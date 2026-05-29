@@ -23,7 +23,8 @@
       "Bash(git remote *)",
       "Bash(git push *)",
       "Bash(git -c user.name=\"UNIsport Dev\" -c user.email=\"dev@unisport.local\" commit -q -m \"feat\\(onboarding\\): shared 9-step shell + Screen 1 \\(Basics\\), flow state/profile object, routing after login, data file \\(classYears/freshmanClassYear/gender\\), dev replay\")",
-      "Bash(git -c user.name=\"UNIsport Dev\" -c user.email=\"dev@unisport.local\" commit -q -m \"feat\\(onboarding\\): rename Gender->Sex \\(Male/Female\\), set class years to '27-'30, freshmanClassYear='30\")"
+      "Bash(git -c user.name=\"UNIsport Dev\" -c user.email=\"dev@unisport.local\" commit -q -m \"feat\\(onboarding\\): rename Gender->Sex \\(Male/Female\\), set class years to '27-'30, freshmanClassYear='30\")",
+      "Bash(git -c user.name=\"UNIsport Dev\" -c user.email=\"dev@unisport.local\" commit -q -m \"feat\\(onboarding\\): Screen 2 Where you live + reusable searchable dropdown \\(Yard dorms vs 12 houses via freshmanClassYear\\); rename partnerGender->partnerPreference\")"
     ],
     "defaultMode": "bypassPermissions"
   }

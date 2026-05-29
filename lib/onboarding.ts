@@ -19,6 +19,49 @@ export const freshmanClassYear: string = "'30";
 // Sex options (editable).
 export const sexOptions: string[] = ["Male", "Female"];
 
+// ---- Screen 2: Where you live ------------------------------------------------
+
+// Freshman Yard dorms (shown when the chosen class year === freshmanClassYear).
+export const yardDorms: string[] = [
+  "Apley Court",
+  "Canaday",
+  "Grays",
+  "Greenough",
+  "Hollis",
+  "Holworthy",
+  "Hurlbut",
+  "Lionel",
+  "Matthews",
+  "Mower",
+  "Pennypacker",
+  "Stoughton",
+  "Straus",
+  "Thayer",
+  "Weld",
+  "Wigglesworth",
+];
+
+// The 12 upperclassman houses (shown for everyone who isn't the freshman class).
+export const houses: string[] = [
+  "Adams",
+  "Cabot",
+  "Currier",
+  "Dunster",
+  "Eliot",
+  "Kirkland",
+  "Leverett",
+  "Lowell",
+  "Mather",
+  "Pforzheimer",
+  "Quincy",
+  "Winthrop",
+];
+
+// Decoupled from any hardcoded year: freshmen see Yard dorms, everyone else houses.
+export function residenceOptions(classYear: string): string[] {
+  return classYear === freshmanClassYear ? yardDorms : houses;
+}
+
 // ---- The collected profile (one object for the whole flow) -------------------
 // Clean field names — matching will read these later. Optional fields fill in as
 // the user moves through the screens (or are left empty on skippable screens).
@@ -54,7 +97,7 @@ export type OnboardingProfile = {
 
   // Screen 7 — Preferences (matching inputs + mentorship)
   trainingType: "" | "solo" | "partner" | "either";
-  partnerGender: "" | "any" | "male" | "female";
+  partnerPreference: "" | "any" | "male" | "female";
   mentorFreshmen: boolean;
   beMentored: boolean;
   helpOthers: boolean;
@@ -84,7 +127,7 @@ export const emptyProfile: OnboardingProfile = {
   languages: [],
   interests: [],
   trainingType: "",
-  partnerGender: "",
+  partnerPreference: "",
   mentorFreshmen: false,
   beMentored: false,
   helpOthers: false,

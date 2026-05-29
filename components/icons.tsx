@@ -102,6 +102,18 @@ export const IconBasketball = (p: IconProps) => (
   </Base>
 );
 
+export const IconChevronDown = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M6 9l6 6 6-6" />
+  </Base>
+);
+
+export const IconCheck = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M5 12l5 5 9-10" />
+  </Base>
+);
+
 // Generic Harvard shield sigil (theme-colored), used as a fallback.
 export const IconShield = (p: IconProps) => (
   <Base {...p}>

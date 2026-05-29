@@ -5,9 +5,12 @@ import { useRouter } from "next/navigation";
 import { useAppState } from "@/components/AppState";
 import OnboardingShell from "@/components/onboarding/OnboardingShell";
 import { Pill, FieldLabel, TextField } from "@/components/onboarding/controls";
+import SearchableDropdown from "@/components/onboarding/SearchableDropdown";
 import {
   classYears,
   sexOptions,
+  freshmanClassYear,
+  residenceOptions,
   emptyProfile,
   type OnboardingProfile,
 } from "@/lib/onboarding";
@@ -51,6 +54,8 @@ export default function OnboardingFlow() {
     switch (meta.key) {
       case "basics":
         return profile.name.trim() !== "" && profile.classYear !== "" && profile.sex !== "";
+      case "residence":
+        return profile.residence !== "";
       default:
         return true;
     }
@@ -88,7 +93,17 @@ export default function OnboardingFlow() {
             <FieldLabel>Class year</FieldLabel>
             <div className="mb-4 flex flex-wrap gap-1.5">
               {classYears.map((y) => (
-                <Pill key={y} label={y} selected={profile.classYear === y} onClick={() => set("classYear", y)} />
+                <Pill
+                  key={y}
+                  label={y}
+                  selected={profile.classYear === y}
+                  onClick={() =>
+                    // Changing class year clears a now-possibly-invalid residence.
+                    setProfile((p) =>
+                      p.classYear === y ? p : { ...p, classYear: y, residence: "" }
+                    )
+                  }
+                />
               ))}
             </div>
 
@@ -100,6 +115,21 @@ export default function OnboardingFlow() {
             </div>
           </div>
         );
+      case "residence": {
+        const isFreshman = profile.classYear === freshmanClassYear;
+        return (
+          <div>
+            <FieldLabel>{isFreshman ? "Your Yard dorm" : "Your house"}</FieldLabel>
+            <SearchableDropdown
+              options={residenceOptions(profile.classYear)}
+              value={profile.residence}
+              onChange={(v) => set("residence", v)}
+              placeholder={isFreshman ? "Select your dorm" : "Select your house"}
+              ariaLabel="Where you live"
+            />
+          </div>
+        );
+      }
       default:
         return (
           <div className="rounded-xl border border-border bg-surface-2 p-6 text-center text-[13px] text-muted">
