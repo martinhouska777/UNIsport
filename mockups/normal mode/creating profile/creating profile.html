@@ -1,0 +1,449 @@
+<style>
+  .ob-canvas { background: #0a0a0a; border-radius: 16px; padding: 24px 16px; }
+  .ob-row { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
+  .ob-phone { width: 320px; flex-shrink: 0; background: #0F0F0F; border-radius: 32px; border: 8px solid #1a1a1a; overflow: hidden; font-family: 'Inter', 'Calibri', sans-serif; color: #F5F0E8; display: flex; flex-direction: column; }
+  .ob-label { text-align: center; font-size: 11px; color: #8A8478; letter-spacing: 0.1em; text-transform: uppercase; margin-top: 8px; font-weight: 500; }
+  .ob-col { display: flex; flex-direction: column; align-items: center; gap: 4px; margin-bottom: 8px; }
+  .ob-screen { padding: 16px 20px 20px; min-height: 640px; display: flex; flex-direction: column; }
+  .ob-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; min-height: 24px; }
+  .ob-back { color: #8A8478; font-size: 18px; cursor: pointer; }
+  .ob-skip { color: #8A8478; font-size: 13px; cursor: pointer; }
+  .ob-progress { display: flex; gap: 4px; margin: 8px 0 24px; }
+  .ob-seg { flex: 1; height: 3px; background: #2A2A2A; border-radius: 2px; }
+  .ob-seg.active { background: #A51C30; }
+  .ob-seg.done { background: #A51C30; opacity: 0.5; }
+  .ob-h { font-family: 'Georgia', serif; font-size: 22px; font-weight: 500; line-height: 1.25; margin-bottom: 8px; color: #F5F0E8; }
+  .ob-sub { font-size: 13px; color: #8A8478; margin-bottom: 22px; line-height: 1.5; }
+  .ob-field-label { font-size: 12px; color: #8A8478; margin-bottom: 8px; letter-spacing: 0.04em; text-transform: uppercase; font-weight: 500; }
+  .ob-input { width: 100%; background: #1A1A1A; border: 0.5px solid #2A2A2A; border-radius: 10px; padding: 12px 14px; color: #F5F0E8; font-size: 14px; margin-bottom: 16px; font-family: inherit; }
+  .ob-input::placeholder { color: #5a564f; }
+  .ob-select { width: 100%; background: #1A1A1A; border: 0.5px solid #2A2A2A; border-radius: 10px; padding: 12px 14px; color: #F5F0E8; font-size: 14px; margin-bottom: 16px; appearance: none; background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="8" viewBox="0 0 12 8"><path d="M1 1l5 5 5-5" stroke="%238A8478" stroke-width="1.5" fill="none"/></svg>'); background-repeat: no-repeat; background-position: right 14px center; }
+  .ob-pills { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+  .ob-pill { padding: 8px 14px; background: #1A1A1A; border: 0.5px solid #2A2A2A; border-radius: 999px; color: #F5F0E8; font-size: 13px; cursor: pointer; }
+  .ob-pill.on { background: #2a1010; border-color: #A51C30; color: #C4324A; }
+  .ob-pill.gold { background: #2a2310; border-color: #D4A843; color: #D4A843; }
+  .ob-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+  .ob-card { background: #1A1A1A; border: 0.5px solid #2A2A2A; border-radius: 12px; padding: 16px 12px; text-align: center; }
+  .ob-card.on { border-color: #A51C30; background: #1d0d10; }
+  .ob-card .icon { font-size: 22px; margin-bottom: 6px; color: #D4A843; }
+  .ob-card .name { font-size: 13px; font-weight: 500; }
+  .ob-level { background: #1A1A1A; border: 0.5px solid #2A2A2A; border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; cursor: pointer; }
+  .ob-level.on { border-color: #A51C30; background: #1d0d10; }
+  .ob-level .name { font-size: 13px; font-weight: 500; margin-bottom: 2px; }
+  .ob-level .desc { font-size: 11px; color: #8A8478; }
+  .ob-why { background: #1d0d10; border: 0.5px solid #A51C30; border-radius: 10px; padding: 12px 14px; margin-bottom: 22px; }
+  .ob-why-h { font-size: 12px; color: #C4324A; font-weight: 500; margin-bottom: 6px; letter-spacing: 0.05em; text-transform: uppercase; }
+  .ob-why-p { font-size: 12px; color: #B5B0A4; line-height: 1.55; }
+  .ob-group { margin-bottom: 18px; }
+  .ob-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 16px; }
+  .ob-day { aspect-ratio: 1; background: #1A1A1A; border: 0.5px solid #2A2A2A; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 12px; cursor: pointer; }
+  .ob-day.on { background: #2a1010; border-color: #A51C30; color: #C4324A; }
+  .ob-toggle-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 12px 0; border-bottom: 0.5px solid #1f1f1f; gap: 12px; }
+  .ob-toggle-row:last-child { border-bottom: none; }
+  .ob-toggle-text { flex: 1; }
+  .ob-toggle-label { font-size: 13px; font-weight: 500; }
+  .ob-toggle-sub { font-size: 11px; color: #8A8478; margin-top: 2px; }
+  .ob-toggle { width: 38px; height: 22px; background: #2A2A2A; border-radius: 999px; position: relative; cursor: pointer; flex-shrink: 0; margin-top: 2px; }
+  .ob-toggle.on { background: #A51C30; }
+  .ob-toggle::after { content: ''; position: absolute; width: 16px; height: 16px; background: #fff; border-radius: 50%; top: 3px; left: 3px; transition: left 0.2s; }
+  .ob-toggle.on::after { left: 19px; }
+  .ob-section-title { font-size: 12px; color: #D4A843; letter-spacing: 0.06em; text-transform: uppercase; font-weight: 500; margin-bottom: 4px; }
+  .ob-section-help { font-size: 11px; color: #8A8478; margin-bottom: 8px; }
+  .ob-section { background: #1A1A1A; border: 0.5px solid #2A2A2A; border-radius: 12px; padding: 14px 16px; margin-bottom: 12px; }
+  .ob-textarea { width: 100%; background: #1A1A1A; border: 0.5px solid #2A2A2A; border-radius: 10px; padding: 12px 14px; color: #F5F0E8; font-size: 14px; min-height: 90px; font-family: inherit; resize: none; margin-bottom: 6px; }
+  .ob-char { text-align: right; font-size: 11px; color: #8A8478; margin-bottom: 16px; }
+  .ob-photo { border: 1.5px dashed #2A2A2A; border-radius: 12px; padding: 24px 16px; text-align: center; margin-bottom: 8px; cursor: pointer; }
+  .ob-photo .icon { font-size: 28px; color: #5a564f; margin-bottom: 8px; }
+  .ob-photo .ph-h { font-size: 13px; color: #F5F0E8; margin-bottom: 4px; }
+  .ob-photo .ph-sub { font-size: 11px; color: #8A8478; }
+  .ob-photo-why { font-size: 11px; color: #D4A843; text-align: center; margin-bottom: 16px; }
+  .ob-pr-row { display: grid; grid-template-columns: 1fr 70px 60px; gap: 6px; margin-bottom: 8px; }
+  .ob-pr-row input, .ob-pr-row select { background: #1A1A1A; border: 0.5px solid #2A2A2A; border-radius: 8px; padding: 10px; color: #F5F0E8; font-size: 12px; font-family: inherit; }
+  .ob-add { background: transparent; border: 0.5px dashed #2A2A2A; border-radius: 10px; padding: 10px; width: 100%; color: #8A8478; font-size: 12px; cursor: pointer; margin-bottom: 16px; font-family: inherit; }
+  .ob-cta { margin-top: auto; padding-top: 16px; }
+  .ob-btn { width: 100%; background: #A51C30; color: #fff; border: none; border-radius: 12px; padding: 14px; font-size: 14px; font-weight: 500; cursor: pointer; font-family: inherit; }
+  .ob-btn.gold { background: #D4A843; color: #1a1308; }
+  .ob-helper { font-size: 11px; color: #8A8478; text-align: center; margin-top: 8px; }
+  .ob-notif-icon { width: 64px; height: 64px; border-radius: 50%; background: #1d0d10; border: 0.5px solid #A51C30; display: flex; align-items: center; justify-content: center; margin: 40px auto 24px; font-size: 28px; color: #C4324A; }
+  .ob-notif-list { background: #1A1A1A; border: 0.5px solid #2A2A2A; border-radius: 12px; padding: 14px 16px; margin-bottom: 24px; }
+  .ob-notif-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; font-size: 13px; }
+  .ob-notif-item i { color: #D4A843; font-size: 16px; flex-shrink: 0; }
+  .ob-later { text-align: center; color: #8A8478; font-size: 13px; margin-top: 14px; cursor: pointer; }
+  .scroll-wrap { max-height: 580px; overflow-y: auto; padding-right: 4px; }
+  .scroll-wrap::-webkit-scrollbar { width: 4px; }
+  .scroll-wrap::-webkit-scrollbar-track { background: transparent; }
+  .scroll-wrap::-webkit-scrollbar-thumb { background: #2A2A2A; border-radius: 2px; }
+</style>
+
+<div class="ob-canvas">
+  <div class="ob-row">
+
+    <!-- STEP 1 — IDENTITY -->
+    <div class="ob-col">
+      <div class="ob-phone">
+        <div class="ob-screen">
+          <div class="ob-top">
+            <span class="ob-back"><i class="ti ti-arrow-left" aria-hidden="true"></i></span>
+            <span></span>
+          </div>
+          <div class="ob-progress">
+            <div class="ob-seg active"></div>
+            <div class="ob-seg"></div>
+            <div class="ob-seg"></div>
+            <div class="ob-seg"></div>
+            <div class="ob-seg"></div>
+            <div class="ob-seg"></div>
+          </div>
+          <div class="ob-h">Let's get to know you.</div>
+          <div class="ob-sub">A few quick basics so other members can find you.</div>
+
+          <div class="ob-field-label">What should we call you?</div>
+          <input class="ob-input" placeholder="Martin Novák" value="Martin Novák" />
+
+          <div class="ob-field-label">Where do you live on campus?</div>
+          <select class="ob-select"><option>Adams House</option></select>
+
+          <div class="ob-field-label">Class year</div>
+          <div class="ob-pills">
+            <div class="ob-pill">'26</div>
+            <div class="ob-pill">'27</div>
+            <div class="ob-pill on">'28</div>
+            <div class="ob-pill">'29</div>
+            <div class="ob-pill">Grad</div>
+          </div>
+
+          <div class="ob-field-label">Gender</div>
+          <div class="ob-pills">
+            <div class="ob-pill on">Male</div>
+            <div class="ob-pill">Female</div>
+          </div>
+
+          <div class="ob-cta">
+            <button class="ob-btn">Continue</button>
+          </div>
+        </div>
+      </div>
+      <div class="ob-label">1 · Identity</div>
+    </div>
+
+    <!-- STEP 2 — TRAINING -->
+    <div class="ob-col">
+      <div class="ob-phone">
+        <div class="ob-screen">
+          <div class="ob-top">
+            <span class="ob-back"><i class="ti ti-arrow-left" aria-hidden="true"></i></span>
+            <span></span>
+          </div>
+          <div class="ob-progress">
+            <div class="ob-seg done"></div>
+            <div class="ob-seg active"></div>
+            <div class="ob-seg"></div>
+            <div class="ob-seg"></div>
+            <div class="ob-seg"></div>
+            <div class="ob-seg"></div>
+          </div>
+          <div class="scroll-wrap">
+            <div class="ob-h">What do you train?</div>
+            <div class="ob-sub">Pick your main thing — you can do everything else too.</div>
+
+            <div class="ob-cards">
+              <div class="ob-card on"><div class="icon"><i class="ti ti-barbell" aria-hidden="true"></i></div><div class="name">Gym</div></div>
+              <div class="ob-card"><div class="icon"><i class="ti ti-run" aria-hidden="true"></i></div><div class="name">Running</div></div>
+              <div class="ob-card"><div class="icon"><i class="ti ti-heart-rate-monitor" aria-hidden="true"></i></div><div class="name">Cardio</div></div>
+              <div class="ob-card"><div class="icon"><i class="ti ti-plus" aria-hidden="true"></i></div><div class="name">Other</div></div>
+            </div>
+
+            <div class="ob-field-label">Home gym</div>
+            <select class="ob-select"><option>MAC — Murr Center</option></select>
+
+            <div class="ob-field-label">Experience level</div>
+            <div class="ob-level"><div class="name">Beginner</div><div class="desc">New to lifting, learning the basics.</div></div>
+            <div class="ob-level on"><div class="name">Intermediate</div><div class="desc">Consistent for 1–3 years, know your numbers.</div></div>
+            <div class="ob-level"><div class="name">Advanced</div><div class="desc">3+ years, structured programming.</div></div>
+
+            <div class="ob-field-label" style="margin-top:16px">Your split (optional)</div>
+            <div class="ob-pills">
+              <div class="ob-pill on">Push-Pull-Legs</div>
+              <div class="ob-pill">Upper-Lower</div>
+              <div class="ob-pill">Full body</div>
+              <div class="ob-pill">Bro split</div>
+              <div class="ob-pill">Custom</div>
+            </div>
+
+            <div class="ob-field-label">Days you usually train</div>
+            <div class="ob-days">
+              <div class="ob-day on">M</div>
+              <div class="ob-day on">T</div>
+              <div class="ob-day">W</div>
+              <div class="ob-day on">T</div>
+              <div class="ob-day on">F</div>
+              <div class="ob-day">S</div>
+              <div class="ob-day">S</div>
+            </div>
+
+            <div class="ob-field-label">Time of day</div>
+            <div class="ob-pills">
+              <div class="ob-pill">Early AM</div>
+              <div class="ob-pill on">AM</div>
+              <div class="ob-pill">Midday</div>
+              <div class="ob-pill on">PM</div>
+              <div class="ob-pill">Late PM</div>
+            </div>
+          </div>
+
+          <div class="ob-cta">
+            <button class="ob-btn">Continue</button>
+          </div>
+        </div>
+      </div>
+      <div class="ob-label">2 · Training</div>
+    </div>
+
+    <!-- STEP 3 — BACKGROUND -->
+    <div class="ob-col">
+      <div class="ob-phone">
+        <div class="ob-screen">
+          <div class="ob-top">
+            <span class="ob-back"><i class="ti ti-arrow-left" aria-hidden="true"></i></span>
+            <span class="ob-skip">Skip</span>
+          </div>
+          <div class="ob-progress">
+            <div class="ob-seg done"></div>
+            <div class="ob-seg done"></div>
+            <div class="ob-seg active"></div>
+            <div class="ob-seg"></div>
+            <div class="ob-seg"></div>
+            <div class="ob-seg"></div>
+          </div>
+          <div class="scroll-wrap">
+            <div class="ob-h">Who are you, outside the gym?</div>
+
+            <div class="ob-why">
+              <div class="ob-why-h">Why we ask</div>
+              <div class="ob-why-p">The best gym friendships come from shared backgrounds — a fellow econ major, another European, someone else into startups. All optional.</div>
+            </div>
+
+            <div class="ob-field-label">What are you studying?</div>
+            <div class="ob-pills">
+              <div class="ob-pill on">Economics</div>
+              <div class="ob-pill">CS</div>
+              <div class="ob-pill">Math</div>
+              <div class="ob-pill">Government</div>
+              <div class="ob-pill">Pre-med</div>
+              <div class="ob-pill">Engineering</div>
+              <div class="ob-pill">Humanities</div>
+              <div class="ob-pill">Other</div>
+            </div>
+
+            <div class="ob-field-label">Where are you from?</div>
+            <div class="ob-pills">
+              <div class="ob-pill">American</div>
+              <div class="ob-pill on">European</div>
+              <div class="ob-pill">Asian</div>
+              <div class="ob-pill">Latin American</div>
+              <div class="ob-pill">African</div>
+              <div class="ob-pill">Middle Eastern</div>
+              <div class="ob-pill">Other</div>
+            </div>
+
+            <div class="ob-field-label">Languages you speak</div>
+            <div class="ob-pills">
+              <div class="ob-pill on">English</div>
+              <div class="ob-pill on">Czech</div>
+              <div class="ob-pill">Spanish</div>
+              <div class="ob-pill">French</div>
+              <div class="ob-pill">German</div>
+              <div class="ob-pill">Mandarin</div>
+              <div class="ob-pill">Other</div>
+            </div>
+
+            <div class="ob-field-label">Interests outside training</div>
+            <div class="ob-pills">
+              <div class="ob-pill on">Business</div>
+              <div class="ob-pill on">Startups</div>
+              <div class="ob-pill">Music</div>
+              <div class="ob-pill">Art</div>
+              <div class="ob-pill">Travel</div>
+              <div class="ob-pill">Reading</div>
+              <div class="ob-pill">Gaming</div>
+              <div class="ob-pill">Cooking</div>
+              <div class="ob-pill">Outdoors</div>
+            </div>
+          </div>
+
+          <div class="ob-cta">
+            <button class="ob-btn">Continue</button>
+          </div>
+        </div>
+      </div>
+      <div class="ob-label">3 · Background</div>
+    </div>
+
+    <!-- STEP 4 — PREFERENCES -->
+    <div class="ob-col">
+      <div class="ob-phone">
+        <div class="ob-screen">
+          <div class="ob-top">
+            <span class="ob-back"><i class="ti ti-arrow-left" aria-hidden="true"></i></span>
+            <span></span>
+          </div>
+          <div class="ob-progress">
+            <div class="ob-seg done"></div>
+            <div class="ob-seg done"></div>
+            <div class="ob-seg done"></div>
+            <div class="ob-seg active"></div>
+            <div class="ob-seg"></div>
+            <div class="ob-seg"></div>
+          </div>
+          <div class="ob-h">Your preferences.</div>
+          <div class="ob-sub">Who you'd like to train with and how you want to help out.</div>
+
+          <div class="ob-field-label">Partner gender</div>
+          <div class="ob-pills">
+            <div class="ob-pill on">Any</div>
+            <div class="ob-pill">Male</div>
+            <div class="ob-pill">Female</div>
+          </div>
+
+          <div style="margin-top: 16px"></div>
+
+          <div class="ob-section">
+            <div class="ob-section-title">Peer advising</div>
+            <div class="ob-section-help">Harvard-life mentorship — optional, toggle what applies.</div>
+            <div class="ob-toggle-row">
+              <div class="ob-toggle-text">
+                <div class="ob-toggle-label">Mentor freshmen</div>
+                <div class="ob-toggle-sub">Help newcomers navigate Harvard.</div>
+              </div>
+              <div class="ob-toggle on"></div>
+            </div>
+            <div class="ob-toggle-row">
+              <div class="ob-toggle-text">
+                <div class="ob-toggle-label">Be mentored as a freshman</div>
+                <div class="ob-toggle-sub">Get guidance from an upperclassman.</div>
+              </div>
+              <div class="ob-toggle"></div>
+            </div>
+          </div>
+
+          <div class="ob-section">
+            <div class="ob-section-title">Gym mentorship</div>
+            <div class="ob-section-help">Optional — toggle what applies.</div>
+            <div class="ob-toggle-row">
+              <div class="ob-toggle-text">
+                <div class="ob-toggle-label">Help less experienced lifters</div>
+                <div class="ob-toggle-sub">Form check, programming basics.</div>
+              </div>
+              <div class="ob-toggle on"></div>
+            </div>
+            <div class="ob-toggle-row">
+              <div class="ob-toggle-text">
+                <div class="ob-toggle-label">Get help from someone advanced</div>
+                <div class="ob-toggle-sub">Learn from someone further along.</div>
+              </div>
+              <div class="ob-toggle"></div>
+            </div>
+          </div>
+
+          <div class="ob-cta">
+            <button class="ob-btn">Continue</button>
+          </div>
+        </div>
+      </div>
+      <div class="ob-label">4 · Preferences</div>
+    </div>
+
+    <!-- STEP 5 — PROFILE FINISH -->
+    <div class="ob-col">
+      <div class="ob-phone">
+        <div class="ob-screen">
+          <div class="ob-top">
+            <span class="ob-back"><i class="ti ti-arrow-left" aria-hidden="true"></i></span>
+            <span class="ob-skip">Skip</span>
+          </div>
+          <div class="ob-progress">
+            <div class="ob-seg done"></div>
+            <div class="ob-seg done"></div>
+            <div class="ob-seg done"></div>
+            <div class="ob-seg done"></div>
+            <div class="ob-seg active"></div>
+            <div class="ob-seg"></div>
+          </div>
+          <div class="scroll-wrap">
+            <div class="ob-h">Finish your profile.</div>
+            <div class="ob-sub">All optional — but profiles with photos get 3× more matches.</div>
+
+            <div class="ob-field-label">Bio</div>
+            <textarea class="ob-textarea" placeholder="Czech econ major, powerlifter, training for first meet in spring.">Czech econ major, powerlifter, training for first meet in spring.</textarea>
+            <div class="ob-char">62 / 160</div>
+
+            <div class="ob-field-label">Profile photo</div>
+            <div class="ob-photo">
+              <div class="icon"><i class="ti ti-camera" aria-hidden="true"></i></div>
+              <div class="ph-h">Add a photo</div>
+              <div class="ph-sub">Tap to upload</div>
+            </div>
+            <div class="ob-photo-why">Profiles with photos get 3× more matches</div>
+
+            <div class="ob-field-label">Personal records</div>
+            <div class="ob-pr-row">
+              <select><option>Bench</option></select>
+              <input placeholder="kg" value="100" />
+              <input placeholder="reps" value="5" />
+            </div>
+            <div class="ob-pr-row">
+              <select><option>Squat</option></select>
+              <input placeholder="kg" value="140" />
+              <input placeholder="reps" value="3" />
+            </div>
+            <button class="ob-add">+ Add another PR</button>
+          </div>
+
+          <div class="ob-cta">
+            <button class="ob-btn">Continue</button>
+          </div>
+        </div>
+      </div>
+      <div class="ob-label">5 · Profile</div>
+    </div>
+
+    <!-- STEP 6 — NOTIFICATIONS -->
+    <div class="ob-col">
+      <div class="ob-phone">
+        <div class="ob-screen">
+          <div class="ob-top">
+            <span></span>
+            <span></span>
+          </div>
+          <div class="ob-progress">
+            <div class="ob-seg done"></div>
+            <div class="ob-seg done"></div>
+            <div class="ob-seg done"></div>
+            <div class="ob-seg done"></div>
+            <div class="ob-seg done"></div>
+            <div class="ob-seg active"></div>
+          </div>
+
+          <div class="ob-notif-icon"><i class="ti ti-bell" aria-hidden="true"></i></div>
+
+          <div class="ob-h" style="text-align:center">Stay in the loop.</div>
+          <div class="ob-sub" style="text-align:center">Get notified the moment something matters.</div>
+
+          <div class="ob-notif-list">
+            <div class="ob-notif-item"><i class="ti ti-user-check" aria-hidden="true"></i><span>Someone matches with you</span></div>
+            <div class="ob-notif-item"><i class="ti ti-message" aria-hidden="true"></i><span>New messages</span></div>
+            <div class="ob-notif-item"><i class="ti ti-calendar-event" aria-hidden="true"></i><span>Session invites</span></div>
+            <div class="ob-notif-item"><i class="ti ti-flame" aria-hidden="true"></i><span>Streak reminders</span></div>
+          </div>
+
+          <div class="ob-cta">
+            <button class="ob-btn gold">Enable notifications</button>
+            <div class="ob-later">Maybe later</div>
+          </div>
+        </div>
+      </div>
+      <div class="ob-label">6 · Notifications</div>
+    </div>
+
+  </div>
+</div>

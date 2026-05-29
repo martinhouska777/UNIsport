@@ -5,7 +5,7 @@ import { useAppState } from "@/components/AppState";
 import { getUniversity } from "@/lib/themes";
 
 export default function ProfilePage() {
-  const { universityKey, logout } = useAppState();
+  const { universityKey, logout, resetOnboarding } = useAppState();
   const router = useRouter();
   const university = getUniversity(universityKey);
 
@@ -23,10 +23,20 @@ export default function ProfilePage() {
 
         <button
           onClick={() => {
+            resetOnboarding();
+            router.replace("/onboarding");
+          }}
+          className="mt-6 w-full rounded-full border border-border bg-surface-2 px-5 py-2.5 text-sm font-medium text-text transition-colors"
+        >
+          Replay onboarding (dev)
+        </button>
+
+        <button
+          onClick={() => {
             logout();
             router.replace("/");
           }}
-          className="mt-6 w-full rounded-full border border-border bg-background px-5 py-2.5 text-sm font-medium text-text transition-colors hover:bg-surface"
+          className="mt-3 w-full rounded-full border border-border bg-background px-5 py-2.5 text-sm font-medium text-text transition-colors hover:bg-surface"
         >
           Log out (demo)
         </button>

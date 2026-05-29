@@ -9,12 +9,13 @@ import { useRouter } from "next/navigation";
 import { useAppState } from "@/components/AppState";
 
 export default function Landing() {
-  const { ready, loggedIn, login } = useAppState();
+  const { ready, loggedIn, onboarded, login } = useAppState();
   const router = useRouter();
 
+  // After login: new users go through onboarding first, then into the app.
   useEffect(() => {
-    if (ready && loggedIn) router.replace("/gyms");
-  }, [ready, loggedIn, router]);
+    if (ready && loggedIn) router.replace(onboarded ? "/gyms" : "/onboarding");
+  }, [ready, loggedIn, onboarded, router]);
 
   return (
     <div className="flex min-h-dvh flex-col items-center justify-center bg-background px-6 text-center">
@@ -30,7 +31,7 @@ export default function Landing() {
         <button
           onClick={() => {
             login();
-            router.replace("/gyms");
+            router.replace(onboarded ? "/gyms" : "/onboarding");
           }}
           className="mt-8 w-full rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-contrast transition-opacity hover:opacity-90"
         >

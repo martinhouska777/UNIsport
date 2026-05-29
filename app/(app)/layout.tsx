@@ -15,14 +15,16 @@ import BottomNav from "@/components/BottomNav";
 import { getUniversity, neutralTheme } from "@/lib/themes";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
-  const { ready, loggedIn, universityKey } = useAppState();
+  const { ready, loggedIn, onboarded, universityKey } = useAppState();
   const router = useRouter();
 
   useEffect(() => {
-    if (ready && !loggedIn) router.replace("/");
-  }, [ready, loggedIn, router]);
+    if (!ready) return;
+    if (!loggedIn) router.replace("/");
+    else if (!onboarded) router.replace("/onboarding"); // finish onboarding first
+  }, [ready, loggedIn, onboarded, router]);
 
-  if (!ready || !loggedIn) return null;
+  if (!ready || !loggedIn || !onboarded) return null;
 
   const theme = getUniversity(universityKey)?.theme ?? neutralTheme;
 
