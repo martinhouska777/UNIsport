@@ -102,10 +102,46 @@ export const IconBasketball = (p: IconProps) => (
   </Base>
 );
 
-// Generic Harvard shield sigil (theme-colored), used for house gyms.
+// Generic Harvard shield sigil (theme-colored), used as a fallback.
 export const IconShield = (p: IconProps) => (
   <Base {...p}>
     <path d="M12 3l7 2v6c0 5-3.5 8-7 10-3.5-2-7-5-7-10V5z" />
     <path d="M12 3v20M5 11h14" />
   </Base>
 );
+
+// House sigil drawn in a house's TWO identity colors (passed as data, not theme).
+export function HouseSigil({
+  primary,
+  secondary,
+  size = 28,
+}: {
+  primary: string;
+  secondary: string;
+  size?: number;
+}) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
+      <path
+        d="M12 3l7 2v6c0 5-3.5 8-7 10-3.5-2-7-5-7-10V5z"
+        fill={primary}
+        fillOpacity={0.25}
+        stroke={primary}
+        strokeWidth={1.6}
+        strokeLinejoin="round"
+      />
+      <path
+        d="M12 4.5v15M5.5 11h13"
+        stroke={secondary}
+        strokeWidth={1.4}
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
