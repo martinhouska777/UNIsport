@@ -27,7 +27,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const theme = getUniversity(universityKey)?.theme ?? neutralTheme;
 
   return (
-    <ThemeProvider tokens={theme} className="flex min-h-dvh flex-col bg-background">
+    <ThemeProvider tokens={theme} className="flex min-h-dvh flex-col overflow-x-hidden bg-background">
       <main className="flex flex-1 flex-col">{children}</main>
       <BottomNav />
     </ThemeProvider>

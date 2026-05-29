@@ -121,7 +121,8 @@ export default function GymsPage() {
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search gyms..."
             aria-label="Search gyms"
-            className="w-full bg-transparent text-[13px] text-text placeholder:text-muted focus:outline-none"
+            // 16px text prevents mobile browsers from auto-zooming on focus.
+            className="w-full min-w-0 bg-transparent text-base text-text placeholder:text-muted focus:outline-none"
           />
         </div>
       </div>
