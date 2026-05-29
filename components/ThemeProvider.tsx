@@ -13,6 +13,7 @@ function tokensToCssVars(t: ThemeTokens): CSSProperties {
   return {
     "--background": t.background,
     "--surface": t.surface,
+    "--surface-2": t.surface2,
     "--border": t.border,
     "--text": t.text,
     "--muted": t.muted,

@@ -12,6 +12,7 @@
 export type ThemeTokens = {
   background: string;
   surface: string;
+  surface2: string; // one step more elevated than surface (inputs, pills, rows)
   border: string;
   text: string;
   muted: string;
@@ -28,6 +29,7 @@ export type ThemeTokens = {
 export const neutralTheme: ThemeTokens = {
   background: "#f6f6f7",
   surface: "#ffffff",
+  surface2: "#eeeef0",
   border: "#e4e4e7",
   text: "#1c1c1f",
   muted: "#6b7280",
@@ -49,18 +51,20 @@ export const universities: Record<string, University> = {
   harvard: {
     key: "harvard",
     name: "Harvard University",
+    // Dark theme: crimson primary + gold accent on a near-black background.
     theme: {
-      background: "#faf6f6",
-      surface: "#ffffff",
-      border: "#ecd9dd",
-      text: "#1c1417",
-      muted: "#7a6b6e",
+      background: "#0b0b0c",
+      surface: "#161616",
+      surface2: "#1f1f1f",
+      border: "#272727",
+      text: "#f5f5f5",
+      muted: "#8d8d8d",
       primary: "#a51c30", // Harvard crimson
       primaryContrast: "#ffffff",
       accent: "#d4a843", // Harvard gold
-      success: "#16a34a",
-      warn: "#d97706",
-      danger: "#b91c1c",
+      success: "#22c55e",
+      warn: "#f59e0b",
+      danger: "#ef4444",
     },
   },
 };
