@@ -28,6 +28,10 @@ import {
   MAX_TOP_GYMS,
   weekDays,
   timeBlocks,
+  concentrations,
+  countries,
+  languageOptions,
+  interestOptions,
   emptyProfile,
   type OnboardingProfile,
 } from "@/lib/onboarding";
@@ -418,6 +422,68 @@ export default function OnboardingFlow() {
             <p className="mt-3 text-[11px] text-muted">
               Tap a day to set the times you&apos;re usually free to train.
             </p>
+          </div>
+        );
+      }
+      case "background": {
+        const toggleInterest = (i: string) =>
+          set(
+            "interests",
+            profile.interests.includes(i)
+              ? profile.interests.filter((x) => x !== i)
+              : [...profile.interests, i]
+          );
+        return (
+          <div className="flex flex-col gap-5">
+            <div>
+              <FieldLabel>What are you studying?</FieldLabel>
+              <SearchableDropdown
+                options={concentrations}
+                value={profile.concentration}
+                onChange={(v) => set("concentration", v)}
+                placeholder="Select your concentration"
+                ariaLabel="Concentration"
+              />
+            </div>
+
+            <div>
+              <FieldLabel>Where are you from?</FieldLabel>
+              <SearchableDropdown
+                options={countries}
+                value={profile.hometownCountry}
+                onChange={(v) => set("hometownCountry", v)}
+                placeholder="Select your country"
+                searchPlaceholder="Search countries…"
+                ariaLabel="Country"
+              />
+            </div>
+
+            <div>
+              <FieldLabel>Languages you speak</FieldLabel>
+              <SearchableDropdown
+                multiple
+                options={languageOptions}
+                value={profile.languages}
+                onChange={(v) => set("languages", v)}
+                placeholder="Add languages"
+                searchPlaceholder="Search languages…"
+                ariaLabel="Languages"
+              />
+            </div>
+
+            <div>
+              <FieldLabel>Interests outside training</FieldLabel>
+              <div className="flex flex-wrap gap-1.5">
+                {interestOptions.map((i) => (
+                  <Pill
+                    key={i}
+                    label={i}
+                    selected={profile.interests.includes(i)}
+                    onClick={() => toggleInterest(i)}
+                  />
+                ))}
+              </div>
+            </div>
           </div>
         );
       }
