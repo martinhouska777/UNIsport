@@ -1,0 +1,359 @@
+<h2 class="sr-only">Leaderboards page with House and Class tabs, five expandable metric sections each containing interactive rankings and contribution stats.</h2>
+
+<div style="padding: 1rem 0; display: flex; flex-direction: column; align-items: center; gap: 1.5rem;">
+
+  <div style="font-size: 13px; color: var(--color-text-secondary); text-align: center; max-width: 480px;">
+    Leaderboards page. Tap any metric row to expand. Switch tabs at top. Currently showing your house ranking.
+  </div>
+
+  <div style="display: flex; gap: 1.25rem; align-items: flex-start; flex-wrap: wrap; justify-content: center;">
+
+    <div style="width: 320px; background: #0a0a0a; border-radius: 36px; overflow: hidden; border: 7px solid #1c1c1c; position: relative;">
+
+      <div style="background: #111; border-bottom: 0.5px solid #1f1f1f; padding: 12px 14px; display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <i class="ti ti-arrow-left" style="font-size: 18px; color: #aaa;" aria-hidden="true"></i>
+          <span style="font-size: 15px; font-weight: 500; color: #fff;">Leaderboards</span>
+        </div>
+        <i class="ti ti-info-circle" style="font-size: 18px; color: #aaa;" aria-hidden="true"></i>
+      </div>
+
+      <div style="background: #111; border-bottom: 0.5px solid #1f1f1f; padding: 0 14px; display: flex; gap: 20px;">
+        <div data-tab="houses" class="tab tab-active" style="padding: 10px 0; cursor: pointer; position: relative;">
+          <span style="font-size: 12px; color: #fff; font-weight: 500;">Houses</span>
+          <div style="position: absolute; bottom: -0.5px; left: 0; right: 0; height: 2px; background: #A51C30;"></div>
+        </div>
+        <div data-tab="classes" class="tab" style="padding: 10px 0; cursor: pointer;">
+          <span style="font-size: 12px; color: #666;">Classes</span>
+        </div>
+      </div>
+
+      <div style="background: #0d0d0d; padding: 8px 14px; border-bottom: 0.5px solid #1f1f1f; display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; gap: 8px;">
+          <div data-period="month" class="period period-active" style="padding: 3px 10px; border-radius: 999px; background: #2a1010; border: 0.5px solid #A51C30; cursor: pointer;">
+            <span style="font-size: 9px; color: #A51C30; font-weight: 500;">This month</span>
+          </div>
+          <div data-period="semester" class="period" style="padding: 3px 10px; border-radius: 999px; background: transparent; border: 0.5px solid #2a2a2a; cursor: pointer;">
+            <span style="font-size: 9px; color: #888;">Semester</span>
+          </div>
+          <div data-period="all" class="period" style="padding: 3px 10px; border-radius: 999px; background: transparent; border: 0.5px solid #2a2a2a; cursor: pointer;">
+            <span style="font-size: 9px; color: #888;">All time</span>
+          </div>
+        </div>
+        <span style="font-size: 9px; color: #555;">May 2026</span>
+      </div>
+
+      <div style="max-height: 480px; overflow-y: auto; scrollbar-width: none;">
+
+        <div id="metrics-list" style="display: flex; flex-direction: column;"></div>
+
+      </div>
+
+      <div style="background: #111; border-top: 0.5px solid #1f1f1f; padding: 8px 0 10px; display: grid; grid-template-columns: 1fr 1fr 1fr 1fr 1fr; align-items: end;">
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
+          <i class="ti ti-building-stadium" style="font-size: 18px; color: #666;" aria-hidden="true"></i>
+          <span style="font-size: 8px; color: #666;">Gyms</span>
+        </div>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
+          <i class="ti ti-users" style="font-size: 18px; color: #666;" aria-hidden="true"></i>
+          <span style="font-size: 8px; color: #666;">Match</span>
+        </div>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 4px; transform: translateY(-12px);">
+          <div style="width: 44px; height: 44px; border-radius: 50%; background: #A51C30; display: flex; align-items: center; justify-content: center; border: 3px solid #0a0a0a;">
+            <i class="ti ti-plus" style="font-size: 20px; color: #fff;" aria-hidden="true"></i>
+          </div>
+          <span style="font-size: 8px; color: #A51C30; font-weight: 500;">Log</span>
+        </div>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
+          <i class="ti ti-message-circle" style="font-size: 18px; color: #666;" aria-hidden="true"></i>
+          <span style="font-size: 8px; color: #666;">Messages</span>
+        </div>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
+          <i class="ti ti-user" style="font-size: 18px; color: #666;" aria-hidden="true"></i>
+          <span style="font-size: 8px; color: #666;">Profile</span>
+        </div>
+      </div>
+
+    </div>
+
+    <div style="width: 280px; display: flex; flex-direction: column; gap: 10px;">
+      <div style="font-size: 11px; letter-spacing: 0.08em; color: var(--color-text-secondary); font-weight: 500;">LEADERBOARDS STRUCTURE</div>
+
+      <div style="background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 10px 12px;">
+        <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+          <i class="ti ti-layout-2" style="font-size: 14px; color: #185FA5;" aria-hidden="true"></i>
+          <span style="font-size: 12px; font-weight: 500;">Tabs</span>
+        </div>
+        <div style="font-size: 12px; color: var(--color-text-secondary); line-height: 1.5;">
+          Houses (12) and Classes (4 years). Same 5 metrics, different groupings.
+        </div>
+      </div>
+
+      <div style="background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 10px 12px;">
+        <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+          <i class="ti ti-list-numbers" style="font-size: 14px; color: #BA7517;" aria-hidden="true"></i>
+          <span style="font-size: 12px; font-weight: 500;">5 metrics</span>
+        </div>
+        <div style="font-size: 12px; color: var(--color-text-secondary); line-height: 1.5; padding-left: 0;">
+          <ol style="margin: 0; padding-left: 18px;">
+            <li>Sessions per capita</li>
+            <li>People met per capita</li>
+            <li>Weekly avg per user</li>
+            <li>Mentor sessions per capita</li>
+            <li>Most improved (% vs last)</li>
+          </ol>
+        </div>
+      </div>
+
+      <div style="background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 10px 12px;">
+        <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+          <i class="ti ti-chevrons-down" style="font-size: 14px; color: #0F6E56;" aria-hidden="true"></i>
+          <span style="font-size: 12px; font-weight: 500;">Expandable rows</span>
+        </div>
+        <div style="font-size: 12px; color: var(--color-text-secondary); line-height: 1.5;">
+          Collapsed: rank, headline value, your contribution. Expanded: full top 12 + interactive bar chart + your impact.
+        </div>
+      </div>
+
+      <div id="tap-feedback" style="background: #1a2a1a; border: 0.5px solid #2d6a2d; border-radius: var(--border-radius-md); padding: 10px 12px; min-height: 40px; display: flex; align-items: center; gap: 8px;">
+        <i class="ti ti-hand-finger" style="font-size: 14px; color: #2d6a2d;" aria-hidden="true"></i>
+        <span style="font-size: 11px; color: var(--color-text-secondary);">Tap a metric row to expand. Switch tabs to see Classes.</span>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+(function(){
+  const houseData = {
+    sessions: { label: 'Sessions per capita', icon: 'ti-activity', userRank: 2, userName: 'Adams', userValue: '5.2', unit: 'sessions/person', trend: '+0.4', ranks: [
+      {name:'Quincy', value:6.1, mine:false, residents:415},
+      {name:'Adams', value:5.2, mine:true, residents:401},
+      {name:'Lowell', value:4.9, mine:false, residents:392},
+      {name:'Mather', value:4.7, mine:false, residents:380},
+      {name:'Winthrop', value:4.5, mine:false, residents:407},
+      {name:'Leverett', value:4.3, mine:false, residents:441},
+      {name:'Eliot', value:4.1, mine:false, residents:398},
+      {name:'Kirkland', value:3.9, mine:false, residents:376},
+      {name:'Pforzheimer', value:3.7, mine:false, residents:412},
+      {name:'Cabot', value:3.5, mine:false, residents:389},
+      {name:'Currier', value:3.2, mine:false, residents:425},
+      {name:'Dunster', value:2.8, mine:false, residents:368}
+    ]},
+    met: { label: 'People met per capita', icon: 'ti-users-plus', userRank: 4, userName: 'Adams', userValue: '0.71', unit: 'new/person', trend: '+0.12', ranks: [
+      {name:'Lowell', value:0.92, mine:false},
+      {name:'Quincy', value:0.84, mine:false},
+      {name:'Winthrop', value:0.79, mine:false},
+      {name:'Adams', value:0.71, mine:true},
+      {name:'Mather', value:0.66, mine:false},
+      {name:'Eliot', value:0.61, mine:false},
+      {name:'Leverett', value:0.58, mine:false},
+      {name:'Kirkland', value:0.54, mine:false},
+      {name:'Currier', value:0.49, mine:false},
+      {name:'Pforzheimer', value:0.46, mine:false},
+      {name:'Cabot', value:0.41, mine:false},
+      {name:'Dunster', value:0.38, mine:false}
+    ]},
+    weekly: { label: 'Avg sessions/user (weekly)', icon: 'ti-calendar-stats', userRank: 3, userName: 'Adams', userValue: '3.1', unit: 'per active user', trend: '+0.2', ranks: [
+      {name:'Quincy', value:3.4, mine:false},
+      {name:'Lowell', value:3.2, mine:false},
+      {name:'Adams', value:3.1, mine:true},
+      {name:'Winthrop', value:2.9, mine:false},
+      {name:'Mather', value:2.7, mine:false},
+      {name:'Eliot', value:2.6, mine:false},
+      {name:'Leverett', value:2.5, mine:false},
+      {name:'Kirkland', value:2.3, mine:false},
+      {name:'Currier', value:2.1, mine:false},
+      {name:'Pforzheimer', value:2.0, mine:false},
+      {name:'Cabot', value:1.8, mine:false},
+      {name:'Dunster', value:1.5, mine:false}
+    ]},
+    mentor: { label: 'Mentor sessions per capita', icon: 'ti-school', userRank: 1, userName: 'Adams', userValue: '0.43', unit: 'mentor sess/person', trend: '+0.18', ranks: [
+      {name:'Adams', value:0.43, mine:true},
+      {name:'Eliot', value:0.39, mine:false},
+      {name:'Lowell', value:0.36, mine:false},
+      {name:'Mather', value:0.31, mine:false},
+      {name:'Winthrop', value:0.28, mine:false},
+      {name:'Kirkland', value:0.24, mine:false},
+      {name:'Quincy', value:0.22, mine:false},
+      {name:'Leverett', value:0.19, mine:false},
+      {name:'Currier', value:0.17, mine:false},
+      {name:'Pforzheimer', value:0.14, mine:false},
+      {name:'Cabot', value:0.11, mine:false},
+      {name:'Dunster', value:0.08, mine:false}
+    ]},
+    improved: { label: 'Most improved (vs last month)', icon: 'ti-trending-up', userRank: 5, userName: 'Adams', userValue: '+18%', unit: 'increase', trend: '', ranks: [
+      {name:'Currier', value:'+42%', raw:42, mine:false},
+      {name:'Dunster', value:'+34%', raw:34, mine:false},
+      {name:'Pforzheimer', value:'+27%', raw:27, mine:false},
+      {name:'Cabot', value:'+21%', raw:21, mine:false},
+      {name:'Adams', value:'+18%', raw:18, mine:true},
+      {name:'Kirkland', value:'+14%', raw:14, mine:false},
+      {name:'Eliot', value:'+11%', raw:11, mine:false},
+      {name:'Mather', value:'+8%', raw:8, mine:false},
+      {name:'Leverett', value:'+5%', raw:5, mine:false},
+      {name:'Winthrop', value:'+3%', raw:3, mine:false},
+      {name:'Lowell', value:'-2%', raw:-2, mine:false},
+      {name:'Quincy', value:'-6%', raw:-6, mine:false}
+    ]}
+  };
+
+  const classData = {
+    sessions: { label: 'Sessions per capita', icon: 'ti-activity', userRank: 1, userName: '\u201926', userValue: '5.8', unit: 'sessions/person', trend: '+0.6', ranks: [
+      {name:'\u201926', value:5.8, mine:true},
+      {name:'\u201927', value:4.9, mine:false},
+      {name:'\u201928', value:4.2, mine:false},
+      {name:'\u201929', value:3.7, mine:false}
+    ]},
+    met: { label: 'People met per capita', icon: 'ti-users-plus', userRank: 3, userName: '\u201926', userValue: '0.58', unit: 'new/person', trend: '+0.08', ranks: [
+      {name:'\u201929', value:0.94, mine:false},
+      {name:'\u201928', value:0.81, mine:false},
+      {name:'\u201926', value:0.58, mine:true},
+      {name:'\u201927', value:0.52, mine:false}
+    ]},
+    weekly: { label: 'Avg sessions/user (weekly)', icon: 'ti-calendar-stats', userRank: 1, userName: '\u201926', userValue: '3.5', unit: 'per active user', trend: '+0.3', ranks: [
+      {name:'\u201926', value:3.5, mine:true},
+      {name:'\u201927', value:3.0, mine:false},
+      {name:'\u201928', value:2.6, mine:false},
+      {name:'\u201929', value:2.3, mine:false}
+    ]},
+    mentor: { label: 'Mentor sessions per capita', icon: 'ti-school', userRank: 1, userName: '\u201926', userValue: '0.71', unit: 'mentor sess/person', trend: '+0.22', ranks: [
+      {name:'\u201926', value:0.71, mine:true},
+      {name:'\u201927', value:0.48, mine:false},
+      {name:'\u201928', value:0.12, mine:false},
+      {name:'\u201929', value:0.04, mine:false}
+    ]},
+    improved: { label: 'Most improved (vs last month)', icon: 'ti-trending-up', userRank: 2, userName: '\u201926', userValue: '+22%', unit: 'increase', trend: '', ranks: [
+      {name:'\u201929', value:'+38%', raw:38, mine:false},
+      {name:'\u201926', value:'+22%', raw:22, mine:true},
+      {name:'\u201928', value:'+15%', raw:15, mine:false},
+      {name:'\u201927', value:'+9%', raw:9, mine:false}
+    ]}
+  };
+
+  let currentTab = 'houses';
+  let currentPeriod = 'month';
+  let expanded = 'sessions';
+
+  function buildMetricRow(key, data){
+    const isOpen = expanded === key;
+    const isPercent = key === 'improved';
+    const rankColors = ['#D4A843', '#C0C0C0', '#CD7F32'];
+    const rankBg = data.userRank <= 3 ? rankColors[data.userRank - 1] : '#2a2a2a';
+    const rankTextColor = data.userRank <= 3 ? '#1a1000' : '#fff';
+
+    let html = `<div data-metric="${key}" style="border-bottom: 0.5px solid #1f1f1f; cursor: pointer;">`;
+    html += `<div style="padding: 12px 14px; display: flex; align-items: center; justify-content: space-between;">`;
+    html += `<div style="display: flex; align-items: center; gap: 10px; flex: 1;">`;
+    html += `<div style="width: 28px; height: 28px; border-radius: 7px; background: #1a1a1a; display: flex; align-items: center; justify-content: center;"><i class="ti ${data.icon}" style="font-size: 14px; color: #A51C30;" aria-hidden="true"></i></div>`;
+    html += `<div><div style="font-size: 11px; color: #fff; font-weight: 500;">${data.label}</div><div style="font-size: 9px; color: #666; margin-top: 1px;">${data.userName} ranks #${data.userRank} \u00b7 ${data.userValue} ${data.unit}</div></div>`;
+    html += `</div>`;
+    html += `<div style="display: flex; align-items: center; gap: 8px;">`;
+    html += `<div style="width: 22px; height: 22px; border-radius: 50%; background: ${rankBg}; display: flex; align-items: center; justify-content: center;"><span style="font-size: 10px; color: ${rankTextColor}; font-weight: 500;">${data.userRank}</span></div>`;
+    html += `<i class="ti ti-chevron-${isOpen?'up':'down'}" style="font-size: 14px; color: #666;" aria-hidden="true"></i>`;
+    html += `</div></div>`;
+
+    if(isOpen){
+      const maxVal = isPercent ? Math.max(...data.ranks.map(r => Math.abs(r.raw))) : Math.max(...data.ranks.map(r => r.value));
+      html += `<div style="padding: 0 14px 14px; background: #0d0d0d;">`;
+
+      html += `<div style="background: #2a1010; border: 0.5px solid #A51C30; border-radius: 8px; padding: 8px 10px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;">`;
+      html += `<div><div style="font-size: 9px; color: #A51C30; letter-spacing: 0.06em; font-weight: 500;">YOUR CONTRIBUTION</div><div style="font-size: 11px; color: #fff; margin-top: 2px;">You logged 8 of your house's total</div></div>`;
+      html += `<div style="display: flex; align-items: center; gap: 4px;"><i class="ti ti-trending-up" style="font-size: 12px; color: #5DCAA5;" aria-hidden="true"></i><span style="font-size: 11px; color: #5DCAA5; font-weight: 500;">${data.trend || '+0%'}</span></div>`;
+      html += `</div>`;
+
+      html += `<div style="display: flex; flex-direction: column; gap: 4px;">`;
+      data.ranks.forEach((r, i) => {
+        const rank = i + 1;
+        let trophy = '';
+        if(rank === 1) trophy = '<i class="ti ti-crown" style="font-size: 12px; color: #D4A843;" aria-hidden="true"></i>';
+        else if(rank === 2) trophy = '<i class="ti ti-medal" style="font-size: 12px; color: #C0C0C0;" aria-hidden="true"></i>';
+        else if(rank === 3) trophy = '<i class="ti ti-medal" style="font-size: 12px; color: #CD7F32;" aria-hidden="true"></i>';
+        else trophy = `<span style="font-size: 10px; color: #555; min-width: 12px; text-align: center;">${rank}</span>`;
+
+        const barVal = isPercent ? Math.abs(r.raw) : r.value;
+        const barPct = (barVal / maxVal) * 100;
+        const barColor = r.mine ? '#A51C30' : '#2a2a2a';
+        const rowBg = r.mine ? '#1a0a0a' : 'transparent';
+        const nameColor = r.mine ? '#fff' : '#aaa';
+        const valColor = r.mine ? '#fff' : '#888';
+        const displayVal = isPercent ? r.value : r.value.toFixed(2);
+
+        html += `<div style="display: flex; align-items: center; gap: 8px; padding: 5px 6px; background: ${rowBg}; border-radius: 5px;">`;
+        html += `<div style="width: 14px; display: flex; justify-content: center;">${trophy}</div>`;
+        html += `<div style="flex: 1; display: flex; align-items: center; gap: 6px;">`;
+        html += `<span style="font-size: 10px; color: ${nameColor}; font-weight: ${r.mine?500:400}; min-width: 70px;">${r.name}</span>`;
+        html += `<div style="flex: 1; height: 4px; background: #1a1a1a; border-radius: 2px; overflow: hidden;"><div style="height: 100%; width: ${barPct}%; background: ${barColor};"></div></div>`;
+        html += `</div>`;
+        html += `<span style="font-size: 10px; color: ${valColor}; font-weight: ${r.mine?500:400}; min-width: 36px; text-align: right;">${displayVal}</span>`;
+        html += `</div>`;
+      });
+      html += `</div></div>`;
+    }
+
+    html += `</div>`;
+    return html;
+  }
+
+  function render(){
+    const data = currentTab === 'houses' ? houseData : classData;
+    const list = document.getElementById('metrics-list');
+    let html = '';
+    ['sessions', 'met', 'weekly', 'mentor', 'improved'].forEach(key => {
+      html += buildMetricRow(key, data[key]);
+    });
+    list.innerHTML = html;
+
+    list.querySelectorAll('[data-metric]').forEach(el => {
+      el.addEventListener('click', () => {
+        expanded = (expanded === el.dataset.metric) ? null : el.dataset.metric;
+        render();
+        const feedback = document.getElementById('tap-feedback');
+        const metric = data[el.dataset.metric];
+        if(expanded){
+          feedback.style.background = '#2a1a1a';
+          feedback.style.borderColor = '#A51C30';
+          feedback.innerHTML = `<i class="ti ti-arrow-right" style="font-size:14px;color:#A51C30;" aria-hidden="true"></i><span style="font-size:11px;color:var(--color-text-primary);line-height:1.5;"><strong>${metric.label}</strong>: ${metric.userName} ranks #${metric.userRank} of ${metric.ranks.length}.</span>`;
+        }
+      });
+    });
+  }
+
+  document.querySelectorAll('[data-tab]').forEach(el => {
+    el.addEventListener('click', () => {
+      currentTab = el.dataset.tab;
+      document.querySelectorAll('[data-tab]').forEach(t => {
+        const isActive = t.dataset.tab === currentTab;
+        t.querySelector('span').style.color = isActive ? '#fff' : '#666';
+        t.querySelector('span').style.fontWeight = isActive ? '500' : '400';
+        let underline = t.querySelector('div');
+        if(isActive && !underline){
+          underline = document.createElement('div');
+          underline.style.cssText = 'position:absolute;bottom:-0.5px;left:0;right:0;height:2px;background:#A51C30;';
+          t.appendChild(underline);
+        } else if(!isActive && underline){
+          underline.remove();
+        }
+      });
+      render();
+    });
+  });
+
+  document.querySelectorAll('[data-period]').forEach(el => {
+    el.addEventListener('click', () => {
+      currentPeriod = el.dataset.period;
+      document.querySelectorAll('[data-period]').forEach(p => {
+        const isActive = p.dataset.period === currentPeriod;
+        p.style.background = isActive ? '#2a1010' : 'transparent';
+        p.style.border = isActive ? '0.5px solid #A51C30' : '0.5px solid #2a2a2a';
+        p.querySelector('span').style.color = isActive ? '#A51C30' : '#888';
+        p.querySelector('span').style.fontWeight = isActive ? '500' : '400';
+      });
+    });
+  });
+
+  render();
+})();
+</script>

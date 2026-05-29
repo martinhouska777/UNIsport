@@ -1,0 +1,233 @@
+<h2 class="sr-only">Profile v3 mockup with renamed Lifting profile section, Leaderboards card replacing the house card, and a 5-tab bottom navigation with a centered Log button.</h2>
+
+<div style="padding: 1rem 0; display: flex; flex-direction: column; align-items: center; gap: 1.5rem;">
+
+  <div style="font-size: 13px; color: var(--color-text-secondary); text-align: center; max-width: 480px;">
+    Profile v3. Tap any element on the phone to see what it opens. The bottom nav is now 5 tabs with a centered Log button.
+  </div>
+
+  <div style="display: flex; gap: 1.25rem; align-items: flex-start; flex-wrap: wrap; justify-content: center;">
+
+    <div style="width: 320px; background: #0a0a0a; border-radius: 36px; overflow: hidden; border: 7px solid #1c1c1c; position: relative;">
+
+      <div style="background: #111; border-bottom: 0.5px solid #1f1f1f; padding: 12px 14px; display: flex; align-items: center; justify-content: space-between;">
+        <span style="font-size: 16px; font-weight: 500; color: #fff;">My profile</span>
+        <div style="display: flex; gap: 10px; align-items: center;">
+          <i class="ti ti-edit" style="font-size: 18px; color: #aaa;" aria-hidden="true"></i>
+          <i class="ti ti-settings" style="font-size: 18px; color: #aaa;" aria-hidden="true"></i>
+        </div>
+      </div>
+
+      <div style="max-height: 540px; overflow-y: auto; scrollbar-width: none;">
+
+        <div style="padding: 18px 14px 12px; display: flex; flex-direction: column; align-items: center; gap: 8px; border-bottom: 0.5px solid #1f1f1f;">
+          <div style="width: 72px; height: 72px; border-radius: 50%; background: #2a1010; border: 2.5px solid #A51C30; display: flex; align-items: center; justify-content: center;">
+            <i class="ti ti-user" style="font-size: 30px; color: #A51C30;" aria-hidden="true"></i>
+          </div>
+          <div style="text-align: center;">
+            <div style="display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 2px;">
+              <span style="font-size: 16px; font-weight: 500; color: #fff;">Jake Morrison</span>
+              <div style="background: #D4A843; border-radius: 5px; padding: 1px 5px;">
+                <span style="font-size: 8px; color: #1a1000; font-weight: 500; letter-spacing: 0.05em;">VARSITY</span>
+              </div>
+              <div style="background: #1a2a1a; border: 0.5px solid #2d6a2d; border-radius: 5px; padding: 1px 5px;">
+                <span style="font-size: 8px; color: #2d6a2d; font-weight: 500; letter-spacing: 0.05em;">MENTOR</span>
+              </div>
+            </div>
+            <div style="font-size: 10px; color: #666;">Adams House &middot; Class of 2026</div>
+          </div>
+          <p style="font-size: 11px; color: #aaa; margin: 4px 0 0; line-height: 1.5; text-align: center; max-width: 260px;">Rowing team, powerlifting nerd. Chess, jazz, terrible movies.</p>
+        </div>
+
+        <div style="padding: 10px 14px; border-bottom: 0.5px solid #1f1f1f; display: flex; justify-content: space-around;" id="stats-row">
+          <div data-tap="met" style="text-align: center; cursor: pointer; padding: 4px 8px; border-radius: 6px;">
+            <div style="font-size: 17px; font-weight: 500; color: #fff;">12</div>
+            <div style="font-size: 8px; color: #888; margin-top: 2px; letter-spacing: 0.06em;">PEOPLE MET</div>
+          </div>
+          <div style="width: 0.5px; background: #1f1f1f;"></div>
+          <div data-tap="sessions" style="text-align: center; cursor: pointer; padding: 4px 8px; border-radius: 6px;">
+            <div style="font-size: 17px; font-weight: 500; color: #fff;">142</div>
+            <div style="font-size: 8px; color: #888; margin-top: 2px; letter-spacing: 0.06em;">SESSIONS</div>
+          </div>
+          <div style="width: 0.5px; background: #1f1f1f;"></div>
+          <div data-tap="partners" style="text-align: center; cursor: pointer; padding: 4px 8px; border-radius: 6px;">
+            <div style="font-size: 17px; font-weight: 500; color: #fff;">18</div>
+            <div style="font-size: 8px; color: #888; margin-top: 2px; letter-spacing: 0.06em;">PARTNERS</div>
+          </div>
+        </div>
+
+        <div data-tap="lifting" style="padding: 10px 14px; border-bottom: 0.5px solid #1f1f1f; display: flex; align-items: center; justify-content: space-between; cursor: pointer;">
+          <div>
+            <div style="font-size: 9px; letter-spacing: 0.1em; color: #A51C30; font-weight: 500; margin-bottom: 3px;">LIFTING PROFILE</div>
+            <div style="font-size: 11px; color: #fff;">Advanced &middot; Powerlifting &middot; PPL &middot; MAC</div>
+          </div>
+          <i class="ti ti-chevron-right" style="font-size: 14px; color: #555;" aria-hidden="true"></i>
+        </div>
+
+        <div style="padding: 10px 14px; border-bottom: 0.5px solid #1f1f1f;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+            <div style="font-size: 9px; letter-spacing: 0.1em; color: #A51C30; font-weight: 500;">THIS WEEK</div>
+            <div data-tap="full-cal" style="font-size: 9px; color: #888; cursor: pointer;">View month &rsaquo;</div>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;" id="week-strip"></div>
+        </div>
+
+        <div data-tap="leaderboards" style="margin: 10px 14px; border-radius: 10px; padding: 12px; cursor: pointer; background: linear-gradient(135deg, rgba(165,28,48,0.18) 0%, rgba(212,168,67,0.10) 100%); border: 0.5px solid rgba(212,168,67,0.35); display: flex; align-items: center; justify-content: space-between;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(212,168,67,0.18); border: 0.5px solid rgba(212,168,67,0.4); display: flex; align-items: center; justify-content: center;">
+              <i class="ti ti-trophy" style="font-size: 18px; color: #D4A843;" aria-hidden="true"></i>
+            </div>
+            <div>
+              <div style="font-size: 12px; color: #fff; font-weight: 500;">Leaderboards</div>
+              <div style="font-size: 9px; color: #aaa; margin-top: 1px;">Houses &middot; running &middot; challenges</div>
+            </div>
+          </div>
+          <i class="ti ti-chevron-right" style="font-size: 14px; color: #aaa;" aria-hidden="true"></i>
+        </div>
+
+        <div style="padding: 6px 14px 14px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+            <div style="font-size: 9px; letter-spacing: 0.1em; color: #A51C30; font-weight: 500;">PHOTOS</div>
+            <div style="font-size: 9px; color: #888;">2 of 6</div>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 3px; border-radius: 6px; overflow: hidden;">
+            <div style="aspect-ratio: 1; background: #1a1a1a; display: flex; align-items: center; justify-content: center; border: 0.5px solid #2a2a2a;"><i class="ti ti-barbell" style="font-size: 18px; color: #333;" aria-hidden="true"></i></div>
+            <div style="aspect-ratio: 1; background: #1a1a1a; display: flex; align-items: center; justify-content: center; border: 0.5px solid #2a2a2a;"><i class="ti ti-run" style="font-size: 18px; color: #333;" aria-hidden="true"></i></div>
+            <div style="aspect-ratio: 1; background: #1a1a1a; border: 1px dashed #2a2a2a; display: flex; align-items: center; justify-content: center;"><i class="ti ti-plus" style="font-size: 18px; color: #333;" aria-hidden="true"></i></div>
+          </div>
+        </div>
+
+      </div>
+
+      <div style="background: #111; border-top: 0.5px solid #1f1f1f; padding: 8px 0 10px; display: grid; grid-template-columns: 1fr 1fr 1fr 1fr 1fr; align-items: end; position: relative;">
+        <div data-tap="nav-gyms" style="display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer;">
+          <i class="ti ti-building-stadium" style="font-size: 20px; color: #666;" aria-hidden="true"></i>
+          <span style="font-size: 8px; color: #666;">Gyms</span>
+        </div>
+        <div data-tap="nav-match" style="display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer;">
+          <i class="ti ti-users" style="font-size: 20px; color: #666;" aria-hidden="true"></i>
+          <span style="font-size: 8px; color: #666;">Match</span>
+        </div>
+        <div data-tap="nav-log" style="display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; transform: translateY(-12px);">
+          <div style="width: 46px; height: 46px; border-radius: 50%; background: #A51C30; display: flex; align-items: center; justify-content: center; border: 3px solid #0a0a0a;">
+            <i class="ti ti-plus" style="font-size: 22px; color: #fff;" aria-hidden="true"></i>
+          </div>
+          <span style="font-size: 8px; color: #A51C30; font-weight: 500;">Log</span>
+        </div>
+        <div data-tap="nav-messages" style="display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; position: relative;">
+          <i class="ti ti-message-circle" style="font-size: 20px; color: #666;" aria-hidden="true"></i>
+          <span style="font-size: 8px; color: #666;">Messages</span>
+          <div style="position: absolute; top: -2px; right: 18px; width: 6px; height: 6px; border-radius: 50%; background: #A51C30;"></div>
+        </div>
+        <div data-tap="nav-profile" style="display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer;">
+          <i class="ti ti-user" style="font-size: 20px; color: #A51C30;" aria-hidden="true"></i>
+          <span style="font-size: 8px; color: #A51C30; font-weight: 500;">Profile</span>
+        </div>
+      </div>
+
+    </div>
+
+    <div style="width: 280px; display: flex; flex-direction: column; gap: 10px;">
+      <div style="font-size: 11px; letter-spacing: 0.08em; color: var(--color-text-secondary); font-weight: 500;">V3 CHANGES</div>
+
+      <div style="background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 10px 12px;">
+        <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+          <i class="ti ti-arrow-bar-to-right" style="font-size: 14px; color: #185FA5;" aria-hidden="true"></i>
+          <span style="font-size: 12px; font-weight: 500;">Renamed</span>
+        </div>
+        <div style="font-size: 12px; color: var(--color-text-secondary); line-height: 1.5;">
+          <code>Training</code> &rarr; <code>Lifting profile</code>. Same data, signals "this is what you're matched on."
+        </div>
+      </div>
+
+      <div style="background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 10px 12px;">
+        <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+          <i class="ti ti-trophy" style="font-size: 14px; color: #BA7517;" aria-hidden="true"></i>
+          <span style="font-size: 12px; font-weight: 500;">Leaderboards card</span>
+        </div>
+        <div style="font-size: 12px; color: var(--color-text-secondary); line-height: 1.5;">
+          Replaces "Adams is #2". One entry into all rankings: houses (per capita), running, monthly challenges.
+        </div>
+      </div>
+
+      <div style="background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 10px 12px;">
+        <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+          <i class="ti ti-circle-plus" style="font-size: 14px; color: #0F6E56;" aria-hidden="true"></i>
+          <span style="font-size: 12px; font-weight: 500;">5-tab nav with Log</span>
+        </div>
+        <div style="font-size: 12px; color: var(--color-text-secondary); line-height: 1.5;">
+          Gyms / Match / <strong>Log</strong> / Messages / Profile. Center button always one tap away. Messages + Feed merge later keeps it at 5.
+        </div>
+      </div>
+
+      <div id="tap-feedback" style="background: #1a2a1a; border: 0.5px solid #2d6a2d; border-radius: var(--border-radius-md); padding: 10px 12px; min-height: 40px; display: flex; align-items: center; gap: 8px;">
+        <i class="ti ti-hand-finger" style="font-size: 14px; color: #2d6a2d;" aria-hidden="true"></i>
+        <span style="font-size: 11px; color: var(--color-text-secondary);">Tap any element to preview what it opens</span>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+(function(){
+  const week = [
+    {d:'M', n:18, trained:true},
+    {d:'T', n:19, trained:false},
+    {d:'W', n:20, trained:true},
+    {d:'T', n:21, trained:true, today:true},
+    {d:'F', n:22, trained:false, future:true},
+    {d:'S', n:23, trained:false, future:true},
+    {d:'S', n:24, trained:false, future:true}
+  ];
+  const strip = document.getElementById('week-strip');
+  if(strip){
+    week.forEach(day => {
+      let bg = '#1a1a1a', color = '#555', border = 'none';
+      if(day.trained){ bg = '#A51C30'; color = '#fff'; }
+      if(day.today){ bg = '#7a1520'; border = '1.5px solid #A51C30'; color = '#fff'; }
+      if(day.future){ bg = 'transparent'; color = '#333'; }
+      const cell = document.createElement('div');
+      cell.style.cssText = `aspect-ratio:1;background:${bg};border:${border};border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:${day.trained?'pointer':'default'};`;
+      cell.innerHTML = `<div style="font-size:8px;color:${day.trained||day.today?'#fff':'#444'};opacity:0.7;line-height:1;">${day.d}</div><div style="font-size:10px;color:${color};margin-top:2px;font-weight:500;">${day.n}</div>`;
+      if(day.trained){ cell.dataset.tap = 'session-' + day.n; }
+      strip.appendChild(cell);
+    });
+  }
+
+  const feedback = document.getElementById('tap-feedback');
+  const messages = {
+    'met': 'Opens: 12 unique people trained with this semester, sortable by date and gym.',
+    'sessions': 'Opens: full session history, filterable by gym, type, partner.',
+    'partners': 'Opens: 18 recurring partners with frequency, last session, message button.',
+    'lifting': 'Opens: edit Level, Type, Split, Schedule, Gym, Gender pref, Mentor toggle.',
+    'full-cal': 'Opens: full month calendar with sessions plotted.',
+    'leaderboards': 'Opens: tabbed view \u2014 Houses (per cap), Running, Monthly challenges.',
+    'session-18': 'Opens: Mon May 18 session detail \u2014 partner, exercises, photos.',
+    'session-20': 'Opens: Wed May 20 session detail \u2014 partner, exercises, photos.',
+    'session-21': 'Opens: today\u2019s session detail.',
+    'nav-gyms': 'Switches to Gyms tab.',
+    'nav-match': 'Switches to Match tab (Browse / Session Search).',
+    'nav-log': 'Opens Log Session screen \u2014 add exercises, sets, partner, photos.',
+    'nav-messages': 'Switches to Messages tab (DMs + community channels).',
+    'nav-profile': 'Currently on Profile.'
+  };
+
+  function showFeedback(key){
+    if(!messages[key]) return;
+    feedback.style.background = '#2a1a1a';
+    feedback.style.borderColor = '#A51C30';
+    feedback.innerHTML = `<i class="ti ti-arrow-right" style="font-size:14px;color:#A51C30;" aria-hidden="true"></i><span style="font-size:11px;color:var(--color-text-primary);line-height:1.5;">${messages[key]}</span>`;
+  }
+
+  document.querySelectorAll('[data-tap]').forEach(el => {
+    el.addEventListener('click', () => showFeedback(el.dataset.tap));
+  });
+  if(strip){
+    strip.querySelectorAll('[data-tap]').forEach(el => {
+      el.addEventListener('click', () => showFeedback(el.dataset.tap));
+    });
+  }
+})();
+</script>
