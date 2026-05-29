@@ -93,6 +93,21 @@ export const cardioTypes: string[] = ["Cycling", "Rowing", "Swimming", "Elliptic
 export const verifiedGyms: string[] = gyms.map((g) => g.name);
 export const MAX_TOP_GYMS = 3;
 
+// ---- Screen 5: When you train ------------------------------------------------
+export type WeekDay = { key: string; label: string; letter: string };
+export const weekDays: WeekDay[] = [
+  { key: "mon", label: "Monday", letter: "M" },
+  { key: "tue", label: "Tuesday", letter: "T" },
+  { key: "wed", label: "Wednesday", letter: "W" },
+  { key: "thu", label: "Thursday", letter: "T" },
+  { key: "fri", label: "Friday", letter: "F" },
+  { key: "sat", label: "Saturday", letter: "S" },
+  { key: "sun", label: "Sunday", letter: "S" },
+];
+
+// Free-time blocks shown when a day is expanded (editable).
+export const timeBlocks: string[] = ["Early AM", "AM", "Midday", "PM", "Late PM"];
+
 // ---- The collected profile (one object for the whole flow) -------------------
 // Clean field names — matching will read these later. Optional fields fill in as
 // the user moves through the screens (or are left empty on skippable screens).

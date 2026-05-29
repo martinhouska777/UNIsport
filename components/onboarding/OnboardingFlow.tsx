@@ -26,6 +26,8 @@ import {
   cardioTypes,
   verifiedGyms,
   MAX_TOP_GYMS,
+  weekDays,
+  timeBlocks,
   emptyProfile,
   type OnboardingProfile,
 } from "@/lib/onboarding";
@@ -64,6 +66,7 @@ export default function OnboardingFlow() {
 
   const [step, setStep] = useState(0); // 0-based index into STEPS
   const [profile, setProfile] = useState<OnboardingProfile>(emptyProfile);
+  const [expandedDay, setExpandedDay] = useState<string | null>(null); // Screen 5 UI
 
   const meta = STEPS[step];
   const isLast = step === STEPS.length - 1;
@@ -80,6 +83,8 @@ export default function OnboardingFlow() {
         return profile.residence !== "";
       case "topgyms":
         return profile.topGyms.length > 0;
+      case "schedule":
+        return Object.values(profile.trainingSchedule).some((blocks) => blocks.length > 0);
       case "activity": {
         if (profile.primaryActivity === "" || profile.experienceLevel === "") return false;
         switch (profile.primaryActivity) {
@@ -351,6 +356,67 @@ export default function OnboardingFlow() {
 
             <p className="mt-2 text-[11px] text-muted">
               Pick up to 3, in order — your #1 is where you train most.
+            </p>
+          </div>
+        );
+      }
+      case "schedule": {
+        const schedule = profile.trainingSchedule;
+        const blocksFor = (day: string) => schedule[day] ?? [];
+        const toggleBlock = (day: string, b: string) => {
+          const cur = blocksFor(day);
+          const nextBlocks = cur.includes(b) ? cur.filter((x) => x !== b) : [...cur, b];
+          const next = { ...schedule };
+          if (nextBlocks.length === 0) delete next[day];
+          else next[day] = nextBlocks;
+          set("trainingSchedule", next);
+        };
+        const expandedMeta = weekDays.find((d) => d.key === expandedDay);
+        return (
+          <div>
+            <div className="mb-4 grid grid-cols-7 gap-1.5">
+              {weekDays.map((d) => {
+                const hasBlocks = blocksFor(d.key).length > 0;
+                const open = expandedDay === d.key;
+                return (
+                  <button
+                    key={d.key}
+                    type="button"
+                    onClick={() => setExpandedDay(open ? null : d.key)}
+                    aria-pressed={hasBlocks}
+                    aria-expanded={open}
+                    className={`flex aspect-square items-center justify-center rounded-lg border text-[13px] transition-colors ${
+                      hasBlocks
+                        ? "border-primary bg-primary/15 text-primary"
+                        : open
+                          ? "border-primary bg-surface-2 text-text"
+                          : "border-border bg-surface-2 text-text"
+                    }`}
+                  >
+                    {d.letter}
+                  </button>
+                );
+              })}
+            </div>
+
+            {expandedMeta && (
+              <div className="rounded-xl border border-border bg-surface-2 p-4">
+                <FieldLabel>{expandedMeta.label} — free times</FieldLabel>
+                <div className="flex flex-wrap gap-1.5">
+                  {timeBlocks.map((b) => (
+                    <Pill
+                      key={b}
+                      label={b}
+                      selected={blocksFor(expandedMeta.key).includes(b)}
+                      onClick={() => toggleBlock(expandedMeta.key, b)}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <p className="mt-3 text-[11px] text-muted">
+              Tap a day to set the times you&apos;re usually free to train.
             </p>
           </div>
         );
