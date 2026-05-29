@@ -22,6 +22,7 @@ export default function OnboardingShell({
   title,
   subtitle,
   centered,
+  headerSlot,
   children,
   primaryLabel,
   primaryVariant = "primary",
@@ -39,6 +40,7 @@ export default function OnboardingShell({
   title: string;
   subtitle?: string;
   centered?: boolean;
+  headerSlot?: ReactNode;
   children: ReactNode;
   primaryLabel: string;
   primaryVariant?: "primary" | "gold";
@@ -85,6 +87,7 @@ export default function OnboardingShell({
 
       {/* Scrollable body */}
       <div className={`flex-1 overflow-y-auto ${centered ? "text-center" : ""}`}>
+        {headerSlot}
         <h1 className="mb-2 font-serif text-[22px] font-medium leading-tight text-text">
           {title}
         </h1>

@@ -258,6 +258,15 @@ export const gymMentorship: { key: ToggleKey; label: string; sub: string }[] = [
   { key: "getHelp", label: "Get help from someone advanced", sub: "Learn from someone further along." },
 ];
 
+// ---- Screen 9: Notifications -------------------------------------------------
+// What users get notified about (NO streaks). Icons map to the icon set.
+export const notificationItems: { icon: string; label: string }[] = [
+  { icon: "heart", label: "Someone matches with you" },
+  { icon: "message", label: "New messages" },
+  { icon: "calendar", label: "Session invites" },
+  { icon: "clock", label: "Session reminders" },
+];
+
 export const countries: string[] = [
   "United States", "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Argentina",
   "Armenia", "Australia", "Austria", "Azerbaijan", "Bahamas", "Bahrain", "Bangladesh",

@@ -115,6 +115,26 @@ export const IconActivity = (p: IconProps) => (
   </Base>
 );
 
+export const IconBell = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6z" />
+    <path d="M10 19a2 2 0 0 0 4 0" />
+  </Base>
+);
+
+export const IconMessage = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.2A8 8 0 1 1 21 12z" />
+  </Base>
+);
+
+export const IconCalendar = (p: IconProps) => (
+  <Base {...p}>
+    <rect x="3.5" y="5" width="17" height="16" rx="2" />
+    <path d="M3.5 9.5h17M8 3v4M16 3v4" />
+  </Base>
+);
+
 export const IconCamera = (p: IconProps) => (
   <Base {...p}>
     <path d="M3 9a2 2 0 0 1 2-2h2l1.5-2h7L17 7h2a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />

@@ -15,6 +15,11 @@ import {
   IconChevronDown,
   IconX,
   IconCamera,
+  IconBell,
+  IconMessage,
+  IconCalendar,
+  IconClock,
+  IconHeart,
 } from "@/components/icons";
 import {
   classYears,
@@ -37,6 +42,7 @@ import {
   partnerPreferences,
   peerAdvising,
   gymMentorship,
+  notificationItems,
   emptyProfile,
   type OnboardingProfile,
 } from "@/lib/onboarding";
@@ -46,6 +52,13 @@ const activityIcons: Record<string, (p: { size?: number; className?: string }) =
   run: IconRun,
   activity: IconActivity,
   plus: IconPlus,
+};
+
+const notifIcons: Record<string, (p: { size?: number; className?: string }) => React.ReactNode> = {
+  heart: IconHeart,
+  message: IconMessage,
+  calendar: IconCalendar,
+  clock: IconClock,
 };
 
 type StepMeta = {
@@ -145,8 +158,10 @@ export default function OnboardingFlow() {
 
   const finish = () => {
     // No Supabase yet — keep the object in memory and log it so it's inspectable.
-    // eslint-disable-next-line no-console
+    /* eslint-disable no-console */
     console.log("UNIsport onboarding profile:", profile);
+    console.log("UNIsport onboarding profile (readable):\n" + JSON.stringify(profile, null, 2));
+    /* eslint-enable no-console */
     completeOnboarding();
     router.replace("/gyms");
   };
@@ -615,6 +630,27 @@ export default function OnboardingFlow() {
             </div>
           </div>
         );
+      case "notifications":
+        return (
+          <div className="rounded-xl border border-border bg-surface-2 p-4 text-left">
+            {notificationItems.map((item, i) => {
+              const NotifIcon = notifIcons[item.icon];
+              return (
+                <div
+                  key={item.label}
+                  className={`flex items-center gap-2.5 py-2 ${
+                    i < notificationItems.length - 1 ? "border-b border-border" : ""
+                  }`}
+                >
+                  <span className="text-accent">
+                    <NotifIcon size={16} />
+                  </span>
+                  <span className="text-[13px] text-text">{item.label}</span>
+                </div>
+              );
+            })}
+          </div>
+        );
       default:
         return (
           <div className="rounded-xl border border-border bg-surface-2 p-6 text-center text-[13px] text-muted">
@@ -640,6 +676,13 @@ export default function OnboardingFlow() {
         onPrimary: goNext,
       };
 
+  const headerSlot =
+    meta.key === "notifications" ? (
+      <div className="mx-auto mb-6 mt-6 flex h-16 w-16 items-center justify-center rounded-full border border-primary bg-primary/10 text-primary">
+        <IconBell size={28} />
+      </div>
+    ) : undefined;
+
   return (
     <OnboardingShell
       step={step + 1}
@@ -651,6 +694,7 @@ export default function OnboardingFlow() {
       title={meta.title}
       subtitle={meta.subtitle}
       centered={meta.centered}
+      headerSlot={headerSlot}
       {...ctaProps}
     >
       {renderBody()}
