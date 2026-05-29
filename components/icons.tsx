@@ -102,6 +102,19 @@ export const IconBasketball = (p: IconProps) => (
   </Base>
 );
 
+export const IconPlus = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M12 5v14M5 12h14" />
+  </Base>
+);
+
+// Pulse / heart-rate line — used for the "Cardio" activity.
+export const IconActivity = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M3 12h3l2 6 4-13 2 7h7" />
+  </Base>
+);
+
 export const IconChevronDown = (p: IconProps) => (
   <Base {...p}>
     <path d="M6 9l6 6 6-6" />

@@ -62,6 +62,30 @@ export function residenceOptions(classYear: string): string[] {
   return classYear === freshmanClassYear ? yardDorms : houses;
 }
 
+// ---- Screen 3: Primary activity + experience + conditional -------------------
+
+export type PrimaryActivity = "gym" | "running" | "cardio" | "other";
+export type ActivityOption = { key: PrimaryActivity; label: string; icon: string };
+
+export const primaryActivities: ActivityOption[] = [
+  { key: "gym", label: "Gym", icon: "barbell" },
+  { key: "running", label: "Running", icon: "run" },
+  { key: "cardio", label: "Cardio", icon: "activity" },
+  { key: "other", label: "Other", icon: "plus" },
+];
+
+export type ExperienceLevel = { key: "beginner" | "intermediate" | "advanced"; name: string; desc: string };
+
+export const experienceLevels: ExperienceLevel[] = [
+  { key: "beginner", name: "Beginner", desc: "New to it, learning the basics." },
+  { key: "intermediate", name: "Intermediate", desc: "Consistent for 1–3 years, know your numbers." },
+  { key: "advanced", name: "Advanced", desc: "3+ years, structured programming." },
+];
+
+// Conditional sub-options (data-driven, editable).
+export const gymSplits: string[] = ["Push-Pull-Legs", "Upper-Lower", "Full body", "Bro split", "Custom"];
+export const cardioTypes: string[] = ["Cycling", "Rowing", "Swimming", "Elliptical", "Stair climber", "HIIT"];
+
 // ---- The collected profile (one object for the whole flow) -------------------
 // Clean field names — matching will read these later. Optional fields fill in as
 // the user moves through the screens (or are left empty on skippable screens).
@@ -78,7 +102,7 @@ export type OnboardingProfile = {
   primaryActivity: "" | "gym" | "running" | "cardio" | "other";
   activityOther: string;
   experienceLevel: "" | "beginner" | "intermediate" | "advanced";
-  gymSplit: string[];
+  gymSplit: string;
   runningDistance: string;
   runningPace: string;
   cardioType: string;
@@ -116,7 +140,7 @@ export const emptyProfile: OnboardingProfile = {
   primaryActivity: "",
   activityOther: "",
   experienceLevel: "",
-  gymSplit: [],
+  gymSplit: "",
   runningDistance: "",
   runningPace: "",
   cardioType: "",

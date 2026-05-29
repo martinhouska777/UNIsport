@@ -7,13 +7,30 @@ import OnboardingShell from "@/components/onboarding/OnboardingShell";
 import { Pill, FieldLabel, TextField } from "@/components/onboarding/controls";
 import SearchableDropdown from "@/components/onboarding/SearchableDropdown";
 import {
+  IconBarbell,
+  IconRun,
+  IconActivity,
+  IconPlus,
+} from "@/components/icons";
+import {
   classYears,
   sexOptions,
   freshmanClassYear,
   residenceOptions,
+  primaryActivities,
+  experienceLevels,
+  gymSplits,
+  cardioTypes,
   emptyProfile,
   type OnboardingProfile,
 } from "@/lib/onboarding";
+
+const activityIcons: Record<string, (p: { size?: number; className?: string }) => React.ReactNode> = {
+  barbell: IconBarbell,
+  run: IconRun,
+  activity: IconActivity,
+  plus: IconPlus,
+};
 
 type StepMeta = {
   key: string;
@@ -56,6 +73,21 @@ export default function OnboardingFlow() {
         return profile.name.trim() !== "" && profile.classYear !== "" && profile.sex !== "";
       case "residence":
         return profile.residence !== "";
+      case "activity": {
+        if (profile.primaryActivity === "" || profile.experienceLevel === "") return false;
+        switch (profile.primaryActivity) {
+          case "gym":
+            return profile.gymSplit !== "";
+          case "running":
+            return profile.runningDistance.trim() !== "" && profile.runningPace.trim() !== "";
+          case "cardio":
+            return profile.cardioType !== "";
+          case "other":
+            return profile.activityOther.trim() !== "";
+          default:
+            return false;
+        }
+      }
       default:
         return true;
     }
@@ -113,6 +145,114 @@ export default function OnboardingFlow() {
                 <Pill key={s} label={s} selected={profile.sex === s} onClick={() => set("sex", s)} />
               ))}
             </div>
+          </div>
+        );
+      case "activity":
+        return (
+          <div>
+            {/* Activity cards (pick one) */}
+            <div className="mb-5 grid grid-cols-2 gap-2.5">
+              {primaryActivities.map((a) => {
+                const ActIcon = activityIcons[a.icon];
+                const on = profile.primaryActivity === a.key;
+                return (
+                  <button
+                    key={a.key}
+                    type="button"
+                    onClick={() => set("primaryActivity", a.key)}
+                    aria-pressed={on}
+                    className={`flex flex-col items-center gap-1.5 rounded-xl border p-4 transition-colors ${
+                      on ? "border-primary bg-primary/10" : "border-border bg-surface-2"
+                    }`}
+                  >
+                    <span className="text-accent">
+                      <ActIcon size={22} />
+                    </span>
+                    <span className="text-[13px] font-medium text-text">{a.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Experience level (always shown) */}
+            <FieldLabel>Experience level</FieldLabel>
+            <div className="mb-5 flex flex-col gap-2">
+              {experienceLevels.map((lvl) => {
+                const on = profile.experienceLevel === lvl.key;
+                return (
+                  <button
+                    key={lvl.key}
+                    type="button"
+                    onClick={() => set("experienceLevel", lvl.key)}
+                    aria-pressed={on}
+                    className={`rounded-[10px] border p-3 text-left transition-colors ${
+                      on ? "border-primary bg-primary/10" : "border-border bg-surface-2"
+                    }`}
+                  >
+                    <div className="text-[13px] font-medium text-text">{lvl.name}</div>
+                    <div className="text-[11px] text-muted">{lvl.desc}</div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Conditional on the chosen activity */}
+            {profile.primaryActivity === "gym" && (
+              <>
+                <FieldLabel>Your split</FieldLabel>
+                <div className="flex flex-wrap gap-1.5">
+                  {gymSplits.map((s) => (
+                    <Pill key={s} label={s} selected={profile.gymSplit === s} onClick={() => set("gymSplit", s)} />
+                  ))}
+                </div>
+              </>
+            )}
+
+            {profile.primaryActivity === "running" && (
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <FieldLabel>Usual distance</FieldLabel>
+                  <TextField
+                    value={profile.runningDistance}
+                    onChange={(v) => set("runningDistance", v)}
+                    placeholder="e.g. 5 km"
+                    ariaLabel="Usual distance"
+                  />
+                </div>
+                <div>
+                  <FieldLabel>Usual pace</FieldLabel>
+                  <TextField
+                    value={profile.runningPace}
+                    onChange={(v) => set("runningPace", v)}
+                    placeholder="e.g. 5:00 /km"
+                    ariaLabel="Usual pace"
+                  />
+                </div>
+              </div>
+            )}
+
+            {profile.primaryActivity === "cardio" && (
+              <>
+                <FieldLabel>Type</FieldLabel>
+                <div className="flex flex-wrap gap-1.5">
+                  {cardioTypes.map((c) => (
+                    <Pill key={c} label={c} selected={profile.cardioType === c} onClick={() => set("cardioType", c)} />
+                  ))}
+                </div>
+              </>
+            )}
+
+            {profile.primaryActivity === "other" && (
+              <>
+                <FieldLabel>Tell us what</FieldLabel>
+                <TextField
+                  value={profile.activityOther}
+                  onChange={(v) => set("activityOther", v)}
+                  placeholder="e.g. Climbing, martial arts…"
+                  ariaLabel="Your activity"
+                />
+              </>
+            )}
           </div>
         );
       case "residence": {
