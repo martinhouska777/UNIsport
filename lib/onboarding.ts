@@ -6,6 +6,8 @@
   Screens are added to this file as they are built.
 */
 
+import { gyms } from "./gyms";
+
 // ---- Screen 1: Basics --------------------------------------------------------
 
 // Editable list of class-year pills. (Set the real years here.)
@@ -85,6 +87,11 @@ export const experienceLevels: ExperienceLevel[] = [
 // Conditional sub-options (data-driven, editable).
 export const gymSplits: string[] = ["Push-Pull-Legs", "Upper-Lower", "Full body", "Bro split", "Custom"];
 export const cardioTypes: string[] = ["Cycling", "Rowing", "Swimming", "Elliptical", "Stair climber", "HIIT"];
+
+// ---- Screen 4: Top gyms ------------------------------------------------------
+// The verified gym list comes straight from the gym data the app already uses.
+export const verifiedGyms: string[] = gyms.map((g) => g.name);
+export const MAX_TOP_GYMS = 3;
 
 // ---- The collected profile (one object for the whole flow) -------------------
 // Clean field names — matching will read these later. Optional fields fill in as

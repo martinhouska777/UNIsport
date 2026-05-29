@@ -11,6 +11,9 @@ import {
   IconRun,
   IconActivity,
   IconPlus,
+  IconChevronUp,
+  IconChevronDown,
+  IconX,
 } from "@/components/icons";
 import {
   classYears,
@@ -21,6 +24,8 @@ import {
   experienceLevels,
   gymSplits,
   cardioTypes,
+  verifiedGyms,
+  MAX_TOP_GYMS,
   emptyProfile,
   type OnboardingProfile,
 } from "@/lib/onboarding";
@@ -73,6 +78,8 @@ export default function OnboardingFlow() {
         return profile.name.trim() !== "" && profile.classYear !== "" && profile.sex !== "";
       case "residence":
         return profile.residence !== "";
+      case "topgyms":
+        return profile.topGyms.length > 0;
       case "activity": {
         if (profile.primaryActivity === "" || profile.experienceLevel === "") return false;
         switch (profile.primaryActivity) {
@@ -267,6 +274,84 @@ export default function OnboardingFlow() {
               placeholder={isFreshman ? "Select your dorm" : "Select your house"}
               ariaLabel="Where you live"
             />
+          </div>
+        );
+      }
+      case "topgyms": {
+        const top = profile.topGyms;
+        const available = verifiedGyms.filter((g) => !top.includes(g));
+        const move = (i: number, dir: -1 | 1) => {
+          const j = i + dir;
+          if (j < 0 || j >= top.length) return;
+          const arr = [...top];
+          [arr[i], arr[j]] = [arr[j], arr[i]];
+          set("topGyms", arr);
+        };
+        const add = (g: string) => {
+          if (top.length >= MAX_TOP_GYMS || top.includes(g)) return;
+          set("topGyms", [...top, g]);
+        };
+        const remove = (g: string) => set("topGyms", top.filter((x) => x !== g));
+        return (
+          <div>
+            {top.length > 0 && (
+              <div className="mb-4 flex flex-col gap-2">
+                {top.map((g, i) => (
+                  <div
+                    key={g}
+                    className="flex items-center gap-2.5 rounded-[10px] border border-border bg-surface-2 px-3 py-2.5"
+                  >
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/15 text-xs font-semibold text-primary">
+                      {i + 1}
+                    </span>
+                    <span className="flex-1 text-sm text-text">{g}</span>
+                    <button
+                      type="button"
+                      onClick={() => move(i, -1)}
+                      disabled={i === 0}
+                      aria-label={`Move ${g} up`}
+                      className="text-muted disabled:opacity-30"
+                    >
+                      <IconChevronUp size={18} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => move(i, 1)}
+                      disabled={i === top.length - 1}
+                      aria-label={`Move ${g} down`}
+                      className="text-muted disabled:opacity-30"
+                    >
+                      <IconChevronDown size={18} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => remove(g)}
+                      aria-label={`Remove ${g}`}
+                      className="text-muted"
+                    >
+                      <IconX size={16} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {top.length < MAX_TOP_GYMS ? (
+              <SearchableDropdown
+                options={available}
+                value=""
+                onChange={add}
+                placeholder="Add a gym"
+                searchPlaceholder="Search gyms…"
+                ariaLabel="Add a gym"
+              />
+            ) : (
+              <p className="text-[12px] text-muted">That&apos;s your top 3 — remove one to swap.</p>
+            )}
+
+            <p className="mt-2 text-[11px] text-muted">
+              Pick up to 3, in order — your #1 is where you train most.
+            </p>
           </div>
         );
       }
