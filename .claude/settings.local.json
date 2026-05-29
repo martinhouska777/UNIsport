@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir)",
+      "Bash(npm --version)",
+      "Bash(git --version)",
+      "Bash(gh --version)",
+      "Bash(gh auth *)",
+      "Bash(git init *)",
+      "Bash(git config *)",
+      "Bash(mv .claude ../UNIsport-claude-bak)",
+      "Bash(npx --yes create-next-app@latest . --typescript --tailwind --app --no-src-dir --import-alias \"@/*\" --eslint --use-npm --no-turbopack --yes)",
+      "Bash(npx --yes create-next-app@latest unisport --typescript --tailwind --app --no-src-dir --import-alias \"@/*\" --eslint --use-npm --no-turbopack --disable-git --yes)",
+      "Bash(echo \"---CLAUDE.md---\"; cat CLAUDE.md; echo; echo \"---AGENTS.md---\"; cat AGENTS.md; echo \"---.claude here---\"; ls -la .claude; echo \"---backup---\"; ls -la ../UNIsport-claude-bak)",
+      "Bash(git add *)",
+      "Bash(git -c user.name=\"UNIsport Dev\" -c user.email=\"dev@unisport.local\" commit -q -m \"chore: scaffold Next.js 16 + Tailwind v4 app and add CLAUDE.md project rules\")"
+    ]
+  }
+}
