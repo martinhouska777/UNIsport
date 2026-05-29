@@ -17,7 +17,9 @@
       "Bash(node scripts/gen-icons.mjs)",
       "Bash(curl -s -o /dev/null -w '%{http_code}' http://localhost:3000__TRACKED_VAR__)",
       "Bash(curl -s http://localhost:3000/)",
-      "Bash(git -c user.name=\"UNIsport Dev\" -c user.email=\"dev@unisport.local\" commit -q -m \"docs: add planned database schema \\(universities, profiles, gyms, sessions, matches, channels, messages\\) — not connected\")"
+      "Bash(git -c user.name=\"UNIsport Dev\" -c user.email=\"dev@unisport.local\" commit -q -m \"docs: add planned database schema \\(universities, profiles, gyms, sessions, matches, channels, messages\\) — not connected\")",
+      "Bash(grep -rnE \"#[0-9a-fA-F]{3,6}\\\\b\" app components)",
+      "Bash(git -c user.name=\"UNIsport Dev\" -c user.email=\"dev@unisport.local\" commit -q -m \"feat\\(gyms\\): gym list screen with search bar, All/Main/House filters, main + house cards \\(crowd indicators removed\\); add gym data, icon set, temp profile stub\")"
     ]
   }
 }
