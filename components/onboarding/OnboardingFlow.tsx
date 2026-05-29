@@ -14,6 +14,7 @@ import {
   IconChevronUp,
   IconChevronDown,
   IconX,
+  IconCamera,
 } from "@/components/icons";
 import {
   classYears,
@@ -582,6 +583,38 @@ export default function OnboardingFlow() {
           </div>
         );
       }
+      case "finish":
+        return (
+          <div className="flex flex-col gap-5">
+            <div>
+              <FieldLabel>Bio</FieldLabel>
+              <textarea
+                value={profile.bio}
+                maxLength={160}
+                onChange={(e) => set("bio", e.target.value)}
+                placeholder="A line about you — your sport, goals, what you're training for."
+                aria-label="Bio"
+                className="min-h-[90px] w-full resize-none rounded-[10px] border border-border bg-surface-2 px-3.5 py-3 text-base text-text placeholder:text-muted focus:border-primary focus:outline-none"
+              />
+              <div className="mt-1 text-right text-[11px] text-muted">{profile.bio.length} / 160</div>
+            </div>
+
+            <div>
+              <FieldLabel>Profile photo</FieldLabel>
+              <button
+                type="button"
+                aria-label="Add a photo"
+                className="flex w-full flex-col items-center gap-2 rounded-xl border border-dashed border-border bg-surface-2 px-4 py-7 text-center"
+              >
+                <span className="text-muted">
+                  <IconCamera size={28} />
+                </span>
+                <span className="text-[13px] text-text">Add a photo</span>
+                <span className="text-[11px] text-muted">Tap to upload</span>
+              </button>
+            </div>
+          </div>
+        );
       default:
         return (
           <div className="rounded-xl border border-border bg-surface-2 p-6 text-center text-[13px] text-muted">

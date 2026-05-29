@@ -115,6 +115,13 @@ export const IconActivity = (p: IconProps) => (
   </Base>
 );
 
+export const IconCamera = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M3 9a2 2 0 0 1 2-2h2l1.5-2h7L17 7h2a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+    <circle cx="12" cy="13" r="3.2" />
+  </Base>
+);
+
 export const IconChevronDown = (p: IconProps) => (
   <Base {...p}>
     <path d="M6 9l6 6 6-6" />
