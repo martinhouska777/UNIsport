@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAppState } from "@/components/AppState";
 import OnboardingShell from "@/components/onboarding/OnboardingShell";
-import { Pill, FieldLabel, TextField } from "@/components/onboarding/controls";
+import { Pill, FieldLabel, TextField, Toggle, Section } from "@/components/onboarding/controls";
 import SearchableDropdown from "@/components/onboarding/SearchableDropdown";
 import {
   IconBarbell,
@@ -32,6 +32,10 @@ import {
   countries,
   languageOptions,
   interestOptions,
+  trainingTypes,
+  partnerPreferences,
+  peerAdvising,
+  gymMentorship,
   emptyProfile,
   type OnboardingProfile,
 } from "@/lib/onboarding";
@@ -89,6 +93,8 @@ export default function OnboardingFlow() {
         return profile.topGyms.length > 0;
       case "schedule":
         return Object.values(profile.trainingSchedule).some((blocks) => blocks.length > 0);
+      case "preferences":
+        return profile.trainingType !== "" && profile.partnerPreference !== "";
       case "activity": {
         if (profile.primaryActivity === "" || profile.experienceLevel === "") return false;
         switch (profile.primaryActivity) {
@@ -487,6 +493,72 @@ export default function OnboardingFlow() {
           </div>
         );
       }
+      case "preferences":
+        return (
+          <div className="flex flex-col gap-5">
+            <div>
+              <FieldLabel>Training type</FieldLabel>
+              <div className="flex flex-wrap gap-1.5">
+                {trainingTypes.map((t) => (
+                  <Pill
+                    key={t.key}
+                    label={t.label}
+                    selected={profile.trainingType === t.key}
+                    onClick={() => set("trainingType", t.key)}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <FieldLabel>Partner preference</FieldLabel>
+              <div className="flex flex-wrap gap-1.5">
+                {partnerPreferences.map((p) => (
+                  <Pill
+                    key={p.key}
+                    label={p.label}
+                    selected={profile.partnerPreference === p.key}
+                    onClick={() => set("partnerPreference", p.key)}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <Section title="Peer advising" help="Harvard-life mentorship — optional, toggle what applies.">
+              {peerAdvising.map((row, i) => (
+                <div
+                  key={row.key}
+                  className={`flex items-start justify-between gap-3 py-3 ${
+                    i < peerAdvising.length - 1 ? "border-b border-border" : ""
+                  }`}
+                >
+                  <div className="flex-1">
+                    <div className="text-[13px] font-medium text-text">{row.label}</div>
+                    <div className="text-[11px] text-muted">{row.sub}</div>
+                  </div>
+                  <Toggle on={profile[row.key]} onChange={() => set(row.key, !profile[row.key])} ariaLabel={row.label} />
+                </div>
+              ))}
+            </Section>
+
+            <Section title="Gym mentorship" help="Optional — toggle what applies.">
+              {gymMentorship.map((row, i) => (
+                <div
+                  key={row.key}
+                  className={`flex items-start justify-between gap-3 py-3 ${
+                    i < gymMentorship.length - 1 ? "border-b border-border" : ""
+                  }`}
+                >
+                  <div className="flex-1">
+                    <div className="text-[13px] font-medium text-text">{row.label}</div>
+                    <div className="text-[11px] text-muted">{row.sub}</div>
+                  </div>
+                  <Toggle on={profile[row.key]} onChange={() => set(row.key, !profile[row.key])} ariaLabel={row.label} />
+                </div>
+              ))}
+            </Section>
+          </div>
+        );
       default:
         return (
           <div className="rounded-xl border border-border bg-surface-2 p-6 text-center text-[13px] text-muted">

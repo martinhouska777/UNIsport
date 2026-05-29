@@ -47,6 +47,53 @@ export function FieldLabel({ children }: { children: ReactNode }) {
   );
 }
 
+export function Toggle({
+  on,
+  onChange,
+  ariaLabel,
+}: {
+  on: boolean;
+  onChange: () => void;
+  ariaLabel?: string;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={on}
+      aria-label={ariaLabel}
+      onClick={onChange}
+      className={`relative h-[22px] w-[38px] flex-shrink-0 rounded-full transition-colors ${
+        on ? "bg-primary" : "bg-border"
+      }`}
+    >
+      <span
+        className={`absolute top-[3px] h-4 w-4 rounded-full bg-primary-contrast transition-all ${
+          on ? "left-[19px]" : "left-[3px]"
+        }`}
+      />
+    </button>
+  );
+}
+
+export function Section({
+  title,
+  help,
+  children,
+}: {
+  title: string;
+  help?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="rounded-xl border border-border bg-surface-2 p-4">
+      <div className="text-xs font-medium uppercase tracking-[0.06em] text-accent">{title}</div>
+      {help && <div className="mb-1 mt-0.5 text-[11px] text-muted">{help}</div>}
+      <div>{children}</div>
+    </div>
+  );
+}
+
 export function TextField({
   value,
   onChange,

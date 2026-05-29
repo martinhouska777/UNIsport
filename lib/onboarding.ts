@@ -232,6 +232,32 @@ export const interestOptions: string[] = [
   "Foodie",
 ];
 
+// ---- Screen 7: Preferences ---------------------------------------------------
+export const trainingTypes: { key: "solo" | "partner" | "either"; label: string }[] = [
+  { key: "solo", label: "Solo" },
+  { key: "partner", label: "Partner" },
+  { key: "either", label: "Either" },
+];
+
+export const partnerPreferences: { key: "any" | "male" | "female"; label: string }[] = [
+  { key: "any", label: "Any" },
+  { key: "male", label: "Male" },
+  { key: "female", label: "Female" },
+];
+
+// Toggle keys map directly to boolean fields on the profile.
+export type ToggleKey = "mentorFreshmen" | "beMentored" | "helpOthers" | "getHelp";
+
+export const peerAdvising: { key: ToggleKey; label: string; sub: string }[] = [
+  { key: "mentorFreshmen", label: "Mentor freshmen", sub: "Help newcomers navigate Harvard." },
+  { key: "beMentored", label: "Be mentored as a freshman", sub: "Get guidance from an upperclassman." },
+];
+
+export const gymMentorship: { key: ToggleKey; label: string; sub: string }[] = [
+  { key: "helpOthers", label: "Help less experienced lifters", sub: "Form check, programming basics." },
+  { key: "getHelp", label: "Get help from someone advanced", sub: "Learn from someone further along." },
+];
+
 export const countries: string[] = [
   "United States", "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Argentina",
   "Armenia", "Australia", "Austria", "Azerbaijan", "Bahamas", "Bahrain", "Bangladesh",
