@@ -28,7 +28,8 @@
       "Bash(git -c user.name=\"UNIsport Dev\" -c user.email=\"dev@unisport.local\" commit -q -m \"feat\\(onboarding\\): Screen 3 primary activity cards + experience levels + conditional inputs \\(split/distance+pace/cardio type/other\\), data-driven with gating\")",
       "Bash(git -c user.name=\"UNIsport Dev\" -c user.email=\"dev@unisport.local\" commit -q -m \"feat\\(onboarding\\): Screen 4 Top gyms - pick + rank top 3 \\(tap reorder, remove\\), reuses searchable dropdown; verified gym list from gym data\")",
       "Bash(git -c user.name=\"UNIsport Dev\" -c user.email=\"dev@unisport.local\" commit -q -m \"feat\\(onboarding\\): Screen 5 When you train - 7-day grid, tap-to-expand inline time blocks, stores days+blocks\")",
-      "Bash(git -c user.name=\"UNIsport Dev\" -c user.email=\"dev@unisport.local\" commit -q -m \"feat\\(onboarding\\): Screen 7 Preferences - training type, partner preference, peer-advising + gym-mentorship toggles; add Toggle/Section controls\")"
+      "Bash(git -c user.name=\"UNIsport Dev\" -c user.email=\"dev@unisport.local\" commit -q -m \"feat\\(onboarding\\): Screen 7 Preferences - training type, partner preference, peer-advising + gym-mentorship toggles; add Toggle/Section controls\")",
+      "Bash(git -c user.name=\"UNIsport Dev\" -c user.email=\"dev@unisport.local\" commit -q -m \"fix\\(onboarding\\): Screen 7 mentorship toggles conditional on class year \\(freshman vs upperclassman\\) and experience \\(beginner/advanced/intermediate\\); reset ineligible answers\")"
     ],
     "defaultMode": "bypassPermissions"
   }

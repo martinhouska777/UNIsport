@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAppState } from "@/components/AppState";
 import OnboardingShell from "@/components/onboarding/OnboardingShell";
@@ -81,6 +81,27 @@ export default function OnboardingFlow() {
 
   const set = <K extends keyof OnboardingProfile>(key: K, value: OnboardingProfile[K]) =>
     setProfile((p) => ({ ...p, [key]: value }));
+
+  // Keep the Screen 7 mentorship answers consistent with eligibility if the user
+  // goes back and changes their class year or experience level.
+  useEffect(() => {
+    setProfile((p) => {
+      const isFreshman = p.classYear === freshmanClassYear;
+      const next = {
+        ...p,
+        mentorFreshmen: isFreshman ? false : p.mentorFreshmen,
+        beMentored: isFreshman ? p.beMentored : false,
+        helpOthers: p.experienceLevel === "beginner" ? false : p.helpOthers,
+        getHelp: p.experienceLevel === "advanced" ? false : p.getHelp,
+      };
+      const same =
+        next.mentorFreshmen === p.mentorFreshmen &&
+        next.beMentored === p.beMentored &&
+        next.helpOthers === p.helpOthers &&
+        next.getHelp === p.getHelp;
+      return same ? p : next;
+    });
+  }, [profile.classYear, profile.experienceLevel]);
 
   // Required-field gating per screen (only built screens enforce; rest pass for now).
   const canContinue = (): boolean => {
@@ -493,7 +514,34 @@ export default function OnboardingFlow() {
           </div>
         );
       }
-      case "preferences":
+      case "preferences": {
+        const isFreshman = profile.classYear === freshmanClassYear;
+        // Peer advising: freshmen can only be mentored; upperclassmen can only mentor.
+        const peerRows = peerAdvising.filter((r) =>
+          isFreshman ? r.key === "beMentored" : r.key === "mentorFreshmen"
+        );
+        // Gym mentorship by experience: beginner -> get help only; advanced -> help only;
+        // intermediate -> both.
+        const gymRows = gymMentorship.filter((r) => {
+          if (profile.experienceLevel === "beginner") return r.key === "getHelp";
+          if (profile.experienceLevel === "advanced") return r.key === "helpOthers";
+          return true;
+        });
+        const renderToggleRows = (rows: typeof peerAdvising) =>
+          rows.map((row, i) => (
+            <div
+              key={row.key}
+              className={`flex items-start justify-between gap-3 py-3 ${
+                i < rows.length - 1 ? "border-b border-border" : ""
+              }`}
+            >
+              <div className="flex-1">
+                <div className="text-[13px] font-medium text-text">{row.label}</div>
+                <div className="text-[11px] text-muted">{row.sub}</div>
+              </div>
+              <Toggle on={profile[row.key]} onChange={() => set(row.key, !profile[row.key])} ariaLabel={row.label} />
+            </div>
+          ));
         return (
           <div className="flex flex-col gap-5">
             <div>
@@ -524,41 +572,16 @@ export default function OnboardingFlow() {
               </div>
             </div>
 
-            <Section title="Peer advising" help="Harvard-life mentorship — optional, toggle what applies.">
-              {peerAdvising.map((row, i) => (
-                <div
-                  key={row.key}
-                  className={`flex items-start justify-between gap-3 py-3 ${
-                    i < peerAdvising.length - 1 ? "border-b border-border" : ""
-                  }`}
-                >
-                  <div className="flex-1">
-                    <div className="text-[13px] font-medium text-text">{row.label}</div>
-                    <div className="text-[11px] text-muted">{row.sub}</div>
-                  </div>
-                  <Toggle on={profile[row.key]} onChange={() => set(row.key, !profile[row.key])} ariaLabel={row.label} />
-                </div>
-              ))}
+            <Section title="Peer advising" help="Harvard-life mentorship — optional.">
+              {renderToggleRows(peerRows)}
             </Section>
 
-            <Section title="Gym mentorship" help="Optional — toggle what applies.">
-              {gymMentorship.map((row, i) => (
-                <div
-                  key={row.key}
-                  className={`flex items-start justify-between gap-3 py-3 ${
-                    i < gymMentorship.length - 1 ? "border-b border-border" : ""
-                  }`}
-                >
-                  <div className="flex-1">
-                    <div className="text-[13px] font-medium text-text">{row.label}</div>
-                    <div className="text-[11px] text-muted">{row.sub}</div>
-                  </div>
-                  <Toggle on={profile[row.key]} onChange={() => set(row.key, !profile[row.key])} ariaLabel={row.label} />
-                </div>
-              ))}
+            <Section title="Gym mentorship" help="Optional — based on your experience level.">
+              {renderToggleRows(gymRows)}
             </Section>
           </div>
         );
+      }
       default:
         return (
           <div className="rounded-xl border border-border bg-surface-2 p-6 text-center text-[13px] text-muted">
