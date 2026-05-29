@@ -22,7 +22,8 @@
       "Bash(git -c user.name=\"UNIsport Dev\" -c user.email=\"dev@unisport.local\" commit -q -m \"feat\\(gyms\\): gym list screen with search bar, All/Main/House filters, main + house cards \\(crowd indicators removed\\); add gym data, icon set, temp profile stub\")",
       "Bash(git remote *)",
       "Bash(git push *)",
-      "Bash(git -c user.name=\"UNIsport Dev\" -c user.email=\"dev@unisport.local\" commit -q -m \"feat\\(onboarding\\): shared 9-step shell + Screen 1 \\(Basics\\), flow state/profile object, routing after login, data file \\(classYears/freshmanClassYear/gender\\), dev replay\")"
+      "Bash(git -c user.name=\"UNIsport Dev\" -c user.email=\"dev@unisport.local\" commit -q -m \"feat\\(onboarding\\): shared 9-step shell + Screen 1 \\(Basics\\), flow state/profile object, routing after login, data file \\(classYears/freshmanClassYear/gender\\), dev replay\")",
+      "Bash(git -c user.name=\"UNIsport Dev\" -c user.email=\"dev@unisport.local\" commit -q -m \"feat\\(onboarding\\): rename Gender->Sex \\(Male/Female\\), set class years to '27-'30, freshmanClassYear='30\")"
     ],
     "defaultMode": "bypassPermissions"
   }

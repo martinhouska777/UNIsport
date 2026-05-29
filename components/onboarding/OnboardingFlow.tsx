@@ -7,7 +7,7 @@ import OnboardingShell from "@/components/onboarding/OnboardingShell";
 import { Pill, FieldLabel, TextField } from "@/components/onboarding/controls";
 import {
   classYears,
-  genderOptions,
+  sexOptions,
   emptyProfile,
   type OnboardingProfile,
 } from "@/lib/onboarding";
@@ -50,7 +50,7 @@ export default function OnboardingFlow() {
   const canContinue = (): boolean => {
     switch (meta.key) {
       case "basics":
-        return profile.name.trim() !== "" && profile.classYear !== "" && profile.gender !== "";
+        return profile.name.trim() !== "" && profile.classYear !== "" && profile.sex !== "";
       default:
         return true;
     }
@@ -92,10 +92,10 @@ export default function OnboardingFlow() {
               ))}
             </div>
 
-            <FieldLabel>Gender</FieldLabel>
+            <FieldLabel>Sex</FieldLabel>
             <div className="flex flex-wrap gap-1.5">
-              {genderOptions.map((g) => (
-                <Pill key={g} label={g} selected={profile.gender === g} onClick={() => set("gender", g)} />
+              {sexOptions.map((s) => (
+                <Pill key={s} label={s} selected={profile.sex === s} onClick={() => set("sex", s)} />
               ))}
             </div>
           </div>
