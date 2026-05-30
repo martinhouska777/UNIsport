@@ -4,7 +4,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAppState } from "@/components/AppState";
 import InlineEdit from "@/components/profile/InlineEdit";
-import { currentUser, classOfLabel, type CurrentUser } from "@/lib/currentUser";
+import SessionCalendar from "@/components/profile/SessionCalendar";
+import SessionSheet from "@/components/profile/SessionSheet";
+import { currentUser, classOfLabel, type CurrentUser, type Session } from "@/lib/currentUser";
 import { IconSettings, IconUser, IconCamera } from "@/components/icons";
 
 export default function ProfilePage() {
@@ -13,6 +15,7 @@ export default function ProfilePage() {
 
   // Edits update this in-memory object (no Supabase yet) and log the change.
   const [user, setUser] = useState<CurrentUser>(currentUser);
+  const [openSession, setOpenSession] = useState<Session | null>(null);
   const update = (patch: Partial<CurrentUser>) =>
     setUser((prev) => {
       // eslint-disable-next-line no-console
@@ -109,6 +112,9 @@ export default function ProfilePage() {
         ))}
       </div>
 
+      {/* Session calendar */}
+      <SessionCalendar sessions={user.sessions} onPick={(s) => setOpenSession(s)} />
+
       {/* Temporary dev tools (until real settings/profile flows exist) */}
       <div className="px-3.5 py-4">
         <div className="mb-2 text-[9px] font-medium uppercase tracking-[0.1em] text-muted">Dev tools</div>
@@ -135,6 +141,10 @@ export default function ProfilePage() {
           </button>
         </div>
       </div>
+
+      {openSession && (
+        <SessionSheet session={openSession} onClose={() => setOpenSession(null)} />
+      )}
     </div>
   );
 }
