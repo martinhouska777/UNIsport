@@ -47,7 +47,8 @@
       "Bash(curl -sI \"https://wavxyrgtaotrhnyepyor.supabase.co/auth/v1/authorize?provider=google&redirect_to=http%3A%2F%2Flocalhost%3A3000%2Fauth%2Fcallback\" -H \"apikey: sb_publishable_YWLbzuy4wi6p1xWQbxzAfQ_h1ePdnPp\")",
       "Bash(curl -s -o /dev/null -D - \"https://wavxyrgtaotrhnyepyor.supabase.co/auth/v1/authorize?provider=google&redirect_to=http%3A%2F%2Flocalhost%3A3000%2Fauth%2Fcallback\" -H \"apikey: sb_publishable_YWLbzuy4wi6p1xWQbxzAfQ_h1ePdnPp\")",
       "mcp__Claude_in_Chrome__browser_batch",
-      "Bash(curl -s -o /dev/null -D - \"https://wavxyrgtaotrhnyepyor.supabase.co/auth/v1/authorize?provider=google&redirect_to=https%3A%2F%2Fun-isport.vercel.app%2Fauth%2Fcallback\" -H \"apikey: sb_publishable_YWLbzuy4wi6p1xWQbxzAfQ_h1ePdnPp\")"
+      "Bash(curl -s -o /dev/null -D - \"https://wavxyrgtaotrhnyepyor.supabase.co/auth/v1/authorize?provider=google&redirect_to=https%3A%2F%2Fun-isport.vercel.app%2Fauth%2Fcallback\" -H \"apikey: sb_publishable_YWLbzuy4wi6p1xWQbxzAfQ_h1ePdnPp\")",
+      "Bash(git -c user.name=\"UNIsport Dev\" -c user.email=\"dev@unisport.local\" commit -q -m \"feat\\(auth\\): Log in / Sign up toggle \\(shouldCreateUser differentiates\\), clear error messages incl. failed magic-link bounce\")"
     ],
     "defaultMode": "bypassPermissions"
   }
