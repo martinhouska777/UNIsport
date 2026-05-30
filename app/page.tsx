@@ -53,9 +53,22 @@ export default function Landing() {
         }
         return;
       }
-      // If email confirmation is ON in Supabase, there's no session yet.
+      // Supabase hides "this email already has an account" (to stop people probing
+      // who's registered): it returns success with NO session and an EMPTY
+      // identities list. Detect that and point them to Log in — otherwise they'd
+      // get stuck on a "check your email" screen for a mail that never arrives
+      // (this project has email auto-confirm ON, so no confirmation mail is sent).
+      const alreadyRegistered =
+        !data.session && !!data.user && (data.user.identities?.length ?? 0) === 0;
+      if (alreadyRegistered) {
+        setError("An account with that email already exists — switch to “Log in”.");
+        return;
+      }
+
+      // A real new account with no session means email confirmation is ON in
+      // Supabase → a confirmation link was just sent.
       if (!data.session) setConfirmSent(true);
-      // If confirmation is OFF, a session exists → the redirect effect handles it.
+      // Otherwise a session exists (confirmation OFF) → the redirect effect handles it.
     } else {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       setLoading(false);
