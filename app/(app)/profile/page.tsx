@@ -201,13 +201,13 @@ export default function ProfilePage() {
           </button>
           <button
             type="button"
-            onClick={() => {
-              logout();
+            onClick={async () => {
+              await logout();
               router.replace("/");
             }}
             className="w-full rounded-full border border-border bg-background px-5 py-2.5 text-sm font-medium text-text"
           >
-            Log out (demo)
+            Log out
           </button>
         </div>
       </div>

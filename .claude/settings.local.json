@@ -33,7 +33,16 @@
       "Bash(git -c user.name=\"UNIsport Dev\" -c user.email=\"dev@unisport.local\" commit -q -m \"feat\\(onboarding\\): Screen 9 Notifications \\(bell, notify list, gold Enable CTA + Maybe later\\) completes flow into Gyms; log full profile\")",
       "Bash(git -c user.name=\"UNIsport Dev\" -c user.email=\"dev@unisport.local\" commit -q -m \"docs\\(CLAUDE.md\\): refresh GitHub-connected note, add project map + how-to-hand-over-work section\")",
       "Bash(git -c user.name=\"UNIsport Dev\" -c user.email=\"dev@unisport.local\" commit -q -m \"feat\\(profile\\): My Profile top half - identity \\(avatar, inline name, VARSITY/Mentor badges\\), editable bio, Sessions/Partners/Following stats; fake currentUser data + InlineEdit; no streaks\")",
-      "Bash(git -c user.name=\"UNIsport Dev\" -c user.email=\"dev@unisport.local\" commit -q -m \"feat\\(profile\\): move VARSITY/Mentor badges under name; edit name+bio only via pencil \\(with grey hover circle\\)\")"
+      "Bash(git -c user.name=\"UNIsport Dev\" -c user.email=\"dev@unisport.local\" commit -q -m \"feat\\(profile\\): move VARSITY/Mentor badges under name; edit name+bio only via pencil \\(with grey hover circle\\)\")",
+      "mcp__Claude_in_Chrome__list_connected_browsers",
+      "mcp__Claude_in_Chrome__find",
+      "mcp__Claude_in_Chrome__navigate",
+      "mcp__Claude_in_Chrome__get_page_text",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\\\\n\" \"https://wavxyrgtaotrhnyepyor.supabase.co/auth/v1/settings\" -H \"apikey: sb_publishable_YWLbzuy4wi6p1xWQbxzAfQ_h1ePdnPp\")",
+      "Bash(curl -s \"https://wavxyrgtaotrhnyepyor.supabase.co/auth/v1/settings\" -H \"apikey: sb_publishable_YWLbzuy4wi6p1xWQbxzAfQ_h1ePdnPp\")",
+      "Bash(node -e \"let d='';process.stdin.on\\('data',c=>d+=c\\).on\\('end',\\(\\)=>{try{const j=JSON.parse\\(d\\);console.log\\('external providers:',Object.entries\\(j.external||{}\\).filter\\(\\([,v]\\)=>v\\).map\\(\\([k]\\)=>k\\).join\\(', '\\)||'\\(none\\)'\\);console.log\\('email signup enabled:', !j.disable_signup\\);}catch\\(e\\){console.log\\('raw:',d.slice\\(0,200\\)\\)}}\\)\")",
+      "mcp__Claude_in_Chrome__computer",
+      "mcp__Claude_Preview__preview_start"
     ],
     "defaultMode": "bypassPermissions"
   }

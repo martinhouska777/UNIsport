@@ -1,10 +1,8 @@
 "use client";
 
 /*
-  TEMPORARY fake auth + onboarding + "which university am I" state.
-  Stand-in until real login (Supabase) is wired up later. It remembers, in the
-  browser, whether the demo user is "logged in", whether they've finished
-  onboarding, and which university theme to load in Zone 2.
+  App-wide state. Login is now REAL (Supabase auth session); onboarding-complete
+  and the active university are still local for now (moved to the DB in a later slice).
 */
 import {
   createContext,
@@ -13,43 +11,48 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import type { Session } from "@supabase/supabase-js";
+import { createClient, hasSupabaseEnv } from "@/lib/supabase/client";
 
 type AppState = {
-  ready: boolean; // becomes true after we've read from localStorage
+  ready: boolean; // becomes true once we've checked the session
   loggedIn: boolean;
   onboarded: boolean;
   universityKey: string;
-  login: () => void;
-  logout: () => void;
+  logout: () => Promise<void>;
   completeOnboarding: () => void;
   resetOnboarding: () => void; // temporary dev helper to replay onboarding
 };
 
-const LOGGED_IN_KEY = "unisport.demo.loggedIn";
 const ONBOARDED_KEY = "unisport.demo.onboarded";
 const DEFAULT_UNIVERSITY = "harvard"; // later: comes from the logged-in user's record
 
 const AppStateContext = createContext<AppState | null>(null);
 
 export function AppStateProvider({ children }: { children: ReactNode }) {
+  // One browser client for the app's lifetime (null if env isn't configured yet).
+  const [supabase] = useState(() => (hasSupabaseEnv() ? createClient() : null));
   const [ready, setReady] = useState(false);
-  const [loggedIn, setLoggedIn] = useState(false);
+  const [session, setSession] = useState<Session | null>(null);
   const [onboarded, setOnboarded] = useState(false);
 
   useEffect(() => {
-    setLoggedIn(localStorage.getItem(LOGGED_IN_KEY) === "true");
     setOnboarded(localStorage.getItem(ONBOARDED_KEY) === "true");
-    setReady(true);
-  }, []);
+    if (!supabase) {
+      setReady(true);
+      return;
+    }
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+      setReady(true);
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => setSession(s));
+    return () => sub.subscription.unsubscribe();
+  }, [supabase]);
 
-  const login = () => {
-    localStorage.setItem(LOGGED_IN_KEY, "true");
-    setLoggedIn(true);
-  };
-
-  const logout = () => {
-    localStorage.removeItem(LOGGED_IN_KEY);
-    setLoggedIn(false);
+  const logout = async () => {
+    if (supabase) await supabase.auth.signOut();
+    setSession(null);
   };
 
   const completeOnboarding = () => {
@@ -66,10 +69,9 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     <AppStateContext.Provider
       value={{
         ready,
-        loggedIn,
+        loggedIn: !!session,
         onboarded,
         universityKey: DEFAULT_UNIVERSITY,
-        login,
         logout,
         completeOnboarding,
         resetOnboarding,
