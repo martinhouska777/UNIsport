@@ -51,27 +51,31 @@ export default function ProfilePage() {
           </button>
         </div>
 
-        <div className="flex flex-col items-center gap-0.5">
-          <div className="flex items-center justify-center gap-1.5">
-            <InlineEdit
-              value={user.name}
-              onChange={(v) => update({ name: v })}
-              ariaLabel="name"
-              placeholder="Your name"
-              maxLength={40}
-              textClassName="text-base font-medium text-text"
-            />
-            {user.badges.varsity && (
-              <span className="rounded bg-accent px-1.5 py-0.5 text-[8px] font-medium tracking-wide text-background">
-                VARSITY
-              </span>
-            )}
-            {user.badges.mentor && (
-              <span className="rounded border border-success bg-success/15 px-1.5 py-0.5 text-[8px] font-medium tracking-wide text-success">
-                MENTOR
-              </span>
-            )}
-          </div>
+        <div className="flex flex-col items-center gap-1">
+          <InlineEdit
+            value={user.name}
+            onChange={(v) => update({ name: v })}
+            ariaLabel="name"
+            placeholder="Your name"
+            maxLength={40}
+            textClassName="text-base font-medium text-text"
+          />
+
+          {(user.badges.varsity || user.badges.mentor) && (
+            <div className="flex items-center justify-center gap-1.5">
+              {user.badges.varsity && (
+                <span className="rounded bg-accent px-1.5 py-0.5 text-[8px] font-medium tracking-wide text-background">
+                  VARSITY
+                </span>
+              )}
+              {user.badges.mentor && (
+                <span className="rounded border border-success bg-success/15 px-1.5 py-0.5 text-[8px] font-medium tracking-wide text-success">
+                  MENTOR
+                </span>
+              )}
+            </div>
+          )}
+
           <div className="text-[10px] text-muted">
             {user.residence} House · {classOfLabel(user.classYear)}
           </div>

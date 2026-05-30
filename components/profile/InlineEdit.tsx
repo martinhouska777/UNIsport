@@ -80,12 +80,7 @@ export default function InlineEdit({
   }
 
   return (
-    <button
-      type="button"
-      onClick={start}
-      aria-label={`Edit ${ariaLabel}`}
-      className="group inline-flex items-start gap-1 text-left"
-    >
+    <span className={`inline-flex gap-1 ${multiline ? "items-start" : "items-center"}`}>
       <span
         className={`${multiline ? "" : "border-b border-dashed border-muted"} ${
           value ? "" : "text-muted"
@@ -93,7 +88,15 @@ export default function InlineEdit({
       >
         {value || placeholder}
       </span>
-      <IconPencil size={multiline ? 14 : 12} className="mt-0.5 shrink-0 text-muted" />
-    </button>
+      {/* Editing is triggered ONLY by this pencil; grey circle on hover signals it's tappable. */}
+      <button
+        type="button"
+        onClick={start}
+        aria-label={`Edit ${ariaLabel}`}
+        className="shrink-0 rounded-full p-1 text-muted transition-colors hover:bg-muted/20"
+      >
+        <IconPencil size={multiline ? 14 : 12} />
+      </button>
+    </span>
   );
 }

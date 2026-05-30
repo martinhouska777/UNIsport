@@ -32,7 +32,8 @@
       "Bash(git -c user.name=\"UNIsport Dev\" -c user.email=\"dev@unisport.local\" commit -q -m \"fix\\(onboarding\\): Screen 7 mentorship toggles conditional on class year \\(freshman vs upperclassman\\) and experience \\(beginner/advanced/intermediate\\); reset ineligible answers\")",
       "Bash(git -c user.name=\"UNIsport Dev\" -c user.email=\"dev@unisport.local\" commit -q -m \"feat\\(onboarding\\): Screen 9 Notifications \\(bell, notify list, gold Enable CTA + Maybe later\\) completes flow into Gyms; log full profile\")",
       "Bash(git -c user.name=\"UNIsport Dev\" -c user.email=\"dev@unisport.local\" commit -q -m \"docs\\(CLAUDE.md\\): refresh GitHub-connected note, add project map + how-to-hand-over-work section\")",
-      "Bash(git -c user.name=\"UNIsport Dev\" -c user.email=\"dev@unisport.local\" commit -q -m \"feat\\(profile\\): My Profile top half - identity \\(avatar, inline name, VARSITY/Mentor badges\\), editable bio, Sessions/Partners/Following stats; fake currentUser data + InlineEdit; no streaks\")"
+      "Bash(git -c user.name=\"UNIsport Dev\" -c user.email=\"dev@unisport.local\" commit -q -m \"feat\\(profile\\): My Profile top half - identity \\(avatar, inline name, VARSITY/Mentor badges\\), editable bio, Sessions/Partners/Following stats; fake currentUser data + InlineEdit; no streaks\")",
+      "Bash(git -c user.name=\"UNIsport Dev\" -c user.email=\"dev@unisport.local\" commit -q -m \"feat\\(profile\\): move VARSITY/Mentor badges under name; edit name+bio only via pencil \\(with grey hover circle\\)\")"
     ],
     "defaultMode": "bypassPermissions"
   }
