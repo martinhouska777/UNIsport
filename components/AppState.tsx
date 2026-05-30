@@ -20,6 +20,7 @@ import type { OnboardingProfile } from "@/lib/onboarding";
 type AppState = {
   ready: boolean; // true once session + onboarding status are known
   loggedIn: boolean;
+  userId: string | null;
   onboarded: boolean;
   universityKey: string;
   logout: () => Promise<void>;
@@ -110,6 +111,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       value={{
         ready,
         loggedIn: !!session,
+        userId: session?.user.id ?? null,
         onboarded,
         universityKey: DEFAULT_UNIVERSITY,
         logout,

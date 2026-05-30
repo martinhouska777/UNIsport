@@ -5,6 +5,7 @@
   This is DATA: the screen reads/loops from here and never hardcodes values.
 */
 import type { OnboardingProfile } from "./onboarding";
+import { emptyProfile } from "./onboarding";
 
 export type PersonalRecord = { lift: string; value: string };
 
@@ -87,4 +88,43 @@ export const currentUser: CurrentUser = {
 // "'27" -> "Class of 2027"; leaves non-year values (e.g. "Grad") as-is.
 export function classOfLabel(classYear: string): string {
   return classYear.startsWith("'") ? `Class of 20${classYear.slice(1)}` : classYear;
+}
+
+const cap = (s: string) => (s ? s[0].toUpperCase() + s.slice(1) : s);
+
+const DAY_LABELS: Record<string, string> = {
+  mon: "Mon", tue: "Tue", wed: "Wed", thu: "Thu", fri: "Fri", sat: "Sat", sun: "Sun",
+};
+function scheduleSummary(sched: Record<string, string[]>): string {
+  const days = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
+    .filter((d) => sched?.[d]?.length)
+    .map((d) => DAY_LABELS[d]);
+  return days.length ? days.join(" · ") : "—";
+}
+
+/*
+  Builds the profile-display object from a user's SAVED onboarding answers
+  (the `data` JSON in the profiles table). Training rows derive from onboarding,
+  unless the user has edited them (stored back under `trainingDisplay`). Fields
+  onboarding doesn't capture (stats, PRs, photos, sessions, varsity) start empty.
+*/
+export function profileFromOnboarding(raw: Record<string, unknown>): CurrentUser {
+  const p = { ...emptyProfile, ...(raw as Partial<OnboardingProfile>) } as OnboardingProfile;
+  const savedTraining = (raw as { trainingDisplay?: CurrentUser["trainingDisplay"] }).trainingDisplay;
+  return {
+    ...p,
+    badges: { varsity: false, mentor: !!(p.mentorFreshmen || p.helpOthers) },
+    stats: { sessions: 0, partners: 0, following: 0 },
+    trainingDisplay:
+      savedTraining ?? {
+        level: cap(p.experienceLevel) || "—",
+        type: cap(p.primaryActivity) || "—",
+        split: p.gymSplit || "—",
+        schedule: scheduleSummary(p.trainingSchedule),
+        gym: p.topGyms[0] || "—",
+      },
+    personalRecords: [],
+    photos: [],
+    sessions: [],
+  };
 }

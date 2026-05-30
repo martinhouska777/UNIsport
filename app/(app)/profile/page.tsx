@@ -1,27 +1,88 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAppState } from "@/components/AppState";
+import { createClient, hasSupabaseEnv } from "@/lib/supabase/client";
 import InlineEdit from "@/components/profile/InlineEdit";
 import SessionCalendar from "@/components/profile/SessionCalendar";
 import SessionSheet from "@/components/profile/SessionSheet";
-import { currentUser, classOfLabel, type CurrentUser, type Session } from "@/lib/currentUser";
+import {
+  profileFromOnboarding,
+  classOfLabel,
+  type CurrentUser,
+  type Session,
+} from "@/lib/currentUser";
 import { IconSettings, IconUser, IconCamera, IconPencil, IconPlus } from "@/components/icons";
 
 export default function ProfilePage() {
-  const { logout, resetOnboarding } = useAppState();
+  const { userId, logout, resetOnboarding } = useAppState();
   const router = useRouter();
 
-  // Edits update this in-memory object (no Supabase yet) and log the change.
-  const [user, setUser] = useState<CurrentUser>(currentUser);
+  const [supabase] = useState(() => (hasSupabaseEnv() ? createClient() : null));
+  // The saved profile JSON (onboarding answers + any profile edits).
+  const [data, setData] = useState<Record<string, unknown> | null>(null);
+  const [loading, setLoading] = useState(true);
   const [openSession, setOpenSession] = useState<Session | null>(null);
-  const update = (patch: Partial<CurrentUser>) =>
-    setUser((prev) => {
-      // eslint-disable-next-line no-console
-      console.log("My Profile updated:", patch);
-      return { ...prev, ...patch };
+
+  useEffect(() => {
+    if (!supabase || !userId) {
+      setData({});
+      setLoading(false);
+      return;
+    }
+    let active = true;
+    supabase
+      .from("profiles")
+      .select("data")
+      .eq("id", userId)
+      .maybeSingle()
+      .then(({ data: row }) => {
+        if (!active) return;
+        setData((row?.data as Record<string, unknown>) ?? {});
+        setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [supabase, userId]);
+
+  // Edit handler: updates the saved JSON in place and persists to the DB.
+  const update = (patch: Partial<CurrentUser>) => {
+    setData((prev) => {
+      const next = { ...(prev ?? {}) };
+      if ("name" in patch) next.name = patch.name;
+      if ("bio" in patch) next.bio = patch.bio;
+      if ("trainingDisplay" in patch) next.trainingDisplay = patch.trainingDisplay;
+      if (supabase && userId) {
+        supabase
+          .from("profiles")
+          .update({ data: next, updated_at: new Date().toISOString() })
+          .eq("id", userId)
+          .then(({ error }) => {
+            // eslint-disable-next-line no-console
+            if (error) console.error("Profile save failed:", error.message);
+          });
+      }
+      return next;
     });
+  };
+
+  const user = data ? profileFromOnboarding(data) : null;
+
+  if (loading || !user) {
+    return (
+      <div className="mx-auto w-full max-w-screen-sm">
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-surface px-3.5 py-3">
+          <span className="text-base font-medium text-text">My Profile</span>
+          <span className="text-muted">
+            <IconSettings size={18} />
+          </span>
+        </div>
+        <div className="px-6 py-20 text-center text-sm text-muted">Loading your profile…</div>
+      </div>
+    );
+  }
 
   const stats = [
     { label: "Sessions", value: user.stats.sessions },
@@ -90,7 +151,8 @@ export default function ProfilePage() {
           )}
 
           <div className="text-[10px] text-muted">
-            {user.residence} House · {classOfLabel(user.classYear)}
+            {user.residence ? `${user.residence} House · ` : ""}
+            {classOfLabel(user.classYear)}
           </div>
         </div>
       </div>
@@ -234,4 +296,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
