@@ -21,6 +21,10 @@ export type Session = {
 export type CurrentUser = OnboardingProfile & {
   badges: { varsity: boolean; mentor: boolean };
   stats: { sessions: number; partners: number; following: number };
+  // Human-readable, editable Training rows shown on the profile. These mirror the
+  // matching fields above (experienceLevel, gymSplit, topGyms…) and will be unified
+  // with them once the database is wired up.
+  trainingDisplay: { level: string; type: string; split: string; schedule: string; gym: string };
   personalRecords: PersonalRecord[];
   photos: string[];
   sessions: Session[];
@@ -57,6 +61,13 @@ export const currentUser: CurrentUser = {
   // --- profile-only fields ---
   badges: { varsity: true, mentor: true },
   stats: { sessions: 142, partners: 18, following: 24 },
+  trainingDisplay: {
+    level: "Advanced",
+    type: "Powerlifting",
+    split: "Push-Pull-Legs",
+    schedule: "Mon · Wed · Fri",
+    gym: "Malkin Athletic Center",
+  },
   personalRecords: [
     { lift: "Squat", value: "180 kg × 1" },
     { lift: "Bench", value: "120 kg × 3" },

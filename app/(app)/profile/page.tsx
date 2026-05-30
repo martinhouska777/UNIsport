@@ -7,7 +7,7 @@ import InlineEdit from "@/components/profile/InlineEdit";
 import SessionCalendar from "@/components/profile/SessionCalendar";
 import SessionSheet from "@/components/profile/SessionSheet";
 import { currentUser, classOfLabel, type CurrentUser, type Session } from "@/lib/currentUser";
-import { IconSettings, IconUser, IconCamera } from "@/components/icons";
+import { IconSettings, IconUser, IconCamera, IconPencil, IconPlus } from "@/components/icons";
 
 export default function ProfilePage() {
   const { logout, resetOnboarding } = useAppState();
@@ -28,6 +28,16 @@ export default function ProfilePage() {
     { label: "Partners", value: user.stats.partners },
     { label: "Following", value: user.stats.following },
   ];
+
+  const trainingRows: { key: keyof CurrentUser["trainingDisplay"]; label: string }[] = [
+    { key: "level", label: "Level" },
+    { key: "type", label: "Type" },
+    { key: "split", label: "Split" },
+    { key: "schedule", label: "Schedule" },
+    { key: "gym", label: "Gym" },
+  ];
+  const setTraining = (key: keyof CurrentUser["trainingDisplay"], value: string) =>
+    update({ trainingDisplay: { ...user.trainingDisplay, [key]: value } });
 
   return (
     <div className="mx-auto w-full max-w-screen-sm">
@@ -115,6 +125,66 @@ export default function ProfilePage() {
       {/* Session calendar */}
       <SessionCalendar sessions={user.sessions} onPick={(s) => setOpenSession(s)} />
 
+      {/* Training */}
+      <div className="border-b border-border px-3.5 py-3">
+        <div className="mb-1 text-[9px] font-medium uppercase tracking-[0.1em] text-primary">Training</div>
+        <div className="flex flex-col divide-y divide-border">
+          {trainingRows.map((row) => (
+            <div key={row.key} className="flex items-center justify-between gap-3 py-2">
+              <span className="text-xs text-muted">{row.label}</span>
+              <InlineEdit
+                value={user.trainingDisplay[row.key]}
+                onChange={(v) => setTraining(row.key, v)}
+                ariaLabel={row.label}
+                placeholder="Add"
+                textClassName="text-xs text-text text-right"
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Personal records */}
+      <div className="border-b border-border px-3.5 py-3">
+        <div className="mb-2 flex items-center justify-between">
+          <div className="text-[9px] font-medium uppercase tracking-[0.1em] text-primary">Personal records</div>
+          <button type="button" aria-label="Edit personal records" className="rounded-full p-1 text-muted transition-colors hover:bg-muted/20">
+            <IconPencil size={13} />
+          </button>
+        </div>
+        {user.personalRecords.length > 0 ? (
+          <div className="flex flex-col divide-y divide-border">
+            {user.personalRecords.map((pr) => (
+              <div key={pr.lift} className="flex items-center justify-between py-2">
+                <span className="text-xs text-muted">{pr.lift}</span>
+                <span className="text-xs font-medium text-text">{pr.value}</span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-lg border border-dashed border-border bg-surface-2 px-3 py-4 text-center text-[12px] text-muted">
+            Add your personal records
+          </div>
+        )}
+      </div>
+
+      {/* Photos */}
+      <div className="border-b border-border px-3.5 py-3">
+        <div className="mb-2 text-[9px] font-medium uppercase tracking-[0.1em] text-primary">Photos</div>
+        <div className="grid grid-cols-3 gap-1.5">
+          {user.photos.map((_, i) => (
+            <div key={i} className="aspect-square rounded-md border border-border bg-surface-2" />
+          ))}
+          <button
+            type="button"
+            aria-label="Add photo"
+            className="flex aspect-square items-center justify-center rounded-md border border-dashed border-border bg-surface-2 text-muted"
+          >
+            <IconPlus size={20} />
+          </button>
+        </div>
+      </div>
+
       {/* Temporary dev tools (until real settings/profile flows exist) */}
       <div className="px-3.5 py-4">
         <div className="mb-2 text-[9px] font-medium uppercase tracking-[0.1em] text-muted">Dev tools</div>
@@ -142,9 +212,26 @@ export default function ProfilePage() {
         </div>
       </div>
 
+      {/* Bottom action bar (sticks above the tab nav) */}
+      <div className="sticky bottom-0 z-20 flex gap-2.5 border-t border-border bg-surface px-3.5 py-3">
+        <button
+          type="button"
+          className="flex-1 rounded-full border border-border bg-surface-2 px-5 py-3 text-sm font-medium text-text"
+        >
+          Share Profile
+        </button>
+        <button
+          type="button"
+          className="flex-1 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-contrast"
+        >
+          Log Session
+        </button>
+      </div>
+
       {openSession && (
         <SessionSheet session={openSession} onClose={() => setOpenSession(null)} />
       )}
     </div>
   );
 }
+
