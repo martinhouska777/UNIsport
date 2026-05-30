@@ -1,0 +1,7 @@
+{
+  "// note": "When you open this project, VS Code offers to install these. They are helpers only — none change the app.",
+  "recommendations": [
+    "dbaeumer.vscode-eslint",
+    "bradlc.vscode-tailwindcss"
+  ]
+}

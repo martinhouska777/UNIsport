@@ -1,0 +1,19 @@
+{
+  "// note": "Project editor defaults. Safe — these only affect VS Code, not the running app.",
+
+  "// eslint": "Let the ESLint extension check these file types and show problems live.",
+  "eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact"],
+
+  "// tailwind": "Help Tailwind IntelliSense work inside this project's CSS-variable setup.",
+  "tailwindCSS.includeLanguages": { "typescriptreact": "javascript" },
+  "css.validate": false,
+
+  "// search": "Hide noisy generated folders from search and the file tree.",
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/.next": true
+  },
+
+  "// typescript": "Use the project's own TypeScript version for accurate error checking.",
+  "typescript.tsdk": "node_modules/typescript/lib"
+}

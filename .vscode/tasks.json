@@ -1,0 +1,30 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Start app (dev server)",
+      "type": "shell",
+      "command": "npm run dev",
+      "detail": "Runs the app locally at http://localhost:3000",
+      "isBackground": true,
+      "presentation": { "reveal": "always", "panel": "dedicated" },
+      "problemMatcher": []
+    },
+    {
+      "label": "Check code (type-check)",
+      "type": "shell",
+      "command": "npx tsc --noEmit",
+      "detail": "Checks the whole project for TypeScript errors",
+      "presentation": { "reveal": "always", "panel": "dedicated" },
+      "problemMatcher": ["$tsc"]
+    },
+    {
+      "label": "Check code (lint)",
+      "type": "shell",
+      "command": "npm run lint",
+      "detail": "Runs ESLint across the project",
+      "presentation": { "reveal": "always", "panel": "dedicated" },
+      "problemMatcher": []
+    }
+  ]
+}
