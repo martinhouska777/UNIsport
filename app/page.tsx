@@ -3,7 +3,7 @@
 /*
   ZONE 1 (pre-login) landing + auth. Neutral brand ONLY.
   Two intents: "Log in" (existing accounts) and "Sign up" (new accounts).
-  Both use passwordless magic-link email + Google. After auth, the app routes
+  Email + password (the familiar flow) plus Google. After auth, the app routes
   new accounts (no profile yet) to onboarding and returning ones to the app.
 */
 import { useEffect, useState } from "react";
@@ -20,7 +20,8 @@ export default function Landing() {
   const [supabase] = useState(() => (hasSupabaseEnv() ? createClient() : null));
   const [mode, setMode] = useState<Mode>("login");
   const [email, setEmail] = useState("");
-  const [sent, setSent] = useState(false);
+  const [password, setPassword] = useState("");
+  const [confirmSent, setConfirmSent] = useState(false); // only if email-confirm is ON in Supabase
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,34 +29,47 @@ export default function Landing() {
     if (ready && loggedIn) router.replace(onboarded ? "/gyms" : "/onboarding");
   }, [ready, loggedIn, onboarded, router]);
 
-  // Show a clear message when a magic link fails (instead of silently bouncing).
+  // Show a clear message if a Google sign-in bounced back with an error.
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get("auth_error")) {
-      setError("That sign-in link didn't work or has expired. Please request a new one (or use Google).");
+      setError("That sign-in didn't work. Please try again (or use email + password).");
     }
   }, []);
 
-  const sendLink = async (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!supabase) return;
     setLoading(true);
     setError(null);
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-        shouldCreateUser: mode === "signup", // Log in won't create a new account
-      },
-    });
-    setLoading(false);
-    if (error) {
-      if (mode === "login" && /not allowed|not found|no user|signups/i.test(error.message)) {
-        setError("No account found for that email — switch to “Sign up” to create one.");
-      } else {
-        setError(error.message);
+
+    if (mode === "signup") {
+      const { data, error } = await supabase.auth.signUp({ email, password });
+      setLoading(false);
+      if (error) {
+        if (/already registered|already exists|user already/i.test(error.message)) {
+          setError("An account with that email already exists — switch to “Log in”.");
+        } else {
+          setError(error.message);
+        }
+        return;
       }
+      // If email confirmation is ON in Supabase, there's no session yet.
+      if (!data.session) setConfirmSent(true);
+      // If confirmation is OFF, a session exists → the redirect effect handles it.
     } else {
-      setSent(true);
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      setLoading(false);
+      if (error) {
+        if (/invalid login credentials/i.test(error.message)) {
+          setError("Wrong email or password. New here? Switch to “Sign up”.");
+        } else if (/email not confirmed/i.test(error.message)) {
+          setError("Please confirm your email first — check your inbox for the link.");
+        } else {
+          setError(error.message);
+        }
+        return;
+      }
+      // Success → the redirect effect handles routing.
     }
   };
 
@@ -72,7 +86,7 @@ export default function Landing() {
   const switchMode = (m: Mode) => {
     setMode(m);
     setError(null);
-    setSent(false);
+    setConfirmSent(false);
   };
 
   const isSignup = mode === "signup";
@@ -92,15 +106,15 @@ export default function Landing() {
           <p className="mt-8 rounded-xl border border-border bg-surface-2 px-4 py-3 text-sm text-muted">
             Sign-in isn&apos;t configured in this environment yet.
           </p>
-        ) : sent ? (
+        ) : confirmSent ? (
           <div className="mt-8 rounded-xl border border-border bg-surface-2 px-4 py-5">
-            <p className="text-sm text-text">Check your email</p>
+            <p className="text-sm text-text">Confirm your email</p>
             <p className="mt-1 text-xs text-muted">
-              We sent a sign-in link to <span className="text-text">{email}</span>. Open it on this
-              device to continue.
+              We sent a confirmation link to <span className="text-text">{email}</span>. Open it to
+              activate your account, then come back and log in.
             </p>
-            <button onClick={() => setSent(false)} className="mt-4 text-xs font-medium text-primary">
-              Use a different email
+            <button onClick={() => switchMode("login")} className="mt-4 text-xs font-medium text-primary">
+              Back to log in
             </button>
           </div>
         ) : (
@@ -129,14 +143,26 @@ export default function Landing() {
               {isSignup ? "New here? Create your account." : "Welcome back — log in to your account."}
             </p>
 
-            <form onSubmit={sendLink} className="flex flex-col gap-2.5">
+            <form onSubmit={submit} className="flex flex-col gap-2.5">
               <input
                 type="email"
                 required
+                autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
                 aria-label="Email"
+                className="w-full rounded-full border border-border bg-surface-2 px-5 py-3 text-base text-text placeholder:text-muted focus:border-primary focus:outline-none"
+              />
+              <input
+                type="password"
+                required
+                minLength={6}
+                autoComplete={isSignup ? "new-password" : "current-password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder={isSignup ? "Choose a password (6+ characters)" : "Password"}
+                aria-label="Password"
                 className="w-full rounded-full border border-border bg-surface-2 px-5 py-3 text-base text-text placeholder:text-muted focus:border-primary focus:outline-none"
               />
               <button
@@ -144,7 +170,7 @@ export default function Landing() {
                 disabled={loading}
                 className="w-full rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-contrast transition-opacity hover:opacity-90 disabled:opacity-60"
               >
-                {loading ? "Sending…" : isSignup ? "Send sign-up link" : "Send login link"}
+                {loading ? "Please wait…" : isSignup ? "Create account" : "Log in"}
               </button>
             </form>
 
@@ -166,7 +192,9 @@ export default function Landing() {
         )}
 
         <p className="mt-4 text-xs text-muted">
-          We&apos;ll email you a one-time link — no password needed.
+          {isSignup
+            ? "Your password is stored securely — we never see it."
+            : "Use the email and password you signed up with."}
         </p>
       </div>
     </div>
