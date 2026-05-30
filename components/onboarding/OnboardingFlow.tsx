@@ -84,7 +84,7 @@ const STEPS: StepMeta[] = [
 
 export default function OnboardingFlow() {
   const router = useRouter();
-  const { completeOnboarding } = useAppState();
+  const { saveOnboarding } = useAppState();
 
   const [step, setStep] = useState(0); // 0-based index into STEPS
   const [profile, setProfile] = useState<OnboardingProfile>(emptyProfile);
@@ -156,13 +156,10 @@ export default function OnboardingFlow() {
   };
   const goBack = () => setStep((s) => Math.max(s - 1, 0));
 
-  const finish = () => {
-    // No Supabase yet — keep the object in memory and log it so it's inspectable.
-    /* eslint-disable no-console */
+  const finish = async () => {
+    // eslint-disable-next-line no-console
     console.log("UNIsport onboarding profile:", profile);
-    console.log("UNIsport onboarding profile (readable):\n" + JSON.stringify(profile, null, 2));
-    /* eslint-enable no-console */
-    completeOnboarding();
+    await saveOnboarding(profile); // saves to the DB + marks this account onboarded
     router.replace("/gyms");
   };
 

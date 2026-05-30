@@ -191,8 +191,8 @@ export default function ProfilePage() {
         <div className="flex flex-col gap-2">
           <button
             type="button"
-            onClick={() => {
-              resetOnboarding();
+            onClick={async () => {
+              await resetOnboarding();
               router.replace("/onboarding");
             }}
             className="w-full rounded-full border border-border bg-surface-2 px-5 py-2.5 text-sm font-medium text-text"

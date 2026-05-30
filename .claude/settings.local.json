@@ -42,7 +42,12 @@
       "Bash(curl -s \"https://wavxyrgtaotrhnyepyor.supabase.co/auth/v1/settings\" -H \"apikey: sb_publishable_YWLbzuy4wi6p1xWQbxzAfQ_h1ePdnPp\")",
       "Bash(node -e \"let d='';process.stdin.on\\('data',c=>d+=c\\).on\\('end',\\(\\)=>{try{const j=JSON.parse\\(d\\);console.log\\('external providers:',Object.entries\\(j.external||{}\\).filter\\(\\([,v]\\)=>v\\).map\\(\\([k]\\)=>k\\).join\\(', '\\)||'\\(none\\)'\\);console.log\\('email signup enabled:', !j.disable_signup\\);}catch\\(e\\){console.log\\('raw:',d.slice\\(0,200\\)\\)}}\\)\")",
       "mcp__Claude_in_Chrome__computer",
-      "mcp__Claude_Preview__preview_start"
+      "mcp__Claude_Preview__preview_start",
+      "mcp__Claude_in_Chrome__tabs_create_mcp",
+      "Bash(curl -sI \"https://wavxyrgtaotrhnyepyor.supabase.co/auth/v1/authorize?provider=google&redirect_to=http%3A%2F%2Flocalhost%3A3000%2Fauth%2Fcallback\" -H \"apikey: sb_publishable_YWLbzuy4wi6p1xWQbxzAfQ_h1ePdnPp\")",
+      "Bash(curl -s -o /dev/null -D - \"https://wavxyrgtaotrhnyepyor.supabase.co/auth/v1/authorize?provider=google&redirect_to=http%3A%2F%2Flocalhost%3A3000%2Fauth%2Fcallback\" -H \"apikey: sb_publishable_YWLbzuy4wi6p1xWQbxzAfQ_h1ePdnPp\")",
+      "mcp__Claude_in_Chrome__browser_batch",
+      "Bash(curl -s -o /dev/null -D - \"https://wavxyrgtaotrhnyepyor.supabase.co/auth/v1/authorize?provider=google&redirect_to=https%3A%2F%2Fun-isport.vercel.app%2Fauth%2Fcallback\" -H \"apikey: sb_publishable_YWLbzuy4wi6p1xWQbxzAfQ_h1ePdnPp\")"
     ],
     "defaultMode": "bypassPermissions"
   }

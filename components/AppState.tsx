@@ -1,8 +1,10 @@
 "use client";
 
 /*
-  App-wide state. Login is now REAL (Supabase auth session); onboarding-complete
-  and the active university are still local for now (moved to the DB in a later slice).
+  App-wide state. Login is REAL (Supabase session). "Has this account finished
+  onboarding?" is now read from the DATABASE (the `profiles` table) rather than
+  the browser — so a brand-new account onboards, and a returning account goes
+  straight to the app, on any device.
 */
 import {
   createContext,
@@ -13,55 +15,93 @@ import {
 } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { createClient, hasSupabaseEnv } from "@/lib/supabase/client";
+import type { OnboardingProfile } from "@/lib/onboarding";
 
 type AppState = {
-  ready: boolean; // becomes true once we've checked the session
+  ready: boolean; // true once session + onboarding status are known
   loggedIn: boolean;
   onboarded: boolean;
   universityKey: string;
   logout: () => Promise<void>;
-  completeOnboarding: () => void;
-  resetOnboarding: () => void; // temporary dev helper to replay onboarding
+  saveOnboarding: (profile: OnboardingProfile) => Promise<void>;
+  resetOnboarding: () => Promise<void>; // temporary dev helper to replay onboarding
 };
 
-const ONBOARDED_KEY = "unisport.demo.onboarded";
-const DEFAULT_UNIVERSITY = "harvard"; // later: comes from the logged-in user's record
+const DEFAULT_UNIVERSITY = "harvard"; // later: from the user's profile row
 
 const AppStateContext = createContext<AppState | null>(null);
 
 export function AppStateProvider({ children }: { children: ReactNode }) {
-  // One browser client for the app's lifetime (null if env isn't configured yet).
   const [supabase] = useState(() => (hasSupabaseEnv() ? createClient() : null));
   const [ready, setReady] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
   const [onboarded, setOnboarded] = useState(false);
 
+  // Read onboarding-complete flag for a user from the DB (resilient if the table
+  // doesn't exist yet → treated as "not onboarded").
+  const refreshOnboarded = async (userId: string) => {
+    if (!supabase) return;
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("onboarding_completed")
+      .eq("id", userId)
+      .maybeSingle();
+    setOnboarded(!error && !!data?.onboarding_completed);
+  };
+
   useEffect(() => {
-    setOnboarded(localStorage.getItem(ONBOARDED_KEY) === "true");
     if (!supabase) {
       setReady(true);
       return;
     }
-    supabase.auth.getSession().then(({ data }) => {
+    let active = true;
+    (async () => {
+      const { data } = await supabase.auth.getSession();
+      if (!active) return;
       setSession(data.session);
+      if (data.session) await refreshOnboarded(data.session.user.id);
       setReady(true);
+    })();
+
+    const { data: sub } = supabase.auth.onAuthStateChange(async (_event, s) => {
+      setSession(s);
+      if (s) await refreshOnboarded(s.user.id);
+      else setOnboarded(false);
     });
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => setSession(s));
-    return () => sub.subscription.unsubscribe();
+    return () => {
+      active = false;
+      sub.subscription.unsubscribe();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [supabase]);
 
   const logout = async () => {
     if (supabase) await supabase.auth.signOut();
     setSession(null);
+    setOnboarded(false);
   };
 
-  const completeOnboarding = () => {
-    localStorage.setItem(ONBOARDED_KEY, "true");
+  const saveOnboarding = async (profile: OnboardingProfile) => {
+    if (supabase && session) {
+      const { error } = await supabase.from("profiles").upsert({
+        id: session.user.id,
+        data: profile,
+        onboarding_completed: true,
+        updated_at: new Date().toISOString(),
+      });
+      // eslint-disable-next-line no-console
+      if (error) console.error("Saving profile failed:", error.message);
+    }
     setOnboarded(true);
   };
 
-  const resetOnboarding = () => {
-    localStorage.removeItem(ONBOARDED_KEY);
+  const resetOnboarding = async () => {
+    if (supabase && session) {
+      await supabase
+        .from("profiles")
+        .update({ onboarding_completed: false })
+        .eq("id", session.user.id);
+    }
     setOnboarded(false);
   };
 
@@ -73,7 +113,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         onboarded,
         universityKey: DEFAULT_UNIVERSITY,
         logout,
-        completeOnboarding,
+        saveOnboarding,
         resetOnboarding,
       }}
     >
