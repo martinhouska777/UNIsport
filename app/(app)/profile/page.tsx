@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAppState } from "@/components/AppState";
+import VarsityShield from "@/components/varsity/VarsityShield";
 import { createClient, hasSupabaseEnv } from "@/lib/supabase/client";
 import InlineEdit from "@/components/profile/InlineEdit";
 import SessionCalendar from "@/components/profile/SessionCalendar";
@@ -13,7 +15,7 @@ import {
   type CurrentUser,
   type Session,
 } from "@/lib/currentUser";
-import { IconSettings, IconUser, IconCamera, IconPencil, IconPlus } from "@/components/icons";
+import { IconSettings, IconUser, IconCamera, IconPencil, IconPlus, IconArrowRight } from "@/components/icons";
 
 export default function ProfilePage() {
   const { userId, logout, resetOnboarding } = useAppState();
@@ -245,6 +247,26 @@ export default function ProfilePage() {
             <IconPlus size={20} />
           </button>
         </div>
+      </div>
+
+      {/* Entry into Varsity Mode (the gated rowing-team section) */}
+      <div className="border-b border-border px-3.5 py-3">
+        <div className="mb-2 text-[9px] font-medium uppercase tracking-[0.1em] text-primary">
+          Varsity
+        </div>
+        <Link
+          href="/varsity/home"
+          className="flex items-center gap-3 rounded-2xl border border-primary/40 bg-primary/10 px-4 py-3.5"
+        >
+          <VarsityShield size={30} />
+          <div className="flex-1">
+            <div className="text-sm font-medium text-text">Enter Varsity Mode</div>
+            <div className="text-[11px] text-muted">Harvard Rowing · training, lineups &amp; team</div>
+          </div>
+          <span className="text-muted">
+            <IconArrowRight size={18} />
+          </span>
+        </Link>
       </div>
 
       {/* Temporary dev tools (until real settings/profile flows exist) */}
