@@ -88,6 +88,36 @@ export const IconCheckCircle = (p: IconProps) => (
   </Base>
 );
 
+export const IconChevronRight = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M9 6l6 6-6 6" />
+  </Base>
+);
+
+export const IconAnchor = (p: IconProps) => (
+  <Base {...p}>
+    <circle cx="12" cy="5" r="2.5" />
+    <path d="M12 7.5V21" />
+    <path d="M8 11h8" />
+    <path d="M5 13a7 7 0 0 0 14 0" />
+  </Base>
+);
+
+export const IconGlobe = (p: IconProps) => (
+  <Base {...p}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M3 12h18" />
+    <path d="M12 3c3 3 3 15 0 18-3-3-3-15 0-18z" />
+  </Base>
+);
+
+export const IconCopy = (p: IconProps) => (
+  <Base {...p}>
+    <rect x="9" y="9" width="11" height="11" rx="2" />
+    <path d="M5 15V5a2 2 0 0 1 2-2h8" />
+  </Base>
+);
+
 export const IconHeart = ({ filled, ...p }: IconProps & { filled?: boolean }) => (
   <Base {...p} fill={filled ? "currentColor" : "none"}>
     <path d="M12 20s-7-4.4-7-9a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 4.6-7 9-7 9z" />
