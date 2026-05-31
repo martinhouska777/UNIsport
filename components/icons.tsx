@@ -118,6 +118,29 @@ export const IconCopy = (p: IconProps) => (
   </Base>
 );
 
+export const IconSend = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M22 2L11 13" />
+    <path d="M22 2l-7 20-4-9-9-4 20-7z" />
+  </Base>
+);
+
+export const IconClipboard = (p: IconProps) => (
+  <Base {...p}>
+    <rect x="6" y="4" width="12" height="17" rx="2" />
+    <rect x="9" y="2.5" width="6" height="3" rx="1" />
+    <path d="M9 11h6M9 15h4" />
+  </Base>
+);
+
+export const IconInfo = (p: IconProps) => (
+  <Base {...p}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M12 11v5" />
+    <path d="M12 8h.01" />
+  </Base>
+);
+
 export const IconHeart = ({ filled, ...p }: IconProps & { filled?: boolean }) => (
   <Base {...p} fill={filled ? "currentColor" : "none"}>
     <path d="M12 20s-7-4.4-7-9a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 4.6-7 9-7 9z" />

@@ -8,6 +8,7 @@
   Static for now — the status / edit / settings / copy actions get wired up in
   a later "make it interactive" pass.
 */
+import Link from "next/link";
 import { profile, activityColor, activityLegend, type ActivityType } from "@/lib/varsity/profile";
 import {
   IconSettings,
@@ -307,6 +308,17 @@ export default function ProfileScreen() {
 
       <div className="pt-1">
         <ReportCard />
+      </div>
+
+      {/* Dev entry into the Coach Console (until the real coach role/approval exists) */}
+      <div className="mx-3.5 mt-4">
+        <Link
+          href="/varsity/coach"
+          className="flex items-center justify-center gap-2 rounded-xl border border-border bg-surface px-4 py-3 text-[11px] font-medium text-muted"
+        >
+          <IconChevronRight size={14} />
+          Open Coach Console (dev)
+        </Link>
       </div>
     </div>
   );
