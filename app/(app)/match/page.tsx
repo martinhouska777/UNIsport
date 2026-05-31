@@ -11,6 +11,7 @@
   choices stay data-driven.
 */
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useAppState } from "@/components/AppState";
 import {
   getBrowseMatches,
@@ -29,11 +30,19 @@ const genderOptions: { key: string | null; label: string }[] = [
   { key: "female", label: "Women" },
 ];
 
-function Grid({ matches, max }: { matches: Match[]; max: number }) {
+function Grid({
+  matches,
+  max,
+  onView,
+}: {
+  matches: Match[];
+  max: number;
+  onView: (m: Match, max: number) => void;
+}) {
   return (
     <div className="grid grid-cols-2 gap-2 px-3 pb-4">
       {matches.map((m) => (
-        <MatchCard key={m.userId} match={m} max={max} />
+        <MatchCard key={m.userId} match={m} max={max} onView={(x) => onView(x, max)} />
       ))}
     </div>
   );
@@ -45,7 +54,15 @@ function Status({ children }: { children: React.ReactNode }) {
 
 export default function MatchPage() {
   const { userId } = useAppState();
+  const router = useRouter();
   const [tab, setTab] = useState<SubTab>("browse");
+
+  // Open another person's profile, passing the exact compatibility % shown on
+  // their card so the profile badge stays truthful.
+  const viewProfile = (m: Match, max: number) => {
+    const pct = Math.round((m.score / max) * 100);
+    router.push(`/people/${m.userId}?pct=${pct}`);
+  };
 
   // --- Browse state ---
   const [browse, setBrowse] = useState<Match[] | null>(null);
@@ -139,7 +156,7 @@ export default function MatchPage() {
               <div className="px-3 pb-1.5 text-[10px] tracking-[0.06em] text-muted">
                 {browse.length} {browse.length === 1 ? "PERSON" : "PEOPLE"} · SORTED BY COMPATIBILITY
               </div>
-              <Grid matches={browse} max={100} />
+              <Grid matches={browse} max={100} onView={viewProfile} />
             </>
           )}
         </>
@@ -235,7 +252,7 @@ export default function MatchPage() {
               {results.length === 0 ? (
                 <Status>No one matches those filters yet. Try a different slot.</Status>
               ) : (
-                <Grid matches={results} max={92} />
+                <Grid matches={results} max={92} onView={viewProfile} />
               )}
             </div>
           )}
