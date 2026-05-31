@@ -26,6 +26,8 @@ export type MatchBreakdown = {
 export type Match = {
   userId: string; // the candidate's profile id
   name: string;
+  level: string | null; // 'beginner' | 'intermediate' | 'advanced' | null
+  residence: string | null; // their house / dorm, for the card subtitle
   score: number; // browse: out of 100, session search: out of 92
   breakdown: MatchBreakdown;
 };
@@ -43,6 +45,8 @@ export type SessionMatchParams = {
 type RpcRow = {
   candidate_id: string;
   name: string;
+  level: string | null;
+  residence: string | null;
   score: number | string;
   interests_pts: number | string;
   concentration_pts: number | string;
@@ -67,7 +71,14 @@ function toMatch(r: RpcRow): Match {
     training: num(r.training_pts),
   };
   if (r.schedule_pts != null) breakdown.schedule = num(r.schedule_pts);
-  return { userId: r.candidate_id, name: r.name, score: num(r.score), breakdown };
+  return {
+    userId: r.candidate_id,
+    name: r.name,
+    level: r.level,
+    residence: r.residence,
+    score: num(r.score),
+    breakdown,
+  };
 }
 
 /** Function 1 — all compatible partners, scored out of 100, best first. */

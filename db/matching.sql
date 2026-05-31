@@ -111,7 +111,12 @@ $$;
 --    real universities arrive, change ONLY this expression to read the real
 --    column — nothing downstream changes.
 -- ---------------------------------------------------------------------------
-create or replace view public.match_profiles as
+-- Drop dependents first so re-running can change the view's / functions' shape.
+drop function if exists public.match_browse(uuid);
+drop function if exists public.match_session_search(uuid, text, text, text, text, text);
+drop view if exists public.match_profiles;
+
+create view public.match_profiles as
 select
   p.id,
   coalesce(p.data->>'name', '')                                   as name,
@@ -131,6 +136,7 @@ select
   nullif(p.data->>'concentration', '')                          as concentration,
   nullif(p.data->>'hometownCountry', '')                        as country,
   public.match_region(nullif(p.data->>'hometownCountry', ''))   as region,
+  nullif(p.data->>'residence', '')                             as residence,
   coalesce(p.data->'topGyms', '[]'::jsonb)                      as top_gyms,
   coalesce(p.data->'interests', '[]'::jsonb)                    as interests,
   coalesce(p.data->'languages', '[]'::jsonb)                    as languages,
@@ -150,6 +156,8 @@ create or replace function public.match_browse(searcher_id uuid)
 returns table (
   candidate_id      uuid,
   name              text,
+  level             text,
+  residence         text,
   score             numeric,
   interests_pts     numeric,
   concentration_pts numeric,
@@ -171,6 +179,8 @@ as $$
   select
     c.id,
     c.name,
+    c.level,
+    c.residence,
     round(comp.interests + comp.concentration + comp.origin + comp.languages
           + comp.gym + comp.level + comp.schedule + comp.training, 1) as score,
     round(comp.interests, 1),
@@ -285,6 +295,8 @@ create or replace function public.match_session_search(
 returns table (
   candidate_id      uuid,
   name              text,
+  level             text,
+  residence         text,
   score             numeric,
   interests_pts     numeric,
   concentration_pts numeric,
@@ -305,6 +317,8 @@ as $$
   select
     c.id,
     c.name,
+    c.level,
+    c.residence,
     round(comp.interests + comp.concentration + comp.origin + comp.languages
           + comp.gym + comp.level + comp.training, 1) as score,
     round(comp.interests, 1),
