@@ -68,6 +68,26 @@ export const IconArrowRight = (p: IconProps) => (
   </Base>
 );
 
+export const IconFlag = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M5 21V4M5 4h11l-2 4 2 4H5" />
+  </Base>
+);
+
+export const IconBulb = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M9 18h6M10 21h4" />
+    <path d="M8 14a5 5 0 1 1 8 0c-.7.9-1 1.6-1 3H9c0-1.4-.3-2.1-1-3z" />
+  </Base>
+);
+
+export const IconCheckCircle = (p: IconProps) => (
+  <Base {...p}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M8.5 12.5l2.5 2.5 4.5-5" />
+  </Base>
+);
+
 export const IconHeart = ({ filled, ...p }: IconProps & { filled?: boolean }) => (
   <Base {...p} fill={filled ? "currentColor" : "none"}>
     <path d="M12 20s-7-4.4-7-9a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 4.6-7 9-7 9z" />
