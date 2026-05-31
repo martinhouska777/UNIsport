@@ -93,13 +93,21 @@ $$;
 -- ---------------------------------------------------------------------------
 -- 2. Gender-preference helper. Stored values are lowercased: gender is
 --    'male'/'female'; pref is 'any'/'male'/'female' (missing/blank = 'any').
+--
+--    Permissive on missing data: only EXCLUDE when the preference is a concrete
+--    'male'/'female' AND the other person's gender is known AND they conflict.
+--    A blank/null preference means "no preference"; a blank/null gender (the
+--    user skipped the question) must NOT be filtered out — otherwise a single
+--    unanswered field silently removes a real person from everyone's results.
 -- ---------------------------------------------------------------------------
 create or replace function public.pref_allows(pref text, g text)
 returns boolean
 language sql
 immutable
 as $$
-  select pref is null or pref = '' or pref = 'any' or pref = g;
+  select pref is null or pref = '' or pref = 'any'  -- no concrete preference
+      or g is null or g = ''                        -- other gender unknown → allow
+      or pref = g;                                  -- concrete pref matches
 $$;
 
 -- ---------------------------------------------------------------------------

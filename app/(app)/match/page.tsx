@@ -54,8 +54,6 @@ export default function MatchPage() {
   useEffect(() => {
     if (!userId) return;
     let active = true;
-    setBrowse(null);
-    setBrowseErr(null);
     getBrowseMatches(userId)
       .then((rows) => active && setBrowse(rows))
       .catch((e) => active && setBrowseErr(e.message));
