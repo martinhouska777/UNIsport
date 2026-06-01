@@ -1,0 +1,1792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Universal College Fitness Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* Background */
+    --color-bg: #0A0A0A;
+    --color-bg-elevated: #111111;
+    --color-surface: #141414;
+
+    /* Borders */
+    --color-border: #1F1F1F;
+    --color-border-hover: #2A2A2A;
+
+    /* Text */
+    --color-text-primary: #F5F5F5;
+    --color-text-secondary: #888888;
+    --color-text-tertiary: #555555;
+
+    /* Accents */
+    --color-accent: #4A9EFF;
+    --color-accent-dim: rgba(74, 158, 255, 0.1);
+    --color-accent-soft: rgba(74, 158, 255, 0.2);
+    --color-success: #34D399;
+    --color-warn: #FBBF24;
+    --color-danger: #EF4444;
+
+    /* Varsity */
+    --color-varsity: #E0C896;
+    --color-varsity-dim: rgba(224, 200, 150, 0.08);
+    --color-varsity-soft: rgba(224, 200, 150, 0.2);
+
+    /* Fonts */
+    --font-display: 'Instrument Serif', serif;
+    --font-body: 'Geist', sans-serif;
+    --font-mono: 'Geist Mono', monospace;
+
+    /* Layout */
+    --max-width: 1280px;
+    --pad-x: 32px;
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--color-bg);
+    color: var(--color-text-primary);
+    font-family: var(--font-body);
+    font-weight: 400;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+  }
+
+  /* Subtle technical grid overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Faint horizontal divider helper */
+  .divider {
+    border-top: 1px solid var(--color-border);
+  }
+
+  /* ============ NAVBAR ============ */
+  .nav {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    background: rgba(10, 10, 10, 0.75);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .nav-inner {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 18px var(--pad-x);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .wordmark {
+    font-family: var(--font-display);
+    font-size: 24px;
+    font-style: italic;
+    letter-spacing: -0.02em;
+    color: var(--color-text-primary);
+    cursor: pointer;
+  }
+  .wordmark span { color: var(--color-accent); }
+
+  .nav-cta {
+    background: var(--color-text-primary);
+    color: var(--color-bg);
+    border: none;
+    padding: 10px 18px;
+    border-radius: 100px;
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    letter-spacing: -0.01em;
+  }
+  .nav-cta:hover {
+    background: var(--color-accent);
+    color: var(--color-text-primary);
+  }
+
+  /* ============ HERO ============ */
+  .hero {
+    position: relative;
+    min-height: 88vh;
+    padding: 64px var(--pad-x) 96px;
+    max-width: var(--max-width);
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 80px;
+    align-items: center;
+    z-index: 1;
+  }
+
+  .hero::after {
+    content: '';
+    position: absolute;
+    top: 25%;
+    right: 5%;
+    width: 700px;
+    height: 700px;
+    background: radial-gradient(circle, var(--color-accent-dim) 0%, transparent 60%);
+    filter: blur(80px);
+    z-index: -1;
+    pointer-events: none;
+  }
+
+  .hero-content {
+    animation: fadeUp 0.9s ease-out both;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    background: var(--color-accent-dim);
+    border: 1px solid var(--color-accent-soft);
+    border-radius: 100px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-accent);
+    margin-bottom: 28px;
+  }
+  .eyebrow-dot {
+    width: 6px;
+    height: 6px;
+    background: var(--color-accent);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+    box-shadow: 0 0 8px var(--color-accent);
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .headline {
+    font-family: var(--font-display);
+    font-size: clamp(56px, 7.2vw, 88px);
+    line-height: 0.98;
+    letter-spacing: -0.03em;
+    color: var(--color-text-primary);
+    margin-bottom: 20px;
+    font-weight: 400;
+  }
+  .headline em {
+    font-style: italic;
+    color: var(--color-accent);
+  }
+
+  .scope-line {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-text-tertiary);
+    margin-bottom: 24px;
+  }
+  .scope-line span { color: var(--color-text-secondary); }
+
+  .subhead {
+    font-size: 19px;
+    line-height: 1.5;
+    color: var(--color-text-secondary);
+    max-width: 500px;
+    margin-bottom: 40px;
+    letter-spacing: -0.01em;
+  }
+
+  .cta-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 48px;
+  }
+
+  .cta-primary {
+    background: var(--color-accent);
+    color: var(--color-text-primary);
+    border: none;
+    padding: 16px 28px;
+    border-radius: 100px;
+    font-family: var(--font-body);
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    letter-spacing: -0.01em;
+  }
+  .cta-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(74, 158, 255, 0.25);
+  }
+  .cta-primary svg { transition: transform 0.2s ease; }
+  .cta-primary:hover svg { transform: translateX(3px); }
+
+  .cta-secondary {
+    background: transparent;
+    color: var(--color-text-secondary);
+    border: none;
+    padding: 16px 8px;
+    font-family: var(--font-body);
+    font-size: 15px;
+    cursor: pointer;
+    transition: color 0.2s ease;
+    text-decoration: none;
+  }
+  .cta-secondary:hover { color: var(--color-text-primary); }
+
+  .university-strip {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding-top: 28px;
+    border-top: 1px solid var(--color-border);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--color-text-tertiary);
+    letter-spacing: 0.05em;
+  }
+  .university-strip-label { text-transform: uppercase; }
+  .university-strip-list { color: var(--color-text-secondary); }
+  .university-strip-list span { margin: 0 6px; color: var(--color-text-tertiary); }
+
+  /* ============ PHONE MOCKUP ============ */
+  .phone-wrap {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .phone {
+    position: relative;
+    width: 340px;
+    height: 700px;
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border-hover);
+    border-radius: 44px;
+    padding: 12px;
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.04) inset,
+      0 40px 80px -20px rgba(0, 0, 0, 0.6),
+      0 20px 40px -10px rgba(74, 158, 255, 0.08);
+    transition: transform 0.4s ease, box-shadow 0.4s ease;
+    flex-shrink: 0;
+  }
+  .phone:hover {
+    transform: translateY(-4px);
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.04) inset,
+      0 50px 100px -20px rgba(0, 0, 0, 0.7),
+      0 24px 48px -10px rgba(74, 158, 255, 0.12);
+  }
+  .phone.varsity-phone {
+    width: 300px;
+    height: 620px;
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.04) inset,
+      0 40px 80px -20px rgba(0, 0, 0, 0.6),
+      0 20px 40px -10px rgba(224, 200, 150, 0.06);
+  }
+  .phone.varsity-phone:hover {
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.04) inset,
+      0 50px 100px -20px rgba(0, 0, 0, 0.7),
+      0 24px 48px -10px rgba(224, 200, 150, 0.1);
+  }
+
+  .phone-screen {
+    width: 100%;
+    height: 100%;
+    background: var(--color-bg);
+    border-radius: 32px;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .status-bar {
+    padding: 14px 24px 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--color-text-primary);
+    flex-shrink: 0;
+  }
+  .status-icons {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    opacity: 0.9;
+  }
+
+  .app-header { padding: 18px 20px 14px; flex-shrink: 0; }
+  .app-title {
+    font-family: var(--font-display);
+    font-size: 28px;
+    color: var(--color-text-primary);
+    letter-spacing: -0.02em;
+    margin-bottom: 2px;
+  }
+  .app-subtitle {
+    font-size: 13px;
+    color: var(--color-text-secondary);
+  }
+
+  .filter-row {
+    display: flex;
+    gap: 6px;
+    padding: 0 20px 16px;
+    flex-shrink: 0;
+  }
+  .pill {
+    padding: 7px 14px;
+    background: transparent;
+    border: 1px solid var(--color-border);
+    border-radius: 100px;
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    font-weight: 500;
+  }
+  .pill.active {
+    background: var(--color-text-primary);
+    color: var(--color-bg);
+    border-color: var(--color-text-primary);
+  }
+
+  .gym-list {
+    padding: 0 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  .gym-card {
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: 16px;
+    overflow: hidden;
+    position: relative;
+  }
+  .gym-card.featured { border-color: var(--color-accent-soft); }
+
+  .gym-image {
+    height: 120px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: flex-end;
+    padding: 12px;
+  }
+  .gym-image.mac {
+    background:
+      linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.7) 100%),
+      linear-gradient(135deg, #2a1f1f 0%, #1a0f12 50%, #0a0808 100%);
+  }
+  .gym-image.malkin {
+    background:
+      linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.7) 100%),
+      linear-gradient(135deg, #1f2a2f 0%, #0f1a1f 100%);
+  }
+  .gym-image::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      radial-gradient(circle at 20% 60%, rgba(255,255,255,0.04) 0%, transparent 30%),
+      radial-gradient(circle at 80% 40%, rgba(255,255,255,0.03) 0%, transparent 25%);
+  }
+
+  .crowd-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 9px;
+    background: rgba(10,10,10,0.7);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 100px;
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--color-text-primary);
+  }
+  .crowd-dot { width: 5px; height: 5px; border-radius: 50%; }
+  .crowd-dot.quiet { background: var(--color-success); }
+  .crowd-dot.moderate { background: var(--color-warn); }
+  .crowd-dot.busy { background: var(--color-danger); }
+
+  .gym-label {
+    position: relative;
+    z-index: 1;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.5);
+  }
+
+  .gym-info { padding: 12px 14px 14px; }
+  .gym-name {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--color-text-primary);
+    margin-bottom: 6px;
+  }
+  .gym-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 11px;
+    color: var(--color-text-secondary);
+  }
+  .gym-meta-divider {
+    width: 2px;
+    height: 2px;
+    background: var(--color-text-tertiary);
+    border-radius: 50%;
+  }
+  .star { color: var(--color-warn); }
+
+  .bottom-nav {
+    margin-top: auto;
+    padding: 12px 20px 18px;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    border-top: 1px solid var(--color-border);
+    background: var(--color-bg);
+    flex-shrink: 0;
+  }
+  .nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    font-size: 9px;
+    color: var(--color-text-tertiary);
+    letter-spacing: 0.04em;
+  }
+  .nav-item.active { color: var(--color-accent); }
+  .nav-item.varsity-active { color: var(--color-varsity); }
+  .nav-icon { width: 18px; height: 18px; opacity: 0.85; }
+
+  /* Annotations */
+  .annotation {
+    position: absolute;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--color-text-secondary);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+  .annotation-1 { top: 90px; right: -50px; }
+  .annotation-2 { bottom: 240px; left: -70px; }
+  .annotation-line {
+    width: 32px;
+    height: 1px;
+    background: linear-gradient(90deg, var(--color-border-hover), transparent);
+  }
+  .annotation-2 .annotation-line {
+    background: linear-gradient(-90deg, var(--color-border-hover), transparent);
+  }
+
+  /* ============ PLATFORM OVERVIEW STRIP ============ */
+  .overview {
+    background: var(--color-bg-elevated);
+    border-top: 1px solid var(--color-border);
+    border-bottom: 1px solid var(--color-border);
+    padding: 24px 0;
+    position: relative;
+    z-index: 1;
+  }
+  .overview-inner {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 0 var(--pad-x);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .overview-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-text-tertiary);
+    flex-shrink: 0;
+  }
+  .overview-pills {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .overview-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 100px;
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    transition: all 0.25s ease;
+    cursor: default;
+  }
+  .overview-pill:hover {
+    transform: translateY(-2px);
+    border-color: var(--color-border-hover);
+    color: var(--color-text-primary);
+  }
+  .overview-pill svg {
+    width: 14px;
+    height: 14px;
+    color: var(--color-accent);
+  }
+  .overview-pill.varsity-pill svg {
+    color: var(--color-varsity);
+  }
+  .overview-pill:hover svg { color: inherit; }
+
+  /* ============ SECTION HEADER PATTERN ============ */
+  .section-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-text-secondary);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .section-eyebrow::before {
+    content: '';
+    width: 24px;
+    height: 1px;
+    background: var(--color-accent);
+  }
+  .section-eyebrow.centered { justify-content: center; }
+
+  .section-title {
+    font-family: var(--font-display);
+    font-size: clamp(40px, 5vw, 56px);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    color: var(--color-text-primary);
+    font-weight: 400;
+    margin-bottom: 16px;
+    max-width: 760px;
+  }
+  .section-title em {
+    font-style: italic;
+    color: var(--color-text-secondary);
+  }
+
+  .section-subtitle {
+    font-size: 17px;
+    color: var(--color-text-secondary);
+    max-width: 580px;
+    line-height: 1.5;
+  }
+
+  /* ============ FEATURES (5 CARDS) ============ */
+  .features {
+    padding: 112px var(--pad-x);
+    max-width: var(--max-width);
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+  }
+
+  .features-header {
+    margin-bottom: 56px;
+  }
+
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+
+  .feature-card {
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: 20px;
+    padding: 28px 26px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .feature-card:hover {
+    border-color: var(--color-border-hover);
+    transform: translateY(-3px);
+  }
+  .feature-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--color-accent), transparent);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  .feature-card:hover::before { opacity: 0.5; }
+
+  .feature-card.varsity-card {
+    grid-column: span 1;
+  }
+  .feature-card.varsity-card::before {
+    background: linear-gradient(90deg, transparent, var(--color-varsity), transparent);
+  }
+
+  .feature-card.span-2 {
+    grid-column: span 1;
+  }
+
+  .feature-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 11px;
+    background: var(--color-accent-dim);
+    border: 1px solid var(--color-accent-soft);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-accent);
+    margin-bottom: 22px;
+  }
+  .feature-card.varsity-card .feature-icon {
+    background: var(--color-varsity-dim);
+    border-color: var(--color-varsity-soft);
+    color: var(--color-varsity);
+  }
+
+  .feature-number {
+    position: absolute;
+    top: 22px;
+    right: 26px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--color-text-tertiary);
+    letter-spacing: 0.1em;
+  }
+
+  .feature-title {
+    font-family: var(--font-display);
+    font-size: 24px;
+    letter-spacing: -0.02em;
+    color: var(--color-text-primary);
+    margin-bottom: 10px;
+    font-weight: 400;
+    line-height: 1.15;
+  }
+
+  .feature-desc {
+    font-size: 14.5px;
+    color: var(--color-text-secondary);
+    line-height: 1.5;
+  }
+
+  .feature-tag {
+    margin-top: 18px;
+    padding-top: 18px;
+    border-top: 1px solid var(--color-border);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--color-text-tertiary);
+    letter-spacing: 0.05em;
+  }
+  .feature-tag span { color: var(--color-accent); }
+  .feature-card.varsity-card .feature-tag span { color: var(--color-varsity); }
+
+  /* ============ VARSITY DEEP-DIVE ============ */
+  .varsity {
+    position: relative;
+    padding: 128px var(--pad-x);
+    background:
+      radial-gradient(ellipse at top right, var(--color-varsity-dim) 0%, transparent 50%),
+      radial-gradient(ellipse at bottom left, rgba(224, 200, 150, 0.04) 0%, transparent 50%),
+      var(--color-bg);
+    border-top: 1px solid var(--color-border);
+    border-bottom: 1px solid var(--color-border);
+    z-index: 1;
+    overflow: hidden;
+  }
+
+  .varsity-inner {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 80px;
+    align-items: center;
+  }
+
+  .varsity-content .section-eyebrow::before { background: var(--color-varsity); }
+  .varsity-content .section-eyebrow { color: var(--color-varsity); }
+
+  .varsity-title {
+    font-family: var(--font-display);
+    font-size: clamp(40px, 5.5vw, 60px);
+    line-height: 1.02;
+    letter-spacing: -0.02em;
+    color: var(--color-text-primary);
+    font-weight: 400;
+    margin-bottom: 20px;
+  }
+  .varsity-title em {
+    font-style: italic;
+    color: var(--color-varsity);
+  }
+
+  .varsity-subtitle {
+    font-size: 18px;
+    color: var(--color-text-secondary);
+    max-width: 520px;
+    margin-bottom: 32px;
+    line-height: 1.55;
+  }
+
+  .varsity-features {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-bottom: 36px;
+  }
+  .varsity-feature {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    font-size: 15px;
+    color: var(--color-text-primary);
+    line-height: 1.4;
+  }
+  .varsity-feature-bullet {
+    width: 5px;
+    height: 5px;
+    background: var(--color-varsity);
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 9px;
+    box-shadow: 0 0 6px var(--color-varsity);
+  }
+  .varsity-feature span {
+    color: var(--color-text-secondary);
+    margin-left: 4px;
+  }
+
+  .varsity-cta {
+    background: transparent;
+    color: var(--color-varsity);
+    border: 1px solid var(--color-varsity-soft);
+    padding: 14px 24px;
+    border-radius: 100px;
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .varsity-cta:hover {
+    background: var(--color-varsity-dim);
+    border-color: var(--color-varsity);
+    transform: translateY(-1px);
+  }
+  .varsity-cta svg { transition: transform 0.2s ease; }
+  .varsity-cta:hover svg { transform: translateX(3px); }
+
+  .varsity-meta {
+    margin-top: 24px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--color-text-tertiary);
+    letter-spacing: 0.06em;
+  }
+  .varsity-meta span { color: var(--color-text-secondary); }
+
+  /* Varsity phone content */
+  .countdown-row {
+    margin: 0 16px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-varsity-soft);
+    border-radius: 12px;
+  }
+  .countdown-label {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--color-text-tertiary);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .countdown-value {
+    font-family: var(--font-display);
+    font-size: 18px;
+    color: var(--color-varsity);
+    font-style: italic;
+  }
+  .weather-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 9px;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 100px;
+    font-size: 10px;
+    color: var(--color-text-secondary);
+    font-family: var(--font-mono);
+  }
+
+  .lineup-card {
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: 14px;
+    padding: 14px;
+    margin: 0 16px 10px;
+  }
+  .lineup-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--color-border);
+  }
+  .lineup-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--color-text-primary);
+  }
+  .lineup-tag {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--color-varsity);
+    letter-spacing: 0.08em;
+    padding: 3px 8px;
+    background: var(--color-varsity-dim);
+    border-radius: 100px;
+    text-transform: uppercase;
+  }
+  .lineup-seats {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .seat-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 8px;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+  }
+  .seat-num {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--color-varsity);
+    width: 14px;
+    text-align: center;
+  }
+  .seat-name {
+    font-size: 12px;
+    color: var(--color-text-primary);
+    flex: 1;
+  }
+  .seat-meta {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--color-text-secondary);
+  }
+
+  .session-card {
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-varsity-soft);
+    border-radius: 14px;
+    padding: 14px;
+    margin: 0 16px;
+  }
+  .session-title {
+    font-family: var(--font-display);
+    font-size: 17px;
+    color: var(--color-text-primary);
+    letter-spacing: -0.01em;
+    margin-bottom: 4px;
+  }
+  .session-time {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--color-varsity);
+    letter-spacing: 0.05em;
+    margin-bottom: 10px;
+  }
+  .session-meta-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding-top: 10px;
+    border-top: 1px solid var(--color-border);
+  }
+  .meta-block {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .meta-label {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--color-text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .meta-value {
+    font-size: 12px;
+    color: var(--color-text-primary);
+    font-weight: 500;
+  }
+
+  /* ============ HOW IT WORKS ============ */
+  .how {
+    padding: 128px var(--pad-x);
+    max-width: var(--max-width);
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+  }
+
+  .how-header {
+    text-align: center;
+    margin-bottom: 80px;
+  }
+  .how-header .section-title {
+    margin: 0 auto 16px;
+  }
+  .how-header .section-subtitle {
+    margin: 0 auto;
+  }
+
+  .how-steps {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    position: relative;
+  }
+
+  .how-steps::before {
+    content: '';
+    position: absolute;
+    top: 32px;
+    left: 12%;
+    right: 12%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--color-border-hover), var(--color-border-hover), transparent);
+  }
+
+  .step {
+    text-align: center;
+    padding: 0 20px;
+    position: relative;
+  }
+
+  .step-num {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 24px;
+    border-radius: 50%;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border-hover);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-style: italic;
+    color: var(--color-accent);
+    position: relative;
+    z-index: 1;
+  }
+
+  .step-title {
+    font-family: var(--font-display);
+    font-size: 24px;
+    letter-spacing: -0.02em;
+    color: var(--color-text-primary);
+    margin-bottom: 10px;
+    font-weight: 400;
+  }
+
+  .step-desc {
+    font-size: 15px;
+    color: var(--color-text-secondary);
+    max-width: 280px;
+    margin: 0 auto;
+    line-height: 1.5;
+  }
+
+  .step-mono {
+    margin-top: 16px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--color-text-tertiary);
+    letter-spacing: 0.08em;
+  }
+
+  /* ============ EXCLUSIVITY ============ */
+  .exclusivity {
+    padding: 160px var(--pad-x);
+    position: relative;
+    z-index: 1;
+    border-top: 1px solid var(--color-border);
+    border-bottom: 1px solid var(--color-border);
+  }
+  .exclusivity::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at center, var(--color-accent-dim) 0%, transparent 40%);
+    opacity: 0.6;
+    pointer-events: none;
+  }
+
+  .exclusivity-inner {
+    max-width: 880px;
+    margin: 0 auto;
+    text-align: center;
+    position: relative;
+  }
+
+  .exclusivity-mark {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 16px;
+    background: rgba(20,20,20,0.6);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid var(--color-border-hover);
+    border-radius: 100px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--color-text-secondary);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 40px;
+  }
+  .exclusivity-mark-dot {
+    width: 6px;
+    height: 6px;
+    background: var(--color-success);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--color-success);
+  }
+
+  .exclusivity-title {
+    font-family: var(--font-display);
+    font-size: clamp(48px, 6vw, 72px);
+    line-height: 1.02;
+    letter-spacing: -0.025em;
+    color: var(--color-text-primary);
+    font-weight: 400;
+    margin-bottom: 28px;
+  }
+  .exclusivity-title em {
+    font-style: italic;
+    color: var(--color-accent);
+  }
+
+  .exclusivity-body {
+    font-size: 18px;
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+    max-width: 620px;
+    margin: 0 auto;
+  }
+
+  /* ============ FINAL CTA ============ */
+  .final-cta {
+    padding: 160px var(--pad-x);
+    text-align: center;
+    position: relative;
+    z-index: 1;
+  }
+
+  .final-cta-inner {
+    max-width: 760px;
+    margin: 0 auto;
+  }
+
+  .final-cta-title {
+    font-family: var(--font-display);
+    font-size: clamp(56px, 7.5vw, 96px);
+    line-height: 0.98;
+    letter-spacing: -0.03em;
+    color: var(--color-text-primary);
+    font-weight: 400;
+    margin-bottom: 40px;
+  }
+  .final-cta-title em {
+    font-style: italic;
+    color: var(--color-accent);
+  }
+
+  .final-cta-button {
+    background: var(--color-accent);
+    color: var(--color-text-primary);
+    border: none;
+    padding: 20px 40px;
+    border-radius: 100px;
+    font-family: var(--font-body);
+    font-size: 17px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+  .final-cta-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(74, 158, 255, 0.3);
+  }
+  .final-cta-button svg { transition: transform 0.2s ease; }
+  .final-cta-button:hover svg { transform: translateX(3px); }
+
+  .final-cta-meta {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--color-text-tertiary);
+    letter-spacing: 0.06em;
+  }
+  .final-cta-meta span { color: var(--color-text-secondary); }
+
+  /* ============ FOOTER ============ */
+  .footer {
+    padding: 40px var(--pad-x);
+    border-top: 1px solid var(--color-border);
+    position: relative;
+    z-index: 1;
+  }
+  .footer-inner {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .footer-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--color-text-tertiary);
+    letter-spacing: 0.05em;
+  }
+  .footer-left .wordmark { font-size: 18px; }
+  .footer-divider {
+    width: 1px;
+    height: 14px;
+    background: var(--color-border);
+  }
+  .footer-right {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--color-text-tertiary);
+    letter-spacing: 0.05em;
+  }
+
+  /* ============ RESPONSIVE ============ */
+  @media (max-width: 1100px) {
+    .features-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 968px) {
+    .hero {
+      grid-template-columns: 1fr;
+      gap: 56px;
+      padding: 40px 24px 72px;
+    }
+    .nav-inner, .footer-inner { padding-left: 24px; padding-right: 24px; }
+    .features, .how, .exclusivity, .final-cta, .varsity, .overview-inner {
+      padding-left: 24px;
+      padding-right: 24px;
+    }
+    .features { padding-top: 72px; padding-bottom: 72px; }
+    .how { padding-top: 72px; padding-bottom: 72px; }
+    .varsity { padding-top: 88px; padding-bottom: 88px; }
+    .exclusivity, .final-cta { padding-top: 96px; padding-bottom: 96px; }
+
+    .features-grid { grid-template-columns: 1fr; }
+    .how-steps { grid-template-columns: 1fr; gap: 48px; }
+    .how-steps::before { display: none; }
+    .varsity-inner { grid-template-columns: 1fr; gap: 56px; }
+
+    .phone { width: 300px; height: 620px; }
+    .phone.varsity-phone { width: 280px; height: 580px; }
+    .annotation { display: none; }
+    .hero::after { width: 400px; height: 400px; right: -15%; }
+
+    .overview-inner { flex-direction: column; align-items: flex-start; gap: 16px; }
+  }
+
+  @media (max-width: 480px) {
+    .cta-row { flex-direction: column; align-items: stretch; }
+    .cta-primary { justify-content: center; }
+    .university-strip { flex-wrap: wrap; }
+    .footer-inner { flex-direction: column; align-items: flex-start; }
+    .nav-inner { padding: 14px 20px; }
+    .wordmark { font-size: 20px; }
+    .headline { font-size: clamp(44px, 11vw, 64px); }
+    .phone { width: 280px; height: 580px; }
+    .phone.varsity-phone { width: 260px; height: 540px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ NAVBAR ============ -->
+<nav class="nav">
+  <div class="nav-inner">
+    <div class="wordmark">[name<span>]</span></div>
+    <button class="nav-cta">Get Started</button>
+  </div>
+</nav>
+
+<!-- ============ HERO ============ -->
+<section class="hero">
+  <div class="hero-content">
+
+    <div class="eyebrow">
+      <span class="eyebrow-dot"></span>
+      The universal college fitness platform
+    </div>
+
+    <h1 class="headline">
+      Your campus.<br>
+      Your gym.<br>
+      <em>Your people.</em>
+    </h1>
+
+    <p class="scope-line">
+      For every student. <span>With a dedicated mode for varsity athletes.</span>
+    </p>
+
+    <p class="subhead">
+      Discover every gym on campus. Find a verified training partner. Log every session. Join the community that's already there — plus a gated mode built for varsity teams.
+    </p>
+
+    <div class="cta-row">
+      <button class="cta-primary">
+        Get started with .edu
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M3 7H11M11 7L7 3M11 7L7 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <a href="#how" class="cta-secondary">See how it works →</a>
+    </div>
+
+    <div class="university-strip">
+      <span class="university-strip-label">Starting at</span>
+      <span class="university-strip-list">
+        Harvard<span>·</span>Yale<span>·</span>MIT<span>·</span>Princeton
+      </span>
+    </div>
+  </div>
+
+  <!-- Hero phone -->
+  <div class="phone-wrap">
+
+    <div class="annotation annotation-1">
+      <span class="annotation-line"></span>
+      Real photos
+    </div>
+    <div class="annotation annotation-2">
+      Live crowd data
+      <span class="annotation-line"></span>
+    </div>
+
+    <div class="phone">
+      <div class="phone-screen">
+
+        <div class="status-bar">
+          <span>9:41</span>
+          <div class="status-icons">
+            <svg width="14" height="10" viewBox="0 0 14 10" fill="currentColor"><rect x="0" y="6" width="2" height="4" rx="0.5"/><rect x="3" y="4" width="2" height="6" rx="0.5"/><rect x="6" y="2" width="2" height="8" rx="0.5"/><rect x="9" y="0" width="2" height="10" rx="0.5"/></svg>
+            <svg width="14" height="10" viewBox="0 0 14 10" fill="currentColor"><path d="M7 8.5L0 2.5C2 0.5 4.5 0 7 0C9.5 0 12 0.5 14 2.5L7 8.5Z" opacity="0.9"/></svg>
+            <svg width="22" height="10" viewBox="0 0 22 10" fill="none"><rect x="0.5" y="0.5" width="19" height="9" rx="2" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="14" height="6" rx="1" fill="currentColor"/><rect x="20" y="3.5" width="1.5" height="3" rx="0.5" fill="currentColor"/></svg>
+          </div>
+        </div>
+
+        <div class="app-header">
+          <div class="app-title">Gyms</div>
+          <div class="app-subtitle">8 locations on campus</div>
+        </div>
+
+        <div class="filter-row">
+          <span class="pill active">All</span>
+          <span class="pill">Main</span>
+          <span class="pill">House</span>
+        </div>
+
+        <div class="gym-list">
+          <div class="gym-card featured">
+            <div class="gym-image mac">
+              <span class="crowd-badge"><span class="crowd-dot quiet"></span>Quiet</span>
+              <span class="gym-label">Main · Strength</span>
+            </div>
+            <div class="gym-info">
+              <div class="gym-name">Murr Athletic Center</div>
+              <div class="gym-meta">
+                <span><span class="star">★</span> 4.8</span>
+                <span class="gym-meta-divider"></span>
+                <span>6am – 11pm</span>
+                <span class="gym-meta-divider"></span>
+                <span>12 here now</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="gym-card">
+            <div class="gym-image malkin">
+              <span class="crowd-badge"><span class="crowd-dot moderate"></span>Moderate</span>
+              <span class="gym-label">Main · Cardio</span>
+            </div>
+            <div class="gym-info">
+              <div class="gym-name">Malkin Athletic Center</div>
+              <div class="gym-meta">
+                <span><span class="star">★</span> 4.6</span>
+                <span class="gym-meta-divider"></span>
+                <span>5am – 12am</span>
+                <span class="gym-meta-divider"></span>
+                <span>28 here now</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bottom-nav">
+          <div class="nav-item active">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+            Gyms
+          </div>
+          <div class="nav-item">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="3"/><circle cx="17" cy="11" r="3"/><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/></svg>
+            Match
+          </div>
+          <div class="nav-item">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
+            Messages
+          </div>
+          <div class="nav-item">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a4 4 0 014-4h8a4 4 0 014 4v2"/></svg>
+            Profile
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PLATFORM OVERVIEW STRIP ============ -->
+<div class="overview">
+  <div class="overview-inner">
+    <div class="overview-label">Five layers, one platform</div>
+    <div class="overview-pills">
+      <div class="overview-pill">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+        Gym Discovery
+      </div>
+      <div class="overview-pill">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="3"/><circle cx="17" cy="11" r="3"/><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/></svg>
+        Partner Matching
+      </div>
+      <div class="overview-pill">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-7"/></svg>
+        Session Logging
+      </div>
+      <div class="overview-pill">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
+        Community
+      </div>
+      <div class="overview-pill varsity-pill">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 010-5H6"/><path d="M18 9h1.5a2.5 2.5 0 000-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0012 0V2z"/></svg>
+        Varsity Mode
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ FIVE-LAYER FEATURE GRID ============ -->
+<section class="features">
+  <div class="features-header">
+    <div class="section-eyebrow">The platform</div>
+    <h2 class="section-title">Built for every student. <em>Made for every campus.</em></h2>
+    <p class="section-subtitle">A complete fitness platform with five layers, locked to your university by .edu verification. The deeper you go, the more it does.</p>
+  </div>
+
+  <div class="features-grid">
+
+    <article class="feature-card">
+      <span class="feature-number">01</span>
+      <div class="feature-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+          <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+          <path d="M9 22V12h6v10"/>
+        </svg>
+      </div>
+      <h3 class="feature-title">Every gym on campus, mapped.</h3>
+      <p class="feature-desc">Real photos, full equipment lists, hours, and live crowd levels — for every gym at your university, in one place.</p>
+      <p class="feature-tag">Shot by students <span>·</span> Updated weekly</p>
+    </article>
+
+    <article class="feature-card">
+      <span class="feature-number">02</span>
+      <div class="feature-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+          <circle cx="9" cy="7" r="3"/>
+          <circle cx="17" cy="11" r="3"/>
+          <path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/>
+        </svg>
+      </div>
+      <h3 class="feature-title">Find your training partner.</h3>
+      <p class="feature-desc">Matched by gym, schedule, level, and training type. Verified .edu only — no requests, no waiting, just train.</p>
+      <p class="feature-tag">Compatibility scored <span>·</span> AI-described matches</p>
+    </article>
+
+    <article class="feature-card">
+      <span class="feature-number">03</span>
+      <div class="feature-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+          <path d="M3 3v18h18"/>
+          <path d="M7 14l4-4 4 4 5-7"/>
+        </svg>
+      </div>
+      <h3 class="feature-title">Log every session. Build every plan.</h3>
+      <p class="feature-desc">Track lifts, runs, and workouts. Build your own programs. Streaks, calendar history, and personal records — all permanent.</p>
+      <p class="feature-tag">Snapchat-style streaks <span>·</span> Session calendar</p>
+    </article>
+
+    <article class="feature-card">
+      <span class="feature-number">04</span>
+      <div class="feature-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+          <path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/>
+        </svg>
+      </div>
+      <h3 class="feature-title">Your campus fitness feed.</h3>
+      <p class="feature-desc">Open channels for nutrition, form, PRs, and running. Everyone at your school is already in — no followers needed.</p>
+      <p class="feature-tag">5 open channels <span>·</span> Per-house leaderboard</p>
+    </article>
+
+    <article class="feature-card varsity-card">
+      <span class="feature-number">05</span>
+      <div class="feature-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+          <path d="M6 9H4.5a2.5 2.5 0 010-5H6"/>
+          <path d="M18 9h1.5a2.5 2.5 0 000-5H18"/>
+          <path d="M4 22h16"/>
+          <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/>
+          <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>
+          <path d="M18 2H6v7a6 6 0 0012 0V2z"/>
+        </svg>
+      </div>
+      <h3 class="feature-title">Varsity Mode — for athletes.</h3>
+      <p class="feature-desc">A gated upgrade for varsity teams. Training plans, lineups, performance data — unlocked by your team captain.</p>
+      <p class="feature-tag">Captain-approved <span>·</span> Sport-specific</p>
+    </article>
+
+  </div>
+</section>
+
+<!-- ============ VARSITY DEEP-DIVE ============ -->
+<section class="varsity">
+  <div class="varsity-inner">
+    <div class="varsity-content">
+      <div class="section-eyebrow">For varsity athletes</div>
+      <h2 class="varsity-title">And a mode built for <em>your sport.</em></h2>
+      <p class="varsity-subtitle">
+        Training plans, lineup builders, and performance data — replacing WhatsApp screenshots, Excel files, and lost notebooks with one tool athletes use every day. Gated by your team captain.
+      </p>
+
+      <div class="varsity-features">
+        <div class="varsity-feature">
+          <span class="varsity-feature-bullet"></span>
+          <div>Captain-approved access to your team's hub<span> — one tap, then unlocked.</span></div>
+        </div>
+        <div class="varsity-feature">
+          <span class="varsity-feature-bullet"></span>
+          <div>Lineup builder and daily training plan<span> — published instantly to every athlete.</span></div>
+        </div>
+        <div class="varsity-feature">
+          <span class="varsity-feature-bullet"></span>
+          <div>AI session logging from a single photo<span> — Concept 2, RP3, or watch upload.</span></div>
+        </div>
+        <div class="varsity-feature">
+          <span class="varsity-feature-bullet"></span>
+          <div>Permanent record for PRs, seat races, and injuries<span> — institutional memory, finally.</span></div>
+        </div>
+      </div>
+
+      <button class="varsity-cta">
+        Learn about Varsity Mode
+        <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
+          <path d="M3 7H11M11 7L7 3M11 7L7 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+
+      <p class="varsity-meta">Launching with Harvard Rowing<span> · </span>Built to scale to every varsity sport</p>
+    </div>
+
+    <!-- Varsity phone -->
+    <div class="phone-wrap">
+      <div class="phone varsity-phone">
+        <div class="phone-screen">
+
+          <div class="status-bar">
+            <span>7:14</span>
+            <div class="status-icons">
+              <svg width="14" height="10" viewBox="0 0 14 10" fill="currentColor"><rect x="0" y="6" width="2" height="4" rx="0.5"/><rect x="3" y="4" width="2" height="6" rx="0.5"/><rect x="6" y="2" width="2" height="8" rx="0.5"/><rect x="9" y="0" width="2" height="10" rx="0.5"/></svg>
+              <svg width="22" height="10" viewBox="0 0 22 10" fill="none"><rect x="0.5" y="0.5" width="19" height="9" rx="2" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="14" height="6" rx="1" fill="currentColor"/><rect x="20" y="3.5" width="1.5" height="3" rx="0.5" fill="currentColor"/></svg>
+            </div>
+          </div>
+
+          <div class="app-header">
+            <div class="app-title">Today</div>
+            <div class="app-subtitle">Varsity · Heavyweight squad</div>
+          </div>
+
+          <div class="countdown-row">
+            <div>
+              <div class="countdown-label">IRA Championship</div>
+              <div class="countdown-value">47 days</div>
+            </div>
+            <div class="weather-pill">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+              58° · Calm
+            </div>
+          </div>
+
+          <div class="lineup-card">
+            <div class="lineup-header">
+              <span class="lineup-title">1V — AM piece</span>
+              <span class="lineup-tag">Lineup</span>
+            </div>
+            <div class="lineup-seats">
+              <div class="seat-row">
+                <span class="seat-num">B</span>
+                <span class="seat-name">L. Bessler</span>
+                <span class="seat-meta">P · 5:47</span>
+              </div>
+              <div class="seat-row">
+                <span class="seat-num">7</span>
+                <span class="seat-name">O. Marcovitz</span>
+                <span class="seat-meta">S · 5:53</span>
+              </div>
+              <div class="seat-row">
+                <span class="seat-num">6</span>
+                <span class="seat-name">J. Brangan</span>
+                <span class="seat-meta">P · 5:53</span>
+              </div>
+              <div class="seat-row">
+                <span class="seat-num">5</span>
+                <span class="seat-name">A. Lykomitros</span>
+                <span class="seat-meta">S · 5:53</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="session-card">
+            <div class="session-title">6×500m @ 2k</div>
+            <div class="session-time">06:00 AM · Newell Boathouse</div>
+            <div class="session-meta-grid">
+              <div class="meta-block">
+                <span class="meta-label">Rate</span>
+                <span class="meta-value">32–36 spm</span>
+              </div>
+              <div class="meta-block">
+                <span class="meta-label">Rest</span>
+                <span class="meta-value">2:00 light</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="bottom-nav">
+            <div class="nav-item varsity-active">
+              <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+              Home
+            </div>
+            <div class="nav-item">
+              <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+              Calendar
+            </div>
+            <div class="nav-item">
+              <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
+              Log
+            </div>
+            <div class="nav-item">
+              <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="3"/><circle cx="17" cy="11" r="3"/><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/></svg>
+              Team
+            </div>
+            <div class="nav-item">
+              <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a4 4 0 014-4h8a4 4 0 014 4v2"/></svg>
+              Profile
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============ HOW IT WORKS ============ -->
+<section class="how" id="how">
+  <div class="how-header">
+    <div class="section-eyebrow centered">How it works</div>
+    <h2 class="section-title" style="margin: 0 auto 16px;">From verification to your first session in under <em>two minutes.</em></h2>
+    <p class="section-subtitle">No passwords. No social logins. Just your .edu email.</p>
+  </div>
+
+  <div class="how-steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <h3 class="step-title">Verify with .edu</h3>
+      <p class="step-desc">One magic link sent to your university email. No password to remember, no social login required.</p>
+      <p class="step-mono">30 SECONDS</p>
+    </div>
+
+    <div class="step">
+      <div class="step-num">2</div>
+      <h3 class="step-title">Set up your profile</h3>
+      <p class="step-desc">Your house, gym, schedule, training style, and level. Edit anything later from your profile tab.</p>
+      <p class="step-mono">60 SECONDS</p>
+    </div>
+
+    <div class="step">
+      <div class="step-num">3</div>
+      <h3 class="step-title">Find a partner. Train.</h3>
+      <p class="step-desc">Browse matches, search a specific session, open a community channel — start training right away.</p>
+      <p class="step-mono">RIGHT AWAY</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ EXCLUSIVITY ============ -->
+<section class="exclusivity">
+  <div class="exclusivity-inner">
+    <div class="exclusivity-mark">
+      <span class="exclusivity-mark-dot"></span>
+      Members-only
+    </div>
+    <h2 class="exclusivity-title">
+      Verified. Unofficial.<br>
+      Built by <em>students.</em>
+    </h2>
+    <p class="exclusivity-body">
+      Your .edu email is your membership. Every gym, every partner, every channel is locked to your campus. Officially unaffiliated with any university — by design.
+    </p>
+  </div>
+</section>
+
+<!-- ============ FINAL CTA ============ -->
+<section class="final-cta">
+  <div class="final-cta-inner">
+    <h2 class="final-cta-title">
+      Stop training <em>alone.</em>
+    </h2>
+    <button class="final-cta-button">
+      Get started with your .edu
+      <svg width="16" height="16" viewBox="0 0 14 14" fill="none">
+        <path d="M3 7H11M11 7L7 3M11 7L7 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+    <p class="final-cta-meta">Free for verified students<span> · </span>Available now at Harvard</p>
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-left">
+      <div class="wordmark">[name<span>]</span></div>
+      <div class="footer-divider"></div>
+      <span>Built at Harvard, for every campus</span>
+    </div>
+    <div class="footer-right">
+      Officially unaffiliated with Harvard University
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

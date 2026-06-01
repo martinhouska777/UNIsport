@@ -40,6 +40,85 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/*
+  LANDING TOKENS (Zone 1 marketing front-door) — scoped, additive.
+  The mockup's hardcoded hex maps to these tokens here at the token layer;
+  landing components only ever use the resulting `l-*` utilities (rule 1).
+  These DO NOT touch the app theme above. Two product-brand accents:
+  blue (student) and gold (varsity) — neutral brand, no university colors.
+*/
+@theme inline {
+  --color-l-bg: #0a0a0a;
+  --color-l-bg-elevated: #111111;
+  --color-l-surface: #141414;
+  --color-l-border: #1f1f1f;
+  --color-l-border-hover: #2a2a2a;
+  --color-l-text: #f5f5f5;
+  --color-l-text-2: #888888;
+  --color-l-text-3: #555555;
+  --color-l-accent: #4a9eff;
+  --color-l-accent-dim: rgba(74, 158, 255, 0.1);
+  --color-l-accent-soft: rgba(74, 158, 255, 0.2);
+  --color-l-success: #34d399;
+  --color-l-warn: #fbbf24;
+  --color-l-danger: #ef4444;
+  --color-l-varsity: #e0c896;
+  --color-l-varsity-dim: rgba(224, 200, 150, 0.08);
+  --color-l-varsity-soft: rgba(224, 200, 150, 0.2);
+  --font-display: var(--font-instrument-serif);
+}
+
+/* Faint technical grid overlay used behind the landing. */
+.l-grid::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+  background-size: 48px 48px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Soft brand glow blobs (accent / varsity), applied to a positioned parent. */
+.l-glow-accent::after {
+  content: "";
+  position: absolute;
+  top: 25%;
+  right: 5%;
+  width: 700px;
+  height: 700px;
+  background: radial-gradient(circle, var(--color-l-accent-dim) 0%, transparent 60%);
+  filter: blur(80px);
+  z-index: -1;
+  pointer-events: none;
+}
+
+@keyframes l-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.l-pulse { animation: l-pulse 2s infinite; }
+
+@keyframes l-fade-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.l-fade-up { animation: l-fade-up 0.9s ease-out both; }
+
+/* Placeholder gym-photo gradients for the in-phone mockup screens. */
+.l-gym-mac {
+  background:
+    linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.7) 100%),
+    linear-gradient(135deg, #2a1f1f 0%, #1a0f12 50%, #0a0808 100%);
+}
+.l-gym-malkin {
+  background:
+    linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.7) 100%),
+    linear-gradient(135deg, #1f2a2f 0%, #0f1a1f 100%);
+}
+
 body {
   background: var(--background);
   color: var(--text);
