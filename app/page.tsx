@@ -4,6 +4,10 @@ import Hero from "@/components/landing/Hero";
 import OverviewStrip from "@/components/landing/OverviewStrip";
 import Features from "@/components/landing/Features";
 import VarsitySection from "@/components/landing/VarsitySection";
+import HowItWorks from "@/components/landing/HowItWorks";
+import Exclusivity from "@/components/landing/Exclusivity";
+import FinalCta from "@/components/landing/FinalCta";
+import LandingFooter from "@/components/landing/LandingFooter";
 
 /*
   ZONE 1 — the public landing (marketing front-door). Neutral product brand
@@ -23,7 +27,11 @@ export default function LandingPage() {
         <OverviewStrip />
         <Features />
         <VarsitySection />
+        <HowItWorks />
+        <Exclusivity />
+        <FinalCta />
       </main>
+      <LandingFooter />
     </div>
   );
 }
