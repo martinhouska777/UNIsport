@@ -5,6 +5,10 @@
   (a day's AM or PM), then build one or more BOATS for it by filling seats from
   the ATHLETE POOL, and publish. Later this comes from the DB; for now it's mock.
 
+  There is ONE roster keyed by id. Boats reference athletes by id and the pool
+  shows whoever isn't currently seated — so a name can move between the pool and a
+  seat (by typing or dragging) and only ever appear in one place.
+
   Rowing "side" (Port / Starboard / Both) is a per-athlete CONTENT property, so
   its colors live HERE as data and are applied via inline style — the same
   rule-1 exception the plan/profile screens use (port has no theme token).
@@ -18,11 +22,62 @@ export const sideMeta: Record<Side, { label: string; color: string }> = {
   B: { label: "Both", color: "#d4a843" },
 };
 
+/* ── The roster (every assignable athlete, keyed by id) ── */
+export type Athlete = {
+  id: string;
+  initials: string;
+  name: string;
+  side: Side;
+  out?: "INJ" | "SICK"; // unavailable today → shown dimmed, can't be seated
+};
+
+export const roster: Athlete[] = [
+  // 1V — currently seated
+  { id: "MK", initials: "MK", name: "M. Klein", side: "S" },
+  { id: "JR", initials: "JR", name: "J. Reyes", side: "P" },
+  { id: "TW", initials: "TW", name: "T. Walsh", side: "S" },
+  { id: "NC", initials: "NC", name: "N. Chen", side: "P" },
+  { id: "DH", initials: "DH", name: "D. Hunt", side: "S" },
+  { id: "LB", initials: "LB", name: "L. Berg", side: "P" },
+  { id: "SL", initials: "SL", name: "S. Liu", side: "B" },
+  // 2V
+  { id: "OM", initials: "OM", name: "O. Mahon", side: "P" },
+  { id: "PS", initials: "PS", name: "P. Singh", side: "S" },
+  { id: "BF", initials: "BF", name: "B. Foster", side: "S" },
+  { id: "RN", initials: "RN", name: "R. Nash", side: "P" },
+  { id: "KT", initials: "KT", name: "K. Tan", side: "B" },
+  // 3V
+  { id: "CV", initials: "CV", name: "C. Vo", side: "S" },
+  { id: "FM", initials: "FM", name: "F. Moss", side: "P" },
+  { id: "ML", initials: "ML", name: "M. Lowe", side: "S" },
+  { id: "JG", initials: "JG", name: "J. Goss", side: "P" },
+  // 4V
+  { id: "HE", initials: "HE", name: "H. Espo", side: "S" },
+  { id: "DM", initials: "DM", name: "D. Marsh", side: "P" },
+  // out today
+  { id: "BW", initials: "BW", name: "B. Walsh", side: "S", out: "INJ" },
+  { id: "AV", initials: "AV", name: "A. Vicino", side: "P", out: "SICK" },
+];
+
+export const rosterById: Record<string, Athlete> = Object.fromEntries(
+  roster.map((a) => [a.id, a]),
+);
+
+// How the pool is grouped (by each athlete's last lineup). Seated athletes drop
+// out of their group automatically; removing one returns it here.
+export const rosterGroups: { label: string; danger?: boolean; ids: string[] }[] = [
+  { label: "1V — Current lineup", ids: ["MK", "JR", "TW", "NC", "DH", "LB"] },
+  { label: "Coxswains", ids: ["SL"] },
+  { label: "2V — Last lineup", ids: ["OM", "PS", "BF", "RN", "KT"] },
+  { label: "3V — Last lineup", ids: ["CV", "FM", "ML", "JG"] },
+  { label: "4V — Last lineup", ids: ["HE", "DM"] },
+  { label: "Unavailable today", danger: true, ids: ["BW", "AV"] },
+];
+
 /* ── The practice picker (entry screen) ── */
 export type PracticeStatus = "draft" | "published" | "none" | "rest";
 
 export const practiceStatusMeta: Record<PracticeStatus, { label: string; dot: string }> = {
-  // dot color → theme token class
   draft: { label: "Draft", dot: "bg-warn" },
   published: { label: "Published", dot: "bg-success" },
   none: { label: "Not started", dot: "bg-muted/50" },
@@ -88,18 +143,26 @@ export const boatShape: Record<BoatType, { rowers: number; cox: boolean }> = {
   "2-": { rowers: 2, cox: false },
 };
 
-export type Athlete = { initials: string; name: string; side: Side };
-export type Seat = { label: string; athlete?: Athlete }; // label = "1"…"S" (stroke)
-
+export type SeatSlot = { label: string; athleteId: string | null }; // label "1"…"S" (stroke)
 export type Boat = {
   id: string;
   badge: BoatType;
   name: string;
   dock: string;
-  seats: Seat[];
-  cox?: Athlete;
-  note?: string;
+  note: string;
+  seats: SeatSlot[];
+  hasCox: boolean;
+  coxId: string | null;
 };
+
+// Build the empty seat list for a rigging ("1".."7","S", last = stroke).
+export function makeSeats(type: BoatType): SeatSlot[] {
+  const { rowers } = boatShape[type];
+  return Array.from({ length: rowers }, (_, i) => ({
+    label: i === rowers - 1 ? "S" : String(i + 1),
+    athleteId: null,
+  }));
+}
 
 // The session this practice prescribes (pulled from the training plan).
 export const sessionContext = {
@@ -115,59 +178,17 @@ export const initialBoats: Boat[] = [
     name: "1V Eight",
     dock: "7:00am",
     note: "Drive sequence — slow the slide on the recovery.",
-    cox: { initials: "SL", name: "S. Liu", side: "B" },
+    hasCox: true,
+    coxId: "SL",
     seats: [
-      { label: "1", athlete: { initials: "MK", name: "M. Klein", side: "S" } },
-      { label: "2", athlete: { initials: "JR", name: "J. Reyes", side: "P" } },
-      { label: "3", athlete: { initials: "TW", name: "T. Walsh", side: "S" } },
-      { label: "4" },
-      { label: "5", athlete: { initials: "NC", name: "N. Chen", side: "P" } },
-      { label: "6", athlete: { initials: "DH", name: "D. Hunt", side: "S" } },
-      { label: "7" },
-      { label: "S", athlete: { initials: "LB", name: "L. Berg", side: "P" } },
+      { label: "1", athleteId: "MK" },
+      { label: "2", athleteId: "JR" },
+      { label: "3", athleteId: "TW" },
+      { label: "4", athleteId: null },
+      { label: "5", athleteId: "NC" },
+      { label: "6", athleteId: "DH" },
+      { label: "7", athleteId: null },
+      { label: "S", athleteId: "LB" },
     ],
   },
 ];
-
-/* ── The athlete pool, grouped by their last lineup ── */
-export type PoolAthlete = Athlete & { out?: "INJ" | "SICK" };
-export type PoolGroup = { label: string; danger?: boolean; athletes: PoolAthlete[] };
-
-export const pool: PoolGroup[] = [
-  {
-    label: "2V — Last lineup",
-    athletes: [
-      { initials: "OM", name: "O. Mahon", side: "P" },
-      { initials: "PS", name: "P. Singh", side: "S" },
-      { initials: "BF", name: "B. Foster", side: "S" },
-      { initials: "RN", name: "R. Nash", side: "P" },
-      { initials: "KT", name: "K. Tan", side: "B" },
-    ],
-  },
-  {
-    label: "3V — Last lineup",
-    athletes: [
-      { initials: "CV", name: "C. Vo", side: "S" },
-      { initials: "FM", name: "F. Moss", side: "P" },
-      { initials: "ML", name: "M. Lowe", side: "S" },
-      { initials: "JG", name: "J. Goss", side: "P" },
-    ],
-  },
-  {
-    label: "4V — Last lineup",
-    athletes: [
-      { initials: "HE", name: "H. Espo", side: "S" },
-      { initials: "DM", name: "D. Marsh", side: "P" },
-    ],
-  },
-  {
-    label: "Unavailable today",
-    danger: true,
-    athletes: [
-      { initials: "BW", name: "B. Walsh", side: "S", out: "INJ" },
-      { initials: "AV", name: "A. Vicino", side: "P", out: "SICK" },
-    ],
-  },
-];
-
-export const poolCount = { available: 14, out: 2 };
