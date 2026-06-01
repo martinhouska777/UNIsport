@@ -2,6 +2,8 @@ import { instrumentSerif } from "@/components/landing/fonts";
 import LandingNav from "@/components/landing/LandingNav";
 import Hero from "@/components/landing/Hero";
 import OverviewStrip from "@/components/landing/OverviewStrip";
+import Features from "@/components/landing/Features";
+import VarsitySection from "@/components/landing/VarsitySection";
 
 /*
   ZONE 1 — the public landing (marketing front-door). Neutral product brand
@@ -19,6 +21,8 @@ export default function LandingPage() {
       <main className="relative">
         <Hero />
         <OverviewStrip />
+        <Features />
+        <VarsitySection />
       </main>
     </div>
   );
