@@ -16,7 +16,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import ThemeProvider from "@/components/ThemeProvider";
-import { varsityTheme } from "@/lib/varsity/theme";
+import { varsityTheme, varsityLightTheme } from "@/lib/varsity/theme";
 import { useAppState } from "@/components/AppState";
 import { fetchPlan, type Plan } from "@/lib/varsity/planStore";
 import { prescribedForDay } from "@/lib/varsity/athleteHome";
@@ -335,7 +335,12 @@ function LogEditor({
     </div>
   );
 
-  return createPortal(<ThemeProvider tokens={varsityTheme}>{overlay}</ThemeProvider>, document.body);
+  return createPortal(
+    <ThemeProvider tokens={varsityTheme} light={varsityLightTheme}>
+      {overlay}
+    </ThemeProvider>,
+    document.body,
+  );
 }
 
 /* ─────────────────────────  list rows  ───────────────────────── */

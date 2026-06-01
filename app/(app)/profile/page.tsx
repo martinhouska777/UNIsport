@@ -15,6 +15,7 @@ import {
   type CurrentUser,
   type Session,
 } from "@/lib/currentUser";
+import { ThemeModeToggle } from "@/components/ThemeMode";
 import { IconSettings, IconUser, IconCamera, IconPencil, IconPlus, IconArrowRight } from "@/components/icons";
 
 export default function ProfilePage() {
@@ -107,9 +108,12 @@ export default function ProfilePage() {
       {/* Top bar */}
       <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-surface px-3.5 py-3">
         <span className="text-base font-medium text-text">My Profile</span>
-        <button type="button" aria-label="Settings" className="text-muted">
-          <IconSettings size={18} />
-        </button>
+        <div className="flex items-center gap-2">
+          <ThemeModeToggle />
+          <button type="button" aria-label="Settings" className="text-muted">
+            <IconSettings size={18} />
+          </button>
+        </div>
       </div>
 
       {/* Identity block */}

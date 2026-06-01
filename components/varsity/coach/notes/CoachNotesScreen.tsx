@@ -15,7 +15,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import ThemeProvider from "@/components/ThemeProvider";
-import { varsityTheme } from "@/lib/varsity/theme";
+import { varsityTheme, varsityLightTheme } from "@/lib/varsity/theme";
 import {
   fetchTeamRoster,
   fetchNotes,
@@ -188,7 +188,12 @@ function Editor({
 
   // Portal to <body> with the varsity theme, so the full-screen editor escapes
   // the coach layout's stacking context (same fix as the plan session editor).
-  return createPortal(<ThemeProvider tokens={varsityTheme}>{overlay}</ThemeProvider>, document.body);
+  return createPortal(
+    <ThemeProvider tokens={varsityTheme} light={varsityLightTheme}>
+      {overlay}
+    </ThemeProvider>,
+    document.body,
+  );
 }
 
 /* ─────────────────────────  screen  ───────────────────────── */

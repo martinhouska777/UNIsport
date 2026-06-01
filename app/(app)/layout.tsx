@@ -26,10 +26,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   if (!ready || !loggedIn || !onboarded) return null;
 
-  const theme = getUniversity(universityKey)?.theme ?? neutralTheme;
+  const uni = getUniversity(universityKey);
+  const theme = uni?.theme ?? neutralTheme;
 
   return (
-    <ThemeProvider tokens={theme} className="flex h-dvh flex-col overflow-hidden bg-background">
+    <ThemeProvider
+      tokens={theme}
+      light={uni?.themeLight}
+      className="flex h-dvh flex-col overflow-hidden bg-background"
+    >
       <main className="flex flex-1 flex-col overflow-y-auto">{children}</main>
       <BottomNav />
     </ThemeProvider>

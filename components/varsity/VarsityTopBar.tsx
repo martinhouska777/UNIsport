@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import VarsityShield from "@/components/varsity/VarsityShield";
+import { ThemeModeToggle } from "@/components/ThemeMode";
 import { IconBell, IconArrowLeft } from "@/components/icons";
 
 /*
@@ -25,6 +26,7 @@ export default function VarsityTopBar() {
       </div>
 
       <div className="flex items-center gap-2">
+        <ThemeModeToggle />
         <button
           type="button"
           aria-label="Notifications"

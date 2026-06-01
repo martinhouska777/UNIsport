@@ -18,10 +18,11 @@ export default function OnboardingPage() {
 
   if (!ready || !loggedIn) return null;
 
-  const theme = getUniversity(universityKey)?.theme ?? neutralTheme;
+  const uni = getUniversity(universityKey);
+  const theme = uni?.theme ?? neutralTheme;
 
   return (
-    <ThemeProvider tokens={theme}>
+    <ThemeProvider tokens={theme} light={uni?.themeLight}>
       <OnboardingFlow />
     </ThemeProvider>
   );

@@ -29,5 +29,22 @@ export const varsityTheme: ThemeTokens = {
   danger: "#ef4444",
 };
 
+// Light-mode variant of Varsity Mode: same crimson + gold branding, neutrals
+// flipped to a near-white base; gold darkened so it reads on white.
+export const varsityLightTheme: ThemeTokens = {
+  background: "#f7f6f4",
+  surface: "#ffffff",
+  surface2: "#efedea",
+  border: "#e3e0db",
+  text: "#16140f",
+  muted: "#5f5b53",
+  primary: "#a51c30",
+  primaryContrast: "#ffffff",
+  accent: "#9a751c",
+  success: "#15803d",
+  warn: "#b45309",
+  danger: "#dc2626",
+};
+
 // Where Varsity Mode opens to, and where its bottom-nav tabs live.
 export const VARSITY_HOME = "/varsity/home";

@@ -44,7 +44,8 @@ export const neutralTheme: ThemeTokens = {
 export type University = {
   key: string;
   name: string;
-  theme: ThemeTokens;
+  theme: ThemeTokens; // the default (dark) look
+  themeLight?: ThemeTokens; // light-mode variant (same brand hues, inverted neutrals)
 };
 
 export const universities: Record<string, University> = {
@@ -65,6 +66,22 @@ export const universities: Record<string, University> = {
       success: "#22c55e",
       warn: "#f59e0b",
       danger: "#ef4444",
+    },
+    // Light theme: the neutrals flipped (near-black -> near-white), brand hues
+    // kept; the gold accent darkened so it reads on white.
+    themeLight: {
+      background: "#f6f6f7",
+      surface: "#ffffff",
+      surface2: "#edeef0",
+      border: "#e0e1e5",
+      text: "#15151a",
+      muted: "#606673",
+      primary: "#a51c30",
+      primaryContrast: "#ffffff",
+      accent: "#9a751c",
+      success: "#15803d",
+      warn: "#b45309",
+      danger: "#dc2626",
     },
   },
 };
