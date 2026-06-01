@@ -35,6 +35,24 @@ export type Slot = {
   loc?: string;
 } | null;
 
+// Where a session happens. ONLY on-water sessions need a boat lineup; land
+// sessions (erg, weights, flex) don't. The coach sets this per session in the
+// plan; below is a sensible default derived from the workout type + location.
+export type Venue = "water" | "land";
+export const venueMeta: Record<Venue, { label: string; short: string }> = {
+  water: { label: "On water", short: "Water" },
+  land: { label: "On land", short: "Land" },
+};
+
+const waterLocations = ["Newell", "CRI", "Florida"];
+export function defaultVenue(slot: Slot): Venue | null {
+  if (!slot || slot.type === "off") return null; // rest → no venue
+  if (slot.type === "water") return "water";
+  if (slot.type === "weights" || slot.type === "flex") return "land";
+  // erg-style pieces (ut2/ut1/thresh/hard): on water only if at a boathouse.
+  return slot.loc && waterLocations.some((w) => slot.loc!.includes(w)) ? "water" : "land";
+}
+
 export type PlanDay = { name: string; num: number; am: Slot; pm: Slot; today?: boolean };
 export type WeekChip = { type: WorkoutType; count: number };
 export type PlanWeek = { index: number; range: string; chips: WeekChip[]; days: PlanDay[] };
