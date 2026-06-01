@@ -14,6 +14,9 @@
   lib/varsity/coachPlan.ts (rule-1 exception), applied via inline style.
 */
 import { useMemo, useState } from "react";
+import { createPortal } from "react-dom";
+import ThemeProvider from "@/components/ThemeProvider";
+import { varsityTheme } from "@/lib/varsity/theme";
 import {
   categories,
   categoryMeta,
@@ -442,7 +445,8 @@ export default function TrainingPlanScreen() {
   /* ─────────────  session editor — FULL SCREEN (inlined, not a child component,
      so the description/note inputs keep focus while typing)  ───────────── */
   function renderEditor() {
-    if (!editor) return null;
+    // editor only opens on a click (client) — never during SSR, so document exists
+    if (!editor || typeof document === "undefined") return null;
     const cat = form.category;
     const sugg = cat ? suggestionsFor(cat, form.intensity) : [];
     const weekday = editor.date.toLocaleDateString("en-US", { weekday: "long" });
@@ -451,8 +455,8 @@ export default function TrainingPlanScreen() {
     const inputCls =
       "w-full rounded-xl border border-border bg-surface-2 px-3.5 py-3 text-base text-text outline-none focus:border-primary placeholder:text-muted";
     const labelCls = "mb-1.5 mt-4 text-[10px] font-semibold uppercase tracking-[0.1em] text-muted";
-    return (
-      <div className="fixed inset-0 z-50 flex h-dvh flex-col bg-background">
+    const overlay = (
+      <div className="fixed inset-0 z-[60] flex h-dvh flex-col bg-background">
         {/* header with back */}
         <div className="flex flex-shrink-0 items-center gap-2 border-b border-border px-4 py-3">
           <button type="button" onClick={() => setEditor(null)} className="flex items-center gap-1 text-[13px] text-muted">
@@ -599,5 +603,9 @@ export default function TrainingPlanScreen() {
         </div>
       </div>
     );
+    // Portal to <body> with the varsity theme, so the full-screen editor sits
+    // above the coach top bar + nav (escaping main's stacking context) and its
+    // colors still resolve.
+    return createPortal(<ThemeProvider tokens={varsityTheme}>{overlay}</ThemeProvider>, document.body);
   }
 }
