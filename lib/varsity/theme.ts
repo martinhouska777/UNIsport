@@ -21,7 +21,7 @@ export const varsityTheme: ThemeTokens = {
   border: "#1f1f1f",
   text: "#f0ebe3",
   muted: "#8a8a8a",
-  primary: "#a51c30", // Harvard crimson (oar blade)
+  primary: "#9e1b2e", // Harvard crimson (oar blade) — deep, not pink
   primaryContrast: "#ffffff", // white (oar chevron)
   accent: "#d4a843", // Harvard gold
   success: "#22c55e",
@@ -30,20 +30,22 @@ export const varsityTheme: ThemeTokens = {
 };
 
 // Light-mode variant of Varsity Mode: same crimson + gold branding, neutrals
-// flipped to a near-white base; gold darkened so it reads on white.
+// flipped to a near-white base. The crimson is pushed DEEPER (more black in it)
+// so it never reads as washed-out pink on white, and the text is near-black so
+// the light screens stay high-contrast.
 export const varsityLightTheme: ThemeTokens = {
-  background: "#f7f6f4",
+  background: "#f4f3f1",
   surface: "#ffffff",
-  surface2: "#efedea",
-  border: "#e3e0db",
-  text: "#16140f",
-  muted: "#5f5b53",
-  primary: "#a51c30",
+  surface2: "#eae8e4",
+  border: "#dcd8d2",
+  text: "#14120e",
+  muted: "#5c574e",
+  primary: "#911627", // deeper crimson for white backgrounds
   primaryContrast: "#ffffff",
-  accent: "#9a751c",
+  accent: "#8a6816",
   success: "#15803d",
   warn: "#b45309",
-  danger: "#dc2626",
+  danger: "#c81e2c",
 };
 
 // Where Varsity Mode opens to, and where its bottom-nav tabs live.

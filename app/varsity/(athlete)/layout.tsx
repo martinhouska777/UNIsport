@@ -18,7 +18,7 @@ import ThemeProvider from "@/components/ThemeProvider";
 import OarRails from "@/components/varsity/OarRails";
 import VarsityTopBar from "@/components/varsity/VarsityTopBar";
 import VarsityNav from "@/components/varsity/VarsityNav";
-import { varsityTheme } from "@/lib/varsity/theme";
+import { varsityTheme, varsityLightTheme } from "@/lib/varsity/theme";
 
 export default function VarsityLayout({ children }: { children: React.ReactNode }) {
   const { ready, loggedIn, onboarded } = useAppState();
@@ -35,6 +35,7 @@ export default function VarsityLayout({ children }: { children: React.ReactNode 
   return (
     <ThemeProvider
       tokens={varsityTheme}
+      light={varsityLightTheme}
       className="relative flex h-dvh flex-col overflow-hidden bg-background"
     >
       <OarRails />

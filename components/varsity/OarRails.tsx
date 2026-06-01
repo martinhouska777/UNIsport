@@ -24,8 +24,8 @@ function Oar() {
           fill="var(--primary-contrast)"
         />
       </svg>
-      {/* Oar shaft */}
-      <div className="w-[2px] flex-1 bg-primary" />
+      {/* Oar shaft — faint, so the rails read as a crisp mark, not a pink wash */}
+      <div className="w-[2px] flex-1 bg-text/10" />
     </div>
   );
 }
@@ -33,10 +33,10 @@ function Oar() {
 export default function OarRails() {
   return (
     <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-0">
-      <div className="absolute inset-y-3 left-1 opacity-40">
+      <div className="absolute inset-y-2 left-1">
         <Oar />
       </div>
-      <div className="absolute inset-y-3 right-1 opacity-40">
+      <div className="absolute inset-y-2 right-1">
         <Oar />
       </div>
     </div>
