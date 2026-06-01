@@ -55,7 +55,22 @@ export type Lineup = {
   cox: { init: string };
 };
 
-export const home = {
+export type Greeting = { date: string; name: string; block: string; week: string };
+export type Race = { name: string; location: string; count: number; unit: string };
+export type Focus = { coach: string; when: string; text: string; tags: string[] };
+
+// The full shape the Home screen renders. The athlete view builds this from the
+// published plan (lib/varsity/athleteHome.ts); the object below is demo data.
+export type HomeData = {
+  greeting: Greeting;
+  race: Race | null;
+  week: WeekDay[];
+  today: TodaySession[];
+  lineups: Lineup[];
+  focus: Focus;
+};
+
+export const home: HomeData = {
   greeting: {
     date: "Friday · May 22",
     name: "Martin",

@@ -6,9 +6,17 @@
   strip, today's prescribed sessions (with coach notes + watch-verify), the
   day's lineup, and the coach's weekly focus. All colors are theme tokens.
 */
+import { useEffect, useState } from "react";
+import { useAppState } from "@/components/AppState";
+import { fetchPlan, fetchProfileName } from "@/lib/varsity/planStore";
+import { buildAthleteHome } from "@/lib/varsity/athleteHome";
 import {
-  home,
   kindStyles,
+  type HomeData,
+  type Greeting as GreetingData,
+  type Race as RaceData,
+  type Focus as FocusData,
+  type WeekDay,
   type TodaySession,
   type SessionStatus,
   type Lineup,
@@ -21,6 +29,7 @@ import {
   IconMessage,
   IconBulb,
   IconX,
+  IconCalendar,
 } from "@/components/icons";
 
 const statusStyle: Record<
@@ -42,8 +51,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 }
 
 /* ─── Greeting ─── */
-function Greeting() {
-  const g = home.greeting;
+function Greeting({ g }: { g: GreetingData }) {
   return (
     <div className="flex items-end justify-between px-4 pb-1 pt-3">
       <div>
@@ -61,8 +69,7 @@ function Greeting() {
 }
 
 /* ─── Race countdown ─── */
-function RaceBar() {
-  const r = home.race;
+function RaceBar({ r }: { r: RaceData }) {
   return (
     <div className="mx-3 mt-2 flex items-center gap-3 rounded-xl border border-primary/35 bg-gradient-to-r from-primary/20 to-accent/10 px-3.5 py-2.5">
       <span className="text-primary">
@@ -83,7 +90,7 @@ function RaceBar() {
 }
 
 /* ─── Week strip ─── */
-function WeekStrip() {
+function WeekStrip({ week }: { week: WeekDay[] }) {
   return (
     <div className="px-3 pt-4">
       <div className="flex items-center justify-between px-0.5 pb-2">
@@ -96,7 +103,7 @@ function WeekStrip() {
         </div>
       </div>
       <div className="grid grid-cols-7 gap-1">
-        {home.week.map((d, i) => (
+        {week.map((d, i) => (
           <div
             key={i}
             className={`overflow-hidden rounded-lg border bg-surface ${
@@ -225,7 +232,7 @@ function LineupRow({ l }: { l: Lineup }) {
   );
 }
 
-function LineupCard() {
+function LineupCard({ lineups }: { lineups: Lineup[] }) {
   return (
     <div className="overflow-hidden rounded-xl border border-border bg-surface">
       <div className="flex items-center justify-between border-b border-border px-3 py-2.5">
@@ -233,7 +240,7 @@ function LineupCard() {
         <span className="text-[10px] text-muted">Tap seat to see athlete</span>
       </div>
       <div className="flex flex-col gap-3 px-3 py-3">
-        {home.lineups.map((l, i) => (
+        {lineups.map((l, i) => (
           <div key={i} className="flex flex-col gap-3">
             {i > 0 && <div className="h-px bg-border" />}
             <LineupRow l={l} />
@@ -245,8 +252,7 @@ function LineupCard() {
 }
 
 /* ─── Coach focus ─── */
-function CoachFocus() {
-  const f = home.focus;
+function CoachFocus({ f }: { f: FocusData }) {
   return (
     <div className="relative overflow-hidden rounded-xl border border-accent/25 bg-gradient-to-br from-accent/10 to-surface p-3.5">
       <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-accent to-transparent" />
@@ -274,29 +280,79 @@ function CoachFocus() {
   );
 }
 
+/* ─── Empty state (no published plan for this week) ─── */
+function EmptyHome() {
+  return (
+    <div className="mx-auto flex w-full max-w-screen-sm flex-col items-center px-6 pt-20 text-center">
+      <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary/15 text-primary">
+        <IconCalendar size={22} />
+      </div>
+      <div className="text-[15px] font-semibold text-text">No plan published yet</div>
+      <p className="mt-1 max-w-[18rem] text-[12px] leading-relaxed text-muted">
+        Your coach hasn&apos;t shared this week&apos;s training plan. It&apos;ll show up here as
+        soon as it&apos;s published.
+      </p>
+    </div>
+  );
+}
+
 export default function HomeScreen() {
+  const { userId } = useAppState();
+  const [data, setData] = useState<HomeData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      const [plan, firstName] = await Promise.all([fetchPlan(), fetchProfileName(userId)]);
+      if (!active) return;
+      setData(buildAthleteHome(plan, firstName));
+      setLoading(false);
+    })();
+    return () => {
+      active = false;
+    };
+  }, [userId]);
+
+  if (loading) {
+    return (
+      <div className="mx-auto w-full max-w-screen-sm px-4 pt-20 text-center text-[13px] text-muted">
+        Loading…
+      </div>
+    );
+  }
+  if (!data) return <EmptyHome />;
+
   return (
     <div className="mx-auto w-full max-w-screen-sm pb-6">
-      <Greeting />
-      <RaceBar />
-      <WeekStrip />
+      <Greeting g={data.greeting} />
+      {data.race && <RaceBar r={data.race} />}
+      <WeekStrip week={data.week} />
 
       <div className="flex items-center justify-between px-4 pb-2 pt-4">
         <SectionLabel>Today&apos;s Sessions</SectionLabel>
-        <span className="text-[10px] text-muted">Fri · 2 prescribed</span>
+        <span className="text-[10px] text-muted">
+          {data.today.length} prescribed
+        </span>
       </div>
-      <div className="flex flex-col gap-2 px-3">
-        {home.today.map((s, i) => (
-          <SessionCard key={i} s={s} />
-        ))}
+      {data.today.length > 0 ? (
+        <div className="flex flex-col gap-2 px-3">
+          {data.today.map((s, i) => (
+            <SessionCard key={i} s={s} />
+          ))}
+        </div>
+      ) : (
+        <div className="mx-3 rounded-xl border border-dashed border-border bg-surface px-4 py-5 text-center text-[12px] text-muted">
+          Nothing scheduled for today.
+        </div>
+      )}
+
+      <div className="px-3 pt-3">
+        <LineupCard lineups={data.lineups} />
       </div>
 
       <div className="px-3 pt-3">
-        <LineupCard />
-      </div>
-
-      <div className="px-3 pt-3">
-        <CoachFocus />
+        <CoachFocus f={data.focus} />
       </div>
     </div>
   );

@@ -13,7 +13,7 @@
   the DB later). Colors are theme tokens; workout colors are content colors from
   lib/varsity/coachPlan.ts (rule-1 exception), applied via inline style.
 */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import ThemeProvider from "@/components/ThemeProvider";
 import { varsityTheme } from "@/lib/varsity/theme";
@@ -42,6 +42,7 @@ import {
   type Period,
   type WeekRow,
 } from "@/lib/varsity/coachPlan";
+import { fetchPlan, savePlan } from "@/lib/varsity/planStore";
 import {
   IconPlus,
   IconArrowLeft,
@@ -51,20 +52,8 @@ import {
   IconCheck,
   IconCalendar,
   IconRepeat,
+  IconSend,
 } from "@/components/icons";
-
-// Plan persistence (local only until the DB) — the Save button writes here.
-const BLOCKS_KEY = "varsityPlanBlocks";
-const SESSIONS_KEY = "varsityPlanSessions";
-function loadStored<T>(key: string, fallback: T): T {
-  if (typeof window === "undefined") return fallback;
-  try {
-    const raw = window.localStorage.getItem(key);
-    return raw ? (JSON.parse(raw) as T) : fallback;
-  } catch {
-    return fallback;
-  }
-}
 
 type View =
   | { name: "blocks" }
@@ -94,32 +83,76 @@ function DraftBadge() {
 }
 
 export default function TrainingPlanScreen() {
-  const [blocks, setBlocks] = useState<Block[]>(() => loadStored<Block[]>(BLOCKS_KEY, []));
-  const [sessions, setSessions] = useState<SessionMap>(() => loadStored<SessionMap>(SESSIONS_KEY, {}));
+  const [blocks, setBlocks] = useState<Block[]>([]);
+  const [sessions, setSessions] = useState<SessionMap>({});
   const [view, setView] = useState<View>({ name: "blocks" });
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
+  // Load the shared plan from the database (or localStorage fallback) on mount.
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      const plan = await fetchPlan();
+      if (!active) return;
+      setBlocks(plan.blocks);
+      setSessions(plan.sessions);
+      setLoading(false);
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
+
   // Persist the whole plan (manual Save button, accessible while building).
-  const saveAll = () => {
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem(BLOCKS_KEY, JSON.stringify(blocks));
-      window.localStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions));
+  // Returns false if the save failed so callers (e.g. Publish) can react.
+  const persist = async (next?: { blocks?: Block[]; sessions?: SessionMap }) => {
+    setSaving(true);
+    const { error } = await savePlan({
+      blocks: next?.blocks ?? blocks,
+      sessions: next?.sessions ?? sessions,
+    });
+    setSaving(false);
+    if (error) {
+      console.error("savePlan:", error);
+      return false;
     }
     setSaved(true);
     window.setTimeout(() => setSaved(false), 1500);
+    return true;
   };
 
   const saveButton = (
     <button
       type="button"
-      onClick={saveAll}
-      className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[12px] font-semibold ${
+      onClick={() => persist()}
+      disabled={saving}
+      className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[12px] font-semibold disabled:opacity-50 ${
         saved ? "border-success/40 bg-success/10 text-success" : "border-primary/40 text-primary"
       }`}
     >
-      <IconCheck size={14} /> {saved ? "Saved" : "Save"}
+      <IconCheck size={14} /> {saving ? "Saving…" : saved ? "Saved" : "Save"}
     </button>
   );
+
+  // Publish a draft block: flip it to published, then persist so athletes see it.
+  const publishBlock = async (blockId: string) => {
+    const next = blocks.map((b) =>
+      b.id === blockId ? { ...b, status: "published" as const } : b,
+    );
+    setBlocks(next);
+    await persist({ blocks: next });
+  };
+
+  // Move a published block back to draft (hides it from athletes again).
+  const unpublishBlock = async (blockId: string) => {
+    const next = blocks.map((b) =>
+      b.id === blockId ? { ...b, status: "draft" as const } : b,
+    );
+    setBlocks(next);
+    await persist({ blocks: next });
+  };
 
   // editor sheet
   const [editor, setEditor] = useState<{ date: Date; period: Period } | null>(null);
@@ -210,6 +243,14 @@ export default function TrainingPlanScreen() {
     });
     setEditor(null);
   };
+
+  if (loading) {
+    return (
+      <div className="mx-auto w-full max-w-screen-sm px-4 pt-10 text-center text-[13px] text-muted">
+        Loading plan…
+      </div>
+    );
+  }
 
   /* ─────────────  view: blocks list  ───────────── */
   if (view.name === "blocks") {
@@ -369,6 +410,44 @@ export default function TrainingPlanScreen() {
             )}
           </div>
         )}
+
+        {/* publish status — controls whether athletes can see this block */}
+        <div className="mt-4 flex items-center gap-3 rounded-xl border border-border bg-surface px-3.5 py-3">
+          <div className="flex-1">
+            <div className="flex items-center gap-1.5 text-[12px] font-semibold text-text">
+              <span
+                className={`h-2 w-2 rounded-full ${
+                  block.status === "published" ? "bg-success" : "bg-warn"
+                }`}
+              />
+              {block.status === "published" ? "Published" : "Draft"}
+            </div>
+            <div className="mt-0.5 text-[10px] text-muted">
+              {block.status === "published"
+                ? "Athletes can see this week on their Home."
+                : "Only you can see this — publish to share it with the team."}
+            </div>
+          </div>
+          {block.status === "published" ? (
+            <button
+              type="button"
+              onClick={() => unpublishBlock(block.id)}
+              disabled={saving}
+              className="rounded-lg border border-border px-3 py-2 text-[12px] font-semibold text-muted disabled:opacity-50"
+            >
+              Unpublish
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => publishBlock(block.id)}
+              disabled={saving}
+              className="flex items-center gap-1.5 rounded-lg bg-primary px-3.5 py-2 text-[12px] font-semibold text-primary-contrast disabled:opacity-50"
+            >
+              <IconSend size={13} /> Publish to team
+            </button>
+          )}
+        </div>
 
         <div className="mt-5 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">Weeks</div>
         <div className="mt-2.5 flex flex-col gap-2">
