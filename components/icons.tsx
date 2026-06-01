@@ -267,6 +267,21 @@ export const IconCheck = (p: IconProps) => (
   </Base>
 );
 
+export const IconEye = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" />
+    <circle cx="12" cy="12" r="3" />
+  </Base>
+);
+
+export const IconDots = (p: IconProps) => (
+  <Base {...p}>
+    <circle cx="12" cy="5" r="1" />
+    <circle cx="12" cy="12" r="1" />
+    <circle cx="12" cy="19" r="1" />
+  </Base>
+);
+
 // Generic Harvard shield sigil (theme-colored), used as a fallback.
 export const IconShield = (p: IconProps) => (
   <Base {...p}>

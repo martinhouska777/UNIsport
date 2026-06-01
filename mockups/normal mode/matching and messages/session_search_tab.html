@@ -1,0 +1,255 @@
+
+<h2 class="sr-only">Session search tab with expandable filters and AI-described results</h2>
+<style>
+.phone{width:306px;background:#0a0a0a;border-radius:32px;overflow:hidden;border:6px solid #1c1c1c;}
+.wrap{display:flex;flex-direction:column;align-items:center;background:var(--color-background-secondary);padding:1.5rem 1rem;border-radius:12px;gap:10px;}
+.label{font-size:11px;color:var(--color-text-secondary);letter-spacing:0.06em;}
+.state-btn{background:#1a1a1a;border:0.5px solid #333;color:#aaa;border-radius:20px;padding:6px 18px;font-size:12px;cursor:pointer;margin:0 4px;}
+.state-btn.active{background:#A51C30;border-color:#A51C30;color:#fff;}
+.scroll{max-height:540px;overflow-y:auto;scrollbar-width:none;}
+.scroll::-webkit-scrollbar{display:none;}
+.pill{background:#1e1e1e;border-radius:14px;padding:5px 12px;font-size:11px;color:#666;border:0.5px solid #2a2a2a;cursor:pointer;}
+.pill.active{background:#A51C30;color:#fff;border-color:#A51C30;}
+.filter-row{display:flex;flex-direction:column;gap:5px;padding:0 12px;}
+.filter-label{font-size:10px;color:#555;letter-spacing:0.08em;font-weight:500;}
+.filter-pills{display:flex;flex-wrap:wrap;gap:5px;}
+.search-btn{background:#A51C30;border-radius:12px;padding:11px;text-align:center;margin:0 12px 12px;cursor:pointer;}
+.result-card{background:#1a1a1a;border-radius:14px;overflow:hidden;border:0.5px solid #2a2a2a;}
+.nav-bar{background:#0a0a0a;border-top:0.5px solid #1f1f1f;padding:10px 0 6px;display:flex;justify-content:space-around;}
+.nav-item{display:flex;flex-direction:column;align-items:center;gap:3px;}
+</style>
+
+<div class="wrap">
+  <div style="display:flex;gap:6px;">
+    <button class="state-btn active" onclick="showState(0)">Filters open</button>
+    <button class="state-btn" onclick="showState(1)">Results</button>
+  </div>
+
+  <div class="phone" id="phone"></div>
+</div>
+
+<script>
+const states = [
+
+`<div style="background:#111;border-bottom:0.5px solid #1f1f1f;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;">
+  <div style="font-size:16px;font-weight:500;color:#fff;">Match</div>
+  <div style="font-size:10px;color:#555;letter-spacing:0.06em;">SESSION SEARCH</div>
+</div>
+<div style="background:#111;padding:10px 12px 8px;">
+  <div style="display:flex;gap:0;border-radius:12px;overflow:hidden;border:0.5px solid #2a2a2a;">
+    <div style="flex:1;background:#1a1a1a;padding:8px;text-align:center;font-size:12px;color:#555;">Browse</div>
+    <div style="flex:1;background:#A51C30;padding:8px;text-align:center;font-size:12px;font-weight:500;color:#fff;">Session Search</div>
+  </div>
+</div>
+<div style="max-height:490px;overflow-y:auto;scrollbar-width:none;padding-bottom:8px;">
+  <div style="display:flex;flex-direction:column;gap:12px;padding:4px 12px 0;">
+
+    <div style="display:flex;flex-direction:column;gap:5px;">
+      <div style="font-size:10px;color:#555;letter-spacing:0.08em;font-weight:500;">GYM</div>
+      <div style="display:flex;flex-wrap:wrap;gap:5px;">
+        <div style="background:#A51C30;border-radius:14px;padding:5px 12px;font-size:11px;color:#fff;border:0.5px solid #A51C30;">MAC</div>
+        <div style="background:#1e1e1e;border-radius:14px;padding:5px 12px;font-size:11px;color:#666;border:0.5px solid #2a2a2a;">Malkin</div>
+        <div style="background:#1e1e1e;border-radius:14px;padding:5px 12px;font-size:11px;color:#666;border:0.5px solid #2a2a2a;">Adams</div>
+        <div style="background:#1e1e1e;border-radius:14px;padding:5px 12px;font-size:11px;color:#666;border:0.5px solid #2a2a2a;">Dunster</div>
+        <div style="background:#1e1e1e;border-radius:14px;padding:5px 12px;font-size:11px;color:#666;border:0.5px solid #2a2a2a;">Leverett</div>
+      </div>
+    </div>
+
+    <div style="height:0.5px;background:#1f1f1f;"></div>
+
+    <div style="display:flex;flex-direction:column;gap:5px;">
+      <div style="font-size:10px;color:#555;letter-spacing:0.08em;font-weight:500;">DAY</div>
+      <div style="display:flex;flex-wrap:wrap;gap:5px;">
+        <div style="background:#1e1e1e;border-radius:14px;padding:5px 10px;font-size:11px;color:#666;border:0.5px solid #2a2a2a;">Mon</div>
+        <div style="background:#1e1e1e;border-radius:14px;padding:5px 10px;font-size:11px;color:#666;border:0.5px solid #2a2a2a;">Tue</div>
+        <div style="background:#1e1e1e;border-radius:14px;padding:5px 10px;font-size:11px;color:#666;border:0.5px solid #2a2a2a;">Wed</div>
+        <div style="background:#A51C30;border-radius:14px;padding:5px 10px;font-size:11px;color:#fff;border:0.5px solid #A51C30;">Sun</div>
+        <div style="background:#1e1e1e;border-radius:14px;padding:5px 10px;font-size:11px;color:#666;border:0.5px solid #2a2a2a;">Thu</div>
+        <div style="background:#1e1e1e;border-radius:14px;padding:5px 10px;font-size:11px;color:#666;border:0.5px solid #2a2a2a;">Fri</div>
+        <div style="background:#1e1e1e;border-radius:14px;padding:5px 10px;font-size:11px;color:#666;border:0.5px solid #2a2a2a;">Sat</div>
+      </div>
+    </div>
+
+    <div style="height:0.5px;background:#1f1f1f;"></div>
+
+    <div style="display:flex;flex-direction:column;gap:5px;">
+      <div style="font-size:10px;color:#555;letter-spacing:0.08em;font-weight:500;">TIME</div>
+      <div style="display:flex;gap:5px;">
+        <div style="background:#1e1e1e;border-radius:14px;padding:5px 12px;font-size:11px;color:#666;border:0.5px solid #2a2a2a;">Morning</div>
+        <div style="background:#A51C30;border-radius:14px;padding:5px 12px;font-size:11px;color:#fff;border:0.5px solid #A51C30;">Afternoon</div>
+        <div style="background:#1e1e1e;border-radius:14px;padding:5px 12px;font-size:11px;color:#666;border:0.5px solid #2a2a2a;">Evening</div>
+      </div>
+    </div>
+
+    <div style="height:0.5px;background:#1f1f1f;"></div>
+
+    <div style="display:flex;flex-direction:column;gap:5px;">
+      <div style="font-size:10px;color:#555;letter-spacing:0.08em;font-weight:500;">ACTIVITY</div>
+      <div style="display:flex;gap:5px;">
+        <div style="background:#A51C30;border-radius:14px;padding:5px 12px;font-size:11px;color:#fff;border:0.5px solid #A51C30;">Gym</div>
+        <div style="background:#1e1e1e;border-radius:14px;padding:5px 12px;font-size:11px;color:#666;border:0.5px solid #2a2a2a;">Running</div>
+        <div style="background:#1e1e1e;border-radius:14px;padding:5px 12px;font-size:11px;color:#666;border:0.5px solid #2a2a2a;">Both</div>
+      </div>
+    </div>
+
+    <div style="height:0.5px;background:#1f1f1f;"></div>
+
+    <div style="display:flex;flex-direction:column;gap:5px;">
+      <div style="font-size:10px;color:#555;letter-spacing:0.08em;font-weight:500;">LEVEL</div>
+      <div style="display:flex;gap:5px;">
+        <div style="background:#1e1e1e;border-radius:14px;padding:5px 12px;font-size:11px;color:#666;border:0.5px solid #2a2a2a;">Beginner</div>
+        <div style="background:#1e1e1e;border-radius:14px;padding:5px 12px;font-size:11px;color:#666;border:0.5px solid #2a2a2a;">Int.</div>
+        <div style="background:#A51C30;border-radius:14px;padding:5px 12px;font-size:11px;color:#fff;border:0.5px solid #A51C30;">Advanced</div>
+        <div style="background:#1e1e1e;border-radius:14px;padding:5px 12px;font-size:11px;color:#666;border:0.5px solid #2a2a2a;">Any</div>
+      </div>
+    </div>
+
+    <div style="height:0.5px;background:#1f1f1f;"></div>
+
+    <div style="display:flex;flex-direction:column;gap:5px;">
+      <div style="font-size:10px;color:#555;letter-spacing:0.08em;font-weight:500;">GENDER</div>
+      <div style="display:flex;gap:5px;">
+        <div style="background:#1e1e1e;border-radius:14px;padding:5px 12px;font-size:11px;color:#666;border:0.5px solid #2a2a2a;">Men</div>
+        <div style="background:#1e1e1e;border-radius:14px;padding:5px 12px;font-size:11px;color:#666;border:0.5px solid #2a2a2a;">Women</div>
+        <div style="background:#A51C30;border-radius:14px;padding:5px 12px;font-size:11px;color:#fff;border:0.5px solid #A51C30;">Both</div>
+      </div>
+    </div>
+
+    <div style="height:0.5px;background:#1f1f1f;"></div>
+
+    <div style="display:flex;flex-direction:column;gap:5px;">
+      <div style="font-size:10px;color:#555;letter-spacing:0.08em;font-weight:500;">TRAINING TYPE</div>
+      <div style="display:flex;flex-wrap:wrap;gap:5px;">
+        <div style="background:#A51C30;border-radius:14px;padding:5px 12px;font-size:11px;color:#fff;border:0.5px solid #A51C30;">Powerlifting</div>
+        <div style="background:#1e1e1e;border-radius:14px;padding:5px 12px;font-size:11px;color:#666;border:0.5px solid #2a2a2a;">Bodybuilding</div>
+        <div style="background:#1e1e1e;border-radius:14px;padding:5px 12px;font-size:11px;color:#666;border:0.5px solid #2a2a2a;">General</div>
+        <div style="background:#1e1e1e;border-radius:14px;padding:5px 12px;font-size:11px;color:#666;border:0.5px solid #2a2a2a;">Cardio</div>
+      </div>
+    </div>
+
+  </div>
+  <div style="padding:14px 12px 4px;">
+    <div style="background:#A51C30;border-radius:12px;padding:12px;text-align:center;">
+      <span style="font-size:13px;font-weight:500;color:#fff;">Search</span>
+    </div>
+  </div>
+</div>
+<div style="background:#0a0a0a;border-top:0.5px solid #1f1f1f;padding:10px 0 6px;display:flex;justify-content:space-around;">
+  <div style="display:flex;flex-direction:column;align-items:center;gap:3px;"><i class="ti ti-building" style="font-size:20px;color:#444;" aria-hidden="true"></i><span style="font-size:9px;color:#444;">Gyms</span></div>
+  <div style="display:flex;flex-direction:column;align-items:center;gap:3px;"><i class="ti ti-users" style="font-size:20px;color:#A51C30;" aria-hidden="true"></i><span style="font-size:9px;color:#A51C30;font-weight:500;">Match</span></div>
+  <div style="display:flex;flex-direction:column;align-items:center;gap:3px;"><i class="ti ti-user" style="font-size:20px;color:#444;" aria-hidden="true"></i><span style="font-size:9px;color:#444;">Profile</span></div>
+</div>`,
+
+`<div style="background:#111;border-bottom:0.5px solid #1f1f1f;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;">
+  <div style="font-size:16px;font-weight:500;color:#fff;">Match</div>
+  <div style="font-size:10px;color:#555;letter-spacing:0.06em;">SESSION SEARCH</div>
+</div>
+<div style="background:#111;padding:10px 12px 8px;">
+  <div style="display:flex;gap:0;border-radius:12px;overflow:hidden;border:0.5px solid #2a2a2a;">
+    <div style="flex:1;background:#1a1a1a;padding:8px;text-align:center;font-size:12px;color:#555;">Browse</div>
+    <div style="flex:1;background:#A51C30;padding:8px;text-align:center;font-size:12px;font-weight:500;color:#fff;">Session Search</div>
+  </div>
+</div>
+<div style="background:#111;padding:6px 12px 8px;display:flex;align-items:center;justify-content:space-between;">
+  <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+    <div style="display:flex;align-items:center;gap:4px;background:#2a1a1a;border-radius:10px;padding:3px 8px;border:0.5px solid #A51C30;">
+      <span style="font-size:10px;color:#A51C30;">MAC</span>
+      <span style="font-size:10px;color:#A51C30;">·</span>
+      <span style="font-size:10px;color:#A51C30;">Sun</span>
+      <span style="font-size:10px;color:#A51C30;">·</span>
+      <span style="font-size:10px;color:#A51C30;">Afternoon</span>
+    </div>
+  </div>
+  <div style="background:#1e1e1e;border-radius:10px;padding:3px 10px;border:0.5px solid #2a2a2a;white-space:nowrap;">
+    <span style="font-size:10px;color:#888;">Edit filters</span>
+  </div>
+</div>
+<div style="background:#111;padding:2px 12px 6px;">
+  <span style="font-size:10px;color:#555;letter-spacing:0.06em;">4 PEOPLE AVAILABLE</span>
+</div>
+<div style="padding:0 10px 12px;background:#111;display:grid;grid-template-columns:1fr 1fr;gap:8px;max-height:440px;overflow-y:auto;scrollbar-width:none;">
+
+  <div style="background:#1a1a1a;border-radius:14px;overflow:hidden;border:0.5px solid #2a2a2a;">
+    <div style="height:100px;background:linear-gradient(160deg,#1a0f0f,#2d1515);display:flex;align-items:center;justify-content:center;position:relative;">
+      <div style="width:48px;height:48px;border-radius:50%;background:#3a1a1a;border:2px solid #A51C30;display:flex;align-items:center;justify-content:center;"><i class="ti ti-user" style="font-size:20px;color:#A51C30;" aria-hidden="true"></i></div>
+      <div style="position:absolute;top:8px;right:8px;background:#A51C30;border-radius:8px;padding:2px 6px;"><span style="font-size:9px;color:#fff;font-weight:500;">96%</span></div>
+      <div style="position:absolute;bottom:6px;left:0;right:0;text-align:center;"><span style="font-size:9px;color:rgba(255,255,255,0.5);">Available Sun pm</span></div>
+    </div>
+    <div style="padding:8px 9px 10px;">
+      <div style="font-size:12px;font-weight:500;color:#fff;margin-bottom:1px;">Jake M.</div>
+      <div style="font-size:10px;color:#666;margin-bottom:6px;">Adams · Advanced</div>
+      <div style="display:flex;align-items:flex-start;gap:4px;margin-bottom:7px;">
+        <span style="color:#D4A843;font-size:9px;margin-top:1px;flex-shrink:0;">✦</span>
+        <span style="font-size:9px;color:#aaa;font-style:italic;line-height:1.4;">Same session time, both into AI and heavy lifting</span>
+      </div>
+      <div style="background:#A51C30;border-radius:8px;padding:5px;text-align:center;"><span style="font-size:10px;color:#fff;font-weight:500;">View Profile</span></div>
+    </div>
+  </div>
+
+  <div style="background:#1a1a1a;border-radius:14px;overflow:hidden;border:0.5px solid #2a2a2a;">
+    <div style="height:100px;background:linear-gradient(160deg,#0f1a0f,#152d15);display:flex;align-items:center;justify-content:center;position:relative;">
+      <div style="width:48px;height:48px;border-radius:50%;background:#1a3a1a;border:2px solid #2d6a2d;display:flex;align-items:center;justify-content:center;"><i class="ti ti-user" style="font-size:20px;color:#2d6a2d;" aria-hidden="true"></i></div>
+      <div style="position:absolute;top:8px;right:8px;background:#A51C30;border-radius:8px;padding:2px 6px;"><span style="font-size:9px;color:#fff;font-weight:500;">88%</span></div>
+      <div style="position:absolute;bottom:6px;left:0;right:0;text-align:center;"><span style="font-size:9px;color:rgba(255,255,255,0.5);">Available Sun pm</span></div>
+    </div>
+    <div style="padding:8px 9px 10px;">
+      <div style="font-size:12px;font-weight:500;color:#fff;margin-bottom:1px;">Sofia R.</div>
+      <div style="font-size:10px;color:#666;margin-bottom:6px;">Leverett · Int.</div>
+      <div style="display:flex;align-items:flex-start;gap:4px;margin-bottom:7px;">
+        <span style="color:#D4A843;font-size:9px;margin-top:1px;flex-shrink:0;">✦</span>
+        <span style="font-size:9px;color:#aaa;font-style:italic;line-height:1.4;">Free Sunday afternoon, shares your interest in business</span>
+      </div>
+      <div style="background:#A51C30;border-radius:8px;padding:5px;text-align:center;"><span style="font-size:10px;color:#fff;font-weight:500;">View Profile</span></div>
+    </div>
+  </div>
+
+  <div style="background:#1a1a1a;border-radius:14px;overflow:hidden;border:0.5px solid #2a2a2a;">
+    <div style="height:100px;background:linear-gradient(160deg,#0f0f1a,#15152d);display:flex;align-items:center;justify-content:center;position:relative;">
+      <div style="width:48px;height:48px;border-radius:50%;background:#1a1a3a;border:2px solid #2a2a8a;display:flex;align-items:center;justify-content:center;"><i class="ti ti-user" style="font-size:20px;color:#4a4aaa;" aria-hidden="true"></i></div>
+      <div style="position:absolute;top:8px;right:8px;background:#A51C30;border-radius:8px;padding:2px 6px;"><span style="font-size:9px;color:#fff;font-weight:500;">81%</span></div>
+      <div style="position:absolute;bottom:6px;left:0;right:0;text-align:center;"><span style="font-size:9px;color:rgba(255,255,255,0.5);">Available Sun pm</span></div>
+    </div>
+    <div style="padding:8px 9px 10px;">
+      <div style="font-size:12px;font-weight:500;color:#fff;margin-bottom:1px;">Tom K.</div>
+      <div style="font-size:10px;color:#666;margin-bottom:6px;">Eliot · Advanced</div>
+      <div style="display:flex;align-items:flex-start;gap:4px;margin-bottom:7px;">
+        <span style="color:#D4A843;font-size:9px;margin-top:1px;flex-shrink:0;">✦</span>
+        <span style="font-size:9px;color:#aaa;font-style:italic;line-height:1.4;">Powerlifter at MAC Sundays — exact same window as you</span>
+      </div>
+      <div style="background:#A51C30;border-radius:8px;padding:5px;text-align:center;"><span style="font-size:10px;color:#fff;font-weight:500;">View Profile</span></div>
+    </div>
+  </div>
+
+  <div style="background:#1a1a1a;border-radius:14px;overflow:hidden;border:0.5px solid #2a2a2a;">
+    <div style="height:100px;background:linear-gradient(160deg,#1a0a0f,#2d1520);display:flex;align-items:center;justify-content:center;position:relative;">
+      <div style="width:48px;height:48px;border-radius:50%;background:#3a1a25;border:2px solid #8a1a40;display:flex;align-items:center;justify-content:center;"><i class="ti ti-user" style="font-size:20px;color:#cc3060;" aria-hidden="true"></i></div>
+      <div style="position:absolute;top:8px;right:8px;background:#A51C30;border-radius:8px;padding:2px 6px;"><span style="font-size:9px;color:#fff;font-weight:500;">74%</span></div>
+      <div style="position:absolute;bottom:6px;left:0;right:0;text-align:center;"><span style="font-size:9px;color:rgba(255,255,255,0.5);">Available Sun pm</span></div>
+    </div>
+    <div style="padding:8px 9px 10px;">
+      <div style="font-size:12px;font-weight:500;color:#fff;margin-bottom:1px;">Priya S.</div>
+      <div style="font-size:10px;color:#666;margin-bottom:6px;">Lowell · Beginner</div>
+      <div style="display:flex;align-items:flex-start;gap:4px;margin-bottom:7px;">
+        <span style="color:#D4A843;font-size:9px;margin-top:1px;flex-shrink:0;">✦</span>
+        <span style="font-size:9px;color:#aaa;font-style:italic;line-height:1.4;">Looking for a mentor this Sunday — good fit for your mentor toggle</span>
+      </div>
+      <div style="background:#A51C30;border-radius:8px;padding:5px;text-align:center;"><span style="font-size:10px;color:#fff;font-weight:500;">View Profile</span></div>
+    </div>
+  </div>
+
+</div>
+<div style="background:#0a0a0a;border-top:0.5px solid #1f1f1f;padding:10px 0 6px;display:flex;justify-content:space-around;">
+  <div style="display:flex;flex-direction:column;align-items:center;gap:3px;"><i class="ti ti-building" style="font-size:20px;color:#444;" aria-hidden="true"></i><span style="font-size:9px;color:#444;">Gyms</span></div>
+  <div style="display:flex;flex-direction:column;align-items:center;gap:3px;"><i class="ti ti-users" style="font-size:20px;color:#A51C30;" aria-hidden="true"></i><span style="font-size:9px;color:#A51C30;font-weight:500;">Match</span></div>
+  <div style="display:flex;flex-direction:column;align-items:center;gap:3px;"><i class="ti ti-user" style="font-size:20px;color:#444;" aria-hidden="true"></i><span style="font-size:9px;color:#444;">Profile</span></div>
+</div>`
+
+];
+
+function showState(i) {
+  document.querySelectorAll('.state-btn').forEach((b,j) => b.classList.toggle('active', i===j));
+  document.getElementById('phone').innerHTML = states[i];
+}
+
+showState(0);
+</script>
