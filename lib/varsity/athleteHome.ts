@@ -16,6 +16,7 @@ import {
   sessionKey,
   sessionLabel,
   periods,
+  type Period,
   type Session,
   type Block,
 } from "./coachPlan";
@@ -69,6 +70,24 @@ function pickActive(blocks: Block[], today: Date) {
     return { block, weeks, weekIdx };
   }
   return null;
+}
+
+// Today's PRESCRIBED sessions (for the Log tab) — the same published-block gate
+// as Home, so athletes log exactly what they're shown. Empty when today isn't in
+// a published block or has no sessions.
+export function prescribedForToday(
+  plan: Plan,
+  today = new Date(),
+): { period: Period; dayKey: string; session: Session }[] {
+  const active = pickActive(plan.blocks, today);
+  if (!active) return [];
+  const todayCell = active.weeks[active.weekIdx].days.find((d) => d.today);
+  if (!todayCell) return [];
+  return periods.flatMap((p) => {
+    const dayKey = sessionKey(todayCell.date, p);
+    const s = plan.sessions[dayKey];
+    return s ? [{ period: p, dayKey, session: s }] : [];
+  });
 }
 
 export function buildAthleteHome(
