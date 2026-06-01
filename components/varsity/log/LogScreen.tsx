@@ -13,7 +13,7 @@
   so its Save bar stays pinned). Colors are theme tokens; the per-category dot is
   a content color applied via inline style (rule-1 exception).
 */
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import ThemeProvider from "@/components/ThemeProvider";
 import { varsityTheme } from "@/lib/varsity/theme";
@@ -28,6 +28,7 @@ import {
   type Period,
 } from "@/lib/varsity/coachPlan";
 import { estimateForSession, formatMetrics } from "@/lib/varsity/logParse";
+import { scanErgPhoto, minutesToClock } from "@/lib/varsity/ergScan";
 import {
   fetchLogsInRange,
   savePlanLog,
@@ -44,6 +45,7 @@ import {
   IconCheckCircle,
   IconArrowLeft,
   IconClock,
+  IconChevronRight,
 } from "@/components/icons";
 
 /* category → label + content color for the dot (extra adds run/bike/other) */
@@ -105,6 +107,41 @@ function LogEditor({
   const [note, setNote] = useState(existing?.note ?? "");
   const [busy, setBusy] = useState(false);
   const fromPlan = !!est && (est.minutes != null || est.metres != null);
+
+  // C2/RP3 photo scan (erg only) → fills the fields via Claude vision.
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [scanning, setScanning] = useState(false);
+  const [scanMsg, setScanMsg] = useState<string | null>(null);
+
+  const handleScan = async (file: File | undefined) => {
+    if (!file) return;
+    setScanning(true);
+    setScanMsg(null);
+    const { result, error } = await scanErgPhoto(file);
+    setScanning(false);
+    if (error || !result) {
+      setScanMsg(
+        error === "unconfigured"
+          ? "Photo scanning isn't switched on yet — enter the numbers by hand."
+          : "Couldn't read that photo — enter the numbers by hand.",
+      );
+      return;
+    }
+    if (result.totalMinutes != null) setMinutes(String(Math.round(result.totalMinutes)));
+    if (result.totalMetres != null) setMetres(String(result.totalMetres));
+    if (result.splitPer500) setSplit(result.splitPer500);
+    // The minutes field is whole-number, so keep the exact time + rate + watts in the note.
+    const bits: string[] = [];
+    if (result.totalMinutes != null) bits.push(minutesToClock(result.totalMinutes));
+    if (result.strokeRate != null) bits.push(`r${result.strokeRate}`);
+    if (result.avgWatts != null) bits.push(`${result.avgWatts}W`);
+    if (bits.length) setNote((prev) => [bits.join(" · "), prev].filter(Boolean).join(" · "));
+    setScanMsg(
+      result.confident
+        ? "Filled from your photo — check it and save."
+        : "Read it, but I wasn't fully sure — please double-check.",
+    );
+  };
 
   const inputCls =
     "w-full rounded-xl border border-border bg-surface-2 px-3.5 py-3 text-base text-text outline-none focus:border-primary placeholder:text-muted";
@@ -200,6 +237,28 @@ function LogEditor({
                   </button>
                 ))}
               </div>
+            </>
+          )}
+
+          {category === "erg" && (
+            <>
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                className="hidden"
+                onChange={(e) => handleScan(e.target.files?.[0])}
+              />
+              <button
+                type="button"
+                onClick={() => fileRef.current?.click()}
+                disabled={scanning}
+                className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-primary/40 bg-primary/[0.06] py-3 text-[13px] font-semibold text-primary disabled:opacity-60"
+              >
+                <IconCamera size={16} /> {scanning ? "Reading photo…" : "Scan C2 / RP3 monitor"}
+              </button>
+              {scanMsg && <p className="mt-1.5 text-[11px] text-muted">{scanMsg}</p>}
             </>
           )}
 
@@ -435,7 +494,6 @@ export default function LogScreen() {
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Date>(today);
   const [editor, setEditor] = useState<EditorState | null>(null);
-  const [showSoon, setShowSoon] = useState(false);
 
   const reloadLogs = async () => {
     if (userId) setLogs(await fetchLogsInRange(userId, rangeFrom, rangeTo));
@@ -519,10 +577,10 @@ export default function LogScreen() {
           })}
         </div>
 
-        {/* C2 photo — placeholder for the auto-read coming later */}
+        {/* C2 photo — opens an erg log with the photo scanner ready */}
         <button
           type="button"
-          onClick={() => setShowSoon((s) => !s)}
+          onClick={() => setEditor({ mode: "extra" })}
           className="mt-4 flex w-full items-center gap-3 rounded-2xl border border-dashed border-primary/40 bg-primary/[0.06] px-4 py-3.5 text-left active:bg-primary/10"
         >
           <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary">
@@ -532,15 +590,8 @@ export default function LogScreen() {
             <div className="text-[14px] font-semibold text-text">Scan C2 / RP3 monitor</div>
             <div className="text-[11px] text-muted">Snap the screen — splits read automatically</div>
           </div>
-          <span className="flex-shrink-0 rounded-full border border-accent/40 bg-accent/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-accent">
-            Soon
-          </span>
+          <IconChevronRight size={16} />
         </button>
-        {showSoon && (
-          <p className="mt-2 rounded-xl border border-border bg-surface px-3.5 py-2.5 text-[11px] leading-relaxed text-muted">
-            Photo auto-reading is coming soon. For now, tap a session below and type the result by hand.
-          </p>
-        )}
 
         {/* prescribed plan for the selected day */}
         <div className="mt-6">
