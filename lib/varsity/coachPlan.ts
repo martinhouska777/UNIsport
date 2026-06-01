@@ -1,192 +1,172 @@
 /*
-  COACH — TRAINING PLAN DATA (source of truth for the coach plan builder)
+  COACH — TRAINING PLAN MODEL (source of truth for the plan builder)
   ------------------------------------------------------------------
-  Ported from the coach training-plan mockup. A "block" (e.g. Spring 2026) is a
-  date range broken into weeks; each day has an AM and PM slot; each slot has a
-  workout type, description, time, etc. Built here from a default weekly pattern
-  plus per-week overrides — the same model the real plan PDFs follow.
+  The coach builds a PLAN as a series of BLOCKS (e.g. "Spring 2026", usually
+  leading up to a race). A block is a date range; it breaks into weeks; each day
+  has an AM and a PM slot; a slot can hold one SESSION.
 
-  Workout-type colors are CONTENT colors (rule-1 exception): ut2/hard/flex map
-  to theme tokens; the rest keep their own hex and are applied via inline style.
+  A session is a CATEGORY (Water / Erg / Weights / Off / Flex). Water and Erg
+  sessions also carry an INTENSITY (UT2 / UT1 / Hard). The coach types a free
+  description (or taps one of the 5 most-used suggestions to fill it) and can add
+  a note. There is no duration and no location; the time is a preset per period.
+
+  Only WATER sessions need a boat lineup — the Lineup Builder reads `isOnWater`.
+
+  Workout colors are CONTENT colors (rule-1 exception): mapped to theme tokens
+  where one exists (UT2→success, Hard→danger, Flex→muted), otherwise a hex value,
+  always applied via inline style — never a hardcoded class.
 */
 
-export type WorkoutType = "ut2" | "ut1" | "thresh" | "hard" | "weights" | "water" | "flex" | "off";
+export type Period = "AM" | "PM";
+export const periods: Period[] = ["AM", "PM"];
 
-export const workoutMeta: Record<WorkoutType, { short: string; name: string; color: string }> = {
-  ut2: { short: "UT2", name: "UT2", color: "var(--success)" },
-  ut1: { short: "UT1", name: "UT1", color: "#eab308" },
-  thresh: { short: "AT", name: "Threshold", color: "#f97316" },
-  hard: { short: "HARD", name: "Hard", color: "var(--danger)" },
-  weights: { short: "WTS", name: "Weights", color: "#c084fc" },
-  water: { short: "H2O", name: "On-water", color: "#4a90a4" },
-  flex: { short: "FLEX", name: "Flex", color: "var(--muted)" },
-  off: { short: "OFF", name: "Off", color: "#166534" },
+// Usual start time per period (no duration, no location — those are implied).
+export const presetTime: Record<Period, string> = { AM: "7:00 AM", PM: "4:30 PM" };
+
+/* ── Categories ── */
+export type Category = "water" | "erg" | "weights" | "off" | "flex";
+export const categories: Category[] = ["water", "erg", "weights", "off", "flex"];
+
+export const categoryMeta: Record<
+  Category,
+  { label: string; color: string; hasIntensity: boolean }
+> = {
+  water: { label: "Water", color: "#4a90a4", hasIntensity: true },
+  erg: { label: "Erg", color: "var(--muted)", hasIntensity: true },
+  weights: { label: "Weights", color: "#c084fc", hasIntensity: false },
+  off: { label: "Off", color: "#166534", hasIntensity: false },
+  flex: { label: "Flex", color: "var(--muted)", hasIntensity: false },
 };
 
-export const workoutLegend: WorkoutType[] = [
-  "ut2", "ut1", "thresh", "hard", "weights", "water", "flex", "off",
-];
-
-export type Slot = {
-  type: WorkoutType;
-  desc?: string;
-  time?: string;
-  dur?: string;
-  loc?: string;
-} | null;
-
-// Where a session happens. ONLY on-water sessions need a boat lineup; land
-// sessions (erg, weights, flex) don't. The coach sets this per session in the
-// plan; below is a sensible default derived from the workout type + location.
-export type Venue = "water" | "land";
-export const venueMeta: Record<Venue, { label: string; short: string }> = {
-  water: { label: "On water", short: "Water" },
-  land: { label: "On land", short: "Land" },
+/* ── Intensities (Water + Erg only) ── */
+export type Intensity = "UT2" | "UT1" | "hard";
+export const intensities: Intensity[] = ["UT2", "UT1", "hard"];
+export const intensityMeta: Record<Intensity, { label: string; color: string }> = {
+  UT2: { label: "UT2", color: "var(--success)" },
+  UT1: { label: "UT1", color: "#eab308" },
+  hard: { label: "Hard", color: "var(--danger)" },
 };
 
-const waterLocations = ["Newell", "CRI", "Florida"];
-export function defaultVenue(slot: Slot): Venue | null {
-  if (!slot || slot.type === "off") return null; // rest → no venue
-  if (slot.type === "water") return "water";
-  if (slot.type === "weights" || slot.type === "flex") return "land";
-  // erg-style pieces (ut2/ut1/thresh/hard): on water only if at a boathouse.
-  return slot.loc && waterLocations.some((w) => slot.loc!.includes(w)) ? "water" : "land";
+/* ── The 5 most-used workouts to suggest (tap to fill the description) ── */
+const intensitySuggestions: Record<Intensity, string[]> = {
+  UT2: ["3×25' UT2", "70' steady state", "4×20' UT2", "2×30' UT2", "90' UT2 row"],
+  UT1: ["3×15' UT1, RP3s", "4×12' UT1", "2×20' UT1", "3×17' UT1", "6×8' UT1"],
+  hard: [
+    "3×5' (1:50 at 72, 2k+2)",
+    "8×500m, 1:30 rest",
+    "2k test",
+    "4×5' rate ladder",
+    "6×750m race pace",
+  ],
+};
+const weightsSuggestions = ["Lift @ Palmer Dixon", "Max strength", "Power endurance", "Core circuit", "Oly technique"];
+const flexSuggestions = ["Captain's practice", "Recovery row / spin", "Mobility + roll out", "Cross-train", "Yoga / stretch"];
+
+export function suggestionsFor(category: Category, intensity?: Intensity): string[] {
+  if (category === "water" || category === "erg") return intensity ? intensitySuggestions[intensity] : [];
+  if (category === "weights") return weightsSuggestions;
+  if (category === "flex") return flexSuggestions;
+  return []; // off → none
 }
 
-export type PlanDay = { name: string; num: number; am: Slot; pm: Slot; today?: boolean };
-export type WeekChip = { type: WorkoutType; count: number };
-export type PlanWeek = { index: number; range: string; chips: WeekChip[]; days: PlanDay[] };
-
-export const blocks = [
-  { id: "spring2026", name: "Spring 2026", dates: "Jan 26 — Mar 15 · 7 weeks", status: "Draft" as const, active: true },
-  { id: "winter2025", name: "Winter 2025", dates: "Dec 1 — Jan 18 · 7 weeks", status: "Published" as const },
-  { id: "fall2025", name: "Fall 2025 — Through HOCR", dates: "Sep 8 — Nov 30 · 12 weeks", status: "Published" as const },
-];
-
-export const planBlock = {
-  name: "Spring 2026",
-  range: "Jan 26 – Mar 15, 2026",
-  meta: "7 weeks · 49 days",
-  status: "Draft" as const,
+/* ── A session and how sessions are stored ── */
+export type Session = {
+  category: Category;
+  intensity?: Intensity;
+  description: string;
+  note?: string;
 };
 
-// ── Build the calendar from a default pattern + per-week overrides ──
-const dayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-const blockStart = new Date(2026, 0, 26); // Jan 26 2026
-const mockToday = new Date(2026, 1, 4); // Feb 4 2026
-
-const seed: Record<string, { am: Slot; pm: Slot }> = {
-  Mon: {
-    am: { type: "flex", desc: "Captain's practice", time: "9:15 AM", dur: "90m" },
-    pm: { type: "weights", desc: "Lift @ Palmer Dixon OR Flex training", time: "4:30 PM", dur: "1h 30m", loc: "Palmer Dixon" },
-  },
-  Tue: {
-    am: { type: "flex", desc: "Captain's practice", time: "9:15 AM", dur: "90m" },
-    pm: { type: "hard", desc: "3×5' (1:30 at 32, 2k+2; 3:30 at 26, 5k pace)", time: "4:30 PM", dur: "1h 45m", loc: "Newell" },
-  },
-  Wed: {
-    am: null,
-    pm: { type: "weights", desc: "Lift @ Palmer Dixon OR Flex training", time: "4:30 PM", dur: "1h 30m", loc: "Palmer Dixon" },
-  },
-  Thu: {
-    am: { type: "flex", desc: "Captain's practice", time: "9:15 AM", dur: "90m" },
-    pm: { type: "thresh", desc: "3×15' UT1, RP3s", time: "4:30 PM", dur: "1h 45m", loc: "Newell" },
-  },
-  Fri: {
-    am: { type: "flex", desc: "Captain's practice", time: "9:15 AM", dur: "90m" },
-    pm: { type: "weights", desc: "Lift @ Palmer Dixon OR Flex training", time: "4:30 PM", dur: "1h 30m", loc: "Palmer Dixon" },
-  },
-  Sat: {
-    am: { type: "hard", desc: "3×11' (3/1/3/1/3; 3' at 24, 5k+8; 1' at 2k pace)", time: "7:00 AM", dur: "2h", loc: "Newell" },
-    pm: { type: "flex", desc: "Recovery / 45' volume OR roll out + core", time: "2:00 PM", dur: "1h" },
-  },
-  Sun: { am: { type: "off" }, pm: { type: "off" } },
-};
-
-// key = `${day}-${am|pm}`; value undefined → use seed, null → empty
-const overrides: Record<string, Slot | undefined>[] = [
-  {}, // Week 1
-  {
-    "Wed-am": { type: "ut2", desc: "3×25' UT2 erg", time: "7:00 AM", dur: "2h", loc: "Newell" },
-    "Sat-am": { type: "ut2", desc: "3×25' UT2 erg", time: "7:00 AM", dur: "2h", loc: "Newell" },
-    "Tue-pm": { type: "hard", desc: "4×5' (1:30 at 32, 2k+2; 3:30 at 26, 5k pace)", time: "4:30 PM", dur: "1h 45m", loc: "Newell" },
-    "Sat-pm": { type: "hard", desc: "20' UT2 + 9×1' on/off + 20' UT2", time: "2:00 PM", dur: "1h 30m" },
-  },
-  {
-    "Wed-am": { type: "ut2", desc: "3×27' UT2 erg", time: "7:00 AM", dur: "2h 15m" },
-    "Sat-am": { type: "ut2", desc: "3×27' UT2 erg", time: "7:00 AM", dur: "2h 15m" },
-    "Tue-pm": { type: "hard", desc: "4 or 5×5' (1:30 at 32, 2k+2; 3:30 at 26)", time: "4:30 PM", dur: "1h 45m" },
-    "Thu-pm": { type: "thresh", desc: "3×17' UT1, RP3s", time: "4:30 PM", dur: "1h 45m" },
-  },
-  {
-    "Wed-am": { type: "ut2", desc: "3×30' UT2 erg", time: "7:00 AM", dur: "2h 30m" },
-    "Sat-am": { type: "ut2", desc: "3×20' UT2 erg", time: "7:00 AM", dur: "1h 30m" },
-    "Sat-pm": { type: "hard", desc: "8×500m, 1:30 rest. 2k pace first 4.", time: "2:00 PM", dur: "1h 30m" },
-  },
-  {
-    "Wed-am": { type: "ut2", desc: "3×30' UT2 erg", time: "7:00 AM", dur: "2h 30m" },
-    "Sat-am": { type: "hard", desc: "8×500m, 1:30 rest. 2k pace first 4.", time: "7:00 AM", dur: "1h 30m" },
-    "Tue-pm": { type: "water", desc: "C2 — 3×1k on 9' centers, 2k profile", time: "4:30 PM", dur: "2h", loc: "CRI" },
-    "Sat-pm": { type: "water", desc: "C2 — 3×15' UT1", time: "2:00 PM", dur: "2h", loc: "CRI" },
-  },
-  {
-    "Wed-am": { type: "ut2", desc: "3×30' UT2 erg", time: "7:00 AM", dur: "2h 30m" },
-    "Sat-am": { type: "ut2", desc: "2×25' UT2 erg", time: "7:00 AM", dur: "1h 45m" },
-    "Tue-pm": { type: "water", desc: "C2 — 2×1250 on 10' centers", time: "4:30 PM", dur: "2h", loc: "CRI" },
-    "Sat-pm": { type: "hard", desc: "6×500m, 1:30 rest. 2k profile", time: "2:00 PM", dur: "1h 30m" },
-  },
-  {
-    "Mon-am": { type: "ut2", desc: "2×20' UT2", time: "7:00 AM", dur: "1h" },
-    "Tue-pm": { type: "hard", desc: "2k TEST", time: "4:30 PM", dur: "1h 30m", loc: "Newell" },
-    "Wed-pm": null,
-    "Thu-am": { type: "water", desc: "FL2 training", time: "TBD", loc: "Florida" },
-    "Thu-pm": { type: "water", desc: "FL2 training", time: "TBD", loc: "Florida" },
-    "Fri-am": { type: "water", desc: "FL2 training", time: "TBD", loc: "Florida" },
-    "Sat-am": { type: "water", desc: "FL2 training", time: "TBD", loc: "Florida" },
-    "Sun-am": { type: "water", desc: "FL2 training", time: "TBD", loc: "Florida" },
-  },
-];
-
-function pick(over: Record<string, Slot | undefined>, key: string, fallback: Slot): Slot {
-  return key in over ? (over[key] ?? null) : fallback;
+// Sessions live in one map keyed by day+period, so the whole plan is one object.
+export type SessionMap = Record<string, Session>;
+export function sessionKey(date: Date, period: Period): string {
+  return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}-${period}`;
 }
 
-export const weeks: PlanWeek[] = Array.from({ length: 7 }, (_, w) => {
-  const first = new Date(blockStart);
-  first.setDate(blockStart.getDate() + w * 7);
-  const last = new Date(first);
-  last.setDate(first.getDate() + 6);
+export const isOnWater = (s: Session | undefined) => s?.category === "water";
 
-  const over = overrides[w] ?? {};
-  const counts: Partial<Record<WorkoutType, number>> = {};
+// The color + label to show for a session (intensity wins for water/erg).
+export function sessionColor(s: Session): string {
+  return s.intensity ? intensityMeta[s.intensity].color : categoryMeta[s.category].color;
+}
+export function sessionLabel(s: Session): string {
+  const cat = categoryMeta[s.category].label;
+  return s.intensity ? `${cat} · ${intensityMeta[s.intensity].label}` : cat;
+}
 
-  const days: PlanDay[] = dayNames.map((name, d) => {
-    const date = new Date(first);
-    date.setDate(first.getDate() + d);
-    const am = pick(over, `${name}-am`, seed[name].am);
-    const pm = pick(over, `${name}-pm`, seed[name].pm);
-    for (const s of [am, pm]) {
-      if (s && s.type !== "off") counts[s.type] = (counts[s.type] ?? 0) + 1;
+/* ── Blocks + week math ── */
+export type Block = {
+  id: string;
+  name: string;
+  start: string; // ISO yyyy-mm-dd
+  end: string;
+  raceName?: string;
+  raceDate?: string; // ISO
+};
+
+const WD = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const MO = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+export function parseDate(iso: string): Date {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+export function toISO(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(
+    date.getDate(),
+  ).padStart(2, "0")}`;
+}
+export function addDays(iso: string, days: number): string {
+  const d = parseDate(iso);
+  d.setDate(d.getDate() + days);
+  return toISO(d);
+}
+function sameDay(a: Date, b: Date) {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+}
+
+export type DayCell = { date: Date; weekday: string; dayNum: number; month: string; today: boolean };
+export type WeekRow = { index: number; rangeLabel: string; days: DayCell[] };
+
+// Break a block into 7-day weeks from its start date (the last week may be partial).
+export function buildWeeks(block: Block, today = new Date()): WeekRow[] {
+  const end = parseDate(block.end);
+  const cursor = parseDate(block.start);
+  const weeks: WeekRow[] = [];
+  let idx = 1;
+  while (cursor <= end) {
+    const days: DayCell[] = [];
+    const wkStart = new Date(cursor);
+    for (let i = 0; i < 7 && cursor <= end; i++) {
+      days.push({
+        date: new Date(cursor),
+        weekday: WD[cursor.getDay()],
+        dayNum: cursor.getDate(),
+        month: MO[cursor.getMonth()],
+        today: sameDay(cursor, today),
+      });
+      cursor.setDate(cursor.getDate() + 1);
     }
-    return {
-      name,
-      num: date.getDate(),
-      am,
-      pm,
-      today: date.toDateString() === mockToday.toDateString(),
-    };
-  });
+    const wkEnd = days[days.length - 1].date;
+    weeks.push({
+      index: idx++,
+      rangeLabel: `${MO[wkStart.getMonth()]} ${wkStart.getDate()} – ${MO[wkEnd.getMonth()]} ${wkEnd.getDate()}`,
+      days,
+    });
+  }
+  return weeks;
+}
 
-  const chips: WeekChip[] = (Object.keys(counts) as WorkoutType[]).map((type) => ({
-    type,
-    count: counts[type]!,
-  }));
+export function blockRangeLabel(block: Block): string {
+  const s = parseDate(block.start);
+  const e = parseDate(block.end);
+  const weeks = Math.ceil((e.getTime() - s.getTime()) / (7 * 864e5)) || 1;
+  return `${MO[s.getMonth()]} ${s.getDate()} – ${MO[e.getMonth()]} ${e.getDate()}, ${e.getFullYear()} · ${weeks} weeks`;
+}
 
-  return {
-    index: w + 1,
-    range: `${months[first.getMonth()]} ${first.getDate()} – ${months[last.getMonth()]} ${last.getDate()}`,
-    chips,
-    days,
-  };
-});
+// Days until the race (or null) — for the block's countdown.
+export function daysToRace(block: Block, today = new Date()): number | null {
+  if (!block.raceDate) return null;
+  const ms = parseDate(block.raceDate).getTime() - new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+  return Math.max(0, Math.round(ms / 864e5));
+}
