@@ -282,6 +282,15 @@ export const IconDots = (p: IconProps) => (
   </Base>
 );
 
+export const IconTrash = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M4 7h16" />
+    <path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+    <path d="M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13" />
+    <path d="M10 11v6M14 11v6" />
+  </Base>
+);
+
 export const IconRepeat = (p: IconProps) => (
   <Base {...p}>
     <path d="M17 2l4 4-4 4" />

@@ -53,6 +53,7 @@ import {
   IconCalendar,
   IconRepeat,
   IconSend,
+  IconTrash,
 } from "@/components/icons";
 
 type View =
@@ -78,6 +79,14 @@ function DraftBadge() {
   return (
     <span className="rounded border border-warn/40 bg-warn/10 px-1.5 py-px text-[8px] font-bold uppercase tracking-[0.08em] text-warn">
       Draft
+    </span>
+  );
+}
+
+function PublishedBadge() {
+  return (
+    <span className="rounded border border-success/40 bg-success/10 px-1.5 py-px text-[8px] font-bold uppercase tracking-[0.08em] text-success">
+      Published
     </span>
   );
 }
@@ -152,6 +161,49 @@ export default function TrainingPlanScreen() {
     );
     setBlocks(next);
     await persist({ blocks: next });
+  };
+
+  // delete / reset confirmation
+  const [confirm, setConfirm] = useState<
+    | { kind: "block"; blockId: string }
+    | { kind: "week"; blockId: string; weekIdx: number }
+    | null
+  >(null);
+
+  // Every session-slot key inside a block's date range.
+  const blockKeys = (b: Block) => {
+    const keys = new Set<string>();
+    for (const w of buildWeeks(b)) for (const d of w.days) for (const p of periods) keys.add(sessionKey(d.date, p));
+    return keys;
+  };
+
+  // Delete a block + its sessions (keeping any slot another block still covers).
+  const deleteBlock = async (blockId: string) => {
+    const b = blocks.find((x) => x.id === blockId);
+    if (!b) return;
+    const nextBlocks = blocks.filter((x) => x.id !== blockId);
+    const otherKeys = new Set<string>();
+    for (const ob of nextBlocks) for (const k of blockKeys(ob)) otherKeys.add(k);
+    const nextSessions = { ...sessions };
+    for (const k of blockKeys(b)) if (!otherKeys.has(k)) delete nextSessions[k];
+    setBlocks(nextBlocks);
+    setSessions(nextSessions);
+    setConfirm(null);
+    setView({ name: "blocks" });
+    await persist({ blocks: nextBlocks, sessions: nextSessions });
+  };
+
+  // Clear every session in one week (block + other weeks stay intact).
+  const resetWeek = async (blockId: string, weekIdx: number) => {
+    const b = blocks.find((x) => x.id === blockId);
+    if (!b) return;
+    const w = buildWeeks(b)[weekIdx];
+    if (!w) return;
+    const nextSessions = { ...sessions };
+    for (const d of w.days) for (const p of periods) delete nextSessions[sessionKey(d.date, p)];
+    setSessions(nextSessions);
+    setConfirm(null);
+    await persist({ sessions: nextSessions });
   };
 
   // editor sheet
@@ -244,6 +296,58 @@ export default function TrainingPlanScreen() {
     setEditor(null);
   };
 
+  // Shared delete/reset confirmation (portalled so it sits above everything).
+  const confirmModal =
+    confirm && typeof document !== "undefined"
+      ? createPortal(
+          <ThemeProvider tokens={varsityTheme}>
+            <div
+              className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 px-6"
+              onClick={() => setConfirm(null)}
+            >
+              <div
+                className="w-full max-w-xs rounded-2xl border border-border bg-surface p-5"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-danger/15 text-danger">
+                  <IconTrash size={18} />
+                </div>
+                <h2 className="mt-3 text-[16px] font-semibold text-text">
+                  {confirm.kind === "block" ? "Delete this block?" : "Clear this week?"}
+                </h2>
+                <p className="mt-1 text-[12px] leading-relaxed text-muted">
+                  {confirm.kind === "block"
+                    ? "This removes the block and all of its sessions. It can't be undone."
+                    : "This removes every AM/PM session in this week. The block stays."}
+                </p>
+                <div className="mt-4 flex gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => setConfirm(null)}
+                    className="flex-1 rounded-xl border border-border bg-surface py-3 text-[13px] font-medium text-muted"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    disabled={saving}
+                    onClick={() =>
+                      confirm.kind === "block"
+                        ? deleteBlock(confirm.blockId)
+                        : resetWeek(confirm.blockId, confirm.weekIdx)
+                    }
+                    className="flex-1 rounded-xl border border-danger/40 bg-danger/10 py-3 text-[13px] font-semibold text-danger disabled:opacity-50"
+                  >
+                    {confirm.kind === "block" ? "Delete" : "Clear week"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </ThemeProvider>,
+          document.body,
+        )
+      : null;
+
   if (loading) {
     return (
       <div className="mx-auto w-full max-w-screen-sm px-4 pt-10 text-center text-[13px] text-muted">
@@ -280,26 +384,38 @@ export default function TrainingPlanScreen() {
         ) : (
           <div className="mt-5 flex flex-col gap-2.5">
             {blocks.map((b) => (
-              <button
+              <div
                 key={b.id}
-                type="button"
-                onClick={() => setView({ name: "block", blockId: b.id })}
-                className="flex items-center gap-3 rounded-2xl border border-border bg-surface px-4 py-3.5 text-left"
+                className="flex items-stretch overflow-hidden rounded-2xl border border-border bg-surface"
               >
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[15px] font-semibold text-text">{b.name}</span>
-                    {b.status === "draft" && <DraftBadge />}
-                  </div>
-                  <div className="mt-0.5 text-[11px] text-muted">{blockRangeLabel(b)}</div>
-                  {b.raceName && (
-                    <div className="mt-1 flex items-center gap-1 text-[10px] text-accent">
-                      <IconFlag size={11} /> {b.raceName}
+                <button
+                  type="button"
+                  onClick={() => setView({ name: "block", blockId: b.id })}
+                  className="flex flex-1 items-center gap-3 px-4 py-3.5 text-left"
+                >
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[15px] font-semibold text-text">{b.name}</span>
+                      {b.status === "draft" ? <DraftBadge /> : <PublishedBadge />}
                     </div>
-                  )}
-                </div>
-                <IconChevronRight size={16} />
-              </button>
+                    <div className="mt-0.5 text-[11px] text-muted">{blockRangeLabel(b)}</div>
+                    {b.raceName && (
+                      <div className="mt-1 flex items-center gap-1 text-[10px] text-accent">
+                        <IconFlag size={11} /> {b.raceName}
+                      </div>
+                    )}
+                  </div>
+                  <IconChevronRight size={16} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setConfirm({ kind: "block", blockId: b.id })}
+                  aria-label={`Delete ${b.name}`}
+                  className="flex items-center border-l border-border px-3.5 text-muted active:bg-danger/10 active:text-danger"
+                >
+                  <IconTrash size={16} />
+                </button>
+              </div>
             ))}
             <button
               type="button"
@@ -310,6 +426,7 @@ export default function TrainingPlanScreen() {
             </button>
           </div>
         )}
+        {confirmModal}
       </div>
     );
   }
@@ -475,6 +592,15 @@ export default function TrainingPlanScreen() {
             );
           })}
         </div>
+
+        <button
+          type="button"
+          onClick={() => setConfirm({ kind: "block", blockId: block.id })}
+          className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl border border-danger/30 bg-danger/[0.06] py-3 text-[13px] font-semibold text-danger"
+        >
+          <IconTrash size={15} /> Delete block
+        </button>
+        {confirmModal}
       </div>
     );
   }
@@ -579,7 +705,16 @@ export default function TrainingPlanScreen() {
           ))}
         </div>
 
+        <button
+          type="button"
+          onClick={() => setConfirm({ kind: "week", blockId: block.id, weekIdx: view.weekIdx })}
+          className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl border border-danger/30 bg-danger/[0.06] py-3 text-[13px] font-semibold text-danger"
+        >
+          <IconTrash size={15} /> Clear this week
+        </button>
+
         {editor && renderEditor()}
+        {confirmModal}
       </div>
     );
   }
