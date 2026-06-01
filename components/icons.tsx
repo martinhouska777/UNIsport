@@ -282,6 +282,15 @@ export const IconDots = (p: IconProps) => (
   </Base>
 );
 
+export const IconRepeat = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M17 2l4 4-4 4" />
+    <path d="M3 11V9a4 4 0 0 1 4-4h14" />
+    <path d="M7 22l-4-4 4-4" />
+    <path d="M21 13v2a4 4 0 0 1-4 4H3" />
+  </Base>
+);
+
 // Generic Harvard shield sigil (theme-colored), used as a fallback.
 export const IconShield = (p: IconProps) => (
   <Base {...p}>

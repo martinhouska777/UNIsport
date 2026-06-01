@@ -133,16 +133,23 @@ function sameDay(a: Date, b: Date) {
 export type DayCell = { date: Date; weekday: string; dayNum: number; month: string; today: boolean };
 export type WeekRow = { index: number; rangeLabel: string; days: DayCell[] };
 
-// Break a block into 7-day weeks from its start date (the last week may be partial).
+// The Monday on or before a date (rowing weeks run Mon–Sun).
+function mondayOnOrBefore(d: Date): Date {
+  const x = new Date(d);
+  x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); // getDay(): Sun=0 → Monday=offset 0
+  return x;
+}
+
+// Break a block into whole Monday–Sunday weeks covering its range.
 export function buildWeeks(block: Block, today = new Date()): WeekRow[] {
   const end = parseDate(block.end);
-  const cursor = parseDate(block.start);
+  const cursor = mondayOnOrBefore(parseDate(block.start));
   const weeks: WeekRow[] = [];
   let idx = 1;
   while (cursor <= end) {
     const days: DayCell[] = [];
     const wkStart = new Date(cursor);
-    for (let i = 0; i < 7 && cursor <= end; i++) {
+    for (let i = 0; i < 7; i++) {
       days.push({
         date: new Date(cursor),
         weekday: WD[cursor.getDay()],

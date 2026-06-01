@@ -50,7 +50,21 @@ import {
   IconClipboard,
   IconCheck,
   IconCalendar,
+  IconRepeat,
 } from "@/components/icons";
+
+// Plan persistence (local only until the DB) — the Save button writes here.
+const BLOCKS_KEY = "varsityPlanBlocks";
+const SESSIONS_KEY = "varsityPlanSessions";
+function loadStored<T>(key: string, fallback: T): T {
+  if (typeof window === "undefined") return fallback;
+  try {
+    const raw = window.localStorage.getItem(key);
+    return raw ? (JSON.parse(raw) as T) : fallback;
+  } catch {
+    return fallback;
+  }
+}
 
 type View =
   | { name: "blocks" }
@@ -58,7 +72,14 @@ type View =
   | { name: "block"; blockId: string }
   | { name: "week"; blockId: string; weekIdx: number };
 
-type Form = { category?: Category; intensity?: Intensity; description: string; time: string; note: string };
+type Form = {
+  category?: Category;
+  intensity?: Intensity;
+  description: string;
+  time: string;
+  note: string;
+  repeat: "once" | "weekly";
+};
 
 function Dot({ color }: { color: string }) {
   return <span className="h-2.5 w-2.5 rounded-full" style={{ background: color }} />;
@@ -73,13 +94,36 @@ function DraftBadge() {
 }
 
 export default function TrainingPlanScreen() {
-  const [blocks, setBlocks] = useState<Block[]>([]);
-  const [sessions, setSessions] = useState<SessionMap>({});
+  const [blocks, setBlocks] = useState<Block[]>(() => loadStored<Block[]>(BLOCKS_KEY, []));
+  const [sessions, setSessions] = useState<SessionMap>(() => loadStored<SessionMap>(SESSIONS_KEY, {}));
   const [view, setView] = useState<View>({ name: "blocks" });
+  const [saved, setSaved] = useState(false);
+
+  // Persist the whole plan (manual Save button, accessible while building).
+  const saveAll = () => {
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(BLOCKS_KEY, JSON.stringify(blocks));
+      window.localStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions));
+    }
+    setSaved(true);
+    window.setTimeout(() => setSaved(false), 1500);
+  };
+
+  const saveButton = (
+    <button
+      type="button"
+      onClick={saveAll}
+      className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[12px] font-semibold ${
+        saved ? "border-success/40 bg-success/10 text-success" : "border-primary/40 text-primary"
+      }`}
+    >
+      <IconCheck size={14} /> {saved ? "Saved" : "Save"}
+    </button>
+  );
 
   // editor sheet
   const [editor, setEditor] = useState<{ date: Date; period: Period } | null>(null);
-  const [form, setForm] = useState<Form>({ description: "", time: "", note: "" });
+  const [form, setForm] = useState<Form>({ description: "", time: "", note: "", repeat: "once" });
 
   // create-block form
   const todayISO = toISO(new Date());
@@ -122,6 +166,7 @@ export default function TrainingPlanScreen() {
       description: existing?.description ?? "",
       time: existing?.time ?? presetTime[period],
       note: existing?.note ?? "",
+      repeat: "once",
     });
     setEditor({ date, period });
   };
@@ -138,7 +183,21 @@ export default function TrainingPlanScreen() {
       time: form.time.trim() || presetTime[editor.period],
       note: form.note.trim() || undefined,
     };
-    setSessions((prev) => ({ ...prev, [sessionKey(editor.date, editor.period)]: s }));
+    if (form.repeat === "weekly") {
+      // apply to the same weekday + period across every week in the block
+      const weekday = editor.date.getDay();
+      setSessions((prev) => {
+        const next = { ...prev };
+        for (const w of weeks) {
+          for (const d of w.days) {
+            if (d.date.getDay() === weekday) next[sessionKey(d.date, editor.period)] = s;
+          }
+        }
+        return next;
+      });
+    } else {
+      setSessions((prev) => ({ ...prev, [sessionKey(editor.date, editor.period)]: s }));
+    }
     setEditor(null);
   };
 
@@ -284,10 +343,13 @@ export default function TrainingPlanScreen() {
     const race = daysToRace(block);
     return (
       <div className="mx-auto w-full max-w-screen-sm px-4 pb-8 pt-4">
-        <button onClick={() => setView({ name: "blocks" })} className="flex items-center gap-1 text-[13px] text-muted">
-          <IconArrowLeft size={16} /> Blocks
-        </button>
-        <div className="mt-1 flex items-center gap-2">
+        <div className="sticky top-0 z-20 -mx-4 flex items-center justify-between border-b border-border bg-background/95 px-4 py-2.5 backdrop-blur">
+          <button onClick={() => setView({ name: "blocks" })} className="flex items-center gap-1 text-[13px] text-muted">
+            <IconArrowLeft size={16} /> Blocks
+          </button>
+          {saveButton}
+        </div>
+        <div className="mt-3 flex items-center gap-2">
           <h1 className="text-2xl font-semibold text-text">{block.name}</h1>
           {block.status === "draft" && <DraftBadge />}
         </div>
@@ -343,13 +405,16 @@ export default function TrainingPlanScreen() {
     const week = weeks[view.weekIdx];
     return (
       <div className="mx-auto w-full max-w-screen-sm px-4 pb-8 pt-4">
-        <button
-          onClick={() => setView({ name: "block", blockId: block.id })}
-          className="flex items-center gap-1 text-[13px] text-muted"
-        >
-          <IconArrowLeft size={16} /> {block.name}
-        </button>
-        <h1 className="mt-1 text-2xl font-semibold text-text">Week {week.index}</h1>
+        <div className="sticky top-0 z-20 -mx-4 flex items-center justify-between border-b border-border bg-background/95 px-4 py-2.5 backdrop-blur">
+          <button
+            onClick={() => setView({ name: "block", blockId: block.id })}
+            className="flex items-center gap-1 text-[13px] text-muted"
+          >
+            <IconArrowLeft size={16} /> {block.name}
+          </button>
+          {saveButton}
+        </div>
+        <h1 className="mt-3 text-2xl font-semibold text-text">Week {week.index}</h1>
         <div className="mt-0.5 text-[11px] text-muted">{week.rangeLabel}</div>
 
         {/* week jump chips */}
@@ -577,6 +642,42 @@ export default function TrainingPlanScreen() {
             placeholder="A note for the athletes…"
             className={inputCls}
           />
+
+          {/* repeat weekly — lots of sessions recur (e.g. every Tue/Thu) */}
+          {cat && (
+            <>
+              <div className={labelCls}>Repeat</div>
+              <div className="grid grid-cols-2 gap-1.5">
+                {(
+                  [
+                    ["once", "Just this day"],
+                    ["weekly", "Every week"],
+                  ] as const
+                ).map(([key, label]) => {
+                  const active = form.repeat === key;
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => setForm((f) => ({ ...f, repeat: key }))}
+                      className={`flex items-center justify-center gap-1.5 rounded-xl border py-2.5 text-[12px] font-semibold ${
+                        active ? "border-primary bg-primary/10 text-text" : "border-border bg-surface text-muted"
+                      }`}
+                    >
+                      {key === "weekly" && <IconRepeat size={14} />}
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+              {form.repeat === "weekly" && (
+                <p className="mt-1.5 text-[10px] text-muted">
+                  Adds this to every {editor.date.toLocaleDateString("en-US", { weekday: "long" })} {editor.period}{" "}
+                  in the block.
+                </p>
+              )}
+            </>
+          )}
         </div>
 
         {/* footer with confirm */}
