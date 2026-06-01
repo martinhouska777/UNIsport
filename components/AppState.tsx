@@ -65,9 +65,14 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     })();
 
     const { data: sub } = supabase.auth.onAuthStateChange(async (_event, s) => {
+      // Re-checking the DB for onboarding status is async. Flip `ready` off while
+      // we look it up so the landing redirect WAITS for the real answer instead of
+      // acting on the stale default (which sent returning accounts to onboarding).
+      setReady(false);
       setSession(s);
       if (s) await refreshOnboarded(s.user.id);
       else setOnboarded(false);
+      setReady(true);
     });
     return () => {
       active = false;

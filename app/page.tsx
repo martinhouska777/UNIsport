@@ -13,6 +13,20 @@ import { createClient, hasSupabaseEnv } from "@/lib/supabase/client";
 
 type Mode = "login" | "signup";
 
+// Credentials of the last successful login, kept ONLY in this browser (never in
+// source). Powers the one-click "Continue as …" button so you don't retype them.
+const REMEMBER_KEY = "unisport.lastLogin";
+type Remembered = { email: string; password: string };
+
+function readRemembered(): Remembered | null {
+  try {
+    const raw = localStorage.getItem(REMEMBER_KEY);
+    return raw ? (JSON.parse(raw) as Remembered) : null;
+  } catch {
+    return null;
+  }
+}
+
 export default function Landing() {
   const { ready, loggedIn, onboarded } = useAppState();
   const router = useRouter();
@@ -24,10 +38,16 @@ export default function Landing() {
   const [confirmSent, setConfirmSent] = useState(false); // only if email-confirm is ON in Supabase
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [remembered, setRemembered] = useState<Remembered | null>(null);
 
   useEffect(() => {
     if (ready && loggedIn) router.replace(onboarded ? "/gyms" : "/onboarding");
   }, [ready, loggedIn, onboarded, router]);
+
+  // Load any remembered login so we can offer the one-click button.
+  useEffect(() => {
+    setRemembered(readRemembered());
+  }, []);
 
   // Show a clear message if a Google sign-in bounced back with an error.
   useEffect(() => {
@@ -82,8 +102,32 @@ export default function Landing() {
         }
         return;
       }
-      // Success → the redirect effect handles routing.
+      // Success → remember these credentials in this browser only, then the
+      // redirect effect handles routing.
+      try {
+        localStorage.setItem(REMEMBER_KEY, JSON.stringify({ email, password }));
+      } catch {
+        /* storage unavailable (e.g. private mode) — quick login just won't appear */
+      }
     }
+  };
+
+  // One-click sign-in using the credentials remembered from a previous login.
+  const quickLogin = async () => {
+    if (!supabase || !remembered) return;
+    setLoading(true);
+    setError(null);
+    const { error } = await supabase.auth.signInWithPassword(remembered);
+    setLoading(false);
+    if (error) {
+      // Stale (e.g. password changed) — drop it and fall back to the form.
+      try {
+        localStorage.removeItem(REMEMBER_KEY);
+      } catch {}
+      setRemembered(null);
+      setError("Saved login didn't work anymore — please log in again.");
+    }
+    // Success → the redirect effect handles routing.
   };
 
   const signInWithGoogle = async () => {
@@ -132,6 +176,24 @@ export default function Landing() {
           </div>
         ) : (
           <div className="mt-7">
+            {/* One-click sign-in remembered from a previous login on this device. */}
+            {remembered && (
+              <div className="mb-4">
+                <button
+                  onClick={quickLogin}
+                  disabled={loading}
+                  className="w-full rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-contrast transition-opacity hover:opacity-90 disabled:opacity-60"
+                >
+                  {loading ? "Please wait…" : `Continue as ${remembered.email}`}
+                </button>
+                <div className="my-3 flex items-center gap-3 text-[11px] text-muted">
+                  <span className="h-px flex-1 bg-border" />
+                  or use a different account
+                  <span className="h-px flex-1 bg-border" />
+                </div>
+              </div>
+            )}
+
             {/* Log in / Sign up toggle */}
             <div className="mb-4 flex rounded-full border border-border bg-surface-2 p-1 text-sm font-medium">
               <button
