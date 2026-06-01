@@ -12,7 +12,7 @@ import ThemeProvider from "@/components/ThemeProvider";
 import OarRails from "@/components/varsity/OarRails";
 import CoachTopBar from "@/components/varsity/coach/CoachTopBar";
 import CoachNav from "@/components/varsity/coach/CoachNav";
-import { varsityTheme, varsityLightTheme } from "@/lib/varsity/theme";
+import { varsityTheme } from "@/lib/varsity/theme";
 
 export default function CoachLayout({ children }: { children: React.ReactNode }) {
   const { ready, loggedIn, onboarded } = useAppState();
@@ -29,7 +29,6 @@ export default function CoachLayout({ children }: { children: React.ReactNode })
   return (
     <ThemeProvider
       tokens={varsityTheme}
-      light={varsityLightTheme}
       className="relative flex h-dvh flex-col overflow-hidden bg-background"
     >
       <OarRails />

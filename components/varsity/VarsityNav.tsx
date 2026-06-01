@@ -7,9 +7,9 @@ import { IconUser, IconCalendar, IconPlus } from "@/components/icons";
 
 /*
   Varsity Mode's own 5-tab bottom navigation (separate from the normal app's
-  BottomNav). The whole bar is crimson (the gocrimson.com look); the center tab
-  is an elevated white "Log" button with a crimson +. Active tab is white, the
-  rest are dimmed white. Colors are all theme tokens.
+  BottomNav). Center tab is an elevated crimson "Log" button — the floating +
+  from the mockups. Active tab is crimson; the rest are muted. Colors are all
+  theme tokens.
 */
 type Tab = { href: string; label: string; icon: ReactNode };
 
@@ -55,7 +55,7 @@ function NavItem({ tab, active }: { tab: Tab; active: boolean }) {
       href={tab.href}
       aria-current={active ? "page" : undefined}
       className={`flex flex-1 flex-col items-center gap-1 py-1 text-[10px] font-medium transition-colors ${
-        active ? "text-primary-contrast" : "text-primary-contrast/55"
+        active ? "text-primary" : "text-muted"
       }`}
     >
       {tab.icon}
@@ -69,7 +69,7 @@ export default function VarsityNav() {
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + "/");
 
   return (
-    <nav className="relative z-10 flex-shrink-0 bg-primary shadow-[0_-1px_0_rgba(0,0,0,0.15)]">
+    <nav className="relative z-10 flex-shrink-0 border-t border-border bg-surface">
       <ul className="mx-auto flex max-w-screen-sm items-end px-2 pb-5 pt-2">
         {leftTabs.map((tab) => (
           <li key={tab.href} className="flex flex-1">
@@ -82,7 +82,7 @@ export default function VarsityNav() {
           <Link
             href="/varsity/log"
             aria-label="Log a session"
-            className="-mt-6 flex h-14 w-14 items-center justify-center rounded-full bg-primary-contrast text-primary shadow-lg ring-4 ring-primary"
+            className="-mt-6 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-contrast shadow-lg ring-4 ring-background"
           >
             <IconPlus size={26} />
           </Link>
