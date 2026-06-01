@@ -161,11 +161,16 @@ export async function savePlan(plan: Plan): Promise<{ error?: string }> {
   return {};
 }
 
-/* ── The signed-in athlete's first name (for the Home greeting) ── */
-export async function fetchProfileName(userId: string | null): Promise<string> {
+/* ── The signed-in athlete's full profile name ── */
+export async function fetchProfileFullName(userId: string | null): Promise<string> {
   if (!userId || !hasSupabaseEnv()) return "";
   const supabase = createClient();
   const { data } = await supabase.from("profiles").select("data").eq("id", userId).maybeSingle();
-  const full = (data?.data as { name?: string } | undefined)?.name ?? "";
-  return full.trim().split(/\s+/)[0] ?? ""; // first name only
+  return ((data?.data as { name?: string } | undefined)?.name ?? "").trim();
+}
+
+/* ── The signed-in athlete's first name (for the Home greeting) ── */
+export async function fetchProfileName(userId: string | null): Promise<string> {
+  const full = await fetchProfileFullName(userId);
+  return full.split(/\s+/)[0] ?? ""; // first name only
 }

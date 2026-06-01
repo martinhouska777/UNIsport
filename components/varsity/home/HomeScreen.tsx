@@ -8,7 +8,7 @@
 */
 import { useEffect, useState } from "react";
 import { useAppState } from "@/components/AppState";
-import { fetchPlan, fetchProfileName } from "@/lib/varsity/planStore";
+import { fetchPlan, fetchProfileFullName } from "@/lib/varsity/planStore";
 import { fetchTodayLineups } from "@/lib/varsity/lineupStore";
 import { fetchNote } from "@/lib/varsity/notesStore";
 import { sessionKey } from "@/lib/varsity/coachPlan";
@@ -196,40 +196,71 @@ function SessionCard({ s }: { s: TodaySession }) {
   );
 }
 
-/* ─── Lineup ─── */
-function Seat({ num, init, mine }: { num: string; init: string; mine?: boolean }) {
+/* ─── Lineup (vertical · full names · your seat highlighted) ─── */
+function SeatRow({
+  label,
+  name,
+  mine,
+  cox,
+}: {
+  label: string;
+  name: string;
+  mine?: boolean;
+  cox?: boolean;
+}) {
+  const open = name === "—" || name === "";
   return (
     <div
-      className={`flex h-7 flex-1 flex-col items-center justify-center rounded-md border ${
-        mine ? "border-primary bg-primary/15" : "border-border bg-surface-2"
+      className={`flex items-center gap-2.5 rounded-lg border px-2.5 py-2 ${
+        mine
+          ? "border-primary bg-primary/15"
+          : cox
+            ? "border-accent/40 bg-accent/[0.08]"
+            : "border-border bg-surface-2"
       }`}
     >
-      <span className="text-[6px] font-semibold leading-none text-muted">{num}</span>
-      <span className={`mt-0.5 text-[8px] font-semibold leading-none ${mine ? "text-primary" : "text-text/80"}`}>
-        {init}
+      <span
+        className={`flex h-6 w-14 flex-shrink-0 items-center justify-center rounded text-[9px] font-bold uppercase tracking-[0.06em] ${
+          cox ? "bg-accent/15 text-accent" : mine ? "bg-primary/20 text-primary" : "bg-background text-muted"
+        }`}
+      >
+        {label}
       </span>
+      <span
+        className={`flex-1 truncate text-[13px] font-medium ${
+          mine ? "text-primary" : open ? "italic text-muted/60" : "text-text"
+        }`}
+      >
+        {open ? "Open seat" : name}
+      </span>
+      {mine && (
+        <span className="flex-shrink-0 rounded bg-primary px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.08em] text-primary-contrast">
+          You
+        </span>
+      )}
     </div>
   );
 }
 
-function LineupRow({ l }: { l: Lineup }) {
+function LineupBoat({ l }: { l: Lineup }) {
+  // Builder stores seats bow→stroke; show cox + stroke at the top, bow at the bottom.
+  const rowing = [...l.seats].reverse();
+  const lastIdx = rowing.length - 1;
   return (
-    <div>
-      <div className="mb-1.5 text-[8px] font-semibold tracking-[0.1em] text-muted">{l.period}</div>
-      <div className="flex items-center gap-1.5">
-        <span className="text-[7px] tracking-wide text-muted">STR</span>
-        <div className="flex flex-1 items-center gap-1">
-          {l.seats.map((s) => (
-            <Seat key={s.num} {...s} />
-          ))}
-        </div>
-        <span className="text-[7px] tracking-wide text-muted">BOW</span>
-        {l.cox && (
-          <div className="flex h-7 w-6 flex-col items-center justify-center rounded-md border border-accent/40 bg-accent/15">
-            <span className="text-[6px] font-semibold leading-none text-accent">C</span>
-            <span className="mt-0.5 text-[7px] font-semibold leading-none text-accent">{l.cox.init}</span>
-          </div>
-        )}
+    <div className="overflow-hidden rounded-xl border border-border bg-surface">
+      <div className="border-b border-border px-3 py-2.5 text-[12px] font-semibold text-text">
+        {l.period}
+      </div>
+      <div className="flex flex-col gap-1.5 p-3">
+        {l.cox && <SeatRow label="Cox" name={l.cox.name} mine={l.cox.mine} cox />}
+        {rowing.map((s, i) => (
+          <SeatRow
+            key={s.num}
+            label={s.num === "S" ? "Stroke" : i === lastIdx ? "Bow" : s.num}
+            name={s.name}
+            mine={s.mine}
+          />
+        ))}
       </div>
     </div>
   );
@@ -237,17 +268,14 @@ function LineupRow({ l }: { l: Lineup }) {
 
 function LineupCard({ lineups }: { lineups: Lineup[] }) {
   return (
-    <div className="overflow-hidden rounded-xl border border-border bg-surface">
-      <div className="flex items-center justify-between border-b border-border px-3 py-2.5">
+    <div>
+      <div className="mb-2 flex items-center justify-between px-1">
         <SectionLabel>Your Lineup</SectionLabel>
-        <span className="text-[10px] text-muted">Tap seat to see athlete</span>
+        <span className="text-[10px] text-muted">Stroke at top · bow at bottom</span>
       </div>
-      <div className="flex flex-col gap-3 px-3 py-3">
+      <div className="flex flex-col gap-3">
         {lineups.map((l, i) => (
-          <div key={i} className="flex flex-col gap-3">
-            {i > 0 && <div className="h-px bg-border" />}
-            <LineupRow l={l} />
-          </div>
+          <LineupBoat key={i} l={l} />
         ))}
       </div>
     </div>
@@ -310,13 +338,14 @@ export default function HomeScreen() {
     let active = true;
     (async () => {
       const today = new Date();
-      const [plan, firstName, lineups, coachNote] = await Promise.all([
+      const fullName = await fetchProfileFullName(userId);
+      const [plan, lineups, coachNote] = await Promise.all([
         fetchPlan(),
-        fetchProfileName(userId),
-        fetchTodayLineups((p) => sessionKey(today, p)),
+        fetchTodayLineups((p) => sessionKey(today, p), fullName),
         fetchNote(userId),
       ]);
       if (!active) return;
+      const firstName = fullName.split(/\s+/)[0] ?? "";
       setData(buildAthleteHome(plan, firstName, lineups, today));
       setNote(coachNote);
       setLoading(false);

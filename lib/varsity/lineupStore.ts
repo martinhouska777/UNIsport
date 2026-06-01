@@ -86,23 +86,33 @@ export async function saveLineup(
 
 /* ── Athlete Home: today's published boats as Lineup[] ── */
 const boatTypeName = (badge: string) => boatTypes.find((b) => b.type === badge)?.name ?? badge;
+const norm = (s: string) => s.trim().toLowerCase();
 
-function boatToLineup(period: string, boat: Boat): Lineup {
+// `myName` is the signed-in athlete's full profile name. We have no real link
+// between accounts and the (still-mock) roster yet, so we highlight "your seat"
+// by matching that name to the seated athlete's name — works for anyone who's
+// both a real account and in the squad (e.g. Martin Houska).
+function boatToLineup(period: string, boat: Boat, myName: string | null): Lineup {
+  const me = myName ? norm(myName) : null;
+  const fill = (athleteId: string | null) => {
+    const a = athleteId ? rosterById[athleteId] : undefined;
+    return {
+      init: a?.initials ?? "—",
+      name: a?.name ?? "—",
+      mine: !!(me && a && norm(a.name) === me),
+    };
+  };
   return {
     period: `${period} · ${boat.name}${boat.dock ? ` · ${boat.dock}` : ""}`,
     type: boatTypeName(boat.badge),
-    seats: boat.seats.map((s) => ({
-      num: s.label,
-      init: s.athleteId ? (rosterById[s.athleteId]?.initials ?? "?") : "—",
-    })),
-    cox: boat.hasCox
-      ? { init: boat.coxId ? (rosterById[boat.coxId]?.initials ?? "?") : "—" }
-      : undefined,
+    seats: boat.seats.map((s) => ({ num: s.label, ...fill(s.athleteId) })),
+    cox: boat.hasCox ? fill(boat.coxId) : undefined,
   };
 }
 
 export async function fetchTodayLineups(
   dayKeyFor: (period: "AM" | "PM") => string,
+  myName: string | null = null,
 ): Promise<Lineup[]> {
   const periods: ("AM" | "PM")[] = ["AM", "PM"];
   const stored = await Promise.all(periods.map((p) => fetchLineup(dayKeyFor(p))));
@@ -110,7 +120,7 @@ export async function fetchTodayLineups(
   periods.forEach((p, i) => {
     const s = stored[i];
     if (s && s.status === "published") {
-      for (const boat of s.boats) out.push(boatToLineup(p, boat));
+      for (const boat of s.boats) out.push(boatToLineup(p, boat, myName));
     }
   });
   return out;

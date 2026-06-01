@@ -47,12 +47,12 @@ export type TodaySession = {
   verify?: VerifyStat[];
 };
 
-export type Seat = { num: string; init: string; mine?: boolean };
+export type Seat = { num: string; init: string; name: string; mine?: boolean };
 export type Lineup = {
   period: string;
   type: string; // "Eight" | "Four" etc.
   seats: Seat[];
-  cox?: { init: string }; // coxless boats (4-/2-) have none
+  cox?: { init: string; name: string; mine?: boolean }; // coxless boats (4-/2-) have none
 };
 
 export type Greeting = { date: string; name: string; block: string; week: string };
@@ -132,34 +132,10 @@ export const home: HomeData = {
       },
     },
   ] as TodaySession[],
-  lineups: [
-    {
-      period: "AM · 2V Eight · Dock 7:00",
-      type: "Eight",
-      seats: [
-        { num: "1", init: "JB" },
-        { num: "2", init: "SR" },
-        { num: "3", init: "TK" },
-        { num: "4", init: "ME", mine: true },
-        { num: "5", init: "AC" },
-        { num: "6", init: "PL" },
-        { num: "7", init: "JD" },
-        { num: "8", init: "EH" },
-      ],
-      cox: { init: "DO" },
-    },
-    {
-      period: "PM · 2V Four · Palmer Dixon 4:30",
-      type: "Four",
-      seats: [
-        { num: "1", init: "JB" },
-        { num: "2", init: "ME", mine: true },
-        { num: "3", init: "TK" },
-        { num: "4", init: "AC" },
-      ],
-      cox: { init: "DO" },
-    },
-  ] as Lineup[],
+  // The real Home builds lineups from the published DB lineup (see
+  // lib/varsity/lineupStore.ts → fetchTodayLineups); this demo object only
+  // still feeds `focus`, so the lineup sample is left empty.
+  lineups: [] as Lineup[],
   focus: {
     coach: "COACH DORNEY · FOCUS THIS WEEK",
     when: "Updated Monday",
