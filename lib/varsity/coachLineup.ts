@@ -16,11 +16,15 @@
 
 export type Side = "P" | "S" | "B"; // Port · Starboard · Both (bisweptual)
 
+// Side colors mirror real oars: port = red, starboard = green; rows-both = blue.
+// Coxes are separate (yellow) and never take a rowing side.
 export const sideMeta: Record<Side, { label: string; color: string }> = {
-  P: { label: "Port", color: "#3b82f6" },
-  S: { label: "Starboard", color: "#ef4444" },
-  B: { label: "Both", color: "#d4a843" },
+  P: { label: "Port", color: "#ef4444" }, // red
+  S: { label: "Starboard", color: "#22c55e" }, // green
+  B: { label: "Both", color: "#3b82f6" }, // blue
 };
+
+export const COX_COLOR = "#eab308"; // yellow — cox identity
 
 /* ── The roster (every assignable athlete, keyed by id) ── */
 export type Athlete = {
@@ -28,6 +32,7 @@ export type Athlete = {
   initials: string;
   name: string;
   side: Side;
+  cox?: boolean; // a coxswain — can ONLY take the cox seat, never a rowing seat
   out?: "INJ" | "SICK"; // unavailable today → shown dimmed, can't be seated
 };
 
@@ -39,7 +44,9 @@ export const roster: Athlete[] = [
   { id: "NC", initials: "NC", name: "N. Chen", side: "P" },
   { id: "DH", initials: "DH", name: "D. Hunt", side: "S" },
   { id: "LB", initials: "LB", name: "L. Berg", side: "P" },
-  { id: "SL", initials: "SL", name: "S. Liu", side: "B" },
+  // coxswains
+  { id: "SL", initials: "SL", name: "S. Liu", side: "B", cox: true },
+  { id: "EP", initials: "EP", name: "E. Park", side: "B", cox: true },
   // 2V
   { id: "OM", initials: "OM", name: "O. Mahon", side: "P" },
   { id: "PS", initials: "PS", name: "P. Singh", side: "S" },
@@ -67,7 +74,7 @@ export const rosterById: Record<string, Athlete> = Object.fromEntries(
 // out of their group automatically; removing one returns it here.
 export const rosterGroups: { label: string; danger?: boolean; ids: string[] }[] = [
   { label: "1V — Current lineup", ids: ["MK", "JR", "TW", "NC", "DH", "LB"] },
-  { label: "Coxswains", ids: ["SL"] },
+  { label: "Coxswains", ids: ["SL", "EP"] },
   { label: "2V — Last lineup", ids: ["OM", "PS", "BF", "RN", "KT"] },
   { label: "3V — Last lineup", ids: ["CV", "FM", "ML", "JG"] },
   { label: "4V — Last lineup", ids: ["HE", "DM"] },

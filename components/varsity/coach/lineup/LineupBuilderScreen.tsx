@@ -22,6 +22,7 @@ import {
   rosterById,
   rosterGroups,
   sideMeta,
+  COX_COLOR,
   boatTypes,
   makeSeats,
   type PracticeDay,
@@ -69,8 +70,18 @@ function SideTag({ side }: { side: Side }) {
   );
 }
 
-function Avatar({ initials, side, className = "" }: { initials: string; side?: Side; className?: string }) {
-  const color = side ? sideMeta[side].color : undefined;
+function Avatar({
+  initials,
+  side,
+  cox,
+  className = "",
+}: {
+  initials: string;
+  side?: Side;
+  cox?: boolean;
+  className?: string;
+}) {
+  const color = cox ? COX_COLOR : side ? sideMeta[side].color : undefined;
   return (
     <span
       className={`flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border text-[10px] font-bold ${className}`}
@@ -81,6 +92,21 @@ function Avatar({ initials, side, className = "" }: { initials: string; side?: S
   );
 }
 type Side = Athlete["side"];
+
+// Tag shown for an athlete in the pool / a seat: their side, or "COX".
+function AthleteTag({ a }: { a: Athlete }) {
+  if (a.cox) {
+    return (
+      <span
+        className="rounded px-1.5 py-px text-[9px] font-bold tracking-[0.05em]"
+        style={{ background: `${COX_COLOR}22`, color: COX_COLOR }}
+      >
+        COX
+      </span>
+    );
+  }
+  return <SideTag side={a.side} />;
+}
 
 /* ─────────────────────────  view 1: day picker  ───────────────────────── */
 function PracticeButton({ practice, onPick }: { practice: Practice; onPick: () => void }) {
@@ -250,9 +276,9 @@ function Seat({
                   }}
                   className="flex w-full items-center gap-2.5 border-b border-border px-3 py-2.5 text-left last:border-b-0 active:bg-primary/10"
                 >
-                  <Avatar initials={m.initials} side={m.side} />
+                  <Avatar initials={m.initials} side={m.side} cox={m.cox} />
                   <span className="flex-1 text-[13px] font-semibold text-text">{m.name}</span>
-                  <SideTag side={m.side} />
+                  <AthleteTag a={m} />
                 </button>
               ))}
             </div>
@@ -274,11 +300,7 @@ function Seat({
                 : "border-primary/35 bg-primary/10"
           }`}
         >
-          <Avatar
-            initials={athlete.initials}
-            side={cox ? undefined : athlete.side}
-            className={cox ? "border-accent/50 bg-accent/15 text-accent" : ""}
-          />
+          <Avatar initials={athlete.initials} side={athlete.side} cox={cox} />
           <span className="flex-1 text-[13px] font-semibold text-text">{athlete.name}</span>
           {!cox && <SideTag side={athlete.side} />}
           <button type="button" onClick={onClear} className="text-muted hover:text-danger">
@@ -328,9 +350,9 @@ function PoolChip({ a, onDragStart }: { a: Athlete; onDragStart: () => void }) {
       }}
       className="flex cursor-grab items-center gap-2 rounded-xl border border-border bg-surface px-2 py-1.5 active:cursor-grabbing active:border-primary/40 active:bg-primary/10"
     >
-      <Avatar initials={a.initials} side={a.side} />
+      <Avatar initials={a.initials} side={a.side} cox={a.cox} />
       <span className="text-[12px] font-semibold text-text">{a.name}</span>
-      <SideTag side={a.side} />
+      <AthleteTag a={a} />
     </div>
   );
 }
@@ -366,15 +388,25 @@ function Builder({
     [seatedIds],
   );
   const matches = useMemo(() => {
+    // a cox seat only offers coxes; a rowing seat only offers rowers
+    const wantCox = typing?.kind === "cox";
+    let list = available.filter((a) => !!a.cox === wantCox);
     const q = query.trim().toLowerCase();
-    if (!q) return available;
-    return available.filter(
-      (a) => a.name.toLowerCase().includes(q) || a.initials.toLowerCase().includes(q),
-    );
-  }, [available, query]);
+    if (q) {
+      list = list.filter(
+        (a) => a.name.toLowerCase().includes(q) || a.initials.toLowerCase().includes(q),
+      );
+    }
+    return list;
+  }, [available, query, typing]);
 
-  // put `athleteId` into `slot`, removing them from wherever they were first
+  // put `athleteId` into `slot`, removing them from wherever they were first.
+  // The cox seat is locked to coxes; coxes can't take a rowing seat.
   const assign = (slot: Slot, athleteId: string) => {
+    const a = rosterById[athleteId];
+    if (!a) return;
+    if (slot.kind === "cox" && !a.cox) return;
+    if (slot.kind === "seat" && a.cox) return;
     setBoats((prev) =>
       prev
         .map((b) => ({
