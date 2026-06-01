@@ -72,19 +72,19 @@ function pickActive(blocks: Block[], today: Date) {
   return null;
 }
 
-// Today's PRESCRIBED sessions (for the Log tab) — the same published-block gate
-// as Home, so athletes log exactly what they're shown. Empty when today isn't in
-// a published block or has no sessions.
-export function prescribedForToday(
+// A day's PRESCRIBED sessions (for the Log tab) — the same published-block gate
+// as Home, so athletes log exactly what they're shown. Works for any day (today
+// or a recent one). Empty when the day isn't in a published block or has none.
+export function prescribedForDay(
   plan: Plan,
-  today = new Date(),
+  day = new Date(),
 ): { period: Period; dayKey: string; session: Session }[] {
-  const active = pickActive(plan.blocks, today);
+  const active = pickActive(plan.blocks, day);
   if (!active) return [];
-  const todayCell = active.weeks[active.weekIdx].days.find((d) => d.today);
-  if (!todayCell) return [];
+  const cell = active.weeks[active.weekIdx].days.find((d) => d.today);
+  if (!cell) return [];
   return periods.flatMap((p) => {
-    const dayKey = sessionKey(todayCell.date, p);
+    const dayKey = sessionKey(cell.date, p);
     const s = plan.sessions[dayKey];
     return s ? [{ period: p, dayKey, session: s }] : [];
   });

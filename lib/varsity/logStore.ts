@@ -96,6 +96,28 @@ export async function fetchLogsForDate(athleteId: string, dateIso: string): Prom
   return (data as Row[]).map(rowToEntry);
 }
 
+/* ── Read a date range of logs (powers the day-picker's "needs logging" dots) ── */
+export async function fetchLogsInRange(
+  athleteId: string,
+  fromIso: string,
+  toIso: string,
+): Promise<LogEntry[]> {
+  if (!athleteId) return [];
+  if (!hasSupabaseEnv()) {
+    return loadLocal(athleteId).filter((l) => l.logDate >= fromIso && l.logDate <= toIso);
+  }
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("varsity_logs")
+    .select("*")
+    .eq("athlete_id", athleteId)
+    .gte("log_date", fromIso)
+    .lte("log_date", toIso)
+    .order("created_at", { ascending: true });
+  if (error || !data) return [];
+  return (data as Row[]).map(rowToEntry);
+}
+
 /* ── Save a PLAN log (one per slot → update if it exists, else insert) ── */
 export async function savePlanLog(athleteId: string, draft: LogDraft): Promise<{ error?: string }> {
   if (!hasSupabaseEnv()) {

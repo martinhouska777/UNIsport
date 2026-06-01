@@ -18,8 +18,8 @@ import { createPortal } from "react-dom";
 import ThemeProvider from "@/components/ThemeProvider";
 import { varsityTheme } from "@/lib/varsity/theme";
 import { useAppState } from "@/components/AppState";
-import { fetchPlan } from "@/lib/varsity/planStore";
-import { prescribedForToday } from "@/lib/varsity/athleteHome";
+import { fetchPlan, type Plan } from "@/lib/varsity/planStore";
+import { prescribedForDay } from "@/lib/varsity/athleteHome";
 import {
   sessionLabel,
   categoryMeta,
@@ -28,7 +28,7 @@ import {
   type Period,
 } from "@/lib/varsity/coachPlan";
 import {
-  fetchLogsForDate,
+  fetchLogsInRange,
   savePlanLog,
   saveExtraLog,
   updateLog,
@@ -348,48 +348,134 @@ function ExtraRow({ log, onEdit }: { log: LogEntry; onEdit: () => void }) {
   );
 }
 
+/* ─────────────────────────  day picker  ───────────────────────── */
+type DayStat = { prescribed: number; loggedPlan: number; extra: number };
+
+function DayChip({
+  date,
+  selected,
+  isToday,
+  stat,
+  onPick,
+}: {
+  date: Date;
+  selected: boolean;
+  isToday: boolean;
+  stat: DayStat;
+  onPick: () => void;
+}) {
+  // amber = prescribed but not all logged · green = all logged · accent = only extra
+  let dot = "bg-transparent";
+  if (stat.prescribed > 0) dot = stat.loggedPlan >= stat.prescribed ? "bg-success" : "bg-warn";
+  else if (stat.extra > 0) dot = "bg-accent";
+  return (
+    <button
+      type="button"
+      onClick={onPick}
+      className={`flex w-[3.1rem] flex-shrink-0 flex-col items-center gap-1 rounded-xl border py-2 ${
+        selected
+          ? "border-primary bg-primary/15"
+          : isToday
+            ? "border-primary/40 bg-surface"
+            : "border-border bg-surface"
+      }`}
+    >
+      <span className="text-[9px] font-semibold uppercase tracking-wide text-muted">
+        {isToday ? "Today" : date.toLocaleDateString("en-US", { weekday: "short" })}
+      </span>
+      <span className={`text-[15px] font-semibold leading-none ${selected ? "text-primary" : "text-text"}`}>
+        {date.getDate()}
+      </span>
+      <span className={`h-1.5 w-1.5 rounded-full ${dot}`} />
+    </button>
+  );
+}
+
 /* ─────────────────────────  screen  ───────────────────────── */
+const DAYS_BACK = 7; // today + the past 6 days
+
+function startOfDay(d: Date) {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  return x;
+}
+
 export default function LogScreen() {
   const { userId } = useAppState();
-  const today = useMemo(() => new Date(), []);
-  const todayIso = toISO(today);
+  const today = useMemo(() => startOfDay(new Date()), []);
+  // The last 7 days, oldest → newest (today on the right).
+  const days = useMemo(
+    () =>
+      Array.from({ length: DAYS_BACK }, (_, i) => {
+        const d = new Date(today);
+        d.setDate(today.getDate() - (DAYS_BACK - 1 - i));
+        return d;
+      }),
+    [today],
+  );
+  const rangeFrom = toISO(days[0]);
+  const rangeTo = toISO(today);
 
-  const [prescribed, setPrescribed] = useState<
-    { period: Period; dayKey: string; session: Session }[] | null
-  >(null);
+  const [plan, setPlan] = useState<Plan | null>(null);
   const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState<Date>(today);
   const [editor, setEditor] = useState<EditorState | null>(null);
   const [showSoon, setShowSoon] = useState(false);
 
-  const loadLogs = async () => {
-    if (!userId) return;
-    setLogs(await fetchLogsForDate(userId, todayIso));
+  const reloadLogs = async () => {
+    if (userId) setLogs(await fetchLogsInRange(userId, rangeFrom, rangeTo));
   };
 
   useEffect(() => {
     let active = true;
     (async () => {
-      const [plan, dayLogs] = await Promise.all([
+      const [p, rangeLogs] = await Promise.all([
         fetchPlan(),
-        userId ? fetchLogsForDate(userId, todayIso) : Promise.resolve([]),
+        userId ? fetchLogsInRange(userId, rangeFrom, rangeTo) : Promise.resolve([]),
       ]);
       if (!active) return;
-      setPrescribed(prescribedForToday(plan, today));
-      setLogs(dayLogs);
+      setPlan(p);
+      setLogs(rangeLogs);
+      setLoading(false);
     })();
     return () => {
       active = false;
     };
-  }, [userId, todayIso, today]);
+  }, [userId, rangeFrom, rangeTo]);
+
+  const selectedIso = toISO(selected);
+  const isToday = selectedIso === rangeTo;
+  const selectedLogs = useMemo(() => logs.filter((l) => l.logDate === selectedIso), [logs, selectedIso]);
 
   const planLogByKey = useMemo(() => {
     const m: Record<string, LogEntry> = {};
-    for (const l of logs) if (l.source === "plan" && l.dayKey) m[l.dayKey] = l;
+    for (const l of selectedLogs) if (l.source === "plan" && l.dayKey) m[l.dayKey] = l;
     return m;
-  }, [logs]);
-  const extraLogs = useMemo(() => logs.filter((l) => l.source === "extra"), [logs]);
+  }, [selectedLogs]);
+  const extraLogs = useMemo(() => selectedLogs.filter((l) => l.source === "extra"), [selectedLogs]);
 
-  const dateLabel = today.toLocaleDateString("en-US", {
+  const prescribed: { period: Period; dayKey: string; session: Session }[] = useMemo(
+    () => (plan ? prescribedForDay(plan, selected) : []),
+    [plan, selected],
+  );
+
+  // Per-day status for the strip dots.
+  const dayStat = useMemo(() => {
+    const out: Record<string, DayStat> = {};
+    for (const d of days) {
+      const iso = toISO(d);
+      const dl = logs.filter((l) => l.logDate === iso);
+      out[iso] = {
+        prescribed: plan ? prescribedForDay(plan, d).length : 0,
+        loggedPlan: dl.filter((l) => l.source === "plan").length,
+        extra: dl.filter((l) => l.source === "extra").length,
+      };
+    }
+    return out;
+  }, [days, plan, logs]);
+
+  const dateLabel = selected.toLocaleDateString("en-US", {
     weekday: "long",
     month: "long",
     day: "numeric",
@@ -399,8 +485,25 @@ export default function LogScreen() {
     <>
       <div className="mx-auto w-full max-w-screen-sm px-4 pb-10 pt-4">
         <div className="text-[9px] font-semibold uppercase tracking-[0.16em] text-accent">Log a session</div>
-        <h1 className="mt-0.5 text-2xl font-semibold text-text">Today</h1>
+        <h1 className="mt-0.5 text-2xl font-semibold text-text">{isToday ? "Today" : dateLabel.split(",")[0]}</h1>
         <p className="mt-0.5 text-[12px] text-muted">{dateLabel}</p>
+
+        {/* day picker — pick today or a recent day to log */}
+        <div className="mt-3 flex gap-1.5 overflow-x-auto pb-1">
+          {days.map((d) => {
+            const iso = toISO(d);
+            return (
+              <DayChip
+                key={iso}
+                date={d}
+                selected={iso === selectedIso}
+                isToday={iso === rangeTo}
+                stat={dayStat[iso] ?? { prescribed: 0, loggedPlan: 0, extra: 0 }}
+                onPick={() => setSelected(d)}
+              />
+            );
+          })}
+        </div>
 
         {/* C2 photo — placeholder for the auto-read coming later */}
         <button
@@ -425,14 +528,14 @@ export default function LogScreen() {
           </p>
         )}
 
-        {/* Today's plan */}
+        {/* prescribed plan for the selected day */}
         <div className="mt-6">
-          <SectionLabel hint="from your coach">Today&apos;s plan</SectionLabel>
-          {prescribed === null ? (
+          <SectionLabel hint="from your coach">{isToday ? "Today's plan" : "Plan this day"}</SectionLabel>
+          {loading ? (
             <div className="py-6 text-center text-[12px] text-muted">Loading…</div>
           ) : prescribed.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-border bg-surface px-4 py-6 text-center text-[12px] text-muted">
-              Nothing prescribed today. Add any training below.
+              Nothing prescribed this day. Add any training below.
             </div>
           ) : (
             <div className="flex flex-col gap-2">
@@ -487,10 +590,10 @@ export default function LogScreen() {
         <LogEditor
           state={editor}
           athleteId={userId}
-          logDate={todayIso}
+          logDate={selectedIso}
           onClose={() => setEditor(null)}
           onSaved={async () => {
-            await loadLogs();
+            await reloadLogs();
             setEditor(null);
           }}
         />
