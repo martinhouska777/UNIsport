@@ -27,6 +27,7 @@ import {
   type Session,
   type Period,
 } from "@/lib/varsity/coachPlan";
+import { estimateForSession, formatMetrics } from "@/lib/varsity/logParse";
 import {
   fetchLogsInRange,
   savePlanLog,
@@ -57,8 +58,6 @@ const catMeta: Record<string, { label: string; color: string }> = {
   other: { label: "Other", color: "var(--muted)" },
 };
 const extraCategories = ["erg", "water", "weights", "run", "bike", "other"] as const;
-const feelings = [1, 2, 3, 4, 5];
-
 function Dot({ color }: { color: string }) {
   return <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ background: color }} />;
 }
@@ -68,31 +67,6 @@ function SectionLabel({ children, hint }: { children: React.ReactNode; hint?: st
     <div className="mb-2 flex items-center justify-between px-0.5">
       <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">{children}</span>
       {hint && <span className="text-[10px] text-muted">{hint}</span>}
-    </div>
-  );
-}
-
-function FeelingPicker({ value, onChange }: { value: number | null; onChange: (v: number) => void }) {
-  return (
-    <div>
-      <div className="grid grid-cols-5 gap-1.5">
-        {feelings.map((f) => (
-          <button
-            key={f}
-            type="button"
-            onClick={() => onChange(f)}
-            className={`rounded-xl border py-2.5 text-[15px] font-semibold ${
-              value === f ? "border-primary bg-primary/15 text-text" : "border-border bg-surface text-muted"
-            }`}
-          >
-            {f}
-          </button>
-        ))}
-      </div>
-      <div className="mt-1.5 flex justify-between text-[10px] text-muted">
-        <span>1 · easy</span>
-        <span>5 · maxed out</span>
-      </div>
     </div>
   );
 }
@@ -116,16 +90,21 @@ function LogEditor({
   onSaved: () => void;
 }) {
   const existing = state.existing;
+  // For a planned session with no log yet, pre-fill minutes/metres from the plan.
+  const est = state.mode === "plan" && !existing ? estimateForSession(state.session) : null;
   const [title, setTitle] = useState(
     existing?.title ?? (state.mode === "plan" ? sessionLabel(state.session) : ""),
   );
   const [category, setCategory] = useState<string>(
     existing?.category ?? (state.mode === "plan" ? state.session.category : "erg"),
   );
-  const [result, setResult] = useState(existing?.result ?? "");
-  const [feeling, setFeeling] = useState<number | null>(existing?.feeling ?? null);
+  const numStr = (n: number | null | undefined) => (n != null ? String(n) : "");
+  const [minutes, setMinutes] = useState<string>(numStr(existing?.minutes ?? est?.minutes));
+  const [metres, setMetres] = useState<string>(numStr(existing?.metres ?? est?.metres));
+  const [split, setSplit] = useState<string>(existing?.split ?? "");
   const [note, setNote] = useState(existing?.note ?? "");
   const [busy, setBusy] = useState(false);
+  const fromPlan = !!est && (est.minutes != null || est.metres != null);
 
   const inputCls =
     "w-full rounded-xl border border-border bg-surface-2 px-3.5 py-3 text-base text-text outline-none focus:border-primary placeholder:text-muted";
@@ -142,8 +121,9 @@ function LogEditor({
       source: state.mode,
       title: title.trim() || (state.mode === "plan" ? sessionLabel(state.session) : "Extra session"),
       category,
-      result: result.trim(),
-      feeling,
+      minutes: minutes.trim() ? Number(minutes) : null,
+      metres: metres.trim() ? Number(metres) : null,
+      split: split.trim() || null,
       note: note.trim(),
     };
     const res =
@@ -223,17 +203,43 @@ function LogEditor({
             </>
           )}
 
-          <div className={labelCls}>Result</div>
-          <textarea
-            value={result}
-            onChange={(e) => setResult(e.target.value)}
-            rows={2}
-            placeholder="Distance, splits, time… (a photo will fill this in later)"
-            className={`${inputCls} resize-none`}
-          />
-
-          <div className={labelCls}>How did it feel?</div>
-          <FeelingPicker value={feeling} onChange={setFeeling} />
+          <div className="mt-4 flex items-center justify-between">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Result</span>
+            {fromPlan && (
+              <span className="text-[10px] text-accent">Estimated from the plan · edit if needed</span>
+            )}
+          </div>
+          <div className="mt-1.5 grid grid-cols-2 gap-2">
+            <div>
+              <label className="mb-1 block text-[10px] text-muted">Minutes</label>
+              <input
+                value={minutes}
+                onChange={(e) => setMinutes(e.target.value.replace(/[^\d]/g, ""))}
+                inputMode="numeric"
+                placeholder="—"
+                className={inputCls}
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-[10px] text-muted">Metres</label>
+              <input
+                value={metres}
+                onChange={(e) => setMetres(e.target.value.replace(/[^\d]/g, ""))}
+                inputMode="numeric"
+                placeholder="—"
+                className={inputCls}
+              />
+            </div>
+          </div>
+          <div className="mt-2">
+            <label className="mb-1 block text-[10px] text-muted">Split /500m (optional)</label>
+            <input
+              value={split}
+              onChange={(e) => setSplit(e.target.value)}
+              placeholder="e.g. 1:52"
+              className={inputCls}
+            />
+          </div>
 
           <div className={labelCls}>Note (optional)</div>
           <input
@@ -310,7 +316,11 @@ function PrescribedRow({
           </span>
         </div>
         {detail && <div className="mt-0.5 truncate text-[11px] text-muted">{detail}</div>}
-        {log?.result && <div className="mt-1 text-[12px] font-medium text-text/90">{log.result}</div>}
+        {log && formatMetrics(log.minutes, log.metres, log.split) && (
+          <div className="mt-1 text-[12px] font-medium text-text/90">
+            {formatMetrics(log.minutes, log.metres, log.split)}
+          </div>
+        )}
       </div>
       {log ? (
         <span className="flex flex-shrink-0 items-center gap-1 text-[11px] font-semibold text-success">
@@ -338,7 +348,11 @@ function ExtraRow({ log, onEdit }: { log: LogEntry; onEdit: () => void }) {
       </span>
       <div className="min-w-0 flex-1">
         <span className="text-[14px] font-semibold text-text">{log.title}</span>
-        {log.result && <div className="mt-0.5 text-[12px] text-text/90">{log.result}</div>}
+        {formatMetrics(log.minutes, log.metres, log.split) && (
+          <div className="mt-0.5 text-[12px] text-text/90">
+            {formatMetrics(log.minutes, log.metres, log.split)}
+          </div>
+        )}
         {log.note && <div className="mt-0.5 truncate text-[11px] text-muted">{log.note}</div>}
       </div>
       <span className="flex-shrink-0 rounded-md border border-border px-2 py-0.5 text-[10px] font-medium text-muted">
