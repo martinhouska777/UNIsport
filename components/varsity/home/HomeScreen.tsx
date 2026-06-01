@@ -355,8 +355,8 @@ export default function HomeScreen() {
     };
   }, [userId]);
 
-  // The coach's note rides above everything, so the athlete sees it on open
-  // even before any plan is published.
+  // The coach's note sits at the bottom of the page (shown in every state,
+  // even before a plan is published).
   const noteCard =
     note !== null ? (
       <div className="px-3 pt-3">
@@ -367,7 +367,6 @@ export default function HomeScreen() {
   if (loading) {
     return (
       <div className="mx-auto w-full max-w-screen-sm pb-6">
-        {noteCard}
         <div className="px-4 pt-20 text-center text-[13px] text-muted">Loading…</div>
       </div>
     );
@@ -375,15 +374,14 @@ export default function HomeScreen() {
   if (!data) {
     return (
       <div className="mx-auto w-full max-w-screen-sm pb-6">
-        {noteCard}
         <EmptyHome />
+        {noteCard}
       </div>
     );
   }
 
   return (
     <div className="mx-auto w-full max-w-screen-sm pb-6">
-      {noteCard}
       <Greeting g={data.greeting} />
       {data.race && <RaceBar r={data.race} />}
       <WeekStrip week={data.week} />
@@ -411,6 +409,8 @@ export default function HomeScreen() {
           <LineupCard lineups={data.lineups} />
         </div>
       )}
+
+      {noteCard}
     </div>
   );
 }
