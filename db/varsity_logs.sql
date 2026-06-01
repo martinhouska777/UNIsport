@@ -20,11 +20,18 @@ create table if not exists public.varsity_logs (
   source      text not null default 'extra', -- 'plan' | 'extra'
   title       text not null,                 -- e.g. "Water · UT2" or "Easy run"
   category    text,                           -- water/erg/weights/flex/off/run/bike/other
-  result      text not null default '',       -- distance / splits / time (free text)
-  feeling     int,                            -- 1..5, how it felt (optional)
+  minutes     int,                            -- total time done
+  metres      int,                            -- total distance done
+  split       text,                           -- e.g. "1:52" (mainly erg)
   note        text not null default '',
   created_at  timestamptz not null default now()
 );
+
+-- Structured metrics (added after the first version, which used free-text
+-- `result` + a `feeling` score). Idempotent so it applies to existing tables.
+alter table public.varsity_logs add column if not exists minutes int;
+alter table public.varsity_logs add column if not exists metres  int;
+alter table public.varsity_logs add column if not exists split   text;
 
 -- At most one plan-log per athlete per plan slot (extras have null day_key, and
 -- Postgres treats nulls as distinct, so many extras per day are allowed).

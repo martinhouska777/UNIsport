@@ -18,8 +18,9 @@ export type LogEntry = {
   source: LogSource;
   title: string;
   category: string | null;
-  result: string;
-  feeling: number | null;
+  minutes: number | null; // total time done
+  metres: number | null; // total distance done
+  split: string | null; // e.g. "1:52" (mainly erg)
   note: string;
 };
 
@@ -34,8 +35,9 @@ type Row = {
   source: LogSource;
   title: string;
   category: string | null;
-  result: string;
-  feeling: number | null;
+  minutes: number | null;
+  metres: number | null;
+  split: string | null;
   note: string;
 };
 
@@ -47,8 +49,9 @@ const rowToEntry = (r: Row): LogEntry => ({
   source: r.source,
   title: r.title,
   category: r.category,
-  result: r.result ?? "",
-  feeling: r.feeling,
+  minutes: r.minutes,
+  metres: r.metres,
+  split: r.split,
   note: r.note ?? "",
 });
 
@@ -60,8 +63,9 @@ const draftToRow = (athleteId: string, d: LogDraft) => ({
   source: d.source,
   title: d.title,
   category: d.category,
-  result: d.result,
-  feeling: d.feeling,
+  minutes: d.minutes,
+  metres: d.metres,
+  split: d.split,
   note: d.note,
 });
 
