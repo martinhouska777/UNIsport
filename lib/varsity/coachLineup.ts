@@ -36,34 +36,74 @@ export type Athlete = {
   out?: "INJ" | "SICK"; // unavailable today → shown dimmed, can't be seated
 };
 
+// The real squad. The source list groups athletes by erg/fitness training group
+// (Columns A–D, Bike, UT2, OYO, Rx), NOT by rowing side — so we don't yet know
+// who rows port vs starboard. Everyone defaults to "B" (Both) until the coach
+// sets a real bowside/strokeside split. Columns A + D are the coxswains.
 export const roster: Athlete[] = [
-  // 1V — currently seated
-  { id: "MK", initials: "MK", name: "M. Klein", side: "S" },
-  { id: "JR", initials: "JR", name: "J. Reyes", side: "P" },
-  { id: "TW", initials: "TW", name: "T. Walsh", side: "S" },
-  { id: "NC", initials: "NC", name: "N. Chen", side: "P" },
-  { id: "DH", initials: "DH", name: "D. Hunt", side: "S" },
-  { id: "LB", initials: "LB", name: "L. Berg", side: "P" },
-  // coxswains
-  { id: "SL", initials: "SL", name: "S. Liu", side: "B", cox: true },
-  { id: "EP", initials: "EP", name: "E. Park", side: "B", cox: true },
-  // 2V
-  { id: "OM", initials: "OM", name: "O. Mahon", side: "P" },
-  { id: "PS", initials: "PS", name: "P. Singh", side: "S" },
-  { id: "BF", initials: "BF", name: "B. Foster", side: "S" },
-  { id: "RN", initials: "RN", name: "R. Nash", side: "P" },
-  { id: "KT", initials: "KT", name: "K. Tan", side: "B" },
-  // 3V
-  { id: "CV", initials: "CV", name: "C. Vo", side: "S" },
-  { id: "FM", initials: "FM", name: "F. Moss", side: "P" },
-  { id: "ML", initials: "ML", name: "M. Lowe", side: "S" },
-  { id: "JG", initials: "JG", name: "J. Goss", side: "P" },
-  // 4V
-  { id: "HE", initials: "HE", name: "H. Espo", side: "S" },
-  { id: "DM", initials: "DM", name: "D. Marsh", side: "P" },
-  // out today
-  { id: "BW", initials: "BW", name: "B. Walsh", side: "S", out: "INJ" },
-  { id: "AV", initials: "AV", name: "A. Vicino", side: "P", out: "SICK" },
+  // ── Coxswains (Columns A + D) ──
+  { id: "cate-frerichs", initials: "CF", name: "Cate Frerichs", side: "B", cox: true },
+  { id: "micah-john", initials: "MJ", name: "Micah John", side: "B", cox: true },
+  { id: "iris-hennin", initials: "IH", name: "Iris Hennin", side: "B", cox: true },
+  { id: "nick-yoo", initials: "NY", name: "Nick Yoo", side: "B", cox: true },
+  { id: "nat-toms", initials: "NT", name: "Nat Toms", side: "B", cox: true },
+  { id: "abbi-park", initials: "AP", name: "Abbi Park", side: "B", cox: true },
+  { id: "helena-inzerillo", initials: "HI", name: "Helena Inzerillo", side: "B", cox: true },
+
+  // ── Group B ──
+  { id: "asante-kiio", initials: "AK", name: "Asante Kiio", side: "B" },
+  { id: "luca-vicino", initials: "LV", name: "Luca Vicino", side: "B" },
+  { id: "marcus-chung", initials: "MC", name: "Marcus Chung", side: "B" },
+  { id: "mason-cruz-abrams", initials: "MCr", name: "Mason Cruz-Abrams", side: "B" },
+  { id: "jack-dorney", initials: "JD", name: "Jack Dorney", side: "B" },
+  { id: "alexander-grundy", initials: "AG", name: "Alexander Grundy", side: "B" },
+  { id: "george-farkas", initials: "GF", name: "George Farkas", side: "B" },
+  { id: "sam-gallaudet", initials: "SG", name: "Sam Gallaudet", side: "B" },
+  { id: "martin-houska", initials: "MH", name: "Martin Houska", side: "B" },
+  { id: "marco-gandola", initials: "MG", name: "Marco Gandola", side: "B" },
+  { id: "apostolos-lykomitros", initials: "AL", name: "Apostolos Lykomitros", side: "B" },
+  { id: "tyler-horler", initials: "TH", name: "Tyler Horler", side: "B" },
+  { id: "teddy-plimpton", initials: "TP", name: "Teddy Plimpton", side: "B" },
+  { id: "sam-davidson", initials: "SD", name: "Sam Davidson", side: "B" },
+  { id: "jordan-dykema", initials: "JDy", name: "Jordan Dykema", side: "B" },
+
+  // ── Group C ──
+  { id: "jack-hansen-knarhoi", initials: "JH", name: "Jack Hansen-Knarhoi", side: "B" },
+  { id: "owen-finnerty", initials: "OF", name: "Owen Finnerty", side: "B" },
+  { id: "marco-vicino", initials: "MV", name: "Marco Vicino", side: "B" },
+  { id: "pierce-lapham", initials: "PL", name: "Pierce Lapham", side: "B" },
+  { id: "julian-paul", initials: "JP", name: "Julian Paul", side: "B" },
+  { id: "ben-scott", initials: "BS", name: "Ben Scott", side: "B" },
+  { id: "sam-woodgate", initials: "SW", name: "Sam Woodgate", side: "B" },
+  { id: "mike-thomas", initials: "MT", name: "Mike Thomas", side: "B" },
+  { id: "joseph-baker", initials: "JB", name: "Joseph Baker", side: "B" },
+  { id: "adam-cech", initials: "AC", name: "Adam Cech", side: "B" },
+  { id: "alex-sanchez-fretz", initials: "AS", name: "Alex Sanchez Fretz", side: "B" },
+  { id: "leo-bessler", initials: "LB", name: "Leo Bessler", side: "B" },
+  { id: "joshua-brangan", initials: "JBr", name: "Joshua Brangan", side: "B" },
+  { id: "bob-rawlinson", initials: "BR", name: "Bob Rawlinson", side: "B" },
+  { id: "ben-schnalke", initials: "BSc", name: "Ben Schnalke", side: "B" },
+  { id: "jack-sulger", initials: "JS", name: "Jack Sulger", side: "B" },
+  { id: "elam-hughes", initials: "EH", name: "Elam Hughes", side: "B" },
+  { id: "owen-marcovitz", initials: "OM", name: "Owen Marcovitz", side: "B" },
+
+  // ── Bike ──
+  { id: "will-fowler", initials: "WF", name: "Will Fowler", side: "B" },
+  { id: "kevin-weldon", initials: "KW", name: "Kevin Weldon", side: "B" },
+
+  // ── UT2 ──
+  { id: "leyth-sousou", initials: "LS", name: "Leyth Sousou", side: "B" },
+
+  // ── OYO ──
+  { id: "cameron-beyki", initials: "CB", name: "Cameron Beyki", side: "B" },
+  { id: "max-morehead", initials: "MM", name: "Max Morehead", side: "B" },
+
+  // ── Rx ──
+  { id: "george-burney", initials: "GB", name: "George Burney", side: "B" },
+  { id: "alp-karadogan", initials: "AK2", name: "Alp Karadogan", side: "B" },
+  { id: "kynan-tallec-botos", initials: "KT", name: "Kynan Tallec-Botos", side: "B" },
+  { id: "ryan-cornelius", initials: "RC", name: "Ryan Cornelius", side: "B" },
+  { id: "charles-richards", initials: "CR", name: "Charles Richards", side: "B" },
 ];
 
 export const rosterById: Record<string, Athlete> = Object.fromEntries(
@@ -73,12 +113,13 @@ export const rosterById: Record<string, Athlete> = Object.fromEntries(
 // How the pool is grouped (by each athlete's last lineup). Seated athletes drop
 // out of their group automatically; removing one returns it here.
 export const rosterGroups: { label: string; danger?: boolean; ids: string[] }[] = [
-  { label: "1V — Current lineup", ids: ["MK", "JR", "TW", "NC", "DH", "LB"] },
-  { label: "Coxswains", ids: ["SL", "EP"] },
-  { label: "2V — Last lineup", ids: ["OM", "PS", "BF", "RN", "KT"] },
-  { label: "3V — Last lineup", ids: ["CV", "FM", "ML", "JG"] },
-  { label: "4V — Last lineup", ids: ["HE", "DM"] },
-  { label: "Unavailable today", danger: true, ids: ["BW", "AV"] },
+  { label: "Coxswains", ids: ["cate-frerichs", "micah-john", "iris-hennin", "nick-yoo", "nat-toms", "abbi-park", "helena-inzerillo"] },
+  { label: "Group B", ids: ["asante-kiio", "luca-vicino", "marcus-chung", "mason-cruz-abrams", "jack-dorney", "alexander-grundy", "george-farkas", "sam-gallaudet", "martin-houska", "marco-gandola", "apostolos-lykomitros", "tyler-horler", "teddy-plimpton", "sam-davidson", "jordan-dykema"] },
+  { label: "Group C", ids: ["jack-hansen-knarhoi", "owen-finnerty", "marco-vicino", "pierce-lapham", "julian-paul", "ben-scott", "sam-woodgate", "mike-thomas", "joseph-baker", "adam-cech", "alex-sanchez-fretz", "leo-bessler", "joshua-brangan", "bob-rawlinson", "ben-schnalke", "jack-sulger", "elam-hughes", "owen-marcovitz"] },
+  { label: "Bike", ids: ["will-fowler", "kevin-weldon"] },
+  { label: "UT2", ids: ["leyth-sousou"] },
+  { label: "OYO", ids: ["cameron-beyki", "max-morehead"] },
+  { label: "Rx", ids: ["george-burney", "alp-karadogan", "kynan-tallec-botos", "ryan-cornelius", "charles-richards"] },
 ];
 
 /* ── The practice picker (entry screen) ── */
@@ -92,46 +133,6 @@ export const practiceStatusMeta: Record<PracticeStatus, { label: string; dot: st
 };
 
 export type Practice = { period: "AM" | "PM"; status: PracticeStatus };
-export type PracticeDay = {
-  id: string;
-  num: number;
-  weekday: string;
-  month: string;
-  today?: boolean;
-  note?: string;
-  am: Practice;
-  pm: Practice;
-};
-
-export const practiceDays: PracticeDay[] = [
-  {
-    id: "thu-9",
-    num: 9,
-    weekday: "Thursday",
-    month: "January",
-    today: true,
-    am: { period: "AM", status: "draft" },
-    pm: { period: "PM", status: "none" },
-  },
-  {
-    id: "fri-10",
-    num: 10,
-    weekday: "Friday",
-    month: "January",
-    note: "Captain's practice",
-    am: { period: "AM", status: "none" },
-    pm: { period: "PM", status: "none" },
-  },
-  {
-    id: "sat-11",
-    num: 11,
-    weekday: "Saturday",
-    month: "January",
-    note: "3×11' race prep",
-    am: { period: "AM", status: "published" },
-    pm: { period: "PM", status: "rest" },
-  },
-];
 
 /* ── Boat rigging types ── */
 export type BoatType = "8+" | "4+" | "4-" | "2-";
@@ -170,32 +171,3 @@ export function makeSeats(type: BoatType): SeatSlot[] {
     athleteId: null,
   }));
 }
-
-// The session this practice prescribes (pulled from the training plan).
-export const sessionContext = {
-  title: "RP3 · 3×5' (1:50 at 72, 2k+2)",
-  sub: "7:00am dock · Newell",
-};
-
-// One worked-up boat (the 1V eight, 6/8 filled) to show the builder in use.
-export const initialBoats: Boat[] = [
-  {
-    id: "1v",
-    badge: "8+",
-    name: "1V Eight",
-    dock: "7:00am",
-    note: "Drive sequence — slow the slide on the recovery.",
-    hasCox: true,
-    coxId: "SL",
-    seats: [
-      { label: "1", athleteId: "MK" },
-      { label: "2", athleteId: "JR" },
-      { label: "3", athleteId: "TW" },
-      { label: "4", athleteId: null },
-      { label: "5", athleteId: "NC" },
-      { label: "6", athleteId: "DH" },
-      { label: "7", athleteId: null },
-      { label: "S", athleteId: "LB" },
-    ],
-  },
-];
