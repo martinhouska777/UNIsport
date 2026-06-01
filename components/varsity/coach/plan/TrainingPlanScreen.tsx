@@ -452,7 +452,7 @@ export default function TrainingPlanScreen() {
       "w-full rounded-xl border border-border bg-surface-2 px-3.5 py-3 text-base text-text outline-none focus:border-primary placeholder:text-muted";
     const labelCls = "mb-1.5 mt-4 text-[10px] font-semibold uppercase tracking-[0.1em] text-muted";
     return (
-      <div className="fixed inset-0 z-50 flex flex-col bg-background">
+      <div className="fixed inset-0 z-50 flex h-dvh flex-col bg-background">
         {/* header with back */}
         <div className="flex flex-shrink-0 items-center gap-2 border-b border-border px-4 py-3">
           <button type="button" onClick={() => setEditor(null)} className="flex items-center gap-1 text-[13px] text-muted">
