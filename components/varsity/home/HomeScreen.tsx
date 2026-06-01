@@ -18,7 +18,6 @@ import {
   type HomeData,
   type Greeting as GreetingData,
   type Race as RaceData,
-  type Focus as FocusData,
   type WeekDay,
   type TodaySession,
   type SessionStatus,
@@ -30,7 +29,6 @@ import {
   IconCheck,
   IconCheckCircle,
   IconMessage,
-  IconBulb,
   IconX,
   IconCalendar,
 } from "@/components/icons";
@@ -256,35 +254,6 @@ function LineupCard({ lineups }: { lineups: Lineup[] }) {
   );
 }
 
-/* ─── Coach focus ─── */
-function CoachFocus({ f }: { f: FocusData }) {
-  return (
-    <div className="relative overflow-hidden rounded-xl border border-accent/25 bg-gradient-to-br from-accent/10 to-surface p-3.5">
-      <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-accent to-transparent" />
-      <div className="mb-2 flex items-center gap-2">
-        <span className="flex h-6 w-6 items-center justify-center rounded-md border border-accent/30 bg-accent/15 text-accent">
-          <IconBulb size={13} />
-        </span>
-        <div>
-          <div className="text-[8px] font-semibold tracking-[0.1em] text-accent">{f.coach}</div>
-          <div className="text-[9px] text-muted">{f.when}</div>
-        </div>
-      </div>
-      <p className="text-[12px] italic leading-relaxed text-text/85">“{f.text}”</p>
-      <div className="mt-2 flex flex-wrap gap-1.5">
-        {f.tags.map((t) => (
-          <span
-            key={t}
-            className="rounded-md border border-accent/30 bg-accent/10 px-2 py-0.5 text-[8px] font-medium text-accent"
-          >
-            {t}
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 /* ─── Coach's note for you (red = work on this · green = all clear) ─── */
 function CoachNoteCard({ note }: { note: string }) {
   if (note.trim()) {
@@ -413,10 +382,6 @@ export default function HomeScreen() {
           <LineupCard lineups={data.lineups} />
         </div>
       )}
-
-      <div className="px-3 pt-3">
-        <CoachFocus f={data.focus} />
-      </div>
     </div>
   );
 }

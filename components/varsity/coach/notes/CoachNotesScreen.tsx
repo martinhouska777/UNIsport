@@ -13,6 +13,9 @@
   green = success), so it re-skins with the theme.
 */
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
+import ThemeProvider from "@/components/ThemeProvider";
+import { varsityTheme } from "@/lib/varsity/theme";
 import {
   fetchTeamRoster,
   fetchNotes,
@@ -116,15 +119,15 @@ function Editor({
     onSaved(text.trim());
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-background">
-      <div className="flex items-center gap-2 border-b border-border px-4 py-3">
+  const overlay = (
+    <div className="fixed inset-0 z-[60] flex h-dvh flex-col bg-background">
+      <div className="flex flex-shrink-0 items-center gap-2 border-b border-border px-4 py-3">
         <button type="button" onClick={onBack} className="flex items-center gap-1 text-[13px] text-muted">
           <IconArrowLeft size={18} /> Team
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 pb-32 pt-5">
+      <div className="flex-1 overflow-y-auto px-4 pb-6 pt-5">
         <div className="mx-auto w-full max-w-screen-sm">
           <div className="flex items-center gap-3">
             <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full border border-border bg-surface-2 text-[15px] font-bold text-text">
@@ -155,8 +158,9 @@ function Editor({
         </div>
       </div>
 
-      {/* save bar */}
-      <div className="absolute inset-x-0 bottom-0 z-10 border-t border-border bg-surface px-4 pb-6 pt-3">
+      {/* footer with save — a flex sibling (flex-shrink-0), so it stays pinned
+          while the content scrolls instead of drifting */}
+      <div className="flex-shrink-0 border-t border-border bg-background px-4 pb-6 pt-3">
         <div className="mx-auto flex max-w-screen-sm gap-2.5">
           {initialNote.trim() && (
             <button
@@ -181,6 +185,10 @@ function Editor({
       </div>
     </div>
   );
+
+  // Portal to <body> with the varsity theme, so the full-screen editor escapes
+  // the coach layout's stacking context (same fix as the plan session editor).
+  return createPortal(<ThemeProvider tokens={varsityTheme}>{overlay}</ThemeProvider>, document.body);
 }
 
 /* ─────────────────────────  screen  ───────────────────────── */
