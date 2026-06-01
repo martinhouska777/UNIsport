@@ -22,6 +22,7 @@ import {
   periods,
   presetTime,
   suggestionsFor,
+  optionsLabel,
   sessionKey,
   sessionColor,
   sessionLabel,
@@ -54,10 +55,18 @@ type View =
   | { name: "block"; blockId: string }
   | { name: "week"; blockId: string; weekIdx: number };
 
-type Form = { category?: Category; intensity?: Intensity; description: string; note: string };
+type Form = { category?: Category; intensity?: Intensity; description: string; time: string; note: string };
 
 function Dot({ color }: { color: string }) {
   return <span className="h-2.5 w-2.5 rounded-full" style={{ background: color }} />;
+}
+
+function DraftBadge() {
+  return (
+    <span className="rounded border border-warn/40 bg-warn/10 px-1.5 py-px text-[8px] font-bold uppercase tracking-[0.08em] text-warn">
+      Draft
+    </span>
+  );
 }
 
 export default function TrainingPlanScreen() {
@@ -67,7 +76,7 @@ export default function TrainingPlanScreen() {
 
   // editor sheet
   const [editor, setEditor] = useState<{ date: Date; period: Period } | null>(null);
-  const [form, setForm] = useState<Form>({ description: "", note: "" });
+  const [form, setForm] = useState<Form>({ description: "", time: "", note: "" });
 
   // create-block form
   const todayISO = toISO(new Date());
@@ -93,6 +102,7 @@ export default function TrainingPlanScreen() {
       name: draft.name.trim(),
       start: draft.start,
       end: draft.end,
+      status: "draft",
       raceName: draft.raceName.trim() || undefined,
       raceDate: draft.raceDate || undefined,
     };
@@ -107,6 +117,7 @@ export default function TrainingPlanScreen() {
       category: existing?.category,
       intensity: existing?.intensity,
       description: existing?.description ?? "",
+      time: existing?.time ?? presetTime[period],
       note: existing?.note ?? "",
     });
     setEditor({ date, period });
@@ -121,6 +132,7 @@ export default function TrainingPlanScreen() {
       category: form.category,
       intensity: categoryMeta[form.category].hasIntensity ? form.intensity : undefined,
       description: form.description.trim(),
+      time: form.time.trim() || presetTime[editor.period],
       note: form.note.trim() || undefined,
     };
     setSessions((prev) => ({ ...prev, [sessionKey(editor.date, editor.period)]: s }));
@@ -172,7 +184,10 @@ export default function TrainingPlanScreen() {
                 className="flex items-center gap-3 rounded-2xl border border-border bg-surface px-4 py-3.5 text-left"
               >
                 <div className="flex-1">
-                  <div className="text-[15px] font-semibold text-text">{b.name}</div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[15px] font-semibold text-text">{b.name}</span>
+                    {b.status === "draft" && <DraftBadge />}
+                  </div>
                   <div className="mt-0.5 text-[11px] text-muted">{blockRangeLabel(b)}</div>
                   {b.raceName && (
                     <div className="mt-1 flex items-center gap-1 text-[10px] text-accent">
@@ -269,7 +284,10 @@ export default function TrainingPlanScreen() {
         <button onClick={() => setView({ name: "blocks" })} className="flex items-center gap-1 text-[13px] text-muted">
           <IconArrowLeft size={16} /> Blocks
         </button>
-        <h1 className="mt-1 text-2xl font-semibold text-text">{block.name}</h1>
+        <div className="mt-1 flex items-center gap-2">
+          <h1 className="text-2xl font-semibold text-text">{block.name}</h1>
+          {block.status === "draft" && <DraftBadge />}
+        </div>
         <div className="mt-1 text-[11px] text-muted">{blockRangeLabel(block)}</div>
 
         {block.raceName && (
@@ -399,7 +417,7 @@ export default function TrainingPlanScreen() {
                         {s.description || sessionLabel(s)}
                       </div>
                       <div className="mt-0.5 flex items-center gap-2 text-[9px] text-muted">
-                        <span>{presetTime[p]}</span>
+                        <span>{s.time}</span>
                         {s.note && (
                           <span className="flex items-center gap-1">
                             <IconClipboard size={9} /> note
@@ -421,133 +439,162 @@ export default function TrainingPlanScreen() {
 
   return null;
 
-  /* ─────────────  session editor sheet (inlined, not a child component, so the
-     description/note inputs keep focus while typing)  ───────────── */
+  /* ─────────────  session editor — FULL SCREEN (inlined, not a child component,
+     so the description/note inputs keep focus while typing)  ───────────── */
   function renderEditor() {
     if (!editor) return null;
     const cat = form.category;
     const sugg = cat ? suggestionsFor(cat, form.intensity) : [];
     const weekday = editor.date.toLocaleDateString("en-US", { weekday: "long" });
+    const longDate = editor.date.toLocaleDateString("en-US", { month: "long", day: "numeric" });
+    const existing = !!sessions[sessionKey(editor.date, editor.period)];
+    const inputCls =
+      "w-full rounded-xl border border-border bg-surface-2 px-3.5 py-3 text-base text-text outline-none focus:border-primary placeholder:text-muted";
+    const labelCls = "mb-1.5 mt-4 text-[10px] font-semibold uppercase tracking-[0.1em] text-muted";
     return (
-      <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60" onClick={() => setEditor(null)}>
-        <div
-          className="flex max-h-[88vh] w-full max-w-screen-sm flex-col rounded-t-3xl border-t border-border bg-background"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="mx-auto mt-3 h-1 w-9 flex-shrink-0 rounded-full bg-border" />
-          <div className="overflow-y-auto px-5 pb-5 pt-3">
-            <h2 className="text-lg font-semibold text-text">
+      <div className="fixed inset-0 z-50 flex flex-col bg-background">
+        {/* header with back */}
+        <div className="flex flex-shrink-0 items-center gap-2 border-b border-border px-4 py-3">
+          <button type="button" onClick={() => setEditor(null)} className="flex items-center gap-1 text-[13px] text-muted">
+            <IconArrowLeft size={18} /> Back
+          </button>
+          <div className="ml-1">
+            <div className="text-[15px] font-semibold leading-none text-text">
               {weekday} {editor.period}
-            </h2>
-            <p className="mb-4 text-[11px] text-muted">{presetTime[editor.period]} · no duration or location needed</p>
-
-            {/* category */}
-            <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Type</div>
-            <div className="grid grid-cols-5 gap-1.5">
-              {categories.map((c) => {
-                const active = cat === c;
-                return (
-                  <button
-                    key={c}
-                    type="button"
-                    onClick={() => setForm((f) => ({ ...f, category: c, intensity: undefined }))}
-                    className={`flex flex-col items-center gap-1.5 rounded-xl border py-2.5 ${
-                      active ? "border-primary bg-primary/10" : "border-border bg-surface"
-                    }`}
-                  >
-                    <Dot color={categoryMeta[c].color} />
-                    <span className="text-[10px] font-semibold text-text">{categoryMeta[c].label}</span>
-                  </button>
-                );
-              })}
             </div>
+            <div className="mt-1 text-[10px] text-muted">{longDate}</div>
+          </div>
+        </div>
 
-            {/* intensity (water/erg) */}
-            {cat && categoryMeta[cat].hasIntensity && (
-              <>
-                <div className="mb-1.5 mt-4 text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Intensity</div>
-                <div className="grid grid-cols-3 gap-1.5">
-                  {intensities.map((it) => {
-                    const active = form.intensity === it;
-                    return (
-                      <button
-                        key={it}
-                        type="button"
-                        onClick={() => setForm((f) => ({ ...f, intensity: it }))}
-                        className={`flex items-center justify-center gap-1.5 rounded-xl border py-2.5 ${
-                          active ? "border-primary bg-primary/10" : "border-border bg-surface"
-                        }`}
-                      >
-                        <Dot color={intensityMeta[it].color} />
-                        <span className="text-[12px] font-semibold text-text">{intensityMeta[it].label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </>
-            )}
+        {/* scrollable content */}
+        <div className="mx-auto w-full max-w-screen-sm flex-1 overflow-y-auto px-5 pb-6 pt-4">
+          {/* category */}
+          <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Type</div>
+          <div className="grid grid-cols-5 gap-1.5">
+            {categories.map((c) => {
+              const active = cat === c;
+              return (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setForm((f) => ({ ...f, category: c, intensity: undefined, description: "" }))}
+                  className={`flex flex-col items-center gap-1.5 rounded-xl border py-2.5 ${
+                    active ? "border-primary bg-primary/10" : "border-border bg-surface"
+                  }`}
+                >
+                  <Dot color={categoryMeta[c].color} />
+                  <span className="text-[10px] font-semibold text-text">{categoryMeta[c].label}</span>
+                </button>
+              );
+            })}
+          </div>
 
-            {/* suggestions */}
-            {sugg.length > 0 && (
-              <>
-                <div className="mb-1.5 mt-4 text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
-                  Most used · tap to fill
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {sugg.map((text) => (
+          {/* intensity (water/erg) */}
+          {cat && categoryMeta[cat].hasIntensity && (
+            <>
+              <div className={labelCls}>Intensity</div>
+              <div className="grid grid-cols-3 gap-1.5">
+                {intensities.map((it) => {
+                  const active = form.intensity === it;
+                  return (
+                    <button
+                      key={it}
+                      type="button"
+                      onClick={() => setForm((f) => ({ ...f, intensity: it }))}
+                      className={`flex items-center justify-center gap-1.5 rounded-xl border py-2.5 ${
+                        active ? "border-primary bg-primary/10" : "border-border bg-surface"
+                      }`}
+                    >
+                      <Dot color={intensityMeta[it].color} />
+                      <span className="text-[12px] font-semibold text-text">{intensityMeta[it].label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
+
+          {/* quick options (Most used / flex length) */}
+          {cat && sugg.length > 0 && (
+            <>
+              <div className={labelCls}>{optionsLabel(cat)}</div>
+              <div className="flex flex-wrap gap-1.5">
+                {sugg.map((text) => {
+                  const active = form.description === text;
+                  return (
                     <button
                       key={text}
                       type="button"
                       onClick={() => setForm((f) => ({ ...f, description: text }))}
-                      className="rounded-lg border border-border bg-surface px-2.5 py-1.5 text-[11px] text-text active:border-primary/40 active:bg-primary/10"
+                      className={`rounded-lg border px-2.5 py-1.5 text-[11px] text-text ${
+                        active ? "border-primary bg-primary/10" : "border-border bg-surface"
+                      }`}
                     >
                       {text}
                     </button>
-                  ))}
-                </div>
-              </>
-            )}
+                  );
+                })}
+              </div>
+            </>
+          )}
 
-            {/* description + note */}
-            {cat && cat !== "off" && (
-              <>
-                <div className="mb-1.5 mt-4 text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Description</div>
-                <textarea
-                  value={form.description}
-                  onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-                  rows={2}
-                  placeholder="Type the workout…"
-                  className="w-full resize-none rounded-xl border border-border bg-surface-2 px-3.5 py-3 text-base text-text outline-none focus:border-primary placeholder:text-muted"
-                />
-              </>
-            )}
+          {/* description (not for Off) */}
+          {cat && cat !== "off" && (
+            <>
+              <div className={labelCls}>Description</div>
+              <textarea
+                value={form.description}
+                onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+                rows={2}
+                placeholder="Type the workout…"
+                className={`${inputCls} resize-none`}
+              />
+            </>
+          )}
 
-            <div className="mb-1.5 mt-4 text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Note (optional)</div>
-            <input
-              value={form.note}
-              onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))}
-              placeholder="A note for the athletes…"
-              className="w-full rounded-xl border border-border bg-surface-2 px-3.5 py-3 text-base text-text outline-none focus:border-primary placeholder:text-muted"
-            />
+          {/* time — preset but editable (not for Off) */}
+          {cat && cat !== "off" && (
+            <>
+              <div className={labelCls}>Time</div>
+              <input
+                value={form.time}
+                onChange={(e) => setForm((f) => ({ ...f, time: e.target.value }))}
+                placeholder={presetTime[editor.period]}
+                className={inputCls}
+              />
+            </>
+          )}
 
-            {/* actions */}
-            <div className="mt-5 flex gap-2.5">
+          {/* note */}
+          <div className={labelCls}>Note (optional)</div>
+          <input
+            value={form.note}
+            onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))}
+            placeholder="A note for the athletes…"
+            className={inputCls}
+          />
+        </div>
+
+        {/* footer with confirm */}
+        <div className="flex-shrink-0 border-t border-border bg-background px-4 pb-6 pt-3">
+          <div className="mx-auto flex max-w-screen-sm gap-2.5">
+            {existing && (
               <button
                 type="button"
                 onClick={clearSession}
-                className="rounded-xl border border-border bg-surface px-4 py-3 text-[13px] font-medium text-muted"
+                className="rounded-xl border border-border bg-surface px-4 py-3.5 text-[13px] font-medium text-muted"
               >
-                Clear
+                Remove
               </button>
-              <button
-                type="button"
-                disabled={!editorValid}
-                onClick={saveSession}
-                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-primary py-3 text-[14px] font-semibold text-primary-contrast disabled:opacity-40"
-              >
-                <IconCheck size={16} /> Save session
-              </button>
-            </div>
+            )}
+            <button
+              type="button"
+              disabled={!editorValid}
+              onClick={saveSession}
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-[14px] font-semibold text-primary-contrast disabled:opacity-40"
+            >
+              <IconCheck size={16} /> Confirm session
+            </button>
           </div>
         </div>
       </div>

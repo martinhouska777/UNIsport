@@ -59,21 +59,24 @@ const intensitySuggestions: Record<Intensity, string[]> = {
     "6×750m race pace",
   ],
 };
-const weightsSuggestions = ["Lift @ Palmer Dixon", "Max strength", "Power endurance", "Core circuit", "Oly technique"];
-const flexSuggestions = ["Captain's practice", "Recovery row / spin", "Mobility + roll out", "Cross-train", "Yoga / stretch"];
+// Flex is just a length choice; weights & off have no quick options.
+const flexLengths = ["50 mins", "60 mins", "75 mins"];
 
 export function suggestionsFor(category: Category, intensity?: Intensity): string[] {
   if (category === "water" || category === "erg") return intensity ? intensitySuggestions[intensity] : [];
-  if (category === "weights") return weightsSuggestions;
-  if (category === "flex") return flexSuggestions;
-  return []; // off → none
+  if (category === "flex") return flexLengths;
+  return []; // weights + off → none
 }
+// Header shown above the quick options (different wording for flex's lengths).
+export const optionsLabel = (category: Category) =>
+  category === "flex" ? "Length" : "Most used · tap to fill";
 
 /* ── A session and how sessions are stored ── */
 export type Session = {
   category: Category;
   intensity?: Intensity;
   description: string;
+  time: string; // preset per period, but editable
   note?: string;
 };
 
@@ -95,11 +98,13 @@ export function sessionLabel(s: Session): string {
 }
 
 /* ── Blocks + week math ── */
+export type BlockStatus = "draft" | "published";
 export type Block = {
   id: string;
   name: string;
   start: string; // ISO yyyy-mm-dd
   end: string;
+  status: BlockStatus; // new blocks start as a draft
   raceName?: string;
   raceDate?: string; // ISO
 };
