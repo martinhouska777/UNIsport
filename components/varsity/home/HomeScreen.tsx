@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 import { useAppState } from "@/components/AppState";
 import { fetchPlan, fetchProfileName } from "@/lib/varsity/planStore";
 import { fetchTodayLineups } from "@/lib/varsity/lineupStore";
+import { fetchNote } from "@/lib/varsity/notesStore";
 import { sessionKey } from "@/lib/varsity/coachPlan";
 import { buildAthleteHome } from "@/lib/varsity/athleteHome";
 import {
@@ -284,6 +285,36 @@ function CoachFocus({ f }: { f: FocusData }) {
   );
 }
 
+/* ─── Coach's note for you (red = work on this · green = all clear) ─── */
+function CoachNoteCard({ note }: { note: string }) {
+  if (note.trim()) {
+    return (
+      <div className="overflow-hidden rounded-xl border border-danger/40 bg-danger/[0.07]">
+        <div className="flex items-center gap-2 border-b border-danger/25 px-3.5 py-2.5">
+          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-danger text-[12px] font-black leading-none text-background">
+            !
+          </span>
+          <span className="text-[9px] font-semibold uppercase tracking-[0.14em] text-danger">
+            Coach&apos;s note · work on this
+          </span>
+        </div>
+        <p className="px-3.5 py-3 text-[13px] leading-relaxed text-text/90">{note}</p>
+      </div>
+    );
+  }
+  return (
+    <div className="flex items-center gap-2.5 rounded-xl border border-success/40 bg-success/[0.07] px-3.5 py-3">
+      <span className="text-success">
+        <IconCheckCircle size={18} />
+      </span>
+      <div>
+        <div className="text-[13px] font-semibold text-success">Good job</div>
+        <div className="text-[11px] text-muted">No notes from your coach — keep it up.</div>
+      </div>
+    </div>
+  );
+}
+
 /* ─── Empty state (no published plan for this week) ─── */
 function EmptyHome() {
   return (
@@ -304,18 +335,21 @@ export default function HomeScreen() {
   const { userId } = useAppState();
   const [data, setData] = useState<HomeData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [note, setNote] = useState<string | null>(null); // null = still loading
 
   useEffect(() => {
     let active = true;
     (async () => {
       const today = new Date();
-      const [plan, firstName, lineups] = await Promise.all([
+      const [plan, firstName, lineups, coachNote] = await Promise.all([
         fetchPlan(),
         fetchProfileName(userId),
         fetchTodayLineups((p) => sessionKey(today, p)),
+        fetchNote(userId),
       ]);
       if (!active) return;
       setData(buildAthleteHome(plan, firstName, lineups, today));
+      setNote(coachNote);
       setLoading(false);
     })();
     return () => {
@@ -323,17 +357,35 @@ export default function HomeScreen() {
     };
   }, [userId]);
 
+  // The coach's note rides above everything, so the athlete sees it on open
+  // even before any plan is published.
+  const noteCard =
+    note !== null ? (
+      <div className="px-3 pt-3">
+        <CoachNoteCard note={note} />
+      </div>
+    ) : null;
+
   if (loading) {
     return (
-      <div className="mx-auto w-full max-w-screen-sm px-4 pt-20 text-center text-[13px] text-muted">
-        Loading…
+      <div className="mx-auto w-full max-w-screen-sm pb-6">
+        {noteCard}
+        <div className="px-4 pt-20 text-center text-[13px] text-muted">Loading…</div>
       </div>
     );
   }
-  if (!data) return <EmptyHome />;
+  if (!data) {
+    return (
+      <div className="mx-auto w-full max-w-screen-sm pb-6">
+        {noteCard}
+        <EmptyHome />
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto w-full max-w-screen-sm pb-6">
+      {noteCard}
       <Greeting g={data.greeting} />
       {data.race && <RaceBar r={data.race} />}
       <WeekStrip week={data.week} />
