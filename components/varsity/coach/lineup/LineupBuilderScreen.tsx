@@ -1,23 +1,26 @@
 "use client";
 
 /*
-  Coach LINEUP BUILDER (mobile-adapted, now interactive).
-  Two views in local state:
-    • "days"    — pick a practice (a day's AM or PM) to build.
-    • "builder" — fill boats for that practice from the athlete pool.
+  Coach LINEUP BUILDER (DB-backed).
+  Two views:
+    • "days"    — pick a practice (a real day's AM or PM) to build. Each shows a
+                  status dot (none / draft / published) read from the database.
+    • "builder" — fill boats for that practice from the athlete pool, then Save
+                  (draft) or Publish to the team. Loads any existing lineup.
 
   Seats are live: click an empty seat to TYPE a name (autocomplete from the pool),
   or DRAG a name from the pool (or another seat) onto a seat. The X clears a seat
   back to the pool. There is ONE roster, so each athlete is in exactly one place.
-  Publish/preview are still stubs. Colors are theme tokens; rowing-side colors are
-  content colors from lib/varsity/coachLineup.ts (rule-1 exception).
+  Lineups persist per practice (day_key) via lib/varsity/lineupStore.ts. Colors
+  are theme tokens; rowing-side colors are content colors (rule-1 exception).
+
+  NOTE: the roster is still demo data (no real athlete accounts yet), so athletes
+  see the published boats but not a personalised "your seat" highlight — that
+  needs real team membership (a later slice).
 */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
-  practiceDays,
   practiceStatusMeta,
-  sessionContext,
-  initialBoats,
   roster,
   rosterById,
   rosterGroups,
@@ -25,30 +28,52 @@ import {
   COX_COLOR,
   boatTypes,
   makeSeats,
-  type PracticeDay,
   type Practice,
+  type PracticeStatus,
   type Boat,
   type Athlete,
   type BoatType,
 } from "@/lib/varsity/coachLineup";
+import { sessionKey, sessionLabel } from "@/lib/varsity/coachPlan";
+import { fetchPlan, type Plan } from "@/lib/varsity/planStore";
+import {
+  fetchLineup,
+  fetchLineupStatuses,
+  saveLineup,
+  type LineupStatus,
+} from "@/lib/varsity/lineupStore";
 import {
   IconArrowLeft,
   IconChevronRight,
   IconClock,
   IconPlus,
   IconX,
-  IconEye,
   IconSend,
   IconClipboard,
   IconPencil,
   IconDots,
-  IconCalendar,
   IconCheck,
 } from "@/components/icons";
 
 /* a target slot inside a boat: a numbered seat, or the cox seat */
 type Slot = { boatId: string; kind: "seat"; idx: number } | { boatId: string; kind: "cox" };
 const slotKey = (s: Slot) => (s.kind === "cox" ? `${s.boatId}:cox` : `${s.boatId}:${s.idx}`);
+
+// A real calendar day in the picker, with its two practices.
+type PickDay = {
+  id: string;
+  date: Date;
+  num: number;
+  weekday: string;
+  month: string;
+  today?: boolean;
+  note?: string;
+  am: Practice;
+  pm: Practice;
+};
+
+// What the prescribed-session card shows (from the published plan, if any).
+type PlanContext = { title: string; sub: string } | null;
 
 /* ─────────────────────────  shared bits  ───────────────────────── */
 function SectionLabel({ children }: { children: React.ReactNode }) {
@@ -127,7 +152,7 @@ function PracticeButton({ practice, onPick }: { practice: Practice; onPick: () =
   );
 }
 
-function DayCard({ day, onPick }: { day: PracticeDay; onPick: (day: PracticeDay, p: Practice) => void }) {
+function DayCard({ day, onPick }: { day: PickDay; onPick: (day: PickDay, p: Practice) => void }) {
   return (
     <div
       className={`overflow-hidden rounded-2xl border bg-surface ${
@@ -142,12 +167,10 @@ function DayCard({ day, onPick }: { day: PracticeDay; onPick: (day: PracticeDay,
             <div className="mt-1 text-[10px] text-muted">{day.month}</div>
           </div>
         </div>
-        {day.today ? (
+        {day.today && (
           <span className="rounded-md bg-primary px-2 py-1 text-[9px] font-bold uppercase tracking-[0.08em] text-primary-contrast">
             Today
           </span>
-        ) : (
-          day.note && <span className="text-[11px] text-muted">{day.note}</span>
         )}
       </div>
       <div className="flex border-t border-border">
@@ -158,7 +181,7 @@ function DayCard({ day, onPick }: { day: PracticeDay; onPick: (day: PracticeDay,
   );
 }
 
-function DayPicker({ onPick }: { onPick: (day: PracticeDay, p: Practice) => void }) {
+function DayPicker({ days, onPick }: { days: PickDay[]; onPick: (day: PickDay, p: Practice) => void }) {
   return (
     <div className="mx-auto w-full max-w-screen-sm px-4 pb-8 pt-4">
       <div className="text-[9px] font-semibold uppercase tracking-[0.16em] text-accent">Lineup</div>
@@ -166,28 +189,12 @@ function DayPicker({ onPick }: { onPick: (day: PracticeDay, p: Practice) => void
       <p className="mt-1 text-[12px] text-muted">Pick a practice to build.</p>
 
       <div className="mt-5">
-        <SectionLabel>Next 3 days</SectionLabel>
+        <SectionLabel>Next 7 days</SectionLabel>
         <div className="flex flex-col gap-2.5">
-          {practiceDays.map((d) => (
+          {days.map((d) => (
             <DayCard key={d.id} day={d} onPick={onPick} />
           ))}
         </div>
-      </div>
-
-      <div className="mt-5">
-        <SectionLabel>Later</SectionLabel>
-        <button
-          type="button"
-          className="flex w-full items-center gap-2.5 rounded-xl border border-border bg-surface px-3.5 py-3.5 text-left"
-        >
-          <span className="text-muted">
-            <IconCalendar size={18} />
-          </span>
-          <span className="flex-1 text-[13px] text-muted">Pick a different day from calendar</span>
-          <span className="text-muted">
-            <IconChevronRight size={14} />
-          </span>
-        </button>
       </div>
     </div>
   );
@@ -360,29 +367,41 @@ function PoolChip({ a, onDragStart }: { a: Athlete; onDragStart: () => void }) {
 
 /* ─────────────────────────  builder  ───────────────────────── */
 function Builder({
+  dayKey,
   context,
-  seedBoats,
+  planContext,
   onBack,
 }: {
+  dayKey: string;
   context: { weekday: string; period: string; sub: string };
-  seedBoats: Boat[];
+  planContext: PlanContext;
   onBack: () => void;
 }) {
-  const [boats, setBoats] = useState<Boat[]>(seedBoats);
+  const [boats, setBoats] = useState<Boat[]>([]);
+  const [status, setStatus] = useState<LineupStatus>("draft");
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState<null | "save" | "publish">(null);
+  const [justSaved, setJustSaved] = useState(false);
   const [typing, setTyping] = useState<Slot | null>(null);
   const [query, setQuery] = useState("");
   const [dropKey, setDropKey] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
-  const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
   const [poolFilter, setPoolFilter] = useState<"all" | "P" | "S">("all");
 
-  const toggleSaved = (boatId: string) =>
-    setSavedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(boatId)) next.delete(boatId);
-      else next.add(boatId);
-      return next;
-    });
+  // Load any existing lineup for this practice from the database.
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      const stored = await fetchLineup(dayKey);
+      if (!active) return;
+      setBoats(stored?.boats ?? []);
+      setStatus(stored?.status ?? "draft");
+      setLoading(false);
+    })();
+    return () => {
+      active = false;
+    };
+  }, [dayKey]);
 
   // who's seated right now (across all boats)
   const seatedIds = useMemo(() => {
@@ -437,7 +456,6 @@ function Builder({
     setTyping(null);
     setQuery("");
     setDropKey(null);
-    setSavedIds(new Set()); // lineup changed → boats need re-saving
   };
 
   const clear = (slot: Slot) => {
@@ -448,8 +466,10 @@ function Builder({
         return { ...b, seats: b.seats.map((s, i) => (i === slot.idx ? { ...s, athleteId: null } : s)) };
       }),
     );
-    setSavedIds(new Set());
   };
+
+  const setNote = (boatId: string, note: string) =>
+    setBoats((prev) => prev.map((b) => (b.id === boatId ? { ...b, note } : b)));
 
   const addBoat = (type: BoatType) => {
     setBoats((bs) => [
@@ -466,6 +486,19 @@ function Builder({
       },
     ]);
     setSheetOpen(false);
+  };
+
+  const persist = async (newStatus: LineupStatus, which: "save" | "publish") => {
+    setBusy(which);
+    const { error } = await saveLineup(dayKey, boats, newStatus);
+    setBusy(null);
+    if (error) {
+      console.error("saveLineup:", error);
+      return;
+    }
+    setStatus(newStatus);
+    setJustSaved(true);
+    window.setTimeout(() => setJustSaved(false), 1500);
   };
 
   const renderSeat = (boat: Boat, slot: Slot, label: string, athleteId: string | null, cox = false) => {
@@ -507,198 +540,213 @@ function Builder({
         <button type="button" onClick={onBack} className="flex items-center gap-1 text-[13px] text-muted">
           <IconArrowLeft size={16} /> Days
         </button>
-        <h1 className="mt-1 text-2xl font-semibold text-text">
-          {context.weekday} {context.period}
-        </h1>
-        <div className="mt-0.5 text-[11px] text-muted">{context.sub}</div>
-
-        {/* prescribed session */}
-        <div className="mt-4 flex items-center gap-2.5 rounded-xl border border-border bg-surface px-3 py-3">
-          <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full bg-danger" />
-          <div className="flex-1">
-            <div className="text-[13px] font-semibold text-text">{sessionContext.title}</div>
-            <div className="mt-0.5 text-[11px] text-muted">{sessionContext.sub}</div>
-          </div>
-          <span className="text-muted">
-            <IconChevronRight size={14} />
+        <div className="mt-1 flex items-center gap-2">
+          <h1 className="text-2xl font-semibold text-text">
+            {context.weekday} {context.period}
+          </h1>
+          <span
+            className={`flex items-center gap-1 rounded px-1.5 py-px text-[9px] font-bold uppercase tracking-[0.06em] ${
+              status === "published"
+                ? "border border-success/40 bg-success/10 text-success"
+                : "border border-warn/40 bg-warn/10 text-warn"
+            }`}
+          >
+            <span className={`h-1.5 w-1.5 rounded-full ${status === "published" ? "bg-success" : "bg-warn"}`} />
+            {status === "published" ? "Published" : "Draft"}
           </span>
         </div>
+        <div className="mt-0.5 text-[11px] text-muted">{context.sub}</div>
 
-        {/* boats */}
-        <div className="mt-4 flex flex-col gap-3">
-          {boats.length === 0 && (
-            <div className="rounded-2xl border border-dashed border-border bg-surface py-7 text-center text-[12px] italic text-muted">
-              No boats added yet
+        {/* prescribed session (from the published plan, if any) */}
+        {planContext && (
+          <div className="mt-4 flex items-center gap-2.5 rounded-xl border border-border bg-surface px-3 py-3">
+            <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full bg-danger" />
+            <div className="flex-1">
+              <div className="text-[13px] font-semibold text-text">{planContext.title}</div>
+              <div className="mt-0.5 text-[11px] text-muted">{planContext.sub}</div>
             </div>
-          )}
-          {boats.map((boat) => {
-            const filled = boat.seats.filter((s) => s.athleteId).length;
-            return (
-              <div key={boat.id} className="overflow-hidden rounded-2xl border border-border bg-surface">
-                {/* header */}
-                <div className="flex items-center justify-between border-b border-border px-3.5 py-3">
-                  <div className="flex items-center gap-2">
-                    <span className="rounded-md border border-primary/35 bg-primary/15 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.06em] text-primary">
-                      {boat.badge}
-                    </span>
-                    <span className="text-[14px] font-semibold text-text">{boat.name}</span>
-                    <span className="text-muted">
-                      <IconPencil size={12} />
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2.5 text-muted">
-                    <span className="flex items-center gap-1 text-[12px]">
-                      <IconClock size={13} />
-                      <span className="font-medium text-text">{boat.dock}</span>
-                    </span>
-                    <IconDots size={16} />
-                  </div>
-                </div>
+            <span className="text-muted">
+              <IconChevronRight size={14} />
+            </span>
+          </div>
+        )}
 
-                {/* hull — cox + stroke at the top, down to bow at the bottom */}
-                <div className="px-3 py-4">
-                  {boat.hasCox && (
-                    <div className="mb-2">
-                      {renderSeat(boat, { boatId: boat.id, kind: "cox" }, "COX", boat.coxId, true)}
+        {loading ? (
+          <div className="mt-8 text-center text-[13px] text-muted">Loading lineup…</div>
+        ) : (
+          <>
+            {/* boats */}
+            <div className="mt-4 flex flex-col gap-3">
+              {boats.length === 0 && (
+                <div className="rounded-2xl border border-dashed border-border bg-surface py-7 text-center text-[12px] italic text-muted">
+                  No boats added yet
+                </div>
+              )}
+              {boats.map((boat) => {
+                const filled = boat.seats.filter((s) => s.athleteId).length;
+                return (
+                  <div key={boat.id} className="overflow-hidden rounded-2xl border border-border bg-surface">
+                    {/* header */}
+                    <div className="flex items-center justify-between border-b border-border px-3.5 py-3">
+                      <div className="flex items-center gap-2">
+                        <span className="rounded-md border border-primary/35 bg-primary/15 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.06em] text-primary">
+                          {boat.badge}
+                        </span>
+                        <span className="text-[14px] font-semibold text-text">{boat.name}</span>
+                        <span className="text-muted">
+                          <IconPencil size={12} />
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2.5 text-muted">
+                        <span className="flex items-center gap-1 text-[12px]">
+                          <IconClock size={13} />
+                          <span className="font-medium text-text">{boat.dock}</span>
+                        </span>
+                        <IconDots size={16} />
+                      </div>
                     </div>
-                  )}
-                  <div className="relative rounded-[0.75rem_0.75rem_2.5rem_2.5rem] border border-border bg-gradient-to-b from-surface-2 to-background px-3.5 pb-7 pt-7">
-                    <div className="absolute left-1/2 top-2 -translate-x-1/2 text-[9px] font-bold uppercase tracking-[0.1em] text-muted">
-                      Stroke ▲
+
+                    {/* hull — cox + stroke at the top, down to bow at the bottom */}
+                    <div className="px-3 py-4">
+                      {boat.hasCox && (
+                        <div className="mb-2">
+                          {renderSeat(boat, { boatId: boat.id, kind: "cox" }, "COX", boat.coxId, true)}
+                        </div>
+                      )}
+                      <div className="relative rounded-[0.75rem_0.75rem_2.5rem_2.5rem] border border-border bg-gradient-to-b from-surface-2 to-background px-3.5 pb-7 pt-7">
+                        <div className="absolute left-1/2 top-2 -translate-x-1/2 text-[9px] font-bold uppercase tracking-[0.1em] text-muted">
+                          Stroke ▲
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                          {boat.seats
+                            .map((s, i) =>
+                              renderSeat(boat, { boatId: boat.id, kind: "seat", idx: i }, s.label, s.athleteId),
+                            )
+                            .reverse()}
+                        </div>
+                        <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 text-[9px] font-bold uppercase tracking-[0.1em] text-muted">
+                          Bow ▼
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex flex-col gap-1.5">
-                      {boat.seats
-                        .map((s, i) =>
-                          renderSeat(boat, { boatId: boat.id, kind: "seat", idx: i }, s.label, s.athleteId),
-                        )
-                        .reverse()}
+
+                    {/* note — usually which oars / which boat to take */}
+                    <div className="flex items-center gap-2 border-t border-border px-3.5 py-2.5 text-muted">
+                      <IconClipboard size={14} />
+                      <input
+                        value={boat.note}
+                        onChange={(e) => setNote(boat.id, e.target.value)}
+                        placeholder="Note — oars, which boat to take…"
+                        className="flex-1 bg-transparent text-[12px] text-text outline-none placeholder:italic placeholder:text-muted/70"
+                      />
                     </div>
-                    <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 text-[9px] font-bold uppercase tracking-[0.1em] text-muted">
-                      Bow ▼
+
+                    {/* footer — filled count */}
+                    <div className="border-t border-border px-3.5 py-2 text-[10px] text-muted">
+                      {filled} / {boat.seats.length} filled
                     </div>
                   </div>
-                </div>
+                );
+              })}
+            </div>
 
-                {/* note — usually which oars / which boat to take */}
-                <div className="flex items-center gap-2 border-t border-border px-3.5 py-2.5 text-muted">
-                  <IconClipboard size={14} />
-                  <input
-                    defaultValue={boat.note}
-                    placeholder="Note — oars, which boat to take…"
-                    className="flex-1 bg-transparent text-[12px] text-text outline-none placeholder:italic placeholder:text-muted/70"
-                  />
-                </div>
+            <button
+              type="button"
+              onClick={() => setSheetOpen(true)}
+              className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-border bg-surface py-3.5 text-[13px] font-medium text-muted active:border-primary/40 active:text-primary"
+            >
+              <IconPlus size={16} /> Add{boats.length ? " Another" : ""} Boat
+            </button>
 
-                {/* footer — filled count + save this boat */}
-                <div className="flex items-center justify-between border-t border-border px-3.5 py-2">
-                  <span className="text-[10px] text-muted">
-                    {filled} / {boat.seats.length} filled
-                  </span>
-                  {(() => {
-                    const saved = savedIds.has(boat.id);
-                    return (
-                      <button
-                        type="button"
-                        onClick={() => toggleSaved(boat.id)}
-                        className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[11px] font-semibold ${
-                          saved ? "border-success/40 bg-success/10 text-success" : "border-primary/40 text-primary"
-                        }`}
-                      >
-                        <IconCheck size={13} /> {saved ? "Saved" : "Save boat"}
-                      </button>
-                    );
-                  })()}
-                </div>
+            {/* pool */}
+            <div className="mt-6">
+              <div className="mb-2.5 flex items-center justify-between">
+                <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
+                  Athlete Pool
+                </span>
+                <span className="rounded-full border border-border bg-surface px-2 py-0.5 text-[11px] text-muted">
+                  {available.length} available · {roster.filter((a) => a.out).length} out
+                </span>
               </div>
-            );
-          })}
-        </div>
 
-        <button
-          type="button"
-          onClick={() => setSheetOpen(true)}
-          className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-border bg-surface py-3.5 text-[13px] font-medium text-muted active:border-primary/40 active:text-primary"
-        >
-          <IconPlus size={16} /> Add{boats.length ? " Another" : ""} Boat
-        </button>
-
-        {/* pool */}
-        <div className="mt-6">
-          <div className="mb-2.5 flex items-center justify-between">
-            <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
-              Athlete Pool
-            </span>
-            <span className="rounded-full border border-border bg-surface px-2 py-0.5 text-[11px] text-muted">
-              {available.length} available · {roster.filter((a) => a.out).length} out
-            </span>
-          </div>
-
-          {/* sort the pool by side */}
-          <div className="mb-2.5 flex gap-1.5">
-            {(
-              [
-                ["all", "All"],
-                ["P", "Port"],
-                ["S", "Starboard"],
-              ] as const
-            ).map(([key, label]) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => setPoolFilter(key)}
-                className={`rounded-lg border px-2.5 py-1 text-[11px] font-medium ${
-                  poolFilter === key ? "border-primary bg-primary/10 text-text" : "border-border bg-surface text-muted"
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-
-          <div className="flex flex-col gap-3">
-            {rosterGroups.map((g) => {
-              const chips = g.ids
-                .map((id) => rosterById[id])
-                .filter((a) => a.out || !seatedIds.has(a.id))
-                // side filter: Port shows P (+ both); Starboard shows S (+ both); coxes only under All
-                .filter((a) => poolFilter === "all" || (!a.cox && (a.side === poolFilter || a.side === "B")));
-              if (chips.length === 0) return null;
-              return (
-                <div key={g.label}>
-                  <div
-                    className={`mb-1.5 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.1em] ${
-                      g.danger ? "text-danger" : "text-muted"
+              {/* sort the pool by side */}
+              <div className="mb-2.5 flex gap-1.5">
+                {(
+                  [
+                    ["all", "All"],
+                    ["P", "Port"],
+                    ["S", "Starboard"],
+                  ] as const
+                ).map(([key, label]) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setPoolFilter(key)}
+                    className={`rounded-lg border px-2.5 py-1 text-[11px] font-medium ${
+                      poolFilter === key ? "border-primary bg-primary/10 text-text" : "border-border bg-surface text-muted"
                     }`}
                   >
-                    {g.label}
-                    <span className="h-px flex-1 bg-border" />
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {chips.map((a) => (
-                      <PoolChip key={a.id} a={a} onDragStart={() => setDropKey(null)} />
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+                    {label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex flex-col gap-3">
+                {rosterGroups.map((g) => {
+                  const chips = g.ids
+                    .map((id) => rosterById[id])
+                    .filter((a) => a.out || !seatedIds.has(a.id))
+                    // side filter: Port shows P (+ both); Starboard shows S (+ both); coxes only under All
+                    .filter((a) => poolFilter === "all" || (!a.cox && (a.side === poolFilter || a.side === "B")));
+                  if (chips.length === 0) return null;
+                  return (
+                    <div key={g.label}>
+                      <div
+                        className={`mb-1.5 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.1em] ${
+                          g.danger ? "text-danger" : "text-muted"
+                        }`}
+                      >
+                        {g.label}
+                        <span className="h-px flex-1 bg-border" />
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {chips.map((a) => (
+                          <PoolChip key={a.id} a={a} onDragStart={() => setDropKey(null)} />
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
-      {/* publish bar */}
+      {/* save / publish bar */}
       <div className="absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-background via-background to-transparent px-4 pb-6 pt-6">
         <div className="mx-auto flex max-w-screen-sm gap-2.5">
           <button
             type="button"
-            className="flex items-center gap-1.5 rounded-2xl border border-border bg-surface px-4 py-3.5 text-[13px] font-medium text-muted"
+            onClick={() => persist("draft", "save")}
+            disabled={busy !== null}
+            className="flex items-center gap-1.5 rounded-2xl border border-border bg-surface px-4 py-3.5 text-[13px] font-medium text-muted disabled:opacity-50"
           >
-            <IconEye size={15} /> Preview
+            <IconCheck size={15} />
+            {busy === "save" ? "Saving…" : justSaved && status === "draft" ? "Saved" : "Save draft"}
           </button>
           <button
             type="button"
-            className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-primary py-3.5 text-[14px] font-semibold text-primary-contrast"
+            onClick={() => persist("published", "publish")}
+            disabled={busy !== null}
+            className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-primary py-3.5 text-[14px] font-semibold text-primary-contrast disabled:opacity-50"
           >
-            <IconSend size={16} /> Publish Lineup
+            <IconSend size={16} />
+            {busy === "publish"
+              ? "Publishing…"
+              : status === "published"
+                ? "Update live lineup"
+                : "Publish to team"}
           </button>
         </div>
       </div>
@@ -735,33 +783,78 @@ function Builder({
 
 /* ─────────────────────────  screen  ───────────────────────── */
 export default function LineupBuilderScreen() {
+  const [statuses, setStatuses] = useState<Record<string, LineupStatus>>({});
+  const [plan, setPlan] = useState<Plan | null>(null);
   const [practice, setPractice] = useState<{
     key: string;
+    dayKey: string;
     context: { weekday: string; period: string; sub: string };
-    seed: Boat[];
+    planContext: PlanContext;
   } | null>(null);
 
-  const pick = (day: PracticeDay, p: Practice) => {
-    const seeded = day.id === "thu-9" && p.period === "AM";
+  const refreshStatuses = async () => setStatuses(await fetchLineupStatuses());
+
+  useEffect(() => {
+    (async () => {
+      const [s, p] = await Promise.all([fetchLineupStatuses(), fetchPlan()]);
+      setStatuses(s);
+      setPlan(p);
+    })();
+  }, []);
+
+  // The next 7 days, each with its two practices and DB status.
+  const days: PickDay[] = useMemo(() => {
+    const base = new Date();
+    base.setHours(0, 0, 0, 0);
+    const out: PickDay[] = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(base);
+      d.setDate(base.getDate() + i);
+      const amKey = sessionKey(d, "AM");
+      const pmKey = sessionKey(d, "PM");
+      out.push({
+        id: amKey.slice(0, -3),
+        date: d,
+        num: d.getDate(),
+        weekday: d.toLocaleDateString("en-US", { weekday: "long" }),
+        month: d.toLocaleDateString("en-US", { month: "long" }),
+        today: i === 0,
+        am: { period: "AM", status: (statuses[amKey] as PracticeStatus) ?? "none" },
+        pm: { period: "PM", status: (statuses[pmKey] as PracticeStatus) ?? "none" },
+      });
+    }
+    return out;
+  }, [statuses]);
+
+  const pick = (day: PickDay, p: Practice) => {
+    const dayKey = sessionKey(day.date, p.period);
+    const s = plan?.sessions[dayKey];
     setPractice({
-      key: `${day.id}-${p.period}`,
+      key: dayKey,
+      dayKey,
       context: {
         weekday: day.weekday,
         period: p.period,
-        sub: `${day.month.slice(0, 3)} ${day.num} · 7:00am dock`,
+        sub: `${day.month.slice(0, 3)} ${day.num}`,
       },
-      seed: seeded ? initialBoats : [],
+      planContext: s
+        ? { title: s.description.trim() || sessionLabel(s), sub: sessionLabel(s) }
+        : null,
     });
   };
 
-  if (!practice) return <DayPicker onPick={pick} />;
+  if (!practice) return <DayPicker days={days} onPick={pick} />;
 
   return (
     <Builder
       key={practice.key}
+      dayKey={practice.dayKey}
       context={practice.context}
-      seedBoats={practice.seed}
-      onBack={() => setPractice(null)}
+      planContext={practice.planContext}
+      onBack={() => {
+        setPractice(null);
+        void refreshStatuses();
+      }}
     />
   );
 }

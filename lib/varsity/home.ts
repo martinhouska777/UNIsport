@@ -52,7 +52,7 @@ export type Lineup = {
   period: string;
   type: string; // "Eight" | "Four" etc.
   seats: Seat[];
-  cox: { init: string };
+  cox?: { init: string }; // coxless boats (4-/2-) have none
 };
 
 export type Greeting = { date: string; name: string; block: string; week: string };

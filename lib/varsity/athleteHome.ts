@@ -19,7 +19,14 @@ import {
   type Session,
   type Block,
 } from "./coachPlan";
-import { home, type HomeData, type SessionKind, type WeekDay, type TodaySession } from "./home";
+import {
+  home,
+  type HomeData,
+  type SessionKind,
+  type WeekDay,
+  type TodaySession,
+  type Lineup,
+} from "./home";
 import type { Plan } from "./planStore";
 
 // Plan category/intensity → the Home screen's color "kind".
@@ -67,6 +74,7 @@ function pickActive(blocks: Block[], today: Date) {
 export function buildAthleteHome(
   plan: Plan,
   firstName: string,
+  lineups: Lineup[],
   today = new Date(),
 ): HomeData | null {
   const active = pickActive(plan.blocks, today);
@@ -137,8 +145,7 @@ export function buildAthleteHome(
     race,
     week,
     today: todaySessions,
-    // Placeholders until the lineup + notes slices wire these to real data.
-    lineups: home.lineups,
-    focus: home.focus,
+    lineups, // today's published boats (empty if none posted)
+    focus: home.focus, // placeholder until the notes slice
   };
 }

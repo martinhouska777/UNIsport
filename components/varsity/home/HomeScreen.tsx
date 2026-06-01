@@ -9,6 +9,8 @@
 import { useEffect, useState } from "react";
 import { useAppState } from "@/components/AppState";
 import { fetchPlan, fetchProfileName } from "@/lib/varsity/planStore";
+import { fetchTodayLineups } from "@/lib/varsity/lineupStore";
+import { sessionKey } from "@/lib/varsity/coachPlan";
 import { buildAthleteHome } from "@/lib/varsity/athleteHome";
 import {
   kindStyles,
@@ -223,10 +225,12 @@ function LineupRow({ l }: { l: Lineup }) {
           ))}
         </div>
         <span className="text-[7px] tracking-wide text-muted">BOW</span>
-        <div className="flex h-7 w-6 flex-col items-center justify-center rounded-md border border-accent/40 bg-accent/15">
-          <span className="text-[6px] font-semibold leading-none text-accent">C</span>
-          <span className="mt-0.5 text-[7px] font-semibold leading-none text-accent">{l.cox.init}</span>
-        </div>
+        {l.cox && (
+          <div className="flex h-7 w-6 flex-col items-center justify-center rounded-md border border-accent/40 bg-accent/15">
+            <span className="text-[6px] font-semibold leading-none text-accent">C</span>
+            <span className="mt-0.5 text-[7px] font-semibold leading-none text-accent">{l.cox.init}</span>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -304,9 +308,14 @@ export default function HomeScreen() {
   useEffect(() => {
     let active = true;
     (async () => {
-      const [plan, firstName] = await Promise.all([fetchPlan(), fetchProfileName(userId)]);
+      const today = new Date();
+      const [plan, firstName, lineups] = await Promise.all([
+        fetchPlan(),
+        fetchProfileName(userId),
+        fetchTodayLineups((p) => sessionKey(today, p)),
+      ]);
       if (!active) return;
-      setData(buildAthleteHome(plan, firstName));
+      setData(buildAthleteHome(plan, firstName, lineups, today));
       setLoading(false);
     })();
     return () => {
@@ -347,9 +356,11 @@ export default function HomeScreen() {
         </div>
       )}
 
-      <div className="px-3 pt-3">
-        <LineupCard lineups={data.lineups} />
-      </div>
+      {data.lineups.length > 0 && (
+        <div className="px-3 pt-3">
+          <LineupCard lineups={data.lineups} />
+        </div>
+      )}
 
       <div className="px-3 pt-3">
         <CoachFocus f={data.focus} />
