@@ -43,6 +43,7 @@ import {
   IconPencil,
   IconDots,
   IconCalendar,
+  IconCheck,
 } from "@/components/icons";
 
 /* a target slot inside a boat: a numbered seat, or the cox seat */
@@ -372,6 +373,16 @@ function Builder({
   const [query, setQuery] = useState("");
   const [dropKey, setDropKey] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
+  const [poolFilter, setPoolFilter] = useState<"all" | "P" | "S">("all");
+
+  const toggleSaved = (boatId: string) =>
+    setSavedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(boatId)) next.delete(boatId);
+      else next.add(boatId);
+      return next;
+    });
 
   // who's seated right now (across all boats)
   const seatedIds = useMemo(() => {
@@ -426,6 +437,7 @@ function Builder({
     setTyping(null);
     setQuery("");
     setDropKey(null);
+    setSavedIds(new Set()); // lineup changed → boats need re-saving
   };
 
   const clear = (slot: Slot) => {
@@ -436,6 +448,7 @@ function Builder({
         return { ...b, seats: b.seats.map((s, i) => (i === slot.idx ? { ...s, athleteId: null } : s)) };
       }),
     );
+    setSavedIds(new Set());
   };
 
   const addBoat = (type: BoatType) => {
@@ -542,42 +555,59 @@ function Builder({
                   </div>
                 </div>
 
-                {/* hull */}
+                {/* hull — cox + stroke at the top, down to bow at the bottom */}
                 <div className="px-3 py-4">
-                  <div className="relative rounded-[2.5rem_2.5rem_0.75rem_0.75rem] border border-border bg-gradient-to-b from-surface-2 to-background px-3.5 pb-7 pt-7">
-                    <div className="absolute left-1/2 top-2 -translate-x-1/2 text-[9px] font-bold uppercase tracking-[0.1em] text-muted">
-                      ▲ Bow
-                    </div>
-                    <div className="flex flex-col gap-1.5">
-                      {boat.seats.map((s, i) =>
-                        renderSeat(boat, { boatId: boat.id, kind: "seat", idx: i }, s.label, s.athleteId),
-                      )}
-                    </div>
-                    <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 text-[9px] font-bold uppercase tracking-[0.1em] text-muted">
-                      Stroke ▼
-                    </div>
-                  </div>
-
-                  {/* cox */}
                   {boat.hasCox && (
-                    <div className="mt-2">
+                    <div className="mb-2">
                       {renderSeat(boat, { boatId: boat.id, kind: "cox" }, "COX", boat.coxId, true)}
                     </div>
                   )}
+                  <div className="relative rounded-[0.75rem_0.75rem_2.5rem_2.5rem] border border-border bg-gradient-to-b from-surface-2 to-background px-3.5 pb-7 pt-7">
+                    <div className="absolute left-1/2 top-2 -translate-x-1/2 text-[9px] font-bold uppercase tracking-[0.1em] text-muted">
+                      Stroke ▲
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      {boat.seats
+                        .map((s, i) =>
+                          renderSeat(boat, { boatId: boat.id, kind: "seat", idx: i }, s.label, s.athleteId),
+                        )
+                        .reverse()}
+                    </div>
+                    <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 text-[9px] font-bold uppercase tracking-[0.1em] text-muted">
+                      Bow ▼
+                    </div>
+                  </div>
                 </div>
 
-                {/* focus note */}
+                {/* note — usually which oars / which boat to take */}
                 <div className="flex items-center gap-2 border-t border-border px-3.5 py-2.5 text-muted">
                   <IconClipboard size={14} />
                   <input
                     defaultValue={boat.note}
-                    placeholder="Focus note for this boat…"
+                    placeholder="Note — oars, which boat to take…"
                     className="flex-1 bg-transparent text-[12px] text-text outline-none placeholder:italic placeholder:text-muted/70"
                   />
                 </div>
 
-                <div className="border-t border-border px-3.5 py-1.5 text-right text-[10px] text-muted">
-                  {filled} / {boat.seats.length} filled
+                {/* footer — filled count + save this boat */}
+                <div className="flex items-center justify-between border-t border-border px-3.5 py-2">
+                  <span className="text-[10px] text-muted">
+                    {filled} / {boat.seats.length} filled
+                  </span>
+                  {(() => {
+                    const saved = savedIds.has(boat.id);
+                    return (
+                      <button
+                        type="button"
+                        onClick={() => toggleSaved(boat.id)}
+                        className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[11px] font-semibold ${
+                          saved ? "border-success/40 bg-success/10 text-success" : "border-primary/40 text-primary"
+                        }`}
+                      >
+                        <IconCheck size={13} /> {saved ? "Saved" : "Save boat"}
+                      </button>
+                    );
+                  })()}
                 </div>
               </div>
             );
@@ -602,11 +632,36 @@ function Builder({
               {available.length} available · {roster.filter((a) => a.out).length} out
             </span>
           </div>
+
+          {/* sort the pool by side */}
+          <div className="mb-2.5 flex gap-1.5">
+            {(
+              [
+                ["all", "All"],
+                ["P", "Port"],
+                ["S", "Starboard"],
+              ] as const
+            ).map(([key, label]) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setPoolFilter(key)}
+                className={`rounded-lg border px-2.5 py-1 text-[11px] font-medium ${
+                  poolFilter === key ? "border-primary bg-primary/10 text-text" : "border-border bg-surface text-muted"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
           <div className="flex flex-col gap-3">
             {rosterGroups.map((g) => {
               const chips = g.ids
                 .map((id) => rosterById[id])
-                .filter((a) => a.out || !seatedIds.has(a.id));
+                .filter((a) => a.out || !seatedIds.has(a.id))
+                // side filter: Port shows P (+ both); Starboard shows S (+ both); coxes only under All
+                .filter((a) => poolFilter === "all" || (!a.cox && (a.side === poolFilter || a.side === "B")));
               if (chips.length === 0) return null;
               return (
                 <div key={g.label}>
