@@ -1,10 +1,5 @@
-import VarsityScaffold from "@/components/varsity/VarsityScaffold";
+import TeamScreen from "@/components/varsity/team/TeamScreen";
 
 export default function VarsityTeamPage() {
-  return (
-    <VarsityScaffold kicker="The squad" title="Team">
-      Winter-points leaderboard, workout posts, session debriefs and team
-      announcements will live here.
-    </VarsityScaffold>
-  );
+  return <TeamScreen />;
 }
