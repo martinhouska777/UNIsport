@@ -11,17 +11,19 @@ import SessionCalendar from "@/components/profile/SessionCalendar";
 import SessionSheet from "@/components/profile/SessionSheet";
 import PersonalRecords from "@/components/profile/PersonalRecords";
 import PhotoGrid from "@/components/profile/PhotoGrid";
+import PreferencesSheet from "@/components/profile/PreferencesSheet";
 import {
   profileFromOnboarding,
+  deriveTrainingDisplay,
   classOfLabel,
   type CurrentUser,
   type PersonalRecord,
   type Session,
 } from "@/lib/currentUser";
 import { fileToDataUrl } from "@/lib/image";
-import { residenceLabel } from "@/lib/onboarding";
+import { residenceLabel, type OnboardingProfile } from "@/lib/onboarding";
 import { ThemeModeToggle } from "@/components/ThemeMode";
-import { IconSettings, IconUser, IconCamera, IconArrowRight } from "@/components/icons";
+import { IconSettings, IconUser, IconCamera, IconPencil, IconArrowRight } from "@/components/icons";
 
 export default function ProfilePage() {
   const { userId, logout, resetOnboarding } = useAppState();
@@ -32,6 +34,9 @@ export default function ProfilePage() {
   const [data, setData] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(true);
   const [openSession, setOpenSession] = useState<Session | null>(null);
+  const [editingPrefs, setEditingPrefs] = useState(false);
+  // Tiny status so saving to the database is visible (and failures aren't silent).
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const avatarInputRef = useRef<HTMLInputElement>(null);
 
   // Avatar picker: downscale the chosen image and store it as the profile photo.
@@ -66,28 +71,33 @@ export default function ProfilePage() {
     };
   }, [supabase, userId]);
 
-  // Edit handler: updates the saved JSON in place and persists to the DB.
+  // Edit handler: merges the patch into the saved JSON and persists it to the DB.
+  // The write lives OUTSIDE the state updater (so it runs once, not twice in
+  // StrictMode) and reports a save status the user can see.
   const update = (patch: Partial<CurrentUser>) => {
-    setData((prev) => {
-      const next = { ...(prev ?? {}) };
-      if ("name" in patch) next.name = patch.name;
-      if ("bio" in patch) next.bio = patch.bio;
-      if ("trainingDisplay" in patch) next.trainingDisplay = patch.trainingDisplay;
-      if ("personalRecords" in patch) next.personalRecords = patch.personalRecords;
-      if ("photos" in patch) next.photos = patch.photos;
-      if ("photo" in patch) next.photo = patch.photo;
-      if (supabase && userId) {
-        supabase
-          .from("profiles")
-          .update({ data: next, updated_at: new Date().toISOString() })
-          .eq("id", userId)
-          .then(({ error }) => {
-            // eslint-disable-next-line no-console
-            if (error) console.error("Profile save failed:", error.message);
-          });
-      }
-      return next;
-    });
+    const next = { ...(data ?? {}), ...patch };
+    setData(next);
+    if (!supabase || !userId) return; // no DB in this environment → in-memory only
+    setSaveState("saving");
+    supabase
+      .from("profiles")
+      .update({ data: next, updated_at: new Date().toISOString() })
+      .eq("id", userId)
+      .then(({ error }) => {
+        if (error) {
+          console.error("Profile save failed:", error.message);
+          setSaveState("error");
+        } else {
+          setSaveState("saved");
+        }
+      });
+  };
+
+  // Save edited onboarding answers, and re-derive the Training rows so they stay
+  // consistent with the new answers.
+  const savePreferences = (patch: Partial<OnboardingProfile>) => {
+    const merged = { ...(data as Partial<OnboardingProfile>), ...patch } as OnboardingProfile;
+    update({ ...patch, trainingDisplay: deriveTrainingDisplay(merged) });
   };
 
   const user = data ? profileFromOnboarding(data) : null;
@@ -112,6 +122,15 @@ export default function ProfilePage() {
     { label: "Following", value: user.stats.following },
   ];
 
+  const cap = (s: string) => (s ? s[0].toUpperCase() + s.slice(1) : s);
+  // "Who you train with" summary, e.g. "Partner · Any".
+  const trainWithLabel = user.trainingType
+    ? cap(user.trainingType) +
+      (user.trainingType !== "solo" && user.partnerPreference
+        ? ` · ${cap(user.partnerPreference)}`
+        : "")
+    : "—";
+
   const trainingRows: { key: keyof CurrentUser["trainingDisplay"]; label: string }[] = [
     { key: "level", label: "Level" },
     { key: "type", label: "Type" },
@@ -128,6 +147,13 @@ export default function ProfilePage() {
       <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-surface px-3.5 py-3">
         <span className="text-base font-medium text-text">My Profile</span>
         <div className="flex items-center gap-2">
+          {saveState !== "idle" && (
+            <span
+              className={`text-[11px] ${saveState === "error" ? "text-danger" : "text-muted"}`}
+            >
+              {saveState === "saving" ? "Saving…" : saveState === "saved" ? "Saved ✓" : "Couldn’t save"}
+            </span>
+          )}
           <ThemeModeToggle />
           <button type="button" aria-label="Settings" className="text-muted">
             <IconSettings size={18} />
@@ -247,6 +273,60 @@ export default function ProfilePage() {
         </div>
       </div>
 
+      {/* Preferences — your editable onboarding answers */}
+      <div className="border-b border-border px-3.5 py-3">
+        <div className="mb-2 flex items-center justify-between">
+          <div className="text-[9px] font-medium uppercase tracking-[0.1em] text-primary">
+            Preferences
+          </div>
+          <button
+            type="button"
+            onClick={() => setEditingPrefs(true)}
+            className="flex items-center gap-1 rounded-full px-1.5 py-1 text-[11px] font-medium text-primary transition-colors hover:bg-primary/10"
+          >
+            <IconPencil size={11} />
+            Edit answers
+          </button>
+        </div>
+
+        <div className="flex items-center justify-between py-1.5">
+          <span className="text-xs text-muted">Train with</span>
+          <span className="text-xs text-text">{trainWithLabel}</span>
+        </div>
+
+        {user.interests.length > 0 && (
+          <div className="mt-2.5">
+            <div className="mb-1.5 text-[11px] text-muted">Interests</div>
+            <div className="flex flex-wrap gap-1.5">
+              {user.interests.map((i) => (
+                <span
+                  key={i}
+                  className="rounded-full border border-accent bg-accent/15 px-2.5 py-1 text-[11px] text-accent"
+                >
+                  {i}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {user.languages.length > 0 && (
+          <div className="mt-2.5">
+            <div className="mb-1.5 text-[11px] text-muted">Languages</div>
+            <div className="flex flex-wrap gap-1.5">
+              {user.languages.map((l) => (
+                <span
+                  key={l}
+                  className="rounded-full border border-border bg-surface-2 px-2.5 py-1 text-[11px] text-text"
+                >
+                  {l}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Personal records */}
       <PersonalRecords
         records={user.personalRecords}
@@ -321,6 +401,14 @@ export default function ProfilePage() {
 
       {openSession && (
         <SessionSheet session={openSession} onClose={() => setOpenSession(null)} />
+      )}
+
+      {editingPrefs && (
+        <PreferencesSheet
+          profile={user}
+          onSave={savePreferences}
+          onClose={() => setEditingPrefs(false)}
+        />
       )}
     </div>
   );

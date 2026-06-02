@@ -102,6 +102,18 @@ function scheduleSummary(sched: Record<string, string[]>): string {
   return days.length ? days.join(" · ") : "—";
 }
 
+// The human-readable Training rows, derived from a user's onboarding answers.
+// Exported so the profile can re-derive them after the user edits preferences.
+export function deriveTrainingDisplay(p: OnboardingProfile): CurrentUser["trainingDisplay"] {
+  return {
+    level: cap(p.experienceLevel) || "—",
+    type: cap(p.primaryActivity) || "—",
+    split: p.gymSplit || "—",
+    schedule: scheduleSummary(p.trainingSchedule),
+    gym: p.topGyms[0] || "—",
+  };
+}
+
 /*
   Builds the profile-display object from a user's SAVED onboarding answers
   (the `data` JSON in the profiles table). Training rows derive from onboarding,
@@ -120,14 +132,7 @@ export function profileFromOnboarding(raw: Record<string, unknown>): CurrentUser
     ...p,
     badges: { varsity: false, mentor: !!(p.mentorFreshmen || p.helpOthers) },
     stats: { sessions: 0, partners: 0, following: 0 },
-    trainingDisplay:
-      savedTraining ?? {
-        level: cap(p.experienceLevel) || "—",
-        type: cap(p.primaryActivity) || "—",
-        split: p.gymSplit || "—",
-        schedule: scheduleSummary(p.trainingSchedule),
-        gym: p.topGyms[0] || "—",
-      },
+    trainingDisplay: savedTraining ?? deriveTrainingDisplay(p),
     personalRecords: extra.personalRecords ?? [],
     photos: extra.photos ?? [],
     sessions: [],
