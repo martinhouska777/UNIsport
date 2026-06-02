@@ -111,7 +111,7 @@ function WeekStrip({ week }: { week: WeekDay[] }) {
               d.today ? "border-primary shadow-[0_0_10px_rgba(165,28,48,0.25)]" : "border-border"
             } ${d.dimmed ? "opacity-40" : ""}`}
           >
-            <div className="bg-black/20 px-0.5 py-1 text-center">
+            <div className="bg-surface-2 px-0.5 py-1 text-center">
               <span className={`block text-[7px] font-semibold ${d.today ? "text-accent" : "text-muted"}`}>
                 {d.letter}
               </span>
