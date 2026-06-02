@@ -260,10 +260,28 @@ function PrSheet({
   );
 }
 
-/* ─────────────────────────  weekly-metres bar graph  ───────────────────────── */
-function MetresGraph({ weeks }: { weeks: { label: string; metres: number; latest: boolean }[] }) {
+/* ─────────────────────────  weekly-metres line graph  ───────────────────────── */
+function MetresLineGraph({ weeks }: { weeks: { label: string; metres: number; latest: boolean }[] }) {
   const max = Math.max(1, ...weeks.map((w) => w.metres));
   const anyData = weeks.some((w) => w.metres > 0);
+
+  // SVG geometry (a viewBox that stretches to the card width).
+  const W = 320;
+  const H = 116;
+  const padX = 8;
+  const padT = 14;
+  const padB = 16;
+  const plotW = W - padX * 2;
+  const plotH = H - padT - padB;
+  const baseline = padT + plotH;
+  const n = weeks.length;
+  const x = (i: number) => padX + (n === 1 ? plotW / 2 : (plotW * i) / (n - 1));
+  const y = (v: number) => padT + plotH * (1 - v / max);
+
+  const pts = weeks.map((w, i) => [x(i), y(w.metres)] as const);
+  const line = pts.map(([px, py]) => `${px},${py}`).join(" ");
+  const area = `M ${pts[0][0]},${baseline} L ${line.replaceAll(" ", " L ")} L ${pts[n - 1][0]},${baseline} Z`;
+
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-surface px-3.5 pb-3 pt-3.5">
       <div className="flex items-baseline justify-between">
@@ -275,23 +293,42 @@ function MetresGraph({ weeks }: { weeks: { label: string; metres: number; latest
 
       {anyData ? (
         <>
-          <div className="mt-3 flex h-28 items-end gap-1.5">
-            {weeks.map((w, i) => (
-              <div key={i} className="flex flex-1 flex-col items-center justify-end gap-1">
-                <span className="text-[7px] font-medium text-muted">
-                  {w.metres > 0 ? metresK(w.metres) : ""}
-                </span>
-                <div
-                  className={`w-full rounded-t-[3px] ${w.latest ? "bg-primary" : "bg-primary/35"}`}
-                  style={{ height: `${Math.max((w.metres / max) * 100, w.metres > 0 ? 6 : 1)}%` }}
-                />
-              </div>
+          <svg
+            viewBox={`0 0 ${W} ${H}`}
+            width="100%"
+            className="mt-3 block text-primary"
+            aria-hidden="true"
+          >
+            {/* baseline */}
+            <line x1={padX} y1={baseline} x2={W - padX} y2={baseline} stroke="var(--border)" strokeWidth={1} />
+            {/* soft area under the line */}
+            <path d={area} fill="var(--primary)" fillOpacity={0.1} />
+            {/* the trend line */}
+            <polyline
+              points={line}
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              strokeLinejoin="round"
+              strokeLinecap="round"
+            />
+            {/* points (latest filled solid) */}
+            {pts.map(([px, py], i) => (
+              <circle
+                key={i}
+                cx={px}
+                cy={py}
+                r={weeks[i].latest ? 4 : 3}
+                fill={weeks[i].latest ? "var(--primary)" : "var(--surface)"}
+                stroke="currentColor"
+                strokeWidth={2}
+              />
             ))}
-          </div>
-          <div className="mt-1.5 flex gap-1.5">
+          </svg>
+          <div className="mt-1 flex">
             {weeks.map((w, i) => (
               <div key={i} className="flex-1 text-center text-[7px] text-muted">
-                {w.label}
+                {w.latest ? "This wk" : w.label}
               </div>
             ))}
           </div>
@@ -361,14 +398,15 @@ export default function ProfileScreen() {
     });
   };
 
-  // This month's totals.
-  const monthPrefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-`;
-  const monthLogs = useMemo(() => logs.filter((l) => l.logDate.startsWith(monthPrefix)), [logs, monthPrefix]);
-  const monthSessions = monthLogs.length;
-  const monthMetres = monthLogs.reduce(
+  // This week's totals (the current Mon–Sun, up to today).
+  const weekStartIso = useMemo(() => toISO(mondayOf(now)), [now]);
+  const weekLogs = useMemo(() => logs.filter((l) => l.logDate >= weekStartIso), [logs, weekStartIso]);
+  const weekSessions = weekLogs.length;
+  const weekMetres = weekLogs.reduce(
     (s, l) => s + (rowingCategories.has(l.category ?? "") ? l.metres ?? 0 : 0),
     0,
   );
+  const weekDays = new Set(weekLogs.map((l) => l.logDate)).size;
 
   // Weekly metres buckets (Mon–Sun), oldest → newest.
   const weeks = useMemo(() => {
@@ -391,8 +429,6 @@ export default function ProfileScreen() {
     }
     return buckets;
   }, [logs, now]);
-
-  const weeklyAvg = Math.round(weeks.reduce((s, w) => s + w.metres, 0) / WEEKS);
 
   if (!profile) {
     return (
@@ -428,9 +464,9 @@ export default function ProfileScreen() {
   };
 
   const statTiles = [
-    { val: String(monthSessions), lbl: "Sessions", sub: "this month" },
-    { val: metresK(monthMetres), lbl: "Metres", sub: "this month" },
-    { val: metresK(weeklyAvg), lbl: "Weekly avg", sub: `${WEEKS} wks` },
+    { val: String(weekSessions), lbl: "Sessions", sub: "this week" },
+    { val: metresK(weekMetres), lbl: "Metres", sub: "this week" },
+    { val: String(weekDays), lbl: "Days", sub: "this week" },
   ];
 
   return (
@@ -516,7 +552,7 @@ export default function ProfileScreen() {
         ))}
       </div>
       <div className="mx-3.5">
-        <MetresGraph weeks={weeks} />
+        <MetresLineGraph weeks={weeks} />
       </div>
 
       {/* ── Training calendar → its own tab ── */}
