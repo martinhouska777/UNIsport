@@ -47,6 +47,20 @@ export const logCategoryColor: Record<string, string> = {
   off: "var(--muted)",
   other: "var(--muted)",
 };
+// Human labels for the calendar legend (same keys as logCategoryColor).
+export const logCategoryLabel: Record<string, string> = {
+  water: "Water",
+  erg: "Erg",
+  weights: "Weights",
+  run: "Run",
+  bike: "Bike",
+  flex: "Flex",
+  off: "Off",
+  other: "Other",
+};
+// Categories shown in the calendar legend, in order.
+export const legendCategories = ["water", "erg", "weights", "run", "flex"] as const;
+
 // Which logged categories count as "metres rowed" for the monthly total.
 export const rowingCategories = new Set(["water", "erg"]);
 

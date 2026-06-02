@@ -6,25 +6,20 @@
   • Identity: the SAME name as the normal app profile (profiles.data.name), the
     year on the team (Freshman/Sophomore/…), and height/weight — all editable.
   • Current status: tap to change (Active / Light training / Injured / Away).
-  • Training calendar: a compact, tappable month built from the athlete's OWN
-    logged sessions (lib/varsity/logStore). Tap a day to see what was logged.
-  • This-month stats: sessions completed + metres rowed, from the same logs.
+  • Statistics: this-month sessions + metres and an 8-week "metres rowed" graph,
+    all computed from the athlete's OWN logs (lib/varsity/logStore).
+  • A button into the Calendar tab — the day-by-day training history lives there.
   • Personal bests: 2K / 5K / 6K / 30′ r20 — editable.
   • Send to coaches abroad: a shareable link (copy / share sheet).
 
   Editable data persists via lib/varsity/athleteProfile (profiles.data.varsity).
-  All colors are theme tokens; per-category calendar dots are CONTENT colors from
-  data, applied via inline style (rule-1 exception). Editor sheets are portalled
-  to <body>, so they re-wrap themselves in <ThemeProvider> to keep the theme.
+  All colors are theme tokens. Editor sheets use the shared <Sheet> (portalled).
 */
-import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { createPortal } from "react-dom";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import ThemeProvider from "@/components/ThemeProvider";
+import Sheet from "@/components/varsity/Sheet";
 import { useAppState } from "@/components/AppState";
-import { varsityTheme, varsityLightTheme } from "@/lib/varsity/theme";
 import { fetchLogsInRange, type LogEntry } from "@/lib/varsity/logStore";
-import { formatMetrics } from "@/lib/varsity/logParse";
 import { toISO } from "@/lib/varsity/coachPlan";
 import {
   fetchAthleteProfile,
@@ -32,7 +27,6 @@ import {
   teamYearOptions,
   statusOptions,
   prPieces,
-  logCategoryColor,
   rowingCategories,
   type VarsityAthleteProfile,
   type StatusTone,
@@ -42,11 +36,10 @@ import {
   IconAnchor,
   IconActivity,
   IconChevronRight,
-  IconChevronDown,
+  IconCalendar,
   IconGlobe,
   IconCopy,
   IconCheck,
-  IconX,
 } from "@/components/icons";
 
 /* status tone (data) → a theme-token utility (never a raw color) */
@@ -71,71 +64,28 @@ const toneRing: Record<StatusTone, string> = {
 const statusByTitle = (title: string) =>
   statusOptions.find((s) => s.title === title) ?? statusOptions[0];
 
-const MONTHS = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
-];
-
 function initialsOf(name: string): string {
   const parts = name.split(/\s+/).filter(Boolean);
   if (parts.length === 0) return "—";
   return (parts[0][0] + (parts[1]?.[0] ?? "")).toUpperCase();
 }
-
 function slugify(name: string): string {
   return name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "athlete";
 }
-
-/* ─────────────────────────  reusable bottom sheet  ───────────────────────── */
-function Sheet({
-  title,
-  onClose,
-  children,
-}: {
-  title: string;
-  onClose: () => void;
-  children: ReactNode;
-}) {
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [onClose]);
-
-  return createPortal(
-    <ThemeProvider tokens={varsityTheme} light={varsityLightTheme}>
-      <div className="fixed inset-0 z-[60] flex flex-col justify-end">
-        <button
-          type="button"
-          aria-label="Close"
-          onClick={onClose}
-          className="absolute inset-0 bg-background/70 [animation:backdrop-in_0.2s_ease-out]"
-        />
-        <div className="relative max-h-[85%] overflow-y-auto rounded-t-3xl border-t border-border bg-surface [animation:sheet-up_0.28s_cubic-bezier(0.2,0.8,0.2,1)]">
-          <div className="flex justify-center pb-1.5 pt-2.5">
-            <div className="h-1 w-9 rounded-full bg-border" />
-          </div>
-          <div className="flex items-center justify-between border-b border-border px-4 pb-3">
-            <span className="text-[15px] font-semibold text-text">{title}</span>
-            <button
-              type="button"
-              onClick={onClose}
-              aria-label="Close"
-              className="flex h-7 w-7 items-center justify-center rounded-full bg-surface-2 text-muted"
-            >
-              <IconX size={14} />
-            </button>
-          </div>
-          <div className="px-4 pb-8 pt-4">{children}</div>
-        </div>
-      </div>
-    </ThemeProvider>,
-    document.body,
-  );
+function metresK(m: number): string {
+  if (m >= 1000) return `${(m / 1000).toFixed(m >= 10000 ? 0 : 1)}k`;
+  return String(m);
+}
+function mondayOf(d: Date): Date {
+  const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  x.setDate(x.getDate() - ((x.getDay() + 6) % 7));
+  return x;
 }
 
 const inputCls =
   "w-full rounded-xl border border-border bg-surface-2 px-3.5 py-3 text-base text-text outline-none focus:border-primary placeholder:text-muted";
+
+const WEEKS = 8;
 
 /* ─────────────────────────  edit identity sheet  ───────────────────────── */
 function EditIdentitySheet({
@@ -310,80 +260,62 @@ function PrSheet({
   );
 }
 
-/* ─────────────────────────  day-detail sheet  ───────────────────────── */
-function DaySheet({
-  dateLabel,
-  logs,
-  onClose,
-}: {
-  dateLabel: string;
-  logs: LogEntry[];
-  onClose: () => void;
-}) {
+/* ─────────────────────────  weekly-metres bar graph  ───────────────────────── */
+function MetresGraph({ weeks }: { weeks: { label: string; metres: number; latest: boolean }[] }) {
+  const max = Math.max(1, ...weeks.map((w) => w.metres));
+  const anyData = weeks.some((w) => w.metres > 0);
   return (
-    <Sheet title={dateLabel} onClose={onClose}>
-      {logs.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border bg-surface-2 px-4 py-6 text-center text-[12px] text-muted">
-          Nothing logged this day.
-        </div>
-      ) : (
-        <div className="flex flex-col gap-2">
-          {logs.map((l) => {
-            const metrics = formatMetrics(l.minutes, l.metres, l.split);
-            return (
-              <div key={l.id} className="flex items-start gap-3 rounded-2xl border border-border bg-surface-2 px-3.5 py-3">
-                <span
-                  className="mt-1 h-2.5 w-2.5 flex-shrink-0 rounded-full"
-                  style={{ background: logCategoryColor[l.category ?? "other"] ?? "var(--muted)" }}
+    <div className="overflow-hidden rounded-2xl border border-border bg-surface px-3.5 pb-3 pt-3.5">
+      <div className="flex items-baseline justify-between">
+        <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
+          Metres rowed
+        </span>
+        <span className="text-[10px] text-muted">last {WEEKS} weeks</span>
+      </div>
+
+      {anyData ? (
+        <>
+          <div className="mt-3 flex h-28 items-end gap-1.5">
+            {weeks.map((w, i) => (
+              <div key={i} className="flex flex-1 flex-col items-center justify-end gap-1">
+                <span className="text-[7px] font-medium text-muted">
+                  {w.metres > 0 ? metresK(w.metres) : ""}
+                </span>
+                <div
+                  className={`w-full rounded-t-[3px] ${w.latest ? "bg-primary" : "bg-primary/35"}`}
+                  style={{ height: `${Math.max((w.metres / max) * 100, w.metres > 0 ? 6 : 1)}%` }}
                 />
-                <div className="min-w-0 flex-1">
-                  <div className="text-[13px] font-semibold text-text">{l.title}</div>
-                  {metrics && <div className="mt-0.5 text-[12px] text-text/90">{metrics}</div>}
-                  {l.note && <div className="mt-0.5 text-[11px] text-muted">{l.note}</div>}
-                </div>
-                {l.source === "plan" && (
-                  <span className="flex-shrink-0 rounded-md border border-border px-2 py-0.5 text-[9px] font-medium uppercase tracking-wide text-muted">
-                    Plan
-                  </span>
-                )}
               </div>
-            );
-          })}
-        </div>
+            ))}
+          </div>
+          <div className="mt-1.5 flex gap-1.5">
+            {weeks.map((w, i) => (
+              <div key={i} className="flex-1 text-center text-[7px] text-muted">
+                {w.label}
+              </div>
+            ))}
+          </div>
+        </>
+      ) : (
+        <p className="mt-3 rounded-xl border border-dashed border-border bg-surface-2 px-3 py-6 text-center text-[11px] text-muted">
+          Log some erg or water sessions and your weekly metres will chart here.
+        </p>
       )}
-      <Link
-        href="/varsity/log"
-        className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-surface px-4 py-3 text-[12px] font-medium text-text"
-      >
-        Open the log
-        <IconChevronRight size={14} />
-      </Link>
-    </Sheet>
+    </div>
   );
 }
 
 /* ─────────────────────────  screen  ───────────────────────── */
-type CalDay = { num: number; iso: string; dots: string[]; today: boolean; future: boolean };
-
 export default function ProfileScreen() {
   const { userId } = useAppState();
   const now = useMemo(() => new Date(), []);
-  const todayIso = toISO(now);
 
   const [name, setName] = useState("");
   const [classYear, setClassYear] = useState("");
   const [profile, setProfile] = useState<VarsityAthleteProfile | null>(null);
-
-  // Calendar month being viewed (defaults to the current month).
-  const [view, setView] = useState({ y: now.getFullYear(), m: now.getMonth() });
   const [logs, setLogs] = useState<LogEntry[]>([]);
 
-  type Modal =
-    | { kind: "identity" }
-    | { kind: "status" }
-    | { kind: "prs" }
-    | { kind: "day"; iso: string; label: string }
-    | null;
+  type Modal = "identity" | "status" | "prs" | null;
   const [modal, setModal] = useState<Modal>(null);
   const [copied, setCopied] = useState(false);
 
@@ -402,7 +334,7 @@ export default function ProfileScreen() {
     };
   }, [userId]);
 
-  // Logs for the viewed month (drives the calendar + this-month stats).
+  // Logs across the last 8 weeks — powers the graph + this-month stats.
   useEffect(() => {
     let active = true;
     (async () => {
@@ -410,17 +342,17 @@ export default function ProfileScreen() {
         setLogs([]);
         return;
       }
-      const from = toISO(new Date(view.y, view.m, 1));
-      const to = toISO(new Date(view.y, view.m + 1, 0));
-      const rows = await fetchLogsInRange(userId, from, to);
+      const firstMonday = mondayOf(now);
+      firstMonday.setDate(firstMonday.getDate() - (WEEKS - 1) * 7);
+      const rows = await fetchLogsInRange(userId, toISO(firstMonday), toISO(now));
       if (active) setLogs(rows);
     })();
     return () => {
       active = false;
     };
-  }, [userId, view]);
+  }, [userId, now]);
 
-  const patchProfile = async (patch: Partial<VarsityAthleteProfile>) => {
+  const patchProfile = (patch: Partial<VarsityAthleteProfile>) => {
     setProfile((prev) => {
       if (!prev) return prev;
       const next = { ...prev, ...patch };
@@ -429,52 +361,38 @@ export default function ProfileScreen() {
     });
   };
 
-  // Logs grouped by day-of-month, for the calendar + day sheet.
-  const logsByDay = useMemo(() => {
-    const map: Record<number, LogEntry[]> = {};
-    for (const l of logs) {
-      const day = Number(l.logDate.split("-")[2]);
-      (map[day] ??= []).push(l);
-    }
-    return map;
-  }, [logs]);
-
-  const calendar = useMemo<CalDay[]>(() => {
-    const daysInMonth = new Date(view.y, view.m + 1, 0).getDate();
-    const out: CalDay[] = [];
-    for (let n = 1; n <= daysInMonth; n++) {
-      const iso = toISO(new Date(view.y, view.m, n));
-      const dayLogs = logsByDay[n] ?? [];
-      // Unique categories that day, in first-seen order, capped at 3 dots.
-      const seen = new Set<string>();
-      const dots: string[] = [];
-      for (const l of dayLogs) {
-        const c = l.category ?? "other";
-        if (!seen.has(c) && dots.length < 3) {
-          seen.add(c);
-          dots.push(c);
-        }
-      }
-      out.push({ num: n, iso, dots, today: iso === todayIso, future: iso > todayIso });
-    }
-    return out;
-  }, [view, logsByDay, todayIso]);
-
-  const leadingEmpty = (new Date(view.y, view.m, 1).getDay() + 6) % 7; // Monday-first
-  const monthSessions = logs.length;
-  const monthMetres = logs.reduce(
-    (sum, l) => sum + (rowingCategories.has(l.category ?? "") ? l.metres ?? 0 : 0),
+  // This month's totals.
+  const monthPrefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-`;
+  const monthLogs = useMemo(() => logs.filter((l) => l.logDate.startsWith(monthPrefix)), [logs, monthPrefix]);
+  const monthSessions = monthLogs.length;
+  const monthMetres = monthLogs.reduce(
+    (s, l) => s + (rowingCategories.has(l.category ?? "") ? l.metres ?? 0 : 0),
     0,
   );
-  const metresLabel =
-    monthMetres >= 1000 ? `${(monthMetres / 1000).toFixed(monthMetres >= 10000 ? 0 : 1)}k` : String(monthMetres);
 
-  const goMonth = (delta: number) =>
-    setView((v) => {
-      const d = new Date(v.y, v.m + delta, 1);
-      return { y: d.getFullYear(), m: d.getMonth() };
+  // Weekly metres buckets (Mon–Sun), oldest → newest.
+  const weeks = useMemo(() => {
+    const thisMonday = mondayOf(now);
+    const buckets = Array.from({ length: WEEKS }, (_, i) => {
+      const start = new Date(thisMonday);
+      start.setDate(thisMonday.getDate() - (WEEKS - 1 - i) * 7);
+      return {
+        startIso: toISO(start),
+        endIso: toISO(new Date(start.getFullYear(), start.getMonth(), start.getDate() + 6)),
+        label: `${start.getMonth() + 1}/${start.getDate()}`,
+        metres: 0,
+        latest: i === WEEKS - 1,
+      };
     });
-  const atCurrentMonth = view.y === now.getFullYear() && view.m === now.getMonth();
+    for (const l of logs) {
+      if (!rowingCategories.has(l.category ?? "")) continue;
+      const b = buckets.find((bk) => l.logDate >= bk.startIso && l.logDate <= bk.endIso);
+      if (b) b.metres += l.metres ?? 0;
+    }
+    return buckets;
+  }, [logs, now]);
+
+  const weeklyAvg = Math.round(weeks.reduce((s, w) => s + w.metres, 0) / WEEKS);
 
   if (!profile) {
     return (
@@ -509,7 +427,11 @@ export default function ProfileScreen() {
     copyLink();
   };
 
-  const dayNames = ["M", "T", "W", "T", "F", "S", "S"];
+  const statTiles = [
+    { val: String(monthSessions), lbl: "Sessions", sub: "this month" },
+    { val: metresK(monthMetres), lbl: "Metres", sub: "this month" },
+    { val: metresK(weeklyAvg), lbl: "Weekly avg", sub: `${WEEKS} wks` },
+  ];
 
   return (
     <div className="mx-auto w-full max-w-screen-sm pb-10">
@@ -548,7 +470,7 @@ export default function ProfileScreen() {
           </div>
           <button
             type="button"
-            onClick={() => setModal({ kind: "identity" })}
+            onClick={() => setModal("identity")}
             aria-label="Edit profile"
             className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[10px] border border-border bg-surface text-muted"
           >
@@ -560,7 +482,7 @@ export default function ProfileScreen() {
       {/* ── Current status (tap to change) ── */}
       <button
         type="button"
-        onClick={() => setModal({ kind: "status" })}
+        onClick={() => setModal("status")}
         className="mx-3.5 mt-3.5 flex w-[calc(100%-1.75rem)] items-center gap-3 overflow-hidden rounded-2xl border border-border bg-surface px-3.5 py-3 text-left"
       >
         <span className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[10px] border ${toneRing[status.tone]}`}>
@@ -578,100 +500,41 @@ export default function ProfileScreen() {
         </span>
       </button>
 
-      {/* ── Training calendar (compact + tappable, built from logged sessions) ── */}
+      {/* ── Statistics ── */}
       <div className="px-4 pb-2 pt-5 text-[9px] font-semibold uppercase tracking-[0.16em] text-muted">
-        Training Calendar
+        Statistics
       </div>
-      <div className="mx-3.5 overflow-hidden rounded-2xl border border-border bg-surface">
-        <div className="flex items-center justify-between border-b border-border px-3.5 py-3">
-          <div className="flex items-baseline gap-2">
-            <span className="text-base font-semibold text-text">{MONTHS[view.m]}</span>
-            <span className="text-[10px] font-medium tracking-wide text-muted">{view.y}</span>
-          </div>
-          <div className="flex gap-1">
-            <button
-              type="button"
-              aria-label="Previous month"
-              onClick={() => goMonth(-1)}
-              className="flex h-6 w-6 items-center justify-center rounded-md border border-border bg-surface-2 text-muted"
-            >
-              <IconChevronDown size={14} className="rotate-90" />
-            </button>
-            <button
-              type="button"
-              aria-label="Next month"
-              onClick={() => goMonth(1)}
-              disabled={atCurrentMonth}
-              className="flex h-6 w-6 items-center justify-center rounded-md border border-border bg-surface-2 text-muted disabled:opacity-30"
-            >
-              <IconChevronDown size={14} className="-rotate-90" />
-            </button>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-7 border-b border-border px-2 pb-1 pt-2">
-          {dayNames.map((d, i) => (
-            <div key={i} className="py-0.5 text-center text-[8px] font-semibold tracking-[0.14em] text-muted">
-              {d}
+      <div className="mx-3.5 mb-2.5 grid grid-cols-3 gap-1.5">
+        {statTiles.map((t) => (
+          <div key={t.lbl} className="rounded-2xl border border-border bg-surface px-2 py-3 text-center">
+            <div className="text-xl font-semibold leading-none text-text">{t.val}</div>
+            <div className="mt-1.5 text-[8px] font-semibold uppercase tracking-[0.1em] text-muted">
+              {t.lbl}
             </div>
-          ))}
-        </div>
-
-        <div className="grid grid-cols-7 gap-[3px] px-2 pb-2.5 pt-1.5">
-          {Array.from({ length: leadingEmpty }).map((_, i) => (
-            <div key={`e${i}`} className="aspect-square" />
-          ))}
-          {calendar.map((d) => {
-            const has = d.dots.length > 0;
-            const label = `${MONTHS[view.m]} ${d.num}`;
-            return (
-              <button
-                key={d.num}
-                type="button"
-                onClick={() => setModal({ kind: "day", iso: d.iso, label })}
-                className={`flex aspect-square flex-col items-center justify-center rounded-[9px] pt-0.5 ${
-                  d.today ? "border border-primary/40 bg-primary/15" : has ? "active:bg-surface-2" : ""
-                }`}
-              >
-                <span
-                  className={`text-[12px] font-medium leading-none ${
-                    d.today ? "font-bold text-primary" : d.future ? "text-muted" : "text-text"
-                  }`}
-                >
-                  {d.num}
-                </span>
-                <span className="mt-[3px] flex h-1 items-center gap-0.5">
-                  {d.dots.map((c, i) => (
-                    <span
-                      key={i}
-                      className="h-1 w-1 rounded-full"
-                      style={{ background: logCategoryColor[c] ?? "var(--muted)" }}
-                    />
-                  ))}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* This-month summary, straight from the logs */}
-        <div className="flex items-center gap-3.5 border-t border-border px-3.5 py-3">
-          <div>
-            <div className="text-sm font-semibold leading-none text-text">{monthSessions}</div>
-            <div className="mt-1 text-[8px] font-semibold uppercase tracking-[0.14em] text-muted">
-              Sessions
-            </div>
+            <div className="mt-0.5 text-[8px] text-muted">{t.sub}</div>
           </div>
-          <div className="h-6 w-px bg-border" />
-          <div>
-            <div className="text-sm font-semibold leading-none text-text">{metresLabel}</div>
-            <div className="mt-1 text-[8px] font-semibold uppercase tracking-[0.14em] text-muted">
-              Metres rowed
-            </div>
-          </div>
-          <span className="ml-auto text-[9px] text-muted">this month</span>
-        </div>
+        ))}
       </div>
+      <div className="mx-3.5">
+        <MetresGraph weeks={weeks} />
+      </div>
+
+      {/* ── Training calendar → its own tab ── */}
+      <Link
+        href="/varsity/calendar"
+        className="mx-3.5 mt-2.5 flex w-[calc(100%-1.75rem)] items-center gap-3 rounded-2xl border border-border bg-surface px-3.5 py-3"
+      >
+        <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[10px] border border-primary/30 bg-primary/10 text-primary">
+          <IconCalendar size={18} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="text-[13px] font-medium text-text">Training calendar</div>
+          <div className="text-[10px] text-muted">See what you did, day by day</div>
+        </div>
+        <span className="text-muted">
+          <IconChevronRight size={17} />
+        </span>
+      </Link>
 
       {/* ── Personal bests (editable) ── */}
       <div className="flex items-center justify-between px-4 pb-2 pt-5">
@@ -680,7 +543,7 @@ export default function ProfileScreen() {
         </div>
         <button
           type="button"
-          onClick={() => setModal({ kind: "prs" })}
+          onClick={() => setModal("prs")}
           aria-label="Edit personal bests"
           className="flex items-center gap-1 text-[10px] font-medium text-primary"
         >
@@ -694,7 +557,7 @@ export default function ProfileScreen() {
             <button
               key={piece}
               type="button"
-              onClick={() => setModal({ kind: "prs" })}
+              onClick={() => setModal("prs")}
               className="flex items-baseline justify-between rounded-xl border border-border bg-surface px-3 py-2.5 text-left"
             >
               <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">
@@ -763,21 +626,14 @@ export default function ProfileScreen() {
       </div>
 
       {/* ── Sheets ── */}
-      {modal?.kind === "identity" && (
+      {modal === "identity" && (
         <EditIdentitySheet profile={profile} onSave={patchProfile} onClose={() => setModal(null)} />
       )}
-      {modal?.kind === "status" && (
+      {modal === "status" && (
         <StatusSheet current={profile.status} onSave={patchProfile} onClose={() => setModal(null)} />
       )}
-      {modal?.kind === "prs" && (
+      {modal === "prs" && (
         <PrSheet prs={profile.prs} onSave={patchProfile} onClose={() => setModal(null)} />
-      )}
-      {modal?.kind === "day" && (
-        <DaySheet
-          dateLabel={modal.label}
-          logs={logsByDay[Number(modal.iso.split("-")[2])] ?? []}
-          onClose={() => setModal(null)}
-        />
       )}
     </div>
   );

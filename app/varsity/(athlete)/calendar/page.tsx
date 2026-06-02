@@ -1,9 +1,5 @@
-import VarsityScaffold from "@/components/varsity/VarsityScaffold";
+import CalendarScreen from "@/components/varsity/calendar/CalendarScreen";
 
 export default function VarsityCalendarPage() {
-  return (
-    <VarsityScaffold kicker="Training history" title="Calendar">
-      Prescribed vs logged vs extra training across the block will live here.
-    </VarsityScaffold>
-  );
+  return <CalendarScreen />;
 }
