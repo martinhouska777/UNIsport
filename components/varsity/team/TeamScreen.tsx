@@ -13,12 +13,15 @@
   All colors are theme tokens; the rowing-side dot is a CONTENT color from data
   applied via inline style (the rule-1 exception the lineup screens use).
 */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Sheet from "@/components/varsity/Sheet";
-import { roster, rosterGroups, rosterById, sideMeta, COX_COLOR, type Athlete } from "@/lib/varsity/coachLineup";
+import ErgBoard from "@/components/varsity/team/ErgBoard";
+import { useAppState } from "@/components/AppState";
+import { fetchProfileFullName } from "@/lib/varsity/planStore";
+import { roster, rosterById, sideMeta, COX_COLOR, type Athlete } from "@/lib/varsity/coachLineup";
 import { teamProfile } from "@/lib/varsity/teamProfiles";
 import { statusOptions, prPieces, type StatusTone } from "@/lib/varsity/athleteProfile";
-import { IconSearch, IconChevronRight, IconAnchor, IconActivity } from "@/components/icons";
+import { IconSearch, IconChevronRight, IconActivity } from "@/components/icons";
 
 const toneText: Record<StatusTone, string> = {
   success: "text-success",
@@ -134,17 +137,28 @@ function RosterRow({ a, onOpen }: { a: Athlete; onOpen: () => void }) {
 type Tab = "roster" | "ergs";
 
 export default function TeamScreen() {
+  const { userId } = useAppState();
   const [tab, setTab] = useState<Tab>("roster");
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState<string | null>(null);
+  const [myName, setMyName] = useState<string | null>(null);
 
-  const counts = useMemo(() => {
-    const cox = roster.filter((a) => a.cox).length;
-    return { rowers: roster.length - cox, cox };
-  }, []);
+  useEffect(() => {
+    let active = true;
+    fetchProfileFullName(userId).then((n) => active && setMyName(n));
+    return () => {
+      active = false;
+    };
+  }, [userId]);
+
+  // Rowers only (coxswains aren't on the squad roster here), in name order.
+  const rowers = useMemo(
+    () => roster.filter((a) => !a.cox).sort((a, b) => a.name.localeCompare(b.name)),
+    [],
+  );
 
   const q = query.trim().toLowerCase();
-  const matches = (a: Athlete) => a.name.toLowerCase().includes(q);
+  const shown = q ? rowers.filter((a) => a.name.toLowerCase().includes(q)) : rowers;
 
   return (
     <div className="mx-auto w-full max-w-screen-sm px-4 pb-10 pt-4">
@@ -181,52 +195,21 @@ export default function TeamScreen() {
               className="w-full bg-transparent text-base text-text outline-none placeholder:text-muted"
             />
           </div>
-          <div className="mt-1.5 px-0.5 text-[10px] text-muted">
-            {counts.rowers} rowers · {counts.cox} coxswains
-          </div>
+          <div className="mt-1.5 px-0.5 text-[10px] text-muted">{rowers.length} rowers</div>
 
-          {q ? (
-            // Flat, filtered list while searching.
-            <div className="mt-3 flex flex-col gap-1.5">
-              {roster.filter(matches).map((a) => (
-                <RosterRow key={a.id} a={a} onOpen={() => setOpen(a.id)} />
-              ))}
-              {roster.filter(matches).length === 0 && (
-                <div className="rounded-xl border border-dashed border-border bg-surface px-4 py-8 text-center text-[12px] text-muted">
-                  No one matches “{query}”.
-                </div>
-              )}
-            </div>
-          ) : (
-            // Grouped by training group otherwise.
-            <div className="mt-3 flex flex-col gap-4">
-              {rosterGroups.map((g) => (
-                <div key={g.label}>
-                  <div className="mb-1.5 px-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
-                    {g.label}
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    {g.ids.map((id) => {
-                      const a = rosterById[id];
-                      return a ? <RosterRow key={id} a={a} onOpen={() => setOpen(id)} /> : null;
-                    })}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+          <div className="mt-3 flex flex-col gap-1.5">
+            {shown.map((a) => (
+              <RosterRow key={a.id} a={a} onOpen={() => setOpen(a.id)} />
+            ))}
+            {shown.length === 0 && (
+              <div className="rounded-xl border border-dashed border-border bg-surface px-4 py-8 text-center text-[12px] text-muted">
+                No one matches “{query}”.
+              </div>
+            )}
+          </div>
         </>
       ) : (
-        // Ergs — built next slice.
-        <div className="mt-4 rounded-2xl border border-border bg-surface px-6 py-12 text-center">
-          <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-primary/15 text-primary">
-            <IconAnchor size={20} />
-          </div>
-          <div className="text-[14px] font-semibold text-text">Erg rankings are next</div>
-          <p className="mx-auto mt-1 max-w-[16rem] text-[12px] leading-relaxed text-muted">
-            The last workout, ranked — with each rower&apos;s improvement against their previous time.
-          </p>
-        </div>
+        <ErgBoard myName={myName} onOpen={(id) => setOpen(id)} />
       )}
 
       {open && <AthleteSheet athleteId={open} onClose={() => setOpen(null)} />}

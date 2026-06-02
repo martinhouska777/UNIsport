@@ -39,6 +39,17 @@ function mulberry32(seed: number): () => number {
   };
 }
 
+// A stable seeded RNG for an athlete id (optionally salted for a second stream).
+export function rngFor(id: string, salt = ""): () => number {
+  return mulberry32(hashSeed(id + salt));
+}
+
+// "m:ss.s" → seconds (e.g. "6:08.4" → 368.4)
+export function clockToSec(clock: string): number {
+  const [m, s] = clock.split(":");
+  return Number(m) * 60 + Number(s);
+}
+
 // seconds → "m:ss.s"
 export function secToClock(sec: number): string {
   const m = Math.floor(sec / 60);
