@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   getChannelThread,
   sendChannelMessage,
+  joinChannel,
   clockTime,
   type ChannelMessage,
 } from "@/lib/supabase/messages";
@@ -29,24 +30,43 @@ const CHANNEL_ICONS: Record<string, (p: { size?: number }) => React.ReactElement
 };
 
 /*
-  Community channel thread. Each message shows the sender's name + residence and
-  time (denormalised onto the message), like a group chat. Open to everyone.
+  Community channel thread. Each message shows the sender's name, house + class
+  year, and time (denormalised onto the message), like a group chat. Anyone can
+  read; joining (opt-in) is required to post, so a non-member sees a Join bar
+  instead of the composer.
 */
 export default function ChannelThread({
   channelId,
   title,
   icon,
+  joined: joinedInitial,
   onBack,
 }: {
   channelId: string;
   title: string;
   icon: string;
+  joined: boolean;
   onBack: () => void;
 }) {
   const [messages, setMessages] = useState<ChannelMessage[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [joined, setJoined] = useState(joinedInitial);
+  const [joining, setJoining] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const Glyph = CHANNEL_ICONS[icon] ?? IconMessage;
+
+  const join = async () => {
+    if (joining) return;
+    setJoining(true);
+    try {
+      await joinChannel(channelId);
+      setJoined(true);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setJoining(false);
+    }
+  };
 
   useEffect(() => {
     let active = true;
@@ -109,7 +129,8 @@ export default function ChannelThread({
                   <div className="mb-1 flex items-baseline gap-1.5">
                     <span className="text-[12px] font-medium text-text">{m.senderName || "Member"}</span>
                     <span className="text-[9px] text-muted">
-                      {m.senderResidence ? `${m.senderResidence} · ` : ""}
+                      {[m.senderResidence, m.senderClassYear].filter(Boolean).join(" · ")}
+                      {(m.senderResidence || m.senderClassYear) ? " · " : ""}
                       {clockTime(m.createdAt)}
                     </span>
                   </div>
@@ -124,7 +145,21 @@ export default function ChannelThread({
         <div ref={bottomRef} />
       </div>
 
-      <Composer placeholder={`Message # ${title}...`} onSend={send} />
+      {joined ? (
+        <Composer placeholder={`Message # ${title}...`} onSend={send} />
+      ) : (
+        <div className="flex items-center justify-between gap-3 border-t border-border bg-surface px-3.5 py-3">
+          <span className="text-[12px] text-muted">Join # {title} to post a message.</span>
+          <button
+            type="button"
+            onClick={join}
+            disabled={joining}
+            className="shrink-0 rounded-full bg-primary px-4 py-2 text-[12px] font-semibold text-primary-contrast transition-opacity disabled:opacity-50"
+          >
+            {joining ? "Joining…" : "Join"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

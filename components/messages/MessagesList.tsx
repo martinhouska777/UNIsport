@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   listDirectConversations,
   listChannels,
+  joinChannel,
   relativeTime,
   type DmConversation,
   type Channel,
@@ -79,6 +80,21 @@ export default function MessagesList({
     );
   }, [channels, query]);
 
+  // Join a channel (opt-in). Optimistic — flip joined immediately, revert on error.
+  const handleJoin = async (channelId: string) => {
+    setChannels((prev) =>
+      (prev ?? []).map((c) => (c.channelId === channelId ? { ...c, joined: true } : c)),
+    );
+    try {
+      await joinChannel(channelId);
+    } catch (e) {
+      setChannels((prev) =>
+        (prev ?? []).map((c) => (c.channelId === channelId ? { ...c, joined: false } : c)),
+      );
+      setError((e as Error).message);
+    }
+  };
+
   return (
     <div className="flex h-full min-h-0 flex-col">
       {/* Header */}
@@ -135,6 +151,7 @@ export default function MessagesList({
             list={filteredChannels}
             loading={channels === null}
             onOpen={onOpenChannel}
+            onJoin={handleJoin}
           />
         )}
       </div>
@@ -195,45 +212,108 @@ function CommunityList({
   list,
   loading,
   onOpen,
+  onJoin,
 }: {
   list: Channel[];
   loading: boolean;
   onOpen: (c: Channel) => void;
+  onJoin: (channelId: string) => void;
 }) {
   if (loading) {
     return <div className="px-6 py-16 text-center text-sm text-muted">Loading…</div>;
   }
+  const joined = list.filter((c) => c.joined);
+  const discover = list.filter((c) => !c.joined);
+
   return (
     <div>
-      <div className="px-3.5 pb-1 pt-3 text-[10px] font-medium uppercase tracking-[0.08em] text-muted">
-        Channels — open to all
-      </div>
-      {list.map((c) => (
-        <button
-          key={c.channelId}
-          type="button"
-          onClick={() => onOpen(c)}
-          className="flex w-full items-center gap-3 border-b border-border px-3.5 py-2.5 text-left"
-        >
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-primary bg-primary/15 text-primary">
-            <ChannelGlyph icon={c.icon} size={20} />
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center justify-between gap-2">
-              <span className="truncate text-[13px] font-medium text-text">#&nbsp;{c.name}</span>
-              <span className="shrink-0 text-[10px] text-muted">{relativeTime(c.lastAt)}</span>
+      {/* Channels the person has joined — behave like a normal chat list. */}
+      {joined.length > 0 && (
+        <>
+          <SectionHeader>Your channels</SectionHeader>
+          {joined.map((c) => (
+            <button
+              key={c.channelId}
+              type="button"
+              onClick={() => onOpen(c)}
+              className="flex w-full items-center gap-3 border-b border-border px-3.5 py-2.5 text-left"
+            >
+              <ChannelTile icon={c.icon} />
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="truncate text-[13px] font-medium text-text">#&nbsp;{c.name}</span>
+                  <span className="shrink-0 text-[10px] text-muted">{relativeTime(c.lastAt)}</span>
+                </div>
+                <div className="truncate text-[11px] text-muted">
+                  {c.lastBody
+                    ? `${c.lastSenderName ?? "Someone"}: ${c.lastBody}`
+                    : "No messages yet"}
+                </div>
+              </div>
+              {c.unread > 0 && (
+                <span className="flex h-[18px] min-w-[18px] shrink-0 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-medium text-primary-contrast">
+                  {c.unread}
+                </span>
+              )}
+            </button>
+          ))}
+        </>
+      )}
+
+      {/* Channels available to join. Tapping the row opens it to browse; the
+          Join button (right) joins so you can post. */}
+      {discover.length > 0 && (
+        <>
+          <SectionHeader>Discover — join to post</SectionHeader>
+          {discover.map((c) => (
+            <div
+              key={c.channelId}
+              className="flex w-full items-center gap-3 border-b border-border px-3.5 py-2.5"
+            >
+              <button
+                type="button"
+                onClick={() => onOpen(c)}
+                className="flex min-w-0 flex-1 items-center gap-3 text-left"
+              >
+                <ChannelTile icon={c.icon} />
+                <div className="min-w-0 flex-1">
+                  <span className="block truncate text-[13px] font-medium text-text">
+                    #&nbsp;{c.name}
+                  </span>
+                  <span className="block truncate text-[11px] text-muted">
+                    {c.lastBody
+                      ? `${c.lastSenderName ?? "Someone"}: ${c.lastBody}`
+                      : "No messages yet"}
+                  </span>
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => onJoin(c.channelId)}
+                className="shrink-0 rounded-full bg-primary px-3.5 py-1.5 text-[11px] font-semibold text-primary-contrast"
+              >
+                Join
+              </button>
             </div>
-            <div className="truncate text-[11px] text-muted">
-              {c.lastBody ? `${c.lastSenderName ?? "Someone"}: ${c.lastBody}` : "No messages yet"}
-            </div>
-          </div>
-          {c.unread > 0 && (
-            <span className="flex h-[18px] min-w-[18px] shrink-0 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-medium text-primary-contrast">
-              {c.unread}
-            </span>
-          )}
-        </button>
-      ))}
+          ))}
+        </>
+      )}
+    </div>
+  );
+}
+
+function SectionHeader({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="px-3.5 pb-1 pt-3 text-[10px] font-medium uppercase tracking-[0.08em] text-muted">
+      {children}
+    </div>
+  );
+}
+
+function ChannelTile({ icon }: { icon: string }) {
+  return (
+    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-primary bg-primary/15 text-primary">
+      <ChannelGlyph icon={icon} size={20} />
     </div>
   );
 }

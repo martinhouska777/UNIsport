@@ -19,7 +19,7 @@ import type { Channel, DmConversation } from "@/lib/supabase/messages";
 
 type Open =
   | { type: "dm"; id: string; name: string }
-  | { type: "channel"; id: string; name: string; icon: string }
+  | { type: "channel"; id: string; name: string; icon: string; joined: boolean }
   | null;
 
 export default function MessagesPage() {
@@ -57,14 +57,26 @@ function Messages() {
           onBack={back}
         />
       ) : open?.type === "channel" ? (
-        <ChannelThread channelId={open.id} title={open.name} icon={open.icon} onBack={back} />
+        <ChannelThread
+          channelId={open.id}
+          title={open.name}
+          icon={open.icon}
+          joined={open.joined}
+          onBack={back}
+        />
       ) : (
         <MessagesList
           onOpenDm={(c: DmConversation) =>
             setOpen({ type: "dm", id: c.conversationId, name: c.otherName })
           }
           onOpenChannel={(c: Channel) =>
-            setOpen({ type: "channel", id: c.channelId, name: c.name, icon: c.icon })
+            setOpen({
+              type: "channel",
+              id: c.channelId,
+              name: c.name,
+              icon: c.icon,
+              joined: c.joined,
+            })
           }
         />
       )}

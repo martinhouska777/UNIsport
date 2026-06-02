@@ -67,14 +67,17 @@ create table if not exists public.channels (
 );
 
 create table if not exists public.channel_messages (
-  id               uuid primary key default gen_random_uuid(),
-  channel_id       uuid not null references public.channels (id) on delete cascade,
-  sender_id        uuid not null,
-  sender_name      text not null default '',
-  sender_residence text,
-  body             text not null,
-  created_at       timestamptz not null default now()
+  id                uuid primary key default gen_random_uuid(),
+  channel_id        uuid not null references public.channels (id) on delete cascade,
+  sender_id         uuid not null,
+  sender_name       text not null default '',
+  sender_residence  text,
+  sender_class_year text,
+  body              text not null,
+  created_at        timestamptz not null default now()
 );
+-- Class year was added after the first version; add it to existing databases.
+alter table public.channel_messages add column if not exists sender_class_year text;
 create index if not exists channel_messages_channel_idx
   on public.channel_messages (channel_id, created_at);
 
@@ -82,6 +85,15 @@ create table if not exists public.channel_reads (
   channel_id   uuid not null references public.channels (id) on delete cascade,
   user_id      uuid not null,
   last_read_at timestamptz not null default 'epoch',
+  primary key (channel_id, user_id)
+);
+
+-- Which channels each user has chosen to JOIN. Browsing/reading is open to all,
+-- but posting (and unread badges) require membership — joining is opt-in.
+create table if not exists public.channel_members (
+  channel_id uuid not null references public.channels (id) on delete cascade,
+  user_id    uuid not null,
+  joined_at  timestamptz not null default now(),
   primary key (channel_id, user_id)
 );
 
@@ -93,6 +105,7 @@ alter table public.dm_reads         enable row level security;
 alter table public.channels         enable row level security;
 alter table public.channel_messages enable row level security;
 alter table public.channel_reads    enable row level security;
+alter table public.channel_members  enable row level security;
 
 -- ---------------------------------------------------------------------------
 -- Seed the community channels (idempotent).
@@ -272,7 +285,15 @@ $$;
 -- COMMUNITY CHANNEL FUNCTIONS
 -- ===========================================================================
 
--- Every channel with its last message and the caller's unread count.
+-- These three gained columns (joined / sender_class_year) after the first
+-- version. Postgres can't change a function's OUT columns via create-or-replace,
+-- so drop the old versions first — makes re-running this script safe.
+drop function if exists public.channel_list();
+drop function if exists public.channel_thread(uuid);
+drop function if exists public.channel_send(uuid, text);
+
+-- Every channel with its last message, the caller's unread count, and whether
+-- the caller has joined it.
 create or replace function public.channel_list()
 returns table (
   channel_id       uuid,
@@ -282,7 +303,8 @@ returns table (
   last_body        text,
   last_sender_name text,
   last_at          timestamptz,
-  unread           integer
+  unread           integer,
+  joined           boolean
 )
 language sql
 stable
@@ -299,7 +321,11 @@ as $$
         and m.created_at > coalesce(
           (select last_read_at from public.channel_reads r
            where r.channel_id = ch.id and r.user_id = auth.uid()), 'epoch')
-    ), 0)::int
+    ), 0)::int,
+    exists(
+      select 1 from public.channel_members mem
+      where mem.channel_id = ch.id and mem.user_id = auth.uid()
+    )
   from public.channels ch
   left join lateral (
     select body, sender_name, created_at
@@ -311,15 +337,51 @@ as $$
   order by ch.sort, ch.name;
 $$;
 
+-- Join / leave a channel (opt-in membership). Joining is required to post.
+create or replace function public.channel_join(chan_id uuid)
+returns void
+language plpgsql
+volatile
+security definer
+set search_path = public
+as $$
+declare me uuid := auth.uid();
+begin
+  if me is null then raise exception 'not authenticated'; end if;
+  if not exists (select 1 from public.channels ch where ch.id = chan_id) then
+    raise exception 'unknown channel';
+  end if;
+  insert into public.channel_members (channel_id, user_id)
+    values (chan_id, me)
+    on conflict (channel_id, user_id) do nothing;
+end;
+$$;
+
+create or replace function public.channel_leave(chan_id uuid)
+returns void
+language plpgsql
+volatile
+security definer
+set search_path = public
+as $$
+declare me uuid := auth.uid();
+begin
+  if me is null then raise exception 'not authenticated'; end if;
+  delete from public.channel_members
+    where channel_id = chan_id and user_id = me;
+end;
+$$;
+
 -- All messages in a channel (oldest first). Marks the channel read.
 create or replace function public.channel_thread(chan_id uuid)
 returns table (
-  id               uuid,
-  sender_id        uuid,
-  sender_name      text,
-  sender_residence text,
-  body             text,
-  created_at       timestamptz
+  id                uuid,
+  sender_id         uuid,
+  sender_name       text,
+  sender_residence  text,
+  sender_class_year text,
+  body              text,
+  created_at        timestamptz
 )
 language plpgsql
 volatile
@@ -335,22 +397,25 @@ begin
     on conflict (channel_id, user_id) do update set last_read_at = excluded.last_read_at;
 
   return query
-    select m.id, m.sender_id, m.sender_name, m.sender_residence, m.body, m.created_at
+    select m.id, m.sender_id, m.sender_name, m.sender_residence,
+           m.sender_class_year, m.body, m.created_at
     from public.channel_messages m
     where m.channel_id = chan_id
     order by m.created_at asc;
 end;
 $$;
 
--- Post a message to a channel; returns the saved row.
+-- Post a message to a channel; returns the saved row. Requires membership
+-- (the caller must have joined the channel — joining is opt-in).
 create or replace function public.channel_send(chan_id uuid, message_text text)
 returns table (
-  id               uuid,
-  sender_id        uuid,
-  sender_name      text,
-  sender_residence text,
-  body             text,
-  created_at       timestamptz
+  id                uuid,
+  sender_id         uuid,
+  sender_name       text,
+  sender_residence  text,
+  sender_class_year text,
+  body              text,
+  created_at        timestamptz
 )
 language plpgsql
 volatile
@@ -361,6 +426,7 @@ declare
   me     uuid := auth.uid();
   nm     text;
   res    text;
+  cls    text;
   new_id uuid;
 begin
   if me is null then raise exception 'not authenticated'; end if;
@@ -370,13 +436,22 @@ begin
   if not exists (select 1 from public.channels ch where ch.id = chan_id) then
     raise exception 'unknown channel';
   end if;
+  if not exists (
+    select 1 from public.channel_members mem
+    where mem.channel_id = chan_id and mem.user_id = me
+  ) then
+    raise exception 'join the channel to post';
+  end if;
 
-  select coalesce(p.data->>'name', 'Member'), nullif(p.data->>'residence', '')
-    into nm, res
+  select coalesce(p.data->>'name', 'Member'),
+         nullif(p.data->>'residence', ''),
+         nullif(p.data->>'classYear', '')
+    into nm, res, cls
     from public.profiles p where p.id = me;
 
-  insert into public.channel_messages (channel_id, sender_id, sender_name, sender_residence, body)
-    values (chan_id, me, nm, res, btrim(message_text))
+  insert into public.channel_messages
+      (channel_id, sender_id, sender_name, sender_residence, sender_class_year, body)
+    values (chan_id, me, nm, res, cls, btrim(message_text))
     returning channel_messages.id into new_id;
 
   insert into public.channel_reads (channel_id, user_id, last_read_at)
@@ -384,7 +459,8 @@ begin
     on conflict (channel_id, user_id) do update set last_read_at = excluded.last_read_at;
 
   return query
-    select m.id, m.sender_id, m.sender_name, m.sender_residence, m.body, m.created_at
+    select m.id, m.sender_id, m.sender_name, m.sender_residence,
+           m.sender_class_year, m.body, m.created_at
     from public.channel_messages m where m.id = new_id;
 end;
 $$;
@@ -397,5 +473,7 @@ grant execute on function public.dm_list()                 to authenticated;
 grant execute on function public.dm_thread(uuid)           to authenticated;
 grant execute on function public.dm_send(uuid, text)       to authenticated;
 grant execute on function public.channel_list()            to authenticated;
+grant execute on function public.channel_join(uuid)        to authenticated;
+grant execute on function public.channel_leave(uuid)       to authenticated;
 grant execute on function public.channel_thread(uuid)      to authenticated;
 grant execute on function public.channel_send(uuid, text)  to authenticated;

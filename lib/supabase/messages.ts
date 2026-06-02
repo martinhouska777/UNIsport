@@ -87,6 +87,7 @@ export type Channel = {
   lastSenderName: string | null;
   lastAt: string | null;
   unread: number;
+  joined: boolean;
 };
 
 export type ChannelMessage = {
@@ -94,6 +95,7 @@ export type ChannelMessage = {
   senderId: string;
   senderName: string;
   senderResidence: string | null;
+  senderClassYear: string | null;
   body: string;
   createdAt: string;
 };
@@ -110,7 +112,20 @@ export async function listChannels(): Promise<Channel[]> {
     lastSenderName: (r.last_sender_name as string) ?? null,
     lastAt: (r.last_at as string) ?? null,
     unread: Number(r.unread ?? 0),
+    joined: !!r.joined,
   }));
+}
+
+/** Join a channel (opt-in). Required before posting. */
+export async function joinChannel(channelId: string): Promise<void> {
+  const { error } = await createClient().rpc("channel_join", { chan_id: channelId });
+  if (error) throw new Error(`joinChannel failed: ${error.message}`);
+}
+
+/** Leave a channel. */
+export async function leaveChannel(channelId: string): Promise<void> {
+  const { error } = await createClient().rpc("channel_leave", { chan_id: channelId });
+  if (error) throw new Error(`leaveChannel failed: ${error.message}`);
 }
 
 export async function getChannelThread(channelId: string): Promise<ChannelMessage[]> {
@@ -137,6 +152,7 @@ function toChannelMessage(r: Record<string, unknown>): ChannelMessage {
     senderId: r.sender_id as string,
     senderName: (r.sender_name as string) ?? "",
     senderResidence: (r.sender_residence as string) ?? null,
+    senderClassYear: (r.sender_class_year as string) ?? null,
     body: r.body as string,
     createdAt: r.created_at as string,
   };
