@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAppState } from "@/components/AppState";
@@ -9,15 +9,19 @@ import { createClient, hasSupabaseEnv } from "@/lib/supabase/client";
 import InlineEdit from "@/components/profile/InlineEdit";
 import SessionCalendar from "@/components/profile/SessionCalendar";
 import SessionSheet from "@/components/profile/SessionSheet";
+import PersonalRecords from "@/components/profile/PersonalRecords";
+import PhotoGrid from "@/components/profile/PhotoGrid";
 import {
   profileFromOnboarding,
   classOfLabel,
   type CurrentUser,
+  type PersonalRecord,
   type Session,
 } from "@/lib/currentUser";
+import { fileToDataUrl } from "@/lib/image";
 import { residenceLabel } from "@/lib/onboarding";
 import { ThemeModeToggle } from "@/components/ThemeMode";
-import { IconSettings, IconUser, IconCamera, IconPencil, IconPlus, IconArrowRight } from "@/components/icons";
+import { IconSettings, IconUser, IconCamera, IconArrowRight } from "@/components/icons";
 
 export default function ProfilePage() {
   const { userId, logout, resetOnboarding } = useAppState();
@@ -28,6 +32,17 @@ export default function ProfilePage() {
   const [data, setData] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(true);
   const [openSession, setOpenSession] = useState<Session | null>(null);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+
+  // Avatar picker: downscale the chosen image and store it as the profile photo.
+  const pickAvatar = async (file: File | undefined) => {
+    if (!file || !file.type.startsWith("image/")) return;
+    try {
+      update({ photo: await fileToDataUrl(file) });
+    } catch {
+      // Ignore images that won't decode.
+    }
+  };
 
   useEffect(() => {
     if (!supabase || !userId) {
@@ -58,6 +73,9 @@ export default function ProfilePage() {
       if ("name" in patch) next.name = patch.name;
       if ("bio" in patch) next.bio = patch.bio;
       if ("trainingDisplay" in patch) next.trainingDisplay = patch.trainingDisplay;
+      if ("personalRecords" in patch) next.personalRecords = patch.personalRecords;
+      if ("photos" in patch) next.photos = patch.photos;
+      if ("photo" in patch) next.photo = patch.photo;
       if (supabase && userId) {
         supabase
           .from("profiles")
@@ -120,12 +138,28 @@ export default function ProfilePage() {
       {/* Identity block */}
       <div className="flex flex-col items-center gap-2 border-b border-border px-3.5 pb-3 pt-4">
         <div className="relative">
-          <div className="flex h-[72px] w-[72px] items-center justify-center rounded-full border-2 border-primary bg-primary/15 text-primary">
-            <IconUser size={30} />
+          <div className="flex h-[72px] w-[72px] items-center justify-center overflow-hidden rounded-full border-2 border-primary bg-primary/15 text-primary">
+            {user.photo ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={user.photo} alt={user.name || "Profile photo"} className="h-full w-full object-cover" />
+            ) : (
+              <IconUser size={30} />
+            )}
           </div>
+          <input
+            ref={avatarInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              pickAvatar(e.target.files?.[0]);
+              e.target.value = "";
+            }}
+          />
           <button
             type="button"
-            aria-label="Add photo"
+            onClick={() => avatarInputRef.current?.click()}
+            aria-label={user.photo ? "Change photo" : "Add photo"}
             className="absolute -bottom-0.5 -right-0.5 flex h-6 w-6 items-center justify-center rounded-full border border-border bg-surface-2 text-muted"
           >
             <IconCamera size={12} />
@@ -214,45 +248,13 @@ export default function ProfilePage() {
       </div>
 
       {/* Personal records */}
-      <div className="border-b border-border px-3.5 py-3">
-        <div className="mb-2 flex items-center justify-between">
-          <div className="text-[9px] font-medium uppercase tracking-[0.1em] text-primary">Personal records</div>
-          <button type="button" aria-label="Edit personal records" className="rounded-full p-1 text-muted transition-colors hover:bg-muted/20">
-            <IconPencil size={13} />
-          </button>
-        </div>
-        {user.personalRecords.length > 0 ? (
-          <div className="flex flex-col divide-y divide-border">
-            {user.personalRecords.map((pr) => (
-              <div key={pr.lift} className="flex items-center justify-between py-2">
-                <span className="text-xs text-muted">{pr.lift}</span>
-                <span className="text-xs font-medium text-text">{pr.value}</span>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="rounded-lg border border-dashed border-border bg-surface-2 px-3 py-4 text-center text-[12px] text-muted">
-            Add your personal records
-          </div>
-        )}
-      </div>
+      <PersonalRecords
+        records={user.personalRecords}
+        onChange={(records: PersonalRecord[]) => update({ personalRecords: records })}
+      />
 
       {/* Photos */}
-      <div className="border-b border-border px-3.5 py-3">
-        <div className="mb-2 text-[9px] font-medium uppercase tracking-[0.1em] text-primary">Photos</div>
-        <div className="grid grid-cols-3 gap-1.5">
-          {user.photos.map((_, i) => (
-            <div key={i} className="aspect-square rounded-md border border-border bg-surface-2" />
-          ))}
-          <button
-            type="button"
-            aria-label="Add photo"
-            className="flex aspect-square items-center justify-center rounded-md border border-dashed border-border bg-surface-2 text-muted"
-          >
-            <IconPlus size={20} />
-          </button>
-        </div>
-      </div>
+      <PhotoGrid photos={user.photos} onChange={(photos) => update({ photos })} />
 
       {/* Entry into Varsity Mode (the gated rowing-team section) */}
       <div className="border-b border-border px-3.5 py-3">

@@ -110,7 +110,12 @@ function scheduleSummary(sched: Record<string, string[]>): string {
 */
 export function profileFromOnboarding(raw: Record<string, unknown>): CurrentUser {
   const p = { ...emptyProfile, ...(raw as Partial<OnboardingProfile>) } as OnboardingProfile;
-  const savedTraining = (raw as { trainingDisplay?: CurrentUser["trainingDisplay"] }).trainingDisplay;
+  const extra = raw as {
+    trainingDisplay?: CurrentUser["trainingDisplay"];
+    personalRecords?: PersonalRecord[];
+    photos?: string[];
+  };
+  const savedTraining = extra.trainingDisplay;
   return {
     ...p,
     badges: { varsity: false, mentor: !!(p.mentorFreshmen || p.helpOthers) },
@@ -123,8 +128,8 @@ export function profileFromOnboarding(raw: Record<string, unknown>): CurrentUser
         schedule: scheduleSummary(p.trainingSchedule),
         gym: p.topGyms[0] || "—",
       },
-    personalRecords: [],
-    photos: [],
+    personalRecords: extra.personalRecords ?? [],
+    photos: extra.photos ?? [],
     sessions: [],
   };
 }
