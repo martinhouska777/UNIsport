@@ -18,6 +18,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { getPublicProfile } from "@/lib/supabase/profiles";
 import { profileFromOnboarding, classOfLabel, type CurrentUser } from "@/lib/currentUser";
 import { residenceLabel } from "@/lib/onboarding";
+import { startDirectConversation } from "@/lib/supabase/messages";
 import { IconArrowLeft, IconUser } from "@/components/icons";
 import PhotoGallery from "@/components/profile/PhotoGallery";
 
@@ -47,6 +48,21 @@ function PersonProfile() {
   const [user, setUser] = useState<CurrentUser | null>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "missing" | "error">("loading");
   const [errMsg, setErrMsg] = useState<string>("");
+  const [messaging, setMessaging] = useState(false);
+
+  // Open (or create) a direct conversation with this person, then jump to it.
+  const message = async () => {
+    if (!id || messaging) return;
+    setMessaging(true);
+    try {
+      const convId = await startDirectConversation(id);
+      const name = user?.name || "Member";
+      router.push(`/messages?dm=${convId}&name=${encodeURIComponent(name)}`);
+    } catch (e) {
+      setErrMsg((e as Error).message);
+      setMessaging(false);
+    }
+  };
 
   useEffect(() => {
     if (!id) return;
@@ -276,10 +292,11 @@ function PersonProfile() {
             </button>
             <button
               type="button"
-              disabled
-              className="flex-[2] rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-contrast opacity-50"
+              onClick={message}
+              disabled={messaging}
+              className="flex-[2] rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-contrast transition-opacity disabled:opacity-50"
             >
-              Message
+              {messaging ? "Opening…" : "Message"}
             </button>
           </div>
         </>
