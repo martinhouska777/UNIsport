@@ -21,6 +21,7 @@ import {
   type Session,
 } from "@/lib/currentUser";
 import { fileToDataUrl } from "@/lib/image";
+import { getMyFollowCounts } from "@/lib/supabase/follows";
 import { residenceLabel, type OnboardingProfile } from "@/lib/onboarding";
 import { ThemeModeToggle } from "@/components/ThemeMode";
 import { IconSettings, IconUser, IconCamera, IconPencil, IconArrowRight } from "@/components/icons";
@@ -35,6 +36,7 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [openSession, setOpenSession] = useState<Session | null>(null);
   const [editingPrefs, setEditingPrefs] = useState(false);
+  const [followCounts, setFollowCounts] = useState<{ following: number; followers: number } | null>(null);
   // Tiny status so saving to the database is visible (and failures aren't silent).
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const avatarInputRef = useRef<HTMLInputElement>(null);
@@ -66,6 +68,18 @@ export default function ProfilePage() {
         setData((row?.data as Record<string, unknown>) ?? {});
         setLoading(false);
       });
+    return () => {
+      active = false;
+    };
+  }, [supabase, userId]);
+
+  // Real "Following" count from the follow graph.
+  useEffect(() => {
+    if (!supabase || !userId) return;
+    let active = true;
+    getMyFollowCounts()
+      .then((c) => active && setFollowCounts(c))
+      .catch(() => {});
     return () => {
       active = false;
     };
@@ -119,7 +133,7 @@ export default function ProfilePage() {
   const stats = [
     { label: "Sessions", value: user.stats.sessions },
     { label: "Partners", value: user.stats.partners },
-    { label: "Following", value: user.stats.following },
+    { label: "Following", value: followCounts?.following ?? user.stats.following },
   ];
 
   const cap = (s: string) => (s ? s[0].toUpperCase() + s.slice(1) : s);

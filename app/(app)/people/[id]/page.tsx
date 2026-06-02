@@ -19,7 +19,8 @@ import { getPublicProfile } from "@/lib/supabase/profiles";
 import { profileFromOnboarding, classOfLabel, type CurrentUser } from "@/lib/currentUser";
 import { residenceLabel } from "@/lib/onboarding";
 import { startDirectConversation } from "@/lib/supabase/messages";
-import { IconArrowLeft, IconUser } from "@/components/icons";
+import { getFollowStatus, followUser, unfollowUser } from "@/lib/supabase/follows";
+import { IconArrowLeft, IconUser, IconCheck } from "@/components/icons";
 import PhotoGallery from "@/components/profile/PhotoGallery";
 
 // useSearchParams() requires a Suspense boundary or the production build fails
@@ -49,6 +50,26 @@ function PersonProfile() {
   const [status, setStatus] = useState<"loading" | "ready" | "missing" | "error">("loading");
   const [errMsg, setErrMsg] = useState<string>("");
   const [messaging, setMessaging] = useState(false);
+  const [following, setFollowing] = useState<boolean | null>(null); // null until known
+  const [followsBack, setFollowsBack] = useState(false);
+  const [followBusy, setFollowBusy] = useState(false);
+
+  // Toggle follow/unfollow, updating the button optimistically.
+  const toggleFollow = async () => {
+    if (!id || following === null || followBusy) return;
+    const next = !following;
+    setFollowBusy(true);
+    setFollowing(next); // optimistic
+    try {
+      if (next) await followUser(id);
+      else await unfollowUser(id);
+    } catch (e) {
+      setFollowing(!next); // revert on failure
+      setErrMsg((e as Error).message);
+    } finally {
+      setFollowBusy(false);
+    }
+  };
 
   // Open (or create) a direct conversation with this person, then jump to it.
   const message = async () => {
@@ -82,6 +103,22 @@ function PersonProfile() {
         setErrMsg((e as Error).message);
         setStatus("error");
       });
+    return () => {
+      active = false;
+    };
+  }, [id]);
+
+  // Load whether the signed-in user already follows this person.
+  useEffect(() => {
+    if (!id) return;
+    let active = true;
+    getFollowStatus(id)
+      .then((s) => {
+        if (!active) return;
+        setFollowing(s.following);
+        setFollowsBack(s.followsBack);
+      })
+      .catch(() => active && setFollowing(false));
     return () => {
       active = false;
     };
@@ -285,10 +322,17 @@ function PersonProfile() {
           <div className="sticky bottom-0 z-20 mt-auto flex gap-2.5 border-t border-border bg-surface px-4 py-3">
             <button
               type="button"
-              disabled
-              className="flex-1 rounded-full border border-border bg-surface-2 px-5 py-3 text-sm font-medium text-text opacity-50"
+              onClick={toggleFollow}
+              disabled={following === null || followBusy}
+              aria-pressed={following === true}
+              className={`flex flex-1 items-center justify-center gap-1.5 rounded-full border px-5 py-3 text-sm font-medium transition-colors disabled:opacity-50 ${
+                following
+                  ? "border-primary bg-primary/15 text-primary"
+                  : "border-border bg-surface-2 text-text"
+              }`}
             >
-              Follow
+              {following && <IconCheck size={15} />}
+              {following ? "Following" : followsBack ? "Follow back" : "Follow"}
             </button>
             <button
               type="button"
