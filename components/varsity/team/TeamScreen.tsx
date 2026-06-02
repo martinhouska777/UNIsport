@@ -20,7 +20,8 @@ import { useAppState } from "@/components/AppState";
 import { fetchProfileFullName } from "@/lib/varsity/planStore";
 import { roster, rosterById, sideMeta, COX_COLOR, type Athlete } from "@/lib/varsity/coachLineup";
 import { teamProfile } from "@/lib/varsity/teamProfiles";
-import { teamTrainingMonth, formatDuration } from "@/lib/varsity/teamTraining";
+import { teamTrainingMonth, formatDuration, type CatTotal } from "@/lib/varsity/teamTraining";
+import { formatMetrics } from "@/lib/varsity/logParse";
 import {
   statusOptions,
   prPieces,
@@ -29,7 +30,7 @@ import {
   legendCategories,
   type StatusTone,
 } from "@/lib/varsity/athleteProfile";
-import { IconSearch, IconChevronRight } from "@/components/icons";
+import { IconSearch, IconChevronRight, IconChevronDown } from "@/components/icons";
 
 const toneDot: Record<StatusTone, string> = {
   success: "bg-success",
@@ -45,19 +46,50 @@ const sideLabel = (a: Athlete) => (a.cox ? "Cox" : sideMeta[a.side].label);
 /* ─────────────────────────  athlete profile sheet  ───────────────────────── */
 const DAY_NAMES = ["M", "T", "W", "T", "F", "S", "S"];
 
+function CatBreakdown({ rows, empty }: { rows: CatTotal[]; empty: string }) {
+  if (rows.length === 0) {
+    return <div className="px-3.5 py-3 text-[11px] text-muted">{empty}</div>;
+  }
+  return (
+    <div className="flex flex-col divide-y divide-border">
+      {rows.map((row) => (
+        <div key={row.cat} className="flex items-center gap-2.5 px-3.5 py-2">
+          <span
+            className="h-2.5 w-2.5 flex-shrink-0 rounded-full"
+            style={{ background: logCategoryColor[row.cat] ?? "var(--muted)" }}
+          />
+          <span className="flex-1 text-[12px] font-medium text-text">
+            {logCategoryLabel[row.cat] ?? row.cat}
+          </span>
+          <span className="text-[11px] text-muted">{row.sessions}×</span>
+          <span className="w-16 text-right text-[12px] font-semibold text-text">
+            {formatDuration(row.minutes)}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function AthleteSheet({ athleteId, onClose }: { athleteId: string; onClose: () => void }) {
   const a = rosterById[athleteId];
   const p = teamProfile(athleteId);
-  const month = teamTrainingMonth(athleteId);
-  const classLine = [p.classYear, p.teamYear].filter(Boolean).join(" · ");
+  const now = useMemo(() => new Date(), []);
+  const [view, setView] = useState({ y: now.getFullYear(), m: now.getMonth() });
   const [selDay, setSelDay] = useState<number | null>(null);
-  const selected = selDay != null ? month.days.find((d) => d.day === selDay) ?? null : null;
+  const [openBreak, setOpenBreak] = useState<"trained" | "extra" | null>(null);
 
-  const tiles = [
-    { val: `${month.consistency}%`, lbl: "Consistency" },
-    { val: formatDuration(month.minutes), lbl: "Trained" },
-    { val: String(month.extraCount), lbl: "Extra" },
-  ];
+  const month = teamTrainingMonth(athleteId, view.y, view.m);
+  const classLine = [p.classYear, p.teamYear].filter(Boolean).join(" · ");
+  const atCurrent = view.y === now.getFullYear() && view.m === now.getMonth();
+  const goMonth = (delta: number) => {
+    setView((v) => {
+      const d = new Date(v.y, v.m + delta, 1);
+      return { y: d.getFullYear(), m: d.getMonth() };
+    });
+    setSelDay(null);
+  };
+  const selected = selDay != null ? month.days.find((d) => d.day === selDay) ?? null : null;
 
   const dotsFor = (sessions: { cat: string }[]) => {
     const seen = new Set<string>();
@@ -70,6 +102,11 @@ function AthleteSheet({ athleteId, onClose }: { athleteId: string; onClose: () =
     }
     return out;
   };
+
+  const tileCls = (active: boolean) =>
+    `rounded-2xl border px-2 py-3 text-center ${
+      active ? "border-primary bg-primary/10" : "border-border bg-surface-2"
+    }`;
 
   return (
     <Sheet title="Athlete" onClose={onClose}>
@@ -95,23 +132,73 @@ function AthleteSheet({ athleteId, onClose }: { athleteId: string; onClose: () =
         </div>
       </div>
 
-      {/* this month's training stats */}
-      <div className="mt-4 grid grid-cols-3 gap-1.5">
-        {tiles.map((t) => (
-          <div key={t.lbl} className="rounded-2xl border border-border bg-surface-2 px-2 py-3 text-center">
-            <div className="text-lg font-semibold leading-none text-text">{t.val}</div>
-            <div className="mt-1.5 text-[8px] font-semibold uppercase tracking-[0.1em] text-muted">
-              {t.lbl}
-            </div>
-          </div>
-        ))}
+      {/* month switcher — stats + calendar follow this */}
+      <div className="mt-4 flex items-center justify-between">
+        <span className="text-[9px] font-semibold uppercase tracking-[0.14em] text-muted">Training</span>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            aria-label="Previous month"
+            onClick={() => goMonth(-1)}
+            className="flex h-6 w-6 items-center justify-center rounded-md border border-border bg-surface-2 text-muted"
+          >
+            <IconChevronDown size={13} className="rotate-90" />
+          </button>
+          <span className="min-w-[5.5rem] text-center text-[12px] font-semibold text-text">
+            {month.monthLabel} {month.y}
+          </span>
+          <button
+            type="button"
+            aria-label="Next month"
+            onClick={() => goMonth(1)}
+            disabled={atCurrent}
+            className="flex h-6 w-6 items-center justify-center rounded-md border border-border bg-surface-2 text-muted disabled:opacity-30"
+          >
+            <IconChevronDown size={13} className="-rotate-90" />
+          </button>
+        </div>
       </div>
+
+      {/* stats for the viewed month — Trained / Extra expand a breakdown */}
+      <div className="mt-2 grid grid-cols-3 gap-1.5">
+        <div className={tileCls(false)}>
+          <div className="text-lg font-semibold leading-none text-text">{month.consistency}%</div>
+          <div className="mt-1.5 text-[8px] font-semibold uppercase tracking-[0.1em] text-muted">
+            Consistency
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => setOpenBreak((o) => (o === "trained" ? null : "trained"))}
+          className={tileCls(openBreak === "trained")}
+        >
+          <div className="text-lg font-semibold leading-none text-text">{formatDuration(month.minutes)}</div>
+          <div className="mt-1.5 text-[8px] font-semibold uppercase tracking-[0.1em] text-muted">Trained</div>
+        </button>
+        <button
+          type="button"
+          onClick={() => setOpenBreak((o) => (o === "extra" ? null : "extra"))}
+          className={tileCls(openBreak === "extra")}
+        >
+          <div className="text-lg font-semibold leading-none text-text">{month.extraCount}</div>
+          <div className="mt-1.5 text-[8px] font-semibold uppercase tracking-[0.1em] text-muted">Extra</div>
+        </button>
+      </div>
+
+      {openBreak && (
+        <div className="mt-1.5 overflow-hidden rounded-2xl border border-border bg-surface-2">
+          <div className="border-b border-border px-3.5 py-2 text-[9px] font-semibold uppercase tracking-[0.12em] text-muted">
+            {openBreak === "trained" ? "By activity" : "Extra by activity"}
+          </div>
+          <CatBreakdown
+            rows={openBreak === "trained" ? month.byCategory : month.extraByCategory}
+            empty={openBreak === "trained" ? "Nothing logged this month." : "No extra sessions this month."}
+          />
+        </div>
+      )}
 
       {/* training calendar */}
       <div className="mt-3 overflow-hidden rounded-2xl border border-border bg-surface-2">
-        <div className="border-b border-border px-3.5 py-2.5 text-[12px] font-semibold text-text">
-          {month.monthLabel} {month.year}
-        </div>
         <div className="grid grid-cols-7 border-b border-border px-2 pb-1 pt-2">
           {DAY_NAMES.map((d, i) => (
             <div key={i} className="py-0.5 text-center text-[8px] font-semibold tracking-[0.12em] text-muted">
@@ -163,7 +250,7 @@ function AthleteSheet({ athleteId, onClose }: { athleteId: string; onClose: () =
           })}
         </div>
 
-        {/* selected-day detail */}
+        {/* selected-day detail — minutes · metres · split, like the log */}
         <div className="border-t border-border px-3.5 py-2.5">
           {selected == null ? (
             <div className="text-[11px] text-muted">Tap a day to see what they did.</div>
@@ -172,22 +259,31 @@ function AthleteSheet({ athleteId, onClose }: { athleteId: string; onClose: () =
               {month.monthLabel} {selected.day} · {selected.future ? "Upcoming" : "Rest day"}
             </div>
           ) : (
-            <div className="flex flex-col gap-1.5">
-              {selected.sessions.map((s, i) => (
-                <div key={i} className="flex items-center gap-2 text-[12px]">
-                  <span
-                    className="h-2 w-2 flex-shrink-0 rounded-full"
-                    style={{ background: logCategoryColor[s.cat] ?? "var(--muted)" }}
-                  />
-                  <span className="font-medium text-text">{logCategoryLabel[s.cat] ?? s.cat}</span>
-                  <span className="text-muted">· {formatDuration(s.minutes)}</span>
-                  {s.extra && (
-                    <span className="ml-auto rounded border border-border px-1.5 py-0.5 text-[8px] font-medium uppercase tracking-wide text-muted">
-                      Extra
-                    </span>
-                  )}
-                </div>
-              ))}
+            <div className="flex flex-col gap-2">
+              {selected.sessions.map((s, i) => {
+                const metrics = formatMetrics(s.minutes, s.metres, s.split);
+                return (
+                  <div key={i} className="flex items-start gap-2">
+                    <span
+                      className="mt-1 h-2.5 w-2.5 flex-shrink-0 rounded-full"
+                      style={{ background: logCategoryColor[s.cat] ?? "var(--muted)" }}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[12px] font-semibold text-text">
+                          {logCategoryLabel[s.cat] ?? s.cat}
+                        </span>
+                        {s.extra && (
+                          <span className="rounded border border-border px-1.5 py-0.5 text-[8px] font-medium uppercase tracking-wide text-muted">
+                            Extra
+                          </span>
+                        )}
+                      </div>
+                      {metrics && <div className="mt-0.5 text-[11px] text-text/90">{metrics}</div>}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
