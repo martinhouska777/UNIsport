@@ -18,7 +18,7 @@ import ChannelThread from "@/components/messages/ChannelThread";
 import type { Channel, DmConversation } from "@/lib/supabase/messages";
 
 type Open =
-  | { type: "dm"; id: string; name: string }
+  | { type: "dm"; id: string; name: string; otherId: string | null }
   | { type: "channel"; id: string; name: string; icon: string; joined: boolean }
   | null;
 
@@ -38,7 +38,14 @@ function Messages() {
   // Read once on mount so navigating back doesn't reopen the thread.
   const [open, setOpen] = useState<Open>(() => {
     const dm = search.get("dm");
-    return dm ? { type: "dm", id: dm, name: search.get("name") ?? "Member" } : null;
+    return dm
+      ? {
+          type: "dm",
+          id: dm,
+          name: search.get("name") ?? "Member",
+          otherId: search.get("uid"),
+        }
+      : null;
   });
 
   const back = () => {
@@ -53,6 +60,7 @@ function Messages() {
         <DmThread
           conversationId={open.id}
           title={open.name}
+          otherId={open.otherId}
           currentUserId={userId}
           onBack={back}
         />
@@ -67,7 +75,7 @@ function Messages() {
       ) : (
         <MessagesList
           onOpenDm={(c: DmConversation) =>
-            setOpen({ type: "dm", id: c.conversationId, name: c.otherName })
+            setOpen({ type: "dm", id: c.conversationId, name: c.otherName, otherId: c.otherId })
           }
           onOpenChannel={(c: Channel) =>
             setOpen({

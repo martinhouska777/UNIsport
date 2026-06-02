@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import {
   getDirectThread,
   sendDirectMessage,
   clockTime,
   type DmMessage,
 } from "@/lib/supabase/messages";
+import { getPublicProfile } from "@/lib/supabase/profiles";
 import { IconArrowLeft } from "@/components/icons";
 import Avatar from "./Avatar";
 import Composer from "./Composer";
@@ -19,17 +21,32 @@ import { dayLabel, sameDay } from "./dayLabel";
 export default function DmThread({
   conversationId,
   title,
+  otherId,
   currentUserId,
   onBack,
 }: {
   conversationId: string;
   title: string;
+  otherId: string | null;
   currentUserId: string | null;
   onBack: () => void;
 }) {
   const [messages, setMessages] = useState<DmMessage[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [photo, setPhoto] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  // Load the other person's profile photo for the header (RLS-safe public read).
+  useEffect(() => {
+    if (!otherId) return;
+    let active = true;
+    getPublicProfile(otherId)
+      .then((p) => active && setPhoto((p?.photo as string) ?? null))
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [otherId]);
 
   useEffect(() => {
     let active = true;
@@ -56,13 +73,26 @@ export default function DmThread({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      {/* Header */}
+      {/* Header — tapping the avatar/name opens the person's profile. */}
       <div className="flex items-center gap-3 border-b border-border bg-surface px-3 py-2.5">
         <button type="button" onClick={onBack} aria-label="Back" className="text-muted">
           <IconArrowLeft size={18} />
         </button>
-        <Avatar size={36} />
-        <span className="text-[13px] font-medium text-text">{title}</span>
+        {otherId ? (
+          <Link
+            href={`/people/${otherId}`}
+            className="flex min-w-0 items-center gap-3"
+            aria-label={`View ${title}'s profile`}
+          >
+            <Avatar size={36} src={photo} alt={title} />
+            <span className="truncate text-[13px] font-medium text-text">{title}</span>
+          </Link>
+        ) : (
+          <div className="flex min-w-0 items-center gap-3">
+            <Avatar size={36} src={photo} alt={title} />
+            <span className="truncate text-[13px] font-medium text-text">{title}</span>
+          </div>
+        )}
       </div>
 
       {/* Messages */}

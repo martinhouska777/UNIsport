@@ -78,7 +78,9 @@ function PersonProfile() {
     try {
       const convId = await startDirectConversation(id);
       const name = user?.name || "Member";
-      router.push(`/messages?dm=${convId}&name=${encodeURIComponent(name)}`);
+      router.push(
+        `/messages?dm=${convId}&name=${encodeURIComponent(name)}&uid=${encodeURIComponent(id)}`,
+      );
     } catch (e) {
       setErrMsg((e as Error).message);
       setMessaging(false);
