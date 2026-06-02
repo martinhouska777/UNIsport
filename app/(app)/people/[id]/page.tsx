@@ -17,6 +17,7 @@ import { Suspense, useEffect, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { getPublicProfile } from "@/lib/supabase/profiles";
 import { profileFromOnboarding, classOfLabel, type CurrentUser } from "@/lib/currentUser";
+import { residenceLabel } from "@/lib/onboarding";
 import { IconArrowLeft, IconUser } from "@/components/icons";
 
 // useSearchParams() requires a Suspense boundary or the production build fails
@@ -129,7 +130,7 @@ function PersonProfile() {
 
               {(user.residence || user.classYear) && (
                 <div className="text-[11px] text-muted">
-                  {user.residence ? `${user.residence} House` : ""}
+                  {residenceLabel(user.residence ?? "")}
                   {user.residence && user.classYear ? " · " : ""}
                   {user.classYear ? classOfLabel(user.classYear) : ""}
                 </div>

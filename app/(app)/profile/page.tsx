@@ -15,6 +15,7 @@ import {
   type CurrentUser,
   type Session,
 } from "@/lib/currentUser";
+import { residenceLabel } from "@/lib/onboarding";
 import { ThemeModeToggle } from "@/components/ThemeMode";
 import { IconSettings, IconUser, IconCamera, IconPencil, IconPlus, IconArrowRight } from "@/components/icons";
 
@@ -157,7 +158,7 @@ export default function ProfilePage() {
           )}
 
           <div className="text-[10px] text-muted">
-            {user.residence ? `${user.residence} House · ` : ""}
+            {user.residence ? `${residenceLabel(user.residence)} · ` : ""}
             {classOfLabel(user.classYear)}
           </div>
         </div>

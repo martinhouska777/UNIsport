@@ -51,7 +51,6 @@ import {
   IconSend,
   IconClipboard,
   IconPencil,
-  IconDots,
   IconCheck,
 } from "@/components/icons";
 
@@ -470,6 +469,10 @@ function Builder({
 
   const setNote = (boatId: string, note: string) =>
     setBoats((prev) => prev.map((b) => (b.id === boatId ? { ...b, note } : b)));
+  const setName = (boatId: string, name: string) =>
+    setBoats((prev) => prev.map((b) => (b.id === boatId ? { ...b, name } : b)));
+  const setDock = (boatId: string, dock: string) =>
+    setBoats((prev) => prev.map((b) => (b.id === boatId ? { ...b, dock } : b)));
 
   const addBoat = (type: BoatType) => {
     setBoats((bs) => [
@@ -587,22 +590,29 @@ function Builder({
                 return (
                   <div key={boat.id} className="overflow-hidden rounded-2xl border border-border bg-surface">
                     {/* header */}
-                    <div className="flex items-center justify-between border-b border-border px-3.5 py-3">
-                      <div className="flex items-center gap-2">
-                        <span className="rounded-md border border-primary/35 bg-primary/15 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.06em] text-primary">
+                    <div className="flex items-center justify-between gap-2 border-b border-border px-3.5 py-3">
+                      <div className="flex min-w-0 flex-1 items-center gap-2">
+                        <span className="flex-shrink-0 rounded-md border border-primary/35 bg-primary/15 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.06em] text-primary">
                           {boat.badge}
                         </span>
-                        <span className="text-[14px] font-semibold text-text">{boat.name}</span>
-                        <span className="text-muted">
+                        <input
+                          value={boat.name}
+                          onChange={(e) => setName(boat.id, e.target.value)}
+                          aria-label="Boat name"
+                          className="min-w-0 flex-1 bg-transparent text-[14px] font-semibold text-text outline-none focus:border-b focus:border-primary"
+                        />
+                        <span className="flex-shrink-0 text-muted">
                           <IconPencil size={12} />
                         </span>
                       </div>
-                      <div className="flex items-center gap-2.5 text-muted">
-                        <span className="flex items-center gap-1 text-[12px]">
-                          <IconClock size={13} />
-                          <span className="font-medium text-text">{boat.dock}</span>
-                        </span>
-                        <IconDots size={16} />
+                      <div className="flex flex-shrink-0 items-center gap-1 text-muted">
+                        <IconClock size={13} />
+                        <input
+                          value={boat.dock}
+                          onChange={(e) => setDock(boat.id, e.target.value)}
+                          aria-label="Boat time"
+                          className="w-16 bg-transparent text-right text-[12px] font-medium text-text outline-none focus:border-b focus:border-primary"
+                        />
                       </div>
                     </div>
 

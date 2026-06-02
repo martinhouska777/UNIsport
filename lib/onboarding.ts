@@ -64,6 +64,14 @@ export function residenceOptions(classYear: string): string[] {
   return classYear === freshmanClassYear ? yardDorms : houses;
 }
 
+// Display label for a residence. The 12 upperclassman Houses read as "Adams
+// House"; freshman Yard dorms (Canaday, Thayer, …) are NOT Houses, so they show
+// as-is. Returns "" for an empty value.
+export function residenceLabel(residence: string): string {
+  if (!residence) return "";
+  return houses.includes(residence) ? `${residence} House` : residence;
+}
+
 // ---- Screen 3: Primary activity + experience + conditional -------------------
 
 export type PrimaryActivity = "gym" | "running" | "cardio" | "other";
