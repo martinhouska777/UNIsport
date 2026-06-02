@@ -29,6 +29,11 @@ export type CurrentUser = OnboardingProfile & {
   personalRecords: PersonalRecord[];
   photos: string[];
   sessions: Session[];
+  // Whether these sections are shown on the PUBLIC profile others see. The owner
+  // always sees their own; these only gate what other people get (enforced in
+  // the get_public_profile DB function, not just here).
+  showPhotos: boolean;
+  showPersonalRecords: boolean;
 };
 
 export const currentUser: CurrentUser = {
@@ -75,6 +80,8 @@ export const currentUser: CurrentUser = {
     { lift: "Deadlift", value: "220 kg × 1" },
   ],
   photos: [],
+  showPhotos: true,
+  showPersonalRecords: true,
   sessions: [
     { day: 3, activity: "Push day", gym: "Malkin Athletic Center", partner: "Alex Chen", exercises: ["Bench 5×5", "OHP 4×8", "Triceps"], photos: [] },
     { day: 6, activity: "Pull day", gym: "Malkin Athletic Center", partner: "Solo", exercises: ["Deadlift 5×3", "Rows 4×10", "Curls"], photos: [] },
@@ -126,6 +133,8 @@ export function profileFromOnboarding(raw: Record<string, unknown>): CurrentUser
     trainingDisplay?: CurrentUser["trainingDisplay"];
     personalRecords?: PersonalRecord[];
     photos?: string[];
+    showPhotos?: boolean;
+    showPersonalRecords?: boolean;
   };
   const savedTraining = extra.trainingDisplay;
   return {
@@ -135,6 +144,8 @@ export function profileFromOnboarding(raw: Record<string, unknown>): CurrentUser
     trainingDisplay: savedTraining ?? deriveTrainingDisplay(p),
     personalRecords: extra.personalRecords ?? [],
     photos: extra.photos ?? [],
+    showPhotos: extra.showPhotos ?? true,
+    showPersonalRecords: extra.showPersonalRecords ?? true,
     sessions: [],
   };
 }

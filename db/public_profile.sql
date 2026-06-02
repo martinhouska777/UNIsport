@@ -29,6 +29,7 @@ as $$
     'classYear',        p.data->>'classYear',
     'residence',        p.data->>'residence',
     'bio',              p.data->>'bio',
+    'photo',            p.data->>'photo',
     'primaryActivity',  p.data->>'primaryActivity',
     'experienceLevel',  p.data->>'experienceLevel',
     'gymSplit',         p.data->>'gymSplit',
@@ -39,7 +40,16 @@ as $$
     'languages',        coalesce(p.data->'languages', '[]'::jsonb),
     'interests',        coalesce(p.data->'interests', '[]'::jsonb),
     'mentorFreshmen',   coalesce((p.data->>'mentorFreshmen')::boolean, false),
-    'helpOthers',       coalesce((p.data->>'helpOthers')::boolean, false)
+    'helpOthers',       coalesce((p.data->>'helpOthers')::boolean, false),
+    -- Photos & personal records are only exposed when the owner has them set to
+    -- "Shown to others" (defaults to shown when the flag is absent). This is the
+    -- privacy gate: hidden sections never leave the database.
+    'photos',           case when coalesce((p.data->>'showPhotos')::boolean, true)
+                             then coalesce(p.data->'photos', '[]'::jsonb)
+                             else '[]'::jsonb end,
+    'personalRecords',  case when coalesce((p.data->>'showPersonalRecords')::boolean, true)
+                             then coalesce(p.data->'personalRecords', '[]'::jsonb)
+                             else '[]'::jsonb end
   )
   from public.profiles p
   where p.id = profile_id

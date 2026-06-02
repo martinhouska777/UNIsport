@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { PersonalRecord } from "@/lib/currentUser";
 import { IconPencil, IconCheck, IconTrash, IconPlus } from "@/components/icons";
+import VisibilityToggle from "@/components/profile/VisibilityToggle";
 
 /*
   Personal records block: a read-only list that flips into an editor when the
@@ -14,9 +15,13 @@ import { IconPencil, IconCheck, IconTrash, IconPlus } from "@/components/icons";
 export default function PersonalRecords({
   records,
   onChange,
+  visible,
+  onVisibleChange,
 }: {
   records: PersonalRecord[];
   onChange: (records: PersonalRecord[]) => void;
+  visible: boolean;
+  onVisibleChange: (visible: boolean) => void;
 }) {
   const [editing, setEditing] = useState(false);
 
@@ -38,14 +43,17 @@ export default function PersonalRecords({
         <div className="text-[9px] font-medium uppercase tracking-[0.1em] text-primary">
           Personal records
         </div>
-        <button
-          type="button"
-          onClick={() => (editing ? done() : setEditing(true))}
-          aria-label={editing ? "Done editing personal records" : "Edit personal records"}
-          className="rounded-full p-1 text-muted transition-colors hover:bg-muted/20"
-        >
-          {editing ? <IconCheck size={14} /> : <IconPencil size={13} />}
-        </button>
+        <div className="flex items-center gap-2">
+          <VisibilityToggle visible={visible} onChange={onVisibleChange} />
+          <button
+            type="button"
+            onClick={() => (editing ? done() : setEditing(true))}
+            aria-label={editing ? "Done editing personal records" : "Edit personal records"}
+            className="rounded-full p-1 text-muted transition-colors hover:bg-muted/20"
+          >
+            {editing ? <IconCheck size={14} /> : <IconPencil size={13} />}
+          </button>
+        </div>
       </div>
 
       {editing ? (

@@ -19,6 +19,7 @@ import { getPublicProfile } from "@/lib/supabase/profiles";
 import { profileFromOnboarding, classOfLabel, type CurrentUser } from "@/lib/currentUser";
 import { residenceLabel } from "@/lib/onboarding";
 import { IconArrowLeft, IconUser } from "@/components/icons";
+import PhotoGallery from "@/components/profile/PhotoGallery";
 
 // useSearchParams() requires a Suspense boundary or the production build fails
 // ("Missing Suspense boundary with useSearchParams"), so the page wraps the
@@ -112,8 +113,13 @@ function PersonProfile() {
         <>
           {/* Identity */}
           <div className="flex flex-col items-center gap-2.5 border-b border-border px-4 pb-4 pt-5">
-            <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-primary bg-primary/15 text-primary">
-              <IconUser size={34} />
+            <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-2 border-primary bg-primary/15 text-primary">
+              {user.photo ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={user.photo} alt={user.name || "Profile photo"} className="h-full w-full object-cover" />
+              ) : (
+                <IconUser size={34} />
+              )}
             </div>
 
             <div className="flex flex-col items-center gap-1.5">
@@ -175,6 +181,33 @@ function PersonProfile() {
               ))}
             </div>
           </div>
+
+          {/* Personal records (only present when they chose to show them) */}
+          {user.personalRecords.length > 0 && (
+            <div className="border-b border-border px-4 py-3">
+              <div className="mb-2 text-[9px] font-medium uppercase tracking-[0.1em] text-primary">
+                Personal records
+              </div>
+              <div className="flex flex-col divide-y divide-border">
+                {user.personalRecords.map((pr, i) => (
+                  <div key={i} className="flex items-center justify-between py-2">
+                    <span className="text-xs text-muted">{pr.lift}</span>
+                    <span className="text-xs font-medium text-text">{pr.value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Photos (only present when they chose to show them) */}
+          {user.photos.length > 0 && (
+            <div className="border-b border-border px-4 py-3">
+              <div className="mb-2 text-[9px] font-medium uppercase tracking-[0.1em] text-primary">
+                Photos
+              </div>
+              <PhotoGallery photos={user.photos} />
+            </div>
+          )}
 
           {/* Interests */}
           {user.interests.length > 0 && (

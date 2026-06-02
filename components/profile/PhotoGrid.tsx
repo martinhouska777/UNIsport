@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { IconPlus, IconX } from "@/components/icons";
 import { fileToDataUrl } from "@/lib/image";
+import VisibilityToggle from "@/components/profile/VisibilityToggle";
 
 /*
   Functional photo grid. The dashed tile opens the device photo picker; chosen
@@ -13,9 +14,13 @@ import { fileToDataUrl } from "@/lib/image";
 export default function PhotoGrid({
   photos,
   onChange,
+  visible,
+  onVisibleChange,
 }: {
   photos: string[];
   onChange: (photos: string[]) => void;
+  visible: boolean;
+  onVisibleChange: (visible: boolean) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
@@ -41,8 +46,11 @@ export default function PhotoGrid({
 
   return (
     <div className="border-b border-border px-3.5 py-3">
-      <div className="mb-2 text-[9px] font-medium uppercase tracking-[0.1em] text-primary">
-        Photos
+      <div className="mb-2 flex items-center justify-between">
+        <div className="text-[9px] font-medium uppercase tracking-[0.1em] text-primary">
+          Photos
+        </div>
+        <VisibilityToggle visible={visible} onChange={onVisibleChange} />
       </div>
 
       <input

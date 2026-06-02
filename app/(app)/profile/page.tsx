@@ -331,10 +331,17 @@ export default function ProfilePage() {
       <PersonalRecords
         records={user.personalRecords}
         onChange={(records: PersonalRecord[]) => update({ personalRecords: records })}
+        visible={user.showPersonalRecords}
+        onVisibleChange={(v) => update({ showPersonalRecords: v })}
       />
 
       {/* Photos */}
-      <PhotoGrid photos={user.photos} onChange={(photos) => update({ photos })} />
+      <PhotoGrid
+        photos={user.photos}
+        onChange={(photos) => update({ photos })}
+        visible={user.showPhotos}
+        onVisibleChange={(v) => update({ showPhotos: v })}
+      />
 
       {/* Entry into Varsity Mode (the gated rowing-team section) */}
       <div className="border-b border-border px-3.5 py-3">
