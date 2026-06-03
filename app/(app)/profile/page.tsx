@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAppState } from "@/components/AppState";
@@ -9,6 +9,7 @@ import { createClient, hasSupabaseEnv } from "@/lib/supabase/client";
 import InlineEdit from "@/components/profile/InlineEdit";
 import SessionCalendar from "@/components/profile/SessionCalendar";
 import SessionSheet from "@/components/profile/SessionSheet";
+import LogSessionSheet from "@/components/profile/LogSessionSheet";
 import PersonalRecords from "@/components/profile/PersonalRecords";
 import PhotoGrid from "@/components/profile/PhotoGrid";
 import PreferencesSheet from "@/components/profile/PreferencesSheet";
@@ -18,8 +19,8 @@ import {
   classOfLabel,
   type CurrentUser,
   type PersonalRecord,
-  type Session,
 } from "@/lib/currentUser";
+import { listMonth, countWorkouts, type WorkoutLog } from "@/lib/supabase/workouts";
 import { fileToDataUrl } from "@/lib/image";
 import { getMyFollowCounts } from "@/lib/supabase/follows";
 import { residenceLabel, type OnboardingProfile } from "@/lib/onboarding";
@@ -34,7 +35,11 @@ export default function ProfilePage() {
   // The saved profile JSON (onboarding answers + any profile edits).
   const [data, setData] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(true);
-  const [openSession, setOpenSession] = useState<Session | null>(null);
+  // Logged workouts for the current month + the all-time count (Sessions stat).
+  const [logs, setLogs] = useState<WorkoutLog[]>([]);
+  const [sessionsCount, setSessionsCount] = useState(0);
+  const [openDate, setOpenDate] = useState<string | null>(null); // day sheet
+  const [logging, setLogging] = useState(false); // log/edit editor open
   const [editingPrefs, setEditingPrefs] = useState(false);
   const [followCounts, setFollowCounts] = useState<{ following: number; followers: number } | null>(null);
   // Tiny status so saving to the database is visible (and failures aren't silent).
@@ -85,6 +90,39 @@ export default function ProfilePage() {
     };
   }, [supabase, userId]);
 
+  // Fetch this month's logged workouts (for the calendar) + the all-time count.
+  // Pure (no setState) so it's safe to call from both the effect and handlers.
+  const fetchLogs = useCallback(async (): Promise<{ logs: WorkoutLog[]; total: number }> => {
+    if (!userId) return { logs: [], total: 0 };
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = now.getMonth();
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const from = `${y}-${pad(m + 1)}-01`;
+    const to = `${y}-${pad(m + 1)}-${pad(new Date(y, m + 1, 0).getDate())}`;
+    const [logs, total] = await Promise.all([listMonth(userId, from, to), countWorkouts(userId)]);
+    return { logs, total };
+  }, [userId]);
+
+  useEffect(() => {
+    let active = true;
+    fetchLogs().then((r) => {
+      if (!active) return;
+      setLogs(r.logs);
+      setSessionsCount(r.total);
+    });
+    return () => {
+      active = false;
+    };
+  }, [fetchLogs]);
+
+  // Reload after logging a session.
+  const reloadLogs = async () => {
+    const r = await fetchLogs();
+    setLogs(r.logs);
+    setSessionsCount(r.total);
+  };
+
   // Edit handler: merges the patch into the saved JSON and persists it to the DB.
   // The write lives OUTSIDE the state updater (so it runs once, not twice in
   // StrictMode) and reports a save status the user can see.
@@ -131,7 +169,7 @@ export default function ProfilePage() {
   }
 
   const stats = [
-    { label: "Sessions", value: user.stats.sessions },
+    { label: "Sessions", value: sessionsCount },
     { label: "Partners", value: user.stats.partners },
     { label: "Following", value: followCounts?.following ?? user.stats.following },
   ];
@@ -266,7 +304,7 @@ export default function ProfilePage() {
       </div>
 
       {/* Session calendar */}
-      <SessionCalendar sessions={user.sessions} onPick={(s) => setOpenSession(s)} />
+      <SessionCalendar logs={logs} onPickDate={(d) => setOpenDate(d)} />
 
       {/* Training */}
       <div className="border-b border-border px-3.5 py-3">
@@ -414,14 +452,30 @@ export default function ProfilePage() {
         </button>
         <button
           type="button"
+          onClick={() => setLogging(true)}
           className="flex-1 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-contrast"
         >
           Log Session
         </button>
       </div>
 
-      {openSession && (
-        <SessionSheet session={openSession} onClose={() => setOpenSession(null)} />
+      {openDate && (
+        <SessionSheet
+          date={openDate}
+          logs={logs.filter((l) => l.date === openDate)}
+          onClose={() => setOpenDate(null)}
+        />
+      )}
+
+      {logging && userId && (
+        <LogSessionSheet
+          userId={userId}
+          onClose={() => setLogging(false)}
+          onSaved={async () => {
+            await reloadLogs();
+            setLogging(false);
+          }}
+        />
       )}
 
       {editingPrefs && (

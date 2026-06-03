@@ -1,36 +1,38 @@
 "use client";
 
 import { useEffect } from "react";
-import type { Session } from "@/lib/currentUser";
+import {
+  activityLabel,
+  exerciseSummary,
+  type WorkoutLog,
+} from "@/lib/supabase/workouts";
 import { IconX, IconUser } from "@/components/icons";
 
 /*
-  Bottom sheet that slides up with a session's details. Closes on the X, on the
-  backdrop, or on Escape. All content reads from the session data.
+  Bottom sheet showing every workout logged on a given day. Closes on the X, on
+  the backdrop, or on Escape. All content reads from the logged sessions; editing
+  and deleting come in a later slice. Colors are theme tokens (rule 1).
 */
 export default function SessionSheet({
-  session,
+  date,
+  logs,
   onClose,
 }: {
-  session: Session;
+  date: string; // ISO yyyy-mm-dd
+  logs: WorkoutLog[];
   onClose: () => void;
 }) {
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  const now = new Date();
-  const date = new Date(now.getFullYear(), now.getMonth(), session.day);
-  const dateLabel = date.toLocaleString("en-US", {
+  const dateLabel = new Date(`${date}T00:00:00`).toLocaleString("en-US", {
     weekday: "long",
     month: "long",
     day: "numeric",
   });
-  const solo = !session.partner || session.partner.toLowerCase() === "solo";
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col justify-end">
@@ -51,7 +53,7 @@ export default function SessionSheet({
           <div>
             <div className="text-[15px] font-medium text-text">{dateLabel}</div>
             <div className="mt-0.5 text-[11px] text-muted">
-              {session.activity} · {session.gym}
+              {logs.length} session{logs.length === 1 ? "" : "s"} logged
             </div>
           </div>
           <button
@@ -64,49 +66,54 @@ export default function SessionSheet({
           </button>
         </div>
 
-        {/* Partner */}
-        <div className="flex items-center gap-2.5 border-b border-border px-4 py-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-primary bg-primary/15 text-primary">
-            <IconUser size={16} />
-          </div>
-          <div>
-            <div className="text-[10px] text-muted">{solo ? "Session" : "Training partner"}</div>
-            <div className="text-xs font-medium text-primary">
-              {solo ? "Solo session" : session.partner}
-            </div>
-          </div>
-        </div>
+        {/* One block per logged session */}
+        <div className="flex flex-col divide-y divide-border pb-6">
+          {logs.map((log) => {
+            const solo = !log.partner || log.partner.toLowerCase() === "solo";
+            return (
+              <div key={log.id} className="px-4 py-3">
+                {/* Activity + gym */}
+                <div className="text-[14px] font-medium text-text">{activityLabel(log.activity)}</div>
+                {log.gym && <div className="mt-0.5 text-[11px] text-muted">{log.gym}</div>}
 
-        {/* Exercises */}
-        {session.exercises.length > 0 && (
-          <div className="border-b border-border px-4 py-3">
-            <div className="mb-2 text-[10px] font-medium uppercase tracking-[0.08em] text-muted">
-              Exercises
-            </div>
-            <div className="flex flex-col divide-y divide-border">
-              {session.exercises.map((ex) => (
-                <div key={ex} className="py-2 text-xs text-text">
-                  {ex}
+                {/* Partner */}
+                <div className="mt-2.5 flex items-center gap-2.5">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-primary bg-primary/15 text-primary">
+                    <IconUser size={14} />
+                  </div>
+                  <div>
+                    <div className="text-[10px] text-muted">{solo ? "Session" : "Training partner"}</div>
+                    <div className="text-xs font-medium text-primary">
+                      {solo ? "Solo session" : log.partner}
+                    </div>
+                  </div>
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
 
-        {/* Photos */}
-        <div className="px-4 pb-6 pt-3">
-          <div className="mb-2 text-[10px] font-medium uppercase tracking-[0.08em] text-muted">
-            Photos
-          </div>
-          {session.photos.length > 0 ? (
-            <div className="grid grid-cols-3 gap-1">
-              {session.photos.map((_, i) => (
-                <div key={i} className="aspect-square rounded-md border border-border bg-surface-2" />
-              ))}
-            </div>
-          ) : (
-            <div className="text-[11px] text-muted">No photos from this session.</div>
-          )}
+                {/* Exercises */}
+                {log.exercises.length > 0 && (
+                  <div className="mt-3">
+                    <div className="mb-1.5 text-[10px] font-medium uppercase tracking-[0.08em] text-muted">
+                      Exercises
+                    </div>
+                    <div className="flex flex-col divide-y divide-border">
+                      {log.exercises.map((ex, i) => (
+                        <div key={i} className="py-1.5 text-xs text-text">
+                          {exerciseSummary(ex) || "—"}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Note */}
+                {log.note && (
+                  <div className="mt-3 rounded-xl border border-border bg-surface-2 px-3 py-2 text-[12px] leading-relaxed text-muted">
+                    {log.note}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

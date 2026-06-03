@@ -1,20 +1,25 @@
 "use client";
 
-import type { Session } from "@/lib/currentUser";
+import type { WorkoutLog } from "@/lib/supabase/workouts";
 
 // Monday-first weekday header, matching the rest of the app.
 const WEEK = ["M", "T", "W", "T", "F", "S", "S"];
 
+// Local-time ISO yyyy-mm-dd for a given day in the shown month.
+const isoFor = (year: number, month: number, day: number) =>
+  `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+
 /*
-  Month calendar driven entirely by the sessions data. A day with a session is
-  filled crimson and tappable; today is outlined; everything else is dim.
+  Month calendar driven by the user's logged workouts. A day with one or more
+  logged sessions is filled crimson and tappable (opens that day's sessions);
+  today is outlined; everything else is dim.
 */
 export default function SessionCalendar({
-  sessions,
-  onPick,
+  logs,
+  onPickDate,
 }: {
-  sessions: Session[];
-  onPick: (s: Session) => void;
+  logs: WorkoutLog[];
+  onPickDate: (dateIso: string) => void;
 }) {
   const now = new Date();
   const year = now.getFullYear();
@@ -25,7 +30,17 @@ export default function SessionCalendar({
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const firstDow = new Date(year, month, 1).getDay(); // 0=Sun
   const lead = (firstDow + 6) % 7; // shift so Monday is the first column
-  const byDay = new Map(sessions.map((s) => [s.day, s] as const));
+
+  // Count of logged sessions per day-of-month (only days in the shown month).
+  const countByDay = new Map<number, number>();
+  for (const l of logs) {
+    const d = new Date(`${l.date}T00:00:00`);
+    if (d.getFullYear() === year && d.getMonth() === month) {
+      const day = d.getDate();
+      countByDay.set(day, (countByDay.get(day) ?? 0) + 1);
+    }
+  }
+
   const cells: (number | null)[] = [
     ...Array(lead).fill(null),
     ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
@@ -51,9 +66,10 @@ export default function SessionCalendar({
       <div className="grid grid-cols-7 gap-1">
         {cells.map((n, idx) => {
           if (n === null) return <div key={idx} />;
-          const s = byDay.get(n);
+          const count = countByDay.get(n) ?? 0;
+          const hasSession = count > 0;
           const isToday = n === today;
-          const cls = s
+          const cls = hasSession
             ? "bg-primary text-primary-contrast cursor-pointer"
             : isToday
               ? "border border-primary bg-primary/15 text-text cursor-default"
@@ -62,14 +78,19 @@ export default function SessionCalendar({
             <button
               key={idx}
               type="button"
-              disabled={!s}
-              onClick={() => s && onPick(s)}
-              aria-label={s ? `${s.activity} on day ${n}` : `Day ${n}`}
-              className={`flex aspect-square items-center justify-center rounded-md text-[11px] ${cls} ${
-                s && isToday ? "ring-1 ring-primary-contrast" : ""
+              disabled={!hasSession}
+              onClick={() => hasSession && onPickDate(isoFor(year, month, n))}
+              aria-label={hasSession ? `${count} session${count > 1 ? "s" : ""} on day ${n}` : `Day ${n}`}
+              className={`relative flex aspect-square items-center justify-center rounded-md text-[11px] ${cls} ${
+                hasSession && isToday ? "ring-1 ring-primary-contrast" : ""
               }`}
             >
               {n}
+              {count > 1 && (
+                <span className="absolute bottom-0.5 right-0.5 text-[7px] font-semibold leading-none text-primary-contrast/90">
+                  {count}
+                </span>
+              )}
             </button>
           );
         })}
