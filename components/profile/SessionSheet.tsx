@@ -30,6 +30,8 @@ export default function SessionSheet({
   // Inline delete confirm + in-flight state, keyed by the log being acted on.
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  // A tapped photo, shown full-screen.
+  const [viewer, setViewer] = useState<string | null>(null);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     document.addEventListener("keydown", onKey);
@@ -172,6 +174,24 @@ export default function SessionSheet({
                   </div>
                 )}
 
+                {/* Photos — memories from the session */}
+                {log.photos.length > 0 && (
+                  <div className="mt-3 grid grid-cols-3 gap-1.5">
+                    {log.photos.map((src, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => setViewer(src)}
+                        aria-label={`View photo ${i + 1}`}
+                        className="aspect-square overflow-hidden rounded-md border border-border bg-surface-2"
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={src} alt={`Photo ${i + 1}`} className="h-full w-full object-cover" />
+                      </button>
+                    ))}
+                  </div>
+                )}
+
                 {/* Note */}
                 {log.note && (
                   <div className="mt-3 rounded-xl border border-border bg-surface-2 px-3 py-2 text-[12px] leading-relaxed text-muted">
@@ -183,6 +203,25 @@ export default function SessionSheet({
           })}
         </div>
       </div>
+
+      {/* Full-screen photo viewer */}
+      {viewer && (
+        <div
+          className="absolute inset-0 z-10 flex items-center justify-center bg-background/90 p-6"
+          onClick={() => setViewer(null)}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={viewer} alt="" className="max-h-full max-w-full rounded-lg object-contain" />
+          <button
+            type="button"
+            onClick={() => setViewer(null)}
+            aria-label="Close photo"
+            className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-surface-2 text-text"
+          >
+            <IconX size={18} />
+          </button>
+        </div>
+      )}
     </div>
   );
 }

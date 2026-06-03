@@ -9,7 +9,7 @@
   weight), and a note. Saves through lib/supabase/workouts.ts. All colors are
   theme tokens (rule 1); inputs stay text-base so phones don't auto-zoom.
 */
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { primaryActivities, cardioTypes, verifiedGyms } from "@/lib/onboarding";
 import {
   saveWorkout,
@@ -19,7 +19,8 @@ import {
   type WorkoutExercise,
   type WorkoutLog,
 } from "@/lib/supabase/workouts";
-import { IconArrowLeft, IconCheck, IconPlus, IconTrash } from "@/components/icons";
+import { fileToDataUrl } from "@/lib/image";
+import { IconArrowLeft, IconCheck, IconPlus, IconTrash, IconX } from "@/components/icons";
 
 const todayIso = () => {
   const d = new Date();
@@ -55,6 +56,9 @@ export default function LogSessionSheet({
   const [unit, setUnit] = useState<DistanceUnit>(existing?.metrics.unit ?? "km");
   const [duration, setDuration] = useState(existing?.metrics.duration ?? "");
   const [note, setNote] = useState(existing?.note ?? "");
+  const [photos, setPhotos] = useState<string[]>(existing?.photos ?? []);
+  const [photoBusy, setPhotoBusy] = useState(false);
+  const photoInputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -76,6 +80,25 @@ export default function LogSessionSheet({
   const removeExercise = (i: number) =>
     setExercises((prev) => (prev.length === 1 ? [emptyExercise()] : prev.filter((_, idx) => idx !== i)));
 
+  // Photos ("memories"): downscale each picked image to a data URL (same as the
+  // profile gallery), append; the corner X removes one.
+  const addPhotos = async (files: FileList | null) => {
+    if (!files?.length) return;
+    setPhotoBusy(true);
+    const added: string[] = [];
+    for (const f of Array.from(files)) {
+      if (!f.type.startsWith("image/")) continue;
+      try {
+        added.push(await fileToDataUrl(f));
+      } catch {
+        // skip anything that won't decode
+      }
+    }
+    setPhotoBusy(false);
+    if (added.length) setPhotos((prev) => [...prev, ...added]);
+  };
+  const removePhoto = (i: number) => setPhotos((prev) => prev.filter((_, idx) => idx !== i));
+
   const save = async () => {
     if (!date || busy) return;
     setBusy(true);
@@ -87,6 +110,7 @@ export default function LogSessionSheet({
       partner,
       exercises,
       metrics: { cardioType, distance, unit, duration },
+      photos,
       note,
     };
     const res = existing
@@ -287,6 +311,51 @@ export default function LogSessionSheet({
               />
             </>
           )}
+
+          {/* Photos — "memories" from the session */}
+          <div className="mt-5 flex items-center justify-between">
+            <span className={labelCls.replace("mb-1.5", "mb-0")}>Photos (optional)</span>
+            <span className="text-[10px] text-muted">memories from the session</span>
+          </div>
+          <input
+            ref={photoInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            onChange={(e) => {
+              addPhotos(e.target.files);
+              e.target.value = ""; // allow re-picking the same file
+            }}
+          />
+          <div className="mt-2 grid grid-cols-3 gap-1.5">
+            {photos.map((src, i) => (
+              <div
+                key={i}
+                className="relative aspect-square overflow-hidden rounded-md border border-border bg-surface-2"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={src} alt={`Photo ${i + 1}`} className="h-full w-full object-cover" />
+                <button
+                  type="button"
+                  onClick={() => removePhoto(i)}
+                  aria-label={`Remove photo ${i + 1}`}
+                  className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-background/80 text-text backdrop-blur hover:text-danger"
+                >
+                  <IconX size={11} />
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() => photoInputRef.current?.click()}
+              disabled={photoBusy}
+              aria-label="Add photo"
+              className="flex aspect-square items-center justify-center rounded-md border border-dashed border-border bg-surface text-muted disabled:opacity-50"
+            >
+              <IconPlus size={20} />
+            </button>
+          </div>
 
           <div className={`${labelCls} mt-5`}>Note (optional)</div>
           <input

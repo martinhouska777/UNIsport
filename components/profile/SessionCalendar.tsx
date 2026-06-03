@@ -31,13 +31,16 @@ export default function SessionCalendar({
   const firstDow = new Date(year, month, 1).getDay(); // 0=Sun
   const lead = (firstDow + 6) % 7; // shift so Monday is the first column
 
-  // Count of logged sessions per day-of-month (only days in the shown month).
+  // Count of logged sessions per day-of-month + the first photo found that day
+  // (only days in the shown month). The photo turns a day into a "memory" tile.
   const countByDay = new Map<number, number>();
+  const photoByDay = new Map<number, string>();
   for (const l of logs) {
     const d = new Date(`${l.date}T00:00:00`);
     if (d.getFullYear() === year && d.getMonth() === month) {
       const day = d.getDate();
       countByDay.set(day, (countByDay.get(day) ?? 0) + 1);
+      if (l.photos.length > 0 && !photoByDay.has(day)) photoByDay.set(day, l.photos[0]);
     }
   }
 
@@ -68,12 +71,20 @@ export default function SessionCalendar({
           if (n === null) return <div key={idx} />;
           const count = countByDay.get(n) ?? 0;
           const hasSession = count > 0;
+          const photo = photoByDay.get(n);
           const isToday = n === today;
-          const cls = hasSession
-            ? "bg-primary text-primary-contrast cursor-pointer"
-            : isToday
-              ? "border border-primary bg-primary/15 text-text cursor-default"
-              : "bg-surface-2 text-muted cursor-default";
+          const cls = photo
+            ? "cursor-pointer text-text"
+            : hasSession
+              ? "bg-primary text-primary-contrast cursor-pointer"
+              : isToday
+                ? "border border-primary bg-primary/15 text-text cursor-default"
+                : "bg-surface-2 text-muted cursor-default";
+          const ring = isToday && (hasSession || photo)
+            ? photo
+              ? "ring-1 ring-primary"
+              : "ring-1 ring-primary-contrast"
+            : "";
           return (
             <button
               key={idx}
@@ -81,13 +92,22 @@ export default function SessionCalendar({
               disabled={!hasSession}
               onClick={() => hasSession && onPickDate(isoFor(year, month, n))}
               aria-label={hasSession ? `${count} session${count > 1 ? "s" : ""} on day ${n}` : `Day ${n}`}
-              className={`relative flex aspect-square items-center justify-center rounded-md text-[11px] ${cls} ${
-                hasSession && isToday ? "ring-1 ring-primary-contrast" : ""
-              }`}
+              className={`relative flex aspect-square items-center justify-center overflow-hidden rounded-md text-[11px] ${cls} ${ring}`}
             >
-              {n}
+              {photo && (
+                <>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={photo} alt="" className="absolute inset-0 h-full w-full object-cover" />
+                  <span className="absolute inset-0 bg-gradient-to-t from-background/85 via-background/10 to-transparent" />
+                </>
+              )}
+              <span className={photo ? "absolute bottom-0.5 left-1 font-semibold" : ""}>{n}</span>
               {count > 1 && (
-                <span className="absolute bottom-0.5 right-0.5 text-[7px] font-semibold leading-none text-primary-contrast/90">
+                <span
+                  className={`absolute bottom-0.5 right-0.5 text-[7px] font-semibold leading-none ${
+                    photo ? "text-text" : "text-primary-contrast/90"
+                  }`}
+                >
                   {count}
                 </span>
               )}

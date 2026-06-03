@@ -36,6 +36,7 @@ export type WorkoutLog = {
   partner: string;
   exercises: WorkoutExercise[]; // gym / other
   metrics: WorkoutMetrics; // running / cardio
+  photos: string[]; // session photos (downscaled data URLs) — "memories"
   note: string;
 };
 
@@ -50,6 +51,7 @@ type Row = {
   partner: string | null;
   exercises: WorkoutExercise[] | null;
   metrics: WorkoutMetrics | null;
+  photos: string[] | null;
   note: string | null;
 };
 
@@ -61,6 +63,7 @@ const rowToLog = (r: Row): WorkoutLog => ({
   partner: r.partner ?? "",
   exercises: Array.isArray(r.exercises) ? r.exercises : [],
   metrics: r.metrics && typeof r.metrics === "object" ? r.metrics : {},
+  photos: Array.isArray(r.photos) ? r.photos : [],
   note: r.note ?? "",
 });
 
@@ -91,6 +94,7 @@ const draftToRow = (userId: string, d: WorkoutDraft) => ({
           (e) => e.name.trim() || e.sets.trim() || e.reps.trim() || e.weight.trim(),
         ),
   metrics: cleanMetrics(d.activity, d.metrics),
+  photos: Array.isArray(d.photos) ? d.photos : [],
   note: d.note.trim(),
 });
 
@@ -122,7 +126,7 @@ export async function listMonth(
   }
   const { data, error } = await createClient()
     .from("workout_logs")
-    .select("id, log_date, activity, gym, partner, exercises, metrics, note")
+    .select("id, log_date, activity, gym, partner, exercises, metrics, photos, note")
     .eq("user_id", userId)
     .gte("log_date", fromIso)
     .lte("log_date", toIso)

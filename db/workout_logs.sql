@@ -7,8 +7,8 @@
 -- / reps / weight, stored as jsonb), and a free-text note.
 --
 -- PRIVATE per-user: Row-Level Security restricts every row to its owner
--- (auth.uid() = user_id) — same pattern as db/varsity_logs.sql. Photos are NOT
--- here yet (a later slice will add them).
+-- (auth.uid() = user_id) — same pattern as db/varsity_logs.sql. Optional session
+-- photos ("memories") are stored as a jsonb array of downscaled data URLs.
 --
 -- IDEMPOTENT: safe to paste into the Supabase SQL editor and re-run.
 -- ============================================================================
@@ -24,12 +24,14 @@ create table if not exists public.workout_logs (
   partner    text,                                 -- optional training-partner name
   exercises  jsonb not null default '[]'::jsonb,   -- gym/other: [{ name, sets, reps, weight }]
   metrics    jsonb not null default '{}'::jsonb,   -- running/cardio: { cardioType?, distance?, unit?, duration? }
+  photos     jsonb not null default '[]'::jsonb,   -- session photos: ["data:image/jpeg;base64,…", …]
   note       text not null default '',
   created_at timestamptz not null default now()
 );
 
--- Activity-specific metrics were added after the first version; add to existing DBs.
+-- Columns added after the first version; add to existing DBs.
 alter table public.workout_logs add column if not exists metrics jsonb not null default '{}'::jsonb;
+alter table public.workout_logs add column if not exists photos  jsonb not null default '[]'::jsonb;
 
 create index if not exists workout_logs_user_date_idx
   on public.workout_logs (user_id, log_date);
