@@ -87,10 +87,16 @@ export default function LoginPage() {
         return;
       }
 
-      // A real new account with no session means email confirmation is ON in
-      // Supabase → a confirmation link was just sent.
-      if (!data.session) setConfirmSent(true);
-      // Otherwise a session exists (confirmation OFF) → the redirect effect handles it.
+      // A real new account with no session: accounts are auto-confirmed at the
+      // database level (db/auth_autoconfirm.sql), so the account is usable right
+      // away — log them straight in. Only if that genuinely fails do we fall
+      // back to the "check your email" screen.
+      if (!data.session) {
+        const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
+        if (signInErr) setConfirmSent(true);
+        // success → the redirect effect handles routing
+      }
+      // Otherwise a session already exists → the redirect effect handles it.
     } else {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       setLoading(false);
