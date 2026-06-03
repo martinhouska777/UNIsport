@@ -111,6 +111,32 @@ as $$
 $$;
 
 -- ---------------------------------------------------------------------------
+-- 2b. Time-block → hour range. Onboarding only collects coarse free-time
+--     blocks per day ('Early AM'..'Late PM'), not exact hours. Session search
+--     lets a user pick a precise hour and finds anyone whose blocks fall within
+--     a window of that hour. To compare the two we translate each block into the
+--     hour range (24h clock) it roughly represents, then test overlap.
+--
+--     This is a deliberately rough bridge over the rough data we have today;
+--     when onboarding starts collecting exact hours, this is the only thing
+--     that changes. Returns null for an unknown block (no overlap, ignored).
+-- ---------------------------------------------------------------------------
+create or replace function public.block_range(block text)
+returns numrange
+language sql
+immutable
+as $$
+  select case lower(trim(block))
+    when 'early am' then numrange(5, 8)    -- 5–8 AM
+    when 'am'       then numrange(8, 11)   -- 8–11 AM
+    when 'midday'   then numrange(11, 14)  -- 11 AM–2 PM
+    when 'pm'       then numrange(14, 18)  -- 2–6 PM
+    when 'late pm'  then numrange(18, 22)  -- 6–10 PM
+    else null
+  end;
+$$;
+
+-- ---------------------------------------------------------------------------
 -- 3. The translation-layer view. One row per ONBOARDED profile, with the json
 --    flattened into clean columns. Arrays stay as jsonb (interests/languages/
 --    top_gyms/schedule) and are read with json operators in the functions.
@@ -122,6 +148,7 @@ $$;
 -- Drop dependents first so re-running can change the view's / functions' shape.
 drop function if exists public.match_browse(uuid);
 drop function if exists public.match_session_search(uuid, text, text, text, text, text);
+drop function if exists public.match_session_search(uuid, text, text, numeric, text, text, text);
 drop view if exists public.match_profiles;
 
 create view public.match_profiles as
@@ -132,6 +159,7 @@ select
   lower(coalesce(p.data->>'sex', ''))                             as gender,
   lower(coalesce(nullif(p.data->>'partnerPreference', ''), 'any')) as partner_pref,
   lower(coalesce(p.data->>'trainingType', ''))                   as training_type,
+  lower(coalesce(p.data->>'primaryActivity', ''))               as primary_activity,
   p.data->>'experienceLevel'                                     as level,
   case lower(coalesce(p.data->>'experienceLevel', ''))
     when 'beginner' then 1
@@ -281,24 +309,34 @@ $$;
 
 -- ============================================================================
 -- 5. FUNCTION 2 — match_session_search(...)
---    Logistics-first: "find me a partner at THIS gym, on THIS day+block".
---    Hard filters: the shared gates PLUS gym-in-top-3, schedule has the slot,
---    and optional level / gender filters. Survivors are ranked by the SAME
---    affinity + logistics score MINUS the schedule component (the slot is
---    already fixed), so the max here is 92, not 100.
+--    "Find me a partner doing THIS activity, on THIS day, around THIS hour."
 --
---    target_gym is the gym NAME (gyms live in lib/gyms.ts, stored as names).
---    target_day  is a day key: 'mon'..'sun'.
---    target_block is a block label: 'Early AM','AM','Midday','PM','Late PM'.
---    level_filter / gender_filter are optional (null = no filter).
+--    REQUIRED inputs (the search makes no sense without them):
+--      activity_filter — 'gym'|'running'|'cardio'|'other'; only people whose
+--                        primary activity matches are returned.
+--      target_day      — a day key: 'mon'..'sun'.
+--      target_hour     — the hour you want to train, 24h clock, 30-min steps OK
+--                        (e.g. 15 = 3 PM, 15.5 = 3:30 PM). A candidate qualifies
+--                        if ANY of their free-time blocks that day overlaps the
+--                        window [target_hour - 2, target_hour + 2] — so 3 PM
+--                        also surfaces people free at, say, 1 PM or 5 PM.
+--
+--    OPTIONAL inputs (null = no filter), set in the on-screen filter window:
+--      gym_filter    — only people who list this gym (NAME) in their top gyms.
+--      level_filter  — 'beginner'|'intermediate'|'advanced'.
+--      gender_filter — 'male'|'female' (still subject to partner prefs).
+--
+--    Survivors are ranked by the SAME affinity + logistics score MINUS the
+--    schedule component (the slot is already fixed), so the max here is 92.
 -- ============================================================================
 create or replace function public.match_session_search(
-  searcher_id   uuid,
-  target_gym    text,
-  target_day    text,
-  target_block  text,
-  level_filter  text default null,
-  gender_filter text default null
+  searcher_id     uuid,
+  activity_filter text,
+  target_day      text,
+  target_hour     numeric,
+  gym_filter      text default null,
+  level_filter    text default null,
+  gender_filter   text default null
 )
 returns table (
   candidate_id      uuid,
@@ -387,11 +425,19 @@ as $$
     and c.training_type is distinct from 'solo'
     and public.pref_allows(me.partner_pref, c.gender)
     and public.pref_allows(c.partner_pref, me.gender)
-    -- logistics hard filters:
-    and c.top_gyms ? target_gym
-    and coalesce(c.schedule -> target_day, '[]'::jsonb) ? target_block
-    and (level_filter  is null or c.level  = level_filter)
-    and (gender_filter is null or c.gender = lower(gender_filter))
+    -- REQUIRED logistics filters: same activity + free within ±2h of the hour.
+    and c.primary_activity = lower(activity_filter)
+    and exists (
+      select 1
+      from jsonb_array_elements_text(
+             coalesce(c.schedule -> target_day, '[]'::jsonb)
+           ) b
+      where public.block_range(b) && numrange(target_hour - 2, target_hour + 2)
+    )
+    -- OPTIONAL filters (null = ignored):
+    and (gym_filter    is null or c.top_gyms ? gym_filter)
+    and (level_filter  is null or c.level    = level_filter)
+    and (gender_filter is null or c.gender   = lower(gender_filter))
   order by score desc;
 $$;
 
@@ -399,4 +445,4 @@ $$;
 -- 6. Let signed-in users call these via Supabase RPC.
 -- ---------------------------------------------------------------------------
 grant execute on function public.match_browse(uuid) to authenticated;
-grant execute on function public.match_session_search(uuid, text, text, text, text, text) to authenticated;
+grant execute on function public.match_session_search(uuid, text, text, numeric, text, text, text) to authenticated;

@@ -34,11 +34,12 @@ export type Match = {
 
 export type SessionMatchParams = {
   userId: string;
-  gym: string; // gym name exactly as in lib/gyms.ts
-  day: string; // 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun'
-  block: string; // 'Early AM' | 'AM' | 'Midday' | 'PM' | 'Late PM'
-  level?: string | null; // 'beginner' | 'intermediate' | 'advanced' | null
-  gender?: string | null; // 'male' | 'female' | null
+  activity: string; // 'gym' | 'running' | 'cardio' | 'other' (required)
+  day: string; // 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun' (required)
+  hour: number; // 24h clock, 30-min steps OK (15 = 3 PM, 15.5 = 3:30 PM) (required)
+  gym?: string | null; // optional: gym name exactly as in lib/gyms.ts
+  level?: string | null; // optional: 'beginner' | 'intermediate' | 'advanced'
+  gender?: string | null; // optional: 'male' | 'female'
 };
 
 // Raw row shape returned by the SQL functions (snake_case, schedule optional).
@@ -91,14 +92,18 @@ export async function getBrowseMatches(userId: string): Promise<Match[]> {
   return (data as RpcRow[]).map(toMatch);
 }
 
-/** Function 2 — partners for a fixed gym + day + time block, scored out of 92. */
+/**
+ * Function 2 — partners for an activity + day, free within ±2h of a chosen
+ * hour, scored out of 92. Gym/level/gender are optional filters (omit = any).
+ */
 export async function getSessionMatches(params: SessionMatchParams): Promise<Match[]> {
   const supabase = createClient();
   const { data, error } = await supabase.rpc("match_session_search", {
     searcher_id: params.userId,
-    target_gym: params.gym,
+    activity_filter: params.activity,
     target_day: params.day,
-    target_block: params.block,
+    target_hour: params.hour,
+    gym_filter: params.gym ?? null,
     level_filter: params.level ?? null,
     gender_filter: params.gender ?? null,
   });

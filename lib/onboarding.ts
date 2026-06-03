@@ -116,6 +116,34 @@ export const weekDays: WeekDay[] = [
 // Free-time blocks shown when a day is expanded (editable).
 export const timeBlocks: string[] = ["Early AM", "AM", "Midday", "PM", "Late PM"];
 
+// ---- Match → Session Search: precise time picker -----------------------------
+// In Session Search you pick the hour you actually want to train (24h clock,
+// 30-min steps). Matching then finds people free within SESSION_WINDOW_HOURS of
+// it. NOTE: profiles today only store the coarse `timeBlocks` above; the precise
+// hour is bridged onto those blocks in db/matching.sql (see `block_range`) until
+// onboarding collects exact hours. Change the range/step here to widen choices.
+export const SESSION_WINDOW_HOURS = 2;
+
+export type TimeSlot = { value: number; label: string };
+
+export const sessionTimeSlots: TimeSlot[] = (() => {
+  const slots: TimeSlot[] = [];
+  for (let h = 6; h <= 22; h++) {
+    for (const m of [0, 30]) {
+      if (h === 22 && m === 30) break; // stop at 10:00 PM
+      const hour12 = ((h + 11) % 12) + 1;
+      const ampm = h < 12 ? "AM" : "PM";
+      slots.push({ value: h + m / 60, label: `${hour12}:${m === 0 ? "00" : "30"} ${ampm}` });
+    }
+  }
+  return slots;
+})();
+
+// Pretty label for a chosen session hour value (e.g. 15.5 → "3:30 PM").
+export function sessionTimeLabel(value: number): string {
+  return sessionTimeSlots.find((s) => s.value === value)?.label ?? "";
+}
+
 // ---- Screen 6: Background (all optional) -------------------------------------
 
 export const concentrations: string[] = [
