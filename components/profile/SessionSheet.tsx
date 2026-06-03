@@ -1,28 +1,35 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   activityLabel,
   exerciseSummary,
   metricsSummary,
   type WorkoutLog,
 } from "@/lib/supabase/workouts";
-import { IconX, IconUser } from "@/components/icons";
+import { IconX, IconUser, IconPencil, IconTrash } from "@/components/icons";
 
 /*
   Bottom sheet showing every workout logged on a given day. Closes on the X, on
-  the backdrop, or on Escape. All content reads from the logged sessions; editing
-  and deleting come in a later slice. Colors are theme tokens (rule 1).
+  the backdrop, or on Escape. Each logged session can be edited (reopens it in
+  the Log editor) or deleted (two-step confirm). Colors are theme tokens (rule 1).
 */
 export default function SessionSheet({
   date,
   logs,
   onClose,
+  onEdit,
+  onDelete,
 }: {
   date: string; // ISO yyyy-mm-dd
   logs: WorkoutLog[];
   onClose: () => void;
+  onEdit: (log: WorkoutLog) => void;
+  onDelete: (log: WorkoutLog) => Promise<void>;
 }) {
+  // Inline delete confirm + in-flight state, keyed by the log being acted on.
+  const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     document.addEventListener("keydown", onKey);
@@ -74,9 +81,60 @@ export default function SessionSheet({
             const summary = metricsSummary(log);
             return (
               <div key={log.id} className="px-4 py-3">
-                {/* Activity + gym */}
-                <div className="text-[14px] font-medium text-text">{activityLabel(log.activity)}</div>
-                {log.gym && <div className="mt-0.5 text-[11px] text-muted">{log.gym}</div>}
+                {/* Activity + gym, with edit / delete actions */}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="text-[14px] font-medium text-text">
+                      {activityLabel(log.activity)}
+                    </div>
+                    {log.gym && <div className="mt-0.5 text-[11px] text-muted">{log.gym}</div>}
+                  </div>
+                  <div className="flex flex-shrink-0 items-center gap-1.5">
+                    {confirmId === log.id ? (
+                      <>
+                        <button
+                          type="button"
+                          disabled={busyId === log.id}
+                          onClick={async () => {
+                            setBusyId(log.id);
+                            await onDelete(log);
+                            setConfirmId(null);
+                            setBusyId(null);
+                          }}
+                          className="rounded-lg bg-danger/15 px-2.5 py-1 text-[11px] font-medium text-danger disabled:opacity-50"
+                        >
+                          {busyId === log.id ? "Deleting…" : "Delete"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setConfirmId(null)}
+                          className="rounded-lg bg-surface-2 px-2.5 py-1 text-[11px] text-muted"
+                        >
+                          Cancel
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => onEdit(log)}
+                          aria-label="Edit session"
+                          className="flex h-7 w-7 items-center justify-center rounded-full bg-surface-2 text-muted"
+                        >
+                          <IconPencil size={13} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setConfirmId(log.id)}
+                          aria-label="Delete session"
+                          className="flex h-7 w-7 items-center justify-center rounded-full bg-surface-2 text-muted"
+                        >
+                          <IconTrash size={13} />
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
 
                 {/* Running / cardio metrics */}
                 {summary && (

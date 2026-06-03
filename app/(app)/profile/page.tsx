@@ -20,7 +20,7 @@ import {
   type CurrentUser,
   type PersonalRecord,
 } from "@/lib/currentUser";
-import { listMonth, countWorkouts, type WorkoutLog } from "@/lib/supabase/workouts";
+import { listMonth, countWorkouts, deleteWorkout, type WorkoutLog } from "@/lib/supabase/workouts";
 import { fileToDataUrl } from "@/lib/image";
 import { getMyFollowCounts } from "@/lib/supabase/follows";
 import { residenceLabel, type OnboardingProfile } from "@/lib/onboarding";
@@ -39,7 +39,8 @@ export default function ProfilePage() {
   const [logs, setLogs] = useState<WorkoutLog[]>([]);
   const [sessionsCount, setSessionsCount] = useState(0);
   const [openDate, setOpenDate] = useState<string | null>(null); // day sheet
-  const [logging, setLogging] = useState(false); // log/edit editor open
+  const [logging, setLogging] = useState(false); // "Log session" (new) editor open
+  const [editLog, setEditLog] = useState<WorkoutLog | null>(null); // editing an existing log
   const [editingPrefs, setEditingPrefs] = useState(false);
   const [followCounts, setFollowCounts] = useState<{ following: number; followers: number } | null>(null);
   // Tiny status so saving to the database is visible (and failures aren't silent).
@@ -121,6 +122,22 @@ export default function ProfilePage() {
     const r = await fetchLogs();
     setLogs(r.logs);
     setSessionsCount(r.total);
+  };
+
+  // Edit a logged session: close the day sheet and reopen it in the editor.
+  const handleEditLog = (log: WorkoutLog) => {
+    setOpenDate(null);
+    setEditLog(log);
+  };
+
+  // Delete a logged session, refresh, and close the day sheet if that day is now
+  // empty (use the freshly fetched logs, not the async state).
+  const handleDeleteLog = async (log: WorkoutLog) => {
+    if (userId) await deleteWorkout(userId, log.id);
+    const r = await fetchLogs();
+    setLogs(r.logs);
+    setSessionsCount(r.total);
+    if (!r.logs.some((l) => l.date === log.date)) setOpenDate(null);
   };
 
   // Edit handler: merges the patch into the saved JSON and persists it to the DB.
@@ -464,16 +481,23 @@ export default function ProfilePage() {
           date={openDate}
           logs={logs.filter((l) => l.date === openDate)}
           onClose={() => setOpenDate(null)}
+          onEdit={handleEditLog}
+          onDelete={handleDeleteLog}
         />
       )}
 
-      {logging && userId && (
+      {(logging || editLog) && userId && (
         <LogSessionSheet
           userId={userId}
-          onClose={() => setLogging(false)}
+          existing={editLog ?? undefined}
+          onClose={() => {
+            setLogging(false);
+            setEditLog(null);
+          }}
           onSaved={async () => {
             await reloadLogs();
             setLogging(false);
+            setEditLog(null);
           }}
         />
       )}
