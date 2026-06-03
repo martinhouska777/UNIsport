@@ -5,6 +5,8 @@ import Link from "next/link";
 import {
   getDirectThread,
   sendDirectMessage,
+  getPeerLastRead,
+  signalUnreadChanged,
   clockTime,
   type DmMessage,
 } from "@/lib/supabase/messages";
@@ -34,6 +36,8 @@ export default function DmThread({
   const [messages, setMessages] = useState<DmMessage[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [photo, setPhoto] = useState<string | null>(null);
+  // The other person's last-read time — drives the Delivered/Read receipt.
+  const [peerReadAt, setPeerReadAt] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   // Load the other person's profile photo for the header (RLS-safe public read).
@@ -50,10 +54,21 @@ export default function DmThread({
 
   useEffect(() => {
     let active = true;
-    const load = () =>
-      getDirectThread(conversationId)
-        .then((m) => active && setMessages(m))
-        .catch((e) => active && setError((e as Error).message));
+    const load = async () => {
+      try {
+        // Loading the thread also marks it read server-side; tell the nav badge.
+        const [m, peer] = await Promise.all([
+          getDirectThread(conversationId),
+          getPeerLastRead(conversationId).catch(() => null),
+        ]);
+        if (!active) return;
+        setMessages(m);
+        setPeerReadAt(peer);
+        signalUnreadChanged();
+      } catch (e) {
+        if (active) setError((e as Error).message);
+      }
+    };
     load();
     const timer = setInterval(load, 5000);
     return () => {
@@ -70,6 +85,11 @@ export default function DmThread({
     const msg = await sendDirectMessage(conversationId, text);
     setMessages((prev) => [...(prev ?? []), msg]);
   };
+
+  // The receipt (Delivered/Read) is shown only under my most recent message.
+  const lastMineIndex = messages
+    ? messages.map((m) => m.senderId === currentUserId).lastIndexOf(true)
+    : -1;
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -130,6 +150,15 @@ export default function DmThread({
                     className={`mt-1 text-[9px] text-muted ${mine ? "text-right" : "text-left"}`}
                   >
                     {clockTime(m.createdAt)}
+                    {mine && i === lastMineIndex && (
+                      <span>
+                        {" · "}
+                        {peerReadAt &&
+                        new Date(peerReadAt).getTime() >= new Date(m.createdAt).getTime()
+                          ? "Read"
+                          : "Delivered"}
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>

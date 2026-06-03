@@ -465,6 +465,73 @@ begin
 end;
 $$;
 
+-- ===========================================================================
+-- READ RECEIPTS + UNREAD BADGE
+-- ===========================================================================
+
+-- The OTHER participant's last-read time for a conversation. Powers the
+-- "Delivered"/"Read" receipt under your own sent messages: a message you sent is
+-- "Read" once this timestamp is at/after it. Participant-gated; returns null if
+-- the other person has never opened the thread (i.e. nothing read yet).
+create or replace function public.dm_peer_read(conversation_id uuid)
+returns timestamptz
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+declare
+  me   uuid := auth.uid();
+  peer uuid;
+begin
+  select case when c.user_lo = me then c.user_hi else c.user_lo end
+    into peer
+    from public.dm_conversations c
+    where c.id = conversation_id and (c.user_lo = me or c.user_hi = me);
+  if peer is null then raise exception 'not a participant'; end if;
+  return (
+    select last_read_at from public.dm_reads r
+    where r.conv_id = conversation_id and r.user_id = peer
+  );
+end;
+$$;
+
+-- Total unread messages for the caller across all DMs PLUS every channel they
+-- have joined — the single number behind the Messages tab badge in the nav.
+-- Counts only messages from other people that arrived after the caller's
+-- last-read marker for that conversation/channel.
+create or replace function public.unread_total()
+returns integer
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select (
+    coalesce((
+      select count(*)
+      from public.dm_messages m
+      join public.dm_conversations c on c.id = m.conv_id
+      where (c.user_lo = auth.uid() or c.user_hi = auth.uid())
+        and m.sender_id <> auth.uid()
+        and m.created_at > coalesce(
+          (select last_read_at from public.dm_reads r
+           where r.conv_id = c.id and r.user_id = auth.uid()), 'epoch')
+    ), 0)
+    +
+    coalesce((
+      select count(*)
+      from public.channel_messages m
+      join public.channel_members mem
+        on mem.channel_id = m.channel_id and mem.user_id = auth.uid()
+      where m.sender_id <> auth.uid()
+        and m.created_at > coalesce(
+          (select last_read_at from public.channel_reads r
+           where r.channel_id = m.channel_id and r.user_id = auth.uid()), 'epoch')
+    ), 0)
+  )::int;
+$$;
+
 -- ---------------------------------------------------------------------------
 -- Let signed-in users call these via Supabase RPC.
 -- ---------------------------------------------------------------------------
@@ -472,6 +539,8 @@ grant execute on function public.dm_start(uuid)            to authenticated;
 grant execute on function public.dm_list()                 to authenticated;
 grant execute on function public.dm_thread(uuid)           to authenticated;
 grant execute on function public.dm_send(uuid, text)       to authenticated;
+grant execute on function public.dm_peer_read(uuid)        to authenticated;
+grant execute on function public.unread_total()            to authenticated;
 grant execute on function public.channel_list()            to authenticated;
 grant execute on function public.channel_join(uuid)        to authenticated;
 grant execute on function public.channel_leave(uuid)       to authenticated;

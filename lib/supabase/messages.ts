@@ -66,6 +66,18 @@ export async function sendDirectMessage(
   return toDmMessage((data as Record<string, unknown>[])[0]);
 }
 
+/**
+ * The other person's last-read time for a conversation (ISO string, or null if
+ * they've never opened it). Used to show "Read" vs "Delivered" on your messages.
+ */
+export async function getPeerLastRead(conversationId: string): Promise<string | null> {
+  const { data, error } = await createClient().rpc("dm_peer_read", {
+    conversation_id: conversationId,
+  });
+  if (error) throw new Error(`getPeerLastRead failed: ${error.message}`);
+  return (data as string | null) ?? null;
+}
+
 function toDmMessage(r: Record<string, unknown>): DmMessage {
   return {
     id: r.id as string,
@@ -156,6 +168,27 @@ function toChannelMessage(r: Record<string, unknown>): ChannelMessage {
     body: r.body as string,
     createdAt: r.created_at as string,
   };
+}
+
+// --- Unread badge ----------------------------------------------------------
+
+/** Total unread messages across DMs + joined channels — for the nav badge. */
+export async function getUnreadTotal(): Promise<number> {
+  const { data, error } = await createClient().rpc("unread_total");
+  if (error) throw new Error(`getUnreadTotal failed: ${error.message}`);
+  return Number(data ?? 0);
+}
+
+/**
+ * Fire-and-forget signal that the unread count may have changed (e.g. just
+ * opened a thread, which marks it read). The nav badge listens for this so it
+ * updates immediately instead of waiting for its next poll.
+ */
+export const UNREAD_REFRESH_EVENT = "unread:refresh";
+export function signalUnreadChanged() {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event(UNREAD_REFRESH_EVENT));
+  }
 }
 
 // --- Shared formatting -----------------------------------------------------

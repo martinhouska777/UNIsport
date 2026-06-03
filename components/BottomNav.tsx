@@ -2,13 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import { getUnreadTotal, UNREAD_REFRESH_EVENT } from "@/lib/supabase/messages";
 
 type Tab = {
   href: string;
   label: string;
   icon: ReactNode;
-  hasUnread?: boolean;
 };
 
 const iconProps = {
@@ -49,7 +49,6 @@ const tabs: Tab[] = [
   {
     href: "/messages",
     label: "Messages",
-    hasUnread: true,
     icon: (
       <svg {...iconProps}>
         <path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.2A8 8 0 1 1 21 12z" />
@@ -70,6 +69,25 @@ const tabs: Tab[] = [
 
 export default function BottomNav() {
   const pathname = usePathname();
+  const [unread, setUnread] = useState(0);
+
+  // Keep the Messages badge live: poll, refetch when the route changes, and
+  // listen for the in-app signal fired right after a thread is marked read.
+  useEffect(() => {
+    let active = true;
+    const refresh = () =>
+      getUnreadTotal()
+        .then((n) => active && setUnread(n))
+        .catch(() => {});
+    refresh();
+    const timer = setInterval(refresh, 10000);
+    window.addEventListener(UNREAD_REFRESH_EVENT, refresh);
+    return () => {
+      active = false;
+      clearInterval(timer);
+      window.removeEventListener(UNREAD_REFRESH_EVENT, refresh);
+    };
+  }, [pathname]);
 
   return (
     <nav className="sticky bottom-0 z-10 border-t border-border bg-surface">
@@ -87,11 +105,13 @@ export default function BottomNav() {
               >
                 <span className="relative">
                   {tab.icon}
-                  {tab.hasUnread && (
+                  {tab.href === "/messages" && unread > 0 && (
                     <span
-                      aria-label="unread messages"
-                      className="absolute -right-1 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-surface bg-danger"
-                    />
+                      aria-label={`${unread} unread messages`}
+                      className="absolute -right-2 -top-1.5 flex h-[15px] min-w-[15px] items-center justify-center rounded-full border border-surface bg-danger px-1 text-[9px] font-semibold leading-none text-primary-contrast"
+                    >
+                      {unread > 9 ? "9+" : unread}
+                    </span>
                   )}
                 </span>
                 {tab.label}

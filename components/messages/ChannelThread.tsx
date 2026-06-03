@@ -5,6 +5,7 @@ import {
   getChannelThread,
   sendChannelMessage,
   joinChannel,
+  signalUnreadChanged,
   clockTime,
   type ChannelMessage,
 } from "@/lib/supabase/messages";
@@ -72,7 +73,11 @@ export default function ChannelThread({
     let active = true;
     const load = () =>
       getChannelThread(channelId)
-        .then((m) => active && setMessages(m))
+        .then((m) => {
+          if (!active) return;
+          setMessages(m);
+          signalUnreadChanged(); // reading the channel cleared its unread count
+        })
         .catch((e) => active && setError((e as Error).message));
     load();
     const timer = setInterval(load, 5000);
