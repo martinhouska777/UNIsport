@@ -10,11 +10,11 @@
   theme tokens (rule 1); inputs stay text-base so phones don't auto-zoom.
 */
 import { useEffect, useState } from "react";
-import { primaryActivities } from "@/lib/onboarding";
-import { verifiedGyms } from "@/lib/onboarding";
+import { primaryActivities, cardioTypes, verifiedGyms } from "@/lib/onboarding";
 import {
   saveWorkout,
   updateWorkout,
+  type DistanceUnit,
   type WorkoutDraft,
   type WorkoutExercise,
   type WorkoutLog,
@@ -49,9 +49,20 @@ export default function LogSessionSheet({
   const [exercises, setExercises] = useState<WorkoutExercise[]>(
     existing?.exercises.length ? existing.exercises : [emptyExercise()],
   );
+  // Running / cardio metrics.
+  const [cardioType, setCardioType] = useState(existing?.metrics.cardioType ?? "");
+  const [distance, setDistance] = useState(existing?.metrics.distance ?? "");
+  const [unit, setUnit] = useState<DistanceUnit>(existing?.metrics.unit ?? "km");
+  const [duration, setDuration] = useState(existing?.metrics.duration ?? "");
   const [note, setNote] = useState(existing?.note ?? "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const isRunning = activity === "running";
+  const isCardio = activity === "cardio";
+  const usesExercises = !isRunning && !isCardio; // gym / other
+  // Running uses km/mi; cardio also allows metres (rowing, swimming).
+  const unitOptions: DistanceUnit[] = isCardio ? ["km", "mi", "m"] : ["km", "mi"];
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -69,7 +80,15 @@ export default function LogSessionSheet({
     if (!date || busy) return;
     setBusy(true);
     setError(null);
-    const draft: WorkoutDraft = { date, activity, gym, partner, exercises, note };
+    const draft: WorkoutDraft = {
+      date,
+      activity,
+      gym,
+      partner,
+      exercises,
+      metrics: { cardioType, distance, unit, duration },
+      note,
+    };
     const res = existing
       ? await updateWorkout(userId, existing.id, draft)
       : await saveWorkout(userId, draft);
@@ -127,12 +146,14 @@ export default function LogSessionSheet({
             ))}
           </div>
 
-          <div className={`${labelCls} mt-4`}>Gym (optional)</div>
+          <div className={`${labelCls} mt-4`}>
+            {usesExercises ? "Gym (optional)" : "Where (optional)"}
+          </div>
           <input
             list="gym-options"
             value={gym}
             onChange={(e) => setGym(e.target.value)}
-            placeholder="Where did you train?"
+            placeholder={isRunning ? "Route or area" : "Where did you train?"}
             className={inputCls}
           />
           <datalist id="gym-options">
@@ -149,58 +170,123 @@ export default function LogSessionSheet({
             className={inputCls}
           />
 
-          {/* Exercises */}
-          <div className="mt-5 flex items-center justify-between">
-            <span className={labelCls.replace("mb-1.5", "mb-0")}>Exercises</span>
-            <span className="text-[10px] text-muted">name · sets · reps · weight</span>
-          </div>
-          <div className="mt-2 flex flex-col gap-2">
-            {exercises.map((ex, i) => (
-              <div key={i} className="flex items-center gap-1.5">
+          {/* Exercises — gym / other */}
+          {usesExercises && (
+            <>
+              <div className="mt-5 flex items-center justify-between">
+                <span className={labelCls.replace("mb-1.5", "mb-0")}>Exercises</span>
+                <span className="text-[10px] text-muted">name · sets · reps · weight</span>
+              </div>
+              <div className="mt-2 flex flex-col gap-2">
+                {exercises.map((ex, i) => (
+                  <div key={i} className="flex items-center gap-1.5">
+                    <input
+                      value={ex.name}
+                      onChange={(e) => setExercise(i, { name: e.target.value })}
+                      placeholder="Exercise"
+                      className={`${inputCls} flex-1`}
+                    />
+                    <input
+                      value={ex.sets}
+                      onChange={(e) => setExercise(i, { sets: e.target.value.replace(/[^\d]/g, "") })}
+                      inputMode="numeric"
+                      placeholder="Sets"
+                      className={`${inputCls} w-[56px] px-2 text-center`}
+                    />
+                    <input
+                      value={ex.reps}
+                      onChange={(e) => setExercise(i, { reps: e.target.value.replace(/[^\d]/g, "") })}
+                      inputMode="numeric"
+                      placeholder="Reps"
+                      className={`${inputCls} w-[56px] px-2 text-center`}
+                    />
+                    <input
+                      value={ex.weight}
+                      onChange={(e) => setExercise(i, { weight: e.target.value })}
+                      placeholder="Wt"
+                      className={`${inputCls} w-[64px] px-2 text-center`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeExercise(i)}
+                      aria-label="Remove exercise"
+                      className="flex h-9 w-8 flex-shrink-0 items-center justify-center rounded-lg text-muted hover:text-danger"
+                    >
+                      <IconTrash size={15} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={addExercise}
+                className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-surface py-2.5 text-[13px] font-medium text-muted active:border-primary/40 active:text-primary"
+              >
+                <IconPlus size={15} /> Add exercise
+              </button>
+            </>
+          )}
+
+          {/* Cardio type — cardio only */}
+          {isCardio && (
+            <>
+              <div className={`${labelCls} mt-5`}>Cardio type</div>
+              <div className="flex flex-wrap gap-1.5">
+                {cardioTypes.map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setCardioType(c)}
+                    className={`rounded-full border px-3 py-1.5 text-[12px] font-medium ${
+                      cardioType === c
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border bg-surface text-text"
+                    }`}
+                  >
+                    {c}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+
+          {/* Distance + duration — running / cardio */}
+          {(isRunning || isCardio) && (
+            <>
+              <div className={`${labelCls} mt-5`}>Distance (optional)</div>
+              <div className="flex items-center gap-1.5">
                 <input
-                  value={ex.name}
-                  onChange={(e) => setExercise(i, { name: e.target.value })}
-                  placeholder="Exercise"
+                  value={distance}
+                  onChange={(e) => setDistance(e.target.value.replace(/[^\d.]/g, ""))}
+                  inputMode="decimal"
+                  placeholder="e.g. 5.2"
                   className={`${inputCls} flex-1`}
                 />
-                <input
-                  value={ex.sets}
-                  onChange={(e) => setExercise(i, { sets: e.target.value.replace(/[^\d]/g, "") })}
-                  inputMode="numeric"
-                  placeholder="Sets"
-                  className={`${inputCls} w-[56px] px-2 text-center`}
-                />
-                <input
-                  value={ex.reps}
-                  onChange={(e) => setExercise(i, { reps: e.target.value.replace(/[^\d]/g, "") })}
-                  inputMode="numeric"
-                  placeholder="Reps"
-                  className={`${inputCls} w-[56px] px-2 text-center`}
-                />
-                <input
-                  value={ex.weight}
-                  onChange={(e) => setExercise(i, { weight: e.target.value })}
-                  placeholder="Wt"
-                  className={`${inputCls} w-[64px] px-2 text-center`}
-                />
-                <button
-                  type="button"
-                  onClick={() => removeExercise(i)}
-                  aria-label="Remove exercise"
-                  className="flex h-9 w-8 flex-shrink-0 items-center justify-center rounded-lg text-muted hover:text-danger"
-                >
-                  <IconTrash size={15} />
-                </button>
+                <div className="flex overflow-hidden rounded-xl border border-border">
+                  {unitOptions.map((u) => (
+                    <button
+                      key={u}
+                      type="button"
+                      onClick={() => setUnit(u)}
+                      className={`px-3 py-2.5 text-[12px] font-semibold ${
+                        unit === u ? "bg-primary text-primary-contrast" : "bg-surface-2 text-muted"
+                      }`}
+                    >
+                      {u}
+                    </button>
+                  ))}
+                </div>
               </div>
-            ))}
-          </div>
-          <button
-            type="button"
-            onClick={addExercise}
-            className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-surface py-2.5 text-[13px] font-medium text-muted active:border-primary/40 active:text-primary"
-          >
-            <IconPlus size={15} /> Add exercise
-          </button>
+
+              <div className={`${labelCls} mt-4`}>Duration (optional)</div>
+              <input
+                value={duration}
+                onChange={(e) => setDuration(e.target.value)}
+                placeholder="e.g. 45 min or 1:05:00"
+                className={inputCls}
+              />
+            </>
+          )}
 
           <div className={`${labelCls} mt-5`}>Note (optional)</div>
           <input

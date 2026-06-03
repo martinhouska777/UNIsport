@@ -17,13 +17,25 @@ export type WorkoutExercise = {
   weight: string;
 };
 
+export type DistanceUnit = "km" | "mi" | "m";
+
+// Activity-specific metrics (running & cardio). All optional; kept as strings so
+// the form is forgiving (distance "5.2", duration "45 min" or "1:05:00").
+export type WorkoutMetrics = {
+  cardioType?: string; // cardio only — Cycling / Rowing / Swimming / …
+  distance?: string;
+  unit?: DistanceUnit;
+  duration?: string;
+};
+
 export type WorkoutLog = {
   id: string;
   date: string; // ISO yyyy-mm-dd
   activity: string; // 'gym' | 'running' | 'cardio' | 'other'
   gym: string;
   partner: string;
-  exercises: WorkoutExercise[];
+  exercises: WorkoutExercise[]; // gym / other
+  metrics: WorkoutMetrics; // running / cardio
   note: string;
 };
 
@@ -37,6 +49,7 @@ type Row = {
   gym: string | null;
   partner: string | null;
   exercises: WorkoutExercise[] | null;
+  metrics: WorkoutMetrics | null;
   note: string | null;
 };
 
@@ -47,8 +60,22 @@ const rowToLog = (r: Row): WorkoutLog => ({
   gym: r.gym ?? "",
   partner: r.partner ?? "",
   exercises: Array.isArray(r.exercises) ? r.exercises : [],
+  metrics: r.metrics && typeof r.metrics === "object" ? r.metrics : {},
   note: r.note ?? "",
 });
+
+// Keep only the metrics that apply to the activity, dropping empty fields.
+const cleanMetrics = (activity: string, m: WorkoutMetrics): WorkoutMetrics => {
+  if (activity !== "running" && activity !== "cardio") return {};
+  const out: WorkoutMetrics = {};
+  if (activity === "cardio" && m.cardioType?.trim()) out.cardioType = m.cardioType.trim();
+  if (m.distance?.trim()) {
+    out.distance = m.distance.trim();
+    out.unit = m.unit ?? "km";
+  }
+  if (m.duration?.trim()) out.duration = m.duration.trim();
+  return out;
+};
 
 const draftToRow = (userId: string, d: WorkoutDraft) => ({
   user_id: userId,
@@ -56,10 +83,14 @@ const draftToRow = (userId: string, d: WorkoutDraft) => ({
   activity: d.activity,
   gym: d.gym.trim() || null,
   partner: d.partner.trim() || null,
-  // Drop fully-empty exercise rows so blank lines don't get stored.
-  exercises: d.exercises.filter(
-    (e) => e.name.trim() || e.sets.trim() || e.reps.trim() || e.weight.trim(),
-  ),
+  // Exercises only apply to gym/other; drop fully-empty rows so blanks aren't stored.
+  exercises:
+    d.activity === "running" || d.activity === "cardio"
+      ? []
+      : d.exercises.filter(
+          (e) => e.name.trim() || e.sets.trim() || e.reps.trim() || e.weight.trim(),
+        ),
+  metrics: cleanMetrics(d.activity, d.metrics),
   note: d.note.trim(),
 });
 
@@ -91,7 +122,7 @@ export async function listMonth(
   }
   const { data, error } = await createClient()
     .from("workout_logs")
-    .select("id, log_date, activity, gym, partner, exercises, note")
+    .select("id, log_date, activity, gym, partner, exercises, metrics, note")
     .eq("user_id", userId)
     .gte("log_date", fromIso)
     .lte("log_date", toIso)
@@ -173,4 +204,16 @@ export function activityLabel(activity: string): string {
 export function exerciseSummary(e: WorkoutExercise): string {
   const setsReps = [e.sets.trim(), e.reps.trim()].filter(Boolean).join("×");
   return [e.name.trim(), setsReps, e.weight.trim()].filter(Boolean).join(" · ");
+}
+
+/**
+ * One-line summary of a running/cardio log's metrics, e.g.
+ * "5.2 km · 24:30" or "Cycling · 20 km · 45 min". Empty for gym/other.
+ */
+export function metricsSummary(log: WorkoutLog): string {
+  const m = log.metrics ?? {};
+  const dist = m.distance ? `${m.distance} ${m.unit ?? "km"}` : "";
+  if (log.activity === "running") return [dist, m.duration].filter(Boolean).join(" · ");
+  if (log.activity === "cardio") return [m.cardioType, dist, m.duration].filter(Boolean).join(" · ");
+  return "";
 }

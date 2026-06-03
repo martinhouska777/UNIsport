@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import {
   activityLabel,
   exerciseSummary,
+  metricsSummary,
   type WorkoutLog,
 } from "@/lib/supabase/workouts";
 import { IconX, IconUser } from "@/components/icons";
@@ -70,11 +71,19 @@ export default function SessionSheet({
         <div className="flex flex-col divide-y divide-border pb-6">
           {logs.map((log) => {
             const solo = !log.partner || log.partner.toLowerCase() === "solo";
+            const summary = metricsSummary(log);
             return (
               <div key={log.id} className="px-4 py-3">
                 {/* Activity + gym */}
                 <div className="text-[14px] font-medium text-text">{activityLabel(log.activity)}</div>
                 {log.gym && <div className="mt-0.5 text-[11px] text-muted">{log.gym}</div>}
+
+                {/* Running / cardio metrics */}
+                {summary && (
+                  <div className="mt-2 inline-block rounded-lg border border-primary bg-primary/10 px-2.5 py-1 text-[12px] font-medium text-primary">
+                    {summary}
+                  </div>
+                )}
 
                 {/* Partner */}
                 <div className="mt-2.5 flex items-center gap-2.5">

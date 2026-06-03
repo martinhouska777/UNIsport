@@ -22,10 +22,14 @@ create table if not exists public.workout_logs (
   activity   text not null default 'gym',         -- 'gym' | 'running' | 'cardio' | 'other'
   gym        text,                                 -- optional gym name
   partner    text,                                 -- optional training-partner name
-  exercises  jsonb not null default '[]'::jsonb,   -- [{ name, sets, reps, weight }]
+  exercises  jsonb not null default '[]'::jsonb,   -- gym/other: [{ name, sets, reps, weight }]
+  metrics    jsonb not null default '{}'::jsonb,   -- running/cardio: { cardioType?, distance?, unit?, duration? }
   note       text not null default '',
   created_at timestamptz not null default now()
 );
+
+-- Activity-specific metrics were added after the first version; add to existing DBs.
+alter table public.workout_logs add column if not exists metrics jsonb not null default '{}'::jsonb;
 
 create index if not exists workout_logs_user_date_idx
   on public.workout_logs (user_id, log_date);
