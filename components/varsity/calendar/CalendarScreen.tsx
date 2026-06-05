@@ -12,6 +12,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Sheet from "@/components/varsity/Sheet";
+import WorkoutDetail from "@/components/varsity/calendar/WorkoutDetail";
 import { useAppState } from "@/components/AppState";
 import { fetchLogsInRange, type LogEntry } from "@/lib/varsity/logStore";
 import { formatMetrics } from "@/lib/varsity/logParse";
@@ -36,10 +37,12 @@ function DaySheet({
   label,
   logs,
   onClose,
+  onOpen,
 }: {
   label: string;
   logs: LogEntry[];
   onClose: () => void;
+  onOpen: (log: LogEntry) => void;
 }) {
   return (
     <Sheet title={label} onClose={onClose}>
@@ -52,9 +55,11 @@ function DaySheet({
           {logs.map((l) => {
             const metrics = formatMetrics(l.minutes, l.metres, l.split);
             return (
-              <div
+              <button
                 key={l.id}
-                className="flex items-start gap-3 rounded-2xl border border-border bg-surface-2 px-3.5 py-3"
+                type="button"
+                onClick={() => onOpen(l)}
+                className="flex items-start gap-3 rounded-2xl border border-border bg-surface-2 px-3.5 py-3 text-left active:bg-surface"
               >
                 <span
                   className="mt-1 h-2.5 w-2.5 flex-shrink-0 rounded-full"
@@ -63,14 +68,15 @@ function DaySheet({
                 <div className="min-w-0 flex-1">
                   <div className="text-[13px] font-semibold text-text">{l.title}</div>
                   {metrics && <div className="mt-0.5 text-[12px] text-text/90">{metrics}</div>}
-                  {l.note && <div className="mt-0.5 text-[11px] text-muted">{l.note}</div>}
+                  {l.note && <div className="mt-0.5 truncate text-[11px] text-muted">{l.note}</div>}
                 </div>
                 {l.source === "plan" && (
                   <span className="flex-shrink-0 rounded-md border border-border px-2 py-0.5 text-[9px] font-medium uppercase tracking-wide text-muted">
                     Plan
                   </span>
                 )}
-              </div>
+                <IconChevronRight size={15} className="mt-0.5 flex-shrink-0 text-muted" />
+              </button>
             );
           })}
         </div>
@@ -94,6 +100,7 @@ export default function CalendarScreen() {
   const [view, setView] = useState({ y: now.getFullYear(), m: now.getMonth() });
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [picked, setPicked] = useState<{ iso: string; label: string } | null>(null);
+  const [openLog, setOpenLog] = useState<LogEntry | null>(null); // full-screen detail
 
   useEffect(() => {
     let active = true;
@@ -282,8 +289,11 @@ export default function CalendarScreen() {
           label={picked.label}
           logs={logsByDay[Number(picked.iso.split("-")[2])] ?? []}
           onClose={() => setPicked(null)}
+          onOpen={(log) => setOpenLog(log)}
         />
       )}
+
+      {openLog && <WorkoutDetail log={openLog} onClose={() => setOpenLog(null)} />}
     </div>
   );
 }
