@@ -122,6 +122,28 @@ export async function fetchLogsInRange(
   return (data as Row[]).map(rowToEntry);
 }
 
+/* ── Read all logs of one category, newest first (powers "Compare") ── */
+export async function fetchLogsByCategory(
+  athleteId: string,
+  category: string,
+): Promise<LogEntry[]> {
+  if (!athleteId) return [];
+  if (!hasSupabaseEnv()) {
+    return loadLocal(athleteId)
+      .filter((l) => l.category === category)
+      .sort((a, b) => b.logDate.localeCompare(a.logDate));
+  }
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("varsity_logs")
+    .select("*")
+    .eq("athlete_id", athleteId)
+    .eq("category", category)
+    .order("log_date", { ascending: false });
+  if (error || !data) return [];
+  return (data as Row[]).map(rowToEntry);
+}
+
 /* ── Save a PLAN log (one per slot → update if it exists, else insert) ── */
 export async function savePlanLog(athleteId: string, draft: LogDraft): Promise<{ error?: string }> {
   if (!hasSupabaseEnv()) {

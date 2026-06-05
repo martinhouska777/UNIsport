@@ -293,7 +293,9 @@ export default function CalendarScreen() {
         />
       )}
 
-      {openLog && <WorkoutDetail log={openLog} onClose={() => setOpenLog(null)} />}
+      {openLog && (
+        <WorkoutDetail key={openLog.id} log={openLog} userId={userId} onClose={() => setOpenLog(null)} />
+      )}
     </div>
   );
 }
