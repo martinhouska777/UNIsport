@@ -27,6 +27,67 @@ function Stat({ label, value }: { label: string; value: string }) {
   );
 }
 
+/*
+  Pull the extra erg numbers the scanner tucks into the note ("7:32 · r24 ·
+  250W · …"). Each is optional — only what's actually present is returned. Time
+  is anchored to the start so a user's own note text can't be mistaken for it.
+*/
+function ergExtras(note: string) {
+  const time = note.match(/^(\d{1,3}:\d{2})/)?.[1] ?? null;
+  const rate = note.match(/\br(\d{1,2})\b/i)?.[1] ?? null;
+  const watts = note.match(/\b(\d{2,4})\s*W\b/)?.[1] ?? null;
+  return { time, rate, watts };
+}
+
+// A single number on the erg "monitor" panel.
+function ErgCell({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="text-center">
+      <div className="text-[8px] font-semibold uppercase tracking-[0.12em] text-muted">{label}</div>
+      <div className="mt-1 text-lg font-semibold leading-none text-text tabular-nums">{value}</div>
+    </div>
+  );
+}
+
+/*
+  ERG RESULT — a Concept2-style summary for erg logs: the /500m split as the
+  headline (the number that matters on an erg), then distance / time / rate /
+  watts underneath. Reads stored fields + ergExtras(note). All theme tokens.
+*/
+function ErgResult({ log }: { log: LogEntry }) {
+  const { time, rate, watts } = ergExtras(log.note);
+  const timeLabel = time ?? (log.minutes != null ? `${log.minutes}:00` : null);
+  const cells: { label: string; value: string }[] = [];
+  if (log.metres != null) cells.push({ label: "Metres", value: log.metres.toLocaleString() });
+  if (timeLabel) cells.push({ label: "Time", value: timeLabel });
+  if (rate) cells.push({ label: "s/m", value: rate });
+  if (watts) cells.push({ label: "Watts", value: watts });
+
+  return (
+    <div className="mt-5 overflow-hidden rounded-2xl border border-border bg-surface-2">
+      <div className="border-b border-border px-4 py-1.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-muted">
+        Erg result
+      </div>
+      <div className="px-4 py-4 text-center">
+        <div className="text-4xl font-semibold leading-none text-primary tabular-nums">
+          {log.split ?? "—"}
+        </div>
+        <div className="mt-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-muted">/500m split</div>
+      </div>
+      {cells.length > 0 && (
+        <div
+          className="grid gap-2 border-t border-border px-4 py-3"
+          style={{ gridTemplateColumns: `repeat(${cells.length}, minmax(0, 1fr))` }}
+        >
+          {cells.map((c) => (
+            <ErgCell key={c.label} label={c.label} value={c.value} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function WorkoutDetail({ log, onClose }: { log: LogEntry; onClose: () => void }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -75,8 +136,10 @@ export default function WorkoutDetail({ log, onClose }: { log: LogEntry; onClose
             {log.period && ` · ${log.period}`}
           </div>
 
-          {/* Result tiles (or a one-line summary fallback) */}
-          {tiles.length > 0 ? (
+          {/* Erg logs get the Concept2-style result; everything else gets tiles. */}
+          {cat === "erg" ? (
+            <ErgResult log={log} />
+          ) : tiles.length > 0 ? (
             <div className="mt-5 flex gap-2">
               {tiles.map((t) => (
                 <Stat key={t.label} label={t.label} value={t.value} />
