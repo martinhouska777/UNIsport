@@ -273,6 +273,19 @@ export function exerciseSummary(e: WorkoutExercise, unit: WeightUnit = "kg"): st
   return [e.name.trim(), setsLabel, topLabel].filter(Boolean).join(" · ");
 }
 
+/** Distinct muscle groups trained in a log, in first-seen order (gym/other). */
+export function logMuscles(log: WorkoutLog): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const e of log.exercises) {
+    if (e.muscle && !seen.has(e.muscle)) {
+      seen.add(e.muscle);
+      out.push(e.muscle);
+    }
+  }
+  return out;
+}
+
 /**
  * One-line summary of a running/cardio log's metrics, e.g.
  * "5.2 km · 24:30" or "Cycling · 20 km · 45 min". Empty for gym/other.

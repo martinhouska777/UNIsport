@@ -1,6 +1,6 @@
 "use client";
 
-import type { WorkoutLog } from "@/lib/supabase/workouts";
+import { activityLabel, logMuscles, type WorkoutLog } from "@/lib/supabase/workouts";
 
 // Monday-first weekday header, matching the rest of the app.
 const WEEK = ["M", "T", "W", "T", "F", "S", "S"];
@@ -9,10 +9,26 @@ const WEEK = ["M", "T", "W", "T", "F", "S", "S"];
 const isoFor = (year: number, month: number, day: number) =>
   `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 
+// Short, readable label for a muscle group on the tiny calendar tiles.
+const SHORT_MUSCLE: Record<string, string> = {
+  Chest: "Chest",
+  Back: "Back",
+  Shoulders: "Delts",
+  Biceps: "Bis",
+  Triceps: "Tris",
+  Legs: "Legs",
+  Glutes: "Glute",
+  Calves: "Calf",
+  Core: "Core",
+  Forearms: "Fore",
+};
+const short = (label: string) => SHORT_MUSCLE[label] ?? label.slice(0, 5);
+
 /*
-  Month calendar driven by the user's logged workouts. A day with one or more
-  logged sessions is filled crimson and tappable (opens that day's sessions);
-  today is outlined; everything else is dim.
+  Month calendar driven by the user's logged workouts. Each trained day shows the
+  BODY PARTS worked that day as small chips (gym/other), or the activity name for
+  runs/cardio. Tap a day to open its sessions. Today is outlined; rest days dim.
+  All colors are theme tokens (rule 1).
 */
 export default function SessionCalendar({
   logs,
@@ -31,16 +47,27 @@ export default function SessionCalendar({
   const firstDow = new Date(year, month, 1).getDay(); // 0=Sun
   const lead = (firstDow + 6) % 7; // shift so Monday is the first column
 
-  // Count of logged sessions per day-of-month + the first photo found that day
-  // (only days in the shown month). The photo turns a day into a "memory" tile.
-  const countByDay = new Map<number, number>();
-  const photoByDay = new Map<number, string>();
-  for (const l of logs) {
-    const d = new Date(`${l.date}T00:00:00`);
-    if (d.getFullYear() === year && d.getMonth() === month) {
-      const day = d.getDate();
-      countByDay.set(day, (countByDay.get(day) ?? 0) + 1);
-      if (l.photos.length > 0 && !photoByDay.has(day)) photoByDay.set(day, l.photos[0]);
+  // Per day-of-month: the distinct body parts trained (gym/other), falling back
+  // to the distinct activity names (Run / Cardio) when there are no muscles.
+  const chipsByDay = new Map<number, string[]>();
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dayLogs = logs.filter((l) => {
+      const d = new Date(`${l.date}T00:00:00`);
+      return d.getFullYear() === year && d.getMonth() === month && d.getDate() === day;
+    });
+    if (dayLogs.length === 0) continue;
+    const muscles: string[] = [];
+    for (const l of dayLogs) for (const m of logMuscles(l)) if (!muscles.includes(m)) muscles.push(m);
+    if (muscles.length > 0) {
+      chipsByDay.set(day, muscles);
+    } else {
+      // No tagged muscles → show the activity name(s) instead.
+      const acts: string[] = [];
+      for (const l of dayLogs) {
+        const a = activityLabel(l.activity);
+        if (!acts.includes(a)) acts.push(a);
+      }
+      chipsByDay.set(day, acts);
     }
   }
 
@@ -69,46 +96,48 @@ export default function SessionCalendar({
       <div className="grid grid-cols-7 gap-1">
         {cells.map((n, idx) => {
           if (n === null) return <div key={idx} />;
-          const count = countByDay.get(n) ?? 0;
-          const hasSession = count > 0;
-          const photo = photoByDay.get(n);
+          const chips = chipsByDay.get(n);
+          const hasSession = !!chips;
           const isToday = n === today;
-          const cls = photo
-            ? "cursor-pointer text-text"
-            : hasSession
-              ? "bg-primary text-primary-contrast cursor-pointer"
-              : isToday
-                ? "border border-primary bg-primary/15 text-text cursor-default"
-                : "bg-surface-2 text-muted cursor-default";
-          const ring = isToday && (hasSession || photo)
-            ? photo
-              ? "ring-1 ring-primary"
-              : "ring-1 ring-primary-contrast"
-            : "";
+          const cls = hasSession
+            ? "border border-primary/40 bg-primary/15 cursor-pointer"
+            : isToday
+              ? "border border-primary bg-primary/10 cursor-default"
+              : "bg-surface-2 cursor-default";
+          const extra = chips ? chips.length - 2 : 0;
           return (
             <button
               key={idx}
               type="button"
               disabled={!hasSession}
               onClick={() => hasSession && onPickDate(isoFor(year, month, n))}
-              aria-label={hasSession ? `${count} session${count > 1 ? "s" : ""} on day ${n}` : `Day ${n}`}
-              className={`relative flex aspect-square items-center justify-center overflow-hidden rounded-md text-[11px] ${cls} ${ring}`}
+              aria-label={hasSession ? `${chips!.join(", ")} on day ${n}` : `Day ${n}`}
+              className={`relative flex aspect-square flex-col items-stretch overflow-hidden rounded-md p-1 ${cls} ${
+                isToday ? "ring-1 ring-primary" : ""
+              }`}
             >
-              {photo && (
-                <>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={photo} alt="" className="absolute inset-0 h-full w-full object-cover" />
-                  <span className="absolute inset-0 bg-gradient-to-t from-background/85 via-background/10 to-transparent" />
-                </>
-              )}
-              <span className={photo ? "absolute bottom-0.5 left-1 font-semibold" : ""}>{n}</span>
-              {count > 1 && (
-                <span
-                  className={`absolute bottom-0.5 right-0.5 text-[7px] font-semibold leading-none ${
-                    photo ? "text-text" : "text-primary-contrast/90"
-                  }`}
-                >
-                  {count}
+              <span
+                className={`text-left text-[10px] font-medium leading-none ${
+                  hasSession || isToday ? "text-text" : "text-muted"
+                }`}
+              >
+                {n}
+              </span>
+              {chips && (
+                <span className="mt-auto flex flex-col gap-0.5">
+                  {chips.slice(0, 2).map((c) => (
+                    <span
+                      key={c}
+                      className="truncate rounded bg-primary/15 px-1 text-left text-[7px] font-medium leading-[1.4] text-primary"
+                    >
+                      {short(c)}
+                    </span>
+                  ))}
+                  {extra > 0 && (
+                    <span className="px-1 text-left text-[7px] font-medium leading-[1.3] text-muted">
+                      +{extra}
+                    </span>
+                  )}
                 </span>
               )}
             </button>
@@ -119,8 +148,8 @@ export default function SessionCalendar({
       {/* Legend */}
       <div className="mt-2.5 flex items-center gap-3 text-[9px] text-muted">
         <span className="flex items-center gap-1">
-          <span className="h-2.5 w-2.5 rounded-sm bg-primary" />
-          Session
+          <span className="h-2.5 w-2.5 rounded-sm border border-primary/40 bg-primary/15" />
+          Trained
         </span>
         <span className="flex items-center gap-1">
           <span className="h-2.5 w-2.5 rounded-sm bg-surface-2" />

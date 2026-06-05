@@ -9,6 +9,7 @@ import { createClient, hasSupabaseEnv } from "@/lib/supabase/client";
 import InlineEdit from "@/components/profile/InlineEdit";
 import SessionCalendar from "@/components/profile/SessionCalendar";
 import SessionSheet from "@/components/profile/SessionSheet";
+import WorkoutDetail from "@/components/profile/WorkoutDetail";
 import LogSessionSheet from "@/components/profile/LogSessionSheet";
 import PersonalRecords from "@/components/profile/PersonalRecords";
 import PhotoGrid from "@/components/profile/PhotoGrid";
@@ -39,6 +40,7 @@ export default function ProfilePage() {
   const [logs, setLogs] = useState<WorkoutLog[]>([]);
   const [sessionsCount, setSessionsCount] = useState(0);
   const [openDate, setOpenDate] = useState<string | null>(null); // day sheet
+  const [openLog, setOpenLog] = useState<WorkoutLog | null>(null); // full-screen workout detail
   const [logging, setLogging] = useState(false); // "Log session" (new) editor open
   const [editLog, setEditLog] = useState<WorkoutLog | null>(null); // editing an existing log
   const [editingPrefs, setEditingPrefs] = useState(false);
@@ -124,19 +126,21 @@ export default function ProfilePage() {
     setSessionsCount(r.total);
   };
 
-  // Edit a logged session: close the day sheet and reopen it in the editor.
+  // Edit a logged session: close the detail + day sheet and reopen it in the editor.
   const handleEditLog = (log: WorkoutLog) => {
+    setOpenLog(null);
     setOpenDate(null);
     setEditLog(log);
   };
 
-  // Delete a logged session, refresh, and close the day sheet if that day is now
-  // empty (use the freshly fetched logs, not the async state).
+  // Delete a logged session, refresh, close the detail, and close the day sheet
+  // if that day is now empty (use the freshly fetched logs, not the async state).
   const handleDeleteLog = async (log: WorkoutLog) => {
     if (userId) await deleteWorkout(userId, log.id);
     const r = await fetchLogs();
     setLogs(r.logs);
     setSessionsCount(r.total);
+    setOpenLog(null);
     if (!r.logs.some((l) => l.date === log.date)) setOpenDate(null);
   };
 
@@ -481,6 +485,14 @@ export default function ProfilePage() {
           date={openDate}
           logs={logs.filter((l) => l.date === openDate)}
           onClose={() => setOpenDate(null)}
+          onOpen={(log) => setOpenLog(log)}
+        />
+      )}
+
+      {openLog && (
+        <WorkoutDetail
+          log={openLog}
+          onBack={() => setOpenLog(null)}
           onEdit={handleEditLog}
           onDelete={handleDeleteLog}
         />
