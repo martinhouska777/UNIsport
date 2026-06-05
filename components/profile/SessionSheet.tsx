@@ -1,31 +1,37 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   activityLabel,
+  exerciseSummary,
   metricsSummary,
   type WorkoutLog,
 } from "@/lib/supabase/workouts";
-import { IconX, IconUser, IconChevronRight } from "@/components/icons";
+import { IconX, IconUser, IconPencil, IconTrash } from "@/components/icons";
 
 /*
-  Bottom sheet listing every workout logged on a given day as a compact,
-  tappable row. Tapping a row opens that workout on its own full screen
-  (WorkoutDetail), where edit / delete — and later the erg screen, Compare and
-  Garmin data — live. Closes on the X, the backdrop, or Escape. Colors are
-  theme tokens (rule 1).
+  Bottom sheet showing every workout logged on a given day. Closes on the X, on
+  the backdrop, or on Escape. Each logged session can be edited (reopens it in
+  the Log editor) or deleted (two-step confirm). Colors are theme tokens (rule 1).
 */
 export default function SessionSheet({
   date,
   logs,
   onClose,
-  onOpen,
+  onEdit,
+  onDelete,
 }: {
   date: string; // ISO yyyy-mm-dd
   logs: WorkoutLog[];
   onClose: () => void;
-  onOpen: (log: WorkoutLog) => void;
+  onEdit: (log: WorkoutLog) => void;
+  onDelete: (log: WorkoutLog) => Promise<void>;
 }) {
+  // Inline delete confirm + in-flight state, keyed by the log being acted on.
+  const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
+  // A tapped photo, shown full-screen.
+  const [viewer, setViewer] = useState<string | null>(null);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     document.addEventListener("keydown", onKey);
@@ -70,51 +76,152 @@ export default function SessionSheet({
           </button>
         </div>
 
-        {/* One tappable row per logged session */}
+        {/* One block per logged session */}
         <div className="flex flex-col divide-y divide-border pb-6">
           {logs.map((log) => {
             const solo = !log.partner || log.partner.toLowerCase() === "solo";
-            // The most useful single line under the activity name.
-            const subtitle =
-              metricsSummary(log) ||
-              log.gym ||
-              (!solo ? `with ${log.partner}` : null) ||
-              (log.exercises.length > 0
-                ? `${log.exercises.length} exercise${log.exercises.length === 1 ? "" : "s"}`
-                : "Solo session");
-            const photo = log.photos[0];
+            const summary = metricsSummary(log);
             return (
-              <button
-                key={log.id}
-                type="button"
-                onClick={() => onOpen(log)}
-                className="flex w-full items-center gap-3 px-4 py-3 text-left active:bg-surface-2"
-              >
-                {/* Thumbnail: first photo, or an activity avatar */}
-                {photo ? (
-                  <span className="h-11 w-11 shrink-0 overflow-hidden rounded-xl border border-border bg-surface-2">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={photo} alt="" className="h-full w-full object-cover" />
-                  </span>
-                ) : (
-                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-primary bg-primary/15 text-primary">
-                    <IconUser size={18} />
-                  </span>
+              <div key={log.id} className="px-4 py-3">
+                {/* Activity + gym, with edit / delete actions */}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="text-[14px] font-medium text-text">
+                      {activityLabel(log.activity)}
+                    </div>
+                    {log.gym && <div className="mt-0.5 text-[11px] text-muted">{log.gym}</div>}
+                  </div>
+                  <div className="flex flex-shrink-0 items-center gap-1.5">
+                    {confirmId === log.id ? (
+                      <>
+                        <button
+                          type="button"
+                          disabled={busyId === log.id}
+                          onClick={async () => {
+                            setBusyId(log.id);
+                            await onDelete(log);
+                            setConfirmId(null);
+                            setBusyId(null);
+                          }}
+                          className="rounded-lg bg-danger/15 px-2.5 py-1 text-[11px] font-medium text-danger disabled:opacity-50"
+                        >
+                          {busyId === log.id ? "Deleting…" : "Delete"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setConfirmId(null)}
+                          className="rounded-lg bg-surface-2 px-2.5 py-1 text-[11px] text-muted"
+                        >
+                          Cancel
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => onEdit(log)}
+                          aria-label="Edit session"
+                          className="flex h-7 w-7 items-center justify-center rounded-full bg-surface-2 text-muted"
+                        >
+                          <IconPencil size={13} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setConfirmId(log.id)}
+                          aria-label="Delete session"
+                          className="flex h-7 w-7 items-center justify-center rounded-full bg-surface-2 text-muted"
+                        >
+                          <IconTrash size={13} />
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* Running / cardio metrics */}
+                {summary && (
+                  <div className="mt-2 inline-block rounded-lg border border-primary bg-primary/10 px-2.5 py-1 text-[12px] font-medium text-primary">
+                    {summary}
+                  </div>
                 )}
 
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[14px] font-medium text-text">
-                    {activityLabel(log.activity)}
-                  </span>
-                  <span className="mt-0.5 block truncate text-[11px] text-muted">{subtitle}</span>
-                </span>
+                {/* Partner */}
+                <div className="mt-2.5 flex items-center gap-2.5">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-primary bg-primary/15 text-primary">
+                    <IconUser size={14} />
+                  </div>
+                  <div>
+                    <div className="text-[10px] text-muted">{solo ? "Session" : "Training partner"}</div>
+                    <div className="text-xs font-medium text-primary">
+                      {solo ? "Solo session" : log.partner}
+                    </div>
+                  </div>
+                </div>
 
-                <IconChevronRight size={16} className="shrink-0 text-muted" />
-              </button>
+                {/* Exercises */}
+                {log.exercises.length > 0 && (
+                  <div className="mt-3">
+                    <div className="mb-1.5 text-[10px] font-medium uppercase tracking-[0.08em] text-muted">
+                      Exercises
+                    </div>
+                    <div className="flex flex-col divide-y divide-border">
+                      {log.exercises.map((ex, i) => (
+                        <div key={i} className="py-1.5 text-xs text-text">
+                          {exerciseSummary(ex) || "—"}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Photos — memories from the session */}
+                {log.photos.length > 0 && (
+                  <div className="mt-3 grid grid-cols-3 gap-1.5">
+                    {log.photos.map((src, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => setViewer(src)}
+                        aria-label={`View photo ${i + 1}`}
+                        className="aspect-square overflow-hidden rounded-md border border-border bg-surface-2"
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={src} alt={`Photo ${i + 1}`} className="h-full w-full object-cover" />
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* Note */}
+                {log.note && (
+                  <div className="mt-3 rounded-xl border border-border bg-surface-2 px-3 py-2 text-[12px] leading-relaxed text-muted">
+                    {log.note}
+                  </div>
+                )}
+              </div>
             );
           })}
         </div>
       </div>
+
+      {/* Full-screen photo viewer */}
+      {viewer && (
+        <div
+          className="absolute inset-0 z-10 flex items-center justify-center bg-background/90 p-6"
+          onClick={() => setViewer(null)}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={viewer} alt="" className="max-h-full max-w-full rounded-lg object-contain" />
+          <button
+            type="button"
+            onClick={() => setViewer(null)}
+            aria-label="Close photo"
+            className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-surface-2 text-text"
+          >
+            <IconX size={18} />
+          </button>
+        </div>
+      )}
     </div>
   );
 }
