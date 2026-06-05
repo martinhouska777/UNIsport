@@ -8,24 +8,34 @@
 */
 import { createClient, hasSupabaseEnv } from "@/lib/supabase/client";
 
-// One exercise line. Kept as strings so the form is forgiving (e.g. weight can
-// be "100 kg" or "bodyweight"); empty fields are allowed.
+// Hevy-style gym logging: an exercise has a primary muscle group and a list of
+// SETS, each with its own weight + reps, an optional type (Warmup/Normal/Drop/
+// Failure) and a done flag. Values are strings so the form stays forgiving.
+export type SetType = "W" | "N" | "D" | "F";
+export type WorkoutSet = {
+  weight: string;
+  reps: string;
+  type?: SetType; // undefined = normal
+  done?: boolean;
+};
 export type WorkoutExercise = {
   name: string;
-  sets: string;
-  reps: string;
-  weight: string;
+  muscle?: string; // muscle group (from the catalog); optional for custom/legacy
+  sets: WorkoutSet[];
 };
 
 export type DistanceUnit = "km" | "mi" | "m";
+export type WeightUnit = "kg" | "lb";
 
-// Activity-specific metrics (running & cardio). All optional; kept as strings so
-// the form is forgiving (distance "5.2", duration "45 min" or "1:05:00").
+// Activity-specific metrics (running & cardio) plus the gym weight unit. All
+// optional; kept as strings so the form is forgiving (distance "5.2", duration
+// "45 min" or "1:05:00").
 export type WorkoutMetrics = {
   cardioType?: string; // cardio only — Cycling / Rowing / Swimming / …
   distance?: string;
   unit?: DistanceUnit;
   duration?: string;
+  weightUnit?: WeightUnit; // gym / other — kg or lb
 };
 
 export type WorkoutLog = {
@@ -49,11 +59,47 @@ type Row = {
   activity: string;
   gym: string | null;
   partner: string | null;
-  exercises: WorkoutExercise[] | null;
+  exercises: unknown; // new per-set shape, or the old flat shape — normalized on read
   metrics: WorkoutMetrics | null;
   photos: string[] | null;
   note: string | null;
 };
+
+const cap20 = (n: number) => Math.min(Math.max(n, 1), 20);
+
+const normSet = (s: Record<string, unknown>): WorkoutSet => ({
+  weight: String(s.weight ?? ""),
+  reps: String(s.reps ?? ""),
+  ...(s.type ? { type: s.type as SetType } : {}),
+  ...(s.done ? { done: true } : {}),
+});
+
+/*
+  Read either shape. New logs store { name, muscle, sets: [{weight,reps,…}] }.
+  Old logs stored the flat { name, sets:"3", reps:"5", weight:"100" } — those are
+  expanded into N identical set rows so they still display in the new UI.
+*/
+function normalizeExercises(raw: unknown): WorkoutExercise[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.map((e) => {
+    const ex = (e ?? {}) as Record<string, unknown>;
+    if (Array.isArray(ex.sets)) {
+      return {
+        name: String(ex.name ?? ""),
+        ...(ex.muscle ? { muscle: String(ex.muscle) } : {}),
+        sets: (ex.sets as Record<string, unknown>[]).map(normSet),
+      };
+    }
+    // Legacy flat row → expand to `sets` identical entries.
+    const count = cap20(parseInt(String(ex.sets ?? "1"), 10) || 1);
+    const weight = String(ex.weight ?? "");
+    const reps = String(ex.reps ?? "");
+    return {
+      name: String(ex.name ?? ""),
+      sets: Array.from({ length: count }, () => ({ weight, reps })),
+    };
+  });
+}
 
 const rowToLog = (r: Row): WorkoutLog => ({
   id: r.id,
@@ -61,7 +107,7 @@ const rowToLog = (r: Row): WorkoutLog => ({
   activity: r.activity ?? "gym",
   gym: r.gym ?? "",
   partner: r.partner ?? "",
-  exercises: Array.isArray(r.exercises) ? r.exercises : [],
+  exercises: normalizeExercises(r.exercises),
   metrics: r.metrics && typeof r.metrics === "object" ? r.metrics : {},
   photos: Array.isArray(r.photos) ? r.photos : [],
   note: r.note ?? "",
@@ -69,15 +115,18 @@ const rowToLog = (r: Row): WorkoutLog => ({
 
 // Keep only the metrics that apply to the activity, dropping empty fields.
 const cleanMetrics = (activity: string, m: WorkoutMetrics): WorkoutMetrics => {
-  if (activity !== "running" && activity !== "cardio") return {};
-  const out: WorkoutMetrics = {};
-  if (activity === "cardio" && m.cardioType?.trim()) out.cardioType = m.cardioType.trim();
-  if (m.distance?.trim()) {
-    out.distance = m.distance.trim();
-    out.unit = m.unit ?? "km";
+  if (activity === "running" || activity === "cardio") {
+    const out: WorkoutMetrics = {};
+    if (activity === "cardio" && m.cardioType?.trim()) out.cardioType = m.cardioType.trim();
+    if (m.distance?.trim()) {
+      out.distance = m.distance.trim();
+      out.unit = m.unit ?? "km";
+    }
+    if (m.duration?.trim()) out.duration = m.duration.trim();
+    return out;
   }
-  if (m.duration?.trim()) out.duration = m.duration.trim();
-  return out;
+  // gym / other → remember the weight unit the sets were logged in.
+  return m.weightUnit ? { weightUnit: m.weightUnit } : {};
 };
 
 const draftToRow = (userId: string, d: WorkoutDraft) => ({
@@ -86,13 +135,16 @@ const draftToRow = (userId: string, d: WorkoutDraft) => ({
   activity: d.activity,
   gym: d.gym.trim() || null,
   partner: d.partner.trim() || null,
-  // Exercises only apply to gym/other; drop fully-empty rows so blanks aren't stored.
+  // Exercises only apply to gym/other; keep any named exercise, drop empty sets.
   exercises:
     d.activity === "running" || d.activity === "cardio"
       ? []
-      : d.exercises.filter(
-          (e) => e.name.trim() || e.sets.trim() || e.reps.trim() || e.weight.trim(),
-        ),
+      : d.exercises
+          .map((e) => ({
+            ...e,
+            sets: e.sets.filter((s) => s.weight.trim() || s.reps.trim() || s.done),
+          }))
+          .filter((e) => e.name.trim() && e.sets.length > 0),
   metrics: cleanMetrics(d.activity, d.metrics),
   photos: Array.isArray(d.photos) ? d.photos : [],
   note: d.note.trim(),
@@ -103,7 +155,9 @@ const keyFor = (userId: string) => `workoutLogs:${userId}`;
 function loadLocal(userId: string): WorkoutLog[] {
   if (typeof window === "undefined") return [];
   try {
-    return JSON.parse(window.localStorage.getItem(keyFor(userId)) ?? "[]") as WorkoutLog[];
+    const raw = JSON.parse(window.localStorage.getItem(keyFor(userId)) ?? "[]") as WorkoutLog[];
+    // Migrate any legacy flat exercises so old localStorage logs read in the new shape.
+    return raw.map((l) => ({ ...l, exercises: normalizeExercises(l.exercises) }));
   } catch {
     return [];
   }
@@ -204,10 +258,19 @@ export function activityLabel(activity: string): string {
   return map[activity] ?? (activity ? activity[0].toUpperCase() + activity.slice(1) : "Session");
 }
 
-/** Compact one-line summary of an exercise, e.g. "Bench · 5×5 · 100 kg". */
-export function exerciseSummary(e: WorkoutExercise): string {
-  const setsReps = [e.sets.trim(), e.reps.trim()].filter(Boolean).join("×");
-  return [e.name.trim(), setsReps, e.weight.trim()].filter(Boolean).join(" · ");
+/**
+ * Compact one-line summary of an exercise, e.g. "Bench Press · 3 sets · 100 kg × 5".
+ * The third part is the heaviest logged set (the one most worth seeing at a glance).
+ */
+export function exerciseSummary(e: WorkoutExercise, unit: WeightUnit = "kg"): string {
+  const count = e.sets.length;
+  const setsLabel = count > 0 ? `${count} set${count === 1 ? "" : "s"}` : "";
+  // Heaviest set that actually has a weight + reps.
+  const top = e.sets
+    .filter((s) => s.weight.trim() && s.reps.trim())
+    .sort((a, b) => (parseFloat(b.weight) || 0) - (parseFloat(a.weight) || 0))[0];
+  const topLabel = top ? `${top.weight} ${unit} × ${top.reps}` : "";
+  return [e.name.trim(), setsLabel, topLabel].filter(Boolean).join(" · ");
 }
 
 /**

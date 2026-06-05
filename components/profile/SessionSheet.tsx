@@ -167,7 +167,7 @@ export default function SessionSheet({
                     <div className="flex flex-col divide-y divide-border">
                       {log.exercises.map((ex, i) => (
                         <div key={i} className="py-1.5 text-xs text-text">
-                          {exerciseSummary(ex) || "—"}
+                          {exerciseSummary(ex, log.metrics.weightUnit ?? "kg") || "—"}
                         </div>
                       ))}
                     </div>
