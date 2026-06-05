@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useAppState } from "@/components/AppState";
+import { useFavorites } from "@/lib/gymSocial";
 import type { Gym, GalleryIcon } from "@/lib/gyms";
 import {
   IconArrowLeft,
@@ -23,7 +25,9 @@ const galleryIcons: Record<GalleryIcon, (p: { size?: number; className?: string 
 };
 
 export default function GymProfile({ gym }: { gym: Gym }) {
-  const [favorite, setFavorite] = useState(false);
+  const { userId } = useAppState();
+  const { isFavorite, toggle } = useFavorites(userId);
+  const favorite = isFavorite(gym.slug);
   const [activePhoto, setActivePhoto] = useState(0);
 
   const onGalleryScroll = (e: React.UIEvent<HTMLDivElement>) => {
@@ -43,9 +47,9 @@ export default function GymProfile({ gym }: { gym: Gym }) {
         </span>
         <button
           type="button"
-          aria-label="Favorite"
+          aria-label={favorite ? "Remove from favourites" : "Add to favourites"}
           aria-pressed={favorite}
-          onClick={() => setFavorite((v) => !v)}
+          onClick={() => toggle(gym.slug)}
           className={favorite ? "text-primary" : "text-muted"}
         >
           <IconHeart size={18} filled={favorite} />
