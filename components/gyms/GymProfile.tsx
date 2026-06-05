@@ -3,13 +3,13 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useAppState } from "@/components/AppState";
-import { useFavorites } from "@/lib/gymSocial";
+import { useFavorites, useGymStats, timeAgo } from "@/lib/gymSocial";
+import { StarRater, CrowdPicker, RatingValue } from "@/components/gyms/RateCrowd";
 import type { Gym, GalleryIcon } from "@/lib/gyms";
 import {
   IconArrowLeft,
   IconHeart,
   IconClock,
-  IconStar,
   IconMapPin,
   IconBarbell,
   IconRun,
@@ -27,7 +27,10 @@ const galleryIcons: Record<GalleryIcon, (p: { size?: number; className?: string 
 export default function GymProfile({ gym }: { gym: Gym }) {
   const { userId } = useAppState();
   const { isFavorite, toggle } = useFavorites(userId);
+  const { getRating, setRating, getCrowd, reportCrowd } = useGymStats(userId);
   const favorite = isFavorite(gym.slug);
+  const rating = getRating(gym.slug);
+  const crowd = getCrowd(gym.slug);
   const [activePhoto, setActivePhoto] = useState(0);
 
   const onGalleryScroll = (e: React.UIEvent<HTMLDivElement>) => {
@@ -103,13 +106,37 @@ export default function GymProfile({ gym }: { gym: Gym }) {
           <span className="flex items-center gap-1.5">
             <IconClock size={13} /> {gym.hours}
           </span>
-          <span className="flex items-center gap-1.5">
-            <IconStar size={13} className="text-accent" /> {gym.rating}{" "}
-            <span className="text-muted/70">({gym.ratingCount} ratings)</span>
-          </span>
+          <RatingValue rating={rating} showAgo />
           <span className="flex items-center gap-1.5">
             <IconMapPin size={13} /> {gym.address}
           </span>
+        </div>
+      </div>
+
+      {/* Your rating + live crowd — what you fill in after / during a workout */}
+      <div className="border-b border-border px-3.5 py-3.5">
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] font-medium uppercase tracking-[0.1em] text-primary">
+            Rate this gym
+          </span>
+          <span className="text-[11px] text-muted">
+            {rating ? `You rated · ${timeAgo(rating.at)}` : "Tap a star"}
+          </span>
+        </div>
+        <div className="mt-2">
+          <StarRater value={rating?.value ?? 0} onRate={(n) => setRating(gym.slug, n)} />
+        </div>
+
+        <div className="mt-4 flex items-center justify-between">
+          <span className="text-[10px] font-medium uppercase tracking-[0.1em] text-primary">
+            How busy right now?
+          </span>
+          <span className="text-[11px] text-muted">
+            {crowd ? `Reported ${timeAgo(crowd.at)}` : "No recent reports"}
+          </span>
+        </div>
+        <div className="mt-2">
+          <CrowdPicker value={crowd?.level ?? null} onReport={(l) => reportCrowd(gym.slug, l)} />
         </div>
       </div>
 

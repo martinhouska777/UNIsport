@@ -22,6 +22,8 @@ import {
   type WorkoutLog,
 } from "@/lib/supabase/workouts";
 import ExercisePicker from "@/components/profile/ExercisePicker";
+import GymCheckInPrompt from "@/components/gyms/GymCheckInPrompt";
+import { getGymByName } from "@/lib/gyms";
 import { fileToDataUrl } from "@/lib/image";
 import { IconArrowLeft, IconCheck, IconPlus, IconTrash, IconX } from "@/components/icons";
 
@@ -70,6 +72,8 @@ export default function LogSessionSheet({
   const photoInputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // After saving a session at a known gym, offer an optional rating + crowd check-in.
+  const [checkIn, setCheckIn] = useState<{ slug: string; name: string } | null>(null);
 
   const isRunning = activity === "running";
   const isCardio = activity === "cardio";
@@ -160,6 +164,13 @@ export default function LogSessionSheet({
     setBusy(false);
     if (res.error) {
       setError(res.error);
+      return;
+    }
+    // If this session was at a recognised gym, offer the optional rating + crowd
+    // check-in before closing; otherwise finish straight away.
+    const matched = getGymByName(gym);
+    if (matched) {
+      setCheckIn({ slug: matched.slug, name: matched.name });
       return;
     }
     onSaved();
@@ -508,6 +519,15 @@ export default function LogSessionSheet({
 
       {pickerOpen && (
         <ExercisePicker onPick={addExercise} onClose={() => setPickerOpen(false)} />
+      )}
+
+      {checkIn && (
+        <GymCheckInPrompt
+          userId={userId}
+          gymSlug={checkIn.slug}
+          gymName={checkIn.name}
+          onDone={onSaved}
+        />
       )}
     </div>
   );

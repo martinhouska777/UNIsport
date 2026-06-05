@@ -287,3 +287,10 @@ export const gyms: Gym[] = [...mainGyms, ...houseGyms];
 export function getGym(slug: string): Gym | undefined {
   return gyms.find((g) => g.slug === slug);
 }
+
+// Find a gym by its exact display name (used to link a logged session's gym
+// — stored as the gym's name — back to its slug for ratings / crowd).
+export function getGymByName(name: string): Gym | undefined {
+  const n = name.trim().toLowerCase();
+  return gyms.find((g) => g.name.toLowerCase() === n);
+}
