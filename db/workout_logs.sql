@@ -21,7 +21,8 @@ create table if not exists public.workout_logs (
   log_date   date not null,                       -- the day the workout was done
   activity   text not null default 'gym',         -- 'gym' | 'running' | 'cardio' | 'other'
   gym        text,                                 -- optional gym name
-  partner    text,                                 -- optional training-partner name
+  partner    text,                                 -- optional training-partner name (display)
+  partner_id uuid references public.profiles (id) on delete set null, -- real app person, when picked
   exercises  jsonb not null default '[]'::jsonb,   -- gym/other: [{ name, sets, reps, weight }]
   metrics    jsonb not null default '{}'::jsonb,   -- running/cardio: { cardioType?, distance?, unit?, duration? }
   photos     jsonb not null default '[]'::jsonb,   -- session photos: ["data:image/jpeg;base64,…", …]
@@ -32,6 +33,7 @@ create table if not exists public.workout_logs (
 -- Columns added after the first version; add to existing DBs.
 alter table public.workout_logs add column if not exists metrics jsonb not null default '{}'::jsonb;
 alter table public.workout_logs add column if not exists photos  jsonb not null default '[]'::jsonb;
+alter table public.workout_logs add column if not exists partner_id uuid references public.profiles (id) on delete set null;
 
 create index if not exists workout_logs_user_date_idx
   on public.workout_logs (user_id, log_date);

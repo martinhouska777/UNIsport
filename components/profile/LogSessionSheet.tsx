@@ -22,6 +22,8 @@ import {
   type WorkoutLog,
 } from "@/lib/supabase/workouts";
 import ExercisePicker from "@/components/profile/ExercisePicker";
+import PartnerPicker from "@/components/profile/PartnerPicker";
+import Avatar from "@/components/messages/Avatar";
 import GymCheckInPrompt from "@/components/gyms/GymCheckInPrompt";
 import { getGymByName } from "@/lib/gyms";
 import { fileToDataUrl } from "@/lib/image";
@@ -57,8 +59,10 @@ export default function LogSessionSheet({
   const [activity, setActivity] = useState(existing?.activity ?? "gym");
   const [gym, setGym] = useState(existing?.gym ?? "");
   const [partner, setPartner] = useState(existing?.partner ?? "");
+  const [partnerId, setPartnerId] = useState<string | undefined>(existing?.partnerId);
   const [exercises, setExercises] = useState<WorkoutExercise[]>(existing?.exercises ?? []);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [partnerPickerOpen, setPartnerPickerOpen] = useState(false);
   // Weight unit for the gym sets (kg / lb), per workout.
   const [weightUnit, setWeightUnit] = useState<WeightUnit>(existing?.metrics.weightUnit ?? "kg");
   // Running / cardio metrics.
@@ -153,6 +157,7 @@ export default function LogSessionSheet({
       activity,
       gym,
       partner,
+      partnerId,
       exercises,
       metrics: { cardioType, distance, unit, duration, weightUnit },
       photos,
@@ -239,12 +244,21 @@ export default function LogSessionSheet({
           </datalist>
 
           <div className={`${labelCls} mt-4`}>Training partner (optional)</div>
-          <input
-            value={partner}
-            onChange={(e) => setPartner(e.target.value)}
-            placeholder="Solo, or a name"
-            className={inputCls}
-          />
+          <button
+            type="button"
+            onClick={() => setPartnerPickerOpen(true)}
+            className={`${inputCls} flex items-center gap-2.5 text-left`}
+          >
+            {partnerId ? (
+              <>
+                <Avatar size={26} alt={partner} />
+                <span className="flex-1 truncate text-text">{partner}</span>
+                <span className="text-[12px] text-muted">Change</span>
+              </>
+            ) : (
+              <span className="flex-1 text-muted">Solo · tap to add a partner</span>
+            )}
+          </button>
 
           {/* Exercises — gym / other (Hevy-style per-set logging) */}
           {usesExercises && (
@@ -519,6 +533,22 @@ export default function LogSessionSheet({
 
       {pickerOpen && (
         <ExercisePicker onPick={addExercise} onClose={() => setPickerOpen(false)} />
+      )}
+
+      {partnerPickerOpen && (
+        <PartnerPicker
+          userId={userId}
+          currentId={partnerId}
+          onPick={(p) => {
+            setPartner(p.name);
+            setPartnerId(p.id);
+          }}
+          onClear={() => {
+            setPartner("");
+            setPartnerId(undefined);
+          }}
+          onClose={() => setPartnerPickerOpen(false)}
+        />
       )}
 
       {checkIn && (

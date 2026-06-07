@@ -43,7 +43,8 @@ export type WorkoutLog = {
   date: string; // ISO yyyy-mm-dd
   activity: string; // 'gym' | 'running' | 'cardio' | 'other'
   gym: string;
-  partner: string;
+  partner: string; // display name (real person's name, or legacy free text)
+  partnerId?: string; // real app person's profile id, when picked from people
   exercises: WorkoutExercise[]; // gym / other
   metrics: WorkoutMetrics; // running / cardio
   photos: string[]; // session photos (downscaled data URLs) — "memories"
@@ -59,6 +60,7 @@ type Row = {
   activity: string;
   gym: string | null;
   partner: string | null;
+  partner_id: string | null;
   exercises: unknown; // new per-set shape, or the old flat shape — normalized on read
   metrics: WorkoutMetrics | null;
   photos: string[] | null;
@@ -107,6 +109,7 @@ const rowToLog = (r: Row): WorkoutLog => ({
   activity: r.activity ?? "gym",
   gym: r.gym ?? "",
   partner: r.partner ?? "",
+  ...(r.partner_id ? { partnerId: r.partner_id } : {}),
   exercises: normalizeExercises(r.exercises),
   metrics: r.metrics && typeof r.metrics === "object" ? r.metrics : {},
   photos: Array.isArray(r.photos) ? r.photos : [],
@@ -135,6 +138,7 @@ const draftToRow = (userId: string, d: WorkoutDraft) => ({
   activity: d.activity,
   gym: d.gym.trim() || null,
   partner: d.partner.trim() || null,
+  partner_id: d.partnerId ?? null,
   // Exercises only apply to gym/other; keep any named exercise, drop empty sets.
   exercises:
     d.activity === "running" || d.activity === "cardio"
@@ -180,7 +184,7 @@ export async function listMonth(
   }
   const { data, error } = await createClient()
     .from("workout_logs")
-    .select("id, log_date, activity, gym, partner, exercises, metrics, photos, note")
+    .select("id, log_date, activity, gym, partner, partner_id, exercises, metrics, photos, note")
     .eq("user_id", userId)
     .gte("log_date", fromIso)
     .lte("log_date", toIso)
