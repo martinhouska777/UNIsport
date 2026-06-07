@@ -25,10 +25,18 @@ export const kindStyles: Record<SessionKind, { bar: string; block: string }> = {
 
 export type SessionStatus = "verified" | "upcoming" | "flagged" | "missed";
 
-export type DaySession = { time: string; label: string; kind: SessionKind };
+export type DaySession = {
+  time: string; // period: "AM" | "PM" | "ALL"
+  clock?: string; // start time, e.g. "7:00 AM"
+  label: string; // workout description ("3×25' UT2") or category name — shown in cells
+  type?: string; // category · intensity, e.g. "Water · UT2" — shown in the day detail
+  kind: SessionKind;
+  note?: string; // coach note for this session
+};
 export type WeekDay = {
   letter: string;
   num: number;
+  dateLabel?: string; // e.g. "Wed · May 20" — header for the day detail
   today?: boolean;
   dimmed?: boolean;
   sessions: DaySession[];

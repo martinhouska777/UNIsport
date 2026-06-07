@@ -43,13 +43,19 @@ function kindOf(s: Session): SessionKind {
   }
 }
 
-// Tiny label for the week-strip cell.
-function shortLabel(s: Session): string {
+// Category fallback label, used when the coach didn't type a description.
+function categoryLabel(s: Session): string {
   if (s.category === "off") return "OFF";
   if (s.category === "weights") return "Weights";
   if (s.category === "flex") return "Flex";
   const cat = s.category === "water" ? "water" : "erg";
   return s.intensity ? `${s.intensity} ${cat}` : cat;
+}
+
+// What shows in a calendar cell: the coach's actual workout ("3×25' UT2") when
+// there is one, otherwise the category name.
+function cellLabel(s: Session): string {
+  return s.description.trim() || categoryLabel(s);
 }
 
 // Pick the published block to show today + which week within it is current.
@@ -112,10 +118,21 @@ export function buildAthleteHome(
     days: wk.days.map((d) => ({
       letter: d.weekday[0],
       num: d.dayNum,
+      dateLabel: `${d.weekday} · ${d.month} ${d.dayNum}`,
       today: d.today || undefined,
       sessions: periods.flatMap((p) => {
         const s = plan.sessions[sessionKey(d.date, p)];
-        return s ? [{ time: p, label: shortLabel(s), kind: kindOf(s) }] : [];
+        if (!s) return [];
+        return [
+          {
+            time: p,
+            clock: s.time,
+            label: cellLabel(s),
+            type: sessionLabel(s),
+            kind: kindOf(s),
+            note: s.note || undefined,
+          },
+        ];
       }),
     })),
   }));
