@@ -49,6 +49,8 @@ export type WorkoutLog = {
   metrics: WorkoutMetrics; // running / cardio
   photos: string[]; // session photos (downscaled data URLs) — "memories"
   note: string;
+  verified?: boolean; // true when auto-logged from a confirmed chat session plan
+  planId?: string; // the session plan this came from, if any
 };
 
 // What you pass in to create/update (id is assigned server-side).
@@ -65,6 +67,8 @@ type Row = {
   metrics: WorkoutMetrics | null;
   photos: string[] | null;
   note: string | null;
+  verified: boolean | null;
+  plan_id: string | null;
 };
 
 const cap20 = (n: number) => Math.min(Math.max(n, 1), 20);
@@ -114,6 +118,8 @@ const rowToLog = (r: Row): WorkoutLog => ({
   metrics: r.metrics && typeof r.metrics === "object" ? r.metrics : {},
   photos: Array.isArray(r.photos) ? r.photos : [],
   note: r.note ?? "",
+  ...(r.verified ? { verified: true } : {}),
+  ...(r.plan_id ? { planId: r.plan_id } : {}),
 });
 
 // Keep only the metrics that apply to the activity, dropping empty fields.
@@ -184,7 +190,7 @@ export async function listMonth(
   }
   const { data, error } = await createClient()
     .from("workout_logs")
-    .select("id, log_date, activity, gym, partner, partner_id, exercises, metrics, photos, note")
+    .select("id, log_date, activity, gym, partner, partner_id, exercises, metrics, photos, note, verified, plan_id")
     .eq("user_id", userId)
     .gte("log_date", fromIso)
     .lte("log_date", toIso)
@@ -257,6 +263,52 @@ export async function listPartners(userId: string): Promise<PartnerSummary[]> {
       date: r.log_date,
     })),
   );
+}
+
+/* ── Streak & points (Slice D) ──
+   Both rise ONLY from VERIFIED sessions (auto-logged when a chat-planned session
+   is confirmed by both people). One-per-day: a day counts once regardless of how
+   many verified sessions it had. */
+
+// Local-date ISO (yyyy-mm-dd) for a Date, matching how log_date is stored.
+const localIso = (dt: Date) =>
+  `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`;
+
+/** Points = distinct verified-session days; streak = current consecutive-day run
+    (alive if there's a verified session today or yesterday). */
+export function streakStats(days: string[]): { points: number; streak: number } {
+  const set = new Set(days);
+  const points = set.size;
+  const cursor = new Date();
+  cursor.setHours(0, 0, 0, 0);
+  // The run is still "live" today or, if nothing yet today, yesterday.
+  if (!set.has(localIso(cursor))) {
+    cursor.setDate(cursor.getDate() - 1);
+    if (!set.has(localIso(cursor))) return { points, streak: 0 };
+  }
+  let streak = 0;
+  while (set.has(localIso(cursor))) {
+    streak += 1;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  return { points, streak };
+}
+
+/** All dates (yyyy-mm-dd) on which the user has a verified session. */
+export async function listVerifiedDays(userId: string): Promise<string[]> {
+  if (!userId) return [];
+  if (!hasSupabaseEnv()) {
+    return loadLocal(userId)
+      .filter((l) => l.verified)
+      .map((l) => l.date);
+  }
+  const { data, error } = await createClient()
+    .from("workout_logs")
+    .select("log_date")
+    .eq("user_id", userId)
+    .eq("verified", true);
+  if (error || !data) return [];
+  return (data as { log_date: string }[]).map((r) => r.log_date);
 }
 
 /* ── Create a new log ── */

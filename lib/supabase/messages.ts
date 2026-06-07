@@ -23,7 +23,9 @@ export type DmPlan = {
   activity: string;
   place: string | null;
   scheduledAt: string;
-  status: "proposed" | "accepted" | "declined";
+  status: "proposed" | "accepted" | "declined" | "confirmed" | "missed";
+  proposerAnswer: "yes" | "no" | null; // after-the-fact "did it happen?" answers
+  recipientAnswer: "yes" | "no" | null;
 };
 
 export type DmMessage = {
@@ -106,6 +108,8 @@ function toDmMessage(r: Record<string, unknown>): DmMessage {
             place: (r.plan_place as string) ?? null,
             scheduledAt: r.plan_scheduled_at as string,
             status: ((r.plan_status as string) ?? "proposed") as DmPlan["status"],
+            proposerAnswer: (r.plan_proposer_answer as DmPlan["proposerAnswer"]) ?? null,
+            recipientAnswer: (r.plan_recipient_answer as DmPlan["recipientAnswer"]) ?? null,
           },
         }
       : {}),

@@ -37,3 +37,41 @@ export async function respondToPlan(planId: string, accept: boolean): Promise<vo
   });
   if (error) throw new Error(`respondToPlan failed: ${error.message}`);
 }
+
+/**
+ * Answer "did this happen?" for an accepted session. When both people answer
+ * yes, the session is confirmed and a verified workout is auto-logged for each.
+ * Returns the plan's resulting status.
+ */
+export async function confirmPlan(planId: string, attended: boolean): Promise<string> {
+  const { data, error } = await createClient().rpc("plan_confirm", {
+    p_plan_id: planId,
+    p_attended: attended,
+  });
+  if (error) throw new Error(`confirmPlan failed: ${error.message}`);
+  return data as string;
+}
+
+// An accepted, still-upcoming session (for the Profile "Upcoming" list).
+export type UpcomingPlan = {
+  planId: string;
+  otherId: string;
+  otherName: string;
+  activity: string;
+  place: string | null;
+  scheduledAt: string;
+};
+
+/** The caller's accepted, upcoming sessions, soonest first. */
+export async function listUpcomingPlans(): Promise<UpcomingPlan[]> {
+  const { data, error } = await createClient().rpc("my_upcoming_plans");
+  if (error) throw new Error(`listUpcomingPlans failed: ${error.message}`);
+  return (data as Record<string, unknown>[]).map((r) => ({
+    planId: r.plan_id as string,
+    otherId: r.other_id as string,
+    otherName: (r.other_name as string) ?? "Member",
+    activity: r.activity as string,
+    place: (r.place as string) ?? null,
+    scheduledAt: r.scheduled_at as string,
+  }));
+}

@@ -163,6 +163,11 @@ export default function WorkoutDetail({
             <div className="text-[10px] text-muted">{solo ? "Session" : "Training partner"}</div>
             <div className="text-[13px] font-medium text-primary">{solo ? "Solo session" : log.partner}</div>
           </div>
+          {log.verified && (
+            <span className="ml-auto flex items-center gap-1 rounded-full border border-success bg-success/15 px-2 py-1 text-[10px] font-medium text-success">
+              <IconCheck size={11} /> Verified
+            </span>
+          )}
         </div>
 
         {/* Photos */}

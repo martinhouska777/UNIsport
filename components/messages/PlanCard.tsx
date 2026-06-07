@@ -11,7 +11,7 @@
   Colors are theme tokens only (rule 1).
 */
 import { useState } from "react";
-import { respondToPlan, planWhenLabel } from "@/lib/supabase/sessionPlans";
+import { respondToPlan, confirmPlan, planWhenLabel } from "@/lib/supabase/sessionPlans";
 import { type DmPlan } from "@/lib/supabase/messages";
 import { activityLabel } from "@/lib/supabase/workouts";
 import { IconCalendar, IconCheck, IconX, IconMapPin } from "@/components/icons";
@@ -42,6 +42,24 @@ export default function PlanCard({
       setBusy(false);
     }
   };
+
+  const confirm = async (attended: boolean) => {
+    if (busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await confirmPlan(plan.planId, attended);
+      onChanged();
+    } catch (e) {
+      setError((e as Error).message);
+      setBusy(false);
+    }
+  };
+
+  // For an accepted session: has its time passed, and how did each side answer?
+  const isPast = new Date(plan.scheduledAt).getTime() <= Date.now();
+  const myAnswer = mine ? plan.proposerAnswer : plan.recipientAnswer;
+  const theirAnswer = mine ? plan.recipientAnswer : plan.proposerAnswer;
 
   return (
     <div className="mx-auto w-full max-w-[88%] rounded-2xl border border-border bg-surface-2 p-3.5">
@@ -99,10 +117,55 @@ export default function PlanCard({
           <div className="text-[11px] text-muted">Waiting for {otherName} to accept…</div>
         )}
 
-        {plan.status === "accepted" && (
+        {plan.status === "accepted" && !isPast && (
           <div className="flex items-center gap-1.5 text-[12px] font-medium text-success">
             <IconCheck size={14} /> You&apos;re on — see you there
           </div>
+        )}
+
+        {/* After the time: both confirm whether it actually happened. */}
+        {plan.status === "accepted" && isPast && myAnswer === null && (
+          <div>
+            <div className="mb-2 text-[12px] font-medium text-text">Did this happen?</div>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => confirm(true)}
+                className="flex flex-1 items-center justify-center gap-1.5 rounded-full bg-primary py-2 text-[12px] font-semibold text-primary-contrast disabled:opacity-50"
+              >
+                <IconCheck size={14} /> Yes, we trained
+              </button>
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => confirm(false)}
+                className="flex flex-1 items-center justify-center gap-1.5 rounded-full border border-border bg-surface py-2 text-[12px] font-medium text-muted disabled:opacity-50"
+              >
+                <IconX size={14} /> No-show
+              </button>
+            </div>
+          </div>
+        )}
+
+        {plan.status === "accepted" && isPast && myAnswer !== null && (
+          <div className="text-[11px] text-muted">
+            {myAnswer === "yes"
+              ? theirAnswer === null
+                ? `You confirmed. Waiting for ${otherName} to confirm…`
+                : ""
+              : "You marked this as a no-show."}
+          </div>
+        )}
+
+        {plan.status === "confirmed" && (
+          <div className="flex items-center gap-1.5 text-[12px] font-medium text-success">
+            <IconCheck size={14} /> Verified — logged for both of you
+          </div>
+        )}
+
+        {plan.status === "missed" && (
+          <div className="text-[12px] text-muted">Marked as didn&apos;t happen.</div>
         )}
 
         {plan.status === "declined" && (
