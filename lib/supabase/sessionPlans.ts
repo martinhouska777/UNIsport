@@ -52,6 +52,26 @@ export async function confirmPlan(planId: string, attended: boolean): Promise<st
   return data as string;
 }
 
+/** Cancel an open (proposed/accepted) plan. Either participant may cancel. */
+export async function cancelPlan(planId: string): Promise<void> {
+  const { error } = await createClient().rpc("plan_cancel", { p_plan_id: planId });
+  if (error) throw new Error(`cancelPlan failed: ${error.message}`);
+}
+
+/** Reschedule an open plan (proposer only) — sends it back for re-acceptance. */
+export async function reschedulePlan(
+  planId: string,
+  input: { activity: string; place: string; scheduledAt: string },
+): Promise<void> {
+  const { error } = await createClient().rpc("plan_reschedule", {
+    p_plan_id: planId,
+    p_activity: input.activity,
+    p_place: input.place || null,
+    p_scheduled_at: input.scheduledAt,
+  });
+  if (error) throw new Error(`reschedulePlan failed: ${error.message}`);
+}
+
 // An accepted, still-upcoming session (for the Profile "Upcoming" list).
 export type UpcomingPlan = {
   planId: string;

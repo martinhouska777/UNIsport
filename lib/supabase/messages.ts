@@ -23,7 +23,7 @@ export type DmPlan = {
   activity: string;
   place: string | null;
   scheduledAt: string;
-  status: "proposed" | "accepted" | "declined" | "confirmed" | "missed";
+  status: "proposed" | "accepted" | "declined" | "confirmed" | "missed" | "cancelled";
   proposerAnswer: "yes" | "no" | null; // after-the-fact "did it happen?" answers
   recipientAnswer: "yes" | "no" | null;
 };

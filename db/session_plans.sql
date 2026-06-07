@@ -315,9 +315,94 @@ as $$
   order by sp.scheduled_at asc;
 $$;
 
+-- ===========================================================================
+-- SLICE E — cancel / reschedule an open plan
+-- ===========================================================================
+
+-- Cancel a plan that hasn't happened yet. Either participant may cancel while
+-- it's still 'proposed' or 'accepted'. Posts a short note in the thread so the
+-- other person sees it. (A 'cancelled' plan card just shows a cancelled state.)
+create or replace function public.plan_cancel(p_plan_id uuid)
+returns void
+language plpgsql
+volatile
+security definer
+set search_path = public
+as $$
+declare
+  me        uuid := auth.uid();
+  pl        public.session_plans;
+  recipient uuid;
+  nm        text;
+begin
+  if me is null then raise exception 'not authenticated'; end if;
+
+  select * into pl from public.session_plans where id = p_plan_id;
+  if pl.id is null then raise exception 'unknown plan'; end if;
+
+  select case when c.user_lo = pl.proposer_id then c.user_hi else c.user_lo end
+    into recipient
+    from public.dm_conversations c where c.id = pl.conv_id;
+
+  if me <> pl.proposer_id and me <> recipient then raise exception 'not a participant'; end if;
+  if pl.status not in ('proposed', 'accepted') then raise exception 'cannot cancel now'; end if;
+
+  update public.session_plans set status = 'cancelled' where id = p_plan_id;
+
+  select coalesce(p.data->>'name', 'Member') into nm from public.profiles p where p.id = me;
+  insert into public.dm_messages (conv_id, sender_id, sender_name, body)
+    values (pl.conv_id, me, nm, '📅 ' || nm || ' cancelled the session plan.');
+end;
+$$;
+
+-- Reschedule (proposer only) — change the activity/place/time of an open plan and
+-- send it back for re-acceptance (status → 'proposed', answers cleared). Posts a
+-- note in the thread.
+create or replace function public.plan_reschedule(
+  p_plan_id      uuid,
+  p_activity     text,
+  p_place        text,
+  p_scheduled_at timestamptz
+)
+returns void
+language plpgsql
+volatile
+security definer
+set search_path = public
+as $$
+declare
+  me uuid := auth.uid();
+  pl public.session_plans;
+  nm text;
+begin
+  if me is null then raise exception 'not authenticated'; end if;
+  if p_scheduled_at is null then raise exception 'time required'; end if;
+
+  select * into pl from public.session_plans where id = p_plan_id;
+  if pl.id is null then raise exception 'unknown plan'; end if;
+  if me <> pl.proposer_id then raise exception 'only the proposer can reschedule'; end if;
+  if pl.status not in ('proposed', 'accepted') then raise exception 'cannot reschedule now'; end if;
+
+  update public.session_plans
+    set activity         = btrim(p_activity),
+        place            = nullif(btrim(coalesce(p_place, '')), ''),
+        scheduled_at     = p_scheduled_at,
+        status           = 'proposed',
+        proposer_answer  = null,
+        recipient_answer = null
+    where id = p_plan_id;
+
+  select coalesce(p.data->>'name', 'Member') into nm from public.profiles p where p.id = me;
+  insert into public.dm_messages (conv_id, sender_id, sender_name, body)
+    values (pl.conv_id, me, nm, '📅 ' || nm || ' rescheduled the session — please re-confirm.');
+end;
+$$;
+
 -- ---------------------------------------------------------------------------
 grant execute on function public.dm_thread(uuid)                       to authenticated;
 grant execute on function public.plan_create(uuid, text, text, timestamptz) to authenticated;
 grant execute on function public.plan_respond(uuid, boolean)           to authenticated;
 grant execute on function public.plan_confirm(uuid, boolean)           to authenticated;
 grant execute on function public.my_upcoming_plans()                   to authenticated;
+grant execute on function public.plan_cancel(uuid)                     to authenticated;
+grant execute on function public.plan_reschedule(uuid, text, text, timestamptz) to authenticated;

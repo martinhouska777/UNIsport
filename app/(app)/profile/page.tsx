@@ -13,7 +13,6 @@ import WorkoutDetail from "@/components/profile/WorkoutDetail";
 import LogSessionSheet from "@/components/profile/LogSessionSheet";
 import PartnersSheet from "@/components/profile/PartnersSheet";
 import UpcomingSessions from "@/components/profile/UpcomingSessions";
-import StreakCard from "@/components/profile/StreakCard";
 import PersonalRecords from "@/components/profile/PersonalRecords";
 import PhotoGrid from "@/components/profile/PhotoGrid";
 import PreferencesSheet from "@/components/profile/PreferencesSheet";
@@ -361,9 +360,6 @@ export default function ProfilePage() {
           </div>
         ))}
       </div>
-
-      {/* Streak & points — rise only from verified chat-planned sessions */}
-      <StreakCard userId={userId} />
 
       {/* Upcoming accepted sessions (chat-planned) */}
       <UpcomingSessions />

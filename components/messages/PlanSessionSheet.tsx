@@ -8,30 +8,40 @@
 */
 import { useEffect, useState } from "react";
 import { primaryActivities, verifiedGyms } from "@/lib/onboarding";
-import { createPlan } from "@/lib/supabase/sessionPlans";
+import { createPlan, reschedulePlan } from "@/lib/supabase/sessionPlans";
 import { IconX } from "@/components/icons";
 
-const todayIso = () => {
-  const d = new Date();
-  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
-  return d.toISOString().slice(0, 10);
+const pad = (n: number) => String(n).padStart(2, "0");
+const localDate = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const localTime = (d: Date) => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+const todayIso = () => localDate(new Date());
+
+// When `existing` is given, the sheet reschedules that plan instead of creating one.
+export type PlanEdit = {
+  planId: string;
+  activity: string;
+  place: string | null;
+  scheduledAt: string;
 };
 
 export default function PlanSessionSheet({
   conversationId,
   otherName,
+  existing,
   onClose,
   onCreated,
 }: {
   conversationId: string;
   otherName: string;
+  existing?: PlanEdit;
   onClose: () => void;
   onCreated: () => void;
 }) {
-  const [activity, setActivity] = useState("gym");
-  const [place, setPlace] = useState("");
-  const [date, setDate] = useState(todayIso());
-  const [time, setTime] = useState("17:00");
+  const existingDate = existing ? new Date(existing.scheduledAt) : null;
+  const [activity, setActivity] = useState(existing?.activity ?? "gym");
+  const [place, setPlace] = useState(existing?.place ?? "");
+  const [date, setDate] = useState(existingDate ? localDate(existingDate) : todayIso());
+  const [time, setTime] = useState(existingDate ? localTime(existingDate) : "17:00");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -47,7 +57,11 @@ export default function PlanSessionSheet({
     setError(null);
     try {
       const scheduledAt = new Date(`${date}T${time}`).toISOString();
-      await createPlan(conversationId, { activity, place, scheduledAt });
+      if (existing) {
+        await reschedulePlan(existing.planId, { activity, place, scheduledAt });
+      } else {
+        await createPlan(conversationId, { activity, place, scheduledAt });
+      }
       onCreated();
     } catch (e) {
       setError((e as Error).message);
@@ -74,7 +88,9 @@ export default function PlanSessionSheet({
         </div>
 
         <div className="flex items-center justify-between border-b border-border px-4 pb-3">
-          <div className="text-[15px] font-medium text-text">Plan a session with {otherName}</div>
+          <div className="text-[15px] font-medium text-text">
+            {existing ? "Reschedule session" : `Plan a session with ${otherName}`}
+          </div>
           <button
             type="button"
             onClick={onClose}
@@ -148,7 +164,7 @@ export default function PlanSessionSheet({
             disabled={busy || !date || !time}
             className="mt-5 w-full rounded-full bg-primary py-3 text-sm font-semibold text-primary-contrast disabled:opacity-50"
           >
-            {busy ? "Sending…" : `Send plan to ${otherName}`}
+            {busy ? "Sending…" : existing ? "Update & resend" : `Send plan to ${otherName}`}
           </button>
         </div>
       </div>

@@ -9,6 +9,7 @@ import {
   signalUnreadChanged,
   clockTime,
   type DmMessage,
+  type DmPlan,
 } from "@/lib/supabase/messages";
 import { getPublicProfile } from "@/lib/supabase/profiles";
 import { IconArrowLeft, IconCalendar } from "@/components/icons";
@@ -41,6 +42,7 @@ export default function DmThread({
   // The other person's last-read time — drives the Delivered/Read receipt.
   const [peerReadAt, setPeerReadAt] = useState<string | null>(null);
   const [planOpen, setPlanOpen] = useState(false); // "Plan a session" form
+  const [editPlan, setEditPlan] = useState<DmPlan | null>(null); // reschedule editor
   const bottomRef = useRef<HTMLDivElement>(null);
 
   // Load the other person's profile photo for the header (RLS-safe public read).
@@ -144,7 +146,13 @@ export default function DmThread({
                 </div>
               )}
               {m.kind === "plan" && m.plan ? (
-                <PlanCard plan={m.plan} mine={mine} otherName={title} onChanged={load} />
+                <PlanCard
+                  plan={m.plan}
+                  mine={mine}
+                  otherName={title}
+                  onChanged={load}
+                  onReschedule={setEditPlan}
+                />
               ) : (
               <div className={`flex ${mine ? "justify-end" : "justify-start"}`}>
                 <div className="max-w-[78%]">
@@ -189,6 +197,24 @@ export default function DmThread({
           onClose={() => setPlanOpen(false)}
           onCreated={() => {
             setPlanOpen(false);
+            load();
+          }}
+        />
+      )}
+
+      {editPlan && (
+        <PlanSessionSheet
+          conversationId={conversationId}
+          otherName={title}
+          existing={{
+            planId: editPlan.planId,
+            activity: editPlan.activity,
+            place: editPlan.place,
+            scheduledAt: editPlan.scheduledAt,
+          }}
+          onClose={() => setEditPlan(null)}
+          onCreated={() => {
+            setEditPlan(null);
             load();
           }}
         />

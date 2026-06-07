@@ -11,7 +11,7 @@
   Colors are theme tokens only (rule 1).
 */
 import { useState } from "react";
-import { respondToPlan, confirmPlan, planWhenLabel } from "@/lib/supabase/sessionPlans";
+import { respondToPlan, confirmPlan, cancelPlan, planWhenLabel } from "@/lib/supabase/sessionPlans";
 import { type DmPlan } from "@/lib/supabase/messages";
 import { activityLabel } from "@/lib/supabase/workouts";
 import { IconCalendar, IconCheck, IconX, IconMapPin } from "@/components/icons";
@@ -21,11 +21,13 @@ export default function PlanCard({
   mine,
   otherName,
   onChanged,
+  onReschedule,
 }: {
   plan: DmPlan;
   mine: boolean; // did I propose this?
   otherName: string;
   onChanged: () => void; // refetch the thread after a response
+  onReschedule: (plan: DmPlan) => void; // open the reschedule editor (proposer)
 }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -56,10 +58,28 @@ export default function PlanCard({
     }
   };
 
+  const cancel = async () => {
+    if (busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await cancelPlan(plan.planId);
+      onChanged();
+    } catch (e) {
+      setError((e as Error).message);
+      setBusy(false);
+    }
+  };
+
   // For an accepted session: has its time passed, and how did each side answer?
   const isPast = new Date(plan.scheduledAt).getTime() <= Date.now();
   const myAnswer = mine ? plan.proposerAnswer : plan.recipientAnswer;
   const theirAnswer = mine ? plan.recipientAnswer : plan.proposerAnswer;
+
+  // An open plan that hasn't happened yet can be cancelled (either side) or
+  // rescheduled (proposer only).
+  const canManage =
+    (plan.status === "proposed" && mine) || (plan.status === "accepted" && !isPast);
 
   return (
     <div className="mx-auto w-full max-w-[88%] rounded-2xl border border-border bg-surface-2 p-3.5">
@@ -171,6 +191,34 @@ export default function PlanCard({
         {plan.status === "declined" && (
           <div className="text-[12px] text-muted">
             {mine ? `${otherName} declined this time.` : "You declined this plan."}
+          </div>
+        )}
+
+        {plan.status === "cancelled" && (
+          <div className="text-[12px] text-muted">This session plan was cancelled.</div>
+        )}
+
+        {/* Manage an open, not-yet-happened plan */}
+        {canManage && (
+          <div className="mt-2 flex gap-3">
+            {mine && (
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => onReschedule(plan)}
+                className="text-[11px] font-medium text-primary disabled:opacity-50"
+              >
+                Reschedule
+              </button>
+            )}
+            <button
+              type="button"
+              disabled={busy}
+              onClick={cancel}
+              className="text-[11px] font-medium text-muted disabled:opacity-50"
+            >
+              Cancel
+            </button>
           </div>
         )}
 
