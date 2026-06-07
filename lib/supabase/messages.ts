@@ -17,12 +17,23 @@ export type DmConversation = {
   unread: number;
 };
 
+// A plan card carried inline in a thread (kind === 'plan').
+export type DmPlan = {
+  planId: string;
+  activity: string;
+  place: string | null;
+  scheduledAt: string;
+  status: "proposed" | "accepted" | "declined";
+};
+
 export type DmMessage = {
   id: string;
   senderId: string;
   senderName: string;
   body: string;
   createdAt: string;
+  kind: "text" | "plan";
+  plan?: DmPlan; // present when kind === 'plan'
 };
 
 /** Find or create the conversation with another user; returns its id. */
@@ -79,12 +90,25 @@ export async function getPeerLastRead(conversationId: string): Promise<string | 
 }
 
 function toDmMessage(r: Record<string, unknown>): DmMessage {
+  const kind = (r.kind as string) === "plan" ? "plan" : "text";
   return {
     id: r.id as string,
     senderId: r.sender_id as string,
     senderName: (r.sender_name as string) ?? "",
     body: r.body as string,
     createdAt: r.created_at as string,
+    kind,
+    ...(kind === "plan" && r.plan_id
+      ? {
+          plan: {
+            planId: r.plan_id as string,
+            activity: (r.plan_activity as string) ?? "",
+            place: (r.plan_place as string) ?? null,
+            scheduledAt: r.plan_scheduled_at as string,
+            status: ((r.plan_status as string) ?? "proposed") as DmPlan["status"],
+          },
+        }
+      : {}),
   };
 }
 

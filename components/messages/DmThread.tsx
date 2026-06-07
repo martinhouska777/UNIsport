@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   getDirectThread,
@@ -11,9 +11,11 @@ import {
   type DmMessage,
 } from "@/lib/supabase/messages";
 import { getPublicProfile } from "@/lib/supabase/profiles";
-import { IconArrowLeft } from "@/components/icons";
+import { IconArrowLeft, IconCalendar } from "@/components/icons";
 import Avatar from "./Avatar";
 import Composer from "./Composer";
+import PlanCard from "./PlanCard";
+import PlanSessionSheet from "./PlanSessionSheet";
 import { dayLabel, sameDay } from "./dayLabel";
 
 /*
@@ -38,6 +40,7 @@ export default function DmThread({
   const [photo, setPhoto] = useState<string | null>(null);
   // The other person's last-read time — drives the Delivered/Read receipt.
   const [peerReadAt, setPeerReadAt] = useState<string | null>(null);
+  const [planOpen, setPlanOpen] = useState(false); // "Plan a session" form
   const bottomRef = useRef<HTMLDivElement>(null);
 
   // Load the other person's profile photo for the header (RLS-safe public read).
@@ -52,30 +55,27 @@ export default function DmThread({
     };
   }, [otherId]);
 
+  // Load the thread (also marks it read server-side; tells the nav badge). Kept
+  // as a callback so the plan card/form can refresh after a response.
+  const load = useCallback(async () => {
+    try {
+      const [m, peer] = await Promise.all([
+        getDirectThread(conversationId),
+        getPeerLastRead(conversationId).catch(() => null),
+      ]);
+      setMessages(m);
+      setPeerReadAt(peer);
+      signalUnreadChanged();
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  }, [conversationId]);
+
   useEffect(() => {
-    let active = true;
-    const load = async () => {
-      try {
-        // Loading the thread also marks it read server-side; tell the nav badge.
-        const [m, peer] = await Promise.all([
-          getDirectThread(conversationId),
-          getPeerLastRead(conversationId).catch(() => null),
-        ]);
-        if (!active) return;
-        setMessages(m);
-        setPeerReadAt(peer);
-        signalUnreadChanged();
-      } catch (e) {
-        if (active) setError((e as Error).message);
-      }
-    };
     load();
     const timer = setInterval(load, 5000);
-    return () => {
-      active = false;
-      clearInterval(timer);
-    };
-  }, [conversationId]);
+    return () => clearInterval(timer);
+  }, [load]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView();
@@ -113,6 +113,14 @@ export default function DmThread({
             <span className="truncate text-[13px] font-medium text-text">{title}</span>
           </div>
         )}
+        <button
+          type="button"
+          onClick={() => setPlanOpen(true)}
+          aria-label="Plan a session"
+          className="ml-auto flex shrink-0 items-center gap-1.5 rounded-full border border-primary/40 bg-primary/10 px-3 py-1.5 text-[12px] font-medium text-primary"
+        >
+          <IconCalendar size={14} /> Plan
+        </button>
       </div>
 
       {/* Messages */}
@@ -135,6 +143,9 @@ export default function DmThread({
                   </span>
                 </div>
               )}
+              {m.kind === "plan" && m.plan ? (
+                <PlanCard plan={m.plan} mine={mine} otherName={title} onChanged={load} />
+              ) : (
               <div className={`flex ${mine ? "justify-end" : "justify-start"}`}>
                 <div className="max-w-[78%]">
                   <div
@@ -162,6 +173,7 @@ export default function DmThread({
                   </div>
                 </div>
               </div>
+              )}
             </div>
           );
         })}
@@ -169,6 +181,18 @@ export default function DmThread({
       </div>
 
       <Composer placeholder="Message..." onSend={send} />
+
+      {planOpen && (
+        <PlanSessionSheet
+          conversationId={conversationId}
+          otherName={title}
+          onClose={() => setPlanOpen(false)}
+          onCreated={() => {
+            setPlanOpen(false);
+            load();
+          }}
+        />
+      )}
     </div>
   );
 }
