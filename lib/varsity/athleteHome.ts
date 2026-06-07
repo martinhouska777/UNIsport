@@ -12,7 +12,6 @@
 import {
   buildWeeks,
   parseDate,
-  daysToRace,
   sessionKey,
   sessionLabel,
   periods,
@@ -24,7 +23,7 @@ import {
   home,
   type HomeData,
   type SessionKind,
-  type WeekDay,
+  type WeekView,
   type TodaySession,
   type Lineup,
 } from "./home";
@@ -106,15 +105,19 @@ export function buildAthleteHome(
     " · " +
     today.toLocaleDateString("en-US", { month: "long", day: "numeric" });
 
-  // This week's strip.
-  const week: WeekDay[] = weekRow.days.map((d) => ({
-    letter: d.weekday[0],
-    num: d.dayNum,
-    today: d.today || undefined,
-    sessions: periods.flatMap((p) => {
-      const s = plan.sessions[sessionKey(d.date, p)];
-      return s ? [{ time: p, label: shortLabel(s), kind: kindOf(s) }] : [];
-    }),
+  // Every week of the block, so the strip can swipe between weeks and show a
+  // month overview. weekIdx (0-based) is the week containing today.
+  const weekViews: WeekView[] = weeks.map((wk) => ({
+    label: wk.rangeLabel,
+    days: wk.days.map((d) => ({
+      letter: d.weekday[0],
+      num: d.dayNum,
+      today: d.today || undefined,
+      sessions: periods.flatMap((p) => {
+        const s = plan.sessions[sessionKey(d.date, p)];
+        return s ? [{ time: p, label: shortLabel(s), kind: kindOf(s) }] : [];
+      }),
+    })),
   }));
 
   // Today's AM/PM sessions (empty if today isn't inside this week — e.g. a block
@@ -140,19 +143,32 @@ export function buildAthleteHome(
       })
     : [];
 
-  const race = block.raceName
-    ? {
-        name: block.raceName,
-        location: block.raceDate
-          ? parseDate(block.raceDate).toLocaleDateString("en-US", {
-              month: "long",
-              day: "numeric",
-            })
-          : "",
-        count: daysToRace(block, today) ?? 0,
-        unit: (daysToRace(block, today) ?? 0) === 1 ? "Day" : "Days",
-      }
-    : null;
+  // Signed days until the race: negative once it's in the past. We use the raw
+  // sign here (not daysToRace, which clamps at 0) so a finished race can vanish.
+  const raceDaysLeft =
+    block.raceName && block.raceDate
+      ? Math.round(
+          (parseDate(block.raceDate).getTime() -
+            new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime()) /
+            864e5,
+        )
+      : null;
+
+  // Race over (yesterday or earlier) → no countdown at all.
+  const race =
+    raceDaysLeft !== null && raceDaysLeft >= 0
+      ? {
+          name: block.raceName!,
+          location: block.raceDate
+            ? parseDate(block.raceDate).toLocaleDateString("en-US", {
+                month: "long",
+                day: "numeric",
+              })
+            : "",
+          big: raceDaysLeft === 0 ? "Today" : raceDaysLeft === 1 ? "Tomorrow" : String(raceDaysLeft),
+          small: raceDaysLeft > 1 ? "Days" : undefined,
+        }
+      : null;
 
   return {
     greeting: {
@@ -162,7 +178,8 @@ export function buildAthleteHome(
       week: `Week ${weekRow.index} of ${weeks.length}`,
     },
     race,
-    week,
+    weeks: weekViews,
+    weekIndex: weekIdx,
     today: todaySessions,
     lineups, // today's published boats (empty if none posted)
     focus: home.focus, // placeholder until the notes slice

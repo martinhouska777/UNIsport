@@ -6,7 +6,7 @@
   strip, today's prescribed sessions (with coach notes + watch-verify), the
   day's lineup, and the coach's weekly focus. All colors are theme tokens.
 */
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAppState } from "@/components/AppState";
 import { fetchPlan, fetchProfileFullName } from "@/lib/varsity/planStore";
 import { fetchTodayLineups } from "@/lib/varsity/lineupStore";
@@ -19,6 +19,7 @@ import {
   type Greeting as GreetingData,
   type Race as RaceData,
   type WeekDay,
+  type WeekView,
   type TodaySession,
   type SessionStatus,
   type Lineup,
@@ -31,6 +32,8 @@ import {
   IconMessage,
   IconX,
   IconCalendar,
+  IconArrowLeft,
+  IconArrowRight,
 } from "@/components/icons";
 
 const statusStyle: Record<
@@ -81,59 +84,174 @@ function RaceBar({ r }: { r: RaceData }) {
         <div className="text-[10px] text-muted">{r.location}</div>
       </div>
       <div className="text-right">
-        <div className="text-2xl font-semibold leading-none text-accent">{r.count}</div>
-        <div className="text-[8px] font-semibold uppercase tracking-[0.12em] text-muted">
-          {r.unit}
-        </div>
+        <div className="text-2xl font-semibold leading-none text-accent">{r.big}</div>
+        {r.small && (
+          <div className="text-[8px] font-semibold uppercase tracking-[0.12em] text-muted">
+            {r.small}
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
-/* ─── Week strip ─── */
-function WeekStrip({ week }: { week: WeekDay[] }) {
+/* ─── Week strip ───
+   Swipe (or use the arrows) to move between the block's weeks; the "Month"
+   toggle stacks every week of the block as a compact overview. */
+function DayCell({ d }: { d: WeekDay }) {
   return (
-    <div className="px-3 pt-4">
-      <div className="flex items-center justify-between px-0.5 pb-2">
-        <SectionLabel>This Week</SectionLabel>
-        <div className="flex overflow-hidden rounded-lg border border-border bg-surface">
-          <span className="bg-primary px-2.5 py-1 text-[9px] font-medium text-primary-contrast">
-            Week
-          </span>
-          <span className="px-2.5 py-1 text-[9px] font-medium text-muted">Month</span>
-        </div>
+    <div
+      className={`overflow-hidden rounded-lg border bg-surface ${
+        d.today ? "border-primary shadow-[0_0_10px_rgba(165,28,48,0.25)]" : "border-border"
+      } ${d.dimmed ? "opacity-40" : ""}`}
+    >
+      <div className="bg-surface-2 px-0.5 py-1 text-center">
+        <span className={`block text-[7px] font-semibold ${d.today ? "text-accent" : "text-muted"}`}>
+          {d.letter}
+        </span>
+        <span className={`block text-[11px] font-medium leading-tight ${d.today ? "text-primary" : "text-text"}`}>
+          {d.num}
+        </span>
+      </div>
+      <div className="flex flex-col gap-px p-0.5">
+        {d.sessions.map((s, j) => (
+          <div key={j} className={`rounded px-1 py-0.5 ${kindStyles[s.kind].block}`}>
+            <span className="block text-[6px] font-semibold leading-none text-text/60">{s.time}</span>
+            <span className="mt-0.5 block text-[7px] font-medium leading-tight text-text/90">
+              {s.label}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// One compact week row for the Month overview: day number + a dot per session.
+function MonthWeekRow({
+  wk,
+  onPick,
+}: {
+  wk: WeekView;
+  onPick: () => void;
+}) {
+  const isThisWeek = wk.days.some((d) => d.today);
+  return (
+    <button
+      onClick={onPick}
+      className={`w-full rounded-lg border px-2 py-1.5 text-left transition-colors ${
+        isThisWeek ? "border-primary bg-primary/[0.06]" : "border-border bg-surface hover:bg-surface-2"
+      }`}
+    >
+      <div className="mb-1 text-[8px] font-semibold uppercase tracking-[0.08em] text-muted">
+        {wk.label}
       </div>
       <div className="grid grid-cols-7 gap-1">
-        {week.map((d, i) => (
+        {wk.days.map((d, i) => (
           <div
             key={i}
-            className={`overflow-hidden rounded-lg border bg-surface ${
-              d.today ? "border-primary shadow-[0_0_10px_rgba(165,28,48,0.25)]" : "border-border"
-            } ${d.dimmed ? "opacity-40" : ""}`}
+            className={`rounded border py-1 text-center ${
+              d.today ? "border-primary bg-primary/15" : "border-border bg-surface-2"
+            }`}
           >
-            <div className="bg-surface-2 px-0.5 py-1 text-center">
-              <span className={`block text-[7px] font-semibold ${d.today ? "text-accent" : "text-muted"}`}>
-                {d.letter}
-              </span>
-              <span className={`block text-[11px] font-medium leading-tight ${d.today ? "text-primary" : "text-text"}`}>
-                {d.num}
-              </span>
-            </div>
-            <div className="flex flex-col gap-px p-0.5">
-              {d.sessions.map((s, j) => (
-                <div key={j} className={`rounded px-1 py-0.5 ${kindStyles[s.kind].block}`}>
-                  <span className="block text-[6px] font-semibold leading-none text-text/60">
-                    {s.time}
-                  </span>
-                  <span className="mt-0.5 block text-[7px] font-medium leading-tight text-text/90">
-                    {s.label}
-                  </span>
-                </div>
+            <span className={`block text-[10px] font-medium leading-none ${d.today ? "text-primary" : "text-text"}`}>
+              {d.num}
+            </span>
+            <div className="mt-1 flex h-1 items-center justify-center gap-0.5">
+              {d.sessions.slice(0, 3).map((s, j) => (
+                <span key={j} className={`h-1 w-1 rounded-full ${kindStyles[s.kind].bar}`} />
               ))}
             </div>
           </div>
         ))}
       </div>
+    </button>
+  );
+}
+
+function WeekStrip({ weeks, startIndex }: { weeks: WeekView[]; startIndex: number }) {
+  const [mode, setMode] = useState<"week" | "month">("week");
+  const [idx, setIdx] = useState(startIndex);
+  const touchX = useRef<number | null>(null);
+
+  const last = weeks.length - 1;
+  const go = (delta: number) => setIdx((i) => Math.max(0, Math.min(last, i + delta)));
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    touchX.current = e.touches[0].clientX;
+  };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (touchX.current === null) return;
+    const dx = e.changedTouches[0].clientX - touchX.current;
+    touchX.current = null;
+    if (Math.abs(dx) < 40) return;
+    go(dx < 0 ? 1 : -1); // swipe left → next week
+  };
+
+  const current = weeks[idx];
+  const tabBtn = (m: "week" | "month") =>
+    `px-2.5 py-1 text-[9px] font-medium ${
+      mode === m ? "bg-primary text-primary-contrast" : "text-muted"
+    }`;
+
+  return (
+    <div className="px-3 pt-4">
+      <div className="flex items-center justify-between px-0.5 pb-2">
+        <SectionLabel>{mode === "week" ? "This Week" : "Block Overview"}</SectionLabel>
+        <div className="flex overflow-hidden rounded-lg border border-border bg-surface">
+          <button onClick={() => setMode("week")} className={tabBtn("week")}>
+            Week
+          </button>
+          <button onClick={() => setMode("month")} className={tabBtn("month")}>
+            Month
+          </button>
+        </div>
+      </div>
+
+      {mode === "week" ? (
+        <>
+          <div className="mb-2 flex items-center justify-between">
+            <button
+              onClick={() => go(-1)}
+              disabled={idx === 0}
+              aria-label="Previous week"
+              className="flex h-6 w-6 items-center justify-center rounded-md border border-border bg-surface text-muted disabled:opacity-30"
+            >
+              <IconArrowLeft size={13} />
+            </button>
+            <span className="text-[11px] font-medium text-text">
+              {current.label}
+              {idx === startIndex && <span className="text-muted"> · this week</span>}
+            </span>
+            <button
+              onClick={() => go(1)}
+              disabled={idx === last}
+              aria-label="Next week"
+              className="flex h-6 w-6 items-center justify-center rounded-md border border-border bg-surface text-muted disabled:opacity-30"
+            >
+              <IconArrowRight size={13} />
+            </button>
+          </div>
+          <div className="grid grid-cols-7 gap-1" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+            {current.days.map((d, i) => (
+              <DayCell key={i} d={d} />
+            ))}
+          </div>
+        </>
+      ) : (
+        <div className="flex flex-col gap-1.5">
+          {weeks.map((wk, wi) => (
+            <MonthWeekRow
+              key={wi}
+              wk={wk}
+              onPick={() => {
+                setIdx(wi);
+                setMode("week");
+              }}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -383,8 +501,7 @@ export default function HomeScreen() {
   return (
     <div className="mx-auto w-full max-w-screen-sm pb-6">
       <Greeting g={data.greeting} />
-      {data.race && <RaceBar r={data.race} />}
-      <WeekStrip week={data.week} />
+      <WeekStrip weeks={data.weeks} startIndex={data.weekIndex} />
 
       <div className="flex items-center justify-between px-4 pb-2 pt-4">
         <SectionLabel>Today&apos;s Sessions</SectionLabel>
@@ -407,6 +524,15 @@ export default function HomeScreen() {
       {data.lineups.length > 0 && (
         <div className="px-3 pt-3">
           <LineupCard lineups={data.lineups} />
+        </div>
+      )}
+
+      {data.race && (
+        <div className="pt-4">
+          <div className="px-4 pb-1">
+            <SectionLabel>Next Race</SectionLabel>
+          </div>
+          <RaceBar r={data.race} />
         </div>
       )}
 

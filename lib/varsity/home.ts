@@ -56,15 +56,24 @@ export type Lineup = {
 };
 
 export type Greeting = { date: string; name: string; block: string; week: string };
-export type Race = { name: string; location: string; count: number; unit: string };
+// `big` is the headline (e.g. "Today", "Tomorrow", or a number like "12");
+// `small` is the optional caption under a number ("Days"/"Day"). When the race
+// has already passed, the Home screen drops the race entirely (race = null).
+export type Race = { name: string; location: string; big: string; small?: string };
 export type Focus = { coach: string; when: string; text: string; tags: string[] };
+
+// One Mon–Sun week of the plan, with a short range label ("May 18 – 24").
+export type WeekView = { label: string; days: WeekDay[] };
 
 // The full shape the Home screen renders. The athlete view builds this from the
 // published plan (lib/varsity/athleteHome.ts); the object below is demo data.
+// `weeks` is every week of the current block (so the strip can swipe / show the
+// month); `weekIndex` is the one containing today.
 export type HomeData = {
   greeting: Greeting;
   race: Race | null;
-  week: WeekDay[];
+  weeks: WeekView[];
+  weekIndex: number;
   today: TodaySession[];
   lineups: Lineup[];
   focus: Focus;
@@ -80,27 +89,32 @@ export const home: HomeData = {
   race: {
     name: "Harvard vs Yale Regatta",
     location: "Thames River, CT · 8:00 AM start",
-    count: 1,
-    unit: "Day",
+    big: "Tomorrow",
   },
-  week: [
-    { letter: "M", num: 18, sessions: [
-      { time: "AM", label: "UT2 erg", kind: "ut2" },
-      { time: "PM", label: "Weights", kind: "weights" },
-    ] },
-    { letter: "T", num: 19, sessions: [{ time: "AM", label: "UT2 run", kind: "ut2" }] },
-    { letter: "W", num: 20, sessions: [{ time: "ALL", label: "OFF", kind: "off" }] },
-    { letter: "T", num: 21, sessions: [
-      { time: "AM", label: "UT2 erg", kind: "ut2" },
-      { time: "PM", label: "RP3", kind: "hard" },
-    ] },
-    { letter: "F", num: 22, today: true, sessions: [
-      { time: "AM", label: "UT2 run", kind: "ut2" },
-      { time: "PM", label: "RP3 4x5'", kind: "hard" },
-    ] },
-    { letter: "S", num: 23, sessions: [{ time: "AM", label: "RACE", kind: "race" }] },
-    { letter: "S", num: 24, dimmed: true, sessions: [{ time: "ALL", label: "Recov", kind: "recovery" }] },
-  ] as WeekDay[],
+  weekIndex: 0,
+  weeks: [
+    {
+      label: "May 18 – 24",
+      days: [
+        { letter: "M", num: 18, sessions: [
+          { time: "AM", label: "UT2 erg", kind: "ut2" },
+          { time: "PM", label: "Weights", kind: "weights" },
+        ] },
+        { letter: "T", num: 19, sessions: [{ time: "AM", label: "UT2 run", kind: "ut2" }] },
+        { letter: "W", num: 20, sessions: [{ time: "ALL", label: "OFF", kind: "off" }] },
+        { letter: "T", num: 21, sessions: [
+          { time: "AM", label: "UT2 erg", kind: "ut2" },
+          { time: "PM", label: "RP3", kind: "hard" },
+        ] },
+        { letter: "F", num: 22, today: true, sessions: [
+          { time: "AM", label: "UT2 run", kind: "ut2" },
+          { time: "PM", label: "RP3 4x5'", kind: "hard" },
+        ] },
+        { letter: "S", num: 23, sessions: [{ time: "AM", label: "RACE", kind: "race" }] },
+        { letter: "S", num: 24, dimmed: true, sessions: [{ time: "ALL", label: "Recov", kind: "recovery" }] },
+      ] as WeekDay[],
+    },
+  ],
   today: [
     {
       period: "AM · 7:00",
