@@ -204,6 +204,61 @@ export async function countWorkouts(userId: string): Promise<number> {
   return error ? 0 : (count ?? 0);
 }
 
+/* ── Distinct training partners (real app people) across ALL logs ──
+   Powers the Profile "Partners" stat + the "who did I train with" list. Only
+   counts sessions logged with a real picked person (partner_id), grouped by that
+   person; keeps their most-recent display name + how many sessions + last date. */
+export type PartnerSummary = {
+  id: string;
+  name: string;
+  sessions: number;
+  lastDate: string; // ISO yyyy-mm-dd of the most recent session together
+};
+
+// Aggregate rows (already sorted newest-first) into one entry per partner.
+function aggregatePartners(rows: { partnerId?: string; partner: string; date: string }[]): PartnerSummary[] {
+  const byId = new Map<string, PartnerSummary>();
+  for (const r of rows) {
+    if (!r.partnerId) continue;
+    const existing = byId.get(r.partnerId);
+    if (existing) {
+      existing.sessions += 1;
+      if (r.date > existing.lastDate) existing.lastDate = r.date;
+    } else {
+      byId.set(r.partnerId, {
+        id: r.partnerId,
+        name: r.partner || "Member",
+        sessions: 1,
+        lastDate: r.date,
+      });
+    }
+  }
+  return [...byId.values()].sort((a, b) => b.lastDate.localeCompare(a.lastDate));
+}
+
+export async function listPartners(userId: string): Promise<PartnerSummary[]> {
+  if (!userId) return [];
+  if (!hasSupabaseEnv()) {
+    return aggregatePartners(
+      loadLocal(userId).map((l) => ({ partnerId: l.partnerId, partner: l.partner, date: l.date })),
+    );
+  }
+  const { data, error } = await createClient()
+    .from("workout_logs")
+    .select("partner_id, partner, log_date")
+    .eq("user_id", userId)
+    .not("partner_id", "is", null)
+    .order("log_date", { ascending: false });
+  if (error || !data) return [];
+  return aggregatePartners(
+    (data as { partner_id: string; partner: string | null; log_date: string }[]).map((r) => ({
+      partnerId: r.partner_id,
+      partner: r.partner ?? "",
+      date: r.log_date,
+    })),
+  );
+}
+
 /* ── Create a new log ── */
 export async function saveWorkout(
   userId: string,

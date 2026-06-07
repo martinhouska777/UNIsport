@@ -11,6 +11,7 @@ import SessionCalendar from "@/components/profile/SessionCalendar";
 import SessionSheet from "@/components/profile/SessionSheet";
 import WorkoutDetail from "@/components/profile/WorkoutDetail";
 import LogSessionSheet from "@/components/profile/LogSessionSheet";
+import PartnersSheet from "@/components/profile/PartnersSheet";
 import PersonalRecords from "@/components/profile/PersonalRecords";
 import PhotoGrid from "@/components/profile/PhotoGrid";
 import PreferencesSheet from "@/components/profile/PreferencesSheet";
@@ -21,7 +22,14 @@ import {
   type CurrentUser,
   type PersonalRecord,
 } from "@/lib/currentUser";
-import { listMonth, countWorkouts, deleteWorkout, type WorkoutLog } from "@/lib/supabase/workouts";
+import {
+  listMonth,
+  countWorkouts,
+  listPartners,
+  deleteWorkout,
+  type WorkoutLog,
+  type PartnerSummary,
+} from "@/lib/supabase/workouts";
 import { fileToDataUrl } from "@/lib/image";
 import { getMyFollowCounts } from "@/lib/supabase/follows";
 import { residenceLabel, type OnboardingProfile } from "@/lib/onboarding";
@@ -39,6 +47,8 @@ export default function ProfilePage() {
   // Logged workouts for the current month + the all-time count (Sessions stat).
   const [logs, setLogs] = useState<WorkoutLog[]>([]);
   const [sessionsCount, setSessionsCount] = useState(0);
+  const [partners, setPartners] = useState<PartnerSummary[]>([]);
+  const [partnersOpen, setPartnersOpen] = useState(false); // "Partners" stat → who list
   const [openDate, setOpenDate] = useState<string | null>(null); // day sheet
   const [openLog, setOpenLog] = useState<WorkoutLog | null>(null); // full-screen workout detail
   const [logging, setLogging] = useState(false); // "Log session" (new) editor open
@@ -95,16 +105,24 @@ export default function ProfilePage() {
 
   // Fetch this month's logged workouts (for the calendar) + the all-time count.
   // Pure (no setState) so it's safe to call from both the effect and handlers.
-  const fetchLogs = useCallback(async (): Promise<{ logs: WorkoutLog[]; total: number }> => {
-    if (!userId) return { logs: [], total: 0 };
+  const fetchLogs = useCallback(async (): Promise<{
+    logs: WorkoutLog[];
+    total: number;
+    partners: PartnerSummary[];
+  }> => {
+    if (!userId) return { logs: [], total: 0, partners: [] };
     const now = new Date();
     const y = now.getFullYear();
     const m = now.getMonth();
     const pad = (n: number) => String(n).padStart(2, "0");
     const from = `${y}-${pad(m + 1)}-01`;
     const to = `${y}-${pad(m + 1)}-${pad(new Date(y, m + 1, 0).getDate())}`;
-    const [logs, total] = await Promise.all([listMonth(userId, from, to), countWorkouts(userId)]);
-    return { logs, total };
+    const [logs, total, partners] = await Promise.all([
+      listMonth(userId, from, to),
+      countWorkouts(userId),
+      listPartners(userId),
+    ]);
+    return { logs, total, partners };
   }, [userId]);
 
   useEffect(() => {
@@ -113,6 +131,7 @@ export default function ProfilePage() {
       if (!active) return;
       setLogs(r.logs);
       setSessionsCount(r.total);
+      setPartners(r.partners);
     });
     return () => {
       active = false;
@@ -124,6 +143,7 @@ export default function ProfilePage() {
     const r = await fetchLogs();
     setLogs(r.logs);
     setSessionsCount(r.total);
+    setPartners(r.partners);
   };
 
   // Edit a logged session: close the detail + day sheet and reopen it in the editor.
@@ -140,6 +160,7 @@ export default function ProfilePage() {
     const r = await fetchLogs();
     setLogs(r.logs);
     setSessionsCount(r.total);
+    setPartners(r.partners);
     setOpenLog(null);
     if (!r.logs.some((l) => l.date === log.date)) setOpenDate(null);
   };
@@ -189,9 +210,9 @@ export default function ProfilePage() {
     );
   }
 
-  const stats = [
+  const stats: { label: string; value: number; onClick?: () => void }[] = [
     { label: "Sessions", value: sessionsCount },
-    { label: "Partners", value: user.stats.partners },
+    { label: "Partners", value: partners.length, onClick: () => setPartnersOpen(true) },
     { label: "Following", value: followCounts?.following ?? user.stats.following },
   ];
 
@@ -316,10 +337,25 @@ export default function ProfilePage() {
         {stats.map((s, i) => (
           <div key={s.label} className="flex items-stretch">
             {i > 0 && <div className="mr-0 w-px self-stretch bg-border" />}
-            <div className="px-4 text-center">
-              <div className="text-[17px] font-medium text-text">{s.value}</div>
-              <div className="mt-0.5 text-[9px] uppercase tracking-[0.06em] text-muted">{s.label}</div>
-            </div>
+            {s.onClick ? (
+              <button
+                type="button"
+                onClick={s.onClick}
+                className="px-4 text-center transition-colors active:bg-surface-2"
+              >
+                <div className="text-[17px] font-medium text-text">{s.value}</div>
+                <div className="mt-0.5 text-[9px] uppercase tracking-[0.06em] text-primary">
+                  {s.label}
+                </div>
+              </button>
+            ) : (
+              <div className="px-4 text-center">
+                <div className="text-[17px] font-medium text-text">{s.value}</div>
+                <div className="mt-0.5 text-[9px] uppercase tracking-[0.06em] text-muted">
+                  {s.label}
+                </div>
+              </div>
+            )}
           </div>
         ))}
       </div>
@@ -479,6 +515,10 @@ export default function ProfilePage() {
           Log Session
         </button>
       </div>
+
+      {partnersOpen && (
+        <PartnersSheet partners={partners} onClose={() => setPartnersOpen(false)} />
+      )}
 
       {openDate && (
         <SessionSheet
