@@ -46,6 +46,7 @@ import {
   emptyProfile,
   type OnboardingProfile,
 } from "@/lib/onboarding";
+import { subscribeToPush, sendTestNotification } from "@/lib/push/client";
 
 const activityIcons: Record<string, (p: { size?: number; className?: string }) => React.ReactNode> = {
   barbell: IconBarbell,
@@ -161,6 +162,21 @@ export default function OnboardingFlow() {
     console.log("UNIsport onboarding profile:", profile);
     await saveOnboarding(profile); // saves to the DB + marks this account onboarded
     router.replace("/gyms");
+  };
+
+  // Last screen's gold CTA: ask the OS for notification permission, register the
+  // push subscription, fire a welcome ping, then finish. Denied/unsupported still
+  // completes onboarding — notifications are a nicety, never a blocker.
+  const enableNotifications = async () => {
+    const status = await subscribeToPush();
+    if (status === "granted") {
+      void sendTestNotification({
+        title: "Welcome to UNIsport 🎉",
+        body: "Notifications are on — we'll ping you the moment something matters.",
+        url: "/gyms",
+      });
+    }
+    await finish();
   };
 
   const renderBody = () => {
@@ -662,7 +678,7 @@ export default function OnboardingFlow() {
     ? {
         primaryLabel: "Enable notifications",
         primaryVariant: "gold" as const,
-        onPrimary: finish,
+        onPrimary: enableNotifications,
         secondaryLabel: "Maybe later",
         onSecondary: finish,
       }

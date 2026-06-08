@@ -4,6 +4,7 @@ import Link from "next/link";
 import VarsityShield from "@/components/varsity/VarsityShield";
 import { ThemeModeToggle } from "@/components/ThemeMode";
 import { IconBell, IconArrowLeft } from "@/components/icons";
+import { subscribeToPush, isSubscribed, sendTestNotification } from "@/lib/push/client";
 
 /*
   Top bar for every Varsity Mode screen: the varsity mark on the left, and on
@@ -11,6 +12,20 @@ import { IconBell, IconArrowLeft } from "@/components/icons";
   app (Profile tab). This is the mode-switch back out of Varsity Mode.
 */
 export default function VarsityTopBar() {
+  // Tap the bell: enable notifications the first time, then show a sample of how a
+  // team notification will look (real team alerts use the same delivery path).
+  const handleBell = async () => {
+    if (!(await isSubscribed())) {
+      const status = await subscribeToPush();
+      if (status !== "granted") return;
+    }
+    await sendTestNotification({
+      title: "Harvard Rowing",
+      body: "This is how a team notification will look.",
+      url: "/varsity",
+    });
+  };
+
   return (
     <div className="relative z-10 flex flex-shrink-0 items-center justify-between border-b border-border bg-background px-4 py-3">
       <div className="flex items-center gap-2">
@@ -29,6 +44,7 @@ export default function VarsityTopBar() {
         <ThemeModeToggle />
         <button
           type="button"
+          onClick={handleBell}
           aria-label="Notifications"
           className="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-surface text-muted"
         >
