@@ -6,7 +6,7 @@
   strip, today's prescribed sessions (with coach notes + watch-verify), the
   day's lineup, and the coach's weekly focus. All colors are theme tokens.
 */
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useAppState } from "@/components/AppState";
 import { fetchPlan, fetchProfileFullName } from "@/lib/varsity/planStore";
 import { fetchTodayLineups } from "@/lib/varsity/lineupStore";
@@ -96,64 +96,137 @@ function RaceBar({ r }: { r: RaceData }) {
 }
 
 /* ─── Week strip ───
-   Swipe (or use the arrows) to move between the block's weeks; the "Month"
-   toggle stacks every week of the block. Tap any day to see its full workout. */
+   Two views of the coach's plan. WEEK = a spreadsheet (AM/PM rows, day columns,
+   scroll sideways) styled after the team's training Excel. MONTH = a readable
+   full-width agenda, day by day. Tap any cell/day to see the full workout. */
 
-// A single day in the calendar. `big` makes the cell taller with larger text
-// (used in the Month overview so the workouts are easy to read).
-function DayCell({
-  d,
+const PERIOD_ROWS = ["AM", "PM"] as const;
+
+// WEEK view: the Excel-style grid. AM/PM down a sticky left column, the week's
+// days across; each cell is color-coded and shows the coach's workout text.
+function ExcelWeek({
+  week,
   selected,
-  big,
   onSelect,
 }: {
-  d: WeekDay;
-  selected: boolean;
-  big?: boolean;
-  onSelect: () => void;
+  week: WeekView;
+  selected: WeekDay | null;
+  onSelect: (d: WeekDay) => void;
 }) {
   return (
-    <button
-      onClick={onSelect}
-      className={`flex flex-col overflow-hidden rounded-lg border bg-surface text-left transition-colors ${
-        big ? "min-h-[58px]" : ""
-      } ${
-        selected
-          ? "border-primary ring-1 ring-primary"
-          : d.today
-            ? "border-primary shadow-[0_0_10px_rgba(165,28,48,0.25)]"
-            : "border-border"
-      } ${d.dimmed ? "opacity-40" : ""}`}
-    >
-      <div className="bg-surface-2 px-0.5 py-1 text-center">
-        <span className={`block text-[7px] font-semibold ${d.today ? "text-accent" : "text-muted"}`}>
-          {d.letter}
-        </span>
-        <span
-          className={`block font-medium leading-tight ${big ? "text-[13px]" : "text-[11px]"} ${
-            d.today ? "text-primary" : "text-text"
-          }`}
-        >
-          {d.num}
-        </span>
-      </div>
-      <div className="flex flex-1 flex-col gap-px p-0.5">
-        {d.sessions.map((s, j) => (
-          <div key={j} className={`rounded px-1 py-0.5 ${kindStyles[s.kind].block}`}>
-            {!big && (
-              <span className="block text-[6px] font-semibold leading-none text-text/60">{s.time}</span>
-            )}
-            <span
-              className={`block font-medium leading-tight text-text/90 ${
-                big ? "mt-0 text-[9px]" : "mt-0.5 text-[7px]"
+    <div className="overflow-x-auto rounded-xl border border-border">
+      <div className="min-w-max">
+        {/* header: weekday + date for each column */}
+        <div className="flex">
+          <div className="sticky left-0 z-10 w-9 flex-shrink-0 border-b border-r border-border bg-surface-2" />
+          {week.days.map((d, i) => (
+            <div
+              key={i}
+              className={`w-28 flex-shrink-0 border-b border-r border-border px-1 py-1.5 text-center ${
+                d.today ? "bg-primary/15" : "bg-surface-2"
               }`}
             >
-              {s.label}
-            </span>
+              <div className={`text-[8px] font-semibold uppercase ${d.today ? "text-accent" : "text-muted"}`}>
+                {d.letter}
+              </div>
+              <div className={`text-[13px] font-semibold leading-none ${d.today ? "text-primary" : "text-text"}`}>
+                {d.num}
+              </div>
+            </div>
+          ))}
+        </div>
+        {/* one row per period */}
+        {PERIOD_ROWS.map((row) => (
+          <div key={row} className="flex">
+            <div className="sticky left-0 z-10 flex w-9 flex-shrink-0 items-center justify-center border-b border-r border-border bg-surface-2 text-[9px] font-bold tracking-wide text-muted">
+              {row}
+            </div>
+            {week.days.map((d, i) => {
+              const s = d.sessions.find((x) => x.time === row);
+              const sel = selected === d;
+              return (
+                <button
+                  key={i}
+                  onClick={() => onSelect(d)}
+                  className={`w-28 flex-shrink-0 border-b border-r border-border p-1 text-left align-top ${
+                    sel ? "ring-1 ring-inset ring-primary" : ""
+                  } ${d.today ? "bg-primary/[0.04]" : ""}`}
+                >
+                  {s ? (
+                    <div className={`min-h-[40px] rounded px-1.5 py-1 ${kindStyles[s.kind].block}`}>
+                      <span className="block text-[10px] font-medium leading-snug text-text">{s.label}</span>
+                    </div>
+                  ) : (
+                    <div className="min-h-[40px]" />
+                  )}
+                </button>
+              );
+            })}
           </div>
         ))}
       </div>
-    </button>
+    </div>
+  );
+}
+
+// MONTH view: a readable agenda — each day a full-width row with its workouts.
+function MonthAgenda({
+  weeks,
+  selected,
+  onSelect,
+}: {
+  weeks: WeekView[];
+  selected: WeekDay | null;
+  onSelect: (d: WeekDay) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-4">
+      {weeks.map((wk, wi) => (
+        <div key={wi}>
+          <div className="mb-1.5 flex items-center gap-2 px-0.5">
+            <span className="text-[9px] font-semibold uppercase tracking-[0.08em] text-muted">{wk.label}</span>
+            {wk.days.some((d) => d.today) && (
+              <span className="rounded bg-primary/15 px-1.5 py-px text-[8px] font-semibold text-primary">
+                This week
+              </span>
+            )}
+          </div>
+          <div className="divide-y divide-border overflow-hidden rounded-xl border border-border">
+            {wk.days.map((d, i) => (
+              <button
+                key={i}
+                onClick={() => onSelect(d)}
+                className={`flex w-full gap-3 px-3 py-2 text-left ${
+                  d.today ? "bg-primary/[0.06]" : selected === d ? "bg-surface-2" : "bg-surface"
+                }`}
+              >
+                <div className="w-10 flex-shrink-0 pt-0.5">
+                  <div className={`text-[9px] font-semibold uppercase ${d.today ? "text-accent" : "text-muted"}`}>
+                    {d.letter}
+                  </div>
+                  <div className={`text-[15px] font-semibold leading-none ${d.today ? "text-primary" : "text-text"}`}>
+                    {d.num}
+                  </div>
+                </div>
+                <div className="flex flex-1 flex-col justify-center gap-1 py-0.5">
+                  {d.sessions.length > 0 ? (
+                    d.sessions.map((s, j) => (
+                      <div key={j} className="flex items-center gap-2">
+                        <span className={`h-2.5 w-2.5 flex-shrink-0 rounded-sm ${kindStyles[s.kind].bar}`} />
+                        <span className="w-6 flex-shrink-0 text-[8px] font-bold text-muted">{s.time}</span>
+                        <span className="text-[12px] leading-snug text-text">{s.label}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <span className="text-[11px] italic text-muted/60">Rest day</span>
+                  )}
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -206,22 +279,10 @@ function WeekStrip({ weeks, startIndex }: { weeks: WeekView[]; startIndex: numbe
   const [mode, setMode] = useState<"week" | "month">("week");
   const [idx, setIdx] = useState(startIndex);
   const [selected, setSelected] = useState<WeekDay | null>(null);
-  const touchX = useRef<number | null>(null);
 
   const last = weeks.length - 1;
   const go = (delta: number) => setIdx((i) => Math.max(0, Math.min(last, i + delta)));
   const pick = (d: WeekDay) => setSelected((cur) => (cur === d ? null : d)); // tap again to close
-
-  const onTouchStart = (e: React.TouchEvent) => {
-    touchX.current = e.touches[0].clientX;
-  };
-  const onTouchEnd = (e: React.TouchEvent) => {
-    if (touchX.current === null) return;
-    const dx = e.changedTouches[0].clientX - touchX.current;
-    touchX.current = null;
-    if (Math.abs(dx) < 40) return;
-    go(dx < 0 ? 1 : -1); // swipe left → next week
-  };
 
   const current = weeks[idx];
   const tabBtn = (m: "week" | "month") =>
@@ -232,7 +293,7 @@ function WeekStrip({ weeks, startIndex }: { weeks: WeekView[]; startIndex: numbe
   return (
     <div className="px-3 pt-4">
       <div className="flex items-center justify-between px-0.5 pb-2">
-        <SectionLabel>{mode === "week" ? "This Week" : "Block Overview"}</SectionLabel>
+        <SectionLabel>{mode === "week" ? "Training Plan" : "Block Overview"}</SectionLabel>
         <div className="flex overflow-hidden rounded-lg border border-border bg-surface">
           <button onClick={() => setMode("week")} className={tabBtn("week")}>
             Week
@@ -267,34 +328,11 @@ function WeekStrip({ weeks, startIndex }: { weeks: WeekView[]; startIndex: numbe
               <IconArrowRight size={13} />
             </button>
           </div>
-          <div className="grid grid-cols-7 gap-1" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
-            {current.days.map((d, i) => (
-              <DayCell key={i} d={d} selected={selected === d} onSelect={() => pick(d)} />
-            ))}
-          </div>
+          <ExcelWeek week={current} selected={selected} onSelect={pick} />
+          <div className="mt-1 text-center text-[9px] text-muted">Scroll sideways for the weekend →</div>
         </>
       ) : (
-        <div className="flex flex-col gap-3">
-          {weeks.map((wk, wi) => (
-            <div key={wi}>
-              <div className="mb-1 flex items-center gap-2 px-0.5">
-                <span className="text-[9px] font-semibold uppercase tracking-[0.08em] text-muted">
-                  {wk.label}
-                </span>
-                {wk.days.some((d) => d.today) && (
-                  <span className="rounded bg-primary/15 px-1.5 py-px text-[8px] font-semibold text-primary">
-                    This week
-                  </span>
-                )}
-              </div>
-              <div className="grid grid-cols-7 gap-1">
-                {wk.days.map((d, i) => (
-                  <DayCell key={i} d={d} selected={selected === d} big onSelect={() => pick(d)} />
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
+        <MonthAgenda weeks={weeks} selected={selected} onSelect={pick} />
       )}
 
       {selected && <DayDetail d={selected} onClose={() => setSelected(null)} />}
