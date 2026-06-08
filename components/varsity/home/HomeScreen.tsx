@@ -102,9 +102,10 @@ function RaceBar({ r }: { r: RaceData }) {
 
 const PERIOD_ROWS = ["AM", "PM"] as const;
 
-// WEEK view: the Excel-style grid. AM/PM down a sticky left column, the week's
-// days across; each cell is color-coded and shows the coach's workout text.
-function ExcelWeek({
+// WEEK view: the whole week at a glance — 7 day columns, no sideways scrolling.
+// Each session is a color-coded block (the colour is the intensity: UT2, hard,
+// …) showing the coach's workout text; cells grow so the full text fits.
+function WeekFit({
   week,
   selected,
   onSelect,
@@ -114,57 +115,46 @@ function ExcelWeek({
   onSelect: (d: WeekDay) => void;
 }) {
   return (
-    <div className="overflow-x-auto rounded-xl border border-border">
-      <div className="min-w-max">
-        {/* header: weekday + date for each column */}
-        <div className="flex">
-          <div className="sticky left-0 z-10 w-9 flex-shrink-0 border-b border-r border-border bg-surface-2" />
-          {week.days.map((d, i) => (
-            <div
-              key={i}
-              className={`w-28 flex-shrink-0 border-b border-r border-border px-1 py-1.5 text-center ${
-                d.today ? "bg-primary/15" : "bg-surface-2"
-              }`}
-            >
-              <div className={`text-[8px] font-semibold uppercase ${d.today ? "text-accent" : "text-muted"}`}>
+    <div className="grid grid-cols-7 items-stretch gap-1">
+      {week.days.map((d, i) => {
+        const sel = selected === d;
+        return (
+          <button
+            key={i}
+            onClick={() => onSelect(d)}
+            className={`flex flex-col overflow-hidden rounded-lg border bg-surface text-left ${
+              sel
+                ? "border-primary ring-1 ring-primary"
+                : d.today
+                  ? "border-primary"
+                  : "border-border"
+            }`}
+          >
+            <div className={`px-0.5 py-1 text-center ${d.today ? "bg-primary/15" : "bg-surface-2"}`}>
+              <div className={`text-[8px] font-semibold uppercase leading-none ${d.today ? "text-accent" : "text-muted"}`}>
                 {d.letter}
               </div>
-              <div className={`text-[13px] font-semibold leading-none ${d.today ? "text-primary" : "text-text"}`}>
+              <div className={`mt-0.5 text-[12px] font-semibold leading-none ${d.today ? "text-primary" : "text-text"}`}>
                 {d.num}
               </div>
             </div>
-          ))}
-        </div>
-        {/* one row per period */}
-        {PERIOD_ROWS.map((row) => (
-          <div key={row} className="flex">
-            <div className="sticky left-0 z-10 flex w-9 flex-shrink-0 items-center justify-center border-b border-r border-border bg-surface-2 text-[9px] font-bold tracking-wide text-muted">
-              {row}
+            <div className="flex flex-1 flex-col gap-0.5 p-0.5">
+              {PERIOD_ROWS.map((row) => {
+                const s = d.sessions.find((x) => x.time === row);
+                if (!s) return null;
+                return (
+                  <div key={row} className={`flex-1 rounded px-1 py-1 ${kindStyles[s.kind].block}`}>
+                    <span className="block text-[7px] font-bold leading-none text-text/45">{row}</span>
+                    <span className="mt-0.5 block break-words text-[10px] font-medium leading-tight text-text">
+                      {s.label}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
-            {week.days.map((d, i) => {
-              const s = d.sessions.find((x) => x.time === row);
-              const sel = selected === d;
-              return (
-                <button
-                  key={i}
-                  onClick={() => onSelect(d)}
-                  className={`w-28 flex-shrink-0 border-b border-r border-border p-1 text-left align-top ${
-                    sel ? "ring-1 ring-inset ring-primary" : ""
-                  } ${d.today ? "bg-primary/[0.04]" : ""}`}
-                >
-                  {s ? (
-                    <div className={`min-h-[40px] rounded px-1.5 py-1 ${kindStyles[s.kind].block}`}>
-                      <span className="block text-[10px] font-medium leading-snug text-text">{s.label}</span>
-                    </div>
-                  ) : (
-                    <div className="min-h-[40px]" />
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        ))}
-      </div>
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -328,8 +318,7 @@ function WeekStrip({ weeks, startIndex }: { weeks: WeekView[]; startIndex: numbe
               <IconArrowRight size={13} />
             </button>
           </div>
-          <ExcelWeek week={current} selected={selected} onSelect={pick} />
-          <div className="mt-1 text-center text-[9px] text-muted">Scroll sideways for the weekend →</div>
+          <WeekFit week={current} selected={selected} onSelect={pick} />
         </>
       ) : (
         <MonthAgenda weeks={weeks} selected={selected} onSelect={pick} />
