@@ -120,6 +120,24 @@ export async function unsubscribeFromPush(): Promise<void> {
   }
 }
 
+// Fire-and-forget: ask the server to notify the OTHER person in a conversation
+// (a new message or a session plan). Never throws and never blocks the caller —
+// a failed notification must not affect sending the message itself. `keepalive`
+// lets it complete even if the page navigates right after.
+export function notifyConversation(input: {
+  conversationId: string;
+  kind: "message" | "plan";
+  preview?: string;
+}): void {
+  if (typeof window === "undefined") return;
+  void fetch("/api/push/notify", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    keepalive: true,
+  }).catch(() => {});
+}
+
 // Ask the server to send a notification to this user's devices (welcome / sample).
 export async function sendTestNotification(payload?: {
   title?: string;

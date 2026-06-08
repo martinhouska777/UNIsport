@@ -5,6 +5,7 @@
   part of the DM thread (see lib/supabase/messages.ts → DmMessage.plan).
 */
 import { createClient } from "@/lib/supabase/client";
+import { notifyConversation } from "@/lib/push/client";
 
 /** Propose a session in a conversation. Returns the new plan id. */
 export async function createPlan(
@@ -18,6 +19,13 @@ export async function createPlan(
     p_scheduled_at: input.scheduledAt,
   });
   if (error) throw new Error(`createPlan failed: ${error.message}`);
+  // Push the recipient about the invite (fire-and-forget; never blocks the call).
+  const where = input.place ? ` at ${input.place}` : "";
+  notifyConversation({
+    conversationId,
+    kind: "plan",
+    preview: `${input.activity}${where} · ${planWhenLabel(input.scheduledAt)}`,
+  });
   return data as string;
 }
 

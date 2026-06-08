@@ -4,6 +4,7 @@
   which enforce who can read/post using auth.uid(). Nothing here is faked.
 */
 import { createClient } from "@/lib/supabase/client";
+import { notifyConversation } from "@/lib/push/client";
 
 // --- Direct messages -------------------------------------------------------
 
@@ -76,7 +77,10 @@ export async function sendDirectMessage(
     message_text: body,
   });
   if (error) throw new Error(`sendDirectMessage failed: ${error.message}`);
-  return toDmMessage((data as Record<string, unknown>[])[0]);
+  const message = toDmMessage((data as Record<string, unknown>[])[0]);
+  // Push the recipient (fire-and-forget; never blocks or fails the send).
+  notifyConversation({ conversationId, kind: "message", preview: message.body });
+  return message;
 }
 
 /**
