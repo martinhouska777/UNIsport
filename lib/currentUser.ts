@@ -34,6 +34,10 @@ export type CurrentUser = OnboardingProfile & {
   // the get_public_profile DB function, not just here).
   showPhotos: boolean;
   showPersonalRecords: boolean;
+  // Which push notifications this user wants to receive (apply across all their
+  // devices). Default on; enforced server-side in db/push_notify.sql.
+  notifyMessages: boolean;
+  notifyPlans: boolean;
 };
 
 export const currentUser: CurrentUser = {
@@ -82,6 +86,8 @@ export const currentUser: CurrentUser = {
   photos: [],
   showPhotos: true,
   showPersonalRecords: true,
+  notifyMessages: true,
+  notifyPlans: true,
   sessions: [
     { day: 3, activity: "Push day", gym: "Malkin Athletic Center", partner: "Alex Chen", exercises: ["Bench 5×5", "OHP 4×8", "Triceps"], photos: [] },
     { day: 6, activity: "Pull day", gym: "Malkin Athletic Center", partner: "Solo", exercises: ["Deadlift 5×3", "Rows 4×10", "Curls"], photos: [] },
@@ -135,6 +141,8 @@ export function profileFromOnboarding(raw: Record<string, unknown>): CurrentUser
     photos?: string[];
     showPhotos?: boolean;
     showPersonalRecords?: boolean;
+    notifyMessages?: boolean;
+    notifyPlans?: boolean;
   };
   const savedTraining = extra.trainingDisplay;
   return {
@@ -146,6 +154,8 @@ export function profileFromOnboarding(raw: Record<string, unknown>): CurrentUser
     photos: extra.photos ?? [],
     showPhotos: extra.showPhotos ?? true,
     showPersonalRecords: extra.showPersonalRecords ?? true,
+    notifyMessages: extra.notifyMessages ?? true,
+    notifyPlans: extra.notifyPlans ?? true,
     sessions: [],
   };
 }

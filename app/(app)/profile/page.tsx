@@ -16,6 +16,7 @@ import UpcomingSessions from "@/components/profile/UpcomingSessions";
 import PersonalRecords from "@/components/profile/PersonalRecords";
 import PhotoGrid from "@/components/profile/PhotoGrid";
 import PreferencesSheet from "@/components/profile/PreferencesSheet";
+import NotificationSettings from "@/components/profile/NotificationSettings";
 import {
   profileFromOnboarding,
   deriveTrainingDisplay,
@@ -454,6 +455,13 @@ export default function ProfilePage() {
         onChange={(photos) => update({ photos })}
         visible={user.showPhotos}
         onVisibleChange={(v) => update({ showPhotos: v })}
+      />
+
+      {/* Notification settings — device on/off + which kinds to receive */}
+      <NotificationSettings
+        messages={user.notifyMessages}
+        plans={user.notifyPlans}
+        onChange={update}
       />
 
       {/* Entry into Varsity Mode (the gated rowing-team section) */}

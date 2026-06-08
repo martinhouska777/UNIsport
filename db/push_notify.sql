@@ -16,10 +16,14 @@
 -- ============================================================================
 
 -- The push subscriptions of the OTHER participant in a DM conversation — only if
--- the caller is one of the two members. Works for both new messages and session
--- plans (plans live inside a conversation too). Empty result = recipient has no
--- devices enabled (nothing to send).
-create or replace function public.dm_push_targets(conversation_id uuid)
+-- the caller is one of the two members AND the recipient hasn't switched off this
+-- kind of notification ('message' or 'plan'; preference stored on their profile,
+-- default ON when unset). Works for both new messages and session plans (plans
+-- live inside a conversation too). Empty result = nothing to send.
+-- Param list changed (added `kind`); drop the old single-arg version first so a
+-- re-run doesn't leave a stale overload behind.
+drop function if exists public.dm_push_targets(uuid);
+create or replace function public.dm_push_targets(conversation_id uuid, kind text)
 returns table (endpoint text, p256dh text, auth text)
 language plpgsql
 stable
@@ -27,8 +31,10 @@ security definer
 set search_path = public
 as $$
 declare
-  me   uuid := auth.uid();
-  peer uuid;
+  me       uuid := auth.uid();
+  peer     uuid;
+  pref_key text := case when kind = 'plan' then 'notifyPlans' else 'notifyMessages' end;
+  wants    boolean;
 begin
   if me is null then raise exception 'not authenticated'; end if;
 
@@ -38,6 +44,11 @@ begin
     where c.id = conversation_id and (c.user_lo = me or c.user_hi = me);
 
   if peer is null then raise exception 'not a participant'; end if;
+
+  -- Recipient's preference for this kind; missing key = on.
+  select coalesce((p.data->>pref_key)::boolean, true) into wants
+    from public.profiles p where p.id = peer;
+  if not coalesce(wants, true) then return; end if;
 
   return query
     select s.endpoint, s.p256dh, s.auth
@@ -73,6 +84,6 @@ as $$
   delete from public.push_subscriptions where endpoint = any(endpoints);
 $$;
 
-grant execute on function public.dm_push_targets(uuid)   to authenticated;
+grant execute on function public.dm_push_targets(uuid, text) to authenticated;
 grant execute on function public.my_display_name()       to authenticated;
 grant execute on function public.push_forget(text[])     to authenticated;

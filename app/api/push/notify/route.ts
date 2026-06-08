@@ -41,6 +41,7 @@ export async function POST(request: Request) {
   // a participant) fail soft.
   const { data: targets, error } = await supabase.rpc("dm_push_targets", {
     conversation_id: conversationId,
+    kind,
   });
   if (error) return Response.json({ error: "forbidden" }, { status: 403 });
 
