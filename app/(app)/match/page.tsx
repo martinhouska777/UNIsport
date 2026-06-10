@@ -29,9 +29,16 @@ import {
   SESSION_WINDOW_HOURS,
 } from "@/lib/onboarding";
 import MatchCard from "@/components/match/MatchCard";
+import BuddyBoard from "@/components/match/BuddyBoard";
 import { Pill, FieldLabel } from "@/components/onboarding/controls";
 
-type SubTab = "browse" | "session";
+type SubTab = "browse" | "session" | "buddy";
+
+const subTabs: { key: SubTab; label: string; heading: string }[] = [
+  { key: "browse", label: "Browse", heading: "BROWSE" },
+  { key: "session", label: "Session", heading: "SESSION SEARCH" },
+  { key: "buddy", label: "Buddy Board", heading: "BUDDY BOARD" },
+];
 
 const genderOptions: { key: string; label: string }[] = [
   { key: "male", label: "Men" },
@@ -238,23 +245,23 @@ export default function MatchPage() {
       <div className="flex items-center justify-between px-4 pt-3">
         <h1 className="text-base font-medium text-text">Match</h1>
         <span className="text-[10px] tracking-[0.06em] text-muted">
-          {tab === "browse" ? "BROWSE" : "SESSION SEARCH"}
+          {subTabs.find((s) => s.key === tab)?.heading}
         </span>
       </div>
 
       {/* Sub-tab switch */}
       <div className="px-3 pb-2 pt-2.5">
         <div className="flex overflow-hidden rounded-xl border border-border">
-          {(["browse", "session"] as const).map((t) => (
+          {subTabs.map((s) => (
             <button
-              key={t}
+              key={s.key}
               type="button"
-              onClick={() => setTab(t)}
+              onClick={() => setTab(s.key)}
               className={`flex-1 py-2 text-xs font-medium transition-colors ${
-                tab === t ? "bg-primary text-primary-contrast" : "bg-surface-2 text-muted"
+                tab === s.key ? "bg-primary text-primary-contrast" : "bg-surface-2 text-muted"
               }`}
             >
-              {t === "browse" ? "Browse" : "Session Search"}
+              {s.label}
             </button>
           ))}
         </div>
@@ -398,6 +405,9 @@ export default function MatchPage() {
           )}
         </div>
       )}
+
+      {/* BUDDY BOARD */}
+      {tab === "buddy" && <BuddyBoard />}
 
       {/* OPTIONAL-FILTERS SHEET */}
       {sheetOpen && (
