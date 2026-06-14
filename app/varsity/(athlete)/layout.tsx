@@ -16,6 +16,7 @@ import { useRouter } from "next/navigation";
 import { useAppState } from "@/components/AppState";
 import ThemeProvider from "@/components/ThemeProvider";
 import OarRails from "@/components/varsity/OarRails";
+import VarsityIntro from "@/components/varsity/VarsityIntro";
 import VarsityTopBar from "@/components/varsity/VarsityTopBar";
 import VarsityNav from "@/components/varsity/VarsityNav";
 import { varsityTheme, varsityLightTheme } from "@/lib/varsity/theme";
@@ -38,6 +39,7 @@ export default function VarsityLayout({ children }: { children: React.ReactNode 
       light={varsityLightTheme}
       className="relative flex h-dvh flex-col overflow-hidden bg-background"
     >
+      <VarsityIntro />
       <OarRails />
       <VarsityTopBar />
       <main className="relative z-10 flex flex-1 flex-col overflow-y-auto">

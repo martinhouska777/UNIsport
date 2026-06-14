@@ -140,6 +140,34 @@ body {
   .app-page-enter { animation: none; }
 }
 
+/*
+  VARSITY MODE INTRO — crossed-oars crest reveal.
+  Two oars sweep in from the sides (already angled) and meet crossed in the
+  middle; the crest then drops in from the top. The oar graphic is a swap point
+  for a real oar image later — only the visual changes, not this motion.
+*/
+@keyframes v-oar-in-left {
+  from { opacity: 0; transform: translateX(-120vw); }
+  60%  { opacity: 1; }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes v-oar-in-right {
+  from { opacity: 0; transform: translateX(120vw); }
+  60%  { opacity: 1; }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes v-crest-drop {
+  from { opacity: 0; transform: translateY(-48vh) scale(0.82); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.v-oar-in-left  { animation: v-oar-in-left  0.85s cubic-bezier(0.18, 0.7, 0.2, 1) both; }
+.v-oar-in-right { animation: v-oar-in-right 0.85s cubic-bezier(0.18, 0.7, 0.2, 1) both; }
+.v-crest-drop   { animation: v-crest-drop   0.75s 0.55s cubic-bezier(0.2, 0.85, 0.25, 1) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .v-oar-in-left, .v-oar-in-right, .v-crest-drop { animation: none; }
+}
+
 /* Bottom-sheet entrance (session detail overlay) */
 @keyframes sheet-up {
   from { transform: translateY(100%); }
