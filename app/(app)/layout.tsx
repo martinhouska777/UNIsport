@@ -8,7 +8,7 @@
     user isn't "logged in".
 */
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useAppState } from "@/components/AppState";
 import ThemeProvider from "@/components/ThemeProvider";
 import BottomNav from "@/components/BottomNav";
@@ -17,6 +17,7 @@ import { getUniversity, neutralTheme } from "@/lib/themes";
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { ready, loggedIn, onboarded, universityKey } = useAppState();
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     if (!ready) return;
@@ -35,7 +36,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       light={uni?.themeLight}
       className="flex h-dvh flex-col overflow-hidden bg-background"
     >
-      <main className="flex flex-1 flex-col overflow-y-auto">{children}</main>
+      {/* Keying on the route remounts the tab subtree so the entrance
+          animation replays on every navigation; main stays the scroll
+          container so sticky headers keep working. */}
+      <main
+        key={pathname}
+        className="app-page-enter flex flex-1 flex-col overflow-y-auto"
+      >
+        {children}
+      </main>
       <BottomNav />
     </ThemeProvider>
   );

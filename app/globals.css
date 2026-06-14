@@ -124,6 +124,22 @@ body {
   color: var(--text);
 }
 
+/*
+  ZONE 2 IN-APP MOTION (post-login).
+  Reusable entrance animations applied across the tab screens so navigation
+  feels alive instead of snapping. Kept subtle + fast (a PWA must stay quick),
+  and fully disabled when the OS requests reduced motion.
+*/
+@keyframes app-page-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.app-page-enter { animation: app-page-enter 0.28s ease-out both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .app-page-enter { animation: none; }
+}
+
 /* Bottom-sheet entrance (session detail overlay) */
 @keyframes sheet-up {
   from { transform: translateY(100%); }
