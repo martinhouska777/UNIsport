@@ -59,9 +59,9 @@ function StatsRow({
         <span className="flex items-center gap-1">
           <IconClock size={13} /> {gym.hours}
         </span>
-        {/* Real rating + when it was last rated (n/a until anyone rates it) */}
-        <RatingValue rating={rating} showAgo />
-        {/* Live crowd ("how busy right now"), n/a once a report goes stale */}
+        {/* Real rating, or an invitation when nobody has rated this gym yet */}
+        <RatingValue rating={rating} showAgo empty="prompt" />
+        {/* Live crowd ("how busy right now") — disappears once a report goes stale */}
         <CrowdChip crowd={crowd} />
         <span className="flex items-center gap-1">
           <IconFloors size={13} /> {gym.floors} {gym.floors === 1 ? "floor" : "floors"}

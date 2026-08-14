@@ -77,26 +77,43 @@ export function CrowdPicker({
   );
 }
 
-// Compact rating for rows: gold star + value (or "n/a"), optional "· 2d ago".
+/*
+  Compact rating for rows: gold star + value, optional "· 2d ago".
+  An unrated gym NEVER renders a placeholder value — a screen full of "n/a"
+  reads as "this app has no data". `empty` decides what nothing looks like:
+   - "hide"   → render nothing, and let the neighbouring stats fill the space.
+   - "prompt" → an invitation to be the first to rate (used on the gym cards,
+                where the whole card already links to the gym's rating control).
+*/
 export function RatingValue({
   rating,
   showAgo = false,
+  empty = "hide",
 }: {
   rating: GymRating | null;
   showAgo?: boolean;
+  empty?: "hide" | "prompt";
 }) {
+  if (!rating) {
+    if (empty === "hide") return null;
+    return (
+      <span className="flex items-center gap-1 text-muted">
+        <IconStar size={13} /> Be the first to rate
+      </span>
+    );
+  }
   return (
     <span className="flex items-center gap-1">
-      <IconStar size={13} className={rating ? "text-accent" : "text-muted"} />
-      <span className={rating ? "text-text" : "text-muted"}>
-        {rating ? rating.value.toFixed(1) : "n/a"}
-      </span>
-      {rating && showAgo && <span className="text-muted/70">· {timeAgo(rating.at)}</span>}
+      <IconStar size={13} className="text-accent" />
+      <span className="text-text">{rating.value.toFixed(1)}</span>
+      {showAgo && <span className="text-muted/70">· {timeAgo(rating.at)}</span>}
     </span>
   );
 }
 
-// Compact crowd for rows: person glyph + level (toned), or a muted "n/a".
+// Compact crowd for rows: person glyph + level (toned). With no fresh report
+// there is nothing honest to say, so the stat disappears rather than showing
+// a placeholder.
 export function CrowdChip({
   crowd,
   showAgo = false,
@@ -104,13 +121,7 @@ export function CrowdChip({
   crowd: GymCrowd | null;
   showAgo?: boolean;
 }) {
-  if (!crowd) {
-    return (
-      <span className="flex items-center gap-1 text-muted">
-        <IconUser size={12} /> n/a
-      </span>
-    );
-  }
+  if (!crowd) return null;
   return (
     <span className={`flex items-center gap-1 ${crowdTone(crowd.level)}`}>
       <IconUser size={12} /> {crowdLabel(crowd.level)}
