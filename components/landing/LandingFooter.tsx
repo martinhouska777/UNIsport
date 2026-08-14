@@ -11,8 +11,21 @@ export default function LandingFooter() {
           <span className="h-3.5 w-px bg-l-border" />
           <span>Built at Harvard, for every campus</span>
         </div>
-        <div className="font-mono text-[11px] tracking-wide text-l-text-3">
-          Officially unaffiliated with Harvard University
+        <div className="flex flex-col items-start gap-2 sm:items-end">
+          {/* Google's brand verification checks the privacy policy is reachable
+              and linked from the homepage, so these stay in the footer. */}
+          <div className="flex items-center gap-4 font-mono text-[11px] tracking-wide">
+            <Link href="/privacy" className="text-l-text-3 transition-colors hover:text-l-text-2">
+              Privacy
+            </Link>
+            <span className="h-3 w-px bg-l-border" />
+            <Link href="/terms" className="text-l-text-3 transition-colors hover:text-l-text-2">
+              Terms
+            </Link>
+          </div>
+          <div className="font-mono text-[11px] tracking-wide text-l-text-3">
+            Officially unaffiliated with Harvard University
+          </div>
         </div>
       </div>
     </footer>

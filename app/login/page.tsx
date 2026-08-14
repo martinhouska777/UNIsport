@@ -15,15 +15,25 @@ import { createClient, hasSupabaseEnv } from "@/lib/supabase/client";
 
 type Mode = "login" | "signup";
 
-// Credentials of the last successful login, kept ONLY in this browser (never in
-// source). Powers the one-click "Continue as …" button so you don't retype them.
+// The EMAIL of the last successful login, kept only in this browser so the form
+// can prefill it. Never the password: anything in localStorage is readable by
+// any script running on the page, so a single injected script would hand over
+// real passwords — and people reuse them. Supabase already keeps you signed in
+// on its own, so there is nothing to gain by storing it.
 const REMEMBER_KEY = "unisport.lastLogin";
-type Remembered = { email: string; password: string };
 
-function readRemembered(): Remembered | null {
+function readRememberedEmail(): string | null {
   try {
     const raw = localStorage.getItem(REMEMBER_KEY);
-    return raw ? (JSON.parse(raw) as Remembered) : null;
+    if (!raw) return null;
+    const saved = JSON.parse(raw) as { email?: string; password?: string };
+    if (!saved?.email) return null;
+    // Earlier builds also stored the password here. Scrub it the moment we see
+    // it, so browsers that already have one stop carrying it around.
+    if (saved.password !== undefined) {
+      localStorage.setItem(REMEMBER_KEY, JSON.stringify({ email: saved.email }));
+    }
+    return saved.email;
   } catch {
     return null;
   }
@@ -40,15 +50,15 @@ export default function LoginPage() {
   const [confirmSent, setConfirmSent] = useState(false); // only if email-confirm is ON in Supabase
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [remembered, setRemembered] = useState<Remembered | null>(null);
 
   useEffect(() => {
     if (ready && loggedIn) router.replace(onboarded ? "/gyms" : "/onboarding");
   }, [ready, loggedIn, onboarded, router]);
 
-  // Load any remembered login so we can offer the one-click button.
+  // Prefill the email from the last sign-in on this device (password never is).
   useEffect(() => {
-    setRemembered(readRemembered());
+    const saved = readRememberedEmail();
+    if (saved) setEmail((current) => current || saved);
   }, []);
 
   // Show a clear message if a Google sign-in bounced back with an error.
@@ -110,32 +120,14 @@ export default function LoginPage() {
         }
         return;
       }
-      // Success → remember these credentials in this browser only, then the
-      // redirect effect handles routing.
+      // Success → remember the email (only) so this device prefills it next
+      // time, then the redirect effect handles routing.
       try {
-        localStorage.setItem(REMEMBER_KEY, JSON.stringify({ email, password }));
+        localStorage.setItem(REMEMBER_KEY, JSON.stringify({ email }));
       } catch {
-        /* storage unavailable (e.g. private mode) — quick login just won't appear */
+        /* storage unavailable (e.g. private mode) — the prefill just won't appear */
       }
     }
-  };
-
-  // One-click sign-in using the credentials remembered from a previous login.
-  const quickLogin = async () => {
-    if (!supabase || !remembered) return;
-    setLoading(true);
-    setError(null);
-    const { error } = await supabase.auth.signInWithPassword(remembered);
-    setLoading(false);
-    if (error) {
-      // Stale (e.g. password changed) — drop it and fall back to the form.
-      try {
-        localStorage.removeItem(REMEMBER_KEY);
-      } catch {}
-      setRemembered(null);
-      setError("Saved login didn't work anymore — please log in again.");
-    }
-    // Success → the redirect effect handles routing.
   };
 
   const signInWithGoogle = async () => {
@@ -190,24 +182,6 @@ export default function LoginPage() {
           </div>
         ) : (
           <div className="mt-7">
-            {/* One-click sign-in remembered from a previous login on this device. */}
-            {remembered && (
-              <div className="mb-4">
-                <button
-                  onClick={quickLogin}
-                  disabled={loading}
-                  className="w-full rounded-full bg-l-accent px-5 py-3 text-sm font-semibold text-l-text transition-opacity hover:opacity-90 disabled:opacity-60"
-                >
-                  {loading ? "Please wait…" : `Continue as ${remembered.email}`}
-                </button>
-                <div className="my-3 flex items-center gap-3 text-[11px] text-l-text-2">
-                  <span className="h-px flex-1 bg-l-border" />
-                  or use a different account
-                  <span className="h-px flex-1 bg-l-border" />
-                </div>
-              </div>
-            )}
-
             {/* Log in / Sign up toggle */}
             <div className="mb-4 flex rounded-full border border-l-border bg-l-surface p-1 text-sm font-medium">
               <button
