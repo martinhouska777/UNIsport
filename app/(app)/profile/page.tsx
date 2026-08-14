@@ -254,7 +254,14 @@ export default function ProfilePage() {
             </span>
           )}
           <ThemeModeToggle />
-          <button type="button" aria-label="Settings" className="text-muted">
+          {/* Was a dead button. It now opens the same preferences sheet as
+              "Edit answers" further down the page. */}
+          <button
+            type="button"
+            aria-label="Preferences"
+            onClick={() => setEditingPrefs(true)}
+            className="text-muted"
+          >
             <IconSettings size={18} />
           </button>
         </div>

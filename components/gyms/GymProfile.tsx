@@ -196,15 +196,20 @@ export default function GymProfile({ gym }: { gym: Gym }) {
         </div>
       )}
 
-      {/* Bottom action — Match tab not built yet, so this is visual only */}
-      <div className="px-3.5 pb-4 pt-2">
-        <button
-          type="button"
-          className="w-full rounded-2xl bg-primary py-3.5 text-center text-[13px] font-medium text-primary-contrast"
+      {/*
+        The page's one conversion action. It used to be a dead <button> with no
+        handler, sitting below ~25 rows of equipment where nobody scrolled — so
+        it is now a real link AND sticks to the bottom of the viewport (above
+        the tab bar) instead of waiting at the end of the page.
+      */}
+      <div className="sticky bottom-0 z-10 border-t border-border bg-surface px-3.5 pb-4 pt-3">
+        <Link
+          href={`/match?gym=${encodeURIComponent(gym.name)}`}
+          className="block w-full rounded-2xl bg-primary py-3.5 text-center text-[13px] font-medium text-primary-contrast"
         >
           Find a partner at this gym{" "}
           <span className="text-primary-contrast/60">→</span>
-        </button>
+        </Link>
       </div>
     </div>
   );

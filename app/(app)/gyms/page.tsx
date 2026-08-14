@@ -86,7 +86,13 @@ function MainCard({ gym, fav, onToggleFav, crowd }: CardProps) {
         </span>
         <div className="p-3">
           <div className="text-[15px] font-medium text-text">{gym.name}</div>
-          <div className="text-[10px] text-muted">{gym.address}</div>
+          {/*
+            This sits on the crimson gradient, which in light mode is a pale
+            pink — `text-muted` on it fell below the 4.5:1 contrast minimum.
+            A dimmed `text` colour keeps the same visual weight in both modes
+            and stays readable on either end of the gradient.
+          */}
+          <div className="text-[10px] text-text/75">{gym.address}</div>
         </div>
       </div>
       <StatsRow gym={gym} crowd={crowd} />
@@ -116,7 +122,9 @@ function HouseCard({ gym, fav, onToggleFav, crowd }: CardProps) {
         ) : null}
         <div>
           <div className="text-sm font-medium text-text">{gym.name}</div>
-          <div className="text-[9px] text-muted">House gym</div>
+          {/* 9px muted was too faint to read in light mode; 10px + a stronger
+              colour, still clearly secondary to the gym name. */}
+          <div className="text-[10px] text-text/70">House gym</div>
         </div>
       </div>
       <StatsRow gym={gym} crowd={crowd} />

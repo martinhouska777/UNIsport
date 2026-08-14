@@ -75,7 +75,10 @@ export const universities: Record<string, University> = {
       surface2: "#edeef0",
       border: "#e0e1e5",
       text: "#15151a",
-      muted: "#606673",
+      // Darkened from #606673: secondary text is used at 9–11px all over the
+      // app, and the old value only just cleared 4.5:1 on white — it failed
+      // outright on any tinted surface. This clears 7:1 on the background.
+      muted: "#4e5462",
       primary: "#a51c30",
       primaryContrast: "#ffffff",
       accent: "#9a751c",

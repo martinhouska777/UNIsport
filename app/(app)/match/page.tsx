@@ -11,8 +11,8 @@
   are theme tokens; the choice lists reuse the onboarding data so they stay
   data-driven.
 */
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAppState } from "@/components/AppState";
 import {
   getBrowseMatches,
@@ -135,10 +135,33 @@ function FilterRow({
   );
 }
 
+// useSearchParams() needs a Suspense boundary or the production build fails
+// ("Missing Suspense boundary with useSearchParams").
 export default function MatchPage() {
+  return (
+    <Suspense
+      fallback={<div className="px-6 py-20 text-center text-sm text-muted">Loading…</div>}
+    >
+      <MatchScreen />
+    </Suspense>
+  );
+}
+
+function MatchScreen() {
   const { userId } = useAppState();
   const router = useRouter();
-  const [tab, setTab] = useState<SubTab>("browse");
+  const search = useSearchParams();
+
+  /*
+    Arriving from a gym's "Find a partner at this gym" button (/match?gym=...):
+    open Session search with that gym already filtered in, so the tap actually
+    carries the user's intent instead of dropping them on a blank Browse list.
+    Only gym names the app knows are accepted — never arbitrary URL text.
+  */
+  const gymParam = search.get("gym");
+  const presetGym = gymParam && verifiedGyms.includes(gymParam) ? gymParam : null;
+
+  const [tab, setTab] = useState<SubTab>(presetGym ? "session" : "browse");
 
   // Open another person's profile, passing the exact fit tier shown on their
   // card so the profile badge says the same thing the card did.
@@ -173,11 +196,13 @@ export default function MatchPage() {
 
   // --- Session-search OPTIONAL filters (in the sheet) ---
   const [sheetOpen, setSheetOpen] = useState(false);
-  const [gym, setGym] = useState<string | null>(null);
+  const [gym, setGym] = useState<string | null>(presetGym);
   const [level, setLevel] = useState<string | null>(null);
   const [gender, setGender] = useState<string | null>(null);
   // Which filter rows are ticked open. A row open with no pick yet = no filter.
-  const [openRows, setOpenRows] = useState<Set<string>>(new Set());
+  const [openRows, setOpenRows] = useState<Set<string>>(
+    () => new Set(presetGym ? ["gym"] : []),
+  );
 
   const toggleRow = (
     key: string,

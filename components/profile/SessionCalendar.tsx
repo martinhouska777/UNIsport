@@ -152,7 +152,10 @@ export default function SessionCalendar({
           Trained
         </span>
         <span className="flex items-center gap-1">
-          <span className="h-2.5 w-2.5 rounded-sm bg-surface-2" />
+          {/* Needs its own outline: in light mode surface-2 on surface is almost
+              the same colour, so the swatch vanished and the label read as a
+              legend entry for nothing. */}
+          <span className="h-2.5 w-2.5 rounded-sm border border-border bg-surface-2" />
           Rest
         </span>
         <span className="flex items-center gap-1">
