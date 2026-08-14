@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { IconX } from "@/components/icons";
+import { useDragToDismiss } from "@/components/useDragToDismiss";
 import { Pill, FieldLabel, Toggle, TextField } from "@/components/onboarding/controls";
 import SearchableDropdown from "@/components/onboarding/SearchableDropdown";
 import {
@@ -64,6 +65,8 @@ export default function PreferencesSheet({
   onClose: () => void;
 }) {
   const [draft, setDraft] = useState<Editable>(profile);
+  // Drag the handle down to close, like a native sheet.
+  const { dragProps, sheetStyle } = useDragToDismiss(onClose);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -111,27 +114,35 @@ export default function PreferencesSheet({
         className="absolute inset-0 bg-background/70 [animation:backdrop-in_0.2s_ease-out]"
       />
 
-      <div className="relative flex max-h-[90%] flex-col rounded-t-3xl border-t border-border bg-surface [animation:sheet-up_0.28s_cubic-bezier(0.2,0.8,0.2,1)]">
-        <div className="flex justify-center pb-1.5 pt-2.5">
-          <div className="h-1 w-9 rounded-full bg-border" />
-        </div>
-
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-border px-4 pb-3">
-          <div>
-            <div className="text-[15px] font-medium text-text">Edit your answers</div>
-            <div className="mt-0.5 text-[11px] text-muted">
-              Update your training & matching preferences
-            </div>
+      <div
+        style={sheetStyle}
+        className="relative flex max-h-[90%] flex-col rounded-t-3xl border-t border-border bg-surface [animation:sheet-up_0.28s_cubic-bezier(0.2,0.8,0.2,1)]"
+      >
+        {/* Grab area: the handle and the title. Drag it down to close. Stops
+            here on purpose — extending it over the scrolling body below would
+            make every scroll fight the drag. */}
+        <div {...dragProps} className="cursor-grab active:cursor-grabbing">
+          <div className="flex justify-center pb-1.5 pt-2.5">
+            <div className="h-1 w-9 rounded-full bg-border" />
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close"
-            className="flex h-7 w-7 items-center justify-center rounded-full bg-surface-2 text-muted"
-          >
-            <IconX size={14} />
-          </button>
+
+          {/* Header */}
+          <div className="flex items-center justify-between border-b border-border px-4 pb-3">
+            <div>
+              <div className="text-[15px] font-medium text-text">Edit your answers</div>
+              <div className="mt-0.5 text-[11px] text-muted">
+                Update your training &amp; matching preferences
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Close"
+              className="flex h-7 w-7 items-center justify-center rounded-full bg-surface-2 text-muted"
+            >
+              <IconX size={14} />
+            </button>
+          </div>
         </div>
 
         {/* Scrollable body */}
