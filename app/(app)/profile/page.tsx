@@ -205,7 +205,7 @@ export default function ProfilePage() {
     return (
       <div className="mx-auto w-full max-w-screen-sm">
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-surface px-3.5 py-3">
-          <span className="text-base font-medium text-text">My Profile</span>
+          <h1 className="text-base font-medium text-text">My Profile</h1>
           <span className="text-muted">
             <IconSettings size={18} />
           </span>
@@ -244,7 +244,7 @@ export default function ProfilePage() {
     <div className="mx-auto w-full max-w-screen-sm">
       {/* Top bar */}
       <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-surface px-3.5 py-3">
-        <span className="text-base font-medium text-text">My Profile</span>
+        <h1 className="text-base font-medium text-text">My Profile</h1>
         <div className="flex items-center gap-2">
           {saveState !== "idle" && (
             <span

@@ -152,6 +152,10 @@ export default function GymsPage() {
 
   return (
     <div className="mx-auto w-full max-w-screen-sm">
+      {/* The route's title. Visually hidden because the design has no header
+          bar here, but screen readers and the document outline need one. */}
+      <h1 className="sr-only">Gyms</h1>
+
       {/* Search bar — filters the list as you type */}
       <div className="px-3 pt-3">
         <div className="flex items-center gap-2 rounded-full border border-border bg-surface-2 px-3 py-2 text-muted focus-within:border-primary">
@@ -204,9 +208,7 @@ export default function GymsPage() {
 
         {showHouseHeader && (
           <div className="pb-0.5 pt-1">
-            <div className="text-[10px] font-medium tracking-[0.1em] text-muted">
-              HOUSE GYMS
-            </div>
+            <h2 className="text-[10px] font-medium tracking-[0.1em] text-muted">HOUSE GYMS</h2>
           </div>
         )}
 

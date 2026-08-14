@@ -101,7 +101,7 @@ export default function GymProfile({ gym }: { gym: Gym }) {
 
       {/* Header block */}
       <div className="border-b border-border px-3.5 py-3">
-        <div className="mb-1.5 text-[15px] font-medium text-text">{gym.name}</div>
+        <h1 className="mb-1.5 text-[15px] font-medium text-text">{gym.name}</h1>
         <div className="flex flex-wrap gap-x-3.5 gap-y-1 text-[11px] text-muted">
           <span className="flex items-center gap-1.5">
             <IconClock size={13} /> {gym.hours}
@@ -116,9 +116,9 @@ export default function GymProfile({ gym }: { gym: Gym }) {
       {/* Your rating + live crowd — what you fill in after / during a workout */}
       <div className="border-b border-border px-3.5 py-3.5">
         <div className="flex items-center justify-between">
-          <span className="text-[10px] font-medium uppercase tracking-[0.1em] text-muted">
+          <h2 className="text-[10px] font-medium uppercase tracking-[0.1em] text-muted">
             Rate this gym
-          </span>
+          </h2>
           <span className="text-[11px] text-muted">
             {rating ? `You rated · ${timeAgo(rating.at)}` : "Tap a star"}
           </span>
@@ -128,9 +128,9 @@ export default function GymProfile({ gym }: { gym: Gym }) {
         </div>
 
         <div className="mt-4 flex items-center justify-between">
-          <span className="text-[10px] font-medium uppercase tracking-[0.1em] text-muted">
+          <h2 className="text-[10px] font-medium uppercase tracking-[0.1em] text-muted">
             How busy right now?
-          </span>
+          </h2>
           <span className="text-[11px] text-muted">
             {crowd ? `Reported ${timeAgo(crowd.at)}` : "No recent reports"}
           </span>
@@ -145,9 +145,9 @@ export default function GymProfile({ gym }: { gym: Gym }) {
         .filter((section) => section.rows.length > 0)
         .map((section) => (
           <div key={section.title} className="border-b border-border px-3.5 py-3">
-            <div className="mb-2.5 text-[10px] font-medium uppercase tracking-[0.1em] text-muted">
+            <h2 className="mb-2.5 text-[10px] font-medium uppercase tracking-[0.1em] text-muted">
               {section.title}
-            </div>
+            </h2>
             <div className="flex flex-col divide-y divide-border">
               {section.rows.map((row) => (
                 <div
@@ -168,9 +168,9 @@ export default function GymProfile({ gym }: { gym: Gym }) {
           {/* An average with no sample size is meaningless — 4.6 from two
               people reads the same as 4.6 from two hundred. */}
           <div className="mb-2.5 flex items-baseline justify-between">
-            <span className="text-[10px] font-medium uppercase tracking-[0.1em] text-muted">
+            <h2 className="text-[10px] font-medium uppercase tracking-[0.1em] text-muted">
               Ratings Breakdown
-            </span>
+            </h2>
             {gym.ratingCount > 0 && (
               <span className="text-[10px] text-muted">
                 {gym.ratingCount} {gym.ratingCount === 1 ? "rating" : "ratings"}

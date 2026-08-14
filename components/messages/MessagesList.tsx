@@ -99,7 +99,7 @@ export default function MessagesList({
     <div className="flex h-full min-h-0 flex-col">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-border bg-surface px-3.5 py-3">
-        <span className="text-base font-medium text-text">Messages</span>
+        <h1 className="text-base font-medium text-text">Messages</h1>
       </div>
 
       {/* Direct / Community toggle */}
