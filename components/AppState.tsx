@@ -21,6 +21,7 @@ type AppState = {
   ready: boolean; // true once session + onboarding status are known
   loggedIn: boolean;
   userId: string | null;
+  email: string | null; // which account you're signed in as — shown on Profile
   onboarded: boolean;
   universityKey: string;
   logout: () => Promise<void>;
@@ -144,6 +145,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         ready,
         loggedIn: !!session,
         userId: session?.user.id ?? null,
+        email: session?.user.email ?? null,
         onboarded,
         universityKey: DEFAULT_UNIVERSITY,
         logout,

@@ -42,7 +42,7 @@ import { IconSettings, IconUser, IconCamera, IconPencil, IconArrowRight } from "
 const isProduction = process.env.NODE_ENV === "production";
 
 export default function ProfilePage() {
-  const { userId, logout, resetOnboarding } = useAppState();
+  const { userId, email, logout, resetOnboarding } = useAppState();
   const router = useRouter();
 
   const [supabase] = useState(() => (hasSupabaseEnv() ? createClient() : null));
@@ -497,6 +497,13 @@ export default function ProfilePage() {
       {/* Log out is a real user action; "Replay onboarding" is a dev affordance
           and must never reach production (it wipes the user back to step 1). */}
       <div className="px-3.5 py-4">
+        {/* Which account this is. Signing in with Google gives no other clue —
+            you can hold two Google accounts and not know which one you used. */}
+        {email && (
+          <p className="mb-3 text-xs text-muted">
+            Signed in as <span className="text-text">{email}</span>
+          </p>
+        )}
         {!isProduction && (
           <div className="mb-2 text-[9px] font-medium uppercase tracking-[0.1em] text-muted">
             Dev tools
