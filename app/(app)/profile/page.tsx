@@ -38,6 +38,10 @@ import { residenceLabel, type OnboardingProfile } from "@/lib/onboarding";
 import { ThemeModeToggle } from "@/components/ThemeMode";
 import { IconSettings, IconUser, IconCamera, IconPencil, IconArrowRight } from "@/components/icons";
 
+// Build-time flag: Next inlines NODE_ENV, so anything behind this is stripped
+// from the deployed bundle and only ever appears under `npm run dev`.
+const isDev = process.env.NODE_ENV !== "production";
+
 export default function ProfilePage() {
   const { userId, logout, resetOnboarding } = useAppState();
   const router = useRouter();
@@ -484,20 +488,30 @@ export default function ProfilePage() {
         </Link>
       </div>
 
-      {/* Temporary dev tools (until real settings/profile flows exist) */}
+      {/*
+        Account actions. "Replay onboarding" wipes the user's answers and
+        restarts the flow — a development helper, never something a real user
+        should find, so it (and its heading) exist only outside production.
+      */}
       <div className="px-3.5 py-4">
-        <div className="mb-2 text-[9px] font-medium uppercase tracking-[0.1em] text-muted">Dev tools</div>
+        {isDev && (
+          <div className="mb-2 text-[9px] font-medium uppercase tracking-[0.1em] text-muted">
+            Dev tools
+          </div>
+        )}
         <div className="flex flex-col gap-2">
-          <button
-            type="button"
-            onClick={async () => {
-              await resetOnboarding();
-              router.replace("/onboarding");
-            }}
-            className="w-full rounded-full border border-border bg-surface-2 px-5 py-2.5 text-sm font-medium text-text"
-          >
-            Replay onboarding (dev)
-          </button>
+          {isDev && (
+            <button
+              type="button"
+              onClick={async () => {
+                await resetOnboarding();
+                router.replace("/onboarding");
+              }}
+              className="w-full rounded-full border border-border bg-surface-2 px-5 py-2.5 text-sm font-medium text-text"
+            >
+              Replay onboarding (dev)
+            </button>
+          )}
           <button
             type="button"
             onClick={async () => {
