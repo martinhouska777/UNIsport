@@ -41,6 +41,10 @@ export default function PlanCard({
       onChanged();
     } catch (e) {
       setError((e as Error).message);
+    } finally {
+      // Always release the card. This card stays mounted after a response (the
+      // thread refetches in place), so leaving `busy` on left Cancel/Reschedule
+      // permanently greyed out until you backed out of the chat and reopened it.
       setBusy(false);
     }
   };
@@ -54,6 +58,7 @@ export default function PlanCard({
       onChanged();
     } catch (e) {
       setError((e as Error).message);
+    } finally {
       setBusy(false);
     }
   };
@@ -67,6 +72,7 @@ export default function PlanCard({
       onChanged();
     } catch (e) {
       setError((e as Error).message);
+    } finally {
       setBusy(false);
     }
   };

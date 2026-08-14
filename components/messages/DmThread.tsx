@@ -79,9 +79,13 @@ export default function DmThread({
     return () => clearInterval(timer);
   }, [load]);
 
+  // Jump to the newest message only when there IS a new message. Keying this on
+  // `messages` scrolled on every 5s poll (the poll replaces the array even when
+  // nothing changed), which yanked you back down while reading older messages.
+  const lastMessageId = messages?.[messages.length - 1]?.id ?? null;
   useEffect(() => {
     bottomRef.current?.scrollIntoView();
-  }, [messages]);
+  }, [lastMessageId]);
 
   const send = async (text: string) => {
     const msg = await sendDirectMessage(conversationId, text);

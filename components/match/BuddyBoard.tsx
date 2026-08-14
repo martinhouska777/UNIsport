@@ -118,7 +118,11 @@ export default function BuddyBoard() {
     setMessagingId(post.id);
     try {
       const convId = await startDirectConversation(post.author);
-      router.push(`/messages?dm=${convId}&name=${encodeURIComponent(post.authorName)}`);
+      // `uid` matters: without it the thread header has no photo and the name
+      // isn't tappable through to their profile.
+      router.push(
+        `/messages?dm=${convId}&name=${encodeURIComponent(post.authorName)}&uid=${encodeURIComponent(post.author)}`,
+      );
     } catch (e) {
       setBoardErr((e as Error).message);
       setMessagingId(null);

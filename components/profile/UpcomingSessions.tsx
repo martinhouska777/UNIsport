@@ -48,7 +48,11 @@ export default function UpcomingSessions() {
   const open = async (p: UpcomingPlan) => {
     try {
       const cid = await startDirectConversation(p.otherId);
-      router.push(`/messages?dm=${cid}&name=${encodeURIComponent(p.otherName)}`);
+      // `uid` matters: without it the thread header has no photo and the name
+      // isn't tappable through to their profile.
+      router.push(
+        `/messages?dm=${cid}&name=${encodeURIComponent(p.otherName)}&uid=${encodeURIComponent(p.otherId)}`,
+      );
     } catch {
       // Ignore — tapping just won't navigate if the DM can't be opened.
     }
