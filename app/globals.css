@@ -140,8 +140,15 @@ html {
   overscroll-behavior: none;
 }
 
+/*
+  <body> deliberately paints NOTHING. The themed color goes on <html> (set by
+  ThemeProvider's paintRoot), and body would otherwise cover it with the LIGHT
+  :root default — body sits outside the themed wrapper, so it never receives the
+  theme's variables. That showed as a pale strip under the tab bar wherever the
+  app shell didn't reach the very bottom.
+*/
 body {
-  background: var(--background);
+  background: transparent;
   color: var(--text);
   overscroll-behavior: none;
   touch-action: pan-x pan-y;
@@ -157,7 +164,15 @@ body {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
 }
-.app-page-enter { animation: app-page-enter 0.28s ease-out both; }
+/*
+  `backwards`, NOT `both`. With `both` the final keyframe sticks, leaving
+  transform: translateY(0) on this element forever — and any transformed
+  ancestor becomes the containing block for position: fixed. Every bottom sheet
+  opened from a tab page then anchored itself to this scrolling <main> instead
+  of the screen, landing off-view so you had to scroll up to reach it.
+  `backwards` keeps the pre-animation state only, so nothing lingers.
+*/
+.app-page-enter { animation: app-page-enter 0.28s ease-out backwards; }
 
 @media (prefers-reduced-motion: reduce) {
   .app-page-enter { animation: none; }

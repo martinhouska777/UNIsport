@@ -14,7 +14,6 @@
 */
 import { useState } from "react";
 import { IconCheck, IconX } from "@/components/icons";
-import { useDragToDismiss } from "@/components/useDragToDismiss";
 
 export type Option = { value: string; label: string };
 
@@ -38,7 +37,6 @@ export default function OptionPickerSheet({
   onClose: () => void;
 }) {
   const [picked, setPicked] = useState<string[]>(selected);
-  const { dragProps, sheetStyle } = useDragToDismiss(onClose);
 
   const choose = (value: string) => {
     if (!multiple) {
@@ -62,11 +60,10 @@ export default function OptionPickerSheet({
         className="absolute inset-0 bg-background/70 [animation:backdrop-in_0.2s_ease-out]"
       />
 
-      <div
-        style={sheetStyle}
-        className="relative flex max-h-[85%] flex-col rounded-t-3xl border-t border-border bg-surface [animation:sheet-up_0.28s_cubic-bezier(0.2,0.8,0.2,1)]"
-      >
-        <div {...dragProps} className="cursor-grab active:cursor-grabbing">
+      {/* Slides up from the bottom; closed with the X, Cancel, or the backdrop.
+          Not drag-dismissible on purpose — a picker is a quick in-and-out. */}
+      <div className="relative flex max-h-[85%] flex-col rounded-t-3xl border-t border-border bg-surface [animation:sheet-up_0.28s_cubic-bezier(0.2,0.8,0.2,1)]">
+        <div>
           <div className="flex justify-center pb-1.5 pt-2.5">
             <div className="h-1 w-9 rounded-full bg-border" />
           </div>
