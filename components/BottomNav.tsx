@@ -22,7 +22,9 @@ const iconProps = {
   strokeLinejoin: "round" as const,
 };
 
-const tabs: Tab[] = [
+// Shared with SideNav (the laptop-width version of this nav) so the tab list
+// and its icons live in exactly one place.
+export const tabs: Tab[] = [
   {
     href: "/gyms",
     label: "Gyms",
@@ -67,12 +69,15 @@ const tabs: Tab[] = [
   },
 ];
 
-export default function BottomNav() {
+/*
+  Keeps the Messages badge live: polls, refetches when the route changes, and
+  listens for the in-app signal fired right after a thread is marked read.
+  Shared with SideNav.
+*/
+export function useUnreadCount() {
   const pathname = usePathname();
   const [unread, setUnread] = useState(0);
 
-  // Keep the Messages badge live: poll, refetch when the route changes, and
-  // listen for the in-app signal fired right after a thread is marked read.
   useEffect(() => {
     let active = true;
     const refresh = () =>
@@ -89,8 +94,16 @@ export default function BottomNav() {
     };
   }, [pathname]);
 
+  return unread;
+}
+
+// Phone / tablet navigation. On laptop widths SideNav takes over, so this hides.
+export default function BottomNav() {
+  const pathname = usePathname();
+  const unread = useUnreadCount();
+
   return (
-    <nav className="sticky bottom-0 z-10 border-t border-border bg-surface">
+    <nav className="sticky bottom-0 z-10 border-t border-border bg-surface lg:hidden">
       <ul className="mx-auto flex max-w-screen-sm items-stretch">
         {tabs.map((tab) => {
           const active = pathname === tab.href;

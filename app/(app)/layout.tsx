@@ -12,6 +12,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { useAppState } from "@/components/AppState";
 import ThemeProvider from "@/components/ThemeProvider";
 import BottomNav from "@/components/BottomNav";
+import SideNav from "@/components/SideNav";
 import { getUniversity, neutralTheme } from "@/lib/themes";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -31,11 +32,18 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const theme = uni?.theme ?? neutralTheme;
 
   return (
+    /*
+      Phone: a column with the tab bar underneath it.
+      Laptop (lg and up): the same thing turned on its side — SideNav on the
+      left, page beside it, BottomNav hidden. Only the flex direction changes,
+      so no screen has to know which one it's in.
+    */
     <ThemeProvider
       tokens={theme}
       light={uni?.themeLight}
-      className="flex h-dvh flex-col overflow-hidden bg-background"
+      className="flex h-dvh flex-col overflow-hidden bg-background lg:flex-row"
     >
+      <SideNav />
       {/* Keying on the route remounts the tab subtree so the entrance
           animation replays on every navigation; main stays the scroll
           container so sticky headers keep working. */}

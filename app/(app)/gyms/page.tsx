@@ -159,14 +159,24 @@ export default function GymsPage() {
   const showHouseHeader = (filter === "all" || filter === "fav") && visibleHouse.length > 0;
 
   return (
-    <div className="mx-auto w-full max-w-screen-sm">
-      {/* The route's title. Visually hidden because the design has no header
-          bar here, but screen readers and the document outline need one. */}
-      <h1 className="sr-only">Gyms</h1>
+    /*
+      Phone: the usual 640px column. Laptop: the column widens and the cards
+      below lay out in a grid, so a big screen shows the whole gym list at once
+      instead of one narrow strip in the middle of the page.
+    */
+    <div className="mx-auto w-full max-w-screen-sm lg:max-w-5xl lg:px-4 lg:pt-3">
+      {/* The route's title. Hidden on phones, where the design has no header
+          bar; on a laptop there's room for a real one. Either way screen
+          readers and the document outline get their heading. */}
+      <h1 className="sr-only px-3 text-lg font-semibold text-text lg:not-sr-only lg:mb-1 lg:block">
+        Gyms
+      </h1>
 
       {/* Search bar — filters the list as you type */}
       <div className="px-3 pt-3">
-        <div className="flex items-center gap-2 rounded-full border border-border bg-surface-2 px-3 py-2 text-muted focus-within:border-primary">
+        {/* A search field stretched across a whole laptop screen looks broken,
+            so it keeps a sane width once there's room. */}
+        <div className="flex items-center gap-2 rounded-full border border-border bg-surface-2 px-3 py-2 text-muted focus-within:border-primary lg:max-w-md">
           <IconSearch size={15} />
           <input
             type="text"
@@ -202,8 +212,8 @@ export default function GymsPage() {
         </div>
       </div>
 
-      {/* Cards */}
-      <div className="flex flex-col gap-2.5 px-3 pb-4">
+      {/* Cards — one column on a phone, two or three across on a laptop. */}
+      <div className="grid grid-cols-1 items-start gap-2.5 px-3 pb-4 lg:grid-cols-2 xl:grid-cols-3">
         {visibleMain.map((g) => (
           <MainCard
             key={g.slug}
@@ -215,7 +225,8 @@ export default function GymsPage() {
         ))}
 
         {showHouseHeader && (
-          <div className="pb-0.5 pt-1">
+          // Section headings break the grid rather than sitting in a cell.
+          <div className="pb-0.5 pt-1 lg:col-span-full lg:pt-3">
             <h2 className="text-[10px] font-medium tracking-[0.1em] text-muted">HOUSE GYMS</h2>
           </div>
         )}
@@ -231,7 +242,7 @@ export default function GymsPage() {
         ))}
 
         {nothing && (
-          <div className="py-16 text-center text-sm text-muted">
+          <div className="py-16 text-center text-sm text-muted lg:col-span-full">
             {filter === "fav" && q === ""
               ? "No favourites yet. Tap the heart on a gym to save it here."
               : `No gyms match “${query}”.`}
