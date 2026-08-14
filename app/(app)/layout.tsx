@@ -41,6 +41,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     <ThemeProvider
       tokens={theme}
       light={uni?.themeLight}
+      paintRoot
       className="flex h-dvh flex-col overflow-hidden bg-background lg:flex-row"
     >
       <SideNav />

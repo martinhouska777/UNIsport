@@ -1,6 +1,6 @@
 "use client";
 
-import type { CSSProperties, ReactNode } from "react";
+import { useEffect, type CSSProperties, type ReactNode } from "react";
 import type { ThemeTokens } from "@/lib/themes";
 import { useThemeMode } from "@/components/ThemeMode";
 
@@ -36,14 +36,43 @@ export default function ThemeProvider({
   light,
   children,
   className,
+  paintRoot = false,
 }: {
   tokens: ThemeTokens;
   light?: ThemeTokens;
   children: ReactNode;
   className?: string;
+  /*
+    Copy this theme's background onto <html>. Set it on the provider that wraps a
+    whole ROUTE, never on a sheet or overlay — nested providers would fight over
+    the document and the last one mounted would win.
+
+    Why it's needed: these tokens live on the wrapper div below, so <html> keeps
+    the light :root defaults. Rubber-band scrolling on a dark screen exposed that
+    as a white strip. Also sets color-scheme, so native scrollbars and form
+    controls stop rendering light-on-dark.
+  */
+  paintRoot?: boolean;
 }) {
   const { mode } = useThemeMode();
-  const active = light && mode === "light" ? light : tokens;
+  const usingLight = !!light && mode === "light";
+  const active = usingLight ? light : tokens;
+
+  useEffect(() => {
+    if (!paintRoot) return;
+    const root = document.documentElement;
+    const previousBackground = root.style.backgroundColor;
+    const previousScheme = root.style.colorScheme;
+    root.style.backgroundColor = active.background;
+    root.style.colorScheme = usingLight ? "light" : "dark";
+    // Restore on unmount so leaving a themed route doesn't strand its color on
+    // the document (e.g. Zone 2 -> the Zone 1 landing).
+    return () => {
+      root.style.backgroundColor = previousBackground;
+      root.style.colorScheme = previousScheme;
+    };
+  }, [paintRoot, active.background, usingLight]);
+
   return (
     <div style={tokensToCssVars(active)} className={className}>
       {children}

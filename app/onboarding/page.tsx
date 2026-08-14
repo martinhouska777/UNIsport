@@ -22,7 +22,7 @@ export default function OnboardingPage() {
   const theme = uni?.theme ?? neutralTheme;
 
   return (
-    <ThemeProvider tokens={theme} light={uni?.themeLight}>
+    <ThemeProvider tokens={theme} light={uni?.themeLight} paintRoot>
       <OnboardingFlow />
     </ThemeProvider>
   );

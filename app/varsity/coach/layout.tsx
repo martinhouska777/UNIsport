@@ -30,6 +30,7 @@ export default function CoachLayout({ children }: { children: React.ReactNode })
     <ThemeProvider
       tokens={varsityTheme}
       light={varsityLightTheme}
+      paintRoot
       className="relative flex h-dvh flex-col overflow-hidden bg-background"
     >
       <OarRails />

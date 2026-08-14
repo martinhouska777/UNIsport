@@ -119,9 +119,32 @@
     linear-gradient(135deg, #1f2a2f 0%, #0f1a1f 100%);
 }
 
+/*
+  DRAGGING / OVERSCROLL / ZOOM — native-app feel (rule: match WhatsApp).
+
+  The theme's colors are written onto a wrapper <div> by ThemeProvider, so <html>
+  and <body> keep the LIGHT :root defaults above. Dragging past the top or bottom
+  rubber-banded the page and exposed that light background behind a dark screen.
+  Two defences, because the first isn't supported everywhere:
+    1. overscroll-behavior: none — removes the bounce (and pull-to-refresh)
+       outright, so there is nothing to see behind.
+    2. ThemeProvider mirrors the active background onto <html> (see paintRoot),
+       so on browsers that bounce anyway the exposed strip is the right color.
+
+  touch-action pins the page to panning only: no pinch-zoom, and no double-tap
+  zoom. Photos get their own zoom later — they'll opt back in with
+  `touch-action: pinch-zoom` on the image viewer, the way Instagram does.
+*/
+html {
+  background: var(--background);
+  overscroll-behavior: none;
+}
+
 body {
   background: var(--background);
   color: var(--text);
+  overscroll-behavior: none;
+  touch-action: pan-x pan-y;
 }
 
 /*

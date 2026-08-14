@@ -34,6 +34,15 @@ export const viewport: Viewport = {
     { media: "(prefers-color-scheme: light)", color: "#f6f6f7" },
     { media: "(prefers-color-scheme: dark)", color: "#0b0b0c" },
   ],
+  // Pin the zoom level so the app can't be pinched or double-tapped larger,
+  // like WhatsApp. A stray pinch on a tab bar reads as the app breaking.
+  // NOTE: this also disables the browser's own zoom for people who rely on it,
+  // which is why photos are getting their own pinch-to-zoom viewer next — the
+  // content worth magnifying stays magnifiable.
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({
