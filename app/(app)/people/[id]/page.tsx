@@ -9,9 +9,9 @@
 
   Data is REAL: it loads the person's public profile via the get_public_profile
   RPC (RLS-safe) and runs it through profileFromOnboarding — the SAME mapping the
-  owner's own Profile tab uses — so nothing here is faked. The match % is the
-  exact number shown on the card the user tapped (passed via ?pct=), shown only
-  when present. All colors are theme tokens (rule 1).
+  owner's own Profile tab uses — so nothing here is faked. The compatibility
+  badge is the same tier shown on the card the user tapped (passed via ?fit=),
+  shown only when present. All colors are theme tokens (rule 1).
 */
 import { Suspense, useEffect, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
@@ -20,6 +20,7 @@ import { profileFromOnboarding, classOfLabel, type CurrentUser } from "@/lib/cur
 import { residenceLabel } from "@/lib/onboarding";
 import { startDirectConversation } from "@/lib/supabase/messages";
 import { getFollowStatus, followUser, unfollowUser } from "@/lib/supabase/follows";
+import { tierByKey } from "@/lib/supabase/matching";
 import { IconArrowLeft, IconUser, IconCheck } from "@/components/icons";
 import PhotoGallery from "@/components/profile/PhotoGallery";
 
@@ -43,8 +44,8 @@ function PersonProfile() {
   const search = useSearchParams();
   const router = useRouter();
   const id = params.id;
-  const pctParam = search.get("pct");
-  const pct = pctParam && /^\d+$/.test(pctParam) ? Number(pctParam) : null;
+  // The compatibility tier shown on the card the user tapped (passed via ?fit=).
+  const tier = tierByKey(search.get("fit"));
 
   const [user, setUser] = useState<CurrentUser | null>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "missing" | "error">("loading");
@@ -197,11 +198,13 @@ function PersonProfile() {
                 </div>
               )}
 
-              {(pct !== null || user.badges.mentor) && (
+              {(tier !== null || user.badges.mentor) && (
                 <div className="mt-0.5 flex items-center gap-2">
-                  {pct !== null && (
-                    <span className="rounded-lg border border-primary bg-primary/15 px-2 py-0.5 text-[10px] font-medium text-primary">
-                      {pct}% match
+                  {tier !== null && (
+                    <span
+                      className={`rounded-lg border border-current bg-surface-2 px-2 py-0.5 text-[10px] font-medium ${tier.tone}`}
+                    >
+                      {tier.label}
                     </span>
                   )}
                   {user.badges.mentor && (

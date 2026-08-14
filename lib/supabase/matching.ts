@@ -23,6 +23,49 @@ export type MatchBreakdown = {
   training: number;
 };
 
+/*
+  COMPATIBILITY TIERS
+  The score is a sum over eight overlapping dimensions, so even an excellent
+  partner — trains at your gym, your level, free when you are — collects only
+  about a third of the theoretical maximum. Rendering that as "33%" reads as a
+  failed match rather than a good one, so the raw number never reaches the UI:
+  it becomes one of three plain-English tiers instead. Anything below the
+  bottom tier isn't worth putting on screen at all.
+
+  Tones are theme tokens (rule 1), same approach as CROWD_LEVELS in lib/gymSocial.
+*/
+export type MatchTier = {
+  key: "strong" | "good" | "worth";
+  label: string;
+  tone: string;
+};
+
+// Ordered strongest first; `minPercent` is a share of that search's max score.
+const TIERS: (MatchTier & { minPercent: number })[] = [
+  { key: "strong", label: "Strong fit", tone: "text-success", minPercent: 30 },
+  { key: "good", label: "Good fit", tone: "text-accent", minPercent: 18 },
+  { key: "worth", label: "Worth a try", tone: "text-muted", minPercent: 10 },
+];
+
+/** The tier a score falls in, or null when it's too weak to recommend. */
+export function matchTier(score: number, max: number): MatchTier | null {
+  const percent = max > 0 ? (score / max) * 100 : 0;
+  return TIERS.find((t) => percent >= t.minPercent) ?? null;
+}
+
+/** Look a tier up by key — for screens that receive it as a URL parameter. */
+export function tierByKey(key: string | null): MatchTier | null {
+  return TIERS.find((t) => t.key === key) ?? null;
+}
+
+/**
+ * Drops results too weak to recommend. Rows already arrive sorted best-first,
+ * so this only ever trims the tail.
+ */
+export function rankedMatches(rows: Match[], max: number): Match[] {
+  return rows.filter((m) => matchTier(m.score, max) !== null);
+}
+
 export type Match = {
   userId: string; // the candidate's profile id
   name: string;

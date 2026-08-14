@@ -17,6 +17,8 @@ import { useAppState } from "@/components/AppState";
 import {
   getBrowseMatches,
   getSessionMatches,
+  matchTier,
+  rankedMatches,
   type Match,
 } from "@/lib/supabase/matching";
 import {
@@ -136,11 +138,11 @@ export default function MatchPage() {
   const router = useRouter();
   const [tab, setTab] = useState<SubTab>("browse");
 
-  // Open another person's profile, passing the exact compatibility % shown on
-  // their card so the profile badge stays truthful.
+  // Open another person's profile, passing the same compatibility tier shown on
+  // their card so the profile badge can never say something different.
   const viewProfile = (m: Match, max: number) => {
-    const pct = Math.round((m.score / max) * 100);
-    router.push(`/people/${m.userId}?pct=${pct}`);
+    const tier = matchTier(m.score, max);
+    router.push(`/people/${m.userId}${tier ? `?fit=${tier.key}` : ""}`);
   };
 
   // --- Browse state ---
@@ -151,7 +153,9 @@ export default function MatchPage() {
     if (!userId) return;
     let active = true;
     getBrowseMatches(userId)
-      .then((rows) => active && setBrowse(rows))
+      // Too-weak results are dropped here so the count above the grid always
+      // matches what's actually shown.
+      .then((rows) => active && setBrowse(rankedMatches(rows, 100)))
       .catch((e) => active && setBrowseErr(e.message));
     return () => {
       active = false;
@@ -231,7 +235,7 @@ export default function MatchPage() {
         level,
         gender,
       });
-      setResults(rows);
+      setResults(rankedMatches(rows, 92));
     } catch (e) {
       setSessionErr((e as Error).message);
     } finally {
