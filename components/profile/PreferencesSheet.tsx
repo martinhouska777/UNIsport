@@ -12,8 +12,6 @@ import {
   cardioTypes,
   verifiedGyms,
   MAX_TOP_GYMS,
-  weekDays,
-  timeBlocks,
   interestOptions,
   languageOptions,
   concentrations,
@@ -43,7 +41,6 @@ type Editable = Pick<
   | "runningPace"
   | "cardioType"
   | "topGyms"
-  | "trainingSchedule"
   | "interests"
   | "languages"
   | "concentration"
@@ -87,17 +84,6 @@ export default function PreferencesSheet({
       if (key === "topGyms" && arr.length >= MAX_TOP_GYMS) return;
       set(key, [...arr, value]);
     }
-  };
-
-  const toggleTimeBlock = (day: string, block: string) => {
-    const current = draft.trainingSchedule[day] ?? [];
-    const next = current.includes(block)
-      ? current.filter((b) => b !== block)
-      : [...current, block];
-    const sched = { ...draft.trainingSchedule };
-    if (next.length) sched[day] = next;
-    else delete sched[day];
-    set("trainingSchedule", sched);
   };
 
   const save = () => {
@@ -253,27 +239,12 @@ export default function PreferencesSheet({
             />
           </div>
 
-          {/* When you train */}
-          <div>
-            <FieldLabel>When you train</FieldLabel>
-            <div className="flex flex-col gap-2.5">
-              {weekDays.map((d) => (
-                <div key={d.key}>
-                  <div className="mb-1.5 text-[11px] font-medium text-muted">{d.label}</div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {timeBlocks.map((b) => (
-                      <Pill
-                        key={b}
-                        label={b}
-                        selected={(draft.trainingSchedule[d.key] ?? []).includes(b)}
-                        onClick={() => toggleTimeBlock(d.key, b)}
-                      />
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          {/* "When you train" deliberately ISN'T here any more. It's edited on
+              the profile's Training → Days row, which sets real hours. Keeping a
+              coarse block picker here too meant two editors writing the same
+              field in different formats: the blocks would show nothing selected
+              for someone who'd set hours, and saving would silently overwrite
+              those hours back to blocks. */}
 
           {/* Who you train with */}
           <div>

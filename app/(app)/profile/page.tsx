@@ -13,11 +13,12 @@ import UpcomingSessions from "@/components/profile/UpcomingSessions";
 import PersonalRecords from "@/components/profile/PersonalRecords";
 import PhotoGrid from "@/components/profile/PhotoGrid";
 import PreferencesSheet from "@/components/profile/PreferencesSheet";
+import TrainingScheduleSheet from "@/components/profile/TrainingScheduleSheet";
+import OptionPickerSheet from "@/components/profile/OptionPickerSheet";
 import { useProfileData } from "@/components/profile/useProfileData";
 import {
   profileFromOnboarding,
   classOfLabel,
-  type CurrentUser,
   type PersonalRecord,
 } from "@/lib/currentUser";
 import {
@@ -30,8 +31,23 @@ import {
 } from "@/lib/supabase/workouts";
 import { fileToDataUrl } from "@/lib/image";
 import { getMyFollowCounts } from "@/lib/supabase/follows";
-import { residenceLabel } from "@/lib/onboarding";
-import { IconSettings, IconUser, IconCamera, IconPencil, IconArrowRight } from "@/components/icons";
+import {
+  residenceLabel,
+  experienceLevels,
+  primaryActivities,
+  gymSplits,
+  verifiedGyms,
+  MAX_TOP_GYMS,
+  type OnboardingProfile,
+} from "@/lib/onboarding";
+import {
+  IconSettings,
+  IconUser,
+  IconCamera,
+  IconPencil,
+  IconArrowRight,
+  IconChevronRight,
+} from "@/components/icons";
 
 export default function ProfilePage() {
   // The saved profile JSON (onboarding answers + any profile edits) and its
@@ -49,6 +65,9 @@ export default function ProfilePage() {
   const [logging, setLogging] = useState(false); // "Log session" (new) editor open
   const [editLog, setEditLog] = useState<WorkoutLog | null>(null); // editing an existing log
   const [editingPrefs, setEditingPrefs] = useState(false);
+  const [editingSchedule, setEditingSchedule] = useState(false);
+  // Which Training row is being picked, if any.
+  const [picker, setPicker] = useState<"level" | "activity" | "split" | "gyms" | null>(null);
   const [followCounts, setFollowCounts] = useState<{ following: number; followers: number } | null>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
 
@@ -167,15 +186,44 @@ export default function ProfilePage() {
         : "")
     : "—";
 
-  const trainingRows: { key: keyof CurrentUser["trainingDisplay"]; label: string }[] = [
-    { key: "level", label: "Level" },
-    { key: "type", label: "Type" },
-    { key: "split", label: "Split" },
-    { key: "schedule", label: "Schedule" },
-    { key: "gym", label: "Gym" },
+  /*
+    Each row shows the saved answer and opens the picker that edits it. Saving
+    goes through savePreferences, which re-derives the display rows, so the
+    label and the stored answer can never disagree.
+  */
+  const answers = data as Partial<OnboardingProfile>;
+  const trainingRows: { key: string; label: string; value: string; onEdit: () => void }[] = [
+    {
+      key: "level",
+      label: "Level",
+      value: user.trainingDisplay.level,
+      onEdit: () => setPicker("level"),
+    },
+    {
+      key: "type",
+      label: "Activity",
+      value: user.trainingDisplay.type,
+      onEdit: () => setPicker("activity"),
+    },
+    {
+      key: "split",
+      label: "Split",
+      value: user.trainingDisplay.split,
+      onEdit: () => setPicker("split"),
+    },
+    {
+      key: "schedule",
+      label: "Days",
+      value: user.trainingDisplay.schedule,
+      onEdit: () => setEditingSchedule(true),
+    },
+    {
+      key: "gym",
+      label: "Gyms",
+      value: answers.topGyms?.join(" · ") || "—",
+      onEdit: () => setPicker("gyms"),
+    },
   ];
-  const setTraining = (key: keyof CurrentUser["trainingDisplay"], value: string) =>
-    update({ trainingDisplay: { ...user.trainingDisplay, [key]: value } });
 
   return (
     <div className="mx-auto w-full max-w-screen-sm">
@@ -311,21 +359,32 @@ export default function ProfilePage() {
       {/* Session calendar */}
       <SessionCalendar logs={logs} onPickDate={(d) => setOpenDate(d)} />
 
-      {/* Training */}
+      {/* Training — every row opens a real picker and saves the real answer.
+          These used to be free-text boxes writing to `trainingDisplay`, a
+          display-only copy, so edits here never reached matching. */}
       <div className="border-b border-border px-3.5 py-3">
-        <div className="mb-1 text-[9px] font-medium uppercase tracking-[0.1em] text-muted">Training</div>
+        <div className="mb-1 flex items-baseline justify-between">
+          <div className="text-[9px] font-medium uppercase tracking-[0.1em] text-muted">
+            Training
+          </div>
+          <span className="text-[9px] text-muted">affects who you match with</span>
+        </div>
         <div className="flex flex-col divide-y divide-border">
           {trainingRows.map((row) => (
-            <div key={row.key} className="flex items-center justify-between gap-3 py-2">
+            <button
+              key={row.key}
+              type="button"
+              onClick={row.onEdit}
+              className="flex items-center justify-between gap-3 py-2.5 text-left"
+            >
               <span className="text-xs text-muted">{row.label}</span>
-              <InlineEdit
-                value={user.trainingDisplay[row.key]}
-                onChange={(v) => setTraining(row.key, v)}
-                ariaLabel={row.label}
-                placeholder="Add"
-                textClassName="text-xs text-text text-right"
-              />
-            </div>
+              <span className="flex items-center gap-1.5">
+                <span className="text-xs text-text">{row.value}</span>
+                <span className="text-muted">
+                  <IconChevronRight size={13} />
+                </span>
+              </span>
+            </button>
           ))}
         </div>
       </div>
@@ -480,6 +539,64 @@ export default function ProfilePage() {
           profile={user}
           onSave={savePreferences}
           onClose={() => setEditingPrefs(false)}
+        />
+      )}
+
+      {editingSchedule && (
+        <TrainingScheduleSheet
+          schedule={answers.trainingSchedule ?? {}}
+          onSave={(trainingSchedule) => savePreferences({ trainingSchedule })}
+          onClose={() => setEditingSchedule(false)}
+        />
+      )}
+
+      {picker === "level" && (
+        <OptionPickerSheet
+          title="Experience level"
+          hint="How long you've been training"
+          options={experienceLevels.map((l) => ({ value: l.key, label: `${l.name} — ${l.desc}` }))}
+          selected={answers.experienceLevel ? [answers.experienceLevel] : []}
+          onSave={([experienceLevel]) =>
+            savePreferences({ experienceLevel: experienceLevel as OnboardingProfile["experienceLevel"] })
+          }
+          onClose={() => setPicker(null)}
+        />
+      )}
+
+      {picker === "activity" && (
+        <OptionPickerSheet
+          title="Main activity"
+          hint="What you mostly do"
+          options={primaryActivities.map((a) => ({ value: a.key, label: a.label }))}
+          selected={answers.primaryActivity ? [answers.primaryActivity] : []}
+          onSave={([primaryActivity]) =>
+            savePreferences({ primaryActivity: primaryActivity as OnboardingProfile["primaryActivity"] })
+          }
+          onClose={() => setPicker(null)}
+        />
+      )}
+
+      {picker === "split" && (
+        <OptionPickerSheet
+          title="Training split"
+          hint="How you organise your week"
+          options={gymSplits.map((s) => ({ value: s, label: s }))}
+          selected={answers.gymSplit ? [answers.gymSplit] : []}
+          onSave={([gymSplit]) => savePreferences({ gymSplit })}
+          onClose={() => setPicker(null)}
+        />
+      )}
+
+      {picker === "gyms" && (
+        <OptionPickerSheet
+          title="Your gyms"
+          hint={`Up to ${MAX_TOP_GYMS}, in order of preference`}
+          options={verifiedGyms.map((g) => ({ value: g, label: g }))}
+          selected={answers.topGyms ?? []}
+          multiple
+          max={MAX_TOP_GYMS}
+          onSave={(topGyms) => savePreferences({ topGyms })}
+          onClose={() => setPicker(null)}
         />
       )}
     </div>

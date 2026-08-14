@@ -111,22 +111,45 @@ as $$
 $$;
 
 -- ---------------------------------------------------------------------------
--- 2b. Time-block → hour range. Onboarding only collects coarse free-time
---     blocks per day ('Early AM'..'Late PM'), not exact hours. Session search
---     lets a user pick a precise hour and finds anyone whose blocks fall within
---     a window of that hour. To compare the two we translate each block into the
---     hour range (24h clock) it roughly represents, then test overlap.
+-- 2b. Availability slot → hour range. Everything that compares "when are you
+--     free" goes through here, so a slot's stored TEXT never has to be compared
+--     directly.
 --
---     This is a deliberately rough bridge over the rough data we have today;
---     when onboarding starts collecting exact hours, this is the only thing
---     that changes. Returns null for an unknown block (no overlap, ignored).
+--     TWO formats are understood, because both exist in saved profiles:
+--       '07:00-09:00'  exact hours — written by the profile's week editor
+--       'AM'           coarse block — still written by onboarding
+--
+--     Exact hours are used as-is; a named block widens to the range it always
+--     stood for. That means people who edited their week and people who only
+--     ever onboarded still match each other, with no data migration.
+--     Mirrors BLOCK_HOURS in lib/schedule.ts — keep the two in step.
+--
+--     Returns null for anything unrecognised or inverted, and null never
+--     overlaps, so a bad slot is ignored rather than matching everyone.
 -- ---------------------------------------------------------------------------
 create or replace function public.block_range(block text)
 returns numrange
-language sql
+language plpgsql
 immutable
 as $$
-  select case lower(trim(block))
+declare
+  t  text := lower(trim(coalesce(block, '')));
+  lo numeric;
+  hi numeric;
+begin
+  -- Exact hours, e.g. '07:00-09:00' or '7:00 - 9:30'.
+  if t ~ '^[0-9]{1,2}:[0-9]{2}\s*-\s*[0-9]{1,2}:[0-9]{2}$' then
+    lo := trim(split_part(split_part(t, '-', 1), ':', 1))::numeric
+        + trim(split_part(split_part(t, '-', 1), ':', 2))::numeric / 60;
+    hi := trim(split_part(split_part(t, '-', 2), ':', 1))::numeric
+        + trim(split_part(split_part(t, '-', 2), ':', 2))::numeric / 60;
+    if hi <= lo then
+      return null;
+    end if;
+    return numrange(lo, hi);
+  end if;
+
+  return case t
     when 'early am' then numrange(5, 8)    -- 5–8 AM
     when 'am'       then numrange(8, 11)   -- 8–11 AM
     when 'midday'   then numrange(11, 14)  -- 11 AM–2 PM
@@ -134,6 +157,7 @@ as $$
     when 'late pm'  then numrange(18, 22)  -- 6–10 PM
     else null
   end;
+end;
 $$;
 
 -- ---------------------------------------------------------------------------
@@ -277,18 +301,31 @@ as $$
       end as level,
 
       -- Schedule overlap: 8 pts (deliberately low), full at 3+ shared slots.
+      --
+      -- Compared as overlapping RANGES on the same day, not as identical text.
+      -- Text equality only worked while everyone stored the same five block
+      -- names; with exact hours it scores '07:00-09:00' against '07:30-09:30'
+      -- as no overlap at all, which is plainly wrong, and never matches an
+      -- hours profile with a blocks one. Counts DISTINCT slots of mine that
+      -- overlap at least one of theirs, so one long slot spanning several of
+      -- theirs still counts once.
       8 * least((
         select count(*)
         from (
-          select je.key as d, v as b
-          from jsonb_each(me.schedule) je
-          cross join jsonb_array_elements_text(je.value) v
-        ) sx
-        join (
-          select je.key as d, v as b
-          from jsonb_each(c.schedule) je
-          cross join jsonb_array_elements_text(je.value) v
-        ) cx on sx.d = cx.d and sx.b = cx.b
+          select distinct sx.d, sx.b
+          from (
+            select je.key as d, v as b
+            from jsonb_each(me.schedule) je
+            cross join jsonb_array_elements_text(je.value) v
+          ) sx
+          join (
+            select je.key as d, v as b
+            from jsonb_each(c.schedule) je
+            cross join jsonb_array_elements_text(je.value) v
+          ) cx
+            on sx.d = cx.d
+           and public.block_range(sx.b) && public.block_range(cx.b)
+        ) matched
       ), 3) / 3.0 as schedule,
 
       -- Training-type alignment: 6 pts. Both flexible (partner/either) = 6.
