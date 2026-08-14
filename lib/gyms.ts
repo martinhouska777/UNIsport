@@ -16,7 +16,6 @@ export type GalleryItem = { label: string; icon: GalleryIcon };
 
 export type StatRow = { label: string; value: string };
 export type EquipmentSection = { title: string; rows: StatRow[] };
-export type RatingBar = { label: string; value: number }; // out of 5
 
 export type HouseColors = { primary: string; secondary: string };
 
@@ -26,16 +25,16 @@ export type Gym = {
   kind: GymKind;
   address: string;
   hours: string;
+  // Seed values for the day a real, shared rating average exists in the
+  // database. NOT displayed anywhere: what the app shows is the rating people
+  // actually gave (lib/gymSocial.ts), so it can never invent a score.
   rating: number;
   ratingCount: number;
   floors: number;
   houseColors?: HouseColors; // only for house gyms
   gallery: GalleryItem[];
   equipment: EquipmentSection[];
-  ratings: RatingBar[];
 };
-
-const clamp5 = (n: number) => Math.max(0, Math.min(5, Math.round(n * 10) / 10));
 
 // Generates a standard house-gym record; only the distinctive bits are passed in.
 function houseGym(opts: {
@@ -87,11 +86,6 @@ function houseGym(opts: {
         title: "Other Facilities",
         rows: [{ label: "Weight rooms", value: "1" }],
       },
-    ],
-    ratings: [
-      { label: "Equipment", value: clamp5(rating - 0.2) },
-      { label: "Cleanliness", value: clamp5(rating + 0.1) },
-      { label: "Atmosphere", value: clamp5(rating) },
     ],
   };
 }
@@ -149,11 +143,6 @@ const mainGyms: Gym[] = [
         ],
       },
     ],
-    ratings: [
-      { label: "Equipment", value: 4.6 },
-      { label: "Cleanliness", value: 4.8 },
-      { label: "Atmosphere", value: 4.4 },
-    ],
   },
   {
     slug: "murr",
@@ -202,11 +191,6 @@ const mainGyms: Gym[] = [
           { label: "Weight rooms", value: "2" },
         ],
       },
-    ],
-    ratings: [
-      { label: "Equipment", value: 4.5 },
-      { label: "Cleanliness", value: 4.6 },
-      { label: "Atmosphere", value: 4.5 },
     ],
   },
   {
@@ -257,11 +241,6 @@ const mainGyms: Gym[] = [
           { label: "Weight rooms", value: "2" },
         ],
       },
-    ],
-    ratings: [
-      { label: "Equipment", value: 4.3 },
-      { label: "Cleanliness", value: 4.5 },
-      { label: "Atmosphere", value: 4.3 },
     ],
   },
 ];

@@ -162,30 +162,12 @@ export default function GymProfile({ gym }: { gym: Gym }) {
           </div>
         ))}
 
-      {/* Ratings breakdown — one gold bar per category */}
-      {gym.ratings.length > 0 && (
-        <div className="px-3.5 py-3">
-          <div className="mb-2.5 text-[10px] font-medium uppercase tracking-[0.1em] text-primary">
-            Ratings Breakdown
-          </div>
-          <div className="flex flex-col gap-2">
-            {gym.ratings.map((r) => (
-              <div key={r.label} className="flex items-center gap-2.5">
-                <span className="min-w-[90px] text-[11px] text-muted">{r.label}</span>
-                <span className="h-1 flex-1 rounded-sm bg-surface-2">
-                  <span
-                    className="block h-1 rounded-sm bg-accent"
-                    style={{ width: `${(r.value / 5) * 100}%` }}
-                  />
-                </span>
-                <span className="min-w-[24px] text-right text-[11px] text-text">
-                  {r.value}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      {/*
+        A per-category ratings breakdown (Equipment / Cleanliness / Atmosphere)
+        used to live here, but its numbers were invented in lib/gyms.ts while the
+        header showed the real rating — so the same screen contradicted itself.
+        It comes back when those categories are actually collected from raters.
+      */}
 
       {/* Bottom action — Match tab not built yet, so this is visual only */}
       <div className="px-3.5 pb-4 pt-2">
