@@ -57,22 +57,49 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     }
     let active = true;
     (async () => {
-      const { data } = await supabase.auth.getSession();
-      if (!active) return;
-      setSession(data.session);
-      if (data.session) await refreshOnboarded(data.session.user.id);
-      setReady(true);
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (!active) return;
+        setSession(data.session);
+        if (data.session) await refreshOnboarded(data.session.user.id);
+      } finally {
+        // Always land on ready, even if the session or profile lookup fails —
+        // otherwise the whole app sits on a loading state with no way out.
+        if (active) setReady(true);
+      }
     })();
 
-    const { data: sub } = supabase.auth.onAuthStateChange(async (_event, s) => {
-      // Re-checking the DB for onboarding status is async. Flip `ready` off while
-      // we look it up so the landing redirect WAITS for the real answer instead of
-      // acting on the stale default (which sent returning accounts to onboarding).
-      setReady(false);
+    /*
+      IMPORTANT: this callback must NOT be async and must NOT await any other
+      Supabase call.
+
+      supabase-js holds an internal auth lock for as long as this callback runs,
+      and any Supabase call made inside it waits on that same lock — so awaiting
+      the profiles query here deadlocks the client. The visible symptom is
+      sign-in hanging on "Please wait…" forever with no error, because
+      signInWithPassword() itself never resolves. Deferring with a 0ms timeout
+      lets the lock release first.
+      See https://supabase.com/docs/reference/javascript/auth-onauthstatechange
+    */
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
       setSession(s);
-      if (s) await refreshOnboarded(s.user.id);
-      else setOnboarded(false);
-      setReady(true);
+      if (!s) {
+        setOnboarded(false);
+        setReady(true);
+        return;
+      }
+      // Looking up onboarding status is async, so flip `ready` off while we do
+      // it — otherwise the redirect acts on the stale default and sends
+      // returning accounts back through onboarding.
+      setReady(false);
+      setTimeout(async () => {
+        if (!active) return;
+        try {
+          await refreshOnboarded(s.user.id);
+        } finally {
+          if (active) setReady(true);
+        }
+      }, 0);
     });
     return () => {
       active = false;
