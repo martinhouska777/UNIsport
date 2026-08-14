@@ -106,7 +106,7 @@ export default function GymProfile({ gym }: { gym: Gym }) {
           <span className="flex items-center gap-1.5">
             <IconClock size={13} /> {gym.hours}
           </span>
-          <RatingValue rating={rating} showAgo />
+          <RatingValue value={gym.rating} count={gym.ratingCount} />
           <span className="flex items-center gap-1.5">
             <IconMapPin size={13} /> {gym.address}
           </span>
@@ -165,8 +165,17 @@ export default function GymProfile({ gym }: { gym: Gym }) {
       {/* Ratings breakdown — one gold bar per category */}
       {gym.ratings.length > 0 && (
         <div className="px-3.5 py-3">
-          <div className="mb-2.5 text-[10px] font-medium uppercase tracking-[0.1em] text-muted">
-            Ratings Breakdown
+          {/* An average with no sample size is meaningless — 4.6 from two
+              people reads the same as 4.6 from two hundred. */}
+          <div className="mb-2.5 flex items-baseline justify-between">
+            <span className="text-[10px] font-medium uppercase tracking-[0.1em] text-muted">
+              Ratings Breakdown
+            </span>
+            {gym.ratingCount > 0 && (
+              <span className="text-[10px] text-muted">
+                {gym.ratingCount} {gym.ratingCount === 1 ? "rating" : "ratings"}
+              </span>
+            )}
           </div>
           <div className="flex flex-col gap-2">
             {gym.ratings.map((r) => (

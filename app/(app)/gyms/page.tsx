@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { gyms, type Gym } from "@/lib/gyms";
 import { useAppState } from "@/components/AppState";
-import { useFavorites, useGymStats, type GymCrowd, type GymRating } from "@/lib/gymSocial";
+import { useFavorites, useGymStats, type GymCrowd } from "@/lib/gymSocial";
 import { RatingValue, CrowdChip } from "@/components/gyms/RateCrowd";
 import {
   IconSearch,
@@ -44,24 +44,16 @@ function FavHeart({ fav, onToggle }: { fav: boolean; onToggle: () => void }) {
   );
 }
 
-function StatsRow({
-  gym,
-  rating,
-  crowd,
-}: {
-  gym: Gym;
-  rating: GymRating | null;
-  crowd: GymCrowd | null;
-}) {
+function StatsRow({ gym, crowd }: { gym: Gym; crowd: GymCrowd | null }) {
   return (
     <div className="flex items-center justify-between gap-2 bg-surface px-3 py-2.5">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
         <span className="flex items-center gap-1">
           <IconClock size={13} /> {gym.hours}
         </span>
-        {/* Real rating + when it was last rated (n/a until anyone rates it) */}
-        <RatingValue rating={rating} showAgo />
-        {/* Live crowd ("how busy right now"), n/a once a report goes stale */}
+        {/* The gym's rating + how many rated it (hidden if nobody has) */}
+        <RatingValue value={gym.rating} count={gym.ratingCount} />
+        {/* Live crowd ("how busy right now") — hidden when there's no fresh report */}
         <CrowdChip crowd={crowd} />
         <span className="flex items-center gap-1">
           <IconFloors size={13} /> {gym.floors} {gym.floors === 1 ? "floor" : "floors"}
@@ -78,11 +70,10 @@ type CardProps = {
   gym: Gym;
   fav: boolean;
   onToggleFav: () => void;
-  rating: GymRating | null;
   crowd: GymCrowd | null;
 };
 
-function MainCard({ gym, fav, onToggleFav, rating, crowd }: CardProps) {
+function MainCard({ gym, fav, onToggleFav, crowd }: CardProps) {
   return (
     <Link
       href={`/gyms/${gym.slug}`}
@@ -98,12 +89,12 @@ function MainCard({ gym, fav, onToggleFav, rating, crowd }: CardProps) {
           <div className="text-[10px] text-muted">{gym.address}</div>
         </div>
       </div>
-      <StatsRow gym={gym} rating={rating} crowd={crowd} />
+      <StatsRow gym={gym} crowd={crowd} />
     </Link>
   );
 }
 
-function HouseCard({ gym, fav, onToggleFav, rating, crowd }: CardProps) {
+function HouseCard({ gym, fav, onToggleFav, crowd }: CardProps) {
   const colors = gym.houseColors;
   return (
     <Link
@@ -128,7 +119,7 @@ function HouseCard({ gym, fav, onToggleFav, rating, crowd }: CardProps) {
           <div className="text-[9px] text-muted">House gym</div>
         </div>
       </div>
-      <StatsRow gym={gym} rating={rating} crowd={crowd} />
+      <StatsRow gym={gym} crowd={crowd} />
     </Link>
   );
 }
@@ -136,7 +127,7 @@ function HouseCard({ gym, fav, onToggleFav, rating, crowd }: CardProps) {
 export default function GymsPage() {
   const { userId } = useAppState();
   const { isFavorite, toggle } = useFavorites(userId);
-  const { getRating, getCrowd } = useGymStats(userId);
+  const { getCrowd } = useGymStats(userId);
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
 
@@ -207,7 +198,6 @@ export default function GymsPage() {
             gym={g}
             fav={isFavorite(g.slug)}
             onToggleFav={() => toggle(g.slug)}
-            rating={getRating(g.slug)}
             crowd={getCrowd(g.slug)}
           />
         ))}
@@ -226,7 +216,6 @@ export default function GymsPage() {
             gym={g}
             fav={isFavorite(g.slug)}
             onToggleFav={() => toggle(g.slug)}
-            rating={getRating(g.slug)}
             crowd={getCrowd(g.slug)}
           />
         ))}
