@@ -28,6 +28,7 @@ import {
   sessionTimeLabel,
   SESSION_WINDOW_HOURS,
 } from "@/lib/onboarding";
+import { matchTier, isWorthShowing } from "@/lib/matchTier";
 import MatchCard from "@/components/match/MatchCard";
 import BuddyBoard from "@/components/match/BuddyBoard";
 import { Pill, FieldLabel } from "@/components/onboarding/controls";
@@ -54,9 +55,12 @@ function Grid({
   max: number;
   onView: (m: Match, max: number) => void;
 }) {
+  // Candidates below the weakest tier are dropped rather than shown — a 6%
+  // match on screen makes the whole list look like it failed.
+  const worthShowing = matches.filter((m) => isWorthShowing(m.score, max));
   return (
     <div className="grid grid-cols-2 gap-2 px-3 pb-4">
-      {matches.map((m) => (
+      {worthShowing.map((m) => (
         <MatchCard key={m.userId} match={m} max={max} onView={(x) => onView(x, max)} />
       ))}
     </div>
@@ -136,11 +140,15 @@ export default function MatchPage() {
   const router = useRouter();
   const [tab, setTab] = useState<SubTab>("browse");
 
-  // Open another person's profile, passing the exact compatibility % shown on
-  // their card so the profile badge stays truthful.
+  // Open another person's profile, passing the exact fit tier shown on their
+  // card so the profile badge says the same thing the card did.
   const viewProfile = (m: Match, max: number) => {
-    const pct = Math.round((m.score / max) * 100);
-    router.push(`/people/${m.userId}?pct=${pct}`);
+    const tier = matchTier(m.score, max);
+    router.push(
+      tier
+        ? `/people/${m.userId}?fit=${encodeURIComponent(tier.label)}`
+        : `/people/${m.userId}`,
+    );
   };
 
   // --- Browse state ---

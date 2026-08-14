@@ -1,4 +1,5 @@
 import type { Match } from "@/lib/supabase/matching";
+import { matchTier } from "@/lib/matchTier";
 import { IconUser } from "@/components/icons";
 
 /*
@@ -44,7 +45,8 @@ export default function MatchCard({
   max: number; // 100 for browse, 92 for session search
   onView?: (m: Match) => void;
 }) {
-  const pct = Math.round((match.score / max) * 100);
+  // A qualitative tier, not a raw percentage — see lib/matchTier.ts for why.
+  const tier = matchTier(match.score, max);
   const subtitle = [match.residence, levelLabel(match.level)]
     .filter(Boolean)
     .join(" · ");
@@ -56,9 +58,11 @@ export default function MatchCard({
         <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-primary bg-primary/15 text-primary">
           <IconUser size={20} />
         </div>
-        <span className="absolute right-2 top-2 rounded-lg bg-primary px-1.5 py-0.5 text-[9px] font-medium text-primary-contrast">
-          {pct}%
-        </span>
+        {tier && (
+          <span className="absolute right-2 top-2 rounded-lg bg-primary px-1.5 py-0.5 text-[9px] font-medium text-primary-contrast">
+            {tier.label}
+          </span>
+        )}
       </div>
 
       {/* Details */}

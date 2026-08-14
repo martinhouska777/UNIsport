@@ -9,8 +9,8 @@
 
   Data is REAL: it loads the person's public profile via the get_public_profile
   RPC (RLS-safe) and runs it through profileFromOnboarding — the SAME mapping the
-  owner's own Profile tab uses — so nothing here is faked. The match % is the
-  exact number shown on the card the user tapped (passed via ?pct=), shown only
+  owner's own Profile tab uses — so nothing here is faked. The fit tier is the
+  same one shown on the card the user tapped (passed via ?fit=), shown only
   when present. All colors are theme tokens (rule 1).
 */
 import { Suspense, useEffect, useState } from "react";
@@ -18,6 +18,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { getPublicProfile } from "@/lib/supabase/profiles";
 import { profileFromOnboarding, classOfLabel, type CurrentUser } from "@/lib/currentUser";
 import { residenceLabel } from "@/lib/onboarding";
+import { MATCH_TIER_LABELS } from "@/lib/matchTier";
 import { startDirectConversation } from "@/lib/supabase/messages";
 import { getFollowStatus, followUser, unfollowUser } from "@/lib/supabase/follows";
 import { IconArrowLeft, IconUser, IconCheck } from "@/components/icons";
@@ -43,8 +44,9 @@ function PersonProfile() {
   const search = useSearchParams();
   const router = useRouter();
   const id = params.id;
-  const pctParam = search.get("pct");
-  const pct = pctParam && /^\d+$/.test(pctParam) ? Number(pctParam) : null;
+  // Only ever the labels we ourselves emit — never arbitrary text from the URL.
+  const fitParam = search.get("fit");
+  const fit = fitParam && MATCH_TIER_LABELS.includes(fitParam) ? fitParam : null;
 
   const [user, setUser] = useState<CurrentUser | null>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "missing" | "error">("loading");
@@ -197,11 +199,11 @@ function PersonProfile() {
                 </div>
               )}
 
-              {(pct !== null || user.badges.mentor) && (
+              {(fit !== null || user.badges.mentor) && (
                 <div className="mt-0.5 flex items-center gap-2">
-                  {pct !== null && (
+                  {fit !== null && (
                     <span className="rounded-lg border border-primary bg-primary/15 px-2 py-0.5 text-[10px] font-medium text-primary">
-                      {pct}% match
+                      {fit}
                     </span>
                   )}
                   {user.badges.mentor && (
