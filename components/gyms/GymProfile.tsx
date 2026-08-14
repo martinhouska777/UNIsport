@@ -116,7 +116,7 @@ export default function GymProfile({ gym }: { gym: Gym }) {
       {/* Your rating + live crowd — what you fill in after / during a workout */}
       <div className="border-b border-border px-3.5 py-3.5">
         <div className="flex items-center justify-between">
-          <span className="text-[10px] font-medium uppercase tracking-[0.1em] text-primary">
+          <span className="text-[10px] font-medium uppercase tracking-[0.1em] text-muted">
             Rate this gym
           </span>
           <span className="text-[11px] text-muted">
@@ -128,7 +128,7 @@ export default function GymProfile({ gym }: { gym: Gym }) {
         </div>
 
         <div className="mt-4 flex items-center justify-between">
-          <span className="text-[10px] font-medium uppercase tracking-[0.1em] text-primary">
+          <span className="text-[10px] font-medium uppercase tracking-[0.1em] text-muted">
             How busy right now?
           </span>
           <span className="text-[11px] text-muted">
@@ -145,7 +145,7 @@ export default function GymProfile({ gym }: { gym: Gym }) {
         .filter((section) => section.rows.length > 0)
         .map((section) => (
           <div key={section.title} className="border-b border-border px-3.5 py-3">
-            <div className="mb-2.5 text-[10px] font-medium uppercase tracking-[0.1em] text-primary">
+            <div className="mb-2.5 text-[10px] font-medium uppercase tracking-[0.1em] text-muted">
               {section.title}
             </div>
             <div className="flex flex-col divide-y divide-border">
@@ -165,7 +165,7 @@ export default function GymProfile({ gym }: { gym: Gym }) {
       {/* Ratings breakdown — one gold bar per category */}
       {gym.ratings.length > 0 && (
         <div className="px-3.5 py-3">
-          <div className="mb-2.5 text-[10px] font-medium uppercase tracking-[0.1em] text-primary">
+          <div className="mb-2.5 text-[10px] font-medium uppercase tracking-[0.1em] text-muted">
             Ratings Breakdown
           </div>
           <div className="flex flex-col gap-2">

@@ -40,7 +40,7 @@ export default function PersonalRecords({
   return (
     <div className="border-b border-border px-3.5 py-3">
       <div className="mb-2 flex items-center justify-between">
-        <div className="text-[9px] font-medium uppercase tracking-[0.1em] text-primary">
+        <div className="text-[9px] font-medium uppercase tracking-[0.1em] text-muted">
           Personal records
         </div>
         <div className="flex items-center gap-2">

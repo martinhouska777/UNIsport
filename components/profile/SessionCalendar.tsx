@@ -79,7 +79,7 @@ export default function SessionCalendar({
   return (
     <div className="border-b border-border px-3.5 py-3">
       <div className="mb-2 flex items-center justify-between">
-        <div className="text-[9px] font-medium uppercase tracking-[0.1em] text-primary">
+        <div className="text-[9px] font-medium uppercase tracking-[0.1em] text-muted">
           Session calendar
         </div>
         <div className="text-[11px] text-muted">{monthLabel}</div>

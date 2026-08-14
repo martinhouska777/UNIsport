@@ -222,7 +222,7 @@ function PersonProfile() {
 
           {/* Training */}
           <div className="border-b border-border px-4 py-3">
-            <div className="mb-1 text-[9px] font-medium uppercase tracking-[0.1em] text-primary">
+            <div className="mb-1 text-[9px] font-medium uppercase tracking-[0.1em] text-muted">
               Training
             </div>
             <div className="flex flex-col divide-y divide-border">
@@ -240,7 +240,7 @@ function PersonProfile() {
           {/* Personal records (only present when they chose to show them) */}
           {user.personalRecords.length > 0 && (
             <div className="border-b border-border px-4 py-3">
-              <div className="mb-2 text-[9px] font-medium uppercase tracking-[0.1em] text-primary">
+              <div className="mb-2 text-[9px] font-medium uppercase tracking-[0.1em] text-muted">
                 Personal records
               </div>
               <div className="flex flex-col divide-y divide-border">
@@ -257,7 +257,7 @@ function PersonProfile() {
           {/* Photos (only present when they chose to show them) */}
           {user.photos.length > 0 && (
             <div className="border-b border-border px-4 py-3">
-              <div className="mb-2 text-[9px] font-medium uppercase tracking-[0.1em] text-primary">
+              <div className="mb-2 text-[9px] font-medium uppercase tracking-[0.1em] text-muted">
                 Photos
               </div>
               <PhotoGallery photos={user.photos} />
@@ -267,7 +267,7 @@ function PersonProfile() {
           {/* Interests */}
           {user.interests.length > 0 && (
             <div className="border-b border-border px-4 py-3">
-              <div className="mb-2 text-[9px] font-medium uppercase tracking-[0.1em] text-primary">
+              <div className="mb-2 text-[9px] font-medium uppercase tracking-[0.1em] text-muted">
                 Interests
               </div>
               <div className="flex flex-wrap gap-1.5">
@@ -286,7 +286,7 @@ function PersonProfile() {
           {/* About */}
           {(user.concentration || user.hometownCountry || user.languages.length > 0) && (
             <div className="border-b border-border px-4 py-3">
-              <div className="mb-1 text-[9px] font-medium uppercase tracking-[0.1em] text-primary">
+              <div className="mb-1 text-[9px] font-medium uppercase tracking-[0.1em] text-muted">
                 About
               </div>
               <div className="flex flex-col divide-y divide-border">

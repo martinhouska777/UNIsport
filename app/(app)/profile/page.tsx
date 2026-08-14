@@ -325,7 +325,7 @@ export default function ProfilePage() {
 
       {/* Bio */}
       <div className="border-b border-border px-3.5 py-3">
-        <div className="mb-1.5 text-[9px] font-medium uppercase tracking-[0.1em] text-primary">Bio</div>
+        <div className="mb-1.5 text-[9px] font-medium uppercase tracking-[0.1em] text-muted">Bio</div>
         <InlineEdit
           value={user.bio}
           onChange={(v) => update({ bio: v })}
@@ -373,7 +373,7 @@ export default function ProfilePage() {
 
       {/* Training */}
       <div className="border-b border-border px-3.5 py-3">
-        <div className="mb-1 text-[9px] font-medium uppercase tracking-[0.1em] text-primary">Training</div>
+        <div className="mb-1 text-[9px] font-medium uppercase tracking-[0.1em] text-muted">Training</div>
         <div className="flex flex-col divide-y divide-border">
           {trainingRows.map((row) => (
             <div key={row.key} className="flex items-center justify-between gap-3 py-2">
@@ -393,7 +393,7 @@ export default function ProfilePage() {
       {/* Preferences — your editable onboarding answers */}
       <div className="border-b border-border px-3.5 py-3">
         <div className="mb-2 flex items-center justify-between">
-          <div className="text-[9px] font-medium uppercase tracking-[0.1em] text-primary">
+          <div className="text-[9px] font-medium uppercase tracking-[0.1em] text-muted">
             Preferences
           </div>
           <button
@@ -469,7 +469,7 @@ export default function ProfilePage() {
 
       {/* Entry into Varsity Mode (the gated rowing-team section) */}
       <div className="border-b border-border px-3.5 py-3">
-        <div className="mb-2 text-[9px] font-medium uppercase tracking-[0.1em] text-primary">
+        <div className="mb-2 text-[9px] font-medium uppercase tracking-[0.1em] text-muted">
           Varsity
         </div>
         <Link
