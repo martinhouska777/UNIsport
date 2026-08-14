@@ -63,7 +63,7 @@ export default function ExercisePicker({
             className="w-full bg-transparent py-2.5 text-base text-text outline-none placeholder:text-muted"
           />
         </div>
-        <div className="mt-2 flex gap-1.5 overflow-x-auto pb-1">
+        <div className="mt-2 chip-row flex gap-1.5 overflow-x-auto pb-1">
           <FilterChip label="All" active={muscle === null} onClick={() => setMuscle(null)} />
           {muscleGroups.map((m) => (
             <FilterChip key={m} label={m} active={muscle === m} onClick={() => setMuscle(m)} />

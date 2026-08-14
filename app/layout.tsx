@@ -26,7 +26,14 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#2f3b52",
+  // Paints the phone's status bar / browser chrome. These must match what the
+  // app ACTUALLY renders — the neutral light background, and the near-black the
+  // landing and the dark app theme share. (It used to be a single navy that
+  // appears nowhere in the UI.)
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f6f6f7" },
+    { media: "(prefers-color-scheme: dark)", color: "#0b0b0c" },
+  ],
 };
 
 export default function RootLayout({

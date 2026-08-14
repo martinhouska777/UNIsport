@@ -38,6 +38,26 @@ export const categoryMeta: Record<
   flex: { label: "Flex", color: "var(--muted)", hasIntensity: false },
 };
 
+/*
+  Colors for the ATHLETE'S LOG legend. The log covers everything the coach's
+  plan does, plus cross-training the plan never schedules (run / bike / other),
+  and it gives Erg its own colour rather than the plan's muted grey.
+
+  These live here because per-entity content colors belong in DATA files, never
+  as literals inside a component (rule 1) — LogScreen used to declare its own.
+*/
+export type LogCategory = Category | "run" | "bike" | "other";
+export const logCategoryMeta: Record<LogCategory, { label: string; color: string }> = {
+  water: { label: "Water", color: categoryMeta.water.color },
+  erg: { label: "Erg", color: "#60a5fa" },
+  weights: { label: "Weights", color: categoryMeta.weights.color },
+  flex: { label: "Flex", color: "var(--accent)" },
+  off: { label: "Off", color: categoryMeta.off.color },
+  run: { label: "Run", color: "#c084fc" },
+  bike: { label: "Bike", color: "#f59e0b" },
+  other: { label: "Other", color: "var(--muted)" },
+};
+
 /* ── Intensities (Water + Erg only) ── */
 export type Intensity = "UT2" | "UT1" | "hard";
 export const intensities: Intensity[] = ["UT2", "UT1", "hard"];

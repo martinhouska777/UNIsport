@@ -38,6 +38,9 @@ import { residenceLabel, type OnboardingProfile } from "@/lib/onboarding";
 import { ThemeModeToggle } from "@/components/ThemeMode";
 import { IconSettings, IconUser, IconCamera, IconPencil, IconArrowRight } from "@/components/icons";
 
+// Dev-only affordances are compiled out of the production bundle.
+const isProduction = process.env.NODE_ENV === "production";
+
 export default function ProfilePage() {
   const { userId, logout, resetOnboarding } = useAppState();
   const router = useRouter();
@@ -484,20 +487,27 @@ export default function ProfilePage() {
         </Link>
       </div>
 
-      {/* Temporary dev tools (until real settings/profile flows exist) */}
+      {/* Log out is a real user action; "Replay onboarding" is a dev affordance
+          and must never reach production (it wipes the user back to step 1). */}
       <div className="px-3.5 py-4">
-        <div className="mb-2 text-[9px] font-medium uppercase tracking-[0.1em] text-muted">Dev tools</div>
+        {!isProduction && (
+          <div className="mb-2 text-[9px] font-medium uppercase tracking-[0.1em] text-muted">
+            Dev tools
+          </div>
+        )}
         <div className="flex flex-col gap-2">
-          <button
-            type="button"
-            onClick={async () => {
-              await resetOnboarding();
-              router.replace("/onboarding");
-            }}
-            className="w-full rounded-full border border-border bg-surface-2 px-5 py-2.5 text-sm font-medium text-text"
-          >
-            Replay onboarding (dev)
-          </button>
+          {!isProduction && (
+            <button
+              type="button"
+              onClick={async () => {
+                await resetOnboarding();
+                router.replace("/onboarding");
+              }}
+              className="w-full rounded-full border border-border bg-surface-2 px-5 py-2.5 text-sm font-medium text-text"
+            >
+              Replay onboarding (dev)
+            </button>
+          )}
           <button
             type="button"
             onClick={async () => {

@@ -325,7 +325,7 @@ export default function MatchPage() {
             {/* REQUIRED: Time (precise hour, scroll to pick) */}
             <div>
               <FieldLabel>Time</FieldLabel>
-              <div className="-mx-0.5 flex gap-1.5 overflow-x-auto px-0.5 pb-1">
+              <div className="-mx-0.5 chip-row flex gap-1.5 overflow-x-auto px-0.5 pb-1">
                 {sessionTimeSlots.map((s) => (
                   <div key={s.value} className="flex-shrink-0">
                     <Pill

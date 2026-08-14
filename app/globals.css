@@ -177,3 +177,21 @@ body {
   from { opacity: 0; }
   to { opacity: 1; }
 }
+
+/*
+  Horizontal chip rows (filters, pickers, day selectors).
+  Hides the raw OS scrollbar — with arrow buttons on Windows it reads as an
+  unfinished control — and fades the trailing edge so it stays discoverable
+  that there is more to scroll.
+*/
+.chip-row {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.chip-row::-webkit-scrollbar {
+  display: none;
+}
+.chip-row-fade {
+  -webkit-mask-image: linear-gradient(to right, #000 88%, transparent 100%);
+  mask-image: linear-gradient(to right, #000 88%, transparent 100%);
+}

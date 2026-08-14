@@ -176,7 +176,7 @@ export default function BuddyBoard() {
 
         <div>
           <FieldLabel>Gym (optional)</FieldLabel>
-          <div className="-mx-0.5 flex gap-1.5 overflow-x-auto px-0.5 pb-1">
+          <div className="-mx-0.5 chip-row flex gap-1.5 overflow-x-auto px-0.5 pb-1">
             {verifiedGyms.map((g) => (
               <div key={g} className="flex-shrink-0">
                 <Pill label={g} selected={gym === g} onClick={() => setGym(gym === g ? null : g)} />
@@ -263,7 +263,7 @@ export default function BuddyBoard() {
         </div>
 
         <div className="flex flex-col gap-2 rounded-xl border border-border bg-surface-2 p-3">
-          <div className="-mx-0.5 flex gap-1.5 overflow-x-auto px-0.5 pb-0.5">
+          <div className="-mx-0.5 chip-row flex gap-1.5 overflow-x-auto px-0.5 pb-0.5">
             {buddyFocuses.map((f) => (
               <div key={f.key} className="flex-shrink-0">
                 <Pill
@@ -274,7 +274,7 @@ export default function BuddyBoard() {
               </div>
             ))}
           </div>
-          <div className="-mx-0.5 flex gap-1.5 overflow-x-auto px-0.5 pb-0.5">
+          <div className="-mx-0.5 chip-row flex gap-1.5 overflow-x-auto px-0.5 pb-0.5">
             {weekDays.map((d) => (
               <div key={d.key} className="flex-shrink-0">
                 <Pill

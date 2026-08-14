@@ -22,7 +22,7 @@ import { fetchPlan, type Plan } from "@/lib/varsity/planStore";
 import { prescribedForDay } from "@/lib/varsity/athleteHome";
 import {
   sessionLabel,
-  categoryMeta,
+  logCategoryMeta,
   toISO,
   type Session,
   type Period,
@@ -48,17 +48,9 @@ import {
   IconChevronRight,
 } from "@/components/icons";
 
-/* category → label + content color for the dot (extra adds run/bike/other) */
-const catMeta: Record<string, { label: string; color: string }> = {
-  water: { label: "Water", color: categoryMeta.water.color },
-  erg: { label: "Erg", color: "#60a5fa" },
-  weights: { label: "Weights", color: categoryMeta.weights.color },
-  flex: { label: "Flex", color: "var(--accent)" },
-  off: { label: "Off", color: categoryMeta.off.color },
-  run: { label: "Run", color: "#c084fc" },
-  bike: { label: "Bike", color: "#f59e0b" },
-  other: { label: "Other", color: "var(--muted)" },
-};
+/* category → label + content color for the dot. Lives in the data layer
+   (lib/varsity/coachPlan.ts) so no color literal sits in this component. */
+const catMeta: Record<string, { label: string; color: string }> = logCategoryMeta;
 const extraCategories = ["erg", "water", "weights", "run", "bike", "other"] as const;
 function Dot({ color }: { color: string }) {
   return <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ background: color }} />;
@@ -566,7 +558,7 @@ export default function LogScreen() {
         <p className="mt-0.5 text-[12px] text-muted">{dateLabel}</p>
 
         {/* day picker — pick today or a recent day to log */}
-        <div className="mt-3 flex gap-1.5 overflow-x-auto pb-1">
+        <div className="mt-3 chip-row flex gap-1.5 overflow-x-auto pb-1">
           {days.map((d) => {
             const iso = toISO(d);
             return (
