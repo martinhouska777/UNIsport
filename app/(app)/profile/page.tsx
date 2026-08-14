@@ -2,10 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useAppState } from "@/components/AppState";
 import VarsityShield from "@/components/varsity/VarsityShield";
-import { createClient, hasSupabaseEnv } from "@/lib/supabase/client";
 import InlineEdit from "@/components/profile/InlineEdit";
 import SessionCalendar from "@/components/profile/SessionCalendar";
 import SessionSheet from "@/components/profile/SessionSheet";
@@ -16,10 +13,9 @@ import UpcomingSessions from "@/components/profile/UpcomingSessions";
 import PersonalRecords from "@/components/profile/PersonalRecords";
 import PhotoGrid from "@/components/profile/PhotoGrid";
 import PreferencesSheet from "@/components/profile/PreferencesSheet";
-import NotificationSettings from "@/components/profile/NotificationSettings";
+import { useProfileData } from "@/components/profile/useProfileData";
 import {
   profileFromOnboarding,
-  deriveTrainingDisplay,
   classOfLabel,
   type CurrentUser,
   type PersonalRecord,
@@ -34,21 +30,15 @@ import {
 } from "@/lib/supabase/workouts";
 import { fileToDataUrl } from "@/lib/image";
 import { getMyFollowCounts } from "@/lib/supabase/follows";
-import { residenceLabel, type OnboardingProfile } from "@/lib/onboarding";
-import { ThemeModeToggle } from "@/components/ThemeMode";
+import { residenceLabel } from "@/lib/onboarding";
 import { IconSettings, IconUser, IconCamera, IconPencil, IconArrowRight } from "@/components/icons";
 
-// Dev-only affordances are compiled out of the production bundle.
-const isProduction = process.env.NODE_ENV === "production";
-
 export default function ProfilePage() {
-  const { userId, email, logout, resetOnboarding } = useAppState();
-  const router = useRouter();
+  // The saved profile JSON (onboarding answers + any profile edits) and its
+  // writer, shared with the Settings page so both edit the same row the same way.
+  const { data, loading, saveState, update, savePreferences, supabase, userId } =
+    useProfileData();
 
-  const [supabase] = useState(() => (hasSupabaseEnv() ? createClient() : null));
-  // The saved profile JSON (onboarding answers + any profile edits).
-  const [data, setData] = useState<Record<string, unknown> | null>(null);
-  const [loading, setLoading] = useState(true);
   // Logged workouts for the current month + the all-time count (Sessions stat).
   const [logs, setLogs] = useState<WorkoutLog[]>([]);
   const [sessionsCount, setSessionsCount] = useState(0);
@@ -60,8 +50,6 @@ export default function ProfilePage() {
   const [editLog, setEditLog] = useState<WorkoutLog | null>(null); // editing an existing log
   const [editingPrefs, setEditingPrefs] = useState(false);
   const [followCounts, setFollowCounts] = useState<{ following: number; followers: number } | null>(null);
-  // Tiny status so saving to the database is visible (and failures aren't silent).
-  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const avatarInputRef = useRef<HTMLInputElement>(null);
 
   // Avatar picker: downscale the chosen image and store it as the profile photo.
@@ -73,28 +61,6 @@ export default function ProfilePage() {
       // Ignore images that won't decode.
     }
   };
-
-  useEffect(() => {
-    if (!supabase || !userId) {
-      setData({});
-      setLoading(false);
-      return;
-    }
-    let active = true;
-    supabase
-      .from("profiles")
-      .select("data")
-      .eq("id", userId)
-      .maybeSingle()
-      .then(({ data: row }) => {
-        if (!active) return;
-        setData((row?.data as Record<string, unknown>) ?? {});
-        setLoading(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, [supabase, userId]);
 
   // Real "Following" count from the follow graph.
   useEffect(() => {
@@ -170,35 +136,6 @@ export default function ProfilePage() {
     if (!r.logs.some((l) => l.date === log.date)) setOpenDate(null);
   };
 
-  // Edit handler: merges the patch into the saved JSON and persists it to the DB.
-  // The write lives OUTSIDE the state updater (so it runs once, not twice in
-  // StrictMode) and reports a save status the user can see.
-  const update = (patch: Partial<CurrentUser>) => {
-    const next = { ...(data ?? {}), ...patch };
-    setData(next);
-    if (!supabase || !userId) return; // no DB in this environment → in-memory only
-    setSaveState("saving");
-    supabase
-      .from("profiles")
-      .update({ data: next, updated_at: new Date().toISOString() })
-      .eq("id", userId)
-      .then(({ error }) => {
-        if (error) {
-          console.error("Profile save failed:", error.message);
-          setSaveState("error");
-        } else {
-          setSaveState("saved");
-        }
-      });
-  };
-
-  // Save edited onboarding answers, and re-derive the Training rows so they stay
-  // consistent with the new answers.
-  const savePreferences = (patch: Partial<OnboardingProfile>) => {
-    const merged = { ...(data as Partial<OnboardingProfile>), ...patch } as OnboardingProfile;
-    update({ ...patch, trainingDisplay: deriveTrainingDisplay(merged) });
-  };
-
   const user = data ? profileFromOnboarding(data) : null;
 
   if (loading || !user) {
@@ -253,17 +190,13 @@ export default function ProfilePage() {
               {saveState === "saving" ? "Saving…" : saveState === "saved" ? "Saved ✓" : "Couldn’t save"}
             </span>
           )}
-          <ThemeModeToggle />
-          {/* Was a dead button. It now opens the same preferences sheet as
-              "Edit answers" further down the page. */}
-          <button
-            type="button"
-            aria-label="Preferences"
-            onClick={() => setEditingPrefs(true)}
-            className="text-muted"
-          >
+          {/* One button, and it's a cog. The light/dark toggle used to sit here
+              too, but IconSettings was drawn as a circle with rays — the same
+              picture as IconSun — so this read as two sun buttons. Both the
+              toggle and the preferences sheet now live on /settings. */}
+          <Link href="/settings" aria-label="Settings" className="text-muted">
             <IconSettings size={18} />
-          </button>
+          </Link>
         </div>
       </div>
 
@@ -467,13 +400,6 @@ export default function ProfilePage() {
         onVisibleChange={(v) => update({ showPhotos: v })}
       />
 
-      {/* Notification settings — device on/off + which kinds to receive */}
-      <NotificationSettings
-        messages={user.notifyMessages}
-        plans={user.notifyPlans}
-        onChange={update}
-      />
-
       {/* Entry into Varsity Mode (the gated rowing-team section) */}
       <div className="border-b border-border px-3.5 py-3">
         <div className="mb-2 text-[9px] font-medium uppercase tracking-[0.1em] text-muted">
@@ -492,47 +418,6 @@ export default function ProfilePage() {
             <IconArrowRight size={18} />
           </span>
         </Link>
-      </div>
-
-      {/* Log out is a real user action; "Replay onboarding" is a dev affordance
-          and must never reach production (it wipes the user back to step 1). */}
-      <div className="px-3.5 py-4">
-        {/* Which account this is. Signing in with Google gives no other clue —
-            you can hold two Google accounts and not know which one you used. */}
-        {email && (
-          <p className="mb-3 text-xs text-muted">
-            Signed in as <span className="text-text">{email}</span>
-          </p>
-        )}
-        {!isProduction && (
-          <div className="mb-2 text-[9px] font-medium uppercase tracking-[0.1em] text-muted">
-            Dev tools
-          </div>
-        )}
-        <div className="flex flex-col gap-2">
-          {!isProduction && (
-            <button
-              type="button"
-              onClick={async () => {
-                await resetOnboarding();
-                router.replace("/onboarding");
-              }}
-              className="w-full rounded-full border border-border bg-surface-2 px-5 py-2.5 text-sm font-medium text-text"
-            >
-              Replay onboarding (dev)
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={async () => {
-              await logout();
-              router.replace("/");
-            }}
-            className="w-full rounded-full border border-border bg-background px-5 py-2.5 text-sm font-medium text-text"
-          >
-            Log out
-          </button>
-        </div>
       </div>
 
       {/* Bottom action bar (sticks above the tab nav) */}
