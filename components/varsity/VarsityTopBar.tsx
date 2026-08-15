@@ -8,7 +8,7 @@ import ModeSwitcherSheet from "@/components/ModeSwitcherSheet";
 import { useAppState } from "@/components/AppState";
 import useTapOrDoubleTap from "@/components/useTapOrDoubleTap";
 import { ThemeModeToggle } from "@/components/ThemeMode";
-import { IconBell, IconArrowLeft, IconChevronDown } from "@/components/icons";
+import { IconBell, IconArrowLeft, IconChevronDown, IconSettings } from "@/components/icons";
 import { subscribeToPush, isSubscribed, sendTestNotification } from "@/lib/push/client";
 
 /*
@@ -87,6 +87,16 @@ export default function VarsityTopBar() {
         >
           <IconBell size={16} />
         </button>
+        {/* Settings has to be reachable from here: a rower who joined through a
+            team link has no student profile to find the cog on, so without this
+            they could never change units, notifications — or log out. */}
+        <Link
+          href="/settings"
+          aria-label="Settings"
+          className="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-surface text-muted"
+        >
+          <IconSettings size={16} />
+        </Link>
         {/* Only offered when there IS something to exit to. */}
         {studentReady && (
           <Link

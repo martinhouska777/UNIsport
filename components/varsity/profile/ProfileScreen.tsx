@@ -20,7 +20,14 @@ import Link from "next/link";
 import Sheet from "@/components/varsity/Sheet";
 import { useAppState } from "@/components/AppState";
 import { useMembership } from "@/components/varsity/useMembership";
+import { useUnits } from "@/components/useUnits";
 import { can, canOpenConsole, roleLabel } from "@/lib/varsity/membership";
+import {
+  formatWeight,
+  kgToUnit,
+  weightToKg,
+  type Units,
+} from "@/lib/varsity/units";
 import { fetchLogsInRange, type LogEntry } from "@/lib/varsity/logStore";
 import { toISO } from "@/lib/varsity/coachPlan";
 import {
@@ -92,22 +99,29 @@ const WEEKS = 8;
 /* ─────────────────────────  edit identity sheet  ───────────────────────── */
 function EditIdentitySheet({
   profile,
+  units,
   onSave,
   onClose,
 }: {
   profile: VarsityAthleteProfile;
+  units: Units;
   onSave: (patch: Partial<VarsityAthleteProfile>) => void;
   onClose: () => void;
 }) {
   const [teamYear, setTeamYear] = useState(profile.teamYear);
   const [height, setHeight] = useState(profile.heightCm != null ? String(profile.heightCm) : "");
-  const [weight, setWeight] = useState(profile.weightKg != null ? String(profile.weightKg) : "");
+  // Shown and typed in whichever weight unit they chose; ALWAYS stored in kilos,
+  // so switching the setting later can't corrupt what's on the record.
+  const [weight, setWeight] = useState(
+    profile.weightKg != null ? String(Math.round(kgToUnit(profile.weightKg, units.weight))) : "",
+  );
 
   const save = () => {
+    const typed = weight.trim() ? Number(weight) : null;
     onSave({
       teamYear,
       heightCm: height.trim() ? Number(height) : null,
-      weightKg: weight.trim() ? Number(weight) : null,
+      weightKg: typed == null ? null : Math.round(weightToKg(typed, units.weight) * 10) / 10,
     });
     onClose();
   };
@@ -146,7 +160,7 @@ function EditIdentitySheet({
           />
         </div>
         <div>
-          <label className="mb-1 block text-[10px] text-muted">Weight (kg)</label>
+          <label className="mb-1 block text-[10px] text-muted">Weight ({units.weight})</label>
           <input
             value={weight}
             onChange={(e) => setWeight(e.target.value.replace(/[^\d.]/g, ""))}
@@ -347,6 +361,7 @@ function MetresLineGraph({ weeks }: { weeks: { label: string; metres: number; la
 /* ─────────────────────────  screen  ───────────────────────── */
 export default function ProfileScreen() {
   const { userId } = useAppState();
+  const { units } = useUnits();
   // Coach or captain? Decides whether the console door appears at the bottom.
   const { membership, isMember } = useMembership();
   const consoleRole =
@@ -505,7 +520,7 @@ export default function ProfileScreen() {
               )}
               {profile.weightKg != null && (
                 <span className="rounded-md border border-border bg-surface px-2 py-1 text-[10px] text-text">
-                  {profile.weightKg} kg
+                  {formatWeight(profile.weightKg, units.weight)}
                 </span>
               )}
             </div>
@@ -672,7 +687,12 @@ export default function ProfileScreen() {
 
       {/* ── Sheets ── */}
       {modal === "identity" && (
-        <EditIdentitySheet profile={profile} onSave={patchProfile} onClose={() => setModal(null)} />
+        <EditIdentitySheet
+          profile={profile}
+          units={units}
+          onSave={patchProfile}
+          onClose={() => setModal(null)}
+        />
       )}
       {modal === "status" && (
         <StatusSheet current={profile.status} onSave={patchProfile} onClose={() => setModal(null)} />

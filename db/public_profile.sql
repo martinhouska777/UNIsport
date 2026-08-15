@@ -49,7 +49,16 @@ as $$
                              else '[]'::jsonb end,
     'personalRecords',  case when coalesce((p.data->>'showPersonalRecords')::boolean, true)
                              then coalesce(p.data->'personalRecords', '[]'::jsonb)
-                             else '[]'::jsonb end
+                             else '[]'::jsonb end,
+    -- Is this person on a varsity squad? Just the yes/no that drives the
+    -- VARSITY badge — never which team, which role, or anything about the
+    -- squad itself. Only an APPROVED member counts; someone still waiting in a
+    -- captain's queue isn't on the team yet and mustn't be shown as though
+    -- they are.
+    'varsityMember',    exists (
+                          select 1 from public.varsity_members m
+                          where m.user_id = p.id and m.status = 'approved'
+                        )
   )
   from public.profiles p
   where p.id = profile_id

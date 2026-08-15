@@ -13,7 +13,10 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Sheet from "@/components/varsity/Sheet";
 import WorkoutDetail from "@/components/varsity/calendar/WorkoutDetail";
+import CategoryStatsSheet from "@/components/varsity/calendar/CategoryStatsSheet";
 import { useAppState } from "@/components/AppState";
+import { useUnits } from "@/components/useUnits";
+import { formatDistance } from "@/lib/varsity/units";
 import { fetchLogsInRange, type LogEntry } from "@/lib/varsity/logStore";
 import { formatMetrics } from "@/lib/varsity/logParse";
 import { toISO } from "@/lib/varsity/coachPlan";
@@ -101,6 +104,8 @@ export default function CalendarScreen() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [picked, setPicked] = useState<{ iso: string; label: string } | null>(null);
   const [openLog, setOpenLog] = useState<LogEntry | null>(null); // full-screen detail
+  const [statsFor, setStatsFor] = useState<string | null>(null); // legend → stats sheet
+  const { units } = useUnits();
 
   useEffect(() => {
     let active = true;
@@ -153,10 +158,16 @@ export default function CalendarScreen() {
     (sum, l) => sum + (rowingCategories.has(l.category ?? "") ? l.metres ?? 0 : 0),
     0,
   );
-  const metresLabel =
-    monthMetres >= 1000
-      ? `${(monthMetres / 1000).toFixed(monthMetres >= 10000 ? 0 : 1)}k`
-      : String(monthMetres);
+  // How many sessions of each kind — shown on the legend so the colours carry a
+  // number even before you tap one.
+  const monthCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const l of logs) {
+      const c = l.category ?? "other";
+      counts[c] = (counts[c] ?? 0) + 1;
+    }
+    return counts;
+  }, [logs]);
 
   const goMonth = (delta: number) =>
     setView((v) => {
@@ -252,17 +263,28 @@ export default function CalendarScreen() {
           })}
         </div>
 
-        {/* Legend */}
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 border-t border-border bg-surface-2 px-4 py-2.5">
-          {legendCategories.map((c) => (
-            <div key={c} className="flex items-center gap-1.5 text-[10px] text-muted">
-              <span
-                className="h-1.5 w-1.5 rounded-full"
-                style={{ background: logCategoryColor[c] ?? "var(--muted)" }}
-              />
-              {logCategoryLabel[c]}
-            </div>
-          ))}
+        {/* Legend — each colour is a button: tap it for that kind of training's
+            sessions, time and distance this month. */}
+        <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1 border-t border-border bg-surface-2 px-3 py-2">
+          {legendCategories.map((c) => {
+            const count = monthCounts[c] ?? 0;
+            return (
+              <button
+                key={c}
+                type="button"
+                onClick={() => setStatsFor(c)}
+                aria-label={`${logCategoryLabel[c]} statistics for ${MONTHS[view.m]}`}
+                className="flex items-center gap-1.5 rounded-full px-1.5 py-1 text-[10px] text-muted active:bg-surface"
+              >
+                <span
+                  className="h-1.5 w-1.5 rounded-full"
+                  style={{ background: logCategoryColor[c] ?? "var(--muted)" }}
+                />
+                {logCategoryLabel[c]}
+                {count > 0 && <span className="font-semibold text-text">{count}</span>}
+              </button>
+            );
+          })}
         </div>
 
         {/* Month summary */}
@@ -275,9 +297,11 @@ export default function CalendarScreen() {
           </div>
           <div className="h-6 w-px bg-border" />
           <div>
-            <div className="text-base font-semibold leading-none text-text">{metresLabel}</div>
+            <div className="text-base font-semibold leading-none text-text">
+              {formatDistance(monthMetres, units.distance)}
+            </div>
             <div className="mt-1 text-[8px] font-semibold uppercase tracking-[0.14em] text-muted">
-              Metres rowed
+              Rowed
             </div>
           </div>
           <span className="ml-auto text-[10px] text-muted">in {MONTHS[view.m]}</span>
@@ -290,6 +314,16 @@ export default function CalendarScreen() {
           logs={logsByDay[Number(picked.iso.split("-")[2])] ?? []}
           onClose={() => setPicked(null)}
           onOpen={(log) => setOpenLog(log)}
+        />
+      )}
+
+      {statsFor && (
+        <CategoryStatsSheet
+          category={statsFor}
+          monthLabel={`${MONTHS[view.m]} ${view.y}`}
+          logs={logs}
+          units={units}
+          onClose={() => setStatsFor(null)}
         />
       )}
 

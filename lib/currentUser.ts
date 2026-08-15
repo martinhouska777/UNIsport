@@ -143,11 +143,17 @@ export function profileFromOnboarding(raw: Record<string, unknown>): CurrentUser
     showPersonalRecords?: boolean;
     notifyMessages?: boolean;
     notifyPlans?: boolean;
+    // Set by get_public_profile when viewing SOMEONE ELSE: true if they're an
+    // approved member of a squad. Absent when reading your own profiles.data
+    // (membership lives in its own table), so your own page passes it in.
+    // NB deliberately not called `varsity` — that key already holds the athlete
+    // record (height, weight, erg PRs) under profiles.data.
+    varsityMember?: boolean;
   };
   const savedTraining = extra.trainingDisplay;
   return {
     ...p,
-    badges: { varsity: false, mentor: !!(p.mentorFreshmen || p.helpOthers) },
+    badges: { varsity: !!extra.varsityMember, mentor: !!(p.mentorFreshmen || p.helpOthers) },
     stats: { sessions: 0, partners: 0, following: 0 },
     trainingDisplay: savedTraining ?? deriveTrainingDisplay(p),
     personalRecords: extra.personalRecords ?? [],

@@ -23,6 +23,8 @@ import { useProfileData } from "@/components/profile/useProfileData";
 import PreferencesSheet from "@/components/profile/PreferencesSheet";
 import NotificationSettings from "@/components/profile/NotificationSettings";
 import { useMembership } from "@/components/varsity/useMembership";
+import { useUnits } from "@/components/useUnits";
+import { distanceOptions, weightOptions } from "@/lib/varsity/units";
 import { profileFromOnboarding } from "@/lib/currentUser";
 import { getUniversity, neutralTheme } from "@/lib/themes";
 import { roleLabel } from "@/lib/varsity/membership";
@@ -88,11 +90,48 @@ function Row({
   );
 }
 
+/* One unit choice: a label with the options as segmented pills beside it. */
+function UnitRow({
+  label,
+  options,
+  value,
+  onPick,
+}: {
+  label: string;
+  options: { key: string; label: string; short: string }[];
+  value: string;
+  onPick: (key: string) => void;
+}) {
+  return (
+    <div className="flex items-center gap-3 rounded-2xl border border-border bg-surface px-4 py-2.5">
+      <span className="flex-1 text-sm text-text">{label}</span>
+      <div className="flex gap-1 rounded-full border border-border bg-surface-2 p-0.5">
+        {options.map((o) => (
+          <button
+            key={o.key}
+            type="button"
+            onClick={() => onPick(o.key)}
+            aria-pressed={value === o.key}
+            aria-label={o.label}
+            className={`rounded-full px-3 py-1.5 text-[12px] font-medium transition-colors ${
+              value === o.key ? "bg-primary text-primary-contrast" : "text-muted"
+            }`}
+          >
+            {o.short}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function SettingsPage() {
-  const { ready, loggedIn, email, logout, resetOnboarding, universityKey } = useAppState();
+  const { ready, loggedIn, email, studentReady, logout, resetOnboarding, universityKey } =
+    useAppState();
   const { mode, toggle } = useThemeMode();
   const { data, loading, saveState, update, savePreferences } = useProfileData();
   const { membership, loading: membershipLoading } = useMembership();
+  const { units, setUnits } = useUnits();
   const router = useRouter();
   const [editingPrefs, setEditingPrefs] = useState(false);
 
@@ -186,17 +225,50 @@ export default function SettingsPage() {
           )}
         </Section>
 
-        <Section title="Your answers">
-          <Row
-            icon={<IconPencil size={18} />}
-            label="Edit answers"
-            detail={loading ? "Loading…" : undefined}
-            onClick={() => user && setEditingPrefs(true)}
-          />
-          <p className="mt-2 px-1 text-[11px] text-muted">
-            Training, schedule, gyms, interests and who you want to train with.
-          </p>
+        {/* Units — what the app shows, not what it stores. Everything is kept
+            in metres and kilograms underneath, so switching is only ever a
+            change of display. */}
+        <Section title="Units">
+          <div className="flex flex-col gap-2">
+            <UnitRow
+              label="Distance"
+              options={distanceOptions}
+              value={units.distance}
+              onPick={(v) => setUnits({ ...units, distance: v as typeof units.distance })}
+            />
+            <UnitRow
+              label="Weight"
+              options={weightOptions}
+              value={units.weight}
+              onPick={(v) => setUnits({ ...units, weight: v as typeof units.weight })}
+            />
+          </div>
         </Section>
+
+        {/* "Your answers" only exists if there ARE answers. Someone who joined
+            through a team link never did the student flow, so they're offered
+            it rather than shown an editor over empty fields. */}
+        {studentReady ? (
+          <Section title="Your answers">
+            <Row
+              icon={<IconPencil size={18} />}
+              label="Edit answers"
+              detail={loading ? "Loading…" : undefined}
+              onClick={() => user && setEditingPrefs(true)}
+            />
+            <p className="mt-2 px-1 text-[11px] text-muted">
+              Training, schedule, gyms, interests and who you want to train with.
+            </p>
+          </Section>
+        ) : (
+          <Section title="Student mode">
+            <Row icon={<IconPencil size={18} />} label="Set up the student side" href="/onboarding" />
+            <p className="mt-2 px-1 text-[11px] text-muted">
+              Campus gyms, finding people to train with, and messages. Separate from your team,
+              and entirely up to you.
+            </p>
+          </Section>
+        )}
 
         {/* Reused as-is: device permission plus which kinds you receive. */}
         {user && (

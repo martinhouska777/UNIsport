@@ -345,9 +345,13 @@ export default function ProfilePage() {
             textClassName="text-base font-medium text-text"
           />
 
-          {(user.badges.varsity || user.badges.mentor) && (
+          {/* On your OWN profile the varsity badge comes from live membership:
+              profiles.data has no record of it (the squad lives in its own
+              table), so unlike a profile you're viewing, it can't come through
+              profileFromOnboarding. */}
+          {(isMember || user.badges.mentor) && (
             <div className="flex items-center justify-center gap-1.5">
-              {user.badges.varsity && (
+              {isMember && (
                 <span className="rounded bg-accent px-1.5 py-0.5 text-[8px] font-medium tracking-wide text-background">
                   VARSITY
                 </span>

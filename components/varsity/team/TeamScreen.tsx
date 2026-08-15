@@ -17,6 +17,8 @@ import { useEffect, useMemo, useState } from "react";
 import Sheet from "@/components/varsity/Sheet";
 import ErgBoard from "@/components/varsity/team/ErgBoard";
 import { useAppState } from "@/components/AppState";
+import { useUnits } from "@/components/useUnits";
+import { formatWeight } from "@/lib/varsity/units";
 import { fetchProfileFullName } from "@/lib/varsity/planStore";
 import { roster, rosterById, sideMeta, COX_COLOR, type Athlete } from "@/lib/varsity/coachLineup";
 import { teamProfile } from "@/lib/varsity/teamProfiles";
@@ -74,6 +76,7 @@ function CatBreakdown({ rows, empty }: { rows: CatTotal[]; empty: string }) {
 function AthleteSheet({ athleteId, onClose }: { athleteId: string; onClose: () => void }) {
   const a = rosterById[athleteId];
   const p = teamProfile(athleteId);
+  const { units } = useUnits();
   const now = useMemo(() => new Date(), []);
   const [view, setView] = useState({ y: now.getFullYear(), m: now.getMonth() });
   const [selDay, setSelDay] = useState<number | null>(null);
@@ -126,7 +129,7 @@ function AthleteSheet({ athleteId, onClose }: { athleteId: string; onClose: () =
               {p.heightCm} cm
             </span>
             <span className="rounded-md border border-border bg-surface-2 px-2 py-1 text-[10px] text-text">
-              {p.weightKg} kg
+              {formatWeight(p.weightKg, units.weight)}
             </span>
           </div>
         </div>
