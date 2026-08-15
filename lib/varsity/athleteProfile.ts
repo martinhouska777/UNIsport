@@ -64,9 +64,9 @@ export const legendCategories = ["water", "erg", "weights", "run", "flex"] as co
 // Which logged categories count as "metres rowed" for the monthly total.
 export const rowingCategories = new Set(["water", "erg"]);
 
-// The three stats a profile shows before anyone touches the arrows on them.
+// What the profile's graph charts before anyone touches the arrows on it.
 // Keys come from lib/varsity/athleteStats.
-export const defaultStatTiles = ["sessions", "distance", "days"];
+export const defaultStatMetric = "distance";
 
 /* ── The stored record ── */
 export type VarsityAthleteProfile = {
@@ -75,7 +75,7 @@ export type VarsityAthleteProfile = {
   weightKg: number | null;
   status: string; // a statusOptions title
   prs: Record<string, string>; // piece label -> value (e.g. "2K" -> "6:08.4")
-  statTiles: string[]; // which three stats the profile shows, left to right
+  statMetric: string; // what the Statistics graph (and its three numbers) shows
 };
 
 // Best guess at class standing from the academic class year (e.g. '30 = Freshman
@@ -95,7 +95,7 @@ export function defaultProfile(classYear: string): VarsityAthleteProfile {
     weightKg: null,
     status: statusOptions[0].title,
     prs: {},
-    statTiles: [...defaultStatTiles],
+    statMetric: defaultStatMetric,
   };
 }
 
@@ -113,8 +113,8 @@ function withDefaults(
     status: saved?.status || base.status,
     prs: { ...base.prs, ...(saved?.prs ?? {}) },
     // Checked against the real metric list where it's rendered, so a stale key
-    // from an older version can't blank a tile.
-    statTiles: saved?.statTiles?.length ? saved.statTiles : base.statTiles,
+    // from an older version can't blank the graph.
+    statMetric: saved?.statMetric || base.statMetric,
   };
 }
 

@@ -36,16 +36,14 @@ import {
   teamYearOptions,
   statusOptions,
   prPieces,
-  rowingCategories,
-  defaultStatTiles,
   type VarsityAthleteProfile,
   type StatusTone,
 } from "@/lib/varsity/athleteProfile";
 import {
   metricByKey,
-  sanitizeStatTiles,
-  cycleStat,
-  type StatInput,
+  nextMetric,
+  summarise,
+  type StatMetric,
 } from "@/lib/varsity/athleteStats";
 import {
   IconPencil,
@@ -280,10 +278,20 @@ function PrSheet({
   );
 }
 
-/* ─────────────────────────  weekly-metres line graph  ───────────────────────── */
-function MetresLineGraph({ weeks }: { weeks: { label: string; metres: number; latest: boolean }[] }) {
-  const max = Math.max(1, ...weeks.map((w) => w.metres));
-  const anyData = weeks.some((w) => w.metres > 0);
+/* ─────────────────────────  weekly line graph  ─────────────────────────
+   Whatever the athlete picked with the arrows in its header: metres, hours,
+   sessions or days. The three numbers above it come from the same buckets. */
+function WeeklyGraph({
+  weeks,
+  metric,
+  onSwap,
+}: {
+  weeks: { label: string; value: number; latest: boolean }[];
+  metric: StatMetric;
+  onSwap: (dir: 1 | -1) => void;
+}) {
+  const max = Math.max(1, ...weeks.map((w) => w.value));
+  const anyData = weeks.some((w) => w.value > 0);
 
   // SVG geometry (a viewBox that stretches to the card width).
   const W = 320;
@@ -298,17 +306,37 @@ function MetresLineGraph({ weeks }: { weeks: { label: string; metres: number; la
   const x = (i: number) => padX + (n === 1 ? plotW / 2 : (plotW * i) / (n - 1));
   const y = (v: number) => padT + plotH * (1 - v / max);
 
-  const pts = weeks.map((w, i) => [x(i), y(w.metres)] as const);
+  const pts = weeks.map((w, i) => [x(i), y(w.value)] as const);
   const line = pts.map(([px, py]) => `${px},${py}`).join(" ");
   const area = `M ${pts[0][0]},${baseline} L ${line.replaceAll(" ", " L ")} L ${pts[n - 1][0]},${baseline} Z`;
 
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-surface px-3.5 pb-3 pt-3.5">
-      <div className="flex items-baseline justify-between">
-        <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
-          Metres rowed
-        </span>
-        <span className="text-[10px] text-muted">last {WEEKS} weeks</span>
+      {/* The arrows live here, on the thing they change. Everything in this
+          block — graph and the three numbers above it — follows this choice. */}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-0.5">
+          <button
+            type="button"
+            onClick={() => onSwap(-1)}
+            aria-label="Chart the previous measure"
+            className="-ml-1.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-muted active:bg-surface-2"
+          >
+            <IconChevronLeft size={15} />
+          </button>
+          <span className="truncate text-[10px] font-semibold uppercase tracking-[0.1em] text-text">
+            {metric.label}
+          </span>
+          <button
+            type="button"
+            onClick={() => onSwap(1)}
+            aria-label="Chart the next measure"
+            className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-muted active:bg-surface-2"
+          >
+            <IconChevronRight size={15} />
+          </button>
+        </div>
+        <span className="flex-shrink-0 text-[10px] text-muted">last {WEEKS} weeks</span>
       </div>
 
       {anyData ? (
@@ -316,7 +344,7 @@ function MetresLineGraph({ weeks }: { weeks: { label: string; metres: number; la
           <svg
             viewBox={`0 0 ${W} ${H}`}
             width="100%"
-            className="mt-3 block text-primary"
+            className="mt-2 block text-primary"
             aria-hidden="true"
           >
             {/* baseline */}
@@ -354,8 +382,8 @@ function MetresLineGraph({ weeks }: { weeks: { label: string; metres: number; la
           </div>
         </>
       ) : (
-        <p className="mt-3 rounded-xl border border-dashed border-border bg-surface-2 px-3 py-6 text-center text-[11px] text-muted">
-          Log some erg or water sessions and your weekly metres will chart here.
+        <p className="mt-2 rounded-xl border border-dashed border-border bg-surface-2 px-3 py-6 text-center text-[11px] text-muted">
+          {metric.empty}
         </p>
       )}
     </div>
@@ -424,23 +452,11 @@ export default function ProfileScreen() {
   };
 
   /*
-    Everything the three stat tiles are allowed to read. The screen already has
-    eight weeks of logs for the graph, so swapping a tile is instant — no metric
-    goes back to the database for its number.
+    The last 8 Mon–Sun weeks, each holding its own logs. Bucketing the LOGS
+    rather than a running total is what lets the chosen measure do its own sum —
+    switching the graph to hours is instant and never returns to the database.
   */
-  const weekStartIso = useMemo(() => toISO(mondayOf(now)), [now]);
-  const statInput: StatInput = useMemo(
-    () => ({
-      logs,
-      weekStartIso,
-      fourWeeksAgoIso: toISO(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 27)),
-      units,
-    }),
-    [logs, weekStartIso, now, units],
-  );
-
-  // Weekly metres buckets (Mon–Sun), oldest → newest.
-  const weeks = useMemo(() => {
+  const weekBuckets = useMemo(() => {
     const thisMonday = mondayOf(now);
     const buckets = Array.from({ length: WEEKS }, (_, i) => {
       const start = new Date(thisMonday);
@@ -449,14 +465,13 @@ export default function ProfileScreen() {
         startIso: toISO(start),
         endIso: toISO(new Date(start.getFullYear(), start.getMonth(), start.getDate() + 6)),
         label: `${start.getMonth() + 1}/${start.getDate()}`,
-        metres: 0,
+        logs: [] as LogEntry[],
         latest: i === WEEKS - 1,
       };
     });
     for (const l of logs) {
-      if (!rowingCategories.has(l.category ?? "")) continue;
       const b = buckets.find((bk) => l.logDate >= bk.startIso && l.logDate <= bk.endIso);
-      if (b) b.metres += l.metres ?? 0;
+      if (b) b.logs.push(l);
     }
     return buckets;
   }, [logs, now]);
@@ -494,11 +509,21 @@ export default function ProfileScreen() {
     copyLink();
   };
 
-  // Which three stats this athlete keeps on their profile, and the arrows that
-  // change one. The choice is saved with the rest of their record.
-  const tiles = sanitizeStatTiles(profile.statTiles, defaultStatTiles);
-  const swapStat = (slot: number, dir: 1 | -1) =>
-    patchProfile({ statTiles: cycleStat(tiles, slot, dir) });
+  /*
+    One measure for the whole Statistics block: the graph plots it week by week,
+    and the three numbers above are the same measure this week, on average, and
+    at its best. The choice is saved with the rest of the athlete's record.
+  */
+  const metric = metricByKey(profile.statMetric);
+  const weekValues = weekBuckets.map((b) => metric.weekly(b.logs));
+  const weeks = weekBuckets.map((b, i) => ({
+    label: b.label,
+    value: weekValues[i],
+    latest: b.latest,
+  }));
+  const tiles = summarise(weekValues, metric, units);
+  const swapMetric = (dir: 1 | -1) =>
+    patchProfile({ statMetric: nextMetric(metric.key, dir) });
 
   return (
     <div className="mx-auto w-full max-w-screen-sm pb-10">
@@ -571,50 +596,28 @@ export default function ProfileScreen() {
       <div className="px-4 pb-2 pt-5 text-[9px] font-semibold uppercase tracking-[0.16em] text-muted">
         Statistics
       </div>
-      <div className="mx-3.5 mb-2.5 grid grid-cols-3 gap-1.5">
-        {tiles.map((key, slot) => {
-          const metric = metricByKey(key);
-          const value = metric.value(statInput);
-          return (
+      <div className="mx-3.5 mb-1.5 grid grid-cols-3 gap-1.5">
+        {tiles.map((t) => (
+          <div
+            key={t.label}
+            className="rounded-2xl border border-border bg-surface px-1.5 py-3 text-center"
+          >
+            {/* "8h 30m" and "12.4 km" need more room than "14" — the number
+                steps down a size rather than spilling out of the tile. */}
             <div
-              key={slot}
-              className="rounded-2xl border border-border bg-surface px-1.5 pb-1 pt-3 text-center"
+              className={`${t.value.length > 6 ? "text-base" : "text-xl"} font-semibold leading-none text-text`}
             >
-              {/* "8h 30m" and "12.4 km" need more room than "14" — the number
-                  steps down a size rather than spilling out of the tile. */}
-              <div
-                className={`${value.length > 6 ? "text-base" : "text-xl"} font-semibold leading-none text-text`}
-              >
-                {value}
-              </div>
-              <div className="mt-1.5 text-[8px] font-semibold uppercase tracking-[0.08em] text-muted">
-                {metric.label}
-              </div>
-              <div className="mt-0.5 text-[8px] text-muted">{metric.sub}</div>
-              <div className="mt-0.5 flex items-center justify-center">
-                <button
-                  type="button"
-                  onClick={() => swapStat(slot, -1)}
-                  aria-label={`Show a different stat here instead of ${metric.label}`}
-                  className="flex h-7 w-7 items-center justify-center rounded-full text-muted active:bg-surface-2"
-                >
-                  <IconChevronLeft size={13} />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => swapStat(slot, 1)}
-                  aria-label={`Show the next stat here instead of ${metric.label}`}
-                  className="flex h-7 w-7 items-center justify-center rounded-full text-muted active:bg-surface-2"
-                >
-                  <IconChevronRight size={13} />
-                </button>
-              </div>
+              {t.value}
             </div>
-          );
-        })}
+            <div className="mt-1.5 text-[8px] font-semibold uppercase tracking-[0.08em] text-muted">
+              {t.label}
+            </div>
+            <div className="mt-0.5 text-[8px] text-muted">{t.sub}</div>
+          </div>
+        ))}
       </div>
       <div className="mx-3.5">
-        <MetresLineGraph weeks={weeks} />
+        <WeeklyGraph weeks={weeks} metric={metric} onSwap={swapMetric} />
       </div>
 
       {/* ── Training calendar → its own tab ── */}
