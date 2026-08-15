@@ -23,7 +23,7 @@ import { varsityTheme, varsityLightTheme } from "@/lib/varsity/theme";
 const TEAM_TAB = "/varsity/coach/team";
 
 export default function CoachLayout({ children }: { children: React.ReactNode }) {
-  const { ready, loggedIn, onboarded } = useAppState();
+  const { ready, loggedIn, varsityReady } = useAppState();
   const { membership, loading } = useMembership();
   const router = useRouter();
   const pathname = usePathname();
@@ -36,8 +36,8 @@ export default function CoachLayout({ children }: { children: React.ReactNode })
       router.replace("/");
       return;
     }
-    if (!onboarded) {
-      router.replace("/onboarding");
+    if (!varsityReady) {
+      router.replace("/varsity/setup");
       return;
     }
     if (loading) return;
@@ -48,9 +48,9 @@ export default function CoachLayout({ children }: { children: React.ReactNode })
     }
     // A captain who lands on a training screen goes to the one tab they own.
     if (!can.buildPlan(role) && pathname !== TEAM_TAB) router.replace(TEAM_TAB);
-  }, [ready, loggedIn, onboarded, loading, role, pathname, router]);
+  }, [ready, loggedIn, varsityReady, loading, role, pathname, router]);
 
-  if (!ready || !loggedIn || !onboarded || loading || !role || !canOpenConsole(role)) return null;
+  if (!ready || !loggedIn || !varsityReady || loading || !role || !canOpenConsole(role)) return null;
 
   return (
     <ThemeProvider

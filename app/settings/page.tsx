@@ -170,12 +170,12 @@ export default function SettingsPage() {
               </p>
             </>
           ) : membership.status === "pending" ? (
-            <p className="rounded-2xl border border-border bg-surface px-4 py-3 text-sm text-text">
-              {membership.teamName}
-              <span className="mt-0.5 block text-[11px] text-warn">
-                Waiting for your captain to let you in
-              </span>
-            </p>
+            <Row
+              icon={<IconShield size={18} />}
+              label={membership.teamName}
+              detail="Waiting"
+              href="/varsity/waiting"
+            />
           ) : (
             <Row
               icon={<IconShield size={18} />}

@@ -17,15 +17,31 @@ import type { Session } from "@supabase/supabase-js";
 import { createClient, hasSupabaseEnv } from "@/lib/supabase/client";
 import type { OnboardingProfile } from "@/lib/onboarding";
 
+/*
+  One account, two capabilities. `studentReady` and `varsityReady` are
+  INDEPENDENT: you can hold either, or both.
+    • studentReady — finished the nine-step student onboarding → Gyms, Match,
+      Messages. This is the flag the app has always had.
+    • varsityReady — finished the short athlete setup (name + class year). A
+      rower who arrives through a team invite gets this WITHOUT answering the
+      student questions; the student side stays optional and is offered from the
+      mode switcher whenever they want it.
+  Neither says anything about being on a squad — that's membership, and it lives
+  in the database (see lib/varsity/membership).
+*/
 type AppState = {
-  ready: boolean; // true once session + onboarding status are known
+  ready: boolean; // true once session + both setup flags are known
   loggedIn: boolean;
   userId: string | null;
   email: string | null; // which account you're signed in as — shown on Profile
-  onboarded: boolean;
+  studentReady: boolean;
+  varsityReady: boolean;
   universityKey: string;
   logout: () => Promise<void>;
   saveOnboarding: (profile: OnboardingProfile) => Promise<void>;
+  // The short varsity setup: writes name/class year onto the SAME profile row
+  // and marks only the varsity flag, leaving the student side untouched.
+  saveVarsitySetup: (basics: { name: string; classYear: string; sex: string }) => Promise<void>;
   resetOnboarding: () => Promise<void>; // temporary dev helper to replay onboarding
 };
 
@@ -37,18 +53,20 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const [supabase] = useState(() => (hasSupabaseEnv() ? createClient() : null));
   const [ready, setReady] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
-  const [onboarded, setOnboarded] = useState(false);
+  const [studentReady, setStudentReady] = useState(false);
+  const [varsityReady, setVarsityReady] = useState(false);
 
-  // Read onboarding-complete flag for a user from the DB (resilient if the table
-  // doesn't exist yet → treated as "not onboarded").
+  // Read both setup flags for a user from the DB (resilient if the table or the
+  // column doesn't exist yet → treated as "set up neither side").
   const refreshOnboarded = async (userId: string) => {
     if (!supabase) return;
     const { data, error } = await supabase
       .from("profiles")
-      .select("onboarding_completed")
+      .select("onboarding_completed, varsity_setup_completed")
       .eq("id", userId)
       .maybeSingle();
-    setOnboarded(!error && !!data?.onboarding_completed);
+    setStudentReady(!error && !!data?.onboarding_completed);
+    setVarsityReady(!error && !!data?.varsity_setup_completed);
   };
 
   useEffect(() => {
@@ -85,7 +103,8 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
       setSession(s);
       if (!s) {
-        setOnboarded(false);
+        setStudentReady(false);
+        setVarsityReady(false);
         setReady(true);
         return;
       }
@@ -112,21 +131,52 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     if (supabase) await supabase.auth.signOut();
     setSession(null);
-    setOnboarded(false);
+    setStudentReady(false);
+    setVarsityReady(false);
   };
 
   const saveOnboarding = async (profile: OnboardingProfile) => {
     if (supabase && session) {
+      // Finishing the student flow also satisfies the varsity side: it asks for
+      // the same name and class year, so nobody is sent through both.
       const { error } = await supabase.from("profiles").upsert({
         id: session.user.id,
         data: profile,
         onboarding_completed: true,
+        varsity_setup_completed: true,
         updated_at: new Date().toISOString(),
       });
       // eslint-disable-next-line no-console
       if (error) console.error("Saving profile failed:", error.message);
     }
-    setOnboarded(true);
+    setStudentReady(true);
+    setVarsityReady(true);
+  };
+
+  /*
+    The short athlete setup. MERGES onto whatever `data` already holds rather
+    than replacing it, so running this can never wipe a student profile, and
+    deliberately leaves onboarding_completed alone — the student side stays
+    optional until they choose it.
+  */
+  const saveVarsitySetup = async (basics: { name: string; classYear: string; sex: string }) => {
+    if (supabase && session) {
+      const { data: row } = await supabase
+        .from("profiles")
+        .select("data")
+        .eq("id", session.user.id)
+        .maybeSingle();
+      const current = (row?.data as Record<string, unknown>) ?? {};
+      const { error } = await supabase.from("profiles").upsert({
+        id: session.user.id,
+        data: { ...current, ...basics },
+        varsity_setup_completed: true,
+        updated_at: new Date().toISOString(),
+      });
+      // eslint-disable-next-line no-console
+      if (error) console.error("Saving varsity setup failed:", error.message);
+    }
+    setVarsityReady(true);
   };
 
   const resetOnboarding = async () => {
@@ -136,7 +186,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         .update({ onboarding_completed: false })
         .eq("id", session.user.id);
     }
-    setOnboarded(false);
+    setStudentReady(false);
   };
 
   return (
@@ -146,10 +196,12 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         loggedIn: !!session,
         userId: session?.user.id ?? null,
         email: session?.user.email ?? null,
-        onboarded,
+        studentReady,
+        varsityReady,
         universityKey: DEFAULT_UNIVERSITY,
         logout,
         saveOnboarding,
+        saveVarsitySetup,
         resetOnboarding,
       }}
     >

@@ -16,17 +16,20 @@ import SideNav from "@/components/SideNav";
 import { getUniversity, neutralTheme } from "@/lib/themes";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
-  const { ready, loggedIn, onboarded, universityKey } = useAppState();
+  const { ready, loggedIn, studentReady, universityKey } = useAppState();
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
     if (!ready) return;
     if (!loggedIn) router.replace("/");
-    else if (!onboarded) router.replace("/onboarding"); // finish onboarding first
-  }, [ready, loggedIn, onboarded, router]);
+    // These tabs ARE the student side, so they need the student setup. A rower
+    // who only did the varsity setup lands here by choosing "Student" in the
+    // mode switcher, and onboarding is exactly what they asked for.
+    else if (!studentReady) router.replace("/onboarding");
+  }, [ready, loggedIn, studentReady, router]);
 
-  if (!ready || !loggedIn || !onboarded) return null;
+  if (!ready || !loggedIn || !studentReady) return null;
 
   const uni = getUniversity(universityKey);
   const theme = uni?.theme ?? neutralTheme;

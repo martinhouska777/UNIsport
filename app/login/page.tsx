@@ -12,6 +12,7 @@ import Link from "next/link";
 import { instrumentSerif } from "@/components/landing/fonts";
 import { useAppState } from "@/components/AppState";
 import { createClient, hasSupabaseEnv } from "@/lib/supabase/client";
+import { VARSITY_HOME } from "@/lib/varsity/theme";
 
 type Mode = "login" | "signup";
 
@@ -40,7 +41,7 @@ function readRememberedEmail(): string | null {
 }
 
 export default function LoginPage() {
-  const { ready, loggedIn, onboarded } = useAppState();
+  const { ready, loggedIn, studentReady, varsityReady } = useAppState();
   const router = useRouter();
 
   const [supabase] = useState(() => (hasSupabaseEnv() ? createClient() : null));
@@ -62,9 +63,19 @@ export default function LoginPage() {
     */
     const next = new URLSearchParams(window.location.search).get("next");
     const safeNext = next && next.startsWith("/") && !next.startsWith("//") ? next : null;
-    if (!onboarded) router.replace("/onboarding");
-    else router.replace(safeNext ?? "/gyms");
-  }, [ready, loggedIn, onboarded, router]);
+    /*
+      Where someone lands depends on which side of the app they have set up.
+      A `next` always wins — it means they were part-way through something
+      (almost always an invite link), and that page knows what to do with an
+      account that isn't set up yet. Otherwise: the student app if they have it,
+      Varsity Mode if that's the only side they did, and the student onboarding
+      only for someone who has neither.
+    */
+    if (safeNext) router.replace(safeNext);
+    else if (studentReady) router.replace("/gyms");
+    else if (varsityReady) router.replace(VARSITY_HOME);
+    else router.replace("/onboarding");
+  }, [ready, loggedIn, studentReady, varsityReady, router]);
 
   // Prefill the email from the last sign-in on this device (password never is).
   useEffect(() => {

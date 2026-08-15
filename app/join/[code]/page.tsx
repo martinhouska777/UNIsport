@@ -30,7 +30,7 @@ export default function JoinWithCodePage() {
   const params = useParams<{ code: string }>();
   const code = (params?.code ?? "").toString().toUpperCase();
   const router = useRouter();
-  const { ready, loggedIn, onboarded, email } = useAppState();
+  const { ready, loggedIn, studentReady, varsityReady, email } = useAppState();
 
   const [preview, setPreview] = useState<InvitePreview | null>(null);
   const [busy, setBusy] = useState(false);
@@ -69,8 +69,13 @@ export default function JoinWithCodePage() {
   }, [code]);
 
   const teamName = preview?.teamName ?? "your team";
-  // Where "back to the app" should land: the tab bar for a signed-in student.
-  const appHome = loggedIn ? "/gyms" : "/";
+  /*
+    Where "back to the app" should land. Someone who came in varsity-first has
+    no student side, so /gyms would bounce them into an onboarding they never
+    asked for — send them to the waiting screen, which IS their app until a
+    captain lets them in.
+  */
+  const appHome = !loggedIn ? "/" : studentReady ? "/gyms" : "/varsity/waiting";
 
   return (
     <JoinShell badge="Team invite">
@@ -118,25 +123,29 @@ export default function JoinWithCodePage() {
         </>
       )}
 
-      {/* 4. Signed in but the normal student setup isn't finished */}
-      {preview?.valid && ready && loggedIn && !onboarded && (
+      {/* 4. Signed in, but we don't know their name yet.
+             Two questions on the varsity setup screen — NOT the nine-step
+             student onboarding, which has nothing to do with rowing. It has to
+             happen before the request goes in, or the captain gets a queue of
+             "Unnamed" people and can't tell who to approve. */}
+      {preview?.valid && ready && loggedIn && !varsityReady && (
         <>
           <h1 className="font-display text-3xl text-l-text">Nearly there</h1>
           <p className="mt-3 text-sm leading-relaxed text-l-text-2">
-            Finish setting up your UNIsport account first — then come back to this link and
-            you&apos;ll be able to join {teamName}.
+            Two quick questions so {teamName} knows who&apos;s asking, then you can send
+            your request.
           </p>
           <Link
-            href="/onboarding"
+            href="/varsity/setup"
             className="mt-8 inline-block w-full rounded-full bg-l-varsity px-5 py-3 text-sm font-semibold text-l-bg"
           >
-            Finish setting up
+            Set up my profile
           </Link>
         </>
       )}
 
       {/* 5. Ready to ask — the button that puts you in the queue */}
-      {preview?.valid && ready && loggedIn && onboarded && !result && (
+      {preview?.valid && ready && loggedIn && varsityReady && !result && (
         <>
           <h1 className="font-display text-3xl text-l-text">Join {teamName}</h1>
           <p className="mt-3 text-sm leading-relaxed text-l-text-2">

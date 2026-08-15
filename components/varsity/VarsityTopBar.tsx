@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import VarsityCrest from "@/components/varsity/VarsityCrest";
 import ModeSwitcherSheet from "@/components/ModeSwitcherSheet";
+import { useAppState } from "@/components/AppState";
 import useTapOrDoubleTap from "@/components/useTapOrDoubleTap";
 import { ThemeModeToggle } from "@/components/ThemeMode";
 import { IconBell, IconArrowLeft, IconChevronDown } from "@/components/icons";
@@ -17,13 +18,25 @@ import { subscribeToPush, isSubscribed, sendTestNotification } from "@/lib/push/
 */
 export default function VarsityTopBar() {
   const router = useRouter();
+  const { studentReady } = useAppState();
   const [switchingMode, setSwitchingMode] = useState(false);
 
-  // The mark is the mode switcher, mirroring the name on the normal profile:
-  // one tap opens the sheet, two taps drop you back into the normal app.
+  /*
+    The mark is the mode switcher, mirroring the name on the normal profile:
+    one tap opens the sheet, two taps drop you back into the normal app.
+
+    "Back into the normal app" only exists if they HAVE one. A rower who joined
+    through a team link has never set up the student side, and sending them to
+    /profile would bounce them straight into the nine-step onboarding they were
+    spared. For them both taps open the sheet, which offers the student side
+    properly, as a choice.
+  */
   const handleModeTap = useTapOrDoubleTap(
     useCallback(() => setSwitchingMode(true), []),
-    useCallback(() => router.push("/profile"), [router]),
+    useCallback(() => {
+      if (studentReady) router.push("/profile");
+      else setSwitchingMode(true);
+    }, [studentReady, router]),
   );
 
   // Tap the bell: enable notifications the first time, then show a sample of how a
@@ -74,14 +87,17 @@ export default function VarsityTopBar() {
         >
           <IconBell size={16} />
         </button>
-        <Link
-          href="/profile"
-          aria-label="Exit Varsity Mode"
-          className="flex h-8 items-center gap-1 rounded-full border border-border bg-surface px-3 text-[11px] font-medium text-muted"
-        >
-          <IconArrowLeft size={14} />
-          Exit
-        </Link>
+        {/* Only offered when there IS something to exit to. */}
+        {studentReady && (
+          <Link
+            href="/profile"
+            aria-label="Exit Varsity Mode"
+            className="flex h-8 items-center gap-1 rounded-full border border-border bg-surface px-3 text-[11px] font-medium text-muted"
+          >
+            <IconArrowLeft size={14} />
+            Exit
+          </Link>
+        )}
       </div>
     </div>
 

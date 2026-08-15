@@ -11,13 +11,20 @@
 
   The varsity row has three faces, because not everyone is on a team:
     • on a squad   → the team's name and your role; tapping switches mode
-    • waiting      → "waiting for your captain", tapping goes to Settings
+    • waiting      → "waiting for your captain", tapping goes to the waiting screen
     • on no team   → "Join a varsity team", tapping goes to the invite screen
+
+  The student row has two, because the student side is now OPTIONAL: someone who
+  joined through a team link may never have set it up. It is shown openly rather
+  than hidden — there's nothing exclusive about the student app, and offering it
+  here is how a rower finds it. (The reverse isn't true: a student who isn't on
+  a squad sees no varsity mark at all, because that one IS gated.)
 */
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import VarsityShield from "@/components/varsity/VarsityShield";
 import VarsityCrest from "@/components/varsity/VarsityCrest";
+import { useAppState } from "@/components/AppState";
 import { useMembership } from "@/components/varsity/useMembership";
 import { roleLabel } from "@/lib/varsity/membership";
 import { VARSITY_HOME } from "@/lib/varsity/theme";
@@ -33,6 +40,7 @@ export default function ModeSwitcherSheet({
   onClose: () => void;
 }) {
   const router = useRouter();
+  const { studentReady } = useAppState();
   const { membership, isMember, isPending } = useMembership();
 
   useEffect(() => {
@@ -44,7 +52,9 @@ export default function ModeSwitcherSheet({
   const go = (mode: "student" | "varsity") => {
     onClose();
     if (mode === "student") {
-      if (current !== "student") router.push("/profile");
+      // Never set up? This row is the offer to do it.
+      if (!studentReady) router.push("/onboarding");
+      else if (current !== "student") router.push("/profile");
       return;
     }
     // Varsity only opens for an approved member; everyone else is pointed at
@@ -52,7 +62,7 @@ export default function ModeSwitcherSheet({
     if (isMember) {
       if (current !== "varsity") router.push(VARSITY_HOME);
     } else {
-      router.push(isPending ? "/settings" : "/join");
+      router.push(isPending ? "/varsity/waiting" : "/join");
     }
   };
 
@@ -109,11 +119,15 @@ export default function ModeSwitcherSheet({
               <span className="block truncate text-[14px] font-medium text-text">
                 {name || "Student"}
               </span>
-              <span className="mt-0.5 block truncate text-[11px] text-muted">
-                Gyms, matches &amp; sessions
+              <span
+                className={`mt-0.5 block truncate text-[11px] ${
+                  studentReady ? "text-muted" : "text-accent"
+                }`}
+              >
+                {studentReady ? "Gyms, matches & sessions" : "Set up — gyms, matches & sessions"}
               </span>
             </span>
-            {current === "student" ? (
+            {current === "student" && studentReady ? (
               <IconCheck size={16} className="shrink-0 text-primary" />
             ) : (
               <IconChevronRight size={16} className="shrink-0 text-muted" />
