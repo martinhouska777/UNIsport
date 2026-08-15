@@ -75,6 +75,10 @@ export default function ProfilePage() {
   // Which Training row is being picked, if any.
   const [picker, setPicker] = useState<"level" | "activity" | "split" | "gyms" | null>(null);
   const [followCounts, setFollowCounts] = useState<{ following: number; followers: number } | null>(null);
+  // True once the counts have actually been fetched. Without it a brand-new
+  // profile would show three zeros for a beat before the starter card replaced
+  // them — the exact "0 / 0 / 0" moment this slice exists to remove.
+  const [statsLoaded, setStatsLoaded] = useState(false);
   const [switchingMode, setSwitchingMode] = useState(false); // mode switcher sheet
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
@@ -109,11 +113,16 @@ export default function ProfilePage() {
 
   // Real "Following" count from the follow graph.
   useEffect(() => {
-    if (!supabase || !userId) return;
+    // Settle on zeros when there's nobody to ask, so the stats block doesn't sit
+    // in "still loading" forever.
+    if (!supabase || !userId) {
+      setFollowCounts({ following: 0, followers: 0 });
+      return;
+    }
     let active = true;
     getMyFollowCounts()
       .then((c) => active && setFollowCounts(c))
-      .catch(() => {});
+      .catch(() => active && setFollowCounts({ following: 0, followers: 0 }));
     return () => {
       active = false;
     };
@@ -148,6 +157,7 @@ export default function ProfilePage() {
       setLogs(r.logs);
       setSessionsCount(r.total);
       setPartners(r.partners);
+      setStatsLoaded(true);
     });
     return () => {
       active = false;
@@ -197,11 +207,20 @@ export default function ProfilePage() {
     );
   }
 
+  const following = followCounts?.following ?? user.stats.following;
   const stats: { label: string; value: number; onClick?: () => void }[] = [
     { label: "Sessions", value: sessionsCount },
     { label: "Partners", value: partners.length, onClick: () => setPartnersOpen(true) },
-    { label: "Following", value: followCounts?.following ?? user.stats.following },
+    { label: "Following", value: following },
   ];
+
+  /*
+    A profile with nothing on it yet. Counters that all read 0 tell you nothing
+    except that you're behind, so until there's a single session, partner or
+    follow, the stats strip is replaced by the one thing that starts all three.
+  */
+  const statsReady = statsLoaded && followCounts !== null;
+  const brandNew = sessionsCount === 0 && partners.length === 0 && following === 0;
 
   const cap = (s: string) => (s ? s[0].toUpperCase() + s.slice(1) : s);
   // "Who you train with" summary, e.g. "Partner · Any".
@@ -385,7 +404,28 @@ export default function ProfilePage() {
         />
       </div>
 
-      {/* Stats */}
+      {/* Stats — or, on a profile with nothing on it yet, the first step */}
+      {!statsReady ? (
+        // Same height as either block, so nothing jumps when the counts land.
+        <div className="h-[58px] border-b border-border" />
+      ) : brandNew ? (
+        <div className="border-b border-border px-3.5 py-3">
+          <div className="rounded-2xl border border-border bg-surface-2 px-4 py-4">
+            <div className="text-sm font-medium text-text">Log your first session</div>
+            <p className="mt-1 text-[12px] leading-relaxed text-muted">
+              Your calendar, your sessions and the people you train with all start here.
+              It takes about ten seconds.
+            </p>
+            <button
+              type="button"
+              onClick={() => setLogging(true)}
+              className="mt-3 rounded-full bg-primary px-4 py-2 text-[13px] font-semibold text-primary-contrast"
+            >
+              Log a session
+            </button>
+          </div>
+        </div>
+      ) : (
       <div className="flex items-stretch justify-around border-b border-border px-3.5 py-2.5">
         {stats.map((s, i) => (
           <div key={s.label} className="flex items-stretch">
@@ -412,12 +452,16 @@ export default function ProfilePage() {
           </div>
         ))}
       </div>
+      )}
 
       {/* Upcoming accepted sessions (chat-planned) */}
       <UpcomingSessions />
 
-      {/* Session calendar */}
-      <SessionCalendar logs={logs} onPickDate={(d) => setOpenDate(d)} />
+      {/* Session calendar — an all-blank month says nothing, so it only appears
+          once there's at least one logged session to mark on it. */}
+      {statsReady && sessionsCount > 0 && (
+        <SessionCalendar logs={logs} onPickDate={(d) => setOpenDate(d)} />
+      )}
 
       {/* Training — every row opens a real picker and saves the real answer.
           These used to be free-text boxes writing to `trainingDisplay`, a

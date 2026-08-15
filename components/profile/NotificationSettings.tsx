@@ -4,11 +4,12 @@ import { useEffect, useState } from "react";
 import { Toggle } from "@/components/onboarding/controls";
 import { IconBell } from "@/components/icons";
 import {
-  isPushSupported,
   getPermission,
   isSubscribed,
   subscribeToPush,
   unsubscribeFromPush,
+  pushEnvironment,
+  type PushEnvironment,
 } from "@/lib/push/client";
 
 /*
@@ -34,16 +35,16 @@ export default function NotificationSettings({
   // we keep them in one object set from an async callback — never synchronously
   // in the effect body, which would also risk a hydration mismatch).
   type DeviceState = {
-    supported: boolean;
+    env: PushEnvironment;
     permission: NotificationPermission | "unsupported";
     subscribed: boolean;
   };
   const [device, setDevice] = useState<DeviceState>({
-    supported: true,
+    env: "ready",
     permission: "default",
     subscribed: false,
   });
-  const { supported, permission, subscribed } = device;
+  const { env, permission, subscribed } = device;
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -51,7 +52,7 @@ export default function NotificationSettings({
     (async () => {
       const isSub = await isSubscribed();
       if (active) {
-        setDevice({ supported: isPushSupported(), permission: getPermission(), subscribed: isSub });
+        setDevice({ env: pushEnvironment(), permission: getPermission(), subscribed: isSub });
       }
     })();
     return () => {
@@ -74,14 +75,43 @@ export default function NotificationSettings({
     setBusy(false);
   };
 
+  /*
+    When push isn't available we say WHOSE problem it is and what to do next,
+    instead of the old catch-all that told everyone their browser was broken —
+    including iPhone owners (whose phones do support this, once the app is on the
+    Home Screen) and everyone on Chrome when our own keys were missing.
+  */
+  const note = (title: string, body: string) => (
+    <div>
+      <div className="text-xs text-text">{title}</div>
+      <p className="mt-0.5 text-[11px] leading-relaxed text-muted">{body}</p>
+    </div>
+  );
+
   // The device row: its message + any action button depend on browser state.
   const renderDeviceRow = () => {
-    if (!supported) {
-      return (
-        <p className="text-[11px] text-muted">
-          This browser doesn’t support notifications. Try Chrome on Android/desktop, or
-          add the app to your Home Screen on iPhone.
-        </p>
+    if (env === "install-ios") {
+      return note(
+        "Install UNIsport to get notifications",
+        "Tap the Share button at the bottom of Safari, choose “Add to Home Screen”, then open UNIsport from your Home Screen and come back here.",
+      );
+    }
+    if (env === "ios-too-old") {
+      return note(
+        "Your iPhone needs a newer iOS",
+        "Notifications need iOS 16.4 or later. Update your phone, then turn them on here.",
+      );
+    }
+    if (env === "browser") {
+      return note(
+        "This browser can’t do notifications",
+        "Open UNIsport in Chrome, Edge, Firefox, or Safari 16.4 and later to turn them on.",
+      );
+    }
+    if (env === "not-configured") {
+      return note(
+        "Notifications aren’t live yet",
+        "That’s on our side, not your device — nothing for you to do. Your choices below are saved and will apply as soon as we switch them on.",
       );
     }
     if (permission === "denied") {

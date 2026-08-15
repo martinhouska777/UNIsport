@@ -44,14 +44,21 @@ export default function PhotoGrid({
 
   const remove = (i: number) => onChange(photos.filter((_, idx) => idx !== i));
 
+  const empty = photos.length === 0;
+
   return (
     <div className="border-b border-border px-3.5 py-3">
-      <div className="mb-2 flex items-center justify-between">
-        <div className="text-[9px] font-medium uppercase tracking-[0.1em] text-muted">
-          Photos
+      {/* With no photos there is nothing to label and nothing to hide, so the
+          whole block collapses to one "Add photos" row — an empty grid under a
+          heading was just another blank rectangle on a new profile. */}
+      {!empty && (
+        <div className="mb-2 flex items-center justify-between">
+          <div className="text-[9px] font-medium uppercase tracking-[0.1em] text-muted">
+            Photos
+          </div>
+          <VisibilityToggle visible={visible} onChange={onVisibleChange} />
         </div>
-        <VisibilityToggle visible={visible} onChange={onVisibleChange} />
-      </div>
+      )}
 
       <input
         ref={inputRef}
@@ -65,6 +72,17 @@ export default function PhotoGrid({
         }}
       />
 
+      {empty ? (
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          disabled={busy}
+          className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-border bg-surface-2 px-3 py-4 text-[12px] text-muted disabled:opacity-50"
+        >
+          <IconPlus size={14} />
+          {busy ? "Adding…" : "Add photos"}
+        </button>
+      ) : (
       <div className="grid grid-cols-3 gap-1.5">
         {photos.map((src, i) => (
           <div
@@ -101,6 +119,7 @@ export default function PhotoGrid({
           <IconPlus size={20} />
         </button>
       </div>
+      )}
 
       {viewer != null && photos[viewer] && (
         <div

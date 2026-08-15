@@ -32,6 +32,49 @@ export function getPermission(): NotificationPermission | "unsupported" {
   return Notification.permission;
 }
 
+/*
+  WHY notifications can't be turned on here, in the user's terms. "Unsupported"
+  used to be a single bucket, so an iPhone (which CAN do push, once the app is on
+  the Home Screen) and a missing VAPID key on our side both told the visitor
+  their browser was at fault. These are four different situations with four
+  different answers — three of which are not the visitor's problem.
+*/
+export type PushEnvironment =
+  | "ready" // browser can push and we're configured — show the on/off control
+  | "install-ios" // iPhone/iPad in Safari: install to the Home Screen first
+  | "ios-too-old" // already installed, but iOS is older than 16.4
+  | "browser" // some other browser with no Push API
+  | "not-configured"; // our own push keys aren't set on this deployment
+
+function isIOS(): boolean {
+  if (typeof navigator === "undefined") return false;
+  return (
+    /iphone|ipad|ipod/i.test(navigator.userAgent) ||
+    // iPadOS reports itself as a Mac; the touch points give it away.
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)
+  );
+}
+
+// True when running from the Home Screen / as an installed app rather than a tab.
+export function isInstalled(): boolean {
+  if (typeof window === "undefined") return false;
+  return (
+    window.matchMedia("(display-mode: standalone)").matches ||
+    (window.navigator as Navigator & { standalone?: boolean }).standalone === true
+  );
+}
+
+export function pushEnvironment(): PushEnvironment {
+  if (typeof window === "undefined") return "ready";
+  const browserCan =
+    "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+  if (!browserCan) {
+    if (isIOS()) return isInstalled() ? "ios-too-old" : "install-ios";
+    return "browser";
+  }
+  return PUBLIC_KEY ? "ready" : "not-configured";
+}
+
 // VAPID public keys are base64url; PushManager wants raw bytes (an ArrayBuffer).
 function urlBase64ToBuffer(base64: string): ArrayBuffer {
   const padding = "=".repeat((4 - (base64.length % 4)) % 4);
