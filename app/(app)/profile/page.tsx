@@ -255,10 +255,11 @@ export default function ProfilePage() {
     <div className="mx-auto w-full max-w-screen-sm">
       {/* Top bar */}
       <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-surface px-3.5 py-3">
-        {/* For someone on a squad the title doubles as the mode switcher: tap
-            for the sheet, double-tap to go straight into Varsity Mode. For
-            everyone else it is just their name — no chevron, no mark, nothing
-            hinting at a mode they don't have. */}
+        {/* The university sigil sits beside the name for EVERYONE — it's the
+            school's mark, the same one the student mode uses, and says nothing
+            about varsity. What only a squad member gets is the chevron and the
+            tap: the title then doubles as the mode switcher (tap for the sheet,
+            double-tap to go straight into Varsity Mode). */}
         {isMember ? (
           <button
             type="button"
@@ -271,7 +272,10 @@ export default function ProfilePage() {
             <VarsityShield size={17} />
           </button>
         ) : (
-          <h1 className="text-base font-medium text-text">{user.name || "My Profile"}</h1>
+          <div className="flex items-center gap-1.5">
+            <h1 className="text-base font-medium text-text">{user.name || "My Profile"}</h1>
+            <VarsityShield size={17} />
+          </div>
         )}
         <div className="flex items-center gap-2">
           {saveState !== "idle" && (
