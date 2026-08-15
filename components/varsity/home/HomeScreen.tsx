@@ -6,7 +6,7 @@
   strip, today's prescribed sessions (with coach notes + watch-verify), the
   day's lineup, and the coach's weekly focus. All colors are theme tokens.
 */
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAppState } from "@/components/AppState";
 import { fetchPlan, fetchProfileFullName } from "@/lib/varsity/planStore";
 import { fetchTodayLineups } from "@/lib/varsity/lineupStore";
@@ -96,9 +96,9 @@ function RaceBar({ r }: { r: RaceData }) {
 }
 
 /* ─── Week strip ───
-   Two views of the coach's plan. WEEK = a spreadsheet (AM/PM rows, day columns,
-   scroll sideways) styled after the team's training Excel. MONTH = a readable
-   full-width agenda, day by day. Tap any cell/day to see the full workout. */
+   Two views of the coach's plan. WEEK = the seven days side by side, styled
+   after the team's training Excel. MONTH = a full wall calendar, one month at a
+   time. Tap any cell/day to see the full workout. */
 
 const PERIOD_ROWS = ["AM", "PM"] as const;
 
@@ -159,8 +159,16 @@ function WeekFit({
   );
 }
 
-// MONTH view: a readable agenda — each day a full-width row with its workouts.
-function MonthAgenda({
+// MONTH view: a real wall calendar. One month at a time, Monday-first, cells
+// tall enough to carry a bar per session so the shape of the month reads at a
+// glance. Days outside the coach's block are shown but greyed and dead.
+const MONTH_NAMES = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+const DAY_LETTERS = ["M", "T", "W", "T", "F", "S", "S"];
+
+function MonthGrid({
   weeks,
   selected,
   onSelect,
@@ -169,53 +177,119 @@ function MonthAgenda({
   selected: WeekDay | null;
   onSelect: (d: WeekDay) => void;
 }) {
+  // Every planned day, keyed by date, so any calendar month can be filled in
+  // from whichever weeks of the block overlap it.
+  const byIso = useMemo(() => {
+    const map: Record<string, WeekDay> = {};
+    for (const wk of weeks) for (const d of wk.days) map[d.iso] = d;
+    return map;
+  }, [weeks]);
+
+  // The block's span, as {y, m} bounds for the month arrows.
+  const isos = useMemo(() => Object.keys(byIso).sort(), [byIso]);
+  const monthOf = (iso: string) => {
+    const [y, m] = iso.split("-").map(Number);
+    return { y, m: m - 1 };
+  };
+  const firstMonth = monthOf(isos[0] ?? "2000-01-01");
+  const lastMonth = monthOf(isos[isos.length - 1] ?? "2000-01-01");
+
+  // Open on the month containing today, falling back to the block's start.
+  const [view, setView] = useState(() => {
+    const todayIso = isos.find((iso) => byIso[iso].today);
+    return monthOf(todayIso ?? isos[0] ?? "2000-01-01");
+  });
+
+  const goMonth = (delta: number) =>
+    setView((v) => {
+      const d = new Date(v.y, v.m + delta, 1);
+      return { y: d.getFullYear(), m: d.getMonth() };
+    });
+  const asNum = (v: { y: number; m: number }) => v.y * 12 + v.m;
+  const atStart = asNum(view) <= asNum(firstMonth);
+  const atEnd = asNum(view) >= asNum(lastMonth);
+
+  const daysInMonth = new Date(view.y, view.m + 1, 0).getDate();
+  const leadingEmpty = (new Date(view.y, view.m, 1).getDay() + 6) % 7; // Monday-first
+  const pad = (n: number) => String(n).padStart(2, "0");
+
   return (
-    <div className="flex flex-col gap-4">
-      {weeks.map((wk, wi) => (
-        <div key={wi}>
-          <div className="mb-1.5 flex items-center gap-2 px-0.5">
-            <span className="text-[9px] font-semibold uppercase tracking-[0.08em] text-muted">{wk.label}</span>
-            {wk.days.some((d) => d.today) && (
-              <span className="rounded bg-primary/15 px-1.5 py-px text-[8px] font-semibold text-primary">
-                This week
-              </span>
-            )}
+    <div className="overflow-hidden rounded-xl border border-border bg-surface">
+      {/* Month + arrows */}
+      <div className="flex items-center justify-between border-b border-border px-3 py-2.5">
+        <button
+          onClick={() => goMonth(-1)}
+          disabled={atStart}
+          aria-label="Previous month"
+          className="flex h-6 w-6 items-center justify-center rounded-md border border-border bg-surface-2 text-muted disabled:opacity-30"
+        >
+          <IconArrowLeft size={13} />
+        </button>
+        <span className="flex items-baseline gap-1.5">
+          <span className="text-[13px] font-semibold text-text">{MONTH_NAMES[view.m]}</span>
+          <span className="text-[10px] font-medium text-muted">{view.y}</span>
+        </span>
+        <button
+          onClick={() => goMonth(1)}
+          disabled={atEnd}
+          aria-label="Next month"
+          className="flex h-6 w-6 items-center justify-center rounded-md border border-border bg-surface-2 text-muted disabled:opacity-30"
+        >
+          <IconArrowRight size={13} />
+        </button>
+      </div>
+
+      {/* Weekday header */}
+      <div className="grid grid-cols-7 border-b border-border px-1.5 pb-1 pt-1.5">
+        {DAY_LETTERS.map((d, i) => (
+          <div key={i} className="text-center text-[8px] font-semibold tracking-[0.12em] text-muted">
+            {d}
           </div>
-          <div className="divide-y divide-border overflow-hidden rounded-xl border border-border">
-            {wk.days.map((d, i) => (
-              <button
-                key={i}
-                onClick={() => onSelect(d)}
-                className={`flex w-full gap-3 px-3 py-2 text-left ${
-                  d.today ? "bg-primary/[0.06]" : selected === d ? "bg-surface-2" : "bg-surface"
+        ))}
+      </div>
+
+      {/* Days */}
+      <div className="grid grid-cols-7 gap-1 p-1.5">
+        {Array.from({ length: leadingEmpty }).map((_, i) => (
+          <div key={`e${i}`} className="min-h-[52px]" />
+        ))}
+        {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((num) => {
+          const iso = `${view.y}-${pad(view.m + 1)}-${pad(num)}`;
+          const day = byIso[iso];
+          const sel = day != null && selected === day;
+          return (
+            <button
+              key={num}
+              type="button"
+              disabled={!day}
+              onClick={() => day && onSelect(day)}
+              className={`flex min-h-[52px] flex-col rounded-lg border p-1 text-left ${
+                sel
+                  ? "border-primary bg-primary/10 ring-1 ring-primary"
+                  : day?.today
+                    ? "border-primary bg-primary/[0.08]"
+                    : day
+                      ? "border-border bg-surface-2"
+                      : "border-transparent"
+              }`}
+            >
+              <span
+                className={`text-[11px] font-semibold leading-none ${
+                  day?.today ? "text-primary" : day ? "text-text" : "text-muted/40"
                 }`}
               >
-                <div className="w-10 flex-shrink-0 pt-0.5">
-                  <div className={`text-[9px] font-semibold uppercase ${d.today ? "text-accent" : "text-muted"}`}>
-                    {d.letter}
-                  </div>
-                  <div className={`text-[15px] font-semibold leading-none ${d.today ? "text-primary" : "text-text"}`}>
-                    {d.num}
-                  </div>
-                </div>
-                <div className="flex flex-1 flex-col justify-center gap-1 py-0.5">
-                  {d.sessions.length > 0 ? (
-                    d.sessions.map((s, j) => (
-                      <div key={j} className="flex items-center gap-2">
-                        <span className={`h-2.5 w-2.5 flex-shrink-0 rounded-sm ${kindStyles[s.kind].bar}`} />
-                        <span className="w-6 flex-shrink-0 text-[8px] font-bold text-muted">{s.time}</span>
-                        <span className="text-[12px] leading-snug text-text">{s.label}</span>
-                      </div>
-                    ))
-                  ) : (
-                    <span className="text-[11px] italic text-muted/60">Rest day</span>
-                  )}
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-      ))}
+                {num}
+              </span>
+              {/* One bar per prescribed session — the month's shape at a glance. */}
+              <span className="mt-auto flex flex-col gap-0.5">
+                {(day?.sessions ?? []).slice(0, 3).map((s, j) => (
+                  <span key={j} className={`h-1.5 w-full rounded-sm ${kindStyles[s.kind].bar}`} />
+                ))}
+              </span>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -321,7 +395,7 @@ function WeekStrip({ weeks, startIndex }: { weeks: WeekView[]; startIndex: numbe
           <WeekFit week={current} selected={selected} onSelect={pick} />
         </>
       ) : (
-        <MonthAgenda weeks={weeks} selected={selected} onSelect={pick} />
+        <MonthGrid weeks={weeks} selected={selected} onSelect={pick} />
       )}
 
       {selected && <DayDetail d={selected} onClose={() => setSelected(null)} />}

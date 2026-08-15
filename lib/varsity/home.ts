@@ -36,6 +36,7 @@ export type DaySession = {
 export type WeekDay = {
   letter: string;
   num: number;
+  iso: string; // yyyy-mm-dd — lets the month calendar place the day in a grid
   dateLabel?: string; // e.g. "Wed · May 20" — header for the day detail
   today?: boolean;
   dimmed?: boolean;
@@ -104,22 +105,22 @@ export const home: HomeData = {
     {
       label: "May 18 – 24",
       days: [
-        { letter: "M", num: 18, sessions: [
+        { letter: "M", num: 18, iso: "2026-05-18", sessions: [
           { time: "AM", label: "UT2 erg", kind: "ut2" },
           { time: "PM", label: "Weights", kind: "weights" },
         ] },
-        { letter: "T", num: 19, sessions: [{ time: "AM", label: "UT2 run", kind: "ut2" }] },
-        { letter: "W", num: 20, sessions: [{ time: "ALL", label: "OFF", kind: "off" }] },
-        { letter: "T", num: 21, sessions: [
+        { letter: "T", num: 19, iso: "2026-05-19", sessions: [{ time: "AM", label: "UT2 run", kind: "ut2" }] },
+        { letter: "W", num: 20, iso: "2026-05-20", sessions: [{ time: "ALL", label: "OFF", kind: "off" }] },
+        { letter: "T", num: 21, iso: "2026-05-21", sessions: [
           { time: "AM", label: "UT2 erg", kind: "ut2" },
           { time: "PM", label: "RP3", kind: "hard" },
         ] },
-        { letter: "F", num: 22, today: true, sessions: [
+        { letter: "F", num: 22, iso: "2026-05-22", today: true, sessions: [
           { time: "AM", label: "UT2 run", kind: "ut2" },
           { time: "PM", label: "RP3 4x5'", kind: "hard" },
         ] },
-        { letter: "S", num: 23, sessions: [{ time: "AM", label: "RACE", kind: "race" }] },
-        { letter: "S", num: 24, dimmed: true, sessions: [{ time: "ALL", label: "Recov", kind: "recovery" }] },
+        { letter: "S", num: 23, iso: "2026-05-23", sessions: [{ time: "AM", label: "RACE", kind: "race" }] },
+        { letter: "S", num: 24, iso: "2026-05-24", dimmed: true, sessions: [{ time: "ALL", label: "Recov", kind: "recovery" }] },
       ] as WeekDay[],
     },
   ],

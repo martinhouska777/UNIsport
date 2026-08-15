@@ -14,6 +14,7 @@ import {
   parseDate,
   sessionKey,
   sessionLabel,
+  toISO,
   periods,
   type Period,
   type Session,
@@ -118,6 +119,7 @@ export function buildAthleteHome(
     days: wk.days.map((d) => ({
       letter: d.weekday[0],
       num: d.dayNum,
+      iso: toISO(d.date),
       dateLabel: `${d.weekday} · ${d.month} ${d.dayNum}`,
       today: d.today || undefined,
       sessions: periods.flatMap((p) => {
