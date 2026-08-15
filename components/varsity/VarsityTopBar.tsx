@@ -1,9 +1,13 @@
 "use client";
 
+import { useCallback, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import VarsityShield from "@/components/varsity/VarsityShield";
+import ModeSwitcherSheet from "@/components/ModeSwitcherSheet";
+import useTapOrDoubleTap from "@/components/useTapOrDoubleTap";
 import { ThemeModeToggle } from "@/components/ThemeMode";
-import { IconBell, IconArrowLeft } from "@/components/icons";
+import { IconBell, IconArrowLeft, IconChevronDown } from "@/components/icons";
 import { subscribeToPush, isSubscribed, sendTestNotification } from "@/lib/push/client";
 
 /*
@@ -12,6 +16,16 @@ import { subscribeToPush, isSubscribed, sendTestNotification } from "@/lib/push/
   app (Profile tab). This is the mode-switch back out of Varsity Mode.
 */
 export default function VarsityTopBar() {
+  const router = useRouter();
+  const [switchingMode, setSwitchingMode] = useState(false);
+
+  // The mark is the mode switcher, mirroring the name on the normal profile:
+  // one tap opens the sheet, two taps drop you back into the normal app.
+  const handleModeTap = useTapOrDoubleTap(
+    useCallback(() => setSwitchingMode(true), []),
+    useCallback(() => router.push("/profile"), [router]),
+  );
+
   // Tap the bell: enable notifications the first time, then show a sample of how a
   // team notification will look (real team alerts use the same delivery path).
   const handleBell = async () => {
@@ -27,8 +41,17 @@ export default function VarsityTopBar() {
   };
 
   return (
+    /* The sheet is a SIBLING of the bar, not a child: the bar sits in its own
+       z-10 stacking context alongside the page and the tab nav, so a sheet
+       nested inside it would be painted underneath them. */
+    <>
     <div className="relative z-10 flex flex-shrink-0 items-center justify-between border-b border-border bg-background px-4 py-3">
-      <div className="flex items-center gap-2">
+      <button
+        type="button"
+        onClick={handleModeTap}
+        aria-label="Switch mode"
+        className="flex items-center gap-2 text-left"
+      >
         <VarsityShield size={26} />
         <div className="flex flex-col leading-none">
           <span className="text-[8px] font-semibold tracking-[0.18em] text-accent">
@@ -38,7 +61,8 @@ export default function VarsityTopBar() {
             Harvard Rowing
           </span>
         </div>
-      </div>
+        <IconChevronDown size={13} className="text-muted" />
+      </button>
 
       <div className="flex items-center gap-2">
         <ThemeModeToggle />
@@ -60,5 +84,10 @@ export default function VarsityTopBar() {
         </Link>
       </div>
     </div>
+
+    {switchingMode && (
+      <ModeSwitcherSheet current="varsity" onClose={() => setSwitchingMode(false)} />
+    )}
+    </>
   );
 }

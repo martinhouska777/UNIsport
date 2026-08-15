@@ -2,7 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import VarsityShield from "@/components/varsity/VarsityShield";
+import ModeSwitcherSheet from "@/components/ModeSwitcherSheet";
+import useTapOrDoubleTap from "@/components/useTapOrDoubleTap";
+import { VARSITY_HOME } from "@/lib/varsity/theme";
 import InlineEdit from "@/components/profile/InlineEdit";
 import SessionCalendar from "@/components/profile/SessionCalendar";
 import SessionSheet from "@/components/profile/SessionSheet";
@@ -45,7 +49,7 @@ import {
   IconUser,
   IconCamera,
   IconPencil,
-  IconArrowRight,
+  IconChevronDown,
   IconChevronRight,
 } from "@/components/icons";
 
@@ -69,7 +73,16 @@ export default function ProfilePage() {
   // Which Training row is being picked, if any.
   const [picker, setPicker] = useState<"level" | "activity" | "split" | "gyms" | null>(null);
   const [followCounts, setFollowCounts] = useState<{ following: number; followers: number } | null>(null);
+  const [switchingMode, setSwitchingMode] = useState(false); // mode switcher sheet
   const avatarInputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
+
+  // The name in the top bar: one tap opens the switcher, two go straight to
+  // Varsity Mode (which plays its own intro on the way in).
+  const handleModeTap = useTapOrDoubleTap(
+    useCallback(() => setSwitchingMode(true), []),
+    useCallback(() => router.push(VARSITY_HOME), [router]),
+  );
 
   // Avatar picker: downscale the chosen image and store it as the profile photo.
   const pickAvatar = async (file: File | undefined) => {
@@ -229,7 +242,18 @@ export default function ProfilePage() {
     <div className="mx-auto w-full max-w-screen-sm">
       {/* Top bar */}
       <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-surface px-3.5 py-3">
-        <h1 className="text-base font-medium text-text">My Profile</h1>
+        {/* The title doubles as the mode switcher: tap for the sheet, double-tap
+            to go straight into Varsity Mode. */}
+        <button
+          type="button"
+          onClick={handleModeTap}
+          aria-label="Switch mode"
+          className="flex items-center gap-1.5"
+        >
+          <h1 className="text-base font-medium text-text">{user.name || "My Profile"}</h1>
+          <IconChevronDown size={13} className="text-muted" />
+          <VarsityShield size={17} />
+        </button>
         <div className="flex items-center gap-2">
           {saveState !== "idle" && (
             <span
@@ -277,6 +301,11 @@ export default function ProfilePage() {
           >
             <IconCamera size={12} />
           </button>
+
+          {/* Quiet hint that there's another mode behind this profile. */}
+          <span className="absolute -right-1 -top-1 flex h-[22px] w-[22px] items-center justify-center rounded-full border border-border bg-surface">
+            <VarsityShield size={13} />
+          </span>
         </div>
 
         <div className="flex flex-col items-center gap-1">
@@ -459,25 +488,8 @@ export default function ProfilePage() {
         onVisibleChange={(v) => update({ showPhotos: v })}
       />
 
-      {/* Entry into Varsity Mode (the gated rowing-team section) */}
-      <div className="border-b border-border px-3.5 py-3">
-        <div className="mb-2 text-[9px] font-medium uppercase tracking-[0.1em] text-muted">
-          Varsity
-        </div>
-        <Link
-          href="/varsity/home"
-          className="flex items-center gap-3 rounded-2xl border border-primary/40 bg-primary/10 px-4 py-3.5"
-        >
-          <VarsityShield size={30} />
-          <div className="flex-1">
-            <div className="text-sm font-medium text-text">Enter Varsity Mode</div>
-            <div className="text-[11px] text-muted">Harvard Rowing · training, lineups &amp; team</div>
-          </div>
-          <span className="text-muted">
-            <IconArrowRight size={18} />
-          </span>
-        </Link>
-      </div>
+      {/* Varsity Mode isn't a row down here any more — it's the switcher on the
+          name in the top bar (tap = sheet, double-tap = straight in). */}
 
       {/* Bottom action bar (sticks above the tab nav) */}
       <div className="sticky bottom-0 z-20 flex gap-2.5 border-t border-border bg-surface px-3.5 py-3">
@@ -495,6 +507,15 @@ export default function ProfilePage() {
           Log Session
         </button>
       </div>
+
+      {switchingMode && (
+        <ModeSwitcherSheet
+          current="student"
+          name={user.name}
+          photo={user.photo}
+          onClose={() => setSwitchingMode(false)}
+        />
+      )}
 
       {partnersOpen && (
         <PartnersSheet partners={partners} onClose={() => setPartnersOpen(false)} />
