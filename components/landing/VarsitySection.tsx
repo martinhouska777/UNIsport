@@ -1,13 +1,18 @@
 import Link from "next/link";
 import VarsityPhone from "./VarsityPhone";
 
-// Deep-dive on Varsity Mode — gold accent throughout, distinct from the blue
-// student sections. The CTA leads to the Varsity entry (/join).
+/*
+  Deep-dive on Varsity Mode — gold accent throughout, distinct from the blue
+  student sections. The CTA leads to the Varsity entry (/join).
+
+  These four points describe what the app actually does today, because a coach
+  reading this will find out within a minute either way.
+*/
 const POINTS: { lead: string; tail: string }[] = [
-  { lead: "Captain-approved access to your team's hub", tail: " — one tap, then unlocked." },
-  { lead: "Lineup builder and daily training plan", tail: " — published instantly to every athlete." },
+  { lead: "Your captain sends a link, and approves who comes in", tail: " — a forwarded link gets nobody onto the squad." },
+  { lead: "The coach writes the plan and the lineups", tail: " — published straight to every athlete's week." },
   { lead: "AI session logging from a single photo", tail: " — Concept 2, RP3, or watch upload." },
-  { lead: "Permanent record for PRs, seat races, and injuries", tail: " — institutional memory, finally." },
+  { lead: "One permanent record of every session, erg PR and injury", tail: " — institutional memory, finally." },
 ];
 
 export default function VarsitySection() {
@@ -40,11 +45,14 @@ export default function VarsitySection() {
             ))}
           </div>
 
+          {/* This opens the code/link screen, so it has to say so — it used to
+              read "Learn about Varsity Mode", which promised an explainer and
+              delivered a form. */}
           <Link
             href="/join"
             className="group inline-flex items-center gap-2 rounded-full border border-l-varsity-soft px-6 py-3.5 text-sm font-medium text-l-varsity transition-colors hover:border-l-varsity hover:bg-l-varsity-dim"
           >
-            Learn about Varsity Mode
+            Join with a team invite
             <svg width="12" height="12" viewBox="0 0 14 14" fill="none" className="transition-transform group-hover:translate-x-1">
               <path
                 d="M3 7H11M11 7L7 3M11 7L7 11"
@@ -55,6 +63,10 @@ export default function VarsitySection() {
               />
             </svg>
           </Link>
+
+          <p className="mt-4 text-[13px] text-l-text-3">
+            No invite yet? Your coach or captain sends one — there&apos;s no other way onto a squad.
+          </p>
 
           <p className="mt-6 font-mono text-[11px] tracking-wide text-l-text-3">
             Launching with Harvard Rowing <span className="text-l-text-2">·</span> Built to scale to

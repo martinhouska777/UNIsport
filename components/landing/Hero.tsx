@@ -58,6 +58,18 @@ export default function Hero() {
           </a>
         </div>
 
+        {/* The other way in. A rower usually arrives here holding a link from
+            their captain, and shouldn't have to scroll to find where it goes. */}
+        <p className="-mt-6 mb-12 text-[14px] text-l-text-3">
+          Got a link from your team?{" "}
+          <Link
+            href="/join"
+            className="font-medium text-l-varsity underline-offset-4 transition-colors hover:underline"
+          >
+            Join with your invite →
+          </Link>
+        </p>
+
         <div className="flex flex-wrap items-center gap-4 border-t border-l-border pt-7 font-mono text-xs tracking-wide text-l-text-3">
           <span className="uppercase">Starting at</span>
           <span className="text-l-text-2">
