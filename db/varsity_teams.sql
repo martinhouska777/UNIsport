@@ -245,12 +245,18 @@ begin
 
   select * into t from public.varsity_teams where id = i.team_id;
 
+  -- The failure cases carry `personal` too, so the screen can tell someone
+  -- re-opening their own one-person invite ("already used") apart from someone
+  -- arriving at a squad link that filled up.
   if i.revoked_at is not null then
-    return jsonb_build_object('valid', false, 'reason', 'revoked', 'team_name', t.name);
+    return jsonb_build_object('valid', false, 'reason', 'revoked', 'team_name', t.name,
+                              'personal', i.email_lock is not null);
   elsif i.expires_at < now() then
-    return jsonb_build_object('valid', false, 'reason', 'expired', 'team_name', t.name);
+    return jsonb_build_object('valid', false, 'reason', 'expired', 'team_name', t.name,
+                              'personal', i.email_lock is not null);
   elsif i.uses >= i.max_uses then
-    return jsonb_build_object('valid', false, 'reason', 'used_up', 'team_name', t.name);
+    return jsonb_build_object('valid', false, 'reason', 'used_up', 'team_name', t.name,
+                              'personal', i.email_lock is not null);
   end if;
 
   return jsonb_build_object(

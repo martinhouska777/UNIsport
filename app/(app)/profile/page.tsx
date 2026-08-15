@@ -79,14 +79,20 @@ export default function ProfilePage() {
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
-  // Is this account on a squad? Decides whether the varsity affordances on this
-  // page do anything — a regular student has no second mode to switch to.
-  const { isMember } = useMembership();
+  /*
+    Is this account tied to a squad at all (waiting to be let in counts)?
+    Decides whether ANY varsity mark shows on this page. A regular student must
+    see no trace of it: the mark in the top bar would otherwise advertise that
+    some accounts have a section theirs doesn't. People who aren't on a team
+    reach the join screen through Settings instead.
+  */
+  const { membership, isMember } = useMembership();
+  const hasVarsity = !!membership;
 
-  // The name in the top bar: one tap opens the switcher, two go straight to
-  // Varsity Mode (which plays its own intro on the way in). The shortcut only
-  // exists for actual team members; for everyone else the sheet explains how to
-  // join instead of dumping them on a screen they'd be bounced off.
+  // The name in the top bar (only tappable for squad members): one tap opens
+  // the switcher, two go straight to Varsity Mode, which plays its own intro on
+  // the way in. Someone still waiting to be approved gets the sheet either way —
+  // it tells them where they stand rather than bouncing them off a locked tab.
   const handleModeTap = useTapOrDoubleTap(
     useCallback(() => setSwitchingMode(true), []),
     useCallback(() => {
@@ -253,18 +259,24 @@ export default function ProfilePage() {
     <div className="mx-auto w-full max-w-screen-sm">
       {/* Top bar */}
       <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-surface px-3.5 py-3">
-        {/* The title doubles as the mode switcher: tap for the sheet, double-tap
-            to go straight into Varsity Mode. */}
-        <button
-          type="button"
-          onClick={handleModeTap}
-          aria-label="Switch mode"
-          className="flex items-center gap-1.5"
-        >
+        {/* For someone on a squad the title doubles as the mode switcher: tap
+            for the sheet, double-tap to go straight into Varsity Mode. For
+            everyone else it is just their name — no chevron, no mark, nothing
+            hinting at a mode they don't have. */}
+        {hasVarsity ? (
+          <button
+            type="button"
+            onClick={handleModeTap}
+            aria-label="Switch mode"
+            className="flex items-center gap-1.5"
+          >
+            <h1 className="text-base font-medium text-text">{user.name || "My Profile"}</h1>
+            <IconChevronDown size={13} className="text-muted" />
+            <VarsityShield size={17} />
+          </button>
+        ) : (
           <h1 className="text-base font-medium text-text">{user.name || "My Profile"}</h1>
-          <IconChevronDown size={13} className="text-muted" />
-          <VarsityShield size={17} />
-        </button>
+        )}
         <div className="flex items-center gap-2">
           {saveState !== "idle" && (
             <span

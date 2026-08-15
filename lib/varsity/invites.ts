@@ -98,6 +98,18 @@ export const redeemMessage: Record<string, string> = {
   wrong_domain: "This team only accepts university email addresses.",
 };
 
+/*
+  The same refusal reads very differently depending on the kind of link. A
+  personal invite is deliberately single-use, so "already used" is the system
+  working — say so, rather than leaving someone thinking the link is broken.
+*/
+export function refusalMessage(reason: string | undefined, personal?: boolean): string {
+  if (personal && reason === "used_up") {
+    return "This invite was for one person and has already been used. Ask your captain for a new one.";
+  }
+  return redeemMessage[reason ?? "unknown"] ?? redeemMessage.unknown;
+}
+
 /* ── Look at a code without spending it (so the join page can name the team) ── */
 export type InvitePreview = {
   valid: boolean;

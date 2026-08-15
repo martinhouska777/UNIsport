@@ -9,18 +9,18 @@
   (revoked, expired, used up, wrong email, wrong university domain) is decided
   in the database — see db/varsity_teams.sql — so a forwarded link is harmless.
 
-  Zone 1 styling (`l-*` tokens): a stranger can land here before signing in, so
-  no university colors, only the neutral brand + the gold varsity accent.
+  Back behaviour lives in <JoinShell> — signed-in people came from Settings and
+  go back there, never to the landing page.
 */
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { instrumentSerif } from "@/components/landing/fonts";
+import JoinShell from "@/components/join/JoinShell";
 import { useAppState } from "@/components/AppState";
 import {
   previewInvite,
   redeemInvite,
-  redeemMessage,
+  refusalMessage,
   PENDING_INVITE_KEY,
   type InvitePreview,
 } from "@/lib/varsity/invites";
@@ -69,157 +69,144 @@ export default function JoinWithCodePage() {
   }, [code]);
 
   const teamName = preview?.teamName ?? "your team";
+  // Where "back to the app" should land: the tab bar for a signed-in student.
+  const appHome = loggedIn ? "/gyms" : "/";
 
   return (
-    <div
-      className={`${instrumentSerif.variable} flex min-h-dvh flex-col items-center justify-center bg-l-bg px-6 text-center font-sans text-l-text`}
-    >
-      <div className="w-full max-w-sm">
-        <Link
-          href="/"
-          className="mb-8 inline-block font-display text-2xl italic tracking-tight text-l-text"
-        >
-          UNI<span className="text-l-varsity">sport</span>
-        </Link>
+    <JoinShell badge="Team invite">
+      {/* 1. Still looking the code up */}
+      {!preview && <p className="text-sm text-l-text-2">Checking this invite…</p>}
 
-        <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-l-varsity-soft bg-l-varsity-dim px-3 py-1.5 font-mono text-[11px] font-medium uppercase tracking-wider text-l-varsity">
-          Team invite
-        </div>
+      {/* 2. The code is no good — say exactly why, and offer another go */}
+      {preview && !preview.valid && (
+        <>
+          <h1 className="font-display text-3xl text-l-text">This link doesn&apos;t work</h1>
+          <p className="mt-3 text-sm leading-relaxed text-l-text-2">
+            {refusalMessage(preview.reason, preview.personal)}
+          </p>
+          <p className="mt-3 break-all font-mono text-[11px] text-l-text-3">{code}</p>
+          <Link
+            href="/join"
+            className="mt-7 inline-block w-full rounded-full border border-l-border px-5 py-3 text-sm font-medium text-l-text"
+          >
+            Try another link
+          </Link>
+        </>
+      )}
 
-        {/* 1. Still looking the code up */}
-        {!preview && <p className="text-sm text-l-text-2">Checking this invite…</p>}
+      {/* 3. Good code, but we don't know who you are yet */}
+      {preview?.valid && ready && !loggedIn && (
+        <>
+          <h1 className="font-display text-3xl text-l-text">Join {teamName}</h1>
+          <p className="mt-3 text-sm leading-relaxed text-l-text-2">
+            Sign in with your university account to ask your captain for a place on the squad.
+            {preview.emailDomain && (
+              <>
+                {" "}
+                This team only accepts{" "}
+                <span className="text-l-text">@{preview.emailDomain}</span> addresses.
+              </>
+            )}
+          </p>
+          <button
+            type="button"
+            onClick={() => router.push(`/login?next=/join/${code}`)}
+            className="mt-8 w-full rounded-full bg-l-varsity px-5 py-3 text-sm font-semibold text-l-bg"
+          >
+            Sign in to join
+          </button>
+        </>
+      )}
 
-        {/* 2. The code is no good — say exactly why */}
-        {preview && !preview.valid && (
-          <>
-            <h1 className="font-display text-3xl text-l-text">This link doesn&apos;t work</h1>
-            <p className="mt-3 text-sm leading-relaxed text-l-text-2">
-              {redeemMessage[preview.reason ?? "unknown"] ?? redeemMessage.unknown}
-            </p>
-            <Link
-              href="/"
-              className="mt-8 inline-block text-xs font-medium text-l-text-2 hover:text-l-text"
-            >
-              ← Back to UNIsport
-            </Link>
-          </>
-        )}
+      {/* 4. Signed in but the normal student setup isn't finished */}
+      {preview?.valid && ready && loggedIn && !onboarded && (
+        <>
+          <h1 className="font-display text-3xl text-l-text">Nearly there</h1>
+          <p className="mt-3 text-sm leading-relaxed text-l-text-2">
+            Finish setting up your UNIsport account first — then come back to this link and
+            you&apos;ll be able to join {teamName}.
+          </p>
+          <Link
+            href="/onboarding"
+            className="mt-8 inline-block w-full rounded-full bg-l-varsity px-5 py-3 text-sm font-semibold text-l-bg"
+          >
+            Finish setting up
+          </Link>
+        </>
+      )}
 
-        {/* 3. Good code, but we don't know who you are yet */}
-        {preview?.valid && ready && !loggedIn && (
-          <>
-            <h1 className="font-display text-3xl text-l-text">Join {teamName}</h1>
-            <p className="mt-3 text-sm leading-relaxed text-l-text-2">
-              Sign in with your university account to ask your captain for a place on the
-              squad.
-              {preview.emailDomain && (
-                <>
-                  {" "}
-                  This team only accepts{" "}
-                  <span className="text-l-text">@{preview.emailDomain}</span> addresses.
-                </>
-              )}
-            </p>
-            <button
-              type="button"
-              onClick={() => router.push(`/login?next=/join/${code}`)}
-              className="mt-8 w-full rounded-full bg-l-varsity px-5 py-3 text-sm font-semibold text-l-bg"
-            >
-              Sign in to join
-            </button>
-          </>
-        )}
+      {/* 5. Ready to ask — the button that puts you in the queue */}
+      {preview?.valid && ready && loggedIn && onboarded && !result && (
+        <>
+          <h1 className="font-display text-3xl text-l-text">Join {teamName}</h1>
+          <p className="mt-3 text-sm leading-relaxed text-l-text-2">
+            {preview.autoApprove
+              ? "You'll get access to the team's training as soon as you join."
+              : "Your captain gets a request and lets you in. You'll see the team's training once they do."}
+          </p>
+          <p className="mt-4 rounded-xl border border-l-border bg-l-surface px-4 py-3 text-xs text-l-text-2">
+            Joining as <span className="text-l-text">{email}</span>
+          </p>
+          <button
+            type="button"
+            onClick={join}
+            disabled={busy}
+            className="mt-6 w-full rounded-full bg-l-varsity px-5 py-3 text-sm font-semibold text-l-bg disabled:opacity-60"
+          >
+            {busy ? "Sending…" : preview.autoApprove ? "Join the team" : "Ask to join"}
+          </button>
+        </>
+      )}
 
-        {/* 4. Signed in but the normal student setup isn't finished */}
-        {preview?.valid && ready && loggedIn && !onboarded && (
-          <>
-            <h1 className="font-display text-3xl text-l-text">Nearly there</h1>
-            <p className="mt-3 text-sm leading-relaxed text-l-text-2">
-              Finish setting up your UNIsport account first — then come back to this link
-              and you&apos;ll be able to join {teamName}.
-            </p>
-            <Link
-              href="/onboarding"
-              className="mt-8 inline-block w-full rounded-full bg-l-varsity px-5 py-3 text-sm font-semibold text-l-bg"
-            >
-              Finish setting up
-            </Link>
-          </>
-        )}
+      {/* 6a. In the waiting room */}
+      {result?.status === "pending" && (
+        <>
+          <h1 className="font-display text-3xl text-l-text">Request sent</h1>
+          <p className="mt-3 text-sm leading-relaxed text-l-text-2">
+            Your captain has to let you in. You&apos;ll find {teamName} waiting in your profile
+            once they do — nothing else to do here.
+          </p>
+          <Link
+            href={appHome}
+            className="mt-8 inline-block w-full rounded-full border border-l-border px-5 py-3 text-sm font-medium text-l-text"
+          >
+            Back to the app
+          </Link>
+        </>
+      )}
 
-        {/* 5. Ready to ask — the button that puts you in the queue */}
-        {preview?.valid && ready && loggedIn && onboarded && !result && (
-          <>
-            <h1 className="font-display text-3xl text-l-text">Join {teamName}</h1>
-            <p className="mt-3 text-sm leading-relaxed text-l-text-2">
-              {preview.autoApprove
-                ? "You'll get access to the team's training as soon as you join."
-                : "Your captain gets a request and lets you in. You'll see the team's training once they do."}
-            </p>
-            <p className="mt-4 rounded-xl border border-l-border bg-l-surface px-4 py-3 text-xs text-l-text-2">
-              Joining as <span className="text-l-text">{email}</span>
-            </p>
-            <button
-              type="button"
-              onClick={join}
-              disabled={busy}
-              className="mt-6 w-full rounded-full bg-l-varsity px-5 py-3 text-sm font-semibold text-l-bg disabled:opacity-60"
-            >
-              {busy ? "Sending…" : preview.autoApprove ? "Join the team" : "Ask to join"}
-            </button>
-          </>
-        )}
+      {/* 6b. Straight in (a link the captain marked auto-approve) */}
+      {result?.status === "approved" && (
+        <>
+          <h1 className="font-display text-3xl text-l-text">You&apos;re in</h1>
+          <p className="mt-3 text-sm leading-relaxed text-l-text-2">
+            Welcome to {teamName}. Varsity Mode now sits alongside your student account —
+            switch between them from your profile.
+          </p>
+          <Link
+            href={VARSITY_HOME}
+            className="mt-8 inline-block w-full rounded-full bg-l-varsity px-5 py-3 text-sm font-semibold text-l-bg"
+          >
+            Open Varsity Mode
+          </Link>
+        </>
+      )}
 
-        {/* 6a. In the waiting room */}
-        {result?.status === "pending" && (
-          <>
-            <h1 className="font-display text-3xl text-l-text">Request sent</h1>
-            <p className="mt-3 text-sm leading-relaxed text-l-text-2">
-              Your captain has to let you in. You&apos;ll find {teamName} waiting in your
-              profile once they do — nothing else to do here.
-            </p>
-            <Link
-              href="/gyms"
-              className="mt-8 inline-block w-full rounded-full border border-l-border px-5 py-3 text-sm font-medium text-l-text"
-            >
-              Back to the app
-            </Link>
-          </>
-        )}
-
-        {/* 6b. Straight in (a link the captain marked auto-approve) */}
-        {result?.status === "approved" && (
-          <>
-            <h1 className="font-display text-3xl text-l-text">You&apos;re in</h1>
-            <p className="mt-3 text-sm leading-relaxed text-l-text-2">
-              Welcome to {teamName}. Varsity Mode now sits alongside your student account —
-              switch between them from your profile.
-            </p>
-            <Link
-              href={VARSITY_HOME}
-              className="mt-8 inline-block w-full rounded-full bg-l-varsity px-5 py-3 text-sm font-semibold text-l-bg"
-            >
-              Open Varsity Mode
-            </Link>
-          </>
-        )}
-
-        {/* 6c. The server said no */}
-        {result?.reason && (
-          <>
-            <h1 className="font-display text-3xl text-l-text">Couldn&apos;t join</h1>
-            <p className="mt-3 text-sm leading-relaxed text-l-text-2">
-              {redeemMessage[result.reason] ?? result.reason}
-            </p>
-            <Link
-              href="/gyms"
-              className="mt-8 inline-block text-xs font-medium text-l-text-2 hover:text-l-text"
-            >
-              ← Back to the app
-            </Link>
-          </>
-        )}
-      </div>
-    </div>
+      {/* 6c. The server said no */}
+      {result?.reason && (
+        <>
+          <h1 className="font-display text-3xl text-l-text">Couldn&apos;t join</h1>
+          <p className="mt-3 text-sm leading-relaxed text-l-text-2">
+            {refusalMessage(result.reason, preview?.personal)}
+          </p>
+          <Link
+            href="/join"
+            className="mt-7 inline-block w-full rounded-full border border-l-border px-5 py-3 text-sm font-medium text-l-text"
+          >
+            Try another link
+          </Link>
+        </>
+      )}
+    </JoinShell>
   );
 }
