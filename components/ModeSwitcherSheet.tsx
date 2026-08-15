@@ -8,11 +8,18 @@
   varsity mark in the Varsity top bar. The mode you're already in is ticked and
   just closes the sheet; the other one navigates. Colors are theme tokens
   (rule 1) so the same sheet reads correctly in both modes' themes.
+
+  The varsity row has three faces, because not everyone is on a team:
+    • on a squad   → the team's name and your role; tapping switches mode
+    • waiting      → "waiting for your captain", tapping goes to Settings
+    • on no team   → "Join a varsity team", tapping goes to the invite screen
 */
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import VarsityShield from "@/components/varsity/VarsityShield";
 import VarsityCrest from "@/components/varsity/VarsityCrest";
+import { useMembership } from "@/components/varsity/useMembership";
+import { roleLabel } from "@/lib/varsity/membership";
 import { VARSITY_HOME } from "@/lib/varsity/theme";
 import { IconCheck, IconChevronRight, IconX } from "@/components/icons";
 
@@ -26,6 +33,7 @@ export default function ModeSwitcherSheet({
   onClose: () => void;
 }) {
   const router = useRouter();
+  const { membership, isMember, isPending } = useMembership();
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -35,9 +43,25 @@ export default function ModeSwitcherSheet({
 
   const go = (mode: "student" | "varsity") => {
     onClose();
-    if (mode === current) return;
-    router.push(mode === "varsity" ? VARSITY_HOME : "/profile");
+    if (mode === "student") {
+      if (current !== "student") router.push("/profile");
+      return;
+    }
+    // Varsity only opens for an approved member; everyone else is pointed at
+    // the step that would actually get them in.
+    if (isMember) {
+      if (current !== "varsity") router.push(VARSITY_HOME);
+    } else {
+      router.push(isPending ? "/settings" : "/join");
+    }
   };
+
+  // What the varsity row says, given where this person stands.
+  const varsityLine = isMember
+    ? `${membership!.teamName} · ${roleLabel[membership!.role]}`
+    : isPending
+      ? "Waiting for your captain to let you in"
+      : "Join with an invite link from your team";
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col justify-end">
@@ -102,16 +126,24 @@ export default function ModeSwitcherSheet({
             onClick={() => go("varsity")}
             className="flex w-full items-center gap-3 px-4 py-3.5 text-left active:bg-surface-2"
           >
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-primary/40 bg-primary/10">
+            <span
+              className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border ${
+                isMember ? "border-primary/40 bg-primary/10" : "border-border bg-surface-2 opacity-60"
+              }`}
+            >
               <VarsityCrest size={32} />
             </span>
             <span className="min-w-0 flex-1">
               <span className="block truncate text-[14px] font-medium text-text">Varsity</span>
-              <span className="mt-0.5 block truncate text-[11px] text-muted">
-                Harvard Rowing · training, lineups &amp; team
+              <span
+                className={`mt-0.5 block truncate text-[11px] ${
+                  isPending ? "text-warn" : "text-muted"
+                }`}
+              >
+                {varsityLine}
               </span>
             </span>
-            {current === "varsity" ? (
+            {current === "varsity" && isMember ? (
               <IconCheck size={16} className="shrink-0 text-primary" />
             ) : (
               <IconChevronRight size={16} className="shrink-0 text-muted" />

@@ -22,13 +22,17 @@ import { useThemeMode } from "@/components/ThemeMode";
 import { useProfileData } from "@/components/profile/useProfileData";
 import PreferencesSheet from "@/components/profile/PreferencesSheet";
 import NotificationSettings from "@/components/profile/NotificationSettings";
+import { useMembership } from "@/components/varsity/useMembership";
 import { profileFromOnboarding } from "@/lib/currentUser";
 import { getUniversity, neutralTheme } from "@/lib/themes";
+import { roleLabel } from "@/lib/varsity/membership";
+import { VARSITY_HOME } from "@/lib/varsity/theme";
 import {
   IconArrowLeft,
   IconChevronRight,
   IconMoon,
   IconPencil,
+  IconShield,
   IconSun,
 } from "@/components/icons";
 
@@ -88,6 +92,7 @@ export default function SettingsPage() {
   const { ready, loggedIn, email, logout, resetOnboarding, universityKey } = useAppState();
   const { mode, toggle } = useThemeMode();
   const { data, loading, saveState, update, savePreferences } = useProfileData();
+  const { membership, loading: membershipLoading } = useMembership();
   const router = useRouter();
   const [editingPrefs, setEditingPrefs] = useState(false);
 
@@ -148,6 +153,37 @@ export default function SettingsPage() {
             <span className="flex-1 text-sm text-text">Appearance</span>
             <span className="text-xs text-muted">{mode === "dark" ? "Dark" : "Light"}</span>
           </button>
+        </Section>
+
+        {/* Varsity — a team you belong to sits alongside the student account.
+            Three states: not on a team, waiting for a captain, or in. */}
+        <Section title="Varsity">
+          {membershipLoading ? (
+            <p className="rounded-2xl border border-border bg-surface px-4 py-3 text-sm text-muted">
+              Checking…
+            </p>
+          ) : !membership ? (
+            <>
+              <Row icon={<IconShield size={18} />} label="Join a varsity team" href="/join" />
+              <p className="mt-2 px-1 text-[11px] text-muted">
+                Paste the invite link your coach or captain sent you.
+              </p>
+            </>
+          ) : membership.status === "pending" ? (
+            <p className="rounded-2xl border border-border bg-surface px-4 py-3 text-sm text-text">
+              {membership.teamName}
+              <span className="mt-0.5 block text-[11px] text-warn">
+                Waiting for your captain to let you in
+              </span>
+            </p>
+          ) : (
+            <Row
+              icon={<IconShield size={18} />}
+              label={membership.teamName}
+              detail={roleLabel[membership.role]}
+              href={VARSITY_HOME}
+            />
+          )}
         </Section>
 
         <Section title="Your answers">

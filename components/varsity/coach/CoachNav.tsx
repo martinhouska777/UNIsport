@@ -3,28 +3,35 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
-import { IconCalendar, IconAnchor, IconClipboard } from "@/components/icons";
+import { IconCalendar, IconAnchor, IconClipboard, IconUser } from "@/components/icons";
+import { can, type VarsityRole } from "@/lib/varsity/membership";
 
 /*
-  Coach Console bottom nav: Plan · Lineup · Notes. Separate from the athlete
-  5-tab nav. Active tab is crimson.
+  Coach Console bottom nav. Which tabs exist depends on the role, and that rule
+  lives in the tab DATA below (`allowed`), not in the markup:
+    coach   — Plan · Lineup · Notes · Team
+    captain — Team only (a captain handles people, never training)
+  Active tab is crimson. The server enforces the same split, so a captain who
+  types a plan URL still can't save anything.
 */
-type Tab = { href: string; label: string; icon: ReactNode };
+type Tab = { href: string; label: string; icon: ReactNode; allowed: (r: VarsityRole) => boolean };
 
 const tabs: Tab[] = [
-  { href: "/varsity/coach/plan", label: "Plan", icon: <IconCalendar size={22} /> },
-  { href: "/varsity/coach/lineup", label: "Lineup", icon: <IconAnchor size={22} /> },
-  { href: "/varsity/coach/notes", label: "Notes", icon: <IconClipboard size={22} /> },
+  { href: "/varsity/coach/plan", label: "Plan", icon: <IconCalendar size={22} />, allowed: can.buildPlan },
+  { href: "/varsity/coach/lineup", label: "Lineup", icon: <IconAnchor size={22} />, allowed: can.buildLineup },
+  { href: "/varsity/coach/notes", label: "Notes", icon: <IconClipboard size={22} />, allowed: can.writeNotes },
+  { href: "/varsity/coach/team", label: "Team", icon: <IconUser size={22} />, allowed: can.invite },
 ];
 
-export default function CoachNav() {
+export default function CoachNav({ role }: { role: VarsityRole }) {
   const pathname = usePathname();
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + "/");
+  const visible = tabs.filter((t) => t.allowed(role));
 
   return (
     <nav className="relative z-10 flex-shrink-0 border-t border-border bg-surface">
       <ul className="mx-auto flex max-w-screen-sm items-stretch px-2 pb-5 pt-2">
-        {tabs.map((tab) => (
+        {visible.map((tab) => (
           <li key={tab.href} className="flex-1">
             <Link
               href={tab.href}

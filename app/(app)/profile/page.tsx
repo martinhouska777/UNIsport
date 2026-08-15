@@ -7,6 +7,7 @@ import VarsityShield from "@/components/varsity/VarsityShield";
 import VarsityCrest from "@/components/varsity/VarsityCrest";
 import ModeSwitcherSheet from "@/components/ModeSwitcherSheet";
 import useTapOrDoubleTap from "@/components/useTapOrDoubleTap";
+import { useMembership } from "@/components/varsity/useMembership";
 import { VARSITY_HOME } from "@/lib/varsity/theme";
 import InlineEdit from "@/components/profile/InlineEdit";
 import SessionCalendar from "@/components/profile/SessionCalendar";
@@ -78,11 +79,20 @@ export default function ProfilePage() {
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
+  // Is this account on a squad? Decides whether the varsity affordances on this
+  // page do anything — a regular student has no second mode to switch to.
+  const { isMember } = useMembership();
+
   // The name in the top bar: one tap opens the switcher, two go straight to
-  // Varsity Mode (which plays its own intro on the way in).
+  // Varsity Mode (which plays its own intro on the way in). The shortcut only
+  // exists for actual team members; for everyone else the sheet explains how to
+  // join instead of dumping them on a screen they'd be bounced off.
   const handleModeTap = useTapOrDoubleTap(
     useCallback(() => setSwitchingMode(true), []),
-    useCallback(() => router.push(VARSITY_HOME), [router]),
+    useCallback(() => {
+      if (isMember) router.push(VARSITY_HOME);
+      else setSwitchingMode(true);
+    }, [isMember, router]),
   );
 
   // Avatar picker: downscale the chosen image and store it as the profile photo.
@@ -304,10 +314,13 @@ export default function ProfilePage() {
           </button>
 
           {/* Quiet hint that there's another mode behind this profile — the
-              oars crest, because it points AT Varsity Mode. */}
-          <span className="absolute -right-1.5 -top-1.5 flex h-[26px] w-[26px] items-center justify-center rounded-full border border-border bg-surface">
-            <VarsityCrest size={19} />
-          </span>
+              oars crest, because it points AT Varsity Mode. Only shown to
+              people who actually have one. */}
+          {isMember && (
+            <span className="absolute -right-1.5 -top-1.5 flex h-[26px] w-[26px] items-center justify-center rounded-full border border-border bg-surface">
+              <VarsityCrest size={19} />
+            </span>
+          )}
         </div>
 
         <div className="flex flex-col items-center gap-1">

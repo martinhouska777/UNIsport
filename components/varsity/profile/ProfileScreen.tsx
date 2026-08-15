@@ -19,6 +19,8 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Sheet from "@/components/varsity/Sheet";
 import { useAppState } from "@/components/AppState";
+import { useMembership } from "@/components/varsity/useMembership";
+import { can, canOpenConsole, roleLabel } from "@/lib/varsity/membership";
 import { fetchLogsInRange, type LogEntry } from "@/lib/varsity/logStore";
 import { toISO } from "@/lib/varsity/coachPlan";
 import {
@@ -345,6 +347,10 @@ function MetresLineGraph({ weeks }: { weeks: { label: string; metres: number; la
 /* ─────────────────────────  screen  ───────────────────────── */
 export default function ProfileScreen() {
   const { userId } = useAppState();
+  // Coach or captain? Decides whether the console door appears at the bottom.
+  const { membership, isMember } = useMembership();
+  const consoleRole =
+    isMember && canOpenConsole(membership!.role) ? membership!.role : null;
   const now = useMemo(() => new Date(), []);
 
   const [name, setName] = useState("");
@@ -650,16 +656,19 @@ export default function ProfileScreen() {
         </div>
       </div>
 
-      {/* Dev entry into the Coach Console (until the real coach role/approval exists) */}
-      <div className="mx-3.5 mt-4">
-        <Link
-          href="/varsity/coach"
-          className="flex items-center justify-center gap-2 rounded-xl border border-border bg-surface px-4 py-3 text-[11px] font-medium text-muted"
-        >
-          <IconChevronRight size={14} />
-          Open Coach Console (dev)
-        </Link>
-      </div>
+      {/* The door into the console, for the people who run the squad. A plain
+          athlete never sees it, and the database refuses them anyway. */}
+      {consoleRole && (
+        <div className="mx-3.5 mt-4">
+          <Link
+            href={can.buildPlan(consoleRole) ? "/varsity/coach/plan" : "/varsity/coach/team"}
+            className="flex items-center justify-center gap-2 rounded-xl border border-border bg-surface px-4 py-3 text-[11px] font-medium text-muted"
+          >
+            <IconChevronRight size={14} />
+            Open {roleLabel[consoleRole]} Console
+          </Link>
+        </div>
+      )}
 
       {/* ── Sheets ── */}
       {modal === "identity" && (

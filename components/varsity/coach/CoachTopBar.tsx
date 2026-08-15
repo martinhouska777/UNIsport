@@ -3,13 +3,20 @@
 import Link from "next/link";
 import { ThemeModeToggle } from "@/components/ThemeMode";
 import { IconArrowLeft } from "@/components/icons";
+import { roleLabel, type VarsityRole } from "@/lib/varsity/membership";
 
 /*
-  Top bar for the Coach Console. Shows the coach context and an exit back to the
-  athlete side of Varsity Mode (Home). The crimson "H" mark mirrors the coach
-  mockup's brand block.
+  Top bar for the Coach Console. Names the console, the squad, and which hat the
+  person is wearing — a captain sees a much smaller console than a coach, so it
+  should be obvious which one they are. Exit goes back to the athlete side.
 */
-export default function CoachTopBar() {
+export default function CoachTopBar({
+  role,
+  teamName,
+}: {
+  role: VarsityRole;
+  teamName: string;
+}) {
   return (
     <div className="relative z-10 flex flex-shrink-0 items-center justify-between border-b border-border bg-background px-4 py-3">
       <div className="flex items-center gap-2.5">
@@ -17,8 +24,10 @@ export default function CoachTopBar() {
           H
         </span>
         <div className="flex flex-col leading-none">
-          <span className="text-sm font-semibold text-text">Coach Console</span>
-          <span className="mt-0.5 text-[10px] tracking-[0.1em] text-muted">Harvard Rowing</span>
+          <span className="text-sm font-semibold text-text">
+            {roleLabel[role]} Console
+          </span>
+          <span className="mt-0.5 text-[10px] tracking-[0.1em] text-muted">{teamName}</span>
         </div>
       </div>
       <div className="flex items-center gap-2">

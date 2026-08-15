@@ -52,7 +52,18 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (ready && loggedIn) router.replace(onboarded ? "/gyms" : "/onboarding");
+    if (!ready || !loggedIn) return;
+    /*
+      An invite link sends people here as /login?next=/join/<code> so they land
+      back on the invite once they're signed in. Read straight off the URL
+      rather than with useSearchParams(), which would force this whole page
+      into a Suspense boundary. Only same-site paths are honoured, so the
+      parameter can't be used to bounce someone to another website.
+    */
+    const next = new URLSearchParams(window.location.search).get("next");
+    const safeNext = next && next.startsWith("/") && !next.startsWith("//") ? next : null;
+    if (!onboarded) router.replace("/onboarding");
+    else router.replace(safeNext ?? "/gyms");
   }, [ready, loggedIn, onboarded, router]);
 
   // Prefill the email from the last sign-in on this device (password never is).
