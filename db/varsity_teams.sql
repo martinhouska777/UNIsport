@@ -19,7 +19,9 @@
 --
 -- Run this in the Supabase SQL editor. IDEMPOTENT — safe to re-run.
 
-create extension if not exists pgcrypto;
+-- pgcrypto gives us gen_random_bytes() for the invite codes. On Supabase it is
+-- already installed in the `extensions` schema, so this is usually a no-op.
+create extension if not exists pgcrypto with schema extensions;
 
 -- ── A squad ────────────────────────────────────────────────────────────────
 create table if not exists public.varsity_teams (
@@ -83,9 +85,15 @@ returns text language sql stable security definer set search_path = public as $$
 $$;
 
 -- May this caller invite people / approve joiners? Coach and captain both may.
+--
+-- The coalesce() is load-bearing. varsity_my_role() returns NULL for anyone who
+-- isn't an APPROVED member, and `NULL in ('coach','captain')` is NULL — not
+-- false. Without it every `if not varsity_can_admin(...)` guard below evaluates
+-- to NULL, the IF never fires, and someone merely sitting in the waiting room
+-- can mint their own invite links. Never let this return NULL.
 create or replace function public.varsity_can_admin(p_team uuid)
 returns boolean language sql stable security definer set search_path = public as $$
-  select public.varsity_my_role(p_team) in ('coach', 'captain');
+  select coalesce(public.varsity_my_role(p_team) in ('coach', 'captain'), false);
 $$;
 
 grant execute on function public.varsity_my_role(uuid)  to authenticated;
@@ -149,8 +157,11 @@ $$;
 -- the ambiguous ones (0/O, 1/I/L) removed, so it survives being read aloud or
 -- retyped. About 79 bits — not something anyone guesses or enumerates.
 -- ---------------------------------------------------------------------------
+-- search_path includes `extensions` because that is where Supabase installs
+-- pgcrypto — with search_path pinned to public alone, gen_random_bytes() is
+-- invisible and every attempt to make a link fails.
 create or replace function public.varsity_gen_code()
-returns text language plpgsql volatile set search_path = public as $$
+returns text language plpgsql volatile set search_path = public, extensions as $$
 declare
   alphabet constant text := 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
   result text := '';
@@ -377,7 +388,10 @@ create or replace function public.varsity_set_member_role(
 )
 returns void language plpgsql security definer set search_path = public as $$
 begin
-  if public.varsity_my_role(p_team) <> 'coach' then
+  -- IS DISTINCT FROM, not <>: for a non-member varsity_my_role() is NULL, and
+  -- `NULL <> 'coach'` is NULL, so a plain <> would let a stranger straight past
+  -- this guard and hand themselves a coach role.
+  if public.varsity_my_role(p_team) is distinct from 'coach' then
     raise exception 'Only a coach can change roles';
   end if;
   if p_role not in ('coach', 'captain', 'athlete') then
