@@ -103,13 +103,15 @@ export default function VarsityIntro() {
           </div>
         </div>
 
-        {/* The motto, sliding in under the crest. Crimson comes from the theme
-            token, and the words from the university's data — a school with no
-            motto in its row simply has no line here. */}
+        {/* The motto, sliding in under the crest. `text` is the token that
+            flips with the background — off-white on the dark theme, near-black
+            on the light one — so the words read either way without either
+            colour being written here. The words themselves come from the
+            university's data; a school with no motto has no line at all. */}
         {motto && (
           <div className="absolute inset-x-0 top-[196px] flex justify-center">
             <div
-              className="v-motto-in whitespace-nowrap text-[15px] font-semibold uppercase text-primary"
+              className="v-motto-in whitespace-nowrap text-[15px] font-semibold uppercase text-text"
               // The trailing letter's spacing would push the word off-centre;
               // this pays it back. Matches the tracking the animation ends on.
               style={{ textIndent: "0.38em" }}
