@@ -2,7 +2,7 @@
 
 /*
   COACH CONSOLE shell — a separate area inside Varsity Mode for the people who
-  run the squad. Same varsity theme + oar rails, but its own top bar and nav.
+  run the squad. Same varsity theme, but its own top bar and nav.
 
   This is also the gate. Only an approved coach or captain gets in at all, and a
   captain only gets the Team screen — the owner's rule is that captains handle
@@ -13,7 +13,6 @@ import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAppState } from "@/components/AppState";
 import ThemeProvider from "@/components/ThemeProvider";
-import OarRails from "@/components/varsity/OarRails";
 import CoachTopBar from "@/components/varsity/coach/CoachTopBar";
 import CoachNav from "@/components/varsity/coach/CoachNav";
 import { useMembership } from "@/components/varsity/useMembership";
@@ -59,7 +58,6 @@ export default function CoachLayout({ children }: { children: React.ReactNode })
       paintRoot
       className="relative flex h-dvh flex-col overflow-hidden bg-background"
     >
-      <OarRails />
       <CoachTopBar role={role} teamName={membership!.teamName} />
       <main className="relative z-10 flex flex-1 flex-col overflow-y-auto">{children}</main>
       <CoachNav role={role} />

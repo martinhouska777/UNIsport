@@ -3,7 +3,6 @@
 /*
   VARSITY MODE shell — a fully separate section of the app.
   - Applies the Varsity theme (its own data) at runtime via <ThemeProvider>.
-  - Frames the screen with the crimson/white Harvard "oar" rails.
   - Renders its OWN top bar + 5-tab bottom nav (not the normal app's).
   - Reuses the same login session as the rest of the app: if you're not logged
     in / onboarded it bounces you back out, just like the normal Zone 2 shell.
@@ -25,7 +24,6 @@ import { useRouter } from "next/navigation";
 import { useAppState } from "@/components/AppState";
 import { useMembership } from "@/components/varsity/useMembership";
 import ThemeProvider from "@/components/ThemeProvider";
-import OarRails from "@/components/varsity/OarRails";
 import VarsityIntro from "@/components/varsity/VarsityIntro";
 import VarsityTopBar from "@/components/varsity/VarsityTopBar";
 import VarsityNav from "@/components/varsity/VarsityNav";
@@ -61,7 +59,6 @@ export default function VarsityLayout({ children }: { children: React.ReactNode 
       className="relative flex h-dvh flex-col overflow-hidden bg-background"
     >
       <VarsityIntro />
-      <OarRails />
       <VarsityTopBar />
       <main className="relative z-10 flex flex-1 flex-col overflow-y-auto">
         {children}
