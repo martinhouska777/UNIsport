@@ -94,6 +94,12 @@ export const IconChevronRight = (p: IconProps) => (
   </Base>
 );
 
+export const IconChevronLeft = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M15 6l-6 6 6 6" />
+  </Base>
+);
+
 export const IconAnchor = (p: IconProps) => (
   <Base {...p}>
     <circle cx="12" cy="5" r="2.5" />

@@ -37,11 +37,19 @@ import {
   statusOptions,
   prPieces,
   rowingCategories,
+  defaultStatTiles,
   type VarsityAthleteProfile,
   type StatusTone,
 } from "@/lib/varsity/athleteProfile";
 import {
+  metricByKey,
+  sanitizeStatTiles,
+  cycleStat,
+  type StatInput,
+} from "@/lib/varsity/athleteStats";
+import {
   IconPencil,
+  IconChevronLeft,
   IconAnchor,
   IconActivity,
   IconChevronRight,
@@ -80,10 +88,6 @@ function initialsOf(name: string): string {
 }
 function slugify(name: string): string {
   return name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "athlete";
-}
-function metresK(m: number): string {
-  if (m >= 1000) return `${(m / 1000).toFixed(m >= 10000 ? 0 : 1)}k`;
-  return String(m);
 }
 function mondayOf(d: Date): Date {
   const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
@@ -419,15 +423,21 @@ export default function ProfileScreen() {
     });
   };
 
-  // This week's totals (the current Mon–Sun, up to today).
+  /*
+    Everything the three stat tiles are allowed to read. The screen already has
+    eight weeks of logs for the graph, so swapping a tile is instant — no metric
+    goes back to the database for its number.
+  */
   const weekStartIso = useMemo(() => toISO(mondayOf(now)), [now]);
-  const weekLogs = useMemo(() => logs.filter((l) => l.logDate >= weekStartIso), [logs, weekStartIso]);
-  const weekSessions = weekLogs.length;
-  const weekMetres = weekLogs.reduce(
-    (s, l) => s + (rowingCategories.has(l.category ?? "") ? l.metres ?? 0 : 0),
-    0,
+  const statInput: StatInput = useMemo(
+    () => ({
+      logs,
+      weekStartIso,
+      fourWeeksAgoIso: toISO(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 27)),
+      units,
+    }),
+    [logs, weekStartIso, now, units],
   );
-  const weekDays = new Set(weekLogs.map((l) => l.logDate)).size;
 
   // Weekly metres buckets (Mon–Sun), oldest → newest.
   const weeks = useMemo(() => {
@@ -484,11 +494,11 @@ export default function ProfileScreen() {
     copyLink();
   };
 
-  const statTiles = [
-    { val: String(weekSessions), lbl: "Sessions", sub: "this week" },
-    { val: metresK(weekMetres), lbl: "Metres", sub: "this week" },
-    { val: String(weekDays), lbl: "Days", sub: "this week" },
-  ];
+  // Which three stats this athlete keeps on their profile, and the arrows that
+  // change one. The choice is saved with the rest of their record.
+  const tiles = sanitizeStatTiles(profile.statTiles, defaultStatTiles);
+  const swapStat = (slot: number, dir: 1 | -1) =>
+    patchProfile({ statTiles: cycleStat(tiles, slot, dir) });
 
   return (
     <div className="mx-auto w-full max-w-screen-sm pb-10">
@@ -562,15 +572,46 @@ export default function ProfileScreen() {
         Statistics
       </div>
       <div className="mx-3.5 mb-2.5 grid grid-cols-3 gap-1.5">
-        {statTiles.map((t) => (
-          <div key={t.lbl} className="rounded-2xl border border-border bg-surface px-2 py-3 text-center">
-            <div className="text-xl font-semibold leading-none text-text">{t.val}</div>
-            <div className="mt-1.5 text-[8px] font-semibold uppercase tracking-[0.1em] text-muted">
-              {t.lbl}
+        {tiles.map((key, slot) => {
+          const metric = metricByKey(key);
+          const value = metric.value(statInput);
+          return (
+            <div
+              key={slot}
+              className="rounded-2xl border border-border bg-surface px-1.5 pb-1 pt-3 text-center"
+            >
+              {/* "8h 30m" and "12.4 km" need more room than "14" — the number
+                  steps down a size rather than spilling out of the tile. */}
+              <div
+                className={`${value.length > 6 ? "text-base" : "text-xl"} font-semibold leading-none text-text`}
+              >
+                {value}
+              </div>
+              <div className="mt-1.5 text-[8px] font-semibold uppercase tracking-[0.08em] text-muted">
+                {metric.label}
+              </div>
+              <div className="mt-0.5 text-[8px] text-muted">{metric.sub}</div>
+              <div className="mt-0.5 flex items-center justify-center">
+                <button
+                  type="button"
+                  onClick={() => swapStat(slot, -1)}
+                  aria-label={`Show a different stat here instead of ${metric.label}`}
+                  className="flex h-7 w-7 items-center justify-center rounded-full text-muted active:bg-surface-2"
+                >
+                  <IconChevronLeft size={13} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => swapStat(slot, 1)}
+                  aria-label={`Show the next stat here instead of ${metric.label}`}
+                  className="flex h-7 w-7 items-center justify-center rounded-full text-muted active:bg-surface-2"
+                >
+                  <IconChevronRight size={13} />
+                </button>
+              </div>
             </div>
-            <div className="mt-0.5 text-[8px] text-muted">{t.sub}</div>
-          </div>
-        ))}
+          );
+        })}
       </div>
       <div className="mx-3.5">
         <MetresLineGraph weeks={weeks} />
