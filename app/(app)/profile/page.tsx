@@ -80,25 +80,21 @@ export default function ProfilePage() {
   const router = useRouter();
 
   /*
-    Is this account tied to a squad at all (waiting to be let in counts)?
-    Decides whether ANY varsity mark shows on this page. A regular student must
-    see no trace of it: the mark in the top bar would otherwise advertise that
-    some accounts have a section theirs doesn't. People who aren't on a team
-    reach the join screen through Settings instead.
+    Only an APPROVED member sees any varsity mark on this page — not someone
+    still waiting to be let in, and certainly not a regular student. Until the
+    captain approves you, the only place varsity is mentioned is Settings, which
+    is somewhere you go looking rather than something the app puts in front of
+    you. Nothing here should advertise that other accounts have a section this
+    one doesn't.
   */
-  const { membership, isMember } = useMembership();
-  const hasVarsity = !!membership;
+  const { isMember } = useMembership();
 
-  // The name in the top bar (only tappable for squad members): one tap opens
-  // the switcher, two go straight to Varsity Mode, which plays its own intro on
-  // the way in. Someone still waiting to be approved gets the sheet either way —
-  // it tells them where they stand rather than bouncing them off a locked tab.
+  // The name in the top bar, which only becomes a button once you're an
+  // approved member: one tap opens the switcher, two go straight to Varsity
+  // Mode, which plays its own intro on the way in.
   const handleModeTap = useTapOrDoubleTap(
     useCallback(() => setSwitchingMode(true), []),
-    useCallback(() => {
-      if (isMember) router.push(VARSITY_HOME);
-      else setSwitchingMode(true);
-    }, [isMember, router]),
+    useCallback(() => router.push(VARSITY_HOME), [router]),
   );
 
   // Avatar picker: downscale the chosen image and store it as the profile photo.
@@ -263,7 +259,7 @@ export default function ProfilePage() {
             for the sheet, double-tap to go straight into Varsity Mode. For
             everyone else it is just their name — no chevron, no mark, nothing
             hinting at a mode they don't have. */}
-        {hasVarsity ? (
+        {isMember ? (
           <button
             type="button"
             onClick={handleModeTap}
