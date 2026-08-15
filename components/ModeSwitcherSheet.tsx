@@ -12,18 +12,17 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import VarsityShield from "@/components/varsity/VarsityShield";
+import VarsityCrest from "@/components/varsity/VarsityCrest";
 import { VARSITY_HOME } from "@/lib/varsity/theme";
-import { IconUser, IconCheck, IconChevronRight, IconX } from "@/components/icons";
+import { IconCheck, IconChevronRight, IconX } from "@/components/icons";
 
 export default function ModeSwitcherSheet({
   current,
   name,
-  photo,
   onClose,
 }: {
   current: "student" | "varsity";
   name?: string;
-  photo?: string | null;
   onClose: () => void;
 }) {
   const router = useRouter();
@@ -78,13 +77,9 @@ export default function ModeSwitcherSheet({
             onClick={() => go("student")}
             className="flex w-full items-center gap-3 px-4 py-3.5 text-left active:bg-surface-2"
           >
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border bg-surface-2 text-muted">
-              {photo ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={photo} alt="" className="h-full w-full object-cover" />
-              ) : (
-                <IconUser size={20} />
-              )}
+            {/* The plain shield is the student mark; the oars are varsity's. */}
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border bg-surface-2">
+              <VarsityShield size={22} />
             </span>
             <span className="min-w-0 flex-1">
               <span className="block truncate text-[14px] font-medium text-text">
@@ -108,7 +103,7 @@ export default function ModeSwitcherSheet({
             className="flex w-full items-center gap-3 px-4 py-3.5 text-left active:bg-surface-2"
           >
             <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-primary/40 bg-primary/10">
-              <VarsityShield size={24} />
+              <VarsityCrest size={32} />
             </span>
             <span className="min-w-0 flex-1">
               <span className="block truncate text-[14px] font-medium text-text">Varsity</span>

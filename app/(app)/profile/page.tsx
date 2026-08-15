@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import VarsityShield from "@/components/varsity/VarsityShield";
+import VarsityCrest from "@/components/varsity/VarsityCrest";
 import ModeSwitcherSheet from "@/components/ModeSwitcherSheet";
 import useTapOrDoubleTap from "@/components/useTapOrDoubleTap";
 import { VARSITY_HOME } from "@/lib/varsity/theme";
@@ -302,9 +303,10 @@ export default function ProfilePage() {
             <IconCamera size={12} />
           </button>
 
-          {/* Quiet hint that there's another mode behind this profile. */}
-          <span className="absolute -right-1 -top-1 flex h-[22px] w-[22px] items-center justify-center rounded-full border border-border bg-surface">
-            <VarsityShield size={13} />
+          {/* Quiet hint that there's another mode behind this profile — the
+              oars crest, because it points AT Varsity Mode. */}
+          <span className="absolute -right-1.5 -top-1.5 flex h-[26px] w-[26px] items-center justify-center rounded-full border border-border bg-surface">
+            <VarsityCrest size={19} />
           </span>
         </div>
 
@@ -512,7 +514,6 @@ export default function ProfilePage() {
         <ModeSwitcherSheet
           current="student"
           name={user.name}
-          photo={user.photo}
           onClose={() => setSwitchingMode(false)}
         />
       )}

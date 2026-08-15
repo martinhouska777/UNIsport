@@ -3,7 +3,7 @@
 import { useCallback, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import VarsityShield from "@/components/varsity/VarsityShield";
+import VarsityCrest from "@/components/varsity/VarsityCrest";
 import ModeSwitcherSheet from "@/components/ModeSwitcherSheet";
 import useTapOrDoubleTap from "@/components/useTapOrDoubleTap";
 import { ThemeModeToggle } from "@/components/ThemeMode";
@@ -52,7 +52,7 @@ export default function VarsityTopBar() {
         aria-label="Switch mode"
         className="flex items-center gap-2 text-left"
       >
-        <VarsityShield size={26} />
+        <VarsityCrest size={30} />
         <div className="flex flex-col leading-none">
           <span className="text-[8px] font-semibold tracking-[0.18em] text-accent">
             VARSITY MODE
