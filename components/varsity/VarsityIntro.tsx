@@ -15,6 +15,8 @@
 */
 import { useEffect, useState } from "react";
 import VarsityShield from "@/components/varsity/VarsityShield";
+import { useAppState } from "@/components/AppState";
+import { getUniversity } from "@/lib/themes";
 
 // Placeholder oar: blade at the top, long shaft below. Colors are theme tokens
 // (crimson primary, white contrast) so it re-skins with the theme (rule 1).
@@ -43,6 +45,10 @@ function IntroOar() {
 export default function VarsityIntro() {
   const [leaving, setLeaving] = useState(false);
   const [done, setDone] = useState(false);
+  // The motto is the UNIVERSITY's, not Varsity Mode's, so it comes from the
+  // same theme data every school will eventually have a row in (rule 2).
+  const { universityKey } = useAppState();
+  const motto = getUniversity(universityKey)?.motto;
 
   useEffect(() => {
     // Respect the OS "reduce motion" setting: skip the intro outright.
@@ -53,8 +59,9 @@ export default function VarsityIntro() {
       setDone(true);
       return;
     }
-    const fade = setTimeout(() => setLeaving(true), 1750); // start fade-out
-    const end = setTimeout(() => setDone(true), 2300); // unmount after fade
+    // The motto lands at ~1.95s; hold it a beat before fading the whole thing.
+    const fade = setTimeout(() => setLeaving(true), 2250); // start fade-out
+    const end = setTimeout(() => setDone(true), 2800); // unmount after fade
     return () => {
       clearTimeout(fade);
       clearTimeout(end);
@@ -95,6 +102,22 @@ export default function VarsityIntro() {
             <VarsityShield size={92} />
           </div>
         </div>
+
+        {/* The motto, sliding in under the crest. Crimson comes from the theme
+            token, and the words from the university's data — a school with no
+            motto in its row simply has no line here. */}
+        {motto && (
+          <div className="absolute inset-x-0 top-[196px] flex justify-center">
+            <div
+              className="v-motto-in whitespace-nowrap text-[15px] font-semibold uppercase text-primary"
+              // The trailing letter's spacing would push the word off-centre;
+              // this pays it back. Matches the tracking the animation ends on.
+              style={{ textIndent: "0.38em" }}
+            >
+              {motto}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

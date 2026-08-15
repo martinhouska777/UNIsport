@@ -46,12 +46,16 @@ export type University = {
   name: string;
   theme: ThemeTokens; // the default (dark) look
   themeLight?: ThemeTokens; // light-mode variant (same brand hues, inverted neutrals)
+  // Words under the crest on the Varsity Mode intro. Optional on purpose: a
+  // school without one simply doesn't get the line — no component change.
+  motto?: string;
 };
 
 export const universities: Record<string, University> = {
   harvard: {
     key: "harvard",
     name: "Harvard University",
+    motto: "Ex Nemo", // the rowing motto, per the product owner
     // Dark theme: crimson primary + gold accent on a near-black background.
     theme: {
       background: "#0b0b0c",
