@@ -1,36 +1,51 @@
 "use client";
 
 /*
-  MATCH TAB. Two sub-tabs (mirrors the mockup):
+  MATCH TAB. Three sub-tabs:
   - Browse: all compatible partners, scored out of 100, best first.
   - Session Search: pick WHAT (activity) + WHEN (day + hour) — all required —
-    then optionally narrow with gym / level / gender in a filter sheet. Results
-    are people doing that activity who are free within ~2h of your hour.
+    then search. Results are people doing that activity who are free within ~2h.
+  - Buddy Board: open posts looking for a partner.
+
+  Every result card carries the REASONS that person ranked where they did (see
+  lib/matchReasons.ts) — the things you actually share. Tapping through to their
+  profile shows the full list.
+
+  FILTERS are shared by Browse and Session search: one sheet, one piece of state,
+  so a concentration you picked on one tab still applies on the other. Browse
+  re-runs the moment a filter changes; Session search waits for the Search button
+  because its required day/hour aren't a filter, they're the question.
 
   Data comes from the SQL RPC functions via lib/supabase/matching.ts. All colors
   are theme tokens; the choice lists reuse the onboarding data so they stay
   data-driven.
 */
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAppState } from "@/components/AppState";
+import { useProfileData } from "@/components/profile/useProfileData";
 import {
   getBrowseMatches,
   getSessionMatches,
   type Match,
+  type MatchFilters,
 } from "@/lib/supabase/matching";
 import {
   weekDays,
-  experienceLevels,
-  verifiedGyms,
   primaryActivities,
   sessionTimeSlots,
   sessionTimeLabel,
+  verifiedGyms,
   SESSION_WINDOW_HOURS,
 } from "@/lib/onboarding";
 import { matchTier, isWorthShowing } from "@/lib/matchTier";
 import MatchCard from "@/components/match/MatchCard";
 import BuddyBoard from "@/components/match/BuddyBoard";
+import FiltersSheet, {
+  NO_FILTERS,
+  activeFilterCount,
+  activeFilterChips,
+} from "@/components/match/FiltersSheet";
 import { Pill, FieldLabel } from "@/components/onboarding/controls";
 
 type SubTab = "browse" | "session" | "buddy";
@@ -39,11 +54,6 @@ const subTabs: { key: SubTab; label: string; heading: string }[] = [
   { key: "browse", label: "Browse", heading: "BROWSE" },
   { key: "session", label: "Session", heading: "SESSION SEARCH" },
   { key: "buddy", label: "Buddy Board", heading: "BUDDY BOARD" },
-];
-
-const genderOptions: { key: string; label: string }[] = [
-  { key: "male", label: "Men" },
-  { key: "female", label: "Women" },
 ];
 
 function Grid({
@@ -59,7 +69,7 @@ function Grid({
   // match on screen makes the whole list look like it failed.
   const worthShowing = matches.filter((m) => isWorthShowing(m.score, max));
   return (
-    <div className="grid grid-cols-2 gap-2 px-3 pb-4">
+    <div className="grid grid-cols-2 items-start gap-2 px-3 pb-4">
       {worthShowing.map((m) => (
         <MatchCard key={m.userId} match={m} max={max} onView={(x) => onView(x, max)} />
       ))}
@@ -71,63 +81,43 @@ function Status({ children }: { children: React.ReactNode }) {
   return <div className="px-3 py-16 text-center text-sm text-muted">{children}</div>;
 }
 
-// A square tick-box used in the optional-filters sheet. Ticking it reveals that
-// filter's options; unticking clears the choice.
-function CheckSquare({ checked }: { checked: boolean }) {
-  return (
-    <span
-      className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-[5px] border text-[11px] font-bold ${
-        checked
-          ? "border-primary bg-primary text-primary-contrast"
-          : "border-border bg-surface-2 text-transparent"
-      }`}
-    >
-      ✓
-    </span>
-  );
-}
-
-// One collapsible filter row inside the sheet: a tick-box + title, and when
-// ticked, the tappable options. Choosing one sets the value; unticking clears it.
-function FilterRow({
-  title,
-  open,
-  onToggle,
-  options,
-  value,
-  onPick,
+// The Filters button plus the chips for whatever is currently narrowing the
+// list. Shown on both Browse and Session search, driven by the same state.
+function FilterBar({
+  filters,
+  onOpen,
+  onClear,
 }: {
-  title: string;
-  open: boolean;
-  onToggle: () => void;
-  options: { key: string; label: string }[];
-  value: string | null;
-  onPick: (key: string) => void;
+  filters: MatchFilters;
+  onOpen: () => void;
+  onClear: (key: keyof MatchFilters) => void;
 }) {
+  const count = activeFilterCount(filters);
+  const chips = activeFilterChips(filters);
   return (
-    <div className="border-b border-border py-3 last:border-b-0">
-      <button
-        type="button"
-        onClick={onToggle}
-        className="flex w-full items-center gap-2.5 text-left"
-      >
-        <CheckSquare checked={open} />
-        <span className="text-sm text-text">{title}</span>
-        {value && !open && (
-          <span className="ml-auto text-xs text-muted">
-            {options.find((o) => o.key === value)?.label}
-          </span>
-        )}
-      </button>
-      {open && (
-        <div className="mt-2.5 flex flex-wrap gap-1.5 pl-[30px]">
-          {options.map((o) => (
-            <Pill
-              key={o.key}
-              label={o.label}
-              selected={value === o.key}
-              onClick={() => onPick(o.key)}
-            />
+    <div>
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={onOpen}
+          className="rounded-full border border-border bg-surface px-3.5 py-2 text-[13px] text-text"
+        >
+          Filters{count > 0 ? ` · ${count}` : ""}
+        </button>
+        <span className="text-[11px] text-muted">Optional</span>
+      </div>
+      {chips.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {chips.map((c) => (
+            <button
+              key={c.key}
+              type="button"
+              onClick={() => onClear(c.key)}
+              className="flex items-center gap-1 rounded-full border border-primary bg-primary/15 px-3 py-1.5 text-[12px] text-primary"
+            >
+              {c.label}
+              <span className="text-[13px] leading-none">×</span>
+            </button>
           ))}
         </div>
       )}
@@ -149,6 +139,7 @@ export default function MatchPage() {
 
 function MatchScreen() {
   const { userId } = useAppState();
+  const { data: myProfile } = useProfileData();
   const router = useRouter();
   const search = useSearchParams();
 
@@ -163,6 +154,13 @@ function MatchScreen() {
 
   const [tab, setTab] = useState<SubTab>(presetGym ? "session" : "browse");
 
+  // My own answers, for the sheet's "Same as mine" shortcuts.
+  const myConcentration = (myProfile?.concentration as string) || null;
+  const myInterests = useMemo(
+    () => (Array.isArray(myProfile?.interests) ? (myProfile.interests as string[]) : []),
+    [myProfile],
+  );
+
   // Open another person's profile, passing the exact fit tier shown on their
   // card so the profile badge says the same thing the card did.
   const viewProfile = (m: Match, max: number) => {
@@ -174,45 +172,22 @@ function MatchScreen() {
     );
   };
 
-  // --- Browse state ---
-  const [browse, setBrowse] = useState<Match[] | null>(null);
-  const [browseErr, setBrowseErr] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!userId) return;
-    let active = true;
-    getBrowseMatches(userId)
-      .then((rows) => active && setBrowse(rows))
-      .catch((e) => active && setBrowseErr(e.message));
-    return () => {
-      active = false;
-    };
-  }, [userId]);
-
-  // --- Session-search REQUIRED state ---
-  const [activity, setActivity] = useState<string | null>(null);
-  const [day, setDay] = useState<string | null>(null);
-  const [hour, setHour] = useState<number | null>(null);
-
-  // --- Session-search OPTIONAL filters (in the sheet) ---
+  // --- Shared filters (both Browse and Session search) ---
+  const [filters, setFilters] = useState<MatchFilters>(() =>
+    presetGym ? { ...NO_FILTERS, gym: presetGym } : NO_FILTERS,
+  );
   const [sheetOpen, setSheetOpen] = useState(false);
-  const [gym, setGym] = useState<string | null>(presetGym);
-  const [level, setLevel] = useState<string | null>(null);
-  const [gender, setGender] = useState<string | null>(null);
-  // Which filter rows are ticked open. A row open with no pick yet = no filter.
+  // Which rows are ticked open. A row open with no pick yet = no filter.
   const [openRows, setOpenRows] = useState<Set<string>>(
     () => new Set(presetGym ? ["gym"] : []),
   );
 
-  const toggleRow = (
-    key: string,
-    clear: () => void,
-  ) => {
+  const toggleRow = (key: keyof MatchFilters) => {
     setOpenRows((prev) => {
       const next = new Set(prev);
       if (next.has(key)) {
         next.delete(key);
-        clear(); // unticking a filter clears its choice
+        setFilters((f) => ({ ...f, [key]: null })); // unticking clears the choice
       } else {
         next.add(key);
       }
@@ -220,29 +195,49 @@ function MatchScreen() {
     });
   };
 
-  const activeFilters = [
-    gym && { key: "gym", label: gym, clear: () => setGym(null) },
-    level && {
-      key: "level",
-      label: experienceLevels.find((l) => l.key === level)?.name ?? level,
-      clear: () => setLevel(null),
-    },
-    gender && {
-      key: "gender",
-      label: genderOptions.find((g) => g.key === gender)?.label ?? gender,
-      clear: () => setGender(null),
-    },
-  ].filter(Boolean) as { key: string; label: string; clear: () => void }[];
-
-  const clearFilter = (key: string) => {
-    const f = activeFilters.find((x) => x.key === key);
-    f?.clear();
+  const clearFilter = (key: keyof MatchFilters) => {
+    setFilters((f) => ({ ...f, [key]: null }));
     setOpenRows((prev) => {
       const next = new Set(prev);
       next.delete(key);
       return next;
     });
   };
+
+  /*
+    --- Browse state ---
+    Re-runs whenever a filter changes. `filters` is a new object every time it's
+    edited, so identity is the signal: a stored result is only shown while it
+    still belongs to the filters on screen, which makes "loading" something we
+    derive rather than a flag to reset (resetting one inside the effect would
+    cascade a render) and drops a slow reply that a newer search has overtaken.
+  */
+  type BrowseResult = { forFilters: MatchFilters; rows?: Match[]; error?: string };
+  const [browseResult, setBrowseResult] = useState<BrowseResult | null>(null);
+
+  useEffect(() => {
+    if (!userId) return;
+    let active = true;
+    getBrowseMatches(userId, filters)
+      .then((rows) => {
+        if (active) setBrowseResult({ forFilters: filters, rows });
+      })
+      .catch((e: Error) => {
+        if (active) setBrowseResult({ forFilters: filters, error: e.message });
+      });
+    return () => {
+      active = false;
+    };
+  }, [userId, filters]);
+
+  const current = browseResult?.forFilters === filters ? browseResult : null;
+  const browse = current?.rows ?? null;
+  const browseErr = current?.error ?? null;
+
+  // --- Session-search REQUIRED state ---
+  const [activity, setActivity] = useState<string | null>(null);
+  const [day, setDay] = useState<string | null>(null);
+  const [hour, setHour] = useState<number | null>(null);
 
   const [results, setResults] = useState<Match[] | null>(null);
   const [searching, setSearching] = useState(false);
@@ -260,9 +255,7 @@ function MatchScreen() {
         activity: activity!,
         day: day!,
         hour: hour!,
-        gym,
-        level,
-        gender,
+        ...filters,
       });
       setResults(rows);
     } catch (e) {
@@ -303,11 +296,20 @@ function MatchScreen() {
       {/* BROWSE */}
       {tab === "browse" && (
         <>
+          <div className="px-3 pb-2">
+            <FilterBar
+              filters={filters}
+              onOpen={() => setSheetOpen(true)}
+              onClear={clearFilter}
+            />
+          </div>
           {browseErr && <Status>Couldn’t load matches: {browseErr}</Status>}
           {!browseErr && browse === null && <Status>Finding your matches…</Status>}
           {!browseErr && browse && browse.length === 0 && (
             <Status>
-              No matches yet. As more people finish onboarding, they’ll show up here.
+              {activeFilterCount(filters) > 0
+                ? "Nobody matches those filters yet. Try clearing one."
+                : "No matches yet. As more people finish onboarding, they’ll show up here."}
             </Status>
           )}
           {!browseErr && browse && browse.length > 0 && (
@@ -378,34 +380,12 @@ function MatchScreen() {
               </p>
             </div>
 
-            {/* OPTIONAL filters: button + active chips */}
-            <div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setSheetOpen(true)}
-                  className="rounded-full border border-border bg-surface px-3.5 py-2 text-[13px] text-text"
-                >
-                  Filters{activeFilters.length > 0 ? ` · ${activeFilters.length}` : ""}
-                </button>
-                <span className="text-[11px] text-muted">Optional</span>
-              </div>
-              {activeFilters.length > 0 && (
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  {activeFilters.map((f) => (
-                    <button
-                      key={f.key}
-                      type="button"
-                      onClick={() => clearFilter(f.key)}
-                      className="flex items-center gap-1 rounded-full border border-primary bg-primary/15 px-3 py-1.5 text-[12px] text-primary"
-                    >
-                      {f.label}
-                      <span className="text-[13px] leading-none">×</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+            {/* OPTIONAL filters — the same sheet Browse uses */}
+            <FilterBar
+              filters={filters}
+              onOpen={() => setSheetOpen(true)}
+              onClear={clearFilter}
+            />
 
             <button
               type="button"
@@ -442,56 +422,16 @@ function MatchScreen() {
       {/* BUDDY BOARD */}
       {tab === "buddy" && <BuddyBoard />}
 
-      {/* OPTIONAL-FILTERS SHEET */}
       {sheetOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/50"
-          onClick={() => setSheetOpen(false)}
-        >
-          <div
-            className="w-full max-w-screen-sm rounded-t-2xl border-t border-border bg-surface p-4"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="mb-1 flex items-center justify-between">
-              <h2 className="text-sm font-medium text-text">Filters</h2>
-              <button
-                type="button"
-                onClick={() => setSheetOpen(false)}
-                className="text-[13px] font-medium text-primary"
-              >
-                Done
-              </button>
-            </div>
-            <p className="mb-1 text-[11px] text-muted">
-              Tick a filter to narrow results. Leave all unticked to see everyone.
-            </p>
-
-            <FilterRow
-              title="Gym"
-              open={openRows.has("gym")}
-              onToggle={() => toggleRow("gym", () => setGym(null))}
-              options={verifiedGyms.map((g) => ({ key: g, label: g }))}
-              value={gym}
-              onPick={setGym}
-            />
-            <FilterRow
-              title="Level"
-              open={openRows.has("level")}
-              onToggle={() => toggleRow("level", () => setLevel(null))}
-              options={experienceLevels.map((l) => ({ key: l.key, label: l.name }))}
-              value={level}
-              onPick={setLevel}
-            />
-            <FilterRow
-              title="Gender"
-              open={openRows.has("gender")}
-              onToggle={() => toggleRow("gender", () => setGender(null))}
-              options={genderOptions}
-              value={gender}
-              onPick={setGender}
-            />
-          </div>
-        </div>
+        <FiltersSheet
+          value={filters}
+          onChange={setFilters}
+          openRows={openRows}
+          onToggleRow={toggleRow}
+          onClose={() => setSheetOpen(false)}
+          myConcentration={myConcentration}
+          myInterests={myInterests}
+        />
       )}
     </div>
   );

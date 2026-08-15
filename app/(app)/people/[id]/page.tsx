@@ -19,6 +19,9 @@ import { getPublicProfile } from "@/lib/supabase/profiles";
 import { profileFromOnboarding, classOfLabel, type CurrentUser } from "@/lib/currentUser";
 import { residenceLabel } from "@/lib/onboarding";
 import { MATCH_TIER_LABELS } from "@/lib/matchTier";
+import { getPairMatch } from "@/lib/supabase/matching";
+import { matchReasons, type MatchReason } from "@/lib/matchReasons";
+import { useAppState } from "@/components/AppState";
 import { startDirectConversation } from "@/lib/supabase/messages";
 import { getFollowStatus, followUser, unfollowUser } from "@/lib/supabase/follows";
 import { IconArrowLeft, IconUser, IconCheck } from "@/components/icons";
@@ -55,6 +58,30 @@ function PersonProfile() {
   const [following, setFollowing] = useState<boolean | null>(null); // null until known
   const [followsBack, setFollowsBack] = useState(false);
   const [followBusy, setFollowBusy] = useState(false);
+
+  /*
+    "Why you match" is re-asked of the database rather than carried over from the
+    card that was tapped, so it's still right when this page is refreshed, opened
+    from a link, or reached from anywhere that isn't the Match tab. Empty when
+    the two share nothing, or when the pairing isn't valid at all.
+  */
+  const { userId: meId } = useAppState();
+  const [reasons, setReasons] = useState<MatchReason[]>([]);
+
+  useEffect(() => {
+    if (!meId || !id || meId === id) return;
+    let active = true;
+    getPairMatch(meId, id)
+      .then((m) => {
+        if (active && m) setReasons(matchReasons(m));
+      })
+      .catch(() => {
+        /* The profile itself is the point; no reasons is a fine outcome. */
+      });
+    return () => {
+      active = false;
+    };
+  }, [meId, id]);
 
   // Toggle follow/unfollow, updating the button optimistically.
   const toggleFollow = async () => {
@@ -221,6 +248,27 @@ function PersonProfile() {
               </div>
             )}
           </div>
+
+          {/* Why you match — the same reasons their card showed, in full. Sits
+              directly under the identity block because it's what the tap was
+              asking about. */}
+          {reasons.length > 0 && (
+            <div className="border-b border-border px-4 py-3">
+              <div className="mb-2 text-[9px] font-medium uppercase tracking-[0.1em] text-muted">
+                Why you match
+              </div>
+              <ul className="flex flex-col gap-1.5">
+                {reasons.map((r) => (
+                  <li key={r.key} className="flex items-start gap-2">
+                    <span className="mt-[3px] flex-shrink-0 text-accent">
+                      <IconCheck size={12} />
+                    </span>
+                    <span className="text-[12px] leading-snug text-text">{r.full}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           {/* Training */}
           <div className="border-b border-border px-4 py-3">

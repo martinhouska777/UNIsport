@@ -1,41 +1,19 @@
 import type { Match } from "@/lib/supabase/matching";
 import { matchTier } from "@/lib/matchTier";
+import { topMatchReasons } from "@/lib/matchReasons";
 import { IconUser } from "@/components/icons";
 
 /*
-  One result card in the Match grid. Mirrors the mockup: avatar block with a
-  compatibility badge, name, "house · level" subtitle, a short data-driven
-  "why you match" line, and a View Profile button. All colors are theme tokens.
+  One result card in the Match grid: avatar block with a compatibility badge,
+  name, "house · level" subtitle, the reasons this person ranked where they did,
+  and a View Profile button. All colors are theme tokens.
+
+  The reasons are the point of the card. They are the actual things the two
+  people share, straight out of the matching engine — "Economics", "Czechia",
+  "Climbing, Coffee" — in the order those things moved the score. The mockup had
+  a made-up AI sentence here instead; a real fact is both more useful and
+  something we can stand behind. The full list lives on their profile.
 */
-
-// Turn the score breakdown into a plain-English reason, picking the two
-// strongest signals. This replaces the mockup's faked AI sentence with real
-// data so it can never claim something that isn't in the score.
-function reasonFor(m: Match): string {
-  const b = m.breakdown;
-  const bits: { pts: number; text: string }[] = [
-    { pts: b.gym, text: "trains at your gym" },
-    { pts: b.schedule ?? 0, text: "free when you are" },
-    { pts: b.concentration, text: "same concentration" },
-    { pts: b.origin, text: "from near you" },
-    { pts: b.interests, text: "shares your interests" },
-    { pts: b.languages, text: "speaks your language" },
-    { pts: b.level, text: "a level that fits" },
-    { pts: b.training, text: "wants a partner too" },
-  ];
-  const top = bits
-    .filter((x) => x.pts > 0)
-    .sort((a, c) => c.pts - a.pts)
-    .slice(0, 2)
-    .map((x) => x.text);
-  if (top.length === 0) return "A possible workout partner.";
-  const s = top.join(", ");
-  return s.charAt(0).toUpperCase() + s.slice(1) + ".";
-}
-
-const levelLabel = (l: string | null) =>
-  l ? l.charAt(0).toUpperCase() + l.slice(1) : null;
-
 export default function MatchCard({
   match,
   max,
@@ -50,6 +28,7 @@ export default function MatchCard({
   const subtitle = [match.residence, levelLabel(match.level)]
     .filter(Boolean)
     .join(" · ");
+  const reasons = topMatchReasons(match);
 
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-surface">
@@ -71,14 +50,30 @@ export default function MatchCard({
           {match.name || "Member"}
         </div>
         {subtitle && (
-          <div className="mb-1.5 truncate text-[10px] text-muted">{subtitle}</div>
+          <div className="truncate text-[10px] text-muted">{subtitle}</div>
         )}
-        <div className="mb-2 flex items-start gap-1">
-          <span className="mt-px flex-shrink-0 text-[9px] text-accent">✦</span>
-          <span className="text-[10px] italic leading-snug text-muted">
-            {reasonFor(match)}
-          </span>
+
+        {/* Why they're here. Chips wrap, so a person with three overlaps gets a
+            slightly taller card than one with a single overlap — better than
+            truncating the reason someone actually cares about. */}
+        <div className="mb-2 mt-1.5 flex min-h-[18px] flex-wrap gap-1">
+          {reasons.length > 0 ? (
+            reasons.map((r) => (
+              <span
+                key={r.key}
+                title={r.full}
+                className="max-w-full truncate rounded-md border border-accent/40 bg-accent/10 px-1.5 py-0.5 text-[9px] leading-tight text-text"
+              >
+                {r.short}
+              </span>
+            ))
+          ) : (
+            <span className="text-[10px] italic text-muted">
+              A possible workout partner.
+            </span>
+          )}
         </div>
+
         <button
           type="button"
           onClick={() => onView?.(match)}
@@ -90,3 +85,6 @@ export default function MatchCard({
     </div>
   );
 }
+
+const levelLabel = (l: string | null) =>
+  l ? l.charAt(0).toUpperCase() + l.slice(1) : null;

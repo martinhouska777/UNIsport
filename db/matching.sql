@@ -12,19 +12,38 @@
 --     1. match_region(country)  — derive a continent/region for origin scoring.
 --     2. pref_allows(pref, g)   — gender-preference helper.
 --     3. match_profiles (VIEW)  — reads each profile's json as clean columns.
---     4. match_browse()         — Function 1 (affinity + logistics, /100).
---     5. match_session_search() — Function 2 (logistics-first, /92).
+--     4. match_candidates()     — THE scoring engine (see below).
+--     5. match_browse()         — everyone, affinity + logistics, /100.
+--     6. match_session_search() — logistics-first for one day+hour, /92.
+--     7. match_pair()           — the same row for ONE person, for their profile.
 --
---   WHY A VIEW: the two functions read from the view, never from the raw json.
+--   WHY A VIEW: the functions read from the view, never from the raw json.
 --   When real per-university tables arrive later (varsity mode / more schools),
 --   we rewrite ONLY the view to point at them — the functions and the frontend
 --   keep working unchanged.
 --
+--   WHY AN ENGINE: the scoring used to be copy-pasted into browse and session
+--   search, so every tweak had to be made twice and the two lists could drift
+--   apart. Now match_candidates() scores a searcher against everyone ONCE, and
+--   the three public functions are thin wrappers that filter and order its rows.
+--   Tune a weight in one place and every surface agrees.
+--
+--   WHY IT RETURNS FACTS, NOT JUST POINTS: the app has to tell a student WHY
+--   someone is at the top of their list ("Both from Czechia", "Economics",
+--   "Climbing, Coffee"). Points alone can't say that, so the engine also returns
+--   the actual overlapping values. Every reason shown in the UI is therefore a
+--   real fact out of the database, never a guess or a generated sentence.
+--
 -- SECURITY
 --   profiles has Row-Level Security: a user can only SELECT their own row.
---   Matching must read OTHER users, so both functions are SECURITY DEFINER
---   (they run with the definer's rights, bypassing RLS) but only ever return
---   safe match data (display name + score breakdown), never raw private json.
+--   Matching must read OTHER users, so the functions are SECURITY DEFINER (they
+--   run with the definer's rights, bypassing RLS) but only ever return safe
+--   match data: display name, score breakdown, and the facts the searcher
+--   ALREADY SHARES with the candidate — never the candidate's raw private json.
+--   In particular, shared_interests is the INTERSECTION with the searcher's own
+--   interests, so it can never leak an interest the searcher didn't already
+--   have. The unfiltered lists stay internal to the engine (c_* columns) purely
+--   so the wrappers can apply filters, and are not exposed by any wrapper.
 --
 -- IDEMPOTENT: safe to paste into the Supabase SQL editor and re-run.
 -- ============================================================================
@@ -170,9 +189,14 @@ $$;
 --    column — nothing downstream changes.
 -- ---------------------------------------------------------------------------
 -- Drop dependents first so re-running can change the view's / functions' shape.
+-- Wrappers before the engine, engine before the view — each depends on the next.
 drop function if exists public.match_browse(uuid);
+drop function if exists public.match_browse(uuid, text, text[], text, text, text);
 drop function if exists public.match_session_search(uuid, text, text, text, text, text);
 drop function if exists public.match_session_search(uuid, text, text, numeric, text, text, text);
+drop function if exists public.match_session_search(uuid, text, text, numeric, text, text, text, text, text[]);
+drop function if exists public.match_pair(uuid, uuid);
+drop function if exists public.match_candidates(uuid);
 drop view if exists public.match_profiles;
 
 create view public.match_profiles as
@@ -204,29 +228,51 @@ select
 from public.profiles p
 where p.onboarding_completed = true;
 
+
 -- ============================================================================
--- 4. FUNCTION 1 — match_browse(searcher_id)
---    Every candidate that passes the shared gates, scored out of 100, highest
---    first, with each component broken out for debugging.
+-- 4. THE ENGINE — match_candidates(searcher_id)
+--    Scores the searcher against every candidate who clears the shared gates,
+--    ONCE. Returns each score component separately, the real overlapping facts
+--    behind those components, and the raw fields the wrappers filter on.
 --
---    AFFINITY (54): interests 22 | concentration 12 | origin 12 | languages 8
---    LOGISTICS (46): gym 20 | level 12 | schedule 8 | training type 6
+--    It does NOT total the score and does NOT order — those differ per surface
+--    (browse counts schedule, session search doesn't), so the wrappers decide.
+--
+--    WEIGHTS (change them HERE and every surface follows):
+--      AFFINITY  (54): interests 22 | concentration 12 | origin 12 | languages 8
+--      LOGISTICS (46): gym 20 | level 12 | schedule 8 | training type 6
 -- ============================================================================
-create or replace function public.match_browse(searcher_id uuid)
+create or replace function public.match_candidates(searcher_id uuid)
 returns table (
-  candidate_id      uuid,
-  name              text,
-  level             text,
-  residence         text,
-  score             numeric,
-  interests_pts     numeric,
-  concentration_pts numeric,
-  origin_pts        numeric,
-  languages_pts     numeric,
-  gym_pts           numeric,
-  level_pts         numeric,
-  schedule_pts      numeric,
-  training_pts      numeric
+  candidate_id       uuid,
+  name               text,
+  level              text,
+  residence          text,
+  -- score components
+  interests_pts      numeric,
+  concentration_pts  numeric,
+  origin_pts         numeric,
+  languages_pts      numeric,
+  gym_pts            numeric,
+  level_pts          numeric,
+  schedule_pts       numeric,
+  training_pts       numeric,
+  -- the facts behind those components (what the UI shows as reasons)
+  shared_interests   text[],
+  shared_languages   text[],
+  same_concentration text,
+  shared_country     text,
+  shared_region      text,
+  shared_gym         text,
+  level_note         text,
+  -- internal: the candidate's own values, so the wrappers can filter on them.
+  -- No wrapper returns these to the client.
+  c_concentration    text,
+  c_activity         text,
+  c_gender           text,
+  c_interests        jsonb,
+  c_top_gyms         jsonb,
+  c_schedule         jsonb
 )
 language sql
 stable
@@ -241,8 +287,7 @@ as $$
     c.name,
     c.level,
     c.residence,
-    round(comp.interests + comp.concentration + comp.origin + comp.languages
-          + comp.gym + comp.level + comp.schedule + comp.training, 1) as score,
+
     round(comp.interests, 1),
     round(comp.concentration, 1),
     round(comp.origin, 1),
@@ -250,16 +295,45 @@ as $$
     round(comp.gym, 1),
     round(comp.level, 1),
     round(comp.schedule, 1),
-    round(comp.training, 1)
+    round(comp.training, 1),
+
+    comp.shared_interests,
+    comp.shared_languages,
+    -- Only name the concentration when it actually matched.
+    case when me.concentration is not null and me.concentration = c.concentration
+         then c.concentration end,
+    -- Country first; region only when the countries DIFFER, so two Czechs are
+    -- never described as merely "both from Europe".
+    case when me.country is not null and me.country = c.country
+         then c.country end,
+    case when me.region is not null and me.region = c.region
+          and me.country is distinct from c.country
+         then c.region end,
+    comp.shared_gym,
+    comp.level_note,
+
+    c.concentration,
+    c.primary_activity,
+    c.gender,
+    c.interests,
+    c.top_gyms,
+    c.schedule
   from me, public.match_profiles c
   cross join lateral (
     select
       -- Shared interests: 22 pts, full at 4+ overlapping.
       22 * least((
         select count(*)
-        from jsonb_array_elements_text(me.interests) a
-        join jsonb_array_elements_text(c.interests) b on a = b
+        from jsonb_array_elements_text(me.interests) as x(val)
+        join jsonb_array_elements_text(c.interests)  as y(val) on x.val = y.val
       ), 4) / 4.0 as interests,
+
+      -- ...and the interests themselves, for the "why" line on the card.
+      (
+        select coalesce(array_agg(x.val order by x.val), '{}'::text[])
+        from jsonb_array_elements_text(me.interests) as x(val)
+        join jsonb_array_elements_text(c.interests)  as y(val) on x.val = y.val
+      ) as shared_interests,
 
       -- Same concentration: 12 if equal (and set), else 0.
       case when me.concentration is not null and me.concentration = c.concentration
@@ -273,9 +347,15 @@ as $$
       -- Shared languages: 8 pts, full at 3+ overlapping.
       8 * least((
         select count(*)
-        from jsonb_array_elements_text(me.languages) a
-        join jsonb_array_elements_text(c.languages) b on a = b
+        from jsonb_array_elements_text(me.languages) as x(val)
+        join jsonb_array_elements_text(c.languages)  as y(val) on x.val = y.val
       ), 3) / 3.0 as languages,
+
+      (
+        select coalesce(array_agg(x.val order by x.val), '{}'::text[])
+        from jsonb_array_elements_text(me.languages) as x(val)
+        join jsonb_array_elements_text(c.languages)  as y(val) on x.val = y.val
+      ) as shared_languages,
 
       -- Gym overlap, rank-aware: 20 pts. For each gym both list in their top 3,
       -- rank 1 is worth 3, rank 2 -> 2, rank 3 -> 1; add the two users' rank
@@ -288,6 +368,17 @@ as $$
         where s.ord <= 3 and cc.ord <= 3
       ), 0) as gym,
 
+      -- ...and WHICH gym that was — the best-ranked one they share.
+      (
+        select s.gym
+        from jsonb_array_elements_text(me.top_gyms) with ordinality s(gym, ord)
+        join jsonb_array_elements_text(c.top_gyms)  with ordinality cc(gym, ord)
+          on s.gym = cc.gym
+        where s.ord <= 3 and cc.ord <= 3
+        order by (4 - s.ord) + (4 - cc.ord) desc, s.ord
+        limit 1
+      ) as shared_gym,
+
       -- Level proximity: same 12, one step 6, two steps 0. EXCEPTION: if there
       -- is a gap AND the more-advanced user offers mentorship while the other
       -- wants it, treat the gap as a bonus instead -> full 12.
@@ -299,6 +390,19 @@ as $$
           then 12
         else greatest(12 - 6 * abs(me.level_rank - c.level_rank), 0)
       end as level,
+
+      -- Which of those cases fired, so the UI can word it correctly instead of
+      -- guessing from the points alone.
+      case
+        when me.level_rank is null or c.level_rank is null then null
+        when me.level_rank = c.level_rank then 'same'
+        when abs(me.level_rank - c.level_rank) >= 1
+             and ((me.level_rank > c.level_rank and me.give_mentor    and c.receive_mentor)
+               or (c.level_rank > me.level_rank and c.give_mentor    and me.receive_mentor))
+          then 'mentor'
+        when abs(me.level_rank - c.level_rank) = 1 then 'close'
+        else null
+      end as level_note,
 
       -- Schedule overlap: 8 pts (deliberately low), full at 3+ shared slots.
       --
@@ -340,13 +444,76 @@ as $$
     and c.university_id = me.university_id
     and c.training_type is distinct from 'solo'
     and public.pref_allows(me.partner_pref, c.gender)
-    and public.pref_allows(c.partner_pref, me.gender)
-  order by score desc;
+    and public.pref_allows(c.partner_pref, me.gender);
 $$;
 
 -- ============================================================================
--- 5. FUNCTION 2 — match_session_search(...)
---    "Find me a partner doing THIS activity, on THIS day, around THIS hour."
+-- 5. match_browse(...) — every compatible partner, scored out of 100, best
+--    first. Every filter is OPTIONAL; null means "don't narrow on this".
+--
+--      concentration_filter — only people concentrating in this subject.
+--      interests_filter     — only people into at least ONE of these. Picking
+--                             more interests therefore WIDENS the net; the
+--                             score still floats people sharing more to the top.
+--      gym_filter / level_filter / gender_filter — as before.
+-- ============================================================================
+create or replace function public.match_browse(
+  searcher_id          uuid,
+  concentration_filter text   default null,
+  interests_filter     text[] default null,
+  gym_filter           text   default null,
+  level_filter         text   default null,
+  gender_filter        text   default null
+)
+returns table (
+  candidate_id       uuid,
+  name               text,
+  level              text,
+  residence          text,
+  score              numeric,
+  interests_pts      numeric,
+  concentration_pts  numeric,
+  origin_pts         numeric,
+  languages_pts      numeric,
+  gym_pts            numeric,
+  level_pts          numeric,
+  schedule_pts       numeric,
+  training_pts       numeric,
+  shared_interests   text[],
+  shared_languages   text[],
+  same_concentration text,
+  shared_country     text,
+  shared_region      text,
+  shared_gym         text,
+  level_note         text
+)
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select
+    m.candidate_id, m.name, m.level, m.residence,
+    round(m.interests_pts + m.concentration_pts + m.origin_pts + m.languages_pts
+        + m.gym_pts + m.level_pts + m.schedule_pts + m.training_pts, 1) as total,
+    m.interests_pts, m.concentration_pts, m.origin_pts, m.languages_pts,
+    m.gym_pts, m.level_pts, m.schedule_pts, m.training_pts,
+    m.shared_interests, m.shared_languages, m.same_concentration,
+    m.shared_country, m.shared_region, m.shared_gym, m.level_note
+  from public.match_candidates(searcher_id) m
+  where (concentration_filter is null or m.c_concentration = concentration_filter)
+    and (interests_filter is null or exists (
+          select 1 from jsonb_array_elements_text(m.c_interests) as z(val)
+          where z.val = any (interests_filter)))
+    and (gym_filter    is null or m.c_top_gyms ? gym_filter)
+    and (level_filter  is null or m.level      = level_filter)
+    and (gender_filter is null or m.c_gender   = lower(gender_filter))
+  order by total desc;
+$$;
+
+-- ============================================================================
+-- 6. match_session_search(...) — "find me a partner doing THIS activity, on
+--    THIS day, around THIS hour."
 --
 --    REQUIRED inputs (the search makes no sense without them):
 --      activity_filter — 'gym'|'running'|'cardio'|'other'; only people whose
@@ -358,128 +525,135 @@ $$;
 --                        window [target_hour - 2, target_hour + 2] — so 3 PM
 --                        also surfaces people free at, say, 1 PM or 5 PM.
 --
---    OPTIONAL inputs (null = no filter), set in the on-screen filter window:
---      gym_filter    — only people who list this gym (NAME) in their top gyms.
---      level_filter  — 'beginner'|'intermediate'|'advanced'.
---      gender_filter — 'male'|'female' (still subject to partner prefs).
+--    OPTIONAL inputs (null = no filter), set in the on-screen filter sheet:
+--      gym / level / gender / concentration / interests — as in match_browse.
 --
---    Survivors are ranked by the SAME affinity + logistics score MINUS the
---    schedule component (the slot is already fixed), so the max here is 92.
+--    Survivors are ranked by the SAME score MINUS the schedule component (the
+--    slot is already fixed), so the max here is 92.
 -- ============================================================================
 create or replace function public.match_session_search(
-  searcher_id     uuid,
-  activity_filter text,
-  target_day      text,
-  target_hour     numeric,
-  gym_filter      text default null,
-  level_filter    text default null,
-  gender_filter   text default null
+  searcher_id          uuid,
+  activity_filter      text,
+  target_day           text,
+  target_hour          numeric,
+  gym_filter           text   default null,
+  level_filter         text   default null,
+  gender_filter        text   default null,
+  concentration_filter text   default null,
+  interests_filter     text[] default null
 )
 returns table (
-  candidate_id      uuid,
-  name              text,
-  level             text,
-  residence         text,
-  score             numeric,
-  interests_pts     numeric,
-  concentration_pts numeric,
-  origin_pts        numeric,
-  languages_pts     numeric,
-  gym_pts           numeric,
-  level_pts         numeric,
-  training_pts      numeric
+  candidate_id       uuid,
+  name               text,
+  level              text,
+  residence          text,
+  score              numeric,
+  interests_pts      numeric,
+  concentration_pts  numeric,
+  origin_pts         numeric,
+  languages_pts      numeric,
+  gym_pts            numeric,
+  level_pts          numeric,
+  training_pts       numeric,
+  shared_interests   text[],
+  shared_languages   text[],
+  same_concentration text,
+  shared_country     text,
+  shared_region      text,
+  shared_gym         text,
+  level_note         text
 )
 language sql
 stable
 security definer
 set search_path = public
 as $$
-  with me as (
-    select * from public.match_profiles where id = searcher_id
-  )
   select
-    c.id,
-    c.name,
-    c.level,
-    c.residence,
-    round(comp.interests + comp.concentration + comp.origin + comp.languages
-          + comp.gym + comp.level + comp.training, 1) as score,
-    round(comp.interests, 1),
-    round(comp.concentration, 1),
-    round(comp.origin, 1),
-    round(comp.languages, 1),
-    round(comp.gym, 1),
-    round(comp.level, 1),
-    round(comp.training, 1)
-  from me, public.match_profiles c
-  cross join lateral (
-    select
-      22 * least((
-        select count(*)
-        from jsonb_array_elements_text(me.interests) a
-        join jsonb_array_elements_text(c.interests) b on a = b
-      ), 4) / 4.0 as interests,
-
-      case when me.concentration is not null and me.concentration = c.concentration
-           then 12 else 0 end as concentration,
-
-      case when me.country is not null and me.country = c.country then 12
-           when me.region  is not null and me.region  = c.region  then 7
-           else 0 end as origin,
-
-      8 * least((
-        select count(*)
-        from jsonb_array_elements_text(me.languages) a
-        join jsonb_array_elements_text(c.languages) b on a = b
-      ), 3) / 3.0 as languages,
-
-      coalesce((
-        select 20 * max((4 - s.ord) + (4 - cc.ord)) / 6.0
-        from jsonb_array_elements_text(me.top_gyms) with ordinality s(gym, ord)
-        join jsonb_array_elements_text(c.top_gyms)  with ordinality cc(gym, ord)
-          on s.gym = cc.gym
-        where s.ord <= 3 and cc.ord <= 3
-      ), 0) as gym,
-
-      case
-        when me.level_rank is null or c.level_rank is null then 0
-        when abs(me.level_rank - c.level_rank) >= 1
-             and ((me.level_rank > c.level_rank and me.give_mentor    and c.receive_mentor)
-               or (c.level_rank > me.level_rank and c.give_mentor    and me.receive_mentor))
-          then 12
-        else greatest(12 - 6 * abs(me.level_rank - c.level_rank), 0)
-      end as level,
-
-      case
-        when me.training_type in ('partner', 'either')
-         and c.training_type  in ('partner', 'either') then 6
-        when c.training_type in ('partner', 'either')   then 3
-        else 0
-      end as training
-  ) comp
-  where c.id <> me.id
-    and c.university_id = me.university_id
-    and c.training_type is distinct from 'solo'
-    and public.pref_allows(me.partner_pref, c.gender)
-    and public.pref_allows(c.partner_pref, me.gender)
-    -- REQUIRED logistics filters: same activity + free within ±2h of the hour.
-    and c.primary_activity = lower(activity_filter)
+    m.candidate_id, m.name, m.level, m.residence,
+    round(m.interests_pts + m.concentration_pts + m.origin_pts + m.languages_pts
+        + m.gym_pts + m.level_pts + m.training_pts, 1) as total,
+    m.interests_pts, m.concentration_pts, m.origin_pts, m.languages_pts,
+    m.gym_pts, m.level_pts, m.training_pts,
+    m.shared_interests, m.shared_languages, m.same_concentration,
+    m.shared_country, m.shared_region, m.shared_gym, m.level_note
+  from public.match_candidates(searcher_id) m
+  where m.c_activity = lower(activity_filter)
     and exists (
       select 1
       from jsonb_array_elements_text(
-             coalesce(c.schedule -> target_day, '[]'::jsonb)
+             coalesce(m.c_schedule -> target_day, '[]'::jsonb)
            ) b
       where public.block_range(b) && numrange(target_hour - 2, target_hour + 2)
     )
-    -- OPTIONAL filters (null = ignored):
-    and (gym_filter    is null or c.top_gyms ? gym_filter)
-    and (level_filter  is null or c.level    = level_filter)
-    and (gender_filter is null or c.gender   = lower(gender_filter))
-  order by score desc;
+    and (concentration_filter is null or m.c_concentration = concentration_filter)
+    and (interests_filter is null or exists (
+          select 1 from jsonb_array_elements_text(m.c_interests) as z(val)
+          where z.val = any (interests_filter)))
+    and (gym_filter    is null or m.c_top_gyms ? gym_filter)
+    and (level_filter  is null or m.level      = level_filter)
+    and (gender_filter is null or m.c_gender   = lower(gender_filter))
+  order by total desc;
+$$;
+
+-- ============================================================================
+-- 7. match_pair(searcher_id, other_id) — the SAME row for exactly one person.
+--    Powers the "Why you match" block on someone's profile, so the reasons
+--    survive a refresh or a shared link instead of being carried in the URL.
+--    Scored out of 100 (schedule included) like browse. Returns no rows when
+--    the two don't pass the shared gates — the profile then shows no reasons.
+-- ============================================================================
+create or replace function public.match_pair(searcher_id uuid, other_id uuid)
+returns table (
+  candidate_id       uuid,
+  name               text,
+  level              text,
+  residence          text,
+  score              numeric,
+  interests_pts      numeric,
+  concentration_pts  numeric,
+  origin_pts         numeric,
+  languages_pts      numeric,
+  gym_pts            numeric,
+  level_pts          numeric,
+  schedule_pts       numeric,
+  training_pts       numeric,
+  shared_interests   text[],
+  shared_languages   text[],
+  same_concentration text,
+  shared_country     text,
+  shared_region      text,
+  shared_gym         text,
+  level_note         text
+)
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select
+    m.candidate_id, m.name, m.level, m.residence,
+    round(m.interests_pts + m.concentration_pts + m.origin_pts + m.languages_pts
+        + m.gym_pts + m.level_pts + m.schedule_pts + m.training_pts, 1),
+    m.interests_pts, m.concentration_pts, m.origin_pts, m.languages_pts,
+    m.gym_pts, m.level_pts, m.schedule_pts, m.training_pts,
+    m.shared_interests, m.shared_languages, m.same_concentration,
+    m.shared_country, m.shared_region, m.shared_gym, m.level_note
+  from public.match_candidates(searcher_id) m
+  where m.candidate_id = other_id;
 $$;
 
 -- ---------------------------------------------------------------------------
--- 6. Let signed-in users call these via Supabase RPC.
+-- 8. Let signed-in users call the three wrappers via Supabase RPC. The engine
+--    stays private: it exposes each candidate's unfiltered interests and
+--    schedule so the wrappers can filter on them, and nothing outside this file
+--    should read those. The wrappers are SECURITY DEFINER, so they can still
+--    call it.
 -- ---------------------------------------------------------------------------
-grant execute on function public.match_browse(uuid) to authenticated;
-grant execute on function public.match_session_search(uuid, text, text, numeric, text, text, text) to authenticated;
+revoke all on function public.match_candidates(uuid) from public;
+
+grant execute on function public.match_browse(uuid, text, text[], text, text, text)
+  to authenticated;
+grant execute on function public.match_session_search(
+  uuid, text, text, numeric, text, text, text, text, text[]
+) to authenticated;
+grant execute on function public.match_pair(uuid, uuid) to authenticated;

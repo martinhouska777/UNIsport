@@ -32,7 +32,7 @@ const FEATURES: Feature[] = [
     desc: "Matched by gym, schedule, level, and training type. Verified students only — no requests, no waiting, just train.",
     tag: (
       <>
-        Compatibility scored <Sep /> AI-described matches
+        Compatibility scored <Sep /> Every match explained
       </>
     ),
     icon: (
