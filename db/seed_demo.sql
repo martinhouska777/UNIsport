@@ -268,11 +268,13 @@ begin
                   'de11a010-0000-4000-8000-000000000010','de11a013-0000-4000-8000-000000000013',
                   'de11a014-0000-4000-8000-000000000014','de11a008-0000-4000-8000-000000000008');
 
+  -- Two people, not more: the same concentration on every card reads as fake,
+  -- and it must never contradict a bio that already names a field of study
+  -- (Ryan's bio says he is an Econ concentrator, so he keeps Economics).
   if my_conc is not null then
     update public.profiles p
        set data = jsonb_set(p.data, '{concentration}', to_jsonb(my_conc))
-     where p.id in ('de11a001-0000-4000-8000-000000000001','de11a004-0000-4000-8000-000000000004',
-                    'de11a014-0000-4000-8000-000000000014');
+     where p.id in ('de11a001-0000-4000-8000-000000000001','de11a004-0000-4000-8000-000000000004');
   end if;
 
   if my_country is not null then
@@ -318,9 +320,9 @@ begin
            greatest(me,'de11a001-0000-4000-8000-000000000001'::uuid), now() - interval '11 days');
 
   insert into public.dm_messages (conv_id, sender_id, sender_name, body, created_at) values
-    (conv,'de11a001-0000-4000-8000-000000000001','Elena Vásquez','Hey! Saw we match on legs day at the MAC — are you training tomorrow?', now() - interval '2 days 4 hours'),
-    (conv, me, coalesce(my->>'name','Me'),'Yeah, planning to. Usually go around 6.', now() - interval '2 days 3 hours'),
-    (conv,'de11a001-0000-4000-8000-000000000001','Elena Vásquez','Perfect, 6 works. I need a spotter for squats anyway.', now() - interval '2 days 3 hours');
+    (conv,'de11a001-0000-4000-8000-000000000001','Elena Vásquez','Hey! Saw we match on legs day at the MAC — want to train together this week?', now() - interval '2 days 4 hours'),
+    (conv, me, coalesce(my->>'name','Me'),'Yeah, I am in. I usually go around 8.', now() - interval '2 days 3 hours'),
+    (conv,'de11a001-0000-4000-8000-000000000001','Elena Vásquez','Perfect, 8 works. I need a spotter for squats anyway.', now() - interval '2 days 3 hours');
 
   plan_a := gen_random_uuid();
   insert into public.session_plans (id, conv_id, proposer_id, activity, place, scheduled_at, status, created_at) values
@@ -343,12 +345,12 @@ begin
   insert into public.dm_messages (conv_id, sender_id, sender_name, body, created_at) values
     (conv,'de11a004-0000-4000-8000-000000000004','Tomáš Novák','Ahoj! Finally someone else who trains late.', now() - interval '6 days'),
     (conv, me, coalesce(my->>'name','Me'),'Ha, the gym is empty after 9. Much better.', now() - interval '6 days' + interval '20 minutes'),
-    (conv,'de11a004-0000-4000-8000-000000000004','Tomáš Novák','Exactly. Want to do a pull session Thursday?', now() - interval '5 hours');
+    (conv,'de11a004-0000-4000-8000-000000000004','Tomáš Novák','Exactly. Want to do a pull session this week?', now() - interval '5 hours');
 
   plan_b := gen_random_uuid();
   insert into public.session_plans (id, conv_id, proposer_id, activity, place, scheduled_at, status, created_at) values
     (plan_b, conv, 'de11a004-0000-4000-8000-000000000004','gym','Hemenway Gymnasium',
-     date_trunc('day', now() + interval '3 days') + interval '21 hours', 'proposed', now() - interval '5 hours');
+     date_trunc('day', now() + interval '3 days') + interval '19 hours', 'proposed', now() - interval '5 hours');
   insert into public.dm_messages (conv_id, sender_id, sender_name, body, kind, plan_id, created_at) values
     (conv,'de11a004-0000-4000-8000-000000000004','Tomáš Novák','📅 Session plan: gym · Hemenway Gymnasium','plan', plan_b, now() - interval '5 hours');
 
@@ -398,7 +400,7 @@ begin
            greatest(me,'de11a013-0000-4000-8000-000000000013'::uuid), now() - interval '8 days');
 
   insert into public.dm_messages (conv_id, sender_id, sender_name, body, created_at) values
-    (conv,'de11a013-0000-4000-8000-000000000013','Nadia Haddad','Still good for legs on Wednesday at 6?', now() - interval '4 days'),
+    (conv,'de11a013-0000-4000-8000-000000000013','Nadia Haddad','Still on for legs at 8?', now() - interval '4 days'),
     (conv, me, coalesce(my->>'name','Me'),'Yes, see you at the MAC.', now() - interval '4 days' + interval '15 minutes');
 
   plan_c := gen_random_uuid();
