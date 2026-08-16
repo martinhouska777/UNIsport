@@ -53,8 +53,8 @@
       var q = (window.innerHeight - b.top) / (window.innerHeight + b.height);
       q = Math.max(0, Math.min(1, q));
       if (s.wrap) {
-        s.wrap.style.transform =
-          "translateY(" + (14 - q * 28).toFixed(1) + "px) rotate(" + (1.1 - q * 2.2).toFixed(2) + "deg)";
+        // Vertical only — a rotation here read as the phone being tilted.
+        s.wrap.style.transform = "translateY(" + (14 - q * 28).toFixed(1) + "px)";
       }
 
       // Tall captures scroll inside the phone.
@@ -71,7 +71,8 @@
         if (hold > 0 && hold < 1) p = p <= hold ? 0 : (p - hold) / (1 - hold);
         var from = parseFloat(img.getAttribute("data-from")) || 0;
         var to = parseFloat(img.getAttribute("data-to")) || 1;
-        var frac = from + (to - from) * p;
+        // data-to past 1 means: reach the bottom early, then rest there.
+        var frac = Math.min(1, from + (to - from) * p);
         var travel = img.offsetHeight - img.parentNode.offsetHeight;
         if (travel > 0) img.style.transform = "translateY(" + -(frac * travel).toFixed(1) + "px)";
       });

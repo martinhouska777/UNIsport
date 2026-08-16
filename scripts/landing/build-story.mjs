@@ -39,7 +39,9 @@ const story1 = [
     ann: [{ side: "right", top: 52, text: "One tap to accept" }],
   },
   {
-    key: "tall-logsheet", kicker: "05 · The log", pan: [0, 0.75], side: "left",
+    // hold 0.25: the sheet is at its very top the moment the beat appears,
+    // then the whole scroll happens on screen instead of starting mid-page.
+    key: "tall-logsheet", kicker: "05 · The log", pan: [0, 0.75], hold: 0.25, side: "left",
     head: "Afterwards, log it together.",
     sub: "Every set, every rep — and the partner carried straight over from the plan.",
     ann: [{ side: "right", top: 30, text: "Set by set" }],
@@ -51,22 +53,26 @@ const story1 = [
     ann: [{ side: "left", top: 50, text: "Photo + note" }],
   },
   {
-    key: "07-your-profile", kicker: "07 · The proof", side: "left",
-    head: "28 sessions. 6 partners.", headEm: "Never train alone.",
+    // The profile scrolls from the name down to the leaderboard ranks and comes
+    // to rest on the session calendar — the month is the closing image.
+    key: "tall-profile", kicker: "07 · The proof", pan: [0, 1.3], hold: 0.2, side: "left",
+    head: "29 sessions. 6 partners.", headEm: "Never train alone.",
     sub: "",
-    ann: [{ side: "right", top: 34, text: "The receipts" }],
+    ann: [{ side: "right", top: 30, text: "Leaderboards" }, { side: "left", top: 76, text: "Every day you trained" }],
   },
 ];
 
 const story2 = [
   {
-    key: "tall-vhome", kicker: "V1 · The plan", pan: [0, 0.27], hold: 0.45,
+    // V1 carries the scroll all the way down to the lineup, so V2's headline
+    // arrives with the boat almost centred rather than announcing it early.
+    key: "tall-vhome", kicker: "V1 · The plan", pan: [0, 0.5], hold: 0.45,
     head: "The coach's plan, on every phone.",
     sub: "Water, erg, weights — the week your coach actually built. Not a screenshot of a spreadsheet.",
     ann: [{ side: "right", top: 18, text: "Week 6 of 15" }],
   },
   {
-    key: "tall-vhome", kicker: "V2 · The boat", pan: [0.27, 0.68],
+    key: "tall-vhome", kicker: "V2 · The boat", pan: [0.5, 0.8],
     head: "Your name, in the boat.",
     sub: "The lineup your coach published, seat by seat, the night before you row it — the four in the morning, the pair after lunch.",
     ann: [{ side: "left", top: 42, text: "You, 3 seat" }],
@@ -74,10 +80,11 @@ const story2 = [
   {
     // The race and the note used to be a beat each. On a home screen this short
     // they share one window, and no amount of scrolling separates them.
-    key: "tall-vhome", kicker: "V3 · The race", pan: [0.68, 1],
+    // `to` past 1: the pan hits the very bottom mid-beat and rests there.
+    key: "tall-vhome", kicker: "V3 · The race", pan: [0.74, 1.2],
     head: "The next race, and what to fix before it.",
     sub: "Head of the Charles, 63 days out — and one note from your coach sitting under it until you've sorted it.",
-    ann: [{ side: "right", top: 34, text: "Counting down" }, { side: "left", top: 62, text: "Straight from the coach" }],
+    ann: [{ side: "right", top: 52, text: "Counting down" }, { side: "left", top: 70, text: "Straight from the coach" }],
   },
   {
     key: "13-varsity-log-list", kicker: "V4 · The week", side: "left",
@@ -92,81 +99,6 @@ const story2 = [
     ann: [{ side: "right", top: 40, text: "Eight weeks of work" }],
   },
 ];
-
-/*
-  BLADE LOCK — the closing hero. Twelve real university blade liveries on a
-  perspective arc; the one locked in the centre re-themes the phone to that
-  club. Liveries from Wikipedia's list of rowing blades + the Harvard Gazette
-  blade guide (Harvard = crimson flame tip on white; Washington famously plain
-  white; Princeton split orange/black; Cal gold chevron; Cornell red tip …).
-*/
-const CLUBS = [
-  { n: "Harvard",    p: "#A51C30", s: "#f5f5f5", blade: { base: "#f2ede4", type: "flame",    c: "#A51C30" } },
-  { n: "Yale",       p: "#00356B", s: "#f5f5f5", blade: { base: "#00356B", type: "split",    c: "#f5f5f5" } },
-  { n: "Princeton",  p: "#F58025", s: "#111111", blade: { base: "#F58025", type: "split",    c: "#141414" } },
-  { n: "Washington", p: "#4B2E83", s: "#B7A57A", blade: { base: "#f2f2f2", type: "solid" } },
-  { n: "California", p: "#003262", s: "#FDB515", blade: { base: "#003262", type: "chevron",  c: "#FDB515" } },
-  { n: "Cornell",    p: "#B31B1B", s: "#f5f5f5", blade: { base: "#f2f2f2", type: "tip",      c: "#B31B1B" } },
-  { n: "Brown",      p: "#4E3629", s: "#f5f5f5", blade: { base: "#f2f2f2", type: "diagonal", c: "#4E3629" } },
-  { n: "Columbia",   p: "#6CACE4", s: "#f5f5f5", blade: { base: "#6CACE4", type: "diagonal", c: "#f5f5f5" } },
-  { n: "Dartmouth",  p: "#00693E", s: "#f5f5f5", blade: { base: "#00693E", type: "diagonal", c: "#f5f5f5" } },
-  { n: "Penn",       p: "#011F5B", s: "#990000", blade: { base: "#011F5B", type: "split",    c: "#990000" } },
-  { n: "Syracuse",   p: "#F76900", s: "#000E54", blade: { base: "#F76900", type: "chevron",  c: "#000E54" } },
-  { n: "Wisconsin",  p: "#C5050C", s: "#f5f5f5", blade: { base: "#C5050C", type: "solid" } },
-];
-
-// One hatchet blade + shaft. The livery is clipped to the blade shape.
-function bladeSVG(club, idx) {
-  const b = club.blade;
-  const clip = "bl-clip-" + idx;
-  let overlay = "";
-  if (b.type === "flame")    overlay = `<polygon points="6,2 58,2 32,44" fill="${b.c}" clip-path="url(#${clip})"/>`;
-  if (b.type === "split")    overlay = `<rect x="32" y="0" width="32" height="70" fill="${b.c}" clip-path="url(#${clip})"/>`;
-  if (b.type === "tip")      overlay = `<rect x="0" y="0" width="64" height="22" fill="${b.c}" clip-path="url(#${clip})"/>`;
-  if (b.type === "chevron")  overlay = `<polygon points="0,18 32,34 64,18 64,34 32,50 0,34" fill="${b.c}" clip-path="url(#${clip})"/>`;
-  if (b.type === "diagonal") overlay = `<polygon points="0,0 64,0 64,30 0,14" fill="${b.c}" clip-path="url(#${clip})"/>`;
-  return `<svg viewBox="0 0 64 104" width="64" height="104" aria-hidden="true">
-    <defs><clipPath id="${clip}"><path d="M14,3 Q32,-3 50,3 Q60,9 59,30 L56,58 Q55,66 46,66 L18,66 Q9,66 8,58 L5,30 Q4,9 14,3 Z"/></clipPath></defs>
-    <path d="M14,3 Q32,-3 50,3 Q60,9 59,30 L56,58 Q55,66 46,66 L18,66 Q9,66 8,58 L5,30 Q4,9 14,3 Z" fill="${b.base}"/>
-    ${overlay}
-    <path d="M14,3 Q32,-3 50,3 Q60,9 59,30 L56,58 Q55,66 46,66 L18,66 Q9,66 8,58 L5,30 Q4,9 14,3 Z" fill="none" stroke="rgba(0,0,0,0.35)" stroke-width="1"/>
-    <rect x="29" y="64" width="6" height="40" rx="3" fill="#3a3a3a"/>
-  </svg>`;
-}
-
-function renderBladeHero() {
-  const blades = CLUBS.map((c, i) =>
-    `<button class="blade" data-i="${i}" aria-label="${c.n} Rowing">${bladeSVG(c, i)}</button>`).join("");
-  return `
-<div class="statement" id="bladehero" style="--up:${CLUBS[0].p};--us:${CLUBS[0].s}">
-  <p class="lead-in">One boathouse at a time —</p>
-  <h1>Every crew. <em>One system.</em></h1>
-  <p class="sub">Built for Harvard rowing. Ready for every boathouse after it — in its own colours, read straight off the blade.</p>
-  <div class="blade-arc">${blades}</div>
-  <div class="blade-club" id="bladeClub">Harvard Rowing</div>
-  <div class="phone bl-phone">
-    <div class="screen">
-      <div class="statusbar"><span>9:41</span><i class="island"></i><span>5G</span></div>
-      <div class="bl-mock">
-        <div class="bl-top"><i></i><span id="bladeTeam">HARVARD ROWING</span><em>Fri · AM</em></div>
-        <div class="bl-greet">
-          <div class="bl-kick">Week 6 of 15 · Summer base</div>
-          <div class="bl-name">Varsity Home</div>
-        </div>
-        <div class="bl-week">
-          <b></b><b></b><b></b><b class="on"></b><b></b><b></b><b></b>
-        </div>
-        <div class="bl-race">
-          <div><div class="bl-race-n">Head of the Charles</div><div class="bl-race-d">October 18</div></div>
-          <div class="bl-count"><strong>63</strong><span>days</span></div>
-        </div>
-        <div class="bl-note">Coach's note · work on this</div>
-      </div>
-      <div class="homebar"><i></i></div>
-    </div>
-  </div>
-</div>`;
-}
 
 function renderStory(id, beats) {
   const copy = beats.map((b, i) => `
@@ -416,56 +348,6 @@ const html = `<title>Never Train Alone</title>
     border: 1px solid var(--border); backdrop-filter: blur(6px);
   }
 
-  /* ── Blade Lock hero ── */
-  /* Compact: headline, arc, club name and phone all have to fit one screen. */
-  #bladehero { --sa: var(--gold); min-height: 100svh; gap: 7px; padding: 16px 24px 14px; justify-content: center; }
-  #bladehero h1 { font-size: clamp(30px, 4.4vw, 50px); max-width: 18ch; }
-  #bladehero .lead-in { font-size: clamp(15px, 2vw, 20px); }
-  #bladehero .sub { font-size: clamp(12px, 1.4vw, 15px); max-width: 52ch; }
-  .blade-arc {
-    display: flex; align-items: flex-start; justify-content: center;
-    height: clamp(74px, 10svh, 104px); margin-top: 0; position: relative; width: 100%;
-    max-width: 900px; pointer-events: none;
-  }
-  .blade {
-    position: absolute; left: 50%; top: 0; margin-left: -32px;
-    background: none; border: 0; padding: 0; cursor: pointer; pointer-events: auto;
-    transition: transform 0.8s cubic-bezier(0.65, 0, 0.35, 1), opacity 0.8s ease, filter 0.8s ease;
-    transform-origin: 50% 20%;
-  }
-  .blade:focus-visible { outline: 2px solid var(--up); outline-offset: 4px; border-radius: 8px; }
-  .blade.lock { filter: drop-shadow(0 0 18px color-mix(in srgb, var(--up) 55%, transparent)); }
-  .blade-club { margin-top: 18px;
-    font-family: var(--mono); font-size: 12px; letter-spacing: 0.18em;
-    text-transform: uppercase; color: var(--up); transition: color 0.6s ease;
-  }
-  .bl-phone { cursor: default; animation: none; width: min(198px, 20svh, 52vw); margin-top: 0; }
-  .bl-mock { aspect-ratio: 900 / 900; background: #0c0c0c; padding: 14px; display: flex; flex-direction: column; gap: 12px; transition: background 0.6s ease; }
-  .bl-top { display: flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; color: var(--up); transition: color 0.6s ease; }
-  .bl-top i { width: 7px; height: 7px; border-radius: 50%; background: var(--up); box-shadow: 0 0 8px var(--up); transition: background 0.6s ease; }
-  .bl-top em { margin-left: auto; font-style: normal; color: var(--text-3); }
-  .bl-greet { margin-top: 4px; }
-  .bl-kick { font-family: var(--mono); font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--us); transition: color 0.6s ease; }
-  .bl-name { font-family: var(--serif); font-size: 21px; color: var(--text); margin-top: 4px; }
-  .bl-week { display: flex; gap: 5px; }
-  .bl-week b { flex: 1; height: 34px; border-radius: 6px; background: #181818; border: 1px solid #222; }
-  .bl-week b.on { background: color-mix(in srgb, var(--up) 30%, #181818); border-color: var(--up); transition: background 0.6s ease, border-color 0.6s ease; }
-  .bl-race {
-    display: flex; align-items: center; justify-content: space-between;
-    border: 1px solid color-mix(in srgb, var(--up) 45%, transparent);
-    background: color-mix(in srgb, var(--up) 12%, transparent);
-    border-radius: 12px; padding: 12px 14px; transition: border-color 0.6s ease, background 0.6s ease;
-  }
-  .bl-race-n { font-size: 13px; font-weight: 600; color: var(--text); }
-  .bl-race-d { font-size: 11px; color: var(--text-2); margin-top: 2px; }
-  .bl-count { text-align: right; color: var(--up); transition: color 0.6s ease; }
-  .bl-count strong { font-size: 26px; font-weight: 700; }
-  .bl-count span { display: block; font-family: var(--mono); font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; }
-  .bl-note {
-    font-family: var(--mono); font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase;
-    color: var(--text-3); border: 1px dashed #2a2a2a; border-radius: 8px; padding: 9px 12px;
-  }
-
   @media (max-width: 1023px) {
     .stage {
       grid-template-columns: 1fr; grid-template-rows: auto 1fr;
@@ -512,8 +394,6 @@ ${renderStory("story1", story1)}
 </div>
 
 ${renderStory("story2", story2)}
-
-${renderBladeHero()}
 
 <div class="cta">
   <h2>One app per university. <em>Yours next.</em></h2>
@@ -580,8 +460,8 @@ ${renderBladeHero()}
       var q = (window.innerHeight - b.top) / (window.innerHeight + b.height);
       q = Math.max(0, Math.min(1, q));
       if (s.wrap) {
-        s.wrap.style.transform =
-          "translateY(" + (14 - q * 28).toFixed(1) + "px) rotate(" + (1.1 - q * 2.2).toFixed(2) + "deg)";
+        // Vertical only — a rotation here read as the phone being tilted.
+        s.wrap.style.transform = "translateY(" + (14 - q * 28).toFixed(1) + "px)";
       }
 
       // Tall captures scroll inside the phone.
@@ -598,7 +478,8 @@ ${renderBladeHero()}
         if (hold > 0 && hold < 1) p = p <= hold ? 0 : (p - hold) / (1 - hold);
         var from = parseFloat(img.getAttribute("data-from")) || 0;
         var to = parseFloat(img.getAttribute("data-to")) || 1;
-        var frac = from + (to - from) * p;
+        // data-to past 1 means: reach the bottom early, then rest there.
+        var frac = Math.min(1, from + (to - from) * p);
         var travel = img.offsetHeight - img.parentNode.offsetHeight;
         if (travel > 0) img.style.transform = "translateY(" + -(frac * travel).toFixed(1) + "px)";
       });
@@ -662,44 +543,6 @@ ${renderBladeHero()}
       });
     }
   });
-})();
-</script>
-<script>
-(function () {
-  var hero = document.getElementById('bladehero');
-  if (!hero) return;
-  var blades = Array.prototype.slice.call(hero.querySelectorAll('.blade'));
-  var club = document.getElementById('bladeClub');
-  var team = document.getElementById('bladeTeam');
-  var CLUBS = ${JSON.stringify(CLUBS.map(c => ({ n: c.n, p: c.p, s: c.s })))};
-  var N = blades.length, active = 0, timer = null;
-  function place() {
-    blades.forEach(function (b, i) {
-      var off = i - active;
-      if (off > N / 2) off -= N;
-      if (off < -N / 2) off += N;
-      var x = off * 74, y = Math.abs(off) * 13, r = off * 8;
-      var sc = off === 0 ? 1.28 : Math.max(0.62, 1 - Math.abs(off) * 0.11);
-      b.style.transform = 'translate(' + x + 'px,' + y + 'px) rotate(' + r + 'deg) scale(' + sc + ')';
-      b.style.opacity = Math.abs(off) > 4 ? 0 : String(1 - Math.abs(off) * 0.16);
-      b.style.zIndex = String(100 - Math.abs(off));
-      b.classList.toggle('lock', off === 0);
-    });
-    var c = CLUBS[active];
-    hero.style.setProperty('--up', c.p);
-    hero.style.setProperty('--us', c.s);
-    club.textContent = c.n + ' Rowing';
-    team.textContent = c.n.toUpperCase() + ' ROWING';
-  }
-  function next() { active = (active + 1) % N; place(); }
-  function start() { stop(); timer = setInterval(next, 2600); }
-  function stop() { if (timer) { clearInterval(timer); timer = null; } }
-  blades.forEach(function (b, i) {
-    b.addEventListener('click', function () { active = i; place(); start(); });
-  });
-  place();
-  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (!reduce) start();
 })();
 </script>
 `;

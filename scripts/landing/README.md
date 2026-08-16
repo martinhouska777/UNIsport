@@ -138,21 +138,30 @@ revokes it afterwards — ask for a fresh one, never assume one is lying around.
 
 ---
 
+## Decisions already carried out (2026-08-17)
+
+- Student beats 5–6 ride the **Log Session sheet** (`tall-logsheet`), not the
+  saved-session crops — the photo option and note are actually on screen.
+- Varsity race + coach's note are **one beat** (V3); home is shot on a
+  **shot day** (`db/seed_varsity_shotday.sql`: a four AM, a pair PM), and the
+  screenshot account is **John Brown**, whose seat lights up as "You".
+- Both stories **hold their opening frame** (long first marker + `hold:` on the
+  first pan beat), the phone **no longer tilts** (drift is vertical only), and
+  the crossing flip is **off below 1024px** — it pushed the phone off screen.
+- Student beat 7 pans the profile (`tall-profile`, capture-profile-tall.mjs)
+  down past the leaderboard ranks and rests on the session calendar.
+- The **Blade Lock hero was cut** from the scroll page at the owner's request
+  (the standalone `webpage/Blade Lock Light.html` still exists).
+
 ## Agreed but not yet done
 
 1. **Shoot the confirmation card** ("did this happen?" → verified workout) and
    make it a student beat. It is the app's most distinctive mechanic and is
    currently absent from both animations.
-2. **Cut student beat 6** ("A record you'll actually keep") — its headline
-   promises photos while the frame shows an empty photo slot.
-3. **Merge Varsity V3 + V4** — the coach's note is too small to hold a beat of
-   its own.
-4. **Add a closing Varsity still** returning to the published lineup, so the
-   section ends on the boat rather than a statistics graph.
-5. **Beat 1 copy** → "First, every gym on campus." — bridges the hero's promise
+2. **Beat 1 copy** → "First, every gym on campus." — bridges the hero's promise
    about people into a screen full of buildings.
-6. **Unresolved:** the demo students have no profile photos, so the match screen
+3. **Unresolved:** the demo students have no profile photos, so the match screen
    is a row of placeholder glyphs under a headline about finding people. Needs
    either generated portraits or a crop that avoids the avatar row.
-7. **Then:** stitch the four sections into one page and port into `app/page.tsx`
+4. **Then:** stitch the sections into one page and port into `app/page.tsx`
    using the `l-*` design tokens (rule 1 — no hex literals in components).
