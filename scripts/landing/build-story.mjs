@@ -39,16 +39,16 @@ const story1 = [
     ann: [{ side: "right", top: 52, text: "One tap to accept" }],
   },
   {
-    key: "tall-session", kicker: "05 · The log", pan: [0, 0.5], side: "left",
+    key: "tall-logsheet", kicker: "05 · The log", pan: [0, 0.75], side: "left",
     head: "Afterwards, log it together.",
     sub: "Every set, every rep — and the partner carried straight over from the plan.",
     ann: [{ side: "right", top: 30, text: "Set by set" }],
   },
   {
-    key: "tall-session", kicker: "06 · The record", pan: [0.5, 1], side: "left",
-    head: "A record you'll actually keep.",
-    sub: "Photos and a note on every session — a training log that reads like a camera roll.",
-    ann: [{ side: "left", top: 50, text: "Yours forever" }],
+    key: "tall-logsheet", kicker: "06 · The record", pan: [0.75, 1], side: "left",
+    head: "A photo and a note, while it's fresh.",
+    sub: "Who you trained with, how it went, and a picture if you took one — a training log you'll still want to read in four years.",
+    ann: [{ side: "left", top: 50, text: "Photo + note" }],
   },
   {
     key: "07-your-profile", kicker: "07 · The proof", side: "left",
@@ -60,37 +60,33 @@ const story1 = [
 
 const story2 = [
   {
-    key: "tall-vhome", kicker: "V1 · The plan", pan: [0, 0.28],
+    key: "tall-vhome", kicker: "V1 · The plan", pan: [0, 0.27], hold: 0.45,
     head: "The coach's plan, on every phone.",
     sub: "Water, erg, weights — the week your coach actually built. Not a screenshot of a spreadsheet.",
     ann: [{ side: "right", top: 18, text: "Week 6 of 15" }],
   },
   {
-    key: "tall-vhome", kicker: "V2 · The boat", pan: [0.28, 0.62],
+    key: "tall-vhome", kicker: "V2 · The boat", pan: [0.27, 0.68],
     head: "Your name, in the boat.",
-    sub: "The lineup your coach published, seat by seat, the night before you row it.",
-    ann: [{ side: "left", top: 42, text: "You, 5 seat, 1V" }],
+    sub: "The lineup your coach published, seat by seat, the night before you row it — the four in the morning, the pair after lunch.",
+    ann: [{ side: "left", top: 42, text: "You, 3 seat" }],
   },
   {
-    key: "tall-vhome", kicker: "V3 · The race", pan: [0.62, 0.84],
-    head: "The next race is always in view.",
-    sub: "Head of the Charles, 63 days out — and every session between now and then already planned.",
-    ann: [{ side: "right", top: 46, text: "Counting down" }],
+    // The race and the note used to be a beat each. On a home screen this short
+    // they share one window, and no amount of scrolling separates them.
+    key: "tall-vhome", kicker: "V3 · The race", pan: [0.68, 1],
+    head: "The next race, and what to fix before it.",
+    sub: "Head of the Charles, 63 days out — and one note from your coach sitting under it until you've sorted it.",
+    ann: [{ side: "right", top: 34, text: "Counting down" }, { side: "left", top: 62, text: "Straight from the coach" }],
   },
   {
-    key: "tall-vhome", kicker: "V4 · The note", pan: [0.84, 1],
-    head: "And what to fix, from your coach.",
-    sub: "One note, always on your home screen, so you know what you're working on before you get on the water.",
-    ann: [{ side: "left", top: 58, text: "Straight from the coach" }],
-  },
-  {
-    key: "13-varsity-log-list", kicker: "V5 · The week", side: "left",
+    key: "13-varsity-log-list", kicker: "V4 · The week", side: "left",
     head: "Log straight off the plan.",
     sub: "Your whole week across the top — every session the coach set, waiting to be logged.",
     ann: [{ side: "right", top: 16, text: "Your week, at a glance" }, { side: "left", top: 44, text: "Tap to log" }],
   },
   {
-    key: "tall-vprofile", kicker: "V6 · The season", pan: [0.06, 0.42], side: "left",
+    key: "tall-vprofile", kicker: "V5 · The season", pan: [0.06, 0.42], side: "left",
     head: "129 km this week.",
     sub: "Metres rowed, week by week, all season — consistency you can actually see.",
     ann: [{ side: "right", top: 40, text: "Eight weeks of work" }],
@@ -483,7 +479,11 @@ const html = `<title>Never Train Alone</title>
     .phone-col { align-items: start; height: 100%; padding-top: 10px; }
     .phone { width: min(84vw, (100svh - 230px) * 0.55); }
     .ann { display: none; }
+    /* The phone crossing the page is a two-column move. In one column it just
+       drives the phone off the side of the screen, so the flip is off here. */
+    .stage.flip .phone-col, .stage.flip .copy { transform: none; }
     .rail { top: auto; bottom: -6px; position: absolute; left: 50%; transform: translateX(-50%); flex-direction: row; }
+    .stage.flip .rail { left: 50%; right: auto; }
     .dot.active { height: 5px; width: 18px; }
     .marker:first-child { height: 120svh; }
   }

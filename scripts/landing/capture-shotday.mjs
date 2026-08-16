@@ -79,17 +79,22 @@ await phone();
 await page.goto(BASE + "/profile", { waitUntil: "networkidle2", timeout: 45000 });
 await wait(3500);
 
-// the richest logged day (most muscle groups in its aria-label)
-const day = await page.evaluate(() => {
+// A specific day, not the richest one: the beat promises a training partner
+// carried over from the plan, and only some sessions have one. The 15th is a
+// four-exercise gym session with Elena Vásquez and a note on it.
+const LOG_DAY = 15;
+const day = await page.evaluate((wanted) => {
   const b = [...document.querySelectorAll("button[aria-label]")].filter((x) =>
     / on day \d+$/.test(x.getAttribute("aria-label") || "")
   );
-  const pick = b.sort(
-    (p, q) => q.getAttribute("aria-label").split(",").length - p.getAttribute("aria-label").split(",").length
-  )[0];
+  const pick =
+    b.find((x) => x.getAttribute("aria-label").endsWith(` on day ${wanted}`)) ??
+    b.sort(
+      (p, q) => q.getAttribute("aria-label").split(",").length - p.getAttribute("aria-label").split(",").length
+    )[0];
   if (pick) { pick.click(); return pick.getAttribute("aria-label"); }
   return null;
-});
+}, LOG_DAY);
 await wait(1500);
 console.log("day sheet:", day);
 

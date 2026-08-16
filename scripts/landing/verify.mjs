@@ -56,8 +56,24 @@ await report("story1 beat5 ", "story1", 5);
 await report("story1 beat6 ", "story1", 6);
 await report("story2 beat0 ", "story2", 0);
 await report("story2 beat1 ", "story2", 1);
-await report("story2 beat3 ", "story2", 3);
-await report("story2 beat5 ", "story2", 5);
+await report("story2 beat2 ", "story2", 2);
+await report("story2 beat4 ", "story2", 4);
+
+// ── the opening hold: the first screen must sit still while it is read ──
+async function atFraction(storyId, beat, f) {
+  await page.evaluate((sid, b, frac) => {
+    document.documentElement.style.scrollBehavior = "auto";
+    const m = document.querySelector(`#${sid} .marker[data-i="${b}"]`);
+    const top = m.getBoundingClientRect().top + window.scrollY;
+    window.scrollTo(0, top - window.innerHeight + (m.offsetHeight + window.innerHeight) * frac);
+  }, storyId, beat, f);
+  await wait(700);
+  return page.evaluate((sid) => document.querySelector(`#${sid} .shot.active`)?.style.transform || "(none)",
+    storyId);
+}
+for (const f of [0.2, 0.4, 0.5, 0.7, 0.95]) {
+  console.log(`story2 beat0 pan @${f}:`, await atFraction("story2", 0, f));
+}
 
 // screenshots of the two sides
 await page.evaluate(() => {

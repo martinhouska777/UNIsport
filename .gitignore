@@ -43,5 +43,7 @@ next-env.d.ts
 
 # Never commit a captured auth session
 session-cookie.txt
+scripts/landing/.chrome-profile/
 scripts/landing/*.png
 scripts/landing/*.html
+scripts/landing/shots.json
