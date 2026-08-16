@@ -40,3 +40,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Never commit a captured auth session
+session-cookie.txt
+scripts/landing/*.png
+scripts/landing/*.html
