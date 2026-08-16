@@ -34,10 +34,13 @@
 
 -- ---------------------------------------------------------------------------
 -- The 14 invented students. Edit names / details here — nothing is hardcoded
--- further down. (Temp table: it disappears when the session ends.)
+-- further down. It is a plain table rather than a TEMP one because the Supabase
+-- SQL editor does not guarantee a temp table survives the whole script; row-level
+-- security is on with no policies, so no client can ever read it, and
+-- db/seed_demo_undo.sql drops it.
 -- ---------------------------------------------------------------------------
-drop table if exists demo_people;
-create temp table demo_people (
+drop table if exists public.demo_seed_people;
+create table public.demo_seed_people (
   id         uuid,
   email      text,
   name       text,
@@ -61,8 +64,9 @@ create temp table demo_people (
   help       boolean,
   bio        text
 );
+alter table public.demo_seed_people enable row level security;  -- no policies: server-side only
 
-insert into demo_people values
+insert into public.demo_seed_people values
 ('de11a001-0000-4000-8000-000000000001','elena.vasquez@demo.unisport.test','Elena Vásquez','''28','Female','Leverett',
  'gym','intermediate','Push-Pull-Legs','','','',
  '["Malkin Athletic Center","Hemenway Gymnasium"]',
@@ -218,7 +222,7 @@ begin
     now(), now() - interval '90 days', now(),
     '{"provider":"email","providers":["email"]}'::jsonb,
     jsonb_build_object('name', d.name)
-  from demo_people d;
+  from public.demo_seed_people d;
 
   insert into public.profiles (id, data, onboarding_completed, updated_at)
   select
@@ -252,7 +256,7 @@ begin
     ),
     true,
     now() - interval '3 days'
-  from demo_people d;
+  from public.demo_seed_people d;
 
   -- --- 3. Make the matches REAL --------------------------------------------
   -- Share the owner's actual gyms / concentration / country / interests with
@@ -293,13 +297,13 @@ begin
   -- --- 4. Follows -----------------------------------------------------------
   insert into public.follows (follower_id, followee_id, created_at)
   select d.id, me, now() - (row_number() over (order by d.name) || ' days')::interval
-    from demo_people d
+    from public.demo_seed_people d
    where d.id <> 'de11a005-0000-4000-8000-000000000005'
   on conflict do nothing;
 
   insert into public.follows (follower_id, followee_id, created_at)
   select me, d.id, now() - interval '5 days'
-    from demo_people d
+    from public.demo_seed_people d
    where d.id in ('de11a001-0000-4000-8000-000000000001','de11a002-0000-4000-8000-000000000002',
                   'de11a004-0000-4000-8000-000000000004','de11a006-0000-4000-8000-000000000006',
                   'de11a009-0000-4000-8000-000000000009','de11a013-0000-4000-8000-000000000013')
@@ -410,7 +414,7 @@ begin
   -- --- 6. Community channels ------------------------------------------------
   -- The demo people join and post; the owner joins so the tab looks lived-in.
   insert into public.channel_members (channel_id, user_id, joined_at)
-  select c.id, d.id, now() - interval '20 days' from public.channels c cross join demo_people d
+  select c.id, d.id, now() - interval '20 days' from public.channels c cross join public.demo_seed_people d
   on conflict do nothing;
 
   insert into public.channel_members (channel_id, user_id, joined_at)
@@ -607,4 +611,5 @@ begin
   raise notice 'Demo data loaded for % — 14 people, 5 conversations, 22 channel messages, 6 board posts, 24 workouts.', owner_email;
 end $$;
 
-drop table if exists demo_people;
+-- The helper table is LEFT IN PLACE (row-level security on, no policies, so no
+-- client can read it). db/seed_demo_undo.sql drops it.

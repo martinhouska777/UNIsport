@@ -31,3 +31,4 @@ delete from public.varsity_coach_notes n
  where k.kind = 'coach_note' and k.key = n.athlete_id::text;
 
 drop table if exists public.demo_seed_keys;
+drop table if exists public.demo_seed_week;

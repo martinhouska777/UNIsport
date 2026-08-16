@@ -22,3 +22,6 @@ delete from public.buddy_posts      where author::text like 'de11a%';
 delete from public.dm_conversations where user_lo::text like 'de11a%' or user_hi::text like 'de11a%';
 delete from public.follows          where follower_id::text like 'de11a%' or followee_id::text like 'de11a%';
 delete from auth.users              where id::text like 'de11a%';  -- cascades to profiles
+
+-- The seed's helper table.
+drop table if exists public.demo_seed_people;

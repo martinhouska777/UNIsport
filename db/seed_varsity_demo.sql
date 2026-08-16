@@ -41,16 +41,17 @@ alter table public.demo_seed_keys enable row level security;  -- no policies: se
 -- whole nine-week window is generated from these seven days.
 -- Descriptions are taken from the app's own quick-fill suggestions.
 -- ---------------------------------------------------------------------------
-drop table if exists demo_week;
-create temp table demo_week (
+drop table if exists public.demo_seed_week;
+create table public.demo_seed_week (
   dow         int,      -- 0 = Sunday … 6 = Saturday
   period      text,     -- AM | PM
   category    text,     -- water | erg | weights | off | flex
   intensity   text,     -- UT2 | UT1 | hard (water + erg only)
   description text
 );
+alter table public.demo_seed_week enable row level security;  -- no policies: server-side only
 
-insert into demo_week values
+insert into public.demo_seed_week values
   (1,'AM','erg',    'UT2', '3×25'' UT2'),
   (1,'PM','weights', null, 'Main strength — squat, pull, press'),
   (2,'AM','water',  'UT2', '70'' steady state'),
@@ -147,7 +148,7 @@ begin
     select s.base || '-' || w.period, w.category, w.intensity, w.description,
            case w.period when 'AM' then '7:00 AM' else '4:30 PM' end, now()
     from slots s
-    join demo_week w on w.dow = s.dow
+    join public.demo_seed_week w on w.dow = s.dow
     on conflict (day_key) do update
       set category = excluded.category, intensity = excluded.intensity,
           description = excluded.description, time = excluded.time, updated_at = now()
@@ -220,7 +221,7 @@ begin
   sess as (
     select s.d, s.doy, w.period, w.category, w.intensity, s.base || '-' || w.period as day_key
     from slots s
-    join demo_week w on w.dow = s.dow
+    join public.demo_seed_week w on w.dow = s.dow
     where w.category <> 'off'
       and mod(s.doy + case w.period when 'AM' then 0 else 4 end, 11) <> 0  -- miss one now and then
   )
@@ -276,4 +277,5 @@ begin
   raise notice 'Varsity demo loaded for %. Race: Head of the Charles on %. Logs on file: %.', owner_email, v_race, n;
 end $$;
 
-drop table if exists demo_week;
+-- The helper table is LEFT IN PLACE (row-level security on, no policies).
+-- db/seed_varsity_demo_undo.sql drops it.
