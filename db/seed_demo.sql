@@ -313,25 +313,25 @@ begin
 
   -- --- 5. Direct messages ---------------------------------------------------
 
-  -- (a) Elena — an accepted session plan, sitting in the thread.
+  -- (a) Ryan — an accepted session plan, sitting in the thread.
   conv := gen_random_uuid();
   insert into public.dm_conversations (id, user_lo, user_hi, created_at) values
-    (conv, least(me,'de11a001-0000-4000-8000-000000000001'::uuid),
-           greatest(me,'de11a001-0000-4000-8000-000000000001'::uuid), now() - interval '11 days');
+    (conv, least(me,'de11a014-0000-4000-8000-000000000014'::uuid),
+           greatest(me,'de11a014-0000-4000-8000-000000000014'::uuid), now() - interval '11 days');
 
   insert into public.dm_messages (conv_id, sender_id, sender_name, body, created_at) values
-    (conv,'de11a001-0000-4000-8000-000000000001','Elena Vásquez','Hey! Saw we match on legs day at the MAC — want to train together this week?', now() - interval '2 days 4 hours'),
+    (conv,'de11a014-0000-4000-8000-000000000014','Ryan O''Neill','Hey! Saw we match on legs day at the MAC — want to train together this week?', now() - interval '2 days 4 hours'),
     (conv, me, coalesce(my->>'name','Me'),'Yeah, I am in. I usually go around 8.', now() - interval '2 days 3 hours'),
-    (conv,'de11a001-0000-4000-8000-000000000001','Elena Vásquez','Perfect, 8 works. I need a spotter for squats anyway.', now() - interval '2 days 3 hours');
+    (conv,'de11a014-0000-4000-8000-000000000014','Ryan O''Neill','Perfect, 8 works. I need a spotter for squats anyway.', now() - interval '2 days 3 hours');
 
   plan_a := gen_random_uuid();
   insert into public.session_plans (id, conv_id, proposer_id, activity, place, scheduled_at, status, created_at) values
-    (plan_a, conv, 'de11a001-0000-4000-8000-000000000001','gym','Malkin Athletic Center',
+    (plan_a, conv, 'de11a014-0000-4000-8000-000000000014','gym','Malkin Athletic Center',
      date_trunc('day', now() + interval '1 day') + interval '18 hours', 'accepted', now() - interval '2 days 2 hours');
   insert into public.dm_messages (conv_id, sender_id, sender_name, body, kind, plan_id, created_at) values
-    (conv,'de11a001-0000-4000-8000-000000000001','Elena Vásquez','📅 Session plan: gym · Malkin Athletic Center','plan', plan_a, now() - interval '2 days 2 hours');
+    (conv,'de11a014-0000-4000-8000-000000000014','Ryan O''Neill','📅 Session plan: gym · Malkin Athletic Center','plan', plan_a, now() - interval '2 days 2 hours');
   insert into public.dm_messages (conv_id, sender_id, sender_name, body, created_at) values
-    (conv,'de11a001-0000-4000-8000-000000000001','Elena Vásquez','See you there 💪', now() - interval '20 hours');
+    (conv,'de11a014-0000-4000-8000-000000000014','Ryan O''Neill','See you there 💪', now() - interval '20 hours');
 
   insert into public.dm_reads (conv_id, user_id, last_read_at) values
     (conv, me, now() - interval '30 hours') on conflict (conv_id, user_id) do update set last_read_at = excluded.last_read_at;
@@ -486,12 +486,12 @@ begin
     w.note,
     now() - (w.days_ago || ' days')::interval
   from (values
-    (1,  1,'gym','Malkin Athletic Center','Elena Vásquez','de11a001-0000-4000-8000-000000000001'::uuid,
+    (1,  1,'gym','Malkin Athletic Center','Ryan O''Neill','de11a014-0000-4000-8000-000000000014'::uuid,
      '[{"name":"Back Squat","muscle":"Legs","sets":[{"weight":"60","reps":"8","type":"W","done":true},{"weight":"90","reps":"5","done":true},{"weight":"100","reps":"5","done":true},{"weight":"100","reps":"5","done":true}]},
         {"name":"Romanian Deadlift","muscle":"Legs","sets":[{"weight":"80","reps":"10","done":true},{"weight":"80","reps":"10","done":true},{"weight":"80","reps":"9","done":true}]},
         {"name":"Leg Press","muscle":"Legs","sets":[{"weight":"160","reps":"12","done":true},{"weight":"160","reps":"12","done":true}]},
         {"name":"Standing Calf Raise","muscle":"Calves","sets":[{"weight":"60","reps":"15","done":true},{"weight":"60","reps":"15","done":true}]}]'::jsonb,
-     '{"weightUnit":"kg"}'::jsonb,'Squats moved well. Elena spotted the top sets.'),
+     '{"weightUnit":"kg"}'::jsonb,'Squats moved well. Ryan spotted the top sets.'),
 
     (2,  3,'gym','Malkin Athletic Center','',null,
      '[{"name":"Bench Press","muscle":"Chest","sets":[{"weight":"40","reps":"10","type":"W","done":true},{"weight":"70","reps":"6","done":true},{"weight":"75","reps":"5","done":true},{"weight":"75","reps":"4","done":true}]},
@@ -560,7 +560,7 @@ begin
     (14,24,'running','','',null,'[]'::jsonb,
      '{"distance":"5.0","unit":"km","duration":"25:52"}'::jsonb,'Fastest 5k so far.'),
 
-    (15,26,'gym','Malkin Athletic Center','Elena Vásquez','de11a001-0000-4000-8000-000000000001'::uuid,
+    (15,26,'gym','Malkin Athletic Center','Ryan O''Neill','de11a014-0000-4000-8000-000000000014'::uuid,
      '[{"name":"Bench Press","muscle":"Chest","sets":[{"weight":"67.5","reps":"6","done":true},{"weight":"70","reps":"5","done":true},{"weight":"70","reps":"5","done":true}]},
         {"name":"Cable Fly","muscle":"Chest","sets":[{"weight":"17.5","reps":"12","done":true},{"weight":"17.5","reps":"12","done":true}]},
         {"name":"Triceps Pushdown","muscle":"Triceps","sets":[{"weight":"27.5","reps":"12","done":true},{"weight":"27.5","reps":"12","done":true}]}]'::jsonb,

@@ -28,7 +28,7 @@ async function report(label, storyId, beat) {
     const ph = document.querySelector(`#${sid} .phone`).getBoundingClientRect();
     const cp = document.querySelector(`#${sid} .copy`).getBoundingClientRect();
     const active = document.querySelector(`#${sid} .beat.active`);
-    const shot = document.querySelector(`#${sid} .shot.active`);
+    const shot = document.querySelector(`#${sid} .shot-frame.active .shot`);
     return {
       active: active?.dataset.i,
       headline: active?.querySelector("h2")?.innerText.slice(0, 38),
@@ -68,7 +68,7 @@ async function atFraction(storyId, beat, f) {
     window.scrollTo(0, top - window.innerHeight + (m.offsetHeight + window.innerHeight) * frac);
   }, storyId, beat, f);
   await wait(700);
-  return page.evaluate((sid) => document.querySelector(`#${sid} .shot.active`)?.style.transform || "(none)",
+  return page.evaluate((sid) => document.querySelector(`#${sid} .shot-frame.active .shot`)?.style.transform || "(none)",
     storyId);
 }
 for (const f of [0.2, 0.4, 0.5, 0.7, 0.95]) {
