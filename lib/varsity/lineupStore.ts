@@ -91,7 +91,7 @@ const norm = (s: string) => s.trim().toLowerCase();
 // `myName` is the signed-in athlete's full profile name. We have no real link
 // between accounts and the (still-mock) roster yet, so we highlight "your seat"
 // by matching that name to the seated athlete's name — works for anyone who's
-// both a real account and in the squad (e.g. Martin Houska).
+// both a real account and in the squad (e.g. John Brown, the demo account).
 function boatToLineup(period: string, boat: Boat, myName: string | null): Lineup {
   const me = myName ? norm(myName) : null;
   const fill = (athleteId: string | null) => {

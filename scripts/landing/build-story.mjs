@@ -6,6 +6,9 @@
 //     phone as you scroll the page. Consecutive pan beats sharing an image
 //     continue the same scroll, so several headlines can ride one long screen.
 //     `pan: [from, to]` are fractions of the image's travel.
+//     `hold: 0…1` keeps the image still for that share of the beat before the
+//     pan starts — the opening frame of each story needs a moment to be read
+//     before anything moves.
 import fs from "fs";
 
 const shots = JSON.parse(fs.readFileSync("shots.json", "utf8"));
@@ -179,7 +182,9 @@ function renderStory(id, beats) {
 
   // one <img> per beat; pan beats get the tall class and their travel range
   const imgs = beats.map((b, i) => {
-    const pan = b.pan ? ` data-from="${b.pan[0]}" data-to="${b.pan[1]}"` : "";
+    const pan = b.pan
+      ? ` data-from="${b.pan[0]}" data-to="${b.pan[1]}" data-hold="${b.hold || 0}"`
+      : "";
     return `<img class="shot${b.pan ? " tall" : ""}${i === 0 ? " active" : ""}" data-i="${i}"${pan} src="${shots[b.key]}" alt="" decoding="async" />`;
   }).join("\n");
 
@@ -294,7 +299,9 @@ const html = `<title>Never Train Alone</title>
   .markers { position: relative; margin-top: -100svh; }
   .marker { height: 100svh; }
   .marker.pan { height: 150svh; }
-  .marker:first-child { height: 55svh; }
+  /* The opening beat of each story is the one nobody has read yet — it gets
+     roughly two screens of scroll before the second headline takes over. */
+  .marker:first-child { height: 165svh; }
   .marker:last-child { height: 130svh; }
 
   .copy { position: relative; min-height: 300px; }
@@ -478,7 +485,7 @@ const html = `<title>Never Train Alone</title>
     .ann { display: none; }
     .rail { top: auto; bottom: -6px; position: absolute; left: 50%; transform: translateX(-50%); flex-direction: row; }
     .dot.active { height: 5px; width: 18px; }
-    .marker:first-child { height: 40svh; }
+    .marker:first-child { height: 120svh; }
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -585,6 +592,10 @@ ${renderBladeHero()}
         var mr = m.getBoundingClientRect();
         var p = (window.innerHeight - mr.top) / (window.innerHeight + mr.height);
         p = Math.max(0, Math.min(1, p));
+        // A hold is a dead zone at the START of the beat: the screen sits still
+        // long enough to be read, then the remaining scroll does the whole pan.
+        var hold = parseFloat(img.getAttribute("data-hold")) || 0;
+        if (hold > 0 && hold < 1) p = p <= hold ? 0 : (p - hold) / (1 - hold);
         var from = parseFloat(img.getAttribute("data-from")) || 0;
         var to = parseFloat(img.getAttribute("data-to")) || 1;
         var frac = from + (to - from) * p;

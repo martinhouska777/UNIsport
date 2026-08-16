@@ -59,7 +59,8 @@ export const roster: Athlete[] = [
   { id: "alexander-grundy", initials: "AG", name: "Alexander Grundy", side: "B" },
   { id: "george-farkas", initials: "GF", name: "George Farkas", side: "B" },
   { id: "sam-gallaudet", initials: "SG", name: "Sam Gallaudet", side: "B" },
-  { id: "martin-houska", initials: "MH", name: "Martin Houska", side: "B" },
+  // The demo account itself, so a seat can light up as "You" on Home.
+  { id: "john-brown", initials: "JBn", name: "John Brown", side: "B" },
   { id: "marco-gandola", initials: "MG", name: "Marco Gandola", side: "B" },
   { id: "apostolos-lykomitros", initials: "AL", name: "Apostolos Lykomitros", side: "B" },
   { id: "tyler-horler", initials: "TH", name: "Tyler Horler", side: "B" },
@@ -114,7 +115,7 @@ export const rosterById: Record<string, Athlete> = Object.fromEntries(
 // out of their group automatically; removing one returns it here.
 export const rosterGroups: { label: string; danger?: boolean; ids: string[] }[] = [
   { label: "Coxswains", ids: ["cate-frerichs", "micah-john", "iris-hennin", "nick-yoo", "nat-toms", "abbi-park", "helena-inzerillo"] },
-  { label: "Group B", ids: ["asante-kiio", "luca-vicino", "marcus-chung", "mason-cruz-abrams", "jack-dorney", "alexander-grundy", "george-farkas", "sam-gallaudet", "martin-houska", "marco-gandola", "apostolos-lykomitros", "tyler-horler", "teddy-plimpton", "sam-davidson", "jordan-dykema"] },
+  { label: "Group B", ids: ["asante-kiio", "luca-vicino", "marcus-chung", "mason-cruz-abrams", "jack-dorney", "alexander-grundy", "george-farkas", "sam-gallaudet", "john-brown", "marco-gandola", "apostolos-lykomitros", "tyler-horler", "teddy-plimpton", "sam-davidson", "jordan-dykema"] },
   { label: "Group C", ids: ["jack-hansen-knarhoi", "owen-finnerty", "marco-vicino", "pierce-lapham", "julian-paul", "ben-scott", "sam-woodgate", "mike-thomas", "joseph-baker", "adam-cech", "alex-sanchez-fretz", "leo-bessler", "joshua-brangan", "bob-rawlinson", "ben-schnalke", "jack-sulger", "elam-hughes", "owen-marcovitz"] },
   { label: "Bike", ids: ["will-fowler", "kevin-weldon"] },
   { label: "UT2", ids: ["leyth-sousou"] },

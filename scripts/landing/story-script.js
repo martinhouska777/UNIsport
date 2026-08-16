@@ -65,6 +65,10 @@
         var mr = m.getBoundingClientRect();
         var p = (window.innerHeight - mr.top) / (window.innerHeight + mr.height);
         p = Math.max(0, Math.min(1, p));
+        // A hold is a dead zone at the START of the beat: the screen sits still
+        // long enough to be read, then the remaining scroll does the whole pan.
+        var hold = parseFloat(img.getAttribute("data-hold")) || 0;
+        if (hold > 0 && hold < 1) p = p <= hold ? 0 : (p - hold) / (1 - hold);
         var from = parseFloat(img.getAttribute("data-from")) || 0;
         var to = parseFloat(img.getAttribute("data-to")) || 1;
         var frac = from + (to - from) * p;
