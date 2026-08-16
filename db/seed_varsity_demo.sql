@@ -63,7 +63,8 @@ insert into public.demo_seed_week values
   (5,'AM','water',  'UT2', '4×20'' UT2'),
   (5,'PM','off',     null, ''),
   (6,'AM','water', 'hard', '3×5'' (1:50 at 72, 2k+2)'),
-  (0,'AM','off',     null, '');
+  (0,'AM','water',  'UT2', '90'' UT2 row'),   -- Sunday long steady
+  (0,'PM','off',     null, '');
 
 -- ---------------------------------------------------------------------------
 -- Everything else runs in one block so it can share the owner's id + dates.
@@ -152,10 +153,13 @@ begin
     on conflict (day_key) do update
       set category = excluded.category, intensity = excluded.intensity,
           description = excluded.description, time = excluded.time, updated_at = now()
-    returning day_key
+    -- xmax = 0 marks a row this statement really INSERTED, as opposed to one
+    -- that already existed and was updated. Only the new ones are recorded, so
+    -- the undo can never delete a session the coach built by hand.
+    returning day_key, (xmax = 0) as was_new
   )
   insert into public.demo_seed_keys (kind, key)
-  select 'plan_session', day_key from written
+  select 'plan_session', day_key from written where was_new
   on conflict do nothing;
 
   -- --- 4. Boat lineups for the water practices ------------------------------
@@ -197,10 +201,10 @@ begin
     from water w
     on conflict (day_key) do update
       set boats = excluded.boats, status = excluded.status, updated_at = now()
-    returning day_key
+    returning day_key, (xmax = 0) as was_new
   )
   insert into public.demo_seed_keys (kind, key)
-  select 'lineup', day_key from written
+  select 'lineup', day_key from written where was_new
   on conflict do nothing;
 
   -- --- 5. The owner's own logs (five weeks, up to YESTERDAY) ----------------
@@ -253,7 +257,9 @@ begin
       else null
     end,
     ''
-  from sess;
+  from sess
+  -- A slot the athlete has already logged for real is left exactly as it is.
+  on conflict (athlete_id, day_key) do nothing;
 
   -- A few sessions nobody prescribed — the "extra" training the plan never asks
   -- for, which is half the point of the log.
