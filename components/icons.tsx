@@ -74,6 +74,14 @@ export const IconFlag = (p: IconProps) => (
   </Base>
 );
 
+export const IconTrophy = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M7 4h10v5a5 5 0 0 1-10 0V4z" />
+    <path d="M7 6H4v1a4 4 0 0 0 3 3.9M17 6h3v1a4 4 0 0 1-3 3.9" />
+    <path d="M12 14v3M9 20h6M10 17h4l.5 3h-5l.5-3z" />
+  </Base>
+);
+
 export const IconBulb = (p: IconProps) => (
   <Base {...p}>
     <path d="M9 18h6M10 21h4" />

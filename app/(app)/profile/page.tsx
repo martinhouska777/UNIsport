@@ -16,6 +16,7 @@ import WorkoutDetail from "@/components/profile/WorkoutDetail";
 import LogSessionSheet from "@/components/profile/LogSessionSheet";
 import PartnersSheet from "@/components/profile/PartnersSheet";
 import UpcomingSessions from "@/components/profile/UpcomingSessions";
+import LeaderboardStrip from "@/components/leaderboards/LeaderboardStrip";
 import PersonalRecords from "@/components/profile/PersonalRecords";
 import PhotoGrid from "@/components/profile/PhotoGrid";
 import PreferencesSheet from "@/components/profile/PreferencesSheet";
@@ -456,6 +457,11 @@ export default function ProfilePage() {
 
       {/* Upcoming accepted sessions (chat-planned) */}
       <UpcomingSessions />
+
+      {/* Leaderboards — one line, roughly a centimetre tall, straight into the
+          full boards. It sits ABOVE the calendar deliberately: it's the thing
+          worth glancing at every time this tab opens. */}
+      <LeaderboardStrip />
 
       {/* Session calendar — an all-blank month says nothing, so it only appears
           once there's at least one logged session to mark on it. */}
