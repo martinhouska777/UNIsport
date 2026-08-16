@@ -195,7 +195,7 @@ the entire "reveal" — nothing more.
 ## Assets
 
 Cropped and normalised screenshots live in `public/landing/`, every one of them
-**900 × 1493**, WebP, bottom-flush so the app's nav bar always sits on the frame's
+**900 × 1479**, WebP, bottom-flush so the app's nav bar always sits on the frame's
 bottom edge. They are cut from raw phone screenshots: the OS status and gesture bands
 are removed, and the shorter ones are padded above with the app's black background so
 all frames share one canvas. **Identical dimensions are not cosmetic** — a cross-fade
@@ -209,8 +209,9 @@ Any new screenshot must go through the same treatment before it is used.
 | `02-match.webp` | 2 — then it finds your people |
 | `03-why-you-match.webp` | 3 — and it tells you why |
 | `04-plan-a-session.webp` | 4 — agree on a session in the chat |
-| `05-log-a-session.webp` | 5 — afterwards it logs itself |
-| `06-your-profile.webp` | spare — not in the five, useful for the hero |
+| `05-log-a-session.webp` | 5a — logging it, partner carried over from the chat |
+| `06-memories.webp` | 5b — photos and the note, "memories from the session" |
+| `07-your-profile.webp` | spare — useful for the hero |
 
 Animation 2's four frames are not shot yet.
 
