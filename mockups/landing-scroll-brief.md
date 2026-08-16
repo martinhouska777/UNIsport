@@ -12,13 +12,26 @@ thumb, and by the bottom understands **what the app does, who it is for, and why
 is not another fitness tracker**. No paragraphs of explanation — the app explains
 itself through real screens, one idea per screen.
 
-Two acts:
+**Two separate animations**, not one long one:
 
-- **Act I — the app for every student.** Gyms → people → plan → proof.
-- **Act II — Varsity Mode.** The same app, built for the squad you actually compete with.
+- **Animation 1 — the app for every student.** Gyms → people → plan → proof.
+- **Animation 2 — Varsity Mode.** The same app, built for the squad you actually
+  compete with.
 
-Act II must feel like a reveal, not a feature list. Most visitors will not be varsity
-athletes; the point is *"and it goes deeper than you thought"*.
+They are independent. Each opens with its own statement, runs its own sequence of
+beats in its own phone frame, and closes before the next begins. Nothing carries over
+between them — the first one finishes, the page resets, the second one starts.
+
+Why separate rather than one continuous scroll: they are aimed at two different
+people. Animation 1 must land completely for a visitor who will never read further,
+and Animation 2 has to introduce itself from scratch, as a reveal rather than a
+continuation. It also means either can be reordered, shortened or dropped without
+touching the other.
+
+**Build it as one component fed by two data sets** — a `ScrollStory` that takes a list
+of beats (headline, sub-line, image) and renders the whole mechanic. The beats live in
+a data file, never inside the component (rule 7). A third story later is then a data
+entry, not new code.
 
 ---
 
@@ -54,7 +67,7 @@ actually gets you both there.
 - *Training is a team sport.*
 
 **Buttons:** primary → `/join`, label "Bring it to your university". Secondary, quiet
-→ anchor down to Act I, label "See how it works".
+→ anchor down to the first animation, label "See how it works".
 
 Under the fold indicator, one small line of honesty that doubles as the white-label
 pitch:
@@ -63,7 +76,7 @@ pitch:
 
 ---
 
-## Act I — five beats, five screens
+## Animation 1 — five beats, five screens
 
 One screenshot per beat. The phone frame **never leaves the screen** — only the screen
 inside it changes. That is what makes it read as one app instead of five features.
@@ -80,20 +93,28 @@ inside it changes. That is what makes it read as one app instead of five feature
 sprint, so let it breathe: more whitespace above and below, slower reveal, and let the
 checklist tick in line by line rather than appearing all at once.
 
-**Beat 5 is the emotional close of Act I** — the loop shutting. Land on the word
-*verified*.
+**Beat 5 closes the first animation** — the loop shutting. Land on the word *verified*.
 
 ---
 
-## The turn
+## Between the two — a full stop, then a new opening
 
-One short full-width line between the acts, on its own, no screenshot:
+Animation 1 ends. Give it a real ending: the phone frame fades out, the progress rail
+goes, and the page returns to plain background. A visitor should feel the section
+close.
 
-> **And if you train for the university itself —**
+Animation 2 then opens with its own statement section, full width, no screenshot, no
+phone — the same weight as the hero at the top of the page:
+
+> ### And if you train for the university itself —
+> # Varsity Mode.
+> The app your squad has been running out of a group chat.
+
+Only after that does the second phone frame arrive and its beats begin.
 
 ---
 
-## Act II — Varsity Mode, four beats
+## Animation 2 — Varsity Mode, four beats
 
 | # | Headline | Sub-line | Screen |
 |---|---|---|---|
@@ -140,9 +161,10 @@ scroll cue that bobs, and stops bobbing once the user has scrolled.
 
 **Beat 3 special case:** the *Why you match* rows tick in at 60ms intervals.
 
-**The turn into Act II:** the background steps one surface level darker across the
-transition and the phone frame briefly scales down 4% before Act II's first screen
-arrives. That is the entire "reveal" — nothing more.
+**Between the two animations:** the first phone frame fades and scales down 4% as it
+leaves, the background steps one surface level darker behind the Varsity Mode opening,
+and the second phone frame arrives only after that statement has been read. That is
+the entire "reveal" — nothing more.
 
 ---
 
