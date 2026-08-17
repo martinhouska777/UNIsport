@@ -743,6 +743,12 @@ ${closer("closer-blades", "Blade Lock Light.html", "Every crew. One system.", "v
   function prime(sec, f) {
     var d = f.contentDocument;
     if (!d || !d.body) return;
+    /* Once per document. Two whenReady chains can both land here (the
+       frame's load event, and an arrival that found the closer unprimed —
+       a reload with the scroll restored at it); the second used to re-hide
+       a phone the first had already revealed. */
+    if (d.__primed) return;
+    d.__primed = true;
     var kind = sec.getAttribute("data-tabs");
     var activeTab = +sec.getAttribute("data-tab-active");
 
@@ -1516,8 +1522,19 @@ ${closer("closer-blades", "Blade Lock Light.html", "Every crew. One system.", "v
         if (armed) return;
         armed = true;
 
-        var d = f.contentDocument;
-        if (!d || !d.querySelector(".__ph")) { whenReady(f, function () { prime(sec, f); }); }
+        /* Everything below needs a PRIMED closer. A reload that restores the
+           scroll right here fires this observer before the piece has even
+           mounted — running on the half-built document is what left the
+           phone hidden with nobody to reveal it. So: not ready → prime
+           first, arrive after. */
+        var d0 = f.contentDocument;
+        if (!d0 || !d0.querySelector(".__ph")) {
+          whenReady(f, function () { prime(sec, f); arrive(); });
+          return;
+        }
+        arrive();
+
+        function arrive() {
         toHarvard(f);              // open on the colour the phone was wearing
         if (sec.getAttribute("data-oars")) unglow(f);
         var shell = f.contentDocument && f.contentDocument.querySelector(".__ph");
@@ -1559,6 +1576,7 @@ ${closer("closer-blades", "Blade Lock Light.html", "Every crew. One system.", "v
           } else {
             spin(sec, f, 1500);
           }
+        }
         }
       });
     }, { threshold: sec.getAttribute("data-flight") ? 0.02 : 0.3 });

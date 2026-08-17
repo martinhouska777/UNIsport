@@ -311,10 +311,10 @@
   .closer.tallfit { height: auto; }
   .closer.tallfit .closer-stick { height: auto; }
   .closer.tallfit .closer-frame { height: var(--fit); }
-  /* Pinned: the section is two screens tall and its contents stick, so the
-     picture holds still for about a screen of scrolling while the phone flies.
-     Nothing is taken out of the reader's hands — they are still scrolling. */
-  .closer.pinned { height: 190svh; }
+  /* Pinned: a little taller than one screen, so the first wheel-notches after
+     landing hold the picture still while the choreography finishes — a small
+     cushion, not the old extra screen of dead scrolling. */
+  .closer.pinned { height: 135svh; }
   .closer.pinned .closer-stick { position: sticky; top: 0; height: 100svh; }
 
   /* The phone in flight belongs to the PAGE, not to either section — which is
@@ -1507,6 +1507,12 @@ document.addEventListener('DOMContentLoaded', async function() {
   function prime(sec, f) {
     var d = f.contentDocument;
     if (!d || !d.body) return;
+    /* Once per document. Two whenReady chains can both land here (the
+       frame's load event, and an arrival that found the closer unprimed —
+       a reload with the scroll restored at it); the second used to re-hide
+       a phone the first had already revealed. */
+    if (d.__primed) return;
+    d.__primed = true;
     var kind = sec.getAttribute("data-tabs");
     var activeTab = +sec.getAttribute("data-tab-active");
 
@@ -1529,9 +1535,11 @@ document.addEventListener('DOMContentLoaded', async function() {
       '.__lt{position:relative;z-index:1;transition:opacity .5s ease .5s,transform 1s cubic-bezier(.2,.85,.25,1) .5s}' +
       '.__lt.pre{opacity:0;transform:translateX(-215px) scale(.45)}' +
       // After a flight the letter and the words move as one: no waiting beat.
-      // And going backwards it tucks in fast, ahead of the phone taking off.
+      // And going backwards it swings home the same way it came out — the
+      // entrance curve reversed, opacity trailing so it fades in behind the
+      // phone rather than in the open.
       '.__lt.now{transition:opacity .5s ease,transform 1s cubic-bezier(.2,.85,.25,1)}' +
-      '.__lt.rev{transition:opacity .3s ease,transform .5s cubic-bezier(.55,0,.8,.4)}' +
+      '.__lt.rev{transition:opacity .5s ease .5s,transform 1s cubic-bezier(.75,0,.8,.15)}' +
       // The closer's words: parked off to the right, so they can arrive
       // right-to-left as the phone sets down. translate, not transform — same
       // reason as the oars: nothing of theirs gets trampled.
@@ -1600,6 +1608,9 @@ document.addEventListener('DOMContentLoaded', async function() {
         return !fblocks.some(function (o) { return o !== e && o.contains(e); });
       }).forEach(function (e) { e.classList.add("__ft", "pre"); });
     }
+
+    // no drop-shadow on the blades, from the very first frame drawn
+    if (sec.getAttribute("data-oars")) unglow(f);
 
     if (shell) parkOars(sec, d, shell);
 
@@ -1705,6 +1716,58 @@ document.addEventListener('DOMContentLoaded', async function() {
     });
   }
 
+  /* Where each oar goes for the small formation: the WHOLE wheel compressed
+     toward its own centre — the same circle, closer together (F), smaller
+     (K) — stood behind the phone with Harvard's blade at the middle, peeking
+     ~90px above it. The pose is MEASURED, not predicted: our scale composes
+     with the wheel transform the app has already put on each oar. So:
+     transitions off, stand each oar at translate 0 / scale K, read where
+     that actually puts it, derive targets — then one correction round,
+     because the piece styles its blades by depth and pushes whatever we ask
+     for outward. All in one synchronous pass; nothing is painted. */
+  function oarPose(d, shell, oars) {
+    var K = 0.4, F = 0.3;
+    var pr = shell.getBoundingClientRect();
+    var pcx = pr.left + pr.width / 2;
+    var saved = oars.map(function (o) {
+      var s = { t: o.style.translate, k: o.style.scale, tr: o.style.transition };
+      o.style.transition = "none";
+      o.style.translate = "0px 0px";
+      o.style.scale = String(K);
+      return s;
+    });
+    var rects = oars.map(function (o) { return o.getBoundingClientRect(); });
+    var wx = 0, wy = 0;
+    rects.forEach(function (r) { wx += r.left + r.width / 2; wy += r.top + r.height / 2; });
+    wx /= rects.length; wy /= rects.length;
+    var minis = rects.map(function (r) {
+      return { x: wx + (r.left + r.width / 2 - wx) * F,
+               y: wy + (r.top + r.height / 2 - wy) * F,
+               h: r.height };
+    });
+    var minTop = Infinity;
+    minis.forEach(function (m) { minTop = Math.min(minTop, m.y - m.h / 2); });
+    var dx0 = pcx - wx, dy0 = (pr.top - 90) - minTop;
+    var want = minis.map(function (m) { return { x: m.x + dx0, y: m.y + dy0 }; });
+    var targets = want.map(function (w, i) {
+      var r = rects[i];
+      return { x: w.x - (r.left + r.width / 2), y: w.y - (r.top + r.height / 2) };
+    });
+    oars.forEach(function (o, i) { o.style.translate = targets[i].x + "px " + targets[i].y + "px"; });
+    oars.forEach(function (o, i) {
+      var r = o.getBoundingClientRect();
+      targets[i].x += want[i].x - (r.left + r.width / 2);
+      targets[i].y += want[i].y - (r.top + r.height / 2);
+    });
+    oars.forEach(function (o, i) {          // back where they were, unpainted
+      o.style.translate = saved[i].t;
+      o.style.scale = saved[i].k;
+      o.style.transition = saved[i].tr;
+    });
+    void d.body.offsetWidth;
+    return targets;
+  }
+
   // The oars, as drawn: hidden behind the phone; when it settles, just the
   // BLADES rise into view above it — close together, already in formation —
   // hold a beat, then spread out to their places in the arc.
@@ -1716,68 +1779,12 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (!oars.length || !shell) return;
 
     setTimeout(function () {
-      var pr = shell.getBoundingClientRect();
-      var pcx = pr.left + pr.width / 2;
-      var K = 0.4;    // miniature size
-      var F = 0.3;    // how tightly the circle is drawn in (the piece's own
-                      // depth transform widens whatever we ask for)
-
-      /* The peek pose is MEASURED, not predicted: our scale composes with the
-         wheel transform the app has already put on each oar, so where an oar
-         ends up at scale K cannot be worked out from its rect alone. Instead:
-         transitions off, stand each oar at translate 0 / scale K, read where
-         that actually puts it, and derive the targets. All in one synchronous
-         pass — nothing is painted in between. Translate is the outermost part
-         of the composition, so it shifts the result one-to-one. */
-      var saved = oars.map(function (o) {
-        var s = { t: o.style.translate, k: o.style.scale };
-        o.style.transition = "none";
-        o.style.translate = "0px 0px";
-        o.style.scale = String(K);
-        return s;
-      });
-      /* The peek is the WHOLE wheel in miniature: every position compressed
-         toward the wheel's own centre — the same circle, closer together —
-         then stood behind the phone, Harvard's blade at the middle peeking
-         ~90px above it. The lower half hides behind the phone, which is the
-         point: the formation is already there before it opens. */
-      var rects = oars.map(function (o) { return o.getBoundingClientRect(); });
-      var wx = 0, wy = 0;
-      rects.forEach(function (r) { wx += r.left + r.width / 2; wy += r.top + r.height / 2; });
-      wx /= rects.length; wy /= rects.length;
-      var minis = rects.map(function (r) {
-        return { x: wx + (r.left + r.width / 2 - wx) * F,
-                 y: wy + (r.top + r.height / 2 - wy) * F,
-                 h: r.height };
-      });
-      var minTop = Infinity;
-      minis.forEach(function (m) { minTop = Math.min(minTop, m.y - m.h / 2); });
-      var dx0 = pcx - wx, dy0 = (pr.top - 90) - minTop;
-      var want = minis.map(function (m) { return { x: m.x + dx0, y: m.y + dy0 }; });
-      var targets = want.map(function (w, i) {
-        var r = rects[i];
-        return { x: w.x - (r.left + r.width / 2), y: w.y - (r.top + r.height / 2) };
-      });
-      /* One correction round: stand each oar at its computed target and read
-         where it ACTUALLY ends up — the piece styles its blades by depth, and
-         that pushes whatever we ask for outward. Subtract the error. Still
-         unpainted. */
-      oars.forEach(function (o, i) { o.style.translate = targets[i].x + "px " + targets[i].y + "px"; });
-      oars.forEach(function (o, i) {
-        var r = o.getBoundingClientRect();
-        targets[i].x += want[i].x - (r.left + r.width / 2);
-        targets[i].y += want[i].y - (r.top + r.height / 2);
-      });
-      oars.forEach(function (o, i) {        // back to parked, still unpainted
-        o.style.translate = saved[i].t;
-        o.style.scale = saved[i].k;
-      });
-      void d.body.offsetWidth;
+      var targets = oarPose(d, shell, oars);
       oars.forEach(function (o, i) {        // transitions on: rise to the pose
         o.style.transition = "";
         o.classList.remove("pre");
         o.style.translate = targets[i].x + "px " + targets[i].y + "px";
-        o.style.scale = String(K);
+        o.style.scale = "0.4";
       });
     }, delay || 0);
 
@@ -1815,35 +1822,138 @@ document.addEventListener('DOMContentLoaded', async function() {
      is an IntersectionObserver that would need the whole document hidden) and
      the wheel simply carries on turning, smoothly, the way it does on its
      own. No more pacing it with clicks — that is what jumped. */
+  function wheelLogic(f) {
+    try {
+      var d = f.contentDocument;
+      if (!d) return null;
+      var all = [].slice.call(d.querySelectorAll("*"));
+      var root = null, key = null;
+      for (var i = 0; i < all.length && !root; i++) {
+        var ks = Object.getOwnPropertyNames(all[i]);
+        for (var j = 0; j < ks.length; j++) {
+          if (ks[j].indexOf("__reactContainer$") === 0) { root = all[i]; key = ks[j]; break; }
+        }
+      }
+      if (!root) return null;
+      var q = [root[key]], seen = 0;
+      while (q.length && seen < 20000) {
+        var fib = q.shift(); seen++;
+        if (!fib) continue;
+        var sn = fib.stateNode;
+        if (sn && sn.logic && ("rot" in sn.logic) && sn.logic.state &&
+            typeof sn.logic.state.pinned === "boolean") return sn.logic;
+        if (fib.child) q.push(fib.child);
+        if (fib.sibling) q.push(fib.sibling);
+      }
+    } catch (e) {}
+    return null;
+  }
   function unpin(f, delay) {
     setTimeout(function () {
-      try {
-        var d = f.contentDocument;
-        if (!d) return;
-        var all = [].slice.call(d.querySelectorAll("*"));
-        var root = null, key = null;
-        for (var i = 0; i < all.length && !root; i++) {
-          var ks = Object.getOwnPropertyNames(all[i]);
-          for (var j = 0; j < ks.length; j++) {
-            if (ks[j].indexOf("__reactContainer$") === 0) { root = all[i]; key = ks[j]; break; }
-          }
-        }
-        if (!root) return;
-        var q = [root[key]], seen = 0;
-        while (q.length && seen < 20000) {
-          var fib = q.shift(); seen++;
-          if (!fib) continue;
-          var sn = fib.stateNode;
-          if (sn && sn.logic && ("rot" in sn.logic) && sn.logic.state &&
-              typeof sn.logic.state.pinned === "boolean") {
-            sn.logic.setState({ pinned: false });
-            return;
-          }
-          if (fib.child) q.push(fib.child);
-          if (fib.sibling) q.push(fib.sibling);
-        }
-      } catch (e) {}
+      var L = wheelLogic(f);
+      if (L) L.setState({ pinned: false });
     }, delay || 0);
+  }
+  // The active blade's drop-shadow, off at the source: the piece reads this
+  // prop every frame it draws.
+  function unglow(f) {
+    var L = wheelLogic(f);
+    if (L && L.props) L.props.oarGlow = false;
+  }
+
+  /* The oars, called back: the wheel is pinned where it stands, the blades
+     gather off the arc into the small formation above the phone — the same
+     pose they arrived in — and then sink down behind it. The spread, played
+     backwards. */
+  function gatherOars(sec, f) {
+    var d = f.contentDocument;
+    var shell = d && d.querySelector(".__ph");
+    if (!shell) return;
+    var pr = shell.getBoundingClientRect();
+    var pcx = pr.left + pr.width / 2, pcy = pr.top + pr.height / 2;
+    var oars = [];
+    [].slice.call(d.querySelectorAll("span")).forEach(function (o) {
+      var kid = o.firstElementChild;
+      if (!kid || kid.tagName.toLowerCase() !== "svg") return;
+      var r = o.getBoundingClientRect();
+      if (r.height < 90 || r.width > 130 || shell.contains(o)) return;
+      oars.push(o);
+    });
+    if (!oars.length) return;
+
+    // hold the wheel still on whichever crew it is showing — the gather
+    // needs a formation that stands where it was measured
+    var L = wheelLogic(f);
+    if (L && L.state && !L.state.pinned) {
+      var btns = [].slice.call(d.querySelectorAll("button"));
+      if (btns[L.state.active]) btns[L.state.active].click();
+    }
+
+    oars.forEach(function (o) {
+      o.classList.add("__oar");
+      // transform stays out of the list: the wheel still owns it
+      o.style.transition = "translate .6s cubic-bezier(.25,.9,.3,1), scale .6s cubic-bezier(.25,.9,.3,1), opacity .45s ease";
+    });
+    var targets = oarPose(d, shell, oars);
+    oars.forEach(function (o, i) {
+      o.style.translate = targets[i].x + "px " + targets[i].y + "px";
+      o.style.scale = "0.4";
+    });
+    // …and down behind the phone, fading as they go
+    setTimeout(function () {
+      oars.forEach(function (o) {
+        var parts = (o.style.translate || "0px 0px").split(" ");
+        var tx = parseFloat(parts[0]) || 0, ty = parseFloat(parts[1]) || 0;
+        var r = o.getBoundingClientRect();
+        o.style.translate = (tx + (pcx - (r.left + r.width / 2))) + "px " +
+                            (ty + (pcy - (r.top + r.height / 2))) + "px";
+        o.style.scale = "0.3";
+        o.classList.add("pre");
+      });
+    }, 650);
+  }
+
+  /* THE WAY BACK, first act: everything the arrival brought out goes back in,
+     the same way it came. The words leave to the right, the crew's name goes
+     first; the letter swings home behind the phone, or the oars gather and
+     sink. The page is held still for the length of it — the flight home
+     takes over from here. */
+  function retractCloser(sec, f, done) {
+    var d = f.contentDocument;
+    if (!d) { done(); return; }
+    if (sec.__spin) { clearInterval(sec.__spin); sec.__spin = null; }
+    if (sec.__spinStart) { clearTimeout(sec.__spinStart); sec.__spinStart = null; }
+
+    [].slice.call(d.querySelectorAll(".__hd")).forEach(function (e) { e.classList.add("pre"); });
+    [].slice.call(d.querySelectorAll(".__ft")).forEach(function (e) { e.classList.add("pre"); });
+
+    var wait;
+    if (sec.getAttribute("data-oars")) {
+      wait = 1200;   // gather (650) + sink (550)
+      gatherOars(sec, f);
+    } else {
+      wait = 1000;   // the letter's full swing home
+      var lt = d.querySelector(".__lt");
+      if (lt) { lt.classList.remove("now"); lt.classList.add("rev"); lt.classList.add("pre"); }
+    }
+
+    var y0 = window.scrollY, holding = true, over = false;
+    function rel(ev) { if (ev && ev.type === "wheel" && ev.deltaY < 0) return; holding = false; }
+    window.addEventListener("wheel", rel, { passive: true });
+    window.addEventListener("touchmove", rel, { passive: true });
+    window.addEventListener("keydown", rel);
+    (function hold() {
+      if (over || !holding) return;
+      window.scrollTo(0, y0);
+      requestAnimationFrame(hold);
+    })();
+    setTimeout(function () {
+      over = true;
+      window.removeEventListener("wheel", rel);
+      window.removeEventListener("touchmove", rel);
+      window.removeEventListener("keydown", rel);
+      done();
+    }, wait);
   }
 
   // Just the letter — used after a flight, where the phone is already home.
@@ -2056,16 +2166,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (!flight || !shell || !rectOfStoryPhone(src)) { done(); return; }
     sec.__flying = true;
 
-    // the closer stops being a place: rotation off, words away, letter home
-    if (sec.__spin) { clearInterval(sec.__spin); sec.__spin = null; }
-    if (sec.__spinStart) { clearTimeout(sec.__spinStart); sec.__spinStart = null; }
-    var lt = d.querySelector(".__lt");
-    if (lt) { lt.classList.remove("now"); lt.classList.add("rev"); lt.classList.add("pre"); }
-    [].slice.call(d.querySelectorAll(".__hd")).forEach(function (e) { e.classList.add("pre"); });
-    [].slice.call(d.querySelectorAll(".__ft")).forEach(function (e) { e.classList.add("pre"); });
-    // …and the oars tuck back in behind the phone before it lifts off
-    parkOars(sec, d, shell);
-
     // the page's phone takes over from theirs, exactly where it stands
     var ir = f.getBoundingClientRect(), sr = shell.getBoundingClientRect();
     var A = { x: ir.left + sr.left + sr.width / 2, y: ir.top + sr.top + sr.height / 2, w: sr.width };
@@ -2186,13 +2286,33 @@ document.addEventListener('DOMContentLoaded', async function() {
         if (armed) return;
         armed = true;
 
-        var d = f.contentDocument;
-        if (!d || !d.querySelector(".__ph")) { whenReady(f, function () { prime(sec, f); }); }
+        /* Everything below needs a PRIMED closer. A reload that restores the
+           scroll right here fires this observer before the piece has even
+           mounted — running on the half-built document is what left the
+           phone hidden with nobody to reveal it. So: not ready → prime
+           first, arrive after. */
+        var d0 = f.contentDocument;
+        if (!d0 || !d0.querySelector(".__ph")) {
+          whenReady(f, function () { prime(sec, f); arrive(); });
+          return;
+        }
+        arrive();
+
+        function arrive() {
         toHarvard(f);              // open on the colour the phone was wearing
+        if (sec.getAttribute("data-oars")) unglow(f);
         var shell = f.contentDocument && f.contentDocument.querySelector(".__ph");
         if (shell) parkOars(sec, f.contentDocument, shell);   // fresh geometry
 
-        if (flies && sec.classList.contains("pinned")) {
+        /* The flight only makes sense when the reader actually CAME from the
+           story — its phone near the screen to take off from. A reload that
+           restores the scroll here, or a jump from elsewhere, reveals the
+           closer in place instead of replaying a flight from nowhere. */
+        var st = rectOfStoryPhone(sec.getAttribute("data-from") || "story1");
+        var near = st && st.width > 10 &&
+                   st.bottom > 120 && st.top < window.innerHeight - 120;
+
+        if (flies && sec.classList.contains("pinned") && near) {
           runFlight(sec, f, function () {
             playText(f, 220);      // the words arrive with whatever comes out
             if (sec.getAttribute("data-oars")) {
@@ -2203,9 +2323,10 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
           });
         } else {
-          // No flight on this screen (narrow, or reduced motion) — but the
-          // phone was hidden in expectation of one. Swap the hiding for the
-          // slide-in entrance, so it arrives instead of just appearing.
+          // No flight here (narrow screen, reduced motion, or the reader did
+          // not come from the story) — but the phone may be hidden waiting
+          // for one. Swap the hiding for the slide-in entrance, so it
+          // arrives instead of just appearing.
           var sh = f.contentDocument && f.contentDocument.querySelector(".__ph");
           if (sh && sh.classList.contains("hide")) {
             sh.classList.add("pre");
@@ -2220,19 +2341,24 @@ document.addEventListener('DOMContentLoaded', async function() {
             spin(sec, f, 1500);
           }
         }
+        }
       });
     }, { threshold: sec.getAttribute("data-flight") ? 0.02 : 0.3 });
     io.observe(sec);
 
     /* The way back: a nudge up from the top of the pin plays the film in
-       reverse. Only from the pin's start — deeper in, scrolling up is just
-       scrolling. armed stays true until the reverse lands, so the observer
-       above cannot replay the arrival mid-move. */
+       reverse — first act puts everything back the way it came, then the
+       flight home. Only from the pin's start — deeper in, scrolling up is
+       just scrolling. armed stays true until the reverse lands, so the
+       observer above cannot replay the arrival mid-move. */
     if (flies && sec.getAttribute("data-txt")) {
       window.addEventListener("wheel", function (ev) {
         if (ev.deltaY >= 0 || !armed || !sec.__flown || sec.__flying) return;
         if (sec.getBoundingClientRect().top < -12) return;
-        runFlightBack(sec, f, function () { armed = false; });
+        sec.__flying = true;   // claimed from the first frame of the act
+        retractCloser(sec, f, function () {
+          runFlightBack(sec, f, function () { armed = false; });
+        });
       }, { passive: true });
     }
   });
