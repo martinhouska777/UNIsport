@@ -29,14 +29,30 @@ export type DmPlan = {
   recipientAnswer: "yes" | "no" | null;
 };
 
+/*
+  A shared session photo carried inline in a thread (kind === 'memory'). It's a
+  COPY taken when it was sent (see db/memories.sql): workout_logs is private to
+  its owner, and a memory already in someone's chat shouldn't change because the
+  sender later edited the session. The sender's private session NOTE is not part
+  of it — anything they wanted to say came through as a normal message.
+*/
+export type DmMemory = {
+  memoryId: string;
+  photo: string; // data URL
+  gym: string | null;
+  trained: string | null; // "Chest · Triceps" / "Rowing · 2 km · 8:12"
+  takenOn: string; // ISO yyyy-mm-dd — the session's day, not the share's
+};
+
 export type DmMessage = {
   id: string;
   senderId: string;
   senderName: string;
   body: string;
   createdAt: string;
-  kind: "text" | "plan";
+  kind: "text" | "plan" | "memory";
   plan?: DmPlan; // present when kind === 'plan'
+  memory?: DmMemory; // present when kind === 'memory'
 };
 
 /** Find or create the conversation with another user; returns its id. */
@@ -95,8 +111,36 @@ export async function getPeerLastRead(conversationId: string): Promise<string | 
   return (data as string | null) ?? null;
 }
 
+/**
+ * Share one session photo into a conversation. `caption` (optional) is sent as a
+ * normal message right after the memory, so the card stays clean and your words
+ * read as your words.
+ */
+export async function shareMemory(
+  conversationId: string,
+  memory: { photo: string; gym: string; trained: string; takenOn: string },
+  caption?: string,
+): Promise<void> {
+  const { error } = await createClient().rpc("memory_share", {
+    conversation_id: conversationId,
+    p_photo: memory.photo,
+    p_gym: memory.gym || null,
+    p_trained: memory.trained || null,
+    p_taken_on: memory.takenOn,
+    p_caption: caption?.trim() || null,
+  });
+  if (error) throw new Error(`shareMemory failed: ${error.message}`);
+  notifyConversation({
+    conversationId,
+    kind: "message",
+    preview: caption?.trim() || "📸 Shared a memory",
+  });
+}
+
 function toDmMessage(r: Record<string, unknown>): DmMessage {
-  const kind = (r.kind as string) === "plan" ? "plan" : "text";
+  const rawKind = r.kind as string;
+  const kind: DmMessage["kind"] =
+    rawKind === "plan" ? "plan" : rawKind === "memory" ? "memory" : "text";
   return {
     id: r.id as string,
     senderId: r.sender_id as string,
@@ -114,6 +158,17 @@ function toDmMessage(r: Record<string, unknown>): DmMessage {
             status: ((r.plan_status as string) ?? "proposed") as DmPlan["status"],
             proposerAnswer: (r.plan_proposer_answer as DmPlan["proposerAnswer"]) ?? null,
             recipientAnswer: (r.plan_recipient_answer as DmPlan["recipientAnswer"]) ?? null,
+          },
+        }
+      : {}),
+    ...(kind === "memory" && r.memory_id && r.memory_photo
+      ? {
+          memory: {
+            memoryId: r.memory_id as string,
+            photo: r.memory_photo as string,
+            gym: (r.memory_gym as string) ?? null,
+            trained: (r.memory_trained as string) ?? null,
+            takenOn: r.memory_taken_on as string,
           },
         }
       : {}),

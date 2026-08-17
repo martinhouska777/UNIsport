@@ -199,6 +199,59 @@ export async function listMonth(
   return (data as Row[]).map(rowToLog);
 }
 
+/* ── Every log that has at least one photo, newest day first ──
+   Powers Memories (lib/memories.ts), which is a view over ALL of your history
+   rather than one calendar month. The "has a photo" test is done here in JS
+   rather than in the query: `photos` is a jsonb column, and an empty-array
+   filter on jsonb is the kind of thing that quietly matches nothing. */
+export async function listWithPhotos(userId: string): Promise<WorkoutLog[]> {
+  if (!userId) return [];
+  const hasPhoto = (l: WorkoutLog) => Array.isArray(l.photos) && l.photos.some(Boolean);
+  if (!hasSupabaseEnv()) {
+    return loadLocal(userId)
+      .filter(hasPhoto)
+      .sort((a, b) => b.date.localeCompare(a.date));
+  }
+  const { data, error } = await createClient()
+    .from("workout_logs")
+    .select("id, log_date, activity, gym, partner, partner_id, exercises, metrics, photos, note, verified, plan_id")
+    .eq("user_id", userId)
+    .order("log_date", { ascending: false });
+  if (error || !data) return [];
+  return (data as Row[]).map(rowToLog).filter(hasPhoto);
+}
+
+/* ── How many session photos you have + the newest one ──
+   The Profile tab's Memories row needs a count and one thumbnail. Downloading
+   every photo in your history to work that out would be absurd, so this goes
+   through my_memory_stats() (db/memories.sql), which computes it in the database
+   and returns exactly one image. */
+export type MemoryStats = { count: number; latestPhoto: string | null; latestDate: string | null };
+
+export async function memoryStats(userId: string): Promise<MemoryStats> {
+  const none: MemoryStats = { count: 0, latestPhoto: null, latestDate: null };
+  if (!userId) return none;
+  if (!hasSupabaseEnv()) {
+    const withPhotos = loadLocal(userId)
+      .filter((l) => Array.isArray(l.photos) && l.photos.some(Boolean))
+      .sort((a, b) => b.date.localeCompare(a.date));
+    const count = withPhotos.reduce((n, l) => n + l.photos.filter(Boolean).length, 0);
+    return {
+      count,
+      latestPhoto: withPhotos[0]?.photos.find(Boolean) ?? null,
+      latestDate: withPhotos[0]?.date ?? null,
+    };
+  }
+  const { data, error } = await createClient().rpc("my_memory_stats");
+  const row = (data as Record<string, unknown>[] | null)?.[0];
+  if (error || !row) return none;
+  return {
+    count: Number(row.photo_count ?? 0),
+    latestPhoto: (row.latest_photo as string) ?? null,
+    latestDate: (row.latest_date as string) ?? null,
+  };
+}
+
 /* ── Total number of logged sessions (for the profile "Sessions" stat) ── */
 export async function countWorkouts(userId: string): Promise<number> {
   if (!userId) return 0;

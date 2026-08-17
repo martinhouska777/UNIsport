@@ -16,6 +16,7 @@ import { IconArrowLeft, IconCalendar } from "@/components/icons";
 import Avatar from "./Avatar";
 import Composer from "./Composer";
 import PlanCard from "./PlanCard";
+import MemoryCard from "./MemoryCard";
 import PlanSessionSheet from "./PlanSessionSheet";
 import { dayLabel, sameDay } from "./dayLabel";
 
@@ -156,6 +157,13 @@ export default function DmThread({
                   otherName={title}
                   onChanged={load}
                   onReschedule={setEditPlan}
+                />
+              ) : m.kind === "memory" && m.memory ? (
+                <MemoryCard
+                  memory={m.memory}
+                  mine={mine}
+                  senderName={mine ? "" : title}
+                  createdAt={m.createdAt}
                 />
               ) : (
               <div className={`flex ${mine ? "justify-end" : "justify-start"}`}>

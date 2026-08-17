@@ -21,6 +21,7 @@ import UpcomingSessions from "@/components/profile/UpcomingSessions";
 import LeaderboardStrip from "@/components/leaderboards/LeaderboardStrip";
 import PersonalRecords from "@/components/profile/PersonalRecords";
 import PhotoGrid from "@/components/profile/PhotoGrid";
+import MemoriesRow from "@/components/memories/MemoriesRow";
 import PreferencesSheet from "@/components/profile/PreferencesSheet";
 import TrainingScheduleSheet from "@/components/profile/TrainingScheduleSheet";
 import OptionPickerSheet from "@/components/profile/OptionPickerSheet";
@@ -467,6 +468,11 @@ export default function ProfilePage() {
       {statsReady && sessionsCount > 0 && (
         <SessionCalendar logs={logs} onPickDate={(d) => setOpenDate(d)} />
       )}
+
+      {/* Memories — the same sessions from the other end: the photos, not the
+          days. Sits directly under the calendar because that's the question it
+          answers next. Like the calendar, it waits for a first session. */}
+      {statsReady && sessionsCount > 0 && <MemoriesRow userId={userId} />}
 
       {/* Training — every row opens a real picker and saves the real answer.
           These used to be free-text boxes writing to `trainingDisplay`, a
