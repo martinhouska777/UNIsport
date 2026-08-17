@@ -161,6 +161,38 @@ revokes it afterwards — ask for a fresh one, never assume one is lying around.
 - The **Blade Lock hero was cut** from the scroll page at the owner's request
   (the standalone `webpage/Blade Lock Light.html` still exists).
 
+## The closers (webpage/*.html)
+
+`Blade Lock Light.html` and `UNIsport Campus Colours.html` are **bundled apps**
+from Claude Design — ~130KB of JavaScript each that mount into `document.body`
+and style `body` and `*`. They cannot be pasted into the page (they would
+flatten the sticky stages), so `closer()` in build-story.mjs gives each one its
+own document inside a full-screen `srcdoc` frame. Re-exporting is a drop-in:
+replace the file, rebuild.
+
+Because the frames are same-origin, the page choreographs them on arrival:
+
+| What | How it's found |
+|---|---|
+| the phone | the only element with a >20px corner radius above the "9:41" clock |
+| the letter | the largest type in the document (Blade Lock has none — optional) |
+| the accent | the biggest piece of *coloured* type (greys are chrome) |
+
+Nothing is matched by class name — their bundles emit obfuscated ones (`scp0`),
+so structure is the only stable handle. On arrival the frame is blanked,
+**reloaded** (both pieces cycle on their own timer, so without this the reader
+arrives mid-sequence instead of on Harvard), primed while hidden, then played:
+the phone slides in from where the story's phone was, and the letter swings out
+from behind it.
+
+**The app's bottom tab bar is drawn by us**, not by the design files — they
+render a phone without one. If a re-export ever includes one, delete
+`buildTabs()` and the `.__tabs` rules rather than ending up with two.
+
+Two gotchas that cost time, both from the page being built inside a template
+literal: a regex literal in an emitted script loses its backslashes (use string
+splitting), and any backtick in an emitted comment ends the literal early.
+
 ## Agreed but not yet done
 
 1. **Shoot the confirmation card** ("did this happen?" → verified workout) and

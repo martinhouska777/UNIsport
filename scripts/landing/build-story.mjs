@@ -134,14 +134,14 @@ const story2 = [
   drop-in — replace the file in webpage/ and rebuild. The frames are told not
   to scroll, so a wheel over one keeps scrolling THIS page.
 */
-function closer(id, file, title) {
+function closer(id, file, title, tabs, tabActive) {
   let doc = fs.readFileSync("../../webpage/" + file, "utf8");
   const noScroll = "<style>html,body{overflow:hidden!important}</style>";
   doc = doc.includes("</head>") ? doc.replace("</head>", noScroll + "</head>") : noScroll + doc;
   // srcdoc is an HTML attribute: & and " have to be escaped, nothing else.
   const esc = doc.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
   return `
-<section class="closer" id="${id}">
+<section class="closer" id="${id}" data-tabs="${tabs}" data-tab-active="${tabActive}">
   <iframe class="closer-frame" title="${title}" srcdoc="${esc}"></iframe>
 </section>`;
 }
@@ -515,7 +515,7 @@ const html = `<title>Never Train Alone</title>
 
   /* A closer is a whole screen of its own: the reader stops scrolling and reads. */
   .closer { position: relative; z-index: 1; width: 100%; height: 100svh; background: var(--bg); }
-  .closer-frame { display: block; width: 100%; height: 100%; border: 0; }
+  .closer-frame { display: block; width: 100%; height: 100%; border: 0; transition: opacity 0.45s ease; }
   /* A narrow screen stacks their layout taller than one viewport; the script
      below grows the section to fit rather than clipping it. */
   .closer.tallfit { height: auto; }
@@ -571,7 +571,7 @@ const html = `<title>Never Train Alone</title>
 
 ${renderStory("story1", story1)}
 
-${closer("closer-colours", "UNIsport Campus Colours.html", "Your campus, your colours")}
+${closer("closer-colours", "UNIsport Campus Colours.html", "Your campus, your colours", "student", 0)}
 
 <div class="statement" id="interlude">
   <p class="lead-in">And if you train for the university itself —</p>
@@ -582,7 +582,7 @@ ${closer("closer-colours", "UNIsport Campus Colours.html", "Your campus, your co
 
 ${renderStory("story2", story2)}
 
-${closer("closer-blades", "Blade Lock Light.html", "Every crew. One system.")}
+${closer("closer-blades", "Blade Lock Light.html", "Every crew. One system.", "varsity", 0)}
 
 <div class="cta">
   <h2>One app per university. <em>Yours next.</em></h2>
@@ -599,6 +599,218 @@ ${closer("closer-blades", "Blade Lock Light.html", "Every crew. One system.")}
     <path d="M20.4 14.2A8.6 8.6 0 0 1 9.8 3.6a8.6 8.6 0 1 0 10.6 10.6Z"/>
   </svg>
 </button>
+<script>
+/*
+  ARRIVING AT A CLOSER.
+  ----------------------------------------------------------------------------
+  A closer is a separate document, but a same-origin one, so the page can reach
+  in and choreograph it. Three things happen when the reader gets there:
+
+    1. It STARTS FROM THE BEGINNING. Both pieces cycle through campuses/crews on
+       their own timer from the moment they load, so by the time anyone scrolled
+       down they were several schools in. The frame is reloaded on arrival, so
+       the sequence opens on Harvard — the same crimson the phone was wearing a
+       moment ago, which is what makes the changing colours read as a change.
+    2. The PHONE ARRIVES. It slides in from where the story's phone had been and
+       settles into its new position.
+    3. The LETTER COMES OUT FROM BEHIND IT — the phone is lifted above the
+       letter, so it really is hidden behind it until it swings clear.
+
+  Everything is found by what it looks like, never by class name: the phone by
+  its status-bar clock, the letter by being the biggest type on the page. A
+  re-export from Claude Design keeps working as long as those hold.
+*/
+(function () {
+  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // The app's own bottom tab bar, which the design pieces don't draw.
+  var TABS = {
+    student: [
+      ["Gyms", "M4 9h2v6H4zM18 9h2v6h-2zM6 11h12v2H6z"],
+      ["Match", "M12 20s-7-4.5-7-9a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 4.5-7 9-7 9z"],
+      ["Messages", "M4 5h16v10H8l-4 4z"],
+      ["Profile", "M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 20c0-4 4-6 8-6s8 2 8 6"],
+    ],
+    varsity: [
+      ["Home", "M4 11l8-6 8 6v8h-5v-5H9v5H4z"],
+      ["Calendar", "M4 6h16v14H4zM4 10h16M8 3v4M16 3v4"],
+      ["", ""], // the centre action button
+      ["Team", "M9 12a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM3 19c0-3 3-4.5 6-4.5S15 16 15 19M17 10a2.5 2.5 0 1 0 0-5M16 14c3 0 5 1.5 5 4"],
+      ["Profile", "M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 20c0-4 4-6 8-6s8 2 8 6"],
+    ],
+  };
+
+  function buildTabs(d, kind, active) {
+    var items = TABS[kind];
+    var bar = d.createElement("div");
+    bar.className = "__tabs";
+    bar.innerHTML = items.map(function (t, i) {
+      if (!t[0]) return '<span class="__plus">+</span>';
+      return '<span class="__tab' + (i === active ? " on" : "") + '">' +
+        '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" ' +
+        'stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="' + t[1] + '"/></svg>' +
+        "<b>" + t[0] + "</b></span>";
+    }).join("");
+    return bar;
+  }
+
+  function findPhone(d) {
+    var win = d.defaultView;
+    if (!win) return null;
+    var clock = [].slice.call(d.querySelectorAll("*")).filter(function (e) {
+      return e.children.length === 0 && e.textContent.trim() === "9:41";
+    })[0];
+    if (!clock) return null;
+    var el = clock, shell = null;
+    while (el && el !== d.body) {
+      var cs = win.getComputedStyle(el), r = el.getBoundingClientRect();
+      if (parseFloat(cs.borderTopLeftRadius) > 20 && r.width > 200) shell = el;
+      el = el.parentElement;
+    }
+    return shell;
+  }
+
+  // The letter is simply the largest type in the document; the block that holds
+  // it (letter + wordmark under it) is the nearest ancestor that is taller.
+  function findLetter(d) {
+    var win = d.defaultView;
+    if (!win) return null;
+    var best = null, size = 0;
+    [].slice.call(d.querySelectorAll("span,div,h1,h2,p")).forEach(function (e) {
+      if (e.children.length) return;
+      var fs = parseFloat(win.getComputedStyle(e).fontSize) || 0;
+      if (fs > size) { size = fs; best = e; }
+    });
+    if (!best || size < 90) return null;
+    var block = best, h = best.getBoundingClientRect().height;
+    for (var i = 0; i < 3 && block.parentElement; i++) {
+      var p = block.parentElement;
+      if (p.getBoundingClientRect().height > h + 25) { block = p; break; }
+      block = p;
+    }
+    return block;
+  }
+
+  function prime(sec, f) {
+    var d = f.contentDocument;
+    if (!d || !d.body) return;
+    var kind = sec.getAttribute("data-tabs");
+    var activeTab = +sec.getAttribute("data-tab-active");
+
+    var st = d.createElement("style");
+    st.textContent =
+      '.__ph{position:relative;z-index:3;transition:transform .95s cubic-bezier(.2,.85,.25,1)}' +
+      '.__ph.pre{transform:translateX(-110px) scale(1.16)}' +
+      '.__lt{position:relative;z-index:1;transition:opacity .5s ease .5s,transform 1s cubic-bezier(.2,.85,.25,1) .5s}' +
+      '.__lt.pre{opacity:0;transform:translateX(-215px) scale(.45)}' +
+      '.__tabs{position:absolute;left:0;right:0;bottom:0;height:12%;display:flex;align-items:center;' +
+      'justify-content:space-around;background:#fff;border-top:1px solid #e7e4df;padding-bottom:1.6%;z-index:5}' +
+      '.__tab{display:flex;flex-direction:column;align-items:center;gap:2px;color:#9b968c;line-height:1}' +
+      '.__tab b{font:600 6.5px/1 ui-sans-serif,system-ui,sans-serif;letter-spacing:.02em}' +
+      '.__tab.on{color:var(--__accent,#a51c30)}' +
+      '.__plus{width:26px;height:26px;border-radius:50%;background:var(--__accent,#a51c30);color:#fff;' +
+      'display:flex;align-items:center;justify-content:center;font:400 18px/1 ui-sans-serif,system-ui,sans-serif;' +
+      'margin-top:-14%;box-shadow:0 4px 10px rgba(0,0,0,.25)}';
+    d.head.appendChild(st);
+
+    var shell = findPhone(d);
+    if (shell) {
+      shell.classList.add("__ph");
+      if (!reduce) shell.classList.add("pre");
+      // the screen is the padded inner box; the bar belongs inside it
+      var screen = shell.querySelector("*");
+      if (screen && !screen.querySelector(".__tabs")) {
+        var cs = d.defaultView.getComputedStyle(screen);
+        if (cs.position === "static") screen.style.position = "relative";
+        screen.style.overflow = "hidden";
+        screen.appendChild(buildTabs(d, kind, activeTab));
+      }
+    }
+    var letter = findLetter(d);
+    if (letter) {
+      letter.classList.add("__lt");
+      if (!reduce) letter.classList.add("pre");
+    }
+
+    // The accent follows whichever school/crew is showing: the largest piece of
+    // type that carries an actual colour (greys and near-whites are chrome).
+    function accent() {
+      var win = d.defaultView;
+      if (!win) return;
+      var best = "", size = 0;
+      [].slice.call(d.querySelectorAll("span,div,b,em,h1,h2,p")).forEach(function (e) {
+        if (e.children.length || !e.textContent.trim()) return;
+        var cs = win.getComputedStyle(e);
+        // No regex here: this whole script is emitted from a template literal,
+        // which eats backslashes — a character class would arrive unescaped.
+        var open = cs.color.indexOf("(");
+        if (open < 0) return;
+        var parts = cs.color.slice(open + 1).split(")")[0].split(",");
+        var r = parseFloat(parts[0]), g = parseFloat(parts[1]), bl = parseFloat(parts[2]);
+        if (isNaN(r) || isNaN(g) || isNaN(bl)) return;
+        if (Math.max(r, g, bl) - Math.min(r, g, bl) < 40) return;
+        var fs = parseFloat(cs.fontSize) || 0;
+        if (fs > size) { size = fs; best = cs.color; }
+      });
+      if (best) d.documentElement.style.setProperty("--__accent", best);
+    }
+    accent();
+    if (sec.__accentTimer) clearInterval(sec.__accentTimer);
+    sec.__accentTimer = setInterval(accent, 400);
+  }
+
+  function play(f) {
+    var d = f.contentDocument;
+    if (!d) return;
+    [".__ph", ".__lt"].forEach(function (sel, i) {
+      var el = d.querySelector(sel);
+      if (el) setTimeout(function () { el.classList.remove("pre"); }, i * 260);
+    });
+  }
+
+  // Their app mounts a moment AFTER the frame's load event, so nothing can be
+  // dressed up until it has actually drawn something.
+  function whenReady(f, cb, tries) {
+    var d = f.contentDocument;
+    // The phone is the anchor and both pieces have one; a letter is optional
+    // (Blade Lock has blades instead), so it must not gate the reveal.
+    if (d && d.body && findPhone(d)) return cb(d);
+    if ((tries || 0) > 60) return;
+    setTimeout(function () { whenReady(f, cb, (tries || 0) + 1); }, 100);
+  }
+
+  [].slice.call(document.querySelectorAll(".closer")).forEach(function (sec) {
+    var f = sec.querySelector("iframe");
+    var armed = false;
+
+    f.addEventListener("load", function () {
+      whenReady(f, function () {
+        prime(sec, f);
+        f.style.opacity = "1";
+        if (armed) setTimeout(function () { play(f); }, 180);
+      });
+    });
+
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (!e.isIntersecting) {
+          // Scrolled back above it: arm again so returning replays from Harvard.
+          if (e.boundingClientRect.top > 0) armed = false;
+          return;
+        }
+        if (armed) return;
+        armed = true;
+        if (reduce || !f.contentWindow) return;
+        // Blank it, restart it, dress it, then play it in — the reader sees the
+        // sequence open on Harvard rather than wherever the timer had got to.
+        f.style.opacity = "0";
+        f.contentWindow.location.reload();
+      });
+    }, { threshold: 0.3 });
+    io.observe(sec);
+  });
+})();
+</script>
 <script>
   // Each closer is its own document, so it can be measured: if what it renders
   // is taller than one screen (phones stack it), the section grows to fit
