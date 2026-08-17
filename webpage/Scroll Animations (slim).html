@@ -1820,6 +1820,15 @@ document.addEventListener('DOMContentLoaded', async function() {
                : { x: target.x, y: target.y, w: target.w };
     var t0 = performance.now(), DUR = 1500, swapped = false;
 
+    /* Two kinds of move. The camera-follow (Blade Lock, below) walks the page
+       behind the phone. The IN-PLACE CUT (data-txt) never shows the page
+       moving at all: the world is held still and fades to black around the
+       phone, the page is cut to the new section underneath while nothing but
+       the phone is visible, and the phone then glides the short distance into
+       its final place. The new section builds itself around it. */
+    var still = !!sec.getAttribute("data-txt");
+    var JUMP = 0.32, jumped = false;
+
     /* The move and the page arrive together. Triggered on its own the phone
        could land before the section had finished coming up, so the same easing
        that flies the phone also carries the page the rest of the way to the
@@ -1840,28 +1849,46 @@ document.addEventListener('DOMContentLoaded', async function() {
     function step(now) {
       var t = Math.min(1, (now - t0) / DUR);
       var e = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+      var px, py, sc, prog;
 
-      /* THE CAMERA FOLLOWS THE PHONE. The path is walked in PAGE space, from
-         where the phone is now to where it has to land, and the scroll is then
-         derived from it — so the page travels the whole distance behind a phone
-         that stays in frame. The phone's own on-screen movement is the gentle
-         arc between its two positions; everything else is the world moving. */
-      var m = 1 - e;
-      var aDocY = A.y + scrollFrom, bDocY = B.y + scrollTo;
-      var amp = Math.max(220, Math.abs(bDocY - aDocY) * 0.35);
-      var c1 = aDocY + amp, c2 = bDocY - amp;
-      var docY = m*m*m*aDocY + 3*m*m*e*c1 + 3*m*e*e*c2 + e*e*e*bDocY;
-      // on screen it drifts from where it was to where it lands, with a small
-      // sag through the middle so the move still reads as a curve
-      var vy = A.y + (B.y - A.y) * e + 34 * Math.sin(Math.PI * t);
-      if (driving) window.scrollTo(0, docY - vy);
-      var px = A.x + (B.x - A.x) * e + 26 * Math.sin(Math.PI * t);
-      var py = vy;
+      if (still) {
+        /* THE IN-PLACE CUT. The page is HELD — no travel to watch. While the
+           story fades around the phone, nothing moves; then the scroll is cut
+           to the pinned closer in one jump (everything around the phone is
+           black, so there is nothing to see it happen by), and the phone
+           glides into its place in the new section. */
+        if (!jumped && t >= JUMP) jumped = true;
+        if (driving) window.scrollTo(0, jumped ? scrollTo : scrollFrom);
+        var g = t < JUMP ? 0 : (t - JUMP) / (1 - JUMP);
+        var ge = g < 0.5 ? 4 * g * g * g : 1 - Math.pow(-2 * g + 2, 3) / 2;
+        px = A.x + (B.x - A.x) * ge;
+        py = A.y + (B.y - A.y) * ge + 12 * Math.sin(Math.PI * g);
+        sc = (A.w + (B.w - A.w) * ge) / A.w;
+        prog = g;
+      } else {
+        /* THE CAMERA FOLLOWS THE PHONE. The path is walked in PAGE space, from
+           where the phone is now to where it has to land, and the scroll is then
+           derived from it — so the page travels the whole distance behind a phone
+           that stays in frame. The phone's own on-screen movement is the gentle
+           arc between its two positions; everything else is the world moving. */
+        var m = 1 - e;
+        var aDocY = A.y + scrollFrom, bDocY = B.y + scrollTo;
+        var amp = Math.max(220, Math.abs(bDocY - aDocY) * 0.35);
+        var c1 = aDocY + amp, c2 = bDocY - amp;
+        var docY = m*m*m*aDocY + 3*m*m*e*c1 + 3*m*e*e*c2 + e*e*e*bDocY;
+        // on screen it drifts from where it was to where it lands, with a small
+        // sag through the middle so the move still reads as a curve
+        var vy = A.y + (B.y - A.y) * e + 34 * Math.sin(Math.PI * t);
+        if (driving) window.scrollTo(0, docY - vy);
+        px = A.x + (B.x - A.x) * e + 26 * Math.sin(Math.PI * t);
+        py = vy;
+        prog = t;
+      }
       // size only ever eases between the two phones' real sizes — no shrinking
-      var sc = (A.w + (B.w - A.w) * e) / A.w;
+      if (sc === undefined) sc = (A.w + (B.w - A.w) * e) / A.w;
       flight.style.transform =
         "translate(" + (px - w0 * sc / 2) + "px," + (py - h0 * sc / 2) + "px) scale(" + sc + ")";
-      if (!swapped && t >= 0.5) {
+      if (!swapped && prog >= 0.5) {
         swapped = true;
         if (slide) { a.style.translate = "110% 0"; b.style.translate = "0 0"; }
         else { a.style.opacity = "0"; b.style.opacity = "1"; }
@@ -1944,6 +1971,12 @@ document.addEventListener('DOMContentLoaded', async function() {
     var secDocTop = scrollFrom + sec.getBoundingClientRect().top;
     var scrollTo = Math.max(0, secDocTop - window.innerHeight - 2);
     var t0 = performance.now(), DUR = 1500, swapped = false;
+    /* The same in-place cut, backwards: the closer empties around the held
+       phone, the page is cut back above the closer while only the phone is
+       visible, and the phone glides up to where the story's phone stands —
+       measured live AFTER the cut, because its sticky stage settles with the
+       scroll and the landing has to be exact. */
+    var JUMP = 0.32, jumped = false;
     var driving = true;
     function release(ev) { if (ev && ev.type === "wheel" && ev.deltaY < 0) return; driving = false; }
     window.addEventListener("wheel", release, { passive: true });
@@ -1952,31 +1985,24 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     function step(now) {
       var t = Math.min(1, (now - t0) / DUR);
-      var e = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-
-      /* The story's phone is measured LIVE each frame: its stage is sticky, so
-         its place on the page can shift as the scroll walks back up — and the
-         landing has to be exact. */
-      var tr = rectOfStoryPhone(src);
+      if (!jumped && t >= JUMP) jumped = true;
+      if (driving) window.scrollTo(0, jumped ? scrollTo : scrollFrom);
+      var g = t < JUMP ? 0 : (t - JUMP) / (1 - JUMP);
+      var ge = g < 0.5 ? 4 * g * g * g : 1 - Math.pow(-2 * g + 2, 3) / 2;
+      var tr = jumped ? rectOfStoryPhone(src) : null;
       var B = tr ? { x: tr.left + tr.width / 2, y: tr.top + tr.height / 2, w: tr.width } : A;
-      var m = 1 - e;
-      var aDocY = A.y + scrollFrom, bDocY = B.y + window.scrollY;
-      var amp = Math.max(220, Math.abs(aDocY - bDocY) * 0.35);
-      var c1 = aDocY - amp, c2 = bDocY + amp;   // leaves upward, arrives upward
-      var docY = m*m*m*aDocY + 3*m*m*e*c1 + 3*m*e*e*c2 + e*e*e*bDocY;
-      var vy = A.y + (B.y - A.y) * e - 34 * Math.sin(Math.PI * t);
-      if (driving) window.scrollTo(0, docY - vy);
-      var px = A.x + (B.x - A.x) * e - 26 * Math.sin(Math.PI * t);
-      var sc = (A.w + (B.w - A.w) * e) / A.w;
+      var px = A.x + (B.x - A.x) * ge;
+      var vy = A.y + (B.y - A.y) * ge - 12 * Math.sin(Math.PI * g);
+      var sc = (A.w + (B.w - A.w) * ge) / A.w;
       flight.style.transform =
         "translate(" + (px - w0 * sc / 2) + "px," + (vy - h0 * sc / 2) + "px) scale(" + sc + ")";
-      if (!swapped && t >= 0.5) {
+      if (!swapped && g >= 0.5) {
         swapped = true;
         if (slide) { a.style.translate = "-110% 0"; b.style.translate = "0 0"; }
         else { a.style.opacity = "0"; b.style.opacity = "1"; }
       }
       // the story's words come back with the landing, not after it
-      if (t >= 0.55 && stg) stg.classList.remove("gone");
+      if (g >= 0.7 && stg) stg.classList.remove("gone");
       if (t < 1) requestAnimationFrame(step);
       else {
         if (driving) window.scrollTo(0, scrollTo);
