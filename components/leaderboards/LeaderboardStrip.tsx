@@ -100,7 +100,7 @@ export default function LeaderboardStrip({ period = "month" }: { period?: Period
       ) : (
         <div className="min-w-0 flex-1">
           <div className="text-[13px] font-medium leading-tight text-text">Leaderboards</div>
-          <div className="mt-0.5 truncate text-[10px] text-muted">
+          <div className="mt-0.5 truncate text-[11px] text-muted">
             Log a session to take your place{house ? ` for ${residenceLabel(house)}` : ""}.
           </div>
         </div>

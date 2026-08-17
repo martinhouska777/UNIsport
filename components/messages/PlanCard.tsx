@@ -95,7 +95,7 @@ export default function PlanCard({
           <IconCalendar size={16} />
         </span>
         <div className="min-w-0">
-          <div className="text-[9px] font-semibold uppercase tracking-[0.1em] text-primary">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-primary">
             Session plan
           </div>
           <div className="truncate text-[14px] font-medium text-text">

@@ -60,8 +60,8 @@ function Dot({ color }: { color: string }) {
 function SectionLabel({ children, hint }: { children: React.ReactNode; hint?: string }) {
   return (
     <div className="mb-2 flex items-center justify-between px-0.5">
-      <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">{children}</span>
-      {hint && <span className="text-[10px] text-muted">{hint}</span>}
+      <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">{children}</span>
+      {hint && <span className="text-[11px] text-muted">{hint}</span>}
     </div>
   );
 }
@@ -138,7 +138,7 @@ function LogEditor({
 
   const inputCls =
     "w-full rounded-xl border border-border bg-surface-2 px-3.5 py-3 text-base text-text outline-none focus:border-primary placeholder:text-muted";
-  const labelCls = "mb-1.5 mt-4 text-[10px] font-semibold uppercase tracking-[0.1em] text-muted";
+  const labelCls = "mb-1.5 mt-4 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted";
 
   const valid = state.mode === "plan" || title.trim().length > 0;
 
@@ -256,14 +256,14 @@ function LogEditor({
           )}
 
           <div className="mt-4 flex items-center justify-between">
-            <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Result</span>
+            <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">Result</span>
             {fromPlan && (
-              <span className="text-[10px] text-accent">Estimated from the plan · edit if needed</span>
+              <span className="text-[11px] text-accent">Estimated from the plan · edit if needed</span>
             )}
           </div>
           <div className="mt-1.5 grid grid-cols-2 gap-2">
             <div>
-              <label className="mb-1 block text-[10px] text-muted">Minutes</label>
+              <label className="mb-1 block text-[11px] text-muted">Minutes</label>
               <input
                 value={minutes}
                 onChange={(e) => setMinutes(e.target.value.replace(/[^\d]/g, ""))}
@@ -273,7 +273,7 @@ function LogEditor({
               />
             </div>
             <div>
-              <label className="mb-1 block text-[10px] text-muted">Metres</label>
+              <label className="mb-1 block text-[11px] text-muted">Metres</label>
               <input
                 value={metres}
                 onChange={(e) => setMetres(e.target.value.replace(/[^\d]/g, ""))}
@@ -284,7 +284,7 @@ function LogEditor({
             </div>
           </div>
           <div className="mt-2">
-            <label className="mb-1 block text-[10px] text-muted">Split /500m (optional)</label>
+            <label className="mb-1 block text-[11px] text-muted">Split /500m (optional)</label>
             <input
               value={split}
               onChange={(e) => setSplit(e.target.value)}
@@ -363,7 +363,7 @@ function PrescribedRow({
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <span className="text-[14px] font-semibold text-text">{label}</span>
-          <span className="flex items-center gap-1 text-[10px] text-muted">
+          <span className="flex items-center gap-1 text-[11px] text-muted">
             <IconClock size={11} /> {period} · {time}
           </span>
         </div>
@@ -407,7 +407,7 @@ function ExtraRow({ log, onEdit }: { log: LogEntry; onEdit: () => void }) {
         )}
         {log.note && <div className="mt-0.5 truncate text-[11px] text-muted">{log.note}</div>}
       </div>
-      <span className="flex-shrink-0 rounded-md border border-border px-2 py-0.5 text-[10px] font-medium text-muted">
+      <span className="flex-shrink-0 rounded-md border border-border px-2 py-0.5 text-[11px] font-medium text-muted">
         {meta.label}
       </span>
     </button>
@@ -446,7 +446,7 @@ function DayChip({
             : "border-border bg-surface"
       }`}
     >
-      <span className="text-[9px] font-semibold uppercase tracking-wide text-muted">
+      <span className="text-[11px] font-semibold uppercase tracking-wide text-muted">
         {isToday ? "Today" : date.toLocaleDateString("en-US", { weekday: "short" })}
       </span>
       <span className={`text-[15px] font-semibold leading-none ${selected ? "text-primary" : "text-text"}`}>
@@ -549,7 +549,7 @@ export default function LogScreen() {
   return (
     <>
       <div className="mx-auto w-full max-w-screen-sm px-4 pb-10 pt-4">
-        <div className="text-[9px] font-semibold uppercase tracking-[0.16em] text-accent">Log a session</div>
+        <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-accent">Log a session</div>
         <h1 className="mt-0.5 text-2xl font-semibold text-text">{isToday ? "Today" : dateLabel.split(",")[0]}</h1>
         <p className="mt-0.5 text-[12px] text-muted">{dateLabel}</p>
 

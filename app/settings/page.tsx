@@ -45,7 +45,7 @@ const isProduction = process.env.NODE_ENV === "production";
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="border-b border-border px-3.5 py-4">
-      <h2 className="mb-2 text-[9px] font-medium uppercase tracking-[0.1em] text-muted">
+      <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
         {title}
       </h2>
       {children}

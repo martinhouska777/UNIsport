@@ -129,7 +129,7 @@ function MainCard({ gym, fav, onToggleFav, crowd }: CardProps) {
       */}
       <div className="relative flex h-24 items-end overflow-hidden bg-gradient-to-br from-surface-2 to-background">
         <Watermark gym={gym} />
-        <span className="absolute left-2.5 top-2 rounded-lg bg-background/60 px-2 py-0.5 text-[10px] tracking-wider text-text-2">
+        <span className="absolute left-2.5 top-2 rounded-lg bg-background/60 px-2 py-0.5 text-[11px] tracking-wider text-text-2">
           MAIN GYM
         </span>
         <div className="relative p-3">
@@ -166,7 +166,7 @@ function HouseCard({ gym, fav, onToggleFav, crowd }: CardProps) {
           <div className="text-sm font-medium text-text">{gym.name}</div>
           {/* 9px muted was too faint to read in light mode; 10px + a stronger
               colour, still clearly secondary to the gym name. */}
-          <div className="text-[10px] text-text-2">House gym</div>
+          <div className="text-[11px] text-text-2">House gym</div>
         </div>
       </div>
       <StatsRow gym={gym} crowd={crowd} />
@@ -269,7 +269,7 @@ export default function GymsPage() {
         {showHouseHeader && (
           // Section headings break the grid rather than sitting in a cell.
           <div className="pb-0.5 pt-1 lg:col-span-full lg:pt-3">
-            <h2 className="text-[10px] font-medium tracking-[0.1em] text-muted">HOUSE GYMS</h2>
+            <h2 className="text-[11px] font-medium tracking-[0.1em] text-muted">HOUSE GYMS</h2>
           </div>
         )}
 

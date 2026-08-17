@@ -36,7 +36,7 @@ export default function CoachNav({ role }: { role: VarsityRole }) {
             <Link
               href={tab.href}
               aria-current={isActive(tab.href) ? "page" : undefined}
-              className={`flex flex-col items-center gap-1 py-1 text-[10px] font-medium transition-colors ${
+              className={`flex flex-col items-center gap-1 py-1 text-[11px] font-medium transition-colors ${
                 isActive(tab.href) ? "text-primary" : "text-muted"
               }`}
             >

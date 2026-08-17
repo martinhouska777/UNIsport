@@ -17,7 +17,7 @@ export default function VarsityScaffold({
   return (
     <div className="mx-auto flex w-full max-w-screen-sm flex-1 flex-col px-5 py-6">
       {kicker && (
-        <div className="text-[9px] font-semibold uppercase tracking-[0.18em] text-accent">
+        <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-accent">
           {kicker}
         </div>
       )}

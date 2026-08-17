@@ -121,14 +121,14 @@ function AthleteSheet({ athleteId, onClose }: { athleteId: string; onClose: () =
           <div className="text-lg font-semibold leading-tight text-text">{a?.name ?? "Unknown"}</div>
           {classLine && <div className="mt-1 text-[11px] text-muted">{classLine}</div>}
           <div className="mt-2 flex flex-wrap items-center gap-1.5">
-            <span className="inline-flex items-center gap-1 rounded-md border border-border bg-surface-2 px-2 py-1 text-[10px] text-text">
+            <span className="inline-flex items-center gap-1 rounded-md border border-border bg-surface-2 px-2 py-1 text-[11px] text-text">
               <span className="h-2 w-2 rounded-full" style={{ background: sideColor(a) }} />
               {sideLabel(a)}
             </span>
-            <span className="rounded-md border border-border bg-surface-2 px-2 py-1 text-[10px] text-text">
+            <span className="rounded-md border border-border bg-surface-2 px-2 py-1 text-[11px] text-text">
               {p.heightCm} cm
             </span>
-            <span className="rounded-md border border-border bg-surface-2 px-2 py-1 text-[10px] text-text">
+            <span className="rounded-md border border-border bg-surface-2 px-2 py-1 text-[11px] text-text">
               {formatWeight(p.weightKg, units.weight)}
             </span>
           </div>
@@ -137,7 +137,7 @@ function AthleteSheet({ athleteId, onClose }: { athleteId: string; onClose: () =
 
       {/* month switcher — stats + calendar follow this */}
       <div className="mt-4 flex items-center justify-between">
-        <span className="text-[9px] font-semibold uppercase tracking-[0.14em] text-muted">Training</span>
+        <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">Training</span>
         <div className="flex items-center gap-2">
           <button
             type="button"
@@ -190,7 +190,7 @@ function AthleteSheet({ athleteId, onClose }: { athleteId: string; onClose: () =
 
       {openBreak && (
         <div className="mt-1.5 overflow-hidden rounded-2xl border border-border bg-surface-2">
-          <div className="border-b border-border px-3.5 py-2 text-[9px] font-semibold uppercase tracking-[0.12em] text-muted">
+          <div className="border-b border-border px-3.5 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
             {openBreak === "trained" ? "By activity" : "Extra by activity"}
           </div>
           <CatBreakdown
@@ -294,7 +294,7 @@ function AthleteSheet({ athleteId, onClose }: { athleteId: string; onClose: () =
         {/* legend */}
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 border-t border-border px-3.5 py-2.5">
           {legendCategories.map((c) => (
-            <div key={c} className="flex items-center gap-1.5 text-[9px] text-muted">
+            <div key={c} className="flex items-center gap-1.5 text-[11px] text-muted">
               <span className="h-1.5 w-1.5 rounded-full" style={{ background: logCategoryColor[c] ?? "var(--muted)" }} />
               {logCategoryLabel[c]}
             </div>
@@ -303,7 +303,7 @@ function AthleteSheet({ athleteId, onClose }: { athleteId: string; onClose: () =
       </div>
 
       {/* erg PRs */}
-      <div className="mb-2 mt-4 text-[9px] font-semibold uppercase tracking-[0.14em] text-muted">
+      <div className="mb-2 mt-4 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
         Personal Bests
       </div>
       <div className="grid grid-cols-2 gap-1.5">
@@ -312,7 +312,7 @@ function AthleteSheet({ athleteId, onClose }: { athleteId: string; onClose: () =
             key={piece}
             className="flex items-baseline justify-between rounded-xl border border-border bg-surface-2 px-3 py-2.5"
           >
-            <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">{piece}</span>
+            <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">{piece}</span>
             <span className="text-[14px] font-semibold text-text">{p.prs[piece] ?? "—"}</span>
           </div>
         ))}
@@ -335,7 +335,7 @@ function RosterRow({ a, onOpen }: { a: Athlete; onOpen: () => void }) {
         <span className={`absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-surface ${toneDot[tone]}`} />
       </span>
       <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-text">{a.name}</span>
-      <span className="flex items-center gap-1 text-[10px] text-muted">
+      <span className="flex items-center gap-1 text-[11px] text-muted">
         <span className="h-2 w-2 rounded-full" style={{ background: sideColor(a) }} />
         {a.cox ? "Cox" : a.side}
       </span>
@@ -375,7 +375,7 @@ export default function TeamScreen() {
 
   return (
     <div className="mx-auto w-full max-w-screen-sm px-4 pb-10 pt-4">
-      <div className="text-[9px] font-semibold uppercase tracking-[0.16em] text-accent">The squad</div>
+      <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-accent">The squad</div>
       <h1 className="mt-0.5 text-2xl font-semibold text-text">Team</h1>
 
       {/* sub-navigation */}
@@ -408,7 +408,7 @@ export default function TeamScreen() {
               className="w-full bg-transparent text-base text-text outline-none placeholder:text-muted"
             />
           </div>
-          <div className="mt-1.5 px-0.5 text-[10px] text-muted">{rowers.length} rowers</div>
+          <div className="mt-1.5 px-0.5 text-[11px] text-muted">{rowers.length} rowers</div>
 
           <div className="mt-3 flex flex-col gap-1.5">
             {shown.map((a) => (

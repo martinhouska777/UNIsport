@@ -361,7 +361,7 @@ export default function TrainingPlanScreen() {
   if (view.name === "blocks") {
     return (
       <div className="mx-auto w-full max-w-screen-sm px-4 pb-8 pt-4">
-        <div className="text-[9px] font-semibold uppercase tracking-[0.16em] text-accent">Training Plan</div>
+        <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-accent">Training Plan</div>
         <h1 className="mt-0.5 text-2xl font-semibold text-text">Blocks</h1>
         <p className="mt-1 text-[12px] text-muted">A block is a stretch of training, usually up to a race.</p>
 
@@ -397,7 +397,7 @@ export default function TrainingPlanScreen() {
                     </div>
                     <div className="mt-0.5 text-[11px] text-muted">{blockRangeLabel(b)}</div>
                     {b.raceName && (
-                      <div className="mt-1 flex items-center gap-1 text-[10px] text-accent">
+                      <div className="mt-1 flex items-center gap-1 text-[11px] text-accent">
                         <IconFlag size={11} /> {b.raceName}
                       </div>
                     )}
@@ -433,7 +433,7 @@ export default function TrainingPlanScreen() {
     const valid = draft.name.trim() && draft.start && draft.end && draft.end >= draft.start;
     const inputCls =
       "w-full rounded-xl border border-border bg-surface-2 px-3.5 py-3 text-base text-text outline-none focus:border-primary placeholder:text-muted";
-    const labelCls = "mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.1em] text-muted";
+    const labelCls = "mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.12em] text-muted";
     return (
       <div className="mx-auto w-full max-w-screen-sm px-4 pb-8 pt-4">
         <button onClick={() => setView({ name: "blocks" })} className="flex items-center gap-1 text-[13px] text-muted">
@@ -531,7 +531,7 @@ export default function TrainingPlanScreen() {
               />
               {block.status === "published" ? "Published" : "Draft"}
             </div>
-            <div className="mt-0.5 text-[10px] text-muted">
+            <div className="mt-0.5 text-[11px] text-muted">
               {block.status === "published"
                 ? "Athletes can see this week on their Home."
                 : "Only you can see this — publish to share it with the team."}
@@ -553,7 +553,7 @@ export default function TrainingPlanScreen() {
           )}
         </div>
 
-        <div className="mt-5 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">Weeks</div>
+        <div className="mt-5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">Weeks</div>
         <div className="mt-2.5 flex flex-col gap-2">
           {weeks.map((w, i) => {
             const count = weekSessionCount(w);
@@ -570,7 +570,7 @@ export default function TrainingPlanScreen() {
                 </div>
                 <div className="flex-1">
                   <div className="text-[13px] font-medium text-text">{w.rangeLabel}</div>
-                  <div className="mt-0.5 text-[10px] text-muted">
+                  <div className="mt-0.5 text-[11px] text-muted">
                     {count > 0 ? `${count} session${count > 1 ? "s" : ""} set` : "Empty"}
                   </div>
                 </div>
@@ -633,7 +633,7 @@ export default function TrainingPlanScreen() {
               className={`overflow-hidden rounded-xl border bg-surface ${d.today ? "border-primary/50" : "border-border"}`}
             >
               <div className={`flex items-center justify-between px-3 py-2 ${d.today ? "bg-primary-tint" : "bg-surface-2"}`}>
-                <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted">
+                <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
                   {d.weekday} {d.month}
                 </span>
                 <span className={`text-sm font-semibold ${d.today ? "text-primary" : "text-text"}`}>{d.dayNum}</span>
@@ -676,7 +676,7 @@ export default function TrainingPlanScreen() {
                       <div className="text-[11px] font-medium leading-snug text-text">
                         {s.description || sessionLabel(s)}
                       </div>
-                      <div className="mt-0.5 flex items-center gap-2 text-[9px] text-muted">
+                      <div className="mt-0.5 flex items-center gap-2 text-[11px] text-muted">
                         <span>{s.time}</span>
                         {s.note && (
                           <span className="flex items-center gap-1">
@@ -720,7 +720,7 @@ export default function TrainingPlanScreen() {
     const existing = !!sessions[sessionKey(editor.date, editor.period)];
     const inputCls =
       "w-full rounded-xl border border-border bg-surface-2 px-3.5 py-3 text-base text-text outline-none focus:border-primary placeholder:text-muted";
-    const labelCls = "mb-1.5 mt-4 text-[10px] font-semibold uppercase tracking-[0.1em] text-muted";
+    const labelCls = "mb-1.5 mt-4 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted";
     const overlay = (
       <div className="fixed inset-0 z-[60] flex h-dvh flex-col bg-background">
         {/* header with back */}
@@ -732,14 +732,14 @@ export default function TrainingPlanScreen() {
             <div className="text-[15px] font-semibold leading-none text-text">
               {weekday} {editor.period}
             </div>
-            <div className="mt-1 text-[10px] text-muted">{longDate}</div>
+            <div className="mt-1 text-[11px] text-muted">{longDate}</div>
           </div>
         </div>
 
         {/* scrollable content */}
         <div className="mx-auto w-full max-w-screen-sm flex-1 overflow-y-auto px-5 pb-6 pt-4">
           {/* category */}
-          <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Type</div>
+          <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">Type</div>
           <div className="grid grid-cols-5 gap-1.5">
             {categories.map((c) => {
               const active = cat === c;
@@ -753,7 +753,7 @@ export default function TrainingPlanScreen() {
                   }`}
                 >
                   <Dot color={categoryMeta[c].color} />
-                  <span className="text-[10px] font-semibold text-text">{categoryMeta[c].label}</span>
+                  <span className="text-[11px] font-semibold text-text">{categoryMeta[c].label}</span>
                 </button>
               );
             })}
@@ -872,7 +872,7 @@ export default function TrainingPlanScreen() {
                 })}
               </div>
               {form.repeat === "weekly" && (
-                <p className="mt-1.5 text-[10px] text-muted">
+                <p className="mt-1.5 text-[11px] text-muted">
                   Adds this to every {editor.date.toLocaleDateString("en-US", { weekday: "long" })} {editor.period}{" "}
                   in the block.
                 </p>

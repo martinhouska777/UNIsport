@@ -53,7 +53,7 @@ export default function SideNav() {
                   {tab.href === "/messages" && unread > 0 && (
                     <span
                       aria-label={`${unread} unread messages`}
-                      className="absolute -right-2 -top-1.5 flex h-[15px] min-w-[15px] items-center justify-center rounded-full border border-surface bg-danger px-1 text-[9px] font-semibold leading-none text-primary-contrast"
+                      className="absolute -right-2 -top-1.5 flex h-[15px] min-w-[15px] items-center justify-center rounded-full border border-surface bg-danger px-1 text-[11px] font-semibold leading-none text-primary-contrast"
                     >
                       {unread > 9 ? "9+" : unread}
                     </span>
@@ -67,7 +67,7 @@ export default function SideNav() {
       </ul>
 
       <div className="flex items-center justify-between gap-2 px-5 py-4">
-        <span className="truncate text-[10px] uppercase tracking-[0.1em] text-muted">
+        <span className="truncate text-[11px] uppercase tracking-[0.1em] text-muted">
           {university}
         </span>
         <ThemeModeToggle />

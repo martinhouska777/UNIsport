@@ -100,7 +100,7 @@ export default function ExercisePicker({
                   onClick={() => pickCatalog(e)}
                   className="flex items-center gap-3 py-2.5 text-left active:bg-surface-2"
                 >
-                  <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-surface-2 text-[10px] font-semibold text-muted">
+                  <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-surface-2 text-[11px] font-semibold text-muted">
                     {e.muscle.slice(0, 3)}
                   </span>
                   <span className="min-w-0 flex-1">

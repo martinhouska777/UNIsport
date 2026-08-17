@@ -79,7 +79,7 @@ export default function SessionCalendar({
   return (
     <div className="border-b border-border px-3.5 py-3">
       <div className="mb-2 flex items-center justify-between">
-        <div className="text-[9px] font-medium uppercase tracking-[0.1em] text-muted">
+        <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
           Session calendar
         </div>
         <div className="text-[11px] text-muted">{monthLabel}</div>
@@ -87,7 +87,7 @@ export default function SessionCalendar({
 
       <div className="mb-1 grid grid-cols-7 gap-1">
         {WEEK.map((d, i) => (
-          <div key={i} className="text-center text-[9px] text-muted">
+          <div key={i} className="text-center text-[11px] text-muted">
             {d}
           </div>
         ))}
@@ -117,7 +117,7 @@ export default function SessionCalendar({
               }`}
             >
               <span
-                className={`text-left text-[10px] font-medium leading-none ${
+                className={`text-left text-[11px] font-medium leading-none ${
                   hasSession || isToday ? "text-text" : "text-muted"
                 }`}
               >
@@ -146,7 +146,7 @@ export default function SessionCalendar({
       </div>
 
       {/* Legend */}
-      <div className="mt-2.5 flex items-center gap-3 text-[9px] text-muted">
+      <div className="mt-2.5 flex items-center gap-3 text-[11px] text-muted">
         <span className="flex items-center gap-1">
           <span className="h-2.5 w-2.5 rounded-sm border border-primary-line bg-primary-tint" />
           Trained

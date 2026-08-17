@@ -17,6 +17,7 @@ import { fetchNote } from "@/lib/varsity/notesStore";
 import { sessionKey } from "@/lib/varsity/coachPlan";
 import { buildAthleteHome } from "@/lib/varsity/athleteHome";
 import { SkeletonCards, SkeletonLines } from "@/components/ui/Skeleton";
+import SectionLabel from "@/components/ui/SectionLabel";
 import {
   kindStyles,
   type SessionKind,
@@ -51,26 +52,21 @@ const statusStyle: Record<
   missed: { cls: "text-danger", label: "MISSED", Icon: IconX },
 };
 
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="text-[9px] font-semibold uppercase tracking-[0.16em] text-muted">
-      {children}
-    </div>
-  );
-}
+/* The section label used to be defined here, one of more than ten versions of
+   the same heading across the app. It lives in components/ui now. */
 
 /* ─── Greeting ─── */
 function Greeting({ g }: { g: GreetingData }) {
   return (
     <div className="flex items-end justify-between px-4 pb-1 pt-3">
       <div>
-        <div className="text-[10px] font-medium uppercase tracking-[0.1em] text-muted">
+        <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
           {g.date}
         </div>
         <div className="text-2xl font-semibold leading-none text-text">{g.name}</div>
       </div>
       <div className="text-right">
-        <div className="text-[9px] font-semibold tracking-[0.1em] text-accent">{g.block}</div>
+        <div className="text-[11px] font-semibold tracking-[0.1em] text-accent">{g.block}</div>
         <div className="text-[11px] text-muted">{g.week}</div>
       </div>
     </div>
@@ -86,7 +82,7 @@ function RaceBar({ r }: { r: RaceData }) {
       </span>
       <div className="flex-1">
         <div className="text-xs font-medium text-text">{r.name}</div>
-        <div className="text-[10px] text-muted">{r.location}</div>
+        <div className="text-[11px] text-muted">{r.location}</div>
       </div>
       <div className="text-right">
         <div className="text-2xl font-semibold leading-none text-accent">{r.big}</div>
@@ -286,7 +282,7 @@ function MonthOverlay({
         {/* Weekday header */}
         <div className="grid flex-shrink-0 grid-cols-7 gap-1 border-b border-border px-1.5 py-1">
           {DAY_LETTERS.map((d, i) => (
-            <div key={i} className="text-center text-[9px] font-semibold tracking-[0.12em] text-muted">
+            <div key={i} className="text-center text-[11px] font-semibold tracking-[0.12em] text-muted">
               {d}
             </div>
           ))}
@@ -349,7 +345,7 @@ function MonthOverlay({
         {/* What the colors mean */}
         <div className="flex flex-shrink-0 flex-wrap items-center justify-center gap-x-3 gap-y-1 border-t border-border bg-surface px-3 py-2">
           {LEGEND.map((l) => (
-            <span key={l.kind} className="flex items-center gap-1 text-[9px] text-muted">
+            <span key={l.kind} className="flex items-center gap-1 text-[11px] text-muted">
               <span className={`h-1.5 w-3 rounded-sm ${kindStyles[l.kind].bar}`} />
               {l.label}
             </span>
@@ -391,7 +387,7 @@ function DayDetail({ d, onClose }: { d: WeekDay; onClose: () => void }) {
                     {s.time}
                     {s.clock ? ` · ${s.clock}` : ""}
                   </span>
-                  {s.type && <span className="text-[10px] text-muted">{s.type}</span>}
+                  {s.type && <span className="text-[11px] text-muted">{s.type}</span>}
                 </div>
                 <div className="mt-1 text-[13px] font-medium text-text">{s.label}</div>
                 {s.note && (
@@ -495,7 +491,7 @@ function SessionCard({ s }: { s: TodaySession }) {
               <span className="rounded border border-border bg-surface-2 px-1.5 py-0.5 text-[8px] font-semibold tracking-[0.06em] text-muted">
                 {s.period}
               </span>
-              <span className="text-[10px] text-muted">{s.location}</span>
+              <span className="text-[11px] text-muted">{s.location}</span>
             </div>
             <span className={`flex items-center gap-1 text-[8px] font-semibold tracking-[0.06em] ${st.cls}`}>
               <st.Icon size={12} />
@@ -503,7 +499,7 @@ function SessionCard({ s }: { s: TodaySession }) {
             </span>
           </div>
           <div className="text-[13px] font-medium text-text">{s.title}</div>
-          <div className="mt-0.5 text-[10px] leading-relaxed text-muted">{s.detail}</div>
+          <div className="mt-0.5 text-[11px] leading-relaxed text-muted">{s.detail}</div>
 
           {s.coachNote && (
             <div className="mt-2 flex gap-2 rounded-lg border border-accent-line bg-accent-tint px-2.5 py-2">
@@ -514,7 +510,7 @@ function SessionCard({ s }: { s: TodaySession }) {
                 <div className="text-[7px] font-semibold tracking-[0.12em] text-accent">
                   {s.coachNote.coach}
                 </div>
-                <div className="mt-0.5 text-[10px] leading-relaxed text-text-2">
+                <div className="mt-0.5 text-[11px] leading-relaxed text-text-2">
                   {s.coachNote.text}
                 </div>
               </div>
@@ -526,7 +522,7 @@ function SessionCard({ s }: { s: TodaySession }) {
       {s.verify && (
         <div className="flex items-center gap-3 border-t border-border bg-background/60 px-3 py-2">
           {s.verify.map((v, i) => (
-            <div key={i} className="flex items-center gap-1 text-[9px]">
+            <div key={i} className="flex items-center gap-1 text-[11px]">
               <span className="text-success">
                 <IconCheck size={11} />
               </span>
@@ -564,7 +560,7 @@ function SeatRow({
       }`}
     >
       <span
-        className={`flex h-6 w-14 flex-shrink-0 items-center justify-center rounded text-[9px] font-bold uppercase tracking-[0.06em] ${
+        className={`flex h-6 w-14 flex-shrink-0 items-center justify-center rounded text-[11px] font-semibold uppercase tracking-[0.12em] ${
           cox ? "bg-accent-tint text-accent" : mine ? "bg-primary-tint text-primary" : "bg-background text-muted"
         }`}
       >
@@ -578,7 +574,7 @@ function SeatRow({
         {open ? "Open seat" : name}
       </span>
       {mine && (
-        <span className="flex-shrink-0 rounded bg-text px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] text-background">
+        <span className="flex-shrink-0 rounded bg-text px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-background">
           You
         </span>
       )}
@@ -615,7 +611,7 @@ function LineupCard({ lineups }: { lineups: Lineup[] }) {
     <div>
       <div className="mb-2 flex items-center justify-between px-1">
         <SectionLabel>Your Lineup</SectionLabel>
-        <span className="text-[10px] text-muted">Stroke at top · bow at bottom</span>
+        <span className="text-[11px] text-muted">Stroke at top · bow at bottom</span>
       </div>
       <div className="flex flex-col gap-3">
         {lineups.map((l, i) => (
@@ -635,7 +631,7 @@ function CoachNoteCard({ note }: { note: string }) {
           <span className="flex h-5 w-5 items-center justify-center rounded-full bg-danger text-[12px] font-black leading-none text-background">
             !
           </span>
-          <span className="text-[9px] font-semibold uppercase tracking-[0.14em] text-danger">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-danger">
             Coach&apos;s note · work on this
           </span>
         </div>
@@ -732,7 +728,7 @@ export default function HomeScreen() {
 
       <div className="flex items-center justify-between px-4 pb-2 pt-4">
         <SectionLabel>Today&apos;s Sessions</SectionLabel>
-        <span className="text-[10px] text-muted">
+        <span className="text-[11px] text-muted">
           {data.today.length} prescribed
         </span>
       </div>

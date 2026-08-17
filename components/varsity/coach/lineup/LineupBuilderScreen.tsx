@@ -78,7 +78,7 @@ type PlanContext = { title: string; sub: string } | null;
 /* ─────────────────────────  shared bits  ───────────────────────── */
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mb-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
+    <div className="mb-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
       {children}
     </div>
   );
@@ -88,7 +88,7 @@ function SideTag({ side }: { side: Side }) {
   const m = sideMeta[side];
   return (
     <span
-      className="rounded px-1.5 py-px text-[9px] font-bold tracking-[0.05em]"
+      className="rounded px-1.5 py-px text-[11px] font-bold tracking-[0.05em]"
       style={{ background: `${m.color}22`, color: m.color }}
     >
       {side}
@@ -110,7 +110,7 @@ function Avatar({
   const color = cox ? COX_COLOR : side ? sideMeta[side].color : undefined;
   return (
     <span
-      className={`flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border text-[10px] font-bold ${className}`}
+      className={`flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border text-[11px] font-bold ${className}`}
       style={color ? { background: `${color}1f`, borderColor: `${color}66`, color } : undefined}
     >
       {initials}
@@ -124,7 +124,7 @@ function AthleteTag({ a }: { a: Athlete }) {
   if (a.cox) {
     return (
       <span
-        className="rounded px-1.5 py-px text-[9px] font-bold tracking-[0.05em]"
+        className="rounded px-1.5 py-px text-[11px] font-bold tracking-[0.05em]"
         style={{ background: `${COX_COLOR}22`, color: COX_COLOR }}
       >
         COX
@@ -144,7 +144,7 @@ function PracticeButton({ practice, onPick }: { practice: Practice; onPick: () =
       className="flex flex-1 flex-col items-center gap-1.5 border-r border-border py-3 last:border-r-0 active:bg-surface-2"
     >
       <span className="text-[11px] font-semibold tracking-[0.08em] text-text">{practice.period}</span>
-      <span className="flex items-center gap-1.5 text-[10px] text-muted">
+      <span className="flex items-center gap-1.5 text-[11px] text-muted">
         <span className={`h-1.5 w-1.5 rounded-full ${s.dot}`} />
         {s.label}
       </span>
@@ -164,11 +164,11 @@ function DayCard({ day, onPick }: { day: PickDay; onPick: (day: PickDay, p: Prac
           <span className="text-2xl font-semibold leading-none text-text">{day.num}</span>
           <div>
             <div className="text-[13px] font-semibold leading-none text-text">{day.weekday}</div>
-            <div className="mt-1 text-[10px] text-muted">{day.month}</div>
+            <div className="mt-1 text-[11px] text-muted">{day.month}</div>
           </div>
         </div>
         {day.today && (
-          <span className="rounded-md bg-text px-2 py-1 text-[11px] font-bold uppercase tracking-[0.08em] text-background">
+          <span className="rounded-md bg-text px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-background">
             Today
           </span>
         )}
@@ -184,7 +184,7 @@ function DayCard({ day, onPick }: { day: PickDay; onPick: (day: PickDay, p: Prac
 function DayPicker({ days, onPick }: { days: PickDay[]; onPick: (day: PickDay, p: Practice) => void }) {
   return (
     <div className="mx-auto w-full max-w-screen-sm px-4 pb-8 pt-4">
-      <div className="text-[9px] font-semibold uppercase tracking-[0.16em] text-accent">Lineup</div>
+      <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-accent">Lineup</div>
       <h1 className="mt-0.5 text-2xl font-semibold text-text">Create Lineup</h1>
       <p className="mt-1 text-[12px] text-muted">Pick a practice to build.</p>
 
@@ -251,7 +251,7 @@ function Seat({
 
   return (
     <div className="flex items-center gap-2">
-      <span className={`w-5 flex-shrink-0 text-center text-[10px] font-bold ${numColor}`}>{label}</span>
+      <span className={`w-5 flex-shrink-0 text-center text-[11px] font-bold ${numColor}`}>{label}</span>
 
       {typing ? (
         <div className="relative min-h-[42px] flex-1">
@@ -343,7 +343,7 @@ function PoolChip({ a, onDragStart }: { a: Athlete; onDragStart: () => void }) {
       <div className="flex items-center gap-2 rounded-xl border border-danger-line bg-danger-tint px-2 py-1.5 opacity-50">
         <Avatar initials={a.initials} className="border-danger-line bg-danger-tint text-danger" />
         <span className="text-[12px] font-semibold text-muted">{a.name}</span>
-        <span className="rounded bg-danger-tint px-1.5 py-px text-[9px] font-bold tracking-[0.05em] text-danger">
+        <span className="rounded bg-danger-tint px-1.5 py-px text-[11px] font-bold tracking-[0.05em] text-danger">
           {a.out}
         </span>
       </div>
@@ -549,7 +549,7 @@ function Builder({
             {context.weekday} {context.period}
           </h1>
           <span
-            className={`flex items-center gap-1 rounded px-1.5 py-px text-[9px] font-bold uppercase tracking-[0.06em] ${
+            className={`flex items-center gap-1 rounded px-1.5 py-px text-[11px] font-semibold uppercase tracking-[0.12em] ${
               status === "published"
                 ? "border border-success-line bg-success-tint text-success"
                 : "border border-warn-line bg-warn-tint text-warn"
@@ -593,7 +593,7 @@ function Builder({
                     {/* header */}
                     <div className="flex items-center justify-between gap-2 border-b border-border px-3.5 py-3">
                       <div className="flex min-w-0 flex-1 items-center gap-2">
-                        <span className="flex-shrink-0 rounded-md border border-primary-line bg-primary-tint px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.06em] text-primary">
+                        <span className="flex-shrink-0 rounded-md border border-primary-line bg-primary-tint px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-primary">
                           {boat.badge}
                         </span>
                         <input
@@ -625,7 +625,7 @@ function Builder({
                         </div>
                       )}
                       <div className="relative rounded-[0.75rem_0.75rem_2.5rem_2.5rem] border border-border bg-gradient-to-b from-surface-2 to-background px-3.5 pb-7 pt-7">
-                        <div className="absolute left-1/2 top-2 -translate-x-1/2 text-[9px] font-bold uppercase tracking-[0.1em] text-muted">
+                        <div className="absolute left-1/2 top-2 -translate-x-1/2 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
                           Stroke ▲
                         </div>
                         <div className="flex flex-col gap-1.5">
@@ -635,7 +635,7 @@ function Builder({
                             )
                             .reverse()}
                         </div>
-                        <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 text-[9px] font-bold uppercase tracking-[0.1em] text-muted">
+                        <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
                           Bow ▼
                         </div>
                       </div>
@@ -653,7 +653,7 @@ function Builder({
                     </div>
 
                     {/* footer — filled count */}
-                    <div className="border-t border-border px-3.5 py-2 text-[10px] text-muted">
+                    <div className="border-t border-border px-3.5 py-2 text-[11px] text-muted">
                       {filled} / {boat.seats.length} filled
                     </div>
                   </div>
@@ -672,7 +672,7 @@ function Builder({
             {/* pool */}
             <div className="mt-6">
               <div className="mb-2.5 flex items-center justify-between">
-                <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
+                <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
                   Athlete Pool
                 </span>
                 <span className="rounded-full border border-border bg-surface px-2 py-0.5 text-[11px] text-muted">
@@ -713,7 +713,7 @@ function Builder({
                   return (
                     <div key={g.label}>
                       <div
-                        className={`mb-1.5 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.1em] ${
+                        className={`mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] ${
                           g.danger ? "text-danger" : "text-muted"
                         }`}
                       >
@@ -781,7 +781,7 @@ function Builder({
                 >
                   <span className="text-xl font-semibold text-text">{b.symbol}</span>
                   <span className="text-[12px] font-semibold text-text">{b.name}</span>
-                  <span className="text-[10px] text-muted">{b.desc}</span>
+                  <span className="text-[11px] text-muted">{b.desc}</span>
                 </button>
               ))}
             </div>

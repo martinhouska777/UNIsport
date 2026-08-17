@@ -60,7 +60,7 @@ export default function UpcomingSessions() {
 
   return (
     <div className="border-b border-border px-3.5 py-3">
-      <div className="mb-2 text-[9px] font-medium uppercase tracking-[0.1em] text-muted">
+      <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
         Upcoming sessions
       </div>
       <div className="flex flex-col gap-2">

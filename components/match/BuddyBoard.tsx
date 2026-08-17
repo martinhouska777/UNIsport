@@ -212,7 +212,7 @@ export default function BuddyBoard() {
       {/* YOUR POSTS */}
       {mine && mine.length > 0 && (
         <div className="pt-4">
-          <div className="pb-1.5 text-[10px] tracking-[0.06em] text-muted">YOUR POSTS</div>
+          <div className="pb-1.5 text-[11px] tracking-[0.06em] text-muted">YOUR POSTS</div>
           <div className="flex flex-col gap-2">
             {mine.map((m) => (
               <div
@@ -243,7 +243,7 @@ export default function BuddyBoard() {
       {/* BOARD FILTERS */}
       <div className="pt-5">
         <div className="flex items-center justify-between pb-2">
-          <div className="text-[10px] tracking-[0.06em] text-muted">OPEN POSTS</div>
+          <div className="text-[11px] tracking-[0.06em] text-muted">OPEN POSTS</div>
           {anyFilter && (
             <button
               type="button"

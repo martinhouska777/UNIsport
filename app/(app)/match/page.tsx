@@ -271,7 +271,7 @@ function MatchScreen() {
       {/* Header */}
       <div className="flex items-center justify-between px-4 pt-3">
         <h1 className="text-base font-medium text-text">Match</h1>
-        <span className="text-[10px] tracking-[0.06em] text-muted">
+        <span className="text-[11px] tracking-[0.06em] text-muted">
           {subTabs.find((s) => s.key === tab)?.heading}
         </span>
       </div>
@@ -315,7 +315,7 @@ function MatchScreen() {
           )}
           {!browseErr && browse && browse.length > 0 && (
             <>
-              <div className="px-3 pb-1.5 text-[10px] tracking-[0.06em] text-muted">
+              <div className="px-3 pb-1.5 text-[11px] tracking-[0.06em] text-muted">
                 {browse.length} {browse.length === 1 ? "PERSON" : "PEOPLE"} · SORTED BY COMPATIBILITY
               </div>
               <Grid matches={browse} max={100} onView={viewProfile} />
@@ -402,7 +402,7 @@ function MatchScreen() {
           {sessionErr && <Status>Search failed: {sessionErr}</Status>}
           {!sessionErr && results && (
             <div className="pt-3">
-              <div className="pb-1.5 text-[10px] tracking-[0.06em] text-muted">
+              <div className="pb-1.5 text-[11px] tracking-[0.06em] text-muted">
                 {results.length} {results.length === 1 ? "PERSON" : "PEOPLE"} AVAILABLE
               </div>
               {results.length === 0 ? (

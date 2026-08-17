@@ -70,7 +70,7 @@ export default function VarsityWaitingPage() {
         </p>
 
         <div className="mt-5 rounded-xl border border-border bg-surface px-4 py-3 text-left">
-          <div className="text-[9px] font-semibold uppercase tracking-[0.12em] text-muted">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
             They&apos;ll see you as
           </div>
           <div className="mt-1 truncate text-[13px] text-text">{email}</div>

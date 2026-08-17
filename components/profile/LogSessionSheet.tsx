@@ -184,7 +184,7 @@ export default function LogSessionSheet({
 
   const inputCls =
     "w-full rounded-xl border border-border bg-surface-2 px-3 py-2.5 text-base text-text outline-none focus:border-primary placeholder:text-muted";
-  const labelCls = "mb-1.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-muted";
+  const labelCls = "mb-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted";
 
   return (
     <div className="fixed inset-0 z-50 flex h-dvh flex-col bg-background">
@@ -305,7 +305,7 @@ export default function LogSessionSheet({
                       </div>
 
                       {/* Column header */}
-                      <div className="flex items-center gap-2 px-3 pb-1 pt-2 text-[9px] font-semibold uppercase tracking-[0.1em] text-muted">
+                      <div className="flex items-center gap-2 px-3 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
                         <span className="w-8 text-center">Set</span>
                         <span className="flex-1 text-center">{weightUnit}</span>
                         <span className="flex-1 text-center">Reps</span>
@@ -464,7 +464,7 @@ export default function LogSessionSheet({
           {/* Photos — "memories" from the session */}
           <div className="mt-5 flex items-center justify-between">
             <span className={labelCls.replace("mb-1.5", "mb-0")}>Photos (optional)</span>
-            <span className="text-[10px] text-muted">memories from the session</span>
+            <span className="text-[11px] text-muted">memories from the session</span>
           </div>
           <input
             ref={photoInputRef}

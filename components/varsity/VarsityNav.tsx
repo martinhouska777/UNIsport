@@ -54,7 +54,7 @@ function NavItem({ tab, active }: { tab: Tab; active: boolean }) {
     <Link
       href={tab.href}
       aria-current={active ? "page" : undefined}
-      className={`flex flex-1 flex-col items-center gap-1 py-1 text-[10px] font-medium transition-colors ${
+      className={`flex flex-1 flex-col items-center gap-1 py-1 text-[11px] font-medium transition-colors ${
         active ? "text-primary" : "text-muted"
       }`}
     >

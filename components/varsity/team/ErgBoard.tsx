@@ -26,7 +26,7 @@ export default function ErgBoard({
     <div className="mt-4">
       <div className="mb-2 flex items-baseline justify-between px-0.5">
         <span className="text-[13px] font-semibold text-text">{workout.piece} test</span>
-        <span className="text-[10px] text-muted">{workout.dateLabel} · vs previous</span>
+        <span className="text-[11px] text-muted">{workout.dateLabel} · vs previous</span>
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-border bg-surface">
@@ -50,13 +50,13 @@ export default function ErgBoard({
               >
                 {i + 1}
               </span>
-              <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-primary-tint text-[10px] font-semibold text-primary">
+              <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-primary-tint text-[11px] font-semibold text-primary">
                 {r.initials}
               </span>
               <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-text">
                 {r.name}
                 {mine && (
-                  <span className="ml-1.5 rounded bg-text px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-background">
+                  <span className="ml-1.5 rounded bg-text px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-background">
                     You
                   </span>
                 )}
@@ -78,7 +78,7 @@ export default function ErgBoard({
         })}
       </div>
 
-      <p className="mt-2 px-0.5 text-[10px] leading-relaxed text-muted">
+      <p className="mt-2 px-0.5 text-[11px] leading-relaxed text-muted">
         Green = faster than your last 2K, red = slower. Tap a name for their profile.
       </p>
     </div>

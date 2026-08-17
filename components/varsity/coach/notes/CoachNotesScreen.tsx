@@ -43,7 +43,7 @@ const initialsOf = (name: string) =>
 function StatusChip({ hasNote }: { hasNote: boolean }) {
   if (hasNote) {
     return (
-      <span className="flex items-center gap-1.5 rounded-full border border-danger-line bg-danger-tint px-2 py-1 text-[10px] font-bold uppercase tracking-[0.06em] text-danger">
+      <span className="flex items-center gap-1.5 rounded-full border border-danger-line bg-danger-tint px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-danger">
         <span className="flex h-4 w-4 items-center justify-center rounded-full bg-danger text-[11px] font-black leading-none text-background">
           !
         </span>
@@ -52,7 +52,7 @@ function StatusChip({ hasNote }: { hasNote: boolean }) {
     );
   }
   return (
-    <span className="flex items-center gap-1.5 rounded-full border border-success-line bg-success-tint px-2 py-1 text-[10px] font-bold uppercase tracking-[0.06em] text-success">
+    <span className="flex items-center gap-1.5 rounded-full border border-success-line bg-success-tint px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-success">
       <IconCheckCircle size={13} />
       Good job
     </span>
@@ -135,7 +135,7 @@ function Editor({
               {initialsOf(member.name)}
             </span>
             <div>
-              <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-accent">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-accent">
                 Technical note
               </div>
               <h1 className="text-xl font-semibold text-text">{member.name}</h1>
@@ -214,7 +214,7 @@ export default function CoachNotesScreen() {
   return (
     <>
       <div className="mx-auto w-full max-w-screen-sm px-4 pb-8 pt-4">
-        <div className="text-[9px] font-semibold uppercase tracking-[0.16em] text-accent">Notes</div>
+        <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-accent">Notes</div>
         <h1 className="mt-0.5 text-2xl font-semibold text-text">Athlete Notes</h1>
         <p className="mt-1 text-[12px] text-muted">
           Tap an athlete to write a technical note. They see it on their Home.
@@ -235,7 +235,7 @@ export default function CoachNotesScreen() {
         ) : (
           <>
             <div className="mt-4 flex items-center justify-between">
-              <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
                 {roster.length} athlete{roster.length === 1 ? "" : "s"}
               </span>
               <span className="rounded-full border border-border bg-surface px-2 py-0.5 text-[11px] text-muted">

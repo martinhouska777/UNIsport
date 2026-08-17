@@ -131,7 +131,7 @@ function EditIdentitySheet({
 
   return (
     <Sheet title="Edit profile" onClose={onClose}>
-      <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
+      <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
         Year on the team
       </div>
       <div className="flex flex-wrap gap-1.5">
@@ -153,7 +153,7 @@ function EditIdentitySheet({
 
       <div className="mt-4 grid grid-cols-2 gap-2">
         <div>
-          <label className="mb-1 block text-[10px] text-muted">Height (cm)</label>
+          <label className="mb-1 block text-[11px] text-muted">Height (cm)</label>
           <input
             value={height}
             onChange={(e) => setHeight(e.target.value.replace(/[^\d]/g, ""))}
@@ -163,7 +163,7 @@ function EditIdentitySheet({
           />
         </div>
         <div>
-          <label className="mb-1 block text-[10px] text-muted">Weight ({units.weight})</label>
+          <label className="mb-1 block text-[11px] text-muted">Weight ({units.weight})</label>
           <input
             value={weight}
             onChange={(e) => setWeight(e.target.value.replace(/[^\d.]/g, ""))}
@@ -322,7 +322,7 @@ function WeeklyGraph({
           >
             <IconChevronLeft size={15} />
           </button>
-          <span className="truncate text-[10px] font-semibold uppercase tracking-[0.1em] text-text">
+          <span className="truncate text-[11px] font-semibold uppercase tracking-[0.12em] text-text">
             {metric.label}
           </span>
           <button
@@ -334,7 +334,7 @@ function WeeklyGraph({
             <IconChevronRight size={15} />
           </button>
         </div>
-        <span className="flex-shrink-0 text-[10px] text-muted">last {WEEKS} weeks</span>
+        <span className="flex-shrink-0 text-[11px] text-muted">last {WEEKS} weeks</span>
       </div>
 
       {anyData ? (
@@ -540,19 +540,19 @@ export default function ProfileScreen() {
             </div>
             <div className="mt-1 text-[11px] text-muted">{classLine}</div>
             <div className="mt-2 flex flex-wrap items-center gap-1.5">
-              <span className="inline-flex items-center gap-1 rounded-md border border-border bg-surface px-2 py-1 text-[10px] text-text">
+              <span className="inline-flex items-center gap-1 rounded-md border border-border bg-surface px-2 py-1 text-[11px] text-text">
                 <span className="text-accent">
                   <IconAnchor size={11} />
                 </span>
                 {profile.teamYear || "Team"}
               </span>
               {profile.heightCm != null && (
-                <span className="rounded-md border border-border bg-surface px-2 py-1 text-[10px] text-text">
+                <span className="rounded-md border border-border bg-surface px-2 py-1 text-[11px] text-text">
                   {profile.heightCm} cm
                 </span>
               )}
               {profile.weightKg != null && (
-                <span className="rounded-md border border-border bg-surface px-2 py-1 text-[10px] text-text">
+                <span className="rounded-md border border-border bg-surface px-2 py-1 text-[11px] text-text">
                   {formatWeight(profile.weightKg, units.weight)}
                 </span>
               )}
@@ -583,7 +583,7 @@ export default function ProfileScreen() {
             Current status
           </div>
           <div className={`mt-0.5 text-[13px] font-medium ${toneText[status.tone]}`}>{status.title}</div>
-          <div className="mt-0.5 truncate text-[10px] text-muted">{status.sub}</div>
+          <div className="mt-0.5 truncate text-[11px] text-muted">{status.sub}</div>
         </div>
         <span className="text-muted">
           <IconChevronRight size={17} />
@@ -591,7 +591,7 @@ export default function ProfileScreen() {
       </button>
 
       {/* ── Statistics ── */}
-      <div className="px-4 pb-2 pt-5 text-[9px] font-semibold uppercase tracking-[0.16em] text-muted">
+      <div className="px-4 pb-2 pt-5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
         Statistics
       </div>
       <div className="mx-3.5 mb-1.5 grid grid-cols-3 gap-1.5">
@@ -628,7 +628,7 @@ export default function ProfileScreen() {
         </span>
         <div className="min-w-0 flex-1">
           <div className="text-[13px] font-medium text-text">Training calendar</div>
-          <div className="text-[10px] text-muted">See what you did, day by day</div>
+          <div className="text-[11px] text-muted">See what you did, day by day</div>
         </div>
         <span className="text-muted">
           <IconChevronRight size={17} />
@@ -637,14 +637,14 @@ export default function ProfileScreen() {
 
       {/* ── Personal bests (editable) ── */}
       <div className="flex items-center justify-between px-4 pb-2 pt-5">
-        <div className="text-[9px] font-semibold uppercase tracking-[0.16em] text-muted">
+        <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
           Personal Bests
         </div>
         <button
           type="button"
           onClick={() => setModal("prs")}
           aria-label="Edit personal bests"
-          className="flex items-center gap-1 text-[10px] font-medium text-primary"
+          className="flex items-center gap-1 text-[11px] font-medium text-primary"
         >
           <IconPencil size={12} /> Edit
         </button>
@@ -659,7 +659,7 @@ export default function ProfileScreen() {
               onClick={() => setModal("prs")}
               className="flex items-baseline justify-between rounded-xl border border-border bg-surface px-3 py-2.5 text-left"
             >
-              <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
                 {piece}
               </span>
               <span className={`text-[14px] font-semibold ${val ? "text-text" : "text-text-3"}`}>
@@ -671,7 +671,7 @@ export default function ProfileScreen() {
       </div>
 
       {/* ── Send to coaches abroad (shareable report link) ── */}
-      <div className="px-4 pb-2 pt-5 text-[9px] font-semibold uppercase tracking-[0.16em] text-muted">
+      <div className="px-4 pb-2 pt-5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
         Recruiting
       </div>
       <div className="relative mx-3.5 overflow-hidden rounded-2xl border border-accent-line bg-gradient-to-br from-accent/10 to-surface">
@@ -692,13 +692,13 @@ export default function ProfileScreen() {
           </div>
         </div>
         <div className="flex items-center gap-2 border-t border-accent/15 bg-[color-mix(in_srgb,var(--text)_8%,transparent)] px-3.5 py-2.5">
-          <div className="flex-1 truncate rounded-md border border-border bg-surface-2 px-2.5 py-1.5 text-[10px] text-muted">
+          <div className="flex-1 truncate rounded-md border border-border bg-surface-2 px-2.5 py-1.5 text-[11px] text-muted">
             {shareUrl}
           </div>
           <button
             type="button"
             onClick={copyLink}
-            className="flex items-center gap-1 rounded-md border border-border bg-surface px-2.5 py-1.5 text-[10px] font-semibold tracking-[0.06em] text-text"
+            className="flex items-center gap-1 rounded-md border border-border bg-surface px-2.5 py-1.5 text-[11px] font-semibold tracking-[0.06em] text-text"
           >
             {copied ? <IconCheck size={12} /> : <IconCopy size={12} />}
             {copied ? "COPIED" : "COPY"}
@@ -706,7 +706,7 @@ export default function ProfileScreen() {
           <button
             type="button"
             onClick={share}
-            className="flex items-center gap-1 rounded-md bg-accent px-2.5 py-1.5 text-[10px] font-semibold tracking-[0.06em] text-background"
+            className="flex items-center gap-1 rounded-md bg-accent px-2.5 py-1.5 text-[11px] font-semibold tracking-[0.06em] text-background"
           >
             SEND
           </button>

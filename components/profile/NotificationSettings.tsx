@@ -155,7 +155,7 @@ export default function NotificationSettings({
         <span className="text-primary">
           <IconBell size={12} />
         </span>
-        <div className="text-[9px] font-medium uppercase tracking-[0.1em] text-muted">
+        <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
           Notifications
         </div>
       </div>

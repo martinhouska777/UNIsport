@@ -144,7 +144,7 @@ export default function DmThread({
             <div key={m.id} className="flex flex-col gap-2">
               {showDay && (
                 <div className="flex justify-center py-1">
-                  <span className="rounded-lg bg-surface-2 px-3 py-1 text-[10px] text-muted">
+                  <span className="rounded-lg bg-surface-2 px-3 py-1 text-[11px] text-muted">
                     {dayLabel(m.createdAt)}
                   </span>
                 </div>
@@ -170,7 +170,7 @@ export default function DmThread({
                     {m.body}
                   </div>
                   <div
-                    className={`mt-1 text-[9px] text-muted ${mine ? "text-right" : "text-left"}`}
+                    className={`mt-1 text-[11px] text-muted ${mine ? "text-right" : "text-left"}`}
                   >
                     {clockTime(m.createdAt)}
                     {mine && i === lastMineIndex && (

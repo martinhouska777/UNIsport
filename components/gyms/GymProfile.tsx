@@ -131,7 +131,7 @@ export default function GymProfile({ gym }: { gym: Gym }) {
       {/* Your rating + live crowd — what you fill in after / during a workout */}
       <div className="border-b border-border px-3.5 py-3.5">
         <div className="flex items-center justify-between">
-          <h2 className="text-[10px] font-medium uppercase tracking-[0.1em] text-muted">
+          <h2 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
             Rate this gym
           </h2>
           <span className="text-[11px] text-muted">
@@ -143,7 +143,7 @@ export default function GymProfile({ gym }: { gym: Gym }) {
         </div>
 
         <div className="mt-4 flex items-center justify-between">
-          <h2 className="text-[10px] font-medium uppercase tracking-[0.1em] text-muted">
+          <h2 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
             How busy right now?
           </h2>
           <span className="text-[11px] text-muted">
@@ -160,7 +160,7 @@ export default function GymProfile({ gym }: { gym: Gym }) {
         .filter((section) => section.rows.length > 0)
         .map((section) => (
           <div key={section.title} className="border-b border-border px-3.5 py-3">
-            <h2 className="mb-2.5 text-[10px] font-medium uppercase tracking-[0.1em] text-muted">
+            <h2 className="mb-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
               {section.title}
             </h2>
             <div className="flex flex-col divide-y divide-border">
@@ -183,11 +183,11 @@ export default function GymProfile({ gym }: { gym: Gym }) {
           {/* An average with no sample size is meaningless — 4.6 from two
               people reads the same as 4.6 from two hundred. */}
           <div className="mb-2.5 flex items-baseline justify-between">
-            <h2 className="text-[10px] font-medium uppercase tracking-[0.1em] text-muted">
+            <h2 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
               Ratings Breakdown
             </h2>
             {gym.ratingCount > 0 && (
-              <span className="text-[10px] text-muted">
+              <span className="text-[11px] text-muted">
                 {gym.ratingCount} {gym.ratingCount === 1 ? "rating" : "ratings"}
               </span>
             )}

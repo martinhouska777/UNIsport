@@ -51,7 +51,7 @@ export default function MatchCard({
           {match.name || "Member"}
         </div>
         {subtitle && (
-          <div className="truncate text-[10px] text-muted">{subtitle}</div>
+          <div className="truncate text-[11px] text-muted">{subtitle}</div>
         )}
 
         {/* Why they're here. Chips wrap, so a person with three overlaps gets a
@@ -63,13 +63,13 @@ export default function MatchCard({
               <span
                 key={r.key}
                 title={r.full}
-                className="max-w-full truncate rounded-md border border-accent-line bg-accent-tint px-1.5 py-0.5 text-[9px] leading-tight text-text"
+                className="max-w-full truncate rounded-md border border-accent-line bg-accent-tint px-1.5 py-0.5 text-[11px] leading-tight text-text"
               >
                 {r.short}
               </span>
             ))
           ) : (
-            <span className="text-[10px] italic text-muted">
+            <span className="text-[11px] italic text-muted">
               A possible workout partner.
             </span>
           )}

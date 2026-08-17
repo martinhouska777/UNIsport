@@ -27,7 +27,7 @@ export default function CoachTopBar({
           <span className="text-sm font-semibold text-text">
             {roleLabel[role]} Console
           </span>
-          <span className="mt-0.5 text-[10px] tracking-[0.1em] text-muted">{teamName}</span>
+          <span className="mt-0.5 text-[11px] tracking-[0.1em] text-muted">{teamName}</span>
         </div>
       </div>
       <div className="flex items-center gap-2">

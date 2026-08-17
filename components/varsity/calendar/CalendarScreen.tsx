@@ -74,7 +74,7 @@ function DaySheet({
                   {l.note && <div className="mt-0.5 truncate text-[11px] text-muted">{l.note}</div>}
                 </div>
                 {l.source === "plan" && (
-                  <span className="flex-shrink-0 rounded-md border border-border px-2 py-0.5 text-[9px] font-medium uppercase tracking-wide text-muted">
+                  <span className="flex-shrink-0 rounded-md border border-border px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-muted">
                     Plan
                   </span>
                 )}
@@ -178,7 +178,7 @@ export default function CalendarScreen() {
 
   return (
     <div className="mx-auto w-full max-w-screen-sm px-4 pb-10 pt-4">
-      <div className="text-[9px] font-semibold uppercase tracking-[0.16em] text-accent">
+      <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-accent">
         Training history
       </div>
       <h1 className="mt-0.5 text-2xl font-semibold text-text">Calendar</h1>
@@ -215,7 +215,7 @@ export default function CalendarScreen() {
         {/* Weekday header */}
         <div className="grid grid-cols-7 border-b border-border px-2 pb-1 pt-2">
           {DAY_NAMES.map((d, i) => (
-            <div key={i} className="py-0.5 text-center text-[9px] font-semibold tracking-[0.12em] text-muted">
+            <div key={i} className="py-0.5 text-center text-[11px] font-semibold tracking-[0.12em] text-muted">
               {d}
             </div>
           ))}
@@ -274,7 +274,7 @@ export default function CalendarScreen() {
                 type="button"
                 onClick={() => setStatsFor(c)}
                 aria-label={`${logCategoryLabel[c]} statistics for ${MONTHS[view.m]}`}
-                className="flex items-center gap-1.5 rounded-full px-1.5 py-1 text-[10px] text-muted active:bg-surface"
+                className="flex items-center gap-1.5 rounded-full px-1.5 py-1 text-[11px] text-muted active:bg-surface"
               >
                 <span
                   className="h-1.5 w-1.5 rounded-full"
@@ -304,7 +304,7 @@ export default function CalendarScreen() {
               Rowed
             </div>
           </div>
-          <span className="ml-auto text-[10px] text-muted">in {MONTHS[view.m]}</span>
+          <span className="ml-auto text-[11px] text-muted">in {MONTHS[view.m]}</span>
         </div>
       </div>
 

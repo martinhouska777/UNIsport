@@ -104,7 +104,7 @@ export default function WorkoutDetail({
         {/* Gym */}
         {log.gym && (
           <div className="mb-4">
-            <div className="mb-1 text-[10px] font-medium uppercase tracking-[0.08em] text-muted">Gym</div>
+            <div className="mb-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">Gym</div>
             <div className="text-[13px] text-text">{log.gym}</div>
           </div>
         )}
@@ -120,7 +120,7 @@ export default function WorkoutDetail({
                     <div className="text-[14px] font-semibold text-text">{ex.name}</div>
                     {ex.muscle && <div className="text-[11px] text-muted">{ex.muscle}</div>}
                   </div>
-                  <div className="grid grid-cols-[2rem_1fr_1fr_2rem] items-center px-3 pb-1 pt-2 text-[9px] font-semibold uppercase tracking-[0.1em] text-muted">
+                  <div className="grid grid-cols-[2rem_1fr_1fr_2rem] items-center px-3 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
                     <span className="text-center">Set</span>
                     <span className="text-center">{unit}</span>
                     <span className="text-center">Reps</span>
@@ -161,11 +161,11 @@ export default function WorkoutDetail({
             <IconUser size={15} />
           </div>
           <div>
-            <div className="text-[10px] text-muted">{solo ? "Session" : "Training partner"}</div>
+            <div className="text-[11px] text-muted">{solo ? "Session" : "Training partner"}</div>
             <div className="text-[13px] font-medium text-primary">{solo ? "Solo session" : log.partner}</div>
           </div>
           {log.verified && (
-            <span className="ml-auto flex items-center gap-1 rounded-full border border-success bg-success-tint px-2 py-1 text-[10px] font-medium text-success">
+            <span className="ml-auto flex items-center gap-1 rounded-full border border-success bg-success-tint px-2 py-1 text-[11px] font-medium text-success">
               <IconCheck size={11} /> Verified
             </span>
           )}
@@ -174,7 +174,7 @@ export default function WorkoutDetail({
         {/* Photos */}
         {log.photos.length > 0 && (
           <div className="mb-4">
-            <div className="mb-1.5 text-[10px] font-medium uppercase tracking-[0.08em] text-muted">Photos</div>
+            <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">Photos</div>
             <div className="grid grid-cols-3 gap-1.5">
               {log.photos.map((src, i) => (
                 <button
@@ -195,7 +195,7 @@ export default function WorkoutDetail({
         {/* Note */}
         {log.note && (
           <div className="mb-4">
-            <div className="mb-1.5 text-[10px] font-medium uppercase tracking-[0.08em] text-muted">Note</div>
+            <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">Note</div>
             <div className="rounded-xl border border-border bg-surface-2 px-3 py-2.5 text-[13px] leading-relaxed text-muted">
               {log.note}
             </div>

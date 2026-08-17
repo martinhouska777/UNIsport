@@ -53,7 +53,7 @@ export default function PhotoGrid({
           heading was just another blank rectangle on a new profile. */}
       {!empty && (
         <div className="mb-2 flex items-center justify-between">
-          <div className="text-[9px] font-medium uppercase tracking-[0.1em] text-muted">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
             Photos
           </div>
           <VisibilityToggle visible={visible} onChange={onVisibleChange} />

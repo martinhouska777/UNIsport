@@ -21,7 +21,7 @@ function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex-1 rounded-2xl border border-border bg-surface px-3.5 py-3 text-center">
       <div className="text-xl font-semibold leading-none text-text tabular-nums">{value}</div>
-      <div className="mt-1.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-muted">{label}</div>
+      <div className="mt-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">{label}</div>
     </div>
   );
 }
@@ -64,14 +64,14 @@ function ErgResult({ log }: { log: LogEntry }) {
 
   return (
     <div className="mt-5 overflow-hidden rounded-2xl border border-border bg-surface-2">
-      <div className="border-b border-border px-4 py-1.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-muted">
+      <div className="border-b border-border px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
         Erg result
       </div>
       <div className="px-4 py-4 text-center">
         <div className="text-4xl font-semibold leading-none text-primary tabular-nums">
           {log.split ?? "—"}
         </div>
-        <div className="mt-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-muted">/500m split</div>
+        <div className="mt-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">/500m split</div>
       </div>
       {cells.length > 0 && (
         <div
@@ -161,8 +161,8 @@ export default function WorkoutDetail({
           {/* Title + category + plan/extra */}
           <div className="flex items-center gap-2">
             <span className="h-3 w-3 flex-shrink-0 rounded-full" style={{ background: color }} />
-            <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted">{catLabel}</span>
-            <span className="ml-auto rounded-md border border-border px-2 py-0.5 text-[9px] font-medium uppercase tracking-wide text-muted">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">{catLabel}</span>
+            <span className="ml-auto rounded-md border border-border px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-muted">
               {current.source === "plan" ? "Plan" : "Extra"}
             </span>
           </div>
@@ -193,7 +193,7 @@ export default function WorkoutDetail({
           {/* Note */}
           {current.note && (
             <div className="mt-5">
-              <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Note</div>
+              <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">Note</div>
               <div className="rounded-2xl border border-border bg-surface-2 px-3.5 py-3 text-[13px] leading-relaxed text-text-2">
                 {current.note}
               </div>

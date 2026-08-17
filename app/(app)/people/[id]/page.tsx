@@ -230,12 +230,12 @@ function PersonProfile() {
               {(fit !== null || user.badges.mentor) && (
                 <div className="mt-0.5 flex items-center gap-2">
                   {fit !== null && (
-                    <span className="rounded-lg border border-primary bg-primary-tint px-2 py-0.5 text-[10px] font-medium text-primary">
+                    <span className="rounded-lg border border-primary bg-primary-tint px-2 py-0.5 text-[11px] font-medium text-primary">
                       {fit}
                     </span>
                   )}
                   {user.badges.mentor && (
-                    <span className="rounded-lg border border-success bg-success-tint px-2 py-0.5 text-[10px] font-medium text-success">
+                    <span className="rounded-lg border border-success bg-success-tint px-2 py-0.5 text-[11px] font-medium text-success">
                       Mentor
                     </span>
                   )}
@@ -255,7 +255,7 @@ function PersonProfile() {
               asking about. */}
           {reasons.length > 0 && (
             <div className="border-b border-border px-4 py-3">
-              <div className="mb-2 text-[9px] font-medium uppercase tracking-[0.1em] text-muted">
+              <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
                 Why you match
               </div>
               <ul className="flex flex-col gap-1.5">
@@ -273,7 +273,7 @@ function PersonProfile() {
 
           {/* Training */}
           <div className="border-b border-border px-4 py-3">
-            <div className="mb-1 text-[9px] font-medium uppercase tracking-[0.1em] text-muted">
+            <div className="mb-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
               Training
             </div>
             <div className="flex flex-col divide-y divide-border">
@@ -291,7 +291,7 @@ function PersonProfile() {
           {/* Personal records (only present when they chose to show them) */}
           {user.personalRecords.length > 0 && (
             <div className="border-b border-border px-4 py-3">
-              <div className="mb-2 text-[9px] font-medium uppercase tracking-[0.1em] text-muted">
+              <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
                 Personal records
               </div>
               <div className="flex flex-col divide-y divide-border">
@@ -308,7 +308,7 @@ function PersonProfile() {
           {/* Photos (only present when they chose to show them) */}
           {user.photos.length > 0 && (
             <div className="border-b border-border px-4 py-3">
-              <div className="mb-2 text-[9px] font-medium uppercase tracking-[0.1em] text-muted">
+              <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
                 Photos
               </div>
               <PhotoGallery photos={user.photos} />
@@ -318,7 +318,7 @@ function PersonProfile() {
           {/* Interests */}
           {user.interests.length > 0 && (
             <div className="border-b border-border px-4 py-3">
-              <div className="mb-2 text-[9px] font-medium uppercase tracking-[0.1em] text-muted">
+              <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
                 Interests
               </div>
               <div className="flex flex-wrap gap-1.5">
@@ -337,7 +337,7 @@ function PersonProfile() {
           {/* About */}
           {(user.concentration || user.hometownCountry || user.languages.length > 0) && (
             <div className="border-b border-border px-4 py-3">
-              <div className="mb-1 text-[9px] font-medium uppercase tracking-[0.1em] text-muted">
+              <div className="mb-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
                 About
               </div>
               <div className="flex flex-col divide-y divide-border">

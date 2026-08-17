@@ -129,15 +129,15 @@ function PersonRow({ row, showHouse }: { row: LeaderRow; showHouse: boolean }) {
       }`}
     >
       <RankBadge rank={row.rank} />
-      <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-primary-tint text-[10px] font-semibold text-primary">
+      <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-primary-tint text-[11px] font-semibold text-primary">
         {row.initials}
       </span>
       <div className="min-w-0 flex-1">
         <div className="truncate text-[13px] font-medium text-text">
           {row.name}
-          {row.isMe && <span className="ml-1.5 text-[10px] text-primary">You</span>}
+          {row.isMe && <span className="ml-1.5 text-[11px] text-primary">You</span>}
         </div>
-        <div className="truncate text-[10px] text-muted">
+        <div className="truncate text-[11px] text-muted">
           {[showHouse && row.residence ? residenceLabel(row.residence) : "", row.classYear]
             .filter(Boolean)
             .join(" · ") || "—"}
@@ -164,9 +164,9 @@ function GroupRowItem({ row, kind }: { row: GroupRow; kind: "house" | "year" }) 
       <div className="min-w-0 flex-1">
         <div className="truncate text-[13px] font-medium text-text">
           {groupLabel(kind, row.key)}
-          {row.isMine && <span className="ml-1.5 text-[10px] text-primary">Yours</span>}
+          {row.isMine && <span className="ml-1.5 text-[11px] text-primary">Yours</span>}
         </div>
-        <div className="truncate text-[10px] text-muted">
+        <div className="truncate text-[11px] text-muted">
           {row.actives} of {row.members} training · {row.sessions} sessions
         </div>
       </div>
@@ -289,7 +289,7 @@ export default function LeaderboardsPage() {
                 <div className="text-[13px] font-semibold text-text">
                   {standing.houseRankIn ? ordinal(standing.houseRankIn) : "—"}
                 </div>
-                <div className="mt-0.5 text-[9px] uppercase tracking-[0.08em] text-muted">
+                <div className="mt-0.5 text-[11px] uppercase tracking-[0.08em] text-muted">
                   in {residenceLabel(standing.residence)}
                 </div>
               </div>
@@ -297,7 +297,7 @@ export default function LeaderboardsPage() {
                 <div className="text-[13px] font-semibold text-text">
                   {standing.houseRank ? `#${standing.houseRank} of ${standing.houseTotal}` : "—"}
                 </div>
-                <div className="mt-0.5 text-[9px] uppercase tracking-[0.08em] text-muted">
+                <div className="mt-0.5 text-[11px] uppercase tracking-[0.08em] text-muted">
                   {residenceLabel(standing.residence)} overall
                 </div>
               </div>
@@ -372,7 +372,7 @@ export default function LeaderboardsPage() {
                 <PersonRow key={r.userId} row={r} showHouse={board !== "myHouse"} />
               ))}
             </div>
-            <div className="mt-2.5 px-0.5 text-[10px] text-muted">
+            <div className="mt-2.5 px-0.5 text-[11px] text-muted">
               {board === "partners"
                 ? scoreLabel("partners", people[0].score) + " leads"
                 : `Top ${people.length}`}
@@ -384,7 +384,7 @@ export default function LeaderboardsPage() {
       {/* How scoring works — said once, plainly, so nobody has to guess. */}
       <div className="mt-4 px-3.5">
         <div className="rounded-2xl border border-border bg-surface-2 px-3.5 py-3">
-          <div className="text-[9px] font-semibold uppercase tracking-[0.14em] text-muted">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
             How it works
           </div>
           <ul className="mt-2 flex flex-col gap-1.5 text-[11px] leading-relaxed text-muted">

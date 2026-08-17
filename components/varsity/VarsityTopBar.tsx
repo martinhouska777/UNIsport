@@ -70,7 +70,7 @@ export default function VarsityTopBar() {
           <span className="text-[8px] font-semibold tracking-[0.18em] text-accent">
             VARSITY MODE
           </span>
-          <span className="mt-0.5 text-[10px] tracking-[0.08em] text-muted">
+          <span className="mt-0.5 text-[11px] tracking-[0.08em] text-muted">
             Harvard Rowing
           </span>
         </div>

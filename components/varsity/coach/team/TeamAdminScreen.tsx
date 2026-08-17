@@ -41,7 +41,7 @@ import { IconCheck, IconCopy, IconSend, IconTrash, IconX } from "@/components/ic
 function Section({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
   return (
     <section className="border-b border-border px-3.5 py-4">
-      <h2 className="text-[9px] font-medium uppercase tracking-[0.12em] text-muted">{title}</h2>
+      <h2 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">{title}</h2>
       {hint && <p className="mt-1 text-[11px] leading-relaxed text-muted">{hint}</p>}
       <div className="mt-2.5">{children}</div>
     </section>
@@ -204,7 +204,7 @@ export default function TeamAdminScreen({ membership }: { membership: Membership
                   <div className="truncate text-sm font-medium text-text">{m.name}</div>
                   <div className="mt-0.5 truncate text-[11px] text-muted">{m.email}</div>
                   {m.inviteLabel && (
-                    <div className="mt-0.5 text-[10px] text-muted">via {m.inviteLabel}</div>
+                    <div className="mt-0.5 text-[11px] text-muted">via {m.inviteLabel}</div>
                   )}
                 </div>
                 <button
@@ -234,7 +234,7 @@ export default function TeamAdminScreen({ membership }: { membership: Membership
         {/* The link just generated */}
         {fresh && (
           <div className="mb-3 rounded-xl border border-accent-line bg-accent/5 px-3.5 py-3">
-            <div className="text-[9px] font-semibold uppercase tracking-[0.14em] text-accent">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-accent">
               Ready to send
             </div>
             <div className="mt-1.5 break-all rounded-lg border border-border bg-surface px-2.5 py-2 font-mono text-[11px] text-text">
@@ -320,9 +320,9 @@ export default function TeamAdminScreen({ membership }: { membership: Membership
                       <span className="truncate text-[12px] font-medium text-text">
                         {i.label || "Invite"}
                       </span>
-                      <span className={`text-[10px] font-semibold ${s.tone}`}>{s.text}</span>
+                      <span className={`text-[11px] font-semibold ${s.tone}`}>{s.text}</span>
                     </div>
-                    <div className="mt-0.5 truncate text-[10px] text-muted">
+                    <div className="mt-0.5 truncate text-[11px] text-muted">
                       {i.emailLock ? `${i.emailLock} · ` : ""}
                       {i.uses}/{i.maxUses} joined · {expiryLabel(i.expiresAt)}
                     </div>
@@ -365,10 +365,10 @@ export default function TeamAdminScreen({ membership }: { membership: Membership
             >
               <div className="min-w-0 flex-1">
                 <div className="truncate text-[13px] text-text">{m.name}</div>
-                <div className="mt-0.5 truncate text-[10px] text-muted">{m.email}</div>
+                <div className="mt-0.5 truncate text-[11px] text-muted">{m.email}</div>
               </div>
               <span
-                className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
                   m.role === "athlete"
                     ? "bg-surface-2 text-muted"
                     : "bg-primary-tint text-primary"
@@ -383,7 +383,7 @@ export default function TeamAdminScreen({ membership }: { membership: Membership
                   type="button"
                   onClick={() => promote(m.userId, m.role === "captain" ? "athlete" : "captain")}
                   disabled={busy === m.userId}
-                  className="rounded-full border border-border bg-surface-2 px-2.5 py-1 text-[10px] font-medium text-text disabled:opacity-50"
+                  className="rounded-full border border-border bg-surface-2 px-2.5 py-1 text-[11px] font-medium text-text disabled:opacity-50"
                 >
                   {m.role === "captain" ? "Make athlete" : "Make captain"}
                 </button>

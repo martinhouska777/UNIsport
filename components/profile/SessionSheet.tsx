@@ -104,7 +104,7 @@ export default function SessionSheet({
                       {muscles.map((m) => (
                         <span
                           key={m}
-                          className="rounded-full bg-primary-tint px-1.5 py-0.5 text-[10px] font-medium text-primary"
+                          className="rounded-full bg-primary-tint px-1.5 py-0.5 text-[11px] font-medium text-primary"
                         >
                           {m}
                         </span>

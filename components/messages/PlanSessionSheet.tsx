@@ -72,7 +72,7 @@ export default function PlanSessionSheet({
 
   const inputCls =
     "w-full rounded-xl border border-border bg-surface-2 px-3 py-2.5 text-base text-text outline-none focus:border-primary placeholder:text-muted";
-  const labelCls = "mb-1.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-muted";
+  const labelCls = "mb-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted";
 
   return (
     <div className="fixed inset-0 z-[60] flex flex-col justify-end">

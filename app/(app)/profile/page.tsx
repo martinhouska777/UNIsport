@@ -387,7 +387,7 @@ export default function ProfilePage() {
             </div>
           )}
 
-          <div className="text-[10px] text-muted">
+          <div className="text-[11px] text-muted">
             {user.residence ? `${residenceLabel(user.residence)} · ` : ""}
             {classOfLabel(user.classYear)}
           </div>
@@ -396,7 +396,7 @@ export default function ProfilePage() {
 
       {/* Bio */}
       <div className="border-b border-border px-3.5 py-3">
-        <div className="mb-1.5 text-[9px] font-medium uppercase tracking-[0.1em] text-muted">Bio</div>
+        <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">Bio</div>
         <InlineEdit
           value={user.bio}
           onChange={(v) => update({ bio: v })}
@@ -437,14 +437,14 @@ export default function ProfilePage() {
                 className="px-4 text-center transition-colors active:bg-surface-2"
               >
                 <div className="text-[17px] font-medium text-text">{s.value}</div>
-                <div className="mt-0.5 text-[9px] uppercase tracking-[0.06em] text-primary">
+                <div className="mt-0.5 text-[11px] uppercase tracking-[0.06em] text-primary">
                   {s.label}
                 </div>
               </button>
             ) : (
               <div className="px-4 text-center">
                 <div className="text-[17px] font-medium text-text">{s.value}</div>
-                <div className="mt-0.5 text-[9px] uppercase tracking-[0.06em] text-muted">
+                <div className="mt-0.5 text-[11px] uppercase tracking-[0.06em] text-muted">
                   {s.label}
                 </div>
               </div>
@@ -473,10 +473,10 @@ export default function ProfilePage() {
           display-only copy, so edits here never reached matching. */}
       <div className="border-b border-border px-3.5 py-3">
         <div className="mb-1 flex items-baseline justify-between">
-          <div className="text-[9px] font-medium uppercase tracking-[0.1em] text-muted">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
             Training
           </div>
-          <span className="text-[9px] text-muted">affects who you match with</span>
+          <span className="text-[11px] text-muted">affects who you match with</span>
         </div>
         <div className="flex flex-col divide-y divide-border">
           {trainingRows.map((row) => (
@@ -501,7 +501,7 @@ export default function ProfilePage() {
       {/* Preferences — your editable onboarding answers */}
       <div className="border-b border-border px-3.5 py-3">
         <div className="mb-2 flex items-center justify-between">
-          <div className="text-[9px] font-medium uppercase tracking-[0.1em] text-muted">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
             Preferences
           </div>
           <button

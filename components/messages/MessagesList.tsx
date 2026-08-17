@@ -193,7 +193,7 @@ function DirectList({
           <div className="min-w-0 flex-1">
             <div className="flex items-center justify-between gap-2">
               <span className="truncate text-[13px] font-medium text-text">{c.otherName}</span>
-              <span className="shrink-0 text-[10px] text-muted">{relativeTime(c.lastAt)}</span>
+              <span className="shrink-0 text-[11px] text-muted">{relativeTime(c.lastAt)}</span>
             </div>
             <div className="truncate text-[11px] text-muted">
               {c.lastBody
@@ -244,7 +244,7 @@ function CommunityList({
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-2">
                   <span className="truncate text-[13px] font-medium text-text">#&nbsp;{c.name}</span>
-                  <span className="shrink-0 text-[10px] text-muted">{relativeTime(c.lastAt)}</span>
+                  <span className="shrink-0 text-[11px] text-muted">{relativeTime(c.lastAt)}</span>
                 </div>
                 <div className="truncate text-[11px] text-muted">
                   {c.lastBody
@@ -302,7 +302,7 @@ function CommunityList({
 
 function SectionHeader({ children }: { children: React.ReactNode }) {
   return (
-    <div className="px-3.5 pb-1 pt-3 text-[10px] font-medium uppercase tracking-[0.08em] text-muted">
+    <div className="px-3.5 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
       {children}
     </div>
   );

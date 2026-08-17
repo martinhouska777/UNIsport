@@ -33,7 +33,7 @@ export default function GymCheckInPrompt({
         </div>
 
         <div className="mt-4 flex items-center justify-between">
-          <span className="text-[10px] font-medium uppercase tracking-[0.1em] text-muted">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
             How was it?
           </span>
           {rating && <span className="text-[11px] text-muted">{rating.value.toFixed(1)} / 5</span>}
@@ -42,7 +42,7 @@ export default function GymCheckInPrompt({
           <StarRater value={rating?.value ?? 0} onRate={(n) => setRating(gymSlug, n)} />
         </div>
 
-        <div className="mt-4 text-[10px] font-medium uppercase tracking-[0.1em] text-muted">
+        <div className="mt-4 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
           How busy was it?
         </div>
         <div className="mt-2">
