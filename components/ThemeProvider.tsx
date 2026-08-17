@@ -21,13 +21,17 @@ function tokensToCssVars(t: ThemeTokens): CSSProperties {
     "--surface-2": t.surface2,
     "--border": t.border,
     "--text": t.text,
+    "--text-2": t.text2,
+    "--text-3": t.text3,
     "--muted": t.muted,
     "--primary": t.primary,
+    "--primary-live": t.primaryLive,
     "--primary-contrast": t.primaryContrast,
     "--accent": t.accent,
     "--success": t.success,
     "--warn": t.warn,
     "--danger": t.danger,
+    "--overlay-shadow": t.overlayShadow,
   } as CSSProperties;
 }
 

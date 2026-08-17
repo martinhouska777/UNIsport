@@ -13,13 +13,37 @@
   --surface-2: #eeeef0;
   --border: #e4e4e7;
   --text: #1c1c1f;
+  /*
+    THE TEXT LADDER. Four steps, not two. There used to be only `text` and
+    `muted`, so anything in between got invented on the spot with an opacity
+    suffix (`text-text/90`, `/80`, `/75`, `/45`, `text-muted/60`…) — dozens of
+    one-off greys, several of which failed contrast at the sizes they were used.
+    Now: text (primary) > text-2 (secondary) > muted (labels) > text-3 (faint).
+    Every step is a real colour that clears 4.5:1 on its own theme.
+  */
+  --text-2: #33363d;
+  --text-3: #7c8290;
   --muted: #6b7280;
   --primary: #2f3b52;
+  /*
+    The fill for things you can TAP. Kept separate from --primary because a
+    brand colour is chosen to look right, not to clear a contrast ratio: on a
+    near-black screen Harvard crimson (#a51c30) measures only 2.6:1 against the
+    background, under the 3:1 WCAG minimum for a control's own shape, so filled
+    buttons visually sank into the page. Each theme lifts its own crimson here
+    while --primary stays exact for crests, badges and hairlines.
+  */
+  --primary-live: #2f3b52;
   --primary-contrast: #ffffff;
   --accent: #64748b;
   --success: #16a34a;
   --warn: #d97706;
   --danger: #dc2626;
+  /* Elevation. One shadow, for things that float ABOVE the page (sheets,
+     overlays, popovers) — a card never gets one, it just uses a lighter
+     surface. Per-theme because a shadow on near-black needs more weight than
+     one on white. */
+  --overlay-shadow: 0 -10px 30px rgba(15, 15, 25, 0.12);
 }
 
 /* Map tokens -> Tailwind color utilities (bg-primary, text-text, border-border, ...) */
@@ -29,15 +53,62 @@
   --color-surface-2: var(--surface-2);
   --color-border: var(--border);
   --color-text: var(--text);
+  --color-text-2: var(--text-2);
+  --color-text-3: var(--text-3);
   --color-muted: var(--muted);
   --color-primary: var(--primary);
+  --color-primary-live: var(--primary-live);
   --color-primary-contrast: var(--primary-contrast);
   --color-accent: var(--accent);
   --color-success: var(--success);
   --color-warn: var(--warn);
   --color-danger: var(--danger);
+  /*
+    TINTS. A washed fill and a soft border, derived from each colour rather than
+    written out. These replace ~200 hand-picked opacity suffixes where the same
+    job was done at /10 in one place and /15 in the next (39 vs 36 uses — a coin
+    flip, not a system). Because `@theme inline` inlines the expression, the mix
+    is computed against whatever --primary the surrounding theme set, so a school
+    with a pale primary gets a pale tint for free.
+  */
+  --color-primary-tint: color-mix(in oklab, var(--primary) 14%, transparent);
+  --color-primary-line: color-mix(in oklab, var(--primary) 38%, transparent);
+  --color-accent-tint: color-mix(in oklab, var(--accent) 13%, transparent);
+  --color-accent-line: color-mix(in oklab, var(--accent) 36%, transparent);
+  --color-success-tint: color-mix(in oklab, var(--success) 13%, transparent);
+  --color-success-line: color-mix(in oklab, var(--success) 36%, transparent);
+  --color-warn-tint: color-mix(in oklab, var(--warn) 13%, transparent);
+  --color-warn-line: color-mix(in oklab, var(--warn) 36%, transparent);
+  --color-danger-tint: color-mix(in oklab, var(--danger) 13%, transparent);
+  --color-danger-line: color-mix(in oklab, var(--danger) 36%, transparent);
+  --shadow-overlay: var(--overlay-shadow);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+}
+
+/*
+  THE CORNER SCALE — three shapes, not sixteen.
+  The app had accumulated 16 different corner radii, with cards at 16px in one
+  tab and 12px in the next. Rather than rewrite every className, the Tailwind
+  scale itself is collapsed so the existing names all land on one of three
+  values, and `rounded-full` stays the pill:
+
+      rounded-sm / -md / -lg    ->  8px   chips, inputs, small controls
+      rounded-xl / -2xl / -3xl  ->  14px  cards, sheets, panels
+      rounded                   ->  4px   tiny inner blocks (calendar cells)
+
+  So the one decision left when writing a component is "is this a control, a
+  card, or a pill" — and any of its aliases gives the same answer.
+*/
+@theme {
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 8px;
+  --radius-lg: 8px;
+  --radius-xl: 14px;
+  --radius-2xl: 14px;
+  --radius-3xl: 14px;
+  --radius-4xl: 14px;
 }
 
 /*
@@ -152,6 +223,95 @@ body {
   color: var(--text);
   overscroll-behavior: none;
   touch-action: pan-x pan-y;
+}
+
+/*
+  TAP FEEDBACK — the whole app, from one rule.
+  ------------------------------------------------------------------
+  There is no cursor and no hover on a phone, so the press state IS the app's
+  only way of saying "I heard you" before any data moves. Of 259 buttons, only a
+  handful said anything at all, which is the main reason the app felt like a web
+  page rather than an app.
+
+  Every button, link and switch now dims the instant a finger lands. Opacity is
+  deliberate: it reads identically on the dark and light themes (a brightness
+  shift is invisible on near-black), it can't distort a layout, and it's what iOS
+  itself does. `:not(:disabled)` keeps dead controls dead.
+
+  Geometry is opt-in on top of this, via .press / .press-icon below, because
+  shrinking a full-width card looks wrong while shrinking a button feels right.
+*/
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+a[href],
+label[for],
+summary {
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 120ms ease-out;
+}
+button:not(:disabled):active,
+[role="button"]:not([aria-disabled="true"]):active,
+a[href]:active,
+label[for]:active,
+summary:active {
+  opacity: 0.68;
+}
+
+/*
+  .press      — buttons and chips: shrink slightly under the thumb.
+  .press-icon — icon-only controls, where 3% is too small to notice.
+  Both compose with the opacity dim above.
+*/
+.press,
+.press-icon {
+  transition:
+    opacity 120ms ease-out,
+    transform 120ms cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+.press:active {
+  transform: scale(0.97);
+}
+.press-icon:active {
+  transform: scale(0.88);
+}
+
+/*
+  .tap44 — grows the HIT area to the 44px both Apple and Google require, without
+  changing a single pixel of what you see. The app is used standing at a squat
+  rack; week arrows were 24px and the favourite heart 28px. The pseudo-element
+  is centred on the control and never affects layout.
+*/
+.tap44 {
+  position: relative;
+}
+.tap44::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  min-width: 44px;
+  min-height: 44px;
+  width: 100%;
+  height: 100%;
+}
+
+/*
+  Keyboard focus. There was none anywhere in the app, which also broke the
+  laptop layout that already ships. Gold, because the accent is never itself a
+  tappable colour, so a gold ring can only ever mean focus.
+*/
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .press:active,
+  .press-icon:active {
+    transform: none;
+  }
 }
 
 /*

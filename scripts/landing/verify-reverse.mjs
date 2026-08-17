@@ -78,12 +78,13 @@ const headsIn = await page.evaluate(() => {
 });
 console.log("closer words:   ", JSON.stringify(headsIn));
 
-// ── ONE wheel nudge up → the whole film in reverse ──
+// ── ONE wheel nudge up → first act (letter swings home, words leave), then
+// the flight; ~1000 + 1500ms in all ──
 await page.evaluate(() => window.dispatchEvent(new WheelEvent("wheel", { deltaY: -120, bubbles: true })));
-await wait(700);
+await wait(1300);
 console.log("mid-reverse:    ", JSON.stringify(await state()));
 await page.screenshot({ path: `${SHOTS}/rev-2-midreverse.png` });
-await wait(1600);
+await wait(1900);
 const back = await state();
 console.log("back at story:  ", JSON.stringify(back));
 await page.screenshot({ path: `${SHOTS}/rev-3-back.png` });
@@ -102,6 +103,31 @@ const again = await state();
 console.log("landed again:   ", JSON.stringify(again));
 await page.screenshot({ path: `${SHOTS}/rev-4-landed-again.png` });
 
+// ── a reload that restores the scroll AT the closer must NOT replay the
+// flight — the closer just reveals in place ──
+await page.evaluate(() => {
+  document.documentElement.style.scrollBehavior = "auto";
+  const sec = document.getElementById("closer-colours");
+  sessionStorage.clear();
+  window.__restoreY = sec.getBoundingClientRect().top + window.scrollY + 60;
+});
+const restoreY = await page.evaluate(() => window.__restoreY);
+await page.reload({ waitUntil: "networkidle2" });
+await wait(2500);
+await page.evaluate((y) => { document.documentElement.style.scrollBehavior = "auto"; window.scrollTo(0, y); }, restoreY);
+await wait(2500);
+const restored = await page.evaluate(() => {
+  const sec = document.getElementById("closer-colours");
+  const d = sec.querySelector("iframe").contentDocument;
+  const shell = d && d.querySelector(".__ph");
+  return {
+    flightOn: document.getElementById("flight").classList.contains("on"),
+    shellVisible: shell ? !shell.classList.contains("hide") : false,
+    y: Math.round(scrollY),
+  };
+});
+console.log("restored:       ", JSON.stringify(restored));
+
 // ── verdicts ──
 const ok = (name, cond) => console.log((cond ? "PASS " : "FAIL ") + name);
 ok("story words faded during flight", mid.storyWordsGone && mid.copyOpacity === "0" || mid.storyWordsGone);
@@ -114,6 +140,7 @@ ok("story words back", !back.storyWordsGone && back.copyOpacity === "1");
 ok("story phone back", !back.storyPhoneHidden);
 ok("closer re-parked after reverse", back.shellHidden === true && back.headsParked === back.heads);
 ok("replays afresh", again.secTop === 0 && again.headsParked === 0 && again.letter.indexOf("pre") === -1);
+ok("reload at the closer reveals in place, no flight", !restored.flightOn && restored.shellVisible && Math.abs(restored.y - restoreY) < 400);
 
 await browser.close();
 console.log("done");

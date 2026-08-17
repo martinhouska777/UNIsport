@@ -119,11 +119,28 @@ const w2 = await wheel();
 await wait(800);
 const w3 = await wheel();
 console.log("wheel:     ", JSON.stringify({ w1, w2, w3 }));
+const glowing = await page.evaluate(() => {
+  const d = document.querySelector("#closer-blades iframe").contentDocument;
+  const shell = d.querySelector(".__ph");
+  let n = 0;
+  [...d.querySelectorAll("span")].forEach(o => {
+    const kid = o.firstElementChild;
+    if (!kid || kid.tagName.toLowerCase() !== "svg") return;
+    const r = o.getBoundingClientRect();
+    if (r.height < 90 || r.width > 130 || shell.contains(o)) return;
+    [...o.querySelectorAll("*"), o].forEach(e => {
+      if ((getComputedStyle(e).filter || "").includes("drop-shadow")) n++;
+    });
+  });
+  return n;
+});
+console.log("glowing:   ", glowing);
 await page.screenshot({ path: `${SHOTS}/bl-3-spinning.png` });
 
-// ── one wheel nudge up: full reverse ──
+// ── one wheel nudge up: first act (label out, words out, oars gather and
+// sink), then the flight — ~1200 + 1500ms in all ──
 await page.evaluate(() => window.dispatchEvent(new WheelEvent("wheel", { deltaY: -120, bubbles: true })));
-await wait(2400);
+await wait(3600);
 const back = await page.evaluate(() => {
   const sec = document.getElementById("closer-blades");
   const d = sec.querySelector("iframe").contentDocument;
@@ -175,6 +192,7 @@ ok("crew name appears once the oars are in place", spread.ftHidden.length > 0 &&
 ok("words arrived", peek.heads.length > 0 && spread.heads.every(p => !p));
 ok("wheel pinned on Harvard through the choreography", wPinned && wPinned.pinned && wPinned.active === 0);
 ok("wheel released and turning continuously", w1 && w3 && !w3.pinned && Math.abs(w3.rot - w2.rot) > 8 && Math.abs(w2.rot - w1.rot) > 8);
+ok("no glow on the blades", glowing === 0);
 ok("reverse: oars tucked away, back at the story", back.secTop >= 899 && back.oarsParked === back.oarsTagged && back.oarsTagged > 0 && back.shellHidden && back.storyWordsBack && back.phoneBack);
 ok("replays afresh", again.secTop === 0 && again.bright.length > 0 && again.bright.every(o => !o.pre));
 
