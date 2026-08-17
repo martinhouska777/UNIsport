@@ -615,6 +615,9 @@ ${renderStory("story1", story1)}
 ${closer("closer-colours", "UNIsport Campus Colours.html", "Your campus, your colours", "student", 0, {
   // the profile it was just reading → the Gyms list, swapped inside the pinch
   from: "story1", fromShot: ".shot-frame[data-i='6'] .shot", toShot: ".shot-frame[data-i='0'] .shot",
+  // profile → Gyms is a tab switch (Gyms is the leftmost tab), so the screens
+  // slide like the varsity cut instead of dissolving
+  swap: "slide",
   // the words arrive from the right as the phone lands, and one nudge up
   // plays the whole film backwards
   txt: true,
@@ -805,7 +808,8 @@ ${closer("closer-blades", "Blade Lock Light.html", "Every crew. One system.", "v
     var bar = d.createElement("div");
     bar.className = "__tabs";
     bar.innerHTML = items.map(function (t, i) {
-      if (!t[0]) return '<span class="__plus">+</span>';
+      if (!t[0]) return '<span class="__plus"><svg viewBox="0 0 24 24" style="width:48%;height:48%" ' +
+        'fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M12 4v16M4 12h16"/></svg></span>';
       return '<span class="__tab' + (i === active ? " on" : "") + '">' +
         '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" ' +
         'stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="' + t[1] + '"/></svg>' +
@@ -916,9 +920,11 @@ ${closer("closer-blades", "Blade Lock Light.html", "Every crew. One system.", "v
       // stylesheet with !important outranks the inline style forever. Each
       // blade is a button labelled "<crew> Rowing"; nothing else matches.
       'button[aria-label$=" Rowing"]{filter:none!important}' +
-      '.__plus{width:26px;height:26px;border-radius:50%;background:var(--__accent,#a51c30);color:#fff;' +
-      'display:flex;align-items:center;justify-content:center;font:400 18px/1 ui-sans-serif,system-ui,sans-serif;' +
-      'margin-top:-14%;box-shadow:0 4px 10px rgba(0,0,0,.25)}';
+      // The log button, to the REAL app's proportions: ~1/6 of the screen
+      // wide, its centre riding the bar's top edge, a white halo under it.
+      '.__plus{width:16%;aspect-ratio:1;border-radius:50%;background:var(--__accent,#a51c30);color:#fff;' +
+      'display:flex;align-items:center;justify-content:center;margin-top:-8%;' +
+      'box-shadow:0 0 0 5px rgba(255,255,255,.92),0 4px 10px rgba(0,0,0,.25)}';
     d.head.appendChild(st);
 
     var shell = findPhone(d);
