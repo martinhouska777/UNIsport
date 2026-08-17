@@ -16,6 +16,8 @@ import {
 import type { Session } from "@supabase/supabase-js";
 import { createClient, hasSupabaseEnv } from "@/lib/supabase/client";
 import type { OnboardingProfile } from "@/lib/onboarding";
+import type { VarsityAthleteProfile } from "@/lib/varsity/athleteProfile";
+import { defaultUnits, type Units } from "@/lib/varsity/units";
 
 /*
   One account, two capabilities. `studentReady` and `varsityReady` are
@@ -39,9 +41,22 @@ type AppState = {
   universityKey: string;
   logout: () => Promise<void>;
   saveOnboarding: (profile: OnboardingProfile) => Promise<void>;
-  // The short varsity setup: writes name/class year onto the SAME profile row
-  // and marks only the varsity flag, leaving the student side untouched.
-  saveVarsitySetup: (basics: { name: string; classYear: string; sex: string }) => Promise<void>;
+  /*
+    The short varsity setup: writes name/class year onto the SAME profile row
+    and marks only the varsity flag, leaving the student side untouched.
+
+    `varsity` (rowing side, cox, height, weight) and `units` go into the SAME
+    write on purpose. Each of those has its own save helper elsewhere, but all
+    three read-modify-write the one `profiles.data` JSON — calling them
+    separately here would race, and the last one to land would drop the others.
+  */
+  saveVarsitySetup: (basics: {
+    name: string;
+    classYear: string;
+    sex: string;
+    varsity?: Partial<VarsityAthleteProfile>;
+    units?: Partial<Units>;
+  }) => Promise<void>;
   resetOnboarding: () => Promise<void>; // temporary dev helper to replay onboarding
 };
 
@@ -159,8 +174,15 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     deliberately leaves onboarding_completed alone — the student side stays
     optional until they choose it.
   */
-  const saveVarsitySetup = async (basics: { name: string; classYear: string; sex: string }) => {
+  const saveVarsitySetup = async (basics: {
+    name: string;
+    classYear: string;
+    sex: string;
+    varsity?: Partial<VarsityAthleteProfile>;
+    units?: Partial<Units>;
+  }) => {
     if (supabase && session) {
+      const { name, classYear, sex, varsity, units } = basics;
       const { data: row } = await supabase
         .from("profiles")
         .select("data")
@@ -169,7 +191,16 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       const current = (row?.data as Record<string, unknown>) ?? {};
       const { error } = await supabase.from("profiles").upsert({
         id: session.user.id,
-        data: { ...current, ...basics },
+        data: {
+          ...current,
+          name,
+          classYear,
+          sex,
+          // Both are sub-keys, so they merge onto whatever is already there
+          // rather than replacing it — someone re-running setup keeps their PRs.
+          varsity: { ...((current.varsity as object) ?? {}), ...(varsity ?? {}) },
+          units: { ...defaultUnits, ...((current.units as object) ?? {}), ...(units ?? {}) },
+        },
         varsity_setup_completed: true,
         updated_at: new Date().toISOString(),
       });

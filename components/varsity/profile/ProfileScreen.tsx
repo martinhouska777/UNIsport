@@ -35,6 +35,9 @@ import {
   fetchAthleteProfile,
   saveAthleteProfile,
   teamYearOptions,
+  boatRoleOptions,
+  sideOptions,
+  sideLabel,
   statusOptions,
   prPieces,
   type VarsityAthleteProfile,
@@ -112,6 +115,8 @@ function EditIdentitySheet({
   onClose: () => void;
 }) {
   const [teamYear, setTeamYear] = useState(profile.teamYear);
+  const [boatRole, setBoatRole] = useState(profile.boatRole);
+  const [side, setSide] = useState(profile.side);
   const [height, setHeight] = useState(profile.heightCm != null ? String(profile.heightCm) : "");
   // Shown and typed in whichever weight unit they chose; ALWAYS stored in kilos,
   // so switching the setting later can't corrupt what's on the record.
@@ -123,6 +128,9 @@ function EditIdentitySheet({
     const typed = weight.trim() ? Number(weight) : null;
     onSave({
       teamYear,
+      boatRole,
+      // Same as setup: a coxswain has no side, so don't keep a stale one.
+      side: boatRole === "Coxswain" ? "B" : side,
       heightCm: height.trim() ? Number(height) : null,
       weightKg: typed == null ? null : Math.round(weightToKg(typed, units.weight) * 10) / 10,
     });
@@ -150,6 +158,52 @@ function EditIdentitySheet({
           </button>
         ))}
       </div>
+
+      <div className="mb-1.5 mt-4 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
+        In the boat
+      </div>
+      <div className="flex flex-wrap gap-1.5">
+        {boatRoleOptions.map((r) => (
+          <button
+            key={r}
+            type="button"
+            onClick={() => setBoatRole(r)}
+            className={`rounded-full border px-3.5 py-2 text-[12px] font-medium ${
+              boatRole === r
+                ? "border-primary bg-primary-tint text-primary"
+                : "border-border bg-surface-2 text-text"
+            }`}
+          >
+            {r}
+          </button>
+        ))}
+      </div>
+
+      {/* A coxswain never takes a rowing seat, so the side question disappears. */}
+      {boatRole === "Rower" && (
+        <>
+          <div className="mb-1.5 mt-4 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
+            Side
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {sideOptions.map((o) => (
+              <button
+                key={o.key}
+                type="button"
+                onClick={() => setSide(o.key)}
+                className={`flex flex-col items-center rounded-full border px-3.5 py-1.5 text-[12px] font-medium leading-tight ${
+                  side === o.key
+                    ? "border-primary bg-primary-tint text-primary"
+                    : "border-border bg-surface-2 text-text"
+                }`}
+              >
+                <span>{o.label}</span>
+                <span className="text-[10px] opacity-70">{o.sub}</span>
+              </button>
+            ))}
+          </div>
+        </>
+      )}
 
       <div className="mt-4 grid grid-cols-2 gap-2">
         <div>
@@ -545,6 +599,13 @@ export default function ProfileScreen() {
                   <IconAnchor size={11} />
                 </span>
                 {profile.teamYear || "Team"}
+              </span>
+              {/* Coxswain, or which side you row — the answer from setup, so it
+                  doesn't vanish into the database the moment it's given. */}
+              <span className="rounded-md border border-border bg-surface px-2 py-1 text-[11px] text-text">
+                {profile.boatRole === "Coxswain"
+                  ? "Coxswain"
+                  : (sideLabel(profile.boatRole, profile.side) ?? "Either side")}
               </span>
               {profile.heightCm != null && (
                 <span className="rounded-md border border-border bg-surface px-2 py-1 text-[11px] text-text">

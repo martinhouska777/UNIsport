@@ -15,11 +15,43 @@
 */
 import { createClient, hasSupabaseEnv } from "@/lib/supabase/client";
 import { classYears, freshmanClassYear } from "@/lib/onboarding";
+import { sideMeta, type Side } from "@/lib/varsity/coachLineup";
 
 /* ── Editable option lists ── */
 
 // Class standing on the team (the "freshman / sophomore …" the owner asked for).
 export const teamYearOptions = ["Freshman", "Sophomore", "Junior", "Senior", "Grad"] as const;
+
+/*
+  What you are in a boat. A coxswain can only ever take the cox seat — the
+  lineup builder already enforces that (see `cox` in lib/varsity/coachLineup.ts)
+  — so picking Coxswain makes the side question meaningless and it disappears.
+*/
+export const boatRoleOptions = ["Rower", "Coxswain"] as const;
+export type BoatRole = (typeof boatRoleOptions)[number];
+
+/*
+  Which side you row. The `Side` type and its oar colors already live in
+  coachLineup.ts, because the coach's builder colors every seat by it — this
+  just gives the ATHLETE a way to answer it about themselves instead of leaving
+  the coach to set thirty of them by hand.
+
+  Both names are shown: an American squad says "port / starboard", a British one
+  says "strokeside / bowside", and a Harvard boat contains both kinds of person.
+  Strokeside IS port and bowside IS starboard, so nobody has to pick a dialect.
+*/
+export const sideOptions: { key: Side; label: string; sub: string }[] = [
+  { key: "P", label: sideMeta.P.label, sub: "Strokeside" },
+  { key: "S", label: sideMeta.S.label, sub: "Bowside" },
+  { key: "B", label: sideMeta.B.label, sub: "Either side" },
+];
+
+/** "Port · Strokeside" — for the chip on the profile. Null for a coxswain. */
+export function sideLabel(role: BoatRole, side: Side): string | null {
+  if (role === "Coxswain") return null;
+  const o = sideOptions.find((s) => s.key === side);
+  return o ? (o.key === "B" ? o.label : `${o.label} · ${o.sub}`) : null;
+}
 
 // Current status — `tone` maps to a theme token, never a raw color (rule 1).
 export type StatusTone = "success" | "warn" | "danger" | "muted";
@@ -71,6 +103,8 @@ export const defaultStatMetric = "distance";
 /* ── The stored record ── */
 export type VarsityAthleteProfile = {
   teamYear: string; // one of teamYearOptions
+  boatRole: BoatRole; // Rower | Coxswain
+  side: Side; // P | S | B — meaningless for a coxswain, kept so a switch back works
   heightCm: number | null;
   weightKg: number | null;
   status: string; // a statusOptions title
@@ -91,6 +125,10 @@ export function defaultTeamYear(classYear: string): string {
 export function defaultProfile(classYear: string): VarsityAthleteProfile {
   return {
     teamYear: defaultTeamYear(classYear),
+    // "Both" is the honest default for anyone who never answered — it is what
+    // the coach's roster already assumes, so nothing changes for old accounts.
+    boatRole: "Rower",
+    side: "B",
     heightCm: null,
     weightKg: null,
     status: statusOptions[0].title,
@@ -108,6 +146,12 @@ function withDefaults(
   const base = defaultProfile(classYear);
   return {
     teamYear: saved?.teamYear || base.teamYear,
+    // Both are checked against the real option lists, so a value written by an
+    // older build (or hand-edited JSON) can never render an empty pill row.
+    boatRole: boatRoleOptions.includes(saved?.boatRole as BoatRole)
+      ? (saved!.boatRole as BoatRole)
+      : base.boatRole,
+    side: saved?.side === "P" || saved?.side === "S" ? saved.side : base.side,
     heightCm: saved?.heightCm ?? base.heightCm,
     weightKg: saved?.weightKg ?? base.weightKg,
     status: saved?.status || base.status,
