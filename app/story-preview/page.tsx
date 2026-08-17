@@ -1,14 +1,16 @@
 import { instrumentSerif } from "@/components/landing/fonts";
-import ScrollStory from "@/components/landing/ScrollStory";
-import { studentStory, varsityStory } from "@/lib/landingCopy";
+import StoryCloser from "@/components/landing/StoryCloser";
+import Interlude from "@/components/landing/Interlude";
+import { cues, studentStory, varsityStory } from "@/lib/landingCopy";
 
 /*
-  SCRATCH ROUTE — the two scroll stories, native, so they can be reviewed in a
-  browser without touching the live landing page at "/". Same chrome the
-  landing provides (the serif variable, the grid, the dark ground).
+  SCRATCH ROUTE — the middle of the landing page, native: the student story
+  flying into Campus Colours, the interlude, the varsity story flying into
+  Blade Lock. Reviewed here without touching the live page at "/". Same
+  chrome the landing provides (the serif variable, the grid, the dark ground).
 
-  A spacer above and between: the stories are meant to be arrived at, not
-  started on. Delete this route when the stories move into app/page.tsx.
+  A spacer above: the first story is meant to be arrived at, not started on.
+  Delete this route when the sequence moves into app/page.tsx.
 */
 export default function StoryPreviewPage() {
   return (
@@ -16,14 +18,28 @@ export default function StoryPreviewPage() {
       className={`${instrumentSerif.variable} l-grid relative min-h-screen overflow-x-clip bg-l-bg font-sans text-l-text`}
     >
       <main className="relative">
-        <div className="flex h-[60svh] items-center justify-center font-mono text-[11px] tracking-[0.12em] uppercase text-l-text-3">
-          Scroll
+        <div className="flex h-[60svh] items-end justify-center pb-10">
+          <div className="l-cue">{cues.hero}</div>
         </div>
-        <ScrollStory id="story1" beats={studentStory} accent="accent" />
-        <div className="flex h-[60svh] items-center justify-center font-mono text-[11px] tracking-[0.12em] uppercase text-l-text-3">
-          Keep going
-        </div>
-        <ScrollStory id="story2" beats={varsityStory} accent="varsity" />
+        <StoryCloser
+          storyId="story1"
+          beats={studentStory}
+          accent="accent"
+          closer="campus"
+          closerId="campus-colours"
+          fromBeat={6}
+          toBeat={0}
+        />
+        <Interlude />
+        <StoryCloser
+          storyId="story2"
+          beats={varsityStory}
+          accent="varsity"
+          closer="blades"
+          closerId="blade-lock"
+          fromBeat={5}
+          toBeat={0}
+        />
         <div className="h-[40svh]" />
       </main>
     </div>

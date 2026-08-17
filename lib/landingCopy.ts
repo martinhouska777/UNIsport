@@ -159,6 +159,12 @@ export const interlude = {
   sub: "The app your squad has been running out of a group chat.",
 };
 
+/* The two small scroll cues — under the hero, and under the interlude. */
+export const cues = {
+  hero: "Scroll",
+  interlude: "Keep going",
+};
+
 /* ───────────────────── V1–V6 · THE VARSITY STORY ───────────────────── */
 
 /*

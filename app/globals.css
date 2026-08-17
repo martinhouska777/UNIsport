@@ -147,7 +147,52 @@
   --color-l-phone-island-line: #222222;
   --color-l-phone-bar: #cfccc6;
   --color-l-phone-line: #e7e4df;
+  /* The interlude's ground: one step warmer than the page, the "background
+     steps one surface level darker behind the Varsity Mode opening". */
+  --color-l-bg-warm: #0d0c0a;
   --font-display: var(--font-instrument-serif);
+}
+
+/*
+  THE CLOSERS' ARRIVAL (components/landing/CampusColours.tsx, BladeLock.tsx,
+  driven by StoryCloser.tsx) — what the artifact painted onto the iframed
+  pieces from outside, native. A closer arrives in pieces: the phone slides in
+  (or is switched on under the flying phone), the letter swings out from
+  behind it, the words come in from the right, the crew's name waits for the
+  oars. .lc-pre is "not yet"; removing it plays the entrance.
+*/
+/* (These rules are unlayered and so outrank Tailwind's utilities on the same
+   element — they set ONLY what the utilities do not: transitions and the
+   pre/hide states. Position and stacking stay with the utilities.) */
+.lc-phone { transition: transform 0.95s cubic-bezier(0.2, 0.85, 0.25, 1); }
+.lc-phone.lc-pre { transform: translateX(-110px) scale(1.16); }
+/* While the page's own phone is flying in, this one must not be there — two
+   phones in the same place is the whole thing we are avoiding. */
+.lc-phone.lc-hide { visibility: hidden; }
+.lc-letter { transition: opacity 0.5s ease 0.5s, transform 1s cubic-bezier(0.2, 0.85, 0.25, 1) 0.5s; }
+.lc-letter.lc-pre { opacity: 0; transform: translateX(-215px) scale(0.45); }
+/* After a flight the letter and the words move as one: no waiting beat. And
+   going backwards it swings home the same way it came out — the entrance
+   curve reversed, opacity trailing so it fades in behind the phone. */
+.lc-letter.lc-now { transition: opacity 0.5s ease, transform 1s cubic-bezier(0.2, 0.85, 0.25, 1); }
+.lc-letter.lc-rev { transition: opacity 0.5s ease 0.5s, transform 1s cubic-bezier(0.75, 0, 0.8, 0.15); }
+/* The closer's words: parked off to the right, so they can arrive
+   right-to-left as the phone sets down. */
+.lc-words { transition: translate 0.6s cubic-bezier(0.25, 0.8, 0.3, 1), opacity 0.45s ease; }
+.lc-words.lc-pre { translate: 52vw 0; opacity: 0; }
+/* The crew's name under the phone: held back until the oars are in place
+   (its colour and glow follow the crew, so those transitions live here too). */
+.lc-label { transition: opacity 0.5s ease, color 0.6s ease-in-out, text-shadow 0.6s ease-in-out; }
+.lc-label.lc-pre { opacity: 0; }
+/* Pinned: a little taller than one screen, so the first wheel-notches after
+   landing hold the picture still while the choreography finishes. */
+.lc-closer.lc-pinned { min-height: 135svh; }
+.lc-closer.lc-pinned > .lc-stick { position: sticky; top: 0; height: 100svh; min-height: 0; }
+@media (prefers-reduced-motion: reduce) {
+  .lc-phone, .lc-letter, .lc-words, .lc-label { transition: none; }
+  .lc-phone.lc-pre, .lc-letter.lc-pre { transform: none; opacity: 1; }
+  .lc-words.lc-pre { translate: none; opacity: 1; }
+  .lc-label.lc-pre { opacity: 1; }
 }
 
 /*
@@ -369,6 +414,21 @@
   50% { opacity: 0.4; }
 }
 .l-pulse { animation: l-pulse 2s infinite; }
+
+/* The small scroll cue under the hero and the interlude: a word and a
+   bobbing hairline. Stops bobbing under reduced motion. */
+.l-cue {
+  color: var(--color-l-text-3); font-family: var(--font-mono);
+  font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+}
+.l-cue::after {
+  content: ""; width: 1px; height: 44px;
+  background: linear-gradient(var(--color-l-text-3), transparent);
+  animation: l-cue-bob 1.8s ease-in-out infinite;
+}
+@keyframes l-cue-bob { 0%,100%{transform:translateY(0);opacity:.7} 50%{transform:translateY(8px);opacity:1} }
+@media (prefers-reduced-motion: reduce) { .l-cue::after { animation: none; } }
 
 @keyframes l-fade-up {
   from { opacity: 0; transform: translateY(20px); }
