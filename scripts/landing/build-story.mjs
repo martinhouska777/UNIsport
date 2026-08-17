@@ -789,6 +789,11 @@ ${closer("closer-blades", "Blade Lock Light.html", "Every crew. One system.", "v
       '.__tab{display:flex;flex-direction:column;align-items:center;gap:2px;color:#9b968c;line-height:1}' +
       '.__tab b{font:600 6.5px/1 ui-sans-serif,system-ui,sans-serif;letter-spacing:.02em}' +
       '.__tab.on{color:var(--__accent,#a51c30)}' +
+      // The blades carry a drop-shadow glow the piece re-applies on every
+      // crew change — a prop write does not survive its re-renders, but a
+      // stylesheet with !important outranks the inline style forever. Each
+      // blade is a button labelled "<crew> Rowing"; nothing else matches.
+      'button[aria-label$=" Rowing"]{filter:none!important}' +
       '.__plus{width:26px;height:26px;border-radius:50%;background:var(--__accent,#a51c30);color:#fff;' +
       'display:flex;align-items:center;justify-content:center;font:400 18px/1 ui-sans-serif,system-ui,sans-serif;' +
       'margin-top:-14%;box-shadow:0 4px 10px rgba(0,0,0,.25)}';
@@ -844,9 +849,6 @@ ${closer("closer-blades", "Blade Lock Light.html", "Every crew. One system.", "v
         return !fblocks.some(function (o) { return o !== e && o.contains(e); });
       }).forEach(function (e) { e.classList.add("__ft", "pre"); });
     }
-
-    // no drop-shadow on the blades, from the very first frame drawn
-    if (sec.getAttribute("data-oars")) unglow(f);
 
     if (shell) parkOars(sec, d, shell);
 
@@ -1090,13 +1092,6 @@ ${closer("closer-blades", "Blade Lock Light.html", "Every crew. One system.", "v
       if (L) L.setState({ pinned: false });
     }, delay || 0);
   }
-  // The active blade's drop-shadow, off at the source: the piece reads this
-  // prop every frame it draws.
-  function unglow(f) {
-    var L = wheelLogic(f);
-    if (L && L.props) L.props.oarGlow = false;
-  }
-
   /* The oars, called back: the wheel is pinned where it stands, the blades
      gather off the arc into the small formation above the phone — the same
      pose they arrived in — and then sink down behind it. The spread, played
@@ -1552,7 +1547,6 @@ ${closer("closer-blades", "Blade Lock Light.html", "Every crew. One system.", "v
 
         function arrive() {
         toHarvard(f);              // open on the colour the phone was wearing
-        if (sec.getAttribute("data-oars")) unglow(f);
         var shell = f.contentDocument && f.contentDocument.querySelector(".__ph");
         if (shell) parkOars(sec, f.contentDocument, shell);   // fresh geometry
 
