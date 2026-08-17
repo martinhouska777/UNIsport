@@ -205,3 +205,29 @@ splitting), and any backtick in an emitted comment ends the literal early.
    either generated portraits or a crop that avoids the avatar row.
 4. **Then:** stitch the sections into one page and port into `app/page.tsx`
    using the `l-*` design tokens (rule 1 — no hex literals in components).
+
+---
+
+## Chapter three — the Coach's Console (proposed, frames captured)
+
+The third scroll story (the buyer's side of Varsity Mode) is proposed in a
+Claude artifact ("The Coach's Console" — ask the owner for the URL). Its eight
+frames are already captured and committed as `public/landing/coach-*.webp`
+(same 900×1479 canvas), with the beat copy, enter transitions and markers all
+written in the artifact.
+
+To re-capture (e.g. after the console's UI changes): the local dev server has
+no Supabase env, so `fetchMyMembership` returns null and the console gate
+bounces. Temporarily bypass the gate in `app/varsity/coach/layout.tsx`
+(hardcode role "coach") and give `fetchTeamRoster` in `lib/varsity/notesStore.ts`
+a demo-roster fallback — do NOT commit either change — then:
+
+```
+npm run dev
+node scripts/landing/capture-coach.mjs   # seeds localStorage, walks the console
+```
+
+The seed inside `capture-coach.mjs` mirrors the athlete story exactly:
+Fall 2026 block (Jul 13 – Oct 18), week 6 current, Head of the Charles 62 days
+out, John Brown in the 1V's 3 seat, and his coach note ("fix it before the
+Charles") — so the coach chapter and the athlete chapter read as one product.
