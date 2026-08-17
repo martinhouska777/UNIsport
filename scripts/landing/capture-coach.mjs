@@ -95,10 +95,10 @@ const lineupTueAM = {
       dock: "Newell",
       note: "Stern pairs focus",
       hasCox: true,
-      coxId: "cate-frerichs",
+      coxId: "ellie-novak",
       seats: seats([
-        "asante-kiio", "luca-vicino", "john-brown", "marcus-chung",
-        "jack-dorney", "alexander-grundy", "george-farkas", "sam-gallaudet",
+        "alex-carter", "ben-holt", "john-brown", "danny-fox",
+        "erik-lund", "felix-hart", "george-mills", "chris-mercer",
       ]),
     },
     {
@@ -108,10 +108,10 @@ const lineupTueAM = {
       dock: "Newell",
       note: "",
       hasCox: true,
-      coxId: "micah-john",
+      coxId: "maya-reyes",
       seats: seats([
-        "jack-hansen-knarhoi", "owen-finnerty", "marco-vicino", "pierce-lapham",
-        "julian-paul", "ben-scott", "sam-woodgate", "mike-thomas",
+        "ivan-petrov", "henry-oday", "kai-tanaka", "jake-summers",
+        "marco-silva", "liam-walsh", "oscar-reed", "noah-berg",
       ]),
     },
   ],
@@ -119,9 +119,9 @@ const lineupTueAM = {
 
 const notes = {
   "john-brown": "Catch timing drifts late in pieces. Video Tuesday — fix it before the Charles.",
-  "george-farkas": "Great week. Keep the r18 work long and loose.",
-  "marcus-chung": "Ease the left shoulder in lifts — swap press for pull until cleared.",
-  "owen-finnerty": "2k pacing: go out at 1:32, not 1:29. Trust the back half.",
+  "george-mills": "Great week. Keep the r18 work long and loose.",
+  "danny-fox": "Ease the left shoulder in lifts — swap press for pull until cleared.",
+  "henry-oday": "2k pacing: go out at 1:32, not 1:29. Trust the back half.",
 };
 
 const seed = {
@@ -129,7 +129,7 @@ const seed = {
   varsityPlanSessions: JSON.stringify(sessions),
   "varsityLineup:2026-7-18-AM": JSON.stringify(lineupTueAM),
   ...Object.fromEntries(Object.entries(notes).map(([id, n]) => [`varsityCoachNote:${id}`, n])),
-  themeMode: "dark",
+  uniThemeMode: "light", // white mode — the lit-screen look the landing page uses
 };
 
 /* ── Drive ─────────────────────────────────────────────────── */
@@ -223,5 +223,40 @@ await page.evaluate(() => {
 await wait(2000);
 await shot("note");
 
+// ── Tall pan strips (full inner scroll expanded, for data-from/to pans) ──
+async function tallshot(name) {
+  await page.evaluate(() => {
+    document.querySelector("nextjs-portal")?.remove();
+    const root = document.querySelector(".h-dvh");
+    if (root) { root.style.height = "auto"; root.style.overflow = "visible"; }
+    const main = document.querySelector("main");
+    if (main) { main.style.overflow = "visible"; main.style.height = "auto"; }
+    document.documentElement.style.height = "auto";
+    document.body.style.height = "auto";
+  });
+  await wait(400);
+  await page.screenshot({ path: `${OUT}/coach-${name}-tall.png`, fullPage: true });
+  console.log("captured tall", name);
+}
+
+// Boats, cox to bow.
+await go("/varsity/coach/lineup", 3000);
+await page.evaluate(() => {
+  const cell = [...document.querySelectorAll("button,[role=button],div")]
+    .filter((e) => /Published/.test(e.textContent || "") && (e.textContent || "").length < 40)
+    .sort((a, b) => a.textContent.length - b.textContent.length)[0];
+  (cell?.closest("button,[role=button]") || cell)?.click();
+});
+await wait(2500);
+await tallshot("boats");
+
+// The week, Monday to Sunday.
+await go("/varsity/coach/plan", 3000);
+await clickText(/Fall 2026/);
+await wait(1200);
+await clickText(/Aug 17 – Aug 23/);
+await wait(1200);
+await tallshot("week");
+
 await browser.close();
-console.log("done");
+console.log("tall done");

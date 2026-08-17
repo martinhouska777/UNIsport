@@ -219,13 +219,23 @@ written in the artifact.
 To re-capture (e.g. after the console's UI changes): the local dev server has
 no Supabase env, so `fetchMyMembership` returns null and the console gate
 bounces. Temporarily bypass the gate in `app/varsity/coach/layout.tsx`
-(hardcode role "coach") and give `fetchTeamRoster` in `lib/varsity/notesStore.ts`
-a demo-roster fallback — do NOT commit either change — then:
+(hardcode role "coach"), give `fetchTeamRoster` in `lib/varsity/notesStore.ts`
+a demo-roster fallback, and swap the real roster in `lib/varsity/coachLineup.ts`
+for FAKE names with port/starboard sides (the committed frames use fake names on
+purpose — never ship the real squad list in marketing) — do NOT commit any of
+these changes — then:
 
 ```
 npm run dev
 node scripts/landing/capture-coach.mjs   # seeds localStorage, walks the console
 ```
+
+Frames are captured in the app's LIGHT theme (`uniThemeMode: "light"`), so the
+screens read as lit screens on the story's dark page — same as the student
+chapter. `coach-week-tall.webp` / `coach-boats-tall.webp` are full-scroll pan
+strips. The interactive chapter prototype itself is committed as
+`webpage/Coach Console Story.html` (a Claude artifact mirrors it — ask the
+owner for the URL).
 
 The seed inside `capture-coach.mjs` mirrors the athlete story exactly:
 Fall 2026 block (Jul 13 – Oct 18), week 6 current, Head of the Charles 62 days
