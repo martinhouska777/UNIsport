@@ -1,8 +1,8 @@
-import type { HTMLAttributes, ReactNode } from "react";
+import type { HTMLAttributes, ReactNode, Ref } from "react";
 
 /*
   THE PHONE FRAME every landing section draws its screens in — the coach
-  screens, both closers, and (once ported) the two scroll stories.
+  screens, both closers, and the two scroll stories.
 
   One frame, so a reader meets the same object everywhere, and so the flying
   phone of the stories can land on a closer's phone to the pixel: the shell,
@@ -15,15 +15,17 @@ import type { HTMLAttributes, ReactNode } from "react";
   tokens in globals.css. No hex here (rule 1).
 
   Children go where the app's screen is — a single <Image>, or a stack. The
-  caller sets the width (`className`); everything inside follows it.
+  caller sets the width (`className`); everything inside follows it. `ref`
+  lands on the outer box, whose rect is the shell's.
 */
 export default function Phone({
   children,
   className = "",
+  ref,
   ...rest
-}: { children: ReactNode; className?: string } & HTMLAttributes<HTMLDivElement>) {
+}: { children: ReactNode; className?: string; ref?: Ref<HTMLDivElement> } & HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={`@container ${className}`} {...rest}>
+    <div ref={ref} className={`@container ${className}`} {...rest}>
       <div className="rounded-[12.2cqw] border border-l-border-hover bg-l-bg-elevated p-[2.78cqw] shadow-2xl">
         <div className="overflow-hidden rounded-[9.44cqw] bg-l-phone-screen">
           <div className="flex items-center justify-between bg-l-phone-screen px-[6.11cqw] pt-[3.33cqw] pb-[2.22cqw] font-mono text-[3.33cqw] leading-none text-l-phone-ink">

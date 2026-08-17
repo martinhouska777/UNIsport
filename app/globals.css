@@ -150,6 +150,187 @@
   --font-display: var(--font-instrument-serif);
 }
 
+/*
+  THE SCROLL STORIES (components/landing/ScrollStory.tsx) — the choreography.
+
+  Ported from the prototype's stylesheet in scripts/landing/build-story.mjs,
+  class for class, colour for token. Kept as real CSS rather than utilities
+  because it is state-driven: a frame's transform depends on how it ENTERS
+  (data-enter), how it LEAVES (data-out), whether it is active or leaving, and
+  whether the reader is scrolling back (.ls-rev). The runtime only toggles
+  classes and attributes; everything visual is here.
+*/
+.ls-story { position: relative; z-index: 1; }
+.ls-stage {
+  position: sticky; top: 0; height: 100svh; overflow: hidden;
+  display: grid; grid-template-columns: 1fr 1fr; align-items: center;
+  max-width: 1200px; margin: 0 auto; padding: 0 48px; gap: 40px;
+}
+.ls-markers { position: relative; margin-top: -100svh; }
+.ls-marker { height: 100svh; }
+.ls-marker.ls-pan { height: 150svh; }
+/* The opening beat of each story is the one nobody has read yet — it gets
+   roughly two screens of scroll before the second headline takes over. */
+.ls-marker:first-child { height: 165svh; }
+.ls-marker:last-child { height: 130svh; }
+
+.ls-copy { position: relative; min-height: 300px; }
+.ls-beat {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  justify-content: center; gap: 16px;
+  opacity: 0; transform: translateY(18px); pointer-events: none;
+  transition: opacity 0.45s ease, transform 0.45s ease;
+}
+.ls-beat.ls-on { opacity: 1; transform: none; }
+
+/* The phone crosses the page once per story, at the narrative pivot. Slow
+   (0.9s) and eased, so it reads as one deliberate move rather than motion. */
+.ls-copy, .ls-phone-col { transition: transform 0.9s cubic-bezier(0.65, 0, 0.35, 1), opacity 0.4s ease; }
+.ls-rail { transition: opacity 0.4s ease; }
+/* While the phone is in flight the story's words step aside — the phone is
+   the one thing carrying over, so it gets the screen to itself. */
+.ls-stage.ls-gone .ls-copy, .ls-stage.ls-gone .ls-rail { opacity: 0; }
+.ls-stage.ls-flip .ls-phone-col { transform: translateX(calc(-100% - 40px)); }
+.ls-stage.ls-flip .ls-copy      { transform: translateX(calc(100% + 40px)); }
+.ls-phone-col { display: flex; justify-content: center; }
+.ls-phone-wrap { position: relative; will-change: transform; }
+@keyframes ls-float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+.ls-phone { animation: ls-float 7s ease-in-out infinite; }
+
+.ls-shots { position: relative; aspect-ratio: 900 / 1480; overflow: hidden; background: var(--color-l-phone-screen); }
+/*
+  Each screen sits in its own frame. Only two frames are ever visible: the one
+  arriving and the one it is replacing, which is kept on screen underneath for
+  the length of the move — otherwise a slide reveals the black phone behind it
+  instead of the screen you came from.
+*/
+.ls-frame {
+  position: absolute; inset: 0; overflow: hidden; opacity: 0; z-index: 0;
+  transition: opacity 0.5s ease, transform 0.62s cubic-bezier(0.32, 0.72, 0, 1);
+  will-change: transform;
+}
+.ls-frame.ls-on { opacity: 1; z-index: 2; transform: none; }
+.ls-frame.ls-leaving { opacity: 1; z-index: 1; }
+.ls-shot { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: block; }
+.ls-shot.ls-tall { height: auto; will-change: transform; }
+
+/* Arriving. A frame is parked in its start position until it goes .ls-on. */
+.ls-frame[data-enter="push"]:not(.ls-on):not(.ls-leaving),
+.ls-frame[data-enter="tab"]:not(.ls-on):not(.ls-leaving)  { transform: translateX(100%); opacity: 1; }
+.ls-frame[data-enter="sheet"]:not(.ls-on):not(.ls-leaving) { transform: translateY(100%); opacity: 1; }
+/* An arriving zoom target starts slightly small and settles to full size. */
+.ls-frame[data-enter="zoom"]:not(.ls-on):not(.ls-leaving)  { transform: scale(0.92); }
+/* "none" is a continuation of the same screen: no motion, no fade. */
+.ls-frame[data-enter="none"] { transition: none; }
+
+/* Leaving. Where the old screen goes depends on what replaced it. */
+.ls-frame.ls-leaving[data-out="push"]    { transform: translateX(-22%); filter: brightness(0.82); }
+.ls-frame.ls-leaving[data-out="tab"]     { transform: translateX(-100%); }
+.ls-frame.ls-leaving[data-out="sheet"]   { transform: scale(0.94); filter: brightness(0.78); }
+.ls-frame.ls-leaving[data-out="none"]    { transition: none; opacity: 0; }
+.ls-frame.ls-leaving[data-out="fade"]    { opacity: 0; }
+/* The sheet drops away OVER the screen it reveals. */
+.ls-frame.ls-leaving[data-out="dismiss"] { transform: translateY(102%); z-index: 3; }
+/* The whoosh: the old screen magnifies into the tapped button and dissolves. */
+.ls-frame.ls-leaving[data-out="zoom"] {
+  transform: scale(2.35); opacity: 0; z-index: 3;
+  transform-origin: var(--ox, 50%) var(--oy, 50%);
+  transition: transform 0.72s cubic-bezier(0.5, 0, 0.15, 1), opacity 0.5s ease 0.18s;
+}
+
+/* Scrolling back up: no directional replay, just a quick honest crossfade. */
+.ls-shots.ls-rev .ls-frame { transition: opacity 0.4s ease; transform: none; filter: none; }
+.ls-shots.ls-rev .ls-frame:not(.ls-on) { opacity: 0; }
+
+/* The tap that caused it: a ring, on the screen being left, before it moves. */
+.ls-tap {
+  position: absolute; z-index: 4; width: 34px; height: 34px; margin: -17px 0 0 -17px;
+  border-radius: 50%;
+  border: 2px solid color-mix(in srgb, var(--color-l-phone-ink) 75%, transparent);
+  background: color-mix(in srgb, var(--color-l-phone-ink) 12%, transparent);
+  opacity: 0; pointer-events: none;
+}
+.ls-tap.ls-fire { animation: ls-tap-ring 0.5s ease-out; }
+@keyframes ls-tap-ring {
+  0%   { opacity: 0;   transform: scale(0.45); }
+  28%  { opacity: 0.95; transform: scale(0.8); }
+  100% { opacity: 0;   transform: scale(1.7); }
+}
+
+/* The arrow that walks to a button and presses it. Tip sits on the target. */
+.ls-pointer {
+  position: absolute; z-index: 4; width: 22px; height: 22px; margin: -2px 0 0 -2px;
+  opacity: 0; pointer-events: none;
+}
+.ls-pointer svg { display: block; filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.6)); }
+.ls-pointer.ls-fire { animation: ls-pointer-walk 0.95s cubic-bezier(0.3, 0, 0.2, 1); }
+@keyframes ls-pointer-walk {
+  0%   { opacity: 0; transform: translate(90px, 120px); }
+  30%  { opacity: 1; }
+  58%  { transform: translate(0, 0) scale(1); }
+  70%  { transform: translate(0, 0) scale(0.8); }   /* the press */
+  82%  { transform: translate(0, 0) scale(1); }
+  100% { opacity: 0; transform: translate(0, 0); }
+}
+
+/* The labels pointing into the phone. */
+.ls-ann {
+  position: absolute; display: flex; align-items: center; gap: 8px;
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--color-l-text-2); white-space: nowrap;
+  opacity: 0; transition: opacity 0.45s ease 0.15s;
+}
+.ls-ann.ls-on { opacity: 1; }
+.ls-ann-left  { right: calc(100% + 10px); }
+.ls-ann-right { left: calc(100% + 10px); }
+/* After the phone crosses, mirror the pointers and move the rail to the far
+   edge, or they end up stacked on top of each other. */
+.ls-stage.ls-flip .ls-ann-left  { right: auto; left: calc(100% + 10px); flex-direction: row-reverse; }
+.ls-stage.ls-flip .ls-ann-right { left: auto; right: calc(100% + 10px); flex-direction: row-reverse; }
+.ls-stage.ls-flip .ls-rail { left: auto; right: 16px; }
+.ls-ann-line { width: 32px; height: 1px; }
+.ls-ann-left  .ls-ann-line { background: linear-gradient(to left, var(--color-l-border-hover), transparent); }
+.ls-ann-right .ls-ann-line { background: linear-gradient(to right, var(--color-l-border-hover), transparent); }
+
+/* The rail: one dot per beat, the active one stretched. */
+.ls-rail {
+  position: absolute; left: 16px; top: 50%; transform: translateY(-50%);
+  display: flex; flex-direction: column; gap: 10px;
+}
+.ls-dot {
+  cursor: pointer; width: 5px; height: 5px; border-radius: 50%; border: 0; padding: 0;
+  background: var(--color-l-border-hover);
+  transition: background 0.3s, height 0.3s, width 0.3s;
+}
+.ls-dot.ls-on { background: var(--sa); height: 18px; border-radius: 3px; }
+.ls-dot:hover { background: var(--color-l-text-2); }
+.ls-dot:focus-visible, .ls-phone:focus-visible { outline: 2px solid var(--sa); outline-offset: 6px; }
+
+@media (max-width: 1023px) {
+  .ls-stage {
+    grid-template-columns: 1fr; grid-template-rows: auto 1fr;
+    padding: 12px 20px 20px; gap: 6px; align-items: start;
+  }
+  .ls-copy { min-height: 148px; }
+  .ls-beat { justify-content: flex-end; gap: 8px; text-align: center; align-items: center; }
+  .ls-phone-col { align-items: start; height: 100%; padding-top: 10px; }
+  .ls-ann { display: none; }
+  /* The phone crossing the page is a two-column move. In one column it just
+     drives the phone off the side of the screen, so the flip is off here. */
+  .ls-stage.ls-flip .ls-phone-col, .ls-stage.ls-flip .ls-copy { transform: none; }
+  .ls-rail { top: auto; bottom: -6px; left: 50%; transform: translateX(-50%); flex-direction: row; }
+  .ls-stage.ls-flip .ls-rail { left: 50%; right: auto; }
+  .ls-dot.ls-on { height: 5px; width: 18px; }
+  .ls-marker:first-child { height: 120svh; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ls-beat, .ls-shot, .ls-frame, .ls-ann, .ls-dot { transition: none; }
+  .ls-phone, .ls-tap, .ls-pointer { animation: none; }
+  /* No motion: every cut is a plain show/hide. */
+  .ls-frame:not(.ls-on) { opacity: 0; transform: none; }
+}
+
 /* The closers' big letter: the incoming one rises in, the outgoing one lifts
    out. (Each letter is a fresh element per school change, so the animation
    restarts on its own.) */
