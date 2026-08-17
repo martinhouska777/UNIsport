@@ -1537,6 +1537,9 @@ document.addEventListener('DOMContentLoaded', async function() {
       // reason as the oars: nothing of theirs gets trampled.
       '.__hd{transition:translate .6s cubic-bezier(.25,.8,.3,1),opacity .45s ease}' +
       '.__hd.pre{translate:52vw 0;opacity:0}' +
+      // The crew's name under the phone: held back until the oars are in place.
+      '.__ft{transition:opacity .5s ease}' +
+      '.__ft.pre{opacity:0}' +
       '.__tabs{position:absolute;left:0;right:0;bottom:0;height:12%;display:flex;align-items:center;' +
       'justify-content:space-around;background:#fff;border-top:1px solid #e7e4df;padding-bottom:1.6%;z-index:5}' +
       '.__tab{display:flex;flex-direction:column;align-items:center;gap:2px;color:#9b968c;line-height:1}' +
@@ -1581,6 +1584,21 @@ document.addEventListener('DOMContentLoaded', async function() {
       blocks.filter(function (e) {
         return !blocks.some(function (o) { return o !== e && o.contains(e); });
       }).forEach(function (e) { e.classList.add("__hd", "pre"); });
+    }
+
+    /* The crew's name under the phone (blades piece only): found the same
+       way — outermost text standing fully below the phone — and held back
+       until the oars are in their places. */
+    if (sec.getAttribute("data-oars") && shell && !reduce) {
+      var pb = shell.getBoundingClientRect().bottom;
+      var fblocks = [].slice.call(d.body.querySelectorAll("*")).filter(function (e) {
+        if (e === shell || shell.contains(e) || e.contains(shell)) return false;
+        var r = e.getBoundingClientRect();
+        return r.height > 0 && r.top >= pb - 2 && e.textContent && e.textContent.trim();
+      });
+      fblocks.filter(function (e) {
+        return !fblocks.some(function (o) { return o !== e && o.contains(e); });
+      }).forEach(function (e) { e.classList.add("__ft", "pre"); });
     }
 
     if (shell) parkOars(sec, d, shell);
@@ -1670,6 +1688,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (shell && sec.getAttribute("data-flight") && !reduce) shell.classList.add("hide");
     if (shell) parkOars(sec, d, shell);
     if (!reduce) [].slice.call(d.querySelectorAll(".__hd")).forEach(function (e) { e.classList.add("pre"); });
+    if (!reduce) [].slice.call(d.querySelectorAll(".__ft")).forEach(function (e) { e.classList.add("pre"); });
     // and the story gets its words back, wherever the reader left it
     var src = sec.getAttribute("data-from");
     var stg = src && document.querySelector("#" + src + " .stage");
@@ -1699,16 +1718,17 @@ document.addEventListener('DOMContentLoaded', async function() {
     setTimeout(function () {
       var pr = shell.getBoundingClientRect();
       var pcx = pr.left + pr.width / 2;
-      var K = 0.45;   // peek size
+      var K = 0.4;    // miniature size
+      var F = 0.3;    // how tightly the circle is drawn in (the piece's own
+                      // depth transform widens whatever we ask for)
 
       /* The peek pose is MEASURED, not predicted: our scale composes with the
          wheel transform the app has already put on each oar, so where an oar
          ends up at scale K cannot be worked out from its rect alone. Instead:
          transitions off, stand each oar at translate 0 / scale K, read where
-         that actually puts it, and derive the exact translate that brings the
-         blade tip level and the pack in close. All in one synchronous pass —
-         nothing is painted in between. Translate is the outermost part of the
-         composition, so it shifts the result one-to-one. */
+         that actually puts it, and derive the targets. All in one synchronous
+         pass — nothing is painted in between. Translate is the outermost part
+         of the composition, so it shifts the result one-to-one. */
       var saved = oars.map(function (o) {
         var s = { t: o.style.translate, k: o.style.scale };
         o.style.transition = "none";
@@ -1716,48 +1736,65 @@ document.addEventListener('DOMContentLoaded', async function() {
         o.style.scale = String(K);
         return s;
       });
-      var targets = oars.map(function (o) {
-        var r = o.getBoundingClientRect();   // where scale K really stands
-        var cx = r.left + r.width / 2;
-        /* Pulled to under a fifth of its scaled spread — the pack sits within
-           the phone's width — with blade tips ~90px clear of it. The piece
-           adds its own depth per blade on top of this, which leaves the
-           centre blade standing slightly proudest: the drawing's silhouette,
-           kept rather than corrected. */
-        return ((pcx - cx) * 0.82) + "px " + ((pr.top - 90) - r.top) + "px";
+      /* The peek is the WHOLE wheel in miniature: every position compressed
+         toward the wheel's own centre — the same circle, closer together —
+         then stood behind the phone, Harvard's blade at the middle peeking
+         ~90px above it. The lower half hides behind the phone, which is the
+         point: the formation is already there before it opens. */
+      var rects = oars.map(function (o) { return o.getBoundingClientRect(); });
+      var wx = 0, wy = 0;
+      rects.forEach(function (r) { wx += r.left + r.width / 2; wy += r.top + r.height / 2; });
+      wx /= rects.length; wy /= rects.length;
+      var minis = rects.map(function (r) {
+        return { x: wx + (r.left + r.width / 2 - wx) * F,
+                 y: wy + (r.top + r.height / 2 - wy) * F,
+                 h: r.height };
+      });
+      var minTop = Infinity;
+      minis.forEach(function (m) { minTop = Math.min(minTop, m.y - m.h / 2); });
+      var dx0 = pcx - wx, dy0 = (pr.top - 90) - minTop;
+      var want = minis.map(function (m) { return { x: m.x + dx0, y: m.y + dy0 }; });
+      var targets = want.map(function (w, i) {
+        var r = rects[i];
+        return { x: w.x - (r.left + r.width / 2), y: w.y - (r.top + r.height / 2) };
+      });
+      /* One correction round: stand each oar at its computed target and read
+         where it ACTUALLY ends up — the piece styles its blades by depth, and
+         that pushes whatever we ask for outward. Subtract the error. Still
+         unpainted. */
+      oars.forEach(function (o, i) { o.style.translate = targets[i].x + "px " + targets[i].y + "px"; });
+      oars.forEach(function (o, i) {
+        var r = o.getBoundingClientRect();
+        targets[i].x += want[i].x - (r.left + r.width / 2);
+        targets[i].y += want[i].y - (r.top + r.height / 2);
       });
       oars.forEach(function (o, i) {        // back to parked, still unpainted
         o.style.translate = saved[i].t;
         o.style.scale = saved[i].k;
       });
       void d.body.offsetWidth;
-      /* The fan has a faint FAR side — three background blades the piece
-         keeps at a fraction of full opacity. The drawing's peek is the five
-         bright ones; the faint ones stay tucked away until the spread, and
-         simply fade into their background places then. */
       oars.forEach(function (o, i) {        // transitions on: rise to the pose
         o.style.transition = "";
-        var dimEl = o.querySelector("[data-dim]");   // a shade: 0 = bright,
-        // ~.11 = the two outer arc blades (still part of the fan), ~.22 = the
-        // three background blades that wait for the spread
-        if (dimEl && parseFloat(d.defaultView.getComputedStyle(dimEl).opacity) > 0.15) return;
         o.classList.remove("pre");
-        o.style.translate = targets[i];
+        o.style.translate = targets[i].x + "px " + targets[i].y + "px";
         o.style.scale = String(K);
       });
     }, delay || 0);
 
     // The rise takes .8s; the formation then HOLDS for a beat — the drawing's
     // "oars start here" is a pose, not a waypoint — before spreading out.
-    // The faint background blades surface here too, in their own places.
     setTimeout(function () {
       oars.forEach(function (o) {
         o.classList.remove("pre");
         o.style.translate = "";
         o.style.scale = "";
       });
-      // Hand the oars back: with our class gone, nothing of ours is in the
-      // way when the wheel starts turning again.
+      // The crew's name appears only once the oars are in their places…
+      setTimeout(function () {
+        [].slice.call(d.querySelectorAll(".__ft")).forEach(function (e) { e.classList.remove("pre"); });
+      }, 850);
+      // …and the oars are handed back: with our class gone, nothing of ours
+      // is in the way when the wheel starts turning again.
       setTimeout(function () {
         oars.forEach(function (o) { o.classList.remove("__oar"); });
       }, 950);
@@ -2018,6 +2055,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     var lt = d.querySelector(".__lt");
     if (lt) { lt.classList.remove("now"); lt.classList.add("rev"); lt.classList.add("pre"); }
     [].slice.call(d.querySelectorAll(".__hd")).forEach(function (e) { e.classList.add("pre"); });
+    [].slice.call(d.querySelectorAll(".__ft")).forEach(function (e) { e.classList.add("pre"); });
     // …and the oars tuck back in behind the phone before it lifts off
     parkOars(sec, d, shell);
 

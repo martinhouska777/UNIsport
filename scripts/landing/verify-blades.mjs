@@ -60,6 +60,7 @@ const oars = () => page.evaluate(() => {
     phoneTop: pr ? Math.round(pr.top) : null,
     phoneCx: pr ? Math.round(pr.left + pr.width / 2) : null,
     heads: d ? [...d.querySelectorAll(".__hd")].map(e => e.classList.contains("pre")) : [],
+    ftHidden: d ? [...d.querySelectorAll(".__ft")].map(e => e.classList.contains("pre")) : [],
   };
 });
 
@@ -104,7 +105,8 @@ const spread = await page.evaluate(() => {
     const r = o.getBoundingClientRect();
     return !(r.height < 90 || r.width > 130 || shell.contains(o));
   }).map(o => Math.round(o.getBoundingClientRect().left + o.getBoundingClientRect().width / 2));
-  return { xs, heads: [...d.querySelectorAll(".__hd")].map(e => e.classList.contains("pre")) };
+  return { xs, heads: [...d.querySelectorAll(".__hd")].map(e => e.classList.contains("pre")),
+           ftHidden: [...d.querySelectorAll(".__ft")].map(e => e.classList.contains("pre")) };
 });
 console.log("spread:    ", JSON.stringify(spread));
 await page.screenshot({ path: `${SHOTS}/bl-2-spread.png` });
@@ -157,17 +159,19 @@ await page.screenshot({ path: `${SHOTS}/bl-5-landed-again.png` });
 
 const ok = (name, cond) => console.log((cond ? "PASS " : "FAIL ") + name);
 const rank = (a) => a.map(x => a.slice().sort((p, q) => p - q).indexOf(x));
-const px = peek.bright.map(o => o.x);
-const tops = peek.bright.map(o => o.top);
-const sorted = peek.bright.slice().sort((a, b) => a.x - b.x);
-ok("five blades peeked as a fan, centre proudest", peek.bright.length >= 5 && peek.bright.every(o => !o.pre)
-  && Math.min(...tops) === tops[px.indexOf(peek.bright.reduce((m, o) => Math.abs(o.x - peek.phoneCx) < Math.abs(m.x - peek.phoneCx) ? o : m).x)]
-  && Math.max(...tops) - Math.min(...tops) < 60
-  && tops.every(t => t < peek.phoneTop - 40));
-ok("fan is symmetric", sorted.every((o, i) => Math.abs(o.top - sorted[sorted.length - 1 - i].top) < 6));
-ok("faint background blades held back", peek.faint.length > 0 && peek.faint.every(o => o.pre));
-ok("peek is close together (within phone-ish width)", px.every(x => Math.abs(x - peek.phoneCx) < 160));
-ok("spread reaches the arc (wider than the peek)", Math.max(...spread.xs) - Math.min(...spread.xs) > (Math.max(...px) - Math.min(...px)) * 2);
+const all = peek.bright.concat(peek.faint);
+const arc = peek.bright;   // the bright side is the visible top of the circle
+const arcTops = arc.map(o => o.top);
+const centre = arc.reduce((m, o) => Math.abs(o.x - peek.phoneCx) < Math.abs(m.x - peek.phoneCx) ? o : m);
+const sorted = arc.slice().sort((a, b) => a.x - b.x);
+ok("the whole wheel is there at the peek", all.length === 8 && all.every(o => !o.pre));
+ok("Harvard's blade centred and proudest", Math.abs(centre.x - peek.phoneCx) < 20 && centre.top === Math.min(...arcTops));
+ok("the circle is drawn in close (within phone-ish width)", all.every(o => Math.abs(o.x - peek.phoneCx) < 160));
+ok("the visible arc keeps its curve, symmetric", sorted.every((o, i) => Math.abs(o.top - sorted[sorted.length - 1 - i].top) < 8));
+ok("crew name held back at the peek", peek.ftHidden.length > 0 && peek.ftHidden.every(h => h));
+const peekXs = all.map(o => o.x);
+ok("spread reaches the arc (wider than the peek)", Math.max(...spread.xs) - Math.min(...spread.xs) > (Math.max(...peekXs) - Math.min(...peekXs)) * 2);
+ok("crew name appears once the oars are in place", spread.ftHidden.length > 0 && spread.ftHidden.every(h => !h));
 ok("words arrived", peek.heads.length > 0 && spread.heads.every(p => !p));
 ok("wheel pinned on Harvard through the choreography", wPinned && wPinned.pinned && wPinned.active === 0);
 ok("wheel released and turning continuously", w1 && w3 && !w3.pinned && Math.abs(w3.rot - w2.rot) > 8 && Math.abs(w2.rot - w1.rot) > 8);
