@@ -19,11 +19,13 @@
 --   that can be farmed stops meaning anything the week people notice.
 --
 -- PERIODS
---   'week'  — since Monday of the current week
---   'month' — since the 1st of the current month  (default)
---   'all'   — everything ever
+--   'month'    — since the 1st of the current month  (default)
+--   'semester' — since the start of the current term: Sep 1 (fall), Jan 1
+--                (spring), Jun 1 (summer)
+--   'all'      — everything ever
 --   Boards reset, which is the point: a season nobody can still win is a season
---   nobody plays. Every month, everyone starts level again.
+--   nobody plays. Every month, everyone starts level again — and the semester
+--   board is the longer race that a single good month can't decide.
 --
 -- IDEMPOTENT: safe to paste into the Supabase SQL editor and re-run.
 -- ============================================================================
@@ -33,15 +35,27 @@
 -- ---------------------------------------------------------------------------
 
 -- Start date of a leaderboard period.
+--
+-- A "semester" is the academic term the calendar is in right now: Sep–Dec is
+-- the fall term, Jan–May the spring term, Jun–Aug the summer. Deriving it from
+-- the month means no term-dates table to maintain and nothing to forget to
+-- update in August — the board rolls over on its own.
 create or replace function public.leaderboard_since(period text)
 returns date
 language sql
 immutable
 as $$
   select case lower(coalesce(period, 'month'))
-           when 'week' then (date_trunc('week',  current_date))::date
-           when 'all'  then '1900-01-01'::date
-           else             (date_trunc('month', current_date))::date
+           when 'all'      then '1900-01-01'::date
+           when 'semester' then make_date(
+             extract(year from current_date)::int,
+             case when extract(month from current_date) >= 9 then 9
+                  when extract(month from current_date) >= 6 then 6
+                  else 1
+             end,
+             1
+           )
+           else (date_trunc('month', current_date))::date
          end;
 $$;
 

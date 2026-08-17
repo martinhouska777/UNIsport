@@ -7,8 +7,9 @@
   board can never be read backwards into "what did that person actually do".
 
   A score is a SESSION COUNT for the period, where one day counts at most twice
-  (see the SQL). Boards reset every month — the reset is the feature, not an
-  implementation detail: a table nobody can still win is a table nobody plays.
+  (see the SQL). Boards reset every month and every semester — the reset is the
+  feature, not an implementation detail: a table nobody can still win is a table
+  nobody plays.
 
   Nothing here invents numbers. With no database configured every board comes
   back empty and the screens say so, rather than showing a convincing fake.
@@ -19,7 +20,7 @@ import { getGymByName } from "@/lib/gyms";
 
 /* ─────────────────────────────  types  ───────────────────────────── */
 
-export type Period = "week" | "month" | "all";
+export type Period = "month" | "semester" | "all";
 
 // The individual boards. `house` always means the CALLER's own house.
 export type PeopleBoard = "campus" | "house" | "partners";
@@ -77,8 +78,8 @@ export const MIN_GROUP_MEMBERS = 3;
 /* ─────────────────────────────  labels  ───────────────────────────── */
 
 export const periodLabel: Record<Period, string> = {
-  week: "This week",
   month: "This month",
+  semester: "This semester",
   all: "All time",
 };
 

@@ -14,8 +14,9 @@
   are no placeholder numbers anywhere on this screen — a board with nothing in
   it says so.
 
-  Boards reset weekly / monthly (the period toggle). That reset is the point:
-  everybody starts level again, so the table is always still winnable.
+  Boards reset monthly / each semester (the period toggle). That reset is the
+  point: everybody starts level again, so the table is always still winnable —
+  the month is the short race, the semester the long one.
 
   Colors are theme tokens (rule 1). The only per-item colors are each house's
   identity color, which lives in lib/gyms.ts as DATA and is applied inline —
@@ -92,8 +93,8 @@ const BOARDS: BoardDef[] = [
 ];
 
 const PERIODS: { key: Period; label: string }[] = [
-  { key: "week", label: "This week" },
   { key: "month", label: "This month" },
+  { key: "semester", label: "This semester" },
   { key: "all", label: "All time" },
 ];
 
@@ -390,7 +391,7 @@ export default function LeaderboardsPage() {
           <ul className="mt-2 flex flex-col gap-1.5 text-[11px] leading-relaxed text-muted">
             <li>One logged session = one point. A single day counts twice at most.</li>
             <li>Team boards rank by sessions per member, not by total.</li>
-            <li>Weekly and monthly boards reset, so everyone starts level again.</li>
+            <li>Monthly and semester boards reset, so everyone starts level again.</li>
             <li>Only your name, house, year and totals are ever shown — never your workouts.</li>
           </ul>
         </div>
