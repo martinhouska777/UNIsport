@@ -23,7 +23,7 @@ decided so it does not get re-argued.
  6  Story B        the varsity scroll animation, V1–V6
  7  Feature block  features left (+ to expand) · Blade Lock piece right
                    + "what's coming for varsity"
- 8  Coach section  The Coach's Console — five screens          ← BUILT
+ 8  Coach section  The Coach's Console — five screens          ← BUILT (twice)
                    + "what's coming for coaches"
  9  FAQ
 10  About · Contact
@@ -40,7 +40,9 @@ still meets everything in order.
 | What | Where | State |
 |---|---|---|
 | **All landing copy** | `lib/landingCopy.ts` | **Source of truth** |
-| Coach section | `components/landing/CoachSection.tsx` | Built, native, tokenised |
+| Coach section (site) | `components/landing/CoachSection.tsx` | Built, native, tokenised |
+| Coach section (prototype) | `renderCoach()` in `build-story.mjs` | Built, in the artifact |
+| Coach design piece | `mockups/coaches/` | The original hand-over |
 | Coach preview route | `app/coach-preview/page.tsx` | Scratch — delete once slotted in |
 | Live landing (old) | `app/page.tsx` + `components/landing/*` | Still the pre-animation version |
 | Scroll animations | `scripts/landing/build-story.mjs` → `story.html` | Built, published as an artifact |
@@ -128,6 +130,32 @@ port them, not a pattern to copy.
    nobody has checked.
 
 ---
+
+## Do not break the animations
+
+The scroll choreography is the most expensive and most fragile thing in this
+repo. It took many passes to get the phone to fly between sections and land on
+the closer's own phone to the pixel. **Any change that alters page height,
+section order, or the DOM around a story moves every scroll position after
+it** — which is most changes.
+
+So: **run all three suites after any change to the landing page, not just ones
+that look animation-related.** Adding the coach section between the last closer
+and the CTA looked inert and still moved every scroll offset below it; it
+passed, but only because it was checked.
+
+What green looks like:
+
+- `verify` — beats switch, pans travel, the flip fires, phone-click and
+  dot-rail navigate, `horiz: false` on mobile, and `compatMode: CSS1Compat`
+  (quirks mode means the doctype is missing and no handler fires)
+- `verify-flight` — both closers `flew: true`, `offscreenFrames: 0`, and
+  **`landing error: dx=0 dy=0 dw=0`** — the flying phone must land exactly on
+  the closer's own phone
+- `verify-reverse` — **11 of 11 PASS**
+
+If any of those regress, fix it before moving on. Do not republish the artifact
+on a red suite.
 
 ## Verifying
 
