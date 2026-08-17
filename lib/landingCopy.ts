@@ -18,10 +18,15 @@
   port (ScrollStory reads its beats from here), a copy change must be made in
   BOTH places or the prototype and the site will disagree.
 
-  Motion fields — pan, hold, enter, tap, ann — deliberately stay in
-  build-story.mjs. They are mechanics, not text, and this file is meant to stay
-  readable by someone who does not read code.
+  Motion fields — pan, hold, enter, tap — deliberately stay in build-story.mjs.
+  They are mechanics, not text, and this file is meant to stay readable by
+  someone who does not read code. Annotations DO live here: the little labels
+  that point into the phone are words a reader reads, so they get reviewed with
+  the rest of the copy. Only their placement stays in the build script.
 */
+
+/** A label pointing into the phone screen. `top` is a % down the frame. */
+export type Annotation = { side: "left" | "right"; top: number; text: string };
 
 export type Beat = {
   /** S1…S7 / V1…V6 — how we refer to this beat in conversation. */
@@ -36,6 +41,8 @@ export type Beat = {
   sub: string;
   /** Which screenshot in public/landing/ this beat rides. */
   shot: string;
+  /** Labels pointing at what's on that screen. */
+  ann: Annotation[];
 };
 
 /* ─────────────────────────── THE HERO ─────────────────────────── */
@@ -74,30 +81,53 @@ export const studentStory: Beat[] = [
   {
     id: "S1",
     kicker: "01 · The gyms",
-    head: "Every gym on campus. One list.",
-    sub: "Opening hours, how busy it is right now, and the house gyms nobody has a map of.",
+    head: "Find every gym on campus. In one app.",
+    /* Equipment carries the weight here, and it sits last so it lands last.
+       It also travels: "the house gyms nobody has a map of" was the better
+       line, but houses are a Harvard word and the sentence died at school two.
+       Every campus has rooms whose contents are a mystery. */
+    sub: "Opening hours, ratings, a live crowd meter — and the equipment nobody has a map of.",
     shot: "01-gyms.webp",
+    ann: [
+      { side: "right", top: 14, text: "Live ratings" },
+      { side: "left", top: 68, text: "Full equipment list" },
+    ],
   },
   {
     id: "S2",
     kicker: "02 · The people",
+    /* "61 people · sorted by compatibility" is printed on the screenshot, so
+       the number is read off the app rather than invented. */
     head: "Then it finds your people.",
-    sub: "Sorted by how well you actually fit — same gym, same hours, same level.",
+    sub: "61 people, ranked by how well you actually fit — same gym, same hours, same level, and more you'd never think to filter for.",
     shot: "02-match.webp",
+    ann: [{ side: "right", top: 24, text: "Ranked by real fit" }],
   },
   {
     id: "S3",
+    /* The strongest beat on the page: every rival can show a profile, almost
+       none can explain its own matching. So the headline stays on the
+       explanation, and the profile's contents — interests, concentration,
+       languages, the mentor pairing — ride underneath it. They are the same
+       screen, so nothing had to be traded away for the mentor to appear. */
     kicker: "03 · The reasons",
     head: "And it tells you why.",
-    sub: "Every reason is a real fact from both profiles. No black box.",
+    sub: "Every reason is a real fact off both profiles — shared interests, the same concentration, a language you both speak. Including the one that says one of you is here to teach the other.",
     shot: "03-why-you-match.webp",
+    ann: [
+      { side: "right", top: 34, text: "Mentor fit" },
+      { side: "left", top: 56, text: "Facts, not guesses" },
+    ],
   },
   {
     id: "S4",
     kicker: "04 · The plan",
+    /* The fear this beat answers is not "how do I schedule" — it is "are they
+       actually going to turn up". So the sub ends on the certainty. */
     head: "Make the plan in the chat.",
-    sub: "One tap proposes a session. One tap accepts. It's on both your calendars.",
+    sub: "One tap proposes it. One tap accepts. It's on both calendars — nobody has to ask “are we still on?”",
     shot: "04-plan-a-session.webp",
+    ann: [{ side: "right", top: 52, text: "One tap to accept" }],
   },
   {
     id: "S5",
@@ -105,21 +135,31 @@ export const studentStory: Beat[] = [
     head: "Afterwards, log it together.",
     sub: "Every set, every rep — and the partner carried straight over from the plan.",
     shot: "tall-logsheet.webp",
+    ann: [{ side: "right", top: 30, text: "Set by set" }],
   },
   {
     id: "S6",
     kicker: "06 · The record",
     head: "A photo and a note, while it's fresh.",
-    sub: "Who you trained with, how it went, and a picture if you took one — a training log you'll still want to read in four years.",
+    sub: "Who you trained with, how it went, and a picture if you took one — a session you'll have forgotten by March, still there in four years.",
     shot: "tall-logsheet.webp",
+    ann: [{ side: "left", top: 50, text: "Photo + note" }],
   },
   {
     id: "S7",
     kicker: "07 · The proof",
+    /* The finale keeps no sub-line on purpose — the two numbers and the brand
+       line are the whole beat, and silence under them is what gives them room.
+       The leaderboards the pan travels past are named by the annotation
+       instead, which is why they do not need a sentence. */
     head: "29 sessions. 6 partners.",
     headEm: brandLine,
     sub: "",
     shot: "tall-profile.webp",
+    ann: [
+      { side: "right", top: 30, text: "Campus leaderboards" },
+      { side: "left", top: 76, text: "Every day you trained" },
+    ],
   },
 ];
 
@@ -134,6 +174,22 @@ export const interlude = {
 
 /* ───────────────────── V1–V6 · THE VARSITY STORY ───────────────────── */
 
+/*
+  Two open questions on this story, both raised and neither yet decided:
+
+  1. It ends on a statistics graph (V6), which the brief argues against by
+     name: a stats screen is the one screen every fitness app already has,
+     while a seat in a named boat, published by a coach, is the one none of
+     them can show. That screen is V2, currently buried mid-story.
+  2. V5's headline is the only line in either story written in the generic
+     voice — "keep track of every session" names nothing and could sit on any
+     fitness app ever shipped.
+
+  And one absence: AI erg logging (app/api/varsity/erg-scan) reads a Concept2
+  or RP3 monitor from a photo. It is the most distinctive thing Varsity Mode
+  does, the landing page mentions it in a single bullet, and no beat shows it.
+  It has no capture yet.
+*/
 export const varsityStory: Beat[] = [
   {
     id: "V1",
@@ -141,6 +197,7 @@ export const varsityStory: Beat[] = [
     head: "The coach's plan, on every phone.",
     sub: "Water, erg, weights — the week your coach actually built. Not a screenshot of a spreadsheet.",
     shot: "tall-vhome.webp",
+    ann: [{ side: "right", top: 18, text: "Week 6 of 15" }],
   },
   {
     id: "V2",
@@ -148,6 +205,7 @@ export const varsityStory: Beat[] = [
     head: "Your name, in the boat.",
     sub: "The lineup your coach published, seat by seat, the night before you row it — the four in the morning, the pair after lunch.",
     shot: "tall-vhome.webp",
+    ann: [{ side: "left", top: 42, text: "You, 3 seat" }],
   },
   {
     id: "V3",
@@ -155,6 +213,10 @@ export const varsityStory: Beat[] = [
     head: "The next race, and what to fix before it.",
     sub: "Head of the Charles, 63 days out — and one note from your coach sitting under it until you've sorted it.",
     shot: "tall-vhome.webp",
+    ann: [
+      { side: "right", top: 52, text: "Counting down" },
+      { side: "left", top: 70, text: "Straight from the coach" },
+    ],
   },
   {
     id: "V4",
@@ -162,6 +224,10 @@ export const varsityStory: Beat[] = [
     head: "Log straight off the plan.",
     sub: "Your whole week across the top — every session the coach set, waiting to be logged.",
     shot: "13-varsity-log-list.webp",
+    ann: [
+      { side: "right", top: 16, text: "Your week, at a glance" },
+      { side: "left", top: 44, text: "Tap to log" },
+    ],
   },
   {
     id: "V5",
@@ -169,6 +235,10 @@ export const varsityStory: Beat[] = [
     head: "Keep track of every session.",
     sub: "Each workout you log lands on the calendar by itself — your season's training history, paired with live statistics.",
     shot: "14-varsity-calendar.webp",
+    ann: [
+      { side: "right", top: 34, text: "Session dots" },
+      { side: "left", top: 64, text: "Today" },
+    ],
   },
   {
     id: "V6",
@@ -176,6 +246,7 @@ export const varsityStory: Beat[] = [
     head: "129 km this week.",
     sub: "Metres rowed, week by week, all season — consistency you can actually see.",
     shot: "tall-vprofile.webp",
+    ann: [{ side: "right", top: 40, text: "Eight weeks of work" }],
   },
 ];
 
