@@ -134,15 +134,20 @@ const story2 = [
   drop-in — replace the file in webpage/ and rebuild. The frames are told not
   to scroll, so a wheel over one keeps scrolling THIS page.
 */
-function closer(id, file, title, tabs, tabActive) {
+function closer(id, file, title, tabs, tabActive, flight) {
+  const fl = flight || {};
   let doc = fs.readFileSync("../../webpage/" + file, "utf8");
   const noScroll = "<style>html,body{overflow:hidden!important}</style>";
   doc = doc.includes("</head>") ? doc.replace("</head>", noScroll + "</head>") : noScroll + doc;
   // srcdoc is an HTML attribute: & and " have to be escaped, nothing else.
   const esc = doc.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
   return `
-<section class="closer" id="${id}" data-tabs="${tabs}" data-tab-active="${tabActive}">
-  <iframe class="closer-frame" title="${title}" srcdoc="${esc}"></iframe>
+<section class="closer" id="${id}" data-tabs="${tabs}" data-tab-active="${tabActive}"${flight ? ' data-flight="1" data-from="' + fl.from + '" data-from-shot="' + fl.fromShot +
+  '" data-to-shot="' + fl.toShot + '"' + (fl.swap === "slide" ? ' data-swap="slide"' : "") +
+  (fl.oars ? ' data-oars="1"' : "") : ""}>
+  <div class="closer-stick">
+    <iframe class="closer-frame" title="${title}" srcdoc="${esc}"></iframe>
+  </div>
 </section>`;
 }
 
@@ -515,11 +520,28 @@ const html = `<title>Never Train Alone</title>
 
   /* A closer is a whole screen of its own: the reader stops scrolling and reads. */
   .closer { position: relative; z-index: 1; width: 100%; height: 100svh; background: var(--bg); }
+  .closer-stick { height: 100%; }
   .closer-frame { display: block; width: 100%; height: 100%; border: 0; transition: opacity 0.45s ease; }
   /* A narrow screen stacks their layout taller than one viewport; the script
      below grows the section to fit rather than clipping it. */
   .closer.tallfit { height: auto; }
+  .closer.tallfit .closer-stick { height: auto; }
   .closer.tallfit .closer-frame { height: var(--fit); }
+  /* Pinned: the section is two screens tall and its contents stick, so the
+     picture holds still for about a screen of scrolling while the phone flies.
+     Nothing is taken out of the reader's hands — they are still scrolling. */
+  .closer.pinned { height: 190svh; }
+  .closer.pinned .closer-stick { position: sticky; top: 0; height: 100svh; }
+
+  /* The phone in flight belongs to the PAGE, not to either section — which is
+     the only way it can be on screen continuously across the boundary. */
+  .flight {
+    position: fixed; left: 0; top: 0; z-index: 6; display: none;
+    pointer-events: none; transform-origin: 0 0; will-change: transform;
+  }
+  .flight.on { display: block; }
+  .flight .phone { animation: none; }
+  .flight .shot { transition: opacity 0.16s linear; }
 
   .proto {
     position: fixed; bottom: 12px; left: 14px; z-index: 2;
@@ -571,7 +593,10 @@ const html = `<title>Never Train Alone</title>
 
 ${renderStory("story1", story1)}
 
-${closer("closer-colours", "UNIsport Campus Colours.html", "Your campus, your colours", "student", 0)}
+${closer("closer-colours", "UNIsport Campus Colours.html", "Your campus, your colours", "student", 0, {
+  // the profile it was just reading → the Gyms list, swapped inside the pinch
+  from: "story1", fromShot: ".shot-frame[data-i='6'] .shot", toShot: ".shot-frame[data-i='0'] .shot",
+})}
 
 <div class="statement" id="interlude">
   <p class="lead-in">And if you train for the university itself —</p>
@@ -582,7 +607,22 @@ ${closer("closer-colours", "UNIsport Campus Colours.html", "Your campus, your co
 
 ${renderStory("story2", story2)}
 
-${closer("closer-blades", "Blade Lock Light.html", "Every crew. One system.", "varsity", 0)}
+${closer("closer-blades", "Blade Lock Light.html", "Every crew. One system.", "varsity", 0, {
+  // the season statistics → back to Varsity Home, as a tab switch; then the
+  // oars come out from behind it
+  from: "story2", fromShot: ".shot-frame[data-i='5'] .shot", toShot: ".shot-frame[data-i='0'] .shot",
+  swap: "slide", oars: true,
+})}
+
+<div class="flight" id="flight" aria-hidden="true">
+  <div class="phone">
+    <div class="screen">
+      <div class="statusbar"><span>9:41</span><i class="island"></i><span>5G</span></div>
+      <div class="shots"></div>
+      <div class="homebar"><i></i></div>
+    </div>
+  </div>
+</div>
 
 <div class="cta">
   <h2>One app per university. <em>Yours next.</em></h2>
@@ -701,6 +741,15 @@ ${closer("closer-blades", "Blade Lock Light.html", "Every crew. One system.", "v
     st.textContent =
       '.__ph{position:relative;z-index:3;transition:transform .95s cubic-bezier(.2,.85,.25,1)}' +
       '.__ph.pre{transform:translateX(-110px) scale(1.16)}' +
+      // While the page's own phone is flying in, theirs must not be there —
+      // two phones in the same place is the whole thing we are avoiding.
+      '.__ph.hide{visibility:hidden}' +
+      // The oars are collapsed onto the phone and then let go. translate/scale
+      // are their OWN properties, not transform: the app rewrites each oar's
+      // inline transform on every cycle, and these compose with it instead of
+      // being trampled by it.
+      '.__oar{transition:translate .95s cubic-bezier(.2,.85,.25,1),scale .95s cubic-bezier(.2,.85,.25,1),opacity .5s ease}' +
+      '.__oar.pre{opacity:0}' +
       '.__lt{position:relative;z-index:1;transition:opacity .5s ease .5s,transform 1s cubic-bezier(.2,.85,.25,1) .5s}' +
       '.__lt.pre{opacity:0;transform:translateX(-215px) scale(.45)}' +
       '.__tabs{position:absolute;left:0;right:0;bottom:0;height:12%;display:flex;align-items:center;' +
@@ -716,7 +765,8 @@ ${closer("closer-blades", "Blade Lock Light.html", "Every crew. One system.", "v
     var shell = findPhone(d);
     if (shell) {
       shell.classList.add("__ph");
-      if (!reduce) shell.classList.add("pre");
+      if (sec.getAttribute("data-flight") && !reduce) shell.classList.add("hide");
+      else if (!reduce) shell.classList.add("pre");
       // the screen is the padded inner box; the bar belongs inside it
       var screen = shell.querySelector("*");
       if (screen && !screen.querySelector(".__tabs")) {
@@ -731,6 +781,8 @@ ${closer("closer-blades", "Blade Lock Light.html", "Every crew. One system.", "v
       letter.classList.add("__lt");
       if (!reduce) letter.classList.add("pre");
     }
+
+    if (shell) parkOars(sec, d, shell);
 
     // The accent follows whichever school/crew is showing: the largest piece of
     // type that carries an actual colour (greys and near-whites are chrome).
@@ -759,6 +811,61 @@ ${closer("closer-blades", "Blade Lock Light.html", "Every crew. One system.", "v
     sec.__accentTimer = setInterval(accent, 400);
   }
 
+  /* Blade Lock's oars: every tall, narrow span holding an SVG that isn't part
+     of the phone. Parked ON the phone, shrunk to nothing, so they can come back
+     out from behind it. translate/scale are used rather than transform because
+     the app rewrites each oar's inline transform on every change. */
+  function parkOars(sec, d, shell) {
+    if (!sec.getAttribute("data-oars") || reduce) return;
+    var pr = shell.getBoundingClientRect();
+    var pcx = pr.left + pr.width / 2, pcy = pr.top + pr.height / 2;
+    [].slice.call(d.querySelectorAll("span")).forEach(function (o) {
+      var kid = o.firstElementChild;
+      if (!kid || kid.tagName.toLowerCase() !== "svg") return;
+      var r = o.getBoundingClientRect();
+      if (r.height < 90 || r.width > 130 || shell.contains(o)) return;
+      o.classList.add("__oar", "pre");
+      o.style.translate = (pcx - (r.left + r.width / 2)) + "px " + (pcy - (r.top + r.height / 2)) + "px";
+      o.style.scale = "0.14";
+    });
+  }
+
+  /* Both pieces cycle on their own timer, and clicking one of their controls
+     both jumps to that school AND stops that timer — so the page clicks the
+     first one (Harvard) as the reader arrives, and then paces the rotation
+     itself. That is what makes the sequence open on the crimson the phone was
+     already wearing, every time. */
+  function toHarvard(f) {
+    var d = f.contentDocument;
+    var btns = d ? [].slice.call(d.querySelectorAll("button")) : [];
+    if (btns.length > 2) { btns[0].click(); return true; }
+    return false;
+  }
+  function spin(sec, f, delay) {
+    if (sec.__spin) { clearInterval(sec.__spin); sec.__spin = null; }
+    if (reduce) return;
+    sec.__spinStart = setTimeout(function () {
+      var i = 0;
+      sec.__spin = setInterval(function () {
+        var d = f.contentDocument;
+        var btns = d ? [].slice.call(d.querySelectorAll("button")) : [];
+        if (!btns.length) { clearInterval(sec.__spin); return; }
+        i = (i + 1) % btns.length;
+        btns[i].click();
+      }, 2400);
+    }, delay || 0);
+  }
+  function rewind(sec, f) {
+    if (sec.__spin) { clearInterval(sec.__spin); sec.__spin = null; }
+    if (sec.__spinStart) { clearTimeout(sec.__spinStart); sec.__spinStart = null; }
+    var d = f.contentDocument;
+    if (!d) return;
+    var lt = d.querySelector(".__lt"); if (lt && !reduce) lt.classList.add("pre");
+    var shell = d.querySelector(".__ph");
+    if (shell && sec.getAttribute("data-flight") && !reduce) shell.classList.add("hide");
+    if (shell) parkOars(sec, d, shell);
+  }
+
   function play(f) {
     var d = f.contentDocument;
     if (!d) return;
@@ -766,6 +873,155 @@ ${closer("closer-blades", "Blade Lock Light.html", "Every crew. One system.", "v
       var el = d.querySelector(sel);
       if (el) setTimeout(function () { el.classList.remove("pre"); }, i * 260);
     });
+  }
+
+  // The oars come out of the phone together, then open into the arc — the
+  // centre blade (the locked one, Harvard on a fresh load) leads.
+  function playOars(f, delay) {
+    var d = f.contentDocument;
+    if (!d) return;
+    var oars = [].slice.call(d.querySelectorAll(".__oar"));
+    if (!oars.length) return;
+    var mid = d.documentElement.clientWidth / 2;
+    oars.map(function (o) {
+      var r = o.getBoundingClientRect();
+      return { o: o, d: Math.abs(r.left + r.width / 2 - mid) };
+    }).sort(function (a, b) { return a.d - b.d; })
+      .forEach(function (item, i) {
+        setTimeout(function () {
+          item.o.classList.remove("pre");
+          item.o.style.translate = "";
+          item.o.style.scale = "";
+        }, (delay || 0) + i * 65);
+      });
+  }
+
+  // Just the letter — used after a flight, where the phone is already home.
+  function playLetter(f, delay) {
+    var d = f.contentDocument;
+    if (!d) return;
+    var el = d.querySelector(".__lt");
+    if (el) setTimeout(function () { el.classList.remove("pre"); }, delay || 0);
+  }
+
+  /* ── THE FLIGHT ──────────────────────────────────────────────────────────
+     The story's phone and the closer's phone are two different phones in two
+     different documents, which is why the old version cut. So neither is used
+     for the move: a third phone, belonging to the page, takes off from exactly
+     where the story's phone is, flies across the boundary, and lands exactly on
+     the closer's phone — which has been invisible the whole time and is simply
+     switched on underneath at the end.
+
+     The path leaves downward and arrives downward (an S — down, right, down),
+     and halfway it collapses almost to nothing before opening back out. The
+     screen changes at that pinch, so it comes out of it showing Gyms.        */
+  var flight = document.getElementById("flight");
+  var flightPhone = flight && flight.querySelector(".phone");
+  var flightShots = flight && flight.querySelector(".shots");
+
+  function rectOfStoryPhone(id) {
+    var p = document.querySelector("#" + id + " .phone");
+    return p ? p.getBoundingClientRect() : null;
+  }
+  function rectOfCloserPhone(f) {
+    var d = f.contentDocument;
+    if (!d) return null;
+    var shell = d.querySelector(".__ph") || findPhone(d);
+    if (!shell) return null;
+    var ir = f.getBoundingClientRect(), sr = shell.getBoundingClientRect();
+    return { x: ir.left + sr.left + sr.width / 2, y: ir.top + sr.top + sr.height / 2, w: sr.width };
+  }
+
+  function runFlight(sec, f, done) {
+    var src = sec.getAttribute("data-from") || "story1";
+    var slide = sec.getAttribute("data-swap") === "slide";
+    var start = rectOfStoryPhone(src), target = rectOfCloserPhone(f);
+    if (!flight || !start || !target || start.width < 10) { done(); return; }
+
+    // Take the story's own screens with it: cloned, so nothing is downloaded
+    // or embedded twice, and the profile keeps the exact scroll it ended on.
+    var fromShot = document.querySelector("#" + src + " " + sec.getAttribute("data-from-shot"));
+    var toShot = document.querySelector("#" + src + " " + sec.getAttribute("data-to-shot"));
+    if (!fromShot || !toShot) { done(); return; }
+    flightShots.innerHTML = "";
+    var a = fromShot.cloneNode(true), b = toShot.cloneNode(true);
+    b.style.transform = "translateY(0px)";   // the new screen starts at its top
+    a.style.opacity = "1";
+    if (slide) {
+      // Profile → Home is a tab switch: the old screen leaves to the right and
+      // the new one comes in from the left. translate again, so the strip's own
+      // transform (which does the vertical panning) survives.
+      b.style.opacity = "1";
+      a.style.transition = b.style.transition = "translate .5s cubic-bezier(.4,0,.2,1)";
+      b.style.translate = "-110% 0";
+    } else {
+      b.style.opacity = "0";
+    }
+    flightShots.appendChild(a); flightShots.appendChild(b);
+
+    flightPhone.style.width = start.width + "px";
+    flight.classList.add("on");
+    var box = flight.getBoundingClientRect();
+    var w0 = box.width, h0 = box.height;
+
+    // hide the story's phone: there is only ever one on screen
+    var col = document.querySelector("#" + src + " .phone-col");
+    if (col) col.style.visibility = "hidden";
+
+    var A = { x: start.left + start.width / 2, y: start.top + start.height / 2, w: start.width };
+    var t0 = performance.now(), DUR = 1500, swapped = false;
+
+    /* The move and the page arrive together. Triggered on its own the phone
+       could land before the section had finished coming up, so the same easing
+       that flies the phone also carries the page the rest of the way to the
+       pinned position — "scroll a little and it does the whole thing".
+       The moment the reader touches the wheel, the page is theirs again. */
+    var scrollFrom = window.scrollY;
+    var scrollTo = scrollFrom + sec.getBoundingClientRect().top;
+    var driving = true;
+    function release() { driving = false; }
+    window.addEventListener("wheel", release, { passive: true, once: true });
+    window.addEventListener("touchmove", release, { passive: true, once: true });
+    window.addEventListener("keydown", release, { once: true });
+
+    function step(now) {
+      var t = Math.min(1, (now - t0) / DUR);
+      var e = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+      if (driving) window.scrollTo(0, scrollFrom + (scrollTo - scrollFrom) * e);
+      // recomputed every frame: until the section pins, the target is moving
+      var tg = rectOfCloserPhone(f) || target;
+      var amp = Math.max(150, Math.abs(tg.y - A.y) * 0.75);
+      var c1x = A.x, c1y = A.y + amp, c2x = tg.x, c2y = tg.y - amp;
+      var m = 1 - e;
+      var px = m*m*m*A.x + 3*m*m*e*c1x + 3*m*e*e*c2x + e*e*e*tg.x;
+      var py = m*m*m*A.y + 3*m*m*e*c1y + 3*m*e*e*c2y + e*e*e*tg.y;
+      // size: it ends at the closer's size, and dips almost to nothing halfway
+      var grow = (A.w + (tg.w - A.w) * e) / A.w;
+      var pinch = slide ? 1 - 0.10 * Math.sin(Math.PI * t)
+                        : 1 - 0.72 * Math.pow(Math.sin(Math.PI * t), 2.2);
+      var sc = grow * pinch;
+      flight.style.transform =
+        "translate(" + (px - w0 * sc / 2) + "px," + (py - h0 * sc / 2) + "px) scale(" + sc + ")";
+      if (!swapped && t >= 0.5) {
+        swapped = true;
+        if (slide) { a.style.translate = "110% 0"; b.style.translate = "0 0"; }
+        else { a.style.opacity = "0"; b.style.opacity = "1"; }
+      }
+      if (t < 1) requestAnimationFrame(step);
+      else {
+        var d = f.contentDocument;
+        var shell = d && d.querySelector(".__ph");
+        if (shell) shell.classList.remove("hide");   // theirs, exactly here, takes over
+        flight.classList.remove("on");
+        flight.style.transform = "";
+        if (col) col.style.visibility = "";
+        window.removeEventListener("wheel", release);
+        window.removeEventListener("touchmove", release);
+        window.removeEventListener("keydown", release);
+        done();
+      }
+    }
+    requestAnimationFrame(step);
   }
 
   // Their app mounts a moment AFTER the frame's load event, so nothing can be
@@ -783,30 +1039,43 @@ ${closer("closer-blades", "Blade Lock Light.html", "Every crew. One system.", "v
     var f = sec.querySelector("iframe");
     var armed = false;
 
+    var flies = !!sec.getAttribute("data-flight") && !reduce;
+    // Only the pinned, flown-into closer needs the extra screen of scroll, and
+    // only where the two-column layout exists to fly across.
+    if (flies && window.innerWidth >= 1024) sec.classList.add("pinned");
+
     f.addEventListener("load", function () {
-      whenReady(f, function () {
-        prime(sec, f);
-        f.style.opacity = "1";
-        if (armed) setTimeout(function () { play(f); }, 180);
-      });
+      whenReady(f, function () { prime(sec, f); });
     });
 
     var io = new IntersectionObserver(function (entries) {
       entries.forEach(function (e) {
         if (!e.isIntersecting) {
-          // Scrolled back above it: arm again so returning replays from Harvard.
-          if (e.boundingClientRect.top > 0) armed = false;
+          // Scrolled back above it: put it away, so coming back plays it again.
+          if (e.boundingClientRect.top > 0 && armed) { armed = false; rewind(sec, f); }
           return;
         }
         if (armed) return;
         armed = true;
-        if (reduce || !f.contentWindow) return;
-        // Blank it, restart it, dress it, then play it in — the reader sees the
-        // sequence open on Harvard rather than wherever the timer had got to.
-        f.style.opacity = "0";
-        f.contentWindow.location.reload();
+
+        var d = f.contentDocument;
+        if (!d || !d.querySelector(".__ph")) { whenReady(f, function () { prime(sec, f); }); }
+        toHarvard(f);              // open on the colour the phone was wearing
+        var shell = f.contentDocument && f.contentDocument.querySelector(".__ph");
+        if (shell) parkOars(sec, f.contentDocument, shell);   // fresh geometry
+
+        if (flies && sec.classList.contains("pinned")) {
+          runFlight(sec, f, function () {
+            if (sec.getAttribute("data-oars")) playOars(f, 180);
+            else playLetter(f, 220);
+            spin(sec, f, 1700);    // …and only then does it start rotating
+          });
+        } else {
+          play(f);
+          spin(sec, f, 1500);
+        }
       });
-    }, { threshold: 0.3 });
+    }, { threshold: sec.getAttribute("data-flight") ? 0.02 : 0.3 });
     io.observe(sec);
   });
 })();
@@ -821,7 +1090,8 @@ ${closer("closer-blades", "Blade Lock Light.html", "Every crew. One system.", "v
     var frames = [].slice.call(document.querySelectorAll(".closer-frame"));
     function fit() {
       frames.forEach(function (f) {
-        var sec = f.parentNode;
+        var sec = f.closest(".closer");
+        if (sec.classList.contains("pinned")) return;
         sec.classList.remove("tallfit");
         f.style.height = "";
         var d = f.contentDocument;
