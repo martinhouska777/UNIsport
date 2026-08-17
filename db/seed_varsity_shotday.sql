@@ -39,7 +39,16 @@ begin
   am_key := base || '-AM';
   pm_key := base || '-PM';
 
-  -- --- The AM four ---------------------------------------------------------
+  -- --- The AM session and its four -----------------------------------------
+  -- Whatever weekday this runs on, the AM becomes a water session — a boat
+  -- lineup published under an erg morning would contradict itself on screen.
+  insert into public.varsity_plan_sessions (day_key, category, intensity, description, time, updated_at)
+  values (am_key, 'water', 'UT2', '2×20'' at rate 20', '7:00 AM', now())
+  on conflict (day_key) do update
+    set category = excluded.category, intensity = excluded.intensity,
+        description = excluded.description, time = excluded.time, updated_at = now();
+  insert into public.demo_seed_keys (kind, key) values ('plan_session', am_key) on conflict do nothing;
+
   -- Seats are stored bow → stroke; Home reverses them so stroke sits at the top.
   update public.varsity_lineups
      set boats = '[

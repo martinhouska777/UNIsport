@@ -106,7 +106,14 @@ const story2 = [
     ann: [{ side: "right", top: 16, text: "Your week, at a glance" }, { side: "left", top: 44, text: "Tap to log" }],
   },
   {
-    key: "tall-vprofile", kicker: "V5 · The season", pan: [0.06, 0.42], side: "left", enter: "tab", tap: [88.4, 93.3],
+    // Logged a workout → over to the Calendar tab, where it just landed.
+    key: "14-varsity-calendar", kicker: "V5 · The calendar", side: "left", enter: "tab", tap: [30.8, 94],
+    head: "Keep track of every session.",
+    sub: "Each workout you log lands on the calendar by itself — your season's training history, paired with live statistics.",
+    ann: [{ side: "right", top: 34, text: "Session dots" }, { side: "left", top: 64, text: "Today" }],
+  },
+  {
+    key: "tall-vprofile", kicker: "V6 · The season", pan: [0.06, 0.42], side: "left", enter: "tab", tap: [88.4, 93.3],
     head: "129 km this week.",
     sub: "Metres rowed, week by week, all season — consistency you can actually see.",
     ann: [{ side: "right", top: 40, text: "Eight weeks of work" }],
@@ -181,14 +188,39 @@ ${imgs}
 }
 
 const html = `<title>Never Train Alone</title>
+<script>
+  // Theme first, before any styles apply: default LIGHT (the app frames and
+  // the static closers are light), remembered per browser.
+  (function () {
+    var t;
+    try { t = localStorage.getItem("storyTheme"); } catch (e) {}
+    if (t !== "dark") document.documentElement.classList.add("light");
+  })();
+</script>
 <style>
   :root {
     --bg: #0a0a0a; --bg-elevated: #111111;
     --border: #1f1f1f; --border-2: #2a2a2a;
     --text: #f5f5f5; --text-2: #888888; --text-3: #555555;
     --blue: #4a9eff; --gold: #e0c896;
+    --bg-warm: #0d0c0a;
+    --grid: rgba(255,255,255,0.015);
+    --phone-shadow: rgba(0,0,0,0.55);
+    --pill-bg: rgba(10,10,10,0.7);
     --serif: "Instrument Serif", Georgia, "Times New Roman", serif;
     --mono: ui-monospace, "SF Mono", "Cascadia Mono", Consolas, monospace;
+  }
+  /* The light palette: same page, neutrals flipped, accents darkened so the
+     kickers and italics keep their contrast on white. */
+  html.light {
+    --bg: #faf9f7; --bg-elevated: #ffffff;
+    --border: #e7e4df; --border-2: #d6d2cb;
+    --text: #16150f; --text-2: #5c584f; --text-3: #9b968c;
+    --blue: #1a63c4; --gold: #8a6d20;
+    --bg-warm: #f4f1ea;
+    --grid: rgba(0,0,0,0.03);
+    --phone-shadow: rgba(20,16,8,0.2);
+    --pill-bg: rgba(255,255,255,0.75);
   }
   * { margin: 0; box-sizing: border-box; }
   html { scroll-behavior: smooth; }
@@ -200,8 +232,8 @@ const html = `<title>Never Train Alone</title>
   body::before {
     content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none;
     background-image:
-      linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
     background-size: 48px 48px;
   }
 
@@ -302,24 +334,24 @@ const html = `<title>Never Train Alone</title>
   .phone-wrap { position: relative; }
   .phone {
     cursor: pointer; width: min(360px, 48svh, 86vw);
-    border: 1px solid var(--border-2); background: var(--bg-elevated);
+    border: 1px solid #2a2a2a; background: #101010;
     border-radius: 44px; padding: 10px;
-    box-shadow: 0 40px 80px rgba(0,0,0,0.55);
+    box-shadow: 0 40px 80px var(--phone-shadow);
     animation: float 7s ease-in-out infinite;
   }
-  .screen { position: relative; border-radius: 34px; overflow: hidden; background: #000; }
+  .screen { position: relative; border-radius: 34px; overflow: hidden; background: #fff; }
   .statusbar {
     display: flex; justify-content: space-between; align-items: center;
     padding: 12px 22px 8px; font-family: var(--mono); font-size: 12px;
-    color: var(--text); background: #000;
+    color: #16150f; background: #fff;
   }
-  .statusbar span:last-child { color: var(--text-3); font-size: 11px; }
+  .statusbar span:last-child { color: #9b968c; font-size: 11px; }
   /* The dynamic-island pill and the gesture bar: the black bands above and
      below the app content that make the frame read as a real phone. */
   .island { width: 84px; height: 22px; border-radius: 999px; background: #161616; border: 1px solid #222; }
-  .homebar { height: 24px; display: flex; align-items: center; justify-content: center; background: #000; }
-  .homebar i { width: 38%; height: 4px; border-radius: 999px; background: #2e2e2e; }
-  .shots { position: relative; aspect-ratio: 900 / 1479; overflow: hidden; background: #000; }
+  .homebar { height: 24px; display: flex; align-items: center; justify-content: center; background: #fff; }
+  .homebar i { width: 38%; height: 4px; border-radius: 999px; background: #cfccc6; }
+  .shots { position: relative; aspect-ratio: 900 / 1479; overflow: hidden; background: #fff; }
   /*
     Each screen sits in its own frame. Only two frames are ever visible: the one
     arriving and the one it is replacing, which is kept on screen underneath for
@@ -346,9 +378,9 @@ const html = `<title>Never Train Alone</title>
   .shot-frame[data-enter="none"] { transition: none; }
 
   /* Leaving. Where the old screen goes depends on what replaced it. */
-  .shot-frame.leaving[data-out="push"]    { transform: translateX(-22%); filter: brightness(0.55); }
+  .shot-frame.leaving[data-out="push"]    { transform: translateX(-22%); filter: brightness(0.82); }
   .shot-frame.leaving[data-out="tab"]     { transform: translateX(-100%); }
-  .shot-frame.leaving[data-out="sheet"]   { transform: scale(0.94); filter: brightness(0.5); }
+  .shot-frame.leaving[data-out="sheet"]   { transform: scale(0.94); filter: brightness(0.78); }
   .shot-frame.leaving[data-out="none"]    { transition: none; opacity: 0; }
   .shot-frame.leaving[data-out="fade"]    { opacity: 0; }
   /* The sheet drops away OVER the screen it reveals. */
@@ -367,8 +399,8 @@ const html = `<title>Never Train Alone</title>
   /* The tap that caused it: a ring, on the screen being left, before it moves. */
   .tap {
     position: absolute; z-index: 4; width: 34px; height: 34px; margin: -17px 0 0 -17px;
-    border-radius: 50%; border: 2px solid rgba(255,255,255,0.9);
-    background: rgba(255,255,255,0.14); opacity: 0; pointer-events: none;
+    border-radius: 50%; border: 2px solid rgba(22,21,15,0.75);
+    background: rgba(22,21,15,0.12); opacity: 0; pointer-events: none;
   }
   .tap.fire { animation: tap-ring 0.5s ease-out; }
   @keyframes tap-ring {
@@ -413,7 +445,7 @@ const html = `<title>Never Train Alone</title>
 
   #hero, #story1 { --sa: var(--blue); }
   #interlude, #story2 { --sa: var(--gold); }
-  #interlude { background: #0d0c0a; min-height: 100svh; }
+  #interlude { background: var(--bg-warm); min-height: 100svh; }
 
   .cta {
     position: relative; z-index: 1; min-height: 70svh;
@@ -437,11 +469,28 @@ const html = `<title>Never Train Alone</title>
   .cta a:focus-visible { outline: 2px solid var(--text); outline-offset: 3px; }
   .cta .note { color: var(--text-3); font-size: 13px; margin-top: 6px; }
 
+  /* Light / dark switch — one button, swaps the page palette. */
+  .mode {
+    position: fixed; top: 14px; right: 14px; z-index: 5;
+    width: 40px; height: 40px; border-radius: 50%; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    border: 1px solid var(--border-2); background: var(--pill-bg);
+    color: var(--text-2); backdrop-filter: blur(6px);
+    transition: color 0.2s ease, border-color 0.2s ease;
+  }
+  .mode:hover, .mode:focus-visible { color: var(--text); border-color: var(--text-3); }
+  .mode:focus-visible { outline: 2px solid var(--sa, var(--blue)); outline-offset: 3px; }
+  /* The icon shows where the button takes you: sun in the dark, moon in the light. */
+  .mode svg { display: block; }
+  .mode .moon { display: none; }
+  html.light .mode .sun { display: none; }
+  html.light .mode .moon { display: block; }
+
   .proto {
     position: fixed; bottom: 12px; left: 50%; transform: translateX(-50%); z-index: 2;
     font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em;
     text-transform: uppercase; color: var(--text-3);
-    background: rgba(10,10,10,0.7); padding: 4px 12px; border-radius: 999px;
+    background: var(--pill-bg); padding: 4px 12px; border-radius: 999px;
     border: 1px solid var(--border); backdrop-filter: blur(6px);
   }
 
@@ -500,6 +549,21 @@ ${renderStory("story2", story2)}
   <a href="https://un-isport.vercel.app/join" target="_blank" rel="noopener">Bring it to your university</a>
   <div class="note">Prototype — scroll timing and copy under review.</div>
 </div>
+
+<button class="mode" id="modeToggle" aria-label="Switch between light and dark mode">
+  <svg class="sun" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+    <circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.4M12 19.1v2.4M2.5 12h2.4M19.1 12h2.4M4.9 4.9l1.7 1.7M17.4 17.4l1.7 1.7M19.1 4.9l-1.7 1.7M6.6 17.4l-1.7 1.7"/>
+  </svg>
+  <svg class="moon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M20.4 14.2A8.6 8.6 0 0 1 9.8 3.6a8.6 8.6 0 1 0 10.6 10.6Z"/>
+  </svg>
+</button>
+<script>
+  document.getElementById("modeToggle").addEventListener("click", function () {
+    var light = document.documentElement.classList.toggle("light");
+    try { localStorage.setItem("storyTheme", light ? "light" : "dark"); } catch (e) {}
+  });
+</script>
 
 <div class="proto">Scroll-story prototype · both animations</div>
 

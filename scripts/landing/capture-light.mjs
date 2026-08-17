@@ -1,0 +1,158 @@
+// Re-shoots EVERY frame the scroll story uses, in the app's LIGHT mode — the
+// app keys its palette off localStorage.uniThemeMode, which is planted before
+// any page loads. Run db/seed_varsity_shotday.sql first (with the session
+// clock in the owner's timezone) so Varsity Home has the four and the pair.
+//
+// Frames written to public/landing/:
+//   stills  01-gyms, 02-match, 03-why-you-match (Ryan), 04-plan-a-session,
+//           13-varsity-log-list
+//   strips  tall-logsheet, tall-profile, tall-vhome, tall-vprofile
+import puppeteer from "puppeteer-core";
+import fs from "fs";
+import sharp from "sharp";
+import { execSync } from "node:child_process";
+
+const COOKIE = fs.readFileSync("session-cookie.txt", "utf8").trim();
+const BASE = "https://un-isport.vercel.app";
+const W = 402, PHONE_H = 661, DSF = 3;
+const OUT = "../../public/landing/";
+
+const browser = await puppeteer.launch({
+  executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe",
+  headless: "new",
+  args: ["--disable-gpu", "--no-first-run"],
+});
+const page = await browser.newPage();
+await page.setUserAgent(
+  "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36"
+);
+await browser.setCookie({
+  name: "sb-wavxyrgtaotrhnyepyor-auth-token",
+  value: COOKIE, domain: "un-isport.vercel.app", path: "/",
+  secure: true, sameSite: "Lax", expires: Math.floor(Date.now() / 1000) + 3600,
+});
+await page.evaluateOnNewDocument(() => {
+  try { window.localStorage.setItem("uniThemeMode", "light"); } catch {}
+});
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+const phone = () => page.setViewport({ width: W, height: PHONE_H, deviceScaleFactor: DSF, isMobile: true, hasTouch: true });
+const tall = (h) => page.setViewport({ width: W, height: h, deviceScaleFactor: DSF, isMobile: true, hasTouch: true });
+
+async function still(name) {
+  await page.screenshot({ path: `cap-${name}.png` });
+  await sharp(`cap-${name}.png`).resize({ width: 900 }).webp({ quality: 86 })
+    .toFile(OUT + name + ".webp");
+  console.log(name + ".webp");
+}
+
+/* ── student stills ─────────────────────────────────────────────────────── */
+await phone();
+await page.goto(BASE + "/gyms", { waitUntil: "networkidle2", timeout: 45000 });
+await wait(3500);
+await still("01-gyms");
+
+await page.goto(BASE + "/match", { waitUntil: "networkidle2", timeout: 45000 });
+await wait(3500);
+await still("02-match");
+
+// Ryan's profile — the person the whole thread follows.
+await page.goto(BASE + "/people/de11a014-0000-4000-8000-000000000014", { waitUntil: "networkidle2", timeout: 45000 });
+await wait(3000);
+await still("03-why-you-match");
+
+// The chat, opened from the Messages list so the read state is realistic.
+await page.goto(BASE + "/messages", { waitUntil: "networkidle2", timeout: 45000 });
+await wait(3000);
+const thread = await page.evaluate(() => {
+  const el = [...document.querySelectorAll("a,button,[role=button]")].find((e) =>
+    /ryan o'neill/i.test(e.textContent));
+  if (el) { el.click(); return true; }
+  return false;
+});
+if (!thread) throw new Error("no Ryan thread on the Messages list");
+await wait(2500);
+await still("04-plan-a-session");
+
+/* ── the log sheet strip ────────────────────────────────────────────────── */
+await page.goto(BASE + "/profile", { waitUntil: "networkidle2", timeout: 45000 });
+await wait(3200);
+const day = await page.evaluate(() => {
+  const pick = [...document.querySelectorAll("button[aria-label]")].find((x) =>
+    /^Legs, Calves on day \d+$/.test(x.getAttribute("aria-label") || ""));
+  if (pick) { pick.click(); return pick.getAttribute("aria-label"); }
+  return null;
+});
+await wait(1500);
+console.log("day sheet:", day);
+await page.evaluate(() => {
+  const cands = [...document.querySelectorAll("button,[role=button],div[class*=cursor-pointer]")].filter(
+    (e) => /^(Gym|Running|Cardio)/.test(e.textContent.trim()) && e.textContent.trim().length < 60);
+  const pick = cands.find((e) => /legs/i.test(e.textContent)) ||
+    cands.sort((a, b) => b.textContent.trim().length - a.textContent.trim().length)[0];
+  pick?.click();
+});
+await wait(1600);
+const edited = await page.evaluate(() => {
+  const el = [...document.querySelectorAll("button")].find((b) => /edit session/i.test(b.textContent.trim()));
+  if (el) { el.click(); return true; }
+  return false;
+});
+if (!edited) throw new Error("could not open the log sheet");
+await tall(2000);
+await wait(1600);
+await page.screenshot({ path: "cap-logsheet-tall.png" });
+
+/* ── the profile strip, cut under the calendar ──────────────────────────── */
+await phone();
+await page.goto(BASE + "/profile", { waitUntil: "networkidle2", timeout: 45000 });
+await wait(3200);
+await tall(2400);
+await wait(1800);
+const pm = await page.evaluate(() => {
+  const all = [...document.querySelectorAll("body *")];
+  const cal = all.find((el) => el.children.length === 0 &&
+    el.textContent.trim().toLowerCase().startsWith(
+      new Date().toLocaleString("en-US", { month: "long", year: "numeric" }).toLowerCase()));
+  let box = cal;
+  while (box && !box.className?.toString?.().includes("border-b")) box = box.parentElement;
+  return { calendarBottom: box ? Math.round(box.getBoundingClientRect().bottom + window.scrollY) : null };
+});
+console.log("calendar bottom:", pm.calendarBottom);
+await page.screenshot({ path: "cap-profile-tall.png" });
+
+/* ── varsity ────────────────────────────────────────────────────────────── */
+await phone();
+await page.goto(BASE + "/varsity/home", { waitUntil: "networkidle2", timeout: 45000 });
+await wait(3500);
+await tall(2000);
+await wait(1800);
+await page.screenshot({ path: "cap-vhome-tall.png" });
+console.log("vhome tall captured");
+
+await phone();
+await page.goto(BASE + "/varsity/log", { waitUntil: "networkidle2", timeout: 45000 });
+await wait(3200);
+await still("13-varsity-log-list");
+
+await page.goto(BASE + "/varsity/profile", { waitUntil: "networkidle2", timeout: 45000 });
+await wait(3200);
+await tall(2200);
+await wait(1800);
+await page.screenshot({ path: "cap-vprofile-tall.png" });
+console.log("vprofile tall captured");
+
+await browser.close();
+
+/* ── strips → frames ────────────────────────────────────────────────────── */
+// A light page's "blank" is white, and make-frames detects blankness by
+// variance, not shade, so the same cut works unchanged.
+execSync(`node make-frames.mjs cap-logsheet-tall.png ${OUT}tall-logsheet.webp`, { stdio: "inherit" });
+execSync(`node make-frames.mjs cap-vhome-tall.png ${OUT}tall-vhome.webp`, { stdio: "inherit" });
+execSync(`node make-frames.mjs cap-vprofile-tall.png ${OUT}tall-vprofile.webp`, { stdio: "inherit" });
+
+const resized = await sharp("cap-profile-tall.png").resize({ width: 900 }).png().toBuffer();
+const meta = await sharp(resized).metadata();
+const cutAt = Math.min(meta.height, Math.round((pm.calendarBottom + 10) * (900 / W)));
+await sharp(resized).extract({ left: 0, top: 0, width: 900, height: cutAt })
+  .webp({ quality: 86 }).toFile(OUT + "tall-profile.webp");
+console.log(`tall-profile.webp  900x${cutAt}`);

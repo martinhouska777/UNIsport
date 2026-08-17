@@ -89,9 +89,17 @@ Then:
 
 | Script | Captures |
 |---|---|
+| `capture-light.mjs` | **the whole story set, in the app's light mode** — run this one to refresh everything (shot-day seed first, in the owner's timezone) |
+| `capture-ryan.mjs` | just the three frames carrying the partner's name |
+| `capture-profile-tall.mjs` | just the student profile strip |
+| `capture-shotday.mjs` | varsity home strip + the log sheet (dark-era script) |
 | `capture.mjs` | the varsity stills — home, race, log sheet, team, lineup |
 | `capture-varsity-tall.mjs` | tall strips for the pans (home, profile, calendar) |
 | `capture-tall3.mjs` | the student tall strips (a logged session, the profile) |
+
+The app is put into light mode by planting `localStorage.uniThemeMode = "light"`
+before the first load (`capture-light.mjs` does this) — every frame must be
+shot that way now, or a dark screen appears inside the light-chrome phone.
 
 **Never type the owner's password.** They log in themselves; the scripts reuse
 that session.
