@@ -23,8 +23,22 @@
 // follows, so cause and effect are in the right order. Coordinates are measured
 // off the live app, not guessed.
 import fs from "fs";
+import sharp from "sharp";
 
 const shots = JSON.parse(fs.readFileSync("shots.json", "utf8"));
+
+/* The REAL screens for the closers' phones, in every school's colours —
+   produced by recolor-shots.mjs from the same captures the stories use, so
+   the flight lands on exactly the image it flew with. Downscaled here: the
+   closer phone never renders wider than ~600 device pixels. */
+const SCHOOL_KEYS = ["harvard", "yale", "princeton", "penn", "brown", "columbia", "cornell", "dartmouth"];
+const realShots = { gyms: {}, vhome: {} };
+for (const scr of Object.keys(realShots)) {
+  for (const key of SCHOOL_KEYS) {
+    const buf = await sharp(`recolored/${scr}-${key}.webp`).resize(720).webp({ quality: 80 }).toBuffer();
+    realShots[scr][key] = "data:image/webp;base64," + buf.toString("base64");
+  }
+}
 
 const story1 = [
   {
@@ -144,7 +158,8 @@ function closer(id, file, title, tabs, tabActive, flight) {
   return `
 <section class="closer" id="${id}" data-tabs="${tabs}" data-tab-active="${tabActive}"${flight ? ' data-flight="1" data-from="' + fl.from + '" data-from-shot="' + fl.fromShot +
   '" data-to-shot="' + fl.toShot + '"' + (fl.swap === "slide" ? ' data-swap="slide"' : "") +
-  (fl.oars ? ' data-oars="1"' : "") + (fl.txt ? ' data-txt="1"' : "") : ""}>
+  (fl.oars ? ' data-oars="1"' : "") + (fl.txt ? ' data-txt="1"' : "") +
+  (fl.real ? ' data-real="' + fl.real + '"' : "") : ""}>
   <div class="closer-stick">
     <iframe class="closer-frame" title="${title}" srcdoc="${esc}"></iframe>
   </div>
@@ -603,6 +618,8 @@ ${closer("closer-colours", "UNIsport Campus Colours.html", "Your campus, your co
   // the words arrive from the right as the phone lands, and one nudge up
   // plays the whole film backwards
   txt: true,
+  // the phone shows the REAL Gyms screen, recolored per school
+  real: "gyms",
 })}
 
 <div class="statement" id="interlude">
@@ -621,6 +638,8 @@ ${closer("closer-blades", "Blade Lock Light.html", "Every crew. One system.", "v
   swap: "slide", oars: true,
   // same cut as the student closer: words from the right, one nudge up reverses
   txt: true,
+  // the phone shows the REAL Varsity Home, recolored and renamed per school
+  real: "vhome",
 })}
 
 <div class="flight" id="flight" aria-hidden="true">
@@ -672,6 +691,12 @@ ${closer("closer-blades", "Blade Lock Light.html", "Every crew. One system.", "v
 (function () {
   var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+  /* The REAL screens, one per school, for the closers' phones — the same
+     captures the stories fly in with, recolored (and, for the varsity
+     header, renamed) per school by recolor-shots.mjs. */
+  var REAL_SHOTS = ${JSON.stringify(realShots)};
+  var SCHOOL_KEYS = ${JSON.stringify(SCHOOL_KEYS)};
+
   // The app's own bottom tab bar, which the design pieces don't draw.
   var TABS = {
     student: [
@@ -688,6 +713,92 @@ ${closer("closer-blades", "Blade Lock Light.html", "Every crew. One system.", "v
       ["Profile", "M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 20c0-4 4-6 8-6s8 2 8 6"],
     ],
   };
+
+  /* The real screen inside a closer's phone: the same statusbar / capture /
+     gesture-bar sandwich the flying phone is built from, scaled to this
+     phone's screen. Two stacked images, so a school change is a crossfade. */
+  function buildRealShot(d, screen, shell, kind) {
+    if (screen.querySelector(".__rs")) return;
+    var w = screen.getBoundingClientRect().width || 300;
+    var k = w / 338;   // the story phone's screen is the size reference
+    var rs = d.createElement("div");
+    rs.className = "__rs";
+    rs.innerHTML =
+      '<div class="__rsb" style="padding:' + (12 * k) + 'px ' + (22 * k) + 'px ' + (8 * k) + 'px;' +
+        'font-family:ui-monospace,Consolas,monospace;font-size:' + (12 * k) + 'px">' +
+        '<span>9:41</span><i class="__rsi" style="width:' + (84 * k) + 'px;height:' + (22 * k) + 'px"></i>' +
+        '<span style="font-size:' + (11 * k) + 'px;color:#9b968c">5G</span></div>' +
+      '<div class="__rsimg"><img class="on" alt=""><img alt=""></div>' +
+      '<div class="__rhb" style="height:' + (24 * k) + 'px"><i style="width:38%;height:' + (4 * k) + 'px"></i></div>';
+    screen.appendChild(rs);
+    var imgs = rs.querySelectorAll("img");
+    imgs[0].src = REAL_SHOTS[kind].harvard;
+    imgs[1].src = REAL_SHOTS[kind].harvard;
+    d.__realKind = kind;
+    d.__realSchool = "harvard";
+  }
+
+  /* Which school the piece is showing right now — its logic instance (found
+     once through the react internals, then remembered) carries the index:
+     the wheel calls it active, the letter piece calls it idx. Mapped through
+     the piece's OWN school list, so the order can never drift from ours. */
+  function currentSchoolKey(d) {
+    try {
+      var L = d.__logicRef;
+      if (!L) {
+        var all = [].slice.call(d.querySelectorAll("*"));
+        var root = null, key = null;
+        for (var i = 0; i < all.length && !root; i++) {
+          var ks = Object.getOwnPropertyNames(all[i]);
+          for (var j = 0; j < ks.length; j++) {
+            if (ks[j].indexOf("__reactContainer$") === 0) { root = all[i]; key = ks[j]; break; }
+          }
+        }
+        if (!root) return null;
+        var q = [root[key]], seen = 0;
+        while (q.length && seen < 20000) {
+          var fib = q.shift(); seen++;
+          if (!fib) continue;
+          var sn = fib.stateNode;
+          if (sn && sn.logic && sn.logic.state &&
+              (typeof sn.logic.state.active === "number" || typeof sn.logic.state.idx === "number")) {
+            L = d.__logicRef = sn.logic;
+            break;
+          }
+          if (fib.child) q.push(fib.child);
+          if (fib.sibling) q.push(fib.sibling);
+        }
+        if (!L) return null;
+      }
+      var n = typeof L.state.active === "number" ? L.state.active : L.state.idx;
+      var arr = L.schools || L.SCHOOLS;
+      if (arr && arr[n] && arr[n].n) return String(arr[n].n).toLowerCase();
+      return SCHOOL_KEYS[n] || null;
+    } catch (e) { return null; }
+  }
+
+  function setRealShot(d, key, instant) {
+    var rs = d.querySelector(".__rs");
+    if (!rs || !REAL_SHOTS[d.__realKind] || d.__realSchool === key) return;
+    d.__realSchool = key;
+    var imgs = rs.querySelectorAll("img");
+    var front = imgs[0].classList.contains("on") ? imgs[0] : imgs[1];
+    var back = front === imgs[0] ? imgs[1] : imgs[0];
+    if (instant) {
+      front.src = REAL_SHOTS[d.__realKind][key];
+      back.src = REAL_SHOTS[d.__realKind][key];
+      return;
+    }
+    back.src = REAL_SHOTS[d.__realKind][key];
+    back.classList.add("on");
+    front.classList.remove("on");
+  }
+
+  function followSchool(d) {
+    if (!d.__realKind) return;
+    var key = currentSchoolKey(d);
+    if (key && REAL_SHOTS[d.__realKind][key]) setRealShot(d, key, false);
+  }
 
   function buildTabs(d, kind, active) {
     var items = TABS[kind];
@@ -784,6 +895,17 @@ ${closer("closer-blades", "Blade Lock Light.html", "Every crew. One system.", "v
       // The crew's name under the phone: held back until the oars are in place.
       '.__ft{transition:opacity .5s ease}' +
       '.__ft.pre{opacity:0}' +
+      // The REAL screen, laid over the piece's drawn one: status bar, the
+      // recolored capture, gesture bar — the same sandwich the flying phone
+      // is made of, so the landing is pixel-for-pixel.
+      '.__rs{position:absolute;inset:0;z-index:4;display:flex;flex-direction:column;background:#fff}' +
+      '.__rs .__rsb{display:flex;justify-content:space-between;align-items:center;background:#fff;color:#16150f}' +
+      '.__rs .__rsi{background:#161616;border:1px solid #222;border-radius:999px}' +
+      '.__rs .__rsimg{position:relative;flex:1;overflow:hidden;background:#fff}' +
+      '.__rs .__rsimg img{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;opacity:0;transition:opacity .45s ease}' +
+      '.__rs .__rsimg img.on{opacity:1}' +
+      '.__rs .__rhb{display:flex;align-items:center;justify-content:center;background:#fff}' +
+      '.__rs .__rhb i{background:#cfccc6;border-radius:999px;display:block}' +
       '.__tabs{position:absolute;left:0;right:0;bottom:0;height:12%;display:flex;align-items:center;' +
       'justify-content:space-around;background:#fff;border-top:1px solid #e7e4df;padding-bottom:1.6%;z-index:5}' +
       '.__tab{display:flex;flex-direction:column;align-items:center;gap:2px;color:#9b968c;line-height:1}' +
@@ -806,11 +928,17 @@ ${closer("closer-blades", "Blade Lock Light.html", "Every crew. One system.", "v
       else if (!reduce) shell.classList.add("pre");
       // the screen is the padded inner box; the bar belongs inside it
       var screen = shell.querySelector("*");
-      if (screen && !screen.querySelector(".__tabs")) {
+      if (screen) {
         var cs = d.defaultView.getComputedStyle(screen);
         if (cs.position === "static") screen.style.position = "relative";
         screen.style.overflow = "hidden";
-        screen.appendChild(buildTabs(d, kind, activeTab));
+        // the REAL screen covers the piece's drawn one; the Gyms capture
+        // carries the app's own tab bar, so no bar is drawn over it
+        var realKind = sec.getAttribute("data-real");
+        if (realKind) buildRealShot(d, screen, shell, realKind);
+        if (!screen.querySelector(".__tabs") && realKind !== "gyms") {
+          screen.appendChild(buildTabs(d, kind, activeTab));
+        }
       }
     }
     var letter = findLetter(d);
@@ -876,7 +1004,7 @@ ${closer("closer-blades", "Blade Lock Light.html", "Every crew. One system.", "v
     }
     accent();
     if (sec.__accentTimer) clearInterval(sec.__accentTimer);
-    sec.__accentTimer = setInterval(accent, 400);
+    sec.__accentTimer = setInterval(function () { accent(); followSchool(d); }, 400);
   }
 
   /* Blade Lock's oars: every tall, narrow span holding an SVG that isn't part
@@ -938,6 +1066,7 @@ ${closer("closer-blades", "Blade Lock Light.html", "Every crew. One system.", "v
     if (shell) parkOars(sec, d, shell);
     if (!reduce) [].slice.call(d.querySelectorAll(".__hd")).forEach(function (e) { e.classList.add("pre"); });
     if (!reduce) [].slice.call(d.querySelectorAll(".__ft")).forEach(function (e) { e.classList.add("pre"); });
+    setRealShot(d, "harvard", true);   // back to the colour the flight wears
     // and the story gets its words back, wherever the reader left it
     var src = sec.getAttribute("data-from");
     var stg = src && document.querySelector("#" + src + " .stage");
@@ -1547,6 +1676,7 @@ ${closer("closer-blades", "Blade Lock Light.html", "Every crew. One system.", "v
 
         function arrive() {
         toHarvard(f);              // open on the colour the phone was wearing
+        if (f.contentDocument) setRealShot(f.contentDocument, "harvard", true);
         var shell = f.contentDocument && f.contentDocument.querySelector(".__ph");
         if (shell) parkOars(sec, f.contentDocument, shell);   // fresh geometry
 
