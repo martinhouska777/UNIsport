@@ -318,7 +318,7 @@ function WeeklyGraph({
             type="button"
             onClick={() => onSwap(-1)}
             aria-label="Chart the previous measure"
-            className="-ml-1.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-muted active:bg-surface-2"
+            className="tap44 press-icon -ml-1.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-muted active:bg-surface-2"
           >
             <IconChevronLeft size={15} />
           </button>
@@ -329,7 +329,7 @@ function WeeklyGraph({
             type="button"
             onClick={() => onSwap(1)}
             aria-label="Chart the next measure"
-            className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-muted active:bg-surface-2"
+            className="tap44 press-icon flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-muted active:bg-surface-2"
           >
             <IconChevronRight size={15} />
           </button>
@@ -562,7 +562,7 @@ export default function ProfileScreen() {
             type="button"
             onClick={() => setModal("identity")}
             aria-label="Edit profile"
-            className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[10px] border border-border bg-surface text-muted"
+            className="tap44 press-icon flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[10px] border border-border bg-surface text-muted"
           >
             <IconPencil size={15} />
           </button>

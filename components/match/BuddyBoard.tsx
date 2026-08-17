@@ -14,6 +14,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Button from "@/components/ui/Button";
+import { SkeletonRows } from "@/components/ui/Skeleton";
 import {
   createBuddyPost,
   listBuddyBoard,
@@ -296,7 +297,7 @@ export default function BuddyBoard() {
 
       {/* BOARD LIST */}
       {boardErr && <Status>Couldn’t load the board: {boardErr}</Status>}
-      {!boardErr && board === null && <Status>Loading the board…</Status>}
+      {!boardErr && board === null && <SkeletonRows count={4} />}
       {!boardErr && board && board.length === 0 && (
         <Status>
           {anyFilter

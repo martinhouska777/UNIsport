@@ -143,7 +143,7 @@ function AthleteSheet({ athleteId, onClose }: { athleteId: string; onClose: () =
             type="button"
             aria-label="Previous month"
             onClick={() => goMonth(-1)}
-            className="flex h-6 w-6 items-center justify-center rounded-md border border-border bg-surface-2 text-muted"
+            className="tap44 press-icon flex h-6 w-6 items-center justify-center rounded-md border border-border bg-surface-2 text-muted"
           >
             <IconChevronDown size={13} className="rotate-90" />
           </button>
@@ -155,7 +155,7 @@ function AthleteSheet({ athleteId, onClose }: { athleteId: string; onClose: () =
             aria-label="Next month"
             onClick={() => goMonth(1)}
             disabled={atCurrent}
-            className="flex h-6 w-6 items-center justify-center rounded-md border border-border bg-surface-2 text-muted disabled:opacity-30"
+            className="tap44 press-icon flex h-6 w-6 items-center justify-center rounded-md border border-border bg-surface-2 text-muted disabled:opacity-30"
           >
             <IconChevronDown size={13} className="-rotate-90" />
           </button>

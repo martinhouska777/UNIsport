@@ -33,6 +33,9 @@ export default function GymProfile({ gym }: { gym: Gym }) {
   const rating = getRating(gym.slug);
   const crowd = getCrowd(gym.slug);
   const [activePhoto, setActivePhoto] = useState(0);
+  // See FavHeart in the gyms list: counts taps so the pop plays on the tap and
+  // not on every render of a gym that's already a favourite.
+  const [favTaps, setFavTaps] = useState(0);
 
   const onGalleryScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const el = e.currentTarget;
@@ -43,7 +46,11 @@ export default function GymProfile({ gym }: { gym: Gym }) {
     <div className="mx-auto flex w-full max-w-screen-sm flex-col">
       {/* Top bar */}
       <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-surface px-3.5 py-2.5">
-        <Link href="/gyms" aria-label="Back to gyms" className="text-muted">
+        <Link
+          href="/gyms"
+          aria-label="Back to gyms"
+          className="tap44 press-icon flex h-8 w-8 items-center justify-center text-muted"
+        >
           <IconArrowLeft size={18} />
         </Link>
         <span className="truncate px-2 text-[13px] font-medium text-text">
@@ -53,10 +60,17 @@ export default function GymProfile({ gym }: { gym: Gym }) {
           type="button"
           aria-label={favorite ? "Remove from favourites" : "Add to favourites"}
           aria-pressed={favorite}
-          onClick={() => toggle(gym.slug)}
-          className={favorite ? "text-primary" : "text-muted"}
+          onClick={() => {
+            setFavTaps((t) => t + 1);
+            toggle(gym.slug);
+          }}
+          className={`tap44 press-icon flex h-8 w-8 items-center justify-center ${
+            favorite ? "text-primary-live" : "text-muted"
+          }`}
         >
-          <IconHeart size={18} filled={favorite} />
+          <span key={favTaps} className={favTaps > 0 && favorite ? "react-pop block" : "block"}>
+            <IconHeart size={18} filled={favorite} />
+          </span>
         </button>
       </div>
 

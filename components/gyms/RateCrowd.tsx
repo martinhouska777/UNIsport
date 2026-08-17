@@ -13,9 +13,16 @@ import {
   type CrowdLevel,
   type GymCrowd,
 } from "@/lib/gymSocial";
+import { useState } from "react";
 import { IconStar, IconUser } from "@/components/icons";
 
-// Five stars. Tappable when `onRate` is given; read-only (just a display) when not.
+/*
+  Five stars. Tappable when `onRate` is given; read-only (just a display) when
+  not. Rating something is one of the two taps in the app worth celebrating, so
+  the stars fill in SEQUENCE rather than all at once — `rated` holds the value
+  you just chose (not the saved value), which is what keeps the animation from
+  replaying every time this re-renders with a rating already on it.
+*/
 export function StarRater({
   value,
   onRate,
@@ -25,6 +32,7 @@ export function StarRater({
   onRate?: (n: number) => void;
   size?: number;
 }) {
+  const [rated, setRated] = useState(0);
   return (
     <div className="flex items-center gap-1.5">
       {[1, 2, 3, 4, 5].map((n) => (
@@ -32,13 +40,22 @@ export function StarRater({
           key={n}
           type="button"
           disabled={!onRate}
-          onClick={() => onRate?.(n)}
+          onClick={() => {
+            setRated(n);
+            onRate?.(n);
+          }}
           aria-label={`Rate ${n} star${n > 1 ? "s" : ""}`}
-          className={`${n <= value ? "text-accent" : "text-text-3"} ${
-            onRate ? "active:scale-95" : "cursor-default"
+          className={`tap44 press-icon ${n <= value ? "text-accent" : "text-text-3"} ${
+            onRate ? "" : "cursor-default"
           }`}
         >
-          <IconStar size={size} />
+          <span
+            key={`${rated}-${n <= value}`}
+            className={rated > 0 && n <= rated ? "react-star block" : "block"}
+            style={rated > 0 && n <= rated ? { animationDelay: `${(n - 1) * 45}ms` } : undefined}
+          >
+            <IconStar size={size} />
+          </span>
         </button>
       ))}
     </div>

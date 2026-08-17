@@ -298,7 +298,7 @@ export default function LogSessionSheet({
                           type="button"
                           onClick={() => removeExercise(i)}
                           aria-label="Remove exercise"
-                          className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-surface-2 text-muted hover:text-danger"
+                          className="tap44 press-icon flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-surface-2 text-muted hover:text-danger"
                         >
                           <IconTrash size={14} />
                         </button>
@@ -358,7 +358,7 @@ export default function LogSessionSheet({
                                 type="button"
                                 onClick={() => patchSet(i, j, { done: !s.done })}
                                 aria-label={s.done ? "Mark set not done" : "Mark set done"}
-                                className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg ${
+                                className={`tap44 press-icon flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg ${
                                   s.done ? "bg-success text-background" : "bg-surface-2 text-muted"
                                 }`}
                               >
@@ -368,7 +368,7 @@ export default function LogSessionSheet({
                                 type="button"
                                 onClick={() => removeSet(i, j)}
                                 aria-label="Remove set"
-                                className="flex h-8 w-6 flex-shrink-0 items-center justify-center text-muted hover:text-danger"
+                                className="tap44 press-icon flex h-8 w-6 flex-shrink-0 items-center justify-center text-muted hover:text-danger"
                               >
                                 <IconX size={13} />
                               </button>
@@ -489,7 +489,7 @@ export default function LogSessionSheet({
                   type="button"
                   onClick={() => removePhoto(i)}
                   aria-label={`Remove photo ${i + 1}`}
-                  className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-background/80 text-text backdrop-blur hover:text-danger"
+                  className="tap44 press-icon absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-background/80 text-text backdrop-blur hover:text-danger"
                 >
                   <IconX size={11} />
                 </button>

@@ -28,23 +28,32 @@ const filters: { key: Filter; label: string }[] = [
   { key: "house", label: "House" },
 ];
 
-// Heart toggle that sits on a gym card without triggering the card's link.
+/*
+  Heart toggle that sits on a gym card without triggering the card's link.
+  `taps` exists purely so the pop plays when you favourite something and NOT on
+  every render of an already-favourited gym: bumping it changes the inner span's
+  key, which remounts it and restarts the animation from the top.
+*/
 function FavHeart({ fav, onToggle }: { fav: boolean; onToggle: () => void }) {
+  const [taps, setTaps] = useState(0);
   return (
     <button
       type="button"
       onClick={(e) => {
         e.preventDefault();
         e.stopPropagation();
+        setTaps((t) => t + 1);
         onToggle();
       }}
       aria-label={fav ? "Remove from favourites" : "Add to favourites"}
       aria-pressed={fav}
-      className={`absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-background/55 backdrop-blur ${
-        fav ? "text-primary" : "text-text-2"
+      className={`tap44 press-icon absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-background/55 backdrop-blur ${
+        fav ? "text-primary-live" : "text-text-2"
       }`}
     >
-      <IconHeart size={15} filled={fav} />
+      <span key={taps} className={taps > 0 && fav ? "react-pop block" : "block"}>
+        <IconHeart size={15} filled={fav} />
+      </span>
     </button>
   );
 }

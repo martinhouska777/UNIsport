@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Button from "@/components/ui/Button";
+import { SkeletonRows } from "@/components/ui/Skeleton";
 import {
   listDirectConversations,
   listChannels,
@@ -170,7 +171,7 @@ function DirectList({
   onOpen: (c: DmConversation) => void;
 }) {
   if (loading) {
-    return <div className="px-6 py-16 text-center text-sm text-muted">Loading…</div>;
+    return <SkeletonRows count={7} />;
   }
   if (list.length === 0) {
     return (
@@ -221,7 +222,7 @@ function CommunityList({
   onJoin: (channelId: string) => void;
 }) {
   if (loading) {
-    return <div className="px-6 py-16 text-center text-sm text-muted">Loading…</div>;
+    return <SkeletonRows count={7} />;
   }
   const joined = list.filter((c) => c.joined);
   const discover = list.filter((c) => !c.joined);

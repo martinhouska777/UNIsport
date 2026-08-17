@@ -16,6 +16,7 @@ import { getBrowseMatches } from "@/lib/supabase/matching";
 import { listDirectConversations } from "@/lib/supabase/messages";
 import { residenceLabel } from "@/lib/onboarding";
 import { IconArrowLeft, IconSearch, IconUser, IconCheck } from "@/components/icons";
+import { SkeletonRows } from "@/components/ui/Skeleton";
 
 export type PartnerPick = { id: string; name: string };
 
@@ -121,7 +122,7 @@ export default function PartnerPicker({
           </button>
 
           {people === null ? (
-            <div className="py-10 text-center text-[12px] text-muted">Loading people…</div>
+            <SkeletonRows count={4} />
           ) : results.length === 0 ? (
             <div className="px-2 py-10 text-center text-[12px] text-muted">
               {people.length === 0

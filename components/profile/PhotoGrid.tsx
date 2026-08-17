@@ -102,7 +102,7 @@ export default function PhotoGrid({
               type="button"
               onClick={() => remove(i)}
               aria-label={`Remove photo ${i + 1}`}
-              className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-background/80 text-text backdrop-blur transition-colors hover:text-danger"
+              className="tap44 press-icon absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-background/80 text-text backdrop-blur transition-colors hover:text-danger"
             >
               <IconX size={11} />
             </button>
@@ -136,7 +136,7 @@ export default function PhotoGrid({
             type="button"
             onClick={() => setViewer(null)}
             aria-label="Close photo"
-            className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-surface-2 text-text"
+            className="tap44 press-icon absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-surface-2 text-text"
           >
             <IconX size={18} />
           </button>

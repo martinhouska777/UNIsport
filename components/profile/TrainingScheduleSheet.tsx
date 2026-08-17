@@ -120,7 +120,7 @@ export default function TrainingScheduleSheet({
               type="button"
               onClick={onClose}
               aria-label="Close"
-              className="flex h-7 w-7 items-center justify-center rounded-full bg-surface-2 text-muted"
+              className="tap44 press-icon flex h-7 w-7 items-center justify-center rounded-full bg-surface-2 text-muted"
             >
               <IconX size={14} />
             </button>
@@ -180,7 +180,7 @@ export default function TrainingScheduleSheet({
                           type="button"
                           onClick={() => removeSlot(day.key, i)}
                           aria-label={`Remove ${slotLabel(slot)} on ${day.label}`}
-                          className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-2 text-muted"
+                          className="tap44 press-icon flex h-8 w-8 items-center justify-center rounded-full bg-surface-2 text-muted"
                         >
                           <IconTrash size={14} />
                         </button>

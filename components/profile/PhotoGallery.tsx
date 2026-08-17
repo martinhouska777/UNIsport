@@ -44,7 +44,7 @@ export default function PhotoGallery({ photos }: { photos: string[] }) {
             type="button"
             onClick={() => setViewer(null)}
             aria-label="Close photo"
-            className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-surface-2 text-text"
+            className="tap44 press-icon absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-surface-2 text-text"
           >
             <IconX size={18} />
           </button>

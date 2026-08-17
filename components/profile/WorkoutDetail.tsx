@@ -68,7 +68,7 @@ export default function WorkoutDetail({
           type="button"
           onClick={onBack}
           aria-label="Back"
-          className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-2 text-text"
+          className="tap44 press-icon flex h-8 w-8 items-center justify-center rounded-full bg-surface-2 text-text"
         >
           <IconArrowLeft size={16} />
         </button>

@@ -96,7 +96,7 @@ export default function PlanSessionSheet({
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="flex h-7 w-7 items-center justify-center rounded-full bg-surface-2 text-muted"
+            className="tap44 press-icon flex h-7 w-7 items-center justify-center rounded-full bg-surface-2 text-muted"
           >
             <IconX size={14} />
           </button>

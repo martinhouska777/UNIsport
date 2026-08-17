@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Button from "@/components/ui/Button";
+import { SkeletonLines, SkeletonRows } from "@/components/ui/Skeleton";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import VarsityShield from "@/components/varsity/VarsityShield";
@@ -204,7 +205,8 @@ export default function ProfilePage() {
             <IconSettings size={18} />
           </span>
         </div>
-        <div className="px-6 py-20 text-center text-sm text-muted">Loading your profile…</div>
+        <SkeletonLines count={5} />
+        <SkeletonRows count={3} avatar={false} />
       </div>
     );
   }
@@ -341,7 +343,7 @@ export default function ProfilePage() {
             type="button"
             onClick={() => avatarInputRef.current?.click()}
             aria-label={user.photo ? "Change photo" : "Add photo"}
-            className="absolute -bottom-0.5 -right-0.5 flex h-6 w-6 items-center justify-center rounded-full border border-border bg-surface-2 text-muted"
+            className="tap44 press-icon absolute -bottom-0.5 -right-0.5 flex h-6 w-6 items-center justify-center rounded-full border border-border bg-surface-2 text-muted"
           >
             <IconCamera size={12} />
           </button>

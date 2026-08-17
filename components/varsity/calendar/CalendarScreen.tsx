@@ -196,7 +196,7 @@ export default function CalendarScreen() {
               type="button"
               aria-label="Previous month"
               onClick={() => goMonth(-1)}
-              className="flex h-7 w-7 items-center justify-center rounded-lg border border-border bg-surface-2 text-muted"
+              className="tap44 press-icon flex h-7 w-7 items-center justify-center rounded-lg border border-border bg-surface-2 text-muted"
             >
               <IconChevronDown size={15} className="rotate-90" />
             </button>
@@ -205,7 +205,7 @@ export default function CalendarScreen() {
               aria-label="Next month"
               onClick={() => goMonth(1)}
               disabled={atCurrentMonth}
-              className="flex h-7 w-7 items-center justify-center rounded-lg border border-border bg-surface-2 text-muted disabled:opacity-30"
+              className="tap44 press-icon flex h-7 w-7 items-center justify-center rounded-lg border border-border bg-surface-2 text-muted disabled:opacity-30"
             >
               <IconChevronDown size={15} className="-rotate-90" />
             </button>

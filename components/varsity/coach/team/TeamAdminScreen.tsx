@@ -212,7 +212,7 @@ export default function TeamAdminScreen({ membership }: { membership: Membership
                   onClick={() => decide(m.userId, "removed")}
                   disabled={busy === m.userId}
                   aria-label={`Reject ${m.name}`}
-                  className="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-surface-2 text-muted disabled:opacity-50"
+                  className="tap44 press-icon flex h-8 w-8 items-center justify-center rounded-full border border-border bg-surface-2 text-muted disabled:opacity-50"
                 >
                   <IconX size={14} />
                 </button>
@@ -333,7 +333,7 @@ export default function TeamAdminScreen({ membership }: { membership: Membership
                         type="button"
                         onClick={() => copy(inviteUrl(i.code))}
                         aria-label="Copy this link"
-                        className="flex h-7 w-7 items-center justify-center rounded-full border border-border bg-surface-2 text-muted"
+                        className="tap44 press-icon flex h-7 w-7 items-center justify-center rounded-full border border-border bg-surface-2 text-muted"
                       >
                         <IconCopy size={12} />
                       </button>
@@ -342,7 +342,7 @@ export default function TeamAdminScreen({ membership }: { membership: Membership
                         onClick={() => kill(i.id)}
                         disabled={busy === i.id}
                         aria-label="Cancel this link"
-                        className="flex h-7 w-7 items-center justify-center rounded-full border border-border bg-surface-2 text-danger disabled:opacity-50"
+                        className="tap44 press-icon flex h-7 w-7 items-center justify-center rounded-full border border-border bg-surface-2 text-danger disabled:opacity-50"
                       >
                         <IconTrash size={12} />
                       </button>

@@ -84,7 +84,7 @@ export function ThemeModeToggle({ className = "" }: { className?: string }) {
       onClick={toggle}
       aria-label={toLight ? "Switch to light mode" : "Switch to dark mode"}
       title={toLight ? "Light mode" : "Dark mode"}
-      className={`flex h-8 w-8 items-center justify-center rounded-full border border-border bg-surface text-muted ${className}`}
+      className={`tap44 press-icon flex h-8 w-8 items-center justify-center rounded-full border border-border bg-surface text-muted ${className}`}
     >
       {toLight ? <IconSun size={16} /> : <IconMoon size={16} />}
     </button>

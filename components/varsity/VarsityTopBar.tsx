@@ -83,7 +83,7 @@ export default function VarsityTopBar() {
           type="button"
           onClick={handleBell}
           aria-label="Notifications"
-          className="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-surface text-muted"
+          className="tap44 press-icon flex h-8 w-8 items-center justify-center rounded-full border border-border bg-surface text-muted"
         >
           <IconBell size={16} />
         </button>
@@ -93,7 +93,7 @@ export default function VarsityTopBar() {
         <Link
           href="/settings"
           aria-label="Settings"
-          className="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-surface text-muted"
+          className="tap44 press-icon flex h-8 w-8 items-center justify-center rounded-full border border-border bg-surface text-muted"
         >
           <IconSettings size={16} />
         </Link>

@@ -16,6 +16,7 @@ import { fetchTodayLineups } from "@/lib/varsity/lineupStore";
 import { fetchNote } from "@/lib/varsity/notesStore";
 import { sessionKey } from "@/lib/varsity/coachPlan";
 import { buildAthleteHome } from "@/lib/varsity/athleteHome";
+import { SkeletonCards, SkeletonLines } from "@/components/ui/Skeleton";
 import {
   kindStyles,
   type SessionKind,
@@ -249,7 +250,7 @@ function MonthOverlay({
               onClick={() => goMonth(-1)}
               disabled={atStart}
               aria-label="Previous month"
-              className="flex h-7 w-7 items-center justify-center rounded-lg border border-border bg-surface text-muted disabled:opacity-30"
+              className="tap44 press-icon flex h-7 w-7 items-center justify-center rounded-lg border border-border bg-surface text-muted disabled:opacity-30"
             >
               <IconArrowLeft size={14} />
             </button>
@@ -257,7 +258,7 @@ function MonthOverlay({
               onClick={() => goMonth(1)}
               disabled={atEnd}
               aria-label="Next month"
-              className="flex h-7 w-7 items-center justify-center rounded-lg border border-border bg-surface text-muted disabled:opacity-30"
+              className="tap44 press-icon flex h-7 w-7 items-center justify-center rounded-lg border border-border bg-surface text-muted disabled:opacity-30"
             >
               <IconArrowRight size={14} />
             </button>
@@ -276,7 +277,7 @@ function MonthOverlay({
           <button
             onClick={onClose}
             aria-label="Close month view"
-            className="flex h-7 w-7 items-center justify-center rounded-full bg-surface-2 text-muted"
+            className="tap44 press-icon flex h-7 w-7 items-center justify-center rounded-full bg-surface-2 text-muted"
           >
             <IconX size={15} />
           </button>
@@ -431,9 +432,9 @@ function WeekStrip({ weeks, startIndex }: { weeks: WeekView[]; startIndex: numbe
             full-screen and the X drops you back here. */}
         <button
           onClick={() => setMonthOpen(true)}
-          className="flex items-center gap-1.5 rounded-lg border border-border bg-surface px-2.5 py-1 text-[9px] font-medium text-muted"
+          className="press flex h-8 items-center gap-1.5 rounded-lg border border-border bg-surface px-3 text-[11px] font-medium text-text"
         >
-          <IconCalendar size={11} />
+          <IconCalendar size={13} />
           Month
         </button>
       </div>
@@ -443,7 +444,7 @@ function WeekStrip({ weeks, startIndex }: { weeks: WeekView[]; startIndex: numbe
           onClick={() => go(-1)}
           disabled={idx === 0}
           aria-label="Previous week"
-          className="flex h-6 w-6 items-center justify-center rounded-md border border-border bg-surface text-muted disabled:opacity-30"
+          className="tap44 press-icon flex h-6 w-6 items-center justify-center rounded-md border border-border bg-surface text-muted disabled:opacity-30"
         >
           <IconArrowLeft size={13} />
         </button>
@@ -455,7 +456,7 @@ function WeekStrip({ weeks, startIndex }: { weeks: WeekView[]; startIndex: numbe
           onClick={() => go(1)}
           disabled={idx === last}
           aria-label="Next week"
-          className="flex h-6 w-6 items-center justify-center rounded-md border border-border bg-surface text-muted disabled:opacity-30"
+          className="tap44 press-icon flex h-6 w-6 items-center justify-center rounded-md border border-border bg-surface text-muted disabled:opacity-30"
         >
           <IconArrowRight size={13} />
         </button>
@@ -710,7 +711,8 @@ export default function HomeScreen() {
   if (loading) {
     return (
       <div className="mx-auto w-full max-w-screen-sm pb-6">
-        <div className="px-4 pt-20 text-center text-[13px] text-muted">Loading…</div>
+        <SkeletonLines count={2} />
+        <SkeletonCards count={2} />
       </div>
     );
   }
