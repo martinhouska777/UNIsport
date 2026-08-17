@@ -81,51 +81,37 @@ export const studentStory: Beat[] = [
   {
     id: "S1",
     kicker: "01 · The gyms",
-    head: "Find every gym on campus. In one app.",
-    /* Equipment carries the weight here, and it sits last so it lands last.
-       It also travels: "the house gyms nobody has a map of" was the better
-       line, but houses are a Harvard word and the sentence died at school two.
-       Every campus has rooms whose contents are a mystery. */
-    sub: "Opening hours, ratings, a live crowd meter — and the equipment nobody has a map of.",
+    head: "Find every gym on campus in one app.",
+    sub: "Opening hours, ratings, equipment that nobody has a map of, live crowd meter.",
     shot: "01-gyms.webp",
     ann: [
       { side: "right", top: 14, text: "Live ratings" },
-      { side: "left", top: 68, text: "Full equipment list" },
+      { side: "left", top: 68, text: "House gyms too" },
     ],
   },
   {
     id: "S2",
     kicker: "02 · The people",
-    /* "61 people · sorted by compatibility" is printed on the screenshot, so
-       the number is read off the app rather than invented. */
-    head: "Then it finds your people.",
-    sub: "61 people, ranked by how well you actually fit — same gym, same hours, same level, and more you'd never think to filter for.",
+    head: "Find training partners, make friends, establish contacts.",
+    sub: "Matching sorted by how well you actually fit — same gym, hours, level and much more.",
     shot: "02-match.webp",
     ann: [{ side: "right", top: 24, text: "Ranked by real fit" }],
   },
   {
     id: "S3",
-    /* The strongest beat on the page: every rival can show a profile, almost
-       none can explain its own matching. So the headline stays on the
-       explanation, and the profile's contents — interests, concentration,
-       languages, the mentor pairing — ride underneath it. They are the same
-       screen, so nothing had to be traded away for the mentor to appear. */
     kicker: "03 · The reasons",
-    head: "And it tells you why.",
-    sub: "Every reason is a real fact off both profiles — shared interests, the same concentration, a language you both speak. Including the one that says one of you is here to teach the other.",
+    /* "Life goals" was in the owner's line and is not in the product — the
+       profile stores concentration, hometown, languages, interests and a bio. */
+    head: "View a person's profile for hobbies, interests, concentrations.",
+    sub: "Or get mentored by more experienced people.",
     shot: "03-why-you-match.webp",
-    ann: [
-      { side: "right", top: 34, text: "Mentor fit" },
-      { side: "left", top: 56, text: "Facts, not guesses" },
-    ],
+    ann: [{ side: "left", top: 56, text: "Facts, not guesses" }],
   },
   {
     id: "S4",
     kicker: "04 · The plan",
-    /* The fear this beat answers is not "how do I schedule" — it is "are they
-       actually going to turn up". So the sub ends on the certainty. */
-    head: "Make the plan in the chat.",
-    sub: "One tap proposes it. One tap accepts. It's on both calendars — nobody has to ask “are we still on?”",
+    head: "Plan your session in the chat with one tap.",
+    sub: "One tap proposes the session, one accepts, it's in both calendars.",
     shot: "04-plan-a-session.webp",
     ann: [{ side: "right", top: 52, text: "One tap to accept" }],
   },
@@ -140,24 +126,25 @@ export const studentStory: Beat[] = [
   {
     id: "S6",
     kicker: "06 · The record",
-    head: "A photo and a note, while it's fresh.",
-    sub: "Who you trained with, how it went, and a picture if you took one — a session you'll have forgotten by March, still there in four years.",
+    /* "Track your partner's calendar" was in the owner's line and is not in
+       the product — /people/[id] renders a profile, match reasons and photos,
+       and no calendar. */
+    head: "Make memories stored in the calendar.",
+    sub: "Who you trained with, how it went, and a picture to make memories that last forever.",
     shot: "tall-logsheet.webp",
     ann: [{ side: "left", top: 50, text: "Photo + note" }],
   },
   {
     id: "S7",
     kicker: "07 · The proof",
-    /* The finale keeps no sub-line on purpose — the two numbers and the brand
-       line are the whole beat, and silence under them is what gives them room.
-       The leaderboards the pan travels past are named by the annotation
-       instead, which is why they do not need a sentence. */
+    /* Not `brandLine`: the story closes on the owner's "never train alone
+       AGAIN", while the brand line under the logo stays at three words. */
     head: "29 sessions. 6 partners.",
-    headEm: brandLine,
-    sub: "",
+    headEm: "Never train alone again.",
+    sub: "Participate in college leaderboards.",
     shot: "tall-profile.webp",
     ann: [
-      { side: "right", top: 30, text: "Campus leaderboards" },
+      { side: "right", top: 30, text: "Leaderboards" },
       { side: "left", top: 76, text: "Every day you trained" },
     ],
   },
@@ -201,29 +188,29 @@ export const varsityStory: Beat[] = [
   {
     id: "V1",
     kicker: "V1 · The plan",
-    /* Two promises, and the second is the one a squad actually cares about:
-       not just that the plan is on your phone, but that it is the current
-       one. A PDF in a group chat is out of date the first time it changes. */
-    head: "The coach's plan, always on you.",
-    sub: "Water, erg, weights — the week your coach actually built, changing the moment they change it. Not a screenshot of a spreadsheet.",
+    /* "Always actual" was the owner's word — aktuální, a Czech false friend.
+       "Current" is the meaning; English "actual" means real-not-fake. The
+       sub is the one that was already here: the owner gave V1 a headline
+       only, and deleting a line nobody asked to delete is the bigger edit. */
+    head: "Training plan always at hand, always current.",
+    sub: "Water, erg, weights — the week your coach actually built. Not a screenshot of a spreadsheet.",
     shot: "tall-vhome.webp",
     ann: [{ side: "right", top: 18, text: "Week 6 of 15" }],
   },
   {
     id: "V2",
     kicker: "V2 · The boat",
-    /* The headline stays on the image — a name in a boat — and the misery it
-       replaces goes first in the sub, where the contrast does the work. */
-    head: "Your name, in the boat.",
-    sub: "No scrolling 40 names in a spreadsheet — the lineup your coach published, seat by seat, the night before you row it. The four in the morning, the pair after lunch.",
+    head: "Find your lineup in a second.",
+    sub: "Never look through 40 names in an Excel sheet again. Your name pops right in a boat.",
     shot: "tall-vhome.webp",
     ann: [{ side: "left", top: 42, text: "You, 3 seat" }],
   },
   {
     id: "V3",
     kicker: "V3 · The race",
-    head: "The next race, and what to fix before it.",
-    sub: "Head of the Charles, 63 days out — and one note from your coach sitting under it until you've sorted it.",
+    /* "Always on your eyes" is před očima taken literally. */
+    head: "Keep your focus up.",
+    sub: "Countdown to the next race and coach's note on what to fix, always in front of you.",
     shot: "tall-vhome.webp",
     ann: [
       { side: "right", top: 52, text: "Counting down" },
@@ -233,18 +220,16 @@ export const varsityStory: Beat[] = [
   {
     id: "V4",
     kicker: "V4 · The week",
-    /* All three routes into a log are on this one capture and the copy used
-       to mention only the first: a Log button on each prescribed session, the
-       "Scan C2 / RP3 monitor" card, and "Add extra session" at the bottom.
-       The erg scan is the most distinctive thing Varsity Mode does and this
-       is the only beat that shows it. "Never been easier" was cut — it is
-       the exact ad voice the brief bans. */
-    head: "Log straight off the plan.",
-    sub: "Every session your coach set, waiting with a Log button. Snap the C2 or RP3 monitor and the splits read themselves. Anything extra you did goes on underneath.",
+    /* "Logging IN workouts" was the owner's phrase — logging in is signing
+       in, a different thing. All three routes named here are on the capture:
+       a Log button per prescribed session, the "Scan C2 / RP3 monitor" card,
+       and "Add extra session" at the bottom. */
+    head: "Logging workouts has never been easier.",
+    sub: "Log your workout straight from your training plan, scan your erg for instant extraction, add extra workouts.",
     shot: "13-varsity-log-list.webp",
     ann: [
-      { side: "right", top: 40, text: "Scan the erg" },
-      { side: "left", top: 58, text: "Log from the plan" },
+      { side: "right", top: 16, text: "Your week, at a glance" },
+      { side: "left", top: 44, text: "Tap to log" },
     ],
   },
   {
@@ -261,8 +246,13 @@ export const varsityStory: Beat[] = [
   {
     id: "V6",
     kicker: "V6 · The season",
-    head: "129 km this week.",
-    sub: "Metres rowed, week by week, all season — consistency you can actually see.",
+    /* "Check how your teammates are doing" is a real feature but NOT on this
+       frame — tall-vprofile is your own season. The squad screen exists
+       (11-varsity-teammate.webp) and is a dark-mode capture, so until it is
+       re-shot this clause is the one line in either story with no picture
+       behind it. */
+    head: "See your statistics.",
+    sub: "Track consistency, check how your teammates are doing, inspire yourself.",
     shot: "tall-vprofile.webp",
     ann: [{ side: "right", top: 40, text: "Eight weeks of work" }],
   },

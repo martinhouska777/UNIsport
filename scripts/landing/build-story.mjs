@@ -43,26 +43,26 @@ for (const scr of Object.keys(realShots)) {
 const story1 = [
   {
     key: "01-gyms", kicker: "01 · The gyms",
-    head: "Every gym on campus. One list.",
-    sub: "Opening hours, how busy it is right now, and the house gyms nobody has a map of.",
+    head: "Find every gym on campus in one app.",
+    sub: "Opening hours, ratings, equipment that nobody has a map of, live crowd meter.",
     ann: [{ side: "right", top: 14, text: "Live ratings" }, { side: "left", top: 68, text: "House gyms too" }],
   },
   {
     key: "02-match", kicker: "02 · The people", enter: "tab", tap: [37.5, 95.5],
-    head: "Then it finds your people.",
-    sub: "Sorted by how well you actually fit — same gym, same hours, same level.",
+    head: "Find training partners, make friends, establish contacts.",
+    sub: "Matching sorted by how well you actually fit — same gym, hours, level and much more.",
     ann: [{ side: "right", top: 24, text: "Ranked by real fit" }],
   },
   {
     key: "03-why-you-match", kicker: "03 · The reasons", enter: "zoom", tap: [26, 54],
-    head: "And it tells you why.",
-    sub: "Every reason is a real fact from both profiles. No black box.",
+    head: "View a person's profile for hobbies, interests, concentrations.",
+    sub: "Or get mentored by more experienced people.",
     ann: [{ side: "left", top: 56, text: "Facts, not guesses" }],
   },
   {
     key: "04-plan-a-session", kicker: "04 · The plan", enter: "push", tap: [68, 86.5], pointer: true,
-    head: "Make the plan in the chat.",
-    sub: "One tap proposes a session. One tap accepts. It's on both your calendars.",
+    head: "Plan your session in the chat with one tap.",
+    sub: "One tap proposes the session, one accepts, it's in both calendars.",
     ann: [{ side: "right", top: 52, text: "One tap to accept" }],
   },
   {
@@ -75,16 +75,16 @@ const story1 = [
   },
   {
     key: "tall-logsheet", kicker: "06 · The record", pan: [0.75, 1], side: "left", enter: "none",
-    head: "A photo and a note, while it's fresh.",
-    sub: "Who you trained with, how it went, and a picture if you took one — a training log you'll still want to read in four years.",
+    head: "Make memories stored in the calendar.",
+    sub: "Who you trained with, how it went, and a picture to make memories that last forever.",
     ann: [{ side: "left", top: 50, text: "Photo + note" }],
   },
   {
     // The profile scrolls from the name down to the leaderboard ranks and comes
     // to rest on the session calendar — the month is the closing image.
     key: "tall-profile", kicker: "07 · The proof", pan: [0, 1.3], hold: 0.2, side: "left", enter: "dismiss", tap: [50, 95],
-    head: "29 sessions. 6 partners.", headEm: "Never train alone.",
-    sub: "",
+    head: "29 sessions. 6 partners.", headEm: "Never train alone again.",
+    sub: "Participate in college leaderboards.",
     ann: [{ side: "right", top: 30, text: "Leaderboards" }, { side: "left", top: 76, text: "Every day you trained" }],
   },
 ];
@@ -94,14 +94,14 @@ const story2 = [
     // V1 carries the scroll all the way down to the lineup, so V2's headline
     // arrives with the boat almost centred rather than announcing it early.
     key: "tall-vhome", kicker: "V1 · The plan", pan: [0, 0.5], hold: 0.45,
-    head: "The coach's plan, on every phone.",
+    head: "Training plan always at hand, always current.",
     sub: "Water, erg, weights — the week your coach actually built. Not a screenshot of a spreadsheet.",
     ann: [{ side: "right", top: 18, text: "Week 6 of 15" }],
   },
   {
     key: "tall-vhome", kicker: "V2 · The boat", pan: [0.5, 0.8], enter: "none",
-    head: "Your name, in the boat.",
-    sub: "The lineup your coach published, seat by seat, the night before you row it — the four in the morning, the pair after lunch.",
+    head: "Find your lineup in a second.",
+    sub: "Never look through 40 names in an Excel sheet again. Your name pops right in a boat.",
     ann: [{ side: "left", top: 42, text: "You, 3 seat" }],
   },
   {
@@ -109,14 +109,14 @@ const story2 = [
     // they share one window, and no amount of scrolling separates them.
     // `to` past 1: the pan hits the very bottom mid-beat and rests there.
     key: "tall-vhome", kicker: "V3 · The race", pan: [0.74, 1.2], enter: "none",
-    head: "The next race, and what to fix before it.",
-    sub: "Head of the Charles, 63 days out — and one note from your coach sitting under it until you've sorted it.",
+    head: "Keep your focus up.",
+    sub: "Countdown to the next race and coach's note on what to fix, always in front of you.",
     ann: [{ side: "right", top: 52, text: "Counting down" }, { side: "left", top: 70, text: "Straight from the coach" }],
   },
   {
     key: "13-varsity-log-list", kicker: "V4 · The week", side: "left", enter: "sheet", tap: [50, 92.7],
-    head: "Log straight off the plan.",
-    sub: "Your whole week across the top — every session the coach set, waiting to be logged.",
+    head: "Logging workouts has never been easier.",
+    sub: "Log your workout straight from your training plan, scan your erg for instant extraction, add extra workouts.",
     ann: [{ side: "right", top: 16, text: "Your week, at a glance" }, { side: "left", top: 44, text: "Tap to log" }],
   },
   {
@@ -128,8 +128,8 @@ const story2 = [
   },
   {
     key: "tall-vprofile", kicker: "V6 · The season", pan: [0.06, 0.42], side: "left", enter: "tab", tap: [88.4, 93.3],
-    head: "129 km this week.",
-    sub: "Metres rowed, week by week, all season — consistency you can actually see.",
+    head: "See your statistics.",
+    sub: "Track consistency, check how your teammates are doing, inspire yourself.",
     ann: [{ side: "right", top: 40, text: "Eight weeks of work" }],
   },
 ];
