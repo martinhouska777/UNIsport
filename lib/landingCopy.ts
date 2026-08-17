@@ -258,6 +258,124 @@ export const varsityStory: Beat[] = [
   },
 ];
 
+/* ───────────────────── THE COACH SECTION ─────────────────────
+
+  The third door. Ported from the "One Coach, Forty Athletes" design piece,
+  which sits after the varsity story — its own bridge line refers to "the story
+  you just scrolled", so the order is load-bearing.
+
+  ── On the colour ────────────────────────────────────────────────────────
+  The design piece used crimson (#a51c30). That is Harvard's colour, and Zone 1
+  is neutral-brand only (rule 2) — so it would have been both a university
+  colour in the pre-login zone and a third accent competing with the blue/gold
+  system. This section uses the GOLD varsity accent instead: the Coach Console
+  lives at /varsity/coach, and everything it publishes lands in the varsity
+  story. One token swap reverses this if the owner wants crimson.
+*/
+
+/** A run of body text; `bold` lifts it to full-strength text colour. */
+export type Segment = { text: string; bold?: boolean };
+
+export type CoachStep = {
+  n: string;
+  /** The small label above the headline — "1 · Create". */
+  step: string;
+  head: string;
+  body: Segment[];
+  shot: string;
+  /** Read aloud by screen readers, so it describes the screen, not the file. */
+  alt: string;
+};
+
+export const coach = {
+  badge: "UNIsport · for coaches & athletic departments",
+  leadIn: "And for the person who runs the squad —",
+  headline: "The Coach's",
+  headlineEm: "Console.",
+  sub: [
+    { text: "Students use the app. " },
+    { text: "Coaches run it.", bold: true },
+    {
+      text: " From an empty season to a published lineup in five screens — the plan, the boats and the notes the varsity story above depends on, all built here. These are real screens from the console as it works today.",
+    },
+  ] as Segment[],
+
+  steps: [
+    {
+      n: "1",
+      step: "1 · Create",
+      head: "Start with the race.",
+      body: [
+        { text: "Name the block, set the dates, add the race you're pointing at. That's the whole setup — " },
+        { text: "one screen, under a minute", bold: true },
+        { text: ". The app works out the weeks and starts the countdown your athletes will see." },
+      ],
+      shot: "coach-1-create.webp",
+      alt: "The new training block form: block name, from and to dates, and an optional goal race with its date",
+    },
+    {
+      n: "2",
+      step: "2 · Build",
+      head: "Two taps per session.",
+      body: [
+        { text: "Pick the type — water, erg, weights. Pick the intensity. Then tap one of the " },
+        { text: "five workouts this squad actually uses", bold: true },
+        { text: " and the session fills itself in. A full training week takes minutes, not an evening." },
+      ],
+      shot: "coach-2-build.webp",
+      alt: "The session builder: type and intensity pickers, the five most-used workouts as tap-to-fill chips, and a Confirm session button",
+    },
+    {
+      n: "3",
+      step: "3 · Plan",
+      head: "Publish the week once.",
+      body: [
+        { text: "The season is one block — fourteen weeks, counting down to the race. Water, erg and weights for every AM and PM, colour-coded by intensity. " },
+        { text: "Publish, and it's on every athlete's phone.", bold: true },
+        { text: " No more screenshots of a spreadsheet in the group chat." },
+      ],
+      shot: "coach-3-plan.webp",
+      alt: "The Training Plan screen: week 6 of the Fall 2026 block, with colour-coded AM and PM sessions for every day",
+    },
+    {
+      n: "4",
+      step: "4 · Lineup",
+      head: "Publish the boats.",
+      body: [
+        { text: "Seat by seat, cox to bow. Port shows red and starboard green, straight from each rower's profile — " },
+        { text: "stroke on strokeside, seven on bowside", bold: true },
+        { text: ", the way the boat is actually rigged. One tap and the lineup is on every phone " },
+        { text: "the night before", bold: true },
+        { text: ", not shouted across the dock." },
+      ],
+      shot: "coach-4-lineup.webp",
+      alt: "The Lineup screen: the 1V eight seated cox to bow, port seats in red and starboard seats in green",
+    },
+    {
+      n: "5",
+      step: "5 · Notes",
+      head: "Keep every athlete on track.",
+      body: [
+        { text: "One short technical note per athlete. It sits on their Home — under their race countdown — until it's fixed. Everyone else sees a green " },
+        { text: "“Good job”", bold: true },
+        { text: ". Forty athletes, one glance, no noise." },
+      ],
+      shot: "coach-5-notes.webp",
+      alt: "The Athlete Notes screen: the roster with a short technical note per athlete, and a green Good job for everyone without one",
+    },
+  ] as CoachStep[],
+
+  bridge: "Everything the console publishes is the story you just scrolled — the plan on their Home, their name in the boat, the note under their race.",
+  bridgeSub:
+    "A student who signs up brings one user. A coach who adopts brings the whole squad. That's why the console exists — and why it's already built.",
+
+  facts: [
+    { title: "1 plan → 40 phones", body: "Publish once; every athlete's Home updates itself." },
+    { title: "Boats, the night before", body: "Lineups land on phones before anyone reaches the dock." },
+    { title: "The spreadsheet, retired", body: "Plan, lineups and feedback live in one place, not a group chat." },
+  ],
+};
+
 /* ─────────────────────────── THE CLOSE ─────────────────────────── */
 
 export const finalCta = {
