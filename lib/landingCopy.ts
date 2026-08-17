@@ -185,25 +185,37 @@ export const interlude = {
      voice — "keep track of every session" names nothing and could sit on any
      fitness app ever shipped.
 
-  And one absence: AI erg logging (app/api/varsity/erg-scan) reads a Concept2
-  or RP3 monitor from a photo. It is the most distinctive thing Varsity Mode
-  does, the landing page mentions it in a single bullet, and no beat shows it.
-  It has no capture yet.
+  And one beat that is written but cannot be shot yet — V7, the squad:
+
+      head: "See how the squad is training."
+      sub:  "92% consistency, 19 hours, five extra sessions — every teammate's
+             month, and where yours sits next to it."
+
+  Those numbers are read off 11-varsity-teammate.webp, which already exists.
+  The problem is that it is a DARK-mode capture from the old shot day, and
+  every frame in both stories is now light — a dark screen inside the light
+  phone chrome reads as a bug. It needs a re-shoot through capture-light.mjs
+  before this beat can ship.
 */
 export const varsityStory: Beat[] = [
   {
     id: "V1",
     kicker: "V1 · The plan",
-    head: "The coach's plan, on every phone.",
-    sub: "Water, erg, weights — the week your coach actually built. Not a screenshot of a spreadsheet.",
+    /* Two promises, and the second is the one a squad actually cares about:
+       not just that the plan is on your phone, but that it is the current
+       one. A PDF in a group chat is out of date the first time it changes. */
+    head: "The coach's plan, always on you.",
+    sub: "Water, erg, weights — the week your coach actually built, changing the moment they change it. Not a screenshot of a spreadsheet.",
     shot: "tall-vhome.webp",
     ann: [{ side: "right", top: 18, text: "Week 6 of 15" }],
   },
   {
     id: "V2",
     kicker: "V2 · The boat",
+    /* The headline stays on the image — a name in a boat — and the misery it
+       replaces goes first in the sub, where the contrast does the work. */
     head: "Your name, in the boat.",
-    sub: "The lineup your coach published, seat by seat, the night before you row it — the four in the morning, the pair after lunch.",
+    sub: "No scrolling 40 names in a spreadsheet — the lineup your coach published, seat by seat, the night before you row it. The four in the morning, the pair after lunch.",
     shot: "tall-vhome.webp",
     ann: [{ side: "left", top: 42, text: "You, 3 seat" }],
   },
@@ -221,12 +233,18 @@ export const varsityStory: Beat[] = [
   {
     id: "V4",
     kicker: "V4 · The week",
+    /* All three routes into a log are on this one capture and the copy used
+       to mention only the first: a Log button on each prescribed session, the
+       "Scan C2 / RP3 monitor" card, and "Add extra session" at the bottom.
+       The erg scan is the most distinctive thing Varsity Mode does and this
+       is the only beat that shows it. "Never been easier" was cut — it is
+       the exact ad voice the brief bans. */
     head: "Log straight off the plan.",
-    sub: "Your whole week across the top — every session the coach set, waiting to be logged.",
+    sub: "Every session your coach set, waiting with a Log button. Snap the C2 or RP3 monitor and the splits read themselves. Anything extra you did goes on underneath.",
     shot: "13-varsity-log-list.webp",
     ann: [
-      { side: "right", top: 16, text: "Your week, at a glance" },
-      { side: "left", top: 44, text: "Tap to log" },
+      { side: "right", top: 40, text: "Scan the erg" },
+      { side: "left", top: 58, text: "Log from the plan" },
     ],
   },
   {
