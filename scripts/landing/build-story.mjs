@@ -144,7 +144,7 @@ function closer(id, file, title, tabs, tabActive, flight) {
   return `
 <section class="closer" id="${id}" data-tabs="${tabs}" data-tab-active="${tabActive}"${flight ? ' data-flight="1" data-from="' + fl.from + '" data-from-shot="' + fl.fromShot +
   '" data-to-shot="' + fl.toShot + '"' + (fl.swap === "slide" ? ' data-swap="slide"' : "") +
-  (fl.oars ? ' data-oars="1"' : "") : ""}>
+  (fl.oars ? ' data-oars="1"' : "") + (fl.txt ? ' data-txt="1"' : "") : ""}>
   <div class="closer-stick">
     <iframe class="closer-frame" title="${title}" srcdoc="${esc}"></iframe>
   </div>
@@ -358,7 +358,11 @@ const html = `<title>Never Train Alone</title>
 
   /* The phone crosses the page once per story, at the narrative pivot. Slow
      (0.9s) and eased, so it reads as one deliberate move rather than motion. */
-  .copy, .phone-col { transition: transform 0.9s cubic-bezier(0.65, 0, 0.35, 1); }
+  .copy, .phone-col { transition: transform 0.9s cubic-bezier(0.65, 0, 0.35, 1), opacity 0.4s ease; }
+  .rail { transition: opacity 0.4s ease; }
+  /* While the phone is in flight the story's words step aside — the phone is
+     the one thing carrying over, so it gets the screen to itself. */
+  .stage.gone .copy, .stage.gone .rail { opacity: 0; }
   .stage.flip .phone-col { transform: translateX(calc(-100% - 40px)); }
   .stage.flip .copy      { transform: translateX(calc(100% + 40px)); }
   .phone-col { display: flex; justify-content: center; }
@@ -596,6 +600,9 @@ ${renderStory("story1", story1)}
 ${closer("closer-colours", "UNIsport Campus Colours.html", "Your campus, your colours", "student", 0, {
   // the profile it was just reading → the Gyms list, swapped inside the pinch
   from: "story1", fromShot: ".shot-frame[data-i='6'] .shot", toShot: ".shot-frame[data-i='0'] .shot",
+  // the words arrive from the right as the phone lands, and one nudge up
+  // plays the whole film backwards
+  txt: true,
 })}
 
 <div class="statement" id="interlude">
@@ -755,6 +762,15 @@ ${closer("closer-blades", "Blade Lock Light.html", "Every crew. One system.", "v
       '.__oar.pre{opacity:0}' +
       '.__lt{position:relative;z-index:1;transition:opacity .5s ease .5s,transform 1s cubic-bezier(.2,.85,.25,1) .5s}' +
       '.__lt.pre{opacity:0;transform:translateX(-215px) scale(.45)}' +
+      // After a flight the letter and the words move as one: no waiting beat.
+      // And going backwards it tucks in fast, ahead of the phone taking off.
+      '.__lt.now{transition:opacity .5s ease,transform 1s cubic-bezier(.2,.85,.25,1)}' +
+      '.__lt.rev{transition:opacity .3s ease,transform .5s cubic-bezier(.55,0,.8,.4)}' +
+      // The closer's words: parked off to the right, so they can arrive
+      // right-to-left as the phone sets down. translate, not transform — same
+      // reason as the oars: nothing of theirs gets trampled.
+      '.__hd{transition:translate .6s cubic-bezier(.25,.8,.3,1),opacity .45s ease}' +
+      '.__hd.pre{translate:52vw 0;opacity:0}' +
       '.__tabs{position:absolute;left:0;right:0;bottom:0;height:12%;display:flex;align-items:center;' +
       'justify-content:space-around;background:#fff;border-top:1px solid #e7e4df;padding-bottom:1.6%;z-index:5}' +
       '.__tab{display:flex;flex-direction:column;align-items:center;gap:2px;color:#9b968c;line-height:1}' +
@@ -783,6 +799,22 @@ ${closer("closer-blades", "Blade Lock Light.html", "Every crew. One system.", "v
     if (letter) {
       letter.classList.add("__lt");
       if (!reduce) letter.classList.add("pre");
+    }
+
+    /* The closer's words: every outermost block of text standing fully above
+       the phone. Found by geometry, like everything else in these documents —
+       their class names are minified noise. */
+    if (sec.getAttribute("data-txt") && shell && !reduce) {
+      var pr = shell.getBoundingClientRect();
+      var blocks = [].slice.call(d.body.querySelectorAll("*")).filter(function (e) {
+        if (letter && (e === letter || letter.contains(e) || e.contains(letter))) return false;
+        if (e === shell || shell.contains(e) || e.contains(shell)) return false;
+        var r = e.getBoundingClientRect();
+        return r.height > 0 && r.bottom <= pr.top + 2 && e.textContent && e.textContent.trim();
+      });
+      blocks.filter(function (e) {
+        return !blocks.some(function (o) { return o !== e && o.contains(e); });
+      }).forEach(function (e) { e.classList.add("__hd", "pre"); });
     }
 
     if (shell) parkOars(sec, d, shell);
@@ -867,10 +899,16 @@ ${closer("closer-blades", "Blade Lock Light.html", "Every crew. One system.", "v
     if (sec.__spinStart) { clearTimeout(sec.__spinStart); sec.__spinStart = null; }
     var d = f.contentDocument;
     if (!d) return;
-    var lt = d.querySelector(".__lt"); if (lt && !reduce) lt.classList.add("pre");
+    var lt = d.querySelector(".__lt"); if (lt && !reduce) { lt.classList.remove("now"); lt.classList.remove("rev"); lt.classList.add("pre"); }
     var shell = d.querySelector(".__ph");
     if (shell && sec.getAttribute("data-flight") && !reduce) shell.classList.add("hide");
     if (shell) parkOars(sec, d, shell);
+    if (!reduce) [].slice.call(d.querySelectorAll(".__hd")).forEach(function (e) { e.classList.add("pre"); });
+    // and the story gets its words back, wherever the reader left it
+    var src = sec.getAttribute("data-from");
+    var stg = src && document.querySelector("#" + src + " .stage");
+    if (stg) stg.classList.remove("gone");
+    sec.__flown = false;
   }
 
   function play(f) {
@@ -915,11 +953,25 @@ ${closer("closer-blades", "Blade Lock Light.html", "Every crew. One system.", "v
   }
 
   // Just the letter — used after a flight, where the phone is already home.
+  // .now drops the built-in waiting beat, so it moves WITH the words.
   function playLetter(f, delay) {
     var d = f.contentDocument;
     if (!d) return;
     var el = d.querySelector(".__lt");
-    if (el) setTimeout(function () { el.classList.remove("pre"); }, delay || 0);
+    if (el) setTimeout(function () {
+      el.classList.remove("rev");
+      el.classList.add("now");
+      el.classList.remove("pre");
+    }, delay || 0);
+  }
+
+  // The closer's words, in from the right — at the same moment as the letter.
+  function playText(f, delay) {
+    var d = f.contentDocument;
+    if (!d) return;
+    [].slice.call(d.querySelectorAll(".__hd")).forEach(function (el) {
+      setTimeout(function () { el.classList.remove("pre"); }, delay || 0);
+    });
   }
 
   /* ── THE FLIGHT ──────────────────────────────────────────────────────────
@@ -985,6 +1037,10 @@ ${closer("closer-blades", "Blade Lock Light.html", "Every crew. One system.", "v
     // hide the story's phone: there is only ever one on screen
     var col = document.querySelector("#" + src + " .phone-col");
     if (col) col.style.visibility = "hidden";
+    // …and its words step aside: the phone is the whole story now
+    var stg = document.querySelector("#" + src + " .stage");
+    if (stg) stg.classList.add("gone");
+    sec.__flying = true;
 
     var A = { x: start.left + start.width / 2, y: start.top + start.height / 2, w: start.width };
 
@@ -1006,10 +1062,14 @@ ${closer("closer-blades", "Blade Lock Light.html", "Every crew. One system.", "v
     var scrollFrom = window.scrollY;
     var scrollTo = scrollFrom + sec.getBoundingClientRect().top;
     var driving = true;
-    function release() { driving = false; }
-    window.addEventListener("wheel", release, { passive: true, once: true });
-    window.addEventListener("touchmove", release, { passive: true, once: true });
-    window.addEventListener("keydown", release, { once: true });
+    // A wheel in the SAME direction is the reader pushing the move along, not
+    // asking for the page back — only the opposite direction releases it.
+    // (Trackpads trail inertia events; without this, the gesture that starts
+    // the flight would also cancel it.)
+    function release(ev) { if (ev && ev.type === "wheel" && ev.deltaY > 0) return; driving = false; }
+    window.addEventListener("wheel", release, { passive: true });
+    window.addEventListener("touchmove", release, { passive: true });
+    window.addEventListener("keydown", release);
 
     function step(now) {
       var t = Math.min(1, (now - t0) / DUR);
@@ -1052,6 +1112,117 @@ ${closer("closer-blades", "Blade Lock Light.html", "Every crew. One system.", "v
         window.removeEventListener("wheel", release);
         window.removeEventListener("touchmove", release);
         window.removeEventListener("keydown", release);
+        sec.__flying = false;
+        sec.__flown = true;    // the way back starts from here
+        done();
+      }
+    }
+    requestAnimationFrame(step);
+  }
+
+  /* ── AND BACK AGAIN ──────────────────────────────────────────────────────
+     One nudge up from the pinned closer plays the film backwards. The words
+     leave to the right, the letter tucks in behind the phone, and the phone —
+     the page's phone again — flies back up the way it came, the camera
+     following, and sets down exactly where the story left it. The page lands
+     with the closer just off the bottom of the screen, so scrolling down
+     again simply plays the whole thing afresh. */
+  function runFlightBack(sec, f, done) {
+    var src = sec.getAttribute("data-from") || "story1";
+    var slide = sec.getAttribute("data-swap") === "slide";
+    var d = f.contentDocument;
+    var shell = d && d.querySelector(".__ph");
+    if (!flight || !shell || !rectOfStoryPhone(src)) { done(); return; }
+    sec.__flying = true;
+
+    // the closer stops being a place: rotation off, words away, letter home
+    if (sec.__spin) { clearInterval(sec.__spin); sec.__spin = null; }
+    if (sec.__spinStart) { clearTimeout(sec.__spinStart); sec.__spinStart = null; }
+    var lt = d.querySelector(".__lt");
+    if (lt) { lt.classList.remove("now"); lt.classList.add("rev"); lt.classList.add("pre"); }
+    [].slice.call(d.querySelectorAll(".__hd")).forEach(function (e) { e.classList.add("pre"); });
+
+    // the page's phone takes over from theirs, exactly where it stands
+    var ir = f.getBoundingClientRect(), sr = shell.getBoundingClientRect();
+    var A = { x: ir.left + sr.left + sr.width / 2, y: ir.top + sr.top + sr.height / 2, w: sr.width };
+    shell.classList.add("hide");
+
+    // the screens, the other way round: leave on the closer's, arrive on the
+    // exact frame the story ended on (the clone keeps its scroll)
+    var fromShot = document.querySelector("#" + src + " " + sec.getAttribute("data-to-shot"));
+    var toShot = document.querySelector("#" + src + " " + sec.getAttribute("data-from-shot"));
+    flightShots.innerHTML = "";
+    var a = fromShot.cloneNode(true), b = toShot.cloneNode(true);
+    a.style.opacity = "1";
+    a.style.transform = "translateY(0px)";
+    if (slide) {
+      b.style.opacity = "1";
+      a.style.transition = b.style.transition = "translate .5s cubic-bezier(.4,0,.2,1)";
+      b.style.translate = "110% 0";
+    } else {
+      b.style.opacity = "0";
+    }
+    flightShots.appendChild(a); flightShots.appendChild(b);
+
+    flightPhone.style.width = A.w + "px";
+    flight.classList.add("on");
+    var box = flight.getBoundingClientRect();
+    var w0 = box.width, h0 = box.height;
+
+    // two phones again, for a moment: the story's stays hidden until landing
+    var col = document.querySelector("#" + src + " .phone-col");
+    if (col) col.style.visibility = "hidden";
+    var stg = document.querySelector("#" + src + " .stage");
+
+    var scrollFrom = window.scrollY;
+    var secDocTop = scrollFrom + sec.getBoundingClientRect().top;
+    var scrollTo = Math.max(0, secDocTop - window.innerHeight - 2);
+    var t0 = performance.now(), DUR = 1500, swapped = false;
+    var driving = true;
+    function release(ev) { if (ev && ev.type === "wheel" && ev.deltaY < 0) return; driving = false; }
+    window.addEventListener("wheel", release, { passive: true });
+    window.addEventListener("touchmove", release, { passive: true });
+    window.addEventListener("keydown", release);
+
+    function step(now) {
+      var t = Math.min(1, (now - t0) / DUR);
+      var e = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+      /* The story's phone is measured LIVE each frame: its stage is sticky, so
+         its place on the page can shift as the scroll walks back up — and the
+         landing has to be exact. */
+      var tr = rectOfStoryPhone(src);
+      var B = tr ? { x: tr.left + tr.width / 2, y: tr.top + tr.height / 2, w: tr.width } : A;
+      var m = 1 - e;
+      var aDocY = A.y + scrollFrom, bDocY = B.y + window.scrollY;
+      var amp = Math.max(220, Math.abs(aDocY - bDocY) * 0.35);
+      var c1 = aDocY - amp, c2 = bDocY + amp;   // leaves upward, arrives upward
+      var docY = m*m*m*aDocY + 3*m*m*e*c1 + 3*m*e*e*c2 + e*e*e*bDocY;
+      var vy = A.y + (B.y - A.y) * e - 34 * Math.sin(Math.PI * t);
+      if (driving) window.scrollTo(0, docY - vy);
+      var px = A.x + (B.x - A.x) * e - 26 * Math.sin(Math.PI * t);
+      var sc = (A.w + (B.w - A.w) * e) / A.w;
+      flight.style.transform =
+        "translate(" + (px - w0 * sc / 2) + "px," + (vy - h0 * sc / 2) + "px) scale(" + sc + ")";
+      if (!swapped && t >= 0.5) {
+        swapped = true;
+        if (slide) { a.style.translate = "-110% 0"; b.style.translate = "0 0"; }
+        else { a.style.opacity = "0"; b.style.opacity = "1"; }
+      }
+      // the story's words come back with the landing, not after it
+      if (t >= 0.55 && stg) stg.classList.remove("gone");
+      if (t < 1) requestAnimationFrame(step);
+      else {
+        if (driving) window.scrollTo(0, scrollTo);
+        if (col) col.style.visibility = "";   // theirs again, exactly here
+        if (stg) stg.classList.remove("gone");
+        flight.classList.remove("on");
+        flight.style.transform = "";
+        window.removeEventListener("wheel", release);
+        window.removeEventListener("touchmove", release);
+        window.removeEventListener("keydown", release);
+        sec.__flying = false;
+        sec.__flown = false;
         done();
       }
     }
@@ -1102,15 +1273,38 @@ ${closer("closer-blades", "Blade Lock Light.html", "Every crew. One system.", "v
           runFlight(sec, f, function () {
             if (sec.getAttribute("data-oars")) playOars(f, 180);
             else playLetter(f, 220);
+            playText(f, 220);      // the words and the letter, as one move
             spin(sec, f, 1700);    // …and only then does it start rotating
           });
         } else {
+          // No flight on this screen (narrow, or reduced motion) — but the
+          // phone was hidden in expectation of one. Swap the hiding for the
+          // slide-in entrance, so it arrives instead of just appearing.
+          var sh = f.contentDocument && f.contentDocument.querySelector(".__ph");
+          if (sh && sh.classList.contains("hide")) {
+            sh.classList.add("pre");
+            void sh.offsetWidth;
+            sh.classList.remove("hide");
+          }
           play(f);
+          playText(f, 320);
           spin(sec, f, 1500);
         }
       });
     }, { threshold: sec.getAttribute("data-flight") ? 0.02 : 0.3 });
     io.observe(sec);
+
+    /* The way back: a nudge up from the top of the pin plays the film in
+       reverse. Only from the pin's start — deeper in, scrolling up is just
+       scrolling. armed stays true until the reverse lands, so the observer
+       above cannot replay the arrival mid-move. */
+    if (flies && sec.getAttribute("data-txt")) {
+      window.addEventListener("wheel", function (ev) {
+        if (ev.deltaY >= 0 || !armed || !sec.__flown || sec.__flying) return;
+        if (sec.getBoundingClientRect().top < -12) return;
+        runFlightBack(sec, f, function () { armed = false; });
+      }, { passive: true });
+    }
   });
 })();
 </script>
