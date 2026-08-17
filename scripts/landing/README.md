@@ -14,13 +14,25 @@ This file is the mechanics.
 | What | Where |
 |---|---|
 | Screenshot frames (900×1479 + tall pan strips) | `public/landing/*.webp` |
-| Scroll animations, self-contained | `webpage/Scroll Animations.html` (full) and `(slim).html` (497KB, for uploading) |
+| Scroll animations, self-contained | `webpage/Scroll Animations.html` (full, 2.5MB) and `(slim).html` (~1MB, for uploading) |
 | Varsity static closer (from Claude Design) | `webpage/Blade Lock Light.html` |
 | Student static closer (from Claude Design) | `webpage/UNIsport Campus Colours.html` |
 | The build script for the animations | `scripts/landing/build-story.mjs` |
+| The closers' real screens, per school | `scripts/landing/recolored/*.webp` (+ `patches/` headers) |
 
-The published prototype is a Claude artifact; ask the owner for the URL, or
-re-publish the built `story.html`.
+The published prototype is the owner's artifact:
+**https://claude.ai/code/artifact/7c4ae5b7-8fdf-4310-94ee-55cff6fe4641**
+Re-publish `story.html` to that same URL (pass it as `url`) — a fresh publish
+would strand the owner on the old link.
+
+Build, check, publish:
+
+```
+node build-story.mjs      # writes story.html
+node verify-reverse.mjs   # the student closer, 11 checks
+node verify-blades.mjs    # the varsity closer, 13 checks
+node make-slim.mjs        # syncs both webpage/ copies (slim = recompressed)
+```
 
 ---
 
@@ -179,19 +191,85 @@ Because the frames are same-origin, the page choreographs them on arrival:
 | the accent | the biggest piece of *coloured* type (greys are chrome) |
 
 Nothing is matched by class name — their bundles emit obfuscated ones (`scp0`),
-so structure is the only stable handle. On arrival the frame is blanked,
-**reloaded** (both pieces cycle on their own timer, so without this the reader
-arrives mid-sequence instead of on Harvard), primed while hidden, then played:
-the phone slides in from where the story's phone was, and the letter swings out
-from behind it.
+so structure is the only stable handle.
 
 **The app's bottom tab bar is drawn by us**, not by the design files — they
 render a phone without one. If a re-export ever includes one, delete
-`buildTabs()` and the `.__tabs` rules rather than ending up with two.
+`buildTabs()` and the `.__tabs` rules rather than ending up with two. (The
+student closer needs no bar: its real screen carries the app's own.)
 
 Two gotchas that cost time, both from the page being built inside a template
 literal: a regex literal in an emitted script loses its backslashes (use string
 splitting), and any backtick in an emitted comment ends the literal early.
+
+### Reaching inside a piece
+
+Both pieces are React apps. Their component instance is reached through the
+fiber tree (`__reactContainer$…` on a host node → walk to a `stateNode.logic`),
+which is how the page:
+
+- **stops the wheel** on Harvard as the reader arrives, and **releases it**
+  (`setState({pinned:false})`) the moment the oars spread, so the rotation is
+  the piece's own continuous one. Pacing it with clicks is what used to make
+  it jump.
+- **reads which school is showing** (`state.active` on the wheel, `state.idx`
+  on the letter piece) to keep the phone's real screen in step, mapped through
+  the piece's own `schools` array.
+
+A prop write does NOT survive their re-renders — that is why the blades' glow
+is killed with a stylesheet rule (`button[aria-label$=" Rowing"]{filter:none
+!important}`) rather than by setting `oarGlow`.
+
+### The closers' phones show the REAL app
+
+`recolor-shots.mjs` builds `recolored/{gyms,vhome}-{school}.webp` from the same
+captures the stories fly with: every crimson-family pixel is shifted into the
+school's palette (taken from the design pieces' own data, second colour
+included — Penn's blue-red-blue), leaving whites, greys, golds and photos
+alone. Harvard is the untouched original, so the flight lands on the exact
+pixels it left with. `patch-vhead.mjs` renders the per-school varsity header
+("<School> Rowing", chevron, shield initial) that is baked into the capture.
+
+In the page those images sit over the piece's drawn phone as the same
+statusbar/capture/gesture-bar sandwich the flying phone is built from, and
+crossfade as the piece cycles.
+
+### The transition (both closers, desktop ≥1024px)
+
+An **in-place cut**, not a camera move: the page is held still while the story
+fades to black around the phone, the scroll is cut to the pinned closer while
+only the phone is visible, and the phone then glides into its place. The words
+arrive from the right; the letter swings out, or the oars rise from behind the
+phone as a miniature of the whole wheel (`oarPose`, measured in an unpainted
+pass — the pieces compose their own depth transform with ours), hold, and
+spread onto the already-turning wheel.
+
+One nudge up plays it backwards: `retractCloser()` puts everything back the way
+it came, then `runFlightBack()` flies home.
+
+**Three traps, all of which cost real time:**
+
+1. The closer is a full-screen iframe, so **wheel events never reach the
+   window** — every wheel listener (the reverse trigger, both flights'
+   release, the retract hold) must ALSO be bound on `f.contentDocument`.
+2. The reverse must trigger from **anywhere on the landed closer**, not just
+   the pin's start — smooth scrolling delivers the events deep in the cushion.
+3. `prime()` is **once per document**, and an arrival that finds a closer
+   unprimed must prime first and arrive after: two `whenReady` chains used to
+   race, the loser re-hiding a phone the winner had revealed.
+
+The flight only runs when the story's phone is actually near the screen; a
+reload with the scroll restored at a closer reveals it in place instead.
+
+## The transition is signed off (2026-08-17)
+
+The owner reviewed it to "otherwise perfect". Both closers now: real screens
+throughout, in-place cut both ways, reversible from anywhere, continuous
+wheel, no blade glow, real log button, tab-switch slides. Small tweaks may
+still come, but the mechanism is settled — **change it only when asked.**
+
+Mobile (<1024px) deliberately does NOT fly: the closers reveal in place. That
+path is the least-reviewed part of the page.
 
 ## Agreed but not yet done
 
@@ -203,5 +281,19 @@ splitting), and any backtick in an emitted comment ends the literal early.
 3. **Unresolved:** the demo students have no profile photos, so the match screen
    is a row of placeholder glyphs under a headline about finding people. Needs
    either generated portraits or a crop that avoids the avatar row.
-4. **Then:** stitch the sections into one page and port into `app/page.tsx`
-   using the `l-*` design tokens (rule 1 — no hex literals in components).
+
+## Next: turning this into the webpage
+
+Agreed plan, in this order — do NOT jump to the port:
+
+1. **Content pass.** All copy lives in the two beat arrays at the top of
+   `build-story.mjs`; the owner sends text and button labels, we rebuild and
+   re-publish to the artifact URL for review.
+2. **Structure pass.** Section order, plus any new sections (pricing, FAQ,
+   contact). **A story and its closer are a welded pair** — the phone flies
+   between them, so nothing may sit in between. Everything else is free to
+   move: hero, interlude, CTA, and new sections between blocks.
+3. **Port into `app/page.tsx`** with the `l-*` design tokens (rule 1 — no hex
+   literals in components), signup wired to the real login, and the embedded
+   screenshots served as real image files instead of data URIs (the page is
+   2.5MB self-contained). Do this ONCE, after content and structure freeze.
