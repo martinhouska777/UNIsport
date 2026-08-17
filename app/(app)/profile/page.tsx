@@ -19,6 +19,7 @@ import LogSessionSheet from "@/components/profile/LogSessionSheet";
 import PartnersSheet from "@/components/profile/PartnersSheet";
 import UpcomingSessions from "@/components/profile/UpcomingSessions";
 import LeaderboardStrip from "@/components/leaderboards/LeaderboardStrip";
+import MemoriesStrip from "@/components/profile/MemoriesStrip";
 import PersonalRecords from "@/components/profile/PersonalRecords";
 import PhotoGrid from "@/components/profile/PhotoGrid";
 import PreferencesSheet from "@/components/profile/PreferencesSheet";
@@ -467,6 +468,12 @@ export default function ProfilePage() {
       {statsReady && sessionsCount > 0 && (
         <SessionCalendar logs={logs} onPickDate={(d) => setOpenDate(d)} />
       )}
+
+      {/* Memories — the same history as pictures. Directly under the calendar
+          because it answers the other half of the question: the calendar says
+          what you did, this says what it looked like. Hides itself entirely
+          until there's a photo to show. */}
+      <MemoriesStrip />
 
       {/* Training — every row opens a real picker and saves the real answer.
           These used to be free-text boxes writing to `trainingDisplay`, a

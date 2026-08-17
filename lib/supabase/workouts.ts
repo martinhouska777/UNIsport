@@ -199,6 +199,41 @@ export async function listMonth(
   return (data as Row[]).map(rowToLog);
 }
 
+/* ── Sessions that have a photo, newest first (the Memories gallery) ──
+   Not date-bounded — the gallery is the whole history — so it is read a PAGE at
+   a time. The `photos` filter runs in the database, so sessions without a
+   picture never cross the wire.
+
+   Why the page is small: a session photo is stored inline as a data URL (a
+   1280px JPEG, ~200-400 KB once base64'd), so twelve sessions can already be a
+   few megabytes. That is the cost of keeping pictures in the row, and this
+   screen is where it shows. Moving photos to Supabase Storage — one file, one
+   link, a real thumbnail — is what makes this cheap. */
+export const PHOTO_PAGE = 12;
+
+export async function listPhotoLogs(
+  userId: string,
+  limit = PHOTO_PAGE,
+  offset = 0,
+): Promise<WorkoutLog[]> {
+  if (!userId) return [];
+  if (!hasSupabaseEnv()) {
+    return loadLocal(userId)
+      .filter((l) => l.photos?.length)
+      .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0))
+      .slice(offset, offset + limit);
+  }
+  const { data, error } = await createClient()
+    .from("workout_logs")
+    .select("id, log_date, activity, gym, partner, partner_id, exercises, metrics, photos, note, verified, plan_id")
+    .eq("user_id", userId)
+    .neq("photos", "[]")
+    .order("log_date", { ascending: false })
+    .range(offset, offset + limit - 1);
+  if (error || !data) return [];
+  return (data as Row[]).map(rowToLog).filter((l) => l.photos.length > 0);
+}
+
 /* ── Total number of logged sessions (for the profile "Sessions" stat) ── */
 export async function countWorkouts(userId: string): Promise<number> {
   if (!userId) return 0;
