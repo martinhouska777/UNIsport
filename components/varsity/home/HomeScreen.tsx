@@ -79,7 +79,7 @@ function Greeting({ g }: { g: GreetingData }) {
 /* ─── Race countdown ─── */
 function RaceBar({ r }: { r: RaceData }) {
   return (
-    <div className="mx-3 mt-2 flex items-center gap-3 rounded-xl border border-primary/35 bg-gradient-to-r from-primary/20 to-accent/10 px-3.5 py-2.5">
+    <div className="mx-3 mt-2 flex items-center gap-3 rounded-xl border border-primary-line bg-gradient-to-r from-primary/20 to-accent/10 px-3.5 py-2.5">
       <span className="text-primary">
         <IconFlag size={18} />
       </span>
@@ -134,7 +134,7 @@ function WeekFit({
                   : "border-border"
             }`}
           >
-            <div className={`px-0.5 py-1 text-center ${d.today ? "bg-primary/15" : "bg-surface-2"}`}>
+            <div className={`px-0.5 py-1 text-center ${d.today ? "bg-primary-tint" : "bg-surface-2"}`}>
               <div className={`text-[8px] font-semibold uppercase leading-none ${d.today ? "text-accent" : "text-muted"}`}>
                 {d.letter}
               </div>
@@ -148,7 +148,7 @@ function WeekFit({
                 if (!s) return null;
                 return (
                   <div key={row} className={`flex-1 rounded px-1 py-1 ${kindStyles[s.kind].block}`}>
-                    <span className="block text-[7px] font-bold leading-none text-text/45">{row}</span>
+                    <span className="block text-[7px] font-bold leading-none text-text-3">{row}</span>
                     <span className="mt-0.5 block break-words text-[10px] font-medium leading-tight text-text">
                       {s.label}
                     </span>
@@ -309,9 +309,9 @@ function MonthOverlay({
                 onClick={() => day && onSelect(day)}
                 className={`flex min-h-[64px] flex-col overflow-hidden rounded-lg border p-[3px] text-left ${
                   sel
-                    ? "border-primary bg-primary/10 ring-1 ring-primary"
+                    ? "border-primary bg-primary-tint ring-1 ring-primary"
                     : day?.today
-                      ? "border-primary bg-primary/[0.08]"
+                      ? "border-primary bg-primary-tint"
                       : day
                         ? "border-border bg-surface"
                         : "border-transparent"
@@ -331,7 +331,7 @@ function MonthOverlay({
                       key={j}
                       className={`flex-1 overflow-hidden rounded px-1 py-0.5 ${kindStyles[s.kind].block}`}
                     >
-                      <span className="block text-[6px] font-bold leading-none text-text/45">
+                      <span className="block text-[6px] font-bold leading-none text-text-3">
                         {s.time}
                       </span>
                       <span className="mt-px block break-words text-[8px] font-medium leading-[1.15] text-text">
@@ -394,11 +394,11 @@ function DayDetail({ d, onClose }: { d: WeekDay; onClose: () => void }) {
                 </div>
                 <div className="mt-1 text-[13px] font-medium text-text">{s.label}</div>
                 {s.note && (
-                  <div className="mt-1.5 flex gap-2 rounded-lg border border-accent/30 bg-accent/10 px-2.5 py-1.5">
+                  <div className="mt-1.5 flex gap-2 rounded-lg border border-accent-line bg-accent-tint px-2.5 py-1.5">
                     <span className="mt-0.5 flex-shrink-0 text-accent">
                       <IconMessage size={11} />
                     </span>
-                    <span className="text-[11px] leading-relaxed text-text/80">{s.note}</span>
+                    <span className="text-[11px] leading-relaxed text-text-2">{s.note}</span>
                   </div>
                 )}
               </div>
@@ -505,7 +505,7 @@ function SessionCard({ s }: { s: TodaySession }) {
           <div className="mt-0.5 text-[10px] leading-relaxed text-muted">{s.detail}</div>
 
           {s.coachNote && (
-            <div className="mt-2 flex gap-2 rounded-lg border border-accent/30 bg-accent/10 px-2.5 py-2">
+            <div className="mt-2 flex gap-2 rounded-lg border border-accent-line bg-accent-tint px-2.5 py-2">
               <span className="mt-0.5 flex-shrink-0 text-accent">
                 <IconMessage size={12} />
               </span>
@@ -513,7 +513,7 @@ function SessionCard({ s }: { s: TodaySession }) {
                 <div className="text-[7px] font-semibold tracking-[0.12em] text-accent">
                   {s.coachNote.coach}
                 </div>
-                <div className="mt-0.5 text-[10px] leading-relaxed text-text/80">
+                <div className="mt-0.5 text-[10px] leading-relaxed text-text-2">
                   {s.coachNote.text}
                 </div>
               </div>
@@ -556,28 +556,28 @@ function SeatRow({
     <div
       className={`flex items-center gap-2.5 rounded-lg border px-2.5 py-2 ${
         mine
-          ? "border-primary bg-primary/15"
+          ? "border-primary bg-primary-tint"
           : cox
-            ? "border-accent/40 bg-accent/[0.08]"
+            ? "border-accent-line bg-accent-tint"
             : "border-border bg-surface-2"
       }`}
     >
       <span
         className={`flex h-6 w-14 flex-shrink-0 items-center justify-center rounded text-[9px] font-bold uppercase tracking-[0.06em] ${
-          cox ? "bg-accent/15 text-accent" : mine ? "bg-primary/20 text-primary" : "bg-background text-muted"
+          cox ? "bg-accent-tint text-accent" : mine ? "bg-primary-tint text-primary" : "bg-background text-muted"
         }`}
       >
         {label}
       </span>
       <span
         className={`flex-1 truncate text-[13px] font-medium ${
-          mine ? "text-primary" : open ? "italic text-muted/60" : "text-text"
+          mine ? "text-primary" : open ? "italic text-text-3" : "text-text"
         }`}
       >
         {open ? "Open seat" : name}
       </span>
       {mine && (
-        <span className="flex-shrink-0 rounded bg-primary px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.08em] text-primary-contrast">
+        <span className="flex-shrink-0 rounded bg-text px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] text-background">
           You
         </span>
       )}
@@ -629,8 +629,8 @@ function LineupCard({ lineups }: { lineups: Lineup[] }) {
 function CoachNoteCard({ note }: { note: string }) {
   if (note.trim()) {
     return (
-      <div className="overflow-hidden rounded-xl border border-danger/40 bg-danger/[0.07]">
-        <div className="flex items-center gap-2 border-b border-danger/25 px-3.5 py-2.5">
+      <div className="overflow-hidden rounded-xl border border-danger-line bg-danger-tint">
+        <div className="flex items-center gap-2 border-b border-danger-line px-3.5 py-2.5">
           <span className="flex h-5 w-5 items-center justify-center rounded-full bg-danger text-[12px] font-black leading-none text-background">
             !
           </span>
@@ -638,12 +638,12 @@ function CoachNoteCard({ note }: { note: string }) {
             Coach&apos;s note · work on this
           </span>
         </div>
-        <p className="px-3.5 py-3 text-[13px] leading-relaxed text-text/90">{note}</p>
+        <p className="px-3.5 py-3 text-[13px] leading-relaxed text-text-2">{note}</p>
       </div>
     );
   }
   return (
-    <div className="flex items-center gap-2.5 rounded-xl border border-success/40 bg-success/[0.07] px-3.5 py-3">
+    <div className="flex items-center gap-2.5 rounded-xl border border-success-line bg-success-tint px-3.5 py-3">
       <span className="text-success">
         <IconCheckCircle size={18} />
       </span>
@@ -659,7 +659,7 @@ function CoachNoteCard({ note }: { note: string }) {
 function EmptyHome() {
   return (
     <div className="mx-auto flex w-full max-w-screen-sm flex-col items-center px-6 pt-20 text-center">
-      <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary/15 text-primary">
+      <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary-tint text-primary">
         <IconCalendar size={22} />
       </div>
       <div className="text-[15px] font-semibold text-text">No plan published yet</div>

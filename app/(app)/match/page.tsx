@@ -114,7 +114,7 @@ function FilterBar({
               key={c.key}
               type="button"
               onClick={() => onClear(c.key)}
-              className="flex items-center gap-1 rounded-full border border-primary bg-primary/15 px-3 py-1.5 text-[12px] text-primary"
+              className="flex items-center gap-1 rounded-full border border-primary bg-primary-tint px-3 py-1.5 text-[12px] text-primary"
             >
               {c.label}
               <span className="text-[13px] leading-none">×</span>
@@ -285,7 +285,7 @@ function MatchScreen() {
               type="button"
               onClick={() => setTab(s.key)}
               className={`flex-1 py-2 text-xs font-medium transition-colors ${
-                tab === s.key ? "bg-primary text-primary-contrast" : "bg-surface-2 text-muted"
+                tab === s.key ? "bg-text text-background" : "bg-surface-2 text-muted"
               }`}
             >
               {s.label}

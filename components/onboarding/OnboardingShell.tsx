@@ -104,7 +104,7 @@ export default function OnboardingShell({
           className={`w-full rounded-xl py-3.5 text-sm font-medium transition-opacity disabled:cursor-not-allowed disabled:opacity-40 ${
             primaryVariant === "gold"
               ? "bg-accent text-background"
-              : "bg-primary text-primary-contrast"
+              : "bg-primary-live text-primary-contrast"
           }`}
         >
           {primaryLabel}

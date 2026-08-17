@@ -175,7 +175,7 @@ export default function TeamAdminScreen({ membership }: { membership: Membership
   return (
     <div className="mx-auto w-full max-w-screen-sm pb-10">
       {error && (
-        <p className="mx-3.5 mt-3 rounded-xl border border-danger/40 bg-danger/10 px-3.5 py-2.5 text-[12px] text-danger">
+        <p className="mx-3.5 mt-3 rounded-xl border border-danger-line bg-danger-tint px-3.5 py-2.5 text-[12px] text-danger">
           {error}
         </p>
       )}
@@ -198,7 +198,7 @@ export default function TeamAdminScreen({ membership }: { membership: Membership
             {pending.map((m) => (
               <li
                 key={m.userId}
-                className="flex items-center gap-3 rounded-xl border border-warn/30 bg-surface px-3.5 py-3"
+                className="flex items-center gap-3 rounded-xl border border-warn-line bg-surface px-3.5 py-3"
               >
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-sm font-medium text-text">{m.name}</div>
@@ -233,7 +233,7 @@ export default function TeamAdminScreen({ membership }: { membership: Membership
       >
         {/* The link just generated */}
         {fresh && (
-          <div className="mb-3 rounded-xl border border-accent/40 bg-accent/5 px-3.5 py-3">
+          <div className="mb-3 rounded-xl border border-accent-line bg-accent/5 px-3.5 py-3">
             <div className="text-[9px] font-semibold uppercase tracking-[0.14em] text-accent">
               Ready to send
             </div>
@@ -371,7 +371,7 @@ export default function TeamAdminScreen({ membership }: { membership: Membership
                 className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
                   m.role === "athlete"
                     ? "bg-surface-2 text-muted"
-                    : "bg-primary/15 text-primary"
+                    : "bg-primary-tint text-primary"
                 }`}
               >
                 {roleLabel[m.role]}

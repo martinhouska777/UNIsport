@@ -219,7 +219,7 @@ export default function LogSessionSheet({
                 onClick={() => setActivity(a.key)}
                 className={`rounded-xl border py-2.5 text-[12px] font-semibold ${
                   activity === a.key
-                    ? "border-primary bg-primary/10 text-primary"
+                    ? "border-primary bg-primary-tint text-primary"
                     : "border-border bg-surface text-text"
                 }`}
               >
@@ -274,7 +274,7 @@ export default function LogSessionSheet({
                       type="button"
                       onClick={() => setWeightUnit(u)}
                       className={`px-2.5 py-1 text-[11px] font-semibold ${
-                        weightUnit === u ? "bg-primary text-primary-contrast" : "bg-surface-2 text-muted"
+                        weightUnit === u ? "bg-text text-background" : "bg-surface-2 text-muted"
                       }`}
                     >
                       {u}
@@ -323,7 +323,7 @@ export default function LogSessionSheet({
                             <div
                               key={j}
                               className={`flex items-center gap-2 px-3 py-1.5 ${
-                                s.done ? "bg-primary/10" : ""
+                                s.done ? "bg-primary-tint" : ""
                               }`}
                             >
                               <button
@@ -333,8 +333,8 @@ export default function LogSessionSheet({
                                 className={`h-8 w-8 flex-shrink-0 rounded-lg text-[12px] font-semibold ${
                                   s.type
                                     ? isWarm
-                                      ? "bg-warn/20 text-warn"
-                                      : "bg-accent/20 text-accent"
+                                      ? "bg-warn-tint text-warn"
+                                      : "bg-accent-tint text-accent"
                                     : "bg-surface-2 text-text"
                                 }`}
                               >
@@ -359,7 +359,7 @@ export default function LogSessionSheet({
                                 onClick={() => patchSet(i, j, { done: !s.done })}
                                 aria-label={s.done ? "Mark set not done" : "Mark set done"}
                                 className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg ${
-                                  s.done ? "bg-primary text-primary-contrast" : "bg-surface-2 text-muted"
+                                  s.done ? "bg-success text-background" : "bg-surface-2 text-muted"
                                 }`}
                               >
                                 <IconCheck size={15} />
@@ -393,7 +393,7 @@ export default function LogSessionSheet({
               <button
                 type="button"
                 onClick={() => setPickerOpen(true)}
-                className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-surface py-3 text-[13px] font-medium text-muted active:border-primary/40 active:text-primary"
+                className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-surface py-3 text-[13px] font-medium text-muted active:border-primary-line active:text-primary"
               >
                 <IconPlus size={15} /> Add exercise
               </button>
@@ -412,7 +412,7 @@ export default function LogSessionSheet({
                     onClick={() => setCardioType(c)}
                     className={`rounded-full border px-3 py-1.5 text-[12px] font-medium ${
                       cardioType === c
-                        ? "border-primary bg-primary/10 text-primary"
+                        ? "border-primary bg-primary-tint text-primary"
                         : "border-border bg-surface text-text"
                     }`}
                   >
@@ -442,7 +442,7 @@ export default function LogSessionSheet({
                       type="button"
                       onClick={() => setUnit(u)}
                       className={`px-3 py-2.5 text-[12px] font-semibold ${
-                        unit === u ? "bg-primary text-primary-contrast" : "bg-surface-2 text-muted"
+                        unit === u ? "bg-text text-background" : "bg-surface-2 text-muted"
                       }`}
                     >
                       {u}

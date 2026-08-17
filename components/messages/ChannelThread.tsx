@@ -108,7 +108,7 @@ export default function ChannelThread({
         <button type="button" onClick={onBack} aria-label="Back" className="text-muted">
           <IconArrowLeft size={18} />
         </button>
-        <div className="flex h-9 w-9 items-center justify-center rounded-[10px] border border-primary bg-primary/15 text-primary">
+        <div className="flex h-9 w-9 items-center justify-center rounded-[10px] border border-primary bg-primary-tint text-primary">
           <Glyph size={16} />
         </div>
         <span className="text-[13px] font-medium text-text">#&nbsp;{title}</span>

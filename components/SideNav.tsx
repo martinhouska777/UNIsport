@@ -44,7 +44,7 @@ export default function SideNav() {
                 aria-current={active ? "page" : undefined}
                 className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium transition-colors ${
                   active
-                    ? "bg-primary/12 text-primary"
+                    ? "bg-primary-tint text-primary"
                     : "text-muted hover:bg-surface-2 hover:text-text"
                 }`}
               >

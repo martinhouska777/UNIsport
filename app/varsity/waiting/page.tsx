@@ -56,7 +56,7 @@ export default function VarsityWaitingPage() {
           <VarsityCrest size={40} />
         </div>
 
-        <div className="mx-auto mb-4 inline-flex items-center gap-1.5 rounded-full border border-warn/30 bg-warn/10 px-3 py-1.5 text-[11px] font-medium text-warn">
+        <div className="mx-auto mb-4 inline-flex items-center gap-1.5 rounded-full border border-warn-line bg-warn-tint px-3 py-1.5 text-[11px] font-medium text-warn">
           <IconClock size={13} />
           Waiting to be let in
         </div>

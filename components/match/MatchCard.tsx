@@ -34,12 +34,12 @@ export default function MatchCard({
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-surface">
       {/* Avatar block + compatibility badge */}
-      <div className="relative flex h-24 items-center justify-center bg-gradient-to-br from-primary/25 to-surface-2">
-        <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-primary bg-primary/15 text-primary">
+      <div className="relative flex h-24 items-center justify-center bg-gradient-to-br from-surface-2 to-background">
+        <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-primary bg-primary-tint text-primary">
           <IconUser size={20} />
         </div>
         {tier && (
-          <span className="absolute right-2 top-2 rounded-lg bg-primary px-1.5 py-0.5 text-[9px] font-medium text-primary-contrast">
+          <span className="absolute right-2 top-2 rounded-lg border border-border bg-surface px-2 py-0.5 text-[11px] font-semibold text-text">
             {tier.label}
           </span>
         )}
@@ -63,7 +63,7 @@ export default function MatchCard({
               <span
                 key={r.key}
                 title={r.full}
-                className="max-w-full truncate rounded-md border border-accent/40 bg-accent/10 px-1.5 py-0.5 text-[9px] leading-tight text-text"
+                className="max-w-full truncate rounded-md border border-accent-line bg-accent-tint px-1.5 py-0.5 text-[9px] leading-tight text-text"
               >
                 {r.short}
               </span>

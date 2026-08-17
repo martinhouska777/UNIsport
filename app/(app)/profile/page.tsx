@@ -319,7 +319,7 @@ export default function ProfilePage() {
       {/* Identity block */}
       <div className="flex flex-col items-center gap-2 border-b border-border px-3.5 pb-3 pt-4">
         <div className="relative">
-          <div className="flex h-[72px] w-[72px] items-center justify-center overflow-hidden rounded-full border-2 border-primary bg-primary/15 text-primary">
+          <div className="flex h-[72px] w-[72px] items-center justify-center overflow-hidden rounded-full border-2 border-primary bg-primary-tint text-primary">
             {user.photo ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={user.photo} alt={user.name || "Profile photo"} className="h-full w-full object-cover" />
@@ -378,7 +378,7 @@ export default function ProfilePage() {
                 </span>
               )}
               {user.badges.mentor && (
-                <span className="rounded border border-success bg-success/15 px-1.5 py-0.5 text-[8px] font-medium tracking-wide text-success">
+                <span className="rounded border border-success bg-success-tint px-1.5 py-0.5 text-[8px] font-medium tracking-wide text-success">
                   MENTOR
                 </span>
               )}
@@ -505,7 +505,7 @@ export default function ProfilePage() {
           <button
             type="button"
             onClick={() => setEditingPrefs(true)}
-            className="flex items-center gap-1 rounded-full px-1.5 py-1 text-[11px] font-medium text-primary transition-colors hover:bg-primary/10"
+            className="flex items-center gap-1 rounded-full px-1.5 py-1 text-[11px] font-medium text-primary transition-colors hover:bg-primary-tint"
           >
             <IconPencil size={11} />
             Edit answers
@@ -524,7 +524,7 @@ export default function ProfilePage() {
               {user.interests.map((i) => (
                 <span
                   key={i}
-                  className="rounded-full border border-accent bg-accent/15 px-2.5 py-1 text-[11px] text-accent"
+                  className="rounded-full border border-accent bg-accent-tint px-2.5 py-1 text-[11px] text-accent"
                 >
                   {i}
                 </span>

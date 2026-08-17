@@ -99,7 +99,7 @@ export default function OptionPickerSheet({
                 aria-pressed={isPicked}
                 className={`flex items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-left text-sm ${
                   isPicked
-                    ? "border-primary bg-primary/10 text-text"
+                    ? "border-primary bg-primary-tint text-text"
                     : `border-border bg-surface-2 text-text ${full ? "opacity-40" : ""}`
                 }`}
               >

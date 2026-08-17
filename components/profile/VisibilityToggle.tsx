@@ -23,7 +23,7 @@ export default function VisibilityToggle({
       aria-label={visible ? "Shown to others — tap to hide" : "Hidden from others — tap to show"}
       className={`flex items-center gap-1 rounded-full border px-2 py-1 text-[10px] font-medium transition-colors ${
         visible
-          ? "border-success/40 bg-success/10 text-success"
+          ? "border-success-line bg-success-tint text-success"
           : "border-border bg-surface-2 text-muted"
       }`}
     >

@@ -142,7 +142,7 @@ export default function ModeSwitcherSheet({
           >
             <span
               className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border ${
-                isMember ? "border-primary/40 bg-primary/10" : "border-border bg-surface-2 opacity-60"
+                isMember ? "border-primary-line bg-primary-tint" : "border-border bg-surface-2 opacity-60"
               }`}
             >
               <VarsityCrest size={32} />

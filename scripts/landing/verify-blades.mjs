@@ -138,8 +138,12 @@ console.log("glowing:   ", glowing);
 await page.screenshot({ path: `${SHOTS}/bl-3-spinning.png` });
 
 // ── one wheel nudge up: first act (label out, words out, oars gather and
-// sink), then the flight — ~1200 + 1500ms in all ──
-await page.evaluate(() => window.dispatchEvent(new WheelEvent("wheel", { deltaY: -120, bubbles: true })));
+// sink), then the flight — ~1200 + 1500ms in all. Dispatched INSIDE the
+// closer iframe: that is where a real cursor is. ──
+await page.evaluate(() => {
+  const d = document.querySelector("#closer-blades iframe").contentDocument;
+  d.dispatchEvent(new d.defaultView.WheelEvent("wheel", { deltaY: -120, bubbles: true }));
+});
 await wait(3600);
 const back = await page.evaluate(() => {
   const sec = document.getElementById("closer-blades");

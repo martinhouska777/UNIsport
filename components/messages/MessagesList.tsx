@@ -112,7 +112,7 @@ export default function MessagesList({
               type="button"
               onClick={() => setTab(t)}
               className={`flex-1 py-2 text-center text-xs font-medium capitalize transition-colors ${
-                tab === t ? "bg-primary text-primary-contrast" : "bg-surface-2 text-muted"
+                tab === t ? "bg-text text-background" : "bg-surface-2 text-muted"
               }`}
             >
               {t === "direct" ? "Direct" : "Community"}
@@ -201,7 +201,7 @@ function DirectList({
             </div>
           </div>
           {c.unread > 0 && (
-            <span className="h-2 w-2 shrink-0 rounded-full bg-primary" aria-label="unread" />
+            <span className="h-2 w-2 shrink-0 rounded-full bg-primary-live" aria-label="unread" />
           )}
         </button>
       ))}
@@ -252,7 +252,7 @@ function CommunityList({
                 </div>
               </div>
               {c.unread > 0 && (
-                <span className="flex h-[18px] min-w-[18px] shrink-0 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-medium text-primary-contrast">
+                <span className="flex h-[18px] min-w-[18px] shrink-0 items-center justify-center rounded-full bg-primary-live px-1 text-[11px] font-semibold text-primary-contrast">
                   {c.unread}
                 </span>
               )}
@@ -309,7 +309,7 @@ function SectionHeader({ children }: { children: React.ReactNode }) {
 
 function ChannelTile({ icon }: { icon: string }) {
   return (
-    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-primary bg-primary/15 text-primary">
+    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-primary bg-primary-tint text-primary">
       <ChannelGlyph icon={icon} size={20} />
     </div>
   );

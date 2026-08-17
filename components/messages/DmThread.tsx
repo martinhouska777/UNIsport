@@ -123,7 +123,7 @@ export default function DmThread({
           type="button"
           onClick={() => setPlanOpen(true)}
           aria-label="Plan a session"
-          className="ml-auto flex shrink-0 items-center gap-1.5 rounded-full border border-primary/40 bg-primary/10 px-3 py-1.5 text-[12px] font-medium text-primary"
+          className="ml-auto flex shrink-0 items-center gap-1.5 rounded-full border border-primary-line bg-primary-tint px-3 py-1.5 text-[12px] font-medium text-primary"
         >
           <IconCalendar size={14} /> Plan
         </button>
@@ -163,7 +163,7 @@ export default function DmThread({
                   <div
                     className={`px-3 py-2 text-[12px] leading-relaxed ${
                       mine
-                        ? "rounded-[16px_16px_4px_16px] bg-primary text-primary-contrast"
+                        ? "rounded-[16px_16px_4px_16px] bg-primary-live text-primary-contrast"
                         : "rounded-[16px_16px_16px_4px] bg-surface-2 text-text"
                     }`}
                   >

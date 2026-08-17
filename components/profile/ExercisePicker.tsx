@@ -78,9 +78,9 @@ export default function ExercisePicker({
             <button
               type="button"
               onClick={() => onPick({ name: typed, muscle })}
-              className="mb-2 flex w-full items-center gap-3 rounded-xl border border-dashed border-primary/40 bg-primary/[0.06] px-3.5 py-3 text-left"
+              className="mb-2 flex w-full items-center gap-3 rounded-xl border border-dashed border-primary-line bg-primary-tint px-3.5 py-3 text-left"
             >
-              <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary">
+              <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-primary-tint text-primary">
                 <IconPlus size={16} />
               </span>
               <span className="text-[13px] font-medium text-text">
@@ -134,7 +134,7 @@ function FilterChip({
       type="button"
       onClick={onClick}
       className={`flex-shrink-0 rounded-full border px-3 py-1.5 text-[12px] font-medium ${
-        active ? "border-primary bg-primary/10 text-primary" : "border-border bg-surface text-muted"
+        active ? "border-primary bg-primary-tint text-primary" : "border-border bg-surface text-muted"
       }`}
     >
       {label}

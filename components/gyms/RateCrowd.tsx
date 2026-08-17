@@ -34,7 +34,7 @@ export function StarRater({
           disabled={!onRate}
           onClick={() => onRate?.(n)}
           aria-label={`Rate ${n} star${n > 1 ? "s" : ""}`}
-          className={`${n <= value ? "text-accent" : "text-muted/30"} ${
+          className={`${n <= value ? "text-accent" : "text-text-3"} ${
             onRate ? "active:scale-95" : "cursor-default"
           }`}
         >
@@ -92,7 +92,7 @@ export function RatingValue({ value, count }: { value: number; count: number }) 
     <span className="flex items-center gap-1">
       <IconStar size={13} className="text-accent" />
       <span className="text-text">{value.toFixed(1)}</span>
-      <span className="text-muted/70">({count})</span>
+      <span className="text-text-3">({count})</span>
     </span>
   );
 }
@@ -113,7 +113,7 @@ export function CrowdChip({
   return (
     <span className={`flex items-center gap-1 ${crowdTone(crowd.level)}`}>
       <IconUser size={12} /> {crowdLabel(crowd.level)}
-      {showAgo && <span className="text-muted/70">· {timeAgo(crowd.at)}</span>}
+      {showAgo && <span className="text-text-3">· {timeAgo(crowd.at)}</span>}
     </span>
   );
 }

@@ -80,7 +80,7 @@ export default function PersonalRecords({
                 type="button"
                 onClick={() => removeRecord(i)}
                 aria-label={`Remove record ${i + 1}`}
-                className="shrink-0 rounded-full p-1.5 text-muted transition-colors hover:bg-danger/15 hover:text-danger"
+                className="shrink-0 rounded-full p-1.5 text-muted transition-colors hover:bg-danger-tint hover:text-danger"
               >
                 <IconTrash size={15} />
               </button>

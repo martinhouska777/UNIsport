@@ -64,7 +64,7 @@ export default function SearchableDropdown(props: Props) {
           {selectedArr.map((s) => (
             <span
               key={s}
-              className="flex items-center gap-1 rounded-full border border-primary bg-primary/15 px-2.5 py-1 text-xs text-primary"
+              className="flex items-center gap-1 rounded-full border border-primary bg-primary-tint px-2.5 py-1 text-xs text-primary"
             >
               {s}
               <button type="button" onClick={() => choose(s)} aria-label={`Remove ${s}`}>
@@ -114,7 +114,7 @@ export default function SearchableDropdown(props: Props) {
                   type="button"
                   onClick={() => choose(o)}
                   className={`flex w-full items-center justify-between px-3.5 py-2.5 text-left text-sm ${
-                    isSelected(o) ? "bg-primary/10 text-primary" : "text-text"
+                    isSelected(o) ? "bg-primary-tint text-primary" : "text-text"
                   }`}
                 >
                   <span>{o}</span>

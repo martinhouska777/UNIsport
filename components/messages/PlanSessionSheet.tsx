@@ -112,7 +112,7 @@ export default function PlanSessionSheet({
                 onClick={() => setActivity(a.key)}
                 className={`rounded-xl border py-2.5 text-[12px] font-semibold ${
                   activity === a.key
-                    ? "border-primary bg-primary/10 text-primary"
+                    ? "border-primary bg-primary-tint text-primary"
                     : "border-border bg-surface text-text"
                 }`}
               >

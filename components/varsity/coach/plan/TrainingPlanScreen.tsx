@@ -78,7 +78,7 @@ function Dot({ color }: { color: string }) {
 
 function DraftBadge() {
   return (
-    <span className="rounded border border-warn/40 bg-warn/10 px-1.5 py-px text-[8px] font-bold uppercase tracking-[0.08em] text-warn">
+    <span className="rounded border border-warn-line bg-warn-tint px-1.5 py-px text-[8px] font-bold uppercase tracking-[0.08em] text-warn">
       Draft
     </span>
   );
@@ -86,7 +86,7 @@ function DraftBadge() {
 
 function PublishedBadge() {
   return (
-    <span className="rounded border border-success/40 bg-success/10 px-1.5 py-px text-[8px] font-bold uppercase tracking-[0.08em] text-success">
+    <span className="rounded border border-success-line bg-success-tint px-1.5 py-px text-[8px] font-bold uppercase tracking-[0.08em] text-success">
       Published
     </span>
   );
@@ -139,7 +139,7 @@ export default function TrainingPlanScreen() {
       onClick={() => persist()}
       disabled={saving}
       className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[12px] font-semibold disabled:opacity-50 ${
-        saved ? "border-success/40 bg-success/10 text-success" : "border-primary/40 text-primary"
+        saved ? "border-success-line bg-success-tint text-success" : "border-primary-line text-primary"
       }`}
     >
       <IconCheck size={14} /> {saving ? "Saving…" : saved ? "Saved" : "Save"}
@@ -310,7 +310,7 @@ export default function TrainingPlanScreen() {
                 className="w-full max-w-xs rounded-2xl border border-border bg-surface p-5"
                 onClick={(e) => e.stopPropagation()}
               >
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-danger/15 text-danger">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-danger-tint text-danger">
                   <IconTrash size={18} />
                 </div>
                 <h2 className="mt-3 text-[16px] font-semibold text-text">
@@ -337,7 +337,7 @@ export default function TrainingPlanScreen() {
                         ? deleteBlock(confirm.blockId)
                         : resetWeek(confirm.blockId, confirm.weekIdx)
                     }
-                    className="flex-1 rounded-xl border border-danger/40 bg-danger/10 py-3 text-[13px] font-semibold text-danger disabled:opacity-50"
+                    className="flex-1 rounded-xl border border-danger-line bg-danger-tint py-3 text-[13px] font-semibold text-danger disabled:opacity-50"
                   >
                     {confirm.kind === "block" ? "Delete" : "Clear week"}
                   </button>
@@ -367,7 +367,7 @@ export default function TrainingPlanScreen() {
 
         {blocks.length === 0 ? (
           <div className="mt-8 rounded-2xl border border-dashed border-border bg-surface px-5 py-10 text-center">
-            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary/15 text-primary">
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary-tint text-primary">
               <IconCalendar size={22} />
             </div>
             <div className="text-[14px] font-semibold text-text">No training blocks yet</div>
@@ -408,7 +408,7 @@ export default function TrainingPlanScreen() {
                   type="button"
                   onClick={() => setConfirm({ kind: "block", blockId: b.id })}
                   aria-label={`Delete ${b.name}`}
-                  className="flex items-center border-l border-border px-3.5 text-muted active:bg-danger/10 active:text-danger"
+                  className="flex items-center border-l border-border px-3.5 text-muted active:bg-danger-tint active:text-danger"
                 >
                   <IconTrash size={16} />
                 </button>
@@ -417,7 +417,7 @@ export default function TrainingPlanScreen() {
             <button
               type="button"
               onClick={() => setView({ name: "create" })}
-              className="mt-1 flex items-center justify-center gap-2 rounded-2xl border border-dashed border-border bg-surface py-3.5 text-[13px] font-medium text-muted active:border-primary/40 active:text-primary"
+              className="mt-1 flex items-center justify-center gap-2 rounded-2xl border border-dashed border-border bg-surface py-3.5 text-[13px] font-medium text-muted active:border-primary-line active:text-primary"
             >
               <IconPlus size={16} /> New training block
             </button>
@@ -506,7 +506,7 @@ export default function TrainingPlanScreen() {
         <div className="mt-1 text-[11px] text-muted">{blockRangeLabel(block)}</div>
 
         {block.raceName && (
-          <div className="mt-3 flex items-center gap-3 rounded-xl border border-primary/35 bg-gradient-to-r from-primary/20 to-accent/10 px-3.5 py-2.5">
+          <div className="mt-3 flex items-center gap-3 rounded-xl border border-primary-line bg-gradient-to-r from-primary/20 to-accent/10 px-3.5 py-2.5">
             <span className="text-primary">
               <IconFlag size={18} />
             </span>
@@ -583,7 +583,7 @@ export default function TrainingPlanScreen() {
         <button
           type="button"
           onClick={() => setConfirm({ kind: "block", blockId: block.id })}
-          className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl border border-danger/30 bg-danger/[0.06] py-3 text-[13px] font-semibold text-danger"
+          className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl border border-danger-line bg-danger-tint py-3 text-[13px] font-semibold text-danger"
         >
           <IconTrash size={15} /> Delete block
         </button>
@@ -617,7 +617,7 @@ export default function TrainingPlanScreen() {
               type="button"
               onClick={() => setView({ name: "week", blockId: block.id, weekIdx: i })}
               className={`flex-shrink-0 rounded-lg border px-3 py-1.5 text-[11px] font-medium ${
-                i === view.weekIdx ? "border-primary bg-primary text-primary-contrast" : "border-border bg-surface text-muted"
+                i === view.weekIdx ? "border-text bg-text text-background" : "border-border bg-surface text-muted"
               }`}
             >
               Week {w.index}
@@ -632,7 +632,7 @@ export default function TrainingPlanScreen() {
               key={d.date.toISOString()}
               className={`overflow-hidden rounded-xl border bg-surface ${d.today ? "border-primary/50" : "border-border"}`}
             >
-              <div className={`flex items-center justify-between px-3 py-2 ${d.today ? "bg-primary/15" : "bg-surface-2"}`}>
+              <div className={`flex items-center justify-between px-3 py-2 ${d.today ? "bg-primary-tint" : "bg-surface-2"}`}>
                 <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted">
                   {d.weekday} {d.month}
                 </span>
@@ -647,7 +647,7 @@ export default function TrainingPlanScreen() {
                         key={p}
                         type="button"
                         onClick={() => openEditor(d.date, p)}
-                        className="flex items-center gap-2 rounded-lg border border-dashed border-border px-2.5 py-2 text-muted active:border-primary/40 active:text-primary"
+                        className="flex items-center gap-2 rounded-lg border border-dashed border-border px-2.5 py-2 text-muted active:border-primary-line active:text-primary"
                       >
                         <span className="text-[8px] font-bold tracking-[0.12em]">{p}</span>
                         <span className="flex items-center gap-1 text-[11px] italic">
@@ -695,7 +695,7 @@ export default function TrainingPlanScreen() {
         <button
           type="button"
           onClick={() => setConfirm({ kind: "week", blockId: block.id, weekIdx: view.weekIdx })}
-          className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl border border-danger/30 bg-danger/[0.06] py-3 text-[13px] font-semibold text-danger"
+          className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl border border-danger-line bg-danger-tint py-3 text-[13px] font-semibold text-danger"
         >
           <IconTrash size={15} /> Clear this week
         </button>
@@ -749,7 +749,7 @@ export default function TrainingPlanScreen() {
                   type="button"
                   onClick={() => setForm((f) => ({ ...f, category: c, intensity: undefined, description: "" }))}
                   className={`flex flex-col items-center gap-1.5 rounded-xl border py-2.5 ${
-                    active ? "border-primary bg-primary/10" : "border-border bg-surface"
+                    active ? "border-primary bg-primary-tint" : "border-border bg-surface"
                   }`}
                 >
                   <Dot color={categoryMeta[c].color} />
@@ -772,7 +772,7 @@ export default function TrainingPlanScreen() {
                       type="button"
                       onClick={() => setForm((f) => ({ ...f, intensity: it }))}
                       className={`flex items-center justify-center gap-1.5 rounded-xl border py-2.5 ${
-                        active ? "border-primary bg-primary/10" : "border-border bg-surface"
+                        active ? "border-primary bg-primary-tint" : "border-border bg-surface"
                       }`}
                     >
                       <Dot color={intensityMeta[it].color} />
@@ -797,7 +797,7 @@ export default function TrainingPlanScreen() {
                       type="button"
                       onClick={() => setForm((f) => ({ ...f, description: text }))}
                       className={`rounded-lg border px-2.5 py-1.5 text-[11px] text-text ${
-                        active ? "border-primary bg-primary/10" : "border-border bg-surface"
+                        active ? "border-primary bg-primary-tint" : "border-border bg-surface"
                       }`}
                     >
                       {text}
@@ -862,7 +862,7 @@ export default function TrainingPlanScreen() {
                       type="button"
                       onClick={() => setForm((f) => ({ ...f, repeat: key }))}
                       className={`flex items-center justify-center gap-1.5 rounded-xl border py-2.5 text-[12px] font-semibold ${
-                        active ? "border-primary bg-primary/10 text-text" : "border-border bg-surface text-muted"
+                        active ? "border-primary bg-primary-tint text-text" : "border-border bg-surface text-muted"
                       }`}
                     >
                       {key === "weekly" && <IconRepeat size={14} />}

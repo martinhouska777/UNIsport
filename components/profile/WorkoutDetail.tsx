@@ -86,7 +86,7 @@ export default function WorkoutDetail({
             {muscles.map((m) => (
               <span
                 key={m}
-                className="rounded-full bg-primary/15 px-2.5 py-1 text-[11px] font-medium text-primary"
+                className="rounded-full bg-primary-tint px-2.5 py-1 text-[11px] font-medium text-primary"
               >
                 {m}
               </span>
@@ -96,7 +96,7 @@ export default function WorkoutDetail({
 
         {/* Running / cardio metrics */}
         {metrics && (
-          <div className="mb-4 inline-block rounded-xl border border-primary bg-primary/10 px-3 py-1.5 text-[14px] font-medium text-primary">
+          <div className="mb-4 inline-block rounded-xl border border-primary bg-primary-tint px-3 py-1.5 text-[14px] font-medium text-primary">
             {metrics}
           </div>
         )}
@@ -134,9 +134,9 @@ export default function WorkoutDetail({
                       <span
                         className={`mx-auto flex h-6 w-6 items-center justify-center rounded-md text-[11px] font-semibold ${
                           s.type === "W"
-                            ? "bg-warn/20 text-warn"
+                            ? "bg-warn-tint text-warn"
                             : s.type
-                              ? "bg-accent/20 text-accent"
+                              ? "bg-accent-tint text-accent"
                               : "bg-surface-2 text-text"
                         }`}
                       >
@@ -157,7 +157,7 @@ export default function WorkoutDetail({
 
         {/* Partner */}
         <div className="mb-4 flex items-center gap-2.5">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-primary bg-primary/15 text-primary">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-primary bg-primary-tint text-primary">
             <IconUser size={15} />
           </div>
           <div>
@@ -165,7 +165,7 @@ export default function WorkoutDetail({
             <div className="text-[13px] font-medium text-primary">{solo ? "Solo session" : log.partner}</div>
           </div>
           {log.verified && (
-            <span className="ml-auto flex items-center gap-1 rounded-full border border-success bg-success/15 px-2 py-1 text-[10px] font-medium text-success">
+            <span className="ml-auto flex items-center gap-1 rounded-full border border-success bg-success-tint px-2 py-1 text-[10px] font-medium text-success">
               <IconCheck size={11} /> Verified
             </span>
           )}
@@ -232,14 +232,10 @@ export default function WorkoutDetail({
               <IconTrash size={15} />
               Delete
             </Button>
-            <button
-              type="button"
-              onClick={() => onEdit(log)}
-              className="flex flex-1 items-center justify-center gap-1.5 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-contrast"
-            >
+            <Button size="lg" onClick={() => onEdit(log)} className="flex-1">
               <IconPencil size={15} />
               Edit session
-            </button>
+            </Button>
           </>
         )}
       </div>

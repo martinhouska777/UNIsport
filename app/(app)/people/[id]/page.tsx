@@ -198,7 +198,7 @@ function PersonProfile() {
         <>
           {/* Identity */}
           <div className="flex flex-col items-center gap-2.5 border-b border-border px-4 pb-4 pt-5">
-            <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-2 border-primary bg-primary/15 text-primary">
+            <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-2 border-primary bg-primary-tint text-primary">
               {user.photo ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={user.photo} alt={user.name || "Profile photo"} className="h-full w-full object-cover" />
@@ -230,12 +230,12 @@ function PersonProfile() {
               {(fit !== null || user.badges.mentor) && (
                 <div className="mt-0.5 flex items-center gap-2">
                   {fit !== null && (
-                    <span className="rounded-lg border border-primary bg-primary/15 px-2 py-0.5 text-[10px] font-medium text-primary">
+                    <span className="rounded-lg border border-primary bg-primary-tint px-2 py-0.5 text-[10px] font-medium text-primary">
                       {fit}
                     </span>
                   )}
                   {user.badges.mentor && (
-                    <span className="rounded-lg border border-success bg-success/15 px-2 py-0.5 text-[10px] font-medium text-success">
+                    <span className="rounded-lg border border-success bg-success-tint px-2 py-0.5 text-[10px] font-medium text-success">
                       Mentor
                     </span>
                   )}
@@ -380,7 +380,7 @@ function PersonProfile() {
               aria-pressed={following === true}
               className={`flex flex-1 items-center justify-center gap-1.5 rounded-full border px-5 py-3 text-sm font-medium transition-colors disabled:opacity-50 ${
                 following
-                  ? "border-primary bg-primary/15 text-primary"
+                  ? "border-primary bg-primary-tint text-primary"
                   : "border-border bg-surface-2 text-text"
               }`}
             >

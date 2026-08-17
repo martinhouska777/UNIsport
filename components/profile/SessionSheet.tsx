@@ -90,7 +90,7 @@ export default function SessionSheet({
                     <img src={photo} alt="" className="h-full w-full object-cover" />
                   </span>
                 ) : (
-                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-primary bg-primary/15 text-primary">
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-primary bg-primary-tint text-primary">
                     <IconUser size={18} />
                   </span>
                 )}
@@ -104,7 +104,7 @@ export default function SessionSheet({
                       {muscles.map((m) => (
                         <span
                           key={m}
-                          className="rounded-full bg-primary/15 px-1.5 py-0.5 text-[10px] font-medium text-primary"
+                          className="rounded-full bg-primary-tint px-1.5 py-0.5 text-[10px] font-medium text-primary"
                         >
                           {m}
                         </span>

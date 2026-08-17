@@ -73,7 +73,7 @@ export default function GymProfile({ gym }: { gym: Gym }) {
               return (
                 <div
                   key={i}
-                  className="flex h-50 min-w-full snap-start flex-col items-center justify-center gap-2 bg-gradient-to-br from-primary/25 to-surface-2"
+                  className="flex h-50 min-w-full snap-start flex-col items-center justify-center gap-2 bg-gradient-to-br from-surface-2 to-background"
                 >
                   <span className="text-text/15">
                     <PhotoIcon size={40} />

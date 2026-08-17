@@ -16,7 +16,7 @@ export default function Avatar({
 }) {
   return (
     <div
-      className="flex shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-primary bg-primary/15 text-primary"
+      className="flex shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-primary bg-primary-tint text-primary"
       style={{ width: size, height: size }}
     >
       {src ? (

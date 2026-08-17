@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { gyms, type Gym } from "@/lib/gyms";
+import { gyms, type Gym, type GalleryIcon } from "@/lib/gyms";
 import { useAppState } from "@/components/AppState";
 import { useFavorites, useGymStats, type GymCrowd } from "@/lib/gymSocial";
 import { RatingValue, CrowdChip } from "@/components/gyms/RateCrowd";
@@ -11,6 +11,11 @@ import {
   IconClock,
   IconFloors,
   IconHeart,
+  IconChevronRight,
+  IconBarbell,
+  IconRun,
+  IconSwimming,
+  IconBasketball,
   HouseSigil,
 } from "@/components/icons";
 
@@ -36,7 +41,7 @@ function FavHeart({ fav, onToggle }: { fav: boolean; onToggle: () => void }) {
       aria-label={fav ? "Remove from favourites" : "Add to favourites"}
       aria-pressed={fav}
       className={`absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-background/55 backdrop-blur ${
-        fav ? "text-primary" : "text-text/70"
+        fav ? "text-primary" : "text-text-2"
       }`}
     >
       <IconHeart size={15} filled={fav} />
@@ -59,8 +64,8 @@ function StatsRow({ gym, crowd }: { gym: Gym; crowd: GymCrowd | null }) {
           <IconFloors size={13} /> {gym.floors} {gym.floors === 1 ? "floor" : "floors"}
         </span>
       </div>
-      <span className="flex-shrink-0 rounded-lg bg-primary px-3 py-1 text-xs font-medium text-primary-contrast">
-        View
+      <span className="flex-shrink-0 text-muted">
+        <IconChevronRight size={16} />
       </span>
     </div>
   );
@@ -73,6 +78,31 @@ type CardProps = {
   crowd: GymCrowd | null;
 };
 
+/*
+  The gym's own activity icon, ghosted into the empty photo slot. Which icon it
+  is comes from the gym's DATA (its gallery), never from this component.
+*/
+const watermarks: Record<GalleryIcon, (p: { size?: number }) => React.ReactNode> = {
+  barbell: IconBarbell,
+  run: IconRun,
+  swimming: IconSwimming,
+  basketball: IconBasketball,
+};
+
+function Watermark({ gym }: { gym: Gym }) {
+  const kind = gym.gallery[0]?.icon;
+  if (!kind) return null;
+  const Icon = watermarks[kind];
+  return (
+    <span
+      aria-hidden
+      className="pointer-events-none absolute -right-3 -top-2 text-text/[0.06]"
+    >
+      <Icon size={92} />
+    </span>
+  );
+}
+
 function MainCard({ gym, fav, onToggleFav, crowd }: CardProps) {
   return (
     <Link
@@ -80,19 +110,22 @@ function MainCard({ gym, fav, onToggleFav, crowd }: CardProps) {
       className="relative block overflow-hidden rounded-2xl border border-border"
     >
       <FavHeart fav={fav} onToggle={onToggleFav} />
-      <div className="relative flex h-24 items-end bg-gradient-to-br from-primary/30 to-surface-2">
-        <span className="absolute left-2.5 top-2 rounded-lg bg-background/60 px-2 py-0.5 text-[9px] tracking-wider text-text/70">
+      {/*
+        This block is where the gym's photo goes. Until there is one it used to
+        be filled with a crimson wash, which put a big brand-coloured field
+        directly above the crimson button — so crimson stopped meaning "tap me".
+        It's now a neutral surface with the gym's own activity icon watermarked
+        into it, the same treatment the photo gallery on the gym page uses, so
+        an empty slot reads as "photo coming" rather than as a void.
+      */}
+      <div className="relative flex h-24 items-end overflow-hidden bg-gradient-to-br from-surface-2 to-background">
+        <Watermark gym={gym} />
+        <span className="absolute left-2.5 top-2 rounded-lg bg-background/60 px-2 py-0.5 text-[10px] tracking-wider text-text-2">
           MAIN GYM
         </span>
-        <div className="p-3">
+        <div className="relative p-3">
           <div className="text-[15px] font-medium text-text">{gym.name}</div>
-          {/*
-            This sits on the crimson gradient, which in light mode is a pale
-            pink — `text-muted` on it fell below the 4.5:1 contrast minimum.
-            A dimmed `text` colour keeps the same visual weight in both modes
-            and stays readable on either end of the gradient.
-          */}
-          <div className="text-[10px] text-text/75">{gym.address}</div>
+          <div className="text-[11px] text-text-2">{gym.address}</div>
         </div>
       </div>
       <StatsRow gym={gym} crowd={crowd} />
@@ -124,7 +157,7 @@ function HouseCard({ gym, fav, onToggleFav, crowd }: CardProps) {
           <div className="text-sm font-medium text-text">{gym.name}</div>
           {/* 9px muted was too faint to read in light mode; 10px + a stronger
               colour, still clearly secondary to the gym name. */}
-          <div className="text-[10px] text-text/70">House gym</div>
+          <div className="text-[10px] text-text-2">House gym</div>
         </div>
       </div>
       <StatsRow gym={gym} crowd={crowd} />
@@ -201,7 +234,7 @@ export default function GymsPage() {
                 onClick={() => setFilter(f.key)}
                 className={`rounded-full px-3.5 py-1.5 text-[11px] font-medium transition-colors ${
                   active
-                    ? "bg-primary text-primary-contrast"
+                    ? "bg-text text-background"
                     : "border border-border bg-surface-2 text-muted"
                 }`}
               >

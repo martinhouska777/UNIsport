@@ -100,9 +100,9 @@ export default function SessionCalendar({
           const hasSession = !!chips;
           const isToday = n === today;
           const cls = hasSession
-            ? "border border-primary/40 bg-primary/15 cursor-pointer"
+            ? "border border-primary-line bg-primary-tint cursor-pointer"
             : isToday
-              ? "border border-primary bg-primary/10 cursor-default"
+              ? "border border-primary bg-primary-tint cursor-default"
               : "bg-surface-2 cursor-default";
           const extra = chips ? chips.length - 2 : 0;
           return (
@@ -128,7 +128,7 @@ export default function SessionCalendar({
                   {chips.slice(0, 2).map((c) => (
                     <span
                       key={c}
-                      className="truncate rounded bg-primary/15 px-1 text-left text-[7px] font-medium leading-[1.4] text-primary"
+                      className="truncate rounded bg-primary-tint px-1 text-left text-[7px] font-medium leading-[1.4] text-primary"
                     >
                       {short(c)}
                     </span>
@@ -148,7 +148,7 @@ export default function SessionCalendar({
       {/* Legend */}
       <div className="mt-2.5 flex items-center gap-3 text-[9px] text-muted">
         <span className="flex items-center gap-1">
-          <span className="h-2.5 w-2.5 rounded-sm border border-primary/40 bg-primary/15" />
+          <span className="h-2.5 w-2.5 rounded-sm border border-primary-line bg-primary-tint" />
           Trained
         </span>
         <span className="flex items-center gap-1">

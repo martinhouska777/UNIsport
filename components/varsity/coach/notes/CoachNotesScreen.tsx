@@ -43,7 +43,7 @@ const initialsOf = (name: string) =>
 function StatusChip({ hasNote }: { hasNote: boolean }) {
   if (hasNote) {
     return (
-      <span className="flex items-center gap-1.5 rounded-full border border-danger/40 bg-danger/10 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.06em] text-danger">
+      <span className="flex items-center gap-1.5 rounded-full border border-danger-line bg-danger-tint px-2 py-1 text-[10px] font-bold uppercase tracking-[0.06em] text-danger">
         <span className="flex h-4 w-4 items-center justify-center rounded-full bg-danger text-[11px] font-black leading-none text-background">
           !
         </span>
@@ -52,7 +52,7 @@ function StatusChip({ hasNote }: { hasNote: boolean }) {
     );
   }
   return (
-    <span className="flex items-center gap-1.5 rounded-full border border-success/40 bg-success/10 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.06em] text-success">
+    <span className="flex items-center gap-1.5 rounded-full border border-success-line bg-success-tint px-2 py-1 text-[10px] font-bold uppercase tracking-[0.06em] text-success">
       <IconCheckCircle size={13} />
       Good job
     </span>
@@ -154,7 +154,7 @@ function Editor({
             onChange={(e) => setText(e.target.value)}
             rows={5}
             placeholder="e.g. Finish the stroke — you're rushing the catch. Drive through to the hips before extracting."
-            className="mt-3 w-full resize-none rounded-2xl border border-border bg-surface px-3.5 py-3 text-base leading-relaxed text-text outline-none placeholder:text-muted/60 focus:border-primary"
+            className="mt-3 w-full resize-none rounded-2xl border border-border bg-surface px-3.5 py-3 text-base leading-relaxed text-text outline-none placeholder:text-text-3 focus:border-primary"
           />
         </div>
       </div>
@@ -224,7 +224,7 @@ export default function CoachNotesScreen() {
           <div className="mt-10 text-center text-[13px] text-muted">Loading team…</div>
         ) : roster.length === 0 ? (
           <div className="mt-8 flex flex-col items-center rounded-2xl border border-dashed border-border bg-surface px-6 py-10 text-center">
-            <span className="mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-primary/15 text-primary">
+            <span className="mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-primary-tint text-primary">
               <IconUser size={20} />
             </span>
             <div className="text-[14px] font-semibold text-text">No athletes yet</div>

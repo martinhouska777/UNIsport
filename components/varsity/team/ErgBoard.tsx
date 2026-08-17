@@ -41,7 +41,7 @@ export default function ErgBoard({
               onClick={() => onOpen(r.athleteId)}
               className={`flex w-full items-center gap-3 px-3 py-2.5 text-left ${
                 i > 0 ? "border-t border-border" : ""
-              } ${mine ? "bg-primary/10" : "active:bg-surface-2"}`}
+              } ${mine ? "bg-primary-tint" : "active:bg-surface-2"}`}
             >
               <span
                 className={`w-5 flex-shrink-0 text-center text-[12px] font-semibold ${
@@ -50,13 +50,13 @@ export default function ErgBoard({
               >
                 {i + 1}
               </span>
-              <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-primary/15 text-[10px] font-semibold text-primary">
+              <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-primary-tint text-[10px] font-semibold text-primary">
                 {r.initials}
               </span>
               <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-text">
                 {r.name}
                 {mine && (
-                  <span className="ml-1.5 rounded bg-primary px-1 py-0.5 text-[8px] font-bold uppercase tracking-wide text-primary-contrast">
+                  <span className="ml-1.5 rounded bg-text px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-background">
                     You
                   </span>
                 )}

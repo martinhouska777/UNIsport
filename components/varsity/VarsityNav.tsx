@@ -82,7 +82,7 @@ export default function VarsityNav() {
           <Link
             href="/varsity/log"
             aria-label="Log a session"
-            className="-mt-6 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-contrast shadow-lg ring-4 ring-background"
+            className="-mt-6 flex h-14 w-14 items-center justify-center rounded-full bg-primary-live text-primary-contrast shadow-lg ring-4 ring-background"
           >
             <IconPlus size={26} />
           </Link>

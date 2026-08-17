@@ -113,7 +113,7 @@ function RankBadge({ rank }: { rank: number }) {
   return (
     <span
       className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg text-[11px] font-semibold ${
-        top ? "bg-accent/20 text-accent" : "text-muted"
+        top ? "bg-accent-tint text-accent" : "text-muted"
       }`}
     >
       {rank}
@@ -125,11 +125,11 @@ function PersonRow({ row, showHouse }: { row: LeaderRow; showHouse: boolean }) {
   return (
     <div
       className={`flex items-center gap-2.5 rounded-xl border px-3 py-2.5 ${
-        row.isMe ? "border-primary bg-primary/10" : "border-border bg-surface"
+        row.isMe ? "border-primary bg-primary-tint" : "border-border bg-surface"
       }`}
     >
       <RankBadge rank={row.rank} />
-      <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-primary/15 text-[10px] font-semibold text-primary">
+      <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-primary-tint text-[10px] font-semibold text-primary">
         {row.initials}
       </span>
       <div className="min-w-0 flex-1">
@@ -153,7 +153,7 @@ function GroupRowItem({ row, kind }: { row: GroupRow; kind: "house" | "year" }) 
   return (
     <div
       className={`flex items-center gap-2.5 rounded-xl border px-3 py-2.5 ${
-        row.isMine ? "border-primary bg-primary/10" : "border-border bg-surface"
+        row.isMine ? "border-primary bg-primary-tint" : "border-border bg-surface"
       }`}
     >
       <RankBadge rank={row.rank} />
@@ -257,7 +257,7 @@ export default function LeaderboardsPage() {
       <div className="border-b border-border px-3.5 py-3">
         <div className="rounded-2xl border border-border bg-surface-2 px-3.5 py-3">
           <div className="flex items-center gap-2.5">
-            <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-accent/15 text-accent">
+            <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-accent-tint text-accent">
               <IconTrophy size={16} />
             </span>
             <div className="min-w-0 flex-1">
@@ -278,7 +278,7 @@ export default function LeaderboardsPage() {
 
           {/* The single most useful line on the screen. */}
           {nudge && (
-            <div className="mt-2.5 rounded-xl border border-primary/30 bg-primary/10 px-3 py-2 text-[11px] font-medium text-primary">
+            <div className="mt-2.5 rounded-xl border border-primary-line bg-primary-tint px-3 py-2 text-[11px] font-medium text-primary">
               {nudge}
             </div>
           )}
@@ -315,7 +315,7 @@ export default function LeaderboardsPage() {
               type="button"
               onClick={() => setPeriod(p.key)}
               className={`flex-1 rounded-lg py-2 text-[12px] font-semibold transition-colors ${
-                period === p.key ? "bg-primary text-primary-contrast" : "text-muted"
+                period === p.key ? "bg-text text-background" : "text-muted"
               }`}
             >
               {p.label}
@@ -333,7 +333,7 @@ export default function LeaderboardsPage() {
             onClick={() => setBoard(b.key)}
             className={`flex-shrink-0 rounded-full border px-3.5 py-1.5 text-[12px] font-medium transition-colors ${
               board === b.key
-                ? "border-primary bg-primary text-primary-contrast"
+                ? "border-text bg-text text-background"
                 : "border-border bg-surface text-muted"
             }`}
           >

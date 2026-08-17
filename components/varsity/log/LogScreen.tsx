@@ -222,7 +222,7 @@ function LogEditor({
                     type="button"
                     onClick={() => setCategory(c)}
                     className={`flex items-center justify-center gap-1.5 rounded-xl border py-2.5 ${
-                      category === c ? "border-primary bg-primary/10" : "border-border bg-surface"
+                      category === c ? "border-primary bg-primary-tint" : "border-border bg-surface"
                     }`}
                   >
                     <Dot color={catMeta[c].color} />
@@ -247,7 +247,7 @@ function LogEditor({
                 type="button"
                 onClick={() => fileRef.current?.click()}
                 disabled={scanning}
-                className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-primary/40 bg-primary/[0.06] py-3 text-[13px] font-semibold text-primary disabled:opacity-60"
+                className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-primary-line bg-primary-tint py-3 text-[13px] font-semibold text-primary disabled:opacity-60"
               >
                 <IconCamera size={16} /> {scanning ? "Reading photo…" : "Scan C2 / RP3 monitor"}
               </button>
@@ -354,7 +354,7 @@ function PrescribedRow({
       type="button"
       onClick={onLog}
       className={`flex w-full items-start gap-3 rounded-2xl border px-3.5 py-3 text-left ${
-        log ? "border-success/40 bg-success/[0.06]" : "border-border bg-surface active:bg-surface-2"
+        log ? "border-success-line bg-success-tint" : "border-border bg-surface active:bg-surface-2"
       }`}
     >
       <span className="mt-1">
@@ -369,7 +369,7 @@ function PrescribedRow({
         </div>
         {detail && <div className="mt-0.5 truncate text-[11px] text-muted">{detail}</div>}
         {log && formatMetrics(log.minutes, log.metres, log.split) && (
-          <div className="mt-1 text-[12px] font-medium text-text/90">
+          <div className="mt-1 text-[12px] font-medium text-text-2">
             {formatMetrics(log.minutes, log.metres, log.split)}
           </div>
         )}
@@ -379,7 +379,7 @@ function PrescribedRow({
           <IconCheckCircle size={14} /> Logged
         </span>
       ) : (
-        <span className="flex-shrink-0 rounded-lg bg-primary px-3 py-1.5 text-[12px] font-semibold text-primary-contrast">
+        <span className="flex-shrink-0 rounded-lg bg-primary-live px-3 py-1.5 text-[12px] font-semibold text-primary-contrast">
           Log
         </span>
       )}
@@ -401,7 +401,7 @@ function ExtraRow({ log, onEdit }: { log: LogEntry; onEdit: () => void }) {
       <div className="min-w-0 flex-1">
         <span className="text-[14px] font-semibold text-text">{log.title}</span>
         {formatMetrics(log.minutes, log.metres, log.split) && (
-          <div className="mt-0.5 text-[12px] text-text/90">
+          <div className="mt-0.5 text-[12px] text-text-2">
             {formatMetrics(log.minutes, log.metres, log.split)}
           </div>
         )}
@@ -440,9 +440,9 @@ function DayChip({
       onClick={onPick}
       className={`flex w-[3.1rem] flex-shrink-0 flex-col items-center gap-1 rounded-xl border py-2 ${
         selected
-          ? "border-primary bg-primary/15"
+          ? "border-primary bg-primary-tint"
           : isToday
-            ? "border-primary/40 bg-surface"
+            ? "border-primary-line bg-surface"
             : "border-border bg-surface"
       }`}
     >
@@ -574,9 +574,9 @@ export default function LogScreen() {
         <button
           type="button"
           onClick={() => setEditor({ mode: "extra" })}
-          className="mt-4 flex w-full items-center gap-3 rounded-2xl border border-dashed border-primary/40 bg-primary/[0.06] px-4 py-3.5 text-left active:bg-primary/10"
+          className="mt-4 flex w-full items-center gap-3 rounded-2xl border border-dashed border-primary-line bg-primary-tint px-4 py-3.5 text-left active:bg-primary-tint"
         >
-          <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary">
+          <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-primary-tint text-primary">
             <IconCamera size={20} />
           </span>
           <div className="flex-1">
@@ -637,7 +637,7 @@ export default function LogScreen() {
           <button
             type="button"
             onClick={() => setEditor({ mode: "extra" })}
-            className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-border bg-surface py-3.5 text-[13px] font-medium text-muted active:border-primary/40 active:text-primary"
+            className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-border bg-surface py-3.5 text-[13px] font-medium text-muted active:border-primary-line active:text-primary"
           >
             <IconPlus size={16} /> Add extra session
           </button>

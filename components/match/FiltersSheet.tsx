@@ -84,7 +84,7 @@ function CheckSquare({ checked }: { checked: boolean }) {
     <span
       className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-[5px] border text-[11px] font-bold ${
         checked
-          ? "border-primary bg-primary text-primary-contrast"
+          ? "border-text bg-text text-background"
           : "border-border bg-surface-2 text-transparent"
       }`}
     >
@@ -142,7 +142,7 @@ function MineButton({
       onClick={onClick}
       className={`mb-2 rounded-full border px-3 py-1.5 text-[12px] ${
         active
-          ? "border-primary bg-primary/15 text-primary"
+          ? "border-primary bg-primary-tint text-primary"
           : "border-border bg-surface-2 text-muted"
       }`}
     >

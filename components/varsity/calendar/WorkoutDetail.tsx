@@ -194,7 +194,7 @@ export default function WorkoutDetail({
           {current.note && (
             <div className="mt-5">
               <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Note</div>
-              <div className="rounded-2xl border border-border bg-surface-2 px-3.5 py-3 text-[13px] leading-relaxed text-text/90">
+              <div className="rounded-2xl border border-border bg-surface-2 px-3.5 py-3 text-[13px] leading-relaxed text-text-2">
                 {current.note}
               </div>
             </div>
@@ -236,7 +236,7 @@ export default function WorkoutDetail({
                         </span>
                         <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-text">{l.title}</span>
                         {rowMetric(l) && (
-                          <span className="flex-shrink-0 text-[12px] font-semibold tabular-nums text-text/90">
+                          <span className="flex-shrink-0 text-[12px] font-semibold tabular-nums text-text-2">
                             {rowMetric(l)}
                           </span>
                         )}

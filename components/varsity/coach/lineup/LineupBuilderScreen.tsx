@@ -156,7 +156,7 @@ function DayCard({ day, onPick }: { day: PickDay; onPick: (day: PickDay, p: Prac
   return (
     <div
       className={`overflow-hidden rounded-2xl border bg-surface ${
-        day.today ? "border-primary/40 bg-gradient-to-br from-primary/10 to-surface" : "border-border"
+        day.today ? "border-primary-line bg-gradient-to-br from-primary/10 to-surface" : "border-border"
       }`}
     >
       <div className="flex items-center justify-between px-3.5 py-3">
@@ -168,7 +168,7 @@ function DayCard({ day, onPick }: { day: PickDay; onPick: (day: PickDay, p: Prac
           </div>
         </div>
         {day.today && (
-          <span className="rounded-md bg-primary px-2 py-1 text-[9px] font-bold uppercase tracking-[0.08em] text-primary-contrast">
+          <span className="rounded-md bg-text px-2 py-1 text-[11px] font-bold uppercase tracking-[0.08em] text-background">
             Today
           </span>
         )}
@@ -269,7 +269,7 @@ function Seat({
                 if (e.key === "Escape") onClear();
               }}
               placeholder="Type name or drag from pool"
-              className="w-full bg-transparent text-[13px] font-medium text-text outline-none placeholder:text-muted/70"
+              className="w-full bg-transparent text-[13px] font-medium text-text outline-none placeholder:text-text-3"
             />
           </div>
           {matches.length > 0 && (
@@ -282,7 +282,7 @@ function Seat({
                     e.preventDefault();
                     onAssign(m.id);
                   }}
-                  className="flex w-full items-center gap-2.5 border-b border-border px-3 py-2.5 text-left last:border-b-0 active:bg-primary/10"
+                  className="flex w-full items-center gap-2.5 border-b border-border px-3 py-2.5 text-left last:border-b-0 active:bg-primary-tint"
                 >
                   <Avatar initials={m.initials} side={m.side} cox={m.cox} />
                   <span className="flex-1 text-[13px] font-semibold text-text">{m.name}</span>
@@ -302,10 +302,10 @@ function Seat({
           {...dropHandlers}
           className={`flex min-h-[42px] flex-1 cursor-grab items-center gap-2 rounded-lg border px-2.5 py-1.5 active:cursor-grabbing ${
             dropActive
-              ? "border-accent bg-accent/10"
+              ? "border-accent bg-accent-tint"
               : cox
-                ? "border-accent/35 bg-accent/[0.06]"
-                : "border-primary/35 bg-primary/10"
+                ? "border-accent-line bg-accent-tint"
+                : "border-primary-line bg-primary-tint"
           }`}
         >
           <Avatar initials={athlete.initials} side={athlete.side} cox={cox} />
@@ -322,10 +322,10 @@ function Seat({
           {...dropHandlers}
           className={`flex min-h-[42px] flex-1 items-center gap-2 rounded-lg border border-dashed px-2.5 text-left ${
             dropActive
-              ? "border-accent bg-accent/10 text-accent"
+              ? "border-accent bg-accent-tint text-accent"
               : cox
-                ? "border-border text-muted hover:border-accent/40"
-                : "border-border text-muted hover:border-primary/40"
+                ? "border-border text-muted hover:border-accent-line"
+                : "border-border text-muted hover:border-primary-line"
           }`}
         >
           <IconPlus size={13} />
@@ -340,10 +340,10 @@ function Seat({
 function PoolChip({ a, onDragStart }: { a: Athlete; onDragStart: () => void }) {
   if (a.out) {
     return (
-      <div className="flex items-center gap-2 rounded-xl border border-danger/25 bg-danger/[0.08] px-2 py-1.5 opacity-50">
-        <Avatar initials={a.initials} className="border-danger/30 bg-danger/15 text-danger" />
+      <div className="flex items-center gap-2 rounded-xl border border-danger-line bg-danger-tint px-2 py-1.5 opacity-50">
+        <Avatar initials={a.initials} className="border-danger-line bg-danger-tint text-danger" />
         <span className="text-[12px] font-semibold text-muted">{a.name}</span>
-        <span className="rounded bg-danger/20 px-1.5 py-px text-[9px] font-bold tracking-[0.05em] text-danger">
+        <span className="rounded bg-danger-tint px-1.5 py-px text-[9px] font-bold tracking-[0.05em] text-danger">
           {a.out}
         </span>
       </div>
@@ -356,7 +356,7 @@ function PoolChip({ a, onDragStart }: { a: Athlete; onDragStart: () => void }) {
         e.dataTransfer.setData("text/plain", a.id);
         onDragStart();
       }}
-      className="flex cursor-grab items-center gap-2 rounded-xl border border-border bg-surface px-2 py-1.5 active:cursor-grabbing active:border-primary/40 active:bg-primary/10"
+      className="flex cursor-grab items-center gap-2 rounded-xl border border-border bg-surface px-2 py-1.5 active:cursor-grabbing active:border-primary-line active:bg-primary-tint"
     >
       <Avatar initials={a.initials} side={a.side} cox={a.cox} />
       <span className="text-[12px] font-semibold text-text">{a.name}</span>
@@ -551,8 +551,8 @@ function Builder({
           <span
             className={`flex items-center gap-1 rounded px-1.5 py-px text-[9px] font-bold uppercase tracking-[0.06em] ${
               status === "published"
-                ? "border border-success/40 bg-success/10 text-success"
-                : "border border-warn/40 bg-warn/10 text-warn"
+                ? "border border-success-line bg-success-tint text-success"
+                : "border border-warn-line bg-warn-tint text-warn"
             }`}
           >
             <span className={`h-1.5 w-1.5 rounded-full ${status === "published" ? "bg-success" : "bg-warn"}`} />
@@ -593,7 +593,7 @@ function Builder({
                     {/* header */}
                     <div className="flex items-center justify-between gap-2 border-b border-border px-3.5 py-3">
                       <div className="flex min-w-0 flex-1 items-center gap-2">
-                        <span className="flex-shrink-0 rounded-md border border-primary/35 bg-primary/15 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.06em] text-primary">
+                        <span className="flex-shrink-0 rounded-md border border-primary-line bg-primary-tint px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.06em] text-primary">
                           {boat.badge}
                         </span>
                         <input
@@ -648,7 +648,7 @@ function Builder({
                         value={boat.note}
                         onChange={(e) => setNote(boat.id, e.target.value)}
                         placeholder="Note — oars, which boat to take…"
-                        className="flex-1 bg-transparent text-[12px] text-text outline-none placeholder:italic placeholder:text-muted/70"
+                        className="flex-1 bg-transparent text-[12px] text-text outline-none placeholder:italic placeholder:text-text-3"
                       />
                     </div>
 
@@ -664,7 +664,7 @@ function Builder({
             <button
               type="button"
               onClick={() => setSheetOpen(true)}
-              className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-border bg-surface py-3.5 text-[13px] font-medium text-muted active:border-primary/40 active:text-primary"
+              className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-border bg-surface py-3.5 text-[13px] font-medium text-muted active:border-primary-line active:text-primary"
             >
               <IconPlus size={16} /> Add{boats.length ? " Another" : ""} Boat
             </button>
@@ -694,7 +694,7 @@ function Builder({
                     type="button"
                     onClick={() => setPoolFilter(key)}
                     className={`rounded-lg border px-2.5 py-1 text-[11px] font-medium ${
-                      poolFilter === key ? "border-primary bg-primary/10 text-text" : "border-border bg-surface text-muted"
+                      poolFilter === key ? "border-primary bg-primary-tint text-text" : "border-border bg-surface text-muted"
                     }`}
                   >
                     {label}
@@ -777,7 +777,7 @@ function Builder({
                   key={b.type}
                   type="button"
                   onClick={() => addBoat(b.type)}
-                  className="flex flex-col items-center gap-1 rounded-2xl border border-border bg-surface px-3 py-3.5 active:border-primary active:bg-primary/10"
+                  className="flex flex-col items-center gap-1 rounded-2xl border border-border bg-surface px-3 py-3.5 active:border-primary active:bg-primary-tint"
                 >
                   <span className="text-xl font-semibold text-text">{b.symbol}</span>
                   <span className="text-[12px] font-semibold text-text">{b.name}</span>

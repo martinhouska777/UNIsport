@@ -234,7 +234,7 @@ export default function OnboardingFlow() {
                     onClick={() => set("primaryActivity", a.key)}
                     aria-pressed={on}
                     className={`flex flex-col items-center gap-1.5 rounded-xl border p-4 transition-colors ${
-                      on ? "border-primary bg-primary/10" : "border-border bg-surface-2"
+                      on ? "border-primary bg-primary-tint" : "border-border bg-surface-2"
                     }`}
                   >
                     <span className="text-accent">
@@ -258,7 +258,7 @@ export default function OnboardingFlow() {
                     onClick={() => set("experienceLevel", lvl.key)}
                     aria-pressed={on}
                     className={`rounded-[10px] border p-3 text-left transition-colors ${
-                      on ? "border-primary bg-primary/10" : "border-border bg-surface-2"
+                      on ? "border-primary bg-primary-tint" : "border-border bg-surface-2"
                     }`}
                   >
                     <div className="text-[13px] font-medium text-text">{lvl.name}</div>
@@ -366,7 +366,7 @@ export default function OnboardingFlow() {
                     key={g}
                     className="flex items-center gap-2.5 rounded-[10px] border border-border bg-surface-2 px-3 py-2.5"
                   >
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/15 text-xs font-semibold text-primary">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary-tint text-xs font-semibold text-primary">
                       {i + 1}
                     </span>
                     <span className="flex-1 text-sm text-text">{g}</span>
@@ -447,7 +447,7 @@ export default function OnboardingFlow() {
                     aria-expanded={open}
                     className={`flex aspect-square items-center justify-center rounded-lg border text-[13px] transition-colors ${
                       hasBlocks
-                        ? "border-primary bg-primary/15 text-primary"
+                        ? "border-primary bg-primary-tint text-primary"
                         : open
                           ? "border-primary bg-surface-2 text-text"
                           : "border-border bg-surface-2 text-text"
@@ -691,7 +691,7 @@ export default function OnboardingFlow() {
 
   const headerSlot =
     meta.key === "notifications" ? (
-      <div className="mx-auto mb-6 mt-6 flex h-16 w-16 items-center justify-center rounded-full border border-primary bg-primary/10 text-primary">
+      <div className="mx-auto mb-6 mt-6 flex h-16 w-16 items-center justify-center rounded-full border border-primary bg-primary-tint text-primary">
         <IconBell size={28} />
       </div>
     ) : undefined;

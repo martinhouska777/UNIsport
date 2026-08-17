@@ -108,13 +108,13 @@ function AthleteSheet({ athleteId, onClose }: { athleteId: string; onClose: () =
 
   const tileCls = (active: boolean) =>
     `rounded-2xl border px-2 py-3 text-center ${
-      active ? "border-primary bg-primary/10" : "border-border bg-surface-2"
+      active ? "border-primary bg-primary-tint" : "border-border bg-surface-2"
     }`;
 
   return (
     <Sheet title="Athlete" onClose={onClose}>
       <div className="flex items-start gap-3.5">
-        <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-2xl border border-primary/35 bg-gradient-to-br from-primary/15 to-primary/5">
+        <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-2xl border border-primary-line bg-gradient-to-br from-primary/15 to-primary/5">
           <span className="text-xl font-semibold text-primary">{a?.initials ?? "—"}</span>
         </div>
         <div className="min-w-0 flex-1 pt-0.5">
@@ -224,9 +224,9 @@ function AthleteSheet({ athleteId, onClose }: { athleteId: string; onClose: () =
                 onClick={() => setSelDay(d.day)}
                 className={`flex aspect-square flex-col items-center justify-center rounded-[9px] pt-0.5 ${
                   isSel
-                    ? "border border-primary bg-primary/20"
+                    ? "border border-primary bg-primary-tint"
                     : isToday
-                      ? "border border-primary/40 bg-primary/10"
+                      ? "border border-primary-line bg-primary-tint"
                       : dots.length
                         ? "active:bg-surface"
                         : ""
@@ -234,7 +234,7 @@ function AthleteSheet({ athleteId, onClose }: { athleteId: string; onClose: () =
               >
                 <span
                   className={`text-[11px] font-medium leading-none ${
-                    isSel || isToday ? "text-primary" : d.future ? "text-muted/50" : "text-text"
+                    isSel || isToday ? "text-primary" : d.future ? "text-text-3" : "text-text"
                   }`}
                 >
                   {d.day}
@@ -282,7 +282,7 @@ function AthleteSheet({ athleteId, onClose }: { athleteId: string; onClose: () =
                           </span>
                         )}
                       </div>
-                      {metrics && <div className="mt-0.5 text-[11px] text-text/90">{metrics}</div>}
+                      {metrics && <div className="mt-0.5 text-[11px] text-text-2">{metrics}</div>}
                     </div>
                   </div>
                 );
@@ -330,7 +330,7 @@ function RosterRow({ a, onOpen }: { a: Athlete; onOpen: () => void }) {
       onClick={onOpen}
       className="flex w-full items-center gap-3 rounded-xl border border-border bg-surface px-3 py-2.5 text-left active:bg-surface-2"
     >
-      <span className="relative flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-primary/15 text-[11px] font-semibold text-primary">
+      <span className="relative flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-primary-tint text-[11px] font-semibold text-primary">
         {a.initials}
         <span className={`absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-surface ${toneDot[tone]}`} />
       </span>
@@ -386,7 +386,7 @@ export default function TeamScreen() {
             type="button"
             onClick={() => setTab(t)}
             className={`flex-1 rounded-lg py-2 text-[12px] font-semibold capitalize transition-colors ${
-              tab === t ? "bg-primary text-primary-contrast" : "text-muted"
+              tab === t ? "bg-text text-background" : "text-muted"
             }`}
           >
             {t}

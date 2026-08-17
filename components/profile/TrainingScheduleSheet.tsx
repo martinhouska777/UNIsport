@@ -138,7 +138,7 @@ export default function TrainingScheduleSheet({
                     type="button"
                     onClick={() => addSlot(day.key)}
                     aria-label={`Add a time on ${day.label}`}
-                    className="flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-medium text-primary transition-colors hover:bg-primary/10"
+                    className="flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-medium text-primary transition-colors hover:bg-primary-tint"
                   >
                     <IconPlus size={12} />
                     Add time

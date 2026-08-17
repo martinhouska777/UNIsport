@@ -79,8 +79,12 @@ const headsIn = await page.evaluate(() => {
 console.log("closer words:   ", JSON.stringify(headsIn));
 
 // ── ONE wheel nudge up → first act (letter swings home, words leave), then
-// the flight; ~1000 + 1500ms in all ──
-await page.evaluate(() => window.dispatchEvent(new WheelEvent("wheel", { deltaY: -120, bubbles: true })));
+// the flight; ~1000 + 1500ms in all. Dispatched INSIDE the closer iframe:
+// that is where a real cursor is, and where the trigger went deaf once. ──
+await page.evaluate(() => {
+  const d = document.querySelector("#closer-colours iframe").contentDocument;
+  d.dispatchEvent(new d.defaultView.WheelEvent("wheel", { deltaY: -120, bubbles: true }));
+});
 await wait(1300);
 console.log("mid-reverse:    ", JSON.stringify(await state()));
 await page.screenshot({ path: `${SHOTS}/rev-2-midreverse.png` });

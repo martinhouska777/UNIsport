@@ -22,8 +22,8 @@ export function Pill({
 }) {
   const selectedClass =
     variant === "gold"
-      ? "border-accent bg-accent/15 text-accent"
-      : "border-primary bg-primary/15 text-primary";
+      ? "border-accent bg-accent-tint text-accent"
+      : "border-primary bg-primary-tint text-primary";
 
   return (
     <button
@@ -64,7 +64,7 @@ export function Toggle({
       aria-label={ariaLabel}
       onClick={onChange}
       className={`relative h-[22px] w-[38px] flex-shrink-0 rounded-full transition-colors ${
-        on ? "bg-primary" : "bg-border"
+        on ? "bg-primary-live" : "bg-border"
       }`}
     >
       <span

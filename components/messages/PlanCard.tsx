@@ -91,7 +91,7 @@ export default function PlanCard({
   return (
     <div className="mx-auto w-full max-w-[88%] rounded-2xl border border-border bg-surface-2 p-3.5">
       <div className="flex items-center gap-2">
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-tint text-primary">
           <IconCalendar size={16} />
         </span>
         <div className="min-w-0">

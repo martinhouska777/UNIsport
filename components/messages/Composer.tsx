@@ -50,7 +50,7 @@ export default function Composer({
         onClick={submit}
         disabled={!text.trim() || sending}
         aria-label="Send message"
-        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-contrast transition-opacity disabled:opacity-40"
+        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-live text-primary-contrast transition-opacity disabled:opacity-40"
       >
         <IconSend size={18} />
       </button>

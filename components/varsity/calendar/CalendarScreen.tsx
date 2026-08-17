@@ -70,7 +70,7 @@ function DaySheet({
                 />
                 <div className="min-w-0 flex-1">
                   <div className="text-[13px] font-semibold text-text">{l.title}</div>
-                  {metrics && <div className="mt-0.5 text-[12px] text-text/90">{metrics}</div>}
+                  {metrics && <div className="mt-0.5 text-[12px] text-text-2">{metrics}</div>}
                   {l.note && <div className="mt-0.5 truncate text-[11px] text-muted">{l.note}</div>}
                 </div>
                 {l.source === "plan" && (
@@ -236,7 +236,7 @@ export default function CalendarScreen() {
                 onClick={() => setPicked({ iso: d.iso, label })}
                 className={`flex aspect-square flex-col items-center justify-center gap-1 rounded-xl pt-1 ${
                   d.today
-                    ? "border border-primary/40 bg-primary/15"
+                    ? "border border-primary-line bg-primary-tint"
                     : has
                       ? "border border-border bg-surface-2 active:bg-surface"
                       : "active:bg-surface-2"

@@ -1173,14 +1173,25 @@ ${closer("closer-blades", "Blade Lock Light.html", "Every crew. One system.", "v
       if (lt) { lt.classList.remove("now"); lt.classList.add("rev"); lt.classList.add("pre"); }
     }
 
+    /* Wherever in the pin the reader is when they turn back — the cushion
+       shows the same held picture everywhere — the page first glides to the
+       nearest properly framed spot, then holds there for the length of the
+       act. One animation, always from a clean frame. */
     var y0 = window.scrollY, holding = true, over = false;
+    var secDocTop = y0 + sec.getBoundingClientRect().top;
+    var pinEnd = secDocTop + Math.max(0, sec.offsetHeight - window.innerHeight);
+    var yT = Math.max(secDocTop, Math.min(y0, pinEnd));
+    var g0 = performance.now(), G = 240;
     function rel(ev) { if (ev && ev.type === "wheel" && ev.deltaY < 0) return; holding = false; }
     window.addEventListener("wheel", rel, { passive: true });
     window.addEventListener("touchmove", rel, { passive: true });
     window.addEventListener("keydown", rel);
-    (function hold() {
+    d.addEventListener("wheel", rel, { passive: true });   // the wheel is over the frame
+    (function hold(now) {
       if (over || !holding) return;
-      window.scrollTo(0, y0);
+      var g = Math.min(1, ((now || performance.now()) - g0) / G);
+      var e = 1 - Math.pow(1 - g, 3);
+      window.scrollTo(0, y0 + (yT - y0) * e);
       requestAnimationFrame(hold);
     })();
     setTimeout(function () {
@@ -1188,6 +1199,7 @@ ${closer("closer-blades", "Blade Lock Light.html", "Every crew. One system.", "v
       window.removeEventListener("wheel", rel);
       window.removeEventListener("touchmove", rel);
       window.removeEventListener("keydown", rel);
+      d.removeEventListener("wheel", rel);
       done();
     }, wait);
   }
@@ -1319,6 +1331,7 @@ ${closer("closer-blades", "Blade Lock Light.html", "Every crew. One system.", "v
     window.addEventListener("wheel", release, { passive: true });
     window.addEventListener("touchmove", release, { passive: true });
     window.addEventListener("keydown", release);
+    if (idoc) idoc.addEventListener("wheel", release, { passive: true });   // post-cut, the frame is under the wheel
 
     function step(now) {
       var t = Math.min(1, (now - t0) / DUR);
@@ -1379,6 +1392,7 @@ ${closer("closer-blades", "Blade Lock Light.html", "Every crew. One system.", "v
         window.removeEventListener("wheel", release);
         window.removeEventListener("touchmove", release);
         window.removeEventListener("keydown", release);
+        if (idoc) idoc.removeEventListener("wheel", release);
         sec.__flying = false;
         sec.__flown = true;    // the way back starts from here
         done();
@@ -1399,7 +1413,7 @@ ${closer("closer-blades", "Blade Lock Light.html", "Every crew. One system.", "v
     var slide = sec.getAttribute("data-swap") === "slide";
     var d = f.contentDocument;
     var shell = d && d.querySelector(".__ph");
-    if (!flight || !shell || !rectOfStoryPhone(src)) { done(); return; }
+    if (!flight || !shell || !rectOfStoryPhone(src)) { sec.__flying = false; done(); return; }
     sec.__flying = true;
 
     // the page's phone takes over from theirs, exactly where it stands
@@ -1449,6 +1463,7 @@ ${closer("closer-blades", "Blade Lock Light.html", "Every crew. One system.", "v
     window.addEventListener("wheel", release, { passive: true });
     window.addEventListener("touchmove", release, { passive: true });
     window.addEventListener("keydown", release);
+    d.addEventListener("wheel", release, { passive: true });   // over the frame, pre-cut
 
     function step(now) {
       var t = Math.min(1, (now - t0) / DUR);
@@ -1480,6 +1495,7 @@ ${closer("closer-blades", "Blade Lock Light.html", "Every crew. One system.", "v
         window.removeEventListener("wheel", release);
         window.removeEventListener("touchmove", release);
         window.removeEventListener("keydown", release);
+        d.removeEventListener("wheel", release);
         sec.__flying = false;
         sec.__flown = false;
         done();
@@ -1582,20 +1598,33 @@ ${closer("closer-blades", "Blade Lock Light.html", "Every crew. One system.", "v
     }, { threshold: sec.getAttribute("data-flight") ? 0.02 : 0.3 });
     io.observe(sec);
 
-    /* The way back: a nudge up from the top of the pin plays the film in
-       reverse — first act puts everything back the way it came, then the
-       flight home. Only from the pin's start — deeper in, scrolling up is
-       just scrolling. armed stays true until the reverse lands, so the
-       observer above cannot replay the arrival mid-move. */
+    /* The way back: a nudge up ANYWHERE on the landed closer plays the film
+       in reverse — first act puts everything back the way it came (gliding
+       the frame to the pin first if the reader had drifted), then the flight
+       home. Anywhere, because with smooth scrolling the wheel events arrive
+       while the page is still deep in the cushion — a trigger that only
+       listened at the pin's start simply never heard them. armed stays true
+       until the reverse lands, so the observer above cannot replay the
+       arrival mid-move. */
     if (flies && sec.getAttribute("data-txt")) {
-      window.addEventListener("wheel", function (ev) {
+      var onWheelUp = function (ev) {
         if (ev.deltaY >= 0 || !armed || !sec.__flown || sec.__flying) return;
-        if (sec.getBoundingClientRect().top < -12) return;
+        var r = sec.getBoundingClientRect(), mid = window.innerHeight / 2;
+        if (r.top > mid || r.bottom < mid) return;   // it is not what is on screen
         sec.__flying = true;   // claimed from the first frame of the act
         retractCloser(sec, f, function () {
           runFlightBack(sec, f, function () { armed = false; });
         });
-      }, { passive: true });
+      };
+      window.addEventListener("wheel", onWheelUp, { passive: true });
+      /* CRUCIAL: the landed closer is a full-screen iframe — the reader's
+         wheel is over IT, and wheel events do not cross document boundaries.
+         The browser still chain-scrolls the page (which is how the closer
+         could slide away), but a window-level listener never hears a thing.
+         So the same trigger listens inside the closer's own document. */
+      whenReady(f, function () {
+        f.contentDocument.addEventListener("wheel", onWheelUp, { passive: true });
+      });
     }
   });
 })();

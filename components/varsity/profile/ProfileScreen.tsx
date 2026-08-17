@@ -72,9 +72,9 @@ const toneDot: Record<StatusTone, string> = {
   muted: "bg-muted",
 };
 const toneRing: Record<StatusTone, string> = {
-  success: "border-success/30 bg-success/15 text-success",
-  warn: "border-warn/30 bg-warn/15 text-warn",
-  danger: "border-danger/30 bg-danger/15 text-danger",
+  success: "border-success-line bg-success-tint text-success",
+  warn: "border-warn-line bg-warn-tint text-warn",
+  danger: "border-danger-line bg-danger-tint text-danger",
   muted: "border-border bg-surface-2 text-muted",
 };
 const statusByTitle = (title: string) =>
@@ -142,7 +142,7 @@ function EditIdentitySheet({
             onClick={() => setTeamYear(y)}
             className={`rounded-full border px-3.5 py-2 text-[12px] font-medium ${
               teamYear === y
-                ? "border-primary bg-primary/15 text-primary"
+                ? "border-primary bg-primary-tint text-primary"
                 : "border-border bg-surface-2 text-text"
             }`}
           >
@@ -205,7 +205,7 @@ function StatusSheet({
                 onClose();
               }}
               className={`flex items-center gap-3 rounded-2xl border px-3.5 py-3 text-left ${
-                active ? "border-primary bg-primary/10" : "border-border bg-surface-2"
+                active ? "border-primary bg-primary-tint" : "border-border bg-surface-2"
               }`}
             >
               <span className={`h-2.5 w-2.5 flex-shrink-0 rounded-full ${toneDot[s.tone]}`} />
@@ -528,7 +528,7 @@ export default function ProfileScreen() {
       {/* ── Identity ── */}
       <div className="border-b border-border bg-[radial-gradient(circle_at_0%_0%,color-mix(in_srgb,var(--primary)_9%,transparent),transparent_60%)] px-4 pb-4 pt-4">
         <div className="flex items-start gap-3.5">
-          <div className="relative flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-2xl border border-primary/35 bg-gradient-to-br from-primary/15 to-primary/5">
+          <div className="relative flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-2xl border border-primary-line bg-gradient-to-br from-primary/15 to-primary/5">
             <span className="text-xl font-semibold text-primary">{initialsOf(name)}</span>
             <span
               className={`absolute bottom-0.5 right-0.5 h-3 w-3 rounded-full border-[2.5px] border-background ${toneDot[status.tone]}`}
@@ -623,7 +623,7 @@ export default function ProfileScreen() {
         href="/varsity/calendar"
         className="mx-3.5 mt-2.5 flex w-[calc(100%-1.75rem)] items-center gap-3 rounded-2xl border border-border bg-surface px-3.5 py-3"
       >
-        <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[10px] border border-primary/30 bg-primary/10 text-primary">
+        <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[10px] border border-primary-line bg-primary-tint text-primary">
           <IconCalendar size={18} />
         </span>
         <div className="min-w-0 flex-1">
@@ -662,7 +662,7 @@ export default function ProfileScreen() {
               <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">
                 {piece}
               </span>
-              <span className={`text-[14px] font-semibold ${val ? "text-text" : "text-muted/50"}`}>
+              <span className={`text-[14px] font-semibold ${val ? "text-text" : "text-text-3"}`}>
                 {val || "—"}
               </span>
             </button>
@@ -674,10 +674,10 @@ export default function ProfileScreen() {
       <div className="px-4 pb-2 pt-5 text-[9px] font-semibold uppercase tracking-[0.16em] text-muted">
         Recruiting
       </div>
-      <div className="relative mx-3.5 overflow-hidden rounded-2xl border border-accent/30 bg-gradient-to-br from-accent/10 to-surface">
+      <div className="relative mx-3.5 overflow-hidden rounded-2xl border border-accent-line bg-gradient-to-br from-accent/10 to-surface">
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent to-transparent" />
         <div className="flex items-start gap-3 px-4 pb-3 pt-3.5">
-          <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border border-accent/30 bg-accent/15 text-accent">
+          <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border border-accent-line bg-accent-tint text-accent">
             <IconGlobe size={20} />
           </span>
           <div className="flex-1">
