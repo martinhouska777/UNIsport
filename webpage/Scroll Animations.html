@@ -988,7 +988,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 </div>
 
 
-<section class="closer" id="closer-blades" data-tabs="varsity" data-tab-active="0" data-flight="1" data-from="story2" data-from-shot=".shot-frame[data-i='5'] .shot" data-to-shot=".shot-frame[data-i='0'] .shot" data-swap="slide" data-oars="1">
+<section class="closer" id="closer-blades" data-tabs="varsity" data-tab-active="0" data-flight="1" data-from="story2" data-from-shot=".shot-frame[data-i='5'] .shot" data-to-shot=".shot-frame[data-i='0'] .shot" data-swap="slide" data-oars="1" data-txt="1">
   <div class="closer-stick">
     <iframe class="closer-frame" title="Every crew. One system." srcdoc="<!DOCTYPE html>
 <html>
@@ -1686,36 +1686,120 @@ document.addEventListener('DOMContentLoaded', async function() {
     });
   }
 
-  // The oars come out of the phone together, then open into the arc — the
-  // centre blade (the locked one, Harvard on a fresh load) leads.
+  // The oars, as drawn: hidden behind the phone; when it settles, just the
+  // BLADES rise into view above it — close together, already in formation —
+  // hold a beat, then spread out to their places in the arc.
   function playOars(f, delay) {
     var d = f.contentDocument;
     if (!d) return;
     var oars = [].slice.call(d.querySelectorAll(".__oar"));
-    if (!oars.length) return;
+    var shell = d.querySelector(".__ph");
+    if (!oars.length || !shell) return;
 
-    // Out of the phone as ONE bundle first — visible, still stacked, just clear
-    // of the phone — and only then apart into the arc. Coming straight to their
-    // places read as appearing rather than spreading.
     setTimeout(function () {
-      oars.forEach(function (o) {
+      var pr = shell.getBoundingClientRect();
+      var pcx = pr.left + pr.width / 2;
+      var K = 0.45;   // peek size
+
+      /* The peek pose is MEASURED, not predicted: our scale composes with the
+         wheel transform the app has already put on each oar, so where an oar
+         ends up at scale K cannot be worked out from its rect alone. Instead:
+         transitions off, stand each oar at translate 0 / scale K, read where
+         that actually puts it, and derive the exact translate that brings the
+         blade tip level and the pack in close. All in one synchronous pass —
+         nothing is painted in between. Translate is the outermost part of the
+         composition, so it shifts the result one-to-one. */
+      var saved = oars.map(function (o) {
+        var s = { t: o.style.translate, k: o.style.scale };
+        o.style.transition = "none";
+        o.style.translate = "0px 0px";
+        o.style.scale = String(K);
+        return s;
+      });
+      var targets = oars.map(function (o) {
+        var r = o.getBoundingClientRect();   // where scale K really stands
+        var cx = r.left + r.width / 2;
+        /* Pulled to under a fifth of its scaled spread — the pack sits within
+           the phone's width — with blade tips ~90px clear of it. The piece
+           adds its own depth per blade on top of this, which leaves the
+           centre blade standing slightly proudest: the drawing's silhouette,
+           kept rather than corrected. */
+        return ((pcx - cx) * 0.82) + "px " + ((pr.top - 90) - r.top) + "px";
+      });
+      oars.forEach(function (o, i) {        // back to parked, still unpainted
+        o.style.translate = saved[i].t;
+        o.style.scale = saved[i].k;
+      });
+      void d.body.offsetWidth;
+      /* The fan has a faint FAR side — three background blades the piece
+         keeps at a fraction of full opacity. The drawing's peek is the five
+         bright ones; the faint ones stay tucked away until the spread, and
+         simply fade into their background places then. */
+      oars.forEach(function (o, i) {        // transitions on: rise to the pose
+        o.style.transition = "";
+        var dimEl = o.querySelector("[data-dim]");   // a shade: 0 = bright,
+        // ~.11 = the two outer arc blades (still part of the fan), ~.22 = the
+        // three background blades that wait for the spread
+        if (dimEl && parseFloat(d.defaultView.getComputedStyle(dimEl).opacity) > 0.15) return;
         o.classList.remove("pre");
-        o.style.translate = (o.__dx || 0) + "px " + ((o.__dy || 0) - 46) + "px";
-        o.style.scale = "0.62";
+        o.style.translate = targets[i];
+        o.style.scale = String(K);
       });
     }, delay || 0);
 
+    // The rise takes .8s; the formation then HOLDS for a beat — the drawing's
+    // "oars start here" is a pose, not a waypoint — before spreading out.
+    // The faint background blades surface here too, in their own places.
     setTimeout(function () {
       oars.forEach(function (o) {
+        o.classList.remove("pre");
         o.style.translate = "";
         o.style.scale = "";
       });
-      // Hand the oars back: with our class gone, their own transitions drive
-      // the rotation again and it sweeps instead of snapping.
+      // Hand the oars back: with our class gone, nothing of ours is in the
+      // way when the wheel starts turning again.
       setTimeout(function () {
         oars.forEach(function (o) { o.classList.remove("__oar"); });
       }, 950);
-    }, (delay || 0) + 480);
+    }, (delay || 0) + 1150);
+  }
+
+  /* The wheel of oars spins CONTINUOUSLY in the design piece; a click pins it
+     on one crew. Arrival clicks Harvard so the phone and the centre blade
+     agree — and once the oars are out, the pin is lifted through the piece's
+     own state (reached via the react internals: the only other unpin it owns
+     is an IntersectionObserver that would need the whole document hidden) and
+     the wheel simply carries on turning, smoothly, the way it does on its
+     own. No more pacing it with clicks — that is what jumped. */
+  function unpin(f, delay) {
+    setTimeout(function () {
+      try {
+        var d = f.contentDocument;
+        if (!d) return;
+        var all = [].slice.call(d.querySelectorAll("*"));
+        var root = null, key = null;
+        for (var i = 0; i < all.length && !root; i++) {
+          var ks = Object.getOwnPropertyNames(all[i]);
+          for (var j = 0; j < ks.length; j++) {
+            if (ks[j].indexOf("__reactContainer$") === 0) { root = all[i]; key = ks[j]; break; }
+          }
+        }
+        if (!root) return;
+        var q = [root[key]], seen = 0;
+        while (q.length && seen < 20000) {
+          var fib = q.shift(); seen++;
+          if (!fib) continue;
+          var sn = fib.stateNode;
+          if (sn && sn.logic && ("rot" in sn.logic) && sn.logic.state &&
+              typeof sn.logic.state.pinned === "boolean") {
+            sn.logic.setState({ pinned: false });
+            return;
+          }
+          if (fib.child) q.push(fib.child);
+          if (fib.sibling) q.push(fib.sibling);
+        }
+      } catch (e) {}
+    }, delay || 0);
   }
 
   // Just the letter — used after a flight, where the phone is already home.
@@ -1934,6 +2018,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     var lt = d.querySelector(".__lt");
     if (lt) { lt.classList.remove("now"); lt.classList.add("rev"); lt.classList.add("pre"); }
     [].slice.call(d.querySelectorAll(".__hd")).forEach(function (e) { e.classList.add("pre"); });
+    // …and the oars tuck back in behind the phone before it lifts off
+    parkOars(sec, d, shell);
 
     // the page's phone takes over from theirs, exactly where it stands
     var ir = f.getBoundingClientRect(), sr = shell.getBoundingClientRect();
@@ -2063,10 +2149,14 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         if (flies && sec.classList.contains("pinned")) {
           runFlight(sec, f, function () {
-            if (sec.getAttribute("data-oars")) playOars(f, 180);
-            else playLetter(f, 220);
-            playText(f, 220);      // the words and the letter, as one move
-            spin(sec, f, 1700);    // …and only then does it start rotating
+            playText(f, 220);      // the words arrive with whatever comes out
+            if (sec.getAttribute("data-oars")) {
+              playOars(f, 240);    // peek at 240, holds, spreads at 1390, handed back ~2350
+              unpin(f, 2600);      // …and the wheel turns again, on its own
+            } else {
+              playLetter(f, 220);
+              spin(sec, f, 1700);  // …and only then does it start rotating
+            }
           });
         } else {
           // No flight on this screen (narrow, or reduced motion) — but the
@@ -2080,7 +2170,12 @@ document.addEventListener('DOMContentLoaded', async function() {
           }
           play(f);
           playText(f, 320);
-          spin(sec, f, 1500);
+          if (sec.getAttribute("data-oars")) {
+            playOars(f, 700);      // after the phone's own entrance
+            unpin(f, 3300);
+          } else {
+            spin(sec, f, 1500);
+          }
         }
       });
     }, { threshold: sec.getAttribute("data-flight") ? 0.02 : 0.3 });
