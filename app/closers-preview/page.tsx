@@ -1,5 +1,6 @@
 import { instrumentSerif } from "@/components/landing/fonts";
 import CampusColours from "@/components/landing/CampusColours";
+import BladeLock from "@/components/landing/BladeLock";
 
 /*
   SCRATCH ROUTE — the two closers on their own, so they can be reviewed in a
@@ -16,6 +17,7 @@ export default function ClosersPreviewPage() {
     >
       <main className="relative">
         <CampusColours id="campus-colours" />
+        <BladeLock id="blade-lock" />
       </main>
     </div>
   );

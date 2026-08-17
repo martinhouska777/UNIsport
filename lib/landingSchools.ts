@@ -49,6 +49,18 @@ export const BLADE_PATH =
 /** The blade piece's off-white for the light-based blades. */
 const BLADE_WHITE = "#f5f3ef";
 
+/** The oar itself, as the blade piece drew it — handle, shaft, collar, the
+    hairlines on them, the blade's outline, and the shade that dims a blade as
+    it turns away. Illustration colours, applied inline. */
+export const OAR_ART = {
+  handle: "#161618",
+  shaft: "#1d1d20",
+  collar: "#0c0c0e",
+  line: "#3a3a3e",
+  outline: "#45454a",
+  shade: "#060607",
+};
+
 export const schools: School[] = [
   {
     key: "harvard",

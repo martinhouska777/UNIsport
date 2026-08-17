@@ -1,8 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Phone from "@/components/landing/Phone";
+import { useCloserGate } from "@/components/landing/useCloserGate";
 import { closers } from "@/lib/landingCopy";
 import { schools, rgba } from "@/lib/landingSchools";
 
@@ -35,39 +36,15 @@ import { schools, rgba } from "@/lib/landingSchools";
 const PERIOD_MS = 2600;
 
 export default function CampusColours({ id }: { id?: string }) {
-  const ref = useRef<HTMLElement>(null);
   const [{ idx, prev }, setSchool] = useState<{ idx: number; prev: number | null }>({ idx: 0, prev: null });
   const [pinned, setPinned] = useState(false);
-  const [reduced, setReduced] = useState(false);
-  const [inView, setInView] = useState(false);
-
-  /* Honour prefers-reduced-motion, live. */
-  useEffect(() => {
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const on = () => setReduced(mq.matches);
-    on();
-    mq.addEventListener("change", on);
-    return () => mq.removeEventListener("change", on);
-  }, []);
 
   /* In view → cycle; out of view → stop, un-pin, and go back to Harvard so
      the next arrival opens on it. */
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const io = new IntersectionObserver(
-      ([e]) => {
-        setInView(e.isIntersecting);
-        if (!e.isIntersecting) {
-          setPinned(false);
-          setSchool({ idx: 0, prev: null });
-        }
-      },
-      { threshold: 0 },
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
+  const { ref, inView, reduced } = useCloserGate(() => {
+    setPinned(false);
+    setSchool({ idx: 0, prev: null });
+  });
 
   useEffect(() => {
     if (!inView || pinned || reduced) return;
