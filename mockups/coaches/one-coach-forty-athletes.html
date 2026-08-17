@@ -1,0 +1,301 @@
+<!-- MOCKUP — the 'One Coach, Forty Athletes' Claude Design piece, saved per rule 8.
+     The artifact host's injected runtime is stripped, and the five embedded
+     base64 captures are swapped for the committed frames in public/landing/,
+     so this is ~10KB instead of ~295KB and shows the same layout.
+     Ported natively in components/landing/CoachSection.tsx. Its crimson is NOT
+     copied — the section uses the gold varsity token (see LANDING.md). -->
+<title>One Coach, Forty Athletes</title>
+<script>
+  // Same theme convention as the story page: dark by default, light remembered.
+  (function () {
+    var t;
+    try { t = localStorage.getItem("storyTheme"); } catch (e) {}
+    if (t === "light") document.documentElement.classList.add("light");
+  })();
+</script>
+<style>
+  :root {
+    --bg: #0a0a0a; --bg-elevated: #111111;
+    --border: #1f1f1f; --border-2: #2a2a2a;
+    --text: #f5f5f5; --text-2: #8f8f8f; --text-3: #565656;
+    --crimson: #e56b7f;
+    --grid: rgba(255,255,255,0.015);
+    --phone-shadow: rgba(0,0,0,0.55);
+    --pill-bg: rgba(10,10,10,0.7);
+    --serif: "Instrument Serif", Georgia, "Times New Roman", serif;
+    --mono: ui-monospace, "SF Mono", "Cascadia Mono", Consolas, monospace;
+  }
+  html.light {
+    --bg: #faf9f7; --bg-elevated: #ffffff;
+    --border: #e7e4df; --border-2: #d6d2cb;
+    --text: #16150f; --text-2: #5c584f; --text-3: #9b968c;
+    --crimson: #a51c30;
+    --grid: rgba(0,0,0,0.03);
+    --phone-shadow: rgba(20,16,8,0.2);
+    --pill-bg: rgba(255,255,255,0.75);
+  }
+  * { margin: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased; overflow-x: clip;
+  }
+  body::before {
+    content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+  main { position: relative; z-index: 1; max-width: 1160px; margin: 0 auto; padding: 0 28px 90px; }
+
+  /* ── The section opener: plain statement, no scroll choreography ── */
+  .head {
+    text-align: center; padding: 88px 0 26px;
+    display: flex; flex-direction: column; align-items: center; gap: 18px;
+  }
+  .badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    border: 1px solid color-mix(in srgb, var(--crimson) 30%, transparent);
+    background: color-mix(in srgb, var(--crimson) 10%, transparent);
+    color: var(--crimson); border-radius: 999px; padding: 6px 14px;
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  .head .lead-in { font-family: var(--serif); font-size: clamp(19px, 3vw, 27px); color: var(--text-2); }
+  .head .lead-in em, .head h1 em, .bridge em { font-style: italic; color: var(--crimson); }
+  .head h1 {
+    font-family: var(--serif); font-weight: 400;
+    font-size: clamp(46px, 9vw, 96px); line-height: 0.99; letter-spacing: -0.02em;
+    text-wrap: balance; max-width: 14ch;
+  }
+  .head .sub {
+    color: var(--text-2); font-size: clamp(16px, 2.2vw, 19px); line-height: 1.6;
+    max-width: 52ch; text-wrap: balance;
+  }
+  .head .sub b { color: var(--text); font-weight: 600; }
+
+  /* ── Three screens, three explanations ── */
+  .features {
+    display: flex; flex-wrap: wrap; justify-content: center; gap: 60px 44px;
+    margin-top: 48px; align-items: flex-start;
+  }
+  .feature {
+    flex: 0 1 300px; display: flex; flex-direction: column; align-items: center;
+    gap: 22px; text-align: center;
+  }
+  .phone {
+    width: min(300px, 80vw);
+    border: 1px solid #2a2a2a; background: #101010;
+    border-radius: 40px; padding: 9px;
+    box-shadow: 0 32px 64px var(--phone-shadow);
+  }
+  .screen { position: relative; border-radius: 32px; overflow: hidden; background: #fff; }
+  .statusbar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 20px 7px; font-family: var(--mono); font-size: 11px;
+    color: #16150f; background: #fff;
+  }
+  .statusbar span:last-child { color: #9b968c; font-size: 10px; }
+  .island { width: 76px; height: 20px; border-radius: 999px; background: #161616; border: 1px solid #222; }
+  .shot { display: block; width: 100%; aspect-ratio: 900 / 1479; object-fit: cover; }
+  .homebar { height: 20px; display: flex; align-items: center; justify-content: center; background: #fff; }
+  .homebar i { width: 38%; height: 4px; border-radius: 999px; background: #cfccc6; }
+
+  .feature .step {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--crimson);
+  }
+  .feature h2 {
+    font-family: var(--serif); font-weight: 400; margin-top: 6px;
+    font-size: clamp(26px, 3vw, 34px); line-height: 1.08; letter-spacing: -0.015em; text-wrap: balance;
+  }
+  .feature p {
+    color: var(--text-2); font-size: 15px; line-height: 1.65; max-width: 36ch; margin-top: 10px;
+  }
+  .feature p b { color: var(--text); font-weight: 600; }
+  /* Content colours quoted from the app itself (rule-1 exception: these ARE the
+     product's side colours, shown as content, not as page chrome). */
+  .side { display: inline-block; width: 9px; height: 9px; border-radius: 3px; vertical-align: -1px; }
+  .side.p { background: #ef4444; }
+  .side.s { background: #22c55e; }
+
+  /* ── The bridge back to the athlete story ── */
+  .bridge {
+    margin: 76px auto 0; max-width: 46ch; text-align: center;
+    font-family: var(--serif); font-size: clamp(22px, 3.2vw, 32px);
+    line-height: 1.3; letter-spacing: -0.01em; text-wrap: balance;
+  }
+  .bridge-sub {
+    margin: 14px auto 0; max-width: 52ch; text-align: center;
+    color: var(--text-2); font-size: 15px; line-height: 1.65;
+  }
+
+  /* ── Three plain facts ── */
+  .facts {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;
+    margin-top: 56px;
+  }
+  .fact {
+    border: 1px solid var(--border); border-radius: 16px; background: var(--bg-elevated);
+    padding: 22px 20px; text-align: center;
+  }
+  .fact b {
+    font-family: var(--serif); font-weight: 400; font-size: clamp(22px, 2.6vw, 28px);
+    letter-spacing: -0.015em; display: block; text-wrap: balance;
+  }
+  .fact span { color: var(--text-2); font-size: 13px; line-height: 1.55; display: block; margin-top: 7px; }
+
+  .fine {
+    margin-top: 64px; border-top: 1px solid var(--border); padding-top: 16px;
+    text-align: center; font-family: var(--mono); font-size: 10.5px;
+    letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-3); line-height: 2;
+  }
+
+  .mode {
+    position: fixed; top: 14px; right: 14px; z-index: 5;
+    width: 40px; height: 40px; border-radius: 50%; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    border: 1px solid var(--border-2); background: var(--pill-bg);
+    color: var(--text-2); backdrop-filter: blur(6px);
+  }
+  .mode:hover, .mode:focus-visible { color: var(--text); border-color: var(--text-3); }
+  .mode:focus-visible { outline: 2px solid var(--crimson); outline-offset: 3px; }
+  .mode svg { display: block; }
+  .mode .moon { display: none; }
+  html.light .mode .sun { display: none; }
+  html.light .mode .moon { display: block; }
+
+  @media (max-width: 900px) {
+    .features { grid-template-columns: 1fr; gap: 56px; }
+    .facts { grid-template-columns: 1fr; }
+    .head { padding-top: 64px; }
+  }
+</style>
+
+<main>
+  <div class="head">
+    <div class="badge">UNIsport &middot; for coaches &amp; athletic departments</div>
+    <p class="lead-in">And for the person who runs the squad &mdash;</p>
+    <h1>The Coach&#8217;s <em>Console.</em></h1>
+    <p class="sub">Students use the app. <b>Coaches run it.</b> From an empty season to a published
+    lineup in five screens &mdash; the plan, the boats and the notes the varsity story above depends on,
+    all built here. These are real screens from the console as it works today.</p>
+  </div>
+
+  <div class="features">
+    <div class="feature">
+      <div class="phone">
+        <div class="screen">
+          <div class="statusbar"><span>9:41</span><i class="island"></i><span>5G</span></div>
+          <img class="shot" src="/landing/coach-1-create.webp" alt="The new training block form: block name, from and to dates, and an optional goal race with its date" decoding="async" />
+          <div class="homebar"><i></i></div>
+        </div>
+      </div>
+      <div>
+        <div class="step">1 &middot; Create</div>
+        <h2>Start with the race.</h2>
+        <p>Name the block, set the dates, add the race you&#8217;re pointing at. That&#8217;s the whole
+        setup &mdash; <b>one screen, under a minute</b>. The app works out the weeks and starts the
+        countdown your athletes will see.</p>
+      </div>
+    </div>
+
+    <div class="feature">
+      <div class="phone">
+        <div class="screen">
+          <div class="statusbar"><span>9:41</span><i class="island"></i><span>5G</span></div>
+          <img class="shot" src="/landing/coach-2-build.webp" alt="The session builder: type and intensity pickers, the five most-used workouts as tap-to-fill chips, and a Confirm session button" decoding="async" />
+          <div class="homebar"><i></i></div>
+        </div>
+      </div>
+      <div>
+        <div class="step">2 &middot; Build</div>
+        <h2>Two taps per session.</h2>
+        <p>Pick the type &mdash; water, erg, weights. Pick the intensity. Then tap one of the
+        <b>five workouts this squad actually uses</b> and the session fills itself in.
+        A full training week takes minutes, not an evening.</p>
+      </div>
+    </div>
+
+    <div class="feature">
+      <div class="phone">
+        <div class="screen">
+          <div class="statusbar"><span>9:41</span><i class="island"></i><span>5G</span></div>
+          <img class="shot" src="/landing/coach-3-plan.webp" alt="The Training Plan screen: week 6 of the Fall 2026 block, with colour-coded AM and PM sessions for every day" decoding="async" />
+          <div class="homebar"><i></i></div>
+        </div>
+      </div>
+      <div>
+        <div class="step">3 &middot; Plan</div>
+        <h2>Publish the week once.</h2>
+        <p>The season is one block &mdash; fourteen weeks, counting down to the race. Water, erg and weights
+        for every AM and PM, colour-coded by intensity. <b>Publish, and it&#8217;s on every athlete&#8217;s
+        phone.</b> No more screenshots of a spreadsheet in the group chat.</p>
+      </div>
+    </div>
+
+    <div class="feature">
+      <div class="phone">
+        <div class="screen">
+          <div class="statusbar"><span>9:41</span><i class="island"></i><span>5G</span></div>
+          <img class="shot" src="/landing/coach-4-lineup.webp" alt="The Lineup screen: the 1V eight seated cox to bow, port seats in red and starboard seats in green" decoding="async" />
+          <div class="homebar"><i></i></div>
+        </div>
+      </div>
+      <div>
+        <div class="step">4 &middot; Lineup</div>
+        <h2>Publish the boats.</h2>
+        <p>Seat by seat, cox to bow. Port shows red <span class="side p"></span> and starboard green
+        <span class="side s"></span>, straight from each rower&#8217;s profile &mdash; <b>stroke on
+        strokeside, seven on bowside</b>, the way the boat is actually rigged. One tap and the lineup is on
+        every phone <b>the night before</b>, not shouted across the dock.</p>
+      </div>
+    </div>
+
+    <div class="feature">
+      <div class="phone">
+        <div class="screen">
+          <div class="statusbar"><span>9:41</span><i class="island"></i><span>5G</span></div>
+          <img class="shot" src="/landing/coach-5-notes.webp" alt="The Athlete Notes screen: the roster with a short technical note per athlete, and a green Good job for everyone without one" decoding="async" />
+          <div class="homebar"><i></i></div>
+        </div>
+      </div>
+      <div>
+        <div class="step">5 &middot; Notes</div>
+        <h2>Keep every athlete on track.</h2>
+        <p>One short technical note per athlete. It sits on their Home &mdash; under their race countdown
+        &mdash; until it&#8217;s fixed. Everyone else sees a green <b>&#8220;Good job&#8221;</b>. Forty
+        athletes, one glance, no noise.</p>
+      </div>
+    </div>
+  </div>
+
+  <p class="bridge">Everything the console publishes is the story you just scrolled &mdash;
+  the plan on their Home, their name in the boat, <em>the note under their race.</em></p>
+  <p class="bridge-sub">A student who signs up brings one user. A coach who adopts brings the whole squad.
+  That&#8217;s why the console exists &mdash; and why it&#8217;s already built.</p>
+
+  <div class="facts">
+    <div class="fact"><b>1 plan &rarr; 40 phones</b><span>Publish once; every athlete&#8217;s Home updates itself.</span></div>
+    <div class="fact"><b>Boats, the night before</b><span>Lineups land on phones before anyone reaches the dock.</span></div>
+    <div class="fact"><b>The spreadsheet, retired</b><span>Plan, lineups and feedback live in one place, not a group chat.</span></div>
+  </div>
+
+  <div class="fine">Real screens from the Coach Console &middot; slots into the landing page after the varsity story &middot; copy for review</div>
+</main>
+
+<button class="mode" id="modeToggle" aria-label="Switch between light and dark mode">
+  <svg class="sun" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+    <circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.4M12 19.1v2.4M2.5 12h2.4M19.1 12h2.4M4.9 4.9l1.7 1.7M17.4 17.4l1.7 1.7M19.1 4.9l-1.7 1.7M6.6 17.4l-1.7 1.7"/>
+  </svg>
+  <svg class="moon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M20.4 14.2A8.6 8.6 0 0 1 9.8 3.6a8.6 8.6 0 1 0 10.6 10.6Z"/>
+  </svg>
+</button>
+<script>
+  document.getElementById("modeToggle").addEventListener("click", function () {
+    var light = document.documentElement.classList.toggle("light");
+    try { localStorage.setItem("storyTheme", light ? "light" : "dark"); } catch (e) {}
+  });
+</script>
+
