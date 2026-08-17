@@ -120,6 +120,32 @@ const story2 = [
   },
 ];
 
+/*
+  THE CLOSERS — the two Claude Design pieces in webpage/.
+
+  They are not HTML pages that can be pasted in: each is a BUNDLED app, ~130KB
+  of JavaScript that mounts itself into document.body and owns the document
+  (their CSS starts with `* { margin: 0 }` and styles `body` directly). Spliced
+  into this page they would flatten the sticky stages and the phone would stop
+  tracking the scroll.
+
+  So each gets its own document, in a full-screen frame: their code runs
+  untouched, nothing leaks either way, and re-exporting from Claude Design is a
+  drop-in — replace the file in webpage/ and rebuild. The frames are told not
+  to scroll, so a wheel over one keeps scrolling THIS page.
+*/
+function closer(id, file, title) {
+  let doc = fs.readFileSync("../../webpage/" + file, "utf8");
+  const noScroll = "<style>html,body{overflow:hidden!important}</style>";
+  doc = doc.includes("</head>") ? doc.replace("</head>", noScroll + "</head>") : noScroll + doc;
+  // srcdoc is an HTML attribute: & and " have to be escaped, nothing else.
+  const esc = doc.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
+  return `
+<section class="closer" id="${id}">
+  <iframe class="closer-frame" title="${title}" srcdoc="${esc}"></iframe>
+</section>`;
+}
+
 function renderStory(id, beats) {
   const copy = beats.map((b, i) => `
       <div class="beat${i === 0 ? " active" : ""}" data-i="${i}">
@@ -487,8 +513,16 @@ const html = `<title>Never Train Alone</title>
   html.light .mode .sun { display: none; }
   html.light .mode .moon { display: block; }
 
+  /* A closer is a whole screen of its own: the reader stops scrolling and reads. */
+  .closer { position: relative; z-index: 1; width: 100%; height: 100svh; background: var(--bg); }
+  .closer-frame { display: block; width: 100%; height: 100%; border: 0; }
+  /* A narrow screen stacks their layout taller than one viewport; the script
+     below grows the section to fit rather than clipping it. */
+  .closer.tallfit { height: auto; }
+  .closer.tallfit .closer-frame { height: var(--fit); }
+
   .proto {
-    position: fixed; bottom: 12px; left: 50%; transform: translateX(-50%); z-index: 2;
+    position: fixed; bottom: 12px; left: 14px; z-index: 2;
     font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em;
     text-transform: uppercase; color: var(--text-3);
     background: var(--pill-bg); padding: 4px 12px; border-radius: 999px;
@@ -515,6 +549,8 @@ const html = `<title>Never Train Alone</title>
     .stage.flip .rail { left: 50%; right: auto; }
     .dot.active { height: 5px; width: 18px; }
     .marker:first-child { height: 120svh; }
+    /* Not enough width for a prototype label and a phone at the same time. */
+    .proto { display: none; }
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -535,6 +571,8 @@ const html = `<title>Never Train Alone</title>
 
 ${renderStory("story1", story1)}
 
+${closer("closer-colours", "UNIsport Campus Colours.html", "Your campus, your colours")}
+
 <div class="statement" id="interlude">
   <p class="lead-in">And if you train for the university itself —</p>
   <h1>Varsity <em>Mode.</em></h1>
@@ -543,6 +581,8 @@ ${renderStory("story1", story1)}
 </div>
 
 ${renderStory("story2", story2)}
+
+${closer("closer-blades", "Blade Lock Light.html", "Every crew. One system.")}
 
 <div class="cta">
   <h2>One app per university. <em>Yours next.</em></h2>
@@ -559,6 +599,36 @@ ${renderStory("story2", story2)}
     <path d="M20.4 14.2A8.6 8.6 0 0 1 9.8 3.6a8.6 8.6 0 1 0 10.6 10.6Z"/>
   </svg>
 </button>
+<script>
+  // Each closer is its own document, so it can be measured: if what it renders
+  // is taller than one screen (phones stack it), the section grows to fit
+  // instead of cutting the phone in half. Capped, because their layout uses
+  // viewport units — growing the frame grows the content, and an uncapped loop
+  // would chase itself forever.
+  (function () {
+    var frames = [].slice.call(document.querySelectorAll(".closer-frame"));
+    function fit() {
+      frames.forEach(function (f) {
+        var sec = f.parentNode;
+        sec.classList.remove("tallfit");
+        f.style.height = "";
+        var d = f.contentDocument;
+        if (!d || !d.body) return;
+        var need = Math.max(d.body.scrollHeight, d.documentElement.scrollHeight);
+        var cap = Math.round(window.innerHeight * 2);
+        if (need > f.clientHeight + 8) {
+          sec.classList.add("tallfit");
+          sec.style.setProperty("--fit", Math.min(need + 8, cap) + "px");
+        }
+      });
+    }
+    frames.forEach(function (f) { f.addEventListener("load", fit); });
+    window.addEventListener("load", fit);
+    window.addEventListener("resize", fit);
+    setTimeout(fit, 600);
+    setTimeout(fit, 2000);
+  })();
+</script>
 <script>
   document.getElementById("modeToggle").addEventListener("click", function () {
     var light = document.documentElement.classList.toggle("light");
