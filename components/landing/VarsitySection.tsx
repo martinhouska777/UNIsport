@@ -17,7 +17,10 @@ const POINTS: { lead: string; tail: string }[] = [
 
 export default function VarsitySection() {
   return (
-    <section className="relative z-[1] overflow-hidden border-y border-l-border bg-[radial-gradient(ellipse_at_top_right,var(--color-l-varsity-dim)_0%,transparent_50%),radial-gradient(ellipse_at_bottom_left,rgba(224,200,150,0.04)_0%,transparent_50%)] px-6 py-24 sm:px-8 lg:py-32">
+    <section
+      id="varsity"
+      className="relative z-[1] scroll-mt-20 overflow-hidden border-y border-l-border bg-[radial-gradient(ellipse_at_top_right,var(--color-l-varsity-dim)_0%,transparent_50%),radial-gradient(ellipse_at_bottom_left,rgba(224,200,150,0.04)_0%,transparent_50%)] px-6 py-24 sm:px-8 lg:py-32"
+    >
       <div className="mx-auto grid max-w-[1280px] grid-cols-1 items-center gap-14 lg:grid-cols-[1.2fr_1fr] lg:gap-20">
         <div>
           <div className="mb-4 flex items-center gap-3 font-mono text-[11px] uppercase tracking-widest text-l-varsity">

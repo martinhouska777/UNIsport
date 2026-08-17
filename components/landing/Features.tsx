@@ -101,7 +101,10 @@ function Sep({ varsity = false }: { varsity?: boolean }) {
 
 export default function Features() {
   return (
-    <section className="relative z-[1] mx-auto max-w-[1280px] px-6 py-20 sm:px-8 lg:py-28">
+    <section
+      id="platform"
+      className="relative z-[1] mx-auto max-w-[1280px] scroll-mt-20 px-6 py-20 sm:px-8 lg:py-28"
+    >
       <div className="mb-14">
         <div className="mb-4 flex items-center gap-3 font-mono text-[11px] uppercase tracking-widest text-l-text-2">
           <span className="h-px w-6 bg-l-accent" />

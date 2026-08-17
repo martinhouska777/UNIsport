@@ -38,24 +38,37 @@ export default function Hero() {
         </p>
 
         <p className="mb-10 max-w-[500px] text-[19px] leading-relaxed tracking-tight text-l-text-2">
-          Discover every gym on campus. Find a verified training partner. Log every session. Join
-          the community that&apos;s already there — plus a gated mode built for varsity teams.
+          Discover every gym on campus. Find a verified training partner. Log every session. See
+          where you rank — plus a gated mode built for varsity teams.
         </p>
 
-        <div className="mb-12 flex flex-col items-stretch gap-4 sm:flex-row sm:items-center">
+        {/* Two ways to look around, because there are two apps in here. The
+            mode buttons currently jump to the static sections; once the scroll
+            stories land they re-point at those instead. */}
+        <div className="mb-12 flex flex-col items-stretch gap-4">
           <Link
             href="/login"
-            className="group inline-flex items-center justify-center gap-2 rounded-full bg-l-accent px-7 py-4 text-[15px] font-medium tracking-tight text-l-text transition-transform hover:-translate-y-0.5"
+            className="group inline-flex items-center justify-center gap-2 self-start rounded-full bg-l-accent px-7 py-4 text-[15px] font-medium tracking-tight text-l-text transition-transform hover:-translate-y-0.5"
           >
             Get started with .edu
             <Arrow className="transition-transform group-hover:translate-x-1" />
           </Link>
-          <a
-            href="#how"
-            className="px-2 py-4 text-center text-[15px] text-l-text-2 transition-colors hover:text-l-text"
-          >
-            See how it works →
-          </a>
+          <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
+            <a
+              href="#platform"
+              className="group inline-flex items-center justify-center gap-2 rounded-full border border-l-border px-5 py-3 text-[14px] tracking-tight text-l-text-2 transition-colors hover:border-l-border-hover hover:text-l-text"
+            >
+              See the student app
+              <Arrow className="transition-transform group-hover:translate-x-1" />
+            </a>
+            <a
+              href="#varsity"
+              className="group inline-flex items-center justify-center gap-2 rounded-full border border-l-varsity-soft px-5 py-3 text-[14px] tracking-tight text-l-varsity transition-colors hover:border-l-varsity hover:bg-l-varsity-dim"
+            >
+              See Varsity Mode
+              <Arrow className="transition-transform group-hover:translate-x-1" />
+            </a>
+          </div>
         </div>
 
         {/* The other way in. A rower usually arrives here holding a link from
