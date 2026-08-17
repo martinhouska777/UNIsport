@@ -136,8 +136,24 @@
   --color-l-varsity: #e0c896;
   --color-l-varsity-dim: rgba(224, 200, 150, 0.08);
   --color-l-varsity-soft: rgba(224, 200, 150, 0.2);
+  /* The drawn phone's chrome — the light screen, its status-bar ink, the
+     dynamic island and the gesture bar. One phone frame is shared by every
+     landing section (coach, both closers, later the stories), so its colours
+     are tokens like everything else, not hex inside the component. */
+  --color-l-phone-screen: #ffffff;
+  --color-l-phone-ink: #16150f;
+  --color-l-phone-ink-2: #9b968c;
+  --color-l-phone-island: #161616;
+  --color-l-phone-island-line: #222222;
+  --color-l-phone-bar: #cfccc6;
   --font-display: var(--font-instrument-serif);
 }
+
+/* The closers' big letter: the incoming one rises in, the outgoing one lifts
+   out. (Each letter is a fresh element per school change, so the animation
+   restarts on its own.) */
+@keyframes l-letter-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes l-letter-out { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-12px); } }
 
 /* Faint technical grid overlay used behind the landing. */
 .l-grid::before {

@@ -258,6 +258,42 @@ export const varsityStory: Beat[] = [
   },
 ];
 
+/* ─────────────────────────── THE TWO CLOSERS ───────────────────────────
+
+  Each story ends on a closer: the phone from the story lands in a static piece
+  that cycles through eight universities' colours. Campus Colours closes the
+  student story (S7 → the Gyms screen, recoloured per school, beside a giant
+  letter); Blade Lock closes the varsity story (V6 → Varsity Home, recoloured
+  and renamed per school, with eight rowing blades fanned behind it).
+
+  The words below were carried over verbatim from the two Claude Design pieces
+  (webpage/UNIsport Campus Colours.html, webpage/Blade Lock Light.html) — with
+  ONE change, marked. The eight schools' names live with their colours in
+  lib/landingSchools.ts; the line under the varsity phone reads
+  "{SCHOOL} ROWING".
+*/
+
+export const closers = {
+  campus: {
+    leadIn: "One app per university —",
+    headline: "Your campus,",
+    headlineEm: "your colours.",
+    /* The design read "Same app. Eight campuses. Yours next." — but the app is
+       live at ONE university (the final CTA says so). The eight here show what
+       white-labelling looks like; they are not eight live campuses. The claim
+       is dropped rather than softened: "Same app. Yours next." */
+    sub: "Every gym on campus, in the colours of the university it belongs to. Same app. Yours next.",
+  },
+  blades: {
+    leadIn: "One boathouse at a time —",
+    headline: "Every crew.",
+    headlineEm: "One system.",
+    sub: "Built for Harvard rowing. Ready for every boathouse after it — in its own colours, read straight off the blade.",
+    /* Under the phone: "HARVARD ROWING", "YALE ROWING", … */
+    label: "Rowing",
+  },
+};
+
 /* ───────────────────── THE COACH SECTION ─────────────────────
 
   The third door. Ported from the "One Coach, Forty Athletes" design piece,

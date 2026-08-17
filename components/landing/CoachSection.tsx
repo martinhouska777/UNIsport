@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Phone from "@/components/landing/Phone";
 import { coach, type Segment } from "@/lib/landingCopy";
 
 /*
@@ -31,31 +32,21 @@ function Body({ parts, className = "" }: { parts: Segment[]; className?: string 
   );
 }
 
-/* The phone frame the captures sit in — the same sandwich the stories use, so
-   a reader who scrolled through those meets a familiar object here. */
+/* The phone frame the captures sit in — the shared landing Phone, so a reader
+   who scrolled through the stories meets a familiar object here. */
 function CoachPhone({ shot, alt, preload }: { shot: string; alt: string; preload?: boolean }) {
   return (
-    <div className="w-full max-w-[300px] rounded-[40px] border border-l-border-hover bg-l-bg-elevated p-[9px] shadow-2xl">
-      <div className="overflow-hidden rounded-[32px] bg-white">
-        <div className="flex items-center justify-between bg-white px-5 pt-2.5 pb-[7px] font-mono text-[11px] text-[#16150f]">
-          <span>9:41</span>
-          <i className="h-5 w-[76px] rounded-full border border-[#222] bg-[#161616]" />
-          <span className="text-[10px] text-[#9b968c]">5G</span>
-        </div>
-        <Image
-          src={`/landing/${shot}`}
-          alt={alt}
-          width={900}
-          height={1479}
-          preload={preload}
-          sizes="(max-width: 640px) 80vw, 300px"
-          className="block h-auto w-full"
-        />
-        <div className="flex h-5 items-center justify-center bg-white">
-          <i className="h-1 w-[38%] rounded-full bg-[#cfccc6]" />
-        </div>
-      </div>
-    </div>
+    <Phone className="w-full max-w-[300px]">
+      <Image
+        src={`/landing/${shot}`}
+        alt={alt}
+        width={900}
+        height={1479}
+        preload={preload}
+        sizes="(max-width: 640px) 80vw, 300px"
+        className="block h-auto w-full"
+      />
+    </Phone>
   );
 }
 
