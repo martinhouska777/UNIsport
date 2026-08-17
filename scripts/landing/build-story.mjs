@@ -1020,7 +1020,15 @@ ${closer("closer-blades", "Blade Lock Light.html", "Every crew. One system.", "v
     // The rise takes .8s; the formation then HOLDS for a beat — the drawing's
     // "oars start here" is a pose, not a waypoint — before spreading out.
     setTimeout(function () {
+      // The wheel is released the moment the spread BEGINS: the blades glide
+      // out — still small — onto a wheel already turning, and arrive into
+      // motion instead of standing still and then lurching into it.
+      unpin(f, 0);
       oars.forEach(function (o) {
+        /* transform comes OUT of the transition list here: the wheel writes
+           it every frame now, and a transition would trail it. translate and
+           scale still glide the blade into its socket on the moving wheel. */
+        o.style.transition = "translate .8s cubic-bezier(.25,.9,.3,1), scale .8s cubic-bezier(.25,.9,.3,1), opacity .45s ease";
         o.classList.remove("pre");
         o.style.translate = "";
         o.style.scale = "";
@@ -1029,10 +1037,9 @@ ${closer("closer-blades", "Blade Lock Light.html", "Every crew. One system.", "v
       setTimeout(function () {
         [].slice.call(d.querySelectorAll(".__ft")).forEach(function (e) { e.classList.remove("pre"); });
       }, 850);
-      // …and the oars are handed back: with our class gone, nothing of ours
-      // is in the way when the wheel starts turning again.
+      // …and the oars are handed back entirely, our transition override with them.
       setTimeout(function () {
-        oars.forEach(function (o) { o.classList.remove("__oar"); });
+        oars.forEach(function (o) { o.classList.remove("__oar"); o.style.transition = ""; });
       }, 950);
     }, (delay || 0) + 1150);
   }
@@ -1425,8 +1432,7 @@ ${closer("closer-blades", "Blade Lock Light.html", "Every crew. One system.", "v
           runFlight(sec, f, function () {
             playText(f, 220);      // the words arrive with whatever comes out
             if (sec.getAttribute("data-oars")) {
-              playOars(f, 240);    // peek at 240, holds, spreads at 1390, handed back ~2350
-              unpin(f, 2600);      // …and the wheel turns again, on its own
+              playOars(f, 240);    // peek, hold, then spread onto the turning wheel
             } else {
               playLetter(f, 220);
               spin(sec, f, 1700);  // …and only then does it start rotating
@@ -1446,7 +1452,6 @@ ${closer("closer-blades", "Blade Lock Light.html", "Every crew. One system.", "v
           playText(f, 320);
           if (sec.getAttribute("data-oars")) {
             playOars(f, 700);      // after the phone's own entrance
-            unpin(f, 3300);
           } else {
             spin(sec, f, 1500);
           }
