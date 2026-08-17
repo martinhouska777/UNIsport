@@ -40,14 +40,20 @@ still meets everything in order.
 | What | Where | State |
 |---|---|---|
 | **All landing copy** | `lib/landingCopy.ts` | **Source of truth** |
+| The eight schools (colours, letters, blade art) | `lib/landingSchools.ts` | Data — content colours, rule 1's exception |
+| The shared phone frame | `components/landing/Phone.tsx` | One phone for every section; chrome = `l-phone-*` tokens |
 | Coach section (site) | `components/landing/CoachSection.tsx` | Built, native, tokenised |
 | Coach section (prototype) | `renderCoach()` in `build-story.mjs` | Built, in the artifact |
 | Coach design piece | `mockups/coaches/` | The original hand-over |
 | Coach preview route | `app/coach-preview/page.tsx` | Scratch — delete once slotted in |
+| **Campus Colours (site)** | `components/landing/CampusColours.tsx` | **Built, native** — the student closer |
+| **Blade Lock (site)** | `components/landing/BladeLock.tsx` | **Built, native** — the varsity closer |
+| Closers preview route | `app/closers-preview/page.tsx` | Scratch — delete once slotted in |
+| Per-school screens for the closers' phones | `public/landing/closers/{gyms,vhome}-*.webp` | 16 files, 900×1480, from `recolor-shots.mjs` |
 | Live landing (old) | `app/page.tsx` + `components/landing/*` | Still the pre-animation version |
 | Scroll animations | `scripts/landing/build-story.mjs` → `story.html` | Built, published as an artifact |
 | Animation runtime | `scripts/landing/story-script.js` | Vanilla DOM; not yet React |
-| The two closers | `webpage/*.html` | Bundled Design apps, iframed |
+| The two closers (prototype) | `webpage/*.html` | Bundled Design apps, iframed — still what the artifact shows |
 | Screenshots | `public/landing/*.webp` | All 900×1479 |
 
 ### The one duplication
@@ -92,8 +98,36 @@ example.
 
 **Prefer native ports over iframes.** A page built of iframes has no shared
 scroll, no selectable text for search engines, and one document per frame. The
-closers are iframed only because they are bundled apps; that is a reason to
-port them, not a pattern to copy.
+closers were iframed only because they are bundled apps; that is a reason to
+port them, not a pattern to copy — and they are now ported (see below).
+
+**The closers show the REAL app, recoloured per school** (commit `56006d1`),
+not the design pieces' drawn phone screens. The native ports do the same:
+`public/landing/closers/gyms-*.webp` in Campus Colours, `vhome-*.webp` in
+Blade Lock, with the varsity tab bar drawn over the capture (which stops
+above the app's own bar). Regenerate them with `scripts/landing/recolor-shots.mjs`
+and copy from `scripts/landing/recolored/`.
+
+**One phone frame everywhere.** `components/landing/Phone.tsx` draws the shell,
+status bar, island and gesture bar at the story phone's proportions, in
+container units, so a 270px closer phone and a 300px coach phone are the same
+object and the flight can land on one to the pixel. Restyle the phone there,
+once, and every section follows — but keep the stories' phone the same object
+when they are ported. Its chrome colours are `l-phone-*` tokens.
+
+**Blade Lock's glow is off.** The design piece drop-shadowed the front blade
+in its colour; the artifact removed it (`cb4a72c`), and the native port does
+not draw it. The headline's and label's soft text-shadow glows stay.
+
+**One closer line was changed.** Campus Colours' sub read *"Same app. Eight
+campuses. Yours next."* — the app is live at one university, so the claim is
+gone: *"Same app. Yours next."* Marked in `lib/landingCopy.ts`; one-line
+revert.
+
+**Closers reset to Harvard.** In the artifact each closer's frame is reloaded on
+arrival so the sequence opens on Harvard, the colour the story's phone was
+wearing. Natively, `useCloserGate` does the same: a closer only moves while
+on screen and returns to Harvard (un-pinned) once it has scrolled fully out.
 
 ---
 
@@ -157,6 +191,18 @@ What green looks like:
 If any of those regress, fix it before moving on. Do not republish the artifact
 on a red suite.
 
+One known flicker, measured on an unchanged build: `verify-flight`'s Blade Lock
+landing reads `dy=1` on some runs and `dy=0` on others (a sub-pixel rounding at
+the instant of measurement — Campus Colours is `0 0 0` every time). It was
+there before the closer ports; a `dy=1` on Blade Lock alone is not a regression.
+Anything else non-zero is.
+
+**`story.html` is gitignored and goes stale.** It is rebuilt only by hand
+(`node build-story.mjs`); after checking out commits that touched
+`build-story.mjs`, rebuild before trusting a suite. `serve.mjs` reads the file
+per request, so a server left running from an earlier session serves the fresh
+build.
+
 ## Verifying
 
 There is no `npm test`. The checks are:
@@ -186,12 +232,16 @@ frozen at its load-time value. Verify in real headless Chrome.
 ## Build order
 
 1. ~~Coach section, ported native~~ — **done**, on `/coach-preview`
-2. **The two closers, ported native.** Unlocks features-beside-the-piece, and
-   gets the page off iframes.
+2. ~~The two closers, ported native.~~ — **done**, on `/closers-preview`
+   (`CampusColours.tsx`, `BladeLock.tsx`). Both phones carry
+   `data-closer-phone` for the flight to land on.
 3. **The scroll stories.** The big one: `story-script.js` drives the DOM
    directly and assumes it owns the page, so it becomes a client component
    managing its own refs, fed by `lib/landingCopy.ts` (the brief: *"one
-   component fed by two data sets"*).
+   component fed by two data sets"*). This is also where the flight goes —
+   the story's phone flying down and landing on the closer's
+   `data-closer-phone`, the letter swinging out from behind it, the oars
+   un-parking — none of which is in the closer ports, on purpose.
 4. **Assemble `/`.** Hero with three doors, availability strip, the three
    sections, FAQ, about, footer. Delete the old feature cards 01–04, the
    "five layers" strip, and both drawn phones (`HeroPhone`, `VarsityPhone`) —

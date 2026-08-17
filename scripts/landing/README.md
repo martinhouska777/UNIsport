@@ -163,6 +163,16 @@ revokes it afterwards — ask for a fresh one, never assume one is lying around.
 
 ## The closers (webpage/*.html)
 
+> **Ported.** Both closers now exist as native React components —
+> `components/landing/CampusColours.tsx` and `BladeLock.tsx`, on the scratch
+> route `/closers-preview` — with the school data in `lib/landingSchools.ts`
+> and the copy in `lib/landingCopy.ts`. Everything below is how the
+> **prototype artifact** still does it (it is built from these files, and it
+> stays that way until the stories are ported and the page assembled). To read
+> a design bundle's real source, decode the base64 (gzip) entries of its
+> `<script type="__bundler/manifest">` and its `__bundler/template` — the
+> template is an ~20–40KB HTML file with the layout and logic in the clear.
+
 `Blade Lock Light.html` and `UNIsport Campus Colours.html` are **bundled apps**
 from Claude Design — ~130KB of JavaScript each that mount into `document.body`
 and style `body` and `*`. They cannot be pasted into the page (they would
