@@ -189,12 +189,13 @@ ${imgs}
 
 const html = `<title>Never Train Alone</title>
 <script>
-  // Theme first, before any styles apply: default LIGHT (the app frames and
-  // the static closers are light), remembered per browser.
+  // Theme first, before any styles apply: default DARK — the black page is
+  // what makes the light phone screens read as lit screens. Light is opt-in
+  // through the switch, and remembered per browser.
   (function () {
     var t;
     try { t = localStorage.getItem("storyTheme"); } catch (e) {}
-    if (t !== "dark") document.documentElement.classList.add("light");
+    if (t === "light") document.documentElement.classList.add("light");
   })();
 </script>
 <style>
