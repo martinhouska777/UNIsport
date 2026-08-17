@@ -180,6 +180,29 @@ async function clickText(re, extra = "") {
 await go("/varsity/coach/plan", 4000);
 await shot("blocks");
 
+// 1b. The create-block form, filled in — where a season starts.
+await clickText(/New training block/);
+await wait(1200);
+await page.evaluate(() => {
+  // React-controlled inputs: set the value through the native setter so React sees it.
+  const set = (el, v) => {
+    const proto = el.tagName === "INPUT" ? HTMLInputElement.prototype : HTMLTextAreaElement.prototype;
+    Object.getOwnPropertyDescriptor(proto, "value").set.call(el, v);
+    el.dispatchEvent(new Event("input", { bubbles: true }));
+  };
+  const inputs = [...document.querySelectorAll("input")];
+  const text = inputs.filter((i) => i.type !== "date");
+  const dates = inputs.filter((i) => i.type === "date");
+  if (text[0]) set(text[0], "Spring 2027 — to Sprints");
+  if (dates[0]) set(dates[0], "2027-01-11");
+  if (dates[1]) set(dates[1], "2027-05-16");
+  if (text[1]) set(text[1], "Eastern Sprints");
+  if (dates[2]) set(dates[2], "2027-05-16");
+});
+await wait(900);
+await shot("create");
+await go("/varsity/coach/plan", 2500);
+
 // 2. Into Fall 2026 → the weeks of the block.
 await clickText(/Fall 2026/);
 await wait(1500);

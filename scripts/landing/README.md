@@ -212,10 +212,15 @@ splitting), and any backtick in an emitted comment ends the literal early.
 
 The owner decided the coach part of the landing page is a STATIC section, not a
 third scroll animation: coaches are few and motivated — they read. The section
-is `webpage/Coach Console Section.html` — three real screens (Plan week /
-1V lineup with port-red, starboard-green seats / Athlete Notes) with plain
-explanatory text and no animation, in the page's visual language, ready to slot
-in after Blade Lock. `webpage/Coach Console Story.html` (the animated
+is `webpage/Coach Console Section.html` — five real screens (Create block /
+session builder / Plan week / 1V lineup / Athlete Notes) with plain explanatory
+text and no animation, in the page's visual language, ready to slot in after
+Blade Lock.
+
+The capture roster's sides follow the standard rig — **stroke is strokeside
+(port, red), 7 is bowside (starboard, green)**, alternating to bow. Keep it that
+way when re-capturing: a rower reading the page will spot a mis-rigged eight
+immediately. `webpage/Coach Console Story.html` (the animated
 prototype) stays in the repo for reference only — do not wire it in.
 
 ### Original notes — frames + capture
