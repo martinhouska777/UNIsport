@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Button, { buttonClass } from "@/components/ui/Button";
 import {
   activityLabel,
   logMuscles,
@@ -220,21 +221,17 @@ export default function WorkoutDetail({
                 setBusy(true);
                 await onDelete(log);
               }}
-              className="flex-1 rounded-full bg-danger px-5 py-3 text-sm font-semibold text-primary-contrast disabled:opacity-50"
+              className={buttonClass({ variant: "danger", size: "lg", className: "flex-1" })}
             >
               {busy ? "Deleting…" : "Delete session"}
             </button>
           </>
         ) : (
           <>
-            <button
-              type="button"
-              onClick={() => setConfirming(true)}
-              className="flex items-center justify-center gap-1.5 rounded-full border border-border bg-surface-2 px-5 py-3 text-sm font-medium text-danger"
-            >
+            <Button variant="dangerSoft" size="lg" onClick={() => setConfirming(true)}>
               <IconTrash size={15} />
               Delete
-            </button>
+            </Button>
             <button
               type="button"
               onClick={() => onEdit(log)}

@@ -13,6 +13,7 @@
   green = success), so it re-skins with the theme.
 */
 import { useEffect, useMemo, useState } from "react";
+import Button, { buttonClass } from "@/components/ui/Button";
 import { createPortal } from "react-dom";
 import ThemeProvider from "@/components/ThemeProvider";
 import { varsityTheme, varsityLightTheme } from "@/lib/varsity/theme";
@@ -167,20 +168,15 @@ function Editor({
               type="button"
               onClick={() => setText("")}
               disabled={busy}
-              className="rounded-2xl border border-border bg-surface px-4 py-3.5 text-[13px] font-medium text-muted disabled:opacity-50"
+              className={buttonClass({ variant: "secondary", size: "lg" })}
             >
               Clear
             </button>
           )}
-          <button
-            type="button"
-            onClick={save}
-            disabled={busy || !dirty}
-            className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-primary py-3.5 text-[14px] font-semibold text-primary-contrast disabled:opacity-40"
-          >
+          <Button size="lg" onClick={save} disabled={busy || !dirty} className="flex-1">
             <IconCheck size={16} />
             {busy ? "Saving…" : "Save note"}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

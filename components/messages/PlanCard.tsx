@@ -11,6 +11,7 @@
   Colors are theme tokens only (rule 1).
 */
 import { useState } from "react";
+import Button from "@/components/ui/Button";
 import { respondToPlan, confirmPlan, cancelPlan, planWhenLabel } from "@/lib/supabase/sessionPlans";
 import { type DmPlan } from "@/lib/supabase/messages";
 import { activityLabel } from "@/lib/supabase/workouts";
@@ -120,22 +121,18 @@ export default function PlanCard({
       <div className="mt-3 border-t border-border pt-2.5">
         {plan.status === "proposed" && !mine && (
           <div className="flex gap-2">
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => respond(true)}
-              className="flex flex-1 items-center justify-center gap-1.5 rounded-full bg-primary py-2 text-[12px] font-semibold text-primary-contrast disabled:opacity-50"
-            >
+            <Button size="sm" disabled={busy} onClick={() => respond(true)} className="flex-1">
               <IconCheck size={14} /> Accept
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
               disabled={busy}
               onClick={() => respond(false)}
-              className="flex flex-1 items-center justify-center gap-1.5 rounded-full border border-border bg-surface py-2 text-[12px] font-medium text-muted disabled:opacity-50"
+              className="flex-1"
             >
               <IconX size={14} /> Decline
-            </button>
+            </Button>
           </div>
         )}
 
@@ -154,22 +151,18 @@ export default function PlanCard({
           <div>
             <div className="mb-2 text-[12px] font-medium text-text">Did this happen?</div>
             <div className="flex gap-2">
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => confirm(true)}
-                className="flex flex-1 items-center justify-center gap-1.5 rounded-full bg-primary py-2 text-[12px] font-semibold text-primary-contrast disabled:opacity-50"
-              >
+              <Button size="sm" disabled={busy} onClick={() => confirm(true)} className="flex-1">
                 <IconCheck size={14} /> Yes, we trained
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
                 disabled={busy}
                 onClick={() => confirm(false)}
-                className="flex flex-1 items-center justify-center gap-1.5 rounded-full border border-border bg-surface py-2 text-[12px] font-medium text-muted disabled:opacity-50"
+                className="flex-1"
               >
                 <IconX size={14} /> No-show
-              </button>
+              </Button>
             </div>
           </div>
         )}

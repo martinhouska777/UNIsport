@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Button from "@/components/ui/Button";
 import {
   listDirectConversations,
   listChannels,
@@ -287,13 +288,9 @@ function CommunityList({
                   </span>
                 </div>
               </button>
-              <button
-                type="button"
-                onClick={() => onJoin(c.channelId)}
-                className="shrink-0 rounded-full bg-primary px-3.5 py-1.5 text-[11px] font-semibold text-primary-contrast"
-              >
+              <Button size="sm" onClick={() => onJoin(c.channelId)} className="shrink-0">
                 Join
-              </button>
+              </Button>
             </div>
           ))}
         </>

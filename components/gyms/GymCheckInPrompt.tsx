@@ -7,6 +7,7 @@
 */
 import { useGymStats } from "@/lib/gymSocial";
 import { StarRater, CrowdPicker } from "@/components/gyms/RateCrowd";
+import Button from "@/components/ui/Button";
 
 export default function GymCheckInPrompt({
   userId,
@@ -48,20 +49,12 @@ export default function GymCheckInPrompt({
           <CrowdPicker value={crowd?.level ?? null} onReport={(l) => reportCrowd(gymSlug, l)} />
         </div>
 
-        <button
-          type="button"
-          onClick={onDone}
-          className="mt-5 w-full rounded-full bg-primary py-3 text-[14px] font-semibold text-primary-contrast"
-        >
+        <Button size="lg" full onClick={onDone} className="mt-5">
           Done
-        </button>
-        <button
-          type="button"
-          onClick={onDone}
-          className="mt-1.5 w-full py-1 text-[12px] text-muted"
-        >
+        </Button>
+        <Button variant="muted" size="sm" full onClick={onDone} className="mt-1.5">
           Skip
-        </button>
+        </Button>
       </div>
     </div>
   );

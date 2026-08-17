@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Button from "@/components/ui/Button";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import VarsityShield from "@/components/varsity/VarsityShield";
@@ -417,13 +418,9 @@ export default function ProfilePage() {
               Your calendar, your sessions and the people you train with all start here.
               It takes about ten seconds.
             </p>
-            <button
-              type="button"
-              onClick={() => setLogging(true)}
-              className="mt-3 rounded-full bg-primary px-4 py-2 text-[13px] font-semibold text-primary-contrast"
-            >
+            <Button size="md" onClick={() => setLogging(true)} className="mt-3">
               Log a session
-            </button>
+            </Button>
           </div>
         </div>
       ) : (
@@ -574,19 +571,14 @@ export default function ProfilePage() {
 
       {/* Bottom action bar (sticks above the tab nav) */}
       <div className="sticky bottom-0 z-20 flex gap-2.5 border-t border-border bg-surface px-3.5 py-3">
-        <button
-          type="button"
-          className="flex-1 rounded-full border border-border bg-surface-2 px-5 py-3 text-sm font-medium text-text"
-        >
-          Share Profile
-        </button>
-        <button
-          type="button"
-          onClick={() => setLogging(true)}
-          className="flex-1 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-contrast"
-        >
+        {/* "Log Session" is the job of this screen, so it gets the weight —
+            these used to be two equal halves. */}
+        <Button variant="secondary" size="lg" className="flex-1">
+          Share
+        </Button>
+        <Button size="lg" onClick={() => setLogging(true)} className="flex-[2]">
           Log Session
-        </button>
+        </Button>
       </div>
 
       {switchingMode && (

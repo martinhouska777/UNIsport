@@ -2,6 +2,7 @@ import type { Match } from "@/lib/supabase/matching";
 import { matchTier } from "@/lib/matchTier";
 import { topMatchReasons } from "@/lib/matchReasons";
 import { IconUser } from "@/components/icons";
+import Button from "@/components/ui/Button";
 
 /*
   One result card in the Match grid: avatar block with a compatibility badge,
@@ -74,13 +75,11 @@ export default function MatchCard({
           )}
         </div>
 
-        <button
-          type="button"
-          onClick={() => onView?.(match)}
-          className="w-full rounded-lg bg-primary py-1.5 text-[10px] font-medium text-primary-contrast"
-        >
-          View Profile
-        </button>
+        {/* Was 22px tall with 10px text — the only action on the card and the
+            hardest thing on it to hit. Now a real 32px control. */}
+        <Button size="sm" full onClick={() => onView?.(match)}>
+          View profile
+        </Button>
       </div>
     </div>
   );

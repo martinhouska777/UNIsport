@@ -16,6 +16,7 @@
   All colors are theme tokens. Editor sheets use the shared <Sheet> (portalled).
 */
 import { useEffect, useMemo, useState } from "react";
+import Button from "@/components/ui/Button";
 import Link from "next/link";
 import Sheet from "@/components/varsity/Sheet";
 import { useAppState } from "@/components/AppState";
@@ -173,13 +174,9 @@ function EditIdentitySheet({
         </div>
       </div>
 
-      <button
-        type="button"
-        onClick={save}
-        className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-[14px] font-semibold text-primary-contrast"
-      >
+      <Button size="lg" full onClick={save} className="mt-5">
         <IconCheck size={16} /> Save
-      </button>
+      </Button>
     </Sheet>
   );
 }
@@ -262,18 +259,19 @@ function PrSheet({
           </div>
         ))}
       </div>
-      <button
-        type="button"
+      <Button
+        size="lg"
+        full
         onClick={() => {
           const cleaned: Record<string, string> = {};
           for (const [k, v] of Object.entries(draft)) if (v.trim()) cleaned[k] = v.trim();
           onSave({ prs: cleaned });
           onClose();
         }}
-        className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-[14px] font-semibold text-primary-contrast"
+        className="mt-5"
       >
         <IconCheck size={16} /> Save bests
-      </button>
+      </Button>
     </Sheet>
   );
 }

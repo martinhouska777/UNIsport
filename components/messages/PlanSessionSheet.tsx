@@ -7,6 +7,7 @@
   stay text-base so phones don't auto-zoom; colors are theme tokens (rule 1).
 */
 import { useEffect, useState } from "react";
+import Button from "@/components/ui/Button";
 import { primaryActivities, verifiedGyms } from "@/lib/onboarding";
 import { createPlan, reschedulePlan } from "@/lib/supabase/sessionPlans";
 import { IconX } from "@/components/icons";
@@ -158,14 +159,9 @@ export default function PlanSessionSheet({
 
           {error && <div className="mt-3 text-[12px] text-danger">{error}</div>}
 
-          <button
-            type="button"
-            onClick={propose}
-            disabled={busy || !date || !time}
-            className="mt-5 w-full rounded-full bg-primary py-3 text-sm font-semibold text-primary-contrast disabled:opacity-50"
-          >
+          <Button size="lg" full onClick={propose} disabled={busy || !date || !time} className="mt-5">
             {busy ? "Sending…" : existing ? "Update & resend" : `Send plan to ${otherName}`}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

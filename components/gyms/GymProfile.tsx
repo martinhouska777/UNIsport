@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useAppState } from "@/components/AppState";
 import { useFavorites, useGymStats, timeAgo } from "@/lib/gymSocial";
 import { StarRater, CrowdPicker, RatingValue } from "@/components/gyms/RateCrowd";
+import { ButtonLink } from "@/components/ui/Button";
 import type { Gym, GalleryIcon } from "@/lib/gyms";
 import {
   IconArrowLeft,
@@ -203,13 +204,10 @@ export default function GymProfile({ gym }: { gym: Gym }) {
         the tab bar) instead of waiting at the end of the page.
       */}
       <div className="sticky bottom-0 z-10 border-t border-border bg-surface px-3.5 pb-4 pt-3">
-        <Link
-          href={`/match?gym=${encodeURIComponent(gym.name)}`}
-          className="block w-full rounded-2xl bg-primary py-3.5 text-center text-[13px] font-medium text-primary-contrast"
-        >
+        <ButtonLink href={`/match?gym=${encodeURIComponent(gym.name)}`} size="lg" full>
           Find a partner at this gym{" "}
           <span className="text-primary-contrast/60">→</span>
-        </Link>
+        </ButtonLink>
       </div>
     </div>
   );

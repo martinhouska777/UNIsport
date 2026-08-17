@@ -19,6 +19,7 @@
   needs real team membership (a later slice).
 */
 import { useEffect, useMemo, useState } from "react";
+import Button, { buttonClass } from "@/components/ui/Button";
 import {
   practiceStatusMeta,
   roster,
@@ -740,16 +741,16 @@ function Builder({
             type="button"
             onClick={() => persist("draft", "save")}
             disabled={busy !== null}
-            className="flex items-center gap-1.5 rounded-2xl border border-border bg-surface px-4 py-3.5 text-[13px] font-medium text-muted disabled:opacity-50"
+            className={buttonClass({ variant: "secondary", size: "lg" })}
           >
             <IconCheck size={15} />
             {busy === "save" ? "Saving…" : justSaved && status === "draft" ? "Saved" : "Save draft"}
           </button>
-          <button
-            type="button"
+          <Button
+            size="lg"
             onClick={() => persist("published", "publish")}
             disabled={busy !== null}
-            className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-primary py-3.5 text-[14px] font-semibold text-primary-contrast disabled:opacity-50"
+            className="flex-1"
           >
             <IconSend size={16} />
             {busy === "publish"
@@ -757,7 +758,7 @@ function Builder({
               : status === "published"
                 ? "Update live lineup"
                 : "Publish to team"}
-          </button>
+          </Button>
         </div>
       </div>
 

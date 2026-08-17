@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Button from "@/components/ui/Button";
 import { IconX } from "@/components/icons";
 import { useDragToDismiss } from "@/components/useDragToDismiss";
 import { Pill, FieldLabel, Toggle, TextField } from "@/components/onboarding/controls";
@@ -342,20 +343,12 @@ export default function PreferencesSheet({
 
         {/* Sticky save bar */}
         <div className="flex gap-2.5 border-t border-border bg-surface px-4 py-3">
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex-1 rounded-full border border-border bg-surface-2 px-5 py-3 text-sm font-medium text-text"
-          >
+          <Button variant="secondary" size="lg" onClick={onClose} className="flex-1">
             Cancel
-          </button>
-          <button
-            type="button"
-            onClick={save}
-            className="flex-1 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-contrast"
-          >
+          </Button>
+          <Button size="lg" onClick={save} className="flex-1">
             Save
-          </button>
+          </Button>
         </div>
       </div>
     </div>

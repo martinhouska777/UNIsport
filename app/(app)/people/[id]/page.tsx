@@ -14,6 +14,7 @@
   when present. All colors are theme tokens (rule 1).
 */
 import { Suspense, useEffect, useState } from "react";
+import Button from "@/components/ui/Button";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { getPublicProfile } from "@/lib/supabase/profiles";
 import { profileFromOnboarding, classOfLabel, type CurrentUser } from "@/lib/currentUser";
@@ -386,14 +387,9 @@ function PersonProfile() {
               {following && <IconCheck size={15} />}
               {following ? "Following" : followsBack ? "Follow back" : "Follow"}
             </button>
-            <button
-              type="button"
-              onClick={message}
-              disabled={messaging}
-              className="flex-[2] rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-contrast transition-opacity disabled:opacity-50"
-            >
+            <Button size="lg" onClick={message} disabled={messaging} className="flex-[2]">
               {messaging ? "Opening…" : "Message"}
-            </button>
+            </Button>
           </div>
         </>
       )}

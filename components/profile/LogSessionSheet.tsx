@@ -10,6 +10,7 @@
   theme tokens (rule 1); inputs stay text-base so phones don't auto-zoom.
 */
 import { useEffect, useRef, useState } from "react";
+import Button from "@/components/ui/Button";
 import { primaryActivities, cardioTypes, verifiedGyms } from "@/lib/onboarding";
 import {
   saveWorkout,
@@ -520,14 +521,9 @@ export default function LogSessionSheet({
       {/* Save bar */}
       <div className="flex-shrink-0 border-t border-border bg-surface px-4 pb-6 pt-3">
         <div className="mx-auto max-w-screen-sm">
-          <button
-            type="button"
-            onClick={save}
-            disabled={busy || !date}
-            className="flex w-full items-center justify-center gap-2 rounded-full bg-primary py-3.5 text-[14px] font-semibold text-primary-contrast disabled:opacity-40"
-          >
+          <Button size="lg" full onClick={save} disabled={busy || !date}>
             <IconCheck size={16} /> {busy ? "Saving…" : existing ? "Save changes" : "Save session"}
-          </button>
+          </Button>
         </div>
       </div>
 

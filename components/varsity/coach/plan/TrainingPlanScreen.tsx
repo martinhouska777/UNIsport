@@ -14,6 +14,7 @@
   lib/varsity/coachPlan.ts (rule-1 exception), applied via inline style.
 */
 import { useEffect, useMemo, useState } from "react";
+import Button, { buttonClass } from "@/components/ui/Button";
 import { createPortal } from "react-dom";
 import ThemeProvider from "@/components/ThemeProvider";
 import { varsityTheme, varsityLightTheme } from "@/lib/varsity/theme";
@@ -373,13 +374,9 @@ export default function TrainingPlanScreen() {
             <p className="mx-auto mt-1 max-w-[16rem] text-[12px] text-muted">
               Create your first block to start planning the weeks ahead.
             </p>
-            <button
-              type="button"
-              onClick={() => setView({ name: "create" })}
-              className="mt-5 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-3 text-[13px] font-semibold text-primary-contrast"
-            >
+            <Button size="md" onClick={() => setView({ name: "create" })} className="mt-5">
               <IconPlus size={16} /> New training block
-            </button>
+            </Button>
           </div>
         ) : (
           <div className="mt-5 flex flex-col gap-2.5">
@@ -483,14 +480,9 @@ export default function TrainingPlanScreen() {
             </div>
           </div>
 
-          <button
-            type="button"
-            disabled={!valid}
-            onClick={createBlock}
-            className="mt-1 rounded-xl bg-primary py-3.5 text-[14px] font-semibold text-primary-contrast disabled:opacity-40"
-          >
+          <Button size="lg" full disabled={!valid} onClick={createBlock} className="mt-1">
             Create block
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -555,14 +547,9 @@ export default function TrainingPlanScreen() {
               Unpublish
             </button>
           ) : (
-            <button
-              type="button"
-              onClick={() => publishBlock(block.id)}
-              disabled={saving}
-              className="flex items-center gap-1.5 rounded-lg bg-primary px-3.5 py-2 text-[12px] font-semibold text-primary-contrast disabled:opacity-50"
-            >
+            <Button size="sm" onClick={() => publishBlock(block.id)} disabled={saving}>
               <IconSend size={13} /> Publish to team
-            </button>
+            </Button>
           )}
         </div>
 
@@ -901,19 +888,14 @@ export default function TrainingPlanScreen() {
               <button
                 type="button"
                 onClick={clearSession}
-                className="rounded-xl border border-border bg-surface px-4 py-3.5 text-[13px] font-medium text-muted"
+                className={buttonClass({ variant: "secondary", size: "lg" })}
               >
                 Remove
               </button>
             )}
-            <button
-              type="button"
-              disabled={!editorValid}
-              onClick={saveSession}
-              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-[14px] font-semibold text-primary-contrast disabled:opacity-40"
-            >
+            <Button size="lg" disabled={!editorValid} onClick={saveSession} className="flex-1">
               <IconCheck size={16} /> Confirm session
-            </button>
+            </Button>
           </div>
         </div>
       </div>

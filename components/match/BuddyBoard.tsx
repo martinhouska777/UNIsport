@@ -13,6 +13,7 @@
 */
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Button from "@/components/ui/Button";
 import {
   createBuddyPost,
   listBuddyBoard,
@@ -198,14 +199,9 @@ export default function BuddyBoard() {
           />
         </div>
 
-        <button
-          type="button"
-          onClick={submit}
-          disabled={!canPost}
-          className="rounded-xl bg-primary py-3 text-center text-[13px] font-medium text-primary-contrast disabled:opacity-40"
-        >
+        <Button size="lg" full onClick={submit} disabled={!canPost}>
           {posting ? "Posting…" : "Post to board"}
-        </button>
+        </Button>
         {!focus || !day || !timeOfDay ? (
           <p className="text-center text-[11px] text-muted">Pick a focus, day, and time of day.</p>
         ) : null}
@@ -325,14 +321,14 @@ export default function BuddyBoard() {
                   </div>
                 )}
               </div>
-              <button
-                type="button"
+              <Button
+                size="sm"
                 onClick={() => message(p)}
                 disabled={messagingId === p.id}
-                className="flex-shrink-0 rounded-full bg-primary px-4 py-2 text-[12px] font-medium text-primary-contrast disabled:opacity-40"
+                className="flex-shrink-0"
               >
                 {messagingId === p.id ? "…" : "Message"}
-              </button>
+              </Button>
             </div>
           ))}
         </div>

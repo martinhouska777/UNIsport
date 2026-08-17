@@ -13,6 +13,7 @@
   keeps a ranked list up to `max`, showing each pick's position.
 */
 import { useState } from "react";
+import Button from "@/components/ui/Button";
 import { IconCheck, IconX } from "@/components/icons";
 
 export type Option = { value: string; label: string };
@@ -116,23 +117,19 @@ export default function OptionPickerSheet({
 
         {multiple && (
           <div className="flex gap-2.5 border-t border-border px-4 py-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 rounded-full border border-border bg-surface-2 px-5 py-3 text-sm font-medium text-text"
-            >
+            <Button variant="secondary" size="lg" onClick={onClose} className="flex-1">
               Cancel
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
+              size="lg"
               onClick={() => {
                 onSave(picked);
                 onClose();
               }}
-              className="flex-1 rounded-full bg-primary px-5 py-3 text-sm font-medium text-primary-contrast"
+              className="flex-1"
             >
               Save
-            </button>
+            </Button>
           </div>
         )}
       </div>

@@ -13,6 +13,7 @@
   deals in real times and saving quietly upgrades that person's answers.
 */
 import { useState } from "react";
+import Button from "@/components/ui/Button";
 import { IconX, IconPlus, IconTrash } from "@/components/icons";
 import { weekDays } from "@/lib/onboarding";
 import {
@@ -193,20 +194,12 @@ export default function TrainingScheduleSheet({
         </div>
 
         <div className="flex gap-2.5 border-t border-border px-4 py-3">
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex-1 rounded-full border border-border bg-surface-2 px-5 py-3 text-sm font-medium text-text"
-          >
+          <Button variant="secondary" size="lg" onClick={onClose} className="flex-1">
             Cancel
-          </button>
-          <button
-            type="button"
-            onClick={save}
-            className="flex-1 rounded-full bg-primary px-5 py-3 text-sm font-medium text-primary-contrast"
-          >
+          </Button>
+          <Button size="lg" onClick={save} className="flex-1">
             Save
-          </button>
+          </Button>
         </div>
       </div>
     </div>

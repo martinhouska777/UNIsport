@@ -21,6 +21,7 @@
   data-driven.
 */
 import { Suspense, useEffect, useMemo, useState } from "react";
+import Button from "@/components/ui/Button";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAppState } from "@/components/AppState";
 import { useProfileData } from "@/components/profile/useProfileData";
@@ -387,14 +388,9 @@ function MatchScreen() {
               onClear={clearFilter}
             />
 
-            <button
-              type="button"
-              onClick={runSearch}
-              disabled={!canSearch || searching}
-              className="rounded-xl bg-primary py-3 text-center text-[13px] font-medium text-primary-contrast disabled:opacity-40"
-            >
+            <Button size="lg" full onClick={runSearch} disabled={!canSearch || searching}>
               {searching ? "Searching…" : "Search"}
-            </button>
+            </Button>
             {!canSearch && (
               <p className="text-center text-[11px] text-muted">
                 Pick an activity, day, and time to search.

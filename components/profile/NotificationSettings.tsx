@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Button from "@/components/ui/Button";
 import { Toggle } from "@/components/onboarding/controls";
 import { IconBell } from "@/components/icons";
 import {
@@ -140,14 +141,9 @@ export default function NotificationSettings({
             {busy ? "…" : "Turn off"}
           </button>
         ) : (
-          <button
-            type="button"
-            onClick={enable}
-            disabled={busy}
-            className="rounded-full bg-primary px-3.5 py-1.5 text-[11px] font-semibold text-primary-contrast disabled:opacity-50"
-          >
+          <Button size="sm" onClick={enable} disabled={busy}>
             {busy ? "…" : "Enable"}
-          </button>
+          </Button>
         )}
       </div>
     );

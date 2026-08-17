@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Button from "@/components/ui/Button";
 import {
   getChannelThread,
   sendChannelMessage,
@@ -159,14 +160,9 @@ export default function ChannelThread({
       ) : (
         <div className="flex items-center justify-between gap-3 border-t border-border bg-surface px-3.5 py-3">
           <span className="text-[12px] text-muted">Join # {title} to post a message.</span>
-          <button
-            type="button"
-            onClick={join}
-            disabled={joining}
-            className="shrink-0 rounded-full bg-primary px-4 py-2 text-[12px] font-semibold text-primary-contrast transition-opacity disabled:opacity-50"
-          >
+          <Button size="sm" onClick={join} disabled={joining} className="shrink-0">
             {joining ? "Joining…" : "Join"}
-          </button>
+          </Button>
         </div>
       )}
     </div>

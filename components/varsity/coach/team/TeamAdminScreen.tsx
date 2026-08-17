@@ -15,6 +15,7 @@
   All colors are theme tokens (rule 1); the link presets are data (lib/varsity/invites).
 */
 import { useCallback, useEffect, useState } from "react";
+import Button from "@/components/ui/Button";
 import {
   createInvite,
   inviteState,
@@ -215,15 +216,10 @@ export default function TeamAdminScreen({ membership }: { membership: Membership
                 >
                   <IconX size={14} />
                 </button>
-                <button
-                  type="button"
-                  onClick={() => decide(m.userId, "approved")}
-                  disabled={busy === m.userId}
-                  className="flex h-8 items-center gap-1 rounded-full bg-primary px-3.5 text-[11px] font-semibold text-primary-contrast disabled:opacity-50"
-                >
+                <Button size="sm" onClick={() => decide(m.userId, "approved")} disabled={busy === m.userId}>
                   <IconCheck size={13} />
                   Let in
-                </button>
+                </Button>
               </li>
             ))}
           </ul>
@@ -290,13 +286,9 @@ export default function TeamAdminScreen({ membership }: { membership: Membership
                     /* text-base so phones don't zoom the page on focus */
                     className="min-w-0 flex-1 rounded-lg border border-border bg-surface-2 px-3 py-2 text-base text-text placeholder:text-muted focus:border-accent focus:outline-none"
                   />
-                  <button
-                    type="submit"
-                    disabled={busy === "new" || !emailValue.trim()}
-                    className="rounded-lg bg-primary px-3 py-2 text-[11px] font-semibold text-primary-contrast disabled:opacity-50"
-                  >
+                  <Button type="submit" size="md" disabled={busy === "new" || !emailValue.trim()}>
                     Make
-                  </button>
+                  </Button>
                 </form>
               ) : (
                 <button

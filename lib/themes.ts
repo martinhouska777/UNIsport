@@ -48,9 +48,9 @@ export const neutralTheme: ThemeTokens = {
   surface2: "#eeeef0",
   border: "#e4e4e7",
   text: "#1c1c1f",
-  text2: "#33363d",
-  text3: "#7c8290",
-  muted: "#6b7280",
+  text2: "#2c313c",
+  text3: "#676d7a",
+  muted: "#4f5563",
   primary: "#2f3b52",
   primaryLive: "#2f3b52", // already clears 3:1 on a light ground
   primaryContrast: "#ffffff",
@@ -84,7 +84,7 @@ export const universities: Record<string, University> = {
       border: "#272727",
       text: "#f5f5f5",
       text2: "#cdcdcd",
-      text3: "#757575", // the faintest grey that still clears 4.5:1 on a card
+      text3: "#828282", // the faintest grey that still clears 4.5:1 on a card
       muted: "#8d8d8d",
       primary: "#a51c30", // Harvard crimson
       primaryLive: "#c8203a", // crimson lifted to 3.5:1 for button fills
