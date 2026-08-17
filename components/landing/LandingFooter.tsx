@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { footer } from "@/lib/landingCopy";
 
 export default function LandingFooter() {
   return (
@@ -9,23 +10,21 @@ export default function LandingFooter() {
             UNI<span className="text-l-accent">sport</span>
           </Link>
           <span className="h-3.5 w-px bg-l-border" />
-          <span>Built at Harvard, for every campus</span>
+          <span>{footer.tagline}</span>
         </div>
         <div className="flex flex-col items-start gap-2 sm:items-end">
           {/* Google's brand verification checks the privacy policy is reachable
               and linked from the homepage, so these stay in the footer. */}
           <div className="flex items-center gap-4 font-mono text-[11px] tracking-wide">
             <Link href="/privacy" className="text-l-text-3 transition-colors hover:text-l-text-2">
-              Privacy
+              {footer.privacy}
             </Link>
             <span className="h-3 w-px bg-l-border" />
             <Link href="/terms" className="text-l-text-3 transition-colors hover:text-l-text-2">
-              Terms
+              {footer.terms}
             </Link>
           </div>
-          <div className="font-mono text-[11px] tracking-wide text-l-text-3">
-            Officially unaffiliated with Harvard University
-          </div>
+          <div className="font-mono text-[11px] tracking-wide text-l-text-3">{footer.unaffiliated}</div>
         </div>
       </div>
     </footer>

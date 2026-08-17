@@ -1,33 +1,34 @@
 import Link from "next/link";
+import { nav } from "@/lib/landingCopy";
 
 /*
-  Sticky top bar for the landing. Two ways in, because there genuinely are two:
-  students sign themselves up, while a varsity athlete arrives holding a link
-  their captain sent. The varsity route is quiet and gold — secondary for most
-  visitors, but the first thing a rower is looking for.
+  The top bar: the wordmark, Log in, and the same door as the hero's button.
+  (The team-invite way in lives under the hero, next to the doors, where a
+  rower holding a link will read it.)
+
+  Static, not sticky: below the intro the page is full-screen sticky stages —
+  the stories, the closers — and a bar pinned over them would sit on top of
+  every one. The hero's button and the final CTA are the ways in.
 */
 export default function LandingNav() {
   return (
-    <nav className="sticky top-0 z-50 border-b border-l-border bg-l-bg/75 backdrop-blur-xl">
+    <nav className="relative z-[2] border-b border-l-border bg-l-bg">
       <div className="mx-auto flex max-w-[1280px] items-center justify-between px-6 py-[18px] sm:px-8">
-        <Link
-          href="/"
-          className="font-display text-2xl italic tracking-tight text-l-text"
-        >
+        <Link href="/" className="font-display text-2xl italic tracking-tight text-l-text">
           UNI<span className="text-l-accent">sport</span>
         </Link>
         <div className="flex items-center gap-2 sm:gap-2.5">
           <Link
-            href="/join"
-            className="rounded-full border border-l-varsity-soft px-3.5 py-2 text-[13px] font-medium tracking-tight text-l-varsity transition-colors hover:border-l-varsity hover:bg-l-varsity-dim sm:px-[18px] sm:text-sm"
+            href="/login"
+            className="rounded-full px-3.5 py-2 text-[13px] font-medium tracking-tight text-l-text-2 transition-colors hover:text-l-text sm:px-[18px] sm:text-sm"
           >
-            Team invite
+            {nav.login}
           </Link>
           <Link
             href="/login"
             className="rounded-full bg-l-text px-[18px] py-2.5 text-sm font-medium tracking-tight text-l-bg transition-colors hover:bg-l-accent hover:text-l-text"
           >
-            Get Started
+            {nav.cta}
           </Link>
         </div>
       </div>

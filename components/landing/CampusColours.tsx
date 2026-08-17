@@ -1,8 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useEffect, useImperativeHandle, useRef, useState, type Ref } from "react";
+import { useCallback, useEffect, useImperativeHandle, useRef, useState, type ReactNode, type Ref } from "react";
 import Phone from "@/components/landing/Phone";
+import CloserSplit from "@/components/landing/CloserSplit";
 import { useCloserGate } from "@/components/landing/useCloserGate";
 import type { CloserHandle } from "@/components/landing/closer";
 import { closers } from "@/lib/landingCopy";
@@ -43,6 +44,7 @@ export default function CampusColours({
   id,
   managed = false,
   pinned = false,
+  aside,
   ref,
 }: {
   id?: string;
@@ -50,6 +52,8 @@ export default function CampusColours({
   managed?: boolean;
   /** A little taller than one screen, sticky inside — the flight lands here. */
   pinned?: boolean;
+  /** Something to stand beside the piece — the feature rows. */
+  aside?: ReactNode;
   ref?: Ref<CloserHandle>;
 }) {
   const [{ idx, prev }, setSchool] = useState<{ idx: number; prev: number | null }>({ idx: 0, prev: null });
@@ -169,6 +173,7 @@ export default function CampusColours({
         ref={stick}
         className="lc-stick flex min-h-svh flex-col items-center justify-center overflow-hidden px-6 py-10 sm:px-8"
       >
+        <CloserSplit aside={aside} accent="accent">
         {/* ── The words ── */}
         <div className={`lc-words mb-11 max-w-[760px] text-center ${wordsPre ? "lc-pre" : ""}`}>
           <p className="mb-2.5 font-display text-[clamp(16px,2vw,20px)] text-l-text-2">{copy.leadIn}</p>
@@ -278,6 +283,7 @@ export default function CampusColours({
             );
           })}
         </div>
+        </CloserSplit>
       </div>
     </section>
   );

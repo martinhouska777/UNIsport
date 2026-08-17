@@ -235,16 +235,27 @@ frozen at its load-time value. Verify in real headless Chrome.
 2. ~~The two closers, ported native.~~ — **done**, on `/closers-preview`
    (`CampusColours.tsx`, `BladeLock.tsx`). Both phones carry
    `data-closer-phone` for the flight to land on.
-3. **The scroll stories.** The big one: `story-script.js` drives the DOM
-   directly and assumes it owns the page, so it becomes a client component
-   managing its own refs, fed by `lib/landingCopy.ts` (the brief: *"one
-   component fed by two data sets"*). This is also where the flight goes —
-   the story's phone flying down and landing on the closer's
-   `data-closer-phone`, the letter swinging out from behind it, the oars
-   un-parking — none of which is in the closer ports, on purpose.
-4. **Assemble `/`.** Hero with three doors, availability strip, the three
-   sections, FAQ, about, footer. Delete the old feature cards 01–04, the
-   "five layers" strip, and both drawn phones (`HeroPhone`, `VarsityPhone`) —
-   the real screenshots replace them.
+3. ~~The scroll stories.~~ — **done.** `components/landing/ScrollStory.tsx`
+   (one component, two data sets; copy from `lib/landingCopy.ts`, mechanics
+   from `lib/landingMotion.ts`, choreography CSS as `.ls-*` in globals.css)
+   and `StoryCloser.tsx` (a story + its closer + the page's flying phone: the
+   in-place cut, forward and back — the artifact's script, asked of component
+   handles instead of searched through iframes). Suites:
+   `scripts/landing/verify-site.mjs`, `verify-site-flight.mjs`.
+4. **Assemble `/`.** — **built, on `/landing-preview`** as
+   `components/landing/LandingPage.tsx`: intro with the three doors and the
+   availability line, Story A → Campus Colours with the student feature rows
+   beside it, the interlude, Story B → Blade Lock with the varsity rows,
+   the coach section, FAQ, About · Contact, the close, the footer. The nav
+   is static (a bar pinned over full-screen sticky stages sat on every one).
+   **Not yet swapped into `/`** — pending the owner's review. To swap:
+   `app/page.tsx` renders `<LandingPage />`, delete `app/landing-preview`,
+   then delete the old `Hero`, `HeroPhone`, `VarsityPhone`, `Features`,
+   `OverviewStrip`, `HowItWorks`, `Exclusivity`, `VarsitySection`.
+   **Copy written for it, marked DRAFT in `lib/landingCopy.ts` for the owner:**
+   the availability line, the two feature lists (each row checked against
+   the code — the route or file is in the comment), the FAQ, About. "What's
+   coming" for students / varsity / coaches is deliberately absent: it is a
+   roadmap only the owner knows.
 
 Build each on a scratch route first so `/` never breaks.

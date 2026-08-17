@@ -4,13 +4,13 @@
 // the pivot, pans travel, the opening hold holds, phone-click and dot-click
 // navigate, and the mobile layout has no horizontal overflow.
 //
-//   node verify-site.mjs                      # http://localhost:3000/story-preview
+//   node verify-site.mjs                      # http://localhost:3000/landing-preview
 //   node verify-site.mjs http://localhost:3000/   # once assembled
 //
 // Screenshots land next to this file (gitignored).
 import puppeteer from "puppeteer-core";
 
-const URL = process.argv[2] || "http://localhost:3000/story-preview";
+const URL = process.argv[2] || "http://localhost:3000/landing-preview";
 const browser = await puppeteer.launch({
   executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe",
   headless: "new",
@@ -122,8 +122,9 @@ check(dotTo === 4, "dot click navigates");
 
 // ── mobile ──
 await page.setViewport({ width: 390, height: 844, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
-await page.reload({ waitUntil: "networkidle2" });
-await wait(1500);
+// "load", not networkidle: the dev server's image optimiser keeps a phone-DPR page busy for a while
+await page.reload({ waitUntil: "load", timeout: 90000 });
+await wait(2500);
 const mob = await page.evaluate(() => {
   const ph = document.querySelector("#story1 [data-story-phone]").getBoundingClientRect();
   const cp = document.querySelector("#story1 .ls-copy").getBoundingClientRect();

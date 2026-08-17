@@ -69,6 +69,28 @@ export const hero = {
   schools: ["Harvard", "Yale", "MIT", "Princeton"],
 };
 
+/* ─────────────────────────── THE TOP BAR ─────────────────────────── */
+
+export const nav = {
+  login: "Log in",
+  /* Also the hero's primary button — the same door, twice. */
+  cta: hero.primaryCta,
+};
+
+/* THE THREE DOORS under the hero — Student · Varsity athlete · Coach — each
+   jumps to its own section. A visitor who just scrolls meets everything in
+   order anyway. The one-liners reuse lines that already exist above/below. */
+export const doors = [
+  { label: "Student", sub: hero.kicker.lead, href: "#story1" },
+  { label: "Varsity athlete", sub: hero.kicker.tail, href: "#interlude" },
+  { label: "Coach", sub: "For the person who runs the squad.", href: "#coaches" },
+];
+
+/* THE AVAILABILITY LINE — one line, under the doors. The final CTA's own
+   sentence with "one university" named. DRAFT for the owner: it states the
+   only fact the app can currently stand behind. */
+export const availability = "Live now at Harvard. New campuses are onboarded one at a time — colours, gyms and houses included.";
+
 /* THE BRAND LINE. Three words, a promise rather than a description — it goes
    under the logo, on the splash, in a store listing. Distinct from the hero
    headline above, which describes and only ever appears on this page.
@@ -298,6 +320,161 @@ export const closers = {
     /* Under the phone: "HARVARD ROWING", "YALE ROWING", … */
     label: "Rowing",
   },
+};
+
+/* ─────────────── THE FEATURE LISTS beside each closer ───────────────
+
+  Left of Campus Colours: what the student app does, one row per feature, a
+  "+" opens the detail. Left of Blade Lock: the same for Varsity Mode. Every
+  row names something the app does TODAY — checked against the code, the
+  route or the capture named in the comment. DRAFT for the owner: these are
+  the first written words for this block; the stories above say the same
+  things in the owner's voice, and these rows keep to it.
+
+  "What's coming" for students / varsity / coaches is NOT here on purpose:
+  it is a roadmap, and only the owner knows it. Add a `coming` array to each
+  block when the words exist and the page will show it.
+*/
+
+export type FeatureRow = { title: string; detail: string };
+
+export const studentFeatures: { kicker: string; rows: FeatureRow[] } = {
+  kicker: "The student app",
+  rows: [
+    {
+      /* /gyms — hours, ratings, equipment lists, favourites, the crowd meter (lib/gymSocial.ts) */
+      title: "Every gym on campus, in one list.",
+      detail: "Opening hours, ratings, the equipment in each room, and a live crowd meter — the main gyms and the house gyms nobody has a map of.",
+    },
+    {
+      /* /match — ranked by compatibility; /people/[id] — the Why-you-match facts */
+      title: "Training partners, ranked by real fit.",
+      detail: "Same gym, same hours, same level — plus interests, hometown, languages, and whether one of you wants a mentor. Every reason is a fact off both profiles.",
+    },
+    {
+      /* messages/PlanCard.tsx — propose, accept, both calendars */
+      title: "Plan a session inside the chat.",
+      detail: "One tap proposes it, one tap accepts, and it is on both your calendars.",
+    },
+    {
+      /* the Log Session sheet (tall-logsheet capture): sets and reps, the partner carried over, photos and a note */
+      title: "Log it together, set by set.",
+      detail: "Every set and rep, the partner carried straight over from the plan, a photo and a note — the memory of the session, not just the numbers.",
+    },
+    {
+      /* PlanCard's confirmation → verified session; lib/supabase/workouts.ts streakStats */
+      title: "Verified sessions and streaks.",
+      detail: "You both confirm the session happened; verified days build your streak.",
+    },
+    {
+      /* /leaderboards — lib/leaderboards.ts: campus, house, partners, year */
+      title: "Leaderboards for the whole college.",
+      detail: "See where you rank across campus, in your house, among your partners and your year.",
+    },
+    {
+      /* /messages — the open channels (components/messages/ChannelThread.tsx) */
+      title: "Open campus channels.",
+      detail: "Everyone at your school is already in — no followers, no requests.",
+    },
+  ],
+};
+
+export const varsityFeatures: { kicker: string; rows: FeatureRow[] } = {
+  kicker: "Varsity Mode",
+  rows: [
+    {
+      /* /varsity/home — the week the coach published (V1) */
+      title: "The training plan, always current.",
+      detail: "Water, erg, weights — the week your coach actually built, on your phone the moment it is published. Not a screenshot of a spreadsheet.",
+    },
+    {
+      /* /varsity/home lineup card (V2), coach lineups (coach step 4) */
+      title: "Your name, in the boat.",
+      detail: "Lineups published by the coach, seat by seat, the night before — your seat lights up.",
+    },
+    {
+      /* race countdown + coach's note on Home (V3, coach step 1 & 5) */
+      title: "The next race, and the note to fix.",
+      detail: "A countdown to the race the block points at, and your coach's one technical note, in front of you until it is fixed.",
+    },
+    {
+      /* /varsity/log — Log per prescribed session, Scan C2/RP3, Add extra session (V4) */
+      title: "Log straight off the plan.",
+      detail: "Tap the prescribed session to log it, scan your Concept2 or RP3 monitor to read the numbers off it, or add an extra session.",
+    },
+    {
+      /* /varsity/calendar (V5) and /varsity/profile (V6) */
+      title: "Your season, on the calendar.",
+      detail: "Every logged workout lands on the calendar by itself — your training history, with your consistency beside it.",
+    },
+    {
+      /* /varsity/team — the squad's month (11-varsity-teammate capture) */
+      title: "How the squad is training.",
+      detail: "Every teammate's month, and where yours sits next to it — without having to ask anyone.",
+    },
+    {
+      /* /join — the invite; a captain's or coach's link unlocks the mode */
+      title: "Gated by your team.",
+      detail: "Varsity Mode opens from a link your captain or coach sends. Nobody else sees it.",
+    },
+  ],
+};
+
+/* ─────────────────────────── FAQ ─────────────────────────── */
+
+/* DRAFT for the owner. Every answer states only what the app does today.
+   Two things left OPEN on purpose and marked: whether login enforces .edu
+   (it does not, yet — any address works), and whether the app is free (the
+   old page said "Free for students"; nobody has confirmed it). */
+export const faqTitle = "Questions";
+export const faq: { q: string; a: string }[] = [
+  {
+    q: "Which universities is it live at?",
+    a: "Harvard, today. New campuses are onboarded one at a time — each with its own colours, gyms and houses — so the app you sign up to is already yours.",
+  },
+  {
+    q: "Who can join?",
+    /* OPEN: the sign-in flow does not enforce a .edu address yet. */
+    a: "Students at a live university sign up with their university email. Varsity athletes join through the link their captain or coach sends; coaches get the console with their team.",
+  },
+  {
+    q: "What is Varsity Mode?",
+    a: "A gated part of the same app for varsity teams: the coach's training plan, boat lineups, the race countdown and the coach's notes on the athlete's phone, plus logging straight off the plan. It opens from a team invite.",
+  },
+  {
+    q: "What does a coach get?",
+    a: "The Coach's Console: build a training block around a race, publish the week's sessions once to every athlete, publish lineups seat by seat, and leave one technical note per athlete.",
+  },
+  {
+    q: "What does the app know about me?",
+    a: "What you put in your profile — concentration, hometown, languages, interests, a bio — and the sessions you log. Matches are explained from those facts. The privacy policy has the full list.",
+  },
+  {
+    q: "Is it official?",
+    a: "No. UNIsport is an independent app, officially unaffiliated with Harvard University.",
+  },
+];
+
+/* ─────────────────────── ABOUT · CONTACT ─────────────────────── */
+
+/* DRAFT for the owner. The contact address is the one already published on
+   /privacy and /terms. */
+export const about = {
+  kicker: "About",
+  headline: "Built at Harvard,",
+  headlineEm: "for every campus.",
+  body: "UNIsport started as the app one campus was missing: every gym in one place, the people worth training with, and the plan that gets you both there — then a mode for the squads that train for the university itself, and a console for the coaches who run them. One app per university, in that university's colours.",
+  contactLabel: "Contact",
+  email: "martinhouska777@gmail.com",
+};
+
+/* ─────────────────────────── FOOTER ─────────────────────────── */
+
+export const footer = {
+  tagline: "Built at Harvard, for every campus",
+  privacy: "Privacy",
+  terms: "Terms",
+  unaffiliated: "Officially unaffiliated with Harvard University",
 };
 
 /* ───────────────────── THE COACH SECTION ─────────────────────

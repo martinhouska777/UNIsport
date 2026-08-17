@@ -1,8 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useEffect, useImperativeHandle, useRef, useState, type Ref } from "react";
+import { useCallback, useEffect, useImperativeHandle, useRef, useState, type ReactNode, type Ref } from "react";
 import Phone from "@/components/landing/Phone";
+import CloserSplit from "@/components/landing/CloserSplit";
 import { useCloserGate } from "@/components/landing/useCloserGate";
 import type { CloserHandle } from "@/components/landing/closer";
 import { closers } from "@/lib/landingCopy";
@@ -130,6 +131,7 @@ export default function BladeLock({
   id,
   managed = false,
   pinned = false,
+  aside,
   ref,
 }: {
   id?: string;
@@ -137,6 +139,8 @@ export default function BladeLock({
   managed?: boolean;
   /** A little taller than one screen, sticky inside — the flight lands here. */
   pinned?: boolean;
+  /** Something to stand beside the piece — the feature rows. */
+  aside?: ReactNode;
   ref?: Ref<CloserHandle>;
 }) {
   const [active, setActive] = useState(0);
@@ -374,6 +378,7 @@ export default function BladeLock({
         ref={stick}
         className="lc-stick flex min-h-svh flex-col items-center justify-center overflow-hidden px-6 py-10 sm:px-8"
       >
+        <CloserSplit aside={aside} accent="varsity">
         {/* ── The words ── */}
         <div className={`lc-words mb-10 max-w-[640px] text-center ${wordsPre ? "lc-pre" : ""}`}>
           <p className="font-display text-[clamp(14px,1.8vw,17px)] text-l-text-2">{copy.leadIn}</p>
@@ -486,6 +491,7 @@ export default function BladeLock({
         >
           {s.name} {copy.label}
         </div>
+        </CloserSplit>
       </div>
     </section>
   );

@@ -56,6 +56,8 @@ type Props = {
   toBeat: number;
   /** Anything to render between the story and the closer (nothing, usually). */
   children?: ReactNode;
+  /** The feature rows that stand beside the closer's piece. */
+  aside?: ReactNode;
 };
 
 const DUR = 1500;
@@ -75,7 +77,7 @@ function useFlies() {
   );
 }
 
-export default function StoryCloser({ storyId, beats, accent, closer, closerId, fromBeat, toBeat, children }: Props) {
+export default function StoryCloser({ storyId, beats, accent, closer, closerId, fromBeat, toBeat, children, aside }: Props) {
   const story = useRef<ScrollStoryHandle>(null);
   const clo = useRef<CloserHandle>(null);
   const flight = useRef<HTMLDivElement>(null);
@@ -374,9 +376,9 @@ export default function StoryCloser({ storyId, beats, accent, closer, closerId, 
       <ScrollStory ref={story} id={storyId} beats={beats} accent={accent} />
       {children}
       {closer === "campus" ? (
-        <CampusColours ref={clo} id={closerId} managed pinned={pinned} />
+        <CampusColours ref={clo} id={closerId} managed pinned={pinned} aside={aside} />
       ) : (
-        <BladeLock ref={clo} id={closerId} managed pinned={pinned} />
+        <BladeLock ref={clo} id={closerId} managed pinned={pinned} aside={aside} />
       )}
       {/* The phone in flight belongs to the PAGE, not to either section — the
           only way it can be on screen continuously across the boundary. */}

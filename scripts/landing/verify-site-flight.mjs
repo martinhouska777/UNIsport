@@ -6,11 +6,11 @@
 // nudge up reverses it all, down again replays afresh, and a reload at the
 // closer reveals in place with no flight.
 //
-//   node verify-site-flight.mjs                    # http://localhost:3000/story-preview
+//   node verify-site-flight.mjs                    # http://localhost:3000/landing-preview
 //   node verify-site-flight.mjs http://localhost:3000/
 import puppeteer from "puppeteer-core";
 
-const URL = process.argv[2] || "http://localhost:3000/story-preview";
+const URL = process.argv[2] || "http://localhost:3000/landing-preview";
 const browser = await puppeteer.launch({
   executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe",
   headless: "new",
