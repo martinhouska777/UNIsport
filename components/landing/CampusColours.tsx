@@ -25,8 +25,8 @@ import { schools, rgba } from "@/lib/landingSchools";
   patch-gyms.mjs (Payne Whitney for Yale, Dillon for Princeton, …). The Gyms
   capture carries the app's own tab bar, so none is drawn here.
 
-  Behaviour, as the piece: it cycles through the eight schools (every 1.3s —
-  half the piece's pace, at the owner's request),
+  Behaviour, as the piece: it cycles through the eight schools every 2.6s
+  (the first step sooner — see FIRST_MS),
   a click on a dot pins that school, and it un-pins once the section has
   scrolled out of view. It opens on Harvard — the colour the story's phone
   was wearing — and resets to Harvard when it leaves.
@@ -40,9 +40,11 @@ import { schools, rgba } from "@/lib/landingSchools";
   and the dots still work.
 */
 
-// 1.3s per school — half the design piece's 2.6s, at the owner's request:
-// the wait for Yale after landing on Harvard read as too long.
-const PERIOD_MS = 1300;
+// 2.6s per school, the design piece's pace — but the FIRST step (Harvard → Yale
+// after landing) comes sooner: at the piece's pace the wait for Yale, on top
+// of the arrival, read as twice as long as every other step.
+const PERIOD_MS = 2600;
+const FIRST_MS = 1500;
 type Phase = "hide" | "pre" | "in";
 
 export default function CampusColours({
@@ -94,10 +96,16 @@ export default function CampusColours({
 
   useEffect(() => {
     if (!inView || held || reduced || !cycling) return;
-    const t = setInterval(() => {
-      setSchool((s) => ({ idx: (s.idx + 1) % schools.length, prev: s.idx }));
-    }, PERIOD_MS);
-    return () => clearInterval(t);
+    const step = () => setSchool((s) => ({ idx: (s.idx + 1) % schools.length, prev: s.idx }));
+    let t: ReturnType<typeof setInterval> | null = null;
+    const first = setTimeout(() => {
+      step();
+      t = setInterval(step, PERIOD_MS);
+    }, FIRST_MS);
+    return () => {
+      clearTimeout(first);
+      if (t) clearInterval(t);
+    };
   }, [inView, held, reduced, cycling]);
 
   const pick = (i: number) => {
@@ -129,7 +137,7 @@ export default function CampusColours({
         setLetter("now");
         setWordsPre(false);
       }, 220);
-      later(() => setCycling(true), 850); // …and only then does it start rotating
+      later(() => setCycling(true), 600); // …and only then does it start rotating
     },
     arriveInPlace: () => {
       // The phone may be hidden waiting for a flight that is not coming: swap
@@ -139,7 +147,7 @@ export default function CampusColours({
       later(() => setPhone("in"), 30);
       later(() => setLetter("in"), 260);
       later(() => setWordsPre(false), 320);
-      later(() => setCycling(true), 750);
+      later(() => setCycling(true), 600);
     },
     retract: () =>
       new Promise<void>((resolve) => {
