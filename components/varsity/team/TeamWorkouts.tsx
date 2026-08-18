@@ -292,6 +292,7 @@ export default function TeamWorkouts() {
         <TelemetryOuting
           outing={openedOuting}
           dateLabel={outingDateLabel(openedOuting.dayKey)}
+          allOutings={outings}
           onClose={() => setOpenOuting(null)}
         />
       )}
