@@ -1,9 +1,17 @@
-// Re-shoots EVERY frame the scroll story uses, in the app's LIGHT mode — the
-// app keys its palette off localStorage.uniThemeMode, which is planted before
-// any page loads. Run db/seed_varsity_shotday.sql first (with the session
-// clock in the owner's timezone) so Varsity Home has the four and the pair.
+// Re-shoots EVERY frame the scroll story uses, in the app's LIGHT mode (the
+// default) or its DARK mode (`--mode dark`) — the app keys its palette off
+// localStorage.uniThemeMode, which is planted before any page loads. Run
+// db/seed_varsity_shotday.sql first (with the session clock in the owner's
+// timezone) so Varsity Home has the four and the pair.
 //
-// Frames written to public/landing/:
+//   node capture-light.mjs               # → public/landing/        (light)
+//   node capture-light.mjs --mode dark   # → public/landing/dark/   (dark)
+//
+// The landing's light/dark switch (components/landing/PhoneMode.tsx) shows
+// the dark folder's twin of each light frame; until this has been run in
+// dark mode that folder holds stand-ins from dark-placeholders.mjs.
+//
+// Frames written:
 //   stills  01-gyms, 02-match, 03-why-you-match (Ryan), 04-plan-a-session,
 //           13-varsity-log-list
 //   strips  tall-logsheet, tall-profile, tall-vhome, tall-vprofile
@@ -12,10 +20,13 @@ import fs from "fs";
 import sharp from "sharp";
 import { execSync } from "node:child_process";
 
+const MODE = process.argv.includes("--mode") ? process.argv[process.argv.indexOf("--mode") + 1] : "light";
+if (MODE !== "light" && MODE !== "dark") throw new Error("--mode light|dark");
 const COOKIE = fs.readFileSync("session-cookie.txt", "utf8").trim();
 const BASE = "https://un-isport.vercel.app";
 const W = 402, PHONE_H = 661, DSF = 3;
-const OUT = "../../public/landing/";
+const OUT = MODE === "dark" ? "../../public/landing/dark/" : "../../public/landing/";
+fs.mkdirSync(OUT, { recursive: true });
 
 const browser = await puppeteer.launch({
   executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe",
@@ -31,9 +42,9 @@ await browser.setCookie({
   value: COOKIE, domain: "un-isport.vercel.app", path: "/",
   secure: true, sameSite: "Lax", expires: Math.floor(Date.now() / 1000) + 3600,
 });
-await page.evaluateOnNewDocument(() => {
-  try { window.localStorage.setItem("uniThemeMode", "light"); } catch {}
-});
+await page.evaluateOnNewDocument((mode) => {
+  try { window.localStorage.setItem("uniThemeMode", mode); } catch {}
+}, MODE);
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const phone = () => page.setViewport({ width: W, height: PHONE_H, deviceScaleFactor: DSF, isMobile: true, hasTouch: true });
 const tall = (h) => page.setViewport({ width: W, height: h, deviceScaleFactor: DSF, isMobile: true, hasTouch: true });
