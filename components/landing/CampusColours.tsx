@@ -19,11 +19,14 @@ import { schools, rgba } from "@/lib/landingSchools";
   colours applied inline from lib/landingSchools.ts (content, rule 1's
   exception).
 
-  Inside the phone is the REAL Gyms screen, recoloured per school (the same
-  captures the artifact's closer shows) — not the design's drawn gym list.
-  The Gyms capture carries the app's own tab bar, so none is drawn here.
+  Inside the phone is the REAL Gyms screen, recoloured per school AND showing
+  that school's own gyms — the Harvard capture, recolour-shifted by
+  scripts/landing/recolor-shots.mjs and its three cards rewritten by
+  patch-gyms.mjs (Payne Whitney for Yale, Dillon for Princeton, …). The Gyms
+  capture carries the app's own tab bar, so none is drawn here.
 
-  Behaviour, as the piece: it cycles through the eight schools every 2.6s,
+  Behaviour, as the piece: it cycles through the eight schools (every 1.3s —
+  half the piece's pace, at the owner's request),
   a click on a dot pins that school, and it un-pins once the section has
   scrolled out of view. It opens on Harvard — the colour the story's phone
   was wearing — and resets to Harvard when it leaves.
@@ -37,7 +40,9 @@ import { schools, rgba } from "@/lib/landingSchools";
   and the dots still work.
 */
 
-const PERIOD_MS = 2600;
+// 1.3s per school — half the design piece's 2.6s, at the owner's request:
+// the wait for Yale after landing on Harvard read as too long.
+const PERIOD_MS = 1300;
 type Phase = "hide" | "pre" | "in";
 
 export default function CampusColours({
@@ -124,7 +129,7 @@ export default function CampusColours({
         setLetter("now");
         setWordsPre(false);
       }, 220);
-      later(() => setCycling(true), 1700); // …and only then does it start rotating
+      later(() => setCycling(true), 850); // …and only then does it start rotating
     },
     arriveInPlace: () => {
       // The phone may be hidden waiting for a flight that is not coming: swap
@@ -134,7 +139,7 @@ export default function CampusColours({
       later(() => setPhone("in"), 30);
       later(() => setLetter("in"), 260);
       later(() => setWordsPre(false), 320);
-      later(() => setCycling(true), 1500);
+      later(() => setCycling(true), 750);
     },
     retract: () =>
       new Promise<void>((resolve) => {
@@ -171,11 +176,11 @@ export default function CampusColours({
     >
       <div
         ref={stick}
-        className="lc-stick flex min-h-svh flex-col items-center justify-center overflow-hidden px-6 py-10 sm:px-8"
+        className="lc-stick flex min-h-svh flex-col items-center justify-center overflow-hidden px-6 py-6 sm:px-8 lg:py-10"
       >
         <CloserSplit aside={aside} accent="accent">
         {/* ── The words ── */}
-        <div className={`lc-words mb-11 max-w-[760px] text-center ${wordsPre ? "lc-pre" : ""}`}>
+        <div className={`lc-words mb-6 max-w-[760px] text-center lg:mb-11 ${wordsPre ? "lc-pre" : ""}`}>
           <p className="mb-2.5 font-display text-[clamp(16px,2vw,20px)] text-l-text-2">{copy.leadIn}</p>
           <h2 className="font-display text-[clamp(36px,4.6vw,60px)] font-normal leading-[1.1] tracking-tight text-balance text-l-text">
             {copy.headline}{" "}
@@ -192,10 +197,12 @@ export default function CampusColours({
         </div>
 
         {/* ── Phone beside the letter (letter above the phone below 1024px) ── */}
-        <div className="flex w-full flex-col items-center justify-center gap-10 lg:flex-row lg:gap-[60px]">
+        {/* On a phone the whole piece — words, letter, phone, dots — fits one screen:
+            smaller phone, tighter gaps. Desktop is the piece's own spacing. */}
+        <div className="flex w-full flex-col items-center justify-center gap-5 lg:flex-row lg:gap-[60px]">
           <Phone
             ref={phoneEl}
-            className={`lc-phone relative z-[3] order-2 w-[min(270px,84vw)] flex-none lg:order-1 ${
+            className={`lc-phone relative z-[3] order-2 w-[min(270px,52vw)] flex-none lg:order-1 lg:w-[270px] ${
               phone === "hide" ? "lc-hide" : phone === "pre" ? "lc-pre" : ""
             }`}
             data-closer-phone="campus"
@@ -250,7 +257,7 @@ export default function CampusColours({
               </span>
             </div>
             <div
-              className="relative mt-[26px] font-mono text-[26px] uppercase tracking-[0.2em] transition-colors duration-[600ms] ease-in-out motion-reduce:transition-none"
+              className="relative mt-3 font-mono text-[22px] uppercase tracking-[0.2em] lg:mt-[26px] lg:text-[26px] transition-colors duration-[600ms] ease-in-out motion-reduce:transition-none"
               style={{ color: s.ink }}
             >
               {s.name}
@@ -259,7 +266,7 @@ export default function CampusColours({
         </div>
 
         {/* ── One dot per school ── */}
-        <div className="mt-12 flex items-center justify-center gap-3.5" role="group" aria-label="Choose a university">
+        <div className="mt-7 flex items-center justify-center gap-3.5 lg:mt-12" role="group" aria-label="Choose a university">
           {schools.map((sc, i) => {
             const on = i === idx;
             return (

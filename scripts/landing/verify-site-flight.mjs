@@ -17,6 +17,8 @@ const browser = await puppeteer.launch({
   args: ["--disable-gpu", "--no-first-run"],
 });
 const page = await browser.newPage();
+// a cold dev server takes a while to serve a phone-DPR page through the image optimiser
+page.setDefaultNavigationTimeout(120000);
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 let fails = 0;
 const ok = (name, cond) => { console.log((cond ? "PASS " : "FAIL ") + name); if (!cond) fails++; };

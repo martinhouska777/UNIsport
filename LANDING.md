@@ -103,8 +103,12 @@ port them, not a pattern to copy — and they are now ported (see below).
 not the design pieces' drawn phone screens. The native ports do the same:
 `public/landing/closers/gyms-*.webp` in Campus Colours, `vhome-*.webp` in
 Blade Lock, with the varsity tab bar drawn over the capture (which stops
-above the app's own bar). Regenerate them with `scripts/landing/recolor-shots.mjs`
-and copy from `scripts/landing/recolored/`.
+above the app's own bar). And, since 2026-08-18, the Gyms screen shows **each
+school's own gyms**: `scripts/landing/patch-gyms.mjs` wipes Malkin / Murr /
+Hemenway off the recoloured capture and writes Payne Whitney, Dillon,
+Pottruck… in their place (data: `scripts/landing/school-gyms.mjs`).
+Regenerate: `recolor-shots.mjs`, then `patch-gyms.mjs` (it writes both
+`recolored/` and `public/landing/closers/`).
 
 **One phone frame everywhere.** `components/landing/Phone.tsx` draws the shell,
 status bar, island and gesture bar at the story phone's proportions, in
@@ -112,6 +116,12 @@ container units, so a 270px closer phone and a 300px coach phone are the same
 object and the flight can land on one to the pixel. Restyle the phone there,
 once, and every section follows — but keep the stories' phone the same object
 when they are ported. Its chrome colours are `l-phone-*` tokens.
+
+**Blade Lock's phone sits 94px below the wheel's centre** — halfway between the
+piece's 117 (too much shaft showing, the owner said) and the first port's 74
+(too little): the whole blade and a little shaft stand clear above the phone.
+**Campus Colours cycles every 1.3s**, half the piece's pace, at the owner's
+request.
 
 **Blade Lock's glow is off.** The design piece drop-shadowed the front blade
 in its colour; the artifact removed it (`cb4a72c`), and the native port does

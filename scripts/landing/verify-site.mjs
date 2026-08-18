@@ -17,6 +17,8 @@ const browser = await puppeteer.launch({
   args: ["--disable-gpu", "--no-first-run"],
 });
 const page = await browser.newPage();
+// a cold dev server takes a while to serve a phone-DPR page through the image optimiser
+page.setDefaultNavigationTimeout(120000);
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 let fails = 0;
 const check = (ok, label) => { console.log((ok ? "PASS " : "FAIL ") + label); if (!ok) fails++; };
@@ -121,11 +123,16 @@ console.log("dot click ->", dotTo);
 check(dotTo === 4, "dot click navigates");
 
 // ── mobile ──
-await page.setViewport({ width: 390, height: 844, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
-// "load", not networkidle: the dev server's image optimiser keeps a phone-DPR page busy for a while
-await page.reload({ waitUntil: "load", timeout: 90000 });
-await wait(2500);
-const mob = await page.evaluate(() => {
+// A fresh tab already at phone size, waiting for DOM-ready and a settle — not
+// "load": the dev server's image optimiser can hold a phone-DPR page's load
+// event for minutes, and nothing measured here needs the images.
+await page.close();
+const page2 = await browser.newPage();
+page2.setDefaultNavigationTimeout(120000);
+await page2.setViewport({ width: 390, height: 844, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
+await page2.goto(URL, { waitUntil: "domcontentloaded" });
+await wait(6000);
+const mob = await page2.evaluate(() => {
   const ph = document.querySelector("#story1 [data-story-phone]").getBoundingClientRect();
   const cp = document.querySelector("#story1 .ls-copy").getBoundingClientRect();
   return {
@@ -136,12 +143,12 @@ const mob = await page.evaluate(() => {
 });
 console.log("mobile:", JSON.stringify(mob));
 check(!mob.horiz && mob.stack < mob.vh, "mobile: no horizontal overflow, stack fits");
-await page.evaluate(() => {
+await page2.evaluate(() => {
   const m = document.querySelector('#story1 .ls-marker[data-i="2"]');
   window.scrollTo(0, m.getBoundingClientRect().top + window.scrollY - window.innerHeight / 2 + m.offsetHeight / 2);
 });
 await wait(1200);
-await page.screenshot({ path: "site-mobile.png" });
+await page2.screenshot({ path: "site-mobile.png" });
 
 await browser.close();
 console.log(fails ? `done — ${fails} FAILED` : "done — all green");
