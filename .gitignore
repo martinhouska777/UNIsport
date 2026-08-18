@@ -47,3 +47,4 @@ scripts/landing/.chrome-profile/
 scripts/landing/*.png
 scripts/landing/*.html
 scripts/landing/shots.json
+scripts/landing/raw/

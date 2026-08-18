@@ -83,8 +83,8 @@ export const shotSize: Record<string, { w: number; h: number }> = {
   "04-plan-a-session.webp": { w: 900, h: 1480 },
   "13-varsity-log-list.webp": { w: 900, h: 1480 },
   "14-varsity-calendar.webp": { w: 900, h: 1480 },
-  "tall-logsheet.webp": { w: 900, h: 4372 },
-  "tall-profile.webp": { w: 900, h: 2140 },
-  "tall-vhome.webp": { w: 900, h: 3016 },
-  "tall-vprofile.webp": { w: 900, h: 2473 },
+  "tall-logsheet.webp": { w: 900, h: 4417 },
+  "tall-profile.webp": { w: 900, h: 2176 },
+  "tall-vhome.webp": { w: 900, h: 3098 },
+  "tall-vprofile.webp": { w: 900, h: 2502 },
 };

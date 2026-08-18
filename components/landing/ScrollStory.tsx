@@ -221,6 +221,14 @@ export default function ScrollStory({ id, beats, accent, ref }: Props) {
   const glide = useCallback(() => {
     if (glideRaf.current) return; // already running
     glideT.current = performance.now();
+    // Whole DEVICE pixels. The phone and each strip are composited layers
+    // (will-change: transform); a layer left at a fractional offset — 6.43px,
+    // -289.49px — is bilinear-resampled by the compositor and the small text
+    // in the screenshots goes soft (owner, 2026-08-18: "blurry"). Snapping
+    // the resting transform to the device grid keeps it crisp; while moving
+    // the difference is invisible.
+    const dpr = window.devicePixelRatio || 1;
+    const snap = (v: number) => (Math.round(v * dpr) / dpr).toFixed(3);
     const step = (t: number) => {
       const dt = Math.min(64, t - glideT.current);
       glideT.current = t;
@@ -238,7 +246,7 @@ export default function ScrollStory({ id, beats, accent, ref }: Props) {
         return have + d * k;
       };
       const drift = follow(dr.drift, tg.drift);
-      if (drift !== dr.drift && wrap.current) wrap.current.style.transform = `translateY(${drift.toFixed(2)}px)`;
+      if (drift !== dr.drift && wrap.current) wrap.current.style.transform = `translateY(${snap(drift)}px)`;
       dr.drift = drift;
       for (let i = 0; i < tg.pans.length; i++) {
         const want = tg.pans[i];
@@ -247,7 +255,7 @@ export default function ScrollStory({ id, beats, accent, ref }: Props) {
         const now = follow(have, want);
         if (now !== have) {
           const img = shots.current[i];
-          if (img) img.style.transform = `translateY(${(-now).toFixed(2)}px)`;
+          if (img) img.style.transform = `translateY(${snap(-now)}px)`;
           dr.pans[i] = now;
         }
       }
