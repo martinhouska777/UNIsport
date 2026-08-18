@@ -472,7 +472,6 @@ export default function BladeLock({
                   alt={`Varsity Home in ${sc.name}'s colours`}
                   fill
                   sizes="272px"
-                  quality={90}
                   loading={i === 0 ? "eager" : "lazy"}
                   aria-hidden={i !== active}
                   className="object-fill transition-opacity duration-[450ms] ease-in-out motion-reduce:transition-none"

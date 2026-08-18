@@ -18,8 +18,7 @@ export default function CoachPhone({ shot, alt, preload }: { shot: string; alt: 
         width={900}
         height={1479}
         preload={preload}
-        sizes="300px"
-        quality={90}
+        sizes="(max-width: 640px) 80vw, 300px"
         className="block h-auto w-full"
       />
     </Phone>

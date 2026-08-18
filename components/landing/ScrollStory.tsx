@@ -445,8 +445,7 @@ export default function ScrollStory({ id, beats, accent, ref }: Props) {
                         alt={`${b.kicker.replace(/^\S+\s·\s/, "")}: ${b.head}`}
                         width={size.w}
                         height={size.h}
-                        sizes="360px"
-                        quality={90}
+                        sizes="(max-width: 1023px) 84vw, 360px"
                         /* Every frame loads up front (the first with priority):
                            a phone scrolled fast used to reach a beat whose
                            lazy frame had not arrived and show a white screen. */
