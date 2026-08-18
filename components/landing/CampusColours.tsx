@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useCallback, useEffect, useImperativeHandle, useRef, useState, type ReactNode, type Ref } from "react";
 import Phone from "@/components/landing/Phone";
+import { shotSrc, usePhoneMode } from "@/components/landing/PhoneMode";
 import CloserSplit from "@/components/landing/CloserSplit";
 import { useCloserGate } from "@/components/landing/useCloserGate";
 import type { CloserHandle } from "@/components/landing/closer";
@@ -172,6 +173,7 @@ export default function CampusColours({
   const s = schools[idx];
   const animate = prev != null && !reduced;
   const copy = closers.campus;
+  const { mode } = usePhoneMode();
   const letterCls =
     letter === "pre" ? "lc-pre" : letter === "now" ? "lc-now" : letter === "rev" ? "lc-rev lc-pre" : "";
 
@@ -180,7 +182,7 @@ export default function CampusColours({
       ref={sectionRef}
       id={id}
       data-closer="campus"
-      className={`lc-closer relative z-[1] scroll-mt-20 border-t border-l-border ${pinned ? "lc-pinned" : ""}`}
+      className={`lc-closer relative z-[1] scroll-mt-20 border-t border-l-line ${pinned ? "lc-pinned" : ""}`}
     >
       <div
         ref={stick}
@@ -219,7 +221,7 @@ export default function CampusColours({
               {schools.map((sc, i) => (
                 <Image
                   key={sc.key}
-                  src={`/landing/closers/gyms-${sc.key}.webp`}
+                  src={shotSrc(`/landing/closers/gyms-${sc.key}.webp`, mode)}
                   alt={`The Gyms screen in ${sc.name}'s colours`}
                   fill
                   sizes="270px"
@@ -284,7 +286,7 @@ export default function CampusColours({
                 aria-label={sc.name}
                 aria-pressed={on}
                 onClick={() => pick(i)}
-                className="h-2.5 w-2.5 cursor-pointer rounded-full border-0 bg-l-border-hover p-0 transition-[transform,background-color] duration-300 ease-in-out focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-l-text motion-reduce:transition-none"
+                className="h-2.5 w-2.5 cursor-pointer rounded-full border-0 bg-l-line-hover p-0 transition-[transform,background-color] duration-300 ease-in-out focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-l-text motion-reduce:transition-none"
                 style={
                   on
                     ? {

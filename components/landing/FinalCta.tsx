@@ -1,10 +1,10 @@
-import { about, finalCta } from "@/lib/landingCopy";
+import { finalCta, mailtoHref } from "@/lib/landingCopy";
 
 /*
   THE CLOSE — "One app per university. Yours next." The button is for a
   university, not a student: it opens a mail to the address on /privacy and
-  /terms. (The prototype pointed it at /join, which is the TEAM invite — a
-  different door.)
+  /terms, subject and first line already written. (The prototype pointed it
+  at /join, which is the TEAM invite — a different door.)
 */
 export default function FinalCta() {
   return (
@@ -14,7 +14,7 @@ export default function FinalCta() {
       </h2>
       <p className="max-w-[40ch] text-[16px] leading-[1.6] text-l-text-2">{finalCta.sub}</p>
       <a
-        href={`mailto:${about.email}`}
+        href={mailtoHref(finalCta.mailSubject, finalCta.mailBody)}
         className="mt-2.5 inline-flex items-center gap-2 rounded-full bg-l-accent px-[30px] py-[15px] text-[15px] font-semibold tracking-tight text-l-bg transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-l-text"
       >
         {finalCta.button}

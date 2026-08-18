@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useCallback, useEffect, useImperativeHandle, useRef, useState, type ReactNode, type Ref } from "react";
 import Phone from "@/components/landing/Phone";
+import { shotSrc, usePhoneMode } from "@/components/landing/PhoneMode";
 import CloserSplit from "@/components/landing/CloserSplit";
 import { useCloserGate } from "@/components/landing/useCloserGate";
 import type { CloserHandle } from "@/components/landing/closer";
@@ -393,6 +394,7 @@ export default function BladeLock({
 
   const s = schools[active];
   const copy = closers.blades;
+  const { mode } = usePhoneMode();
   const ct = "transition-colors duration-[600ms] ease-in-out motion-reduce:transition-none";
 
   return (
@@ -401,7 +403,7 @@ export default function BladeLock({
       id={id}
       data-closer="blades"
       data-held={held || undefined}
-      className={`lc-closer relative z-[1] scroll-mt-20 border-t border-l-border ${pinned ? "lc-pinned" : ""}`}
+      className={`lc-closer relative z-[1] scroll-mt-20 border-t border-l-line ${pinned ? "lc-pinned" : ""}`}
     >
       <div
         ref={stick}
@@ -462,7 +464,7 @@ export default function BladeLock({
               {schools.map((sc, i) => (
                 <Image
                   key={sc.key}
-                  src={`/landing/closers/vhome-${sc.key}.webp`}
+                  src={shotSrc(`/landing/closers/vhome-${sc.key}.webp`, mode)}
                   alt={`Varsity Home in ${sc.name}'s colours`}
                   fill
                   sizes="272px"

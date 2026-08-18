@@ -92,7 +92,7 @@ export default function JoinWithCodePage() {
           <p className="mt-3 break-all font-mono text-[11px] text-l-text-3">{code}</p>
           <Link
             href="/join"
-            className="mt-7 inline-block w-full rounded-full border border-l-border px-5 py-3 text-sm font-medium text-l-text"
+            className="mt-7 inline-block w-full rounded-full border border-l-line px-5 py-3 text-sm font-medium text-l-text"
           >
             Try another link
           </Link>
@@ -153,7 +153,7 @@ export default function JoinWithCodePage() {
               ? "You'll get access to the team's training as soon as you join."
               : "Your captain gets a request and lets you in. You'll see the team's training once they do."}
           </p>
-          <p className="mt-4 rounded-xl border border-l-border bg-l-surface px-4 py-3 text-xs text-l-text-2">
+          <p className="mt-4 rounded-xl border border-l-line bg-l-surface px-4 py-3 text-xs text-l-text-2">
             Joining as <span className="text-l-text">{email}</span>
           </p>
           <button
@@ -177,7 +177,7 @@ export default function JoinWithCodePage() {
           </p>
           <Link
             href={appHome}
-            className="mt-8 inline-block w-full rounded-full border border-l-border px-5 py-3 text-sm font-medium text-l-text"
+            className="mt-8 inline-block w-full rounded-full border border-l-line px-5 py-3 text-sm font-medium text-l-text"
           >
             Back to the app
           </Link>
@@ -210,7 +210,7 @@ export default function JoinWithCodePage() {
           </p>
           <Link
             href="/join"
-            className="mt-7 inline-block w-full rounded-full border border-l-border px-5 py-3 text-sm font-medium text-l-text"
+            className="mt-7 inline-block w-full rounded-full border border-l-line px-5 py-3 text-sm font-medium text-l-text"
           >
             Try another link
           </Link>

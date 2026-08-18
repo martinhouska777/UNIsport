@@ -1,6 +1,5 @@
-import Image from "next/image";
-import Phone from "@/components/landing/Phone";
-import { coach, type Segment } from "@/lib/landingCopy";
+import CoachPhone from "@/components/landing/CoachPhone";
+import { coach, mailtoHref, type Segment } from "@/lib/landingCopy";
 
 /*
   THE COACH SECTION — the third door, after the varsity story.
@@ -32,29 +31,14 @@ function Body({ parts, className = "" }: { parts: Segment[]; className?: string 
   );
 }
 
-/* The phone frame the captures sit in — the shared landing Phone, so a reader
-   who scrolled through the stories meets a familiar object here. */
-function CoachPhone({ shot, alt, preload }: { shot: string; alt: string; preload?: boolean }) {
-  return (
-    <Phone className="w-full max-w-[300px]">
-      <Image
-        src={`/landing/${shot}`}
-        alt={alt}
-        width={900}
-        height={1479}
-        preload={preload}
-        sizes="(max-width: 640px) 80vw, 300px"
-        className="block h-auto w-full"
-      />
-    </Phone>
-  );
-}
+/* The phone frame the captures sit in is components/landing/CoachPhone.tsx —
+   the shared landing Phone, following the light/dark switch. */
 
 export default function CoachSection() {
   return (
     <section
       id="coaches"
-      className="relative z-[1] scroll-mt-20 border-t border-l-border px-6 pt-24 pb-28 sm:px-8"
+      className="relative z-[1] scroll-mt-20 border-t border-l-line px-6 pt-24 pb-28 sm:px-8"
     >
       <div className="mx-auto max-w-[1160px]">
         {/* ── The opener ── */}
@@ -111,7 +95,7 @@ export default function CoachSection() {
           {coach.facts.map((f) => (
             <div
               key={f.title}
-              className="rounded-2xl border border-l-border bg-l-bg-elevated px-5 py-[22px] text-center"
+              className="rounded-2xl border border-l-line bg-l-bg-elevated px-5 py-[22px] text-center"
             >
               <b className="block font-display text-[clamp(22px,2.6vw,28px)] font-normal tracking-tight text-balance text-l-text">
                 {f.title}
@@ -121,6 +105,17 @@ export default function CoachSection() {
               </span>
             </div>
           ))}
+        </div>
+
+        {/* ── The coach's own way in ── */}
+        <div className="mt-12 flex flex-col items-center gap-3 text-center sm:flex-row sm:justify-center sm:gap-5">
+          <span className="font-display text-[clamp(20px,2.4vw,26px)] tracking-tight text-l-text-2">{coach.cta.lead}</span>
+          <a
+            href={mailtoHref(coach.cta.mailSubject, coach.cta.mailBody)}
+            className="inline-flex items-center gap-2 rounded-full bg-l-varsity px-6 py-3 text-[14px] font-semibold tracking-tight text-l-bg transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-l-text"
+          >
+            {coach.cta.label} →
+          </a>
         </div>
       </div>
     </section>

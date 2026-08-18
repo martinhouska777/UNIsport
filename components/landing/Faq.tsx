@@ -3,12 +3,12 @@ import { faq, faqTitle } from "@/lib/landingCopy";
 /* FAQ — questions as native <details>, answers from lib/landingCopy.ts. */
 export default function Faq() {
   return (
-    <section id="faq" className="relative z-[1] scroll-mt-20 border-t border-l-border px-6 py-24 sm:px-8">
+    <section id="faq" className="relative z-[1] scroll-mt-20 border-t border-l-line px-6 py-24 sm:px-8">
       <div className="mx-auto grid max-w-[1160px] gap-10 lg:grid-cols-[1fr_2fr]">
         <h2 className="font-display text-[clamp(36px,5vw,56px)] leading-[1.02] tracking-tight text-l-text">
           {faqTitle}
         </h2>
-        <ul className="divide-y divide-l-border border-y border-l-border">
+        <ul className="divide-y divide-l-line border-y border-l-line">
           {faq.map((f) => (
             <li key={f.q}>
               <details className="group">

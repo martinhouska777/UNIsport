@@ -48,18 +48,25 @@ export type Beat = {
 /* ─────────────────────────── THE HERO ─────────────────────────── */
 
 export const hero = {
-  badge: "The universal college fitness platform",
+  /* The pill above the headline. It read "The universal college fitness
+     platform" — a claim. This is the one fact the page can stand behind, and
+     it now sits where the badge did, in the first thing a visitor reads.
+     (2026-08-18 review: facts convert better than claims.) */
+  badge: "Live now at Harvard",
   /* The page headline. Describes the product, and lives only here. */
   headline: ["Your campus.", "Your gym.", "Your people."],
   kicker: {
     lead: "For every student.",
     tail: "With a dedicated mode for varsity athletes.",
   },
-  /* Four short claims, then the varsity note. The fourth was "Join the
-     community that's already there" — vague about where those people are.
-     "See where you rank" is the leaderboards, and it is the only line here
-     that gives a reason to come back tomorrow. */
-  body: "Discover every gym on campus. Find a verified training partner. Log every session. See where you rank — plus a gated mode built for varsity teams.",
+  /* One line, not four sentences: the four claims are S1, S2, S5 and S7 in
+     miniature, and the reader meets them again three screens down. The old
+     line — kept for a one-line revert:
+       "Discover every gym on campus. Find a verified training partner. Log
+        every session. See where you rank — plus a gated mode built for
+        varsity teams."
+     "See where you rank" stays: it is the only reason to come back tomorrow. */
+  body: "Every gym on campus, a verified training partner, every session logged — and where you rank.",
   primaryCta: "Get started with .edu",
   /* Two doors, because the kicker promises two. */
   studentCta: "See the student app",
@@ -67,6 +74,17 @@ export const hero = {
   inviteNote: "Got a link from your team?",
   inviteCta: "Join with your invite",
   schools: ["Harvard", "Yale", "MIT", "Princeton"],
+};
+
+/* ─────────────────── THE LINK CARD (title tag, OG, X) ─────────────────── */
+
+/* What a pasted link shows before anyone taps it — the browser tab title,
+   the card in a group chat. The image (public/og.png) is drawn by
+   scripts/landing/make-og.mjs from the same headline and pill. */
+export const social = {
+  title: `UNIsport — ${hero.headline.join(" ")}`,
+  description: "Every gym on campus, training partners ranked by real fit, and a Varsity Mode for teams. Live at Harvard.",
+  imageAlt: "UNIsport — Your campus. Your gym. Your people. The Gyms screen in a phone beside the headline.",
 };
 
 /* ─────────────────────────── THE TOP BAR ─────────────────────────── */
@@ -86,10 +104,11 @@ export const doors = [
   { label: "Coach", sub: "For the person who runs the squad.", href: "#coaches" },
 ];
 
-/* THE AVAILABILITY LINE — one line, under the doors. The final CTA's own
-   sentence with "one university" named. DRAFT for the owner: it states the
-   only fact the app can currently stand behind. */
-export const availability = "Live now at Harvard. New campuses are onboarded one at a time — colours, gyms and houses included.";
+/* THE AVAILABILITY LINE — directly under the primary button, at a readable
+   size (it used to be 11px in the faintest grey, under the doors, below the
+   fold). "Live now at Harvard" moved up into the pill above the headline
+   (hero.badge), so this is the second half of that sentence. */
+export const availability = "New campuses are onboarded one at a time — colours, gyms and houses included.";
 
 /* THE BRAND LINE. Three words, a promise rather than a description — it goes
    under the logo, on the splash, in a store listing. Distinct from the hero
@@ -339,8 +358,13 @@ export const closers = {
 /** `icon` names one of the line icons in components/landing/FeatureIcon.tsx. */
 export type FeatureRow = { icon: string; title: string; detail: string };
 
-export const studentFeatures: { kicker: string; rows: FeatureRow[] } = {
+/** The button under a feature list — every door ends where it started, with
+    its own way in (2026-08-18 review: the lists used to end in a hairline). */
+export type FeatureCta = { label: string; href: string };
+
+export const studentFeatures: { kicker: string; rows: FeatureRow[]; cta: FeatureCta } = {
   kicker: "The student app",
+  cta: { label: hero.primaryCta, href: "/login" },
   rows: [
     {
       /* /gyms — hours, ratings, equipment lists, favourites, the crowd meter (lib/gymSocial.ts) */
@@ -387,8 +411,9 @@ export const studentFeatures: { kicker: string; rows: FeatureRow[] } = {
   ],
 };
 
-export const varsityFeatures: { kicker: string; rows: FeatureRow[] } = {
+export const varsityFeatures: { kicker: string; rows: FeatureRow[]; cta: FeatureCta } = {
   kicker: "Varsity Mode",
+  cta: { label: hero.inviteCta, href: "/join" },
   rows: [
     {
       /* /varsity/home — the week the coach published (V1) */
@@ -608,6 +633,17 @@ export const coach = {
     { title: "Boats, the night before", body: "Lineups land on phones before anyone reaches the dock." },
     { title: "The spreadsheet, retired", body: "Plan, lineups and feedback live in one place, not a group chat." },
   ],
+
+  /* The coach's own way in. There is no self-serve console yet — a coach gets
+     it with their team, by asking — so this opens a mail with the subject
+     already written. (2026-08-18 review: the section that the copy calls the
+     biggest lever ended with nothing to click.) */
+  cta: {
+    lead: "Run a squad?",
+    label: "Get the console for your team",
+    mailSubject: "The Coach's Console for my team",
+    mailBody: "Hi Martin,\n\nI coach ______ at ______ and I'd like to run the squad on UNIsport.\n\n",
+  },
 };
 
 /* ─────────────────────────── THE CLOSE ─────────────────────────── */
@@ -617,4 +653,12 @@ export const finalCta = {
   headlineEm: "Yours next.",
   sub: "Live now at one university. New campuses are onboarded one at a time — colours, gyms and houses included.",
   button: "Bring it to your university",
+  /* The button opens a mail with the subject and the first line written, so a
+     tap on a phone is never a blank draft (it used to be a bare mailto:). */
+  mailSubject: "Bring UNIsport to my university",
+  mailBody: "Hi Martin,\n\nI'm at ______ and I'd like UNIsport on our campus.\n\n",
 };
+
+/** mailto: with the subject and body already filled in. */
+export const mailtoHref = (subject: string, body: string) =>
+  `mailto:${about.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;

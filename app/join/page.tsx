@@ -59,7 +59,7 @@ export default function JoinPage() {
           spellCheck={false}
           aria-label="Invite link or code"
           /* text-base keeps phones from zooming the whole page on focus */
-          className="w-full rounded-xl border border-l-border bg-l-surface px-4 py-3 text-center font-mono text-base tracking-[0.15em] text-l-text placeholder:font-sans placeholder:tracking-normal placeholder:text-l-text-3 focus:border-l-varsity-soft focus:outline-none"
+          className="w-full rounded-xl border border-l-line bg-l-surface px-4 py-3 text-center font-mono text-base tracking-[0.15em] text-l-text placeholder:font-sans placeholder:tracking-normal placeholder:text-l-text-3 focus:border-l-varsity-soft focus:outline-none"
         />
         <button
           type="submit"

@@ -29,7 +29,7 @@ export default function LegalPage({
         <h1 className="font-display text-4xl italic tracking-tight text-l-text sm:text-5xl">
           {title}
         </h1>
-        <p className="mt-3 font-mono text-[11px] tracking-wide text-l-text-3">
+        <p className="mt-3 font-mono text-[12px] tracking-wide text-l-text-2">
           Last updated {updated}
         </p>
         <div className="mt-10 flex flex-col gap-8">{children}</div>
