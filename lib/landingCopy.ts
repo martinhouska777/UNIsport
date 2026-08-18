@@ -104,7 +104,10 @@ export const nav = {
    `/varsity` is the app's own varsity area (post-login), so the audience
    views live under `/for/…`. */
 export type LandingView = "all" | "students" | "varsity" | "coaches" | "about" | "contact";
-export const views: { view: Exclude<LandingView, "all">; label: string; href: string; title: string }[] = [
+export const views: { view: LandingView; label: string; href: string; title: string }[] = [
+  /* Home = the whole page, first in the row (owner, 2026-08-18). Its title
+     is the page's own, so the link card on "/" is unchanged. */
+  { view: "all", label: "Home", href: "/", title: social.title },
   { view: "students", label: "Students", href: "/for/students", title: "UNIsport for students" },
   { view: "varsity", label: "Varsity", href: "/for/varsity", title: "UNIsport for varsity athletes" },
   { view: "coaches", label: "Coaches", href: "/for/coaches", title: "UNIsport for coaches" },

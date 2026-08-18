@@ -1,4 +1,5 @@
 import Link from "next/link";
+import TabRow from "@/components/landing/TabRow";
 import { nav, views, type LandingView } from "@/lib/landingCopy";
 
 /*
@@ -12,13 +13,13 @@ import { nav, views, type LandingView } from "@/lib/landingCopy";
   the stories, the closers — and a bar pinned over them would sit on top of
   every one. The hero's button and the final CTA are the ways in.
 
-  On a phone the tabs take a second row of their own (five labels plus two
+  On a phone the tabs take a second row of their own (six labels plus two
   buttons plus the wordmark do not fit one 375px row); it scrolls sideways
-  without a scrollbar if it must.
+  without a scrollbar, with a fade on the right while there is more (TabRow).
 */
 function Tabs({ view, className = "" }: { view: LandingView; className?: string }) {
   return (
-    <div className={`flex items-center gap-1 ${className}`} role="navigation" aria-label="Sections">
+    <div className={`flex items-center gap-0.5 sm:gap-1 ${className}`} role="navigation" aria-label="Sections">
       {views.map((v) => {
         const on = v.view === view;
         return (
@@ -26,7 +27,7 @@ function Tabs({ view, className = "" }: { view: LandingView; className?: string 
             key={v.view}
             href={v.href}
             aria-current={on ? "page" : undefined}
-            className={`shrink-0 rounded-full px-3 py-1.5 text-[13px] font-medium tracking-tight transition-colors sm:px-3.5 sm:text-sm ${
+            className={`shrink-0 rounded-full px-2.5 py-1.5 text-[12.5px] font-medium tracking-tight transition-colors sm:px-3.5 sm:text-sm ${
               on ? "bg-l-line-hover text-l-text" : "text-l-text-2 hover:text-l-text"
             }`}
           >
@@ -62,8 +63,10 @@ export default function LandingNav({ view = "all" }: { view?: LandingView }) {
             </Link>
           </div>
         </div>
-        {/* The phone row: -mx so the first and last tab can scroll to the edge. */}
-        <Tabs view={view} className="-mx-6 overflow-x-auto px-6 pb-3 [scrollbar-width:none] md:hidden [&::-webkit-scrollbar]:hidden" />
+        {/* The phone row: scrolls sideways, fade on the right while there is more. */}
+        <TabRow className="md:hidden">
+          <Tabs view={view} className="w-max" />
+        </TabRow>
       </div>
     </nav>
   );
