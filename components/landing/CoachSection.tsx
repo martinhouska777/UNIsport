@@ -1,5 +1,4 @@
-import Image from "next/image";
-import Phone from "@/components/landing/Phone";
+import CoachPhone from "@/components/landing/CoachPhone";
 import { coach, mailtoHref, type Segment } from "@/lib/landingCopy";
 
 /*
@@ -32,23 +31,8 @@ function Body({ parts, className = "" }: { parts: Segment[]; className?: string 
   );
 }
 
-/* The phone frame the captures sit in — the shared landing Phone, so a reader
-   who scrolled through the stories meets a familiar object here. */
-function CoachPhone({ shot, alt, preload }: { shot: string; alt: string; preload?: boolean }) {
-  return (
-    <Phone className="w-full max-w-[300px]">
-      <Image
-        src={`/landing/${shot}`}
-        alt={alt}
-        width={900}
-        height={1479}
-        preload={preload}
-        sizes="(max-width: 640px) 80vw, 300px"
-        className="block h-auto w-full"
-      />
-    </Phone>
-  );
-}
+/* The phone frame the captures sit in is components/landing/CoachPhone.tsx —
+   the shared landing Phone, following the light/dark switch. */
 
 export default function CoachSection() {
   return (

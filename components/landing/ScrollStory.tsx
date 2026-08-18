@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useCallback, useEffect, useImperativeHandle, useMemo, useRef, type CSSProperties, type Ref } from "react";
 import Phone from "@/components/landing/Phone";
+import { shotSrc, usePhoneMode } from "@/components/landing/PhoneMode";
 import type { Beat } from "@/lib/landingCopy";
 import { motion as motionByBeat, shotSize } from "@/lib/landingMotion";
 
@@ -78,6 +79,10 @@ export default function ScrollStory({ id, beats, accent, ref }: Props) {
   const reduce = useRef(false);
 
   const mo = useMemo(() => beats.map((b) => motionByBeat[b.id] || {}), [beats]);
+  // Light or dark captures. A mode change re-renders the <Image>s with the
+  // twin src and nothing else: the choreography lives in refs and DOM
+  // classes, which a re-render leaves alone.
+  const { mode } = usePhoneMode();
 
   useImperativeHandle(ref, () => ({
     phoneRect: () => phoneEl.current?.getBoundingClientRect() ?? null,
@@ -381,7 +386,7 @@ export default function ScrollStory({ id, beats, accent, ref }: Props) {
                         ref={(el) => {
                           shots.current[i] = el;
                         }}
-                        src={`/landing/${b.shot}`}
+                        src={shotSrc(`/landing/${b.shot}`, mode)}
                         alt={`${b.kicker.replace(/^\S+\s·\s/, "")}: ${b.head}`}
                         width={size.w}
                         height={size.h}

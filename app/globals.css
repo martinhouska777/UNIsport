@@ -164,9 +164,27 @@
   --color-l-phone-island-line: #222222;
   --color-l-phone-bar: #cfccc6;
   --color-l-phone-line: #e7e4df;
+  --color-l-phone-frame: #2a2a2a;
   /* The interlude's ground: one step warmer than the page, the "background
      steps one surface level darker behind the Varsity Mode opening". */
   --color-l-bg-warm: #0d0c0a;
+}
+/* DARK PHONE SCREENS (components/landing/PhoneMode.tsx). The visitor can flip
+   every phone on the page to the app's dark look; the captures swap to their
+   /landing/dark twins and the drawn chrome follows here: the screen ground
+   the dark app actually paints (#0b0b0c, the root layout's dark theme-color),
+   light status-bar ink, a brighter shell edge so the phone still reads
+   against the page. Only the phone tokens change — the page around it is the
+   same page. */
+[data-phone-mode="dark"] {
+  --color-l-phone-screen: #0b0b0c;
+  --color-l-phone-ink: #f5f5f5;
+  --color-l-phone-ink-2: #8a8a8a;
+  --color-l-phone-island: #000000;
+  --color-l-phone-island-line: #2a2a2a;
+  --color-l-phone-bar: #3a3a3a;
+  --color-l-phone-line: #262626;
+  --color-l-phone-frame: #3d3d3d;
 }
 /* The display face is a plain utility, not a theme alias: next/font puts
    --font-instrument-serif on the landing's root <div>, not on :root, so an

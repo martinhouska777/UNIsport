@@ -49,6 +49,9 @@ still meets everything in order.
 | **Blade Lock (site)** | `components/landing/BladeLock.tsx` | **Built, native** — the varsity closer |
 | Per-school screens for the closers' phones | `public/landing/closers/{gyms,vhome}-*.webp` | 16 files, 900×1480, from `recolor-shots.mjs` |
 | **The live landing** | `app/page.tsx` → `components/landing/LandingPage.tsx` | **The new page** — stories, closers, coach, FAQ, about |
+| Light / dark phone screens | `components/landing/PhoneMode.tsx`, `public/landing/dark/**` | Built — the switch bottom-right; **dark frames are provisional** (see below) |
+| The link card | `app/page.tsx` metadata, `public/og.png` ← `scripts/landing/make-og.mjs` | Built |
+| Palette B scratch | `app/landing-mono/page.tsx` | **Scratch** — owner to decide, then delete |
 | Scroll animations | `scripts/landing/build-story.mjs` → `story.html` | Built, published as an artifact |
 | Animation runtime | `scripts/landing/story-script.js` | Vanilla DOM; not yet React |
 | The two closers (prototype) | `webpage/*.html` | Bundled Design apps, iframed — still what the artifact shows |
@@ -139,6 +142,59 @@ wearing. Natively, `useCloserGate` does the same: a closer only moves while
 on screen and returns to Harvard (un-pinned) once it has scrolled fully out.
 
 ---
+
+## The 2026-08-18 review pass — what changed and why
+
+A measured review (headless Chrome at four widths, WCAG contrast computed,
+head tags dumped) found two real bugs and a list of changes; all are in.
+
+**Two bugs that had been invisible in the code:**
+
+1. **`border-l-border` was two rules.** Every landing token starts with `l-`,
+   so Tailwind read `border-l-border` both as "border colour `l-border`" and
+   as "LEFT border colour `border`" — and the app theme defines
+   `--color-border` (#e4e4e7), so the left edge of every card, icon box and
+   coach tile was light grey. Fixed by renaming the token to **`l-line`**
+   (there is no `--color-line`). Rule, now in `globals.css`: never write
+   `border-l-accent` / `border-l-text` bare either — use
+   `border-(--color-l-accent)`.
+2. **The varsity accent did not exist.** The tokens were `@theme inline`, so
+   `--color-l-varsity` was only ever baked into utilities and never emitted as
+   a variable; `--sa: var(--color-l-varsity)` (the varsity story's and Blade
+   Lock's accent) resolved to nothing — white kicker, white icons, invisible
+   rail dot. Now **`@theme static`**; `font-display` is a plain `@utility`
+   because next/font's variable lives on the landing root, not `:root`.
+
+**Changes:** primary button dark-on-blue everywhere (was light-on-blue at
+2.5:1 in the hero); nothing readable in `text-3`; the hero pill says the fact
+("Live now at Harvard"), one-line body, availability under the button; doors
+blue / gold / gold-outline; a button under each feature list and under the
+coach facts, `mailto:` buttons with subject + first line; V6 label no longer
+clips at 1280; story screens have alt text; title / description / OG / X
+card + `og.png`; `theme-color #0a0a0a` and no zoom lock on `/` only.
+
+**Light / dark phone screens.** `PhoneMode.tsx` — a context, `shotSrc()`,
+the pill bottom-right. Every capture at `/landing/<x>.webp` has a twin at
+`/landing/dark/<x>.webp` (closers: `/landing/dark/closers/`); the phone
+chrome flips via the `l-phone-*` tokens under `[data-phone-mode="dark"]`.
+Default = the visitor's `prefers-color-scheme`, then their last choice.
+**The dark frames are stand-ins** made by `dark-placeholders.mjs` (light
+captures inverted, hue restored — crimson comes out salmon). Real ones:
+`node save-cookie.mjs` (owner logs in) → `node capture-light.mjs --mode
+dark` (writes the dark folder for the story frames). Still to do after that:
+dark base captures for the closers (`recolor-shots.mjs` / `patch-gyms.mjs`
+on a dark base — the wipe colour is white today) and for the five coach
+screens.
+
+**Palette B, undecided.** `/landing-mono` shows the page with the student
+accent turned to the text white — the school colours become the only
+saturated colour on the page (the argument: on Campus Colours the blue
+chrome sits beside Yale-blue content). Three token values, one wrapper.
+Decide, then either move the values into `globals.css` or delete the route.
+
+**Still the owner's to decide** (unchanged): enforce `.edu` or rename the
+button; V6 ending on a stats screen; V7's dark capture; "how much does it
+cost?" for the FAQ; any real number for social proof.
 
 ## Measured facts worth not re-discovering
 

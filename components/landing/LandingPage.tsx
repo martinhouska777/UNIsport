@@ -9,6 +9,7 @@ import Faq from "@/components/landing/Faq";
 import About from "@/components/landing/About";
 import FinalCta from "@/components/landing/FinalCta";
 import LandingFooter from "@/components/landing/LandingFooter";
+import { PhoneModeProvider, PhoneModeToggle } from "@/components/landing/PhoneMode";
 import { studentFeatures, studentStory, varsityFeatures, varsityStory } from "@/lib/landingCopy";
 
 /*
@@ -29,12 +30,18 @@ import { studentFeatures, studentStory, varsityFeatures, varsityStory } from "@/
      The close · footer
 
   Every word is in lib/landingCopy.ts.
+
+  Every phone on the page shows the real app in light OR dark (PhoneMode):
+  the switch is the small pill pinned bottom-right; the provider wraps the
+  whole page so the closers' phones, the flying phone and the coach's five
+  all flip together.
 */
 export default function LandingPage() {
   return (
     <div
       className={`${instrumentSerif.variable} l-grid relative min-h-screen overflow-x-clip bg-l-bg font-sans text-l-text`}
     >
+      <PhoneModeProvider>
       <LandingNav />
       <main className="relative">
         <LandingHero />
@@ -65,6 +72,8 @@ export default function LandingPage() {
         <FinalCta />
       </main>
       <LandingFooter />
+      <PhoneModeToggle />
+      </PhoneModeProvider>
     </div>
   );
 }
