@@ -48,7 +48,7 @@ import { BLADE_PATH, OAR_ART, schools, rgba } from "@/lib/landingSchools";
   Harvard at the front; clicking a blade jumps straight to it.
 
   Like the piece it is one screen tall with the content centred; the stage is
-  a touch shorter than the piece's (600 vs 660) so the whole thing, label
+  a touch shorter than the piece's (580 vs 660) so the whole thing, label
   included, fits a 900px laptop without the piece's page-zoom. The phone is
   the piece's 272px. Below ~700px wide the outermost oars run off the sides,
   exactly as they do in the piece — the phone stays readable, the wheel is
@@ -58,12 +58,13 @@ import { BLADE_PATH, OAR_ART, schools, rgba } from "@/lib/landingSchools";
 const PERIOD_MS = 2600;
 const STEP = 45; // degrees between oars
 const RADIUS = 295;
-const STAGE_H = 600;
+const STAGE_H = 580;
 // The wheel's centre, from the top of the stage. With the phone (486 tall)
-// on the stage floor its top is 114px below the centre — the piece's own
-// offset (117) — so the WHOLE blade and a hand of shaft stand clear above
-// the phone, even for the oar directly behind it.
-const WHEEL_TOP = 200;
+// on the stage floor its top is 94px below the centre, so the whole blade
+// and a little of the shaft stand clear above the phone, even for the oar
+// directly behind it — halfway between the piece's offset (117) and the
+// first port's (74), which the owner judged too much and too little shaft.
+const WHEEL_TOP = 210;
 const OAR_W = 78;
 const OAR_H = 468;
 // the small formation: the wheel compressed toward its centre (F), smaller (K)
@@ -152,6 +153,12 @@ export default function BladeLock({
   const [phone, setPhone] = useState<"hide" | "pre" | "in">("in");
   const [wordsPre, setWordsPre] = useState(false);
   const [labelPre, setLabelPre] = useState(false);
+  // On a phone the wheel is scaled to the width it has: everything (phone,
+  // stage, oars) shrinks a little, and the oars fan on a tighter radius so
+  // all eight blades stand inside the screen instead of running off it.
+  // Desktop is untouched (zoom = 1, the piece's 295px radius).
+  const [zoom, setZoom] = useState(1);
+  const geo = useRef({ sc: 1, r: RADIUS });
 
   const stick = useRef<HTMLDivElement>(null);
   const stage = useRef<HTMLDivElement>(null);
@@ -179,11 +186,12 @@ export default function BladeLock({
     const now = performance.now();
     const k = glideAt(park.current, now); // 0 free … 1 parked
     const m = glideAt(form.current, now); // 0 spread … 1 formation
+    const { sc, r } = geo.current;
     // the phone, in stage coordinates relative to the wheel's centre
     const sr = stage.current?.getBoundingClientRect();
     const pr = phoneEl.current?.getBoundingClientRect();
-    const phoneTop = sr && pr ? pr.top - sr.top - WHEEL_TOP : STAGE_H - 486 - WHEEL_TOP;
-    const phoneMidY = sr && pr ? phoneTop + pr.height / 2 : phoneTop + 243;
+    const phoneTop = sr && pr ? pr.top - sr.top - WHEEL_TOP * sc : (STAGE_H - 486 - WHEEL_TOP) * sc;
+    const phoneMidY = sr && pr ? phoneTop + pr.height / 2 : phoneTop + 243 * sc;
 
     // first pass: the wheel
     const full: { x: number; y: number; s: number; d: number }[] = [];
@@ -193,9 +201,9 @@ export default function BladeLock({
       const a = ((i * STEP + rot.current) * Math.PI) / 180;
       const d = Math.cos(a); // 1 = front, -1 = back
       full.push({
-        x: Math.sin(a) * RADIUS,
-        y: -(1 - d) * 20,
-        s: 0.5 + 0.58 * Math.pow((d + 1) / 2, 1.35),
+        x: Math.sin(a) * r,
+        y: -(1 - d) * 20 * sc,
+        s: (0.5 + 0.58 * Math.pow((d + 1) / 2, 1.35)) * sc,
         d,
       });
       if (d > bestD) {
@@ -209,7 +217,7 @@ export default function BladeLock({
     full.forEach((o) => {
       minTop = Math.min(minTop, FORM_F * o.y - (OAR_H * o.s * FORM_K) / 2);
     });
-    const dy = phoneTop - PEEK - minTop;
+    const dy = phoneTop - PEEK * sc - minTop;
 
     for (let i = 0; i < schools.length; i++) {
       const btn = oars.current[i];
@@ -221,7 +229,7 @@ export default function BladeLock({
       let s = o.s + (o.s * FORM_K - o.s) * m;
       x += (0 - x) * k;
       y += (phoneMidY - y) * k;
-      s += (PARK_SCALE - s) * k;
+      s += (PARK_SCALE * sc - s) * k;
       const op = (0.62 + (0.38 * (o.d + 1)) / 2) * (1 - k);
       btn.style.transform = `translate(-50%,-50%) translate(${x.toFixed(1)}px,${y.toFixed(1)}px) scale(${s.toFixed(3)})`;
       btn.style.opacity = op.toFixed(3);
@@ -248,6 +256,23 @@ export default function BladeLock({
   /* First paint, and whenever the wheel is not running: place the oars once. */
   useEffect(() => {
     renderFrame();
+  }, [renderFrame]);
+
+  /* The stage's width decides the scale and the radius (see `zoom` above). */
+  useEffect(() => {
+    const el = stage.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([e]) => {
+      const w = e.contentRect.width;
+      const narrow = w < 700;
+      const s = narrow ? Math.max(0.7, Math.min(1, w / 460)) : 1;
+      const rad = Math.min(RADIUS * s, w / 2 - 45 * s);
+      geo.current = { sc: s, r: rad };
+      setZoom(s);
+      renderFrame();
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
   }, [renderFrame]);
 
   /* The wheel. Turns one oar per PERIOD while free; eases onto the picked
@@ -401,7 +426,7 @@ export default function BladeLock({
         </div>
 
         {/* ── The stage: the wheel of oars, the phone in front of it ── */}
-        <div ref={stage} className="relative w-full max-w-[860px] flex-none" style={{ height: STAGE_H }}>
+        <div ref={stage} className="relative w-full max-w-[860px] flex-none" style={{ height: STAGE_H * zoom }}>
           {schools.map((sc, i) => (
             <button
               key={sc.key}
@@ -413,7 +438,7 @@ export default function BladeLock({
               aria-pressed={held && i === active}
               onClick={() => pick(i)}
               className="absolute left-1/2 cursor-pointer rounded-lg border-0 bg-transparent p-0 opacity-0 will-change-transform focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-l-text"
-              style={{ top: WHEEL_TOP, width: OAR_W, height: OAR_H }}
+              style={{ top: WHEEL_TOP * zoom, width: OAR_W, height: OAR_H }}
             >
               {/* the oar is drawn lying down and stood up here, blade at the top */}
               <span
@@ -427,7 +452,8 @@ export default function BladeLock({
 
           <Phone
             ref={phoneEl}
-            className={`lc-phone absolute bottom-0 left-1/2 z-[100] w-[272px] -translate-x-1/2 ${
+            style={{ width: 272 * zoom }}
+            className={`lc-phone absolute bottom-0 left-1/2 z-[100] -translate-x-1/2 ${
               phone === "hide" ? "lc-hide" : phone === "pre" ? "lc-pre" : ""
             }`}
             data-closer-phone="blades"

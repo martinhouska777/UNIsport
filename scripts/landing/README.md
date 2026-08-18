@@ -184,6 +184,11 @@ revokes it afterwards — ask for a fresh one, never assume one is lying around.
 > a design bundle's real source, decode the base64 (gzip) entries of its
 > `<script type="__bundler/manifest">` and its `__bundler/template` — the
 > template is an ~20–40KB HTML file with the layout and logic in the clear.
+>
+> **The closers' screens, per school:** `recolor-shots.mjs` recolours the real
+> Harvard captures (`recolored/`), then `patch-gyms.mjs` writes each school's
+> OWN gyms onto the Gyms screen (data in `school-gyms.mjs`) and copies the
+> results to `public/landing/closers/` for the site.
 
 `Blade Lock Light.html` and `UNIsport Campus Colours.html` are **bundled apps**
 from Claude Design — ~130KB of JavaScript each that mount into `document.body`
