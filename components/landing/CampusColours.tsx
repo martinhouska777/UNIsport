@@ -226,6 +226,7 @@ export default function CampusColours({
                   alt={`The Gyms screen in ${sc.name}'s colours`}
                   fill
                   sizes="270px"
+                  quality={90}
                   loading={i === 0 ? "eager" : "lazy"}
                   aria-hidden={i !== idx}
                   className="object-fill transition-opacity duration-[450ms] ease-in-out motion-reduce:transition-none"
