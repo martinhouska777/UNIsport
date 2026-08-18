@@ -19,23 +19,29 @@ import OarMark, { OAR_BOX } from "@/components/varsity/OarMark";
 
 export default function VarsityCrest({ size = 28 }: { size?: number }) {
   const { universityKey } = useAppState();
-  // one oar, blade at the top, 34 tall in the 40 box; rotated both ways
-  // around the middle to make the X
-  const oarH = 34;
+  // One oar, blade at the top, the full 40 of the box; the two are rotated
+  // ±36° about a point low in the box (20, 24) — the crossing sits behind the
+  // shield's lower half — so each WHOLE blade stands clear above the shield's
+  // shoulders and the handles come out below its base. Worked out, not
+  // eyeballed: the blade is the top ~24% of the oar, so its foot is 15.4 from
+  // the pivot; at 36° that lands at y≈11.5, x≈±9 — above and outside the
+  // shield (top 14, half-width 7.5).
+  const oarH = 40;
   const oarW = (OAR_BOX.w / OAR_BOX.h) * oarH;
 
   return (
     <svg width={size} height={size} viewBox="0 0 40 40" fill="none" aria-hidden="true">
-      {[-32, 32].map((deg) => (
-        <g key={deg} transform={`rotate(${deg} 20 20)`}>
-          <OarMark schoolKey={universityKey} x={20 - oarW / 2} y={3} width={oarW} height={oarH} />
+      {[-36, 36].map((deg) => (
+        <g key={deg} transform={`rotate(${deg} 20 24)`}>
+          <OarMark schoolKey={universityKey} x={20 - oarW / 2} y={-1} width={oarW} height={oarH} />
         </g>
       ))}
 
-      {/* The shield, lifted onto the crossing point. The first copy is a fat
-          background-coloured outline that keeps the oars from bleeding into
-          the shield's edge at small sizes. */}
-      <g transform="translate(10.5 9.6) scale(0.86)">
+      {/* The shield, on the crossing point, a little smaller than it was so
+          the blades have room. The first copy is a fat background-coloured
+          outline that keeps the shafts from bleeding into the shield's edge
+          at small sizes. */}
+      <g transform="translate(12.4 14) scale(0.72)">
         <path
           d="M1,1 L21,1 L21,15 Q21,24 11,25 Q1,24 1,15 Z"
           fill="var(--background)"
