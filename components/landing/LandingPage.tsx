@@ -100,7 +100,7 @@ export default function LandingPage({ view = "all" }: { view?: LandingView }) {
         )}
         {coaches && <CoachSection solo={!all} />}
         {audience && <Faq view={view} />}
-        {(all || view === "about") && <About />}
+        {(all || view === "about") && <About full={!all} />}
         {(all || view === "contact") && <Contact />}
         {audience && <FinalCta />}
         {!all && (

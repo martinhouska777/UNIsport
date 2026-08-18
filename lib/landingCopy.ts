@@ -544,6 +544,28 @@ export const about = {
   headlineEm: "for every campus.",
   body: "UNIsport started as the app one campus was missing: every gym in one place, the people worth training with, and the plan that gets you both there — then a mode for the squads that train for the university itself, and a console for the coaches who run them. One app per university, in that university's colours.",
   email: "martinhouska777@gmail.com",
+  /* On "/" the About section is the paragraph above and this link; the full
+     "why" lives on the About tab. */
+  readWhy: "Read why we built it",
+};
+
+/* WHY WE BUILT IT — the About tab (owner, 2026-08-18: "the motivation part,
+   why we did it"). DRAFT, written from the brief's positioning ("every fitness
+   app treats you as one person alone with a log; on a campus, training is
+   neither solitary nor unstructured") and from what the app does — NOT from
+   the owner's own story, which only they can tell. Owner: rewrite freely,
+   add a line about who you are if you want one; each entry is a paragraph.
+   The brief's voice: plain, specific, no "journey", no invented numbers. */
+export const aboutWhy = {
+  kicker: "Why",
+  headline: "Why we",
+  headlineEm: "built it.",
+  paragraphs: [
+    "Every fitness app treats you as one person alone with a log. That is not what training on a campus is like. It happens in specific buildings — the main gym, the house gyms nobody has a map of — with specific people, on a schedule someone else often sets. The apps knew none of that. They knew your step count.",
+    "So the people were the first problem. On a campus of thousands you walk past the ones who train at your hour, at your level, on your side of the river — and never meet them. Every match in UNIsport is explained from real facts off two profiles, so a training partner is a person you can trust, not a stranger from a feed.",
+    "The teams were the second. Varsity squads were running a season out of a group chat: the coach's plan as a screenshot of a spreadsheet, the boat lineups as a photo, the race countdown in someone's head. We built Varsity Mode so all of it lands on every athlete's phone, and the Coach's Console so the coach publishes it once.",
+    "And the campus itself was the third. One app cannot serve every university at once — the gyms are different, the houses are different, the colours are different. So it is one app per university, in that university's colours, built at Harvard first because that is where we were, and brought to the next campus one at a time.",
+  ],
 };
 
 /* CONTACT — its own tab (owner, 2026-08-18): the address, and the places
