@@ -20,6 +20,8 @@
 */
 import { useMemo, useState } from "react";
 import Sheet from "@/components/varsity/Sheet";
+import ResultDetail from "@/components/varsity/team/ResultDetail";
+import { IconCamera, IconFloors } from "@/components/icons";
 import { sessionLabel, sessionColor } from "@/lib/varsity/coachPlan";
 import {
   buildBoard,
@@ -56,6 +58,8 @@ export default function WorkoutBoard({
   onClose: () => void;
 }) {
   const [metric, setMetric] = useState<MetricKey>("split");
+  // Which row is open in full (its numbers, its reps, its monitor photo).
+  const [openRow, setOpenRow] = useState<string | null>(null);
   const ranked = workout.board === "ranked";
   const board = useMemo(
     () => buildBoard(results, workout.board, metric, myId),
@@ -159,11 +163,13 @@ export default function WorkoutBoard({
       ) : (
         <div className="mt-3 overflow-hidden rounded-2xl border border-border bg-surface">
           {board.rows.map((row, i) => (
-            <div
+            <button
               key={row.result.id}
-              className={`flex items-center gap-3 px-3 py-2.5 ${
+              type="button"
+              onClick={() => setOpenRow(row.result.id)}
+              className={`flex w-full items-center gap-3 px-3 py-2.5 text-left ${
                 i > 0 ? "border-t border-border" : ""
-              } ${row.mine ? "bg-primary-tint" : ""}`}
+              } ${row.mine ? "bg-primary-tint" : "active:bg-surface-2"}`}
             >
               {ranked && (
                 <span
@@ -186,16 +192,39 @@ export default function WorkoutBoard({
                     </span>
                   )}
                 </div>
-                {row.detail && (
-                  <div className="mt-0.5 truncate text-[11px] text-muted">{row.detail}</div>
-                )}
+                <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-muted">
+                  {row.detail && <span className="truncate">{row.detail}</span>}
+                  {/* what tapping this row will get you */}
+                  {!!row.result.intervals?.length && (
+                    <span
+                      className="flex flex-shrink-0 items-center gap-0.5"
+                      title={`${row.result.intervals.length} intervals`}
+                    >
+                      <IconFloors size={11} />
+                      {row.result.intervals.length}
+                    </span>
+                  )}
+                  {row.result.photoPath && (
+                    <span className="flex-shrink-0" title="Monitor photo">
+                      <IconCamera size={11} />
+                    </span>
+                  )}
+                </div>
               </div>
               <span className="flex-shrink-0 text-right text-[13px] font-semibold tabular-nums text-text">
                 {row.display}
               </span>
-            </div>
+            </button>
           ))}
         </div>
+      )}
+
+      {openRow && (
+        <ResultDetail
+          result={board.rows.find((r) => r.result.id === openRow)!.result}
+          dateLabel={`${workout.dateLabel} · ${workout.period} · ${workout.session.description.trim() || sessionLabel(workout.session)}`}
+          onClose={() => setOpenRow(null)}
+        />
       )}
 
       {board.logged > 0 && !readable && (

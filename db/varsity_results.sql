@@ -50,7 +50,11 @@ create table if not exists public.varsity_results (
   stroke_rate  int,
   watts        int,       -- average watts (from the monitor, else derived)
   weight_kg    numeric,   -- snapshot, for watts-per-kilo (null = they haven't set one)
-  photo_path   text,      -- the monitor photo (next slice)
+  photo_path   text,      -- the monitor photo in storage: '<athlete_id>/<day_key>.jpg'
+  -- Per-interval rows read off the monitor, in the order shown, summary row
+  -- excluded. [{label, metres, timeSec, splitPer500, strokeRate}]. Null when
+  -- the piece had no interval screen (a straight 2K) or nobody scanned one.
+  intervals    jsonb,
   note         text not null default '',
   created_at   timestamptz not null default now(),
   updated_at   timestamptz not null default now(),
@@ -59,6 +63,11 @@ create table if not exists public.varsity_results (
 
 create index if not exists varsity_results_day_idx     on public.varsity_results (day_key);
 create index if not exists varsity_results_athlete_idx on public.varsity_results (athlete_id);
+
+-- Both added after the first version of this table, so the file stays runnable
+-- against a database that already has it.
+alter table public.varsity_results add column if not exists photo_path text;
+alter table public.varsity_results add column if not exists intervals  jsonb;
 
 alter table public.varsity_results enable row level security;
 
@@ -85,3 +94,53 @@ create policy "Own result updatable"
 drop policy if exists "Own result deletable" on public.varsity_results;
 create policy "Own result deletable"
   on public.varsity_results for delete using (auth.uid() = athlete_id);
+
+-- ---------------------------------------------------------------------------
+-- 4. THE MONITOR PHOTOS
+-- ---------------------------------------------------------------------------
+-- Self-reported times are only as good as the trust behind them. The photo is
+-- the evidence: the coach (and everybody else) can tap a result and see the
+-- screen it came off. It is also what makes a misread scan recoverable — the
+-- numbers can be corrected against the picture instead of re-rowing the piece.
+--
+-- The bucket is PRIVATE. Reads go through short-lived signed URLs, so a photo
+-- can't be hotlinked out of the app by anyone who guesses a path.
+--
+-- Path convention: '<athlete_id>/<day_key>.jpg'. The first folder being the
+-- owner's uuid is what the write policies below key on — it is the whole
+-- security model, so the client must never write anywhere else.
+insert into storage.buckets (id, name, public)
+values ('erg-photos', 'erg-photos', false)
+on conflict (id) do nothing;
+
+-- READ: the whole squad, matching the results themselves.
+drop policy if exists "Erg photos readable by signed-in users" on storage.objects;
+create policy "Erg photos readable by signed-in users"
+  on storage.objects for select
+  using (bucket_id = 'erg-photos' and auth.role() = 'authenticated');
+
+-- WRITE: only inside your own folder. Nobody can add, replace or delete a
+-- photo under someone else's result.
+drop policy if exists "Own erg photo insertable" on storage.objects;
+create policy "Own erg photo insertable"
+  on storage.objects for insert
+  with check (
+    bucket_id = 'erg-photos'
+    and (storage.foldername(name))[1] = auth.uid()::text
+  );
+
+drop policy if exists "Own erg photo updatable" on storage.objects;
+create policy "Own erg photo updatable"
+  on storage.objects for update
+  using (
+    bucket_id = 'erg-photos'
+    and (storage.foldername(name))[1] = auth.uid()::text
+  );
+
+drop policy if exists "Own erg photo deletable" on storage.objects;
+create policy "Own erg photo deletable"
+  on storage.objects for delete
+  using (
+    bucket_id = 'erg-photos'
+    and (storage.foldername(name))[1] = auth.uid()::text
+  );

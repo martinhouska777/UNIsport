@@ -32,7 +32,9 @@ import { estimateForSession, formatMetrics } from "@/lib/varsity/logParse";
 import { scanErgPhoto, minutesToClock } from "@/lib/varsity/ergScan";
 import { deriveSplitSec, deriveTotalSec } from "@/lib/varsity/ergMath";
 import { fetchAthleteProfile } from "@/lib/varsity/athleteProfile";
-import { shareResult, unshareResult } from "@/lib/varsity/resultsStore";
+import { shareResult, unshareResult, intervalsFromScan } from "@/lib/varsity/resultsStore";
+import { uploadErgPhoto } from "@/lib/varsity/ergPhotos";
+import type { ErgScanInterval } from "@/lib/varsity/ergScan";
 import {
   fetchLogsInRange,
   savePlanLog,
@@ -109,12 +111,19 @@ function LogEditor({
   const fileRef = useRef<HTMLInputElement>(null);
   const [scanning, setScanning] = useState(false);
   const [scanMsg, setScanMsg] = useState<string | null>(null);
-  // Rate and watts have no field of their own (they go in the note), but a team
-  // board wants them as numbers, so the scan's figures are kept here too.
-  const [scanned, setScanned] = useState<{ strokeRate: number | null; watts: number | null }>({
-    strokeRate: null,
-    watts: null,
-  });
+  /*
+    What the scan produced beyond the three visible fields. Rate and watts have
+    no field of their own (they go in the note); the per-interval rows have no
+    field at all; and `image` is the photo itself, which becomes the evidence
+    attached to a team-workout result. None of it survives a manual edit with no
+    fresh scan — which is honest: the row then says exactly what was last saved.
+  */
+  const [scanned, setScanned] = useState<{
+    strokeRate: number | null;
+    watts: number | null;
+    intervals: ErgScanInterval[];
+    image: string | null;
+  }>({ strokeRate: null, watts: null, intervals: [], image: null });
 
   /*
     TEAM WORKOUT: the coach flagged this session, so saving it also puts the
@@ -145,9 +154,12 @@ function LogEditor({
     if (!file) return;
     setScanning(true);
     setScanMsg(null);
-    const { result, error } = await scanErgPhoto(file);
+    const { result, error, image } = await scanErgPhoto(file);
     setScanning(false);
     if (error || !result) {
+      // Keep the photo even when the read failed — an unreadable screen is
+      // exactly the one a human needs to look at.
+      setScanned({ strokeRate: null, watts: null, intervals: [], image: image ?? null });
       setScanMsg(
         error === "unconfigured"
           ? "Photo scanning isn't switched on yet — enter the numbers by hand."
@@ -155,7 +167,12 @@ function LogEditor({
       );
       return;
     }
-    setScanned({ strokeRate: result.strokeRate, watts: result.avgWatts });
+    setScanned({
+      strokeRate: result.strokeRate,
+      watts: result.avgWatts,
+      intervals: result.intervals ?? [],
+      image: image ?? null,
+    });
     if (result.totalMinutes != null) setMinutes(String(Math.round(result.totalMinutes)));
     if (result.totalMetres != null) setMetres(String(result.totalMetres));
     if (result.splitPer500) setSplit(result.splitPer500);
@@ -211,6 +228,12 @@ function LogEditor({
     if (state.mode === "plan" && state.session.teamWorkout) {
       const splitSec = deriveSplitSec(draft.split, draft.minutes, draft.metres);
       const totalSec = deriveTotalSec(splitSec, draft.metres, draft.minutes);
+      // The photo is uploaded on SAVE, not on scan, so an abandoned edit never
+      // leaves an orphan image in the bucket. A failed upload is not a failed
+      // save: the result still goes up, just without its picture.
+      const photoPath = scanned.image
+        ? await uploadErgPhoto(athleteId, state.dayKey, scanned.image)
+        : null;
       const shared = await shareResult(athleteId, {
         dayKey: state.dayKey,
         athleteName: me.name,
@@ -221,6 +244,8 @@ function LogEditor({
         strokeRate: scanned.strokeRate,
         watts: scanned.watts,
         weightKg: me.weightKg,
+        photoPath,
+        intervals: intervalsFromScan(scanned.intervals),
         note: draft.note,
       });
       // The private log is already saved; a board that refused the row is worth
@@ -331,6 +356,12 @@ function LogEditor({
                 <IconCamera size={16} /> {scanning ? "Reading photo…" : "Scan C2 / RP3 monitor"}
               </button>
               {scanMsg && <p className="mt-1.5 text-[11px] text-muted">{scanMsg}</p>}
+              {teamWorkout && (
+                <p className="mt-1.5 text-[11px] leading-relaxed text-muted">
+                  On a team workout the photo is kept with your result, so anyone can check the
+                  screen it came off — and any splits on it become your interval breakdown.
+                </p>
+              )}
             </>
           )}
 

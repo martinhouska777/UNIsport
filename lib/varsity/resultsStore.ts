@@ -14,6 +14,42 @@
   store here — one shared key, so at least your own result shows up in dev.
 */
 import { createClient, hasSupabaseEnv } from "@/lib/supabase/client";
+import { clockToSec } from "./ergMath";
+import { deleteErgPhoto } from "./ergPhotos";
+import type { ErgScanInterval } from "./ergScan";
+
+/*
+  One row off an interval screen. Times are kept in SECONDS rather than as the
+  "m:ss.t" text the monitor showed, because the board does arithmetic on them —
+  the fade from first rep to last, the spread across the piece. The label stays
+  as text: it is whatever named the row on screen.
+*/
+export type ResultInterval = {
+  label: string | null;
+  metres: number | null;
+  timeSec: number | null;
+  splitSec: number | null;
+  strokeRate: number | null;
+};
+
+/*
+  Scan rows → stored rows. A row the monitor showed but we could not read a
+  single number from is DROPPED: a blank line in an interval table is worse
+  than a shorter table, because it reads as a rep somebody failed to finish.
+*/
+export function intervalsFromScan(rows: ErgScanInterval[] | undefined): ResultInterval[] | null {
+  if (!rows || rows.length === 0) return null;
+  const out = rows
+    .map((r) => ({
+      label: r.label?.trim() || null,
+      metres: r.metres ?? null,
+      timeSec: clockToSec(r.time),
+      splitSec: clockToSec(r.splitPer500),
+      strokeRate: r.strokeRate ?? null,
+    }))
+    .filter((r) => r.metres != null || r.timeSec != null || r.splitSec != null);
+  return out.length ? out : null;
+}
 
 export type TeamResult = {
   id: string;
@@ -27,6 +63,8 @@ export type TeamResult = {
   strokeRate: number | null;
   watts: number | null;
   weightKg: number | null;
+  photoPath: string | null; // the monitor shot in storage (lib/varsity/ergPhotos.ts)
+  intervals: ResultInterval[] | null; // per-rep rows, when the screen had them
   note: string;
 };
 
@@ -45,6 +83,8 @@ type Row = {
   stroke_rate: number | null;
   watts: number | null;
   weight_kg: number | null;
+  photo_path: string | null;
+  intervals: ResultInterval[] | null;
   note: string | null;
 };
 
@@ -60,6 +100,8 @@ const rowToResult = (r: Row): TeamResult => ({
   strokeRate: r.stroke_rate,
   watts: r.watts,
   weightKg: r.weight_kg,
+  photoPath: r.photo_path,
+  intervals: r.intervals ?? null,
   note: r.note ?? "",
 });
 
@@ -74,6 +116,8 @@ const draftToRow = (athleteId: string, d: ResultDraft) => ({
   stroke_rate: d.strokeRate,
   watts: d.watts,
   weight_kg: d.weightKg,
+  photo_path: d.photoPath,
+  intervals: d.intervals,
   note: d.note,
   updated_at: new Date().toISOString(),
 });
@@ -138,12 +182,15 @@ export async function shareResult(
   return error ? { error: error.message } : {};
 }
 
-/* ── Take your result back off a board (when you delete the log behind it) ── */
+/* ── Take your result back off a board (when you delete the log behind it).
+     The monitor photo goes with it — an image left in the bucket after its
+     result is gone is a leak nobody would ever notice. ── */
 export async function unshareResult(
   athleteId: string,
   dayKey: string,
 ): Promise<{ error?: string }> {
   if (!athleteId) return {};
+  await deleteErgPhoto(`${athleteId}/${dayKey}.jpg`);
   if (!hasSupabaseEnv()) {
     saveLocal(loadLocal().filter((r) => !(r.dayKey === dayKey && r.athleteId === athleteId)));
     return {};
