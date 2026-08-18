@@ -19,7 +19,14 @@ Rules:
 - "s/m" / "spm" / rate -> stroke rate, strokes per minute (integer).
 - "watts" -> average watts (integer).
 - If both a per-interval row and a final SUMMARY/total are visible, use the SUMMARY totals.
-- Set "confident" to false if the photo is blurry, cropped, or you are unsure of the main numbers.`;
+- Set "confident" to false if the photo is blurry, cropped, or you are unsure of the main numbers.
+
+Intervals:
+- If the screen lists one row PER INTERVAL (8×500m, 4×2000m, a rate ladder), return each row in "intervals", top to bottom, exactly as displayed.
+- EXCLUDE the summary/total row from "intervals" — it is already the top-level result.
+- "label" is whatever names the row on screen (a rep number, a distance, a time). Null if the row is unlabelled.
+- "time" is that interval's own time as shown, "m:ss" or "m:ss.t".
+- Return an EMPTY ARRAY when the screen shows no per-interval rows (a plain 2K result screen). Never invent rows, and never split a total into equal pieces yourself.`;
 
 // Structured-output schema (output_config.format). Nullable via anyOf; every
 // field required; additionalProperties:false (required by structured outputs).
@@ -34,6 +41,21 @@ const schema = {
     strokeRate: { anyOf: [{ type: "integer" }, { type: "null" }] },
     avgWatts: { anyOf: [{ type: "integer" }, { type: "null" }] },
     confident: { type: "boolean" },
+    intervals: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          label: { anyOf: [{ type: "string" }, { type: "null" }] },
+          metres: { anyOf: [{ type: "integer" }, { type: "null" }] },
+          time: { anyOf: [{ type: "string" }, { type: "null" }] },
+          splitPer500: { anyOf: [{ type: "string" }, { type: "null" }] },
+          strokeRate: { anyOf: [{ type: "integer" }, { type: "null" }] },
+        },
+        required: ["label", "metres", "time", "splitPer500", "strokeRate"],
+      },
+    },
   },
   required: [
     "monitor",
@@ -43,6 +65,7 @@ const schema = {
     "strokeRate",
     "avgWatts",
     "confident",
+    "intervals",
   ],
 } as const;
 
@@ -68,9 +91,13 @@ export async function POST(request: Request) {
 
   try {
     const resp = await anthropic().messages.create({
-      model: "claude-opus-4-8",
-      max_tokens: 1024,
-      thinking: { type: "disabled" }, // a quick read; structured output keeps it terse
+      model: "claude-opus-5",
+      max_tokens: 4096, // an interval screen can be a dozen rows
+      // Reading numbers off a screen is not hard work, so keep the effort low —
+      // but leave thinking ON. Disabling it on this model is known to leak
+      // stray <thinking> tags into the visible output, which structured output
+      // then has to survive; low effort is the cheaper, safer lever.
+      thinking: { type: "adaptive" },
       // cache_control on the (small) system prompt as requested — only actually
       // caches once a prefix exceeds the model's ~4K-token minimum, so it's a
       // no-op at this size but harmless and future-proof.
@@ -84,7 +111,7 @@ export async function POST(request: Request) {
           ],
         },
       ],
-      output_config: { format: { type: "json_schema", schema } },
+      output_config: { effort: "low", format: { type: "json_schema", schema } },
     });
 
     const text = resp.content.find((b) => b.type === "text");

@@ -3,6 +3,15 @@
   get back structured metrics. Downscales the photo first so the upload stays
   small and within the vision API's limits.
 */
+// One row off an interval screen, exactly as the monitor displayed it.
+export type ErgScanInterval = {
+  label: string | null;
+  metres: number | null;
+  time: string | null; // "m:ss" / "m:ss.t"
+  splitPer500: string | null;
+  strokeRate: number | null;
+};
+
 export type ErgScan = {
   monitor: "C2" | "RP3" | "other";
   totalMinutes: number | null;
@@ -11,9 +20,16 @@ export type ErgScan = {
   strokeRate: number | null;
   avgWatts: number | null;
   confident: boolean;
+  intervals: ErgScanInterval[];
 };
 
-export type ScanResult = { result?: ErgScan; error?: string };
+/*
+  `image` is the downscaled JPEG that was sent. It comes back so the caller can
+  KEEP the photo — on a team workout it is uploaded as the evidence behind the
+  result. It is returned even when the read fails: a photo the app couldn't
+  parse is exactly the one a human needs to look at.
+*/
+export type ScanResult = { result?: ErgScan; error?: string; image?: string };
 
 // Shrink a photo to a JPEG data URL (long edge ≤ maxEdge) before upload.
 async function fileToDataUrl(file: File, maxEdge = 1600): Promise<string> {
@@ -45,10 +61,13 @@ export async function scanErgPhoto(file: File): Promise<ScanResult> {
       body: JSON.stringify({ image }),
     });
     const json = await res.json().catch(() => ({}));
-    if (!res.ok) return { error: (json as { error?: string }).error ?? "scan_failed" };
-    return { result: (json as { result: ErgScan }).result };
+    if (!res.ok) return { image, error: (json as { error?: string }).error ?? "scan_failed" };
+    const result = (json as { result: ErgScan }).result;
+    // An older server (or a odd response) may omit intervals — never let the
+    // rest of the app see an undefined array.
+    return { image, result: { ...result, intervals: result?.intervals ?? [] } };
   } catch {
-    return { error: "network" };
+    return { image, error: "network" };
   }
 }
 

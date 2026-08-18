@@ -91,6 +91,41 @@ export function suggestionsFor(category: Category, intensity?: Intensity): strin
 export const optionsLabel = (category: Category) =>
   category === "flex" ? "Length" : "Most used · tap to fill";
 
+/* ── Team workouts ──────────────────────────────────────────────────────────
+   The coach can mark a session as a TEAM WORKOUT: everyone who logs it lands on
+   one shared board the whole squad can see (db/varsity_results.sql). A board is
+   one of two kinds, because not every session is a race:
+
+     ranked  — a test or race piece. Fastest first, with a rank number.
+     average — steady training. Who did it, and what the squad averaged. No
+               ranking, because ranking a UT2 row is bad coaching.
+
+   Both option lists are DATA (rule 7): the editor loops over them. */
+export type BoardKind = "ranked" | "average";
+export const boardOptions: { key: BoardKind; label: string; sub: string }[] = [
+  { key: "ranked", label: "Ranked", sub: "A test or race piece — fastest first" },
+  { key: "average", label: "Everyone", sub: "Steady work — who did it, and the squad average" },
+];
+
+// What to suggest when the coach first flicks the switch: hard pieces are the
+// ones people race, everything else is training. Always editable afterwards.
+export const defaultBoard = (intensity?: Intensity): BoardKind =>
+  intensity === "hard" ? "ranked" : "average";
+
+/*
+  Which sessions can have a board at all: ERG only.
+
+  Water was the obvious second candidate and is deliberately left out. A boat's
+  numbers belong to the boat, not the rower — eight people share one split, the
+  stream and the wind move it more than the crew does, and no two outings are
+  comparable. Ranking rowers on it would be measuring the river. An erg piece is
+  the same machine, the same distance, indoors, for everybody.
+
+  The rule lives here, in data, so the coach's editor and the team board can
+  never disagree about it (rule 7).
+*/
+export const canBeTeamWorkout = (category?: Category): boolean => category === "erg";
+
 /* ── A session and how sessions are stored ── */
 export type Session = {
   category: Category;
@@ -98,12 +133,35 @@ export type Session = {
   description: string;
   time: string; // preset per period, but editable
   note?: string;
+  teamWorkout?: boolean; // results shared to a squad board
+  board?: BoardKind; // which kind of board (only read when teamWorkout)
 };
 
 // Sessions live in one map keyed by day+period, so the whole plan is one object.
 export type SessionMap = Record<string, Session>;
 export function sessionKey(date: Date, period: Period): string {
   return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}-${period}`;
+}
+
+/*
+  The reverse of sessionKey(). Note the key holds a ZERO-BASED month and pads
+  nothing ('2026-5-22-AM' is 22 June 2026), so it must never be treated as an
+  ISO date or sorted as text — the boards sort on the Date this returns.
+  Returns null for a key that isn't in that shape.
+*/
+export function parseSessionKey(key: string): { date: Date; period: Period } | null {
+  const m = /^(\d{4})-(\d{1,2})-(\d{1,2})-(AM|PM)$/.exec(key);
+  if (!m) return null;
+  const date = new Date(Number(m[1]), Number(m[2]), Number(m[3]));
+  return Number.isNaN(date.getTime()) ? null : { date, period: m[4] as Period };
+}
+
+// "Tue 22 Jun" — how a workout's date reads on the team board.
+export function dayKeyLabel(key: string): string {
+  const parsed = parseSessionKey(key);
+  if (!parsed) return key;
+  const d = parsed.date;
+  return `${WD[d.getDay()]} ${d.getDate()} ${MO[d.getMonth()]}`;
 }
 
 export const isOnWater = (s: Session | undefined) => s?.category === "water";

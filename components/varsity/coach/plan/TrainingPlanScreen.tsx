@@ -30,6 +30,9 @@ import {
   sessionKey,
   sessionColor,
   sessionLabel,
+  boardOptions,
+  defaultBoard,
+  canBeTeamWorkout,
   buildWeeks,
   blockRangeLabel,
   daysToRace,
@@ -42,6 +45,7 @@ import {
   type Intensity,
   type Period,
   type WeekRow,
+  type BoardKind,
 } from "@/lib/varsity/coachPlan";
 import { fetchPlan, savePlan } from "@/lib/varsity/planStore";
 import {
@@ -55,6 +59,7 @@ import {
   IconRepeat,
   IconSend,
   IconTrash,
+  IconTrophy,
 } from "@/components/icons";
 
 type View =
@@ -70,11 +75,14 @@ type Form = {
   time: string;
   note: string;
   repeat: "once" | "weekly";
+  teamWorkout: boolean;
+  board: BoardKind;
 };
 
 function Dot({ color }: { color: string }) {
   return <span className="h-2.5 w-2.5 rounded-full" style={{ background: color }} />;
 }
+
 
 function DraftBadge() {
   return (
@@ -209,7 +217,14 @@ export default function TrainingPlanScreen() {
 
   // editor sheet
   const [editor, setEditor] = useState<{ date: Date; period: Period } | null>(null);
-  const [form, setForm] = useState<Form>({ description: "", time: "", note: "", repeat: "once" });
+  const [form, setForm] = useState<Form>({
+    description: "",
+    time: "",
+    note: "",
+    repeat: "once",
+    teamWorkout: false,
+    board: "average",
+  });
 
   // create-block form
   const todayISO = toISO(new Date());
@@ -253,6 +268,8 @@ export default function TrainingPlanScreen() {
       time: existing?.time ?? presetTime[period],
       note: existing?.note ?? "",
       repeat: "once",
+      teamWorkout: existing?.teamWorkout ?? false,
+      board: existing?.board ?? defaultBoard(existing?.intensity),
     });
     setEditor({ date, period });
   };
@@ -268,6 +285,10 @@ export default function TrainingPlanScreen() {
       description: form.description.trim(),
       time: form.time.trim() || presetTime[editor.period],
       note: form.note.trim() || undefined,
+      // Only erg sessions can carry a board (see canBeTeamWorkout), so a
+      // session that isn't one never keeps a stale flag.
+      teamWorkout: canBeTeamWorkout(form.category) ? form.teamWorkout : false,
+      board: form.board,
     };
     if (form.repeat === "weekly") {
       // apply to the same weekday + period across every week in the block
@@ -843,6 +864,73 @@ export default function TrainingPlanScreen() {
             placeholder="A note for the athletes…"
             className={inputCls}
           />
+
+          {/* team workout — the switch that gives this session a shared board */}
+          {canBeTeamWorkout(cat) && (
+            <>
+              <div className={labelCls}>Team workout</div>
+              <button
+                type="button"
+                onClick={() =>
+                  setForm((f) => ({
+                    ...f,
+                    teamWorkout: !f.teamWorkout,
+                    // First time on, suggest the board that fits the intensity.
+                    board: f.teamWorkout ? f.board : defaultBoard(f.intensity),
+                  }))
+                }
+                className={`flex w-full items-center gap-3 rounded-xl border px-3.5 py-3 text-left ${
+                  form.teamWorkout ? "border-primary bg-primary-tint" : "border-border bg-surface"
+                }`}
+              >
+                <span className={form.teamWorkout ? "text-primary" : "text-muted"}>
+                  <IconTrophy size={16} />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[12px] font-semibold text-text">
+                    Share results with the squad
+                  </span>
+                  <span className="mt-0.5 block text-[11px] leading-relaxed text-muted">
+                    Everyone who logs this session lands on one board the whole team can see.
+                  </span>
+                </span>
+                <span
+                  className={`relative h-5 w-9 flex-shrink-0 rounded-full transition-colors ${
+                    form.teamWorkout ? "bg-primary" : "bg-surface-2 border border-border"
+                  }`}
+                >
+                  <span
+                    className={`absolute top-0.5 h-4 w-4 rounded-full bg-background transition-all ${
+                      form.teamWorkout ? "left-[1.15rem]" : "left-0.5"
+                    }`}
+                  />
+                </span>
+              </button>
+
+              {form.teamWorkout && (
+                <div className="mt-1.5 grid grid-cols-2 gap-1.5">
+                  {boardOptions.map((o) => {
+                    const active = form.board === o.key;
+                    return (
+                      <button
+                        key={o.key}
+                        type="button"
+                        onClick={() => setForm((f) => ({ ...f, board: o.key }))}
+                        className={`rounded-xl border px-3 py-2.5 text-left ${
+                          active ? "border-primary bg-primary-tint" : "border-border bg-surface"
+                        }`}
+                      >
+                        <span className="block text-[12px] font-semibold text-text">{o.label}</span>
+                        <span className="mt-0.5 block text-[11px] leading-relaxed text-muted">
+                          {o.sub}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </>
+          )}
 
           {/* repeat weekly — lots of sessions recur (e.g. every Tue/Thu) */}
           {cat && (

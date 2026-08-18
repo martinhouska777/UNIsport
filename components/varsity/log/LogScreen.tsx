@@ -30,6 +30,11 @@ import {
 } from "@/lib/varsity/coachPlan";
 import { estimateForSession, formatMetrics } from "@/lib/varsity/logParse";
 import { scanErgPhoto, minutesToClock } from "@/lib/varsity/ergScan";
+import { deriveSplitSec, deriveTotalSec } from "@/lib/varsity/ergMath";
+import { fetchAthleteProfile } from "@/lib/varsity/athleteProfile";
+import { shareResult, unshareResult, intervalsFromScan } from "@/lib/varsity/resultsStore";
+import { uploadErgPhoto } from "@/lib/varsity/ergPhotos";
+import type { ErgScanInterval } from "@/lib/varsity/ergScan";
 import {
   fetchLogsInRange,
   savePlanLog,
@@ -40,6 +45,7 @@ import {
   type LogDraft,
 } from "@/lib/varsity/logStore";
 import {
+  IconTrophy,
   IconCamera,
   IconPlus,
   IconCheck,
@@ -105,14 +111,56 @@ function LogEditor({
   const fileRef = useRef<HTMLInputElement>(null);
   const [scanning, setScanning] = useState(false);
   const [scanMsg, setScanMsg] = useState<string | null>(null);
+  /*
+    What the scan produced beyond the three visible fields. Rate and watts have
+    no field of their own (they go in the note); the per-interval rows have no
+    field at all; and `image` is the photo itself, which becomes the evidence
+    attached to a team-workout result. None of it survives a manual edit with no
+    fresh scan — which is honest: the row then says exactly what was last saved.
+  */
+  const [scanned, setScanned] = useState<{
+    strokeRate: number | null;
+    watts: number | null;
+    monitor: string | null;
+    intervals: ErgScanInterval[];
+    image: string | null;
+  }>({ strokeRate: null, watts: null, monitor: null, intervals: [], image: null });
+
+  /*
+    TEAM WORKOUT: the coach flagged this session, so saving it also puts the
+    result on the squad's board (lib/varsity/resultsStore.ts). The athlete's own
+    log stays private either way — this is the one piece that is shared, and the
+    editor says so out loud rather than doing it silently.
+  */
+  const teamWorkout = state.mode === "plan" && !!state.session.teamWorkout;
+  // Name and body weight for the board row, read once so Save stays instant.
+  // The weight is a SNAPSHOT: watts-per-kilo should use the weight they pulled
+  // this piece at, not whatever the profile says months later.
+  const [me, setMe] = useState<{ name: string; weightKg: number | null }>({
+    name: "",
+    weightKg: null,
+  });
+  useEffect(() => {
+    if (!teamWorkout) return;
+    let active = true;
+    fetchAthleteProfile(athleteId).then((b) => {
+      if (active) setMe({ name: b.name, weightKg: b.profile.weightKg });
+    });
+    return () => {
+      active = false;
+    };
+  }, [teamWorkout, athleteId]);
 
   const handleScan = async (file: File | undefined) => {
     if (!file) return;
     setScanning(true);
     setScanMsg(null);
-    const { result, error } = await scanErgPhoto(file);
+    const { result, error, image } = await scanErgPhoto(file);
     setScanning(false);
     if (error || !result) {
+      // Keep the photo even when the read failed — an unreadable screen is
+      // exactly the one a human needs to look at.
+      setScanned({ strokeRate: null, watts: null, monitor: null, intervals: [], image: image ?? null });
       setScanMsg(
         error === "unconfigured"
           ? "Photo scanning isn't switched on yet — enter the numbers by hand."
@@ -120,6 +168,13 @@ function LogEditor({
       );
       return;
     }
+    setScanned({
+      strokeRate: result.strokeRate,
+      watts: result.avgWatts,
+      monitor: result.monitor,
+      intervals: result.intervals ?? [],
+      image: image ?? null,
+    });
     if (result.totalMinutes != null) setMinutes(String(Math.round(result.totalMinutes)));
     if (result.totalMetres != null) setMetres(String(result.totalMetres));
     if (result.splitPer500) setSplit(result.splitPer500);
@@ -162,11 +217,46 @@ function LogEditor({
         : existing
           ? await updateLog(athleteId, existing.id, draft)
           : await saveExtraLog(athleteId, draft);
-    setBusy(false);
     if (res.error) {
+      setBusy(false);
       console.error("save log:", res.error);
       return;
     }
+
+    // Team workout → also put this on the squad board. The split is stored in
+    // seconds so the board can rank without re-parsing text, and the time is
+    // rebuilt from split × distance where possible (the Minutes field is whole
+    // minutes, which is a quarter of a minute out on a 2K).
+    if (state.mode === "plan" && state.session.teamWorkout) {
+      const splitSec = deriveSplitSec(draft.split, draft.minutes, draft.metres);
+      const totalSec = deriveTotalSec(splitSec, draft.metres, draft.minutes);
+      // The photo is uploaded on SAVE, not on scan, so an abandoned edit never
+      // leaves an orphan image in the bucket. A failed upload is not a failed
+      // save: the result still goes up, just without its picture.
+      const photoPath = scanned.image
+        ? await uploadErgPhoto(athleteId, state.dayKey, scanned.image)
+        : null;
+      const shared = await shareResult(athleteId, {
+        dayKey: state.dayKey,
+        athleteName: me.name,
+        minutes: totalSec != null ? totalSec / 60 : draft.minutes,
+        metres: draft.metres,
+        split: draft.split,
+        splitSec,
+        strokeRate: scanned.strokeRate,
+        watts: scanned.watts,
+        weightKg: me.weightKg,
+        monitor: scanned.monitor,
+        photoPath,
+        intervals: intervalsFromScan(scanned.intervals),
+        note: draft.note,
+      });
+      // The private log is already saved; a board that refused the row is worth
+      // knowing about but must not look like the log failed.
+      if (shared.error) console.error("share result:", shared.error);
+    }
+
+    setBusy(false);
     onSaved();
   };
 
@@ -174,6 +264,11 @@ function LogEditor({
     if (!existing) return;
     setBusy(true);
     await deleteLog(athleteId, existing.id);
+    // Deleting the log takes the result off the board with it — otherwise a
+    // time stays up for a session its owner says they never did.
+    if (state.mode === "plan" && state.session.teamWorkout) {
+      await unshareResult(athleteId, state.dayKey);
+    }
     setBusy(false);
     onSaved();
   };
@@ -202,6 +297,18 @@ function LogEditor({
               </div>
               {state.session.description.trim() && (
                 <p className="mt-1.5 text-[12px] leading-relaxed text-muted">{state.session.description}</p>
+              )}
+              {teamWorkout && (
+                <div className="mt-2.5 flex items-start gap-2 border-t border-border pt-2.5">
+                  <span className="mt-px text-primary">
+                    <IconTrophy size={13} />
+                  </span>
+                  <p className="text-[11px] leading-relaxed text-muted">
+                    <span className="font-semibold text-text">Team workout.</span> What you save
+                    here also goes on the squad&rsquo;s board for this session. The rest of your log
+                    stays private.
+                  </p>
+                </div>
               )}
             </div>
           ) : (
@@ -252,6 +359,12 @@ function LogEditor({
                 <IconCamera size={16} /> {scanning ? "Reading photo…" : "Scan C2 / RP3 monitor"}
               </button>
               {scanMsg && <p className="mt-1.5 text-[11px] text-muted">{scanMsg}</p>}
+              {teamWorkout && (
+                <p className="mt-1.5 text-[11px] leading-relaxed text-muted">
+                  On a team workout the photo is kept with your result, so anyone can check the
+                  screen it came off — and any splits on it become your interval breakdown.
+                </p>
+              )}
             </>
           )}
 
