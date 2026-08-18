@@ -45,10 +45,8 @@ still meets everything in order.
 | Coach section (site) | `components/landing/CoachSection.tsx` | Built, native, tokenised |
 | Coach section (prototype) | `renderCoach()` in `build-story.mjs` | Built, in the artifact |
 | Coach design piece | `mockups/coaches/` | The original hand-over |
-| Coach preview route | `app/coach-preview/page.tsx` | Scratch — delete once slotted in |
 | **Campus Colours (site)** | `components/landing/CampusColours.tsx` | **Built, native** — the student closer |
 | **Blade Lock (site)** | `components/landing/BladeLock.tsx` | **Built, native** — the varsity closer |
-| Closers preview route | `app/closers-preview/page.tsx` | Scratch — delete once slotted in |
 | Per-school screens for the closers' phones | `public/landing/closers/{gyms,vhome}-*.webp` | 16 files, 900×1480, from `recolor-shots.mjs` |
 | **The live landing** | `app/page.tsx` → `components/landing/LandingPage.tsx` | **The new page** — stories, closers, coach, FAQ, about |
 | Scroll animations | `scripts/landing/build-story.mjs` → `story.html` | Built, published as an artifact |
