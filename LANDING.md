@@ -50,7 +50,7 @@ still meets everything in order.
 | **Blade Lock (site)** | `components/landing/BladeLock.tsx` | **Built, native** — the varsity closer |
 | Closers preview route | `app/closers-preview/page.tsx` | Scratch — delete once slotted in |
 | Per-school screens for the closers' phones | `public/landing/closers/{gyms,vhome}-*.webp` | 16 files, 900×1480, from `recolor-shots.mjs` |
-| Live landing (old) | `app/page.tsx` + `components/landing/*` | Still the pre-animation version |
+| **The live landing** | `app/page.tsx` → `components/landing/LandingPage.tsx` | **The new page** — stories, closers, coach, FAQ, about |
 | Scroll animations | `scripts/landing/build-story.mjs` → `story.html` | Built, published as an artifact |
 | Animation runtime | `scripts/landing/story-script.js` | Vanilla DOM; not yet React |
 | The two closers (prototype) | `webpage/*.html` | Bundled Design apps, iframed — still what the artifact shows |
