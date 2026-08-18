@@ -43,6 +43,10 @@ type DemoPiece = {
   offsetSec: number;
   rate: number; // strokes per minute the piece is rowed at
   turnout: number; // roughly what fraction of the squad logged it
+  /* Seconds per 500 m to ADD because this edition is older. The squad has been
+     getting faster, so an eight-week-old 2k sits a couple of seconds down — it
+     is what gives "compare with last time" something to compare. */
+  drift?: number;
   /* A piece rowed as reps has an interval screen behind it. `repOffsets` is the
      shape of the effort: seconds per 500 m off the athlete's average for the
      piece, one per rep. They sum to zero, so the reps and the summary agree —
@@ -51,8 +55,12 @@ type DemoPiece = {
 };
 
 export const demoPieces: DemoPiece[] = [
+  /* The same pieces come round again and again — that repetition is the whole
+     point of a board. Each older edition carries a `drift`, so the squad is
+     visibly quicker now than it was ten weeks ago. */
   { daysAgo: 2, period: "AM", description: "2k test", intensity: "hard", board: "ranked",
-    metres: 2000, offsetSec: 0, rate: 34, turnout: 0.94 },
+    metres: 2000, offsetSec: 0, rate: 34, turnout: 0.94,
+    reps: { metres: 500, offsets: [-0.9, 0.3, 0.9, -0.3] } },
   { daysAgo: 5, period: "PM", description: "8×500m, 1:30 rest", intensity: "hard", board: "ranked",
     metres: 4000, offsetSec: -2.5, rate: 32, turnout: 0.83,
     reps: { metres: 500, offsets: [-1.5, -0.5, 0, 0.4, 0.8, 1.0, 0.6, -0.8] } },
@@ -63,7 +71,30 @@ export const demoPieces: DemoPiece[] = [
     minutes: 30, offsetSec: 13, rate: 20, turnout: 0.72 },
   { daysAgo: 16, period: "AM", description: "3×25' UT2", intensity: "UT2", board: "average",
     minutes: 75, offsetSec: 21, rate: 20, turnout: 0.89 },
+
+  // Earlier editions of the same pieces.
+  { daysAgo: 24, period: "PM", description: "8×500m, 1:30 rest", intensity: "hard", board: "ranked",
+    metres: 4000, offsetSec: -2.5, rate: 32, turnout: 0.79, drift: 1.1,
+    reps: { metres: 500, offsets: [-1.3, -0.4, 0.1, 0.5, 0.9, 0.9, 0.5, -1.2] } },
+  { daysAgo: 34, period: "AM", description: "30' r20", intensity: "UT1", board: "ranked",
+    minutes: 30, offsetSec: 13, rate: 20, turnout: 0.7, drift: 1.4 },
+  { daysAgo: 38, period: "AM", description: "2k test", intensity: "hard", board: "ranked",
+    metres: 2000, offsetSec: 0, rate: 34, turnout: 0.9, drift: 1.8,
+    reps: { metres: 500, offsets: [-0.8, 0.2, 1.0, -0.4] } },
+  { daysAgo: 52, period: "PM", description: "8×500m, 1:30 rest", intensity: "hard", board: "ranked",
+    metres: 4000, offsetSec: -2.5, rate: 31, turnout: 0.75, drift: 2.2,
+    reps: { metres: 500, offsets: [-1.1, -0.3, 0.2, 0.6, 1.0, 0.8, 0.3, -1.5] } },
+  { daysAgo: 70, period: "AM", description: "2k test", intensity: "hard", board: "ranked",
+    metres: 2000, offsetSec: 0, rate: 33, turnout: 0.86, drift: 3.4,
+    reps: { metres: 500, offsets: [-0.6, 0.3, 1.1, -0.8] } },
 ];
+
+/*
+  One rower is on an RP3 rather than a Concept2 — there is one in most boat
+  houses, and its split is not the erg's. The board lists them apart instead of
+  ranking them, which is what the squad's own spreadsheet has always done.
+*/
+const RP3_ATHLETE = "joseph-baker";
 
 // Rowers only — a coxswain doesn't sit on an erg board.
 const rowers = () => roster.filter((a) => !a.cox);
@@ -176,7 +207,7 @@ export function demoTeamPlan(
       // "9 of 24 logged" line, so the example has to show it.
       if (r() > piece.turnout) continue;
 
-      const splitSec = base500(a.id) + piece.offsetSec + (r() * 4 - 1.5);
+      const splitSec = base500(a.id) + piece.offsetSec + (piece.drift ?? 0) + (r() * 4 - 1.5);
       const totalSec = piece.metres != null
         ? (splitSec * piece.metres) / 500
         : (piece.minutes ?? 0) * 60;
@@ -196,6 +227,7 @@ export function demoTeamPlan(
         strokeRate: piece.rate,
         watts: null, // derived from the split, exactly as a hand-typed result is
         weightKg: teamProfile(a.id).weightKg,
+        monitor: a.id === RP3_ATHLETE ? "RP3" : "C2",
         photoPath: demoMonitorImage(
           mine ? me!.name || "You" : a.name,
           totalSec,

@@ -63,6 +63,9 @@ export type TeamResult = {
   strokeRate: number | null;
   watts: number | null;
   weightKg: number | null;
+  // Which machine it was rowed on. 'RP3' results sit in their own block rather
+  // than being ranked against ergs — the two read different splits.
+  monitor: string | null;
   photoPath: string | null; // the monitor shot in storage (lib/varsity/ergPhotos.ts)
   intervals: ResultInterval[] | null; // per-rep rows, when the screen had them
   note: string;
@@ -83,6 +86,7 @@ type Row = {
   stroke_rate: number | null;
   watts: number | null;
   weight_kg: number | null;
+  monitor: string | null;
   photo_path: string | null;
   intervals: ResultInterval[] | null;
   note: string | null;
@@ -100,6 +104,7 @@ const rowToResult = (r: Row): TeamResult => ({
   strokeRate: r.stroke_rate,
   watts: r.watts,
   weightKg: r.weight_kg,
+  monitor: r.monitor,
   photoPath: r.photo_path,
   intervals: r.intervals ?? null,
   note: r.note ?? "",
@@ -116,6 +121,7 @@ const draftToRow = (athleteId: string, d: ResultDraft) => ({
   stroke_rate: d.strokeRate,
   watts: d.watts,
   weight_kg: d.weightKg,
+  monitor: d.monitor,
   photo_path: d.photoPath,
   intervals: d.intervals,
   note: d.note,

@@ -15,14 +15,30 @@
       them with; the screen the numbers came off is the evidence. It is also
       what makes a misread scan fixable.
 
+  And the question a single result can never answer on its own: AM I GETTING
+  FASTER. Every previous go this squad has had at the same piece is listed with
+  the change from the one before it, and a best marked. "Same piece" is decided
+  by fingerprint, not by the coach's wording — a 2K is a 2K whether it was typed
+  as "2k test" or "2000m".
+
   All colours are theme tokens.
 */
 import { useEffect, useState } from "react";
 import Sheet from "@/components/varsity/Sheet";
 import { ergPhotoUrl } from "@/lib/varsity/ergPhotos";
 import { secToClock, secToSplit, deriveWatts, wattsPerKg } from "@/lib/varsity/ergMath";
-import { initialsOf } from "@/lib/varsity/teamBoard";
+import { sessionLabel } from "@/lib/varsity/coachPlan";
+import {
+  initialsOf,
+  athleteHistory,
+  improvementLabel,
+  metricMeta,
+  type PastPiece,
+  type MetricKey,
+  type TeamWorkout,
+} from "@/lib/varsity/teamBoard";
 import type { TeamResult } from "@/lib/varsity/resultsStore";
+import { IconStar } from "@/components/icons";
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
@@ -37,11 +53,18 @@ function Stat({ label, value }: { label: string; value: string }) {
 
 export default function ResultDetail({
   result,
-  dateLabel,
+  workout,
+  history,
+  metric,
   onClose,
 }: {
   result: TeamResult;
-  dateLabel: string;
+  workout: TeamWorkout;
+  /* Every go this squad has had at the same piece, newest first, INCLUDING the
+     one on screen — so the run reads as one story rather than "today" and "some
+     other times". */
+  history: PastPiece[];
+  metric: MetricKey;
   onClose: () => void;
 }) {
   const [photo, setPhoto] = useState<string | null>(null);
@@ -56,6 +79,11 @@ export default function ResultDetail({
       active = false;
     };
   }, [result.photoPath]);
+
+  const dateLabel = `${workout.dateLabel} · ${workout.period} · ${
+    workout.session.description.trim() || sessionLabel(workout.session)
+  }`;
+  const runs = athleteHistory(history, result.athleteId, metric);
 
   const splitSec = result.splitSec;
   const watts = deriveWatts(result.watts, splitSec);
@@ -179,6 +207,56 @@ export default function ResultDetail({
           </div>
           <p className="mt-1.5 px-0.5 text-[11px] leading-relaxed text-muted">
             Longer bar = slower rep. The fastest one is green.
+          </p>
+        </>
+      )}
+
+      {/* am I getting faster */}
+      {runs.length > 1 && (
+        <>
+          <div className="mb-2 mt-4 px-0.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
+            Every {metricMeta(metric).label.toLowerCase()} on this piece
+          </div>
+          <div className="overflow-hidden rounded-2xl border border-border bg-surface">
+            {runs.map((point, i) => {
+              const current = point.dayKey === workout.dayKey;
+              const better = point.improvement != null && point.improvement > 0.05;
+              const worse = point.improvement != null && point.improvement < -0.05;
+              return (
+                <div
+                  key={point.dayKey}
+                  className={`flex items-center gap-2.5 px-3 py-2.5 ${
+                    i > 0 ? "border-t border-border" : ""
+                  } ${current ? "bg-primary-tint" : ""}`}
+                >
+                  <span className="min-w-0 flex-1 truncate text-[12px] text-text">
+                    {point.dateLabel}
+                    {current && (
+                      <span className="ml-1.5 text-[11px] font-semibold text-primary">this one</span>
+                    )}
+                  </span>
+                  {point.best && (
+                    <span className="flex flex-shrink-0 items-center gap-0.5 text-[10px] font-bold uppercase tracking-wide text-accent">
+                      <IconStar size={10} /> Best
+                    </span>
+                  )}
+                  <span className="flex-shrink-0 text-[13px] font-semibold tabular-nums text-text">
+                    {point.display}
+                  </span>
+                  <span
+                    className={`w-14 flex-shrink-0 text-right text-[11px] font-semibold tabular-nums ${
+                      better ? "text-success" : worse ? "text-danger" : "text-muted"
+                    }`}
+                  >
+                    {point.improvement != null ? improvementLabel(point.improvement, metric) : "—"}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+          <p className="mt-1.5 px-0.5 text-[11px] leading-relaxed text-muted">
+            Each change is against the go before it. Same piece means the same distance or time and
+            the same number of reps — not the same wording.
           </p>
         </>
       )}

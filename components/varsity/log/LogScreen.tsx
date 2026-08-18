@@ -121,9 +121,10 @@ function LogEditor({
   const [scanned, setScanned] = useState<{
     strokeRate: number | null;
     watts: number | null;
+    monitor: string | null;
     intervals: ErgScanInterval[];
     image: string | null;
-  }>({ strokeRate: null, watts: null, intervals: [], image: null });
+  }>({ strokeRate: null, watts: null, monitor: null, intervals: [], image: null });
 
   /*
     TEAM WORKOUT: the coach flagged this session, so saving it also puts the
@@ -159,7 +160,7 @@ function LogEditor({
     if (error || !result) {
       // Keep the photo even when the read failed — an unreadable screen is
       // exactly the one a human needs to look at.
-      setScanned({ strokeRate: null, watts: null, intervals: [], image: image ?? null });
+      setScanned({ strokeRate: null, watts: null, monitor: null, intervals: [], image: image ?? null });
       setScanMsg(
         error === "unconfigured"
           ? "Photo scanning isn't switched on yet — enter the numbers by hand."
@@ -170,6 +171,7 @@ function LogEditor({
     setScanned({
       strokeRate: result.strokeRate,
       watts: result.avgWatts,
+      monitor: result.monitor,
       intervals: result.intervals ?? [],
       image: image ?? null,
     });
@@ -244,6 +246,7 @@ function LogEditor({
         strokeRate: scanned.strokeRate,
         watts: scanned.watts,
         weightKg: me.weightKg,
+        monitor: scanned.monitor,
         photoPath,
         intervals: intervalsFromScan(scanned.intervals),
         note: draft.note,

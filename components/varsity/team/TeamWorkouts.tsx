@@ -157,6 +157,8 @@ export default function TeamWorkouts() {
         <WorkoutBoard
           workout={opened}
           results={openedResults}
+          workouts={workouts}
+          allResults={results}
           squadSize={shownSquadSize}
           myId={userId}
           onClose={() => setOpen(null)}

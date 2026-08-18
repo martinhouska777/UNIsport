@@ -50,6 +50,10 @@ create table if not exists public.varsity_results (
   stroke_rate  int,
   watts        int,       -- average watts (from the monitor, else derived)
   weight_kg    numeric,   -- snapshot, for watts-per-kilo (null = they haven't set one)
+  -- 'C2' | 'RP3' | 'other'. An RP3 reads a different split for the same effort,
+  -- so its results are listed apart rather than ranked against the ergs — the
+  -- squad's own spreadsheet has always kept them in their own block.
+  monitor      text,
   photo_path   text,      -- the monitor photo in storage: '<athlete_id>/<day_key>.jpg'
   -- Per-interval rows read off the monitor, in the order shown, summary row
   -- excluded. [{label, metres, timeSec, splitPer500, strokeRate}]. Null when
@@ -66,6 +70,7 @@ create index if not exists varsity_results_athlete_idx on public.varsity_results
 
 -- Both added after the first version of this table, so the file stays runnable
 -- against a database that already has it.
+alter table public.varsity_results add column if not exists monitor    text;
 alter table public.varsity_results add column if not exists photo_path text;
 alter table public.varsity_results add column if not exists intervals  jsonb;
 
