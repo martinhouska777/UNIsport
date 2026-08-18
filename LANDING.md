@@ -178,8 +178,12 @@ view (`faq[].on`).
   `lib/landingCopy.ts` (marked DRAFT): `interlude.leadInSolo` (no "And"),
   `coach.leadInSolo` + `coach.subSolo` ("the notes your athletes open on
   their phones" instead of "the varsity story above depends on").
-- The tab bar is still **not sticky** (same reason as before). On phones the
-  tabs take a second row that scrolls sideways.
+- The tab bar is **sticky** since 2026-08-18 (`StickyBar.tsx`): pinned like a
+  regular site's, but it slides up while a story or closer (`.ls-story`,
+  `.lc-closer`) is under it — the reason it used to be static — and on a
+  phone also hides on scroll-down / returns on scroll-up. In flow, so no
+  scroll offset moved; suites green. On phones the tabs take a second row
+  that scrolls sideways with a fade while there is more (`TabRow.tsx`).
 - The suites take a URL and skip the story that is not on the page:
   `node verify-site.mjs http://localhost:3000/for/students`, same for
   `verify-site-flight.mjs`. Run them on `/`, `/for/students`, `/for/varsity`.
