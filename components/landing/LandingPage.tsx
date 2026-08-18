@@ -32,7 +32,9 @@ import { studentFeatures, studentStory, varsityFeatures, varsityStory } from "@/
   Every word is in lib/landingCopy.ts.
 
   Every phone on the page shows the real app in light OR dark (PhoneMode):
-  the switch is the small pill pinned bottom-right; the provider wraps the
+  the switch is the small pill pinned bottom-right, shown only while a
+  section holding phone screens is in view (data-phone-screens: the two
+  stories, both closers, the coach's console); the provider wraps the
   whole page so the closers' phones, the flying phone and the coach's five
   all flip together.
 */

@@ -311,7 +311,7 @@ export default function ScrollStory({ id, beats, accent, ref }: Props) {
   const accentVar = { "--sa": `var(--color-l-${accent})` } as CSSProperties;
 
   return (
-    <div ref={root} className="ls-story" id={id} data-story={id} style={accentVar}>
+    <div ref={root} className="ls-story" id={id} data-story={id} data-phone-screens style={accentVar}>
       <div ref={stage} className="ls-stage">
         {/* the rail */}
         <div className="ls-rail" role="group" aria-label="Steps">
