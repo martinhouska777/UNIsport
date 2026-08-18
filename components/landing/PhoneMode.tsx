@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useSyncExternalStore, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
 
 /*
   LIGHT / DARK PHONE SCREENS.
@@ -101,10 +101,41 @@ function Moon() {
   );
 }
 
-/* The switch: a small pill pinned bottom-right, over every section, so it is
-   at hand while a story is scrolling. Two buttons, the current one filled. */
+/* The switch: a small pill pinned bottom-right — but only while something it
+   can flip is on screen. The sections that hold phone screens (both scroll
+   stories, both closers, the coach's console) carry `data-phone-screens`; an
+   IntersectionObserver over them shows the pill while any one of them is in
+   view and fades it out over the hero, the interlude, the FAQ, the close.
+   Server-rendered hidden; the first phone is a screen below the fold, so the
+   client has resolved it before it could matter. Two buttons, the current
+   one filled. */
+export const PHONE_SCREENS_ATTR = "data-phone-screens";
+
+function usePhoneScreensOnScreen() {
+  const [on, setOn] = useState(false);
+  useEffect(() => {
+    const els = Array.from(document.querySelectorAll(`[${PHONE_SCREENS_ATTR}]`));
+    if (!els.length) return;
+    const seen = new Set<Element>();
+    // A section counts once it reaches the middle half of the screen — a
+    // sliver at the very edge does not (the interlude is one screen tall,
+    // and the next story's top would otherwise keep the pill up through it).
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => (e.isIntersecting ? seen.add(e.target) : seen.delete(e.target)));
+        setOn(seen.size > 0);
+      },
+      { rootMargin: "-25% 0px -25% 0px" },
+    );
+    els.forEach((el) => io.observe(el));
+    return () => io.disconnect();
+  }, []);
+  return on;
+}
+
 export function PhoneModeToggle() {
   const { mode, setMode } = usePhoneMode();
+  const shown = usePhoneScreensOnScreen();
   const btn = (m: PhoneMode, label: string, icon: ReactNode) => {
     const on = mode === m;
     return (
@@ -114,6 +145,7 @@ export function PhoneModeToggle() {
         aria-label={`${label} phone screens`}
         title={`${label} phone screens`}
         onClick={() => setMode(m)}
+        tabIndex={shown ? 0 : -1}
         className={`flex h-8 items-center gap-1.5 rounded-full px-3 font-mono text-[11px] tracking-wider uppercase transition-colors ${
           on ? "bg-l-text text-l-bg" : "text-l-text-2 hover:text-l-text"
         }`}
@@ -127,7 +159,10 @@ export function PhoneModeToggle() {
     <div
       role="group"
       aria-label="Phone screens"
-      className="fixed right-4 bottom-4 z-[60] flex items-center gap-0.5 rounded-full border border-l-line bg-l-surface/90 p-1 shadow-2xl backdrop-blur print:hidden sm:right-6 sm:bottom-6"
+      aria-hidden={!shown}
+      className={`fixed right-4 bottom-4 z-[60] flex items-center gap-0.5 rounded-full border border-l-line bg-l-surface/90 p-1 shadow-2xl backdrop-blur transition-[opacity,transform] duration-300 ease-out print:hidden motion-reduce:transition-none sm:right-6 sm:bottom-6 ${
+        shown ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-2 opacity-0"
+      }`}
     >
       {btn("light", "Light", <Sun />)}
       {btn("dark", "Dark", <Moon />)}

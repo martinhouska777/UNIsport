@@ -182,6 +182,7 @@ export default function CampusColours({
       ref={sectionRef}
       id={id}
       data-closer="campus"
+      data-phone-screens
       className={`lc-closer relative z-[1] scroll-mt-20 border-t border-l-line ${pinned ? "lc-pinned" : ""}`}
     >
       <div

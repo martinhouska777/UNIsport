@@ -38,6 +38,7 @@ export default function CoachSection() {
   return (
     <section
       id="coaches"
+      data-phone-screens
       className="relative z-[1] scroll-mt-20 border-t border-l-line px-6 pt-24 pb-28 sm:px-8"
     >
       <div className="mx-auto max-w-[1160px]">

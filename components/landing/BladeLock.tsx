@@ -35,7 +35,7 @@ import { BLADE_PATH, OAR_ART, schools, rgba } from "@/lib/landingSchools";
   behind the phone, shrunk to nothing. When the phone has set down, just the
   blades rise into view above it, close together, already in formation (the
   whole wheel compressed toward its centre, Harvard's blade in the middle,
-  peeking ~90px above the phone); hold a beat; then spread out onto a wheel
+  peeking ~90px above the phone); hold a short beat; then spread out onto a wheel
   that has already started turning, so they arrive into motion. The crew's
   name appears once they are in their places. The way back is the same film
   reversed: the wheel holds, the blades gather into the formation and sink
@@ -320,16 +320,19 @@ export default function BladeLock({
   // The oars, as drawn: hidden behind the phone; when it settles, just the
   // BLADES rise into view above it — close together, already in formation —
   // hold a beat, then spread out to their places in the arc.
+  // Brisk (owner's note, 2026-08-18: the first showing dragged): the rise
+  // takes .45s, the formation holds .2s, the spread .55s — 1.2s in all,
+  // where it used to be 2s.
   const playOars = (delay: number) => {
-    later(() => setPose("park", 0, 800), delay);
-    // The rise takes .8s; the formation then HOLDS for a beat before spreading.
+    later(() => setPose("park", 0, 450), delay);
+    // The rise takes .45s; the formation then HOLDS a short beat before spreading.
     later(() => {
       // The wheel is released the moment the spread BEGINS: the blades glide
       // out onto a wheel already turning, and arrive into motion.
       heldRef.current = false;
-      setPose("form", 0, 800);
-      later(() => setLabelPre(false), 850); // the crew's name, once they are in place
-    }, delay + 1150);
+      setPose("form", 0, 550);
+      later(() => setLabelPre(false), 550); // the crew's name, once they are in place
+    }, delay + 650);
   };
 
   useImperativeHandle(ref, () => ({
@@ -402,6 +405,7 @@ export default function BladeLock({
       ref={sectionRef}
       id={id}
       data-closer="blades"
+      data-phone-screens
       data-held={held || undefined}
       className={`lc-closer relative z-[1] scroll-mt-20 border-t border-l-line ${pinned ? "lc-pinned" : ""}`}
     >
