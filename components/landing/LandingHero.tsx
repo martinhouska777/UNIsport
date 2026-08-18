@@ -57,7 +57,7 @@ export default function LandingHero() {
               className={`group flex flex-col items-start gap-1.5 rounded-2xl border px-5 py-4 text-left transition-colors ${
                 i === 1
                   ? "border-l-varsity-soft hover:border-l-varsity hover:bg-l-varsity-dim"
-                  : "border-l-border hover:border-l-border-hover hover:bg-l-bg-elevated"
+                  : "border-l-line hover:border-l-line-hover hover:bg-l-bg-elevated"
               }`}
             >
               <span
@@ -82,7 +82,7 @@ export default function LandingHero() {
           </Link>
         </p>
 
-        <p className="mt-8 max-w-[60ch] border-t border-l-border pt-6 font-mono text-[11px] leading-relaxed tracking-wide text-l-text-3">
+        <p className="mt-8 max-w-[60ch] border-t border-l-line pt-6 font-mono text-[11px] leading-relaxed tracking-wide text-l-text-3">
           {availability}
         </p>
 

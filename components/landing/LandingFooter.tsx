@@ -3,13 +3,13 @@ import { footer } from "@/lib/landingCopy";
 
 export default function LandingFooter() {
   return (
-    <footer className="relative z-[1] border-t border-l-border px-6 py-10 sm:px-8">
+    <footer className="relative z-[1] border-t border-l-line px-6 py-10 sm:px-8">
       <div className="mx-auto flex max-w-[1280px] flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
         <div className="flex items-center gap-4 font-mono text-xs tracking-wide text-l-text-3">
           <Link href="/" className="font-display text-lg italic tracking-tight text-l-text">
             UNI<span className="text-l-accent">sport</span>
           </Link>
-          <span className="h-3.5 w-px bg-l-border" />
+          <span className="h-3.5 w-px bg-l-line" />
           <span>{footer.tagline}</span>
         </div>
         <div className="flex flex-col items-start gap-2 sm:items-end">
@@ -19,7 +19,7 @@ export default function LandingFooter() {
             <Link href="/privacy" className="text-l-text-3 transition-colors hover:text-l-text-2">
               {footer.privacy}
             </Link>
-            <span className="h-3 w-px bg-l-border" />
+            <span className="h-3 w-px bg-l-line" />
             <Link href="/terms" className="text-l-text-3 transition-colors hover:text-l-text-2">
               {footer.terms}
             </Link>

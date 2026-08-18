@@ -54,7 +54,7 @@ export default function CoachSection() {
   return (
     <section
       id="coaches"
-      className="relative z-[1] scroll-mt-20 border-t border-l-border px-6 pt-24 pb-28 sm:px-8"
+      className="relative z-[1] scroll-mt-20 border-t border-l-line px-6 pt-24 pb-28 sm:px-8"
     >
       <div className="mx-auto max-w-[1160px]">
         {/* ── The opener ── */}
@@ -111,7 +111,7 @@ export default function CoachSection() {
           {coach.facts.map((f) => (
             <div
               key={f.title}
-              className="rounded-2xl border border-l-border bg-l-bg-elevated px-5 py-[22px] text-center"
+              className="rounded-2xl border border-l-line bg-l-bg-elevated px-5 py-[22px] text-center"
             >
               <b className="block font-display text-[clamp(22px,2.6vw,28px)] font-normal tracking-tight text-balance text-l-text">
                 {f.title}

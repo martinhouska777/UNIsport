@@ -188,11 +188,11 @@ export default function LoginPage() {
         </p>
 
         {!hasSupabaseEnv() ? (
-          <p className="mt-8 rounded-xl border border-l-border bg-l-surface px-4 py-3 text-sm text-l-text-2">
+          <p className="mt-8 rounded-xl border border-l-line bg-l-surface px-4 py-3 text-sm text-l-text-2">
             Sign-in isn&apos;t configured in this environment yet.
           </p>
         ) : confirmSent ? (
-          <div className="mt-8 rounded-xl border border-l-border bg-l-surface px-4 py-5">
+          <div className="mt-8 rounded-xl border border-l-line bg-l-surface px-4 py-5">
             <p className="text-sm text-l-text">Confirm your email</p>
             <p className="mt-1 text-xs text-l-text-2">
               We sent a confirmation link to <span className="text-l-text">{email}</span>. Open it to
@@ -205,7 +205,7 @@ export default function LoginPage() {
         ) : (
           <div className="mt-7">
             {/* Log in / Sign up toggle */}
-            <div className="mb-4 flex rounded-full border border-l-border bg-l-surface p-1 text-sm font-medium">
+            <div className="mb-4 flex rounded-full border border-l-line bg-l-surface p-1 text-sm font-medium">
               <button
                 onClick={() => switchMode("login")}
                 className={`flex-1 rounded-full py-2 transition-colors ${
@@ -237,7 +237,7 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
                 aria-label="Email"
-                className="w-full rounded-full border border-l-border bg-l-surface px-5 py-3 text-base text-l-text placeholder:text-l-text-3 focus:border-l-accent focus:outline-none"
+                className="w-full rounded-full border border-l-line bg-l-surface px-5 py-3 text-base text-l-text placeholder:text-l-text-3 focus:border-(--color-l-accent) focus:outline-none"
               />
               <input
                 type="password"
@@ -248,7 +248,7 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder={isSignup ? "Choose a password (6+ characters)" : "Password"}
                 aria-label="Password"
-                className="w-full rounded-full border border-l-border bg-l-surface px-5 py-3 text-base text-l-text placeholder:text-l-text-3 focus:border-l-accent focus:outline-none"
+                className="w-full rounded-full border border-l-line bg-l-surface px-5 py-3 text-base text-l-text placeholder:text-l-text-3 focus:border-(--color-l-accent) focus:outline-none"
               />
               <button
                 type="submit"
@@ -260,14 +260,14 @@ export default function LoginPage() {
             </form>
 
             <div className="my-3 flex items-center gap-3 text-[11px] text-l-text-2">
-              <span className="h-px flex-1 bg-l-border" />
+              <span className="h-px flex-1 bg-l-line" />
               or
-              <span className="h-px flex-1 bg-l-border" />
+              <span className="h-px flex-1 bg-l-line" />
             </div>
 
             <button
               onClick={signInWithGoogle}
-              className="w-full rounded-full border border-l-border bg-l-surface px-5 py-3 text-sm font-medium text-l-text"
+              className="w-full rounded-full border border-l-line bg-l-surface px-5 py-3 text-sm font-medium text-l-text"
             >
               Continue with Google
             </button>

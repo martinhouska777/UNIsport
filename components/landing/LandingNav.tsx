@@ -12,7 +12,7 @@ import { nav } from "@/lib/landingCopy";
 */
 export default function LandingNav() {
   return (
-    <nav className="relative z-[2] border-b border-l-border bg-l-bg">
+    <nav className="relative z-[2] border-b border-l-line bg-l-bg">
       <div className="mx-auto flex max-w-[1280px] items-center justify-between px-6 py-[18px] sm:px-8">
         <Link href="/" className="font-display text-2xl italic tracking-tight text-l-text">
           UNI<span className="text-l-accent">sport</span>

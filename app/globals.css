@@ -117,13 +117,21 @@
   landing components only ever use the resulting `l-*` utilities (rule 1).
   These DO NOT touch the app theme above. Two product-brand accents:
   blue (student) and gold (varsity) — neutral brand, no university colors.
+
+  NAMING TRAP: because every token starts with `l-`, `border-l-<x>` is read by
+  Tailwind BOTH as "border colour l-<x>" AND as "LEFT border colour <x>" — and
+  when the app theme above happens to define `--color-<x>`, both rules are
+  emitted and the left edge takes the app's colour. That is why the border
+  token is `l-line` and not `l-border` (the app has `--color-border`), and why
+  `border-l-accent` / `border-l-text` must never be written bare (the app has
+  `--color-accent` and `--color-text`): use `border-(--color-l-accent)`.
 */
 @theme inline {
   --color-l-bg: #0a0a0a;
   --color-l-bg-elevated: #111111;
   --color-l-surface: #141414;
-  --color-l-border: #1f1f1f;
-  --color-l-border-hover: #2a2a2a;
+  --color-l-line: #1f1f1f;
+  --color-l-line-hover: #2a2a2a;
   --color-l-text: #f5f5f5;
   --color-l-text-2: #888888;
   --color-l-text-3: #555555;
@@ -334,8 +342,8 @@
 .ls-stage.ls-flip .ls-ann-right { left: auto; right: calc(100% + 10px); flex-direction: row-reverse; }
 .ls-stage.ls-flip .ls-rail { left: auto; right: 16px; }
 .ls-ann-line { width: 32px; height: 1px; }
-.ls-ann-left  .ls-ann-line { background: linear-gradient(to left, var(--color-l-border-hover), transparent); }
-.ls-ann-right .ls-ann-line { background: linear-gradient(to right, var(--color-l-border-hover), transparent); }
+.ls-ann-left  .ls-ann-line { background: linear-gradient(to left, var(--color-l-line-hover), transparent); }
+.ls-ann-right .ls-ann-line { background: linear-gradient(to right, var(--color-l-line-hover), transparent); }
 
 /* The rail: one dot per beat, the active one stretched. */
 .ls-rail {
@@ -344,7 +352,7 @@
 }
 .ls-dot {
   cursor: pointer; width: 5px; height: 5px; border-radius: 50%; border: 0; padding: 0;
-  background: var(--color-l-border-hover);
+  background: var(--color-l-line-hover);
   transition: background 0.3s, height 0.3s, width 0.3s;
 }
 .ls-dot.ls-on { background: var(--sa); height: 18px; border-radius: 3px; }

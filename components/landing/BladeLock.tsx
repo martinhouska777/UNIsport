@@ -401,7 +401,7 @@ export default function BladeLock({
       id={id}
       data-closer="blades"
       data-held={held || undefined}
-      className={`lc-closer relative z-[1] scroll-mt-20 border-t border-l-border ${pinned ? "lc-pinned" : ""}`}
+      className={`lc-closer relative z-[1] scroll-mt-20 border-t border-l-line ${pinned ? "lc-pinned" : ""}`}
     >
       <div
         ref={stick}

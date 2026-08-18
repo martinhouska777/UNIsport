@@ -4,7 +4,7 @@ import { about } from "@/lib/landingCopy";
    /privacy and /terms. */
 export default function About() {
   return (
-    <section id="about" className="relative z-[1] scroll-mt-20 border-t border-l-border px-6 py-24 sm:px-8">
+    <section id="about" className="relative z-[1] scroll-mt-20 border-t border-l-line px-6 py-24 sm:px-8">
       <div className="mx-auto grid max-w-[1160px] gap-10 lg:grid-cols-[1fr_2fr]">
         <div className="font-mono text-[11px] tracking-[0.14em] uppercase text-l-accent">{about.kicker}</div>
         <div>

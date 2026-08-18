@@ -180,7 +180,7 @@ export default function CampusColours({
       ref={sectionRef}
       id={id}
       data-closer="campus"
-      className={`lc-closer relative z-[1] scroll-mt-20 border-t border-l-border ${pinned ? "lc-pinned" : ""}`}
+      className={`lc-closer relative z-[1] scroll-mt-20 border-t border-l-line ${pinned ? "lc-pinned" : ""}`}
     >
       <div
         ref={stick}
@@ -284,7 +284,7 @@ export default function CampusColours({
                 aria-label={sc.name}
                 aria-pressed={on}
                 onClick={() => pick(i)}
-                className="h-2.5 w-2.5 cursor-pointer rounded-full border-0 bg-l-border-hover p-0 transition-[transform,background-color] duration-300 ease-in-out focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-l-text motion-reduce:transition-none"
+                className="h-2.5 w-2.5 cursor-pointer rounded-full border-0 bg-l-line-hover p-0 transition-[transform,background-color] duration-300 ease-in-out focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-l-text motion-reduce:transition-none"
                 style={
                   on
                     ? {
