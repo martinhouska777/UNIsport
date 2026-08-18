@@ -26,7 +26,7 @@ export default function LandingNav() {
           </Link>
           <Link
             href="/login"
-            className="rounded-full bg-l-text px-[18px] py-2.5 text-sm font-medium tracking-tight text-l-bg transition-colors hover:bg-l-accent hover:text-l-text"
+            className="rounded-full bg-l-text px-[18px] py-2.5 text-sm font-medium tracking-tight text-l-bg transition-colors hover:bg-l-accent"
           >
             {nav.cta}
           </Link>

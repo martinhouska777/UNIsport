@@ -12,9 +12,9 @@ export default function About() {
             {about.headline} <em className="italic text-l-accent">{about.headlineEm}</em>
           </h2>
           <p className="mt-6 max-w-[62ch] text-[clamp(16px,1.8vw,18px)] leading-[1.65] text-l-text-2">{about.body}</p>
-          <p className="mt-8 font-mono text-[12px] tracking-wide text-l-text-3">
+          <p className="mt-8 font-mono text-[13px] tracking-wide text-l-text-2">
             <span className="uppercase">{about.contactLabel}</span>{" "}
-            <a href={`mailto:${about.email}`} className="ml-3 text-l-text-2 underline-offset-4 transition-colors hover:text-l-text hover:underline">
+            <a href={`mailto:${about.email}`} className="ml-3 text-l-text underline-offset-4 transition-colors hover:underline">
               {about.email}
             </a>
           </p>

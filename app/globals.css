@@ -125,8 +125,17 @@
   token is `l-line` and not `l-border` (the app has `--color-border`), and why
   `border-l-accent` / `border-l-text` must never be written bare (the app has
   `--color-accent` and `--color-text`): use `border-(--color-l-accent)`.
+
+  `static`, not `inline`: with `inline` the utilities bake the hex in and the
+  variable itself is only emitted where some CSS file happens to say
+  `var(--color-l-…)`. `--color-l-varsity` never was, so `--sa: var(--color-l-
+  varsity)` — the varsity story's and Blade Lock's accent — resolved to
+  nothing (white kicker, invisible button, transparent rail dot). `static`
+  emits every landing variable and makes the utilities read them, which is
+  also what lets an ancestor override the phone chrome (dark screens) or the
+  whole palette (a scratch route) without touching a component.
 */
-@theme inline {
+@theme static {
   --color-l-bg: #0a0a0a;
   --color-l-bg-elevated: #111111;
   --color-l-surface: #141414;
@@ -158,7 +167,13 @@
   /* The interlude's ground: one step warmer than the page, the "background
      steps one surface level darker behind the Varsity Mode opening". */
   --color-l-bg-warm: #0d0c0a;
-  --font-display: var(--font-instrument-serif);
+}
+/* The display face is a plain utility, not a theme alias: next/font puts
+   --font-instrument-serif on the landing's root <div>, not on :root, so an
+   alias emitted at :root would resolve to nothing. This reads the variable
+   where it is. */
+@utility font-display {
+  font-family: var(--font-instrument-serif);
 }
 
 /*
@@ -342,6 +357,9 @@
 .ls-stage.ls-flip .ls-ann-right { left: auto; right: calc(100% + 10px); flex-direction: row-reverse; }
 .ls-stage.ls-flip .ls-rail { left: auto; right: 16px; }
 .ls-ann-line { width: 32px; height: 1px; }
+/* On a 1280 screen the longest label ("Eight weeks of work", V6) ran 2px off
+   the left edge; a shorter pointer line at that width keeps it on. */
+@media (max-width: 1365px) { .ls-ann-line { width: 24px; } }
 .ls-ann-left  .ls-ann-line { background: linear-gradient(to left, var(--color-l-line-hover), transparent); }
 .ls-ann-right .ls-ann-line { background: linear-gradient(to right, var(--color-l-line-hover), transparent); }
 

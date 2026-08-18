@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Phone from "@/components/landing/Phone";
-import { coach, type Segment } from "@/lib/landingCopy";
+import { coach, mailtoHref, type Segment } from "@/lib/landingCopy";
 
 /*
   THE COACH SECTION — the third door, after the varsity story.
@@ -121,6 +121,17 @@ export default function CoachSection() {
               </span>
             </div>
           ))}
+        </div>
+
+        {/* ── The coach's own way in ── */}
+        <div className="mt-12 flex flex-col items-center gap-3 text-center sm:flex-row sm:justify-center sm:gap-5">
+          <span className="font-display text-[clamp(20px,2.4vw,26px)] tracking-tight text-l-text-2">{coach.cta.lead}</span>
+          <a
+            href={mailtoHref(coach.cta.mailSubject, coach.cta.mailBody)}
+            className="inline-flex items-center gap-2 rounded-full bg-l-varsity px-6 py-3 text-[14px] font-semibold tracking-tight text-l-bg transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-l-text"
+          >
+            {coach.cta.label} →
+          </a>
         </div>
       </div>
     </section>

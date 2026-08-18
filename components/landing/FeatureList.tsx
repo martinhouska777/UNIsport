@@ -1,13 +1,16 @@
+import Link from "next/link";
 import FeatureIcon from "@/components/landing/FeatureIcon";
-import type { FeatureRow } from "@/lib/landingCopy";
+import type { FeatureCta, FeatureRow } from "@/lib/landingCopy";
 
 /*
   The feature rows beside a closer — an icon and a title per row, a "+" that
   opens the detail. Native <details>, so it is keyboard-accessible and needs
   no script; the "+" turns into a "×" when open. The accent (blue or gold) is
-  the section's --sa, set by the caller.
+  the section's --sa, set by the caller. Under the rows, the section's own
+  way in — the same button as the hero for students, the invite for varsity —
+  filled in the section's accent with dark text (both clear 7:1).
 */
-export default function FeatureList({ kicker, rows }: { kicker: string; rows: FeatureRow[] }) {
+export default function FeatureList({ kicker, rows, cta }: { kicker: string; rows: FeatureRow[]; cta?: FeatureCta }) {
   return (
     <div className="w-full max-w-[520px]">
       <div className="mb-3 font-mono text-[11px] tracking-[0.14em] uppercase text-(--sa)">{kicker}</div>
@@ -35,6 +38,14 @@ export default function FeatureList({ kicker, rows }: { kicker: string; rows: Fe
           </li>
         ))}
       </ul>
+      {cta && (
+        <Link
+          href={cta.href}
+          className="mt-5 inline-flex items-center gap-2 rounded-full bg-(--sa) px-6 py-3 text-[14px] font-semibold tracking-tight text-l-bg transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-l-text"
+        >
+          {cta.label} →
+        </Link>
+      )}
     </div>
   );
 }

@@ -46,7 +46,7 @@ export default function LandingPage() {
           closerId="campus-colours"
           fromBeat={6}
           toBeat={0}
-          aside={<FeatureList kicker={studentFeatures.kicker} rows={studentFeatures.rows} />}
+          aside={<FeatureList kicker={studentFeatures.kicker} rows={studentFeatures.rows} cta={studentFeatures.cta} />}
         />
         <Interlude />
         <StoryCloser
@@ -57,7 +57,7 @@ export default function LandingPage() {
           closerId="blade-lock"
           fromBeat={5}
           toBeat={0}
-          aside={<FeatureList kicker={varsityFeatures.kicker} rows={varsityFeatures.rows} />}
+          aside={<FeatureList kicker={varsityFeatures.kicker} rows={varsityFeatures.rows} cta={varsityFeatures.cta} />}
         />
         <CoachSection />
         <Faq />
