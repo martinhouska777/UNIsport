@@ -77,6 +77,17 @@ export default function ScrollStory({ id, beats, accent, ref }: Props) {
   const cleanup = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingTap = useRef<[number, number] | null>(null);
   const reduce = useRef(false);
+  // The scroll-linked movements — the phone's slow drift and the tall
+  // captures panning inside it — do not follow the scroll position directly.
+  // A finger (and a mouse wheel) delivers the position in steps, and a strip
+  // tied 1:1 to it jumps in the same steps. So the scroll only sets a TARGET
+  // (px), and a small follower glides the drawn value toward it every frame
+  // (time-based, ~60ms to close most of the gap): steps become motion, with
+  // a lag too short to read as lag. (Reduced motion: no drift, no pans — as before.)
+  const target = useRef<{ drift: number; pans: number[] }>({ drift: 0, pans: [] });
+  const drawn = useRef<{ drift: number; pans: number[] }>({ drift: NaN, pans: [] });
+  const glideRaf = useRef(0);
+  const glideT = useRef(0);
 
   const mo = useMemo(() => beats.map((b) => motionByBeat[b.id] || {}), [beats]);
   // Light or dark captures. A mode change re-renders the <Image>s with the
@@ -204,6 +215,47 @@ export default function ScrollStory({ id, beats, accent, ref }: Props) {
     [commit, mo],
   );
 
+  // The follower: draw the drift and the pans a step closer to their targets,
+  // and keep going on requestAnimationFrame until everything has settled.
+  // Idle when the page is still — no work between scrolls.
+  const glide = useCallback(() => {
+    if (glideRaf.current) return; // already running
+    glideT.current = performance.now();
+    const step = (t: number) => {
+      const dt = Math.min(64, t - glideT.current);
+      glideT.current = t;
+      // the share of the remaining gap closed this frame, time-based so it
+      // feels the same at 60 and 120Hz
+      const k = 1 - Math.exp(-dt / 60);
+      const tg = target.current;
+      const dr = drawn.current;
+      let moving = false;
+      const follow = (have: number, want: number) => {
+        if (Number.isNaN(have)) return want; // first paint: no glide-in
+        const d = want - have;
+        if (Math.abs(d) < 0.25) return want;
+        moving = true;
+        return have + d * k;
+      };
+      const drift = follow(dr.drift, tg.drift);
+      if (drift !== dr.drift && wrap.current) wrap.current.style.transform = `translateY(${drift.toFixed(2)}px)`;
+      dr.drift = drift;
+      for (let i = 0; i < tg.pans.length; i++) {
+        const want = tg.pans[i];
+        if (want === undefined) continue;
+        const have = dr.pans[i] ?? NaN;
+        const now = follow(have, want);
+        if (now !== have) {
+          const img = shots.current[i];
+          if (img) img.style.transform = `translateY(${(-now).toFixed(2)}px)`;
+          dr.pans[i] = now;
+        }
+      }
+      glideRaf.current = moving ? requestAnimationFrame(step) : 0;
+    };
+    glideRaf.current = requestAnimationFrame(step);
+  }, []);
+
   // Which beat owns the middle of the screen. Plain geometry rather than an
   // IntersectionObserver: the markers are pulled under a sticky stage with a
   // negative margin, and observers were not reporting them reliably there.
@@ -234,7 +286,7 @@ export default function ScrollStory({ id, beats, accent, ref }: Props) {
     let q = (window.innerHeight - b.top) / (window.innerHeight + b.height);
     q = Math.max(0, Math.min(1, q));
     // Vertical only — a rotation here read as the phone being tilted.
-    if (wrap.current) wrap.current.style.transform = `translateY(${(14 - q * 28).toFixed(1)}px)`;
+    target.current.drift = 14 - q * 28;
 
     // Tall captures scroll inside the phone.
     shots.current.forEach((img, i) => {
@@ -254,9 +306,10 @@ export default function ScrollStory({ id, beats, accent, ref }: Props) {
       const frac = Math.min(1, from + (to - from) * p);
       const parent = img.parentElement;
       const travel = img.offsetHeight - (parent ? parent.offsetHeight : 0);
-      if (travel > 0) img.style.transform = `translateY(${-(frac * travel).toFixed(1)}px)`;
+      if (travel > 0) target.current.pans[i] = frac * travel;
     });
-  }, [mo, setActive]);
+    glide();
+  }, [mo, setActive, glide]);
 
   useEffect(() => {
     reduce.current = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -283,6 +336,8 @@ export default function ScrollStory({ id, beats, accent, ref }: Props) {
       window.removeEventListener("load", frame);
       if (pending.current) clearTimeout(pending.current);
       if (cleanup.current) clearTimeout(cleanup.current);
+      if (glideRaf.current) cancelAnimationFrame(glideRaf.current);
+      glideRaf.current = 0;
     };
   }, [frame]);
 
