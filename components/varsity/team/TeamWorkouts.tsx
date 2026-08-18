@@ -155,6 +155,7 @@ export default function TeamWorkouts() {
 
       {opened && (
         <WorkoutBoard
+          key={opened.dayKey} // a fresh board when another workout is opened from inside this one
           workout={opened}
           results={openedResults}
           workouts={workouts}
@@ -162,6 +163,7 @@ export default function TeamWorkouts() {
           squadSize={shownSquadSize}
           myId={userId}
           onClose={() => setOpen(null)}
+          onOpenWorkout={(dayKey) => setOpen(dayKey)}
         />
       )}
     </div>

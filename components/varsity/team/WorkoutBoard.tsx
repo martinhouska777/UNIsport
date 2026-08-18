@@ -29,6 +29,7 @@ import { useMemo, useState } from "react";
 import Sheet from "@/components/varsity/Sheet";
 import ResultDetail from "@/components/varsity/team/ResultDetail";
 import BoardTable from "@/components/varsity/team/BoardTable";
+import Delta from "@/components/varsity/team/Delta";
 import { sessionLabel, sessionColor } from "@/lib/varsity/coachPlan";
 import {
   buildBoard,
@@ -37,13 +38,12 @@ import {
   pieceKindOf,
   pieceSignature,
   samePieceHistory,
-  improvementLabel,
   type MetricKey,
   type TeamWorkout,
 } from "@/lib/varsity/teamBoard";
 import { secToClock } from "@/lib/varsity/ergMath";
 import type { TeamResult } from "@/lib/varsity/resultsStore";
-import { IconCamera, IconFloors, IconChevronUp, IconChevronDown } from "@/components/icons";
+import { IconCamera, IconFloors, IconChevronRight } from "@/components/icons";
 
 function Tile({ value, label }: { value: string; label: string }) {
   return (
@@ -66,6 +66,7 @@ export default function WorkoutBoard({
   squadSize,
   myId,
   onClose,
+  onOpenWorkout,
 }: {
   workout: TeamWorkout;
   results: TeamResult[];
@@ -74,6 +75,9 @@ export default function WorkoutBoard({
   squadSize: number | null;
   myId: string | null;
   onClose: () => void;
+  /* Open another team workout in this board's place — how a previous edition
+     of the same piece, tapped in someone's history, is reached. */
+  onOpenWorkout?: (dayKey: string) => void;
 }) {
   const ranked = workout.board === "ranked";
   const [view, setView] = useState<View>("list");
@@ -128,9 +132,14 @@ export default function WorkoutBoard({
         </p>
       </div>
 
-      {/* your own line, first — the thing you opened this to see */}
+      {/* your own line, first — the thing you opened this to see. Tap it for
+          your full result and your run of this piece over time. */}
       {mine && (
-        <div className="mt-2 flex items-center gap-2.5 rounded-2xl border border-primary-line bg-primary-tint px-3.5 py-2.5">
+        <button
+          type="button"
+          onClick={() => setOpenRow(mine.result.id)}
+          className="mt-2 flex w-full items-center gap-2.5 rounded-2xl border border-primary-line bg-primary-tint px-3.5 py-2.5 text-left"
+        >
           <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-primary">
             You
           </span>
@@ -142,22 +151,11 @@ export default function WorkoutBoard({
           <span className="ml-auto text-[14px] font-semibold tabular-nums text-text">
             {mine.display}
           </span>
-          {mine.improvement != null && (
-            <span
-              className={`flex items-center gap-0.5 text-[12px] font-semibold tabular-nums ${
-                mine.improvement > 0.05
-                  ? "text-success"
-                  : mine.improvement < -0.05
-                    ? "text-danger"
-                    : "text-muted"
-              }`}
-            >
-              {mine.improvement > 0.05 && <IconChevronUp size={12} />}
-              {mine.improvement < -0.05 && <IconChevronDown size={12} />}
-              {improvementLabel(mine.improvement, metric)}
-            </span>
-          )}
-        </div>
+          {mine.improvement != null && <Delta improvement={mine.improvement} metric={metric} />}
+          <span className="text-muted">
+            <IconChevronRight size={14} />
+          </span>
+        </button>
       )}
 
       {/* metric filter */}
@@ -283,20 +281,15 @@ export default function WorkoutBoard({
                   )}
                 </div>
               </div>
-              <div className="flex-shrink-0 text-right">
-                <div className="text-[13px] font-semibold tabular-nums text-text">{row.display}</div>
-                {row.improvement != null && (
-                  <div
-                    className={`text-[11px] font-semibold tabular-nums ${
-                      row.improvement > 0.05
-                        ? "text-success"
-                        : row.improvement < -0.05
-                          ? "text-danger"
-                          : "text-muted"
-                    }`}
-                  >
-                    {improvementLabel(row.improvement, metric)}
-                  </div>
+              <div className="flex flex-shrink-0 items-center gap-2">
+                <span className="text-[13px] font-semibold tabular-nums text-text">{row.display}</span>
+                {/* how much faster (or slower) than their own last go at this
+                    piece — a chip, not small print, because it is the second
+                    thing everyone reads on a ranking */}
+                {row.improvement != null ? (
+                  <Delta improvement={row.improvement} metric={metric} />
+                ) : (
+                  previous && <span className="w-[62px] flex-shrink-0" aria-hidden />
                 )}
               </div>
             </button>
@@ -346,8 +339,9 @@ export default function WorkoutBoard({
           }
           workout={workout}
           history={[{ workout, results }, ...past]}
-          metric={metric}
+          kind={kind}
           onClose={() => setOpenRow(null)}
+          onOpenWorkout={onOpenWorkout}
         />
       )}
 

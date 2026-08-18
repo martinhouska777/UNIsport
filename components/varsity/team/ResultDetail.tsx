@@ -16,29 +16,36 @@
       what makes a misread scan fixable.
 
   And the question a single result can never answer on its own: AM I GETTING
-  FASTER. Every previous go this squad has had at the same piece is listed with
-  the change from the one before it, and a best marked. "Same piece" is decided
-  by fingerprint, not by the coach's wording — a 2K is a 2K whether it was typed
-  as "2k test" or "2000m".
+  FASTER. "Compared with previous" is this ONE person's run of the piece: a
+  headline (this go against the last one, against the first one, and their
+  best), then every edition newest first — the piece's own result big (time on
+  a 2K, metres on a 30'), the split / rate / watts / W/kg under it, the change
+  on the go before as a chip, and a bar where the best go is the longest. Each
+  previous edition is a button: tapping it opens THAT day's board in place of
+  this one (onOpenWorkout), so a run of results can be walked back through.
+  "Same piece" is decided by fingerprint, not by the coach's wording — a 2K is
+  a 2K whether it was typed as "2k test" or "2000m".
 
   All colours are theme tokens.
 */
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Sheet from "@/components/varsity/Sheet";
 import { ergPhotoUrl } from "@/lib/varsity/ergPhotos";
 import { secToClock, secToSplit, deriveWatts, wattsPerKg } from "@/lib/varsity/ergMath";
 import { sessionLabel } from "@/lib/varsity/coachPlan";
 import {
   initialsOf,
-  athleteHistory,
-  improvementLabel,
   metricMeta,
+  metricValue,
+  metricDisplay,
   type PastPiece,
+  type PieceKind,
   type MetricKey,
   type TeamWorkout,
 } from "@/lib/varsity/teamBoard";
 import type { TeamResult } from "@/lib/varsity/resultsStore";
-import { IconStar } from "@/components/icons";
+import Delta from "@/components/varsity/team/Delta";
+import { IconStar, IconChevronRight } from "@/components/icons";
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
@@ -55,8 +62,9 @@ export default function ResultDetail({
   result,
   workout,
   history,
-  metric,
+  kind,
   onClose,
+  onOpenWorkout,
 }: {
   result: TeamResult;
   workout: TeamWorkout;
@@ -64,8 +72,13 @@ export default function ResultDetail({
      one on screen — so the run reads as one story rather than "today" and "some
      other times". */
   history: PastPiece[];
-  metric: MetricKey;
+  /* Whether the piece fixed the distance (a 2K) or the time (a 30'): decides
+     which number IS the result in the comparison — time on the one, metres on
+     the other. */
+  kind: PieceKind;
   onClose: () => void;
+  /* Open a previous edition's board in place of this one. */
+  onOpenWorkout?: (dayKey: string) => void;
 }) {
   const [photo, setPhoto] = useState<string | null>(null);
   const [photoFailed, setPhotoFailed] = useState(false);
@@ -83,7 +96,51 @@ export default function ResultDetail({
   const dateLabel = `${workout.dateLabel} · ${workout.period} · ${
     workout.session.description.trim() || sessionLabel(workout.session)
   }`;
-  const runs = athleteHistory(history, result.athleteId, metric);
+  // This person's every go at the piece, newest first. The result compared is
+  // the piece's OWN — time on a distance piece, metres on a timed one — not the
+  // metric the board happens to be sorted by, so the comparison reads the same
+  // whichever pill is lit. Each edition carries its change on the go before,
+  // and a bar length where the best go is the longest.
+  const primary: MetricKey = kind === "distance" ? "time" : "distance";
+  const editions = useMemo(() => {
+    const lowerIsBetter = metricMeta(primary).lowerIsBetter;
+    const mine = history
+      .map((p) => ({ workout: p.workout, mine: p.results.find((r) => r.athleteId === result.athleteId) }))
+      .filter((e): e is { workout: TeamWorkout; mine: TeamResult } => !!e.mine)
+      .sort((a, b) => b.workout.date.getTime() - a.workout.date.getTime());
+    const values = mine.map((e) => metricValue(e.mine, primary));
+    const known = values.filter((v): v is number => v != null);
+    const bestValue = known.length ? (lowerIsBetter ? Math.min(...known) : Math.max(...known)) : null;
+    const worstValue = known.length ? (lowerIsBetter ? Math.max(...known) : Math.min(...known)) : null;
+    const span = bestValue != null && worstValue != null ? Math.abs(worstValue - bestValue) : 0;
+    return mine.map((e, i) => {
+      const value = values[i];
+      const prev = values[i + 1] ?? null; // the go before = the next, older, one
+      return {
+        ...e,
+        value,
+        display: metricDisplay(value, primary),
+        improvement:
+          value != null && prev != null ? (lowerIsBetter ? prev - value : value - prev) : null,
+        best: value != null && value === bestValue,
+        // 40%–100%: the best go fills the row, the worst sits at 40%, so a
+        // tight run of results still reads as tight.
+        frac:
+          value != null && bestValue != null && span > 0.01
+            ? 1 - 0.6 * (Math.abs(value - bestValue) / span)
+            : 1,
+      };
+    });
+  }, [history, result.athleteId, primary]);
+  const thisEdition = editions.find((e) => e.workout.dayKey === workout.dayKey) ?? null;
+  const bestEdition = editions.find((e) => e.best) ?? null;
+  const firstEdition = editions[editions.length - 1] ?? null;
+  const vsFirst =
+    thisEdition && firstEdition && thisEdition !== firstEdition && thisEdition.value != null && firstEdition.value != null
+      ? metricMeta(primary).lowerIsBetter
+        ? firstEdition.value - thisEdition.value
+        : thisEdition.value - firstEdition.value
+      : null;
 
   const splitSec = result.splitSec;
   const watts = deriveWatts(result.watts, splitSec);
@@ -211,52 +268,136 @@ export default function ResultDetail({
         </>
       )}
 
-      {/* am I getting faster */}
-      {runs.length > 1 && (
+      {/* am I getting faster — this person's every go at the piece */}
+      {editions.length > 1 && (
         <>
-          <div className="mb-2 mt-4 px-0.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-            Every {metricMeta(metric).label.toLowerCase()} on this piece
+          <div className="mb-2 mt-4 flex items-baseline justify-between px-0.5">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
+              Compared with previous
+            </span>
+            <span className="text-[11px] text-muted">
+              {editions.length} × this piece
+            </span>
           </div>
-          <div className="overflow-hidden rounded-2xl border border-border bg-surface">
-            {runs.map((point, i) => {
-              const current = point.dayKey === workout.dayKey;
-              const better = point.improvement != null && point.improvement > 0.05;
-              const worse = point.improvement != null && point.improvement < -0.05;
-              return (
-                <div
-                  key={point.dayKey}
-                  className={`flex items-center gap-2.5 px-3 py-2.5 ${
-                    i > 0 ? "border-t border-border" : ""
-                  } ${current ? "bg-primary-tint" : ""}`}
-                >
-                  <span className="min-w-0 flex-1 truncate text-[12px] text-text">
-                    {point.dateLabel}
-                    {current && (
-                      <span className="ml-1.5 text-[11px] font-semibold text-primary">this one</span>
-                    )}
-                  </span>
-                  {point.best && (
-                    <span className="flex flex-shrink-0 items-center gap-0.5 text-[10px] font-bold uppercase tracking-wide text-accent">
-                      <IconStar size={10} /> Best
-                    </span>
+
+          {/* the headline: this go against the last one and against the first,
+              and the best they have ever done it in */}
+          {thisEdition && (
+            <div className="grid grid-cols-3 gap-1.5">
+              <div className="rounded-xl border border-border bg-surface-2 px-2 py-2.5 text-center">
+                <div className="flex justify-center">
+                  {thisEdition.improvement != null ? (
+                    <Delta improvement={thisEdition.improvement} metric={primary} size="lg" />
+                  ) : (
+                    <span className="text-[13px] font-semibold text-muted">—</span>
                   )}
-                  <span className="flex-shrink-0 text-[13px] font-semibold tabular-nums text-text">
-                    {point.display}
-                  </span>
-                  <span
-                    className={`w-14 flex-shrink-0 text-right text-[11px] font-semibold tabular-nums ${
-                      better ? "text-success" : worse ? "text-danger" : "text-muted"
-                    }`}
-                  >
-                    {point.improvement != null ? improvementLabel(point.improvement, metric) : "—"}
-                  </span>
                 </div>
+                <div className="mt-1.5 text-[8px] font-semibold uppercase tracking-[0.12em] text-muted">
+                  vs last time
+                </div>
+              </div>
+              <div className="rounded-xl border border-border bg-surface-2 px-2 py-2.5 text-center">
+                <div className="flex justify-center">
+                  {vsFirst != null ? (
+                    <Delta improvement={vsFirst} metric={primary} size="lg" />
+                  ) : (
+                    <span className="text-[13px] font-semibold text-muted">—</span>
+                  )}
+                </div>
+                <div className="mt-1.5 text-[8px] font-semibold uppercase tracking-[0.12em] text-muted">
+                  vs first · {editions[editions.length - 1].workout.dateLabel.replace(/^\w{3} /, "")}
+                </div>
+              </div>
+              <div className="rounded-xl border border-border bg-surface-2 px-2 py-2.5 text-center">
+                <div className="flex items-center justify-center gap-1 text-[15px] font-semibold leading-none tabular-nums text-text">
+                  <span className="text-accent">
+                    <IconStar size={12} />
+                  </span>
+                  {bestEdition ? bestEdition.display : "—"}
+                </div>
+                <div className="mt-1.5 text-[8px] font-semibold uppercase tracking-[0.12em] text-muted">
+                  Best{bestEdition && bestEdition.workout.dayKey !== workout.dayKey ? ` · ${bestEdition.workout.dateLabel}` : bestEdition ? " · this one" : ""}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* every edition, newest first: the piece's own result big, the rest
+              of the numbers under it, the change on the go before, and a bar —
+              the longest bar is the best go. Tap one to open that day's board. */}
+          <div className="mt-2 overflow-hidden rounded-2xl border border-border bg-surface">
+            {editions.map((e, i) => {
+              const current = e.workout.dayKey === workout.dayKey;
+              const canOpen = !current && !!onOpenWorkout;
+              const eSplit = e.mine.splitSec;
+              const eWatts = deriveWatts(e.mine.watts, eSplit);
+              const eWkg = wattsPerKg(eWatts, e.mine.weightKg);
+              const secondary = [
+                eSplit != null ? `${secToSplit(eSplit, true)} /500m` : null,
+                e.mine.strokeRate != null ? `r${e.mine.strokeRate}` : null,
+                eWatts != null ? `${Math.round(eWatts)} W` : null,
+                eWkg != null ? `${eWkg.toFixed(2)} W/kg` : null,
+              ]
+                .filter(Boolean)
+                .join(" · ");
+              const Row = canOpen ? "button" : "div";
+              return (
+                <Row
+                  key={e.workout.dayKey}
+                  {...(canOpen
+                    ? { type: "button" as const, onClick: () => onOpenWorkout!(e.workout.dayKey) }
+                    : {})}
+                  className={`block w-full px-3 py-2.5 text-left ${i > 0 ? "border-t border-border" : ""} ${
+                    current ? "bg-primary-tint" : canOpen ? "active:bg-surface-2" : ""
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5 text-[12px] text-text">
+                        <span className="truncate font-medium">{e.workout.dateLabel}</span>
+                        {current && (
+                          <span className="flex-shrink-0 text-[10px] font-semibold uppercase tracking-wide text-primary">
+                            this one
+                          </span>
+                        )}
+                        {e.best && (
+                          <span className="flex flex-shrink-0 items-center gap-0.5 text-[10px] font-bold uppercase tracking-wide text-accent">
+                            <IconStar size={10} /> Best
+                          </span>
+                        )}
+                      </div>
+                      {secondary && (
+                        <div className="mt-0.5 truncate text-[11px] tabular-nums text-muted">{secondary}</div>
+                      )}
+                    </div>
+                    <span className="flex-shrink-0 text-[15px] font-semibold tabular-nums text-text">
+                      {e.display}
+                    </span>
+                    {e.improvement != null ? (
+                      <Delta improvement={e.improvement} metric={primary} />
+                    ) : (
+                      <span className="w-[62px] flex-shrink-0 text-center text-[11px] text-muted">first</span>
+                    )}
+                    {canOpen && (
+                      <span className="flex-shrink-0 text-muted">
+                        <IconChevronRight size={14} />
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-surface-2">
+                    <div
+                      className={`h-full rounded-full ${e.best ? "bg-success" : current ? "bg-primary" : "bg-muted"}`}
+                      style={{ width: `${Math.round(e.frac * 100)}%` }}
+                    />
+                  </div>
+                </Row>
               );
             })}
           </div>
           <p className="mt-1.5 px-0.5 text-[11px] leading-relaxed text-muted">
-            Each change is against the go before it. Same piece means the same distance or time and
-            the same number of reps — not the same wording.
+            Longest bar = best go. Each change is against the go before it.
+            {onOpenWorkout && " Tap a previous one to open that day's board."} Same piece means the
+            same distance or time and the same number of reps — not the same wording.
           </p>
         </>
       )}
