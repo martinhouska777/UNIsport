@@ -500,6 +500,15 @@ html {
   background: var(--background);
   overscroll-behavior: none;
 }
+/* Zone 1 (the landing, the legal pages — anything rooted in .l-grid) has no
+   ThemeProvider to paint <html>, so the document behind it stayed the APP's
+   light ground. A phone scrolling faster than it paints — or rubber-banding —
+   showed that light ground through the dark page as a white flash. The
+   document itself is dark wherever the landing is. */
+html:has(.l-grid) {
+  background: var(--color-l-bg);
+  color-scheme: dark;
+}
 
 /*
   <body> deliberately paints NOTHING. The themed color goes on <html> (set by

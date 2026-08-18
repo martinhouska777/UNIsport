@@ -391,7 +391,11 @@ export default function ScrollStory({ id, beats, accent, ref }: Props) {
                         width={size.w}
                         height={size.h}
                         sizes="(max-width: 1023px) 84vw, 360px"
-                        loading={i === 0 ? "eager" : "lazy"}
+                        /* Every frame loads up front (the first with priority):
+                           a phone scrolled fast used to reach a beat whose
+                           lazy frame had not arrived and show a white screen. */
+                        loading="eager"
+                        fetchPriority={i === 0 ? "high" : "low"}
                         className={`ls-shot${m.pan ? " ls-tall" : ""}`}
                       />
                     </div>
