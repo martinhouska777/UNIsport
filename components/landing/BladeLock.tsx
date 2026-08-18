@@ -48,7 +48,7 @@ import { BLADE_PATH, OAR_ART, schools, rgba } from "@/lib/landingSchools";
   Harvard at the front; clicking a blade jumps straight to it.
 
   Like the piece it is one screen tall with the content centred; the stage is
-  a touch shorter than the piece's (560 vs 660) so the whole thing, label
+  a touch shorter than the piece's (600 vs 660) so the whole thing, label
   included, fits a 900px laptop without the piece's page-zoom. The phone is
   the piece's 272px. Below ~700px wide the outermost oars run off the sides,
   exactly as they do in the piece — the phone stays readable, the wheel is
@@ -58,8 +58,12 @@ import { BLADE_PATH, OAR_ART, schools, rgba } from "@/lib/landingSchools";
 const PERIOD_MS = 2600;
 const STEP = 45; // degrees between oars
 const RADIUS = 295;
-const STAGE_H = 560;
-const WHEEL_TOP = 220; // the wheel's centre, from the top of the stage
+const STAGE_H = 600;
+// The wheel's centre, from the top of the stage. With the phone (486 tall)
+// on the stage floor its top is 114px below the centre — the piece's own
+// offset (117) — so the WHOLE blade and a hand of shaft stand clear above
+// the phone, even for the oar directly behind it.
+const WHEEL_TOP = 200;
 const OAR_W = 78;
 const OAR_H = 468;
 // the small formation: the wheel compressed toward its centre (F), smaller (K)
@@ -376,11 +380,11 @@ export default function BladeLock({
     >
       <div
         ref={stick}
-        className="lc-stick flex min-h-svh flex-col items-center justify-center overflow-hidden px-6 py-10 sm:px-8"
+        className="lc-stick flex min-h-svh flex-col items-center justify-center overflow-hidden px-6 py-6 sm:px-8"
       >
         <CloserSplit aside={aside} accent="varsity">
         {/* ── The words ── */}
-        <div className={`lc-words mb-10 max-w-[640px] text-center ${wordsPre ? "lc-pre" : ""}`}>
+        <div className={`lc-words mb-14 max-w-[640px] text-center ${wordsPre ? "lc-pre" : ""}`}>
           <p className="font-display text-[clamp(14px,1.8vw,17px)] text-l-text-2">{copy.leadIn}</p>
           <h2 className="mt-1 mb-1.5 font-display text-[clamp(32px,4.2vw,52px)] font-normal leading-[1.05] tracking-tight text-balance text-l-text">
             {copy.headline}{" "}

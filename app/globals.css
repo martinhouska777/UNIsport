@@ -436,18 +436,6 @@
 }
 .l-fade-up { animation: l-fade-up 0.9s ease-out both; }
 
-/* Placeholder gym-photo gradients for the in-phone mockup screens. */
-.l-gym-mac {
-  background:
-    linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.7) 100%),
-    linear-gradient(135deg, #2a1f1f 0%, #1a0f12 50%, #0a0808 100%);
-}
-.l-gym-malkin {
-  background:
-    linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.7) 100%),
-    linear-gradient(135deg, #1f2a2f 0%, #0f1a1f 100%);
-}
-
 /*
   DRAGGING / OVERSCROLL / ZOOM — native-app feel (rule: match WhatsApp).
 

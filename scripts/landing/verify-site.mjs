@@ -4,13 +4,13 @@
 // the pivot, pans travel, the opening hold holds, phone-click and dot-click
 // navigate, and the mobile layout has no horizontal overflow.
 //
-//   node verify-site.mjs                      # http://localhost:3000/landing-preview
+//   node verify-site.mjs                      # http://localhost:3000/
 //   node verify-site.mjs http://localhost:3000/   # once assembled
 //
 // Screenshots land next to this file (gitignored).
 import puppeteer from "puppeteer-core";
 
-const URL = process.argv[2] || "http://localhost:3000/landing-preview";
+const URL = process.argv[2] || "http://localhost:3000/";
 const browser = await puppeteer.launch({
   executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe",
   headless: "new",

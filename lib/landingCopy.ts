@@ -336,43 +336,51 @@ export const closers = {
   block when the words exist and the page will show it.
 */
 
-export type FeatureRow = { title: string; detail: string };
+/** `icon` names one of the line icons in components/landing/FeatureIcon.tsx. */
+export type FeatureRow = { icon: string; title: string; detail: string };
 
 export const studentFeatures: { kicker: string; rows: FeatureRow[] } = {
   kicker: "The student app",
   rows: [
     {
       /* /gyms — hours, ratings, equipment lists, favourites, the crowd meter (lib/gymSocial.ts) */
+      icon: "gym",
       title: "Every gym on campus, in one list.",
       detail: "Opening hours, ratings, the equipment in each room, and a live crowd meter — the main gyms and the house gyms nobody has a map of.",
     },
     {
       /* /match — ranked by compatibility; /people/[id] — the Why-you-match facts */
+      icon: "partners",
       title: "Training partners, ranked by real fit.",
       detail: "Same gym, same hours, same level — plus interests, hometown, languages, and whether one of you wants a mentor. Every reason is a fact off both profiles.",
     },
     {
       /* messages/PlanCard.tsx — propose, accept, both calendars */
+      icon: "chat",
       title: "Plan a session inside the chat.",
       detail: "One tap proposes it, one tap accepts, and it is on both your calendars.",
     },
     {
       /* the Log Session sheet (tall-logsheet capture): sets and reps, the partner carried over, photos and a note */
+      icon: "log",
       title: "Log it together, set by set.",
       detail: "Every set and rep, the partner carried straight over from the plan, a photo and a note — the memory of the session, not just the numbers.",
     },
     {
       /* PlanCard's confirmation → verified session; lib/supabase/workouts.ts streakStats */
+      icon: "verified",
       title: "Verified sessions and streaks.",
       detail: "You both confirm the session happened; verified days build your streak.",
     },
     {
       /* /leaderboards — lib/leaderboards.ts: campus, house, partners, year */
+      icon: "leaderboard",
       title: "Leaderboards for the whole college.",
       detail: "See where you rank across campus, in your house, among your partners and your year.",
     },
     {
       /* /messages — the open channels (components/messages/ChannelThread.tsx) */
+      icon: "channels",
       title: "Open campus channels.",
       detail: "Everyone at your school is already in — no followers, no requests.",
     },
@@ -384,36 +392,43 @@ export const varsityFeatures: { kicker: string; rows: FeatureRow[] } = {
   rows: [
     {
       /* /varsity/home — the week the coach published (V1) */
+      icon: "plan",
       title: "The training plan, always current.",
       detail: "Water, erg, weights — the week your coach actually built, on your phone the moment it is published. Not a screenshot of a spreadsheet.",
     },
     {
       /* /varsity/home lineup card (V2), coach lineups (coach step 4) */
+      icon: "boat",
       title: "Your name, in the boat.",
       detail: "Lineups published by the coach, seat by seat, the night before — your seat lights up.",
     },
     {
       /* race countdown + coach's note on Home (V3, coach step 1 & 5) */
+      icon: "race",
       title: "The next race, and the note to fix.",
       detail: "A countdown to the race the block points at, and your coach's one technical note, in front of you until it is fixed.",
     },
     {
       /* /varsity/log — Log per prescribed session, Scan C2/RP3, Add extra session (V4) */
+      icon: "logplan",
       title: "Log straight off the plan.",
       detail: "Tap the prescribed session to log it, scan your Concept2 or RP3 monitor to read the numbers off it, or add an extra session.",
     },
     {
       /* /varsity/calendar (V5) and /varsity/profile (V6) */
+      icon: "calendar",
       title: "Your season, on the calendar.",
       detail: "Every logged workout lands on the calendar by itself — your training history, with your consistency beside it.",
     },
     {
       /* /varsity/team — the squad's month (11-varsity-teammate capture) */
+      icon: "squad",
       title: "How the squad is training.",
       detail: "Every teammate's month, and where yours sits next to it — without having to ask anyone.",
     },
     {
       /* /join — the invite; a captain's or coach's link unlocks the mode */
+      icon: "lock",
       title: "Gated by your team.",
       detail: "Varsity Mode opens from a link your captain or coach sends. Nobody else sees it.",
     },
