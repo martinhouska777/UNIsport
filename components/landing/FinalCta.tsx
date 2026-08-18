@@ -1,32 +1,24 @@
-import Link from "next/link";
+import { about, finalCta } from "@/lib/landingCopy";
 
-// Closing call-to-action — sends the student into sign-in.
+/*
+  THE CLOSE — "One app per university. Yours next." The button is for a
+  university, not a student: it opens a mail to the address on /privacy and
+  /terms. (The prototype pointed it at /join, which is the TEAM invite — a
+  different door.)
+*/
 export default function FinalCta() {
   return (
-    <section className="relative z-[1] px-6 py-32 text-center sm:px-8 lg:py-40">
-      <div className="mx-auto max-w-[760px]">
-        <h2 className="mb-10 font-display text-[clamp(48px,7.5vw,96px)] font-normal leading-[0.98] tracking-tight text-l-text">
-          Stop training <em className="italic text-l-accent">alone.</em>
-        </h2>
-        <Link
-          href="/login"
-          className="group mb-6 inline-flex items-center gap-2.5 rounded-full bg-l-accent px-10 py-5 text-[17px] font-medium text-l-text transition-transform hover:-translate-y-0.5"
-        >
-          Get started with your email
-          <svg width="16" height="16" viewBox="0 0 14 14" fill="none" className="transition-transform group-hover:translate-x-1">
-            <path
-              d="M3 7H11M11 7L7 3M11 7L7 11"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </Link>
-        <p className="font-mono text-xs tracking-wide text-l-text-3">
-          Free for students <span className="text-l-text-2">·</span> Available now at Harvard
-        </p>
-      </div>
+    <section className="relative z-[1] flex min-h-[70svh] flex-col items-center justify-center gap-5 px-6 py-24 text-center sm:px-8">
+      <h2 className="max-w-[16ch] font-display text-[clamp(36px,6vw,64px)] font-normal leading-[1.05] tracking-[-0.015em] text-balance text-l-text">
+        {finalCta.headline} <em className="italic text-l-accent">{finalCta.headlineEm}</em>
+      </h2>
+      <p className="max-w-[40ch] text-[16px] leading-[1.6] text-l-text-2">{finalCta.sub}</p>
+      <a
+        href={`mailto:${about.email}`}
+        className="mt-2.5 inline-flex items-center gap-2 rounded-full bg-l-accent px-[30px] py-[15px] text-[15px] font-semibold tracking-tight text-l-bg transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-l-text"
+      >
+        {finalCta.button}
+      </a>
     </section>
   );
 }

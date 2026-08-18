@@ -43,26 +43,26 @@ for (const scr of Object.keys(realShots)) {
 const story1 = [
   {
     key: "01-gyms", kicker: "01 · The gyms",
-    head: "Every gym on campus. One list.",
-    sub: "Opening hours, how busy it is right now, and the house gyms nobody has a map of.",
+    head: "Find every gym on campus in one app.",
+    sub: "Opening hours, ratings, equipment that nobody has a map of, live crowd meter.",
     ann: [{ side: "right", top: 14, text: "Live ratings" }, { side: "left", top: 68, text: "House gyms too" }],
   },
   {
     key: "02-match", kicker: "02 · The people", enter: "tab", tap: [37.5, 95.5],
-    head: "Then it finds your people.",
-    sub: "Sorted by how well you actually fit — same gym, same hours, same level.",
+    head: "Find training partners, make friends, establish contacts.",
+    sub: "Matching sorted by how well you actually fit — same gym, hours, level and much more.",
     ann: [{ side: "right", top: 24, text: "Ranked by real fit" }],
   },
   {
     key: "03-why-you-match", kicker: "03 · The reasons", enter: "zoom", tap: [26, 54],
-    head: "And it tells you why.",
-    sub: "Every reason is a real fact from both profiles. No black box.",
+    head: "View a person's profile for hobbies, interests, concentrations.",
+    sub: "Or get mentored by more experienced people.",
     ann: [{ side: "left", top: 56, text: "Facts, not guesses" }],
   },
   {
     key: "04-plan-a-session", kicker: "04 · The plan", enter: "push", tap: [68, 86.5], pointer: true,
-    head: "Make the plan in the chat.",
-    sub: "One tap proposes a session. One tap accepts. It's on both your calendars.",
+    head: "Plan your session in the chat with one tap.",
+    sub: "One tap proposes the session, one accepts, it's in both calendars.",
     ann: [{ side: "right", top: 52, text: "One tap to accept" }],
   },
   {
@@ -75,16 +75,16 @@ const story1 = [
   },
   {
     key: "tall-logsheet", kicker: "06 · The record", pan: [0.75, 1], side: "left", enter: "none",
-    head: "A photo and a note, while it's fresh.",
-    sub: "Who you trained with, how it went, and a picture if you took one — a training log you'll still want to read in four years.",
+    head: "Make memories stored in the calendar.",
+    sub: "Who you trained with, how it went, and a picture to make memories that last forever.",
     ann: [{ side: "left", top: 50, text: "Photo + note" }],
   },
   {
     // The profile scrolls from the name down to the leaderboard ranks and comes
     // to rest on the session calendar — the month is the closing image.
     key: "tall-profile", kicker: "07 · The proof", pan: [0, 1.3], hold: 0.2, side: "left", enter: "dismiss", tap: [50, 95],
-    head: "29 sessions. 6 partners.", headEm: "Never train alone.",
-    sub: "",
+    head: "29 sessions. 6 partners.", headEm: "Never train alone again.",
+    sub: "Participate in college leaderboards.",
     ann: [{ side: "right", top: 30, text: "Leaderboards" }, { side: "left", top: 76, text: "Every day you trained" }],
   },
 ];
@@ -94,14 +94,14 @@ const story2 = [
     // V1 carries the scroll all the way down to the lineup, so V2's headline
     // arrives with the boat almost centred rather than announcing it early.
     key: "tall-vhome", kicker: "V1 · The plan", pan: [0, 0.5], hold: 0.45,
-    head: "The coach's plan, on every phone.",
+    head: "Training plan always at hand, always current.",
     sub: "Water, erg, weights — the week your coach actually built. Not a screenshot of a spreadsheet.",
     ann: [{ side: "right", top: 18, text: "Week 6 of 15" }],
   },
   {
     key: "tall-vhome", kicker: "V2 · The boat", pan: [0.5, 0.8], enter: "none",
-    head: "Your name, in the boat.",
-    sub: "The lineup your coach published, seat by seat, the night before you row it — the four in the morning, the pair after lunch.",
+    head: "Find your lineup in a second.",
+    sub: "Never look through 40 names in an Excel sheet again. Your name pops right in a boat.",
     ann: [{ side: "left", top: 42, text: "You, 3 seat" }],
   },
   {
@@ -109,14 +109,14 @@ const story2 = [
     // they share one window, and no amount of scrolling separates them.
     // `to` past 1: the pan hits the very bottom mid-beat and rests there.
     key: "tall-vhome", kicker: "V3 · The race", pan: [0.74, 1.2], enter: "none",
-    head: "The next race, and what to fix before it.",
-    sub: "Head of the Charles, 63 days out — and one note from your coach sitting under it until you've sorted it.",
+    head: "Keep your focus up.",
+    sub: "Countdown to the next race and coach's note on what to fix, always in front of you.",
     ann: [{ side: "right", top: 52, text: "Counting down" }, { side: "left", top: 70, text: "Straight from the coach" }],
   },
   {
     key: "13-varsity-log-list", kicker: "V4 · The week", side: "left", enter: "sheet", tap: [50, 92.7],
-    head: "Log straight off the plan.",
-    sub: "Your whole week across the top — every session the coach set, waiting to be logged.",
+    head: "Logging workouts has never been easier.",
+    sub: "Log your workout straight from your training plan, scan your erg for instant extraction, add extra workouts.",
     ann: [{ side: "right", top: 16, text: "Your week, at a glance" }, { side: "left", top: 44, text: "Tap to log" }],
   },
   {
@@ -128,11 +128,106 @@ const story2 = [
   },
   {
     key: "tall-vprofile", kicker: "V6 · The season", pan: [0.06, 0.42], side: "left", enter: "tab", tap: [88.4, 93.3],
-    head: "129 km this week.",
-    sub: "Metres rowed, week by week, all season — consistency you can actually see.",
+    head: "See your statistics.",
+    sub: "Track consistency, check how your teammates are doing, inspire yourself.",
     ann: [{ side: "right", top: 40, text: "Eight weeks of work" }],
   },
 ];
+
+/*
+  THE COACH SECTION — the third door, after both stories.
+
+  Not an animation and not a closer: it is plain layout, so it is emitted
+  natively here rather than given a frame of its own. Ported from the "One
+  Coach, Forty Athletes" design piece (kept in mockups/coaches/). That piece
+  used Harvard crimson; this uses the page's own --gold, because the pre-login
+  page carries no university colour and the console lives inside Varsity Mode.
+
+  Copy is mirrored from lib/landingCopy.ts — the same sync obligation as the
+  beats above, until ScrollStory reads its data from there.
+*/
+const coachSteps = [
+  {
+    key: "coach-1-create", step: "1 &middot; Create",
+    head: "Start with the race.",
+    body: "Name the block, set the dates, add the race you&#8217;re pointing at. That&#8217;s the whole setup &mdash; <b>one screen, under a minute</b>. The app works out the weeks and starts the countdown your athletes will see.",
+    alt: "The new training block form: block name, from and to dates, and an optional goal race with its date",
+  },
+  {
+    key: "coach-2-build", step: "2 &middot; Build",
+    head: "Two taps per session.",
+    body: "Pick the type &mdash; water, erg, weights. Pick the intensity. Then tap one of the <b>five workouts this squad actually uses</b> and the session fills itself in. A full training week takes minutes, not an evening.",
+    alt: "The session builder: type and intensity pickers, the five most-used workouts as tap-to-fill chips, and a Confirm session button",
+  },
+  {
+    key: "coach-3-plan", step: "3 &middot; Plan",
+    head: "Publish the week once.",
+    body: "The season is one block &mdash; fourteen weeks, counting down to the race. Water, erg and weights for every AM and PM, colour-coded by intensity. <b>Publish, and it&#8217;s on every athlete&#8217;s phone.</b> No more screenshots of a spreadsheet in the group chat.",
+    alt: "The Training Plan screen: week 6 of the Fall 2026 block, with colour-coded AM and PM sessions for every day",
+  },
+  {
+    key: "coach-4-lineup", step: "4 &middot; Lineup",
+    head: "Publish the boats.",
+    body: "Seat by seat, cox to bow. Port shows red and starboard green, straight from each rower&#8217;s profile &mdash; <b>stroke on strokeside, seven on bowside</b>, the way the boat is actually rigged. One tap and the lineup is on every phone <b>the night before</b>, not shouted across the dock.",
+    alt: "The Lineup screen: the 1V eight seated cox to bow, port seats in red and starboard seats in green",
+  },
+  {
+    key: "coach-5-notes", step: "5 &middot; Notes",
+    head: "Keep every athlete on track.",
+    body: "One short technical note per athlete. It sits on their Home &mdash; under their race countdown &mdash; until it&#8217;s fixed. Everyone else sees a green <b>&#8220;Good job&#8221;</b>. Forty athletes, one glance, no noise.",
+    alt: "The Athlete Notes screen: the roster with a short technical note per athlete, and a green Good job for everyone without one",
+  },
+];
+
+const coachFacts = [
+  ["1 plan &rarr; 40 phones", "Publish once; every athlete&#8217;s Home updates itself."],
+  ["Boats, the night before", "Lineups land on phones before anyone reaches the dock."],
+  ["The spreadsheet, retired", "Plan, lineups and feedback live in one place, not a group chat."],
+];
+
+function renderCoach() {
+  return `
+<section class="coach" id="coach">
+  <div class="coach-head">
+    <div class="badge">UNIsport &middot; for coaches &amp; athletic departments</div>
+    <p class="lead-in">And for the person who runs the squad &mdash;</p>
+    <h2>The Coach&#8217;s <em>Console.</em></h2>
+    <p class="sub">Students use the app. <b>Coaches run it.</b> From an empty season to a published
+      lineup in five screens &mdash; the plan, the boats and the notes the varsity story above
+      depends on, all built here. These are real screens from the console as it works today.</p>
+  </div>
+
+  <div class="coach-grid">
+    ${coachSteps.map((s) => `
+    <article class="coach-step">
+      <div class="phone coach-phone">
+        <div class="screen">
+          <div class="statusbar"><span>9:41</span><i class="island"></i><span>5G</span></div>
+          <!-- No loading="lazy": the bytes are already in this document as a data
+               URI, so lazy buys no network saving and only delays the decode,
+               which shows as a blank white phone as you scroll past. -->
+          <img class="shot" src="${shots[s.key]}" alt="${s.alt}" decoding="async" />
+          <div class="homebar"><i></i></div>
+        </div>
+      </div>
+      <div>
+        <div class="coach-stepno">${s.step}</div>
+        <h3>${s.head}</h3>
+        <p>${s.body}</p>
+      </div>
+    </article>`).join("")}
+  </div>
+
+  <p class="coach-bridge">Everything the console publishes is the story you just scrolled &mdash;
+    the plan on their Home, their name in the boat, the note under their race.</p>
+  <p class="coach-bridge-sub">A student who signs up brings one user. A coach who adopts brings the
+    whole squad. That&#8217;s why the console exists &mdash; and why it&#8217;s already built.</p>
+
+  <div class="coach-facts">
+    ${coachFacts.map(([t, b]) => `<div class="coach-fact"><b>${t}</b><span>${b}</span></div>`).join("")}
+  </div>
+</section>`;
+}
 
 /*
   THE CLOSERS — the two Claude Design pieces in webpage/.
@@ -498,6 +593,63 @@ const html = `<title>Never Train Alone</title>
   #interlude, #story2 { --sa: var(--gold); }
   #interlude { background: var(--bg-warm); min-height: 100svh; }
 
+  /* ── The coach section: plain layout, gold accent, no choreography ── */
+  .coach { position: relative; z-index: 1; --sa: var(--gold);
+    max-width: 1160px; margin: 0 auto; padding: 96px 28px 30px; }
+  .coach-head { display: flex; flex-direction: column; align-items: center; gap: 18px; text-align: center; }
+  .coach-head .lead-in { font-family: var(--serif); font-size: clamp(19px, 3vw, 27px); color: var(--text-2); }
+  .coach-head h2 {
+    font-family: var(--serif); font-weight: 400;
+    font-size: clamp(42px, 8vw, 88px); line-height: 0.99; letter-spacing: -0.02em;
+    text-wrap: balance; max-width: 14ch;
+  }
+  .coach-head h2 em { font-style: italic; color: var(--sa); }
+  .coach-head .sub {
+    color: var(--text-2); font-size: clamp(16px, 2.2vw, 19px); line-height: 1.6;
+    max-width: 52ch; text-wrap: balance;
+  }
+  .coach b { color: var(--text); font-weight: 600; }
+
+  .coach-grid {
+    display: flex; flex-wrap: wrap; justify-content: center;
+    gap: 60px 44px; margin-top: 48px; align-items: flex-start;
+  }
+  .coach-step { flex: 0 1 300px; display: flex; flex-direction: column; align-items: center; gap: 22px; text-align: center; }
+  /* The story's phone floats on a timer; this one is still — nothing here moves. */
+  .coach-phone { width: min(300px, 80vw); animation: none; cursor: default; border-radius: 40px; padding: 9px; }
+  .coach-phone .screen { border-radius: 32px; }
+  .coach-phone .shot { position: static; width: 100%; height: auto; aspect-ratio: 900 / 1479; }
+  .coach-stepno {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--sa);
+  }
+  .coach-step h3 {
+    font-family: var(--serif); font-weight: 400; margin-top: 6px;
+    font-size: clamp(26px, 3vw, 34px); line-height: 1.08; letter-spacing: -0.015em; text-wrap: balance;
+  }
+  .coach-step p { color: var(--text-2); font-size: 15px; line-height: 1.65; max-width: 36ch; margin-top: 10px; }
+
+  .coach-bridge {
+    margin: 76px auto 0; max-width: 46ch; text-align: center;
+    font-family: var(--serif); font-size: clamp(22px, 3.2vw, 32px);
+    line-height: 1.3; letter-spacing: -0.01em; text-wrap: balance;
+  }
+  .coach-bridge-sub {
+    margin: 14px auto 0; max-width: 52ch; text-align: center;
+    color: var(--text-2); font-size: 15px; line-height: 1.65;
+  }
+  .coach-facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 56px; }
+  .coach-fact {
+    border: 1px solid var(--border); border-radius: 16px; background: var(--bg-elevated);
+    padding: 22px 20px; text-align: center;
+  }
+  .coach-fact b {
+    font-family: var(--serif); font-weight: 400; font-size: clamp(22px, 2.6vw, 28px);
+    letter-spacing: -0.015em; display: block; text-wrap: balance;
+  }
+  .coach-fact span { color: var(--text-2); font-size: 13px; line-height: 1.55; display: block; margin-top: 7px; }
+  @media (max-width: 900px) { .coach-facts { grid-template-columns: 1fr; } .coach { padding-top: 68px; } }
+
   .cta {
     position: relative; z-index: 1; min-height: 70svh;
     display: flex; flex-direction: column; justify-content: center; align-items: center;
@@ -654,6 +806,8 @@ ${closer("closer-blades", "Blade Lock Light.html", "Every crew. One system.", "v
     </div>
   </div>
 </div>
+
+${renderCoach()}
 
 <div class="cta">
   <h2>One app per university. <em>Yours next.</em></h2>
