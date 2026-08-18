@@ -34,7 +34,9 @@ function Body({ parts, className = "" }: { parts: Segment[]; className?: string 
 /* The phone frame the captures sit in is components/landing/CoachPhone.tsx —
    the shared landing Phone, following the light/dark switch. */
 
-export default function CoachSection() {
+/** `solo`: on the Coach view (/for/coaches) there is no varsity story above,
+    so the lead-in and the sub-line that lean on it read their solo variants. */
+export default function CoachSection({ solo = false }: { solo?: boolean }) {
   return (
     <section
       id="coaches"
@@ -47,12 +49,12 @@ export default function CoachSection() {
           <div className="inline-flex items-center gap-2 rounded-full border border-l-varsity-soft bg-l-varsity-dim px-3.5 py-1.5 font-mono text-[11px] uppercase tracking-wider text-l-varsity">
             {coach.badge}
           </div>
-          <p className="font-display text-[clamp(19px,3vw,27px)] text-l-text-2">{coach.leadIn}</p>
+          <p className="font-display text-[clamp(19px,3vw,27px)] text-l-text-2">{solo ? coach.leadInSolo : coach.leadIn}</p>
           <h2 className="max-w-[14ch] font-display text-[clamp(46px,9vw,96px)] font-normal leading-[0.99] tracking-tight text-balance text-l-text">
             {coach.headline} <em className="italic text-l-varsity">{coach.headlineEm}</em>
           </h2>
           <Body
-            parts={coach.sub}
+            parts={solo ? coach.subSolo : coach.sub}
             className="max-w-[52ch] text-[clamp(16px,2.2vw,19px)] leading-relaxed text-balance text-l-text-2"
           />
         </div>

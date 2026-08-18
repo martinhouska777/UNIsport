@@ -8,6 +8,7 @@
 //
 //   node verify-site-flight.mjs                    # http://localhost:3000/
 //   node verify-site-flight.mjs http://localhost:3000/
+//   node verify-site-flight.mjs http://localhost:3000/for/varsity   # a view with one story: the other is skipped
 import puppeteer from "puppeteer-core";
 
 const URL = process.argv[2] || "http://localhost:3000/";
@@ -27,6 +28,9 @@ page.on("pageerror", (e) => console.log("pageerror:", e.message));
 await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 1 });
 await page.goto(URL, { waitUntil: "networkidle2" });
 await wait(2000);
+// The tabbed views (/for/students, /for/varsity) carry ONE story; check what is there.
+const has = await page.evaluate(() => ({ s1: !!document.getElementById("story1"), s2: !!document.getElementById("story2") }));
+console.log("stories on the page:", JSON.stringify(has));
 
 const parkAtEnd = (sid) => page.evaluate((s) => {
   document.documentElement.style.scrollBehavior = "auto";
@@ -109,7 +113,8 @@ async function flyInto(closerId, storyId, label) {
   return { rep, trace };
 }
 
-await flyInto("campus-colours", "story1", "Campus Colours");
+if (has.s1) await flyInto("campus-colours", "story1", "Campus Colours");
+if (has.s2) {
 await flyInto("blade-lock", "story2", "Blade Lock");
 await wait(2500);
 const oars = await page.evaluate(() => {
@@ -122,8 +127,10 @@ const oars = await page.evaluate(() => {
 console.log("oars after landing:", JSON.stringify(oars));
 ok("Blade Lock: oars spread (front oar full-size, visible), name shown", oars.front.op > 0.9 && /scale\(1\.0/.test(oars.front.tr) && !oars.labelPre);
 await page.screenshot({ path: "site-flight-blades-settled.png" });
+}
 
 // ── the student transition there AND back ──
+if (has.s1) {
 console.log("\n=== reverse: story1 <-> campus-colours ===");
 const state = () => page.evaluate(() => {
   const sec = document.getElementById("campus-colours");
@@ -199,6 +206,7 @@ ok("story phone back", !back.storyPhoneHidden);
 ok("closer re-parked after reverse", back.shellHidden === true && back.headsParked);
 ok("replays afresh", again.secTop === 0 && !again.headsParked && again.letter.indexOf("lc-pre") === -1);
 ok("reload at the closer reveals in place, no flight", !restored.flightOn && restored.shellVisible && Math.abs(restored.y - restoreY) < 400);
+}
 
 await browser.close();
 console.log(fails ? `\ndone — ${fails} FAILED` : "\ndone — all green");

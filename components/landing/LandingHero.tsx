@@ -22,7 +22,9 @@ function Arrow({ className = "" }: { className?: string }) {
   );
 }
 
-export default function LandingHero() {
+/** `doors`: false on a view already chosen from the top bar (/for/…), where
+    the three doors would only repeat the tab the visitor just pressed. */
+export default function LandingHero({ doors: showDoors = true }: { doors?: boolean }) {
   return (
     <section
       id="top"
@@ -58,10 +60,12 @@ export default function LandingHero() {
         <p className="mt-4 max-w-[46ch] text-[14px] leading-relaxed text-l-text-2">{availability}</p>
 
         {/* The three doors — blue for the student, gold for the varsity athlete,
-            a gold outline for the coach (their section wears the same gold). */}
+            a gold outline for the coach (their section wears the same gold).
+            Each opens that audience's own view — the same page as its tab. */}
+        {showDoors && (
         <div className="mt-9 grid w-full max-w-[860px] grid-cols-1 gap-3 sm:grid-cols-3">
           {doors.map((d, i) => (
-            <a
+            <Link
               key={d.label}
               href={d.href}
               className={`group flex flex-col items-start gap-1.5 rounded-2xl border px-5 py-4 text-left transition-colors ${
@@ -79,9 +83,10 @@ export default function LandingHero() {
                 <Arrow className="text-l-text-3 transition-transform group-hover:translate-x-1" />
               </span>
               <span className="text-[13px] leading-snug text-l-text-2">{d.sub}</span>
-            </a>
+            </Link>
           ))}
         </div>
+        )}
 
         {/* The other way in. A rower usually arrives holding a link from their
             captain, and shouldn't have to scroll to find where it goes. */}

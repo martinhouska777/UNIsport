@@ -95,13 +95,32 @@ export const nav = {
   cta: hero.primaryCta,
 };
 
-/* THE THREE DOORS under the hero — Student · Varsity athlete · Coach — each
-   jumps to its own section. A visitor who just scrolls meets everything in
-   order anyway. The one-liners reuse lines that already exist above/below. */
+/* THE VIEWS — the tabs in the top bar, like a regular website's (owner,
+   2026-08-18). "/" is the whole page in order; each tab shows ONE audience's
+   part of it (the shared intro, that audience's story or console, the FAQ,
+   the close) or one of the two short pages, and each has its own address so
+   a coach can be sent a link that opens straight on the coach view — the
+   varsity story says the app spreads through group chats.
+   `/varsity` is the app's own varsity area (post-login), so the audience
+   views live under `/for/…`. */
+export type LandingView = "all" | "students" | "varsity" | "coaches" | "about" | "contact";
+export const views: { view: Exclude<LandingView, "all">; label: string; href: string; title: string }[] = [
+  { view: "students", label: "Students", href: "/for/students", title: "UNIsport for students" },
+  { view: "varsity", label: "Varsity", href: "/for/varsity", title: "UNIsport for varsity athletes" },
+  { view: "coaches", label: "Coaches", href: "/for/coaches", title: "UNIsport for coaches" },
+  { view: "about", label: "About", href: "/about", title: "About UNIsport" },
+  { view: "contact", label: "Contact", href: "/contact", title: "Contact UNIsport" },
+];
+
+/* THE THREE DOORS under the hero — Student · Varsity athlete · Coach — the
+   same three views as the tabs, so pressing "Coach" here or "Coaches" in the
+   bar opens the same page (one mechanism, not two). Shown on "/" only: on a
+   view you have already chosen. The one-liners reuse lines that already
+   exist above/below. */
 export const doors = [
-  { label: "Student", sub: hero.kicker.lead, href: "#story1" },
-  { label: "Varsity athlete", sub: hero.kicker.tail, href: "#interlude" },
-  { label: "Coach", sub: "For the person who runs the squad.", href: "#coaches" },
+  { label: "Student", sub: hero.kicker.lead, href: "/for/students" },
+  { label: "Varsity athlete", sub: hero.kicker.tail, href: "/for/varsity" },
+  { label: "Coach", sub: "For the person who runs the squad.", href: "/for/coaches" },
 ];
 
 /* THE AVAILABILITY LINE — directly under the primary button, at a readable
@@ -195,6 +214,9 @@ export const studentStory: Beat[] = [
 
 export const interlude = {
   leadIn: "And if you train for the university itself —",
+  /* On the Varsity view (/for/varsity) nothing comes before it, so the "And"
+     that joins it to the student story goes. Same line otherwise. */
+  leadInSolo: "If you train for the university itself —",
   headline: "Varsity",
   headlineEm: "Mode.",
   sub: "The app your squad has been running out of a group chat.",
@@ -504,8 +526,28 @@ export const about = {
   headline: "Built at Harvard,",
   headlineEm: "for every campus.",
   body: "UNIsport started as the app one campus was missing: every gym in one place, the people worth training with, and the plan that gets you both there — then a mode for the squads that train for the university itself, and a console for the coaches who run them. One app per university, in that university's colours.",
-  contactLabel: "Contact",
   email: "martinhouska777@gmail.com",
+};
+
+/* CONTACT — its own tab (owner, 2026-08-18): the address, and the places
+   the app will be. The socials are DATA: a row renders as a link once it has
+   an `href`; until then it shows as "coming soon", so an account that does
+   not exist yet is never a dead link. Fill `href` in when the account is
+   made (e.g. "https://instagram.com/<handle>"), and put the handle in
+   `handle`. Delete a row to drop the platform. DRAFT for the owner. */
+export type SocialLink = { name: string; handle: string; href: string | null; icon: "instagram" | "tiktok" | "x" };
+export const contact = {
+  kicker: "Contact",
+  headline: "Say hello.",
+  body: "A question, a campus that should be next, a team that wants in — write, or find us where the app is talked about.",
+  emailLabel: "Email",
+  socialsLabel: "Find us",
+  comingSoon: "coming soon",
+  socials: [
+    { name: "Instagram", handle: "", href: null, icon: "instagram" },
+    { name: "TikTok", handle: "", href: null, icon: "tiktok" },
+    { name: "X", handle: "", href: null, icon: "x" },
+  ] as SocialLink[],
 };
 
 /* ─────────────────────────── FOOTER ─────────────────────────── */
@@ -556,6 +598,17 @@ export const coach = {
     { text: "Coaches run it.", bold: true },
     {
       text: " From an empty season to a published lineup in five screens — the plan, the boats and the notes the varsity story above depends on, all built here. These are real screens from the console as it works today.",
+    },
+  ] as Segment[],
+  /* On the Coach view (/for/coaches) there is no varsity story above, so the
+     two lines that lean on it change: the "And" goes, and "the varsity story
+     above depends on" becomes what the athletes see. DRAFT for the owner. */
+  leadInSolo: "For the person who runs the squad —",
+  subSolo: [
+    { text: "Students use the app. " },
+    { text: "Coaches run it.", bold: true },
+    {
+      text: " From an empty season to a published lineup in five screens — the plan, the boats and the notes your athletes open on their phones, all built here. These are real screens from the console as it works today.",
     },
   ] as Segment[],
 

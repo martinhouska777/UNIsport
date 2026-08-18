@@ -48,7 +48,9 @@ still meets everything in order.
 | **Campus Colours (site)** | `components/landing/CampusColours.tsx` | **Built, native** — the student closer |
 | **Blade Lock (site)** | `components/landing/BladeLock.tsx` | **Built, native** — the varsity closer |
 | Per-school screens for the closers' phones | `public/landing/closers/{gyms,vhome}-*.webp` | 16 files, 900×1480, from `recolor-shots.mjs` |
-| **The live landing** | `app/page.tsx` → `components/landing/LandingPage.tsx` | **The new page** — stories, closers, coach, FAQ, about |
+| **The live landing** | `app/page.tsx` → `components/landing/LandingPage.tsx` | **The new page** — stories, closers, coach, FAQ, about, contact |
+| **The tabs / views** | `views` in `lib/landingCopy.ts` → `LandingNav.tsx`; `LandingPage view=…`; routes `app/for/[audience]`, `app/about`, `app/contact`; shared head in `components/landing/routeMeta.ts` | Built (2026-08-18) — see "One page, six views" below |
+| Contact + socials | `components/landing/Contact.tsx`, `contact.socials` in `lib/landingCopy.ts` | Built — Instagram / TikTok / X are "coming soon" until the owner fills in `href` + `handle` |
 | Light / dark phone screens | `components/landing/PhoneMode.tsx`, `public/landing/dark/**` | Built — the switch bottom-right, shown only over the sections with phones (`data-phone-screens`); **dark frames are provisional** (see below) |
 | The link card | `app/page.tsx` metadata, `public/og.png` ← `scripts/landing/make-og.mjs` | Built |
 | Palette B scratch | `app/landing-mono/page.tsx` | **Scratch** — owner to decide, then delete |
@@ -142,6 +144,40 @@ wearing. Natively, `useCloserGate` does the same: a closer only moves while
 on screen and returns to Harvard (un-pinned) once it has scrolled fully out.
 
 ---
+
+## One page, six views (2026-08-18)
+
+The owner asked for "tabs on top like regular webpages" so a coach can see
+just the coach part. Agreed shape: **`/` still shows the whole page in
+order** (the interlude and the coach bridge line only work in sequence, and a
+student who rows should discover Varsity Mode by scrolling); the tabs
+**narrow** it, and each has its own address so it can be sent as a link:
+
+```
+/               all          the page as before
+/for/students   students     intro · Story A → Campus Colours · FAQ · close
+/for/varsity    varsity      intro · Varsity Mode. (solo lead-in) · Story B → Blade Lock · FAQ · close
+/for/coaches    coaches      intro · Coach's Console (solo lead-in + sub) · FAQ · close
+/about          about        About only
+/contact        contact      Contact only — email + the socials row
+```
+
+- One component, one prop: `<LandingPage view=…>`. A story stays welded to its
+  closer; only whole sections are dropped. The hero's three doors open the
+  same three views as the tabs (one mechanism); on a view they are hidden.
+- `/varsity` is the app's own varsity area, hence `/for/…`. Unknown
+  audiences 404 (`dynamicParams = false`).
+- Two lines lean on the section before them and have `…Solo` variants in
+  `lib/landingCopy.ts` (marked DRAFT): `interlude.leadInSolo` (no "And"),
+  `coach.leadInSolo` + `coach.subSolo` ("the notes your athletes open on
+  their phones" instead of "the varsity story above depends on").
+- The tab bar is still **not sticky** (same reason as before). On phones the
+  tabs take a second row that scrolls sideways.
+- The suites take a URL and skip the story that is not on the page:
+  `node verify-site.mjs http://localhost:3000/for/students`, same for
+  `verify-site-flight.mjs`. Run them on `/`, `/for/students`, `/for/varsity`.
+- Socials: `contact.socials` rows render as links once `href` is set; until
+  then a muted "coming soon" chip. Owner to supply handles.
 
 ## The 2026-08-18 review pass — what changed and why
 
