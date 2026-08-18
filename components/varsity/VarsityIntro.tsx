@@ -11,63 +11,14 @@
 
   The oars are the landing page's oars (the Blade Lock closer's drawing): a
   dark handle, shaft and collar, and the school's own blade — Harvard's
-  crimson with the two white wedges — from lib/landingSchools.ts. Same
-  data, same shape, stood upright here. The oar's colours are that data
-  file's illustration colours applied inline (rule 1's content exception),
-  so a school without a blade drawing falls back to the theme's primary.
+  crimson with the two white wedges — from lib/landingSchools.ts, drawn by
+  OarMark (shared with the Varsity Mode mark, VarsityCrest). 250px tall here.
 */
 import { useEffect, useState } from "react";
 import VarsityShield from "@/components/varsity/VarsityShield";
 import { useAppState } from "@/components/AppState";
 import { getUniversity } from "@/lib/themes";
-import { BLADE_PATH, OAR_ART, schools } from "@/lib/landingSchools";
-
-/*
-  One oar, blade at the top. The landing draws it lying down in a 980×160 box
-  (handle at x=0, blade tip at x=980); here the box is turned upright, so
-  the same rects and paths render tip-up. 250px tall like the placeholder it
-  replaces, so the crossing, the crest and the motto sit where they did.
-*/
-function IntroOar({ schoolKey, side }: { schoolKey: string; side: "l" | "r" }) {
-  const s = schools.find((x) => x.key === schoolKey);
-  const clip = `v-intro-blade-${side}-${schoolKey}`; // one id per oar
-  return (
-    <svg width="41" height="250" viewBox="0 0 160 980" fill="none" aria-hidden="true">
-      <defs>
-        <clipPath id={clip}>
-          <path d={BLADE_PATH} />
-        </clipPath>
-      </defs>
-      {/* lying-down coordinates → upright: (x, y) ↦ (y, 980 − x) */}
-      <g transform="translate(0,980) rotate(-90)">
-        <rect x="2" y="72" width="150" height="16" rx="6" fill={OAR_ART.handle} stroke={OAR_ART.line} strokeWidth="1" />
-        <rect x="146" y="75" width="642" height="10" rx="4" fill={OAR_ART.shaft} stroke={OAR_ART.line} strokeWidth="1" />
-        <rect x="784" y="67" width="22" height="26" rx="3" fill={OAR_ART.collar} stroke={OAR_ART.line} strokeWidth="1" />
-        <g transform="translate(280,0) translate(700,95) scale(1.30) translate(-700,-95)">
-          {s ? (
-            <g clipPath={`url(#${clip})`}>
-              <rect x="518" y="44" width="188" height="100" fill={s.blade.base} />
-              {s.blade.marks.map((m, k) =>
-                m.kind === "polygon" ? (
-                  <polygon key={k} points={m.points} fill={m.fill} />
-                ) : m.kind === "path" ? (
-                  <path key={k} d={m.d} fill={m.fill} />
-                ) : m.kind === "rect" ? (
-                  <rect key={k} x={m.x} y={m.y} width={m.w} height={m.h} fill={m.fill} />
-                ) : (
-                  <circle key={k} cx={m.cx} cy={m.cy} r={m.r} fill={m.fill} />
-                ),
-              )}
-            </g>
-          ) : (
-            <path d={BLADE_PATH} fill="var(--primary)" />
-          )}
-          <path d={BLADE_PATH} fill="none" stroke={OAR_ART.outline} strokeWidth="1.5" />
-        </g>
-      </g>
-    </svg>
-  );
-}
+import OarMark from "@/components/varsity/OarMark";
 
 export default function VarsityIntro() {
   const [leaving, setLeaving] = useState(false);
@@ -107,7 +58,7 @@ export default function VarsityIntro() {
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="v-oar-in-left">
             <div className="origin-center rotate-[-32deg]">
-              <IntroOar schoolKey={universityKey} side="l" />
+              <OarMark schoolKey={universityKey} width={41} height={250} />
             </div>
           </div>
         </div>
@@ -116,7 +67,7 @@ export default function VarsityIntro() {
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="v-oar-in-right">
             <div className="origin-center rotate-[32deg]">
-              <IntroOar schoolKey={universityKey} side="r" />
+              <OarMark schoolKey={universityKey} width={41} height={250} />
             </div>
           </div>
         </div>
