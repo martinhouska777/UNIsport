@@ -11,7 +11,8 @@ import Contact from "@/components/landing/Contact";
 import FinalCta from "@/components/landing/FinalCta";
 import LandingFooter from "@/components/landing/LandingFooter";
 import { PhoneModeProvider, PhoneModeToggle } from "@/components/landing/PhoneMode";
-import { studentFeatures, studentStory, varsityFeatures, varsityStory, type LandingView } from "@/lib/landingCopy";
+import Link from "next/link";
+import { seeAll, studentFeatures, studentStory, varsityFeatures, varsityStory, type LandingView } from "@/lib/landingCopy";
 
 /*
   ZONE 1 — THE PUBLIC LANDING, assembled. Neutral product brand only (dark +
@@ -22,10 +23,15 @@ import { studentFeatures, studentStory, varsityFeatures, varsityStory, type Land
 
      /               everything, in order          view="all"
      /for/students   intro · Story A → Campus Colours · FAQ · close
-     /for/varsity    intro · Varsity Mode. · Story B → Blade Lock · FAQ · close
-     /for/coaches    intro · The Coach's Console · FAQ · close
+     /for/varsity    Varsity Mode. (as the opener) · Story B → Blade Lock · FAQ · close
+     /for/coaches    The Coach's Console (its opener opens the page) · FAQ · close
      /about          About
      /contact        Contact
+
+  The student intro is written for students, so it opens "/" and the
+  Students view only; the varsity and coach views open on their own
+  statement (Interlude / CoachSection with `solo`). Every tabbed view ends
+  with the way back to the whole page.
 
   On "/" the order is load-bearing: each story flies into its closer, the
   interlude opens the varsity story from scratch, and the coach section's
@@ -66,7 +72,7 @@ export default function LandingPage({ view = "all" }: { view?: LandingView }) {
           (About, Contact) instead of mid-screen; the long views overflow the
           viewport anyway and are unaffected. */}
       <main className="relative flex-1">
-        {audience && <LandingHero doors={all} />}
+        {students && <LandingHero doors={all} />}
         {students && (
           <StoryCloser
             storyId="story1"
@@ -93,10 +99,18 @@ export default function LandingPage({ view = "all" }: { view?: LandingView }) {
           />
         )}
         {coaches && <CoachSection solo={!all} />}
-        {audience && <Faq />}
+        {audience && <Faq view={view} />}
         {(all || view === "about") && <About />}
         {(all || view === "contact") && <Contact />}
         {audience && <FinalCta />}
+        {!all && (
+          <p className="relative z-[1] border-t border-l-line px-6 py-8 text-center text-[14px] text-l-text-2 sm:px-8">
+            {seeAll.lead}{" "}
+            <Link href="/" className="font-medium text-l-text underline-offset-4 transition-colors hover:underline">
+              {seeAll.cta} →
+            </Link>
+          </p>
+        )}
       </main>
       <LandingFooter />
       <PhoneModeToggle />

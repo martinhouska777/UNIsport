@@ -1,7 +1,9 @@
-import { faq, faqTitle } from "@/lib/landingCopy";
+import { faq, faqTitle, type LandingView } from "@/lib/landingCopy";
 
-/* FAQ — questions as native <details>, answers from lib/landingCopy.ts. */
-export default function Faq() {
+/* FAQ — questions as native <details>, answers from lib/landingCopy.ts.
+   On "/" every question; on a tabbed view only the ones tagged for it. */
+export default function Faq({ view = "all" }: { view?: LandingView }) {
+  const items = view === "all" ? faq : faq.filter((f) => (f.on as string[]).includes(view));
   return (
     <section id="faq" className="relative z-[1] scroll-mt-20 border-t border-l-line px-6 py-24 sm:px-8">
       <div className="mx-auto grid max-w-[1160px] gap-10 lg:grid-cols-[1fr_2fr]">
@@ -9,7 +11,7 @@ export default function Faq() {
           {faqTitle}
         </h2>
         <ul className="divide-y divide-l-line border-y border-l-line">
-          {faq.map((f) => (
+          {items.map((f) => (
             <li key={f.q}>
               <details className="group">
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-6 py-5 text-left [&::-webkit-details-marker]:hidden">

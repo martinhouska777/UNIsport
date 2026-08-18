@@ -27,7 +27,7 @@ function Tabs({ view, className = "" }: { view: LandingView; className?: string 
             href={v.href}
             aria-current={on ? "page" : undefined}
             className={`shrink-0 rounded-full px-3 py-1.5 text-[13px] font-medium tracking-tight transition-colors sm:px-3.5 sm:text-sm ${
-              on ? "bg-l-surface text-l-text ring-1 ring-l-line-hover" : "text-l-text-2 hover:text-l-text"
+              on ? "bg-l-line-hover text-l-text" : "text-l-text-2 hover:text-l-text"
             }`}
           >
             {v.label}

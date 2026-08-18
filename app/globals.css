@@ -452,6 +452,19 @@
   z-index: -1;
   pointer-events: none;
 }
+/* The gold twin — behind the coach's console when it opens /for/coaches. */
+.l-glow-varsity::after {
+  content: "";
+  position: absolute;
+  top: 5%;
+  right: 5%;
+  width: 700px;
+  height: 700px;
+  background: radial-gradient(circle, var(--color-l-varsity-dim) 0%, transparent 60%);
+  filter: blur(80px);
+  z-index: -1;
+  pointer-events: none;
+}
 
 @keyframes l-pulse {
   0%, 100% { opacity: 1; }

@@ -156,11 +156,18 @@ student who rows should discover Varsity Mode by scrolling); the tabs
 ```
 /               all          the page as before
 /for/students   students     intro · Story A → Campus Colours · FAQ · close
-/for/varsity    varsity      intro · Varsity Mode. (solo lead-in) · Story B → Blade Lock · FAQ · close
-/for/coaches    coaches      intro · Coach's Console (solo lead-in + sub) · FAQ · close
+/for/varsity    varsity      "Varsity Mode." AS the opener (+ invite button) · Story B → Blade Lock · FAQ · close
+/for/coaches    coaches      the Console's opener AS the page opener (+ its mail button) · FAQ · close
 /about          about        About only
 /contact        contact      Contact only — email + the socials row
 ```
+
+The student intro (headline, "Get started with .edu") is written for
+students, so it opens `/` and Students only; Varsity and Coaches open on
+their own statement (`Interlude solo`, `CoachSection solo` — the latter also
+swaps `coach.bridge` for `bridgeSolo`). Every tabbed view ends with "This is
+one part of the page. See the whole page →" (`seeAll`). The FAQ filters by
+view (`faq[].on`).
 
 - One component, one prop: `<LandingPage view=…>`. A story stays welded to its
   closer; only whole sections are dropped. The hero's three doors open the

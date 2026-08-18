@@ -34,18 +34,21 @@ function Body({ parts, className = "" }: { parts: Segment[]; className?: string 
 /* The phone frame the captures sit in is components/landing/CoachPhone.tsx —
    the shared landing Phone, following the light/dark switch. */
 
-/** `solo`: on the Coach view (/for/coaches) there is no varsity story above,
-    so the lead-in and the sub-line that lean on it read their solo variants. */
+/** `solo`: on the Coach view (/for/coaches) the section OPENS the page —
+    nothing above it but the bar. So: no top rule, hero-height top padding,
+    the coach's own button right under the opener (the same mail as the one
+    at the foot), and the three lines that leant on the varsity story above
+    (lead-in, sub, bridge) read their solo variants. */
 export default function CoachSection({ solo = false }: { solo?: boolean }) {
   return (
     <section
       id="coaches"
       data-phone-screens
-      className="relative z-[1] scroll-mt-20 border-t border-l-line px-6 pt-24 pb-28 sm:px-8"
+      className={`relative z-[1] scroll-mt-20 px-6 pb-28 sm:px-8 ${solo ? "l-glow-varsity pt-14 sm:pt-20" : "border-t border-l-line pt-24"}`}
     >
       <div className="mx-auto max-w-[1160px]">
         {/* ── The opener ── */}
-        <div className="flex flex-col items-center gap-[18px] pb-7 text-center">
+        <div className={`flex flex-col items-center gap-[18px] pb-7 text-center ${solo ? "l-fade-up" : ""}`}>
           <div className="inline-flex items-center gap-2 rounded-full border border-l-varsity-soft bg-l-varsity-dim px-3.5 py-1.5 font-mono text-[11px] uppercase tracking-wider text-l-varsity">
             {coach.badge}
           </div>
@@ -57,6 +60,14 @@ export default function CoachSection({ solo = false }: { solo?: boolean }) {
             parts={solo ? coach.subSolo : coach.sub}
             className="max-w-[52ch] text-[clamp(16px,2.2vw,19px)] leading-relaxed text-balance text-l-text-2"
           />
+          {solo && (
+            <a
+              href={mailtoHref(coach.cta.mailSubject, coach.cta.mailBody)}
+              className="mt-3 inline-flex items-center gap-2 rounded-full bg-l-varsity px-7 py-4 text-[15px] font-semibold tracking-tight text-l-bg transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-l-text"
+            >
+              {coach.cta.label} →
+            </a>
+          )}
         </div>
 
         {/* ── Five screens, five explanations ── */}
@@ -87,7 +98,7 @@ export default function CoachSection({ solo = false }: { solo?: boolean }) {
 
         {/* ── The bridge back to the athlete story ── */}
         <p className="mx-auto mt-[76px] max-w-[46ch] text-center font-display text-[clamp(22px,3.2vw,32px)] leading-[1.3] tracking-tight text-balance text-l-text">
-          {coach.bridge}
+          {solo ? coach.bridgeSolo : coach.bridge}
         </p>
         <p className="mx-auto mt-3.5 max-w-[52ch] text-center text-[15px] leading-[1.65] text-l-text-2">
           {coach.bridgeSub}

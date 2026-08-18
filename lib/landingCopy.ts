@@ -112,6 +112,13 @@ export const views: { view: Exclude<LandingView, "all">; label: string; href: st
   { view: "contact", label: "Contact", href: "/contact", title: "Contact UNIsport" },
 ];
 
+/* At the foot of every tabbed view, above the footer: the way back to the
+   whole page, for the visitor who came in on a link to one part. */
+export const seeAll = {
+  lead: "This is one part of the page.",
+  cta: "See the whole page",
+};
+
 /* THE THREE DOORS under the hero — Student · Varsity athlete · Coach — the
    same three views as the tabs, so pressing "Coach" here or "Coaches" in the
    bar opens the same page (one mechanism, not two). Shown on "/" only: on a
@@ -489,29 +496,39 @@ export const varsityFeatures: { kicker: string; rows: FeatureRow[]; cta: Feature
    (it does not, yet — any address works), and whether the app is free (the
    old page said "Free for students"; nobody has confirmed it). */
 export const faqTitle = "Questions";
-export const faq: { q: string; a: string }[] = [
+/* `on`: which tabbed views ask this question. "/" shows every question; a
+   coach on /for/coaches is not asked "What does the app know about me?".
+   Views: "students" | "varsity" | "coaches" — see `views` above. */
+type FaqAudience = "students" | "varsity" | "coaches";
+export const faq: { q: string; a: string; on: FaqAudience[] }[] = [
   {
+    on: ["students", "varsity", "coaches"],
     q: "Which universities is it live at?",
     a: "Harvard, today. New campuses are onboarded one at a time — each with its own colours, gyms and houses — so the app you sign up to is already yours.",
   },
   {
+    on: ["students", "varsity", "coaches"],
     q: "Who can join?",
     /* OPEN: the sign-in flow does not enforce a .edu address yet. */
     a: "Students at a live university sign up with their university email. Varsity athletes join through the link their captain or coach sends; coaches get the console with their team.",
   },
   {
+    on: ["students", "varsity"],
     q: "What is Varsity Mode?",
     a: "A gated part of the same app for varsity teams: the coach's training plan, boat lineups, the race countdown and the coach's notes on the athlete's phone, plus logging straight off the plan. It opens from a team invite.",
   },
   {
+    on: ["varsity", "coaches"],
     q: "What does a coach get?",
     a: "The Coach's Console: build a training block around a race, publish the week's sessions once to every athlete, publish lineups seat by seat, and leave one technical note per athlete.",
   },
   {
+    on: ["students", "varsity"],
     q: "What does the app know about me?",
     a: "What you put in your profile — concentration, hometown, languages, interests, a bio — and the sessions you log. Matches are explained from those facts. The privacy policy has the full list.",
   },
   {
+    on: ["students", "varsity", "coaches"],
     q: "Is it official?",
     a: "No. UNIsport is an independent app, officially unaffiliated with Harvard University.",
   },
@@ -678,6 +695,8 @@ export const coach = {
   ] as CoachStep[],
 
   bridge: "Everything the console publishes is the story you just scrolled — the plan on their Home, their name in the boat, the note under their race.",
+  /* On the Coach view there is no story above to point back to. DRAFT. */
+  bridgeSolo: "Everything the console publishes lands on the athletes' phones — the plan on their Home, their name in the boat, the note under their race.",
   bridgeSub:
     "A student who signs up brings one user. A coach who adopts brings the whole squad. That's why the console exists — and why it's already built.",
 
