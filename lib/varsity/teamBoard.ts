@@ -114,7 +114,7 @@ export function metricDisplay(value: number | null, key: MetricKey): string {
   if (value == null) return "—";
   switch (key) {
     case "split":
-      return secToSplit(value);
+      return secToSplit(value, true);
     case "time":
       return secToClock(value);
     case "watts":

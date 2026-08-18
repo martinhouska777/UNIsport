@@ -33,16 +33,20 @@ export function clockToSec(clock: string | null | undefined): number | null {
   return Number.isFinite(sec) ? sec : null;
 }
 
-// 112.3 → "1:52.3". Splits are always read to a tenth; whole seconds show as
-// "1:52" so a typed-by-hand split doesn't grow a fake ".0" of precision.
-export function secToSplit(sec: number): string {
+/*
+  112.3 → "1:52.3". Whole seconds show as "1:52" so a typed-by-hand split
+  doesn't grow a fake ".0" of precision — EXCEPT with alwaysTenths, which a
+  ranked column wants: "1:30" sitting between "1:29.9" and "1:30.2" reads as a
+  rounder, less precise number than its neighbours when it isn't one.
+*/
+export function secToSplit(sec: number, alwaysTenths = false): string {
   const tenths = Math.round(sec * 10);
   const m = Math.floor(tenths / 600);
   const s = (tenths % 600) / 10;
   const whole = Math.floor(s);
   const frac = tenths % 10;
   const ss = String(whole).padStart(2, "0");
-  return frac ? `${m}:${ss}.${frac}` : `${m}:${ss}`;
+  return frac || alwaysTenths ? `${m}:${ss}.${frac}` : `${m}:${ss}`;
 }
 
 // 3684 → "1:01:24" for anything an hour or longer, else "6:08".

@@ -19,11 +19,12 @@ import { useEffect, useMemo, useState } from "react";
 import { useAppState } from "@/components/AppState";
 import { useMembership } from "@/components/varsity/useMembership";
 import WorkoutBoard from "@/components/varsity/team/WorkoutBoard";
-import { fetchPlan } from "@/lib/varsity/planStore";
+import { fetchPlan, fetchProfileFullName } from "@/lib/varsity/planStore";
+import { demoTeamPlan, demoSquadSize } from "@/lib/varsity/demoWorkouts";
 import { fetchResults, fetchSquadSize, type TeamResult } from "@/lib/varsity/resultsStore";
 import { teamWorkouts, type TeamWorkout } from "@/lib/varsity/teamBoard";
 import { sessionLabel, sessionColor } from "@/lib/varsity/coachPlan";
-import { IconChevronRight, IconTrophy } from "@/components/icons";
+import { IconChevronRight } from "@/components/icons";
 
 export default function TeamWorkouts() {
   const { userId } = useAppState();
@@ -34,6 +35,7 @@ export default function TeamWorkouts() {
   const [results, setResults] = useState<TeamResult[]>([]);
   const [squadSize, setSquadSize] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const [example, setExample] = useState(false);
   const [open, setOpen] = useState<string | null>(null);
 
   useEffect(() => {
@@ -42,16 +44,28 @@ export default function TeamWorkouts() {
       const plan = await fetchPlan();
       const list = teamWorkouts(plan.sessions);
       if (!active) return;
-      setWorkouts(list);
-      const rows = await fetchResults(list.map((w) => w.dayKey));
-      if (!active) return;
-      setResults(rows);
+
+      if (list.length > 0) {
+        setWorkouts(list);
+        const rows = await fetchResults(list.map((w) => w.dayKey));
+        if (!active) return;
+        setResults(rows);
+      } else {
+        // Nothing flagged yet → the worked example, with the viewer standing in
+        // for the squad's median rower so they can see their own row.
+        const name = await fetchProfileFullName(userId);
+        if (!active) return;
+        const demo = demoTeamPlan(new Date(), userId ? { id: userId, name } : null);
+        setWorkouts(teamWorkouts(demo.sessions));
+        setResults(demo.results);
+        setExample(true);
+      }
       setLoading(false);
     })();
     return () => {
       active = false;
     };
-  }, []);
+  }, [userId]);
 
   useEffect(() => {
     let active = true;
@@ -60,6 +74,10 @@ export default function TeamWorkouts() {
       active = false;
     };
   }, [teamId]);
+
+  /* An example board counts against the EXAMPLE roster, never the real squad —
+     "37 of 3 logged" is nonsense on a squad that hasn't signed up yet. */
+  const shownSquadSize = example ? demoSquadSize : squadSize;
 
   // How many results each workout has, so the list can show it without
   // re-filtering inside the render loop.
@@ -85,23 +103,18 @@ export default function TeamWorkouts() {
     );
   }
 
-  if (workouts.length === 0) {
-    return (
-      <div className="mt-4 rounded-2xl border border-dashed border-border bg-surface px-4 py-10 text-center">
-        <span className="text-muted">
-          <IconTrophy size={22} />
-        </span>
-        <p className="mt-2 text-[13px] font-semibold text-text">No team workouts yet</p>
-        <p className="mx-auto mt-1 max-w-[16rem] text-[11px] leading-relaxed text-muted">
-          When the coach marks a session as a team workout, everyone&rsquo;s result lands here
-          automatically as they log it.
-        </p>
-      </div>
-    );
-  }
-
   return (
     <div className="mt-4">
+      {example && (
+        <div className="mb-2 rounded-xl border border-dashed border-border bg-surface-2 px-3.5 py-2.5">
+          <p className="text-[11px] leading-relaxed text-muted">
+            <span className="font-semibold text-text">Example workouts.</span> Nobody has flagged a
+            team workout yet, so this is what the board looks like once they have. It vanishes the
+            moment the coach switches a real session on.
+          </p>
+        </div>
+      )}
+
       <div className="flex flex-col gap-1.5">
         {workouts.map((w) => {
           const n = counts.get(w.dayKey) ?? 0;
@@ -129,7 +142,7 @@ export default function TeamWorkouts() {
                 </div>
                 <div className="mt-1 text-[11px] text-muted">
                   {w.dateLabel} · {w.period} ·{" "}
-                  {n === 0 ? "nobody logged yet" : `${n}${squadSize ? ` of ${squadSize}` : ""} logged`}
+                  {n === 0 ? "nobody logged yet" : `${n}${shownSquadSize ? ` of ${shownSquadSize}` : ""} logged`}
                 </div>
               </div>
               <span className="text-muted">
@@ -144,7 +157,7 @@ export default function TeamWorkouts() {
         <WorkoutBoard
           workout={opened}
           results={openedResults}
-          squadSize={squadSize}
+          squadSize={shownSquadSize}
           myId={userId}
           onClose={() => setOpen(null)}
         />
