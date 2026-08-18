@@ -120,8 +120,9 @@ when they are ported. Its chrome colours are `l-phone-*` tokens.
 **Blade Lock's phone sits 94px below the wheel's centre** — halfway between the
 piece's 117 (too much shaft showing, the owner said) and the first port's 74
 (too little): the whole blade and a little shaft stand clear above the phone.
-**Campus Colours cycles every 1.3s**, half the piece's pace, at the owner's
-request.
+**Campus Colours keeps the piece's 2.6s pace, but the first step is sooner:**
+Harvard → Yale 1.5s after the cycle starts (~2.1s after landing) — the owner
+found the first wait, on top of the arrival, felt twice as long as the rest.
 
 **Blade Lock's glow is off.** The design piece drop-shadowed the front blade
 in its colour; the artifact removed it (`cb4a72c`), and the native port does
