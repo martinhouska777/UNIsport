@@ -57,8 +57,59 @@ export type TelemetryPiece = {
     distPerStroke: number | null; // m
   };
   seats?: SeatStats[];
+  /* The finest breakdown the source listed — 100 m of a race, 5-second bits
+     of a burst — in order. This is what the speed chart is drawn from. */
   segments?: PieceSegment[];
+  /* A coarser breakdown listed alongside (the 500 m splits of a 2K), used to
+     band and label the chart. Optional; the chart derives bands from the
+     segments when it is missing. */
+  splits?: PieceSegment[];
 };
+
+/* ── Derived from segments ──────────────────────────────────────────────── */
+
+/** Boat speed in m/s for a segment: from its split when it has one (what the
+    coach reads), else metres over time. */
+export function segmentSpeed(g: PieceSegment): number | null {
+  if (g.splitSec != null && g.splitSec > 0) return 500 / g.splitSec;
+  if (g.durationSec > 0 && g.metres > 0) return g.metres / g.durationSec;
+  return null;
+}
+
+/** Cumulative metres at the END of each segment. */
+export function segmentEnds(segments: PieceSegment[]): number[] {
+  let m = 0;
+  return segments.map((g) => (m += g.metres));
+}
+
+/** Group segments into bands of ~`every` metres and average each band's
+    split by time over distance — the 500 m splits when the source did not
+    list them itself. */
+export function bandsFrom(segments: PieceSegment[], every: number): PieceSegment[] {
+  const out: PieceSegment[] = [];
+  let acc = { durationSec: 0, metres: 0, rateNum: 0, rateN: 0 };
+  const flush = () => {
+    if (acc.metres <= 0) return;
+    out.push({
+      durationSec: acc.durationSec,
+      metres: acc.metres,
+      rating: acc.rateN ? acc.rateNum / acc.rateN : null,
+      splitSec: (acc.durationSec / acc.metres) * 500,
+    });
+    acc = { durationSec: 0, metres: 0, rateNum: 0, rateN: 0 };
+  };
+  for (const g of segments) {
+    acc.durationSec += g.durationSec;
+    acc.metres += g.metres;
+    if (g.rating != null) {
+      acc.rateNum += g.rating;
+      acc.rateN += 1;
+    }
+    if (acc.metres >= every - 1e-6) flush();
+  }
+  flush();
+  return out;
+}
 
 export type TelemetryOuting = {
   id: string;

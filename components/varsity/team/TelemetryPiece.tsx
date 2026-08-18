@@ -5,6 +5,9 @@
   ---------------------------------------------------------------------------
   PowerLine's analysis window for a piece, phone-sized:
 
+    • BOAT SPEED — the piece segment by segment (SpeedChart.tsx): split with
+      faster up, rate under it, the 500 m bands labelled, scrub to read a
+      segment, and another piece of the same length laid over for comparison.
     • THE BOAT — average speed, rating, average power, metres per stroke: the
       "Average" panel top-right.
     • POWER BY SEAT — eight bars with the crew's names: the middle-right panel.
@@ -24,8 +27,14 @@
   Force curves are not drawn yet: they need the traces from the export, which
   the app does not hold until the importer lands. All colours are theme tokens.
 */
+import { useMemo, useState } from "react";
 import Sheet from "@/components/varsity/Sheet";
+import SpeedChart from "@/components/varsity/team/SpeedChart";
 import { fmtDuration, fmtSplit, fmtDeg, type TelemetryPiece as Piece, type TelemetryOuting } from "@/lib/varsity/telemetry";
+
+/** Another piece the chart can lay over this one: same kind of piece (about
+    the same distance), with segments to draw. */
+export type CompareCandidate = { piece: Piece; label: string };
 
 const TH = "px-2.5 py-2 text-[9px] font-semibold uppercase tracking-[0.1em] text-muted whitespace-nowrap";
 const TD = "px-2.5 py-2 text-[12px] tabular-nums text-text whitespace-nowrap";
@@ -45,14 +54,25 @@ export default function TelemetryPiece({
   outing,
   piece,
   dateLabel,
+  compareWith,
   onClose,
 }: {
   outing: TelemetryOuting;
   piece: Piece;
   dateLabel: string;
+  /* Pieces of about the same length elsewhere (this outing, other outings)
+     that the speed chart can be compared with. */
+  compareWith?: CompareCandidate[];
   onClose: () => void;
 }) {
   const seats = piece.seats ?? [];
+  const [compareId, setCompareId] = useState<string | null>(null);
+  const candidates = useMemo(
+    () => (compareWith ?? []).filter((c) => c.piece.id !== piece.id && (c.piece.segments?.length ?? 0) >= 2),
+    [compareWith, piece.id],
+  );
+  const compare = candidates.find((c) => c.piece.id === compareId) ?? null;
+  const hasChart = (piece.segments?.length ?? 0) >= 2;
   const maxW = seats.reduce((m, s) => Math.max(m, s.watts ?? 0), 0);
   const avgW =
     seats.length && seats.some((s) => s.watts != null)
@@ -76,6 +96,38 @@ export default function TelemetryPiece({
           {piece.splitSec != null && ` · ${fmtSplit(piece.splitSec)} /500m`}
         </p>
       </div>
+
+      {/* how it was rowed */}
+      {hasChart && (
+        <>
+          <div className="mb-1 mt-4 px-0.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
+            Boat speed
+          </div>
+          <div className="rounded-2xl border border-border bg-surface px-2 pb-2 pt-2.5">
+            <SpeedChart piece={piece} compare={compare?.piece ?? null} compareLabel={compare?.label} />
+          </div>
+          {candidates.length > 0 && (
+            <div className="mt-2 flex flex-wrap items-center gap-1.5 px-0.5">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Compare with</span>
+              {candidates.map((c) => {
+                const on = c.piece.id === compareId;
+                return (
+                  <button
+                    key={c.piece.id}
+                    type="button"
+                    onClick={() => setCompareId(on ? null : c.piece.id)}
+                    className={`rounded-full border px-2.5 py-1 text-[11px] font-medium ${
+                      on ? "border-primary bg-primary-tint text-primary" : "border-border bg-surface-2 text-text"
+                    }`}
+                  >
+                    {c.label}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </>
+      )}
 
       {/* the boat */}
       {piece.boat && (

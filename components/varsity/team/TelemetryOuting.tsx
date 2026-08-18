@@ -13,22 +13,46 @@
 import { useState } from "react";
 import Sheet from "@/components/varsity/Sheet";
 import TelemetryPiece from "@/components/varsity/team/TelemetryPiece";
+import type { CompareCandidate } from "@/components/varsity/team/TelemetryPiece";
 import { fmtDuration, fmtSplit, outingTotals, type TelemetryOuting as Outing } from "@/lib/varsity/telemetry";
+import { dayKeyLabel } from "@/lib/varsity/coachPlan";
 import { IconChevronRight } from "@/components/icons";
 
 export default function TelemetryOuting({
   outing,
   dateLabel,
+  allOutings,
   onClose,
 }: {
   outing: Outing;
   dateLabel: string; // "Fri 15 May · AM"
+  /* Every outing there is, so a piece can be compared with one of about the
+     same length from another day. */
+  allOutings?: Outing[];
   onClose: () => void;
 }) {
   const [openPiece, setOpenPiece] = useState<string | null>(null);
   const totals = outingTotals(outing);
   const withSeats = outing.pieces.filter((p) => p.seats?.length).length;
   const piece = outing.pieces.find((p) => p.id === openPiece) ?? null;
+
+  // Pieces within ~6% of this one's distance, anywhere, that have segments —
+  // labelled with their day (and name when the day has several).
+  const compareWith: CompareCandidate[] = piece
+    ? (allOutings ?? [outing]).flatMap((o) =>
+        o.pieces
+          .filter(
+            (p) =>
+              p.id !== piece.id &&
+              (p.segments?.length ?? 0) >= 2 &&
+              Math.abs(p.metres - piece.metres) / Math.max(1, piece.metres) <= 0.06,
+          )
+          .map((p) => ({
+            piece: p,
+            label: o.id === outing.id ? p.name : `${p.name} · ${dayKeyLabel(o.dayKey)}`,
+          })),
+      )
+    : [];
 
   return (
     <Sheet title="Water" onClose={onClose}>
@@ -97,7 +121,13 @@ export default function TelemetryOuting({
       </p>
 
       {piece && (
-        <TelemetryPiece outing={outing} piece={piece} dateLabel={dateLabel} onClose={() => setOpenPiece(null)} />
+        <TelemetryPiece
+          outing={outing}
+          piece={piece}
+          dateLabel={dateLabel}
+          compareWith={compareWith}
+          onClose={() => setOpenPiece(null)}
+        />
       )}
     </Sheet>
   );

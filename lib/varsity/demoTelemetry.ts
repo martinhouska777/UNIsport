@@ -144,8 +144,69 @@ const pieces: TelemetryPiece[] = [
   },
 ];
 
-/* 15 May 2026, morning (the PowerLine clock read 10:01 AM). */
+/*
+  THE IRA 2000 m — a second example, from a PowerLine photo the owner shared on
+  31 May 2026: the piece "IRA s…" 05:43.0 · 1997 m · 39.2 · 1:25.9, broken
+  into its four 500 m splits and twenty 100 m segments (time · metres · rate ·
+  split, as listed). This is what the boat-speed chart is drawn from. No seat
+  panel was in the photo, so no seats. The crew is not named on the screen —
+  "1V" is an assumption to correct.
+*/
+const s100 = (t: number, m: number, r: number, sm: number, ss: number) => ({
+  durationSec: t,
+  metres: m,
+  rating: r,
+  splitSec: sm * 60 + ss,
+});
+const iraPiece: TelemetryPiece = {
+  id: "ira-2000",
+  name: "IRA — 2000 m",
+  durationSec: secs(5, 43.0),
+  metres: 1997,
+  rating: 39.2,
+  splitSec: split(1, 25.9),
+  splits: [
+    { durationSec: secs(1, 24.4), metres: 500, rating: 41.1, splitSec: split(1, 24.4) },
+    { durationSec: secs(1, 27.9), metres: 500, rating: 37.5, splitSec: split(1, 27.9) },
+    { durationSec: secs(1, 26.7), metres: 500, rating: 37.9, splitSec: split(1, 26.7) },
+    { durationSec: secs(1, 24.1), metres: 497, rating: 40.5, splitSec: split(1, 24.6) },
+  ],
+  segments: [
+    s100(17.5, 100, 44.1, 1, 27.2),
+    s100(16.2, 100, 42.3, 1, 20.8),
+    s100(16.6, 100, 40.7, 1, 23.1),
+    s100(17.0, 100, 39.6, 1, 24.9),
+    s100(17.2, 100, 38.9, 1, 26.0),
+    s100(17.4, 100, 38.1, 1, 27.2),
+    s100(17.4, 100, 37.9, 1, 26.8),
+    s100(17.7, 100, 37.5, 1, 28.6),
+    s100(17.7, 100, 37.1, 1, 28.7),
+    s100(17.6, 100, 37.0, 1, 28.0),
+    s100(17.3, 100, 37.3, 1, 26.6),
+    s100(17.4, 100, 37.6, 1, 27.2),
+    s100(17.3, 100, 38.1, 1, 26.6),
+    s100(17.3, 100, 38.1, 1, 26.6),
+    s100(17.3, 100, 38.6, 1, 26.3),
+    s100(17.1, 100, 39.1, 1, 25.6),
+    s100(17.1, 100, 40.2, 1, 25.3),
+    s100(16.8, 100, 40.9, 1, 23.7),
+    s100(16.8, 100, 41.4, 1, 24.0),
+    s100(16.3, 97, 40.9, 1, 24.4),
+  ],
+};
+
+/* 15 May 2026, morning (the PowerLine clock read 10:01 AM); the IRA piece
+   is filed under 30 May 2026 (the photo is from just after midnight on the
+   31st). */
 export const demoOutings: TelemetryOuting[] = [
+  {
+    id: "example-peach-ira",
+    dayKey: sessionKey(new Date(2026, 4, 30), "AM"),
+    source: "peach",
+    crew: "1V",
+    box: "5423",
+    pieces: [iraPiece],
+  },
   {
     id: "example-peach-604",
     dayKey: sessionKey(new Date(2026, 4, 15), "AM"),
