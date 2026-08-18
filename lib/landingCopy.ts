@@ -76,6 +76,17 @@ export const hero = {
   schools: ["Harvard", "Yale", "MIT", "Princeton"],
 };
 
+/* ─────────────────── THE LINK CARD (title tag, OG, X) ─────────────────── */
+
+/* What a pasted link shows before anyone taps it — the browser tab title,
+   the card in a group chat. The image (public/og.png) is drawn by
+   scripts/landing/make-og.mjs from the same headline and pill. */
+export const social = {
+  title: `UNIsport — ${hero.headline.join(" ")}`,
+  description: "Every gym on campus, training partners ranked by real fit, and a Varsity Mode for teams. Live at Harvard.",
+  imageAlt: "UNIsport — Your campus. Your gym. Your people. The Gyms screen in a phone beside the headline.",
+};
+
 /* ─────────────────────────── THE TOP BAR ─────────────────────────── */
 
 export const nav = {
