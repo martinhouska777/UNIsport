@@ -117,8 +117,22 @@ export default function WorkoutBoard({
         ))}
       </div>
 
-      {/* the squad's averages — only where there is no ranking, so a steady
-          session still says something useful about the whole squad */}
+      {/* the squad's average. On a RANKED board it is one line — the number you
+          want next to a ranking is "where do I sit against the squad", and an
+          average distance tile on a 2K test where everyone rowed 2,000 m is a
+          dead number. A steady session has no ranking to read against, so there
+          it gets the full three tiles instead. Both follow the metric pills. */}
+      {ranked && board.logged > 0 && (
+        <div className="mt-3 flex items-center justify-between rounded-2xl border border-border bg-surface-2 px-3.5 py-2.5">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
+            Squad average
+          </span>
+          <span className="text-[14px] font-semibold tabular-nums text-text">
+            {board.averageDisplay}
+          </span>
+        </div>
+      )}
+
       {!ranked && board.logged > 0 && (
         <div className="mt-3 flex gap-1.5">
           <Tile value={board.averageDisplay} label={`Avg ${metricMeta(metric).label}`} />

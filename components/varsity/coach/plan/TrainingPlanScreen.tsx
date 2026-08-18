@@ -32,6 +32,7 @@ import {
   sessionLabel,
   boardOptions,
   defaultBoard,
+  canBeTeamWorkout,
   buildWeeks,
   blockRangeLabel,
   daysToRace,
@@ -82,13 +83,6 @@ function Dot({ color }: { color: string }) {
   return <span className="h-2.5 w-2.5 rounded-full" style={{ background: color }} />;
 }
 
-/*
-  Which sessions can have a team board. Water and erg are exactly the categories
-  that carry an intensity — and exactly the ones with a time, a distance and a
-  split to compare — so the same flag decides both. A weights or flex session
-  has nothing to put in a column.
-*/
-const canBeTeamWorkout = (c?: Category) => !!c && categoryMeta[c].hasIntensity;
 
 function DraftBadge() {
   return (
@@ -291,8 +285,8 @@ export default function TrainingPlanScreen() {
       description: form.description.trim(),
       time: form.time.trim() || presetTime[editor.period],
       note: form.note.trim() || undefined,
-      // Only water/erg sessions can carry a board (they are the ones with a
-      // time and a distance to compare), so never write one onto anything else.
+      // Only erg sessions can carry a board (see canBeTeamWorkout), so a
+      // session that isn't one never keeps a stale flag.
       teamWorkout: canBeTeamWorkout(form.category) ? form.teamWorkout : false,
       board: form.board,
     };

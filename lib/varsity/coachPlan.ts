@@ -112,6 +112,20 @@ export const boardOptions: { key: BoardKind; label: string; sub: string }[] = [
 export const defaultBoard = (intensity?: Intensity): BoardKind =>
   intensity === "hard" ? "ranked" : "average";
 
+/*
+  Which sessions can have a board at all: ERG only.
+
+  Water was the obvious second candidate and is deliberately left out. A boat's
+  numbers belong to the boat, not the rower — eight people share one split, the
+  stream and the wind move it more than the crew does, and no two outings are
+  comparable. Ranking rowers on it would be measuring the river. An erg piece is
+  the same machine, the same distance, indoors, for everybody.
+
+  The rule lives here, in data, so the coach's editor and the team board can
+  never disagree about it (rule 7).
+*/
+export const canBeTeamWorkout = (category?: Category): boolean => category === "erg";
+
 /* ── A session and how sessions are stored ── */
 export type Session = {
   category: Category;
