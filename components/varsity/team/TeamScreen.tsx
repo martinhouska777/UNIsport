@@ -4,22 +4,22 @@
   Varsity TEAM tab — the squad.
   ---------------------------------------------------------------------------
   A top sub-navigation switches between:
-    • Roster — the whole squad (grouped like the lineup pool), searchable; tap a
-      rower to open their profile (team year, height/weight, status, erg PRs).
-    • Ergs   — last-workout rankings + improvement vs last time (next slice).
+    • Roster   — the whole squad (grouped like the lineup pool), searchable; tap
+                 a rower to open their profile (team year, height/weight, status,
+                 erg PRs).
+    • Workouts — every session the coach flagged as a TEAM WORKOUT, with the
+                 board of everyone's results (components/varsity/team/…).
 
   Roster comes from lib/varsity/coachLineup; each athlete's profile detail from
   lib/varsity/teamProfiles (stable demo data until accounts link to the squad).
   All colors are theme tokens; the rowing-side dot is a CONTENT color from data
   applied via inline style (the rule-1 exception the lineup screens use).
 */
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Sheet from "@/components/varsity/Sheet";
-import ErgBoard from "@/components/varsity/team/ErgBoard";
-import { useAppState } from "@/components/AppState";
+import TeamWorkouts from "@/components/varsity/team/TeamWorkouts";
 import { useUnits } from "@/components/useUnits";
 import { formatWeight } from "@/lib/varsity/units";
-import { fetchProfileFullName } from "@/lib/varsity/planStore";
 import { roster, rosterById, sideMeta, COX_COLOR, type Athlete } from "@/lib/varsity/coachLineup";
 import { teamProfile } from "@/lib/varsity/teamProfiles";
 import { teamTrainingMonth, formatDuration, type CatTotal } from "@/lib/varsity/teamTraining";
@@ -347,22 +347,12 @@ function RosterRow({ a, onOpen }: { a: Athlete; onOpen: () => void }) {
 }
 
 /* ─────────────────────────  screen  ───────────────────────── */
-type Tab = "roster" | "ergs";
+type Tab = "roster" | "workouts";
 
 export default function TeamScreen() {
-  const { userId } = useAppState();
   const [tab, setTab] = useState<Tab>("roster");
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState<string | null>(null);
-  const [myName, setMyName] = useState<string | null>(null);
-
-  useEffect(() => {
-    let active = true;
-    fetchProfileFullName(userId).then((n) => active && setMyName(n));
-    return () => {
-      active = false;
-    };
-  }, [userId]);
 
   // Rowers only (coxswains aren't on the squad roster here), in name order.
   const rowers = useMemo(
@@ -380,7 +370,7 @@ export default function TeamScreen() {
 
       {/* sub-navigation */}
       <div className="mt-3 flex gap-1 rounded-xl border border-border bg-surface p-1">
-        {(["roster", "ergs"] as Tab[]).map((t) => (
+        {(["roster", "workouts"] as Tab[]).map((t) => (
           <button
             key={t}
             type="button"
@@ -422,7 +412,7 @@ export default function TeamScreen() {
           </div>
         </>
       ) : (
-        <ErgBoard myName={myName} onOpen={(id) => setOpen(id)} />
+        <TeamWorkouts />
       )}
 
       {open && <AthleteSheet athleteId={open} onClose={() => setOpen(null)} />}

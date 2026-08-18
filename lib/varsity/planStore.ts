@@ -10,7 +10,7 @@
   this module only maps it to and from the two DB tables.
 */
 import { createClient, hasSupabaseEnv } from "@/lib/supabase/client";
-import type { Block, Session, SessionMap, Category, Intensity } from "./coachPlan";
+import type { Block, Session, SessionMap, Category, Intensity, BoardKind } from "./coachPlan";
 
 export type Plan = { blocks: Block[]; sessions: SessionMap };
 
@@ -57,6 +57,8 @@ type SessionRow = {
   description: string | null;
   time: string | null;
   note: string | null;
+  team_workout: boolean | null;
+  board: string | null;
 };
 
 function rowToBlock(r: BlockRow): Block {
@@ -88,6 +90,8 @@ function rowToSession(r: SessionRow): Session {
     description: r.description ?? "",
     time: r.time ?? "",
     note: r.note ?? undefined,
+    teamWorkout: r.team_workout ?? false,
+    board: r.board === "ranked" ? "ranked" : "average",
   };
 }
 function sessionToRow(dayKey: string, s: Session) {
@@ -98,6 +102,8 @@ function sessionToRow(dayKey: string, s: Session) {
     description: s.description ?? "",
     time: s.time ?? "",
     note: s.note ?? null,
+    team_workout: s.teamWorkout ?? false,
+    board: (s.board ?? "average") satisfies BoardKind,
     updated_at: new Date().toISOString(),
   };
 }
