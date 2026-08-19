@@ -29,7 +29,7 @@ import { profileFromOnboarding } from "@/lib/currentUser";
 import { getUniversity, neutralTheme } from "@/lib/themes";
 import { roleLabel } from "@/lib/varsity/membership";
 import { VARSITY_HOME } from "@/lib/varsity/theme";
-import { requestTour, resetAllTours } from "@/lib/tour";
+import { requestTour, resetTour } from "@/lib/tour";
 import {
   IconArrowLeft,
   IconBulb,
@@ -282,25 +282,24 @@ export default function SettingsPage() {
         )}
 
         {/*
-          The tours point at things inside the tab shell, and this page
-          deliberately sits outside it. So this forgets every screen's tour,
-          leaves a request for the first one, and goes to Gyms — where the
-          shell picks it up. The rest then teach themselves again as you open
-          each screen, exactly as they did the first time.
+          The tour points at things inside the tab shell, and this page
+          deliberately sits outside it. So this forgets the tour, leaves a
+          request behind, and goes to Gyms — where the shell picks it up and
+          walks the whole app again from the start.
         */}
         <Section title="Help">
           <Row
             icon={<IconBulb size={18} />}
             label="Take the tour"
             onClick={() => {
-              if (userId) resetAllTours(userId);
-              requestTour("tabs");
+              if (userId) resetTour(userId);
+              requestTour();
               router.push("/gyms");
             }}
           />
           <p className="mt-2 px-1 text-[11px] text-muted">
-            Starts with the four tabs. Each screen then explains itself again the
-            next time you open it.
+            Walks you through the whole app — the four tabs, a gym, and how a
+            session gets logged. About a minute, and you can stop any time.
           </p>
         </Section>
 
@@ -317,9 +316,9 @@ export default function SettingsPage() {
               <button
                 type="button"
                 onClick={async () => {
-                  // Forget the tours too, so replaying onboarding reproduces the
-                  // genuine first run — including each screen teaching itself.
-                  if (userId) resetAllTours(userId);
+                  // Forget the tour too, so replaying onboarding reproduces the
+                  // genuine first run — the app introducing itself included.
+                  if (userId) resetTour(userId);
                   await resetOnboarding();
                   router.replace("/onboarding");
                 }}

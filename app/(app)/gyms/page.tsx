@@ -234,7 +234,9 @@ export default function GymsPage() {
 
       {/* Filter pills */}
       <div className="px-3 py-2.5">
-        <div className="flex gap-1.5">
+        {/* data-tour: the tour lights this row when it explains favourites
+            (lib/tour.ts). */}
+        <div data-tour="gyms-filters" className="flex gap-1.5">
           {filters.map((f) => {
             const active = filter === f.key;
             return (

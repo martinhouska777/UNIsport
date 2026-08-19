@@ -3,10 +3,18 @@
 /*
   THE TOUR OVERLAY — the dim, the hole, and the caption.
   ---------------------------------------------------------------------------
-  Steps come from lib/tour.ts. Each one names a `data-tour` anchor somewhere in
-  the app; this finds that element, measures it, and cuts a hole in the dim
-  around it, so the REAL button is what you see lit — nothing is cloned or
-  redrawn, which is the whole point: you learn where the thing actually is.
+  Steps come from lib/tour.ts, as ONE ordered walk through the whole app. Each
+  one names a `data-tour` anchor; this finds that element, measures it, and cuts
+  a hole in the dim around it, so the REAL button is what you see lit — nothing
+  is cloned or redrawn, which is the whole point: you learn where the thing
+  actually is.
+
+  It also DRIVES the app. A step can name a route to go to and a control to
+  press first, so the walk crosses tabs, opens a gym and opens the Log Session
+  editor on its own. Everything a step needs may therefore be absent at the
+  moment that step begins, so each one waits for its own target and gives up
+  after a few seconds by moving on — a screen that fails to load costs one step,
+  never the whole tour.
 
   How the hole works: one div sits exactly over the target carrying a huge
   `box-shadow` spread. A box-shadow is painted OUTSIDE its element, so the
@@ -23,16 +31,20 @@
 
   NOT portalled, deliberately. ThemeProvider writes the theme onto a wrapper
   div, not onto :root, so a portal to <body> would escape the theme and render
-  in Zone 1 colours. It is mounted inside the tab shell instead, which is also
-  the only place its anchors exist.
+  in Zone 1 colours. It is mounted in the tab shell instead — which, being
+  outside the keyed <main>, is also the only place that survives the tour's own
+  navigation between tabs.
 */
 import { useCallback, useEffect, useId, useRef, useState } from "react";
-import type { TourStep } from "@/lib/tour";
+import { useRouter } from "next/navigation";
+import { closeOnExit, tourSteps } from "@/lib/tour";
 
 const PAD = 8; // breathing room around the lit element
 const EDGE = 6; // never let the hole run off the side of the screen
 const GAP = 14; // between the hole and the caption
 const CAPTION_W = 340; // caption width when it sits beside the hole (laptop)
+const BEAT = 150; // ms between "is it here yet?" checks
+const PATIENCE = 30; // that many beats — about 4.5s — then move on
 
 type Box = { top: number; left: number; width: number; height: number; radius: number };
 
@@ -62,72 +74,101 @@ function visibleAnchor(anchor: string): HTMLElement | null {
 }
 
 export default function TourOverlay({
-  steps,
   onDone,
 }: {
-  steps: TourStep[];
   /** Called when the tour ends, however it ends — finished, skipped, Escape. */
   onDone: () => void;
 }) {
-  // Steps whose anchor actually exists. Resolved once, after mount, so a step
-  // pointing at something that isn't on screen is dropped rather than showing
-  // an empty hole.
-  const [live, setLive] = useState<TourStep[] | null>(null);
+  const router = useRouter();
   const [i, setI] = useState(0);
+  /*
+    Which step has its target on screen and ready. Held as an index rather than
+    a boolean so arriving at a new step disarms it by definition — the effect
+    below never has to reach in and switch it off, which would be a setState in
+    an effect body and a cascading render.
+  */
+  const [armedFor, setArmedFor] = useState(-1);
   const [box, setBox] = useState<Box | null>(null);
   const nextRef = useRef<HTMLButtonElement | null>(null);
   const titleId = useId();
   const bodyId = useId();
 
+  const step = tourSteps[i];
+  const armed = armedFor === i;
+  const last = i >= tourSteps.length - 1;
+
   /*
-    Resolving anchors has to wait for the commit — on the first render the
-    targets are in the same commit as this overlay, so they aren't in the DOM
-    yet. Measuring the DOM after paint is what effects are for; the one-time
-    state sync that follows is the same sanctioned exception ThemeMode.tsx makes
-    for reading localStorage on mount.
+    Ending the tour, however it ends. It shuts anything it opened on your
+    behalf first (lib/tour.ts) — walk out during the Log Session steps and you
+    would otherwise be left standing in an editor you never asked to open.
+  */
+  const finish = useCallback(() => {
+    closeOnExit.forEach((anchor) => visibleAnchor(anchor)?.click());
+    onDone();
+  }, [onDone]);
 
-    It RETRIES, because a screen's own content arrives later than its frame:
-    Match and Profile fetch from Supabase, so their anchors appear a beat after
-    the route does. Giving up on the first miss would teach half a screen and
-    then mark it as taught.
+  const next = useCallback(() => {
+    if (i >= tourSteps.length - 1) finish();
+    else setI((n) => n + 1);
+  }, [i, finish]);
 
-    If nothing ever resolves the list stays empty and this renders nothing —
-    deliberately WITHOUT calling onDone, so a tour nobody saw is never marked
-    as seen and gets another go next time.
+  /*
+    GETTING TO THE STEP. Navigate if it asks for a different screen, press its
+    control once the screen is there, then wait for the thing it wants to light
+    up. All three can take a moment — a route change re-renders the shell, the
+    Log Session editor mounts a beat after its button is pressed, and Match and
+    Profile fetch from Supabase — so this checks on a timer rather than assuming.
+
+    Reading `window.location.pathname` rather than the usePathname() hook is
+    deliberate: the hook would re-run this effect mid-wait and start the whole
+    approach again from the top.
   */
   useEffect(() => {
+    let cancelled = false;
+    let pressed = false;
+    let beats = 0;
     let timer: ReturnType<typeof setTimeout>;
-    let tries = 0;
+
+    if (step.route && window.location.pathname !== step.route) router.push(step.route);
+
     const attempt = () => {
-      const found = steps.map((s) => s.anchor === null || !!visibleAnchor(s.anchor));
-      const done = found.every(Boolean); // everything is on screen — go now
-      const timedOut = ++tries >= 20; // ~3s, then go with whatever showed up
-      if (!done && !timedOut) {
-        timer = setTimeout(attempt, 150);
+      if (cancelled) return;
+      const arrived = !step.route || window.location.pathname === step.route;
+
+      if (arrived && step.press && !pressed) {
+        const control = visibleAnchor(step.press);
+        if (control) {
+          pressed = true;
+          control.click();
+          timer = setTimeout(attempt, BEAT); // let it react before measuring
+          return;
+        }
+      }
+
+      const target = arrived && (step.anchor === null || !!visibleAnchor(step.anchor));
+      if (target) {
+        setArmedFor(i);
         return;
       }
-      const usable = steps.filter((_, k) => found[k]);
-      setLive(usable.some((s) => s.anchor) ? usable : []);
+
+      if (++beats < PATIENCE) {
+        timer = setTimeout(attempt, BEAT);
+        return;
+      }
+      // It never turned up. Move on rather than stranding the whole walk here.
+      next();
     };
-    attempt();
-    return () => clearTimeout(timer);
+
+    // On a timer rather than straight away: a step whose target is already
+    // there would otherwise arm itself synchronously inside this effect.
+    timer = setTimeout(attempt, 0);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+    // `next` changes with i, which is the only thing that should restart this.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const step = live?.[i];
-
-  /*
-    Steps marked `activate` press their own target before explaining it — the
-    three Match sub-tabs, so each step shows the screen it's describing. Fired
-    once per step: clicking re-renders the page underneath, which re-runs the
-    measuring effect, and without this guard it would click forever.
-  */
-  const activated = useRef(-1);
-  useEffect(() => {
-    if (!live || !step?.activate || !step.anchor || activated.current === i) return;
-    activated.current = i;
-    visibleAnchor(step.anchor)?.click();
-  }, [live, step, i]);
+  }, [i]);
 
   /*
     setBox, but only when the box has actually moved. The measuring loop below
@@ -142,21 +183,18 @@ export default function TourOverlay({
   }, []);
 
   const measure = useCallback(() => {
-    if (!step?.anchor) {
+    if (!step.anchor) {
       apply(null);
       return;
     }
     const el = visibleAnchor(step.anchor);
-    if (!el) {
-      apply(null);
-      return;
-    }
+    if (!el) return; // gone for a frame — keep the last good position
     /*
       Bring it into view first. Some targets sit down the page — the rate/crowd
-      block on a gym, the leaderboard strip on Profile — and the overlay eats
-      taps, so nobody can scroll to them. "instant" on purpose: a smooth scroll
-      would still be moving when this measures, and the hole would land where
-      the target used to be.
+      block on a gym, the photo grid in the Log Session editor — and the overlay
+      eats taps, so nobody can scroll to them. "instant" on purpose: a smooth
+      scroll would still be moving when this measures, and the hole would land
+      where the target used to be.
     */
     let r = el.getBoundingClientRect();
     if (r.top < 0 || r.bottom > window.innerHeight) {
@@ -198,27 +236,25 @@ export default function TourOverlay({
     it arrives (`.app-page-enter`, app/globals.css), so a tour that opens with
     the screen measured its target mid-flight and drew the ring where the
     element was passing through rather than where it came to rest — a few
-    pixels low, every time. The `activate` steps break it from the other end:
-    pressing a sub-tab re-lays-out the screen after the measurement.
+    pixels low, every time. A step that presses its own control breaks it from
+    the other end: the press re-lays-out the screen after the measurement.
 
     So it keeps measuring for about three quarters of a second, which outlasts
     both that entrance and the ring's own travel, and `apply` above makes the
     frames where nothing moved cost nothing.
   */
   useEffect(() => {
-    if (!live) return;
+    if (!armed) return;
     let raf = 0;
     let frames = 0;
     const tick = () => {
       measure();
       if (++frames < 45) raf = requestAnimationFrame(tick);
     };
-    // Reading the target's real position — see the note above.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    tick();
+    tick(); // reads the target's real position — see the note above
     window.addEventListener("resize", measure);
     window.addEventListener("orientationchange", measure);
-    // Capture: the page scrolls inside <main>, not on the window.
+    // Capture: the page scrolls inside <main> and inside sheets, not on window.
     window.addEventListener("scroll", measure, true);
     return () => {
       cancelAnimationFrame(raf);
@@ -226,13 +262,7 @@ export default function TourOverlay({
       window.removeEventListener("orientationchange", measure);
       window.removeEventListener("scroll", measure, true);
     };
-  }, [live, measure]);
-
-  const last = !!live && i >= live.length - 1;
-  const next = useCallback(() => {
-    if (last) onDone();
-    else setI((n) => n + 1);
-  }, [last, onDone]);
+  }, [armed, measure]);
 
   /*
     Escape ends it, same as every other overlay in the app. Deliberately NOTHING
@@ -241,11 +271,11 @@ export default function TourOverlay({
   */
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onDone();
+      if (e.key === "Escape") finish();
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [onDone]);
+  }, [finish]);
 
   /*
     Focus goes on Next, not on the card. The card is a plain container, and this
@@ -254,10 +284,8 @@ export default function TourOverlay({
     would be a lie. On the button it is both true and useful.
   */
   useEffect(() => {
-    nextRef.current?.focus();
-  }, [i, live]);
-
-  if (!live || !step) return null;
+    if (armed) nextRef.current?.focus();
+  }, [i, armed]);
 
   /*
     The dim, written once and used by both the hole and the plain backdrop.
@@ -293,8 +321,12 @@ export default function TourOverlay({
       aria-labelledby={titleId}
       aria-describedby={bodyId}
     >
-      {/* The dim. With an anchor it's the hole's shadow; without one (the
-          closing card) it's a plain backdrop over everything. */}
+      {/*
+        The dim. With an anchor it's the hole's shadow; without one (the opening
+        and closing cards) it's a plain backdrop over everything. The last hole
+        is deliberately left lit while the next step is being reached, so the
+        light TRAVELS to its next target instead of blinking off and on.
+      */}
       {box ? (
         <div
           className="tour-hole absolute"
@@ -313,40 +345,42 @@ export default function TourOverlay({
         <div className="absolute inset-0" style={{ background: dim }} />
       )}
 
-      <div
-        className="absolute rounded-2xl border border-border bg-surface p-4 shadow-overlay"
-        style={caption}
-      >
-        <h2 id={titleId} className="text-[15px] font-semibold text-text">
-          {step.title}
-        </h2>
-        <p id={bodyId} className="mt-1.5 text-[13px] leading-relaxed text-text-2">
-          {step.body}
-        </p>
+      {armed && (
+        <div
+          className="absolute rounded-2xl border border-border bg-surface p-4 shadow-overlay"
+          style={caption}
+        >
+          <h2 id={titleId} className="text-[15px] font-semibold text-text">
+            {step.title}
+          </h2>
+          <p id={bodyId} className="mt-1.5 text-[13px] leading-relaxed text-text-2">
+            {step.body}
+          </p>
 
-        <div className="mt-4 flex items-center justify-between gap-3">
-          <button
-            type="button"
-            onClick={onDone}
-            className="tap44 press rounded-full px-1 text-[13px] font-medium text-muted"
-          >
-            {last ? "Close" : "Skip"}
-          </button>
-          <div className="flex items-center gap-3">
-            <span className="text-[11px] tabular-nums text-text-3">
-              {i + 1} / {live.length}
-            </span>
+          <div className="mt-4 flex items-center justify-between gap-3">
             <button
-              ref={nextRef}
               type="button"
-              onClick={next}
-              className="tap44 press rounded-full bg-primary-live px-4 py-2 text-[13px] font-semibold text-primary-contrast"
+              onClick={finish}
+              className="tap44 press rounded-full px-1 text-[13px] font-medium text-muted"
             >
-              {last ? "Done" : "Next"}
+              {last ? "Close" : "Skip"}
             </button>
+            <div className="flex items-center gap-3">
+              <span className="text-[11px] tabular-nums text-text-3">
+                {i + 1} / {tourSteps.length}
+              </span>
+              <button
+                ref={nextRef}
+                type="button"
+                onClick={next}
+                className="tap44 press rounded-full bg-primary-live px-4 py-2 text-[13px] font-semibold text-primary-contrast"
+              >
+                {last ? "Done" : "Next"}
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

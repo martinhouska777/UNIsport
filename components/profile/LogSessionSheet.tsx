@@ -190,7 +190,14 @@ export default function LogSessionSheet({
     <div className="fixed inset-0 z-50 flex h-dvh flex-col bg-background">
       {/* Header */}
       <div className="flex flex-shrink-0 items-center gap-2 border-b border-border bg-surface px-4 py-3">
-        <button type="button" onClick={onClose} className="flex items-center gap-1 text-[13px] text-muted">
+        {/* data-tour: the tour presses this to close the editor again when it
+            has finished explaining it (lib/tour.ts). */}
+        <button
+          type="button"
+          data-tour="log-cancel"
+          onClick={onClose}
+          className="flex items-center gap-1 text-[13px] text-muted"
+        >
           <IconArrowLeft size={18} /> Cancel
         </button>
         <span className="ml-1 text-[15px] font-semibold text-text">
@@ -211,7 +218,8 @@ export default function LogSessionSheet({
           />
 
           <div className={`${labelCls} mt-4`}>Activity</div>
-          <div className="grid grid-cols-4 gap-1.5">
+          {/* data-tour: the tour lights the activity picker (lib/tour.ts). */}
+          <div data-tour="log-activity" className="grid grid-cols-4 gap-1.5">
             {primaryActivities.map((a) => (
               <button
                 key={a.key}
@@ -390,8 +398,11 @@ export default function LogSessionSheet({
                 })}
               </div>
 
+              {/* data-tour: on a fresh session the list above is empty, so this
+                  IS the exercise section as far as the tour is concerned. */}
               <button
                 type="button"
+                data-tour="log-exercises"
                 onClick={() => setPickerOpen(true)}
                 className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-surface py-3 text-[13px] font-medium text-muted active:border-primary-line active:text-primary"
               >
@@ -477,7 +488,8 @@ export default function LogSessionSheet({
               e.target.value = ""; // allow re-picking the same file
             }}
           />
-          <div className="mt-2 grid grid-cols-3 gap-1.5">
+          {/* data-tour: the tour explains that these become Memories. */}
+          <div data-tour="log-photos" className="mt-2 grid grid-cols-3 gap-1.5">
             {photos.map((src, i) => (
               <div
                 key={i}
@@ -520,7 +532,8 @@ export default function LogSessionSheet({
 
       {/* Save bar */}
       <div className="flex-shrink-0 border-t border-border bg-surface px-4 pb-6 pt-3">
-        <div className="mx-auto max-w-screen-sm">
+        {/* data-tour: the tour's last stop inside the editor (lib/tour.ts). */}
+        <div data-tour="log-save" className="mx-auto max-w-screen-sm">
           <Button size="lg" full onClick={save} disabled={busy || !date}>
             <IconCheck size={16} /> {busy ? "Saving…" : existing ? "Save changes" : "Save session"}
           </Button>
