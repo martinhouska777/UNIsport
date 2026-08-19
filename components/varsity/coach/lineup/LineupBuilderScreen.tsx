@@ -95,11 +95,10 @@ type Side = Athlete["side"];
   A BLADE. Every side marker in this screen is the same object: a solid patch of
   the side's colour with legible lettering on it, the way an oar is painted.
 
-  Solid rather than the old tint-and-matching-text, because bow side is WHITE:
-  white letters on a 13%-white wash is nothing at all, and on the varsity light
-  theme it is worse. Painting the blade and putting the side's `ink` on top is
-  the one treatment that survives both themes and all three colours. The hairline
-  border stops a white blade from dissolving into a white card.
+  Solid rather than the old tint-and-matching-text: a 13% wash of the side's
+  colour is nearly nothing on the varsity light theme. Painting the blade and
+  putting the side's `ink` on top is the one treatment that survives both themes
+  and all three colours, and the hairline border keeps the patch's edge crisp.
 */
 function blade(color: string, ink: string): React.CSSProperties {
   return {
@@ -480,7 +479,7 @@ function Builder({
   const matches = useMemo(() => {
     // A cox seat only offers coxes; a rowing seat only offers rowers who can
     // row THAT side. Someone who rows both is offered everywhere. Suggesting a
-    // bowside rower for a strokeside seat is just a wrong suggestion — the
+    // starboard rower for a port seat is just a wrong suggestion — the
     // coach can still drag them in if they mean it, and the seat says so.
     const wantCox = typing?.kind === "cox";
     let list = available.filter((a) => !!a.cox === wantCox);

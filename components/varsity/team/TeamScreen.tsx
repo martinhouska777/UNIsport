@@ -43,8 +43,8 @@ const toneDot: Record<StatusTone, string> = {
 const toneOf = (title: string): StatusTone =>
   statusOptions.find((s) => s.title === title)?.tone ?? "muted";
 /*
-  The side dot. It carries a hairline of its own ink because bow side is WHITE
-  now — a bare white dot disappears on the varsity light theme.
+  The side dot. It carries a hairline of its own ink so the dot keeps a crisp
+  edge on both the light and the dark varsity theme, whatever colour it is.
 */
 const sideDot = (a: Athlete): React.CSSProperties => {
   const color = a.cox ? COX_COLOR : sideMeta[a.side].color;

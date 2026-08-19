@@ -180,17 +180,12 @@ export default function VarsitySetupPage() {
                     key={o.key}
                     selected={side === o.key}
                     onClick={() => setSide(o.key)}
-                    label={
-                      <span className="flex flex-col items-center leading-tight">
-                        <span>{o.label}</span>
-                        <span className="text-[10px] opacity-70">{o.sub}</span>
-                      </span>
-                    }
+                    label={o.label}
                   />
                 ))}
               </div>
               <p className="mb-4 text-[11px] leading-relaxed text-muted">
-                Your coach sees this when they build lineups. Pick “Either side” if you
+                Your coach sees this when they build lineups. Pick “Both” if you
                 genuinely swing both ways — it isn’t a wrong answer.
               </p>
             </>

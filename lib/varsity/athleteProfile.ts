@@ -36,21 +36,21 @@ export type BoatRole = (typeof boatRoleOptions)[number];
   just gives the ATHLETE a way to answer it about themselves instead of leaving
   the coach to set thirty of them by hand.
 
-  Both names are shown: an American squad says "port / starboard", a British one
-  says "strokeside / bowside", and a Harvard boat contains both kinds of person.
-  Strokeside IS port and bowside IS starboard, so nobody has to pick a dialect.
+  ONE name per side, taken straight from sideMeta: Port, Starboard, Both. The
+  old second line (the British strokeside/bowside dialect) is gone on the
+  owner's instruction — an athlete answering this should read the same word here
+  that the coach reads on the roster and on the seat in the boat.
 */
-export const sideOptions: { key: Side; label: string; sub: string }[] = [
-  { key: "P", label: sideMeta.P.label, sub: "Port" },
-  { key: "S", label: sideMeta.S.label, sub: "Starboard" },
-  { key: "B", label: sideMeta.B.label, sub: "Either side" },
+export const sideOptions: { key: Side; label: string }[] = [
+  { key: "P", label: sideMeta.P.label },
+  { key: "S", label: sideMeta.S.label },
+  { key: "B", label: sideMeta.B.label },
 ];
 
-/** "Stroke · Port" — for the chip on the profile. Null for a coxswain. */
+/** "Starboard" — for the chip on the profile. Null for a coxswain. */
 export function sideLabel(role: BoatRole, side: Side): string | null {
   if (role === "Coxswain") return null;
-  const o = sideOptions.find((s) => s.key === side);
-  return o ? (o.key === "B" ? o.label : `${o.label} · ${o.sub}`) : null;
+  return sideOptions.find((s) => s.key === side)?.label ?? null;
 }
 
 // Current status — `tone` maps to a theme token, never a raw color (rule 1).

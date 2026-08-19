@@ -198,7 +198,6 @@ function EditIdentitySheet({
                 }`}
               >
                 <span>{o.label}</span>
-                <span className="text-[10px] opacity-70">{o.sub}</span>
               </button>
             ))}
           </div>
@@ -605,7 +604,7 @@ export default function ProfileScreen() {
               <span className="rounded-md border border-border bg-surface px-2 py-1 text-[11px] text-text">
                 {profile.boatRole === "Coxswain"
                   ? "Coxswain"
-                  : (sideLabel(profile.boatRole, profile.side) ?? "Either side")}
+                  : (sideLabel(profile.boatRole, profile.side) ?? "Both")}
               </span>
               {profile.heightCm != null && (
                 <span className="rounded-md border border-border bg-surface px-2 py-1 text-[11px] text-text">

@@ -18,22 +18,23 @@
 /*
   The two sides of a boat, named the way a crew names them. `P` and `S` are the
   underlying port/starboard, kept as the stored keys because the database, the
-  athlete setup form and every saved lineup already speak them — but nobody in
-  a boathouse says "port", they say STROKE SIDE and BOW SIDE, so that is what
-  is written on screen.
+  athlete setup form and every saved lineup already speak them — and now they
+  are also the words written ON screen, everywhere. The owner's call: a side has
+  ONE name across the profile, the roster and the boat builder. (A British crew
+  says strokeside/bowside for the same two sides; that dialect is deliberately
+  not shown any more, so nobody has to translate between them.)
 */
-export type Side = "P" | "S" | "B"; // stroke side · bow side · both (bisweptual)
+export type Side = "P" | "S" | "B"; // port · starboard · both (bisweptual)
 
 /*
-  Painted blades. Stroke side is red, bow side is white, and someone who rows
-  either way is blue — the owner's scheme, and the one the squad's oars use.
-  `ink` is what stays readable ON that blade, because a white blade needs dark
-  lettering and a red one needs light: the app has a light theme as well as a
-  dark one, so neither colour can be assumed to sit on a dark background.
+  Painted blades. Port is red, starboard is GREEN, and someone who rows either
+  way is blue — the owner's scheme, and the one the squad's oars use.
+  `ink` is what stays readable ON that blade: the app has a light theme as well
+  as a dark one, so no blade colour may assume the background behind it.
 */
 export const sideMeta: Record<Side, { label: string; tag: string; color: string; ink: string }> = {
-  P: { label: "Stroke", tag: "STR", color: "#d93025", ink: "#ffffff" },
-  S: { label: "Bow", tag: "BOW", color: "#f4f4f5", ink: "#18181b" },
+  P: { label: "Port", tag: "PORT", color: "#d93025", ink: "#ffffff" },
+  S: { label: "Starboard", tag: "STBD", color: "#1e8e3e", ink: "#ffffff" },
   B: { label: "Both", tag: "BOTH", color: "#2563eb", ink: "#ffffff" },
 };
 
@@ -202,7 +203,7 @@ export function makeSeats(type: BoatType): SeatSlot[] {
 
 /*
   WHICH SIDE A SEAT ROWS. A boat is rigged alternately: the stroke seat takes
-  stroke side, the seat in front of them bow side, and so on down to the bow.
+  port, the seat in front of them starboard, and so on down to the bow.
   An eight is therefore always four of each, a four is two of each, and that is
   a fact about the boat rather than about who the coach puts in it — which is
   why it is computed here rather than stored, and why it cannot come out wrong.
@@ -218,7 +219,7 @@ export function fitsSeat(a: Athlete, side: Side): boolean {
   return !a.cox && (a.side === "B" || a.side === side);
 }
 
-/** How many of each side a rigging asks for — "4 stroke · 4 bow" on an eight. */
+/** How many of each side a rigging asks for — "4 port · 4 starboard" on an eight. */
 export function sideDemand(rowers: number): { P: number; S: number } {
   return {
     P: Array.from({ length: rowers }, (_, i) => seatSide(i, rowers)).filter((s) => s === "P").length,
