@@ -297,6 +297,7 @@ path is the least-reviewed part of the page.
    is a row of placeholder glyphs under a headline about finding people. Needs
    either generated portraits or a crop that avoids the avatar row.
 
+
 ## Next: turning this into the webpage
 
 Agreed plan, in this order — do NOT jump to the port:
@@ -312,3 +313,62 @@ Agreed plan, in this order — do NOT jump to the port:
    literals in components), signup wired to the real login, and the embedded
    screenshots served as real image files instead of data URIs (the page is
    2.5MB self-contained). Do this ONCE, after content and structure freeze.
+
+---
+
+## Chapter three — the Coach's Console (DECISION: static section, no animation)
+
+> **Status (merged 19 Aug):** the live coach section is NOT this HTML. It was
+> ported natively in `b922e70` as `components/landing/CoachSection.tsx` from a
+> different design piece, with its own captures (`public/landing/coach-1-*` …
+> `coach-5-*`). Everything below is the earlier chapter and its capture rig,
+> kept as reference — `capture-coach.mjs` still writes the old `coach-*.webp`
+> names, which nothing on the page reads any more.
+
+
+The owner decided the coach part of the landing page is a STATIC section, not a
+third scroll animation: coaches are few and motivated — they read. The section
+is `webpage/Coach Console Section.html` — five real screens (Create block /
+session builder / Plan week / 1V lineup / Athlete Notes) with plain explanatory
+text and no animation, in the page's visual language, ready to slot in after
+Blade Lock.
+
+The capture roster's sides follow the standard rig — **stroke is strokeside
+(port, red), 7 is bowside (starboard, green)**, alternating to bow. Keep it that
+way when re-capturing: a rower reading the page will spot a mis-rigged eight
+immediately. `webpage/Coach Console Story.html` (the animated
+prototype) stays in the repo for reference only — do not wire it in.
+
+### Original notes — frames + capture
+
+The third scroll story (the buyer's side of Varsity Mode) is proposed in a
+Claude artifact ("The Coach's Console" — ask the owner for the URL). Its eight
+frames are already captured and committed as `public/landing/coach-*.webp`
+(same 900×1479 canvas), with the beat copy, enter transitions and markers all
+written in the artifact.
+
+To re-capture (e.g. after the console's UI changes): the local dev server has
+no Supabase env, so `fetchMyMembership` returns null and the console gate
+bounces. Temporarily bypass the gate in `app/varsity/coach/layout.tsx`
+(hardcode role "coach"), give `fetchTeamRoster` in `lib/varsity/notesStore.ts`
+a demo-roster fallback, and swap the real roster in `lib/varsity/coachLineup.ts`
+for FAKE names with port/starboard sides (the committed frames use fake names on
+purpose — never ship the real squad list in marketing) — do NOT commit any of
+these changes — then:
+
+```
+npm run dev
+node scripts/landing/capture-coach.mjs   # seeds localStorage, walks the console
+```
+
+Frames are captured in the app's LIGHT theme (`uniThemeMode: "light"`), so the
+screens read as lit screens on the story's dark page — same as the student
+chapter. `coach-week-tall.webp` / `coach-boats-tall.webp` are full-scroll pan
+strips. The interactive chapter prototype itself is committed as
+`webpage/Coach Console Story.html` (a Claude artifact mirrors it — ask the
+owner for the URL).
+
+The seed inside `capture-coach.mjs` mirrors the athlete story exactly:
+Fall 2026 block (Jul 13 – Oct 18), week 6 current, Head of the Charles 62 days
+out, John Brown in the 1V's 3 seat, and his coach note ("fix it before the
+Charles") — so the coach chapter and the athlete chapter read as one product.
