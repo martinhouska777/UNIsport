@@ -274,12 +274,24 @@ proof. (The `.edu` question is settled — see "Open, and blocked" below.)
    against this by name — a stats screen is the one screen every fitness app
    has; a seat in a named boat, published by a coach, is the one none of them
    can show. That screen is V2, currently mid-story. Undecided.
-2. **V7, the squad beat, is written but cannot ship.** Copy is recorded above
-   `varsityStory` in `lib/landingCopy.ts`. `11-varsity-teammate.webp` carries
-   exactly the right numbers and is a **dark-mode capture** from the old shot
-   day; every other frame is light. Needs a re-shoot through
-   `capture-light.mjs`, which needs the owner to log in and hand over a session
-   cookie (expires in an hour — see `scripts/landing/README.md`).
+2. **V7, the squad beat, is PARKED — and the blocker is not the screenshot.**
+   The screen it advertises (Varsity → Team → Roster → a rower → their training
+   month) is drawn from **invented data**: `lib/varsity/teamTraining.ts` and
+   `teamProfiles.ts` derive the calendar, the consistency percentage, the hours
+   and the personal bests from the athlete's id, because accounts are not linked
+   to the squad yet. Shooting it would put fabricated training on the marketing
+   page, against this page's own rule that every claim states what the app does
+   today. **Unblocked by app work, not by a capture**: a teammate's month has to
+   come from their real logged sessions. Only then re-shoot.
+
+   The rig is ready for that day: `scripts/landing/capture-teammate.mjs` shoots
+   this one frame in light AND dark (both are required — `shotSrc()` has no
+   fallback), opens the same rower the original used, and prints the numbers off
+   the screen so the beat's sub-line can be written from the frame instead of
+   guessed. It needs a session cookie (owner logs in; expires in an hour — see
+   `scripts/landing/README.md`). The copy is recorded above `varsityStory` in
+   `lib/landingCopy.ts`; `11-varsity-teammate.webp` is still the old dark-mode
+   capture sitting in the light folder, and no beat references it.
 3. ~~The hero says "Get started with .edu" and login does not enforce `.edu`.~~
    **CLOSED 2026-08-19 (`5947dae`) — enforced.** `lib/universityEmail.ts` holds
    the rule as data (any `.edu` domain, plus `EXTRA_DOMAINS` for universities

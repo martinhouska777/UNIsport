@@ -257,11 +257,15 @@ export const cues = {
       sub:  "92% consistency, 19 hours, five extra sessions — every teammate's
              month, and where yours sits next to it."
 
-  Those numbers are read off 11-varsity-teammate.webp, which already exists.
-  The problem is that it is a DARK-mode capture from the old shot day, and
-  every frame in both stories is now light — a dark screen inside the light
-  phone chrome reads as a bug. It needs a re-shoot through capture-light.mjs
-  before this beat can ship.
+  PARKED 2026-08-19, and not over the screenshot. Those numbers are read off
+  11-varsity-teammate.webp, which is a dark-mode capture from the old shot day
+  sitting in the light folder — but re-shooting it is the small problem. The
+  screen itself is DEMO DATA: lib/varsity/teamTraining.ts and teamProfiles.ts
+  derive a teammate's calendar, consistency, hours and personal bests from
+  their id, because accounts aren't linked to the squad yet. Advertising it
+  would put invented training on the landing page. The beat ships when a
+  teammate's month comes from their real logged sessions; the capture rig
+  (scripts/landing/capture-teammate.mjs) is written and waiting.
 */
 export const varsityStory: Beat[] = [
   {
