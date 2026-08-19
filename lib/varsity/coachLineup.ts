@@ -32,10 +32,17 @@ export type Side = "P" | "S" | "B"; // port · starboard · both (bisweptual)
   `ink` is what stays readable ON that blade: the app has a light theme as well
   as a dark one, so no blade colour may assume the background behind it.
 */
+/*
+  `label` is the word — used wherever there is room to read one (the athlete's
+  profile, the Team roster, the pool filter, the boat footer). `tag` is the
+  single letter painted on the blade markers in the Coach Console, where the
+  marker sits beside a name in a seat and a whole word would crowd it out.
+  The owner's call: P, S, B in the console.
+*/
 export const sideMeta: Record<Side, { label: string; tag: string; color: string; ink: string }> = {
-  P: { label: "Port", tag: "PORT", color: "#d93025", ink: "#ffffff" },
-  S: { label: "Starboard", tag: "STBD", color: "#1e8e3e", ink: "#ffffff" },
-  B: { label: "Both", tag: "BOTH", color: "#2563eb", ink: "#ffffff" },
+  P: { label: "Port", tag: "P", color: "#d93025", ink: "#ffffff" },
+  S: { label: "Starboard", tag: "S", color: "#1e8e3e", ink: "#ffffff" },
+  B: { label: "Both", tag: "B", color: "#2563eb", ink: "#ffffff" },
 };
 
 export const COX_COLOR = "#eab308"; // yellow — cox identity
