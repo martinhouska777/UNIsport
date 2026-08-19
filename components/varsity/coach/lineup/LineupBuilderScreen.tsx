@@ -27,6 +27,11 @@ import {
   rosterGroups,
   sideMeta,
   COX_COLOR,
+  COX_INK,
+  seatSide,
+  fitsSeat,
+  sideDemand,
+  outMeta,
   boatTypes,
   makeSeats,
   type Practice,
@@ -84,14 +89,34 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
+type Side = Athlete["side"];
+
+/*
+  A BLADE. Every side marker in this screen is the same object: a solid patch of
+  the side's colour with legible lettering on it, the way an oar is painted.
+
+  Solid rather than the old tint-and-matching-text, because bow side is WHITE:
+  white letters on a 13%-white wash is nothing at all, and on the varsity light
+  theme it is worse. Painting the blade and putting the side's `ink` on top is
+  the one treatment that survives both themes and all three colours. The hairline
+  border stops a white blade from dissolving into a white card.
+*/
+function blade(color: string, ink: string): React.CSSProperties {
+  return {
+    background: color,
+    color: ink,
+    borderColor: `color-mix(in oklab, ${ink} 22%, transparent)`,
+  };
+}
+
 function SideTag({ side }: { side: Side }) {
   const m = sideMeta[side];
   return (
     <span
-      className="rounded px-1.5 py-px text-[11px] font-bold tracking-[0.05em]"
-      style={{ background: `${m.color}22`, color: m.color }}
+      className="rounded border px-1.5 py-px text-[10px] font-bold tracking-[0.05em]"
+      style={blade(m.color, m.ink)}
     >
-      {side}
+      {m.tag}
     </span>
   );
 }
@@ -107,25 +132,28 @@ function Avatar({
   cox?: boolean;
   className?: string;
 }) {
-  const color = cox ? COX_COLOR : side ? sideMeta[side].color : undefined;
+  const paint = cox
+    ? blade(COX_COLOR, COX_INK)
+    : side
+      ? blade(sideMeta[side].color, sideMeta[side].ink)
+      : undefined;
   return (
     <span
       className={`flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border text-[11px] font-bold ${className}`}
-      style={color ? { background: `${color}1f`, borderColor: `${color}66`, color } : undefined}
+      style={paint}
     >
       {initials}
     </span>
   );
 }
-type Side = Athlete["side"];
 
 // Tag shown for an athlete in the pool / a seat: their side, or "COX".
 function AthleteTag({ a }: { a: Athlete }) {
   if (a.cox) {
     return (
       <span
-        className="rounded px-1.5 py-px text-[11px] font-bold tracking-[0.05em]"
-        style={{ background: `${COX_COLOR}22`, color: COX_COLOR }}
+        className="rounded border px-1.5 py-px text-[10px] font-bold tracking-[0.05em]"
+        style={blade(COX_COLOR, COX_INK)}
       >
         COX
       </span>
@@ -203,6 +231,7 @@ function DayPicker({ days, onPick }: { days: PickDay[]; onPick: (day: PickDay, p
 /* ─────────────────────────  view 2: builder (interactive)  ───────────────────────── */
 function Seat({
   label,
+  side,
   athlete,
   cox,
   typing,
@@ -219,6 +248,8 @@ function Seat({
   onDragLeaveSlot,
 }: {
   label: string;
+  /** Which side this seat rows. Absent on the cox seat, which rows neither. */
+  side?: Exclude<Side, "B">;
   athlete?: Athlete;
   cox?: boolean;
   typing: boolean;
@@ -234,7 +265,20 @@ function Seat({
   onDragOverSlot: () => void;
   onDragLeaveSlot: () => void;
 }) {
-  const numColor = cox ? "text-accent" : "text-muted";
+  /*
+    The seat's own blade, carrying the seat number. A seat rows one side and
+    only one — that is how a boat is rigged — so the number is painted in that
+    side's colour rather than described in words. Reading down the hull you see
+    red, white, red, white: four of each, which is the point.
+  */
+  const seatPaint = cox ? blade(COX_COLOR, COX_INK) : side ? blade(sideMeta[side].color, sideMeta[side].ink) : undefined;
+
+  /*
+    Seated on the wrong side. Not prevented — a coach may know something the
+    roster doesn't, and being overruled by a form is worse than being warned —
+    but it is never silent.
+  */
+  const wrongSide = !!athlete && !cox && !!side && !fitsSeat(athlete, side);
 
   const dropHandlers = {
     onDragOver: (e: React.DragEvent) => {
@@ -251,7 +295,13 @@ function Seat({
 
   return (
     <div className="flex items-center gap-2">
-      <span className={`w-5 flex-shrink-0 text-center text-[11px] font-bold ${numColor}`}>{label}</span>
+      <span
+        className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded border text-[11px] font-bold"
+        style={seatPaint}
+        title={cox ? "Cox" : side ? `${sideMeta[side].label} side` : undefined}
+      >
+        {label}
+      </span>
 
       {typing ? (
         <div className="relative min-h-[42px] flex-1">
@@ -303,13 +353,20 @@ function Seat({
           className={`flex min-h-[42px] flex-1 cursor-grab items-center gap-2 rounded-lg border px-2.5 py-1.5 active:cursor-grabbing ${
             dropActive
               ? "border-accent bg-accent-tint"
-              : cox
-                ? "border-accent-line bg-accent-tint"
-                : "border-primary-line bg-primary-tint"
+              : wrongSide
+                ? "border-danger-line bg-danger-tint"
+                : cox
+                  ? "border-accent-line bg-accent-tint"
+                  : "border-primary-line bg-primary-tint"
           }`}
         >
           <Avatar initials={athlete.initials} side={athlete.side} cox={cox} />
-          <span className="flex-1 text-[13px] font-semibold text-text">{athlete.name}</span>
+          <span className="flex-1 truncate text-[13px] font-semibold text-text">{athlete.name}</span>
+          {wrongSide && (
+            <span className="flex-shrink-0 text-[10px] font-bold uppercase tracking-[0.06em] text-danger">
+              Off side
+            </span>
+          )}
           {!cox && <SideTag side={athlete.side} />}
           <button type="button" onClick={onClear} className="text-muted hover:text-danger">
             <IconX size={14} />
@@ -343,8 +400,8 @@ function PoolChip({ a, onDragStart }: { a: Athlete; onDragStart: () => void }) {
       <div className="flex items-center gap-2 rounded-xl border border-danger-line bg-danger-tint px-2 py-1.5 opacity-50">
         <Avatar initials={a.initials} className="border-danger-line bg-danger-tint text-danger" />
         <span className="text-[12px] font-semibold text-muted">{a.name}</span>
-        <span className="rounded bg-danger-tint px-1.5 py-px text-[11px] font-bold tracking-[0.05em] text-danger">
-          {a.out}
+        <span className="rounded bg-danger-tint px-1.5 py-px text-[10px] font-bold uppercase tracking-[0.05em] text-danger">
+          {outMeta[a.out]}
         </span>
       </div>
     );
@@ -417,10 +474,23 @@ function Builder({
     () => roster.filter((a) => !a.out && !seatedIds.has(a.id)),
     [seatedIds],
   );
+  // Injured or ill: never seatable, and shown as one list rather than dimmed
+  // in among the training groups.
+  const unavailable = useMemo(() => roster.filter((a) => a.out), []);
   const matches = useMemo(() => {
-    // a cox seat only offers coxes; a rowing seat only offers rowers
+    // A cox seat only offers coxes; a rowing seat only offers rowers who can
+    // row THAT side. Someone who rows both is offered everywhere. Suggesting a
+    // bowside rower for a strokeside seat is just a wrong suggestion — the
+    // coach can still drag them in if they mean it, and the seat says so.
     const wantCox = typing?.kind === "cox";
     let list = available.filter((a) => !!a.cox === wantCox);
+    if (typing?.kind === "seat") {
+      const boat = boats.find((b) => b.id === typing.boatId);
+      if (boat) {
+        const need = seatSide(typing.idx, boat.seats.length);
+        list = list.filter((a) => fitsSeat(a, need));
+      }
+    }
     const q = query.trim().toLowerCase();
     if (q) {
       list = list.filter(
@@ -428,7 +498,7 @@ function Builder({
       );
     }
     return list;
-  }, [available, query, typing]);
+  }, [available, query, typing, boats]);
 
   // put `athleteId` into `slot`, removing them from wherever they were first.
   // The cox seat is locked to coxes; coxes can't take a rowing seat.
@@ -507,10 +577,13 @@ function Builder({
 
   const renderSeat = (boat: Boat, slot: Slot, label: string, athleteId: string | null, cox = false) => {
     const key = slotKey(slot);
+    // A rowing seat rows one side; the cox seat rows none.
+    const side = slot.kind === "seat" ? seatSide(slot.idx, boat.seats.length) : undefined;
     return (
       <Seat
         key={key}
         label={label}
+        side={side}
         cox={cox}
         athlete={athleteId ? rosterById[athleteId] : undefined}
         typing={!!typing && slotKey(typing) === key}
@@ -652,9 +725,39 @@ function Builder({
                       />
                     </div>
 
-                    {/* footer — filled count */}
-                    <div className="border-t border-border px-3.5 py-2 text-[11px] text-muted">
-                      {filled} / {boat.seats.length} filled
+                    {/*
+                      Footer — filled count, and the side maths. An eight needs
+                      four stroke-side and four bow-side; a four needs two of
+                      each. Showing "3 / 4" against each blade is the fastest
+                      way to see a boat that cannot actually go out.
+                    */}
+                    <div className="flex items-center justify-between gap-2 border-t border-border px-3.5 py-2 text-[11px] text-muted">
+                      <span>
+                        {filled} / {boat.seats.length} filled
+                      </span>
+                      <span className="flex items-center gap-1.5">
+                        {(["P", "S"] as const).map((sd) => {
+                          const want = sideDemand(boat.seats.length)[sd];
+                          const have = boat.seats.filter(
+                            (st, i) =>
+                              st.athleteId &&
+                              seatSide(i, boat.seats.length) === sd &&
+                              rosterById[st.athleteId] &&
+                              fitsSeat(rosterById[st.athleteId], sd),
+                          ).length;
+                          return (
+                            <span key={sd} className="flex items-center gap-1">
+                              <span
+                                className="h-2.5 w-2.5 rounded-sm border"
+                                style={blade(sideMeta[sd].color, sideMeta[sd].ink)}
+                              />
+                              <span className={have === want ? "text-text" : undefined}>
+                                {have}/{want} {sideMeta[sd].label.toLowerCase()}
+                              </span>
+                            </span>
+                          );
+                        })}
+                      </span>
                     </div>
                   </div>
                 );
@@ -676,7 +779,7 @@ function Builder({
                   Athlete Pool
                 </span>
                 <span className="rounded-full border border-border bg-surface px-2 py-0.5 text-[11px] text-muted">
-                  {available.length} available · {roster.filter((a) => a.out).length} out
+                  {available.length} available · {unavailable.length} out
                 </span>
               </div>
 
@@ -685,18 +788,24 @@ function Builder({
                 {(
                   [
                     ["all", "All"],
-                    ["P", "Port"],
-                    ["S", "Starboard"],
+                    ["P", sideMeta.P.label],
+                    ["S", sideMeta.S.label],
                   ] as const
                 ).map(([key, label]) => (
                   <button
                     key={key}
                     type="button"
                     onClick={() => setPoolFilter(key)}
-                    className={`rounded-lg border px-2.5 py-1 text-[11px] font-medium ${
+                    className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[11px] font-medium ${
                       poolFilter === key ? "border-primary bg-primary-tint text-text" : "border-border bg-surface text-muted"
                     }`}
                   >
+                    {key !== "all" && (
+                      <span
+                        className="h-2.5 w-2.5 rounded-sm border"
+                        style={blade(sideMeta[key].color, sideMeta[key].ink)}
+                      />
+                    )}
                     {label}
                   </button>
                 ))}
@@ -706,17 +815,16 @@ function Builder({
                 {rosterGroups.map((g) => {
                   const chips = g.ids
                     .map((id) => rosterById[id])
-                    .filter((a) => a.out || !seatedIds.has(a.id))
-                    // side filter: Port shows P (+ both); Starboard shows S (+ both); coxes only under All
+                    // Anyone unavailable is listed once, at the bottom, under
+                    // its own heading — not scattered through the groups at
+                    // half opacity where a coach has to hunt for them.
+                    .filter((a) => !a.out && !seatedIds.has(a.id))
+                    // side filter: Stroke shows P (+ both); Bow shows S (+ both); coxes only under All
                     .filter((a) => poolFilter === "all" || (!a.cox && (a.side === poolFilter || a.side === "B")));
                   if (chips.length === 0) return null;
                   return (
                     <div key={g.label}>
-                      <div
-                        className={`mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] ${
-                          g.danger ? "text-danger" : "text-muted"
-                        }`}
-                      >
+                      <div className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
                         {g.label}
                         <span className="h-px flex-1 bg-border" />
                       </div>
@@ -728,6 +836,25 @@ function Builder({
                     </div>
                   );
                 })}
+
+                {/*
+                  UNAVAILABLE — the question a coach asks before any of the
+                  others: who can't I pick today. Kept out of the side filter
+                  on purpose; "who is hurt" is not a stroke-side question.
+                */}
+                {unavailable.length > 0 && (
+                  <div>
+                    <div className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-danger">
+                      Unavailable
+                      <span className="h-px flex-1 bg-danger-line" />
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {unavailable.map((a) => (
+                        <PoolChip key={a.id} a={a} onDragStart={() => setDropKey(null)} />
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </>

@@ -9,22 +9,43 @@
   shows whoever isn't currently seated — so a name can move between the pool and a
   seat (by typing or dragging) and only ever appear in one place.
 
-  Rowing "side" (Port / Starboard / Both) is a per-athlete CONTENT property, so
-  its colors live HERE as data and are applied via inline style — the same
-  rule-1 exception the plan/profile screens use (port has no theme token).
+  Rowing "side" is a per-athlete CONTENT property, so its colors live HERE as
+  data and are applied via inline style — the same rule-1 exception the
+  plan/profile screens use (a blade colour has no theme token, and never
+  should: it does not change when the university does).
 */
 
-export type Side = "P" | "S" | "B"; // Port · Starboard · Both (bisweptual)
+/*
+  The two sides of a boat, named the way a crew names them. `P` and `S` are the
+  underlying port/starboard, kept as the stored keys because the database, the
+  athlete setup form and every saved lineup already speak them — but nobody in
+  a boathouse says "port", they say STROKE SIDE and BOW SIDE, so that is what
+  is written on screen.
+*/
+export type Side = "P" | "S" | "B"; // stroke side · bow side · both (bisweptual)
 
-// Side colors mirror real oars: port = red, starboard = green; rows-both = blue.
-// Coxes are separate (yellow) and never take a rowing side.
-export const sideMeta: Record<Side, { label: string; color: string }> = {
-  P: { label: "Port", color: "#ef4444" }, // red
-  S: { label: "Starboard", color: "#22c55e" }, // green
-  B: { label: "Both", color: "#3b82f6" }, // blue
+/*
+  Painted blades. Stroke side is red, bow side is white, and someone who rows
+  either way is blue — the owner's scheme, and the one the squad's oars use.
+  `ink` is what stays readable ON that blade, because a white blade needs dark
+  lettering and a red one needs light: the app has a light theme as well as a
+  dark one, so neither colour can be assumed to sit on a dark background.
+*/
+export const sideMeta: Record<Side, { label: string; tag: string; color: string; ink: string }> = {
+  P: { label: "Stroke", tag: "STR", color: "#d93025", ink: "#ffffff" },
+  S: { label: "Bow", tag: "BOW", color: "#f4f4f5", ink: "#18181b" },
+  B: { label: "Both", tag: "BOTH", color: "#2563eb", ink: "#ffffff" },
 };
 
 export const COX_COLOR = "#eab308"; // yellow — cox identity
+export const COX_INK = "#18181b";
+
+/*
+  Why somebody is out. Two reasons, because they are the two a coach acts on
+  differently: an injury changes selection for weeks, a bug changes it for days.
+*/
+export type OutReason = "INJ" | "SICK";
+export const outMeta: Record<OutReason, string> = { INJ: "Injured", SICK: "Sick" };
 
 /* ── The roster (every assignable athlete, keyed by id) ── */
 export type Athlete = {
@@ -33,13 +54,19 @@ export type Athlete = {
   name: string;
   side: Side;
   cox?: boolean; // a coxswain — can ONLY take the cox seat, never a rowing seat
-  out?: "INJ" | "SICK"; // unavailable today → shown dimmed, can't be seated
+  out?: OutReason; // unavailable today → listed apart, can't be seated
 };
 
-// The real squad. The source list groups athletes by erg/fitness training group
-// (Columns A–D, Bike, UT2, OYO, Rx), NOT by rowing side — so we don't yet know
-// who rows port vs starboard. Everyone defaults to "B" (Both) until the coach
-// sets a real bowside/strokeside split. Columns A + D are the coxswains.
+/*
+  The real squad. The source list groups athletes by erg/fitness training group
+  (Columns A–D, Bike, UT2, OYO, Rx), NOT by rowing side, so the sides below are
+  a WORKING SPLIT, not the truth: roughly half stroke, half bow, a few who row
+  either way. They exist so the boat maths is real while the roster is still
+  demo data — a coach's own answer (the side question in /varsity/setup) will
+  replace them the moment these are real accounts. Same for `out`: five people
+  are carrying something, so "who can I actually put in a boat today" has an
+  answer to show. Columns A + D are the coxswains, who take no side at all.
+*/
 export const roster: Athlete[] = [
   // ── Coxswains (Columns A + D) ──
   { id: "cate-frerichs", initials: "CF", name: "Cate Frerichs", side: "B", cox: true },
@@ -51,60 +78,60 @@ export const roster: Athlete[] = [
   { id: "helena-inzerillo", initials: "HI", name: "Helena Inzerillo", side: "B", cox: true },
 
   // ── Group B ──
-  { id: "asante-kiio", initials: "AK", name: "Asante Kiio", side: "B" },
-  { id: "luca-vicino", initials: "LV", name: "Luca Vicino", side: "B" },
-  { id: "marcus-chung", initials: "MC", name: "Marcus Chung", side: "B" },
-  { id: "mason-cruz-abrams", initials: "MCr", name: "Mason Cruz-Abrams", side: "B" },
+  { id: "asante-kiio", initials: "AK", name: "Asante Kiio", side: "P" },
+  { id: "luca-vicino", initials: "LV", name: "Luca Vicino", side: "S" },
+  { id: "marcus-chung", initials: "MC", name: "Marcus Chung", side: "P" },
+  { id: "mason-cruz-abrams", initials: "MCr", name: "Mason Cruz-Abrams", side: "S" },
   { id: "jack-dorney", initials: "JD", name: "Jack Dorney", side: "B" },
-  { id: "alexander-grundy", initials: "AG", name: "Alexander Grundy", side: "B" },
-  { id: "george-farkas", initials: "GF", name: "George Farkas", side: "B" },
-  { id: "sam-gallaudet", initials: "SG", name: "Sam Gallaudet", side: "B" },
+  { id: "alexander-grundy", initials: "AG", name: "Alexander Grundy", side: "P" },
+  { id: "george-farkas", initials: "GF", name: "George Farkas", side: "S" },
+  { id: "sam-gallaudet", initials: "SG", name: "Sam Gallaudet", side: "P" },
   // The demo account itself, so a seat can light up as "You" on Home.
-  { id: "john-brown", initials: "JBn", name: "John Brown", side: "B" },
+  { id: "john-brown", initials: "JBn", name: "John Brown", side: "S" },
   { id: "marco-gandola", initials: "MG", name: "Marco Gandola", side: "B" },
-  { id: "apostolos-lykomitros", initials: "AL", name: "Apostolos Lykomitros", side: "B" },
-  { id: "tyler-horler", initials: "TH", name: "Tyler Horler", side: "B" },
-  { id: "teddy-plimpton", initials: "TP", name: "Teddy Plimpton", side: "B" },
-  { id: "sam-davidson", initials: "SD", name: "Sam Davidson", side: "B" },
+  { id: "apostolos-lykomitros", initials: "AL", name: "Apostolos Lykomitros", side: "P" },
+  { id: "tyler-horler", initials: "TH", name: "Tyler Horler", side: "S", out: "INJ" },
+  { id: "teddy-plimpton", initials: "TP", name: "Teddy Plimpton", side: "P" },
+  { id: "sam-davidson", initials: "SD", name: "Sam Davidson", side: "S" },
   { id: "jordan-dykema", initials: "JDy", name: "Jordan Dykema", side: "B" },
 
   // ── Group C ──
-  { id: "jack-hansen-knarhoi", initials: "JH", name: "Jack Hansen-Knarhoi", side: "B" },
-  { id: "owen-finnerty", initials: "OF", name: "Owen Finnerty", side: "B" },
-  { id: "marco-vicino", initials: "MV", name: "Marco Vicino", side: "B" },
-  { id: "pierce-lapham", initials: "PL", name: "Pierce Lapham", side: "B" },
-  { id: "julian-paul", initials: "JP", name: "Julian Paul", side: "B" },
-  { id: "ben-scott", initials: "BS", name: "Ben Scott", side: "B" },
-  { id: "sam-woodgate", initials: "SW", name: "Sam Woodgate", side: "B" },
-  { id: "mike-thomas", initials: "MT", name: "Mike Thomas", side: "B" },
-  { id: "joseph-baker", initials: "JB", name: "Joseph Baker", side: "B" },
+  { id: "jack-hansen-knarhoi", initials: "JH", name: "Jack Hansen-Knarhoi", side: "P" },
+  { id: "owen-finnerty", initials: "OF", name: "Owen Finnerty", side: "S" },
+  { id: "marco-vicino", initials: "MV", name: "Marco Vicino", side: "P" },
+  { id: "pierce-lapham", initials: "PL", name: "Pierce Lapham", side: "S" },
+  { id: "julian-paul", initials: "JP", name: "Julian Paul", side: "B", out: "SICK" },
+  { id: "ben-scott", initials: "BS", name: "Ben Scott", side: "P", out: "INJ" },
+  { id: "sam-woodgate", initials: "SW", name: "Sam Woodgate", side: "S" },
+  { id: "mike-thomas", initials: "MT", name: "Mike Thomas", side: "P" },
+  { id: "joseph-baker", initials: "JB", name: "Joseph Baker", side: "S" },
   { id: "adam-cech", initials: "AC", name: "Adam Cech", side: "B" },
-  { id: "alex-sanchez-fretz", initials: "AS", name: "Alex Sanchez Fretz", side: "B" },
-  { id: "leo-bessler", initials: "LB", name: "Leo Bessler", side: "B" },
-  { id: "joshua-brangan", initials: "JBr", name: "Joshua Brangan", side: "B" },
-  { id: "bob-rawlinson", initials: "BR", name: "Bob Rawlinson", side: "B" },
+  { id: "alex-sanchez-fretz", initials: "AS", name: "Alex Sanchez Fretz", side: "P" },
+  { id: "leo-bessler", initials: "LB", name: "Leo Bessler", side: "S" },
+  { id: "joshua-brangan", initials: "JBr", name: "Joshua Brangan", side: "P" },
+  { id: "bob-rawlinson", initials: "BR", name: "Bob Rawlinson", side: "S" },
   { id: "ben-schnalke", initials: "BSc", name: "Ben Schnalke", side: "B" },
-  { id: "jack-sulger", initials: "JS", name: "Jack Sulger", side: "B" },
-  { id: "elam-hughes", initials: "EH", name: "Elam Hughes", side: "B" },
-  { id: "owen-marcovitz", initials: "OM", name: "Owen Marcovitz", side: "B" },
+  { id: "jack-sulger", initials: "JS", name: "Jack Sulger", side: "P" },
+  { id: "elam-hughes", initials: "EH", name: "Elam Hughes", side: "S" },
+  { id: "owen-marcovitz", initials: "OM", name: "Owen Marcovitz", side: "P" },
 
   // ── Bike ──
-  { id: "will-fowler", initials: "WF", name: "Will Fowler", side: "B" },
+  { id: "will-fowler", initials: "WF", name: "Will Fowler", side: "S", out: "INJ" },
   { id: "kevin-weldon", initials: "KW", name: "Kevin Weldon", side: "B" },
 
   // ── UT2 ──
-  { id: "leyth-sousou", initials: "LS", name: "Leyth Sousou", side: "B" },
+  { id: "leyth-sousou", initials: "LS", name: "Leyth Sousou", side: "P" },
 
   // ── OYO ──
-  { id: "cameron-beyki", initials: "CB", name: "Cameron Beyki", side: "B" },
-  { id: "max-morehead", initials: "MM", name: "Max Morehead", side: "B" },
+  { id: "cameron-beyki", initials: "CB", name: "Cameron Beyki", side: "S", out: "SICK" },
+  { id: "max-morehead", initials: "MM", name: "Max Morehead", side: "P" },
 
   // ── Rx ──
-  { id: "george-burney", initials: "GB", name: "George Burney", side: "B" },
+  { id: "george-burney", initials: "GB", name: "George Burney", side: "S" },
   { id: "alp-karadogan", initials: "AK2", name: "Alp Karadogan", side: "B" },
-  { id: "kynan-tallec-botos", initials: "KT", name: "Kynan Tallec-Botos", side: "B" },
-  { id: "ryan-cornelius", initials: "RC", name: "Ryan Cornelius", side: "B" },
-  { id: "charles-richards", initials: "CR", name: "Charles Richards", side: "B" },
+  { id: "kynan-tallec-botos", initials: "KT", name: "Kynan Tallec-Botos", side: "P" },
+  { id: "ryan-cornelius", initials: "RC", name: "Ryan Cornelius", side: "S" },
+  { id: "charles-richards", initials: "CR", name: "Charles Richards", side: "P" },
 ];
 
 export const rosterById: Record<string, Athlete> = Object.fromEntries(
@@ -171,4 +198,30 @@ export function makeSeats(type: BoatType): SeatSlot[] {
     label: i === rowers - 1 ? "S" : String(i + 1),
     athleteId: null,
   }));
+}
+
+/*
+  WHICH SIDE A SEAT ROWS. A boat is rigged alternately: the stroke seat takes
+  stroke side, the seat in front of them bow side, and so on down to the bow.
+  An eight is therefore always four of each, a four is two of each, and that is
+  a fact about the boat rather than about who the coach puts in it — which is
+  why it is computed here rather than stored, and why it cannot come out wrong.
+
+  `i` is the seat's index in the array; the LAST index is the stroke seat.
+*/
+export function seatSide(i: number, rowers: number): Exclude<Side, "B"> {
+  return (rowers - 1 - i) % 2 === 0 ? "P" : "S";
+}
+
+/** Can this athlete take that seat? Someone who rows both sides always can. */
+export function fitsSeat(a: Athlete, side: Side): boolean {
+  return !a.cox && (a.side === "B" || a.side === side);
+}
+
+/** How many of each side a rigging asks for — "4 stroke · 4 bow" on an eight. */
+export function sideDemand(rowers: number): { P: number; S: number } {
+  return {
+    P: Array.from({ length: rowers }, (_, i) => seatSide(i, rowers)).filter((s) => s === "P").length,
+    S: Array.from({ length: rowers }, (_, i) => seatSide(i, rowers)).filter((s) => s === "S").length,
+  };
 }

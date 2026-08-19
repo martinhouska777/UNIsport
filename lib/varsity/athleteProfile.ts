@@ -41,12 +41,12 @@ export type BoatRole = (typeof boatRoleOptions)[number];
   Strokeside IS port and bowside IS starboard, so nobody has to pick a dialect.
 */
 export const sideOptions: { key: Side; label: string; sub: string }[] = [
-  { key: "P", label: sideMeta.P.label, sub: "Strokeside" },
-  { key: "S", label: sideMeta.S.label, sub: "Bowside" },
+  { key: "P", label: sideMeta.P.label, sub: "Port" },
+  { key: "S", label: sideMeta.S.label, sub: "Starboard" },
   { key: "B", label: sideMeta.B.label, sub: "Either side" },
 ];
 
-/** "Port · Strokeside" — for the chip on the profile. Null for a coxswain. */
+/** "Stroke · Port" — for the chip on the profile. Null for a coxswain. */
 export function sideLabel(role: BoatRole, side: Side): string | null {
   if (role === "Coxswain") return null;
   const o = sideOptions.find((s) => s.key === side);

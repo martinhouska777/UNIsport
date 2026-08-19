@@ -20,7 +20,7 @@ import Sheet from "@/components/varsity/Sheet";
 import TeamWorkouts from "@/components/varsity/team/TeamWorkouts";
 import { useUnits } from "@/components/useUnits";
 import { formatWeight } from "@/lib/varsity/units";
-import { roster, rosterById, sideMeta, COX_COLOR, type Athlete } from "@/lib/varsity/coachLineup";
+import { roster, rosterById, sideMeta, COX_COLOR, COX_INK, type Athlete } from "@/lib/varsity/coachLineup";
 import { teamProfile } from "@/lib/varsity/teamProfiles";
 import { teamTrainingMonth, formatDuration, type CatTotal } from "@/lib/varsity/teamTraining";
 import { formatMetrics } from "@/lib/varsity/logParse";
@@ -42,7 +42,15 @@ const toneDot: Record<StatusTone, string> = {
 };
 const toneOf = (title: string): StatusTone =>
   statusOptions.find((s) => s.title === title)?.tone ?? "muted";
-const sideColor = (a: Athlete) => (a.cox ? COX_COLOR : sideMeta[a.side].color);
+/*
+  The side dot. It carries a hairline of its own ink because bow side is WHITE
+  now — a bare white dot disappears on the varsity light theme.
+*/
+const sideDot = (a: Athlete): React.CSSProperties => {
+  const color = a.cox ? COX_COLOR : sideMeta[a.side].color;
+  const ink = a.cox ? COX_INK : sideMeta[a.side].ink;
+  return { background: color, border: `1px solid color-mix(in oklab, ${ink} 30%, transparent)` };
+};
 const sideLabel = (a: Athlete) => (a.cox ? "Cox" : sideMeta[a.side].label);
 
 /* ─────────────────────────  athlete profile sheet  ───────────────────────── */
@@ -122,7 +130,7 @@ function AthleteSheet({ athleteId, onClose }: { athleteId: string; onClose: () =
           {classLine && <div className="mt-1 text-[11px] text-muted">{classLine}</div>}
           <div className="mt-2 flex flex-wrap items-center gap-1.5">
             <span className="inline-flex items-center gap-1 rounded-md border border-border bg-surface-2 px-2 py-1 text-[11px] text-text">
-              <span className="h-2 w-2 rounded-full" style={{ background: sideColor(a) }} />
+              <span className="h-2 w-2 rounded-full" style={sideDot(a)} />
               {sideLabel(a)}
             </span>
             <span className="rounded-md border border-border bg-surface-2 px-2 py-1 text-[11px] text-text">
@@ -336,7 +344,7 @@ function RosterRow({ a, onOpen }: { a: Athlete; onOpen: () => void }) {
       </span>
       <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-text">{a.name}</span>
       <span className="flex items-center gap-1 text-[11px] text-muted">
-        <span className="h-2 w-2 rounded-full" style={{ background: sideColor(a) }} />
+        <span className="h-2 w-2 rounded-full" style={sideDot(a)} />
         {a.cox ? "Cox" : a.side}
       </span>
       <span className="text-muted">

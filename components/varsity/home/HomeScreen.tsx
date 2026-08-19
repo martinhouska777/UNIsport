@@ -8,7 +8,10 @@
 */
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
+import Link from "next/link";
 import { useAppState } from "@/components/AppState";
+import { useMembership } from "@/components/varsity/useMembership";
+import { can, canOpenConsole, roleLabel, type VarsityRole } from "@/lib/varsity/membership";
 import ThemeProvider from "@/components/ThemeProvider";
 import { varsityTheme, varsityLightTheme } from "@/lib/varsity/theme";
 import { fetchPlan, fetchProfileFullName } from "@/lib/varsity/planStore";
@@ -40,6 +43,8 @@ import {
   IconCalendar,
   IconArrowLeft,
   IconArrowRight,
+  IconChevronRight,
+  IconClipboard,
 } from "@/components/icons";
 
 const statusStyle: Record<
@@ -668,8 +673,50 @@ function EmptyHome() {
   );
 }
 
+/*
+  THE DOOR INTO THE COACH CONSOLE.
+
+  It used to exist only at the bottom of the athlete Profile, which is the last
+  place someone who RUNS the squad would look — the owner asked for it back in
+  Varsity Mode as a button, so here it is, on the first screen the mode opens.
+  A plain athlete never sees it, and the database refuses them regardless.
+
+  A captain and a coach get different doors on purpose: a captain handles
+  invites and cannot build a plan (lib/varsity/membership.ts), so sending them
+  to the plan builder would open a screen with nothing on it.
+*/
+function ConsoleDoor({ role }: { role: VarsityRole }) {
+  return (
+    <div className="px-3 pt-3">
+      <Link
+        href={can.buildPlan(role) ? "/varsity/coach/plan" : "/varsity/coach/team"}
+        className="flex items-center gap-3 rounded-xl border border-accent-line bg-accent-tint px-3.5 py-3"
+      >
+        <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-accent text-background">
+          <IconClipboard size={16} />
+        </span>
+        <span className="flex min-w-0 flex-1 flex-col leading-tight">
+          <span className="text-[14px] font-semibold text-text">
+            {roleLabel[role]} Console
+          </span>
+          <span className="mt-0.5 text-[11px] text-muted">
+            {can.buildPlan(role)
+              ? "Training plan, lineups, notes and the squad"
+              : "Invite rowers and manage the squad"}
+          </span>
+        </span>
+        <IconChevronRight size={16} className="flex-shrink-0 text-muted" />
+      </Link>
+    </div>
+  );
+}
+
 export default function HomeScreen() {
   const { userId } = useAppState();
+  // Coach or captain? Decides whether the console door appears at the top.
+  const { membership, isMember } = useMembership();
+  const consoleRole =
+    isMember && canOpenConsole(membership!.role) ? membership!.role : null;
   const [data, setData] = useState<HomeData | null>(null);
   const [loading, setLoading] = useState(true);
   const [note, setNote] = useState<string | null>(null); // null = still loading
@@ -715,6 +762,7 @@ export default function HomeScreen() {
   if (!data) {
     return (
       <div className="mx-auto w-full max-w-screen-sm pb-6">
+        {consoleRole && <ConsoleDoor role={consoleRole} />}
         <EmptyHome />
         {noteCard}
       </div>
@@ -724,6 +772,7 @@ export default function HomeScreen() {
   return (
     <div className="mx-auto w-full max-w-screen-sm pb-6">
       <Greeting g={data.greeting} />
+      {consoleRole && <ConsoleDoor role={consoleRole} />}
       <WeekStrip weeks={data.weeks} startIndex={data.weekIndex} />
 
       <div className="flex items-center justify-between px-4 pb-2 pt-4">
