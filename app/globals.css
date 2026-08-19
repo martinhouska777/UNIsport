@@ -279,6 +279,28 @@
 .ls-stage.ls-flip .ls-phone-col { transform: translateX(calc(-100% - 40px)); }
 .ls-stage.ls-flip .ls-copy      { transform: translateX(calc(100% + 40px)); }
 .ls-phone-col { display: flex; justify-content: center; }
+
+/*
+  THE ARRIVAL — a story's first appearance.
+  Until now the stage simply scrolled into place: the phone and the words were
+  already sitting there, finished, before anyone had read a word of them. The
+  first phone on the whole page deserves to arrive.
+
+  So they come from opposite sides and meet — the phone from its own edge, the
+  words from theirs — reusing the flip's transition above, which is why the
+  arrival and the mid-story crossing feel like the same page moving rather than
+  two different effects. The phone travels further; it is what the reader came
+  to look at.
+
+  Armed by ScrollStory ONLY when the story is still below the fold, so a story
+  already on screen (a deep link, a short window) is never yanked out of place
+  to be animated back in — and never armed at all under reduced motion. The
+  class is added by JS, never rendered, so with no JS at all nothing is hidden.
+  The stage's own overflow:hidden does the clipping.
+*/
+.ls-stage.ls-enter .ls-phone-col { transform: translateX(74px) scale(0.97); opacity: 0; }
+.ls-stage.ls-enter .ls-copy      { transform: translateX(-46px); opacity: 0; }
+.ls-stage.ls-enter .ls-rail      { opacity: 0; }
 .ls-phone-wrap { position: relative; will-change: transform; }
 @keyframes ls-float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
 .ls-phone { animation: ls-float 7s ease-in-out infinite; }

@@ -349,6 +349,43 @@ export default function ScrollStory({ id, beats, accent, ref }: Props) {
     };
   }, [frame]);
 
+  /*
+    THE ARRIVAL — the story's first appearance (app/globals.css, .ls-enter).
+
+    The phone and the words start pushed out to their own sides and glide in
+    to meet as the stage comes up the screen, so the first phone on the page
+    arrives instead of merely being there.
+
+    Armed only if the stage is still BELOW the fold at mount: a story already
+    on screen must not be shoved out of position just so it can slide back.
+    That check also makes this free of the flash it would otherwise have —
+    nothing visible ever moves at arming time. Reduced motion skips it whole.
+
+    Disarmed the moment the stage is a third on screen, which is early enough
+    that the movement has settled by the time it pins.
+  */
+  useEffect(() => {
+    const el = stage.current;
+    if (!el) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (el.getBoundingClientRect().top < window.innerHeight * 0.9) return;
+
+    el.classList.add("ls-enter");
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((e) => e.isIntersecting && e.intersectionRatio >= 0.3)) return;
+        el.classList.remove("ls-enter");
+        io.disconnect();
+      },
+      { threshold: [0.3] },
+    );
+    io.observe(el);
+    return () => {
+      io.disconnect();
+      el.classList.remove("ls-enter");
+    };
+  }, []);
+
   // Scroll the page so a given beat sits in the middle. Everything else follows
   // from that, so navigation and scrolling can never disagree.
   const goTo = (i: number) => {
