@@ -164,6 +164,29 @@ export async function fetchResults(dayKeys: string[]): Promise<TeamResult[]> {
   return (data as Row[]).map(rowToResult);
 }
 
+/* ── Every result ONE athlete has posted, newest first ──
+     Powers the coach's athlete screen. varsity_results is a team board, so
+     this needed no new permission — only a query nobody had written yet. ── */
+export async function fetchAthleteResults(athleteId: string): Promise<TeamResult[]> {
+  if (!athleteId) return [];
+  if (!hasSupabaseEnv()) {
+    return loadLocal()
+      .filter((r) => r.athleteId === athleteId)
+      .sort((a, b) => b.dayKey.localeCompare(a.dayKey));
+  }
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("varsity_results")
+    .select("*")
+    .eq("athlete_id", athleteId)
+    .order("day_key", { ascending: false });
+  if (error || !data) {
+    console.error("fetchAthleteResults:", error?.message);
+    return [];
+  }
+  return (data as Row[]).map(rowToResult);
+}
+
 /* ── Share (or re-share) your result for one team workout ──
      Upserts on (day_key, athlete_id): logging the same piece twice corrects
      your row rather than putting you on the board twice. ── */

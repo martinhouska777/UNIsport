@@ -30,6 +30,10 @@ export const can = {
   writeNotes: (r: VarsityRole) => r === "coach",
   invite: (r: VarsityRole) => r === "coach" || r === "captain",
   changeRoles: (r: VarsityRole) => r === "coach",
+  // Reading a squad member's own training diary. Coach only — a captain runs
+  // the invites, but is still a peer on the squad. The database enforces the
+  // same split in db/varsity_coach_reads.sql; this only hides the door.
+  readTraining: (r: VarsityRole) => r === "coach",
 };
 
 // True if this person may open the Coach Console at all (in any form).

@@ -139,7 +139,7 @@ export function defaultProfile(classYear: string): VarsityAthleteProfile {
 
 // Fold a saved (partial) record onto the defaults so the screen always has a
 // complete object to render.
-function withDefaults(
+export function withDefaults(
   saved: Partial<VarsityAthleteProfile> | undefined,
   classYear: string,
 ): VarsityAthleteProfile {

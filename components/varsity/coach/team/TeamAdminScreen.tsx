@@ -8,13 +8,17 @@
        actual gate; a forwarded link only ever lands someone here.
     2. INVITE LINKS — generate one to paste into WhatsApp, watch how many people
        came through it, and revoke it the moment it leaks.
-    3. THE SQUAD — who is in, and (coach only) who is a captain.
+    3. THE SQUAD — who is in, and (coach only) who is a captain. A COACH can
+       also open anyone here to see their training; a captain cannot, and gets
+       no chevron, because the database would refuse them anyway
+       (db/varsity_coach_reads.sql).
 
   Nothing here is a security boundary: every button calls a database function
   that re-checks the caller's role. See db/varsity_teams.sql.
   All colors are theme tokens (rule 1); the link presets are data (lib/varsity/invites).
 */
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import Button from "@/components/ui/Button";
 import {
   createInvite,
@@ -35,7 +39,7 @@ import {
   type SquadMember,
   type VarsityRole,
 } from "@/lib/varsity/membership";
-import { IconCheck, IconCopy, IconSend, IconTrash, IconX } from "@/components/icons";
+import { IconCheck, IconChevronRight, IconCopy, IconSend, IconTrash, IconX } from "@/components/icons";
 
 /* A titled block, matching the section labels used across Varsity Mode. */
 function Section({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
@@ -356,17 +360,37 @@ export default function TeamAdminScreen({ membership }: { membership: Membership
       </Section>
 
       {/* ── 3. The squad ── */}
-      <Section title={`Squad · ${approved.length}`}>
+      <Section
+        title={`Squad · ${approved.length}`}
+        hint={
+          can.readTraining(role)
+            ? "Tap anyone to see their training — calendar, sessions and erg results."
+            : undefined
+        }
+      >
         <ul className="flex flex-col gap-2">
           {approved.map((m) => (
             <li
               key={m.userId}
               className="flex items-center gap-3 rounded-xl border border-border bg-surface px-3.5 py-2.5"
             >
-              <div className="min-w-0 flex-1">
-                <div className="truncate text-[13px] text-text">{m.name}</div>
-                <div className="mt-0.5 truncate text-[11px] text-muted">{m.email}</div>
-              </div>
+              {can.readTraining(role) ? (
+                <Link
+                  href={`/varsity/coach/athlete/${m.userId}`}
+                  className="flex min-w-0 flex-1 items-center gap-2"
+                >
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[13px] text-text">{m.name}</span>
+                    <span className="mt-0.5 block truncate text-[11px] text-muted">{m.email}</span>
+                  </span>
+                  <IconChevronRight size={14} className="flex-shrink-0 text-muted" />
+                </Link>
+              ) : (
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-[13px] text-text">{m.name}</div>
+                  <div className="mt-0.5 truncate text-[11px] text-muted">{m.email}</div>
+                </div>
+              )}
               <span
                 className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
                   m.role === "athlete"
