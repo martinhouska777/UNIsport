@@ -249,9 +249,9 @@ beside a different blue. Nowhere else on the page does the accent sit next to a
 school colour. If it is ever worth fixing, fix it there — either that one list
 goes neutral, or it takes the colour of the school currently on screen.
 
-**Still the owner's to decide** (unchanged): enforce `.edu` or rename the
-button; V6 ending on a stats screen; V7's dark capture; "how much does it
-cost?" for the FAQ; any real number for social proof.
+**Still the owner's to decide**: V6 ending on a stats screen; V7's dark
+capture; "how much does it cost?" for the FAQ; any real number for social
+proof. (The `.edu` question is settled — see "Open, and blocked" below.)
 
 ## Measured facts worth not re-discovering
 
@@ -280,8 +280,15 @@ cost?" for the FAQ; any real number for social proof.
    day; every other frame is light. Needs a re-shoot through
    `capture-light.mjs`, which needs the owner to log in and hand over a session
    cookie (expires in an hour — see `scripts/landing/README.md`).
-3. **The hero says "Get started with .edu" and login does not enforce `.edu`.**
-   Any address works today. Either enforce it or change the button.
+3. ~~The hero says "Get started with .edu" and login does not enforce `.edu`.~~
+   **CLOSED 2026-08-19 (`5947dae`) — enforced.** `lib/universityEmail.ts` holds
+   the rule as data (any `.edu` domain, plus `EXTRA_DOMAINS` for universities
+   that don't end in it — empty today). Checked on the sign-up form AND in the
+   Google callback, since either one alone is a way round. Only NEW accounts
+   are checked; anyone already set up keeps their access. **Side effect worth
+   knowing: a new test account can no longer be made with a gmail address** —
+   adding one to `EXTRA_DOMAINS` is a one-line data edit if that gets in the
+   way.
 4. **"Free for students" and "Updated weekly"** are claims on the live page that
    nobody has checked.
 
