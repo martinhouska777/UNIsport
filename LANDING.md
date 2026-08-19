@@ -51,9 +51,8 @@ still meets everything in order.
 | **The live landing** | `app/page.tsx` → `components/landing/LandingPage.tsx` | **The new page** — stories, closers, coach, FAQ, about, contact |
 | **The tabs / views** | `views` in `lib/landingCopy.ts` → `LandingNav.tsx`; `LandingPage view=…`; routes `app/for/[audience]`, `app/about`, `app/contact`; shared head in `components/landing/routeMeta.ts` | Built (2026-08-18) — see "One page, six views" below |
 | Contact + socials | `components/landing/Contact.tsx`, `contact.socials` in `lib/landingCopy.ts` | Built — Instagram / TikTok / X are "coming soon" until the owner fills in `href` + `handle` |
-| Light / dark phone screens | `components/landing/PhoneMode.tsx`, `public/landing/dark/**` | Built — the switch bottom-right, shown only over the sections with phones (`data-phone-screens`); **dark frames are provisional** (see below) |
+| Light / dark phone screens | `components/landing/PhoneMode.tsx`, `public/landing/dark/**` | Built — the switch bottom-right, shown only over the sections with phones (`data-phone-screens`); dark frames are real captures (see below) |
 | The link card | `app/page.tsx` metadata, `public/og.png` ← `scripts/landing/make-og.mjs` | Built |
-| Palette B scratch | `app/landing-mono/page.tsx` | **Scratch** — owner to decide, then delete |
 | Scroll animations | `scripts/landing/build-story.mjs` → `story.html` | Built, published as an artifact |
 | Animation runtime | `scripts/landing/story-script.js` | Vanilla DOM; not yet React |
 | The two closers (prototype) | `webpage/*.html` | Bundled Design apps, iframed — still what the artifact shows |
@@ -225,19 +224,30 @@ the pill bottom-right. Every capture at `/landing/<x>.webp` has a twin at
 `/landing/dark/<x>.webp` (closers: `/landing/dark/closers/`); the phone
 chrome flips via the `l-phone-*` tokens under `[data-phone-mode="dark"]`.
 Default = the visitor's `prefers-color-scheme`, then their last choice.
-**The dark frames are stand-ins** made by `dark-placeholders.mjs` (light
-captures inverted, hue restored — crimson comes out salmon). Real ones:
-`node save-cookie.mjs` (owner logs in) → `node capture-light.mjs --mode
-dark` (writes the dark folder for the story frames). Still to do after that:
-dark base captures for the closers (`recolor-shots.mjs` / `patch-gyms.mjs`
-on a dark base — the wipe colour is white today) and for the five coach
-screens.
+**The dark frames are real** as of `ea5d904` (2026-08-18): shot from the app's
+own dark theme — `node save-cookie.mjs` (owner logs in) → `node
+capture-light.mjs --mode dark` — with the closers rebuilt on the new base and
+the light frames re-shot the same day. The inverted stand-ins from
+`dark-placeholders.mjs` are gone. Every shot the live page asks for now has a
+dark twin; `shotSrc()` rewrites the path with NO fallback, so a beat added
+without one is a broken image. (The unused files left in `public/landing/` —
+the old `05`–`12` story frames and the archived `coach-*` captures — have no
+dark twin and need none.)
 
-**Palette B, undecided.** `/landing-mono` shows the page with the student
-accent turned to the text white — the school colours become the only
-saturated colour on the page (the argument: on Campus Colours the blue
-chrome sits beside Yale-blue content). Three token values, one wrapper.
-Decide, then either move the values into `globals.css` or delete the route.
+**Palette B — DECIDED 2026-08-19: keep the blue.** `/landing-mono` showed the
+page with the student accent turned to the text white, so that the school
+colours would be the only saturated colour on it. The owner compared the two
+side by side and kept the blue; the scratch route is deleted. Two arguments
+against it, recorded so this is not re-argued: an accent the same colour as the
+body text is no longer an accent (the page loses a level of hierarchy), and with
+the blue gone the only colour left is gold — which belongs to Varsity Mode,
+making the gated rowing feature the loudest thing on a page whose main audience
+is ordinary students. The complaint BEHIND Palette B still stands, but it is
+local: the feature list beside Campus Colours is blue while the phone next to it
+cycles through school colours, so on Yale / Columbia / Penn it reads as blue
+beside a different blue. Nowhere else on the page does the accent sit next to a
+school colour. If it is ever worth fixing, fix it there — either that one list
+goes neutral, or it takes the colour of the school currently on screen.
 
 **Still the owner's to decide** (unchanged): enforce `.edu` or rename the
 button; V6 ending on a stats screen; V7's dark capture; "how much does it
