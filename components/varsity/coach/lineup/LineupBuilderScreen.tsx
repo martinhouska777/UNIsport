@@ -18,7 +18,7 @@
   see the published boats but not a personalised "your seat" highlight — that
   needs real team membership (a later slice).
 */
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Button, { buttonClass } from "@/components/ui/Button";
 import {
   practiceStatusMeta,
@@ -40,7 +40,7 @@ import {
   type Athlete,
   type BoatType,
 } from "@/lib/varsity/coachLineup";
-import { sessionKey, sessionLabel } from "@/lib/varsity/coachPlan";
+import { categoryMeta, sessionKey, sessionLabel } from "@/lib/varsity/coachPlan";
 import { fetchPlan, type Plan } from "@/lib/varsity/planStore";
 import {
   fetchLineup,
@@ -64,6 +64,12 @@ import {
 type Slot = { boatId: string; kind: "seat"; idx: number } | { boatId: string; kind: "cox" };
 const slotKey = (s: Slot) => (s.kind === "cox" ? `${s.boatId}:cox` : `${s.boatId}:${s.idx}`);
 
+/*
+  What the training plan prescribes for one AM or PM slot, reduced to the three
+  things worth showing on a picker button. Null when the plan has nothing there.
+*/
+type PlanCell = { label: string; description: string; color: string } | null;
+
 // A real calendar day in the picker, with its two practices.
 type PickDay = {
   id: string;
@@ -73,8 +79,8 @@ type PickDay = {
   month: string;
   today?: boolean;
   note?: string;
-  am: Practice;
-  pm: Practice;
+  am: Practice & { plan: PlanCell };
+  pm: Practice & { plan: PlanCell };
 };
 
 // What the prescribed-session card shows (from the published plan, if any).
@@ -162,15 +168,52 @@ function AthleteTag({ a }: { a: Athlete }) {
 }
 
 /* ─────────────────────────  view 1: day picker  ───────────────────────── */
-function PracticeButton({ practice, onPick }: { practice: Practice; onPick: () => void }) {
+/*
+  One AM / PM button. It answers two different questions at once, which is why
+  it has two lines: WHAT is prescribed here (from the training plan) and WHERE
+  the lineup for it has got to (from the lineup database). A coach picking a
+  practice to seat wants the first one before they tap — otherwise every day is
+  an identical pair of buttons and they have to open one to find out.
+
+  The category dot is a CONTENT colour out of categoryMeta (rule-1 exception),
+  applied inline, exactly as the plan builder paints it.
+*/
+function PracticeButton({
+  practice,
+  onPick,
+}: {
+  practice: Practice & { plan: PlanCell };
+  onPick: () => void;
+}) {
   const s = practiceStatusMeta[practice.status];
+  const plan = practice.plan;
   return (
     <button
       type="button"
       onClick={onPick}
-      className="flex flex-1 flex-col items-center gap-1.5 border-r border-border py-3 last:border-r-0 active:bg-surface-2"
+      className="flex min-w-0 flex-1 flex-col items-center gap-1.5 border-r border-border px-2.5 py-3 last:border-r-0 active:bg-surface-2"
     >
       <span className="text-[11px] font-semibold tracking-[0.08em] text-text">{practice.period}</span>
+
+      {plan ? (
+        <span className="flex w-full min-w-0 flex-col items-center gap-0.5">
+          <span className="flex max-w-full items-center gap-1.5 text-[11px] font-medium text-text">
+            <span
+              className="h-1.5 w-1.5 flex-shrink-0 rounded-full"
+              style={{ background: plan.color }}
+            />
+            <span className="truncate">{plan.label}</span>
+          </span>
+          {plan.description && (
+            <span className="w-full truncate text-[10px] leading-snug text-muted">
+              {plan.description}
+            </span>
+          )}
+        </span>
+      ) : (
+        <span className="text-[11px] text-muted/70">Nothing planned</span>
+      )}
+
       <span className="flex items-center gap-1.5 text-[11px] text-muted">
         <span className={`h-1.5 w-1.5 rounded-full ${s.dot}`} />
         {s.label}
@@ -931,6 +974,21 @@ export default function LineupBuilderScreen() {
 
   const refreshStatuses = async () => setStatuses(await fetchLineupStatuses());
 
+  // What the plan prescribes for one slot — the same lookup the builder does
+  // when it shows the prescribed-session card, just one screen earlier.
+  const planCell = useCallback(
+    (dayKey: string): PlanCell => {
+      const sess = plan?.sessions[dayKey];
+      if (!sess) return null;
+      return {
+        label: sessionLabel(sess),
+        description: sess.description.trim(),
+        color: categoryMeta[sess.category].color,
+      };
+    },
+    [plan],
+  );
+
   useEffect(() => {
     (async () => {
       const [s, p] = await Promise.all([fetchLineupStatuses(), fetchPlan()]);
@@ -956,12 +1014,12 @@ export default function LineupBuilderScreen() {
         weekday: d.toLocaleDateString("en-US", { weekday: "long" }),
         month: d.toLocaleDateString("en-US", { month: "long" }),
         today: i === 0,
-        am: { period: "AM", status: (statuses[amKey] as PracticeStatus) ?? "none" },
-        pm: { period: "PM", status: (statuses[pmKey] as PracticeStatus) ?? "none" },
+        am: { period: "AM", status: (statuses[amKey] as PracticeStatus) ?? "none", plan: planCell(amKey) },
+        pm: { period: "PM", status: (statuses[pmKey] as PracticeStatus) ?? "none", plan: planCell(pmKey) },
       });
     }
     return out;
-  }, [statuses]);
+  }, [statuses, planCell]);
 
   const pick = (day: PickDay, p: Practice) => {
     const dayKey = sessionKey(day.date, p.period);
