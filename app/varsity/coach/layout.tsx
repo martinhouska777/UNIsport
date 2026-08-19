@@ -20,6 +20,14 @@ import { canOpenConsole, can } from "@/lib/varsity/membership";
 import { varsityTheme, varsityLightTheme } from "@/lib/varsity/theme";
 
 const TEAM_TAB = "/varsity/coach/team";
+const SETTINGS = "/varsity/coach/settings";
+/*
+  What a CAPTAIN may open. A captain runs people, not training: the squad
+  screen (which is the athlete Team tab, so they could see it anyway) and
+  settings, where the invite links are. Everything else bounces to settings —
+  the database refuses them there too, this just doesn't show the door.
+*/
+const captainMay = (path: string) => path === TEAM_TAB || path === SETTINGS;
 
 export default function CoachLayout({ children }: { children: React.ReactNode }) {
   const { ready, loggedIn, varsityReady } = useAppState();
@@ -45,8 +53,8 @@ export default function CoachLayout({ children }: { children: React.ReactNode })
       router.replace("/varsity/home");
       return;
     }
-    // A captain who lands on a training screen goes to the one tab they own.
-    if (!can.buildPlan(role) && pathname !== TEAM_TAB) router.replace(TEAM_TAB);
+    // A captain who lands on a training screen goes to the screen they own.
+    if (!can.buildPlan(role) && !captainMay(pathname)) router.replace(SETTINGS);
   }, [ready, loggedIn, varsityReady, loading, role, pathname, router]);
 
   if (!ready || !loggedIn || !varsityReady || loading || !role || !canOpenConsole(role)) return null;

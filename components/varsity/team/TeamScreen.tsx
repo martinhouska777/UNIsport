@@ -16,6 +16,7 @@
   applied via inline style (the rule-1 exception the lineup screens use).
 */
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import Sheet from "@/components/varsity/Sheet";
 import TeamWorkouts from "@/components/varsity/team/TeamWorkouts";
 import { useUnits } from "@/components/useUnits";
@@ -330,14 +331,17 @@ function AthleteSheet({ athleteId, onClose }: { athleteId: string; onClose: () =
 }
 
 /* ─────────────────────────  roster row  ───────────────────────── */
-function RosterRow({ a, onOpen }: { a: Athlete; onOpen: () => void }) {
+/*
+  The row is a button that opens the squad profile sheet — unless a `href` is
+  given, which is the coach's version: it goes to that rower's full training
+  screen instead. Same row either way; only where it leads changes.
+*/
+function RosterRow({ a, onOpen, href }: { a: Athlete; onOpen: () => void; href?: string }) {
   const tone = toneOf(teamProfile(a.id).status);
-  return (
-    <button
-      type="button"
-      onClick={onOpen}
-      className="flex w-full items-center gap-3 rounded-xl border border-border bg-surface px-3 py-2.5 text-left active:bg-surface-2"
-    >
+  const cls =
+    "flex w-full items-center gap-3 rounded-xl border border-border bg-surface px-3 py-2.5 text-left active:bg-surface-2";
+  const inner = (
+    <>
       <span className="relative flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-primary-tint text-[11px] font-semibold text-primary">
         {a.initials}
         <span className={`absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-surface ${toneDot[tone]}`} />
@@ -350,6 +354,15 @@ function RosterRow({ a, onOpen }: { a: Athlete; onOpen: () => void }) {
       <span className="text-muted">
         <IconChevronRight size={15} />
       </span>
+    </>
+  );
+  return href ? (
+    <Link href={href} className={cls}>
+      {inner}
+    </Link>
+  ) : (
+    <button type="button" onClick={onOpen} className={cls}>
+      {inner}
     </button>
   );
 }
@@ -357,7 +370,20 @@ function RosterRow({ a, onOpen }: { a: Athlete; onOpen: () => void }) {
 /* ─────────────────────────  screen  ───────────────────────── */
 type Tab = "roster" | "workouts";
 
-export default function TeamScreen() {
+/*
+  ONE screen, shown to athletes and to coaches alike — the Coach Console's Team
+  tab renders this exact component. The only difference a coach gets is
+  `athleteHref`: for a rower who is also a real account on this squad it returns
+  the link to their full training screen, which is a permission an athlete does
+  not have. Everything else — roster, workouts, the erg boards, the water
+  telemetry — is identical, on purpose: a coach and a rower should be looking
+  at the same numbers.
+*/
+export default function TeamScreen({
+  athleteHref,
+}: {
+  athleteHref?: (a: Athlete) => string | null;
+} = {}) {
   const [tab, setTab] = useState<Tab>("roster");
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState<string | null>(null);
@@ -410,7 +436,12 @@ export default function TeamScreen() {
 
           <div className="mt-3 flex flex-col gap-1.5">
             {shown.map((a) => (
-              <RosterRow key={a.id} a={a} onOpen={() => setOpen(a.id)} />
+              <RosterRow
+                key={a.id}
+                a={a}
+                onOpen={() => setOpen(a.id)}
+                href={athleteHref?.(a) ?? undefined}
+              />
             ))}
             {shown.length === 0 && (
               <div className="rounded-xl border border-dashed border-border bg-surface px-4 py-8 text-center text-[12px] text-muted">

@@ -1,7 +1,10 @@
 "use client";
 
 /*
-  TEAM ADMIN — the captain's screen (a coach sees it too).
+  SQUAD SETTINGS — running the squad. The captain's whole console; for a coach,
+  the screen behind the gear in the top bar (/varsity/coach/settings). It is
+  deliberately NOT one of the four nav tabs: those are the daily screens, and
+  handing out an invite link is a once-a-term job.
 
   Three things, in the order they matter:
     1. WAITING ROOM — people who used a link and need letting in. This is the

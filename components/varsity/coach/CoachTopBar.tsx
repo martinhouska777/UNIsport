@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ThemeModeToggle } from "@/components/ThemeMode";
-import { IconArrowLeft } from "@/components/icons";
+import { IconArrowLeft, IconSettings } from "@/components/icons";
 import { roleLabel, type VarsityRole } from "@/lib/varsity/membership";
 
 /*
@@ -31,6 +31,15 @@ export default function CoachTopBar({
         </div>
       </div>
       <div className="flex items-center gap-2">
+        {/* Running the squad — invite links, the waiting room, captains. Here
+            rather than on the nav because it is a once-a-term job. */}
+        <Link
+          href="/varsity/coach/settings"
+          aria-label="Squad settings"
+          className="tap44 press-icon flex h-8 w-8 items-center justify-center rounded-full border border-border bg-surface text-muted"
+        >
+          <IconSettings size={15} />
+        </Link>
         <ThemeModeToggle />
         <Link
           href="/varsity/home"
