@@ -112,26 +112,33 @@ export default function BottomNav() {
               <Link
                 href={tab.href}
                 aria-current={active ? "page" : undefined}
-                /* The first-run tour lights this up by name (lib/tour.ts).
-                   SideNav carries the same anchor, and only one of the two
-                   navs is ever on screen. */
-                data-tour={`tab-${tab.href}`}
-                className={`flex flex-col items-center gap-1 py-2.5 text-[11px] font-medium transition-[color,transform] duration-150 active:scale-90 ${
+                className={`flex flex-col items-center py-2.5 text-[11px] font-medium transition-[color,transform] duration-150 active:scale-90 ${
                   active ? "text-primary" : "text-muted"
                 }`}
               >
-                <span className="relative">
-                  {tab.icon}
-                  {tab.href === "/messages" && unread > 0 && (
-                    <span
-                      aria-label={`${unread} unread messages`}
-                      className="absolute -right-2 -top-1.5 flex h-[15px] min-w-[15px] items-center justify-center rounded-full border border-surface bg-danger px-1 text-[11px] font-semibold leading-none text-primary-contrast"
-                    >
-                      {unread > 9 ? "9+" : unread}
-                    </span>
-                  )}
+                {/*
+                  The tap target is the whole quarter-width cell, but the tour
+                  rings THIS — the icon and its label. Anchoring the link
+                  itself drew a ring a quarter of the screen wide around a
+                  24px icon, and hung it off the left edge on the first tab.
+                  SideNav carries the same anchor name on its own item (there
+                  the whole row is the visible thing), and only one of the two
+                  navs is ever on screen. See lib/tour.ts.
+                */}
+                <span data-tour={`tab-${tab.href}`} className="flex flex-col items-center gap-1">
+                  <span className="relative">
+                    {tab.icon}
+                    {tab.href === "/messages" && unread > 0 && (
+                      <span
+                        aria-label={`${unread} unread messages`}
+                        className="absolute -right-2 -top-1.5 flex h-[15px] min-w-[15px] items-center justify-center rounded-full border border-surface bg-danger px-1 text-[11px] font-semibold leading-none text-primary-contrast"
+                      >
+                        {unread > 9 ? "9+" : unread}
+                      </span>
+                    )}
+                  </span>
+                  {tab.label}
                 </span>
-                {tab.label}
               </Link>
             </li>
           );

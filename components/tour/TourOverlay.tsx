@@ -30,10 +30,20 @@ import { useCallback, useEffect, useId, useRef, useState } from "react";
 import type { TourStep } from "@/lib/tour";
 
 const PAD = 8; // breathing room around the lit element
+const EDGE = 6; // never let the hole run off the side of the screen
 const GAP = 14; // between the hole and the caption
 const CAPTION_W = 340; // caption width when it sits beside the hole (laptop)
 
-type Box = { top: number; left: number; width: number; height: number };
+type Box = { top: number; left: number; width: number; height: number; radius: number };
+
+/** Same box, to within half a pixel? Keeps the settle loop from re-rendering. */
+function same(a: Box | null, b: Box | null) {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  return (["top", "left", "width", "height", "radius"] as const).every(
+    (k) => Math.abs(a[k] - b[k]) < 0.5
+  );
+}
 
 /*
   Phone renders BottomNav (`lg:hidden`), laptop renders SideNav (`hidden
@@ -119,14 +129,26 @@ export default function TourOverlay({
     visibleAnchor(step.anchor)?.click();
   }, [live, step, i]);
 
+  /*
+    setBox, but only when the box has actually moved. The measuring loop below
+    runs on every frame for a moment; without this it would re-render on each
+    one and keep restarting the hole's CSS travel.
+  */
+  const boxRef = useRef<Box | null>(null);
+  const apply = useCallback((next: Box | null) => {
+    if (same(boxRef.current, next)) return;
+    boxRef.current = next;
+    setBox(next);
+  }, []);
+
   const measure = useCallback(() => {
     if (!step?.anchor) {
-      setBox(null);
+      apply(null);
       return;
     }
     const el = visibleAnchor(step.anchor);
     if (!el) {
-      setBox(null);
+      apply(null);
       return;
     }
     /*
@@ -141,25 +163,68 @@ export default function TourOverlay({
       el.scrollIntoView({ block: "center", behavior: "instant" as ScrollBehavior });
       r = el.getBoundingClientRect();
     }
-    setBox({
-      top: r.top - PAD,
-      left: r.left - PAD,
-      width: r.width + PAD * 2,
-      height: r.height + PAD * 2,
-    });
-  }, [step]);
+    /*
+      The ring borrows the target's OWN corner radius instead of imposing one.
+      A fixed 16px radius on a square segmented-control button reads as a
+      different shape parked near the button rather than a ring around it.
+      Anything already rounded to half its height is a pill and stays one.
+    */
+    const own = parseFloat(window.getComputedStyle(el).borderTopLeftRadius) || 0;
+    const pill = own >= Math.min(r.width, r.height) / 2 - 1;
 
-  // Re-measure on every step, and whenever the window changes shape under it.
+    /*
+      Clamped to the screen. A bottom-nav tab is a quarter-width cell that
+      starts at x=0, so its ring used to hang off the left edge; a full-width
+      block hung off both.
+    */
+    const left = Math.max(EDGE, r.left - PAD);
+    const top = Math.max(EDGE, r.top - PAD);
+    const right = Math.min(window.innerWidth - EDGE, r.right + PAD);
+    const bottom = Math.min(window.innerHeight - EDGE, r.bottom + PAD);
+
+    apply({
+      top,
+      left,
+      width: Math.max(0, right - left),
+      height: Math.max(0, bottom - top),
+      radius: pill ? 9999 : own + PAD,
+    });
+  }, [step, apply]);
+
+  /*
+    Re-measure on every step, and whenever the page moves under it.
+
+    Measuring ONCE was the alignment bug. A tab page slides eight pixels up as
+    it arrives (`.app-page-enter`, app/globals.css), so a tour that opens with
+    the screen measured its target mid-flight and drew the ring where the
+    element was passing through rather than where it came to rest — a few
+    pixels low, every time. The `activate` steps break it from the other end:
+    pressing a sub-tab re-lays-out the screen after the measurement.
+
+    So it keeps measuring for about three quarters of a second, which outlasts
+    both that entrance and the ring's own travel, and `apply` above makes the
+    frames where nothing moved cost nothing.
+  */
   useEffect(() => {
     if (!live) return;
+    let raf = 0;
+    let frames = 0;
+    const tick = () => {
+      measure();
+      if (++frames < 45) raf = requestAnimationFrame(tick);
+    };
     // Reading the target's real position — see the note above.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    measure();
+    tick();
     window.addEventListener("resize", measure);
     window.addEventListener("orientationchange", measure);
+    // Capture: the page scrolls inside <main>, not on the window.
+    window.addEventListener("scroll", measure, true);
     return () => {
+      cancelAnimationFrame(raf);
       window.removeEventListener("resize", measure);
       window.removeEventListener("orientationchange", measure);
+      window.removeEventListener("scroll", measure, true);
     };
   }, [live, measure]);
 
@@ -232,12 +297,13 @@ export default function TourOverlay({
           closing card) it's a plain backdrop over everything. */}
       {box ? (
         <div
-          className="tour-hole absolute rounded-2xl"
+          className="tour-hole absolute"
           style={{
             top: box.top,
             left: box.left,
             width: box.width,
             height: box.height,
+            borderRadius: box.radius,
             boxShadow: `0 0 0 9999px ${dim}`,
             outline: "2px solid var(--primary-live)",
             outlineOffset: "-1px",
