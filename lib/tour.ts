@@ -15,10 +15,14 @@
   changed without touching component code (rule 7).
 
   Each step:
-    route   go here first (the overlay navigates and waits for the screen)
-    press   press this `data-tour` before the step — opens sheets, switches
-            sub-tabs, closes the editor again
+    press   press this `data-tour` to GET here — the overlay animates a tap on
+            it first, so a screen never changes without you seeing what did it
+    route   where that press should land; also the fallback if the control
+            can't be found, and the only way to reach a step with no button
     anchor  the `data-tour` to light up; null = a centred card with no target
+
+  Prefer `press` over `route`. Being carried to a new screen by an invisible
+  hand teaches nothing — watching the Match tab get tapped teaches the tab.
 
   A step whose anchor never turns up is skipped rather than stranding the tour,
   so a screen that fails to load costs one step, not the whole walk.
@@ -32,10 +36,10 @@
 import { gyms } from "@/lib/gyms";
 
 export type TourStep = {
-  /** Navigate here before showing this step. Omitted = stay put. */
-  route?: string;
-  /** Press this `data-tour` anchor before showing the step. */
+  /** Press this `data-tour` to reach the step — tapped visibly, then clicked. */
   press?: string;
+  /** Where that lands. Also the fallback if the control never turns up. */
+  route?: string;
   /** The `data-tour` to light up; null = a centred card. */
   anchor: string | null;
   title: string;
@@ -68,6 +72,7 @@ export const tourSteps: TourStep[] = [
     body: "Tap the heart on any gym and it lands under Favourites. Main is the big three; House is the twelve house gyms.",
   },
   {
+    press: "gyms-first-card",
     route: aGym,
     anchor: "gym-rate",
     title: "This part is you telling the app",
@@ -81,6 +86,7 @@ export const tourSteps: TourStep[] = [
 
   /* ── Match ────────────────────────────────────────────────────────────── */
   {
+    press: "tab-/match",
     route: "/match",
     anchor: "tab-/match",
     title: "Match",
@@ -107,6 +113,7 @@ export const tourSteps: TourStep[] = [
 
   /* ── Messages ─────────────────────────────────────────────────────────── */
   {
+    press: "tab-/messages",
     route: "/messages",
     anchor: "tab-/messages",
     title: "Messages",
@@ -115,6 +122,7 @@ export const tourSteps: TourStep[] = [
 
   /* ── Profile, and the editor behind it ────────────────────────────────── */
   {
+    press: "tab-/profile",
     route: "/profile",
     anchor: "tab-/profile",
     title: "Profile",

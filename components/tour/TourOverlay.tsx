@@ -45,6 +45,9 @@ const GAP = 14; // between the hole and the caption
 const CAPTION_W = 340; // caption width when it sits beside the hole (laptop)
 const BEAT = 150; // ms between "is it here yet?" checks
 const PATIENCE = 30; // that many beats — about 4.5s — then move on
+const TAP_LEAD = 430; // let the tap animation land before the control is pressed
+const TAP_HOLD = 220; // and stay a moment after, so the cause outlives the effect
+const GRACE = 6; // beats to let a pressed control do its work before forcing the route
 
 type Box = { top: number; left: number; width: number; height: number; radius: number };
 
@@ -89,6 +92,8 @@ export default function TourOverlay({
   */
   const [armedFor, setArmedFor] = useState(-1);
   const [box, setBox] = useState<Box | null>(null);
+  // Where the tour is currently pressing, so a tap can be drawn there first.
+  const [tapAt, setTapAt] = useState<{ x: number; y: number } | null>(null);
   const nextRef = useRef<HTMLButtonElement | null>(null);
   const titleId = useId();
   const bodyId = useId();
@@ -113,11 +118,18 @@ export default function TourOverlay({
   }, [i, finish]);
 
   /*
-    GETTING TO THE STEP. Navigate if it asks for a different screen, press its
-    control once the screen is there, then wait for the thing it wants to light
-    up. All three can take a moment — a route change re-renders the shell, the
-    Log Session editor mounts a beat after its button is pressed, and Match and
-    Profile fetch from Supabase — so this checks on a timer rather than assuming.
+    GETTING TO THE STEP — and being SEEN to. The step names the control that
+    leads here; the tour draws a tap on it, waits long enough for that to
+    register as a press, and only then clicks it. Nobody should land on a new
+    screen wondering what just happened, which is what a silent router.push
+    felt like.
+
+    `route` is the safety net rather than the method: it says where the press
+    ought to land, and is used directly only when the control can't be found or
+    the press went nowhere. Everything after that is waiting — a route change
+    re-renders the shell, the Log Session editor mounts a beat after its button
+    is pressed, and Match and Profile fetch from Supabase — so this checks on a
+    timer rather than assuming.
 
     Reading `window.location.pathname` rather than the usePathname() hook is
     deliberate: the hook would re-run this effect mid-wait and start the whole
@@ -126,27 +138,45 @@ export default function TourOverlay({
   useEffect(() => {
     let cancelled = false;
     let pressed = false;
+    let pushed = false;
     let beats = 0;
     let timer: ReturnType<typeof setTimeout>;
 
-    if (step.route && window.location.pathname !== step.route) router.push(step.route);
-
     const attempt = () => {
       if (cancelled) return;
-      const arrived = !step.route || window.location.pathname === step.route;
+      const arrived = () => !step.route || window.location.pathname === step.route;
 
-      if (arrived && step.press && !pressed) {
+      // 1. Press the control that leads here — visibly.
+      if (step.press && !pressed) {
         const control = visibleAnchor(step.press);
         if (control) {
           pressed = true;
-          control.click();
-          timer = setTimeout(attempt, BEAT); // let it react before measuring
+          let r = control.getBoundingClientRect();
+          if (r.top < 0 || r.bottom > window.innerHeight) {
+            control.scrollIntoView({ block: "center", behavior: "instant" as ScrollBehavior });
+            r = control.getBoundingClientRect();
+          }
+          setTapAt({ x: r.left + r.width / 2, y: r.top + r.height / 2 });
+          timer = setTimeout(() => {
+            if (cancelled) return;
+            control.click();
+            timer = setTimeout(() => {
+              if (cancelled) return;
+              setTapAt(null);
+              attempt();
+            }, TAP_HOLD);
+          }, TAP_LEAD);
           return;
         }
       }
 
-      const target = arrived && (step.anchor === null || !!visibleAnchor(step.anchor));
-      if (target) {
+      // 2. The press didn't get us there (or there was none to make). Go.
+      if (!arrived() && step.route && !pushed && (!step.press || beats >= GRACE)) {
+        pushed = true;
+        router.push(step.route);
+      }
+
+      if (arrived() && (step.anchor === null || !!visibleAnchor(step.anchor))) {
         setArmedFor(i);
         return;
       }
@@ -288,12 +318,26 @@ export default function TourOverlay({
   }, [i, armed]);
 
   /*
-    The dim, written once and used by both the hole and the plain backdrop.
-    Heavy on purpose: on a near-black theme the scrim colour and the page under
-    it are nearly the same, so anything lighter leaves the lit tab looking no
-    brighter than its neighbours — which is the one thing this has to achieve.
+    The dim — and the glow that lets it stay light.
+
+    It used to be 93%: on a near-black theme the scrim and the page under it are
+    nearly the same colour, so a soft scrim left the lit element looking no
+    brighter than its neighbours. The owner's objection to that was fair — you
+    could no longer see the app you were being taught. The answer is not a
+    heavier scrim but a brighter target: at 68% the screen stays legible, and
+    the hole now carries its own crimson ring and halo, so what's lit is lit by
+    ADDING light rather than by drowning everything else.
+
+    The glow is listed BEFORE the scrim in the shadow list, because box-shadows
+    paint in order and the first one wins. None of them may be transitioned —
+    re-interpolating a 9999px spread flickers the whole screen.
   */
-  const dim = "color-mix(in oklab, var(--background) 93%, transparent)";
+  const dim = "color-mix(in oklab, var(--background) 68%, transparent)";
+  const glow = [
+    "0 0 0 2px var(--primary-live)",
+    "0 0 0 5px color-mix(in oklab, var(--primary-live) 30%, transparent)",
+    "0 0 28px 10px color-mix(in oklab, var(--primary-live) 28%, transparent)",
+  ].join(", ");
 
   /*
     Where the caption goes. If there's room beside the hole it sits there —
@@ -328,21 +372,52 @@ export default function TourOverlay({
         light TRAVELS to its next target instead of blinking off and on.
       */}
       {box ? (
-        <div
-          className="tour-hole absolute"
+        /*
+          Tapping the lit element moves the tour on, which is the whole point of
+          lighting it: the owner asked to be able to press the thing rather than
+          only ever press Next. The real control underneath never receives the
+          tap — this sits over it — so the step that follows performs the press
+          itself, animation and all, and the outcome is the same either way.
+        */
+        <button
+          type="button"
+          aria-hidden="true"
+          tabIndex={-1}
+          onClick={next}
+          className="tour-hole absolute cursor-pointer"
           style={{
             top: box.top,
             left: box.left,
             width: box.width,
             height: box.height,
             borderRadius: box.radius,
-            boxShadow: `0 0 0 9999px ${dim}`,
-            outline: "2px solid var(--primary-live)",
-            outlineOffset: "-1px",
+            boxShadow: `${glow}, 0 0 0 9999px ${dim}`,
           }}
         />
       ) : (
         <div className="absolute inset-0" style={{ background: dim }} />
+      )}
+
+      {/*
+        The tap. Drawn on the control the tour is about to press, a beat before
+        it presses it — a ring opening out of a dot, the shape of a finger
+        landing. Without it a screen simply changed on its own.
+      */}
+      {tapAt && (
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute"
+          style={{ left: tapAt.x, top: tapAt.y }}
+        >
+          <span
+            className="tour-tap-ring absolute block h-14 w-14 rounded-full border-2"
+            style={{ borderColor: "var(--primary-live)" }}
+          />
+          <span
+            className="tour-tap-dot absolute block h-9 w-9 rounded-full"
+            style={{ background: "color-mix(in oklab, var(--primary-live) 55%, transparent)" }}
+          />
+        </div>
       )}
 
       {armed && (

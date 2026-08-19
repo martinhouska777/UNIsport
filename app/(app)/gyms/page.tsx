@@ -85,6 +85,9 @@ type CardProps = {
   fav: boolean;
   onToggleFav: () => void;
   crowd: GymCrowd | null;
+  /* The tour presses the first card to open a gym in front of you, rather than
+     arriving there behind your back (lib/tour.ts). Only that card gets one. */
+  tour?: string;
 };
 
 /*
@@ -112,10 +115,11 @@ function Watermark({ gym }: { gym: Gym }) {
   );
 }
 
-function MainCard({ gym, fav, onToggleFav, crowd }: CardProps) {
+function MainCard({ gym, fav, onToggleFav, crowd, tour }: CardProps) {
   return (
     <Link
       href={`/gyms/${gym.slug}`}
+      data-tour={tour}
       className="relative block overflow-hidden rounded-2xl border border-border"
     >
       <FavHeart fav={fav} onToggle={onToggleFav} />
@@ -258,13 +262,14 @@ export default function GymsPage() {
 
       {/* Cards — one column on a phone, two or three across on a laptop. */}
       <div className="grid grid-cols-1 items-start gap-2.5 px-3 pb-4 lg:grid-cols-2 xl:grid-cols-3">
-        {visibleMain.map((g) => (
+        {visibleMain.map((g, idx) => (
           <MainCard
             key={g.slug}
             gym={g}
             fav={isFavorite(g.slug)}
             onToggleFav={() => toggle(g.slug)}
             crowd={getCrowd(g.slug)}
+            tour={idx === 0 ? "gyms-first-card" : undefined}
           />
         ))}
 

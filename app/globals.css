@@ -717,6 +717,30 @@ body {
 }
 
 /*
+  THE TOUR TAP — the app pressing a button in front of you.
+  Drawn on the control a beat before the tour clicks it, so a screen never
+  changes without a visible cause. A ring opening out of a dot: the shape a
+  finger makes landing on glass. Both are centred on the tap point by their own
+  transform, so the wrapper only has to be at the right coordinates.
+*/
+@keyframes tour-tap-ring {
+  from { opacity: 0.85; transform: translate(-50%, -50%) scale(0.3); }
+  to   { opacity: 0;    transform: translate(-50%, -50%) scale(1.5); }
+}
+@keyframes tour-tap-dot {
+  0%   { opacity: 0;    transform: translate(-50%, -50%) scale(0.5); }
+  35%  { opacity: 0.95; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0;    transform: translate(-50%, -50%) scale(0.8); }
+}
+.tour-tap-ring { animation: tour-tap-ring 0.65s ease-out forwards; }
+.tour-tap-dot  { animation: tour-tap-dot 0.65s ease-out forwards; }
+
+@media (prefers-reduced-motion: reduce) {
+  /* Still shown, just not moving — it is information, not decoration. */
+  .tour-tap-ring, .tour-tap-dot { animation: none; transform: translate(-50%, -50%); }
+}
+
+/*
   VARSITY MODE INTRO — crossed-oars crest reveal.
   Two oars sweep in from the sides (already angled) and meet crossed in the
   middle; the crest then drops in from the top. The oar graphic is a swap point
