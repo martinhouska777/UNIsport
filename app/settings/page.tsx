@@ -29,8 +29,10 @@ import { profileFromOnboarding } from "@/lib/currentUser";
 import { getUniversity, neutralTheme } from "@/lib/themes";
 import { roleLabel } from "@/lib/varsity/membership";
 import { VARSITY_HOME } from "@/lib/varsity/theme";
+import { clearTourSeen, requestTour } from "@/lib/tour";
 import {
   IconArrowLeft,
+  IconBulb,
   IconChevronRight,
   IconMoon,
   IconPencil,
@@ -126,7 +128,7 @@ function UnitRow({
 }
 
 export default function SettingsPage() {
-  const { ready, loggedIn, email, studentReady, logout, resetOnboarding, universityKey } =
+  const { ready, loggedIn, email, userId, studentReady, logout, resetOnboarding, universityKey } =
     useAppState();
   const { mode, toggle } = useThemeMode();
   const { data, loading, saveState, update, savePreferences } = useProfileData();
@@ -279,6 +281,25 @@ export default function SettingsPage() {
           />
         )}
 
+        {/*
+          The tour points at the tab bar, which only exists inside the tab
+          shell — and this page deliberately sits outside it. So it leaves a
+          request behind and goes to Gyms, where the shell picks it up.
+        */}
+        <Section title="Help">
+          <Row
+            icon={<IconBulb size={18} />}
+            label="Take the tour"
+            onClick={() => {
+              requestTour();
+              router.push("/gyms");
+            }}
+          />
+          <p className="mt-2 px-1 text-[11px] text-muted">
+            A quick walk through the four tabs and what each one is for.
+          </p>
+        </Section>
+
         <Section title="About">
           <div className="flex flex-col gap-2">
             <Row label="Privacy Policy" href="/privacy" />
@@ -292,6 +313,9 @@ export default function SettingsPage() {
               <button
                 type="button"
                 onClick={async () => {
+                  // Forget the tour too, so replaying onboarding reproduces the
+                  // genuine first run — including the tour appearing by itself.
+                  if (userId) clearTourSeen(userId);
                   await resetOnboarding();
                   router.replace("/onboarding");
                 }}

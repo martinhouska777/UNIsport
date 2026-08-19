@@ -112,6 +112,10 @@ export default function BottomNav() {
               <Link
                 href={tab.href}
                 aria-current={active ? "page" : undefined}
+                /* The first-run tour lights this up by name (lib/tour.ts).
+                   SideNav carries the same anchor, and only one of the two
+                   navs is ever on screen. */
+                data-tour={`tab-${tab.href}`}
                 className={`flex flex-col items-center gap-1 py-2.5 text-[11px] font-medium transition-[color,transform] duration-150 active:scale-90 ${
                   active ? "text-primary" : "text-muted"
                 }`}

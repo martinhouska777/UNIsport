@@ -679,6 +679,22 @@ body {
 }
 
 /*
+  FIRST-RUN TOUR — the lit hole gliding from one tab to the next.
+  The dim itself is the element's box-shadow (see components/tour/TourOverlay),
+  so animating the box travels the light across the nav in one move. Size and
+  position only: the shadow must not transition or the whole screen flickers
+  as the spread is re-interpolated.
+*/
+.tour-hole {
+  transition: top 0.32s cubic-bezier(0.4, 0, 0.2, 1), left 0.32s cubic-bezier(0.4, 0, 0.2, 1),
+    width 0.32s cubic-bezier(0.4, 0, 0.2, 1), height 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tour-hole { transition: none; }
+}
+
+/*
   VARSITY MODE INTRO — crossed-oars crest reveal.
   Two oars sweep in from the sides (already angled) and meet crossed in the
   middle; the crest then drops in from the top. The oar graphic is a swap point

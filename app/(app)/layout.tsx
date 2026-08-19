@@ -13,10 +13,11 @@ import { useAppState } from "@/components/AppState";
 import ThemeProvider from "@/components/ThemeProvider";
 import BottomNav from "@/components/BottomNav";
 import SideNav from "@/components/SideNav";
+import TourGate from "@/components/tour/TourGate";
 import { getUniversity, neutralTheme } from "@/lib/themes";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
-  const { ready, loggedIn, studentReady, universityKey } = useAppState();
+  const { ready, loggedIn, studentReady, universityKey, userId } = useAppState();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -58,6 +59,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         {children}
       </main>
       <BottomNav />
+      {/*
+        The first-run tour. Mounted last, and only on the Gyms tab: it points at
+        the tab bar, so it needs the navs above it in the tree, and Gyms is
+        where onboarding leaves you. It decides for itself whether to appear.
+      */}
+      {pathname === "/gyms" && userId && <TourGate key={userId} userId={userId} />}
     </ThemeProvider>
   );
 }
