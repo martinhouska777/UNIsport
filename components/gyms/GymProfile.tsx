@@ -6,12 +6,13 @@ import { useAppState } from "@/components/AppState";
 import { useFavorites, useGymStats, timeAgo } from "@/lib/gymSocial";
 import { StarRater, CrowdPicker, RatingValue } from "@/components/gyms/RateCrowd";
 import { ButtonLink } from "@/components/ui/Button";
-import type { Gym, GalleryIcon } from "@/lib/gyms";
+import { gymHighlights, type Gym, type GalleryIcon } from "@/lib/gyms";
 import {
   IconArrowLeft,
   IconHeart,
   IconClock,
   IconMapPin,
+  IconChevronDown,
   IconBarbell,
   IconRun,
   IconSwimming,
@@ -31,6 +32,7 @@ export default function GymProfile({ gym }: { gym: Gym }) {
   const { getRating, setRating, getCrowd, reportCrowd } = useGymStats(userId);
   const favorite = isFavorite(gym.slug);
   const rating = getRating(gym.slug);
+  const highlights = gymHighlights(gym);
   const crowd = getCrowd(gym.slug);
   const [activePhoto, setActivePhoto] = useState(0);
   // See FavHeart in the gyms list: counts taps so the pop plays on the tap and
@@ -126,6 +128,25 @@ export default function GymProfile({ gym }: { gym: Gym }) {
             <IconMapPin size={13} /> {gym.address}
           </span>
         </div>
+
+        {/*
+          The headline kit, up here rather than fifteen rows down. "Can I squat,
+          is there a bench, is there a pool" is the question a gym page is
+          actually asked, and it used to be answered somewhere in the middle of
+          four equal-looking lists. Which numbers count is DATA (lib/gyms.ts).
+        */}
+        {highlights.length > 0 && (
+          <ul className="mt-2.5 flex flex-wrap gap-1.5">
+            {highlights.map((h) => (
+              <li
+                key={h}
+                className="rounded-full border border-border bg-surface-2 px-2.5 py-1 text-[11px] font-medium text-text-2"
+              >
+                {h}
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       {/* Your rating + live crowd — what you fill in after / during a workout */}
@@ -156,15 +177,33 @@ export default function GymProfile({ gym }: { gym: Gym }) {
         </div>
       </div>
 
-      {/* Equipment sections — one block per section, one row per item */}
+      {/*
+        Equipment, folded away. All four sections used to be open at once — ~25
+        rows of identical weight between the top of the page and the "find a
+        partner" button, which is why nobody ever reached it. Closed, the whole
+        gym fits on a screen and the sections become a table of contents; the
+        headline numbers are already up in the header for anyone who only wanted
+        those.
+
+        <details> rather than React state on purpose: it opens without
+        JavaScript, it is keyboard-operable and screen-reader-announced for
+        free, and the browser handles find-in-page opening the right section.
+      */}
       {gym.equipment
         .filter((section) => section.rows.length > 0)
         .map((section) => (
-          <div key={section.title} className="border-b border-border px-3.5 py-3">
-            <h2 className="mb-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-              {section.title}
-            </h2>
-            <div className="flex flex-col divide-y divide-border">
+          <details key={section.title} className="group border-b border-border">
+            <summary className="tap44 flex cursor-pointer list-none items-center justify-between px-3.5 py-3 [&::-webkit-details-marker]:hidden">
+              <h2 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
+                {section.title}
+              </h2>
+              {/* Chevron only. A bare row-count here read as a score on a page
+                  that already shows "4.8 (142)" and a ratings breakdown. */}
+              <span className="text-muted transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none">
+                <IconChevronDown size={16} />
+              </span>
+            </summary>
+            <div className="flex flex-col divide-y divide-border px-3.5 pb-3">
               {section.rows.map((row) => (
                 <div
                   key={row.label}
@@ -175,7 +214,7 @@ export default function GymProfile({ gym }: { gym: Gym }) {
                 </div>
               ))}
             </div>
-          </div>
+          </details>
         ))}
 
       {/* Ratings breakdown — one gold bar per category */}

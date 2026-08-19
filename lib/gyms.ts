@@ -294,3 +294,58 @@ export function getGymByName(name: string): Gym | undefined {
   const n = name.trim().toLowerCase();
   return gyms.find((g) => g.name.toLowerCase() === n);
 }
+
+/*
+  THE NUMBERS PEOPLE ACTUALLY CHOOSE A GYM ON.
+  ---------------------------------------------------------------------------
+  A gym page lists ~15 pieces of kit at identical weight, so the three or four
+  things that genuinely decide where you train ("can I squat?") sit buried
+  between treadmill and elliptical counts. These are those, in the order they
+  matter, with the short word a pill uses.
+
+  Two kinds of highlight:
+    counted   "6 racks"  — only when the value is a plain number, because
+              "Olympic + EZ bar" is not something you can compare across gyms
+    presence  "pool"     — the value says the size, which no pill has room for;
+              what matters at a glance is that there is one at all
+
+  DATA, not logic inside the component (rule 7): another school's gyms get
+  their pills for free by using the same row labels, and re-ordering what
+  matters is a re-order of this list.
+*/
+type Highlight = {
+  label: string; // must match a StatRow label exactly
+  one?: string; // singular word, for counted highlights
+  many?: string; // plural word
+  word?: string; // set instead of one/many => presence only, no number
+};
+
+const highlights: Highlight[] = [
+  { label: "Squat racks", one: "rack", many: "racks" },
+  { label: "Bench press stations", one: "bench", many: "benches" },
+  { label: "Deadlift platforms", one: "platform", many: "platforms" },
+  { label: "Swimming pool", word: "pool" },
+  { label: "Basketball courts", word: "courts" },
+  { label: "Treadmills", one: "treadmill", many: "treadmills" },
+];
+
+/** The gym's headline kit, already worded — at most `max`, best first. */
+export function gymHighlights(gym: Gym, max = 4): string[] {
+  const values = new Map<string, string>();
+  gym.equipment.forEach((s) => s.rows.forEach((r) => values.set(r.label, r.value)));
+
+  const out: string[] = [];
+  for (const h of highlights) {
+    if (out.length >= max) break;
+    const raw = values.get(h.label);
+    if (!raw) continue;
+    if (h.word) {
+      out.push(h.word);
+      continue;
+    }
+    const n = Number(raw);
+    if (!Number.isFinite(n) || n <= 0) continue;
+    out.push(`${n} ${n === 1 ? h.one : h.many}`);
+  }
+  return out;
+}
