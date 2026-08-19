@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import type { EmailOtpType } from "@supabase/supabase-js";
+import { isUniversityEmail } from "@/lib/universityEmail";
 
 /*
   Auth callback for Google (and PKCE magic links: ?code=) and email-confirm
@@ -46,6 +47,43 @@ export async function GET(request: NextRequest) {
   if (error) return failure;
 
   /*
+    The profile row, which answers two questions at once: whether this account
+    is NEW (Google hands us a session either way — nothing else here tells the
+    two apart, and there is no trigger creating profile rows, so "no row" means
+    the account has never been set up), and whether onboarding is done.
+  */
+  const userId = data.user?.id;
+  let profile: { onboarding_completed: boolean } | null = null;
+  let profileUnknown = true; // couldn't read it — don't act on a guess
+  if (userId) {
+    const { data: row, error: profileError } = await supabase
+      .from("profiles")
+      .select("onboarding_completed")
+      .eq("id", userId)
+      .maybeSingle();
+    if (!profileError) {
+      profile = row;
+      profileUnknown = false;
+    }
+  }
+
+  /*
+    The same university-email rule the email/password sign-up applies — Google
+    would otherwise be the way around it, since any gmail address can start an
+    OAuth flow and the page promises ".edu".
+
+    Only a NEW account is turned away (no profile row): someone already set up
+    keeps their access whatever address they joined with. Sign them straight
+    back out, so a refused visitor is not left holding a half-session. And if
+    the profile read failed, let them through — an RLS hiccup or a network blip
+    must not lock out a real student.
+  */
+  if (!profileUnknown && !profile && !isUniversityEmail(data.user?.email ?? "")) {
+    await supabase.auth.signOut();
+    return NextResponse.redirect(`${origin}/login?auth_error=university`);
+  }
+
+  /*
     Where to land. A link that asked for a specific page (email confirmations
     carry ?next=) wins. Otherwise go INTO the app: returning to "/" dropped
     Google users on the logged-out landing page, which reads as a failed
@@ -59,16 +97,7 @@ export async function GET(request: NextRequest) {
   */
   let destination = next;
   if (!destination) {
-    destination = "/gyms";
-    const userId = data.user?.id;
-    if (userId) {
-      const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        .select("onboarding_completed")
-        .eq("id", userId)
-        .maybeSingle();
-      if (!profileError && !profile?.onboarding_completed) destination = "/onboarding";
-    }
+    destination = profileUnknown || profile?.onboarding_completed ? "/gyms" : "/onboarding";
   }
 
   const response = NextResponse.redirect(`${origin}${destination}`);

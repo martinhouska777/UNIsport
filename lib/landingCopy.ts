@@ -495,9 +495,11 @@ export const varsityFeatures: { kicker: string; rows: FeatureRow[]; cta: Feature
 /* ─────────────────────────── FAQ ─────────────────────────── */
 
 /* DRAFT for the owner. Every answer states only what the app does today.
-   Two things left OPEN on purpose and marked: whether login enforces .edu
-   (it does not, yet — any address works), and whether the app is free (the
-   old page said "Free for students"; nobody has confirmed it). */
+   The .edu question is now CLOSED: signing up requires a university address
+   (lib/universityEmail.ts), on the email form and through Google alike, so
+   "sign up with their university email" below is true. Still OPEN: whether
+   the app is free (the old page said "Free for students"; nobody has
+   confirmed it). */
 export const faqTitle = "Questions";
 /* `on`: which tabbed views ask this question. "/" shows every question; a
    coach on /for/coaches is not asked "What does the app know about me?".
@@ -512,7 +514,6 @@ export const faq: { q: string; a: string; on: FaqAudience[] }[] = [
   {
     on: ["students", "varsity", "coaches"],
     q: "Who can join?",
-    /* OPEN: the sign-in flow does not enforce a .edu address yet. */
     a: "Students at a live university sign up with their university email. Varsity athletes join through the link their captain or coach sends; coaches get the console with their team.",
   },
   {

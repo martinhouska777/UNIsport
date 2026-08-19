@@ -13,6 +13,7 @@ import { instrumentSerif } from "@/components/landing/fonts";
 import { useAppState } from "@/components/AppState";
 import { createClient, hasSupabaseEnv } from "@/lib/supabase/client";
 import { VARSITY_HOME } from "@/lib/varsity/theme";
+import { isUniversityEmail, UNIVERSITY_EMAIL_MESSAGE } from "@/lib/universityEmail";
 
 type Mode = "login" | "signup";
 
@@ -84,10 +85,16 @@ export default function LoginPage() {
   }, []);
 
   // Show a clear message if a Google sign-in bounced back with an error.
+  // "university" is not a failure — the sign-in worked and was then refused
+  // because the address isn't a university one, so it needs its own wording.
   useEffect(() => {
-    if (new URLSearchParams(window.location.search).get("auth_error")) {
-      setError("That sign-in didn't work. Please try again (or use email + password).");
-    }
+    const why = new URLSearchParams(window.location.search).get("auth_error");
+    if (!why) return;
+    setError(
+      why === "university"
+        ? UNIVERSITY_EMAIL_MESSAGE
+        : "That sign-in didn't work. Please try again (or use email + password).",
+    );
   }, []);
 
   const submit = async (e: React.FormEvent) => {
@@ -97,6 +104,17 @@ export default function LoginPage() {
     setError(null);
 
     if (mode === "signup") {
+      /*
+        The hero button says "Get started with .edu" and the FAQ says students
+        sign up with their university email — so a new account has to be one.
+        Checked on SIGN UP only: an address that already has an account keeps
+        working whatever it is (lib/universityEmail.ts explains why).
+      */
+      if (!isUniversityEmail(email)) {
+        setLoading(false);
+        setError(UNIVERSITY_EMAIL_MESSAGE);
+        return;
+      }
       const { data, error } = await supabase.auth.signUp({ email, password });
       setLoading(false);
       if (error) {
@@ -235,7 +253,7 @@ export default function LoginPage() {
                 autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
+                placeholder={isSignup ? "you@university.edu" : "you@example.com"}
                 aria-label="Email"
                 className="w-full rounded-full border border-l-line bg-l-surface px-5 py-3 text-base text-l-text placeholder:text-l-text-3 focus:border-(--color-l-accent) focus:outline-none"
               />
