@@ -40,7 +40,7 @@ import {
   type Athlete,
   type BoatType,
 } from "@/lib/varsity/coachLineup";
-import { categoryMeta, sessionKey, sessionLabel } from "@/lib/varsity/coachPlan";
+import { categoryMeta, isOnWater, sessionKey, sessionLabel } from "@/lib/varsity/coachPlan";
 import { fetchPlan, type Plan } from "@/lib/varsity/planStore";
 import {
   fetchLineup,
@@ -65,10 +65,14 @@ type Slot = { boatId: string; kind: "seat"; idx: number } | { boatId: string; ki
 const slotKey = (s: Slot) => (s.kind === "cox" ? `${s.boatId}:cox` : `${s.boatId}:${s.idx}`);
 
 /*
-  What the training plan prescribes for one AM or PM slot, reduced to the three
+  What the training plan prescribes for one AM or PM slot, reduced to the few
   things worth showing on a picker button. Null when the plan has nothing there.
+
+  `water` is the one that decides whether the slot can be tapped at all: a
+  lineup seats a BOAT, so an erg, a lift, a flex session or a day off has no
+  lineup to build. The owner's rule, and the reason `isOnWater` exists.
 */
-type PlanCell = { label: string; description: string; color: string } | null;
+type PlanCell = { label: string; description: string; color: string; water: boolean } | null;
 
 // A real calendar day in the picker, with its two practices.
 type PickDay = {
@@ -169,38 +173,42 @@ function AthleteTag({ a }: { a: Athlete }) {
 
 /* ─────────────────────────  view 1: day picker  ───────────────────────── */
 /*
-  One AM / PM button. It answers two different questions at once, which is why
-  it has two lines: WHAT is prescribed here (from the training plan) and WHERE
-  the lineup for it has got to (from the lineup database). A coach picking a
-  practice to seat wants the first one before they tap — otherwise every day is
-  an identical pair of buttons and they have to open one to find out.
+  One AM / PM slot. It answers two questions at once, which is why it stacks:
+  WHAT is prescribed here (from the training plan) and WHERE the lineup for it
+  has got to (from the lineup database). A coach picking a practice to seat
+  wants the first one before they tap — otherwise every day is an identical
+  pair of buttons and they have to open one to find out.
+
+  ONLY A WATER SESSION IS TAPPABLE. A lineup puts people in a boat, so an erg,
+  a lift, a flex session, a day off — and a slot the plan says nothing about —
+  render as plain text instead of a button. They still show what they are, so
+  the day reads as a whole week of training rather than a row of dead ends.
 
   The category dot is a CONTENT colour out of categoryMeta (rule-1 exception),
   applied inline, exactly as the plan builder paints it.
 */
-function PracticeButton({
-  practice,
-  onPick,
-}: {
-  practice: Practice & { plan: PlanCell };
-  onPick: () => void;
-}) {
+function PracticeBody({ practice }: { practice: Practice & { plan: PlanCell } }) {
   const s = practiceStatusMeta[practice.status];
   const plan = practice.plan;
+  const water = !!plan?.water;
   return (
-    <button
-      type="button"
-      onClick={onPick}
-      className="flex min-w-0 flex-1 flex-col items-center gap-1.5 border-r border-border px-2.5 py-3 last:border-r-0 active:bg-surface-2"
-    >
-      <span className="text-[11px] font-semibold tracking-[0.08em] text-text">{practice.period}</span>
+    <>
+      <span
+        className={`text-[11px] font-semibold tracking-[0.08em] ${water ? "text-text" : "text-muted"}`}
+      >
+        {practice.period}
+      </span>
 
       {plan ? (
         <span className="flex w-full min-w-0 flex-col items-center gap-0.5">
-          <span className="flex max-w-full items-center gap-1.5 text-[11px] font-medium text-text">
+          <span
+            className={`flex max-w-full items-center gap-1.5 text-[11px] font-medium ${
+              water ? "text-text" : "text-muted"
+            }`}
+          >
             <span
               className="h-1.5 w-1.5 flex-shrink-0 rounded-full"
-              style={{ background: plan.color }}
+              style={{ background: plan.color, opacity: water ? 1 : 0.5 }}
             />
             <span className="truncate">{plan.label}</span>
           </span>
@@ -214,10 +222,35 @@ function PracticeButton({
         <span className="text-[11px] text-muted/70">Nothing planned</span>
       )}
 
-      <span className="flex items-center gap-1.5 text-[11px] text-muted">
-        <span className={`h-1.5 w-1.5 rounded-full ${s.dot}`} />
-        {s.label}
-      </span>
+      {/* The lineup's own state — only meaningful where a lineup can exist. */}
+      {water && (
+        <span className="flex items-center gap-1.5 text-[11px] text-muted">
+          <span className={`h-1.5 w-1.5 rounded-full ${s.dot}`} />
+          {s.label}
+        </span>
+      )}
+    </>
+  );
+}
+
+function PracticeButton({
+  practice,
+  onPick,
+}: {
+  practice: Practice & { plan: PlanCell };
+  onPick: () => void;
+}) {
+  const cell = "flex min-w-0 flex-1 flex-col items-center gap-1.5 border-r border-border px-2.5 py-3 last:border-r-0";
+  if (!practice.plan?.water) {
+    return (
+      <div className={cell} title="A lineup seats a boat — water sessions only.">
+        <PracticeBody practice={practice} />
+      </div>
+    );
+  }
+  return (
+    <button type="button" onClick={onPick} className={`${cell} active:bg-surface-2`}>
+      <PracticeBody practice={practice} />
     </button>
   );
 }
@@ -256,7 +289,10 @@ function DayPicker({ days, onPick }: { days: PickDay[]; onPick: (day: PickDay, p
     <div className="mx-auto w-full max-w-screen-sm px-4 pb-8 pt-4">
       <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-accent">Lineup</div>
       <h1 className="mt-0.5 text-2xl font-semibold text-text">Create Lineup</h1>
-      <p className="mt-1 text-[12px] text-muted">Pick a practice to build.</p>
+      <p className="mt-1 text-[12px] text-muted">
+        Pick a water session to build. A lineup seats a boat, so erg, weights and
+        rest slots are shown but can&apos;t be opened.
+      </p>
 
       <div className="mt-5">
         <SectionLabel>Next 7 days</SectionLabel>
@@ -984,6 +1020,7 @@ export default function LineupBuilderScreen() {
         label: sessionLabel(sess),
         description: sess.description.trim(),
         color: categoryMeta[sess.category].color,
+        water: isOnWater(sess),
       };
     },
     [plan],
