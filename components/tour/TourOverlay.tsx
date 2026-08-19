@@ -70,24 +70,54 @@ export default function TourOverlay({
   const bodyId = useId();
 
   /*
-    Resolving anchors has to wait for the commit — on the first render of the
-    shell the navs are in the same commit as this overlay, so they aren't in the
-    DOM yet. Measuring the DOM after paint is what effects are for; the one-time
+    Resolving anchors has to wait for the commit — on the first render the
+    targets are in the same commit as this overlay, so they aren't in the DOM
+    yet. Measuring the DOM after paint is what effects are for; the one-time
     state sync that follows is the same sanctioned exception ThemeMode.tsx makes
     for reading localStorage on mount.
 
-    If nothing resolves (no nav on screen at all) the list stays empty and this
-    renders nothing — deliberately WITHOUT calling onDone, so a tour nobody saw
-    never gets marked as seen.
+    It RETRIES, because a screen's own content arrives later than its frame:
+    Match and Profile fetch from Supabase, so their anchors appear a beat after
+    the route does. Giving up on the first miss would teach half a screen and
+    then mark it as taught.
+
+    If nothing ever resolves the list stays empty and this renders nothing —
+    deliberately WITHOUT calling onDone, so a tour nobody saw is never marked
+    as seen and gets another go next time.
   */
   useEffect(() => {
-    const usable = steps.filter((s) => s.anchor === null || visibleAnchor(s.anchor));
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setLive(usable.some((s) => s.anchor) ? usable : []);
+    let timer: ReturnType<typeof setTimeout>;
+    let tries = 0;
+    const attempt = () => {
+      const found = steps.map((s) => s.anchor === null || !!visibleAnchor(s.anchor));
+      const done = found.every(Boolean); // everything is on screen — go now
+      const timedOut = ++tries >= 20; // ~3s, then go with whatever showed up
+      if (!done && !timedOut) {
+        timer = setTimeout(attempt, 150);
+        return;
+      }
+      const usable = steps.filter((_, k) => found[k]);
+      setLive(usable.some((s) => s.anchor) ? usable : []);
+    };
+    attempt();
+    return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const step = live?.[i];
+
+  /*
+    Steps marked `activate` press their own target before explaining it — the
+    three Match sub-tabs, so each step shows the screen it's describing. Fired
+    once per step: clicking re-renders the page underneath, which re-runs the
+    measuring effect, and without this guard it would click forever.
+  */
+  const activated = useRef(-1);
+  useEffect(() => {
+    if (!live || !step?.activate || !step.anchor || activated.current === i) return;
+    activated.current = i;
+    visibleAnchor(step.anchor)?.click();
+  }, [live, step, i]);
 
   const measure = useCallback(() => {
     if (!step?.anchor) {
@@ -99,7 +129,18 @@ export default function TourOverlay({
       setBox(null);
       return;
     }
-    const r = el.getBoundingClientRect();
+    /*
+      Bring it into view first. Some targets sit down the page — the rate/crowd
+      block on a gym, the leaderboard strip on Profile — and the overlay eats
+      taps, so nobody can scroll to them. "instant" on purpose: a smooth scroll
+      would still be moving when this measures, and the hole would land where
+      the target used to be.
+    */
+    let r = el.getBoundingClientRect();
+    if (r.top < 0 || r.bottom > window.innerHeight) {
+      el.scrollIntoView({ block: "center", behavior: "instant" as ScrollBehavior });
+      r = el.getBoundingClientRect();
+    }
     setBox({
       top: r.top - PAD,
       left: r.left - PAD,

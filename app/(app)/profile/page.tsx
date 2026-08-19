@@ -585,7 +585,13 @@ export default function ProfilePage() {
         <Button variant="secondary" size="lg" className="flex-1">
           Share
         </Button>
-        <Button size="lg" onClick={() => setLogging(true)} className="flex-[2]">
+        {/* data-tour: the Profile tour opens on this button (lib/tour.ts). */}
+        <Button
+          data-tour="profile-log"
+          size="lg"
+          onClick={() => setLogging(true)}
+          className="flex-[2]"
+        >
           Log Session
         </Button>
       </div>

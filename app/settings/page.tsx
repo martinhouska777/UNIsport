@@ -29,7 +29,7 @@ import { profileFromOnboarding } from "@/lib/currentUser";
 import { getUniversity, neutralTheme } from "@/lib/themes";
 import { roleLabel } from "@/lib/varsity/membership";
 import { VARSITY_HOME } from "@/lib/varsity/theme";
-import { clearTourSeen, requestTour } from "@/lib/tour";
+import { requestTour, resetAllTours } from "@/lib/tour";
 import {
   IconArrowLeft,
   IconBulb,
@@ -282,21 +282,25 @@ export default function SettingsPage() {
         )}
 
         {/*
-          The tour points at the tab bar, which only exists inside the tab
-          shell — and this page deliberately sits outside it. So it leaves a
-          request behind and goes to Gyms, where the shell picks it up.
+          The tours point at things inside the tab shell, and this page
+          deliberately sits outside it. So this forgets every screen's tour,
+          leaves a request for the first one, and goes to Gyms — where the
+          shell picks it up. The rest then teach themselves again as you open
+          each screen, exactly as they did the first time.
         */}
         <Section title="Help">
           <Row
             icon={<IconBulb size={18} />}
             label="Take the tour"
             onClick={() => {
-              requestTour();
+              if (userId) resetAllTours(userId);
+              requestTour("tabs");
               router.push("/gyms");
             }}
           />
           <p className="mt-2 px-1 text-[11px] text-muted">
-            A quick walk through the four tabs and what each one is for.
+            Starts with the four tabs. Each screen then explains itself again the
+            next time you open it.
           </p>
         </Section>
 
@@ -313,9 +317,9 @@ export default function SettingsPage() {
               <button
                 type="button"
                 onClick={async () => {
-                  // Forget the tour too, so replaying onboarding reproduces the
-                  // genuine first run — including the tour appearing by itself.
-                  if (userId) clearTourSeen(userId);
+                  // Forget the tours too, so replaying onboarding reproduces the
+                  // genuine first run — including each screen teaching itself.
+                  if (userId) resetAllTours(userId);
                   await resetOnboarding();
                   router.replace("/onboarding");
                 }}

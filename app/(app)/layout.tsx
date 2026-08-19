@@ -14,7 +14,22 @@ import ThemeProvider from "@/components/ThemeProvider";
 import BottomNav from "@/components/BottomNav";
 import SideNav from "@/components/SideNav";
 import TourGate from "@/components/tour/TourGate";
+import type { TourId } from "@/lib/tour";
 import { getUniversity, neutralTheme } from "@/lib/themes";
+
+/*
+  Which screen teaches itself here. Each tour runs the first time you land on
+  its screen — /gyms is where onboarding leaves you, so that one gets the tour
+  of the tabs themselves. A gym's own page is matched by prefix, so opening any
+  gym triggers it once. Screens not listed have nothing worth a caption.
+*/
+function tourFor(pathname: string): TourId | null {
+  if (pathname === "/gyms") return "tabs";
+  if (pathname.startsWith("/gyms/")) return "gym";
+  if (pathname === "/match") return "match";
+  if (pathname === "/profile") return "profile";
+  return null;
+}
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { ready, loggedIn, studentReady, universityKey, userId } = useAppState();
@@ -31,6 +46,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }, [ready, loggedIn, studentReady, router]);
 
   if (!ready || !loggedIn || !studentReady) return null;
+
+  const tourId = tourFor(pathname);
 
   const uni = getUniversity(universityKey);
   const theme = uni?.theme ?? neutralTheme;
@@ -60,11 +77,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </main>
       <BottomNav />
       {/*
-        The first-run tour. Mounted last, and only on the Gyms tab: it points at
-        the tab bar, so it needs the navs above it in the tree, and Gyms is
-        where onboarding leaves you. It decides for itself whether to appear.
+        The tours. Mounted last so everything they point at — the navs here, the
+        screen's own content inside <main> — is above them in the tree. Keyed by
+        screen so moving between tabs mounts a fresh one; each decides for itself
+        whether to appear.
       */}
-      {pathname === "/gyms" && userId && <TourGate key={userId} userId={userId} />}
+      {tourId && userId && <TourGate key={`${userId}:${tourId}`} id={tourId} userId={userId} />}
     </ThemeProvider>
   );
 }

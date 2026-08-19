@@ -72,6 +72,10 @@ export default function LeaderboardStrip({ period = "month" }: { period?: Period
   return (
     <Link
       href="/leaderboards"
+      /* data-tour: the Profile tour lights this once the ranks have loaded —
+         it is deliberately NOT on the placeholder above, so the tour waits for
+         real numbers rather than pointing at an empty bar (lib/tour.ts). */
+      data-tour="profile-leaderboards"
       className="flex items-center gap-2 border-b border-border px-3.5 py-2.5 active:bg-surface-2"
     >
       <span

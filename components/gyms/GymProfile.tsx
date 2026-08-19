@@ -129,7 +129,8 @@ export default function GymProfile({ gym }: { gym: Gym }) {
       </div>
 
       {/* Your rating + live crowd — what you fill in after / during a workout */}
-      <div className="border-b border-border px-3.5 py-3.5">
+      {/* data-tour: the gym tour lights this pair (lib/tour.ts). */}
+      <div data-tour="gym-rate" className="border-b border-border px-3.5 py-3.5">
         <div className="flex items-center justify-between">
           <h2 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
             Rate this gym
@@ -217,7 +218,10 @@ export default function GymProfile({ gym }: { gym: Gym }) {
         it is now a real link AND sticks to the bottom of the viewport (above
         the tab bar) instead of waiting at the end of the page.
       */}
-      <div className="sticky bottom-0 z-10 border-t border-border bg-surface px-3.5 pb-4 pt-3">
+      <div
+        data-tour="gym-partner"
+        className="sticky bottom-0 z-10 border-t border-border bg-surface px-3.5 pb-4 pt-3"
+      >
         <ButtonLink href={`/match?gym=${encodeURIComponent(gym.name)}`} size="lg" full>
           Find a partner at this gym{" "}
           <span className="text-primary-contrast/60">→</span>
