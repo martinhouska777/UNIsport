@@ -88,7 +88,7 @@ type PickDay = {
 };
 
 // What the prescribed-session card shows (from the published plan, if any).
-type PlanContext = { title: string; sub: string } | null;
+type PlanContext = { title: string; sub: string; water: boolean } | null;
 
 /* ─────────────────────────  shared bits  ───────────────────────── */
 function SectionLabel({ children }: { children: React.ReactNode }) {
@@ -179,10 +179,10 @@ function AthleteTag({ a }: { a: Athlete }) {
   wants the first one before they tap — otherwise every day is an identical
   pair of buttons and they have to open one to find out.
 
-  ONLY A WATER SESSION IS TAPPABLE. A lineup puts people in a boat, so an erg,
-  a lift, a flex session, a day off — and a slot the plan says nothing about —
-  render as plain text instead of a button. They still show what they are, so
-  the day reads as a whole week of training rather than a row of dead ends.
+  EVERY slot opens. A lineup normally seats a boat, so a water session is the
+  usual one to build — but that is a NOTICE, never a lock (the owner's rule):
+  the builder says so at the top and the coach carries on if they mean to.
+  Non-water slots are simply drawn quieter, so the water ones stand out.
 
   The category dot is a CONTENT colour out of categoryMeta (rule-1 exception),
   applied inline, exactly as the plan builder paints it.
@@ -222,13 +222,10 @@ function PracticeBody({ practice }: { practice: Practice & { plan: PlanCell } })
         <span className="text-[11px] text-muted/70">Nothing planned</span>
       )}
 
-      {/* The lineup's own state — only meaningful where a lineup can exist. */}
-      {water && (
-        <span className="flex items-center gap-1.5 text-[11px] text-muted">
-          <span className={`h-1.5 w-1.5 rounded-full ${s.dot}`} />
-          {s.label}
-        </span>
-      )}
+      <span className="flex items-center gap-1.5 text-[11px] text-muted">
+        <span className={`h-1.5 w-1.5 rounded-full ${s.dot}`} />
+        {s.label}
+      </span>
     </>
   );
 }
@@ -240,16 +237,12 @@ function PracticeButton({
   practice: Practice & { plan: PlanCell };
   onPick: () => void;
 }) {
-  const cell = "flex min-w-0 flex-1 flex-col items-center gap-1.5 border-r border-border px-2.5 py-3 last:border-r-0";
-  if (!practice.plan?.water) {
-    return (
-      <div className={cell} title="A lineup seats a boat — water sessions only.">
-        <PracticeBody practice={practice} />
-      </div>
-    );
-  }
   return (
-    <button type="button" onClick={onPick} className={`${cell} active:bg-surface-2`}>
+    <button
+      type="button"
+      onClick={onPick}
+      className="flex min-w-0 flex-1 flex-col items-center gap-1.5 border-r border-border px-2.5 py-3 last:border-r-0 active:bg-surface-2"
+    >
       <PracticeBody practice={practice} />
     </button>
   );
@@ -290,8 +283,8 @@ function DayPicker({ days, onPick }: { days: PickDay[]; onPick: (day: PickDay, p
       <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-accent">Lineup</div>
       <h1 className="mt-0.5 text-2xl font-semibold text-text">Create Lineup</h1>
       <p className="mt-1 text-[12px] text-muted">
-        Pick a water session to build. A lineup seats a boat, so erg, weights and
-        rest slots are shown but can&apos;t be opened.
+        Pick a practice to build. A lineup seats a boat, so the water sessions are
+        the usual ones — but any slot opens.
       </p>
 
       <div className="mt-5">
@@ -413,7 +406,14 @@ function Seat({
                   className="flex w-full items-center gap-2.5 border-b border-border px-3 py-2.5 text-left last:border-b-0 active:bg-primary-tint"
                 >
                   <Avatar initials={m.initials} side={m.side} cox={m.cox} />
-                  <span className="flex-1 text-[13px] font-semibold text-text">{m.name}</span>
+                  <span className="flex-1 truncate text-[13px] font-semibold text-text">
+                    {m.name}
+                  </span>
+                  {!cox && !!side && !fitsSeat(m, side) && (
+                    <span className="flex-shrink-0 text-[10px] font-bold uppercase tracking-[0.06em] text-warn">
+                      Off side
+                    </span>
+                  )}
                   <AthleteTag a={m} />
                 </button>
               ))}
@@ -432,7 +432,7 @@ function Seat({
             dropActive
               ? "border-accent bg-accent-tint"
               : wrongSide
-                ? "border-danger-line bg-danger-tint"
+                ? "border-warn-line bg-warn-tint"
                 : cox
                   ? "border-accent-line bg-accent-tint"
                   : "border-primary-line bg-primary-tint"
@@ -441,7 +441,10 @@ function Seat({
           <Avatar initials={athlete.initials} side={athlete.side} cox={cox} />
           <span className="flex-1 truncate text-[13px] font-semibold text-text">{athlete.name}</span>
           {wrongSide && (
-            <span className="flex-shrink-0 text-[10px] font-bold uppercase tracking-[0.06em] text-danger">
+            <span
+              className="flex-shrink-0 text-[10px] font-bold uppercase tracking-[0.06em] text-warn"
+              title="This seat is rigged the other way. Fine if you meant it — a tandem rig looks exactly like this."
+            >
               Off side
             </span>
           )}
@@ -556,24 +559,30 @@ function Builder({
   // in among the training groups.
   const unavailable = useMemo(() => roster.filter((a) => a.out), []);
   const matches = useMemo(() => {
-    // A cox seat only offers coxes; a rowing seat only offers rowers who can
-    // row THAT side. Someone who rows both is offered everywhere. Suggesting a
-    // starboard rower for a port seat is just a wrong suggestion — the
-    // coach can still drag them in if they mean it, and the seat says so.
+    // A cox seat only offers coxes and a rowing seat never does — that one IS a
+    // hard rule, because a cox does not row.
+    //
+    // The SIDE is not. Seats are rigged alternately by default, but a coach may
+    // rig tandem (port, port, starboard, starboard) or seat someone off side on
+    // purpose, so every available rower is offered. The ones who fit the seat's
+    // rigged side are listed FIRST, and the rest are marked "off side" here and
+    // in the seat once they are in it. A notice, never a lock (the owner's rule).
     const wantCox = typing?.kind === "cox";
     let list = available.filter((a) => !!a.cox === wantCox);
-    if (typing?.kind === "seat") {
-      const boat = boats.find((b) => b.id === typing.boatId);
-      if (boat) {
-        const need = seatSide(typing.idx, boat.seats.length);
-        list = list.filter((a) => fitsSeat(a, need));
-      }
-    }
     const q = query.trim().toLowerCase();
     if (q) {
       list = list.filter(
         (a) => a.name.toLowerCase().includes(q) || a.initials.toLowerCase().includes(q),
       );
+    }
+    if (typing?.kind === "seat") {
+      const boat = boats.find((b) => b.id === typing.boatId);
+      if (boat) {
+        const need = seatSide(typing.idx, boat.seats.length);
+        list = [...list].sort(
+          (a, b) => Number(fitsSeat(b, need)) - Number(fitsSeat(a, need)),
+        );
+      }
     }
     return list;
   }, [available, query, typing, boats]);
@@ -723,6 +732,19 @@ function Builder({
             <span className="text-muted">
               <IconChevronRight size={14} />
             </span>
+          </div>
+        )}
+
+        {/*
+          A lineup seats a boat, so an erg or a lift is an odd thing to build one
+          for. Odd is not wrong — the coach may be seating a tank session, an erg
+          in boat order, or a day the plan has not caught up with — so this SAYS
+          so and gets out of the way. It never blocks (the owner's rule).
+        */}
+        {planContext && !planContext.water && (
+          <div className="mt-2.5 rounded-xl border border-warn-line bg-warn-tint px-3 py-2.5 text-[11px] leading-relaxed text-text">
+            The plan has <span className="font-semibold">{planContext.sub}</span> here, not a
+            water session. You can still build a lineup.
           </div>
         )}
 
@@ -1070,7 +1092,7 @@ export default function LineupBuilderScreen() {
         sub: `${day.month.slice(0, 3)} ${day.num}`,
       },
       planContext: s
-        ? { title: s.description.trim() || sessionLabel(s), sub: sessionLabel(s) }
+        ? { title: s.description.trim() || sessionLabel(s), sub: sessionLabel(s), water: isOnWater(s) }
         : null,
     });
   };
