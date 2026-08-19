@@ -21,6 +21,11 @@
   a BOAT rather than to a person — that lives in Team → Workouts. What a rower
   did on the water as an individual is in the calendar, like everything else.
 
+  WHEN THERE IS NOTHING YET, each of the bottom two blocks falls back on its own
+  to a worked example (lib/varsity/demoAthlete.ts), labelled as one, so the
+  screen can be reviewed before a squad has trained a single day. Real data
+  always wins — see the header of that file.
+
   Colours are theme tokens (rule 1); the category dots and the side blade are
   CONTENT colours from data, applied inline (the rule-1 exception).
 */
@@ -32,6 +37,8 @@ import { formatDistance } from "@/lib/varsity/units";
 import { fetchLogsInRange, type LogEntry } from "@/lib/varsity/logStore";
 import { fetchAthleteCard, type AthleteCard } from "@/lib/varsity/coachAthlete";
 import { fetchAthleteResults, type TeamResult } from "@/lib/varsity/resultsStore";
+import { rosterIdForName, demoAthleteLogs, demoAthleteResults } from "@/lib/varsity/demoAthlete";
+import { secToSplit, deriveWatts } from "@/lib/varsity/ergMath";
 import { formatMetrics } from "@/lib/varsity/logParse";
 import { dayKeyLabel, toISO } from "@/lib/varsity/coachPlan";
 import { sideMeta } from "@/lib/varsity/coachLineup";
@@ -63,9 +70,18 @@ const toneOf = (title: string): StatusTone =>
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mb-2 mt-6 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
+    <div className="mb-2 mt-6 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
       {children}
     </div>
+  );
+}
+
+/* Says, without room for doubt, that what is below is made up. */
+function ExampleTag() {
+  return (
+    <span className="rounded-md border border-border bg-surface-2 px-1.5 py-0.5 text-[10px] font-semibold tracking-[0.08em] text-warn">
+      Example
+    </span>
   );
 }
 
@@ -133,6 +149,18 @@ export default function AthleteDataScreen({ athleteId }: { athleteId: string }) 
   const [view, setView] = useState({ y: now.getFullYear(), m: now.getMonth() });
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [picked, setPicked] = useState<{ iso: string; label: string } | null>(null);
+  // Which of the two bottom blocks is showing the worked example rather than
+  // the athlete's own rows. They fall back separately — a rower can have ergs
+  // posted and an empty month, or the other way round.
+  const [exampleLogs, setExampleLogs] = useState(false);
+  const [exampleResults, setExampleResults] = useState(false);
+
+  /*
+    The roster athlete this account is, if it is one of them — the example is
+    built from their id, so a heavy rower's example is a heavy rower's numbers.
+    Null for anyone not on the (still mock) roster: they get "nothing yet".
+  */
+  const demoId = useMemo(() => rosterIdForName(card?.name), [card]);
 
   // Who they are + every erg they have posted. Both are athlete-wide, so once.
   useEffect(() => {
@@ -144,7 +172,10 @@ export default function AthleteDataScreen({ athleteId }: { athleteId: string }) 
       ]);
       if (!active) return;
       setCard(c);
-      setResults(r);
+      const stand = rosterIdForName(c?.name);
+      const example = r.length === 0 && !!stand;
+      setResults(example ? demoAthleteResults(stand!) : r);
+      setExampleResults(example);
       setLoading(false);
     })();
     return () => {
@@ -154,17 +185,21 @@ export default function AthleteDataScreen({ athleteId }: { athleteId: string }) 
 
   // Their calendar, one month at a time.
   useEffect(() => {
+    if (loading) return;
     let active = true;
     (async () => {
       const from = toISO(new Date(view.y, view.m, 1));
       const to = toISO(new Date(view.y, view.m + 1, 0));
       const rows = await fetchLogsInRange(athleteId, from, to);
-      if (active) setLogs(rows);
+      if (!active) return;
+      const example = rows.length === 0 && !!demoId;
+      setLogs(example ? demoAthleteLogs(demoId!, view.y, view.m) : rows);
+      setExampleLogs(example);
     })();
     return () => {
       active = false;
     };
-  }, [athleteId, view]);
+  }, [athleteId, view, demoId, loading]);
 
   const logsByDay = useMemo(() => {
     const map: Record<number, LogEntry[]> = {};
@@ -316,7 +351,10 @@ export default function AthleteDataScreen({ athleteId }: { athleteId: string }) 
       )}
 
       {/* ── 2. When — the calendar this permission exists for ── */}
-      <SectionLabel>Training</SectionLabel>
+      <SectionLabel>
+        Training
+        {exampleLogs && <ExampleTag />}
+      </SectionLabel>
       <div className="overflow-hidden rounded-2xl border border-border bg-surface">
         <div className="flex items-center justify-between border-b border-border px-4 py-3.5">
           <div className="flex items-baseline gap-2">
@@ -420,33 +458,44 @@ export default function AthleteDataScreen({ athleteId }: { athleteId: string }) 
       </div>
 
       {/* ── 3. How fast ── */}
-      <SectionLabel>Erg results · {results.length}</SectionLabel>
+      <SectionLabel>
+        Erg results · {results.length}
+        {exampleResults && <ExampleTag />}
+      </SectionLabel>
       {results.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border bg-surface px-4 py-6 text-center text-[12px] text-muted">
           Nothing posted to the team board yet.
         </div>
       ) : (
         <div className="flex flex-col gap-2">
-          {results.map((r) => (
-            <div key={r.id} className="rounded-xl border border-border bg-surface px-3.5 py-3">
-              <div className="flex items-baseline justify-between gap-2">
-                <span className="truncate text-[13px] font-semibold text-text">
-                  {dayKeyLabel(r.dayKey)}
-                </span>
-                {r.split && (
-                  <span className="flex-shrink-0 text-[13px] font-semibold text-text">{r.split}</span>
-                )}
+          {results.map((r) => {
+            /* A hand-typed result carries the split as the monitor showed it; a
+               scanned or derived one only carries the seconds. Show whichever
+               exists, and let the split imply the watts when none were typed —
+               the same arithmetic the team board does. */
+            const split = r.split ?? (r.splitSec != null ? secToSplit(r.splitSec) : null);
+            const watts = deriveWatts(r.watts, r.splitSec);
+            return (
+              <div key={r.id} className="rounded-xl border border-border bg-surface px-3.5 py-3">
+                <div className="flex items-baseline justify-between gap-2">
+                  <span className="truncate text-[13px] font-semibold text-text">
+                    {dayKeyLabel(r.dayKey)}
+                  </span>
+                  {split && (
+                    <span className="flex-shrink-0 text-[13px] font-semibold text-text">{split}</span>
+                  )}
+                </div>
+                <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-muted">
+                  {r.metres != null && <span>{formatDistance(r.metres, units.distance)}</span>}
+                  {r.strokeRate != null && <span>r{r.strokeRate}</span>}
+                  {watts != null && <span>{watts} W</span>}
+                  {r.weightKg != null && <span>{r.weightKg} kg</span>}
+                  {r.monitor && <span>{r.monitor}</span>}
+                </div>
+                {r.note && <div className="mt-1 text-[11px] leading-relaxed text-muted">{r.note}</div>}
               </div>
-              <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-muted">
-                {r.metres != null && <span>{formatDistance(r.metres, units.distance)}</span>}
-                {r.strokeRate != null && <span>r{r.strokeRate}</span>}
-                {r.watts != null && <span>{r.watts} W</span>}
-                {r.weightKg != null && <span>{r.weightKg} kg</span>}
-                {r.monitor && <span>{r.monitor}</span>}
-              </div>
-              {r.note && <div className="mt-1 text-[11px] leading-relaxed text-muted">{r.note}</div>}
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -454,6 +503,13 @@ export default function AthleteDataScreen({ athleteId }: { athleteId: string }) 
         Read only — a session belongs to the athlete who logged it. Crew telemetry sits under
         Team → Workouts, because an outing belongs to a boat rather than to one person.
       </p>
+      {(exampleLogs || exampleResults) && (
+        <p className="mt-2 text-[11px] leading-relaxed text-warn">
+          Anything marked <span className="font-semibold">Example</span> is made up, so the screen
+          can be looked at before this rower has trained. It disappears the moment they log
+          something real.
+        </p>
+      )}
 
       {picked && (
         <DaySheet
