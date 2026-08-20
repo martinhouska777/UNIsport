@@ -45,6 +45,7 @@ import {
   IconArrowRight,
   IconChevronRight,
   IconClipboard,
+  IconAnchor,
 } from "@/components/icons";
 
 const statusStyle: Record<
@@ -589,8 +590,9 @@ function SeatRow({
 
 function LineupBoat({ l }: { l: Lineup }) {
   // Builder stores seats bow→stroke; show cox + stroke at the top, bow at the bottom.
+  // The numbers are the coach's own — 8 down to 1 — so they read the same here
+  // as they do in the boat the coach built. Cox gets the word: there is room.
   const rowing = [...l.seats].reverse();
-  const lastIdx = rowing.length - 1;
   return (
     <div className="overflow-hidden rounded-xl border border-border bg-surface">
       <div className="border-b border-border px-3 py-2.5 text-[12px] font-semibold text-text">
@@ -598,15 +600,17 @@ function LineupBoat({ l }: { l: Lineup }) {
       </div>
       <div className="flex flex-col gap-1.5 p-3">
         {l.cox && <SeatRow label="Cox" name={l.cox.name} mine={l.cox.mine} cox />}
-        {rowing.map((s, i) => (
-          <SeatRow
-            key={s.num}
-            label={s.num === "S" ? "Stroke" : i === lastIdx ? "Bow" : s.num}
-            name={s.name}
-            mine={s.mine}
-          />
+        {rowing.map((s) => (
+          <SeatRow key={s.num} label={s.num} name={s.name} mine={s.mine} />
         ))}
       </div>
+      {/* Which oars to take off the rack, when the coach named a set. */}
+      {l.oars && (
+        <div className="flex items-center gap-2 border-t border-border px-3 py-2 text-[11px] text-muted">
+          <IconAnchor size={13} />
+          <span className="text-text">{l.oars}</span>
+        </div>
+      )}
     </div>
   );
 }

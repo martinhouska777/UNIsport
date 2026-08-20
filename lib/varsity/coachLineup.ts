@@ -66,17 +66,21 @@ export type Athlete = {
 };
 
 /*
-  The real squad. The source list groups athletes by erg/fitness training group
-  (Columns A–D, Bike, UT2, OYO, Rx), NOT by rowing side, so the sides below are
-  a WORKING SPLIT, not the truth: roughly half stroke, half bow, a few who row
-  either way. They exist so the boat maths is real while the roster is still
-  demo data — a coach's own answer (the side question in /varsity/setup) will
-  replace them the moment these are real accounts. Same for `out`: five people
-  are carrying something, so "who can I actually put in a boat today" has an
-  answer to show. Columns A + D are the coxswains, who take no side at all.
+  The real squad, in ONE flat list. The paper list it came from was arranged by
+  erg/fitness training group (Columns A–D, Bike, UT2, OYO, Rx) — those groups
+  are gone from here on the owner's call: they are an erg-test artefact, they go
+  stale the week after they are drawn up, and they say nothing about who can sit
+  in which boat. The only thing that sorts an athlete now is their SIDE.
+
+  The sides below are a WORKING SPLIT while the roster is still demo data:
+  roughly half port, half starboard, a few who row either way. A coach's own
+  answer (the side question in /varsity/setup) replaces them the moment these
+  are real accounts. Same for `out`: five people are carrying something, so
+  "who can I actually put in a boat today" has an answer to show. The coxswains
+  take no side at all.
 */
 export const roster: Athlete[] = [
-  // ── Coxswains (Columns A + D) ──
+  // ── Coxswains ──
   { id: "cate-frerichs", initials: "CF", name: "Cate Frerichs", side: "B", cox: true },
   { id: "micah-john", initials: "MJ", name: "Micah John", side: "B", cox: true },
   { id: "iris-hennin", initials: "IH", name: "Iris Hennin", side: "B", cox: true },
@@ -85,7 +89,6 @@ export const roster: Athlete[] = [
   { id: "abbi-park", initials: "AP", name: "Abbi Park", side: "B", cox: true },
   { id: "helena-inzerillo", initials: "HI", name: "Helena Inzerillo", side: "B", cox: true },
 
-  // ── Group B ──
   { id: "asante-kiio", initials: "AK", name: "Asante Kiio", side: "P" },
   { id: "luca-vicino", initials: "LV", name: "Luca Vicino", side: "S" },
   { id: "marcus-chung", initials: "MC", name: "Marcus Chung", side: "P" },
@@ -103,7 +106,6 @@ export const roster: Athlete[] = [
   { id: "sam-davidson", initials: "SD", name: "Sam Davidson", side: "S" },
   { id: "jordan-dykema", initials: "JDy", name: "Jordan Dykema", side: "B" },
 
-  // ── Group C ──
   { id: "jack-hansen-knarhoi", initials: "JH", name: "Jack Hansen-Knarhoi", side: "P" },
   { id: "owen-finnerty", initials: "OF", name: "Owen Finnerty", side: "S" },
   { id: "marco-vicino", initials: "MV", name: "Marco Vicino", side: "P" },
@@ -123,18 +125,14 @@ export const roster: Athlete[] = [
   { id: "elam-hughes", initials: "EH", name: "Elam Hughes", side: "S" },
   { id: "owen-marcovitz", initials: "OM", name: "Owen Marcovitz", side: "P" },
 
-  // ── Bike ──
   { id: "will-fowler", initials: "WF", name: "Will Fowler", side: "S", out: "INJ" },
   { id: "kevin-weldon", initials: "KW", name: "Kevin Weldon", side: "B" },
 
-  // ── UT2 ──
   { id: "leyth-sousou", initials: "LS", name: "Leyth Sousou", side: "P" },
 
-  // ── OYO ──
   { id: "cameron-beyki", initials: "CB", name: "Cameron Beyki", side: "S", out: "SICK" },
   { id: "max-morehead", initials: "MM", name: "Max Morehead", side: "P" },
 
-  // ── Rx ──
   { id: "george-burney", initials: "GB", name: "George Burney", side: "S" },
   { id: "alp-karadogan", initials: "AK2", name: "Alp Karadogan", side: "B" },
   { id: "kynan-tallec-botos", initials: "KT", name: "Kynan Tallec-Botos", side: "P" },
@@ -146,17 +144,29 @@ export const rosterById: Record<string, Athlete> = Object.fromEntries(
   roster.map((a) => [a.id, a]),
 );
 
-// How the pool is grouped (by each athlete's last lineup). Seated athletes drop
-// out of their group automatically; removing one returns it here.
-export const rosterGroups: { label: string; danger?: boolean; ids: string[] }[] = [
-  { label: "Coxswains", ids: ["cate-frerichs", "micah-john", "iris-hennin", "nick-yoo", "nat-toms", "abbi-park", "helena-inzerillo"] },
-  { label: "Group B", ids: ["asante-kiio", "luca-vicino", "marcus-chung", "mason-cruz-abrams", "jack-dorney", "alexander-grundy", "george-farkas", "sam-gallaudet", "john-brown", "marco-gandola", "apostolos-lykomitros", "tyler-horler", "teddy-plimpton", "sam-davidson", "jordan-dykema"] },
-  { label: "Group C", ids: ["jack-hansen-knarhoi", "owen-finnerty", "marco-vicino", "pierce-lapham", "julian-paul", "ben-scott", "sam-woodgate", "mike-thomas", "joseph-baker", "adam-cech", "alex-sanchez-fretz", "leo-bessler", "joshua-brangan", "bob-rawlinson", "ben-schnalke", "jack-sulger", "elam-hughes", "owen-marcovitz"] },
-  { label: "Bike", ids: ["will-fowler", "kevin-weldon"] },
-  { label: "UT2", ids: ["leyth-sousou"] },
-  { label: "OYO", ids: ["cameron-beyki", "max-morehead"] },
-  { label: "Rx", ids: ["george-burney", "alp-karadogan", "kynan-tallec-botos", "ryan-cornelius", "charles-richards"] },
+/*
+  HOW THE POOL IS FILTERED. Three buttons, and nothing else: All, Port,
+  Starboard. All is everyone. Port and Starboard are the rowers who can pull
+  that side — which includes everyone marked BOTH, so a bisweptual rower shows
+  up under every filter and never has to be hunted for. Coxswains have no side,
+  so they live under All.
+
+  This replaced a pool grouped by erg-training column (Group B, OYO, Rx…). The
+  owner's call: those groups are not true for long and are not what a coach is
+  asking when they are filling a boat.
+*/
+export type PoolFilter = "all" | "P" | "S";
+export const poolFilters: { key: PoolFilter; label: string }[] = [
+  { key: "all", label: "All" },
+  { key: "P", label: sideMeta.P.label },
+  { key: "S", label: sideMeta.S.label },
 ];
+
+/** Does this athlete belong under that filter? "Both" belongs under all three. */
+export function inPool(a: Athlete, f: PoolFilter): boolean {
+  if (f === "all") return true;
+  return !a.cox && (a.side === f || a.side === "B");
+}
 
 /* ── The practice picker (entry screen) ── */
 export type PracticeStatus = "draft" | "published" | "none" | "rest";
@@ -187,49 +197,61 @@ export const boatShape: Record<BoatType, { rowers: number; cox: boolean }> = {
   "2-": { rowers: 2, cox: false },
 };
 
-export type SeatSlot = { label: string; athleteId: string | null }; // label "1"…"S" (stroke)
+export type SeatSlot = { label: string; athleteId: string | null }; // "1" (bow) … "8" (stroke)
 export type Boat = {
   id: string;
   badge: BoatType;
   name: string;
   dock: string;
+  /** Which set of oars this crew takes out. Free text until the sets are named. */
+  oars?: string;
   note: string;
   seats: SeatSlot[];
   hasCox: boolean;
   coxId: string | null;
 };
 
-// Build the empty seat list for a rigging ("1".."7","S", last = stroke).
+/*
+  SEAT NUMBERS, THE WAY A CREW SAYS THEM. Bow is 1 and the stroke seat is the
+  highest number — 8 in an eight, 4 in a four — so a boat reads 8 down to 1
+  from the stern, and the cox sits above the 8. Nothing else is written on a
+  seat: it is a NUMBER, not a side.
+
+  It used to be that each seat was pinned to port or starboard (rigged
+  alternately) and painted in that side's colour. That is gone on the owner's
+  call — a rig is the coach's business, not the app's, and a boat that colours
+  its own seats argues with every crew that rigs tandem.
+
+  `i` is the seat's index in the array, which runs bow → stroke.
+*/
+export function seatLabel(i: number): string {
+  return String(i + 1);
+}
+
+/** The cox's mark in the boat. One letter, because the seat badge is tiny. */
+export const COX_TAG = "C";
+/** The cox's word, for anywhere with room to read it (pool chips, dropdowns). */
+export const COX_LABEL = "COX";
+
+// Build the empty seat list for a rigging — bow (1) first, stroke last.
 export function makeSeats(type: BoatType): SeatSlot[] {
   const { rowers } = boatShape[type];
-  return Array.from({ length: rowers }, (_, i) => ({
-    label: i === rowers - 1 ? "S" : String(i + 1),
-    athleteId: null,
-  }));
+  return Array.from({ length: rowers }, (_, i) => ({ label: seatLabel(i), athleteId: null }));
 }
 
 /*
-  WHICH SIDE A SEAT ROWS. A boat is rigged alternately: the stroke seat takes
-  port, the seat in front of them starboard, and so on down to the bow.
-  An eight is therefore always four of each, a four is two of each, and that is
-  a fact about the boat rather than about who the coach puts in it — which is
-  why it is computed here rather than stored, and why it cannot come out wrong.
-
-  `i` is the seat's index in the array; the LAST index is the stroke seat.
+  WHEN THE BOAT PUSHES OFF. A plain dropdown of every five minutes from early
+  morning to late evening — the classic scroll-through, which on a phone is the
+  native wheel. A new boat opens on 7:15am, the squad's usual first push-off,
+  and the coach changes it from there.
 */
-export function seatSide(i: number, rowers: number): Exclude<Side, "B"> {
-  return (rowers - 1 - i) % 2 === 0 ? "P" : "S";
-}
-
-/** Can this athlete take that seat? Someone who rows both sides always can. */
-export function fitsSeat(a: Athlete, side: Side): boolean {
-  return !a.cox && (a.side === "B" || a.side === side);
-}
-
-/** How many of each side a rigging asks for — "4 port · 4 starboard" on an eight. */
-export function sideDemand(rowers: number): { P: number; S: number } {
-  return {
-    P: Array.from({ length: rowers }, (_, i) => seatSide(i, rowers)).filter((s) => s === "P").length,
-    S: Array.from({ length: rowers }, (_, i) => seatSide(i, rowers)).filter((s) => s === "S").length,
-  };
-}
+export const DEFAULT_DOCK = "7:15am";
+export const dockTimes: string[] = (() => {
+  const out: string[] = [];
+  for (let m = 4 * 60 + 30; m <= 21 * 60; m += 5) {
+    const h24 = Math.floor(m / 60);
+    const h12 = h24 % 12 === 0 ? 12 : h24 % 12;
+    out.push(`${h12}:${String(m % 60).padStart(2, "0")}${h24 < 12 ? "am" : "pm"}`);
+  }
+  return out;
+})();

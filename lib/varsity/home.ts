@@ -62,6 +62,7 @@ export type Lineup = {
   type: string; // "Eight" | "Four" etc.
   seats: Seat[];
   cox?: { init: string; name: string; mine?: boolean }; // coxless boats (4-/2-) have none
+  oars?: string; // which set to take off the rack, when the coach named one
 };
 
 export type Greeting = { date: string; name: string; block: string; week: string };

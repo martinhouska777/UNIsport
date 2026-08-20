@@ -7,7 +7,7 @@
   Falls back to localStorage when Supabase env isn't configured.
 */
 import { createClient, hasSupabaseEnv } from "@/lib/supabase/client";
-import { rosterById, boatTypes, type Boat } from "./coachLineup";
+import { rosterById, boatTypes, seatLabel, type Boat } from "./coachLineup";
 import type { Lineup } from "./home";
 
 export type LineupStatus = "draft" | "published";
@@ -105,8 +105,12 @@ function boatToLineup(period: string, boat: Boat, myName: string | null): Lineup
   return {
     period: `${period} · ${boat.name}${boat.dock ? ` · ${boat.dock}` : ""}`,
     type: boatTypeName(boat.badge),
-    seats: boat.seats.map((s) => ({ num: s.label, ...fill(s.athleteId) })),
+    // The seat number is its POSITION in the boat (bow is 1), not whatever the
+    // stored `label` says — lineups saved under the old scheme wrote "S" for
+    // the stroke seat, and they must still read 8…1 now.
+    seats: boat.seats.map((s, i) => ({ num: seatLabel(i), ...fill(s.athleteId) })),
     cox: boat.hasCox ? fill(boat.coxId) : undefined,
+    oars: boat.oars?.trim() || undefined,
   };
 }
 

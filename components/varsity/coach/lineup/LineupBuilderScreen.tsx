@@ -14,6 +14,16 @@
   Lineups persist per practice (day_key) via lib/varsity/lineupStore.ts. Colors
   are theme tokens; rowing-side colors are content colors (rule-1 exception).
 
+  A SEAT IS A NUMBER. 8 at the stroke down to 1 at the bow, with the cox above
+  the 8 marked "C" (the word COX did not survive a 20px badge; it is still the
+  word everywhere there is room to read it). Seats carry no side and no colour
+  of their own, and nothing is ever flagged "off side" — how the boat is rigged
+  is the coach's business, not the app's. The only rule left in a seat is that a
+  cox does not row and a rower does not cox.
+
+  The POOL is filtered three ways and grouped none: All, Port, Starboard, with
+  the both-sides rowers appearing under every filter.
+
   NOTE: the roster is still demo data (no real athlete accounts yet), so athletes
   see the published boats but not a personalised "your seat" highlight — that
   needs real team membership (a later slice).
@@ -24,13 +34,16 @@ import {
   practiceStatusMeta,
   roster,
   rosterById,
-  rosterGroups,
   sideMeta,
   COX_COLOR,
   COX_INK,
-  seatSide,
-  fitsSeat,
-  sideDemand,
+  COX_TAG,
+  COX_LABEL,
+  seatLabel,
+  poolFilters,
+  inPool,
+  dockTimes,
+  DEFAULT_DOCK,
   outMeta,
   boatTypes,
   makeSeats,
@@ -39,6 +52,7 @@ import {
   type Boat,
   type Athlete,
   type BoatType,
+  type PoolFilter,
 } from "@/lib/varsity/coachLineup";
 import { categoryMeta, isOnWater, sessionKey, sessionLabel } from "@/lib/varsity/coachPlan";
 import { fetchPlan, type Plan } from "@/lib/varsity/planStore";
@@ -52,6 +66,7 @@ import {
   IconArrowLeft,
   IconChevronRight,
   IconClock,
+  IconAnchor,
   IconPlus,
   IconX,
   IconSend,
@@ -156,7 +171,12 @@ function Avatar({
   );
 }
 
-// Tag shown for an athlete in the pool / a seat: their side, or "COX".
+/*
+  Tag shown for an athlete in the pool and in the pick-a-name list: their side,
+  or the WORD "COX". The word, not the letter — these are the places with room
+  to read one. The single "C" is only ever the seat badge inside the boat,
+  which is 20px across and where "COX" turned to mush.
+*/
 function AthleteTag({ a }: { a: Athlete }) {
   if (a.cox) {
     return (
@@ -164,7 +184,7 @@ function AthleteTag({ a }: { a: Athlete }) {
         className="rounded border px-1.5 py-px text-[10px] font-bold tracking-[0.05em]"
         style={blade(COX_COLOR, COX_INK)}
       >
-        COX
+        {COX_LABEL}
       </span>
     );
   }
@@ -302,7 +322,6 @@ function DayPicker({ days, onPick }: { days: PickDay[]; onPick: (day: PickDay, p
 /* ─────────────────────────  view 2: builder (interactive)  ───────────────────────── */
 function Seat({
   label,
-  side,
   athlete,
   cox,
   typing,
@@ -318,9 +337,8 @@ function Seat({
   onDragOverSlot,
   onDragLeaveSlot,
 }: {
+  /** The seat's number — "8" down to "1" — or the cox's "C". */
   label: string;
-  /** Which side this seat rows. Absent on the cox seat, which rows neither. */
-  side?: Exclude<Side, "B">;
   athlete?: Athlete;
   cox?: boolean;
   typing: boolean;
@@ -337,19 +355,12 @@ function Seat({
   onDragLeaveSlot: () => void;
 }) {
   /*
-    The seat's own blade, carrying the seat number. A seat rows one side and
-    only one — that is how a boat is rigged — so the number is painted in that
-    side's colour rather than described in words. Reading down the hull you see
-    red, white, red, white: four of each, which is the point.
+    The seat's badge. A rowing seat carries its NUMBER and nothing else — no
+    colour, because the boat no longer claims to know which side that seat
+    rows. The cox's badge keeps the cox yellow, because that is a person's
+    role rather than a rig.
   */
-  const seatPaint = cox ? blade(COX_COLOR, COX_INK) : side ? blade(sideMeta[side].color, sideMeta[side].ink) : undefined;
-
-  /*
-    Seated on the wrong side. Not prevented — a coach may know something the
-    roster doesn't, and being overruled by a form is worse than being warned —
-    but it is never silent.
-  */
-  const wrongSide = !!athlete && !cox && !!side && !fitsSeat(athlete, side);
+  const seatPaint = cox ? blade(COX_COLOR, COX_INK) : undefined;
 
   const dropHandlers = {
     onDragOver: (e: React.DragEvent) => {
@@ -367,9 +378,11 @@ function Seat({
   return (
     <div className="flex items-center gap-2">
       <span
-        className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded border text-[11px] font-bold"
+        className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded border text-[11px] font-bold ${
+          cox ? "" : "border-border bg-surface-2 text-text"
+        }`}
         style={seatPaint}
-        title={cox ? "Cox" : side ? `${sideMeta[side].label} side` : undefined}
+        title={cox ? "Cox" : `Seat ${label}`}
       >
         {label}
       </span>
@@ -409,11 +422,6 @@ function Seat({
                   <span className="flex-1 truncate text-[13px] font-semibold text-text">
                     {m.name}
                   </span>
-                  {!cox && !!side && !fitsSeat(m, side) && (
-                    <span className="flex-shrink-0 text-[10px] font-bold uppercase tracking-[0.06em] text-warn">
-                      Off side
-                    </span>
-                  )}
                   <AthleteTag a={m} />
                 </button>
               ))}
@@ -431,23 +439,14 @@ function Seat({
           className={`flex min-h-[42px] flex-1 cursor-grab items-center gap-2 rounded-lg border px-2.5 py-1.5 active:cursor-grabbing ${
             dropActive
               ? "border-accent bg-accent-tint"
-              : wrongSide
-                ? "border-warn-line bg-warn-tint"
-                : cox
-                  ? "border-accent-line bg-accent-tint"
-                  : "border-primary-line bg-primary-tint"
+              : cox
+                ? "border-accent-line bg-accent-tint"
+                : "border-primary-line bg-primary-tint"
           }`}
         >
           <Avatar initials={athlete.initials} side={athlete.side} cox={cox} />
           <span className="flex-1 truncate text-[13px] font-semibold text-text">{athlete.name}</span>
-          {wrongSide && (
-            <span
-              className="flex-shrink-0 text-[10px] font-bold uppercase tracking-[0.06em] text-warn"
-              title="This seat is rigged the other way. Fine if you meant it — a tandem rig looks exactly like this."
-            >
-              Off side
-            </span>
-          )}
+          {/* The rower's OWN side, which is a fact about them. The seat has none. */}
           {!cox && <SideTag side={athlete.side} />}
           <button type="button" onClick={onClear} className="text-muted hover:text-danger">
             <IconX size={14} />
@@ -524,7 +523,7 @@ function Builder({
   const [query, setQuery] = useState("");
   const [dropKey, setDropKey] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
-  const [poolFilter, setPoolFilter] = useState<"all" | "P" | "S">("all");
+  const [poolFilter, setPoolFilter] = useState<PoolFilter>("all");
 
   // Load any existing lineup for this practice from the database.
   useEffect(() => {
@@ -559,33 +558,18 @@ function Builder({
   // in among the training groups.
   const unavailable = useMemo(() => roster.filter((a) => a.out), []);
   const matches = useMemo(() => {
-    // A cox seat only offers coxes and a rowing seat never does — that one IS a
-    // hard rule, because a cox does not row.
-    //
-    // The SIDE is not. Seats are rigged alternately by default, but a coach may
-    // rig tandem (port, port, starboard, starboard) or seat someone off side on
-    // purpose, so every available rower is offered. The ones who fit the seat's
-    // rigged side are listed FIRST, and the rest are marked "off side" here and
-    // in the seat once they are in it. A notice, never a lock (the owner's rule).
+    // A cox seat only offers coxes and a rowing seat never does — the one hard
+    // rule left in a seat, because a cox does not row. Which SIDE a rower pulls
+    // no longer narrows anything: a seat is a number, so every available rower
+    // is offered for every seat, and the coach rigs the boat.
     const wantCox = typing?.kind === "cox";
-    let list = available.filter((a) => !!a.cox === wantCox);
+    const list = available.filter((a) => !!a.cox === wantCox);
     const q = query.trim().toLowerCase();
-    if (q) {
-      list = list.filter(
-        (a) => a.name.toLowerCase().includes(q) || a.initials.toLowerCase().includes(q),
-      );
-    }
-    if (typing?.kind === "seat") {
-      const boat = boats.find((b) => b.id === typing.boatId);
-      if (boat) {
-        const need = seatSide(typing.idx, boat.seats.length);
-        list = [...list].sort(
-          (a, b) => Number(fitsSeat(b, need)) - Number(fitsSeat(a, need)),
-        );
-      }
-    }
-    return list;
-  }, [available, query, typing, boats]);
+    if (!q) return list;
+    return list.filter(
+      (a) => a.name.toLowerCase().includes(q) || a.initials.toLowerCase().includes(q),
+    );
+  }, [available, query, typing]);
 
   // put `athleteId` into `slot`, removing them from wherever they were first.
   // The cox seat is locked to coxes; coxes can't take a rowing seat.
@@ -631,6 +615,8 @@ function Builder({
     setBoats((prev) => prev.map((b) => (b.id === boatId ? { ...b, name } : b)));
   const setDock = (boatId: string, dock: string) =>
     setBoats((prev) => prev.map((b) => (b.id === boatId ? { ...b, dock } : b)));
+  const setOars = (boatId: string, oars: string) =>
+    setBoats((prev) => prev.map((b) => (b.id === boatId ? { ...b, oars } : b)));
 
   const addBoat = (type: BoatType) => {
     setBoats((bs) => [
@@ -639,7 +625,8 @@ function Builder({
         id: `boat-${Date.now()}`,
         badge: type,
         name: `New ${type}`,
-        dock: "7:00am",
+        dock: DEFAULT_DOCK,
+        oars: "",
         note: "",
         hasCox: type === "8+" || type === "4+",
         coxId: null,
@@ -662,15 +649,12 @@ function Builder({
     window.setTimeout(() => setJustSaved(false), 1500);
   };
 
-  const renderSeat = (boat: Boat, slot: Slot, label: string, athleteId: string | null, cox = false) => {
+  const renderSeat = (slot: Slot, label: string, athleteId: string | null, cox = false) => {
     const key = slotKey(slot);
-    // A rowing seat rows one side; the cox seat rows none.
-    const side = slot.kind === "seat" ? seatSide(slot.idx, boat.seats.length) : undefined;
     return (
       <Seat
         key={key}
         label={label}
-        side={side}
         cox={cox}
         athlete={athleteId ? rosterById[athleteId] : undefined}
         typing={!!typing && slotKey(typing) === key}
@@ -779,32 +763,56 @@ function Builder({
                           <IconPencil size={12} />
                         </span>
                       </div>
+                      {/*
+                        Push-off time — a plain dropdown of every five minutes,
+                        which is the native scroll wheel on a phone. A boat the
+                        coach has never touched already says 7:15am, so the
+                        common case is no work at all. `dockTimes` may not carry
+                        a time an older lineup was saved with, so that one is
+                        added to the list rather than silently swapped out.
+                      */}
                       <div className="flex flex-shrink-0 items-center gap-1 text-muted">
                         <IconClock size={13} />
-                        <input
+                        <select
                           value={boat.dock}
                           onChange={(e) => setDock(boat.id, e.target.value)}
-                          aria-label="Boat time"
-                          className="w-16 bg-transparent text-right text-[12px] font-medium text-text outline-none focus:border-b focus:border-primary"
-                        />
+                          aria-label="Push-off time"
+                          className="bg-transparent text-right text-[12px] font-medium text-text outline-none"
+                        >
+                          {(dockTimes.includes(boat.dock) ? dockTimes : [boat.dock, ...dockTimes]).map(
+                            (t) => (
+                              <option key={t} value={t} className="bg-surface text-text">
+                                {t}
+                              </option>
+                            ),
+                          )}
+                        </select>
                       </div>
                     </div>
 
-                    {/* hull — cox + stroke at the top, down to bow at the bottom */}
+                    {/* hull — cox above the 8, then 8 down to 1 at the bow */}
                     <div className="px-3 py-4">
                       {boat.hasCox && (
                         <div className="mb-2">
-                          {renderSeat(boat, { boatId: boat.id, kind: "cox" }, "COX", boat.coxId, true)}
+                          {renderSeat({ boatId: boat.id, kind: "cox" }, COX_TAG, boat.coxId, true)}
                         </div>
                       )}
                       <div className="relative rounded-[0.75rem_0.75rem_2.5rem_2.5rem] border border-border bg-gradient-to-b from-surface-2 to-background px-3.5 pb-7 pt-7">
                         <div className="absolute left-1/2 top-2 -translate-x-1/2 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
                           Stroke ▲
                         </div>
+                        {/* The number comes from the seat's POSITION, not from
+                            what an older saved lineup happens to have stored in
+                            `label` — so a lineup built before the numbering
+                            changed still reads 8…1 today. */}
                         <div className="flex flex-col gap-1.5">
                           {boat.seats
                             .map((s, i) =>
-                              renderSeat(boat, { boatId: boat.id, kind: "seat", idx: i }, s.label, s.athleteId),
+                              renderSeat(
+                                { boatId: boat.id, kind: "seat", idx: i },
+                                seatLabel(i),
+                                s.athleteId,
+                              ),
                             )
                             .reverse()}
                         </div>
@@ -814,36 +822,55 @@ function Builder({
                       </div>
                     </div>
 
-                    {/* note — usually which oars / which boat to take */}
+                    {/*
+                      OARS — which set this crew takes off the rack. Its own
+                      line rather than a phrase buried in the note, because it
+                      is the second thing a crew needs after their seat, and
+                      because the athletes' Home shows it back to them.
+
+                      Free text for now: the sets are named on the boathouse
+                      rack and the owner is fetching those names. When they
+                      land they become a data list and this becomes a picker —
+                      no new component, the same field.
+                    */}
+                    <div className="flex items-center gap-2 border-t border-border px-3.5 py-2.5 text-muted">
+                      <IconAnchor size={14} />
+                      <input
+                        value={boat.oars ?? ""}
+                        onChange={(e) => setOars(boat.id, e.target.value)}
+                        aria-label="Oars"
+                        placeholder="Oars — which set to take…"
+                        className="flex-1 bg-transparent text-[12px] text-text outline-none placeholder:italic placeholder:text-text-3"
+                      />
+                    </div>
+
+                    {/* note — anything else the crew needs to know */}
                     <div className="flex items-center gap-2 border-t border-border px-3.5 py-2.5 text-muted">
                       <IconClipboard size={14} />
                       <input
                         value={boat.note}
                         onChange={(e) => setNote(boat.id, e.target.value)}
-                        placeholder="Note — oars, which boat to take…"
+                        aria-label="Note"
+                        placeholder="Note — anything else the crew needs…"
                         className="flex-1 bg-transparent text-[12px] text-text outline-none placeholder:italic placeholder:text-text-3"
                       />
                     </div>
 
                     {/*
-                      Footer — filled count, and the side maths. An eight needs
-                      four stroke-side and four bow-side; a four needs two of
-                      each. Showing "3 / 4" against each blade is the fastest
-                      way to see a boat that cannot actually go out.
+                      Footer — how full the boat is, and WHO is in it: how many
+                      port, how many starboard, how many row either way. It no
+                      longer says what the boat "needs", because the seats no
+                      longer claim a side. It is a count of the crew, which the
+                      coach reads against the rig they have in mind.
                     */}
                     <div className="flex items-center justify-between gap-2 border-t border-border px-3.5 py-2 text-[11px] text-muted">
                       <span>
                         {filled} / {boat.seats.length} filled
                       </span>
-                      <span className="flex items-center gap-1.5">
-                        {(["P", "S"] as const).map((sd) => {
-                          const want = sideDemand(boat.seats.length)[sd];
+                      <span className="flex items-center gap-2">
+                        {(["P", "S", "B"] as const).map((sd) => {
                           const have = boat.seats.filter(
-                            (st, i) =>
-                              st.athleteId &&
-                              seatSide(i, boat.seats.length) === sd &&
-                              rosterById[st.athleteId] &&
-                              fitsSeat(rosterById[st.athleteId], sd),
+                            (st) => st.athleteId && rosterById[st.athleteId]?.side === sd,
                           ).length;
                           return (
                             <span key={sd} className="flex items-center gap-1">
@@ -851,8 +878,8 @@ function Builder({
                                 className="h-2.5 w-2.5 rounded-sm border"
                                 style={blade(sideMeta[sd].color, sideMeta[sd].ink)}
                               />
-                              <span className={have === want ? "text-text" : undefined}>
-                                {have}/{want} {sideMeta[sd].label.toLowerCase()}
+                              <span className={have ? "text-text" : undefined}>
+                                {have} {sideMeta[sd].label.toLowerCase()}
                               </span>
                             </span>
                           );
@@ -883,59 +910,64 @@ function Builder({
                 </span>
               </div>
 
-              {/* sort the pool by side */}
+              {/*
+                THE ONLY THREE BUTTONS. All, Port, Starboard — and anyone who
+                rows BOTH appears under every one of them, because they can
+                genuinely take either seat and hiding them from a filter would
+                cost the coach an option. Coxswains have no side, so they show
+                under All.
+
+                The pool used to be split by erg-training column (Group B, OYO,
+                Rx…). Gone on the owner's call: those groups are not true for
+                long, and they are not the question being asked while a boat is
+                being filled.
+              */}
               <div className="mb-2.5 flex gap-1.5">
-                {(
-                  [
-                    ["all", "All"],
-                    ["P", sideMeta.P.label],
-                    ["S", sideMeta.S.label],
-                  ] as const
-                ).map(([key, label]) => (
+                {poolFilters.map((f) => (
                   <button
-                    key={key}
+                    key={f.key}
                     type="button"
-                    onClick={() => setPoolFilter(key)}
+                    onClick={() => setPoolFilter(f.key)}
+                    aria-pressed={poolFilter === f.key}
                     className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[11px] font-medium ${
-                      poolFilter === key ? "border-primary bg-primary-tint text-text" : "border-border bg-surface text-muted"
+                      poolFilter === f.key
+                        ? "border-primary bg-primary-tint text-text"
+                        : "border-border bg-surface text-muted"
                     }`}
                   >
-                    {key !== "all" && (
+                    {f.key !== "all" && (
                       <span
                         className="h-2.5 w-2.5 rounded-sm border"
-                        style={blade(sideMeta[key].color, sideMeta[key].ink)}
+                        style={blade(sideMeta[f.key].color, sideMeta[f.key].ink)}
                       />
                     )}
-                    {label}
+                    {f.label}
                   </button>
                 ))}
               </div>
 
               <div className="flex flex-col gap-3">
-                {rosterGroups.map((g) => {
-                  const chips = g.ids
-                    .map((id) => rosterById[id])
-                    // Anyone unavailable is listed once, at the bottom, under
-                    // its own heading — not scattered through the groups at
-                    // half opacity where a coach has to hunt for them.
-                    .filter((a) => !a.out && !seatedIds.has(a.id))
-                    // side filter: Stroke shows P (+ both); Bow shows S (+ both); coxes only under All
-                    .filter((a) => poolFilter === "all" || (!a.cox && (a.side === poolFilter || a.side === "B")));
-                  if (chips.length === 0) return null;
+                {(() => {
+                  // One flat list, alphabetical. Anyone unavailable is left out
+                  // here and listed once at the bottom under its own heading.
+                  const chips = available
+                    .filter((a) => inPool(a, poolFilter))
+                    .sort((a, b) => a.name.localeCompare(b.name));
+                  if (chips.length === 0) {
+                    return (
+                      <div className="rounded-xl border border-dashed border-border bg-surface px-4 py-6 text-center text-[12px] italic text-muted">
+                        Nobody left in the pool.
+                      </div>
+                    );
+                  }
                   return (
-                    <div key={g.label}>
-                      <div className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-                        {g.label}
-                        <span className="h-px flex-1 bg-border" />
-                      </div>
-                      <div className="flex flex-wrap gap-1.5">
-                        {chips.map((a) => (
-                          <PoolChip key={a.id} a={a} onDragStart={() => setDropKey(null)} />
-                        ))}
-                      </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {chips.map((a) => (
+                        <PoolChip key={a.id} a={a} onDragStart={() => setDropKey(null)} />
+                      ))}
                     </div>
                   );
-                })}
+                })()}
 
                 {/*
                   UNAVAILABLE — the question a coach asks before any of the
