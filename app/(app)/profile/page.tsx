@@ -6,7 +6,6 @@ import { SkeletonLines, SkeletonRows } from "@/components/ui/Skeleton";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import VarsityShield from "@/components/varsity/VarsityShield";
-import VarsityCrest from "@/components/varsity/VarsityCrest";
 import ModeSwitcherSheet from "@/components/ModeSwitcherSheet";
 import useTapOrDoubleTap from "@/components/useTapOrDoubleTap";
 import { useMembership } from "@/components/varsity/useMembership";
@@ -279,11 +278,13 @@ export default function ProfilePage() {
     <div className="mx-auto w-full max-w-screen-sm">
       {/* Top bar */}
       <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-surface px-3.5 py-3">
-        {/* The university sigil sits beside the name for EVERYONE — it's the
+        {/* The university sigil LEADS the top bar for EVERYONE — it's the
             school's mark, the same one the student mode uses, and says nothing
-            about varsity. What only a squad member gets is the chevron and the
-            tap: the title then doubles as the mode switcher (tap for the sheet,
-            double-tap to go straight into Varsity Mode). */}
+            about varsity. It sits first and big (26px) so the student side has
+            a logo in the corner the way Varsity Mode does, rather than a
+            trailing decoration after the name. What only a squad member gets is
+            the chevron and the tap: the title then doubles as the mode switcher
+            (tap for the sheet, double-tap to go straight into Varsity Mode). */}
         {isMember ? (
           <button
             type="button"
@@ -291,14 +292,14 @@ export default function ProfilePage() {
             aria-label="Switch mode"
             className="flex items-center gap-1.5"
           >
+            <VarsityShield size={26} />
             <h1 className="text-base font-medium text-text">{user.name || "My Profile"}</h1>
             <IconChevronDown size={13} className="text-muted" />
-            <VarsityShield size={17} />
           </button>
         ) : (
           <div className="flex items-center gap-1.5">
+            <VarsityShield size={26} />
             <h1 className="text-base font-medium text-text">{user.name || "My Profile"}</h1>
-            <VarsityShield size={17} />
           </div>
         )}
         <div className="flex items-center gap-2">
@@ -349,14 +350,10 @@ export default function ProfilePage() {
             <IconCamera size={12} />
           </button>
 
-          {/* Quiet hint that there's another mode behind this profile — the
-              oars crest, because it points AT Varsity Mode. Only shown to
-              people who actually have one. */}
-          {isMember && (
-            <span className="absolute -right-1.5 -top-1.5 flex h-[26px] w-[26px] items-center justify-center rounded-full border border-border bg-surface">
-              <VarsityCrest size={19} />
-            </span>
-          )}
+          {/* No varsity crest pinned to the photo. It used to sit here as a
+              quiet hint that another mode exists, but the switcher in the top
+              bar and the VARSITY badge under the name already say it — on the
+              photo it just crowded the face. */}
         </div>
 
         <div className="flex flex-col items-center gap-1">

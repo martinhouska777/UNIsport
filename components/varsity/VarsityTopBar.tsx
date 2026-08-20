@@ -15,6 +15,11 @@ import { subscribeToPush, isSubscribed, sendTestNotification } from "@/lib/push/
   Top bar for every Varsity Mode screen: the varsity mark on the left, and on
   the right a notifications bell + an "exit" control that returns to the normal
   app (Profile tab). This is the mode-switch back out of Varsity Mode.
+
+  The mark is deliberately large (44px tall — the crest is a portrait shape, so
+  that is only ~32 wide): this is the one place the mode announces itself, and
+  at 30px the oars behind the shield read as a smudge. The bar's own vertical
+  padding came down a notch to pay for most of the extra height.
 */
 export default function VarsityTopBar() {
   const router = useRouter();
@@ -58,14 +63,14 @@ export default function VarsityTopBar() {
        z-10 stacking context alongside the page and the tab nav, so a sheet
        nested inside it would be painted underneath them. */
     <>
-    <div className="relative z-10 flex flex-shrink-0 items-center justify-between border-b border-border bg-background px-4 py-3">
+    <div className="relative z-10 flex flex-shrink-0 items-center justify-between border-b border-border bg-background px-4 py-2">
       <button
         type="button"
         onClick={handleModeTap}
         aria-label="Switch mode"
         className="flex items-center gap-2 text-left"
       >
-        <VarsityCrest size={30} />
+        <VarsityCrest size={44} />
         <div className="flex flex-col leading-none">
           <span className="text-[8px] font-semibold tracking-[0.18em] text-accent">
             VARSITY MODE

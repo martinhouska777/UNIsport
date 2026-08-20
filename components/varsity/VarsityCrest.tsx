@@ -1,59 +1,80 @@
 "use client";
 
 /*
-  The VARSITY MODE mark: two oars crossed behind the shield — the same emblem
-  the entry animation assembles (VarsityIntro), frozen into one icon.
+  The VARSITY MODE mark: two oars crossed behind the shield.
 
-  The plain shield (VarsityShield) is the university's mark and now stands for
-  the normal student app; this one, with the oars, stands for Varsity Mode.
+  This is THE LAST FRAME OF THE ENTRY ANIMATION (VarsityIntro), frozen into an
+  icon — not a second drawing that merely resembles it. Everything the intro
+  lays out on its 320×320 stage is repeated here at the same numbers: the same
+  oars (OarMark, the landing page's oar with the school's own blade), the same
+  ±32° cross, the same 41×250 size, and the university shield at the same 92px
+  sitting the same 86px down the stage. The only difference is the frame: the
+  stage is cropped to the drawing so the mark has no dead margin, which makes
+  it a portrait rectangle rather than a square.
 
-  The oars are the real ones — the landing page's oar with the school's own
-  blade (OarMark), the same drawing the intro sweeps in — not a coloured
-  stand-in. The shield keeps its theme colours (primary = crimson, primary-
+  The plain shield (VarsityShield) is the university's mark and stands for the
+  normal student app; this one, with the oars, stands for Varsity Mode.
+
+  Colours: the shield keeps its theme tokens (primary = crimson, primary-
   contrast = white for the H, accent for the thin outline), so the mark
-  re-skins with the theme and hardcodes nothing (rule 1); the blade colours
-  are the school's, from data.
+  re-skins with the theme and hardcodes nothing (rule 1); the blade colours are
+  the school's, from data.
 */
 import { useAppState } from "@/components/AppState";
-import OarMark, { OAR_BOX } from "@/components/varsity/OarMark";
+import OarMark from "@/components/varsity/OarMark";
 
+/* The intro's stage and everything on it, in the intro's own pixels. Change a
+   number in VarsityIntro and it has to change here too — they are one pose. */
+const STAGE = 320; // the intro's h-[320px] w-[320px] box
+const OAR_W = 41; // <OarMark width={41} height={250} />, centred on the stage
+const OAR_H = 250;
+const OAR_DEG = 32; // rotate-[±32deg], about the stage's centre
+const SHIELD = 92; // <VarsityShield size={92} />
+const SHIELD_TOP = 86; // its top-[86px]; horizontally centred
+
+/* The crop: the drawing's own bounding box on that stage, plus a hair. Worked
+   out, not eyeballed — the oar paints from x 44.3 to 149.6 of OarMark's 160
+   box and the blade's tip reaches its very top, so the painted rect turned
+   ±32° about the centre lands inside x 78.6–241.4, y 49.2–275.0. The shield
+   sits well within that. */
+const CROP = { x: 76, y: 46, w: 168, h: 232 };
+
+/** Width ÷ height of the mark, for anyone who needs to reserve room for it. */
+export const CREST_RATIO = CROP.w / CROP.h;
+
+const SHIELD_PATH = "M1,1 L21,1 L21,15 Q21,24 11,25 Q1,24 1,15 Z";
+
+/** `size` is the mark's HEIGHT; the width follows from the crop. */
 export default function VarsityCrest({ size = 28 }: { size?: number }) {
   const { universityKey } = useAppState();
-  // One oar, blade at the top, the full 40 of the box; the two are rotated
-  // ±36° about a point low in the box (20, 24) — the crossing sits behind the
-  // shield's lower half — so each WHOLE blade stands clear above the shield's
-  // shoulders and the handles come out below its base. Worked out, not
-  // eyeballed: the blade is the top ~24% of the oar, so its foot is 15.4 from
-  // the pivot; at 36° that lands at y≈11.5, x≈±9 — above and outside the
-  // shield (top 14, half-width 7.5).
-  const oarH = 40;
-  const oarW = (OAR_BOX.w / OAR_BOX.h) * oarH;
+  // VarsityShield draws in a 22×26 box and is sized by its height.
+  const k = SHIELD / 26;
+  const shieldW = 22 * k;
 
   return (
-    <svg width={size} height={size} viewBox="0 0 40 40" fill="none" aria-hidden="true">
-      {[-36, 36].map((deg) => (
-        <g key={deg} transform={`rotate(${deg} 20 24)`}>
-          <OarMark schoolKey={universityKey} x={20 - oarW / 2} y={-1} width={oarW} height={oarH} />
+    <svg
+      width={size * CREST_RATIO}
+      height={size}
+      viewBox={`${CROP.x} ${CROP.y} ${CROP.w} ${CROP.h}`}
+      fill="none"
+      aria-hidden="true"
+    >
+      {[-OAR_DEG, OAR_DEG].map((deg) => (
+        <g key={deg} transform={`rotate(${deg} ${STAGE / 2} ${STAGE / 2})`}>
+          <OarMark
+            schoolKey={universityKey}
+            x={(STAGE - OAR_W) / 2}
+            y={(STAGE - OAR_H) / 2}
+            width={OAR_W}
+            height={OAR_H}
+          />
         </g>
       ))}
 
-      {/* The shield, on the crossing point, a little smaller than it was so
-          the blades have room. The first copy is a fat background-coloured
-          outline that keeps the shafts from bleeding into the shield's edge
-          at small sizes. */}
-      <g transform="translate(12.4 14) scale(0.72)">
-        <path
-          d="M1,1 L21,1 L21,15 Q21,24 11,25 Q1,24 1,15 Z"
-          fill="var(--background)"
-          stroke="var(--background)"
-          strokeWidth="3.5"
-        />
-        <path
-          d="M1,1 L21,1 L21,15 Q21,24 11,25 Q1,24 1,15 Z"
-          fill="var(--primary)"
-          stroke="var(--accent)"
-          strokeWidth="1.2"
-        />
+      {/* The shield, over the crossing — VarsityShield's drawing, inlined so it
+          can share this SVG's coordinates instead of nesting a second one. */}
+      <g transform={`translate(${(STAGE - shieldW) / 2} ${SHIELD_TOP}) scale(${k})`}>
+        <path d={SHIELD_PATH} fill="var(--primary)" stroke="var(--accent)" strokeWidth="1" />
         {/* The H */}
         <rect x="4" y="4" width="5" height="16" rx="1" fill="var(--primary-contrast)" />
         <rect x="4" y="11" width="14" height="4" rx="1" fill="var(--primary-contrast)" />
