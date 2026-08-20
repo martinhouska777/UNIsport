@@ -224,13 +224,18 @@ export const IconPencil = (p: IconProps) => (
 );
 
 /*
-  A real cog. This used to be a small circle with straight rays, which is the
+  A real cog. It started life as a small circle with straight rays, which is the
   same drawing as IconSun — so the profile header showed what looked like two
-  sun buttons side by side. Toothed outline, unmistakably "settings".
+  sun buttons side by side. A toothed outline is unmistakably "settings".
+
+  The teeth are now COMPUTED rather than drawn by hand: six of them on a 9.2
+  circle, one every 60°, with the roots on a 6.6 circle. The hand-drawn version
+  had teeth that were unevenly sized and out of step with each other, which at
+  16px read as a lopsided blob rather than a cog.
 */
 export const IconSettings = (p: IconProps) => (
   <Base {...p}>
-    <path d="M19.4 13a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5v.2a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H2.9a2 2 0 1 1 0-4H3a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V2.9a2 2 0 1 1 4 0V3a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1h.2a2 2 0 1 1 0 4H21a1.7 1.7 0 0 0-1.5 1z" />
+    <path d="M9.62 3.11A9.2 9.2 0 0 1 14.38 3.11L13.93 5.69A6.6 6.6 0 0 1 16.5 7.17L18.51 5.49A9.2 9.2 0 0 1 20.89 9.62L18.43 10.52A6.6 6.6 0 0 1 18.43 13.48L20.89 14.38A9.2 9.2 0 0 1 18.51 18.51L16.5 16.83A6.6 6.6 0 0 1 13.93 18.31L14.38 20.89A9.2 9.2 0 0 1 9.62 20.89L10.07 18.31A6.6 6.6 0 0 1 7.5 16.83L5.49 18.51A9.2 9.2 0 0 1 3.11 14.38L5.57 13.48A6.6 6.6 0 0 1 5.57 10.52L3.11 9.62A9.2 9.2 0 0 1 5.49 5.49L7.5 7.17A6.6 6.6 0 0 1 10.07 5.69Z" />
     <circle cx="12" cy="12" r="3" />
   </Base>
 );

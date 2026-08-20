@@ -19,33 +19,33 @@ export default function CoachTopBar({
 }) {
   return (
     <div className="relative z-10 flex flex-shrink-0 items-center justify-between border-b border-border bg-background px-4 py-3">
-      <div className="flex items-center gap-2.5">
-        <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-sm font-semibold text-primary-contrast">
+      <div className="flex min-w-0 items-center gap-2.5">
+        <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-primary text-sm font-semibold text-primary-contrast">
           H
         </span>
-        <div className="flex flex-col leading-none">
-          <span className="text-sm font-semibold text-text">
+        <div className="flex min-w-0 flex-col leading-none">
+          <span className="truncate text-sm font-semibold text-text">
             {roleLabel[role]} Console
           </span>
-          <span className="mt-0.5 text-[11px] tracking-[0.1em] text-muted">{teamName}</span>
+          <span className="mt-0.5 truncate text-[11px] tracking-[0.1em] text-muted">{teamName}</span>
         </div>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex flex-shrink-0 items-center gap-2">
         {/* Running the squad — invite links, the waiting room, captains. Here
             rather than on the nav because it is a once-a-term job. */}
         <Link
           href="/varsity/coach/settings"
           aria-label="Squad settings"
           data-tour="coach-settings"
-          className="tap44 press-icon flex h-8 w-8 items-center justify-center rounded-full border border-border bg-surface text-muted"
+          className="tap44 press-icon flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border border-border bg-surface text-muted"
         >
-          <IconSettings size={15} />
+          <IconSettings size={16} />
         </Link>
         <ThemeModeToggle />
         <Link
           href="/varsity/home"
           aria-label="Back to athlete view"
-          className="flex h-8 items-center gap-1 rounded-full border border-border bg-surface px-3 text-[11px] font-medium text-muted"
+          className="flex h-8 flex-shrink-0 items-center gap-1 rounded-full border border-border bg-surface px-3 text-[11px] font-medium text-muted"
         >
           <IconArrowLeft size={14} />
           Athlete view

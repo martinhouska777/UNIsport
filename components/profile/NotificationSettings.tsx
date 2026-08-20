@@ -9,12 +9,13 @@ import {
   isSubscribed,
   subscribeToPush,
   unsubscribeFromPush,
+  sendTestNotification,
   pushEnvironment,
   type PushEnvironment,
 } from "@/lib/push/client";
 
 /*
-  Notifications settings on the Profile tab. Two layers:
+  The Notifications block on the SETTINGS screen. Two layers:
    • DEVICE — turn push on/off for THIS browser (subscribe / unsubscribe). This is
      where the OS permission prompt happens; if the user previously blocked it,
      we say so (can only be re-enabled from browser settings).
@@ -77,6 +78,17 @@ export default function NotificationSettings({
   };
 
   /*
+    A sample notification, delivered down the real path. This used to be the
+    bell in the Varsity Mode top bar; it belongs here, next to the switch that
+    turns notifications on, rather than in the chrome of one mode.
+  */
+  const sendSample = async () => {
+    setBusy(true);
+    await sendTestNotification();
+    setBusy(false);
+  };
+
+  /*
     When push isn't available we say WHOSE problem it is and what to do next,
     instead of the old catch-all that told everyone their browser was broken —
     including iPhone owners (whose phones do support this, once the app is on the
@@ -84,7 +96,7 @@ export default function NotificationSettings({
   */
   const note = (title: string, body: string) => (
     <div>
-      <div className="text-xs text-text">{title}</div>
+      <div className="text-sm text-text">{title}</div>
       <p className="mt-0.5 text-[11px] leading-relaxed text-muted">{body}</p>
     </div>
   );
@@ -126,20 +138,30 @@ export default function NotificationSettings({
     return (
       <div className="flex items-center justify-between gap-3">
         <div>
-          <div className="text-xs text-text">This device</div>
+          <div className="text-sm text-text">This device</div>
           <div className="text-[11px] text-muted">
             {subscribed ? "Notifications are on here" : "Get notified on this device"}
           </div>
         </div>
         {subscribed ? (
-          <button
-            type="button"
-            onClick={disable}
-            disabled={busy}
-            className="rounded-full border border-border bg-surface-2 px-3.5 py-1.5 text-[11px] font-medium text-text disabled:opacity-50"
-          >
-            {busy ? "…" : "Turn off"}
-          </button>
+          <div className="flex flex-shrink-0 items-center gap-2">
+            <button
+              type="button"
+              onClick={sendSample}
+              disabled={busy}
+              className="rounded-full border border-border bg-surface px-3.5 py-1.5 text-[11px] font-medium text-muted disabled:opacity-50"
+            >
+              Send a test
+            </button>
+            <button
+              type="button"
+              onClick={disable}
+              disabled={busy}
+              className="rounded-full border border-border bg-surface-2 px-3.5 py-1.5 text-[11px] font-medium text-text disabled:opacity-50"
+            >
+              {busy ? "…" : "Turn off"}
+            </button>
+          </div>
         ) : (
           <Button size="sm" onClick={enable} disabled={busy}>
             {busy ? "…" : "Enable"}
@@ -150,25 +172,24 @@ export default function NotificationSettings({
   };
 
   return (
-    <div className="border-b border-border px-3.5 py-3">
-      <div className="mb-2 flex items-center gap-1.5">
-        <span className="text-primary">
-          <IconBell size={12} />
-        </span>
-        <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-          Notifications
-        </div>
-      </div>
+    /* Padding, header type and card shape all match <Section> and <Row> on the
+       Settings page, so this reads as one more group on that screen rather than
+       a block imported from somewhere else. */
+    <div className="border-b border-border px-3.5 py-4">
+      <h2 className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
+        <IconBell size={12} />
+        Notifications
+      </h2>
 
-      <div className="rounded-xl border border-border bg-surface-2 px-3 py-2.5">
+      <div className="rounded-2xl border border-border bg-surface px-4 py-3">
         {renderDeviceRow()}
       </div>
 
       {/* What to be notified about — applies across all your devices. */}
-      <div className="mt-3 flex flex-col divide-y divide-border">
-        <div className="flex items-center justify-between gap-3 py-2">
+      <div className="mt-2 flex flex-col gap-2">
+        <div className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-surface px-4 py-3">
           <div>
-            <div className="text-xs text-text">New messages</div>
+            <div className="text-sm text-text">New messages</div>
             <div className="text-[11px] text-muted">When someone sends you a message</div>
           </div>
           <Toggle
@@ -177,9 +198,9 @@ export default function NotificationSettings({
             ariaLabel="Notify me about new messages"
           />
         </div>
-        <div className="flex items-center justify-between gap-3 py-2">
+        <div className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-surface px-4 py-3">
           <div>
-            <div className="text-xs text-text">Session invites</div>
+            <div className="text-sm text-text">Session invites</div>
             <div className="text-[11px] text-muted">When someone proposes a session</div>
           </div>
           <Toggle
