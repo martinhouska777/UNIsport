@@ -8,9 +8,11 @@
   lays out on its 320×320 stage is repeated here at the same numbers: the same
   oars (OarMark, the landing page's oar with the school's own blade), the same
   ±32° cross, the same 41×250 size, and the university shield at the same 92px
-  sitting the same 86px down the stage. The only difference is the frame: the
-  stage is cropped to the drawing so the mark has no dead margin, which makes
-  it a portrait rectangle rather than a square.
+  sitting the same 86px down the stage. The only difference is the FRAME: the
+  stage is cropped to the drawing so the mark has no dead margin, and the
+  cropping runs far enough up the shafts to leave the shield — the H — in the
+  middle of the mark. Nothing is redrawn or re-angled; the film's last frame is
+  simply framed like a badge.
 
   The plain shield (VarsityShield) is the university's mark and stands for the
   normal student app; this one, with the oars, stands for Varsity Mode.
@@ -32,12 +34,20 @@ const OAR_DEG = 32; // rotate-[±32deg], about the stage's centre
 const SHIELD = 92; // <VarsityShield size={92} />
 const SHIELD_TOP = 86; // its top-[86px]; horizontally centred
 
-/* The crop: the drawing's own bounding box on that stage, plus a hair. Worked
-   out, not eyeballed — the oar paints from x 44.3 to 149.6 of OarMark's 160
-   box and the blade's tip reaches its very top, so the painted rect turned
-   ±32° about the centre lands inside x 78.6–241.4, y 49.2–275.0. The shield
-   sits well within that. */
-const CROP = { x: 76, y: 46, w: 168, h: 232 };
+/* The crop. Worked out, not eyeballed.
+
+   SIDEWAYS it is the drawing's own bounding box, plus a hair: the oar paints
+   from x 44.3 to 149.6 of OarMark's 160 box, so the painted rect turned ±32°
+   about the centre reaches x 78.6 and 241.4 — both at the BLADES, up at y≈63,
+   which is why cutting the bottom (below) doesn't change these two numbers.
+
+   DOWNWARDS the drawing runs to y 275 (the handles), but the shield sits at
+   89.5–174.5, so keeping all of it would hang the H high in the frame with a
+   long tail of shaft under it. So the shafts are cut: the bottom edge is put
+   as far below the shield as the blades reach above it, which centres the
+   shield — and the H in it — in the mark. Left over is a stub of shaft under
+   the shield, the same length as the blades standing over it. */
+const CROP = { x: 76, y: 46, w: 168, h: 172 };
 
 /** Width ÷ height of the mark, for anyone who needs to reserve room for it. */
 export const CREST_RATIO = CROP.w / CROP.h;
