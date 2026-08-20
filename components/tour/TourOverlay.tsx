@@ -124,6 +124,21 @@ export default function TourOverlay({
   }, [i, steps, finish]);
 
   /*
+    A step whose target never appeared. On its own that costs one step — but a
+    step in a GROUP takes the rest of its group with it, because a group is a
+    dive into a screen the walk had to open, and the first failed move makes
+    every later one unreachable. Without this, a coach with no training block
+    would sit through eleven four-second waits in a row.
+  */
+  const giveUp = useCallback(() => {
+    const group = steps[i].group;
+    let n = i + 1;
+    if (group) while (n < steps.length && steps[n].group === group) n++;
+    if (n >= steps.length) finish();
+    else setI(n);
+  }, [i, steps, finish]);
+
+  /*
     GETTING TO THE STEP — and being SEEN to. The step names the control that
     leads here; the tour draws a tap on it, waits long enough for that to
     register as a press, and only then clicks it. Nobody should land on a new
@@ -191,8 +206,8 @@ export default function TourOverlay({
         timer = setTimeout(attempt, BEAT);
         return;
       }
-      // It never turned up. Move on rather than stranding the whole walk here.
-      next();
+      // It never turned up. Move on — with the rest of its dive, if it is in one.
+      giveUp();
     };
 
     // On a timer rather than straight away: a step whose target is already
@@ -202,7 +217,7 @@ export default function TourOverlay({
       cancelled = true;
       clearTimeout(timer);
     };
-    // `next` changes with i, which is the only thing that should restart this.
+    // `giveUp` changes with i, which is the only thing that should restart this.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [i]);
 
@@ -365,7 +380,15 @@ export default function TourOverlay({
 
   return (
     <div
-      className="fixed inset-0 z-50"
+      /*
+        Above EVERYTHING. The app's sheets sit at z-50 and won on DOM order,
+        but the plan's workout editor is z-[60] AND portalled to <body>, so a
+        z-50 overlay was drawn behind the very screen it was explaining. 70 is
+        clear of every sheet in the app; the wrapper this lives in is `relative`
+        with no z-index, so it creates no stacking context and this really does
+        compete at the root.
+      */
+      className="fixed inset-0 z-[70]"
       role="dialog"
       aria-modal="true"
       aria-labelledby={titleId}

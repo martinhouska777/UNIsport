@@ -50,6 +50,14 @@ export type TourStep = {
   anchor: string | null;
   title: string;
   body: string;
+  /*
+    Steps that only make sense together — a dive into a screen the walk had to
+    open. If one of them never turns up, the REST OF THE GROUP is dropped
+    immediately rather than each waiting out its own four seconds: once the
+    first move failed (no training block to open, say) nothing further in that
+    dive is reachable, and half a minute of dead air is worse than a gap.
+  */
+  group?: string;
 };
 
 /*

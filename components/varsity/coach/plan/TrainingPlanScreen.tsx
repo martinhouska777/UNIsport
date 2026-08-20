@@ -406,13 +406,16 @@ export default function TrainingPlanScreen() {
           </div>
         ) : (
           <div className="mt-5 flex flex-col gap-2.5">
-            {blocks.map((b) => (
+            {blocks.map((b, bi) => (
               <div
                 key={b.id}
                 className="flex items-stretch overflow-hidden rounded-2xl border border-border bg-surface"
               >
+                {/* data-tour: the console tour opens the FIRST block to walk the
+                    draft → week → workout path (lib/varsity/coachTour.ts). */}
                 <button
                   type="button"
+                  data-tour={bi === 0 ? "coach-plan-first-block" : undefined}
                   onClick={() => setView({ name: "block", blockId: b.id })}
                   className="flex flex-1 items-center gap-3 px-4 py-3.5 text-left"
                 >
@@ -548,7 +551,10 @@ export default function TrainingPlanScreen() {
         )}
 
         {/* publish status — controls whether athletes can see this block */}
-        <div className="mt-4 flex items-center gap-3 rounded-xl border border-border bg-surface px-3.5 py-3">
+        <div
+          data-tour="coach-plan-status"
+          className="mt-4 flex items-center gap-3 rounded-xl border border-border bg-surface px-3.5 py-3"
+        >
           <div className="flex-1">
             <div className="flex items-center gap-1.5 text-[12px] font-semibold text-text">
               <span
@@ -588,6 +594,7 @@ export default function TrainingPlanScreen() {
               <button
                 key={w.index}
                 type="button"
+                data-tour={i === 0 ? "coach-plan-first-week" : undefined}
                 onClick={() => setView({ name: "week", blockId: block.id, weekIdx: i })}
                 className="flex items-center gap-3 rounded-xl border border-border bg-surface px-4 py-3 text-left"
               >
@@ -653,10 +660,13 @@ export default function TrainingPlanScreen() {
         </div>
 
         {/* day cards */}
+        {/* data-tour: the tour lights the FIRST day card — seven of them are
+            taller than the screen, and a ring that size lights nothing. */}
         <div className="mt-3 flex flex-col gap-2">
-          {week.days.map((d) => (
+          {week.days.map((d, di) => (
             <div
               key={d.date.toISOString()}
+              data-tour={di === 0 ? "coach-plan-first-day" : undefined}
               className={`overflow-hidden rounded-xl border bg-surface ${d.today ? "border-primary/50" : "border-border"}`}
             >
               <div className={`flex items-center justify-between px-3 py-2 ${d.today ? "bg-primary-tint" : "bg-surface-2"}`}>
@@ -666,13 +676,17 @@ export default function TrainingPlanScreen() {
                 <span className={`text-sm font-semibold ${d.today ? "text-primary" : "text-text"}`}>{d.dayNum}</span>
               </div>
               <div className="flex flex-col gap-1.5 p-2">
-                {periods.map((p) => {
+                {periods.map((p, pi) => {
                   const s = sessions[sessionKey(d.date, p)];
+                  // The tour presses this to open the workout editor. Named on
+                  // BOTH shapes, because the first slot may be empty or filled.
+                  const tour = di === 0 && pi === 0 ? "coach-plan-first-slot" : undefined;
                   if (!s) {
                     return (
                       <button
                         key={p}
                         type="button"
+                        data-tour={tour}
                         onClick={() => openEditor(d.date, p)}
                         className="flex items-center gap-2 rounded-lg border border-dashed border-border px-2.5 py-2 text-muted active:border-primary-line active:text-primary"
                       >
@@ -687,6 +701,7 @@ export default function TrainingPlanScreen() {
                     <button
                       key={p}
                       type="button"
+                      data-tour={tour}
                       onClick={() => openEditor(d.date, p)}
                       className="w-full rounded-lg border border-border bg-surface-2 py-2 pl-2.5 pr-2.5 text-left"
                       style={{ borderLeft: `3px solid ${sessionColor(s)}` }}
@@ -752,7 +767,14 @@ export default function TrainingPlanScreen() {
       <div className="fixed inset-0 z-[60] flex h-dvh flex-col bg-background">
         {/* header with back */}
         <div className="flex flex-shrink-0 items-center gap-2 border-b border-border px-4 py-3">
-          <button type="button" onClick={() => setEditor(null)} className="flex items-center gap-1 text-[13px] text-muted">
+          {/* data-tour: the tour presses this to leave the editor again —
+              and closeOnExit presses it if the walk is abandoned inside. */}
+          <button
+            type="button"
+            data-tour="coach-plan-editor-back"
+            onClick={() => setEditor(null)}
+            className="flex items-center gap-1 text-[13px] text-muted"
+          >
             <IconArrowLeft size={18} /> Back
           </button>
           <div className="ml-1">
@@ -767,13 +789,17 @@ export default function TrainingPlanScreen() {
         <div className="mx-auto w-full max-w-screen-sm flex-1 overflow-y-auto px-5 pb-6 pt-4">
           {/* category */}
           <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">Type</div>
-          <div className="grid grid-cols-5 gap-1.5">
+          {/* data-tour: every field below this one only exists once a type is
+              chosen, so the tour presses "erg" — the one type that shows the
+              whole form — and the rest of the walk has something to point at. */}
+          <div data-tour="coach-plan-type" className="grid grid-cols-5 gap-1.5">
             {categories.map((c) => {
               const active = cat === c;
               return (
                 <button
                   key={c}
                   type="button"
+                  data-tour={`coach-plan-cat-${c}`}
                   onClick={() => setForm((f) => ({ ...f, category: c, intensity: undefined, description: "" }))}
                   className={`flex flex-col items-center gap-1.5 rounded-xl border py-2.5 ${
                     active ? "border-primary bg-primary-tint" : "border-border bg-surface"
@@ -790,13 +816,14 @@ export default function TrainingPlanScreen() {
           {cat && categoryMeta[cat].hasIntensity && (
             <>
               <div className={labelCls}>Intensity</div>
-              <div className="grid grid-cols-3 gap-1.5">
+              <div data-tour="coach-plan-intensity" className="grid grid-cols-3 gap-1.5">
                 {intensities.map((it) => {
                   const active = form.intensity === it;
                   return (
                     <button
                       key={it}
                       type="button"
+                      data-tour={`coach-plan-int-${it}`}
                       onClick={() => setForm((f) => ({ ...f, intensity: it }))}
                       className={`flex items-center justify-center gap-1.5 rounded-xl border py-2.5 ${
                         active ? "border-primary bg-primary-tint" : "border-border bg-surface"
@@ -815,13 +842,16 @@ export default function TrainingPlanScreen() {
           {cat && sugg.length > 0 && (
             <>
               <div className={labelCls}>{optionsLabel(cat)}</div>
-              <div className="flex flex-wrap gap-1.5">
-                {sugg.map((text) => {
+              {/* data-tour: the tour taps the FIRST chip, so the description
+                  fills in front of you (and Confirm stops being greyed out). */}
+              <div data-tour="coach-plan-options" className="flex flex-wrap gap-1.5">
+                {sugg.map((text, si) => {
                   const active = form.description === text;
                   return (
                     <button
                       key={text}
                       type="button"
+                      data-tour={si === 0 ? "coach-plan-opt-first" : undefined}
                       onClick={() => setForm((f) => ({ ...f, description: text }))}
                       className={`rounded-lg border px-2.5 py-1.5 text-[11px] text-text ${
                         active ? "border-primary bg-primary-tint" : "border-border bg-surface"
@@ -840,6 +870,7 @@ export default function TrainingPlanScreen() {
             <>
               <div className={labelCls}>Description</div>
               <textarea
+                data-tour="coach-plan-desc"
                 value={form.description}
                 onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
                 rows={2}
@@ -854,6 +885,7 @@ export default function TrainingPlanScreen() {
             <>
               <div className={labelCls}>Time</div>
               <input
+                data-tour="coach-plan-time"
                 value={form.time}
                 onChange={(e) => setForm((f) => ({ ...f, time: e.target.value }))}
                 placeholder={presetTime[editor.period]}
@@ -877,6 +909,7 @@ export default function TrainingPlanScreen() {
               <div className={labelCls}>Team workout</div>
               <button
                 type="button"
+                data-tour="coach-plan-team"
                 onClick={() =>
                   setForm((f) => ({
                     ...f,
@@ -942,7 +975,7 @@ export default function TrainingPlanScreen() {
           {cat && (
             <>
               <div className={labelCls}>Repeat</div>
-              <div className="grid grid-cols-2 gap-1.5">
+              <div data-tour="coach-plan-repeat" className="grid grid-cols-2 gap-1.5">
                 {(
                   [
                     ["once", "Just this day"],
@@ -987,7 +1020,13 @@ export default function TrainingPlanScreen() {
                 Remove
               </button>
             )}
-            <Button size="lg" disabled={!editorValid} onClick={saveSession} className="flex-1">
+            <Button
+              size="lg"
+              disabled={!editorValid}
+              onClick={saveSession}
+              data-tour="coach-plan-confirm"
+              className="flex-1"
+            >
               <IconCheck size={16} /> Confirm session
             </Button>
           </div>
