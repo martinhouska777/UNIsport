@@ -22,6 +22,7 @@
 */
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import Button from "@/components/ui/Button";
 import {
   createInvite,
@@ -42,7 +43,10 @@ import {
   type SquadMember,
   type VarsityRole,
 } from "@/lib/varsity/membership";
-import { IconCheck, IconChevronRight, IconCopy, IconSend, IconTrash, IconX } from "@/components/icons";
+import { IconBulb, IconCheck, IconChevronRight, IconCopy, IconSend, IconTrash, IconX } from "@/components/icons";
+import { requestTour, resetTour } from "@/lib/tour";
+import { coachTour } from "@/lib/varsity/coachTour";
+import { useAppState } from "@/components/AppState";
 
 /* A titled block, matching the section labels used across Varsity Mode. */
 function Section({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
@@ -74,6 +78,8 @@ const stateLabel: Record<ReturnType<typeof inviteState>, { text: string; tone: s
 
 export default function TeamAdminScreen({ membership }: { membership: Membership }) {
   const { teamId, role } = membership;
+  const { userId } = useAppState();
+  const router = useRouter();
 
   const [squad, setSquad] = useState<SquadMember[]>([]);
   const [invites, setInvites] = useState<Invite[]>([]);
@@ -419,6 +425,35 @@ export default function TeamAdminScreen({ membership }: { membership: Membership
           ))}
         </ul>
       </Section>
+
+      {/* ── 4. Help ──
+          The console's walk again, on demand. Unlike the app's Settings this
+          screen is INSIDE the shell the tour runs in, so the gate is already
+          mounted and hears the request as an event (lib/tour.ts). It still
+          navigates to Plan, because that is where the walk opens. */}
+      {can.buildPlan(role) && (
+        <Section title="Help">
+          <button
+            type="button"
+            onClick={() => {
+              if (userId) resetTour(coachTour, userId);
+              router.push("/varsity/coach/plan");
+              requestTour(coachTour);
+            }}
+            className="flex w-full items-center gap-3 rounded-xl border border-border bg-surface px-3.5 py-3 text-left"
+          >
+            <span className="text-muted">
+              <IconBulb size={18} />
+            </span>
+            <span className="flex-1 text-[13px] font-medium text-text">Take the console tour</span>
+            <IconChevronRight size={14} className="flex-shrink-0 text-muted" />
+          </button>
+          <p className="mt-2 px-1 text-[11px] leading-relaxed text-muted">
+            Walks the four tabs and shows what each one saves you — a minute, and
+            you can stop any time.
+          </p>
+        </Section>
+      )}
     </div>
   );
 }

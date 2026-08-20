@@ -336,7 +336,20 @@ function AthleteSheet({ athleteId, onClose }: { athleteId: string; onClose: () =
   given, which is the coach's version: it goes to that rower's full training
   screen instead. Same row either way; only where it leads changes.
 */
-function RosterRow({ a, onOpen, href }: { a: Athlete; onOpen: () => void; href?: string }) {
+/* data-tour: the Coach Console tour lights the first row to explain that
+   opening a rower shows what they have actually trained. Harmless in the
+   athletes' own Team tab, where no tour looks for it. */
+function RosterRow({
+  a,
+  onOpen,
+  href,
+  tour,
+}: {
+  a: Athlete;
+  onOpen: () => void;
+  href?: string;
+  tour?: string;
+}) {
   const tone = toneOf(teamProfile(a.id).status);
   const cls =
     "flex w-full items-center gap-3 rounded-xl border border-border bg-surface px-3 py-2.5 text-left active:bg-surface-2";
@@ -357,11 +370,11 @@ function RosterRow({ a, onOpen, href }: { a: Athlete; onOpen: () => void; href?:
     </>
   );
   return href ? (
-    <Link href={href} className={cls}>
+    <Link href={href} data-tour={tour} className={cls}>
       {inner}
     </Link>
   ) : (
-    <button type="button" onClick={onOpen} className={cls}>
+    <button type="button" onClick={onOpen} data-tour={tour} className={cls}>
       {inner}
     </button>
   );
@@ -435,10 +448,11 @@ export default function TeamScreen({
           <div className="mt-1.5 px-0.5 text-[11px] text-muted">{rowers.length} rowers</div>
 
           <div className="mt-3 flex flex-col gap-1.5">
-            {shown.map((a) => (
+            {shown.map((a, i) => (
               <RosterRow
                 key={a.id}
                 a={a}
+                tour={i === 0 ? "coach-team-first-rower" : undefined}
                 onOpen={() => setOpen(a.id)}
                 href={athleteHref?.(a) ?? undefined}
               />

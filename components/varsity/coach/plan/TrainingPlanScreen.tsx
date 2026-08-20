@@ -382,9 +382,12 @@ export default function TrainingPlanScreen() {
   if (view.name === "blocks") {
     return (
       <div className="mx-auto w-full max-w-screen-sm px-4 pb-8 pt-4">
-        <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-accent">Training Plan</div>
-        <h1 className="mt-0.5 text-2xl font-semibold text-text">Blocks</h1>
-        <p className="mt-1 text-[12px] text-muted">A block is a stretch of training, usually up to a race.</p>
+        {/* data-tour: the console tour lights this pair (lib/varsity/coachTour.ts). */}
+        <div data-tour="coach-plan-header">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-accent">Training Plan</div>
+          <h1 className="mt-0.5 text-2xl font-semibold text-text">Blocks</h1>
+          <p className="mt-1 text-[12px] text-muted">A block is a stretch of training, usually up to a race.</p>
+        </div>
 
         {blocks.length === 0 ? (
           <div className="mt-8 rounded-2xl border border-dashed border-border bg-surface px-5 py-10 text-center">
@@ -395,7 +398,9 @@ export default function TrainingPlanScreen() {
             <p className="mx-auto mt-1 max-w-[16rem] text-[12px] text-muted">
               Create your first block to start planning the weeks ahead.
             </p>
-            <Button size="md" onClick={() => setView({ name: "create" })} className="mt-5">
+            {/* data-tour: whichever of the two "new block" buttons is on
+                screen is the one the tour lights — see visibleAnchor(). */}
+            <Button size="md" onClick={() => setView({ name: "create" })} className="mt-5" data-tour="coach-plan-new-block">
               <IconPlus size={16} /> New training block
             </Button>
           </div>
@@ -438,6 +443,7 @@ export default function TrainingPlanScreen() {
             <button
               type="button"
               onClick={() => setView({ name: "create" })}
+              data-tour="coach-plan-new-block"
               className="mt-1 flex items-center justify-center gap-2 rounded-2xl border border-dashed border-border bg-surface py-3.5 text-[13px] font-medium text-muted active:border-primary-line active:text-primary"
             >
               <IconPlus size={16} /> New training block

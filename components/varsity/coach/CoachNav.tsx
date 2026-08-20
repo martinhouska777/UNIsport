@@ -40,8 +40,12 @@ export default function CoachNav({ role }: { role: VarsityRole }) {
                 isActive(tab.href) ? "text-primary" : "text-muted"
               }`}
             >
-              {tab.icon}
-              {tab.label}
+              {/* data-tour: the console tour presses these to cross tabs
+                  (lib/varsity/coachTour.ts). */}
+              <span data-tour={`coach-tab-${tab.href}`} className="flex flex-col items-center gap-1">
+                {tab.icon}
+                {tab.label}
+              </span>
             </Link>
           </li>
         ))}

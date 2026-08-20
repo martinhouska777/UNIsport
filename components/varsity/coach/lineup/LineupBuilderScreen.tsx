@@ -253,14 +253,18 @@ function PracticeBody({ practice }: { practice: Practice & { plan: PlanCell } })
 function PracticeButton({
   practice,
   onPick,
+  tour,
 }: {
   practice: Practice & { plan: PlanCell };
   onPick: () => void;
+  /** data-tour, so the console tour can press one (lib/varsity/coachTour.ts). */
+  tour?: string;
 }) {
   return (
     <button
       type="button"
       onClick={onPick}
+      data-tour={tour}
       className="flex min-w-0 flex-1 flex-col items-center gap-1.5 border-r border-border px-2.5 py-3 last:border-r-0 active:bg-surface-2"
     >
       <PracticeBody practice={practice} />
@@ -268,9 +272,19 @@ function PracticeButton({
   );
 }
 
-function DayCard({ day, onPick }: { day: PickDay; onPick: (day: PickDay, p: Practice) => void }) {
+function DayCard({
+  day,
+  first,
+  onPick,
+}: {
+  day: PickDay;
+  /** The tour presses the first day's AM to get into a builder. */
+  first?: boolean;
+  onPick: (day: PickDay, p: Practice) => void;
+}) {
   return (
     <div
+      data-tour={first ? "coach-lineup-first-day" : undefined}
       className={`overflow-hidden rounded-2xl border bg-surface ${
         day.today ? "border-primary-line bg-gradient-to-br from-primary/10 to-surface" : "border-border"
       }`}
@@ -290,7 +304,11 @@ function DayCard({ day, onPick }: { day: PickDay; onPick: (day: PickDay, p: Prac
         )}
       </div>
       <div className="flex border-t border-border">
-        <PracticeButton practice={day.am} onPick={() => onPick(day, day.am)} />
+        <PracticeButton
+          practice={day.am}
+          tour={first ? "coach-lineup-first-practice" : undefined}
+          onPick={() => onPick(day, day.am)}
+        />
         <PracticeButton practice={day.pm} onPick={() => onPick(day, day.pm)} />
       </div>
     </div>
@@ -309,9 +327,12 @@ function DayPicker({ days, onPick }: { days: PickDay[]; onPick: (day: PickDay, p
 
       <div className="mt-5">
         <SectionLabel>Next 7 days</SectionLabel>
+        {/* data-tour: the tour lights the FIRST card (coach-lineup-first-day,
+            on DayCard) rather than the list — seven cards are taller than the
+            screen, and a hole that size lights nothing. */}
         <div className="flex flex-col gap-2.5">
-          {days.map((d) => (
-            <DayCard key={d.id} day={d} onPick={onPick} />
+          {days.map((d, i) => (
+            <DayCard key={d.id} day={d} first={i === 0} onPick={onPick} />
           ))}
         </div>
       </div>
@@ -894,6 +915,7 @@ function Builder({
             <button
               type="button"
               onClick={() => setSheetOpen(true)}
+              data-tour="coach-lineup-add-boat"
               className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-border bg-surface py-3.5 text-[13px] font-medium text-muted active:border-primary-line active:text-primary"
             >
               <IconPlus size={16} /> Add{boats.length ? " Another" : ""} Boat
@@ -901,7 +923,7 @@ function Builder({
 
             {/* pool */}
             <div className="mt-6">
-              <div className="mb-2.5 flex items-center justify-between">
+              <div data-tour="coach-lineup-count" className="mb-2.5 flex items-center justify-between">
                 <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
                   Athlete Pool
                 </span>
@@ -922,7 +944,7 @@ function Builder({
                 long, and they are not the question being asked while a boat is
                 being filled.
               */}
-              <div className="mb-2.5 flex gap-1.5">
+              <div data-tour="coach-lineup-filters" className="mb-2.5 flex gap-1.5">
                 {poolFilters.map((f) => (
                   <button
                     key={f.key}
@@ -995,7 +1017,9 @@ function Builder({
 
       {/* save / publish bar */}
       <div className="absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-background via-background to-transparent px-4 pb-6 pt-6">
-        <div className="mx-auto flex max-w-screen-sm gap-2.5">
+        {/* data-tour: the two buttons only — the bar around them is a tall
+            fade, and a ring drawn on that swallows half the pool. */}
+        <div data-tour="coach-lineup-publish" className="mx-auto flex max-w-screen-sm gap-2.5">
           <button
             type="button"
             onClick={() => persist("draft", "save")}

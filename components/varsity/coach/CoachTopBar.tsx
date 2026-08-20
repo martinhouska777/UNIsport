@@ -36,6 +36,7 @@ export default function CoachTopBar({
         <Link
           href="/varsity/coach/settings"
           aria-label="Squad settings"
+          data-tour="coach-settings"
           className="tap44 press-icon flex h-8 w-8 items-center justify-center rounded-full border border-border bg-surface text-muted"
         >
           <IconSettings size={15} />

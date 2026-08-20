@@ -3,8 +3,10 @@
 /*
   THE TOUR OVERLAY — the dim, the hole, and the caption.
   ---------------------------------------------------------------------------
-  Steps come from lib/tour.ts, as ONE ordered walk through the whole app. Each
-  one names a `data-tour` anchor; this finds that element, measures it, and cuts
+  Steps come from a `Tour` (lib/tour.ts) — one ordered walk. There are two of
+  them: the app's own, and the Coach Console's (lib/varsity/coachTour.ts). This
+  file knows nothing about either; it is handed one and walks it. Each step
+  names a `data-tour` anchor; this finds that element, measures it, and cuts
   a hole in the dim around it, so the REAL button is what you see lit — nothing
   is cloned or redrawn, which is the whole point: you learn where the thing
   actually is.
@@ -37,7 +39,7 @@
 */
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { closeOnExit, tourSteps } from "@/lib/tour";
+import type { Tour } from "@/lib/tour";
 
 const PAD = 8; // breathing room around the lit element
 const EDGE = 6; // never let the hole run off the side of the screen
@@ -77,8 +79,11 @@ function visibleAnchor(anchor: string): HTMLElement | null {
 }
 
 export default function TourOverlay({
+  tour,
   onDone,
 }: {
+  /** Which walk to run — its steps, and what to shut on the way out. */
+  tour: Tour;
   /** Called when the tour ends, however it ends — finished, skipped, Escape. */
   onDone: () => void;
 }) {
@@ -98,9 +103,10 @@ export default function TourOverlay({
   const titleId = useId();
   const bodyId = useId();
 
-  const step = tourSteps[i];
+  const steps = tour.steps;
+  const step = steps[i];
   const armed = armedFor === i;
-  const last = i >= tourSteps.length - 1;
+  const last = i >= steps.length - 1;
 
   /*
     Ending the tour, however it ends. It shuts anything it opened on your
@@ -108,14 +114,14 @@ export default function TourOverlay({
     would otherwise be left standing in an editor you never asked to open.
   */
   const finish = useCallback(() => {
-    closeOnExit.forEach((anchor) => visibleAnchor(anchor)?.click());
+    tour.closeOnExit.forEach((anchor) => visibleAnchor(anchor)?.click());
     onDone();
-  }, [onDone]);
+  }, [tour, onDone]);
 
   const next = useCallback(() => {
-    if (i >= tourSteps.length - 1) finish();
+    if (i >= steps.length - 1) finish();
     else setI((n) => n + 1);
-  }, [i, finish]);
+  }, [i, steps, finish]);
 
   /*
     GETTING TO THE STEP — and being SEEN to. The step names the control that
@@ -442,7 +448,7 @@ export default function TourOverlay({
             </button>
             <div className="flex items-center gap-3">
               <span className="text-[11px] tabular-nums text-text-3">
-                {i + 1} / {tourSteps.length}
+                {i + 1} / {steps.length}
               </span>
               <button
                 ref={nextRef}

@@ -29,7 +29,7 @@ import { profileFromOnboarding } from "@/lib/currentUser";
 import { getUniversity, neutralTheme } from "@/lib/themes";
 import { roleLabel } from "@/lib/varsity/membership";
 import { VARSITY_HOME } from "@/lib/varsity/theme";
-import { requestTour, resetTour } from "@/lib/tour";
+import { appTour, requestTour, resetTour } from "@/lib/tour";
 import {
   IconArrowLeft,
   IconBulb,
@@ -292,8 +292,8 @@ export default function SettingsPage() {
             icon={<IconBulb size={18} />}
             label="Take the tour"
             onClick={() => {
-              if (userId) resetTour(userId);
-              requestTour();
+              if (userId) resetTour(appTour, userId);
+              requestTour(appTour);
               router.push("/gyms");
             }}
           />
@@ -318,7 +318,7 @@ export default function SettingsPage() {
                 onClick={async () => {
                   // Forget the tour too, so replaying onboarding reproduces the
                   // genuine first run — the app introducing itself included.
-                  if (userId) resetTour(userId);
+                  if (userId) resetTour(appTour, userId);
                   await resetOnboarding();
                   router.replace("/onboarding");
                 }}

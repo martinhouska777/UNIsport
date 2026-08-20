@@ -15,6 +15,8 @@ import { useAppState } from "@/components/AppState";
 import ThemeProvider from "@/components/ThemeProvider";
 import CoachTopBar from "@/components/varsity/coach/CoachTopBar";
 import CoachNav from "@/components/varsity/coach/CoachNav";
+import TourGate from "@/components/tour/TourGate";
+import { coachTour } from "@/lib/varsity/coachTour";
 import { useMembership } from "@/components/varsity/useMembership";
 import { canOpenConsole, can } from "@/lib/varsity/membership";
 import { varsityTheme, varsityLightTheme } from "@/lib/varsity/theme";
@@ -30,7 +32,7 @@ const SETTINGS = "/varsity/coach/settings";
 const captainMay = (path: string) => path === TEAM_TAB || path === SETTINGS;
 
 export default function CoachLayout({ children }: { children: React.ReactNode }) {
-  const { ready, loggedIn, varsityReady } = useAppState();
+  const { ready, loggedIn, varsityReady, userId } = useAppState();
   const { membership, loading } = useMembership();
   const router = useRouter();
   const pathname = usePathname();
@@ -69,6 +71,15 @@ export default function CoachLayout({ children }: { children: React.ReactNode })
       <CoachTopBar role={role} teamName={membership!.teamName} />
       <main className="relative z-10 flex flex-1 flex-col overflow-y-auto">{children}</main>
       <CoachNav role={role} />
+      {/*
+        The console's own walk, the first time a coach is in. Mounted here
+        rather than per screen because it crosses the tabs on its own, and
+        inside ThemeProvider so its dim resolves against the varsity theme.
+
+        COACH ONLY: a captain has the squad screen and settings, and most of
+        the walk points at tabs they do not have.
+      */}
+      {userId && can.buildPlan(role) && <TourGate key={userId} tour={coachTour} userId={userId} />}
     </ThemeProvider>
   );
 }

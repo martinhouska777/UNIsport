@@ -1,10 +1,16 @@
 /*
-  THE TOUR — one walk through the whole app, the first time you're in.
+  THE TOUR — one walk through the app, the first time you're in.
   ---------------------------------------------------------------------------
   ONE list, in order, start to finish. The tour drives itself: it moves between
   tabs, opens a gym, presses Match's sub-tabs and opens the Log Session editor,
   because the parts worth explaining are not all sitting on one screen. You do
   nothing but read and press Next.
+
+  There are TWO of these walks now, and they are the same machine: this one for
+  the app, and lib/varsity/coachTour.ts for the Coach Console. A walk is a
+  `Tour` — an id, its steps, and anything it must shut on the way out — and the
+  overlay, the gate and the seen-flag all take one as an argument. Adding a
+  third is adding a data file, not new code.
 
   (It used to be four separate tours that each fired the first time you opened
   their screen. The product owner asked for the whole thing in one go instead —
@@ -44,6 +50,18 @@ export type TourStep = {
   anchor: string | null;
   title: string;
   body: string;
+};
+
+/*
+  One walk. `id` is what the seen-flag and the replay request are keyed on, so
+  it must stay stable once shipped — "app" is the original, and changing it
+  would re-offer the tour to everyone who has already had it.
+*/
+export type Tour = {
+  id: string;
+  steps: TourStep[];
+  /** `data-tour`s to click if the walk is abandoned — see `closeOnExit` below. */
+  closeOnExit: string[];
 };
 
 /*
@@ -174,18 +192,23 @@ export const tourSteps: TourStep[] = [
   in an editor you never asked to open. Listed here rather than in the overlay
   so it stays a fact about the walk, not about the drawing (rule 7).
 */
-export const closeOnExit = ["log-cancel"];
+const closeOnExit = ["log-cancel"];
+
+/** The walk through the app itself. Its id is "app" — do not change it. */
+export const appTour: Tour = { id: "app", steps: tourSteps, closeOnExit };
 
 /* ── Has this account seen it? ──────────────────────────────────────────── */
 
 // Same shape as the app's other per-user keys (`gymFavorites:${userId}` in
 // lib/gymSocial.ts, `workoutLogs:${userId}` in lib/supabase/workouts.ts).
-const seenKey = (userId: string) => `appTourSeen:${userId}`;
+// Keyed by tour id, so the console's walk has its own flag — someone who has
+// been round the app is still new to the console the first time they open it.
+const seenKey = (tour: Tour, userId: string) => `${tour.id}TourSeen:${userId}`;
 
-export function hasSeenTour(userId: string): boolean {
+export function hasSeenTour(tour: Tour, userId: string): boolean {
   if (typeof window === "undefined") return true; // never auto-run on the server
   try {
-    return window.localStorage.getItem(seenKey(userId)) === "1";
+    return window.localStorage.getItem(seenKey(tour, userId)) === "1";
   } catch {
     // Private mode / storage disabled. Treat it as seen rather than opening the
     // tour on every single page load.
@@ -193,53 +216,76 @@ export function hasSeenTour(userId: string): boolean {
   }
 }
 
-export function markTourSeen(userId: string) {
+export function markTourSeen(tour: Tour, userId: string) {
   if (typeof window === "undefined") return;
   try {
-    window.localStorage.setItem(seenKey(userId), "1");
+    window.localStorage.setItem(seenKey(tour, userId), "1");
   } catch {
     /* nothing to do — it just runs again next time */
   }
 }
 
 /** Forget it, so the app introduces itself from scratch again. */
-export function resetTour(userId: string) {
+export function resetTour(tour: Tour, userId: string) {
   if (typeof window === "undefined") return;
   try {
-    window.localStorage.removeItem(seenKey(userId));
+    window.localStorage.removeItem(seenKey(tour, userId));
   } catch {
     /* ignore */
   }
 }
 
-/* ── Asking for it from outside the tabs ────────────────────────────────── */
+/* ── Asking for it again ────────────────────────────────────────────────── */
 /*
-  Settings lives at /settings, OUTSIDE the tab shell — no bottom nav, no
-  sidebar, nothing for a tour to point at. "Take the tour" therefore leaves a
-  request behind and sends you to /gyms, where the shell picks it up.
-  sessionStorage rather than a query parameter: it survives the navigation,
-  needs no Suspense boundary, and leaves no ?tour=1 stuck in the address bar to
-  re-fire on every refresh.
-*/
-const REQUEST_KEY = "appTourRequest";
+  "Take the tour" has to reach a gate that is already somewhere else, and the
+  two consoles need different answers:
 
-export function requestTour() {
+  • The APP's Settings lives at /settings, OUTSIDE the tab shell. Asking there
+    leaves a request behind and navigates to /gyms, where the shell MOUNTS its
+    gate and reads it. sessionStorage rather than a query parameter: it
+    survives the navigation, needs no Suspense boundary, and leaves no ?tour=1
+    stuck in the address bar to re-fire on every refresh.
+
+  • Squad settings is INSIDE the Coach Console shell, so its gate is already
+    mounted and will never re-read anything. Hence the event: the request is
+    also announced, and a live gate hears it.
+
+  Both are written every time, because the caller does not know which case it
+  is in — and a request that is both stored and announced is read exactly once
+  either way.
+*/
+const requestKey = (tour: Tour) => `${tour.id}TourRequest`;
+const REQUEST_EVENT = "unisport:tour-request";
+
+export function requestTour(tour: Tour) {
   if (typeof window === "undefined") return;
   try {
-    window.sessionStorage.setItem(REQUEST_KEY, "1");
+    window.sessionStorage.setItem(requestKey(tour), "1");
   } catch {
-    /* ignore */
+    /* ignore — the event below still reaches a gate that is already mounted */
   }
+  window.dispatchEvent(new CustomEvent(REQUEST_EVENT, { detail: tour.id }));
 }
 
 /** True once, if the tour was asked for. Reading it clears the request. */
-export function takeTourRequest(): boolean {
+export function takeTourRequest(tour: Tour): boolean {
   if (typeof window === "undefined") return false;
   try {
-    const asked = window.sessionStorage.getItem(REQUEST_KEY) === "1";
-    if (asked) window.sessionStorage.removeItem(REQUEST_KEY);
+    const asked = window.sessionStorage.getItem(requestKey(tour)) === "1";
+    if (asked) window.sessionStorage.removeItem(requestKey(tour));
     return asked;
   } catch {
     return false;
   }
+}
+
+/** Listen for a request aimed at this tour. Returns the unsubscribe. */
+export function onTourRequest(tour: Tour, run: () => void): () => void {
+  const handler = (e: Event) => {
+    if ((e as CustomEvent).detail !== tour.id) return;
+    takeTourRequest(tour); // consume it, so a later mount doesn't run it twice
+    run();
+  };
+  window.addEventListener(REQUEST_EVENT, handler);
+  return () => window.removeEventListener(REQUEST_EVENT, handler);
 }

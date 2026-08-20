@@ -14,6 +14,7 @@ import ThemeProvider from "@/components/ThemeProvider";
 import BottomNav from "@/components/BottomNav";
 import SideNav from "@/components/SideNav";
 import TourGate from "@/components/tour/TourGate";
+import { appTour } from "@/lib/tour";
 import { getUniversity, neutralTheme } from "@/lib/themes";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -66,7 +67,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         its own, so anything keyed to the route would unmount itself mid-walk.
         It decides for itself whether to appear (components/tour/TourGate).
       */}
-      {userId && <TourGate key={userId} userId={userId} />}
+      {userId && <TourGate key={userId} tour={appTour} userId={userId} />}
     </ThemeProvider>
   );
 }
