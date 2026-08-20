@@ -1,7 +1,16 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useEffect, useImperativeHandle, useRef, useState, type ReactNode, type Ref } from "react";
+import {
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+  type ReactNode,
+  type Ref,
+  type TouchEvent as ReactTouchEvent,
+} from "react";
 import Phone from "@/components/landing/Phone";
 import { shotSrc, usePhoneMode } from "@/components/landing/PhoneMode";
 import CloserSplit from "@/components/landing/CloserSplit";
@@ -32,6 +41,12 @@ import { schools, rgba } from "@/lib/landingSchools";
   scrolled out of view. It opens on Harvard — the colour the story's phone
   was wearing — and resets to Harvard when it leaves.
 
+  SWIPE. Nobody should have to wait out the 2.6s to see the next school: a
+  swipe left over the piece goes to the next one, right to the previous, and
+  — like a dot click — pins it, so the cycle stops arguing with the finger.
+  Only a clearly horizontal drag counts, so the page still scrolls normally
+  through a piece that is taller than the screen.
+
   ARRIVAL. On its own (`managed` off, the /closers-preview route) it simply
   cycles while in view. Under StoryCloser (`managed`) it is a stage the flow
   dresses: the phone is hidden while the page's phone flies in and lands on
@@ -46,6 +61,8 @@ import { schools, rgba } from "@/lib/landingSchools";
 // of the arrival, read as twice as long as every other step.
 const PERIOD_MS = 2600;
 const FIRST_MS = 1500;
+/** How far a finger must travel across before it counts as a swipe. */
+const SWIPE_PX = 40;
 type Phase = "hide" | "pre" | "in";
 
 export default function CampusColours({
@@ -112,6 +129,30 @@ export default function CampusColours({
   const pick = (i: number) => {
     setHeld(true);
     setSchool((s) => (s.idx === i ? s : { idx: i, prev: s.idx }));
+  };
+
+  /* A swipe walks to the next/previous school and pins it, exactly as a dot
+     click does — so a finger can outrun the 2.6s cycle. */
+  const walk = (dir: 1 | -1) => {
+    setHeld(true);
+    setSchool((s) => ({ idx: (s.idx + dir + schools.length) % schools.length, prev: s.idx }));
+  };
+
+  const touchFrom = useRef<{ x: number; y: number } | null>(null);
+  const onTouchStart = (e: ReactTouchEvent) => {
+    const t = e.touches[0];
+    touchFrom.current = t ? { x: t.clientX, y: t.clientY } : null;
+  };
+  const onTouchEnd = (e: ReactTouchEvent) => {
+    const from = touchFrom.current;
+    touchFrom.current = null;
+    const t = e.changedTouches[0];
+    if (!from || !t) return;
+    const dx = t.clientX - from.x;
+    const dy = t.clientY - from.y;
+    // Too short is a tap; more down than across is the page being scrolled.
+    if (Math.abs(dx) < SWIPE_PX || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    walk(dx < 0 ? 1 : -1);
   };
 
   useImperativeHandle(ref, () => ({
@@ -187,7 +228,10 @@ export default function CampusColours({
     >
       <div
         ref={stick}
-        className="lc-stick flex min-h-svh flex-col items-center justify-center overflow-hidden px-6 py-6 sm:px-8 lg:py-10"
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
+        // touch-pan-y: vertical is the page's, across is ours.
+        className="lc-stick flex min-h-svh touch-pan-y flex-col items-center justify-center overflow-hidden px-6 py-6 sm:px-8 lg:py-10"
       >
         <CloserSplit aside={aside} accent="accent">
         {/* ── The words ── */}
