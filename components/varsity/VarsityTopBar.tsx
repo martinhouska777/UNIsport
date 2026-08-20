@@ -7,7 +7,6 @@ import VarsityCrest from "@/components/varsity/VarsityCrest";
 import ModeSwitcherSheet from "@/components/ModeSwitcherSheet";
 import { useAppState } from "@/components/AppState";
 import useTapOrDoubleTap from "@/components/useTapOrDoubleTap";
-import { ThemeModeToggle } from "@/components/ThemeMode";
 import { IconArrowLeft, IconChevronDown, IconSettings } from "@/components/icons";
 
 /*
@@ -15,11 +14,14 @@ import { IconArrowLeft, IconChevronDown, IconSettings } from "@/components/icons
   the right the settings cog plus an "exit" control that returns to the normal
   app (Profile tab). This is the mode-switch back out of Varsity Mode.
 
-  There is no notifications bell here any more. Notifications are a SWITCH, and
-  switches live on the Settings screen — the same place the light/dark choice
-  lives in every mode. It also kept the bar honest: four controls squeezed
-  against the mark, and on a narrow phone the round ones were being squashed
-  into ovals.
+  There is no notifications bell and no light/dark toggle here any more. Both
+  are SWITCHES, and every switch in the app lives on the Settings screen behind
+  the cog — which is how the normal app has always worked on a phone (its only
+  light/dark toggle outside Settings is on the laptop side rail). Varsity Mode
+  was the odd one out, carrying two of them in its chrome.
+
+  It also keeps the bar honest: it had four controls squeezed against the mark,
+  and on a narrow phone the round ones were the ones being squashed.
 
   The mark is deliberately large (44px tall — the crest is a portrait shape, so
   that is only ~32 wide): this is the one place the mode announces itself, and
@@ -77,7 +79,6 @@ export default function VarsityTopBar() {
       </button>
 
       <div className="flex flex-shrink-0 items-center gap-2">
-        <ThemeModeToggle />
         {/* Settings has to be reachable from here: a rower who joined through a
             team link has no student profile to find the cog on, so without this
             they could never change units, notifications — or log out. */}
