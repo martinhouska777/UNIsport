@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useCallback, useEffect, useImperativeHandle, useRef, useState, type ReactNode, type Ref } from "react";
 import Phone from "@/components/landing/Phone";
 import { shotSrc, usePhoneMode } from "@/components/landing/PhoneMode";
+import VarsityTabBar from "@/components/landing/VarsityTabBar";
 import CloserSplit from "@/components/landing/CloserSplit";
 import { useCloserGate } from "@/components/landing/useCloserGate";
 import type { CloserHandle } from "@/components/landing/closer";
@@ -75,18 +76,6 @@ const PEEK = 90; // how far the topmost blade shows above the phone
 const PARK_SCALE = 0.3;
 
 const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
-
-/* The app's varsity tab bar — five slots, the centre one is the log button. */
-const VARSITY_TABS: { label: string; d: string }[] = [
-  { label: "Home", d: "M4 11l8-6 8 6v8h-5v-5H9v5H4z" },
-  { label: "Calendar", d: "M4 6h16v14H4zM4 10h16M8 3v4M16 3v4" },
-  { label: "", d: "" },
-  {
-    label: "Team",
-    d: "M9 12a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM3 19c0-3 3-4.5 6-4.5S15 16 15 19M17 10a2.5 2.5 0 1 0 0-5M16 14c3 0 5 1.5 5 4",
-  },
-  { label: "Profile", d: "M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 20c0-4 4-6 8-6s8 2 8 6" },
-];
 
 /* One oar: the piece's drawing. Handle, shaft, collar; then the blade,
    clipped to the blade shape — base coat, the crew's marks, a shade that the
@@ -480,43 +469,7 @@ export default function BladeLock({
                 />
               ))}
               {/* the app's tab bar, which the capture stops above */}
-              <div
-                aria-hidden
-                className="absolute inset-x-0 bottom-0 z-[2] flex h-[12%] items-center justify-around border-t border-l-phone-line bg-l-phone-screen pb-[1.6%]"
-              >
-                {VARSITY_TABS.map((t, i) =>
-                  t.label ? (
-                    <span
-                      key={t.label}
-                      className={`flex flex-col items-center gap-[2px] leading-none text-l-phone-ink-2 ${ct}`}
-                      style={i === 0 ? { color: s.ink } : undefined}
-                    >
-                      <svg
-                        viewBox="0 0 24 24"
-                        className="h-[5.5cqw] w-[5.5cqw]"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.7"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d={t.d} />
-                      </svg>
-                      <b className="font-sans text-[2.4cqw] font-semibold tracking-[0.02em]">{t.label}</b>
-                    </span>
-                  ) : (
-                    <span
-                      key="plus"
-                      className={`-mt-[8%] flex aspect-square w-[16%] items-center justify-center rounded-full text-l-phone-screen shadow-md ring-[5px] ring-l-phone-screen/90 ${ct} transition-[background-color]`}
-                      style={{ background: s.ink }}
-                    >
-                      <svg viewBox="0 0 24 24" className="h-[48%] w-[48%]" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
-                        <path d="M12 4v16M4 12h16" />
-                      </svg>
-                    </span>
-                  ),
-                )}
-              </div>
+              <VarsityTabBar ink={s.ink} transition={ct} />
             </div>
           </Phone>
         </div>

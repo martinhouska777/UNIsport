@@ -1,85 +1,170 @@
 "use client";
 
 import Image from "next/image";
+import { useEffect, useRef, useState } from "react";
 import Phone from "@/components/landing/Phone";
+import VarsityTabBar from "@/components/landing/VarsityTabBar";
 import { shotSrc, usePhoneMode } from "@/components/landing/PhoneMode";
+import { glow, rgba, schools, SCHOOL_CYCLE_MS } from "@/lib/landingSchools";
 
 /*
-  THE INTRO'S BACKDROP — two app screens standing in the margins of the wide
-  screen, half cropped by the edge and fading into the page.
+  THE INTRO'S BACKDROP — two app screens standing beside the words, cycling
+  through the eight schools' colours.
 
-  The owner's note (2026-08-23): on a laptop the intro's sides are empty, and
-  what should fill them is "some phone screens same as I have down there". So
-  these are exactly the screens from down there — the same frame (Phone), the
-  same captures the first story opens on, and the same light/dark switch
-  (PhoneMode) — parked behind the words instead of beside them.
+  The owner's notes, 2026-08-23, in order:
+    • the intro's sides are empty on a laptop — fill them with "some phone
+      screens same as I have down there";
+    • closer in, a size smaller, and opening on the white screens;
+    • "I want colours, and I want the colours to change by school in the hero
+      too, the same as we have with that static image."
 
-  WHICH TWO, and why those: the headline is "Your campus. Your gym. Your
-  people." — the left phone is the Gyms screen and the right is Match. The
-  backdrop is the headline.
+  So this is Campus Colours' idea, brought to the front door. The screens are
+  the closers' OWN recoloured captures — public/landing/closers/gyms-*.webp on
+  the left (the student app) and vhome-*.webp on the right (Varsity Mode) —
+  the two subjects the two closers take, mirroring the two doors underneath.
+  They change together, on the page's one pace (SCHOOL_CYCLE_MS), each with
+  its school's colour glowing behind it. That glow is where the colour really
+  lands: a screenshot is mostly white, a halo is not.
 
-  It supersedes the older note that the intro carries no phone. That note said
-  the real screenshots below replace a DRAWN one; these are the real
-  screenshots, and they are backdrop, not exhibit.
+  Colours are DATA (lib/landingSchools.ts) applied inline — rule 1's content
+  exception, the same one the closers stand on. Rule 2 still holds: the page's
+  own chrome stays neutral; what changes colour is a picture of a themed app.
 
-  WHERE THEY STAND (owner, 2026-08-23: "put the photos more so you can see the
-  whole thing closer to the text"). Beside the mark and the headline, tilted
-  away from the middle, WHOLE — no edge crops them and no mask eats them, and
-  they are small enough to finish well above the row of doors.
+  IT MUST NOT CLAIM EIGHT CAMPUSES. The app is live at one. So the pill above
+  the headline still reads "Live now at Harvard", the cycle STARTS on Harvard,
+  and no school is named here — the line under the button ("new campuses are
+  onboarded one at a time — colours, gyms and houses included") is what these
+  colours illustrate. Campus Colours spells it out further down, and drops the
+  design's "eight campuses" claim for the same reason.
 
-  They are anchored to the TEXT, not to the window: each stands a fixed
-  distance out from the middle of the page (the .l-hero-phone rules in
-  app/globals.css), so on a big monitor they travel outwards with the column
-  of words rather than stranding themselves in the corners.
+  WHERE THEY STAND. Anchored to the TEXT, not to the window — a fixed distance
+  out from the middle of the page (the .l-hero-phone rules in app/globals.css)
+  — so both are whole, clear of the screen edges, and travel outwards with the
+  column of words on a big monitor. Two earlier cuts, so they are not tried
+  again: hanging them half off the side edges showed a vertical strip of
+  somebody's screen and read as dirt on the page; melting them downwards into
+  the doors hid the whole shape of the phone, which is the only thing that
+  makes a phone read as one.
 
-  Two earlier cuts, so they are not tried again: hanging them half off the
-  side edges showed a vertical strip of somebody's screen and read as dirt on
-  the page; melting them downwards into the doors hid the one thing that makes
-  them read as a phone, which is the whole shape of one.
-
-  THEY OPEN WHITE, whatever the machine's colour scheme says (owner,
-  2026-08-23) — a white phone reads as an app against the dark page, a dark
-  one reads as a smudge. The moment a visitor presses the light/dark switch
-  further down, these follow it like every other phone: that is what
-  `chosen` distinguishes. Only the intro overrides the default this way; the
-  rest of the page still opens in the visitor's own scheme.
+  THEY OPEN WHITE, whatever the machine's colour scheme says — a white phone
+  reads as an app against the dark page, a dark one reads as a smudge. The
+  moment a visitor presses the light/dark switch further down, these follow it
+  like every other phone: that is what `chosen` distinguishes. Only the intro
+  overrides the default; the rest of the page still opens in the visitor's own
+  scheme.
 
   Wide screens only (xl and up): below that the margins it fills do not exist.
-  It sits inside HeroFade, so it leaves with everything else. The light/dark
-  pill is NOT summoned for it (no data-phone-screens here): a switch has no
-  business appearing over the front door for two decorations.
+  It sits inside HeroFade, so it leaves with everything else.
 */
-const SHOTS = [
-  { src: "/landing/01-gyms.webp", alt: "The Gyms screen of the app", side: "left" as const },
-  { src: "/landing/02-match.webp", alt: "The Match screen of the app", side: "right" as const },
+const PHONES = [
+  { side: "left" as const, shot: "gyms", what: "The Gyms screen" },
+  { side: "right" as const, shot: "vhome", what: "Varsity Home" },
 ];
+
+/* How many schools' captures are in the DOM. It starts at two — the one
+   showing and the one coming — and only ever grows, so the eight arrive over
+   the first cycle instead of all landing on the front door at once. */
+const START = 2;
 
 export default function HeroPhones() {
   const { mode, chosen } = usePhoneMode();
   // The visitor's choice if they made one; white if they have not.
   const shown = chosen ? mode : "light";
 
+  const [{ i, count }, setCycle] = useState({ i: 0, count: START });
+  const root = useRef<HTMLDivElement>(null);
+
+  /*
+    The cycle, which runs only when it is worth running: not under reduced
+    motion, not while the tab is in the background, and not once the intro has
+    been scrolled past — a timer swapping images nobody is looking at is just
+    heat. It restarts from wherever it left off.
+  */
+  useEffect(() => {
+    const el = root.current;
+    if (!el) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    let timer: ReturnType<typeof setInterval> | null = null;
+    let onScreen = true;
+    const stop = () => {
+      if (timer) clearInterval(timer);
+      timer = null;
+    };
+    const start = () => {
+      if (timer || !onScreen || document.hidden) return;
+      timer = setInterval(
+        () =>
+          setCycle((s) => {
+            const next = (s.i + 1) % schools.length;
+            return { i: next, count: Math.max(s.count, Math.min(next + 2, schools.length)) };
+          }),
+        SCHOOL_CYCLE_MS,
+      );
+    };
+
+    const io = new IntersectionObserver(([e]) => {
+      onScreen = e.isIntersecting;
+      if (onScreen) start();
+      else stop();
+    });
+    io.observe(el);
+    const onVisible = () => (document.hidden ? stop() : start());
+    document.addEventListener("visibilitychange", onVisible);
+    start();
+
+    return () => {
+      stop();
+      io.disconnect();
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, []);
+
+  const school = schools[i];
+
   return (
-    /* w-screen and centred on the intro's own centre, which is the page's:
-       the phones belong to the SCREEN's corners, not to the 1160px column.
-       -z-10 keeps them behind the words — the section is its own stacking
-       context (z-[1]), so they cannot fall behind the page itself. */
+    /* w-screen and centred on the intro's own centre, which is the page's.
+       -z-10 keeps it behind the words — the section is its own stacking
+       context (z-[1]), so it cannot fall behind the page itself. */
     <div
+      ref={root}
       aria-hidden="true"
       className="pointer-events-none absolute inset-y-0 left-1/2 -z-10 hidden w-screen -translate-x-1/2 overflow-hidden xl:block"
     >
-      {SHOTS.map((s) => (
-        <div key={s.src} className="l-hero-phone" data-side={s.side}>
-          <Phone className="opacity-[0.82]">
+      {PHONES.map((p) => (
+        <div key={p.shot} className="l-hero-phone" data-side={p.side}>
+          {/* The school's colour. This, not the screenshot, is what makes the
+              page change colour — a capture is mostly white. glow() raises the
+              near-black navies to the floor the others already clear, so all
+              eight land with the same weight (lib/landingSchools.ts). */}
+          <div
+            className="absolute -inset-28 transition-[background] duration-[600ms] ease-in-out motion-reduce:transition-none"
+            style={{
+              background: `radial-gradient(circle at 50% 50%, ${rgba(glow(school.color), 0.42)} 0%, transparent 66%)`,
+            }}
+          />
+          <Phone className="relative opacity-[0.82]">
             <div className="relative aspect-[900/1480] overflow-hidden bg-l-phone-screen">
-              <Image
-                src={shotSrc(s.src, shown)}
-                alt={s.alt}
-                fill
-                sizes="(min-width: 1536px) 290px, 230px"
-                quality={80}
-                className="object-fill"
-              />
+              {schools.slice(0, count).map((sc, n) => (
+                <Image
+                  key={sc.key}
+                  src={shotSrc(`/landing/closers/${p.shot}-${sc.key}.webp`, shown)}
+                  alt={`${p.what} in ${sc.name}'s colours`}
+                  fill
+                  sizes="(min-width: 1536px) 290px, 230px"
+                  quality={80}
+                  loading={n === 0 ? "eager" : "lazy"}
+                  className="object-fill transition-opacity duration-[600ms] ease-in-out motion-reduce:transition-none"
+                  style={{ opacity: n === i ? 1 : 0 }}
+                />
+              ))}
+              {/* The varsity capture stops above the app's own tab bar. */}
+              {p.shot === "vhome" && (
+                <VarsityTabBar
+                  ink={school.ink}
+                  transition="transition-colors duration-[600ms] ease-in-out motion-reduce:transition-none"
+                />
+              )}
             </div>
           </Phone>
         </div>

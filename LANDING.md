@@ -49,6 +49,8 @@ still meets everything in order.
 | **Blade Lock (site)** | `components/landing/BladeLock.tsx` | **Built, native** — the varsity closer |
 | Per-school screens for the closers' phones | `public/landing/closers/{gyms,vhome}-*.webp` | 16 files, 900×1480, from `recolor-shots.mjs` |
 | **The live landing** | `app/page.tsx` → `components/landing/LandingPage.tsx` | **The new page** — stories, closers, coach, FAQ, about, contact |
+| **The intro** | `components/landing/LandingHero.tsx`; `HeroFade` (the hand-over), `HeroPhones` (the backdrop), `Wordmark` | Rebuilt 2026-08-23 — see "The intro" below |
+| The varsity tab bar the vhome captures stop above | `components/landing/VarsityTabBar.tsx` | Drawn, not captured; used by Blade Lock and by the intro's right phone |
 | **The tabs / views** | `views` in `lib/landingCopy.ts` → `LandingNav.tsx`; `LandingPage view=…`; routes `app/for/[audience]`, `app/about`, `app/contact`; shared head in `components/landing/routeMeta.ts` | Built (2026-08-18) — see "One page, six views" below |
 | Contact + socials | `components/landing/Contact.tsx`, `contact.socials` in `lib/landingCopy.ts` | Built — Instagram / TikTok / X are "coming soon" until the owner fills in `href` + `handle` |
 | Light / dark phone screens | `components/landing/PhoneMode.tsx`, `public/landing/dark/**` | Built — the switch bottom-right, shown only over the sections with phones (`data-phone-screens`); dark frames are real captures (see below) |
@@ -102,6 +104,33 @@ example.
 scroll, no selectable text for search engines, and one document per frame. The
 closers were iframed only because they are bundled apps; that is a reason to
 port them, not a pattern to copy — and they are now ported (see below).
+
+**The intro opens on the mark, and hands over** (2026-08-23). It carries the
+wordmark at full size with the brand line under it — the bar's small copy is
+not drawn while that one is on screen — the blocks arrive on a short stagger,
+and the whole thing fades and lags as you scroll so the first stage of the
+story rises over it. The kicker was dropped where the three doors are drawn:
+it repeated their two subtitles word for word.
+
+**The intro carries two app screens, and they cycle the schools' colours**
+(2026-08-23, the owner's call). They stand beside the words on wide screens
+(xl+), anchored to the text rather than to the window, and show the closers'
+own recoloured captures — `gyms-*` on the left, `vhome-*` on the right —
+changing together on `SCHOOL_CYCLE_MS`, each with its school's colour glowing
+behind it. `glow()` in `lib/landingSchools.ts` raises the near-black navies
+(Yale, Penn, Brown) to a common lightness floor so all eight land with the same
+weight; hue and saturation are untouched, and the schools' own `color`/`ink`
+are unchanged.
+
+Two things this deliberately does NOT do. It does not claim eight campuses:
+the pill still reads "Live now at Harvard", the cycle starts on Harvard, and no
+school is named in the intro — the same care Campus Colours takes. And it does
+not summon the light/dark pill over the front door; instead the intro's phones
+OPEN WHITE whatever the visitor's colour scheme is (a white phone reads as an
+app on the dark page, a dark one reads as a smudge) and follow the switch from
+the moment it is actually pressed. The rest of the page still opens in the
+visitor's own scheme. This supersedes the older "no drawn phone in the intro"
+note, which was about a DRAWN phone standing in for screenshots.
 
 **The closers show the REAL app, recoloured per school** (commit `56006d1`),
 not the design pieces' drawn phone screens. The native ports do the same:

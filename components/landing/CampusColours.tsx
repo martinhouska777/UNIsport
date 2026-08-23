@@ -17,7 +17,7 @@ import CloserSplit from "@/components/landing/CloserSplit";
 import { useCloserGate } from "@/components/landing/useCloserGate";
 import type { CloserHandle } from "@/components/landing/closer";
 import { closers } from "@/lib/landingCopy";
-import { schools, rgba } from "@/lib/landingSchools";
+import { schools, rgba, SCHOOL_CYCLE_MS } from "@/lib/landingSchools";
 
 /*
   CAMPUS COLOURS — the closer of the student story.
@@ -56,10 +56,10 @@ import { schools, rgba } from "@/lib/landingSchools";
   and the dots still work.
 */
 
-// 2.6s per school, the design piece's pace — but the FIRST step (Harvard → Yale
-// after landing) comes sooner: at the piece's pace the wait for Yale, on top
-// of the arrival, read as twice as long as every other step.
-const PERIOD_MS = 2600;
+// The page's one pace (lib/landingSchools.ts) — but the FIRST step (Harvard →
+// Yale after landing) comes sooner: at that pace the wait for Yale, on top of
+// the arrival, read as twice as long as every other step.
+const PERIOD_MS = SCHOOL_CYCLE_MS;
 const FIRST_MS = 1500;
 /** How far a finger must travel across before it counts as a swipe. */
 const SWIPE_PX = 40;

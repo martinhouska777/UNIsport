@@ -30,7 +30,9 @@ if (SCROLL) {
   await page.evaluate((y) => window.scrollTo(0, y), SCROLL);
   await new Promise((r) => setTimeout(r, 700));
 }
-await new Promise((r) => setTimeout(r, 600));
+// WAIT_MS holds before the shot — the intro's backdrop cycles through the
+// schools, so this is how you photograph a school other than the first.
+await new Promise((r) => setTimeout(r, Number(process.env.WAIT_MS || 600)));
 await page.screenshot({ path: OUT });
 await browser.close();
 console.log("wrote", OUT);

@@ -61,6 +61,11 @@ export const OAR_ART = {
   shade: "#060607",
 };
 
+/* HOW FAST THE SCHOOLS CHANGE — 2.6s each, the design piece's pace. Campus
+   Colours set it; the intro's backdrop phones cycle to the same beat, so a
+   reader who scrolls from one to the other meets one rhythm, not two. */
+export const SCHOOL_CYCLE_MS = 2600;
+
 export const schools: School[] = [
   {
     key: "harvard",
@@ -156,6 +161,51 @@ export const schools: School[] = [
 ];
 
 /** `#rrggbb` → `rgba(r,g,b,a)` for the glows and washes built from a school colour. */
+/*
+  THE COLOUR A SCHOOL GLOWS IN.
+
+  Several of these are near-black — Yale #00356b, Penn #011f5b, Brown #4e3629 —
+  and a halo in one of them on a #0a0a0a page is not a halo, it is a slightly
+  less black patch. So the hue and the saturation are kept exactly and only the
+  LIGHTNESS is raised to a common floor, which gives all eight the same
+  presence without turning any of them into a different colour. Columbia's pale
+  blue is already above the floor and comes back untouched.
+
+  Presentational only: the school's own `color` and `ink` are what type and
+  UI use, and neither is changed.
+*/
+export function glow(hex: string, floor = 0.44): string {
+  const n = parseInt(hex.slice(1), 16);
+  const r = ((n >> 16) & 255) / 255,
+    g = ((n >> 8) & 255) / 255,
+    b = (n & 255) / 255;
+  const max = Math.max(r, g, b),
+    min = Math.min(r, g, b);
+  const l = (max + min) / 2;
+  if (l >= floor) return hex;
+  const d = max - min;
+  const sat = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1));
+  let h = 0;
+  if (d !== 0) {
+    if (max === r) h = ((g - b) / d) % 6;
+    else if (max === g) h = (b - r) / d + 2;
+    else h = (r - g) / d + 4;
+    h *= 60;
+    if (h < 0) h += 360;
+  }
+  // back to rgb at the raised lightness
+  const c = (1 - Math.abs(2 * floor - 1)) * sat;
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+  const m = floor - c / 2;
+  const [r1, g1, b1] =
+    h < 60 ? [c, x, 0] : h < 120 ? [x, c, 0] : h < 180 ? [0, c, x] : h < 240 ? [0, x, c] : h < 300 ? [x, 0, c] : [c, 0, x];
+  const hex2 = (v: number) =>
+    Math.round((v + m) * 255)
+      .toString(16)
+      .padStart(2, "0");
+  return `#${hex2(r1)}${hex2(g1)}${hex2(b1)}`;
+}
+
 export function rgba(hex: string, a: number): string {
   const n = parseInt(hex.slice(1), 16);
   return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
