@@ -539,6 +539,26 @@
 #top .l-cue { opacity: calc(1 - var(--l-out, 0) * 2.4); }
 
 /*
+  THE INTRO'S TWO BACKDROP PHONES (components/landing/HeroPhones.tsx).
+
+  Anchored to the TEXT, not to the window: each stands a fixed distance out
+  from the middle of the page, so on a wide monitor they travel outwards with
+  the column of words instead of stranding themselves in the corners. The
+  distance clears the widest line of the intro (the body, 46ch) with room to
+  spare, and the size is chosen so the WHOLE phone fits above the row of
+  doors — no crop, no mask. Only drawn from xl up (the component), where the
+  margins they fill exist at all.
+*/
+.l-hero-phone { position: absolute; top: 2.25rem; left: 50%; width: 230px; }
+.l-hero-phone[data-side="left"] { transform: translateX(calc(-100% - 330px)) rotate(-11deg); }
+.l-hero-phone[data-side="right"] { top: 4.25rem; transform: translateX(330px) rotate(11deg); }
+@media (min-width: 1536px) {
+  .l-hero-phone { width: 290px; }
+  .l-hero-phone[data-side="left"] { transform: translateX(calc(-100% - 340px)) rotate(-11deg); }
+  .l-hero-phone[data-side="right"] { transform: translateX(340px) rotate(11deg); }
+}
+
+/*
   ONE WORDMARK AT A TIME. The bar's small mark is not drawn while the intro's
   big one is on screen; it fades in as the intro leaves. Only on the views that
   HAVE the big one — LandingNav puts this class on then (heroMark).

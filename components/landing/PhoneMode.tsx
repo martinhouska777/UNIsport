@@ -25,12 +25,22 @@ import { createContext, useContext, useEffect, useState, useSyncExternalStore, t
   A tiny external store read through useSyncExternalStore: the server
   snapshot is "light", the client snapshot is the resolved mode, and React
   reconciles the two on hydration without a setState-in-effect.
+
+  `chosen` says whether that mode is the visitor's OWN choice or merely the
+  default we picked for them. Only the intro's backdrop phones care: the owner
+  wants the page to OPEN on the white screens whatever the machine's colour
+  scheme says (2026-08-23) — a white phone reads as an app against the dark
+  page, a dark one reads as a smudge — but the moment a visitor presses the
+  switch, the intro follows them like everything else. Nothing below the intro
+  uses it; the rest of the page still opens in the visitor's own scheme.
 */
 
 export type PhoneMode = "light" | "dark";
 const KEY = "uniLandingPhoneMode";
 
 let resolved: PhoneMode | null = null;
+/** True once the mode is the visitor's own doing, not our default. */
+let chosen = false;
 const listeners = new Set<() => void>();
 function readMode(): PhoneMode {
   if (resolved) return resolved;
@@ -38,16 +48,21 @@ function readMode(): PhoneMode {
   try {
     stored = window.localStorage.getItem(KEY);
   } catch {}
-  resolved =
-    stored === "dark" || stored === "light"
-      ? stored
-      : window.matchMedia("(prefers-color-scheme: dark)").matches
-        ? "dark"
-        : "light";
+  chosen = stored === "dark" || stored === "light";
+  resolved = chosen
+    ? (stored as PhoneMode)
+    : window.matchMedia("(prefers-color-scheme: dark)").matches
+      ? "dark"
+      : "light";
   return resolved;
+}
+function readChosen() {
+  readMode(); // resolves both, once
+  return chosen;
 }
 function writeMode(m: PhoneMode) {
   resolved = m;
+  chosen = true;
   try {
     window.localStorage.setItem(KEY, m);
   } catch {}
@@ -60,8 +75,9 @@ function subscribe(l: () => void) {
   };
 }
 
-const Ctx = createContext<{ mode: PhoneMode; setMode: (m: PhoneMode) => void }>({
+const Ctx = createContext<{ mode: PhoneMode; chosen: boolean; setMode: (m: PhoneMode) => void }>({
   mode: "light",
+  chosen: false,
   setMode: () => {},
 });
 
@@ -76,8 +92,9 @@ export function shotSrc(path: string, mode: PhoneMode) {
 
 export function PhoneModeProvider({ children }: { children: ReactNode }) {
   const mode = useSyncExternalStore(subscribe, readMode, () => "light" as PhoneMode);
+  const chosenNow = useSyncExternalStore(subscribe, readChosen, () => false);
   return (
-    <Ctx.Provider value={{ mode, setMode: writeMode }}>
+    <Ctx.Provider value={{ mode, chosen: chosenNow, setMode: writeMode }}>
       <div data-phone-mode={mode} className="contents">
         {children}
       </div>

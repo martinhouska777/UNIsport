@@ -22,19 +22,32 @@ import { shotSrc, usePhoneMode } from "@/components/landing/PhoneMode";
   the real screenshots below replace a DRAWN one; these are the real
   screenshots, and they are backdrop, not exhibit.
 
-  WHERE THEY STAND. High, in the two upper corners, tilted away from the
-  middle — the widest empty band on a laptop, beside the mark and the
-  headline. They then MELT DOWNWARDS (the mask), so they are gone by the row
-  of doors instead of standing behind it. The first cut of this hung them
-  half off the side edges and sliced them vertically; what you saw then was
-  not a phone but a strip of somebody's screen, which read as dirt on the
-  page. A backdrop has to be a whole object or nothing.
+  WHERE THEY STAND (owner, 2026-08-23: "put the photos more so you can see the
+  whole thing closer to the text"). Beside the mark and the headline, tilted
+  away from the middle, WHOLE — no edge crops them and no mask eats them, and
+  they are small enough to finish well above the row of doors.
+
+  They are anchored to the TEXT, not to the window: each stands a fixed
+  distance out from the middle of the page (the .l-hero-phone rules in
+  app/globals.css), so on a big monitor they travel outwards with the column
+  of words rather than stranding themselves in the corners.
+
+  Two earlier cuts, so they are not tried again: hanging them half off the
+  side edges showed a vertical strip of somebody's screen and read as dirt on
+  the page; melting them downwards into the doors hid the one thing that makes
+  them read as a phone, which is the whole shape of one.
+
+  THEY OPEN WHITE, whatever the machine's colour scheme says (owner,
+  2026-08-23) — a white phone reads as an app against the dark page, a dark
+  one reads as a smudge. The moment a visitor presses the light/dark switch
+  further down, these follow it like every other phone: that is what
+  `chosen` distinguishes. Only the intro overrides the default this way; the
+  rest of the page still opens in the visitor's own scheme.
 
   Wide screens only (xl and up): below that the margins it fills do not exist.
   It sits inside HeroFade, so it leaves with everything else. The light/dark
-  pill is NOT summoned for it (no data-phone-screens here): it follows the
-  mode when a visitor sets one further down, but a switch has no business
-  appearing over the front door for two half-hidden decorations.
+  pill is NOT summoned for it (no data-phone-screens here): a switch has no
+  business appearing over the front door for two decorations.
 */
 const SHOTS = [
   { src: "/landing/01-gyms.webp", alt: "The Gyms screen of the app", side: "left" as const },
@@ -42,10 +55,9 @@ const SHOTS = [
 ];
 
 export default function HeroPhones() {
-  const { mode } = usePhoneMode();
-
-  // Gone before the doors: full strength at the top, nothing by the bottom.
-  const melt = "linear-gradient(to bottom, black 0%, black 30%, rgba(0,0,0,0.35) 62%, transparent 88%)";
+  const { mode, chosen } = usePhoneMode();
+  // The visitor's choice if they made one; white if they have not.
+  const shown = chosen ? mode : "light";
 
   return (
     /* w-screen and centred on the intro's own centre, which is the page's:
@@ -57,22 +69,14 @@ export default function HeroPhones() {
       className="pointer-events-none absolute inset-y-0 left-1/2 -z-10 hidden w-screen -translate-x-1/2 overflow-hidden xl:block"
     >
       {SHOTS.map((s) => (
-        <div
-          key={s.src}
-          className={`absolute top-6 ${
-            s.side === "left"
-              ? "left-[1.5%] -rotate-[11deg]"
-              : "right-[1.5%] top-14 rotate-[11deg]"
-          }`}
-          style={{ maskImage: melt, WebkitMaskImage: melt }}
-        >
-          <Phone className="w-[300px] opacity-70 2xl:w-[360px]">
+        <div key={s.src} className="l-hero-phone" data-side={s.side}>
+          <Phone className="opacity-[0.82]">
             <div className="relative aspect-[900/1480] overflow-hidden bg-l-phone-screen">
               <Image
-                src={shotSrc(s.src, mode)}
+                src={shotSrc(s.src, shown)}
                 alt={s.alt}
                 fill
-                sizes="(min-width: 1536px) 360px, 300px"
+                sizes="(min-width: 1536px) 290px, 230px"
                 quality={80}
                 className="object-fill"
               />
