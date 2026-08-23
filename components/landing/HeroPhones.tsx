@@ -106,7 +106,7 @@ export default function HeroPhones({ i, count }: { i: number; count: number }) {
                     alt={`${p.what} in ${sc.name}'s colours`}
                     fill
                     sizes="(min-width: 1536px) 290px, 230px"
-                    quality={80}
+                    quality={75}
                     loading={n === 0 ? "eager" : "lazy"}
                     className="object-fill transition-opacity duration-[600ms] ease-in-out motion-reduce:transition-none"
                     style={{ opacity: n === i ? 1 : 0 }}
