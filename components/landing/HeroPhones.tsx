@@ -99,25 +99,26 @@ export default function HeroPhones({ i, count }: { i: number; count: number }) {
                 page change colour — a capture is mostly white. lift() raises
                 the near-black navies to the weight the others already have. */}
             <div className="l-hero-glow" style={{ backgroundColor: lift(school.color) }} />
-            <Phone className="relative opacity-[0.82]">
-              <div className="relative aspect-[900/1480] overflow-hidden bg-l-phone-screen">
-                {schools.slice(0, count).map((sc, n) => (
-                  <Image
-                    key={sc.key}
-                    src={shotSrc(`/landing/closers/${p.shot}-${sc.key}.webp`, shown)}
-                    alt={`${p.what} in ${sc.name}'s colours`}
-                    fill
-                    sizes="(min-width: 1536px) 290px, 230px"
-                    quality={75}
-                    loading={n === 0 ? "eager" : "lazy"}
-                    className="object-fill transition-opacity duration-[600ms] ease-in-out motion-reduce:transition-none"
-                    style={{ opacity: n === i ? 1 : 0 }}
-                  />
-                ))}
-              </div>
-            </Phone>
+            <div className="l-hero-rise">
+              <Phone className="relative opacity-[0.82]">
+                <div className="relative aspect-[900/1480] overflow-hidden bg-l-phone-screen">
+                  {schools.slice(0, count).map((sc, n) => (
+                    <Image
+                      key={sc.key}
+                      src={shotSrc(`/landing/closers/${p.shot}-${sc.key}.webp`, shown)}
+                      alt={`${p.what} in ${sc.name}'s colours`}
+                      fill
+                      sizes="(min-width: 1536px) 290px, 230px"
+                      quality={75}
+                      loading={n === 0 ? "eager" : "lazy"}
+                      className="object-fill transition-opacity duration-[600ms] ease-in-out motion-reduce:transition-none"
+                      style={{ opacity: n === i ? 1 : 0 }}
+                    />
+                  ))}
+                </div>
+              </Phone>
+            </div>
           </div>
-
         </div>
       ))}
     </div>

@@ -142,6 +142,16 @@ back neon mint and Brown's brown comes back tan.
 of eight under each phone for one cut; moving it here said the same thing once
 instead of twice and gave the phones the height they needed to be readable,
 which is the whole point of a backdrop made of screens.
+**The intro ARRIVES** (2026-08-23) — six beats on one clock, in
+`app/globals.css`: the mark, the headline, the two phones rising into their
+lean, the button, the doors, then the school's colour blooming behind the
+phones and the scroll cue last. Before this the words faded up but the phones
+and the colour were simply there at the first frame, which is what made the
+whole thing read as a pop. Photograph it with
+`scripts/landing/frames.mjs` — it pauses the page's animations and rewinds
+them, which is the only way to get a still of something that is over in a
+second.
+
 **The intro is ONE SCREEN** (2026-08-23). Every vertical size in it — padding,
 gaps, the headline, the mark, the phones beside it, even the scroll cue's
 hairline — is a `clamp()` with a `vh` term, so it shrinks to fit the window

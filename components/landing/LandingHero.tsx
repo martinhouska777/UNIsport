@@ -193,7 +193,7 @@ export default function LandingHero({ doors: showDoors = true }: { doors?: boole
       {/* Pinned to the foot of the section, not queued at the end of the
           column: the cue is the one thing that costs the intro a whole block
           of height for one word. */}
-      <div className="l-cue pointer-events-none absolute inset-x-0 bottom-[clamp(8px,1.6vh,20px)]">{cues.hero}</div>
+      <div className="l-cue l-in-5 pointer-events-none absolute inset-x-0 bottom-[clamp(8px,1.6vh,20px)]">{cues.hero}</div>
     </section>
   );
 }
