@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Phone from "@/components/landing/Phone";
 import { shotSrc, usePhoneMode } from "@/components/landing/PhoneMode";
-import { accent, lift, rgba, schools } from "@/lib/landingSchools";
+import { lift, schools } from "@/lib/landingSchools";
 
 /*
   THE INTRO'S BACKDROP — two app screens standing beside the words, cycling
@@ -18,10 +18,13 @@ import { accent, lift, rgba, schools } from "@/lib/landingSchools";
 
   So this is Campus Colours' idea, brought to the front door: gyms-*.webp on
   the left and match-*.webp on the right, changing together, each with its
-  school's colour glowing behind it and a row of the eight schools' letters
-  underneath — only the one showing is lit. The letters are there because the
-  owner's point was that colour alone does not say WHOSE colour it is
-  (2026-08-23); they are small and quiet, an indicator rather than a caption.
+  school's colour glowing behind it.
+
+  The eight schools' letters stood in a row under each phone for one cut. The
+  owner took them off (2026-08-23) and moved a single one onto the "Get started
+  with .edu" button — "you see your own university right there" — which is both
+  a better place for it and the height these phones needed to grow into. They
+  are the point of the backdrop, and they have to be READABLE.
 
   THE GLOW is a soft column of light, not a halo: a rounded shape the phone's
   own size, blurred. The first cut was a big radial gradient in a box, which
@@ -80,7 +83,6 @@ export default function HeroPhones({ i, count }: { i: number; count: number }) {
   const shown = chosen ? mode : "light";
 
   const school = schools[i];
-  const lit = accent(school.color).color; // the lit letter, same colour as the intro's type
 
   return (
     /* w-screen and centred on the intro's own centre, which is the page's.
@@ -116,20 +118,6 @@ export default function HeroPhones({ i, count }: { i: number; count: number }) {
             </Phone>
           </div>
 
-          {/* The eight, as letters. Only the one showing is lit — so the
-              colour has a name attached, without the front door captioning
-              itself. Unrotated: the phone leans, the row does not. */}
-          <div className="l-hero-letters font-mono">
-            {schools.map((sc, n) => (
-              <span
-                key={sc.key}
-                className="l-hero-letter"
-                style={n === i ? { color: lit, textShadow: `0 0 14px ${rgba(lit, 0.5)}` } : undefined}
-              >
-                {sc.letter}
-              </span>
-            ))}
-          </div>
         </div>
       ))}
     </div>

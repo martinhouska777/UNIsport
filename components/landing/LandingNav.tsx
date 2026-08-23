@@ -55,7 +55,10 @@ export default function LandingNav({ view = "all", heroMark = false }: { view?: 
     <StickyBar>
     <nav className="relative border-b border-l-line bg-l-bg">
       <div className="mx-auto max-w-[1280px] px-6 sm:px-8">
-        <div className="flex items-center justify-between py-[18px]">
+        {/* 11px, not 18: the bar carried a band of empty either side of the
+            line (owner, 2026-08-23 — "it has terrible space, make it thinner"),
+            and every pixel it gives back is a pixel the intro can be. */}
+        <div className="flex items-center justify-between py-[11px]">
           <Link href="/" aria-label="UNIsport" className={heroMark ? "l-nav-mark" : undefined}>
             <Wordmark className="text-2xl" />
           </Link>

@@ -91,7 +91,7 @@ export default function LandingHero({ doors: showDoors = true }: { doors?: boole
         {/* 1 · The mark. The page says who it is before it says anything else. */}
         <div className="l-in-1 mb-[clamp(10px,2.2vh,24px)] flex flex-col items-center gap-[clamp(2px,0.6vh,8px)]">
           <Wordmark
-            className="text-[clamp(24px,min(4vw,4.2vh),40px)]"
+            className="text-[clamp(26px,min(4.4vw,4.6vh),44px)]"
             accentClassName="text-(--sc) transition-colors duration-700 ease-in-out motion-reduce:transition-none"
           />
           <span className="font-mono text-[11px] tracking-[0.18em] uppercase text-l-text-2">
@@ -106,7 +106,7 @@ export default function LandingHero({ doors: showDoors = true }: { doors?: boole
             {hero.badge}
           </div>
 
-          <h1 className="mb-[clamp(6px,1.4vh,16px)] max-w-[12ch] font-display text-[clamp(32px,min(6vw,6vh),70px)] font-normal leading-[0.98] tracking-[-0.02em] text-balance text-l-text">
+          <h1 className="mb-[clamp(6px,1.4vh,16px)] max-w-[12ch] font-display text-[clamp(34px,min(6.4vw,6.6vh),76px)] font-normal leading-[0.98] tracking-[-0.02em] text-balance text-l-text">
             {hero.headline[0]} {hero.headline[1]} <em className="italic text-(--sc) transition-colors duration-700 ease-in-out motion-reduce:transition-none">
               {hero.headline[2]}
             </em>
@@ -130,8 +130,15 @@ export default function LandingHero({ doors: showDoors = true }: { doors?: boole
         <div className="l-in-3 mt-[clamp(12px,2.4vh,24px)] flex flex-col items-center">
           <Link
             href="/login"
-            className="group inline-flex items-center justify-center gap-2 rounded-full bg-(--sc) px-7 py-4 text-[15px] font-semibold tracking-tight text-(--sc-ink) transition-[transform,background-color,color] duration-700 ease-in-out hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-l-text motion-reduce:transition-none"
+            className="group inline-flex items-center justify-center gap-2 rounded-full bg-(--sc) py-4 pr-7 pl-5 text-[15px] font-semibold tracking-tight text-(--sc-ink) transition-[transform,background-color,color] duration-700 ease-in-out hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-l-text motion-reduce:transition-none"
           >
+            {/* The school showing, as its letter. The intro wears eight
+                universities' colours; this is where it says whose — the owner's
+                "you see your own university right there". Decorative: the
+                button's words are the button. */}
+            <span aria-hidden className="l-cta-mark font-mono">
+              {school.letter}
+            </span>
             {hero.primaryCta}
             <Arrow className="transition-transform group-hover:translate-x-1" />
           </Link>

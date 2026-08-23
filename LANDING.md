@@ -137,8 +137,11 @@ button's label clears 4.5:1 against all eight (Yale and Brown need the walk it
 does); `lift()` desaturates as it lightens, or Dartmouth's forest green comes
 back neon mint and Brown's brown comes back tan.
 
-Under each phone, the eight schools as **letters**, only the one showing lit —
-the owner's point being that a colour alone does not say whose colour it is.
+**The school's letter is on the BUTTON**, as a small disc in the label's ink
+(`.l-cta-mark`) — "you see your own university right there". It stood as a row
+of eight under each phone for one cut; moving it here said the same thing once
+instead of twice and gave the phones the height they needed to be readable,
+which is the whole point of a backdrop made of screens.
 **The intro is ONE SCREEN** (2026-08-23). Every vertical size in it — padding,
 gaps, the headline, the mark, the phones beside it, even the scroll cue's
 hairline — is a `clamp()` with a `vh` term, so it shrinks to fit the window

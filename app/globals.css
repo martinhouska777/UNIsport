@@ -555,7 +555,7 @@
    on a short laptop the intro has to be one screen (owner, 2026-08-23), which
    means the phone and the row of letters under it have to finish above the row
    of doors rather than sitting behind it. */
-.l-hero-phone { position: absolute; top: clamp(16px, 3.4vh, 36px); left: 50%; width: clamp(190px, 23.5vh, 290px); }
+.l-hero-phone { position: absolute; top: clamp(16px, 3.2vh, 40px); left: 50%; width: clamp(210px, 29vh, 340px); }
 .l-hero-phone[data-side="left"] { transform: translateX(calc(-100% - 330px)); }
 .l-hero-phone[data-side="right"] { top: clamp(38px, 7vh, 68px); transform: translateX(330px); }
 /* The phone leans; the row of letters under it does not, so the lean lives on
@@ -587,16 +587,31 @@
   transition: background-color 700ms ease-in-out;
 }
 
-/* The eight schools as letters, under each phone: the one showing is lit in
-   its own colour (set inline — content colour, rule 1's exception), the rest
-   sit in the faintest text token. */
-.l-hero-letters { display: flex; justify-content: center; gap: 0.55rem; margin-top: clamp(20px, 3.6vh, 44px); }
-.l-hero-letter {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  color: var(--color-l-text-3);
-  transition: color 700ms ease-in-out, text-shadow 700ms ease-in-out;
+/* THE SCHOOL'S LETTER, ON THE BUTTON. It stood in a row of eight under each
+   phone until the owner moved it here (2026-08-23) — "you see your own
+   university right there", and the phones got that height back. Sized in em,
+   so it belongs to the button's type rather than to a number. */
+.l-cta-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.68em;
+  height: 1.68em;
+  margin-right: 0.15em;
+  border-radius: 9999px;
+  /* The button's two colours, swapped: the label's ink becomes the disc and
+     the school's colour becomes the letter. An outlined ring at this size was
+     invisible on the button's own colour. The pair is the same one accent()
+     already guarantees at 4.5:1, so the letter is as readable as the label. */
+  background-color: var(--sc-ink);
+  color: var(--sc);
+  font-size: 0.76em;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  transition: background-color 700ms ease-in-out, color 700ms ease-in-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .l-cta-mark { transition: none; }
 }
 
 @media (min-width: 1536px) {
@@ -605,7 +620,7 @@
   .l-hero-glow { filter: blur(32px); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .l-hero-glow, .l-hero-letter { transition: none; }
+  .l-hero-glow { transition: none; }
 }
 
 /*
