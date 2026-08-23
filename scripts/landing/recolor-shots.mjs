@@ -1,8 +1,15 @@
 // Recolors the REAL app screenshots into each school's palette, for the
-// closers' phones: every crimson-family pixel (chips, buttons, header
-// accents, washes) is shifted to the school's colour; whites, greys, golds,
-// greens and photos stay untouched. Writes recolored/{screen}-{school}.webp
-// and a review sheet next to itself.
+// closers' phones AND the intro's backdrop phones: every crimson-family pixel
+// (chips, buttons, header accents, washes) is shifted to the school's colour;
+// whites, greys, golds, greens and photos stay untouched. Writes
+// recolored/{screen}-{school}.webp and a review sheet next to itself.
+//
+//   node recolor-shots.mjs                # every screen
+//   node recolor-shots.mjs --only=match   # just one, leaving the others alone
+//
+// --only matters because recolored/gyms-*.webp is NOT the end of the line:
+// patch-gyms.mjs writes each school's own gyms over it afterwards. A blanket
+// re-run would quietly undo that.
 import sharp from "sharp";
 import fs from "fs";
 
@@ -99,10 +106,15 @@ function secondBand(raw, w, ch) {
 
 fs.mkdirSync("recolored", { recursive: true });
 
+const ONLY = (process.argv.find((a) => a.startsWith("--only=")) || "").slice(7);
 const SCREENS = [
   { id: "gyms",  src: "../../public/landing/01-gyms.webp",   crop: null },
   { id: "vhome", src: "../../public/landing/tall-vhome.webp", crop: { left: 0, top: 0, width: 900, height: 1480 } },
-];
+  // The Match screen — the intro's right-hand phone. Nothing on it is a wash,
+  // so there is no second band to find; the crimson chips, the "View profile"
+  // buttons, the avatar rings and the active tab are what move.
+  { id: "match", src: "../../public/landing/02-match.webp",  crop: null },
+].filter((sc) => !ONLY || sc.id === ONLY);
 
 const thumbs = [];
 for (const sc of SCREENS) {
@@ -131,12 +143,12 @@ for (const sc of SCREENS) {
 // ── the review sheet: two rows of eight, labelled ──
 const TW = 220, TH = Math.round(TW * 1480 / 900), PAD = 16, LABEL = 34;
 const W = PAD + SCHOOLS.length * (TW + PAD);
-const H = PAD + 2 * (TH + LABEL + PAD) + 30;
+const H = PAD + SCREENS.length * (TH + LABEL + PAD) + 30;
 const comps = [];
 let rowY = PAD + 30;
 const svgText = [];
-svgText.push(`<text x="${PAD}" y="${PAD + 12}" font-family="monospace" font-size="15" fill="#eee">THE REAL SCREENS, RECOLORED — top: student Gyms · bottom: varsity Home (top screen)</text>`);
-for (const [ri, row] of ["gyms", "vhome"].entries()) {
+svgText.push(`<text x="${PAD}" y="${PAD + 12}" font-family="monospace" font-size="15" fill="#eee">THE REAL SCREENS, RECOLORED — ${SCREENS.map((sc) => sc.id).join(" · ")}</text>`);
+for (const [ri, row] of SCREENS.map((sc) => sc.id).entries()) {
   let x = PAD;
   for (const t of thumbs.filter((t) => t.row === row)) {
     comps.push({ input: await sharp(t.file).resize(TW, TH).png().toBuffer(), left: x, top: rowY + ri * (TH + LABEL + PAD) });

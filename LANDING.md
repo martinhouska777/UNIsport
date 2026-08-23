@@ -50,7 +50,8 @@ still meets everything in order.
 | Per-school screens for the closers' phones | `public/landing/closers/{gyms,vhome}-*.webp` | 16 files, 900×1480, from `recolor-shots.mjs` |
 | **The live landing** | `app/page.tsx` → `components/landing/LandingPage.tsx` | **The new page** — stories, closers, coach, FAQ, about, contact |
 | **The intro** | `components/landing/LandingHero.tsx`; `HeroFade` (the hand-over), `HeroPhones` (the backdrop), `Wordmark` | Rebuilt 2026-08-23 — see "The intro" below |
-| The varsity tab bar the vhome captures stop above | `components/landing/VarsityTabBar.tsx` | Drawn, not captured; used by Blade Lock and by the intro's right phone |
+| The varsity tab bar the vhome captures stop above | `components/landing/VarsityTabBar.tsx` | Drawn, not captured; Blade Lock's, lifted out so it is written once |
+| The Match screen per school | `public/landing/closers/match-*.webp` (+ `dark/`) | Recoloured 2026-08-23 for the intro's right phone |
 | **The tabs / views** | `views` in `lib/landingCopy.ts` → `LandingNav.tsx`; `LandingPage view=…`; routes `app/for/[audience]`, `app/about`, `app/contact`; shared head in `components/landing/routeMeta.ts` | Built (2026-08-18) — see "One page, six views" below |
 | Contact + socials | `components/landing/Contact.tsx`, `contact.socials` in `lib/landingCopy.ts` | Built — Instagram / TikTok / X are "coming soon" until the owner fills in `href` + `handle` |
 | Light / dark phone screens | `components/landing/PhoneMode.tsx`, `public/landing/dark/**` | Built — the switch bottom-right, shown only over the sections with phones (`data-phone-screens`); dark frames are real captures (see below) |
@@ -114,10 +115,14 @@ it repeated their two subtitles word for word.
 
 **The intro carries two app screens, and they cycle the schools' colours**
 (2026-08-23, the owner's call). They stand beside the words on wide screens
-(xl+), anchored to the text rather than to the window, and show the closers'
-own recoloured captures — `gyms-*` on the left, `vhome-*` on the right —
-changing together on `SCHOOL_CYCLE_MS`, each with its school's colour glowing
-behind it. `glow()` in `lib/landingSchools.ts` raises the near-black navies
+(xl+), anchored to the text rather than to the window, and show `gyms-*` on
+the left and `match-*` on the right — the last two lines of the headline,
+"your gym, your people" — changing together on `SCHOOL_CYCLE_MS`, each with
+its school's colour glowing behind it. Varsity Home stood on the right for one
+cut and the owner took it off: the front door is the student app. Match had
+never been recoloured, so `recolor-shots.mjs` now carries it (`--only=match`,
+then `dark-placeholders.mjs`); `--only` exists because a blanket re-run would
+quietly undo `patch-gyms.mjs`. `glow()` in `lib/landingSchools.ts` raises the near-black navies
 (Yale, Penn, Brown) to a common lightness floor so all eight land with the same
 weight; hue and saturation are untouched, and the schools' own `color`/`ink`
 are unchanged.
@@ -299,11 +304,20 @@ proof. (The `.edu` question is settled — see "Open, and blocked" below.)
 
 ## Open, and blocked
 
-1. **The varsity story ends on a statistics graph (V6).** The brief argues
+1. **The intro's Match cards still name Harvard's houses.** `match-*.webp` is
+   recoloured per school, but the people on it are still "Mather", "Eliot",
+   "Leverett", "Pforzheimer" and "Hemenway Gymnasium" — so Yale's phone reads
+   Payne Whitney on the left (patched) and Mather on the right (not). Fixing it
+   means a `patch-match.mjs` in the shape of `patch-gyms.mjs`: measured
+   geometry for the two card rows plus each school's real residential
+   houses/colleges as data beside `school-gyms.mjs`. At the size the intro
+   draws them (230–290px) the text is a blur, which is why it was not done
+   first — but it is legible to anyone who zooms.
+2. **The varsity story ends on a statistics graph (V6).** The brief argues
    against this by name — a stats screen is the one screen every fitness app
    has; a seat in a named boat, published by a coach, is the one none of them
    can show. That screen is V2, currently mid-story. Undecided.
-2. **V7, the squad beat, is PARKED — and the blocker is not the screenshot.**
+3. **V7, the squad beat, is PARKED — and the blocker is not the screenshot.**
    The screen it advertises (Varsity → Team → Roster → a rower → their training
    month) is drawn from **invented data**: `lib/varsity/teamTraining.ts` and
    `teamProfiles.ts` derive the calendar, the consistency percentage, the hours

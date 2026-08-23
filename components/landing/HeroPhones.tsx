@@ -3,7 +3,6 @@
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import Phone from "@/components/landing/Phone";
-import VarsityTabBar from "@/components/landing/VarsityTabBar";
 import { shotSrc, usePhoneMode } from "@/components/landing/PhoneMode";
 import { glow, rgba, schools, SCHOOL_CYCLE_MS } from "@/lib/landingSchools";
 
@@ -18,13 +17,19 @@ import { glow, rgba, schools, SCHOOL_CYCLE_MS } from "@/lib/landingSchools";
     • "I want colours, and I want the colours to change by school in the hero
       too, the same as we have with that static image."
 
-  So this is Campus Colours' idea, brought to the front door. The screens are
-  the closers' OWN recoloured captures — public/landing/closers/gyms-*.webp on
-  the left (the student app) and vhome-*.webp on the right (Varsity Mode) —
-  the two subjects the two closers take, mirroring the two doors underneath.
-  They change together, on the page's one pace (SCHOOL_CYCLE_MS), each with
-  its school's colour glowing behind it. That glow is where the colour really
-  lands: a screenshot is mostly white, a halo is not.
+  So this is Campus Colours' idea, brought to the front door: gyms-*.webp on
+  the left and match-*.webp on the right, changing together on the page's one
+  pace (SCHOOL_CYCLE_MS), each with its school's colour glowing behind it.
+  That glow is where the colour really lands: a screenshot is mostly white, a
+  halo is not.
+
+  WHY THOSE TWO SCREENS. The headline is "Your campus. Your gym. Your people."
+  — Gyms and Match are the last two lines of it. Varsity Mode stood on the
+  right for one cut and the owner took it off: the front door is the student
+  app, and the varsity side has a door of its own underneath and a whole story
+  further down. Match had never been recoloured (only the two closers' screens
+  had), so scripts/landing/recolor-shots.mjs now carries it too — run it with
+  --only=match, then dark-placeholders.mjs for the dark twins.
 
   Colours are DATA (lib/landingSchools.ts) applied inline — rule 1's content
   exception, the same one the closers stand on. Rule 2 still holds: the page's
@@ -58,7 +63,7 @@ import { glow, rgba, schools, SCHOOL_CYCLE_MS } from "@/lib/landingSchools";
 */
 const PHONES = [
   { side: "left" as const, shot: "gyms", what: "The Gyms screen" },
-  { side: "right" as const, shot: "vhome", what: "Varsity Home" },
+  { side: "right" as const, shot: "match", what: "The Match screen" },
 ];
 
 /* How many schools' captures are in the DOM. It starts at two — the one
@@ -158,13 +163,6 @@ export default function HeroPhones() {
                   style={{ opacity: n === i ? 1 : 0 }}
                 />
               ))}
-              {/* The varsity capture stops above the app's own tab bar. */}
-              {p.shot === "vhome" && (
-                <VarsityTabBar
-                  ink={school.ink}
-                  transition="transition-colors duration-[600ms] ease-in-out motion-reduce:transition-none"
-                />
-              )}
             </div>
           </Phone>
         </div>
