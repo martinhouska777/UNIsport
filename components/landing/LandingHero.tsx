@@ -1,5 +1,6 @@
 import Link from "next/link";
 import HeroFade from "@/components/landing/HeroFade";
+import HeroPhones from "@/components/landing/HeroPhones";
 import Wordmark from "@/components/landing/Wordmark";
 import { availability, brandLine, cues, doors, hero } from "@/lib/landingCopy";
 
@@ -52,6 +53,10 @@ export default function LandingHero({ doors: showDoors = true }: { doors?: boole
       className="l-glow-accent relative z-[1] mx-auto flex min-h-[100svh] max-w-[1160px] flex-col items-center justify-center px-6 pt-10 pb-10 text-center sm:px-8"
     >
       <HeroFade>
+        {/* 0 · The backdrop: two app screens in the margins of a wide screen,
+            which were empty. Behind everything, and only from xl up. */}
+        <HeroPhones />
+
         {/* 1 · The mark. The page says who it is before it says anything else. */}
         <div className="l-in-1 mb-6 flex flex-col items-center gap-2">
           <Wordmark className="text-[clamp(30px,4vw,40px)]" />
