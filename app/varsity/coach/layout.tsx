@@ -20,6 +20,7 @@ import { coachTour } from "@/lib/varsity/coachTour";
 import { useMembership } from "@/components/varsity/useMembership";
 import { canOpenConsole, can } from "@/lib/varsity/membership";
 import { varsityTheme, varsityLightTheme } from "@/lib/varsity/theme";
+import { markMode } from "@/lib/varsity/mode";
 
 const TEAM_TAB = "/varsity/coach/team";
 const SETTINGS = "/varsity/coach/settings";
@@ -38,6 +39,12 @@ export default function CoachLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname();
 
   const role = membership?.status === "approved" ? membership.role : null;
+
+  /* The console is INSIDE Varsity Mode, so stepping back out to the athlete
+     side must not replay its title sequence (lib/varsity/mode.ts). */
+  useEffect(() => {
+    markMode("varsity");
+  }, []);
 
   useEffect(() => {
     if (!ready) return;

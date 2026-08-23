@@ -16,11 +16,18 @@ import SideNav from "@/components/SideNav";
 import TourGate from "@/components/tour/TourGate";
 import { appTour } from "@/lib/tour";
 import { getUniversity, neutralTheme } from "@/lib/themes";
+import { markMode } from "@/lib/varsity/mode";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { ready, loggedIn, studentReady, universityKey, userId } = useAppState();
   const router = useRouter();
   const pathname = usePathname();
+
+  /* Being here IS the normal app, so the next trip into Varsity Mode is a real
+     switch and gets the title sequence (lib/varsity/mode.ts). */
+  useEffect(() => {
+    markMode("student");
+  }, []);
 
   useEffect(() => {
     if (!ready) return;

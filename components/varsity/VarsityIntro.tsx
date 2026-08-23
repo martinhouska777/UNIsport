@@ -6,8 +6,11 @@
   drops from the top onto the crossing point; the whole overlay fades to reveal
   the Home screen.
 
-  Plays on layout mount (i.e. on entering Varsity Mode or a page reload), not on
-  every tab switch. Disabled entirely under prefers-reduced-motion.
+  Plays ONLY on the switch into Varsity Mode from the normal app — not on every
+  tab switch, and not when you come back from a mode-neutral screen such as
+  Settings (which lives outside this layout, so returning re-mounts this).
+  Which mode you are in is remembered in lib/varsity/mode.ts. Disabled entirely
+  under prefers-reduced-motion.
 
   The oars are the landing page's oars (the Blade Lock closer's drawing): a
   dark handle, shaft and collar, and the school's own blade — Harvard's
@@ -19,19 +22,29 @@ import VarsityShield from "@/components/varsity/VarsityShield";
 import { useAppState } from "@/components/AppState";
 import { getUniversity } from "@/lib/themes";
 import OarMark from "@/components/varsity/OarMark";
+import { inVarsityMode, markMode } from "@/lib/varsity/mode";
 
 export default function VarsityIntro() {
   const [leaving, setLeaving] = useState(false);
-  // Respect the OS "reduce motion" setting: skip the intro outright. Decided
-  // once, at mount — the varsity layout only renders this on the client (it
-  // waits for the app state), so reading matchMedia here is safe.
-  const [done, setDone] = useState(
-    () => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches,
-  );
+  // Decided once, at mount — the varsity layout only renders this on the client
+  // (it waits for the app state), so reading the browser here is safe. Two
+  // reasons to skip it: the OS "reduce motion" setting, and already being in
+  // Varsity Mode (a trip out to Settings and back is not an entrance).
+  const [done, setDone] = useState(() => {
+    if (typeof window === "undefined") return true;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return true;
+    return inVarsityMode();
+  });
   // The motto is the UNIVERSITY's, not Varsity Mode's, so it comes from the
   // same theme data every school will eventually have a row in (rule 2).
   const { universityKey } = useAppState();
   const motto = getUniversity(universityKey)?.motto;
+
+  // We are in Varsity Mode from here on, however we got in. Kept out of the
+  // state initializer above, which React may run twice in development.
+  useEffect(() => {
+    markMode("varsity");
+  }, []);
 
   useEffect(() => {
     if (done) return;
