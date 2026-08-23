@@ -1,5 +1,6 @@
 import Link from "next/link";
 import StickyBar from "@/components/landing/StickyBar";
+import Wordmark from "@/components/landing/Wordmark";
 import TabRow from "@/components/landing/TabRow";
 import { nav, views, type LandingView } from "@/lib/landingCopy";
 
@@ -14,6 +15,14 @@ import { nav, views, type LandingView } from "@/lib/landingCopy";
   story or a closer is under it: below the intro the page is full-screen
   sticky stages, and a bar pinned over them sat on top of every one. On a
   phone it also hides on scroll-down and returns on scroll-up.
+
+  ONE WORDMARK AT A TIME. The intro now opens on the mark at full size, and
+  the bar's 24px copy sits 40px above it — two of the same thing, reading as a
+  stutter. So on the views that HAVE the intro (`heroMark`), the bar's mark is
+  not drawn until the intro has scrolled away; HeroFade writes the switch onto
+  <html> and the .l-nav-mark rules in app/globals.css spend it. The views
+  without an intro keep their mark from the start. Nobody loses their way back
+  to the whole page either way: that is the Home tab.
 
   On a phone the tabs take a second row of their own (six labels plus two
   buttons plus the wordmark do not fit one 375px row); it scrolls sideways
@@ -41,14 +50,14 @@ function Tabs({ view, className = "" }: { view: LandingView; className?: string 
   );
 }
 
-export default function LandingNav({ view = "all" }: { view?: LandingView }) {
+export default function LandingNav({ view = "all", heroMark = false }: { view?: LandingView; heroMark?: boolean }) {
   return (
     <StickyBar>
     <nav className="relative border-b border-l-line bg-l-bg">
       <div className="mx-auto max-w-[1280px] px-6 sm:px-8">
         <div className="flex items-center justify-between py-[18px]">
-          <Link href="/" className="font-display text-2xl italic tracking-tight text-l-text">
-            UNI<span className="text-l-accent">sport</span>
+          <Link href="/" aria-label="UNIsport" className={heroMark ? "l-nav-mark" : undefined}>
+            <Wordmark className="text-2xl" />
           </Link>
           <Tabs view={view} className="hidden md:flex" />
           <div className="flex items-center gap-2 sm:gap-2.5">

@@ -516,6 +516,44 @@
 .l-fade-up { animation: l-fade-up 0.9s ease-out both; }
 
 /*
+  THE INTRO'S ENTRANCE, in four beats rather than one block: the mark, then the
+  headline, then the way in, then the doors. Same movement as .l-fade-up, a
+  tenth of a second apart — enough that the page assembles itself in front of
+  you instead of appearing whole. (components/landing/LandingHero.tsx)
+*/
+.l-in-1, .l-in-2, .l-in-3, .l-in-4 { animation: l-fade-up 0.9s ease-out both; }
+.l-in-2 { animation-delay: 0.09s; }
+.l-in-3 { animation-delay: 0.18s; }
+.l-in-4 { animation-delay: 0.27s; }
+
+/*
+  THE HAND-OVER to the story. --l-out runs 0 → 1 as the intro is scrolled by
+  its own height (components/landing/HeroFade.tsx): the intro fades and lags
+  behind the page, so the story's first stage rises OVER it rather than simply
+  replacing it. The cue goes first — it has done its job by then.
+*/
+.l-hero-fade {
+  opacity: calc(1 - var(--l-out, 0));
+  transform: translate3d(0, calc(var(--l-out, 0) * 70px), 0);
+}
+#top .l-cue { opacity: calc(1 - var(--l-out, 0) * 2.4); }
+
+/*
+  ONE WORDMARK AT A TIME. The bar's small mark is not drawn while the intro's
+  big one is on screen; it fades in as the intro leaves. Only on the views that
+  HAVE the big one — LandingNav puts this class on then (heroMark).
+*/
+.l-nav-mark { opacity: 0; pointer-events: none; transition: opacity 0.3s ease-out; }
+[data-hero-mark="gone"] .l-nav-mark { opacity: 1; pointer-events: auto; }
+
+@media (prefers-reduced-motion: reduce) {
+  .l-in-1, .l-in-2, .l-in-3, .l-in-4 { animation: none; }
+  .l-hero-fade { opacity: 1; transform: none; }
+  #top .l-cue { opacity: 1; }
+  .l-nav-mark { transition: none; }
+}
+
+/*
   DRAGGING / OVERSCROLL / ZOOM — native-app feel (rule: match WhatsApp).
 
   The theme's colors are written onto a wrapper <div> by ThemeProvider, so <html>
