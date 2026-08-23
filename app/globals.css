@@ -631,17 +631,27 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.68em;
-  height: 1.68em;
+  width: 1.5em;
+  height: 1.72em;
   margin-right: 0.15em;
-  border-radius: 9999px;
-  /* The button's two colours, swapped: the label's ink becomes the disc and
-     the school's colour becomes the letter. An outlined ring at this size was
+  /* A SHIELD, not a disc. The school does not just tint the button, it wears
+     a crest on it. The shape is ours - a plain heater shield - so no
+     university's own arms ever enter the app; only its letter and its
+     colour do. */
+  clip-path: polygon(
+    0% 0%, 100% 0%, 100% 50%, 96% 66%, 86% 81%, 68% 93%, 50% 100%,
+    32% 93%, 14% 81%, 4% 66%, 0% 50%
+  );
+  /* The button's two colours, swapped: the label's ink becomes the shield and
+     the school's colour becomes the letter. An outlined shape at this size was
      invisible on the button's own colour. The pair is the same one accent()
      already guarantees at 4.5:1, so the letter is as readable as the label. */
   background-color: var(--sc-ink);
   color: var(--sc);
-  font-size: 0.76em;
+  /* The point at the bottom puts the optical centre above the box's, so the
+     letter is nudged up rather than centred. */
+  padding-bottom: 0.22em;
+  font-size: 0.74em;
   font-weight: 700;
   letter-spacing: 0.02em;
   transition: background-color 700ms ease-in-out, color 700ms ease-in-out;
