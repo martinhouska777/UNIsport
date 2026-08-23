@@ -1,10 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
 import Phone from "@/components/landing/Phone";
 import { shotSrc, usePhoneMode } from "@/components/landing/PhoneMode";
-import { glow, rgba, schools, SCHOOL_CYCLE_MS } from "@/lib/landingSchools";
+import { accent, lift, rgba, schools } from "@/lib/landingSchools";
 
 /*
   THE INTRO'S BACKDROP — two app screens standing beside the words, cycling
@@ -18,10 +17,17 @@ import { glow, rgba, schools, SCHOOL_CYCLE_MS } from "@/lib/landingSchools";
       too, the same as we have with that static image."
 
   So this is Campus Colours' idea, brought to the front door: gyms-*.webp on
-  the left and match-*.webp on the right, changing together on the page's one
-  pace (SCHOOL_CYCLE_MS), each with its school's colour glowing behind it.
-  That glow is where the colour really lands: a screenshot is mostly white, a
-  halo is not.
+  the left and match-*.webp on the right, changing together, each with its
+  school's colour glowing behind it and a row of the eight schools' letters
+  underneath — only the one showing is lit. The letters are there because the
+  owner's point was that colour alone does not say WHOSE colour it is
+  (2026-08-23); they are small and quiet, an indicator rather than a caption.
+
+  THE GLOW is a soft column of light, not a halo: a rounded shape the phone's
+  own size, blurred. The first cut was a big radial gradient in a box, which
+  the box cut square at its edges and which ran off the side of the screen —
+  the owner asked for something that ends where you can see it end, with page
+  left over beyond it. It is dimmer than that one too.
 
   WHY THOSE TWO SCREENS. The headline is "Your campus. Your gym. Your people."
   — Gyms and Match are the last two lines of it. Varsity Mode stood on the
@@ -59,112 +65,71 @@ import { glow, rgba, schools, SCHOOL_CYCLE_MS } from "@/lib/landingSchools";
   scheme.
 
   Wide screens only (xl and up): below that the margins it fills do not exist.
-  It sits inside HeroFade, so it leaves with everything else.
+  It sits inside HeroFade, so it leaves with everything else. Which school is
+  showing is decided by the intro (useSchoolCycle) and handed down, because the
+  words up there take the same colour.
 */
 const PHONES = [
   { side: "left" as const, shot: "gyms", what: "The Gyms screen" },
   { side: "right" as const, shot: "match", what: "The Match screen" },
 ];
 
-/* How many schools' captures are in the DOM. It starts at two — the one
-   showing and the one coming — and only ever grows, so the eight arrive over
-   the first cycle instead of all landing on the front door at once. */
-const START = 2;
-
-export default function HeroPhones() {
+export default function HeroPhones({ i, count }: { i: number; count: number }) {
   const { mode, chosen } = usePhoneMode();
   // The visitor's choice if they made one; white if they have not.
   const shown = chosen ? mode : "light";
 
-  const [{ i, count }, setCycle] = useState({ i: 0, count: START });
-  const root = useRef<HTMLDivElement>(null);
-
-  /*
-    The cycle, which runs only when it is worth running: not under reduced
-    motion, not while the tab is in the background, and not once the intro has
-    been scrolled past — a timer swapping images nobody is looking at is just
-    heat. It restarts from wherever it left off.
-  */
-  useEffect(() => {
-    const el = root.current;
-    if (!el) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-
-    let timer: ReturnType<typeof setInterval> | null = null;
-    let onScreen = true;
-    const stop = () => {
-      if (timer) clearInterval(timer);
-      timer = null;
-    };
-    const start = () => {
-      if (timer || !onScreen || document.hidden) return;
-      timer = setInterval(
-        () =>
-          setCycle((s) => {
-            const next = (s.i + 1) % schools.length;
-            return { i: next, count: Math.max(s.count, Math.min(next + 2, schools.length)) };
-          }),
-        SCHOOL_CYCLE_MS,
-      );
-    };
-
-    const io = new IntersectionObserver(([e]) => {
-      onScreen = e.isIntersecting;
-      if (onScreen) start();
-      else stop();
-    });
-    io.observe(el);
-    const onVisible = () => (document.hidden ? stop() : start());
-    document.addEventListener("visibilitychange", onVisible);
-    start();
-
-    return () => {
-      stop();
-      io.disconnect();
-      document.removeEventListener("visibilitychange", onVisible);
-    };
-  }, []);
-
   const school = schools[i];
+  const lit = accent(school.color).color; // the lit letter, same colour as the intro's type
 
   return (
     /* w-screen and centred on the intro's own centre, which is the page's.
        -z-10 keeps it behind the words — the section is its own stacking
        context (z-[1]), so it cannot fall behind the page itself. */
     <div
-      ref={root}
       aria-hidden="true"
       className="pointer-events-none absolute inset-y-0 left-1/2 -z-10 hidden w-screen -translate-x-1/2 overflow-hidden xl:block"
     >
       {PHONES.map((p) => (
         <div key={p.shot} className="l-hero-phone" data-side={p.side}>
-          {/* The school's colour. This, not the screenshot, is what makes the
-              page change colour — a capture is mostly white. glow() raises the
-              near-black navies to the floor the others already clear, so all
-              eight land with the same weight (lib/landingSchools.ts). */}
-          <div
-            className="absolute -inset-28 transition-[background] duration-[600ms] ease-in-out motion-reduce:transition-none"
-            style={{
-              background: `radial-gradient(circle at 50% 50%, ${rgba(glow(school.color), 0.42)} 0%, transparent 66%)`,
-            }}
-          />
-          <Phone className="relative opacity-[0.82]">
-            <div className="relative aspect-[900/1480] overflow-hidden bg-l-phone-screen">
-              {schools.slice(0, count).map((sc, n) => (
-                <Image
-                  key={sc.key}
-                  src={shotSrc(`/landing/closers/${p.shot}-${sc.key}.webp`, shown)}
-                  alt={`${p.what} in ${sc.name}'s colours`}
-                  fill
-                  sizes="(min-width: 1536px) 290px, 230px"
-                  quality={80}
-                  loading={n === 0 ? "eager" : "lazy"}
-                  className="object-fill transition-opacity duration-[600ms] ease-in-out motion-reduce:transition-none"
-                  style={{ opacity: n === i ? 1 : 0 }}
-                />
-              ))}
-            </div>
-          </Phone>
+          <div className="l-hero-tilt">
+            {/* The school's colour. This, not the screenshot, is what makes the
+                page change colour — a capture is mostly white. lift() raises
+                the near-black navies to the weight the others already have. */}
+            <div className="l-hero-glow" style={{ backgroundColor: lift(school.color) }} />
+            <Phone className="relative opacity-[0.82]">
+              <div className="relative aspect-[900/1480] overflow-hidden bg-l-phone-screen">
+                {schools.slice(0, count).map((sc, n) => (
+                  <Image
+                    key={sc.key}
+                    src={shotSrc(`/landing/closers/${p.shot}-${sc.key}.webp`, shown)}
+                    alt={`${p.what} in ${sc.name}'s colours`}
+                    fill
+                    sizes="(min-width: 1536px) 290px, 230px"
+                    quality={80}
+                    loading={n === 0 ? "eager" : "lazy"}
+                    className="object-fill transition-opacity duration-[600ms] ease-in-out motion-reduce:transition-none"
+                    style={{ opacity: n === i ? 1 : 0 }}
+                  />
+                ))}
+              </div>
+            </Phone>
+          </div>
+
+          {/* The eight, as letters. Only the one showing is lit — so the
+              colour has a name attached, without the front door captioning
+              itself. Unrotated: the phone leans, the row does not. */}
+          <div className="l-hero-letters font-mono">
+            {schools.map((sc, n) => (
+              <span
+                key={sc.key}
+                className="l-hero-letter"
+                style={n === i ? { color: lit, textShadow: `0 0 14px ${rgba(lit, 0.5)}` } : undefined}
+              >
+                {sc.letter}
+              </span>
+            ))}
+          </div>
         </div>
       ))}
     </div>

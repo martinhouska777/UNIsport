@@ -61,10 +61,17 @@ export const OAR_ART = {
   shade: "#060607",
 };
 
-/* HOW FAST THE SCHOOLS CHANGE — 2.6s each, the design piece's pace. Campus
-   Colours set it; the intro's backdrop phones cycle to the same beat, so a
-   reader who scrolls from one to the other meets one rhythm, not two. */
+/* HOW FAST THE SCHOOLS CHANGE. Two paces, on purpose.
+
+   Campus Colours keeps the design piece's own 2.6s: down there the cycle IS
+   the exhibit, the reader has stopped, and the section does nothing else.
+
+   The intro is slower. It is the front door, it is trying to be read, and at
+   the closer's pace the owner's verdict was "a disco ball on the hero"
+   (2026-08-23). 5.5s is also long enough to notice which letter under the
+   phone is lit before it moves on. */
 export const SCHOOL_CYCLE_MS = 2600;
+export const HERO_CYCLE_MS = 5500;
 
 export const schools: School[] = [
   {
@@ -162,19 +169,28 @@ export const schools: School[] = [
 
 /** `#rrggbb` → `rgba(r,g,b,a)` for the glows and washes built from a school colour. */
 /*
-  THE COLOUR A SCHOOL GLOWS IN.
+  A SCHOOL'S COLOUR, RAISED TO A USABLE LIGHTNESS.
 
-  Several of these are near-black — Yale #00356b, Penn #011f5b, Brown #4e3629 —
-  and a halo in one of them on a #0a0a0a page is not a halo, it is a slightly
-  less black patch. So the hue and the saturation are kept exactly and only the
-  LIGHTNESS is raised to a common floor, which gives all eight the same
-  presence without turning any of them into a different colour. Columbia's pale
-  blue is already above the floor and comes back untouched.
+  Several of these are near-black — Yale #00356b, Penn #011f5b, Brown #4e3629.
+  A halo in one of them on a #0a0a0a page is not a halo but a slightly less
+  black patch, and a word set in one is unreadable. So the hue and the
+  saturation are kept exactly and only the LIGHTNESS is raised to a floor,
+  which gives all eight the same presence without turning any of them into a
+  different colour. Anything already above the floor (Columbia's pale blue)
+  comes back untouched.
 
-  Presentational only: the school's own `color` and `ink` are what type and
-  UI use, and neither is changed.
+  It also DESATURATES as it lightens, which sounds like a detail and is not:
+  raising a fully saturated dark colour to a mid lightness at full saturation
+  turns Dartmouth's forest green into neon mint and Brown's brown into tan. The
+  schools have to still look like themselves.
+
+  Two floors are in use: ~0.44 for the glow behind the intro's phones, and
+  accent() below for anything that has to be READ.
+
+  Presentational only: the school's own `color` and `ink` are what the closers
+  use for type and UI, and neither is changed.
 */
-export function glow(hex: string, floor = 0.44): string {
+export function lift(hex: string, floor = 0.44, desat = 0.9): string {
   const n = parseInt(hex.slice(1), 16);
   const r = ((n >> 16) & 255) / 255,
     g = ((n >> 8) & 255) / 255,
@@ -184,7 +200,7 @@ export function glow(hex: string, floor = 0.44): string {
   const l = (max + min) / 2;
   if (l >= floor) return hex;
   const d = max - min;
-  const sat = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1));
+  let sat = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1));
   let h = 0;
   if (d !== 0) {
     if (max === r) h = ((g - b) / d) % 6;
@@ -193,6 +209,7 @@ export function glow(hex: string, floor = 0.44): string {
     h *= 60;
     if (h < 0) h += 360;
   }
+  sat *= 1 - (floor - l) * desat; // the further it is lifted, the less neon
   // back to rgb at the raised lightness
   const c = (1 - Math.abs(2 * floor - 1)) * sat;
   const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
@@ -204,6 +221,47 @@ export function glow(hex: string, floor = 0.44): string {
       .toString(16)
       .padStart(2, "0");
   return `#${hex2(r1)}${hex2(g1)}${hex2(b1)}`;
+}
+
+function luminance(hex: string): number {
+  const n = parseInt(hex.slice(1), 16);
+  const ch = (v: number) => {
+    const c = v / 255;
+    return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  };
+  return 0.2126 * ch((n >> 16) & 255) + 0.7152 * ch((n >> 8) & 255) + 0.0722 * ch(n & 255);
+}
+const contrast = (a: number, b: number) => (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+/* The page's two inks, the only two colours a label here is ever set in. */
+const INK = { "l-bg": 0.0056, "l-text": 0.9067 } as const; // luminance of #0a0a0a / #f5f5f5
+
+/*
+  THE SCHOOL'S COLOUR AS AN ACCENT — what the intro paints the wordmark's
+  second half, "Your people" and the button with while that school is showing.
+
+  Two jobs. It has to be readable as type on the near-black page (the display
+  sizes need 3:1), and the BUTTON's label has to clear 4.5:1 against it — the
+  contrast promise this page already made for the blue it replaces. So: lift to
+  a floor that keeps every school recognisably itself, pick whichever ink reads
+  better on the result, and if that still falls short, walk the lightness away
+  from the middle until it does. Yale and Brown are the two that need the walk.
+
+  `ink` is a TOKEN name, never a colour, so nothing is written into a
+  component (rule 1).
+*/
+export function accent(hex: string): { color: string; ink: "l-bg" | "l-text" } {
+  let floor = 0.46;
+  for (let step = 0; step < 8; step++) {
+    const color = lift(hex, floor);
+    const lum = luminance(color);
+    const dark = contrast(lum, INK["l-bg"]);
+    const light = contrast(lum, INK["l-text"]);
+    const ink = dark >= light ? "l-bg" : "l-text";
+    if (Math.max(dark, light) >= 4.5) return { color, ink };
+    // Move AWAY from the middle, in the direction the better ink wants.
+    floor += ink === "l-bg" ? 0.03 : -0.03;
+  }
+  return { color: lift(hex, 0.46), ink: "l-text" };
 }
 
 export function rgba(hex: string, a: number): string {

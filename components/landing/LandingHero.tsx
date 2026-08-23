@@ -1,7 +1,12 @@
+"use client";
+
 import Link from "next/link";
+import { useRef, type CSSProperties } from "react";
 import HeroFade from "@/components/landing/HeroFade";
 import HeroPhones from "@/components/landing/HeroPhones";
 import Wordmark from "@/components/landing/Wordmark";
+import { useSchoolCycle } from "@/components/landing/useSchoolCycle";
+import { accent, HERO_CYCLE_MS } from "@/lib/landingSchools";
 import { availability, brandLine, cues, doors, hero } from "@/lib/landingCopy";
 
 /*
@@ -32,9 +37,21 @@ import { availability, brandLine, cues, doors, hero } from "@/lib/landingCopy";
      short stagger (l-in-1…4), and the whole thing fades and lags as you scroll
      so the story rises over it instead of replacing it.
 
-  Contrast (2026-08-18 review): the primary button is dark-on-blue (7.2:1), the
-  same button as the final CTA. Nothing a visitor is meant to read sits in
-  text-3 (2.7:1 on this ground); text-3 is for the decorative arrows only.
+  IT TAKES THE SCHOOL'S COLOUR. The backdrop cycles the eight schools, and the
+  owner's note (2026-08-23) was that everything blue up here should cycle with
+  them: the wordmark's second half, "Your people", and the button. So the
+  intro owns the cycle (useSchoolCycle) and publishes the school's colour as
+  --sc, with --sc-ink for whatever sits ON it. Two things deliberately do not
+  follow it:
+    • the "Live now at Harvard" pill, which states a fact about Harvard and is
+      the one place a colour could actually mislead (the owner's call);
+    • everything outside the intro, which is still the page's own blue.
+
+  Contrast: accent() in lib/landingSchools.ts guarantees the button's label
+  clears 4.5:1 against whichever school is showing — the promise the blue
+  button already made (dark-on-blue, 7.2:1) held for all eight. Nothing a
+  visitor is meant to read sits in text-3 (2.7:1 on this ground); text-3 is for
+  the decorative arrows only.
 */
 function Arrow({ className = "" }: { className?: string }) {
   return (
@@ -47,19 +64,28 @@ function Arrow({ className = "" }: { className?: string }) {
 /** `doors`: false on a view already chosen from the top bar (/for/…), where
     the three doors would only repeat the tab the visitor just pressed. */
 export default function LandingHero({ doors: showDoors = true }: { doors?: boolean }) {
+  const section = useRef<HTMLElement>(null);
+  const { i, count, school } = useSchoolCycle(section, HERO_CYCLE_MS);
+  const { color, ink } = accent(school.color);
+
   return (
     <section
       id="top"
+      ref={section}
+      style={{ "--sc": color, "--sc-ink": `var(--color-${ink})` } as CSSProperties}
       className="l-glow-accent relative z-[1] mx-auto flex min-h-[100svh] max-w-[1160px] flex-col items-center justify-center px-6 pt-10 pb-10 text-center sm:px-8"
     >
       <HeroFade>
         {/* 0 · The backdrop: two app screens in the margins of a wide screen,
             which were empty. Behind everything, and only from xl up. */}
-        <HeroPhones />
+        <HeroPhones i={i} count={count} />
 
         {/* 1 · The mark. The page says who it is before it says anything else. */}
         <div className="l-in-1 mb-6 flex flex-col items-center gap-2">
-          <Wordmark className="text-[clamp(30px,4vw,40px)]" />
+          <Wordmark
+            className="text-[clamp(30px,4vw,40px)]"
+            accentClassName="text-(--sc) transition-colors duration-700 ease-in-out motion-reduce:transition-none"
+          />
           <span className="font-mono text-[11px] tracking-[0.18em] uppercase text-l-text-2">
             {brandLine}
           </span>
@@ -73,7 +99,9 @@ export default function LandingHero({ doors: showDoors = true }: { doors?: boole
           </div>
 
           <h1 className="mb-4 max-w-[12ch] font-display text-[clamp(40px,6vw,70px)] font-normal leading-[0.98] tracking-[-0.02em] text-balance text-l-text">
-            {hero.headline[0]} {hero.headline[1]} <em className="italic text-l-accent">{hero.headline[2]}</em>
+            {hero.headline[0]} {hero.headline[1]} <em className="italic text-(--sc) transition-colors duration-700 ease-in-out motion-reduce:transition-none">
+              {hero.headline[2]}
+            </em>
           </h1>
 
           {/* The kicker is the doors' two subtitles, word for word. Where the
@@ -94,7 +122,7 @@ export default function LandingHero({ doors: showDoors = true }: { doors?: boole
         <div className="l-in-3 mt-6 flex flex-col items-center">
           <Link
             href="/login"
-            className="group inline-flex items-center justify-center gap-2 rounded-full bg-l-accent px-7 py-4 text-[15px] font-semibold tracking-tight text-l-bg transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-l-text"
+            className="group inline-flex items-center justify-center gap-2 rounded-full bg-(--sc) px-7 py-4 text-[15px] font-semibold tracking-tight text-(--sc-ink) transition-[transform,background-color,color] duration-700 ease-in-out hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-l-text motion-reduce:transition-none"
           >
             {hero.primaryCta}
             <Arrow className="transition-transform group-hover:translate-x-1" />

@@ -550,12 +550,58 @@
   margins they fill exist at all.
 */
 .l-hero-phone { position: absolute; top: 2.25rem; left: 50%; width: 230px; }
-.l-hero-phone[data-side="left"] { transform: translateX(calc(-100% - 330px)) rotate(-11deg); }
-.l-hero-phone[data-side="right"] { top: 4.25rem; transform: translateX(330px) rotate(11deg); }
+.l-hero-phone[data-side="left"] { transform: translateX(calc(-100% - 330px)); }
+.l-hero-phone[data-side="right"] { top: 4.25rem; transform: translateX(330px); }
+/* The phone leans; the row of letters under it does not, so the lean lives on
+   an inner box. A transform changes nothing about layout, so the letters still
+   sit directly under the phone's upright box — the margin below pays for the
+   tilted corner that drops past it. */
+.l-hero-tilt { position: relative; transform: rotate(-11deg); }
+[data-side="right"] .l-hero-tilt { transform: rotate(11deg); }
+
+/*
+  THE GLOW — a soft column of light behind the phone, leaning with it. A
+  rounded shape the phone's own size, blurred, rather than a radial gradient in
+  a box: a gradient was cut square by the box that held it and ran off the side
+  of the screen, and the owner asked for something that visibly ENDS, with page
+  left over beyond it. Dimmer than that one, too.
+*/
+.l-hero-glow {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  /* Wider than the phone, so what you see is the light AROUND it — a shape
+     narrower than the phone is simply hidden behind it. */
+  width: 106%;
+  height: 94%;
+  transform: translate(-50%, -50%);
+  border-radius: 9999px;
+  filter: blur(26px);
+  opacity: 0.36;
+  transition: background-color 700ms ease-in-out;
+}
+
+/* The eight schools as letters, under each phone: the one showing is lit in
+   its own colour (set inline — content colour, rule 1's exception), the rest
+   sit in the faintest text token. */
+.l-hero-letters { display: flex; justify-content: center; gap: 0.55rem; margin-top: 2.75rem; }
+.l-hero-letter {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--color-l-text-3);
+  transition: color 700ms ease-in-out, text-shadow 700ms ease-in-out;
+}
+
 @media (min-width: 1536px) {
   .l-hero-phone { width: 290px; }
-  .l-hero-phone[data-side="left"] { transform: translateX(calc(-100% - 340px)) rotate(-11deg); }
-  .l-hero-phone[data-side="right"] { transform: translateX(340px) rotate(11deg); }
+  .l-hero-phone[data-side="left"] { transform: translateX(calc(-100% - 340px)); }
+  .l-hero-phone[data-side="right"] { transform: translateX(340px); }
+  .l-hero-glow { filter: blur(32px); }
+  .l-hero-letters { margin-top: 3.25rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .l-hero-glow, .l-hero-letter { transition: none; }
 }
 
 /*

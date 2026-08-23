@@ -127,6 +127,24 @@ quietly undo `patch-gyms.mjs`. `glow()` in `lib/landingSchools.ts` raises the ne
 weight; hue and saturation are untouched, and the schools' own `color`/`ink`
 are unchanged.
 
+**And the intro takes the school's colour with them** (2026-08-23). Everything
+blue up there cycles with the phones — the wordmark's second half, "Your
+people", the button — published by the intro as `--sc` / `--sc-ink`. Two things
+deliberately do not follow: the "Live now at Harvard" pill, which states a fact
+about Harvard and is the one place a colour could mislead, and everything
+outside the intro. `accent()` in `lib/landingSchools.ts` guarantees the
+button's label clears 4.5:1 against all eight (Yale and Brown need the walk it
+does); `lift()` desaturates as it lightens, or Dartmouth's forest green comes
+back neon mint and Brown's brown comes back tan.
+
+Under each phone, the eight schools as **letters**, only the one showing lit —
+the owner's point being that a colour alone does not say whose colour it is.
+The intro also runs SLOWER than the closer (`HERO_CYCLE_MS` 5.5s against
+`SCHOOL_CYCLE_MS` 2.6s): at the closer's pace on the front door the verdict was
+"a disco ball". And the glow is a blurred capsule the phone's own size rather
+than a radial gradient in a box — the box cut it square and it ran off the side
+of the screen; it has to visibly end, with page left over beyond it.
+
 Two things this deliberately does NOT do. It does not claim eight campuses:
 the pill still reads "Live now at Harvard", the cycle starts on Harvard, and no
 school is named in the intro — the same care Campus Colours takes. And it does
