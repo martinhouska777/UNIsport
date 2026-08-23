@@ -68,10 +68,10 @@ export const OAR_ART = {
 
    The intro is slower. It is the front door, it is trying to be read, and at
    the closer's pace the owner's verdict was "a disco ball on the hero"
-   (2026-08-23). 5.5s is also long enough to notice which letter under the
-   phone is lit before it moves on. */
+   (2026-08-23). It is also long enough to notice which letter under the
+   phone is lit before it moves on — 4.7s, the owner's number. */
 export const SCHOOL_CYCLE_MS = 2600;
-export const HERO_CYCLE_MS = 5500;
+export const HERO_CYCLE_MS = 4700;
 
 export const schools: School[] = [
   {

@@ -23,6 +23,14 @@ import { availability, brandLine, cues, doors, hero } from "@/lib/landingCopy";
   Three things were wrong with it before (owner, 2026-08-23 — "missing
   something, some flow"):
 
+  IT IS ONE SCREEN, AND IT MEASURES ITSELF (owner, 2026-08-23: "ideally I
+  wanted this to be one section; now I have to scroll to see it"). Every
+  vertical size here — the padding, the gaps, the headline, the mark, and the
+  phones beside it — is a clamp with a vh term, so the intro shrinks to fit the
+  window it is in instead of running past the fold on a short laptop. The
+  scroll cue is pinned to the bottom of the section rather than queued at the
+  end of the column, so it costs the column nothing.
+
   1. NO MARK. The page's own name was only in the 24px bar, so the intro never
      introduced anything. It now opens on the mark at full size; the bar's copy
      of it is not drawn while this one is on screen (HeroFade → .l-nav-mark),
@@ -73,7 +81,7 @@ export default function LandingHero({ doors: showDoors = true }: { doors?: boole
       id="top"
       ref={section}
       style={{ "--sc": color, "--sc-ink": `var(--color-${ink})` } as CSSProperties}
-      className="l-glow-accent relative z-[1] mx-auto flex min-h-[100svh] max-w-[1160px] flex-col items-center justify-center px-6 pt-10 pb-10 text-center sm:px-8"
+      className="l-glow-accent relative z-[1] mx-auto flex min-h-[calc(100svh-var(--l-bar,0px))] max-w-[1160px] flex-col items-center justify-center px-6 pt-[clamp(14px,2.4vh,40px)] pb-[clamp(76px,10vh,100px)] text-center sm:px-8"
     >
       <HeroFade>
         {/* 0 · The backdrop: two app screens in the margins of a wide screen,
@@ -81,9 +89,9 @@ export default function LandingHero({ doors: showDoors = true }: { doors?: boole
         <HeroPhones i={i} count={count} />
 
         {/* 1 · The mark. The page says who it is before it says anything else. */}
-        <div className="l-in-1 mb-6 flex flex-col items-center gap-2">
+        <div className="l-in-1 mb-[clamp(10px,2.2vh,24px)] flex flex-col items-center gap-[clamp(2px,0.6vh,8px)]">
           <Wordmark
-            className="text-[clamp(30px,4vw,40px)]"
+            className="text-[clamp(24px,min(4vw,4.2vh),40px)]"
             accentClassName="text-(--sc) transition-colors duration-700 ease-in-out motion-reduce:transition-none"
           />
           <span className="font-mono text-[11px] tracking-[0.18em] uppercase text-l-text-2">
@@ -93,12 +101,12 @@ export default function LandingHero({ doors: showDoors = true }: { doors?: boole
 
         {/* 2 · The one fact, and the headline. */}
         <div className="l-in-2 flex flex-col items-center">
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-l-accent-soft bg-l-accent-dim px-3 py-1.5 font-mono text-[11px] font-medium tracking-wider uppercase text-l-accent">
+          <div className="mb-[clamp(8px,1.6vh,16px)] inline-flex items-center gap-2 rounded-full border border-l-accent-soft bg-l-accent-dim px-3 py-1.5 font-mono text-[11px] font-medium tracking-wider uppercase text-l-accent">
             <span className="l-pulse h-1.5 w-1.5 rounded-full bg-l-accent shadow-[0_0_8px_var(--color-l-accent)]" />
             {hero.badge}
           </div>
 
-          <h1 className="mb-4 max-w-[12ch] font-display text-[clamp(40px,6vw,70px)] font-normal leading-[0.98] tracking-[-0.02em] text-balance text-l-text">
+          <h1 className="mb-[clamp(6px,1.4vh,16px)] max-w-[12ch] font-display text-[clamp(32px,min(6vw,6vh),70px)] font-normal leading-[0.98] tracking-[-0.02em] text-balance text-l-text">
             {hero.headline[0]} {hero.headline[1]} <em className="italic text-(--sc) transition-colors duration-700 ease-in-out motion-reduce:transition-none">
               {hero.headline[2]}
             </em>
@@ -119,7 +127,7 @@ export default function LandingHero({ doors: showDoors = true }: { doors?: boole
         </div>
 
         {/* 3 · The way in. */}
-        <div className="l-in-3 mt-6 flex flex-col items-center">
+        <div className="l-in-3 mt-[clamp(12px,2.4vh,24px)] flex flex-col items-center">
           <Link
             href="/login"
             className="group inline-flex items-center justify-center gap-2 rounded-full bg-(--sc) px-7 py-4 text-[15px] font-semibold tracking-tight text-(--sc-ink) transition-[transform,background-color,color] duration-700 ease-in-out hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-l-text motion-reduce:transition-none"
@@ -129,7 +137,7 @@ export default function LandingHero({ doors: showDoors = true }: { doors?: boole
           </Link>
 
           {/* The availability line, where the eye lands after the button. */}
-          <p className="mt-3 max-w-[46ch] text-[14px] leading-relaxed text-l-text-2">{availability}</p>
+          <p className="mt-[clamp(6px,1.2vh,12px)] max-w-[46ch] text-[14px] leading-relaxed text-l-text-2">{availability}</p>
         </div>
 
         {/* 4 · The three doors — blue for the student, gold for the varsity
@@ -138,19 +146,19 @@ export default function LandingHero({ doors: showDoors = true }: { doors?: boole
             tab. */}
         <div className="l-in-4 flex w-full flex-col items-center">
           {showDoors && (
-            <div className="mt-6 grid w-full max-w-[860px] grid-cols-1 gap-3 sm:grid-cols-3">
+            <div className="mt-[clamp(12px,2.4vh,24px)] grid w-full max-w-[860px] grid-cols-1 gap-3 sm:grid-cols-3">
               {doors.map((d, i) => (
                 <Link
                   key={d.label}
                   href={d.href}
-                  className={`group flex flex-col items-start gap-1.5 rounded-2xl border px-5 py-4 text-left transition-colors ${
+                  className={`group flex flex-col items-start gap-[clamp(2px,0.6vh,6px)] rounded-2xl border px-5 py-[clamp(9px,1.6vh,16px)] text-left transition-colors ${
                     i === 0
                       ? "border-l-accent-soft hover:border-(--color-l-accent) hover:bg-l-accent-dim"
                       : "border-l-varsity-soft hover:border-l-varsity hover:bg-l-varsity-dim"
                   }`}
                 >
                   <span
-                    className={`flex w-full items-center justify-between font-display text-[22px] tracking-tight ${
+                    className={`flex w-full items-center justify-between font-display text-[clamp(17px,2.4vh,22px)] tracking-tight ${
                       i === 1 ? "text-l-varsity" : "text-l-text"
                     }`}
                   >
@@ -165,16 +173,20 @@ export default function LandingHero({ doors: showDoors = true }: { doors?: boole
 
           {/* The other way in. A rower usually arrives holding a link from their
               captain, and shouldn't have to scroll to find where it goes. */}
-          <p className="mt-6 text-[14px] text-l-text-2">
+          <p className="mt-[clamp(10px,2vh,24px)] text-[14px] text-l-text-2">
             {hero.inviteNote}{" "}
             <Link href="/join" className="font-medium text-l-varsity underline-offset-4 transition-colors hover:underline">
               {hero.inviteCta} →
             </Link>
           </p>
 
-          <div className="l-cue mt-7">{cues.hero}</div>
         </div>
       </HeroFade>
+
+      {/* Pinned to the foot of the section, not queued at the end of the
+          column: the cue is the one thing that costs the intro a whole block
+          of height for one word. */}
+      <div className="l-cue pointer-events-none absolute inset-x-0 bottom-[clamp(8px,1.6vh,20px)]">{cues.hero}</div>
     </section>
   );
 }

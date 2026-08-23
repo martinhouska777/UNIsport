@@ -17,6 +17,11 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
   Measured on scroll through one rAF; the stages are found once by class
   (`.ls-story`, `.lc-closer`) — the same page structure the suites lock in.
   The bar is in flow (position: sticky), so nothing below it moves.
+
+  It also publishes its own height as `--l-bar` on <html>. The intro has to be
+  ONE SCREEN (owner, 2026-08-23) and "one screen" for anything under this bar
+  is 100svh minus the bar — which is 77px on a laptop and two rows on a phone,
+  so it cannot be a number written into the CSS.
 */
 export default function StickyBar({ children }: { children: ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -33,6 +38,7 @@ export default function StickyBar({ children }: { children: ReactNode }) {
       raf = 0;
       const y = window.scrollY;
       const barH = el.offsetHeight;
+      document.documentElement.style.setProperty("--l-bar", `${barH}px`);
       const overStage = stages.some((s) => {
         const r = s.getBoundingClientRect();
         return r.top < barH && r.bottom > 0;

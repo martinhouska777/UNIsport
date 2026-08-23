@@ -502,7 +502,9 @@
   display: flex; flex-direction: column; align-items: center; gap: 10px;
 }
 .l-cue::after {
-  content: ""; width: 1px; height: 44px;
+  /* Shorter on a short screen: the intro is one screen, and this is the last
+     thing that gets to spend height on nothing but a hint. */
+  content: ""; width: 1px; height: clamp(18px, 3.4vh, 44px);
   background: linear-gradient(var(--color-l-text-3), transparent);
   animation: l-cue-bob 1.8s ease-in-out infinite;
 }
@@ -549,9 +551,13 @@
   doors — no crop, no mask. Only drawn from xl up (the component), where the
   margins they fill exist at all.
 */
-.l-hero-phone { position: absolute; top: 2.25rem; left: 50%; width: 230px; }
+/* The phone measures itself against the WINDOW's height, not just its width:
+   on a short laptop the intro has to be one screen (owner, 2026-08-23), which
+   means the phone and the row of letters under it have to finish above the row
+   of doors rather than sitting behind it. */
+.l-hero-phone { position: absolute; top: clamp(16px, 3.4vh, 36px); left: 50%; width: clamp(190px, 23.5vh, 290px); }
 .l-hero-phone[data-side="left"] { transform: translateX(calc(-100% - 330px)); }
-.l-hero-phone[data-side="right"] { top: 4.25rem; transform: translateX(330px); }
+.l-hero-phone[data-side="right"] { top: clamp(38px, 7vh, 68px); transform: translateX(330px); }
 /* The phone leans; the row of letters under it does not, so the lean lives on
    an inner box. A transform changes nothing about layout, so the letters still
    sit directly under the phone's upright box — the margin below pays for the
@@ -584,7 +590,7 @@
 /* The eight schools as letters, under each phone: the one showing is lit in
    its own colour (set inline — content colour, rule 1's exception), the rest
    sit in the faintest text token. */
-.l-hero-letters { display: flex; justify-content: center; gap: 0.55rem; margin-top: 2.75rem; }
+.l-hero-letters { display: flex; justify-content: center; gap: 0.55rem; margin-top: clamp(20px, 3.6vh, 44px); }
 .l-hero-letter {
   font-size: 11px;
   font-weight: 600;
@@ -594,11 +600,9 @@
 }
 
 @media (min-width: 1536px) {
-  .l-hero-phone { width: 290px; }
   .l-hero-phone[data-side="left"] { transform: translateX(calc(-100% - 340px)); }
   .l-hero-phone[data-side="right"] { transform: translateX(340px); }
   .l-hero-glow { filter: blur(32px); }
-  .l-hero-letters { margin-top: 3.25rem; }
 }
 @media (prefers-reduced-motion: reduce) {
   .l-hero-glow, .l-hero-letter { transition: none; }

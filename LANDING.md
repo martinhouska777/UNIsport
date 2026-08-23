@@ -139,7 +139,16 @@ back neon mint and Brown's brown comes back tan.
 
 Under each phone, the eight schools as **letters**, only the one showing lit —
 the owner's point being that a colour alone does not say whose colour it is.
-The intro also runs SLOWER than the closer (`HERO_CYCLE_MS` 5.5s against
+**The intro is ONE SCREEN** (2026-08-23). Every vertical size in it — padding,
+gaps, the headline, the mark, the phones beside it, even the scroll cue's
+hairline — is a `clamp()` with a `vh` term, so it shrinks to fit the window
+rather than running past the fold on a short laptop; the cue is pinned to the
+foot of the section instead of queued at the end of the column. "One screen"
+means `100svh - var(--l-bar)`: `StickyBar` publishes its own height, because
+the bar is 77px on a laptop and two rows on a phone. Verified at 1280x800,
+1900x860 (the owner's window) and 1920x1080.
+
+The intro also runs SLOWER than the closer (`HERO_CYCLE_MS` 4.7s against
 `SCHOOL_CYCLE_MS` 2.6s): at the closer's pace on the front door the verdict was
 "a disco ball". And the glow is a blurred capsule the phone's own size rather
 than a radial gradient in a box — the box cut it square and it ran off the side
