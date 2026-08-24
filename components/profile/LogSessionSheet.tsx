@@ -226,7 +226,18 @@ export default function LogSessionSheet({
         if (share && !sharedPostId) await createPost("", null, logId);
         else if (!share && sharedPostId) await deletePost(sharedPostId);
       } catch {
-        /* the session saved; the feed didn't. Not worth blocking the flow. */
+        /*
+          The session is saved either way — that must never be in doubt. But
+          swallowing this in silence is what made the switch look broken the
+          first time it failed, so the sheet stays open and says so.
+        */
+        setBusy(false);
+        setError(
+          share
+            ? "Session saved, but it couldn’t be shared to the feed. Try the switch again."
+            : "Session saved, but it couldn’t be taken off the feed. Try the switch again.",
+        );
+        return;
       }
       try {
         localStorage.setItem(SHARE_DEFAULT_KEY, share ? "1" : "0");

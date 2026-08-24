@@ -199,6 +199,29 @@ export async function listMonth(
   return (data as Row[]).map(rowToLog);
 }
 
+/* ── The most recent sessions, newest first (the feed's "pick a session") ──
+   WITHOUT the photos. This list is a chooser: it shows what you trained, when
+   and where, and every row that carried its pictures would make picking one
+   cost more than the post itself. The photos come back on their own once the
+   post exists, straight out of the log (db/posts_workout.sql). */
+export async function listRecentLogs(userId: string, limit = 15): Promise<WorkoutLog[]> {
+  if (!userId) return [];
+  if (!hasSupabaseEnv()) {
+    return loadLocal(userId)
+      .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0))
+      .slice(0, limit);
+  }
+  const { data, error } = await createClient()
+    .from("workout_logs")
+    .select("id, log_date, activity, gym, partner, partner_id, exercises, metrics, note, verified, plan_id")
+    .eq("user_id", userId)
+    .order("log_date", { ascending: false })
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error || !data) return [];
+  return (data as Row[]).map((r) => rowToLog({ ...r, photos: [] }));
+}
+
 /* ── Sessions that have a photo, newest first (the Memories gallery) ──
    Not date-bounded — the gallery is the whole history — so it is read a PAGE at
    a time. The `photos` filter runs in the database, so sessions without a

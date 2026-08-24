@@ -39,6 +39,14 @@ create unique index if not exists posts_one_per_log_idx
   on public.posts (workout_log_id)
   where workout_log_id is not null;
 
+-- THE ONE THAT BROKE SHARING. db/posts.sql insisted a post carry words or a
+-- picture of its own. A shared session has neither — the session IS the
+-- content — so every "Share to feed" failed the check and the switch looked
+-- like it did nothing. The third arm is the fix.
+alter table public.posts drop constraint if exists posts_not_empty;
+alter table public.posts add constraint posts_not_empty
+  check (length(btrim(body)) > 0 or photo is not null or workout_log_id is not null);
+
 -- ---------------------------------------------------------------------------
 -- Write
 -- ---------------------------------------------------------------------------
@@ -100,6 +108,20 @@ begin
   end if;
   return new_id;
 end;
+$$;
+
+-- Which of my sessions are already on the feed. One call, so the "pick a
+-- session" list can grey out what's already shared without asking per row.
+create or replace function public.my_shared_log_ids()
+returns setof uuid
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select p.workout_log_id from public.posts p
+   where p.author_id = auth.uid()
+     and p.workout_log_id is not null;
 $$;
 
 -- Is this session of mine already on the feed? Returns the post id, or null.
@@ -192,4 +214,5 @@ $$;
 
 grant execute on function public.post_create(text, text, uuid)     to authenticated;
 grant execute on function public.post_for_log(uuid)                to authenticated;
+grant execute on function public.my_shared_log_ids()               to authenticated;
 grant execute on function public.feed_list(text, text, int, int)   to authenticated;

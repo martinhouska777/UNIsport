@@ -168,6 +168,14 @@ export async function createPost(
   return data as string;
 }
 
+/** Ids of your sessions that are already on the feed — one call for a whole list. */
+export async function sharedLogIds(): Promise<Set<string>> {
+  if (!hasSupabaseEnv()) return new Set();
+  const { data, error } = await createClient().rpc("my_shared_log_ids");
+  if (error) return new Set();
+  return new Set((data as string[]) ?? []);
+}
+
 /** The post this session of yours is already shared as, or null. */
 export async function postForLog(logId: string): Promise<string | null> {
   if (!hasSupabaseEnv()) return null;

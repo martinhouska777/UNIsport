@@ -40,8 +40,12 @@ create table if not exists public.posts (
   -- the feed reads nothing from it yet.
   workout_log_id uuid references public.workout_logs (id) on delete set null,
   created_at     timestamptz not null default now(),
-  -- A post has to actually say something.
-  constraint posts_not_empty check (length(btrim(body)) > 0 or photo is not null),
+  -- A post has to actually say something. A shared session counts as saying
+  -- something — it IS the content — which is why the third arm is here; see
+  -- db/posts_workout.sql, which alters this constraint on databases created
+  -- before workout posts existed.
+  constraint posts_not_empty
+    check (length(btrim(body)) > 0 or photo is not null or workout_log_id is not null),
   constraint posts_body_len  check (length(body) <= 600)
 );
 

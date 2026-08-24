@@ -51,7 +51,7 @@ const SCOPES: { key: FeedScope; label: string; hint: string }[] = [
 ];
 
 export default function FeedPage() {
-  const { universityKey } = useAppState();
+  const { universityKey, userId } = useAppState();
   const [scope, setScope] = useState<FeedScope>("everyone");
   const [school, setSchool] = useState<string | null>(null); // null = all schools
   const [loadingMore, setLoadingMore] = useState(false);
@@ -212,6 +212,7 @@ export default function FeedPage() {
 
       {composing && (
         <ComposeSheet
+          userId={userId ?? ""}
           onPosted={() => {
             // Straight to where the new post actually is.
             setScope("everyone");
