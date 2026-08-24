@@ -347,38 +347,46 @@ export async function listVerifiedDays(userId: string): Promise<string[]> {
 }
 
 /* ── Create a new log ── */
+// Returns the new log's id as well as any error: sharing a session to the feed
+// needs something to point at (db/posts_workout.sql).
 export async function saveWorkout(
   userId: string,
   draft: WorkoutDraft,
-): Promise<{ error?: string }> {
+): Promise<{ id?: string; error?: string }> {
   if (!hasSupabaseEnv()) {
     const all = loadLocal(userId);
-    all.push({ ...draft, id: `local-${Date.now()}` });
+    const id = `local-${Date.now()}`;
+    all.push({ ...draft, id });
     saveLocal(userId, all);
-    return {};
+    return { id };
   }
-  const { error } = await createClient().from("workout_logs").insert(draftToRow(userId, draft));
-  return error ? { error: error.message } : {};
+  const { data, error } = await createClient()
+    .from("workout_logs")
+    .insert(draftToRow(userId, draft))
+    .select("id")
+    .single();
+  return error ? { error: error.message } : { id: (data as { id: string }).id };
 }
 
 /* ── Update an existing log by id ── */
+// Returns the id too, so a caller can treat create and update alike.
 export async function updateWorkout(
   userId: string,
   id: string,
   draft: WorkoutDraft,
-): Promise<{ error?: string }> {
+): Promise<{ id?: string; error?: string }> {
   if (!hasSupabaseEnv()) {
     const all = loadLocal(userId);
     const idx = all.findIndex((l) => l.id === id);
     if (idx >= 0) all[idx] = { ...draft, id };
     saveLocal(userId, all);
-    return {};
+    return { id };
   }
   const { error } = await createClient()
     .from("workout_logs")
     .update(draftToRow(userId, draft))
     .eq("id", id);
-  return error ? { error: error.message } : {};
+  return error ? { error: error.message } : { id };
 }
 
 /* ── Delete a log ── */

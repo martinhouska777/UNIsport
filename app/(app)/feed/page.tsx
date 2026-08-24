@@ -288,8 +288,8 @@ function Empty({
       </h2>
       <p className="mx-auto mt-2 max-w-xs text-[13px] leading-relaxed text-muted">
         {scope === "following"
-          ? "Follow someone from Match or from a post, and what they share turns up here."
-          : "Sessions, results and people looking for company — from your school and from every other campus on the app."}
+          ? "Follow someone from Match or from a post, and the sessions they share turn up here."
+          : "Log a session on your Profile tab and flip “Share to feed” — your note and photos land here, from your school and from every other campus on the app."}
       </p>
       <div className="mt-4">
         <Button variant="primary" size="md" onClick={onWrite}>

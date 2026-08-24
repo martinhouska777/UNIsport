@@ -28,6 +28,7 @@ import Avatar from "@/components/messages/Avatar";
 import GymCheckInPrompt from "@/components/gyms/GymCheckInPrompt";
 import { getGymByName } from "@/lib/gyms";
 import { fileToDataUrl } from "@/lib/image";
+import { createPost, deletePost, postForLog } from "@/lib/supabase/posts";
 import { IconArrowLeft, IconCheck, IconPlus, IconTrash, IconX } from "@/components/icons";
 
 const todayIso = () => {
@@ -42,6 +43,9 @@ const emptySet = (): WorkoutSet => ({ weight: "", reps: "" });
 const SET_TYPE_CYCLE: (SetType | undefined)[] = [undefined, "W", "D", "F"];
 const SET_TYPE_LABEL: Record<SetType, string> = { W: "W", N: "N", D: "D", F: "F" };
 type SetType = NonNullable<WorkoutSet["type"]>;
+
+// Whether the last session was shared to the feed — the switch's starting point.
+const SHARE_DEFAULT_KEY = "unisport.feed.shareByDefault";
 
 export default function LogSessionSheet({
   userId,
@@ -79,6 +83,25 @@ export default function LogSessionSheet({
   const [error, setError] = useState<string | null>(null);
   // After saving a session at a known gym, offer an optional rating + crowd check-in.
   const [checkIn, setCheckIn] = useState<{ slug: string; name: string } | null>(null);
+  /*
+    SHARE TO FEED. The session goes into your own calendar either way; this is
+    the switch that also puts it on the feed, where other people can see what
+    you trained and give it 💪.
+
+    OFF by default the first time — a training log is private until its owner
+    says otherwise — but it remembers what you chose last, because somebody who
+    shares their sessions shares all of them and shouldn't have to say so daily.
+  */
+  const [share, setShare] = useState(() => {
+    if (existing) return false; // corrected below by what's actually on the feed
+    try {
+      return localStorage.getItem(SHARE_DEFAULT_KEY) === "1";
+    } catch {
+      return false;
+    }
+  });
+  // The post this session already has, when it's been shared before.
+  const [sharedPostId, setSharedPostId] = useState<string | null>(null);
 
   const isRunning = activity === "running";
   const isCardio = activity === "cardio";
@@ -91,6 +114,21 @@ export default function LogSessionSheet({
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [onClose]);
+
+  // Editing an already-shared session: the switch has to show the truth, not a
+  // default, or turning it off would look like it did nothing.
+  useEffect(() => {
+    if (!existing) return;
+    let alive = true;
+    postForLog(existing.id).then((postId) => {
+      if (!alive || !postId) return;
+      setSharedPostId(postId);
+      setShare(true);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [existing]);
 
   const removeExercise = (i: number) =>
     setExercises((prev) => prev.filter((_, idx) => idx !== i));
@@ -167,11 +205,36 @@ export default function LogSessionSheet({
     const res = existing
       ? await updateWorkout(userId, existing.id, draft)
       : await saveWorkout(userId, draft);
-    setBusy(false);
     if (res.error) {
+      setBusy(false);
       setError(res.error);
       return;
     }
+
+    /*
+      The feed, second. The session is safely in the calendar by this point, so
+      a failure here must never look like the session was lost — the switch just
+      didn't take, and the log's own screen can share it again.
+
+      The post carries no words and no photo of its own: it POINTS at the
+      session (db/posts_workout.sql), so the note and the pictures shown on the
+      feed are the ones already in the log, and editing the session updates it.
+    */
+    const logId = existing?.id ?? res.id ?? null;
+    if (logId) {
+      try {
+        if (share && !sharedPostId) await createPost("", null, logId);
+        else if (!share && sharedPostId) await deletePost(sharedPostId);
+      } catch {
+        /* the session saved; the feed didn't. Not worth blocking the flow. */
+      }
+      try {
+        localStorage.setItem(SHARE_DEFAULT_KEY, share ? "1" : "0");
+      } catch {
+        /* no storage — next session just starts from off */
+      }
+    }
+    setBusy(false);
     // If this session was at a recognised gym, offer the optional rating + crowd
     // check-in before closing; otherwise finish straight away.
     const matched = getGymByName(gym);
@@ -525,6 +588,37 @@ export default function LogSessionSheet({
             placeholder="How did it go?"
             className={inputCls}
           />
+
+          {/* SHARE TO FEED — last thing before Save, because it's the decision
+              you make once everything else about the session is written. */}
+          <button
+            type="button"
+            onClick={() => setShare((v) => !v)}
+            role="switch"
+            aria-checked={share}
+            className="mt-5 flex w-full items-center gap-3 rounded-xl border border-border bg-surface-2 px-3 py-3 text-left"
+          >
+            <div className="min-w-0 flex-1">
+              <div className="text-[14px] font-medium text-text">Share to feed</div>
+              <div className="mt-0.5 text-[11px] leading-relaxed text-muted">
+                {share
+                  ? "Your note and photos go on the feed with this session. Anyone can give it kudos."
+                  : "Off — this session stays in your calendar only."}
+              </div>
+            </div>
+            <span
+              aria-hidden
+              className={`relative h-6 w-10 shrink-0 rounded-full transition-colors ${
+                share ? "bg-primary-live" : "bg-border"
+              }`}
+            >
+              <span
+                className={`absolute top-0.5 h-5 w-5 rounded-full bg-surface transition-[left] duration-200 ${
+                  share ? "left-[18px]" : "left-0.5"
+                }`}
+              />
+            </span>
+          </button>
 
           {error && <p className="mt-3 text-[12px] text-danger">Couldn’t save: {error}</p>}
         </div>
