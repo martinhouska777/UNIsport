@@ -49,6 +49,23 @@ export const tabs: Tab[] = [
     ),
   },
   {
+    /*
+      The fifth tab. It sits in the middle on purpose: Gyms is where you train,
+      Match is who with, Feed is what's actually happening, Messages is talking
+      to one person, Profile is you. Last place belongs to Profile everywhere
+      else in the world, so the new tab takes the middle rather than the end.
+    */
+    href: "/feed",
+    label: "Feed",
+    icon: (
+      <svg {...iconProps}>
+        <rect x="3" y="4" width="18" height="7" rx="1.5" />
+        <path d="M3 15h11" />
+        <path d="M3 19h7" />
+      </svg>
+    ),
+  },
+  {
     href: "/messages",
     label: "Messages",
     icon: (
