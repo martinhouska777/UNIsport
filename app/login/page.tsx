@@ -47,7 +47,7 @@ function readRememberedEmail(): string | null {
 }
 
 export default function LoginPage() {
-  const { ready, loggedIn, studentReady, varsityReady } = useAppState();
+  const { ready, loggedIn, studentReady, varsityReady, rollUniversity } = useAppState();
   const router = useRouter();
 
   const [supabase] = useState(() => (hasSupabaseEnv() ? createClient() : null));
@@ -102,6 +102,17 @@ export default function LoginPage() {
     );
   }, []);
 
+  /*
+    What every successful sign-in sets off, wherever it came from: leave the
+    note that makes the welcome animation play on the first screen inside, and
+    roll the demo school — which only shows for an address we don't recognise,
+    and is ignored the moment someone signs in with a real university one.
+  */
+  const onSignedIn = () => {
+    markSignIn();
+    rollUniversity();
+  };
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!supabase) return;
@@ -149,10 +160,10 @@ export default function LoginPage() {
       if (!data.session) {
         const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
         if (signInErr) setConfirmSent(true);
-        else markSignIn(); // → the welcome plays on the first screen inside
+        else onSignedIn();
         // success → the redirect effect handles routing
       } else {
-        markSignIn();
+        onSignedIn();
       }
       // Otherwise a session already exists → the redirect effect handles it.
     } else {
@@ -171,7 +182,7 @@ export default function LoginPage() {
       // Success → the first screen on the other side greets them with their
       // university (components/SchoolIntro.tsx), then remember the email (only)
       // so this device prefills it next time; the redirect effect does the rest.
-      markSignIn();
+      onSignedIn();
       try {
         localStorage.setItem(REMEMBER_KEY, JSON.stringify({ email }));
       } catch {
@@ -188,7 +199,7 @@ export default function LoginPage() {
       page, so anything after it may never run. Taken back if the call refuses
       to start, which is the only way we are still here to do it.
     */
-    markSignIn();
+    onSignedIn();
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: { redirectTo: `${window.location.origin}/auth/callback` },

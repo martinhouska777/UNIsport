@@ -18,6 +18,7 @@ import { createClient, hasSupabaseEnv } from "@/lib/supabase/client";
 import type { OnboardingProfile } from "@/lib/onboarding";
 import { getUniversity } from "@/lib/themes";
 import { universityForEmail } from "@/lib/universityEmail";
+import { readDemoSchool, rollDemoSchool } from "@/lib/demoSchool";
 import type { VarsityAthleteProfile } from "@/lib/varsity/athleteProfile";
 import { defaultUnits, type Units } from "@/lib/varsity/units";
 import { clearMembershipCache } from "@/lib/varsity/membership";
@@ -54,6 +55,13 @@ type AppState = {
     and dropped on logout so the next person starts at their own school.
   */
   setUniversity: (key: string) => void;
+  /*
+    Roll the demo school (lib/demoSchool.ts). Called by the sign-in screen the
+    moment a sign-in works, so an account whose address we don't recognise
+    lands on a DIFFERENT university each time — the white-label promise, seen
+    rather than described. Ignored entirely for a real university address.
+  */
+  rollUniversity: () => void;
   logout: () => Promise<void>;
   saveOnboarding: (profile: OnboardingProfile) => Promise<void>;
   /*
@@ -88,32 +96,53 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [studentReady, setStudentReady] = useState(false);
   const [varsityReady, setVarsityReady] = useState(false);
-  const [universityOverride, setUniversityOverride] = useState<string | null>(null);
+  /*
+    The two remembered schools, read after mount (localStorage) so the server
+    and the first client render agree: `chosen` is the Settings switcher's
+    pick, `demo` is the one rolled at the last sign-in. Held together in one
+    piece of state so this stays a single read.
+  */
+  const [remembered, setRemembered] = useState<{ chosen: string | null; demo: string | null }>({
+    chosen: null,
+    demo: null,
+  });
 
-  // The demo switcher's saved choice — read after mount (localStorage), so the
-  // server and the first client render agree on the default.
   useEffect(() => {
     const saved = localStorage.getItem(UNIVERSITY_STORAGE_KEY);
-    if (saved && getUniversity(saved)) setUniversityOverride(saved);
+    setRemembered({
+      chosen: saved && getUniversity(saved) ? saved : null,
+      demo: readDemoSchool(),
+    });
   }, []);
 
   const setUniversity = (key: string) => {
     if (!getUniversity(key)) return;
-    setUniversityOverride(key);
+    setRemembered((current) => ({ ...current, chosen: key }));
     localStorage.setItem(UNIVERSITY_STORAGE_KEY, key);
+  };
+
+  const rollUniversity = () => {
+    const next = rollDemoSchool();
+    setRemembered((current) => ({ ...current, demo: next }));
   };
 
   /*
     WHICH SCHOOL — the signed-in address decides, every render.
 
-    Nothing is stored for this and nothing has to be: the address is on the
-    account, so the answer follows you to any phone or browser you sign in on,
-    and it can never drift out of date. The demo switcher wins while it is set;
-    a school we don't recognise falls back to the default rather than shutting
-    anyone out.
+    Nothing is stored for the real answer and nothing has to be: the address is
+    on the account, so it follows you to any phone or browser you sign in on,
+    and it can never drift out of date.
+
+    The order matters. The Settings switcher wins, because it is someone asking
+    out loud. The ADDRESS comes next, and beats the dice — a real Harvard
+    student is never shown Yale. Only an address we don't recognise reaches the
+    demo roll, and only if that has never run do we fall back to the default.
   */
   const universityKey =
-    universityOverride ?? universityForEmail(session?.user.email)?.key ?? DEFAULT_UNIVERSITY;
+    remembered.chosen ??
+    universityForEmail(session?.user.email)?.key ??
+    remembered.demo ??
+    DEFAULT_UNIVERSITY;
 
   // Read both setup flags for a user from the DB (resilient if the table or the
   // column doesn't exist yet → treated as "set up neither side").
@@ -192,7 +221,8 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     setSession(null);
     // Drop the demo switcher's choice: the next person to sign in on this
     // browser should land at THEIR school, not at whatever was being demoed.
-    setUniversityOverride(null);
+    // The rolled demo school stays — it is what stops the dice repeating.
+    setRemembered((current) => ({ ...current, chosen: null }));
     try {
       localStorage.removeItem(UNIVERSITY_STORAGE_KEY);
     } catch {
@@ -290,6 +320,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         varsityReady,
         universityKey,
         setUniversity,
+        rollUniversity,
         logout,
         saveOnboarding,
         saveVarsitySetup,
