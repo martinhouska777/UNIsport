@@ -93,7 +93,7 @@ export default function InlineEdit({
         type="button"
         onClick={start}
         aria-label={`Edit ${ariaLabel}`}
-        className="shrink-0 rounded-full p-1 text-muted transition-colors hover:bg-muted/20"
+        className="tap44 shrink-0 rounded-full p-1 text-muted transition-colors hover:bg-muted/20"
       >
         <IconPencil size={multiline ? 14 : 12} />
       </button>

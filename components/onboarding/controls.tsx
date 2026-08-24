@@ -30,7 +30,10 @@ export function Pill({
       type="button"
       onClick={onClick}
       aria-pressed={selected}
-      className={`rounded-full border px-3.5 py-2 text-[13px] transition-colors ${
+      /* tap44: a pill is ~34px tall, under the 44px both Apple and Google ask
+         for. The class grows only the invisible hit area (app/globals.css), so
+         chips look exactly as before but survive a thumb at a squat rack. */
+      className={`tap44 rounded-full border px-3.5 py-2 text-[13px] transition-colors ${
         selected ? selectedClass : "border-border bg-surface-2 text-text"
       }`}
     >

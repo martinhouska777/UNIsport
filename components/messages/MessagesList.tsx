@@ -112,7 +112,7 @@ export default function MessagesList({
               key={t}
               type="button"
               onClick={() => setTab(t)}
-              className={`flex-1 py-2 text-center text-xs font-medium capitalize transition-colors ${
+              className={`min-h-11 flex-1 py-2 text-center text-xs font-medium capitalize transition-colors ${
                 tab === t ? "bg-text text-background" : "bg-surface-2 text-muted"
               }`}
             >

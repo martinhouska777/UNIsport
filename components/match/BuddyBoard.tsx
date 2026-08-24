@@ -246,7 +246,7 @@ export default function BuddyBoard() {
                 <button
                   type="button"
                   onClick={() => remove(m.id)}
-                  className="rounded-full border border-border px-3 py-1.5 text-[12px] text-muted"
+                  className="tap44 rounded-full border border-border px-3 py-1.5 text-[12px] text-muted"
                 >
                   Remove
                 </button>

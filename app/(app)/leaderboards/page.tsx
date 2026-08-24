@@ -332,7 +332,7 @@ export default function LeaderboardsPage() {
             key={b.key}
             type="button"
             onClick={() => setBoard(b.key)}
-            className={`flex-shrink-0 rounded-full border px-3.5 py-1.5 text-[12px] font-medium transition-colors ${
+            className={`tap44 flex-shrink-0 rounded-full border px-3.5 py-1.5 text-[12px] font-medium transition-colors ${
               board === b.key
                 ? "border-text bg-text text-background"
                 : "border-border bg-surface text-muted"

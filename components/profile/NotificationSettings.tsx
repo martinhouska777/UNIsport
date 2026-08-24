@@ -149,7 +149,7 @@ export default function NotificationSettings({
               type="button"
               onClick={sendSample}
               disabled={busy}
-              className="rounded-full border border-border bg-surface px-3.5 py-1.5 text-[11px] font-medium text-muted disabled:opacity-50"
+              className="tap44 rounded-full border border-border bg-surface px-3.5 py-1.5 text-[11px] font-medium text-muted disabled:opacity-50"
             >
               Send a test
             </button>
@@ -157,7 +157,7 @@ export default function NotificationSettings({
               type="button"
               onClick={disable}
               disabled={busy}
-              className="rounded-full border border-border bg-surface-2 px-3.5 py-1.5 text-[11px] font-medium text-text disabled:opacity-50"
+              className="tap44 rounded-full border border-border bg-surface-2 px-3.5 py-1.5 text-[11px] font-medium text-text disabled:opacity-50"
             >
               {busy ? "…" : "Turn off"}
             </button>

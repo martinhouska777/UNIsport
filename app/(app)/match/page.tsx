@@ -267,7 +267,7 @@ function MatchScreen() {
                  the screen it just switched to (lib/tour.ts). */
               data-tour={`match-tab-${s.key}`}
               onClick={() => setTab(s.key)}
-              className={`flex-1 py-2 text-xs font-medium transition-colors ${
+              className={`min-h-11 flex-1 py-2 text-xs font-medium transition-colors ${
                 tab === s.key ? "bg-text text-background" : "bg-surface-2 text-muted"
               }`}
             >

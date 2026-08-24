@@ -255,7 +255,7 @@ export default function GymsPage() {
               <button
                 key={f.key}
                 onClick={() => setFilter(f.key)}
-                className={`rounded-full px-3.5 py-1.5 text-[11px] font-medium transition-colors ${
+                className={`tap44 rounded-full px-3.5 py-1.5 text-[11px] font-medium transition-colors ${
                   active
                     ? "bg-text text-background"
                     : "border border-border bg-surface-2 text-muted"

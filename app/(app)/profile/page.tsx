@@ -511,7 +511,7 @@ export default function ProfilePage() {
           <button
             type="button"
             onClick={() => setEditingPrefs(true)}
-            className="flex items-center gap-1 rounded-full px-1.5 py-1 text-[11px] font-medium text-primary transition-colors hover:bg-primary-tint"
+            className="tap44 flex items-center gap-1 rounded-full px-1.5 py-1 text-[11px] font-medium text-primary transition-colors hover:bg-primary-tint"
           >
             <IconPencil size={11} />
             Edit answers

@@ -133,7 +133,7 @@ function FilterChip({
     <button
       type="button"
       onClick={onClick}
-      className={`flex-shrink-0 rounded-full border px-3 py-1.5 text-[12px] font-medium ${
+      className={`tap44 flex-shrink-0 rounded-full border px-3 py-1.5 text-[12px] font-medium ${
         active ? "border-primary bg-primary-tint text-primary" : "border-border bg-surface text-muted"
       }`}
     >
