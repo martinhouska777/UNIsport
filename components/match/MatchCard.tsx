@@ -1,8 +1,10 @@
 import type { Match } from "@/lib/supabase/matching";
 import { matchTier } from "@/lib/matchTier";
 import { topMatchReasons } from "@/lib/matchReasons";
-import { IconUser } from "@/components/icons";
 import Button from "@/components/ui/Button";
+import InitialsAvatar from "@/components/ui/InitialsAvatar";
+import { useAppState } from "@/components/AppState";
+import { houseColorsFor } from "@/lib/gyms";
 
 /*
   One result card in the Match grid: avatar block with a compatibility badge,
@@ -24,6 +26,10 @@ export default function MatchCard({
   max: number; // 100 for browse, 92 for session search
   onView?: (m: Match) => void;
 }) {
+  // Their house's own colours, when they gave a house — see InitialsAvatar.
+  const { universityKey } = useAppState();
+  const houseColors = houseColorsFor(universityKey, match.residence);
+
   // A qualitative tier, not a raw percentage — see lib/matchTier.ts for why.
   const tier = matchTier(match.score, max);
   const subtitle = [match.residence, levelLabel(match.level)]
@@ -35,9 +41,7 @@ export default function MatchCard({
     <div className="overflow-hidden rounded-2xl border border-border bg-surface">
       {/* Avatar block + compatibility badge */}
       <div className="relative flex h-24 items-center justify-center bg-gradient-to-br from-surface-2 to-background">
-        <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-primary bg-primary-tint text-primary">
-          <IconUser size={20} />
-        </div>
+        <InitialsAvatar name={match.name} size={48} colors={houseColors} />
         {tier && (
           <span className="absolute right-2 top-2 rounded-lg border border-border bg-surface px-2 py-0.5 text-[11px] font-semibold text-text">
             {tier.label}

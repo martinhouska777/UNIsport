@@ -134,7 +134,7 @@ export default function ChannelThread({
                 </div>
               )}
               <div className="flex items-start gap-2.5">
-                <Avatar size={32} />
+                <Avatar size={32} name={m.senderName} />
                 <div className="min-w-0 flex-1">
                   <div className="mb-1 flex items-baseline gap-1.5">
                     <span className="text-[12px] font-medium text-text">{m.senderName || "Member"}</span>

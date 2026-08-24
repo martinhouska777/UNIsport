@@ -17,6 +17,7 @@ export default function InlineEdit({
   maxLength,
   multiline = false,
   textClassName = "",
+  validate,
 }: {
   value: string;
   onChange: (v: string) => void;
@@ -25,15 +26,30 @@ export default function InlineEdit({
   maxLength?: number;
   multiline?: boolean;
   textClassName?: string;
+  /** Returns why the draft can't be saved, or null when it's fine. */
+  validate?: (v: string) => string | null;
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
+  // The reason the current draft was refused, shown under the field.
+  const [error, setError] = useState<string | null>(null);
 
   const start = () => {
     setDraft(value);
+    setError(null);
     setEditing(true);
   };
+  /*
+    A rejected draft stays open with the reason under it rather than being
+    silently discarded — losing what someone typed is worse than the mistake.
+  */
   const commit = () => {
+    const why = validate ? validate(draft) : null;
+    if (why) {
+      setError(why);
+      return;
+    }
+    setError(null);
     setEditing(false);
     if (draft !== value) onChange(draft);
   };
@@ -63,19 +79,31 @@ export default function InlineEdit({
       );
     }
     return (
-      <input
-        autoFocus
-        value={draft}
-        maxLength={maxLength}
-        aria-label={ariaLabel}
-        onChange={(e) => setDraft(e.target.value)}
-        onBlur={commit}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") commit();
-          if (e.key === "Escape") setEditing(false);
-        }}
-        className={`border-b border-primary bg-transparent text-base text-text focus:outline-none ${textClassName}`}
-      />
+      <span className="inline-flex flex-col items-center">
+        <input
+          autoFocus
+          value={draft}
+          maxLength={maxLength}
+          aria-label={ariaLabel}
+          aria-invalid={error ? true : undefined}
+          onChange={(e) => {
+            setDraft(e.target.value);
+            if (error) setError(null);
+          }}
+          onBlur={commit}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") commit();
+            if (e.key === "Escape") {
+              setError(null);
+              setEditing(false);
+            }
+          }}
+          className={`border-b bg-transparent text-base text-text focus:outline-none ${
+            error ? "border-danger" : "border-primary"
+          } ${textClassName}`}
+        />
+        {error && <span className="mt-1 text-[11px] text-danger">{error}</span>}
+      </span>
     );
   }
 

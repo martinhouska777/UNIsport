@@ -120,6 +120,13 @@ export default function MessagesList({
             </button>
           ))}
         </div>
+        {/* One line saying what the word means. "Community" on its own was a
+            tab nobody could guess the contents of (#24 in the audit). */}
+        <p className="px-0.5 pt-1.5 text-[11px] text-muted">
+          {tab === "direct"
+            ? "Your one-to-one conversations."
+            : "Open channels for the whole campus — join one to post."}
+        </p>
       </div>
 
       {/* Search */}
@@ -189,7 +196,7 @@ function DirectList({
           onClick={() => onOpen(c)}
           className="flex w-full items-center gap-3 border-b border-border px-3.5 py-3 text-left"
         >
-          <Avatar size={48} />
+          <Avatar size={48} name={c.otherName} />
           <div className="min-w-0 flex-1">
             <div className="flex items-center justify-between gap-2">
               <span className="truncate text-[13px] font-medium text-text">{c.otherName}</span>
@@ -226,6 +233,17 @@ function CommunityList({
   }
   const joined = list.filter((c) => c.joined);
   const discover = list.filter((c) => !c.joined);
+
+  // With no channels at all this used to render an empty box under an
+  // unexplained tab. Say what the tab is for instead.
+  if (list.length === 0) {
+    return (
+      <div className="px-6 py-16 text-center text-sm text-muted">
+        No channels yet. Community is where campus-wide chats live — they’ll
+        appear here as they open.
+      </div>
+    );
+  }
 
   return (
     <div>

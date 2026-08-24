@@ -47,6 +47,7 @@ import {
   gymSplits,
   verifiedGyms,
   MAX_TOP_GYMS,
+  nameError,
   type OnboardingProfile,
 } from "@/lib/onboarding";
 import {
@@ -363,6 +364,8 @@ export default function ProfilePage() {
             ariaLabel="name"
             placeholder="Your name"
             maxLength={40}
+            /* The name everyone else sees — it has to be one (lib/onboarding). */
+            validate={nameError}
             textClassName="text-base font-medium text-text"
           />
 

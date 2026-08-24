@@ -333,6 +333,24 @@ export const countries: string[] = [
 // ---- The collected profile (one object for the whole flow) -------------------
 // Clean field names — matching will read these later. Optional fields fill in as
 // the user moves through the screens (or are left empty on skippable screens).
+/*
+  DISPLAY NAME CHECK — the one field everyone else sees.
+
+  A profile in the audit was called ";plokjh" because the field accepted any
+  keystroke at all (#24). This stays deliberately permissive: names come in
+  every alphabet, so it doesn't demand a surname, capital letters, or Latin
+  characters — it only rejects what can't be part of a name in any of them.
+  Returns the message to show, or null when the name is fine.
+*/
+const NOT_IN_A_NAME = /[0-9;:,/\\|<>[\]{}()!@#$%^&*_=+~`"?]/;
+
+export function nameError(value: string): string | null {
+  const v = value.trim();
+  if (v.length < 2) return "Please use at least 2 characters.";
+  if (NOT_IN_A_NAME.test(v)) return "A name can’t contain numbers or symbols.";
+  return null;
+}
+
 export type OnboardingProfile = {
   // Screen 1 — Basics
   name: string;

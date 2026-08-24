@@ -533,6 +533,26 @@ export function gymsFor(universityKey: string): Gym[] {
   return gymsByUniversity[universityKey] ?? gymsByUniversity.harvard;
 }
 
+/*
+  The two identity colors of the house/college someone lives in, found by the
+  residence they picked in onboarding ("Adams" → the Adams house gym's colors).
+
+  Freshmen live in Yard dorms, which have no gym and no colors, so this returns
+  null for them — callers fall back to the neutral theme tint. These are per-
+  entity CONTENT colors and are applied via inline style, never as a hardcoded
+  color inside a component (rule 1).
+*/
+export function houseColorsFor(
+  universityKey: string,
+  residence: string | null | undefined,
+): HouseColors | null {
+  if (!residence) return null;
+  const house = gymsFor(universityKey).find(
+    (g) => g.kind === "house" && g.name === residence,
+  );
+  return house?.houseColors ?? null;
+}
+
 export const gyms: Gym[] = gymsByUniversity.harvard;
 
 const allGyms: Gym[] = Object.values(gymsByUniversity).flat();

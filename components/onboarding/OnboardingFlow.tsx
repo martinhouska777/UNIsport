@@ -44,6 +44,7 @@ import {
   gymMentorship,
   notificationItems,
   emptyProfile,
+  nameError,
   type OnboardingProfile,
 } from "@/lib/onboarding";
 import { subscribeToPush, sendTestNotification } from "@/lib/push/client";
@@ -122,7 +123,9 @@ export default function OnboardingFlow() {
   const canContinue = (): boolean => {
     switch (meta.key) {
       case "basics":
-        return profile.name.trim() !== "" && profile.classYear !== "" && profile.sex !== "";
+        return (
+          nameError(profile.name) === null && profile.classYear !== "" && profile.sex !== ""
+        );
       case "residence":
         return profile.residence !== "";
       case "topgyms":
@@ -192,6 +195,11 @@ export default function OnboardingFlow() {
                 placeholder="e.g. Martin Novák"
                 ariaLabel="Your name"
               />
+              {/* Only complains once something has been typed — an empty field
+                  on arrival is not a mistake, it's the starting state. */}
+              {profile.name.trim() !== "" && nameError(profile.name) && (
+                <p className="mt-1.5 text-[11px] text-danger">{nameError(profile.name)}</p>
+              )}
             </div>
 
             <FieldLabel>Class year</FieldLabel>
