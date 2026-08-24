@@ -14,13 +14,12 @@
   middle of the mark. Nothing is redrawn or re-angled; the film's last frame is
   simply framed like a badge.
 
-  The plain shield (VarsityShield) is the university's mark and stands for the
-  normal student app; this one, with the oars, stands for Varsity Mode.
+  The crest on its own (UniversityCrest) is the university's mark and stands for
+  the normal student app; this one, with the oars, stands for Varsity Mode.
 
-  Colours: the shield keeps its theme tokens (primary = crimson, primary-
-  contrast = white for the H, accent for the thin outline), so the mark
-  re-skins with the theme and hardcodes nothing (rule 1); the blade colours are
-  the school's, from data.
+  Colours: the crest keeps its theme tokens (primary = crimson field, primary-
+  contrast = the border and the letter), so the mark re-skins with the theme and
+  hardcodes nothing (rule 1); the blade colours are the school's, from data.
 */
 import type { CSSProperties } from "react";
 import { useAppState } from "@/components/AppState";
@@ -34,7 +33,7 @@ const STAGE = 320; // the intro's h-[320px] w-[320px] box
 const OAR_W = 41; // <OarMark width={41} height={250} />, centred on the stage
 const OAR_H = 250;
 const OAR_DEG = 32; // rotate-[±32deg], about the stage's centre
-const SHIELD = 92; // <VarsityShield size={92} />
+const SHIELD = 92; // <UniversityCrest size={92} />
 const SHIELD_TOP = 86; // its top-[86px]; horizontally centred
 
 /* The crop. Worked out, not eyeballed.
@@ -89,8 +88,7 @@ export default function VarsityCrest({ size = 28 }: { size?: number }) {
       ))}
 
       {/* The crest, over the crossing — the DRAWN one (Campus Crests compact
-          cut), nested at the same spot and height the old shield held. The
-          intro still shows the old shield until its own review. */}
+          cut), nested at the same spot and height the intro drops it onto. */}
       <SchoolCrest
         crest={crestFor(universityKey)}
         x={(STAGE - crestW) / 2}

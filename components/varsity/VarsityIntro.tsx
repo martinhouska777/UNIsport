@@ -18,7 +18,7 @@
   OarMark (shared with the Varsity Mode mark, VarsityCrest). 250px tall here.
 */
 import { useEffect, useState } from "react";
-import VarsityShield from "@/components/varsity/VarsityShield";
+import UniversityCrest from "@/components/UniversityCrest";
 import { useAppState } from "@/components/AppState";
 import { getUniversity } from "@/lib/themes";
 import OarMark from "@/components/varsity/OarMark";
@@ -85,10 +85,13 @@ export default function VarsityIntro() {
           </div>
         </div>
 
-        {/* Crest drops from the top onto the crossing point. */}
+        {/* Crest drops from the top onto the crossing point. The DRAWN crest
+            (lib/crests.ts) wearing the theme pair — the same one the whole app
+            wears, and at the same 92px/86px the frozen mark (VarsityCrest) uses,
+            so the film ends on exactly the icon you keep seeing afterwards. */}
         <div className="absolute inset-x-0 top-[86px] flex justify-center">
           <div className="v-crest-drop">
-            <VarsityShield size={92} />
+            <UniversityCrest size={92} />
           </div>
         </div>
 

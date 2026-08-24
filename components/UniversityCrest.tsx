@@ -13,8 +13,7 @@ import { useAppState } from "@/components/AppState";
   in light/dark without knowing anything about either.
 
   This replaced VarsityShield (the old hand-drawn shield with a hardcoded H)
-  everywhere except the Varsity intro animation, which the owner is reviewing
-  separately and still shows the old drawing.
+  everywhere, the Varsity intro animation included — that file is gone.
 
   `size` is the crest's HEIGHT in px; the width follows the 100:116 drawing.
 */

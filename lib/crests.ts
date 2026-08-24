@@ -23,7 +23,17 @@ export type CrestSpec = {
   motif: string;
   /** The letter's font-size in viewBox units. */
   fontSize: number;
-  /** The letter's baseline — on the optical centre, above the geometric one. */
+  /**
+   * The letter's baseline, in viewBox units. NOT eyeballed: each one seats the
+   * letter's INK (its cap box, measured in Playfair 900 — not the em box, which
+   * carries empty ascent) in the middle of the room the letter actually has:
+   *   • no motif  → the middle of the inner shield's area (y ≈ 53). The shield
+   *     tapers to a point, so its area sits HIGH — centring on the box middle
+   *     (y = 58) is what made the letter look like it had slipped down.
+   *   • motif      → the middle of what the motif leaves over, and then pulled
+   *     back up until the letter's bottom corners are still inside the border
+   *     (the shield is narrow down there, so the free area alone lies too low).
+   */
   letterY: number;
 };
 
@@ -36,25 +46,25 @@ export const CREST_SHIELD_PATH = "M8 6 H92 V50 C92 82 76 102 50 110 C24 102 8 82
   four are letter-only, which is what compact means.
 */
 export const crests: Record<string, CrestSpec> = {
-  harvard: { letter: "H", motif: "", fontSize: 64, letterY: 82 },
-  yale: { letter: "Y", motif: "", fontSize: 74, letterY: 82 },
+  harvard: { letter: "H", motif: "", fontSize: 64, letterY: 76 },
+  yale: { letter: "Y", motif: "", fontSize: 74, letterY: 80 },
   princeton: {
     letter: "P",
     motif: "M13 15 H87 V22 H13 Z M13 28 H87 V35 H13 Z",
     fontSize: 66,
-    letterY: 89,
+    letterY: 86,
   },
-  penn: { letter: "P", motif: "", fontSize: 74, letterY: 83 },
-  brown: { letter: "B", motif: "", fontSize: 72, letterY: 82 },
+  penn: { letter: "P", motif: "", fontSize: 74, letterY: 80 },
+  brown: { letter: "B", motif: "", fontSize: 72, letterY: 79 },
   columbia: {
     // the skyline along the base, and the letter seated higher to clear it
     letter: "C",
     motif: "M18 102 V84 H36 V73 H50 V80 H64 V86 H80 V102 Z",
     fontSize: 64,
-    letterY: 68,
+    letterY: 63,
   },
-  cornell: { letter: "C", motif: "M43 30 V19 L50 13 L57 19 V30 Z", fontSize: 62, letterY: 87 },
-  dartmouth: { letter: "D", motif: "M50 14 L65 32 H35 Z", fontSize: 60, letterY: 87 },
+  cornell: { letter: "C", motif: "M43 30 V19 L50 13 L57 19 V30 Z", fontSize: 62, letterY: 85 },
+  dartmouth: { letter: "D", motif: "M50 14 L65 32 H35 Z", fontSize: 60, letterY: 84 },
 };
 
 export function crestFor(key: string): CrestSpec {
