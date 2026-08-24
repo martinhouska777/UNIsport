@@ -48,3 +48,6 @@ scripts/landing/*.png
 scripts/landing/*.html
 scripts/landing/shots.json
 scripts/landing/raw/
+
+# The Vercel CLI's local project link (env files are already covered above).
+.vercel
