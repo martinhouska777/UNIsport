@@ -19,6 +19,7 @@ import type { OnboardingProfile } from "@/lib/onboarding";
 import { getUniversity } from "@/lib/themes";
 import type { VarsityAthleteProfile } from "@/lib/varsity/athleteProfile";
 import { defaultUnits, type Units } from "@/lib/varsity/units";
+import { clearMembershipCache } from "@/lib/varsity/membership";
 
 /*
   One account, two capabilities. `studentReady` and `varsityReady` are
@@ -171,6 +172,9 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     setSession(null);
     setStudentReady(false);
     setVarsityReady(false);
+    // The squad answer is remembered per account (lib/varsity/membership); drop
+    // it so the next person to sign in on this browser is asked afresh.
+    clearMembershipCache();
   };
 
   const saveOnboarding = async (profile: OnboardingProfile) => {

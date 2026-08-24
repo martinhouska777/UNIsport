@@ -47,16 +47,18 @@ export const roleLabel: Record<VarsityRole, string> = {
 
 /* ── Who am I? ──────────────────────────────────────────────────────────────
    Returns null when this account is on no team at all — which is the normal
-   case for a regular student, and what hides Varsity from the mode switcher. */
+   case for a regular student, and what hides Varsity from the mode switcher.
+
+   THROWS if the lookup itself fails. It used to swallow the error and return
+   null, which made a database blip indistinguishable from "you are on no
+   team" — and the screens act on that answer by sending you to /join, i.e. a
+   member gets told to go find an invite. Callers go through loadMembership()
+   below, which retries and never remembers a failure. */
 export async function fetchMyMembership(userId: string | null): Promise<Membership | null> {
   if (!userId || !hasSupabaseEnv()) return null;
   const supabase = createClient();
   const { data, error } = await supabase.rpc("varsity_my_membership");
-  if (error) {
-    // A database that hasn't run varsity_teams.sql yet just means "no team".
-    console.error("fetchMyMembership:", error.message);
-    return null;
-  }
+  if (error) throw new Error(error.message);
   const row = (data as { team_id: string; team_name: string; role: string; status: string }[])?.[0];
   if (!row) return null;
   return {
@@ -143,4 +145,69 @@ export async function setMemberRole(
     p_role: role,
   });
   return error ? { error: error.message } : {};
+}
+
+/* ── ONE ANSWER PER ACCOUNT ─────────────────────────────────────────────────
+   Eleven screens ask "am I on a squad?" and they each used to ask the database
+   themselves, every mount, each starting from its own "don't know yet — so,
+   no team". That blank start is the bug the owner hit: the mode switcher acts
+   on the answer, and an unknown answer looked exactly like being on no team,
+   so tapping Varsity before the reply landed sent a member to /join.
+
+   So the answer is remembered here, per account, and handed to every later
+   asker straight away; askers that overlap share one request. A FAILURE is
+   never remembered and is retried — a blip must not read as being thrown out
+   of your own squad for the rest of the session. */
+
+export type MembershipAnswer = {
+  membership: Membership | null;
+  /** True only after the lookup has been tried and kept failing. */
+  failed: boolean;
+};
+
+let cache: { userId: string; answer: MembershipAnswer } | null = null;
+let inFlight: { userId: string; promise: Promise<MembershipAnswer> } | null = null;
+
+/** The answer we already hold for this account, or null if we hold none. */
+export function peekMembership(userId: string | null): MembershipAnswer | null {
+  return userId && cache?.userId === userId ? cache.answer : null;
+}
+
+/** Throw away what we hold — on sign-out, and when something changed it. */
+export function clearMembershipCache() {
+  cache = null;
+  inFlight = null;
+}
+
+const RETRY_DELAYS_MS = [300, 900]; // two more tries before giving up
+
+async function ask(userId: string): Promise<MembershipAnswer> {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      const membership = await fetchMyMembership(userId);
+      cache = { userId, answer: { membership, failed: false } };
+      return cache.answer;
+    } catch (e) {
+      if (attempt >= RETRY_DELAYS_MS.length) {
+        console.error("membership lookup failed:", e);
+        return { membership: null, failed: true }; // NOT cached
+      }
+      await new Promise((r) => setTimeout(r, RETRY_DELAYS_MS[attempt]));
+    }
+  }
+}
+
+/** Ask, reusing what we hold. `force` re-asks the database (polling for an
+    approval, or after changing the squad). */
+export function loadMembership(userId: string, force = false): Promise<MembershipAnswer> {
+  if (!force) {
+    const held = peekMembership(userId);
+    if (held) return Promise.resolve(held);
+    if (inFlight?.userId === userId) return inFlight.promise;
+  }
+  const promise = ask(userId).finally(() => {
+    if (inFlight?.promise === promise) inFlight = null;
+  });
+  inFlight = { userId, promise };
+  return promise;
 }

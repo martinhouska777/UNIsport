@@ -41,7 +41,7 @@ export default function ModeSwitcherSheet({
 }) {
   const router = useRouter();
   const { studentReady } = useAppState();
-  const { membership, isMember, isPending } = useMembership();
+  const { membership, isMember, isPending, loading: squadLoading } = useMembership();
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -50,6 +50,9 @@ export default function ModeSwitcherSheet({
   }, [onClose]);
 
   const go = (mode: "student" | "varsity") => {
+    // Nothing to act on yet — leave the sheet OPEN, showing "Checking your
+    // squad…", so the tap visibly did nothing instead of quietly closing.
+    if (mode === "varsity" && squadLoading) return;
     onClose();
     if (mode === "student") {
       // Never set up? This row is the offer to do it.
@@ -58,7 +61,11 @@ export default function ModeSwitcherSheet({
       return;
     }
     // Varsity only opens for an approved member; everyone else is pointed at
-    // the step that would actually get them in.
+    // the step that would actually get them in. While we do not YET know which
+    // of those they are, we send them NOWHERE: "no answer yet" used to look
+    // like "on no team", so tapping this before the lookup landed threw a
+    // member out to /join. The row is inert until the answer is in (guarded
+    // above, before the sheet closes).
     if (isMember) {
       if (current !== "varsity") router.push(VARSITY_HOME);
     } else {
@@ -66,12 +73,16 @@ export default function ModeSwitcherSheet({
     }
   };
 
-  // What the varsity row says, given where this person stands.
-  const varsityLine = isMember
-    ? `${membership!.teamName} · ${roleLabel[membership!.role]}`
-    : isPending
-      ? "Waiting for your captain to let you in"
-      : "Join with an invite link from your team";
+  // What the varsity row says, given where this person stands. Until the squad
+  // lookup answers we say so, rather than showing the "go find an invite" line
+  // to someone who may well be on a squad.
+  const varsityLine = squadLoading
+    ? "Checking your squad…"
+    : isMember
+      ? `${membership!.teamName} · ${roleLabel[membership!.role]}`
+      : isPending
+        ? "Waiting for your captain to let you in"
+        : "Join with an invite link from your team";
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col justify-end">
