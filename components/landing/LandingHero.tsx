@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRef, type CSSProperties } from "react";
 import HeroFade from "@/components/landing/HeroFade";
 import HeroPhones from "@/components/landing/HeroPhones";
+import SchoolCrest from "@/components/landing/SchoolCrest";
 import Wordmark from "@/components/landing/Wordmark";
 import { useSchoolCycle } from "@/components/landing/useSchoolCycle";
 import { accent, HERO_CYCLE_MS } from "@/lib/landingSchools";
@@ -132,13 +133,11 @@ export default function LandingHero({ doors: showDoors = true }: { doors?: boole
             href="/login"
             className="group inline-flex items-center justify-center gap-2 rounded-full bg-(--sc) py-4 pr-7 pl-5 text-[15px] font-semibold tracking-tight text-(--sc-ink) transition-[transform,background-color,color] duration-700 ease-in-out hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-l-text motion-reduce:transition-none"
           >
-            {/* The school showing, as its letter. The intro wears eight
+            {/* The school showing, as its crest. The intro wears eight
                 universities' colours; this is where it says whose — the owner's
                 "you see your own university right there". Decorative: the
                 button's words are the button. */}
-            <span aria-hidden className="l-cta-mark font-mono">
-              {school.letter}
-            </span>
+            <SchoolCrest school={school} className="l-cta-mark" />
             {hero.primaryCta}
             <Arrow className="transition-transform group-hover:translate-x-1" />
           </Link>

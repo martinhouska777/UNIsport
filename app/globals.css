@@ -623,41 +623,31 @@
   transition: background-color 700ms ease-in-out;
 }
 
-/* THE SCHOOL'S LETTER, ON THE BUTTON. It stood in a row of eight under each
-   phone until the owner moved it here (2026-08-23) — "you see your own
-   university right there", and the phones got that height back. Sized in em,
-   so it belongs to the button's type rather than to a number. */
+/* THE SCHOOL'S CREST, ON THE BUTTON. It stood in a row of eight letters under
+   each phone until the owner moved it here (2026-08-23) — "you see your own
+   university right there" — and on 2026-08-24 the placeholder CSS shield
+   became the real drawing (SchoolCrest, the Campus Crests compact cut).
+   Sized in em, so it belongs to the button's type rather than to a number;
+   1.5 × 1.74 is the crest's own 100:116. */
 .l-cta-mark {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  display: block;
   width: 1.5em;
-  height: 1.72em;
+  height: 1.74em;
   margin-right: 0.15em;
-  /* A SHIELD, not a disc. The school does not just tint the button, it wears
-     a crest on it. The shape is ours - a plain heater shield - so no
-     university's own arms ever enter the app; only its letter and its
-     colour do. */
-  clip-path: polygon(
-    0% 0%, 100% 0%, 100% 50%, 96% 66%, 86% 81%, 68% 93%, 50% 100%,
-    32% 93%, 14% 81%, 4% 66%, 0% 50%
-  );
   /* The button's two colours, swapped: the label's ink becomes the shield and
-     the school's colour becomes the letter. An outlined shape at this size was
-     invisible on the button's own colour. The pair is the same one accent()
-     already guarantees at 4.5:1, so the letter is as readable as the label. */
-  background-color: var(--sc-ink);
-  color: var(--sc);
-  /* The point at the bottom puts the optical centre above the box's, so the
-     letter is nudged up rather than centred. */
-  padding-bottom: 0.22em;
-  font-size: 0.74em;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  transition: background-color 700ms ease-in-out, color 700ms ease-in-out;
+     the school's colour draws the border, motif and letter — the design
+     piece's own button test wears the crest exactly this way round. The pair
+     is the same one accent() already guarantees at 4.5:1, so the crest is as
+     readable as the label. */
+  --crest-field: var(--sc-ink);
+  --crest-mark: var(--sc);
+}
+/* The crest's parts follow the school cycle at the button's own 700ms. */
+.l-crest-part {
+  transition: fill 700ms ease-in-out, stroke 700ms ease-in-out;
 }
 @media (prefers-reduced-motion: reduce) {
-  .l-cta-mark { transition: none; }
+  .l-crest-part { transition: none; }
 }
 
 @media (min-width: 1536px) {

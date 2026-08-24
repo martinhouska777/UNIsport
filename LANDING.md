@@ -137,11 +137,16 @@ button's label clears 4.5:1 against all eight (Yale and Brown need the walk it
 does); `lift()` desaturates as it lightens, or Dartmouth's forest green comes
 back neon mint and Brown's brown comes back tan.
 
-**The school's letter is on the BUTTON**, as a small disc in the label's ink
-(`.l-cta-mark`) — "you see your own university right there". It stood as a row
-of eight under each phone for one cut; moving it here said the same thing once
-instead of twice and gave the phones the height they needed to be readable,
-which is the whole point of a backdrop made of screens.
+**The school's crest is on the BUTTON** (`.l-cta-mark`) — "you see your own
+university right there". It stood as a row of eight letters under each phone
+for one cut; moving it here said the same thing once instead of twice and gave
+the phones the height they needed to be readable, which is the whole point of
+a backdrop made of screens. It was a disc, then a CSS shield; since 2026-08-24
+it is the real drawing — `SchoolCrest.tsx` rendering the compact cut of the
+"Campus Crests" design piece from data in `lib/landingSchools.ts` (shield,
+inset border, Playfair-900 letter, and a motif for the four schools whose
+letter alone is ambiguous), coloured only by `--crest-field`/`--crest-mark`,
+which the button sets to its own pair inverted.
 **The intro ARRIVES** (2026-08-23) — six beats on one clock, in
 `app/globals.css`: the mark, the headline, the two phones rising into their
 lean, the button, the doors, then the school's colour blooming behind the
