@@ -12,7 +12,7 @@
   as primary, Harvard gold as accent. The crimson + white "oar" branding on the
   side rails comes from `primary` + `primaryContrast` (white).
 */
-import type { ThemeTokens } from "@/lib/themes";
+import type { ThemeTokens, University } from "@/lib/themes";
 
 export const varsityTheme: ThemeTokens = {
   background: "#080808",
@@ -53,6 +53,29 @@ export const varsityLightTheme: ThemeTokens = {
   danger: "#dc2626",
   overlayShadow: "0 -10px 30px rgba(15, 15, 25, 0.12)",
 };
+
+/*
+  VARSITY MODE, AT ANOTHER SCHOOL. The two palettes above are Varsity Mode's
+  own CHASSIS — the warm near-black neutrals — wearing Harvard's hues. When
+  the university switches (Settings), only the four brand hues change; the
+  chassis is what makes Varsity Mode feel like Varsity Mode everywhere.
+  Components keep using tokens, so nothing but this mapping knows.
+*/
+const BRAND = ["primary", "primaryLive", "primaryContrast", "accent"] as const;
+
+function wear(chassis: ThemeTokens, school: ThemeTokens | undefined): ThemeTokens {
+  if (!school) return chassis;
+  const out = { ...chassis };
+  for (const k of BRAND) out[k] = school[k];
+  return out;
+}
+
+export function varsityThemeFor(u: University | undefined): { dark: ThemeTokens; light: ThemeTokens } {
+  return {
+    dark: wear(varsityTheme, u?.theme),
+    light: wear(varsityLightTheme, u?.themeLight),
+  };
+}
 
 // Where Varsity Mode opens to, and where its bottom-nav tabs live.
 export const VARSITY_HOME = "/varsity/home";

@@ -19,7 +19,7 @@ import TourGate from "@/components/tour/TourGate";
 import { coachTour } from "@/lib/varsity/coachTour";
 import { useMembership } from "@/components/varsity/useMembership";
 import { canOpenConsole, can } from "@/lib/varsity/membership";
-import { varsityTheme, varsityLightTheme } from "@/lib/varsity/theme";
+import { useVarsityTheme } from "@/components/varsity/useVarsityTheme";
 import { markMode } from "@/lib/varsity/mode";
 
 const TEAM_TAB = "/varsity/coach/team";
@@ -35,6 +35,7 @@ const captainMay = (path: string) => path === TEAM_TAB || path === SETTINGS;
 export default function CoachLayout({ children }: { children: React.ReactNode }) {
   const { ready, loggedIn, varsityReady, userId } = useAppState();
   const { membership, loading } = useMembership();
+  const vTheme = useVarsityTheme();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -70,8 +71,8 @@ export default function CoachLayout({ children }: { children: React.ReactNode })
 
   return (
     <ThemeProvider
-      tokens={varsityTheme}
-      light={varsityLightTheme}
+      tokens={vTheme.dark}
+      light={vTheme.light}
       paintRoot
       className="relative flex h-dvh flex-col overflow-hidden bg-background"
     >

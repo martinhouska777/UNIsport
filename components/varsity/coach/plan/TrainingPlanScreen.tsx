@@ -17,7 +17,7 @@ import { useEffect, useMemo, useState } from "react";
 import Button, { buttonClass } from "@/components/ui/Button";
 import { createPortal } from "react-dom";
 import ThemeProvider from "@/components/ThemeProvider";
-import { varsityTheme, varsityLightTheme } from "@/lib/varsity/theme";
+import { useVarsityTheme } from "@/components/varsity/useVarsityTheme";
 import {
   categories,
   categoryMeta,
@@ -101,6 +101,7 @@ function PublishedBadge() {
 }
 
 export default function TrainingPlanScreen() {
+  const vTheme = useVarsityTheme();
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [sessions, setSessions] = useState<SessionMap>({});
   const [view, setView] = useState<View>({ name: "blocks" });
@@ -322,7 +323,7 @@ export default function TrainingPlanScreen() {
   const confirmModal =
     confirm && typeof document !== "undefined"
       ? createPortal(
-          <ThemeProvider tokens={varsityTheme} light={varsityLightTheme}>
+          <ThemeProvider tokens={vTheme.dark} light={vTheme.light}>
             <div
               className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 px-6"
               onClick={() => setConfirm(null)}
@@ -1037,7 +1038,7 @@ export default function TrainingPlanScreen() {
     // above the coach top bar + nav (escaping main's stacking context) and its
     // colors still resolve.
     return createPortal(
-      <ThemeProvider tokens={varsityTheme} light={varsityLightTheme}>
+      <ThemeProvider tokens={vTheme.dark} light={vTheme.light}>
         {overlay}
       </ThemeProvider>,
       document.body,

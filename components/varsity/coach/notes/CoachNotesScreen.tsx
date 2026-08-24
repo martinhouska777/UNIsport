@@ -16,7 +16,7 @@ import { useEffect, useMemo, useState } from "react";
 import Button, { buttonClass } from "@/components/ui/Button";
 import { createPortal } from "react-dom";
 import ThemeProvider from "@/components/ThemeProvider";
-import { varsityTheme, varsityLightTheme } from "@/lib/varsity/theme";
+import { useVarsityTheme } from "@/components/varsity/useVarsityTheme";
 import {
   fetchTeamRoster,
   fetchNotes,
@@ -105,6 +105,7 @@ function Editor({
   onBack: () => void;
   onSaved: (note: string) => void;
 }) {
+  const vTheme = useVarsityTheme();
   const [text, setText] = useState(initialNote);
   const [busy, setBusy] = useState(false);
   const dirty = text.trim() !== initialNote.trim();
@@ -185,7 +186,7 @@ function Editor({
   // Portal to <body> with the varsity theme, so the full-screen editor escapes
   // the coach layout's stacking context (same fix as the plan session editor).
   return createPortal(
-    <ThemeProvider tokens={varsityTheme} light={varsityLightTheme}>
+    <ThemeProvider tokens={vTheme.dark} light={vTheme.light}>
       {overlay}
     </ThemeProvider>,
     document.body,

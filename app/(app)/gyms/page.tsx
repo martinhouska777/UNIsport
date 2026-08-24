@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { gyms, type Gym, type GalleryIcon } from "@/lib/gyms";
+import { gymsFor, type Gym, type GalleryIcon } from "@/lib/gyms";
 import { useAppState } from "@/components/AppState";
+import { getUniversity } from "@/lib/themes";
 import { useFavorites, useGymStats, type GymCrowd } from "@/lib/gymSocial";
 import { RatingValue, CrowdChip } from "@/components/gyms/RateCrowd";
 import {
@@ -146,7 +147,7 @@ function MainCard({ gym, fav, onToggleFav, crowd, tour }: CardProps) {
   );
 }
 
-function HouseCard({ gym, fav, onToggleFav, crowd }: CardProps) {
+function HouseCard({ gym, fav, onToggleFav, crowd, sub }: CardProps & { sub: string }) {
   const colors = gym.houseColors;
   return (
     <Link
@@ -169,8 +170,9 @@ function HouseCard({ gym, fav, onToggleFav, crowd }: CardProps) {
         <div>
           <div className="text-sm font-medium text-text">{gym.name}</div>
           {/* 9px muted was too faint to read in light mode; 10px + a stronger
-              colour, still clearly secondary to the gym name. */}
-          <div className="text-[11px] text-text-2">House gym</div>
+              colour, still clearly secondary to the gym name. The word is the
+              school's own — houses, colleges, dorms (lib/themes.ts). */}
+          <div className="text-[11px] text-text-2">{sub}</div>
         </div>
       </div>
       <StatsRow gym={gym} crowd={crowd} />
@@ -179,11 +181,16 @@ function HouseCard({ gym, fav, onToggleFav, crowd }: CardProps) {
 }
 
 export default function GymsPage() {
-  const { userId } = useAppState();
+  const { userId, universityKey } = useAppState();
   const { isFavorite, toggle } = useFavorites(userId);
   const { getCrowd } = useGymStats(userId);
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
+
+  // The school's list AND its words for the residential section — Harvard has
+  // houses, Yale colleges, Brown dorms. Both come from data (rules 2, 7).
+  const gyms = gymsFor(universityKey);
+  const uni = getUniversity(universityKey);
 
   const q = query.trim().toLowerCase();
   const matches = (g: Gym) =>
@@ -243,6 +250,7 @@ export default function GymsPage() {
         <div data-tour="gyms-filters" className="flex gap-1.5">
           {filters.map((f) => {
             const active = filter === f.key;
+            const label = f.key === "house" ? (uni?.housePill ?? f.label) : f.label;
             return (
               <button
                 key={f.key}
@@ -253,7 +261,7 @@ export default function GymsPage() {
                     : "border border-border bg-surface-2 text-muted"
                 }`}
               >
-                {f.label}
+                {label}
               </button>
             );
           })}
@@ -276,7 +284,9 @@ export default function GymsPage() {
         {showHouseHeader && (
           // Section headings break the grid rather than sitting in a cell.
           <div className="pb-0.5 pt-1 lg:col-span-full lg:pt-3">
-            <h2 className="text-[11px] font-medium tracking-[0.1em] text-muted">HOUSE GYMS</h2>
+            <h2 className="text-[11px] font-medium uppercase tracking-[0.1em] text-muted">
+              {uni?.houseSection ?? "House gyms"}
+            </h2>
           </div>
         )}
 
@@ -287,6 +297,7 @@ export default function GymsPage() {
             fav={isFavorite(g.slug)}
             onToggleFav={() => toggle(g.slug)}
             crowd={getCrowd(g.slug)}
+            sub={uni?.houseNoun ?? "House gym"}
           />
         ))}
 

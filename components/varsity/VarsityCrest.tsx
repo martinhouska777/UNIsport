@@ -22,8 +22,11 @@
   re-skins with the theme and hardcodes nothing (rule 1); the blade colours are
   the school's, from data.
 */
+import type { CSSProperties } from "react";
 import { useAppState } from "@/components/AppState";
 import OarMark from "@/components/varsity/OarMark";
+import SchoolCrest from "@/components/SchoolCrest";
+import { crestFor } from "@/lib/crests";
 
 /* The intro's stage and everything on it, in the intro's own pixels. Change a
    number in VarsityIntro and it has to change here too — they are one pose. */
@@ -52,14 +55,11 @@ const CROP = { x: 76, y: 46, w: 168, h: 172 };
 /** Width ÷ height of the mark, for anyone who needs to reserve room for it. */
 export const CREST_RATIO = CROP.w / CROP.h;
 
-const SHIELD_PATH = "M1,1 L21,1 L21,15 Q21,24 11,25 Q1,24 1,15 Z";
-
 /** `size` is the mark's HEIGHT; the width follows from the crop. */
 export default function VarsityCrest({ size = 28 }: { size?: number }) {
   const { universityKey } = useAppState();
-  // VarsityShield draws in a 22×26 box and is sized by its height.
-  const k = SHIELD / 26;
-  const shieldW = 22 * k;
+  // The drawn crest (lib/crests.ts) is a 100×116 box, sized by its height.
+  const crestW = (SHIELD * 100) / 116;
 
   return (
     <svg
@@ -68,6 +68,13 @@ export default function VarsityCrest({ size = 28 }: { size?: number }) {
       viewBox={`${CROP.x} ${CROP.y} ${CROP.w} ${CROP.h}`}
       fill="none"
       aria-hidden="true"
+      style={
+        {
+          // The crest wears the theme's pair, like everything in Zone 2.
+          "--crest-field": "var(--primary)",
+          "--crest-mark": "var(--primary-contrast)",
+        } as CSSProperties
+      }
     >
       {[-OAR_DEG, OAR_DEG].map((deg) => (
         <g key={deg} transform={`rotate(${deg} ${STAGE / 2} ${STAGE / 2})`}>
@@ -81,15 +88,16 @@ export default function VarsityCrest({ size = 28 }: { size?: number }) {
         </g>
       ))}
 
-      {/* The shield, over the crossing — VarsityShield's drawing, inlined so it
-          can share this SVG's coordinates instead of nesting a second one. */}
-      <g transform={`translate(${(STAGE - shieldW) / 2} ${SHIELD_TOP}) scale(${k})`}>
-        <path d={SHIELD_PATH} fill="var(--primary)" stroke="var(--accent)" strokeWidth="1" />
-        {/* The H */}
-        <rect x="4" y="4" width="5" height="16" rx="1" fill="var(--primary-contrast)" />
-        <rect x="4" y="11" width="14" height="4" rx="1" fill="var(--primary-contrast)" />
-        <rect x="13" y="4" width="5" height="16" rx="1" fill="var(--primary-contrast)" />
-      </g>
+      {/* The crest, over the crossing — the DRAWN one (Campus Crests compact
+          cut), nested at the same spot and height the old shield held. The
+          intro still shows the old shield until its own review. */}
+      <SchoolCrest
+        crest={crestFor(universityKey)}
+        x={(STAGE - crestW) / 2}
+        y={SHIELD_TOP}
+        width={crestW}
+        height={SHIELD}
+      />
     </svg>
   );
 }

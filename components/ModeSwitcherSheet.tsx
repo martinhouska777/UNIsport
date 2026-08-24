@@ -22,7 +22,7 @@
 */
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import VarsityShield from "@/components/varsity/VarsityShield";
+import UniversityCrest from "@/components/UniversityCrest";
 import VarsityCrest from "@/components/varsity/VarsityCrest";
 import { useAppState } from "@/components/AppState";
 import { useMembership } from "@/components/varsity/useMembership";
@@ -111,9 +111,9 @@ export default function ModeSwitcherSheet({
             onClick={() => go("student")}
             className="flex w-full items-center gap-3 px-4 py-3.5 text-left active:bg-surface-2"
           >
-            {/* The plain shield is the student mark; the oars are varsity's. */}
+            {/* The plain crest is the student mark; the oars are varsity's. */}
             <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border bg-surface-2">
-              <VarsityShield size={22} />
+              <UniversityCrest size={22} />
             </span>
             <span className="min-w-0 flex-1">
               <span className="block truncate text-[14px] font-medium text-text">

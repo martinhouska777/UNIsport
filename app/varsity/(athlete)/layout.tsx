@@ -27,11 +27,12 @@ import ThemeProvider from "@/components/ThemeProvider";
 import VarsityIntro from "@/components/varsity/VarsityIntro";
 import VarsityTopBar from "@/components/varsity/VarsityTopBar";
 import VarsityNav from "@/components/varsity/VarsityNav";
-import { varsityTheme, varsityLightTheme } from "@/lib/varsity/theme";
+import { useVarsityTheme } from "@/components/varsity/useVarsityTheme";
 
 export default function VarsityLayout({ children }: { children: React.ReactNode }) {
   const { ready, loggedIn, varsityReady } = useAppState();
   const { membership, loading, isMember } = useMembership();
+  const vTheme = useVarsityTheme();
   const router = useRouter();
 
   useEffect(() => {
@@ -53,8 +54,8 @@ export default function VarsityLayout({ children }: { children: React.ReactNode 
 
   return (
     <ThemeProvider
-      tokens={varsityTheme}
-      light={varsityLightTheme}
+      tokens={vTheme.dark}
+      light={vTheme.light}
       paintRoot
       className="relative flex h-dvh flex-col overflow-hidden bg-background"
     >

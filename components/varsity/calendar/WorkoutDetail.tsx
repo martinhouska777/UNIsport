@@ -11,7 +11,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import ThemeProvider from "@/components/ThemeProvider";
-import { varsityTheme, varsityLightTheme } from "@/lib/varsity/theme";
+import { useVarsityTheme } from "@/components/varsity/useVarsityTheme";
 import { fetchLogsByCategory, type LogEntry } from "@/lib/varsity/logStore";
 import { formatMetrics } from "@/lib/varsity/logParse";
 import { logCategoryColor, logCategoryLabel } from "@/lib/varsity/athleteProfile";
@@ -104,6 +104,7 @@ export default function WorkoutDetail({
   userId: string | null;
   onClose: () => void;
 }) {
+  const vTheme = useVarsityTheme();
   // The session on screen. Tapping a Compare row swaps this without leaving.
   const [current, setCurrent] = useState<LogEntry>(log);
   const [compareOpen, setCompareOpen] = useState(false);
@@ -254,7 +255,7 @@ export default function WorkoutDetail({
   );
 
   return createPortal(
-    <ThemeProvider tokens={varsityTheme} light={varsityLightTheme}>
+    <ThemeProvider tokens={vTheme.dark} light={vTheme.light}>
       {overlay}
     </ThemeProvider>,
     document.body,

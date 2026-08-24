@@ -26,7 +26,9 @@ import { useMembership } from "@/components/varsity/useMembership";
 import { useUnits } from "@/components/useUnits";
 import { distanceOptions, weightOptions } from "@/lib/varsity/units";
 import { profileFromOnboarding } from "@/lib/currentUser";
-import { getUniversity, neutralTheme } from "@/lib/themes";
+import { getUniversity, neutralTheme, universities } from "@/lib/themes";
+import SchoolCrest from "@/components/SchoolCrest";
+import { crestFor } from "@/lib/crests";
 import { roleLabel } from "@/lib/varsity/membership";
 import { VARSITY_HOME } from "@/lib/varsity/theme";
 import { appTour, requestTour, resetTour } from "@/lib/tour";
@@ -128,7 +130,7 @@ function UnitRow({
 }
 
 export default function SettingsPage() {
-  const { ready, loggedIn, email, userId, studentReady, logout, resetOnboarding, universityKey } =
+  const { ready, loggedIn, email, userId, studentReady, logout, resetOnboarding, universityKey, setUniversity } =
     useAppState();
   const { mode, toggle } = useThemeMode();
   const { data, loading, saveState, update, savePreferences } = useProfileData();
@@ -194,6 +196,53 @@ export default function SettingsPage() {
             <span className="flex-1 text-sm text-text">Appearance</span>
             <span className="text-xs text-muted">{mode === "dark" ? "Dark" : "Light"}</span>
           </button>
+        </Section>
+
+        {/*
+          THE UNIVERSITY SWITCHER — the white-label demo, visible. One tap
+          re-skins the whole app to another Ivy: theme, crest, gyms. Everything
+          it flips is DATA (lib/themes.ts, lib/crests.ts, lib/gyms.ts), which
+          is the point being demonstrated. Each button shows that school's
+          crest in its own pair — content colours from data, applied inline
+          (rule 1's exception). Later the school comes from the account and
+          this section goes.
+        */}
+        <Section title="University">
+          <div className="grid grid-cols-2 gap-2">
+            {Object.values(universities).map((u) => {
+              const active = u.key === universityKey;
+              return (
+                <button
+                  key={u.key}
+                  type="button"
+                  onClick={() => setUniversity(u.key)}
+                  aria-pressed={active}
+                  className={`flex items-center gap-2.5 rounded-2xl border px-3.5 py-2.5 text-left ${
+                    active ? "border-primary bg-surface" : "border-border bg-surface"
+                  }`}
+                >
+                  <SchoolCrest
+                    crest={crestFor(u.key)}
+                    width={20}
+                    height={23}
+                    style={
+                      {
+                        "--crest-field": u.theme.primary,
+                        "--crest-mark": u.theme.primaryContrast,
+                      } as React.CSSProperties
+                    }
+                  />
+                  <span className={`flex-1 text-sm ${active ? "font-semibold text-text" : "text-text"}`}>
+                    {u.shortName}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          <p className="mt-2 px-1 text-[11px] text-muted">
+            Flips the whole app to that school — colours, crest and gyms. A demo
+            switch until accounts carry a university.
+          </p>
         </Section>
 
         {/* Varsity — a team you belong to sits alongside the student account.

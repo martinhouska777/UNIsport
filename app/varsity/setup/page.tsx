@@ -28,7 +28,8 @@ import ThemeProvider from "@/components/ThemeProvider";
 import OnboardingShell from "@/components/onboarding/OnboardingShell";
 import { FieldLabel, Pill, TextField } from "@/components/onboarding/controls";
 import { classYears, sexOptions } from "@/lib/onboarding";
-import { varsityTheme, varsityLightTheme, VARSITY_HOME } from "@/lib/varsity/theme";
+import { VARSITY_HOME } from "@/lib/varsity/theme";
+import { useVarsityTheme } from "@/components/varsity/useVarsityTheme";
 import { PENDING_INVITE_KEY } from "@/lib/varsity/invites";
 import { boatRoleOptions, sideOptions, type BoatRole } from "@/lib/varsity/athleteProfile";
 import { weightOptions, weightToKg, type WeightUnit } from "@/lib/varsity/units";
@@ -41,6 +42,7 @@ const decimal = (v: string) => v.replace(/[^\d.]/g, "");
 export default function VarsitySetupPage() {
   const router = useRouter();
   const { ready, loggedIn, varsityReady, saveVarsitySetup } = useAppState();
+  const vTheme = useVarsityTheme();
 
   const [name, setName] = useState("");
   const [classYear, setClassYear] = useState("");
@@ -103,8 +105,8 @@ export default function VarsitySetupPage() {
 
   return (
     <ThemeProvider
-      tokens={varsityTheme}
-      light={varsityLightTheme}
+      tokens={vTheme.dark}
+      light={vTheme.light}
       paintRoot
       className="h-dvh bg-background"
     >

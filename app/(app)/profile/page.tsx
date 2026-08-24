@@ -5,7 +5,7 @@ import Button from "@/components/ui/Button";
 import { SkeletonLines, SkeletonRows } from "@/components/ui/Skeleton";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import VarsityShield from "@/components/varsity/VarsityShield";
+import UniversityCrest from "@/components/UniversityCrest";
 import ModeSwitcherSheet from "@/components/ModeSwitcherSheet";
 import useTapOrDoubleTap from "@/components/useTapOrDoubleTap";
 import { useMembership } from "@/components/varsity/useMembership";
@@ -292,13 +292,13 @@ export default function ProfilePage() {
             aria-label="Switch mode"
             className="flex items-center gap-1.5"
           >
-            <VarsityShield size={26} />
+            <UniversityCrest size={26} />
             <h1 className="text-base font-medium text-text">{user.name || "My Profile"}</h1>
             <IconChevronDown size={13} className="text-muted" />
           </button>
         ) : (
           <div className="flex items-center gap-1.5">
-            <VarsityShield size={26} />
+            <UniversityCrest size={26} />
             <h1 className="text-base font-medium text-text">{user.name || "My Profile"}</h1>
           </div>
         )}

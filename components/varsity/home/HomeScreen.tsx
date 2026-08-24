@@ -13,7 +13,7 @@ import { useAppState } from "@/components/AppState";
 import { useMembership } from "@/components/varsity/useMembership";
 import { can, canOpenConsole, roleLabel, type VarsityRole } from "@/lib/varsity/membership";
 import ThemeProvider from "@/components/ThemeProvider";
-import { varsityTheme, varsityLightTheme } from "@/lib/varsity/theme";
+import { useVarsityTheme } from "@/components/varsity/useVarsityTheme";
 import { fetchPlan, fetchProfileFullName } from "@/lib/varsity/planStore";
 import { fetchTodayLineups } from "@/lib/varsity/lineupStore";
 import { fetchNote } from "@/lib/varsity/notesStore";
@@ -197,6 +197,7 @@ function MonthOverlay({
   onClearDay: () => void;
   onClose: () => void;
 }) {
+  const vTheme = useVarsityTheme();
   // Every planned day, keyed by date, so any calendar month can be filled in
   // from whichever weeks of the block overlap it.
   const byIso = useMemo(() => {
@@ -243,7 +244,7 @@ function MonthOverlay({
   // Portalled to <body> (and re-wrapped in the Varsity theme) so it covers the
   // tab bar instead of being painted underneath it — same trick as <Sheet>.
   return createPortal(
-    <ThemeProvider tokens={varsityTheme} light={varsityLightTheme}>
+    <ThemeProvider tokens={vTheme.dark} light={vTheme.light}>
       <div className="fixed inset-0 z-[60] flex flex-col bg-background [animation:backdrop-in_0.18s_ease-out]">
         {/* Header: month + arrows + close */}
         <div className="flex flex-shrink-0 items-center justify-between border-b border-border px-3 py-3">

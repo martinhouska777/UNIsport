@@ -13,7 +13,8 @@ export const instrumentSerif = Instrument_Serif({
 // The crest letter's face. The Campus Crests design piece drew every letter
 // in Playfair Display 900 — at 18px on a button the black weight IS the
 // crest's legibility, and Instrument Serif has no bold cut. One weight, one
-// subset, landing-scoped like the serif above.
+// subset. NOT landing-scoped: the crest is worn by both zones now, so the
+// variable is set on <html> in app/layout.tsx.
 export const playfair = Playfair_Display({
   weight: "900",
   subsets: ["latin"],

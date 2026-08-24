@@ -16,6 +16,7 @@ import {
 import type { Session } from "@supabase/supabase-js";
 import { createClient, hasSupabaseEnv } from "@/lib/supabase/client";
 import type { OnboardingProfile } from "@/lib/onboarding";
+import { getUniversity } from "@/lib/themes";
 import type { VarsityAthleteProfile } from "@/lib/varsity/athleteProfile";
 import { defaultUnits, type Units } from "@/lib/varsity/units";
 
@@ -39,6 +40,13 @@ type AppState = {
   studentReady: boolean;
   varsityReady: boolean;
   universityKey: string;
+  /*
+    The DEMO university switcher (Settings). Until real accounts carry a
+    school, this flips the whole interface — theme, crest, gyms — to another
+    Ivy so the white-label promise can be SEEN, not just claimed. Persisted in
+    the browser; later the school comes from the profile row and this goes.
+  */
+  setUniversity: (key: string) => void;
   logout: () => Promise<void>;
   saveOnboarding: (profile: OnboardingProfile) => Promise<void>;
   /*
@@ -61,6 +69,7 @@ type AppState = {
 };
 
 const DEFAULT_UNIVERSITY = "harvard"; // later: from the user's profile row
+const UNIVERSITY_STORAGE_KEY = "unisport.university"; // the demo switcher's choice
 
 const AppStateContext = createContext<AppState | null>(null);
 
@@ -70,6 +79,20 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [studentReady, setStudentReady] = useState(false);
   const [varsityReady, setVarsityReady] = useState(false);
+  const [universityKey, setUniversityKey] = useState(DEFAULT_UNIVERSITY);
+
+  // The demo switcher's saved choice — read after mount (localStorage), so the
+  // server and the first client render agree on the default.
+  useEffect(() => {
+    const saved = localStorage.getItem(UNIVERSITY_STORAGE_KEY);
+    if (saved && getUniversity(saved)) setUniversityKey(saved);
+  }, []);
+
+  const setUniversity = (key: string) => {
+    if (!getUniversity(key)) return;
+    setUniversityKey(key);
+    localStorage.setItem(UNIVERSITY_STORAGE_KEY, key);
+  };
 
   // Read both setup flags for a user from the DB (resilient if the table or the
   // column doesn't exist yet → treated as "set up neither side").
@@ -229,7 +252,8 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         email: session?.user.email ?? null,
         studentReady,
         varsityReady,
-        universityKey: DEFAULT_UNIVERSITY,
+        universityKey,
+        setUniversity,
         logout,
         saveOnboarding,
         saveVarsitySetup,

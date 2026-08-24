@@ -4,9 +4,10 @@ import Link from "next/link";
 import { useRef, type CSSProperties } from "react";
 import HeroFade from "@/components/landing/HeroFade";
 import HeroPhones from "@/components/landing/HeroPhones";
-import SchoolCrest from "@/components/landing/SchoolCrest";
+import SchoolCrest from "@/components/SchoolCrest";
 import Wordmark from "@/components/landing/Wordmark";
 import { useSchoolCycle } from "@/components/landing/useSchoolCycle";
+import { crestFor } from "@/lib/crests";
 import { accent, HERO_CYCLE_MS } from "@/lib/landingSchools";
 import { availability, brandLine, cues, doors, hero } from "@/lib/landingCopy";
 
@@ -137,7 +138,7 @@ export default function LandingHero({ doors: showDoors = true }: { doors?: boole
                 universities' colours; this is where it says whose — the owner's
                 "you see your own university right there". Decorative: the
                 button's words are the button. */}
-            <SchoolCrest school={school} className="l-cta-mark" />
+            <SchoolCrest crest={crestFor(school.key)} className="l-cta-mark" />
             {hero.primaryCta}
             <Arrow className="transition-transform group-hover:translate-x-1" />
           </Link>

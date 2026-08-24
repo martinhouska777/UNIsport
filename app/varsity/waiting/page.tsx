@@ -22,13 +22,15 @@ import { useAppState } from "@/components/AppState";
 import ThemeProvider from "@/components/ThemeProvider";
 import VarsityCrest from "@/components/varsity/VarsityCrest";
 import { useMembership } from "@/components/varsity/useMembership";
-import { varsityTheme, varsityLightTheme, VARSITY_HOME } from "@/lib/varsity/theme";
+import { VARSITY_HOME } from "@/lib/varsity/theme";
+import { useVarsityTheme } from "@/components/varsity/useVarsityTheme";
 import { IconCheck, IconClock } from "@/components/icons";
 
 export default function VarsityWaitingPage() {
   const router = useRouter();
   const { ready, loggedIn, email, studentReady, logout } = useAppState();
   const { membership, loading, isMember, isPending, reload } = useMembership();
+  const vTheme = useVarsityTheme();
 
   useEffect(() => {
     if (!ready) return;
@@ -46,8 +48,8 @@ export default function VarsityWaitingPage() {
 
   return (
     <ThemeProvider
-      tokens={varsityTheme}
-      light={varsityLightTheme}
+      tokens={vTheme.dark}
+      light={vTheme.light}
       paintRoot
       className="flex h-dvh flex-col overflow-y-auto bg-background"
     >

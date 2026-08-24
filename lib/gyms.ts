@@ -96,6 +96,98 @@ function houseGym(opts: {
   };
 }
 
+/*
+  Generates a MAIN-gym record from a size class plus the gym's own signature
+  facilities. Harvard's three below predate this helper and stay hand-written;
+  every other school's mains come from here, so a campus is a dozen lines of
+  facts rather than three hundred of boilerplate. Numbers per class follow the
+  Harvard three: flagship ≈ Malkin, large ≈ Murr, standard ≈ Hemenway.
+*/
+function mainGym(opts: {
+  slug: string;
+  name: string;
+  address: string;
+  hours: string;
+  rating: number;
+  ratingCount: number;
+  floors: number;
+  size: "flagship" | "large" | "standard";
+  /** The gym's signature facilities, appended to "Other Facilities". */
+  extras?: StatRow[];
+  gallery?: GalleryItem[];
+}): Gym {
+  const spec = {
+    flagship: {
+      dumbbells: "5 – 150 lb", barbells: "Olympic + EZ bar", kettlebells: "8 – 48 kg",
+      racks: "6", benches: "4", platforms: "2", cables: "8",
+      treadmills: "24", bikes: "18", ergs: "10", ellipticals: "12", weightRooms: "3",
+    },
+    large: {
+      dumbbells: "5 – 120 lb", barbells: "Olympic", kettlebells: "8 – 40 kg",
+      racks: "4", benches: "3", platforms: "", cables: "5",
+      treadmills: "16", bikes: "12", ergs: "8", ellipticals: "", weightRooms: "2",
+    },
+    standard: {
+      dumbbells: "5 – 110 lb", barbells: "Olympic", kettlebells: "8 – 32 kg",
+      racks: "3", benches: "3", platforms: "", cables: "4",
+      treadmills: "14", bikes: "10", ergs: "6", ellipticals: "8", weightRooms: "2",
+    },
+  }[opts.size];
+  const row = (label: string, value: string): StatRow[] => (value ? [{ label, value }] : []);
+  const { rating } = opts;
+  return {
+    slug: opts.slug,
+    name: opts.name,
+    kind: "main",
+    address: opts.address,
+    hours: opts.hours,
+    rating,
+    ratingCount: opts.ratingCount,
+    floors: opts.floors,
+    gallery: opts.gallery ?? [
+      { label: "Main Floor", icon: "barbell" },
+      { label: "Cardio Room", icon: "run" },
+    ],
+    equipment: [
+      {
+        title: "Free Weights",
+        rows: [
+          { label: "Dumbbells", value: spec.dumbbells },
+          { label: "Barbells", value: spec.barbells },
+          { label: "Kettlebells", value: spec.kettlebells },
+        ],
+      },
+      {
+        title: "Racks & Platforms",
+        rows: [
+          ...row("Squat racks", spec.racks),
+          ...row("Bench press stations", spec.benches),
+          ...row("Deadlift platforms", spec.platforms),
+          ...row("Cable machines", spec.cables),
+        ],
+      },
+      {
+        title: "Cardio",
+        rows: [
+          ...row("Treadmills", spec.treadmills),
+          ...row("Stationary bikes", spec.bikes),
+          ...row("Rowing machines", spec.ergs),
+          ...row("Ellipticals", spec.ellipticals),
+        ],
+      },
+      {
+        title: "Other Facilities",
+        rows: [...(opts.extras ?? []), { label: "Weight rooms", value: spec.weightRooms }],
+      },
+    ],
+    ratings: [
+      { label: "Equipment", value: clamp5(rating - 0.2) },
+      { label: "Cleanliness", value: clamp5(rating + 0.1) },
+      { label: "Atmosphere", value: clamp5(rating - 0.1) },
+    ],
+  };
+}
+
 const mainGyms: Gym[] = [
   {
     slug: "malkin",
@@ -282,17 +374,180 @@ const houseGyms: Gym[] = [
   houseGym({ slug: "winthrop", name: "Winthrop", address: "32 Mill Street", rating: 4.3, ratingCount: 29, colors: { primary: "#cf2b40", secondary: "#9aa0a6" } }), // Crimson & Gray
 ];
 
-export const gyms: Gym[] = [...mainGyms, ...houseGyms];
+/*
+  THE OTHER SEVEN IVIES.
+  Main facilities are the real ones per campus (researched for the landing's
+  gyms sheet, scripts/landing/preview-gyms8.mjs); hours, ratings and the
+  residential gyms' addresses/colours are DEMO data in the Harvard pattern.
+  Each campus's residential list uses that school's own word for it — houses,
+  colleges, dorms — which the Gyms tab reads from lib/themes.ts.
+*/
+const yaleGyms: Gym[] = [
+  mainGym({ slug: "payne-whitney", name: "Payne Whitney Gymnasium", address: "70 Tower Parkway", hours: "6am–11pm", rating: 4.7, ratingCount: 163, floors: 9, size: "flagship",
+    extras: [ { label: "Swimming pool", value: "50 meter" }, { label: "Basketball courts", value: "3 full-size" }, { label: "Squash courts", value: "12" } ],
+    gallery: [ { label: "Main Floor", icon: "barbell" }, { label: "Cardio Room", icon: "run" }, { label: "Pool", icon: "swimming" }, { label: "Courts", icon: "basketball" } ] }),
+  mainGym({ slug: "israel-fitness", name: "Israel Fitness Center", address: "PWG · 4th floor", hours: "6am–10pm", rating: 4.6, ratingCount: 121, floors: 1, size: "large" }),
+  mainGym({ slug: "lanman", name: "Lanman Center", address: "PWG · court level", hours: "7am–10pm", rating: 4.3, ratingCount: 64, floors: 1, size: "standard",
+    extras: [{ label: "Basketball courts", value: "4 full-size" }],
+    gallery: [ { label: "Courts", icon: "basketball" }, { label: "Cardio Corner", icon: "run" } ] }),
+  houseGym({ slug: "benjamin-franklin", name: "Benjamin Franklin", address: "90 Prospect Street", rating: 4.2, ratingCount: 24, colors: { primary: "#c9243f", secondary: "#e8e8e8" } }), // Red & White
+  houseGym({ slug: "berkeley", name: "Berkeley", address: "205 Elm Street", rating: 4.3, ratingCount: 31, colors: { primary: "#d43a2f", secondary: "#d4a843" } }), // Red & Gold
+  houseGym({ slug: "branford", name: "Branford", address: "74 High Street", rating: 4.4, ratingCount: 36, colors: { primary: "#2f6fb8", secondary: "#d4a843" } }), // Blue & Gold
+  houseGym({ slug: "davenport", name: "Davenport", address: "248 York Street", rating: 4.2, ratingCount: 27, colors: { primary: "#3a3f8f", secondary: "#e8e8e8" } }), // Navy & White
+  houseGym({ slug: "ezra-stiles", name: "Ezra Stiles", address: "302 York Street", rating: 4.0, ratingCount: 19, colors: { primary: "#d4a843", secondary: "#2b2b2b" } }), // Gold & Black
+  houseGym({ slug: "grace-hopper", name: "Grace Hopper", address: "189 Elm Street", rating: 4.3, ratingCount: 28, colors: { primary: "#2e8f5b", secondary: "#e8e8e8" } }), // Green & White
+  houseGym({ slug: "jonathan-edwards", name: "Jonathan Edwards", address: "68 High Street", rating: 4.1, ratingCount: 22, colors: { primary: "#2e7d4f", secondary: "#c4c8d0" } }), // Green & Silver
+  houseGym({ slug: "morse", name: "Morse", address: "304 York Street", rating: 4.0, ratingCount: 18, colors: { primary: "#c93a3a", secondary: "#9aa0a6" } }), // Red & Gray
+  houseGym({ slug: "pauli-murray", name: "Pauli Murray", address: "130 Prospect Street", rating: 4.2, ratingCount: 25, colors: { primary: "#8f4bd0", secondary: "#e8e8e8" } }), // Purple & White
+  houseGym({ slug: "pierson", name: "Pierson", address: "261 Park Street", rating: 4.3, ratingCount: 30, colors: { primary: "#d9b23e", secondary: "#2b2b2b" } }), // Gold & Black
+  houseGym({ slug: "saybrook", name: "Saybrook", address: "242 Elm Street", rating: 4.4, ratingCount: 33, colors: { primary: "#3b6fe0", secondary: "#d43a2f" } }), // Blue & Red
+  houseGym({ slug: "silliman", name: "Silliman", address: "505 College Street", rating: 4.3, ratingCount: 29, colors: { primary: "#c93a3a", secondary: "#d4a843" } }), // Red & Gold
+  houseGym({ slug: "timothy-dwight", name: "Timothy Dwight", address: "345 Temple Street", rating: 4.1, ratingCount: 21, colors: { primary: "#d9553e", secondary: "#e8e8e8" } }), // Vermilion & White
+  houseGym({ slug: "trumbull", name: "Trumbull", address: "241 Elm Street", rating: 4.0, ratingCount: 17, colors: { primary: "#3a3f8f", secondary: "#d4a843" } }), // Navy & Gold
+];
 
+const princetonGyms: Gym[] = [
+  mainGym({ slug: "dillon", name: "Dillon Gymnasium", address: "Elm Drive", hours: "6am–11pm", rating: 4.7, ratingCount: 134, floors: 2, size: "flagship",
+    extras: [ { label: "Swimming pool", value: "25 yard" }, { label: "Group fitness studio", value: "Yes" } ],
+    gallery: [ { label: "Main Floor", icon: "barbell" }, { label: "Cardio Room", icon: "run" }, { label: "Pool", icon: "swimming" } ] }),
+  mainGym({ slug: "stephens", name: "Stephens Fitness Center", address: "Dillon Gym · bi-level", hours: "6am–11pm", rating: 4.6, ratingCount: 112, floors: 2, size: "large" }),
+  mainGym({ slug: "jadwin", name: "Jadwin Gymnasium", address: "Fitzrandolph Road", hours: "7am–10pm", rating: 4.2, ratingCount: 58, floors: 3, size: "standard",
+    extras: [ { label: "Indoor track", value: "200 meter" }, { label: "Basketball courts", value: "3 full-size" } ],
+    gallery: [ { label: "Courts", icon: "basketball" }, { label: "Track", icon: "run" } ] }),
+  houseGym({ slug: "butler", name: "Butler", address: "Elm Drive", rating: 4.2, ratingCount: 26, colors: { primary: "#2f8f5b", secondary: "#e8e8e8" } }), // Green & White
+  houseGym({ slug: "forbes", name: "Forbes", address: "79 Alexander Street", rating: 4.1, ratingCount: 20, colors: { primary: "#3b6fe0", secondary: "#e8e8e8" } }), // Blue & White
+  houseGym({ slug: "mathey", name: "Mathey", address: "Blair Walk", rating: 4.2, ratingCount: 23, colors: { primary: "#9e2b4d", secondary: "#c4c8d0" } }), // Maroon & Silver
+  houseGym({ slug: "rockefeller", name: "Rockefeller", address: "Holder Walk", rating: 4.3, ratingCount: 27, colors: { primary: "#d9553e", secondary: "#2b2b2b" } }), // Orange & Black
+  houseGym({ slug: "whitman", name: "Whitman", address: "Baker Lane", rating: 4.4, ratingCount: 32, colors: { primary: "#8f4bd0", secondary: "#e8e8e8" } }), // Purple & White
+  houseGym({ slug: "yeh", name: "Yeh", address: "Poe Field", rating: 4.3, ratingCount: 24, colors: { primary: "#2ea3a3", secondary: "#2b2b2b" } }), // Teal & Black
+  houseGym({ slug: "new-college-west", name: "New College West", address: "Poe Field", rating: 4.2, ratingCount: 21, colors: { primary: "#d4a843", secondary: "#2b2b2b" } }), // Gold & Black
+];
+
+const pennGyms: Gym[] = [
+  mainGym({ slug: "pottruck", name: "Pottruck Health & Fitness", address: "3701 Walnut Street", hours: "6am–11pm", rating: 4.6, ratingCount: 147, floors: 4, size: "flagship",
+    extras: [ { label: "Swimming pool", value: "25 yard" }, { label: "Climbing wall", value: "Yes" }, { label: "Basketball courts", value: "2 full-size" } ],
+    gallery: [ { label: "Main Floor", icon: "barbell" }, { label: "Cardio Room", icon: "run" }, { label: "Pool", icon: "swimming" }, { label: "Courts", icon: "basketball" } ] }),
+  mainGym({ slug: "fox-fitness", name: "Fox Fitness Center", address: "219 S 33rd Street", hours: "7am–10pm", rating: 4.3, ratingCount: 71, floors: 1, size: "standard" }),
+  mainGym({ slug: "sheerr-pool", name: "Sheerr Pool", address: "Pottruck · lower level", hours: "7am–9pm", rating: 4.4, ratingCount: 52, floors: 1, size: "standard",
+    extras: [{ label: "Swimming pool", value: "12 lanes" }],
+    gallery: [ { label: "Pool", icon: "swimming" }, { label: "Cardio Corner", icon: "run" } ] }),
+  houseGym({ slug: "harrison", name: "Harrison", address: "3910 Irving Street", rating: 4.3, ratingCount: 34, colors: { primary: "#c93a3a", secondary: "#9aa0a6" } }), // Red & Gray
+  houseGym({ slug: "harnwell", name: "Harnwell", address: "3820 Locust Walk", rating: 4.2, ratingCount: 29, colors: { primary: "#3b6fe0", secondary: "#e8e8e8" } }), // Blue & White
+  houseGym({ slug: "rodin", name: "Rodin", address: "3901 Locust Walk", rating: 4.2, ratingCount: 27, colors: { primary: "#2ea3a3", secondary: "#e8e8e8" } }), // Teal & White
+  houseGym({ slug: "fisher-hassenfeld", name: "Fisher Hassenfeld", address: "3700 Spruce Street", rating: 4.1, ratingCount: 22, colors: { primary: "#d4a843", secondary: "#9e2b4d" } }), // Gold & Maroon
+  houseGym({ slug: "ware", name: "Ware", address: "3650 Spruce Street", rating: 4.0, ratingCount: 18, colors: { primary: "#9e2b4d", secondary: "#e8e8e8" } }), // Maroon & White
+  houseGym({ slug: "riepe", name: "Riepe", address: "The Quad · 3700 Spruce St", rating: 4.1, ratingCount: 20, colors: { primary: "#2e8f5b", secondary: "#e8e8e8" } }), // Green & White
+  houseGym({ slug: "hill", name: "Hill", address: "3333 Walnut Street", rating: 3.9, ratingCount: 16, colors: { primary: "#d9553e", secondary: "#2b2b2b" } }), // Orange & Black
+  houseGym({ slug: "kings-court", name: "Kings Court English", address: "3465 Sansom Street", rating: 4.0, ratingCount: 15, colors: { primary: "#8f4bd0", secondary: "#e8e8e8" } }), // Purple & White
+  houseGym({ slug: "lauder", name: "Lauder", address: "3335 Woodland Walk", rating: 4.3, ratingCount: 26, colors: { primary: "#3a3f8f", secondary: "#d4a843" } }), // Navy & Gold
+  houseGym({ slug: "gutmann", name: "Gutmann", address: "4015 Walnut Street", rating: 4.4, ratingCount: 30, colors: { primary: "#2f6fb8", secondary: "#e8e8e8" } }), // Blue & White
+];
+
+const brownGyms: Gym[] = [
+  mainGym({ slug: "nelson", name: "Nelson Fitness Center", address: "225 Hope Street", hours: "6am–11pm", rating: 4.7, ratingCount: 128, floors: 2, size: "flagship",
+    extras: [{ label: "Group fitness studio", value: "Yes" }] }),
+  mainGym({ slug: "omac", name: "Olney-Margolies Athletic Center", address: "235 Hope Street", hours: "6am–10pm", rating: 4.4, ratingCount: 83, floors: 2, size: "large",
+    extras: [ { label: "Indoor track", value: "200 meter" }, { label: "Basketball courts", value: "2 full-size" } ],
+    gallery: [ { label: "Track", icon: "run" }, { label: "Courts", icon: "basketball" } ] }),
+  mainGym({ slug: "coleman", name: "Coleman Aquatics Center", address: "225 Hope Street", hours: "7am–9pm", rating: 4.5, ratingCount: 61, floors: 1, size: "standard",
+    extras: [{ label: "Swimming pool", value: "8 lanes" }],
+    gallery: [ { label: "Pool", icon: "swimming" }, { label: "Cardio Corner", icon: "run" } ] }),
+  houseGym({ slug: "keeney", name: "Keeney Quad", address: "64 Charlesfield Street", rating: 4.2, ratingCount: 28, colors: { primary: "#c93a3a", secondary: "#e8e8e8" } }), // Red & White
+  houseGym({ slug: "wriston", name: "Wriston Quad", address: "Brown Street", rating: 4.1, ratingCount: 24, colors: { primary: "#d4a843", secondary: "#4e3629" } }), // Gold & Brown
+  houseGym({ slug: "pembroke", name: "Pembroke", address: "172 Meeting Street", rating: 4.2, ratingCount: 22, colors: { primary: "#3b6fe0", secondary: "#e8e8e8" } }), // Blue & White
+  houseGym({ slug: "grad-center", name: "Grad Center", address: "90 Thayer Street", rating: 3.9, ratingCount: 15, colors: { primary: "#2b2b2b", secondary: "#9aa0a6" } }), // Black & Gray
+  houseGym({ slug: "perkins", name: "Perkins", address: "154 Power Street", rating: 4.0, ratingCount: 17, colors: { primary: "#2e8f5b", secondary: "#e8e8e8" } }), // Green & White
+  houseGym({ slug: "andrews", name: "Andrews", address: "211 Bowen Street", rating: 4.1, ratingCount: 19, colors: { primary: "#8f4bd0", secondary: "#e8e8e8" } }), // Purple & White
+];
+
+const columbiaGyms: Gym[] = [
+  mainGym({ slug: "dodge", name: "Dodge Fitness Center", address: "3030 Broadway", hours: "6am–11pm", rating: 4.4, ratingCount: 156, floors: 3, size: "flagship",
+    extras: [ { label: "Swimming pool", value: "25 yard" }, { label: "Basketball courts", value: "3 full-size" } ],
+    gallery: [ { label: "Main Floor", icon: "barbell" }, { label: "Cardio Room", icon: "run" }, { label: "Pool", icon: "swimming" }, { label: "Courts", icon: "basketball" } ] }),
+  mainGym({ slug: "levien", name: "Levien Gymnasium", address: "Dodge · court level", hours: "7am–10pm", rating: 4.3, ratingCount: 74, floors: 1, size: "standard",
+    extras: [{ label: "Basketball courts", value: "3 full-size" }],
+    gallery: [ { label: "Courts", icon: "basketball" }, { label: "Cardio Corner", icon: "run" } ] }),
+  mainGym({ slug: "blue-gym", name: "University Gym (Blue Gym)", address: "Dodge · lower level", hours: "7am–10pm", rating: 4.1, ratingCount: 48, floors: 1, size: "standard",
+    extras: [{ label: "Basketball courts", value: "1 full-size" }] }),
+  houseGym({ slug: "carman", name: "Carman", address: "545 W 114th Street", rating: 4.1, ratingCount: 26, colors: { primary: "#3b6fe0", secondary: "#e8e8e8" } }), // Blue & White
+  houseGym({ slug: "john-jay", name: "John Jay", address: "519 W 114th Street", rating: 4.0, ratingCount: 22, colors: { primary: "#9e2b4d", secondary: "#c4c8d0" } }), // Maroon & Silver
+  houseGym({ slug: "furnald", name: "Furnald", address: "2940 Broadway", rating: 4.2, ratingCount: 24, colors: { primary: "#2e8f5b", secondary: "#e8e8e8" } }), // Green & White
+  houseGym({ slug: "hartley", name: "Hartley", address: "1125 Amsterdam Avenue", rating: 4.0, ratingCount: 18, colors: { primary: "#d4a843", secondary: "#2b2b2b" } }), // Gold & Black
+  houseGym({ slug: "wallach", name: "Wallach", address: "1116 Amsterdam Avenue", rating: 3.9, ratingCount: 16, colors: { primary: "#d9553e", secondary: "#e8e8e8" } }), // Orange & White
+  houseGym({ slug: "east-campus", name: "East Campus", address: "70 Morningside Drive", rating: 4.3, ratingCount: 29, colors: { primary: "#2ea3a3", secondary: "#2b2b2b" } }), // Teal & Black
+  houseGym({ slug: "wien", name: "Wien", address: "411 W 116th Street", rating: 3.9, ratingCount: 14, colors: { primary: "#8f4bd0", secondary: "#e8e8e8" } }), // Purple & White
+  houseGym({ slug: "mcbain", name: "McBain", address: "562 W 113th Street", rating: 4.0, ratingCount: 19, colors: { primary: "#c93a3a", secondary: "#9aa0a6" } }), // Red & Gray
+];
+
+const cornellGyms: Gym[] = [
+  mainGym({ slug: "helen-newman", name: "Helen Newman Hall", address: "163 Cradit Farm Drive", hours: "6am–9pm", rating: 4.5, ratingCount: 119, floors: 2, size: "large",
+    extras: [ { label: "Swimming pool", value: "25 yard" }, { label: "Bowling lanes", value: "8" } ],
+    gallery: [ { label: "Main Floor", icon: "barbell" }, { label: "Pool", icon: "swimming" } ] }),
+  mainGym({ slug: "noyes", name: "Noyes Recreation Center", address: "306 West Avenue", hours: "7am–11pm", rating: 4.6, ratingCount: 104, floors: 3, size: "large",
+    extras: [ { label: "Bouldering wall", value: "Yes" }, { label: "Basketball courts", value: "1 full-size" } ] }),
+  mainGym({ slug: "teagle", name: "Teagle Hall", address: "512 Campus Road", hours: "7am–10:45pm", rating: 4.2, ratingCount: 67, floors: 2, size: "standard",
+    extras: [{ label: "Swimming pool", value: "25 yard" }],
+    gallery: [ { label: "Main Floor", icon: "barbell" }, { label: "Pool", icon: "swimming" } ] }),
+  houseGym({ slug: "alice-cook", name: "Alice Cook", address: "709 West Avenue", rating: 4.2, ratingCount: 24, colors: { primary: "#3b6fe0", secondary: "#e8e8e8" } }), // Blue & White
+  houseGym({ slug: "carl-becker", name: "Carl Becker", address: "West Campus", rating: 4.1, ratingCount: 21, colors: { primary: "#2e8f5b", secondary: "#e8e8e8" } }), // Green & White
+  houseGym({ slug: "flora-rose", name: "Flora Rose", address: "West Campus", rating: 4.3, ratingCount: 26, colors: { primary: "#d9553e", secondary: "#e8e8e8" } }), // Rose & White
+  houseGym({ slug: "hans-bethe", name: "Hans Bethe", address: "West Campus", rating: 4.2, ratingCount: 23, colors: { primary: "#8f4bd0", secondary: "#e8e8e8" } }), // Purple & White
+  houseGym({ slug: "william-keeton", name: "William Keeton", address: "West Campus", rating: 4.1, ratingCount: 20, colors: { primary: "#d4a843", secondary: "#2b2b2b" } }), // Gold & Black
+  houseGym({ slug: "toni-morrison", name: "Toni Morrison", address: "18 Sisson Place", rating: 4.4, ratingCount: 31, colors: { primary: "#9e2b4d", secondary: "#c4c8d0" } }), // Maroon & Silver
+  houseGym({ slug: "ganedago", name: "Ganedago Hall", address: "North Campus", rating: 4.3, ratingCount: 25, colors: { primary: "#2ea3a3", secondary: "#e8e8e8" } }), // Teal & White
+  houseGym({ slug: "clara-dickson", name: "Clara Dickson", address: "North Campus", rating: 3.9, ratingCount: 15, colors: { primary: "#c93a3a", secondary: "#e8e8e8" } }), // Red & White
+];
+
+const dartmouthGyms: Gym[] = [
+  mainGym({ slug: "zimmerman", name: "Zimmerman Fitness Center", address: "Alumni Gym · 3rd floor", hours: "6am–11pm", rating: 4.7, ratingCount: 115, floors: 1, size: "flagship" }),
+  mainGym({ slug: "lewinstein", name: "Lewinstein Athletic Center", address: "Alumni Gym · 6 S Park St", hours: "6am–11pm", rating: 4.6, ratingCount: 97, floors: 2, size: "large" }),
+  mainGym({ slug: "berry-sports", name: "Berry Sports Center", address: "6 South Park Street", hours: "7am–10pm", rating: 4.3, ratingCount: 56, floors: 2, size: "standard",
+    extras: [{ label: "Basketball courts", value: "2 full-size" }],
+    gallery: [ { label: "Courts", icon: "basketball" }, { label: "Cardio Corner", icon: "run" } ] }),
+  houseGym({ slug: "allen-house", name: "Allen", address: "Massachusetts Row", rating: 4.2, ratingCount: 22, colors: { primary: "#8f4bd0", secondary: "#e8e8e8" } }), // Purple & White
+  houseGym({ slug: "east-wheelock", name: "East Wheelock", address: "East Wheelock Street", rating: 4.1, ratingCount: 19, colors: { primary: "#3b6fe0", secondary: "#e8e8e8" } }), // Blue & White
+  houseGym({ slug: "north-park", name: "North Park", address: "North Park Street", rating: 4.3, ratingCount: 25, colors: { primary: "#2e8f5b", secondary: "#e8e8e8" } }), // Green & White
+  houseGym({ slug: "school-house", name: "School", address: "School Street", rating: 4.2, ratingCount: 21, colors: { primary: "#d4a843", secondary: "#2b2b2b" } }), // Gold & Black
+  houseGym({ slug: "south-house", name: "South", address: "South Main Street", rating: 4.0, ratingCount: 17, colors: { primary: "#9e2b4d", secondary: "#c4c8d0" } }), // Maroon & Silver
+  houseGym({ slug: "west-house", name: "West", address: "West Wheelock Street", rating: 4.1, ratingCount: 18, colors: { primary: "#d9553e", secondary: "#2b2b2b" } }), // Orange & Black
+];
+
+/*
+  EVERY CAMPUS'S GYMS, by the same keys lib/themes.ts uses. The app reads the
+  logged-in school's list with gymsFor(); the flat `gyms` export stays as
+  Harvard's for the demo fixtures that predate the switcher (tour, fake
+  matches), which are Harvard-shaped anyway.
+*/
+export const gymsByUniversity: Record<string, Gym[]> = {
+  harvard: [...mainGyms, ...houseGyms],
+  yale: yaleGyms,
+  princeton: princetonGyms,
+  penn: pennGyms,
+  brown: brownGyms,
+  columbia: columbiaGyms,
+  cornell: cornellGyms,
+  dartmouth: dartmouthGyms,
+};
+
+export function gymsFor(universityKey: string): Gym[] {
+  return gymsByUniversity[universityKey] ?? gymsByUniversity.harvard;
+}
+
+export const gyms: Gym[] = gymsByUniversity.harvard;
+
+const allGyms: Gym[] = Object.values(gymsByUniversity).flat();
+
+// Slugs are globally unique across schools, so a gym page URL works no matter
+// which school the switcher is set to.
 export function getGym(slug: string): Gym | undefined {
-  return gyms.find((g) => g.slug === slug);
+  return allGyms.find((g) => g.slug === slug);
 }
 
 // Find a gym by its exact display name (used to link a logged session's gym
 // — stored as the gym's name — back to its slug for ratings / crowd).
 export function getGymByName(name: string): Gym | undefined {
   const n = name.trim().toLowerCase();
-  return gyms.find((g) => g.name.toLowerCase() === n);
+  return allGyms.find((g) => g.name.toLowerCase() === n);
 }
 
 /*

@@ -9,7 +9,7 @@
 import { useEffect, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import ThemeProvider from "@/components/ThemeProvider";
-import { varsityTheme, varsityLightTheme } from "@/lib/varsity/theme";
+import { useVarsityTheme } from "@/components/varsity/useVarsityTheme";
 import { IconX } from "@/components/icons";
 
 export default function Sheet({
@@ -21,6 +21,7 @@ export default function Sheet({
   onClose: () => void;
   children: ReactNode;
 }) {
+  const vTheme = useVarsityTheme();
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     document.addEventListener("keydown", onKey);
@@ -28,7 +29,7 @@ export default function Sheet({
   }, [onClose]);
 
   return createPortal(
-    <ThemeProvider tokens={varsityTheme} light={varsityLightTheme}>
+    <ThemeProvider tokens={vTheme.dark} light={vTheme.light}>
       <div className="fixed inset-0 z-[60] flex flex-col justify-end">
         <button
           type="button"

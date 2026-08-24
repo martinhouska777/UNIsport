@@ -1,8 +1,9 @@
 /*
-  The Varsity Mode mark: a crimson shield with the white "oar" bars, outlined in
-  gold. Colors are pulled from the theme variables (primary = crimson,
-  primary-contrast = white, accent = gold) so it re-skins with the theme and
-  never hardcodes hex (rule 1).
+  The OLD hand-drawn shield (an H in bars). Everywhere else this was replaced
+  by the drawn crest (components/UniversityCrest → lib/crests.ts, 2026-08-24);
+  the ONE remaining wearer is the Varsity intro animation, which the owner is
+  reviewing separately — when that adopts the crest, delete this file.
+  Colors are theme variables (rule 1).
 */
 export default function VarsityShield({ size = 26 }: { size?: number }) {
   return (

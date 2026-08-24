@@ -21,29 +21,8 @@
   980×160 SVG viewBox clipped to the blade shape.
 */
 
-/*
-  THE CREST — the compact variant from the "Campus Crests" design piece
-  (2026-08-24), the owner's pick over the full one. One shield, one
-  construction; per school only the motif shape, the letter's size and its
-  seat change. Built to survive 16–32px: nothing thinner than 4 units, motif
-  reduced to a single shape or dropped, letter in Playfair 900.
-
-  The drawing is OURS — a generic heater shield and original motifs — so no
-  university's actual arms enter the repo. It is drawn in var(--crest-field)
-  (the shield) and var(--crest-mark) (border, motif, letter); whoever renders
-  it sets that pair, and on a school-coloured surface the pair inverts.
-*/
-export type Crest = {
-  /** The motif path, clipped to the inner shield. Empty = letter only. */
-  motif: string;
-  /** The letter's font-size in viewBox units (the letter itself is School.letter). */
-  fontSize: number;
-  /** The letter's baseline — sits on the optical centre, above the geometric one. */
-  letterY: number;
-};
-
-/** The heater shield every crest shares, in the 100×116 viewBox. */
-export const CREST_SHIELD_PATH = "M8 6 H92 V50 C92 82 76 102 50 110 C24 102 8 82 8 50 Z";
+/* The crest drawings moved to lib/crests.ts — BOTH zones wear them now, so
+   they are not landing data any more. Look a school's crest up by `key`. */
 
 /** One mark painted on the blade, over its base colour. */
 export type BladeMark =
@@ -64,8 +43,6 @@ export type School = {
   ink: string;
   /** The blade: base coat, then marks on top. */
   blade: { base: string; marks: BladeMark[] };
-  /** The compact crest (see Crest above). */
-  crest: Crest;
 };
 
 /** The blade shape shared by every oar (in the 980×160 viewBox). */
@@ -113,7 +90,6 @@ export const schools: School[] = [
         { kind: "polygon", points: "636,145 704,145 704,100", fill: BLADE_WHITE },
       ],
     },
-    crest: { motif: "", fontSize: 64, letterY: 82 },
   },
   {
     key: "yale",
@@ -125,7 +101,6 @@ export const schools: School[] = [
       base: BLADE_WHITE,
       marks: [{ kind: "path", d: "M522 80 C575 102 640 119 700 121 L700 142 L522 142 Z", fill: "#00356b" }],
     },
-    crest: { motif: "", fontSize: 74, letterY: 82 },
   },
   {
     key: "princeton",
@@ -137,9 +112,6 @@ export const schools: School[] = [
       base: "#e77500",
       marks: [{ kind: "polygon", points: "522,44 700,44 522,144", fill: "#1a1a1a" }],
     },
-    // Two schools share "P" and two share "C" — for those four the motif
-    // stays even in the compact cut, because it is what tells them apart.
-    crest: { motif: "M13 15 H87 V22 H13 Z M13 28 H87 V35 H13 Z", fontSize: 66, letterY: 89 },
   },
   {
     key: "penn",
@@ -151,7 +123,6 @@ export const schools: School[] = [
       base: "#011f5b",
       marks: [{ kind: "polygon", points: "700,54 700,140 600,97", fill: "#c50f1f" }],
     },
-    crest: { motif: "", fontSize: 74, letterY: 83 },
   },
   {
     key: "brown",
@@ -163,7 +134,6 @@ export const schools: School[] = [
       base: BLADE_WHITE,
       marks: [{ kind: "rect", x: 518, y: 44, w: 188, h: 42, fill: "#6b4423" }],
     },
-    crest: { motif: "", fontSize: 72, letterY: 82 },
   },
   {
     key: "columbia",
@@ -175,8 +145,6 @@ export const schools: School[] = [
       base: BLADE_WHITE,
       marks: [{ kind: "polygon", points: "522,44 700,44 700,74 522,132", fill: "#6cace4" }],
     },
-    // the skyline along the base, and the letter seated higher to clear it
-    crest: { motif: "M18 102 V84 H36 V73 H50 V80 H64 V86 H80 V102 Z", fontSize: 64, letterY: 68 },
   },
   {
     key: "cornell",
@@ -191,7 +159,6 @@ export const schools: School[] = [
         { kind: "circle", cx: 701, cy: 120, r: 24, fill: "#e21833" },
       ],
     },
-    crest: { motif: "M43 30 V19 L50 13 L57 19 V30 Z", fontSize: 62, letterY: 87 },
   },
   {
     key: "dartmouth",
@@ -200,7 +167,6 @@ export const schools: School[] = [
     color: "#00693e",
     ink: "#00693e",
     blade: { base: "#00693e", marks: [] },
-    crest: { motif: "M50 14 L65 32 H35 Z", fontSize: 60, letterY: 87 },
   },
 ];
 

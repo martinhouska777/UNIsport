@@ -1,4 +1,4 @@
-import { instrumentSerif, playfair } from "@/components/landing/fonts";
+import { instrumentSerif } from "@/components/landing/fonts";
 import LandingNav from "@/components/landing/LandingNav";
 import LandingHero from "@/components/landing/LandingHero";
 import StoryCloser from "@/components/landing/StoryCloser";
@@ -64,7 +64,7 @@ export default function LandingPage({ view = "all" }: { view?: LandingView }) {
 
   return (
     <div
-      className={`${instrumentSerif.variable} ${playfair.variable} l-grid relative flex min-h-screen flex-col overflow-x-clip bg-l-bg font-sans text-l-text`}
+      className={`${instrumentSerif.variable} l-grid relative flex min-h-screen flex-col overflow-x-clip bg-l-bg font-sans text-l-text`}
     >
       <PhoneModeProvider>
       {/* The bar's small wordmark stands down while the intro's big one is on

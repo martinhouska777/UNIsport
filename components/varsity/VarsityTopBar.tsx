@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import VarsityCrest from "@/components/varsity/VarsityCrest";
 import ModeSwitcherSheet from "@/components/ModeSwitcherSheet";
 import { useAppState } from "@/components/AppState";
+import { getUniversity } from "@/lib/themes";
 import useTapOrDoubleTap from "@/components/useTapOrDoubleTap";
 import { IconArrowLeft, IconChevronDown, IconSettings } from "@/components/icons";
 
@@ -30,8 +31,10 @@ import { IconArrowLeft, IconChevronDown, IconSettings } from "@/components/icons
 */
 export default function VarsityTopBar() {
   const router = useRouter();
-  const { studentReady } = useAppState();
+  const { studentReady, universityKey } = useAppState();
   const [switchingMode, setSwitchingMode] = useState(false);
+  // The school's everyday name is DATA (lib/themes.ts), never typed here.
+  const school = getUniversity(universityKey)?.shortName ?? "";
 
   /*
     The mark is the mode switcher, mirroring the name on the normal profile:
@@ -72,7 +75,7 @@ export default function VarsityTopBar() {
             VARSITY MODE
           </span>
           <span className="mt-0.5 truncate text-[11px] tracking-[0.08em] text-muted">
-            Harvard Rowing
+            {school} Rowing
           </span>
         </div>
         <IconChevronDown size={13} className="flex-shrink-0 text-muted" />

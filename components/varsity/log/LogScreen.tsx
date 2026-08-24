@@ -17,7 +17,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Button, { buttonClass } from "@/components/ui/Button";
 import { createPortal } from "react-dom";
 import ThemeProvider from "@/components/ThemeProvider";
-import { varsityTheme, varsityLightTheme } from "@/lib/varsity/theme";
+import { useVarsityTheme } from "@/components/varsity/useVarsityTheme";
 import { useAppState } from "@/components/AppState";
 import { fetchPlan, type Plan } from "@/lib/varsity/planStore";
 import { prescribedForDay } from "@/lib/varsity/athleteHome";
@@ -90,6 +90,7 @@ function LogEditor({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const vTheme = useVarsityTheme();
   const existing = state.existing;
   // For a planned session with no log yet, pre-fill minutes/metres from the plan.
   const est = state.mode === "plan" && !existing ? estimateForSession(state.session) : null;
@@ -437,7 +438,7 @@ function LogEditor({
   );
 
   return createPortal(
-    <ThemeProvider tokens={varsityTheme} light={varsityLightTheme}>
+    <ThemeProvider tokens={vTheme.dark} light={vTheme.light}>
       {overlay}
     </ThemeProvider>,
     document.body,
