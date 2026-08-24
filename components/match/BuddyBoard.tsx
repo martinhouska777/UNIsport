@@ -27,6 +27,13 @@ import { startDirectConversation } from "@/lib/supabase/messages";
 import { buddyFocuses, buddyTimesOfDay, focusLabel, timeOfDayLabel } from "@/lib/buddyBoard";
 import { weekDays, verifiedGyms } from "@/lib/onboarding";
 import { Pill, FieldLabel } from "@/components/onboarding/controls";
+import FilterBar from "@/components/match/FilterBar";
+import BoardFiltersSheet, {
+  NO_BOARD_FILTERS,
+  boardFilterCount,
+  boardFilterChips,
+  type BoardFilters,
+} from "@/components/match/BoardFiltersSheet";
 import Avatar from "@/components/messages/Avatar";
 
 function dayShort(key: string): string {
@@ -60,20 +67,26 @@ export default function BuddyBoard() {
   const [boardErr, setBoardErr] = useState<string | null>(null);
   const [messagingId, setMessagingId] = useState<string | null>(null);
 
-  // --- Optional board filters ---
-  const [filterFocus, setFilterFocus] = useState<string | null>(null);
-  const [filterDay, setFilterDay] = useState<string | null>(null);
-  const [filterTime, setFilterTime] = useState<string | null>(null);
+  // --- Optional board filters (behind the Filters button, not a second form) ---
+  const [filters, setFilters] = useState<BoardFilters>(NO_BOARD_FILTERS);
+  const [sheetOpen, setSheetOpen] = useState(false);
 
+  // Nothing is set before the first await on purpose: a setState in the
+  // synchronous part of an effect body cascades a render (react-hooks/
+  // set-state-in-effect), and the error only needs clearing once new rows land.
   const load = async () => {
-    setBoardErr(null);
     try {
       const [b, m] = await Promise.all([
-        listBuddyBoard({ focus: filterFocus, day: filterDay, timeOfDay: filterTime }),
+        listBuddyBoard({
+          focus: filters.focus,
+          day: filters.day,
+          timeOfDay: filters.timeOfDay,
+        }),
         listMyBuddyPosts(),
       ]);
       setBoard(b);
       setMine(m);
+      setBoardErr(null);
     } catch (e) {
       setBoardErr((e as Error).message);
     }
@@ -81,9 +94,12 @@ export default function BuddyBoard() {
 
   // Reload the board whenever a filter changes (and on first mount).
   useEffect(() => {
+    // Fetching on a filter change IS synchronising with an external system;
+    // every setState inside load() happens after an await, in a callback.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filterFocus, filterDay, filterTime]);
+  }, [filters]);
 
   const canPost = !!focus && !!day && !!timeOfDay && !posting;
 
@@ -131,7 +147,7 @@ export default function BuddyBoard() {
     }
   };
 
-  const anyFilter = filterFocus || filterDay || filterTime;
+  const anyFilter = boardFilterCount(filters) > 0;
 
   return (
     <div className="px-3 pb-4">
@@ -240,59 +256,17 @@ export default function BuddyBoard() {
         </div>
       )}
 
-      {/* BOARD FILTERS */}
+      {/* BOARD — heading + the Filters button. The filters used to be three
+          rows of pills identical to the three in the form above, which read as
+          the same form repeated; they now live in a sheet (#7 in the audit). */}
       <div className="pt-5">
-        <div className="flex items-center justify-between pb-2">
-          <div className="text-[11px] tracking-[0.06em] text-muted">OPEN POSTS</div>
-          {anyFilter && (
-            <button
-              type="button"
-              onClick={() => {
-                setFilterFocus(null);
-                setFilterDay(null);
-                setFilterTime(null);
-              }}
-              className="text-[11px] text-primary"
-            >
-              Clear filters
-            </button>
-          )}
-        </div>
-
-        <div className="flex flex-col gap-2 rounded-xl border border-border bg-surface-2 p-3">
-          <div className="-mx-0.5 chip-row flex gap-1.5 overflow-x-auto px-0.5 pb-0.5">
-            {buddyFocuses.map((f) => (
-              <div key={f.key} className="flex-shrink-0">
-                <Pill
-                  label={f.label}
-                  selected={filterFocus === f.key}
-                  onClick={() => setFilterFocus(filterFocus === f.key ? null : f.key)}
-                />
-              </div>
-            ))}
-          </div>
-          <div className="-mx-0.5 chip-row flex gap-1.5 overflow-x-auto px-0.5 pb-0.5">
-            {weekDays.map((d) => (
-              <div key={d.key} className="flex-shrink-0">
-                <Pill
-                  label={d.label.slice(0, 3)}
-                  selected={filterDay === d.key}
-                  onClick={() => setFilterDay(filterDay === d.key ? null : d.key)}
-                />
-              </div>
-            ))}
-          </div>
-          <div className="flex gap-1.5">
-            {buddyTimesOfDay.map((t) => (
-              <Pill
-                key={t.key}
-                label={t.label}
-                selected={filterTime === t.key}
-                onClick={() => setFilterTime(filterTime === t.key ? null : t.key)}
-              />
-            ))}
-          </div>
-        </div>
+        <div className="pb-2 text-[11px] tracking-[0.06em] text-muted">OPEN POSTS</div>
+        <FilterBar
+          count={boardFilterCount(filters)}
+          chips={boardFilterChips(filters)}
+          onOpen={() => setSheetOpen(true)}
+          onClear={(key) => setFilters({ ...filters, [key]: null })}
+        />
       </div>
 
       {/* BOARD LIST */}
@@ -333,6 +307,14 @@ export default function BuddyBoard() {
             </div>
           ))}
         </div>
+      )}
+
+      {sheetOpen && (
+        <BoardFiltersSheet
+          value={filters}
+          onChange={setFilters}
+          onClose={() => setSheetOpen(false)}
+        />
       )}
     </div>
   );

@@ -42,6 +42,7 @@ import {
 import { matchTier, isWorthShowing } from "@/lib/matchTier";
 import MatchCard from "@/components/match/MatchCard";
 import BuddyBoard from "@/components/match/BuddyBoard";
+import FilterBar from "@/components/match/FilterBar";
 import FiltersSheet, {
   NO_FILTERS,
   activeFilterCount,
@@ -83,8 +84,10 @@ function Status({ children }: { children: React.ReactNode }) {
 }
 
 // The Filters button plus the chips for whatever is currently narrowing the
-// list. Shown on both Browse and Session search, driven by the same state.
-function FilterBar({
+// list. Shown on both Browse and Session search, driven by the same state — and
+// the presentation itself is shared with the Buddy Board (components/match/
+// FilterBar.tsx) so all three lists are narrowed the same way.
+function MatchFilterBar({
   filters,
   onOpen,
   onClear,
@@ -93,36 +96,13 @@ function FilterBar({
   onOpen: () => void;
   onClear: (key: keyof MatchFilters) => void;
 }) {
-  const count = activeFilterCount(filters);
-  const chips = activeFilterChips(filters);
   return (
-    <div>
-      <div className="flex items-center gap-2">
-        <button
-          type="button"
-          onClick={onOpen}
-          className="rounded-full border border-border bg-surface px-3.5 py-2 text-[13px] text-text"
-        >
-          Filters{count > 0 ? ` · ${count}` : ""}
-        </button>
-        <span className="text-[11px] text-muted">Optional</span>
-      </div>
-      {chips.length > 0 && (
-        <div className="mt-2 flex flex-wrap gap-1.5">
-          {chips.map((c) => (
-            <button
-              key={c.key}
-              type="button"
-              onClick={() => onClear(c.key)}
-              className="flex items-center gap-1 rounded-full border border-primary bg-primary-tint px-3 py-1.5 text-[12px] text-primary"
-            >
-              {c.label}
-              <span className="text-[13px] leading-none">×</span>
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
+    <FilterBar
+      count={activeFilterCount(filters)}
+      chips={activeFilterChips(filters)}
+      onOpen={onOpen}
+      onClear={(key) => onClear(key as keyof MatchFilters)}
+    />
   );
 }
 
@@ -301,7 +281,7 @@ function MatchScreen() {
       {tab === "browse" && (
         <>
           <div className="px-3 pb-2">
-            <FilterBar
+            <MatchFilterBar
               filters={filters}
               onOpen={() => setSheetOpen(true)}
               onClear={clearFilter}
@@ -385,7 +365,7 @@ function MatchScreen() {
             </div>
 
             {/* OPTIONAL filters — the same sheet Browse uses */}
-            <FilterBar
+            <MatchFilterBar
               filters={filters}
               onOpen={() => setSheetOpen(true)}
               onClear={clearFilter}
