@@ -98,8 +98,10 @@ export const schools: School[] = [
     color: "#00356b",
     ink: "#00356b",
     blade: {
+      // Split down the blade's own axis (neck 522,81 → tip 700,97), blue below:
+      // half and half, not a sliver hugging the bottom edge.
       base: BLADE_WHITE,
-      marks: [{ kind: "path", d: "M522 80 C575 102 640 119 700 121 L700 142 L522 142 Z", fill: "#00356b" }],
+      marks: [{ kind: "path", d: "M520 81 L704 98 L704 144 L520 144 Z", fill: "#00356b" }],
     },
   },
   {
@@ -153,10 +155,16 @@ export const schools: School[] = [
     color: "#b31b1b",
     ink: "#b31b1b",
     blade: {
+      // Carnelian across the tip with a round bite taken out of its INNER edge,
+      // leaving a horn top and bottom. A major arc (large-arc-flag 1), so the
+      // bite is deeper than a half circle — which is what makes the horns read.
       base: BLADE_WHITE,
       marks: [
-        { kind: "circle", cx: 701, cy: 75, r: 24, fill: "#e21833" },
-        { kind: "circle", cx: 701, cy: 120, r: 24, fill: "#e21833" },
+        {
+          kind: "path",
+          d: "M642 44 L642 77.7 A22 22 0 1 1 642 116.3 L642 144 L706 144 L706 44 Z",
+          fill: "#b31b1b",
+        },
       ],
     },
   },
@@ -166,7 +174,13 @@ export const schools: School[] = [
     letter: "D",
     color: "#00693e",
     ink: "#00693e",
-    blade: { base: "#00693e", marks: [] },
+    blade: {
+      // Forest green with one white triangle: it hangs off the whole tip edge and
+      // runs back along the blade's lower side. The apex is past the edge on
+      // purpose — the clip lands it exactly on the curve.
+      base: "#00693e",
+      marks: [{ kind: "polygon", points: "704,44 704,144 568,120", fill: BLADE_WHITE }],
+    },
   },
 ];
 
