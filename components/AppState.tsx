@@ -17,6 +17,7 @@ import type { Session } from "@supabase/supabase-js";
 import { createClient, hasSupabaseEnv } from "@/lib/supabase/client";
 import type { OnboardingProfile } from "@/lib/onboarding";
 import { getUniversity } from "@/lib/themes";
+import { universityForEmail } from "@/lib/universityEmail";
 import type { VarsityAthleteProfile } from "@/lib/varsity/athleteProfile";
 import { defaultUnits, type Units } from "@/lib/varsity/units";
 import { clearMembershipCache } from "@/lib/varsity/membership";
@@ -40,12 +41,17 @@ type AppState = {
   email: string | null; // which account you're signed in as — shown on Profile
   studentReady: boolean;
   varsityReady: boolean;
+  /*
+    Which university this account is at. Worked out from the ADDRESS you signed
+    in with — "@harvard.edu" is Harvard — so nobody is ever asked to pick a
+    school, and nobody can pick the wrong one. See lib/universityEmail.ts.
+  */
   universityKey: string;
   /*
-    The DEMO university switcher (Settings). Until real accounts carry a
-    school, this flips the whole interface — theme, crest, gyms — to another
-    Ivy so the white-label promise can be SEEN, not just claimed. Persisted in
-    the browser; later the school comes from the profile row and this goes.
+    The DEMO university switcher (Settings). Overrides the address for as long
+    as it is set, so the white-label promise can be SEEN on one account — flip
+    to Yale and the theme, crest and gyms all follow. Kept in this browser only,
+    and dropped on logout so the next person starts at their own school.
   */
   setUniversity: (key: string) => void;
   logout: () => Promise<void>;
@@ -69,7 +75,9 @@ type AppState = {
   resetOnboarding: () => Promise<void>; // temporary dev helper to replay onboarding
 };
 
-const DEFAULT_UNIVERSITY = "harvard"; // later: from the user's profile row
+// The school for an address we don't recognise — an older account on a personal
+// address, or a campus the app isn't live at yet. They still get a working app.
+const DEFAULT_UNIVERSITY = "harvard";
 const UNIVERSITY_STORAGE_KEY = "unisport.university"; // the demo switcher's choice
 
 const AppStateContext = createContext<AppState | null>(null);
@@ -80,20 +88,32 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [studentReady, setStudentReady] = useState(false);
   const [varsityReady, setVarsityReady] = useState(false);
-  const [universityKey, setUniversityKey] = useState(DEFAULT_UNIVERSITY);
+  const [universityOverride, setUniversityOverride] = useState<string | null>(null);
 
   // The demo switcher's saved choice — read after mount (localStorage), so the
   // server and the first client render agree on the default.
   useEffect(() => {
     const saved = localStorage.getItem(UNIVERSITY_STORAGE_KEY);
-    if (saved && getUniversity(saved)) setUniversityKey(saved);
+    if (saved && getUniversity(saved)) setUniversityOverride(saved);
   }, []);
 
   const setUniversity = (key: string) => {
     if (!getUniversity(key)) return;
-    setUniversityKey(key);
+    setUniversityOverride(key);
     localStorage.setItem(UNIVERSITY_STORAGE_KEY, key);
   };
+
+  /*
+    WHICH SCHOOL — the signed-in address decides, every render.
+
+    Nothing is stored for this and nothing has to be: the address is on the
+    account, so the answer follows you to any phone or browser you sign in on,
+    and it can never drift out of date. The demo switcher wins while it is set;
+    a school we don't recognise falls back to the default rather than shutting
+    anyone out.
+  */
+  const universityKey =
+    universityOverride ?? universityForEmail(session?.user.email)?.key ?? DEFAULT_UNIVERSITY;
 
   // Read both setup flags for a user from the DB (resilient if the table or the
   // column doesn't exist yet → treated as "set up neither side").
@@ -170,6 +190,14 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     if (supabase) await supabase.auth.signOut();
     setSession(null);
+    // Drop the demo switcher's choice: the next person to sign in on this
+    // browser should land at THEIR school, not at whatever was being demoed.
+    setUniversityOverride(null);
+    try {
+      localStorage.removeItem(UNIVERSITY_STORAGE_KEY);
+    } catch {
+      /* storage unavailable — the override simply outlives this session */
+    }
     setStudentReady(false);
     setVarsityReady(false);
     // The squad answer is remembered per account (lib/varsity/membership); drop
@@ -183,7 +211,10 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       // the same name and class year, so nobody is sent through both.
       const { error } = await supabase.from("profiles").upsert({
         id: session.user.id,
-        data: profile,
+        // The school rides along with the profile so the DATABASE knows it too
+        // — matching only ever offers you partners at your own university, and
+        // it reads this field (db/matching.sql).
+        data: { ...profile, university: universityKey },
         onboarding_completed: true,
         varsity_setup_completed: true,
         updated_at: new Date().toISOString(),
@@ -220,6 +251,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         id: session.user.id,
         data: {
           ...current,
+          university: universityKey, // same reason as in saveOnboarding above
           name,
           classYear,
           sex,

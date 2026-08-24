@@ -204,8 +204,9 @@ export default function SettingsPage() {
           it flips is DATA (lib/themes.ts, lib/crests.ts, lib/gyms.ts), which
           is the point being demonstrated. Each button shows that school's
           crest in its own pair — content colours from data, applied inline
-          (rule 1's exception). Later the school comes from the account and
-          this section goes.
+          (rule 1's exception). The real school now comes from the address you
+          signed in with (components/AppState.tsx); this OVERRIDES it for as
+          long as it is set, and is forgotten on logout.
         */}
         <Section title="University">
           <div className="grid grid-cols-2 gap-2">

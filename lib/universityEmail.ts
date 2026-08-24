@@ -18,7 +18,13 @@
   Deliberately NOT enforced when logging in: only when an account is created.
   An address that already has an account keeps working whatever it is, so
   nobody who is already in gets locked out by a rule added after they joined.
+
+  The same domain also says WHICH university you are at — see
+  universityForEmail() at the bottom. That is the whole reason nobody is ever
+  asked to pick their school from a list: they already told us when they typed
+  their address, and an address cannot be picked wrong.
 */
+import { universities, type University } from "@/lib/themes";
 
 /*
   Domains that are university addresses but do not end in `.edu`. Empty today —
@@ -53,3 +59,23 @@ export function isUniversityEmail(email: string): boolean {
 /** What to tell someone whose address was turned away. One sentence, no blame. */
 export const UNIVERSITY_EMAIL_MESSAGE =
   "Please sign up with your university email — the address ending in .edu. UNIsport is only for students at a university it is live at.";
+
+/**
+ * WHICH university is this address at? — the answer the whole theme hangs on.
+ *
+ * Reads the `domains` list on each school in lib/themes.ts, so a new campus is
+ * a data edit there and nothing changes here. Matched on the END of the domain
+ * for the same reason as above: "college.harvard.edu" is Harvard, and
+ * "harvard.edu.example.com" is nobody.
+ *
+ * Returns undefined for an address we do not recognise — a university the app
+ * is not live at yet, or a personal address on an older account. The caller
+ * decides what that means; nothing here turns anyone away.
+ */
+export function universityForEmail(email: string | null | undefined): University | undefined {
+  const domain = domainOf(email ?? "");
+  if (!domain) return undefined;
+  return Object.values(universities).find((u) =>
+    u.domains.some((d) => domain === d || domain.endsWith(`.${d}`)),
+  );
+}

@@ -13,7 +13,11 @@ import { instrumentSerif } from "@/components/landing/fonts";
 import { useAppState } from "@/components/AppState";
 import { createClient, hasSupabaseEnv } from "@/lib/supabase/client";
 import { VARSITY_HOME } from "@/lib/varsity/theme";
-import { isUniversityEmail, UNIVERSITY_EMAIL_MESSAGE } from "@/lib/universityEmail";
+import {
+  isUniversityEmail,
+  universityForEmail,
+  UNIVERSITY_EMAIL_MESSAGE,
+} from "@/lib/universityEmail";
 
 type Mode = "login" | "signup";
 
@@ -188,6 +192,14 @@ export default function LoginPage() {
 
   const isSignup = mode === "signup";
 
+  /*
+    The school the typed address belongs to, if we know it. Shown as a quiet
+    line of TEXT and nothing more: this screen is still Zone 1, where no
+    university colour is allowed (rule 2). The colours arrive on the other side
+    of the sign-in, where they belong.
+  */
+  const school = universityForEmail(email);
+
   return (
     <div
       className={`${instrumentSerif.variable} flex min-h-dvh flex-col items-center justify-center bg-l-bg px-6 text-center font-sans text-l-text`}
@@ -257,6 +269,13 @@ export default function LoginPage() {
                 aria-label="Email"
                 className="w-full rounded-full border border-l-line bg-l-surface px-5 py-3 text-base text-l-text placeholder:text-l-text-3 focus:border-(--color-l-accent) focus:outline-none"
               />
+              {/* Recognised the address → say so, so nobody wonders whether
+                  the app knows where they study. */}
+              {school && (
+                <p className="-mb-0.5 px-5 text-left text-[11px] text-l-text-2">
+                  <span className="text-l-success">✓</span> {school.name}
+                </p>
+              )}
               <input
                 type="password"
                 required

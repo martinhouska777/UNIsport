@@ -66,6 +66,14 @@ export type University = {
   name: string;
   /** The short everyday name — "Harvard" — for lines like "Harvard Rowing". */
   shortName: string;
+  /*
+    The email addresses that MEAN this school. Signing in with an address at
+    one of these is what tells the app which university you are at — nobody is
+    ever asked to pick from a list. Matched on the END of the domain, so
+    "harvard.edu" also accepts "college.harvard.edu". Adding a school = adding
+    a line here, exactly like its colours.
+  */
+  domains: string[];
   theme: ThemeTokens; // the default (dark) look
   themeLight?: ThemeTokens; // light-mode variant (same brand hues, inverted neutrals)
   // Words under the crest on the Varsity Mode intro. Optional on purpose: a
@@ -152,6 +160,7 @@ export const universities: Record<string, University> = {
     key: "harvard",
     name: "Harvard University",
     shortName: "Harvard",
+    domains: ["harvard.edu"],
     motto: "Ex Nemo", // the rowing motto, per the product owner
     houseSection: "House gyms",
     houseNoun: "House gym",
@@ -163,6 +172,7 @@ export const universities: Record<string, University> = {
     key: "yale",
     name: "Yale University",
     shortName: "Yale",
+    domains: ["yale.edu"],
     houseSection: "College gyms",
     houseNoun: "College gym",
     housePill: "College",
@@ -173,6 +183,7 @@ export const universities: Record<string, University> = {
     key: "princeton",
     name: "Princeton University",
     shortName: "Princeton",
+    domains: ["princeton.edu"],
     houseSection: "College gyms",
     houseNoun: "College gym",
     housePill: "College",
@@ -183,6 +194,7 @@ export const universities: Record<string, University> = {
     key: "penn",
     name: "University of Pennsylvania",
     shortName: "Penn",
+    domains: ["upenn.edu"],
     houseSection: "College house gyms",
     houseNoun: "College house gym",
     housePill: "House",
@@ -193,6 +205,7 @@ export const universities: Record<string, University> = {
     key: "brown",
     name: "Brown University",
     shortName: "Brown",
+    domains: ["brown.edu"],
     houseSection: "Dorm gyms",
     houseNoun: "Dorm gym",
     housePill: "Dorm",
@@ -203,6 +216,7 @@ export const universities: Record<string, University> = {
     key: "columbia",
     name: "Columbia University",
     shortName: "Columbia",
+    domains: ["columbia.edu"],
     houseSection: "Residence gyms",
     houseNoun: "Residence gym",
     housePill: "Residence",
@@ -213,6 +227,7 @@ export const universities: Record<string, University> = {
     key: "cornell",
     name: "Cornell University",
     shortName: "Cornell",
+    domains: ["cornell.edu"],
     houseSection: "House gyms",
     houseNoun: "House gym",
     housePill: "House",
@@ -223,6 +238,7 @@ export const universities: Record<string, University> = {
     key: "dartmouth",
     name: "Dartmouth College",
     shortName: "Dartmouth",
+    domains: ["dartmouth.edu"],
     houseSection: "House gyms",
     houseNoun: "House gym",
     housePill: "House",
