@@ -26,6 +26,11 @@ export function initialsOf(name: string): string {
   Whether black or white text reads on a given colour. Standard sRGB relative
   luminance — the house palette runs from pale silver to near-black, so this
   can't be a fixed choice.
+
+  0.179 is where the two contrast ratios cross, NOT the midpoint: a mid-tone
+  like Mather's gold looks bright but still carries black far better than white
+  (9.5:1 against 2.2:1). Splitting at 0.5 is the common mistake and it made the
+  gold houses unreadable.
 */
 function readableOn(hex: string): string {
   const h = hex.replace("#", "");
@@ -33,7 +38,7 @@ function readableOn(hex: string): string {
   const [r, g, b] = [0, 2, 4].map((i) => parseInt(full.slice(i, i + 2), 16) / 255);
   const lin = (c: number) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
   const luminance = 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
-  return luminance > 0.5 ? "#111111" : "#ffffff";
+  return luminance > 0.179 ? "#111111" : "#ffffff";
 }
 
 export default function InitialsAvatar({
