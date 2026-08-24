@@ -155,14 +155,17 @@ export const schools: School[] = [
     color: "#b31b1b",
     ink: "#b31b1b",
     blade: {
-      // Carnelian across the tip with a round bite taken out of its INNER edge,
-      // leaving a horn top and bottom. A major arc (large-arc-flag 1), so the
-      // bite is deeper than a half circle — which is what makes the horns read.
+      // Carnelian across the tip. Its inner edge is TWO ARCS meeting at a single
+      // point: each one leaves an edge of the blade half way down (x 613) and
+      // sweeps in to the cusp a quarter back from the tip (x 656) — so the white
+      // runs out to a spike and the red hangs back in two lobes. The arcs bow
+      // towards the NECK, which is what makes the point sharp instead of a bulb;
+      // bowed the other way it reads as a round bite, which is the wrong blade.
       base: BLADE_WHITE,
       marks: [
         {
           kind: "path",
-          d: "M642 44 L642 77.7 A22 22 0 1 1 642 116.3 L642 144 L706 144 L706 44 Z",
+          d: "M613 40 L613 63.9 Q621.1 97.9 656 97 Q623 91.5 613 123.5 L613 152 L710 152 L710 40 Z",
           fill: "#b31b1b",
         },
       ],
@@ -175,11 +178,13 @@ export const schools: School[] = [
     color: "#00693e",
     ink: "#00693e",
     blade: {
-      // Forest green with one white triangle: it hangs off the whole tip edge and
-      // runs back along the blade's lower side. The apex is past the edge on
-      // purpose — the clip lands it exactly on the curve.
+      // Forest green with one white triangle off the tip edge, running back along
+      // the blade's lower side. It is a WEDGE, not a half: the apex sits on the
+      // bottom edge a third back from the tip (646.5,131.8), so green keeps the
+      // whole body of the blade. The other two corners are past the outline on
+      // purpose — the clip lands the edges exactly on it.
       base: "#00693e",
-      marks: [{ kind: "polygon", points: "704,44 704,144 568,120", fill: BLADE_WHITE }],
+      marks: [{ kind: "polygon", points: "704,40 704,148 646.5,131.8", fill: BLADE_WHITE }],
     },
   },
 ];
