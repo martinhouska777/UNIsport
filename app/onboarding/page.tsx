@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAppState } from "@/components/AppState";
 import ThemeProvider from "@/components/ThemeProvider";
 import OnboardingFlow from "@/components/onboarding/OnboardingFlow";
+import SchoolIntro from "@/components/SchoolIntro";
 import { getUniversity, neutralTheme } from "@/lib/themes";
 
 export default function OnboardingPage() {
@@ -24,6 +25,8 @@ export default function OnboardingPage() {
   return (
     <ThemeProvider tokens={theme} light={uni?.themeLight} paintRoot>
       <OnboardingFlow />
+      {/* A brand-new account meets its university here, before the questions. */}
+      <SchoolIntro />
     </ThemeProvider>
   );
 }

@@ -940,6 +940,44 @@ body {
   .v-oar-in-left, .v-oar-in-right, .v-crest-drop, .v-motto-in { animation: none; }
 }
 
+/*
+  THE SCHOOL WELCOME — the shield reveal played after a sign-in
+  (components/SchoolIntro.tsx). The shield arrives already wearing the
+  university's colour, its inset border follows, and the letter then RISES from
+  inside the shield into its seat — clipped by the shield, so it comes up out of
+  the drawing rather than sliding in over the screen. The name lands last.
+
+  `transform-box: view-box` is what makes the px in these transforms mean
+  viewBox units: without it a transform on an SVG child is measured against its
+  own tight bounding box, and the same 34px would move each school's letter a
+  different distance.
+*/
+@keyframes s-shield-in {
+  from { opacity: 0; transform: scale(1.07); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes s-border-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes s-letter-rise {
+  from { opacity: 0; transform: translateY(34px); }
+  55%  { opacity: 1; }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes s-name-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.s-shield-in   { transform-box: view-box; transform-origin: 50px 59px; animation: s-shield-in 0.45s cubic-bezier(0.2, 0.85, 0.25, 1) both; }
+.s-border-in   { animation: s-border-in 0.4s 0.35s ease-out both; }
+.s-letter-rise { transform-box: view-box; transform-origin: 50px 59px; animation: s-letter-rise 0.6s 0.55s cubic-bezier(0.18, 0.7, 0.2, 1) both; }
+.s-name-in     { animation: s-name-in 0.4s 1.2s cubic-bezier(0.18, 0.7, 0.2, 1) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .s-shield-in, .s-border-in, .s-letter-rise, .s-name-in { animation: none; }
+}
+
 /* Bottom-sheet entrance (session detail overlay) */
 @keyframes sheet-up {
   from { transform: translateY(100%); }

@@ -23,6 +23,7 @@ import { useAppState } from "@/components/AppState";
 import { getUniversity } from "@/lib/themes";
 import OarMark from "@/components/varsity/OarMark";
 import { inVarsityMode, markMode } from "@/lib/varsity/mode";
+import { consumeSignIn } from "@/lib/loginIntro";
 
 export default function VarsityIntro() {
   const [leaving, setLeaving] = useState(false);
@@ -44,6 +45,12 @@ export default function VarsityIntro() {
   // state initializer above, which React may run twice in development.
   useEffect(() => {
     markMode("varsity");
+    /*
+      A rower who signs in and lands straight on the varsity side has now been
+      greeted — by THIS sequence. Tear off the sign-in note so the student
+      welcome doesn't play a second greeting later (lib/loginIntro.ts).
+    */
+    consumeSignIn();
   }, []);
 
   useEffect(() => {

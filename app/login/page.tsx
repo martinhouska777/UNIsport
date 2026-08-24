@@ -13,6 +13,7 @@ import { instrumentSerif } from "@/components/landing/fonts";
 import { useAppState } from "@/components/AppState";
 import { createClient, hasSupabaseEnv } from "@/lib/supabase/client";
 import { VARSITY_HOME } from "@/lib/varsity/theme";
+import { markSignIn, clearSignIn } from "@/lib/loginIntro";
 import {
   isUniversityEmail,
   universityForEmail,
@@ -148,7 +149,10 @@ export default function LoginPage() {
       if (!data.session) {
         const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
         if (signInErr) setConfirmSent(true);
+        else markSignIn(); // → the welcome plays on the first screen inside
         // success → the redirect effect handles routing
+      } else {
+        markSignIn();
       }
       // Otherwise a session already exists → the redirect effect handles it.
     } else {
@@ -164,8 +168,10 @@ export default function LoginPage() {
         }
         return;
       }
-      // Success → remember the email (only) so this device prefills it next
-      // time, then the redirect effect handles routing.
+      // Success → the first screen on the other side greets them with their
+      // university (components/SchoolIntro.tsx), then remember the email (only)
+      // so this device prefills it next time; the redirect effect does the rest.
+      markSignIn();
       try {
         localStorage.setItem(REMEMBER_KEY, JSON.stringify({ email }));
       } catch {
@@ -177,11 +183,20 @@ export default function LoginPage() {
   const signInWithGoogle = async () => {
     if (!supabase) return;
     setError(null);
+    /*
+      Left BEFORE the call, not after: signInWithOAuth navigates away from this
+      page, so anything after it may never run. Taken back if the call refuses
+      to start, which is the only way we are still here to do it.
+    */
+    markSignIn();
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: { redirectTo: `${window.location.origin}/auth/callback` },
     });
-    if (error) setError(error.message);
+    if (error) {
+      clearSignIn();
+      setError(error.message);
+    }
   };
 
   const switchMode = (m: Mode) => {

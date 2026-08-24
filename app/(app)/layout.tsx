@@ -14,6 +14,7 @@ import ThemeProvider from "@/components/ThemeProvider";
 import BottomNav from "@/components/BottomNav";
 import SideNav from "@/components/SideNav";
 import TourGate from "@/components/tour/TourGate";
+import SchoolIntro from "@/components/SchoolIntro";
 import { appTour } from "@/lib/tour";
 import { getUniversity, neutralTheme } from "@/lib/themes";
 import { markMode } from "@/lib/varsity/mode";
@@ -75,6 +76,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         It decides for itself whether to appear (components/tour/TourGate).
       */}
       {userId && <TourGate key={userId} tour={appTour} userId={userId} />}
+      {/*
+        The welcome, last of all so it covers everything — including the tour,
+        which is free to start underneath and be there when the crest dissolves.
+        It decides for itself whether this was a sign-in (components/SchoolIntro).
+      */}
+      <SchoolIntro />
     </ThemeProvider>
   );
 }
