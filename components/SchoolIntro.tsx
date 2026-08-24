@@ -22,21 +22,42 @@
   background here, where a school like Yale's exact navy would all but vanish
   (lib/themes.ts explains that pair).
 
-  Plays ONLY after a sign-in (lib/loginIntro.ts), never on a reopened session,
-  and it can be dismissed with a tap. Disabled entirely under
-  prefers-reduced-motion. Its sibling is VarsityIntro, which greets a rower
-  arriving on the varsity side with the same crest over crossed oars.
+  TWO things bring it on, and they are the same thing twice: arriving on the
+  student side from OUTSIDE it.
+    • a sign-in (lib/loginIntro.ts) — the way in from Zone 1;
+    • a switch back from Varsity Mode (lib/varsity/mode.ts) — the way in from
+      the other half of the app. Its sibling VarsityIntro greets the trip in
+      the opposite direction with the same crest over crossed oars, so the two
+      modes now answer each other.
+  Neither a reopened session nor a walk out to Settings and back is an arrival,
+  and neither replays it. A tap dismisses it; prefers-reduced-motion skips it.
+
+  Marking the mode is THIS component's job, not the shell's — the same as on
+  the varsity side. The shell marked it the moment it mounted, which is before
+  the app state is even known, so the mark was already "student" by the time
+  this could look at where it had come from and the switch was invisible.
 */
 import { useEffect, useId, useState } from "react";
 import { useAppState } from "@/components/AppState";
 import { CREST_SHIELD_PATH, crestFor } from "@/lib/crests";
 import { getUniversity } from "@/lib/themes";
 import { consumeSignIn, peekSignIn } from "@/lib/loginIntro";
+import { inVarsityMode, markMode } from "@/lib/varsity/mode";
 
 /** The crest's height on screen, in px. The width follows the 100:116 drawing. */
 const CREST_HEIGHT = 104;
 
-export default function SchoolIntro() {
+export default function SchoolIntro({
+  /*
+    Called once there is nothing in the way any more — either the sequence has
+    finished, or there was never one to play. The app shell holds the tour back
+    until then, so the walk doesn't start its first step behind an opaque
+    crest and point at things nobody can see.
+  */
+  onFinished,
+}: {
+  onFinished?: () => void;
+} = {}) {
   const { universityKey } = useAppState();
   const crest = crestFor(universityKey);
   const university = getUniversity(universityKey);
@@ -52,16 +73,23 @@ export default function SchoolIntro() {
   const [done, setDone] = useState(() => {
     if (typeof window === "undefined") return true;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return true;
-    return !peekSignIn();
+    return !(peekSignIn() || inVarsityMode());
   });
 
   /*
-    This sign-in has now been greeted, however it went — including the case
-    where the greeting was to hold still, because motion is turned off.
+    We are on the student side from here on, however we got here — and this
+    arrival has now been greeted, however it went, including the case where the
+    greeting was to hold still because motion is turned off.
   */
   useEffect(() => {
+    markMode("student");
     consumeSignIn();
   }, []);
+
+  // Whatever is waiting on the welcome can start: it is over, or never was.
+  useEffect(() => {
+    if (done) onFinished?.();
+  }, [done, onFinished]);
 
   useEffect(() => {
     if (done) return;

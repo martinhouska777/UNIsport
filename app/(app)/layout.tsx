@@ -7,7 +7,7 @@
   - While real auth doesn't exist yet, it redirects to Zone 1 if the demo
     user isn't "logged in".
 */
-import { useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAppState } from "@/components/AppState";
 import ThemeProvider from "@/components/ThemeProvider";
@@ -17,18 +17,23 @@ import TourGate from "@/components/tour/TourGate";
 import SchoolIntro from "@/components/SchoolIntro";
 import { appTour } from "@/lib/tour";
 import { getUniversity, neutralTheme } from "@/lib/themes";
-import { markMode } from "@/lib/varsity/mode";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { ready, loggedIn, studentReady, universityKey, userId } = useAppState();
   const router = useRouter();
   const pathname = usePathname();
 
-  /* Being here IS the normal app, so the next trip into Varsity Mode is a real
-     switch and gets the title sequence (lib/varsity/mode.ts). */
-  useEffect(() => {
-    markMode("student");
-  }, []);
+  /*
+    The tour waits for the welcome. SchoolIntro says when it is out of the way —
+    immediately, when there was no welcome to play — and until then the walk
+    would be talking to a screen nobody can see through.
+
+    (Marking the mode as "student" moved into SchoolIntro with this: it has to
+    happen AFTER something has looked at where we came from, and this ran
+    before the app state was even known.)
+  */
+  const [welcomeOver, setWelcomeOver] = useState(false);
+  const showTour = useCallback(() => setWelcomeOver(true), []);
 
   useEffect(() => {
     if (!ready) return;
@@ -75,13 +80,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         its own, so anything keyed to the route would unmount itself mid-walk.
         It decides for itself whether to appear (components/tour/TourGate).
       */}
-      {userId && <TourGate key={userId} tour={appTour} userId={userId} />}
+      {userId && welcomeOver && <TourGate key={userId} tour={appTour} userId={userId} />}
       {/*
-        The welcome, last of all so it covers everything — including the tour,
-        which is free to start underneath and be there when the crest dissolves.
-        It decides for itself whether this was a sign-in (components/SchoolIntro).
+        The welcome, last of all so it covers everything. It decides for itself
+        whether this is an arrival worth greeting (components/SchoolIntro) and
+        lets the tour go once it is done.
       */}
-      <SchoolIntro />
+      <SchoolIntro onFinished={showTour} />
     </ThemeProvider>
   );
 }
