@@ -91,6 +91,10 @@ export default function OnboardingFlow() {
   const [step, setStep] = useState(0); // 0-based index into STEPS
   const [profile, setProfile] = useState<OnboardingProfile>(emptyProfile);
   const [expandedDay, setExpandedDay] = useState<string | null>(null); // Screen 5 UI
+  // The database refused the write. Nine screens of answers must not walk into
+  // the app as if they were stored — the next load reads the database, finds
+  // nothing, and hands the whole flow back. See components/AppState.tsx.
+  const [failed, setFailed] = useState<string | null>(null);
 
   const meta = STEPS[step];
   const isLast = step === STEPS.length - 1;
@@ -163,7 +167,12 @@ export default function OnboardingFlow() {
   const finish = async () => {
     // eslint-disable-next-line no-console
     console.log("UNIsport onboarding profile:", profile);
-    await saveOnboarding(profile); // saves to the DB + marks this account onboarded
+    setFailed(null);
+    const { error } = await saveOnboarding(profile); // DB write + marks this account onboarded
+    if (error) {
+      setFailed(error);
+      return;
+    }
     router.replace("/gyms");
   };
 
@@ -719,6 +728,16 @@ export default function OnboardingFlow() {
       {...ctaProps}
     >
       {renderBody()}
+      {failed && (
+        <div role="alert" className="mt-6 rounded-2xl border border-border bg-surface-2 p-4">
+          <p className="text-sm font-medium text-danger">We couldn’t save your profile.</p>
+          <p className="mt-1 text-[11px] leading-relaxed text-muted">
+            Nothing you answered is lost — try again. If it keeps failing, this is
+            the reason:
+          </p>
+          <p className="mt-2 break-words text-[11px] leading-relaxed text-muted">{failed}</p>
+        </div>
+      )}
     </OnboardingShell>
   );
 }

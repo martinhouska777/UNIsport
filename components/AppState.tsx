@@ -63,7 +63,13 @@ type AppState = {
   */
   rollUniversity: () => void;
   logout: () => Promise<void>;
-  saveOnboarding: (profile: OnboardingProfile) => Promise<void>;
+  /*
+    Both save helpers RETURN their failure instead of swallowing it. They used
+    to log the error and then mark the account set up anyway, so a write the
+    database refused still looked like success — until the next load asked the
+    database again and sent the person back through setup they had already done.
+  */
+  saveOnboarding: (profile: OnboardingProfile) => Promise<{ error?: string }>;
   /*
     The short varsity setup: writes name/class year onto the SAME profile row
     and marks only the varsity flag, leaving the student side untouched.
@@ -79,7 +85,7 @@ type AppState = {
     sex: string;
     varsity?: Partial<VarsityAthleteProfile>;
     units?: Partial<Units>;
-  }) => Promise<void>;
+  }) => Promise<{ error?: string }>;
   resetOnboarding: () => Promise<void>; // temporary dev helper to replay onboarding
 };
 
@@ -144,17 +150,36 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     remembered.demo ??
     DEFAULT_UNIVERSITY;
 
-  // Read both setup flags for a user from the DB (resilient if the table or the
-  // column doesn't exist yet → treated as "set up neither side").
+  /*
+    Read both setup flags for a user from the DB.
+
+    A FAILED LOOKUP IS NOT AN ANSWER. This used to fold any error into "set up
+    neither side", so one dropped request was indistinguishable from a brand-new
+    account — and the app acts on that by sending you through onboarding you have
+    already done. So a failure is retried, and if it still won't answer the flags
+    are LEFT ALONE rather than downgraded. Same rule the squad lookup follows
+    (lib/varsity/membership.ts).
+  */
+  const RETRY_DELAYS_MS = [300, 900];
   const refreshOnboarded = async (userId: string) => {
     if (!supabase) return;
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("onboarding_completed, varsity_setup_completed")
-      .eq("id", userId)
-      .maybeSingle();
-    setStudentReady(!error && !!data?.onboarding_completed);
-    setVarsityReady(!error && !!data?.varsity_setup_completed);
+    for (let attempt = 0; ; attempt++) {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("onboarding_completed, varsity_setup_completed")
+        .eq("id", userId)
+        .maybeSingle();
+      if (!error) {
+        setStudentReady(!!data?.onboarding_completed);
+        setVarsityReady(!!data?.varsity_setup_completed);
+        return;
+      }
+      if (attempt >= RETRY_DELAYS_MS.length) {
+        console.error("Reading setup flags failed:", error.message);
+        return;
+      }
+      await new Promise((r) => setTimeout(r, RETRY_DELAYS_MS[attempt]));
+    }
   };
 
   useEffect(() => {
@@ -249,11 +274,15 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         varsity_setup_completed: true,
         updated_at: new Date().toISOString(),
       });
-      // eslint-disable-next-line no-console
-      if (error) console.error("Saving profile failed:", error.message);
+      if (error) {
+        // eslint-disable-next-line no-console
+        console.error("Saving profile failed:", error.message);
+        return { error: error.message };
+      }
     }
     setStudentReady(true);
     setVarsityReady(true);
+    return {};
   };
 
   /*
@@ -293,10 +322,14 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         varsity_setup_completed: true,
         updated_at: new Date().toISOString(),
       });
-      // eslint-disable-next-line no-console
-      if (error) console.error("Saving varsity setup failed:", error.message);
+      if (error) {
+        // eslint-disable-next-line no-console
+        console.error("Saving varsity setup failed:", error.message);
+        return { error: error.message };
+      }
     }
     setVarsityReady(true);
+    return {};
   };
 
   const resetOnboarding = async () => {

@@ -58,6 +58,13 @@ export default function VarsitySetupPage() {
   // it is saved, so the rest of the app keeps showing pounds to a pounds person.
   const [weightUnit, setWeightUnit] = useState<WeightUnit>("kg");
   const [saving, setSaving] = useState(false);
+  /*
+    Set when the database refuses the write. This screen used to walk on
+    regardless, so a refused save looked exactly like a saved one — and the next
+    time the app asked the database, this whole screen came back. Saying so here
+    is the difference between a mystery and a fixable error.
+  */
+  const [failed, setFailed] = useState<string | null>(null);
 
   useEffect(() => {
     if (!ready) return;
@@ -70,8 +77,9 @@ export default function VarsitySetupPage() {
 
   const finish = async () => {
     setSaving(true);
+    setFailed(null);
     const typedWeight = weight.trim() ? Number(weight) : null;
-    await saveVarsitySetup({
+    const { error } = await saveVarsitySetup({
       name: name.trim(),
       classYear,
       sex,
@@ -88,6 +96,14 @@ export default function VarsitySetupPage() {
       },
       units: { weight: weightUnit },
     });
+    // Nothing was stored, so nothing has been set up. Stay here with the answers
+    // still typed in rather than walking into a Varsity Mode that will throw
+    // them straight back out again.
+    if (error) {
+      setFailed(error);
+      setSaving(false);
+      return;
+    }
     /*
       Back to the invite that started this, if there was one — the captain's
       queue should show a name, not "Unnamed", so the request is only made
@@ -119,7 +135,7 @@ export default function VarsitySetupPage() {
         onSkip={() => {}}
         title="Let's set you up."
         subtitle="Who you are and how you row. One screen, and you're into your team's training — the rest of your profile can wait."
-        primaryLabel={saving ? "Saving…" : "Continue"}
+        primaryLabel={saving ? "Saving…" : failed ? "Try again" : "Continue"}
         primaryDisabled={!name.trim() || !classYear || saving}
         onPrimary={finish}
       >
@@ -236,6 +252,24 @@ export default function VarsitySetupPage() {
           <p className="mt-2 text-[11px] leading-relaxed text-muted">
             Both optional — you can fill them in later from your profile.
           </p>
+
+          {failed && (
+            <div
+              role="alert"
+              className="mt-6 rounded-2xl border border-border bg-surface-2 p-4"
+            >
+              <p className="text-sm font-medium text-danger">
+                We couldn’t save this.
+              </p>
+              <p className="mt-1 text-[11px] leading-relaxed text-muted">
+                Your answers are still here — try again. If it keeps failing,
+                this is the reason:
+              </p>
+              <p className="mt-2 break-words text-[11px] leading-relaxed text-muted">
+                {failed}
+              </p>
+            </div>
+          )}
         </div>
       </OnboardingShell>
     </ThemeProvider>
