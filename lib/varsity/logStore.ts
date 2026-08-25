@@ -144,15 +144,25 @@ export async function fetchLogsByCategory(
   return (data as Row[]).map(rowToEntry);
 }
 
+/*
+  ── Saving returns the log's ID ──
+  Not for the log itself, which never needed one: for what comes AFTER it.
+  Sharing a session to the varsity feed (db/varsity_posts.sql) is a post that
+  POINTS at the log, so the share step needs something to point at the moment
+  the save lands. Same reason saveWorkout() in normal mode grew one.
+*/
+type SaveResult = { id?: string; error?: string };
+
 /* ── Save a PLAN log (one per slot → update if it exists, else insert) ── */
-export async function savePlanLog(athleteId: string, draft: LogDraft): Promise<{ error?: string }> {
+export async function savePlanLog(athleteId: string, draft: LogDraft): Promise<SaveResult> {
   if (!hasSupabaseEnv()) {
     const all = loadLocal(athleteId);
     const idx = all.findIndex((l) => l.dayKey && l.dayKey === draft.dayKey);
+    const id = idx >= 0 ? all[idx].id : `local-${Date.now()}`;
     if (idx >= 0) all[idx] = { ...all[idx], ...draft };
-    else all.push({ ...draft, id: `local-${Date.now()}` });
+    else all.push({ ...draft, id });
     saveLocal(athleteId, all);
-    return {};
+    return { id };
   }
   const supabase = createClient();
   const { data: existing } = await supabase
@@ -162,23 +172,33 @@ export async function savePlanLog(athleteId: string, draft: LogDraft): Promise<{
     .eq("day_key", draft.dayKey)
     .maybeSingle();
   const row = draftToRow(athleteId, draft);
-  const { error } = existing
-    ? await supabase.from("varsity_logs").update(row).eq("id", (existing as { id: string }).id)
-    : await supabase.from("varsity_logs").insert(row);
-  return error ? { error: error.message } : {};
+  const { data, error } = existing
+    ? await supabase
+        .from("varsity_logs")
+        .update(row)
+        .eq("id", (existing as { id: string }).id)
+        .select("id")
+        .single()
+    : await supabase.from("varsity_logs").insert(row).select("id").single();
+  return error ? { error: error.message } : { id: (data as { id: string } | null)?.id };
 }
 
 /* ── Save an EXTRA log (always a new row) ── */
-export async function saveExtraLog(athleteId: string, draft: LogDraft): Promise<{ error?: string }> {
+export async function saveExtraLog(athleteId: string, draft: LogDraft): Promise<SaveResult> {
   if (!hasSupabaseEnv()) {
     const all = loadLocal(athleteId);
-    all.push({ ...draft, id: `local-${Date.now()}` });
+    const id = `local-${Date.now()}`;
+    all.push({ ...draft, id });
     saveLocal(athleteId, all);
-    return {};
+    return { id };
   }
   const supabase = createClient();
-  const { error } = await supabase.from("varsity_logs").insert(draftToRow(athleteId, draft));
-  return error ? { error: error.message } : {};
+  const { data, error } = await supabase
+    .from("varsity_logs")
+    .insert(draftToRow(athleteId, draft))
+    .select("id")
+    .single();
+  return error ? { error: error.message } : { id: (data as { id: string } | null)?.id };
 }
 
 /* ── Update an existing log by id (used to edit an extra session) ── */
@@ -186,17 +206,17 @@ export async function updateLog(
   athleteId: string,
   id: string,
   draft: LogDraft,
-): Promise<{ error?: string }> {
+): Promise<SaveResult> {
   if (!hasSupabaseEnv()) {
     const all = loadLocal(athleteId);
     const idx = all.findIndex((l) => l.id === id);
     if (idx >= 0) all[idx] = { ...draft, id };
     saveLocal(athleteId, all);
-    return {};
+    return { id };
   }
   const supabase = createClient();
   const { error } = await supabase.from("varsity_logs").update(draftToRow(athleteId, draft)).eq("id", id);
-  return error ? { error: error.message } : {};
+  return error ? { error: error.message } : { id };
 }
 
 /* ── Delete a log ── */

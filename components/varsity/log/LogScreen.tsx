@@ -33,6 +33,7 @@ import { scanErgPhoto, minutesToClock } from "@/lib/varsity/ergScan";
 import { deriveSplitSec, deriveTotalSec } from "@/lib/varsity/ergMath";
 import { fetchAthleteProfile } from "@/lib/varsity/athleteProfile";
 import { shareResult, unshareResult, intervalsFromScan } from "@/lib/varsity/resultsStore";
+import ShareToFeedStep, { type SharedSession } from "@/components/varsity/feed/ShareToFeedStep";
 import { uploadErgPhoto } from "@/lib/varsity/ergPhotos";
 import type { ErgScanInterval } from "@/lib/varsity/ergScan";
 import {
@@ -106,6 +107,9 @@ function LogEditor({
   const [split, setSplit] = useState<string>(existing?.split ?? "");
   const [note, setNote] = useState(existing?.note ?? "");
   const [busy, setBusy] = useState(false);
+  // The session that was just saved, waiting to be offered to the feed. Set by
+  // save(); while it is set, the share step is on top of the editor.
+  const [shareSession, setShareSession] = useState<SharedSession | null>(null);
   const fromPlan = !!est && (est.minutes != null || est.metres != null);
 
   // C2/RP3 photo scan (erg only) → fills the fields via Claude vision.
@@ -258,6 +262,25 @@ function LogEditor({
     }
 
     setBusy(false);
+
+    /*
+      THE FEED COMES AFTER THE LOG, NEVER INSIDE IT.
+      The session is safely saved by this point. Only now is the athlete asked
+      whether it also goes on the feed — and the photo and the comment live on
+      the other side of that question (components/varsity/feed/ShareToFeedStep).
+      Nothing here is published; this only opens the question.
+    */
+    const logId = existing?.id ?? res.id ?? null;
+    if (logId) {
+      setShareSession({
+        id: logId,
+        title: draft.title,
+        minutes: draft.minutes,
+        metres: draft.metres,
+        split: draft.split,
+      });
+      return; // the share step closes the editor when it's finished
+    }
     onSaved();
   };
 
@@ -440,6 +463,12 @@ function LogEditor({
   return createPortal(
     <ThemeProvider tokens={vTheme.dark} light={vTheme.light}>
       {overlay}
+      {/* Saved → "does this also go on the feed?" → only then a photo and a
+          comment. Sits on top of the editor rather than replacing it, so a
+          failed post still has the session behind it. */}
+      {shareSession && (
+        <ShareToFeedStep session={shareSession} onBoard={teamWorkout} onDone={onSaved} />
+      )}
     </ThemeProvider>,
     document.body,
   );
