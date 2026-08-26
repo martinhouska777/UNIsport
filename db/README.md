@@ -56,7 +56,10 @@ dependency is already satisfied. All of them are idempotent — safe to re-run.
   a live project would fight `profiles.sql`. Left as a planning artifact.
 - **`matching_test.sql`** — hand-run `select`s for checking the matching
   functions. Reads only; run it when you want to look, not when you set up.
-- **`seed_*.sql`** — demo people, demo campus, demo varsity week. Optional
+- **`seed_*.sql`** — demo people, demo campus, demo varsity week, and the two
+  feed fillers (`seed_feed.sql` = invented students at the other seven schools
+  posting to the normal feed; `seed_varsity_feed.sql` = invented squads posting
+  to the varsity feed, plus three teammates on your own squad). Optional
   content, not structure. Each has a matching `*_undo.sql` that removes it
   again, so a demo can be put on and taken off a project without residue.
 
