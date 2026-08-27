@@ -8,24 +8,13 @@ import { StarRater, CrowdPicker, RatingValue } from "@/components/gyms/RateCrowd
 import OpenNow from "@/components/gyms/OpenNow";
 import { useMinuteNow } from "@/lib/gymHours";
 import { ButtonLink } from "@/components/ui/Button";
-import { gymHighlights, type Gym, type GalleryIcon } from "@/lib/gyms";
+import { gymHighlights, type Gym } from "@/lib/gyms";
 import {
   IconArrowLeft,
   IconHeart,
   IconMapPin,
   IconChevronDown,
-  IconBarbell,
-  IconRun,
-  IconSwimming,
-  IconBasketball,
 } from "@/components/icons";
-
-const galleryIcons: Record<GalleryIcon, (p: { size?: number; className?: string }) => React.ReactNode> = {
-  barbell: IconBarbell,
-  run: IconRun,
-  swimming: IconSwimming,
-  basketball: IconBasketball,
-};
 
 export default function GymProfile({ gym }: { gym: Gym }) {
   const { userId } = useAppState();
@@ -36,15 +25,9 @@ export default function GymProfile({ gym }: { gym: Gym }) {
   const highlights = gymHighlights(gym);
   const crowd = getCrowd(gym.slug);
   const now = useMinuteNow();
-  const [activePhoto, setActivePhoto] = useState(0);
   // See FavHeart in the gyms list: counts taps so the pop plays on the tap and
   // not on every render of a gym that's already a favourite.
   const [favTaps, setFavTaps] = useState(0);
-
-  const onGalleryScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    const el = e.currentTarget;
-    setActivePhoto(Math.round(el.scrollLeft / el.clientWidth));
-  };
 
   return (
     <div className="mx-auto flex w-full max-w-screen-sm flex-col">
@@ -78,46 +61,17 @@ export default function GymProfile({ gym }: { gym: Gym }) {
         </button>
       </div>
 
-      {/* Photo gallery */}
-      {gym.gallery.length > 0 && (
-        <div className="relative">
-          <div
-            onScroll={onGalleryScroll}
-            className="flex snap-x snap-mandatory overflow-x-auto [&::-webkit-scrollbar]:hidden"
-            style={{ scrollbarWidth: "none" }}
-          >
-            {gym.gallery.map((photo, i) => {
-              const PhotoIcon = galleryIcons[photo.icon];
-              return (
-                <div
-                  key={i}
-                  className="flex h-50 min-w-full snap-start flex-col items-center justify-center gap-2 bg-gradient-to-br from-surface-2 to-background"
-                >
-                  <span className="text-text/15">
-                    <PhotoIcon size={40} />
-                  </span>
-                  <span className="text-[11px] text-text/40">{photo.label}</span>
-                </div>
-              );
-            })}
-          </div>
+      {/*
+        WHERE THE PHOTO CAROUSEL USED TO BE. Four panels — Main Floor, Cardio,
+        Pool, Courts — each a 200px empty rectangle holding one grey icon and one
+        word, with page dots underneath. A photo slot with no photos, and it
+        pushed everything the page is actually for below the fold.
 
-          {/* Dash indicators */}
-          {gym.gallery.length > 1 && (
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center gap-1.5 bg-gradient-to-t from-background/70 to-transparent px-3.5 pb-2.5 pt-6">
-              {gym.gallery.map((_, i) => (
-                <span
-                  key={i}
-                  className={`h-[3px] rounded-sm transition-all ${
-                    i === activePhoto ? "w-[18px] bg-text" : "w-1.5 bg-text/30"
-                  }`}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
+        Gone rather than restyled: there is no photography to put in it, and the
+        gym's own icon still marks its card in the list. gym.gallery stays in the
+        data (lib/gyms.ts) — that is where the card reads its icon from, and
+        where real photos will land when there are some.
+      */}
       {/* Header block */}
       <div className="border-b border-border px-3.5 py-3">
         <h1 className="mb-1.5 text-[15px] font-medium text-text">{gym.name}</h1>
