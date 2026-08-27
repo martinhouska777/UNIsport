@@ -6,10 +6,11 @@ import { gymsFor, type Gym, type GalleryIcon } from "@/lib/gyms";
 import { useAppState } from "@/components/AppState";
 import { getUniversity } from "@/lib/themes";
 import { useFavorites, useGymStats, type GymCrowd } from "@/lib/gymSocial";
+import { gymOpenState, useMinuteNow } from "@/lib/gymHours";
+import OpenNow from "@/components/gyms/OpenNow";
 import { RatingValue, CrowdChip } from "@/components/gyms/RateCrowd";
 import {
   IconSearch,
-  IconClock,
   IconFloors,
   IconHeart,
   IconChevronRight,
@@ -59,13 +60,12 @@ function FavHeart({ fav, onToggle }: { fav: boolean; onToggle: () => void }) {
   );
 }
 
-function StatsRow({ gym, crowd }: { gym: Gym; crowd: GymCrowd | null }) {
+function StatsRow({ gym, crowd, now }: { gym: Gym; crowd: GymCrowd | null; now: number | null }) {
   return (
     <div className="flex items-center justify-between gap-2 bg-surface px-3 py-2.5">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
-        <span className="flex items-center gap-1">
-          <IconClock size={13} /> {gym.hours}
-        </span>
+        {/* Can you walk in right now — the one thing the timetable was hiding */}
+        <OpenNow hours={gym.hours} now={now} />
         {/* The gym's rating + how many rated it (hidden if nobody has) */}
         <RatingValue value={gym.rating} count={gym.ratingCount} />
         {/* Live crowd ("how busy right now") — hidden when there's no fresh report */}
@@ -86,6 +86,7 @@ type CardProps = {
   fav: boolean;
   onToggleFav: () => void;
   crowd: GymCrowd | null;
+  now: number | null;
   /* The tour presses the first card to open a gym in front of you, rather than
      arriving there behind your back (lib/tour.ts). Only that card gets one. */
   tour?: string;
@@ -116,7 +117,7 @@ function Watermark({ gym }: { gym: Gym }) {
   );
 }
 
-function MainCard({ gym, fav, onToggleFav, crowd, tour }: CardProps) {
+function MainCard({ gym, fav, onToggleFav, crowd, now, tour }: CardProps) {
   return (
     <Link
       href={`/gyms/${gym.slug}`}
@@ -142,12 +143,12 @@ function MainCard({ gym, fav, onToggleFav, crowd, tour }: CardProps) {
           <div className="text-[11px] text-text-2">{gym.address}</div>
         </div>
       </div>
-      <StatsRow gym={gym} crowd={crowd} />
+      <StatsRow gym={gym} crowd={crowd} now={now} />
     </Link>
   );
 }
 
-function HouseCard({ gym, fav, onToggleFav, crowd, sub }: CardProps & { sub: string }) {
+function HouseCard({ gym, fav, onToggleFav, crowd, now, sub }: CardProps & { sub: string }) {
   const colors = gym.houseColors;
   return (
     <Link
@@ -175,7 +176,7 @@ function HouseCard({ gym, fav, onToggleFav, crowd, sub }: CardProps & { sub: str
           <div className="text-[11px] text-text-2">{sub}</div>
         </div>
       </div>
-      <StatsRow gym={gym} crowd={crowd} />
+      <StatsRow gym={gym} crowd={crowd} now={now} />
     </Link>
   );
 }
@@ -184,6 +185,8 @@ export default function GymsPage() {
   const { userId, universityKey } = useAppState();
   const { isFavorite, toggle } = useFavorites(userId);
   const { getCrowd } = useGymStats(userId);
+  // One clock for the whole list, so every card agrees on what time it is.
+  const now = useMinuteNow();
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
 
@@ -205,8 +208,21 @@ export default function GymsPage() {
   const showMain = filter === "all" || filter === "fav" || filter === "main";
   const showHouse = filter === "all" || filter === "fav" || filter === "house";
 
-  const visibleMain = showMain ? mainGyms : [];
-  const visibleHouse = showHouse ? houseGyms : [];
+  /*
+    Open gyms first. A closed gym is not a result you can act on, so it sinks to
+    the bottom of its own section rather than sitting between two you could walk
+    into. The order INSIDE each group is left alone — that's the curated order in
+    lib/gyms.ts — and nothing moves until the browser knows the time (`now`),
+    which keeps the first paint identical to the server's.
+  */
+  const openFirst = (list: Gym[]) => {
+    if (now === null) return list;
+    const isOpen = (g: Gym) => gymOpenState(g.hours, now)?.open ?? true;
+    return [...list].sort((a, b) => Number(isOpen(b)) - Number(isOpen(a)));
+  };
+
+  const visibleMain = showMain ? openFirst(mainGyms) : [];
+  const visibleHouse = showHouse ? openFirst(houseGyms) : [];
   const nothing = visibleMain.length === 0 && visibleHouse.length === 0;
   // House gyms get their own section header in the mixed views.
   const showHouseHeader = (filter === "all" || filter === "fav") && visibleHouse.length > 0;
@@ -277,6 +293,7 @@ export default function GymsPage() {
             fav={isFavorite(g.slug)}
             onToggleFav={() => toggle(g.slug)}
             crowd={getCrowd(g.slug)}
+            now={now}
             tour={idx === 0 ? "gyms-first-card" : undefined}
           />
         ))}
@@ -297,6 +314,7 @@ export default function GymsPage() {
             fav={isFavorite(g.slug)}
             onToggleFav={() => toggle(g.slug)}
             crowd={getCrowd(g.slug)}
+            now={now}
             sub={uni?.houseNoun ?? "House gym"}
           />
         ))}

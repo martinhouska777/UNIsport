@@ -5,12 +5,13 @@ import Link from "next/link";
 import { useAppState } from "@/components/AppState";
 import { useFavorites, useGymStats, timeAgo } from "@/lib/gymSocial";
 import { StarRater, CrowdPicker, RatingValue } from "@/components/gyms/RateCrowd";
+import OpenNow from "@/components/gyms/OpenNow";
+import { useMinuteNow } from "@/lib/gymHours";
 import { ButtonLink } from "@/components/ui/Button";
 import { gymHighlights, type Gym, type GalleryIcon } from "@/lib/gyms";
 import {
   IconArrowLeft,
   IconHeart,
-  IconClock,
   IconMapPin,
   IconChevronDown,
   IconBarbell,
@@ -34,6 +35,7 @@ export default function GymProfile({ gym }: { gym: Gym }) {
   const rating = getRating(gym.slug);
   const highlights = gymHighlights(gym);
   const crowd = getCrowd(gym.slug);
+  const now = useMinuteNow();
   const [activePhoto, setActivePhoto] = useState(0);
   // See FavHeart in the gyms list: counts taps so the pop plays on the tap and
   // not on every render of a gym that's already a favourite.
@@ -120,9 +122,7 @@ export default function GymProfile({ gym }: { gym: Gym }) {
       <div className="border-b border-border px-3.5 py-3">
         <h1 className="mb-1.5 text-[15px] font-medium text-text">{gym.name}</h1>
         <div className="flex flex-wrap gap-x-3.5 gap-y-1 text-[11px] text-muted">
-          <span className="flex items-center gap-1.5">
-            <IconClock size={13} /> {gym.hours}
-          </span>
+          <OpenNow hours={gym.hours} now={now} />
           <RatingValue value={gym.rating} count={gym.ratingCount} />
           <span className="flex items-center gap-1.5">
             <IconMapPin size={13} /> {gym.address}

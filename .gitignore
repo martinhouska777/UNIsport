@@ -51,3 +51,6 @@ scripts/landing/raw/
 
 # The Vercel CLI's local project link (env files are already covered above).
 .vercel
+
+# Env files pulled down by the Vercel CLI (feed.env, dev.env, ...) hold DB passwords.
+*.env
