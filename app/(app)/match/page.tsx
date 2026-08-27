@@ -1,11 +1,15 @@
 "use client";
 
 /*
-  MATCH TAB. Three sub-tabs:
-  - Browse: all compatible partners, scored out of 100, best first.
-  - Session Search: pick WHAT (activity) + WHEN (day + hour) — all required —
-    then search. Results are people doing that activity who are free within ~2h.
-  - Buddy Board: open posts looking for a partner.
+  MATCH TAB. TWO sub-tabs — it had three, and all three meant "find a partner",
+  which left nobody able to say which one they were supposed to use:
+
+  - People: all compatible partners, scored out of 100, best first.
+  - Sessions: one screen for "I want to train on Thursday". The board of open
+    posts is what you land on; posting your own is a button on it; and the timed
+    search — pick WHAT (activity) + WHEN (day + hour), all required, and it finds
+    people free within ~2h of that — is folded away above the board for when you
+    already know exactly when you're going.
 
   Every result card carries the REASONS that person ranked where they did (see
   lib/matchReasons.ts) — the things you actually share. Tapping through to their
@@ -49,13 +53,13 @@ import FiltersSheet, {
   activeFilterChips,
 } from "@/components/match/FiltersSheet";
 import { Pill, FieldLabel } from "@/components/onboarding/controls";
+import { IconChevronDown } from "@/components/icons";
 
-type SubTab = "browse" | "session" | "buddy";
+type SubTab = "people" | "sessions";
 
 const subTabs: { key: SubTab; label: string; heading: string }[] = [
-  { key: "browse", label: "Browse", heading: "BROWSE" },
-  { key: "session", label: "Session", heading: "SESSION SEARCH" },
-  { key: "buddy", label: "Buddy Board", heading: "BUDDY BOARD" },
+  { key: "people", label: "People", heading: "SORTED BY FIT" },
+  { key: "sessions", label: "Sessions", heading: "THE COMING WEEK" },
 ];
 
 function Grid({
@@ -126,14 +130,15 @@ function MatchScreen() {
 
   /*
     Arriving from a gym's "Find a partner at this gym" button (/match?gym=...):
-    open Session search with that gym already filtered in, so the tap actually
-    carries the user's intent instead of dropping them on a blank Browse list.
+    open Sessions with the timed search unfolded and that gym already filtered
+    in, so the tap carries the user's intent instead of dropping them on a blank
+    list of everyone.
     Only gym names the app knows are accepted — never arbitrary URL text.
   */
   const gymParam = search.get("gym");
   const presetGym = gymParam && verifiedGyms.includes(gymParam) ? gymParam : null;
 
-  const [tab, setTab] = useState<SubTab>(presetGym ? "session" : "browse");
+  const [tab, setTab] = useState<SubTab>(presetGym ? "sessions" : "people");
 
   // My own answers, for the sheet's "Same as mine" shortcuts.
   const myConcentration = (myProfile?.concentration as string) || null;
@@ -277,8 +282,8 @@ function MatchScreen() {
         </div>
       </div>
 
-      {/* BROWSE */}
-      {tab === "browse" && (
+      {/* PEOPLE — everyone, ranked */}
+      {tab === "people" && (
         <>
           <div className="px-3 pb-2">
             <MatchFilterBar
@@ -307,10 +312,23 @@ function MatchScreen() {
         </>
       )}
 
-      {/* SESSION SEARCH */}
-      {tab === "session" && (
+      {/*
+        SESSIONS. The timed search, folded away — it answers a narrower question
+        than the board underneath it ("who is free at 7 on Thursday" rather than
+        "who wants to train this week"), so it opens on demand instead of
+        standing between you and the posts. Arriving from a gym's "find a partner
+        here" button opens it, because that tap already said when-ish.
+      */}
+      {tab === "sessions" && (
         <div className="px-3 pb-4">
-          <div className="flex flex-col gap-3 rounded-xl border border-border bg-surface-2 p-3.5">
+          <details className="group rounded-xl border border-border bg-surface-2" open={!!presetGym}>
+            <summary className="tap44 flex cursor-pointer list-none items-center justify-between px-3.5 py-3 [&::-webkit-details-marker]:hidden">
+              <span className="text-sm font-medium text-text">Free at a set time?</span>
+              <span className="text-muted transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none">
+                <IconChevronDown size={16} />
+              </span>
+            </summary>
+            <div className="flex flex-col gap-3 border-t border-border p-3.5">
             {/* REQUIRED: Activity */}
             <div>
               <FieldLabel>Activity</FieldLabel>
@@ -395,11 +413,12 @@ function MatchScreen() {
               )}
             </div>
           )}
+          </details>
         </div>
       )}
 
-      {/* BUDDY BOARD */}
-      {tab === "buddy" && <BuddyBoard />}
+      {/* The board itself — the default view of this tab. */}
+      {tab === "sessions" && <BuddyBoard />}
 
       {sheetOpen && (
         <FiltersSheet
