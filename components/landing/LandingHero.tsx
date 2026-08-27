@@ -182,7 +182,10 @@ export default function LandingHero({ doors: showDoors = true }: { doors?: boole
               captain, and shouldn't have to scroll to find where it goes. */}
           <p className="mt-[clamp(10px,2vh,24px)] text-[14px] text-l-text-2">
             {hero.inviteNote}{" "}
-            <Link href="/join" className="font-medium text-l-varsity underline-offset-4 transition-colors hover:underline">
+            <Link
+              href="/join"
+              className="tap44 inline-block font-medium text-l-varsity underline-offset-4 transition-colors hover:underline"
+            >
               {hero.inviteCta} →
             </Link>
           </p>

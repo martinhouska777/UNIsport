@@ -332,7 +332,8 @@ export default function CampusColours({
                 aria-label={sc.name}
                 aria-pressed={on}
                 onClick={() => pick(i)}
-                className="h-2.5 w-2.5 cursor-pointer rounded-full border-0 bg-l-line-hover p-0 transition-[transform,background-color] duration-300 ease-in-out focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-l-text motion-reduce:transition-none"
+                /* tap-dot: 10px to the eye, 44px tall to the thumb (globals.css) */
+                className="tap-dot h-2.5 w-2.5 cursor-pointer rounded-full border-0 bg-l-line-hover p-0 transition-[transform,background-color] duration-300 ease-in-out focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-l-text motion-reduce:transition-none"
                 style={
                   on
                     ? {
