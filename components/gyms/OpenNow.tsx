@@ -10,7 +10,7 @@
   the browser has mounted `now` is null and the plain timetable is drawn — the
   server has no idea what time it is where the reader is.
 */
-import { gymOpenState } from "@/lib/gymHours";
+import { gymOpenState, type Clock } from "@/lib/gymHours";
 import { IconClock } from "@/components/icons";
 
 export default function OpenNow({
@@ -19,10 +19,10 @@ export default function OpenNow({
   size = 13,
 }: {
   hours: string;
-  now: number | null;
+  now: Clock | null;
   size?: number;
 }) {
-  const state = now === null ? null : gymOpenState(hours, now);
+  const state = now === null ? null : gymOpenState(hours, now.minutes);
   // Green while it's open, amber in the last hour, inherited muted once shut.
   const tone = !state ? "" : state.closingSoon ? "text-warn" : state.open ? "text-success" : "";
   return (

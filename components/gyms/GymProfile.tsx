@@ -4,9 +4,9 @@ import { useState } from "react";
 import Link from "next/link";
 import { useAppState } from "@/components/AppState";
 import { useFavorites, useGymStats, timeAgo } from "@/lib/gymSocial";
-import { StarRater, CrowdPicker, RatingValue } from "@/components/gyms/RateCrowd";
+import { StarRater, CrowdPicker, RatingValue, BusyBars } from "@/components/gyms/RateCrowd";
 import OpenNow from "@/components/gyms/OpenNow";
-import { useMinuteNow } from "@/lib/gymHours";
+import { useClock } from "@/lib/gymHours";
 import { ButtonLink } from "@/components/ui/Button";
 import { gymHighlights, type Gym } from "@/lib/gyms";
 import {
@@ -24,7 +24,7 @@ export default function GymProfile({ gym }: { gym: Gym }) {
   const rating = getRating(gym.slug);
   const highlights = gymHighlights(gym);
   const crowd = getCrowd(gym.slug);
-  const now = useMinuteNow();
+  const now = useClock();
   // See FavHeart in the gyms list: counts taps so the pop plays on the tap and
   // not on every render of a gym that's already a favourite.
   const [favTaps, setFavTaps] = useState(0);
@@ -122,11 +122,20 @@ export default function GymProfile({ gym }: { gym: Gym }) {
           <h2 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
             How busy right now?
           </h2>
+          {/* A live report if somebody filed one; otherwise the app says what
+              it actually knows — the typical week — and says that it is typical. */}
           <span className="text-[11px] text-muted">
-            {crowd ? `Reported ${timeAgo(crowd.at)}` : "No recent reports"}
+            {crowd ? `Reported ${timeAgo(crowd.at)}` : "Typical for this time"}
           </span>
         </div>
-        <div className="mt-2">
+        {/* The next six hours, so "come back at nine" is an answer the page can
+            give. Hidden once a live report is in — that is the better answer. */}
+        {!crowd && (
+          <div className="mt-2.5">
+            <BusyBars kind={gym.kind} now={now} />
+          </div>
+        )}
+        <div className="mt-3">
           <CrowdPicker value={crowd?.level ?? null} onReport={(l) => reportCrowd(gym.slug, l)} />
         </div>
       </div>

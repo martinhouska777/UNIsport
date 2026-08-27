@@ -95,9 +95,11 @@ export function gymOpenState(hours: string, now: number): GymOpenState | null {
   return { open: true, closingSoon: false, label: `Open now · closes ${clockLabel(span.closes)}` };
 }
 
+/** The reader's own clock: minutes since midnight, and which day it is (0 = Sunday). */
+export type Clock = { minutes: number; weekday: number };
+
 /*
-  The current time, in minutes since midnight — NULL until the component has
-  mounted in the browser.
+  The current time — NULL until the component has mounted in the browser.
 
   That null matters: the server has no idea what time it is where the reader is,
   so rendering "Open now" during the server pass would make the first paint
@@ -108,12 +110,12 @@ export function gymOpenState(hours: string, now: number): GymOpenState | null {
   It re-reads once a minute, so a gym that closes while you are looking at the
   list says so.
 */
-export function useMinuteNow(): number | null {
-  const [now, setNow] = useState<number | null>(null);
+export function useClock(): Clock | null {
+  const [now, setNow] = useState<Clock | null>(null);
   useEffect(() => {
     const read = () => {
       const d = new Date();
-      setNow(d.getHours() * 60 + d.getMinutes());
+      setNow({ minutes: d.getHours() * 60 + d.getMinutes(), weekday: d.getDay() });
     };
     read();
     const id = setInterval(read, 60_000);

@@ -6,9 +6,9 @@ import { gymsFor, type Gym, type GalleryIcon } from "@/lib/gyms";
 import { useAppState } from "@/components/AppState";
 import { getUniversity } from "@/lib/themes";
 import { useFavorites, useGymStats, type GymCrowd } from "@/lib/gymSocial";
-import { gymOpenState, useMinuteNow } from "@/lib/gymHours";
+import { gymOpenState, useClock, type Clock } from "@/lib/gymHours";
 import OpenNow from "@/components/gyms/OpenNow";
-import { RatingValue, CrowdChip } from "@/components/gyms/RateCrowd";
+import { RatingValue, CrowdChip, PredictedChip } from "@/components/gyms/RateCrowd";
 import {
   IconSearch,
   IconFloors,
@@ -60,7 +60,9 @@ function FavHeart({ fav, onToggle }: { fav: boolean; onToggle: () => void }) {
   );
 }
 
-function StatsRow({ gym, crowd, now }: { gym: Gym; crowd: GymCrowd | null; now: number | null }) {
+function StatsRow({ gym, crowd, now }: { gym: Gym; crowd: GymCrowd | null; now: Clock | null }) {
+  // A shut gym is not "usually quiet", it's shut — the open line already says so.
+  const closed = now !== null && gymOpenState(gym.hours, now.minutes)?.open === false;
   return (
     <div className="flex items-center justify-between gap-2 bg-surface px-3 py-2.5">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
@@ -68,8 +70,13 @@ function StatsRow({ gym, crowd, now }: { gym: Gym; crowd: GymCrowd | null; now: 
         <OpenNow hours={gym.hours} now={now} />
         {/* The gym's rating + how many rated it (hidden if nobody has) */}
         <RatingValue value={gym.rating} count={gym.ratingCount} />
-        {/* Live crowd ("how busy right now") — hidden when there's no fresh report */}
-        <CrowdChip crowd={crowd} />
+{/* How busy it is. A fresh report if there is one; otherwise how busy this
+            gym USUALLY is at this hour, so the line is never blank. */}
+        {crowd ? (
+          <CrowdChip crowd={crowd} />
+        ) : closed ? null : (
+          <PredictedChip kind={gym.kind} now={now} />
+        )}
         <span className="flex items-center gap-1">
           <IconFloors size={13} /> {gym.floors} {gym.floors === 1 ? "floor" : "floors"}
         </span>
@@ -86,7 +93,7 @@ type CardProps = {
   fav: boolean;
   onToggleFav: () => void;
   crowd: GymCrowd | null;
-  now: number | null;
+  now: Clock | null;
   /* The tour presses the first card to open a gym in front of you, rather than
      arriving there behind your back (lib/tour.ts). Only that card gets one. */
   tour?: string;
@@ -186,7 +193,7 @@ export default function GymsPage() {
   const { isFavorite, toggle } = useFavorites(userId);
   const { getCrowd } = useGymStats(userId);
   // One clock for the whole list, so every card agrees on what time it is.
-  const now = useMinuteNow();
+  const now = useClock();
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
 
@@ -217,7 +224,7 @@ export default function GymsPage() {
   */
   const openFirst = (list: Gym[]) => {
     if (now === null) return list;
-    const isOpen = (g: Gym) => gymOpenState(g.hours, now)?.open ?? true;
+    const isOpen = (g: Gym) => gymOpenState(g.hours, now.minutes)?.open ?? true;
     return [...list].sort((a, b) => Number(isOpen(b)) - Number(isOpen(a)));
   };
 
