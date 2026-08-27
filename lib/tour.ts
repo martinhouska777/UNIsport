@@ -116,25 +116,19 @@ export const tourSteps: TourStep[] = [
     route: "/match",
     anchor: "tab-/match",
     title: "Match",
-    body: "Where you find someone to train with. There are three ways to go about it, and they're in the row just underneath.",
+    body: "Where you find someone to train with. Two ways to go about it, in the row just underneath.",
   },
   {
-    press: "match-tab-browse",
-    anchor: "match-tab-browse",
-    title: "Browse — everyone, ranked",
+    press: "match-tab-people",
+    anchor: "match-tab-people",
+    title: "People — everyone, ranked",
     body: "People sorted by how well they fit you, with the reason spelled out under each name. Start here when you just want to find somebody.",
   },
   {
-    press: "match-tab-session",
-    anchor: "match-tab-session",
-    title: "Session — one specific slot",
-    body: "Say what you want to train, which day and what time, and this searches for people free exactly then. Use it when you already know when you're going.",
-  },
-  {
-    press: "match-tab-buddy",
-    anchor: "match-tab-buddy",
-    title: "Buddy Board — post and let them come",
-    body: "Put up what you're looking for instead of searching, or answer somebody else's post. Posts cover the coming week and then expire.",
+    press: "match-tab-sessions",
+    anchor: "match-tab-sessions",
+    title: "Sessions — this coming week",
+    body: "Everyone who has said what they want to train and when. Put your own up with the button, message anyone whose plan suits you — or open “Free at a set time?” to search for people free at one exact hour.",
   },
 
   /* ── Messages ─────────────────────────────────────────────────────────── */

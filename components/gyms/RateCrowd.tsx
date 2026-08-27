@@ -13,6 +13,9 @@ import {
   type CrowdLevel,
   type GymCrowd,
 } from "@/lib/gymSocial";
+import { predictedLabel, predictedLevel, nextHours } from "@/lib/gymBusyness";
+import type { GymKind } from "@/lib/gyms";
+import type { Clock } from "@/lib/gymHours";
 import { useState } from "react";
 import { IconStar, IconUser } from "@/components/icons";
 
@@ -132,5 +135,47 @@ export function CrowdChip({
       <IconUser size={12} /> {crowdLabel(crowd.level)}
       {showAgo && <span className="text-text-3">· {timeAgo(crowd.at)}</span>}
     </span>
+  );
+}
+
+/*
+  What it's USUALLY like at this hour, for the rows where nobody has reported.
+  Deliberately muted rather than green/amber/red: colour on this line would make
+  a guess look like the live reading above it. Nothing is drawn until the browser
+  knows the time, and nothing is drawn for a gym with a fresh report — that one
+  shows CrowdChip instead.
+*/
+export function PredictedChip({ kind, now }: { kind: GymKind; now: Clock | null }) {
+  if (!now) return null;
+  const level = predictedLevel(kind, now.weekday, Math.floor(now.minutes / 60));
+  return (
+    <span className="flex items-center gap-1 text-text-3">
+      <IconUser size={12} /> {predictedLabel(level)}
+    </span>
+  );
+}
+
+/*
+  The next six hours as bars — "come back at nine". Same muted treatment and the
+  same source as PredictedChip, so the row and the chip can never disagree. The
+  current hour is marked so you can see where you're standing on it.
+*/
+export function BusyBars({ kind, now }: { kind: GymKind; now: Clock | null }) {
+  if (!now) return null;
+  const fromHour = Math.floor(now.minutes / 60);
+  return (
+    <div className="flex items-end gap-1.5">
+      {nextHours(kind, now.weekday, fromHour).map((h, i) => (
+        <div key={h.hour} className="flex flex-1 flex-col items-center gap-1">
+          <span className="flex h-8 w-full items-end">
+            <span
+              className={`w-full rounded-sm ${i === 0 ? "bg-text-3" : "bg-border"}`}
+              style={{ height: `${Math.round(h.height * 100)}%` }}
+            />
+          </span>
+          <span className={`text-[10px] ${i === 0 ? "text-text-2" : "text-text-3"}`}>{h.label}</span>
+        </div>
+      ))}
+    </div>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 /*
-  GYM BUDDY BOARD — Match tab → Buddy Board sub-tab.
+  GYM BUDDY BOARD — the default view of Match → Sessions.
 
   The honest answer to "find someone to do legs Thursday afternoon": you POST
   what you want to train + a day + a coarse time-of-day, and you see everyone
@@ -60,6 +60,12 @@ export default function BuddyBoard() {
   const [note, setNote] = useState("");
   const [posting, setPosting] = useState(false);
   const [formErr, setFormErr] = useState<string | null>(null);
+  /*
+    The form used to BE this screen — five rows of chips you had to scroll past
+    to reach anybody else's post. The posts are what you come here for, so the
+    form waits behind the button and the board is what you land on.
+  */
+  const [composing, setComposing] = useState(false);
 
   // --- Board + my posts ---
   const [board, setBoard] = useState<BuddyPost[] | null>(null);
@@ -115,6 +121,7 @@ export default function BuddyBoard() {
       setTimeOfDay(null);
       setGym(null);
       setNote("");
+      setComposing(false);
       await load();
     } catch (e) {
       setFormErr((e as Error).message);
@@ -151,79 +158,94 @@ export default function BuddyBoard() {
 
   return (
     <div className="px-3 pb-4">
-      {/* POST FORM */}
-      <div className="flex flex-col gap-3 rounded-xl border border-border bg-surface-2 p-3.5">
-        <div className="text-sm font-medium text-text">Post what you want to train</div>
-
-        <div>
-          <FieldLabel>Focus</FieldLabel>
-          <div className="flex flex-wrap gap-1.5">
-            {buddyFocuses.map((f) => (
-              <Pill key={f.key} label={f.label} selected={focus === f.key} onClick={() => setFocus(f.key)} />
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <FieldLabel>Day</FieldLabel>
-          <div className="flex flex-wrap gap-1.5">
-            {weekDays.map((d) => (
-              <Pill
-                key={d.key}
-                label={d.label.slice(0, 3)}
-                selected={day === d.key}
-                onClick={() => setDay(d.key)}
-              />
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <FieldLabel>Time of day</FieldLabel>
-          <div className="flex flex-wrap gap-1.5">
-            {buddyTimesOfDay.map((t) => (
-              <Pill
-                key={t.key}
-                label={t.label}
-                selected={timeOfDay === t.key}
-                onClick={() => setTimeOfDay(t.key)}
-              />
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <FieldLabel>Gym (optional)</FieldLabel>
-          <div className="-mx-0.5 chip-row flex gap-1.5 overflow-x-auto px-0.5 pb-1">
-            {verifiedGyms.map((g) => (
-              <div key={g} className="flex-shrink-0">
-                <Pill label={g} selected={gym === g} onClick={() => setGym(gym === g ? null : g)} />
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <FieldLabel>Note (optional)</FieldLabel>
-          <input
-            type="text"
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            placeholder="e.g. easy session, happy to spot"
-            maxLength={120}
-            // 16px text avoids mobile auto-zoom on focus.
-            className="w-full rounded-[10px] border border-border bg-surface px-3.5 py-3 text-base text-text placeholder:text-muted focus:border-primary focus:outline-none"
-          />
-        </div>
-
-        <Button size="lg" full onClick={submit} disabled={!canPost}>
-          {posting ? "Posting…" : "Post to board"}
+      {/* POST — a button until you want it, then the form in its place. */}
+      {!composing ? (
+        <Button size="lg" full onClick={() => setComposing(true)}>
+          + Post what you want to train
         </Button>
-        {!focus || !day || !timeOfDay ? (
-          <p className="text-center text-[11px] text-muted">Pick a focus, day, and time of day.</p>
-        ) : null}
-        {formErr && <p className="text-center text-[11px] text-danger">Couldn’t post: {formErr}</p>}
-      </div>
+      ) : (
+        <div className="flex flex-col gap-3 rounded-xl border border-border bg-surface-2 p-3.5">
+          <div className="flex items-center justify-between">
+            <div className="text-sm font-medium text-text">Post what you want to train</div>
+            <button
+              type="button"
+              onClick={() => setComposing(false)}
+              className="tap44 rounded-full border border-border px-3 py-1.5 text-[12px] text-muted"
+            >
+              Cancel
+            </button>
+          </div>
+
+          <div>
+            <FieldLabel>Focus</FieldLabel>
+            <div className="flex flex-wrap gap-1.5">
+              {buddyFocuses.map((f) => (
+                <Pill key={f.key} label={f.label} selected={focus === f.key} onClick={() => setFocus(f.key)} />
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <FieldLabel>Day</FieldLabel>
+            <div className="flex flex-wrap gap-1.5">
+              {weekDays.map((d) => (
+                <Pill
+                  key={d.key}
+                  label={d.label.slice(0, 3)}
+                  selected={day === d.key}
+                  onClick={() => setDay(d.key)}
+                />
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <FieldLabel>Time of day</FieldLabel>
+            <div className="flex flex-wrap gap-1.5">
+              {buddyTimesOfDay.map((t) => (
+                <Pill
+                  key={t.key}
+                  label={t.label}
+                  selected={timeOfDay === t.key}
+                  onClick={() => setTimeOfDay(t.key)}
+                />
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <FieldLabel>Gym (optional)</FieldLabel>
+            <div className="-mx-0.5 chip-row flex gap-1.5 overflow-x-auto px-0.5 pb-1">
+              {verifiedGyms.map((g) => (
+                <div key={g} className="flex-shrink-0">
+                  <Pill label={g} selected={gym === g} onClick={() => setGym(gym === g ? null : g)} />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <FieldLabel>Note (optional)</FieldLabel>
+            <input
+              type="text"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="e.g. easy session, happy to spot"
+              maxLength={120}
+              // 16px text avoids mobile auto-zoom on focus.
+              className="w-full rounded-[10px] border border-border bg-surface px-3.5 py-3 text-base text-text placeholder:text-muted focus:border-primary focus:outline-none"
+            />
+          </div>
+
+          <Button size="lg" full onClick={submit} disabled={!canPost}>
+            {posting ? "Posting…" : "Post to board"}
+          </Button>
+          {!focus || !day || !timeOfDay ? (
+            <p className="text-center text-[11px] text-muted">Pick a focus, day, and time of day.</p>
+          ) : null}
+          {formErr && <p className="text-center text-[11px] text-danger">Couldn’t post: {formErr}</p>}
+        </div>
+      )}
 
       {/* YOUR POSTS */}
       {mine && mine.length > 0 && (
@@ -276,7 +298,7 @@ export default function BuddyBoard() {
         <Status>
           {anyFilter
             ? "No posts match those filters yet."
-            : "No open posts yet. Post above and check back as more people join."}
+            : "No open posts yet. Put yours up with the button above and check back as more people join."}
         </Status>
       )}
       {!boardErr && board && board.length > 0 && (

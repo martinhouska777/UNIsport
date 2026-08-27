@@ -18,7 +18,10 @@ export default function About({ full = false }: { full?: boolean }) {
           <p className="mt-6 max-w-[62ch] text-[clamp(16px,1.8vw,18px)] leading-[1.65] text-l-text-2">{about.body}</p>
           {!full && (
             <p className="mt-6 text-[15px]">
-              <Link href="/about" className="font-medium text-l-text underline-offset-4 transition-colors hover:underline">
+              <Link
+                href="/about"
+                className="tap44 inline-block font-medium text-l-text underline-offset-4 transition-colors hover:underline"
+              >
                 {about.readWhy} →
               </Link>
             </p>

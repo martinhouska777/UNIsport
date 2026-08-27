@@ -38,7 +38,7 @@ function Tabs({ view, className = "" }: { view: LandingView; className?: string 
             key={v.view}
             href={v.href}
             aria-current={on ? "page" : undefined}
-            className={`shrink-0 rounded-full px-2.5 py-1.5 text-[12.5px] font-medium tracking-tight transition-colors sm:px-3.5 sm:text-sm ${
+            className={`tap44 shrink-0 rounded-full px-2.5 py-1.5 text-[12.5px] font-medium tracking-tight transition-colors sm:px-3.5 sm:text-sm ${
               on ? "bg-l-line-hover text-l-text" : "text-l-text-2 hover:text-l-text"
             }`}
           >
@@ -66,7 +66,7 @@ export default function LandingNav({ view = "all", heroMark = false }: { view?: 
           <div className="flex items-center gap-2 sm:gap-2.5">
             <Link
               href="/login"
-              className="rounded-full px-3.5 py-2 text-[13px] font-medium tracking-tight text-l-text-2 transition-colors hover:text-l-text sm:px-[18px] sm:text-sm"
+              className="tap44 rounded-full px-3.5 py-2 text-[13px] font-medium tracking-tight text-l-text-2 transition-colors hover:text-l-text sm:px-[18px] sm:text-sm"
             >
               {nav.login}
             </Link>

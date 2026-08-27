@@ -27,7 +27,7 @@ export default function FeatureList({ kicker, rows, cta }: { kicker: string; row
                 </span>
                 <span
                   aria-hidden
-                  className="relative h-5 w-5 flex-none text-l-text-3 transition-transform duration-300 group-open:rotate-45 group-open:text-(--sa)"
+                  className="relative h-5 w-5 flex-none text-l-text-2 transition-transform duration-300 group-open:rotate-45 group-open:text-(--sa)"
                 >
                   <span className="absolute top-1/2 left-0 h-px w-full -translate-y-1/2 bg-current" />
                   <span className="absolute top-0 left-1/2 h-full w-px -translate-x-1/2 bg-current" />
