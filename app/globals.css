@@ -257,8 +257,11 @@
 .ls-marker.ls-pan { height: 150svh; }
 /* The opening beat of each story is the one nobody has read yet — it gets
    roughly two screens of scroll before the second headline takes over. */
-.ls-marker:first-child { height: 165svh; }
-.ls-marker:last-child { height: 130svh; }
+.ls-marker.ls-first { height: 165svh; }
+.ls-marker.ls-last { height: 130svh; }
+/* The opening's own scroll: one screenful and a bit, which is what the words
+   need to be read, leave, and hand over to the phone rising behind them. */
+.ls-marker-open { height: 128svh; }
 
 .ls-copy { position: relative; min-height: 300px; }
 .ls-beat {
@@ -301,6 +304,50 @@
 .ls-stage.ls-enter .ls-phone-col { transform: translateX(74px) scale(0.97); opacity: 0; }
 .ls-stage.ls-enter .ls-copy      { transform: translateX(-46px); opacity: 0; }
 .ls-stage.ls-enter .ls-rail      { opacity: 0; }
+/*
+  THE OPENING — the story's title card, played inside the sticky stage.
+
+  Everything here is driven by two numbers the runtime writes onto the stage
+  as it scrolls the opening's marker: --op (0 → 1 across the whole opening)
+  and --rise (the same, but only starting a quarter of the way in).
+
+    the words   lift a little and are gone by --op 0.5
+    the cue     does not move at all, and leaves with the card
+    the phone   rises from below the stage's bottom edge into its home
+
+  The stage clips (overflow: hidden), so the phone is genuinely off the
+  bottom rather than merely transparent, and it arrives in the position it
+  keeps for the rest of the story — no second move once the story starts.
+
+  The drift follower writes an inline transform on .ls-phone-wrap, so the
+  rise takes the COLUMN instead; the column's own 0.9s transition is off
+  while the rise is running, since the rise is already per-frame.
+*/
+.ls-open {
+  position: absolute; inset: 0; z-index: 3;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 0 24px; text-align: center;
+}
+.ls-stage:not(.ls-opening) .ls-open { visibility: hidden; pointer-events: none; }
+.ls-open-words {
+  display: flex; flex-direction: column; align-items: center;
+  gap: clamp(10px, 1.8vh, 18px);
+  opacity: calc(1 - var(--op, 0) * 2);
+  transform: translateY(calc(var(--op, 0) * -44px));
+}
+.ls-open-cue { position: absolute; bottom: clamp(20px, 7vh, 64px); }
+.ls-stage.ls-opening .ls-phone-col {
+  transition: none;
+  transform: translateY(calc((1 - var(--rise, 1)) * 92vh));
+}
+.ls-stage.ls-opening .ls-copy, .ls-stage.ls-opening .ls-rail { opacity: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  /* No rise and no lift: the card is simply there, then the story is. */
+  .ls-open-words { opacity: calc(1 - var(--op, 0) * 2); transform: none; }
+  .ls-stage.ls-opening .ls-phone-col { transform: none; }
+}
+
 .ls-phone-wrap { position: relative; will-change: transform; }
 @keyframes ls-float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
 .ls-phone { animation: ls-float 7s ease-in-out infinite; }
@@ -445,7 +492,8 @@
   .ls-stage.ls-flip .ls-rail { left: 50%; right: auto; }
   .ls-dot.ls-on { height: 5px; width: 18px; }
   .ls-dot::after { width: calc(100% + 10px); height: 44px; }
-  .ls-marker:first-child { height: 120svh; }
+  .ls-marker.ls-first { height: 120svh; }
+  .ls-marker-open { height: 108svh; }
 }
 
 @media (prefers-reduced-motion: reduce) {

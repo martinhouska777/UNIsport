@@ -36,18 +36,22 @@ import { seeAll, studentFeatures, studentStory, varsityFeatures, varsityStory, t
   refreshed and lost something (owner, 2026-08-30). Every tabbed view ends
   with the way back to the whole page.
 
+  Each story OPENS on its own title card, played inside its sticky stage:
+  the words lift away, the scroll cue holds still, and the phone rises from
+  the bottom edge into them (owner, 2026-08-30). StudentIntro and Interlude
+  are those cards — they are content handed to StoryCloser, not sections of
+  their own.
+
   On "/" the order is load-bearing: each story flies into its closer, the
   interlude opens the varsity story from scratch, and the coach section's
   bridge line refers to "the story you just scrolled". A view keeps a story
-  welded to its closer and swaps in the `solo` lines where a section leant
-  on the one before it (Interlude, CoachSection). Every word is in
+  welded to its closer and swaps in the `solo` lines where a card leant on
+  the one before it (Interlude, CoachSection). Every word is in
   lib/landingCopy.ts.
 
      Intro · doors · availability
-     The student app.
-     Story A → Campus Colours (+ the student features beside it)
-     Interlude
-     Story B → Blade Lock (+ the varsity features beside it)
+     Story A, opening on "The student app." → Campus Colours (+ features)
+     Story B, opening on "Varsity Mode."    → Blade Lock (+ features)
      The Coach's Console
      FAQ · About · Contact
      The close · footer
@@ -80,12 +84,12 @@ export default function LandingPage({ view = "all" }: { view?: LandingView }) {
           viewport anyway and are unaffected. */}
       <main className="relative flex-1">
         {all && <LandingHero />}
-        {students && <StudentIntro solo={!all} />}
         {students && (
           <StoryCloser
             storyId="story1"
             beats={studentStory}
             accent="accent"
+            opening={<StudentIntro solo={!all} />}
             closer="campus"
             closerId="campus-colours"
             fromBeat={6}
@@ -93,12 +97,12 @@ export default function LandingPage({ view = "all" }: { view?: LandingView }) {
             aside={<FeatureList kicker={studentFeatures.kicker} rows={studentFeatures.rows} cta={studentFeatures.cta} />}
           />
         )}
-        {varsity && <Interlude solo={!all} />}
         {varsity && (
           <StoryCloser
             storyId="story2"
             beats={varsityStory}
             accent="varsity"
+            opening={<Interlude solo={!all} />}
             closer="blades"
             closerId="blade-lock"
             fromBeat={5}
