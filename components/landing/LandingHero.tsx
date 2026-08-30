@@ -9,7 +9,7 @@ import Wordmark from "@/components/landing/Wordmark";
 import { useSchoolCycle } from "@/components/landing/useSchoolCycle";
 import { crestFor } from "@/lib/crests";
 import { accent, HERO_CYCLE_MS } from "@/lib/landingSchools";
-import { availability, brandLine, cues, doors, hero } from "@/lib/landingCopy";
+import { availability, brandLine, doors, hero } from "@/lib/landingCopy";
 
 /*
   THE INTRO — one screen that introduces the app and then hands over to the
@@ -86,7 +86,7 @@ export default function LandingHero() {
       id="top"
       ref={section}
       style={{ "--sc": color, "--sc-ink": `var(--color-${ink})` } as CSSProperties}
-      className="l-glow-accent relative z-[1] mx-auto flex min-h-[calc(100svh-var(--l-bar,0px))] max-w-[1160px] flex-col items-center justify-center px-6 pt-[clamp(14px,2.4vh,40px)] pb-[clamp(76px,10vh,100px)] text-center sm:px-8"
+      className="l-glow-accent relative z-[1] mx-auto flex min-h-[calc(100svh-var(--l-bar,0px))] max-w-[1160px] flex-col items-center justify-center px-6 pt-[clamp(14px,2.4vh,40px)] pb-[clamp(30px,4.4vh,60px)] text-center sm:px-8"
     >
       <HeroFade>
         {/* 0 · The backdrop: two app screens in the margins of a wide screen,
@@ -184,11 +184,6 @@ export default function LandingHero() {
 
         </div>
       </HeroFade>
-
-      {/* Pinned to the foot of the section, not queued at the end of the
-          column: the cue is the one thing that costs the intro a whole block
-          of height for one word. */}
-      <div className="l-cue l-in-5 pointer-events-none absolute inset-x-0 bottom-[clamp(8px,1.6vh,20px)]">{cues.hero}</div>
     </section>
   );
 }

@@ -304,9 +304,15 @@ export default function ScrollStory({ id, beats, accent, opening, ref }: Props) 
     // drives every part of the title card from CSS (--op for the words,
     // --rise for the phone), and beat 0 stays the active beat underneath so
     // that its words are simply waiting when the opening lets go.
+    // Measured from the PIN, not from the middle of the screen: the card
+    // has to be whole and readable before a word of it starts to leave. The
+    // opening marker's top sits exactly on the stage's, so -om.top is how far
+    // the page has scrolled since the stage pinned; the card is done at the
+    // moment the first beat's marker takes the middle, which is one screen
+    // -half short of the marker's end.
     const om = openMk.current?.getBoundingClientRect();
     if (om) {
-      let op = (mid - om.top) / (om.height || 1);
+      let op = -om.top / Math.max(1, om.height - mid);
       op = Math.max(0, Math.min(1, op));
       if (op !== openDrawn.current) {
         openDrawn.current = op;
@@ -457,7 +463,12 @@ export default function ScrollStory({ id, beats, accent, opening, ref }: Props) 
   return (
     <div ref={root} className="ls-story" id={id} data-story={id} data-phone-screens style={accentVar}>
       <div ref={stage} className="ls-stage">
-        {/* the opening — over both columns, gone the moment the story starts */}
+        {/* the opening — over both columns, gone the moment the story starts.
+            The ground is its own layer UNDER the phone, so the card reads as a
+            different part of the page and then dissolves into the story's own
+            ground as the phone arrives (owner, 2026-08-30: "chci aby viditelne
+            to preslo do jine casti webovky, asi jine pozadi"). */}
+        {opening && <div className="ls-open-ground" aria-hidden />}
         {opening && <div className="ls-open">{opening}</div>}
 
         {/* the rail */}
