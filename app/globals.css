@@ -252,7 +252,12 @@
   display: grid; grid-template-columns: 1fr 1fr; align-items: center;
   max-width: 1200px; margin: 0 auto; padding: 0 48px; gap: 40px;
 }
-.ls-markers { position: relative; margin-top: -100svh; }
+/* The markers are pulled up OVER the sticky stage with that negative
+   margin, and being positioned they paint above it — so they were swallowing
+   every click meant for the stage: the card's link, the phone, the rail dots.
+   They are scroll spacers and nothing else, so they take no pointer at all
+   (owner, 2026-08-30: "see everything it does nefunguje"). */
+.ls-markers { position: relative; margin-top: -100svh; pointer-events: none; }
 .ls-marker { height: 100svh; }
 .ls-marker.ls-pan { height: 150svh; }
 /* The opening beat of each story is the one nobody has read yet — it gets
