@@ -348,15 +348,23 @@
 .ls-open-words {
   display: flex; flex-direction: column; align-items: center;
   gap: clamp(10px, 1.8vh, 18px);
-  opacity: calc(1 - var(--op, 0) * 2);
+  opacity: calc(1 - var(--op, 0) * 3);
   transform: translateY(calc(var(--op, 0) * -44px));
 }
 .ls-open-cue { position: absolute; bottom: clamp(20px, 7vh, 64px); }
-.ls-stage.ls-opening .ls-copy, .ls-stage.ls-opening .ls-rail { opacity: 0; }
+/* THE HOLD — the phone and the story's words wait off their own sides while
+   the card has the screen, and glide in together when the runtime takes the
+   hold off (a fifth of the way into the card). The movement is the flip's
+   transition, two rules up, so the arrival and the mid-story crossing read as
+   the same page moving. Further out than the old .ls-enter: this one has a
+   whole card to come out from behind, not just a stage edge. */
+.ls-stage.ls-hold .ls-phone-col { transform: translateX(130px) scale(0.96); opacity: 0; }
+.ls-stage.ls-hold .ls-copy      { transform: translateX(-90px); opacity: 0; }
+.ls-stage.ls-hold .ls-rail      { opacity: 0; }
 
 @media (prefers-reduced-motion: reduce) {
   /* No lift, and no rise either — the runtime leaves the phone at home. */
-  .ls-open-words { opacity: calc(1 - var(--op, 0) * 2); transform: none; }
+  .ls-open-words { opacity: calc(1 - var(--op, 0) * 3); transform: none; }
 }
 
 .ls-phone-wrap { position: relative; will-change: transform; }
