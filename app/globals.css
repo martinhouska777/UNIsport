@@ -366,6 +366,10 @@
 }
 .ls-stage.ls-hold .ls-open-ground { opacity: 1; }
 .ls-stage.ls-hold .ls-open-words { opacity: 1; transform: none; }
+/* Once the card has let go its words are invisible but still in the layout,
+   so the link inside them must stop being clickable with them. */
+.ls-open-words { pointer-events: none; }
+.ls-stage.ls-hold .ls-open-words { pointer-events: auto; }
 .ls-stage.ls-hold .ls-open-cue { opacity: 1; transition: opacity 0.3s ease; }
 /* THE HOLD — the phone and the story's words wait off their own sides while
    the card has the screen, and glide in together when the runtime takes the

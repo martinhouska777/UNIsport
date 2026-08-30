@@ -179,6 +179,10 @@ export const studentIntro = {
   headline: "The student",
   headlineEm: "app.",
   sub: "What it looks like on a phone, from finding a gym to logging the session with the person you found.",
+  /* The way past the story for someone who wants the list rather than the
+     walk (owner, 2026-08-30). It points AT the feature block beside Campus
+     Colours rather than repeating it here — the overview exists once. */
+  overview: { label: "Or see everything it does", href: "#campus-colours" },
 };
 
 /* ───────────────────── S1–S7 · THE STUDENT STORY ───────────────────── */
@@ -266,6 +270,9 @@ export const interlude = {
   headline: "Varsity",
   headlineEm: "Mode.",
   sub: "The app your squad has been running out of a group chat.",
+  /* Same door as the student card's: the varsity feature block beside Blade
+     Lock, which is where the overview lives — once. */
+  overview: { label: "Or see everything it does", href: "#blade-lock" },
 };
 
 /* The two small scroll cues — under the hero, and under the interlude. */

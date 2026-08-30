@@ -34,6 +34,13 @@ export default function Interlude({ solo = false }: { solo?: boolean }) {
           {interlude.sub}
         </p>
 
+        <a
+          href={interlude.overview.href}
+          className="mt-1 inline-flex items-center gap-2 rounded-full border border-l-varsity-soft px-6 py-3 text-[14px] font-medium tracking-tight text-l-text transition-colors hover:border-l-varsity hover:bg-l-varsity-dim"
+        >
+          {interlude.overview.label} →
+        </a>
+
         {solo && (
           <div className="mt-2 flex flex-col items-center gap-3">
             <p className="text-[14px] text-l-text-2">{hero.inviteNote}</p>
