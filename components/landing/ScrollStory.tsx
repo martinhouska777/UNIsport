@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useEffect, useImperativeHandle, useMemo, useRef, type CSSProperties, type ReactNode, type Ref } from "react";
+import { useCallback, useEffect, useImperativeHandle, useMemo, useRef, type CSSProperties, type Ref } from "react";
 import Phone from "@/components/landing/Phone";
 import { shotSrc, usePhoneMode } from "@/components/landing/PhoneMode";
 import type { Beat } from "@/lib/landingCopy";
@@ -52,28 +52,10 @@ type Props = {
   beats: Beat[];
   /** The story's accent token: "accent" (student blue) or "varsity" (gold). */
   accent: "accent" | "varsity";
-  /*
-    THE OPENING — the story's own title card, played INSIDE the sticky stage
-    rather than in a section above it (owner, 2026-08-30: "the scroll is
-    static and the student app disappears and then the phone comes there").
-
-    A section above the stage could not do it: it scrolls away, taking its
-    scroll cue with it, and the phone would then have to appear a second time
-    somewhere else. Here there is one stage and one phone. An extra marker
-    before the first beat buys the opening its own screenful of scroll, and
-    over it the words lift and fade, the cue holds its place, and the phone
-    rises from below the bottom edge into the home it keeps for the rest of
-    the story. The story's sideways arrival (.ls-enter) is skipped when there
-    is an opening — the rise IS the arrival.
-
-    The node renders its fading half in .ls-open-words and its cue in
-    .ls-open-cue; see StudentIntro / Interlude.
-  */
-  opening?: ReactNode;
   ref?: Ref<ScrollStoryHandle>;
 };
 
-export default function ScrollStory({ id, beats, accent, opening, ref }: Props) {
+export default function ScrollStory({ id, beats, accent, ref }: Props) {
   const root = useRef<HTMLDivElement>(null);
   const stage = useRef<HTMLDivElement>(null);
   const wrap = useRef<HTMLDivElement>(null);
@@ -87,25 +69,6 @@ export default function ScrollStory({ id, beats, accent, opening, ref }: Props) 
   const pointers = useRef<(HTMLSpanElement | null)[]>([]);
   const dots = useRef<(HTMLButtonElement | null)[]>([]);
   const markers = useRef<(HTMLDivElement | null)[]>([]);
-  const openMk = useRef<HTMLDivElement>(null);
-  // 0 while the opening is untouched, 1 once it is fully scrolled through.
-  const openDrawn = useRef(-1);
-  /*
-    THE WHOLE HANDOVER IS ONE LATCH, AND NOTHING IS SCRUBBED (owner,
-    2026-08-30: "chci aby to byl jeden motion, ne ze kdyz nebudu scrollovat
-    dostatecne tak to bude zamrzle napul").
-
-    Anything driven by scroll POSITION stops where the reader stops — the
-    card half faded, the ground half lifted. So scroll decides only WHEN. One
-    fifth of the way into the card the hold comes off, and from that single
-    moment every part of the handover runs on its own clock: the card's words
-    leave, its ground dissolves, the cue holds a beat and follows them, and
-    the phone and the story's words glide in from their own sides. Stop
-    scrolling anywhere and it still finishes.
-
-    Re-armed if the reader goes back above the card, so it always plays.
-  */
-  const held = useRef(true);
 
   // choreography state — refs, never state: nothing here re-renders
   const current = useRef(-1);
@@ -316,39 +279,6 @@ export default function ScrollStory({ id, beats, accent, opening, ref }: Props) 
         break;
       }
     }
-    // The opening owns the middle before the first beat does. Its progress
-    // drives every part of the title card from CSS (--op for the words,
-    // --rise for the phone), and beat 0 stays the active beat underneath so
-    // that its words are simply waiting when the opening lets go.
-    // Measured from the PIN, not from the middle of the screen: the card
-    // has to be whole and readable before a word of it starts to leave. The
-    // opening marker's top sits exactly on the stage's, so -om.top is how far
-    // the page has scrolled since the stage pinned; the card is done at the
-    // moment the first beat's marker takes the middle, which is one screen
-    // -half short of the marker's end.
-    const om = openMk.current?.getBoundingClientRect();
-    if (om) {
-      let op = -om.top / Math.max(1, om.height - mid);
-      op = Math.max(0, Math.min(1, op));
-      if (op !== openDrawn.current) {
-        openDrawn.current = op;
-        stage.current?.classList.toggle("ls-opening", op < 1);
-      }
-      if (best === -1 && om.top <= mid && om.bottom > mid) best = 0;
-
-      // Early, and once: the card is still legible behind them as they come.
-      const st = stage.current;
-      if (st && !reduce.current) {
-        if (held.current && op >= 0.2) {
-          held.current = false;
-          st.classList.remove("ls-hold");
-        } else if (!held.current && op <= 0.02) {
-          held.current = true;
-          st.classList.add("ls-hold");
-        }
-      }
-    }
-
     if (best === -1) {
       const box = el.getBoundingClientRect();
       if (box.bottom <= mid) best = markers.current.length - 1;
@@ -391,10 +321,6 @@ export default function ScrollStory({ id, beats, accent, opening, ref }: Props) 
 
   useEffect(() => {
     reduce.current = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduce.current) {
-      held.current = false;
-      stage.current?.classList.remove("ls-hold");
-    }
     let ticking = false;
     const onScroll = () => {
       if (ticking) return;
@@ -441,7 +367,6 @@ export default function ScrollStory({ id, beats, accent, opening, ref }: Props) 
   useEffect(() => {
     const el = stage.current;
     if (!el) return;
-    if (opening) return; // the rise out of the opening is this story's arrival
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     if (el.getBoundingClientRect().top < window.innerHeight * 0.9) return;
 
@@ -459,7 +384,7 @@ export default function ScrollStory({ id, beats, accent, opening, ref }: Props) 
       io.disconnect();
       el.classList.remove("ls-enter");
     };
-  }, [opening]);
+  }, []);
 
   // Scroll the page so a given beat sits in the middle. Everything else follows
   // from that, so navigation and scrolling can never disagree.
@@ -487,15 +412,7 @@ export default function ScrollStory({ id, beats, accent, opening, ref }: Props) 
 
   return (
     <div ref={root} className="ls-story" id={id} data-story={id} data-phone-screens style={accentVar}>
-      <div ref={stage} className={`ls-stage${opening ? " ls-hold ls-opening" : ""}`}>
-        {/* the opening — over both columns, gone the moment the story starts.
-            The ground is its own layer UNDER the phone, so the card reads as a
-            different part of the page and then dissolves into the story's own
-            ground as the phone arrives (owner, 2026-08-30: "chci aby viditelne
-            to preslo do jine casti webovky, asi jine pozadi"). */}
-        {opening && <div className="ls-open-ground" aria-hidden />}
-        {opening && <div className="ls-open">{opening}</div>}
-
+      <div ref={stage} className="ls-stage">
         {/* the rail */}
         <div className="ls-rail" role="group" aria-label="Steps">
           {beats.map((b, i) => (
@@ -651,14 +568,16 @@ export default function ScrollStory({ id, beats, accent, opening, ref }: Props) 
       </div>
 
       {/* the scroll markers, one per beat, under the sticky stage */}
+      {/* The scroll markers, one per beat, under the sticky stage. Each is
+          also the beat's ADDRESS: the title card's list of steps links straight
+          at them (#story1-b3). Landing on a marker's top leaves the middle of
+          the screen inside it — every marker is at least a screen tall — so
+          the beat it owns is the one that lights up. */}
       <div className="ls-markers">
-        {/* the opening's screenful of scroll. Deliberately NOT an .ls-marker:
-            it owns no beat, and the beat geometry — goTo, the pans, the dots —
-            stays exactly as it was. */}
-        {opening && <div ref={openMk} className="ls-marker-open" />}
         {beats.map((b, i) => (
           <div
             key={b.id}
+            id={`${id}-b${i}`}
             ref={(el) => {
               markers.current[i] = el;
             }}

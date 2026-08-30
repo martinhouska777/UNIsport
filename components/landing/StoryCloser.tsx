@@ -48,8 +48,6 @@ import type { Beat } from "@/lib/landingCopy";
 type Props = {
   storyId: string;
   beats: Beat[];
-  /** The story's title card, played inside its stage — see ScrollStory. */
-  opening?: ReactNode;
   accent: "accent" | "varsity";
   closer: "campus" | "blades";
   closerId?: string;
@@ -79,7 +77,7 @@ function useFlies() {
   );
 }
 
-export default function StoryCloser({ storyId, beats, accent, closer, closerId, fromBeat, toBeat, children, aside, opening }: Props) {
+export default function StoryCloser({ storyId, beats, accent, closer, closerId, fromBeat, toBeat, children, aside }: Props) {
   const story = useRef<ScrollStoryHandle>(null);
   const clo = useRef<CloserHandle>(null);
   const flight = useRef<HTMLDivElement>(null);
@@ -375,7 +373,7 @@ export default function StoryCloser({ storyId, beats, accent, closer, closerId, 
 
   return (
     <>
-      <ScrollStory ref={story} id={storyId} beats={beats} accent={accent} opening={opening} />
+      <ScrollStory ref={story} id={storyId} beats={beats} accent={accent} />
       {children}
       {closer === "campus" ? (
         <CampusColours ref={clo} id={closerId} managed pinned={pinned} aside={aside} />

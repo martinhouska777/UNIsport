@@ -264,9 +264,9 @@
    roughly two screens of scroll before the second headline takes over. */
 .ls-marker.ls-first { height: 165svh; }
 .ls-marker.ls-last { height: 130svh; }
-/* The opening's own scroll: one screenful and a bit, which is what the words
-   need to be read, leave, and hand over to the phone rising behind them. */
-.ls-marker-open { height: 170svh; }
+/* Each marker is also its beat's anchor (#story1-b3, from the title card's
+   list of steps), so a jump has to clear the top bar. */
+.ls-marker { scroll-margin-top: 72px; }
 
 .ls-copy { position: relative; min-height: 300px; }
 .ls-beat {
@@ -309,89 +309,6 @@
 .ls-stage.ls-enter .ls-phone-col { transform: translateX(74px) scale(0.97); opacity: 0; }
 .ls-stage.ls-enter .ls-copy      { transform: translateX(-46px); opacity: 0; }
 .ls-stage.ls-enter .ls-rail      { opacity: 0; }
-/*
-  THE OPENING — the story's title card, played inside the sticky stage.
-
-  Everything here is driven by two numbers the runtime writes onto the stage
-  as it scrolls the opening's marker: --op (0 → 1 across the whole opening)
-  and --rise (the same, but only starting a quarter of the way in).
-
-    the words   lift a little and are gone by --op 0.5
-    the cue     does not move at all, and leaves with the card
-    the phone   rises from below the stage's bottom edge into its home
-
-  The stage clips (overflow: hidden), so the phone is genuinely off the
-  bottom rather than merely transparent, and it arrives in the position it
-  keeps for the rest of the story — no second move once the story starts.
-
-  The drift follower writes an inline transform on .ls-phone-wrap, so the
-  rise takes the COLUMN instead; the column's own 0.9s transition is off
-  while the rise is running, since the rise is already per-frame.
-*/
-/* A surface a step up from the page, so arriving here reads as arriving
-   somewhere. It fades out exactly as the phone finishes rising, which is how
-   the card hands the screen to the story rather than being replaced by it.
-   Under the phone and the words (z-index 0, first in the DOM). */
-.ls-open-ground {
-  position: absolute; inset: 0; z-index: 0;
-  background: var(--color-l-surface);
-  border-top: 1px solid var(--color-l-line);
-  opacity: 0; transition: opacity 0.8s ease;
-}
-/* Both grid items are lifted over the ground: an absolutely positioned
-   element with z-index 0 paints AFTER ordinary in-flow content, so without
-   this the phone rises BEHIND the card's ground and only shows up once the
-   ground has faded — which reads exactly like appearing out of nowhere. */
-.ls-stage > .ls-copy, .ls-stage > .ls-phone-col { position: relative; z-index: 1; }
-.ls-open {
-  position: absolute; inset: 0; z-index: 3;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  padding: 0 24px; text-align: center;
-}
-.ls-stage:not(.ls-opening) .ls-open,
-.ls-stage:not(.ls-opening) .ls-open-ground { visibility: hidden; pointer-events: none; }
-/*
-  EVERY PART OF THE CARD IS IN THE HOLD, not on the scroll position. Held =
-  the card as the reader meets it; released = the card's exit, running to the
-  end whether or not the reader keeps scrolling.
-
-  The cue is the one thing that lingers: it leaves on a delay, so it is still
-  standing there while the words go and only follows once the phone is on its
-  way. (It is what the owner asked to hold still while the rest changed.)
-*/
-.ls-open-words {
-  display: flex; flex-direction: column; align-items: center;
-  gap: clamp(10px, 1.8vh, 18px);
-  opacity: 0; transform: translateY(-44px);
-  transition: opacity 0.5s ease, transform 0.9s cubic-bezier(0.65, 0, 0.35, 1);
-}
-.ls-open-cue {
-  position: absolute; bottom: clamp(20px, 7vh, 64px);
-  opacity: 0; transition: opacity 0.45s ease 0.3s;
-}
-.ls-stage.ls-hold .ls-open-ground { opacity: 1; }
-.ls-stage.ls-hold .ls-open-words { opacity: 1; transform: none; }
-/* Once the card has let go its words are invisible but still in the layout,
-   so the link inside them must stop being clickable with them. */
-.ls-open-words { pointer-events: none; }
-.ls-stage.ls-hold .ls-open-words { pointer-events: auto; }
-.ls-stage.ls-hold .ls-open-cue { opacity: 1; transition: opacity 0.3s ease; }
-/* THE HOLD — the phone and the story's words wait off their own sides while
-   the card has the screen, and glide in together when the runtime takes the
-   hold off (a fifth of the way into the card). The movement is the flip's
-   transition, two rules up, so the arrival and the mid-story crossing read as
-   the same page moving. Further out than the old .ls-enter: this one has a
-   whole card to come out from behind, not just a stage edge. */
-.ls-stage.ls-hold .ls-phone-col { transform: translateX(130px) scale(0.96); opacity: 0; }
-.ls-stage.ls-hold .ls-copy      { transform: translateX(-90px); opacity: 0; }
-.ls-stage.ls-hold .ls-rail      { opacity: 0; }
-
-@media (prefers-reduced-motion: reduce) {
-  /* Nothing is held back and nothing travels: the card is simply there, and
-     then the story is. */
-  .ls-open-words, .ls-open-ground, .ls-open-cue { transition: none; }
-  .ls-open-words { transform: none; }
-}
 
 .ls-phone-wrap { position: relative; will-change: transform; }
 @keyframes ls-float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
@@ -538,7 +455,6 @@
   .ls-dot.ls-on { height: 5px; width: 18px; }
   .ls-dot::after { width: calc(100% + 10px); height: 44px; }
   .ls-marker.ls-first { height: 120svh; }
-  .ls-marker-open { height: 145svh; }
 }
 
 @media (prefers-reduced-motion: reduce) {
