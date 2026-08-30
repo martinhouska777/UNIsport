@@ -189,6 +189,15 @@ revokes it afterwards — ask for a fresh one, never assume one is lying around.
 > Harvard captures (`recolored/`), then `patch-gyms.mjs` writes each school's
 > OWN gyms onto the Gyms screen (data in `school-gyms.mjs`) and copies the
 > results to `public/landing/closers/` for the site.
+>
+> **The intro's Match screen, per school:** `patch-match.mjs` does the same for
+> the four people on it — their residences and the gym they train at (data in
+> `school-residences.mjs`, copied from `lib/gyms.ts` so the shot and the app
+> name the same buildings). It patches the delivered files in place, LIGHT AND
+> DARK, and is idempotent, so it can follow `recolor-shots.mjs --only=match` as
+> often as needed. `--calib` rebuilds Harvard's own words over Harvard's own
+> capture and prints how far each rebuilt line lands from the original — run it
+> after any re-shoot, because the geometry is measured, not derived.
 
 `Blade Lock Light.html` and `UNIsport Campus Colours.html` are **bundled apps**
 from Claude Design — ~130KB of JavaScript each that mount into `document.body`

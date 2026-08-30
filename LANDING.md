@@ -349,15 +349,27 @@ proof. (The `.edu` question is settled — see "Open, and blocked" below.)
 
 ## Open, and blocked
 
-1. **The intro's Match cards still name Harvard's houses.** `match-*.webp` is
-   recoloured per school, but the people on it are still "Mather", "Eliot",
-   "Leverett", "Pforzheimer" and "Hemenway Gymnasium" — so Yale's phone reads
-   Payne Whitney on the left (patched) and Mather on the right (not). Fixing it
-   means a `patch-match.mjs` in the shape of `patch-gyms.mjs`: measured
-   geometry for the two card rows plus each school's real residential
-   houses/colleges as data beside `school-gyms.mjs`. At the size the intro
-   draws them (230–290px) the text is a blur, which is why it was not done
-   first — but it is legible to anyone who zooms.
+1. ~~The intro's Match cards still name Harvard's houses.~~ **CLOSED
+   2026-08-30 — `scripts/landing/patch-match.mjs`**, in the shape of
+   `patch-gyms.mjs`: it wipes the four "<house> · <level>" sub-lines and the
+   three "Hemenway Gymnasium" chips off each recoloured capture and composites
+   that school's own names in their place, LIGHT AND DARK (16 files), with
+   every colour — card ground, sub-line grey, chip fill / border / ink —
+   SAMPLED per file rather than written down. Names live in
+   `school-residences.mjs`, copied from `lib/gyms.ts`, so the shot and the app
+   name the same buildings. `--calib` rebuilds Harvard's own words over
+   Harvard's own capture and reports the drift; it currently lands within 2px
+   on every line. **Re-run it after any re-shoot** — the geometry is measured,
+   not derived.
+
+   **Found while doing it, and NOT fixed: `02-match.webp` is a stale screen.**
+   It shows three tabs (Browse · Session · Buddy Board), the heading "SORTED BY
+   COMPATIBILITY", and the old grey person glyph. The app has had two tabs
+   (People · Sessions), "SORTED BY FIT" and initials avatars since `1ebdd68`
+   and `d91eb6c`. The front door is advertising a Match screen that no longer
+   exists. Fixing it is a re-shoot, which needs an owner login cookie
+   (`save-cookie.mjs` → `capture-light.mjs`, light AND dark), then
+   `recolor-shots.mjs --only=match` and `patch-match.mjs` again.
 2. **The varsity story ends on a statistics graph (V6).** The brief argues
    against this by name — a stats screen is the one screen every fitness app
    has; a seat in a named boat, published by a coach, is the one none of them
