@@ -39,10 +39,12 @@ import { availability, brandLine, cues, doors, hero } from "@/lib/landingCopy";
      so there are never two 40px apart.
   2. IT WAS A WALL OF SMALL TEXT — nine blocks, no hierarchy, and the kicker
      repeated the doors' two subtitles word for word on the same screen. The
-     kicker is gone where the doors are drawn, the headline is a size smaller
-     and the rhythm tighter, so more of the doors is in front of a laptop
-     visitor than before. (The cue is still under the fold on a 800px-tall
-     window; the doors peeking above it are the honest scroll cue there.)
+     kicker is gone, the rhythm is tighter, so more of the doors is in front of
+     a laptop visitor than before. (The cue is still under the fold on a
+     800px-tall window; the doors peeking above it are the honest scroll cue
+     there.) 2026-08-30 reset the ladder: the MARK is now the biggest thing on
+     the screen with the slogan under it, and the headline sits a size below
+     it — the page says its own name first.
   3. IT ARRIVED ALL AT ONCE and left all at once. The blocks now come in on a
      short stagger (l-in-1…4), and the whole thing fades and lags as you scroll
      so the story rises over it instead of replacing it.
@@ -71,9 +73,10 @@ function Arrow({ className = "" }: { className?: string }) {
   );
 }
 
-/** `doors`: false on a view already chosen from the top bar (/for/…), where
-    the three doors would only repeat the tab the visitor just pressed. */
-export default function LandingHero({ doors: showDoors = true }: { doors?: boolean }) {
+/* The intro belongs to "/" alone (2026-08-30): it introduces the whole
+   product and hands the visitor three doors, and a view reached THROUGH one of
+   those doors opens on its own statement instead — see LandingPage. */
+export default function LandingHero() {
   const section = useRef<HTMLElement>(null);
   const { i, count, school } = useSchoolCycle(section, HERO_CYCLE_MS);
   const { color, ink } = accent(school.color);
@@ -114,15 +117,6 @@ export default function LandingHero({ doors: showDoors = true }: { doors?: boole
             </em>
           </h1>
 
-          {/* The kicker is the doors' two subtitles, word for word. Where the
-              doors are drawn it is the same sentence twice on one screen, so
-              it is only kept on the views that have no doors. */}
-          {!showDoors && (
-            <p className="mb-5 font-mono text-xs tracking-wider uppercase text-l-text-2">
-              {hero.kicker.lead} <span className="text-l-text">{hero.kicker.tail}</span>
-            </p>
-          )}
-
           <p className="max-w-[54ch] text-[clamp(15px,1.9vw,17px)] leading-relaxed tracking-tight text-balance text-l-text-2">
             {hero.body}
           </p>
@@ -152,7 +146,6 @@ export default function LandingHero({ doors: showDoors = true }: { doors?: boole
             gold). Each opens that audience's own view — the same page as its
             tab. */}
         <div className="l-in-4 flex w-full flex-col items-center">
-          {showDoors && (
             <div className="mt-[clamp(12px,2.4vh,24px)] grid w-full max-w-[860px] grid-cols-1 gap-3 sm:grid-cols-3">
               {doors.map((d, i) => (
                 <Link
@@ -176,7 +169,6 @@ export default function LandingHero({ doors: showDoors = true }: { doors?: boole
                 </Link>
               ))}
             </div>
-          )}
 
           {/* The other way in. A rower usually arrives holding a link from their
               captain, and shouldn't have to scroll to find where it goes. */}

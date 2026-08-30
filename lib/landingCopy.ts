@@ -152,6 +152,35 @@ export const availability = "New campuses are onboarded one at a time — colour
    back as something the reader has just watched happen. */
 export const brandLine = "Never train alone again.";
 
+/* ─────────────── BEFORE THE STUDENT STORY — a title card ─────────────── */
+
+/*
+  The owner, 2026-08-30: pressing "Student" used to land you on the hero again
+  with the three doors deleted — "it just refreshes the page". And on "/" the
+  student story began cold, on a phone screenshot labelled 01, while the
+  varsity story got a whole screen of ceremony first (see `interlude`). The
+  app's main audience had the coldest opening on the page.
+
+  So the student story gets its own statement, the way varsity and the coach
+  console already have one. It is deliberately a TITLE CARD, not a reveal:
+  "Varsity Mode." works because it is a surprise, and the student app is the
+  thing the visitor came for. On "/" it is one short band between the intro
+  and the story; on /for/students it opens the page and carries the way in.
+
+  The sub-line says what is about to happen — phone screens, in the order you
+  would use them — so the first screenshot is introduced rather than sprung.
+*/
+export const studentIntro = {
+  /* On "/" it follows the intro and is answered later by the interlude's
+     "And if you train for the university itself —", so the two read as a
+     sequence. On /for/students nothing comes before it. */
+  leadIn: "First, for every student —",
+  leadInSolo: "For every student —",
+  headline: "The student",
+  headlineEm: "app.",
+  sub: "What it looks like on a phone, from finding a gym to logging the session with the person you found.",
+};
+
 /* ───────────────────── S1–S7 · THE STUDENT STORY ───────────────────── */
 
 export const studentStory: Beat[] = [
