@@ -331,7 +331,7 @@
   position: absolute; inset: 0; z-index: 0;
   background: var(--color-l-surface);
   border-top: 1px solid var(--color-l-line);
-  opacity: calc(1 - var(--op, 0));
+  opacity: 0; transition: opacity 0.8s ease;
 }
 /* Both grid items are lifted over the ground: an absolutely positioned
    element with z-index 0 paints AFTER ordinary in-flow content, so without
@@ -345,13 +345,28 @@
 }
 .ls-stage:not(.ls-opening) .ls-open,
 .ls-stage:not(.ls-opening) .ls-open-ground { visibility: hidden; pointer-events: none; }
+/*
+  EVERY PART OF THE CARD IS IN THE HOLD, not on the scroll position. Held =
+  the card as the reader meets it; released = the card's exit, running to the
+  end whether or not the reader keeps scrolling.
+
+  The cue is the one thing that lingers: it leaves on a delay, so it is still
+  standing there while the words go and only follows once the phone is on its
+  way. (It is what the owner asked to hold still while the rest changed.)
+*/
 .ls-open-words {
   display: flex; flex-direction: column; align-items: center;
   gap: clamp(10px, 1.8vh, 18px);
-  opacity: calc(1 - var(--op, 0) * 3);
-  transform: translateY(calc(var(--op, 0) * -44px));
+  opacity: 0; transform: translateY(-44px);
+  transition: opacity 0.5s ease, transform 0.9s cubic-bezier(0.65, 0, 0.35, 1);
 }
-.ls-open-cue { position: absolute; bottom: clamp(20px, 7vh, 64px); }
+.ls-open-cue {
+  position: absolute; bottom: clamp(20px, 7vh, 64px);
+  opacity: 0; transition: opacity 0.45s ease 0.3s;
+}
+.ls-stage.ls-hold .ls-open-ground { opacity: 1; }
+.ls-stage.ls-hold .ls-open-words { opacity: 1; transform: none; }
+.ls-stage.ls-hold .ls-open-cue { opacity: 1; transition: opacity 0.3s ease; }
 /* THE HOLD — the phone and the story's words wait off their own sides while
    the card has the screen, and glide in together when the runtime takes the
    hold off (a fifth of the way into the card). The movement is the flip's
@@ -363,8 +378,10 @@
 .ls-stage.ls-hold .ls-rail      { opacity: 0; }
 
 @media (prefers-reduced-motion: reduce) {
-  /* No lift, and no rise either — the runtime leaves the phone at home. */
-  .ls-open-words { opacity: calc(1 - var(--op, 0) * 3); transform: none; }
+  /* Nothing is held back and nothing travels: the card is simply there, and
+     then the story is. */
+  .ls-open-words, .ls-open-ground, .ls-open-cue { transition: none; }
+  .ls-open-words { transform: none; }
 }
 
 .ls-phone-wrap { position: relative; will-change: transform; }

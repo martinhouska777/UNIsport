@@ -91,15 +91,18 @@ export default function ScrollStory({ id, beats, accent, opening, ref }: Props) 
   // 0 while the opening is untouched, 1 once it is fully scrolled through.
   const openDrawn = useRef(-1);
   /*
-    THE ARRIVAL IS A LATCH, NOT A SCRUB (owner, 2026-08-30: "ne scroll a jen
-    nejaka animace, mozna ze strany ten mobil a text z te druhe").
+    THE WHOLE HANDOVER IS ONE LATCH, AND NOTHING IS SCRUBBED (owner,
+    2026-08-30: "chci aby to byl jeden motion, ne ze kdyz nebudu scrollovat
+    dostatecne tak to bude zamrzle napul").
 
-    Two goes at scrubbing the phone's position off the scroll both read badly
-    — a scrubbed movement is only as smooth as the wheel driving it, and it
-    cannot start until the reader has already scrolled a long way. So the
-    scroll only decides WHEN: one fifth of the way into the card the hold
-    comes off, and the phone and the story's words glide in from their own
-    sides on their own clock, the way the stories used to arrive (.ls-enter).
+    Anything driven by scroll POSITION stops where the reader stops — the
+    card half faded, the ground half lifted. So scroll decides only WHEN. One
+    fifth of the way into the card the hold comes off, and from that single
+    moment every part of the handover runs on its own clock: the card's words
+    leave, its ground dissolves, the cue holds a beat and follows them, and
+    the phone and the story's words glide in from their own sides. Stop
+    scrolling anywhere and it still finishes.
+
     Re-armed if the reader goes back above the card, so it always plays.
   */
   const held = useRef(true);
@@ -329,11 +332,7 @@ export default function ScrollStory({ id, beats, accent, opening, ref }: Props) 
       op = Math.max(0, Math.min(1, op));
       if (op !== openDrawn.current) {
         openDrawn.current = op;
-        const st = stage.current;
-        if (st) {
-          st.style.setProperty("--op", op.toFixed(3));
-          st.classList.toggle("ls-opening", op < 1);
-        }
+        stage.current?.classList.toggle("ls-opening", op < 1);
       }
       if (best === -1 && om.top <= mid && om.bottom > mid) best = 0;
 
@@ -488,7 +487,7 @@ export default function ScrollStory({ id, beats, accent, opening, ref }: Props) 
 
   return (
     <div ref={root} className="ls-story" id={id} data-story={id} data-phone-screens style={accentVar}>
-      <div ref={stage} className={`ls-stage${opening ? " ls-hold" : ""}`}>
+      <div ref={stage} className={`ls-stage${opening ? " ls-hold ls-opening" : ""}`}>
         {/* the opening — over both columns, gone the moment the story starts.
             The ground is its own layer UNDER the phone, so the card reads as a
             different part of the page and then dissolves into the story's own
