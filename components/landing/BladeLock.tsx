@@ -69,6 +69,12 @@ const STAGE_H = 580;
 const WHEEL_TOP = 210;
 const OAR_W = 78;
 const OAR_H = 468;
+// What stands above and below the stage inside the sticky screen, in the same
+// units the classes below set them: the stick's py-6, the words' mb-14 and the
+// crew name's pt-3. `fit` subtracts them to find the height the stage has.
+const STICK_PAD_Y = 24;
+const WORDS_GAP = 56;
+const LABEL_GAP = 12;
 // the small formation: the wheel compressed toward its centre (F), smaller (K)
 const FORM_K = 0.4;
 const FORM_F = 0.3;
@@ -143,14 +149,18 @@ export default function BladeLock({
   const [phone, setPhone] = useState<"hide" | "pre" | "in">("in");
   const [wordsPre, setWordsPre] = useState(false);
   const [labelPre, setLabelPre] = useState(false);
-  // On a phone the wheel is scaled to the width it has: everything (phone,
-  // stage, oars) shrinks a little, and the oars fan on a tighter radius so
-  // all eight blades stand inside the screen instead of running off it.
-  // Desktop is untouched (zoom = 1, the piece's 295px radius).
+  // The wheel is scaled to the room it has, in BOTH directions, and takes the
+  // smaller of the two: on a phone to the width (the oars also fan on a tighter
+  // radius so all eight blades stand inside the screen), and on any window to
+  // the height, so the whole piece — top blade to crew name — stands on one
+  // screen instead of running past the fold. Everything (phone, stage, oars)
+  // follows the one number.
   const [zoom, setZoom] = useState(1);
   const geo = useRef({ sc: 1, r: RADIUS });
 
   const stick = useRef<HTMLDivElement>(null);
+  const wordsEl = useRef<HTMLDivElement>(null);
+  const labelEl = useRef<HTMLDivElement>(null);
   const stage = useRef<HTMLDivElement>(null);
   const phoneEl = useRef<HTMLDivElement>(null);
   const oars = useRef<(HTMLButtonElement | null)[]>([]);
@@ -248,21 +258,42 @@ export default function BladeLock({
     renderFrame();
   }, [renderFrame]);
 
-  /* The stage's width decides the scale and the radius (see `zoom` above). */
+  /* The room the stage has decides the scale and the radius (see `zoom`
+     above). Width comes from the stage itself; height is what is left of one
+     screen once the words above and the crew name below have taken theirs.
+     Both of those are measured with offsetHeight, which is layout only — the
+     arrival animation transforms them, and a rect would read the transform. */
   useEffect(() => {
     const el = stage.current;
     if (!el) return;
-    const ro = new ResizeObserver(([e]) => {
-      const w = e.contentRect.width;
-      const narrow = w < 700;
-      const s = narrow ? Math.max(0.7, Math.min(1, w / 460)) : 1;
+    const fit = () => {
+      const w = el.getBoundingClientRect().width;
+      if (!w) return;
+      const byWidth = w < 700 ? Math.max(0.7, Math.min(1, w / 460)) : 1;
+      // One screen, minus the stick's py-6, the words + their mb-14, and the
+      // crew name + its pt-3. `screen` is svh where the stick has it and the
+      // window otherwise; taking the smaller of the two keeps this stable when
+      // the content is what made the stick tall in the first place.
+      const screen = Math.min(window.innerHeight, stick.current?.clientHeight || Infinity);
+      const above = (wordsEl.current?.offsetHeight ?? 0) + WORDS_GAP;
+      const below = LABEL_GAP + (labelEl.current?.offsetHeight ?? 0);
+      const room = screen - STICK_PAD_Y * 2 - above - below;
+      const byHeight = room > 0 ? room / STAGE_H : 1;
+      const s = Math.max(0.6, Math.min(byWidth, byHeight, 1));
       const rad = Math.min(RADIUS * s, w / 2 - 45 * s);
       geo.current = { sc: s, r: rad };
       setZoom(s);
       renderFrame();
-    });
+    };
+    const ro = new ResizeObserver(fit);
     ro.observe(el);
-    return () => ro.disconnect();
+    if (wordsEl.current) ro.observe(wordsEl.current);
+    // the stage's width does not change when only the window's height does
+    window.addEventListener("resize", fit);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", fit);
+    };
   }, [renderFrame]);
 
   /* The wheel. Turns one oar per PERIOD while free; eases onto the picked
@@ -404,7 +435,7 @@ export default function BladeLock({
       >
         <CloserSplit aside={aside} accent="varsity">
         {/* ── The words ── */}
-        <div className={`lc-words mb-14 max-w-[640px] text-center ${wordsPre ? "lc-pre" : ""}`}>
+        <div ref={wordsEl} className={`lc-words mb-14 max-w-[640px] text-center ${wordsPre ? "lc-pre" : ""}`}>
           <p className="font-display text-[clamp(14px,1.8vw,17px)] text-l-text-2">{copy.leadIn}</p>
           <h2 className="mt-1 mb-1.5 font-display text-[clamp(32px,4.2vw,52px)] font-normal leading-[1.05] tracking-tight text-balance text-l-text">
             {copy.headline}{" "}
@@ -476,6 +507,7 @@ export default function BladeLock({
 
         {/* ── The crew's name ── */}
         <div
+          ref={labelEl}
           className={`lc-label pt-3 font-mono text-[17px] font-bold tracking-[5px] uppercase brightness-[1.35] saturate-[1.1] ${labelPre ? "lc-pre" : ""}`}
           style={{ color: s.ink, textShadow: `0 0 14px ${rgba(s.ink, 0.9)}, 0 0 34px ${rgba(s.ink, 0.55)}` }}
         >
