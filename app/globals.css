@@ -333,6 +333,11 @@
   border-top: 1px solid var(--color-l-line);
   opacity: calc(1 - var(--op, 0));
 }
+/* Both grid items are lifted over the ground: an absolutely positioned
+   element with z-index 0 paints AFTER ordinary in-flow content, so without
+   this the phone rises BEHIND the card's ground and only shows up once the
+   ground has faded — which reads exactly like appearing out of nowhere. */
+.ls-stage > .ls-copy, .ls-stage > .ls-phone-col { position: relative; z-index: 1; }
 .ls-open {
   position: absolute; inset: 0; z-index: 3;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -347,16 +352,11 @@
   transform: translateY(calc(var(--op, 0) * -44px));
 }
 .ls-open-cue { position: absolute; bottom: clamp(20px, 7vh, 64px); }
-.ls-stage.ls-opening .ls-phone-col {
-  transition: none;
-  transform: translateY(calc((1 - var(--rise, 1)) * 92vh));
-}
 .ls-stage.ls-opening .ls-copy, .ls-stage.ls-opening .ls-rail { opacity: 0; }
 
 @media (prefers-reduced-motion: reduce) {
-  /* No rise and no lift: the card is simply there, then the story is. */
+  /* No lift, and no rise either — the runtime leaves the phone at home. */
   .ls-open-words { opacity: calc(1 - var(--op, 0) * 2); transform: none; }
-  .ls-stage.ls-opening .ls-phone-col { transform: none; }
 }
 
 .ls-phone-wrap { position: relative; will-change: transform; }
@@ -1142,4 +1142,3 @@ body {
   -webkit-mask-image: linear-gradient(to right, #000 88%, transparent 100%);
   mask-image: linear-gradient(to right, #000 88%, transparent 100%);
 }
-

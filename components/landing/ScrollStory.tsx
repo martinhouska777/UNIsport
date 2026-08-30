@@ -105,8 +105,8 @@ export default function ScrollStory({ id, beats, accent, opening, ref }: Props) 
   // (px), and a small follower glides the drawn value toward it every frame
   // (time-based, ~60ms to close most of the gap): steps become motion, with
   // a lag too short to read as lag. (Reduced motion: no drift, no pans — as before.)
-  const target = useRef<{ drift: number; pans: number[] }>({ drift: 0, pans: [] });
-  const drawn = useRef<{ drift: number; pans: number[] }>({ drift: NaN, pans: [] });
+  const target = useRef<{ drift: number; rise: number; pans: number[] }>({ drift: 0, rise: 0, pans: [] });
+  const drawn = useRef<{ drift: number; rise: number; pans: number[] }>({ drift: NaN, rise: NaN, pans: [] });
   const glideRaf = useRef(0);
   const glideT = useRef(0);
 
@@ -266,9 +266,16 @@ export default function ScrollStory({ id, beats, accent, opening, ref }: Props) 
         moving = true;
         return have + d * k;
       };
+      // The drift and the opening's rise are the same kind of movement on
+      // the same element, so they are one transform and one follower: the
+      // phone can never be handed two competing translations.
       const drift = follow(dr.drift, tg.drift);
-      if (drift !== dr.drift && wrap.current) wrap.current.style.transform = `translateY(${snap(drift)}px)`;
+      const rise = follow(dr.rise, tg.rise);
+      if ((drift !== dr.drift || rise !== dr.rise) && wrap.current) {
+        wrap.current.style.transform = `translateY(${snap(drift + rise)}px)`;
+      }
       dr.drift = drift;
+      dr.rise = rise;
       for (let i = 0; i < tg.pans.length; i++) {
         const want = tg.pans[i];
         if (want === undefined) continue;
@@ -319,9 +326,6 @@ export default function ScrollStory({ id, beats, accent, opening, ref }: Props) 
         const st = stage.current;
         if (st) {
           st.style.setProperty("--op", op.toFixed(3));
-          // The phone waits out the first quarter — the words get read, and
-          // then leave, before anything else moves.
-          st.style.setProperty("--rise", (Math.max(0, op - 0.25) / 0.75).toFixed(3));
           st.classList.toggle("ls-opening", op < 1);
         }
       }
@@ -336,6 +340,28 @@ export default function ScrollStory({ id, beats, accent, opening, ref }: Props) 
     setActive(best);
 
     if (reduce.current) return;
+
+    // THE RISE. Deliberately a TARGET rather than a position written straight
+    // from the scroll: a wheel delivers the page in steps, and anything tied
+    // 1:1 to it arrives in the same steps — which is what made the phone look
+    // like it appeared rather than travelled (owner, 2026-08-30: "chci aby to
+    // bylo fluent, ze se ten mobil jen neobjevi"). The follower above glides
+    // the drawn value toward this one every frame, so a slow scroll reads as
+    // scroll-linked and a fast flick still lands as a movement.
+    // Cubed ease-out on top, so it decelerates into its home instead of
+    // stopping dead.
+    if (om) {
+      const p = Math.max(0, Math.min(1, (openDrawn.current - 0.25) / 0.75));
+      const eased = 1 - Math.pow(1 - p, 3);
+      target.current.rise = Math.round(window.innerHeight * 0.98) * (1 - eased);
+      // First paint: no glide in from nowhere — the phone is simply already
+      // below, which matters on /for/students where the story opens the page.
+      if (Number.isNaN(drawn.current.rise) && wrap.current) {
+        drawn.current.rise = target.current.rise;
+        drawn.current.drift = 0;
+        wrap.current.style.transform = `translateY(${target.current.rise.toFixed(3)}px)`;
+      }
+    }
 
     // A slow drift over the whole story — deliberately a different speed from
     // the per-beat text, so the two never read as the same movement.
