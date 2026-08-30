@@ -170,6 +170,16 @@ export const brandLine = "Never train alone again.";
   The sub-line says what is about to happen — phone screens, in the order you
   would use them — so the first screenshot is introduced rather than sprung.
 */
+/*
+  ONE STEP ON A TITLE CARD — the number the reader will see on the beat, one
+  word for it, and one of the line icons in components/landing/FeatureIcon.tsx.
+
+  These MIRROR the beats below (S1…S7 / V1…V6) and have to be changed with
+  them. They are written out rather than parsed off the beats' kickers so the
+  card's words stay reviewable here, in one place, like the rest of the page.
+*/
+export type OpeningStep = { n: string; icon: string; word: string };
+
 export const studentIntro = {
   /* On "/" it follows the intro and is answered later by the interlude's
      "And if you train for the university itself —", so the two read as a
@@ -178,7 +188,19 @@ export const studentIntro = {
   leadInSolo: "For every student —",
   headline: "The student",
   headlineEm: "app.",
-  sub: "What it looks like on a phone, from finding a gym to logging the session with the person you found.",
+  /* Short on purpose: the seven steps under it now say what the walk covers,
+     so the line only has to say that it IS a walk (owner, 2026-08-30:
+     "napsat scroll through the whole app, neco takoveho"). */
+  sub: "Scroll through the whole app, one screen at a time.",
+  steps: [
+    { n: "01", icon: "gym", word: "Gyms" },
+    { n: "02", icon: "partners", word: "People" },
+    { n: "03", icon: "verified", word: "Reasons" },
+    { n: "04", icon: "chat", word: "Plan" },
+    { n: "05", icon: "log", word: "Log" },
+    { n: "06", icon: "calendar", word: "Record" },
+    { n: "07", icon: "leaderboard", word: "Proof" },
+  ] as OpeningStep[],
   /* The way past the story for someone who wants the list rather than the
      walk (owner, 2026-08-30). It points AT the feature block beside Campus
      Colours rather than repeating it here — the overview exists once. */
@@ -270,6 +292,15 @@ export const interlude = {
   headline: "Varsity",
   headlineEm: "Mode.",
   sub: "The app your squad has been running out of a group chat.",
+  /* Six, not seven: the varsity story has six beats. */
+  steps: [
+    { n: "01", icon: "plan", word: "Plan" },
+    { n: "02", icon: "boat", word: "Boat" },
+    { n: "03", icon: "race", word: "Race" },
+    { n: "04", icon: "logplan", word: "Week" },
+    { n: "05", icon: "calendar", word: "Calendar" },
+    { n: "06", icon: "squad", word: "Season" },
+  ] as OpeningStep[],
   /* Same door as the student card's: the varsity feature block beside Blade
      Lock, which is where the overview lives — once. */
   overview: { label: "Or see everything it does", href: "#blade-lock" },

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import OpeningSteps from "@/components/landing/OpeningSteps";
 import { cues, hero, interlude } from "@/lib/landingCopy";
 
 /*
@@ -34,12 +35,7 @@ export default function Interlude({ solo = false }: { solo?: boolean }) {
           {interlude.sub}
         </p>
 
-        <a
-          href={interlude.overview.href}
-          className="mt-1 inline-flex items-center gap-2 rounded-full border border-l-varsity-soft px-6 py-3 text-[14px] font-medium tracking-tight text-l-text transition-colors hover:border-l-varsity hover:bg-l-varsity-dim"
-        >
-          {interlude.overview.label} →
-        </a>
+        <OpeningSteps steps={interlude.steps} accent="varsity" />
 
         {solo && (
           <div className="mt-2 flex flex-col items-center gap-3">
@@ -52,6 +48,13 @@ export default function Interlude({ solo = false }: { solo?: boolean }) {
             </Link>
           </div>
         )}
+
+        <a
+          href={interlude.overview.href}
+          className="mt-1 inline-flex items-center gap-2 rounded-full border border-l-varsity-soft px-6 py-3 text-[14px] font-medium tracking-tight text-l-text transition-colors hover:border-l-varsity hover:bg-l-varsity-dim"
+        >
+          {interlude.overview.label} →
+        </a>
       </div>
 
       <div className="l-cue ls-open-cue">{solo ? cues.hero : cues.interlude}</div>

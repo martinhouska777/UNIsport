@@ -1,4 +1,5 @@
 import Link from "next/link";
+import OpeningSteps from "@/components/landing/OpeningSteps";
 import { availability, cues, hero, studentIntro } from "@/lib/landingCopy";
 
 /*
@@ -34,12 +35,7 @@ export default function StudentIntro({ solo = false }: { solo?: boolean }) {
           {studentIntro.sub}
         </p>
 
-        <a
-          href={studentIntro.overview.href}
-          className="mt-1 inline-flex items-center gap-2 rounded-full border border-l-accent-soft px-6 py-3 text-[14px] font-medium tracking-tight text-l-text transition-colors hover:border-l-accent hover:bg-l-accent-dim"
-        >
-          {studentIntro.overview.label} →
-        </a>
+        <OpeningSteps steps={studentIntro.steps} accent="accent" />
 
         {solo && (
           <div className="mt-2 flex flex-col items-center gap-3">
@@ -52,6 +48,13 @@ export default function StudentIntro({ solo = false }: { solo?: boolean }) {
             <p className="max-w-[46ch] text-[14px] leading-relaxed text-l-text-2">{availability}</p>
           </div>
         )}
+
+        <a
+          href={studentIntro.overview.href}
+          className="mt-1 inline-flex items-center gap-2 rounded-full border border-l-accent-soft px-6 py-3 text-[14px] font-medium tracking-tight text-l-text transition-colors hover:border-l-accent hover:bg-l-accent-dim"
+        >
+          {studentIntro.overview.label} →
+        </a>
       </div>
 
       <div className="l-cue ls-open-cue">{cues.hero}</div>
