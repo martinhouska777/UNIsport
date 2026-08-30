@@ -683,7 +683,10 @@ function EmptyHome() {
 
   It used to exist only at the bottom of the athlete Profile, which is the last
   place someone who RUNS the squad would look — the owner asked for it back in
-  Varsity Mode as a button, so here it is, on the first screen the mode opens.
+  Varsity Mode as a button, so here it is: the FIRST thing on the
+  first screen the mode opens, above even the greeting, and already there while
+  the plan is still loading. Whoever runs the squad shouldn't have to scroll
+  past their own name to reach it.
   A plain athlete never sees it, and the database refuses them regardless.
 
   A captain and a coach get different doors on purpose: a captain handles
@@ -759,6 +762,7 @@ export default function HomeScreen() {
   if (loading) {
     return (
       <div className="mx-auto w-full max-w-screen-sm pb-6">
+        {consoleRole && <ConsoleDoor role={consoleRole} />}
         <SkeletonLines count={2} />
         <SkeletonCards count={2} />
       </div>
@@ -776,8 +780,8 @@ export default function HomeScreen() {
 
   return (
     <div className="mx-auto w-full max-w-screen-sm pb-6">
-      <Greeting g={data.greeting} />
       {consoleRole && <ConsoleDoor role={consoleRole} />}
+      <Greeting g={data.greeting} />
       <WeekStrip weeks={data.weeks} startIndex={data.weekIndex} />
 
       <div className="flex items-center justify-between px-4 pb-2 pt-4">
