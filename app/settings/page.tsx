@@ -29,13 +29,14 @@ import { profileFromOnboarding } from "@/lib/currentUser";
 import { getUniversity, neutralTheme, universities } from "@/lib/themes";
 import SchoolCrest from "@/components/SchoolCrest";
 import { crestFor } from "@/lib/crests";
-import { roleLabel } from "@/lib/varsity/membership";
+import { can, canOpenConsole, roleLabel } from "@/lib/varsity/membership";
 import { VARSITY_HOME } from "@/lib/varsity/theme";
 import { appTour, requestTour, resetTour } from "@/lib/tour";
 import {
   IconArrowLeft,
   IconBulb,
   IconChevronRight,
+  IconClipboard,
   IconMoon,
   IconPencil,
   IconShield,
@@ -268,12 +269,27 @@ export default function SettingsPage() {
               href="/varsity/waiting"
             />
           ) : (
-            <Row
-              icon={<IconShield size={18} />}
-              label={membership.teamName}
-              detail={roleLabel[membership.role]}
-              href={VARSITY_HOME}
-            />
+            <div className="flex flex-col gap-2">
+              <Row
+                icon={<IconShield size={18} />}
+                label={membership.teamName}
+                detail={roleLabel[membership.role]}
+                href={VARSITY_HOME}
+              />
+              {/* The Coach Console used to be reachable ONLY from inside Varsity
+                  Mode (its home screen and varsity profile), which meant a coach
+                  sitting in the student app had to switch modes first and find
+                  the door there. A coach or captain goes looking in Settings, so
+                  the same door is here — gated on the role exactly as it is
+                  everywhere else, so no athlete or student ever sees it. */}
+              {canOpenConsole(membership.role) && (
+                <Row
+                  icon={<IconClipboard size={18} />}
+                  label={`Open ${roleLabel[membership.role]} Console`}
+                  href={can.buildPlan(membership.role) ? "/varsity/coach/plan" : "/varsity/coach/team"}
+                />
+              )}
+            </div>
           )}
         </Section>
 
