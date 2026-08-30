@@ -59,14 +59,18 @@ export const hero = {
     lead: "For every student.",
     tail: "With a dedicated mode for varsity athletes.",
   },
-  /* One line, not four sentences: the four claims are S1, S2, S5 and S7 in
-     miniature, and the reader meets them again three screens down. The old
-     line — kept for a one-line revert:
-       "Discover every gym on campus. Find a verified training partner. Log
-        every session. See where you rank — plus a gated mode built for
-        varsity teams."
-     "See where you rank" stays: it is the only reason to come back tomorrow. */
-  body: "Every gym on campus, a verified training partner, every session logged — and where you rank.",
+  /* FOUR ACTIONS, in the order the app is actually used: find a gym, match
+     with someone, plan it, log it (S1 → S2 → S4 → S5). The owner, 2026-08-30:
+     "dont just shout out random words, make it targeted to the user — like
+     find … match … log … like actions."
+     Two words are gone on purpose. "A verified training partner" said the
+     PERSON was vetted; what the app verifies is the .edu address at signup
+     (lib/universityEmail.ts), so the line now says which. And "see where you
+     rank" is out — the owner called it too generic, and the leaderboards
+     still get their own beat at S7. The old line, for a one-line revert:
+       "Every gym on campus, a verified training partner, every session
+        logged — and where you rank." */
+  body: "Find every gym on campus. Match with students verified by their .edu email. Plan the session in the chat. Log it together.",
   primaryCta: "Get started with .edu",
   /* Two doors, because the kicker promises two. */
   studentCta: "See the student app",
@@ -139,11 +143,14 @@ export const doors = [
    (hero.badge), so this is the second half of that sentence. */
 export const availability = "New campuses are onboarded one at a time — colours, gyms and houses included.";
 
-/* THE BRAND LINE. Three words, a promise rather than a description — it goes
-   under the logo, on the splash, in a store listing. Distinct from the hero
-   headline above, which describes and only ever appears on this page.
-   S7 already lands on it, so the story closes on the brand line. */
-export const brandLine = "Never train alone.";
+/* THE BRAND LINE — the slogan, set under the wordmark like "Škoda · Simply
+   Clever" (the owner, 2026-08-30). A promise rather than a description: it
+   goes under the logo, on the splash, in a store listing. Distinct from the
+   hero headline above, which describes and only ever appears on this page.
+   It is now the SAME sentence S7 closes the student story on, deliberately:
+   the intro makes the promise, and seven screens later the story hands it
+   back as something the reader has just watched happen. */
+export const brandLine = "Never train alone again.";
 
 /* ───────────────────── S1–S7 · THE STUDENT STORY ───────────────────── */
 

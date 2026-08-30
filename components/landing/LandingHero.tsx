@@ -93,10 +93,10 @@ export default function LandingHero({ doors: showDoors = true }: { doors?: boole
         {/* 1 · The mark. The page says who it is before it says anything else. */}
         <div className="l-in-1 mb-[clamp(10px,2.2vh,24px)] flex flex-col items-center gap-[clamp(2px,0.6vh,8px)]">
           <Wordmark
-            className="text-[clamp(26px,min(4.4vw,4.6vh),44px)]"
+            className="text-[clamp(40px,min(7.2vw,7.4vh),82px)]"
             accentClassName="text-(--sc) transition-colors duration-700 ease-in-out motion-reduce:transition-none"
           />
-          <span className="font-mono text-[11px] tracking-[0.18em] uppercase text-l-text-2">
+          <span className="font-display text-[clamp(15px,2.6vh,24px)] tracking-tight text-l-text-2">
             {brandLine}
           </span>
         </div>
@@ -108,7 +108,7 @@ export default function LandingHero({ doors: showDoors = true }: { doors?: boole
             {hero.badge}
           </div>
 
-          <h1 className="mb-[clamp(6px,1.4vh,16px)] max-w-[12ch] font-display text-[clamp(34px,min(6.4vw,6.6vh),76px)] font-normal leading-[0.98] tracking-[-0.02em] text-balance text-l-text">
+          <h1 className="mb-[clamp(6px,1.4vh,16px)] max-w-[12ch] font-display text-[clamp(24px,min(4.2vw,4.4vh),42px)] font-normal leading-[1.02] tracking-[-0.02em] text-balance text-l-text">
             {hero.headline[0]} {hero.headline[1]} <em className="italic text-(--sc) transition-colors duration-700 ease-in-out motion-reduce:transition-none">
               {hero.headline[2]}
             </em>
@@ -123,7 +123,7 @@ export default function LandingHero({ doors: showDoors = true }: { doors?: boole
             </p>
           )}
 
-          <p className="max-w-[46ch] text-[clamp(16px,2vw,18px)] leading-relaxed tracking-tight text-balance text-l-text-2">
+          <p className="max-w-[54ch] text-[clamp(15px,1.9vw,17px)] leading-relaxed tracking-tight text-balance text-l-text-2">
             {hero.body}
           </p>
         </div>
