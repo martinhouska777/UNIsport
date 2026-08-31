@@ -38,6 +38,9 @@ export type CurrentUser = OnboardingProfile & {
   // devices). Default on; enforced server-side in db/push_notify.sql.
   notifyMessages: boolean;
   notifyPlans: boolean;
+  // Everything the coach publishes to the squad: the week, the boats, and a
+  // technical note written to you. One switch, because they are one voice.
+  notifyTeam: boolean;
 };
 
 export const currentUser: CurrentUser = {
@@ -88,6 +91,7 @@ export const currentUser: CurrentUser = {
   showPersonalRecords: true,
   notifyMessages: true,
   notifyPlans: true,
+  notifyTeam: true,
   sessions: [
     { day: 3, activity: "Push day", gym: "Malkin Athletic Center", partner: "Alex Chen", exercises: ["Bench 5×5", "OHP 4×8", "Triceps"], photos: [] },
     { day: 6, activity: "Pull day", gym: "Malkin Athletic Center", partner: "Solo", exercises: ["Deadlift 5×3", "Rows 4×10", "Curls"], photos: [] },
@@ -143,6 +147,7 @@ export function profileFromOnboarding(raw: Record<string, unknown>): CurrentUser
     showPersonalRecords?: boolean;
     notifyMessages?: boolean;
     notifyPlans?: boolean;
+    notifyTeam?: boolean;
     // Set by get_public_profile when viewing SOMEONE ELSE: true if they're an
     // approved member of a squad. Absent when reading your own profiles.data
     // (membership lives in its own table), so your own page passes it in.
@@ -162,6 +167,7 @@ export function profileFromOnboarding(raw: Record<string, unknown>): CurrentUser
     showPersonalRecords: extra.showPersonalRecords ?? true,
     notifyMessages: extra.notifyMessages ?? true,
     notifyPlans: extra.notifyPlans ?? true,
+    notifyTeam: extra.notifyTeam ?? true,
     sessions: [],
   };
 }

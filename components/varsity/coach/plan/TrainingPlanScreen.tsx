@@ -48,6 +48,7 @@ import {
   type BoardKind,
 } from "@/lib/varsity/coachPlan";
 import { fetchPlan, savePlan } from "@/lib/varsity/planStore";
+import { notifySquad } from "@/lib/push/client";
 import {
   IconPlus,
   IconArrowLeft,
@@ -156,12 +157,16 @@ export default function TrainingPlanScreen() {
   );
 
   // Publish a draft block: flip it to published, then persist so athletes see it.
+  // Publishing is the one moment worth a notification — the squad's week has just
+  // changed under them. Only on success, and never on a plain Save: a draft is
+  // the coach thinking, and nobody should have their phone buzz for that.
   const publishBlock = async (blockId: string) => {
     const next = blocks.map((b) =>
       b.id === blockId ? { ...b, status: "published" as const } : b,
     );
     setBlocks(next);
-    await persist({ blocks: next });
+    const ok = await persist({ blocks: next });
+    if (ok) notifySquad({ kind: "team_plan", preview: next.find((b) => b.id === blockId)?.name });
   };
 
   // Move a published block back to draft (hides it from athletes again).

@@ -23,6 +23,7 @@ import {
   saveNote,
   type TeamMember,
 } from "@/lib/varsity/notesStore";
+import { notifySquad } from "@/lib/push/client";
 import {
   IconArrowLeft,
   IconChevronRight,
@@ -117,6 +118,17 @@ function Editor({
     if (error) {
       console.error("saveNote:", error);
       return;
+    }
+    /*
+      Tell the athlete — the only notification in the console addressed to ONE
+      person, which is the whole point of a technical note. Not on a CLEAR: an
+      empty note means "nothing to fix", and buzzing someone's phone to say
+      nothing is worse than saying nothing quietly. The preview is the note
+      itself, so most of the time it is read from the lock screen and never
+      needs opening.
+    */
+    if (text.trim()) {
+      notifySquad({ kind: "note", athleteId: member.id, preview: text.trim() });
     }
     onSaved(text.trim());
   };

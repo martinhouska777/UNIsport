@@ -27,11 +27,17 @@ import {
 export default function NotificationSettings({
   messages,
   plans,
+  team,
+  showTeam,
   onChange,
 }: {
   messages: boolean;
   plans: boolean;
-  onChange: (patch: { notifyMessages?: boolean; notifyPlans?: boolean }) => void;
+  team: boolean;
+  /* Only squad members are offered the squad switch — a student with no team
+     would be turning off something that can never reach them. */
+  showTeam: boolean;
+  onChange: (patch: { notifyMessages?: boolean; notifyPlans?: boolean; notifyTeam?: boolean }) => void;
 }) {
   // Browser push state, read after mount (these APIs don't exist during SSR, so
   // we keep them in one object set from an async callback — never synchronously
@@ -209,6 +215,21 @@ export default function NotificationSettings({
             ariaLabel="Notify me about session invites"
           />
         </div>
+        {showTeam && (
+          <div className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-surface px-4 py-3">
+            <div>
+              <div className="text-sm text-text">From your coach</div>
+              <div className="text-[11px] text-muted">
+                Training published, lineups up, and notes written to you
+              </div>
+            </div>
+            <Toggle
+              on={team}
+              onChange={() => onChange({ notifyTeam: !team })}
+              ariaLabel="Notify me about what my coach publishes"
+            />
+          </div>
+        )}
       </div>
     </div>
   );

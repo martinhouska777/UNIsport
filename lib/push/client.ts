@@ -181,6 +181,32 @@ export function notifyConversation(input: {
   }).catch(() => {});
 }
 
+/*
+  Fire-and-forget: the coach has just published something, tell the squad.
+
+  Same contract as notifyConversation — never throws, never blocks, `keepalive`
+  so it survives the coach navigating away the instant they press Publish. Who
+  actually receives it is decided in the database (db/varsity_push_notify.sql):
+  this only says WHAT happened, and only a coach's call gets past the RPC.
+
+  Call it after the save SUCCEEDS. Announcing a lineup that failed to store is
+  worse than announcing nothing.
+*/
+export function notifySquad(input: {
+  kind: "team_plan" | "team_lineup" | "note";
+  /** required for "note" — which athlete it was written to */
+  athleteId?: string;
+  preview?: string;
+}): void {
+  if (typeof window === "undefined") return;
+  void fetch("/api/push/notify", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    keepalive: true,
+  }).catch(() => {});
+}
+
 // Ask the server to send a notification to this user's devices (welcome / sample).
 export async function sendTestNotification(payload?: {
   title?: string;

@@ -343,6 +343,9 @@ export default function SettingsPage() {
           <NotificationSettings
             messages={user.notifyMessages}
             plans={user.notifyPlans}
+            team={user.notifyTeam}
+            /* The coach's switch only exists for people who have a coach. */
+            showTeam={membership?.status === "approved"}
             onChange={update}
           />
         )}

@@ -71,6 +71,7 @@ import {
   type Period,
 } from "@/lib/varsity/coachPlan";
 import { fetchPlan, type Plan } from "@/lib/varsity/planStore";
+import { notifySquad } from "@/lib/push/client";
 import {
   fetchLineup,
   fetchLineupStatuses,
@@ -764,6 +765,19 @@ function Builder({
     setStatus(newStatus);
     setJustSaved(true);
     window.setTimeout(() => setJustSaved(false), 1500);
+
+    /*
+      PUBLISHING TELLS THE SQUAD. Fired from here rather than from saveLineup(),
+      because the arrows auto-save on the way out — and an already-published
+      lineup saved by walking past it must not buzz forty phones. Only the
+      button does that.
+    */
+    if (which === "publish") {
+      notifySquad({
+        kind: "team_lineup",
+        preview: `${context.weekday} ${context.period}`,
+      });
+    }
   };
 
   /*
