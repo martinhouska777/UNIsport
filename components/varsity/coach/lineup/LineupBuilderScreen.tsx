@@ -931,7 +931,12 @@ function Builder({
                           value={boat.dock}
                           onChange={(e) => setDock(boat.id, e.target.value)}
                           aria-label="Push-off time"
-                          className="bg-transparent text-right text-[12px] font-medium text-text outline-none"
+                          /* No `outline-none` here, unlike the text fields
+                             around it: a select shows no caret, so the gold
+                             keyboard ring is its only focus mark — and a select
+                             (unlike a text field) only matches :focus-visible
+                             when a keyboard put it there, so a tap stays clean. */
+                          className="bg-transparent text-right text-[12px] font-medium text-text"
                         >
                           {(dockTimes.includes(boat.dock) ? dockTimes : [boat.dock, ...dockTimes]).map(
                             (t) => (
