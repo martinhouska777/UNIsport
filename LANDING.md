@@ -362,14 +362,49 @@ proof. (The `.edu` question is settled — see "Open, and blocked" below.)
    on every line. **Re-run it after any re-shoot** — the geometry is measured,
    not derived.
 
-   **Found while doing it, and NOT fixed: `02-match.webp` is a stale screen.**
-   It shows three tabs (Browse · Session · Buddy Board), the heading "SORTED BY
-   COMPATIBILITY", and the old grey person glyph. The app has had two tabs
-   (People · Sessions), "SORTED BY FIT" and initials avatars since `1ebdd68`
-   and `d91eb6c`. The front door is advertising a Match screen that no longer
-   exists. Fixing it is a re-shoot, which needs an owner login cookie
-   (`save-cookie.mjs` → `capture-light.mjs`, light AND dark), then
-   `recolor-shots.mjs --only=match` and `patch-match.mjs` again.
+   **`02-match.webp` is a stale screen** — three tabs (Browse · Session ·
+   Buddy Board), the heading "SORTED BY COMPATIBILITY", and the old grey person
+   glyph, where the app has had two tabs (People · Sessions), "SORTED BY FIT"
+   and initials avatars since `1ebdd68` and `d91eb6c`.
+
+   **The re-shoot was DONE on 2026-09-01 and then THROWN AWAY — deliberately,
+   on the owner's call ("nechame starou pak zmenime").** The new frame is
+   accurate and a much weaker picture: 2 cards and half an empty screen against
+   the old 4 dense ones, "Worth a try" instead of "Strong fit", no house on the
+   sub-line, 2–3 chips instead of 5. The front door keeps advertising a screen
+   that no longer exists until the ones below are dealt with. **The
+   tooling for the re-shoot now works** — that part is done and pushed:
+
+   - `capture-light.mjs --only=match` shoots exactly that frame (`a8aa259`).
+     `--only` is an EXACT name; it used to match by substring and quietly
+     re-shot `03-why-you-match` as well.
+   - A capture browser is a fresh profile, so every run is somebody's FIRST
+     visit and `TourGate` opened the 17-step walk over the loading page, dimmed
+     it and held it on Gyms. The first re-shoot came back as a photograph of
+     the tour. `capture-light.mjs` presses the walk's own Skip before it
+     shoots anything now.
+
+   **Four things found doing it, all still open:**
+
+   a. **The app names one ordering twice, on one screen.** The tab header says
+      `SORTED BY FIT` (`app/(app)/match/page.tsx:61`) and the count line four
+      lines below says `SORTED BY COMPATIBILITY` (`:307`). Every user sees
+      both. Fix the app, then re-shoot — not the other way round.
+
+   b. **The count lies.** The line reads `{browse.length} PEOPLE` and the
+      grid under it drops everything below the weakest tier (`isWorthShowing`
+      in `Grid`) — so the live app says "4 PEOPLE" over two cards.
+
+   c. **`patch-match.mjs` has nothing left to attach to.** Its whole job is
+      rewriting the "`<house> · <level>`" sub-lines and the "Hemenway
+      Gymnasium" chips per school. Today's Match card carries neither: the
+      sub-line is the level alone. Its measured geometry is written against
+      the OLD capture, so the moment 02-match is replaced that script must be
+      re-measured (`--calib`) or retired.
+
+   d. **The demo account sees 4 candidates, not 61.** Not investigated —
+      the owner parked it ("kasli na to"). It is why the new frame is thin,
+      and it is what a visitor to the real app would see too.
 2. **The varsity story ends on a statistics graph (V6).** The brief argues
    against this by name — a stats screen is the one screen every fitness app
    has; a seat in a named boat, published by a coach, is the one none of them
