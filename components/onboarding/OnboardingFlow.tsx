@@ -16,6 +16,9 @@ import {
   IconX,
   IconCamera,
   IconBell,
+  IconShield,
+  IconMapPin,
+  HouseSigil,
   IconMessage,
   IconCalendar,
   IconClock,
@@ -28,8 +31,12 @@ import {
   residenceOptions,
   primaryActivities,
   experienceLevels,
+  gymStyles,
   gymSplits,
   cardioTypes,
+  runningUnits,
+  runningHints,
+  runningExperiences,
   verifiedGyms,
   MAX_TOP_GYMS,
   weekDays,
@@ -37,16 +44,24 @@ import {
   concentrations,
   countries,
   languageOptions,
+  campusLanguage,
   interestOptions,
-  trainingTypes,
+  MAX_INTEREST_LENGTH,
+  residenceKind,
+  residenceGroup,
   partnerPreferences,
+  TRAIN_ALONE_NOTE,
   peerAdvising,
   gymMentorship,
   notificationItems,
   emptyProfile,
   nameError,
+  readOnboardingDraft,
+  writeOnboardingDraft,
+  clearOnboardingDraft,
   type OnboardingProfile,
 } from "@/lib/onboarding";
+import { houseColorsFor } from "@/lib/gyms";
 import { subscribeToPush, sendTestNotification } from "@/lib/push/client";
 
 const activityIcons: Record<string, (p: { size?: number; className?: string }) => React.ReactNode> = {
@@ -62,6 +77,33 @@ const notifIcons: Record<string, (p: { size?: number; className?: string }) => R
   calendar: IconCalendar,
   clock: IconClock,
 };
+
+/*
+  The emblem in front of a place in the residence picker.
+    • a House  → its OWN two identity colours, which are gym data (lib/gyms.ts)
+                 and reach the component as values, never as hardcoded hex.
+    • a dorm   → the neutral shield, in the theme's gold.
+    • anywhere
+      else     → a pin. Off campus isn't a crest.
+*/
+function ResidenceEmblem({
+  residence,
+  universityKey,
+}: {
+  residence: string;
+  universityKey: string;
+}) {
+  const kind = residenceKind(residence);
+  const colors = kind === "house" ? houseColorsFor(universityKey, residence) : null;
+  if (colors) {
+    return <HouseSigil primary={colors.primary} secondary={colors.secondary} size={20} />;
+  }
+  return (
+    <span className="flex h-5 w-5 items-center justify-center text-accent">
+      {kind === "other" ? <IconMapPin size={16} /> : <IconShield size={17} />}
+    </span>
+  );
+}
 
 type StepMeta = {
   key: string;
@@ -86,11 +128,35 @@ const STEPS: StepMeta[] = [
 
 export default function OnboardingFlow() {
   const router = useRouter();
-  const { saveOnboarding } = useAppState();
+  const { saveOnboarding, userId, universityKey } = useAppState();
 
   const [step, setStep] = useState(0); // 0-based index into STEPS
   const [profile, setProfile] = useState<OnboardingProfile>(emptyProfile);
   const [expandedDay, setExpandedDay] = useState<string | null>(null); // Screen 5 UI
+  const [newInterest, setNewInterest] = useState<string | null>(null); // Screen 6 UI
+  /*
+    Nothing is written back to the draft until the draft has been READ. Without
+    this the first render — an empty profile on screen 1 — would save itself
+    over the answers we were about to restore.
+  */
+  const [restored, setRestored] = useState(false);
+
+  // Coming back in: pick the flow up exactly where it was left. localStorage
+  // can only be touched after mount, so this can't be the initial state.
+  useEffect(() => {
+    const draft = readOnboardingDraft(userId);
+    if (draft) {
+      setProfile(draft.profile);
+      setStep(Math.min(Math.max(draft.step, 0), STEPS.length - 1));
+    }
+    setRestored(true);
+  }, [userId]);
+
+  // Going out: every answer and the screen it was given on, after every change.
+  useEffect(() => {
+    if (!restored) return;
+    writeOnboardingDraft(userId, step, profile);
+  }, [restored, userId, step, profile]);
 
   const meta = STEPS[step];
   const isLast = step === STEPS.length - 1;
@@ -133,12 +199,15 @@ export default function OnboardingFlow() {
       case "schedule":
         return Object.values(profile.trainingSchedule).some((blocks) => blocks.length > 0);
       case "preferences":
-        return profile.trainingType !== "" && profile.partnerPreference !== "";
+        // Someone training alone is never matched, so who they'd be matched
+        // WITH is a question that no longer applies — and isn't asked.
+        return profile.trainingType === "solo" || profile.partnerPreference !== "";
       case "activity": {
-        if (profile.primaryActivity === "" || profile.experienceLevel === "") return false;
+        // Each activity has its own required answers. Experience level is a
+        // gym question; the split and how long you've run are optional.
         switch (profile.primaryActivity) {
           case "gym":
-            return profile.gymSplit !== "";
+            return profile.experienceLevel !== "" && profile.gymStyle !== "";
           case "running":
             return profile.runningDistance.trim() !== "" && profile.runningPace.trim() !== "";
           case "cardio":
@@ -146,7 +215,7 @@ export default function OnboardingFlow() {
           case "other":
             return profile.activityOther.trim() !== "";
           default:
-            return false;
+            return false; // nothing picked yet
         }
       }
       default:
@@ -164,6 +233,7 @@ export default function OnboardingFlow() {
     // eslint-disable-next-line no-console
     console.log("UNIsport onboarding profile:", profile);
     await saveOnboarding(profile); // saves to the DB + marks this account onboarded
+    clearOnboardingDraft(); // the answers live in the database now
     router.replace("/gyms");
   };
 
@@ -254,66 +324,125 @@ export default function OnboardingFlow() {
               })}
             </div>
 
-            {/* Experience level (always shown) */}
-            <FieldLabel>Experience level</FieldLabel>
-            <div className="mb-5 flex flex-col gap-2">
-              {experienceLevels.map((lvl) => {
-                const on = profile.experienceLevel === lvl.key;
-                return (
-                  <button
-                    key={lvl.key}
-                    type="button"
-                    onClick={() => set("experienceLevel", lvl.key)}
-                    aria-pressed={on}
-                    className={`rounded-[10px] border p-3 text-left transition-colors ${
-                      on ? "border-primary bg-primary-tint" : "border-border bg-surface-2"
-                    }`}
-                  >
-                    <div className="text-[13px] font-medium text-text">{lvl.name}</div>
-                    <div className="text-[11px] text-muted">{lvl.desc}</div>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Conditional on the chosen activity */}
+            {/* From here down, each activity asks its OWN questions.
+                Experience level is one of the GYM ones — "advanced" says
+                nothing about a cross-trainer, and a wrong answer would feed
+                matching. */}
             {profile.primaryActivity === "gym" && (
-              <>
-                <FieldLabel>Your split</FieldLabel>
-                <div className="flex flex-wrap gap-1.5">
-                  {gymSplits.map((s) => (
-                    <Pill key={s} label={s} selected={profile.gymSplit === s} onClick={() => set("gymSplit", s)} />
-                  ))}
+              <div className="flex flex-col gap-5">
+                <div>
+                  <FieldLabel>How do you train?</FieldLabel>
+                  <div className="flex flex-wrap gap-1.5">
+                    {gymStyles.map((g) => (
+                      <Pill
+                        key={g}
+                        label={g}
+                        selected={profile.gymStyle === g}
+                        onClick={() => set("gymStyle", g)}
+                      />
+                    ))}
+                  </div>
                 </div>
-              </>
+
+                <div>
+                  <FieldLabel>Experience level</FieldLabel>
+                  <div className="flex flex-col gap-2">
+                    {experienceLevels.map((lvl) => {
+                      const on = profile.experienceLevel === lvl.key;
+                      return (
+                        <button
+                          key={lvl.key}
+                          type="button"
+                          onClick={() => set("experienceLevel", lvl.key)}
+                          aria-pressed={on}
+                          className={`rounded-[10px] border p-3 text-left transition-colors ${
+                            on ? "border-primary bg-primary-tint" : "border-border bg-surface-2"
+                          }`}
+                        >
+                          <div className="text-[13px] font-medium text-text">{lvl.name}</div>
+                          <div className="text-[11px] text-muted">{lvl.desc}</div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div>
+                  <FieldLabel>Your split — optional</FieldLabel>
+                  <div className="flex flex-wrap gap-1.5">
+                    {/* Tapping the chosen split again clears it: it's optional,
+                        so there has to be a way back to no answer. */}
+                    {gymSplits.map((sp) => (
+                      <Pill
+                        key={sp}
+                        label={sp}
+                        selected={profile.gymSplit === sp}
+                        onClick={() => set("gymSplit", profile.gymSplit === sp ? "" : sp)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
             )}
 
             {profile.primaryActivity === "running" && (
-              <div className="grid grid-cols-2 gap-3">
+              <div className="flex flex-col gap-5">
                 <div>
-                  <FieldLabel>Usual distance</FieldLabel>
-                  <TextField
-                    value={profile.runningDistance}
-                    onChange={(v) => set("runningDistance", v)}
-                    placeholder="e.g. 5 km"
-                    ariaLabel="Usual distance"
-                  />
+                  <FieldLabel>Kilometres or miles?</FieldLabel>
+                  <div className="flex flex-wrap gap-1.5">
+                    {runningUnits.map((u) => (
+                      <Pill
+                        key={u.key}
+                        label={u.label}
+                        selected={profile.runningUnit === u.key}
+                        onClick={() => set("runningUnit", u.key)}
+                      />
+                    ))}
+                  </div>
                 </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <FieldLabel>Usual distance</FieldLabel>
+                    <TextField
+                      value={profile.runningDistance}
+                      onChange={(v) => set("runningDistance", v)}
+                      placeholder={runningHints[profile.runningUnit].distance}
+                      ariaLabel="Usual distance"
+                    />
+                  </div>
+                  <div>
+                    <FieldLabel>Usual pace</FieldLabel>
+                    <TextField
+                      value={profile.runningPace}
+                      onChange={(v) => set("runningPace", v)}
+                      placeholder={runningHints[profile.runningUnit].pace}
+                      ariaLabel="Usual pace"
+                    />
+                  </div>
+                </div>
+
                 <div>
-                  <FieldLabel>Usual pace</FieldLabel>
-                  <TextField
-                    value={profile.runningPace}
-                    onChange={(v) => set("runningPace", v)}
-                    placeholder="e.g. 5:00 /km"
-                    ariaLabel="Usual pace"
-                  />
+                  <FieldLabel>How long have you been running? — optional</FieldLabel>
+                  <div className="flex flex-wrap gap-1.5">
+                    {runningExperiences.map((r) => (
+                      <Pill
+                        key={r}
+                        label={r}
+                        selected={profile.runningExperience === r}
+                        onClick={() =>
+                          set("runningExperience", profile.runningExperience === r ? "" : r)
+                        }
+                      />
+                    ))}
+                  </div>
                 </div>
               </div>
             )}
 
             {profile.primaryActivity === "cardio" && (
               <>
-                <FieldLabel>Type</FieldLabel>
+                <FieldLabel>What do you do most often?</FieldLabel>
                 <div className="flex flex-wrap gap-1.5">
                   {cardioTypes.map((c) => (
                     <Pill key={c} label={c} selected={profile.cardioType === c} onClick={() => set("cardioType", c)} />
@@ -345,8 +474,15 @@ export default function OnboardingFlow() {
               value={profile.residence}
               onChange={(v) => set("residence", v)}
               placeholder={isFreshman ? "Select your dorm" : "Select your house"}
+              searchPlaceholder={isFreshman ? "Search dorms…" : "Search houses…"}
               ariaLabel="Where you live"
+              groupOf={residenceGroup}
+              icon={(o) => <ResidenceEmblem residence={o} universityKey={universityKey} />}
             />
+            <p className="mt-2 text-[11px] text-muted">
+              Not in {isFreshman ? "a dorm" : "a House"}? The co-op and off-campus are at the
+              bottom of the list.
+            </p>
           </div>
         );
       }
@@ -497,6 +633,15 @@ export default function OnboardingFlow() {
               ? profile.interests.filter((x) => x !== i)
               : [...profile.interests, i]
           );
+        // Anything chosen that isn't one of our ready-made pills was typed by
+        // this person. Those get their own row, each with an × on it.
+        const ownInterests = profile.interests.filter((i) => !interestOptions.includes(i));
+        const addInterest = () => {
+          const value = (newInterest ?? "").trim();
+          setNewInterest(null);
+          if (value === "" || profile.interests.includes(value)) return;
+          set("interests", [...profile.interests, value]);
+        };
         return (
           <div className="flex flex-col gap-5">
             <div>
@@ -524,8 +669,13 @@ export default function OnboardingFlow() {
 
             <div>
               <FieldLabel>Languages you speak</FieldLabel>
+              {/* English is on and can't be taken off — you're at Harvard. Every
+                  language you do add leaves the list, so what's left to scroll
+                  is only what you haven't said yet. */}
               <SearchableDropdown
                 multiple
+                hideSelected
+                locked={[campusLanguage]}
                 options={languageOptions}
                 value={profile.languages}
                 onChange={(v) => set("languages", v)}
@@ -546,7 +696,64 @@ export default function OnboardingFlow() {
                     onClick={() => toggleInterest(i)}
                   />
                 ))}
+
+                {/* Whatever people typed themselves, always on and removable. */}
+                {ownInterests.map((i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => toggleInterest(i)}
+                    aria-label={`Remove ${i}`}
+                    className="tap44 flex items-center gap-1.5 rounded-full border border-primary bg-primary-tint px-3.5 py-2 text-[13px] text-primary"
+                  >
+                    {i}
+                    <IconX size={13} />
+                  </button>
+                ))}
+
+                {newInterest === null ? (
+                  <button
+                    type="button"
+                    onClick={() => setNewInterest("")}
+                    className="tap44 flex items-center gap-1 rounded-full border border-dashed border-border bg-surface-2 px-3.5 py-2 text-[13px] text-muted"
+                  >
+                    <IconPlus size={13} />
+                    Add
+                  </button>
+                ) : null}
               </div>
+
+              {newInterest !== null && (
+                <div className="mt-2 flex items-center gap-2">
+                  <input
+                    autoFocus
+                    value={newInterest}
+                    maxLength={MAX_INTEREST_LENGTH}
+                    onChange={(e) => setNewInterest(e.target.value)}
+                    /* Enter adds it, Escape backs out — the two things a thumb
+                       on a phone keyboard reaches for. */
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        addInterest();
+                      } else if (e.key === "Escape") {
+                        setNewInterest(null);
+                      }
+                    }}
+                    placeholder="Your own interest"
+                    aria-label="Your own interest"
+                    className="min-w-0 flex-1 rounded-[10px] border border-border bg-surface-2 px-3.5 py-3 text-base text-text placeholder:text-muted focus:border-primary focus:outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={addInterest}
+                    disabled={newInterest.trim() === ""}
+                    className="tap44 flex-shrink-0 rounded-full border border-primary bg-primary-tint px-4 py-2 text-[13px] text-primary disabled:opacity-40"
+                  >
+                    Add
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         );
@@ -579,43 +786,52 @@ export default function OnboardingFlow() {
               <Toggle on={profile[row.key]} onChange={() => set(row.key, !profile[row.key])} ariaLabel={row.label} />
             </div>
           ));
+        const trainsAlone = profile.trainingType === "solo";
         return (
           <div className="flex flex-col gap-5">
-            <div>
-              <FieldLabel>Training type</FieldLabel>
-              <div className="flex flex-wrap gap-1.5">
-                {trainingTypes.map((t) => (
-                  <Pill
-                    key={t.key}
-                    label={t.label}
-                    selected={profile.trainingType === t.key}
-                    onClick={() => set("trainingType", t.key)}
-                  />
-                ))}
+            {/* One switch instead of Solo / Partner / Either. Off is the normal,
+                matchable state; on takes you out of Match and stops the whole
+                partner conversation, including the question below. */}
+            <div className="rounded-xl border border-border bg-surface-2 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1">
+                  <div className="text-[13px] font-medium text-text">I prefer to train alone</div>
+                  <div className="text-[11px] text-muted">{TRAIN_ALONE_NOTE}</div>
+                </div>
+                <Toggle
+                  on={trainsAlone}
+                  onChange={() => set("trainingType", trainsAlone ? "either" : "solo")}
+                  ariaLabel="I prefer to train alone"
+                />
               </div>
             </div>
 
-            <div>
-              <FieldLabel>Partner preference</FieldLabel>
-              <div className="flex flex-wrap gap-1.5">
-                {partnerPreferences.map((p) => (
-                  <Pill
-                    key={p.key}
-                    label={p.label}
-                    selected={profile.partnerPreference === p.key}
-                    onClick={() => set("partnerPreference", p.key)}
-                  />
-                ))}
+            {!trainsAlone && (
+              <div>
+                <FieldLabel>Partner preference</FieldLabel>
+                <div className="flex flex-wrap gap-1.5">
+                  {partnerPreferences.map((p) => (
+                    <Pill
+                      key={p.key}
+                      label={p.label}
+                      selected={profile.partnerPreference === p.key}
+                      onClick={() => set("partnerPreference", p.key)}
+                    />
+                  ))}
+                </div>
+                <p className="mt-2 text-[11px] text-muted">Who you&apos;d like to be matched with.</p>
               </div>
-            </div>
+            )}
 
             <Section title="Peer advising" help="Harvard-life mentorship — optional.">
               {renderToggleRows(peerRows)}
             </Section>
 
-            <Section title="Gym mentorship" help="Optional — based on your experience level.">
-              {renderToggleRows(gymRows)}
-            </Section>
+            {profile.experienceLevel !== "" && (
+              <Section title="Gym mentorship" help="Optional — based on your experience level.">
+                {renderToggleRows(gymRows)}
+              </Section>
+            )}
           </div>
         );
       }

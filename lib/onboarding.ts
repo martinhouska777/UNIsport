@@ -33,6 +33,7 @@ export const yardDorms: string[] = [
   "Holworthy",
   "Hurlbut",
   "Lionel",
+  "Massachusetts Hall",
   "Matthews",
   "Mower",
   "Pennypacker",
@@ -59,9 +60,55 @@ export const houses: string[] = [
   "Winthrop",
 ];
 
-// Decoupled from any hardcoded year: freshmen see Yard dorms, everyone else houses.
+/*
+  Not everyone lives in a dorm or a House. These sit at the BOTTOM of the list,
+  under their own heading:
+    • Dudley Co-op       — Harvard's cooperative house (Mass Ave / Sacramento St).
+    • Dudley Community   — the non-residential community for off-campus students.
+    • Living off campus  — an apartment, at home, commuting.
+  `freshmen: false` means the option is only offered to upperclassmen: a
+  first-year can't be in Dudley, but a first-year CAN live off campus.
+*/
+export const otherResidences: { name: string; freshmen: boolean }[] = [
+  { name: "Dudley Co-op", freshmen: false },
+  { name: "Dudley Community", freshmen: false },
+  { name: "Living off campus", freshmen: true },
+];
+
+// Decoupled from any hardcoded year: freshmen see Yard dorms, everyone else
+// houses — and both then see the "somewhere else" options underneath.
 export function residenceOptions(classYear: string): string[] {
-  return classYear === freshmanClassYear ? yardDorms : houses;
+  const isFreshman = classYear === freshmanClassYear;
+  const main = isFreshman ? yardDorms : houses;
+  const rest = otherResidences
+    .filter((o) => (isFreshman ? o.freshmen : true))
+    .map((o) => o.name);
+  return [...main, ...rest];
+}
+
+/*
+  Which KIND of place a residence is. Drives the little emblem in the picker: a
+  House gets its own two-colour sigil (those colours are gym data), a Yard dorm
+  gets the neutral shield, anything else gets a pin.
+*/
+export type ResidenceKind = "house" | "dorm" | "other";
+
+export function residenceKind(residence: string): ResidenceKind {
+  if (houses.includes(residence)) return "house";
+  if (yardDorms.includes(residence)) return "dorm";
+  return "other";
+}
+
+// The heading a residence sits under in the picker.
+export function residenceGroup(residence: string): string {
+  switch (residenceKind(residence)) {
+    case "house":
+      return "Houses";
+    case "dorm":
+      return "First-year dorms";
+    default:
+      return "Somewhere else";
+  }
 }
 
 // Display label for a residence. The 12 upperclassman Houses read as "Adams
@@ -84,6 +131,12 @@ export const primaryActivities: ActivityOption[] = [
   { key: "other", label: "Other", icon: "plus" },
 ];
 
+/*
+  Experience level is asked ONLY of people whose main thing is the gym — a
+  runner is asked how long they've run instead (`runningExperience`), and
+  someone doing cardio isn't asked at all. "Advanced" means nothing on a
+  cross-trainer, and a wrong answer would feed matching.
+*/
 export type ExperienceLevel = { key: "beginner" | "intermediate" | "advanced"; name: string; desc: string };
 
 export const experienceLevels: ExperienceLevel[] = [
@@ -92,9 +145,52 @@ export const experienceLevels: ExperienceLevel[] = [
   { key: "advanced", name: "Advanced", desc: "3+ years, structured programming." },
 ];
 
-// Conditional sub-options (data-driven, editable).
+/*
+  Conditional sub-options (data-driven, editable).
+
+  GYM asks two things, in plain-English-first order:
+    1. "How do you train?" — `gymStyles`, what you're actually chasing. Anyone
+       can answer this, including someone who has never heard the word "split".
+    2. "Your split" — `gymSplits`, optional, for people who program properly.
+*/
+export const gymStyles: string[] = [
+  "Strength",
+  "Muscle building",
+  "General fitness",
+  "Powerlifting",
+  "CrossFit / functional",
+  "Sport-specific",
+];
+
 export const gymSplits: string[] = ["Push-Pull-Legs", "Upper-Lower", "Full body", "Bro split", "Custom"];
 export const cardioTypes: string[] = ["Cycling", "Rowing", "Swimming", "Elliptical", "Stair climber", "HIIT"];
+
+/*
+  RUNNING. Distance and pace are typed rather than picked, because "8 km at
+  4:40" is a real answer and no list of buttons contains it. The unit switch
+  only changes the EXAMPLES shown in the two fields — whatever is typed is
+  stored exactly as typed, plus the unit it was typed in (`runningUnit`), so a
+  mile-runner's "8:00" is never read as a kilometre pace.
+*/
+export type RunningUnit = "km" | "mi";
+
+export const runningUnits: { key: RunningUnit; label: string }[] = [
+  { key: "km", label: "Kilometres" },
+  { key: "mi", label: "Miles" },
+];
+
+export const runningHints: Record<RunningUnit, { distance: string; pace: string }> = {
+  km: { distance: "e.g. 8 km", pace: "e.g. 5:00 /km" },
+  mi: { distance: "e.g. 5 mi", pace: "e.g. 8:00 /mi" },
+};
+
+// The runner's answer to "experience level" — how long they've been at it.
+export const runningExperiences: string[] = [
+  "Just started",
+  "Under a year",
+  "1–3 years",
+  "3+ years",
+];
 
 // ---- Screen 4: Top gyms ------------------------------------------------------
 // The verified gym list comes straight from the gym data the app already uses.
@@ -195,6 +291,14 @@ export const concentrations: string[] = [
   "Undecided",
 ];
 
+/*
+  The language everybody here already shares. It is switched on for everyone and
+  can't be removed — you can't study at Harvard without it, so asking is noise,
+  and letting someone un-tick it would only put a wrong answer into matching.
+  White-label: a campus that teaches in another language changes THIS line.
+*/
+export const campusLanguage = "English";
+
 export const languageOptions: string[] = [
   "English",
   "Mandarin",
@@ -232,7 +336,13 @@ export const languageOptions: string[] = [
   "Other",
 ];
 
-// ~32 fixed interest pills (multi-select).
+/*
+  ~32 ready-made interest pills (multi-select) — plus anything people type
+  themselves. A typed interest is stored in the same `interests` list as the
+  ready-made ones; "is it one of ours?" is just "is it in this array?", so
+  matching, profiles and the leaderboards need to know nothing about it.
+*/
+export const MAX_INTEREST_LENGTH = 22;
 export const interestOptions: string[] = [
   "Business",
   "Startups",
@@ -269,6 +379,19 @@ export const interestOptions: string[] = [
 ];
 
 // ---- Screen 7: Preferences ---------------------------------------------------
+/*
+  TRAINING TYPE. Onboarding no longer asks this as three buttons — it asks one
+  question, "Do you prefer to train alone?", and stores the answer here:
+    ON  → "solo"   — you are left out of the Match tab entirely (db/matching.sql
+                     drops `solo` candidates). Everything else keeps working:
+                     you still browse Match yourself, and messages come and go
+                     as normal.
+    OFF → "either" — the normal, matchable state.
+  The three-way list stays because the Profile tab's preferences sheet still
+  offers it, and "partner" remains a valid stored value.
+*/
+export const TRAIN_ALONE_NOTE = "You won't appear on the Match tab. You can still browse it, and messages keep working.";
+
 export const trainingTypes: { key: "solo" | "partner" | "either"; label: string }[] = [
   { key: "solo", label: "Solo" },
   { key: "partner", label: "Partner" },
@@ -360,13 +483,23 @@ export type OnboardingProfile = {
   // Screen 2 — Where you live
   residence: string;
 
-  // Screen 3 — Primary activity + experience (matching inputs)
+  /*
+    Screen 3 — Primary activity + what that activity actually asks. Each sport
+    asks its OWN follow-ups, so only some of these are ever filled in:
+      gym     → experienceLevel, gymStyle, gymSplit (split optional)
+      running → runningUnit, runningDistance, runningPace, runningExperience
+      cardio  → cardioType
+      other   → activityOther
+  */
   primaryActivity: "" | "gym" | "running" | "cardio" | "other";
   activityOther: string;
   experienceLevel: "" | "beginner" | "intermediate" | "advanced";
+  gymStyle: string;
   gymSplit: string;
+  runningUnit: RunningUnit;
   runningDistance: string;
   runningPace: string;
+  runningExperience: string;
   cardioType: string;
 
   // Screen 4 — Top gyms (ranked, matching input)
@@ -402,17 +535,20 @@ export const emptyProfile: OnboardingProfile = {
   primaryActivity: "",
   activityOther: "",
   experienceLevel: "",
+  gymStyle: "",
   gymSplit: "",
+  runningUnit: "km",
   runningDistance: "",
   runningPace: "",
+  runningExperience: "",
   cardioType: "",
   topGyms: [],
   trainingSchedule: {},
   concentration: "",
   hometownCountry: "",
-  languages: [],
+  languages: [campusLanguage],
   interests: [],
-  trainingType: "",
+  trainingType: "either",
   partnerPreference: "",
   mentorFreshmen: false,
   beMentored: false,
@@ -421,3 +557,59 @@ export const emptyProfile: OnboardingProfile = {
   bio: "",
   photo: null,
 };
+
+/* ---- The half-finished answers ---------------------------------------------
+  Onboarding is nine screens long and used to live only in React state, so
+  anything that unmounted the flow — a refresh, a tab, the phone reclaiming the
+  page — threw every answer away and put you back on screen 1.
+
+  So the flow writes its progress here after every keystroke and reads it back
+  on the way in. It is a DRAFT, not the profile: the real save still happens
+  once, at the end, into the database (AppState.saveOnboarding). The draft is
+  stamped with the account it belongs to, so signing in as someone else on the
+  same phone never resumes a stranger's answers, and it is thrown away the
+  moment the flow is finished or replayed.
+*/
+const DRAFT_KEY = "unisport.onboarding.draft";
+
+type StoredDraft = { userId: string; step: number; profile: OnboardingProfile };
+
+export function readOnboardingDraft(
+  userId: string | null,
+): { step: number; profile: OnboardingProfile } | null {
+  if (!userId || typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(DRAFT_KEY);
+    if (!raw) return null;
+    const draft = JSON.parse(raw) as StoredDraft;
+    if (draft.userId !== userId) return null;
+    // Spread over the empty profile so a draft written before a field existed
+    // still loads, with the new field at its default rather than undefined.
+    return { step: draft.step, profile: { ...emptyProfile, ...draft.profile } };
+  } catch {
+    return null; // unreadable draft is not worth an error — just start fresh
+  }
+}
+
+export function writeOnboardingDraft(
+  userId: string | null,
+  step: number,
+  profile: OnboardingProfile,
+): void {
+  if (!userId || typeof window === "undefined") return;
+  try {
+    const draft: StoredDraft = { userId, step, profile };
+    window.localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+  } catch {
+    // A full or blocked localStorage must never break onboarding.
+  }
+}
+
+export function clearOnboardingDraft(): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.removeItem(DRAFT_KEY);
+  } catch {
+    // nothing to do
+  }
+}

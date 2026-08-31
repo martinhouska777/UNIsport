@@ -15,7 +15,7 @@ import {
 } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { createClient, hasSupabaseEnv } from "@/lib/supabase/client";
-import type { OnboardingProfile } from "@/lib/onboarding";
+import { clearOnboardingDraft, type OnboardingProfile } from "@/lib/onboarding";
 import { getUniversity } from "@/lib/themes";
 import { universityForEmail } from "@/lib/universityEmail";
 import { readDemoSchool, rollDemoSchool } from "@/lib/demoSchool";
@@ -306,6 +306,9 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         .update({ onboarding_completed: false })
         .eq("id", session.user.id);
     }
+    // Replaying onboarding means starting it over, so the half-finished answers
+    // the flow remembers must go too — otherwise it resumes on the last screen.
+    clearOnboardingDraft();
     setStudentReady(false);
   };
 
