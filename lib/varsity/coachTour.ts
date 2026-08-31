@@ -121,7 +121,7 @@ const steps: TourStep[] = [
     route: PLAN,
     anchor: "coach-plan-options",
     title: "Most days are one tap",
-    body: "The five sessions written most often at this intensity, ready to drop in. Tap one and the description fills itself. This is the difference between planning a week in two minutes and typing “3×25' UT2” for the ninetieth time.",
+    body: "The five sessions written most often at this intensity, ready to drop in — water in kilometres, erg in minutes. Tap one and the description fills itself. This is the difference between planning a week in two minutes and typing “60' UT2 erg” for the ninetieth time.",
   },
   {
     group: PLAN_DIVE,
