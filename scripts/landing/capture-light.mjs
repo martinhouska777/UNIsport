@@ -6,6 +6,13 @@
 //
 //   node capture-light.mjs               # → public/landing/        (light)
 //   node capture-light.mjs --mode dark   # → public/landing/dark/   (dark)
+//   node capture-light.mjs --only=match  # just that one frame, the rest untouched
+//
+// --only exists for the same reason recolor-shots.mjs has one: a frame here is
+// NOT the end of the line. 01-gyms is composited on afterwards by patch-gyms.mjs
+// and 02-match by patch-match.mjs, both against geometry MEASURED on the file
+// that is there now. Re-shooting a frame nobody asked about silently throws
+// that work away, so a run does exactly the frames it is asked for.
 //
 // The landing's light/dark switch (components/landing/PhoneMode.tsx) shows
 // the dark folder's twin of each light frame; until this has been run in
@@ -27,6 +34,15 @@ const BASE = "https://un-isport.vercel.app";
 const W = 402, PHONE_H = 661, DSF = 3;
 const OUT = MODE === "dark" ? "../../public/landing/dark/" : "../../public/landing/";
 fs.mkdirSync(OUT, { recursive: true });
+
+/*
+  Which frames this run is allowed to write. No --only = all of them, exactly
+  as before. Names are matched loosely ("match" finds "02-match") so the flag
+  reads the way the frame is talked about.
+*/
+const ONLY = (process.argv.find((a) => a.startsWith("--only=")) || "").slice(7);
+const wants = (name) => !ONLY || name.includes(ONLY);
+if (ONLY) console.log(`only: ${ONLY}`);
 
 const browser = await puppeteer.launch({
   executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe",
@@ -50,6 +66,7 @@ const phone = () => page.setViewport({ width: W, height: PHONE_H, deviceScaleFac
 const tall = (h) => page.setViewport({ width: W, height: h, deviceScaleFactor: DSF, isMobile: true, hasTouch: true });
 
 async function still(name) {
+  if (!wants(name)) return;
   await page.screenshot({ path: `cap-${name}.png` });
   await sharp(`cap-${name}.png`).resize({ width: 900 }).webp({ quality: 86 })
     .toFile(OUT + name + ".webp");
@@ -58,20 +75,27 @@ async function still(name) {
 
 /* ── student stills ─────────────────────────────────────────────────────── */
 await phone();
-await page.goto(BASE + "/gyms", { waitUntil: "networkidle2", timeout: 45000 });
-await wait(3500);
-await still("01-gyms");
+if (wants("01-gyms")) {
+  await page.goto(BASE + "/gyms", { waitUntil: "networkidle2", timeout: 45000 });
+  await wait(3500);
+  await still("01-gyms");
+}
 
-await page.goto(BASE + "/match", { waitUntil: "networkidle2", timeout: 45000 });
-await wait(3500);
-await still("02-match");
+if (wants("02-match")) {
+  await page.goto(BASE + "/match", { waitUntil: "networkidle2", timeout: 45000 });
+  await wait(3500);
+  await still("02-match");
+}
 
 // Ryan's profile — the person the whole thread follows.
-await page.goto(BASE + "/people/de11a014-0000-4000-8000-000000000014", { waitUntil: "networkidle2", timeout: 45000 });
-await wait(3000);
-await still("03-why-you-match");
+if (wants("03-why-you-match")) {
+  await page.goto(BASE + "/people/de11a014-0000-4000-8000-000000000014", { waitUntil: "networkidle2", timeout: 45000 });
+  await wait(3000);
+  await still("03-why-you-match");
+}
 
 // The chat, opened from the Messages list so the read state is realistic.
+if (wants("04-plan-a-session")) {
 await page.goto(BASE + "/messages", { waitUntil: "networkidle2", timeout: 45000 });
 await wait(3000);
 const thread = await page.evaluate(() => {
@@ -83,8 +107,10 @@ const thread = await page.evaluate(() => {
 if (!thread) throw new Error("no Ryan thread on the Messages list");
 await wait(2500);
 await still("04-plan-a-session");
+}
 
 /* ── the log sheet strip ────────────────────────────────────────────────── */
+if (wants("tall-logsheet")) {
 await page.goto(BASE + "/profile", { waitUntil: "networkidle2", timeout: 45000 });
 await wait(3200);
 const day = await page.evaluate(() => {
@@ -112,14 +138,17 @@ if (!edited) throw new Error("could not open the log sheet");
 await tall(2000);
 await wait(1600);
 await page.screenshot({ path: "cap-logsheet-tall.png" });
+}
 
 /* ── the profile strip, cut under the calendar ──────────────────────────── */
+let pm = { calendarBottom: null };
+if (wants("tall-profile")) {
 await phone();
 await page.goto(BASE + "/profile", { waitUntil: "networkidle2", timeout: 45000 });
 await wait(3200);
 await tall(2400);
 await wait(1800);
-const pm = await page.evaluate(() => {
+pm = await page.evaluate(() => {
   const all = [...document.querySelectorAll("body *")];
   const cal = all.find((el) => el.children.length === 0 &&
     el.textContent.trim().toLowerCase().startsWith(
@@ -130,40 +159,53 @@ const pm = await page.evaluate(() => {
 });
 console.log("calendar bottom:", pm.calendarBottom);
 await page.screenshot({ path: "cap-profile-tall.png" });
+}
 
 /* ── varsity ────────────────────────────────────────────────────────────── */
-await phone();
-await page.goto(BASE + "/varsity/home", { waitUntil: "networkidle2", timeout: 45000 });
-await wait(3500);
-await tall(2000);
-await wait(1800);
-await page.screenshot({ path: "cap-vhome-tall.png" });
-console.log("vhome tall captured");
+if (wants("tall-vhome")) {
+  await phone();
+  await page.goto(BASE + "/varsity/home", { waitUntil: "networkidle2", timeout: 45000 });
+  await wait(3500);
+  await tall(2000);
+  await wait(1800);
+  await page.screenshot({ path: "cap-vhome-tall.png" });
+  console.log("vhome tall captured");
+}
 
-await phone();
-await page.goto(BASE + "/varsity/log", { waitUntil: "networkidle2", timeout: 45000 });
-await wait(3200);
-await still("13-varsity-log-list");
+if (wants("13-varsity-log-list")) {
+  await phone();
+  await page.goto(BASE + "/varsity/log", { waitUntil: "networkidle2", timeout: 45000 });
+  await wait(3200);
+  await still("13-varsity-log-list");
+}
 
-await page.goto(BASE + "/varsity/profile", { waitUntil: "networkidle2", timeout: 45000 });
-await wait(3200);
-await tall(2200);
-await wait(1800);
-await page.screenshot({ path: "cap-vprofile-tall.png" });
-console.log("vprofile tall captured");
+if (wants("tall-vprofile")) {
+  await phone();
+  await page.goto(BASE + "/varsity/profile", { waitUntil: "networkidle2", timeout: 45000 });
+  await wait(3200);
+  await tall(2200);
+  await wait(1800);
+  await page.screenshot({ path: "cap-vprofile-tall.png" });
+  console.log("vprofile tall captured");
+}
 
 await browser.close();
 
 /* ── strips → frames ────────────────────────────────────────────────────── */
 // A light page's "blank" is white, and make-frames detects blankness by
 // variance, not shade, so the same cut works unchanged.
-execSync(`node make-frames.mjs cap-logsheet-tall.png ${OUT}tall-logsheet.webp`, { stdio: "inherit" });
-execSync(`node make-frames.mjs cap-vhome-tall.png ${OUT}tall-vhome.webp`, { stdio: "inherit" });
-execSync(`node make-frames.mjs cap-vprofile-tall.png ${OUT}tall-vprofile.webp`, { stdio: "inherit" });
+if (wants("tall-logsheet"))
+  execSync(`node make-frames.mjs cap-logsheet-tall.png ${OUT}tall-logsheet.webp`, { stdio: "inherit" });
+if (wants("tall-vhome"))
+  execSync(`node make-frames.mjs cap-vhome-tall.png ${OUT}tall-vhome.webp`, { stdio: "inherit" });
+if (wants("tall-vprofile"))
+  execSync(`node make-frames.mjs cap-vprofile-tall.png ${OUT}tall-vprofile.webp`, { stdio: "inherit" });
 
-const resized = await sharp("cap-profile-tall.png").resize({ width: 900 }).png().toBuffer();
-const meta = await sharp(resized).metadata();
-const cutAt = Math.min(meta.height, Math.round((pm.calendarBottom + 10) * (900 / W)));
-await sharp(resized).extract({ left: 0, top: 0, width: 900, height: cutAt })
-  .webp({ quality: 86 }).toFile(OUT + "tall-profile.webp");
-console.log(`tall-profile.webp  900x${cutAt}`);
+if (wants("tall-profile")) {
+  const resized = await sharp("cap-profile-tall.png").resize({ width: 900 }).png().toBuffer();
+  const meta = await sharp(resized).metadata();
+  const cutAt = Math.min(meta.height, Math.round((pm.calendarBottom + 10) * (900 / W)));
+  await sharp(resized).extract({ left: 0, top: 0, width: 900, height: cutAt })
+    .webp({ quality: 86 }).toFile(OUT + "tall-profile.webp");
+  console.log(`tall-profile.webp  900x${cutAt}`);
+}
