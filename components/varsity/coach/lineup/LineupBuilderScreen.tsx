@@ -29,7 +29,9 @@
   anything unsaved on the way out, so a week of outings is seated in one run.
 
   The POOL is filtered four ways and grouped none: All, Port, Starboard, Cox,
-  with the both-sides rowers appearing under both Port and Starboard.
+  with the both-sides rowers appearing under both Port and Starboard. The
+  UNAVAILABLE list underneath answers the same filter, and each name there
+  carries its side as well as the reason it is out.
 
   NOTE: the roster is still demo data (no real athlete accounts yet), so athletes
   see the published boats but not a personalised "your seat" highlight — that
@@ -539,10 +541,17 @@ function Seat({
 /* ─────────────────────────  pool chip  ───────────────────────── */
 function PoolChip({ a, onDragStart }: { a: Athlete; onDragStart: () => void }) {
   if (a.out) {
+    /*
+      Two facts, in the order a coach needs them: WHICH SIDE this person is
+      (or that they cox), then WHY they are out. The side was missing here,
+      so an unavailable rower was a name with no rig — and a coach reading
+      the list to see what the injury costs them had to remember it.
+    */
     return (
       <div className="flex select-none items-center gap-2 rounded-xl border border-danger-line bg-danger-tint px-2 py-1.5 opacity-50">
         <Avatar initials={a.initials} className="border-danger-line bg-danger-tint text-danger" />
         <span className="text-[12px] font-semibold text-muted">{a.name}</span>
+        <AthleteTag a={a} />
         <span className="rounded bg-danger-tint px-1.5 py-px text-[10px] font-bold uppercase tracking-[0.05em] text-danger">
           {outMeta[a.out]}
         </span>
@@ -684,6 +693,12 @@ function Builder({
   // Injured or ill: never seatable, and shown as one list rather than dimmed
   // in among the training groups.
   const unavailable = useMemo(() => roster.filter((a) => a.out), []);
+  // The same list under the filter the pool is showing — an out rower is no
+  // more relevant to the cox seat than an available one.
+  const unavailableHere = useMemo(
+    () => unavailable.filter((a) => inPool(a, poolFilter)),
+    [unavailable, poolFilter],
+  );
   const matches = useMemo(() => {
     // A cox seat only offers coxes and a rowing seat never does — the one hard
     // rule left in a seat, because a cox does not row. Which SIDE a rower pulls
@@ -1182,17 +1197,20 @@ function Builder({
 
                 {/*
                   UNAVAILABLE — the question a coach asks before any of the
-                  others: who can't I pick today. Kept out of the side filter
-                  on purpose; "who is hurt" is not a stroke-side question.
+                  others: who can't I pick today. It answers the SAME filter as
+                  the pool above it, because "who can't I pick" is only ever
+                  asked about the seat being filled: on Cox it is the coxswains
+                  who are out, and nobody wants four injured rowers listed
+                  under it.
                 */}
-                {unavailable.length > 0 && (
+                {unavailableHere.length > 0 && (
                   <div>
                     <div className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-danger">
                       Unavailable
                       <span className="h-px flex-1 bg-danger-line" />
                     </div>
                     <div className="flex flex-wrap gap-1.5">
-                      {unavailable.map((a) => (
+                      {unavailableHere.map((a) => (
                         <PoolChip key={a.id} a={a} onDragStart={() => setDropKey(null)} />
                       ))}
                     </div>
