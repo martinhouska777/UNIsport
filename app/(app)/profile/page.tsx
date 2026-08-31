@@ -6,6 +6,7 @@ import { SkeletonLines, SkeletonRows } from "@/components/ui/Skeleton";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import UniversityCrest from "@/components/UniversityCrest";
+import { useAppState } from "@/components/AppState";
 import ModeSwitcherSheet from "@/components/ModeSwitcherSheet";
 import useTapOrDoubleTap from "@/components/useTapOrDoubleTap";
 import { useMembership } from "@/components/varsity/useMembership";
@@ -86,6 +87,9 @@ export default function ProfilePage() {
   const [switchingMode, setSwitchingMode] = useState(false); // mode switcher sheet
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+  const { resetOnboarding } = useAppState();
+  // Two taps, because finishing a replay OVERWRITES the answers on this page.
+  const [replayArmed, setReplayArmed] = useState(false);
 
   /*
     Only an APPROVED member sees any varsity mark on this page — not someone
@@ -577,6 +581,58 @@ export default function ProfilePage() {
 
       {/* Varsity Mode isn't a row down here any more — it's the switcher on the
           name in the top bar (tap = sheet, double-tap = straight in). */}
+
+      {/*
+        REPLAY ONBOARDING — the last thing on the page, under everything it
+        would rewrite.
+
+        The same button exists in Settings, but only when NODE_ENV isn't
+        production, which means it is invisible on the deployed app — the one
+        place the owner actually reviews from. This one is always here.
+
+        It arms first, because it is not a preview: reaching the end of the
+        flow writes a fresh profile over the one above, and the questions start
+        blank rather than pre-filled with these answers.
+      */}
+      <div className="px-3.5 pb-4 pt-6">
+        {replayArmed ? (
+          <div className="rounded-xl border border-border bg-surface-2 p-3.5">
+            <div className="text-[13px] font-medium text-text">Start onboarding again?</div>
+            <p className="mt-0.5 text-[11px] leading-relaxed text-muted">
+              You&apos;ll answer all nine screens from scratch. Whatever you finish with
+              replaces the profile on this page.
+            </p>
+            <div className="mt-3 flex gap-2">
+              <Button
+                variant="secondary"
+                size="lg"
+                className="flex-1"
+                onClick={() => setReplayArmed(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                size="lg"
+                className="flex-1"
+                onClick={async () => {
+                  await resetOnboarding();
+                  router.replace("/onboarding");
+                }}
+              >
+                Start over
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setReplayArmed(true)}
+            className="w-full rounded-full border border-border bg-surface-2 px-5 py-2.5 text-sm font-medium text-text"
+          >
+            Replay onboarding
+          </button>
+        )}
+      </div>
 
       {/* Bottom action bar (sticks above the tab nav) */}
       <div className="sticky bottom-0 z-20 flex gap-2.5 border-t border-border bg-surface px-3.5 py-3">
