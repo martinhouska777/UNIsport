@@ -590,20 +590,20 @@ function SeatRow({
 }
 
 function LineupBoat({ l }: { l: Lineup }) {
-  // Builder stores seats bow→stroke; show cox + stroke at the top, bow at the bottom.
-  // The numbers are the coach's own — 8 down to 1 — so they read the same here
-  // as they do in the boat the coach built. Cox gets the word: there is room.
-  const rowing = [...l.seats].reverse();
+  // Bow at the top, down to the stroke, cox last — the order the coach's own
+  // builder shows and the order their lineup sheet is written in. An athlete
+  // finding their name here and again on the sheet at the boathouse should not
+  // have to read one of them upside down. Cox gets the word: there is room.
   return (
     <div className="overflow-hidden rounded-xl border border-border bg-surface">
       <div className="border-b border-border px-3 py-2.5 text-[12px] font-semibold text-text">
         {l.period}
       </div>
       <div className="flex flex-col gap-1.5 p-3">
-        {l.cox && <SeatRow label="Cox" name={l.cox.name} mine={l.cox.mine} cox />}
-        {rowing.map((s) => (
+        {l.seats.map((s) => (
           <SeatRow key={s.num} label={s.num} name={s.name} mine={s.mine} />
         ))}
+        {l.cox && <SeatRow label="Cox" name={l.cox.name} mine={l.cox.mine} cox />}
       </div>
       {/* Which oars to take off the rack, when the coach named a set. */}
       {l.oars && (
@@ -621,7 +621,7 @@ function LineupCard({ lineups }: { lineups: Lineup[] }) {
     <div>
       <div className="mb-2 flex items-center justify-between px-1">
         <SectionLabel>Your Lineup</SectionLabel>
-        <span className="text-[11px] text-muted">Stroke at top · bow at bottom</span>
+        <span className="text-[11px] text-muted">Bow at top · cox last</span>
       </div>
       <div className="flex flex-col gap-3">
         {lineups.map((l, i) => (

@@ -14,9 +14,13 @@
   Lineups persist per practice (day_key) via lib/varsity/lineupStore.ts. Colors
   are theme tokens; rowing-side colors are content colors (rule-1 exception).
 
-  A SEAT IS A NUMBER. 8 at the stroke down to 1 at the bow, with the cox above
-  the 8 marked "C" (the word COX did not survive a 20px badge; it is still the
-  word everywhere there is room to read it). Seats carry no side and no colour
+  A SEAT IS A NUMBER, and the boat reads TOP-DOWN IN THE ORDER THE COACH ALREADY
+  WRITES IT: 1 at the bow down to 8 at the stroke, cox last, marked "C" (the word
+  COX did not survive a 20px badge; it is still the word everywhere there is room
+  to read it). Then the boat, then the oars — the column order of the squad's own
+  lineup sheet, so a crew can be copied across without reading it backwards.
+
+  Seats carry no side and no colour
   of their own, and nothing is ever flagged "off side" — how the boat is rigged
   is the coach's business, not the app's. The only rule left in a seat is that a
   cox does not row and a rower does not cox.
@@ -54,7 +58,7 @@ import {
   type BoatType,
   type PoolFilter,
 } from "@/lib/varsity/coachLineup";
-import { categoryMeta, isOnWater, sessionKey, sessionLabel } from "@/lib/varsity/coachPlan";
+import { isOnWater, sessionColor, sessionKey, sessionLabel } from "@/lib/varsity/coachPlan";
 import { fetchPlan, type Plan } from "@/lib/varsity/planStore";
 import {
   fetchLineup,
@@ -203,9 +207,6 @@ function AthleteTag({ a }: { a: Athlete }) {
   usual one to build — but that is a NOTICE, never a lock (the owner's rule):
   the builder says so at the top and the coach carries on if they mean to.
   Non-water slots are simply drawn quieter, so the water ones stand out.
-
-  The category dot is a CONTENT colour out of categoryMeta (rule-1 exception),
-  applied inline, exactly as the plan builder paints it.
 */
 function PracticeBody({ practice }: { practice: Practice & { plan: PlanCell } }) {
   const s = practiceStatusMeta[practice.status];
@@ -222,15 +223,9 @@ function PracticeBody({ practice }: { practice: Practice & { plan: PlanCell } })
       {plan ? (
         <span className="flex w-full min-w-0 flex-col items-center gap-0.5">
           <span
-            className={`flex max-w-full items-center gap-1.5 text-[11px] font-medium ${
-              water ? "text-text" : "text-muted"
-            }`}
+            className={`max-w-full truncate text-[11px] font-medium ${water ? "text-text" : "text-muted"}`}
           >
-            <span
-              className="h-1.5 w-1.5 flex-shrink-0 rounded-full"
-              style={{ background: plan.color, opacity: water ? 1 : 0.5 }}
-            />
-            <span className="truncate">{plan.label}</span>
+            {plan.label}
           </span>
           {plan.description && (
             <span className="w-full truncate text-[10px] leading-snug text-muted">
@@ -250,6 +245,21 @@ function PracticeBody({ practice }: { practice: Practice & { plan: PlanCell } })
   );
 }
 
+/*
+  THE WHOLE CELL IS THE SESSION'S COLOUR. It used to be a 1.5px dot beside the
+  label, which is nothing to glance at — and the coach's own spreadsheet paints
+  the entire square, so a week is read as a pattern before a word of it is.
+  Same colour source as the plan grid (intensity when there is one), so green /
+  yellow / red mean here exactly what they mean there.
+
+  Water sessions are painted at full strength and everything else at less than
+  half, which keeps the old signal — a lineup seats a boat, so the water slots
+  are the ones being looked for — without taking their colour away entirely.
+
+  color-mix over `transparent` rather than a hex + "22" suffix: these colours
+  are theme tokens as often as hex (var(--success)), and a suffix silently
+  produces nothing at all for those. Content colour, applied inline (rule 1).
+*/
 function PracticeButton({
   practice,
   onPick,
@@ -260,12 +270,17 @@ function PracticeButton({
   /** data-tour, so the console tour can press one (lib/varsity/coachTour.ts). */
   tour?: string;
 }) {
+  const plan = practice.plan;
+  const wash = plan
+    ? { background: `color-mix(in oklab, ${plan.color} ${plan.water ? 30 : 12}%, transparent)` }
+    : undefined;
   return (
     <button
       type="button"
       onClick={onPick}
       data-tour={tour}
-      className="flex min-w-0 flex-1 flex-col items-center gap-1.5 border-r border-border px-2.5 py-3 last:border-r-0 active:bg-surface-2"
+      style={wash}
+      className="flex min-w-0 flex-1 flex-col items-center gap-1.5 border-r border-border px-2.5 py-3 last:border-r-0 active:brightness-95"
     >
       <PracticeBody practice={practice} />
     </button>
@@ -768,20 +783,16 @@ function Builder({
                 const filled = boat.seats.filter((s) => s.athleteId).length;
                 return (
                   <div key={boat.id} className="overflow-hidden rounded-2xl border border-border bg-surface">
-                    {/* header */}
+                    {/* header — the rigging and the push-off time. The boat's
+                        NAME is not here: it sits under the crew, where the
+                        coach's own lineup sheet puts it (see below). */}
                     <div className="flex items-center justify-between gap-2 border-b border-border px-3.5 py-3">
                       <div className="flex min-w-0 flex-1 items-center gap-2">
                         <span className="flex-shrink-0 rounded-md border border-primary-line bg-primary-tint px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-primary">
                           {boat.badge}
                         </span>
-                        <input
-                          value={boat.name}
-                          onChange={(e) => setName(boat.id, e.target.value)}
-                          aria-label="Boat name"
-                          className="min-w-0 flex-1 bg-transparent text-[14px] font-semibold text-text outline-none focus:border-b focus:border-primary"
-                        />
-                        <span className="flex-shrink-0 text-muted">
-                          <IconPencil size={12} />
+                        <span className="min-w-0 flex-1 truncate text-[14px] font-semibold text-text">
+                          {boat.name}
                         </span>
                       </div>
                       {/*
@@ -811,36 +822,71 @@ function Builder({
                       </div>
                     </div>
 
-                    {/* hull — cox above the 8, then 8 down to 1 at the bow */}
+                    {/*
+                      NOTE FIRST. It is the one line that applies to the whole
+                      crew ("meet at 6:45", "taking the trailer"), so it reads
+                      before the names rather than after nine rows of them.
+                    */}
+                    <div className="flex items-center gap-2 border-b border-border px-3.5 py-2.5 text-muted">
+                      <IconClipboard size={14} />
+                      <input
+                        value={boat.note}
+                        onChange={(e) => setNote(boat.id, e.target.value)}
+                        aria-label="Note"
+                        placeholder="Note — anything else the crew needs…"
+                        className="flex-1 bg-transparent text-[12px] text-text outline-none placeholder:italic placeholder:text-text-3"
+                      />
+                    </div>
+
+                    {/*
+                      THE CREW, IN THE ORDER THE COACH ALREADY WRITES IT: bow at
+                      the top, down through the stroke, cox last — then the boat,
+                      then the oars. That is the column order of the squad's own
+                      lineup sheet, and a coach copying a crew across from it
+                      should never have to read one list bottom-up against the
+                      other.
+                    */}
                     <div className="px-3 py-4">
-                      {boat.hasCox && (
-                        <div className="mb-2">
-                          {renderSeat({ boatId: boat.id, kind: "cox" }, COX_TAG, boat.coxId, true)}
-                        </div>
-                      )}
-                      <div className="relative rounded-[0.75rem_0.75rem_2.5rem_2.5rem] border border-border bg-gradient-to-b from-surface-2 to-background px-3.5 pb-7 pt-7">
+                      <div className="relative rounded-[2.5rem_2.5rem_0.75rem_0.75rem] border border-border bg-gradient-to-b from-background to-surface-2 px-3.5 pb-7 pt-7">
                         <div className="absolute left-1/2 top-2 -translate-x-1/2 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-                          Stroke ▲
+                          Bow ▲
                         </div>
                         {/* The number comes from the seat's POSITION, not from
                             what an older saved lineup happens to have stored in
                             `label` — so a lineup built before the numbering
-                            changed still reads 8…1 today. */}
+                            changed still reads 1…8 today. */}
                         <div className="flex flex-col gap-1.5">
-                          {boat.seats
-                            .map((s, i) =>
-                              renderSeat(
-                                { boatId: boat.id, kind: "seat", idx: i },
-                                seatLabel(i),
-                                s.athleteId,
-                              ),
-                            )
-                            .reverse()}
+                          {boat.seats.map((s, i) =>
+                            renderSeat(
+                              { boatId: boat.id, kind: "seat", idx: i },
+                              seatLabel(i),
+                              s.athleteId,
+                            ),
+                          )}
                         </div>
                         <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-                          Bow ▼
+                          Stroke ▼
                         </div>
                       </div>
+                      {boat.hasCox && (
+                        <div className="mt-2">
+                          {renderSeat({ boatId: boat.id, kind: "cox" }, COX_TAG, boat.coxId, true)}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* BOAT — which shell this crew takes out. Named here and
+                        echoed read-only in the card header above, so a boat is
+                        still identifiable while scrolling past its crew. */}
+                    <div className="flex items-center gap-2 border-t border-border px-3.5 py-2.5 text-muted">
+                      <IconPencil size={13} />
+                      <input
+                        value={boat.name}
+                        onChange={(e) => setName(boat.id, e.target.value)}
+                        aria-label="Boat name"
+                        placeholder="Boat — which shell…"
+                        className="flex-1 bg-transparent text-[12px] font-semibold text-text outline-none placeholder:font-normal placeholder:italic placeholder:text-text-3"
+                      />
                     </div>
 
                     {/*
@@ -861,18 +907,6 @@ function Builder({
                         onChange={(e) => setOars(boat.id, e.target.value)}
                         aria-label="Oars"
                         placeholder="Oars — which set to take…"
-                        className="flex-1 bg-transparent text-[12px] text-text outline-none placeholder:italic placeholder:text-text-3"
-                      />
-                    </div>
-
-                    {/* note — anything else the crew needs to know */}
-                    <div className="flex items-center gap-2 border-t border-border px-3.5 py-2.5 text-muted">
-                      <IconClipboard size={14} />
-                      <input
-                        value={boat.note}
-                        onChange={(e) => setNote(boat.id, e.target.value)}
-                        aria-label="Note"
-                        placeholder="Note — anything else the crew needs…"
                         className="flex-1 bg-transparent text-[12px] text-text outline-none placeholder:italic placeholder:text-text-3"
                       />
                     </div>
@@ -1097,7 +1131,9 @@ export default function LineupBuilderScreen() {
       return {
         label: sessionLabel(sess),
         description: sess.description.trim(),
-        color: categoryMeta[sess.category].color,
+        // The INTENSITY's colour when the session has one, exactly as the plan
+        // grid paints it — so a UT2 outing is the same green in both screens.
+        color: sessionColor(sess),
         water: isOnWater(sess),
       };
     },
