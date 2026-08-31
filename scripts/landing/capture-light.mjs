@@ -37,11 +37,14 @@ fs.mkdirSync(OUT, { recursive: true });
 
 /*
   Which frames this run is allowed to write. No --only = all of them, exactly
-  as before. Names are matched loosely ("match" finds "02-match") so the flag
-  reads the way the frame is talked about.
+  as before. The name may be given with or without its number, so --only=match
+  and --only=02-match are the same run — but it is an EXACT name either way.
+  Substring matching was tried first and was wrong: "match" also selected
+  03-why-you-match, and re-shot a frame nobody had asked about.
 */
 const ONLY = (process.argv.find((a) => a.startsWith("--only=")) || "").slice(7);
-const wants = (name) => !ONLY || name.includes(ONLY);
+const bare = (name) => name.replace(/^\d+-/, "");
+const wants = (name) => !ONLY || name === ONLY || bare(name) === ONLY;
 if (ONLY) console.log(`only: ${ONLY}`);
 
 const browser = await puppeteer.launch({
@@ -62,6 +65,34 @@ await page.evaluateOnNewDocument((mode) => {
   try { window.localStorage.setItem("uniThemeMode", mode); } catch {}
 }, MODE);
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+
+/*
+  THE FIRST-RUN TOUR HAS TO GO FIRST.
+
+  A capture browser is a brand-new profile every time, so to the app this is
+  always somebody's first visit and TourGate opens the 17-step walk over
+  whatever loads — it dims the screen and holds it on the Gyms tab, so a run
+  that navigates straight to /match photographs the tour on the wrong screen.
+  That is exactly what 02-match came back as the first time.
+
+  "Have they seen it?" is localStorage only (lib/tour.ts, `${tour.id}TourSeen:
+  ${userId}`) and the id is not known until the app has booted, so this presses
+  the walk's own Skip — which writes that flag itself and settles it for the
+  rest of the run. Nothing on the account changes; the profile is thrown away.
+*/
+async function dismissTour() {
+  await page.goto(BASE + "/gyms", { waitUntil: "networkidle2", timeout: 45000 });
+  await wait(4000);
+  const skipped = await page.evaluate(() => {
+    const el = [...document.querySelectorAll("button")].find(
+      (b) => /^(skip|close)$/i.test(b.textContent.trim()),
+    );
+    if (el) { el.click(); return el.textContent.trim(); }
+    return null;
+  });
+  console.log(skipped ? `tour dismissed (${skipped})` : "no tour");
+  await wait(1500);
+}
 const phone = () => page.setViewport({ width: W, height: PHONE_H, deviceScaleFactor: DSF, isMobile: true, hasTouch: true });
 const tall = (h) => page.setViewport({ width: W, height: h, deviceScaleFactor: DSF, isMobile: true, hasTouch: true });
 
@@ -75,6 +106,8 @@ async function still(name) {
 
 /* ── student stills ─────────────────────────────────────────────────────── */
 await phone();
+await dismissTour();
+
 if (wants("01-gyms")) {
   await page.goto(BASE + "/gyms", { waitUntil: "networkidle2", timeout: 45000 });
   await wait(3500);
