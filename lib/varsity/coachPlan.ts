@@ -68,47 +68,43 @@ export const intensityMeta: Record<Intensity, { label: string; color: string }> 
 };
 
 /* ── The 5 most-used workouts to suggest (tap to fill the description) ──────
-   WATER AND ERG GET THEIR OWN LISTS. They used to share one, which meant a
-   coach writing a morning outing was offered erg workouts — "8×500m, 1:30
-   rest" is not something a crew does on the river. So these follow how a real
-   squad writes them: water in KILOMETRES and rate work by boat, erg in minutes
-   and named pieces. (Taken from the HUBC 25/26 fall + winter plans the owner
-   handed over.) Each is only a tap-to-fill starting point — the coach can type
-   anything, and does. */
+   WATER GETS ITS OWN LIST. Water and erg used to share one, and that one was
+   erg workouts — a coach writing a morning outing was offered "8×500m, 1:30
+   rest", which is not something a crew does on the river. The erg list is
+   unchanged; only water is new, taken from the HUBC 25/26 fall plan.
+
+   Which intensity a piece sits under follows the COLOUR the coach's own
+   spreadsheet gives it, because that sheet already codes exactly our three:
+   green steady, yellow/orange rate work, red flat out. So the rate pieces
+   (3×5' @ 28, 3×10' @ 26) are UT1 — orange on the sheet — and red keeps what
+   is actually raced: at-pace miles, trials, the full pull.
+
+   Everything here RECURS. One-offs the season happened to contain once — the
+   HOC course, "row the course, some bursts" — are not "most used" and would
+   only push a weekly session off the list. The coach can still type anything. */
 const waterSuggestions: Record<Intensity, string[]> = {
   // A steady outing is a distance: the whole squad's week is 12/14/16/18k.
   UT2: ["12k UT2", "14k UT2", "16k UT2", "18k UT2", "14–16k UT2 small boats"],
-  UT1: [
-    "2×20' UT1 (60' total rowing)",
-    "2× HOC course",
-    "16k UT2, 2×2 miles at pace",
-    "18k, some race-pace work by boat",
-    "Row the course, some bursts",
-  ],
-  // On the water a hard piece is written as a rate, not a split.
+  // Rate work. On the water a piece is written as a rate, never as a split.
+  UT1: ["3×5' @ 28", "3×5' @ 30", "3×10' @ 26", "3×12' @ 28", "2×2k open rate, small boats"],
+  // Red on the sheet: raced, tested, or flat out.
   hard: [
-    "3×5' @ 28",
-    "3×10' @ 26",
-    "3×12' @ 28",
     "2×2 miles at race pace",
-    "2×2k open rate, small boats",
+    "3×1 mile at pace",
+    "2 miles @ 32, 1 mile @ 34",
+    "4 mile or 2 mile trial",
+    "Full pull",
   ],
 };
 const ergSuggestions: Record<Intensity, string[]> = {
-  UT2: ["30' UT2 erg", "45' UT2 erg", "60' UT2 erg", "75' UT2 erg", "30' UT2 cooldown"],
-  UT1: [
-    "2×6k UT1 erg",
-    "2×25' UT1 erg",
-    "3×17' UT1 erg",
-    "3×20' UT1 erg",
-    "2×4k w/ 3' rest at pace",
-  ],
+  UT2: ["3×25' UT2", "70' steady state", "4×20' UT2", "2×30' UT2", "90' UT2 row"],
+  UT1: ["3×15' UT1, RP3s", "4×12' UT1", "2×20' UT1", "3×17' UT1", "6×8' UT1"],
   hard: [
-    "5×5' @ 26, 4' rest",
-    "4×6' /2' rest, r26",
-    "3×8' @ 26, 4' rest",
-    "2×(6×90\" on, 45\" off), 24-26-28",
-    "5k r26",
+    "3×5' (1:50 at 72, 2k+2)",
+    "8×500m, 1:30 rest",
+    "2k test",
+    "4×5' rate ladder",
+    "6×750m race pace",
   ],
 };
 // Flex is just a length choice; weights & off have no quick options.
