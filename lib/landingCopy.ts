@@ -159,52 +159,43 @@ export const brandLine = "Never train alone again.";
   with the three doors deleted — "it just refreshes the page". And on "/" the
   student story began cold, on a phone screenshot labelled 01, while the
   varsity story got a whole screen of ceremony first (see `interlude`). The
-  app's main audience had the coldest opening on the page.
+  app's main audience had the coldest opening on the page. So it got a card.
 
-  So the student story gets its own statement, the way varsity and the coach
-  console already have one. It is deliberately a TITLE CARD, not a reveal:
-  "Varsity Mode." works because it is a surprise, and the student app is the
-  thing the visitor came for. On "/" it is one short band between the intro
-  and the story; on /for/students it opens the page and carries the way in.
+  STRIPPED TO TWO LINES, 2026-09-01, the owner's call, in two steps.
 
-  The sub-line says what is about to happen — phone screens, in the order you
-  would use them — so the first screenshot is introduced rather than sprung.
+  First the NAME went. "The student app." read as a separate product for
+  students — "i dont want to distinguish students and varsity people, the
+  varsity mode is just for the athletes". It is one app; Varsity Mode is a
+  mode on top of it. So the card stopped naming a product and started making
+  a promise: the owner asked for "never train alone again ze shora" — the
+  line that used to sit unread at S7, lifted to where it is met first.
+
+  Then everything else went with it: the lead-in, the descriptive line, the
+  seven numbered steps, the link to the overview, and the small "Scroll" cue
+  ("cutneme to ostatni"). What is left is the quote and one instruction. The
+  card announces the walk; it no longer summarises it.
+
+  NOTE, still open: S7 also ends on "Never train alone again." Until that is
+  decided the page says it twice — see the beat's comment.
 */
 /*
-  ONE STEP ON A TITLE CARD — the number the reader will see on the beat, one
-  word for it, and one of the line icons in components/landing/FeatureIcon.tsx.
+  ONE STEP ON THE VARSITY TITLE CARD — the number the reader will see on the
+  beat, one word for it, and one of the line icons in
+  components/landing/FeatureIcon.tsx.
 
-  These MIRROR the beats below (S1…S7 / V1…V6) and have to be changed with
-  them. They are written out rather than parsed off the beats' kickers so the
-  card's words stay reviewable here, in one place, like the rest of the page.
+  These MIRROR the beats below (V1…V6) and have to be changed with them; only
+  the varsity interlude carries them now. They are written out rather than
+  parsed off the beats' kickers so the card's words stay reviewable here, in
+  one place, like the rest of the page.
 */
 export type OpeningStep = { n: string; icon: string; word: string };
 
 export const studentIntro = {
-  /* On "/" it follows the intro and is answered later by the interlude's
-     "And if you train for the university itself —", so the two read as a
-     sequence. On /for/students nothing comes before it. */
-  leadIn: "First, for every student —",
-  leadInSolo: "For every student —",
-  headline: "The student",
-  headlineEm: "app.",
-  /* Short on purpose: the seven steps under it now say what the walk covers,
-     so the line only has to say that it IS a walk (owner, 2026-08-30:
-     "napsat scroll through the whole app, neco takoveho"). */
-  sub: "Scroll through the whole app, one screen at a time.",
-  steps: [
-    { n: "01", icon: "gym", word: "Gyms" },
-    { n: "02", icon: "partners", word: "People" },
-    { n: "03", icon: "verified", word: "Reasons" },
-    { n: "04", icon: "chat", word: "Plan" },
-    { n: "05", icon: "log", word: "Log" },
-    { n: "06", icon: "calendar", word: "Record" },
-    { n: "07", icon: "leaderboard", word: "Proof" },
-  ] as OpeningStep[],
-  /* The way past the story for someone who wants the list rather than the
-     walk (owner, 2026-08-30). It points AT the feature block beside Campus
-     Colours rather than repeating it here — the overview exists once. */
-  overview: { label: "Or see everything it does", href: "#campus-colours" },
+  /* Two lines and nothing else. The quote is the headline — it is the best
+     sentence on the page and it used to be seven screens down. */
+  headline: "Never train",
+  headlineEm: "alone again.",
+  sub: "Scroll down to explore the app.",
 };
 
 /* ───────────────────── S1–S7 · THE STUDENT STORY ───────────────────── */
