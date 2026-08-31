@@ -20,10 +20,13 @@
   to read it). Then the boat, then the oars — the column order of the squad's own
   lineup sheet, so a crew can be copied across without reading it backwards.
 
-  Seats carry no side and no colour
-  of their own, and nothing is ever flagged "off side" — how the boat is rigged
-  is the coach's business, not the app's. The only rule left in a seat is that a
-  cox does not row and a rower does not cox.
+  Seats carry no side and no colour of their own, and nothing is ever flagged
+  "off side" — how the boat is rigged is the coach's business, not the app's.
+  The only rule left in a seat is that a cox does not row and a rower does not
+  cox.
+
+  The builder's ‹ › arrows step to the next WATER session in the plan, saving
+  anything unsaved on the way out, so a week of outings is seated in one run.
 
   The POOL is filtered three ways and grouped none: All, Port, Starboard, with
   the both-sides rowers appearing under every filter.
@@ -32,7 +35,7 @@
   see the published boats but not a personalised "your seat" highlight — that
   needs real team membership (a later slice).
 */
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Button, { buttonClass } from "@/components/ui/Button";
 import {
   practiceStatusMeta,
@@ -58,7 +61,15 @@ import {
   type BoatType,
   type PoolFilter,
 } from "@/lib/varsity/coachLineup";
-import { isOnWater, sessionColor, sessionKey, sessionLabel } from "@/lib/varsity/coachPlan";
+import {
+  dayKeyLabel,
+  isOnWater,
+  parseSessionKey,
+  sessionColor,
+  sessionKey,
+  sessionLabel,
+  type Period,
+} from "@/lib/varsity/coachPlan";
 import { fetchPlan, type Plan } from "@/lib/varsity/planStore";
 import {
   fetchLineup,
@@ -68,6 +79,7 @@ import {
 } from "@/lib/varsity/lineupStore";
 import {
   IconArrowLeft,
+  IconChevronLeft,
   IconChevronRight,
   IconClock,
   IconAnchor,
@@ -107,7 +119,7 @@ type PickDay = {
 };
 
 // What the prescribed-session card shows (from the published plan, if any).
-type PlanContext = { title: string; sub: string; water: boolean } | null;
+type PlanContext = { title: string; sub: string; color: string; water: boolean } | null;
 
 /* ─────────────────────────  shared bits  ───────────────────────── */
 function SectionLabel({ children }: { children: React.ReactNode }) {
@@ -228,7 +240,11 @@ function PracticeBody({ practice }: { practice: Practice & { plan: PlanCell } })
             {plan.label}
           </span>
           {plan.description && (
-            <span className="w-full truncate text-[10px] leading-snug text-muted">
+            /* Full-strength text on a painted cell: muted grey on the yellow of
+               a UT1 outing is the one pairing that goes hard to read. */
+            <span
+              className={`w-full truncate text-[10px] leading-snug ${water ? "text-text/85" : "text-muted"}`}
+            >
               {plan.description}
             </span>
           )}
@@ -237,7 +253,7 @@ function PracticeBody({ practice }: { practice: Practice & { plan: PlanCell } })
         <span className="text-[11px] text-muted/70">Nothing planned</span>
       )}
 
-      <span className="flex items-center gap-1.5 text-[11px] text-muted">
+      <span className={`flex items-center gap-1.5 text-[11px] ${water ? "text-text/85" : "text-muted"}`}>
         <span className={`h-1.5 w-1.5 rounded-full ${s.dot}`} />
         {s.label}
       </span>
@@ -539,15 +555,67 @@ function PoolChip({ a, onDragStart }: { a: Athlete; onDragStart: () => void }) {
 }
 
 /* ─────────────────────────  builder  ───────────────────────── */
+/* Stepping between water sessions: which ones, and how to open one. */
+type Nav = {
+  prev: string | null;
+  next: string | null;
+  label: (key: string) => string;
+  go: (key: string) => void;
+};
+
+/*
+  One end of the day stepper. Dead rather than gone at the ends of the plan:
+  a control that disappears moves everything beside it, and this one sits next
+  to the title a coach is already aiming at.
+*/
+function StepArrow({
+  dir,
+  to,
+  label,
+  onGo,
+  busy,
+}: {
+  dir: "prev" | "next";
+  to: string | null;
+  label: (key: string) => string;
+  onGo: (key: string | null) => void;
+  busy: boolean;
+}) {
+  const live = !!to && !busy;
+  const where = to ? label(to) : null;
+  return (
+    <button
+      type="button"
+      disabled={!live}
+      onClick={() => onGo(to)}
+      title={where ? `${dir === "prev" ? "Previous" : "Next"} water session — ${where}` : undefined}
+      aria-label={
+        where
+          ? `${dir === "prev" ? "Previous" : "Next"} water session, ${where}`
+          : `No ${dir === "prev" ? "earlier" : "later"} water session in the plan`
+      }
+      className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border ${
+        live
+          ? "border-border bg-surface text-text active:bg-surface-2"
+          : "border-border/50 bg-surface/40 text-muted/40"
+      }`}
+    >
+      {dir === "prev" ? <IconChevronLeft size={18} /> : <IconChevronRight size={18} />}
+    </button>
+  );
+}
+
 function Builder({
   dayKey,
   context,
   planContext,
+  nav,
   onBack,
 }: {
   dayKey: string;
   context: { weekday: string; period: string; sub: string };
   planContext: PlanContext;
+  nav: Nav;
   onBack: () => void;
 }) {
   const [boats, setBoats] = useState<Boat[]>([]);
@@ -561,12 +629,21 @@ function Builder({
   const [sheetOpen, setSheetOpen] = useState(false);
   const [poolFilter, setPoolFilter] = useState<PoolFilter>("all");
 
+  /*
+    What was loaded, as text. Anything else in `boats` means unsaved work —
+    which matters because the ‹ › arrows leave this practice, and a half-seated
+    eight is not something to lose to a mis-tap. Compared, not counted: a name
+    typed into a boat or an oar set is as much work as a seat filled.
+  */
+  const loaded = useRef("[]");
+
   // Load any existing lineup for this practice from the database.
   useEffect(() => {
     let active = true;
     (async () => {
       const stored = await fetchLineup(dayKey);
       if (!active) return;
+      loaded.current = JSON.stringify(stored?.boats ?? []);
       setBoats(stored?.boats ?? []);
       setStatus(stored?.status ?? "draft");
       setLoading(false);
@@ -680,9 +757,33 @@ function Builder({
       console.error("saveLineup:", error);
       return;
     }
+    loaded.current = JSON.stringify(boats);
     setStatus(newStatus);
     setJustSaved(true);
     window.setTimeout(() => setJustSaved(false), 1500);
+  };
+
+  /*
+    Step to the water session either side of this one.
+
+    Unsaved work is SAVED FIRST, keeping whatever status this lineup already
+    has — a draft stays a draft, a published lineup stays published. Losing a
+    seated crew to an arrow tap would be the worst thing this screen could do,
+    and the coach did not ask to leave the work behind, only to move on.
+  */
+  const step = async (key: string | null) => {
+    if (!key || busy) return;
+    if (JSON.stringify(boats) !== loaded.current) {
+      setBusy("save");
+      const { error } = await saveLineup(dayKey, boats, status);
+      setBusy(null);
+      if (error) {
+        console.error("saveLineup:", error);
+        return; // stay put rather than walk away from work that didn't save
+      }
+      loaded.current = JSON.stringify(boats);
+    }
+    nav.go(key);
   };
 
   const renderSeat = (slot: Slot, label: string, athleteId: string | null, cox = false) => {
@@ -724,27 +825,48 @@ function Builder({
         <button type="button" onClick={onBack} className="flex items-center gap-1 text-[13px] text-muted">
           <IconArrowLeft size={16} /> Days
         </button>
+        {/*
+          ‹ day › — the next and previous WATER session in the plan, because
+          that is the run of practices a coach seats one after another. Which
+          day each one goes to is on the button (its label and its tooltip),
+          and an end of the plan leaves the arrow in place but dead, so the row
+          never reflows under a thumb that is already reaching for it.
+        */}
         <div className="mt-1 flex items-center gap-2">
-          <h1 className="text-2xl font-semibold text-text">
-            {context.weekday} {context.period}
-          </h1>
-          <span
-            className={`flex items-center gap-1 rounded px-1.5 py-px text-[11px] font-semibold uppercase tracking-[0.12em] ${
-              status === "published"
-                ? "border border-success-line bg-success-tint text-success"
-                : "border border-warn-line bg-warn-tint text-warn"
-            }`}
-          >
-            <span className={`h-1.5 w-1.5 rounded-full ${status === "published" ? "bg-success" : "bg-warn"}`} />
-            {status === "published" ? "Published" : "Draft"}
-          </span>
+          <StepArrow dir="prev" to={nav.prev} label={nav.label} onGo={step} busy={busy !== null} />
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <h1 className="truncate text-2xl font-semibold text-text">
+                {context.weekday} {context.period}
+              </h1>
+              <span
+                className={`flex flex-shrink-0 items-center gap-1 rounded px-1.5 py-px text-[11px] font-semibold uppercase tracking-[0.12em] ${
+                  status === "published"
+                    ? "border border-success-line bg-success-tint text-success"
+                    : "border border-warn-line bg-warn-tint text-warn"
+                }`}
+              >
+                <span
+                  className={`h-1.5 w-1.5 rounded-full ${status === "published" ? "bg-success" : "bg-warn"}`}
+                />
+                {status === "published" ? "Published" : "Draft"}
+              </span>
+            </div>
+            <div className="mt-0.5 text-[11px] text-muted">{context.sub}</div>
+          </div>
+          <StepArrow dir="next" to={nav.next} label={nav.label} onGo={step} busy={busy !== null} />
         </div>
-        <div className="mt-0.5 text-[11px] text-muted">{context.sub}</div>
 
         {/* prescribed session (from the published plan, if any) */}
         {planContext && (
           <div className="mt-4 flex items-center gap-2.5 rounded-xl border border-border bg-surface px-3 py-3">
-            <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full bg-danger" />
+            {/* The session's own colour, not a fixed red — a UT2 outing is not
+                a hard piece, and this card sits under a picker that now says
+                so in colour. */}
+            <span
+              className="h-2.5 w-2.5 flex-shrink-0 rounded-full"
+              style={{ background: planContext.color }}
+            />
             <div className="flex-1">
               <div className="text-[13px] font-semibold text-text">{planContext.title}</div>
               <div className="mt-0.5 text-[11px] text-muted">{planContext.sub}</div>
@@ -1172,24 +1294,77 @@ export default function LineupBuilderScreen() {
     return out;
   }, [statuses, planCell]);
 
-  const pick = (day: PickDay, p: Practice) => {
-    const dayKey = sessionKey(day.date, p.period);
-    const s = plan?.sessions[dayKey];
-    setPractice({
-      key: dayKey,
-      dayKey,
-      context: {
-        weekday: day.weekday,
-        period: p.period,
-        sub: `${day.month.slice(0, 3)} ${day.num}`,
-      },
-      planContext: s
-        ? { title: s.description.trim() || sessionLabel(s), sub: sessionLabel(s), water: isOnWater(s) }
-        : null,
-    });
-  };
+  /*
+    Open a practice by its day key. Everything the builder needs about WHICH
+    day this is comes out of the key itself, so the arrows below can open a day
+    that is nowhere on the seven-day picker.
+  */
+  const open = useCallback(
+    (dayKey: string) => {
+      const parsed = parseSessionKey(dayKey);
+      if (!parsed) return;
+      const { date, period } = parsed;
+      const s = plan?.sessions[dayKey];
+      setPractice({
+        key: dayKey,
+        dayKey,
+        context: {
+          weekday: date.toLocaleDateString("en-US", { weekday: "long" }),
+          period,
+          sub: `${date.toLocaleDateString("en-US", { month: "short" })} ${date.getDate()}`,
+        },
+        planContext: s
+          ? {
+              title: s.description.trim() || sessionLabel(s),
+              sub: sessionLabel(s),
+              color: sessionColor(s),
+              water: isOnWater(s),
+            }
+          : null,
+      });
+    },
+    [plan],
+  );
 
-  if (!practice) return <DayPicker days={days} onPick={pick} />;
+  /*
+    EVERY WATER SESSION IN THE PLAN, in the order they happen. This is the track
+    the builder's ‹ › arrows run on: a coach seats Tuesday's outing and steps
+    straight to the next one, instead of going back to the picker, finding the
+    day and reading which slot was the water one.
+
+    Sorted on the parsed Date, never on the key as text — the key carries a
+    zero-based, unpadded month ("2026-5-22-AM" is 22 June), so sorting it as a
+    string interleaves the year's months.
+  */
+  const waterStops = useMemo(() => {
+    if (!plan) return [] as { key: string; time: number; period: Period }[];
+    return Object.entries(plan.sessions)
+      .filter(([, s]) => isOnWater(s))
+      .flatMap(([key]) => {
+        const p = parseSessionKey(key);
+        return p ? [{ key, time: p.date.getTime(), period: p.period }] : [];
+      })
+      .sort((a, b) => a.time - b.time || (a.period === b.period ? 0 : a.period === "AM" ? -1 : 1));
+  }, [plan]);
+
+  // The water session either side of the one open. Null at each end of the plan.
+  const nav = useMemo(() => {
+    const cur = practice ? parseSessionKey(practice.dayKey) : null;
+    if (!cur) return { prev: null, next: null };
+    const t = cur.date.getTime();
+    let prev: string | null = null;
+    let next: string | null = null;
+    for (const stop of waterStops) {
+      const isBefore = stop.time < t || (stop.time === t && stop.period === "AM" && cur.period === "PM");
+      const isAfter = stop.time > t || (stop.time === t && stop.period === "PM" && cur.period === "AM");
+      if (isBefore) prev = stop.key; // sorted, so the last one before wins
+      else if (isAfter && !next) next = stop.key;
+    }
+    return { prev, next };
+  }, [practice, waterStops]);
+
+  if (!practice)
+    return <DayPicker days={days} onPick={(day, p) => open(sessionKey(day.date, p.period))} />;
 
   return (
     <Builder
@@ -1197,6 +1372,15 @@ export default function LineupBuilderScreen() {
       dayKey={practice.dayKey}
       context={practice.context}
       planContext={practice.planContext}
+      nav={{
+        prev: nav.prev,
+        next: nav.next,
+        label: (key: string) => `${dayKeyLabel(key)} ${parseSessionKey(key)?.period ?? ""}`.trim(),
+        go: (key: string) => {
+          open(key);
+          void refreshStatuses();
+        },
+      }}
       onBack={() => {
         setPractice(null);
         void refreshStatuses();
