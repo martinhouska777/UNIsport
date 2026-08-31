@@ -104,6 +104,7 @@ function boatToLineup(period: string, boat: Boat, myName: string | null): Lineup
   };
   return {
     period: `${period} · ${boat.name}${boat.dock ? ` · ${boat.dock}` : ""}`,
+    periodKey: period === "PM" ? "PM" : "AM",
     type: boatTypeName(boat.badge),
     // The seat number is its POSITION in the boat (bow is 1), not whatever the
     // stored `label` says — lineups saved under the old scheme wrote "S" for

@@ -25,6 +25,7 @@ import {
   type HomeData,
   type SessionKind,
   type WeekView,
+  type DaySession,
   type TodaySession,
   type Lineup,
 } from "./home";
@@ -96,6 +97,32 @@ export function prescribedForDay(
   });
 }
 
+/*
+  A day-strip session, drawn as a full session card.
+
+  The Home screen shows ANY day in the place today's sessions sit, and it must
+  look the same whichever day that is — a second, smaller design for "some
+  other Wednesday" is how the screen used to feel wrong. The week strip already
+  carries every day's workout, so this is a rename of fields rather than a
+  second trip to the plan.
+*/
+export function daySessionToCard(s: DaySession): TodaySession {
+  return {
+    period: s.clock ? `${s.time} · ${s.clock}` : s.time,
+    // "ALL" is a whole-day entry and belongs to neither half; it can't own a
+    // boat, so it falls to AM rather than inventing a third period.
+    periodKey: s.time === "PM" ? "PM" : "AM",
+    location: "",
+    // Nothing is claimed about a day that hasn't happened, or one that has:
+    // verification is today's business and lives on today's cards only.
+    status: "upcoming",
+    kind: s.kind,
+    title: s.label,
+    detail: s.type ?? "",
+    coachNote: s.note ? { coach: "COACH", text: s.note } : undefined,
+  };
+}
+
 export function buildAthleteHome(
   plan: Plan,
   firstName: string,
@@ -151,6 +178,7 @@ export function buildAthleteHome(
         return [
           {
             period: `${p} · ${s.time}`,
+            periodKey: p,
             location: "",
             status: "upcoming" as const,
             kind: kindOf(s),

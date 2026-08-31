@@ -17,8 +17,8 @@ import { useVarsityTheme } from "@/components/varsity/useVarsityTheme";
 import { fetchPlan, fetchProfileFullName } from "@/lib/varsity/planStore";
 import { fetchTodayLineups } from "@/lib/varsity/lineupStore";
 import { fetchNote } from "@/lib/varsity/notesStore";
-import { sessionKey } from "@/lib/varsity/coachPlan";
-import { buildAthleteHome } from "@/lib/varsity/athleteHome";
+import { sessionKey, parseDate } from "@/lib/varsity/coachPlan";
+import { buildAthleteHome, daySessionToCard } from "@/lib/varsity/athleteHome";
 import { SkeletonCards, SkeletonLines } from "@/components/ui/Skeleton";
 import SectionLabel from "@/components/ui/SectionLabel";
 import {
@@ -44,6 +44,8 @@ import {
   IconArrowLeft,
   IconArrowRight,
   IconChevronRight,
+  IconChevronDown,
+  IconChevronUp,
   IconClipboard,
   IconAnchor,
 } from "@/components/icons";
@@ -416,16 +418,41 @@ function DayDetail({ d, onClose }: { d: WeekDay; onClose: () => void }) {
   );
 }
 
-function WeekStrip({ weeks, startIndex }: { weeks: WeekView[]; startIndex: number }) {
+/*
+  The strip no longer owns which day is open. ONE day runs the middle of the
+  page — the sessions, and the lineup under them — and it lives in HomeScreen,
+  so tapping a day here swaps what is already on screen instead of wedging a
+  second, smaller copy of it between the calendar and today.
+
+  `weekOf` keeps the strip pointed at the week the open day is in, so stepping
+  past Sunday with the day arrows below turns the page here too.
+*/
+function WeekStrip({
+  weeks,
+  startIndex,
+  selected,
+  onSelect,
+  onClearDay,
+}: {
+  weeks: WeekView[];
+  startIndex: number;
+  selected: WeekDay | null;
+  onSelect: (d: WeekDay) => void;
+  onClearDay: () => void;
+}) {
   const [monthOpen, setMonthOpen] = useState(false);
   const [idx, setIdx] = useState(startIndex);
-  const [selected, setSelected] = useState<WeekDay | null>(null);
 
   const last = weeks.length - 1;
-  const go = (delta: number) => setIdx((i) => Math.max(0, Math.min(last, i + delta)));
-  const pick = (d: WeekDay) => setSelected((cur) => (cur === d ? null : d)); // tap again to close
+  const go = (delta: number) =>
+    setIdx(() => {
+      const from = weekOf >= 0 ? weekOf : idx;
+      return Math.max(0, Math.min(last, from + delta));
+    });
+  const pick = (d: WeekDay) => (d === selected ? onClearDay() : onSelect(d));
 
-  const current = weeks[idx];
+  const weekOf = selected ? weeks.findIndex((w) => w.days.includes(selected)) : -1;
+  const current = weeks[weekOf >= 0 ? weekOf : idx];
 
   return (
     <div className="px-3 pt-4">
@@ -445,7 +472,7 @@ function WeekStrip({ weeks, startIndex }: { weeks: WeekView[]; startIndex: numbe
       <div className="mb-2 flex items-center justify-between">
         <button
           onClick={() => go(-1)}
-          disabled={idx === 0}
+          disabled={(weekOf >= 0 ? weekOf : idx) === 0}
           aria-label="Previous week"
           className="tap44 press-icon flex h-6 w-6 items-center justify-center rounded-md border border-border bg-surface text-muted disabled:opacity-30"
         >
@@ -453,11 +480,13 @@ function WeekStrip({ weeks, startIndex }: { weeks: WeekView[]; startIndex: numbe
         </button>
         <span className="text-[11px] font-medium text-text">
           {current.label}
-          {idx === startIndex && <span className="text-muted"> · this week</span>}
+          {(weekOf >= 0 ? weekOf : idx) === startIndex && (
+            <span className="text-muted"> · this week</span>
+          )}
         </span>
         <button
           onClick={() => go(1)}
-          disabled={idx === last}
+          disabled={(weekOf >= 0 ? weekOf : idx) === last}
           aria-label="Next week"
           className="tap44 press-icon flex h-6 w-6 items-center justify-center rounded-md border border-border bg-surface text-muted disabled:opacity-30"
         >
@@ -467,30 +496,54 @@ function WeekStrip({ weeks, startIndex }: { weeks: WeekView[]; startIndex: numbe
 
       <WeekFit week={current} selected={selected} onSelect={pick} />
 
-      {selected && !monthOpen && <DayDetail d={selected} onClose={() => setSelected(null)} />}
-
       {monthOpen && (
         <MonthOverlay
           weeks={weeks}
           selected={selected}
           onSelect={pick}
-          onClearDay={() => setSelected(null)}
-          onClose={() => {
-            setMonthOpen(false);
-            setSelected(null); // collapse back to a clean week strip
-          }}
+          onClearDay={onClearDay}
+          /* Closing the month KEEPS the day you tapped: you opened the whole
+             calendar to find a day, and the page below is now showing it. */
+          onClose={() => setMonthOpen(false)}
         />
       )}
     </div>
   );
 }
 
-/* ─── Today's sessions ─── */
-function SessionCard({ s }: { s: TodaySession }) {
+/* ─── The day's sessions ─── */
+/*
+  A session card OPENS. The boat you are in is a fact about one session — the
+  morning outing and the evening one are different eights — so it belongs
+  inside that session rather than only in a list further down the page. The
+  card is only openable when a boat has actually been published for it, which
+  doubles as the answer to "are the lineups up yet?" without tapping anything.
+*/
+function SessionCard({ s, lineups = [] }: { s: TodaySession; lineups?: Lineup[] }) {
   const st = statusStyle[s.status];
+  const [open, setOpen] = useState(false);
+  const boats = lineups.filter((l) => l.periodKey === s.periodKey);
+  const openable = boats.length > 0;
+
   return (
     <div className="overflow-hidden rounded-xl border border-border bg-surface">
-      <div className="flex">
+      <div
+        className="flex"
+        onClick={openable ? () => setOpen((o) => !o) : undefined}
+        role={openable ? "button" : undefined}
+        tabIndex={openable ? 0 : undefined}
+        aria-expanded={openable ? open : undefined}
+        onKeyDown={
+          openable
+            ? (e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  setOpen((o) => !o);
+                }
+              }
+            : undefined
+        }
+      >
         <div className={`w-[3px] flex-shrink-0 ${kindStyles[s.kind].bar}`} />
         <div className="flex-1 p-3">
           <div className="mb-1 flex items-center justify-between">
@@ -505,8 +558,18 @@ function SessionCard({ s }: { s: TodaySession }) {
               {st.label}
             </span>
           </div>
-          <div className="text-[13px] font-medium text-text">{s.title}</div>
-          <div className="mt-0.5 text-[11px] leading-relaxed text-muted">{s.detail}</div>
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0 flex-1">
+              <div className="text-[13px] font-medium text-text">{s.title}</div>
+              <div className="mt-0.5 text-[11px] leading-relaxed text-muted">{s.detail}</div>
+            </div>
+            {openable && (
+              <span className="mt-0.5 flex flex-shrink-0 items-center gap-1 text-[8px] font-semibold tracking-[0.06em] text-accent">
+                {open ? "HIDE BOAT" : "YOUR BOAT"}
+                {open ? <IconChevronUp size={12} /> : <IconChevronDown size={12} />}
+              </span>
+            )}
+          </div>
 
           {s.coachNote && (
             <div className="mt-2 flex gap-2 rounded-lg border border-accent-line bg-accent-tint px-2.5 py-2">
@@ -525,6 +588,22 @@ function SessionCard({ s }: { s: TodaySession }) {
           )}
         </div>
       </div>
+
+      {open &&
+        boats.map((l, i) => (
+          <div key={i} className="border-t border-border bg-background/40 px-3 py-3">
+            <div className="mb-2 text-[8px] font-semibold tracking-[0.12em] text-muted">
+              {l.period.toUpperCase()}
+            </div>
+            <LineupSeats l={l} />
+            {l.oars && (
+              <div className="mt-2 flex items-center gap-2 text-[11px] text-muted">
+                <IconAnchor size={13} />
+                <span className="text-text">{l.oars}</span>
+              </div>
+            )}
+          </div>
+        ))}
 
       {s.verify && (
         <div className="flex items-center gap-3 border-t border-border bg-background/60 px-3 py-2">
@@ -589,21 +668,33 @@ function SeatRow({
   );
 }
 
+/*
+  One boat's seats. Bow at the top, down to the stroke, cox last — the order the
+  coach's own builder shows and the order their lineup sheet is written in. An
+  athlete finding their name here and again on the sheet at the boathouse
+  should not have to read one of them upside down. Cox gets the word: there is
+  room. Shared, so the boat inside a session card and the boat in the section
+  below are the same drawing rather than two that drift apart.
+*/
+function LineupSeats({ l }: { l: Lineup }) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      {l.seats.map((s) => (
+        <SeatRow key={s.num} label={s.num} name={s.name} mine={s.mine} />
+      ))}
+      {l.cox && <SeatRow label="Cox" name={l.cox.name} mine={l.cox.mine} cox />}
+    </div>
+  );
+}
+
 function LineupBoat({ l }: { l: Lineup }) {
-  // Bow at the top, down to the stroke, cox last — the order the coach's own
-  // builder shows and the order their lineup sheet is written in. An athlete
-  // finding their name here and again on the sheet at the boathouse should not
-  // have to read one of them upside down. Cox gets the word: there is room.
   return (
     <div className="overflow-hidden rounded-xl border border-border bg-surface">
       <div className="border-b border-border px-3 py-2.5 text-[12px] font-semibold text-text">
         {l.period}
       </div>
-      <div className="flex flex-col gap-1.5 p-3">
-        {l.seats.map((s) => (
-          <SeatRow key={s.num} label={s.num} name={s.name} mine={s.mine} />
-        ))}
-        {l.cox && <SeatRow label="Cox" name={l.cox.name} mine={l.cox.mine} cox />}
+      <div className="p-3">
+        <LineupSeats l={l} />
       </div>
       {/* Which oars to take off the rack, when the coach named a set. */}
       {l.oars && (
@@ -616,17 +707,74 @@ function LineupBoat({ l }: { l: Lineup }) {
   );
 }
 
-function LineupCard({ lineups }: { lineups: Lineup[] }) {
+function LineupCard({ lineups, onToday }: { lineups: Lineup[]; onToday: boolean }) {
   return (
     <div>
       <div className="mb-2 flex items-center justify-between px-1">
-        <SectionLabel>Your Lineup</SectionLabel>
+        {/* "Your Lineup" reads as today's. On another day it says whose day
+            it is, so the boats below are never mistaken for this morning's. */}
+        <SectionLabel>{onToday ? "Your Lineup" : "Lineup That Day"}</SectionLabel>
         <span className="text-[11px] text-muted">Bow at top · cox last</span>
       </div>
       <div className="flex flex-col gap-3">
         {lineups.map((l, i) => (
           <LineupBoat key={i} l={l} />
         ))}
+      </div>
+    </div>
+  );
+}
+
+/*
+  THE DAY HEADER — the one control for the middle of the page. What sits under
+  it (the sessions, and the lineup under those) is whatever day this says.
+
+  The arrows step a day at a time across the whole published block, so looking
+  at Thursday's outing is two taps and no calendar. The × only exists once you
+  have left today, because that is the only time there is somewhere to go back
+  to — and leaving it on today would be a button that does nothing.
+*/
+function DayHeader({
+  title,
+  right,
+  canPrev,
+  canNext,
+  onStep,
+  onToday,
+}: {
+  title: string;
+  right?: string;
+  canPrev: boolean;
+  canNext: boolean;
+  onStep: (delta: -1 | 1) => void;
+  onToday?: () => void;
+}) {
+  const arrow = (dir: -1 | 1, live: boolean) => (
+    <button
+      onClick={() => onStep(dir)}
+      disabled={!live}
+      aria-label={dir === -1 ? "Previous day" : "Next day"}
+      className="tap44 press-icon flex h-6 w-6 items-center justify-center rounded-md border border-border bg-surface text-muted disabled:opacity-30"
+    >
+      {dir === -1 ? <IconArrowLeft size={13} /> : <IconArrowRight size={13} />}
+    </button>
+  );
+  return (
+    <div className="flex items-center justify-between gap-2 px-4 pb-2 pt-4">
+      <SectionLabel>{title}</SectionLabel>
+      <div className="flex items-center gap-1.5">
+        {right && <span className="mr-1 text-[11px] text-muted">{right}</span>}
+        {arrow(-1, canPrev)}
+        {arrow(1, canNext)}
+        {onToday && (
+          <button
+            onClick={onToday}
+            aria-label="Back to today"
+            className="tap44 press-icon flex h-6 w-6 items-center justify-center rounded-md border border-border bg-surface text-muted"
+          >
+            <IconX size={13} />
+          </button>
+        )}
       </div>
     </div>
   );
@@ -728,6 +876,17 @@ export default function HomeScreen() {
   const [data, setData] = useState<HomeData | null>(null);
   const [loading, setLoading] = useState(true);
   const [note, setNote] = useState<string | null>(null); // null = still loading
+  const [myName, setMyName] = useState<string | null>(null); // for "your seat"
+
+  /*
+    WHICH DAY the middle of the page is showing, as an index into the block's
+    days. null means today — kept distinct from "the index that happens to be
+    today" so the × knows whether there is anywhere to go back to.
+  */
+  const [dayIdx, setDayIdx] = useState<number | null>(null);
+  // Another day's published boats, remembered with the day they belong to so a
+  // slow fetch can never paint Tuesday's eight under Thursday's session.
+  const [awayLineups, setAwayLineups] = useState<{ iso: string; lineups: Lineup[] } | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -741,6 +900,7 @@ export default function HomeScreen() {
       ]);
       if (!active) return;
       const firstName = fullName.split(/\s+/)[0] ?? "";
+      setMyName(fullName);
       setData(buildAthleteHome(plan, firstName, lineups, today));
       setNote(coachNote);
       setLoading(false);
@@ -749,6 +909,30 @@ export default function HomeScreen() {
       active = false;
     };
   }, [userId]);
+
+  // Every day of the block, in order — the track the day arrows run on.
+  const allDays = useMemo(() => (data ? data.weeks.flatMap((w) => w.days) : []), [data]);
+  const todayIdx = useMemo(() => {
+    const i = allDays.findIndex((d) => d.today);
+    return i >= 0 ? i : 0; // a block that hasn't started yet opens on its first day
+  }, [allDays]);
+  const viewIdx = dayIdx ?? todayIdx;
+  const viewDay: WeekDay | null = allDays[viewIdx] ?? null;
+  const onToday = dayIdx === null;
+
+  // Fetch the boats for a day that isn't today. Today's came with the page.
+  useEffect(() => {
+    if (onToday || !viewDay) return;
+    const iso = viewDay.iso;
+    let active = true;
+    (async () => {
+      const found = await fetchTodayLineups((p) => sessionKey(parseDate(iso), p), myName);
+      if (active) setAwayLineups({ iso, lineups: found });
+    })();
+    return () => {
+      active = false;
+    };
+  }, [onToday, viewDay, myName]);
 
   // The coach's note sits at the bottom of the page (shown in every state,
   // even before a plan is published).
@@ -778,33 +962,62 @@ export default function HomeScreen() {
     );
   }
 
+  /*
+    What the open day actually shows. Today keeps the richer cards the plan
+    built for it; any other day is drawn from the week strip's own sessions
+    through the SAME card, so the two never look like different features.
+  */
+  const sessions: TodaySession[] = onToday
+    ? data.today
+    : (viewDay?.sessions ?? []).map(daySessionToCard);
+  const lineups: Lineup[] = onToday
+    ? data.lineups
+    : awayLineups?.iso === viewDay?.iso
+      ? awayLineups.lineups
+      : []; // still fetching, or none published
+
   return (
     <div className="mx-auto w-full max-w-screen-sm pb-6">
       {consoleRole && <ConsoleDoor role={consoleRole} />}
       <Greeting g={data.greeting} />
-      <WeekStrip weeks={data.weeks} startIndex={data.weekIndex} />
+      <WeekStrip
+        weeks={data.weeks}
+        startIndex={data.weekIndex}
+        selected={onToday ? null : viewDay}
+        onSelect={(d) => {
+          const i = allDays.indexOf(d);
+          setDayIdx(i === todayIdx ? null : i);
+        }}
+        onClearDay={() => setDayIdx(null)}
+      />
 
-      <div className="flex items-center justify-between px-4 pb-2 pt-4">
-        <SectionLabel>Today&apos;s Sessions</SectionLabel>
-        <span className="text-[11px] text-muted">
-          {data.today.length} prescribed
-        </span>
-      </div>
-      {data.today.length > 0 ? (
+      <DayHeader
+        title={onToday ? "Today's Sessions" : (viewDay?.dateLabel ?? "")}
+        right={onToday ? `${sessions.length} prescribed` : undefined}
+        canPrev={viewIdx > 0}
+        canNext={viewIdx < allDays.length - 1}
+        onStep={(delta) => {
+          const next = Math.max(0, Math.min(allDays.length - 1, viewIdx + delta));
+          setDayIdx(next === todayIdx ? null : next);
+        }}
+        onToday={onToday ? undefined : () => setDayIdx(null)}
+      />
+
+      {sessions.length > 0 ? (
         <div className="flex flex-col gap-2 px-3">
-          {data.today.map((s, i) => (
-            <SessionCard key={i} s={s} />
+          {sessions.map((sess, i) => (
+            <SessionCard key={i} s={sess} lineups={lineups} />
           ))}
         </div>
       ) : (
         <div className="mx-3 rounded-xl border border-dashed border-border bg-surface px-4 py-5 text-center text-[12px] text-muted">
-          Nothing scheduled for today.
+          {onToday ? "Nothing scheduled for today." : "Nothing scheduled this day."}
         </div>
       )}
 
-      {data.lineups.length > 0 && (
+      {lineups.length > 0 && (
         <div className="px-3 pt-3">
-          <LineupCard lineups={data.lineups} />
+          <LineupCard lineups={lineups} onToday={onToday} />
         </div>
       )}
 

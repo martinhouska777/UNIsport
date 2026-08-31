@@ -46,7 +46,11 @@ export type WeekDay = {
 export type VerifyStat = { label: string; value: string; ok: boolean };
 export type CoachNote = { coach: string; text: string };
 export type TodaySession = {
-  period: string;
+  period: string; // what's SHOWN, e.g. "AM · 6:00"
+  /* Which half of the day this is, as a key rather than a label. The card uses
+     it to find its own boat among the day's lineups — reading "AM" back out of
+     the display string would break the first time the label changes. */
+  periodKey: "AM" | "PM";
   location: string;
   status: SessionStatus;
   kind: SessionKind;
@@ -58,7 +62,8 @@ export type TodaySession = {
 
 export type Seat = { num: string; init: string; name: string; mine?: boolean };
 export type Lineup = {
-  period: string;
+  period: string; // shown: "AM · Resolute · Dock 2"
+  periodKey: "AM" | "PM"; // matched on: which session this boat belongs to
   type: string; // "Eight" | "Four" etc.
   seats: Seat[];
   cox?: { init: string; name: string; mine?: boolean }; // coxless boats (4-/2-) have none
@@ -128,6 +133,7 @@ export const home: HomeData = {
   today: [
     {
       period: "AM · 7:00",
+      periodKey: "AM" as const,
       location: "In house",
       status: "verified",
       kind: "ut2",
@@ -145,6 +151,7 @@ export const home: HomeData = {
     },
     {
       period: "PM · 4:30",
+      periodKey: "PM" as const,
       location: "Palmer Dixon",
       status: "upcoming",
       kind: "hard",
