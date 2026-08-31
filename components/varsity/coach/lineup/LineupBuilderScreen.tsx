@@ -594,7 +594,10 @@ function StepArrow({
           ? `${dir === "prev" ? "Previous" : "Next"} water session, ${where}`
           : `No ${dir === "prev" ? "earlier" : "later"} water session in the plan`
       }
-      className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border ${
+      /* tap44: the button is 36px, and this screen is used standing on a dock
+         with cold hands — the helper grows the hit area to 44px without moving
+         a pixel of what you see. */
+      className={`tap44 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border ${
         live
           ? "border-border bg-surface text-text active:bg-surface-2"
           : "border-border/50 bg-surface/40 text-muted/40"
