@@ -145,26 +145,32 @@ export const rosterById: Record<string, Athlete> = Object.fromEntries(
 );
 
 /*
-  HOW THE POOL IS FILTERED. Three buttons, and nothing else: All, Port,
-  Starboard. All is everyone. Port and Starboard are the rowers who can pull
-  that side — which includes everyone marked BOTH, so a bisweptual rower shows
-  up under every filter and never has to be hunted for. Coxswains have no side,
-  so they live under All.
+  HOW THE POOL IS FILTERED. Four buttons: All, Port, Starboard, Cox. All is
+  everyone. Port and Starboard are the rowers who can pull that side — which
+  includes everyone marked BOTH, so a bisweptual rower shows up under both and
+  never has to be hunted for. Cox is its own button because "who can steer" is
+  a question a coach asks on its own, and coxswains have no side to be found
+  under — before this they could only be picked out of All by eye.
 
   This replaced a pool grouped by erg-training column (Group B, OYO, Rx…). The
   owner's call: those groups are not true for long and are not what a coach is
   asking when they are filling a boat.
+
+  Each button carries its own swatch colour, so the row is drawn from this list
+  and the component never names a colour itself.
 */
-export type PoolFilter = "all" | "P" | "S";
-export const poolFilters: { key: PoolFilter; label: string }[] = [
+export type PoolFilter = "all" | "P" | "S" | "cox";
+export const poolFilters: { key: PoolFilter; label: string; color?: string; ink?: string }[] = [
   { key: "all", label: "All" },
-  { key: "P", label: sideMeta.P.label },
-  { key: "S", label: sideMeta.S.label },
+  { key: "P", label: sideMeta.P.label, color: sideMeta.P.color, ink: sideMeta.P.ink },
+  { key: "S", label: sideMeta.S.label, color: sideMeta.S.color, ink: sideMeta.S.ink },
+  { key: "cox", label: "Cox", color: COX_COLOR, ink: COX_INK },
 ];
 
-/** Does this athlete belong under that filter? "Both" belongs under all three. */
+/** Does this athlete belong under that filter? "Both" belongs under P and S. */
 export function inPool(a: Athlete, f: PoolFilter): boolean {
   if (f === "all") return true;
+  if (f === "cox") return !!a.cox;
   return !a.cox && (a.side === f || a.side === "B");
 }
 

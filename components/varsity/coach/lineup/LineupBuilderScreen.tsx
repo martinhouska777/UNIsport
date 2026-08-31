@@ -28,8 +28,8 @@
   The builder's ‹ › arrows step to the next WATER session in the plan, saving
   anything unsaved on the way out, so a week of outings is seated in one run.
 
-  The POOL is filtered three ways and grouped none: All, Port, Starboard, with
-  the both-sides rowers appearing under every filter.
+  The POOL is filtered four ways and grouped none: All, Port, Starboard, Cox,
+  with the both-sides rowers appearing under both Port and Starboard.
 
   NOTE: the roster is still demo data (no real athlete accounts yet), so athletes
   see the published boats but not a personalised "your seat" highlight — that
@@ -431,7 +431,7 @@ function Seat({
   return (
     <div className="flex items-center gap-2">
       <span
-        className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded border text-[11px] font-bold ${
+        className={`flex h-5 w-5 flex-shrink-0 select-none items-center justify-center rounded border text-[11px] font-bold ${
           cox ? "" : "border-border bg-surface-2 text-text"
         }`}
         style={seatPaint}
@@ -460,7 +460,7 @@ function Seat({
             />
           </div>
           {matches.length > 0 && (
-            <div className="absolute left-0 right-0 top-[calc(100%+4px)] z-30 overflow-hidden rounded-xl border border-border bg-surface-2 shadow-xl">
+            <div className="absolute left-0 right-0 top-[calc(100%+4px)] z-30 select-none overflow-hidden rounded-xl border border-border bg-surface-2 shadow-xl">
               {matches.slice(0, 5).map((m) => (
                 <button
                   key={m.id}
@@ -489,7 +489,7 @@ function Seat({
             onDragStartSeat();
           }}
           {...dropHandlers}
-          className={`flex min-h-[42px] flex-1 cursor-grab items-center gap-2 rounded-lg border px-2.5 py-1.5 active:cursor-grabbing ${
+          className={`flex min-h-[42px] flex-1 cursor-grab select-none items-center gap-2 rounded-lg border px-2.5 py-1.5 active:cursor-grabbing ${
             dropActive
               ? "border-accent bg-accent-tint"
               : cox
@@ -510,7 +510,7 @@ function Seat({
           type="button"
           onClick={onStartType}
           {...dropHandlers}
-          className={`flex min-h-[42px] flex-1 items-center gap-2 rounded-lg border border-dashed px-2.5 text-left ${
+          className={`flex min-h-[42px] flex-1 select-none items-center gap-2 rounded-lg border border-dashed px-2.5 text-left ${
             dropActive
               ? "border-accent bg-accent-tint text-accent"
               : cox
@@ -526,11 +526,21 @@ function Seat({
   );
 }
 
+/*
+  `select-none` on everything below that carries a NAME.
+
+  These are things you drag, not things you read: a chip, a filled seat, an
+  empty slot, the suggestion list. Pressing one to drag it, or tapping the same
+  name twice, made the browser select the text instead and leave a blue
+  smear across the boat. Nothing here is worth copying, so nothing here is
+  selectable. The one exception is the seat's own search field, which is a real
+  input and stays fully editable.
+*/
 /* ─────────────────────────  pool chip  ───────────────────────── */
 function PoolChip({ a, onDragStart }: { a: Athlete; onDragStart: () => void }) {
   if (a.out) {
     return (
-      <div className="flex items-center gap-2 rounded-xl border border-danger-line bg-danger-tint px-2 py-1.5 opacity-50">
+      <div className="flex select-none items-center gap-2 rounded-xl border border-danger-line bg-danger-tint px-2 py-1.5 opacity-50">
         <Avatar initials={a.initials} className="border-danger-line bg-danger-tint text-danger" />
         <span className="text-[12px] font-semibold text-muted">{a.name}</span>
         <span className="rounded bg-danger-tint px-1.5 py-px text-[10px] font-bold uppercase tracking-[0.05em] text-danger">
@@ -546,7 +556,7 @@ function PoolChip({ a, onDragStart }: { a: Athlete; onDragStart: () => void }) {
         e.dataTransfer.setData("text/plain", a.id);
         onDragStart();
       }}
-      className="flex cursor-grab items-center gap-2 rounded-xl border border-border bg-surface px-2 py-1.5 active:cursor-grabbing active:border-primary-line active:bg-primary-tint"
+      className="flex cursor-grab select-none items-center gap-2 rounded-xl border border-border bg-surface px-2 py-1.5 active:cursor-grabbing active:border-primary-line active:bg-primary-tint"
     >
       <Avatar initials={a.initials} side={a.side} cox={a.cox} />
       <span className="text-[12px] font-semibold text-text">{a.name}</span>
@@ -1111,18 +1121,19 @@ function Builder({
               </div>
 
               {/*
-                THE ONLY THREE BUTTONS. All, Port, Starboard — and anyone who
-                rows BOTH appears under every one of them, because they can
-                genuinely take either seat and hiding them from a filter would
-                cost the coach an option. Coxswains have no side, so they show
-                under All.
+                FOUR BUTTONS. All, Port, Starboard, Cox. Anyone who rows BOTH
+                appears under Port AND Starboard, because they can genuinely
+                take either seat and hiding them from a filter would cost the
+                coach an option. Cox is its own button: coxswains have no side
+                to be found under, so filling the cox seat used to mean picking
+                them out of All by eye.
 
                 The pool used to be split by erg-training column (Group B, OYO,
                 Rx…). Gone on the owner's call: those groups are not true for
                 long, and they are not the question being asked while a boat is
                 being filled.
               */}
-              <div data-tour="coach-lineup-filters" className="mb-2.5 flex gap-1.5">
+              <div data-tour="coach-lineup-filters" className="mb-2.5 flex select-none gap-1.5">
                 {poolFilters.map((f) => (
                   <button
                     key={f.key}
@@ -1135,10 +1146,10 @@ function Builder({
                         : "border-border bg-surface text-muted"
                     }`}
                   >
-                    {f.key !== "all" && (
+                    {f.color && (
                       <span
                         className="h-2.5 w-2.5 rounded-sm border"
-                        style={blade(sideMeta[f.key].color, sideMeta[f.key].ink)}
+                        style={blade(f.color, f.ink ?? "#ffffff")}
                       />
                     )}
                     {f.label}
