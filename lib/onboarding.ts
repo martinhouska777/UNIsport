@@ -209,15 +209,34 @@ export const weekDays: WeekDay[] = [
   { key: "sun", label: "Sunday", letter: "S" },
 ];
 
-// Free-time blocks shown when a day is expanded (editable).
-export const timeBlocks: string[] = ["Early AM", "AM", "Midday", "PM", "Late PM"];
+/*
+  The ready-made times on the "when do you train" screen. Each one is a REAL
+  hour range, stored exactly as written ("17:00-19:00"), because that is what
+  matching compares — db/matching.sql overlaps ranges, so 17:00–19:00 and
+  17:30–19:30 score as the near-miss they really are.
+
+  This replaced five named blocks ("AM", "PM", …). Those still exist in older
+  profiles and are still understood everywhere — lib/schedule.ts widens them to
+  the hours they always meant, and block_range() does the same in the database
+  — but nothing writes them any more.
+*/
+export const trainingTimePresets: { label: string; slot: string }[] = [
+  { label: "Early 6–8", slot: "06:00-08:00" },
+  { label: "Morning 8–11", slot: "08:00-11:00" },
+  { label: "Lunch 11–2", slot: "11:00-14:00" },
+  { label: "Afternoon 2–5", slot: "14:00-17:00" },
+  { label: "After class 5–7", slot: "17:00-19:00" },
+  { label: "Evening 7–10", slot: "19:00-22:00" },
+];
+
+// Where a day starts when someone picks a day before picking a time.
+export const DEFAULT_TRAINING_SLOT = "17:00-19:00";
 
 // ---- Match → Session Search: precise time picker -----------------------------
 // In Session Search you pick the hour you actually want to train (24h clock,
 // 30-min steps). Matching then finds people free within SESSION_WINDOW_HOURS of
-// it. NOTE: profiles today only store the coarse `timeBlocks` above; the precise
-// hour is bridged onto those blocks in db/matching.sql (see `block_range`) until
-// onboarding collects exact hours. Change the range/step here to widen choices.
+// it. Onboarding now collects real hours too, so the two sides finally speak the
+// same language. Change the range/step here to widen choices.
 export const SESSION_WINDOW_HOURS = 2;
 
 export type TimeSlot = { value: number; label: string };

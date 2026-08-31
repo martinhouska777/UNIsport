@@ -69,5 +69,31 @@ export function timeChoices(fromHour = 5, toHour = 23): string[] {
   return out;
 }
 
+/*
+  The one time that runs through someone's week — the slot sitting on the most
+  days. It is what the "what time, usually?" buttons show as chosen, and the
+  thing a new choice replaces, so days that were given their OWN time are left
+  where they are. Ties go to the earliest slot, so the answer never flickers
+  between two equally common times.
+*/
+export function usualSlot(schedule: Record<string, string[]>): string | null {
+  const days = new Map<string, number>();
+  for (const slots of Object.values(schedule ?? {})) {
+    // Once per day: two days at 17:00 beats one day that lists 17:00 twice.
+    for (const text of new Set(slots ?? [])) {
+      days.set(text, (days.get(text) ?? 0) + 1);
+    }
+  }
+  let best: string | null = null;
+  let bestCount = 0;
+  for (const [text, count] of [...days].sort((a, b) => a[0].localeCompare(b[0]))) {
+    if (count > bestCount) {
+      best = text;
+      bestCount = count;
+    }
+  }
+  return best;
+}
+
 /* "Mon 07:00–09:00" style, for one slot. */
 export const slotLabel = (s: Slot) => `${s.start}–${s.end}`;
