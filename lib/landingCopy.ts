@@ -244,7 +244,13 @@ export const studentStory: Beat[] = [
     id: "S2",
     kicker: "02 · People",
     head: "Find a training partner. Make a friend.",
-    sub: "Ranked by how well you actually fit — same gym, same hours, same level, same interests.",
+    /* The owner, 2026-09-02: "people find training partners mae friends …
+       just make explaining sentences from them with verbs and stuff … and no
+       dashes its so fkn generic". The line that stood here was the shape they
+       mean: a noun list, a dash, an appositive ("Ranked by how well you
+       actually fit — same gym, same hours, same level, same interests."). It
+       says the same thing with something DOING it. */
+    sub: "The app ranks everyone by how well you actually fit, so the first people you see already train at your gym, at your hours and at your level.",
     shot: "02-match.webp",
     ann: [{ side: "right", top: 24, text: "Ranked by real fit" }],
   },
@@ -264,8 +270,10 @@ export const studentStory: Beat[] = [
   {
     id: "S4",
     kicker: "04 · Plan",
-    head: "Plan it in the chat.",
-    sub: "One tap proposes the session, one accepts, and it's in both calendars.",
+    /* The owner's own sentence, 2026-09-02: "plan sessions easily in the chat,
+       once the other one accepts it goes to both calendars". */
+    head: "Plan the session in the chat.",
+    sub: "You propose a time in one tap, and the moment they accept it lands in both your calendars.",
     shot: "04-plan-a-session.webp",
     ann: [{ side: "right", top: 52, text: "One tap to accept" }],
   },
@@ -278,8 +286,12 @@ export const studentStory: Beat[] = [
        slot goes to the calendar below. */
     id: "S5",
     kicker: "05 · Log",
-    head: "Afterwards, log it together.",
-    sub: "Every set, every rep, a photo and a note — with your partner carried over from the plan.",
+    /* The owner's own sentence, 2026-09-02: "record each sets and reps easily
+       and attach a photo with your partner that will be stored in memories".
+       Memories is a real screen (app/(app)/memories), reached from the Profile
+       tab under the calendar, so the line names something that exists. */
+    head: "Log it together afterwards.",
+    sub: "You record every set and every rep as you go, then add a photo with your partner that is saved in your memories.",
     shot: "tall-logsheet.webp",
     ann: [
       { side: "right", top: 26, text: "Set by set" },

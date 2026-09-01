@@ -50,7 +50,7 @@ const story1 = [
   {
     key: "02-match", kicker: "02 · People", enter: "tab", tap: [37.5, 95.5],
     head: "Find a training partner. Make a friend.",
-    sub: "Ranked by how well you actually fit — same gym, same hours, same level, same interests.",
+    sub: "The app ranks everyone by how well you actually fit, so the first people you see already train at your gym, at your hours and at your level.",
     ann: [{ side: "right", top: 24, text: "Ranked by real fit" }],
   },
   {
@@ -61,16 +61,16 @@ const story1 = [
   },
   {
     key: "04-plan-a-session", kicker: "04 · Plan", enter: "push", tap: [68, 86.5], pointer: true,
-    head: "Plan it in the chat.",
-    sub: "One tap proposes the session, one accepts, and it's in both calendars.",
+    head: "Plan the session in the chat.",
+    sub: "You propose a time in one tap, and the moment they accept it lands in both your calendars.",
     ann: [{ side: "right", top: 52, text: "One tap to accept" }],
   },
   {
     // One beat for the whole sheet now — sets at the top, photo and note at
     // the bottom. hold 0.2: it is read before it starts moving.
     key: "tall-logsheet", kicker: "05 · Log", pan: [0, 1], hold: 0.2, side: "left", enter: "push",
-    head: "Afterwards, log it together.",
-    sub: "Every set, every rep, a photo and a note — with your partner carried over from the plan.",
+    head: "Log it together afterwards.",
+    sub: "You record every set and every rep as you go, then add a photo with your partner that is saved in your memories.",
     ann: [{ side: "right", top: 26, text: "Set by set" }, { side: "left", top: 78, text: "Photo + note" }],
   },
   {
