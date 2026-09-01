@@ -448,20 +448,19 @@ export const varsityStory: Beat[] = [
   },
   {
     id: "V6",
-    /* THE SQUAD BOARD, named here at the owner's request — "it would be good
-       to have a note there about team and rankings, its a nice part of it".
-       It is real and it is not demo data: db/varsity_results.sql is a shared
-       table, and logging a session the coach flagged as a TEAM WORKOUT writes
-       a row the whole squad reads (lib/varsity/resultsStore.ts). The wording
-       is exact on purpose — buildBoard() ranks TEST PIECES and deliberately
-       does NOT rank steady sessions, which show squad averages instead
-       (lib/varsity/teamBoard.ts), so "ranked when it is a test piece" is the
-       true claim and "every team piece ranked" would not be.
-
-       Worth knowing: the board is NOT what this frame shows. tall-vprofile is
-       the athlete's own statistics; the board lives behind the Team tab and
-       has never been captured. The sentence is adjacent to the picture, the
-       way S6's "lands in your calendar" is. Its own beat would need a shot. */
+    /* THE SQUAD BOARD IS NOT ADVERTISED HERE, and the reason is worth keeping.
+       The owner asked for it — "a note about team and rankings, its a nice
+       part of it" — and it was written, because lib/varsity/teamBoard.ts and
+       resultsStore.ts implement it and db/varsity_results.sql describes the
+       table it reads. Then the database was checked: `varsity_results` DOES
+       NOT EXIST, and varsity_plan_sessions has neither `team_workout` nor
+       `board`. That migration was never run, so the feature is code with no
+       table behind it and the sentence was advertising something the live app
+       cannot do. It comes back the moment db/varsity_results.sql is applied
+       and a board has been shot — see db/seed_varsity_board.sql, which is
+       written and waiting. (varsity_telemetry and varsity_coach_reads are
+       unapplied too: check the table, not the .sql file, before writing copy
+       about a varsity feature.) */
     kicker: "V6 · Statistics",
     /* "Check how your teammates are doing" is a real feature but NOT on this
        frame — tall-vprofile is your own season. The squad screen exists
@@ -469,7 +468,7 @@ export const varsityStory: Beat[] = [
        re-shot this clause is the one line in either story with no picture
        behind it. */
     head: "See your statistics.",
-    sub: "Consistency, hours and personal bests — and the squad's board on every team workout, ranked when it is a test piece.",
+    sub: "Consistency, hours and personal bests — eight weeks of work, in one screen.",
     shot: "tall-vprofile.webp",
     ann: [{ side: "right", top: 40, text: "Eight weeks of work" }],
   },

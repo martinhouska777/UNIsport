@@ -131,7 +131,7 @@ const story2 = [
   {
     key: "tall-vprofile", kicker: "V6 · Statistics", pan: [0.06, 0.42], side: "left", enter: "tab", tap: [88.4, 93.3],
     head: "See your statistics.",
-    sub: "Consistency, hours and personal bests — and the squad's board on every team workout, ranked when it is a test piece.",
+    sub: "Consistency, hours and personal bests — eight weeks of work, in one screen.",
     ann: [{ side: "right", top: 40, text: "Eight weeks of work" }],
   },
 ];

@@ -1,0 +1,10 @@
+import pg from "pg";
+import { env } from "./env.mjs";
+const c = new pg.Client({ connectionString: env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
+await c.connect();
+const q = async (label, sql) => { try { const r = await c.query(sql); console.log("\n== " + label); console.table(r.rows.slice(0,14)); } catch(e){ console.log("\n== " + label + " ERR", e.message); } };
+await q("users", "select id, email from auth.users order by created_at limit 10");
+await q("team_workout sessions", "select day_key, category, intensity, description, team_workout, board from public.varsity_plan_sessions where team_workout order by day_key desc limit 10");
+await q("recent sessions", "select day_key, category, intensity, description, team_workout, board from public.varsity_plan_sessions order by updated_at desc limit 10");
+await q("results", "select day_key, count(*) n from public.varsity_results group by day_key order by 1 desc limit 10");
+await c.end();
