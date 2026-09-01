@@ -939,24 +939,25 @@ export const coach = {
   },
 };
 
-/* ─────────────────────────── THE CLOSE ─────────────────────────── */
+/* ─────────────────────────── THE CLOSE ───────────────────────────
 
-export const finalCta = {
-  headline: "One app per university.",
-  headlineEm: "Yours next.",
-  /* THE OWNER'S OPENING, 2026-09-02: "dej tam customized for each campus …
-     misto te prvni vety a pak smoothly pokracuj." The sentence it replaced —
-     "Live now at one university." — was the vaguest line on the page: the hero
-     pill names Harvard outright, so the close was being coy about a fact the
-     top had already stated plainly. The rest continues from their opening
-     rather than starting again. */
-  sub: "Customized for each campus — its own colours, gyms and houses — and onboarded one at a time.",
-  button: "Bring it to your university",
-  /* The button opens a mail with the subject and the first line written, so a
-     tap on a phone is never a blank draft (it used to be a bare mailto:). */
-  mailSubject: "Bring UNIsport to my university",
-  mailBody: "Hi Martin,\n\nI'm at ______ and I'd like UNIsport on our campus.\n\n",
-};
+  THERE IS NO CLOSING CALL TO ACTION ANY MORE. It read:
+
+      One app per university. Yours next.
+      Customized for each campus — its own colours, gyms and houses — and
+      onboarded one at a time.
+      [ Bring it to your university ]
+
+  Cut on 2026-09-02, the owner's call and their reasoning: "now for launch we
+  will do it probably just for harvard anyway". A button asking a reader to
+  bring the app to their university is a door that cannot be opened at launch,
+  and it was also the second place on the page opening on "Customized for each
+  campus" — the hero's availability line has that sentence now.
+
+  If a launch ever reaches a second campus, it is one revert away: the section,
+  its copy and components/landing/FinalCta.tsx all came out in one commit.
+  Until then the page ends on About · Contact, and Contact is where a reader
+  who wants it on their campus lands. */
 
 /** mailto: with the subject and body already filled in. */
 export const mailtoHref = (subject: string, body: string) =>

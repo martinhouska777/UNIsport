@@ -823,9 +823,6 @@ ${closer("closer-blades", "Blade Lock Light.html", "Every crew. One system.", "v
 ${renderCoach()}
 
 <div class="cta">
-  <h2>One app per university. <em>Yours next.</em></h2>
-  <p>Customized for each campus — its own colours, gyms and houses — and onboarded one at a time.</p>
-  <a href="https://un-isport.vercel.app/join" target="_blank" rel="noopener">Bring it to your university</a>
   <div class="note">Prototype — scroll timing and copy under review.</div>
 </div>
 
