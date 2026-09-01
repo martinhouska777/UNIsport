@@ -25,18 +25,28 @@ import { availability, cues, hero, studentIntro } from "@/lib/landingCopy";
   min-h-svh section read as an empty screen ("to vyplni ten screen"). The
   reasoning is on `studentIntro` in lib/landingCopy.ts.
 
-  IT TAKES THE SCHOOL'S COLOUR, 2026-09-01, the owner's call — "u toho the app
-  bych udelal to stejne jako landing ze se to meni podle univerzity". The same
-  two things cycle here as in the intro, and for the same reason: "alone
-  again." is this card's "Your people", and the button is the button. It runs
-  on its own useSchoolCycle, which ticks only while the card is on screen, so
-  on "/" the intro's cycle has already stopped by the time this one starts and
-  the two never argue over which school is showing.
+  IT TAKES THE SCHOOL'S COLOUR — BUT ONLY WHEN IT IS THE FRONT DOOR
+  (2026-09-01, the owner, in two steps: "u toho the app bych udelal to stejne
+  jako landing ze se to meni podle univerzity", then "kdyz jedu pres home tak
+  by se to nemenilo, a kdyz kliknu na the app tak tam jo").
 
-  Deliberately NOT cycling: the steps and the overview link, which stay the
-  page's own blue. The intro draws the same line — its pill and its doors keep
-  their colours while the headline and the button change — and a card where
-  every element turns crimson at once is a different page, not this one.
+  So the cycle is tied to `solo`, not to the card:
+    • On "/" the intro is one screen above and is already cycling the eight
+      schools. A second cycle right under it is not a second idea, it is the
+      same idea twice — so here the card is the page's own blue and holds
+      still while the reader scrolls through.
+    • On /for/students nothing comes before it. The card IS the front door, so
+      it does the job the intro does on "/": "alone again." — this card's
+      "Your people" — and the .edu button take the showing school's colour,
+      the button carrying that school's crest and its contrast-checked ink.
+
+  The hook is called either way (it must be), but the ref is only attached in
+  solo, so on "/" it finds no element, returns early, and starts no timer.
+
+  Deliberately NOT cycling even in solo: the steps and the overview link, which
+  stay the page's own blue. The intro draws the same line — its pill and its
+  doors keep their colours while the headline and the button change — and a
+  card where every element turns crimson at once is a different page.
 
   `solo`: on /for/students this card opens the page, so it also carries the
   way in — the .edu button and the availability line, which the hero carries
@@ -50,13 +60,19 @@ export default function StudentIntro({ solo = false }: { solo?: boolean }) {
   return (
     <section
       id="student-intro"
-      ref={section}
-      style={{ "--sc": color, "--sc-ink": `var(--color-${ink})` } as CSSProperties}
+      ref={solo ? section : undefined}
+      style={solo ? ({ "--sc": color, "--sc-ink": `var(--color-${ink})` } as CSSProperties) : undefined}
       className="relative z-[1] flex min-h-svh flex-col items-center justify-center gap-[clamp(10px,1.8vh,18px)] border-t border-l-line bg-l-surface px-6 pt-14 pb-8 text-center"
     >
       <h2 className="max-w-[13ch] font-display text-[clamp(40px,8vw,76px)] font-normal leading-[0.98] tracking-[-0.02em] text-balance text-l-text">
         {studentIntro.headline}{" "}
-        <em className="italic text-(--sc) transition-colors duration-700 ease-in-out motion-reduce:transition-none">
+        <em
+          className={
+            solo
+              ? "italic text-(--sc) transition-colors duration-700 ease-in-out motion-reduce:transition-none"
+              : "italic text-l-accent"
+          }
+        >
           {studentIntro.headlineEm}
         </em>
       </h2>
