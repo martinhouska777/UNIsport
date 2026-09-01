@@ -99,6 +99,28 @@ export default function StoryCloser({ storyId, beats, accent, closer, closerId, 
     let flown = false;
     let flying = false;
 
+    /*
+      A FLIGHT CAN BE INTERRUPTED, and until 2026-09-01 nothing could stop one.
+      It is a 1.5s requestAnimationFrame loop that also DRIVES the page scroll,
+      and two things happen inside it that only its own last frame undoes: the
+      story's phone is hidden and its words step aside (.ls-gone).
+
+      Two ways a reader broke it. Scroll back up out of the closer while the
+      flight is still playing and the "put it away" branch below was skipped
+      (it refused to touch anything mid-flight), so the words never came back
+      and the closer stayed armed — a story with an empty column beside the
+      phone, for good. Or click a nav link mid-flight: the component unmounts,
+      but the loop keeps running and keeps calling window.scrollTo, so the page
+      you just opened yanks itself down to where the OLD page's closer was.
+
+      So a running flight now publishes how to stop it. `abort(true)` puts
+      everything back where the reader is (phone, words, the closer rewound so
+      it plays again); `abort(false)` just stops the loop, for unmount. `dead`
+      is the belt to that braces: every frame and every timer checks it.
+    */
+    let abort: null | ((restore: boolean) => void) = null;
+    let dead = false;
+
     const storyPhoneRect = () => story.current?.phoneRect() ?? null;
 
     /* ── the flight ─────────────────────────────────────────────────── */
@@ -109,6 +131,13 @@ export default function StoryCloser({ storyId, beats, accent, closer, closerId, 
       const fromShot = story.current?.shotEl(fromBeat);
       const toShot = story.current?.shotEl(toBeat);
       if (!fl || !fp || !fs || !start || !target || start.width < 10 || !fromShot || !toShot) {
+        // Whatever is missing, the closer still has to appear. This used to
+        // return into a no-op, and the section's phone was primed HIDDEN — so
+        // any measurement that came back empty (a screen not yet rendered, a
+        // phone not yet laid out) left the reader looking at a closer with no
+        // phone in it, permanently, because `armed` was already true and the
+        // observer never fires twice.
+        c!.arriveInPlace();
         done();
         return;
       }
@@ -159,8 +188,39 @@ export default function StoryCloser({ storyId, beats, accent, closer, closerId, 
       window.addEventListener("wheel", release, { passive: true });
       window.addEventListener("touchmove", release, { passive: true });
       window.addEventListener("keydown", release);
+      // A CLICK ends the driving too — and a nav link is a click. React unmounts
+      // a route some hundreds of ms after the link is pressed, and until then
+      // this loop was still calling window.scrollTo: press "About" mid-flight
+      // and the page that opened scrolled itself to the bottom (owner,
+      // 2026-09-01 — "clicked back to homepage and I didn't see the phone
+      // screens"). Pointer down, hands off.
+      window.addEventListener("pointerdown", release);
+      const unlisten = () => {
+        window.removeEventListener("pointerdown", release);
+        window.removeEventListener("wheel", release);
+        window.removeEventListener("touchmove", release);
+        window.removeEventListener("keydown", release);
+      };
+
+      let raf = 0;
+      abort = (restore) => {
+        cancelAnimationFrame(raf);
+        driving = false;
+        unlisten();
+        fl.style.display = "none";
+        fl.style.transform = "";
+        flying = false;
+        abort = null;
+        if (!restore) return;
+        story.current?.setPhoneHidden(false);
+        story.current?.setGone(false);
+        c!.rewind();
+        armed = false;
+        flown = false;
+      };
 
       const step = (now: number) => {
+        if (dead) return;
         const t = Math.min(1, (now - t0) / DUR);
         if (!jumped && t >= JUMP) jumped = true;
         if (driving) window.scrollTo(0, jumped ? scrollTo : scrollFrom);
@@ -176,7 +236,7 @@ export default function StoryCloser({ storyId, beats, accent, closer, closerId, 
           b.style.translate = "0 0";
         }
         if (t < 1) {
-          requestAnimationFrame(step);
+          raf = requestAnimationFrame(step);
           return;
         }
         if (driving) window.scrollTo(0, scrollTo); // exactly on the pin
@@ -184,14 +244,13 @@ export default function StoryCloser({ storyId, beats, accent, closer, closerId, 
         fl.style.display = "none";
         fl.style.transform = "";
         story.current?.setPhoneHidden(false);
-        window.removeEventListener("wheel", release);
-        window.removeEventListener("touchmove", release);
-        window.removeEventListener("keydown", release);
+        unlisten();
         flying = false;
+        abort = null;
         flown = true; // the way back starts from here
         done();
       };
-      requestAnimationFrame(step);
+      raf = requestAnimationFrame(step);
     }
 
     function runFlightBack(done: () => void) {
@@ -200,7 +259,13 @@ export default function StoryCloser({ storyId, beats, accent, closer, closerId, 
       const fromShot = story.current?.shotEl(toBeat); // leave on the closer's screen…
       const toShot = story.current?.shotEl(fromBeat); // …arrive on the frame the story ended on
       if (!fl || !fp || !fs || !from || !storyPhoneRect() || !fromShot || !toShot) {
+        // retract() has already emptied the closer around the phone, and the
+        // reader is still standing in it. Put it back rather than leaving the
+        // section stripped: `done()` alone disarmed it, and the observer will
+        // not re-fire while the section never left the screen.
+        c!.arriveInPlace();
         flying = false;
+        abort = null;
         done();
         return;
       }
@@ -242,6 +307,37 @@ export default function StoryCloser({ storyId, beats, accent, closer, closerId, 
       window.addEventListener("wheel", release, { passive: true });
       window.addEventListener("touchmove", release, { passive: true });
       window.addEventListener("keydown", release);
+      // A CLICK ends the driving too — and a nav link is a click. React unmounts
+      // a route some hundreds of ms after the link is pressed, and until then
+      // this loop was still calling window.scrollTo: press "About" mid-flight
+      // and the page that opened scrolled itself to the bottom (owner,
+      // 2026-09-01 — "clicked back to homepage and I didn't see the phone
+      // screens"). Pointer down, hands off.
+      window.addEventListener("pointerdown", release);
+      const unlisten = () => {
+        window.removeEventListener("pointerdown", release);
+        window.removeEventListener("wheel", release);
+        window.removeEventListener("touchmove", release);
+        window.removeEventListener("keydown", release);
+      };
+
+      let raf = 0;
+      abort = (restore) => {
+        cancelAnimationFrame(raf);
+        driving = false;
+        unlisten();
+        fl.style.display = "none";
+        fl.style.transform = "";
+        flying = false;
+        abort = null;
+        if (!restore) return;
+        // The way back was already heading here: give the reader the story.
+        story.current?.setPhoneHidden(false);
+        story.current?.setGone(false);
+        c!.rewind();
+        armed = false;
+        flown = false;
+      };
 
       /* The same in-place cut, backwards: the closer empties around the held
          phone, the page is cut back above the closer while only the phone is
@@ -249,6 +345,7 @@ export default function StoryCloser({ storyId, beats, accent, closer, closerId, 
          measured live AFTER the cut, because its sticky stage settles with the
          scroll and the landing has to be exact. */
       const step = (now: number) => {
+        if (dead) return;
         const t = Math.min(1, (now - t0) / DUR);
         if (!jumped && t >= JUMP) jumped = true;
         if (driving) window.scrollTo(0, jumped ? scrollTo : scrollFrom);
@@ -268,7 +365,7 @@ export default function StoryCloser({ storyId, beats, accent, closer, closerId, 
         // the story's words come back with the landing, not after it
         if (g >= 0.7) story.current?.setGone(false);
         if (t < 1) {
-          requestAnimationFrame(step);
+          raf = requestAnimationFrame(step);
           return;
         }
         if (driving) window.scrollTo(0, scrollTo);
@@ -276,14 +373,13 @@ export default function StoryCloser({ storyId, beats, accent, closer, closerId, 
         story.current?.setGone(false);
         fl.style.display = "none";
         fl.style.transform = "";
-        window.removeEventListener("wheel", release);
-        window.removeEventListener("touchmove", release);
-        window.removeEventListener("keydown", release);
+        unlisten();
         flying = false;
+        abort = null;
         flown = false;
         done();
       };
-      requestAnimationFrame(step);
+      raf = requestAnimationFrame(step);
     }
 
     /* THE WAY BACK, first act: everything the arrival brought out goes back
@@ -305,8 +401,29 @@ export default function StoryCloser({ storyId, beats, accent, closer, closerId, 
       window.addEventListener("wheel", rel, { passive: true });
       window.addEventListener("touchmove", rel, { passive: true });
       window.addEventListener("keydown", rel);
+      const unlisten = () => {
+        window.removeEventListener("wheel", rel);
+        window.removeEventListener("touchmove", rel);
+        window.removeEventListener("keydown", rel);
+      };
+      // The first act counts as flight time (onWheelUp set `flying`), so it
+      // has to be stoppable the same way — otherwise leaving during it strands
+      // exactly what a stranded flight used to strand.
+      abort = (restore) => {
+        over = true;
+        holding = false;
+        unlisten();
+        flying = false;
+        abort = null;
+        if (!restore) return;
+        story.current?.setPhoneHidden(false);
+        story.current?.setGone(false);
+        c!.rewind();
+        armed = false;
+        flown = false;
+      };
       const hold = (now?: number) => {
-        if (over || !holding) return;
+        if (over || !holding || dead) return;
         const g = Math.min(1, ((now || performance.now()) - g0) / G);
         const e = 1 - Math.pow(1 - g, 3);
         window.scrollTo(0, y0 + (yT - y0) * e);
@@ -334,7 +451,15 @@ export default function StoryCloser({ storyId, beats, accent, closer, closerId, 
         entries.forEach((e) => {
           if (!e.isIntersecting) {
             // Scrolled back above it: put it away, so coming back plays it again.
-            if (e.boundingClientRect.top > 0 && armed && !flying) {
+            if (e.boundingClientRect.top > 0 && armed) {
+              // Mid-flight this used to do NOTHING, which is how a reader who
+              // turned around during the 1.5s ended up back in a story whose
+              // words had stepped aside for good. Stop the flight instead: it
+              // puts the phone, the words and the closer back itself.
+              if (flying) {
+                abort?.(true);
+                return;
+              }
               armed = false;
               flown = false;
               c.rewind();
@@ -365,6 +490,11 @@ export default function StoryCloser({ storyId, beats, accent, closer, closerId, 
     if (flies) window.addEventListener("wheel", onWheelUp, { passive: true });
 
     return () => {
+      // Leaving the page mid-flight: stop the loop. It drives window.scrollTo,
+      // and it used to keep driving after the route had changed — the page you
+      // opened scrolled itself to where the old page's closer had been.
+      dead = true;
+      abort?.(false);
       io.disconnect();
       window.removeEventListener("wheel", onWheelUp);
     };
