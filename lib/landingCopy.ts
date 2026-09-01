@@ -142,8 +142,11 @@ export const doors = [
    (hero.badge), so this is the second half of that sentence. */
 /* The owner's sentence, dictated 2026-09-02 — "tuhle vetu tam chci". It opens
    on what the app IS (customized per campus) instead of on how few campuses
-   there are; "Yours can be next." is the half it has always ended on. */
-export const availability = "Customized for each campus, each with its own gyms, houses and colours. Yours can be next.";
+   there are; "Yours can be next." is the half it has always ended on. The
+   second "each" is dropped on their own instruction ("you can drop the middle
+   each if its fine with english") — it is, and the line reads lighter without
+   two of them in nine words. */
+export const availability = "Customized for each campus, with its own gyms, houses and colours. Yours can be next.";
 
 /* THE BRAND LINE — the slogan, set under the wordmark like "Škoda · Simply
    Clever" (the owner, 2026-08-30). A promise rather than a description: it
