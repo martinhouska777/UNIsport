@@ -188,7 +188,10 @@ export const brandLine = "Never train alone.";
   word for it, and one of the line icons in components/landing/FeatureIcon.tsx.
 
   These MIRROR the beats below (S1…S7 / V1…V6) and have to be changed with
-  them. They are written out rather than parsed off the beats' kickers so the
+  them — the chip and its beat's kicker are now the SAME words, which is what
+  mirroring was always meant to mean (2026-09-01: the kickers dropped their
+  definite article, because "The why you match" cannot be written and a set
+  where one label refuses the article should not carry it anywhere). They are written out rather than parsed off the beats' kickers so the
   card's words stay reviewable here, in one place, like the rest of the page.
 */
 export type OpeningStep = { n: string; icon: string; word: string };
@@ -205,11 +208,11 @@ export const studentIntro = {
   steps: [
     { n: "01", icon: "gym", word: "Gyms" },
     { n: "02", icon: "partners", word: "People" },
-    { n: "03", icon: "verified", word: "Reasons" },
+    { n: "03", icon: "verified", word: "Why you match" },
     { n: "04", icon: "chat", word: "Plan" },
     { n: "05", icon: "log", word: "Log" },
     { n: "06", icon: "calendar", word: "Record" },
-    { n: "07", icon: "leaderboard", word: "Proof" },
+    { n: "07", icon: "leaderboard", word: "Rankings" },
   ] as OpeningStep[],
   /* The way past the story for someone who wants the list rather than the
      walk. It points AT the feature block beside Campus Colours rather than
@@ -222,7 +225,7 @@ export const studentIntro = {
 export const studentStory: Beat[] = [
   {
     id: "S1",
-    kicker: "01 · The gyms",
+    kicker: "01 · Gyms",
     head: "Find every gym on campus.",
     sub: "Opening hours, ratings, the equipment in each room, and how busy it is right now.",
     shot: "01-gyms.webp",
@@ -233,7 +236,7 @@ export const studentStory: Beat[] = [
   },
   {
     id: "S2",
-    kicker: "02 · The people",
+    kicker: "02 · People",
     head: "Find a training partner. Make a friend.",
     sub: "Ranked by how well you actually fit — same gym, same hours, same level, same interests.",
     shot: "02-match.webp",
@@ -241,7 +244,10 @@ export const studentStory: Beat[] = [
   },
   {
     id: "S3",
-    kicker: "03 · The reasons",
+    /* Named after the app's own words: /people/[id] calls this section "Why
+       you match", and the capture is even filed as 03-why-you-match.webp. The
+       label was "The reasons", which named nothing the reader could picture. */
+    kicker: "03 · Why you match",
     /* "Life goals" was in the owner's line and is not in the product — the
        profile stores concentration, hometown, languages, interests and a bio. */
     head: "See why you match, before you say hello.",
@@ -251,7 +257,7 @@ export const studentStory: Beat[] = [
   },
   {
     id: "S4",
-    kicker: "04 · The plan",
+    kicker: "04 · Plan",
     head: "Plan it in the chat.",
     sub: "One tap proposes the session, one accepts, and it's in both calendars.",
     shot: "04-plan-a-session.webp",
@@ -259,7 +265,7 @@ export const studentStory: Beat[] = [
   },
   {
     id: "S5",
-    kicker: "05 · The log",
+    kicker: "05 · Log",
     head: "Afterwards, log it together.",
     sub: "Every set, every rep — with your partner carried over from the plan.",
     shot: "tall-logsheet.webp",
@@ -267,7 +273,7 @@ export const studentStory: Beat[] = [
   },
   {
     id: "S6",
-    kicker: "06 · The record",
+    kicker: "06 · Record",
     /* "Track your partner's calendar" was in the owner's line and is not in
        the product — /people/[id] renders a profile, match reasons and photos,
        and no calendar. */
@@ -278,7 +284,13 @@ export const studentStory: Beat[] = [
   },
   {
     id: "S7",
-    kicker: "07 · The proof",
+    /* "The proof" told the reader nothing. The screen really does carry the
+       leaderboards, so the label names them — and the sub now lists the four
+       that exist (lib/leaderboards.ts: campus, house, partners, year) rather
+       than mentioning one in passing. The two lines above it are untouched:
+       the story still ends on its payoff, and the rankings are what it hands
+       you on the way out. */
+    kicker: "07 · Rankings",
     /* The story used to close on "Never train alone again." — which now
        opens the walk, on the card above (see `studentIntro`). Saying it twice
        made the ending a repeated promise; "Nobody trained alone." is the same
@@ -286,7 +298,7 @@ export const studentStory: Beat[] = [
        reader joins the two without being told to. */
     head: "29 sessions. 6 partners.",
     headEm: "Nobody trained alone.",
-    sub: "And your place on the campus leaderboard.",
+    sub: "And a place on the rankings — your campus, your house, your partners, your year.",
     shot: "tall-profile.webp",
     ann: [
       { side: "right", top: 30, text: "Leaderboards" },
@@ -357,7 +369,7 @@ export const cues = {
 export const varsityStory: Beat[] = [
   {
     id: "V1",
-    kicker: "V1 · The plan",
+    kicker: "V1 · Plan",
     /* "Always actual" was the owner's word — aktuální, a Czech false friend.
        "Current" is the meaning; English "actual" means real-not-fake. The
        sub is the one that was already here: the owner gave V1 a headline
@@ -369,7 +381,7 @@ export const varsityStory: Beat[] = [
   },
   {
     id: "V2",
-    kicker: "V2 · The boat",
+    kicker: "V2 · Boat",
     head: "Find your lineup in a second.",
     sub: "Never look through 40 names in an Excel sheet again. Your name pops right in a boat.",
     shot: "tall-vhome.webp",
@@ -377,7 +389,7 @@ export const varsityStory: Beat[] = [
   },
   {
     id: "V3",
-    kicker: "V3 · The race",
+    kicker: "V3 · Race",
     /* "Always on your eyes" is před očima taken literally. */
     head: "Keep your focus up.",
     sub: "Countdown to the next race and coach's note on what to fix, always in front of you.",
@@ -389,7 +401,7 @@ export const varsityStory: Beat[] = [
   },
   {
     id: "V4",
-    kicker: "V4 · The week",
+    kicker: "V4 · Week",
     /* "Logging IN workouts" was the owner's phrase — logging in is signing
        in, a different thing. All three routes named here are on the capture:
        a Log button per prescribed session, the "Scan C2 / RP3 monitor" card,
@@ -404,7 +416,7 @@ export const varsityStory: Beat[] = [
   },
   {
     id: "V5",
-    kicker: "V5 · The calendar",
+    kicker: "V5 · Calendar",
     head: "Keep track of every session.",
     sub: "Each workout you log lands on the calendar by itself — your season's training history, paired with live statistics.",
     shot: "14-varsity-calendar.webp",
@@ -415,7 +427,7 @@ export const varsityStory: Beat[] = [
   },
   {
     id: "V6",
-    kicker: "V6 · The season",
+    kicker: "V6 · Season",
     /* "Check how your teammates are doing" is a real feature but NOT on this
        frame — tall-vprofile is your own season. The squad screen exists
        (11-varsity-teammate.webp) and is a dark-mode capture, so until it is

@@ -42,25 +42,25 @@ for (const scr of Object.keys(realShots)) {
 
 const story1 = [
   {
-    key: "01-gyms", kicker: "01 · The gyms",
+    key: "01-gyms", kicker: "01 · Gyms",
     head: "Find every gym on campus.",
     sub: "Opening hours, ratings, the equipment in each room, and how busy it is right now.",
     ann: [{ side: "right", top: 14, text: "Live ratings" }, { side: "left", top: 68, text: "House gyms too" }],
   },
   {
-    key: "02-match", kicker: "02 · The people", enter: "tab", tap: [37.5, 95.5],
+    key: "02-match", kicker: "02 · People", enter: "tab", tap: [37.5, 95.5],
     head: "Find a training partner. Make a friend.",
     sub: "Ranked by how well you actually fit — same gym, same hours, same level, same interests.",
     ann: [{ side: "right", top: 24, text: "Ranked by real fit" }],
   },
   {
-    key: "03-why-you-match", kicker: "03 · The reasons", enter: "zoom", tap: [26, 54],
+    key: "03-why-you-match", kicker: "03 · Why you match", enter: "zoom", tap: [26, 54],
     head: "See why you match, before you say hello.",
     sub: "Interests, concentration, hometown, languages — and whether one of you wants a mentor.",
     ann: [{ side: "left", top: 56, text: "Facts, not guesses" }],
   },
   {
-    key: "04-plan-a-session", kicker: "04 · The plan", enter: "push", tap: [68, 86.5], pointer: true,
+    key: "04-plan-a-session", kicker: "04 · Plan", enter: "push", tap: [68, 86.5], pointer: true,
     head: "Plan it in the chat.",
     sub: "One tap proposes the session, one accepts, and it's in both calendars.",
     ann: [{ side: "right", top: 52, text: "One tap to accept" }],
@@ -68,13 +68,13 @@ const story1 = [
   {
     // hold 0.25: the sheet is at its very top the moment the beat appears,
     // then the whole scroll happens on screen instead of starting mid-page.
-    key: "tall-logsheet", kicker: "05 · The log", pan: [0, 0.75], hold: 0.25, side: "left", enter: "push",
+    key: "tall-logsheet", kicker: "05 · Log", pan: [0, 0.75], hold: 0.25, side: "left", enter: "push",
     head: "Afterwards, log it together.",
     sub: "Every set, every rep — with your partner carried over from the plan.",
     ann: [{ side: "right", top: 30, text: "Set by set" }],
   },
   {
-    key: "tall-logsheet", kicker: "06 · The record", pan: [0.75, 1], side: "left", enter: "none",
+    key: "tall-logsheet", kicker: "06 · Record", pan: [0.75, 1], side: "left", enter: "none",
     head: "Keep the session, not just the numbers.",
     sub: "Who you trained with, how it went, and a photo — all of it lands in your calendar.",
     ann: [{ side: "left", top: 50, text: "Photo + note" }],
@@ -82,9 +82,9 @@ const story1 = [
   {
     // The profile scrolls from the name down to the leaderboard ranks and comes
     // to rest on the session calendar — the month is the closing image.
-    key: "tall-profile", kicker: "07 · The proof", pan: [0, 1.3], hold: 0.2, side: "left", enter: "dismiss", tap: [50, 95],
+    key: "tall-profile", kicker: "07 · Rankings", pan: [0, 1.3], hold: 0.2, side: "left", enter: "dismiss", tap: [50, 95],
     head: "29 sessions. 6 partners.", headEm: "Nobody trained alone.",
-    sub: "And your place on the campus leaderboard.",
+    sub: "And a place on the rankings — your campus, your house, your partners, your year.",
     ann: [{ side: "right", top: 30, text: "Leaderboards" }, { side: "left", top: 76, text: "Every day you trained" }],
   },
 ];
@@ -93,13 +93,13 @@ const story2 = [
   {
     // V1 carries the scroll all the way down to the lineup, so V2's headline
     // arrives with the boat almost centred rather than announcing it early.
-    key: "tall-vhome", kicker: "V1 · The plan", pan: [0, 0.5], hold: 0.45,
+    key: "tall-vhome", kicker: "V1 · Plan", pan: [0, 0.5], hold: 0.45,
     head: "Training plan always at hand, always current.",
     sub: "Water, erg, weights — the week your coach actually built. Not a screenshot of a spreadsheet.",
     ann: [{ side: "right", top: 18, text: "Week 6 of 15" }],
   },
   {
-    key: "tall-vhome", kicker: "V2 · The boat", pan: [0.5, 0.8], enter: "none",
+    key: "tall-vhome", kicker: "V2 · Boat", pan: [0.5, 0.8], enter: "none",
     head: "Find your lineup in a second.",
     sub: "Never look through 40 names in an Excel sheet again. Your name pops right in a boat.",
     ann: [{ side: "left", top: 42, text: "You, 3 seat" }],
@@ -108,26 +108,26 @@ const story2 = [
     // The race and the note used to be a beat each. On a home screen this short
     // they share one window, and no amount of scrolling separates them.
     // `to` past 1: the pan hits the very bottom mid-beat and rests there.
-    key: "tall-vhome", kicker: "V3 · The race", pan: [0.74, 1.2], enter: "none",
+    key: "tall-vhome", kicker: "V3 · Race", pan: [0.74, 1.2], enter: "none",
     head: "Keep your focus up.",
     sub: "Countdown to the next race and coach's note on what to fix, always in front of you.",
     ann: [{ side: "right", top: 52, text: "Counting down" }, { side: "left", top: 70, text: "Straight from the coach" }],
   },
   {
-    key: "13-varsity-log-list", kicker: "V4 · The week", side: "left", enter: "sheet", tap: [50, 92.7],
+    key: "13-varsity-log-list", kicker: "V4 · Week", side: "left", enter: "sheet", tap: [50, 92.7],
     head: "Logging workouts has never been easier.",
     sub: "Log your workout straight from your training plan, scan your erg for instant extraction, add extra workouts.",
     ann: [{ side: "right", top: 16, text: "Your week, at a glance" }, { side: "left", top: 44, text: "Tap to log" }],
   },
   {
     // Logged a workout → over to the Calendar tab, where it just landed.
-    key: "14-varsity-calendar", kicker: "V5 · The calendar", side: "left", enter: "tab", tap: [30.8, 94],
+    key: "14-varsity-calendar", kicker: "V5 · Calendar", side: "left", enter: "tab", tap: [30.8, 94],
     head: "Keep track of every session.",
     sub: "Each workout you log lands on the calendar by itself — your season's training history, paired with live statistics.",
     ann: [{ side: "right", top: 34, text: "Session dots" }, { side: "left", top: 64, text: "Today" }],
   },
   {
-    key: "tall-vprofile", kicker: "V6 · The season", pan: [0.06, 0.42], side: "left", enter: "tab", tap: [88.4, 93.3],
+    key: "tall-vprofile", kicker: "V6 · Season", pan: [0.06, 0.42], side: "left", enter: "tab", tap: [88.4, 93.3],
     head: "See your statistics.",
     sub: "Track consistency, check how your teammates are doing, inspire yourself.",
     ann: [{ side: "right", top: 40, text: "Eight weeks of work" }],
