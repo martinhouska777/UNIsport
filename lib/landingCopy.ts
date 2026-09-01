@@ -324,37 +324,34 @@ export const studentStory: Beat[] = [
 /* ─────────────── BETWEEN THE TWO — a full stop, then a reveal ─────────────── */
 
 export const interlude = {
-  /* THE WHOLE REVEAL IS DICTATED, 2026-09-02: "and if you do sport for the
-     university itself, designed specifically for each college sport, now
-     available for rowing — this is how you write it." Three phrases, one slot
-     each: the lead-in, the small line, and the pill. They stand as given (only
-     the spelling of "available" is ours), and they are not to be improved on
-     without being asked.
-
-     THE PILL is the hero's pill in gold ("Free for students · live now at
-     Harvard") — the one place this page has taught the reader to look for a
-     fact. The sport has to be HERE, because under this line stand seven chips
-     reading Lineups, Squad board, Coach's notes: a swimmer who scrolls into
-     them without having been told has been misled by the page. */
-  badge: "Now available for rowing",
   leadIn: "And if you do sport for the university itself —",
   /* On the Varsity view (/for/varsity) nothing comes before it, so the "And"
      that joins it to the student story goes. Same line otherwise. */
   leadInSolo: "If you do sport for the university itself —",
   headline: "Varsity",
   headlineEm: "Mode.",
-  /* The small line, third of the dictated phrases. What it replaced, and why
-     that is worth not re-writing back in: it said "The app your squad has been
-     running out of a group chat", which called the mode an APP — the reading
-     taken off the student card the day before ("the varsity mode is just for
-     the athletes") — and "running out of" is read as "running low on" before it
-     resolves. The group-chat idea was dropped, not moved (the owner's call):
-     the seven chips below already say what the mode replaces.
+  /* THE REVEAL'S WORDS ARE THE OWNER'S, dictated over two messages on
+     2026-09-02 — "and if you do sport for the university itself, designed
+     specifically for each college sport, now available for rowing … this is
+     how you write it", then the arrangement: the sentence, the sport under
+     the sentence, the steps under that. They stand as given (only "available"
+     is respelled), and are not to be improved on without being asked.
 
-     "NOT A SECOND APP" NOW RESTS ON ONE WORD — "Mode", in the headline. The
-     line that used to carry it ("An extra mode for varsity athletes, …") was
-     folded away by the dictation. Flagged to the owner; theirs to re-open. */
-  sub: "Designed specifically for each college sport.",
+     What this line replaced, and why it is worth not writing back in: it said
+     "The app your squad has been running out of a group chat", which called
+     the mode an APP — the reading taken off the student card the day before
+     ("the varsity mode is just for the athletes") — and "running out of" is
+     read as "running low on" before it resolves. The group-chat idea was
+     dropped, not moved (their call): the seven steps below already say what
+     the mode replaces. */
+  sub: "An extra mode for varsity athletes, designed specifically for each college sport.",
+  /* THE SPORT, on its own line UNDER the sentence (the owner's arrangement —
+     it was a pill above the lead-in for one commit). The reader needs it at
+     exactly this point, because the next thing they meet is seven steps
+     reading Lineups, Squad board, Coach's notes: a swimmer who scrolls into
+     those without having been told has been misled by the page. Drawn as the
+     hero's pill in gold, which is how this page marks a fact. */
+  availability: "Now available for rowing",
   /* Seven now — the squad board joined on 2026-09-01. Renamed the same day to
      the owner's list — the labels now name the thing on the screen rather
      than a mood. "Boat" became "Lineups" (what the coach publishes), "Week"

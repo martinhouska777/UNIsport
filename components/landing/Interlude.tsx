@@ -22,13 +22,6 @@ export default function Interlude({ solo = false }: { solo?: boolean }) {
       id="interlude"
       className="relative z-[1] flex min-h-svh flex-col items-center justify-center gap-[clamp(10px,1.8vh,18px)] border-t border-l-line bg-l-surface px-6 pt-14 pb-8 text-center"
     >
-      {/* The same pill as the hero's, in gold: this page keeps its facts in a
-          pill above the headline, and the reveal had none. */}
-      <div className="inline-flex items-center gap-2 rounded-full border border-l-varsity-soft bg-l-varsity-dim px-3 py-1.5 font-mono text-[11px] font-medium tracking-wider uppercase text-l-varsity">
-        <span className="l-pulse h-1.5 w-1.5 rounded-full bg-l-varsity shadow-[0_0_8px_var(--color-l-varsity)]" />
-        {interlude.badge}
-      </div>
-
       <p className="font-display text-[clamp(20px,3.4vw,30px)] tracking-[-0.01em] text-l-text-2">
         {solo ? interlude.leadInSolo : interlude.leadIn}
       </p>
@@ -40,6 +33,13 @@ export default function Interlude({ solo = false }: { solo?: boolean }) {
       <p className="max-w-[36ch] text-[clamp(16px,2.4vw,19px)] leading-[1.55] tracking-[-0.01em] text-balance text-l-text-2">
         {interlude.sub}
       </p>
+
+      {/* The sport, UNDER the sentence and above the steps (the owner's
+          arrangement). The hero's pill, in gold — how this page marks a fact. */}
+      <div className="inline-flex items-center gap-2 rounded-full border border-l-varsity-soft bg-l-varsity-dim px-3 py-1.5 font-mono text-[11px] font-medium tracking-wider uppercase text-l-varsity">
+        <span className="l-pulse h-1.5 w-1.5 rounded-full bg-l-varsity shadow-[0_0_8px_var(--color-l-varsity)]" />
+        {interlude.availability}
+      </div>
 
       <OpeningSteps steps={interlude.steps} accent="varsity" storyId="story2" />
 

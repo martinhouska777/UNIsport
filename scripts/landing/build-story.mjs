@@ -792,7 +792,8 @@ ${closer("closer-colours", "UNIsport Campus Colours.html", "Your campus, your co
 <div class="statement" id="interlude">
   <p class="lead-in">And if you do sport for the university itself —</p>
   <h1>Varsity <em>Mode.</em></h1>
-  <p class="sub">Designed specifically for each college sport.</p>
+  <p class="sub">An extra mode for varsity athletes, designed specifically for each college sport.</p>
+  <p class="sub">Now available for rowing</p>
   <div class="cue">Keep going</div>
 </div>
 
