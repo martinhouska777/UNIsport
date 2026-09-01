@@ -1,6 +1,6 @@
 /*
   HOW EACH BEAT MOVES — the mechanics of the two scroll stories, keyed by the
-  beat ids in lib/landingCopy.ts (S1…S7, V1…V6).
+  beat ids in lib/landingCopy.ts (S1…S7, V1…V7).
 
   This is deliberately NOT in landingCopy.ts, which stays readable by someone
   who does not read code. It mirrors, exactly, the per-beat motion fields in
@@ -73,12 +73,19 @@ export const motion: Record<string, BeatMotion> = {
   // `to` past 1: the pan hits the very bottom mid-beat and rests there.
   V3: { pan: [0.74, 1.2], enter: "none" },
   V4: { side: "left", enter: "sheet", tap: [50, 92.7] },
-  // Logged a workout → over to the Calendar tab, where it just landed.
-  V5: { side: "left", enter: "tab", tap: [30.8, 94] },
-  V6: { pan: [0.06, 0.42], side: "left", enter: "tab", tap: [88.4, 93.3] },
-  // The board really is a sheet you pull up by tapping a row in the Workouts
-  // list, so "sheet" is not decoration here — it is the gesture that opens it.
-  V7: { side: "left", enter: "sheet" },
+  // THE SQUAD BOARD RUNS BEFORE THE CALENDAR (owner, 2026-09-01), so it no
+  // longer arrives off the statistics screen but off the log list — which has
+  // a tab bar on it, so the gesture can be shown: the ring presses "Team",
+  // then the board rises. It really is a sheet you pull up (Team → Workouts →
+  // tap a row), so "sheet" is not decoration here.
+  V5: { side: "left", enter: "sheet", tap: [69.1, 93.2] },
+  // ...and it leaves the way a sheet leaves: the ring presses the board's own
+  // close X (top right of that capture) and the sheet drops away, revealing
+  // the calendar. The tab bar is behind the sheet on this frame, so a tab tap
+  // would have had nothing to land on.
+  V6: { side: "left", enter: "dismiss", tap: [92.4, 20.3] },
+  // Unchanged: statistics still arrives off the calendar, by the Profile tab.
+  V7: { pan: [0.06, 0.42], side: "left", enter: "tab", tap: [88.4, 93.3] },
 };
 
 /* The natural size of every capture the stories ride, so <Image> can reserve

@@ -359,20 +359,27 @@ export const cues = {
   interlude: "Keep going",
 };
 
-/* ───────────────────── V1–V6 · THE VARSITY STORY ───────────────────── */
+/* ───────────────────── V1–V7 · THE VARSITY STORY ───────────────────── */
 
 /*
+  ORDER (owner's call, 2026-09-01): plan · lineup · notes · log · SQUAD BOARD ·
+  calendar · statistics. The board used to come last, after the two "your own
+  season" beats; now the log beat hands straight over to the squad, and the
+  calendar and the statistics — both of them your own training — close the
+  story side by side.
+
   Two open questions on this story, both raised and neither yet decided:
 
-  1. It ends on a statistics graph (V6), which the brief argues against by
+  1. It ends on a statistics graph (V7), which the brief argues against by
      name: a stats screen is the one screen every fitness app already has,
      while a seat in a named boat, published by a coach, is the one none of
      them can show. That screen is V2, currently buried mid-story.
-  2. V5's headline is the only line in either story written in the generic
+  2. V6's headline is the only line in either story written in the generic
      voice — "keep track of every session" names nothing and could sit on any
      fitness app ever shipped.
 
-  And one beat that is written but cannot be shot yet — V7, the squad:
+  And one beat that is written but cannot be shot yet — the TEAMMATE beat (a
+  different thing from V5's squad board, which ships):
 
       head: "See how the squad is training."
       sub:  "92% consistency, 19 hours, five extra sessions — every teammate's
@@ -437,8 +444,36 @@ export const varsityStory: Beat[] = [
     ],
   },
   {
+    /* THE SQUAD BOARD — the beat the owner asked for ("a note about team and
+       rankings, its a nice part of it"), and it took three goes to get right.
+       First it was a clause on the statistics beat, which promised a board the
+       frame did not show. Then the database said varsity_results did not exist
+       at all, so the clause came off the page entirely. db/varsity_results.sql
+       is applied now, and the app's own worked example
+       (lib/varsity/demoWorkouts.ts) fills the board until a coach flags a real
+       session — so it has both a table behind it and a picture in front of it,
+       and it gets a beat.
+
+       IT RUNS BEFORE THE CALENDAR (the owner's call, 2026-09-01): the log beat
+       hands straight over to the squad, and the two "your own season" beats —
+       calendar then statistics — close the story together instead of being
+       split by the board.
+
+       The capture is DRIVEN, not a URL: Team → Workouts → tap the 2k test.
+       scripts/landing/capture-light.mjs --only=15-varsity-board re-shoots it. */
     id: "V5",
-    kicker: "V5 · Calendar",
+    kicker: "V5 · Squad board",
+    head: "Every team piece, ranked.",
+    sub: "The whole squad on one board — your place in it, the squad's average, and how far off the top eight you are.",
+    shot: "15-varsity-board.webp",
+    ann: [
+      { side: "right", top: 44, text: "Your place" },
+      { side: "left", top: 62, text: "The squad's average" },
+    ],
+  },
+  {
+    id: "V6",
+    kicker: "V6 · Calendar",
     head: "Keep track of every session.",
     sub: "Each workout you log lands on the calendar by itself — your season's training history, paired with live statistics.",
     shot: "14-varsity-calendar.webp",
@@ -448,52 +483,19 @@ export const varsityStory: Beat[] = [
     ],
   },
   {
-    id: "V6",
-    /* THE SQUAD BOARD IS NOT ADVERTISED HERE, and the reason is worth keeping.
-       The owner asked for it — "a note about team and rankings, its a nice
-       part of it" — and it was written, because lib/varsity/teamBoard.ts and
-       resultsStore.ts implement it and db/varsity_results.sql describes the
-       table it reads. Then the database was checked: `varsity_results` DOES
-       NOT EXIST, and varsity_plan_sessions has neither `team_workout` nor
-       `board`. That migration was never run, so the feature is code with no
-       table behind it and the sentence was advertising something the live app
-       cannot do. It comes back the moment db/varsity_results.sql is applied
-       and a board has been shot — see db/seed_varsity_board.sql, which is
-       written and waiting. (varsity_telemetry and varsity_coach_reads are
-       unapplied too: check the table, not the .sql file, before writing copy
-       about a varsity feature.) */
-    kicker: "V6 · Statistics",
+    id: "V7",
     /* "Check how your teammates are doing" is a real feature but NOT on this
-       frame — tall-vprofile is your own season. The squad screen exists
+       frame — tall-vprofile is your own season. The teammate screen exists
        (11-varsity-teammate.webp) and is a dark-mode capture, so until it is
-       re-shot this clause is the one line in either story with no picture
-       behind it. */
+       re-shot that clause has no picture behind it and stays off the page.
+       (varsity_telemetry and varsity_coach_reads are unapplied migrations too:
+       check the TABLE, not the .sql file, before writing copy about a varsity
+       feature.) */
+    kicker: "V7 · Statistics",
     head: "See your statistics.",
     sub: "Consistency, hours and personal bests — eight weeks of work, in one screen.",
     shot: "tall-vprofile.webp",
     ann: [{ side: "right", top: 40, text: "Eight weeks of work" }],
-  },
-  {
-    /* THE SQUAD BOARD — the beat the owner asked for ("a note about team and
-       rankings, its a nice part of it"), and it took three goes to get right.
-       First it was a clause on V6, which promised a board the frame did not
-       show. Then the database said varsity_results did not exist at all, so
-       the clause came off the page entirely. db/varsity_results.sql is applied
-       now, and the app's own worked example (lib/varsity/demoWorkouts.ts)
-       fills the board until a coach flags a real session — so it has both a
-       table behind it and a picture in front of it, and it gets a beat.
-
-       The capture is DRIVEN, not a URL: Team → Workouts → tap the 2k test.
-       scripts/landing/capture-light.mjs --only=15-varsity-board re-shoots it. */
-    id: "V7",
-    kicker: "V7 · Squad board",
-    head: "Every team piece, ranked.",
-    sub: "The whole squad on one board — your place in it, the squad's average, and how far off the top eight you are.",
-    shot: "15-varsity-board.webp",
-    ann: [
-      { side: "right", top: 44, text: "Your place" },
-      { side: "left", top: 62, text: "The squad's average" },
-    ],
   },
 ];
 

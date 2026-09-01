@@ -122,25 +122,27 @@ const story2 = [
     ann: [{ side: "right", top: 16, text: "Your week, at a glance" }, { side: "left", top: 44, text: "Tap to log" }],
   },
   {
-    // Logged a workout → over to the Calendar tab, where it just landed.
-    key: "14-varsity-calendar", kicker: "V5 · Calendar", side: "left", enter: "tab", tap: [30.8, 94],
+    // The squad board — a sheet you pull up from the Workouts list, so it
+    // arrives as one. It runs BEFORE the calendar (owner, 2026-09-01), off the
+    // log list, whose tab bar is where the ring presses "Team".
+    // Driven capture: see capture-light.mjs.
+    key: "15-varsity-board", kicker: "V5 · Squad board", side: "left", enter: "sheet", tap: [69.1, 93.2],
+    head: "Every team piece, ranked.",
+    sub: "The whole squad on one board — your place in it, the squad's average, and how far off the top eight you are.",
+    ann: [{ side: "right", top: 44, text: "Your place" }, { side: "left", top: 62, text: "The squad's average" }],
+  },
+  {
+    // The board's own close X drops the sheet away and the calendar is there.
+    key: "14-varsity-calendar", kicker: "V6 · Calendar", side: "left", enter: "dismiss", tap: [92.4, 20.3],
     head: "Keep track of every session.",
     sub: "Each workout you log lands on the calendar by itself — your season's training history, paired with live statistics.",
     ann: [{ side: "right", top: 34, text: "Session dots" }, { side: "left", top: 64, text: "Today" }],
   },
   {
-    key: "tall-vprofile", kicker: "V6 · Statistics", pan: [0.06, 0.42], side: "left", enter: "tab", tap: [88.4, 93.3],
+    key: "tall-vprofile", kicker: "V7 · Statistics", pan: [0.06, 0.42], side: "left", enter: "tab", tap: [88.4, 93.3],
     head: "See your statistics.",
     sub: "Consistency, hours and personal bests — eight weeks of work, in one screen.",
     ann: [{ side: "right", top: 40, text: "Eight weeks of work" }],
-  },
-  {
-    // The squad board — a sheet you pull up from the Workouts list, so it
-    // arrives as one. Driven capture: see capture-light.mjs.
-    key: "15-varsity-board", kicker: "V7 · Squad board", side: "left", enter: "sheet",
-    head: "Every team piece, ranked.",
-    sub: "The whole squad on one board — your place in it, the squad's average, and how far off the top eight you are.",
-    ann: [{ side: "right", top: 44, text: "Your place" }, { side: "left", top: 62, text: "The squad's average" }],
   },
 ];
 
