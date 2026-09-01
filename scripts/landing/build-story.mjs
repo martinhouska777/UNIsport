@@ -93,13 +93,13 @@ const story2 = [
   {
     // V1 carries the scroll all the way down to the lineup, so V2's headline
     // arrives with the boat almost centred rather than announcing it early.
-    key: "tall-vhome", kicker: "V1 · Plan", pan: [0, 0.5], hold: 0.45,
+    key: "tall-vhome", kicker: "V1 · Training plan", pan: [0, 0.5], hold: 0.45,
     head: "Training plan always at hand, always current.",
     sub: "Water, erg, weights — the week your coach actually built. Not a screenshot of a spreadsheet.",
     ann: [{ side: "right", top: 18, text: "Week 6 of 15" }],
   },
   {
-    key: "tall-vhome", kicker: "V2 · Boat", pan: [0.5, 0.8], enter: "none",
+    key: "tall-vhome", kicker: "V2 · Lineups", pan: [0.5, 0.8], enter: "none",
     head: "Find your lineup in a second.",
     sub: "Never look through 40 names in an Excel sheet again. Your name pops right in a boat.",
     ann: [{ side: "left", top: 42, text: "You, 3 seat" }],
@@ -108,13 +108,13 @@ const story2 = [
     // The race and the note used to be a beat each. On a home screen this short
     // they share one window, and no amount of scrolling separates them.
     // `to` past 1: the pan hits the very bottom mid-beat and rests there.
-    key: "tall-vhome", kicker: "V3 · Race", pan: [0.74, 1.2], enter: "none",
+    key: "tall-vhome", kicker: "V3 · Coach's notes", pan: [0.74, 1.2], enter: "none",
     head: "Keep your focus up.",
     sub: "Countdown to the next race and coach's note on what to fix, always in front of you.",
     ann: [{ side: "right", top: 52, text: "Counting down" }, { side: "left", top: 70, text: "Straight from the coach" }],
   },
   {
-    key: "13-varsity-log-list", kicker: "V4 · Week", side: "left", enter: "sheet", tap: [50, 92.7],
+    key: "13-varsity-log-list", kicker: "V4 · Log", side: "left", enter: "sheet", tap: [50, 92.7],
     head: "Logging workouts has never been easier.",
     sub: "Log your workout straight from your training plan, scan your erg for instant extraction, add extra workouts.",
     ann: [{ side: "right", top: 16, text: "Your week, at a glance" }, { side: "left", top: 44, text: "Tap to log" }],
@@ -127,9 +127,9 @@ const story2 = [
     ann: [{ side: "right", top: 34, text: "Session dots" }, { side: "left", top: 64, text: "Today" }],
   },
   {
-    key: "tall-vprofile", kicker: "V6 · Season", pan: [0.06, 0.42], side: "left", enter: "tab", tap: [88.4, 93.3],
+    key: "tall-vprofile", kicker: "V6 · Statistics", pan: [0.06, 0.42], side: "left", enter: "tab", tap: [88.4, 93.3],
     head: "See your statistics.",
-    sub: "Track consistency, check how your teammates are doing, inspire yourself.",
+    sub: "Consistency, hours and personal bests — and the squad's board on every team workout, ranked when it is a test piece.",
     ann: [{ side: "right", top: 40, text: "Eight weeks of work" }],
   },
 ];

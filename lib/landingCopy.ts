@@ -317,14 +317,21 @@ export const interlude = {
   headline: "Varsity",
   headlineEm: "Mode.",
   sub: "The app your squad has been running out of a group chat.",
-  /* Six, not seven: the varsity story has six beats. */
+  /* Six, not seven: the varsity story has six beats. Renamed 2026-09-01 to
+     the owner's list — the labels now name the thing on the screen rather
+     than a mood. "Boat" became "Lineups" (what the coach publishes), "Week"
+     became "Log" (the beat is the logging list, not a week view), "Season"
+     became "Statistics", and "Race" — which the owner was unsure about
+     ("maybe focus, or technique or coaches notes") — became "Coach's notes",
+     the half of that frame no other app can show. The countdown is still in
+     the beat's own sub. */
   steps: [
-    { n: "01", icon: "plan", word: "Plan" },
-    { n: "02", icon: "boat", word: "Boat" },
-    { n: "03", icon: "race", word: "Race" },
-    { n: "04", icon: "logplan", word: "Week" },
+    { n: "01", icon: "plan", word: "Training plan" },
+    { n: "02", icon: "boat", word: "Lineups" },
+    { n: "03", icon: "race", word: "Coach's notes" },
+    { n: "04", icon: "logplan", word: "Log" },
     { n: "05", icon: "calendar", word: "Calendar" },
-    { n: "06", icon: "squad", word: "Season" },
+    { n: "06", icon: "squad", word: "Statistics" },
   ] as OpeningStep[],
   /* Same door as the student card's: the varsity feature block beside Blade
      Lock, which is where the overview lives — once. */
@@ -369,7 +376,7 @@ export const cues = {
 export const varsityStory: Beat[] = [
   {
     id: "V1",
-    kicker: "V1 · Plan",
+    kicker: "V1 · Training plan",
     /* "Always actual" was the owner's word — aktuální, a Czech false friend.
        "Current" is the meaning; English "actual" means real-not-fake. The
        sub is the one that was already here: the owner gave V1 a headline
@@ -381,7 +388,7 @@ export const varsityStory: Beat[] = [
   },
   {
     id: "V2",
-    kicker: "V2 · Boat",
+    kicker: "V2 · Lineups",
     head: "Find your lineup in a second.",
     sub: "Never look through 40 names in an Excel sheet again. Your name pops right in a boat.",
     shot: "tall-vhome.webp",
@@ -389,7 +396,7 @@ export const varsityStory: Beat[] = [
   },
   {
     id: "V3",
-    kicker: "V3 · Race",
+    kicker: "V3 · Coach's notes",
     /* "Always on your eyes" is před očima taken literally. */
     head: "Keep your focus up.",
     sub: "Countdown to the next race and coach's note on what to fix, always in front of you.",
@@ -401,7 +408,7 @@ export const varsityStory: Beat[] = [
   },
   {
     id: "V4",
-    kicker: "V4 · Week",
+    kicker: "V4 · Log",
     /* "Logging IN workouts" was the owner's phrase — logging in is signing
        in, a different thing. All three routes named here are on the capture:
        a Log button per prescribed session, the "Scan C2 / RP3 monitor" card,
@@ -427,14 +434,28 @@ export const varsityStory: Beat[] = [
   },
   {
     id: "V6",
-    kicker: "V6 · Season",
+    /* THE SQUAD BOARD, named here at the owner's request — "it would be good
+       to have a note there about team and rankings, its a nice part of it".
+       It is real and it is not demo data: db/varsity_results.sql is a shared
+       table, and logging a session the coach flagged as a TEAM WORKOUT writes
+       a row the whole squad reads (lib/varsity/resultsStore.ts). The wording
+       is exact on purpose — buildBoard() ranks TEST PIECES and deliberately
+       does NOT rank steady sessions, which show squad averages instead
+       (lib/varsity/teamBoard.ts), so "ranked when it is a test piece" is the
+       true claim and "every team piece ranked" would not be.
+
+       Worth knowing: the board is NOT what this frame shows. tall-vprofile is
+       the athlete's own statistics; the board lives behind the Team tab and
+       has never been captured. The sentence is adjacent to the picture, the
+       way S6's "lands in your calendar" is. Its own beat would need a shot. */
+    kicker: "V6 · Statistics",
     /* "Check how your teammates are doing" is a real feature but NOT on this
        frame — tall-vprofile is your own season. The squad screen exists
        (11-varsity-teammate.webp) and is a dark-mode capture, so until it is
        re-shot this clause is the one line in either story with no picture
        behind it. */
     head: "See your statistics.",
-    sub: "Track consistency, check how your teammates are doing, inspire yourself.",
+    sub: "Consistency, hours and personal bests — and the squad's board on every team workout, ranked when it is a test piece.",
     shot: "tall-vprofile.webp",
     ann: [{ side: "right", top: 40, text: "Eight weeks of work" }],
   },
