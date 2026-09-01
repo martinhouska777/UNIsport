@@ -140,7 +140,10 @@ export const doors = [
    size (it used to be 11px in the faintest grey, under the doors, below the
    fold). "Live now at Harvard" moved up into the pill above the headline
    (hero.badge), so this is the second half of that sentence. */
-export const availability = "One campus at a time, each with its own gyms, houses and colours. Yours can be next.";
+/* The owner's sentence, dictated 2026-09-02 — "tuhle vetu tam chci". It opens
+   on what the app IS (customized per campus) instead of on how few campuses
+   there are; "Yours can be next." is the half it has always ended on. */
+export const availability = "Customized for each campus, each with its own gyms, houses and colours. Yours can be next.";
 
 /* THE BRAND LINE — the slogan, set under the wordmark like "Škoda · Simply
    Clever" (the owner, 2026-08-30). A promise rather than a description: it
