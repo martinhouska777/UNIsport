@@ -389,8 +389,8 @@ export const interlude = {
     { n: "02", icon: "boat", word: "Lineups" },
     { n: "03", icon: "race", word: "Coach's notes" },
     { n: "04", icon: "logplan", word: "Log" },
-    { n: "05", icon: "leaderboard", word: "Squad board" },
-    { n: "06", icon: "calendar", word: "Calendar" },
+    { n: "05", icon: "calendar", word: "Calendar" },
+    { n: "06", icon: "leaderboard", word: "Squad board" },
     { n: "07", icon: "squad", word: "Statistics" },
   ] as OpeningStep[],
   /* Same door as the student card's: the varsity feature block beside Blade
@@ -464,9 +464,13 @@ export const varsityStory: Beat[] = [
   {
     id: "V3",
     kicker: "V3 · Coach's notes",
-    /* "Always on your eyes" is před očima taken literally. */
+    /* "Always on your eyes" is před očima taken literally, and it was changed
+       to "in front of you" on that reasoning. The owner put it back on
+       2026-09-02 ("always on your eyes instead of always in front of you"), so
+       it stands as theirs. Flagged once: a native reader reads "on your eyes"
+       as wrong rather than as style. */
     head: "Keep your focus up.",
-    sub: "Countdown to the next race and coach's note on what to fix, always in front of you.",
+    sub: "Countdown to the next race and coach's note on what to fix, always on your eyes.",
     shot: "tall-vhome.webp",
     ann: [
       { side: "right", top: 52, text: "Counting down" },
@@ -489,36 +493,8 @@ export const varsityStory: Beat[] = [
     ],
   },
   {
-    /* THE SQUAD BOARD — the beat the owner asked for ("a note about team and
-       rankings, its a nice part of it"), and it took three goes to get right.
-       First it was a clause on the statistics beat, which promised a board the
-       frame did not show. Then the database said varsity_results did not exist
-       at all, so the clause came off the page entirely. db/varsity_results.sql
-       is applied now, and the app's own worked example
-       (lib/varsity/demoWorkouts.ts) fills the board until a coach flags a real
-       session — so it has both a table behind it and a picture in front of it,
-       and it gets a beat.
-
-       IT RUNS BEFORE THE CALENDAR (the owner's call, 2026-09-01): the log beat
-       hands straight over to the squad, and the two "your own season" beats —
-       calendar then statistics — close the story together instead of being
-       split by the board.
-
-       The capture is DRIVEN, not a URL: Team → Workouts → tap the 2k test.
-       scripts/landing/capture-light.mjs --only=15-varsity-board re-shoots it. */
     id: "V5",
-    kicker: "V5 · Squad board",
-    head: "Every team piece, ranked.",
-    sub: "One board holds the whole squad. You see your place in it, the squad's average, and how far off the top eight you are.",
-    shot: "15-varsity-board.webp",
-    ann: [
-      { side: "right", top: 44, text: "Your place" },
-      { side: "left", top: 62, text: "The squad's average" },
-    ],
-  },
-  {
-    id: "V6",
-    kicker: "V6 · Calendar",
+    kicker: "V5 · Calendar",
     head: "Keep track of every session.",
     sub: "Each workout you log lands on the calendar by itself. The season builds into a history, with your statistics beside it.",
     shot: "14-varsity-calendar.webp",
@@ -528,9 +504,39 @@ export const varsityStory: Beat[] = [
     ],
   },
   {
+    /* THE SQUAD BOARD — the beat the owner asked for ("a note about team and
+       rankings, its a nice part of it"), and it took four goes to get right.
+       First it was a clause on the statistics beat, which promised a board the
+       frame did not show. Then the database said varsity_results did not exist
+       at all, so the clause came off the page entirely. db/varsity_results.sql
+       is applied now, and the app's own worked example
+       (lib/varsity/demoWorkouts.ts) fills the board until a coach flags a real
+       session, so it has both a table behind it and a picture in front of it.
+
+       WHERE IT SITS has moved twice in two days, both the owner's call: last
+       of the seven, then straight after Log, and now (2026-09-02, "do calendar
+       after log and before v5") between the calendar and the statistics. The
+       words are theirs too: "all of your team pieces recorded, see how you
+       improved from last time and where you stand in the rankings, with many
+       filters at hand". The filters are named off the capture rather than
+       promised vaguely — Split, Time, Watts and W/kg are the four tabs on it.
+
+       The capture is DRIVEN, not a URL: Team → Workouts → tap the 2k test.
+       scripts/landing/capture-light.mjs --only=15-varsity-board re-shoots it. */
+    id: "V6",
+    kicker: "V6 · Squad board",
+    head: "Every team piece, recorded.",
+    sub: "You see how you improved since last time and where you stand in the rankings, with filters for split, time, watts and watts per kilo.",
+    shot: "15-varsity-board.webp",
+    ann: [
+      { side: "right", top: 44, text: "Your place" },
+      { side: "right", top: 62, text: "Squad avg" },
+    ],
+  },
+  {
     id: "V7",
     /* "Check how your teammates are doing" is a real feature but NOT on this
-       frame — tall-vprofile is your own season. The teammate screen exists
+       frame: tall-vprofile is your own season. The teammate screen exists
        (11-varsity-teammate.webp) and is a dark-mode capture, so until it is
        re-shot that clause has no picture behind it and stays off the page.
        (varsity_telemetry and varsity_coach_reads are unapplied migrations too:

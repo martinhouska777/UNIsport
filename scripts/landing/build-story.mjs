@@ -112,7 +112,7 @@ const story2 = [
     // `to` past 1: the pan hits the very bottom mid-beat and rests there.
     key: "tall-vhome", kicker: "V3 · Coach's notes", pan: [0.74, 1.2], enter: "none",
     head: "Keep your focus up.",
-    sub: "Countdown to the next race and coach's note on what to fix, always in front of you.",
+    sub: "Countdown to the next race and coach's note on what to fix, always on your eyes.",
     ann: [{ side: "right", top: 52, text: "Counting down" }, { side: "left", top: 70, text: "Straight from the coach" }],
   },
   {
@@ -122,24 +122,25 @@ const story2 = [
     ann: [{ side: "right", top: 16, text: "Your week, at a glance" }, { side: "left", top: 44, text: "Tap to log" }],
   },
   {
-    // The squad board — a sheet you pull up from the Workouts list, so it
-    // arrives as one. It runs BEFORE the calendar (owner, 2026-09-01), off the
-    // log list, whose tab bar is where the ring presses "Team".
-    // Driven capture: see capture-light.mjs.
-    key: "15-varsity-board", kicker: "V5 · Squad board", side: "left", enter: "sheet", tap: [69.1, 93.2],
-    head: "Every team piece, ranked.",
-    sub: "One board holds the whole squad. You see your place in it, the squad's average, and how far off the top eight you are.",
-    ann: [{ side: "right", top: 44, text: "Your place" }, { side: "left", top: 62, text: "The squad's average" }],
-  },
-  {
-    // The board's own close X drops the sheet away and the calendar is there.
-    key: "14-varsity-calendar", kicker: "V6 · Calendar", side: "left", enter: "dismiss", tap: [92.4, 20.3],
+    // Logged a workout, so over to the Calendar tab, where it just landed.
+    key: "14-varsity-calendar", kicker: "V5 · Calendar", side: "left", enter: "tab", tap: [30.8, 94],
     head: "Keep track of every session.",
     sub: "Each workout you log lands on the calendar by itself. The season builds into a history, with your statistics beside it.",
     ann: [{ side: "right", top: 34, text: "Session dots" }, { side: "left", top: 64, text: "Today" }],
   },
   {
-    key: "tall-vprofile", kicker: "V7 · Statistics", pan: [0.06, 0.42], side: "left", enter: "tab", tap: [88.4, 93.3],
+    // The squad board sits between the calendar and the statistics (owner,
+    // 2026-09-02). It is a sheet you pull up from the Workouts list, so it
+    // arrives as one, off the calendar screen whose tab bar is where the ring
+    // presses "Team". Driven capture: see capture-light.mjs.
+    key: "15-varsity-board", kicker: "V6 · Squad board", side: "left", enter: "sheet", tap: [69.1, 93.2],
+    head: "Every team piece, recorded.",
+    sub: "You see how you improved since last time and where you stand in the rankings, with filters for split, time, watts and watts per kilo.",
+    ann: [{ side: "right", top: 44, text: "Your place" }, { side: "right", top: 62, text: "Squad avg" }],
+  },
+  {
+    // The board's own close X drops the sheet away and the season is there.
+    key: "tall-vprofile", kicker: "V7 · Statistics", pan: [0.06, 0.42], side: "left", enter: "dismiss", tap: [92.4, 20.3],
     head: "See your statistics.",
     sub: "One screen counts your consistency, your hours and your personal bests over eight weeks.",
     ann: [{ side: "right", top: 40, text: "Eight weeks of work" }],
