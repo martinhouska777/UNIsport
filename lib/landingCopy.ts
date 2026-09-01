@@ -211,7 +211,7 @@ export const studentIntro = {
     { n: "03", icon: "verified", word: "Why you match" },
     { n: "04", icon: "chat", word: "Plan" },
     { n: "05", icon: "log", word: "Log" },
-    { n: "06", icon: "calendar", word: "Record" },
+    { n: "06", icon: "calendar", word: "Calendar" },
     { n: "07", icon: "leaderboard", word: "Rankings" },
   ] as OpeningStep[],
   /* The way past the story for someone who wants the list rather than the
@@ -264,23 +264,37 @@ export const studentStory: Beat[] = [
     ann: [{ side: "right", top: 52, text: "One tap to accept" }],
   },
   {
+    /* ONE BEAT FOR THE WHOLE LOG SHEET (2026-09-01, the owner: "dal bych to
+       log with photos v jedno"). S5 and S6 used to be two beats panning the
+       SAME capture — the top for the sets, the bottom for the photo and the
+       note — which spent two of seven screens on one sheet and left the app's
+       calendar unshown. Now one beat pans the sheet end to end, and the freed
+       slot goes to the calendar below. */
     id: "S5",
     kicker: "05 · Log",
     head: "Afterwards, log it together.",
-    sub: "Every set, every rep — with your partner carried over from the plan.",
+    sub: "Every set, every rep, a photo and a note — with your partner carried over from the plan.",
     shot: "tall-logsheet.webp",
-    ann: [{ side: "right", top: 30, text: "Set by set" }],
+    ann: [
+      { side: "right", top: 26, text: "Set by set" },
+      { side: "left", top: 78, text: "Photo + note" },
+    ],
   },
   {
+    /* THE CALENDAR, at last (the owner: "pak calendar s memories"). No new
+       capture was needed and none could be taken: the live demo account has
+       moved on — different user, different house, an empty September calendar
+       and an empty leaderboard — so a re-shoot today would be a worse picture
+       than the one on disk, exactly as the 02-match re-shoot was. But it did
+       not need one. tall-profile.webp already carries the session calendar
+       under the stats and the leaderboard strip; this beat simply pans down
+       to it and S7 pans the top of the same sheet. */
     id: "S6",
-    kicker: "06 · Record",
-    /* "Track your partner's calendar" was in the owner's line and is not in
-       the product — /people/[id] renders a profile, match reasons and photos,
-       and no calendar. */
-    head: "Keep the session, not just the numbers.",
-    sub: "Who you trained with, how it went, and a photo — all of it lands in your calendar.",
-    shot: "tall-logsheet.webp",
-    ann: [{ side: "left", top: 50, text: "Photo + note" }],
+    kicker: "06 · Calendar",
+    head: "Every session lands in your calendar.",
+    sub: "Who you trained with, how it went, the photo you took — a month you can look back on.",
+    shot: "tall-profile.webp",
+    ann: [{ side: "left", top: 66, text: "Every day you trained" }],
   },
   {
     id: "S7",
@@ -300,10 +314,10 @@ export const studentStory: Beat[] = [
     headEm: "Nobody trained alone.",
     sub: "And a place on the rankings — your campus, your house, your partners, your year.",
     shot: "tall-profile.webp",
-    ann: [
-      { side: "right", top: 30, text: "Leaderboards" },
-      { side: "left", top: 76, text: "Every day you trained" },
-    ],
+    /* "Every day you trained" moved up to S6, which is now the beat that
+       actually shows the calendar. This one opens on the name and the counts
+       the headline reads off, and pans down to the leaderboard strip. */
+    ann: [{ side: "right", top: 60, text: "Where you rank" }],
   },
 ];
 

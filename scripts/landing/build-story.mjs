@@ -66,26 +66,28 @@ const story1 = [
     ann: [{ side: "right", top: 52, text: "One tap to accept" }],
   },
   {
-    // hold 0.25: the sheet is at its very top the moment the beat appears,
-    // then the whole scroll happens on screen instead of starting mid-page.
-    key: "tall-logsheet", kicker: "05 · Log", pan: [0, 0.75], hold: 0.25, side: "left", enter: "push",
+    // One beat for the whole sheet now — sets at the top, photo and note at
+    // the bottom. hold 0.2: it is read before it starts moving.
+    key: "tall-logsheet", kicker: "05 · Log", pan: [0, 1], hold: 0.2, side: "left", enter: "push",
     head: "Afterwards, log it together.",
-    sub: "Every set, every rep — with your partner carried over from the plan.",
-    ann: [{ side: "right", top: 30, text: "Set by set" }],
+    sub: "Every set, every rep, a photo and a note — with your partner carried over from the plan.",
+    ann: [{ side: "right", top: 26, text: "Set by set" }, { side: "left", top: 78, text: "Photo + note" }],
   },
   {
-    key: "tall-logsheet", kicker: "06 · Record", pan: [0.75, 1], side: "left", enter: "none",
-    head: "Keep the session, not just the numbers.",
-    sub: "Who you trained with, how it went, and a photo — all of it lands in your calendar.",
-    ann: [{ side: "left", top: 50, text: "Photo + note" }],
+    // The profile's LOWER half: the session calendar, which the story had
+    // never shown. No new capture — tall-profile already carries it.
+    key: "tall-profile", kicker: "06 · Calendar", pan: [0.65, 1], hold: 0.15, side: "left", enter: "push", tap: [50, 95],
+    head: "Every session lands in your calendar.",
+    sub: "Who you trained with, how it went, the photo you took — a month you can look back on.",
+    ann: [{ side: "left", top: 66, text: "Every day you trained" }],
   },
   {
-    // The profile scrolls from the name down to the leaderboard ranks and comes
-    // to rest on the session calendar — the month is the closing image.
-    key: "tall-profile", kicker: "07 · Rankings", pan: [0, 1.3], hold: 0.2, side: "left", enter: "dismiss", tap: [50, 95],
+    // The same sheet re-entered at the TOP: the name and the counts the
+    // headline reads off, panning down to the leaderboard strip.
+    key: "tall-profile", kicker: "07 · Rankings", pan: [0, 0.38], hold: 0.2, side: "left", enter: "dismiss", tap: [50, 95],
     head: "29 sessions. 6 partners.", headEm: "Nobody trained alone.",
     sub: "And a place on the rankings — your campus, your house, your partners, your year.",
-    ann: [{ side: "right", top: 30, text: "Leaderboards" }, { side: "left", top: 76, text: "Every day you trained" }],
+    ann: [{ side: "right", top: 60, text: "Where you rank" }],
   },
 ];
 

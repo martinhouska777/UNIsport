@@ -53,11 +53,16 @@ export const motion: Record<string, BeatMotion> = {
   S4: { enter: "push", tap: [68, 86.5], pointer: true },
   // hold 0.25: the sheet is at its very top the moment the beat appears, then
   // the whole scroll happens on screen instead of starting mid-page.
-  S5: { pan: [0, 0.75], hold: 0.25, side: "left", enter: "push" },
-  S6: { pan: [0.75, 1], side: "left", enter: "none" },
+  S5: { pan: [0, 1], hold: 0.2, side: "left", enter: "push" },
+  // The same sheet as S5 was; now a different capture — tall-profile, panned
+  // to its lower half, where the session calendar is.
+  S6: { pan: [0.65, 1], hold: 0.15, side: "left", enter: "push", tap: [50, 95] },
   // The profile scrolls from the name down to the leaderboard ranks and comes
   // to rest on the session calendar — the month is the closing image.
-  S7: { pan: [0, 1.3], hold: 0.2, side: "left", enter: "dismiss", tap: [50, 95] },
+  // S6 left this sheet at its bottom; S7 re-enters it at the TOP and pans
+  // down to the leaderboard strip, so the last beat opens on the name and the
+  // counts its headline reads off.
+  S7: { pan: [0, 0.38], hold: 0.2, side: "left", enter: "dismiss", tap: [50, 95] },
 
   /* ── the varsity story ── */
   // V1 carries the scroll all the way down to the lineup, so V2's headline
