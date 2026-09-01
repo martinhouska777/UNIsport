@@ -824,7 +824,7 @@ ${renderCoach()}
 
 <div class="cta">
   <h2>One app per university. <em>Yours next.</em></h2>
-  <p>Live now at one university. New campuses are onboarded one at a time — colours, gyms and houses included.</p>
+  <p>Customized for each campus — its own colours, gyms and houses — and onboarded one at a time.</p>
   <a href="https://un-isport.vercel.app/join" target="_blank" rel="noopener">Bring it to your university</a>
   <div class="note">Prototype — scroll timing and copy under review.</div>
 </div>

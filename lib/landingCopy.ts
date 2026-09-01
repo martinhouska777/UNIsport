@@ -938,7 +938,13 @@ export const coach = {
 export const finalCta = {
   headline: "One app per university.",
   headlineEm: "Yours next.",
-  sub: "Live now at one university. New campuses are onboarded one at a time — colours, gyms and houses included.",
+  /* THE OWNER'S OPENING, 2026-09-02: "dej tam customized for each campus …
+     misto te prvni vety a pak smoothly pokracuj." The sentence it replaced —
+     "Live now at one university." — was the vaguest line on the page: the hero
+     pill names Harvard outright, so the close was being coy about a fact the
+     top had already stated plainly. The rest continues from their opening
+     rather than starting again. */
+  sub: "Customized for each campus — its own colours, gyms and houses — and onboarded one at a time.",
   button: "Bring it to your university",
   /* The button opens a mail with the subject and the first line written, so a
      tap on a phone is never a blank draft (it used to be a bare mailto:). */
