@@ -792,7 +792,7 @@ ${closer("closer-colours", "UNIsport Campus Colours.html", "Your campus, your co
 <div class="statement" id="interlude">
   <p class="lead-in">And if you train for the university itself —</p>
   <h1>Varsity <em>Mode.</em></h1>
-  <p class="sub">The app your squad has been running out of a group chat.</p>
+  <p class="sub">An extra mode for varsity athletes, designed specifically for each college program.</p>
   <div class="cue">Keep going</div>
 </div>
 

@@ -22,6 +22,13 @@ export default function Interlude({ solo = false }: { solo?: boolean }) {
       id="interlude"
       className="relative z-[1] flex min-h-svh flex-col items-center justify-center gap-[clamp(10px,1.8vh,18px)] border-t border-l-line bg-l-surface px-6 pt-14 pb-8 text-center"
     >
+      {/* The same pill as the hero's, in gold: this page keeps its facts in a
+          pill above the headline, and the reveal had none. */}
+      <div className="inline-flex items-center gap-2 rounded-full border border-l-varsity-soft bg-l-varsity-dim px-3 py-1.5 font-mono text-[11px] font-medium tracking-wider uppercase text-l-varsity">
+        <span className="l-pulse h-1.5 w-1.5 rounded-full bg-l-varsity shadow-[0_0_8px_var(--color-l-varsity)]" />
+        {interlude.badge}
+      </div>
+
       <p className="font-display text-[clamp(20px,3.4vw,30px)] tracking-[-0.01em] text-l-text-2">
         {solo ? interlude.leadInSolo : interlude.leadIn}
       </p>
