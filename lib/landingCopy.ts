@@ -324,41 +324,37 @@ export const studentStory: Beat[] = [
 /* ─────────────── BETWEEN THE TWO — a full stop, then a reveal ─────────────── */
 
 export const interlude = {
-  /* THE PILL, 2026-09-02. Two facts the reveal was missing, in the one place
-     this page has already taught the reader to look for facts — the hero's
-     pill ("Free for students · live now at Harvard"). Gold here, blue there.
+  /* THE WHOLE REVEAL IS DICTATED, 2026-09-02: "and if you do sport for the
+     university itself, designed specifically for each college sport, now
+     available for rowing — this is how you write it." Three phrases, one slot
+     each: the lead-in, the small line, and the pill. They stand as given (only
+     the spelling of "available" is ours), and they are not to be improved on
+     without being asked.
 
-     The reader needs the sport at exactly this moment: under this line stand
-     seven chips reading Lineups, Squad board, Coach's notes. A swimmer who
-     scrolls into them without being told the mode is rowing today has been
-     misled by the page. And "more sports to come" is the same promise the
-     page already makes about campuses — one at a time, yours can be next. */
-  badge: "Rowing first · more sports to come",
-  leadIn: "And if you train for the university itself —",
+     THE PILL is the hero's pill in gold ("Free for students · live now at
+     Harvard") — the one place this page has taught the reader to look for a
+     fact. The sport has to be HERE, because under this line stand seven chips
+     reading Lineups, Squad board, Coach's notes: a swimmer who scrolls into
+     them without having been told has been misled by the page. */
+  badge: "Now available for rowing",
+  leadIn: "And if you do sport for the university itself —",
   /* On the Varsity view (/for/varsity) nothing comes before it, so the "And"
      that joins it to the student story goes. Same line otherwise. */
-  leadInSolo: "If you train for the university itself —",
+  leadInSolo: "If you do sport for the university itself —",
   headline: "Varsity",
   headlineEm: "Mode.",
-  /* THE SUB SAYS ONE THING: this is not a second product. The owner,
-     2026-09-02 — "we have an extra feature specially for the varsity
-     athletes" — which is the same call they made on the student card the day
-     before ("i dont want to distinguish students and varsity people, the
-     varsity mode is just for the athletes"). The line that stood here said
-     "The app your squad has been running out of a group chat", and it broke
-     both halves of that: it called the mode an app, and "running out of" is
-     read as "running low on" before it resolves. Dropped, not moved (the
-     owner's call): the seven chips under this line already say what the mode
-     replaces. The availability fact lives in the pill above.
+  /* The small line, third of the dictated phrases. What it replaced, and why
+     that is worth not re-writing back in: it said "The app your squad has been
+     running out of a group chat", which called the mode an APP — the reading
+     taken off the student card the day before ("the varsity mode is just for
+     the athletes") — and "running out of" is read as "running low on" before it
+     resolves. The group-chat idea was dropped, not moved (the owner's call):
+     the seven chips below already say what the mode replaces.
 
-     THE SECOND HALF IS THE OWNER'S OWN WORDING, given the same day: "proste
-     napis designed specifically for each college program". It is also the
-     claim the rest of the page can back — the mode is set up per squad, with
-     that squad's coach, roster, boats and results, the way the app itself is
-     set up per campus. Their phrase stands as written; only the clause in
-     front of it is ours, and it is there so the line still says WHAT this is
-     before it says who it is cut for. */
-  sub: "An extra mode for varsity athletes, designed specifically for each college program.",
+     "NOT A SECOND APP" NOW RESTS ON ONE WORD — "Mode", in the headline. The
+     line that used to carry it ("An extra mode for varsity athletes, …") was
+     folded away by the dictation. Flagged to the owner; theirs to re-open. */
+  sub: "Designed specifically for each college sport.",
   /* Seven now — the squad board joined on 2026-09-01. Renamed the same day to
      the owner's list — the labels now name the thing on the screen rather
      than a mood. "Boat" became "Lineups" (what the coach publishes), "Week"
