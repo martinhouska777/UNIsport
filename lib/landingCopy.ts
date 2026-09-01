@@ -338,15 +338,21 @@ export const interlude = {
      became "Statistics", and "Race" — which the owner was unsure about
      ("maybe focus, or technique or coaches notes") — became "Coach's notes",
      the half of that frame no other app can show. The countdown is still in
-     the beat's own sub. */
+     the beat's own sub.
+
+     THE ORDER HERE IS THE STORY'S ORDER, and it has to be kept by hand: each
+     step links at `#story2-b<its position>`, so a step in the wrong place both
+     prints the wrong number and opens the wrong beat. Moving the squad board
+     ahead of the calendar (b54b2f5) left this list behind for a day — "05
+     Calendar" was pointing at the board. Re-order a beat, re-order this. */
   steps: [
     { n: "01", icon: "plan", word: "Training plan" },
     { n: "02", icon: "boat", word: "Lineups" },
     { n: "03", icon: "race", word: "Coach's notes" },
     { n: "04", icon: "logplan", word: "Log" },
-    { n: "05", icon: "calendar", word: "Calendar" },
-    { n: "06", icon: "squad", word: "Statistics" },
-    { n: "07", icon: "leaderboard", word: "Squad board" },
+    { n: "05", icon: "leaderboard", word: "Squad board" },
+    { n: "06", icon: "calendar", word: "Calendar" },
+    { n: "07", icon: "squad", word: "Statistics" },
   ] as OpeningStep[],
   /* Same door as the student card's: the varsity feature block beside Blade
      Lock, which is where the overview lives — once. */
