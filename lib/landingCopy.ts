@@ -57,22 +57,19 @@ export const hero = {
   badge: "Free for students · live now at Harvard",
   /* The page headline. Describes the product, and lives only here. */
   headline: ["Your campus.", "Your gym.", "Your people."],
-  /* The intro's ONE descriptive line — the kicker above it is gone, so this
-     carries the whole explanation on its own.
+  /* FOUR ACTIONS, in the order the app is actually used: find a gym, match
+     with someone, plan it, log it (S1 → S2 → S4 → S5). The owner, 2026-08-30:
+     "dont just shout out random words, make it targeted to the user — like
+     find … match … log … like actions."
 
-     It used to be four imperatives in a row ("Find … Match … Plan … Log …"),
-     which reads as a list rather than a sentence, and it spent its most
-     valuable clause on "students verified by their .edu email" — administration,
-     in the place the page has to say why it is different.
-
-     2026-09-01, campus-neutral by the owner's call: the same words ship to the
-     next university unchanged, so no landmark and no school name can do the
-     work. The specificity has to come from the SITUATION instead. Sentence one
-     is the offer; sentence two is the reason anyone needs it. For a one-line
-     revert, the old line was:
-       "Find every gym on campus. Match with students verified by their .edu
-        email. Plan the session in the chat. Log it together." */
-  body: "Every gym on campus, and the people in them. Somebody trains at your hour, at your level, in your building — you have never met them.",
+     Rewritten 2026-09-01 into an offer-plus-reason line, and PUT BACK the same
+     day: the owner read both and chose this one ("to se mi libi vic"). It is
+     their line and it stays. For the record, the rejected alternative was:
+       "Every gym on campus, and the people in them. Somebody trains at your
+        hour, at your level, in your building — you have never met them."
+     The pill above it now carries "free for students", which is what that pass
+     was really for. */
+  body: "Find every gym on campus. Match with students verified by their .edu email. Plan the session in the chat. Log it together.",
   primaryCta: "Get started with .edu",
   inviteNote: "Got a link from your team?",
   inviteCta: "Join with your invite",
@@ -172,23 +169,23 @@ export const brandLine = "Never train alone.";
   a promise: the owner asked for "never train alone again ze shora" — the
   line that used to sit unread at S7, lifted to where it is met first.
 
-  Then everything else went with it: the lead-in, the descriptive line, the
-  seven numbered steps, the link to the overview, and the small "Scroll" cue
-  ("cutneme to ostatni"). What is left is the quote and one instruction. The
-  card announces the walk; it no longer summarises it.
+  Then the lead-in and the descriptive line went with it ("cutneme to
+  ostatni"). The seven steps, the overview link and the "Scroll" cue went too
+  — and came straight back the same day, because two lines on a full-height
+  card leave it looking empty: "ale jinak se mi to libilo a to vyplni ten
+  screen". So the card is the quote, one instruction, and the walk laid out
+  underneath it. What it no longer does is name a product.
 
   Settled 2026-09-01: S7 no longer repeats it. The card makes the promise,
   the last beat reports the result ("Nobody trained alone.").
 */
 /*
-  ONE STEP ON THE VARSITY TITLE CARD — the number the reader will see on the
-  beat, one word for it, and one of the line icons in
-  components/landing/FeatureIcon.tsx.
+  ONE STEP ON A TITLE CARD — the number the reader will see on the beat, one
+  word for it, and one of the line icons in components/landing/FeatureIcon.tsx.
 
-  These MIRROR the beats below (V1…V6) and have to be changed with them; only
-  the varsity interlude carries them now. They are written out rather than
-  parsed off the beats' kickers so the card's words stay reviewable here, in
-  one place, like the rest of the page.
+  These MIRROR the beats below (S1…S7 / V1…V6) and have to be changed with
+  them. They are written out rather than parsed off the beats' kickers so the
+  card's words stay reviewable here, in one place, like the rest of the page.
 */
 export type OpeningStep = { n: string; icon: string; word: string };
 
@@ -198,6 +195,22 @@ export const studentIntro = {
   headline: "Never train",
   headlineEm: "alone again.",
   sub: "Scroll down to explore the app.",
+  /* The walk, laid out under the quote — it says how long the scroll is, and
+     each step jumps to its own beat. It also fills a card that is two lines
+     tall on a full-height section. */
+  steps: [
+    { n: "01", icon: "gym", word: "Gyms" },
+    { n: "02", icon: "partners", word: "People" },
+    { n: "03", icon: "verified", word: "Reasons" },
+    { n: "04", icon: "chat", word: "Plan" },
+    { n: "05", icon: "log", word: "Log" },
+    { n: "06", icon: "calendar", word: "Record" },
+    { n: "07", icon: "leaderboard", word: "Proof" },
+  ] as OpeningStep[],
+  /* The way past the story for someone who wants the list rather than the
+     walk. It points AT the feature block beside Campus Colours rather than
+     repeating it here — the overview exists once. */
+  overview: { label: "Or see everything it does", href: "#campus-colours" },
 };
 
 /* ───────────────────── S1–S7 · THE STUDENT STORY ───────────────────── */
