@@ -20,7 +20,7 @@ decided so it does not get re-argued.
  4  Feature block  features left (each with a + to expand) · Campus Colours piece right
                    + "what's coming for students"
  5  Interlude      the full stop, then "Varsity Mode."
- 6  Story B        the varsity scroll animation, V1–V6
+ 6  Story B        the varsity scroll animation, V1–V7
  7  Feature block  features left (+ to expand) · Blade Lock piece right
                    + "what's coming for varsity"
  8  Coach section  The Coach's Console — five screens          ← BUILT (twice)
@@ -328,8 +328,8 @@ beside a different blue. Nowhere else on the page does the accent sit next to a
 school colour. If it is ever worth fixing, fix it there — either that one list
 goes neutral, or it takes the colour of the school currently on screen.
 
-**Still the owner's to decide**: V6 ending on a stats screen; V7's dark
-capture; "how much does it cost?" for the FAQ; any real number for social
+**Still the owner's to decide**: the story ending on a stats screen (now V7);
+the teammate beat's dark capture; "how much does it cost?" for the FAQ; any real number for social
 proof. (The `.edu` question is settled — see "Open, and blocked" below.)
 
 ## Measured facts worth not re-discovering
@@ -405,11 +405,13 @@ proof. (The `.edu` question is settled — see "Open, and blocked" below.)
    d. **The demo account sees 4 candidates, not 61.** Not investigated —
       the owner parked it ("kasli na to"). It is why the new frame is thin,
       and it is what a visitor to the real app would see too.
-2. **The varsity story ends on a statistics graph (V6).** The brief argues
+2. **The varsity story ends on a statistics graph (now V7).** The brief argues
    against this by name — a stats screen is the one screen every fitness app
    has; a seat in a named boat, published by a coach, is the one none of them
    can show. That screen is V2, currently mid-story. Undecided.
-3. **V7, the squad beat, is PARKED — and the blocker is not the screenshot.**
+3. **The TEAMMATE beat is PARKED — and the blocker is not the screenshot.**
+   (Not the squad board: that shipped 2026-09-01 and now runs as V5, before
+   the calendar. This is the other one — a single teammate's training month.)
    The screen it advertises (Varsity → Team → Roster → a rower → their training
    month) is drawn from **invented data**: `lib/varsity/teamTraining.ts` and
    `teamProfiles.ts` derive the calendar, the consistency percentage, the hours
