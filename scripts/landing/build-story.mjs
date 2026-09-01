@@ -43,26 +43,26 @@ for (const scr of Object.keys(realShots)) {
 const story1 = [
   {
     key: "01-gyms", kicker: "01 · The gyms",
-    head: "Find every gym on campus in one app.",
-    sub: "Opening hours, ratings, equipment that nobody has a map of, live crowd meter.",
+    head: "Find every gym on campus.",
+    sub: "Opening hours, ratings, the equipment in each room, and how busy it is right now.",
     ann: [{ side: "right", top: 14, text: "Live ratings" }, { side: "left", top: 68, text: "House gyms too" }],
   },
   {
     key: "02-match", kicker: "02 · The people", enter: "tab", tap: [37.5, 95.5],
-    head: "Find training partners, make friends, establish contacts.",
-    sub: "Matching sorted by how well you actually fit — same gym, hours, level and much more.",
+    head: "Find a training partner. Make a friend.",
+    sub: "Ranked by how well you actually fit — same gym, same hours, same level, same interests.",
     ann: [{ side: "right", top: 24, text: "Ranked by real fit" }],
   },
   {
     key: "03-why-you-match", kicker: "03 · The reasons", enter: "zoom", tap: [26, 54],
-    head: "View a person's profile for hobbies, interests, concentrations.",
-    sub: "Or get mentored by more experienced people.",
+    head: "See why you match, before you say hello.",
+    sub: "Interests, concentration, hometown, languages — and whether one of you wants a mentor.",
     ann: [{ side: "left", top: 56, text: "Facts, not guesses" }],
   },
   {
     key: "04-plan-a-session", kicker: "04 · The plan", enter: "push", tap: [68, 86.5], pointer: true,
-    head: "Plan your session in the chat with one tap.",
-    sub: "One tap proposes the session, one accepts, it's in both calendars.",
+    head: "Plan it in the chat.",
+    sub: "One tap proposes the session, one accepts, and it's in both calendars.",
     ann: [{ side: "right", top: 52, text: "One tap to accept" }],
   },
   {
@@ -70,21 +70,21 @@ const story1 = [
     // then the whole scroll happens on screen instead of starting mid-page.
     key: "tall-logsheet", kicker: "05 · The log", pan: [0, 0.75], hold: 0.25, side: "left", enter: "push",
     head: "Afterwards, log it together.",
-    sub: "Every set, every rep — and the partner carried straight over from the plan.",
+    sub: "Every set, every rep — with your partner carried over from the plan.",
     ann: [{ side: "right", top: 30, text: "Set by set" }],
   },
   {
     key: "tall-logsheet", kicker: "06 · The record", pan: [0.75, 1], side: "left", enter: "none",
-    head: "Make memories stored in the calendar.",
-    sub: "Who you trained with, how it went, and a picture to make memories that last forever.",
+    head: "Keep the session, not just the numbers.",
+    sub: "Who you trained with, how it went, and a photo — all of it lands in your calendar.",
     ann: [{ side: "left", top: 50, text: "Photo + note" }],
   },
   {
     // The profile scrolls from the name down to the leaderboard ranks and comes
     // to rest on the session calendar — the month is the closing image.
     key: "tall-profile", kicker: "07 · The proof", pan: [0, 1.3], hold: 0.2, side: "left", enter: "dismiss", tap: [50, 95],
-    head: "29 sessions. 6 partners.", headEm: "Never train alone again.",
-    sub: "Participate in college leaderboards.",
+    head: "29 sessions. 6 partners.", headEm: "Nobody trained alone.",
+    sub: "And your place on the campus leaderboard.",
     ann: [{ side: "right", top: 30, text: "Leaderboards" }, { side: "left", top: 76, text: "Every day you trained" }],
   },
 ];

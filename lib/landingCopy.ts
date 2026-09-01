@@ -49,35 +49,33 @@ export type Beat = {
 
 export const hero = {
   /* The pill above the headline. It read "The universal college fitness
-     platform" — a claim. This is the one fact the page can stand behind, and
-     it now sits where the badge did, in the first thing a visitor reads.
-     (2026-08-18 review: facts convert better than claims.) */
-  badge: "Live now at Harvard",
+     platform" — a claim. Facts convert better than claims (2026-08-18), so it
+     became "Live now at Harvard", and on 2026-09-01 it took the second fact
+     with it: the app is FREE for students, and the page had never once said
+     so. Free is the reader's first objection, answered in the first line they
+     read. */
+  badge: "Free for students · live now at Harvard",
   /* The page headline. Describes the product, and lives only here. */
   headline: ["Your campus.", "Your gym.", "Your people."],
-  kicker: {
-    lead: "For every student.",
-    tail: "With a dedicated mode for varsity athletes.",
-  },
-  /* FOUR ACTIONS, in the order the app is actually used: find a gym, match
-     with someone, plan it, log it (S1 → S2 → S4 → S5). The owner, 2026-08-30:
-     "dont just shout out random words, make it targeted to the user — like
-     find … match … log … like actions."
-     Two words are gone on purpose. "A verified training partner" said the
-     PERSON was vetted; what the app verifies is the .edu address at signup
-     (lib/universityEmail.ts), so the line now says which. And "see where you
-     rank" is out — the owner called it too generic, and the leaderboards
-     still get their own beat at S7. The old line, for a one-line revert:
-       "Every gym on campus, a verified training partner, every session
-        logged — and where you rank." */
-  body: "Find every gym on campus. Match with students verified by their .edu email. Plan the session in the chat. Log it together.",
+  /* The intro's ONE descriptive line — the kicker above it is gone, so this
+     carries the whole explanation on its own.
+
+     It used to be four imperatives in a row ("Find … Match … Plan … Log …"),
+     which reads as a list rather than a sentence, and it spent its most
+     valuable clause on "students verified by their .edu email" — administration,
+     in the place the page has to say why it is different.
+
+     2026-09-01, campus-neutral by the owner's call: the same words ship to the
+     next university unchanged, so no landmark and no school name can do the
+     work. The specificity has to come from the SITUATION instead. Sentence one
+     is the offer; sentence two is the reason anyone needs it. For a one-line
+     revert, the old line was:
+       "Find every gym on campus. Match with students verified by their .edu
+        email. Plan the session in the chat. Log it together." */
+  body: "Every gym on campus, and the people in them. Somebody trains at your hour, at your level, in your building — you have never met them.",
   primaryCta: "Get started with .edu",
-  /* Two doors, because the kicker promises two. */
-  studentCta: "See the student app",
-  varsityCta: "See Varsity Mode",
   inviteNote: "Got a link from your team?",
   inviteCta: "Join with your invite",
-  schools: ["Harvard", "Yale", "MIT", "Princeton"],
 };
 
 /* ─────────────────── THE LINK CARD (title tag, OG, X) ─────────────────── */
@@ -87,7 +85,7 @@ export const hero = {
    scripts/landing/make-og.mjs from the same headline and pill. */
 export const social = {
   title: `UNIsport — ${hero.headline.join(" ")}`,
-  description: "Every gym on campus, training partners ranked by real fit, and a Varsity Mode for teams. Live at Harvard.",
+  description: "Find the gym. Find someone to go with. Free for students, live at Harvard.",
   imageAlt: "UNIsport — Your campus. Your gym. Your people. The Gyms screen in a phone beside the headline.",
 };
 
@@ -112,9 +110,9 @@ export const views: { view: LandingView; label: string; href: string; title: str
   /* Home = the whole page, first in the row (owner, 2026-08-18). Its title
      is the page's own, so the link card on "/" is unchanged. */
   { view: "all", label: "Home", href: "/", title: social.title },
-  { view: "students", label: "Students", href: "/for/students", title: "UNIsport for students" },
-  { view: "varsity", label: "Varsity", href: "/for/varsity", title: "UNIsport for varsity athletes" },
-  { view: "coaches", label: "Coaches", href: "/for/coaches", title: "UNIsport for coaches" },
+  { view: "students", label: "The app", href: "/for/students", title: "UNIsport — the app" },
+  { view: "varsity", label: "Varsity Mode", href: "/for/varsity", title: "UNIsport — Varsity Mode" },
+  { view: "coaches", label: "Coaches", href: "/for/coaches", title: "UNIsport — the Coach's Console" },
   { view: "about", label: "About", href: "/about", title: "About UNIsport" },
   { view: "contact", label: "Contact", href: "/contact", title: "Contact UNIsport" },
 ];
@@ -132,25 +130,29 @@ export const seeAll = {
    view you have already chosen. The one-liners reuse lines that already
    exist above/below. */
 export const doors = [
-  { label: "Student", sub: hero.kicker.lead, href: "/for/students" },
-  { label: "Varsity athlete", sub: hero.kicker.tail, href: "/for/varsity" },
-  { label: "Coach", sub: "For the person who runs the squad.", href: "/for/coaches" },
+  { label: "Student", sub: "Every gym, and someone to go with.", href: "/for/students" },
+  { label: "Varsity athlete", sub: "Your coach's plan, and your seat in the boat.", href: "/for/varsity" },
+  { label: "Coach", sub: "Publish the week once. Forty phones.", href: "/for/coaches" },
 ];
 
 /* THE AVAILABILITY LINE — directly under the primary button, at a readable
    size (it used to be 11px in the faintest grey, under the doors, below the
    fold). "Live now at Harvard" moved up into the pill above the headline
    (hero.badge), so this is the second half of that sentence. */
-export const availability = "New campuses are onboarded one at a time — colours, gyms and houses included.";
+export const availability = "One campus at a time, each with its own gyms, houses and colours. Yours can be next.";
 
 /* THE BRAND LINE — the slogan, set under the wordmark like "Škoda · Simply
    Clever" (the owner, 2026-08-30). A promise rather than a description: it
-   goes under the logo, on the splash, in a store listing. Distinct from the
-   hero headline above, which describes and only ever appears on this page.
-   It is now the SAME sentence S7 closes the student story on, deliberately:
-   the intro makes the promise, and seven screens later the story hands it
-   back as something the reader has just watched happen. */
-export const brandLine = "Never train alone again.";
+   goes under the logo, on the splash, in a store listing.
+
+   THREE WORDS AGAIN, 2026-09-01. It had been lengthened to "Never train alone
+   again." to match the line S7 closed the student story on, seven screens
+   away. Then the card that opens the walk took that longer line — one screen
+   below this one — and the same sentence twice in two screens reads as a
+   stutter, not a motif. So the slogan goes back to three words and the page
+   escalates instead: the mark states the rule, the card promises it to you,
+   and the word that arrives in between is "again". */
+export const brandLine = "Never train alone.";
 
 /* ─────────────── BEFORE THE STUDENT STORY — a title card ─────────────── */
 
@@ -175,8 +177,8 @@ export const brandLine = "Never train alone again.";
   ("cutneme to ostatni"). What is left is the quote and one instruction. The
   card announces the walk; it no longer summarises it.
 
-  NOTE, still open: S7 also ends on "Never train alone again." Until that is
-  decided the page says it twice — see the beat's comment.
+  Settled 2026-09-01: S7 no longer repeats it. The card makes the promise,
+  the last beat reports the result ("Nobody trained alone.").
 */
 /*
   ONE STEP ON THE VARSITY TITLE CARD — the number the reader will see on the
@@ -204,8 +206,8 @@ export const studentStory: Beat[] = [
   {
     id: "S1",
     kicker: "01 · The gyms",
-    head: "Find every gym on campus in one app.",
-    sub: "Opening hours, ratings, equipment that nobody has a map of, live crowd meter.",
+    head: "Find every gym on campus.",
+    sub: "Opening hours, ratings, the equipment in each room, and how busy it is right now.",
     shot: "01-gyms.webp",
     ann: [
       { side: "right", top: 14, text: "Live ratings" },
@@ -215,8 +217,8 @@ export const studentStory: Beat[] = [
   {
     id: "S2",
     kicker: "02 · The people",
-    head: "Find training partners, make friends, establish contacts.",
-    sub: "Matching sorted by how well you actually fit — same gym, hours, level and much more.",
+    head: "Find a training partner. Make a friend.",
+    sub: "Ranked by how well you actually fit — same gym, same hours, same level, same interests.",
     shot: "02-match.webp",
     ann: [{ side: "right", top: 24, text: "Ranked by real fit" }],
   },
@@ -225,16 +227,16 @@ export const studentStory: Beat[] = [
     kicker: "03 · The reasons",
     /* "Life goals" was in the owner's line and is not in the product — the
        profile stores concentration, hometown, languages, interests and a bio. */
-    head: "View a person's profile for hobbies, interests, concentrations.",
-    sub: "Or get mentored by more experienced people.",
+    head: "See why you match, before you say hello.",
+    sub: "Interests, concentration, hometown, languages — and whether one of you wants a mentor.",
     shot: "03-why-you-match.webp",
     ann: [{ side: "left", top: 56, text: "Facts, not guesses" }],
   },
   {
     id: "S4",
     kicker: "04 · The plan",
-    head: "Plan your session in the chat with one tap.",
-    sub: "One tap proposes the session, one accepts, it's in both calendars.",
+    head: "Plan it in the chat.",
+    sub: "One tap proposes the session, one accepts, and it's in both calendars.",
     shot: "04-plan-a-session.webp",
     ann: [{ side: "right", top: 52, text: "One tap to accept" }],
   },
@@ -242,7 +244,7 @@ export const studentStory: Beat[] = [
     id: "S5",
     kicker: "05 · The log",
     head: "Afterwards, log it together.",
-    sub: "Every set, every rep — and the partner carried straight over from the plan.",
+    sub: "Every set, every rep — with your partner carried over from the plan.",
     shot: "tall-logsheet.webp",
     ann: [{ side: "right", top: 30, text: "Set by set" }],
   },
@@ -252,19 +254,22 @@ export const studentStory: Beat[] = [
     /* "Track your partner's calendar" was in the owner's line and is not in
        the product — /people/[id] renders a profile, match reasons and photos,
        and no calendar. */
-    head: "Make memories stored in the calendar.",
-    sub: "Who you trained with, how it went, and a picture to make memories that last forever.",
+    head: "Keep the session, not just the numbers.",
+    sub: "Who you trained with, how it went, and a photo — all of it lands in your calendar.",
     shot: "tall-logsheet.webp",
     ann: [{ side: "left", top: 50, text: "Photo + note" }],
   },
   {
     id: "S7",
     kicker: "07 · The proof",
-    /* Not `brandLine`: the story closes on the owner's "never train alone
-       AGAIN", while the brand line under the logo stays at three words. */
+    /* The story used to close on "Never train alone again." — which now
+       opens the walk, on the card above (see `studentIntro`). Saying it twice
+       made the ending a repeated promise; "Nobody trained alone." is the same
+       thought as a RESULT, after seven screens of watching it happen. The
+       reader joins the two without being told to. */
     head: "29 sessions. 6 partners.",
-    headEm: "Never train alone again.",
-    sub: "Participate in college leaderboards.",
+    headEm: "Nobody trained alone.",
+    sub: "And your place on the campus leaderboard.",
     shot: "tall-profile.webp",
     ann: [
       { side: "right", top: 30, text: "Leaderboards" },
@@ -464,7 +469,7 @@ export type FeatureRow = { icon: string; title: string; detail: string };
 export type FeatureCta = { label: string; href: string };
 
 export const studentFeatures: { kicker: string; rows: FeatureRow[]; cta: FeatureCta } = {
-  kicker: "The student app",
+  kicker: "The app",
   cta: { label: hero.primaryCta, href: "/login" },
   rows: [
     {
