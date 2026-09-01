@@ -331,7 +331,7 @@ export const interlude = {
   headline: "Varsity",
   headlineEm: "Mode.",
   sub: "The app your squad has been running out of a group chat.",
-  /* Six, not seven: the varsity story has six beats. Renamed 2026-09-01 to
+  /* Seven now — the squad board joined on 2026-09-01. Renamed the same day to
      the owner's list — the labels now name the thing on the screen rather
      than a mood. "Boat" became "Lineups" (what the coach publishes), "Week"
      became "Log" (the beat is the logging list, not a week view), "Season"
@@ -346,6 +346,7 @@ export const interlude = {
     { n: "04", icon: "logplan", word: "Log" },
     { n: "05", icon: "calendar", word: "Calendar" },
     { n: "06", icon: "squad", word: "Statistics" },
+    { n: "07", icon: "leaderboard", word: "Squad board" },
   ] as OpeningStep[],
   /* Same door as the student card's: the varsity feature block beside Blade
      Lock, which is where the overview lives — once. */
@@ -471,6 +472,28 @@ export const varsityStory: Beat[] = [
     sub: "Consistency, hours and personal bests — eight weeks of work, in one screen.",
     shot: "tall-vprofile.webp",
     ann: [{ side: "right", top: 40, text: "Eight weeks of work" }],
+  },
+  {
+    /* THE SQUAD BOARD — the beat the owner asked for ("a note about team and
+       rankings, its a nice part of it"), and it took three goes to get right.
+       First it was a clause on V6, which promised a board the frame did not
+       show. Then the database said varsity_results did not exist at all, so
+       the clause came off the page entirely. db/varsity_results.sql is applied
+       now, and the app's own worked example (lib/varsity/demoWorkouts.ts)
+       fills the board until a coach flags a real session — so it has both a
+       table behind it and a picture in front of it, and it gets a beat.
+
+       The capture is DRIVEN, not a URL: Team → Workouts → tap the 2k test.
+       scripts/landing/capture-light.mjs --only=15-varsity-board re-shoots it. */
+    id: "V7",
+    kicker: "V7 · Squad board",
+    head: "Every team piece, ranked.",
+    sub: "The whole squad on one board — your place in it, the squad's average, and how far off the top eight you are.",
+    shot: "15-varsity-board.webp",
+    ann: [
+      { side: "right", top: 44, text: "Your place" },
+      { side: "left", top: 62, text: "The squad's average" },
+    ],
   },
 ];
 

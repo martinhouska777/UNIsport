@@ -20,7 +20,7 @@
 //
 // Frames written:
 //   stills  01-gyms, 02-match, 03-why-you-match (Ryan), 04-plan-a-session,
-//           13-varsity-log-list
+//           13-varsity-log-list, 15-varsity-board (driven: Team → Workouts → tap)
 //   strips  tall-logsheet, tall-profile, tall-vhome, tall-vprofile
 import puppeteer from "puppeteer-core";
 import fs from "fs";
@@ -210,6 +210,49 @@ if (wants("13-varsity-log-list")) {
   await page.goto(BASE + "/varsity/log", { waitUntil: "networkidle2", timeout: 45000 });
   await wait(3200);
   await still("13-varsity-log-list");
+}
+
+/*
+  THE SQUAD BOARD — the one frame that is not a plain URL.
+
+  It lives behind the Team tab's Workouts list, as a sheet you open by tapping
+  a workout, so this drives the app: /varsity/team → the "Workouts" chip → the
+  first "2k test" row. React's handler needs a real touch, not element.click()
+  — a click() on that button does nothing and the sheet never opens — so it is
+  scrolled into view and tapped through page.touchscreen.
+
+  What comes back is a ranked board: YOUR place, the squad average against the
+  top 8 / 16 / 24, and the list of names with splits and their change since the
+  last time the piece was rowed.
+
+  The numbers are the app's own worked EXAMPLE (lib/varsity/demoWorkouts.ts),
+  derived from each rower's 2K PB, shown until a coach flags a real session.
+  The list banner says so; the sheet does not, and the sheet is what is shot.
+*/
+if (wants("15-varsity-board")) {
+  await phone();
+  await page.goto(BASE + "/varsity/team", { waitUntil: "networkidle2", timeout: 45000 });
+  await wait(4500);
+  await page.evaluate(() => {
+    const el = [...document.querySelectorAll("button,a,[role=button]")].find((e) => /^workouts$/i.test(e.textContent.trim()));
+    if (el) el.click();
+  });
+  await wait(2500);
+  const at = await page.evaluate(() => {
+    const leaf = [...document.querySelectorAll("*")].find((e) => e.children.length === 0 && /^2k test$/i.test(e.textContent.trim()));
+    const btn = leaf && leaf.closest("button");
+    if (!btn) return null;
+    btn.scrollIntoView({ block: "center" });
+    const r = btn.getBoundingClientRect();
+    return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
+  });
+  if (!at) throw new Error("no 2k test row in the Workouts list");
+  await wait(700);
+  await page.touchscreen.tap(at.x, at.y);
+  await wait(3500);
+  const open = await page.evaluate(() => /ranked/i.test(document.body.innerText.slice(0, 4000)));
+  if (!open) throw new Error("the board sheet did not open");
+  await still("15-varsity-board");
 }
 
 if (wants("tall-vprofile")) {

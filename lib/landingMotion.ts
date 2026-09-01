@@ -76,6 +76,9 @@ export const motion: Record<string, BeatMotion> = {
   // Logged a workout → over to the Calendar tab, where it just landed.
   V5: { side: "left", enter: "tab", tap: [30.8, 94] },
   V6: { pan: [0.06, 0.42], side: "left", enter: "tab", tap: [88.4, 93.3] },
+  // The board really is a sheet you pull up by tapping a row in the Workouts
+  // list, so "sheet" is not decoration here — it is the gesture that opens it.
+  V7: { side: "left", enter: "sheet" },
 };
 
 /* The natural size of every capture the stories ride, so <Image> can reserve

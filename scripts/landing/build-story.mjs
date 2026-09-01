@@ -134,6 +134,14 @@ const story2 = [
     sub: "Consistency, hours and personal bests — eight weeks of work, in one screen.",
     ann: [{ side: "right", top: 40, text: "Eight weeks of work" }],
   },
+  {
+    // The squad board — a sheet you pull up from the Workouts list, so it
+    // arrives as one. Driven capture: see capture-light.mjs.
+    key: "15-varsity-board", kicker: "V7 · Squad board", side: "left", enter: "sheet",
+    head: "Every team piece, ranked.",
+    sub: "The whole squad on one board — your place in it, the squad's average, and how far off the top eight you are.",
+    ann: [{ side: "right", top: 44, text: "Your place" }, { side: "left", top: 62, text: "The squad's average" }],
+  },
 ];
 
 /*
