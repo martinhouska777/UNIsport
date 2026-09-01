@@ -50,13 +50,13 @@ const story1 = [
   {
     key: "02-match", kicker: "02 · People", enter: "tab", tap: [37.5, 95.5],
     head: "Find a training partner. Make a friend.",
-    sub: "The app ranks everyone by how well you actually fit, so the first people you see already train at your gym, at your hours and at your level.",
+    sub: "The app puts the best fits first: people who train at your gym, at your hours and at your level.",
     ann: [{ side: "right", top: 24, text: "Ranked by real fit" }],
   },
   {
     key: "03-why-you-match", kicker: "03 · Why you match", enter: "zoom", tap: [26, 54],
     head: "See why you match, before you say hello.",
-    sub: "Interests, concentration, hometown, languages — and whether one of you wants a mentor.",
+    sub: "You see what they study, where they are from and what they are into, and whether one of you wants a mentor.",
     ann: [{ side: "left", top: 56, text: "Facts, not guesses" }],
   },
   {
@@ -78,7 +78,7 @@ const story1 = [
     // never shown. No new capture — tall-profile already carries it.
     key: "tall-profile", kicker: "06 · Calendar", pan: [0.65, 1], hold: 0.15, side: "left", enter: "push", tap: [50, 95],
     head: "Every session lands in your calendar.",
-    sub: "Who you trained with, how it went, the photo you took — a month you can look back on.",
+    sub: "Every session keeps who you trained with, how it went and the photo you took. The month builds itself.",
     ann: [{ side: "left", top: 66, text: "Every day you trained" }],
   },
   {
@@ -86,7 +86,7 @@ const story1 = [
     // headline reads off, panning down to the leaderboard strip.
     key: "tall-profile", kicker: "07 · Rankings", pan: [0, 0.38], hold: 0.2, side: "left", enter: "dismiss", tap: [50, 95],
     head: "29 sessions. 6 partners.", headEm: "Nobody trained alone.",
-    sub: "And a place on the rankings — your campus, your house, your partners, your year.",
+    sub: "You take a place on the rankings too, for your campus, your house, your partners and your year.",
     ann: [{ side: "right", top: 60, text: "Where you rank" }],
   },
 ];
@@ -97,7 +97,7 @@ const story2 = [
     // arrives with the boat almost centred rather than announcing it early.
     key: "tall-vhome", kicker: "V1 · Training plan", pan: [0, 0.5], hold: 0.45,
     head: "Training plan always at hand, always current.",
-    sub: "Water, erg, weights — the week your coach actually built. Not a screenshot of a spreadsheet.",
+    sub: "Your coach builds the week and it lands on your phone. Water, erg and weights, not a screenshot of a spreadsheet.",
     ann: [{ side: "right", top: 18, text: "Week 6 of 15" }],
   },
   {
@@ -128,20 +128,20 @@ const story2 = [
     // Driven capture: see capture-light.mjs.
     key: "15-varsity-board", kicker: "V5 · Squad board", side: "left", enter: "sheet", tap: [69.1, 93.2],
     head: "Every team piece, ranked.",
-    sub: "The whole squad on one board — your place in it, the squad's average, and how far off the top eight you are.",
+    sub: "One board holds the whole squad. You see your place in it, the squad's average, and how far off the top eight you are.",
     ann: [{ side: "right", top: 44, text: "Your place" }, { side: "left", top: 62, text: "The squad's average" }],
   },
   {
     // The board's own close X drops the sheet away and the calendar is there.
     key: "14-varsity-calendar", kicker: "V6 · Calendar", side: "left", enter: "dismiss", tap: [92.4, 20.3],
     head: "Keep track of every session.",
-    sub: "Each workout you log lands on the calendar by itself — your season's training history, paired with live statistics.",
+    sub: "Each workout you log lands on the calendar by itself. The season builds into a history, with your statistics beside it.",
     ann: [{ side: "right", top: 34, text: "Session dots" }, { side: "left", top: 64, text: "Today" }],
   },
   {
     key: "tall-vprofile", kicker: "V7 · Statistics", pan: [0.06, 0.42], side: "left", enter: "tab", tap: [88.4, 93.3],
     head: "See your statistics.",
-    sub: "Consistency, hours and personal bests — eight weeks of work, in one screen.",
+    sub: "One screen counts your consistency, your hours and your personal bests over eight weeks.",
     ann: [{ side: "right", top: 40, text: "Eight weeks of work" }],
   },
 ];
@@ -162,31 +162,31 @@ const coachSteps = [
   {
     key: "coach-1-create", step: "1 &middot; Create",
     head: "Start with the race.",
-    body: "Name the block, set the dates, add the race you&#8217;re pointing at. That&#8217;s the whole setup &mdash; <b>one screen, under a minute</b>. The app works out the weeks and starts the countdown your athletes will see.",
+    body: "Name the block, set the dates, add the race you&#8217;re pointing at. The whole setup takes <b>one screen and under a minute</b>. The app works out the weeks and starts the countdown your athletes will see.",
     alt: "The new training block form: block name, from and to dates, and an optional goal race with its date",
   },
   {
     key: "coach-2-build", step: "2 &middot; Build",
     head: "Two taps per session.",
-    body: "Pick the type &mdash; water, erg, weights. Pick the intensity. Then tap one of the <b>five workouts this squad actually uses</b> and the session fills itself in. A full training week takes minutes, not an evening.",
+    body: "You pick the type, water or erg or weights, then the intensity. Then you tap one of the <b>five workouts this squad actually uses</b> and the session fills itself in. A full training week takes minutes, not an evening.",
     alt: "The session builder: type and intensity pickers, the five most-used workouts as tap-to-fill chips, and a Confirm session button",
   },
   {
     key: "coach-3-plan", step: "3 &middot; Plan",
     head: "Publish the week once.",
-    body: "The season is one block &mdash; fourteen weeks, counting down to the race. Water, erg and weights for every AM and PM, colour-coded by intensity. <b>Publish, and it&#8217;s on every athlete&#8217;s phone.</b> No more screenshots of a spreadsheet in the group chat.",
+    body: "The season is one block of fourteen weeks, counting down to the race. It holds water, erg and weights for every AM and PM, colour-coded by intensity. <b>Publish, and it&#8217;s on every athlete&#8217;s phone.</b> No more screenshots of a spreadsheet in the group chat.",
     alt: "The Training Plan screen: week 6 of the Fall 2026 block, with colour-coded AM and PM sessions for every day",
   },
   {
     key: "coach-4-lineup", step: "4 &middot; Lineup",
     head: "Publish the boats.",
-    body: "Seat by seat, cox to bow. Port shows red and starboard green, straight from each rower&#8217;s profile &mdash; <b>stroke on strokeside, seven on bowside</b>, the way the boat is actually rigged. One tap and the lineup is on every phone <b>the night before</b>, not shouted across the dock.",
+    body: "You seat the boat cox to bow. Port shows red and starboard green, straight from each rower&#8217;s profile, so <b>stroke on strokeside, seven on bowside</b>, the way the boat is actually rigged. One tap and the lineup is on every phone <b>the night before</b>, not shouted across the dock.",
     alt: "The Lineup screen: the 1V eight seated cox to bow, port seats in red and starboard seats in green",
   },
   {
     key: "coach-5-notes", step: "5 &middot; Notes",
     head: "Keep every athlete on track.",
-    body: "One short technical note per athlete. It sits on their Home &mdash; under their race countdown &mdash; until it&#8217;s fixed. Everyone else sees a green <b>&#8220;Good job&#8221;</b>. Forty athletes, one glance, no noise.",
+    body: "You leave one short technical note per athlete. It sits on their Home, under their race countdown, until it&#8217;s fixed. Everyone else sees a green <b>&#8220;Good job&#8221;</b>. Forty athletes, one glance, no noise.",
     alt: "The Athlete Notes screen: the roster with a short technical note per athlete, and a green Good job for everyone without one",
   },
 ];
@@ -204,9 +204,9 @@ function renderCoach() {
     <div class="badge">UNIsport &middot; for coaches &amp; athletic departments</div>
     <p class="lead-in">And for the person who runs the squad &mdash;</p>
     <h2>The Coach&#8217;s <em>Console.</em></h2>
-    <p class="sub">Students use the app. <b>Coaches run it.</b> From an empty season to a published
-      lineup in five screens &mdash; the plan, the boats and the notes the varsity story above
-      depends on, all built here. These are real screens from the console as it works today.</p>
+    <p class="sub">Students use the app. <b>Coaches run it.</b> Five screens take a coach from an empty season to a published lineup. The plan,
+      the boats and the notes the varsity story above depends on are all built here.
+      These are real screens from the console as it works today.</p>
   </div>
 
   <div class="coach-grid">
@@ -230,8 +230,7 @@ function renderCoach() {
     </article>`).join("")}
   </div>
 
-  <p class="coach-bridge">Everything the console publishes is the story you just scrolled &mdash;
-    the plan on their Home, their name in the boat, the note under their race.</p>
+  <p class="coach-bridge">Everything the console publishes is the story you just scrolled. The plan lands on their Home, their name goes in the boat, the note sits under their race.</p>
   <p class="coach-bridge-sub">A student who signs up brings one user. A coach who adopts brings the
     whole squad. That&#8217;s why the console exists &mdash; and why it&#8217;s already built.</p>
 

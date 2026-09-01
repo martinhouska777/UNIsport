@@ -250,7 +250,7 @@ export const studentStory: Beat[] = [
        mean: a noun list, a dash, an appositive ("Ranked by how well you
        actually fit — same gym, same hours, same level, same interests."). It
        says the same thing with something DOING it. */
-    sub: "The app ranks everyone by how well you actually fit, so the first people you see already train at your gym, at your hours and at your level.",
+    sub: "The app puts the best fits first: people who train at your gym, at your hours and at your level.",
     shot: "02-match.webp",
     ann: [{ side: "right", top: 24, text: "Ranked by real fit" }],
   },
@@ -263,7 +263,7 @@ export const studentStory: Beat[] = [
     /* "Life goals" was in the owner's line and is not in the product — the
        profile stores concentration, hometown, languages, interests and a bio. */
     head: "See why you match, before you say hello.",
-    sub: "Interests, concentration, hometown, languages — and whether one of you wants a mentor.",
+    sub: "You see what they study, where they are from and what they are into, and whether one of you wants a mentor.",
     shot: "03-why-you-match.webp",
     ann: [{ side: "left", top: 56, text: "Facts, not guesses" }],
   },
@@ -310,7 +310,7 @@ export const studentStory: Beat[] = [
     id: "S6",
     kicker: "06 · Calendar",
     head: "Every session lands in your calendar.",
-    sub: "Who you trained with, how it went, the photo you took — a month you can look back on.",
+    sub: "Every session keeps who you trained with, how it went and the photo you took. The month builds itself.",
     shot: "tall-profile.webp",
     ann: [{ side: "left", top: 66, text: "Every day you trained" }],
   },
@@ -330,7 +330,7 @@ export const studentStory: Beat[] = [
        reader joins the two without being told to. */
     head: "29 sessions. 6 partners.",
     headEm: "Nobody trained alone.",
-    sub: "And a place on the rankings — your campus, your house, your partners, your year.",
+    sub: "You take a place on the rankings too, for your campus, your house, your partners and your year.",
     shot: "tall-profile.webp",
     /* "Every day you trained" moved up to S6, which is now the beat that
        actually shows the calendar. This one opens on the name and the counts
@@ -449,7 +449,7 @@ export const varsityStory: Beat[] = [
        sub is the one that was already here: the owner gave V1 a headline
        only, and deleting a line nobody asked to delete is the bigger edit. */
     head: "Training plan always at hand, always current.",
-    sub: "Water, erg, weights — the week your coach actually built. Not a screenshot of a spreadsheet.",
+    sub: "Your coach builds the week and it lands on your phone. Water, erg and weights, not a screenshot of a spreadsheet.",
     shot: "tall-vhome.webp",
     ann: [{ side: "right", top: 18, text: "Week 6 of 15" }],
   },
@@ -509,7 +509,7 @@ export const varsityStory: Beat[] = [
     id: "V5",
     kicker: "V5 · Squad board",
     head: "Every team piece, ranked.",
-    sub: "The whole squad on one board — your place in it, the squad's average, and how far off the top eight you are.",
+    sub: "One board holds the whole squad. You see your place in it, the squad's average, and how far off the top eight you are.",
     shot: "15-varsity-board.webp",
     ann: [
       { side: "right", top: 44, text: "Your place" },
@@ -520,7 +520,7 @@ export const varsityStory: Beat[] = [
     id: "V6",
     kicker: "V6 · Calendar",
     head: "Keep track of every session.",
-    sub: "Each workout you log lands on the calendar by itself — your season's training history, paired with live statistics.",
+    sub: "Each workout you log lands on the calendar by itself. The season builds into a history, with your statistics beside it.",
     shot: "14-varsity-calendar.webp",
     ann: [
       { side: "right", top: 34, text: "Session dots" },
@@ -538,7 +538,7 @@ export const varsityStory: Beat[] = [
        feature.) */
     kicker: "V7 · Statistics",
     head: "See your statistics.",
-    sub: "Consistency, hours and personal bests — eight weeks of work, in one screen.",
+    sub: "One screen counts your consistency, your hours and your personal bests over eight weeks.",
     shot: "tall-vprofile.webp",
     ann: [{ side: "right", top: 40, text: "Eight weeks of work" }],
   },
@@ -574,7 +574,7 @@ export const closers = {
     leadIn: "One boathouse at a time —",
     headline: "Every crew.",
     headlineEm: "One system.",
-    sub: "Built for Harvard rowing. Ready for every boathouse after it — in its own colours, read straight off the blade.",
+    sub: "Built for Harvard rowing. Every boathouse after it gets its own colours, read straight off the blade.",
     /* Under the phone: "HARVARD ROWING", "YALE ROWING", … */
     label: "Rowing",
   },
@@ -609,13 +609,13 @@ export const studentFeatures: { kicker: string; rows: FeatureRow[]; cta: Feature
       /* /gyms — hours, ratings, equipment lists, favourites, the crowd meter (lib/gymSocial.ts) */
       icon: "gym",
       title: "Every gym on campus, in one list.",
-      detail: "Opening hours, ratings, the equipment in each room, and a live crowd meter — the main gyms and the house gyms nobody has a map of.",
+      detail: "You see opening hours, ratings, the equipment in each room and how busy it is right now. The house gyms are in there too, and nobody has a map of those.",
     },
     {
       /* /match — ranked by compatibility; /people/[id] — the Why-you-match facts */
       icon: "partners",
       title: "Training partners, ranked by real fit.",
-      detail: "Same gym, same hours, same level — plus interests, hometown, languages, and whether one of you wants a mentor. Every reason is a fact off both profiles.",
+      detail: "The ranking reads your gym, your hours, your level, your interests, your hometown and your languages, and whether one of you wants a mentor. Every reason is a fact off both profiles.",
     },
     {
       /* messages/PlanCard.tsx — propose, accept, both calendars */
@@ -627,7 +627,7 @@ export const studentFeatures: { kicker: string; rows: FeatureRow[]; cta: Feature
       /* the Log Session sheet (tall-logsheet capture): sets and reps, the partner carried over, photos and a note */
       icon: "log",
       title: "Log it together, set by set.",
-      detail: "Every set and rep, the partner carried straight over from the plan, a photo and a note — the memory of the session, not just the numbers.",
+      detail: "You record every set and rep, with your partner carried over from the plan. Add a photo and a note and the session becomes a memory, not just numbers.",
     },
     {
       /* PlanCard's confirmation → verified session; lib/supabase/workouts.ts streakStats */
@@ -645,7 +645,7 @@ export const studentFeatures: { kicker: string; rows: FeatureRow[]; cta: Feature
       /* /messages — the open channels (components/messages/ChannelThread.tsx) */
       icon: "channels",
       title: "Open campus channels.",
-      detail: "Everyone at your school is already in — no followers, no requests.",
+      detail: "Everyone at your school is already in. There are no followers and no requests.",
     },
   ],
 };
@@ -658,13 +658,13 @@ export const varsityFeatures: { kicker: string; rows: FeatureRow[]; cta: Feature
       /* /varsity/home — the week the coach published (V1) */
       icon: "plan",
       title: "The training plan, always current.",
-      detail: "Water, erg, weights — the week your coach actually built, on your phone the moment it is published. Not a screenshot of a spreadsheet.",
+      detail: "Your coach publishes the week and it is on your phone the same moment. Water, erg and weights, not a screenshot of a spreadsheet.",
     },
     {
       /* /varsity/home lineup card (V2), coach lineups (coach step 4) */
       icon: "boat",
       title: "Your name, in the boat.",
-      detail: "Lineups published by the coach, seat by seat, the night before — your seat lights up.",
+      detail: "The coach publishes the lineup seat by seat, the night before. Your seat lights up.",
     },
     {
       /* race countdown + coach's note on Home (V3, coach step 1 & 5) */
@@ -682,13 +682,13 @@ export const varsityFeatures: { kicker: string; rows: FeatureRow[]; cta: Feature
       /* /varsity/calendar (V5) and /varsity/profile (V6) */
       icon: "calendar",
       title: "Your season, on the calendar.",
-      detail: "Every logged workout lands on the calendar by itself — your training history, with your consistency beside it.",
+      detail: "Every workout you log lands on the calendar by itself. Your consistency sits beside it.",
     },
     {
       /* /varsity/team — the squad's month (11-varsity-teammate capture) */
       icon: "squad",
       title: "How the squad is training.",
-      detail: "Every teammate's month, and where yours sits next to it — without having to ask anyone.",
+      detail: "You can open any teammate's month and see where yours sits next to it, without asking anyone.",
     },
     {
       /* /join — the invite; a captain's or coach's link unlocks the mode */
@@ -716,7 +716,7 @@ export const faq: { q: string; a: string; on: FaqAudience[] }[] = [
   {
     on: ["students", "varsity", "coaches"],
     q: "Which universities is it live at?",
-    a: "Harvard, today. New campuses are onboarded one at a time — each with its own colours, gyms and houses — so the app you sign up to is already yours.",
+    a: "Harvard, today. New campuses come on one at a time, each with its own colours, gyms and houses, so the app you sign up to is already yours.",
   },
   {
     on: ["students", "varsity", "coaches"],
@@ -736,7 +736,7 @@ export const faq: { q: string; a: string; on: FaqAudience[] }[] = [
   {
     on: ["students", "varsity"],
     q: "What does the app know about me?",
-    a: "What you put in your profile — concentration, hometown, languages, interests, a bio — and the sessions you log. Matches are explained from those facts. The privacy policy has the full list.",
+    a: "Your profile holds your concentration, hometown, languages, interests and a bio, and the app stores the sessions you log. Matches are explained from those facts. The privacy policy has the full list.",
   },
   {
     on: ["students", "varsity", "coaches"],
@@ -753,7 +753,7 @@ export const about = {
   kicker: "About",
   headline: "Built at Harvard,",
   headlineEm: "for every campus.",
-  body: "UNIsport started as the app one campus was missing: every gym in one place, the people worth training with, and the plan that gets you both there — then a mode for the squads that train for the university itself, and a console for the coaches who run them. One app per university, in that university's colours.",
+  body: "UNIsport started as the app one campus was missing: every gym in one place, the people worth training with, and the plan that gets you both there. Then came a mode for the squads that train for the university itself, and a console for the coaches who run them. One app per university, in that university's colours.",
   email: "martinhouska777@gmail.com",
   /* On "/" the About section is the paragraph above and this link; the full
      "why" lives on the About tab. */
@@ -789,7 +789,7 @@ export type SocialLink = { name: string; handle: string; href: string | null; ic
 export const contact = {
   kicker: "Contact",
   headline: "Say hello.",
-  body: "A question, a campus that should be next, a team that wants in — write, or find us where the app is talked about.",
+  body: "Write to us with a question, a campus that should be next, or a team that wants in. You can also find us where the app is talked about.",
   emailLabel: "Email",
   socialsLabel: "Find us",
   comingSoon: "coming soon",
@@ -847,7 +847,7 @@ export const coach = {
     { text: "Students use the app. " },
     { text: "Coaches run it.", bold: true },
     {
-      text: " From an empty season to a published lineup in five screens — the plan, the boats and the notes the varsity story above depends on, all built here. These are real screens from the console as it works today.",
+      text: " Five screens take a coach from an empty season to a published lineup. The plan, the boats and the notes the varsity story above depends on are all built here. These are real screens from the console as it works today.",
     },
   ] as Segment[],
   /* On the Coach view (/for/coaches) there is no varsity story above, so the
@@ -858,7 +858,7 @@ export const coach = {
     { text: "Students use the app. " },
     { text: "Coaches run it.", bold: true },
     {
-      text: " From an empty season to a published lineup in five screens — the plan, the boats and the notes your athletes open on their phones, all built here. These are real screens from the console as it works today.",
+      text: " Five screens take you from an empty season to a published lineup. The plan, the boats and the notes your athletes open on their phones are all built here. These are real screens from the console as it works today.",
     },
   ] as Segment[],
 
@@ -868,8 +868,8 @@ export const coach = {
       step: "1 · Create",
       head: "Start with the race.",
       body: [
-        { text: "Name the block, set the dates, add the race you're pointing at. That's the whole setup — " },
-        { text: "one screen, under a minute", bold: true },
+        { text: "Name the block, set the dates, add the race you're pointing at. The whole setup takes " },
+        { text: "one screen and under a minute", bold: true },
         { text: ". The app works out the weeks and starts the countdown your athletes will see." },
       ],
       shot: "coach-1-create.webp",
@@ -880,7 +880,7 @@ export const coach = {
       step: "2 · Build",
       head: "Two taps per session.",
       body: [
-        { text: "Pick the type — water, erg, weights. Pick the intensity. Then tap one of the " },
+        { text: "You pick the type, water or erg or weights, then the intensity. Then you tap one of the " },
         { text: "five workouts this squad actually uses", bold: true },
         { text: " and the session fills itself in. A full training week takes minutes, not an evening." },
       ],
@@ -892,7 +892,7 @@ export const coach = {
       step: "3 · Plan",
       head: "Publish the week once.",
       body: [
-        { text: "The season is one block — fourteen weeks, counting down to the race. Water, erg and weights for every AM and PM, colour-coded by intensity. " },
+        { text: "The season is one block of fourteen weeks, counting down to the race. It holds water, erg and weights for every AM and PM, colour-coded by intensity. " },
         { text: "Publish, and it's on every athlete's phone.", bold: true },
         { text: " No more screenshots of a spreadsheet in the group chat." },
       ],
@@ -904,7 +904,7 @@ export const coach = {
       step: "4 · Lineup",
       head: "Publish the boats.",
       body: [
-        { text: "Seat by seat, cox to bow. Port shows red and starboard green, straight from each rower's profile — " },
+        { text: "You seat the boat cox to bow. Port shows red and starboard green, straight from each rower's profile, so " },
         { text: "stroke on strokeside, seven on bowside", bold: true },
         { text: ", the way the boat is actually rigged. One tap and the lineup is on every phone " },
         { text: "the night before", bold: true },
@@ -918,7 +918,7 @@ export const coach = {
       step: "5 · Notes",
       head: "Keep every athlete on track.",
       body: [
-        { text: "One short technical note per athlete. It sits on their Home — under their race countdown — until it's fixed. Everyone else sees a green " },
+        { text: "You leave one short technical note per athlete. It sits on their Home, under their race countdown, until it's fixed. Everyone else sees a green " },
         { text: "“Good job”", bold: true },
         { text: ". Forty athletes, one glance, no noise." },
       ],
@@ -927,9 +927,9 @@ export const coach = {
     },
   ] as CoachStep[],
 
-  bridge: "Everything the console publishes is the story you just scrolled — the plan on their Home, their name in the boat, the note under their race.",
+  bridge: "Everything the console publishes is the story you just scrolled. The plan lands on their Home, their name goes in the boat, the note sits under their race.",
   /* On the Coach view there is no story above to point back to. DRAFT. */
-  bridgeSolo: "Everything the console publishes lands on the athletes' phones — the plan on their Home, their name in the boat, the note under their race.",
+  bridgeSolo: "Everything the console publishes lands on the athletes' phones. The plan goes to their Home, their name into the boat, the note under their race.",
   bridgeSub:
     "A student who signs up brings one user. A coach who adopts brings the whole squad. That's why the console exists — and why it's already built.",
 
