@@ -317,7 +317,7 @@ export const studentStory: Beat[] = [
     id: "S6",
     kicker: "06 · Calendar",
     head: "Check your month in the session calendar.",
-    sub: "Every session you log marks its day and shows what you trained, so you can see the weeks you kept up and the ones you missed. Tap a day to open that session again.",
+    sub: "Every session you log marks its day and shows what you trained, so you can track your workouts week by week. Tap a day to open it again, and every photo you took is collected in Memories, right under the calendar.",
     shot: "tall-profile.webp",
     ann: [{ side: "left", top: 66, text: "Every day you trained" }],
   },

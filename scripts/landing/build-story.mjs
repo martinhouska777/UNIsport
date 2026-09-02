@@ -78,7 +78,7 @@ const story1 = [
     // never shown. No new capture — tall-profile already carries it.
     key: "tall-profile", kicker: "06 · Calendar", pan: [0.65, 1], hold: 0.15, side: "left", enter: "push", tap: [50, 95],
     head: "Check your month in the session calendar.",
-    sub: "Every session you log marks its day and shows what you trained, so you can see the weeks you kept up and the ones you missed. Tap a day to open that session again.",
+    sub: "Every session you log marks its day and shows what you trained, so you can track your workouts week by week. Tap a day to open it again, and every photo you took is collected in Memories, right under the calendar.",
     ann: [{ side: "left", top: 66, text: "Every day you trained" }],
   },
   {
