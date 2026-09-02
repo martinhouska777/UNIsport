@@ -50,7 +50,7 @@ const story1 = [
   {
     key: "02-match", kicker: "02 · People", enter: "tab", tap: [37.5, 95.5],
     head: "Find training partners. Make friends.",
-    sub: "",
+    sub: "The app sorts everyone by how well you fit with them. The people who train at your gym, at your hours and at your level come first.",
     ann: [{ side: "right", top: 24, text: "Ranked by real fit" }],
   },
   {

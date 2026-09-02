@@ -257,7 +257,7 @@ export const studentStory: Beat[] = [
        these words. The swept lines are the ones they want and they stand.
        When an instruction says a section changed, find out WHAT changed before
        reverting text that was approved. */
-    sub: "",
+    sub: "The app sorts everyone by how well you fit with them. The people who train at your gym, at your hours and at your level come first.",
     shot: "02-match.webp",
     ann: [{ side: "right", top: 24, text: "Ranked by real fit" }],
   },
