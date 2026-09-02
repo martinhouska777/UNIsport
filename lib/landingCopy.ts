@@ -243,7 +243,7 @@ export const studentStory: Beat[] = [
   {
     id: "S2",
     kicker: "02 · People",
-    head: "Find a training partner. Make a friend.",
+    head: "Find training partners. Make friends.",
     /* The owner, 2026-09-02: "people find training partners mae friends …
        just make explaining sentences from them with verbs and stuff … and no
        dashes its so fkn generic". The line that stood here was the shape they
@@ -257,7 +257,7 @@ export const studentStory: Beat[] = [
        these words. The swept lines are the ones they want and they stand.
        When an instruction says a section changed, find out WHAT changed before
        reverting text that was approved. */
-    sub: "The app puts the best fits first: people who train at your gym, at your hours and at your level.",
+    sub: "",
     shot: "02-match.webp",
     ann: [{ side: "right", top: 24, text: "Ranked by real fit" }],
   },
@@ -279,8 +279,8 @@ export const studentStory: Beat[] = [
     kicker: "04 · Plan",
     /* The owner's own sentence, 2026-09-02: "plan sessions easily in the chat,
        once the other one accepts it goes to both calendars". */
-    head: "Plan the session in the chat.",
-    sub: "You propose a time in one tap, and the moment they accept it lands in both your calendars.",
+    head: "Plan sessions easily in the chat.",
+    sub: "Once the other one accepts, it goes to both calendars.",
     shot: "04-plan-a-session.webp",
     ann: [{ side: "right", top: 52, text: "One tap to accept" }],
   },
@@ -297,8 +297,8 @@ export const studentStory: Beat[] = [
        and attach a photo with your partner that will be stored in memories".
        Memories is a real screen (app/(app)/memories), reached from the Profile
        tab under the calendar, so the line names something that exists. */
-    head: "Log it together afterwards.",
-    sub: "You record every set and every rep as you go, then add a photo with your partner that is saved in your memories.",
+    head: "Record your sets and reps easily.",
+    sub: "Attach a photo with your partner and it will be stored in your memories.",
     shot: "tall-logsheet.webp",
     ann: [
       { side: "right", top: 26, text: "Set by set" },
