@@ -233,7 +233,7 @@ export const studentStory: Beat[] = [
     id: "S1",
     kicker: "01 · Gyms",
     head: "Find every gym on campus.",
-    sub: "Opening hours, ratings, the equipment in each room, and how busy it is right now.",
+    sub: "Every main gym and every house gym is in one list, with its opening hours, its rating and how many floors it has. Open one to see the equipment in each room and how busy it is right now.",
     shot: "01-gyms.webp",
     ann: [
       { side: "right", top: 14, text: "Live ratings" },
@@ -335,8 +335,7 @@ export const studentStory: Beat[] = [
        made the ending a repeated promise; "Nobody trained alone." is the same
        thought as a RESULT, after seven screens of watching it happen. The
        reader joins the two without being told to. */
-    head: "Track your statistics.",
-    headEm: "See how you do in the leaderboards.",
+    head: "Track your statistics. See how you do in the leaderboards.",
     sub: "Your profile counts the sessions you logged and the partners you trained with. Take part in the college leaderboards and see how you rank on campus, how your house and your year are doing, and who has trained with the most partners.",
     shot: "tall-profile.webp",
     /* "Every day you trained" moved up to S6, which is now the beat that

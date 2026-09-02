@@ -44,7 +44,7 @@ const story1 = [
   {
     key: "01-gyms", kicker: "01 · Gyms",
     head: "Find every gym on campus.",
-    sub: "Opening hours, ratings, the equipment in each room, and how busy it is right now.",
+    sub: "Every main gym and every house gym is in one list, with its opening hours, its rating and how many floors it has. Open one to see the equipment in each room and how busy it is right now.",
     ann: [{ side: "right", top: 14, text: "Live ratings" }, { side: "left", top: 68, text: "House gyms too" }],
   },
   {
@@ -85,7 +85,7 @@ const story1 = [
     // The same sheet re-entered at the TOP: the name and the counts the
     // headline reads off, panning down to the leaderboard strip.
     key: "tall-profile", kicker: "07 · Rankings", pan: [0, 0.38], hold: 0.2, side: "left", enter: "dismiss", tap: [50, 95],
-    head: "Track your statistics.", headEm: "See how you do in the leaderboards.",
+    head: "Track your statistics. See how you do in the leaderboards.",
     sub: "Your profile counts the sessions you logged and the partners you trained with. Take part in the college leaderboards and see how you rank on campus, how your house and your year are doing, and who has trained with the most partners.",
     ann: [{ side: "right", top: 60, text: "Where you rank" }],
   },
