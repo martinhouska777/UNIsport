@@ -445,13 +445,23 @@ export const varsityStory: Beat[] = [
     id: "V1",
     kicker: "V1 · Training plan",
     /* "Always actual" was the owner's word — aktuální, a Czech false friend.
-       "Current" is the meaning; English "actual" means real-not-fake. The
-       sub is the one that was already here: the owner gave V1 a headline
-       only, and deleting a line nobody asked to delete is the bigger edit. */
+       "Current" is the meaning; English "actual" means real-not-fake.
+
+       THE SUB IS THEIRS TOO, 2026-09-02: "chci dat ze training plan je jako
+       zretelny nebo clear a jednoduse, click to each day to see description of
+       workout and current lineups". Both halves are checked against the app
+       rather than promised: components/varsity/home/HomeScreen.tsx runs one
+       day down the middle of the page, its session cards carry the workout's
+       own detail line, and a card opens to the boats when a lineup has been
+       published for that period.
+
+       What it replaced said the coach builds the week and it is not a
+       screenshot of a spreadsheet. Nothing is lost: the varsity feature row
+       beside Blade Lock still says exactly that. */
     head: "Training plan always at hand, always current.",
-    sub: "Your coach builds the week and it lands on your phone. Water, erg and weights, not a screenshot of a spreadsheet.",
+    sub: "The whole week is clear at a glance. Tap any day to read the workout in full and see the lineups.",
     shot: "tall-vhome.webp",
-    ann: [{ side: "right", top: 18, text: "Week 6 of 15" }],
+    ann: [{ side: "right", top: 18, text: "Week 7 of 15" }],
   },
   {
     id: "V2",

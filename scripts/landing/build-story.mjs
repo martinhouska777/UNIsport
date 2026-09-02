@@ -97,8 +97,8 @@ const story2 = [
     // arrives with the boat almost centred rather than announcing it early.
     key: "tall-vhome", kicker: "V1 · Training plan", pan: [0, 0.5], hold: 0.45,
     head: "Training plan always at hand, always current.",
-    sub: "Your coach builds the week and it lands on your phone. Water, erg and weights, not a screenshot of a spreadsheet.",
-    ann: [{ side: "right", top: 18, text: "Week 6 of 15" }],
+    sub: "The whole week is clear at a glance. Tap any day to read the workout in full and see the lineups.",
+    ann: [{ side: "right", top: 18, text: "Week 7 of 15" }],
   },
   {
     key: "tall-vhome", kicker: "V2 · Lineups", pan: [0.5, 0.8], enter: "none",
