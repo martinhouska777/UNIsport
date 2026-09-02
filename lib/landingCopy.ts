@@ -257,7 +257,7 @@ export const studentStory: Beat[] = [
        these words. The swept lines are the ones they want and they stand.
        When an instruction says a section changed, find out WHAT changed before
        reverting text that was approved. */
-    sub: "The app sorts everyone by how well you fit with them. The people who train at your gym, at your hours and at your level come first.",
+    sub: "Browse sorts everyone by how well you fit with them, based on interests, concentration, experience and hours. In Session you pick a time to train and plan directly with people who go at that time, or you post your time on the Buddy Board and see who is interested.",
     shot: "02-match.webp",
     ann: [{ side: "right", top: 24, text: "Ranked by real fit" }],
   },

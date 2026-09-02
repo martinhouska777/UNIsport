@@ -50,7 +50,7 @@ const story1 = [
   {
     key: "02-match", kicker: "02 · People", enter: "tab", tap: [37.5, 95.5],
     head: "Find training partners. Make friends.",
-    sub: "The app sorts everyone by how well you fit with them. The people who train at your gym, at your hours and at your level come first.",
+    sub: "Browse sorts everyone by how well you fit with them, based on interests, concentration, experience and hours. In Session you pick a time to train and plan directly with people who go at that time, or you post your time on the Buddy Board and see who is interested.",
     ann: [{ side: "right", top: 24, text: "Ranked by real fit" }],
   },
   {
