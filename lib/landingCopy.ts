@@ -250,14 +250,14 @@ export const studentStory: Beat[] = [
        mean: a noun list, a dash, an appositive ("Ranked by how well you
        actually fit — same gym, same hours, same level, same interests.").
 
-       THE STUDENT STORY WAS THEN PUT BACK, later the same day, to exactly this
-       state ("revertni to k tomu co bylo"). The sweep that followed the "yes do
-       it" message had gone on to shorten this line again and to rewrite 03, 06
-       and 07; the owner read those on the page and wanted the earlier wording.
-       So 03, 06 and 07 keep their dashes ON PURPOSE — they are the exception to
-       the no-dash rule, by the owner's own call, and are not to be swept again.
-       The rest of the page (features, FAQ, varsity, coach) keeps the sweep. */
-    sub: "The app ranks everyone by how well you actually fit, so the first people you see already train at your gym, at your hours and at your level.",
+       AND A ROUND TRIP NOT TO REPEAT. "Revertni to k tomu co bylo" was read as
+       "undo the sweep on this story", so 02, 03, 06 and 07 were put back to
+       their dashed originals — and the owner's answer was "nemenili jsme tohle
+       uz, proc je to tak spatne". They were pointing at the ANIMATION, not at
+       these words. The swept lines are the ones they want and they stand.
+       When an instruction says a section changed, find out WHAT changed before
+       reverting text that was approved. */
+    sub: "The app puts the best fits first: people who train at your gym, at your hours and at your level.",
     shot: "02-match.webp",
     ann: [{ side: "right", top: 24, text: "Ranked by real fit" }],
   },
@@ -270,7 +270,7 @@ export const studentStory: Beat[] = [
     /* "Life goals" was in the owner's line and is not in the product — the
        profile stores concentration, hometown, languages, interests and a bio. */
     head: "See why you match, before you say hello.",
-    sub: "Interests, concentration, hometown, languages — and whether one of you wants a mentor.",
+    sub: "You see what they study, where they are from and what they are into, and whether one of you wants a mentor.",
     shot: "03-why-you-match.webp",
     ann: [{ side: "left", top: 56, text: "Facts, not guesses" }],
   },
@@ -317,7 +317,7 @@ export const studentStory: Beat[] = [
     id: "S6",
     kicker: "06 · Calendar",
     head: "Every session lands in your calendar.",
-    sub: "Who you trained with, how it went, the photo you took — a month you can look back on.",
+    sub: "Every session keeps who you trained with, how it went and the photo you took. The month builds itself.",
     shot: "tall-profile.webp",
     ann: [{ side: "left", top: 66, text: "Every day you trained" }],
   },
@@ -337,7 +337,7 @@ export const studentStory: Beat[] = [
        reader joins the two without being told to. */
     head: "29 sessions. 6 partners.",
     headEm: "Nobody trained alone.",
-    sub: "And a place on the rankings — your campus, your house, your partners, your year.",
+    sub: "You take a place on the rankings too, for your campus, your house, your partners and your year.",
     shot: "tall-profile.webp",
     /* "Every day you trained" moved up to S6, which is now the beat that
        actually shows the calendar. This one opens on the name and the counts
