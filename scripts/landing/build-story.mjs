@@ -77,8 +77,8 @@ const story1 = [
     // The profile's LOWER half: the session calendar, which the story had
     // never shown. No new capture — tall-profile already carries it.
     key: "tall-profile", kicker: "06 · Calendar", pan: [0.65, 1], hold: 0.15, side: "left", enter: "push", tap: [50, 95],
-    head: "Every session lands in your calendar.",
-    sub: "Every session keeps who you trained with, how it went and the photo you took. The month builds itself.",
+    head: "Check your month in the session calendar.",
+    sub: "Every session you log marks its day and shows what you trained, so you can see the weeks you kept up and the ones you missed. Tap a day to open that session again.",
     ann: [{ side: "left", top: 66, text: "Every day you trained" }],
   },
   {
@@ -86,7 +86,7 @@ const story1 = [
     // headline reads off, panning down to the leaderboard strip.
     key: "tall-profile", kicker: "07 · Rankings", pan: [0, 0.38], hold: 0.2, side: "left", enter: "dismiss", tap: [50, 95],
     head: "29 sessions. 6 partners.", headEm: "Nobody trained alone.",
-    sub: "You take a place on the rankings too, for your campus, your house, your partners and your year.",
+    sub: "Your profile counts the sessions you logged, the partners you trained with and the people you follow. The leaderboards put you in order in your house, in your year, among your partners and across the whole campus.",
     ann: [{ side: "right", top: 60, text: "Where you rank" }],
   },
 ];

@@ -316,8 +316,8 @@ export const studentStory: Beat[] = [
        to it and S7 pans the top of the same sheet. */
     id: "S6",
     kicker: "06 · Calendar",
-    head: "Every session lands in your calendar.",
-    sub: "Every session keeps who you trained with, how it went and the photo you took. The month builds itself.",
+    head: "Check your month in the session calendar.",
+    sub: "Every session you log marks its day and shows what you trained, so you can see the weeks you kept up and the ones you missed. Tap a day to open that session again.",
     shot: "tall-profile.webp",
     ann: [{ side: "left", top: 66, text: "Every day you trained" }],
   },
@@ -337,7 +337,7 @@ export const studentStory: Beat[] = [
        reader joins the two without being told to. */
     head: "29 sessions. 6 partners.",
     headEm: "Nobody trained alone.",
-    sub: "You take a place on the rankings too, for your campus, your house, your partners and your year.",
+    sub: "Your profile counts the sessions you logged, the partners you trained with and the people you follow. The leaderboards put you in order in your house, in your year, among your partners and across the whole campus.",
     shot: "tall-profile.webp",
     /* "Every day you trained" moved up to S6, which is now the beat that
        actually shows the calendar. This one opens on the name and the counts
