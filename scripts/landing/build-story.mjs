@@ -55,8 +55,8 @@ const story1 = [
   },
   {
     key: "03-why-you-match", kicker: "03 · Why you match", enter: "zoom", tap: [26, 54],
-    head: "See why you match, before you say hello.",
-    sub: "You see what they study, where they are from and what they are into, and whether one of you wants a mentor.",
+    head: "View their profile before you plan a session.",
+    sub: "Their profile shows their house, their year and a short bio. Under it, Why you match lists what you have in common: the gym you both use, your shared interests, when your free time overlaps, the languages you speak and whether one of you wants a mentor.",
     ann: [{ side: "left", top: 56, text: "Facts, not guesses" }],
   },
   {
