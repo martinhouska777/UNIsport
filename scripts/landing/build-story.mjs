@@ -43,8 +43,8 @@ for (const scr of Object.keys(realShots)) {
 const story1 = [
   {
     key: "01-gyms", kicker: "01 · Gyms",
-    head: "Find every gym on campus.",
-    sub: "Every main gym and every house gym is in one list, with its opening hours, its rating and how many floors it has. Open one to see the equipment in each room and how busy it is right now.",
+    head: "See every gym on your campus in one place.",
+    sub: "Explore what equipment each gym has, its rating and how busy it is.",
     ann: [{ side: "right", top: 14, text: "Live ratings" }, { side: "left", top: 68, text: "House gyms too" }],
   },
   {
