@@ -78,15 +78,15 @@ const story1 = [
     // never shown. No new capture — tall-profile already carries it.
     key: "tall-profile", kicker: "06 · Calendar", pan: [0.65, 1], hold: 0.15, side: "left", enter: "push", tap: [50, 95],
     head: "Check your month in the session calendar.",
-    sub: "Every session you log marks its day and shows what you trained, so you can track your workouts week by week. Tap a day to open it again, and every photo you took is collected in Memories, right under the calendar.",
+    sub: "Every session you log marks its day and shows what you trained, so you can track your workouts week by week. Tap a day to open it again, and every photo you took is stored in Memories.",
     ann: [{ side: "left", top: 66, text: "Every day you trained" }],
   },
   {
     // The same sheet re-entered at the TOP: the name and the counts the
     // headline reads off, panning down to the leaderboard strip.
     key: "tall-profile", kicker: "07 · Rankings", pan: [0, 0.38], hold: 0.2, side: "left", enter: "dismiss", tap: [50, 95],
-    head: "29 sessions. 6 partners.", headEm: "Nobody trained alone.",
-    sub: "Your profile counts the sessions you logged, the partners you trained with and the people you follow. The leaderboards put you in order in your house, in your year, among your partners and across the whole campus.",
+    head: "Track your statistics.", headEm: "See how you do in the leaderboards.",
+    sub: "Your profile counts the sessions you logged and the partners you trained with. Take part in the college leaderboards and see how you rank on campus, how your house and your year are doing, and who has trained with the most partners.",
     ann: [{ side: "right", top: 60, text: "Where you rank" }],
   },
 ];

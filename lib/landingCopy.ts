@@ -317,7 +317,7 @@ export const studentStory: Beat[] = [
     id: "S6",
     kicker: "06 · Calendar",
     head: "Check your month in the session calendar.",
-    sub: "Every session you log marks its day and shows what you trained, so you can track your workouts week by week. Tap a day to open it again, and every photo you took is collected in Memories, right under the calendar.",
+    sub: "Every session you log marks its day and shows what you trained, so you can track your workouts week by week. Tap a day to open it again, and every photo you took is stored in Memories.",
     shot: "tall-profile.webp",
     ann: [{ side: "left", top: 66, text: "Every day you trained" }],
   },
@@ -335,9 +335,9 @@ export const studentStory: Beat[] = [
        made the ending a repeated promise; "Nobody trained alone." is the same
        thought as a RESULT, after seven screens of watching it happen. The
        reader joins the two without being told to. */
-    head: "29 sessions. 6 partners.",
-    headEm: "Nobody trained alone.",
-    sub: "Your profile counts the sessions you logged, the partners you trained with and the people you follow. The leaderboards put you in order in your house, in your year, among your partners and across the whole campus.",
+    head: "Track your statistics.",
+    headEm: "See how you do in the leaderboards.",
+    sub: "Your profile counts the sessions you logged and the partners you trained with. Take part in the college leaderboards and see how you rank on campus, how your house and your year are doing, and who has trained with the most partners.",
     shot: "tall-profile.webp",
     /* "Every day you trained" moved up to S6, which is now the beat that
        actually shows the calendar. This one opens on the name and the counts
