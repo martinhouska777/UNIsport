@@ -279,8 +279,8 @@ export const studentStory: Beat[] = [
     kicker: "04 · Plan",
     /* The owner's own sentence, 2026-09-02: "plan sessions easily in the chat,
        once the other one accepts it goes to both calendars". */
-    head: "Turn the conversation into a session.",
-    sub: "Plan sessions easily in the chat. You send a card with the gym, the day and the time, and once the other one accepts it goes to both calendars.",
+    head: "Plan sessions easily in the chat.",
+    sub: "You send a card with the gym, the day and the time, and once the other one accepts it goes to both calendars.",
     shot: "04-plan-a-session.webp",
     ann: [{ side: "right", top: 52, text: "One tap to accept" }],
   },
@@ -297,8 +297,8 @@ export const studentStory: Beat[] = [
        and attach a photo with your partner that will be stored in memories".
        Memories is a real screen (app/(app)/memories), reached from the Profile
        tab under the calendar, so the line names something that exists. */
-    head: "Log the session together when you finish.",
-    sub: "Record your sets and reps easily and attach a photo with your partner that will be stored in your memories. The partner from the plan is already filled in.",
+    head: "Log it as soon as you finish.",
+    sub: "Record your sets and reps easily and attach a photo with your partner that will be stored in your memories.",
     shot: "tall-logsheet.webp",
     ann: [
       { side: "right", top: 26, text: "Set by set" },
