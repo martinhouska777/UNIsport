@@ -50,13 +50,13 @@ const story1 = [
   {
     key: "02-match", kicker: "02 · People", enter: "tab", tap: [37.5, 95.5],
     head: "Find a training partner. Make a friend.",
-    sub: "The app puts the best fits first: people who train at your gym, at your hours and at your level.",
+    sub: "The app ranks everyone by how well you actually fit, so the first people you see already train at your gym, at your hours and at your level.",
     ann: [{ side: "right", top: 24, text: "Ranked by real fit" }],
   },
   {
     key: "03-why-you-match", kicker: "03 · Why you match", enter: "zoom", tap: [26, 54],
     head: "See why you match, before you say hello.",
-    sub: "You see what they study, where they are from and what they are into, and whether one of you wants a mentor.",
+    sub: "Interests, concentration, hometown, languages — and whether one of you wants a mentor.",
     ann: [{ side: "left", top: 56, text: "Facts, not guesses" }],
   },
   {
@@ -78,7 +78,7 @@ const story1 = [
     // never shown. No new capture — tall-profile already carries it.
     key: "tall-profile", kicker: "06 · Calendar", pan: [0.65, 1], hold: 0.15, side: "left", enter: "push", tap: [50, 95],
     head: "Every session lands in your calendar.",
-    sub: "Every session keeps who you trained with, how it went and the photo you took. The month builds itself.",
+    sub: "Who you trained with, how it went, the photo you took — a month you can look back on.",
     ann: [{ side: "left", top: 66, text: "Every day you trained" }],
   },
   {
@@ -86,7 +86,7 @@ const story1 = [
     // headline reads off, panning down to the leaderboard strip.
     key: "tall-profile", kicker: "07 · Rankings", pan: [0, 0.38], hold: 0.2, side: "left", enter: "dismiss", tap: [50, 95],
     head: "29 sessions. 6 partners.", headEm: "Nobody trained alone.",
-    sub: "You take a place on the rankings too, for your campus, your house, your partners and your year.",
+    sub: "And a place on the rankings — your campus, your house, your partners, your year.",
     ann: [{ side: "right", top: 60, text: "Where you rank" }],
   },
 ];
