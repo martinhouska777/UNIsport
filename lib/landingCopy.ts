@@ -745,10 +745,10 @@ export const varsityFeatures: { kicker: string; rows: FeatureRow[]; cta: Feature
     {
       /* /varsity/home — the week the coach published (V1), plus the month
          overview in lib/varsity/athleteHome.ts. Owner-dictated 2026-09-03;
-         "menu/tab" is their own wording, left as given. */
+         "week tab" confirmed by the owner over "week menu". */
       icon: "plan",
       title: "Training plan.",
-      detail: "View what training plan your coach posted in the week menu/tab. Expand to see the whole month or tap any day to see the full description and lineups.",
+      detail: "View what training plan your coach posted in the week tab. Expand to see the whole month or tap any day to see the full description and lineups.",
     },
     {
       /* /varsity/home lineup card (V2), coach lineups (coach step 4).
@@ -758,18 +758,20 @@ export const varsityFeatures: { kicker: string; rows: FeatureRow[]; cta: Feature
       detail: "Your coach sets the lineups and publishes them. Your name is highlighted in the boat you are sitting in, so you will never have to search for it again.",
     },
     {
-      /* race countdown + the coach's weekly focus on Home (V3, coach step 1 & 5) */
+      /* race countdown + the coach's note on Home (V3, coach step 1 & 5).
+         Owner-dictated 2026-09-03. */
       icon: "race",
-      title: "Countdown to the next race.",
-      detail: "See how many days are left to the race your block is building toward, and the focus your coach set for the week right next to it.",
+      title: "Countdown to the next race and technical note from a coach.",
+      detail: "Keep your focus up. Have your next race and note from a coach on what to fix always in front of your eyes.",
     },
     {
-      /* /varsity/log — one tap per prescribed session (result + how it felt + note)
-         and "Add extra session". The Scan C2 / RP3 button is still a PLACEHOLDER
-         (LogScreen header), so it is deliberately not claimed here. */
+      /* /varsity/log — one tap per prescribed session, "Add extra session", and
+         the Scan C2 / RP3 button. Owner-dictated 2026-09-03: the owner chose to
+         claim the photo read even though LogScreen's scan button is still a
+         PLACEHOLDER. Ship the feature before this line goes live. */
       icon: "logplan",
-      title: "Log straight from the plan.",
-      detail: "Tap the session your coach prescribed and record the result, how it felt and a note. Anything extra you trained that day you can add yourself.",
+      title: "Log workouts straight from the plan.",
+      detail: "Tap a workout from the plan to log it instantly. Take a photo of your C2 or RP3 to instantly extract the numbers, or add extra sessions.",
     },
     {
       /* /varsity/calendar (V5) — own logs, month grid, per-day detail, month totals */
