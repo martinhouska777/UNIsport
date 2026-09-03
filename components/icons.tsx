@@ -345,6 +345,20 @@ export const IconShield = (p: IconProps) => (
   </Base>
 );
 
+// A camcorder: the mark for footage of a crew, on the boat card and the video list.
+export const IconVideo = (p: IconProps) => (
+  <Base {...p}>
+    <rect x="2.5" y="6" width="13" height="12" rx="2.5" />
+    <path d="M15.5 10.5l5-3v9l-5-3z" />
+  </Base>
+);
+
+export const IconPlay = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M8 5.5l11 6.5-11 6.5z" />
+  </Base>
+);
+
 // House sigil drawn in a house's TWO identity colors (passed as data, not theme).
 export function HouseSigil({
   primary,
