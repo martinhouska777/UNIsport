@@ -687,14 +687,14 @@ export const studentFeatures: { kicker: string; rows: FeatureRow[]; cta: Feature
     {
       /* /gyms — hours, ratings, equipment lists, favourites, the crowd meter (lib/gymSocial.ts) */
       icon: "gym",
-      title: "See every gym on campus.",
-      detail: "Hours, ratings, equipment and how busy it usually is, for every gym on campus, including the house gyms. Or find a partner who already trains at yours.",
+      title: "Overview of all gyms on campus.",
+      detail: "See the opening hours, equipment, rating and how busy it usually is, including the house gyms. Or find a partner who trains directly at your gym.",
     },
     {
       /* /match — ranked by compatibility; /people/[id] — the Why-you-match facts */
       icon: "partners",
       title: "Find your ideal training partner.",
-      detail: "Get matched with people based on your interests, hobbies, concentration, level, language, hometown and more.",
+      detail: "Get matched with people based on your interests, hobbies, concentrations, level, language, hometown or much more.",
     },
     {
       /* onboarding.ts peerAdvising (mentorFreshmen/beMentored, matched on concentration)
@@ -702,13 +702,13 @@ export const studentFeatures: { kicker: string; rows: FeatureRow[]; cta: Feature
          toggles, one row. New 2026-09-03, owner-dictated. */
       icon: "mentor",
       title: "New to the gym or campus?",
-      detail: "Get matched with an upperclassman in your concentration to show you around, or find someone more experienced in the gym who's glad to help with your form.",
+      detail: "Newcomers start easily. The app has a feature of mentoring in the gym by more advanced people who are interested in helping out, or get matched with an upperclassman with a similar concentration to mentor you.",
     },
     {
       /* messages/PlanCard.tsx — propose, accept, both calendars */
       icon: "chat",
-      title: "Plan a session inside the chat.",
-      detail: "Tap the calendar button, set a time, and once your partner accepts, it's on both your calendars.",
+      title: "Plan a session easily in the chat.",
+      detail: "Simply tap the calendar button in the chat and set up a time. Once the other accepts it, it will go into both of your calendars.",
     },
     {
       /* the Log Session sheet (LogSessionSheet.tsx): pick an exercise, record sets/reps/weight per set */
@@ -719,21 +719,21 @@ export const studentFeatures: { kicker: string; rows: FeatureRow[]; cta: Feature
     {
       /* components/profile/MemoriesStrip.tsx, MemoryViewer.tsx — photo attached to a logged session */
       icon: "memories",
-      title: "Build memories, not just numbers.",
-      detail: "Take a photo with your training partner while you log the workout, and it's saved straight to Memories, so you can always come back to it.",
+      title: "Build memories.",
+      detail: "Take a picture with your training partner while you log the workout, and it goes straight to Memories that you can always come back to.",
     },
     {
       /* /leaderboards — lib/leaderboards.ts: campus, house, partners, house/year group boards */
       icon: "leaderboard",
-      title: "See where you rank.",
-      detail: "Your profile counts every session you've logged and everyone you've trained with. See how you rank on campus, how your house or year compares, and who's made the most friends.",
+      title: "Leaderboards.",
+      detail: "Your profile counts every session you logged and the people you met. Take part in your college leaderboards and see where you rank on campus, how your house or year is doing compared to others, and who has made the most friends.",
     },
     {
       /* /messages — the open channels (components/messages/ChannelThread.tsx); real seeded
          channels in db/messages.sql: general, form & programming, nutrition, wins & PRs, running */
       icon: "channels",
-      title: "Talk in community channels.",
-      detail: "Trade advice with your peers on nutrition, form and programming, wins and PRs, and more.",
+      title: "Community channels.",
+      detail: "Take part in community channels and get advice from your peers about nutrition, personal best, form, etc.",
     },
   ],
 };
