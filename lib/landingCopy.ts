@@ -743,48 +743,49 @@ export const varsityFeatures: { kicker: string; rows: FeatureRow[]; cta: Feature
   cta: { label: hero.inviteCta, href: "/join" },
   rows: [
     {
-      /* /varsity/home — the week the coach published (V1). "same moment" dropped —
-         HomeScreen fetchPlan()s on open, there is no push; "whenever you open
-         the app" is the claim the code actually backs. */
+      /* /varsity/home — the week the coach published (V1). HomeScreen fetchPlan()s
+         on open, there is no push, so the claim stays "open the app". */
       icon: "plan",
-      title: "See this week's plan whenever you open the app.",
-      detail: "Your coach publishes it as water, erg and weights, not a screenshot of a spreadsheet.",
+      title: "This week's training plan.",
+      detail: "See what your coach prescribed for today and for the rest of the week, split into water, erg and weights, with a note to every session.",
     },
     {
       /* /varsity/home lineup card (V2), coach lineups (coach step 4) */
       icon: "boat",
       title: "Find your name in the boat.",
-      detail: "The coach publishes the lineup seat by seat, the night before, and your seat lights up.",
+      detail: "Your coach sets the lineup seat by seat and publishes it. Open the app and see which boat and which seat is yours that day.",
     },
     {
-      /* race countdown + coach's note on Home (V3, coach step 1 & 5) */
+      /* race countdown + the coach's weekly focus on Home (V3, coach step 1 & 5) */
       icon: "race",
-      title: "Know what to fix before the next race.",
-      detail: "A countdown to the race this block is building toward, and your coach's one technical note, in front of you until it's fixed.",
+      title: "Countdown to the next race.",
+      detail: "See how many days are left to the race your block is building toward, and the focus your coach set for the week right next to it.",
     },
     {
-      /* /varsity/log — Log per prescribed session, Scan C2/RP3, Add extra session (V4) */
+      /* /varsity/log — one tap per prescribed session (result + how it felt + note)
+         and "Add extra session". The Scan C2 / RP3 button is still a PLACEHOLDER
+         (LogScreen header), so it is deliberately not claimed here. */
       icon: "logplan",
-      title: "Log straight off the plan.",
-      detail: "Tap the prescribed session to log it, scan your Concept2 or RP3 monitor to read the numbers off it, or add an extra session.",
+      title: "Log straight from the plan.",
+      detail: "Tap the session your coach prescribed and record the result, how it felt and a note. Anything extra you trained that day you can add yourself.",
     },
     {
-      /* /varsity/calendar (V5) and /varsity/profile (V6) */
+      /* /varsity/calendar (V5) — own logs, month grid, per-day detail, month totals */
       icon: "calendar",
-      title: "Watch your season take shape on the calendar.",
-      detail: "Every workout you log lands on it by itself, with your consistency sitting right beside it.",
+      title: "Your season on the calendar.",
+      detail: "Every session you log lands on the calendar by itself. Tap any day to see exactly what you did, and see how many sessions and metres you have behind you this month.",
     },
     {
-      /* /varsity/team — the squad's month (11-varsity-teammate capture) */
+      /* /varsity/team — roster + each teammate's training month, erg PRs, status */
       icon: "squad",
       title: "See how the squad is training.",
-      detail: "Open any teammate's month and see where yours sits next to it, without asking anyone.",
+      detail: "Open the roster, tap any teammate and see their month of training, their erg personal bests and their current status.",
     },
     {
       /* /join — the invite; a captain's or coach's link unlocks the mode */
       icon: "lock",
-      title: "Get in through your team, not a store.",
-      detail: "Varsity Mode opens from a link your captain or coach sends, and nobody else sees it.",
+      title: "You get in through your team.",
+      detail: "Varsity Mode only opens from a link your captain or coach sends you. Nobody outside the team sees it.",
     },
   ],
 };
