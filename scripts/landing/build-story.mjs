@@ -97,7 +97,7 @@ const story2 = [
     // arrives with the boat almost centred rather than announcing it early.
     key: "tall-vhome", kicker: "V1 · Training plan", pan: [0, 0.5], hold: 0.45,
     head: "Training plan always at hand.",
-    sub: "Have your training plan always on your eyes and updated in real time. Tap any day to see the full workout description.",
+    sub: "Your training plan updates in real time. Tap any day to see the full workout description.",
     ann: [{ side: "right", top: 18, text: "Week 7 of 15" }],
   },
   {
@@ -117,15 +117,15 @@ const story2 = [
   },
   {
     key: "13-varsity-log-list", kicker: "V4 · Log", side: "left", enter: "sheet", tap: [50, 92.7],
-    head: "Logging workouts has never been easier.",
+    head: "Log a session in a few taps.",
     sub: "Log your workout straight from your training plan. Take a picture of your erg screen to extract your numbers instantly, or add extra workouts.",
     ann: [{ side: "right", top: 16, text: "Your week, at a glance" }, { side: "left", top: 44, text: "Tap to log" }],
   },
   {
     // Logged a workout, so over to the Calendar tab, where it just landed.
     key: "14-varsity-calendar", kicker: "V5 · Calendar", side: "left", enter: "tab", tap: [30.8, 94],
-    head: "Keep track of every session.",
-    sub: "Each workout you log lands on the calendar by itself. The season builds into a history, with your statistics beside it.",
+    head: "Look back on your whole season.",
+    sub: "Each workout lands in the calendar directly from the log. Tap a day to see what you did and track your consistency to the plan along with your extra workouts.",
     ann: [{ side: "right", top: 34, text: "Session dots" }, { side: "left", top: 64, text: "Today" }],
   },
   {
@@ -134,7 +134,7 @@ const story2 = [
     // arrives as one, off the calendar screen whose tab bar is where the ring
     // presses "Team". Driven capture: see capture-light.mjs.
     key: "15-varsity-board", kicker: "V6 · Squad board", side: "left", enter: "sheet", tap: [69.1, 93.2],
-    head: "Every team piece, recorded.",
+    head: "Every team piece goes on the board.",
     sub: "You see how you improved since last time and where you stand in the rankings, with filters for split, time, watts and watts per kilo.",
     ann: [{ side: "right", top: 44, text: "Your place" }, { side: "right", top: 62, text: "Squad avg" }],
   },

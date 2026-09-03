@@ -459,6 +459,12 @@ export const varsityStory: Beat[] = [
        dropped ", always current." because the sub now carries that thought as
        "updated in real time".
 
+       "ALWAYS ON YOUR EYES" CAME BACK OUT of this sub the same day ("nech
+       jen u V3 to always at your eyes"): V1 and V3 sit two beats apart over
+       the SAME capture and both ended on the phrase. V3 keeps it — the coach's
+       note is the thing you are meant to have in front of you — and the head
+       here already says "always at hand".
+
        ONE CLAIM FLAGGED AND SHIPPED ANYWAY: there is no live subscription —
        HomeScreen fetchPlan()s when the screen opens, so the plan is never
        stale but it is not pushed. "Updated the moment your coach publishes it"
@@ -469,7 +475,7 @@ export const varsityStory: Beat[] = [
        builds the week and it is not a screenshot of a spreadsheet — nothing is
        lost, the varsity feature row beside Blade Lock still says exactly that. */
     head: "Training plan always at hand.",
-    sub: "Have your training plan always on your eyes and updated in real time. Tap any day to see the full workout description.",
+    sub: "Your training plan updates in real time. Tap any day to see the full workout description.",
     shot: "tall-vhome.webp",
     ann: [{ side: "right", top: 18, text: "Week 7 of 15" }],
   },
@@ -521,8 +527,11 @@ export const varsityStory: Beat[] = [
        "Take a picture" is what the card actually does — LogScreen reads the
        photo ("Reading photo…", "Filled from your photo — check it and save."),
        it is not a live monitor connection. Head untouched, they did not
-       rewrite it. */
-    head: "Logging workouts has never been easier.",
+       rewrite it. And the head IS rewritten after all, on their word
+       ("a jo log a session in a few taps"): "has never been easier" was the
+       last piece of ad copy in the story and showed the reader nothing, where
+       "a few taps" says how much work it is. */
+    head: "Log a session in a few taps.",
     sub: "Log your workout straight from your training plan. Take a picture of your erg screen to extract your numbers instantly, or add extra workouts.",
     shot: "13-varsity-log-list.webp",
     ann: [
@@ -533,8 +542,19 @@ export const varsityStory: Beat[] = [
   {
     id: "V5",
     kicker: "V5 · Calendar",
-    head: "Keep track of every session.",
-    sub: "Each workout you log lands on the calendar by itself. The season builds into a history, with your statistics beside it.",
+    /* THE SUB IS DICTATED, 2026-09-02: "each workout lands in the calendar
+       directly from the log. tap a day to see what u did and track your
+       consistency to a plan along with extra workouts". Every clause is on the
+       screen: CalendarScreen builds the month out of the athlete's own logs,
+       the day sheet lists what was trained with its metrics, and it badges a
+       session "PLAN" when source === "plan" — which is exactly what makes the
+       plan and the extra workouts tellable apart.
+
+       The head replaces "Keep track of every session.", flagged as the most
+       generic line on the page since the first review, and it deliberately
+       avoids "track" now that the sub uses it. */
+    head: "Look back on your whole season.",
+    sub: "Each workout lands in the calendar directly from the log. Tap a day to see what you did and track your consistency to the plan along with your extra workouts.",
     shot: "14-varsity-calendar.webp",
     ann: [
       { side: "right", top: 34, text: "Session dots" },
@@ -563,7 +583,12 @@ export const varsityStory: Beat[] = [
        scripts/landing/capture-light.mjs --only=15-varsity-board re-shoots it. */
     id: "V6",
     kicker: "V6 · Squad board",
-    head: "Every team piece, recorded.",
+    /* HEADLINE ONLY, 2026-09-02 ("V6 jsut polish the headline") — the sub is
+       the owner's and stands. "Every team piece, recorded." was the shape they
+       had just swept off the page: a noun phrase with a participle hung on a
+       comma. Now something happens. It stays off the sub's ground on purpose,
+       so the head does not spend "where you stand" before the sub gets to it. */
+    head: "Every team piece goes on the board.",
     sub: "You see how you improved since last time and where you stand in the rankings, with filters for split, time, watts and watts per kilo.",
     shot: "15-varsity-board.webp",
     ann: [
