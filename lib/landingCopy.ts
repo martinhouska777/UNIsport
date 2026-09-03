@@ -789,12 +789,6 @@ export const varsityFeatures: { kicker: string; rows: FeatureRow[]; cta: Feature
       title: "Statistics and leaderboards.",
       detail: "Every workout you did is saved in the workouts tab. Tap to see how much you have improved from last time and where you rank compared to others, with filters for split time, watts and watts per kilo.",
     },
-    {
-      /* /join — the invite; a captain's or coach's link unlocks the mode */
-      icon: "lock",
-      title: "You get in through your team.",
-      detail: "Varsity Mode only opens from a link your captain or coach sends you. Nobody outside the team sees it.",
-    },
   ],
 };
 
