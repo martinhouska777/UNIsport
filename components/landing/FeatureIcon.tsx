@@ -18,6 +18,8 @@ const PATHS: Record<string, string> = {
   calendar: "M4 6h16v14H4zM4 10h16M8 14h.01M12 14h.01M16 14h.01M8 3v4M16 3v4",
   squad: "M8 12a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM16 12a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM2 20c0-3 3-5 6-5s6 2 6 5M12 20c0-3 2-5 4-5s6 2 6 5",
   lock: "M6 11h12v10H6zM9 11V7a3 3 0 0 1 6 0v4",
+  mentor: "M12 2l3 7 7 3-7 3-3 7-3-7-7-3 7-3z",
+  memories: "M4 8h3l2-3h6l2 3h3v10H4zM12 11a3 3 0 1 0 0 6 3 3 0 0 0 0-6z",
 };
 
 export default function FeatureIcon({ name, className = "" }: { name: string; className?: string }) {

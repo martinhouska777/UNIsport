@@ -688,43 +688,52 @@ export const studentFeatures: { kicker: string; rows: FeatureRow[]; cta: Feature
       /* /gyms — hours, ratings, equipment lists, favourites, the crowd meter (lib/gymSocial.ts) */
       icon: "gym",
       title: "See every gym on campus.",
-      detail: "Hours, ratings, equipment and how busy it is right now, including the house gyms nobody else maps.",
+      detail: "Hours, ratings, equipment and how busy it usually is, for every gym on campus, including the house gyms. Or find a partner who already trains at yours.",
     },
     {
       /* /match — ranked by compatibility; /people/[id] — the Why-you-match facts */
       icon: "partners",
-      title: "Get matched with people who actually fit.",
-      detail: "The match reads your gym, your hours, your level, your interests, your hometown and your language, plus whether either of you wants a mentor.",
+      title: "Find your ideal training partner.",
+      detail: "Get matched with people based on your interests, hobbies, concentration, level, language, hometown and more.",
+    },
+    {
+      /* onboarding.ts peerAdvising (mentorFreshmen/beMentored, matched on concentration)
+         + gymMentorship (helpOthers/getHelp, gym form & programming) — two real
+         toggles, one row. New 2026-09-03, owner-dictated. */
+      icon: "mentor",
+      title: "New to the gym or campus?",
+      detail: "Get matched with an upperclassman in your concentration to show you around, or find someone more experienced in the gym who's glad to help with your form.",
     },
     {
       /* messages/PlanCard.tsx — propose, accept, both calendars */
       icon: "chat",
-      title: "Plan a session without leaving the chat.",
-      detail: "One tap proposes it, one tap accepts, and it's on both your calendars.",
+      title: "Plan a session inside the chat.",
+      detail: "Tap the calendar button, set a time, and once your partner accepts, it's on both your calendars.",
     },
     {
-      /* the Log Session sheet (tall-logsheet capture): sets and reps, the partner carried over, photos and a note */
+      /* the Log Session sheet (LogSessionSheet.tsx): pick an exercise, record sets/reps/weight per set */
       icon: "log",
-      title: "Log the session together, set by set.",
-      detail: "You record every set and rep, with your partner carried over from the plan. A photo and a note turn it into a memory, not just numbers.",
+      title: "Log the session without leaving the app.",
+      detail: "Pick the exercises and record the sets, reps and weight. No separate app needed.",
     },
     {
-      /* PlanCard's confirmation → verified session; lib/supabase/workouts.ts streakStats */
-      icon: "verified",
-      title: "Build a streak you can't fake.",
-      detail: "You and your partner both confirm the session happened before it counts.",
+      /* components/profile/MemoriesStrip.tsx, MemoryViewer.tsx — photo attached to a logged session */
+      icon: "memories",
+      title: "Build memories, not just numbers.",
+      detail: "Take a photo with your training partner while you log the workout, and it's saved straight to Memories, so you can always come back to it.",
     },
     {
-      /* /leaderboards — lib/leaderboards.ts: campus, house, partners, year */
+      /* /leaderboards — lib/leaderboards.ts: campus, house, partners, house/year group boards */
       icon: "leaderboard",
       title: "See where you rank.",
-      detail: "Across campus, in your house, among your partners and against your year.",
+      detail: "Your profile counts every session you've logged and everyone you've trained with. See how you rank on campus, how your house or year compares, and who's made the most friends.",
     },
     {
-      /* /messages — the open channels (components/messages/ChannelThread.tsx) */
+      /* /messages — the open channels (components/messages/ChannelThread.tsx); real seeded
+         channels in db/messages.sql: general, form & programming, nutrition, wins & PRs, running */
       icon: "channels",
-      title: "Talk in open campus channels.",
-      detail: "Everyone at your school is already in, with no followers and no requests to send.",
+      title: "Talk in community channels.",
+      detail: "Trade advice with your peers on nutrition, form and programming, wins and PRs, and more.",
     },
   ],
 };
