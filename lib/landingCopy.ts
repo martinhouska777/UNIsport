@@ -465,6 +465,13 @@ export const varsityStory: Beat[] = [
        note is the thing you are meant to have in front of you — and the head
        here already says "always at hand".
 
+       THE FIRST SENTENCE IS DICTATED DOWN TO THE RELATIVE PRONOUN, asked
+       twice and answered twice ("for v1 add(that) updates" → "your training
+       plan that updates at real time"). Written with "in real time", the
+       preposition they used the first time round; "at real time" is not the
+       English idiom. It has no main verb, and "training plan" lands twice in
+       two lines with the head above it — both flagged, both theirs.
+
        ONE CLAIM FLAGGED AND SHIPPED ANYWAY: there is no live subscription —
        HomeScreen fetchPlan()s when the screen opens, so the plan is never
        stale but it is not pushed. "Updated the moment your coach publishes it"
@@ -475,7 +482,7 @@ export const varsityStory: Beat[] = [
        builds the week and it is not a screenshot of a spreadsheet — nothing is
        lost, the varsity feature row beside Blade Lock still says exactly that. */
     head: "Training plan always at hand.",
-    sub: "Your training plan updates in real time. Tap any day to see the full workout description.",
+    sub: "Your training plan that updates in real time. Tap any day to see the full workout description.",
     shot: "tall-vhome.webp",
     ann: [{ side: "right", top: 18, text: "Week 7 of 15" }],
   },
