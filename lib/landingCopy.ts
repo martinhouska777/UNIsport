@@ -453,19 +453,23 @@ export const varsityStory: Beat[] = [
     /* "Always actual" was the owner's word — aktuální, a Czech false friend.
        "Current" is the meaning; English "actual" means real-not-fake.
 
-       THE SUB IS THEIRS TOO, 2026-09-02: "chci dat ze training plan je jako
-       zretelny nebo clear a jednoduse, click to each day to see description of
-       workout and current lineups". Both halves are checked against the app
-       rather than promised: components/varsity/home/HomeScreen.tsx runs one
-       day down the middle of the page, its session cards carry the workout's
-       own detail line, and a card opens to the boats when a lineup has been
-       published for that period.
+       HEAD AND SUB ARE BOTH DICTATED, 2026-09-02: "pojdme na training plan
+       always at hand. have your training plan always at eyes and updated in
+       real time. tap any day to see the full workout description". The head
+       dropped ", always current." because the sub now carries that thought as
+       "updated in real time".
 
-       What it replaced said the coach builds the week and it is not a
-       screenshot of a spreadsheet. Nothing is lost: the varsity feature row
-       beside Blade Lock still says exactly that. */
-    head: "Training plan always at hand, always current.",
-    sub: "The whole week is clear at a glance. Tap any day to read the workout in full and see the lineups.",
+       ONE CLAIM FLAGGED AND SHIPPED ANYWAY: there is no live subscription —
+       HomeScreen fetchPlan()s when the screen opens, so the plan is never
+       stale but it is not pushed. "Updated the moment your coach publishes it"
+       was offered as the accurate line; the owner's words stand.
+
+       "Lineups" came OUT of this sub on purpose: V2 is the lineup beat, two
+       screens down the same capture. What the head replaced said the coach
+       builds the week and it is not a screenshot of a spreadsheet — nothing is
+       lost, the varsity feature row beside Blade Lock still says exactly that. */
+    head: "Training plan always at hand.",
+    sub: "Have your training plan always on your eyes and updated in real time. Tap any day to see the full workout description.",
     shot: "tall-vhome.webp",
     ann: [{ side: "right", top: 18, text: "Week 7 of 15" }],
   },
@@ -484,9 +488,19 @@ export const varsityStory: Beat[] = [
        to "in front of you" on that reasoning. The owner put it back on
        2026-09-02 ("always on your eyes instead of always in front of you"), so
        it stands as theirs. Flagged once: a native reader reads "on your eyes"
-       as wrong rather than as style. */
+       as wrong rather than as style.
+
+       THE SUB IS DICTATED, 2026-09-02: "have the countdown to the next race
+       and a note from a coach what to improve always at your eyes" — written
+       with "on your eyes", the form they settled on above, and with "your
+       coach", who is a specific person to the reader. It used to be the
+       generic shape (a noun list, a comma, an appositive); now the reader is
+       doing something. Both halves are on the frame: RaceBar under "Next Race"
+       counts the days down, CoachNoteCard prints the coach's note for you.
+
+       Head untouched — they dictated the sentence, not the headline. */
     head: "Keep your focus up.",
-    sub: "Countdown to the next race and coach's note on what to fix, always on your eyes.",
+    sub: "Have the countdown to the next race and a note from your coach on what to improve always on your eyes.",
     shot: "tall-vhome.webp",
     ann: [
       { side: "right", top: 52, text: "Counting down" },
@@ -499,9 +513,17 @@ export const varsityStory: Beat[] = [
     /* "Logging IN workouts" was the owner's phrase — logging in is signing
        in, a different thing. All three routes named here are on the capture:
        a Log button per prescribed session, the "Scan C2 / RP3 monitor" card,
-       and "Add extra session" at the bottom. */
+       and "Add extra session" at the bottom.
+
+       THE SECOND SENTENCE IS DICTATED, 2026-09-02: "v4 druha veta, take a
+       picture of your erg screen to extract your numbers instantly or add
+       extra workouts". Two sentences now, the shape V1 took the same day.
+       "Take a picture" is what the card actually does — LogScreen reads the
+       photo ("Reading photo…", "Filled from your photo — check it and save."),
+       it is not a live monitor connection. Head untouched, they did not
+       rewrite it. */
     head: "Logging workouts has never been easier.",
-    sub: "Log your workout straight from your training plan, scan your erg for instant extraction, add extra workouts.",
+    sub: "Log your workout straight from your training plan. Take a picture of your erg screen to extract your numbers instantly, or add extra workouts.",
     shot: "13-varsity-log-list.webp",
     ann: [
       { side: "right", top: 16, text: "Your week, at a glance" },

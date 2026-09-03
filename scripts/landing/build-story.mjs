@@ -96,8 +96,8 @@ const story2 = [
     // V1 carries the scroll all the way down to the lineup, so V2's headline
     // arrives with the boat almost centred rather than announcing it early.
     key: "tall-vhome", kicker: "V1 · Training plan", pan: [0, 0.5], hold: 0.45,
-    head: "Training plan always at hand, always current.",
-    sub: "The whole week is clear at a glance. Tap any day to read the workout in full and see the lineups.",
+    head: "Training plan always at hand.",
+    sub: "Have your training plan always on your eyes and updated in real time. Tap any day to see the full workout description.",
     ann: [{ side: "right", top: 18, text: "Week 7 of 15" }],
   },
   {
@@ -112,13 +112,13 @@ const story2 = [
     // `to` past 1: the pan hits the very bottom mid-beat and rests there.
     key: "tall-vhome", kicker: "V3 · Coach's notes", pan: [0.74, 1.2], enter: "none",
     head: "Keep your focus up.",
-    sub: "Countdown to the next race and coach's note on what to fix, always on your eyes.",
+    sub: "Have the countdown to the next race and a note from your coach on what to improve always on your eyes.",
     ann: [{ side: "right", top: 52, text: "Counting down" }, { side: "left", top: 70, text: "Straight from the coach" }],
   },
   {
     key: "13-varsity-log-list", kicker: "V4 · Log", side: "left", enter: "sheet", tap: [50, 92.7],
     head: "Logging workouts has never been easier.",
-    sub: "Log your workout straight from your training plan, scan your erg for instant extraction, add extra workouts.",
+    sub: "Log your workout straight from your training plan. Take a picture of your erg screen to extract your numbers instantly, or add extra workouts.",
     ann: [{ side: "right", top: 16, text: "Your week, at a glance" }, { side: "left", top: 44, text: "Tap to log" }],
   },
   {
