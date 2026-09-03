@@ -235,10 +235,7 @@ export const studentStory: Beat[] = [
     head: "See every gym on your campus in one place.",
     sub: "Explore what equipment each gym has, its rating and how busy it is.",
     shot: "01-gyms.webp",
-    ann: [
-      { side: "right", top: 14, text: "Live ratings" },
-      { side: "left", top: 68, text: "House gyms too" },
-    ],
+    ann: [],
   },
   {
     id: "S2",
@@ -259,7 +256,7 @@ export const studentStory: Beat[] = [
        reverting text that was approved. */
     sub: "Browse sorts everyone by how well you fit with them, based on interests, concentration, experience and hours. In Session you pick a time to train and plan directly with people who go at that time, or you post your time on the Buddy Board and see who is interested.",
     shot: "02-match.webp",
-    ann: [{ side: "right", top: 24, text: "Ranked by real fit" }],
+    ann: [],
   },
   {
     id: "S3",
@@ -272,7 +269,7 @@ export const studentStory: Beat[] = [
     head: "View their profile before you plan a session.",
     sub: "Their profile shows their house, their year and a short bio. Under it, Why you match lists what you have in common: the gym you both use, your shared interests, when your free time overlaps, the languages you speak and whether one of you wants a mentor.",
     shot: "03-why-you-match.webp",
-    ann: [{ side: "left", top: 56, text: "Facts, not guesses" }],
+    ann: [],
   },
   {
     id: "S4",
@@ -282,7 +279,7 @@ export const studentStory: Beat[] = [
     head: "Plan sessions easily in the chat.",
     sub: "You send a card with the gym, the day and the time, and once the other one accepts it goes to both calendars.",
     shot: "04-plan-a-session.webp",
-    ann: [{ side: "right", top: 52, text: "One tap to accept" }],
+    ann: [],
   },
   {
     /* ONE BEAT FOR THE WHOLE LOG SHEET (2026-09-01, the owner: "dal bych to
@@ -300,10 +297,7 @@ export const studentStory: Beat[] = [
     head: "Log it as soon as you finish.",
     sub: "Record your sets and reps easily and attach a photo with your partner that will be stored in your memories.",
     shot: "tall-logsheet.webp",
-    ann: [
-      { side: "right", top: 26, text: "Set by set" },
-      { side: "left", top: 78, text: "Photo + note" },
-    ],
+    ann: [],
   },
   {
     /* THE CALENDAR, at last (the owner: "pak calendar s memories"). No new
@@ -319,7 +313,7 @@ export const studentStory: Beat[] = [
     head: "Check your month in the session calendar.",
     sub: "Every session you log marks its day and shows what you trained, so you can track your workouts week by week. Tap a day to open it again, and every photo you took is stored in Memories.",
     shot: "tall-profile.webp",
-    ann: [{ side: "left", top: 66, text: "Every day you trained" }],
+    ann: [],
   },
   {
     id: "S7",
@@ -341,7 +335,7 @@ export const studentStory: Beat[] = [
     /* "Every day you trained" moved up to S6, which is now the beat that
        actually shows the calendar. This one opens on the name and the counts
        the headline reads off, and pans down to the leaderboard strip. */
-    ann: [{ side: "right", top: 60, text: "Where you rank" }],
+    ann: [],
   },
 ];
 
@@ -484,7 +478,7 @@ export const varsityStory: Beat[] = [
     head: "Training plan always at hand.",
     sub: "Your training plan that updates in real time. Tap any day to see the full workout description.",
     shot: "tall-vhome.webp",
-    ann: [{ side: "right", top: 18, text: "Week 7 of 15" }],
+    ann: [],
   },
   {
     id: "V2",
@@ -492,7 +486,7 @@ export const varsityStory: Beat[] = [
     head: "Find your lineup in a second.",
     sub: "Never look through 40 names in an Excel sheet again. Your name pops right in a boat.",
     shot: "tall-vhome.webp",
-    ann: [{ side: "left", top: 42, text: "You, 3 seat" }],
+    ann: [],
   },
   {
     id: "V3",
@@ -515,10 +509,7 @@ export const varsityStory: Beat[] = [
     head: "Keep your focus up.",
     sub: "Have the countdown to the next race and a note from your coach on what to improve always on your eyes.",
     shot: "tall-vhome.webp",
-    ann: [
-      { side: "right", top: 52, text: "Counting down" },
-      { side: "left", top: 70, text: "Straight from the coach" },
-    ],
+    ann: [],
   },
   {
     id: "V4",
@@ -541,10 +532,7 @@ export const varsityStory: Beat[] = [
     head: "Log a session in a few taps.",
     sub: "Log your workout straight from your training plan. Take a picture of your erg screen to extract your numbers instantly, or add extra workouts.",
     shot: "13-varsity-log-list.webp",
-    ann: [
-      { side: "right", top: 16, text: "Your week, at a glance" },
-      { side: "left", top: 44, text: "Tap to log" },
-    ],
+    ann: [],
   },
   {
     id: "V5",
@@ -563,10 +551,7 @@ export const varsityStory: Beat[] = [
     head: "Look back on your whole season.",
     sub: "Each workout lands in the calendar directly from the log. Tap a day to see what you did and track your consistency to the plan along with your extra workouts.",
     shot: "14-varsity-calendar.webp",
-    ann: [
-      { side: "right", top: 34, text: "Session dots" },
-      { side: "left", top: 64, text: "Today" },
-    ],
+    ann: [],
   },
   {
     /* THE SQUAD BOARD — the beat the owner asked for ("a note about team and
@@ -598,10 +583,7 @@ export const varsityStory: Beat[] = [
     head: "Every team piece goes on the board.",
     sub: "You see how you improved since last time and where you stand in the rankings, with filters for split, time, watts and watts per kilo.",
     shot: "15-varsity-board.webp",
-    ann: [
-      { side: "right", top: 44, text: "Your place" },
-      { side: "right", top: 62, text: "Squad avg" },
-    ],
+    ann: [],
   },
   {
     id: "V7",
@@ -616,7 +598,7 @@ export const varsityStory: Beat[] = [
     head: "See your statistics.",
     sub: "One screen counts your consistency, your hours and your personal bests over eight weeks.",
     shot: "tall-vprofile.webp",
-    ann: [{ side: "right", top: 40, text: "Eight weeks of work" }],
+    ann: [],
   },
 ];
 
