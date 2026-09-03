@@ -80,15 +80,7 @@ import {
   saveLineup,
   type LineupStatus,
 } from "@/lib/varsity/lineupStore";
-import {
-  deleteCrewVideo,
-  fetchVideos,
-  uploadCrewVideo,
-  videoSrc,
-  type CrewSeat,
-  type CrewVideo,
-} from "@/lib/varsity/crewVideos";
-import Sheet from "@/components/varsity/Sheet";
+import CrewVideoStrip from "@/components/varsity/CrewVideoStrip";
 import {
   IconArrowLeft,
   IconChevronLeft,
@@ -101,9 +93,6 @@ import {
   IconClipboard,
   IconPencil,
   IconCheck,
-  IconVideo,
-  IconPlay,
-  IconTrash,
 } from "@/components/icons";
 
 /* a target slot inside a boat: a numbered seat, or the cox seat */
@@ -640,215 +629,6 @@ function StepArrow({
   );
 }
 
-/*
-  ─────────────────────────  VIDEO  ─────────────────────────
-  Footage is attached to a BOAT, never filed on its own. That is the whole idea:
-  the lineup already knows the date, the session, the rigging, the boat and every
-  seat, so the coach picks a file and NOTHING else — no folder, no filename, no
-  list of who is in it. See lib/varsity/crewVideos.ts.
-*/
-
-/* The crew as it was when the camera rolled, seat by seat. Shown under the
-   player, because "which one of those is me" is the question the shared drive
-   could never answer. */
-function CrewList({ crew }: { crew: CrewSeat[] }) {
-  return (
-    <div className="mt-4 flex flex-col gap-1">
-      {crew.map((c) => (
-        <div key={c.seat} className="flex items-center gap-2.5">
-          <span
-            className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-md border text-[10px] font-semibold"
-            style={
-              c.cox ? blade(COX_COLOR, COX_INK) : blade(sideMeta[c.side].color, sideMeta[c.side].ink)
-            }
-          >
-            {c.seat}
-          </span>
-          <span className="text-[12px] text-text">{c.name}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-/* Watch one video, see who was in the boat, and take it down again. The source
-   is fetched on open: a bucket link is signed and short-lived, so it is no use
-   holding one for a list nobody has tapped. */
-function VideoSheet({
-  video,
-  onClose,
-  onRemoved,
-}: {
-  video: CrewVideo;
-  onClose: () => void;
-  onRemoved: () => void;
-}) {
-  const [src, setSrc] = useState<string | null>(null);
-  const [failed, setFailed] = useState(false);
-  const [removing, setRemoving] = useState(false);
-
-  useEffect(() => {
-    let active = true;
-    (async () => {
-      const url = await videoSrc(video);
-      if (!active) return;
-      setSrc(url);
-      setFailed(!url);
-    })();
-    return () => {
-      active = false;
-    };
-  }, [video]);
-
-  return (
-    <Sheet title={video.title} onClose={onClose}>
-      {src ? (
-        // eslint-disable-next-line jsx-a11y/media-has-caption -- squad footage, no track exists
-        <video src={src} controls playsInline className="w-full rounded-xl bg-black" />
-      ) : (
-        <div className="flex h-40 items-center justify-center rounded-xl border border-border bg-surface-2 text-[12px] text-muted">
-          {failed ? "This video could not be opened." : "Loading…"}
-        </div>
-      )}
-
-      <div className="mt-4 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-        In this boat
-      </div>
-      <CrewList crew={video.crew} />
-
-      <button
-        type="button"
-        disabled={removing}
-        onClick={async () => {
-          if (!window.confirm("Remove this video for the whole team?")) return;
-          setRemoving(true);
-          const { error } = await deleteCrewVideo(video);
-          if (error) {
-            window.alert(error);
-            setRemoving(false);
-            return;
-          }
-          onRemoved();
-        }}
-        className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl border border-border py-2.5 text-[12px] font-medium text-danger active:bg-surface-2"
-      >
-        <IconTrash size={14} /> {removing ? "Removing…" : "Remove video"}
-      </button>
-    </Sheet>
-  );
-}
-
-/* The video strip on a boat card: what has been filmed of this crew, and one
-   button to add more. The optional label beside it is for the day one outing
-   produces five clips — "start", "20 stroke", "home". */
-function BoatVideos({
-  dayKey,
-  boat,
-  videos,
-  onAdded,
-  onOpen,
-}: {
-  dayKey: string;
-  boat: Boat;
-  videos: CrewVideo[];
-  onAdded: (v: CrewVideo) => void;
-  onOpen: (v: CrewVideo) => void;
-}) {
-  const fileRef = useRef<HTMLInputElement>(null);
-  const [label, setLabel] = useState("");
-  const [busyText, setBusyText] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  // A video of an empty boat is a video of nobody: the point of attaching it
-  // here is the crew that travels with it.
-  const seated = boat.seats.some((s) => s.athleteId) || !!boat.coxId;
-
-  const pick = async (files: FileList | null) => {
-    if (!files || !files.length) return;
-    setError(null);
-    const list = Array.from(files);
-    for (let i = 0; i < list.length; i++) {
-      setBusyText(list.length > 1 ? `Uploading ${i + 1} of ${list.length}…` : "Uploading…");
-      const { video, error: err } = await uploadCrewVideo(dayKey, boat, list[i], label);
-      if (err) {
-        setError(err);
-        break;
-      }
-      if (video) onAdded(video);
-    }
-    setBusyText(null);
-    setLabel("");
-    if (fileRef.current) fileRef.current.value = "";
-  };
-
-  return (
-    <div className="border-t border-border px-3.5 py-2.5">
-      <div className="flex items-center gap-2 text-muted">
-        <IconVideo size={14} />
-        <span className="flex-1 text-[11px] font-semibold uppercase tracking-[0.12em]">
-          Video{videos.length ? ` · ${videos.length}` : ""}
-        </span>
-      </div>
-
-      {videos.length > 0 && (
-        <div className="mt-2 flex flex-col gap-1.5">
-          {videos.map((v) => (
-            <button
-              key={v.id}
-              type="button"
-              onClick={() => onOpen(v)}
-              className="flex items-center gap-2.5 rounded-xl border border-border bg-surface-2 px-2.5 py-2 text-left active:border-primary-line"
-            >
-              <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-primary-tint text-primary">
-                <IconPlay size={12} />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-[12px] font-medium text-text">{v.title}</span>
-                <span className="block text-[11px] text-muted">
-                  {v.crew.length} in the boat
-                </span>
-              </span>
-            </button>
-          ))}
-        </div>
-      )}
-
-      <div className="mt-2 flex items-center gap-2">
-        <input
-          value={label}
-          onChange={(e) => setLabel(e.target.value)}
-          aria-label="Video label"
-          placeholder="Label — start, 20 stroke… (optional)"
-          className="min-w-0 flex-1 rounded-lg border border-border bg-surface-2 px-2.5 py-1.5 text-base text-[12px] text-text outline-none placeholder:italic placeholder:text-text-3"
-        />
-        <input
-          ref={fileRef}
-          type="file"
-          accept="video/*"
-          multiple
-          hidden
-          onChange={(e) => void pick(e.target.files)}
-        />
-        <button
-          type="button"
-          disabled={!!busyText || !seated}
-          onClick={() => fileRef.current?.click()}
-          className="flex flex-shrink-0 items-center gap-1.5 rounded-lg border border-dashed border-border px-2.5 py-1.5 text-[12px] font-medium text-muted active:border-primary-line active:text-primary disabled:opacity-50"
-        >
-          <IconPlus size={13} /> {busyText ?? "Add video"}
-        </button>
-      </div>
-
-      {!seated && (
-        <div className="mt-1.5 text-[11px] italic text-muted">
-          Seat the boat first — a video is filed by its crew.
-        </div>
-      )}
-      {error && <div className="mt-1.5 text-[11px] text-danger">{error}</div>}
-    </div>
-  );
-}
-
 function Builder({
   dayKey,
   context,
@@ -872,11 +652,6 @@ function Builder({
   const [dropKey, setDropKey] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [poolFilter, setPoolFilter] = useState<PoolFilter>("all");
-  // Footage for this practice, across every boat in it. Kept beside the boats
-  // rather than inside them: a video is its own record with its own crew, and
-  // it must survive the lineup being edited afterwards.
-  const [videos, setVideos] = useState<CrewVideo[]>([]);
-  const [playing, setPlaying] = useState<CrewVideo | null>(null);
 
   /*
     What was loaded, as text. Anything else in `boats` means unsaved work —
@@ -890,12 +665,11 @@ function Builder({
   useEffect(() => {
     let active = true;
     (async () => {
-      const [stored, clips] = await Promise.all([fetchLineup(dayKey), fetchVideos(dayKey)]);
+      const stored = await fetchLineup(dayKey);
       if (!active) return;
       loaded.current = JSON.stringify(stored?.boats ?? []);
       setBoats(stored?.boats ?? []);
       setStatus(stored?.status ?? "draft");
-      setVideos(clips);
       setLoading(false);
     })();
     return () => {
@@ -1312,13 +1086,7 @@ function Builder({
                       the outing. Everything above it is written before the boat
                       pushes off; this is what comes back with it.
                     */}
-                    <BoatVideos
-                      dayKey={dayKey}
-                      boat={boat}
-                      videos={videos.filter((v) => v.boatId === boat.id)}
-                      onAdded={(v) => setVideos((prev) => [...prev, v])}
-                      onOpen={setPlaying}
-                    />
+                    <CrewVideoStrip dayKey={dayKey} boat={boat} />
 
                     {/*
                       Footer — how full the boat is, and WHO is in it: how many
@@ -1491,17 +1259,6 @@ function Builder({
           </Button>
         </div>
       </div>
-
-      {playing && (
-        <VideoSheet
-          video={playing}
-          onClose={() => setPlaying(null)}
-          onRemoved={() => {
-            setVideos((prev) => prev.filter((v) => v.id !== playing.id));
-            setPlaying(null);
-          }}
-        />
-      )}
 
       {sheetOpen && (
         <div className="absolute inset-0 z-50 flex items-end bg-black/60" onClick={() => setSheetOpen(false)}>

@@ -11,6 +11,8 @@
   classes (literals so Tailwind can see them).
 */
 
+import type { Boat } from "./coachLineup";
+
 export type SessionKind = "ut2" | "hard" | "weights" | "off" | "recovery" | "race";
 
 // kind -> token-based classes. `bar` = solid edge, `block` = tinted strip.
@@ -68,6 +70,15 @@ export type Lineup = {
   seats: Seat[];
   cox?: { init: string; name: string; mine?: boolean }; // coxless boats (4-/2-) have none
   oars?: string; // which set to take off the rack, when the coach named one
+  /*
+    WHICH BOAT THIS IS, in the terms the rest of the app stores it in: the
+    practice it belongs to, and the coach's own Boat record. Only a lineup read
+    from the database carries them (the demo day has no boat to attach anything
+    to), which is exactly the test for whether video can hang off it — footage
+    is filed by crew, and a made-up crew has none.
+  */
+  dayKey?: string;
+  boat?: Boat;
 };
 
 export type Greeting = { date: string; name: string; block: string; week: string };

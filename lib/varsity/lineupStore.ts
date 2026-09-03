@@ -92,7 +92,12 @@ const norm = (s: string) => s.trim().toLowerCase();
 // between accounts and the (still-mock) roster yet, so we highlight "your seat"
 // by matching that name to the seated athlete's name — works for anyone who's
 // both a real account and in the squad (e.g. John Brown, the demo account).
-function boatToLineup(period: string, boat: Boat, myName: string | null): Lineup {
+function boatToLineup(
+  period: string,
+  boat: Boat,
+  myName: string | null,
+  dayKey?: string,
+): Lineup {
   const me = myName ? norm(myName) : null;
   const fill = (athleteId: string | null) => {
     const a = athleteId ? rosterById[athleteId] : undefined;
@@ -112,6 +117,10 @@ function boatToLineup(period: string, boat: Boat, myName: string | null): Lineup
     seats: boat.seats.map((s, i) => ({ num: seatLabel(i), ...fill(s.athleteId) })),
     cox: boat.hasCox ? fill(boat.coxId) : undefined,
     oars: boat.oars?.trim() || undefined,
+    // Carried through so the athlete's Home can hang this boat's video off it —
+    // the same boat record the coach's builder attaches footage to.
+    dayKey,
+    boat,
   };
 }
 
@@ -125,7 +134,7 @@ export async function fetchTodayLineups(
   periods.forEach((p, i) => {
     const s = stored[i];
     if (s && s.status === "published") {
-      for (const boat of s.boats) out.push(boatToLineup(p, boat, myName));
+      for (const boat of s.boats) out.push(boatToLineup(p, boat, myName, dayKeyFor(p)));
     }
   });
   return out;

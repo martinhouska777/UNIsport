@@ -16,6 +16,7 @@ import ThemeProvider from "@/components/ThemeProvider";
 import { useVarsityTheme } from "@/components/varsity/useVarsityTheme";
 import { fetchPlan, fetchProfileFullName } from "@/lib/varsity/planStore";
 import { fetchTodayLineups } from "@/lib/varsity/lineupStore";
+import CrewVideoStrip from "@/components/varsity/CrewVideoStrip";
 import { fetchNote } from "@/lib/varsity/notesStore";
 import { sessionKey, parseDate } from "@/lib/varsity/coachPlan";
 import { buildAthleteHome, daySessionToCard } from "@/lib/varsity/athleteHome";
@@ -703,6 +704,14 @@ function LineupBoat({ l }: { l: Lineup }) {
           <span className="text-text">{l.oars}</span>
         </div>
       )}
+      {/*
+        VIDEO of this boat — the same strip the coach has in the builder, because
+        it is often an athlete who filmed. Attached here, a clip lands on the
+        Home screen of everyone who was in the boat, already named and already
+        carrying its seats. Only a boat read from the database has one (the demo
+        day has no real crew to file footage against).
+      */}
+      {l.dayKey && l.boat && <CrewVideoStrip dayKey={l.dayKey} boat={l.boat} />}
     </div>
   );
 }

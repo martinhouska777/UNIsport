@@ -175,6 +175,24 @@ export async function fetchVideos(dayKey: string): Promise<CrewVideo[]> {
   return (data as Row[]).map(fromRow);
 }
 
+/* One boat's footage. The strip on a boat card asks for exactly this, so both
+   the coach's builder and an athlete's Home read the same rows the same way. */
+export async function fetchBoatVideos(dayKey: string, boatId: string): Promise<CrewVideo[]> {
+  if (!hasSupabaseEnv()) return [];
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("varsity_videos")
+    .select("*")
+    .eq("day_key", dayKey)
+    .eq("boat_id", boatId)
+    .order("created_at", { ascending: true });
+  if (error || !data) {
+    if (error) console.error("fetchBoatVideos:", error.message);
+    return [];
+  }
+  return (data as Row[]).map(fromRow);
+}
+
 /*
   Put one file up against one boat. Returns the stored video, or an error
   message plain enough to read standing on a dock.
