@@ -743,17 +743,19 @@ export const varsityFeatures: { kicker: string; rows: FeatureRow[]; cta: Feature
   cta: { label: hero.inviteCta, href: "/join" },
   rows: [
     {
-      /* /varsity/home — the week the coach published (V1). HomeScreen fetchPlan()s
-         on open, there is no push, so the claim stays "open the app". */
+      /* /varsity/home — the week the coach published (V1), plus the month
+         overview in lib/varsity/athleteHome.ts. Owner-dictated 2026-09-03;
+         "menu/tab" is their own wording, left as given. */
       icon: "plan",
-      title: "This week's training plan.",
-      detail: "See what your coach prescribed for today and for the rest of the week, split into water, erg and weights, with a note to every session.",
+      title: "Training plan.",
+      detail: "View what training plan your coach posted in the week menu/tab. Expand to see the whole month or tap any day to see the full description and lineups.",
     },
     {
-      /* /varsity/home lineup card (V2), coach lineups (coach step 4) */
+      /* /varsity/home lineup card (V2), coach lineups (coach step 4).
+         Owner-dictated 2026-09-03. */
       icon: "boat",
-      title: "Find your name in the boat.",
-      detail: "Your coach sets the lineup seat by seat and publishes it. Open the app and see which boat and which seat is yours that day.",
+      title: "Lineups.",
+      detail: "Your coach sets the lineups and publishes them. Your name is highlighted in the boat you are sitting in, so you will never have to search for it again.",
     },
     {
       /* race countdown + the coach's weekly focus on Home (V3, coach step 1 & 5) */
