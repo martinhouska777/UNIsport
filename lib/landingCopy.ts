@@ -639,11 +639,31 @@ export const closers = {
        is dropped rather than softened: "Same app. Yours next." */
     sub: "Every gym on campus, in the colours of the university it belongs to. Same app. Yours next.",
   },
+  /* REWRITTEN BY THE OWNER, 2026-09-02: "Your crew, your blade. your colors
+     instead of every crew one system on top and dont do the thing with the
+     dash on top. then as text every program gets their screen customized to
+     their own colors".
+
+     Three things went with it:
+     - "One system." is gone. The page spent commits taking the word *app* off
+       Varsity Mode (it is a MODE for the athletes, not a second product), and
+       "system" was the same reading in enterprise clothing.
+     - THE LEAD-IN IS GONE, not reworded — no hanging dash over this block. It
+       is the one place on the page that had one and did not need it; the
+       headline opens the piece on its own now. Kept as "" rather than deleted
+       so CampusColours' shape is untouched; BladeLock skips the line when it
+       is empty.
+     - "Built for Harvard rowing." went with the old sub and is NOT replaced
+       here. The same fact is stated in the hero pill, in the FAQ ("Which
+       universities is it live at?") and in the About story, so the block is
+       not the only place a reader could learn it.
+
+     Written with "colours", the page's own spelling everywhere else. */
   blades: {
-    leadIn: "One boathouse at a time —",
-    headline: "Every crew.",
-    headlineEm: "One system.",
-    sub: "Built for Harvard rowing. Every boathouse after it gets its own colours, read straight off the blade.",
+    leadIn: "",
+    headline: "Your crew, your blade,",
+    headlineEm: "your colours.",
+    sub: "Every program gets their screen customized to their own colours.",
     /* Under the phone: "HARVARD ROWING", "YALE ROWING", … */
     label: "Rowing",
   },

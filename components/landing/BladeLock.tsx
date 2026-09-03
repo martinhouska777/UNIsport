@@ -436,7 +436,12 @@ export default function BladeLock({
         <CloserSplit aside={aside} accent="varsity">
         {/* ── The words ── */}
         <div ref={wordsEl} className={`lc-words mb-14 max-w-[640px] text-center ${wordsPre ? "lc-pre" : ""}`}>
-          <p className="font-display text-[clamp(14px,1.8vw,17px)] text-l-text-2">{copy.leadIn}</p>
+          {/* No lead-in over this block since 2026-09-02 (the owner: no dash on
+              top). An empty <p> would still hold a line of height above the
+              headline, so the line only exists when there are words for it. */}
+          {copy.leadIn && (
+            <p className="font-display text-[clamp(14px,1.8vw,17px)] text-l-text-2">{copy.leadIn}</p>
+          )}
           <h2 className="mt-1 mb-1.5 font-display text-[clamp(32px,4.2vw,52px)] font-normal leading-[1.05] tracking-tight text-balance text-l-text">
             {copy.headline}{" "}
             <em
