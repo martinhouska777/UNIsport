@@ -24,6 +24,13 @@
 import { createClient, hasSupabaseEnv } from "@/lib/supabase/client";
 import { rosterById, seatLabel, type Boat, type Side } from "./coachLineup";
 import { dayKeyLabel, parseSessionKey } from "./coachPlan";
+import {
+  DRIVE_FOLDER_ID,
+  driveConfigured,
+  driveMonthFolder,
+  driveToken,
+  driveUpload,
+} from "./drive";
 
 /* One seat, frozen at the moment the video was uploaded. */
 export type CrewSeat = {
@@ -202,26 +209,58 @@ export async function uploadCrewVideo(
   boat: Boat,
   file: File,
   note = "",
+  onProgress?: (fraction: number) => void,
 ): Promise<{ video?: CrewVideo; error?: string }> {
   if (!hasSupabaseEnv()) return { error: "No database connected yet." };
   const supabase = createClient();
 
-  const ext = (file.name.split(".").pop() || "mp4").toLowerCase().slice(0, 5);
-  // A boat's folder, and a random name inside it: two coaches uploading the
-  // same clip name in the same minute must not overwrite each other.
-  const path = `${dayKey}/${boat.id}/${crypto.randomUUID()}.${ext}`;
+  /*
+    WHERE THE FILE GOES. The squad's own Drive when it is set up — that is the
+    real destination, and the only one a full-length outing fits in. The app's
+    own bucket is the fallback for a school that has not connected a drive.
+    Either way the ROW below is identical, which is the whole point of keeping
+    `storage_path` and `external_url` side by side.
+  */
+  let path: string | null = null;
+  let externalUrl: string | null = null;
 
-  const { error: upErr } = await supabase.storage
-    .from(BUCKET)
-    .upload(path, file, { contentType: file.type || "video/mp4", upsert: false });
-  if (upErr) {
-    console.error("uploadCrewVideo:", upErr.message);
-    // The one failure a coach will actually hit, said in their words.
-    return {
-      error: /exceed|too large|size/i.test(upErr.message)
-        ? "That file is too big for the app's own storage — this is what the drive upload fixes."
-        : "Upload failed. Check the signal and try again.",
-    };
+  if (driveConfigured()) {
+    const token = await driveToken(true);
+    if (!token) return { error: "Google Drive isn't connected. Tap Connect Drive and sign in." };
+    const parsed = parseSessionKey(dayKey);
+    // The squad files by month, and the app files the same way — a video the
+    // app put there must be where they would have put it themselves.
+    const month = (parsed?.date ?? new Date()).toLocaleDateString("en-US", { month: "long" });
+    const folder = await driveMonthFolder(DRIVE_FOLDER_ID, month, token);
+    const ext = (file.name.split(".").pop() || "mp4").toLowerCase().slice(0, 5);
+    const result = await driveUpload(
+      file,
+      videoFileName(dayKey, boat, note, ext),
+      folder,
+      token,
+      onProgress,
+    );
+    if ("error" in result) return { error: result.error };
+    externalUrl = result.link;
+  } else {
+    const ext = (file.name.split(".").pop() || "mp4").toLowerCase().slice(0, 5);
+    // A boat's folder, and a random name inside it: two coaches uploading the
+    // same clip name in the same minute must not overwrite each other.
+    path = `${dayKey}/${boat.id}/${crypto.randomUUID()}.${ext}`;
+
+    const { error: upErr } = await supabase.storage
+      .from(BUCKET)
+      .upload(path, file, { contentType: file.type || "video/mp4", upsert: false });
+    if (upErr) {
+      console.error("uploadCrewVideo:", upErr.message);
+      // The one failure a coach will actually hit, said in their words.
+      return {
+        error: /exceed|too large|size/i.test(upErr.message)
+          ? "That file is too big for the app's own storage — this is what the Drive upload fixes."
+          : "Upload failed. Check the signal and try again.",
+      };
+    }
+    onProgress?.(1);
   }
 
   const { data, error } = await supabase
@@ -234,6 +273,7 @@ export async function uploadCrewVideo(
       title: videoTitle(dayKey, boat, note),
       note: note.trim(),
       storage_path: path,
+      external_url: externalUrl,
       crew: crewFromBoat(boat),
     })
     .select("*")
@@ -241,10 +281,16 @@ export async function uploadCrewVideo(
 
   if (error || !data) {
     // The row is what makes the file findable — an orphan in the bucket helps
-    // nobody, so it goes back out.
-    await supabase.storage.from(BUCKET).remove([path]);
+    // nobody, so it goes back out. A file already on the squad's Drive is left
+    // alone: it is in the folder they browse by hand, so it is not lost, and
+    // deleting somebody's footage to tidy up after ourselves would be worse.
+    if (path) await supabase.storage.from(BUCKET).remove([path]);
     console.error("uploadCrewVideo row:", error?.message);
-    return { error: "Could not save the video's details. Nothing was kept." };
+    return {
+      error: externalUrl
+        ? "The video is on Drive, but the app could not record which boat it belongs to."
+        : "Could not save the video's details. Nothing was kept.",
+    };
   }
   return { video: fromRow(data as Row) };
 }
@@ -265,7 +311,13 @@ export async function videoSrc(v: CrewVideo): Promise<string | null> {
   return data.signedUrl;
 }
 
-/* Take a video down: the row first (that is what the team sees), then the file. */
+/*
+  Take a video down: the row first (that is what the team sees), then the file —
+  but only a file in OUR bucket. A video on the squad's Drive is left where it
+  is: that folder is theirs, people browse it without the app, and quietly
+  deleting footage out of it because somebody tidied a list in here would be a
+  nasty surprise. Removing it in the app un-files it, nothing more.
+*/
 export async function deleteCrewVideo(v: CrewVideo): Promise<{ error?: string }> {
   if (!hasSupabaseEnv()) return { error: "No database connected yet." };
   const supabase = createClient();

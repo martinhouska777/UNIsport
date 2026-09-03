@@ -29,6 +29,12 @@ import {
   type CrewSeat,
   type CrewVideo,
 } from "@/lib/varsity/crewVideos";
+import {
+  driveConfigured,
+  driveConnected,
+  driveToken,
+  drivePreviewUrl,
+} from "@/lib/varsity/drive";
 
 /* A painted blade, the way the lineup screens paint one. */
 const blade = (color: string, ink: string): CSSProperties => ({
@@ -77,7 +83,16 @@ function VideoSheet({
   const [failed, setFailed] = useState(false);
   const [removing, setRemoving] = useState(false);
 
+  /*
+    A file on the squad's Drive plays in DRIVE's own player, embedded. It has to:
+    the bytes live there, and Drive streams them against the viewer's own Google
+    session — so somebody without access to the folder sees nothing rather than a
+    broken player. Only a file in our own bucket is a plain <video>.
+  */
+  const preview = video.externalUrl ? drivePreviewUrl(video.externalUrl) : null;
+
   useEffect(() => {
+    if (preview) return; // nothing to sign — Drive's embed carries its own access
     let active = true;
     (async () => {
       const url = await videoSrc(video);
@@ -88,16 +103,36 @@ function VideoSheet({
     return () => {
       active = false;
     };
-  }, [video]);
+  }, [video, preview]);
 
   return (
     <Sheet title={video.title} onClose={onClose}>
-      {src ? (
+      {preview ? (
+        <iframe
+          src={preview}
+          title={video.title}
+          allow="autoplay; fullscreen"
+          allowFullScreen
+          className="aspect-video w-full rounded-xl border-0 bg-black"
+        />
+      ) : src ? (
         <video src={src} controls playsInline className="w-full rounded-xl bg-black" />
       ) : (
         <div className="flex h-40 items-center justify-center rounded-xl border border-border bg-surface-2 text-[12px] text-muted">
           {failed ? "This video could not be opened." : "Loading…"}
         </div>
+      )}
+      {/* The way out to the file itself — Drive is where the squad browses
+          footage without the app, and that must stay true. */}
+      {video.externalUrl && (
+        <a
+          href={video.externalUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-2 block text-[11px] text-muted underline"
+        >
+          Open in Google Drive
+        </a>
       )}
 
       <div className="mt-4 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
@@ -112,7 +147,10 @@ function VideoSheet({
           type="button"
           disabled={removing}
           onClick={async () => {
-            if (!window.confirm("Remove this video for the whole team?")) return;
+            const msg = video.externalUrl
+              ? "Take this video off the boat for the whole team? The file stays in the squad's Drive folder."
+              : "Remove this video for the whole team?";
+            if (!window.confirm(msg)) return;
             setRemoving(true);
             const { error } = await deleteCrewVideo(video);
             if (error) {
@@ -139,6 +177,13 @@ export default function CrewVideoStrip({ dayKey, boat }: { dayKey: string; boat:
   const [label, setLabel] = useState("");
   const [busyText, setBusyText] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  /*
+    Whether this browser can already talk to the squad's Drive. Checked without
+    ever opening a popup: somebody who only came to read their lineup must not
+    be shown a Google sign-in they never asked for. The popup only happens on
+    the button.
+  */
+  const [connected, setConnected] = useState(driveConnected());
 
   useEffect(() => {
     let active = true;
@@ -151,17 +196,36 @@ export default function CrewVideoStrip({ dayKey, boat }: { dayKey: string; boat:
     };
   }, [dayKey, boat.id]);
 
+  // A quiet ask: if Google can answer without a popup (already signed in, and
+  // already said yes once), the button says "Add video" instead of "Connect".
+  useEffect(() => {
+    if (!driveConfigured() || connected) return;
+    let active = true;
+    void driveToken(false).then((t) => {
+      if (active && t) setConnected(true);
+    });
+    return () => {
+      active = false;
+    };
+  }, [connected]);
+
   // A video of an empty boat is a video of nobody: the whole point of attaching
   // it here is the crew that travels with it.
   const seated = boat.seats.some((s) => s.athleteId) || !!boat.coxId;
+  const needsConnect = driveConfigured() && !connected;
 
   const pick = async (files: FileList | null) => {
     if (!files || !files.length) return;
     setError(null);
     const list = Array.from(files);
     for (let i = 0; i < list.length; i++) {
-      setBusyText(list.length > 1 ? `Uploading ${i + 1} of ${list.length}…` : "Uploading…");
-      const { video, error: err } = await uploadCrewVideo(dayKey, boat, list[i], label);
+      // An outing video is big and the boathouse signal is not. A percentage is
+      // the difference between "it's working" and "it's frozen".
+      const of = list.length > 1 ? ` (${i + 1}/${list.length})` : "";
+      setBusyText(`Uploading${of}…`);
+      const { video, error: err } = await uploadCrewVideo(dayKey, boat, list[i], label, (f) =>
+        setBusyText(`Uploading${of} ${Math.round(f * 100)}%`),
+      );
       if (err) {
         setError(err);
         break;
@@ -219,15 +283,35 @@ export default function CrewVideoStrip({ dayKey, boat }: { dayKey: string; boat:
           hidden
           onChange={(e) => void pick(e.target.files)}
         />
+        {/* One button, two jobs. Before Drive is connected it signs you in —
+            which has to be a real tap, because a browser only lets a popup
+            open from one. After that it is simply "Add video". */}
         <button
           type="button"
           disabled={!!busyText || !seated}
-          onClick={() => fileRef.current?.click()}
+          onClick={async () => {
+            if (needsConnect) {
+              setError(null);
+              const t = await driveToken(true);
+              if (!t) {
+                setError("Google sign-in didn't finish, so nothing was uploaded.");
+                return;
+              }
+              setConnected(true);
+            }
+            fileRef.current?.click();
+          }}
           className="tap44 flex flex-shrink-0 items-center gap-1.5 rounded-lg border border-dashed border-border px-2.5 py-1.5 text-[12px] font-medium text-muted active:border-primary-line active:text-primary disabled:opacity-50"
         >
-          <IconPlus size={13} /> {busyText ?? "Add video"}
+          <IconPlus size={13} /> {busyText ?? (needsConnect ? "Connect Drive" : "Add video")}
         </button>
       </div>
+
+      {needsConnect && seated && (
+        <div className="mt-1.5 text-[11px] italic text-muted">
+          Sign in to Google once, and video goes straight to the squad&apos;s Drive folder.
+        </div>
+      )}
 
       {!seated && (
         <div className="mt-1.5 text-[11px] italic text-muted">
