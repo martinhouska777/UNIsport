@@ -663,9 +663,10 @@ export const closers = {
   Left of Campus Colours: what the student app does, one row per feature, a
   "+" opens the detail. Left of Blade Lock: the same for Varsity Mode. Every
   row names something the app does TODAY — checked against the code, the
-  route or the capture named in the comment. DRAFT for the owner: these are
-  the first written words for this block; the stories above say the same
-  things in the owner's voice, and these rows keep to it.
+  route or the capture named in the comment. Rewritten 2026-09-03 into the
+  voice settled on the stories above: a short, verb-led title that speaks to
+  the reader, one factual sub-line. DRAFT for the owner — review in the
+  browser, not here.
 
   "What's coming" for students / varsity / coaches is NOT here on purpose:
   it is a roadmap, and only the owner knows it. Add a `coming` array to each
@@ -686,44 +687,44 @@ export const studentFeatures: { kicker: string; rows: FeatureRow[]; cta: Feature
     {
       /* /gyms — hours, ratings, equipment lists, favourites, the crowd meter (lib/gymSocial.ts) */
       icon: "gym",
-      title: "Every gym on campus, in one list.",
-      detail: "You see opening hours, ratings, the equipment in each room and how busy it is right now. The house gyms are in there too, and nobody has a map of those.",
+      title: "See every gym on campus.",
+      detail: "Hours, ratings, equipment and how busy it is right now, including the house gyms nobody else maps.",
     },
     {
       /* /match — ranked by compatibility; /people/[id] — the Why-you-match facts */
       icon: "partners",
-      title: "Training partners, ranked by real fit.",
-      detail: "The ranking reads your gym, your hours, your level, your interests, your hometown and your languages, and whether one of you wants a mentor. Every reason is a fact off both profiles.",
+      title: "Get matched with people who actually fit.",
+      detail: "The match reads your gym, your hours, your level, your interests, your hometown and your language, plus whether either of you wants a mentor.",
     },
     {
       /* messages/PlanCard.tsx — propose, accept, both calendars */
       icon: "chat",
-      title: "Plan a session inside the chat.",
-      detail: "One tap proposes it, one tap accepts, and it is on both your calendars.",
+      title: "Plan a session without leaving the chat.",
+      detail: "One tap proposes it, one tap accepts, and it's on both your calendars.",
     },
     {
       /* the Log Session sheet (tall-logsheet capture): sets and reps, the partner carried over, photos and a note */
       icon: "log",
-      title: "Log it together, set by set.",
-      detail: "You record every set and rep, with your partner carried over from the plan. Add a photo and a note and the session becomes a memory, not just numbers.",
+      title: "Log the session together, set by set.",
+      detail: "You record every set and rep, with your partner carried over from the plan. A photo and a note turn it into a memory, not just numbers.",
     },
     {
       /* PlanCard's confirmation → verified session; lib/supabase/workouts.ts streakStats */
       icon: "verified",
-      title: "Verified sessions and streaks.",
-      detail: "You both confirm the session happened; verified days build your streak.",
+      title: "Build a streak you can't fake.",
+      detail: "You and your partner both confirm the session happened before it counts.",
     },
     {
       /* /leaderboards — lib/leaderboards.ts: campus, house, partners, year */
       icon: "leaderboard",
-      title: "Leaderboards for the whole college.",
-      detail: "See where you rank across campus, in your house, among your partners and your year.",
+      title: "See where you rank.",
+      detail: "Across campus, in your house, among your partners and against your year.",
     },
     {
       /* /messages — the open channels (components/messages/ChannelThread.tsx) */
       icon: "channels",
-      title: "Open campus channels.",
-      detail: "Everyone at your school is already in. There are no followers and no requests.",
+      title: "Talk in open campus channels.",
+      detail: "Everyone at your school is already in, with no followers and no requests to send.",
     },
   ],
 };
@@ -733,22 +734,24 @@ export const varsityFeatures: { kicker: string; rows: FeatureRow[]; cta: Feature
   cta: { label: hero.inviteCta, href: "/join" },
   rows: [
     {
-      /* /varsity/home — the week the coach published (V1) */
+      /* /varsity/home — the week the coach published (V1). "same moment" dropped —
+         HomeScreen fetchPlan()s on open, there is no push; "whenever you open
+         the app" is the claim the code actually backs. */
       icon: "plan",
-      title: "The training plan, always current.",
-      detail: "Your coach publishes the week and it is on your phone the same moment. Water, erg and weights, not a screenshot of a spreadsheet.",
+      title: "See this week's plan whenever you open the app.",
+      detail: "Your coach publishes it as water, erg and weights, not a screenshot of a spreadsheet.",
     },
     {
       /* /varsity/home lineup card (V2), coach lineups (coach step 4) */
       icon: "boat",
-      title: "Your name, in the boat.",
-      detail: "The coach publishes the lineup seat by seat, the night before. Your seat lights up.",
+      title: "Find your name in the boat.",
+      detail: "The coach publishes the lineup seat by seat, the night before, and your seat lights up.",
     },
     {
       /* race countdown + coach's note on Home (V3, coach step 1 & 5) */
       icon: "race",
-      title: "The next race, and the note to fix.",
-      detail: "A countdown to the race the block points at, and your coach's one technical note, in front of you until it is fixed.",
+      title: "Know what to fix before the next race.",
+      detail: "A countdown to the race this block is building toward, and your coach's one technical note, in front of you until it's fixed.",
     },
     {
       /* /varsity/log — Log per prescribed session, Scan C2/RP3, Add extra session (V4) */
@@ -759,20 +762,20 @@ export const varsityFeatures: { kicker: string; rows: FeatureRow[]; cta: Feature
     {
       /* /varsity/calendar (V5) and /varsity/profile (V6) */
       icon: "calendar",
-      title: "Your season, on the calendar.",
-      detail: "Every workout you log lands on the calendar by itself. Your consistency sits beside it.",
+      title: "Watch your season take shape on the calendar.",
+      detail: "Every workout you log lands on it by itself, with your consistency sitting right beside it.",
     },
     {
       /* /varsity/team — the squad's month (11-varsity-teammate capture) */
       icon: "squad",
-      title: "How the squad is training.",
-      detail: "You can open any teammate's month and see where yours sits next to it, without asking anyone.",
+      title: "See how the squad is training.",
+      detail: "Open any teammate's month and see where yours sits next to it, without asking anyone.",
     },
     {
       /* /join — the invite; a captain's or coach's link unlocks the mode */
       icon: "lock",
-      title: "Gated by your team.",
-      detail: "Varsity Mode opens from a link your captain or coach sends. Nobody else sees it.",
+      title: "Get in through your team, not a store.",
+      detail: "Varsity Mode opens from a link your captain or coach sends, and nobody else sees it.",
     },
   ],
 };
