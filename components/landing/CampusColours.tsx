@@ -253,11 +253,22 @@ export default function CampusColours({
 
         {/* ── Phone beside the letter (letter above the phone below 1024px) ── */}
         {/* On a phone the whole piece — words, letter, phone, dots — fits one screen:
-            smaller phone, tighter gaps. Desktop is the piece's own spacing. */}
+            smaller phone, tighter gaps. Desktop is the piece's own spacing.
+
+            AND IT HAS TO FIT A SHORT WINDOW TOO. From xl up the section is
+            pinned: one screen tall, overflow hidden. The piece is a fixed
+            759px (words 174 + 44, the phone's 482, the dots' 48 + 10) plus the
+            stick's 80 of padding, so under ~840px of window height the bottom
+            was simply cut off — a measured 139px gone at 1440x620 (owner,
+            2026-09-03). Blade Lock had a fit routine for this and this piece
+            had none. So above xl the phone is capped by what is LEFT of the
+            screen: 100svh less that 356px of words, dots and padding, divided
+            by its own 1480/900 aspect (x0.608 = width). At a normal window the
+            min() picks 270 and nothing changes. */}
         <div className="flex w-full flex-col items-center justify-center gap-5 lg:flex-row lg:gap-[60px]">
           <Phone
             ref={phoneEl}
-            className={`lc-phone relative z-[3] order-2 w-[min(270px,52vw)] flex-none lg:order-1 lg:w-[270px] ${
+            className={`lc-phone relative z-[3] order-2 w-[min(270px,52vw)] flex-none lg:order-1 lg:w-[270px] xl:w-[min(270px,calc((100svh_-_356px)*0.608))] ${
               phone === "hide" ? "lc-hide" : phone === "pre" ? "lc-pre" : ""
             }`}
             data-closer-phone="campus"

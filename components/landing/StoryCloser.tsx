@@ -65,13 +65,40 @@ const JUMP = 0.32;
 const easeInOut = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 
 /* Where the flight exists: the two-column layout, without reduced motion.
-   Decided once, at mount (a resize mid-story would otherwise change the page
-   height under the reader — the artifact decides it once too). */
-const FLIES_MQ = "(min-width: 1024px) and (prefers-reduced-motion: no-preference)";
-const noop = () => () => {};
+   1280 is CloserSplit's own breakpoint and the two MUST agree — the pinned
+   stage is one screen tall with overflow hidden, so wrapping it around a
+   single tall column cuts the bottom off.
+
+   IT FOLLOWS A RESIZE NOW. This was decided once at mount, on the reasoning
+   that a resize mid-story would change the page height under the reader. The
+   owner found what that costs (2026-09-03 — "the animations broke, mainly
+   when I have only half the screen"): drag the window narrower and the class
+   never left, so the closer stayed pinned to one screen while its content
+   went to one tall column — a measured 331px of it cut off and unreachable,
+   with the flight still armed for a layout that was gone. A page relaying
+   itself out under a deliberate drag is much the smaller surprise. */
+const FLIES_MQ = "(min-width: 1280px) and (prefers-reduced-motion: no-preference)";
+/* The media query changing is the event that matters, but it is not the only
+   thing that moves the answer, and it is not dispatched everywhere (headless
+   viewport emulation resizes the page and fires nothing at all — which is how
+   this nearly shipped unverified). The resize event and a ResizeObserver on
+   the document say the same thing by two other routes; asking flies() again
+   is cheap and the value guard below swallows the repeats. */
+const watchViewport = (cb: () => void) => {
+  const mq = window.matchMedia(FLIES_MQ);
+  mq.addEventListener("change", cb);
+  window.addEventListener("resize", cb);
+  const ro = new ResizeObserver(cb);
+  ro.observe(document.documentElement);
+  return () => {
+    mq.removeEventListener("change", cb);
+    window.removeEventListener("resize", cb);
+    ro.disconnect();
+  };
+};
 function useFlies() {
   return useSyncExternalStore(
-    noop,
+    watchViewport,
     () => window.matchMedia(FLIES_MQ).matches,
     () => false,
   );
@@ -88,12 +115,15 @@ export default function StoryCloser({ storyId, beats, accent, closer, closerId, 
   const pinned = useFlies();
 
   useEffect(() => {
-    const flies = window.matchMedia(FLIES_MQ).matches;
+    // Asked every time, never cached: the reader can drag the window across
+    // the breakpoint at any moment, and everything below has to answer for the
+    // width the page has NOW.
+    const flies = () => window.matchMedia(FLIES_MQ).matches;
     const c = clo.current;
     const sec = c?.el();
     if (!c || !sec) return;
 
-    c.prime(flies ? "hide" : "pre");
+    c.prime(flies() ? "hide" : "pre");
 
     let armed = false;
     let flown = false;
@@ -443,11 +473,10 @@ export default function StoryCloser({ storyId, beats, accent, closer, closerId, 
     const arrive = () => {
       const st = storyPhoneRect();
       const near = !!st && st.width > 10 && st.bottom > 120 && st.top < window.innerHeight - 120;
-      if (flies && near) runFlight(() => {});
+      if (flies() && near) runFlight(() => {});
       else c.arriveInPlace();
     };
-    const io = new IntersectionObserver(
-      (entries) => {
+    const onIntersect = (entries: IntersectionObserverEntry[]) => {
         entries.forEach((e) => {
           if (!e.isIntersecting) {
             // Scrolled back above it: put it away, so coming back plays it again.
@@ -471,23 +500,59 @@ export default function StoryCloser({ storyId, beats, accent, closer, closerId, 
           armed = true;
           arrive();
         });
-      },
-      { threshold: flies ? 0.02 : 0.3 },
-    );
+    };
+    // Rebuilt on a breakpoint flip: the threshold differs between the two
+    // modes, and an observer keeps the one it was made with.
+    const makeIO = () => new IntersectionObserver(onIntersect, { threshold: flies() ? 0.02 : 0.3 });
+    let io = makeIO();
     io.observe(sec);
+
+    /* THE BREAKPOINT FLIPPED UNDER THE READER — the window was dragged across
+       1280, or reduced-motion was switched on. Everything measured for the old
+       layout is void: stop any flight without restoring it (it would restore
+       into geometry that no longer exists), and hand the section back in the
+       state the new width expects. If the reader is standing in the closer,
+       it appears in place, whole; if it is off screen, it is put away and the
+       observer plays it afresh on the way in. */
+    let mode = flies();
+    const onFlip = () => {
+      if (flies() === mode) return; // a resize that stayed on one side of 1280
+      mode = !mode;
+      abort?.(false);
+      io.disconnect();
+      armed = false;
+      flown = false;
+      flying = false;
+      story.current?.setPhoneHidden(false);
+      story.current?.setGone(false);
+      c.setPhoneHidden(false);
+      const r = sec.getBoundingClientRect();
+      if (r.top < window.innerHeight && r.bottom > 0) {
+        c.arriveInPlace();
+        armed = true;
+      } else {
+        c.rewind();
+        c.prime(flies() ? "hide" : "pre");
+      }
+      io = makeIO();
+      io.observe(sec);
+    };
+    const unwatch = watchViewport(onFlip);
 
     /* A nudge up ANYWHERE on the landed closer plays the film in reverse.
        Anywhere, because with smooth scrolling the wheel events arrive while
        the page is still deep in the cushion. armed stays true until the
        reverse lands, so the observer cannot replay the arrival mid-move. */
     const onWheelUp = (ev: WheelEvent) => {
-      if (ev.deltaY >= 0 || !armed || !flown || flying) return;
+      if (ev.deltaY >= 0 || !armed || !flown || flying || !flies()) return;
       const r = sec.getBoundingClientRect(), mid = window.innerHeight / 2;
       if (r.top > mid || r.bottom < mid) return; // it is not what is on screen
       flying = true; // claimed from the first frame of the act
       retract(() => runFlightBack(() => { armed = false; }));
     };
-    if (flies) window.addEventListener("wheel", onWheelUp, { passive: true });
+    // Always listening; onWheelUp is inert unless a flight has actually landed
+    // (`flown`), and it asks flies() itself, so a flip cannot strand it.
+    window.addEventListener("wheel", onWheelUp, { passive: true });
 
     return () => {
       // Leaving the page mid-flight: stop the loop. It drives window.scrollTo,
@@ -496,6 +561,7 @@ export default function StoryCloser({ storyId, beats, accent, closer, closerId, 
       dead = true;
       abort?.(false);
       io.disconnect();
+      unwatch();
       window.removeEventListener("wheel", onWheelUp);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
