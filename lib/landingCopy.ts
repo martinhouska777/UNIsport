@@ -774,16 +774,20 @@ export const varsityFeatures: { kicker: string; rows: FeatureRow[]; cta: Feature
       detail: "Tap a workout from the plan to log it instantly. Take a photo of your C2 or RP3 to instantly extract the numbers, or add extra sessions.",
     },
     {
-      /* /varsity/calendar (V5) — own logs, month grid, per-day detail, month totals */
+      /* /varsity/calendar (V5) — own logs, month grid, per-day detail, month
+         totals + the consistency figure. Owner-dictated 2026-09-03;
+         "week/month" is their own wording, left as given. */
       icon: "calendar",
-      title: "Your season on the calendar.",
-      detail: "Every session you log lands on the calendar by itself. Tap any day to see exactly what you did, and see how many sessions and metres you have behind you this month.",
+      title: "Calendar.",
+      detail: "Every workout you log goes straight to the calendar. Tap any day to look at your workouts or see the statistics for your week/month alongside your consistency.",
     },
     {
-      /* /varsity/team — roster + each teammate's training month, erg PRs, status */
-      icon: "squad",
-      title: "See how the squad is training.",
-      detail: "Open the roster, tap any teammate and see their month of training, their erg personal bests and their current status.",
+      /* /varsity/team → Workouts tab (TeamWorkouts + BoardTable): every team
+         result with Split / Watts / W/kg columns and the change since last time
+         (Delta.tsx). Owner-dictated 2026-09-03. */
+      icon: "leaderboard",
+      title: "Statistics and leaderboards.",
+      detail: "Every workout you did is saved in the workouts tab. Tap to see how much you have improved from last time and where you rank compared to others, with filters for split time, watts and watts per kilo.",
     },
     {
       /* /join — the invite; a captain's or coach's link unlocks the mode */
