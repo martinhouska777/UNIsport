@@ -932,26 +932,40 @@ export type CoachStep = {
 };
 
 export const coach = {
+  /* REWRITTEN 2026-09-03 in the owner's voice, on their instruction ("read the
+     text up to the coaches console and copy that tone"). The section had been
+     written in a different register from the rest of the page — "not shouted
+     across the dock", "Forty athletes, one glance, no noise", "The spreadsheet,
+     retired" — while the two stories and both feature lists had settled into
+     the owner's own: verbs and explaining sentences, second person, short
+     declaratives, no dashes and no noun-list-plus-appositive. Their words in
+     the varsity story are the model, right down to the shape of "Never look
+     through 40 names in an Excel sheet again."
+
+     Nothing here claims anything new: every step is the same screen, saying
+     the same thing in the page's settled voice. */
   badge: "UNIsport · for coaches & athletic departments",
-  leadIn: "And for the person who runs the squad —",
+  /* Mirrors the interlude's own lead-in, which is the owner's dictated line
+     ("And if you do sport for the university itself —"). */
+  leadIn: "And if you are the one who runs the squad —",
   headline: "The Coach's",
   headlineEm: "Console.",
   sub: [
     { text: "Students use the app. " },
     { text: "Coaches run it.", bold: true },
     {
-      text: " Five screens take a coach from an empty season to a published lineup. The plan, the boats and the notes the varsity story above depends on are all built here. These are real screens from the console as it works today.",
+      text: " Five screens take you from an empty season to a published lineup. Everything the athletes just scrolled through is built here. These are real screens from the console as it works today.",
     },
   ] as Segment[],
   /* On the Coach view (/for/coaches) there is no varsity story above, so the
-     two lines that lean on it change: the "And" goes, and "the varsity story
-     above depends on" becomes what the athletes see. DRAFT for the owner. */
-  leadInSolo: "For the person who runs the squad —",
+     two lines that lean on it change: the "And" goes, and the athletes become
+     yours rather than the ones the reader has just watched. */
+  leadInSolo: "If you are the one who runs the squad —",
   subSolo: [
     { text: "Students use the app. " },
     { text: "Coaches run it.", bold: true },
     {
-      text: " Five screens take you from an empty season to a published lineup. The plan, the boats and the notes your athletes open on their phones are all built here. These are real screens from the console as it works today.",
+      text: " Five screens take you from an empty season to a published lineup. Everything your athletes open on their phones is built here. These are real screens from the console as it works today.",
     },
   ] as Segment[],
 
@@ -959,10 +973,10 @@ export const coach = {
     {
       n: "1",
       step: "1 · Create",
-      head: "Start with the race.",
+      head: "Set up the season in one screen.",
       body: [
-        { text: "Name the block, set the dates, add the race you're pointing at. The whole setup takes " },
-        { text: "one screen and under a minute", bold: true },
+        { text: "Name the block, set the dates and add the race you are pointing at. The whole setup takes " },
+        { text: "under a minute", bold: true },
         { text: ". The app works out the weeks and starts the countdown your athletes will see." },
       ],
       shot: "coach-1-create.webp",
@@ -971,11 +985,11 @@ export const coach = {
     {
       n: "2",
       step: "2 · Build",
-      head: "Two taps per session.",
+      head: "Build a session in two taps.",
       body: [
-        { text: "You pick the type, water or erg or weights, then the intensity. Then you tap one of the " },
-        { text: "five workouts this squad actually uses", bold: true },
-        { text: " and the session fills itself in. A full training week takes minutes, not an evening." },
+        { text: "Pick the type, water, erg or weights, then pick the intensity. Tap one of the " },
+        { text: "five workouts your squad actually uses", bold: true },
+        { text: " and the session fills itself in. A full training week takes minutes." },
       ],
       shot: "coach-2-build.webp",
       alt: "The session builder: type and intensity pickers, the five most-used workouts as tap-to-fill chips, and a Confirm session button",
@@ -985,9 +999,9 @@ export const coach = {
       step: "3 · Plan",
       head: "Publish the week once.",
       body: [
-        { text: "The season is one block of fourteen weeks, counting down to the race. It holds water, erg and weights for every AM and PM, colour-coded by intensity. " },
-        { text: "Publish, and it's on every athlete's phone.", bold: true },
-        { text: " No more screenshots of a spreadsheet in the group chat." },
+        { text: "The season is one block of fourteen weeks counting down to the race. It holds water, erg and weights for every AM and PM, colour coded by intensity. " },
+        { text: "Publish it and it is on every athlete's phone.", bold: true },
+        { text: " Never send a screenshot of a spreadsheet to the group chat again." },
       ],
       shot: "coach-3-plan.webp",
       alt: "The Training Plan screen: week 6 of the Fall 2026 block, with colour-coded AM and PM sessions for every day",
@@ -995,13 +1009,11 @@ export const coach = {
     {
       n: "4",
       step: "4 · Lineup",
-      head: "Publish the boats.",
+      head: "Seat the boat and publish it.",
       body: [
-        { text: "You seat the boat cox to bow. Port shows red and starboard green, straight from each rower's profile, so " },
-        { text: "stroke on strokeside, seven on bowside", bold: true },
-        { text: ", the way the boat is actually rigged. One tap and the lineup is on every phone " },
+        { text: "You seat the boat from cox to bow. Port shows red and starboard green straight from each rower's profile, so you seat everyone on the side they row. One tap and the lineup is on every phone " },
         { text: "the night before", bold: true },
-        { text: ", not shouted across the dock." },
+        { text: ". Never shout it across the dock again." },
       ],
       shot: "coach-4-lineup.webp",
       alt: "The Lineup screen: the 1V eight seated cox to bow, port seats in red and starboard seats in green",
@@ -1011,25 +1023,25 @@ export const coach = {
       step: "5 · Notes",
       head: "Keep every athlete on track.",
       body: [
-        { text: "You leave one short technical note per athlete. It sits on their Home, under their race countdown, until it's fixed. Everyone else sees a green " },
+        { text: "Leave one short technical note per athlete. It sits on their Home under their race countdown until it is fixed. Everyone else sees a green " },
         { text: "“Good job”", bold: true },
-        { text: ". Forty athletes, one glance, no noise." },
+        { text: ". Forty athletes on one screen." },
       ],
       shot: "coach-5-notes.webp",
       alt: "The Athlete Notes screen: the roster with a short technical note per athlete, and a green Good job for everyone without one",
     },
   ] as CoachStep[],
 
-  bridge: "Everything the console publishes is the story you just scrolled. The plan lands on their Home, their name goes in the boat, the note sits under their race.",
-  /* On the Coach view there is no story above to point back to. DRAFT. */
-  bridgeSolo: "Everything the console publishes lands on the athletes' phones. The plan goes to their Home, their name into the boat, the note under their race.",
+  bridge: "Everything you publish here is the story the athletes just scrolled. The plan goes to their Home, their name into the boat, the note under their race countdown.",
+  /* On the Coach view there is no story above to point back to. */
+  bridgeSolo: "Everything you publish here lands on your athletes' phones. The plan goes to their Home, their name into the boat, the note under their race countdown.",
   bridgeSub:
-    "A student who signs up brings one user. A coach who adopts brings the whole squad. That's why the console exists — and why it's already built.",
+    "One student who signs up brings one user. One coach brings the whole squad. That is why the console was built first, and why it is already working.",
 
   facts: [
-    { title: "1 plan → 40 phones", body: "Publish once; every athlete's Home updates itself." },
-    { title: "Boats, the night before", body: "Lineups land on phones before anyone reaches the dock." },
-    { title: "The spreadsheet, retired", body: "Plan, lineups and feedback live in one place, not a group chat." },
+    { title: "One plan, forty phones", body: "You publish once and every athlete's Home updates itself." },
+    { title: "Lineups the night before", body: "The boats are on every phone before anyone gets to the dock." },
+    { title: "No more spreadsheets", body: "The plan, the lineups and your notes all live in one place." },
   ],
 
   /* The coach's own way in. There is no self-serve console yet — a coach gets
