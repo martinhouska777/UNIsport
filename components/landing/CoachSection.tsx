@@ -6,7 +6,7 @@ import { coach, mailtoHref, type Segment } from "@/lib/landingCopy";
 
   Ported natively from the "One Coach, Forty Athletes" design piece rather than
   iframed: it is plain layout with no scroll choreography, so there was nothing
-  to isolate. That means real selectable text, real <Image> loading of the five
+  to isolate. That means real selectable text, real <Image> loading of the six
   captures, and every colour from an `l-*` token (rule 1). The piece's own
   chrome — its title, theme script, mode toggle and background grid — is gone,
   because the landing already provides all four and two copies fight.
@@ -70,7 +70,7 @@ export default function CoachSection({ solo = false }: { solo?: boolean }) {
           )}
         </div>
 
-        {/* ── Five screens, five explanations ── */}
+        {/* ── Six screens, six explanations ── */}
         <div className="mt-12 flex flex-wrap items-start justify-center gap-x-11 gap-y-[60px]">
           {coach.steps.map((s, i) => (
             <article

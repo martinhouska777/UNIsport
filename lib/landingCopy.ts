@@ -847,10 +847,10 @@ export const about = {
   kicker: "About",
   /* The old "Built at Harvard, for every campus." headline sat above a
      product paragraph; the paragraph is personal now, so the headline
-     introduces the person instead. That line still closes the page, in
-     footer.tagline. */
-  headline: "Built by",
-  headlineEm: "a rower.",
+     introduces the person instead (the owner's own wording, 2026-09-03).
+     That line still closes the page, in footer.tagline. */
+  headline: "Who's",
+  headlineEm: "behind this.",
   body: "My name is Martin Houska. I am a rower from the Czech Republic, currently rowing for the Harvard heavyweight team.",
   email: "martinhouska777@gmail.com",
   /* On "/" the About section is the paragraph above and this link; the full
@@ -950,11 +950,24 @@ export const coach = {
   leadIn: "And if you are the one who runs the squad —",
   headline: "The Coach's",
   headlineEm: "Console.",
+  /* THE INTRO AND ALL SIX STEPS ARE THE OWNER'S, DICTATED 2026-09-03.
+     Transcribed with grammar corrected, not rephrased. Two of their asks were
+     answered rather than transcribed, because they asked for them to be:
+       • "pick a name for it" (the plan building, the statistics, etc.) →
+         RUNNING A SEASON, which is what the console does end to end.
+       • "nevím jak to nazvat" (the thing you tap in the session editor) →
+         the workout TYPE, which is that field's own label in
+         TrainingPlanScreen.tsx (Water / Erg / Weights / Off / Flex).
+     The old step 3, "Publish the week once.", is GONE — the owner's call
+     ("publish it je zbytečné"); publishing is a sentence inside the lineup
+     step now, where they put it. Step 5 (Workouts + telemetry) is new copy
+     written to their brief ("zkus zkopírovat můj tón a vymyslet popisek") and
+     checked against TeamWorkouts.tsx / TelemetryOuting.tsx. */
   sub: [
-    { text: "Students use the app. " },
-    { text: "Coaches run it.", bold: true },
+    { text: "UNIsport Varsity Mode is designed to make " },
+    { text: "running a season", bold: true },
     {
-      text: " Five screens take you from an empty season to a published lineup. Everything the athletes just scrolled through is built here. These are real screens from the console as it works today.",
+      text: " as efficient and friendly as possible for a college rowing program. The plan, the lineups, the videos and the numbers all live in one console, and the app is customizable to fit your program perfectly. Everything the athletes just scrolled through is built here, on real screens from the console as it works today.",
     },
   ] as Segment[],
   /* On the Coach view (/for/coaches) there is no varsity story above, so the
@@ -962,21 +975,21 @@ export const coach = {
      yours rather than the ones the reader has just watched. */
   leadInSolo: "If you are the one who runs the squad —",
   subSolo: [
-    { text: "Students use the app. " },
-    { text: "Coaches run it.", bold: true },
+    { text: "UNIsport Varsity Mode is designed to make " },
+    { text: "running a season", bold: true },
     {
-      text: " Five screens take you from an empty season to a published lineup. Everything your athletes open on their phones is built here. These are real screens from the console as it works today.",
+      text: " as efficient and friendly as possible for a college rowing program. The plan, the lineups, the videos and the numbers all live in one console, and the app is customizable to fit your program perfectly. Everything your athletes open on their phones is built here, on real screens from the console as it works today.",
     },
   ] as Segment[],
 
   steps: [
     {
       n: "1",
-      step: "1 · Create",
-      head: "Set up the season in one screen.",
+      step: "1 · Blocks",
+      head: "Set up your training blocks.",
       body: [
-        { text: "Name the block, set the dates and add the race you are pointing at. The whole setup takes " },
-        { text: "under a minute", bold: true },
+        { text: "Name the block, set the dates and add " },
+        { text: "the race or event it is leading to", bold: true },
         { text: ". The app works out the weeks and starts the countdown your athletes will see." },
       ],
       shot: "coach-1-create.webp",
@@ -984,48 +997,67 @@ export const coach = {
     },
     {
       n: "2",
-      step: "2 · Build",
-      head: "Build a session in two taps.",
+      step: "2 · Plan",
+      head: "Create the workout plans easily.",
       body: [
-        { text: "Pick the type, water, erg or weights, then pick the intensity. Tap one of the " },
-        { text: "five workouts your squad actually uses", bold: true },
-        { text: " and the session fills itself in. A full training week takes minutes." },
+        { text: "Tap a day's AM or PM session to fill it in. Pick the workout type, choose the intensity, and choose from your most used workouts or write your own. For repeating workouts like lifts or off days choose " },
+        { text: "repeat every week", bold: true },
+        { text: ", and the plan is set for weeks ahead." },
       ],
       shot: "coach-2-build.webp",
-      alt: "The session builder: type and intensity pickers, the five most-used workouts as tap-to-fill chips, and a Confirm session button",
+      alt: "The session editor: the workout type row, the intensity pickers, the five most-used workouts as tap-to-fill chips, and the repeat-weekly switch",
     },
     {
       n: "3",
-      step: "3 · Plan",
-      head: "Publish the week once.",
+      step: "3 · Lineups",
+      head: "Seat the boat and publish it.",
       body: [
-        { text: "The season is one block of fourteen weeks counting down to the race. It holds water, erg and weights for every AM and PM, colour coded by intensity. " },
-        { text: "Publish it and it is on every athlete's phone.", bold: true },
-        { text: " Never send a screenshot of a spreadsheet to the group chat again." },
+        { text: "Tap a session from the plan to create the lineup for that day. Choose your people from the pool, where everyone carries their side, port, starboard or both, and anyone injured or sick is marked unavailable. " },
+        { text: "Publish it and the lineup is on every phone.", bold: true },
+        { text: " Never shout it across the dock again." },
       ],
-      shot: "coach-3-plan.webp",
-      alt: "The Training Plan screen: week 6 of the Fall 2026 block, with colour-coded AM and PM sessions for every day",
+      shot: "coach-4-lineup.webp",
+      alt: "The Lineup screen: the 1V eight seated cox to bow, port seats in red and starboard seats in green, with the athlete pool beside it",
     },
     {
       n: "4",
-      step: "4 · Lineup",
-      head: "Seat the boat and publish it.",
+      step: "4 · Videos",
+      head: "Put the footage on the boat.",
       body: [
-        { text: "You seat the boat from cox to bow. Port shows red and starboard green straight from each rower's profile, so you seat everyone on the side they row. One tap and the lineup is on every phone " },
-        { text: "the night before", bold: true },
-        { text: ". Never shout it across the dock again." },
+        { text: "After practice, tap a boat to upload a video from the session. " },
+        { text: "It names itself from the boat.", bold: true },
+        { text: " The day, the session, the boat and who was stroking all go into the title, so your athletes know right away which piece they are watching." },
       ],
+      /* STAND-IN SHOT. The video strip sits on this same Lineup screen, below
+         the boats, so the screen is right but the frame is not — it repeats
+         step 3. Needs one capture run (scripts/landing/capture-coach.mjs, plus
+         a walk down to the strip) before launch. */
       shot: "coach-4-lineup.webp",
-      alt: "The Lineup screen: the 1V eight seated cox to bow, port seats in red and starboard seats in green",
+      alt: "The Lineup screen, where a boat's video strip sits under the seated crew",
     },
     {
       n: "5",
-      step: "5 · Notes",
-      head: "Keep every athlete on track.",
+      step: "5 · Stats",
+      head: "Every number the squad puts up, in one list.",
       body: [
-        { text: "Leave one short technical note per athlete. It sits on their Home under their race countdown until it is fixed. Everyone else sees a green " },
-        { text: "“Good job”", bold: true },
-        { text: ". Forty athletes on one screen." },
+        { text: "Flag a session as a team workout and the board fills itself as the athletes log it, ranked by split, time, watts or watts per kilo. Water outings arrive with their telemetry, so you open an outing, then a piece, and read " },
+        { text: "the crew's numbers seat by seat", bold: true },
+        { text: ". Nobody types results into a shared sheet again." },
+      ],
+      /* The Workouts board, captured from the athlete side — the coach's Team
+         tab IS this screen. Right screen, athlete's frame; re-shoot from the
+         console in the same pass as the video strip. */
+      shot: "15-varsity-board.webp",
+      alt: "The team workout board: a 2k test with every athlete's result, filtered by split, time, watts and watts per kilo",
+    },
+    {
+      n: "6",
+      step: "6 · Notes",
+      head: "Keep the athletes on track.",
+      body: [
+        { text: "Write a note to an athlete on where their technical focus should be. It sits on their Home under the race countdown, so they " },
+        { text: "always have it in front of their eyes", bold: true },
+        { text: " and stay focused at all times. Everyone else sees a green “Good job”." },
       ],
       shot: "coach-5-notes.webp",
       alt: "The Athlete Notes screen: the roster with a short technical note per athlete, and a green Good job for everyone without one",
