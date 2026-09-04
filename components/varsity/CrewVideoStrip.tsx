@@ -169,23 +169,8 @@ function VideoSheet({
   );
 }
 
-export default function CrewVideoStrip({
-  dayKey,
-  boat,
-  onReady,
-}: {
-  dayKey: string;
-  boat: Boat;
-  /*
-    Lets a button elsewhere on the page open THIS strip's picker — the one at
-    the top of Home, because somebody who came to post a video looks there
-    first and not at the bottom of their own lineup. Handed the opener while
-    this boat can actually take a video, and null when it can't.
-  */
-  onReady?: (open: (() => void) | null) => void;
-}) {
+export default function CrewVideoStrip({ dayKey, boat }: { dayKey: string; boat: Boat }) {
   const { userId } = useAppState();
-  const rootRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const [videos, setVideos] = useState<CrewVideo[]>([]);
   const [playing, setPlaying] = useState<CrewVideo | null>(null);
@@ -247,24 +232,6 @@ export default function CrewVideoStrip({
     fileRef.current?.click();
   }, [needsConnect]);
 
-  /*
-    Hand the opener up to whoever asked for it. Scrolled into view first: a
-    button at the top of the page must not start an upload whose progress bar
-    and errors are somewhere the person can't see.
-  */
-  useEffect(() => {
-    if (!onReady) return;
-    onReady(
-      seated
-        ? () => {
-            rootRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-            void openPicker();
-          }
-        : null,
-    );
-    return () => onReady(null);
-  }, [onReady, seated, openPicker]);
-
   const pick = async (files: FileList | null) => {
     if (!files || !files.length) return;
     setError(null);
@@ -289,7 +256,7 @@ export default function CrewVideoStrip({
   };
 
   return (
-    <div ref={rootRef} className="border-t border-border px-3.5 py-2.5">
+    <div className="border-t border-border px-3.5 py-2.5">
       <div className="flex items-center gap-2 text-muted">
         <IconVideo size={14} />
         <span className="flex-1 text-[11px] font-semibold uppercase tracking-[0.12em]">

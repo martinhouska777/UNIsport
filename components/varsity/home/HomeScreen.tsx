@@ -6,7 +6,7 @@
   strip, today's prescribed sessions (with coach notes + watch-verify), the
   day's lineup, and the coach's weekly focus. All colors are theme tokens.
 */
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useAppState } from "@/components/AppState";
@@ -17,6 +17,7 @@ import { useVarsityTheme } from "@/components/varsity/useVarsityTheme";
 import { fetchPlan, fetchProfileFullName } from "@/lib/varsity/planStore";
 import { fetchTodayLineups } from "@/lib/varsity/lineupStore";
 import CrewVideoStrip from "@/components/varsity/CrewVideoStrip";
+import UploadVideoSheet from "@/components/varsity/UploadVideoSheet";
 import { driveConfigured, driveFolderLink } from "@/lib/varsity/drive";
 import { fetchNote } from "@/lib/varsity/notesStore";
 import { sessionKey, parseDate } from "@/lib/varsity/coachPlan";
@@ -697,18 +698,18 @@ function LineupSeats({ l }: { l: Lineup }) {
   the training plan: putting this morning's clip up, and going to watch one.
   Both were previously buried at the bottom of a boat card.
 
-  "Upload video" opens the picker on YOUR boat and scrolls down to it, so the
-  upload happens where its progress and its crew are visible — it is the same
-  strip and the same button, reached from somewhere better. "Open Drive" is a
-  plain link to the squad's folder, and only exists once a drive is actually
-  connected; without one there is no folder to open.
+  "Upload video" opens a sheet that ASKS which practice and which boat, rather
+  than guessing at your own boat today — anybody films, and yesterday's outing
+  gets posted this morning. "Open Drive" is a plain link to the squad's folder,
+  and only exists once a drive is actually connected; without one there is no
+  folder to open.
 */
-function DriveBar({ canUpload, onUpload }: { canUpload: boolean; onUpload: () => void }) {
+function DriveBar({ onUpload }: { onUpload: () => void }) {
   const cls =
     "tap44 flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-border bg-surface px-3 py-2 text-[12px] font-semibold text-text active:border-primary-line active:text-primary";
   return (
     <div className="flex items-center gap-2 px-3 pt-3">
-      <button type="button" disabled={!canUpload} onClick={onUpload} className={`${cls} disabled:opacity-40`}>
+      <button type="button" onClick={onUpload} className={cls}>
         <IconPlus size={13} /> Upload video
       </button>
       {driveConfigured() && (
@@ -720,13 +721,7 @@ function DriveBar({ canUpload, onUpload }: { canUpload: boolean; onUpload: () =>
   );
 }
 
-function LineupBoat({
-  l,
-  onReady,
-}: {
-  l: Lineup;
-  onReady?: (open: (() => void) | null) => void;
-}) {
+function LineupBoat({ l }: { l: Lineup }) {
   return (
     <div className="overflow-hidden rounded-xl border border-border bg-surface">
       <div className="border-b border-border px-3 py-2.5 text-[12px] font-semibold text-text">
@@ -749,33 +744,12 @@ function LineupBoat({
         carrying its seats. Only a boat read from the database has one (the demo
         day has no real crew to file footage against).
       */}
-      {l.dayKey && l.boat && (
-        <CrewVideoStrip dayKey={l.dayKey} boat={l.boat} onReady={onReady} />
-      )}
+      {l.dayKey && l.boat && <CrewVideoStrip dayKey={l.dayKey} boat={l.boat} />}
     </div>
   );
 }
 
-function LineupCard({
-  lineups,
-  onToday,
-  onUploadReady,
-}: {
-  lineups: Lineup[];
-  onToday: boolean;
-  onUploadReady?: (open: (() => void) | null) => void;
-}) {
-  /*
-    WHICH BOAT the button at the top of the page uploads to. Your own, because
-    that is the one you were in and the one your clip belongs to. When you are
-    in none of them — a spare, an injured rower filming from the bank — a single
-    published boat is unambiguous enough to take it; two are not, and then the
-    top button goes quiet and the choice is made on the boat itself.
-  */
-  const filmable = lineups.filter((l) => l.dayKey && l.boat);
-  const mine = filmable.find((l) => l.seats.some((s) => s.mine) || l.cox?.mine);
-  const target = mine ?? (filmable.length === 1 ? filmable[0] : undefined);
-
+function LineupCard({ lineups, onToday }: { lineups: Lineup[]; onToday: boolean }) {
   return (
     <div>
       <div className="mb-2 flex items-center justify-between px-1">
@@ -786,7 +760,7 @@ function LineupCard({
       </div>
       <div className="flex flex-col gap-3">
         {lineups.map((l, i) => (
-          <LineupBoat key={i} l={l} onReady={l === target ? onUploadReady : undefined} />
+          <LineupBoat key={i} l={l} />
         ))}
       </div>
     </div>
@@ -956,18 +930,9 @@ export default function HomeScreen() {
   // slow fetch can never paint Tuesday's eight under Thursday's session.
   const [awayLineups, setAwayLineups] = useState<{ iso: string; lineups: Lineup[] } | null>(null);
 
-  /*
-    The bar at the top uploads through the strip further down the page — one
-    upload path, not two. The strip hands its opener up here while there is a
-    boat that can take a video; `canUpload` only exists so the button can grey
-    itself out on a day with no boat of yours in it.
-  */
-  const uploadRef = useRef<(() => void) | null>(null);
-  const [canUpload, setCanUpload] = useState(false);
-  const registerUpload = useCallback((open: (() => void) | null) => {
-    uploadRef.current = open;
-    setCanUpload(!!open);
-  }, []);
+  // The upload sheet, which asks which practice and which boat rather than
+  // guessing (components/varsity/UploadVideoSheet.tsx).
+  const [uploadOpen, setUploadOpen] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -1061,7 +1026,7 @@ export default function HomeScreen() {
     <div className="mx-auto w-full max-w-screen-sm pb-6">
       {consoleRole && <ConsoleDoor role={consoleRole} />}
       <Greeting g={data.greeting} />
-      <DriveBar canUpload={canUpload} onUpload={() => uploadRef.current?.()} />
+      <DriveBar onUpload={() => setUploadOpen(true)} />
       <WeekStrip
         weeks={data.weeks}
         startIndex={data.weekIndex}
@@ -1099,7 +1064,7 @@ export default function HomeScreen() {
 
       {lineups.length > 0 && (
         <div className="px-3 pt-3">
-          <LineupCard lineups={lineups} onToday={onToday} onUploadReady={registerUpload} />
+          <LineupCard lineups={lineups} onToday={onToday} />
         </div>
       )}
 
@@ -1113,6 +1078,8 @@ export default function HomeScreen() {
       )}
 
       {noteCard}
+
+      {uploadOpen && <UploadVideoSheet onClose={() => setUploadOpen(false)} />}
     </div>
   );
 }
