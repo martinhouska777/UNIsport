@@ -11,6 +11,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAppState } from "@/components/AppState";
 import ThemeProvider from "@/components/ThemeProvider";
+import LoadingGate from "@/components/LoadingGate";
 import BottomNav from "@/components/BottomNav";
 import SideNav from "@/components/SideNav";
 import TourGate from "@/components/tour/TourGate";
@@ -44,10 +45,17 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     else if (!studentReady) router.replace("/onboarding");
   }, [ready, loggedIn, studentReady, router]);
 
-  if (!ready || !loggedIn || !studentReady) return null;
-
   const uni = getUniversity(universityKey);
   const theme = uni?.theme ?? neutralTheme;
+
+  // Never `null` while deciding — see components/LoadingGate.tsx.
+  if (!ready || !loggedIn || !studentReady) {
+    return (
+      <ThemeProvider tokens={theme} paintRoot className="bg-background">
+        <LoadingGate />
+      </ThemeProvider>
+    );
+  }
 
   return (
     /*

@@ -24,6 +24,7 @@ import { useRouter } from "next/navigation";
 import { useAppState } from "@/components/AppState";
 import { useMembership } from "@/components/varsity/useMembership";
 import ThemeProvider from "@/components/ThemeProvider";
+import LoadingGate from "@/components/LoadingGate";
 import VarsityIntro from "@/components/varsity/VarsityIntro";
 import VarsityTopBar from "@/components/varsity/VarsityTopBar";
 import VarsityNav from "@/components/varsity/VarsityNav";
@@ -50,7 +51,19 @@ export default function VarsityLayout({ children }: { children: React.ReactNode 
     if (!isMember) router.replace(membership ? "/varsity/waiting" : "/join");
   }, [ready, loggedIn, varsityReady, loading, isMember, membership, router]);
 
-  if (!ready || !loggedIn || !varsityReady || loading || !isMember) return null;
+  /*
+    Still deciding, or on the way somewhere else. NEVER `null` — that is a black
+    screen with nothing on it, and any hang above turns it into a permanent one
+    (components/LoadingGate.tsx). In the varsity theme, so the wait already
+    looks like the mode you are walking into.
+  */
+  if (!ready || !loggedIn || !varsityReady || loading || !isMember) {
+    return (
+      <ThemeProvider tokens={vTheme.dark} light={vTheme.light} paintRoot className="bg-background">
+        <LoadingGate />
+      </ThemeProvider>
+    );
+  }
 
   return (
     <ThemeProvider

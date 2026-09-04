@@ -13,6 +13,7 @@ import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAppState } from "@/components/AppState";
 import ThemeProvider from "@/components/ThemeProvider";
+import LoadingGate from "@/components/LoadingGate";
 import CoachTopBar from "@/components/varsity/coach/CoachTopBar";
 import CoachNav from "@/components/varsity/coach/CoachNav";
 import TourGate from "@/components/tour/TourGate";
@@ -67,7 +68,14 @@ export default function CoachLayout({ children }: { children: React.ReactNode })
     if (!can.buildPlan(role) && !captainMay(pathname)) router.replace(SETTINGS);
   }, [ready, loggedIn, varsityReady, loading, role, pathname, router]);
 
-  if (!ready || !loggedIn || !varsityReady || loading || !role || !canOpenConsole(role)) return null;
+  // Never `null` while deciding — see components/LoadingGate.tsx.
+  if (!ready || !loggedIn || !varsityReady || loading || !role || !canOpenConsole(role)) {
+    return (
+      <ThemeProvider tokens={vTheme.dark} light={vTheme.light} paintRoot className="bg-background">
+        <LoadingGate back="/varsity/home" />
+      </ThemeProvider>
+    );
+  }
 
   return (
     <ThemeProvider
