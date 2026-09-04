@@ -845,8 +845,12 @@ export const faq: { q: string; a: string; on: FaqAudience[] }[] = [
    already published on /privacy and /terms. */
 export const about = {
   kicker: "About",
-  headline: "Built at Harvard,",
-  headlineEm: "for every campus.",
+  /* The old "Built at Harvard, for every campus." headline sat above a
+     product paragraph; the paragraph is personal now, so the headline
+     introduces the person instead. That line still closes the page, in
+     footer.tagline. */
+  headline: "Built by",
+  headlineEm: "a rower.",
   body: "My name is Martin Houska. I am a rower from the Czech Republic, currently rowing for the Harvard heavyweight team.",
   email: "martinhouska777@gmail.com",
   /* On "/" the About section is the paragraph above and this link; the full
