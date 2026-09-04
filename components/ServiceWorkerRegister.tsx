@@ -2,8 +2,10 @@
 
 import { useEffect } from "react";
 
-// Registers the PWA service worker so the app is installable / works offline.
-// Only in production — registering in dev causes stale-cache headaches.
+// Registers the PWA service worker, which is what makes the app installable and
+// what delivers Web Push. It caches build assets only, never pages (public/sw.js
+// says why). Only in production — registering in dev causes stale-cache
+// headaches.
 export default function ServiceWorkerRegister() {
   useEffect(() => {
     if (
