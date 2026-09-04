@@ -201,17 +201,22 @@ const UPLOAD_API = "https://www.googleapis.com/upload/drive/v3";
 type DriveFile = { id: string; name: string };
 
 /*
-  Find the month folder the squad already uses, or make it.
+  Find a folder inside another one, or make it. Every folder the app files a
+  video into is built out of this one call: the month, the day inside it, and
+  the session inside that.
 
-  Matched on the first three letters, case-insensitively, because the folder
-  list is HAND-MADE and hand-made lists have typos in them — this one really
-  does say "Febuary". Creating a correctly-spelled twin beside it would split
-  the month in two, which is exactly the mess this feature exists to end.
+  `prefixMatch` exists for ONE of those — the month. That list of month folders
+  is HAND-MADE and hand-made lists have typos in them; the squad's really does
+  read "Febuary". Matching on the first three letters lands in the folder they
+  already use, where an exact match would create a correctly-spelled twin
+  beside it and split the month in two. The folders the app makes itself are
+  matched exactly, because nobody typed them.
 */
-export async function driveMonthFolder(
+export async function driveFolder(
   parentId: string,
-  monthName: string,
+  name: string,
   accessToken: string,
+  prefixMatch = false,
 ): Promise<string> {
   const q = [
     `'${parentId}' in parents`,
@@ -224,8 +229,11 @@ export async function driveMonthFolder(
   );
   if (res.ok) {
     const { files } = (await res.json()) as { files?: DriveFile[] };
-    const stem = monthName.slice(0, 3).toLowerCase();
-    const hit = files?.find((f) => f.name.trim().toLowerCase().startsWith(stem));
+    const want = name.trim().toLowerCase();
+    const hit = files?.find((f) => {
+      const got = f.name.trim().toLowerCase();
+      return prefixMatch ? got.startsWith(want.slice(0, 3)) : got === want;
+    });
     if (hit) return hit.id;
   }
 
@@ -233,13 +241,32 @@ export async function driveMonthFolder(
     method: "POST",
     headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
     body: JSON.stringify({
-      name: monthName,
+      name,
       mimeType: "application/vnd.google-apps.folder",
       parents: [parentId],
     }),
   });
-  if (!made.ok) return parentId; // couldn't make one: the video still lands in the main folder
+  if (!made.ok) return parentId; // couldn't make one: the video still lands in the parent
   const { id } = (await made.json()) as { id: string };
+  return id;
+}
+
+/*
+  Walk a whole path down, making what isn't there: main → month → day →
+  session. Each step falls back to the folder above it, so a folder Drive
+  refuses to create costs tidiness and never the upload itself. An empty name
+  is skipped rather than made into a folder called nothing.
+*/
+export async function driveFolderPath(
+  rootId: string,
+  steps: { name: string; prefixMatch?: boolean }[],
+  accessToken: string,
+): Promise<string> {
+  let id = rootId;
+  for (const step of steps) {
+    if (!step.name.trim()) continue;
+    id = await driveFolder(id, step.name, accessToken, !!step.prefixMatch);
+  }
   return id;
 }
 
@@ -321,6 +348,10 @@ export async function driveUpload(
 
 /** What we store, and what "open in Drive" points at. */
 export const driveFileLink = (id: string) => `https://drive.google.com/file/d/${id}/view`;
+
+/** The squad's folder itself — what the "Open Drive" button on Home opens. */
+export const driveFolderLink = (id: string = DRIVE_FOLDER_ID) =>
+  `https://drive.google.com/drive/folders/${id}`;
 
 /** The id back out of any Drive link we might have stored. */
 export function driveFileId(url: string): string | null {

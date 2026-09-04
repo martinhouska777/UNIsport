@@ -23,11 +23,12 @@
 */
 import { createClient, hasSupabaseEnv } from "@/lib/supabase/client";
 import { rosterById, seatLabel, type Boat, type Side } from "./coachLineup";
-import { dayKeyLabel, parseSessionKey } from "./coachPlan";
+import { dayKeyLabel, parseSessionKey, sessionLabel } from "./coachPlan";
+import { fetchPlan } from "./planStore";
 import {
   DRIVE_FOLDER_ID,
   driveConfigured,
-  driveMonthFolder,
+  driveFolderPath,
   driveToken,
   driveUpload,
 } from "./drive";
@@ -113,24 +114,86 @@ export function videoTitle(dayKey: string, boat: Boat, note = ""): string {
     .join(" · ");
 }
 
+/* Nothing in a name that a drive, a phone or a URL would argue with. */
+const safeName = (s: string) => s.replace(/[\\/:*?"<>|]/g, "-").trim();
+
 /*
-  The name the file itself gets. Same information as the title, shaped so it
-  still sorts and reads in a plain folder listing — because in step 2 these land
-  in the squad's drive, where people browse them without the app.
+  WHAT TO CALL THE BOAT. The folders around the file already say the date and
+  which session it was, so the only question a Drive listing still has to answer
+  is which boat this is — and it answers it the way a boathouse does.
+
+  The coach's own name for the boat wins ("1V 8+"). An unnamed boat is named by
+  its crew: by the stroke, or by the cox when the seats hold no stroke to point
+  at. A boat with nobody in it is left with its rigging, which is the only thing
+  anybody could truthfully call it.
 */
-export function videoFileName(dayKey: string, boat: Boat, note: string, ext: string): string {
+export function videoBoatName(boat: Boat): string {
+  const named = boat.name.trim();
+  if (named) return [named, boat.badge].filter(Boolean).join(" ");
+  const crew = crewFromBoat(boat);
+  const stroke = strokeName(crew);
+  if (stroke) return [`stroke ${lastName(stroke)}`, boat.badge].filter(Boolean).join(" ");
+  const cox = crew.find((c) => c.cox);
+  if (cox) return [`cox ${lastName(cox.name)}`, boat.badge].filter(Boolean).join(" ");
+  return boat.badge || "Boat";
+}
+
+/*
+  The name the file itself gets. `index` is how many clips this boat already has
+  from this session: the second one must not arrive in Drive under the same name
+  as the first.
+*/
+export function videoFileName(boat: Boat, ext: string, index = 0): string {
+  const suffix = index > 0 ? ` (${index + 1})` : "";
+  return `${safeName(videoBoatName(boat))}${suffix}.${ext}`;
+}
+
+/*
+  THE FOLDERS the file lands in. The squad browses this drive without the app —
+  on a phone, between pieces — so the path itself has to answer "when was this,
+  and what were we doing" before anybody opens a single file:
+
+    HUBC Footage 25-26 / September / 04 Fri / AM · 3×25' UT2 / 1V 8+.mp4
+
+  The day is numbered first so a month folder sorts itself into date order, and
+  the workout is the coach's own words lifted out of the published plan — nobody
+  types the same thing twice. A day nobody filmed gets no folder at all: these
+  are made on the way past, at the moment of an upload.
+*/
+export function videoMonthFolder(dayKey: string): string {
+  const d = parseSessionKey(dayKey)?.date ?? new Date();
+  return d.toLocaleDateString("en-US", { month: "long" });
+}
+
+export function videoDayFolder(dayKey: string): string {
   const parsed = parseSessionKey(dayKey);
-  const stamp = parsed
-    ? `${parsed.date.getFullYear()}-${String(parsed.date.getMonth() + 1).padStart(2, "0")}-${String(
-        parsed.date.getDate(),
-      ).padStart(2, "0")} ${parsed.period}`
-    : dayKey;
-  const stroke = strokeName(crewFromBoat(boat));
-  const bits = [stamp, [boat.name.trim(), boat.badge].filter(Boolean).join(" ")];
-  if (stroke) bits.push(`(stroke ${lastName(stroke)})`);
-  if (note.trim()) bits.push(note.trim());
-  // Nothing in a filename that a drive, a phone or a URL would argue with.
-  return `${bits.join(" — ").replace(/[\\/:*?"<>|]/g, "-")}.${ext}`;
+  if (!parsed) return safeName(dayKey);
+  const d = parsed.date;
+  const weekday = d.toLocaleDateString("en-US", { weekday: "short" });
+  return `${String(d.getDate()).padStart(2, "0")} ${weekday}`;
+}
+
+/* "AM · 3×25' UT2", or just "AM" on a day the coach wrote no description. */
+export function videoSessionFolder(dayKey: string, workout: string): string {
+  const period = parseSessionKey(dayKey)?.period ?? "";
+  const words = workout.trim().slice(0, 60);
+  return safeName([period, words].filter(Boolean).join(" · ")) || "Session";
+}
+
+/*
+  The workout in the coach's own words, out of the published plan. It only ever
+  names a folder, so every way this can fail ends the same way: no words, and a
+  folder that just says AM or PM.
+*/
+async function sessionWorkout(dayKey: string): Promise<string> {
+  try {
+    const plan = await fetchPlan();
+    const session = plan.sessions[dayKey];
+    if (!session) return "";
+    return session.description.trim() || sessionLabel(session);
+  } catch {
+    return "";
+  }
 }
 
 /* ── Store ─────────────────────────────────────────────────────────────── */
@@ -227,15 +290,29 @@ export async function uploadCrewVideo(
   if (driveConfigured()) {
     const token = await driveToken(true);
     if (!token) return { error: "Google Drive isn't connected. Tap Connect Drive and sign in." };
-    const parsed = parseSessionKey(dayKey);
-    // The squad files by month, and the app files the same way — a video the
-    // app put there must be where they would have put it themselves.
-    const month = (parsed?.date ?? new Date()).toLocaleDateString("en-US", { month: "long" });
-    const folder = await driveMonthFolder(DRIVE_FOLDER_ID, month, token);
+    /*
+      WHERE IT LANDS: the month the squad already files by, then the day, then
+      the session — named with the coach's own description of that workout, so
+      the drive reads like the training week rather than like a camera roll.
+    */
+    const workout = await sessionWorkout(dayKey);
+    const folder = await driveFolderPath(
+      DRIVE_FOLDER_ID,
+      [
+        // Prefix-matched: the squad's month list is hand-made and misspelt.
+        { name: videoMonthFolder(dayKey), prefixMatch: true },
+        { name: videoDayFolder(dayKey) },
+        { name: videoSessionFolder(dayKey, workout) },
+      ],
+      token,
+    );
     const ext = (file.name.split(".").pop() || "mp4").toLowerCase().slice(0, 5);
+    // How many clips this boat already has from this session — the second one
+    // must not arrive under the same name as the first and shadow it.
+    const already = await fetchBoatVideos(dayKey, boat.id);
     const result = await driveUpload(
       file,
-      videoFileName(dayKey, boat, note, ext),
+      videoFileName(boat, ext, already.length),
       folder,
       token,
       onProgress,
