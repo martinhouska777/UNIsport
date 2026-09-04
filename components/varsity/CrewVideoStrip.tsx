@@ -16,7 +16,7 @@
   are per-athlete CONTENT colours and come from data (the rule-1 exception the
   lineup screens already use).
 */
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import Sheet from "@/components/varsity/Sheet";
 import { useAppState } from "@/components/AppState";
 import { IconPlay, IconPlus, IconTrash, IconVideo } from "@/components/icons";
@@ -169,8 +169,23 @@ function VideoSheet({
   );
 }
 
-export default function CrewVideoStrip({ dayKey, boat }: { dayKey: string; boat: Boat }) {
+export default function CrewVideoStrip({
+  dayKey,
+  boat,
+  onReady,
+}: {
+  dayKey: string;
+  boat: Boat;
+  /*
+    Lets a button elsewhere on the page open THIS strip's picker — the one at
+    the top of Home, because somebody who came to post a video looks there
+    first and not at the bottom of their own lineup. Handed the opener while
+    this boat can actually take a video, and null when it can't.
+  */
+  onReady?: (open: (() => void) | null) => void;
+}) {
   const { userId } = useAppState();
+  const rootRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const [videos, setVideos] = useState<CrewVideo[]>([]);
   const [playing, setPlaying] = useState<CrewVideo | null>(null);
@@ -214,6 +229,42 @@ export default function CrewVideoStrip({ dayKey, boat }: { dayKey: string; boat:
   const seated = boat.seats.some((s) => s.athleteId) || !!boat.coxId;
   const needsConnect = driveConfigured() && !connected;
 
+  /*
+    Open the file picker. Before Drive is connected this signs you in first,
+    which has to happen inside a real tap — a browser only lets a popup open
+    from one, which is why this is a click path and never an effect.
+  */
+  const openPicker = useCallback(async () => {
+    setError(null);
+    if (needsConnect) {
+      const t = await driveToken(true);
+      if (!t) {
+        setError("Google sign-in didn't finish, so nothing was uploaded.");
+        return;
+      }
+      setConnected(true);
+    }
+    fileRef.current?.click();
+  }, [needsConnect]);
+
+  /*
+    Hand the opener up to whoever asked for it. Scrolled into view first: a
+    button at the top of the page must not start an upload whose progress bar
+    and errors are somewhere the person can't see.
+  */
+  useEffect(() => {
+    if (!onReady) return;
+    onReady(
+      seated
+        ? () => {
+            rootRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+            void openPicker();
+          }
+        : null,
+    );
+    return () => onReady(null);
+  }, [onReady, seated, openPicker]);
+
   const pick = async (files: FileList | null) => {
     if (!files || !files.length) return;
     setError(null);
@@ -238,7 +289,7 @@ export default function CrewVideoStrip({ dayKey, boat }: { dayKey: string; boat:
   };
 
   return (
-    <div className="border-t border-border px-3.5 py-2.5">
+    <div ref={rootRef} className="border-t border-border px-3.5 py-2.5">
       <div className="flex items-center gap-2 text-muted">
         <IconVideo size={14} />
         <span className="flex-1 text-[11px] font-semibold uppercase tracking-[0.12em]">
@@ -289,18 +340,7 @@ export default function CrewVideoStrip({ dayKey, boat }: { dayKey: string; boat:
         <button
           type="button"
           disabled={!!busyText || !seated}
-          onClick={async () => {
-            if (needsConnect) {
-              setError(null);
-              const t = await driveToken(true);
-              if (!t) {
-                setError("Google sign-in didn't finish, so nothing was uploaded.");
-                return;
-              }
-              setConnected(true);
-            }
-            fileRef.current?.click();
-          }}
+          onClick={() => void openPicker()}
           className="tap44 flex flex-shrink-0 items-center gap-1.5 rounded-lg border border-dashed border-border px-2.5 py-1.5 text-[12px] font-medium text-muted active:border-primary-line active:text-primary disabled:opacity-50"
         >
           <IconPlus size={13} /> {busyText ?? (needsConnect ? "Connect Drive" : "Add video")}
