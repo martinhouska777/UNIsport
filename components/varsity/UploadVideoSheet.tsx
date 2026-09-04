@@ -26,29 +26,51 @@
 import { useEffect, useRef, useState } from "react";
 import Sheet from "@/components/varsity/Sheet";
 import { IconPlus, IconVideo, IconCheckCircle } from "@/components/icons";
-import { dayKeyLabel, parseSessionKey } from "@/lib/varsity/coachPlan";
+import { dayKeyLabel, parseSessionKey, sessionLabel } from "@/lib/varsity/coachPlan";
 import { fetchLineup, fetchLineupStatuses } from "@/lib/varsity/lineupStore";
+import { fetchPlan } from "@/lib/varsity/planStore";
 import { uploadCrewVideo, videoBoatName } from "@/lib/varsity/crewVideos";
 import { driveConfigured, driveConnected, driveToken } from "@/lib/varsity/drive";
 import type { Boat } from "@/lib/varsity/coachLineup";
 
-type Practice = { dayKey: string; label: string; at: number };
+type Practice = { dayKey: string; label: string; workout: string; at: number };
+
+/* Today and the seven days before it. Footage gets posted the same morning or
+   the next one; a season's worth of old practices is a list nobody scrolls. */
+const DAYS_BACK = 7;
 
 /*
-  Every published practice, newest first — the order somebody posting footage
-  thinks in ("this morning", "yesterday afternoon"). Drafts are left out: a
-  lineup the squad cannot see yet is not one they can film.
+  Every published practice in that window, newest first — the order somebody
+  posting footage thinks in ("this morning", "yesterday afternoon"). Drafts are
+  left out: a lineup the squad cannot see yet is not one they can film.
+
+  Each row also carries WHAT WAS DONE, in the coach's own words out of the
+  plan — "Thu 3 Sep · PM" alone does not tell you which of two outings you are
+  about to file a video under, and "3×25' UT2" does.
 */
 async function fetchPractices(): Promise<Practice[]> {
-  const statuses = await fetchLineupStatuses();
+  const [statuses, plan] = await Promise.all([fetchLineupStatuses(), fetchPlan()]);
+
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const oldest = todayStart.getTime() - DAYS_BACK * 24 * 60 * 60 * 1000;
+
   return Object.entries(statuses)
     .filter(([, status]) => status === "published")
     .map(([dayKey]) => {
       const parsed = parseSessionKey(dayKey);
       if (!parsed) return null;
+      const day = parsed.date.getTime();
+      if (day < oldest || day > todayStart.getTime()) return null;
+      const session = plan.sessions[dayKey];
       // A nudge for PM, so two practices on one day sort morning-then-afternoon.
-      const at = parsed.date.getTime() + (parsed.period === "PM" ? 1 : 0);
-      return { dayKey, label: `${dayKeyLabel(dayKey)} · ${parsed.period}`, at };
+      const at = day + (parsed.period === "PM" ? 1 : 0);
+      return {
+        dayKey,
+        label: `${dayKeyLabel(dayKey)} · ${parsed.period}`,
+        workout: session ? session.description.trim() || sessionLabel(session) : "",
+        at,
+      };
     })
     .filter((p): p is Practice => !!p)
     .sort((a, b) => b.at - a.at);
@@ -163,8 +185,8 @@ export default function UploadVideoSheet({ onClose }: { onClose: () => void }) {
           <div className="text-[12px] text-muted">Loading practices…</div>
         ) : practices.length === 0 ? (
           <div className="rounded-xl border border-dashed border-border px-3 py-4 text-center text-[12px] text-muted">
-            No published lineups yet. A video hangs on a crew, so there has to be a
-            boat to hang it on.
+            No published lineups in the last week. A video hangs on a crew, so
+            there has to be a boat to hang it on.
           </div>
         ) : (
           <div className="flex max-h-44 flex-col gap-1.5 overflow-y-auto">
@@ -172,6 +194,7 @@ export default function UploadVideoSheet({ onClose }: { onClose: () => void }) {
               <Row
                 key={p.dayKey}
                 label={p.label}
+                sub={p.workout}
                 picked={p.dayKey === dayKey}
                 onClick={() => {
                   setDayKey(p.dayKey);
