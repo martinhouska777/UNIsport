@@ -127,13 +127,14 @@ export const seeAll = {
    view you have already chosen. The one-liners reuse lines that already
    exist above/below. */
 export const doors = [
-  /* The owner's own three lines, 2026-09-01, dictated one after the other.
-     The student door leads on the MATCH and on the social side ("hlavni je
-     ten match"), because that is the part no other fitness app has; the other
-     two name what is actually behind them. */
-  { label: "Student", sub: "Match with people who train like you. Sport is better with friends.", href: "/for/students" },
-  { label: "Varsity athlete", sub: "Your training plan, lineups, statistics and much more.", href: "/for/varsity" },
-  { label: "Coach", sub: "Build plans and lineups easier than ever. Track your athletes.", href: "/for/coaches" },
+  /* The owner's own three lines, dictated 2026-09-01 and re-dictated
+     2026-09-04. The student door now OPENS on the social side and names the
+     match second, and the other two end on the thing that keeps a team there:
+     the app shaped to your own college program, and statistics that do not
+     disappear at the end of a season. Transcribed, grammar only. */
+  { label: "Student", sub: "Sport is better with friends. Match with people who train like you and share your interests.", href: "/for/students" },
+  { label: "Varsity athlete", sub: "Your training plan, lineups, statistics, workouts and much more, all in one app customized to your college program.", href: "/for/varsity" },
+  { label: "Coach", sub: "Build plans and lineups easier than ever. Track your athletes and workouts with statistics that last forever.", href: "/for/coaches" },
 ];
 
 /* THE AVAILABILITY LINE — directly under the primary button, at a readable
