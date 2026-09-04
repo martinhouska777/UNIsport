@@ -460,7 +460,13 @@ export default function ScrollStory({ id, beats, accent, ref }: Props) {
           <div ref={wrap} className="ls-phone-wrap">
             <Phone
               ref={phoneEl}
-              className="ls-phone w-[min(360px,48svh,86vw)] cursor-pointer max-lg:w-[min(84vw,(100svh_-_230px)*0.55)]"
+              /* On a phone: 53% of the COLUMN's height (container-type: size on
+                 .ls-phone-col), never a guess at what the words left. The shell
+                 is 1.79x as tall as it is wide, so 53cqh lands at ~95% of the
+                 column and the phone shrinks on its own when a beat runs long.
+                 It was (100svh - 230px) * 0.55 — a constant that assumed the
+                 words were always 148px, which is what clipped them. */
+              className="ls-phone w-[min(360px,48svh,86vw)] cursor-pointer max-lg:w-[min(84vw,53cqh)]"
               data-story-phone={id}
               role="button"
               tabIndex={0}

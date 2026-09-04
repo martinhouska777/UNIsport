@@ -268,9 +268,18 @@
    list of steps), so a jump has to clear the top bar. */
 .ls-marker { scroll-margin-top: 72px; }
 
-.ls-copy { position: relative; min-height: 300px; }
+/* THE BEATS ARE STACKED IN ONE GRID CELL, not absolutely positioned (owner,
+   2026-09-03: "on my phone the text doesnt fit the screen"). They used to be
+   `position:absolute; inset:0`, which took them out of flow — so .ls-copy was
+   whatever its min-height said and nothing else, 148px on a phone, while the
+   beats themselves needed 124 to 217. Being justify-end, the long ones grew
+   UPWARDS out of that box and the stage clips: the top of "Track your
+   statistics" was sliced off mid-letter on an iPhone. Stacked in one grid
+   cell they still overlap and cross-fade exactly as before, but now the row
+   is as tall as the TALLEST beat and the phone below gets what is left. */
+.ls-copy { position: relative; min-height: 300px; display: grid; }
 .ls-beat {
-  position: absolute; inset: 0; display: flex; flex-direction: column;
+  grid-area: 1 / 1; display: flex; flex-direction: column;
   justify-content: center; gap: 16px;
   opacity: 0; transform: translateY(18px); pointer-events: none;
   transition: opacity 0.45s ease, transform 0.45s ease;
@@ -443,9 +452,15 @@
     grid-template-columns: 1fr; grid-template-rows: auto 1fr;
     padding: 12px 20px 20px; gap: 6px; align-items: start;
   }
+  /* A floor, not a ceiling, now that the row sizes itself to the tallest beat. */
   .ls-copy { min-height: 148px; }
   .ls-beat { justify-content: flex-end; gap: 8px; text-align: center; align-items: center; }
-  .ls-phone-col { align-items: start; height: 100%; padding-top: 10px; }
+  /* container-type: size makes this column a container for cqh, and it has a
+     definite height to be one: it is the 1fr row of a 100svh grid, so its
+     height IS whatever the words left over. The phone is then sized off that
+     (see .ls-phone in ScrollStory) instead of off a guessed constant, and it
+     gives way by itself when a beat runs long. */
+  .ls-phone-col { align-items: start; height: 100%; padding-top: 10px; container-type: size; }
   .ls-ann { display: none; }
   /* The phone crossing the page is a two-column move. In one column it just
      drives the phone off the side of the screen, so the flip is off here. */
