@@ -840,35 +840,31 @@ export const faq: { q: string; a: string; on: FaqAudience[] }[] = [
 
 /* ─────────────────────── ABOUT · CONTACT ─────────────────────── */
 
-/* DRAFT for the owner. The contact address is the one already published on
-   /privacy and /terms. */
+/* The owner's own words (owner, 2026-09-03), transcribed as dictated with
+   grammar corrected and nothing rephrased. The contact address is the one
+   already published on /privacy and /terms. */
 export const about = {
   kicker: "About",
   headline: "Built at Harvard,",
   headlineEm: "for every campus.",
-  body: "UNIsport started as the app one campus was missing: every gym in one place, the people worth training with, and the plan that gets you both there. Then came a mode for the squads that train for the university itself, and a console for the coaches who run them. One app per university, in that university's colours.",
+  body: "My name is Martin Houska. I am a rower from the Czech Republic, currently rowing for the Harvard heavyweight team.",
   email: "martinhouska777@gmail.com",
   /* On "/" the About section is the paragraph above and this link; the full
      "why" lives on the About tab. */
-  readWhy: "Read why we built it",
+  readWhy: "Read why I built it",
 };
 
-/* WHY WE BUILT IT — the About tab (owner, 2026-08-18: "the motivation part,
-   why we did it"). DRAFT, written from the brief's positioning ("every fitness
-   app treats you as one person alone with a log; on a campus, training is
-   neither solitary nor unstructured") and from what the app does — NOT from
-   the owner's own story, which only they can tell. Owner: rewrite freely,
-   add a line about who you are if you want one; each entry is a paragraph.
-   The brief's voice: plain, specific, no "journey", no invented numbers. */
+/* WHY I BUILT IT — the About tab. The owner dictated this in full (owner,
+   2026-09-03); it is transcribed word for word with grammar corrected only.
+   Do NOT rephrase it — it is their story, in their voice. */
 export const aboutWhy = {
   kicker: "Why",
-  headline: "Why we",
+  headline: "Why I",
   headlineEm: "built it.",
   paragraphs: [
-    "Every fitness app treats you as one person alone with a log. That is not what training on a campus is like. It happens in specific buildings — the main gym, the house gyms nobody has a map of — with specific people, on a schedule someone else often sets. The apps knew none of that. They knew your step count.",
-    "So the people were the first problem. On a campus of thousands you walk past the ones who train at your hour, at your level, on your side of the river — and never meet them. Every match in UNIsport is explained from real facts off two profiles, so a training partner is a person you can trust, not a stranger from a feed.",
-    "The teams were the second. Varsity squads were running a season out of a group chat: the coach's plan as a screenshot of a spreadsheet, the boat lineups as a photo, the race countdown in someone's head. We built Varsity Mode so all of it lands on every athlete's phone, and the Coach's Console so the coach publishes it once.",
-    "And the campus itself was the third. One app cannot serve every university at once — the gyms are different, the houses are different, the colours are different. So it is one app per university, in that university's colours, built at Harvard first because that is where we were, and brought to the next campus one at a time.",
+    "I often found myself in a situation where I didn't have somebody to go work out with. Then I arrived at a gym and met people there, asked for advice, and so on. And I knew many people are like me, or are trying to start in the gym but don't know how, and that there are many people like me who would love to help them out and teach from their experience.",
+    "This app's mission is to make working out more sociable and fun, with features like leaderboards or memories, as well as accessible, with features like mentoring newcomers or the gym overview.",
+    "By creating a match system based on interests, hobbies, concentration, languages, hometowns, experience level and much more that are not accessible anywhere else, I hope students will find not only somebody to train with, but also make great friendships or establish contacts for the future.",
   ],
 };
 
