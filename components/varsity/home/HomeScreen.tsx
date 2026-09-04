@@ -16,7 +16,7 @@ import ThemeProvider from "@/components/ThemeProvider";
 import { useVarsityTheme } from "@/components/varsity/useVarsityTheme";
 import { fetchPlan, fetchProfileFullName } from "@/lib/varsity/planStore";
 import { fetchTodayLineups } from "@/lib/varsity/lineupStore";
-import CrewVideoStrip from "@/components/varsity/CrewVideoStrip";
+import LineupBoatCard, { LineupSeats, isMyBoat } from "@/components/varsity/LineupBoatCard";
 import UploadVideoSheet from "@/components/varsity/UploadVideoSheet";
 import { driveConfigured, driveFolderLink } from "@/lib/varsity/drive";
 import { fetchNote } from "@/lib/varsity/notesStore";
@@ -627,70 +627,6 @@ function SessionCard({ s, lineups = [] }: { s: TodaySession; lineups?: Lineup[] 
   );
 }
 
-/* ─── Lineup (vertical · full names · your seat highlighted) ─── */
-function SeatRow({
-  label,
-  name,
-  mine,
-  cox,
-}: {
-  label: string;
-  name: string;
-  mine?: boolean;
-  cox?: boolean;
-}) {
-  const open = name === "—" || name === "";
-  return (
-    <div
-      className={`flex items-center gap-2.5 rounded-lg border px-2.5 py-2 ${
-        mine
-          ? "border-primary bg-primary-tint"
-          : cox
-            ? "border-accent-line bg-accent-tint"
-            : "border-border bg-surface-2"
-      }`}
-    >
-      <span
-        className={`flex h-6 w-14 flex-shrink-0 items-center justify-center rounded text-[11px] font-semibold uppercase tracking-[0.12em] ${
-          cox ? "bg-accent-tint text-accent" : mine ? "bg-primary-tint text-primary" : "bg-background text-muted"
-        }`}
-      >
-        {label}
-      </span>
-      <span
-        className={`flex-1 truncate text-[13px] font-medium ${
-          mine ? "text-primary" : open ? "italic text-text-3" : "text-text"
-        }`}
-      >
-        {open ? "Open seat" : name}
-      </span>
-      {mine && (
-        <span className="flex-shrink-0 rounded bg-text px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-background">
-          You
-        </span>
-      )}
-    </div>
-  );
-}
-
-/*
-  One boat's seats. Bow at the top, down to the stroke, cox last — the order the
-  coach's own builder shows and the order their lineup sheet is written in. An
-  athlete finding their name here and again on the sheet at the boathouse
-  should not have to read one of them upside down. Cox gets the word: there is
-  room. Shared, so the boat inside a session card and the boat in the section
-  below are the same drawing rather than two that drift apart.
-*/
-function LineupSeats({ l }: { l: Lineup }) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      {l.seats.map((s) => (
-        <SeatRow key={s.num} label={s.num} name={s.name} mine={s.mine} />
-      ))}
-      {l.cox && <SeatRow label="Cox" name={l.cox.name} mine={l.cox.mine} cox />}
-    </div>
-  );
-}
 
 /*
   THE VIDEO BAR, at the top because that is where a daily habit belongs. Two
@@ -721,48 +657,54 @@ function DriveBar({ onUpload }: { onUpload: () => void }) {
   );
 }
 
-function LineupBoat({ l }: { l: Lineup }) {
-  return (
-    <div className="overflow-hidden rounded-xl border border-border bg-surface">
-      <div className="border-b border-border px-3 py-2.5 text-[12px] font-semibold text-text">
-        {l.period}
-      </div>
-      <div className="p-3">
-        <LineupSeats l={l} />
-      </div>
-      {/* Which oars to take off the rack, when the coach named a set. */}
-      {l.oars && (
-        <div className="flex items-center gap-2 border-t border-border px-3 py-2 text-[11px] text-muted">
-          <IconAnchor size={13} />
-          <span className="text-text">{l.oars}</span>
-        </div>
-      )}
-      {/*
-        VIDEO of this boat — the same strip the coach has in the builder, because
-        it is often an athlete who filmed. Attached here, a clip lands on the
-        Home screen of everyone who was in the boat, already named and already
-        carrying its seats. Only a boat read from the database has one (the demo
-        day has no real crew to file footage against).
-      */}
-      {l.dayKey && l.boat && <CrewVideoStrip dayKey={l.dayKey} boat={l.boat} />}
-    </div>
-  );
-}
+/*
+  THE LINEUP SECTION — YOUR boat, and a door to everyone else's.
 
-function LineupCard({ lineups, onToday }: { lineups: Lineup[]; onToday: boolean }) {
+  It used to list every published boat, under a heading that said "Your Lineup".
+  Three eights is nine names each: a screen and a half of other people's crews
+  before the rest of the page. Now the section holds only the boat you are in,
+  already open, and "All boats" opens the day's full sheet on its own page.
+
+  When we cannot tell which boat is yours, we say so rather than showing all of
+  them again — but the door is right there, so nothing is out of reach.
+*/
+function LineupCard({
+  lineups,
+  onToday,
+  allHref,
+  total,
+}: {
+  lineups: Lineup[];
+  onToday: boolean;
+  allHref: string;
+  total: number;
+}) {
+  const mine = lineups.filter(isMyBoat);
   return (
     <div>
       <div className="mb-2 flex items-center justify-between px-1">
         {/* "Your Lineup" reads as today's. On another day it says whose day
             it is, so the boats below are never mistaken for this morning's. */}
         <SectionLabel>{onToday ? "Your Lineup" : "Lineup That Day"}</SectionLabel>
-        <span className="text-[11px] text-muted">Bow at top · cox last</span>
+        <Link
+          href={allHref}
+          className="flex items-center gap-0.5 text-[11px] font-semibold text-primary"
+        >
+          All boats{total ? ` · ${total}` : ""} <IconChevronRight size={12} />
+        </Link>
       </div>
-      <div className="flex flex-col gap-3">
-        {lineups.map((l, i) => (
-          <LineupBoat key={i} l={l} />
-        ))}
-      </div>
+      {mine.length > 0 ? (
+        <div className="flex flex-col gap-3">
+          {mine.map((l, i) => (
+            <LineupBoatCard key={i} l={l} defaultOpen />
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-xl border border-dashed border-border bg-surface px-4 py-4 text-center text-[12px] text-muted">
+          You are not in a boat {onToday ? "today" : "that day"} — or the app could not
+          match your name to a seat. Every published boat is on the All boats page.
+        </div>
+      )}
     </div>
   );
 }
@@ -1022,6 +964,15 @@ export default function HomeScreen() {
       ? awayLineups.lineups
       : []; // still fetching, or none published
 
+  /*
+    Only YOUR boat gets onto this page — inside the session card and in the
+    section below it alike. Everyone else's is one tap away on its own page,
+    which is the whole point: three published eights is more screen than the
+    training plan itself.
+  */
+  const myLineups = lineups.filter(isMyBoat);
+  const allBoatsHref = `/varsity/lineups${viewDay?.iso ? `?d=${viewDay.iso}` : ""}`;
+
   return (
     <div className="mx-auto w-full max-w-screen-sm pb-6">
       {consoleRole && <ConsoleDoor role={consoleRole} />}
@@ -1053,7 +1004,7 @@ export default function HomeScreen() {
       {sessions.length > 0 ? (
         <div className="flex flex-col gap-2 px-3">
           {sessions.map((sess, i) => (
-            <SessionCard key={i} s={sess} lineups={lineups} />
+            <SessionCard key={i} s={sess} lineups={myLineups} />
           ))}
         </div>
       ) : (
@@ -1064,7 +1015,12 @@ export default function HomeScreen() {
 
       {lineups.length > 0 && (
         <div className="px-3 pt-3">
-          <LineupCard lineups={lineups} onToday={onToday} />
+          <LineupCard
+            lineups={lineups}
+            onToday={onToday}
+            allHref={allBoatsHref}
+            total={lineups.length}
+          />
         </div>
       )}
 
