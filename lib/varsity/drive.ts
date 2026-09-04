@@ -175,9 +175,15 @@ export async function driveToken(interactive: boolean): Promise<string | null> {
       },
       error_callback: () => finish(null),
     });
-    // "" asks Google to answer silently if it already can; "consent" is the
-    // first time, when the person has to actually see what they are allowing.
-    client.requestAccessToken({ prompt: interactive ? "consent" : "" });
+    /*
+      "" — never "consent". Google shows the consent screen on its own the first
+      time, when there is nothing granted yet; asking for it EVERY time meant a
+      rower who reconnects (which on a phone is most mornings, see the token
+      note above) had to walk back through the unverified-app warning and the
+      permission list to upload one clip. With "", a second connect is a popup
+      that closes on its own.
+    */
+    client.requestAccessToken({ prompt: "" });
     // A silent attempt with no session never calls back at all.
     if (!interactive) setTimeout(() => finish(null), 3000);
   });
