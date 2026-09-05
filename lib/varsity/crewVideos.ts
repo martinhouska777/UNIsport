@@ -29,6 +29,7 @@ import {
   DRIVE_FOLDER_ID,
   driveConfigured,
   driveFolderPath,
+  driveShareAnyone,
   driveToken,
   driveUpload,
 } from "./drive";
@@ -318,6 +319,14 @@ export async function uploadCrewVideo(
       onProgress,
     );
     if ("error" in result) return { error: result.error };
+    /*
+      A file straight out of an upload is private to the uploader, so the link
+      we are about to store would meet Google's authorization page for every
+      teammate. Share it by link the moment it lands. If Google refuses, the
+      video is still uploaded and still listed — it just needs sharing by hand
+      in Drive, which is better than losing the upload over it.
+    */
+    await driveShareAnyone(result.id, token);
     externalUrl = result.link;
   } else {
     const ext = (file.name.split(".").pop() || "mp4").toLowerCase().slice(0, 5);

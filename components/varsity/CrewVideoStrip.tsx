@@ -32,6 +32,8 @@ import {
 import {
   driveConfigured,
   driveConnected,
+  driveFileId,
+  driveShareAnyone,
   driveToken,
   drivePreviewUrl,
 } from "@/lib/varsity/drive";
@@ -82,12 +84,20 @@ function VideoSheet({
   const [src, setSrc] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
   const [removing, setRemoving] = useState(false);
+  const [playHere, setPlayHere] = useState(false);
 
   /*
-    A file on the squad's Drive plays in DRIVE's own player, embedded. It has to:
-    the bytes live there, and Drive streams them against the viewer's own Google
-    session — so somebody without access to the folder sees nothing rather than a
-    broken player. Only a file in our own bucket is a plain <video>.
+    A file on the squad's Drive lives on Drive, so playing it means Drive's own
+    player. Embedding that player is the nice version and the fragile one: it
+    streams against the VIEWER's Google session, which a phone browser blocking
+    third-party cookies never hands over, and a clip nobody shared is private to
+    whoever uploaded it. Either way the embed shows Google's authorization page
+    where the video should be.
+
+    So the LINK leads. It opens the file in a real Drive tab, where the session
+    is the browser's own and it simply plays. The embed is still one tap away
+    for anyone it does work for. New uploads are shared by link as they land
+    (driveShareAnyone), so this is the fallback, not the plan.
   */
   const preview = video.externalUrl ? drivePreviewUrl(video.externalUrl) : null;
 
@@ -105,34 +115,67 @@ function VideoSheet({
     };
   }, [video, preview]);
 
+  /*
+    Clips uploaded before videos were shared on the way up are still private.
+    The one person who can fix that is the uploader, so when they open their own
+    video we quietly ask Drive to share it by link — silently: `driveToken(false)`
+    returns nothing rather than opening a popup at somebody who only came to
+    watch. Nothing in the UI depends on it working.
+  */
+  useEffect(() => {
+    if (!preview || !canRemove) return;
+    const id = driveFileId(video.externalUrl ?? "");
+    if (!id) return;
+    void (async () => {
+      const token = await driveToken(false);
+      if (token) await driveShareAnyone(id, token);
+    })();
+  }, [preview, canRemove, video.externalUrl]);
+
   return (
     <Sheet title={video.title} onClose={onClose}>
       {preview ? (
-        <iframe
-          src={preview}
-          title={video.title}
-          allow="autoplay; fullscreen"
-          allowFullScreen
-          className="aspect-video w-full rounded-xl border-0 bg-black"
-        />
+        <>
+          {/* The way to the video that always works. Drive is also where the
+              squad browses footage without the app, and that must stay true. */}
+          <a
+            href={video.externalUrl ?? "#"}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex aspect-video w-full flex-col items-center justify-center gap-2.5 rounded-xl border border-border bg-surface-2 text-center active:bg-surface"
+          >
+            <span className="flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-contrast">
+              <IconPlay size={22} />
+            </span>
+            <span className="text-[13px] font-semibold text-text">Watch in Google Drive</span>
+            <span className="px-6 text-[11px] leading-relaxed text-muted">
+              Opens the clip in a new tab. Playing it inside the app is coming.
+            </span>
+          </a>
+          {playHere ? (
+            <iframe
+              src={preview}
+              title={video.title}
+              allow="autoplay; fullscreen"
+              allowFullScreen
+              className="mt-2 aspect-video w-full rounded-xl border-0 bg-black"
+            />
+          ) : (
+            <button
+              type="button"
+              onClick={() => setPlayHere(true)}
+              className="mt-2 w-full text-[11px] text-muted underline"
+            >
+              Try playing it here instead
+            </button>
+          )}
+        </>
       ) : src ? (
         <video src={src} controls playsInline className="w-full rounded-xl bg-black" />
       ) : (
         <div className="flex h-40 items-center justify-center rounded-xl border border-border bg-surface-2 text-[12px] text-muted">
           {failed ? "This video could not be opened." : "Loading…"}
         </div>
-      )}
-      {/* The way out to the file itself — Drive is where the squad browses
-          footage without the app, and that must stay true. */}
-      {video.externalUrl && (
-        <a
-          href={video.externalUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-2 block text-[11px] text-muted underline"
-        >
-          Open in Google Drive
-        </a>
       )}
 
       <div className="mt-4 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">

@@ -350,6 +350,33 @@ export async function driveUpload(
   return { error: "The upload finished without Drive confirming the file." };
 }
 
+/* ── Sharing ────────────────────────────────────────────────────────────── */
+
+/*
+  MAKE A FILE OPENABLE BY ITS LINK.
+
+  An uploaded file belongs to whoever uploaded it and is private to their Google
+  account. Everybody else — and the embedded player, which streams against the
+  VIEWER's own Google session — meets Google's authorization page instead of the
+  video. This grants exactly what Drive's Share menu calls "Anyone with the link
+  · Viewer", which is what makes the link we store work for the whole squad.
+
+  Best effort on purpose: a clip that lands but cannot be shared is still
+  uploaded, so the caller carries on rather than throwing the file away.
+*/
+export async function driveShareAnyone(fileId: string, accessToken: string): Promise<boolean> {
+  try {
+    const res = await fetch(`${API}/files/${fileId}/permissions?supportsAllDrives=true`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ role: "reader", type: "anyone" }),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
 /* ── Links ──────────────────────────────────────────────────────────────── */
 
 /** What we store, and what "open in Drive" points at. */
