@@ -152,6 +152,7 @@ export default function DmThread({
               {m.kind === "plan" && m.plan ? (
                 <PlanCard
                   plan={m.plan}
+                  conversationId={conversationId}
                   mine={mine}
                   otherName={title}
                   onChanged={load}

@@ -37,13 +37,41 @@ export function planWhenLabel(iso: string): string {
   return `${day} · ${time}`;
 }
 
+/*
+  Everything below can PING THE OTHER PERSON. A plan is a conversation between
+  two people who are not looking at their phones at the same time: proposing one
+  already notified, but accepting, declining, cancelling and moving it did not —
+  so the person waiting on an answer only found out by opening the chat again.
+
+  `ctx` is optional on purpose. The push is a courtesy, never a requirement: a
+  caller that doesn't know its conversation id still performs the action, it just
+  doesn't announce it. The RPCs decide who is allowed to do what; this only says
+  what happened. Never awaited — see notifyConversation.
+*/
+export type PlanNotifyContext = {
+  conversationId: string;
+  /** the plan's time, so the notification can say WHICH session */
+  scheduledAt: string;
+};
+
+function announce(ctx: PlanNotifyContext | undefined, what: string): void {
+  if (!ctx?.conversationId) return;
+  notifyConversation({ conversationId: ctx.conversationId, kind: "plan_update", preview: what });
+}
+
 /** Accept or decline a proposed session (recipient only). */
-export async function respondToPlan(planId: string, accept: boolean): Promise<void> {
+export async function respondToPlan(
+  planId: string,
+  accept: boolean,
+  ctx?: PlanNotifyContext,
+): Promise<void> {
   const { error } = await createClient().rpc("plan_respond", {
     p_plan_id: planId,
     p_accept: accept,
   });
   if (error) throw new Error(`respondToPlan failed: ${error.message}`);
+  const when = ctx ? planWhenLabel(ctx.scheduledAt) : "";
+  announce(ctx, accept ? `is in — ${when}` : `can't make ${when}`);
 }
 
 /**
@@ -51,25 +79,42 @@ export async function respondToPlan(planId: string, accept: boolean): Promise<vo
  * yes, the session is confirmed and a verified workout is auto-logged for each.
  * Returns the plan's resulting status.
  */
-export async function confirmPlan(planId: string, attended: boolean): Promise<string> {
+export async function confirmPlan(
+  planId: string,
+  attended: boolean,
+  ctx?: PlanNotifyContext,
+): Promise<string> {
   const { data, error } = await createClient().rpc("plan_confirm", {
     p_plan_id: planId,
     p_attended: attended,
   });
   if (error) throw new Error(`confirmPlan failed: ${error.message}`);
-  return data as string;
+  const status = data as string;
+  /*
+    Only nudge when saying yes LEAVES THE PLAN OPEN — i.e. the other person
+    hasn't answered yet and the session can't be verified without them. If the
+    status already came back 'confirmed' they answered first and are about to
+    see it in the app anyway. A "no" is never pushed: telling someone by phone
+    alert that they've been marked a no-show is a fight, not a notification.
+  */
+  if (attended && status === "accepted") {
+    announce(ctx, "says you trained — confirm it too");
+  }
+  return status;
 }
 
 /** Cancel an open (proposed/accepted) plan. Either participant may cancel. */
-export async function cancelPlan(planId: string): Promise<void> {
+export async function cancelPlan(planId: string, ctx?: PlanNotifyContext): Promise<void> {
   const { error } = await createClient().rpc("plan_cancel", { p_plan_id: planId });
   if (error) throw new Error(`cancelPlan failed: ${error.message}`);
+  announce(ctx, ctx ? `cancelled ${planWhenLabel(ctx.scheduledAt)}` : "cancelled the session");
 }
 
 /** Reschedule an open plan (proposer only) — sends it back for re-acceptance. */
 export async function reschedulePlan(
   planId: string,
   input: { activity: string; place: string; scheduledAt: string },
+  conversationId?: string,
 ): Promise<void> {
   const { error } = await createClient().rpc("plan_reschedule", {
     p_plan_id: planId,
@@ -78,6 +123,12 @@ export async function reschedulePlan(
     p_scheduled_at: input.scheduledAt,
   });
   if (error) throw new Error(`reschedulePlan failed: ${error.message}`);
+  // The NEW time is the point of this one — a reschedule sends the plan back to
+  // "proposed", so the other person has to accept again.
+  announce(
+    conversationId ? { conversationId, scheduledAt: input.scheduledAt } : undefined,
+    `moved it to ${planWhenLabel(input.scheduledAt)} — accept again`,
+  );
 }
 
 // An accepted, still-upcoming session (for the Profile "Upcoming" list).

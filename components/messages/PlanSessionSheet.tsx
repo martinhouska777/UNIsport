@@ -59,7 +59,7 @@ export default function PlanSessionSheet({
     try {
       const scheduledAt = new Date(`${date}T${time}`).toISOString();
       if (existing) {
-        await reschedulePlan(existing.planId, { activity, place, scheduledAt });
+        await reschedulePlan(existing.planId, { activity, place, scheduledAt }, conversationId);
       } else {
         await createPlan(conversationId, { activity, place, scheduledAt });
       }

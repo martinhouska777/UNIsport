@@ -169,7 +169,7 @@ export async function unsubscribeFromPush(): Promise<void> {
 // lets it complete even if the page navigates right after.
 export function notifyConversation(input: {
   conversationId: string;
-  kind: "message" | "plan";
+  kind: "message" | "plan" | "plan_update";
   preview?: string;
 }): void {
   if (typeof window === "undefined") return;

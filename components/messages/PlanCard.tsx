@@ -19,12 +19,14 @@ import { IconCalendar, IconCheck, IconX, IconMapPin } from "@/components/icons";
 
 export default function PlanCard({
   plan,
+  conversationId,
   mine,
   otherName,
   onChanged,
   onReschedule,
 }: {
   plan: DmPlan;
+  conversationId: string; // so a response can ping the other person
   mine: boolean; // did I propose this?
   otherName: string;
   onChanged: () => void; // refetch the thread after a response
@@ -38,7 +40,7 @@ export default function PlanCard({
     setBusy(true);
     setError(null);
     try {
-      await respondToPlan(plan.planId, accept);
+      await respondToPlan(plan.planId, accept, { conversationId, scheduledAt: plan.scheduledAt });
       onChanged();
     } catch (e) {
       setError((e as Error).message);
@@ -55,7 +57,7 @@ export default function PlanCard({
     setBusy(true);
     setError(null);
     try {
-      await confirmPlan(plan.planId, attended);
+      await confirmPlan(plan.planId, attended, { conversationId, scheduledAt: plan.scheduledAt });
       onChanged();
     } catch (e) {
       setError((e as Error).message);
@@ -69,7 +71,7 @@ export default function PlanCard({
     setBusy(true);
     setError(null);
     try {
-      await cancelPlan(plan.planId);
+      await cancelPlan(plan.planId, { conversationId, scheduledAt: plan.scheduledAt });
       onChanged();
     } catch (e) {
       setError((e as Error).message);

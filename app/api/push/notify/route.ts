@@ -4,7 +4,7 @@
 
   Every real event notification the app sends, in one route. Two families:
 
-    DM        "message" | "plan"                     needs conversationId
+    DM        "message" | "plan" | "plan_update"     needs conversationId
     Varsity   "team_plan" | "team_lineup" | "note"   the coach telling the squad
                                                      ("note" needs athleteId)
 
@@ -24,7 +24,7 @@ export const runtime = "nodejs";
 const clip = (s: string, n = 120) => (s.length > n ? s.slice(0, n - 1) + "…" : s);
 
 const TEAM_KINDS = ["team_plan", "team_lineup", "note"] as const;
-type Kind = "message" | "plan" | (typeof TEAM_KINDS)[number];
+type Kind = "message" | "plan" | "plan_update" | (typeof TEAM_KINDS)[number];
 const isTeamKind = (k: string): k is (typeof TEAM_KINDS)[number] =>
   (TEAM_KINDS as readonly string[]).includes(k);
 
@@ -39,7 +39,11 @@ export async function POST(request: Request) {
   }
 
   const raw = body.kind ?? "";
-  const kind: Kind = isTeamKind(raw) ? raw : raw === "plan" ? "plan" : "message";
+  const kind: Kind = isTeamKind(raw)
+    ? raw
+    : raw === "plan" || raw === "plan_update"
+      ? raw
+      : "message";
   const preview = (body.preview ?? "").trim();
 
   const supabase = await createClient();
@@ -65,7 +69,11 @@ export async function POST(request: Request) {
     if (!body.conversationId) return Response.json({ error: "bad_request" }, { status: 400 });
     const { data, error } = await supabase.rpc("dm_push_targets", {
       conversation_id: body.conversationId,
-      kind,
+      // "plan_update" asks the database the same question "plan" does — the
+      // recipient's "Session invites" preference governs the whole life of a
+      // plan, not just the invite. Mapping it here keeps that one preference
+      // in one place instead of adding a second key nobody would find.
+      kind: kind === "plan_update" ? "plan" : kind,
     });
     if (error) return Response.json({ error: "forbidden" }, { status: 403 });
     subs = (data as StoredSubscription[]) ?? [];
@@ -96,6 +104,14 @@ export async function POST(request: Request) {
     plan: {
       title: "Session invite",
       body: preview ? `${who} proposed a session — ${clip(preview)}` : `${who} proposed a session`,
+      url: "/messages",
+    },
+    // Everything that happens to a plan AFTER the invite: accepted, declined,
+    // cancelled, moved, or "I've said we trained, your turn". The client sends
+    // the verb and the time; the name is still resolved server-side.
+    plan_update: {
+      title: "Session plan",
+      body: preview ? `${who} ${clip(preview)}` : `${who} updated a session`,
       url: "/messages",
     },
     team_plan: {
