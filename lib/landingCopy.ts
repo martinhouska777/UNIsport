@@ -1068,7 +1068,8 @@ export const coach = {
     },
     {
       n: "3",
-      head: "Seat the boat and publish it.",
+      /* The owner's own title for this one, 2026-09-05. */
+      head: "Build lineups.",
       body: [
         { text: "Tap a session from the plan to create the lineup for that day. Choose your people from the pool, where everyone carries their side, port, starboard or both, and anyone injured or sick is marked unavailable. " },
         /* The owner, 2026-09-05: end on the publishing, and cut the line after
@@ -1080,11 +1081,20 @@ export const coach = {
     },
     {
       n: "4",
-      head: "Put the footage on the boat.",
+      /* DICTATED BY THE OWNER 2026-09-05, transcribed with grammar corrected
+         and not rephrased. It replaces "Put the footage on the boat." and the
+         old body, which named the parts of the title instead of the two things
+         a coach actually does: connect the drive once, then tap a boat.
+
+         ONE THING TO CHECK BEFORE LAUNCH: this says OneDrive, and what is
+         built and working today is GOOGLE Drive (the team's Drive, OAuth
+         verified — see the crew-videos work). Either the copy is a word out or
+         the plan changed; the owner has been asked. */
+      head: "Upload footage of the boat.",
       body: [
-        { text: "After practice, tap a boat to upload a video from the session. " },
-        { text: "It names itself from the boat.", bold: true },
-        { text: " The day, the session, the boat and who was stroking all go into the title, so your athletes know right away which piece they are watching." },
+        { text: "Connect to your OneDrive where you store your rowing footage. Then tap a boat to upload a video from the session. " },
+        { text: "It automatically renames itself according to the lineup and saves into the right date", bold: true },
+        { text: ", so your athletes know right away which piece they are watching." },
       ],
       /* STAND-IN SHOT. The video strip sits on this same Lineup screen, below
          the boats, so the screen is right but the frame is not — it repeats
