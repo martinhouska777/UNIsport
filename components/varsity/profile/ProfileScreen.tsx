@@ -361,14 +361,146 @@ function PrSheet({
   );
 }
 
-/* ─────────────────────────  the line graph  ─────────────────────────
+/* ─────────────────────────  the bar graph  ─────────────────────────
    Whatever the athlete picked with the arrows in its header — metres, hours or
    consistency — over whichever window the button on the right is set to. One
-   point per bucket: a day each for the short ranges, a week each for the long
+   COLUMN per bucket: a day each for the short ranges, a week each for the long
    ones. The three numbers above it come from the same buckets.
 
+   Columns rather than a line: the question this answers is "how much did I do
+   that day", which is a quantity, and a quantity is a height you compare with
+   the one next to it — not a slope between two dots.
+
    BOTH controls live on the card they change: the measure on the left, the
-   window on the right. */
+   window on the right. And the plot itself is a button — a phone card is only
+   so tall, so tapping it opens the same chart at a size you can read.
+
+   The chart is drawn once, here, and used at two sizes. */
+function Bars({
+  points,
+  metric,
+  units,
+  height,
+  everyLabel,
+  showValues,
+}: {
+  points: { label: string; value: number; latest: boolean }[];
+  metric: StatMetric;
+  units: Units;
+  height: number;
+  /** Name every column, or only every other one when they would collide. */
+  everyLabel: boolean;
+  /** Print each column's own number above it. */
+  showValues: boolean;
+}) {
+  /*
+    THE TOP OF THE AXIS. A percentage is always drawn against a full 100, or a
+    consistent 40% week would fill the card and read like a good one. Everything
+    else scales to its own best bucket, rounded UP to something a person would
+    say out loud, so the top gridline is a number and not 15.7.
+  */
+  const peak = Math.max(1, ...points.map((p) => p.value));
+  const max = metric.axisMax ?? niceCeil(peak);
+
+  // SVG geometry (a viewBox that stretches to whatever width it is given).
+  const W = 320;
+  const H = height;
+  const padX = 8;
+  const padT = showValues ? 20 : 12;
+  const padB = 20; // the row of dates under the floor
+  // Type scales with the card, so the big one is genuinely bigger and not just
+  // taller.
+  const fs = H >= 200 ? 9 : 7.5;
+  // Room down the left for the axis labels — they sit outside the plot so the
+  // columns never start underneath their own numbers, and "20.0 km" at the
+  // bigger type needs more of it than the same words on the card.
+  const padL = fs >= 9 ? 44 : 34;
+  const plotW = W - padL - padX;
+  const plotH = H - padT - padB;
+  const baseline = padT + plotH;
+  const n = points.length;
+  const slot = plotW / n;
+  const barW = Math.min(26, slot * 0.66);
+  const cx = (i: number) => padL + slot * (i + 0.5);
+  const yOf = (v: number) => baseline - plotH * (Math.min(v, max) / max);
+
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} width="100%" className="block text-primary" aria-hidden="true">
+      {/*
+        THE Y AXIS — three gridlines (top, middle, zero) and what each is worth,
+        so a column's height is a number instead of a feeling. Only three: a
+        ladder of them would out-shout the bars they exist to explain.
+      */}
+      {[1, 0.5, 0].map((frac) => {
+        const gy = baseline - plotH * frac;
+        return (
+          <g key={frac}>
+            <line
+              x1={padL}
+              y1={gy}
+              x2={W - padX}
+              y2={gy}
+              stroke="var(--border)"
+              strokeWidth={1}
+              /* The zero line is the floor, the two above it are guides. */
+              strokeDasharray={frac === 0 ? undefined : "2 3"}
+            />
+            <text x={padL - 4} y={gy + fs / 3} textAnchor="end" fill="var(--muted)" fontSize={fs}>
+              {axisLabel(max * frac, metric, units)}
+            </text>
+          </g>
+        );
+      })}
+
+      {points.map((p, i) => {
+        const show = everyLabel || p.latest || i % 2 === n % 2;
+        return (
+          <g key={i}>
+            {/* An empty bucket draws no column — the floor already says nothing
+                happened, and a stub would read as a little bit of something. */}
+            {p.value > 0 && (
+              <rect
+                x={cx(i) - barW / 2}
+                y={yOf(p.value)}
+                width={barW}
+                height={Math.max(baseline - yOf(p.value), 1)}
+                rx={Math.min(3, barW / 2)}
+                fill="var(--primary)"
+                /* The newest bucket is the one you came to look at. */
+                fillOpacity={p.latest ? 1 : 0.45}
+              />
+            )}
+            {showValues && p.value > 0 && (
+              <text
+                x={cx(i)}
+                y={yOf(p.value) - 4}
+                textAnchor="middle"
+                fill="var(--text)"
+                fontSize={fs}
+                fontWeight={600}
+              >
+                {metric.format(p.value, units)}
+              </text>
+            )}
+            {show && (
+              <text
+                x={cx(i)}
+                y={baseline + fs + 4}
+                textAnchor="middle"
+                fill="var(--muted)"
+                fontSize={fs}
+                fontWeight={p.latest ? 600 : 400}
+              >
+                {p.label}
+              </text>
+            )}
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
 function WeeklyGraph({
   points,
   metric,
@@ -385,39 +517,14 @@ function WeeklyGraph({
   onRange: (key: string) => void;
 }) {
   const [pickingRange, setPickingRange] = useState(false);
-  const weeks = points;
-  /*
-    THE TOP OF THE AXIS. A percentage is always drawn against a full 100, or a
-    consistent 40% week would fill the card and read like a good one. Everything
-    else scales to its own best bucket, rounded UP to something a person would
-    say out loud, so the top gridline is a number and not 15.7.
-  */
-  const peak = Math.max(1, ...weeks.map((w) => w.value));
-  const max = metric.axisMax ?? niceCeil(peak);
-  const anyData = weeks.some((w) => w.value > 0);
-
-  // SVG geometry (a viewBox that stretches to the card width).
-  const W = 320;
-  const H = 116;
-  const padX = 8;
-  // Room down the left for the axis labels — they sit outside the plot so the
-  // line never starts underneath its own numbers.
-  const padL = 34;
-  const padT = 14;
-  const padB = 16;
-  const plotW = W - padL - padX;
-  const plotH = H - padT - padB;
-  const baseline = padT + plotH;
-  const n = weeks.length;
-  const x = (i: number) => padL + (n === 1 ? plotW / 2 : (plotW * i) / (n - 1));
-  const y = (v: number) => padT + plotH * (1 - v / max);
-
-  const pts = weeks.map((w, i) => [x(i), y(w.value)] as const);
-  const line = pts.map(([px, py]) => `${px},${py}`).join(" ");
-  const area = `M ${pts[0][0]},${baseline} L ${line.replaceAll(" ", " L ")} L ${pts[n - 1][0]},${baseline} Z`;
+  const [zoomed, setZoomed] = useState(false);
+  const anyData = points.some((p) => p.value > 0);
+  // Past about ten columns the dates run into each other at card size, so only
+  // every other one is named there. The full-size chart names them all.
+  const roomy = points.length <= 10;
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-border bg-surface px-3.5 pb-3 pt-3.5">
+    <div className="relative rounded-2xl border border-border bg-surface px-3.5 pb-3 pt-3.5">
       {/* The arrows live here, on the thing they change. Everything in this
           block — graph and the three numbers above it — follows this choice. */}
       <div className="flex items-center justify-between gap-2">
@@ -459,113 +566,81 @@ function WeeklyGraph({
         </button>
       </div>
 
-      {/* Opened, the choices take a row of their own rather than floating over
-          the graph — a popover would be clipped by this card and would land
-          under a thumb on a phone. */}
+      {/* A real dropdown, hanging off the button that opened it, so choosing a
+          window never pushes the graph down the screen. */}
       {pickingRange && (
-        <div className="mt-2 flex gap-1 rounded-xl border border-border bg-surface-2 p-1">
-          {statRanges.map((r) => (
-            <button
-              key={r.key}
-              type="button"
-              onClick={() => {
-                onRange(r.key);
-                setPickingRange(false);
-              }}
-              aria-pressed={r.key === range.key}
-              className={`flex-1 rounded-lg py-1.5 text-[12px] font-semibold transition-colors ${
-                r.key === range.key ? "bg-text text-background" : "text-muted"
-              }`}
-            >
-              {r.label}
-            </button>
-          ))}
-        </div>
+        <>
+          {/* Anywhere else puts it away. */}
+          <button
+            type="button"
+            aria-label="Close the window picker"
+            onClick={() => setPickingRange(false)}
+            className="fixed inset-0 z-10 cursor-default"
+          />
+          <div className="absolute right-3 top-12 z-20 w-36 overflow-hidden rounded-xl border border-border bg-surface-2 shadow-lg">
+            {statRanges.map((r) => (
+              <button
+                key={r.key}
+                type="button"
+                onClick={() => {
+                  onRange(r.key);
+                  setPickingRange(false);
+                }}
+                aria-pressed={r.key === range.key}
+                className={`flex w-full items-center gap-2 px-3 py-2.5 text-left text-[12px] active:bg-surface ${
+                  r.key === range.key ? "font-semibold text-text" : "text-muted"
+                }`}
+              >
+                <span className="flex w-3.5 flex-shrink-0 justify-center">
+                  {r.key === range.key && <IconCheck size={12} />}
+                </span>
+                {r.label}
+              </button>
+            ))}
+          </div>
+        </>
       )}
 
       {anyData ? (
-        <>
-          <svg
-            viewBox={`0 0 ${W} ${H}`}
-            width="100%"
-            className="mt-2 block text-primary"
-            aria-hidden="true"
-          >
-            {/*
-              THE Y AXIS — three gridlines (top, middle, zero) and what each is
-              worth, so a dot's height is a number instead of a feeling. Only
-              three: this card is 116 units tall and a ladder of them would
-              out-shout the line they exist to explain.
-            */}
-            {[1, 0.5, 0].map((frac) => {
-              const gy = padT + plotH * (1 - frac);
-              return (
-                <g key={frac}>
-                  <line
-                    x1={padL}
-                    y1={gy}
-                    x2={W - padX}
-                    y2={gy}
-                    stroke="var(--border)"
-                    strokeWidth={1}
-                    /* The zero line is the floor, the two above it are guides. */
-                    strokeDasharray={frac === 0 ? undefined : "2 3"}
-                  />
-                  <text
-                    x={padL - 4}
-                    y={gy + 2.5}
-                    textAnchor="end"
-                    fill="var(--muted)"
-                    fontSize={7}
-                  >
-                    {axisLabel(max * frac, metric, units)}
-                  </text>
-                </g>
-              );
-            })}
-            {/* soft area under the line */}
-            <path d={area} fill="var(--primary)" fillOpacity={0.1} />
-            {/* the trend line */}
-            <polyline
-              points={line}
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={2}
-              strokeLinejoin="round"
-              strokeLinecap="round"
-            />
-            {/* points (latest filled solid) */}
-            {pts.map(([px, py], i) => (
-              <circle
-                key={i}
-                cx={px}
-                cy={py}
-                r={weeks[i].latest ? 4 : 3}
-                fill={weeks[i].latest ? "var(--primary)" : "var(--surface)"}
-                stroke="currentColor"
-                strokeWidth={2}
-              />
-            ))}
-          </svg>
-          {/* Axis labels. Past about ten of them the numbers run into each
-              other at this size, so every other one is dropped — the shape is
-              what's being read, not the exact date under each dot. */}
-          <div className="mt-1 flex">
-            {weeks.map((w, i) => {
-              const crowded = weeks.length > 10;
-              const show = w.latest || !crowded || i % 2 === weeks.length % 2;
-              return (
-                <div key={i} className="flex-1 text-center text-[7px] text-muted">
-                  {w.latest ? (range.bucket === "day" ? "Today" : "This wk") : show ? w.label : ""}
-                </div>
-              );
-            })}
-          </div>
-        </>
+        /* The plot is the tap target. The header's buttons sit outside it, so
+           this is not a tap target you have to fight. */
+        <button
+          type="button"
+          onClick={() => setZoomed(true)}
+          aria-label={`See ${metric.label.toLowerCase()} full size`}
+          className="mt-2 block w-full active:opacity-80"
+        >
+          <Bars
+            points={points}
+            metric={metric}
+            units={units}
+            height={168}
+            everyLabel={roomy}
+            showValues={false}
+          />
+        </button>
       ) : (
         <p className="mt-2 rounded-xl border border-dashed border-border bg-surface-2 px-3 py-6 text-center text-[11px] text-muted">
           {metric.empty}
         </p>
+      )}
+
+      {zoomed && (
+        <Sheet
+          title={`${metric.label} · ${range.label.toLowerCase()}`}
+          onClose={() => setZoomed(false)}
+        >
+          <Bars
+            points={points}
+            metric={metric}
+            units={units}
+            height={260}
+            everyLabel
+            /* Eight columns is about where a number over each one still has
+               room to be a number. */
+            showValues={points.length <= 8}
+          />
+        </Sheet>
       )}
     </div>
   );
@@ -849,16 +924,16 @@ export default function ProfileScreen() {
         {tiles.map((t) => (
           <div
             key={t.label}
-            className="rounded-2xl border border-border bg-surface px-1.5 py-3 text-center"
+            className="rounded-xl border border-border bg-surface px-1.5 py-2 text-center"
           >
             {/* "8h 30m" and "12.4 km" need more room than "14" — the number
                 steps down a size rather than spilling out of the tile. */}
             <div
-              className={`${t.value.length > 6 ? "text-base" : "text-xl"} font-semibold leading-none text-text`}
+              className={`${t.value.length > 6 ? "text-[13px]" : "text-[15px]"} font-semibold leading-none text-text`}
             >
               {t.value}
             </div>
-            <div className="mt-1.5 text-[8px] font-semibold uppercase tracking-[0.08em] text-muted">
+            <div className="mt-1 text-[8px] font-semibold uppercase tracking-[0.08em] text-muted">
               {t.label}
             </div>
             <div className="mt-0.5 text-[8px] text-muted">{t.sub}</div>
