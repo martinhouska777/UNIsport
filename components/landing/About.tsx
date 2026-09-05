@@ -20,7 +20,7 @@ export default function About({ full = false }: { full?: boolean }) {
             <p className="mt-6 text-[15px]">
               <Link
                 href="/about"
-                className="tap44 inline-block font-medium text-l-text underline-offset-4 transition-colors hover:underline"
+                className="tap44 inline-block font-medium text-l-text underline underline-offset-4 transition-colors"
               >
                 {about.readWhy} →
               </Link>

@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import {
   useCallback,
   useEffect,
@@ -16,7 +17,7 @@ import { shotSrc, usePhoneMode } from "@/components/landing/PhoneMode";
 import CloserSplit from "@/components/landing/CloserSplit";
 import { useCloserGate } from "@/components/landing/useCloserGate";
 import type { CloserHandle } from "@/components/landing/closer";
-import { closers, mailtoHref } from "@/lib/landingCopy";
+import { closers } from "@/lib/landingCopy";
 import { schools, rgba, SCHOOL_CYCLE_MS } from "@/lib/landingSchools";
 
 /*
@@ -260,13 +261,13 @@ export default function CampusColours({
               1's exception. */}
           <p className="mx-auto mt-3.5 max-w-[52ch] text-[clamp(15px,1.6vw,17px)] leading-[1.6] text-pretty text-l-text-2">
             {copy.sub}{" "}
-            <a
-              href={mailtoHref(copy.mailSubject, copy.mailBody)}
-              className="tap44 font-medium underline-offset-4 transition-colors duration-[600ms] ease-in-out hover:underline focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-l-text motion-reduce:transition-none"
+            <Link
+              href={copy.ctaHref}
+              className="tap44 font-medium underline underline-offset-4 transition-colors duration-[600ms] ease-in-out focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-l-text motion-reduce:transition-none"
               style={{ color: s.ink }}
             >
               {copy.cta}
-            </a>
+            </Link>
           </p>
         </div>
 

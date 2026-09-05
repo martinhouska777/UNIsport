@@ -79,7 +79,7 @@ export default function Contact() {
           <p className="mt-5 text-[15px]">
             <Link
               href={contact.whyHref}
-              className="tap44 inline-block font-medium text-l-accent underline-offset-4 transition-colors hover:underline"
+              className="tap44 inline-block font-medium text-l-accent underline underline-offset-4 transition-colors"
             >
               {about.readWhy} →
             </Link>

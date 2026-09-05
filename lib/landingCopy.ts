@@ -639,8 +639,11 @@ export const closers = {
     headlineEm: "your colours.",
     sub: "The app is customized to your university, gyms and colours.",
     cta: "Bring it to yours next.",
-    mailSubject: "Bring UNIsport to my university",
-    mailBody: "Hi Martin,\n\nI study at ______ and I would like to have UNIsport at my university.\n\n",
+    /* NOT a mailto (the owner, 2026-09-04: "i want when u click it to take you
+       somewhere to send an email, not straight email"). A mailto throws the
+       visitor at whatever mail app the machine has, or at nothing; this lands
+       them on Contact, where the address and the socials are. */
+    ctaHref: "/contact",
   },
   /* REWRITTEN BY THE OWNER, 2026-09-02: "Your crew, your blade. your colors
      instead of every crew one system on top and dont do the thing with the
