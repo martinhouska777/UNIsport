@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import OpeningSteps from "@/components/landing/OpeningSteps";
 import SchoolCrest from "@/components/SchoolCrest";
 import { useSchoolCycle } from "@/components/landing/useSchoolCycle";
@@ -26,14 +26,17 @@ import { availability, cues, hero, studentIntro } from "@/lib/landingCopy";
   min-h-svh section read as an empty screen ("to vyplni ten screen"). The
   reasoning is on `studentIntro` in lib/landingCopy.ts.
 
-  IT ARRIVES, AND IT HAS A GROUND (owner, 2026-09-04: "do some animation for
-  the never train alone and the 7 features and better background"). The card
-  is .l-titlecard — the page's grid and one soft glow behind the words, in
-  --tg — and every part of it fades up in turn once the card is on screen,
-  the seven chips one after another. The clock is the hero's; the delays are
-  the --d below, and the CSS is in app/globals.css. NOT the handover the
-  owner rejected in August: nothing here moves the story, the card simply
-  arrives instead of being there already.
+  IT HAS A GROUND, EVERYWHERE (owner, 2026-09-04): .l-titlecard draws the
+  page's grid and one soft glow behind the words, in --tg.
+
+  IT IS WRITTEN OUT, AND ONLY ON "/" (owner, same day: "i want the never train
+  alone again to be like written there like a message and then you start
+  putting there the things under it", and "do the animation only on the home
+  page"). So on "/" the promise types itself a letter at a time, and only when
+  the last letter has landed do the sentence, the seven chips, the link and the
+  cue follow — every delay below is measured from the end of the typing. On
+  /for/students the card is the front door: it is simply there, whole, at the
+  first frame. That is what `anim` gates; the ground and the glow ignore it.
 
   IT TAKES THE SCHOOL'S COLOUR — BUT ONLY WHEN IT IS THE FRONT DOOR
   (2026-09-01, the owner, in two steps: "u toho the app bych udelal to stejne
@@ -53,7 +56,7 @@ import { availability, cues, hero, studentIntro } from "@/lib/landingCopy";
 
   The cycle hook is called either way (it must be), but `cycle` only points at
   the element in solo, so on "/" it finds nothing, returns early and starts no
-  timer. The reveal ref is attached either way — every card arrives.
+  timer.
 
   Deliberately NOT cycling even in solo: the steps and the overview link, which
   stay the page's own blue. The intro draws the same line — its pill and its
@@ -64,12 +67,96 @@ import { availability, cues, hero, studentIntro } from "@/lib/landingCopy";
   way in — the .edu button and the availability line, which the hero carries
   on "/".
 */
+
+/** How long one letter takes. 24 letters ≈ 0.9s, the length of a held breath. */
+const TYPE_MS = 38;
+
+/*
+  THE PROMISE, TYPED. The whole line is always in the DOM — the part that has
+  not arrived yet is `invisible`, which takes its space without being drawn —
+  so the words never reflow as they appear and nothing under them jumps. The
+  caret sits between the two.
+
+  A screen reader gets the finished sentence once, from the sr-only copy; the
+  typed one is hidden from it, because a heading whose name changes 24 times
+  is not a heading anyone can read.
+*/
+function Typed({
+  head,
+  em,
+  emClass,
+  type,
+  playing,
+}: {
+  head: string;
+  em: string;
+  emClass: string;
+  /** false on a page this card opens — the line is simply there. */
+  type: boolean;
+  /** true once the card is on screen. Going false rewinds it. */
+  playing: boolean;
+}) {
+  const full = head.length + 1 + em.length;
+  const [typed, setTyped] = useState(0);
+  /* Read once, on the client, during the first render — not from an effect, so
+     nothing renders twice. The server and the first client render agree because
+     both start with `playing` false, which shows the same thing either way. */
+  const [reduced] = useState(
+    () => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+  );
+
+  useEffect(() => {
+    if (!type || !playing || reduced) return;
+    let i = 0;
+    const t = setInterval(() => {
+      i += 1;
+      setTyped(i);
+      if (i >= full) clearInterval(t);
+    }, TYPE_MS);
+    return () => clearInterval(t);
+  }, [type, playing, reduced, full]);
+
+  const n = !type || reduced ? full : typed;
+
+  const emAt = head.length + 1;
+  const emN = Math.max(0, n - emAt);
+  const caret = type && n < full;
+
+  return (
+    <>
+      <span aria-hidden="true">
+        <span className="inline-block">
+          {head.slice(0, n)}
+          {/* Between the two, so it stands where the writing has got to. */}
+          {caret && n <= head.length && <span className="l-caret" />}
+          <span className="invisible">{head.slice(n)}</span>
+        </span>{" "}
+        <em className={`inline-block ${emClass}`}>
+          {em.slice(0, emN)}
+          {caret && n > head.length && <span className="l-caret" />}
+          <span className="invisible">{em.slice(emN)}</span>
+        </em>
+      </span>
+      <span className="sr-only">
+        {head} {em}
+      </span>
+    </>
+  );
+}
+
 export default function StudentIntro({ solo = false }: { solo?: boolean }) {
   const card = useRef<HTMLElement>(null);
   const cycle = useRef<HTMLElement>(null);
   const { school } = useSchoolCycle(cycle, HERO_CYCLE_MS);
   const shown = useReveal(card);
   const { color, ink } = accent(school.color);
+
+  // The entrance belongs to "/" only; a card that opens its own page is there.
+  const anim = !solo;
+  const playing = anim && shown;
+  // Everything under the headline waits for the last letter.
+  const after = anim ? (studentIntro.headline.length + 1 + studentIntro.headlineEm.length) * TYPE_MS : 0;
+  const at = (ms: number) => ({ "--d": `${after + ms}ms` }) as CSSProperties;
 
   return (
     <section
@@ -89,36 +176,37 @@ export default function StudentIntro({ solo = false }: { solo?: boolean }) {
         } as CSSProperties
       }
       className={`l-titlecard relative z-[1] flex min-h-svh flex-col items-center justify-center gap-[clamp(10px,1.8vh,18px)] border-t border-l-line bg-l-surface px-6 pt-14 pb-8 text-center ${
-        shown ? "is-in" : ""
-      }`}
+        anim ? "l-anim" : ""
+      } ${shown ? "is-in" : ""}`}
     >
       <h2 className="max-w-[13ch] font-display text-[clamp(40px,8vw,76px)] font-normal leading-[0.98] tracking-[-0.02em] text-balance text-l-text">
-        {/* The two halves arrive one after the other, so the promise finishes
-            itself. inline-block: a transform does nothing to a plain inline. */}
-        <span className="l-tc inline-block">{studentIntro.headline}</span>{" "}
-        <em
-          className={`l-tc inline-block ${
+        <Typed
+          /* Leaving the card rewinds the line: a fresh Typed starts at nought,
+             so coming back to it writes it out again. */
+          key={playing ? "typing" : "idle"}
+          head={studentIntro.headline}
+          em={studentIntro.headlineEm}
+          type={anim}
+          playing={playing}
+          emClass={
             solo
               ? "italic text-(--sc) transition-colors duration-700 ease-in-out motion-reduce:transition-none"
               : "italic text-l-accent"
-          }`}
-          style={{ "--d": "110ms" } as CSSProperties}
-        >
-          {studentIntro.headlineEm}
-        </em>
+          }
+        />
       </h2>
 
       <p
         className="l-tc max-w-[38ch] text-[clamp(15px,2.2vw,18px)] leading-[1.55] tracking-[-0.01em] text-balance text-l-text-2"
-        style={{ "--d": "200ms" } as CSSProperties}
+        style={at(120)}
       >
         {studentIntro.sub}
       </p>
 
-      <OpeningSteps steps={studentIntro.steps} accent="accent" storyId="story1" delay={280} />
+      <OpeningSteps steps={studentIntro.steps} accent="accent" storyId="story1" delay={after + 200} />
 
       {solo && (
-        <div className="l-tc mt-2 flex flex-col items-center gap-3" style={{ "--d": "690ms" } as CSSProperties}>
+        <div className="l-tc mt-2 flex flex-col items-center gap-3" style={at(610)}>
           <Link
             href="/login"
             className="inline-flex items-center gap-2 rounded-full bg-(--sc) py-4 pr-7 pl-5 text-[15px] font-semibold tracking-tight text-(--sc-ink) transition-[transform,background-color,color] duration-700 ease-in-out hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-l-text motion-reduce:transition-none"
@@ -133,12 +221,12 @@ export default function StudentIntro({ solo = false }: { solo?: boolean }) {
       <a
         href={studentIntro.overview.href}
         className="l-tc mt-1 inline-flex items-center gap-2 rounded-full border border-l-accent-soft px-6 py-3 text-[14px] font-medium tracking-tight text-l-text transition-colors hover:border-l-accent hover:bg-l-accent-dim"
-        style={{ "--d": "750ms" } as CSSProperties}
+        style={at(670)}
       >
         {studentIntro.overview.label} →
       </a>
 
-      <div className="l-tc l-cue mt-[22px]" style={{ "--d": "830ms" } as CSSProperties}>
+      <div className="l-tc l-cue mt-[22px]" style={at(750)}>
         {cues.hero}
       </div>
     </section>

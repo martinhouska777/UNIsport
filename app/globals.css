@@ -652,16 +652,48 @@
   in --d (the seven feature chips get theirs from OpeningSteps, one after
   another). Before .is-in the parts are simply not painted; under reduced
   motion they are all simply there.
+
+  ONLY ON THE HOME PAGE (owner, 2026-09-04: "do the animation only on the home
+  page"). A card that OPENS a page — /for/students, /for/varsity — is the first
+  thing a visitor sees, and making them wait through an entrance for it is a
+  different thing from meeting it half way down "/". So the entrance is gated
+  on .l-anim, which the components add only when the card is not the page's
+  front door; the ground and the glow stay everywhere.
 */
-.l-titlecard .l-tc { opacity: 0; }
-.l-titlecard.is-in .l-tc {
+.l-titlecard.l-anim .l-tc { opacity: 0; }
+.l-titlecard.l-anim.is-in .l-tc {
   animation: l-fade-up 0.85s cubic-bezier(0.2, 0.8, 0.2, 1) both;
   animation-delay: var(--d, 0ms);
 }
+
+/*
+  THE HEADLINE IS TYPED, not faded (owner, 2026-09-04: "i want the never train
+  alone again to be like written there like a message and then you start
+  putting there the things under it"). The letters arrive one at a time and
+  everything else waits for the last one — the delays are in StudentIntro.
+
+  The caret takes no width of its own (a negative margin cancels it), so the
+  line it is sitting in never reflows as it moves along.
+*/
+.l-caret {
+  display: inline-block;
+  width: 0.055em;
+  margin-right: -0.055em;
+  height: 0.74em;
+  translate: 0 0.04em;
+  background: currentColor;
+  animation: l-caret 1s steps(1, end) infinite;
+}
+@keyframes l-caret {
+  0%, 50% { opacity: 1; }
+  50.01%, 100% { opacity: 0; }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .l-titlecard .l-tc { opacity: 1; }
-  .l-titlecard.is-in .l-tc { animation: none; }
+  .l-titlecard.l-anim .l-tc { opacity: 1; }
+  .l-titlecard.l-anim.is-in .l-tc { animation: none; }
   .l-titlecard::after { transition: none; }
+  .l-caret { display: none; }
 }
 
 /*

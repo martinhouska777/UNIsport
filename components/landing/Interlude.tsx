@@ -15,10 +15,13 @@ import { cues, hero, interlude } from "@/lib/landingCopy";
   into the story is not animated. Everything else the card gained stays: the
   ground a step up from the page, the six steps, the link to the overview.
 
-  IT ARRIVES, AND IT HAS A GROUND — the same .l-titlecard as its student twin
-  (owner, 2026-09-04). Same clock, same glow, in gold; the reasoning and the
-  CSS are with StudentIntro and in app/globals.css. A client component only so
-  it can tell when it is on screen.
+  IT HAS A GROUND, AND ON "/" IT ARRIVES — the same .l-titlecard as its
+  student twin (owner, 2026-09-04). Same glow, in gold; same entrance, and the
+  same rule about where that entrance plays: only where the card is NOT the
+  front door of its own page ("do the animation only on the home page"), so
+  /for/varsity is simply there, whole, at the first frame. The reasoning and
+  the CSS are with StudentIntro and in app/globals.css. A client component only
+  so it can tell when it is on screen.
 
   `solo`: on the Varsity view (/for/varsity) it OPENS the page — nothing above
   it but the bar. The lead-in loses its joining "And", the rower's way in
@@ -28,6 +31,8 @@ import { cues, hero, interlude } from "@/lib/landingCopy";
 export default function Interlude({ solo = false }: { solo?: boolean }) {
   const card = useRef<HTMLElement>(null);
   const shown = useReveal(card);
+  // The entrance belongs to "/" only; a card that opens its own page is there.
+  const anim = !solo;
 
   return (
     <section
@@ -35,8 +40,8 @@ export default function Interlude({ solo = false }: { solo?: boolean }) {
       ref={card}
       style={{ "--tg": "color-mix(in srgb, var(--color-l-varsity) 18%, transparent)" } as CSSProperties}
       className={`l-titlecard relative z-[1] flex min-h-svh flex-col items-center justify-center gap-[clamp(10px,1.8vh,18px)] border-t border-l-line bg-l-surface px-6 pt-14 pb-8 text-center ${
-        shown ? "is-in" : ""
-      }`}
+        anim ? "l-anim" : ""
+      } ${shown ? "is-in" : ""}`}
     >
       <p className="l-tc font-display text-[clamp(20px,3.4vw,30px)] tracking-[-0.01em] text-l-text-2">
         {solo ? interlude.leadInSolo : interlude.leadIn}
