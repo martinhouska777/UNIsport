@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { about, contact, type SocialLink } from "@/lib/landingCopy";
 
 /*
@@ -71,6 +72,18 @@ export default function Contact() {
             {contact.headline}
           </h2>
           <p className="mt-6 max-w-[62ch] text-[clamp(16px,1.8vw,18px)] leading-[1.65] text-l-text-2">{contact.body}</p>
+
+          {/* The owner, 2026-09-04: the Why is important for students, so it is
+              linked from here too, not only from the About section. Same label
+              as that link (about.readWhy) — one wording for one destination. */}
+          <p className="mt-5 text-[15px]">
+            <Link
+              href={contact.whyHref}
+              className="tap44 inline-block font-medium text-l-accent underline-offset-4 transition-colors hover:underline"
+            >
+              {about.readWhy} →
+            </Link>
+          </p>
 
           <p className="mt-8 font-mono text-[13px] tracking-wide text-l-text-2">
             <span className="uppercase">{contact.emailLabel}</span>{" "}

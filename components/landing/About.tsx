@@ -30,7 +30,8 @@ export default function About({ full = false }: { full?: boolean }) {
 
         {full && (
           <>
-            <div className="mt-6 font-mono text-[11px] tracking-[0.14em] uppercase text-l-accent lg:mt-16">{aboutWhy.kicker}</div>
+            {/* #why — what Contact and the bar link to (owner, 2026-09-04). */}
+            <div id="why" className="mt-6 scroll-mt-24 font-mono text-[11px] tracking-[0.14em] uppercase text-l-accent lg:mt-16">{aboutWhy.kicker}</div>
             <div className="lg:mt-16">
               <h2 className="font-display text-[clamp(36px,5vw,56px)] leading-[1.02] tracking-tight text-balance text-l-text">
                 {aboutWhy.headline} <em className="italic text-l-accent">{aboutWhy.headlineEm}</em>

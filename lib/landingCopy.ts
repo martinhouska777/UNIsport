@@ -895,8 +895,21 @@ export const aboutWhy = {
 export type SocialLink = { name: string; handle: string; href: string | null; icon: "instagram" | "tiktok" | "x" };
 export const contact = {
   kicker: "Contact",
+  /* HEADLINE: still the draft "Say hello." — the owner asked for five
+     alternatives on 2026-09-04 and is choosing one. Swap this line, nothing
+     else. */
   headline: "Say hello.",
-  body: "Write to us with a question, a campus that should be next, or a team that wants in. You can also find us where the app is talked about.",
+  /* THE OWNER'S OWN WORDS, dictated 2026-09-04, grammar only: "every feedback
+     and suggestion is appreciated, write me if you are interested to bring it
+     to your university, or use it for your team". ("Every feedback" -> "All
+     feedback and suggestions", since feedback does not take a plural; and
+     "interested to bring" -> "interested in bringing".) It also moves the page
+     from "us" to "me" here, which is the voice About and Why already use. */
+  body: "All feedback and suggestions are appreciated. Write me if you are interested in bringing it to your university, or in using it for your team.",
+  /* The owner, same day: the Why matters to students, so it gets a link here
+     as well as in the bar. The label is about.readWhy, so there is one wording
+     for this link everywhere it appears. */
+  whyHref: "/about#why",
   emailLabel: "Email",
   socialsLabel: "Find us",
   comingSoon: "coming soon",
