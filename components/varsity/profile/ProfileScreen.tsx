@@ -6,8 +6,10 @@
   • Identity: the SAME name as the normal app profile (profiles.data.name), the
     year on the team (Freshman/Sophomore/…), and height/weight — all editable.
   • Current status: tap to change (Active / Light training / Injured / Away).
-  • Statistics: this-month sessions + metres and an 8-week "metres rowed" graph,
-    all computed from the athlete's OWN logs (lib/varsity/logStore).
+  • Statistics: pick a WINDOW (week / 2 weeks / month / 3 months) and a MEASURE
+    (metres / hours / consistency); three numbers and a graph follow both, and
+    tapping through opens the Training mix. All from the athlete OWN logs
+    (lib/varsity/logStore), with the coach plan read only to name intensities.
   • A button into the Calendar tab — the day-by-day training history lives there.
   • Personal bests: 2K / 5K / 6K / 30′ r20 — editable.
   • Send to coaches abroad: a shareable link (copy / share sheet).
@@ -30,7 +32,7 @@ import {
   type Units,
 } from "@/lib/varsity/units";
 import { fetchLogsInRange, type LogEntry } from "@/lib/varsity/logStore";
-import { toISO } from "@/lib/varsity/coachPlan";
+import { toISO, type SessionMap } from "@/lib/varsity/coachPlan";
 import {
   fetchAthleteProfile,
   saveAthleteProfile,
@@ -47,8 +49,16 @@ import {
   metricByKey,
   nextMetric,
   summarise,
+  statRanges,
+  rangeByKey,
+  defaultStatRange,
   type StatMetric,
+  type StatRange,
+  type Bucket,
 } from "@/lib/varsity/athleteStats";
+import { trainingMix } from "@/lib/varsity/trainingMix";
+import TrainingMixSheet from "@/components/varsity/profile/TrainingMixSheet";
+import { fetchPlan } from "@/lib/varsity/planStore";
 import {
   IconPencil,
   IconChevronLeft,
@@ -100,7 +110,11 @@ function mondayOf(d: Date): Date {
 const inputCls =
   "w-full rounded-xl border border-border bg-surface-2 px-3.5 py-3 text-base text-text outline-none focus:border-primary placeholder:text-muted";
 
-const WEEKS = 8;
+/*
+  How far back the LOGS are fetched — always the longest range the chips offer,
+  once, so changing the range is instant and never returns to the database.
+*/
+const LOAD_DAYS = Math.max(...statRanges.map((r) => r.days));
 
 /* ─────────────────────────  edit identity sheet  ───────────────────────── */
 function EditIdentitySheet({
@@ -329,18 +343,23 @@ function PrSheet({
   );
 }
 
-/* ─────────────────────────  weekly line graph  ─────────────────────────
-   Whatever the athlete picked with the arrows in its header: metres, hours,
-   sessions or days. The three numbers above it come from the same buckets. */
+/* ─────────────────────────  the line graph  ─────────────────────────
+   Whatever the athlete picked with the arrows in its header — metres, hours or
+   consistency — over whichever window the chips above it are set to. One point
+   per bucket: a day each for the short ranges, a week each for the long ones.
+   The three numbers above it come from the same buckets. */
 function WeeklyGraph({
-  weeks,
+  points,
   metric,
+  range,
   onSwap,
 }: {
-  weeks: { label: string; value: number; latest: boolean }[];
+  points: { label: string; value: number; latest: boolean }[];
   metric: StatMetric;
+  range: StatRange;
   onSwap: (dir: 1 | -1) => void;
 }) {
+  const weeks = points;
   const max = Math.max(1, ...weeks.map((w) => w.value));
   const anyData = weeks.some((w) => w.value > 0);
 
@@ -387,7 +406,7 @@ function WeeklyGraph({
             <IconChevronRight size={15} />
           </button>
         </div>
-        <span className="flex-shrink-0 text-[11px] text-muted">last {WEEKS} weeks</span>
+        <span className="flex-shrink-0 text-[11px] text-muted">{range.label.toLowerCase()}</span>
       </div>
 
       {anyData ? (
@@ -424,12 +443,19 @@ function WeeklyGraph({
               />
             ))}
           </svg>
+          {/* Axis labels. Past about ten of them the numbers run into each
+              other at this size, so every other one is dropped — the shape is
+              what's being read, not the exact date under each dot. */}
           <div className="mt-1 flex">
-            {weeks.map((w, i) => (
-              <div key={i} className="flex-1 text-center text-[7px] text-muted">
-                {w.latest ? "This wk" : w.label}
-              </div>
-            ))}
+            {weeks.map((w, i) => {
+              const crowded = weeks.length > 10;
+              const show = w.latest || !crowded || i % 2 === weeks.length % 2;
+              return (
+                <div key={i} className="flex-1 text-center text-[7px] text-muted">
+                  {w.latest ? (range.bucket === "day" ? "Today" : "This wk") : show ? w.label : ""}
+                </div>
+              );
+            })}
           </div>
         </>
       ) : (
@@ -455,6 +481,13 @@ export default function ProfileScreen() {
   const [classYear, setClassYear] = useState("");
   const [profile, setProfile] = useState<VarsityAthleteProfile | null>(null);
   const [logs, setLogs] = useState<LogEntry[]>([]);
+  // The chosen window. Kept in the screen, not on the record: it's a question
+  // you ask ("how was last week?"), not a setting you configure once.
+  const [rangeKey, setRangeKey] = useState(defaultStatRange);
+  const range: StatRange = rangeByKey(rangeKey);
+  // The coach's sessions, only so the Training mix can name intensities.
+  const [planSessions, setPlanSessions] = useState<SessionMap>({});
+  const [mixOpen, setMixOpen] = useState(false);
 
   type Modal = "identity" | "status" | "prs" | null;
   const [modal, setModal] = useState<Modal>(null);
@@ -475,7 +508,7 @@ export default function ProfileScreen() {
     };
   }, [userId]);
 
-  // Logs across the last 8 weeks — powers the graph + this-month stats.
+  // Every log the longest range could ask for, fetched once.
   useEffect(() => {
     let active = true;
     (async () => {
@@ -483,15 +516,27 @@ export default function ProfileScreen() {
         setLogs([]);
         return;
       }
-      const firstMonday = mondayOf(now);
-      firstMonday.setDate(firstMonday.getDate() - (WEEKS - 1) * 7);
-      const rows = await fetchLogsInRange(userId, toISO(firstMonday), toISO(now));
+      const first = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (LOAD_DAYS - 1));
+      const rows = await fetchLogsInRange(userId, toISO(first), toISO(now));
       if (active) setLogs(rows);
     })();
     return () => {
       active = false;
     };
   }, [userId, now]);
+
+  /*
+    The coach's plan, only so a logged session can be told apart as UT2 / UT1 /
+    hard in the Training mix. Loaded once — the plan is shared and doesn't
+    change while someone reads their own profile.
+  */
+  useEffect(() => {
+    let active = true;
+    fetchPlan().then((p) => active && setPlanSessions(p.sessions));
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const patchProfile = (patch: Partial<VarsityAthleteProfile>) => {
     setProfile((prev) => {
@@ -503,29 +548,67 @@ export default function ProfileScreen() {
   };
 
   /*
-    The last 8 Mon–Sun weeks, each holding its own logs. Bucketing the LOGS
-    rather than a running total is what lets the chosen measure do its own sum —
-    switching the graph to hours is instant and never returns to the database.
+    THE BUCKETS THE GRAPH PLOTS, for whichever range is chosen.
+
+    A short range is read day by day, a long one week by week (the range's own
+    data says which). Weekly buckets start on Mondays so a "week" means the same
+    thing here as it does on the coach's plan; the last one is short whenever
+    today is mid-week, and NO bucket ever reaches past today — an unfinished
+    week judged on days that haven't happened would report everyone as slacking.
+
+    Bucketing the LOGS rather than a running total is what lets the chosen
+    measure do its own sum: switching to hours, or to a different range, never
+    returns to the database.
   */
-  const weekBuckets = useMemo(() => {
-    const thisMonday = mondayOf(now);
-    const buckets = Array.from({ length: WEEKS }, (_, i) => {
-      const start = new Date(thisMonday);
-      start.setDate(thisMonday.getDate() - (WEEKS - 1 - i) * 7);
+  const buckets = useMemo<Bucket[]>(() => {
+    const todayIso = toISO(now);
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    const starts: Date[] = [];
+    if (range.bucket === "day") {
+      for (let i = range.days - 1; i >= 0; i--) {
+        starts.push(new Date(today.getFullYear(), today.getMonth(), today.getDate() - i));
+      }
+    } else {
+      // Whole Mon–Sun weeks, ending with the one containing today.
+      const thisMonday = mondayOf(now);
+      const count = Math.ceil(range.days / 7);
+      for (let i = count - 1; i >= 0; i--) {
+        const s = new Date(thisMonday);
+        s.setDate(thisMonday.getDate() - i * 7);
+        starts.push(s);
+      }
+    }
+
+    const made: Bucket[] = starts.map((start, i) => {
+      const last = new Date(start);
+      if (range.bucket === "week") last.setDate(start.getDate() + 6);
+      const endIso = toISO(last > today ? today : last);
       return {
-        startIso: toISO(start),
-        endIso: toISO(new Date(start.getFullYear(), start.getMonth(), start.getDate() + 6)),
-        label: `${start.getMonth() + 1}/${start.getDate()}`,
-        logs: [] as LogEntry[],
-        latest: i === WEEKS - 1,
+        label:
+          range.bucket === "day"
+            ? `${start.getDate()}`
+            : `${start.getMonth() + 1}/${start.getDate()}`,
+        span: { startIso: toISO(start), endIso },
+        logs: [],
+        latest: i === starts.length - 1,
       };
     });
+
     for (const l of logs) {
-      const b = buckets.find((bk) => l.logDate >= bk.startIso && l.logDate <= bk.endIso);
+      if (l.logDate > todayIso) continue;
+      const b = made.find((bk) => l.logDate >= bk.span.startIso && l.logDate <= bk.span.endIso);
       if (b) b.logs.push(l);
     }
-    return buckets;
-  }, [logs, now]);
+    return made;
+  }, [logs, now, range]);
+
+  /* What the range actually contained, kind by kind — the window behind the
+     numbers. Computed here so the sheet and the graph can never disagree. */
+  const mix = useMemo(
+    () => trainingMix(buckets.flatMap((b) => b.logs), planSessions),
+    [buckets, planSessions],
+  );
 
   if (!profile) {
     return (
@@ -561,18 +644,18 @@ export default function ProfileScreen() {
   };
 
   /*
-    One measure for the whole Statistics block: the graph plots it week by week,
-    and the three numbers above are the same measure this week, on average, and
-    at its best. The choice is saved with the rest of the athlete's record.
+    One measure and one window for the whole block: the graph plots the measure
+    bucket by bucket, and the three numbers above are that same measure over the
+    whole range, per average bucket, and at its best. The MEASURE is saved with
+    the athlete record; the RANGE is not — see the state above.
   */
   const metric = metricByKey(profile.statMetric);
-  const weekValues = weekBuckets.map((b) => metric.weekly(b.logs));
-  const weeks = weekBuckets.map((b, i) => ({
+  const points = buckets.map((b) => ({
     label: b.label,
-    value: weekValues[i],
+    value: metric.value(b.logs, b.span),
     latest: b.latest,
   }));
-  const tiles = summarise(weekValues, metric, units);
+  const tiles = summarise(buckets, metric, units, range);
   const swapMetric = (dir: 1 | -1) =>
     patchProfile({ statMetric: nextMetric(metric.key, dir) });
 
@@ -654,6 +737,25 @@ export default function ProfileScreen() {
       <div className="px-4 pb-2 pt-5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
         Statistics
       </div>
+
+      {/* THE WINDOW. It sits above everything it changes — the three numbers and
+          the graph both answer for whichever range is lit. */}
+      <div className="mx-3.5 mb-1.5 flex gap-1 rounded-xl border border-border bg-surface p-1">
+        {statRanges.map((r) => (
+          <button
+            key={r.key}
+            type="button"
+            onClick={() => setRangeKey(r.key)}
+            aria-pressed={r.key === range.key}
+            className={`flex-1 rounded-lg py-1.5 text-[12px] font-semibold transition-colors ${
+              r.key === range.key ? "bg-text text-background" : "text-muted"
+            }`}
+          >
+            {r.label}
+          </button>
+        ))}
+      </div>
+
       <div className="mx-3.5 mb-1.5 grid grid-cols-3 gap-1.5">
         {tiles.map((t) => (
           <div
@@ -675,8 +777,44 @@ export default function ProfileScreen() {
         ))}
       </div>
       <div className="mx-3.5">
-        <WeeklyGraph weeks={weeks} metric={metric} onSwap={swapMetric} />
+        <WeeklyGraph points={points} metric={metric} range={range} onSwap={swapMetric} />
+
+        {/* The way into the detail. A row of its own rather than making the
+            graph card tappable — the card already has two arrow buttons in it,
+            and a tap target wrapped around them is a tap target you fight. */}
+        <button
+          type="button"
+          onClick={() => setMixOpen(true)}
+          className="mt-1.5 flex w-full items-center gap-3 rounded-2xl border border-border bg-surface px-3.5 py-3 text-left active:bg-surface-2"
+        >
+          <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[10px] border border-primary-line bg-primary-tint text-primary">
+            <IconActivity size={18} />
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="text-[13px] font-medium text-text">Training mix</div>
+            <div className="mt-0.5 truncate text-[11px] text-muted">
+              {mix.length
+                ? mix
+                    .slice(0, 3)
+                    .map((r) => `${r.label} ${r.share}%`)
+                    .join(" · ")
+                : "Nothing logged in this range yet"}
+            </div>
+          </div>
+          <span className="text-muted">
+            <IconChevronRight size={17} />
+          </span>
+        </button>
       </div>
+
+      {mixOpen && (
+        <TrainingMixSheet
+          rows={mix}
+          rangeLabel={range.label}
+          units={units}
+          onClose={() => setMixOpen(false)}
+        />
+      )}
 
       {/* ── Training calendar → its own tab ── */}
       <Link

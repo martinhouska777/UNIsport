@@ -1,65 +1,161 @@
 /*
-  WHAT THE VARSITY PROFILE GRAPH IS SHOWING.
+  WHAT THE VARSITY PROFILE'S STATISTICS BLOCK IS SHOWING.
   ---------------------------------------------------------------------------
-  One choice drives the whole Statistics block. The arrows sit on the graph, and
-  the three numbers above it are that same measure read three ways: this week,
-  the weekly average, and the best week in the window. Switch the graph to Time
-  and all three become hours — nothing to set up in Settings, and no two numbers
-  that disagree about what they're counting.
+  TWO choices drive the whole block, and everything in it follows both:
 
-  The list below is DATA (rule 7): adding an entry here adds it to the arrows,
-  with no change to the screen. Distances honour the athlete's km/mi setting,
+    the MEASURE — metres, hours, or consistency (the arrows on the graph)
+    the RANGE   — a week, two weeks, a month, three months (the chips above it)
+
+  The three numbers above the graph are that same measure read three ways over
+  that same range: the whole range, the average bucket, and the best bucket. So
+  no two numbers on the screen can disagree about what they are counting.
+
+  Both lists below are DATA (rule 7): adding an entry adds it to the screen with
+  no change to the screen's code. Distances honour the athlete's km/mi setting,
   because everything is stored metric and only formatted on the way out.
+
+  A NOTE ON "A BUCKET". A short range is read day by day and a long one week by
+  week — eight dots is a shape, sixty is a smear, and one is not a graph at all.
+  Which one a range uses is part of the range's own data.
 */
 import type { LogEntry } from "@/lib/varsity/logStore";
 import { formatDistance, formatDuration, type Units } from "@/lib/varsity/units";
 import { rowingCategories } from "@/lib/varsity/athleteProfile";
 
+/* ── The window being looked at ─────────────────────────────────────────── */
+
+/** An inclusive stretch of days, as ISO yyyy-mm-dd — a bucket, or the range. */
+export type Span = { startIso: string; endIso: string };
+
+export type StatRange = {
+  key: string;
+  label: string; // what the chip says
+  days: number; // how far back it reaches, today included
+  bucket: "day" | "week";
+};
+
+export const statRanges: StatRange[] = [
+  { key: "week", label: "Week", days: 7, bucket: "day" },
+  { key: "2weeks", label: "2 weeks", days: 14, bucket: "day" },
+  { key: "month", label: "Month", days: 28, bucket: "week" },
+  { key: "3months", label: "3 months", days: 84, bucket: "week" },
+];
+
+export const defaultStatRange = statRanges[1].key;
+
+export const rangeByKey = (key: string): StatRange =>
+  statRanges.find((r) => r.key === key) ?? statRanges[1];
+
+/** "day" / "week", for tile captions like "Best week". */
+export const bucketWord = (r: StatRange) => (r.bucket === "day" ? "day" : "week");
+
+/* ── Day arithmetic on ISO strings ──────────────────────────────────────── */
+
+const asDate = (iso: string) => {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(y, m - 1, d);
+};
+
+/**
+ * Days in a span that a squad is expected to train — every day except Sunday,
+ * the same rule the Team screen's consistency uses (lib/varsity/teamTraining).
+ * Spans are already clamped to today, so an unfinished week is judged on the
+ * days that have actually happened rather than the ones still to come.
+ */
+function expectedDays(span: Span): number {
+  let n = 0;
+  const end = asDate(span.endIso);
+  for (const d = asDate(span.startIso); d <= end; d.setDate(d.getDate() + 1)) {
+    if (d.getDay() !== 0) n++;
+  }
+  return n;
+}
+
+/** Sunday doesn't count as a training day, so it can't count as one trained. */
+const trainedDays = (logs: LogEntry[]) =>
+  new Set(logs.filter((l) => asDate(l.logDate).getDay() !== 0).map((l) => l.logDate)).size;
+
+/* ── The measures ───────────────────────────────────────────────────────── */
+
 export type StatMetric = {
   key: string;
   label: string; // the graph's title, e.g. "Metres rowed"
   empty: string; // what to say when there's nothing logged yet
-  // One week's worth of logs → the number this metric plots.
-  weekly: (logs: LogEntry[]) => number;
+  /*
+    The measure over ONE span — used for a single bucket AND for the whole
+    range. One function for both is what keeps the total honest: a percentage
+    is recomputed over the range rather than summed, and a distance adds up the
+    same way whichever window you ask about.
+  */
+  value: (logs: LogEntry[], span: Span) => number;
   format: (value: number, units: Units) => string;
+  /** Caption on the first tile. "Total" doesn't fit a percentage. */
+  totalLabel?: string;
+  /*
+    A measure that the default three numbers don't suit may write its own. Only
+    consistency does: averaging it over daily buckets is nonsense, because a
+    single day is either 0% or 100% and "best day: 100%" says nothing at all.
+  */
+  tiles?: (buckets: Bucket[], range: StatRange) => Tile[];
 };
 
-// Counts read better without a trailing ".0", but an average of 4.5 sessions a
-// week is worth seeing.
-const count = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(1));
+export type Tile = { label: string; sub: string; value: string };
+
 const sum = (ns: number[]) => ns.reduce((a, b) => a + b, 0);
 
 export const statMetrics: StatMetric[] = [
   {
     key: "distance",
     label: "Metres rowed",
-    empty: "Log some erg or water sessions and your weekly metres will chart here.",
+    empty: "Log some erg or water sessions and your metres will chart here.",
     // Only what was actually rowed — a lift or a run isn't metres on the water.
-    weekly: (logs) =>
-      sum(logs.map((l) => (rowingCategories.has(l.category ?? "") ? l.metres ?? 0 : 0))),
+    value: (logs) =>
+      sum(logs.map((l) => (rowingCategories.has(l.category ?? "") ? (l.metres ?? 0) : 0))),
     format: (v, units) => formatDistance(v, units.distance),
   },
   {
     key: "time",
     label: "Time trained",
-    empty: "Log a session with its length and your weekly hours will chart here.",
-    weekly: (logs) => sum(logs.map((l) => l.minutes ?? 0)),
+    empty: "Log a session with its length and your hours will chart here.",
+    value: (logs) => sum(logs.map((l) => l.minutes ?? 0)),
     format: (v) => formatDuration(Math.round(v)),
   },
   {
-    key: "sessions",
-    label: "Sessions",
-    empty: "Log a session and your weekly count will chart here.",
-    weekly: (logs) => logs.length,
-    format: count,
-  },
-  {
-    key: "days",
-    label: "Days trained",
-    empty: "Log a session and the days you train will chart here.",
-    // Days, not sessions, so a double day doesn't flatter the number.
-    weekly: (logs) => new Set(logs.map((l) => l.logDate)).size,
-    format: count,
+    /*
+      CONSISTENCY, not "days trained". The raw count of days rewards a long
+      window and punishes a short one, so it could never be compared across the
+      ranges above; a share of the days you were meant to train can. It is also
+      the number the Team screen already grades a squad on, so an athlete reads
+      the same word about themselves that their coach reads about everyone.
+    */
+    key: "consistency",
+    label: "Consistency",
+    empty: "Log a session and your consistency will chart here.",
+    value: (logs, span) => {
+      const expected = expectedDays(span);
+      if (!expected) return 0;
+      return Math.min(100, Math.round((trainedDays(logs) / expected) * 100));
+    },
+    format: (v) => `${Math.round(v)}%`,
+    totalLabel: "Overall",
+    /*
+      The share, then the two counts it is made of — so the percentage always
+      has its working shown, and a bad week reads as "3 missed" rather than an
+      abstract 74%.
+    */
+    tiles: (buckets, range) => {
+      const whole = wholeSpan(buckets);
+      const all = buckets.flatMap((b) => b.logs);
+      const expected = expectedDays(whole);
+      const trained = Math.min(trainedDays(all), expected);
+      const pct = expected ? Math.min(100, Math.round((trained / expected) * 100)) : 0;
+      const sub = range.label.toLowerCase();
+      return [
+        { label: "Overall", sub, value: `${pct}%` },
+        { label: "Trained", sub: expected ? `of ${expected} days` : "no days yet", value: `${trained}` },
+        { label: "Missed", sub, value: `${Math.max(0, expected - trained)}` },
+      ];
+    },
   },
 ];
 
@@ -75,35 +171,59 @@ export function nextMetric(key: string, dir: 1 | -1): string {
   return statMetrics[(((from + dir) % n) + n) % n].key;
 }
 
+/* ── The three numbers above the graph ──────────────────────────────────── */
+
+export type Bucket = { label: string; span: Span; logs: LogEntry[]; latest: boolean };
+
+/** The whole range as one span — first bucket's start to the last one's end. */
+const wholeSpan = (buckets: Bucket[]): Span => ({
+  startIso: buckets[0]?.span.startIso ?? "",
+  endIso: buckets[buckets.length - 1]?.span.endIso ?? "",
+});
+
 /*
-  The three numbers above the graph, all from the same weekly buckets the graph
-  plots. The average deliberately starts at the first week with anything logged:
-  padding it with the empty weeks before someone joined would just tell them
-  they train half as much as they do.
+  All three come from the same buckets the graph plots, over the same range.
+
+  The average deliberately starts at the first bucket with anything in it:
+  padding it with the empty weeks before someone joined the squad would just
+  tell them they train half as much as they do.
 */
 export function summarise(
-  weekValues: number[],
+  buckets: Bucket[],
   metric: StatMetric,
   units: Units,
-): { label: string; sub: string; value: string }[] {
-  const firstActive = weekValues.findIndex((v) => v > 0);
-  const counted = firstActive < 0 ? [] : weekValues.slice(firstActive);
+  range: StatRange,
+): Tile[] {
+  if (metric.tiles) return metric.tiles(buckets, range);
+
+  const values = buckets.map((b) => metric.value(b.logs, b.span));
+  const word = bucketWord(range);
+
+  const firstActive = values.findIndex((v) => v > 0);
+  const counted = firstActive < 0 ? [] : values.slice(firstActive);
   const average = counted.length ? sum(counted) / counted.length : 0;
+
+  // The range read as ONE span, so a percentage is recomputed rather than
+  // averaged and a distance is the honest total.
+  const total = buckets.length
+    ? metric.value(buckets.flatMap((b) => b.logs), wholeSpan(buckets))
+    : 0;
+
   return [
     {
-      label: "This week",
-      sub: "so far",
-      value: metric.format(weekValues[weekValues.length - 1] ?? 0, units),
+      label: metric.totalLabel ?? "Total",
+      sub: range.label.toLowerCase(),
+      value: metric.format(total, units),
     },
     {
-      label: "Weekly avg",
-      sub: counted.length ? `over ${counted.length} wk` : "no data yet",
+      label: `Avg ${word}`,
+      sub: counted.length ? `over ${counted.length} ${word === "day" ? "d" : "wk"}` : "no data yet",
       value: metric.format(average, units),
     },
     {
-      label: "Best week",
-      sub: "last 8 wks",
-      value: metric.format(Math.max(0, ...weekValues), units),
+      label: `Best ${word}`,
+      sub: range.label.toLowerCase(),
+      value: metric.format(Math.max(0, ...values), units),
     },
   ];
 }
