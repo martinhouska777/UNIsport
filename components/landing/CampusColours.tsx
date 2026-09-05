@@ -236,7 +236,7 @@ export default function CampusColours({
       >
         <CloserSplit aside={aside} accent="accent">
         {/* ── The words ── */}
-        <div className={`lc-words mb-6 max-w-[760px] text-center lg:mb-11 ${wordsPre ? "lc-pre" : ""}`}>
+        <div className={`lc-words mb-6 max-w-[760px] text-center lg:mb-9 ${wordsPre ? "lc-pre" : ""}`}>
           {/* No lead-in over this block since 2026-09-04 (the owner: discard the
               sentence above the headline), exactly as Blade Lock. An empty <p>
               would still hold a line of height, so it only exists when there
@@ -282,13 +282,23 @@ export default function CampusColours({
             was simply cut off — a measured 139px gone at 1440x620 (owner,
             2026-09-03). Blade Lock had a fit routine for this and this piece
             had none. So above xl the phone is capped by what is LEFT of the
-            screen: 100svh less that 356px of words, dots and padding, divided
-            by its own 1480/900 aspect (x0.608 = width). At a normal window the
-            min() picks 270 and nothing changes. */}
+            screen: 100svh less that reserve of words, dots and padding, divided
+            by its own 1480/900 aspect (x0.608 = width).
+
+            THE PHONE IS THE PIECE, NOT THE HEADLINE (owner, 2026-09-04: the
+            headline was too big for the phone beside it, "at je to vic v
+            pomeru s ostatnim"). So the headline's ceiling went 60px -> 44px,
+            the gap under the words lg:mb-11 -> lg:mb-9, and the two dozen
+            pixels that frees go to the phone: 270 -> 300 at lg, and above xl
+            310 against a reserve of 344. At 1900x860 that is a 310x554 phone
+            with ~50px of air above the headline and below the dots; measured
+            fitting at 1536x864, 1440x900 and 1280x800 too. (1440x620 still
+            overflows by 37px — it did before this change by exactly the same
+            37px, so it is the older, separate problem.) */}
         <div className="flex w-full flex-col items-center justify-center gap-5 lg:flex-row lg:gap-[60px]">
           <Phone
             ref={phoneEl}
-            className={`lc-phone relative z-[3] order-2 w-[min(270px,52vw)] flex-none lg:order-1 lg:w-[300px] xl:w-[min(330px,calc((100svh_-_330px)*0.608))] ${
+            className={`lc-phone relative z-[3] order-2 w-[min(270px,52vw)] flex-none lg:order-1 lg:w-[300px] xl:w-[min(310px,calc((100svh_-_344px)*0.608))] ${
               phone === "hide" ? "lc-hide" : phone === "pre" ? "lc-pre" : ""
             }`}
             data-closer-phone="campus"

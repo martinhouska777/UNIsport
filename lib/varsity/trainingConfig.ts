@@ -197,6 +197,26 @@ const blank: TrainingConfig = {
   times: { AM: "7:00 AM", PM: "4:30 PM" },
 };
 
+/* ── The colours a coach may pick from ─────────────────────────────────────
+   Content colours, so they live in data (rule 1's exception) and are applied
+   via inline style. Theme tokens first, because those are the ones that follow
+   the university's own palette; the fixed hexes exist because a plan needs more
+   distinguishable colours than a theme defines. */
+export const paletteColors: string[] = [
+  "var(--success)",
+  "var(--danger)",
+  "var(--accent)",
+  "var(--muted)",
+  "#4a90a4",
+  "#60a5fa",
+  "#c084fc",
+  "#ec4899",
+  "#f59e0b",
+  "#eab308",
+  "#14b8a6",
+  "#166534",
+];
+
 export type PresetEntry = { key: string; label: string; sub: string; build: () => TrainingConfig };
 
 export const presets: PresetEntry[] = [
