@@ -697,15 +697,15 @@
 }
 
 /*
-  THE HAND-OVER to the story. --l-out runs 0 → 1 as the intro is scrolled by
-  its own height (components/landing/HeroFade.tsx): the intro fades and lags
-  behind the page, so the story's first stage rises OVER it rather than simply
-  replacing it. The cue goes first — it has done its job by then.
+  THE HAND-OVER to the story. The intro used to fade out and lag behind the
+  page as it was scrolled, so the story's first stage rose OVER it. On a phone
+  the owner read that as the page bleeding into itself — the top going dark
+  while the next section arrived early (2026-09-05) — and asked for it to be
+  static. The intro now simply scrolls off, at full strength, like any other
+  section; no rule here at all. The wrapper (components/landing/HeroFade.tsx)
+  stays because the same component still tells the top bar when the intro's
+  big wordmark has left the screen (data-hero-mark).
 */
-.l-hero-fade {
-  opacity: calc(1 - var(--l-out, 0));
-  transform: translate3d(0, calc(var(--l-out, 0) * 70px), 0);
-}
 
 /*
   THE INTRO'S TWO BACKDROP PHONES (components/landing/HeroPhones.tsx).
@@ -804,8 +804,6 @@
   /* Straight to the end state: in place, and the glow at full strength. */
   .l-hero-rise { animation: none; }
   .l-hero-glow { animation: none; opacity: 0.36; }
-  .l-hero-fade { opacity: 1; transform: none; }
-  #top .l-cue { opacity: 1; }
   .l-nav-mark { transition: none; }
 }
 

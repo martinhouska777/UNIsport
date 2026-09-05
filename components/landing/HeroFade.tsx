@@ -3,22 +3,22 @@
 import { useEffect, useRef, type ReactNode } from "react";
 
 /*
-  THE HAND-OVER. The intro used to simply scroll off and the first stage of the
-  story was suddenly there — the owner's "you just land there".
+  THE INTRO'S WORDMARK WATCH.
 
-  So the intro now LEAVES. As you scroll it fades and lags a little behind the
-  page, and the story's first stage rises over it. Two numbers, both written
-  onto the DOM and spent in CSS (app/globals.css, the .l-hero-fade rules):
+  This used to also fade the intro out and lag it behind the page as you
+  scrolled, so the story's first stage rose over it. On a phone the owner read
+  that as the page bleeding into itself — the top going dark while the next
+  section arrived early (2026-09-05) — so the intro is STATIC now: it scrolls
+  off at full strength, like any other section.
 
-    --l-out        0 at the top of the page → 1 once the intro has been
-                   scrolled by its own height. Drives the fade and the lag.
+  What is left is one measurement, written onto the DOM and spent in CSS:
+
     data-hero-mark on <html>: "here" while the intro's big wordmark is on
                    screen, "gone" after. The top bar's small wordmark is drawn
                    only when it is "gone" — one mark at a time.
 
-  Measured on scroll through one rAF, like StickyBar; nothing re-renders.
-  Reduced motion is handled in CSS (the fade is switched off), but the
-  measurement still runs — the bar's wordmark depends on it.
+  Measured on scroll through one rAF, like StickyBar; nothing re-renders, and
+  nothing here moves — no motion to switch off for reduced motion.
 */
 export default function HeroFade({ children }: { children: ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -32,7 +32,6 @@ export default function HeroFade({ children }: { children: ReactNode }) {
       raf = 0;
       const span = Math.max(node.offsetHeight, 1);
       const p = Math.min(Math.max(window.scrollY / span, 0), 1);
-      node.style.setProperty("--l-out", p.toFixed(3));
       // Just over half way out: by then the big mark has left the screen.
       root.dataset.heroMark = p > 0.55 ? "gone" : "here";
     };
