@@ -16,7 +16,7 @@ import { shotSrc, usePhoneMode } from "@/components/landing/PhoneMode";
 import CloserSplit from "@/components/landing/CloserSplit";
 import { useCloserGate } from "@/components/landing/useCloserGate";
 import type { CloserHandle } from "@/components/landing/closer";
-import { closers } from "@/lib/landingCopy";
+import { closers, mailtoHref } from "@/lib/landingCopy";
 import { schools, rgba, SCHOOL_CYCLE_MS } from "@/lib/landingSchools";
 
 /*
@@ -236,7 +236,13 @@ export default function CampusColours({
         <CloserSplit aside={aside} accent="accent">
         {/* ── The words ── */}
         <div className={`lc-words mb-6 max-w-[760px] text-center lg:mb-11 ${wordsPre ? "lc-pre" : ""}`}>
-          <p className="mb-2.5 font-display text-[clamp(16px,2vw,20px)] text-l-text-2">{copy.leadIn}</p>
+          {/* No lead-in over this block since 2026-09-04 (the owner: discard the
+              sentence above the headline), exactly as Blade Lock. An empty <p>
+              would still hold a line of height, so it only exists when there
+              are words for it. */}
+          {copy.leadIn && (
+            <p className="mb-2.5 font-display text-[clamp(16px,2vw,20px)] text-l-text-2">{copy.leadIn}</p>
+          )}
           <h2 className="font-display text-[clamp(36px,4.6vw,60px)] font-normal leading-[1.1] tracking-tight text-balance text-l-text">
             {copy.headline}{" "}
             <em
@@ -246,8 +252,21 @@ export default function CampusColours({
               {copy.headlineEm}
             </em>
           </h2>
+          {/* The sub ends on the one thing you can press in the student story:
+              "Bring it to yours next." opens a mail to the owner (the same door
+              the Coach's Console gives a coach). It wears the CURRENT school's
+              colour, so it is visibly not body text and it turns over with the
+              rest of the piece — content colour from lib/landingSchools, rule
+              1's exception. */}
           <p className="mx-auto mt-3.5 max-w-[52ch] text-[clamp(15px,1.6vw,17px)] leading-[1.6] text-pretty text-l-text-2">
-            {copy.sub}
+            {copy.sub}{" "}
+            <a
+              href={mailtoHref(copy.mailSubject, copy.mailBody)}
+              className="tap44 font-medium underline-offset-4 transition-colors duration-[600ms] ease-in-out hover:underline focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-l-text motion-reduce:transition-none"
+              style={{ color: s.ink }}
+            >
+              {copy.cta}
+            </a>
           </p>
         </div>
 

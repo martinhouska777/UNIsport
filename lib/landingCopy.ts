@@ -619,15 +619,28 @@ export const varsityStory: Beat[] = [
 */
 
 export const closers = {
+  /* REWRITTEN BY THE OWNER, 2026-09-04: "discard the sentence above your
+     campus your colors, and write under it: the app is customized to your
+     university gyms and colours, bring it to yours next — and make it a
+     different colour so u can tap it and it will go to write an email to me".
+
+     - THE LEAD-IN IS GONE, like Blade Lock's: no hanging dash over the block,
+       the headline opens the piece. Kept as "" rather than deleted so the two
+       closers keep the same shape; CampusColours skips the line when empty.
+     - The old sub is replaced, not extended. It said the same thing about the
+       colours in more words, and it ended on "Yours next." — which is now the
+       thing you press.
+     - "Bring it to yours next." is the CTA: the school's own colour, and it
+       opens a mail to the owner, the same door the Coach's Console offers a
+       coach. The student closer had nothing to press before this. */
   campus: {
-    leadIn: "One app per university —",
+    leadIn: "",
     headline: "Your campus,",
     headlineEm: "your colours.",
-    /* The design read "Same app. Eight campuses. Yours next." — but the app is
-       live at ONE university (the final CTA says so). The eight here show what
-       white-labelling looks like; they are not eight live campuses. The claim
-       is dropped rather than softened: "Same app. Yours next." */
-    sub: "Every gym on campus, in the colours of the university it belongs to. Same app. Yours next.",
+    sub: "The app is customized to your university, gyms and colours.",
+    cta: "Bring it to yours next.",
+    mailSubject: "Bring UNIsport to my university",
+    mailBody: "Hi Martin,\n\nI study at ______ and I would like to have UNIsport at my university.\n\n",
   },
   /* REWRITTEN BY THE OWNER, 2026-09-02: "Your crew, your blade. your colors
      instead of every crew one system on top and dont do the thing with the
