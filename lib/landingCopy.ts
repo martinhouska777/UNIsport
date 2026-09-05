@@ -1086,13 +1086,14 @@ export const coach = {
          old body, which named the parts of the title instead of the two things
          a coach actually does: connect the drive once, then tap a boat.
 
-         ONE THING TO CHECK BEFORE LAUNCH: this says OneDrive, and what is
-         built and working today is GOOGLE Drive (the team's Drive, OAuth
-         verified — see the crew-videos work). Either the copy is a word out or
-         the plan changed; the owner has been asked. */
+         IT SAYS JUST "YOUR DRIVE", DELIBERATELY. It was dictated as OneDrive;
+         what is built and working today is GOOGLE Drive. Asked which, the
+         owner's answer (2026-09-05) was neither: "Google Drive or video
+         storage, I don't know what other teams may have, we'll just write
+         drive." So the page names no vendor — a team reads its own. */
       head: "Upload footage of the boat.",
       body: [
-        { text: "Connect to your OneDrive where you store your rowing footage. Then tap a boat to upload a video from the session. " },
+        { text: "Connect to your drive where you store your rowing footage. Then tap a boat to upload a video from the session. " },
         { text: "It automatically renames itself according to the lineup and saves into the right date", bold: true },
         { text: ", so your athletes know right away which piece they are watching." },
       ],
