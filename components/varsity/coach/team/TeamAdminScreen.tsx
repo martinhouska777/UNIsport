@@ -43,7 +43,16 @@ import {
   type SquadMember,
   type VarsityRole,
 } from "@/lib/varsity/membership";
-import { IconBulb, IconCheck, IconChevronRight, IconCopy, IconSend, IconTrash, IconX } from "@/components/icons";
+import {
+  IconBulb,
+  IconCheck,
+  IconChevronRight,
+  IconCopy,
+  IconSend,
+  IconSettings,
+  IconTrash,
+  IconX,
+} from "@/components/icons";
 import { requestTour, resetTour } from "@/lib/tour";
 import { coachTour } from "@/lib/varsity/coachTour";
 import { useAppState } from "@/components/AppState";
@@ -426,7 +435,32 @@ export default function TeamAdminScreen({ membership }: { membership: Membership
         </ul>
       </Section>
 
-      {/* ── 4. Help ──
+      {/* ── 4. Training settings ──
+          How the plan builder is worded: the session types, the intensity
+          zones, the coach's own most-used workouts and the session times. Its
+          own screen, because it is a once-a-season setup rather than something
+          you touch while running the squad. Coach only — a captain never
+          builds training, and the database refuses them anyway. */}
+      {can.buildPlan(role) && (
+        <Section title="Training">
+          <Link
+            href="/varsity/coach/settings/training"
+            className="flex w-full items-center gap-3 rounded-xl border border-border bg-surface px-3.5 py-3 text-left"
+          >
+            <span className="text-muted">
+              <IconSettings size={18} />
+            </span>
+            <span className="flex-1 text-[13px] font-medium text-text">Training settings</span>
+            <IconChevronRight size={14} className="flex-shrink-0 text-muted" />
+          </Link>
+          <p className="mt-2 px-1 text-[11px] leading-relaxed text-muted">
+            Your session types, intensity zones, favourite workouts and session times — the words
+            the whole squad's plan is written in.
+          </p>
+        </Section>
+      )}
+
+      {/* ── 5. Help ──
           The console's walk again, on demand. Unlike the app's Settings this
           screen is INSIDE the shell the tour runs in, so the gate is already
           mounted and hears the request as an event (lib/tour.ts). It still
