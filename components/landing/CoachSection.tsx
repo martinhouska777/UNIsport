@@ -96,37 +96,21 @@ export default function CoachSection({ solo = false }: { solo?: boolean }) {
           ))}
         </div>
 
-        {/* ── The bridge back to the athlete story ── */}
-        <p className="mx-auto mt-[76px] max-w-[46ch] text-center font-display text-[clamp(22px,3.2vw,32px)] leading-[1.3] tracking-tight text-balance text-l-text">
-          {solo ? coach.bridgeSolo : coach.bridge}
-        </p>
-        <p className="mx-auto mt-3.5 max-w-[52ch] text-center text-[15px] leading-[1.65] text-l-text-2">
-          {coach.bridgeSub}
-        </p>
-
-        {/* ── Three plain facts ── */}
-        <div className="mt-14 grid grid-cols-1 gap-3.5 sm:grid-cols-3">
-          {coach.facts.map((f) => (
-            <div
-              key={f.title}
-              className="rounded-2xl border border-l-line bg-l-bg-elevated px-5 py-[22px] text-center"
-            >
-              <b className="block font-display text-[clamp(22px,2.6vw,28px)] font-normal tracking-tight text-balance text-l-text">
-                {f.title}
-              </b>
-              <span className="mt-[7px] block text-[13px] leading-[1.55] text-l-text-2">
-                {f.body}
-              </span>
-            </div>
-          ))}
-        </div>
-
-        {/* ── The coach's own way in ── */}
-        <div className="mt-12 flex flex-col items-center gap-3 text-center sm:flex-row sm:justify-center sm:gap-5">
-          <span className="font-display text-[clamp(20px,2.4vw,26px)] tracking-tight text-l-text-2">{coach.cta.lead}</span>
+        {/* ── The summary, and the coach's own way in ──
+            The owner, 2026-09-04: after the last screen, a summary and then the
+            way in. Nothing between them any more — the bridge line and the
+            three fact cards said the six steps over again before the only
+            button on the section. */}
+        <div className="mt-[76px] flex flex-col items-center gap-3.5 text-center">
+          <p className="mx-auto max-w-[46ch] font-display text-[clamp(22px,3.2vw,32px)] leading-[1.3] tracking-tight text-balance text-l-text">
+            {coach.summary}
+          </p>
+          <p className="mx-auto max-w-[52ch] text-[15px] leading-[1.65] text-l-text-2">
+            {coach.summarySub}
+          </p>
           <a
             href={mailtoHref(coach.cta.mailSubject, coach.cta.mailBody)}
-            className="inline-flex items-center gap-2 rounded-full bg-l-varsity px-6 py-3 text-[14px] font-semibold tracking-tight text-l-bg transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-l-text"
+            className="mt-3 inline-flex items-center gap-2 rounded-full bg-l-varsity px-7 py-4 text-[15px] font-semibold tracking-tight text-l-bg transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-l-text"
           >
             {coach.cta.label} →
           </a>

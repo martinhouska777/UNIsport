@@ -1078,25 +1078,33 @@ export const coach = {
     },
   ] as CoachStep[],
 
-  bridge: "Everything you publish here is the story the athletes just scrolled. The plan goes to their Home, their name into the boat, the note under their race countdown.",
-  /* On the Coach view there is no story above to point back to. */
-  bridgeSolo: "Everything you publish here lands on your athletes' phones. The plan goes to their Home, their name into the boat, the note under their race countdown.",
-  bridgeSub:
-    "One student who signs up brings one user. One coach brings the whole squad. That is why the console was built first, and why it is already working.",
+  /* THE FOOT OF THE SECTION, ON THE OWNER'S INSTRUCTION 2026-09-04: "cut the
+     bottom part from coaches console, after the last screen we should put
+     there some summary and then the bring it to your team".
 
-  facts: [
-    { title: "One plan, forty phones", body: "You publish once and every athlete's Home updates itself." },
-    { title: "Lineups the night before", body: "The boats are on every phone before anyone gets to the dock." },
-    { title: "No more spreadsheets", body: "The plan, the lineups and your notes all live in one place." },
-  ],
+     What was cut: the bridge line (plus its solo variant), the "one coach
+     brings the whole squad" line, and the three fact cards. Three blocks of
+     restatement stood between the last screen and the only button — the
+     bridge said again what the steps had just shown, and the facts said it a
+     third time in a grid.
+
+     What replaced them: ONE summary, then the door. The summary walks the six
+     steps in their own order (blocks, plan, lineups, videos, statistics,
+     notes) and ends where the coach door on the front page now ends — the
+     numbers staying with the program. Written by me to the owner's brief
+     ("some summary"), not dictated, so it is theirs to correct. */
+  summary: "One console for the whole season.",
+  summarySub:
+    "You build the block, publish the week, set the lineups, upload the videos, read the statistics and leave your notes. Everything you publish lands on your athletes' phones, and the numbers stay with the program.",
 
   /* The coach's own way in. There is no self-serve console yet — a coach gets
      it with their team, by asking — so this opens a mail with the subject
      already written. (2026-08-18 review: the section that the copy calls the
-     biggest lever ended with nothing to click.) */
+     biggest lever ended with nothing to click.) The label is the owner's own
+     2026-09-04 phrase, the coach's half of "Bring it to yours next." on the
+     student closer. */
   cta: {
-    lead: "Run a squad?",
-    label: "Get the console for your team",
+    label: "Bring it to your team",
     mailSubject: "The Coach's Console for my team",
     mailBody: "Hi Martin,\n\nI coach ______ at ______ and I'd like to run the squad on UNIsport.\n\n",
   },
