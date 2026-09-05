@@ -18,8 +18,10 @@ import { BLADE_PATH, OAR_ART, schools, rgba } from "@/lib/landingSchools";
   the varsity phone with EIGHT ROWING OARS fanned behind it on a slowly turning
   wheel, and the crew's name under it. Whichever blade is at the front is the
   crew showing — its colour runs through the headline, the phone's tab bar and
-  the label. A click on a blade turns the wheel to it and holds; it lets go
-  once the section has scrolled out of view.
+  the label. A tap on a blade turns the wheel to it and rests there a beat
+  (TAP_DWELL_MS), then the wheel carries on turning on its own — a tap is a
+  look at one crew, not a stop. (It used to hold until the section scrolled
+  away, which read as the animation having broken.)
 
   Inside the phone is the REAL Varsity Home, recoloured (and its header
   renamed) per school — the same captures the artifact's closer shows. That
@@ -58,6 +60,11 @@ import { BLADE_PATH, OAR_ART, schools, rgba } from "@/lib/landingSchools";
 */
 
 const PERIOD_MS = 2600;
+// How long the wheel rests on a blade you tapped before it carries on turning.
+// It used to rest FOREVER (until the section scrolled away), which read as the
+// animation having broken (owner, 2026-09-05: "why does it stop when I touch
+// it"). Now the tap is a look, not a stop.
+const TAP_DWELL_MS = 1500;
 const STEP = 45; // degrees between oars
 const RADIUS = 295;
 const STAGE_H = 580;
@@ -167,6 +174,12 @@ export default function BladeLock({
   const rot = useRef(0);
   const pinRot = useRef(0);
   const heldRef = useRef(managed); // the wheel holds until the flow lets go
+  // A hold that came from a TAP on a blade, as opposed to one the arrival /
+  // retract film asked for. Only a tap's hold expires on its own; the film's
+  // holds are the film's to release. `tapAt` is when the wheel came to rest on
+  // the tapped blade (0 = still gliding onto it).
+  const tapHold = useRef(false);
+  const tapAt = useRef(0);
   const activeRef = useRef(0);
   // the pose: 1 = fully parked behind the phone / fully in the small formation
   const park = useRef<Glide>({ from: managed ? 1 : 0, to: managed ? 1 : 0, t0: 0, ms: 0 });
@@ -247,6 +260,8 @@ export default function BladeLock({
     rot.current = 0;
     pinRot.current = 0;
     heldRef.current = managed;
+    tapHold.current = false;
+    tapAt.current = 0;
     setHeld(false);
     renderFrame();
   }, [managed, renderFrame]);
@@ -297,7 +312,8 @@ export default function BladeLock({
   }, [renderFrame]);
 
   /* The wheel. Turns one oar per PERIOD while free; eases onto the picked
-     oar while held. Only runs on screen and without reduced motion. */
+     oar while held, and a tap's hold expires after TAP_DWELL_MS so it turns
+     again. Only runs on screen and without reduced motion. */
   useEffect(() => {
     if (!inView || reduced) return;
     let raf = 0;
@@ -308,7 +324,20 @@ export default function BladeLock({
       if (heldRef.current) {
         const diff = pinRot.current - rot.current;
         if (Math.abs(diff) > 0.05) rot.current += diff * Math.min(1, dt * 0.005);
-        else rot.current = pinRot.current;
+        else {
+          rot.current = pinRot.current;
+          // Rested on a blade you tapped: mark when, and let go once the beat
+          // is up, so the wheel carries on instead of stopping for good.
+          if (tapHold.current) {
+            if (!tapAt.current) tapAt.current = t;
+            else if (t - tapAt.current >= TAP_DWELL_MS) {
+              tapHold.current = false;
+              tapAt.current = 0;
+              heldRef.current = false;
+              setHeld(false);
+            }
+          }
+        }
       } else {
         rot.current -= (dt * STEP) / PERIOD_MS;
       }
@@ -326,9 +355,14 @@ export default function BladeLock({
     heldRef.current = true;
     setHeld(true);
     if (reduced || !inView) {
+      // Nothing is turning anyway — land on it and stay.
       rot.current = pinRot.current;
       renderFrame();
+      return;
     }
+    // The wheel glides onto this blade, rests a beat, then turns on again.
+    tapHold.current = true;
+    tapAt.current = 0;
   };
 
   const setPose = (which: "park" | "form", to: number, ms: number) => {
@@ -350,6 +384,8 @@ export default function BladeLock({
       // The wheel is released the moment the spread BEGINS: the blades glide
       // out onto a wheel already turning, and arrive into motion.
       heldRef.current = false;
+      tapHold.current = false;
+      tapAt.current = 0;
       setPose("form", 0, 550);
       later(() => setLabelPre(false), 550); // the crew's name, once they are in place
     }, delay + 650);
@@ -396,6 +432,8 @@ export default function BladeLock({
         // needs a formation that stands where it was measured
         pinRot.current = rot.current;
         heldRef.current = true;
+        tapHold.current = false; // the film's hold, not a tap's — it does not expire
+        tapAt.current = 0;
         setPose("form", 1, 600); // gather off the arc into the formation…
         later(() => setPose("park", 1, 550), 650); // …and down behind the phone
         later(resolve, 1200);
