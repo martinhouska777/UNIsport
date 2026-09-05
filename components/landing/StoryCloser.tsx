@@ -153,6 +153,59 @@ export default function StoryCloser({ storyId, beats, accent, closer, closerId, 
 
     const storyPhoneRect = () => story.current?.phoneRect() ?? null;
 
+    /*
+      DRIVING THE PAGE WITHOUT FIGHTING THE READER.
+
+      Every driven move here (the flight, the flight back, the retract's little
+      glide) moves the page itself with window.scrollTo, once a frame. The
+      reader's own wheel was still scrolling the document underneath all that,
+      so the page went their way for one frame and was yanked back the next.
+      Measured on 2026-09-05, one 1.5s flight taken at a brisk scroll: ELEVEN
+      reversals and 4400px of snap-back, the page visibly sawing between two
+      positions. That is the owner's "sometimes it messes up when I scroll",
+      and it got worse the faster you scrolled — which is why it felt random.
+
+      Undoing a scroll is not the same as not scrolling. So a driven move now
+      SWALLOWS the input it is overriding: a non-passive wheel listener that
+      preventDefault()s the direction the move is already going. Nothing
+      scrolls, so nothing has to be scrolled back, and the move is exactly as
+      smooth as the easing that drives it.
+
+      The promise it keeps: push the OTHER way and the page is yours again,
+      instantly — that wheel is not swallowed, and it ends the drive. So do a
+      key, a touch drag and a pointer down (a nav link is a pointer down; see
+      the note on the flight below).
+    */
+    type Drive = { driving: () => boolean; release: () => void; off: () => void };
+    function driveLock(forward: boolean): Drive {
+      let driving = true;
+      const release = () => {
+        driving = false;
+      };
+      const onWheel = (ev: WheelEvent) => {
+        if (!driving) return;
+        // ctrl+wheel is a pinch-zoom on a trackpad, not a scroll. Never
+        // swallow it — hand the page back and let the reader zoom.
+        if (ev.ctrlKey) return release();
+        if (forward ? ev.deltaY < 0 : ev.deltaY > 0) return release();
+        ev.preventDefault();
+      };
+      window.addEventListener("wheel", onWheel, { passive: false });
+      window.addEventListener("touchmove", release, { passive: true });
+      window.addEventListener("keydown", release);
+      window.addEventListener("pointerdown", release);
+      return {
+        driving: () => driving,
+        release,
+        off: () => {
+          window.removeEventListener("wheel", onWheel);
+          window.removeEventListener("touchmove", release);
+          window.removeEventListener("keydown", release);
+          window.removeEventListener("pointerdown", release);
+        },
+      };
+    }
+
     /* ── the flight ─────────────────────────────────────────────────── */
     function runFlight(done: () => void) {
       const fl = flight.current, fp = flightPhone.current, fs = flightShots.current;
@@ -210,32 +263,19 @@ export default function StoryCloser({ storyId, beats, accent, closer, closerId, 
          the other way, the page is theirs again. */
       const scrollFrom = window.scrollY;
       const scrollTo = scrollFrom + sec!.getBoundingClientRect().top;
-      let driving = true;
-      const release = (ev?: Event) => {
-        if (ev && ev.type === "wheel" && (ev as WheelEvent).deltaY > 0) return;
-        driving = false;
-      };
-      window.addEventListener("wheel", release, { passive: true });
-      window.addEventListener("touchmove", release, { passive: true });
-      window.addEventListener("keydown", release);
-      // A CLICK ends the driving too — and a nav link is a click. React unmounts
-      // a route some hundreds of ms after the link is pressed, and until then
-      // this loop was still calling window.scrollTo: press "About" mid-flight
-      // and the page that opened scrolled itself to the bottom (owner,
-      // 2026-09-01 — "clicked back to homepage and I didn't see the phone
-      // screens"). Pointer down, hands off.
-      window.addEventListener("pointerdown", release);
-      const unlisten = () => {
-        window.removeEventListener("pointerdown", release);
-        window.removeEventListener("wheel", release);
-        window.removeEventListener("touchmove", release);
-        window.removeEventListener("keydown", release);
-      };
+      // Down the page. A CLICK ends the driving too — and a nav link is a
+      // click. React unmounts a route some hundreds of ms after the link is
+      // pressed, and until then this loop was still calling window.scrollTo:
+      // press "About" mid-flight and the page that opened scrolled itself to
+      // the bottom (owner, 2026-09-01 — "clicked back to homepage and I
+      // didn't see the phone screens"). Pointer down, hands off.
+      const drive = driveLock(true);
+      const unlisten = drive.off;
 
       let raf = 0;
       abort = (restore) => {
         cancelAnimationFrame(raf);
-        driving = false;
+        drive.release();
         unlisten();
         fl.style.display = "none";
         fl.style.transform = "";
@@ -253,7 +293,7 @@ export default function StoryCloser({ storyId, beats, accent, closer, closerId, 
         if (dead) return;
         const t = Math.min(1, (now - t0) / DUR);
         if (!jumped && t >= JUMP) jumped = true;
-        if (driving) window.scrollTo(0, jumped ? scrollTo : scrollFrom);
+        if (drive.driving()) window.scrollTo(0, jumped ? scrollTo : scrollFrom);
         const g = t < JUMP ? 0 : (t - JUMP) / (1 - JUMP);
         const ge = easeInOut(g);
         const px = A.x + (B.x - A.x) * ge;
@@ -269,7 +309,7 @@ export default function StoryCloser({ storyId, beats, accent, closer, closerId, 
           raf = requestAnimationFrame(step);
           return;
         }
-        if (driving) window.scrollTo(0, scrollTo); // exactly on the pin
+        if (drive.driving()) window.scrollTo(0, scrollTo); // exactly on the pin
         c!.arriveAfterFlight(); // theirs, exactly here, takes over
         fl.style.display = "none";
         fl.style.transform = "";
@@ -329,32 +369,16 @@ export default function StoryCloser({ storyId, beats, accent, closer, closerId, 
       const t0 = performance.now();
       let swapped = false;
       let jumped = false;
-      let driving = true;
-      const release = (ev?: Event) => {
-        if (ev && ev.type === "wheel" && (ev as WheelEvent).deltaY < 0) return;
-        driving = false;
-      };
-      window.addEventListener("wheel", release, { passive: true });
-      window.addEventListener("touchmove", release, { passive: true });
-      window.addEventListener("keydown", release);
-      // A CLICK ends the driving too — and a nav link is a click. React unmounts
-      // a route some hundreds of ms after the link is pressed, and until then
-      // this loop was still calling window.scrollTo: press "About" mid-flight
-      // and the page that opened scrolled itself to the bottom (owner,
-      // 2026-09-01 — "clicked back to homepage and I didn't see the phone
-      // screens"). Pointer down, hands off.
-      window.addEventListener("pointerdown", release);
-      const unlisten = () => {
-        window.removeEventListener("pointerdown", release);
-        window.removeEventListener("wheel", release);
-        window.removeEventListener("touchmove", release);
-        window.removeEventListener("keydown", release);
-      };
+      // Back UP the page this time, so it is the upward wheel that is
+      // swallowed and a downward one that hands the page back. A pointer down
+      // ends it too — a nav link is a pointer down (see the flight above).
+      const drive = driveLock(false);
+      const unlisten = drive.off;
 
       let raf = 0;
       abort = (restore) => {
         cancelAnimationFrame(raf);
-        driving = false;
+        drive.release();
         unlisten();
         fl.style.display = "none";
         fl.style.transform = "";
@@ -378,7 +402,7 @@ export default function StoryCloser({ storyId, beats, accent, closer, closerId, 
         if (dead) return;
         const t = Math.min(1, (now - t0) / DUR);
         if (!jumped && t >= JUMP) jumped = true;
-        if (driving) window.scrollTo(0, jumped ? scrollTo : scrollFrom);
+        if (drive.driving()) window.scrollTo(0, jumped ? scrollTo : scrollFrom);
         const g = t < JUMP ? 0 : (t - JUMP) / (1 - JUMP);
         const ge = easeInOut(g);
         const tr = jumped ? storyPhoneRect() : null;
@@ -398,7 +422,7 @@ export default function StoryCloser({ storyId, beats, accent, closer, closerId, 
           raf = requestAnimationFrame(step);
           return;
         }
-        if (driving) window.scrollTo(0, scrollTo);
+        if (drive.driving()) window.scrollTo(0, scrollTo);
         story.current?.setPhoneHidden(false); // theirs again, exactly here
         story.current?.setGone(false);
         fl.style.display = "none";
@@ -424,18 +448,9 @@ export default function StoryCloser({ storyId, beats, accent, closer, closerId, 
       const pinEnd = secDocTop + Math.max(0, sec!.offsetHeight - window.innerHeight);
       const yT = Math.max(secDocTop, Math.min(y0, pinEnd));
       const g0 = performance.now(), G = 240;
-      const rel = (ev?: Event) => {
-        if (ev && ev.type === "wheel" && (ev as WheelEvent).deltaY < 0) return;
-        holding = false;
-      };
-      window.addEventListener("wheel", rel, { passive: true });
-      window.addEventListener("touchmove", rel, { passive: true });
-      window.addEventListener("keydown", rel);
-      const unlisten = () => {
-        window.removeEventListener("wheel", rel);
-        window.removeEventListener("touchmove", rel);
-        window.removeEventListener("keydown", rel);
-      };
+      // The way back, so the upward wheel is the one this act swallows.
+      const drive = driveLock(false);
+      const unlisten = drive.off;
       // The first act counts as flight time (onWheelUp set `flying`), so it
       // has to be stoppable the same way — otherwise leaving during it strands
       // exactly what a stranded flight used to strand.
@@ -454,6 +469,10 @@ export default function StoryCloser({ storyId, beats, accent, closer, closerId, 
       };
       const hold = (now?: number) => {
         if (over || !holding || dead) return;
+        if (!drive.driving()) {
+          holding = false;
+          return;
+        }
         const g = Math.min(1, ((now || performance.now()) - g0) / G);
         const e = 1 - Math.pow(1 - g, 3);
         window.scrollTo(0, y0 + (yT - y0) * e);
@@ -462,9 +481,7 @@ export default function StoryCloser({ storyId, beats, accent, closer, closerId, 
       hold();
       c!.retract().then(() => {
         over = true;
-        window.removeEventListener("wheel", rel);
-        window.removeEventListener("touchmove", rel);
-        window.removeEventListener("keydown", rel);
+        unlisten();
         done();
       });
     }
