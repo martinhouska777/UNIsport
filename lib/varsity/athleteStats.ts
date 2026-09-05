@@ -4,7 +4,8 @@
   TWO choices drive the whole block, and everything in it follows both:
 
     the MEASURE — metres, hours, or consistency (the arrows on the graph)
-    the RANGE   — a week, two weeks, a month, three months (the chips above it)
+    the RANGE   — a week, two weeks, a month, three months (the button on its
+                  top right)
 
   The three numbers above the graph are that same measure read three ways over
   that same range: the whole range, the average bucket, and the best bucket. So
@@ -92,6 +93,12 @@ export type StatMetric = {
   /** Caption on the first tile. "Total" doesn't fit a percentage. */
   totalLabel?: string;
   /*
+    A fixed top for the graph's Y axis. Only a percentage has one: scaled to its
+    own best bucket, a steady 40% week would fill the card and read like a good
+    week. Everything else is scaled to what was actually done.
+  */
+  axisMax?: number;
+  /*
     A measure that the default three numbers don't suit may write its own. Only
     consistency does: averaging it over daily buckets is nonsense, because a
     single day is either 0% or 100% and "best day: 100%" says nothing at all.
@@ -138,6 +145,7 @@ export const statMetrics: StatMetric[] = [
     },
     format: (v) => `${Math.round(v)}%`,
     totalLabel: "Overall",
+    axisMax: 100,
     /*
       The share, then the two counts it is made of — so the percentage always
       has its working shown, and a bad week reads as "3 missed" rather than an

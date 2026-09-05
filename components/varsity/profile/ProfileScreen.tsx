@@ -65,6 +65,7 @@ import {
   IconAnchor,
   IconActivity,
   IconChevronRight,
+  IconChevronDown,
   IconCalendar,
   IconGlobe,
   IconCopy,
@@ -109,6 +110,23 @@ function mondayOf(d: Date): Date {
 
 const inputCls =
   "w-full rounded-xl border border-border bg-surface-2 px-3.5 py-3 text-base text-text outline-none focus:border-primary placeholder:text-muted";
+
+/*
+  Round a graph's top gridline UP to a number someone would actually say — 1, 2
+  or 5 times a power of ten. An axis that reads "15.7 km" at the top is a number
+  nobody chose; "20 km" is a scale.
+*/
+function niceCeil(v: number): number {
+  if (v <= 0) return 1;
+  const pow = 10 ** Math.floor(Math.log10(v));
+  const scaled = v / pow;
+  const step = scaled <= 1 ? 1 : scaled <= 2 ? 2 : scaled <= 5 ? 5 : 10;
+  return step * pow;
+}
+
+/* Zero is just "0" — "0.0 km" is three characters of nothing. */
+const axisLabel = (v: number, metric: StatMetric, units: Units) =>
+  v <= 0 ? "0" : metric.format(v, units);
 
 /*
   How far back the LOGS are fetched — always the longest range the chips offer,
@@ -345,35 +363,53 @@ function PrSheet({
 
 /* ─────────────────────────  the line graph  ─────────────────────────
    Whatever the athlete picked with the arrows in its header — metres, hours or
-   consistency — over whichever window the chips above it are set to. One point
-   per bucket: a day each for the short ranges, a week each for the long ones.
-   The three numbers above it come from the same buckets. */
+   consistency — over whichever window the button on the right is set to. One
+   point per bucket: a day each for the short ranges, a week each for the long
+   ones. The three numbers above it come from the same buckets.
+
+   BOTH controls live on the card they change: the measure on the left, the
+   window on the right. */
 function WeeklyGraph({
   points,
   metric,
   range,
+  units,
   onSwap,
+  onRange,
 }: {
   points: { label: string; value: number; latest: boolean }[];
   metric: StatMetric;
   range: StatRange;
+  units: Units;
   onSwap: (dir: 1 | -1) => void;
+  onRange: (key: string) => void;
 }) {
+  const [pickingRange, setPickingRange] = useState(false);
   const weeks = points;
-  const max = Math.max(1, ...weeks.map((w) => w.value));
+  /*
+    THE TOP OF THE AXIS. A percentage is always drawn against a full 100, or a
+    consistent 40% week would fill the card and read like a good one. Everything
+    else scales to its own best bucket, rounded UP to something a person would
+    say out loud, so the top gridline is a number and not 15.7.
+  */
+  const peak = Math.max(1, ...weeks.map((w) => w.value));
+  const max = metric.axisMax ?? niceCeil(peak);
   const anyData = weeks.some((w) => w.value > 0);
 
   // SVG geometry (a viewBox that stretches to the card width).
   const W = 320;
   const H = 116;
   const padX = 8;
+  // Room down the left for the axis labels — they sit outside the plot so the
+  // line never starts underneath its own numbers.
+  const padL = 34;
   const padT = 14;
   const padB = 16;
-  const plotW = W - padX * 2;
+  const plotW = W - padL - padX;
   const plotH = H - padT - padB;
   const baseline = padT + plotH;
   const n = weeks.length;
-  const x = (i: number) => padX + (n === 1 ? plotW / 2 : (plotW * i) / (n - 1));
+  const x = (i: number) => padL + (n === 1 ? plotW / 2 : (plotW * i) / (n - 1));
   const y = (v: number) => padT + plotH * (1 - v / max);
 
   const pts = weeks.map((w, i) => [x(i), y(w.value)] as const);
@@ -406,8 +442,46 @@ function WeeklyGraph({
             <IconChevronRight size={15} />
           </button>
         </div>
-        <span className="flex-shrink-0 text-[11px] text-muted">{range.label.toLowerCase()}</span>
+        {/* THE WINDOW, on the card it changes. It reads as the caption it
+            replaced until you touch it, which is what keeps the header quiet. */}
+        <button
+          type="button"
+          onClick={() => setPickingRange((v) => !v)}
+          aria-expanded={pickingRange}
+          className={`tap44 flex flex-shrink-0 items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] transition-colors ${
+            pickingRange
+              ? "border-primary bg-primary-tint text-primary"
+              : "border-border bg-surface-2 text-muted"
+          }`}
+        >
+          {range.label.toLowerCase()}
+          <IconChevronDown size={12} />
+        </button>
       </div>
+
+      {/* Opened, the choices take a row of their own rather than floating over
+          the graph — a popover would be clipped by this card and would land
+          under a thumb on a phone. */}
+      {pickingRange && (
+        <div className="mt-2 flex gap-1 rounded-xl border border-border bg-surface-2 p-1">
+          {statRanges.map((r) => (
+            <button
+              key={r.key}
+              type="button"
+              onClick={() => {
+                onRange(r.key);
+                setPickingRange(false);
+              }}
+              aria-pressed={r.key === range.key}
+              className={`flex-1 rounded-lg py-1.5 text-[12px] font-semibold transition-colors ${
+                r.key === range.key ? "bg-text text-background" : "text-muted"
+              }`}
+            >
+              {r.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {anyData ? (
         <>
@@ -417,8 +491,38 @@ function WeeklyGraph({
             className="mt-2 block text-primary"
             aria-hidden="true"
           >
-            {/* baseline */}
-            <line x1={padX} y1={baseline} x2={W - padX} y2={baseline} stroke="var(--border)" strokeWidth={1} />
+            {/*
+              THE Y AXIS — three gridlines (top, middle, zero) and what each is
+              worth, so a dot's height is a number instead of a feeling. Only
+              three: this card is 116 units tall and a ladder of them would
+              out-shout the line they exist to explain.
+            */}
+            {[1, 0.5, 0].map((frac) => {
+              const gy = padT + plotH * (1 - frac);
+              return (
+                <g key={frac}>
+                  <line
+                    x1={padL}
+                    y1={gy}
+                    x2={W - padX}
+                    y2={gy}
+                    stroke="var(--border)"
+                    strokeWidth={1}
+                    /* The zero line is the floor, the two above it are guides. */
+                    strokeDasharray={frac === 0 ? undefined : "2 3"}
+                  />
+                  <text
+                    x={padL - 4}
+                    y={gy + 2.5}
+                    textAnchor="end"
+                    fill="var(--muted)"
+                    fontSize={7}
+                  >
+                    {axisLabel(max * frac, metric, units)}
+                  </text>
+                </g>
+              );
+            })}
             {/* soft area under the line */}
             <path d={area} fill="var(--primary)" fillOpacity={0.1} />
             {/* the trend line */}
@@ -738,24 +842,9 @@ export default function ProfileScreen() {
         Statistics
       </div>
 
-      {/* THE WINDOW. It sits above everything it changes — the three numbers and
-          the graph both answer for whichever range is lit. */}
-      <div className="mx-3.5 mb-1.5 flex gap-1 rounded-xl border border-border bg-surface p-1">
-        {statRanges.map((r) => (
-          <button
-            key={r.key}
-            type="button"
-            onClick={() => setRangeKey(r.key)}
-            aria-pressed={r.key === range.key}
-            className={`flex-1 rounded-lg py-1.5 text-[12px] font-semibold transition-colors ${
-              r.key === range.key ? "bg-text text-background" : "text-muted"
-            }`}
-          >
-            {r.label}
-          </button>
-        ))}
-      </div>
-
+      {/* The window is chosen on the graph card below, where the measure is
+          chosen — but it governs these three numbers too, which is why each of
+          them names the range underneath itself. */}
       <div className="mx-3.5 mb-1.5 grid grid-cols-3 gap-1.5">
         {tiles.map((t) => (
           <div
@@ -777,7 +866,14 @@ export default function ProfileScreen() {
         ))}
       </div>
       <div className="mx-3.5">
-        <WeeklyGraph points={points} metric={metric} range={range} onSwap={swapMetric} />
+        <WeeklyGraph
+          points={points}
+          metric={metric}
+          range={range}
+          units={units}
+          onSwap={swapMetric}
+          onRange={setRangeKey}
+        />
 
         {/* The way into the detail. A row of its own rather than making the
             graph card tappable — the card already has two arrow buttons in it,
