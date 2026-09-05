@@ -359,6 +359,13 @@ export const IconPlay = (p: IconProps) => (
   </Base>
 );
 
+// Four corners pushing outwards — "show me this bigger".
+export const IconExpand = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M9 4H4v5M15 4h5v5M9 20H4v-5M15 20h5v-5" />
+  </Base>
+);
+
 // House sigil drawn in a house's TWO identity colors (passed as data, not theme).
 export function HouseSigil({
   primary,

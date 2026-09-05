@@ -3,9 +3,9 @@
   ---------------------------------------------------------------------------
   TWO choices drive the whole block, and everything in it follows both:
 
-    the MEASURE — metres, hours, or consistency (the arrows on the graph)
-    the RANGE   — a week, two weeks, a month, three months (the button on its
-                  top right)
+    the MEASURE — metres, hours, or consistency (the graph's own title)
+    the RANGE   — a week, two weeks, a month, three months, or two dates the
+                  athlete chose (the button on the graph's top right)
 
   The three numbers above the graph are that same measure read three ways over
   that same range: the whole range, the average bucket, and the best bucket. So
@@ -33,6 +33,14 @@ export type StatRange = {
   label: string; // what the chip says
   days: number; // how far back it reaches, today included
   bucket: "day" | "week";
+  /*
+    A CUSTOM window says exactly where it starts and ends, because it need not
+    end today — "how did March go" is a question about a stretch that finished.
+    The four built-in windows leave these empty and are measured back from today
+    the way they always were.
+  */
+  start?: string;
+  end?: string;
 };
 
 export const statRanges: StatRange[] = [
@@ -49,6 +57,61 @@ export const rangeByKey = (key: string): StatRange =>
 
 /** "day" / "week", for tile captions like "Best week". */
 export const bucketWord = (r: StatRange) => (r.bucket === "day" ? "day" : "week");
+
+/* ── A window the athlete picked themselves ─────────────────────────────── */
+
+/** The key the range dropdown uses for "a window I chose". */
+export const CUSTOM_RANGE = "custom";
+
+const MONTH3 = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+/** "14 Sep" — short enough to put two of them on a button. */
+export const shortDate = (iso: string) => {
+  const d = asDate(iso);
+  return `${d.getDate()} ${MONTH3[d.getMonth()]}`;
+};
+
+/**
+ * Two dates the athlete chose, as a range the rest of the block can use exactly
+ * like a built-in one. The bucket size is not a choice: past about a month,
+ * columns per day stop being readable, so a long window is read week by week
+ * like "3 months" already is.
+ */
+export function customRange(startIso: string, endIso: string): StatRange {
+  const [a, b] = startIso <= endIso ? [startIso, endIso] : [endIso, startIso];
+  const days = Math.round((asDate(b).getTime() - asDate(a).getTime()) / 86_400_000) + 1;
+  // Two dates in one month say the month once — the button they sit on shares a
+  // row with the measure's name, and "10 Aug – 30 Aug" crowds it out.
+  const sameMonth = a.slice(0, 7) === b.slice(0, 7);
+  return {
+    key: CUSTOM_RANGE,
+    label: sameMonth ? `${asDate(a).getDate()}–${shortDate(b)}` : `${shortDate(a)} – ${shortDate(b)}`,
+    days,
+    bucket: days <= 31 ? "day" : "week",
+    start: a,
+    end: b,
+  };
+}
+
+/** How a range names itself under a number. Dates keep their capitals. */
+export const rangeCaption = (r: StatRange) => (r.start ? r.label : r.label.toLowerCase());
+
+/* ── How the graph is drawn ─────────────────────────────────────────────── */
+
+/*
+  Columns or a line, and nothing else. A column is "how much did I do that day",
+  which is the honest reading of a bucket; a line is the same numbers read as a
+  trend, which is what people look for over three months. Anything fancier would
+  be decoration.
+*/
+export type ChartType = "bars" | "line";
+export const chartTypes: { key: ChartType; label: string }[] = [
+  { key: "bars", label: "Columns" },
+  { key: "line", label: "Line" },
+];
+export const defaultChartType: ChartType = "bars";
+export const chartTypeOf = (key: string | undefined): ChartType =>
+  key === "line" ? "line" : defaultChartType;
 
 /* ── Day arithmetic on ISO strings ──────────────────────────────────────── */
 
@@ -157,7 +220,7 @@ export const statMetrics: StatMetric[] = [
       const expected = expectedDays(whole);
       const trained = Math.min(trainedDays(all), expected);
       const pct = expected ? Math.min(100, Math.round((trained / expected) * 100)) : 0;
-      const sub = range.label.toLowerCase();
+      const sub = rangeCaption(range);
       return [
         { label: "Overall", sub, value: `${pct}%` },
         { label: "Trained", sub: expected ? `of ${expected} days` : "no days yet", value: `${trained}` },
@@ -220,7 +283,7 @@ export function summarise(
   return [
     {
       label: metric.totalLabel ?? "Total",
-      sub: range.label.toLowerCase(),
+      sub: rangeCaption(range),
       value: metric.format(total, units),
     },
     {
@@ -230,7 +293,7 @@ export function summarise(
     },
     {
       label: `Best ${word}`,
-      sub: range.label.toLowerCase(),
+      sub: rangeCaption(range),
       value: metric.format(Math.max(0, ...values), units),
     },
   ];

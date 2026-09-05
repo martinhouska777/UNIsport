@@ -118,6 +118,7 @@ export type VarsityAthleteProfile = {
   status: string; // a statusOptions title
   prs: Record<string, string>; // piece label -> value (e.g. "2K" -> "6:08.4")
   statMetric: string; // what the Statistics graph (and its three numbers) shows
+  statChart: string; // how it is drawn — "bars" | "line" (lib/varsity/athleteStats)
 };
 
 // Best guess at class standing from the academic class year (e.g. '30 = Freshman
@@ -142,6 +143,7 @@ export function defaultProfile(classYear: string): VarsityAthleteProfile {
     status: statusOptions[0].title,
     prs: {},
     statMetric: defaultStatMetric,
+    statChart: "bars",
   };
 }
 
@@ -167,6 +169,9 @@ export function withDefaults(
     // Checked against the real metric list where it's rendered, so a stale key
     // from an older version can't blank the graph.
     statMetric: saved?.statMetric || base.statMetric,
+    // Same story as the measure: checked against the real list where it's used,
+    // so a key from an older build falls back to columns rather than to nothing.
+    statChart: saved?.statChart || base.statChart,
   };
 }
 

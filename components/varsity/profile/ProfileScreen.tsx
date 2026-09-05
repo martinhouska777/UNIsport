@@ -6,8 +6,9 @@
   • Identity: the SAME name as the normal app profile (profiles.data.name), the
     year on the team (Freshman/Sophomore/…), and height/weight — all editable.
   • Current status: tap to change (Active / Light training / Injured / Away).
-  • Statistics: pick a WINDOW (week / 2 weeks / month / 3 months) and a MEASURE
-    (metres / hours / consistency); three numbers and a graph follow both, and
+  • Statistics: pick a WINDOW (week / 2 weeks / month / 3 months, or two dates
+    of your own) and a MEASURE (metres / hours / consistency); three numbers and
+    a graph — columns or a line — follow both, the graph opens full size, and
     tapping through opens the Training mix. All from the athlete OWN logs
     (lib/varsity/logStore), with the coach plan read only to name intensities.
   • A button into the Calendar tab — the day-by-day training history lives there.
@@ -47,11 +48,17 @@ import {
 } from "@/lib/varsity/athleteProfile";
 import {
   metricByKey,
-  nextMetric,
+  statMetrics,
   summarise,
   statRanges,
   rangeByKey,
+  customRange,
+  rangeCaption,
+  chartTypes,
+  chartTypeOf,
   defaultStatRange,
+  CUSTOM_RANGE,
+  type ChartType,
   type StatMetric,
   type StatRange,
   type Bucket,
@@ -61,7 +68,7 @@ import TrainingMixSheet from "@/components/varsity/profile/TrainingMixSheet";
 import { fetchPlan } from "@/lib/varsity/planStore";
 import {
   IconPencil,
-  IconChevronLeft,
+  IconExpand,
   IconAnchor,
   IconActivity,
   IconChevronRight,
@@ -107,6 +114,16 @@ function mondayOf(d: Date): Date {
   x.setDate(x.getDate() - ((x.getDay() + 6) % 7));
   return x;
 }
+
+/* A yyyy-mm-dd back as a local midnight — never `new Date(iso)`, which reads it
+   as UTC and lands on the day before for anyone west of Greenwich. */
+function asDay(iso: string): Date {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+
+const addDays = (d: Date, n: number) =>
+  new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
 
 const inputCls =
   "w-full rounded-xl border border-border bg-surface-2 px-3.5 py-3 text-base text-text outline-none focus:border-primary placeholder:text-muted";
@@ -361,25 +378,26 @@ function PrSheet({
   );
 }
 
-/* ─────────────────────────  the bar graph  ─────────────────────────
-   Whatever the athlete picked with the arrows in its header — metres, hours or
-   consistency — over whichever window the button on the right is set to. One
-   COLUMN per bucket: a day each for the short ranges, a week each for the long
-   ones. The three numbers above it come from the same buckets.
+/* ─────────────────────────  the graph  ─────────────────────────
+   Whatever the athlete picked in its header — metres, hours or consistency —
+   over whichever window the button on the right is set to, drawn as columns or
+   as a line. One point per bucket: a day each for the short ranges, a week each
+   for the long ones. The three numbers above it come from the same buckets.
 
-   Columns rather than a line: the question this answers is "how much did I do
-   that day", which is a quantity, and a quantity is a height you compare with
-   the one next to it — not a slope between two dots.
+   Columns are the default because the question is "how much did I do that
+   day", and a quantity is a height you compare with the one beside it. A line
+   is the same numbers read as a trend, which is what three months is for.
 
-   BOTH controls live on the card they change: the measure on the left, the
-   window on the right. And the plot itself is a button — a phone card is only
-   so tall, so tapping it opens the same chart at a size you can read.
+   Every control lives on the card it changes: the measure and the window are
+   dropdowns in the header, the shape is a switch in the footer, and the plot
+   itself opens full size — a phone card is only so tall.
 
-   The chart is drawn once, here, and used at two sizes. */
-function Bars({
+   The plot is drawn once, here, and used at two sizes. */
+function Plot({
   points,
   metric,
   units,
+  chart,
   height,
   everyLabel,
   showValues,
@@ -387,6 +405,7 @@ function Bars({
   points: { label: string; value: number; latest: boolean }[];
   metric: StatMetric;
   units: Units;
+  chart: ChartType;
   height: number;
   /** Name every column, or only every other one when they would collide. */
   everyLabel: boolean;
@@ -412,24 +431,30 @@ function Bars({
   // taller.
   const fs = H >= 200 ? 9 : 7.5;
   // Room down the left for the axis labels — they sit outside the plot so the
-  // columns never start underneath their own numbers, and "20.0 km" at the
-  // bigger type needs more of it than the same words on the card.
+  // chart never starts underneath its own numbers, and "20.0 km" at the bigger
+  // type needs more of it than the same words on the card.
   const padL = fs >= 9 ? 44 : 34;
   const plotW = W - padL - padX;
   const plotH = H - padT - padB;
   const baseline = padT + plotH;
   const n = points.length;
+  // A bucket owns a slot and sits in the middle of it — the same x whether it
+  // is drawn as a column or as a point on a line, so switching shape never
+  // moves a day sideways.
   const slot = plotW / n;
   const barW = Math.min(26, slot * 0.66);
   const cx = (i: number) => padL + slot * (i + 0.5);
   const yOf = (v: number) => baseline - plotH * (Math.min(v, max) / max);
 
+  const line = points.map((p, i) => `${cx(i)},${yOf(p.value)}`).join(" ");
+  const area = `M ${cx(0)},${baseline} L ${line.replaceAll(" ", " L ")} L ${cx(n - 1)},${baseline} Z`;
+
   return (
     <svg viewBox={`0 0 ${W} ${H}`} width="100%" className="block text-primary" aria-hidden="true">
       {/*
         THE Y AXIS — three gridlines (top, middle, zero) and what each is worth,
-        so a column's height is a number instead of a feeling. Only three: a
-        ladder of them would out-shout the bars they exist to explain.
+        so a height is a number instead of a feeling. Only three: a ladder of
+        them would out-shout the chart they exist to explain.
       */}
       {[1, 0.5, 0].map((frac) => {
         const gy = baseline - plotH * frac;
@@ -452,13 +477,30 @@ function Bars({
         );
       })}
 
+      {/* THE LINE — one soft fill under one stroke, drawn before the labels so
+          nothing it crosses is lost underneath it. */}
+      {chart === "line" && (
+        <>
+          <path d={area} fill="var(--primary)" fillOpacity={0.12} />
+          <polyline
+            points={line}
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            strokeLinejoin="round"
+            strokeLinecap="round"
+          />
+        </>
+      )}
+
       {points.map((p, i) => {
         const show = everyLabel || p.latest || i % 2 === n % 2;
         return (
           <g key={i}>
-            {/* An empty bucket draws no column — the floor already says nothing
-                happened, and a stub would read as a little bit of something. */}
-            {p.value > 0 && (
+            {/* THE COLUMNS. An empty bucket draws nothing — the floor already
+                says nothing happened, and a stub would read as a little bit of
+                something. */}
+            {chart === "bars" && p.value > 0 && (
               <rect
                 x={cx(i) - barW / 2}
                 y={yOf(p.value)}
@@ -470,10 +512,20 @@ function Bars({
                 fillOpacity={p.latest ? 1 : 0.45}
               />
             )}
+            {chart === "line" && (
+              <circle
+                cx={cx(i)}
+                cy={yOf(p.value)}
+                r={p.latest ? 3.5 : 2.5}
+                fill={p.latest ? "var(--primary)" : "var(--surface)"}
+                stroke="currentColor"
+                strokeWidth={1.5}
+              />
+            )}
             {showValues && p.value > 0 && (
               <text
                 x={cx(i)}
-                y={yOf(p.value) - 4}
+                y={yOf(p.value) - 5}
                 textAnchor="middle"
                 fill="var(--text)"
                 fontSize={fs}
@@ -485,7 +537,7 @@ function Bars({
             {show && (
               <text
                 x={cx(i)}
-                y={baseline + fs + 4}
+                y={baseline + fs + 5}
                 textAnchor="middle"
                 fill="var(--muted)"
                 fontSize={fs}
@@ -501,139 +553,304 @@ function Bars({
   );
 }
 
+/*
+  ONE SHAPE FOR "PICK ONE OF THESE" — a button that says what is chosen, and a
+  list that hangs off it. Two of them sit in the graph's header (the measure and
+  the window), and only one may be open at a time, so the caller owns that.
+
+  A panel rather than a row of chips: chips pushed the graph down the screen
+  every time somebody looked at their options.
+*/
+function Dropdown({
+  label,
+  title,
+  options,
+  value,
+  open,
+  onOpen,
+  onPick,
+  align = "left",
+}: {
+  label: string;
+  /** The measure reads as the card's title; the window as a quiet pill. */
+  title?: boolean;
+  options: { key: string; label: string }[];
+  value: string;
+  open: boolean;
+  onOpen: (v: boolean) => void;
+  onPick: (key: string) => void;
+  align?: "left" | "right";
+}) {
+  return (
+    /* The title takes what is left after the window pill, which never shrinks —
+       "Metres rowed" must not become "Metres row…". */
+    <div className={title ? "relative min-w-0 flex-1" : "relative flex-shrink-0"}>
+      <button
+        type="button"
+        onClick={() => onOpen(!open)}
+        aria-expanded={open}
+        className={
+          title
+            ? "tap44 -ml-1 flex w-full items-center gap-1 rounded-lg px-1 py-0.5 text-left active:bg-surface-2"
+            : `tap44 flex flex-shrink-0 items-center gap-1 rounded-full border px-3 py-1.5 text-[12px] transition-colors ${
+                open
+                  ? "border-primary bg-primary-tint text-primary"
+                  : "border-border bg-surface-2 text-muted"
+              }`
+        }
+      >
+        <span className={title ? "truncate text-[15px] font-semibold text-text" : ""}>{label}</span>
+        <span className="flex-shrink-0">
+          <IconChevronDown size={title ? 15 : 12} />
+        </span>
+      </button>
+
+      {open && (
+        <>
+          {/* Anywhere else puts it away. */}
+          <button
+            type="button"
+            aria-label="Close this menu"
+            onClick={() => onOpen(false)}
+            className="fixed inset-0 z-10 cursor-default"
+          />
+          <div
+            className={`absolute ${align === "right" ? "right-0" : "left-0"} top-[calc(100%+7px)] z-20 w-44 overflow-hidden rounded-xl border border-border bg-surface-2 shadow-lg`}
+          >
+            {options.map((o) => (
+              <button
+                key={o.key}
+                type="button"
+                onClick={() => {
+                  onPick(o.key);
+                  onOpen(false);
+                }}
+                aria-pressed={o.key === value}
+                className={`flex w-full items-center gap-2 px-3 py-2.5 text-left text-[12px] active:bg-surface ${
+                  o.key === value ? "font-semibold text-text" : "text-muted"
+                }`}
+              >
+                <span className="flex w-3.5 flex-shrink-0 justify-center">
+                  {o.key === value && <IconCheck size={12} />}
+                </span>
+                {o.label}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+/*
+  A WINDOW THE ATHLETE PICKS THEMSELVES. Two dates and nothing else: the four
+  ready-made windows answer "how is it going", this answers "how did that
+  training camp go", which is a stretch that has already finished.
+*/
+function CustomRangeSheet({
+  start,
+  end,
+  today,
+  onApply,
+  onClose,
+}: {
+  start: string;
+  end: string;
+  today: string;
+  onApply: (start: string, end: string) => void;
+  onClose: () => void;
+}) {
+  const [from, setFrom] = useState(start);
+  const [to, setTo] = useState(end);
+  const valid = !!from && !!to && from <= to;
+
+  return (
+    <Sheet title="Choose the dates" onClose={onClose}>
+      <div className="flex gap-2">
+        <label className="flex-1">
+          <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
+            From
+          </span>
+          <input
+            type="date"
+            value={from}
+            max={to || today}
+            onChange={(e) => setFrom(e.target.value)}
+            className={inputCls}
+          />
+        </label>
+        <label className="flex-1">
+          <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
+            To
+          </span>
+          <input
+            type="date"
+            value={to}
+            min={from || undefined}
+            /* Nothing has happened after today, and a window reaching into next
+               week would report the athlete as slacking. */
+            max={today}
+            onChange={(e) => setTo(e.target.value)}
+            className={inputCls}
+          />
+        </label>
+      </div>
+      <p className="mt-2.5 text-[11px] leading-relaxed text-muted">
+        Up to a month is charted day by day; anything longer is charted week by
+        week, so the columns stay readable.
+      </p>
+      <Button
+        size="lg"
+        disabled={!valid}
+        onClick={() => {
+          onApply(from, to);
+          onClose();
+        }}
+        className="mt-4 w-full"
+      >
+        Show these dates
+      </Button>
+    </Sheet>
+  );
+}
+
 function WeeklyGraph({
   points,
   metric,
   range,
+  chart,
   units,
-  onSwap,
+  today,
+  windowStart,
+  onMetric,
   onRange,
+  onCustom,
+  onChart,
 }: {
   points: { label: string; value: number; latest: boolean }[];
   metric: StatMetric;
   range: StatRange;
+  chart: ChartType;
   units: Units;
-  onSwap: (dir: 1 | -1) => void;
+  today: string;
+  /** The first day currently on the chart — what the date picker opens on. */
+  windowStart: string;
+  onMetric: (key: string) => void;
   onRange: (key: string) => void;
+  onCustom: (start: string, end: string) => void;
+  onChart: (key: ChartType) => void;
 }) {
-  const [pickingRange, setPickingRange] = useState(false);
+  const [openMenu, setOpenMenu] = useState<"metric" | "range" | null>(null);
+  const [picking, setPicking] = useState(false); // the custom-dates sheet
   const [zoomed, setZoomed] = useState(false);
   const anyData = points.some((p) => p.value > 0);
   // Past about ten columns the dates run into each other at card size, so only
   // every other one is named there. The full-size chart names them all.
   const roomy = points.length <= 10;
 
+  const rangeOptions = [
+    ...statRanges.map((r) => ({ key: r.key, label: r.label })),
+    { key: CUSTOM_RANGE, label: "Choose dates…" },
+  ];
+
   return (
-    <div className="relative rounded-2xl border border-border bg-surface px-3.5 pb-3 pt-3.5">
-      {/* The arrows live here, on the thing they change. Everything in this
-          block — graph and the three numbers above it — follows this choice. */}
+    <div className="rounded-2xl border border-border bg-surface px-4 pb-3.5 pt-4">
+      {/* THE HEADER. The measure names the card, because it is what the card is
+          about; the window sits opposite it, because it is the other half of
+          the same question. Both are the same kind of menu. */}
       <div className="flex items-center justify-between gap-2">
-        <div className="flex min-w-0 items-center gap-0.5">
-          <button
-            type="button"
-            onClick={() => onSwap(-1)}
-            aria-label="Chart the previous measure"
-            className="tap44 press-icon -ml-1.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-muted active:bg-surface-2"
-          >
-            <IconChevronLeft size={15} />
-          </button>
-          <span className="truncate text-[11px] font-semibold uppercase tracking-[0.12em] text-text">
-            {metric.label}
-          </span>
-          <button
-            type="button"
-            onClick={() => onSwap(1)}
-            aria-label="Chart the next measure"
-            className="tap44 press-icon flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-muted active:bg-surface-2"
-          >
-            <IconChevronRight size={15} />
-          </button>
-        </div>
-        {/* THE WINDOW, on the card it changes. It reads as the caption it
-            replaced until you touch it, which is what keeps the header quiet. */}
-        <button
-          type="button"
-          onClick={() => setPickingRange((v) => !v)}
-          aria-expanded={pickingRange}
-          className={`tap44 flex flex-shrink-0 items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] transition-colors ${
-            pickingRange
-              ? "border-primary bg-primary-tint text-primary"
-              : "border-border bg-surface-2 text-muted"
-          }`}
-        >
-          {range.label.toLowerCase()}
-          <IconChevronDown size={12} />
-        </button>
+        <Dropdown
+          title
+          label={metric.label}
+          options={statMetrics.map((m) => ({ key: m.key, label: m.label }))}
+          value={metric.key}
+          open={openMenu === "metric"}
+          onOpen={(v) => setOpenMenu(v ? "metric" : null)}
+          onPick={onMetric}
+        />
+        <Dropdown
+          label={range.label}
+          align="right"
+          options={rangeOptions}
+          value={range.key}
+          open={openMenu === "range"}
+          onOpen={(v) => setOpenMenu(v ? "range" : null)}
+          onPick={(key) => (key === CUSTOM_RANGE ? setPicking(true) : onRange(key))}
+        />
       </div>
 
-      {/* A real dropdown, hanging off the button that opened it, so choosing a
-          window never pushes the graph down the screen. */}
-      {pickingRange && (
-        <>
-          {/* Anywhere else puts it away. */}
-          <button
-            type="button"
-            aria-label="Close the window picker"
-            onClick={() => setPickingRange(false)}
-            className="fixed inset-0 z-10 cursor-default"
-          />
-          <div className="absolute right-3 top-12 z-20 w-36 overflow-hidden rounded-xl border border-border bg-surface-2 shadow-lg">
-            {statRanges.map((r) => (
-              <button
-                key={r.key}
-                type="button"
-                onClick={() => {
-                  onRange(r.key);
-                  setPickingRange(false);
-                }}
-                aria-pressed={r.key === range.key}
-                className={`flex w-full items-center gap-2 px-3 py-2.5 text-left text-[12px] active:bg-surface ${
-                  r.key === range.key ? "font-semibold text-text" : "text-muted"
-                }`}
-              >
-                <span className="flex w-3.5 flex-shrink-0 justify-center">
-                  {r.key === range.key && <IconCheck size={12} />}
-                </span>
-                {r.label}
-              </button>
-            ))}
-          </div>
-        </>
-      )}
-
       {anyData ? (
-        /* The plot is the tap target. The header's buttons sit outside it, so
-           this is not a tap target you have to fight. */
+        /* The plot is its own tap target. Every button on the card sits outside
+           it, so this is not a target you have to fight. */
         <button
           type="button"
           onClick={() => setZoomed(true)}
           aria-label={`See ${metric.label.toLowerCase()} full size`}
-          className="mt-2 block w-full active:opacity-80"
+          className="mt-4 block w-full active:opacity-80"
         >
-          <Bars
+          <Plot
             points={points}
             metric={metric}
             units={units}
-            height={168}
+            chart={chart}
+            height={188}
             everyLabel={roomy}
             showValues={false}
           />
         </button>
       ) : (
-        <p className="mt-2 rounded-xl border border-dashed border-border bg-surface-2 px-3 py-6 text-center text-[11px] text-muted">
+        <p className="mt-4 rounded-xl border border-dashed border-border bg-surface-2 px-4 py-8 text-center text-[12px] leading-relaxed text-muted">
           {metric.empty}
         </p>
       )}
 
-      {zoomed && (
-        <Sheet
-          title={`${metric.label} · ${range.label.toLowerCase()}`}
-          onClose={() => setZoomed(false)}
+      {/* THE FOOTER. What shape it is drawn in, and the way to see it big —
+          the two things that are about the drawing rather than about the
+          numbers, kept away from the header so neither row is crowded. */}
+      <div className="mt-3.5 flex items-center justify-between gap-2 border-t border-border pt-3">
+        <div className="flex rounded-full border border-border bg-surface-2 p-0.5">
+          {chartTypes.map((c) => (
+            <button
+              key={c.key}
+              type="button"
+              onClick={() => onChart(c.key)}
+              aria-pressed={c.key === chart}
+              className={`rounded-full px-3 py-1 text-[11px] font-semibold transition-colors ${
+                c.key === chart ? "bg-text text-background" : "text-muted"
+              }`}
+            >
+              {c.label}
+            </button>
+          ))}
+        </div>
+        <button
+          type="button"
+          onClick={() => setZoomed(true)}
+          disabled={!anyData}
+          className="tap44 flex items-center gap-1.5 px-1 text-[11px] text-muted disabled:opacity-40"
         >
-          <Bars
+          <IconExpand size={13} /> Enlarge
+        </button>
+      </div>
+
+      {picking && (
+        <CustomRangeSheet
+          start={range.start ?? windowStart}
+          end={range.end ?? today}
+          today={today}
+          onApply={onCustom}
+          onClose={() => setPicking(false)}
+        />
+      )}
+
+      {zoomed && (
+        <Sheet title={`${metric.label} · ${range.label}`} onClose={() => setZoomed(false)}>
+          <Plot
             points={points}
             metric={metric}
             units={units}
+            chart={chart}
             height={260}
             everyLabel
             /* Eight columns is about where a number over each one still has
@@ -661,9 +878,15 @@ export default function ProfileScreen() {
   const [profile, setProfile] = useState<VarsityAthleteProfile | null>(null);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   // The chosen window. Kept in the screen, not on the record: it's a question
-  // you ask ("how was last week?"), not a setting you configure once.
+  // you ask ("how was last week?"), not a setting you configure once. `custom`
+  // is a pair of dates the athlete picked; while it is set it IS the window.
   const [rangeKey, setRangeKey] = useState(defaultStatRange);
-  const range: StatRange = rangeByKey(rangeKey);
+  const [custom, setCustom] = useState<{ start: string; end: string } | null>(null);
+  const range: StatRange = custom ? customRange(custom.start, custom.end) : rangeByKey(rangeKey);
+  const pickRange = (key: string) => {
+    setCustom(null);
+    setRangeKey(key);
+  };
   // The coach's sessions, only so the Training mix can name intensities.
   const [planSessions, setPlanSessions] = useState<SessionMap>({});
   const [mixOpen, setMixOpen] = useState(false);
@@ -687,7 +910,16 @@ export default function ProfileScreen() {
     };
   }, [userId]);
 
-  // Every log the longest range could ask for, fetched once.
+  /*
+    Every log the longest ready-made range could ask for, fetched once — which
+    is what makes switching window instant. A window the athlete chose can reach
+    further back than that, and only then do we go to the database again.
+  */
+  const loadFrom = useMemo(() => {
+    const first = toISO(new Date(now.getFullYear(), now.getMonth(), now.getDate() - (LOAD_DAYS - 1)));
+    return custom && custom.start < first ? custom.start : first;
+  }, [now, custom]);
+
   useEffect(() => {
     let active = true;
     (async () => {
@@ -695,14 +927,13 @@ export default function ProfileScreen() {
         setLogs([]);
         return;
       }
-      const first = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (LOAD_DAYS - 1));
-      const rows = await fetchLogsInRange(userId, toISO(first), toISO(now));
+      const rows = await fetchLogsInRange(userId, loadFrom, toISO(now));
       if (active) setLogs(rows);
     })();
     return () => {
       active = false;
     };
-  }, [userId, now]);
+  }, [userId, now, loadFrom]);
 
   /*
     The coach's plan, only so a logged session can be told apart as UT2 / UT1 /
@@ -742,27 +973,32 @@ export default function ProfileScreen() {
   const buckets = useMemo<Bucket[]>(() => {
     const todayIso = toISO(now);
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    /*
+      A ready-made window is measured back from today. A window the athlete
+      chose has its own two ends and need not touch today at all, so it stops
+      where they said — capped at today, because there is nothing after it.
+    */
+    const last = range.end ? new Date(Math.min(asDay(range.end).getTime(), today.getTime())) : today;
+    const first = range.start ? asDay(range.start) : null;
 
     const starts: Date[] = [];
     if (range.bucket === "day") {
-      for (let i = range.days - 1; i >= 0; i--) {
-        starts.push(new Date(today.getFullYear(), today.getMonth(), today.getDate() - i));
+      for (const d = first ? new Date(first) : addDays(last, -(range.days - 1)); d <= last; d.setDate(d.getDate() + 1)) {
+        starts.push(new Date(d));
       }
     } else {
-      // Whole Mon–Sun weeks, ending with the one containing today.
-      const thisMonday = mondayOf(now);
-      const count = Math.ceil(range.days / 7);
-      for (let i = count - 1; i >= 0; i--) {
-        const s = new Date(thisMonday);
-        s.setDate(thisMonday.getDate() - i * 7);
-        starts.push(s);
+      // Whole Mon–Sun weeks, ending with the one containing the last day.
+      const lastMonday = mondayOf(last);
+      const firstMonday = first ? mondayOf(first) : addDays(lastMonday, -(Math.ceil(range.days / 7) - 1) * 7);
+      for (const d = new Date(firstMonday); d <= lastMonday; d.setDate(d.getDate() + 7)) {
+        starts.push(new Date(d));
       }
     }
 
     const made: Bucket[] = starts.map((start, i) => {
-      const last = new Date(start);
-      if (range.bucket === "week") last.setDate(start.getDate() + 6);
-      const endIso = toISO(last > today ? today : last);
+      const end = new Date(start);
+      if (range.bucket === "week") end.setDate(start.getDate() + 6);
+      const endIso = toISO(end > last ? last : end);
       return {
         label:
           range.bucket === "day"
@@ -835,8 +1071,7 @@ export default function ProfileScreen() {
     latest: b.latest,
   }));
   const tiles = summarise(buckets, metric, units, range);
-  const swapMetric = (dir: 1 | -1) =>
-    patchProfile({ statMetric: nextMetric(metric.key, dir) });
+  const chart = chartTypeOf(profile.statChart);
 
   return (
     <div className="mx-auto w-full max-w-screen-sm pb-10">
@@ -920,11 +1155,11 @@ export default function ProfileScreen() {
       {/* The window is chosen on the graph card below, where the measure is
           chosen — but it governs these three numbers too, which is why each of
           them names the range underneath itself. */}
-      <div className="mx-3.5 mb-1.5 grid grid-cols-3 gap-1.5">
+      <div className="mx-3.5 mb-2.5 grid grid-cols-3 gap-2">
         {tiles.map((t) => (
           <div
             key={t.label}
-            className="rounded-xl border border-border bg-surface px-1.5 py-2 text-center"
+            className="rounded-xl border border-border bg-surface px-2 py-2.5 text-center"
           >
             {/* "8h 30m" and "12.4 km" need more room than "14" — the number
                 steps down a size rather than spilling out of the tile. */}
@@ -933,10 +1168,10 @@ export default function ProfileScreen() {
             >
               {t.value}
             </div>
-            <div className="mt-1 text-[8px] font-semibold uppercase tracking-[0.08em] text-muted">
+            <div className="mt-1.5 text-[8px] font-semibold uppercase tracking-[0.08em] text-muted">
               {t.label}
             </div>
-            <div className="mt-0.5 text-[8px] text-muted">{t.sub}</div>
+            <div className="mt-0.5 truncate text-[8px] text-muted">{t.sub}</div>
           </div>
         ))}
       </div>
@@ -945,18 +1180,23 @@ export default function ProfileScreen() {
           points={points}
           metric={metric}
           range={range}
+          chart={chart}
           units={units}
-          onSwap={swapMetric}
-          onRange={setRangeKey}
+          today={toISO(now)}
+          windowStart={buckets[0]?.span.startIso ?? toISO(now)}
+          onMetric={(key) => patchProfile({ statMetric: key })}
+          onRange={pickRange}
+          onCustom={(start, end) => setCustom({ start, end })}
+          onChart={(key) => patchProfile({ statChart: key })}
         />
 
         {/* The way into the detail. A row of its own rather than making the
-            graph card tappable — the card already has two arrow buttons in it,
-            and a tap target wrapped around them is a tap target you fight. */}
+            graph card tappable — the card carries its own buttons, and a tap
+            target wrapped around them is a tap target you fight. */}
         <button
           type="button"
           onClick={() => setMixOpen(true)}
-          className="mt-1.5 flex w-full items-center gap-3 rounded-2xl border border-border bg-surface px-3.5 py-3 text-left active:bg-surface-2"
+          className="mt-2.5 flex w-full items-center gap-3 rounded-2xl border border-border bg-surface px-3.5 py-3.5 text-left active:bg-surface-2"
         >
           <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[10px] border border-primary-line bg-primary-tint text-primary">
             <IconActivity size={18} />
@@ -981,7 +1221,7 @@ export default function ProfileScreen() {
       {mixOpen && (
         <TrainingMixSheet
           rows={mix}
-          rangeLabel={range.label}
+          rangeLabel={rangeCaption(range)}
           units={units}
           onClose={() => setMixOpen(false)}
         />
