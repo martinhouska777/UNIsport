@@ -244,13 +244,10 @@ export default function CampusColours({
           {copy.leadIn && (
             <p className="mb-2.5 font-display text-[clamp(16px,2vw,20px)] text-l-text-2">{copy.leadIn}</p>
           )}
-          {/* TWO LINES, ON PURPOSE (owner, 2026-09-04: "do the text more so it
-              fits 2 lines"). At 52px the sentence still runs on ONE line in a
-              760px block — it would need ~87px to wrap on its own, which is
-              bigger than it ever was — so the BLOCK is what breaks it: 15ch,
-              centred, and text-balance splits it evenly at "campus,". Below
-              lg the clamp shrinks it and it breaks anyway. */}
-          <h2 className="mx-auto max-w-[15ch] font-display text-[clamp(32px,3.9vw,52px)] font-normal leading-[1.1] tracking-tight text-balance text-l-text">
+          {/* The headline is ONE line and stays one line. It was broken into
+              two for an hour on 2026-09-04 and put straight back: the owner's
+              "2 lines" was about the SUB below, not this. */}
+          <h2 className="font-display text-[clamp(30px,3.4vw,44px)] font-normal leading-[1.1] tracking-tight text-balance text-l-text">
             {copy.headline}{" "}
             <em
               className="italic transition-colors duration-[600ms] ease-in-out motion-reduce:transition-none"
@@ -264,8 +261,13 @@ export default function CampusColours({
               the Coach's Console gives a coach). It wears the CURRENT school's
               colour, so it is visibly not body text and it turns over with the
               rest of the piece — content colour from lib/landingSchools, rule
-              1's exception. */}
-          <p className="mx-auto mt-3.5 max-w-[52ch] text-[clamp(15px,1.6vw,17px)] leading-[1.6] text-pretty text-l-text-2">
+              1's exception.
+
+              TWO EVEN LINES (owner, 2026-09-04: "this text 2 lines"). It was
+              already wrapping, but at 52ch the second line was the orphan
+              "yours next." — 46ch plus text-balance instead of text-pretty
+              splits it down the middle, at "university,". */}
+          <p className="mx-auto mt-3.5 max-w-[46ch] text-[clamp(15px,1.6vw,17px)] leading-[1.6] text-balance text-l-text-2">
             {copy.sub}{" "}
             <Link
               href={copy.ctaHref}
@@ -298,22 +300,26 @@ export default function CampusColours({
             pixels that frees go to the phone: 270 -> 300 at lg, and above xl
             310 against a reserve of 344.
 
-            THEN THE HEADLINE TOOK TWO LINES (same day, same owner) and the
-            geometry stopped allowing both: on an 860px window a 52px two-line
-            headline and a 310px phone do not fit together. Half the difference
-            came back out of the chrome — the gap under the words lg:mb-11 is
-            now just mb-6, the stick's lg:py-10 is lg:py-8 — and the phone
-            takes the rest of the hit: 292px at 1900x860, still above the 270
-            it started at. The reserve is 380, which is what the fit needs:
-            chrome is ~330px, and phone height grows 1.088x with the window, so
-            R must clear 0.081*H + 304 at every H. Checked with no overflow at
-            1900x860, 1536x864, 1440x900, 1280x800, 1024x768 and 390x844.
-            (1440x620 still overflows — by 29px now, 37px before, so the older
-            short-window problem is untouched and slightly smaller.) */}
+            AND THEN AS BIG AS IT GOES (same day, same owner: "keep the phone
+            as big as possible… i dont want from a big phone in scrolling
+            animation to small phone"). The stories' phone is 320px, so the
+            flight must not land on anything smaller. Two gaps were tightened
+            to pay for it — the words' lg:mb-11 is now just mb-6, the stick's
+            lg:py-10 is lg:py-8 — which buys ~28px of height, and the cap is
+            340 against a reserve of 330: 322px at 1900x860, so the phone grows
+            a hair on landing instead of shrinking.
+
+            The reserve is what the fit needs, not a guess: the chrome around
+            the phone is ~278px and the phone's height grows 1.088x with the
+            window, so R must clear (278 + 0.088*H) / 1.088 — 325 at 860, 328
+            at 900. Checked with no overflow at 1900x860, 1536x864, 1440x900,
+            1280x800, 1024x768 and 390x844. (1440x620 still overflows — by
+            29px now against 37px before, so the older short-window problem is
+            untouched and slightly smaller.) */}
         <div className="flex w-full flex-col items-center justify-center gap-5 lg:flex-row lg:gap-[60px]">
           <Phone
             ref={phoneEl}
-            className={`lc-phone relative z-[3] order-2 w-[min(270px,52vw)] flex-none lg:order-1 lg:w-[300px] xl:w-[min(310px,calc((100svh_-_380px)*0.608))] ${
+            className={`lc-phone relative z-[3] order-2 w-[min(270px,52vw)] flex-none lg:order-1 lg:w-[300px] xl:w-[min(340px,calc((100svh_-_330px)*0.608))] ${
               phone === "hide" ? "lc-hide" : phone === "pre" ? "lc-pre" : ""
             }`}
             data-closer-phone="campus"
@@ -352,7 +358,7 @@ export default function CampusColours({
                 <span
                   key={`out-${prev}`}
                   aria-hidden
-                  className="font-display text-[clamp(120px,14vw,240px)] leading-[0.8] [grid-area:1/1] [animation:l-letter-out_.6s_ease_both]"
+                  className="font-display text-[clamp(110px,12vw,210px)] leading-[0.8] [grid-area:1/1] [animation:l-letter-out_.6s_ease_both]"
                   style={{ color: schools[prev].ink }}
                 >
                   {schools[prev].letter}
@@ -360,7 +366,7 @@ export default function CampusColours({
               )}
               <span
                 key={`in-${idx}`}
-                className={`font-display text-[clamp(120px,14vw,240px)] leading-[0.8] [grid-area:1/1] ${
+                className={`font-display text-[clamp(110px,12vw,210px)] leading-[0.8] [grid-area:1/1] ${
                   animate ? "[animation:l-letter-in_.6s_ease_both]" : ""
                 }`}
                 style={{ color: s.ink }}
