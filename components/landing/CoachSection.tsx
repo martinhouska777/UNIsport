@@ -81,11 +81,12 @@ export default function CoachSection({ solo = false }: { solo?: boolean }) {
                   (Next 16 deprecated `priority` in favour of `preload`.) */}
               <CoachPhone shot={s.shot} alt={s.alt} preload={i === 0} />
               <div>
-                <div className="font-mono text-[11px] uppercase tracking-[0.14em] text-l-varsity">
-                  {s.step}
-                </div>
-                <h3 className="mt-1.5 font-display text-[clamp(26px,3vw,34px)] font-normal leading-[1.08] tracking-tight text-balance text-l-text">
-                  {s.head}
+                {/* The number now rides IN FRONT of the headline, in the gold,
+                    instead of standing above it as its own one-word label
+                    ("2 · PLAN"). The owner, 2026-09-05: one line per step,
+                    named by the headline. */}
+                <h3 className="font-display text-[clamp(26px,3vw,34px)] font-normal leading-[1.08] tracking-tight text-balance text-l-text">
+                  <span className="text-l-varsity">{s.n} ·</span> {s.head}
                 </h3>
                 <Body
                   parts={s.body}

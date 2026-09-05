@@ -968,8 +968,10 @@ export type Segment = { text: string; bold?: boolean };
 
 export type CoachStep = {
   n: string;
-  /** The small label above the headline — "1 · Create". */
-  step: string;
+  /** The headline, which carries the number in front of it. The one-word gold
+      label that used to stand above it ("2 · PLAN") is GONE — the owner,
+      2026-09-05: "cut the '2 · Plan' and just name it with the headline, like
+      '2 · Create workout plans easily'". One line per step, not two. */
   head: string;
   body: Segment[];
   shot: string;
@@ -1031,7 +1033,6 @@ export const coach = {
   steps: [
     {
       n: "1",
-      step: "1 · Blocks",
       head: "Set up your training blocks.",
       body: [
         { text: "Name the block, set the dates and add " },
@@ -1043,8 +1044,8 @@ export const coach = {
     },
     {
       n: "2",
-      step: "2 · Plan",
-      head: "Create the workout plans easily.",
+      /* The owner's own wording for this one, 2026-09-05. */
+      head: "Create workout plans easily.",
       body: [
         { text: "Tap a day's AM or PM session to fill it in. Pick the workout type, choose the intensity, and choose from your most used workouts or write your own. For repeating workouts like lifts or off days choose " },
         { text: "repeat every week", bold: true },
@@ -1055,19 +1056,18 @@ export const coach = {
     },
     {
       n: "3",
-      step: "3 · Lineups",
       head: "Seat the boat and publish it.",
       body: [
         { text: "Tap a session from the plan to create the lineup for that day. Choose your people from the pool, where everyone carries their side, port, starboard or both, and anyone injured or sick is marked unavailable. " },
-        { text: "Publish it and the lineup is on every phone.", bold: true },
-        { text: " Never shout it across the dock again." },
+        /* The owner, 2026-09-05: end on the publishing, and cut the line after
+           it ("Never shout it across the dock again."). */
+        { text: "Publish it and the lineup is on every athlete's phone.", bold: true },
       ],
       shot: "coach-4-lineup.webp",
       alt: "The Lineup screen: the 1V eight seated cox to bow, port seats in red and starboard seats in green, with the athlete pool beside it",
     },
     {
       n: "4",
-      step: "4 · Videos",
       head: "Put the footage on the boat.",
       body: [
         { text: "After practice, tap a boat to upload a video from the session. " },
@@ -1083,7 +1083,6 @@ export const coach = {
     },
     {
       n: "5",
-      step: "5 · Stats",
       head: "Every number the squad puts up, in one list.",
       body: [
         { text: "Flag a session as a team workout and the board fills itself as the athletes log it, ranked by split, time, watts or watts per kilo. Water outings arrive with their telemetry, so you open an outing, then a piece, and read " },
@@ -1098,7 +1097,6 @@ export const coach = {
     },
     {
       n: "6",
-      step: "6 · Notes",
       head: "Keep the athletes on track.",
       body: [
         { text: "Write a note to an athlete on where their technical focus should be. It sits on their Home under the race countdown, so they " },

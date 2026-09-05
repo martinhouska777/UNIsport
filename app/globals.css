@@ -761,10 +761,13 @@
    became the real drawing (SchoolCrest, the Campus Crests compact cut).
    Sized in em, so it belongs to the button's type rather than to a number;
    1.5 × 1.74 is the crest's own 100:116. */
+/* The school's shield on the button. Smaller than it was (1.5/1.74em) —
+   the owner, 2026-09-05: "make the school letter smaller". It now stands
+   about as tall as the label's own line rather than over it. */
 .l-cta-mark {
   display: block;
-  width: 1.5em;
-  height: 1.74em;
+  width: 1.2em;
+  height: 1.39em;
   margin-right: 0.15em;
   /* The button's two colours, swapped: the label's ink becomes the shield and
      the school's colour draws the border, motif and letter — the design
