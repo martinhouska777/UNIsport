@@ -993,9 +993,9 @@ export const coach = {
      Nothing here claims anything new: every step is the same screen, saying
      the same thing in the page's settled voice. */
   badge: "UNIsport · for coaches & athletic departments",
-  /* Mirrors the interlude's own lead-in, which is the owner's dictated line
-     ("And if you do sport for the university itself —"). */
-  leadIn: "And if you are the one who runs the squad —",
+  /* NO LEAD-IN. It used to mirror the interlude's ("And if you are the one who
+     runs the squad —"); the owner cut it on 2026-09-05. The badge already says
+     who the section is for, and the headline says it again. */
   headline: "The Coach's",
   headlineEm: "Console.",
   /* THE INTRO AND ALL SIX STEPS ARE THE OWNER'S, DICTATED 2026-09-03.
@@ -1019,9 +1019,9 @@ export const coach = {
     },
   ] as Segment[],
   /* On the Coach view (/for/coaches) there is no varsity story above, so the
-     two lines that lean on it change: the "And" goes, and the athletes become
-     yours rather than the ones the reader has just watched. */
-  leadInSolo: "If you are the one who runs the squad —",
+     line that leans on it changes: the athletes become yours rather than the
+     ones the reader has just watched. (There was a `leadInSolo` here too, the
+     lead-in without its "And"; it went with the lead-in.) */
   subSolo: [
     { text: "UNIsport Varsity Mode is designed to make " },
     { text: "running a season", bold: true },
