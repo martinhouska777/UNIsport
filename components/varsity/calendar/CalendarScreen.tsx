@@ -19,14 +19,15 @@
     2. A DAY YOU DID NOTHING IS NOT A BOX. Only days you trained get a card;
        the rest are just their number. Half a month of empty bordered boxes was
        the loudest thing on that screen and it carried no information.
-    3. EVERY SESSION CARRIES ITS NUMBER — a short one ("16k", "72'"), because a
-       column is about 50px wide and the full "12 480 m · 1:52" would wrap to
-       three lines. The exact figures are in the day sheet.
+    3. EVERY SESSION SAYS WHICH KIND IT WAS — the colour is the intensity, so
+       water and erg are the same green and only the word tells them apart.
+       The figures stay in the day sheet: a column is about 33px of text wide.
     4. NO PAGE HEADER. The month is the title. The month's totals sit next to
        it instead of in a bar at the bottom.
 
-  All colors are theme tokens; the per-category block colours are CONTENT
-  colors from data (lib/varsity/athleteProfile), applied via inline style.
+  All colors are theme tokens — the session blocks now borrow the plan's own
+  token-based `kindStyles` (lib/varsity/home) rather than declaring a palette of
+  their own. The only content colours left are the dots in the day sheet.
 */
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
@@ -37,8 +38,11 @@ import { useAppState } from "@/components/AppState";
 import { useUnits } from "@/components/useUnits";
 import { formatDistance } from "@/lib/varsity/units";
 import { fetchLogsInRange, type LogEntry } from "@/lib/varsity/logStore";
+import { fetchPlan } from "@/lib/varsity/planStore";
+import { kindOf } from "@/lib/varsity/athleteHome";
+import { kindStyles, kindLegend } from "@/lib/varsity/home";
 import { formatMetrics } from "@/lib/varsity/logParse";
-import { toISO } from "@/lib/varsity/coachPlan";
+import { toISO, type Session, type SessionMap } from "@/lib/varsity/coachPlan";
 import {
   logCategoryColor,
   logCategoryLabel,
@@ -55,23 +59,37 @@ const DAY_NAMES = ["M", "T", "W", "T", "F", "S", "S"];
 
 const colorOf = (category: string | null) => logCategoryColor[category ?? "other"] ?? "var(--muted)";
 
-/* A wash of the session's own colour behind its text. color-mix rather than a
-   hex-alpha suffix, because several of these colours are theme tokens. */
-const tint = (color: string) => `color-mix(in srgb, ${color} 20%, transparent)`;
-
 /*
-  The one number that fits in a 50px column. Distance wins over time because
-  that is how rowing is talked about; both are rounded hard on purpose — the
-  exact figures are one tap away in the day sheet.
+  WHAT COLOUR A LOGGED SESSION IS.
+
+  The same colour the PLAN gave it — green UT2, red hard, amber weights — so a
+  practice looks the same on the coach's month view and in your own history
+  instead of the two screens using different palettes for the same day. A log
+  carries the plan slot it came from (`dayKey`), which is how we find the
+  coach's session and read its intensity.
+
+  Water and erg are therefore NOT told apart by colour (the plan doesn't either
+  — a UT2 outing and a UT2 erg are both green). Each block prints which it was,
+  and the legend at the bottom is still what the month's statistics hang off.
+
+  A session logged outside the plan has no intensity to read. Weights, flex and
+  off still land on the right colour from their category alone; anything else
+  stays neutral rather than being coloured with a guess.
 */
-function shortMetric(l: LogEntry): string {
-  if (l.metres) {
-    return l.metres >= 1000
-      ? `${(l.metres / 1000).toFixed(l.metres % 1000 === 0 ? 0 : 1)}k`
-      : `${l.metres}m`;
+const NEUTRAL_BLOCK = "bg-muted/20";
+
+function blockClass(l: LogEntry, planned: Session | undefined): string {
+  if (planned) return kindStyles[kindOf(planned)].block;
+  switch (l.category) {
+    case "weights":
+      return kindStyles.weights.block;
+    case "flex":
+      return kindStyles.recovery.block;
+    case "off":
+      return kindStyles.off.block;
+    default:
+      return NEUTRAL_BLOCK;
   }
-  if (l.minutes) return `${l.minutes}'`;
-  return "";
 }
 
 type CalDay = { num: number; iso: string; logs: LogEntry[]; today: boolean; future: boolean };
@@ -145,7 +163,20 @@ export default function CalendarScreen() {
   const [picked, setPicked] = useState<{ iso: string; label: string } | null>(null);
   const [openLog, setOpenLog] = useState<LogEntry | null>(null); // full-screen detail
   const [statsFor, setStatsFor] = useState<string | null>(null); // legend → stats sheet
+  // The coach's sessions, only so a logged one can borrow its colour. Loaded
+  // once — the plan is shared and does not change while you scroll months.
+  const [planSessions, setPlanSessions] = useState<SessionMap>({});
   const { units } = useUnits();
+
+  useEffect(() => {
+    let active = true;
+    fetchPlan().then((p) => {
+      if (active) setPlanSessions(p.sessions);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -309,13 +340,21 @@ export default function CalendarScreen() {
               {has && (
                 <span className="mt-0.5 flex flex-col gap-px">
                   {d.logs.map((l) => {
-                    const c = colorOf(l.category);
-                    const metric = shortMetric(l);
+                    const planned: Session | undefined = l.dayKey ? planSessions[l.dayKey] : undefined;
+                    /*
+                      Which kind of training it was, since the colour now says
+                      how hard rather than what — and water and erg share a
+                      colour at the same intensity.
+
+                      The word ALONE. A column is about 33px of text wide, so
+                      "Water · 16k" truncates to "Wate…" and loses the number it
+                      was there for. The figures live in the day sheet.
+                    */
+                    const sub = logCategoryLabel[l.category ?? "other"];
                     return (
                       <span
                         key={l.id}
-                        className="block rounded px-1 py-0.5"
-                        style={{ background: tint(c) }}
+                        className={`block rounded px-1 py-0.5 ${blockClass(l, planned)}`}
                       >
                         {/* Three lines, then an ellipsis. Without a cap, one
                             long title ("Main strength — squat, pull, press")
@@ -333,9 +372,9 @@ export default function CalendarScreen() {
                         >
                           {l.title}
                         </span>
-                        {metric && (
-                          <span className="mt-px block text-[10px] leading-none" style={{ color: c }}>
-                            {metric}
+                        {sub && (
+                          <span className="mt-px block truncate text-[10px] leading-none text-text-2">
+                            {sub}
                           </span>
                         )}
                       </span>
@@ -348,9 +387,22 @@ export default function CalendarScreen() {
         })}
       </div>
 
-      {/* Legend — each colour is a button: tap it for that kind of training's
-          sessions, time and distance this month. */}
-      <div className="mt-3 flex flex-wrap items-center gap-x-1.5 gap-y-1 border-t border-border px-1 pt-2.5">
+      {/* What the colours mean — the plan's own legend, drawn from the same
+          data, so the two month views can never explain themselves
+          differently. */}
+      <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-border px-1 pt-2.5">
+        {kindLegend.map((l) => (
+          <span key={l.kind} className="flex items-center gap-1 text-[11px] text-muted">
+            <span className={`h-1.5 w-3 rounded-sm ${kindStyles[l.kind].bar}`} />
+            {l.label}
+          </span>
+        ))}
+      </div>
+
+      {/* The month by kind of training — the axis the colours no longer carry.
+          Each is a button: tap it for that training's sessions, time and
+          distance this month. */}
+      <div className="mt-2 flex flex-wrap items-center gap-1.5 px-1">
         {legendCategories.map((c) => {
           const count = monthCounts[c] ?? 0;
           return (
@@ -359,14 +411,10 @@ export default function CalendarScreen() {
               type="button"
               onClick={() => setStatsFor(c)}
               aria-label={`${logCategoryLabel[c]} statistics for ${MONTHS[view.m]}`}
-              className="flex items-center gap-1.5 rounded-full px-1.5 py-1 text-[11px] text-muted active:bg-surface"
+              className="flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-[11px] text-muted active:bg-surface"
             >
-              <span
-                className="h-1.5 w-1.5 rounded-full"
-                style={{ background: logCategoryColor[c] ?? "var(--muted)" }}
-              />
               {logCategoryLabel[c]}
-              {count > 0 && <span className="font-semibold text-text">{count}</span>}
+              <span className={count > 0 ? "font-semibold text-text" : "text-muted"}>{count}</span>
             </button>
           );
         })}

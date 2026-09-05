@@ -31,8 +31,10 @@ import {
 } from "./home";
 import type { Plan } from "./planStore";
 
-// Plan category/intensity → the Home screen's color "kind".
-function kindOf(s: Session): SessionKind {
+// Plan category/intensity → the Home screen's color "kind". Exported because the
+// Calendar tab colours a LOGGED session by the plan session it came from, so
+// that the same practice is the same colour on both screens.
+export function kindOf(s: Session): SessionKind {
   switch (s.category) {
     case "off":
       return "off";

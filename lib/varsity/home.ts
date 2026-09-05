@@ -25,6 +25,21 @@ export const kindStyles: Record<SessionKind, { bar: string; block: string }> = {
   race: { bar: "bg-primary", block: "bg-primary/40" },
 };
 
+/*
+  What the colours mean, in the order they are shown. Lives here rather than in
+  a screen because BOTH month calendars print it — the plan's (Home) and the
+  athlete's own training history (Calendar) — and two copies would drift the
+  first time a kind is renamed (rule 7).
+*/
+export const kindLegend: { kind: SessionKind; label: string }[] = [
+  { kind: "ut2", label: "UT2" },
+  { kind: "hard", label: "Hard" },
+  { kind: "weights", label: "Weights" },
+  { kind: "recovery", label: "Recovery" },
+  { kind: "race", label: "Race" },
+  { kind: "off", label: "Off" },
+];
+
 export type SessionStatus = "verified" | "upcoming" | "flagged" | "missed";
 
 export type DaySession = {

@@ -26,7 +26,7 @@ import { SkeletonCards, SkeletonLines } from "@/components/ui/Skeleton";
 import SectionLabel from "@/components/ui/SectionLabel";
 import {
   kindStyles,
-  type SessionKind,
+  kindLegend,
   type HomeData,
   type Greeting as GreetingData,
   type Race as RaceData,
@@ -182,14 +182,6 @@ const MONTH_NAMES = [
   "July", "August", "September", "October", "November", "December",
 ];
 const DAY_LETTERS = ["M", "T", "W", "T", "F", "S", "S"];
-const LEGEND: { kind: SessionKind; label: string }[] = [
-  { kind: "ut2", label: "UT2" },
-  { kind: "hard", label: "Hard" },
-  { kind: "weights", label: "Weights" },
-  { kind: "recovery", label: "Recovery" },
-  { kind: "race", label: "Race" },
-  { kind: "off", label: "Off" },
-];
 
 function MonthOverlay({
   weeks,
@@ -358,7 +350,7 @@ function MonthOverlay({
 
         {/* What the colors mean */}
         <div className="flex flex-shrink-0 flex-wrap items-center justify-center gap-x-3 gap-y-1 border-t border-border bg-surface px-3 py-2">
-          {LEGEND.map((l) => (
+          {kindLegend.map((l) => (
             <span key={l.kind} className="flex items-center gap-1 text-[11px] text-muted">
               <span className={`h-1.5 w-3 rounded-sm ${kindStyles[l.kind].bar}`} />
               {l.label}
