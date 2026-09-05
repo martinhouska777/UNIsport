@@ -602,6 +602,69 @@
 }
 
 /*
+  ─────────────── THE TWO TITLE CARDS ───────────────
+  StudentIntro ("Never train alone again.") and Interlude ("Varsity Mode.") —
+  the same object twice, and both were a flat panel: bg-l-surface is painted
+  OVER the page grid (which is fixed, behind the page), so the card lost the
+  one texture the rest of the page has and read as an empty screen. The owner,
+  2026-09-04: "do some animation for the never train alone and the 7 features
+  and better background, same as varsity mode, so it looks better."
+
+  So each card now carries the grid itself, masked away at the edges so it
+  never crowds the words, and one soft glow in its OWN colour behind the
+  headline — --tg, set by the component: the page blue on the student card,
+  the showing school's colour when that card is the front door of
+  /for/students, gold on the varsity card.
+*/
+.l-titlecard::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 48px 48px;
+  -webkit-mask-image: radial-gradient(115% 85% at 50% 45%, #000 30%, transparent 76%);
+  mask-image: radial-gradient(115% 85% at 50% 45%, #000 30%, transparent 76%);
+}
+.l-titlecard::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 40%;
+  width: min(1150px, 135%);
+  height: min(760px, 78%);
+  translate: -50% -50%;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(closest-side, var(--tg, transparent) 0%, transparent 70%);
+  filter: blur(46px);
+  /* The student card cycles the eight schools; the colour follows at the
+     cycle's own pace instead of cutting. */
+  transition: background 700ms ease-in-out;
+}
+
+/*
+  THE CARD ARRIVES, once it is on screen — and again if you come back to it.
+  One clock, the hero's: l-fade-up, filled both ways, and a per-element delay
+  in --d (the seven feature chips get theirs from OpeningSteps, one after
+  another). Before .is-in the parts are simply not painted; under reduced
+  motion they are all simply there.
+*/
+.l-titlecard .l-tc { opacity: 0; }
+.l-titlecard.is-in .l-tc {
+  animation: l-fade-up 0.85s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation-delay: var(--d, 0ms);
+}
+@media (prefers-reduced-motion: reduce) {
+  .l-titlecard .l-tc { opacity: 1; }
+  .l-titlecard.is-in .l-tc { animation: none; }
+  .l-titlecard::after { transition: none; }
+}
+
+/*
   THE HAND-OVER to the story. --l-out runs 0 → 1 as the intro is scrolled by
   its own height (components/landing/HeroFade.tsx): the intro fades and lags
   behind the page, so the story's first stage rises OVER it rather than simply

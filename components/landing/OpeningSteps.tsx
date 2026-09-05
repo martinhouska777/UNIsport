@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import FeatureIcon from "@/components/landing/FeatureIcon";
 import type { OpeningStep } from "@/lib/landingCopy";
 
@@ -16,16 +17,23 @@ import type { OpeningStep } from "@/lib/landingCopy";
 
   Wraps rather than scrolls, so seven items on a phone become two or three
   tidy rows instead of a strip running off the side.
+
+  They arrive one after another when the card comes on screen: `delay` is when
+  the first one lands, and each following one is 55ms behind the last (the
+  card's entrance is .l-titlecard in app/globals.css).
 */
 export default function OpeningSteps({
   steps,
   accent,
   storyId,
+  delay = 0,
 }: {
   steps: OpeningStep[];
   accent: "accent" | "varsity";
   /** The story whose markers these link at — "story1" / "story2". */
   storyId: string;
+  /** When the first chip lands, in ms, once the card is on screen. */
+  delay?: number;
 }) {
   const tint = accent === "accent" ? "text-l-accent" : "text-l-varsity";
   const edge = accent === "accent" ? "hover:border-l-accent-soft hover:bg-l-accent-dim" : "hover:border-l-varsity-soft hover:bg-l-varsity-dim";
@@ -33,7 +41,7 @@ export default function OpeningSteps({
   return (
     <ol className="mt-1 flex max-w-[660px] flex-wrap items-center justify-center gap-2">
       {steps.map((s, i) => (
-        <li key={s.n}>
+        <li key={s.n} className="l-tc" style={{ "--d": `${delay + i * 55}ms` } as CSSProperties}>
           <a
             href={`#${storyId}-b${i}`}
             className={`flex items-center gap-1.5 rounded-full border border-transparent px-3 py-1.5 transition-colors ${edge}`}
