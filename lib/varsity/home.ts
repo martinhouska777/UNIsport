@@ -22,7 +22,9 @@ export type SessionKind = "ut2" | "ut1" | "hard" | "weights" | "extra" | "race" 
   documented exception to rule 1 — the same exception lib/varsity/coachPlan.ts
   already uses, and deliberately the same VALUES: UT1's amber and the purple of
   a weights day are copied from the plan builder's own palette, so one session
-  cannot be two colours depending on which screen you are looking at.
+  cannot be two colours depending on which screen you are looking at. Extra is
+  the one hue with no plan equivalent — pink because every other clear hue was
+  already spoken for, and it must not be mistaken for a rest day.
 
   Green / amber / red are the coach's spreadsheet order — steady, rate work,
   flat out — and Race gets blue because it is not an intensity at all, it is the
@@ -33,7 +35,7 @@ export const kindColor: Record<SessionKind, string> = {
   ut1: "#eab308",
   hard: "var(--danger)",
   weights: "#c084fc",
-  extra: "var(--accent)",
+  extra: "#ec4899",
   race: "#3b82f6",
   // Not in the legend (see below) — a rest day still needs SOMETHING to draw.
   off: "var(--muted)",
