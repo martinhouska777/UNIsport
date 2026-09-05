@@ -232,11 +232,11 @@ export default function CampusColours({
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
         // touch-pan-y: vertical is the page's, across is ours.
-        className="lc-stick flex min-h-svh touch-pan-y flex-col items-center justify-center overflow-hidden px-6 py-6 sm:px-8 lg:py-10"
+        className="lc-stick flex min-h-svh touch-pan-y flex-col items-center justify-center overflow-hidden px-6 py-6 sm:px-8 lg:py-8"
       >
         <CloserSplit aside={aside} accent="accent">
         {/* ── The words ── */}
-        <div className={`lc-words mb-6 max-w-[760px] text-center lg:mb-9 ${wordsPre ? "lc-pre" : ""}`}>
+        <div className={`lc-words mb-6 max-w-[760px] text-center ${wordsPre ? "lc-pre" : ""}`}>
           {/* No lead-in over this block since 2026-09-04 (the owner: discard the
               sentence above the headline), exactly as Blade Lock. An empty <p>
               would still hold a line of height, so it only exists when there
@@ -244,7 +244,13 @@ export default function CampusColours({
           {copy.leadIn && (
             <p className="mb-2.5 font-display text-[clamp(16px,2vw,20px)] text-l-text-2">{copy.leadIn}</p>
           )}
-          <h2 className="font-display text-[clamp(30px,3.4vw,44px)] font-normal leading-[1.1] tracking-tight text-balance text-l-text">
+          {/* TWO LINES, ON PURPOSE (owner, 2026-09-04: "do the text more so it
+              fits 2 lines"). At 52px the sentence still runs on ONE line in a
+              760px block — it would need ~87px to wrap on its own, which is
+              bigger than it ever was — so the BLOCK is what breaks it: 15ch,
+              centred, and text-balance splits it evenly at "campus,". Below
+              lg the clamp shrinks it and it breaks anyway. */}
+          <h2 className="mx-auto max-w-[15ch] font-display text-[clamp(32px,3.9vw,52px)] font-normal leading-[1.1] tracking-tight text-balance text-l-text">
             {copy.headline}{" "}
             <em
               className="italic transition-colors duration-[600ms] ease-in-out motion-reduce:transition-none"
@@ -290,15 +296,24 @@ export default function CampusColours({
             pomeru s ostatnim"). So the headline's ceiling went 60px -> 44px,
             the gap under the words lg:mb-11 -> lg:mb-9, and the two dozen
             pixels that frees go to the phone: 270 -> 300 at lg, and above xl
-            310 against a reserve of 344. At 1900x860 that is a 310x554 phone
-            with ~50px of air above the headline and below the dots; measured
-            fitting at 1536x864, 1440x900 and 1280x800 too. (1440x620 still
-            overflows by 37px — it did before this change by exactly the same
-            37px, so it is the older, separate problem.) */}
+            310 against a reserve of 344.
+
+            THEN THE HEADLINE TOOK TWO LINES (same day, same owner) and the
+            geometry stopped allowing both: on an 860px window a 52px two-line
+            headline and a 310px phone do not fit together. Half the difference
+            came back out of the chrome — the gap under the words lg:mb-11 is
+            now just mb-6, the stick's lg:py-10 is lg:py-8 — and the phone
+            takes the rest of the hit: 292px at 1900x860, still above the 270
+            it started at. The reserve is 380, which is what the fit needs:
+            chrome is ~330px, and phone height grows 1.088x with the window, so
+            R must clear 0.081*H + 304 at every H. Checked with no overflow at
+            1900x860, 1536x864, 1440x900, 1280x800, 1024x768 and 390x844.
+            (1440x620 still overflows — by 29px now, 37px before, so the older
+            short-window problem is untouched and slightly smaller.) */}
         <div className="flex w-full flex-col items-center justify-center gap-5 lg:flex-row lg:gap-[60px]">
           <Phone
             ref={phoneEl}
-            className={`lc-phone relative z-[3] order-2 w-[min(270px,52vw)] flex-none lg:order-1 lg:w-[300px] xl:w-[min(310px,calc((100svh_-_344px)*0.608))] ${
+            className={`lc-phone relative z-[3] order-2 w-[min(270px,52vw)] flex-none lg:order-1 lg:w-[300px] xl:w-[min(310px,calc((100svh_-_380px)*0.608))] ${
               phone === "hide" ? "lc-hide" : phone === "pre" ? "lc-pre" : ""
             }`}
             data-closer-phone="campus"
