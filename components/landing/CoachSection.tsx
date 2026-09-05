@@ -44,20 +44,20 @@ export default function CoachSection({ solo = false }: { solo?: boolean }) {
     <section
       id="coaches"
       data-phone-screens
-      className={`relative z-[1] scroll-mt-20 px-6 pb-28 sm:px-8 ${solo ? "l-glow-varsity pt-14 sm:pt-20" : "border-t border-l-line pt-24"}`}
+      className={`relative z-[1] scroll-mt-20 px-6 pb-28 sm:px-8 ${solo ? "l-glow-varsity pt-10 sm:pt-14" : "border-t border-l-line pt-24"}`}
     >
       <div className="mx-auto max-w-[1160px]">
         {/* ── The opener ── */}
-        <div className={`flex flex-col items-center gap-[18px] pb-7 text-center ${solo ? "l-fade-up" : ""}`}>
+        <div className={`flex flex-col items-center gap-[clamp(11px,1.8vh,18px)] pb-7 text-center ${solo ? "l-fade-up" : ""}`}>
           <div className="inline-flex items-center gap-2 rounded-full border border-l-varsity-soft bg-l-varsity-dim px-3.5 py-1.5 font-mono text-[11px] uppercase tracking-wider text-l-varsity">
             {coach.badge}
           </div>
-          <h2 className="max-w-[14ch] font-display text-[clamp(46px,9vw,96px)] font-normal leading-[0.99] tracking-tight text-balance text-l-text">
+          <h2 className="max-w-[14ch] font-display text-[clamp(40px,min(7vw,8.6vh),68px)] font-normal leading-[1.02] tracking-tight text-balance text-l-text">
             {coach.headline} <em className="italic text-l-varsity">{coach.headlineEm}</em>
           </h2>
           <Body
             parts={solo ? coach.subSolo : coach.sub}
-            className="max-w-[52ch] text-[clamp(16px,2.2vw,19px)] leading-relaxed text-balance text-l-text-2"
+            className="max-w-[60ch] text-[clamp(15px,1.9vw,17px)] leading-[1.6] text-balance text-l-text-2"
           />
           {solo && (
             <a
@@ -90,18 +90,30 @@ export default function CoachSection({ solo = false }: { solo?: boolean }) {
           {coach.steps.map((s, i) => (
             <article
               key={s.n}
-              className="flex shrink grow-0 basis-[300px] flex-col items-center gap-[22px] text-center"
+              className="flex shrink grow-0 basis-[300px] flex-col items-center gap-[18px] text-center"
             >
               {/* Only the first capture preloads; the rest are far below the fold.
                   (Next 16 deprecated `priority` in favour of `preload`.) */}
               <CoachPhone shot={s.shot} alt={s.alt} preload={i === 0} />
-              <div>
-                {/* The number now rides IN FRONT of the headline, in the gold,
-                    instead of standing above it as its own one-word label
-                    ("2 · PLAN"). The owner, 2026-09-05: one line per step,
-                    named by the headline. */}
-                <h3 className="font-display text-[clamp(26px,3vw,34px)] font-normal leading-[1.08] tracking-tight text-balance text-l-text">
-                  <span className="text-l-varsity">{s.n} ·</span> {s.head}
+              <div className="flex flex-col items-center">
+                {/* THE STEP NUMBER — its own small gold coin above the headline
+                    (the owner, 2026-09-05: the number was ugly). It rode INSIDE
+                    the headline before, as "1 ·" set in the display serif, which
+                    pulled the gold into the sentence and left the dot hanging at
+                    a line break. As a coin it wears the numbering idiom the page
+                    already has — mono digits in the outlined gold pill of the
+                    section badge and the story chips (OpeningSteps.tsx) — and
+                    the headline is left to read as one clean line, which is what
+                    the owner asked for on the same day. Decorative, hence
+                    aria-hidden: the order is already in the markup. */}
+                <span
+                  aria-hidden
+                  className="mb-3 flex h-7 w-7 items-center justify-center rounded-full border border-l-varsity-soft bg-l-varsity-dim font-mono text-[12px] leading-none text-l-varsity"
+                >
+                  {s.n}
+                </span>
+                <h3 className="font-display text-[clamp(24px,2.7vw,31px)] font-normal leading-[1.1] tracking-tight text-balance text-l-text">
+                  {s.head}
                 </h3>
                 <Body
                   parts={s.body}
