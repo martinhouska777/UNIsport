@@ -244,7 +244,7 @@ export default function CampusColours({
           {copy.leadIn && (
             <p className="mb-2.5 font-display text-[clamp(16px,2vw,20px)] text-l-text-2">{copy.leadIn}</p>
           )}
-          <h2 className="font-display text-[clamp(36px,4.6vw,60px)] font-normal leading-[1.1] tracking-tight text-balance text-l-text">
+          <h2 className="font-display text-[clamp(30px,3.4vw,44px)] font-normal leading-[1.1] tracking-tight text-balance text-l-text">
             {copy.headline}{" "}
             <em
               className="italic transition-colors duration-[600ms] ease-in-out motion-reduce:transition-none"
@@ -288,7 +288,7 @@ export default function CampusColours({
         <div className="flex w-full flex-col items-center justify-center gap-5 lg:flex-row lg:gap-[60px]">
           <Phone
             ref={phoneEl}
-            className={`lc-phone relative z-[3] order-2 w-[min(270px,52vw)] flex-none lg:order-1 lg:w-[270px] xl:w-[min(270px,calc((100svh_-_356px)*0.608))] ${
+            className={`lc-phone relative z-[3] order-2 w-[min(270px,52vw)] flex-none lg:order-1 lg:w-[300px] xl:w-[min(330px,calc((100svh_-_330px)*0.608))] ${
               phone === "hide" ? "lc-hide" : phone === "pre" ? "lc-pre" : ""
             }`}
             data-closer-phone="campus"
