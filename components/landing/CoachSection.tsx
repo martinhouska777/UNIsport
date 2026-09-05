@@ -96,19 +96,25 @@ export default function CoachSection({ solo = false }: { solo?: boolean }) {
                   (Next 16 deprecated `priority` in favour of `preload`.) */}
               <CoachPhone shot={s.shot} alt={s.alt} preload={i === 0} />
               <div>
-                {/* THE STEP NUMBER, back INSIDE the headline and small (the
-                    owner, 2026-09-05). It has been three things in one day: its
-                    own label line above the title ("2 · PLAN"), then the same
-                    size as the headline in the display serif ("1 ·", the one
-                    they called ugly — the gold cut the sentence in two and the
-                    dot hung at a line break), then a coin above it. This is the
-                    quiet version they asked for: a superior figure in the mono
-                    the page numbers everything else with (OpeningSteps.tsx),
-                    sized in `em` so it follows the headline at every width,
-                    raised towards the cap line, and with the dot dropped. It
-                    marks the step without joining the sentence. */}
+                {/* THE STEP NUMBER — a small gold coin BESIDE the headline (the
+                    owner, 2026-09-05: "udělej ho hezčí a třeba v kolečku a vedle
+                    toho názvu"). Four goes in one day: its own label line above
+                    the title ("2 · PLAN"), the same size as the headline in the
+                    display serif ("1 ·" — the gold cut the sentence in two and
+                    the dot hung at a line break), a coin stacked above it, a
+                    bare superior figure, and now the coin brought down onto the
+                    line.
+
+                    It is INLINE, inside the <h3>, not a flex row beside it: that
+                    keeps the headline centred and lets `text-balance` set the
+                    two lines evenly, and the coin can only ever sit in front of
+                    the first word. Everything is sized in `em` off the headline,
+                    so one clamp drives both and the coin holds its proportion
+                    from a phone to a wide monitor. Mono digits in the outlined
+                    gold pill are the page's own numbering idiom — the section
+                    badge and the story chips (OpeningSteps.tsx) wear it too. */}
                 <h3 className="font-display text-[clamp(24px,2.7vw,31px)] font-normal leading-[1.1] tracking-tight text-balance text-l-text">
-                  <span className="mr-[0.5em] align-[0.42em] font-mono text-[0.4em] tracking-[0.06em] text-l-varsity">
+                  <span className="mr-[0.34em] inline-flex h-[1.72em] w-[1.72em] items-center justify-center rounded-full border border-l-varsity-soft bg-l-varsity-dim align-[0.42em] font-mono text-[0.42em] leading-none text-l-varsity">
                     {s.n}
                   </span>
                   {s.head}
