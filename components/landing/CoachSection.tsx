@@ -70,8 +70,20 @@ export default function CoachSection({ solo = false }: { solo?: boolean }) {
           )}
         </div>
 
+        {/* ── The break, and the name the six screens go under ──
+            The opener says what the console is; from here the page shows it.
+            A rule and a heading stand between the two, so the phones are no
+            longer hanging off the bottom of the statement (owner,
+            2026-09-05). */}
+        <div className="mt-16 flex flex-col items-center gap-3 border-t border-l-line pt-16 text-center">
+          <h3 className="font-display text-[clamp(32px,5vw,52px)] font-normal leading-[1.02] tracking-tight text-balance text-l-text">
+            {coach.stepsHead} <em className="italic text-l-varsity">{coach.stepsHeadEm}</em>
+          </h3>
+          <p className="max-w-[46ch] text-[15px] leading-relaxed text-balance text-l-text-2">{coach.stepsSub}</p>
+        </div>
+
         {/* ── Six screens, six explanations ── */}
-        <div className="mt-12 flex flex-wrap items-start justify-center gap-x-11 gap-y-[60px]">
+        <div className="mt-14 flex flex-wrap items-start justify-center gap-x-11 gap-y-[60px]">
           {coach.steps.map((s, i) => (
             <article
               key={s.n}

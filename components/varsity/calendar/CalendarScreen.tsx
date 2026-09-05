@@ -25,9 +25,9 @@
     4. NO PAGE HEADER. The month is the title. The month's totals sit next to
        it instead of in a bar at the bottom.
 
-  All colors are theme tokens — the session blocks now borrow the plan's own
-  token-based `kindStyles` (lib/varsity/home) rather than declaring a palette of
-  their own. The only content colours left are the dots in the day sheet.
+  The session blocks borrow the plan's own palette (`kindColor` in
+  lib/varsity/home) rather than declaring one of their own, so a practice is the
+  same colour here as on the coach's month view.
 */
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
@@ -40,7 +40,7 @@ import { formatDistance } from "@/lib/varsity/units";
 import { fetchLogsInRange, type LogEntry } from "@/lib/varsity/logStore";
 import { fetchPlan } from "@/lib/varsity/planStore";
 import { kindOf } from "@/lib/varsity/athleteHome";
-import { kindStyles, kindLegend } from "@/lib/varsity/home";
+import { kindBar, kindBlock, kindLegend } from "@/lib/varsity/home";
 import { formatMetrics } from "@/lib/varsity/logParse";
 import { toISO, type Session, type SessionMap } from "@/lib/varsity/coachPlan";
 import {
@@ -62,8 +62,8 @@ const colorOf = (category: string | null) => logCategoryColor[category ?? "other
 /*
   WHAT COLOUR A LOGGED SESSION IS.
 
-  The same colour the PLAN gave it — green UT2, red hard, amber weights — so a
-  practice looks the same on the coach's month view and in your own history
+  The same colour the PLAN gave it — green UT2, amber UT1, red hard, purple
+  weights — so a practice looks the same on the coach's month view and in your own history
   instead of the two screens using different palettes for the same day. A log
   carries the plan slot it came from (`dayKey`), which is how we find the
   coach's session and read its intensity.
@@ -76,17 +76,17 @@ const colorOf = (category: string | null) => logCategoryColor[category ?? "other
   off still land on the right colour from their category alone; anything else
   stays neutral rather than being coloured with a guess.
 */
-const NEUTRAL_BLOCK = "bg-muted/20";
+const NEUTRAL_BLOCK = { background: "color-mix(in oklab, var(--muted) 20%, transparent)" };
 
-function blockClass(l: LogEntry, planned: Session | undefined): string {
-  if (planned) return kindStyles[kindOf(planned)].block;
+function blockStyle(l: LogEntry, planned: Session | undefined) {
+  if (planned) return kindBlock(kindOf(planned));
   switch (l.category) {
     case "weights":
-      return kindStyles.weights.block;
+      return kindBlock("weights");
     case "flex":
-      return kindStyles.recovery.block;
+      return kindBlock("extra");
     case "off":
-      return kindStyles.off.block;
+      return kindBlock("off");
     default:
       return NEUTRAL_BLOCK;
   }
@@ -354,7 +354,7 @@ export default function CalendarScreen() {
                     return (
                       <span
                         key={l.id}
-                        className={`block rounded px-1 py-0.5 ${blockClass(l, planned)}`}
+                        className="block rounded px-1 py-0.5" style={blockStyle(l, planned)}
                       >
                         {/* Three lines, then an ellipsis. Without a cap, one
                             long title ("Main strength — squat, pull, press")
@@ -393,7 +393,7 @@ export default function CalendarScreen() {
       <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-border px-1 pt-2.5">
         {kindLegend.map((l) => (
           <span key={l.kind} className="flex items-center gap-1 text-[11px] text-muted">
-            <span className={`h-1.5 w-3 rounded-sm ${kindStyles[l.kind].bar}`} />
+            <span className="h-1.5 w-3 rounded-sm" style={kindBar(l.kind)} />
             {l.label}
           </span>
         ))}

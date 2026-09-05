@@ -24,9 +24,13 @@
   the results from resultsStore, the outings from telemetryStore. Until a real
   export has been imported the water side shows ONE example outing transcribed
   from the owner's own PowerLine screen (lib/varsity/demoTelemetry.ts) — real
-  numbers, labelled as an example, gone the moment a real one exists. Colors
-  are theme tokens; the category dot is a content color from data, applied via
-  inline style (rule-1 exception).
+  numbers, gone the moment a real one exists. Colors are theme tokens; the
+  category dot is a content color from data, applied via inline style (rule-1
+  exception).
+
+  The example rows carry NO "this is an example" note any more — the owner asked
+  for the explanation to go. If seeded data ever gets mistaken for real results,
+  that is the thing to put back (a small tag on the row, not a paragraph).
 */
 import { useEffect, useMemo, useState } from "react";
 import { useAppState } from "@/components/AppState";
@@ -49,7 +53,7 @@ function outingDateLabel(dayKey: string): string {
   return `${dayKeyLabel(dayKey)}${parsed ? ` · ${parsed.period}` : ""}`;
 }
 
-type Kind = "all" | "erg" | "water";
+type Kind = "erg" | "water";
 type Row = { key: string; date: Date; erg?: TeamWorkout; water?: Outing };
 
 export default function TeamWorkouts() {
@@ -65,9 +69,8 @@ export default function TeamWorkouts() {
   const [open, setOpen] = useState<string | null>(null);
   // the water side
   const [outings, setOutings] = useState<Outing[]>([]);
-  const [outingExample, setOutingExample] = useState(false);
   const [openOuting, setOpenOuting] = useState<string | null>(null);
-  const [kind, setKind] = useState<Kind>("all");
+  const [kind, setKind] = useState<Kind>("erg");
 
   useEffect(() => {
     let active = true;
@@ -116,7 +119,6 @@ export default function TeamWorkouts() {
         // No import yet → the one transcribed outing, so the water side can
         // be looked at (see demoTelemetry.ts).
         setOutings(demoOutings);
-        setOutingExample(true);
       }
     });
     return () => {
@@ -145,7 +147,7 @@ export default function TeamWorkouts() {
       water: o,
     }));
     return [...ergRows, ...waterRows]
-      .filter((r) => kind === "all" || (kind === "erg" ? !!r.erg : !!r.water))
+      .filter((r) => (kind === "erg" ? !!r.erg : !!r.water))
       .sort((a, b) => b.date.getTime() - a.date.getTime());
   }, [workouts, outings, kind]);
 
@@ -168,30 +170,9 @@ export default function TeamWorkouts() {
 
   return (
     <div className="mt-4">
-      {(example || outingExample) && (
-        <div className="mb-2 rounded-xl border border-dashed border-border bg-surface-2 px-3.5 py-2.5">
-          <p className="text-[11px] leading-relaxed text-muted">
-            {example && (
-              <>
-                <span className="font-semibold text-text">Example workouts.</span> Nobody has flagged
-                a team workout yet, so this is what the board looks like once they have. It vanishes
-                the moment the coach switches a real session on.{" "}
-              </>
-            )}
-            {outingExample && (
-              <>
-                <span className="font-semibold text-text">Example outing.</span> No Peach export has
-                been imported yet, so the water row is one real outing transcribed from the
-                PowerLine screen (15 May, box 5423). It vanishes when a real import exists.
-              </>
-            )}
-          </p>
-        </div>
-      )}
-
       {/* erg / water */}
       <div className="mb-2 flex gap-1 rounded-xl border border-border bg-surface p-1">
-        {(["all", "erg", "water"] as Kind[]).map((k) => (
+        {(["erg", "water"] as Kind[]).map((k) => (
           <button
             key={k}
             type="button"

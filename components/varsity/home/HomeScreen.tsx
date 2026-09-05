@@ -25,7 +25,8 @@ import { buildAthleteHome, daySessionToCard } from "@/lib/varsity/athleteHome";
 import { SkeletonCards, SkeletonLines } from "@/components/ui/Skeleton";
 import SectionLabel from "@/components/ui/SectionLabel";
 import {
-  kindStyles,
+  kindBar,
+  kindBlock,
   kindLegend,
   type HomeData,
   type Greeting as GreetingData,
@@ -157,7 +158,7 @@ function WeekFit({
                 const s = d.sessions.find((x) => x.time === row);
                 if (!s) return null;
                 return (
-                  <div key={row} className={`flex-1 rounded px-1 py-1 ${kindStyles[s.kind].block}`}>
+                  <div key={row} className="flex-1 rounded px-1 py-1" style={kindBlock(s.kind)}>
                     <span className="block text-[7px] font-bold leading-none text-text-3">{row}</span>
                     <span className="mt-0.5 block break-words text-[10px] font-medium leading-tight text-text">
                       {s.label}
@@ -332,7 +333,7 @@ function MonthOverlay({
                   {(day?.sessions ?? []).map((s, j) => (
                     <span
                       key={j}
-                      className={`flex-1 overflow-hidden rounded px-1 py-0.5 ${kindStyles[s.kind].block}`}
+                      className="flex-1 overflow-hidden rounded px-1 py-0.5" style={kindBlock(s.kind)}
                     >
                       <span className="block text-[6px] font-bold leading-none text-text-3">
                         {s.time}
@@ -352,7 +353,7 @@ function MonthOverlay({
         <div className="flex flex-shrink-0 flex-wrap items-center justify-center gap-x-3 gap-y-1 border-t border-border bg-surface px-3 py-2">
           {kindLegend.map((l) => (
             <span key={l.kind} className="flex items-center gap-1 text-[11px] text-muted">
-              <span className={`h-1.5 w-3 rounded-sm ${kindStyles[l.kind].bar}`} />
+              <span className="h-1.5 w-3 rounded-sm" style={kindBar(l.kind)} />
               {l.label}
             </span>
           ))}
@@ -386,7 +387,7 @@ function DayDetail({ d, onClose }: { d: WeekDay; onClose: () => void }) {
         <div className="flex flex-col divide-y divide-border">
           {d.sessions.map((s, i) => (
             <div key={i} className="flex items-stretch gap-2.5 px-3 py-2.5">
-              <div className={`w-[3px] flex-shrink-0 rounded ${kindStyles[s.kind].bar}`} />
+              <div className="w-[3px] flex-shrink-0 rounded" style={kindBar(s.kind)} />
               <div className="flex-1">
                 <div className="flex items-center gap-2">
                   <span className="rounded border border-border bg-surface-2 px-1.5 py-0.5 text-[8px] font-semibold tracking-[0.06em] text-muted">
@@ -541,7 +542,7 @@ function SessionCard({ s, lineups = [] }: { s: TodaySession; lineups?: Lineup[] 
             : undefined
         }
       >
-        <div className={`w-[3px] flex-shrink-0 ${kindStyles[s.kind].bar}`} />
+        <div className="w-[3px] flex-shrink-0" style={kindBar(s.kind)} />
         <div className="flex-1 p-3">
           <div className="mb-1 flex items-center justify-between">
             <div className="flex items-center gap-2">

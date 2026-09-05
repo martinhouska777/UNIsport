@@ -412,8 +412,8 @@ export default function TeamScreen({
 
   return (
     <div className="mx-auto w-full max-w-screen-sm px-4 pb-10 pt-4">
-      <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-accent">The squad</div>
-      <h1 className="mt-0.5 text-2xl font-semibold text-text">Team</h1>
+      {/* Just the word. "The squad" sat above it saying the same thing twice. */}
+      <h1 className="text-2xl font-semibold text-text">Team</h1>
 
       {/* sub-navigation */}
       <div className="mt-3 flex gap-1 rounded-xl border border-border bg-surface p-1">

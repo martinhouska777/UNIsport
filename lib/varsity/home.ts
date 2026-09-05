@@ -6,38 +6,64 @@
   logged sessions, the day's lineup). For now it's the mock day from the
   mockup so the layout can be reviewed.
 
-  Session "kind" maps to a THEME TOKEN (not a hardcoded color), so the colored
-  blocks/bars re-skin with the theme. See `kindStyles` for the literal Tailwind
-  classes (literals so Tailwind can see them).
+  Session "kind" is the CALENDAR's colour axis — the thing a month of squares
+  is read by. It answers "how hard was that day", which is why the three
+  intensities the coach actually plans in each get their own colour.
 */
 
 import type { Boat } from "./coachLineup";
 
-export type SessionKind = "ut2" | "hard" | "weights" | "off" | "recovery" | "race";
+export type SessionKind = "ut2" | "ut1" | "hard" | "weights" | "extra" | "race" | "off";
 
-// kind -> token-based classes. `bar` = solid edge, `block` = tinted strip.
-export const kindStyles: Record<SessionKind, { bar: string; block: string }> = {
-  ut2: { bar: "bg-success", block: "bg-success/25" },
-  hard: { bar: "bg-danger", block: "bg-danger/30" },
-  weights: { bar: "bg-warn", block: "bg-warn/30" },
-  off: { bar: "bg-muted", block: "bg-muted/20" },
-  recovery: { bar: "bg-accent", block: "bg-accent/25" },
-  race: { bar: "bg-primary", block: "bg-primary/40" },
+/*
+  kind -> one colour, applied by INLINE STYLE.
+
+  These are per-entity content colours living in a data file, which is the
+  documented exception to rule 1 — the same exception lib/varsity/coachPlan.ts
+  already uses, and deliberately the same VALUES: UT1's amber and the purple of
+  a weights day are copied from the plan builder's own palette, so one session
+  cannot be two colours depending on which screen you are looking at.
+
+  Green / amber / red are the coach's spreadsheet order — steady, rate work,
+  flat out — and Race gets blue because it is not an intensity at all, it is the
+  day the training was for.
+*/
+export const kindColor: Record<SessionKind, string> = {
+  ut2: "var(--success)",
+  ut1: "#eab308",
+  hard: "var(--danger)",
+  weights: "#c084fc",
+  extra: "var(--accent)",
+  race: "#3b82f6",
+  // Not in the legend (see below) — a rest day still needs SOMETHING to draw.
+  off: "var(--muted)",
 };
+
+/** Solid edge — the 3px bar down the side of a session row. */
+export const kindBar = (k: SessionKind) => ({ background: kindColor[k] });
+
+/** Tinted fill — the block a calendar cell is painted with. */
+export const kindBlock = (k: SessionKind) => ({
+  background: `color-mix(in oklab, ${kindColor[k]} 28%, transparent)`,
+});
 
 /*
   What the colours mean, in the order they are shown. Lives here rather than in
   a screen because BOTH month calendars print it — the plan's (Home) and the
   athlete's own training history (Calendar) — and two copies would drift the
   first time a kind is renamed (rule 7).
+
+  OFF IS DELIBERATELY ABSENT. A legend is for reading the training; a rest day
+  is the absence of it, and it was spending a slot to say "grey means nothing
+  happened". Off days still draw in grey, they just aren't explained.
 */
 export const kindLegend: { kind: SessionKind; label: string }[] = [
   { kind: "ut2", label: "UT2" },
+  { kind: "ut1", label: "UT1" },
   { kind: "hard", label: "Hard" },
   { kind: "weights", label: "Weights" },
-  { kind: "recovery", label: "Recovery" },
+  { kind: "extra", label: "Extra" },
   { kind: "race", label: "Race" },
-  { kind: "off", label: "Off" },
 ];
 
 export type SessionStatus = "verified" | "upcoming" | "flagged" | "missed";
@@ -152,7 +178,7 @@ export const home: HomeData = {
           { time: "PM", label: "RP3 4x5'", kind: "hard" },
         ] },
         { letter: "S", num: 23, iso: "2026-05-23", sessions: [{ time: "AM", label: "RACE", kind: "race" }] },
-        { letter: "S", num: 24, iso: "2026-05-24", dimmed: true, sessions: [{ time: "ALL", label: "Recov", kind: "recovery" }] },
+        { letter: "S", num: 24, iso: "2026-05-24", dimmed: true, sessions: [{ time: "ALL", label: "Extra", kind: "extra" }] },
       ] as WeekDay[],
     },
   ],

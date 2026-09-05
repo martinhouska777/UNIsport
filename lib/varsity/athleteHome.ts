@@ -41,9 +41,14 @@ export function kindOf(s: Session): SessionKind {
     case "weights":
       return "weights";
     case "flex":
-      return "recovery";
+      return "extra";
     default: // water / erg
-      return s.intensity === "hard" ? "hard" : "ut2";
+      // All three of the coach's intensities are their own colour. UT1 used to
+      // be painted as UT2, which made a month of rate work look like a month of
+      // steady state.
+      if (s.intensity === "hard") return "hard";
+      if (s.intensity === "UT1") return "ut1";
+      return "ut2";
   }
 }
 
