@@ -28,16 +28,23 @@ export default function NotificationSettings({
   messages,
   plans,
   team,
+  follows,
   showTeam,
   onChange,
 }: {
   messages: boolean;
   plans: boolean;
+  follows: boolean;
   team: boolean;
   /* Only squad members are offered the squad switch — a student with no team
      would be turning off something that can never reach them. */
   showTeam: boolean;
-  onChange: (patch: { notifyMessages?: boolean; notifyPlans?: boolean; notifyTeam?: boolean }) => void;
+  onChange: (patch: {
+    notifyMessages?: boolean;
+    notifyPlans?: boolean;
+    notifyFollows?: boolean;
+    notifyTeam?: boolean;
+  }) => void;
 }) {
   // Browser push state, read after mount (these APIs don't exist during SSR, so
   // we keep them in one object set from an async callback — never synchronously
@@ -213,6 +220,17 @@ export default function NotificationSettings({
             on={plans}
             onChange={() => onChange({ notifyPlans: !plans })}
             ariaLabel="Notify me about session invites"
+          />
+        </div>
+        <div className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-surface px-4 py-3">
+          <div>
+            <div className="text-sm text-text">New followers</div>
+            <div className="text-[11px] text-muted">When someone follows you</div>
+          </div>
+          <Toggle
+            on={follows}
+            onChange={() => onChange({ notifyFollows: !follows })}
+            ariaLabel="Notify me about new followers"
           />
         </div>
         {showTeam && (

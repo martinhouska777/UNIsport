@@ -87,3 +87,46 @@ $$;
 grant execute on function public.dm_push_targets(uuid, text) to authenticated;
 grant execute on function public.my_display_name()       to authenticated;
 grant execute on function public.push_forget(text[])     to authenticated;
+
+-- ----------------------------------------------------------------------------
+-- FOLLOWS. Someone tapping Follow on your profile is the same size of event as
+-- a message or a session invite: a real person is interested in training with
+-- you. This returns THEIR devices — the person being followed — and only if the
+-- follow really exists, so nobody can ping a stranger by posting a made-up id.
+--
+-- Preference key `notifyFollows`, missing = on, same shape as the DM prefs.
+-- ----------------------------------------------------------------------------
+create or replace function public.follow_push_targets(target uuid)
+returns table (endpoint text, p256dh text, auth text)
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+declare
+  me    uuid := auth.uid();
+  wants boolean;
+begin
+  if me is null then raise exception 'not authenticated'; end if;
+  if target is null or target = me then return; end if;
+
+  -- Only an actual follow may announce itself.
+  if not exists (
+    select 1 from public.follows f
+    where f.follower_id = me and f.followee_id = target
+  ) then
+    return;
+  end if;
+
+  select coalesce((p.data->>'notifyFollows')::boolean, true) into wants
+    from public.profiles p where p.id = target;
+  if not coalesce(wants, true) then return; end if;
+
+  return query
+    select s.endpoint, s.p256dh, s.auth
+    from public.push_subscriptions s
+    where s.user_id = target;
+end;
+$$;
+
+grant execute on function public.follow_push_targets(uuid) to authenticated;

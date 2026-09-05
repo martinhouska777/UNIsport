@@ -182,6 +182,23 @@ export function notifyConversation(input: {
 }
 
 /*
+  Fire-and-forget: you followed someone, tell them.
+
+  Same contract as notifyConversation. `targetId` is the person you followed;
+  the database checks the follow really exists before it will hand over their
+  devices, so this can't be used to ping a stranger.
+*/
+export function notifyFollow(targetId: string, preview?: string): void {
+  if (typeof window === "undefined") return;
+  void fetch("/api/push/notify", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ kind: "follow", targetId, preview }),
+    keepalive: true,
+  }).catch(() => {});
+}
+
+/*
   Fire-and-forget: the coach has just published something, tell the squad.
 
   Same contract as notifyConversation — never throws, never blocks, `keepalive`

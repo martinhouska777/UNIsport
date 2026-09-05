@@ -2,9 +2,10 @@
   POST /api/push/notify
   Body: { kind, ...ids, preview? }
 
-  Every real event notification the app sends, in one route. Two families:
+  Every real event notification the app sends, in one route. Three families:
 
     DM        "message" | "plan" | "plan_update"     needs conversationId
+    Social    "follow"                               needs targetId
     Varsity   "team_plan" | "team_lineup" | "note"   the coach telling the squad
                                                      ("note" needs athleteId)
 
@@ -24,14 +25,20 @@ export const runtime = "nodejs";
 const clip = (s: string, n = 120) => (s.length > n ? s.slice(0, n - 1) + "…" : s);
 
 const TEAM_KINDS = ["team_plan", "team_lineup", "note"] as const;
-type Kind = "message" | "plan" | "plan_update" | (typeof TEAM_KINDS)[number];
+type Kind = "message" | "plan" | "plan_update" | "follow" | (typeof TEAM_KINDS)[number];
 const isTeamKind = (k: string): k is (typeof TEAM_KINDS)[number] =>
   (TEAM_KINDS as readonly string[]).includes(k);
 
 export async function POST(request: Request) {
   if (!hasVapidConfig()) return Response.json({ error: "unconfigured" }, { status: 503 });
 
-  let body: { conversationId?: string; athleteId?: string; kind?: string; preview?: string };
+  let body: {
+    conversationId?: string;
+    athleteId?: string;
+    targetId?: string;
+    kind?: string;
+    preview?: string;
+  };
   try {
     body = await request.json();
   } catch {
@@ -41,7 +48,7 @@ export async function POST(request: Request) {
   const raw = body.kind ?? "";
   const kind: Kind = isTeamKind(raw)
     ? raw
-    : raw === "plan" || raw === "plan_update"
+    : raw === "plan" || raw === "plan_update" || raw === "follow"
       ? raw
       : "message";
   const preview = (body.preview ?? "").trim();
@@ -63,6 +70,13 @@ export async function POST(request: Request) {
           ? await supabase.rpc("athlete_push_targets", { p_athlete: body.athleteId })
           : { data: null, error: { message: "missing athleteId" } }
         : await supabase.rpc("team_push_targets");
+    if (error) return Response.json({ error: "forbidden" }, { status: 403 });
+    subs = (data as StoredSubscription[]) ?? [];
+  } else if (kind === "follow") {
+    // The person who was followed. The RPC refuses unless the follow actually
+    // exists, so a made-up id reaches nobody.
+    if (!body.targetId) return Response.json({ error: "bad_request" }, { status: 400 });
+    const { data, error } = await supabase.rpc("follow_push_targets", { target: body.targetId });
     if (error) return Response.json({ error: "forbidden" }, { status: 403 });
     subs = (data as StoredSubscription[]) ?? [];
   } else {
@@ -105,6 +119,14 @@ export async function POST(request: Request) {
       title: "Session invite",
       body: preview ? `${who} proposed a session — ${clip(preview)}` : `${who} proposed a session`,
       url: "/messages",
+    },
+    /* A follow opens the FOLLOWER's profile, not the reader's own — the useful
+       next move is looking at who this is and following back. `preview` carries
+       a line about them (their sport, their gym) when the caller knows one. */
+    follow: {
+      title: who,
+      body: preview ? `started following you · ${clip(preview)}` : "started following you",
+      url: `/people/${user.id}`,
     },
     // Everything that happens to a plan AFTER the invite: accepted, declined,
     // cancelled, moved, or "I've said we trained, your turn". The client sends

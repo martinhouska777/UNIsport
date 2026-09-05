@@ -3,6 +3,7 @@
   through SECURITY DEFINER RPCs that act for the signed-in user (auth.uid()).
 */
 import { createClient } from "@/lib/supabase/client";
+import { notifyFollow } from "@/lib/push/client";
 
 export type FollowStatus = {
   following: boolean; // do I follow this person?
@@ -13,6 +14,13 @@ export type FollowStatus = {
 export async function followUser(targetId: string): Promise<void> {
   const { error } = await createClient().rpc("follow_user", { target: targetId });
   if (error) throw new Error(`followUser failed: ${error.message}`);
+  /*
+    Tell them. `follow_user` is idempotent, so following someone you already
+    follow sends a second notification — in practice you can't, because the
+    button reads "Following" by then and unfollow/refollow is a deliberate act.
+    Unfollowing is never announced.
+  */
+  notifyFollow(targetId);
 }
 
 export async function unfollowUser(targetId: string): Promise<void> {
