@@ -67,22 +67,26 @@ export default function CoachSection({ solo = false }: { solo?: boolean }) {
               {coach.cta.label} →
             </a>
           )}
+
+          {/* THE WAY IN, on the opening screen — the varsity intro's own
+              outlined pill, worn here (owner, 2026-09-05: "I want the same
+              style as varsity, there's a see-how-it-works and then you just
+              scroll and see"). It replaced a heading and a sentence that stood
+              between this screen and the phones. */}
+          <a
+            href={coach.overview.href}
+            className="mt-1 inline-flex items-center gap-2 rounded-full border border-l-varsity-soft px-6 py-3 text-[14px] font-medium tracking-tight text-l-text transition-colors hover:border-l-varsity hover:bg-l-varsity-dim"
+          >
+            {coach.overview.label} →
+          </a>
         </div>
 
-        {/* ── The break, and the name the six screens go under ──
-            The opener says what the console is; from here the page shows it.
-            A rule and a heading stand between the two, so the phones are no
-            longer hanging off the bottom of the statement (owner,
-            2026-09-05). */}
-        <div className="mt-16 flex flex-col items-center gap-3 border-t border-l-line pt-16 text-center">
-          <h3 className="font-display text-[clamp(32px,5vw,52px)] font-normal leading-[1.02] tracking-tight text-balance text-l-text">
-            {coach.stepsHead} <em className="italic text-l-varsity">{coach.stepsHeadEm}</em>
-          </h3>
-          <p className="max-w-[46ch] text-[15px] leading-relaxed text-balance text-l-text-2">{coach.stepsSub}</p>
-        </div>
-
-        {/* ── Six screens, six explanations ── */}
-        <div className="mt-14 flex flex-wrap items-start justify-center gap-x-11 gap-y-[60px]">
+        {/* ── Six screens, six explanations. The rule is all that stands
+            between them and the opener now. ── */}
+        <div
+          id="coach-steps"
+          className="mt-16 flex scroll-mt-24 flex-wrap items-start justify-center gap-x-11 gap-y-[60px] border-t border-l-line pt-16"
+        >
           {coach.steps.map((s, i) => (
             <article
               key={s.n}

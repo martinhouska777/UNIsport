@@ -1030,17 +1030,18 @@ export const coach = {
     },
   ] as Segment[],
 
-  /* THE SIX SCREENS GET THEIR OWN NAME. The owner, 2026-09-05: "I'd start by
-     separating the coaches console from the phones down there, so it has a
-     section name too, and then we show there how it works." The opener above
-     says what the console IS; everything below this line is the showing. A
-     rule and this heading stand between the two.
+  /* THE WAY INTO THE SIX SCREENS.
 
-     Written by me to that brief, not dictated — so it is the owner's to
-     correct, like coach.summary was. */
-  stepsHead: "How it",
-  stepsHeadEm: "works.",
-  stepsSub: "Six screens from the console, in the order a season is run.",
+     It was first a heading and a sentence standing between the opener and the
+     phones — "How it works." + "Six screens from the console, in the order a
+     season is run." — from the owner's "give it a section name too"
+     (2026-09-05). Looked at on a phone the same day, they wanted it the way
+     the VARSITY intro already does it instead: the name is a link on the
+     opening screen and then you just scroll and see. So the heading block and
+     its sentence are gone, and this is the same outlined pill the interlude
+     wears (see interlude.overview). The section itself stays static — no
+     scroll choreography here; the owner asked for the link, not the film. */
+  overview: { label: "See how it works", href: "#coach-steps" },
 
   steps: [
     {
