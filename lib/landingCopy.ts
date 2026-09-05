@@ -73,6 +73,12 @@ export const hero = {
   primaryCta: "Get started with .edu",
   inviteNote: "Got a link from your team?",
   inviteCta: "Join with your invite",
+  /* The way to the story behind the app, on the FIRST screen (owner,
+     2026-09-04: "i want the link to be from the home screen because i think
+     its important for students"). It points DOWN this page, not at /about,
+     because the home page now carries the opening of the Why itself. The
+     label is about.readWhy — one wording everywhere it appears. */
+  whyHref: "#why",
 };
 
 /* ─────────────────── THE LINK CARD (title tag, OG, X) ─────────────────── */
@@ -873,6 +879,11 @@ export const about = {
   /* On "/" the About section is the paragraph above and this link; the full
      "why" lives on the About tab. */
   readWhy: "Read why I built it",
+  /* On "/" the Why is already open and titled, so the link that continues it
+     cannot repeat its own heading back at the reader — it says what is on the
+     other side of it instead. readWhy is still the wording everywhere the Why
+     is somewhere ELSE: the hero, Contact, the bar. */
+  readRest: "Read the rest",
 };
 
 /* WHY I BUILT IT — the About tab. The owner dictated this in full (owner,
@@ -882,6 +893,11 @@ export const aboutWhy = {
   kicker: "Why",
   headline: "Why I",
   headlineEm: "built it.",
+  /* HOW MANY OF THEM THE HOME PAGE CARRIES (owner, 2026-09-04: "in about
+     and part on the bottom"). The rest wait on /about, behind about.readWhy.
+     The first one is the one that does the work for a student: it is the
+     situation they are in, before it is anybody's product. */
+  onHome: 1,
   paragraphs: [
     "I often found myself in a situation where I didn't have somebody to go work out with. Then I arrived at a gym and met people there, asked for advice, and so on. And I knew many people are like me, or are trying to start in the gym but don't know how, and that there are many people like me who would love to help them out and teach from their experience.",
     "This app's mission is to make working out more sociable and fun, with features like leaderboards or memories, as well as accessible, with features like mentoring newcomers or the gym overview.",

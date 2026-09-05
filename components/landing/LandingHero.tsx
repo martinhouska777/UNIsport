@@ -9,7 +9,7 @@ import Wordmark from "@/components/landing/Wordmark";
 import { useSchoolCycle } from "@/components/landing/useSchoolCycle";
 import { crestFor } from "@/lib/crests";
 import { accent, HERO_CYCLE_MS } from "@/lib/landingSchools";
-import { availability, brandLine, doors, hero } from "@/lib/landingCopy";
+import { about, availability, brandLine, doors, hero } from "@/lib/landingCopy";
 
 /*
   THE INTRO — one screen that introduces the app and then hands over to the
@@ -170,17 +170,37 @@ export default function LandingHero() {
               ))}
             </div>
 
-          {/* The other way in. A rower usually arrives holding a link from their
-              captain, and shouldn't have to scroll to find where it goes. */}
-          <p className="mt-[clamp(10px,2vh,24px)] text-[14px] text-l-text-2">
-            {hero.inviteNote}{" "}
+          {/* Two small ways on, on one line so the screen keeps its height.
+
+              The WHY (owner, 2026-09-04) points down this same page, where the
+              first paragraph of it now stands: the story behind the app is the
+              piece a student is most likely to be moved by, and until now it
+              was two clicks away.
+
+              The INVITE is the rower's: they usually arrive holding a link from
+              their captain, and shouldn't have to scroll to find where it goes.
+              It keeps the varsity gold; the Why is the page's own ink, so the
+              line reads as one student thing and one team thing. */}
+          <div className="mt-[clamp(10px,2vh,24px)] flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[14px] text-l-text-2">
             <Link
-              href="/join"
-              className="tap44 inline-block font-medium text-l-varsity underline-offset-4 transition-colors hover:underline"
+              href={hero.whyHref}
+              className="tap44 inline-block font-medium text-l-text underline-offset-4 transition-colors hover:underline"
             >
-              {hero.inviteCta} →
+              {about.readWhy} →
             </Link>
-          </p>
+            <span aria-hidden="true" className="text-l-text-3 max-sm:hidden">
+              ·
+            </span>
+            <p>
+              {hero.inviteNote}{" "}
+              <Link
+                href="/join"
+                className="tap44 inline-block font-medium text-l-varsity underline-offset-4 transition-colors hover:underline"
+              >
+                {hero.inviteCta} →
+              </Link>
+            </p>
+          </div>
 
         </div>
       </HeroFade>
