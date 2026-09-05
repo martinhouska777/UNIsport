@@ -90,29 +90,27 @@ export default function CoachSection({ solo = false }: { solo?: boolean }) {
           {coach.steps.map((s, i) => (
             <article
               key={s.n}
-              className="flex shrink grow-0 basis-[300px] flex-col items-center gap-[18px] text-center"
+              className="flex shrink grow-0 basis-[300px] flex-col items-center gap-[20px] text-center"
             >
               {/* Only the first capture preloads; the rest are far below the fold.
                   (Next 16 deprecated `priority` in favour of `preload`.) */}
               <CoachPhone shot={s.shot} alt={s.alt} preload={i === 0} />
-              <div className="flex flex-col items-center">
-                {/* THE STEP NUMBER — its own small gold coin above the headline
-                    (the owner, 2026-09-05: the number was ugly). It rode INSIDE
-                    the headline before, as "1 ·" set in the display serif, which
-                    pulled the gold into the sentence and left the dot hanging at
-                    a line break. As a coin it wears the numbering idiom the page
-                    already has — mono digits in the outlined gold pill of the
-                    section badge and the story chips (OpeningSteps.tsx) — and
-                    the headline is left to read as one clean line, which is what
-                    the owner asked for on the same day. Decorative, hence
-                    aria-hidden: the order is already in the markup. */}
-                <span
-                  aria-hidden
-                  className="mb-3 flex h-7 w-7 items-center justify-center rounded-full border border-l-varsity-soft bg-l-varsity-dim font-mono text-[12px] leading-none text-l-varsity"
-                >
-                  {s.n}
-                </span>
+              <div>
+                {/* THE STEP NUMBER, back INSIDE the headline and small (the
+                    owner, 2026-09-05). It has been three things in one day: its
+                    own label line above the title ("2 · PLAN"), then the same
+                    size as the headline in the display serif ("1 ·", the one
+                    they called ugly — the gold cut the sentence in two and the
+                    dot hung at a line break), then a coin above it. This is the
+                    quiet version they asked for: a superior figure in the mono
+                    the page numbers everything else with (OpeningSteps.tsx),
+                    sized in `em` so it follows the headline at every width,
+                    raised towards the cap line, and with the dot dropped. It
+                    marks the step without joining the sentence. */}
                 <h3 className="font-display text-[clamp(24px,2.7vw,31px)] font-normal leading-[1.1] tracking-tight text-balance text-l-text">
+                  <span className="mr-[0.5em] align-[0.42em] font-mono text-[0.4em] tracking-[0.06em] text-l-varsity">
+                    {s.n}
+                  </span>
                   {s.head}
                 </h3>
                 <Body
