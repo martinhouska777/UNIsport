@@ -442,12 +442,12 @@ export default function ScrollStory({ id, beats, accent, ref }: Props) {
               <div className="font-mono text-[11px] tracking-[0.14em] uppercase text-(--sa) max-lg:text-[10px]">
                 {b.kicker}
               </div>
-              <h2 className="font-display text-[clamp(34px,4.6vw,56px)] font-normal leading-[1.04] tracking-[-0.015em] text-balance text-l-text max-lg:text-[clamp(27px,7.4vw,36px)]">
+              <h2 className="font-display text-[clamp(30px,3.2vw,44px)] font-normal leading-[1.04] tracking-[-0.015em] text-balance text-l-text max-lg:text-[clamp(27px,7.4vw,36px)]">
                 {b.head}
                 {b.headEm && <em className="mt-1.5 block italic text-(--sa)">{b.headEm}</em>}
               </h2>
               {b.sub && (
-                <p className="max-w-[40ch] text-[17px] leading-[1.6] tracking-[-0.01em] text-l-text-2 max-lg:max-w-[34ch] max-lg:text-[14px] max-lg:leading-[1.5]">
+                <p className="max-w-[40ch] text-[16px] leading-[1.6] tracking-[-0.01em] text-l-text-2 max-lg:max-w-[34ch] max-lg:text-[14px] max-lg:leading-[1.5]">
                   {b.sub}
                 </p>
               )}
@@ -460,13 +460,18 @@ export default function ScrollStory({ id, beats, accent, ref }: Props) {
           <div ref={wrap} className="ls-phone-wrap">
             <Phone
               ref={phoneEl}
-              /* On a phone: 53% of the COLUMN's height (container-type: size on
+              /* On a laptop the cap was 360px / 48svh; the owner asked on
+                 2026-09-04 for a bigger phone and smaller words, so it is now
+                 420px / 49svh — the height term is what actually bites, since
+                 49svh * 1.79 keeps the shell inside ~88% of the window at every
+                 laptop size (checked at 1280x800, 1536x864, 1900x860).
+                 On a phone: 53% of the COLUMN's height (container-type: size on
                  .ls-phone-col), never a guess at what the words left. The shell
                  is 1.79x as tall as it is wide, so 53cqh lands at ~95% of the
                  column and the phone shrinks on its own when a beat runs long.
                  It was (100svh - 230px) * 0.55 — a constant that assumed the
                  words were always 148px, which is what clipped them. */
-              className="ls-phone w-[min(360px,48svh,86vw)] cursor-pointer max-lg:w-[min(84vw,53cqh)]"
+              className="ls-phone w-[min(420px,49svh,86vw)] cursor-pointer max-lg:w-[min(84vw,53cqh)]"
               data-story-phone={id}
               role="button"
               tabIndex={0}
@@ -496,7 +501,7 @@ export default function ScrollStory({ id, beats, accent, ref }: Props) {
                         alt={`${b.kicker.replace(/^\S+\s·\s/, "")}: ${b.head}`}
                         width={size.w}
                         height={size.h}
-                        sizes="360px"
+                        sizes="420px"
                         quality={90}
                         /* Every frame loads up front (the first with priority):
                            a phone scrolled fast used to reach a beat whose
