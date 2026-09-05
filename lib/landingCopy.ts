@@ -1106,11 +1106,18 @@ export const coach = {
     },
     {
       n: "5",
-      head: "Every number the squad puts up, in one list.",
+      /* DICTATED BY THE OWNER 2026-09-05, transcribed with grammar corrected
+         and not rephrased. It replaces "Every number the squad puts up, in one
+         list." and a body that spent half its length on water telemetry.
+
+         Checked against what is built: the flag really is ranked-or-average
+         (BoardKind in lib/varsity/coachPlan.ts), and "the squad average" is
+         that second board's own words. */
+      head: "Keep track of your statistics and workouts.",
       body: [
-        { text: "Flag a session as a team workout and the board fills itself as the athletes log it, ranked by split, time, watts or watts per kilo. Water outings arrive with their telemetry, so you open an outing, then a piece, and read " },
-        { text: "the crew's numbers seat by seat", bold: true },
-        { text: ". Nobody types results into a shared sheet again." },
+        { text: "Flag a session as a ranked/team workout, and after each athlete logs it, " },
+        { text: "it shows itself as a list with rankings and filters", bold: true },
+        { text: ", ranked by split, time, watts or watts per kilo. Also look at the squad average and compare to previous workouts." },
       ],
       /* The Workouts board, captured from the athlete side — the coach's Team
          tab IS this screen. Right screen, athlete's frame; re-shoot from the
