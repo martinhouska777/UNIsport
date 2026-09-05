@@ -138,7 +138,7 @@ export const boardOptions: { key: BoardKind; label: string; sub: string }[] = [
 
 // What to suggest when the coach first flicks the switch: hard pieces are the
 // ones people race, everything else is training. Always editable afterwards.
-export const defaultBoard = (intensity?: Intensity): BoardKind =>
+export const defaultBoard = (intensity?: string): BoardKind =>
   intensity === "hard" ? "ranked" : "average";
 
 /*
@@ -153,12 +153,18 @@ export const defaultBoard = (intensity?: Intensity): BoardKind =>
   The rule lives here, in data, so the coach's editor and the team board can
   never disagree about it (rule 7).
 */
-export const canBeTeamWorkout = (category?: Category): boolean => category === "erg";
+export const canBeTeamWorkout = (category?: string): boolean => category === "erg";
 
-/* ── A session and how sessions are stored ── */
+/* ── A session and how sessions are stored ──────────────────────────────────
+   `category` and `intensity` are plain STRINGS, not the unions above, because a
+   squad now defines its own session types and zones in Settings
+   (lib/varsity/trainingConfig.ts) and those keys are whatever the coach's words
+   produced. The unions stay as the ROWING DEFAULT — the preset every team starts
+   from, and the keys already in the database — which is why they still type the
+   constants at the top of this file. */
 export type Session = {
-  category: Category;
-  intensity?: Intensity;
+  category: string;
+  intensity?: string;
   description: string;
   time: string; // preset per period, but editable
   note?: string;
@@ -195,13 +201,22 @@ export function dayKeyLabel(key: string): string {
 
 export const isOnWater = (s: Session | undefined) => s?.category === "water";
 
-// The color + label to show for a session (intensity wins for water/erg).
+/*
+  The colour + label to show for a session (the intensity wins when there is
+  one). These are the ROWING-DEFAULT readings, used by every screen that does
+  not have the team's config to hand — the athlete's log, the team boards, the
+  video strip. A team on a custom config gets its own words from
+  configSessionLabel() / configSessionColor() in trainingConfig.ts; here an
+  unknown key falls back to showing itself, so a renamed type is never a blank.
+*/
 export function sessionColor(s: Session): string {
-  return s.intensity ? intensityMeta[s.intensity].color : categoryMeta[s.category].color;
+  if (s.intensity) return intensityMeta[s.intensity as Intensity]?.color ?? "var(--muted)";
+  return categoryMeta[s.category as Category]?.color ?? "var(--muted)";
 }
 export function sessionLabel(s: Session): string {
-  const cat = categoryMeta[s.category].label;
-  return s.intensity ? `${cat} · ${intensityMeta[s.intensity].label}` : cat;
+  const cat = categoryMeta[s.category as Category]?.label ?? s.category;
+  if (!s.intensity) return cat;
+  return `${cat} · ${intensityMeta[s.intensity as Intensity]?.label ?? s.intensity}`;
 }
 
 /* ── Blocks + week math ── */

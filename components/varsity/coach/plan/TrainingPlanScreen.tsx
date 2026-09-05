@@ -6,12 +6,18 @@
     blocks → create → block (weeks overview) → week (days) → [session editor sheet]
 
   Create a block (name + dates, usually before a race) → it shows the weeks → tap a
-  week to see its 7 days → tap a day's AM/PM to open the editor → pick a category
-  (Water/Erg/Weights/Off/Flex), an intensity for Water/Erg (UT2/UT1/Hard), fill the
-  description (free text, or tap one of 5 suggestions) and an optional note. No
-  duration, no location; the time is a preset. Plan lives in local state (saves to
-  the DB later). Colors are theme tokens; workout colors are content colors from
-  lib/varsity/coachPlan.ts (rule-1 exception), applied via inline style.
+  week to see its 7 days → tap a day's AM/PM to open the editor → pick a type, an
+  intensity if that type asks for one, fill the description (free text, or tap one
+  of the most-used chips) and an optional note. No duration, no location; the time
+  is a preset.
+
+  NOTHING IN THE EDITOR IS HARDCODED ANY MORE. The types, the zones, the chips and
+  the preset times all come from the squad's own config, which the coach edits at
+  /varsity/coach/settings/training (lib/varsity/trainingConfig.ts). Until that
+  loads — and for a team that never opened Settings — it is the rowing default,
+  which is exactly what this screen shipped with. Colors are theme tokens; the
+  session colours are content colours from that config (rule-1 exception),
+  applied via inline style.
 */
 import { useEffect, useMemo, useState } from "react";
 import Button, { buttonClass } from "@/components/ui/Button";
@@ -19,20 +25,10 @@ import { createPortal } from "react-dom";
 import ThemeProvider from "@/components/ThemeProvider";
 import { useVarsityTheme } from "@/components/varsity/useVarsityTheme";
 import {
-  categories,
-  categoryMeta,
-  intensities,
-  intensityMeta,
   periods,
-  presetTime,
-  suggestionsFor,
-  optionsLabel,
   sessionKey,
-  sessionColor,
-  sessionLabel,
   boardOptions,
   defaultBoard,
-  canBeTeamWorkout,
   buildWeeks,
   blockRangeLabel,
   daysToRace,
@@ -41,12 +37,20 @@ import {
   type Block,
   type Session,
   type SessionMap,
-  type Category,
-  type Intensity,
   type Period,
   type WeekRow,
   type BoardKind,
 } from "@/lib/varsity/coachPlan";
+import {
+  configSessionColor,
+  configSessionLabel,
+  defaultConfig,
+  findType,
+  workoutsFor,
+  type TrainingConfig,
+} from "@/lib/varsity/trainingConfig";
+import { fetchTrainingConfig } from "@/lib/varsity/configStore";
+import { useMembership } from "@/components/varsity/useMembership";
 import { fetchPlan, savePlan } from "@/lib/varsity/planStore";
 import { notifySquad } from "@/lib/push/client";
 import {
@@ -70,8 +74,8 @@ type View =
   | { name: "week"; blockId: string; weekIdx: number };
 
 type Form = {
-  category?: Category;
-  intensity?: Intensity;
+  category?: string;
+  intensity?: string;
   description: string;
   time: string;
   note: string;
@@ -83,6 +87,15 @@ type Form = {
 function Dot({ color }: { color: string }) {
   return <span className="h-2.5 w-2.5 rounded-full" style={{ background: color }} />;
 }
+
+/*
+  A faint wash of a session's own colour, for the little label chip.
+  It used to be `${color}22` — string-appending hex alpha — which silently
+  produced nothing whenever the colour was a theme token rather than a hex, and
+  now that a coach picks these colours in Settings half of them are tokens.
+  color-mix() works for both.
+*/
+const tint = (color: string) => `color-mix(in srgb, ${color} 13%, transparent)`;
 
 
 function DraftBadge() {
@@ -103,6 +116,14 @@ function PublishedBadge() {
 
 export default function TrainingPlanScreen() {
   const vTheme = useVarsityTheme();
+  const { membership } = useMembership();
+  /*
+    The squad's own words for everything in the editor — the session types, the
+    zones, the most-used workouts and the preset times. Until it arrives (and
+    for a team that never opened Settings) this is the rowing default, which is
+    exactly what the builder shipped with.
+  */
+  const [cfg, setCfg] = useState<TrainingConfig>(defaultConfig);
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [sessions, setSessions] = useState<SessionMap>({});
   const [view, setView] = useState<View>({ name: "blocks" });
@@ -124,6 +145,20 @@ export default function TrainingPlanScreen() {
       active = false;
     };
   }, []);
+
+  /* The team's training vocabulary, once we know which team this is. Kept
+     separate from the plan load so the grid is never held up by it. */
+  useEffect(() => {
+    const teamId = membership?.teamId;
+    if (!teamId) return;
+    let active = true;
+    fetchTrainingConfig(teamId).then((c) => {
+      if (active) setCfg(c);
+    });
+    return () => {
+      active = false;
+    };
+  }, [membership?.teamId]);
 
   // Persist the whole plan (manual Save button, accessible while building).
   // Returns false if the save failed so callers (e.g. Publish) can react.
@@ -271,7 +306,7 @@ export default function TrainingPlanScreen() {
       category: existing?.category,
       intensity: existing?.intensity,
       description: existing?.description ?? "",
-      time: existing?.time ?? presetTime[period],
+      time: existing?.time ?? cfg.times[period],
       note: existing?.note ?? "",
       repeat: "once",
       teamWorkout: existing?.teamWorkout ?? false,
@@ -280,20 +315,28 @@ export default function TrainingPlanScreen() {
     setEditor({ date, period });
   };
 
-  const editorValid =
-    !!form.category && (!categoryMeta[form.category].hasIntensity || !!form.intensity);
+  /* A type only asks for a zone if the coach said it does, AND there are zones
+     to pick from — a squad that deleted them all must still be able to save. */
+  const asksZone = (typeKey?: string) =>
+    !!typeKey && findType(cfg, typeKey).hasZones && cfg.zones.length > 0;
+
+  const editorValid = !!form.category && (!asksZone(form.category) || !!form.intensity);
+
+  /* A session's colour and words, read through the squad's own config. */
+  const sColor = (s: Session) => configSessionColor(cfg, s.category, s.intensity);
+  const sLabel = (s: Session) => configSessionLabel(cfg, s.category, s.intensity);
 
   const saveSession = () => {
     if (!editor || !form.category || !editorValid) return;
     const s: Session = {
       category: form.category,
-      intensity: categoryMeta[form.category].hasIntensity ? form.intensity : undefined,
+      intensity: asksZone(form.category) ? form.intensity : undefined,
       description: form.description.trim(),
-      time: form.time.trim() || presetTime[editor.period],
+      time: form.time.trim() || cfg.times[editor.period],
       note: form.note.trim() || undefined,
-      // Only erg sessions can carry a board (see canBeTeamWorkout), so a
-      // session that isn't one never keeps a stale flag.
-      teamWorkout: canBeTeamWorkout(form.category) ? form.teamWorkout : false,
+      // Only a type the coach marked as boardable can carry one, so a session
+      // that isn't one never keeps a stale flag.
+      teamWorkout: findType(cfg, form.category).canBoard ? form.teamWorkout : false,
       board: form.board,
     };
     if (form.repeat === "weekly") {
@@ -710,19 +753,19 @@ export default function TrainingPlanScreen() {
                       data-tour={tour}
                       onClick={() => openEditor(d.date, p)}
                       className="w-full rounded-lg border border-border bg-surface-2 py-2 pl-2.5 pr-2.5 text-left"
-                      style={{ borderLeft: `3px solid ${sessionColor(s)}` }}
+                      style={{ borderLeft: `3px solid ${sColor(s)}` }}
                     >
                       <div className="mb-0.5 flex items-center justify-between">
                         <span className="text-[8px] font-bold tracking-[0.12em] text-muted">{p}</span>
                         <span
                           className="rounded px-1.5 py-px text-[8px] font-bold tracking-[0.05em]"
-                          style={{ background: `${sessionColor(s)}22`, color: sessionColor(s) }}
+                          style={{ background: `${tint(sColor(s))}`, color: sColor(s) }}
                         >
-                          {sessionLabel(s)}
+                          {sLabel(s)}
                         </span>
                       </div>
                       <div className="text-[11px] font-medium leading-snug text-text">
-                        {s.description || sessionLabel(s)}
+                        {s.description || sLabel(s)}
                       </div>
                       <div className="mt-0.5 flex items-center gap-2 text-[11px] text-muted">
                         <span>{s.time}</span>
@@ -762,7 +805,10 @@ export default function TrainingPlanScreen() {
     // editor only opens on a click (client) — never during SSR, so document exists
     if (!editor || typeof document === "undefined") return null;
     const cat = form.category;
-    const sugg = cat ? suggestionsFor(cat, form.intensity) : [];
+    const sugg = workoutsFor(cfg, cat, form.intensity);
+    /* The tour presses the first zoned type and the first zone, so the walk
+       works whatever a squad has called them (lib/varsity/coachTour.ts). */
+    const firstZonedType = cfg.types.find((t) => t.hasZones && cfg.zones.length > 0)?.key;
     const weekday = editor.date.toLocaleDateString("en-US", { weekday: "long" });
     const longDate = editor.date.toLocaleDateString("en-US", { month: "long", day: "numeric" });
     const existing = !!sessions[sessionKey(editor.date, editor.period)];
@@ -796,47 +842,61 @@ export default function TrainingPlanScreen() {
           {/* category */}
           <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">Type</div>
           {/* data-tour: every field below this one only exists once a type is
-              chosen, so the tour presses "erg" — the one type that shows the
-              whole form — and the rest of the walk has something to point at. */}
-          <div data-tour="coach-plan-type" className="grid grid-cols-5 gap-1.5">
-            {categories.map((c) => {
-              const active = cat === c;
+              chosen, so the tour presses the first type that asks for a zone —
+              the one that shows the whole form — and the rest of the walk has
+              something to point at. The types themselves come from the squad's
+              settings, so the anchor cannot name one.
+              The column count follows the list rather than being fixed at five,
+              so three types are not three fifths of a row and seven wrap. */}
+          <div
+            data-tour="coach-plan-type"
+            className="grid gap-1.5"
+            style={{ gridTemplateColumns: `repeat(${Math.min(cfg.types.length, 5)}, minmax(0, 1fr))` }}
+          >
+            {cfg.types.map((t) => {
+              const active = cat === t.key;
               return (
                 <button
-                  key={c}
+                  key={t.key}
                   type="button"
-                  data-tour={`coach-plan-cat-${c}`}
-                  onClick={() => setForm((f) => ({ ...f, category: c, intensity: undefined, description: "" }))}
+                  data-tour={t.key === firstZonedType ? "coach-plan-cat-first" : undefined}
+                  onClick={() =>
+                    setForm((f) => ({ ...f, category: t.key, intensity: undefined, description: "" }))
+                  }
                   className={`flex flex-col items-center gap-1.5 rounded-xl border py-2.5 ${
                     active ? "border-primary bg-primary-tint" : "border-border bg-surface"
                   }`}
                 >
-                  <Dot color={categoryMeta[c].color} />
-                  <span className="text-[11px] font-semibold text-text">{categoryMeta[c].label}</span>
+                  <Dot color={t.color} />
+                  <span className="text-[11px] font-semibold text-text">{t.label}</span>
                 </button>
               );
             })}
           </div>
 
-          {/* intensity (water/erg) */}
-          {cat && categoryMeta[cat].hasIntensity && (
+          {/* intensity — only for the types the coach said should ask */}
+          {asksZone(cat) && (
             <>
               <div className={labelCls}>Intensity</div>
-              <div data-tour="coach-plan-intensity" className="grid grid-cols-3 gap-1.5">
-                {intensities.map((it) => {
-                  const active = form.intensity === it;
+              <div
+                data-tour="coach-plan-intensity"
+                className="grid gap-1.5"
+                style={{ gridTemplateColumns: `repeat(${Math.min(cfg.zones.length, 4)}, minmax(0, 1fr))` }}
+              >
+                {cfg.zones.map((z, zi) => {
+                  const active = form.intensity === z.key;
                   return (
                     <button
-                      key={it}
+                      key={z.key}
                       type="button"
-                      data-tour={`coach-plan-int-${it}`}
-                      onClick={() => setForm((f) => ({ ...f, intensity: it }))}
+                      data-tour={zi === 0 ? "coach-plan-int-first" : undefined}
+                      onClick={() => setForm((f) => ({ ...f, intensity: z.key }))}
                       className={`flex items-center justify-center gap-1.5 rounded-xl border py-2.5 ${
                         active ? "border-primary bg-primary-tint" : "border-border bg-surface"
                       }`}
                     >
-                      <Dot color={intensityMeta[it].color} />
-                      <span className="text-[12px] font-semibold text-text">{intensityMeta[it].label}</span>
+                      <Dot color={z.color} />
+                      <span className="text-[12px] font-semibold text-text">{z.label}</span>
                     </button>
                   );
                 })}
@@ -844,10 +904,10 @@ export default function TrainingPlanScreen() {
             </>
           )}
 
-          {/* quick options (Most used / flex length) */}
+          {/* the coach's own most-used workouts for this type + zone */}
           {cat && sugg.length > 0 && (
             <>
-              <div className={labelCls}>{optionsLabel(cat)}</div>
+              <div className={labelCls}>Most used · tap to fill</div>
               {/* data-tour: the tour taps the FIRST chip, so the description
                   fills in front of you (and Confirm stops being greyed out). */}
               <div data-tour="coach-plan-options" className="flex flex-wrap gap-1.5">
@@ -894,7 +954,7 @@ export default function TrainingPlanScreen() {
                 data-tour="coach-plan-time"
                 value={form.time}
                 onChange={(e) => setForm((f) => ({ ...f, time: e.target.value }))}
-                placeholder={presetTime[editor.period]}
+                placeholder={cfg.times[editor.period]}
                 className={inputCls}
               />
             </>
@@ -910,7 +970,7 @@ export default function TrainingPlanScreen() {
           />
 
           {/* team workout — the switch that gives this session a shared board */}
-          {canBeTeamWorkout(cat) && (
+          {findType(cfg, cat).canBoard && (
             <>
               <div className={labelCls}>Team workout</div>
               <button

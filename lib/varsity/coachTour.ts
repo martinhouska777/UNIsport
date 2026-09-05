@@ -109,7 +109,7 @@ const steps: TourStep[] = [
   },
   {
     group: PLAN_DIVE,
-    press: "coach-plan-cat-erg",
+    press: "coach-plan-cat-first",
     route: PLAN,
     anchor: "coach-plan-intensity",
     title: "Then how hard",
@@ -117,7 +117,7 @@ const steps: TourStep[] = [
   },
   {
     group: PLAN_DIVE,
-    press: "coach-plan-int-UT2",
+    press: "coach-plan-int-first",
     route: PLAN,
     anchor: "coach-plan-options",
     title: "Most days are one tap",
