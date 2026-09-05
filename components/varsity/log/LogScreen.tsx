@@ -59,6 +59,10 @@ import {
    (lib/varsity/coachPlan.ts) so no color literal sits in this component. */
 const catMeta: Record<string, { label: string; color: string }> = logCategoryMeta;
 const extraCategories = ["erg", "water", "weights", "run", "bike", "other"] as const;
+/* A FLEX day is the coach saying "train how you like", so the plan itself cannot
+   say what the session was — the athlete does, and that answer is what the
+   calendar counts. Which is why a logged flex day never stays category "flex". */
+const flexCategories = ["run", "bike", "other"] as const;
 function Dot({ color }: { color: string }) {
   return <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ background: color }} />;
 }
@@ -98,7 +102,12 @@ function LogEditor({
     existing?.title ?? (state.mode === "plan" ? sessionLabel(state.session) : ""),
   );
   const [category, setCategory] = useState<string>(
-    existing?.category ?? (state.mode === "plan" ? state.session.category : "erg"),
+    existing?.category ??
+      (state.mode === "plan"
+        ? state.session.category === "flex"
+          ? flexCategories[0]
+          : state.session.category
+        : "erg"),
   );
   const numStr = (n: number | null | undefined) => (n != null ? String(n) : "");
   const [minutes, setMinutes] = useState<string>(numStr(existing?.minutes ?? est?.minutes));
@@ -196,6 +205,26 @@ function LogEditor({
     "w-full rounded-xl border border-border bg-surface-2 px-3.5 py-3 text-base text-text outline-none focus:border-primary placeholder:text-muted";
   const labelCls = "mb-1.5 mt-4 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted";
 
+  // The type chips. An extra log picks from everything; a flex day picks from
+  // what a flex day can be.
+  const typeGrid = (options: readonly string[]) => (
+    <div className="grid grid-cols-3 gap-1.5">
+      {options.map((c) => (
+        <button
+          key={c}
+          type="button"
+          onClick={() => setCategory(c)}
+          className={`flex items-center justify-center gap-1.5 rounded-xl border py-2.5 ${
+            category === c ? "border-primary bg-primary-tint" : "border-border bg-surface"
+          }`}
+        >
+          <Dot color={catMeta[c].color} />
+          <span className="text-[12px] font-semibold text-text">{catMeta[c].label}</span>
+        </button>
+      ))}
+    </div>
+  );
+
   const valid = state.mode === "plan" || title.trim().length > 0;
 
   const save = async () => {
@@ -288,30 +317,40 @@ function LogEditor({
       <div className="flex-1 overflow-y-auto px-4 pb-6 pt-4">
         <div className="mx-auto w-full max-w-screen-sm">
           {state.mode === "plan" ? (
-            <div className="rounded-2xl border border-border bg-surface px-3.5 py-3">
-              <div className="flex items-center gap-2">
-                <Dot color={catMeta[state.session.category]?.color ?? "var(--muted)"} />
-                <span className="text-[13px] font-semibold text-text">{sessionLabel(state.session)}</span>
-                <span className="ml-auto flex items-center gap-1 text-[11px] text-muted">
-                  <IconClock size={12} /> {state.period} · {state.session.time}
-                </span>
-              </div>
-              {state.session.description.trim() && (
-                <p className="mt-1.5 text-[12px] leading-relaxed text-muted">{state.session.description}</p>
-              )}
-              {teamWorkout && (
-                <div className="mt-2.5 flex items-start gap-2 border-t border-border pt-2.5">
-                  <span className="mt-px text-primary">
-                    <IconTrophy size={13} />
+            <>
+              <div className="rounded-2xl border border-border bg-surface px-3.5 py-3">
+                <div className="flex items-center gap-2">
+                  <Dot color={catMeta[state.session.category]?.color ?? "var(--muted)"} />
+                  <span className="text-[13px] font-semibold text-text">{sessionLabel(state.session)}</span>
+                  <span className="ml-auto flex items-center gap-1 text-[11px] text-muted">
+                    <IconClock size={12} /> {state.period} · {state.session.time}
                   </span>
-                  <p className="text-[11px] leading-relaxed text-muted">
-                    <span className="font-semibold text-text">Team workout.</span> What you save
-                    here also goes on the squad&rsquo;s board for this session. The rest of your log
-                    stays private.
-                  </p>
                 </div>
+                {state.session.description.trim() && (
+                  <p className="mt-1.5 text-[12px] leading-relaxed text-muted">{state.session.description}</p>
+                )}
+                {teamWorkout && (
+                  <div className="mt-2.5 flex items-start gap-2 border-t border-border pt-2.5">
+                    <span className="mt-px text-primary">
+                      <IconTrophy size={13} />
+                    </span>
+                    <p className="text-[11px] leading-relaxed text-muted">
+                      <span className="font-semibold text-text">Team workout.</span> What you save
+                      here also goes on the squad&rsquo;s board for this session. The rest of your log
+                      stays private.
+                    </p>
+                  </div>
+                )}
+              </div>
+              {/* The coach said "train how you like" — this is where it gets a name,
+                  and the name is what the calendar counts it as. */}
+              {state.session.category === "flex" && (
+                <>
+                  <div className={labelCls}>What did you do?</div>
+                  {typeGrid(flexCategories)}
+                </>
               )}
-            </div>
+            </>
           ) : (
             <>
               <div className={labelCls.replace("mt-4", "mt-0")}>What did you do?</div>
@@ -323,21 +362,7 @@ function LogEditor({
                 className={inputCls}
               />
               <div className={labelCls}>Type</div>
-              <div className="grid grid-cols-3 gap-1.5">
-                {extraCategories.map((c) => (
-                  <button
-                    key={c}
-                    type="button"
-                    onClick={() => setCategory(c)}
-                    className={`flex items-center justify-center gap-1.5 rounded-xl border py-2.5 ${
-                      category === c ? "border-primary bg-primary-tint" : "border-border bg-surface"
-                    }`}
-                  >
-                    <Dot color={catMeta[c].color} />
-                    <span className="text-[12px] font-semibold text-text">{catMeta[c].label}</span>
-                  </button>
-                ))}
-              </div>
+              {typeGrid(extraCategories)}
             </>
           )}
 

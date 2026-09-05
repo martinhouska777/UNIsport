@@ -84,7 +84,7 @@ function blockStyle(l: LogEntry, planned: Session | undefined) {
     case "weights":
       return kindBlock("weights");
     case "flex":
-      return kindBlock("extra");
+      return kindBlock("flex");
     case "off":
       return kindBlock("off");
     default:

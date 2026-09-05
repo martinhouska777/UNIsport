@@ -13,7 +13,7 @@
 
 import type { Boat } from "./coachLineup";
 
-export type SessionKind = "ut2" | "ut1" | "hard" | "weights" | "extra" | "race" | "off";
+export type SessionKind = "ut2" | "ut1" | "hard" | "weights" | "flex" | "race" | "off";
 
 /*
   kind -> one colour, applied by INLINE STYLE.
@@ -22,9 +22,10 @@ export type SessionKind = "ut2" | "ut1" | "hard" | "weights" | "extra" | "race" 
   documented exception to rule 1 — the same exception lib/varsity/coachPlan.ts
   already uses, and deliberately the same VALUES: UT1's amber and the purple of
   a weights day are copied from the plan builder's own palette, so one session
-  cannot be two colours depending on which screen you are looking at. Extra is
-  the one hue with no plan equivalent — pink because every other clear hue was
-  already spoken for, and it must not be mistaken for a rest day.
+  cannot be two colours depending on which screen you are looking at. Flex —
+  the coach's "train how you like" day — is the one that does NOT take the plan
+  builder's colour: pink, because every other clear hue was already spoken for and
+  a grey flex day would be mistaken for a rest day.
 
   Green / amber / red are the coach's spreadsheet order — steady, rate work,
   flat out — and Race gets blue because it is not an intensity at all, it is the
@@ -35,7 +36,7 @@ export const kindColor: Record<SessionKind, string> = {
   ut1: "#eab308",
   hard: "var(--danger)",
   weights: "#c084fc",
-  extra: "#ec4899",
+  flex: "#ec4899",
   race: "#3b82f6",
   // Not in the legend (see below) — a rest day still needs SOMETHING to draw.
   off: "var(--muted)",
@@ -64,7 +65,7 @@ export const kindLegend: { kind: SessionKind; label: string }[] = [
   { kind: "ut1", label: "UT1" },
   { kind: "hard", label: "Hard" },
   { kind: "weights", label: "Weights" },
-  { kind: "extra", label: "Extra" },
+  { kind: "flex", label: "Flex" },
   { kind: "race", label: "Race" },
 ];
 
@@ -180,7 +181,7 @@ export const home: HomeData = {
           { time: "PM", label: "RP3 4x5'", kind: "hard" },
         ] },
         { letter: "S", num: 23, iso: "2026-05-23", sessions: [{ time: "AM", label: "RACE", kind: "race" }] },
-        { letter: "S", num: 24, iso: "2026-05-24", dimmed: true, sessions: [{ time: "ALL", label: "Extra", kind: "extra" }] },
+        { letter: "S", num: 24, iso: "2026-05-24", dimmed: true, sessions: [{ time: "ALL", label: "Flex", kind: "flex" }] },
       ] as WeekDay[],
     },
   ],

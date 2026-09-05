@@ -9,7 +9,7 @@
   disagree with the dots above it. Distance respects the person's km/miles
   setting (lib/varsity/units); the underlying logs stay in metres.
 
-  Categories that aren't measured in distance (weights, flex) simply don't show
+  Categories that aren't measured in distance (weights) simply don't show
   a distance tile rather than showing a meaningless "0 km" — same for time on a
   session nobody timed.
 */

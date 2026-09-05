@@ -40,7 +40,7 @@ function kindOfLog(l: LogEntry, plan: SessionMap): SessionKind | null {
     case "weights":
       return "weights";
     case "flex":
-      return "extra";
+      return "flex";
     case "off":
       return "off";
     default:

@@ -90,8 +90,16 @@ export const logCategoryLabel: Record<string, string> = {
   off: "Off",
   other: "Other",
 };
-// Categories shown in the calendar legend, in order.
-export const legendCategories = ["water", "erg", "weights", "run", "flex"] as const;
+/*
+  Categories shown in the calendar legend, in order — the month's training by
+  what it actually WAS.
+
+  Flex is deliberately absent. "Flex" is the coach's word for a day you train how
+  you like; how much of it you did is not a number anyone wants. What they want
+  is the thing they actually did on it — so a flex day is logged as a Run or a
+  Bike (components/varsity/log/LogScreen.tsx) and counts there instead.
+*/
+export const legendCategories = ["water", "erg", "weights", "run", "bike"] as const;
 
 // Which logged categories count as "metres rowed" for the monthly total.
 export const rowingCategories = new Set(["water", "erg"]);

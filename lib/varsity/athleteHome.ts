@@ -41,7 +41,7 @@ export function kindOf(s: Session): SessionKind {
     case "weights":
       return "weights";
     case "flex":
-      return "extra";
+      return "flex";
     default: // water / erg
       // All three of the coach's intensities are their own colour. UT1 used to
       // be painted as UT2, which made a month of rate work look like a month of
