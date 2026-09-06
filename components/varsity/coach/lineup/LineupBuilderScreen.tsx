@@ -14,11 +14,17 @@
   Lineups persist per practice (day_key) via lib/varsity/lineupStore.ts. Colors
   are theme tokens; rowing-side colors are content colors (rule-1 exception).
 
-  A SEAT IS A NUMBER, and the boat reads TOP-DOWN IN THE ORDER THE COACH ALREADY
-  WRITES IT: 1 at the bow down to 8 at the stroke, cox last, marked "C" (the word
-  COX did not survive a 20px badge; it is still the word everywhere there is room
-  to read it). Then the boat, then the oars — the column order of the squad's own
-  lineup sheet, so a crew can be copied across without reading it backwards.
+  THE BOAT IS DRAWN AS A BOAT — the same hull the ATHLETE reads on their own
+  phone (components/varsity/LineupBoatCard), so a coach seating a crew is
+  looking at the thing the squad will see. One outline, rounded at both ends,
+  ▲ BOW at the top and ▼ STROKE at the bottom, seats stacked inside it 1 at the
+  bow up to 8 at the stroke, and the COX SEATED INSIDE at the stern below the
+  stroke divider. The cox used to be stranded under the hull entirely.
+
+  A SEAT IS A NUMBER: seat, name, and the SIDE THAT PERSON rows. Under the hull,
+  three lines — boat, oars, crew note — which is the column order of the squad's
+  own lineup sheet, so a crew can be copied across without reading it backwards.
+  (The note used to sit above the crew; it moved down with the redesign.)
 
   Seats carry no side and no colour of their own, and nothing is ever flagged
   "off side" — how the boat is rigged is the coach's business, not the app's.
@@ -86,12 +92,9 @@ import {
   IconChevronLeft,
   IconChevronRight,
   IconClock,
-  IconAnchor,
   IconPlus,
   IconX,
   IconSend,
-  IconClipboard,
-  IconPencil,
   IconCheck,
 } from "@/components/icons";
 
@@ -159,6 +162,84 @@ function SideTag({ side }: { side: Side }) {
     <span
       className="rounded border px-1.5 py-px text-[10px] font-bold tracking-[0.05em]"
       style={blade(m.color, m.ink)}
+    >
+      {m.tag}
+    </span>
+  );
+}
+
+/*
+  ONE LINE UNDER THE HULL — the boat, the oars, the crew note. A label column
+  wide enough for all three words, so the answers line up down the card, and the
+  field beside it is a plain input at 16px (anything smaller and a phone zooms
+  the whole boat the moment it is tapped). An empty NOTE is dashed: it is the
+  one of the three that is genuinely optional.
+*/
+function InfoField({
+  label,
+  value,
+  placeholder,
+  strong,
+  dashedWhenEmpty,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  placeholder: string;
+  /** The boat's name is the card's identity, so it is written heavier. */
+  strong?: boolean;
+  dashedWhenEmpty?: boolean;
+  onChange: (v: string) => void;
+}) {
+  const empty = !value.trim();
+  return (
+    <div
+      className={`flex min-h-[46px] items-center gap-2 rounded-[11px] border bg-surface px-[11px] ${
+        dashedWhenEmpty && empty ? "border-dashed border-border" : "border-border"
+      }`}
+    >
+      <span className="w-11 flex-shrink-0 select-none font-mono text-[10px] font-medium tracking-[0.12em] text-muted">
+        {label}
+      </span>
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        aria-label={label}
+        placeholder={placeholder}
+        className={`min-w-0 flex-1 bg-transparent text-[16px] text-text outline-none placeholder:text-muted ${
+          strong ? "font-semibold placeholder:font-normal" : "font-medium"
+        }`}
+      />
+    </div>
+  );
+}
+
+/*
+  THE ENDS OF THE HULL. Which way the boat is pointing, said once at each end,
+  so the seats between them are unambiguously bow → stroke. The same caps the
+  athlete's own card wears.
+*/
+function HullCap({ arrow, word }: { arrow: string; word: string }) {
+  return (
+    <div className="flex h-[30px] select-none items-center justify-center gap-[7px] font-mono text-[11px] font-semibold tracking-[0.16em] text-muted">
+      <span className="text-[12px] leading-none">{arrow}</span>
+      {word}
+    </div>
+  );
+}
+
+/*
+  The side marker worn INSIDE THE BOAT — the same pill, at the same size, that
+  the athlete reads on their own phone (components/varsity/LineupBoatCard). A
+  seat looks the same to the coach filling it and to the person sitting in it.
+*/
+function SidePill({ side }: { side: Side }) {
+  const m = sideMeta[side];
+  return (
+    <span
+      className="flex h-[21px] flex-shrink-0 items-center rounded-md px-[7px] font-mono text-[10px] font-semibold tracking-[0.06em]"
+      style={blade(m.color, m.ink)}
+      title={m.label}
     >
       {m.tag}
     </span>
@@ -376,6 +457,13 @@ function DayPicker({ days, onPick }: { days: PickDay[]; onPick: (day: PickDay, p
 }
 
 /* ─────────────────────────  view 2: builder (interactive)  ───────────────────────── */
+/*
+  ONE SEAT IN THE HULL, and the one place a crew is actually built: tap it to
+  type a name, drag a name onto it, drag the name out again, or clear it with
+  the ×. It is drawn to the same anatomy as the seat an ATHLETE reads on their
+  own phone — number, name, side — so a coach seating a boat is looking at the
+  thing the squad will see, not at a different rendering of it.
+*/
 function Seat({
   label,
   athlete,
@@ -393,7 +481,7 @@ function Seat({
   onDragOverSlot,
   onDragLeaveSlot,
 }: {
-  /** The seat's number — "8" down to "1" — or the cox's "C". */
+  /** The seat's number — "1" up to "8" — or the cox's "C". */
   label: string;
   athlete?: Athlete;
   cox?: boolean;
@@ -410,14 +498,6 @@ function Seat({
   onDragOverSlot: () => void;
   onDragLeaveSlot: () => void;
 }) {
-  /*
-    The seat's badge. A rowing seat carries its NUMBER and nothing else — no
-    colour, because the boat no longer claims to know which side that seat
-    rows. The cox's badge keeps the cox yellow, because that is a person's
-    role rather than a rig.
-  */
-  const seatPaint = cox ? blade(COX_COLOR, COX_INK) : undefined;
-
   const dropHandlers = {
     onDragOver: (e: React.DragEvent) => {
       e.preventDefault();
@@ -431,104 +511,153 @@ function Seat({
     },
   };
 
-  return (
-    <div className="flex items-center gap-2">
-      <span
-        className={`flex h-5 w-5 flex-shrink-0 select-none items-center justify-center rounded border text-[11px] font-bold ${
-          cox ? "" : "border-border bg-surface-2 text-text"
-        }`}
-        style={seatPaint}
-        title={cox ? "Cox" : `Seat ${label}`}
-      >
-        {label}
-      </span>
+  /*
+    The seat's badge. A rowing seat carries its NUMBER and nothing else — no
+    colour, because the boat no longer claims to know which side that seat
+    rows. The cox's badge keeps the cox yellow, because that is a person's
+    role rather than a rig.
+  */
+  const chip = (
+    <span
+      className={`flex h-[23px] w-[23px] flex-shrink-0 select-none items-center justify-center rounded-[7px] border font-mono text-[12px] font-semibold ${
+        cox ? "" : "border-border bg-surface-2 text-text-2"
+      }`}
+      style={cox ? blade(COX_COLOR, COX_INK) : undefined}
+      title={cox ? "Cox" : `Seat ${label}`}
+    >
+      {label}
+    </span>
+  );
 
-      {typing ? (
-        <div className="relative min-h-[42px] flex-1">
-          <div
-            className={`flex min-h-[42px] items-center gap-2 rounded-lg border px-2.5 ${
-              cox ? "border-accent" : "border-primary"
-            } bg-surface-2`}
-          >
-            <input
-              autoFocus
-              value={query}
-              onChange={(e) => onQuery(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && matches[0]) onAssign(matches[0].id);
-                if (e.key === "Escape") onClear();
-              }}
-              placeholder="Type name or drag from pool"
-              className="w-full bg-transparent text-[13px] font-medium text-text outline-none placeholder:text-text-3"
-            />
-          </div>
-          {matches.length > 0 && (
-            <div className="absolute left-0 right-0 top-[calc(100%+4px)] z-30 select-none overflow-hidden rounded-xl border border-border bg-surface-2 shadow-xl">
-              {matches.slice(0, 5).map((m) => (
-                <button
-                  key={m.id}
-                  type="button"
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    onAssign(m.id);
-                  }}
-                  className="flex w-full items-center gap-2.5 border-b border-border px-3 py-2.5 text-left last:border-b-0 active:bg-primary-tint"
-                >
-                  <Avatar initials={m.initials} side={m.side} cox={m.cox} />
-                  <span className="flex-1 truncate text-[13px] font-semibold text-text">
-                    {m.name}
-                  </span>
-                  <AthleteTag a={m} />
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      ) : athlete ? (
+  /* The cox's row is outlined in the cox's own yellow, filled or not — it is
+     the one seat in the boat that is a different job. */
+  const coxEdge = cox ? { borderColor: COX_COLOR } : undefined;
+
+  if (typing) {
+    return (
+      <div className="relative">
         <div
-          draggable
-          onDragStart={(e) => {
-            e.dataTransfer.setData("text/plain", athlete.id);
-            onDragStartSeat();
-          }}
-          {...dropHandlers}
-          className={`flex min-h-[42px] flex-1 cursor-grab select-none items-center gap-2 rounded-lg border px-2.5 py-1.5 active:cursor-grabbing ${
-            dropActive
-              ? "border-accent bg-accent-tint"
-              : cox
-                ? "border-accent-line bg-accent-tint"
-                : "border-primary-line bg-primary-tint"
-          }`}
+          className="flex h-10 items-center gap-2 rounded-[10px] border bg-surface-2 pl-[7px] pr-2.5"
+          style={coxEdge ?? { borderColor: "var(--primary)" }}
         >
-          <Avatar initials={athlete.initials} side={athlete.side} cox={cox} />
-          <span className="flex-1 truncate text-[13px] font-semibold text-text">{athlete.name}</span>
-          {/* The rower's OWN side, which is a fact about them. The seat has none. */}
-          {!cox && <SideTag side={athlete.side} />}
-          <button type="button" onClick={onClear} className="text-muted hover:text-danger">
-            <IconX size={14} />
-          </button>
+          {chip}
+          <input
+            autoFocus
+            value={query}
+            onChange={(e) => onQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && matches[0]) onAssign(matches[0].id);
+              if (e.key === "Escape") onClear();
+            }}
+            placeholder="Type a name…"
+            /* 16px, so a phone does not zoom the whole boat when it focuses. */
+            className="w-full min-w-0 flex-1 bg-transparent text-[16px] font-medium text-text outline-none placeholder:text-text-3"
+          />
         </div>
-      ) : (
+        {matches.length > 0 && (
+          <div className="absolute left-0 right-0 top-[calc(100%+4px)] z-30 select-none overflow-hidden rounded-xl border border-border bg-surface-2 shadow-xl">
+            {matches.slice(0, 5).map((m) => (
+              <button
+                key={m.id}
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  onAssign(m.id);
+                }}
+                className="flex w-full items-center gap-2.5 border-b border-border px-3 py-2.5 text-left last:border-b-0 active:bg-primary-tint"
+              >
+                <Avatar initials={m.initials} side={m.side} cox={m.cox} />
+                <span className="flex-1 truncate text-[13px] font-semibold text-text">
+                  {m.name}
+                </span>
+                <AthleteTag a={m} />
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  if (athlete) {
+    return (
+      <div
+        draggable
+        onDragStart={(e) => {
+          e.dataTransfer.setData("text/plain", athlete.id);
+          onDragStartSeat();
+        }}
+        {...dropHandlers}
+        className={`flex h-10 cursor-grab select-none items-center gap-2 rounded-[10px] border pl-[7px] pr-[6px] active:cursor-grabbing ${
+          dropActive ? "border-primary bg-primary-tint" : "border-border bg-surface"
+        }`}
+        style={dropActive ? undefined : coxEdge}
+      >
+        {chip}
+        <span className="min-w-0 flex-1 truncate text-[16px] font-medium text-text">
+          {athlete.name}
+        </span>
+        {/* The rower's OWN side, which is a fact about them. The seat has none.
+            A coxswain takes no side, so their row says COX instead. */}
+        {cox ? (
+          <span
+            className="flex h-[21px] flex-shrink-0 items-center rounded-md px-[7px] font-mono text-[10px] font-semibold tracking-[0.06em]"
+            style={blade(COX_COLOR, COX_INK)}
+          >
+            {COX_LABEL}
+          </span>
+        ) : (
+          <SidePill side={athlete.side} />
+        )}
         <button
           type="button"
-          onClick={onStartType}
-          {...dropHandlers}
-          className={`flex min-h-[42px] flex-1 select-none items-center gap-2 rounded-lg border border-dashed px-2.5 text-left ${
-            dropActive
-              ? "border-accent bg-accent-tint text-accent"
-              : cox
-                ? "border-border text-muted hover:border-accent-line"
-                : "border-border text-muted hover:border-primary-line"
-          }`}
+          onClick={onClear}
+          aria-label={`Clear ${athlete.name} from this seat`}
+          className="-mr-1 flex h-10 w-[34px] flex-shrink-0 items-center justify-center text-[17px] leading-none text-muted hover:text-danger"
         >
-          <IconPlus size={13} />
-          <span className="text-[12px] italic">Type or drag a name…</span>
+          <IconX size={15} />
         </button>
+      </div>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={onStartType}
+      {...dropHandlers}
+      className={`flex h-10 w-full select-none items-center gap-2 rounded-[10px] border border-dashed pl-[7px] pr-[6px] text-left ${
+        dropActive ? "border-primary bg-primary-tint" : "border-border"
+      }`}
+      style={dropActive ? undefined : coxEdge}
+    >
+      {cox ? (
+        <span
+          className="flex h-[23px] w-[23px] flex-shrink-0 items-center justify-center rounded-[7px] border font-mono text-[12px] font-semibold"
+          style={{ borderColor: COX_COLOR, color: COX_COLOR }}
+        >
+          {label}
+        </span>
+      ) : (
+        chip
       )}
-    </div>
+      <span className="min-w-0 flex-1 truncate text-[15px] text-muted">
+        {cox ? "No cox yet" : "Open seat"}
+      </span>
+      {cox && (
+        <span
+          className="flex h-[21px] flex-shrink-0 items-center rounded-md px-[7px] font-mono text-[10px] font-semibold tracking-[0.06em]"
+          style={{ color: COX_COLOR, boxShadow: `inset 0 0 0 1px ${COX_COLOR}` }}
+        >
+          {COX_LABEL}
+        </span>
+      )}
+      <span className="flex h-10 w-[34px] flex-shrink-0 items-center justify-center text-muted">
+        <IconPlus size={14} />
+      </span>
+    </button>
   );
 }
-
 /*
   `select-none` on everything below that carries a NAME.
 
@@ -549,16 +678,21 @@ function PoolChip({ a, onDragStart }: { a: Athlete; onDragStart: () => void }) {
       the list to see what the injury costs them had to remember it.
     */
     return (
-      <div className="flex select-none items-center gap-2 rounded-xl border border-danger-line bg-danger-tint px-2 py-1.5 opacity-50">
-        <Avatar initials={a.initials} className="border-danger-line bg-danger-tint text-danger" />
-        <span className="text-[12px] font-semibold text-muted">{a.name}</span>
+      <div className="flex h-[38px] select-none items-center gap-2 rounded-[10px] border border-danger-line bg-danger-tint px-2.5 opacity-60">
+        <span className="text-[15px] font-medium text-muted">{a.name}</span>
         <AthleteTag a={a} />
-        <span className="rounded bg-danger-tint px-1.5 py-px text-[10px] font-bold uppercase tracking-[0.05em] text-danger">
+        <span className="rounded bg-danger-tint px-1.5 py-px font-mono text-[9px] font-semibold uppercase tracking-[0.06em] text-danger">
           {outMeta[a.out]}
         </span>
       </div>
     );
   }
+  /*
+    A NAME AND A SIDE, and nothing else — the same two facts the seat it is
+    about to be dropped into will show. The initials roundel is gone with the
+    redesign: it repeated the name it was sitting next to, and the pool is
+    read by name.
+  */
   return (
     <div
       draggable
@@ -566,11 +700,24 @@ function PoolChip({ a, onDragStart }: { a: Athlete; onDragStart: () => void }) {
         e.dataTransfer.setData("text/plain", a.id);
         onDragStart();
       }}
-      className="flex cursor-grab select-none items-center gap-2 rounded-xl border border-border bg-surface px-2 py-1.5 active:cursor-grabbing active:border-primary-line active:bg-primary-tint"
+      className="flex h-[38px] cursor-grab select-none items-center gap-2 rounded-[10px] border border-border bg-surface px-2.5 active:cursor-grabbing active:border-primary-line active:bg-primary-tint"
     >
-      <Avatar initials={a.initials} side={a.side} cox={a.cox} />
-      <span className="text-[12px] font-semibold text-text">{a.name}</span>
-      <AthleteTag a={a} />
+      <span className="text-[15px] font-medium text-text">{a.name}</span>
+      {a.cox ? (
+        <span
+          className="flex h-[19px] flex-shrink-0 items-center rounded px-1.5 font-mono text-[9px] font-semibold tracking-[0.06em]"
+          style={blade(COX_COLOR, COX_INK)}
+        >
+          {COX_LABEL}
+        </span>
+      ) : (
+        <span
+          className="flex h-[19px] flex-shrink-0 items-center rounded px-1.5 font-mono text-[9px] font-semibold tracking-[0.06em]"
+          style={blade(sideMeta[a.side].color, sideMeta[a.side].ink)}
+        >
+          {sideMeta[a.side].tag}
+        </span>
+      )}
     </div>
   );
 }
@@ -948,9 +1095,11 @@ function Builder({
                 const filled = boat.seats.filter((s) => s.athleteId).length;
                 return (
                   <div key={boat.id} className="overflow-hidden rounded-2xl border border-border bg-surface">
-                    {/* header — the rigging and the push-off time. The boat's
-                        NAME is not here: it sits under the crew, where the
-                        coach's own lineup sheet puts it (see below). */}
+                    {/* header — the rigging, the boat's name and the push-off
+                        time, read-only. The name is EDITED under the crew,
+                        where the coach's own lineup sheet puts it; it is echoed
+                        up here so a boat stays identifiable while you scroll
+                        past its nine seats. */}
                     <div className="flex items-center justify-between gap-2 border-b border-border px-3.5 py-3">
                       <div className="flex min-w-0 flex-1 items-center gap-2">
                         <span className="flex-shrink-0 rounded-md border border-primary-line bg-primary-tint px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-primary">
@@ -993,22 +1142,6 @@ function Builder({
                     </div>
 
                     {/*
-                      NOTE FIRST. It is the one line that applies to the whole
-                      crew ("meet at 6:45", "taking the trailer"), so it reads
-                      before the names rather than after nine rows of them.
-                    */}
-                    <div className="flex items-center gap-2 border-b border-border px-3.5 py-2.5 text-muted">
-                      <IconClipboard size={14} />
-                      <input
-                        value={boat.note}
-                        onChange={(e) => setNote(boat.id, e.target.value)}
-                        aria-label="Note"
-                        placeholder="Note — anything else the crew needs…"
-                        className="flex-1 bg-transparent text-[12px] text-text outline-none placeholder:italic placeholder:text-text-3"
-                      />
-                    </div>
-
-                    {/*
                       THE CREW, IN THE ORDER THE COACH ALREADY WRITES IT: bow at
                       the top, down through the stroke, cox last — then the boat,
                       then the oars. That is the column order of the squad's own
@@ -1017,15 +1150,13 @@ function Builder({
                       other.
                     */}
                     <div className="px-3 py-4">
-                      <div className="relative rounded-[2.5rem_2.5rem_0.75rem_0.75rem] border border-border bg-gradient-to-b from-background to-surface-2 px-3.5 pb-7 pt-7">
-                        <div className="absolute left-1/2 top-2 -translate-x-1/2 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-                          Bow ▲
-                        </div>
+                      <div className="rounded-[44px] border-2 border-border bg-surface-2 px-4 pb-3 pt-2.5">
+                        <HullCap arrow="▲" word="BOW" />
                         {/* The number comes from the seat's POSITION, not from
                             what an older saved lineup happens to have stored in
                             `label` — so a lineup built before the numbering
                             changed still reads 1…8 today. */}
-                        <div className="flex flex-col gap-1.5">
+                        <div className="flex flex-col gap-1">
                           {boat.seats.map((s, i) =>
                             renderSeat(
                               { boatId: boat.id, kind: "seat", idx: i },
@@ -1034,50 +1165,58 @@ function Builder({
                             ),
                           )}
                         </div>
-                        <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-                          Stroke ▼
-                        </div>
+                        {/* THE COX SITS INSIDE THE BOAT, at the stern, below the
+                            stroke divider — which is where a cox sits. They used
+                            to be stranded under the hull entirely. */}
+                        {boat.hasCox && (
+                          <>
+                            <div className="px-1.5 pb-[3px] pt-1">
+                              <div className="h-[1.5px] rounded-[1px] bg-muted" />
+                            </div>
+                            {renderSeat({ boatId: boat.id, kind: "cox" }, COX_TAG, boat.coxId, true)}
+                          </>
+                        )}
+                        <HullCap arrow="▼" word="STROKE" />
                       </div>
-                      {boat.hasCox && (
-                        <div className="mt-2">
-                          {renderSeat({ boatId: boat.id, kind: "cox" }, COX_TAG, boat.coxId, true)}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* BOAT — which shell this crew takes out. Named here and
-                        echoed read-only in the card header above, so a boat is
-                        still identifiable while scrolling past its crew. */}
-                    <div className="flex items-center gap-2 border-t border-border px-3.5 py-2.5 text-muted">
-                      <IconPencil size={13} />
-                      <input
-                        value={boat.name}
-                        onChange={(e) => setName(boat.id, e.target.value)}
-                        aria-label="Boat name"
-                        placeholder="Boat — which shell…"
-                        className="flex-1 bg-transparent text-[12px] font-semibold text-text outline-none placeholder:font-normal placeholder:italic placeholder:text-text-3"
-                      />
                     </div>
 
                     {/*
-                      OARS — which set this crew takes off the rack. Its own
-                      line rather than a phrase buried in the note, because it
-                      is the second thing a crew needs after their seat, and
-                      because the athletes' Home shows it back to them.
+                      THE THREE LINES UNDER THE HULL, in the new design's order:
+                      which shell, which oars, and anything else the crew needs.
+                      One label column so the three answers line up, and each on
+                      its own card rather than as full-width rules — the boat
+                      above them is now a shape, and a stack of edge-to-edge
+                      rules under it read as the hull leaking into the page.
 
-                      Free text for now: the sets are named on the boathouse
-                      rack and the owner is fetching those names. When they
-                      land they become a data list and this becomes a picker —
-                      no new component, the same field.
+                      The NOTE used to sit ABOVE the crew. It moved down here
+                      with the design: the coach is filling seats first, and the
+                      note is the last thing written before the boat goes out.
+
+                      OARS is free text for now — the sets are named on the
+                      boathouse rack and the owner is fetching those names. When
+                      they land they become a data list and this becomes a
+                      picker: no new component, the same field.
                     */}
-                    <div className="flex items-center gap-2 border-t border-border px-3.5 py-2.5 text-muted">
-                      <IconAnchor size={14} />
-                      <input
+                    <div className="flex flex-col gap-[7px] px-3 pb-3">
+                      <InfoField
+                        label="BOAT"
+                        value={boat.name}
+                        placeholder="Which shell…"
+                        strong
+                        onChange={(v) => setName(boat.id, v)}
+                      />
+                      <InfoField
+                        label="OARS"
                         value={boat.oars ?? ""}
-                        onChange={(e) => setOars(boat.id, e.target.value)}
-                        aria-label="Oars"
-                        placeholder="Oars — which set to take…"
-                        className="flex-1 bg-transparent text-[12px] text-text outline-none placeholder:italic placeholder:text-text-3"
+                        placeholder="Which set to take…"
+                        onChange={(v) => setOars(boat.id, v)}
+                      />
+                      <InfoField
+                        label="NOTE"
+                        value={boat.note}
+                        placeholder="Add a crew note…"
+                        dashedWhenEmpty
+                        onChange={(v) => setNote(boat.id, v)}
                       />
                     </div>
 
