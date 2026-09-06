@@ -239,6 +239,15 @@ export const COX_TAG = "C";
 /** The cox's word, for anywhere with room to read it (pool chips, dropdowns). */
 export const COX_LABEL = "COX";
 
+/*
+  WHAT A BOAT IS CALLED BEFORE THE COACH NAMES IT. A placeholder, not a name —
+  which is why it lives here rather than being typed into the builder: the
+  athlete's card has to be able to TELL that a boat is still unnamed, so it can
+  call the crew after its cox or its stroke instead of showing three "New 8+"s
+  in a row (lib/varsity/home → crewName).
+*/
+export const defaultBoatName = (badge: string) => `New ${badge}`;
+
 // Build the empty seat list for a rigging — bow (1) first, stroke last.
 export function makeSeats(type: BoatType): SeatSlot[] {
   const { rowers } = boatShape[type];

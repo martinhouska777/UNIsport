@@ -19,7 +19,14 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import Sheet from "@/components/varsity/Sheet";
 import { useAppState } from "@/components/AppState";
-import { IconPlay, IconPlus, IconTrash, IconVideo } from "@/components/icons";
+import {
+  IconChevronDown,
+  IconChevronUp,
+  IconPlay,
+  IconPlus,
+  IconTrash,
+  IconVideo,
+} from "@/components/icons";
 import { COX_COLOR, COX_INK, sideMeta, type Boat } from "@/lib/varsity/coachLineup";
 import {
   deleteCrewVideo,
@@ -227,6 +234,8 @@ export default function CrewVideoStrip({ dayKey, boat }: { dayKey: string; boat:
     the button.
   */
   const [connected, setConnected] = useState(driveConnected());
+  /* Shut by default — see the strip's own comment at the bottom of the file. */
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -299,15 +308,28 @@ export default function CrewVideoStrip({ dayKey, boat }: { dayKey: string; boat:
   };
 
   return (
+    /*
+      SHUT UNTIL ASKED FOR. Filed under a boat, this strip is three rows —
+      the clips, a label field and an upload button — and it sat open under
+      every single crew, which on a phone is most of a screen spent on the one
+      thing nobody is reading on the way to the boathouse. Now the header says
+      whether there is any footage at all, and the rest opens on a tap.
+    */
     <div className="border-t border-border px-3.5 py-2.5">
-      <div className="flex items-center gap-2 text-muted">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        className="flex w-full items-center gap-2 text-muted"
+      >
         <IconVideo size={14} />
-        <span className="flex-1 text-[11px] font-semibold uppercase tracking-[0.12em]">
+        <span className="flex-1 text-left text-[11px] font-semibold uppercase tracking-[0.12em]">
           Video{videos.length ? ` · ${videos.length}` : ""}
         </span>
-      </div>
+        {open ? <IconChevronUp size={13} /> : <IconChevronDown size={13} />}
+      </button>
 
-      {videos.length > 0 && (
+      {open && videos.length > 0 && (
         <div className="mt-2 flex flex-col gap-1.5">
           {videos.map((v) => (
             <button
@@ -328,7 +350,7 @@ export default function CrewVideoStrip({ dayKey, boat }: { dayKey: string; boat:
         </div>
       )}
 
-      <div className="mt-2 flex items-center gap-2">
+      <div className={`mt-2 flex items-center gap-2 ${open ? "" : "hidden"}`}>
         <input
           value={label}
           onChange={(e) => setLabel(e.target.value)}
@@ -357,18 +379,18 @@ export default function CrewVideoStrip({ dayKey, boat }: { dayKey: string; boat:
         </button>
       </div>
 
-      {needsConnect && seated && (
+      {open && needsConnect && seated && (
         <div className="mt-1.5 text-[11px] italic text-muted">
           Sign in to Google once, and video goes straight to the squad&apos;s Drive folder.
         </div>
       )}
 
-      {!seated && (
+      {open && !seated && (
         <div className="mt-1.5 text-[11px] italic text-muted">
           Seat the boat first — a video is filed by its crew.
         </div>
       )}
-      {error && <div className="mt-1.5 text-[11px] text-danger">{error}</div>}
+      {open && error && <div className="mt-1.5 text-[11px] text-danger">{error}</div>}
 
       {playing && (
         <VideoSheet

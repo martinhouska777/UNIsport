@@ -11,7 +11,7 @@
   intensities the coach actually plans in each get their own colour.
 */
 
-import type { Boat, Side } from "./coachLineup";
+import { defaultBoatName, type Boat, type Side } from "./coachLineup";
 
 export type SessionKind = "ut2" | "ut1" | "hard" | "weights" | "flex" | "race" | "off";
 
@@ -142,13 +142,42 @@ export type Lineup = {
 /*
   WHAT HEADS A BOAT'S CARD: which half of the day, and what rig — "AM 2-".
 
-  The owner's call, and it is how a crew says it out loud. The SHELL's name is
-  not up here: it is written under the hull, on the BOAT line, because the name
-  on the boat you carry down to the water is a different fact from which outing
-  this is. `type` ("Pair", "Eight") is the fallback for a lineup old enough not
-  to have stored its rig.
+  The owner's call, and it is how a crew says it out loud. `type` ("Pair",
+  "Eight") is the fallback for a lineup old enough not to have stored its rig.
 */
 export const boatHeading = (l: Lineup) => `${l.periodKey} ${l.badge ?? l.type}`;
+
+/** "Cate Frerichs" → "Frerichs". A crew is known by a surname, not a full name. */
+const surname = (full: string) => full.trim().split(/\s+/).pop() || full;
+
+/*
+  WHICH BOAT THIS IS, when the day has three of them.
+
+  "AM 8+" alone is true of every eight that went out that morning, so the
+  heading carries a second word: the coach's own name for the boat when they
+  gave it one, and when they didn't — a boat straight out of the builder is
+  still called "New 8+", which is a placeholder and not a name — the person the
+  crew is known by. The COX first, who is the voice of the boat, then the
+  STROKE, who sets it, by surname either way.
+
+  Null when the boat is empty of all three, which is the only case where the
+  rig really is all there is to say.
+*/
+export function crewName(l: Lineup): string | null {
+  const named = l.name?.trim();
+  if (named && named !== defaultBoatName(l.badge ?? "")) return named;
+  const cox = l.cox?.name;
+  if (cox && cox !== "—") return surname(cox);
+  // The stroke sits LAST in the array — the seats run bow → stroke.
+  const stroke = [...l.seats].reverse().find((s) => s.name && s.name !== "—");
+  return stroke ? surname(stroke.name) : null;
+}
+
+/** Every name aboard, for the All-boats search. Lowercased, cox included. */
+export const crewNames = (l: Lineup): string[] =>
+  [...l.seats.map((s) => s.name), l.cox?.name ?? ""]
+    .filter((n) => n && n !== "—")
+    .map((n) => n.toLowerCase());
 
 export type Greeting = { date: string; name: string; block: string; week: string };
 // `big` is the headline (e.g. "Today", "Tomorrow", or a number like "12");

@@ -12,6 +12,9 @@
   Every card starts SHUT. The point of the page is to see the day at a glance —
   which boats are out, which ones you know people in — and then open the one you
   actually want. Yours, when you are in one, is marked and sits first.
+
+  A SEARCH sits above them: type a name and only the boats carrying it are left,
+  already open. "Which boat is Havel in" used to mean opening all of them.
 */
 import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
@@ -20,11 +23,11 @@ import { useAppState } from "@/components/AppState";
 import LineupBoatCard, { isMyBoat } from "@/components/varsity/LineupBoatCard";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { SkeletonCards } from "@/components/ui/Skeleton";
-import { IconArrowLeft } from "@/components/icons";
+import { IconArrowLeft, IconSearch, IconX } from "@/components/icons";
 import { parseDate, sessionKey, toISO } from "@/lib/varsity/coachPlan";
 import { fetchTodayLineups } from "@/lib/varsity/lineupStore";
 import { fetchProfileFullName } from "@/lib/varsity/planStore";
-import type { Lineup } from "@/lib/varsity/home";
+import { crewNames, type Lineup } from "@/lib/varsity/home";
 
 /* "Fri · 4 Sep" — the same shape the day detail on Home uses. */
 function dateLabel(iso: string): string {
@@ -33,6 +36,75 @@ function dateLabel(iso: string): string {
     "en-US",
     { day: "numeric", month: "short" },
   )}`;
+}
+
+/*
+  THE DAY'S BOATS, AND A WAY TO LOOK SOMEBODY UP.
+
+  "Which boat is Havel in?" is the question this page gets asked most after
+  "where am I", and answering it meant opening eight crews and reading nine
+  names in each. Type a name and only the boats carrying it are left — already
+  OPEN, because a search that hands you a shut card has not answered anything.
+
+  The search reads every name aboard, cox included (lib/varsity/home →
+  crewNames), and matches anywhere in the name, so a surname finds them.
+*/
+function BoatSearchList({ lineups }: { lineups: Lineup[] }) {
+  const [q, setQ] = useState("");
+  const needle = q.trim().toLowerCase();
+  const shown = needle
+    ? lineups.filter((l) => crewNames(l).some((n) => n.includes(needle)))
+    : lineups;
+
+  return (
+    <>
+      {/* One field, no button — it filters as you type. 16px so a phone doesn't
+          zoom the page the moment it is tapped. */}
+      <div className="relative mb-3">
+        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted">
+          <IconSearch size={15} />
+        </span>
+        <input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          aria-label="Find someone in a boat"
+          placeholder="Find a name…"
+          className="w-full rounded-xl border border-border bg-surface py-2.5 pl-9 pr-9 text-base text-text outline-none focus:border-primary placeholder:text-muted"
+        />
+        {q && (
+          <button
+            type="button"
+            onClick={() => setQ("")}
+            aria-label="Clear the search"
+            className="tap44 absolute right-1 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center text-muted"
+          >
+            <IconX size={14} />
+          </button>
+        )}
+      </div>
+
+      <div className="mb-2 flex items-center justify-between gap-3 px-1">
+        <SectionLabel>{shown.length === 1 ? "1 boat" : `${shown.length} boats`}</SectionLabel>
+        <span className="truncate text-[11px] text-muted">
+          {needle ? `with “${q.trim()}”` : "Tap one to open it"}
+        </span>
+      </div>
+
+      {shown.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-border bg-surface px-4 py-6 text-center text-[12px] text-muted">
+          Nobody by that name is in a boat this day.
+        </div>
+      ) : (
+        <div className="flex flex-col gap-3">
+          {shown.map((l, i) => (
+            /* The query is part of the key, so a card a search just matched
+               re-opens instead of keeping the shut state it was mounted with. */
+            <LineupBoatCard key={`${i}-${needle}`} l={l} defaultOpen={!!needle} />
+          ))}
+        </div>
+      )}
+    </>
+  );
 }
 
 function AllLineups() {
@@ -82,19 +154,7 @@ function AllLineups() {
             No boats published for this day.
           </div>
         ) : (
-          <>
-            <div className="mb-2 flex items-center justify-between px-1">
-              <SectionLabel>
-                {ordered.length === 1 ? "1 boat" : `${ordered.length} boats`}
-              </SectionLabel>
-              <span className="text-[11px] text-muted">Tap one to open it</span>
-            </div>
-            <div className="flex flex-col gap-3">
-              {ordered.map((l, i) => (
-                <LineupBoatCard key={i} l={l} />
-              ))}
-            </div>
-          </>
+          <BoatSearchList lineups={ordered} />
         )}
       </div>
     </div>

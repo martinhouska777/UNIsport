@@ -62,6 +62,7 @@ import {
   outMeta,
   boatTypes,
   makeSeats,
+  defaultBoatName,
   type Practice,
   type PracticeStatus,
   type Boat,
@@ -914,7 +915,7 @@ function Builder({
       {
         id: `boat-${Date.now()}`,
         badge: type,
-        name: `New ${type}`,
+        name: defaultBoatName(type),
         dock: DEFAULT_DOCK,
         oars: "",
         note: "",

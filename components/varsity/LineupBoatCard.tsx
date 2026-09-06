@@ -27,7 +27,7 @@ import { useState } from "react";
 import CrewVideoStrip from "@/components/varsity/CrewVideoStrip";
 import { IconChevronDown, IconChevronUp } from "@/components/icons";
 import { sideMeta, COX_COLOR, COX_INK, COX_TAG, COX_LABEL } from "@/lib/varsity/coachLineup";
-import { boatHeading, type Lineup, type Seat } from "@/lib/varsity/home";
+import { boatHeading, crewName, type Lineup, type Seat } from "@/lib/varsity/home";
 
 /* Is this the reader's own boat? Their seat, or the cox's seat, is marked when
    the lineup is built (lib/varsity/lineupStore.ts). */
@@ -251,6 +251,7 @@ export default function LineupBoatCard({
   defaultOpen?: boolean;
 }) {
   const [open, setOpen] = useState(defaultOpen);
+  const crew = crewName(l);
 
   return (
     <div className="overflow-hidden rounded-xl border border-border bg-surface">
@@ -267,8 +268,14 @@ export default function LineupBoatCard({
         aria-expanded={open}
         className="flex w-full items-center gap-2.5 px-3.5 py-3 text-left"
       >
-        <span className="min-w-0 flex-1 truncate text-[15px] font-semibold text-text">
-          {boatHeading(l)}
+        <span className="flex min-w-0 flex-1 items-baseline gap-2">
+          <span className="flex-shrink-0 text-[15px] font-semibold text-text">
+            {boatHeading(l)}
+          </span>
+          {/* WHICH eight, on a morning that sent out three: the coach's name for
+              the boat, or the cox's surname, or the stroke's. Quieter than the
+              rig — you scan the column for "AM 8+" and land on the name. */}
+          {crew && <span className="min-w-0 truncate text-[14px] text-muted">{crew}</span>}
         </span>
         {l.dock && (
           <span className="flex-shrink-0 font-mono text-[13px] font-medium text-text-2">
@@ -296,8 +303,11 @@ export default function LineupBoatCard({
             )}
             <LineupSeats l={l} />
             {/* Then the two things you carry down to the water: which shell,
-                and which oars off the rack. */}
-            {l.name && <InfoRow label="BOAT" value={l.name} />}
+                and which oars off the rack. A boat still called "New 8+" has
+                not been named, so there is nothing to write on the BOAT line —
+                `crewName` returns a person's surname in that case, which is not
+                the name painted on the hull. */}
+            {l.name && l.name === crew && <InfoRow label="BOAT" value={l.name} />}
             {l.oars && <InfoRow label="OARS" value={l.oars} />}
           </div>
           {/*
