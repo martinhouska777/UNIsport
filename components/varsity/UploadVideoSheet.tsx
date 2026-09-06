@@ -29,7 +29,7 @@ import { IconPlus, IconVideo, IconCheckCircle } from "@/components/icons";
 import { dayKeyLabel, parseSessionKey, sessionLabel } from "@/lib/varsity/coachPlan";
 import { fetchLineup, fetchLineupStatuses } from "@/lib/varsity/lineupStore";
 import { fetchPlan } from "@/lib/varsity/planStore";
-import { uploadCrewVideo, videoBoatName } from "@/lib/varsity/crewVideos";
+import { uploadCrewVideo, videoBoatName, videoSuggestedName } from "@/lib/varsity/crewVideos";
 import { driveConfigured, driveConnected, driveToken } from "@/lib/varsity/drive";
 import type { Boat } from "@/lib/varsity/coachLineup";
 
@@ -124,6 +124,15 @@ export default function UploadVideoSheet({ onClose }: { onClose: () => void }) {
      to be cleared on the way in. */
   const [boatsFor, setBoatsFor] = useState<{ dayKey: string; boats: Boat[] } | null>(null);
   const [boat, setBoat] = useState<Boat | null>(null);
+  /* Chosen, and NOT yet sent. The upload used to start the instant the picker
+     closed; now the file waits here while its name is agreed (owner,
+     2026-09-06: "ten muzu odsouhlasit a kdyz odsouhlasim tak se to muze
+     nahrat"). */
+  const [picked, setPicked] = useState<File[] | null>(null);
+  /* A name typed by hand, remembered WITH the boat it was typed for — the same
+     trick as boatsFor above. Absent, or belonging to another boat, and the
+     suggestion is what the field shows. */
+  const [typed, setTyped] = useState<{ boatId: string; value: string } | null>(null);
   const [connected, setConnected] = useState(driveConnected());
   const [busy, setBusy] = useState<string | null>(null);
   const [done, setDone] = useState(0);
@@ -155,17 +164,36 @@ export default function UploadVideoSheet({ onClose }: { onClose: () => void }) {
 
   const needsConnect = driveConfigured() && !connected;
 
-  const upload = async (files: FileList | null) => {
-    if (!files || !files.length || !dayKey || !boat) return;
+  /* The coach's own words for this practice — half of the suggested name, and
+     already on the row the reader tapped, so nothing is fetched twice. */
+  const workout = practices?.find((p) => p.dayKey === dayKey)?.workout ?? "";
+
+  /* Derived, not stored: the suggestion follows the boat and the practice, and
+     is replaced only for as long as somebody is typing over it. */
+  const suggested = boat ? videoSuggestedName(boat, workout) : "";
+  const name = typed && typed.boatId === boat?.id ? typed.value : suggested;
+
+  /* The picker closing no longer starts anything. */
+  const pick = (files: FileList | null) => {
     setError(null);
-    const list = Array.from(files);
-    for (let i = 0; i < list.length; i++) {
+    setPicked(files && files.length ? Array.from(files) : null);
+  };
+
+  const upload = async () => {
+    if (!picked || !dayKey || !boat) return;
+    setError(null);
+    for (let i = 0; i < picked.length; i++) {
       // An outing video is big and the boathouse signal is not. A percentage is
       // the difference between "it's working" and "it's frozen".
-      const of = list.length > 1 ? ` (${i + 1}/${list.length})` : "";
+      const of = picked.length > 1 ? ` (${i + 1}/${picked.length})` : "";
       setBusy(`Uploading${of}…`);
-      const { error: err } = await uploadCrewVideo(dayKey, boat, list[i], "", (f) =>
-        setBusy(`Uploading${of} ${Math.round(f * 100)}%`),
+      const { error: err } = await uploadCrewVideo(
+        dayKey,
+        boat,
+        picked[i],
+        "",
+        (f) => setBusy(`Uploading${of} ${Math.round(f * 100)}%`),
+        name.trim(),
       );
       if (err) {
         setError(err);
@@ -174,8 +202,14 @@ export default function UploadVideoSheet({ onClose }: { onClose: () => void }) {
       setDone((n) => n + 1);
     }
     setBusy(null);
+    setPicked(null);
+    setTyped(null);
     if (fileRef.current) fileRef.current.value = "";
   };
+
+  /* Whatever the phone called it — the extension is the one thing about the
+     name that is not the uploader's to choose. */
+  const ext = picked ? (picked[0].name.split(".").pop() || "mp4").toLowerCase().slice(0, 5) : "";
 
   return (
     <Sheet title="Upload video" onClose={onClose}>
@@ -236,7 +270,7 @@ export default function UploadVideoSheet({ onClose }: { onClose: () => void }) {
               accept="video/*"
               multiple
               hidden
-              onChange={(e) => void upload(e.target.files)}
+              onChange={(e) => pick(e.target.files)}
             />
             {needsConnect ? (
               <button
@@ -251,6 +285,52 @@ export default function UploadVideoSheet({ onClose }: { onClose: () => void }) {
               >
                 <IconVideo size={14} /> Connect Google Drive
               </button>
+            ) : picked ? (
+              /*
+                THE NAME, BEFORE THE UPLOAD. The suggestion is the boat and the
+                coach's own words for the outing; the field is the uploader's to
+                take or type over, and nothing leaves the phone until they press
+                the button under it.
+              */
+              <>
+                <Label>Save it as</Label>
+                <div className="flex items-center gap-1.5 rounded-xl border border-border bg-surface-2 px-3 py-2">
+                  <input
+                    value={name}
+                    onChange={(e) => setTyped({ boatId: boat.id, value: e.target.value })}
+                    disabled={!!busy}
+                    aria-label="File name"
+                    /* text-base: anything smaller and a phone zooms the page in
+                       when the field takes focus. */
+                    className="min-w-0 flex-1 bg-transparent text-base text-text outline-none placeholder:text-muted"
+                    placeholder={videoBoatName(boat)}
+                  />
+                  <span className="flex-shrink-0 text-[12px] text-muted">.{ext}</span>
+                </div>
+                <div className="pb-2 pt-1.5 text-[11px] text-muted">
+                  {picked.length === 1
+                    ? picked[0].name
+                    : `${picked.length} clips — the rest land under the same name, numbered (2), (3)…`}
+                </div>
+                <button
+                  type="button"
+                  disabled={!!busy || !name.trim()}
+                  onClick={() => void upload()}
+                  className="tap44 flex w-full items-center justify-center gap-1.5 rounded-xl bg-primary px-3 py-2.5 text-[13px] font-semibold text-primary-contrast disabled:opacity-50"
+                >
+                  <IconPlus size={14} />{" "}
+                  {busy ?? (picked.length === 1 ? "Upload" : `Upload ${picked.length} videos`)}
+                </button>
+                {!busy && (
+                  <button
+                    type="button"
+                    onClick={() => fileRef.current?.click()}
+                    className="tap44 w-full pt-2 text-center text-[12px] text-muted underline underline-offset-4"
+                  >
+                    Choose a different video
+                  </button>
+                )}
+              </>
             ) : (
               <button
                 type="button"

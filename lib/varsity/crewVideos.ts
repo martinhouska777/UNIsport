@@ -124,29 +124,58 @@ const safeName = (s: string) => s.replace(/[\\/:*?"<>|]/g, "-").trim();
   is which boat this is — and it answers it the way a boathouse does.
 
   The coach's own name for the boat wins ("1V 8+"). An unnamed boat is named by
-  its crew: by the stroke, or by the cox when the seats hold no stroke to point
-  at. A boat with nobody in it is left with its rigging, which is the only thing
-  anybody could truthfully call it.
+  its crew, and THE COX COMES FIRST (owner, 2026-09-06: "jestli nema jmeno tak
+  pak pod jmenem cox a jestli neni cox tak pod jmenem stroka hlavne u lodi 2- a
+  4-"). A coxed boat is the cox's boat to a boathouse; the stroke is who you
+  name a boat by when there is no cox to name it after, which is exactly the
+  coxless 2- and 4-. This used to be the other way round. A boat with nobody in
+  it is left with its rigging, which is the only thing anybody could truthfully
+  call it.
 */
 export function videoBoatName(boat: Boat): string {
   const named = boat.name.trim();
   if (named) return [named, boat.badge].filter(Boolean).join(" ");
   const crew = crewFromBoat(boat);
-  const stroke = strokeName(crew);
-  if (stroke) return [`stroke ${lastName(stroke)}`, boat.badge].filter(Boolean).join(" ");
   const cox = crew.find((c) => c.cox);
   if (cox) return [`cox ${lastName(cox.name)}`, boat.badge].filter(Boolean).join(" ");
+  const stroke = strokeName(crew);
+  if (stroke) return [`stroke ${lastName(stroke)}`, boat.badge].filter(Boolean).join(" ");
   return boat.badge || "Boat";
 }
 
 /*
-  The name the file itself gets. `index` is how many clips this boat already has
-  from this session: the second one must not arrive in Drive under the same name
-  as the first.
+  WHAT THE FILE WILL BE CALLED — offered to whoever is uploading, before the
+  upload starts, for them to accept or type over (owner, 2026-09-06: "da mi to
+  tam suggestion jmena te lode jak se pojmenuje ten soubor a ten muzu
+  odsouhlasit a kdyz odsouhlasim tak se to muze nahrat").
+
+    1V 8+ · 3×25' UT2
+    cox Novak 4+ · Steady state
+    stroke Cech 2- · 6×500m
+
+  The boat, then THE WORKOUT in the coach's own words — the owner asked for it
+  by name ("+ nazev workoutu"). It is also the folder this file lands in, and
+  that duplication is deliberate: a clip that gets downloaded, AirDropped or
+  dragged out of Drive keeps saying what it is of, which is the whole reason
+  this feature exists. Cut short because a folder can afford a sentence and a
+  filename cannot.
 */
-export function videoFileName(boat: Boat, ext: string, index = 0): string {
+const WORKOUT_IN_NAME = 40;
+
+export function videoSuggestedName(boat: Boat, workout = ""): string {
+  const words = workout.trim().slice(0, WORKOUT_IN_NAME).trim();
+  return safeName([videoBoatName(boat), words].filter(Boolean).join(" · "));
+}
+
+/*
+  The name the file itself gets — the one that was accepted upstairs, never
+  guessed again here. `index` is how many clips this boat already has from this
+  session: the second one must not arrive in Drive under the same name as the
+  first.
+*/
+export function videoFileName(name: string, ext: string, index = 0): string {
   const suffix = index > 0 ? ` (${index + 1})` : "";
-  return `${safeName(videoBoatName(boat))}${suffix}.${ext}`;
+  return `${safeName(name) || "Boat"}${suffix}.${ext}`;
 }
 
 /*
@@ -274,6 +303,10 @@ export async function uploadCrewVideo(
   file: File,
   note = "",
   onProgress?: (fraction: number) => void,
+  /* The name the uploader accepted in the sheet. Empty = nobody was asked
+     (an older caller, or a school on the app's own storage), in which case
+     the same suggestion is worked out here instead. */
+  name = "",
 ): Promise<{ video?: CrewVideo; error?: string }> {
   if (!hasSupabaseEnv()) return { error: "No database connected yet." };
   const supabase = createClient();
@@ -313,7 +346,7 @@ export async function uploadCrewVideo(
     const already = await fetchBoatVideos(dayKey, boat.id);
     const result = await driveUpload(
       file,
-      videoFileName(boat, ext, already.length),
+      videoFileName(name || videoSuggestedName(boat, workout), ext, already.length),
       folder,
       token,
       onProgress,
