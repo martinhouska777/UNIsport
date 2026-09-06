@@ -68,16 +68,39 @@ export default function CoachSection({ solo = false }: { solo?: boolean }) {
             </a>
           )}
 
-          {/* THE WAY IN, on the opening screen — the varsity intro's own
-              outlined pill, worn here (owner, 2026-09-05: "I want the same
-              style as varsity, there's a see-how-it-works and then you just
-              scroll and see"). It replaced a heading and a sentence that stood
-              between this screen and the phones. */}
+          {/* THE WAY IN, on the opening screen. It began as the varsity intro's
+              outlined pill (owner, 2026-09-05: "I want the same style as
+              varsity, there's a see-how-it-works and then you just scroll and
+              see"), which replaced a heading and a sentence standing between
+              this screen and the phones.
+
+              A DOWN ARROW NOW, and no pill (owner, 2026-09-06: "chci dat jako
+              šipku dolů a nemusí to být taková bublina protože je to hned pod
+              tím"). The interlude's pill is a jump across the page and has to
+              look like a button; this one only says "keep going" — what it
+              points at is the next thing down. So the chrome goes and the
+              arrow turns to face the way it means. */}
           <a
             href={coach.overview.href}
-            className="mt-1 inline-flex items-center gap-2 rounded-full border border-l-varsity-soft px-6 py-3 text-[14px] font-medium tracking-tight text-l-text transition-colors hover:border-l-varsity hover:bg-l-varsity-dim"
+            className="tap44 mt-1 inline-flex flex-col items-center gap-1.5 px-3 py-2 text-[14px] font-medium tracking-tight text-l-text-2 transition-colors hover:text-l-text"
           >
-            {coach.overview.label} →
+            {coach.overview.label}
+            <svg
+              width="19"
+              height="19"
+              viewBox="0 0 24 24"
+              fill="none"
+              aria-hidden
+              className="text-l-varsity"
+            >
+              <path
+                d="M12 5.5v13m0 0-5.6-5.6M12 18.5l5.6-5.6"
+                stroke="currentColor"
+                strokeWidth="1.7"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
           </a>
         </div>
 

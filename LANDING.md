@@ -503,7 +503,8 @@ For the LIVE site (a dev server on :3000, not the artifact):
 cd scripts/landing
 node verify-site.mjs            # beats, pans, flip, click/dot nav, mobile
 node verify-site-flight.mjs     # both closers fly in and land dx=0 dy=0 dw=0
-node verify-site-reverse.mjs    # the way back: 12 assertions, real wheel notches
+node verify-site-reverse.mjs    # the way back: 14 assertions, real wheel notches
+node verify-coach-fits.mjs      # a coach step fits on one screen, in a short window
 ```
 
 `verify-site-reverse.mjs` is the one that keeps 2026-09-06 fixed (see "The way
@@ -601,3 +602,34 @@ briskly out of Campus Colours:
 466ms (blades) instead of 1500 / 1692; the phone travels 416px / 566px and
 lands dx=0 dy=1 dw=0. `verify-site.mjs` and `verify-site-flight.mjs` stay
 all-green — the way IN is untouched.
+
+
+## 2026-09-06 — the Coach's Console, in a short window
+
+Two owner notes, both about the coach section.
+
+**The way in is an arrow now, not a pill.** "See how it works" wore the
+interlude's outlined pill; the owner: "chci dat jako šipku dolů a nemusí to
+být taková bublina protože je to hned pod tím." The interlude's pill is a jump
+across the page and has to look like a button. This one only says *keep going*
+— what it points at is the next thing down the page — so the border and the
+ground are gone and the arrow turns to face the way it means: the label with a
+gold down-arrow under it, still a 44px tap target.
+
+**A step fits on one screen.** "chci aby se ten mobil i text vešli na stránku."
+The phones were fixed at 240px, which makes the tallest step 675px tall — fine
+in the 900px window everything had been checked in, and too tall for the
+owner's, which is about **1526x662 CSS pixels** (their 1907x827 screenshots are
+a 125%-scaled display; divide by 1.25) with a 66px bar fixed over the top. The
+last two lines of every explanation sat under the fold.
+
+`CoachPhone` now sizes itself off the window: `clamp(140px, calc((100svh -
+356px) / 1.771), 240px)`. Both numbers are measured off the rendered page — a
+step is 1.771x the phone's width plus 250 (headline, longest explanation,
+gaps), and 356 is those 250 plus the bar plus 40 of air. It reaches the old 240
+in a window 781 tall and stays there, **so a normal desktop is untouched**.
+
+Kept by `scripts/landing/verify-coach-fits.mjs` (10 assertions across six
+window sizes; 5 of them fail on the code before this). Worth knowing for any
+future "does it fit" question: **the owner's screenshots are at 1.25x** — read
+sizes off the page, not off the picture.
