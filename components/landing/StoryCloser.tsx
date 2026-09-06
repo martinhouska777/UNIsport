@@ -33,14 +33,14 @@ import type { Beat } from "@/lib/landingCopy";
   exactly where the story left it. The page lands with the closer just off
   the bottom of the screen, so scrolling down again plays it all afresh.
 
-  The way back is a THIRD of the way in, and it hands the page over halfway
-  through. Going down, the reader is being carried somewhere and the length of
-  it is the point; going up they want OUT, and a page that will not move reads
-  as a broken one. So the closer empties in a third of a second — the only
-  stretch where the page is held — the cut happens on the next frame, and from
-  there the reader scrolls where they like while the phone glides home over
-  half a second, both ends of the glide measured against the document every
-  frame. Kept by scripts/landing/verify-site-reverse.mjs.
+  The way back is a LITTLE quicker than the way in, and it hands the page over
+  on the first frame. Going down, the reader is being carried somewhere and the
+  length of it is the point; going up they want OUT, and a page that will not
+  move reads as a broken one. So the closer empties in a third of a second —
+  the only stretch where the page is held — the cut happens on the next frame,
+  and from there the reader scrolls where they like while the phone glides
+  home, both ends of the glide measured against the document every frame.
+  Kept by scripts/landing/verify-site-reverse.mjs.
 
   This is the choreography script of scripts/landing/build-story.mjs, which
   did all of the above THROUGH an iframe by finding things geometrically. Here
@@ -78,8 +78,23 @@ const JUMP = 0.32;
    page still for 1.3s, then cut 900px, then the phone vanished — 2.5s of a
    page that would not scroll. So: the closer empties in a third of a second,
    the cut happens on the flight's FIRST frame, and from that frame the page
-   is the reader's again while the phone glides home over half a second. */
-const DUR_BACK = 520;
+   is the reader's again while the phone glides home.
+
+   HOW LONG THAT GLIDE IS — the owner's number, same day, once the way back
+   was fluent: "chci aby to melo tak 1,2 speed toho kdyz scrollujes dolu …
+   trochu rychlejsi nez kdyz scrollujes dolu". So the whole way back runs at
+   1.2x the way in: DUR / 1.2 = 1250ms, end to end. The first act is the
+   closer emptying (340ms in Campus Colours, 450 in Blade Lock — theirs, and
+   left alone), so the glide gets what is left:
+
+       340 + 860 = 1200   |   450 + 860 = 1310   |   mean 1255 ≈ 1250
+
+   At 520 the glide was a THIRD of the way in and the .26s screen swap inside
+   it took half the flight; at 860 that swap sits at 0.30 of it, the same
+   proportion the way in has (0.5s of 1500). The page is handed back on the
+   first frame either way, so a longer glide costs the reader nothing — it is
+   the phone that takes longer, not the scroll. */
+const DUR_BACK = 860;
 const easeInOut = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 
 /* Where the flight exists: the two-column layout, without reduced motion.
