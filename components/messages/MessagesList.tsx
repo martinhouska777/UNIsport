@@ -120,13 +120,6 @@ export default function MessagesList({
             </button>
           ))}
         </div>
-        {/* One line saying what the word means. "Community" on its own was a
-            tab nobody could guess the contents of (#24 in the audit). */}
-        <p className="px-0.5 pt-1.5 text-[11px] text-muted">
-          {tab === "direct"
-            ? "Your one-to-one conversations."
-            : "Open channels for the whole campus — join one to post."}
-        </p>
       </div>
 
       {/* Search */}
