@@ -394,11 +394,13 @@ export default function ResultDetail({
               );
             })}
           </div>
-          <p className="mt-1.5 px-0.5 text-[11px] leading-relaxed text-muted">
-            Longest bar = best go. Each change is against the go before it.
-            {onOpenWorkout && " Tap a previous one to open that day's board."} Same piece means the
-            same distance or time and the same number of reps — not the same wording.
-          </p>
+          {/* NO CAPTION UNDER THIS LIST (owner, 2026-09-06: "u toho comparison
+              bych nedaval ty dlouhe explanation je to docela jasne"). Three
+              sentences used to sit here saying that the longest bar is the best
+              go, that each change is against the go before, that a row can be
+              tapped, and what "same piece" means. The rower reading it has the
+              dates, the numbers and the bars in front of them and can see all
+              of that — the paragraph was the app explaining itself. */}
         </>
       )}
 
