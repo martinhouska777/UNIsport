@@ -11,10 +11,19 @@ export const metadata: Metadata = {
   TERMS OF SERVICE. Kept deliberately short and readable — the app is a student
   fitness product, not an enterprise service. Required alongside the privacy
   policy by Google's OAuth consent screen.
+
+  2026-09-06 pass, alongside the privacy policy's:
+    • the safety section claimed members are verified "beyond confirming an
+      email address". Nothing confirms an address — db/auth_autoconfirm.sql
+      stamps every new account confirmed so a tester can start without waiting
+      for mail. Sign-up does require a .edu (lib/universityEmail.ts), and that
+      is now all the sentence claims. When confirmation is switched back on,
+      this sentence is the one to update.
+    • added: what happens to a crew video, and which country's law applies.
 */
 export default function TermsPage() {
   return (
-    <LegalPage title="Terms of Service" updated="14 August 2026">
+    <LegalPage title="Terms of Service" updated="6 September 2026">
       <Section heading="Using UNIsport">
         <p>
           UNIsport helps university students find gyms, training partners, and sessions on campus.
@@ -63,6 +72,15 @@ export default function TermsPage() {
           give us permission to store and display it inside the app so the app can function. You
           can delete your content, or your whole account, at any time.
         </p>
+        <p>
+          Videos you upload for a varsity crew are different in one way: they go to your team&apos;s
+          own Google Drive, not to us. They live under your team&apos;s control, and only your team
+          can delete them. Do not film anyone who has not agreed to it. The{" "}
+          <Link href="/privacy" className="text-l-accent hover:underline">
+            Privacy Policy
+          </Link>{" "}
+          explains exactly what the app does with Drive.
+        </p>
       </Section>
 
       <Section heading="Training safety — please read this one">
@@ -74,8 +92,8 @@ export default function TermsPage() {
         <p>
           You train at your own risk. You are also responsible for your own judgement when meeting
           people you find through the app — meet in public gym spaces, and tell someone where you
-          are going. We do not vet, background-check, or verify members beyond confirming an email
-          address.
+          are going. Signing up requires a university email address, but we do not background-check
+          members and we cannot confirm that anyone is who they say they are.
         </p>
       </Section>
 
@@ -85,6 +103,14 @@ export default function TermsPage() {
           may change or stop entirely. To the extent the law allows, we are not liable for loss
           arising from your use of the app, including injury from training or anything that happens
           between you and another member.
+        </p>
+      </Section>
+
+      <Section heading="Which law applies">
+        <p>
+          UNIsport is operated from the Czech Republic, and these terms are governed by Czech law.
+          If you are a consumer, this does not take away the protection you have under the law of
+          the country you live in, or your right to bring a claim there.
         </p>
       </Section>
 
