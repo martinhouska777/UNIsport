@@ -382,7 +382,7 @@ export const interlude = {
   /* THE SPORT, on its own line UNDER the sentence (the owner's arrangement —
      it was a pill above the lead-in for one commit). The reader needs it at
      exactly this point, because the next thing they meet is seven steps
-     reading Lineups, Squad board, Coach's notes: a swimmer who scrolls into
+     reading Lineups, Workouts, Coach's notes: a swimmer who scrolls into
      those without having been told has been misled by the page. Drawn as the
      hero's pill in gold, which is how this page marks a fact. */
   availability: "Now available for rowing",
@@ -395,6 +395,11 @@ export const interlude = {
      the half of that frame no other app can show. The countdown is still in
      the beat's own sub.
 
+     "SQUAD BOARD" BECAME "WORKOUTS" on 2026-09-06 (the owner: "v6 u varsity
+     bude workouts"). It is the name of the screen the beat is shot on — Team →
+     Workouts — and the beat now says what you can read there rather than
+     naming one board.
+
      THE ORDER HERE IS THE STORY'S ORDER, and it has to be kept by hand: each
      step links at `#story2-b<its position>`, so a step in the wrong place both
      prints the wrong number and opens the wrong beat. Moving the squad board
@@ -406,7 +411,7 @@ export const interlude = {
     { n: "03", icon: "race", word: "Coach's notes" },
     { n: "04", icon: "logplan", word: "Log" },
     { n: "05", icon: "calendar", word: "Calendar" },
-    { n: "06", icon: "leaderboard", word: "Squad board" },
+    { n: "06", icon: "leaderboard", word: "Workouts" },
     { n: "07", icon: "squad", word: "Statistics" },
   ] as OpeningStep[],
   /* Same door as the student card's: the varsity feature block beside Blade
@@ -423,21 +428,21 @@ export const cues = {
 /* ───────────────────── V1–V7 · THE VARSITY STORY ───────────────────── */
 
 /*
-  ORDER (owner's call, 2026-09-01): plan · lineup · notes · log · SQUAD BOARD ·
-  calendar · statistics. The board used to come last, after the two "your own
-  season" beats; now the log beat hands straight over to the squad, and the
-  calendar and the statistics — both of them your own training — close the
-  story side by side.
+  ORDER (owner's call, 2026-09-01): plan · lineup · notes · log · WORKOUTS ·
+  calendar · statistics. The workouts beat used to come last, after the two
+  "your own season" beats; now the log beat hands straight over to the squad,
+  and the calendar and the statistics — both of them your own training — close
+  the story side by side.
 
-  Two open questions on this story, both raised and neither yet decided:
+  One open question on this story, raised and not yet decided:
 
   1. It ends on a statistics graph (V7), which the brief argues against by
      name: a stats screen is the one screen every fitness app already has,
      while a seat in a named boat, published by a coach, is the one none of
      them can show. That screen is V2, currently buried mid-story.
-  2. V6's headline is the only line in either story written in the generic
-     voice — "keep track of every session" names nothing and could sit on any
-     fitness app ever shipped.
+
+  (The second question — V6's headline being the one generic line in either
+  story — is closed: the owner dictated both of its lines on 2026-09-06.)
 
   And one beat that is written but cannot be shot yet — the TEAMMATE beat (a
   different thing from V5's squad board, which ships):
@@ -570,8 +575,9 @@ export const varsityStory: Beat[] = [
     ann: [],
   },
   {
-    /* THE SQUAD BOARD — the beat the owner asked for ("a note about team and
-       rankings, its a nice part of it"), and it took four goes to get right.
+    /* THE WORKOUTS BEAT (the squad board, until the owner renamed it on
+       2026-09-06) — the beat they asked for ("a note about team and rankings,
+       its a nice part of it"), and it took four goes to get right.
        First it was a clause on the statistics beat, which promised a board the
        frame did not show. Then the database said varsity_results did not exist
        at all, so the clause came off the page entirely. db/varsity_results.sql
@@ -585,19 +591,32 @@ export const varsityStory: Beat[] = [
        words are theirs too: "all of your team pieces recorded, see how you
        improved from last time and where you stand in the rankings, with many
        filters at hand". The filters are named off the capture rather than
-       promised vaguely — Split, Time, Watts and W/kg are the four tabs on it.
+       promised vaguely — Split, Time, Watts and W/kg are the four tabs on it. */
+    id: "V6",
+    kicker: "V6 · Workouts",
+    /* BOTH LINES ARE THE OWNER'S, dictated 2026-09-06: "v6 u varsity bude
+       workouts — look at statistics for every team workout — compare to
+       previous workouts and see how u improved from last time". Their first
+       clause is the headline, their second opens the sub, and the rankings and
+       the four filters — their words from 2026-09-02 — stay on the end of it,
+       because both are on the frame and nothing asked for them to go.
+
+       Every clause is on the capture: the Workouts list is every session the
+       coach flagged, the board reads it four ways (split, time, watts, W/kg),
+       and Delta.tsx prints your change against the same piece last time
+       (samePieceHistory in lib/varsity/teamBoard.ts) — which is exactly what
+       "how you improved from last time" is.
+
+       What the head replaced, and why it is not written back: "Every team
+       piece goes on the board" named the board, and the step above it now
+       says Workouts. The word "statistics" lands here two beats before V7's
+       headline says it again — FLAGGED FOR THE OWNER, not fixed, because both
+       words are theirs.
 
        The capture is DRIVEN, not a URL: Team → Workouts → tap the 2k test.
        scripts/landing/capture-light.mjs --only=15-varsity-board re-shoots it. */
-    id: "V6",
-    kicker: "V6 · Squad board",
-    /* HEADLINE ONLY, 2026-09-02 ("V6 jsut polish the headline") — the sub is
-       the owner's and stands. "Every team piece, recorded." was the shape they
-       had just swept off the page: a noun phrase with a participle hung on a
-       comma. Now something happens. It stays off the sub's ground on purpose,
-       so the head does not spend "where you stand" before the sub gets to it. */
-    head: "Every team piece goes on the board.",
-    sub: "You see how you improved since last time and where you stand in the rankings, with filters for split, time, watts and watts per kilo.",
+    head: "Look at statistics for every team workout.",
+    sub: "Compare to previous workouts and see how you improved from last time, and where you stand in the rankings, with filters for split, time, watts and watts per kilo.",
     shot: "15-varsity-board.webp",
     ann: [],
   },
@@ -611,8 +630,25 @@ export const varsityStory: Beat[] = [
        check the TABLE, not the .sql file, before writing copy about a varsity
        feature.) */
     kicker: "V7 · Statistics",
+    /* THE SUB IS THE OWNER'S EDIT, 2026-09-06: "v7 statistics — pridej tam
+       metres rowed, a rekni ze tam mame grafy a cutni ten personal best atd".
+       So metres rowed leads it, the graph is named, and the personal bests are
+       gone.
+
+       All three measures named here are the screen's own dropdown — "Metres
+       rowed", "Time trained", "Consistency" (statMetrics in
+       lib/varsity/athleteStats.ts) — and each one draws the graph under it,
+       which is why it reads "a graph for each" rather than one graph of three
+       things. The personal bests coming out also fixes a smaller problem: on
+       the capture that card is four dashes, because nothing has been entered.
+
+       "OVER EIGHT WEEKS" IS TRUE OF THE PICTURE, not of today's screen: the
+       capture (Aug 19) has a fixed "last 8 weeks" graph, while the shipped
+       screen now lets you pick the window (week / 2 weeks / month / 3 months /
+       your own dates, default 2 weeks). Re-shoot tall-vprofile.webp and this
+       phrase has to go with it. */
     head: "See your statistics.",
-    sub: "One screen counts your consistency, your hours and your personal bests over eight weeks.",
+    sub: "One screen counts your metres rowed, your hours and your consistency over eight weeks, with a graph for each.",
     shot: "tall-vprofile.webp",
     ann: [],
   },

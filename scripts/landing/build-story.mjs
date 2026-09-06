@@ -129,20 +129,21 @@ const story2 = [
     ann: [{ side: "right", top: 34, text: "Session dots" }, { side: "left", top: 64, text: "Today" }],
   },
   {
-    // The squad board sits between the calendar and the statistics (owner,
+    // The workouts beat sits between the calendar and the statistics (owner,
     // 2026-09-02). It is a sheet you pull up from the Workouts list, so it
     // arrives as one, off the calendar screen whose tab bar is where the ring
-    // presses "Team". Driven capture: see capture-light.mjs.
-    key: "15-varsity-board", kicker: "V6 · Squad board", side: "left", enter: "sheet", tap: [69.1, 93.2],
-    head: "Every team piece goes on the board.",
-    sub: "You see how you improved since last time and where you stand in the rankings, with filters for split, time, watts and watts per kilo.",
+    // presses "Team". Driven capture: see capture-light.mjs. Words: lib/
+    // landingCopy.ts is the source — keep these two in step.
+    key: "15-varsity-board", kicker: "V6 · Workouts", side: "left", enter: "sheet", tap: [69.1, 93.2],
+    head: "Look at statistics for every team workout.",
+    sub: "Compare to previous workouts and see how you improved from last time, and where you stand in the rankings, with filters for split, time, watts and watts per kilo.",
     ann: [{ side: "right", top: 44, text: "Your place" }, { side: "right", top: 62, text: "Squad avg" }],
   },
   {
     // The board's own close X drops the sheet away and the season is there.
     key: "tall-vprofile", kicker: "V7 · Statistics", pan: [0.06, 0.42], side: "left", enter: "dismiss", tap: [92.4, 20.3],
     head: "See your statistics.",
-    sub: "One screen counts your consistency, your hours and your personal bests over eight weeks.",
+    sub: "One screen counts your metres rowed, your hours and your consistency over eight weeks, with a graph for each.",
     ann: [{ side: "right", top: 40, text: "Eight weeks of work" }],
   },
 ];
