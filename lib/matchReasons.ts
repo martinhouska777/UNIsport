@@ -18,6 +18,7 @@
   beats "similar level"), which is what a person scanning a grid wants to see.
 */
 import type { Match } from "@/lib/supabase/matching";
+import { campusLanguage } from "@/lib/onboarding";
 
 export type MatchReason = {
   key: string;
@@ -96,7 +97,14 @@ export function matchReasons(m: Match): MatchReason[] {
             ? `${w.they}${often}`
             : `${w.both} on the side${often}`;
     candidates.push({
-      key: "activity",
+      /*
+        Two DIFFERENT keys on purpose. "You both run" is what a list of runners
+        all say and deserves to be dropped as filler; "they run too" is the one
+        person on that list who ALSO does your thing, which is the rarest and
+        most useful line on the page. Sharing one key would have thrown the
+        second away with the first.
+      */
+      key: f.activityNote === "both_main" ? "activity" : "activity-also",
       short: f.activityNote === "they_also" ? w.they : w.short,
       full,
       pts: b.activity,
@@ -151,14 +159,24 @@ export function matchReasons(m: Match): MatchReason[] {
     });
   }
 
-  if (f.languages.length > 0) {
+  /*
+    Onboarding switches the campus language on for everyone and won't let you
+    turn it off — you can't study here without it. So "you both speak English"
+    is a fact about the university, not about the two of you, and it never earns
+    a line. A SECOND shared language is a real thing and still does.
+
+    Only the wording is filtered, not the score: everybody shares English, so it
+    adds the same points to every single candidate and moves nobody.
+  */
+  const languages = f.languages.filter((l) => l !== campusLanguage);
+  if (languages.length > 0) {
     candidates.push({
       key: "languages",
-      short: f.languages.join(", "),
+      short: languages.join(", "),
       full:
-        f.languages.length === 1
-          ? `You both speak ${f.languages[0]}`
-          : `You both speak ${listWords(f.languages)}`,
+        languages.length === 1
+          ? `You both speak ${languages[0]}`
+          : `You both speak ${listWords(languages)}`,
       pts: b.languages,
       weight: 2,
     });
@@ -201,10 +219,67 @@ export function matchReasons(m: Match): MatchReason[] {
     .map(({ key, short, full }) => ({ key, short, full }));
 }
 
+/*
+  HOW RARE EACH KIND OF REASON IS, ACROSS ONE LIST OF RESULTS.
+
+  Points answer "how much did this move the score?". A card has to answer a
+  different question: "why THIS person rather than the other nineteen?" Those
+  are not the same, and ordering chips by points answered the wrong one.
+
+  Measured on the real seeded campus, a shared level appears on 90% of cards and
+  a shared concentration on 14%. Sorting by points therefore spent the top slot
+  on the fact every card repeats and pushed the one distinguishing fact down.
+
+  So: count how many people in the SAME list share each kind of reason, and show
+  the rarest first. Nothing is hardcoded — on a list of runners, "you both run"
+  goes quiet on its own, and on a list of strangers from everywhere, a shared
+  country becomes the headline. It re-tunes itself to whatever you're looking at.
+*/
+export type ReasonRarity = { total: number; counts: Map<string, number> };
+
+export function reasonRarity(list: Match[]): ReasonRarity {
+  const counts = new Map<string, number>();
+  for (const m of list) {
+    for (const r of matchReasons(m)) counts.set(r.key, (counts.get(r.key) ?? 0) + 1);
+  }
+  return { total: list.length, counts };
+}
+
+/*
+  A reason that nearly EVERYONE on screen also has is not a reason — it is a
+  description of the list. Above this share it is dropped from the cards
+  entirely rather than just sorted last, because a tail of "Both lift · Wants a
+  partner · Same level" repeating down twenty cards is the same noise we set out
+  to remove, only lower on the card.
+
+  What survives is self-tuning: on a lifter's list of lifters, "both lift" goes;
+  on that same list, the one person who ALSO runs keeps their line, because
+  hardly anyone else has it.
+*/
+const TOO_COMMON = 0.7;
+
+// Below this many results, "everyone has it" isn't a meaningful statement yet.
+const ENOUGH_TO_JUDGE = 5;
+
 /**
- * The handful that fit on a result card. Three is what a two-column grid holds
- * without the card growing taller than the ones beside it.
+ * The handful that fit on a result card, rarest-first when given the list they
+ * came from. Without a list it falls back to strongest-first, which is right
+ * for a single profile where there is nothing to be rare against.
  */
-export function topMatchReasons(m: Match, count = 3): MatchReason[] {
-  return matchReasons(m).slice(0, count);
+export function topMatchReasons(
+  m: Match,
+  count = 3,
+  rarity?: ReasonRarity,
+): MatchReason[] {
+  const all = matchReasons(m);
+  if (!rarity || rarity.total < ENOUGH_TO_JUDGE) return all.slice(0, count);
+
+  const share = (k: string) => (rarity.counts.get(k) ?? 0) / rarity.total;
+  // Sort is stable, so reasons that are equally rare keep their points order.
+  const ranked = [...all].sort((x, y) => share(x.key) - share(y.key));
+  const worthSaying = ranked.filter((r) => share(r.key) <= TOO_COMMON);
+
+  // Never leave a card with nothing: if this person genuinely shares only the
+  // universal things, say the strongest one rather than showing an empty row.
+  return (worthSaying.length > 0 ? worthSaying : ranked.slice(0, 1)).slice(0, count);
 }

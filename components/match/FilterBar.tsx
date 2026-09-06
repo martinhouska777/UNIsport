@@ -22,7 +22,7 @@ export default function FilterBar({
   chips,
   onOpen,
   onClear,
-  hint = "Optional",
+  hint,
 }: {
   /** How many filters are active — shown on the button. */
   count: number;
@@ -30,6 +30,7 @@ export default function FilterBar({
   chips: FilterChip[];
   onOpen: () => void;
   onClear: (key: string) => void;
+  /** Only pass this when there is something to say. Usually there isn't. */
   hint?: string;
 }) {
   return (
@@ -42,7 +43,7 @@ export default function FilterBar({
         >
           Filters{count > 0 ? ` · ${count}` : ""}
         </button>
-        <span className="text-[11px] text-muted">{hint}</span>
+        {hint && <span className="text-[11px] text-muted">{hint}</span>}
       </div>
       {chips.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-1.5">

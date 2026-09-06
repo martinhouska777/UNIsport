@@ -45,6 +45,7 @@ import {
 } from "@/lib/onboarding";
 import { matchTier, isWorthShowing } from "@/lib/matchTier";
 import MatchCard from "@/components/match/MatchCard";
+import { reasonRarity } from "@/lib/matchReasons";
 import BuddyBoard from "@/components/match/BuddyBoard";
 import FilterBar from "@/components/match/FilterBar";
 import FiltersSheet, {
@@ -57,9 +58,9 @@ import { IconChevronDown } from "@/components/icons";
 
 type SubTab = "people" | "sessions";
 
-const subTabs: { key: SubTab; label: string; heading: string }[] = [
-  { key: "people", label: "People", heading: "SORTED BY FIT" },
-  { key: "sessions", label: "Sessions", heading: "THE COMING WEEK" },
+const subTabs: { key: SubTab; label: string }[] = [
+  { key: "people", label: "People" },
+  { key: "sessions", label: "Sessions" },
 ];
 
 function Grid({
@@ -74,10 +75,23 @@ function Grid({
   // Candidates below the weakest tier are dropped rather than shown — a 6%
   // match on screen makes the whole list look like it failed.
   const worthShowing = matches.filter((m) => isWorthShowing(m.score, max));
+  /*
+    Measured ACROSS the list that is actually on screen, then handed to every
+    card, so each one can lead with the fact its neighbours don't have. Computed
+    from worthShowing rather than from every candidate: the point is to stand out
+    among the people you can see.
+  */
+  const rarity = reasonRarity(worthShowing);
   return (
     <div className="grid grid-cols-2 items-start gap-2 px-3 pb-4">
       {worthShowing.map((m) => (
-        <MatchCard key={m.userId} match={m} max={max} onView={(x) => onView(x, max)} />
+        <MatchCard
+          key={m.userId}
+          match={m}
+          max={max}
+          rarity={rarity}
+          onView={(x) => onView(x, max)}
+        />
       ))}
     </div>
   );
@@ -254,11 +268,8 @@ function MatchScreen() {
   return (
     <div className="mx-auto w-full max-w-screen-sm">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 pt-3">
+      <div className="flex items-center px-4 pt-3">
         <h1 className="text-base font-medium text-text">Match</h1>
-        <span className="text-[11px] tracking-[0.06em] text-muted">
-          {subTabs.find((s) => s.key === tab)?.heading}
-        </span>
       </div>
 
       {/* Sub-tab switch */}

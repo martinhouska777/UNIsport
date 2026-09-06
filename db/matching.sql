@@ -259,6 +259,7 @@ select
   nullif(p.data->>'hometownCountry', '')                        as country,
   public.match_region(nullif(p.data->>'hometownCountry', ''))   as region,
   nullif(p.data->>'residence', '')                             as residence,
+  nullif(p.data->>'classYear', '')                             as class_year,
   coalesce(p.data->'topGyms', '[]'::jsonb)                      as top_gyms,
   coalesce(p.data->'interests', '[]'::jsonb)                    as interests,
   coalesce(p.data->'languages', '[]'::jsonb)                    as languages,
@@ -292,6 +293,9 @@ returns table (
   name               text,
   level              text,
   residence          text,
+  -- who they are, for the line under their name on a card
+  class_year         text,
+  main_activity      text,
   -- score components
   interests_pts      numeric,
   concentration_pts  numeric,
@@ -335,6 +339,8 @@ as $$
     c.name,
     c.level,
     c.residence,
+    c.class_year,
+    nullif(c.primary_activity, ''),
 
     round(comp.interests, 1),
     round(comp.concentration, 1),
@@ -588,6 +594,8 @@ returns table (
   name               text,
   level              text,
   residence          text,
+  class_year         text,
+  main_activity      text,
   score              numeric,
   interests_pts      numeric,
   concentration_pts  numeric,
@@ -615,7 +623,7 @@ security definer
 set search_path = public
 as $$
   select
-    m.candidate_id, m.name, m.level, m.residence,
+    m.candidate_id, m.name, m.level, m.residence, m.class_year, m.main_activity,
     round(m.interests_pts + m.concentration_pts + m.origin_pts + m.languages_pts
         + m.gym_pts + m.level_pts + m.schedule_pts + m.training_pts
         + m.activity_pts, 1) as total,
@@ -675,6 +683,8 @@ returns table (
   name               text,
   level              text,
   residence          text,
+  class_year         text,
+  main_activity      text,
   score              numeric,
   interests_pts      numeric,
   concentration_pts  numeric,
@@ -701,7 +711,7 @@ security definer
 set search_path = public
 as $$
   select
-    m.candidate_id, m.name, m.level, m.residence,
+    m.candidate_id, m.name, m.level, m.residence, m.class_year, m.main_activity,
     round(m.interests_pts + m.concentration_pts + m.origin_pts + m.languages_pts
         + m.gym_pts + m.level_pts + m.training_pts + m.activity_pts, 1) as total,
     m.interests_pts, m.concentration_pts, m.origin_pts, m.languages_pts,
@@ -744,6 +754,8 @@ returns table (
   name               text,
   level              text,
   residence          text,
+  class_year         text,
+  main_activity      text,
   score              numeric,
   interests_pts      numeric,
   concentration_pts  numeric,
@@ -771,7 +783,7 @@ security definer
 set search_path = public
 as $$
   select
-    m.candidate_id, m.name, m.level, m.residence,
+    m.candidate_id, m.name, m.level, m.residence, m.class_year, m.main_activity,
     round(m.interests_pts + m.concentration_pts + m.origin_pts + m.languages_pts
         + m.gym_pts + m.level_pts + m.schedule_pts + m.training_pts
         + m.activity_pts, 1),

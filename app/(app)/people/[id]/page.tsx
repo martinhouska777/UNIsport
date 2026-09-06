@@ -250,8 +250,11 @@ function PersonProfile() {
             )}
           </div>
 
-          {/* Why you match — the same reasons their card showed, in full. Sits
-              directly under the identity block because it's what the tap was
+          {/* Why you match — EVERY reason, not the handful the card had room
+              for. The card drops whatever the whole list also shares, because a
+              fact twenty cards repeat tells you nothing; here there is no list to
+              stand out from and no shortage of room, so it all shows. Sits
+              directly under the identity block because it is what the tap was
               asking about. */}
           {reasons.length > 0 && (
             <div className="border-b border-border px-4 py-3">

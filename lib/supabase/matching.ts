@@ -67,6 +67,8 @@ export type Match = {
   name: string;
   level: string | null; // 'beginner' | 'intermediate' | 'advanced' | null
   residence: string | null; // their house / dorm, for the card subtitle
+  classYear: string | null; // "'27" — the card shows it as Fr / So / Jr / Sr
+  mainActivity: string | null; // 'gym' | 'running' | 'cardio' | 'other'
   score: number; // browse + pair: out of 100, session search: out of 92
   breakdown: MatchBreakdown;
   facts: MatchFacts;
@@ -94,6 +96,8 @@ type RpcRow = {
   name: string;
   level: string | null;
   residence: string | null;
+  class_year: string | null;
+  main_activity: string | null;
   score: number | string;
   interests_pts: number | string;
   concentration_pts: number | string;
@@ -146,6 +150,8 @@ function toMatch(r: RpcRow): Match {
     name: r.name,
     level: r.level,
     residence: r.residence,
+    classYear: r.class_year,
+    mainActivity: r.main_activity,
     score: num(r.score),
     breakdown,
     facts: {

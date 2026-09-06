@@ -18,6 +18,22 @@ export const classYears: string[] = ["'27", "'28", "'29", "'30"];
 // the 12 houses. When the freshman class rolls over each year, change ONLY this.
 export const freshmanClassYear: string = "'30";
 
+/*
+  "'27" is a fact you have to do arithmetic on: you subtract it from the year
+  to learn that this person is a senior. Fr / So / Jr / Sr is what students
+  actually say out loud, so it is what the app says.
+
+  Derived from freshmanClassYear rather than written down, so when the first-year
+  class rolls over each August every label in the app moves with it — one line of
+  DATA changes and nothing else does.
+*/
+export function classYearLabel(classYear: string): string {
+  const i = classYears.indexOf(classYear);
+  const first = classYears.indexOf(freshmanClassYear);
+  if (i < 0 || first < 0) return classYear;
+  return ["Fr", "So", "Jr", "Sr"][first - i] ?? classYear;
+}
+
 // Sex options (editable).
 export const sexOptions: string[] = ["Male", "Female"];
 
