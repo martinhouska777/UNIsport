@@ -208,12 +208,50 @@ select
   lower(coalesce(nullif(p.data->>'partnerPreference', ''), 'any')) as partner_pref,
   lower(coalesce(p.data->>'trainingType', ''))                   as training_type,
   lower(coalesce(p.data->>'primaryActivity', ''))               as primary_activity,
+  /*
+    EVERYTHING they do — their main activity plus whatever they added on the
+    "anything else you do?" screen — as one array of keys.
+
+    This is what lets matching ask "do they do running at all" instead of "is
+    running their main thing". The old question made somebody who lifts first
+    and runs twice a week invisible to every single running search, forever.
+  */
+  (
+    select coalesce(jsonb_agg(a.val), '[]'::jsonb)
+    from (
+      select lower(nullif(p.data->>'primaryActivity', '')) as val
+      union
+      select lower(nullif(o->>'key', ''))
+      from jsonb_array_elements(coalesce(p.data->'otherActivities', '[]'::jsonb)) o
+    ) a
+    where a.val is not null
+  )                                                              as activities,
+  -- The extras in full, because they carry the "3x a week" the UI quotes back.
+  coalesce(p.data->'otherActivities', '[]'::jsonb)              as other_activities,
   p.data->>'experienceLevel'                                     as level,
-  case lower(coalesce(p.data->>'experienceLevel', ''))
-    when 'beginner' then 1
-    when 'intermediate' then 2
-    when 'advanced' then 3
-    else null
+  /*
+    How practised they are, 1-3. Experience level is a GYM question — a runner
+    is asked how long they have been running instead, and until now that answer
+    never reached the score, so every runner in the app silently forfeited the
+    12 points this component is worth. Read whichever question they were
+    actually asked.
+  */
+  case
+    when lower(coalesce(p.data->>'primaryActivity', '')) = 'running'
+      then case p.data->>'runningExperience'
+             when 'Just started' then 1
+             when 'Under a year' then 1
+             when '1-3 years'    then 2
+             when '1–3 years' then 2
+             when '3+ years'     then 3
+             else null
+           end
+    else case lower(coalesce(p.data->>'experienceLevel', ''))
+           when 'beginner' then 1
+           when 'intermediate' then 2
+           when 'advanced' then 3
+           else null
+         end
   end                                                            as level_rank,
   coalesce((p.data->>'helpOthers')::boolean, false)              as give_mentor,
   coalesce((p.data->>'getHelp')::boolean, false)                 as receive_mentor,
@@ -239,8 +277,14 @@ where p.onboarding_completed = true;
 --    (browse counts schedule, session search doesn't), so the wrappers decide.
 --
 --    WEIGHTS (change them HERE and every surface follows):
---      AFFINITY  (54): interests 22 | concentration 12 | origin 12 | languages 8
---      LOGISTICS (46): gym 20 | level 12 | schedule 8 | training type 6
+--      AFFINITY  (50): interests 18 | concentration 12 | origin 12 | languages 8
+--      LOGISTICS (50): activity 12 | gym 12 | level 12 | schedule 8 | training 6
+--
+--    WHY THE WEIGHTS MOVED: until now the gym BUILDING you go to was worth 20
+--    points and what you actually DO there was worth nothing at all, which is
+--    backwards. The three logistics questions — what you do, where, and at what
+--    level — are each worth the same 12 now, and the 6 points that funded it
+--    came off shared interests, which was the single heaviest thing in the app.
 -- ============================================================================
 create or replace function public.match_candidates(searcher_id uuid)
 returns table (
@@ -257,6 +301,7 @@ returns table (
   level_pts          numeric,
   schedule_pts       numeric,
   training_pts       numeric,
+  activity_pts       numeric,
   -- the facts behind those components (what the UI shows as reasons)
   shared_interests   text[],
   shared_languages   text[],
@@ -265,10 +310,13 @@ returns table (
   shared_region      text,
   shared_gym         text,
   level_note         text,
+  shared_activity    text,
+  activity_note      text,
+  their_activity_freq text,
   -- internal: the candidate's own values, so the wrappers can filter on them.
   -- No wrapper returns these to the client.
   c_concentration    text,
-  c_activity         text,
+  c_activities       jsonb,
   c_gender           text,
   c_interests        jsonb,
   c_top_gyms         jsonb,
@@ -296,6 +344,7 @@ as $$
     round(comp.level, 1),
     round(comp.schedule, 1),
     round(comp.training, 1),
+    round(comp.activity, 1),
 
     comp.shared_interests,
     comp.shared_languages,
@@ -311,9 +360,12 @@ as $$
          then c.region end,
     comp.shared_gym,
     comp.level_note,
+    comp.shared_activity,
+    comp.activity_note,
+    freq.their_freq,
 
     c.concentration,
-    c.primary_activity,
+    c.activities,
     c.gender,
     c.interests,
     c.top_gyms,
@@ -321,8 +373,8 @@ as $$
   from me, public.match_profiles c
   cross join lateral (
     select
-      -- Shared interests: 22 pts, full at 4+ overlapping.
-      22 * least((
+      -- Shared interests: 18 pts, full at 4+ overlapping.
+      18 * least((
         select count(*)
         from jsonb_array_elements_text(me.interests) as x(val)
         join jsonb_array_elements_text(c.interests)  as y(val) on x.val = y.val
@@ -357,11 +409,11 @@ as $$
         join jsonb_array_elements_text(c.languages)  as y(val) on x.val = y.val
       ) as shared_languages,
 
-      -- Gym overlap, rank-aware: 20 pts. For each gym both list in their top 3,
+      -- Gym overlap, rank-aware: 12 pts. For each gym both list in their top 3,
       -- rank 1 is worth 3, rank 2 -> 2, rank 3 -> 1; add the two users' rank
       -- weights (max 6 = both rank 1) and take the best shared gym. None = 0.
       coalesce((
-        select 20 * max((4 - s.ord) + (4 - cc.ord)) / 6.0
+        select 12 * max((4 - s.ord) + (4 - cc.ord)) / 6.0
         from jsonb_array_elements_text(me.top_gyms) with ordinality s(gym, ord)
         join jsonb_array_elements_text(c.top_gyms)  with ordinality cc(gym, ord)
           on s.gym = cc.gym
@@ -432,6 +484,57 @@ as $$
         ) matched
       ), 3) / 3.0 as schedule,
 
+      /*
+        WHAT YOU ACTUALLY DO TOGETHER: 12 pts.
+
+        Rank-aware, in the same spirit as the gym. Sharing your MAIN activity is
+        the real thing and scores full. Being someone's side activity is worth
+        most of it — a gym-first person really can run with a runner, they just
+        do it less often. Two people who each do it on the side score least. And
+        sharing nothing scores 0 WITHOUT being excluded: a lifter and a runner
+        from the same town, in the same concentration, are still worth knowing.
+        They just shouldn't be at the top of each other's list.
+      */
+      case
+        when me.primary_activity <> '' and me.primary_activity = c.primary_activity then 12
+        when me.primary_activity <> '' and c.activities ? me.primary_activity then 8
+        when c.primary_activity  <> '' and me.activities ? c.primary_activity then 8
+        when exists (
+          select 1 from jsonb_array_elements_text(me.activities) x(val)
+          where c.activities ? x.val
+        ) then 5
+        else 0
+      end as activity,
+
+      -- WHICH activity that was. Their main one wins ties, because that is the
+      -- one they can actually be relied on to turn up for.
+      case
+        when me.primary_activity <> '' and me.primary_activity = c.primary_activity
+          then me.primary_activity
+        when c.primary_activity <> '' and me.activities ? c.primary_activity
+          then c.primary_activity
+        when me.primary_activity <> '' and c.activities ? me.primary_activity
+          then me.primary_activity
+        else (
+          select x.val from jsonb_array_elements_text(me.activities) x(val)
+          where c.activities ? x.val limit 1
+        )
+      end as shared_activity,
+
+      -- ...and in what SHAPE, so the UI words it honestly instead of guessing
+      -- from the points. "You both run" and "she runs too" are not the same
+      -- sentence and shouldn't be written by the same line of code.
+      case
+        when me.primary_activity <> '' and me.primary_activity = c.primary_activity then 'both_main'
+        when c.primary_activity  <> '' and me.activities ? c.primary_activity then 'their_main'
+        when me.primary_activity <> '' and c.activities ? me.primary_activity then 'they_also'
+        when exists (
+          select 1 from jsonb_array_elements_text(me.activities) x(val)
+          where c.activities ? x.val
+        ) then 'both_side'
+        else null
+      end as activity_note,
+
       -- Training-type alignment: 6 pts. Both flexible (partner/either) = 6.
       case
         when me.training_type in ('partner', 'either')
@@ -440,6 +543,21 @@ as $$
         else 0
       end as training
   ) comp
+  /*
+    How often THEY do the activity the two of you share — "3x a week", straight
+    off their "anything else you do?" answer. Only their extras carry a
+    frequency; a main activity has none, because that screen asks about it in
+    full and never asks for a number.
+  */
+  cross join lateral (
+    select (
+      select o->>'perWeek'
+      from jsonb_array_elements(c.other_activities) o
+      where lower(o->>'key') = comp.shared_activity
+        and coalesce(o->>'perWeek', '') <> ''
+      limit 1
+    ) as their_freq
+  ) freq
   where c.id <> me.id
     and c.university_id = me.university_id
     and c.training_type is distinct from 'solo'
@@ -477,6 +595,7 @@ returns table (
   languages_pts      numeric,
   gym_pts            numeric,
   level_pts          numeric,
+  activity_pts       numeric,
   schedule_pts       numeric,
   training_pts       numeric,
   shared_interests   text[],
@@ -485,7 +604,10 @@ returns table (
   shared_country     text,
   shared_region      text,
   shared_gym         text,
-  level_note         text
+  level_note         text,
+  shared_activity    text,
+  activity_note      text,
+  their_activity_freq text
 )
 language sql
 stable
@@ -495,11 +617,13 @@ as $$
   select
     m.candidate_id, m.name, m.level, m.residence,
     round(m.interests_pts + m.concentration_pts + m.origin_pts + m.languages_pts
-        + m.gym_pts + m.level_pts + m.schedule_pts + m.training_pts, 1) as total,
+        + m.gym_pts + m.level_pts + m.schedule_pts + m.training_pts
+        + m.activity_pts, 1) as total,
     m.interests_pts, m.concentration_pts, m.origin_pts, m.languages_pts,
-    m.gym_pts, m.level_pts, m.schedule_pts, m.training_pts,
+    m.gym_pts, m.level_pts, m.activity_pts, m.schedule_pts, m.training_pts,
     m.shared_interests, m.shared_languages, m.same_concentration,
-    m.shared_country, m.shared_region, m.shared_gym, m.level_note
+    m.shared_country, m.shared_region, m.shared_gym, m.level_note,
+    m.shared_activity, m.activity_note, m.their_activity_freq
   from public.match_candidates(searcher_id) m
   where (concentration_filter is null or m.c_concentration = concentration_filter)
     and (interests_filter is null or exists (
@@ -516,8 +640,9 @@ $$;
 --    THIS day, around THIS hour."
 --
 --    REQUIRED inputs (the search makes no sense without them):
---      activity_filter — 'gym'|'running'|'cardio'|'other'; only people whose
---                        primary activity matches are returned.
+--      activity_filter — 'gym'|'running'|'cardio'|'other'; everyone who does
+--                        this at all, whether it is their main thing or one of
+--                        the extras they added in onboarding.
 --      target_day      — a day key: 'mon'..'sun'.
 --      target_hour     — the hour you want to train, 24h clock, 30-min steps OK
 --                        (e.g. 15 = 3 PM, 15.5 = 3:30 PM). A candidate qualifies
@@ -529,7 +654,10 @@ $$;
 --      gym / level / gender / concentration / interests — as in match_browse.
 --
 --    Survivors are ranked by the SAME score MINUS the schedule component (the
---    slot is already fixed), so the max here is 92.
+--    slot is already fixed), so the max here is 92. Activity IS still scored
+--    even though it was filtered on: somebody whose MAIN thing is running is a
+--    better running partner than somebody who runs on the side, and the ranking
+--    should say so.
 -- ============================================================================
 create or replace function public.match_session_search(
   searcher_id          uuid,
@@ -554,6 +682,7 @@ returns table (
   languages_pts      numeric,
   gym_pts            numeric,
   level_pts          numeric,
+  activity_pts       numeric,
   training_pts       numeric,
   shared_interests   text[],
   shared_languages   text[],
@@ -561,7 +690,10 @@ returns table (
   shared_country     text,
   shared_region      text,
   shared_gym         text,
-  level_note         text
+  level_note         text,
+  shared_activity    text,
+  activity_note      text,
+  their_activity_freq text
 )
 language sql
 stable
@@ -571,13 +703,17 @@ as $$
   select
     m.candidate_id, m.name, m.level, m.residence,
     round(m.interests_pts + m.concentration_pts + m.origin_pts + m.languages_pts
-        + m.gym_pts + m.level_pts + m.training_pts, 1) as total,
+        + m.gym_pts + m.level_pts + m.training_pts + m.activity_pts, 1) as total,
     m.interests_pts, m.concentration_pts, m.origin_pts, m.languages_pts,
-    m.gym_pts, m.level_pts, m.training_pts,
+    m.gym_pts, m.level_pts, m.activity_pts, m.training_pts,
     m.shared_interests, m.shared_languages, m.same_concentration,
-    m.shared_country, m.shared_region, m.shared_gym, m.level_note
+    m.shared_country, m.shared_region, m.shared_gym, m.level_note,
+    m.shared_activity, m.activity_note, m.their_activity_freq
   from public.match_candidates(searcher_id) m
-  where m.c_activity = lower(activity_filter)
+  -- "Do they do this AT ALL", not "is it their main thing". That one word is
+  -- the whole fix: a gym-first person who also runs twice a week is now
+  -- findable by somebody looking for a running partner.
+  where m.c_activities ? lower(activity_filter)
     and exists (
       select 1
       from jsonb_array_elements_text(
@@ -615,6 +751,7 @@ returns table (
   languages_pts      numeric,
   gym_pts            numeric,
   level_pts          numeric,
+  activity_pts       numeric,
   schedule_pts       numeric,
   training_pts       numeric,
   shared_interests   text[],
@@ -623,7 +760,10 @@ returns table (
   shared_country     text,
   shared_region      text,
   shared_gym         text,
-  level_note         text
+  level_note         text,
+  shared_activity    text,
+  activity_note      text,
+  their_activity_freq text
 )
 language sql
 stable
@@ -633,11 +773,13 @@ as $$
   select
     m.candidate_id, m.name, m.level, m.residence,
     round(m.interests_pts + m.concentration_pts + m.origin_pts + m.languages_pts
-        + m.gym_pts + m.level_pts + m.schedule_pts + m.training_pts, 1),
+        + m.gym_pts + m.level_pts + m.schedule_pts + m.training_pts
+        + m.activity_pts, 1),
     m.interests_pts, m.concentration_pts, m.origin_pts, m.languages_pts,
-    m.gym_pts, m.level_pts, m.schedule_pts, m.training_pts,
+    m.gym_pts, m.level_pts, m.activity_pts, m.schedule_pts, m.training_pts,
     m.shared_interests, m.shared_languages, m.same_concentration,
-    m.shared_country, m.shared_region, m.shared_gym, m.level_note
+    m.shared_country, m.shared_region, m.shared_gym, m.level_note,
+    m.shared_activity, m.activity_note, m.their_activity_freq
   from public.match_candidates(searcher_id) m
   where m.candidate_id = other_id;
 $$;

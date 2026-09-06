@@ -33,6 +33,17 @@ function listWords(items: string[]): string {
   return `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
 }
 
+/*
+  The words for each activity. Kept as data, in one place, because "gym" is a
+  noun and "run" is a verb and no clever template survives both.
+*/
+const activityWording: Record<string, { both: string; they: string; short: string }> = {
+  gym: { both: "You both lift", they: "They lift too", short: "Both lift" },
+  running: { both: "You both run", they: "They run too", short: "Both run" },
+  cardio: { both: "You both do cardio", they: "They do cardio too", short: "Both do cardio" },
+  other: { both: "You do the same sport", they: "They do it too", short: "Same sport" },
+};
+
 const levelWording: Record<
   NonNullable<Match["facts"]["levelNote"]>,
   { short: string; full: string }
@@ -63,6 +74,35 @@ export function matchReasons(m: Match): MatchReason[] {
       full: `You both train at ${f.gym}`,
       pts: b.gym,
       weight: 3,
+    });
+  }
+
+  /*
+    WHAT YOU ACTUALLY DO TOGETHER. Worded from the shape the database reports,
+    never from the points: it is one thing to both live in the gym and quite
+    another to be somebody's side activity, and a student can tell the
+    difference at a glance. The frequency is quoted only when it exists — a
+    main activity is never asked how often, so there is nothing to quote.
+  */
+  if (f.activity && f.activityNote) {
+    const w = activityWording[f.activity] ?? activityWording.other;
+    const often = f.activityFreq ? ` — ${f.activityFreq} a week` : "";
+    const full =
+      f.activityNote === "both_main"
+        ? w.both
+        : f.activityNote === "their_main"
+          ? `${w.both} — it's their main thing`
+          : f.activityNote === "they_also"
+            ? `${w.they}${often}`
+            : `${w.both} on the side${often}`;
+    candidates.push({
+      key: "activity",
+      short: f.activityNote === "they_also" ? w.they : w.short,
+      full,
+      pts: b.activity,
+      // Above every other tie at the same points: what you do together is the
+      // most concrete thing on the card.
+      weight: 4,
     });
   }
 

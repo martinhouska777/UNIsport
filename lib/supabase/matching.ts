@@ -15,8 +15,8 @@
 import { createClient } from "@/lib/supabase/client";
 
 // --- Score breakdown -------------------------------------------------------
-// Affinity (54): interests 22 | concentration 12 | origin 12 | languages 8
-// Logistics (46): gym 20 | level 12 | schedule 8 | training 6
+// Affinity (50): interests 18 | concentration 12 | origin 12 | languages 8
+// Logistics (50): activity 12 | gym 12 | level 12 | schedule 8 | training 6
 // (session search drops `schedule`, so it's optional below.)
 export type MatchBreakdown = {
   interests: number;
@@ -25,6 +25,7 @@ export type MatchBreakdown = {
   languages: number;
   gym: number;
   level: number;
+  activity: number;
   schedule?: number; // present for browse + pair, omitted for session search
   training: number;
 };
@@ -44,6 +45,21 @@ export type MatchFacts = {
   // How the experience levels relate: same, one step apart, or a deliberate
   // mentor pairing. Null when either person never gave a level.
   levelNote: "same" | "close" | "mentor" | null;
+  /*
+    The activity the two of you share — 'gym' | 'running' | 'cardio' | 'other'
+    — and in what shape, because "you both run" and "she runs too" are not the
+    same sentence:
+      both_main  — it's the main thing for both of you
+      their_main — it's their main thing, one of your extras
+      they_also  — it's YOUR main thing, one of their extras
+      both_side  — you both do it on the side
+    Null when you have no activity in common at all.
+  */
+  activity: string | null;
+  activityNote: "both_main" | "their_main" | "they_also" | "both_side" | null;
+  // How often THEY do it, as they answered it ("3x"). Only their extras carry
+  // a frequency — a main activity is never asked for one.
+  activityFreq: string | null;
 };
 
 export type Match = {
@@ -94,6 +110,10 @@ type RpcRow = {
   shared_region: string | null;
   shared_gym: string | null;
   level_note: string | null;
+  activity_pts: number | string;
+  shared_activity: string | null;
+  activity_note: string | null;
+  their_activity_freq: string | null;
 };
 
 const num = (v: number | string | undefined) => (v == null ? 0 : Number(v));
@@ -103,6 +123,12 @@ const num = (v: number | string | undefined) => (v == null ? 0 : Number(v));
 const levelNote = (v: string | null): MatchFacts["levelNote"] =>
   v === "same" || v === "close" || v === "mentor" ? v : null;
 
+// Same guard for the activity shape: an unknown wording never reaches the UI.
+const activityNote = (v: string | null): MatchFacts["activityNote"] =>
+  v === "both_main" || v === "their_main" || v === "they_also" || v === "both_side"
+    ? v
+    : null;
+
 function toMatch(r: RpcRow): Match {
   const breakdown: MatchBreakdown = {
     interests: num(r.interests_pts),
@@ -111,6 +137,7 @@ function toMatch(r: RpcRow): Match {
     languages: num(r.languages_pts),
     gym: num(r.gym_pts),
     level: num(r.level_pts),
+    activity: num(r.activity_pts),
     training: num(r.training_pts),
   };
   if (r.schedule_pts != null) breakdown.schedule = num(r.schedule_pts);
@@ -129,6 +156,9 @@ function toMatch(r: RpcRow): Match {
       region: r.shared_region,
       gym: r.shared_gym,
       levelNote: levelNote(r.level_note),
+      activity: r.shared_activity,
+      activityNote: activityNote(r.activity_note),
+      activityFreq: r.their_activity_freq,
     },
   };
 }
