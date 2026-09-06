@@ -64,6 +64,9 @@ import {
   type Bucket,
 } from "@/lib/varsity/athleteStats";
 import { trainingMix } from "@/lib/varsity/trainingMix";
+import Plot from "@/components/varsity/profile/Plot";
+import Dropdown from "@/components/varsity/profile/Dropdown";
+import StatsFullScreen from "@/components/varsity/profile/StatsFullScreen";
 import TrainingMixSheet from "@/components/varsity/profile/TrainingMixSheet";
 import { fetchPlan } from "@/lib/varsity/planStore";
 import {
@@ -72,7 +75,6 @@ import {
   IconAnchor,
   IconActivity,
   IconChevronRight,
-  IconChevronDown,
   IconCalendar,
   IconGlobe,
   IconCopy,
@@ -127,24 +129,6 @@ const addDays = (d: Date, n: number) =>
 
 const inputCls =
   "w-full rounded-xl border border-border bg-surface-2 px-3.5 py-3 text-base text-text outline-none focus:border-primary placeholder:text-muted";
-
-/*
-  Round a graph's top gridline UP to a number someone would actually say — 1, 2
-  or 5 times a power of ten. An axis that reads "15.7 km" at the top is a number
-  nobody chose; "20 km" is a scale.
-*/
-function niceCeil(v: number): number {
-  if (v <= 0) return 1;
-  const pow = 10 ** Math.floor(Math.log10(v));
-  const scaled = v / pow;
-  const step = scaled <= 1 ? 1 : scaled <= 2 ? 2 : scaled <= 5 ? 5 : 10;
-  return step * pow;
-}
-
-/* Zero is just "0" — "0.0 km" is three characters of nothing. */
-const axisLabel = (v: number, metric: StatMetric, units: Units) =>
-  v <= 0 ? "0" : metric.format(v, units);
-
 /*
   How far back the LOGS are fetched — always the longest range the chips offer,
   once, so changing the range is instant and never returns to the database.
@@ -378,7 +362,7 @@ function PrSheet({
   );
 }
 
-/* ─────────────────────────  the graph  ─────────────────────────
+/* ─────────────────────────  the graph card  ─────────────────────────
    Whatever the athlete picked in its header — metres, hours or consistency —
    over whichever window the button on the right is set to, drawn as columns or
    as a line. One point per bucket: a day each for the short ranges, a week each
@@ -388,260 +372,15 @@ function PrSheet({
    day", and a quantity is a height you compare with the one beside it. A line
    is the same numbers read as a trend, which is what three months is for.
 
-   Every control lives on the card it changes: the measure and the window are
-   dropdowns in the header, the shape is a switch in the footer, and the plot
-   itself opens full size — a phone card is only so tall.
+   THREE CHOICES, ONE SHAPE. The measure, the window and the shape it is drawn
+   in are all the same dropdown (components/varsity/profile/Dropdown) — the
+   first two in the header, the shape in the footer beside the way out to the
+   full-screen graph. The drawing itself lives in ./Plot and is used at both
+   sizes, so the small one and the big one can never disagree.
 
-   The plot is drawn once, here, and used at two sizes. */
-function Plot({
-  points,
-  metric,
-  units,
-  chart,
-  height,
-  everyLabel,
-  showValues,
-}: {
-  points: { label: string; value: number; latest: boolean }[];
-  metric: StatMetric;
-  units: Units;
-  chart: ChartType;
-  height: number;
-  /** Name every column, or only every other one when they would collide. */
-  everyLabel: boolean;
-  /** Print each column's own number above it. */
-  showValues: boolean;
-}) {
-  /*
-    THE TOP OF THE AXIS. A percentage is always drawn against a full 100, or a
-    consistent 40% week would fill the card and read like a good one. Everything
-    else scales to its own best bucket, rounded UP to something a person would
-    say out loud, so the top gridline is a number and not 15.7.
-  */
-  const peak = Math.max(1, ...points.map((p) => p.value));
-  const max = metric.axisMax ?? niceCeil(peak);
-
-  // SVG geometry (a viewBox that stretches to whatever width it is given).
-  const W = 320;
-  const H = height;
-  const padX = 8;
-  const padT = showValues ? 20 : 12;
-  const padB = 20; // the row of dates under the floor
-  // Type scales with the card, so the big one is genuinely bigger and not just
-  // taller.
-  const fs = H >= 200 ? 9 : 7.5;
-  // Room down the left for the axis labels — they sit outside the plot so the
-  // chart never starts underneath its own numbers, and "20.0 km" at the bigger
-  // type needs more of it than the same words on the card.
-  const padL = fs >= 9 ? 44 : 34;
-  const plotW = W - padL - padX;
-  const plotH = H - padT - padB;
-  const baseline = padT + plotH;
-  const n = points.length;
-  // A bucket owns a slot and sits in the middle of it — the same x whether it
-  // is drawn as a column or as a point on a line, so switching shape never
-  // moves a day sideways.
-  const slot = plotW / n;
-  const barW = Math.min(26, slot * 0.66);
-  const cx = (i: number) => padL + slot * (i + 0.5);
-  const yOf = (v: number) => baseline - plotH * (Math.min(v, max) / max);
-
-  const line = points.map((p, i) => `${cx(i)},${yOf(p.value)}`).join(" ");
-  const area = `M ${cx(0)},${baseline} L ${line.replaceAll(" ", " L ")} L ${cx(n - 1)},${baseline} Z`;
-
-  return (
-    <svg viewBox={`0 0 ${W} ${H}`} width="100%" className="block text-primary" aria-hidden="true">
-      {/*
-        THE Y AXIS — three gridlines (top, middle, zero) and what each is worth,
-        so a height is a number instead of a feeling. Only three: a ladder of
-        them would out-shout the chart they exist to explain.
-      */}
-      {[1, 0.5, 0].map((frac) => {
-        const gy = baseline - plotH * frac;
-        return (
-          <g key={frac}>
-            <line
-              x1={padL}
-              y1={gy}
-              x2={W - padX}
-              y2={gy}
-              stroke="var(--border)"
-              strokeWidth={1}
-              /* The zero line is the floor, the two above it are guides. */
-              strokeDasharray={frac === 0 ? undefined : "2 3"}
-            />
-            <text x={padL - 4} y={gy + fs / 3} textAnchor="end" fill="var(--muted)" fontSize={fs}>
-              {axisLabel(max * frac, metric, units)}
-            </text>
-          </g>
-        );
-      })}
-
-      {/* THE LINE — one soft fill under one stroke, drawn before the labels so
-          nothing it crosses is lost underneath it. */}
-      {chart === "line" && (
-        <>
-          <path d={area} fill="var(--primary)" fillOpacity={0.12} />
-          <polyline
-            points={line}
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={2}
-            strokeLinejoin="round"
-            strokeLinecap="round"
-          />
-        </>
-      )}
-
-      {points.map((p, i) => {
-        const show = everyLabel || p.latest || i % 2 === n % 2;
-        return (
-          <g key={i}>
-            {/* THE COLUMNS. An empty bucket draws nothing — the floor already
-                says nothing happened, and a stub would read as a little bit of
-                something. */}
-            {chart === "bars" && p.value > 0 && (
-              <rect
-                x={cx(i) - barW / 2}
-                y={yOf(p.value)}
-                width={barW}
-                height={Math.max(baseline - yOf(p.value), 1)}
-                rx={Math.min(3, barW / 2)}
-                fill="var(--primary)"
-                /* The newest bucket is the one you came to look at. */
-                fillOpacity={p.latest ? 1 : 0.45}
-              />
-            )}
-            {chart === "line" && (
-              <circle
-                cx={cx(i)}
-                cy={yOf(p.value)}
-                r={p.latest ? 3.5 : 2.5}
-                fill={p.latest ? "var(--primary)" : "var(--surface)"}
-                stroke="currentColor"
-                strokeWidth={1.5}
-              />
-            )}
-            {showValues && p.value > 0 && (
-              <text
-                x={cx(i)}
-                y={yOf(p.value) - 5}
-                textAnchor="middle"
-                fill="var(--text)"
-                fontSize={fs}
-                fontWeight={600}
-              >
-                {metric.format(p.value, units)}
-              </text>
-            )}
-            {show && (
-              <text
-                x={cx(i)}
-                y={baseline + fs + 5}
-                textAnchor="middle"
-                fill="var(--muted)"
-                fontSize={fs}
-                fontWeight={p.latest ? 600 : 400}
-              >
-                {p.label}
-              </text>
-            )}
-          </g>
-        );
-      })}
-    </svg>
-  );
-}
-
-/*
-  ONE SHAPE FOR "PICK ONE OF THESE" — a button that says what is chosen, and a
-  list that hangs off it. Two of them sit in the graph's header (the measure and
-  the window), and only one may be open at a time, so the caller owns that.
-
-  A panel rather than a row of chips: chips pushed the graph down the screen
-  every time somebody looked at their options.
-*/
-function Dropdown({
-  label,
-  title,
-  options,
-  value,
-  open,
-  onOpen,
-  onPick,
-  align = "left",
-}: {
-  label: string;
-  /** The measure reads as the card's title; the window as a quiet pill. */
-  title?: boolean;
-  options: { key: string; label: string }[];
-  value: string;
-  open: boolean;
-  onOpen: (v: boolean) => void;
-  onPick: (key: string) => void;
-  align?: "left" | "right";
-}) {
-  return (
-    /* The title takes what is left after the window pill, which never shrinks —
-       "Metres rowed" must not become "Metres row…". */
-    <div className={title ? "relative min-w-0 flex-1" : "relative flex-shrink-0"}>
-      <button
-        type="button"
-        onClick={() => onOpen(!open)}
-        aria-expanded={open}
-        className={
-          title
-            ? "tap44 -ml-1 flex w-full items-center gap-1 rounded-lg px-1 py-0.5 text-left active:bg-surface-2"
-            : `tap44 flex flex-shrink-0 items-center gap-1 rounded-full border px-3 py-1.5 text-[12px] transition-colors ${
-                open
-                  ? "border-primary bg-primary-tint text-primary"
-                  : "border-border bg-surface-2 text-muted"
-              }`
-        }
-      >
-        <span className={title ? "truncate text-[15px] font-semibold text-text" : ""}>{label}</span>
-        <span className="flex-shrink-0">
-          <IconChevronDown size={title ? 15 : 12} />
-        </span>
-      </button>
-
-      {open && (
-        <>
-          {/* Anywhere else puts it away. */}
-          <button
-            type="button"
-            aria-label="Close this menu"
-            onClick={() => onOpen(false)}
-            className="fixed inset-0 z-10 cursor-default"
-          />
-          <div
-            className={`absolute ${align === "right" ? "right-0" : "left-0"} top-[calc(100%+7px)] z-20 w-44 overflow-hidden rounded-xl border border-border bg-surface-2 shadow-lg`}
-          >
-            {options.map((o) => (
-              <button
-                key={o.key}
-                type="button"
-                onClick={() => {
-                  onPick(o.key);
-                  onOpen(false);
-                }}
-                aria-pressed={o.key === value}
-                className={`flex w-full items-center gap-2 px-3 py-2.5 text-left text-[12px] active:bg-surface ${
-                  o.key === value ? "font-semibold text-text" : "text-muted"
-                }`}
-              >
-                <span className="flex w-3.5 flex-shrink-0 justify-center">
-                  {o.key === value && <IconCheck size={12} />}
-                </span>
-                {o.label}
-              </button>
-            ))}
-          </div>
-        </>
-      )}
-    </div>
-  );
-}
+   The card is a GLANCE. Everything a person would actually study — every
+   column named, the best one's number printed on it, the plan kept or missed,
+   the splits, the mix — is on the full screen behind the expand button. */
 
 /*
   A WINDOW THE ATHLETE PICKS THEMSELVES. Two dates and nothing else: the four
@@ -716,11 +455,13 @@ function CustomRangeSheet({
 }
 
 function WeeklyGraph({
+  buckets,
   points,
   metric,
   range,
   chart,
   units,
+  plan,
   today,
   windowStart,
   onMetric,
@@ -728,26 +469,27 @@ function WeeklyGraph({
   onCustom,
   onChart,
 }: {
+  /** The same buckets the points came from — the full screen reads them. */
+  buckets: Bucket[];
   points: { label: string; value: number; latest: boolean }[];
   metric: StatMetric;
   range: StatRange;
   chart: ChartType;
   units: Units;
+  /** The coach's plan, so the full screen can count planned / missed / extra. */
+  plan: SessionMap;
   today: string;
   /** The first day currently on the chart — what the date picker opens on. */
   windowStart: string;
   onMetric: (key: string) => void;
   onRange: (key: string) => void;
   onCustom: (start: string, end: string) => void;
-  onChart: (key: ChartType) => void;
+  onChart: (key: string) => void;
 }) {
-  const [openMenu, setOpenMenu] = useState<"metric" | "range" | null>(null);
+  const [openMenu, setOpenMenu] = useState<"metric" | "range" | "chart" | null>(null);
   const [picking, setPicking] = useState(false); // the custom-dates sheet
-  const [zoomed, setZoomed] = useState(false);
+  const [full, setFull] = useState(false); // the full-screen graph
   const anyData = points.some((p) => p.value > 0);
-  // Past about ten columns the dates run into each other at card size, so only
-  // every other one is named there. The full-size chart names them all.
-  const roomy = points.length <= 10;
 
   const rangeOptions = [
     ...statRanges.map((r) => ({ key: r.key, label: r.label })),
@@ -785,19 +527,11 @@ function WeeklyGraph({
            it, so this is not a target you have to fight. */
         <button
           type="button"
-          onClick={() => setZoomed(true)}
+          onClick={() => setFull(true)}
           aria-label={`See ${metric.label.toLowerCase()} full size`}
           className="mt-4 block w-full active:opacity-80"
         >
-          <Plot
-            points={points}
-            metric={metric}
-            units={units}
-            chart={chart}
-            height={188}
-            everyLabel={roomy}
-            showValues={false}
-          />
+          <Plot points={points} metric={metric} units={units} chart={chart} height={188} />
         </button>
       ) : (
         <p className="mt-4 rounded-xl border border-dashed border-border bg-surface-2 px-4 py-8 text-center text-[12px] leading-relaxed text-muted">
@@ -807,30 +541,26 @@ function WeeklyGraph({
 
       {/* THE FOOTER. What shape it is drawn in, and the way to see it big —
           the two things that are about the drawing rather than about the
-          numbers, kept away from the header so neither row is crowded. */}
+          numbers, kept away from the header so neither row is crowded. The way
+          out is the icon alone: a button that opens a whole screen doesn't need
+          a word as well, and the word was taking the room. */}
       <div className="mt-3.5 flex items-center justify-between gap-2 border-t border-border pt-3">
-        <div className="flex rounded-full border border-border bg-surface-2 p-0.5">
-          {chartTypes.map((c) => (
-            <button
-              key={c.key}
-              type="button"
-              onClick={() => onChart(c.key)}
-              aria-pressed={c.key === chart}
-              className={`rounded-full px-3 py-1 text-[11px] font-semibold transition-colors ${
-                c.key === chart ? "bg-text text-background" : "text-muted"
-              }`}
-            >
-              {c.label}
-            </button>
-          ))}
-        </div>
+        <Dropdown
+          label={chartTypes.find((c) => c.key === chart)?.label ?? "Columns"}
+          options={chartTypes.map((c) => ({ key: c.key, label: c.label }))}
+          value={chart}
+          open={openMenu === "chart"}
+          onOpen={(v) => setOpenMenu(v ? "chart" : null)}
+          onPick={onChart}
+        />
         <button
           type="button"
-          onClick={() => setZoomed(true)}
+          onClick={() => setFull(true)}
           disabled={!anyData}
-          className="tap44 flex items-center gap-1.5 px-1 text-[11px] text-muted disabled:opacity-40"
+          aria-label="See the graph full screen"
+          className="tap44 press-icon flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border border-border bg-surface-2 text-muted disabled:opacity-40"
         >
-          <IconExpand size={13} /> Enlarge
+          <IconExpand size={14} />
         </button>
       </div>
 
@@ -844,20 +574,22 @@ function WeeklyGraph({
         />
       )}
 
-      {zoomed && (
-        <Sheet title={`${metric.label} · ${range.label}`} onClose={() => setZoomed(false)}>
-          <Plot
-            points={points}
-            metric={metric}
-            units={units}
-            chart={chart}
-            height={260}
-            everyLabel
-            /* Eight columns is about where a number over each one still has
-               room to be a number. */
-            showValues={points.length <= 8}
-          />
-        </Sheet>
+      {full && (
+        <StatsFullScreen
+          buckets={buckets}
+          points={points}
+          metric={metric}
+          range={range}
+          chart={chart}
+          units={units}
+          plan={plan}
+          today={today}
+          onMetric={onMetric}
+          onRange={onRange}
+          onCustomRange={() => setPicking(true)}
+          onChart={onChart}
+          onClose={() => setFull(false)}
+        />
       )}
     </div>
   );
@@ -1177,11 +909,13 @@ export default function ProfileScreen() {
       </div>
       <div className="mx-3.5">
         <WeeklyGraph
+          buckets={buckets}
           points={points}
           metric={metric}
           range={range}
           chart={chart}
           units={units}
+          plan={planSessions}
           today={toISO(now)}
           windowStart={buckets[0]?.span.startIso ?? toISO(now)}
           onMetric={(key) => patchProfile({ statMetric: key })}

@@ -126,7 +126,7 @@ const asDate = (iso: string) => {
  * Spans are already clamped to today, so an unfinished week is judged on the
  * days that have actually happened rather than the ones still to come.
  */
-function expectedDays(span: Span): number {
+export function expectedDays(span: Span): number {
   let n = 0;
   const end = asDate(span.endIso);
   for (const d = asDate(span.startIso); d <= end; d.setDate(d.getDate() + 1)) {
@@ -136,7 +136,7 @@ function expectedDays(span: Span): number {
 }
 
 /** Sunday doesn't count as a training day, so it can't count as one trained. */
-const trainedDays = (logs: LogEntry[]) =>
+export const trainedDays = (logs: LogEntry[]) =>
   new Set(logs.filter((l) => asDate(l.logDate).getDay() !== 0).map((l) => l.logDate)).size;
 
 /* ── The measures ───────────────────────────────────────────────────────── */
