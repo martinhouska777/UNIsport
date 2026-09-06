@@ -11,6 +11,7 @@ export type BuddyPost = {
   author: string;
   focus: string;
   day: string;
+  hour: number | null; // 24h clock, 30-min steps. Null on pre-hours posts.
   timeOfDay: string;
   gym: string | null;
   note: string | null;
@@ -24,6 +25,7 @@ export type MyBuddyPost = {
   id: string;
   focus: string;
   day: string;
+  hour: number | null;
   timeOfDay: string;
   gym: string | null;
   note: string | null;
@@ -40,14 +42,14 @@ export type BuddyFilters = {
 export async function createBuddyPost(input: {
   focus: string;
   day: string;
-  timeOfDay: string;
+  hour: number;
   gym?: string | null;
   note?: string | null;
 }): Promise<string> {
   const { data, error } = await createClient().rpc("buddy_post_create", {
     p_focus: input.focus,
     p_day: input.day,
-    p_time_of_day: input.timeOfDay,
+    p_hour: input.hour,
     p_gym: input.gym ?? null,
     p_note: input.note ?? null,
   });
@@ -68,6 +70,8 @@ export async function listBuddyBoard(filters: BuddyFilters = {}): Promise<BuddyP
     author: r.author as string,
     focus: r.focus as string,
     day: r.day as string,
+    // numeric comes back as a string from PostgREST; null stays null.
+    hour: r.hour == null ? null : Number(r.hour),
     timeOfDay: r.time_of_day as string,
     gym: (r.gym as string) ?? null,
     note: (r.note as string) ?? null,
@@ -85,6 +89,8 @@ export async function listMyBuddyPosts(): Promise<MyBuddyPost[]> {
     id: r.id as string,
     focus: r.focus as string,
     day: r.day as string,
+    // numeric comes back as a string from PostgREST; null stays null.
+    hour: r.hour == null ? null : Number(r.hour),
     timeOfDay: r.time_of_day as string,
     gym: (r.gym as string) ?? null,
     note: (r.note as string) ?? null,

@@ -30,7 +30,20 @@ create table if not exists public.buddy_posts (
   created_at   timestamptz not null default now(),
   expires_at   timestamptz not null
 );
+/*
+  The hour they actually mean to go, 24h clock with 30-minute steps (10 = 10 AM,
+  17.5 = 5:30 PM). Nullable, so posts made before this existed keep working.
+
+  WHY: "Thursday afternoon" cannot answer "who is training around 9?", and that
+  question is the whole point of the session search. A post is somebody actively
+  looking for a partner, so it is the best answer the search has — but only if it
+  says an hour. time_of_day is still filled in, derived from this, so the coarse
+  filter and every old post keep working unchanged.
+*/
+alter table public.buddy_posts add column if not exists hour numeric;
+
 create index if not exists buddy_posts_expires_idx on public.buddy_posts (expires_at);
+create index if not exists buddy_posts_when_idx    on public.buddy_posts (day, hour);
 create index if not exists buddy_posts_author_idx  on public.buddy_posts (author);
 
 alter table public.buddy_posts enable row level security;
@@ -53,12 +66,34 @@ as $$
 $$;
 
 -- ---------------------------------------------------------------------------
+-- Which of the app's ACTIVITIES a workout focus belongs to, so a board post and
+-- a session search can be compared at all. The search speaks gym/running/cardio
+-- (lib/onboarding.ts); the board speaks legs/push/run (lib/buddyBoard.ts).
+--
+-- A FUNCTION rather than a stored column on purpose: change the mapping here and
+-- every post ever written moves with it.
+-- ---------------------------------------------------------------------------
+create or replace function public.buddy_focus_activity(p_focus text)
+returns text
+language sql
+immutable
+as $$
+  select case lower(coalesce(p_focus, ''))
+           when 'run'    then 'running'
+           when 'cardio' then 'cardio'
+           else 'gym'
+         end;
+$$;
+
+-- ---------------------------------------------------------------------------
 -- Create a post for the caller. Returns the new id. expires_at = noon the day
 -- AFTER the target day, so a post stays visible through its whole day (with a
 -- timezone buffer) then drops off.
 -- ---------------------------------------------------------------------------
+drop function if exists public.buddy_post_create(text, text, text, text, text);
+
 create or replace function public.buddy_post_create(
-  p_focus text, p_day text, p_time_of_day text, p_gym text, p_note text)
+  p_focus text, p_day text, p_hour numeric, p_gym text, p_note text)
 returns uuid
 language plpgsql
 volatile
@@ -70,13 +105,17 @@ declare
   nid uuid;
 begin
   if me is null then raise exception 'not authenticated'; end if;
-  if p_focus is null or p_day is null or p_time_of_day is null then
-    raise exception 'focus, day and time_of_day are required';
+  if p_focus is null or p_day is null or p_hour is null then
+    raise exception 'focus, day and hour are required';
   end if;
 
-  insert into public.buddy_posts (author, focus, day, time_of_day, gym, note, expires_at)
+  insert into public.buddy_posts (author, focus, day, hour, time_of_day, gym, note, expires_at)
   values (
-    me, p_focus, p_day, p_time_of_day,
+    me, p_focus, p_day, p_hour,
+    -- Derived, never asked: one answer, two shapes, so they can never disagree.
+    case when p_hour < 12 then 'morning'
+         when p_hour < 17 then 'afternoon'
+         else 'evening' end,
     nullif(trim(coalesce(p_gym, '')), ''),
     nullif(trim(coalesce(p_note, '')), ''),
     (public.buddy_next_date(p_day) + interval '1 day' + interval '12 hours')
@@ -92,6 +131,10 @@ $$;
 -- by focus / day / time (null = ignore that filter). Joined to profiles so the
 -- card can show who posted. Newest first.
 -- ---------------------------------------------------------------------------
+-- Dropped first: the shape changed (it returns the hour now), and Postgres
+-- refuses to replace a function whose returns-table differs.
+drop function if exists public.buddy_board_list(text, text, text);
+
 create or replace function public.buddy_board_list(
   focus_filter text default null,
   day_filter   text default null,
@@ -101,6 +144,7 @@ returns table (
   author       uuid,
   focus        text,
   day          text,
+  hour         numeric,
   time_of_day  text,
   gym          text,
   note         text,
@@ -113,7 +157,7 @@ security definer
 set search_path = public
 as $$
   select
-    b.id, b.author, b.focus, b.day, b.time_of_day, b.gym, b.note, b.created_at,
+    b.id, b.author, b.focus, b.day, b.hour, b.time_of_day, b.gym, b.note, b.created_at,
     coalesce(p.data->>'name', 'Member') as author_name,
     p.data->>'photo'                    as author_photo
   from public.buddy_posts b
@@ -129,11 +173,14 @@ $$;
 -- ---------------------------------------------------------------------------
 -- The caller's own active posts (for the "Your posts" list + Remove button).
 -- ---------------------------------------------------------------------------
+drop function if exists public.buddy_my_posts();
+
 create or replace function public.buddy_my_posts()
 returns table (
   id          uuid,
   focus       text,
   day         text,
+  hour        numeric,
   time_of_day text,
   gym         text,
   note        text,
@@ -143,7 +190,7 @@ stable
 security definer
 set search_path = public
 as $$
-  select b.id, b.focus, b.day, b.time_of_day, b.gym, b.note, b.created_at
+  select b.id, b.focus, b.day, b.hour, b.time_of_day, b.gym, b.note, b.created_at
   from public.buddy_posts b
   where b.author = auth.uid() and b.expires_at > now()
   order by b.created_at desc;
@@ -167,7 +214,8 @@ end;
 $$;
 
 grant execute on function public.buddy_next_date(text)                       to authenticated;
-grant execute on function public.buddy_post_create(text, text, text, text, text) to authenticated;
+grant execute on function public.buddy_focus_activity(text)                  to authenticated;
+grant execute on function public.buddy_post_create(text, text, numeric, text, text) to authenticated;
 grant execute on function public.buddy_board_list(text, text, text)          to authenticated;
 grant execute on function public.buddy_my_posts()                            to authenticated;
 grant execute on function public.buddy_post_delete(uuid)                     to authenticated;
