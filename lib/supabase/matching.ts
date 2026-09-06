@@ -76,6 +76,10 @@ export type Match = {
 
 /** The optional narrowing every match surface shares. Null = don't narrow. */
 export type MatchFilters = {
+  // What they do — main activity OR one of their extras. Browse could not ask
+  // this until now, which was its biggest gap: you could see every lifter on
+  // campus but never say "show me the runners".
+  activity?: string | null;
   concentration?: string | null;
   interests?: string[] | null; // people into AT LEAST ONE of these
   gym?: string | null; // gym name exactly as in lib/gyms.ts
@@ -186,6 +190,7 @@ export async function getBrowseMatches(
     gym_filter: filters.gym ?? null,
     level_filter: filters.level ?? null,
     gender_filter: filters.gender ?? null,
+    activity_filter: filters.activity ?? null,
   });
   if (error) throw new Error(`getBrowseMatches failed: ${error.message}`);
   return (data as RpcRow[]).map(toMatch);

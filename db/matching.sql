@@ -192,6 +192,7 @@ $$;
 -- Wrappers before the engine, engine before the view — each depends on the next.
 drop function if exists public.match_browse(uuid);
 drop function if exists public.match_browse(uuid, text, text[], text, text, text);
+drop function if exists public.match_browse(uuid, text, text[], text, text, text, text);
 drop function if exists public.match_session_search(uuid, text, text, text, text, text);
 drop function if exists public.match_session_search(uuid, text, text, numeric, text, text, text);
 drop function if exists public.match_session_search(uuid, text, text, numeric, text, text, text, text, text[]);
@@ -579,6 +580,11 @@ $$;
 --      interests_filter     — only people into at least ONE of these. Picking
 --                             more interests therefore WIDENS the net; the
 --                             score still floats people sharing more to the top.
+--      activity_filter      — only people who do this AT ALL, main or extra.
+--                             Browse could not narrow by activity until now,
+--                             which was the one thing it most needed: you could
+--                             see every lifter on campus but not ask for the
+--                             runners.
 --      gym_filter / level_filter / gender_filter — as before.
 -- ============================================================================
 create or replace function public.match_browse(
@@ -587,7 +593,8 @@ create or replace function public.match_browse(
   interests_filter     text[] default null,
   gym_filter           text   default null,
   level_filter         text   default null,
-  gender_filter        text   default null
+  gender_filter        text   default null,
+  activity_filter      text   default null
 )
 returns table (
   candidate_id       uuid,
@@ -637,9 +644,10 @@ as $$
     and (interests_filter is null or exists (
           select 1 from jsonb_array_elements_text(m.c_interests) as z(val)
           where z.val = any (interests_filter)))
-    and (gym_filter    is null or m.c_top_gyms ? gym_filter)
-    and (level_filter  is null or m.level      = level_filter)
-    and (gender_filter is null or m.c_gender   = lower(gender_filter))
+    and (gym_filter      is null or m.c_top_gyms  ? gym_filter)
+    and (level_filter    is null or m.level       = level_filter)
+    and (gender_filter   is null or m.c_gender    = lower(gender_filter))
+    and (activity_filter is null or m.c_activities ? lower(activity_filter))
   order by total desc;
 $$;
 
@@ -805,7 +813,7 @@ $$;
 -- ---------------------------------------------------------------------------
 revoke all on function public.match_candidates(uuid) from public;
 
-grant execute on function public.match_browse(uuid, text, text[], text, text, text)
+grant execute on function public.match_browse(uuid, text, text[], text, text, text, text)
   to authenticated;
 grant execute on function public.match_session_search(
   uuid, text, text, numeric, text, text, text, text, text[]

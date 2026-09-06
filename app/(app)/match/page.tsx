@@ -109,10 +109,15 @@ function MatchFilterBar({
   filters,
   onOpen,
   onClear,
+  onClearAll,
+  total,
 }: {
   filters: MatchFilters;
   onOpen: () => void;
   onClear: (key: keyof MatchFilters) => void;
+  onClearAll: () => void;
+  /** How many people survived — null while the list is still loading. */
+  total?: number | null;
 }) {
   return (
     <FilterBar
@@ -120,6 +125,9 @@ function MatchFilterBar({
       chips={activeFilterChips(filters)}
       onOpen={onOpen}
       onClear={(key) => onClear(key as keyof MatchFilters)}
+      onClearAll={onClearAll}
+      total={total}
+      noun="person"
     />
   );
 }
@@ -251,11 +259,13 @@ function MatchScreen() {
     setSessionErr(null);
     try {
       const rows = await getSessionMatches({
+        // Shared filters FIRST: the three below are this screen's own required
+        // answers and must win over anything left in the sheet.
+        ...filters,
         userId,
         activity: activity!,
         day: day!,
         hour: hour!,
-        ...filters,
       });
       setResults(rows);
     } catch (e) {
@@ -301,6 +311,8 @@ function MatchScreen() {
               filters={filters}
               onOpen={() => setSheetOpen(true)}
               onClear={clearFilter}
+              onClearAll={() => setFilters(NO_FILTERS)}
+              total={browse?.length ?? null}
             />
           </div>
           {browseErr && <Status>Couldn’t load matches: {browseErr}</Status>}
@@ -313,12 +325,9 @@ function MatchScreen() {
             </Status>
           )}
           {!browseErr && browse && browse.length > 0 && (
-            <>
-              <div className="px-3 pb-1.5 text-[11px] tracking-[0.06em] text-muted">
-                {browse.length} {browse.length === 1 ? "PERSON" : "PEOPLE"} · SORTED BY COMPATIBILITY
-              </div>
-              <Grid matches={browse} max={100} onView={viewProfile} />
-            </>
+            /* The count used to live in a small-caps heading here. It is on the
+               filter bar now, beside the control that changes it. */
+            <Grid matches={browse} max={100} onView={viewProfile} />
           )}
         </>
       )}
@@ -398,6 +407,7 @@ function MatchScreen() {
               filters={filters}
               onOpen={() => setSheetOpen(true)}
               onClear={clearFilter}
+              onClearAll={() => setFilters(NO_FILTERS)}
             />
 
             <Button size="lg" full onClick={runSearch} disabled={!canSearch || searching}>
@@ -414,9 +424,6 @@ function MatchScreen() {
           {sessionErr && <Status>Search failed: {sessionErr}</Status>}
           {!sessionErr && results && (
             <div className="pt-3">
-              <div className="pb-1.5 text-[11px] tracking-[0.06em] text-muted">
-                {results.length} {results.length === 1 ? "PERSON" : "PEOPLE"} AVAILABLE
-              </div>
               {results.length === 0 ? (
                 <Status>No one matches those filters yet. Try a different time.</Status>
               ) : (
@@ -440,6 +447,10 @@ function MatchScreen() {
           onClose={() => setSheetOpen(false)}
           myConcentration={myConcentration}
           myInterests={myInterests}
+          /* The session search asks for the activity itself, as a required
+             answer. Offering it again in the sheet would be the same question
+             in two places with one quietly overriding the other. */
+          showActivity={tab === "people"}
         />
       )}
     </div>

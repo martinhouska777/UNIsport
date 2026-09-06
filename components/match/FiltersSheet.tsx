@@ -7,17 +7,27 @@
   Every filter is optional: tick a row to open it, pick a value, untick to clear.
   Nothing ticked = see everyone.
 
-  Concentration and interests come first because they're the ones people reach
-  for to make a connection rather than just find a body in a gym ("who else is
-  doing Ec?", "who else climbs?"). Both carry a "Same as mine" shortcut, since
-  that's overwhelmingly the common case and typing your own concentration into a
-  filter is silly. Gym, level and gender follow — the logistics.
+  Activity comes first: it is the largest single cut you can make to the list,
+  and it reads "anyone who does this", main activity or one of the extras, so a
+  gym-first person who also runs is found by a search for runners.
+
+  Concentration and interests follow because they're the ones people reach for
+  to make a connection rather than just find a body in a gym ("who else is doing
+  Ec?", "who else climbs?"). Both carry a "Same as mine" shortcut, since that's
+  overwhelmingly the common case and typing your own concentration into a filter
+  is silly. Gym, level and gender come last — the logistics.
 
   Colors are theme tokens; the option lists are the onboarding data, so a new
   concentration or interest appears here automatically.
 */
 import type { ReactNode } from "react";
-import { concentrations, interestOptions, experienceLevels, verifiedGyms } from "@/lib/onboarding";
+import {
+  concentrations,
+  interestOptions,
+  experienceLevels,
+  verifiedGyms,
+  primaryActivities,
+} from "@/lib/onboarding";
 import type { MatchFilters } from "@/lib/supabase/matching";
 import SearchableDropdown from "@/components/onboarding/SearchableDropdown";
 import { Pill } from "@/components/onboarding/controls";
@@ -29,6 +39,7 @@ export const genderOptions: { key: string; label: string }[] = [
 
 /** Everything unset — the "show me everyone" state. */
 export const NO_FILTERS: MatchFilters = {
+  activity: null,
   concentration: null,
   interests: null,
   gym: null,
@@ -39,6 +50,7 @@ export const NO_FILTERS: MatchFilters = {
 /** How many filters are actually narrowing the results right now. */
 export function activeFilterCount(f: MatchFilters): number {
   return [
+    f.activity,
     f.concentration,
     f.interests && f.interests.length > 0 ? f.interests : null,
     f.gym,
@@ -52,6 +64,13 @@ export function activeFilterChips(
   f: MatchFilters,
 ): { key: keyof MatchFilters; label: string }[] {
   const chips: { key: keyof MatchFilters; label: string }[] = [];
+  // Activity leads: it is the biggest cut you can make to the list.
+  if (f.activity) {
+    chips.push({
+      key: "activity",
+      label: primaryActivities.find((a) => a.key === f.activity)?.label ?? f.activity,
+    });
+  }
   if (f.concentration) chips.push({ key: "concentration", label: f.concentration });
   if (f.interests && f.interests.length > 0) {
     chips.push({
@@ -159,12 +178,19 @@ export default function FiltersSheet({
   onClose,
   myConcentration,
   myInterests,
+  showActivity = true,
 }: {
   value: MatchFilters;
   onChange: (next: MatchFilters) => void;
   openRows: Set<string>;
   onToggleRow: (key: keyof MatchFilters) => void;
   onClose: () => void;
+  /*
+    Off on the session search, which asks for the activity itself as a required
+    answer. Offering it twice, in two places, with one silently overriding the
+    other, is how a filter sheet starts lying to people.
+  */
+  showActivity?: boolean;
   /** The signed-in user's own answers, for the "Same as mine" shortcuts. */
   myConcentration: string | null;
   myInterests: string[];
@@ -200,6 +226,29 @@ export default function FiltersSheet({
         <p className="mb-1 text-[11px] text-muted">
           Tick a filter to narrow results. Leave all unticked to see everyone.
         </p>
+
+        {showActivity && (
+          <FilterRow
+            title="Activity"
+            open={openRows.has("activity")}
+            onToggle={() => onToggleRow("activity")}
+            summary={primaryActivities.find((a) => a.key === value.activity)?.label}
+          >
+            <div className="flex flex-wrap gap-1.5">
+              {primaryActivities.map((a) => (
+                <Pill
+                  key={a.key}
+                  label={a.label}
+                  selected={value.activity === a.key}
+                  onClick={() => set({ activity: value.activity === a.key ? null : a.key })}
+                />
+              ))}
+            </div>
+            <p className="mt-1.5 text-[11px] text-muted">
+              Anyone who does this — their main thing or one of their extras.
+            </p>
+          </FilterRow>
+        )}
 
         <FilterRow
           title="Concentration"

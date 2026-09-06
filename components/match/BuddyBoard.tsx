@@ -294,6 +294,9 @@ export default function BuddyBoard() {
           chips={boardFilterChips(filters)}
           onOpen={() => setSheetOpen(true)}
           onClear={(key) => setFilters({ ...filters, [key]: null })}
+          onClearAll={() => setFilters(NO_BOARD_FILTERS)}
+          total={board?.length ?? null}
+          noun="post"
         />
       </div>
 

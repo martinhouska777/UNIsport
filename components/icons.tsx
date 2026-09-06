@@ -240,6 +240,16 @@ export const IconSettings = (p: IconProps) => (
   </Base>
 );
 
+// Three sliders. Reads as "narrow this list" in a way a funnel doesn't at 15px.
+export const IconSliders = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h10M18 18h2" />
+    <circle cx="16" cy="6" r="2" />
+    <circle cx="10" cy="12" r="2" />
+    <circle cx="16" cy="18" r="2" />
+  </Base>
+);
+
 export const IconBell = (p: IconProps) => (
   <Base {...p}>
     <path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6z" />
