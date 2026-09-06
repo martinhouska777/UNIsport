@@ -104,6 +104,37 @@ export const legendCategories = ["water", "erg", "weights", "run", "bike"] as co
 // Which logged categories count as "metres rowed" for the monthly total.
 export const rowingCategories = new Set(["water", "erg"]);
 
+// 6 -> "6", 7.5 -> "7.5". No trailing ".0" in a 33px-wide column.
+const trimNum = (v: number) => (Number.isInteger(v) ? String(v) : v.toFixed(1));
+
+/*
+  HOW MUCH was done, short enough for a month cell.
+
+  This replaced the category word on the second line of a calendar chip. The
+  title above it already says the type — "Erg · UT2" sat on top of "Erg", so the
+  cell spent two of its three lines saying "erg" twice and never said the one
+  thing that wasn't written anywhere else: the size of the session.
+
+  Rowing is measured in metres and spoken in k ("6k", "7.5k"). Everything else
+  is measured in minutes. A run logged with a distance instead gets kilometres,
+  because that is how a run is talked about. Anything logged with no figures at
+  all falls back to the category word, so a cell is never left blank.
+
+  Kept SHORT on purpose: the column is about 33px of text, so "Water · 16k"
+  truncates to "Wate…" and loses the number it was there for.
+*/
+export function logVolumeLabel(
+  category: string | null,
+  metres: number | null,
+  minutes: number | null,
+): string {
+  const key = category ?? "other";
+  if (rowingCategories.has(key) && metres) return `${trimNum(metres / 1000)}k`;
+  if (minutes) return `${minutes} min`;
+  if (metres) return `${trimNum(metres / 1000)} km`;
+  return logCategoryLabel[key] ?? "";
+}
+
 // What the profile's graph charts before anyone touches the arrows on it.
 // Keys come from lib/varsity/athleteStats.
 export const defaultStatMetric = "distance";

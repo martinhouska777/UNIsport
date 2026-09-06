@@ -46,6 +46,7 @@ import { toISO, type Session, type SessionMap } from "@/lib/varsity/coachPlan";
 import {
   logCategoryColor,
   logCategoryLabel,
+  logVolumeLabel,
   legendCategories,
   rowingCategories,
 } from "@/lib/varsity/athleteProfile";
@@ -342,15 +343,18 @@ export default function CalendarScreen() {
                   {d.logs.map((l) => {
                     const planned: Session | undefined = l.dayKey ? planSessions[l.dayKey] : undefined;
                     /*
-                      Which kind of training it was, since the colour now says
-                      how hard rather than what — and water and erg share a
-                      colour at the same intensity.
+                      HOW MUCH, not what. The title above already says the type,
+                      so this line used to read "Erg" directly under "Erg · UT2"
+                      — two of the cell's three lines spent on one word.
 
-                      The word ALONE. A column is about 33px of text wide, so
-                      "Water · 16k" truncates to "Wate…" and loses the number it
-                      was there for. The figures live in the day sheet.
+                      Now it carries the size of the session: metres for rowing,
+                      minutes for everything else (see logVolumeLabel). Still the
+                      figure ALONE, because the column is about 33px of text wide
+                      and "Water · 16k" truncates to "Wate…", losing the number it
+                      was there for. A session logged with no figures falls back
+                      to the category word, so nothing is ever blank.
                     */
-                    const sub = logCategoryLabel[l.category ?? "other"];
+                    const sub = logVolumeLabel(l.category, l.metres, l.minutes);
                     return (
                       <span
                         key={l.id}
