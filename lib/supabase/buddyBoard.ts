@@ -65,7 +65,13 @@ export async function listBuddyBoard(filters: BuddyFilters = {}): Promise<BuddyP
     time_filter: filters.timeOfDay ?? null,
   });
   if (error) throw new Error(`listBuddyBoard failed: ${error.message}`);
-  return (data as Record<string, unknown>[]).map((r) => ({
+  return (data as Record<string, unknown>[]).map(toBuddyPost);
+}
+
+// One row -> one post. Shared by the open board and the session search, so the
+// two can never drift into reading the same row differently.
+function toBuddyPost(r: Record<string, unknown>): BuddyPost {
+  return {
     id: r.id as string,
     author: r.author as string,
     focus: r.focus as string,
@@ -78,7 +84,33 @@ export async function listBuddyBoard(filters: BuddyFilters = {}): Promise<BuddyP
     createdAt: r.created_at as string,
     authorName: (r.author_name as string) ?? "Member",
     authorPhoto: (r.author_photo as string) ?? null,
-  }));
+  };
+}
+
+/*
+  WHO PUT THEIR HAND UP FOR THIS SESSION.
+
+  The same question the session search asks ("running, Thursday, around 9"),
+  answered from the board instead of from people's general schedules. A schedule
+  says somebody is usually free; a post says they are looking right now — so
+  these belong ABOVE the schedule matches, not mixed into them.
+
+  Closest to the hour you asked for comes first.
+*/
+export async function buddyForSession(input: {
+  activity: string;
+  day: string;
+  hour: number;
+  windowHours?: number;
+}): Promise<BuddyPost[]> {
+  const { data, error } = await createClient().rpc("buddy_for_session", {
+    activity_filter: input.activity,
+    day_filter: input.day,
+    target_hour: input.hour,
+    window_hours: input.windowHours ?? 2,
+  });
+  if (error) throw new Error(`buddyForSession failed: ${error.message}`);
+  return (data as Record<string, unknown>[]).map(toBuddyPost);
 }
 
 /** The caller's own active posts. */

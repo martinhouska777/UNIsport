@@ -171,6 +171,59 @@ as $$
 $$;
 
 -- ---------------------------------------------------------------------------
+-- WHO PUT THEIR HAND UP FOR THIS SESSION.
+--
+-- The session search asks "who trains running on Thursday around 9?" and answers
+-- it from people's general SCHEDULES. This answers the same question from the
+-- board instead: people who actively posted that they want a partner for one
+-- specific session. They are the better answer — a schedule says someone is
+-- usually free, a post says they are looking right now — so the Match tab shows
+-- these first.
+--
+-- Matched on activity (via buddy_focus_activity, so "legs" answers a gym search
+-- and "run" a running one), the same day, and an hour within the window. Posts
+-- written before hours existed have no hour and simply cannot be matched by
+-- time, so they stay on the board and out of the search.
+-- ---------------------------------------------------------------------------
+create or replace function public.buddy_for_session(
+  activity_filter text,
+  day_filter      text,
+  target_hour     numeric,
+  window_hours    numeric default 2)
+returns table (
+  id           uuid,
+  author       uuid,
+  focus        text,
+  day          text,
+  hour         numeric,
+  time_of_day  text,
+  gym          text,
+  note         text,
+  created_at   timestamptz,
+  author_name  text,
+  author_photo text)
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select
+    b.id, b.author, b.focus, b.day, b.hour, b.time_of_day, b.gym, b.note, b.created_at,
+    coalesce(p.data->>'name', 'Member') as author_name,
+    p.data->>'photo'                    as author_photo
+  from public.buddy_posts b
+  left join public.profiles p on p.id = b.author
+  where b.expires_at > now()
+    and b.author <> auth.uid()
+    and b.hour is not null
+    and b.day = day_filter
+    and public.buddy_focus_activity(b.focus) = lower(activity_filter)
+    and abs(b.hour - target_hour) <= window_hours
+  -- Closest to the hour you asked for first; a dead-on 9 beats a 7.
+  order by abs(b.hour - target_hour), b.created_at desc;
+$$;
+
+-- ---------------------------------------------------------------------------
 -- The caller's own active posts (for the "Your posts" list + Remove button).
 -- ---------------------------------------------------------------------------
 drop function if exists public.buddy_my_posts();
@@ -217,5 +270,6 @@ grant execute on function public.buddy_next_date(text)                       to 
 grant execute on function public.buddy_focus_activity(text)                  to authenticated;
 grant execute on function public.buddy_post_create(text, text, numeric, text, text) to authenticated;
 grant execute on function public.buddy_board_list(text, text, text)          to authenticated;
+grant execute on function public.buddy_for_session(text, text, numeric, numeric) to authenticated;
 grant execute on function public.buddy_my_posts()                            to authenticated;
 grant execute on function public.buddy_post_delete(uuid)                     to authenticated;
