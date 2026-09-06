@@ -53,8 +53,17 @@ export const hero = {
      became "Live now at Harvard", and on 2026-09-01 it took the second fact
      with it: the app is FREE for students, and the page had never once said
      so. Free is the reader's first objection, answered in the first line they
-     read. */
-  badge: "Free for students · live now at Harvard",
+     read.
+
+     2026-09-06 — "live now at Harvard" TAKEN OUT, and it comes back. Nothing
+     changed about the plan; the claim simply runs ahead of the facts while the
+     only people inside are testers, and "live at X" is an advertising claim,
+     not a mood. It goes back the day real Harvard students are using it
+     (owner: "zatim smaz to live at harvard pak vratime"). The same sentence
+     also lived in `social.description` and in the FAQ below, and in the pill
+     baked into public/og.png by scripts/landing/make-og.mjs — all four moved
+     together, so putting it back means putting it back in all four. */
+  badge: "Free for students",
   /* The page headline. Describes the product, and lives only here. */
   headline: ["Your campus.", "Your gym.", "Your people."],
   /* FOUR ACTIONS, in the order the app is actually used: find a gym, match
@@ -88,7 +97,7 @@ export const hero = {
    scripts/landing/make-og.mjs from the same headline and pill. */
 export const social = {
   title: `UNIsport — ${hero.headline.join(" ")}`,
-  description: "Find the gym. Find someone to go with. Free for students, live at Harvard.",
+  description: "Find the gym. Find someone to go with. Free for students.",
   imageAlt: "UNIsport — Your campus. Your gym. Your people. The Gyms screen in a phone beside the headline.",
 };
 
@@ -831,8 +840,11 @@ type FaqAudience = "students" | "varsity" | "coaches";
 export const faq: { q: string; a: string; on: FaqAudience[] }[] = [
   {
     on: ["students", "varsity", "coaches"],
-    q: "Which universities is it live at?",
-    a: "Harvard, today. New campuses come on one at a time, each with its own colours, gyms and houses, so the app you sign up to is already yours.",
+    /* Was "Which universities is it live at?" / "Harvard, today." — the same
+       live-at-Harvard claim as the pill, so it came out with it (2026-09-06)
+       and goes back with it. The second sentence is untouched. */
+    q: "Which universities is it for?",
+    a: "Harvard first. New campuses come on one at a time, each with its own colours, gyms and houses, so the app you sign up to is already yours.",
   },
   {
     on: ["students", "varsity", "coaches"],

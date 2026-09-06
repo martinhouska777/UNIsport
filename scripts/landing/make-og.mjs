@@ -43,7 +43,7 @@ const html = `<!doctype html><html><head><meta charset="utf-8">
 <div class="grid"></div><div class="glow"></div>
 <div class="wrap"><div class="copy">
   <div class="mark">UNI<b>sport</b></div>
-  <div class="pill"><i></i>Live now at Harvard</div>
+  <div class="pill"><i></i>Free for students</div>
   <h1>Your campus.<br>Your gym.<br><em>Your people.</em></h1>
   <p>Every gym on campus, training partners ranked by real fit, and a Varsity Mode for teams.</p>
 </div></div>
