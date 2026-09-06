@@ -192,6 +192,50 @@ export const runningExperiences: string[] = [
   "3+ years",
 ];
 
+// ---- Screen 3b: Anything else you do? ---------------------------------------
+/*
+  Your MAIN activity is asked about in full on screen 3. Everything ELSE you do
+  is asked about as lightly as it possibly can be, on purpose.
+
+  A gym session is an appointment: you and a partner have to be in the same
+  building at the same hour, which is why screen 5 pins training to days and
+  times. A run is not. You can run at any hour, from anywhere, so demanding a
+  time for it would only put a fiction into the database. All matching actually
+  needs is that you do it, roughly how often, and — ONLY if you happen to have
+  one — a usual day. Leaving the days blank is the normal answer here, not a
+  skipped question.
+
+  This is the screen that fixes the person who lifts AND runs: until now they
+  had to pick one, and were invisible to everyone looking for the other.
+*/
+export type OtherActivity = {
+  key: PrimaryActivity;
+  perWeek: string; // one of activityFrequencies; "" until they pick one
+  days: string[]; // weekDay keys — empty is normal and fine
+  note: string; // only "other" uses this: what the activity actually is
+};
+
+// How often, per week. Deliberately coarse — nobody knows their true average,
+// and matching only needs to tell "now and then" apart from "most days".
+export const activityFrequencies: string[] = ["1×", "2×", "3×", "4×", "5+"];
+
+// Read a frequency back as a number, for matching. "5+" counts as 5.
+export function frequencyPerWeek(value: string): number {
+  return parseInt(value, 10) || 0;
+}
+
+/*
+  The label each activity is offered under on this screen. Worded as the
+  question it really is — "do you run too?" — rather than as a bare noun, so
+  the screen reads as a follow-up to what you already answered.
+*/
+export const otherActivityLabels: Record<PrimaryActivity, string> = {
+  gym: "I lift too",
+  running: "I run too",
+  cardio: "I do cardio too",
+  other: "Something else",
+};
+
 // ---- Screen 4: Top gyms ------------------------------------------------------
 // The verified gym list comes straight from the gym data the app already uses.
 export const verifiedGyms: string[] = gyms.map((g) => g.name);
@@ -521,6 +565,12 @@ export type OnboardingProfile = {
   runningExperience: string;
   cardioType: string;
 
+  /*
+    Screen 3b — everything else you do, lightly (see OtherActivity above).
+    This is what lets a gym-first person be found by someone hunting a runner.
+  */
+  otherActivities: OtherActivity[];
+
   // Screen 4 — Top gyms (ranked, matching input)
   topGyms: string[];
 
@@ -561,6 +611,7 @@ export const emptyProfile: OnboardingProfile = {
   runningPace: "",
   runningExperience: "",
   cardioType: "",
+  otherActivities: [],
   topGyms: [],
   trainingSchedule: {},
   concentration: "",

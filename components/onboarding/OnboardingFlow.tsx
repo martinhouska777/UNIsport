@@ -24,6 +24,7 @@ import {
   IconCalendar,
   IconClock,
   IconHeart,
+  IconCheck,
 } from "@/components/icons";
 import {
   classYears,
@@ -35,6 +36,9 @@ import {
   gymStyles,
   gymSplits,
   cardioTypes,
+  activityFrequencies,
+  otherActivityLabels,
+  type OtherActivity,
   runningUnits,
   runningHints,
   runningExperiences,
@@ -130,6 +134,17 @@ const STEPS: StepMeta[] = [
   { key: "basics", title: "Let's get to know you.", subtitle: "A few quick basics so other members can find you." },
   { key: "residence", title: "Where do you live on campus?", subtitle: "We'll connect you with people nearby." },
   { key: "activity", title: "What do you train?", subtitle: "Pick your main thing — you can do everything else too." },
+  /*
+    The follow-up to the screen above. Skippable, because plenty of people
+    genuinely do one thing — and because the moment this feels like homework
+    people start ticking boxes at random, which is worse than no answer.
+  */
+  {
+    key: "alsodo",
+    title: "Anything else you do?",
+    subtitle: "Your main thing is covered. Tell us what else you get up to and we can match you for that too.",
+    skippable: true,
+  },
   { key: "topgyms", title: "Your top gyms.", subtitle: "Where do you actually train? Pick and rank your top 3." },
   { key: "schedule", title: "When do you usually train?", subtitle: "Pick your days, then the time — this is how we find people who are there when you are." },
   { key: "background", title: "Who are you, outside the gym?", subtitle: "All optional — shared backgrounds make better gym friends.", skippable: true },
@@ -223,6 +238,16 @@ export default function OnboardingFlow() {
         // Someone training alone is never matched, so who they'd be matched
         // WITH is a question that no longer applies — and isn't asked.
         return profile.trainingType === "solo" || profile.partnerPreference !== "";
+      case "alsodo":
+        /*
+          The screen as a whole is optional, but a HALF-answer isn't allowed
+          through: an activity ticked with no frequency tells matching nothing,
+          and "something else" with no name tells it less than that. Untick it
+          or finish it.
+        */
+        return profile.otherActivities.every(
+          (a) => a.perWeek !== "" && (a.key !== "other" || a.note.trim() !== ""),
+        );
       case "activity": {
         // Each activity has its own required answers. Experience level is a
         // gym question; the split and how long you've run are optional.
@@ -485,6 +510,136 @@ export default function OnboardingFlow() {
             )}
           </div>
         );
+      case "alsodo": {
+        /*
+          Everything you do that ISN'T your main thing. Deliberately shallow:
+          which ones, how often, and a usual day only if one actually exists.
+          See the note above OtherActivity in lib/onboarding.ts for why a run
+          is not asked to name an hour the way a gym session is.
+        */
+        const others = primaryActivities.filter((a) => a.key !== profile.primaryActivity);
+        const picked = (key: string) => profile.otherActivities.find((o) => o.key === key);
+
+        const toggle = (key: OtherActivity["key"]) =>
+          set(
+            "otherActivities",
+            picked(key)
+              ? profile.otherActivities.filter((o) => o.key !== key)
+              : [...profile.otherActivities, { key, perWeek: "", days: [], note: "" }],
+          );
+
+        const patch = (key: string, changes: Partial<OtherActivity>) =>
+          set(
+            "otherActivities",
+            profile.otherActivities.map((o) => (o.key === key ? { ...o, ...changes } : o)),
+          );
+
+        const toggleDay = (key: string, day: string) => {
+          const days = picked(key)?.days ?? [];
+          patch(key, { days: days.includes(day) ? days.filter((d) => d !== day) : [...days, day] });
+        };
+
+        return (
+          <div className="flex flex-col gap-2.5">
+            {others.map((a) => {
+              const ActIcon = activityIcons[a.icon];
+              const chosen = picked(a.key);
+              const on = Boolean(chosen);
+              return (
+                <div
+                  key={a.key}
+                  className={`rounded-xl border transition-colors ${
+                    on ? "border-primary bg-primary-tint" : "border-border bg-surface-2"
+                  }`}
+                >
+                  <button
+                    type="button"
+                    onClick={() => toggle(a.key)}
+                    aria-pressed={on}
+                    className="flex min-h-11 w-full items-center gap-3 p-3.5 text-left"
+                  >
+                    <span className="text-accent">
+                      <ActIcon size={20} />
+                    </span>
+                    <span className="flex-1 text-[13px] font-medium text-text">
+                      {otherActivityLabels[a.key]}
+                    </span>
+                    <span
+                      className={`flex h-[22px] w-[22px] items-center justify-center rounded-full border ${
+                        on
+                          ? "border-primary bg-primary text-primary-contrast"
+                          : "border-border text-transparent"
+                      }`}
+                    >
+                      <IconCheck size={13} />
+                    </span>
+                  </button>
+
+                  {on && chosen && (
+                    <div className="flex flex-col gap-4 border-t border-border px-3.5 pb-4 pt-3.5">
+                      {a.key === "other" && (
+                        <div>
+                          <FieldLabel>What is it?</FieldLabel>
+                          <TextField
+                            value={chosen.note}
+                            onChange={(v) => patch(a.key, { note: v })}
+                            placeholder="e.g. Climbing, martial arts…"
+                            ariaLabel="What the activity is"
+                          />
+                        </div>
+                      )}
+
+                      <div>
+                        <FieldLabel>How often?</FieldLabel>
+                        <div className="flex flex-wrap gap-1.5">
+                          {activityFrequencies.map((f) => (
+                            <Pill
+                              key={f}
+                              label={`${f} a week`}
+                              selected={chosen.perWeek === f}
+                              onClick={() => patch(a.key, { perWeek: f })}
+                            />
+                          ))}
+                        </div>
+                      </div>
+
+                      <div>
+                        <FieldLabel>A usual day? — optional</FieldLabel>
+                        <div className="flex gap-1.5">
+                          {weekDays.map((d) => {
+                            const dayOn = chosen.days.includes(d.key);
+                            return (
+                              <button
+                                key={d.key}
+                                type="button"
+                                onClick={() => toggleDay(a.key, d.key)}
+                                aria-pressed={dayOn}
+                                aria-label={d.label}
+                                className={`h-10 flex-1 rounded-[10px] border text-[13px] font-medium transition-colors ${
+                                  dayOn
+                                    ? "border-primary bg-primary text-primary-contrast"
+                                    : "border-border bg-surface text-muted"
+                                }`}
+                              >
+                                {d.letter}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        {/* Said out loud so an empty row doesn't read as a
+                            question they forgot to answer. */}
+                        <p className="pt-2 text-[11px] text-muted">
+                          Only if you have one. Most people don&apos;t — you can go whenever.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        );
+      }
       case "residence": {
         const isFreshman = profile.classYear === freshmanClassYear;
         return (

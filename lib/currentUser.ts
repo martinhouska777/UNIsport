@@ -61,6 +61,9 @@ export const currentUser: CurrentUser = {
   runningPace: "",
   runningExperience: "",
   cardioType: "",
+  // Lifts first, but runs a couple of times a week — the exact case the
+  // "anything else you do?" screen exists for, so the demo account shows it.
+  otherActivities: [{ key: "running", perWeek: "2×", days: [], note: "" }],
   topGyms: ["Malkin Athletic Center", "Murr Center"],
   trainingSchedule: { mon: ["PM"], wed: ["PM"], fri: ["AM"] },
   concentration: "Economics",
