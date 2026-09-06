@@ -123,6 +123,7 @@ function boatToLineup(
     // The three the boat is READ by, kept apart from the display string above
     // so a card can lay them out however it likes.
     name: boat.name?.trim() || undefined,
+    badge: boat.badge,
     dock: boat.dock?.trim() || undefined,
     note: boat.note?.trim() || undefined,
     // Carried through so the athlete's Home can hang this boat's video off it —

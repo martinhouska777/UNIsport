@@ -122,6 +122,8 @@ export type Lineup = {
   oars?: string; // which set to take off the rack, when the coach named one
   /** The shell's name, on its own — "Resolute", or a crew name like "1V". */
   name?: string;
+  /** The rig, as a crew says it: "8+", "4-", "2-". Heads the card. */
+  badge?: string;
   /** When this crew pushes off, e.g. "7:15am". */
   dock?: string;
   /** The coach's note to this crew, if they wrote one. */
@@ -138,28 +140,15 @@ export type Lineup = {
 };
 
 /*
-  WHAT TO CALL A BOAT on a page listing several of them.
+  WHAT HEADS A BOAT'S CARD: which half of the day, and what rig — "AM 2-".
 
-  A crew answers to a name before it answers to a rig: the coach's own name for
-  it first ("Resolute", or a crew name like "1V"), and when they haven't named
-  it, the person the crew is known by — the cox, who is the voice of the boat,
-  and failing that the stroke, who sets it. Only when the boat is empty of both
-  does it fall back to what kind of boat it is, because "Eight" tells you
-  nothing about WHICH eight.
-
-  `tag` says which of those answered, so a name alone is never mistaken for a
-  shell's name. Null when the title is the coach's own.
+  The owner's call, and it is how a crew says it out loud. The SHELL's name is
+  not up here: it is written under the hull, on the BOAT line, because the name
+  on the boat you carry down to the water is a different fact from which outing
+  this is. `type` ("Pair", "Eight") is the fallback for a lineup old enough not
+  to have stored its rig.
 */
-export function boatTitle(l: Lineup): { title: string; tag: string | null } {
-  const named = l.name?.trim();
-  if (named) return { title: named, tag: null };
-  const cox = l.cox?.name;
-  if (cox && cox !== "—") return { title: cox, tag: "Cox" };
-  // The stroke sits LAST in the array — the seats run bow → stroke.
-  const stroke = [...l.seats].reverse().find((s) => s.name && s.name !== "—");
-  if (stroke) return { title: stroke.name, tag: "Stroke" };
-  return { title: l.type, tag: null };
-}
+export const boatHeading = (l: Lineup) => `${l.periodKey} ${l.badge ?? l.type}`;
 
 export type Greeting = { date: string; name: string; block: string; week: string };
 // `big` is the headline (e.g. "Today", "Tomorrow", or a number like "12");

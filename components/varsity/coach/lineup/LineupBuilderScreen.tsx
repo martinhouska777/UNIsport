@@ -1150,7 +1150,7 @@ function Builder({
                       other.
                     */}
                     <div className="px-3 py-4">
-                      <div className="rounded-[44px] border-2 border-border bg-surface-2 px-4 pb-3 pt-2.5">
+                      <div className="rounded-[44px] border-2 border-primary-line bg-surface-2 px-4 pb-3 pt-2.5">
                         <HullCap arrow="▲" word="BOW" />
                         {/* The number comes from the seat's POSITION, not from
                             what an older saved lineup happens to have stored in

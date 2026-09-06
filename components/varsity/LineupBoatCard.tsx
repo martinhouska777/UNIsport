@@ -18,28 +18,21 @@
   a data file (lib/varsity/coachLineup → sideMeta), applied inline: the
   documented exception to rule 1. Everything else is a theme token.
 
-  The card still COLLAPSES. Shut, its header answers the two questions somebody
-  has walking to the boathouse — which boat, and which seat — without opening
-  anything. Which boat is answered by the coach's own name for it, or failing
-  that by the cox, or the stroke (lib/varsity/home → boatTitle).
+  The card COLLAPSES to its title bar: which outing this is ("AM 2-") and when
+  it pushes off, and nothing else. Open, it reads in the order a crew needs it —
+  the coach's note, the boat, then the two things you carry down to the water:
+  which shell, and which oars.
 */
 import { useState } from "react";
 import CrewVideoStrip from "@/components/varsity/CrewVideoStrip";
 import { IconChevronDown, IconChevronUp } from "@/components/icons";
 import { sideMeta, COX_COLOR, COX_INK, COX_TAG, COX_LABEL } from "@/lib/varsity/coachLineup";
-import { boatTitle, type Lineup, type Seat } from "@/lib/varsity/home";
+import { boatHeading, type Lineup, type Seat } from "@/lib/varsity/home";
 
 /* Is this the reader's own boat? Their seat, or the cox's seat, is marked when
    the lineup is built (lib/varsity/lineupStore.ts). */
 export function isMyBoat(l: Lineup): boolean {
   return l.seats.some((s) => s.mine) || !!l.cox?.mine;
-}
-
-/** "5", or "Cox" — whichever seat is theirs. Null when they are not aboard. */
-export function mySeat(l: Lineup): string | null {
-  const seat = l.seats.find((s) => s.mine);
-  if (seat) return seat.num;
-  return l.cox?.mine ? "Cox" : null;
 }
 
 /** An empty seat reads as empty however the coach left it. */
@@ -181,10 +174,11 @@ function CoxRow({ cox }: { cox: NonNullable<Lineup["cox"]> }) {
 
 /* ── The hull ────────────────────────────────────────────────────────────── */
 
-/** The bow and stern caps: which end of the boat you are looking at. */
+/* The bow and stern caps: which end of the boat you are looking at. Muted, like
+   the outline they sit in — they label the boat, they are not part of the crew. */
 function HullCap({ arrow, word }: { arrow: string; word: string }) {
   return (
-    <div className="flex h-[30px] items-center justify-center gap-[7px] font-mono text-[11px] font-semibold tracking-[0.16em] text-text-2">
+    <div className="flex h-[30px] items-center justify-center gap-[7px] font-mono text-[11px] font-semibold tracking-[0.16em] text-muted">
       <span className="text-[12px] leading-none">{arrow}</span>
       {word}
     </div>
@@ -199,7 +193,16 @@ function HullCap({ arrow, word }: { arrow: string; word: string }) {
 */
 export function LineupSeats({ l }: { l: Lineup }) {
   return (
-    <div className="rounded-[44px] border-2 border-text-2 bg-surface-2 px-4 pb-3 pt-2.5">
+    /*
+      THE OUTLINE IS THE SCHOOL'S OWN COLOUR, DARKENED. It used to be drawn in
+      `text-2` — a near-white line on a near-black card, which is the brightest
+      thing on the screen and the first thing your eye lands on, ahead of the
+      names it exists to contain. `primary-line` is the school's hue at just
+      over a third strength, so it reads as a boat wearing the school's paint
+      rather than a fluorescent tube. The seat that is YOURS keeps the primary
+      at FULL strength, so it still wins the card.
+    */
+    <div className="rounded-[44px] border-2 border-primary-line bg-surface-2 px-4 pb-3 pt-2.5">
       <HullCap arrow="▲" word="BOW" />
       <div className="flex flex-col gap-1">
         {l.seats.map((s) => (
@@ -248,38 +251,30 @@ export default function LineupBoatCard({
   defaultOpen?: boolean;
 }) {
   const [open, setOpen] = useState(defaultOpen);
-  const seat = mySeat(l);
-  const seated = l.seats.filter((s) => !isOpen(s.name)).length + (l.cox && !isOpen(l.cox.name) ? 1 : 0);
-  const { title, tag } = boatTitle(l);
 
   return (
     <div className="overflow-hidden rounded-xl border border-border bg-surface">
+      {/*
+        THE TITLE BAR, and nothing more in it: which outing this is on the left,
+        when it pushes off on the right. "AM 2-" is how a crew says it out loud.
+        Everything the header used to also carry — the shell's name, the seat
+        count, your own seat — now lives where it belongs: the shell under the
+        hull on the BOAT line, and your seat marked in the boat itself.
+      */}
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
-        className="flex w-full items-center gap-2 px-3 py-2.5 text-left"
+        className="flex w-full items-center gap-2.5 px-3.5 py-3 text-left"
       >
-        <span className="min-w-0 flex-1">
-          <span className="flex items-center gap-1.5">
-            <span className="truncate text-[13px] font-semibold text-text">{title}</span>
-            {/* Whose name this is, when it is a person's rather than a boat's. */}
-            {tag && (
-              <span className="flex-shrink-0 rounded border border-border bg-surface-2 px-1 py-px font-mono text-[9px] font-semibold uppercase tracking-[0.1em] text-muted">
-                {tag}
-              </span>
-            )}
-          </span>
-          <span className="mt-0.5 block truncate text-[11px] text-muted">
-            {/* Shut, this line has to be worth reading on its own — which half
-                of the day, when it pushes off, and whether you are in it. The
-                TIME lives here rather than beside the note, because a boat
-                without a note still leaves at a quarter past seven. */}
-            {[l.period, l.dock, seat ? `Your seat · ${seat}` : `${seated} aboard`]
-              .filter(Boolean)
-              .join(" · ")}
-          </span>
+        <span className="min-w-0 flex-1 truncate text-[15px] font-semibold text-text">
+          {boatHeading(l)}
         </span>
+        {l.dock && (
+          <span className="flex-shrink-0 font-mono text-[13px] font-medium text-text-2">
+            {l.dock}
+          </span>
+        )}
         <span className="flex-shrink-0 text-muted">
           {open ? <IconChevronUp size={14} /> : <IconChevronDown size={14} />}
         </span>
@@ -288,19 +283,21 @@ export default function LineupBoatCard({
       {open && (
         <>
           <div className="flex flex-col gap-2.5 border-t border-border p-3">
-            {/* THE COACH'S NOTE TO THIS CREW, on top — it is the one thing that
-                changes what you do before you have even read the seats. */}
+            {/* THE COACH'S NOTE TO THIS CREW, first and named — it is the one
+                thing that changes what you do before you have even read the
+                seats, and unlabelled it read as a stray line of text. */}
             {l.note && (
-              <div className="rounded-xl bg-surface-2 px-3 py-2.5 text-[15px] leading-snug text-text">
-                {l.note}
+              <div className="rounded-xl bg-surface-2 px-3 py-2.5">
+                <div className="font-mono text-[10px] font-medium tracking-[0.12em] text-muted">
+                  COACH&rsquo;S NOTE
+                </div>
+                <div className="mt-1 text-[15px] leading-snug text-text">{l.note}</div>
               </div>
             )}
             <LineupSeats l={l} />
-            {/*
-              The shell's name is NOT repeated here — the card's own header is
-              already the boat's name whenever the coach gave it one. Which oars
-              to take off the rack is the one thing left to say.
-            */}
+            {/* Then the two things you carry down to the water: which shell,
+                and which oars off the rack. */}
+            {l.name && <InfoRow label="BOAT" value={l.name} />}
             {l.oars && <InfoRow label="OARS" value={l.oars} />}
           </div>
           {/*
