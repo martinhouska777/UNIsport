@@ -27,11 +27,20 @@ import type { Beat } from "@/lib/landingCopy";
   changes at the pinch: profile → Gyms and season → Home are tab switches, so
   the screens slide.
 
-  AND BACK AGAIN. One nudge up from the landed closer plays the film
+  AND BACK AGAIN, QUICKLY. One nudge up from the landed closer plays the film
   backwards: the words leave, the letter tucks in behind the phone (or the
   oars gather and sink), and the page's phone flies back up and sets down
   exactly where the story left it. The page lands with the closer just off
   the bottom of the screen, so scrolling down again plays it all afresh.
+
+  The way back is a THIRD of the way in, and it hands the page over halfway
+  through. Going down, the reader is being carried somewhere and the length of
+  it is the point; going up they want OUT, and a page that will not move reads
+  as a broken one. So the closer empties in a third of a second — the only
+  stretch where the page is held — the cut happens on the next frame, and from
+  there the reader scrolls where they like while the phone glides home over
+  half a second, both ends of the glide measured against the document every
+  frame. Kept by scripts/landing/verify-site-reverse.mjs.
 
   This is the choreography script of scripts/landing/build-story.mjs, which
   did all of the above THROUGH an iframe by finding things geometrically. Here
@@ -62,6 +71,15 @@ type Props = {
 
 const DUR = 1500;
 const JUMP = 0.32;
+/* THE WAY BACK IS NOT THE WAY IN PLAYED SLOWLY. Going down, the reader is
+   being carried somewhere and the length of it is the point. Going up they
+   want OUT, and every millisecond the page refuses to move reads as a break.
+   Measured on 2026-09-06 with real wheel notches: the old way back held the
+   page still for 1.3s, then cut 900px, then the phone vanished — 2.5s of a
+   page that would not scroll. So: the closer empties in a third of a second,
+   the cut happens on the flight's FIRST frame, and from that frame the page
+   is the reader's again while the phone glides home over half a second. */
+const DUR_BACK = 520;
 const easeInOut = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 
 /* Where the flight exists: the two-column layout, without reduced motion.
@@ -128,6 +146,10 @@ export default function StoryCloser({ storyId, beats, accent, closer, closerId, 
     let armed = false;
     let flown = false;
     let flying = false;
+    // Which way the running move is going. The way back cuts the page above
+    // the closer itself, and that cut must not be mistaken for the reader
+    // turning around (see onIntersect).
+    let reversing = false;
 
     /*
       A FLIGHT CAN BE INTERRUPTED, and until 2026-09-01 nothing could stop one.
@@ -350,7 +372,7 @@ export default function StoryCloser({ storyId, beats, accent, closer, closerId, 
       a.style.opacity = "1";
       a.style.transform = "translateY(0px)";
       b.style.opacity = "1";
-      a.style.transition = b.style.transition = "translate .5s cubic-bezier(.4,0,.2,1)";
+      a.style.transition = b.style.transition = "translate .26s cubic-bezier(.4,0,.2,1)";
       b.style.translate = "110% 0";
       fs.appendChild(a);
       fs.appendChild(b);
@@ -398,40 +420,76 @@ export default function StoryCloser({ storyId, beats, accent, closer, closerId, 
          visible, and the phone glides up to where the story's phone stands —
          measured live AFTER the cut, because its sticky stage settles with the
          scroll and the landing has to be exact. */
+      let yCut = 0;
       const step = (now: number) => {
         if (dead) return;
-        const t = Math.min(1, (now - t0) / DUR);
-        if (!jumped && t >= JUMP) jumped = true;
-        if (drive.driving()) window.scrollTo(0, jumped ? scrollTo : scrollFrom);
-        const g = t < JUMP ? 0 : (t - JUMP) / (1 - JUMP);
-        const ge = easeInOut(g);
-        const tr = jumped ? storyPhoneRect() : null;
-        const B = tr ? { x: tr.left + tr.width / 2, y: tr.top + tr.height / 2, w: tr.width } : A;
-        const px = A.x + (B.x - A.x) * ge;
-        const vy = A.y + (B.y - A.y) * ge - 12 * Math.sin(Math.PI * g);
+        const t = Math.min(1, (now - t0) / DUR_BACK);
+        if (!jumped) {
+          // THE CUT IS THE FIRST FRAME. Act one has already emptied the
+          // closer around the phone, so there is nothing left to hold the
+          // page still for — the old 480ms of nothing before the jump was
+          // half a second of a page that would not move.
+          jumped = true;
+          if (drive.driving()) window.scrollTo(0, scrollTo);
+          yCut = window.scrollY;
+          // …and the page has arrived, so hand it straight back: stop
+          // driving, stop swallowing the wheel. From here the reader scrolls
+          // where they like and the phone still lands where it belongs,
+          // because both ends of the glide are measured against the document
+          // every frame.
+          drive.release();
+        }
+        const ge = easeInOut(t);
+        // where the phone left from, anchored to the DOCUMENT: a reader who
+        // keeps scrolling through the glide must not drag the take-off point
+        // up the page with them.
+        const shift = window.scrollY - yCut;
+        const ax = A.x, ay = A.y - shift;
+        const tr = storyPhoneRect();
+        const B = tr ? { x: tr.left + tr.width / 2, y: tr.top + tr.height / 2, w: tr.width } : { x: ax, y: ay, w: A.w };
+        const px = ax + (B.x - ax) * ge;
+        const vy = ay + (B.y - ay) * ge - 12 * Math.sin(Math.PI * t);
         const sc = (A.w + (B.w - A.w) * ge) / A.w;
         fl.style.transform = `translate(${px - (w0 * sc) / 2}px,${vy - (h0 * sc) / 2}px) scale(${sc})`;
-        if (!swapped && g >= 0.5) {
+        if (!swapped && t >= 0.35) {
           swapped = true;
           a.style.translate = "-110% 0";
           b.style.translate = "0 0";
         }
         // the story's words come back with the landing, not after it
-        if (g >= 0.7) story.current?.setGone(false);
+        if (t >= 0.6) story.current?.setGone(false);
         if (t < 1) {
           raf = requestAnimationFrame(step);
           return;
         }
-        if (drive.driving()) window.scrollTo(0, scrollTo);
         story.current?.setPhoneHidden(false); // theirs again, exactly here
         story.current?.setGone(false);
         fl.style.display = "none";
         fl.style.transform = "";
         unlisten();
         flying = false;
+        reversing = false;
         abort = null;
         flown = false;
         done();
+        // Put the closer away by hand. The observer saw it leave the bottom
+        // of the screen at the cut and was told to keep its hands off a
+        // running way back (see onIntersect) — so the re-parking that used to
+        // ride on that abort has to happen here, or scrolling down again
+        // arrives at a closer that is already open.
+        //
+        // …unless the reader turned around DURING the glide and is standing in
+        // the closer again. The page is theirs from the cut, so half a second
+        // is enough to scroll back into it — and the observer will not say so,
+        // because from its point of view the section never left. Re-parking it
+        // under them would strip the section they are looking at.
+        const r = sec!.getBoundingClientRect();
+        if (r.top < window.innerHeight - 120 && r.bottom > 120) {
+          c!.arriveInPlace();
+          armed = true;
+        } else {
+          c!.rewind();
+        }
       };
       raf = requestAnimationFrame(step);
     }
@@ -446,8 +504,15 @@ export default function StoryCloser({ storyId, beats, accent, closer, closerId, 
       let over = false;
       const secDocTop = y0 + sec!.getBoundingClientRect().top;
       const pinEnd = secDocTop + Math.max(0, sec!.offsetHeight - window.innerHeight);
-      const yT = Math.max(secDocTop, Math.min(y0, pinEnd));
-      const g0 = performance.now(), G = 240;
+      // Wherever in the pin the reader is, glide to the nearest framed spot —
+      // but NEVER back down. The wheel notch that starts the way back has
+      // already scrolled the page a little (it is passive; it is gone before
+      // this runs), and clamping up to the section's top spent the first
+      // 150ms putting that back: a measured 85px bounce DOWN under a reader
+      // pushing up. The page may stand still for a third of a second. It may
+      // not go the wrong way.
+      const yT = Math.min(y0, pinEnd);
+      const g0 = performance.now(), G = 180;
       // The way back, so the upward wheel is the one this act swallows.
       const drive = driveLock(false);
       const unlisten = drive.off;
@@ -488,6 +553,7 @@ export default function StoryCloser({ storyId, beats, accent, closer, closerId, 
 
     /* ── arriving, and leaving ──────────────────────────────────────── */
     const arrive = () => {
+      reversing = false;
       const st = storyPhoneRect();
       const near = !!st && st.width > 10 && st.bottom > 120 && st.top < window.innerHeight - 120;
       if (flies() && near) runFlight(() => {});
@@ -503,7 +569,12 @@ export default function StoryCloser({ storyId, beats, accent, closer, closerId, 
               // words had stepped aside for good. Stop the flight instead: it
               // puts the phone, the words and the closer back itself.
               if (flying) {
-                abort?.(true);
+                // …unless the move IS the way back: cutting the page above
+                // the closer is its own last act, not the reader turning
+                // around. Aborting it here is what killed the glide home
+                // stone dead — measured 2026-09-06, the phone appeared, sat
+                // still for half a second and blinked out at the cut.
+                if (!reversing) abort?.(true);
                 return;
               }
               armed = false;
@@ -565,6 +636,7 @@ export default function StoryCloser({ storyId, beats, accent, closer, closerId, 
       const r = sec.getBoundingClientRect(), mid = window.innerHeight / 2;
       if (r.top > mid || r.bottom < mid) return; // it is not what is on screen
       flying = true; // claimed from the first frame of the act
+      reversing = true;
       retract(() => runFlightBack(() => { armed = false; }));
     };
     // Always listening; onWheelUp is inert unless a flight has actually landed

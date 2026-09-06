@@ -225,6 +225,17 @@
    (its colour and glow follow the crew, so those transitions live here too). */
 .lc-label { transition: opacity 0.5s ease, color 0.6s ease-in-out, text-shadow 0.6s ease-in-out; }
 .lc-label.lc-pre { opacity: 0; }
+/* LEAVING IS NOT ARRIVING PLAYED BACKWARDS. Coming in, the letter has a full
+   second to swing out and the words 0.6s to walk in from the right, because
+   the reader is being carried into the piece. Going the other way the reader
+   is pushing UP and the page cannot move until this is over, so the same
+   moves are cut to about a third: everything is clearly on its way out, and
+   the page is the reader's again a third of a second after they asked.
+   (Set by the closers' own "out" state, cleared by every arrival and by
+   rewind.) */
+.lc-closer.lc-out .lc-letter.lc-rev { transition: opacity 0.24s ease 0.06s, transform 0.34s cubic-bezier(0.75, 0, 0.8, 0.15); }
+.lc-closer.lc-out .lc-words { transition: translate 0.32s cubic-bezier(0.4, 0, 0.9, 0.5), opacity 0.24s ease; }
+.lc-closer.lc-out .lc-label { transition: opacity 0.2s ease; }
 /* Pinned: a little taller than one screen, so the first wheel-notches after
    landing hold the picture still while the choreography finishes. */
 .lc-closer.lc-pinned { min-height: 135svh; }

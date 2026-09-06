@@ -156,6 +156,8 @@ export default function BladeLock({
   const [phone, setPhone] = useState<"hide" | "pre" | "in">("in");
   const [wordsPre, setWordsPre] = useState(false);
   const [labelPre, setLabelPre] = useState(false);
+  // The way OUT is quicker than the way in — see .lc-out in globals.css.
+  const [out, setOut] = useState(false);
   // The wheel is scaled to the room it has, in BOTH directions, and takes the
   // smaller of the two: on a phone to the width (the oars also fan on a tighter
   // radius so all eight blades stand inside the screen), and on any window to
@@ -408,16 +410,19 @@ export default function BladeLock({
       setPhone(mode);
       setWordsPre(true);
       setLabelPre(true);
+      setOut(false);
       setPose("park", 1, 0);
       setPose("form", 1, 0);
       renderFrame();
     },
     arriveAfterFlight: () => {
+      setOut(false);
       setPhone("in");
       later(() => setWordsPre(false), 220);
       playOars(240); // peek, hold, then spread onto the turning wheel
     },
     arriveInPlace: () => {
+      setOut(false);
       setPhone("pre");
       later(() => setPhone("in"), 30);
       later(() => setWordsPre(false), 320);
@@ -426,6 +431,7 @@ export default function BladeLock({
     retract: () =>
       new Promise<void>((resolve) => {
         clearTimers();
+        setOut(true);
         setWordsPre(true);
         setLabelPre(true);
         // hold the wheel still on whichever crew it is showing — the gather
@@ -434,15 +440,18 @@ export default function BladeLock({
         heldRef.current = true;
         tapHold.current = false; // the film's hold, not a tap's — it does not expire
         tapAt.current = 0;
-        setPose("form", 1, 600); // gather off the arc into the formation…
-        later(() => setPose("park", 1, 550), 650); // …and down behind the phone
-        later(resolve, 1200);
+        // Quick: this is the reader leaving, not arriving (see DUR_BACK in
+        // StoryCloser).
+        setPose("form", 1, 240); // gather off the arc into the formation…
+        later(() => setPose("park", 1, 230), 250); // …and down behind the phone
+        later(resolve, 450);
       }),
     setPhoneHidden: (h) => setPhone(h ? "hide" : "in"),
     rewind: () => {
       clearTimers();
       toHarvard();
       heldRef.current = true;
+      setOut(false);
       if (reduced) return;
       setPhone("hide");
       setWordsPre(true);
@@ -465,7 +474,7 @@ export default function BladeLock({
       data-closer="blades"
       data-phone-screens
       data-held={held || undefined}
-      className={`lc-closer relative z-[1] scroll-mt-20 border-t border-l-line ${pinned ? "lc-pinned" : ""}`}
+      className={`lc-closer relative z-[1] scroll-mt-20 border-t border-l-line ${pinned ? "lc-pinned" : ""} ${out ? "lc-out" : ""}`}
     >
       <div
         ref={stick}

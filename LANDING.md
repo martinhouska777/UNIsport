@@ -497,6 +497,22 @@ node verify-flight.mjs    # both closers: must fly, land dx=0 dy=0 dw=0
 node verify-reverse.mjs   # 11 assertions, scrolling back up
 ```
 
+For the LIVE site (a dev server on :3000, not the artifact):
+
+```
+cd scripts/landing
+node verify-site.mjs            # beats, pans, flip, click/dot nav, mobile
+node verify-site-flight.mjs     # both closers fly in and land dx=0 dy=0 dw=0
+node verify-site-reverse.mjs    # the way back: 12 assertions, real wheel notches
+```
+
+`verify-site-reverse.mjs` is the one that keeps 2026-09-06 fixed (see "The way
+back" below). It drives real wheel notches through CDP and asserts, per closer,
+that the page never travels DOWN while the reader pushes up, that it is held
+still no longer than the closer's own way out, and that the phone actually
+flies home and lands on the story's own phone. On the code before that fix it
+reports 9 of 12 FAILED.
+
 The verify scripts hardcode a Windows Chrome path and a Windows screenshot
 directory. On Linux, copy them and point `executablePath` at a local Chromium,
 adding `--no-sandbox` if running as root.
@@ -537,3 +553,51 @@ frozen at its load-time value. Verify in real headless Chrome.
    roadmap only the owner knows.
 
 Build each on a scratch route first so `/` never breaks.
+
+
+## 2026-09-06 — the way back was the broken half
+
+The owner: "koukni na to scrollovani nahoru z tech statickych animaci je to
+zabugovane chci aby to bylo fluent a rychle a smooth" — scrolling back UP out
+of a landed closer.
+
+**Measured first, with real wheel notches** (CDP `Input.dispatchMouseEvent`,
+one sample a frame — the same rig as the 2026-09-05 forward fix). Pushing up
+briskly out of Campus Colours:
+
+- **13 frames of the page going DOWN, 104px**, in the first 150ms. The first
+  wheel notch is passive and has already scrolled the page ~85px before the
+  way back is even called; `retract()` then clamped the page back up to the
+  section's top — which, from 85px above it, meant putting the reader back
+  DOWN, against their own hand.
+- **1.5 seconds of a page that would not move.** The retract film ran 1000ms
+  (1200 on Blade Lock) with the page pinned, and `runFlightBack` then spent
+  another 480ms (JUMP = 0.32) before its cut, holding it as well.
+- **The phone never flew.** `travelX` = 0px. The flight home appeared, sat
+  perfectly still for half a second, cut the page 900px — and the section
+  leaving the bottom of the screen fired the IntersectionObserver, whose
+  "scrolled back above it, put it away" branch called `abort(true)` and killed
+  the flight. Its own cut was being read as the reader turning around. The end
+  state was right, which is why `verify-site-flight.mjs` stayed green through
+  all of it: it only ever checked where things ENDED.
+
+**The fix** — the way back is not the way in played slowly:
+
+1. `retract()` never pulls the page back down (`yT = Math.min(y0, pinEnd)`).
+2. Both closers empty roughly three times faster: a new `lc-out` class on the
+   section shortens the letter's swing home and the words' exit in CSS, so the
+   ARRIVAL keeps its full, slower timing. Campus resolves at 340ms, Blade Lock
+   at 450ms (its oars gather 240 then sink 230).
+3. `runFlightBack` cuts on its FIRST frame (no JUMP) and runs 520ms, not 1500.
+4. At that cut the page has arrived, so the drive is RELEASED: no more
+   `scrollTo`, no more swallowed wheel. The reader is free while the phone is
+   still gliding, and the glide still lands because the take-off point is
+   anchored to the document and the target re-measured every frame.
+5. The observer no longer aborts a running way back (`reversing`), and
+   `runFlightBack` rewinds the closer itself at the end — that re-parking used
+   to ride on the abort.
+
+**After**: 0 reversals at every speed, both closers; held 364ms (campus) /
+466ms (blades) instead of 1500 / 1692; the phone travels 416px / 566px and
+lands dx=0 dy=1 dw=0. `verify-site.mjs` and `verify-site-flight.mjs` stay
+all-green — the way IN is untouched.

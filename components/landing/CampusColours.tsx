@@ -88,6 +88,8 @@ export default function CampusColours({
   const [phone, setPhone] = useState<Phase>("in");
   const [letter, setLetter] = useState<"in" | "pre" | "now" | "rev">("in");
   const [wordsPre, setWordsPre] = useState(false);
+  // The way OUT is quicker than the way in — see .lc-out in globals.css.
+  const [out, setOut] = useState(false);
   const stick = useRef<HTMLDivElement>(null);
   const phoneEl = useRef<HTMLDivElement>(null);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
@@ -173,8 +175,10 @@ export default function CampusColours({
       setPhone(mode);
       setLetter("pre");
       setWordsPre(true);
+      setOut(false);
     },
     arriveAfterFlight: () => {
+      setOut(false);
       setPhone("in"); // theirs, exactly here, takes over
       later(() => {
         setLetter("now");
@@ -186,6 +190,7 @@ export default function CampusColours({
       // The phone may be hidden waiting for a flight that is not coming: swap
       // the hiding for the slide-in entrance, so it arrives instead of just
       // appearing.
+      setOut(false);
       setPhone("pre");
       later(() => setPhone("in"), 30);
       later(() => setLetter("in"), 260);
@@ -196,14 +201,16 @@ export default function CampusColours({
       new Promise<void>((resolve) => {
         clearTimers();
         setCycling(false);
+        setOut(true);
         setWordsPre(true);
         setLetter("rev");
-        later(resolve, 1000); // the letter's full swing home
+        later(resolve, 340); // the letter is home and the words are gone
       }),
     setPhoneHidden: (h) => setPhone(h ? "hide" : "in"),
     rewind: () => {
       clearTimers();
       setCycling(false);
+      setOut(false);
       toHarvard();
       if (reduced) return;
       setPhone("hide");
@@ -225,7 +232,7 @@ export default function CampusColours({
       id={id}
       data-closer="campus"
       data-phone-screens
-      className={`lc-closer relative z-[1] scroll-mt-20 border-t border-l-line ${pinned ? "lc-pinned" : ""}`}
+      className={`lc-closer relative z-[1] scroll-mt-20 border-t border-l-line ${pinned ? "lc-pinned" : ""} ${out ? "lc-out" : ""}`}
     >
       <div
         ref={stick}
