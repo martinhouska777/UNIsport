@@ -334,7 +334,7 @@ function MatchScreen() {
         <div className="px-3 pb-4">
           <details className="group rounded-xl border border-border bg-surface-2" open={!!presetGym}>
             <summary className="tap44 flex cursor-pointer list-none items-center justify-between px-3.5 py-3 [&::-webkit-details-marker]:hidden">
-              <span className="text-sm font-medium text-text">Free at a set time?</span>
+              <span className="text-sm font-medium text-text">Find a partner by time</span>
               <span className="text-muted transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none">
                 <IconChevronDown size={16} />
               </span>

@@ -164,12 +164,12 @@ export default function BuddyBoard() {
       {/* POST — a button until you want it, then the form in its place. */}
       {!composing ? (
         <Button size="lg" full onClick={() => setComposing(true)}>
-          + Post what you want to train
+          + Post your session to the board
         </Button>
       ) : (
         <div className="flex flex-col gap-3 rounded-xl border border-border bg-surface-2 p-3.5">
           <div className="flex items-center justify-between">
-            <div className="text-sm font-medium text-text">Post what you want to train</div>
+            <div className="text-sm font-medium text-text">Post your session to the board</div>
             <button
               type="button"
               onClick={() => setComposing(false)}
