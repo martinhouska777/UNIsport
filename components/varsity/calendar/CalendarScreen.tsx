@@ -323,7 +323,16 @@ export default function CalendarScreen() {
               key={d.num}
               type="button"
               onClick={() => setPicked({ iso: d.iso, label })}
+              /*
+                A day with training stacks from the top, because the chips need
+                the room. A day with NOTHING sits its number in the middle
+                instead: rows are as tall as their busiest day, so a top-aligned
+                number on an empty Tuesday left a column of dead space under it
+                whenever a Monday beside it had two sessions.
+              */
               className={`flex flex-col overflow-hidden rounded-lg p-[3px] text-left ${
+                has ? "" : "justify-center"
+              } ${
                 d.today
                   ? "border border-primary bg-primary-tint"
                   : has
