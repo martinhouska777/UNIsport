@@ -105,6 +105,9 @@ function boatToLineup(
       init: a?.initials ?? "—",
       name: a?.name ?? "—",
       mine: !!(me && a && norm(a.name) === me),
+      // Which way this PERSON rows — the only marker beside their name in the
+      // boat. A coxswain has no side, so a cox row simply carries none.
+      side: a?.side,
     };
   };
   return {
@@ -117,6 +120,11 @@ function boatToLineup(
     seats: boat.seats.map((s, i) => ({ num: seatLabel(i), ...fill(s.athleteId) })),
     cox: boat.hasCox ? fill(boat.coxId) : undefined,
     oars: boat.oars?.trim() || undefined,
+    // The three the boat is READ by, kept apart from the display string above
+    // so a card can lay them out however it likes.
+    name: boat.name?.trim() || undefined,
+    dock: boat.dock?.trim() || undefined,
+    note: boat.note?.trim() || undefined,
     // Carried through so the athlete's Home can hang this boat's video off it —
     // the same boat record the coach's builder attaches footage to.
     dayKey,

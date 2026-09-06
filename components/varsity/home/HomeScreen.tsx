@@ -658,8 +658,9 @@ function DriveBar({ onUpload }: { onUpload: () => void }) {
   before the rest of the page. Now the section holds only the boat you are in,
   already open, and "All boats" opens the day's full sheet on its own page.
 
-  When we cannot tell which boat is yours, we say so rather than showing all of
-  them again — but the door is right there, so nothing is out of reach.
+  When you are not in a boat, the section is simply EMPTY — see below. The two
+  doors out of an empty day are already on the screen: the arrows above step to
+  another day, and "All boats" opens this day's full sheet.
 */
 function LineupCard({
   lineups,
@@ -686,16 +687,18 @@ function LineupCard({
           All boats{total ? ` · ${total}` : ""} <IconChevronRight size={12} />
         </Link>
       </div>
-      {mine.length > 0 ? (
+      {/*
+        NOT IN A BOAT? Then nothing — on the owner's call. A paragraph
+        explaining that you are not in a boat is a paragraph telling you what
+        the empty space already said, and it said it every single day somebody
+        was ashore. The two ways on are still right there: the arrows step to
+        another day, and "All boats" opens the day's full sheet.
+      */}
+      {mine.length > 0 && (
         <div className="flex flex-col gap-3">
           {mine.map((l, i) => (
             <LineupBoatCard key={i} l={l} defaultOpen />
           ))}
-        </div>
-      ) : (
-        <div className="rounded-xl border border-dashed border-border bg-surface px-4 py-4 text-center text-[12px] text-muted">
-          You are not in a boat {onToday ? "today" : "that day"} — or the app could not
-          match your name to a seat. Every published boat is on the All boats page.
         </div>
       )}
     </div>
