@@ -25,9 +25,12 @@ import { buildAthleteHome, daySessionToCard } from "@/lib/varsity/athleteHome";
 import { SkeletonCards, SkeletonLines } from "@/components/ui/Skeleton";
 import SectionLabel from "@/components/ui/SectionLabel";
 import {
+  crewName,
+  dockTime,
   kindBar,
   kindBlock,
   kindLegend,
+  shellName,
   type HomeData,
   type Greeting as GreetingData,
   type Race as RaceData,
@@ -590,13 +593,27 @@ function SessionCard({ s, lineups = [] }: { s: TodaySession; lineups?: Lineup[] 
       {open &&
         boats.map((l, i) => (
           <div key={i} className="border-t border-border bg-background/40 px-3 py-3">
+            {/* Which boat this is and when it pushes off. Built from the parts
+                rather than the stored display string, so a lineup whose old
+                dock field holds a BOATHOUSE doesn't print one where the time
+                goes (lib/varsity/home → dockTime). */}
             <div className="mb-2 text-[8px] font-semibold tracking-[0.12em] text-muted">
-              {l.period.toUpperCase()}
+              {[l.periodKey, crewName(l), dockTime(l)].filter(Boolean).join(" · ").toUpperCase()}
             </div>
             <LineupSeats l={l} />
-            {l.oars && (
+            {/* The two things you carry down to the water, in the same order
+                the full boat card gives them: which shell, then which oars. */}
+            {shellName(l) && (
               <div className="mt-2 flex items-center gap-2 text-[11px] text-muted">
                 <IconAnchor size={13} />
+                <span className="font-mono text-[9px] tracking-[0.12em]">BOAT</span>
+                <span className="text-text">{shellName(l)}</span>
+              </div>
+            )}
+            {l.oars && (
+              <div className="mt-1 flex items-center gap-2 text-[11px] text-muted">
+                <IconAnchor size={13} />
+                <span className="font-mono text-[9px] tracking-[0.12em]">OARS</span>
                 <span className="text-text">{l.oars}</span>
               </div>
             )}

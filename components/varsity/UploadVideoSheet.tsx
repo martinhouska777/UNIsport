@@ -26,7 +26,7 @@
 import { useEffect, useRef, useState } from "react";
 import Sheet from "@/components/varsity/Sheet";
 import { IconPlus, IconVideo, IconCheckCircle } from "@/components/icons";
-import { dayKeyLabel, parseSessionKey, sessionLabel } from "@/lib/varsity/coachPlan";
+import { dayKeyLabel, isOnWater, parseSessionKey, sessionLabel } from "@/lib/varsity/coachPlan";
 import { fetchLineup, fetchLineupStatuses } from "@/lib/varsity/lineupStore";
 import { fetchPlan } from "@/lib/varsity/planStore";
 import { uploadCrewVideo, videoBoatName, videoSuggestedName } from "@/lib/varsity/crewVideos";
@@ -40,9 +40,12 @@ type Practice = { dayKey: string; label: string; workout: string; at: number };
 const DAYS_BACK = 7;
 
 /*
-  Every published practice in that window, newest first — the order somebody
-  posting footage thinks in ("this morning", "yesterday afternoon"). Drafts are
-  left out: a lineup the squad cannot see yet is not one they can film.
+  Every published WATER practice in that window, newest first — the order
+  somebody posting footage thinks in ("this morning", "yesterday afternoon").
+
+  WATER ONLY, on the owner's call: video here is footage of a crew rowing, and
+  an erg session or a lift has no boat to film. Drafts are left out too — a
+  lineup the squad cannot see yet is not one they can film.
 
   Each row also carries WHAT WAS DONE, in the coach's own words out of the
   plan — "Thu 3 Sep · PM" alone does not tell you which of two outings you are
@@ -63,6 +66,9 @@ async function fetchPractices(): Promise<Practice[]> {
       const day = parsed.date.getTime();
       if (day < oldest || day > todayStart.getTime()) return null;
       const session = plan.sessions[dayKey];
+      // Not on the water, not filmable. A published lineup that has lost its
+      // plan session is left out with them: nothing says it was an outing.
+      if (!isOnWater(session)) return null;
       // A nudge for PM, so two practices on one day sort morning-then-afternoon.
       const at = day + (parsed.period === "PM" ? 1 : 0);
       return {
@@ -219,8 +225,8 @@ export default function UploadVideoSheet({ onClose }: { onClose: () => void }) {
           <div className="text-[12px] text-muted">Loading practices…</div>
         ) : practices.length === 0 ? (
           <div className="rounded-xl border border-dashed border-border px-3 py-4 text-center text-[12px] text-muted">
-            No published lineups in the last week. A video hangs on a crew, so
-            there has to be a boat to hang it on.
+            No published water practices in the last week. A video hangs on a
+            crew, so there has to be a boat to hang it on.
           </div>
         ) : (
           <div className="flex max-h-44 flex-col gap-1.5 overflow-y-auto">

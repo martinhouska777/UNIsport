@@ -27,7 +27,14 @@ import { useState } from "react";
 import CrewVideoStrip from "@/components/varsity/CrewVideoStrip";
 import { IconChevronDown, IconChevronUp } from "@/components/icons";
 import { sideMeta, COX_COLOR, COX_INK, COX_TAG, COX_LABEL } from "@/lib/varsity/coachLineup";
-import { boatHeading, crewName, type Lineup, type Seat } from "@/lib/varsity/home";
+import {
+  boatHeading,
+  crewName,
+  dockTime,
+  shellName,
+  type Lineup,
+  type Seat,
+} from "@/lib/varsity/home";
 
 /* Is this the reader's own boat? Their seat, or the cox's seat, is marked when
    the lineup is built (lib/varsity/lineupStore.ts). */
@@ -252,6 +259,12 @@ export default function LineupBoatCard({
 }) {
   const [open, setOpen] = useState(defaultOpen);
   const crew = crewName(l);
+  /* The two things the card has to be right about at a glance: WHEN it pushes
+     off, and WHICH shell to carry down. Both come back null rather than showing
+     something that isn't one — a boathouse name left in the old dock field is
+     not a time (lib/varsity/home → dockTime). */
+  const time = dockTime(l);
+  const shell = shellName(l);
 
   return (
     <div className="overflow-hidden rounded-xl border border-border bg-surface">
@@ -277,9 +290,10 @@ export default function LineupBoatCard({
               rig — you scan the column for "AM 8+" and land on the name. */}
           {crew && <span className="min-w-0 truncate text-[14px] text-muted">{crew}</span>}
         </span>
-        {l.dock && (
+        {/* THE PUSH-OFF TIME, and only ever a time. */}
+        {time && (
           <span className="flex-shrink-0 font-mono text-[13px] font-medium text-text-2">
-            {l.dock}
+            {time}
           </span>
         )}
         <span className="flex-shrink-0 text-muted">
@@ -302,12 +316,11 @@ export default function LineupBoatCard({
               </div>
             )}
             <LineupSeats l={l} />
-            {/* Then the two things you carry down to the water: which shell,
-                and which oars off the rack. A boat still called "New 8+" has
-                not been named, so there is nothing to write on the BOAT line —
-                `crewName` returns a person's surname in that case, which is not
-                the name painted on the hull. */}
-            {l.name && l.name === crew && <InfoRow label="BOAT" value={l.name} />}
+            {/* Then the two things you carry down to the water: WHICH SHELL —
+                the name painted on the boat, "Hosea", "Mississippi" — and WHICH
+                OARS off the rack. A boat still called "New 8+" has not been
+                named, so there is nothing to write on the BOAT line. */}
+            {shell && <InfoRow label="BOAT" value={shell} />}
             {l.oars && <InfoRow label="OARS" value={l.oars} />}
           </div>
           {/*

@@ -166,20 +166,20 @@ begin
   -- Seats reference the roster ids in lib/varsity/coachLineup.ts. Two variants
   -- so consecutive practices are not identical.
   boats_a := '[
-    {"id":"boat-1v","badge":"8+","name":"1V","dock":"Newell","note":"Two by twenty at rate 20. Full pressure off the second piece.","hasCox":true,"coxId":"cate-frerichs",
+    {"id":"boat-1v","badge":"8+","name":"Hosea","dock":"7:15am","oars":"Red set","note":"Two by twenty at rate 20. Full pressure off the second piece.","hasCox":true,"coxId":"cate-frerichs",
      "seats":[{"label":"1","athleteId":"asante-kiio"},{"label":"2","athleteId":"luca-vicino"},{"label":"3","athleteId":"marcus-chung"},{"label":"4","athleteId":"mason-cruz-abrams"},{"label":"5","athleteId":"jack-dorney"},{"label":"6","athleteId":"john-brown"},{"label":"7","athleteId":"alexander-grundy"},{"label":"S","athleteId":"george-farkas"}]},
-    {"id":"boat-2v","badge":"8+","name":"2V","dock":"Newell","note":"Stay behind the 1V through the Powerhouse.","hasCox":true,"coxId":"micah-john",
+    {"id":"boat-2v","badge":"8+","name":"Mississippi","dock":"7:15am","oars":"Blue set","note":"Stay behind the 1V through the Powerhouse.","hasCox":true,"coxId":"micah-john",
      "seats":[{"label":"1","athleteId":"sam-gallaudet"},{"label":"2","athleteId":"marco-gandola"},{"label":"3","athleteId":"apostolos-lykomitros"},{"label":"4","athleteId":"tyler-horler"},{"label":"5","athleteId":"teddy-plimpton"},{"label":"6","athleteId":"sam-davidson"},{"label":"7","athleteId":"jordan-dykema"},{"label":"S","athleteId":"jack-hansen-knarhoi"}]},
-    {"id":"boat-3v","badge":"4+","name":"3V","dock":"Weld","note":"Technical work, half pressure.","hasCox":true,"coxId":"iris-hennin",
+    {"id":"boat-3v","badge":"4+","name":"Kestrel","dock":"7:30am","oars":"White set","note":"Technical work, half pressure.","hasCox":true,"coxId":"iris-hennin",
      "seats":[{"label":"1","athleteId":"owen-finnerty"},{"label":"2","athleteId":"marco-vicino"},{"label":"3","athleteId":"pierce-lapham"},{"label":"S","athleteId":"julian-paul"}]}
   ]'::jsonb;
 
   boats_b := '[
-    {"id":"boat-1v","badge":"8+","name":"1V","dock":"Newell","note":"Head race practice — full course, no stopping.","hasCox":true,"coxId":"nick-yoo",
+    {"id":"boat-1v","badge":"8+","name":"Hosea","dock":"7:15am","oars":"Red set","note":"Head race practice — full course, no stopping.","hasCox":true,"coxId":"nick-yoo",
      "seats":[{"label":"1","athleteId":"asante-kiio"},{"label":"2","athleteId":"marcus-chung"},{"label":"3","athleteId":"luca-vicino"},{"label":"4","athleteId":"jack-dorney"},{"label":"5","athleteId":"john-brown"},{"label":"6","athleteId":"mason-cruz-abrams"},{"label":"7","athleteId":"george-farkas"},{"label":"S","athleteId":"alexander-grundy"}]},
-    {"id":"boat-2v","badge":"8+","name":"2V","dock":"Newell","note":"Rate cap 26 until the bridge.","hasCox":true,"coxId":"nat-toms",
+    {"id":"boat-2v","badge":"8+","name":"Mississippi","dock":"7:15am","oars":"Blue set","note":"Rate cap 26 until the bridge.","hasCox":true,"coxId":"nat-toms",
      "seats":[{"label":"1","athleteId":"sam-gallaudet"},{"label":"2","athleteId":"apostolos-lykomitros"},{"label":"3","athleteId":"marco-gandola"},{"label":"4","athleteId":"teddy-plimpton"},{"label":"5","athleteId":"tyler-horler"},{"label":"6","athleteId":"jordan-dykema"},{"label":"7","athleteId":"sam-davidson"},{"label":"S","athleteId":"jack-hansen-knarhoi"}]},
-    {"id":"boat-4","badge":"4-","name":"Small boat","dock":"Weld","note":"Steering practice.","hasCox":false,"coxId":null,
+    {"id":"boat-4","badge":"4-","name":"Kestrel","dock":"7:30am","oars":"White set","note":"Steering practice.","hasCox":false,"coxId":null,
      "seats":[{"label":"1","athleteId":"ben-scott"},{"label":"2","athleteId":"sam-woodgate"},{"label":"3","athleteId":"mike-thomas"},{"label":"S","athleteId":"joseph-baker"}]}
   ]'::jsonb;
 

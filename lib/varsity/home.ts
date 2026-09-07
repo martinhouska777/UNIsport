@@ -147,6 +147,35 @@ export type Lineup = {
 */
 export const boatHeading = (l: Lineup) => `${l.periodKey} ${l.badge ?? l.type}`;
 
+/*
+  IS THIS A PUSH-OFF TIME?
+
+  `boat.dock` is the time the crew pushes off, and the coach's builder only ever
+  offers times. Lineups written before that — the demo squad included — used the
+  same field for the BOATHOUSE ("Newell", "Weld"), and a card that prints
+  whatever it finds put a boathouse where the athlete looks for a time. So the
+  time slot on a card asks first, and shows nothing rather than something that
+  is not a time.
+*/
+const PUSH_OFF_TIME = /^\d{1,2}[:.]\d{2}\s*(am|pm)?$/i;
+export const isPushOffTime = (s?: string | null): boolean =>
+  !!s && PUSH_OFF_TIME.test(s.trim());
+
+/** When the boat pushes off, or null when nobody set a time. */
+export const dockTime = (l: Lineup): string | null =>
+  isPushOffTime(l.dock) ? l.dock!.trim() : null;
+
+/*
+  WHICH SHELL TO CARRY DOWN — "Hosea", "Mississippi". The coach types it in the
+  builder's BOAT field; a boat still called "New 8+" has not been named, so
+  there is nothing to write on the BOAT line.
+*/
+export function shellName(l: Lineup): string | null {
+  const named = l.name?.trim();
+  if (!named || named === defaultBoatName(l.badge ?? "")) return null;
+  return named;
+}
+
 /** "Cate Frerichs" → "Frerichs". A crew is known by a surname, not a full name. */
 const surname = (full: string) => full.trim().split(/\s+/).pop() || full;
 
@@ -164,8 +193,8 @@ const surname = (full: string) => full.trim().split(/\s+/).pop() || full;
   rig really is all there is to say.
 */
 export function crewName(l: Lineup): string | null {
-  const named = l.name?.trim();
-  if (named && named !== defaultBoatName(l.badge ?? "")) return named;
+  const named = shellName(l);
+  if (named) return named;
   const cox = l.cox?.name;
   if (cox && cox !== "—") return surname(cox);
   // The stroke sits LAST in the array — the seats run bow → stroke.

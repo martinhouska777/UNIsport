@@ -8,7 +8,7 @@
 */
 import { createClient, hasSupabaseEnv } from "@/lib/supabase/client";
 import { rosterById, boatTypes, seatLabel, type Boat } from "./coachLineup";
-import type { Lineup } from "./home";
+import { isPushOffTime, type Lineup } from "./home";
 
 export type LineupStatus = "draft" | "published";
 export type StoredLineup = { boats: Boat[]; status: LineupStatus };
@@ -111,7 +111,9 @@ function boatToLineup(
     };
   };
   return {
-    period: `${period} · ${boat.name}${boat.dock ? ` · ${boat.dock}` : ""}`,
+    // The display string, kept honest: the dock field only joins it when it
+    // really holds a push-off time (older lineups wrote a BOATHOUSE there).
+    period: `${period} · ${boat.name}${isPushOffTime(boat.dock) ? ` · ${boat.dock.trim()}` : ""}`,
     periodKey: period === "PM" ? "PM" : "AM",
     type: boatTypeName(boat.badge),
     // The seat number is its POSITION in the boat (bow is 1), not whatever the
