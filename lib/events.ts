@@ -1,33 +1,43 @@
 /*
   EVENTS — the short races that run alongside the boards, as DATA.
   ---------------------------------------------------------------------------
-  A board is a standing. An EVENT is the opposite of that on purpose: it opens
-  on a Monday or the 1st, it is gone when the window closes, and finishing it
-  pays BONUS POINTS on top of whatever the sessions were already worth. That is
-  the reason to open the app on a Monday rather than at the end of term.
+  A board is a standing. An EVENT is a TASK with a deadline: it opens on a
+  Monday or the 1st, it is gone when the window closes, and finishing it pays
+  BONUS POINTS on top of whatever the sessions were already worth. That is the
+  reason to open the app on a Monday rather than at the end of term.
 
-  TWO KINDS, and they are not the same thing:
+  FIVE TASKS, at two scales. The weekly and monthly lists are the same five
+  things asked at a week's scale and a month's scale, plus one distance event
+  that only makes sense over a month:
 
-    PERSONAL — yours. One weekly and two monthly running at once.
-    THE INTERHOUSE RACE — one a month, run by every eligible house at once and
-               ranked. It pays into the HOUSE's points, not yours.
+    Train 3 days          turn up
+    Train 5 days          turn up more
+    Meet somebody new     the whole point of the app
+    Train with 3 partners not necessarily new ones — just don't train alone
+    Hybrid athlete        both kinds of training in the same window
 
-  THE RACE IS GATED, AND THE GATE IS THE POINT. A house has to have earned
-  `HOUSE_ENTRY_PER_MEMBER` points per member, all time, before it can enter.
-  That turns "we need more people using this" from a wish into a door with a
-  number on it — and because it is per member, a big house cannot open it on
-  size and three keen people cannot carry a house of forty.
+  ONE WEEKLY AND TWO MONTHLY RUN AT ONCE.
+
+  WHY EVENTS HAVE ROUTES. "Hybrid athlete" is finished by three lifts and two
+  cardio sessions, OR by two lifts and three cardio — a runner who lifts twice
+  has done the same work as a lifter who runs twice, and one list of conditions
+  cannot say that. So an event carries several ROUTES, each route a list of
+  conditions, and the event is finished when ANY ONE route is complete. Ordinary
+  events are one route of one condition, so nothing downstream needs a special
+  case.
+
+  THE INTERHOUSE RACE is one a month, run by every eligible house at once and
+  ranked, and it pays into the HOUSE's points. It is GATED: a house has to have
+  earned `HOUSE_ENTRY_PER_MEMBER` points per member, all time, before it can
+  enter. That turns "we need more people using this" from a wish into a door
+  with a number on it — and because it is per member, a big house cannot open
+  it on size and three keen people cannot carry a house of forty.
 
   NO ADMIN, EVER. Which event runs is decided by the WEEK or MONTH NUMBER, so
   the whole campus sees the same one, it changes on its own, and nobody has to
-  remember to set anything. Adding an event later is an entry in one of the
-  lists below — data, not code (rule 7).
-
-  WHY EVENTS HAVE PARTS. Most ask one thing ("train five days"). One asks two
-  at once — three lifts AND two runs in a week — and a single metric with a
-  single number cannot express that. So every event carries a LIST of
-  conditions and is finished when all of them are met. A one-condition event is
-  just a list of one, so there is no special case anywhere downstream.
+  remember to set anything. Adding one later is an entry in a list below — data,
+  not code (rule 7). Counting them is db/events.sql, which knows the metrics
+  but not the targets.
 */
 
 /* ─────────────────────────────  the gate  ───────────────────────────── */
@@ -52,11 +62,14 @@ export const HOUSE_ENTRY_PER_MEMBER = 60;
   without that a single long ride would win any distance event outright.
 
   ANYTHING NOT NAMED HERE COUNTS 1:1. That is the safe default rather than the
-  correct one, and swimming is the case worth knowing about: it is the most
-  logged cardio on this campus by a distance, and a swum kilometre is far harder
-  than a run one, so at 1:1 swimmers have the easiest route to a distance event.
-  Left at 1 deliberately — it is one number here to change once somebody
-  decides what a swum kilometre is worth.
+  correct one, and swimming is the case worth knowing about: it is logged nearly
+  as often as running on this campus, and a swum kilometre is far harder than a
+  run one. It matters less than it sounds — the swims that get logged average
+  1.5 km against running's 6.0 — so it is left at 1 deliberately, as one number
+  to change once somebody decides what a swum kilometre is worth.
+
+  These weights are mirrored in db/events.sql, which does the summing. This file
+  stays the place they are DECIDED.
 */
 export const distanceWeight: Record<string, number> = {
   running: 1,
@@ -79,8 +92,8 @@ export const unitToKm: Record<string, number> = {
  * What one logged session's distance is worth, in weighted kilometres.
  *
  * `kind` is the activity for a run and the cardio type otherwise ("Rowing",
- * "Cycling", "Swimming"), lowercased by the caller — the stored values are
- * capitalised and the weights above are not.
+ * "Cycling", "Swimming") — the stored values are capitalised and the weights
+ * above are not, so both sides are lowercased here.
  */
 export function weightedKm(distance: number, unit: string, kind: string): number {
   if (!Number.isFinite(distance) || distance <= 0) return 0;
@@ -91,34 +104,41 @@ export function weightedKm(distance: number, unit: string, kind: string): number
 /* ─────────────────────────────  types  ───────────────────────────── */
 
 /**
- * Everything an event can be measured on. Each one is countable from the
+ * Everything an event can be measured on. Every one is countable from the
  * workout_logs a person already has — nothing here needs a new question asked
- * at logging time.
+ * at logging time. Counted by db/events.sql.
  */
 export type EventMetric =
   | "days" // separate days trained on
-  | "newPartners" // people trained with for the first time ever
+  | "newPartners" // people trained with for the FIRST time ever
+  | "partners" // different people trained with, new or not
   | "gymSessions" // sessions logged as a gym session
-  | "runSessions" // sessions logged as a run
+  | "cardioSessions" // sessions logged as a run or as cardio
   | "distance" // weighted kilometres (see above)
   | "actives"; // house only: how many members trained at all
 
 export type EventWindow = "week" | "month";
 
-/** One condition. An event is finished when every part of it is met. */
+/** One condition. */
 export type EventPart = {
   metric: EventMetric;
   target: number;
-  /** How this part reads on a progress bar: "days", "runs", "km". */
+  /** How this part reads on a progress bar: "days", "lifts", "km". */
   unit: string;
 };
+
+/**
+ * One way to finish an event: every condition in it must be met. An event with
+ * several routes is finished by whichever one you complete first.
+ */
+export type EventRoute = EventPart[];
 
 export type SportEvent = {
   key: string;
   title: string;
   /** One line, plain English, saying what finishing it takes. */
   blurb: string;
-  parts: EventPart[];
+  routes: EventRoute[];
   /** Bonus points on finishing. A house event pays the house. */
   points: number;
   window: EventWindow;
@@ -130,56 +150,61 @@ export type SportEvent = {
   perMember?: boolean;
 };
 
+/** Shorthand for the ordinary case: one route, one condition. */
+const one = (metric: EventMetric, target: number, unit: string): EventRoute[] => [
+  [{ metric, target, unit }],
+];
+
 /* ═════════════════════════  personal · weekly  ═════════════════════════ */
 
-/*
-  One of these runs each week, chosen by the week number. Two shapes only, on
-  purpose: TURN UP (three days, five days) and MEET SOMEBODY (one, three), plus
-  the hybrid that asks for both kinds of training in the same week. Nothing in
-  here is "log more sessions", which is only the boards again in a smaller font.
-*/
 export const weeklyEvents: SportEvent[] = [
   {
     key: "w-three-days",
-    title: "Three days",
+    title: "Train 3 days",
     blurb: "Train on three separate days before Sunday night.",
-    parts: [{ metric: "days", target: 3, unit: "days" }],
+    routes: one("days", 3, "days"),
     points: 60,
     window: "week",
   },
   {
     key: "w-five-days",
-    title: "Five days",
+    title: "Train 5 days",
     blurb: "Turn up on five separate days this week.",
-    parts: [{ metric: "days", target: 5, unit: "days" }],
+    routes: one("days", 5, "days"),
     points: 100,
     window: "week",
   },
   {
-    key: "w-one-new",
+    key: "w-somebody-new",
     title: "Meet somebody new",
     blurb: "Train with one person you have never trained with before.",
-    parts: [{ metric: "newPartners", target: 1, unit: "people" }],
+    routes: one("newPartners", 1, "people"),
     points: 70,
     window: "week",
   },
   {
-    key: "w-three-new",
-    title: "Three new people",
-    blurb: "Three people you had never trained with before, in one week.",
-    parts: [{ metric: "newPartners", target: 3, unit: "people" }],
-    points: 140,
+    key: "w-three-partners",
+    title: "Train with 3 partners",
+    blurb: "Three different people this week. They don't have to be new — just don't train alone.",
+    routes: one("partners", 3, "people"),
+    points: 120,
     window: "week",
   },
   {
     key: "w-hybrid",
-    title: "Three lifts, two runs",
-    blurb: "Five sessions this week — but three of them in a gym and two on your feet.",
-    parts: [
-      { metric: "gymSessions", target: 3, unit: "lifts" },
-      { metric: "runSessions", target: 2, unit: "runs" },
+    title: "Hybrid athlete",
+    blurb: "Five sessions, both kinds: three lifts and two cardio, or two lifts and three cardio.",
+    routes: [
+      [
+        { metric: "gymSessions", target: 3, unit: "lifts" },
+        { metric: "cardioSessions", target: 2, unit: "cardio" },
+      ],
+      [
+        { metric: "gymSessions", target: 2, unit: "lifts" },
+        { metric: "cardioSessions", target: 3, unit: "cardio" },
+      ],
     ],
-    points: 120,
+    points: 130,
     window: "week",
   },
 ];
@@ -187,64 +212,80 @@ export const weeklyEvents: SportEvent[] = [
 /* ═════════════════════════  personal · monthly  ═════════════════════════ */
 
 /*
-  The same challenges at a month's scale, plus the distance one — a month is
-  long enough for kilometres to be worth asking for, where a week is not (the
-  app has no watch and no Strava import, so a weekly distance event would sit
-  at 12% all week and teach people the events are decoration).
-
-  TWO of these run at once, chosen by the month number, so a month always has
-  a long target and a second one alongside it.
+  The same five tasks at a month's scale — a week times four, near enough,
+  rounded to numbers a person would actually say out loud — plus the distance
+  one. Distance is MONTHLY ONLY: the app has no watch and no Strava import, so
+  kilometres exist only if somebody typed them in, and a weekly distance event
+  would sit at 12% all week and teach people the events are decoration. A month
+  is long enough for the people who do log their runs to finish it.
 */
 export const monthlyEvents: SportEvent[] = [
   {
-    key: "m-hundred",
-    title: "The Hundred",
-    blurb: "A hundred kilometres this month. Running and rowing count in full, cycling a third.",
-    parts: [{ metric: "distance", target: 100, unit: "km" }],
-    points: 300,
-    window: "month",
-  },
-  {
     key: "m-thirteen-days",
-    title: "Thirteen days",
-    blurb: "Train on thirteen separate days — three a week, near enough.",
-    parts: [{ metric: "days", target: 13, unit: "days" }],
+    title: "Train 13 days",
+    blurb: "Thirteen separate days this month — three a week, near enough.",
+    routes: one("days", 13, "days"),
     points: 250,
     window: "month",
   },
   {
     key: "m-twenty-days",
-    title: "Twenty days",
+    title: "Train 20 days",
     blurb: "Twenty separate days in one month. Five a week, all month.",
-    parts: [{ metric: "days", target: 20, unit: "days" }],
+    routes: one("days", 20, "days"),
     points: 400,
     window: "month",
   },
   {
     key: "m-four-new",
-    title: "Four new people",
+    title: "Meet 4 new people",
     blurb: "Four people you had never trained with before.",
-    parts: [{ metric: "newPartners", target: 4, unit: "people" }],
-    points: 280,
+    routes: one("newPartners", 4, "people"),
+    points: 300,
     window: "month",
   },
   {
-    key: "m-ten-new",
-    title: "Ten new people",
-    blurb: "Ten people you had never trained with before, in one month.",
-    parts: [{ metric: "newPartners", target: 10, unit: "people" }],
-    points: 500,
+    /*
+      SIX, not the twelve a straight week-times-four would give. Partners are
+      the one task that does not scale with the calendar — you run out of
+      people you know long before you run out of days, and a target that can
+      only be hit by treating training as networking is a target people ignore.
+    */
+    key: "m-six-partners",
+    title: "Train with 6 partners",
+    blurb: "Six different people over the month. New or not — just not alone.",
+    routes: one("partners", 6, "people"),
+    points: 350,
     window: "month",
   },
   {
+    /*
+      Sixteen sessions, not the twenty that four times the weekly one would
+      ask. Twenty is five a week every week, which is a serious athlete's
+      month, and this task is meant to be about the MIX rather than the volume.
+    */
     key: "m-hybrid",
-    title: "Twelve lifts, eight runs",
-    blurb: "Both kinds of training, all month: twelve in a gym and eight on your feet.",
-    parts: [
-      { metric: "gymSessions", target: 12, unit: "lifts" },
-      { metric: "runSessions", target: 8, unit: "runs" },
+    title: "Hybrid athlete",
+    blurb: "Both kinds, all month: ten lifts and six cardio, or six lifts and ten cardio.",
+    routes: [
+      [
+        { metric: "gymSessions", target: 10, unit: "lifts" },
+        { metric: "cardioSessions", target: 6, unit: "cardio" },
+      ],
+      [
+        { metric: "gymSessions", target: 6, unit: "lifts" },
+        { metric: "cardioSessions", target: 10, unit: "cardio" },
+      ],
     ],
-    points: 450,
+    points: 420,
+    window: "month",
+  },
+  {
+    key: "m-hundred",
+    title: "The Hundred",
+    blurb: "A hundred kilometres this month. Running and rowing count in full, cycling a third.",
+    routes: one("distance", 100, "km"),
+    points: 300,
     window: "month",
   },
 ];
@@ -253,16 +294,16 @@ export const monthlyEvents: SportEvent[] = [
 
 /*
   NOT SETTLED YET — the owner is deciding these, and this list is a placeholder
-  so the gate below has something to gate. What IS settled is the shape: one a
-  month, every house past the gate running the same one, targets PER MEMBER so
-  a race is about how much of a house turns out rather than how big it is.
+  so the gate has something to gate. What IS settled is the shape: one a month,
+  every house past the gate running the same one, targets PER MEMBER so a race
+  is about how much of a house turns out rather than how big it is.
 */
 export const houseEvents: SportEvent[] = [
   {
     key: "h-everyone-in",
     title: "Everyone in",
     blurb: "Get every single member to log at least one session this month.",
-    parts: [{ metric: "actives", target: 1, unit: "members" }],
+    routes: one("actives", 1, "members"),
     perMember: true,
     points: 1200,
     window: "month",
@@ -312,39 +353,70 @@ export function houseEventNow(now = new Date()): SportEvent {
 
 /* ─────────────────────────────  progress  ───────────────────────────── */
 
-/**
- * What one part of an event actually asks for. A house target is multiplied by
- * how many people live there.
- */
+/** What one condition asks for. A house target is multiplied by its members. */
 export function partTarget(event: SportEvent, part: EventPart, members = 1): number {
   return event.perMember ? part.target * Math.max(members, 1) : part.target;
 }
 
-/** Finished only when every condition is met — see "WHY EVENTS HAVE PARTS". */
-export function eventDone(
-  event: SportEvent,
-  counts: Partial<Record<EventMetric, number>>,
-  members = 1,
-): boolean {
-  return event.parts.every(
-    (p) => (counts[p.metric] ?? 0) >= partTarget(event, p, members),
-  );
-}
+export type EventCounts = Partial<Record<EventMetric, number>>;
 
-/** 0–1 across the whole event: the least-finished condition decides it. */
-export function eventProgress(
+/** 0–1 for one route: its least-finished condition decides it. */
+function routeProgress(
   event: SportEvent,
-  counts: Partial<Record<EventMetric, number>>,
-  members = 1,
+  route: EventRoute,
+  counts: EventCounts,
+  members: number,
 ): number {
-  if (event.parts.length === 0) return 0;
+  if (route.length === 0) return 0;
   return Math.min(
-    ...event.parts.map((p) => {
+    ...route.map((p) => {
       const target = partTarget(event, p, members);
       if (target <= 0) return 1;
       return Math.min((counts[p.metric] ?? 0) / target, 1);
     }),
   );
+}
+
+/**
+ * How far along the event is, 0–1 — measured on whichever route you are
+ * closest to finishing. A lifter who has run twice is judged by the route that
+ * suits them, not by the one they were never going to take.
+ */
+export function eventProgress(
+  event: SportEvent,
+  counts: EventCounts,
+  members = 1,
+): number {
+  if (event.routes.length === 0) return 0;
+  return Math.max(...event.routes.map((r) => routeProgress(event, r, counts, members)));
+}
+
+/** Finished when any one route is complete. */
+export function eventDone(event: SportEvent, counts: EventCounts, members = 1): boolean {
+  return event.routes.some((r) =>
+    r.every((p) => (counts[p.metric] ?? 0) >= partTarget(event, p, members)),
+  );
+}
+
+/**
+ * The route you are closest to finishing — the one worth putting on screen,
+ * so the bars say "1 of 2 cardio to go" rather than offering both ways at once.
+ */
+export function bestRoute(
+  event: SportEvent,
+  counts: EventCounts,
+  members = 1,
+): EventRoute {
+  let best = event.routes[0] ?? [];
+  let bestAt = -1;
+  for (const route of event.routes) {
+    const at = routeProgress(event, route, counts, members);
+    if (at > bestAt) {
+      bestAt = at;
+      best = route;
+    }
+  }
+  return best;
 }
 
 /* ─────────────────────────────  the gate  ───────────────────────────── */
