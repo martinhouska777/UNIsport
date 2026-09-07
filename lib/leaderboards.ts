@@ -6,10 +6,15 @@
   workout, note, date or photo ever leaves the database for a leaderboard, so a
   board can never be read backwards into "what did that person actually do".
 
-  A score is a SESSION COUNT for the period, where one day counts at most twice
-  (see the SQL). Boards reset every month and every semester — the reset is the
-  feature, not an implementation detail: a table nobody can still win is a table
-  nobody plays.
+  A score is POINTS for the period. The database counts sessions and splits
+  them three ways — alone, with a partner, with somebody new — and what each
+  one is WORTH lives in lib/points.ts as data. Boards reset every month and
+  every semester: the reset is the feature, not an implementation detail, since
+  a table nobody can still win is a table nobody plays.
+
+  Every row keeps its session counts alongside its points, because a score
+  nobody can check is a score nobody trusts — the screens always show what the
+  points were made of.
 
   Nothing here invents numbers. With no database configured every board comes
   back empty and the screens say so, rather than showing a convincing fake.
@@ -17,6 +22,7 @@
 import { createClient, hasSupabaseEnv } from "@/lib/supabase/client";
 import { residenceLabel } from "@/lib/onboarding";
 import { getGymByName } from "@/lib/gyms";
+import { pointsLabel, rateArgs, sessionPoints, type SessionKinds } from "@/lib/points";
 
 /* ─────────────────────────────  types  ───────────────────────────── */
 
@@ -34,7 +40,12 @@ export type LeaderRow = {
   initials: string;
   residence: string | null;
   classYear: string | null;
+  /** Points — except on the partners board, where it is a head count. */
   score: number;
+  /** What the score was made of. */
+  kinds: SessionKinds;
+  /** Different people trained with this period. */
+  partners: number;
   isMe: boolean;
 };
 
@@ -44,12 +55,16 @@ export type GroupRow = {
   members: number;
   actives: number; // how many of them trained this period
   sessions: number;
-  avgSessions: number;
+  points: number;
+  /** Points per member — what the board is ranked on. */
+  avgPoints: number;
   isMine: boolean;
 };
 
 export type Standing = {
+  points: number;
   sessions: number;
+  kinds: SessionKinds;
   partners: number;
   residence: string | null;
   classYear: string | null;
@@ -62,6 +77,7 @@ export type Standing = {
   yearRank: number | null;
   yearTotal: number;
   nextName: string | null;
+  /** POINTS needed to draw level with the person above you. */
   nextGap: number | null;
   nextScope: "house" | "campus" | null;
 };
@@ -98,10 +114,10 @@ export function houseColor(key: string | null | undefined): string | null {
   return getGymByName(key)?.houseColors?.primary ?? null;
 }
 
-/** "3 sessions" / "1 session", or "3 partners" on the partners board. */
+/** "310 pts", or "3 partners" on the one board that counts people. */
 export function scoreLabel(board: PeopleBoard, score: number): string {
-  const noun = board === "partners" ? "partner" : "session";
-  return `${score} ${noun}${score === 1 ? "" : "s"}`;
+  if (board !== "partners") return pointsLabel(score);
+  return `${score} partner${score === 1 ? "" : "s"}`;
 }
 
 /* ─────────────────────────────  reads  ───────────────────────────── */
@@ -114,6 +130,10 @@ type PeopleRpcRow = {
   residence: string | null;
   class_year: string | null;
   score: number;
+  solo: number;
+  partner: number;
+  new_partner: number;
+  partners: number;
   is_me: boolean | null;
 };
 
@@ -127,6 +147,7 @@ export async function fetchPeopleBoard(
     board,
     period,
     limit_n: limit,
+    ...rateArgs,
   });
   if (error || !data) return [];
   return (data as PeopleRpcRow[]).map((r) => ({
@@ -137,6 +158,8 @@ export async function fetchPeopleBoard(
     residence: r.residence,
     classYear: r.class_year,
     score: r.score,
+    kinds: { solo: r.solo, partner: r.partner, newPartner: r.new_partner },
+    partners: r.partners,
     isMe: !!r.is_me,
   }));
 }
@@ -147,7 +170,8 @@ type GroupRpcRow = {
   members: number;
   actives: number;
   sessions: number;
-  avg_sessions: string | number; // numeric comes back as a string
+  points: number;
+  avg_points: string | number; // numeric comes back as a string
   is_mine: boolean | null;
 };
 
@@ -160,6 +184,7 @@ export async function fetchGroupBoard(
     kind,
     period,
     min_members: MIN_GROUP_MEMBERS,
+    ...rateArgs,
   });
   if (error || !data) return [];
   return (data as GroupRpcRow[]).map((r) => ({
@@ -168,13 +193,18 @@ export async function fetchGroupBoard(
     members: r.members,
     actives: r.actives,
     sessions: r.sessions,
-    avgSessions: Number(r.avg_sessions),
+    points: r.points,
+    avgPoints: Number(r.avg_points),
     isMine: !!r.is_mine,
   }));
 }
 
 type StandingRpcRow = {
+  points: number;
   sessions: number;
+  solo: number;
+  partner: number;
+  new_partner: number;
   partners: number;
   residence: string | null;
   class_year: string | null;
@@ -194,12 +224,21 @@ type StandingRpcRow = {
 /** The signed-in user's own standing. Null when there's nothing to show yet. */
 export async function fetchStanding(period: Period): Promise<Standing | null> {
   if (!hasSupabaseEnv()) return null;
-  const { data, error } = await createClient().rpc("my_leaderboard_standing", { period });
+  const { data, error } = await createClient().rpc("my_leaderboard_standing", {
+    period,
+    ...rateArgs,
+  });
   if (error || !data) return null;
   const r = (data as StandingRpcRow[])[0];
   if (!r) return null;
   return {
+    points: r.points ?? 0,
     sessions: r.sessions ?? 0,
+    kinds: {
+      solo: r.solo ?? 0,
+      partner: r.partner ?? 0,
+      newPartner: r.new_partner ?? 0,
+    },
     partners: r.partners ?? 0,
     residence: r.residence,
     classYear: r.class_year,
@@ -218,12 +257,20 @@ export async function fetchStanding(period: Period): Promise<Standing | null> {
 }
 
 /**
- * The nudge that makes the whole feature worth having: "2 more and you pass
+ * The nudge that makes the whole feature worth having: "40 pts and you pass
  * Marcus" is a reason to train tonight in a way that "you are 7th" is not.
  * Returns null when there is nobody above you (or nothing logged yet).
+ *
+ * A points gap on its own is not actionable, so when the gap is small enough
+ * to close it also says the CHEAPEST way to — which is always the sociable
+ * one, because that is what the multipliers are for.
  */
 export function nextUpLine(s: Standing | null): string | null {
   if (!s || !s.nextName || !s.nextGap || s.nextGap < 1) return null;
   const where = s.nextScope === "house" ? "in your house" : "on campus";
-  return `${s.nextGap} more session${s.nextGap === 1 ? "" : "s"} to pass ${s.nextName} ${where}`;
+  const lead = `${s.nextGap} pts to pass ${s.nextName} ${where}`;
+  const runs = Math.ceil(s.nextGap / sessionPoints.newPartner);
+  // Beyond three it stops being tonight's problem and reads as nagging.
+  if (runs > 3) return lead;
+  return `${lead} — ${runs} session${runs === 1 ? "" : "s"} with someone new`;
 }

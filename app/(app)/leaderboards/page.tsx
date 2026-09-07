@@ -1,14 +1,24 @@
 "use client";
 
 /*
-  LEADERBOARDS — the full boards, reached from the strip on the Profile tab.
+  THE LEAGUE — five boards behind one row of pills.
   ---------------------------------------------------------------------------
-  Five boards behind one row of pills:
-    • Houses   — house vs house, ranked by sessions PER MEMBER
+    • Houses   — house vs house, ranked by POINTS PER MEMBER
     • My house — you against your own housemates
     • Campus   — everyone
     • Partners — who trained with the most DIFFERENT people
     • Years    — class year vs class year, also per member
+
+  Houses opens first, on purpose. Campus is an anonymous list of names; house
+  vs house is the thing people already argue about at dinner, and it is the
+  only board on here with a chance of making somebody drag a friend in.
+
+  SCORED IN POINTS, NOT SESSIONS. A session alone is worth 10, with a partner
+  15, with somebody you have never trained with before 25 — the rates live in
+  lib/points.ts as data. The point of points is not that they are more fun than
+  a session count; it is that they can price the behaviour the app exists for.
+  Which is also why every row still says how many sessions it took: a score
+  nobody can check is a score nobody trusts.
 
   Everything is real: db/leaderboards.sql counts actual logged sessions. There
   are no placeholder numbers anywhere on this screen — a board with nothing in
@@ -23,10 +33,11 @@
   the same exception the gym and lineup screens use.
 */
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import { useAppState } from "@/components/AppState";
-import { IconArrowLeft, IconTrophy, IconChevronRight } from "@/components/icons";
+import { IconTrophy } from "@/components/icons";
+import HonorCode, { HonorCodeFooter, useHonorCode } from "@/components/leaderboards/HonorCode";
 import { residenceLabel } from "@/lib/onboarding";
+import { pointsLabel, sessionPoints, sessionsOf } from "@/lib/points";
 import {
   fetchGroupBoard,
   fetchPeopleBoard,
@@ -59,7 +70,7 @@ const BOARDS: BoardDef[] = [
     key: "houses",
     pill: "Houses",
     title: "House vs house",
-    blurb: `Sessions per member, so a big house can't win on size alone. A house needs ${MIN_GROUP_MEMBERS} members to appear.`,
+    blurb: `Points per member, so a big house can't win on size alone. A house needs ${MIN_GROUP_MEMBERS} members to appear.`,
     empty: "No house has enough members training yet.",
   },
   {
@@ -73,7 +84,7 @@ const BOARDS: BoardDef[] = [
     key: "campus",
     pill: "Campus",
     title: "Campus",
-    blurb: "Everyone, by sessions logged.",
+    blurb: "Everyone, by points earned.",
     empty: "Nobody has logged a session yet.",
   },
   {
@@ -104,6 +115,8 @@ const ordinal = (n: number): string => {
   return `${n}${["th", "st", "nd", "rd"][n % 10] ?? "th"}`;
 };
 
+const plural = (n: number, noun: string) => `${n} ${noun}${n === 1 ? "" : "s"}`;
+
 /* ─────────────────────────  rows  ───────────────────────── */
 
 /* The top three are marked with the theme's accent rather than gold/silver/
@@ -122,7 +135,39 @@ function RankBadge({ rank }: { rank: number }) {
   );
 }
 
-function PersonRow({ row, showHouse }: { row: LeaderRow; showHouse: boolean }) {
+/* A score with its unit under it, so a bare number never has to be guessed at. */
+function Score({ value, unit }: { value: string; unit?: string }) {
+  return (
+    <div className="flex-shrink-0 text-right">
+      <div className="text-[15px] font-semibold leading-none text-text">{value}</div>
+      {unit && (
+        <div className="mt-1 text-[8px] uppercase tracking-[0.08em] text-muted">{unit}</div>
+      )}
+    </div>
+  );
+}
+
+function PersonRow({
+  row,
+  board,
+  showHouse,
+}: {
+  row: LeaderRow;
+  board: BoardKey;
+  showHouse: boolean;
+}) {
+  const sessions = sessionsOf(row.kinds);
+  // House, year and what the score was made of, in one line that survives a
+  // narrow phone by simply dropping the parts that are missing.
+  const detail =
+    [
+      showHouse && row.residence ? residenceLabel(row.residence) : "",
+      row.classYear ?? "",
+      sessions > 0 ? plural(sessions, "session") : "",
+    ]
+      .filter(Boolean)
+      .join(" · ") || "—";
+
   return (
     <div
       className={`flex items-center gap-2.5 rounded-xl border px-3 py-2.5 ${
@@ -138,13 +183,13 @@ function PersonRow({ row, showHouse }: { row: LeaderRow; showHouse: boolean }) {
           {row.name}
           {row.isMe && <span className="ml-1.5 text-[11px] text-primary">You</span>}
         </div>
-        <div className="truncate text-[11px] text-muted">
-          {[showHouse && row.residence ? residenceLabel(row.residence) : "", row.classYear]
-            .filter(Boolean)
-            .join(" · ") || "—"}
-        </div>
+        <div className="truncate text-[11px] text-muted">{detail}</div>
       </div>
-      <span className="flex-shrink-0 text-[15px] font-semibold text-text">{row.score}</span>
+      {board === "partners" ? (
+        <Score value={String(row.score)} unit="people" />
+      ) : (
+        <Score value={row.score.toLocaleString("en-US")} unit="pts" />
+      )}
     </div>
   );
 }
@@ -168,22 +213,20 @@ function GroupRowItem({ row, kind }: { row: GroupRow; kind: "house" | "year" }) 
           {row.isMine && <span className="ml-1.5 text-[11px] text-primary">Yours</span>}
         </div>
         <div className="truncate text-[11px] text-muted">
-          {row.actives} of {row.members} training · {row.sessions} sessions
+          {row.actives} of {row.members} training · {pointsLabel(row.points)}
         </div>
       </div>
-      <div className="flex-shrink-0 text-right">
-        <div className="text-[15px] font-semibold text-text">{row.avgSessions.toFixed(1)}</div>
-        <div className="text-[8px] uppercase tracking-[0.08em] text-muted">per member</div>
-      </div>
+      <Score value={row.avgPoints.toFixed(1)} unit="per member" />
     </div>
   );
 }
 
 /* ─────────────────────────  screen  ───────────────────────── */
 
-export default function LeaderboardsPage() {
-  const router = useRouter();
-  const { userId } = useAppState();
+export default function LeaguePage() {
+  const { userId, universityKey } = useAppState();
+  const { accepted, accept } = useHonorCode(userId);
+
   const [period, setPeriod] = useState<Period>("month");
   const [board, setBoard] = useState<BoardKey>("houses");
 
@@ -243,15 +286,16 @@ export default function LeaderboardsPage() {
   const isGroupBoard = board === "houses" || board === "years";
   const nudge = nextUpLine(standing);
 
+  // Hooks are all above this line, so the honour code can gate the screen.
+  if (accepted === false) {
+    return <HonorCode universityKey={universityKey} onAgree={accept} />;
+  }
+
   return (
     <div className="mx-auto w-full max-w-screen-sm pb-10">
-      {/* Back bar */}
-      <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-surface px-3 py-3">
-        <button type="button" aria-label="Back" onClick={() => router.back()} className="text-muted">
-          <IconArrowLeft size={18} />
-        </button>
-        <span className="text-sm font-medium text-text">Leaderboards</span>
-        <span className="w-[18px]" aria-hidden="true" />
+      {/* A tab, not a pushed screen — the bottom nav is the way back. */}
+      <div className="sticky top-0 z-10 border-b border-border bg-surface px-3.5 py-3 text-center">
+        <span className="text-sm font-medium text-text">League</span>
       </div>
 
       {/* Your standing */}
@@ -263,15 +307,23 @@ export default function LeaderboardsPage() {
             </span>
             <div className="min-w-0 flex-1">
               <div className="text-[13px] font-semibold text-text">
-                {standing?.campusRank
-                  ? `${ordinal(standing.campusRank)} of ${standing.campusTotal} on campus`
+                {standing && standing.points > 0
+                  ? pointsLabel(standing.points)
                   : "Not on the board yet"}
               </div>
               <div className="mt-0.5 text-[11px] text-muted">
-                {standing && standing.sessions > 0
-                  ? `${standing.sessions} session${standing.sessions === 1 ? "" : "s"} ${
-                      period === "all" ? "logged" : PERIODS.find((p) => p.key === period)?.label.toLowerCase()
-                    }`
+                {standing && standing.points > 0
+                  ? [
+                      standing.campusRank
+                        ? `${ordinal(standing.campusRank)} of ${standing.campusTotal} on campus`
+                        : "",
+                      plural(standing.sessions, "session"),
+                      standing.kinds.newPartner > 0
+                        ? `${standing.kinds.newPartner} with someone new`
+                        : "",
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")
                   : "Log a session and you're on it."}
               </div>
             </div>
@@ -370,42 +422,46 @@ export default function LeaderboardsPage() {
           <>
             <div className="mt-3 flex flex-col gap-1.5">
               {people.map((r) => (
-                <PersonRow key={r.userId} row={r} showHouse={board !== "myHouse"} />
+                <PersonRow key={r.userId} row={r} board={board} showHouse={board !== "myHouse"} />
               ))}
             </div>
             <div className="mt-2.5 px-0.5 text-[11px] text-muted">
               {board === "partners"
-                ? scoreLabel("partners", people[0].score) + " leads"
+                ? `${scoreLabel("partners", people[0].score)} leads`
                 : `Top ${people.length}`}
             </div>
           </>
         )}
       </div>
 
-      {/* How scoring works — said once, plainly, so nobody has to guess. */}
+      {/* How scoring works — said once, plainly, so nobody has to guess. The
+          three rates are read from lib/points.ts, so this can never drift out
+          of step with what the boards actually pay. */}
       <div className="mt-4 px-3.5">
         <div className="rounded-2xl border border-border bg-surface-2 px-3.5 py-3">
           <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-            How it works
+            How points work
           </div>
           <ul className="mt-2 flex flex-col gap-1.5 text-[11px] leading-relaxed text-muted">
-            <li>One logged session = one point. A single day counts twice at most.</li>
-            <li>Team boards rank by sessions per member, not by total.</li>
+            <li>
+              A session on your own is <span className="text-text">{sessionPoints.solo} pts</span>.
+              With a partner it&rsquo;s <span className="text-text">{sessionPoints.partner}</span>,
+              and with someone you&rsquo;ve never trained with before{" "}
+              <span className="text-text">{sessionPoints.newPartner}</span>.
+            </li>
+            <li>
+              A partner has to be picked from the app, and a single day counts twice at most.
+            </li>
+            <li>Team boards rank by points per member, not by total.</li>
             <li>Monthly and semester boards reset, so everyone starts level again.</li>
             <li>Only your name, house, year and totals are ever shown — never your workouts.</li>
           </ul>
         </div>
       </div>
 
-      {/* Straight back to the tab you came from. */}
-      <button
-        type="button"
-        onClick={() => router.back()}
-        className="mt-4 flex w-full items-center justify-center gap-1 px-3.5 text-[12px] font-medium text-primary"
-      >
-        Back to your profile
-        <IconChevronRight size={13} />
-      </button>
+      <div className="mt-3 px-3.5">
+        <HonorCodeFooter universityKey={universityKey} />
+      </div>
     </div>
   );
 }
