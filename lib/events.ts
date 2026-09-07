@@ -8,37 +8,27 @@
 
   TWO KINDS, and they are not the same thing:
 
-    PERSONAL — yours. One weekly and two monthly running at once. They ask for
-               something you would not otherwise have done: go somewhere new,
-               turn up more days than usual, meet people. Never "log more
-               sessions", which is just the boards again in a smaller font.
-
-    THE INTERHOUSE RACE — one a month, which every eligible house runs at the
-               same time, ranked against each other. It pays into the HOUSE's
-               points, not yours.
+    PERSONAL — yours. One weekly and two monthly running at once.
+    THE INTERHOUSE RACE — one a month, run by every eligible house at once and
+               ranked. It pays into the HOUSE's points, not yours.
 
   THE RACE IS GATED, AND THE GATE IS THE POINT. A house has to have earned
   `HOUSE_ENTRY_PER_MEMBER` points per member, all time, before it can enter.
   That turns "we need more people using this" from a wish into a door with a
   number on it — and because it is per member, a big house cannot open it on
-  size and three keen people cannot carry a house of forty. Below the gate a
-  house still scores, still appears on the board, and can see exactly how far
-  off it is.
+  size and three keen people cannot carry a house of forty.
 
   NO ADMIN, EVER. Which event runs is decided by the WEEK or MONTH NUMBER, so
   the whole campus sees the same one, it changes on its own, and nobody has to
   remember to set anything. Adding an event later is an entry in one of the
   lists below — data, not code (rule 7).
 
-  EVERY TARGET HERE IS COUNTABLE FROM SESSIONS THAT ALREADY EXIST. That rules
-  a lot of tempting events out. There is deliberately no distance event in the
-  WEEKLY pool: the app has no watch and no Strava import, so kilometres only
-  exist if somebody typed them in, and a weekly event nobody can be bothered to
-  feed sits at 12% all week and teaches people the events are decoration. The
-  monthly pool has exactly one distance event, where a month is long enough for
-  the people who do log their runs to finish it.
+  WHY EVENTS HAVE PARTS. Most ask one thing ("train five days"). One asks two
+  at once — three lifts AND two runs in a week — and a single metric with a
+  single number cannot express that. So every event carries a LIST of
+  conditions and is finished when all of them are met. A one-condition event is
+  just a list of one, so there is no special case anywhere downstream.
 */
-import { gymsFor } from "@/lib/gyms";
 
 /* ─────────────────────────────  the gate  ───────────────────────────── */
 
@@ -54,6 +44,50 @@ import { gymsFor } from "@/lib/gyms";
  */
 export const HOUSE_ENTRY_PER_MEMBER = 60;
 
+/* ══════════════════════  distance, and what it's worth  ══════════════════════ */
+
+/*
+  A kilometre is not a kilometre. Running and rowing count 1:1; cycling counts a
+  third, because three kilometres on a bike is roughly one on your feet and
+  without that a single long ride would win any distance event outright.
+
+  ANYTHING NOT NAMED HERE COUNTS 1:1. That is the safe default rather than the
+  correct one, and swimming is the case worth knowing about: it is the most
+  logged cardio on this campus by a distance, and a swum kilometre is far harder
+  than a run one, so at 1:1 swimmers have the easiest route to a distance event.
+  Left at 1 deliberately — it is one number here to change once somebody
+  decides what a swum kilometre is worth.
+*/
+export const distanceWeight: Record<string, number> = {
+  running: 1,
+  rowing: 1,
+  cycling: 1 / 3,
+};
+
+/*
+  Logged distances are not even in the same unit: rowing goes in as metres,
+  running and swimming in kilometres. Everything is normalised to kilometres
+  before it is weighted, or a 2,000 m row would read as two thousand.
+*/
+export const unitToKm: Record<string, number> = {
+  km: 1,
+  m: 0.001,
+  mi: 1.60934,
+};
+
+/**
+ * What one logged session's distance is worth, in weighted kilometres.
+ *
+ * `kind` is the activity for a run and the cardio type otherwise ("Rowing",
+ * "Cycling", "Swimming"), lowercased by the caller — the stored values are
+ * capitalised and the weights above are not.
+ */
+export function weightedKm(distance: number, unit: string, kind: string): number {
+  if (!Number.isFinite(distance) || distance <= 0) return 0;
+  const km = distance * (unitToKm[unit?.toLowerCase()] ?? 1);
+  return km * (distanceWeight[kind?.toLowerCase()] ?? 1);
+}
+
 /* ─────────────────────────────  types  ───────────────────────────── */
 
 /**
@@ -62,25 +96,29 @@ export const HOUSE_ENTRY_PER_MEMBER = 60;
  * at logging time.
  */
 export type EventMetric =
-  | "sessions" // sessions logged
-  | "socialSessions" // sessions with another app member
-  | "partners" // different people trained with
-  | "newPartners" // people trained with for the first time ever
-  | "gyms" // different gyms trained at
   | "days" // separate days trained on
-  | "distance" // kilometres run, rowed or ridden, as logged
+  | "newPartners" // people trained with for the first time ever
+  | "gymSessions" // sessions logged as a gym session
+  | "runSessions" // sessions logged as a run
+  | "distance" // weighted kilometres (see above)
   | "actives"; // house only: how many members trained at all
 
 export type EventWindow = "week" | "month";
+
+/** One condition. An event is finished when every part of it is met. */
+export type EventPart = {
+  metric: EventMetric;
+  target: number;
+  /** How this part reads on a progress bar: "days", "runs", "km". */
+  unit: string;
+};
 
 export type SportEvent = {
   key: string;
   title: string;
   /** One line, plain English, saying what finishing it takes. */
   blurb: string;
-  metric: EventMetric;
-  /** `"allMainGyms"` is resolved per school at runtime. */
-  target: number | "allMainGyms";
+  parts: EventPart[];
   /** Bonus points on finishing. A house event pays the house. */
   points: number;
   window: EventWindow;
@@ -95,63 +133,53 @@ export type SportEvent = {
 /* ═════════════════════════  personal · weekly  ═════════════════════════ */
 
 /*
-  One of these runs each week, chosen by the week number. Small enough to
-  finish inside seven days from a standing start, and every one of them asks
-  for something a normal week would not contain.
+  One of these runs each week, chosen by the week number. Two shapes only, on
+  purpose: TURN UP (three days, five days) and MEET SOMEBODY (one, three), plus
+  the hybrid that asks for both kinds of training in the same week. Nothing in
+  here is "log more sessions", which is only the boards again in a smaller font.
 */
 export const weeklyEvents: SportEvent[] = [
   {
-    key: "w-two-gyms",
-    title: "Two gyms, one week",
-    blurb: "Train at two different gyms before Sunday night.",
-    metric: "gyms",
-    target: 2,
+    key: "w-three-days",
+    title: "Three days",
+    blurb: "Train on three separate days before Sunday night.",
+    parts: [{ metric: "days", target: 3, unit: "days" }],
     points: 60,
     window: "week",
   },
   {
     key: "w-five-days",
-    title: "Five days out of seven",
+    title: "Five days",
     blurb: "Turn up on five separate days this week.",
-    metric: "days",
-    target: 5,
-    points: 90,
-    window: "week",
-  },
-  {
-    key: "w-two-new",
-    title: "Two new faces",
-    blurb: "Train with two people you have never trained with before.",
-    metric: "newPartners",
-    target: 2,
-    points: 110,
-    window: "week",
-  },
-  {
-    key: "w-three-company",
-    title: "Three with company",
-    blurb: "Three of this week's sessions with somebody else.",
-    metric: "socialSessions",
-    target: 3,
-    points: 80,
-    window: "week",
-  },
-  {
-    key: "w-three-people",
-    title: "Three different people",
-    blurb: "Train with three different partners this week.",
-    metric: "partners",
-    target: 3,
+    parts: [{ metric: "days", target: 5, unit: "days" }],
     points: 100,
     window: "week",
   },
   {
-    key: "w-six-sessions",
-    title: "Six sessions",
-    blurb: "Six logged sessions in seven days.",
-    metric: "sessions",
-    target: 6,
+    key: "w-one-new",
+    title: "Meet somebody new",
+    blurb: "Train with one person you have never trained with before.",
+    parts: [{ metric: "newPartners", target: 1, unit: "people" }],
     points: 70,
+    window: "week",
+  },
+  {
+    key: "w-three-new",
+    title: "Three new people",
+    blurb: "Three people you had never trained with before, in one week.",
+    parts: [{ metric: "newPartners", target: 3, unit: "people" }],
+    points: 140,
+    window: "week",
+  },
+  {
+    key: "w-hybrid",
+    title: "Three lifts, two runs",
+    blurb: "Five sessions this week — but three of them in a gym and two on your feet.",
+    parts: [
+      { metric: "gymSessions", target: 3, unit: "lifts" },
+      { metric: "runSessions", target: 2, unit: "runs" },
+    ],
+    points: 120,
     window: "week",
   },
 ];
@@ -159,63 +187,64 @@ export const weeklyEvents: SportEvent[] = [
 /* ═════════════════════════  personal · monthly  ═════════════════════════ */
 
 /*
+  The same challenges at a month's scale, plus the distance one — a month is
+  long enough for kilometres to be worth asking for, where a week is not (the
+  app has no watch and no Strava import, so a weekly distance event would sit
+  at 12% all week and teach people the events are decoration).
+
   TWO of these run at once, chosen by the month number, so a month always has
-  a long target and a second one to fall back on. They pay properly, because a
-  month is a long time to hold on to something.
+  a long target and a second one alongside it.
 */
 export const monthlyEvents: SportEvent[] = [
   {
     key: "m-hundred",
     title: "The Hundred",
-    blurb: "A hundred kilometres this month, run, rowed or ridden.",
-    metric: "distance",
-    target: 100,
+    blurb: "A hundred kilometres this month. Running and rowing count in full, cycling a third.",
+    parts: [{ metric: "distance", target: 100, unit: "km" }],
     points: 300,
     window: "month",
   },
   {
-    key: "m-every-gym",
-    title: "Every gym on campus",
-    blurb: "Train at all of the main gyms before the month is out.",
-    metric: "gyms",
-    target: "allMainGyms",
+    key: "m-thirteen-days",
+    title: "Thirteen days",
+    blurb: "Train on thirteen separate days — three a week, near enough.",
+    parts: [{ metric: "days", target: 13, unit: "days" }],
     points: 250,
     window: "month",
   },
   {
-    key: "m-five-new",
-    title: "Five new people",
-    blurb: "Five people you had never trained with before.",
-    metric: "newPartners",
-    target: 5,
-    points: 350,
+    key: "m-twenty-days",
+    title: "Twenty days",
+    blurb: "Twenty separate days in one month. Five a week, all month.",
+    parts: [{ metric: "days", target: 20, unit: "days" }],
+    points: 400,
     window: "month",
   },
   {
-    key: "m-sixteen-days",
-    title: "Sixteen days",
-    blurb: "Train on sixteen separate days this month.",
-    metric: "days",
-    target: 16,
-    points: 300,
-    window: "month",
-  },
-  {
-    key: "m-twelve-company",
-    title: "Twelve with company",
-    blurb: "Twelve of this month's sessions with somebody else.",
-    metric: "socialSessions",
-    target: 12,
+    key: "m-four-new",
+    title: "Four new people",
+    blurb: "Four people you had never trained with before.",
+    parts: [{ metric: "newPartners", target: 4, unit: "people" }],
     points: 280,
     window: "month",
   },
   {
-    key: "m-twenty",
-    title: "Twenty sessions",
-    blurb: "Twenty logged sessions in one month.",
-    metric: "sessions",
-    target: 20,
-    points: 260,
+    key: "m-ten-new",
+    title: "Ten new people",
+    blurb: "Ten people you had never trained with before, in one month.",
+    parts: [{ metric: "newPartners", target: 10, unit: "people" }],
+    points: 500,
+    window: "month",
+  },
+  {
+    key: "m-hybrid",
+    title: "Twelve lifts, eight runs",
+    blurb: "Both kinds of training, all month: twelve in a gym and eight on your feet.",
+    parts: [
+      { metric: "gymSessions", target: 12, unit: "lifts" },
+      { metric: "runSessions", target: 8, unit: "runs" },
+    ],
+    points: 450,
     window: "month",
   },
 ];
@@ -223,53 +252,19 @@ export const monthlyEvents: SportEvent[] = [
 /* ═══════════════════════  the interhouse race  ═══════════════════════ */
 
 /*
-  One a month. Every house past the gate runs the same one at the same time and
-  they are ranked while the bars fill. Targets are PER MEMBER, so the race is
-  about how much of a house is taking part rather than how big it is.
-
-  These are deliberately about turnout rather than heroics: a house wins by
-  getting more of its people to do an ordinary amount, which is the only thing
-  a house can actually organise.
+  NOT SETTLED YET — the owner is deciding these, and this list is a placeholder
+  so the gate below has something to gate. What IS settled is the shape: one a
+  month, every house past the gate running the same one, targets PER MEMBER so
+  a race is about how much of a house turns out rather than how big it is.
 */
 export const houseEvents: SportEvent[] = [
   {
     key: "h-everyone-in",
     title: "Everyone in",
     blurb: "Get every single member to log at least one session this month.",
-    metric: "actives",
-    target: 1,
+    parts: [{ metric: "actives", target: 1, unit: "members" }],
     perMember: true,
     points: 1200,
-    window: "month",
-  },
-  {
-    key: "h-house-hundred",
-    title: "The house hundred",
-    blurb: "A hundred sessions between you — more of you, not more from you.",
-    metric: "sessions",
-    target: 8,
-    perMember: true,
-    points: 1000,
-    window: "month",
-  },
-  {
-    key: "h-together",
-    title: "Nobody trains alone",
-    blurb: "Four sessions each with a partner, added up across the house.",
-    metric: "socialSessions",
-    target: 4,
-    perMember: true,
-    points: 1400,
-    window: "month",
-  },
-  {
-    key: "h-introductions",
-    title: "Introductions",
-    blurb: "Two people each of you had never trained with before.",
-    metric: "newPartners",
-    target: 2,
-    perMember: true,
-    points: 1600,
     window: "month",
   },
 ];
@@ -277,7 +272,7 @@ export const houseEvents: SportEvent[] = [
 /* ─────────────────  which ones are running right now  ───────────────── */
 
 /**
- * ISO week number. Used only to pick an event, so it needs to agree with
+ * Which week it is. Used only to pick an event, so it needs to agree with
  * itself week to week rather than match anybody's calendar exactly.
  */
 export function weekNumber(now = new Date()): number {
@@ -286,7 +281,7 @@ export function weekNumber(now = new Date()): number {
   return Math.floor((today - start) / (7 * 24 * 60 * 60 * 1000));
 }
 
-/** Months since the epoch, so the choice keeps moving across a year boundary. */
+/** Months since year zero, so the choice keeps moving across a year boundary. */
 export function monthNumber(now = new Date()): number {
   return now.getUTCFullYear() * 12 + now.getUTCMonth();
 }
@@ -304,8 +299,8 @@ export function monthlyEventsNow(now = new Date()): SportEvent[] {
   const n = monthNumber(now);
   const first = monthlyEvents[n % monthlyEvents.length];
   const second = monthlyEvents[(n * 2 + 1) % monthlyEvents.length];
-  // With six in the pool the two can still land on the same entry; take the
-  // next one along rather than showing the same event twice.
+  // The two can still land on the same entry; take the next one along rather
+  // than showing the same event twice.
   if (second.key !== first.key) return [first, second];
   return [first, monthlyEvents[(n + 1) % monthlyEvents.length]];
 }
@@ -315,26 +310,44 @@ export function houseEventNow(now = new Date()): SportEvent {
   return houseEvents[monthNumber(now) % houseEvents.length];
 }
 
-/* ─────────────────────────────  targets  ───────────────────────────── */
+/* ─────────────────────────────  progress  ───────────────────────────── */
 
 /**
- * What an event actually asks of you, as a number.
- *
- * `allMainGyms` is resolved per school — a campus with four main gyms should
- * not be asked for Harvard's three. A house target is multiplied by how many
- * people live there.
+ * What one part of an event actually asks for. A house target is multiplied by
+ * how many people live there.
  */
-export function eventTarget(
+export function partTarget(event: SportEvent, part: EventPart, members = 1): number {
+  return event.perMember ? part.target * Math.max(members, 1) : part.target;
+}
+
+/** Finished only when every condition is met — see "WHY EVENTS HAVE PARTS". */
+export function eventDone(
   event: SportEvent,
-  universityKey: string,
+  counts: Partial<Record<EventMetric, number>>,
+  members = 1,
+): boolean {
+  return event.parts.every(
+    (p) => (counts[p.metric] ?? 0) >= partTarget(event, p, members),
+  );
+}
+
+/** 0–1 across the whole event: the least-finished condition decides it. */
+export function eventProgress(
+  event: SportEvent,
+  counts: Partial<Record<EventMetric, number>>,
   members = 1,
 ): number {
-  const base =
-    event.target === "allMainGyms"
-      ? gymsFor(universityKey).filter((g) => g.kind === "main").length
-      : event.target;
-  return event.perMember ? base * Math.max(members, 1) : base;
+  if (event.parts.length === 0) return 0;
+  return Math.min(
+    ...event.parts.map((p) => {
+      const target = partTarget(event, p, members);
+      if (target <= 0) return 1;
+      return Math.min((counts[p.metric] ?? 0) / target, 1);
+    }),
+  );
 }
+
+/* ─────────────────────────────  the gate  ───────────────────────────── */
 
 /** Whether a house has earned its way into the race. */
 export function houseCanEnter(points: number, members: number): boolean {
@@ -344,6 +357,5 @@ export function houseCanEnter(points: number, members: number): boolean {
 
 /** How many more points a house needs before the race opens to it. */
 export function pointsToEntry(points: number, members: number): number {
-  const needed = HOUSE_ENTRY_PER_MEMBER * Math.max(members, 0);
-  return Math.max(needed - points, 0);
+  return Math.max(HOUSE_ENTRY_PER_MEMBER * Math.max(members, 0) - points, 0);
 }
