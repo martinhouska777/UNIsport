@@ -105,6 +105,37 @@ export function levelFromXp(xp: number): number {
   return levelProgress(xp).level;
 }
 
+/* ─────────────────────────  a house's level  ───────────────────────── */
+
+/**
+ * A house needs this many times the XP of one person to reach the same level.
+ *
+ * A HOUSE IS RANKED ON ITS TOTAL, NOT ITS AVERAGE — deliberately. A five-person
+ * house on ten sessions sitting next to a house already at fifty is exactly the
+ * pressure that makes people recruit their friends and nag the ones who haven't
+ * been. Fairness to small houses is not what this number is for; the weekly
+ * house-vs-house duel (which matches houses of similar size) is where that
+ * belongs.
+ */
+export const HOUSE_LEVEL_FACTOR = 5;
+
+export function xpForHouseLevel(level: number): number {
+  return xpForLevel(level) * HOUSE_LEVEL_FACTOR;
+}
+
+/** The same curve, stretched. Reported against the house's REAL XP total. */
+export function houseLevelProgress(xp: number): LevelProgress {
+  const scaled = levelProgress(Math.max(0, Math.round(xp)) / HOUSE_LEVEL_FACTOR);
+  return {
+    level: scaled.level,
+    into: scaled.into * HOUSE_LEVEL_FACTOR,
+    span: scaled.span * HOUSE_LEVEL_FACTOR,
+    toGo: scaled.toGo * HOUSE_LEVEL_FACTOR,
+    fraction: scaled.fraction,
+    nextAt: scaled.nextAt * HOUSE_LEVEL_FACTOR,
+  };
+}
+
 /* ─────────────────────────────  the ring  ───────────────────────────── */
 
 /*

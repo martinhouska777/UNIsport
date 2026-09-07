@@ -227,3 +227,133 @@ export function nextChallenge(
 ): ChallengeProgress | null {
   return ladderProgress(c, universityKey).find((p) => !p.done) ?? null;
 }
+
+/* ═══════════════════════  the house ladder  ═══════════════════════ */
+
+/*
+  Community-scale, on purpose: numbers no single person could reach on their
+  own. Your own sessions already lift the house just by existing — these are
+  the extra on top, the thing you can only finish together.
+
+  "Everyone in" is the best one here and the reason the shape works. The last
+  three people who haven't logged anything are the whole game, and getting them
+  in is something only their friends can do. A leaderboard cannot make that
+  happen; a bar that stops one short can.
+*/
+export type HouseMetric = "sessions" | "partners" | "km" | "actives";
+
+export type HouseChallenge = {
+  key: string;
+  title: string;
+  blurb: string;
+  metric: HouseMetric;
+  /** `"allMembers"` is the house's own size, whatever that turns out to be. */
+  target: number | "allMembers";
+  xp: number;
+};
+
+export const houseChallengeLadder: HouseChallenge[] = [
+  {
+    key: "house-first-ten",
+    title: "Off the mark",
+    blurb: "Log 10 sessions between you.",
+    metric: "sessions",
+    target: 10,
+    xp: 200,
+  },
+  {
+    key: "house-everyone-in",
+    title: "Everyone in",
+    blurb: "Every single member logs at least one session.",
+    metric: "actives",
+    target: "allMembers",
+    xp: 600,
+  },
+  {
+    key: "house-hundred",
+    title: "The first hundred",
+    blurb: "Log 100 sessions between you.",
+    metric: "sessions",
+    target: 100,
+    xp: 500,
+  },
+  {
+    key: "house-fifty-partnerships",
+    title: "Fifty partnerships",
+    blurb: "Build 50 training partnerships between you.",
+    metric: "partners",
+    target: 50,
+    xp: 600,
+  },
+  {
+    key: "house-250-km",
+    title: "Two hundred and fifty",
+    blurb: "Cover 250 km between you.",
+    metric: "km",
+    target: 250,
+    xp: 700,
+  },
+  {
+    key: "house-five-hundred",
+    title: "Five hundred",
+    blurb: "Log 500 sessions between you.",
+    metric: "sessions",
+    target: 500,
+    xp: 1000,
+  },
+  {
+    key: "house-thousand",
+    title: "The thousand",
+    blurb: "Log 1,000 sessions between you.",
+    metric: "sessions",
+    target: 1000,
+    xp: 1500,
+  },
+];
+
+export type HouseCounters = {
+  sessions: number;
+  partners: number;
+  km: number;
+  /** Members who have logged at least one session. */
+  actives: number;
+  /** Everybody who lives there, training or not. */
+  members: number;
+};
+
+export const emptyHouseCounters: HouseCounters = {
+  sessions: 0,
+  partners: 0,
+  km: 0,
+  actives: 0,
+  members: 0,
+};
+
+export type HouseChallengeProgress = {
+  challenge: HouseChallenge;
+  target: number;
+  have: number;
+  done: boolean;
+  fraction: number;
+};
+
+export function houseLadderProgress(c: HouseCounters): HouseChallengeProgress[] {
+  return houseChallengeLadder.map((ch) => {
+    const target = ch.target === "allMembers" ? Math.max(1, c.members) : ch.target;
+    const have = Math.floor(c[ch.metric] ?? 0);
+    return {
+      challenge: ch,
+      target,
+      have: Math.min(have, target),
+      // A house with nobody in it has not finished "everyone in".
+      done: c.members > 0 && have >= target,
+      fraction: target > 0 ? Math.min(1, have / target) : 0,
+    };
+  });
+}
+
+export function houseChallengeXp(c: HouseCounters): number {
+  return houseLadderProgress(c)
+    .filter((p) => p.done)
+    .reduce((sum, p) => sum + p.challenge.xp, 0);
+}

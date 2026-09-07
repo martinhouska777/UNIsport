@@ -151,15 +151,22 @@ type GroupRpcRow = {
   is_mine: boolean | null;
 };
 
+/**
+ * `minMembers` defaults to the number a group needs before it may appear on a
+ * public board. The League's house-level view passes 1 instead: a house of one
+ * still has a level, and hiding it from the person who lives there would be
+ * telling them their own house doesn't exist.
+ */
 export async function fetchGroupBoard(
   kind: GroupBoard,
   period: Period,
+  minMembers: number = MIN_GROUP_MEMBERS,
 ): Promise<GroupRow[]> {
   if (!hasSupabaseEnv()) return [];
   const { data, error } = await createClient().rpc("leaderboard_groups", {
     kind,
     period,
-    min_members: MIN_GROUP_MEMBERS,
+    min_members: minMembers,
   });
   if (error || !data) return [];
   return (data as GroupRpcRow[]).map((r) => ({
