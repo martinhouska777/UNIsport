@@ -75,6 +75,8 @@ export type MatchFacts = {
 export type TheirFacts = {
   concentration: string | null;
   interests: string[];
+  /** Their top-ranked gym — the one they actually train at. */
+  gym: string | null;
 };
 
 export type Match = {
@@ -146,6 +148,7 @@ type RpcRow = {
   their_activity_freq: string | null;
   their_concentration: string | null;
   their_interests: string[] | null;
+  their_gym: string | null;
 };
 
 const num = (v: number | string | undefined) => (v == null ? 0 : Number(v));
@@ -197,6 +200,7 @@ function toMatch(r: RpcRow): Match {
     theirs: {
       concentration: r.their_concentration,
       interests: r.their_interests ?? [],
+      gym: r.their_gym,
     },
   };
 }

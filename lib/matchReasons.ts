@@ -187,8 +187,8 @@ export function matchReasons(m: Match): MatchReason[] {
   if (b.schedule != null && b.schedule > 0) {
     candidates.push({
       key: "schedule",
-      short: "Free when you are",
-      full: "Your free time in the week overlaps",
+      short: "Similar times",
+      full: "You train at similar times of day",
       pts: b.schedule,
       weight: 1,
     });
@@ -196,7 +196,14 @@ export function matchReasons(m: Match): MatchReason[] {
 
   if (f.levelNote) {
     candidates.push({
-      key: "level",
+      /*
+        A DIFFERENT KEY for the mentor case, on purpose. "Same level" is what
+        nine cards in ten say and is filler; "one of you offers to mentor, the
+        other wants it" is rare and is the most useful thing on the page. One
+        key would have thrown the second away with the first — the same trick
+        the activity reason above uses.
+      */
+      key: f.levelNote === "mentor" ? "mentor" : "level",
       ...levelWording[f.levelNote],
       pts: b.level,
       weight: 1,
@@ -287,26 +294,42 @@ export function topMatchReasons(
 /* ══════════════════════  what a RESULT CARD shows  ══════════════════════ */
 
 /*
-  A card used to show shared reasons and then pad the leftover room with blank
-  grey boxes, which is the worst of both worlds: the card looks broken AND says
-  nothing about the person. So a card now shows two kinds of chip.
+  WHAT A CARD SAYS, AND IN WHAT ORDER.
 
-    SHARED — something you actually have in common. Marked with a tick and the
-             school's own colour, so what is TRUE is always the thing wearing
-             colour. These come first and are never invented.
-    THEIRS  — their concentration and what they are into, in plain grey. Not a
-             claim about you: it is the answer to "who is this person", which
-             is what makes a stranger worth a tap.
+  Every card answers the same four things in the same four places, so you learn
+  to read one card and then you can read twenty:
 
-  TWO DELIBERATE OMISSIONS.
-    • "Both lift" and its siblings are dropped. The line above the chips already
-      says what they train, so the chip repeated a word that was two millimetres
-      higher up. "They run too" SURVIVES — that is the one person on a list of
-      lifters who also runs, which is genuinely rare and is not written anywhere
-      else on the card.
-    • Shared interests arrive from the engine as one chip ("Climbing, Coffee
-      +2"). On a card they are split one per chip: six short chips pack into the
-      rows and read at a glance, where one long one truncates and loses the tail.
+    1. their concentration
+    2. their main gym
+    3. whether you train at similar times
+    4. whether they also do your sport ("They run too")
+
+  ...and then the room that's left goes to interests — the hobbies — plus
+  anything genuinely rare you share. Six chips in total.
+
+  SHARED OR THEIRS. Each of those first two is a real overlap when you have
+  one, and simply THEIRS when you don't. A shared chip wears the school's own
+  colour and a tick; theirs is plain grey and never dressed up as something you
+  have in common. So the shape of the card is fixed but nothing on it is
+  invented.
+
+  A WHITELIST, NOT A BLACKLIST. Only the reasons named in CARD_CHIPS below can
+  reach a card. That is deliberate: the matching engine scores nine kinds of
+  overlap and some of them are true but worthless to read —
+
+    • "Wants a partner" — almost everybody does. It is a description of the
+      app's users, not of a person.
+    • "Same level" / "Close level" — nine cards in ten. (The MENTOR case is
+      kept: it is rare and it is the most useful line on the page.)
+    • "Both lift" — the identity line two millimetres above already says it.
+
+  ...and a blacklist would have let the next such reason through by default.
+  Anything added to the engine from now on has to be named here before a card
+  will show it.
+
+  Shared interests arrive from the engine as one chip ("Climbing, Coffee +2").
+  On a card they are split one per chip: six short chips pack into the rows and
+  read at a glance, where one long one truncates and loses its tail.
 */
 export type CardChip = {
   key: string;
@@ -317,48 +340,87 @@ export type CardChip = {
   full: string;
 };
 
-/** The chip the identity line above already carries, so it never repeats. */
-const SAID_ELSEWHERE = "activity";
+/**
+ * The only reasons a result card may show, and the order they read in. The
+ * first four are the fixed shape of every card; the rest fill what's left.
+ */
+const CARD_CHIPS = [
+  "concentration",
+  "gym",
+  "schedule",
+  "activity-also",
+  "mentor",
+  "origin",
+  "languages",
+  "interests",
+] as const;
 
-export function cardChips(
-  m: Match,
-  count: number,
-  rarity?: ReasonRarity,
-): CardChip[] {
+export function cardChips(m: Match, count: number, rarity?: ReasonRarity): CardChip[] {
   const chips: CardChip[] = [];
   const seen = new Set<string>();
   const push = (chip: CardChip) => {
-    const id = chip.label.toLowerCase();
-    if (seen.has(id) || chips.length >= count) return;
+    const id = chip.label.trim().toLowerCase();
+    if (!chip.label || seen.has(id) || chips.length >= count) return false;
     seen.add(id);
     chips.push(chip);
+    return true;
   };
 
-  // Ask for more than we need: splitting interests and dropping the activity
-  // chip both change how many survive.
-  for (const r of topMatchReasons(m, count + 4, rarity)) {
-    if (r.key === SAID_ELSEWHERE) continue;
+  /*
+    Ask for everything and sort it ourselves. `topMatchReasons` orders by how
+    RARE a reason is across the list, which is the right question for the tail
+    of the card but the wrong one for its first two slots: the card has to say
+    what somebody studies and where they train whether or not that happens to
+    be unusual.
+  */
+  const shared = new Map(topMatchReasons(m, 99, rarity).map((r) => [r.key, r]));
+  const sharedChip = (key: string) => {
+    const r = shared.get(key);
+    return r ? push({ key: r.key, label: r.short, shared: true, full: r.full }) : false;
+  };
+
+  // 1 · What they study — shared if it is, otherwise simply theirs.
+  if (!sharedChip("concentration") && m.theirs.concentration) {
+    push({
+      key: "their-concentration",
+      label: m.theirs.concentration,
+      shared: false,
+      full: `They're concentrating in ${m.theirs.concentration}`,
+    });
+  }
+
+  // 2 · Where they train. Same rule.
+  if (!sharedChip("gym") && m.theirs.gym) {
+    push({
+      key: "their-gym",
+      label: m.theirs.gym,
+      shared: false,
+      full: `They train at ${m.theirs.gym}`,
+    });
+  }
+
+  // 3 · When. Only ever a shared fact — there is nothing to say about somebody
+  // else's timetable on its own.
+  sharedChip("schedule");
+
+  // 4 · The sometimes-one: they also do your sport.
+  sharedChip("activity-also");
+
+  // Then whatever else is genuinely worth reading, rarest first, with shared
+  // interests split one to a chip.
+  for (const r of topMatchReasons(m, 99, rarity)) {
+    if (!CARD_CHIPS.includes(r.key as (typeof CARD_CHIPS)[number])) continue;
     if (r.key === "interests") {
       for (const one of m.facts.interests) {
         push({ key: `interest-${one}`, label: one, shared: true, full: r.full });
       }
       continue;
     }
-    push({ key: r.key, label: r.short, shared: true, full: r.full });
+    sharedChip(r.key);
   }
 
-  // Then who they are. Concentration first — it is the one fact everybody has
-  // answered and the one that most reliably means something to a stranger.
-  const theirs = m.theirs;
-  if (theirs.concentration) {
-    push({
-      key: "their-concentration",
-      label: theirs.concentration,
-      shared: false,
-      full: `They're concentrating in ${theirs.concentration}`,
-    });
-  }
-  for (const one of theirs.interests) {
+  // And their own hobbies for the room that's left.
+  for (const one of m.theirs.interests) {
     push({
       key: `their-interest-${one}`,
       label: one,

@@ -647,7 +647,8 @@ returns table (
   shared_activity    text,
   activity_note      text,
   their_activity_freq text,
-  -- THEIR OWN values, shared or not. Everything above this line is an OVERLAP,
+  -- THEIR OWN values, shared or not: their concentration, what they are into,
+  -- and their main gym. Everything above this line is an OVERLAP,
   -- which is the right thing to rank on but leaves a card with nothing to say
   -- about somebody you happen to have little in common with. A result card
   -- fills its remaining room with these instead of blank space: their
@@ -655,7 +656,8 @@ returns table (
   -- worth a tap. They are plainly marked as theirs on screen, never dressed up
   -- as something you share.
   their_concentration text,
-  their_interests    text[]
+  their_interests    text[],
+  their_gym          text
 )
 language sql
 stable
@@ -673,7 +675,8 @@ as $$
     m.shared_country, m.shared_region, m.shared_gym, m.level_note,
     m.shared_activity, m.activity_note, m.their_activity_freq,
     m.c_concentration,
-    array(select distinct z.val from jsonb_array_elements_text(m.c_interests) as z(val))
+    array(select distinct z.val from jsonb_array_elements_text(m.c_interests) as z(val)),
+    m.c_top_gyms->>0
   from public.match_candidates(searcher_id) m
   where (concentration_filter is null or m.c_concentration = concentration_filter)
     and (interests_filter is null or exists (
@@ -760,7 +763,8 @@ returns table (
   their_activity_freq text,
   -- THEIR OWN values, shared or not — see match_browse above.
   their_concentration text,
-  their_interests    text[]
+  their_interests    text[],
+  their_gym          text
 )
 language sql
 stable
@@ -777,7 +781,8 @@ as $$
     m.shared_country, m.shared_region, m.shared_gym, m.level_note,
     m.shared_activity, m.activity_note, m.their_activity_freq,
     m.c_concentration,
-    array(select distinct z.val from jsonb_array_elements_text(m.c_interests) as z(val))
+    array(select distinct z.val from jsonb_array_elements_text(m.c_interests) as z(val)),
+    m.c_top_gyms->>0
   from public.match_candidates(searcher_id) m
   -- "Do they do this AT ALL", not "is it their main thing". That one word is
   -- the whole fix: a gym-first person who also runs twice a week is now
@@ -840,7 +845,8 @@ returns table (
   their_activity_freq text,
   -- THEIR OWN values, shared or not — see match_browse above.
   their_concentration text,
-  their_interests    text[]
+  their_interests    text[],
+  their_gym          text
 )
 language sql
 stable
@@ -858,7 +864,8 @@ as $$
     m.shared_country, m.shared_region, m.shared_gym, m.level_note,
     m.shared_activity, m.activity_note, m.their_activity_freq,
     m.c_concentration,
-    array(select distinct z.val from jsonb_array_elements_text(m.c_interests) as z(val))
+    array(select distinct z.val from jsonb_array_elements_text(m.c_interests) as z(val)),
+    m.c_top_gyms->>0
   from public.match_candidates(searcher_id) m
   where m.candidate_id = other_id;
 $$;
