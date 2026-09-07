@@ -23,8 +23,6 @@ import MemoriesStrip from "@/components/profile/MemoriesStrip";
 import PersonalRecords from "@/components/profile/PersonalRecords";
 import PhotoGrid from "@/components/profile/PhotoGrid";
 import PreferencesSheet from "@/components/profile/PreferencesSheet";
-import TrainingScheduleSheet from "@/components/profile/TrainingScheduleSheet";
-import OptionPickerSheet from "@/components/profile/OptionPickerSheet";
 import { useProfileData } from "@/components/profile/useProfileData";
 import {
   profileFromOnboarding,
@@ -43,13 +41,7 @@ import { fileToDataUrl } from "@/lib/image";
 import { getMyFollowCounts } from "@/lib/supabase/follows";
 import {
   residenceLabel,
-  experienceLevels,
-  primaryActivities,
-  gymSplits,
-  verifiedGyms,
-  MAX_TOP_GYMS,
   nameError,
-  type OnboardingProfile,
 } from "@/lib/onboarding";
 import {
   IconSettings,
@@ -57,7 +49,6 @@ import {
   IconCamera,
   IconPencil,
   IconChevronDown,
-  IconChevronRight,
 } from "@/components/icons";
 
 export default function ProfilePage() {
@@ -76,9 +67,7 @@ export default function ProfilePage() {
   const [logging, setLogging] = useState(false); // "Log session" (new) editor open
   const [editLog, setEditLog] = useState<WorkoutLog | null>(null); // editing an existing log
   const [editingPrefs, setEditingPrefs] = useState(false);
-  const [editingSchedule, setEditingSchedule] = useState(false);
   // Which Training row is being picked, if any.
-  const [picker, setPicker] = useState<"level" | "activity" | "split" | "gyms" | null>(null);
   const [followCounts, setFollowCounts] = useState<{ following: number; followers: number } | null>(null);
   // True once the counts have actually been fetched. Without it a brand-new
   // profile would show three zeros for a beat before the starter card replaced
@@ -231,54 +220,13 @@ export default function ProfilePage() {
   const statsReady = statsLoaded && followCounts !== null;
   const brandNew = sessionsCount === 0 && partners.length === 0 && following === 0;
 
-  const cap = (s: string) => (s ? s[0].toUpperCase() + s.slice(1) : s);
   // "Who you train with" summary, e.g. "Partner · Any".
-  const trainWithLabel = user.trainingType
-    ? cap(user.trainingType) +
-      (user.trainingType !== "solo" && user.partnerPreference
-        ? ` · ${cap(user.partnerPreference)}`
-        : "")
-    : "—";
-
   /*
-    Each row shows the saved answer and opens the picker that edits it. Saving
-    goes through savePreferences, which re-derives the display rows, so the
-    label and the stored answer can never disagree.
+    Training, the schedule, the gyms and who you'll train with all moved to
+    Settings — see components/settings/TrainingSettings.tsx. They are answers
+    the app runs on, not things a visitor to your profile reads, and they took
+    about 200px of a page that should be about you.
   */
-  const answers = data as Partial<OnboardingProfile>;
-  const trainingRows: { key: string; label: string; value: string; onEdit: () => void }[] = [
-    {
-      key: "level",
-      label: "Level",
-      value: user.trainingDisplay.level,
-      onEdit: () => setPicker("level"),
-    },
-    {
-      key: "type",
-      label: "Activity",
-      value: user.trainingDisplay.type,
-      onEdit: () => setPicker("activity"),
-    },
-    {
-      key: "split",
-      label: "Split",
-      value: user.trainingDisplay.split,
-      onEdit: () => setPicker("split"),
-    },
-    {
-      key: "schedule",
-      label: "Days",
-      value: user.trainingDisplay.schedule,
-      onEdit: () => setEditingSchedule(true),
-    },
-    {
-      key: "gym",
-      label: "Gyms",
-      value: answers.topGyms?.join(" · ") || "—",
-      onEdit: () => setPicker("gyms"),
-    },
-  ];
-
   return (
     <div className="mx-auto w-full max-w-screen-sm">
       {/* Top bar */}
@@ -479,89 +427,66 @@ export default function ProfilePage() {
           until there's a photo to show. */}
       <MemoriesStrip />
 
-      {/* Training — every row opens a real picker and saves the real answer.
-          These used to be free-text boxes writing to `trainingDisplay`, a
-          display-only copy, so edits here never reached matching. */}
-      <div className="border-b border-border px-3.5 py-3">
-        <div className="mb-1 flex items-baseline justify-between">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-            Training
-          </div>
-          <span className="text-[11px] text-muted">affects who you match with</span>
-        </div>
-        <div className="flex flex-col divide-y divide-border">
-          {trainingRows.map((row) => (
+      {/*
+        WHAT OTHER PEOPLE SEE. Interests and languages used to sit inside a
+        "Preferences" block, beside how you want to be matched and who with —
+        which is why they read as settings. They aren't: they're public, they're
+        what somebody else matches with you ON, and interests are the single most
+        useful line on a match card. Training, the schedule, gyms and your
+        matching preferences went to Settings; these stayed.
+
+        The pencil edits them here rather than sending you to Settings to find
+        them: you should be able to change a thing where you can see it.
+      */}
+      {(user.interests.length > 0 || user.languages.length > 0) && (
+        <div className="border-b border-border px-3.5 py-3">
+          <div className="mb-2 flex items-center justify-between">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
+              About you
+            </div>
             <button
-              key={row.key}
               type="button"
-              onClick={row.onEdit}
-              className="flex items-center justify-between gap-3 py-2.5 text-left"
+              onClick={() => setEditingPrefs(true)}
+              className="tap44 flex items-center gap-1 rounded-full px-1.5 py-1 text-[11px] font-medium text-primary transition-colors hover:bg-primary-tint"
             >
-              <span className="text-xs text-muted">{row.label}</span>
-              <span className="flex items-center gap-1.5">
-                <span className="text-xs text-text">{row.value}</span>
-                <span className="text-muted">
-                  <IconChevronRight size={13} />
-                </span>
-              </span>
+              <IconPencil size={11} />
+              Edit
             </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Preferences — your editable onboarding answers */}
-      <div className="border-b border-border px-3.5 py-3">
-        <div className="mb-2 flex items-center justify-between">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-            Preferences
           </div>
-          <button
-            type="button"
-            onClick={() => setEditingPrefs(true)}
-            className="tap44 flex items-center gap-1 rounded-full px-1.5 py-1 text-[11px] font-medium text-primary transition-colors hover:bg-primary-tint"
-          >
-            <IconPencil size={11} />
-            Edit answers
-          </button>
-        </div>
 
-        <div className="flex items-center justify-between py-1.5">
-          <span className="text-xs text-muted">Train with</span>
-          <span className="text-xs text-text">{trainWithLabel}</span>
-        </div>
-
-        {user.interests.length > 0 && (
-          <div className="mt-2.5">
-            <div className="mb-1.5 text-[11px] text-muted">Interests</div>
-            <div className="flex flex-wrap gap-1.5">
-              {user.interests.map((i) => (
-                <span
-                  key={i}
-                  className="rounded-full border border-accent bg-accent-tint px-2.5 py-1 text-[11px] text-accent"
-                >
-                  {i}
-                </span>
-              ))}
+          {user.interests.length > 0 && (
+            <div>
+              <div className="mb-1.5 text-[11px] text-muted">Interests</div>
+              <div className="flex flex-wrap gap-1.5">
+                {user.interests.map((i) => (
+                  <span
+                    key={i}
+                    className="rounded-full border border-accent bg-accent-tint px-2.5 py-1 text-[11px] text-accent"
+                  >
+                    {i}
+                  </span>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {user.languages.length > 0 && (
-          <div className="mt-2.5">
-            <div className="mb-1.5 text-[11px] text-muted">Languages</div>
-            <div className="flex flex-wrap gap-1.5">
-              {user.languages.map((l) => (
-                <span
-                  key={l}
-                  className="rounded-full border border-border bg-surface-2 px-2.5 py-1 text-[11px] text-text"
-                >
-                  {l}
-                </span>
-              ))}
+          {user.languages.length > 0 && (
+            <div className="mt-2.5">
+              <div className="mb-1.5 text-[11px] text-muted">Languages</div>
+              <div className="flex flex-wrap gap-1.5">
+                {user.languages.map((l) => (
+                  <span
+                    key={l}
+                    className="rounded-full border border-border bg-surface-2 px-2.5 py-1 text-[11px] text-text"
+                  >
+                    {l}
+                  </span>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
 
       {/* Personal records */}
       <PersonalRecords
@@ -706,63 +631,6 @@ export default function ProfilePage() {
         />
       )}
 
-      {editingSchedule && (
-        <TrainingScheduleSheet
-          schedule={answers.trainingSchedule ?? {}}
-          onSave={(trainingSchedule) => savePreferences({ trainingSchedule })}
-          onClose={() => setEditingSchedule(false)}
-        />
-      )}
-
-      {picker === "level" && (
-        <OptionPickerSheet
-          title="Experience level"
-          hint="How long you've been training"
-          options={experienceLevels.map((l) => ({ value: l.key, label: `${l.name} — ${l.desc}` }))}
-          selected={answers.experienceLevel ? [answers.experienceLevel] : []}
-          onSave={([experienceLevel]) =>
-            savePreferences({ experienceLevel: experienceLevel as OnboardingProfile["experienceLevel"] })
-          }
-          onClose={() => setPicker(null)}
-        />
-      )}
-
-      {picker === "activity" && (
-        <OptionPickerSheet
-          title="Main activity"
-          hint="What you mostly do"
-          options={primaryActivities.map((a) => ({ value: a.key, label: a.label }))}
-          selected={answers.primaryActivity ? [answers.primaryActivity] : []}
-          onSave={([primaryActivity]) =>
-            savePreferences({ primaryActivity: primaryActivity as OnboardingProfile["primaryActivity"] })
-          }
-          onClose={() => setPicker(null)}
-        />
-      )}
-
-      {picker === "split" && (
-        <OptionPickerSheet
-          title="Training split"
-          hint="How you organise your week"
-          options={gymSplits.map((s) => ({ value: s, label: s }))}
-          selected={answers.gymSplit ? [answers.gymSplit] : []}
-          onSave={([gymSplit]) => savePreferences({ gymSplit })}
-          onClose={() => setPicker(null)}
-        />
-      )}
-
-      {picker === "gyms" && (
-        <OptionPickerSheet
-          title="Your gyms"
-          hint={`Up to ${MAX_TOP_GYMS}, in order of preference`}
-          options={verifiedGyms.map((g) => ({ value: g, label: g }))}
-          selected={answers.topGyms ?? []}
-          multiple
-          max={MAX_TOP_GYMS}
-          onSave={(topGyms) => savePreferences({ topGyms })}
-          onClose={() => setPicker(null)}
-        />
-      )}
     </div>
   );
 }

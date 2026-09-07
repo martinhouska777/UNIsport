@@ -20,6 +20,8 @@ import { useAppState } from "@/components/AppState";
 import ThemeProvider from "@/components/ThemeProvider";
 import { useThemeMode } from "@/components/ThemeMode";
 import { useProfileData } from "@/components/profile/useProfileData";
+import TrainingSettings from "@/components/settings/TrainingSettings";
+import type { OnboardingProfile } from "@/lib/onboarding";
 import PreferencesSheet from "@/components/profile/PreferencesSheet";
 import NotificationSettings from "@/components/profile/NotificationSettings";
 import { useMembership } from "@/components/varsity/useMembership";
@@ -317,17 +319,35 @@ export default function SettingsPage() {
             through a team link never did the student flow, so they're offered
             it rather than shown an editor over empty fields. */}
         {studentReady ? (
-          <Section title="Your answers">
-            <Row
-              icon={<IconPencil size={18} />}
-              label="Edit answers"
-              detail={loading ? "Loading…" : undefined}
-              onClick={() => user && setEditingPrefs(true)}
-            />
-            <p className="mt-2 px-1 text-[11px] text-muted">
-              Training, schedule, gyms, interests and who you want to train with.
-            </p>
-          </Section>
+          <>
+            {/*
+              TRAINING, moved off the Profile tab. Every row opens in place —
+              the schedule especially, which used to be a sheet thrown over the
+              whole screen. See components/settings/TrainingSettings.tsx.
+            */}
+            <Section title="Training">
+              <TrainingSettings
+                answers={(data ?? {}) as Partial<OnboardingProfile>}
+                onSave={savePreferences}
+              />
+              <p className="mt-2 px-1 text-[11px] text-muted">
+                All of this decides who you&apos;re matched with.
+              </p>
+            </Section>
+
+            <Section title="Your answers">
+              <Row
+                icon={<IconPencil size={18} />}
+                label="Edit answers"
+                detail={loading ? "Loading…" : undefined}
+                onClick={() => user && setEditingPrefs(true)}
+              />
+              <p className="mt-2 px-1 text-[11px] text-muted">
+                Who you want to train with, mentorship, interests, languages and your
+                concentration.
+              </p>
+            </Section>
+          </>
         ) : (
           <Section title="Student mode">
             <Row icon={<IconPencil size={18} />} label="Set up the student side" href="/onboarding" />
