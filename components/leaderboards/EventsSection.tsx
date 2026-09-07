@@ -1,82 +1,74 @@
 "use client";
 
 /*
-  EVENTS — the week's two races.
+  EVENTS — the things with a deadline.
   ---------------------------------------------------------------------------
-  Everything else in the League only goes forwards. This is the part that ENDS:
-  it starts on Monday, it is gone on Sunday night, and it has a winner. That is
-  the reason to open the app on a Monday, and the reason a quiet week still has
-  something in it.
+  Everything else in the League only goes forwards. This is the part that ENDS.
 
-  YOURS runs whatever happens — it works when you are the only person here,
-  which at launch you are.
+  SPECIAL EVENTS are the Strava-style ones: three running at once, one closing
+  on Sunday and two with the month, each worth a chunk of bonus XP. They are
+  deliberately not the daily/weekly/monthly habit challenges on the Challenges
+  tab — those are the steady drumbeat. These ask for something you would not
+  otherwise have done: go somewhere new, run further, meet people, turn up five
+  days out of seven.
 
-  YOUR HOUSE'S is a race between houses, and it is GATED BY HOUSE LEVEL. A
-  house that hasn't built anything yet can see the race, can see exactly how far
-  off the door is, and can see what its own level is — it just cannot enter. The
-  gap is the recruiting pitch: "three more people logging and we're in".
+  THE HOUSE RACE is one event every house runs at the same time, ranked against
+  each other while the bars fill, and it is GATED BY HOUSE LEVEL. A house below
+  the gate can see the race, can see its own level, and can see exactly how far
+  off the door is — the gap is the recruiting pitch.
 
-  Which two events run is decided by the week number (lib/events.ts), so the
-  whole campus sees the same pair and nobody has to schedule anything.
+  Which events run is decided by the week and month number (lib/events.ts), so
+  the whole campus sees the same ones and nobody schedules anything.
 */
 import { Bar, Empty, Loading, RankBadge } from "@/components/leaderboards/pieces";
 import { residenceLabel } from "@/lib/onboarding";
 import { houseColor } from "@/lib/leaderboards";
 import { houseLevelProgress } from "@/lib/xp";
 import {
-  daysLeftLabel,
   eventProgress,
-  eventsThisWeek,
   houseCanEnter,
+  houseEventThisWeek,
+  specialEventsNow,
+  windowLeftLabel,
   HOUSE_EVENT_MIN_LEVEL,
   type EventCounters,
-  type WeeklyEvent,
+  type EventProgress,
+  type SpecialEvent,
 } from "@/lib/events";
 import type { HouseWeek } from "@/lib/league";
 
-function Header({ kind }: { kind: string }) {
+function SectionHead({ title, note }: { title: string; note?: string }) {
   return (
     <div className="flex items-baseline justify-between gap-2">
-      <h2 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">{kind}</h2>
-      <span className="flex-shrink-0 text-[11px] font-medium text-accent">{daysLeftLabel()}</span>
+      <h2 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">{title}</h2>
+      {note && <span className="flex-shrink-0 text-[11px] font-medium text-accent">{note}</span>}
     </div>
   );
 }
 
-/** The big card at the top of each half: what it is, how far, what it pays. */
-function EventCard({
-  event,
-  have,
-  target,
-  done,
-  fraction,
-  tint,
-}: {
-  event: WeeklyEvent;
-  have: number;
-  target: number;
-  done: boolean;
-  fraction: number;
-  tint?: string | null;
-}) {
+/** One special event: what it is, how far you are, what it pays, when it ends. */
+function SpecialCard({ event, p }: { event: SpecialEvent; p: EventProgress }) {
   return (
     <div
-      className={`mt-2 rounded-2xl border px-3.5 py-3 ${
-        done ? "border-success-line bg-success-tint" : "border-border bg-surface-2"
+      className={`rounded-xl border px-3 py-2.5 ${
+        p.done ? "border-success-line bg-success-tint" : "border-border bg-surface"
       }`}
     >
       <div className="flex items-baseline justify-between gap-2">
-        <span className="truncate text-[15px] font-semibold text-text">{event.title}</span>
+        <span className="truncate text-[13px] font-medium text-text">{event.title}</span>
         <span className="flex-shrink-0 text-[11px] font-semibold text-primary">
           +{event.xp.toLocaleString()} XP
         </span>
       </div>
-      <p className="mt-0.5 text-[11px] leading-relaxed text-muted">{event.blurb}</p>
-      <Bar fraction={fraction} tint={tint} />
-      <div className="mt-1.5 text-[11px] font-medium text-text">
-        {done
-          ? "Done — the XP is yours."
-          : `${have.toLocaleString()} of ${target.toLocaleString()}`}
+      <p className="mt-0.5 truncate text-[11px] text-muted">{event.blurb}</p>
+      <Bar fraction={p.fraction} />
+      <div className="mt-1.5 flex items-baseline justify-between gap-2">
+        <span className="text-[11px] font-medium text-text">
+          {p.done ? "Done — the XP is yours." : `${p.have.toLocaleString()} of ${p.target.toLocaleString()}`}
+        </span>
+        <span className="flex-shrink-0 text-[11px] text-muted">
+          {windowLeftLabel(event.window)}
+        </span>
       </div>
     </div>
   );
@@ -85,18 +77,20 @@ function EventCard({
 /* ─────────────────────────────  screen  ───────────────────────────── */
 
 export default function EventsSection({
-  mine,
+  week,
+  month,
   houses,
   residence,
 }: {
-  mine: EventCounters | null;
+  week: EventCounters | null;
+  month: EventCounters | null;
   houses: HouseWeek[] | null;
   residence: string | null;
 }) {
-  if (!mine || !houses) return <Loading />;
+  if (!week || !month || !houses) return <Loading />;
 
-  const { personal, house } = eventsThisWeek();
-  const my = eventProgress(personal, mine);
+  const specials = specialEventsNow();
+  const house = houseEventThisWeek();
 
   const myHouse = houses.find((h) => h.key === residence) ?? null;
   const canEnter = myHouse ? houseCanEnter(myHouse.xp) : false;
@@ -111,51 +105,75 @@ export default function EventsSection({
 
   return (
     <div className="px-3.5 py-3">
-      {/* ── Yours ─────────────────────────────────────────────────── */}
-      <Header kind="Your event this week" />
-      <EventCard
-        event={personal}
-        have={my.have}
-        target={my.target}
-        done={my.done}
-        fraction={my.fraction}
-      />
+      {/* ── Special events ────────────────────────────────────────── */}
+      <SectionHead title="Special events" />
+      <p className="mt-1 text-[11px] leading-relaxed text-muted">
+        Bonus XP for something out of the ordinary. Three at a time — one ends on Sunday, two end
+        with the month.
+      </p>
+      <div className="mt-2 flex flex-col gap-1.5">
+        {specials.map((e) => (
+          <SpecialCard
+            key={e.key}
+            event={e}
+            p={eventProgress(e, e.window === "week" ? week : month)}
+          />
+        ))}
+      </div>
 
       {/* ── The house race ────────────────────────────────────────── */}
       <div className="mt-5">
-        <Header kind="The house race" />
+        <SectionHead title="House competition" note={windowLeftLabel("week")} />
+        <p className="mt-1 text-[11px] leading-relaxed text-muted">
+          One target, every house pushing at once, and a new one every Monday. This week:{" "}
+          <strong className="text-text">{house.title}</strong> — {house.blurb.toLowerCase()}
+        </p>
 
         {!residence ? (
           <Empty>
             You haven&rsquo;t told us where you live yet, so there is no house to race with.
           </Empty>
         ) : !canEnter ? (
-          <>
-            <div className="mt-2 rounded-2xl border border-border bg-surface-2 px-3.5 py-3">
-              <div className="text-[15px] font-semibold text-text">
-                {residenceLabel(residence)} isn&rsquo;t in yet
-              </div>
-              <p className="mt-0.5 text-[11px] leading-relaxed text-muted">
-                A house enters the weekly race at{" "}
-                <strong className="font-semibold text-text">Level {HOUSE_EVENT_MIN_LEVEL}</strong>.
-                Yours is Level {myHouseLevel}. Every session anyone here logs moves it — and so
-                does every person you get to start logging.
-              </p>
-              <Bar
-                fraction={Math.min(1, myHouseLevel / HOUSE_EVENT_MIN_LEVEL)}
-                tint={houseColor(residence)}
-              />
+          <div className="mt-2 rounded-2xl border border-border bg-surface-2 px-3.5 py-3">
+            <div className="text-[15px] font-semibold text-text">
+              {residenceLabel(residence)} isn&rsquo;t in yet
             </div>
-            <p className="mt-2 px-0.5 text-[11px] leading-relaxed text-muted">
-              This week&rsquo;s race is <strong className="text-text">{house.title}</strong> —{" "}
-              {house.blurb.toLowerCase()} You can watch it below.
+            <p className="mt-0.5 text-[11px] leading-relaxed text-muted">
+              A house enters at{" "}
+              <strong className="font-semibold text-text">Level {HOUSE_EVENT_MIN_LEVEL}</strong>.
+              Yours is Level {myHouseLevel}. Every session anyone here logs moves it — and so does
+              every person you get to start logging.
             </p>
-          </>
+            <Bar
+              fraction={Math.min(1, myHouseLevel / HOUSE_EVENT_MIN_LEVEL)}
+              tint={houseColor(residence)}
+            />
+          </div>
         ) : (
           myHouse && (
-            // eventProgress carries the event itself, so spreading it is the
-            // whole card — passing `event` as well would just shadow it.
-            <EventCard {...eventProgress(house, myHouse.counters)} tint={houseColor(residence)} />
+            <div className="mt-2 rounded-2xl border border-border bg-surface-2 px-3.5 py-3">
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="truncate text-[15px] font-semibold text-text">
+                  {residenceLabel(residence)}
+                </span>
+                <span className="flex-shrink-0 text-[11px] font-semibold text-primary">
+                  +{house.xp.toLocaleString()} XP to the house
+                </span>
+              </div>
+              {(() => {
+                const p = eventProgress(house, myHouse.counters);
+                return (
+                  <>
+                    <Bar fraction={p.fraction} tint={houseColor(residence)} />
+                    <div className="mt-1.5 text-[11px] font-medium text-text">
+                      {p.done
+                        ? "Across the line."
+                        : `${p.have.toLocaleString()} of ${p.target.toLocaleString()}`}
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
           )
         )}
 
@@ -182,9 +200,7 @@ export default function EventsSection({
                     <RankBadge rank={i + 1} />
                     <span
                       className="h-8 w-1.5 flex-shrink-0 rounded-full bg-primary"
-                      style={
-                        houseColor(h.key) ? { background: houseColor(h.key)! } : undefined
-                      }
+                      style={houseColor(h.key) ? { background: houseColor(h.key)! } : undefined}
                     />
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-[13px] font-medium text-text">
@@ -192,7 +208,9 @@ export default function EventsSection({
                         {h.isMine && <span className="ml-1.5 text-[11px] text-primary">Yours</span>}
                       </div>
                       <div className="truncate text-[11px] text-muted">
-                        {p.done ? "Across the line" : `${p.have.toLocaleString()} of ${p.target.toLocaleString()}`}
+                        {p.done
+                          ? "Across the line"
+                          : `${p.have.toLocaleString()} of ${p.target.toLocaleString()}`}
                       </div>
                     </div>
                     <span className="flex-shrink-0 text-[15px] font-semibold text-text">
@@ -206,11 +224,6 @@ export default function EventsSection({
           )}
         </div>
       </div>
-
-      <p className="mt-4 px-0.5 text-[11px] leading-relaxed text-muted">
-        Events run Monday to Sunday and change on their own every week. Your own event always
-        runs; the house race needs the house at Level {HOUSE_EVENT_MIN_LEVEL}.
-      </p>
     </div>
   );
 }

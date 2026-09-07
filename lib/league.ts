@@ -28,13 +28,24 @@ import {
 import {
   challengeXp,
   emptyCounters,
+  emptyPeriodSessions,
+  recurringXp,
+  MONTH_TARGET,
+  WEEK_TARGET,
+  type PeriodSessions,
   emptyHouseCounters,
   houseChallengeXp,
   type Counters,
   type HouseCounters,
 } from "@/lib/challenges";
 import { fetchGroupBoard, type GroupRow } from "@/lib/leaderboards";
-import { emptyEventCounters, weekStartISO, type EventCounters } from "@/lib/events";
+import {
+  emptyEventCounters,
+  monthStartISO,
+  todayISO,
+  weekStartISO,
+  type EventCounters,
+} from "@/lib/events";
 import { residenceKind, type ResidenceKind } from "@/lib/onboarding";
 
 export type LeagueRow = {
@@ -49,8 +60,10 @@ export type LeagueRow = {
   sessionsBy: SessionCounts;
   /** XP from turning up. */
   fromSessions: number;
-  /** XP from finished challenges. */
+  /** XP from finished milestone challenges. */
   fromChallenges: number;
+  /** XP from every completion of the daily/weekly/monthly ones. */
+  fromRecurring: number;
   xp: number;
   progress: LevelProgress;
   isMe: boolean;
@@ -68,7 +81,9 @@ type RpcRow = {
   partners: number;
   new_partners: number;
   gyms: number;
-  weeks3: number;
+  days: number;
+  weeks_hit: number;
+  months_hit: number;
   km: string | number; // numeric comes back as a string
   is_me: boolean | null;
 };
@@ -79,7 +94,9 @@ function shape(r: RpcRow, universityKey: string): Omit<LeagueRow, "rank"> {
     partners: r.partners ?? 0,
     newPartners: r.new_partners ?? 0,
     gyms: r.gyms ?? 0,
-    weeks3: r.weeks3 ?? 0,
+    days: r.days ?? 0,
+    weeksHit: r.weeks_hit ?? 0,
+    monthsHit: r.months_hit ?? 0,
     km: Number(r.km ?? 0),
   };
   const sessionsBy: SessionCounts = {
@@ -89,7 +106,10 @@ function shape(r: RpcRow, universityKey: string): Omit<LeagueRow, "rank"> {
   };
   const fromSessions = activityXp(sessionsBy);
   const fromChallenges = challengeXp(counters, universityKey);
-  const xp = fromSessions + fromChallenges;
+  // Every day trained, every week and month that hit its target, paid at the
+  // recurring rate. Counted rather than stored, so it covers all of history.
+  const fromRecurring = recurringXp(counters);
+  const xp = fromSessions + fromChallenges + fromRecurring;
   return {
     userId: r.user_id,
     name: r.name,
@@ -100,6 +120,7 @@ function shape(r: RpcRow, universityKey: string): Omit<LeagueRow, "rank"> {
     sessionsBy,
     fromSessions,
     fromChallenges,
+    fromRecurring,
     xp,
     progress: levelProgress(xp),
     isMe: !!r.is_me,
@@ -120,6 +141,8 @@ async function read(
     xp_new: sessionXp.newPartner,
     only_me: onlyMe,
     since_date: since ?? null,
+    week_target: WEEK_TARGET,
+    month_target: MONTH_TARGET,
   });
   if (error || !data) return [] as Omit<LeagueRow, "rank">[];
   return (data as RpcRow[]).map((r) => shape(r, universityKey));
@@ -167,6 +190,7 @@ export function blankLeague(): Omit<LeagueRow, "rank" | "userId" | "name" | "ini
     sessionsBy: { solo: 0, partner: 0, newPartner: 0 },
     fromSessions: 0,
     fromChallenges: 0,
+    fromRecurring: 0,
     xp: 0,
     progress: levelProgress(0),
     isMe: true,
@@ -299,10 +323,13 @@ export type LeagueData = {
   me: LeagueRow | null;
   people: LeagueRow[];
   houses: HouseStanding[];
-  years: HouseStanding[];
   stats: CampusStats;
-  /** Monday to now — what the weekly events are measured on. */
+  /** Monday to now — the week-long special event and the house race. */
   week: { mine: EventCounters; houses: HouseWeek[] };
+  /** The 1st to now — the month-long special events. */
+  month: { mine: EventCounters };
+  /** YOUR sessions in each window the recurring challenges are open in. */
+  now: PeriodSessions;
 };
 
 /**
@@ -314,7 +341,6 @@ export function emptyLeague(): LeagueData {
     me: null,
     people: [],
     houses: [],
-    years: [],
     stats: {
       people: 0,
       sessions: 0,
@@ -327,30 +353,42 @@ export function emptyLeague(): LeagueData {
       totalXp: 0,
     },
     week: { mine: emptyEventCounters, houses: [] },
+    month: { mine: emptyEventCounters },
+    now: emptyPeriodSessions,
   };
 }
 
 export async function fetchLeague(universityKey: string): Promise<LeagueData> {
   const since = weekStartISO();
-  const [people, weekPeople] = await Promise.all([
+  /*
+    Four reads, and each one earns its place. The all-time counters carry every
+    level, every milestone and the boards. The week is read for EVERYONE because
+    the house race needs every house's week. Today and this month are read only
+    for you — nobody else's daily tick is ever shown, so nobody else's needs
+    fetching.
+  */
+  const [people, weekPeople, todayMine, monthMine] = await Promise.all([
     fetchLeagueBoard(universityKey, 1000),
     fetchLeagueBoard(universityKey, 1000, since),
+    read(universityKey, 1, true, todayISO()),
+    read(universityKey, 1, true, monthStartISO()),
   ]);
-  const [houseGroups, yearGroups] = await Promise.all([
-    fetchGroupBoard("house", "all", 1),
-    fetchGroupBoard("year", "all", 1),
-  ]);
+  const houseGroups = await fetchGroupBoard("house", "all", 1);
   const houses = buildGroupLeague("house", people, houseGroups);
-  const years = buildGroupLeague("year", people, yearGroups);
   return {
     // league_counters always returns the caller's own row, even at zero, so
     // there is no separate read for "me".
     me: people.find((p) => p.isMe) ?? null,
     people,
     houses,
-    years,
     stats: campusStats(people, houses),
     week: buildWeek(weekPeople, houses),
+    month: { mine: mineCounters(monthMine[0]) },
+    now: {
+      today: todayMine[0]?.counters.sessions ?? 0,
+      week: weekPeople.find((p) => p.isMe)?.counters.sessions ?? 0,
+      month: monthMine[0]?.counters.sessions ?? 0,
+    },
   };
 }
 
@@ -362,15 +400,20 @@ export async function fetchLeague(universityKey: string): Promise<LeagueData> {
  * race is the one the house has built over all time, not this week's effort.
  * Everything else is counted from Monday.
  */
-function buildWeek(weekPeople: LeagueRow[], houses: HouseStanding[]): LeagueData["week"] {
-  const mineRow = weekPeople.find((p) => p.isMe);
-  const mine: EventCounters = {
+/** One person's counters inside a window, in the shape events measure. */
+function mineCounters(row?: Omit<LeagueRow, "rank"> | LeagueRow): EventCounters {
+  return {
     ...emptyEventCounters,
-    sessions: mineRow?.counters.sessions ?? 0,
-    partners: mineRow?.counters.partners ?? 0,
-    km: mineRow?.counters.km ?? 0,
-    gyms: mineRow?.counters.gyms ?? 0,
+    sessions: row?.counters.sessions ?? 0,
+    partners: row?.counters.partners ?? 0,
+    km: row?.counters.km ?? 0,
+    gyms: row?.counters.gyms ?? 0,
+    days: row?.counters.days ?? 0,
   };
+}
+
+function buildWeek(weekPeople: LeagueRow[], houses: HouseStanding[]): LeagueData["week"] {
+  const mine = mineCounters(weekPeople.find((p) => p.isMe));
 
   const byKey = new Map<string, HouseWeek>();
   for (const h of houses) {

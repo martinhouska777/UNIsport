@@ -35,7 +35,9 @@ export type ChallengeMetric =
   | "partners" // different people trained with
   | "newPartners" // people trained with for the first time
   | "gyms" // different gyms trained at
-  | "weeks3" // weeks containing 3 or more sessions
+  | "days" // separate days trained on
+  | "weeksHit" // weeks that reached the weekly target
+  | "monthsHit" // months that reached the monthly target
   | "km"; // kilometres run, rowed or ridden
 
 export type Challenge = {
@@ -52,6 +54,118 @@ export type Challenge = {
   /** Paid once, on completion. */
   xp: number;
 };
+
+/* ═══════════════════  the recurring ones (the habit)  ═══════════════════ */
+
+/*
+  THREE CHALLENGES THAT COME BACK. One resets tonight, one on Monday, one on the
+  1st. This is the part that makes the app a habit rather than a scoreboard: a
+  daily tick you do not want to break, a weekly target that survives one bad
+  day, and a monthly one that survives a bad week.
+
+  HOW THEY ARE PAID, and why nothing is stored. A completion is not written
+  down anywhere — it is COUNTED. How many separate days you trained on, how
+  many weeks reached three, how many months reached twelve: the logs already
+  know all three, so db/league.sql just counts them and the XP follows. Nothing
+  to migrate, nothing to keep in step, and every session you have ever logged
+  counted from the day this shipped.
+
+  The two targets below are the single source of truth for the whole system:
+  they are passed INTO the SQL, so "a good week" means the same thing on your
+  challenge card, in your XP, and on the milestone ladder further down.
+*/
+export const WEEK_TARGET = 3;
+export const MONTH_TARGET = 12;
+
+export type Recurrence = "daily" | "weekly" | "monthly";
+
+export type RecurringChallenge = {
+  key: string;
+  recurrence: Recurrence;
+  title: string;
+  blurb: string;
+  /** Sessions needed within the period. */
+  target: number;
+  /** Paid EVERY time it is completed, not once. */
+  xp: number;
+  /** The counter holding how many times it has been completed, all time. */
+  completions: "days" | "weeksHit" | "monthsHit";
+};
+
+export const recurringChallenges: RecurringChallenge[] = [
+  {
+    key: "daily-train",
+    recurrence: "daily",
+    title: "Train today",
+    blurb: "One session, any kind — gym, a run, anything you log.",
+    target: 1,
+    xp: 20,
+    completions: "days",
+  },
+  {
+    key: "weekly-three",
+    recurrence: "weekly",
+    title: `${WEEK_TARGET} this week`,
+    blurb: `Log ${WEEK_TARGET} sessions between Monday and Sunday.`,
+    target: WEEK_TARGET,
+    xp: 100,
+    completions: "weeksHit",
+  },
+  {
+    key: "monthly-twelve",
+    recurrence: "monthly",
+    title: `${MONTH_TARGET} this month`,
+    blurb: `Log ${MONTH_TARGET} sessions before the month is out.`,
+    target: MONTH_TARGET,
+    xp: 300,
+    completions: "monthsHit",
+  },
+];
+
+export const recurrenceLabel: Record<Recurrence, string> = {
+  daily: "Daily",
+  weekly: "Weekly",
+  monthly: "Monthly",
+};
+
+/** Sessions logged in each of the three windows that are open right now. */
+export type PeriodSessions = { today: number; week: number; month: number };
+
+export const emptyPeriodSessions: PeriodSessions = { today: 0, week: 0, month: 0 };
+
+export type RecurringProgress = {
+  challenge: RecurringChallenge;
+  /** Sessions so far in the window that is open now. */
+  have: number;
+  target: number;
+  done: boolean;
+  fraction: number;
+  /** How many times it has ever been completed. */
+  completed: number;
+};
+
+export function recurringProgress(
+  now: PeriodSessions,
+  counters: Counters,
+): RecurringProgress[] {
+  return recurringChallenges.map((c) => {
+    const have =
+      c.recurrence === "daily" ? now.today : c.recurrence === "weekly" ? now.week : now.month;
+    return {
+      challenge: c,
+      have: Math.min(have, c.target),
+      target: c.target,
+      done: have >= c.target,
+      fraction: c.target > 0 ? Math.min(1, have / c.target) : 0,
+      completed: counters[c.completions] ?? 0,
+    };
+  });
+}
+
+/** Everything the recurring challenges have ever paid out. */
+export function recurringXp(c: Counters): number {
+  return recurringChallenges.reduce((sum, ch) => sum + (c[ch.completions] ?? 0) * ch.xp, 0);
+}
 
 /* ───────────────────────────  the ladder  ─────────────────────────── */
 
@@ -87,8 +201,8 @@ export const challengeLadder: Challenge[] = [
   {
     key: "two-good-weeks",
     title: "Twice a habit",
-    blurb: "Have two separate weeks with 3 or more sessions in them.",
-    metric: "weeks3",
+    blurb: `Have two separate weeks that hit ${WEEK_TARGET} sessions.`,
+    metric: "weeksHit",
     target: 2,
     xp: 150,
   },
@@ -135,8 +249,8 @@ export const challengeLadder: Challenge[] = [
   {
     key: "six-good-weeks",
     title: "Half a semester",
-    blurb: "Have six separate weeks with 3 or more sessions in them.",
-    metric: "weeks3",
+    blurb: `Have six separate weeks that hit ${WEEK_TARGET} sessions.`,
+    metric: "weeksHit",
     target: 6,
     xp: 400,
   },
@@ -166,7 +280,9 @@ export type Counters = {
   partners: number;
   newPartners: number;
   gyms: number;
-  weeks3: number;
+  days: number;
+  weeksHit: number;
+  monthsHit: number;
   km: number;
 };
 
@@ -175,7 +291,9 @@ export const emptyCounters: Counters = {
   partners: 0,
   newPartners: 0,
   gyms: 0,
-  weeks3: 0,
+  days: 0,
+  weeksHit: 0,
+  monthsHit: 0,
   km: 0,
 };
 

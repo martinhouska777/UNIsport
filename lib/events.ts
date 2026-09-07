@@ -6,9 +6,11 @@
   starts on Monday, it is gone on Sunday night, and it has a winner. That is
   the reason to open the app on a Monday.
 
-  TWO RUN EVERY WEEK, one of each:
-    • a personal one, which works even if you are the only person here
-    • a house one, which is a race between houses
+  WHAT RUNS AT ONCE:
+    • three SPECIAL events for you — one ending Sunday, two ending with the
+      month. Bonus XP for something you would not otherwise have done.
+    • one HOUSE RACE, which every house able to enter is running at the same
+      time, ranked against each other while the bars fill.
 
   THE HOUSE RACE IS GATED BY YOUR HOUSE'S LEVEL. A house has to have built
   something before it can enter — which turns "we need more people logging" from
@@ -41,6 +43,7 @@ export type EventMetric =
   | "partners"
   | "km"
   | "gyms"
+  | "days" // separate days trained on inside the window
   | "actives"; // house only: how many members trained at all this week
 
 export type WeeklyEvent = {
@@ -55,48 +58,110 @@ export type WeeklyEvent = {
   xp: number;
 };
 
-/* ───────────────────────────  personal  ─────────────────────────── */
+/* ───────────────────────────  special events  ─────────────────────────── */
 
-export const personalEvents: WeeklyEvent[] = [
+/*
+  The Strava-style ones: a handful of interesting targets running at once, worth
+  a chunk of bonus XP, gone when their window closes.
+
+  They are NOT the daily/weekly/monthly habit challenges — those are the steady
+  drumbeat and they never change. These are the opposite: they ask for
+  something you would not otherwise have done. Go somewhere new. Run further
+  than usual. Meet people. Turn up five days out of seven.
+
+  Three run at a time: one week-long and two month-long, so there is always
+  something ending soon and something worth pacing.
+*/
+export type EventWindow = "week" | "month";
+
+export type SpecialEvent = WeeklyEvent & { window: EventWindow };
+
+/** One of these runs each week, and it changes every Monday. */
+export const weeklySpecials: SpecialEvent[] = [
   {
-    key: "wk-four-sessions",
-    title: "Four this week",
-    blurb: "Log 4 sessions before Sunday night.",
-    metric: "sessions",
-    target: 4,
-    xp: 120,
+    key: "sp-wk-five-days",
+    window: "week",
+    title: "Five days out of seven",
+    blurb: "Train on 5 separate days this week.",
+    metric: "days",
+    target: 5,
+    xp: 250,
   },
   {
-    key: "wk-two-partners",
+    key: "sp-wk-two-partners",
+    window: "week",
     title: "Two different people",
     blurb: "Train with 2 different people this week.",
     metric: "partners",
     target: 2,
-    xp: 150,
+    xp: 200,
   },
   {
-    key: "wk-ten-km",
-    title: "Ten kilometres",
-    blurb: "Cover 10 km running, rowing or riding this week.",
+    key: "sp-wk-fifteen-km",
+    window: "week",
+    title: "Fifteen kilometres",
+    blurb: "Cover 15 km running, rowing or riding this week.",
     metric: "km",
-    target: 10,
-    xp: 150,
+    target: 15,
+    xp: 220,
   },
   {
-    key: "wk-two-gyms",
-    title: "Two gyms",
+    key: "sp-wk-two-gyms",
+    window: "week",
+    title: "Somewhere else",
     blurb: "Train at 2 different gyms this week.",
     metric: "gyms",
     target: 2,
-    xp: 120,
+    xp: 180,
+  },
+];
+
+/** Two of these run each month, and they change on the 1st. */
+export const monthlySpecials: SpecialEvent[] = [
+  {
+    key: "sp-mo-fifty-km",
+    window: "month",
+    title: "The fifty",
+    blurb: "Cover 50 km this month, however you like.",
+    metric: "km",
+    target: 50,
+    xp: 500,
   },
   {
-    key: "wk-five-sessions",
-    title: "Five this week",
-    blurb: "Log 5 sessions before Sunday night.",
-    metric: "sessions",
+    key: "sp-mo-fifteen-days",
+    window: "month",
+    title: "Fifteen days",
+    blurb: "Train on 15 separate days this month — one day in two.",
+    metric: "days",
+    target: 15,
+    xp: 600,
+  },
+  {
+    key: "sp-mo-five-partners",
+    window: "month",
+    title: "Five new faces",
+    blurb: "Train with 5 different people this month.",
+    metric: "partners",
     target: 5,
-    xp: 180,
+    xp: 550,
+  },
+  {
+    key: "sp-mo-three-gyms",
+    window: "month",
+    title: "Around the campus",
+    blurb: "Train at 3 different gyms this month.",
+    metric: "gyms",
+    target: 3,
+    xp: 450,
+  },
+  {
+    key: "sp-mo-twenty-five",
+    window: "month",
+    title: "Twenty-five",
+    blurb: "Log 25 sessions this month.",
+    metric: "sessions",
+    target: 25,
+    xp: 700,
   },
 ];
 
@@ -155,10 +220,28 @@ export function weekStart(now: Date = new Date()): Date {
 }
 
 /** "2026-09-07" — what db/league.sql wants for `since_date`. */
-export function weekStartISO(now: Date = new Date()): string {
-  const d = weekStart(now);
+export function isoDate(d: Date): string {
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+export function weekStartISO(now: Date = new Date()): string {
+  return isoDate(weekStart(now));
+}
+
+/* The other two windows the recurring challenges run in. Both are local dates,
+   because "today" has to mean the student's today, not the server's. */
+export function todayISO(now: Date = new Date()): string {
+  return isoDate(now);
+}
+
+export function monthStartISO(now: Date = new Date()): string {
+  return isoDate(new Date(now.getFullYear(), now.getMonth(), 1));
+}
+
+/** "September" — for saying which month the monthly challenge is running in. */
+export function monthName(now: Date = new Date()): string {
+  return now.toLocaleDateString(undefined, { month: "long" });
 }
 
 /** Whole days left, counting today. Sunday reads "last day". */
@@ -175,6 +258,18 @@ export function daysLeftLabel(now: Date = new Date()): string {
   return `${n} days left`;
 }
 
+/** Whole days left in the month, counting today. */
+export function daysLeftInMonth(now: Date = new Date()): number {
+  const last = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  return Math.max(1, last - now.getDate() + 1);
+}
+
+export function windowLeftLabel(w: EventWindow, now: Date = new Date()): string {
+  const n = w === "week" ? daysLeft(now) : daysLeftInMonth(now);
+  if (n === 1) return "Last day";
+  return `${n} days left`;
+}
+
 /**
  * How many whole weeks have passed since a fixed Monday. Used only to rotate
  * the two lists, so the campus always agrees on which event is running and
@@ -185,16 +280,31 @@ function weekNumber(now: Date = new Date()): number {
   return Math.floor((weekStart(now).getTime() - epoch.getTime()) / (7 * 86_400_000));
 }
 
-export function eventsThisWeek(now: Date = new Date()): {
-  personal: WeeklyEvent;
-  house: WeeklyEvent;
-} {
-  const w = weekNumber(now);
-  // Two different list lengths, so the pairing keeps changing rather than
-  // repeating the same combination every few weeks.
-  const pick = <T,>(list: T[], offset = 0) =>
-    list[((((w + offset) % list.length) + list.length) % list.length)];
-  return { personal: pick(personalEvents), house: pick(houseEvents) };
+const at = <T,>(list: T[], i: number): T =>
+  list[(((i % list.length) + list.length) % list.length)];
+
+/** How many months have passed since a fixed point — rotates the monthly ones. */
+function monthNumber(now: Date = new Date()): number {
+  return now.getFullYear() * 12 + now.getMonth();
+}
+
+/** The house race running right now. Changes every Monday. */
+export function houseEventThisWeek(now: Date = new Date()): WeeklyEvent {
+  return at(houseEvents, weekNumber(now));
+}
+
+/**
+ * The three special events open right now: one that ends on Sunday, two that
+ * end with the month. The two monthly ones are picked a step apart so they are
+ * never the same challenge twice.
+ */
+export function specialEventsNow(now: Date = new Date()): SpecialEvent[] {
+  const m = monthNumber(now);
+  return [
+    at(weeklySpecials, weekNumber(now)),
+    at(monthlySpecials, m * 2),
+    at(monthlySpecials, m * 2 + 1),
+  ];
 }
 
 /* ─────────────────────────────  progress  ───────────────────────────── */
@@ -204,6 +314,7 @@ export type EventCounters = {
   partners: number;
   km: number;
   gyms: number;
+  days: number;
   actives: number;
   members: number;
 };
@@ -213,6 +324,7 @@ export const emptyEventCounters: EventCounters = {
   partners: 0,
   km: 0,
   gyms: 0,
+  days: 0,
   actives: 0,
   members: 0,
 };

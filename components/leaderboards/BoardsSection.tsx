@@ -1,165 +1,49 @@
 "use client";
 
 /*
-  LEADERBOARDS — two clocks, kept visibly apart.
+  BOARDS — three of them, and one sentence explaining the reset.
 
-    ALL TIME    people, houses, dorms and years by LEVEL. Never resets, so it
-                is the long story of who has actually built something.
-    THIS MONTH  the session boards, which DO reset. That reset is the point: a
-                table nobody can still win is a table nobody plays.
+    INDIVIDUAL   everyone, by sessions this semester
+    HOUSES/DORMS your own kind, by sessions this semester
+    LEVELS       everyone, by XP — all time, never resets
 
-  Putting them behind one switch rather than in one long row of pills is the
-  whole reason this screen is readable. Seven pills side by side, half of which
-  quietly ignore the period toggle above them, is a screen that lies.
+  THE RANKINGS RESET EVERY SEMESTER. That is the whole point of them: a table
+  nobody can still win is a table nobody plays, and in January everybody starts
+  level again. Levels are the opposite and never reset, which is why they are a
+  separate board rather than another column.
 
-  Houses and Yard dorms are ranked SEPARATELY. Freshmen have been on campus
-  three weeks; measuring them against a house of seniors tells nobody anything.
+  HOUSES OR DORMS, NOT BOTH. Which one you see is decided by where you live,
+  which the app already knows from onboarding: freshmen are in Yard dorms,
+  everybody else is in a house. Showing an upperclassman a dorm table they can
+  never appear in is just clutter, and ranking a three-week-old freshman against
+  a house of seniors tells nobody anything.
+
+  Groups rank on their TOTAL, not their average — the same rule as house levels.
+  A bigger house does have an advantage, and that is deliberate: the way a quiet
+  house catches up is by getting more people logging.
 */
 import { useEffect, useMemo, useState } from "react";
+import { IconActivity } from "@/components/icons";
+import { CampusStatsSheet } from "@/components/leaderboards/CampusStats";
 import LevelAvatar from "@/components/ui/LevelAvatar";
-import { Bar, Empty, Loading, RankBadge, Segmented } from "@/components/leaderboards/pieces";
-import { residenceLabel } from "@/lib/onboarding";
+import { Bar, Empty, Loading, RankBadge } from "@/components/leaderboards/pieces";
+import { residenceKind, residenceLabel } from "@/lib/onboarding";
 import { houseColorsFor } from "@/lib/gyms";
 import {
+  fetchGroupBoard,
   fetchPeopleBoard,
-  groupLabel,
   houseColor,
+  type GroupRow,
   type LeaderRow,
-  type Period,
 } from "@/lib/leaderboards";
-import { rankHouses, type HouseStanding, type LeagueRow } from "@/lib/league";
+import { schoolShortName } from "@/lib/honorCode";
+import type { CampusStats, HouseStanding, LeagueRow } from "@/lib/league";
 
-type Clock = "level" | "month";
-type LevelBoard = "people" | "houses" | "dorms" | "years";
-type MonthBoard = "campus" | "myHouse" | "partners";
-
-const LEVEL_BOARDS: { key: LevelBoard; label: string; blurb: string; empty: string }[] = [
-  {
-    key: "people",
-    label: "People",
-    blurb: "Everyone, by XP earned all time.",
-    empty: "Nobody has earned any XP yet.",
-  },
-  {
-    key: "houses",
-    label: "Houses",
-    blurb: "The twelve houses, by total XP. Size counts — that is deliberate.",
-    empty: "No house has anyone training yet.",
-  },
-  {
-    key: "dorms",
-    label: "Dorms",
-    blurb: "The Yard dorms, ranked among themselves rather than against the houses.",
-    empty: "No dorm has anyone training yet.",
-  },
-  {
-    key: "years",
-    label: "Years",
-    blurb: "Class against class, by total XP.",
-    empty: "No class year has anyone training yet.",
-  },
-];
-
-const MONTH_BOARDS: { key: MonthBoard; label: string; blurb: string; empty: string }[] = [
-  {
-    key: "campus",
-    label: "Campus",
-    blurb: "Everyone, by sessions logged. A single day counts twice at most.",
-    empty: "Nobody has logged a session yet.",
-  },
-  {
-    key: "myHouse",
-    label: "My house",
-    blurb: "You against the people you live with.",
-    empty: "Nobody in your house has logged a session yet.",
-  },
-  {
-    key: "partners",
-    label: "Partners",
-    blurb: "How many different people you trained with. Training alone doesn't count here.",
-    empty: "Nobody has logged a session with a partner yet.",
-  },
-];
-
-const PERIODS: { key: Period; label: string }[] = [
-  { key: "month", label: "This month" },
-  { key: "semester", label: "This semester" },
-  { key: "all", label: "All time" },
-];
+type BoardKey = "individual" | "group" | "levels";
 
 /* ─────────────────────────────  rows  ───────────────────────────── */
 
-function PersonLevelRow({ row, universityKey }: { row: LeagueRow; universityKey: string }) {
-  return (
-    <div
-      className={`flex items-center gap-2.5 rounded-xl border px-3 py-2.5 ${
-        row.isMe ? "border-primary bg-primary-tint" : "border-border bg-surface"
-      }`}
-    >
-      <RankBadge rank={row.rank} />
-      <LevelAvatar
-        name={row.name}
-        level={row.progress.level}
-        size={32}
-        badge
-        colors={houseColorsFor(universityKey, row.residence)}
-      />
-      <div className="min-w-0 flex-1">
-        <div className="truncate text-[13px] font-medium text-text">
-          {row.name}
-          {row.isMe && <span className="ml-1.5 text-[11px] text-primary">You</span>}
-        </div>
-        <div className="truncate text-[11px] text-muted">
-          {[row.residence ? residenceLabel(row.residence) : "", row.classYear]
-            .filter(Boolean)
-            .join(" · ") || "—"}
-        </div>
-      </div>
-      <div className="flex-shrink-0 text-right">
-        <div className="text-[15px] font-semibold text-text">{row.xp.toLocaleString()}</div>
-        <div className="text-[8px] uppercase tracking-[0.08em] text-muted">XP</div>
-      </div>
-    </div>
-  );
-}
-
-function GroupLevelRow({ row, isYear }: { row: HouseStanding; isYear: boolean }) {
-  const tint = isYear ? null : houseColor(row.key);
-  return (
-    <div
-      className={`rounded-xl border px-3 py-2.5 ${
-        row.isMine ? "border-primary bg-primary-tint" : "border-border bg-surface"
-      }`}
-    >
-      <div className="flex items-center gap-2.5">
-        <RankBadge rank={row.rank} />
-        <span
-          className="h-8 w-1.5 flex-shrink-0 rounded-full bg-primary"
-          style={tint ? { background: tint } : undefined}
-        />
-        <div className="min-w-0 flex-1">
-          <div className="truncate text-[13px] font-medium text-text">
-            {isYear ? groupLabel("year", row.key) : residenceLabel(row.key)}
-            {row.isMine && <span className="ml-1.5 text-[11px] text-primary">Yours</span>}
-          </div>
-          <div className="truncate text-[11px] text-muted">
-            {row.counters.actives} of {row.counters.members} training ·{" "}
-            {row.counters.sessions.toLocaleString()} sessions
-          </div>
-        </div>
-        <div className="flex-shrink-0 text-right">
-          <div className="text-[15px] font-semibold text-text">Lvl {row.progress.level}</div>
-          <div className="text-[8px] uppercase tracking-[0.08em] text-muted">
-            {row.xp.toLocaleString()} XP
-          </div>
-        </div>
-      </div>
-      <Bar fraction={row.progress.fraction} tint={tint} />
-    </div>
-  );
-}
-
-function PersonSessionRow({ row, showHouse }: { row: LeaderRow; showHouse: boolean }) {
+function PersonSessionRow({ row }: { row: LeaderRow }) {
   return (
     <div
       className={`flex items-center gap-2.5 rounded-xl border px-3 py-2.5 ${
@@ -176,12 +60,94 @@ function PersonSessionRow({ row, showHouse }: { row: LeaderRow; showHouse: boole
           {row.isMe && <span className="ml-1.5 text-[11px] text-primary">You</span>}
         </div>
         <div className="truncate text-[11px] text-muted">
-          {[showHouse && row.residence ? residenceLabel(row.residence) : "", row.classYear]
+          {[row.residence ? residenceLabel(row.residence) : "", row.classYear]
             .filter(Boolean)
             .join(" · ") || "—"}
         </div>
       </div>
-      <span className="flex-shrink-0 text-[15px] font-semibold text-text">{row.score}</span>
+      <div className="flex-shrink-0 text-right">
+        <div className="text-[15px] font-semibold text-text">{row.score}</div>
+        <div className="text-[8px] uppercase tracking-[0.08em] text-muted">sessions</div>
+      </div>
+    </div>
+  );
+}
+
+/** A house or dorm this semester, carrying its all-time level as context. */
+function GroupSessionRow({
+  row,
+  rank,
+  level,
+}: {
+  row: GroupRow;
+  rank: number;
+  level: number | null;
+}) {
+  const tint = houseColor(row.key);
+  return (
+    <div
+      className={`flex items-center gap-2.5 rounded-xl border px-3 py-2.5 ${
+        row.isMine ? "border-primary bg-primary-tint" : "border-border bg-surface"
+      }`}
+    >
+      <RankBadge rank={rank} />
+      <span
+        className="h-8 w-1.5 flex-shrink-0 rounded-full bg-primary"
+        style={tint ? { background: tint } : undefined}
+      />
+      <div className="min-w-0 flex-1">
+        <div className="truncate text-[13px] font-medium text-text">
+          {residenceLabel(row.key)}
+          {row.isMine && <span className="ml-1.5 text-[11px] text-primary">Yours</span>}
+        </div>
+        <div className="truncate text-[11px] text-muted">
+          {row.actives} of {row.members} training
+          {level ? ` · Level ${level}` : ""}
+        </div>
+      </div>
+      <div className="flex-shrink-0 text-right">
+        <div className="text-[15px] font-semibold text-text">{row.sessions.toLocaleString()}</div>
+        <div className="text-[8px] uppercase tracking-[0.08em] text-muted">sessions</div>
+      </div>
+    </div>
+  );
+}
+
+function PersonLevelRow({ row, universityKey }: { row: LeagueRow; universityKey: string }) {
+  return (
+    <div
+      className={`rounded-xl border px-3 py-2.5 ${
+        row.isMe ? "border-primary bg-primary-tint" : "border-border bg-surface"
+      }`}
+    >
+      <div className="flex items-center gap-2.5">
+        <RankBadge rank={row.rank} />
+        <LevelAvatar
+          name={row.name}
+          level={row.progress.level}
+          size={32}
+          badge
+          colors={houseColorsFor(universityKey, row.residence)}
+        />
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-[13px] font-medium text-text">
+            {row.name}
+            {row.isMe && <span className="ml-1.5 text-[11px] text-primary">You</span>}
+          </div>
+          <div className="truncate text-[11px] text-muted">
+            {[row.residence ? residenceLabel(row.residence) : "", row.classYear]
+              .filter(Boolean)
+              .join(" · ") || "—"}
+          </div>
+        </div>
+        <div className="flex-shrink-0 text-right">
+          <div className="text-[15px] font-semibold text-text">Lvl {row.progress.level}</div>
+          <div className="text-[8px] uppercase tracking-[0.08em] text-muted">
+            {row.xp.toLocaleString()} XP
+          </div>
+        </div>
+      </div>
+      <Bar fraction={row.progress.fraction} />
     </div>
   );
 }
@@ -191,166 +157,186 @@ function PersonSessionRow({ row, showHouse }: { row: LeaderRow; showHouse: boole
 export default function BoardsSection({
   people,
   houses,
-  years,
+  stats,
   universityKey,
   userId,
+  residence,
 }: {
   people: LeagueRow[] | null;
   houses: HouseStanding[] | null;
-  years: HouseStanding[] | null;
+  stats: CampusStats | null;
   universityKey: string;
   userId: string | null;
+  residence: string | null;
 }) {
-  const [clock, setClock] = useState<Clock>("level");
-  const [levelBoard, setLevelBoard] = useState<LevelBoard>("people");
-  const [monthBoard, setMonthBoard] = useState<MonthBoard>("campus");
-  const [period, setPeriod] = useState<Period>("month");
+  const [board, setBoard] = useState<BoardKey>("individual");
+  const [showStats, setShowStats] = useState(false);
+
+  // Freshmen live in Yard dorms, everybody else in a house. Somebody who never
+  // answered gets the houses, which is the bigger and more useful table.
+  const myKind = residence && residenceKind(residence) === "dorm" ? "dorm" : "house";
+  const groupLabelText = myKind === "dorm" ? "Dorms" : "Houses";
 
   /*
     One piece of state holding the result AND which request produced it, so
     "loading" is DERIVED rather than switched on at the top of the effect — a
     synchronous setState in an effect body causes cascading renders.
   */
-  const [result, setResult] = useState<{ for: string; rows: LeaderRow[] } | null>(null);
-  const want = `${monthBoard}|${period}|${userId ?? ""}`;
+  const [result, setResult] = useState<{
+    for: string;
+    rows: LeaderRow[];
+    groups: GroupRow[];
+  } | null>(null);
+  const want = `${board}|${userId ?? ""}`;
 
   useEffect(() => {
-    if (clock !== "month") return;
+    if (board === "levels") return; // already loaded with the rest of the screen
     let active = true;
-    fetchPeopleBoard(
-      monthBoard === "myHouse" ? "house" : monthBoard === "partners" ? "partners" : "campus",
-      period,
-      50,
-    )
-      .then((rows) => active && setResult({ for: want, rows }))
+    const run =
+      board === "individual"
+        ? fetchPeopleBoard("campus", "semester", 50).then((rows) => ({
+            for: want,
+            rows,
+            groups: [] as GroupRow[],
+          }))
+        : fetchGroupBoard("house", "semester", 1).then((groups) => ({
+            for: want,
+            rows: [] as LeaderRow[],
+            groups,
+          }));
+    run
       // A failed read must still settle, or the board says "Counting…" forever.
-      .catch(() => active && setResult({ for: want, rows: [] }));
+      .then((r) => active && setResult(r))
+      .catch(() => active && setResult({ for: want, rows: [], groups: [] }));
     return () => {
       active = false;
     };
-  }, [clock, monthBoard, period, want]);
+  }, [board, want]);
 
-  // Houses and dorms come from one list, split and then re-ranked among
-  // themselves — the rank has to be worked out after the split, not before it.
-  const splitHouses = useMemo(
-    () => (houses ? rankHouses(houses.filter((h) => h.kind === "house")) : null),
-    [houses],
-  );
-  const splitDorms = useMemo(
-    () => (houses ? rankHouses(houses.filter((h) => h.kind !== "house")) : null),
-    [houses],
-  );
+  /*
+    Only your own kind, ranked among themselves on total sessions. The rank has
+    to be worked out after the split — Postgres ranked houses and dorms
+    together, so keeping its numbers would leave gaps in both tables.
+  */
+  const myGroups = useMemo(() => {
+    const rows = (result?.groups ?? []).filter((g) => residenceKind(g.key) === myKind);
+    return [...rows].sort((a, b) => b.sessions - a.sessions || a.key.localeCompare(b.key));
+  }, [result, myKind]);
 
-  const levelDef = LEVEL_BOARDS.find((b) => b.key === levelBoard) ?? LEVEL_BOARDS[0];
-  const monthDef = MONTH_BOARDS.find((b) => b.key === monthBoard) ?? MONTH_BOARDS[0];
-  const groupRows =
-    levelBoard === "houses" ? splitHouses : levelBoard === "dorms" ? splitDorms : years;
+  const levelOf = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const h of houses ?? []) map.set(h.key, h.progress.level);
+    return map;
+  }, [houses]);
+
+  const BOARDS: { key: BoardKey; label: string; blurb: string; empty: string }[] = [
+    {
+      key: "individual",
+      label: "Individual",
+      blurb: "Everyone, by sessions logged this semester. A single day counts twice at most.",
+      empty: "Nobody has logged a session this semester yet.",
+    },
+    {
+      key: "group",
+      label: groupLabelText,
+      blurb: `${groupLabelText} by total sessions this semester. Size counts — that is how a quiet ${
+        myKind === "dorm" ? "dorm" : "house"
+      } catches up: more people logging.`,
+      empty: `No ${myKind === "dorm" ? "dorm" : "house"} has logged anything this semester yet.`,
+    },
+    {
+      key: "levels",
+      label: "Levels",
+      blurb: "Everyone by XP, all time. This is the one that never resets.",
+      empty: "Nobody has earned any XP yet.",
+    },
+  ];
+
+  const def = BOARDS.find((b) => b.key === board) ?? BOARDS[0];
+  const loading = board === "levels" ? people === null : result?.for !== want;
 
   return (
     <div className="px-3.5 py-3">
-      <Segmented
-        value={clock}
-        onChange={setClock}
-        options={[
-          { key: "level", label: "All time · levels" },
-          { key: "month", label: "This month · sessions" },
-        ]}
-      />
+      <div className="flex items-stretch gap-1.5">
+        <div className="flex min-w-0 flex-1 gap-1 rounded-xl border border-border bg-surface p-1">
+          {BOARDS.map((b) => (
+            <button
+              key={b.key}
+              type="button"
+              onClick={() => setBoard(b.key)}
+              className={`tap44 min-w-0 flex-1 truncate rounded-lg py-2 text-[12px] font-semibold transition-colors ${
+                board === b.key ? "bg-text text-background" : "text-muted"
+              }`}
+            >
+              {b.label}
+            </button>
+          ))}
+        </div>
+        {/* Nobody opens an app to read aggregate statistics — but once you are
+            looking at a leaderboard, "how is the whole place doing?" is the
+            obvious next thought. A curiosity belongs behind an icon. */}
+        <button
+          type="button"
+          onClick={() => setShowStats(true)}
+          aria-label="Campus statistics"
+          className="tap44 press-icon flex w-11 flex-shrink-0 items-center justify-center rounded-xl border border-border bg-surface text-muted"
+        >
+          <IconActivity size={16} />
+        </button>
+      </div>
 
-      {clock === "level" ? (
-        <>
-          <div className="mt-2.5 flex gap-1.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {LEVEL_BOARDS.map((b) => (
-              <button
-                key={b.key}
-                type="button"
-                onClick={() => setLevelBoard(b.key)}
-                className={`tap44 flex-shrink-0 rounded-full border px-3.5 py-1.5 text-[12px] font-medium transition-colors ${
-                  levelBoard === b.key
-                    ? "border-text bg-text text-background"
-                    : "border-border bg-surface text-muted"
-                }`}
-              >
-                {b.label}
-              </button>
-            ))}
-          </div>
-
-          <p className="mt-2.5 px-0.5 text-[11px] leading-relaxed text-muted">{levelDef.blurb}</p>
-
-          {levelBoard === "people" ? (
-            people === null ? (
-              <Loading />
-            ) : people.length === 0 ? (
-              <Empty>{levelDef.empty}</Empty>
-            ) : (
-              <div className="mt-2 flex flex-col gap-1.5">
-                {people.slice(0, 50).map((r) => (
-                  <PersonLevelRow key={r.userId} row={r} universityKey={universityKey} />
-                ))}
-              </div>
-            )
-          ) : groupRows === null ? (
-            <Loading />
-          ) : groupRows.length === 0 ? (
-            <Empty>{levelDef.empty}</Empty>
-          ) : (
-            <div className="mt-2 flex flex-col gap-1.5">
-              {groupRows.map((r) => (
-                <GroupLevelRow key={r.key} row={r} isYear={levelBoard === "years"} />
-              ))}
-            </div>
-          )}
-        </>
-      ) : (
-        <>
-          <div className="mt-2.5 flex gap-1.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {MONTH_BOARDS.map((b) => (
-              <button
-                key={b.key}
-                type="button"
-                onClick={() => setMonthBoard(b.key)}
-                className={`tap44 flex-shrink-0 rounded-full border px-3.5 py-1.5 text-[12px] font-medium transition-colors ${
-                  monthBoard === b.key
-                    ? "border-text bg-text text-background"
-                    : "border-border bg-surface text-muted"
-                }`}
-              >
-                {b.label}
-              </button>
-            ))}
-          </div>
-
-          <div className="mt-2 flex gap-1 rounded-xl border border-border bg-surface p-1">
-            {PERIODS.map((p) => (
-              <button
-                key={p.key}
-                type="button"
-                onClick={() => setPeriod(p.key)}
-                className={`flex-1 rounded-lg py-2 text-[12px] font-semibold transition-colors ${
-                  period === p.key ? "bg-text text-background" : "text-muted"
-                }`}
-              >
-                {p.label}
-              </button>
-            ))}
-          </div>
-
-          <p className="mt-2.5 px-0.5 text-[11px] leading-relaxed text-muted">{monthDef.blurb}</p>
-
-          {result?.for !== want ? (
-            <Loading />
-          ) : result.rows.length === 0 ? (
-            <Empty>{monthDef.empty}</Empty>
-          ) : (
-            <div className="mt-2 flex flex-col gap-1.5">
-              {result.rows.map((r) => (
-                <PersonSessionRow key={r.userId} row={r} showHouse={monthBoard !== "myHouse"} />
-              ))}
-            </div>
-          )}
-        </>
+      {showStats && (
+        <CampusStatsSheet
+          stats={stats}
+          schoolName={schoolShortName(universityKey)}
+          onClose={() => setShowStats(false)}
+        />
       )}
+
+      <p className="mt-2.5 px-0.5 text-[11px] leading-relaxed text-muted">{def.blurb}</p>
+
+      {loading ? (
+        <Loading />
+      ) : board === "levels" ? (
+        (people ?? []).length === 0 ? (
+          <Empty>{def.empty}</Empty>
+        ) : (
+          <div className="mt-2 flex flex-col gap-1.5">
+            {(people ?? []).slice(0, 50).map((r) => (
+              <PersonLevelRow key={r.userId} row={r} universityKey={universityKey} />
+            ))}
+          </div>
+        )
+      ) : board === "individual" ? (
+        (result?.rows ?? []).length === 0 ? (
+          <Empty>{def.empty}</Empty>
+        ) : (
+          <div className="mt-2 flex flex-col gap-1.5">
+            {(result?.rows ?? []).map((r) => (
+              <PersonSessionRow key={r.userId} row={r} />
+            ))}
+          </div>
+        )
+      ) : myGroups.length === 0 ? (
+        <Empty>{def.empty}</Empty>
+      ) : (
+        <div className="mt-2 flex flex-col gap-1.5">
+          {myGroups.map((g, i) => (
+            <GroupSessionRow
+              key={g.key}
+              row={g}
+              rank={i + 1}
+              level={levelOf.get(g.key) ?? null}
+            />
+          ))}
+        </div>
+      )}
+
+      <p className="mt-3 px-0.5 text-[11px] leading-relaxed text-muted">
+        {board === "levels"
+          ? "Levels and XP are all time. They never reset — there is always something being built."
+          : "Rankings reset at the start of every semester, so everybody starts level again."}
+      </p>
     </div>
   );
 }

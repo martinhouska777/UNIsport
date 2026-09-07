@@ -25,28 +25,23 @@ import HonorCode, { HonorCodeFooter, useHonorCode } from "@/components/leaderboa
 import HowItWorks from "@/components/leaderboards/HowItWorks";
 import { HouseChallenges, YouChallenges } from "@/components/leaderboards/ChallengesSection";
 import BoardsSection from "@/components/leaderboards/BoardsSection";
-import CampusStatsSection from "@/components/leaderboards/CampusStats";
 import EventsSection from "@/components/leaderboards/EventsSection";
 import { Segmented } from "@/components/leaderboards/pieces";
-import { schoolShortName } from "@/lib/honorCode";
 import { emptyLeague, fetchLeague, type LeagueData } from "@/lib/league";
 
-type Section = "challenges" | "boards" | "events" | "stats";
+type Section = "challenges" | "rankings" | "events";
 type Side = "you" | "house";
 
 /*
-  In the order you meet them: what you're chasing, where you stand, what's on
-  this week, and then the whole campus.
-
-  The labels are short because four have to sit side by side on a phone —
-  "Boards" and "Stats", not "Leaderboards" and "Campus statistics". Each
-  section says its full name in its own heading.
+  Three, in the order you meet them: what you are chasing, where you stand,
+  and what has a deadline on it. The campus statistics are not a fourth tab —
+  nobody opens an app to read them, so they sit behind the chart icon on
+  Rankings, where the question actually occurs to people.
 */
 const SECTIONS: { key: Section; label: string }[] = [
   { key: "challenges", label: "Challenges" },
-  { key: "boards", label: "Boards" },
+  { key: "rankings", label: "Rankings" },
   { key: "events", label: "Events" },
-  { key: "stats", label: "Stats" },
 ];
 
 export default function LeaguePage() {
@@ -120,7 +115,12 @@ export default function LeaguePage() {
             />
           </div>
           {side === "you" ? (
-            <YouChallenges me={me} universityKey={universityKey} campusRank={campusRank} />
+            <YouChallenges
+              me={me}
+              now={data?.now ?? null}
+              universityKey={universityKey}
+              campusRank={campusRank}
+            />
           ) : (
             <HouseChallenges
               house={myHouse}
@@ -133,28 +133,24 @@ export default function LeaguePage() {
 
       {section === "events" && (
         <EventsSection
-          mine={data?.week.mine ?? null}
+          week={data?.week.mine ?? null}
+          month={data?.month.mine ?? null}
           houses={data?.week.houses ?? null}
           residence={me?.residence ?? null}
         />
       )}
 
-      {section === "boards" && (
+      {section === "rankings" && (
         <BoardsSection
           people={data?.people ?? null}
           houses={data?.houses ?? null}
-          years={data?.years ?? null}
+          stats={data?.stats ?? null}
           universityKey={universityKey}
           userId={userId}
+          residence={me?.residence ?? null}
         />
       )}
 
-      {section === "stats" && (
-        <CampusStatsSection
-          stats={data?.stats ?? null}
-          schoolName={schoolShortName(universityKey)}
-        />
-      )}
 
       {/* The rules now live behind the ⓘ in the corner, where they can be
           complete instead of a six-line summary under every screen. */}

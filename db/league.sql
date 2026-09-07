@@ -26,10 +26,10 @@
 --   exercise, a note, a photo or a date. Nobody can read a board backwards into
 --   what somebody actually did.
 --
--- ALL TIME BY DEFAULT. Levels and the permanent ladder never reset — that is the
---   point of them, so `since_date` is left NULL for those. The only caller that
---   passes a date is the weekly events screen, which asks for the Monday just
---   gone.
+-- ALL TIME BY DEFAULT. Levels and the milestone ladder never reset — that is the
+--   point of them, so `since_date` is left NULL for those. The callers that pass
+--   a date are the recurring challenges (today, this Monday, the 1st) and the
+--   weekly events.
 --
 -- DEPENDS ON db/leaderboards.sql for initials_of(). Run that one first.
 --
@@ -55,10 +55,11 @@
 -- stop XP being farmed, and "trained at every gym on campus" is not something a
 -- busy Tuesday should be able to hide.
 -- ---------------------------------------------------------------------------
--- The earlier version of this function had no `since_date`. Adding a parameter
--- would leave BOTH versions in the database as overloads, and a call that omits
--- the new one becomes ambiguous, so the old signature is dropped by name first.
+-- Every earlier signature of this function is dropped by name first. Adding a
+-- parameter would otherwise leave BOTH versions in the database as overloads,
+-- and any call that omits the new one becomes ambiguous.
 drop function if exists public.league_counters(int, int, int, int, boolean);
+drop function if exists public.league_counters(int, int, int, int, boolean, date);
 
 create or replace function public.league_counters(
   limit_n    int default 200,
@@ -66,11 +67,16 @@ create or replace function public.league_counters(
   xp_partner int default 15,
   xp_new     int default 25,
   only_me    boolean default false,
-  -- NULL = all time, which is what levels and the permanent ladder use. The
-  -- weekly events pass the Monday just gone. Note that "new partner" is still
-  -- decided over ALL of history: somebody you met in October is not new again
-  -- in November just because the window moved.
-  since_date date default null
+  -- NULL = all time, which is what levels and the milestones use. The recurring
+  -- challenges pass today, this Monday or the 1st. Note that "new partner" is
+  -- still decided over ALL of history: somebody you met in October is not new
+  -- again in November just because the window moved.
+  since_date date default null,
+  -- How many sessions make a week or a month "hit". Both come from the
+  -- recurring challenges in lib/challenges.ts, so the rule still lives in one
+  -- place and this function only counts.
+  week_target  int default 3,
+  month_target int default 12
 )
 returns table (
   user_id      uuid,
@@ -84,7 +90,9 @@ returns table (
   partners     int,
   new_partners int,
   gyms         int,
-  weeks3       int,
+  days         int,   -- separate days trained on: the daily habit, counted
+  weeks_hit    int,   -- weeks holding at least `week_target` sessions
+  months_hit   int,   -- months holding at least `month_target` sessions
   km           numeric,
   is_me        boolean
 )
@@ -139,7 +147,17 @@ as $$
     from capped c
     group by 1
   ),
-  -- Weeks holding three or more sessions — the consistency challenges.
+  -- How many separate DAYS were trained on. The daily habit, counted over all
+  -- of history: one tick per day, however many times you went.
+  dy as (
+    select c.user_id, count(distinct c.log_date)::int as n
+    from capped c
+    group by 1
+  ),
+  -- Weeks that reached the weekly target — one completion of the weekly
+  -- challenge each. Recurring challenges are paid this way rather than stored:
+  -- how many times you have hit it is something the logs already know, so
+  -- nothing has to be written down and nothing can drift out of step.
   wk as (
     select g.user_id, count(*)::int as n
     from (
@@ -147,7 +165,18 @@ as $$
       from capped cs
       group by 1, 2
     ) g
-    where g.in_week >= 3
+    where g.in_week >= greatest(week_target, 1)
+    group by 1
+  ),
+  -- The same for months.
+  mo as (
+    select g.user_id, count(*)::int as n
+    from (
+      select cs.user_id, date_trunc('month', cs.log_date) as month, count(*) as in_month
+      from capped cs
+      group by 1, 2
+    ) g
+    where g.in_month >= greatest(month_target, 1)
     group by 1
   ),
   -- Different real people trained with. A typed-in name is not a person.
@@ -203,12 +232,16 @@ as $$
     -- because a future month-scoped view of this will need the two apart.
     coalesce(pp.partners, 0),
     coalesce(g.gyms, 0),
+    coalesce(dy.n, 0),
     coalesce(wk.n, 0),
+    coalesce(mo.n, 0),
     coalesce(d.km, 0),
     p.id = auth.uid()
   from public.profiles p
   left join sess s on s.user_id = p.id
+  left join dy     on dy.user_id = p.id
   left join wk     on wk.user_id = p.id
+  left join mo     on mo.user_id = p.id
   left join ppl pp on pp.user_id = p.id
   left join gy g   on g.user_id = p.id
   left join dist d on d.user_id = p.id
@@ -229,4 +262,4 @@ as $$
   limit greatest(coalesce(limit_n, 200), 1);
 $$;
 
-grant execute on function public.league_counters(int, int, int, int, boolean, date) to authenticated;
+grant execute on function public.league_counters(int, int, int, int, boolean, date, int, int) to authenticated;

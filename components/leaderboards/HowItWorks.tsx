@@ -128,9 +128,14 @@ export default function HowItWorks({
 
           <Rule title="Challenges">
             <p>
-              The ladder is permanent and it <strong className="text-text">never resets</strong>.
-              Finishing one pays XP. There is always exactly one next thing — the app shows you
-              that one, part filled.
+              Three come back for ever: one resets tonight, one on Monday, one on the 1st. They
+              pay <strong className="text-text">every time</strong> you complete them, not once —
+              and they count back through everything you have already logged, so nothing you did
+              before this existed is wasted.
+            </p>
+            <p>
+              Under those sits the milestone ladder, which only ever goes forwards. There is
+              always exactly one next thing, and the app shows you that one, part filled.
             </p>
             <p>
               They mix four kinds on purpose: how much you train, how many people you train with,
@@ -158,14 +163,21 @@ export default function HowItWorks({
 
           <Rule title="Events">
             <p>
-              Two run every week, Monday to Sunday, and then they are gone: one for you, one a
-              race between houses. Which two it is changes on its own every Monday.
+              Three <strong className="text-text">special events</strong> run at once — one
+              closing on Sunday, two with the month — for bonus XP. They ask for something out of
+              the ordinary: somewhere new, further than usual, more people than usual.
             </p>
             <p>
-              Your own event always runs. The house race needs your house to be{" "}
-              <strong className="text-text">Level {HOUSE_EVENT_MIN_LEVEL}</strong> — a house below
-              that can watch the race and see exactly how far off the door it is.
+              And one <strong className="text-text">house competition</strong>: a single target
+              that every house able to enter is pushing at the same time, ranked against each
+              other while the bars fill, with a new one every Monday.
             </p>
+            <p>
+              The house competition needs your house at{" "}
+              <strong className="text-text">Level {HOUSE_EVENT_MIN_LEVEL}</strong>. A house below
+              that can watch it and see exactly how far off the door it is.
+            </p>
+            <p>All of them change on their own. Nobody has to set anything up.</p>
           </Rule>
 
           <Rule title="The two clocks">
@@ -174,9 +186,9 @@ export default function HowItWorks({
               never reset, so there is always something being built.
             </p>
             <p>
-              The session boards <strong className="text-text">do</strong> reset — every month and
-              every semester. That is the point of them: a table nobody can still win is a table
-              nobody plays.
+              The rankings <strong className="text-text">do</strong> reset — every semester. That
+              is the point of them: a table nobody can still win is a table nobody plays, and in
+              January everybody starts level again.
             </p>
           </Rule>
 

@@ -20,8 +20,12 @@ import { houseColorsFor } from "@/lib/gyms";
 import {
   ladderProgress,
   houseLadderProgress,
+  recurrenceLabel,
+  recurringProgress,
   type ChallengeProgress,
   type HouseChallengeProgress,
+  type PeriodSessions,
+  type RecurringProgress,
 } from "@/lib/challenges";
 import { HOUSE_LEVEL_FACTOR } from "@/lib/xp";
 import { toNextLevelLine, type HouseStanding, type LeagueRow } from "@/lib/league";
@@ -115,17 +119,60 @@ function Ladder({
   );
 }
 
+/* ─────────────────  the three that come back  ───────────────── */
+
+/*
+  One resets tonight, one on Monday, one on the 1st. The number that matters
+  most on each card is not the bar — it is "done 14 times", because that is the
+  streak you do not want to be the one to break.
+*/
+function RecurringRow({ p }: { p: RecurringProgress }) {
+  const { challenge: c } = p;
+  return (
+    <div
+      className={`rounded-xl border px-3 py-2.5 ${
+        p.done ? "border-success-line bg-success-tint" : "border-border bg-surface"
+      }`}
+    >
+      <div className="flex items-baseline justify-between gap-2">
+        <span className="flex min-w-0 items-baseline gap-1.5">
+          <span className="flex-shrink-0 rounded-md bg-surface-2 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.06em] text-muted">
+            {recurrenceLabel[c.recurrence]}
+          </span>
+          <span className="truncate text-[13px] font-medium text-text">{c.title}</span>
+        </span>
+        <span className="flex-shrink-0 text-[11px] font-semibold text-primary">+{c.xp} XP</span>
+      </div>
+      <p className="mt-0.5 truncate text-[11px] text-muted">{c.blurb}</p>
+      <Bar fraction={p.fraction} />
+      <div className="mt-1.5 flex items-baseline justify-between gap-2">
+        <span className="text-[11px] font-medium text-text">
+          {p.done ? "Done" : `${p.have} of ${p.target}`}
+        </span>
+        <span className="flex-shrink-0 text-[11px] text-muted">
+          {p.completed === 0
+            ? "Never yet"
+            : `Done ${p.completed.toLocaleString()} time${p.completed === 1 ? "" : "s"}`}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 /* ─────────────────────────────  you  ───────────────────────────── */
 
 export function YouChallenges({
   me,
+  now,
   universityKey,
   campusRank,
 }: {
   me: LeagueRow | null;
+  now: PeriodSessions | null;
   universityKey: string;
   campusRank: number | null;
 }) {
+  const recurring = me && now ? recurringProgress(now, me.counters) : [];
   const rows = me ? ladderProgress(me.counters, universityKey) : [];
   const next = rows.find((r) => !r.done) ?? null;
   const done = rows.filter((r) => r.done).length;
@@ -165,15 +212,34 @@ export function YouChallenges({
       <div className="mt-2.5 grid grid-cols-3 gap-1.5">
         <Stat value={`${me?.counters.sessions ?? 0}`} label="Sessions" />
         <Stat value={`${me?.counters.partners ?? 0}`} label="Partners" />
+        <Stat value={`${me?.counters.days ?? 0}`} label="Days" />
+        <Stat value={`${me?.counters.weeksHit ?? 0}`} label="Good weeks" />
         <Stat value={`${me?.counters.gyms ?? 0}`} label="Gyms" />
-        <Stat value={`${me?.counters.weeks3 ?? 0}`} label="Good weeks" />
         <Stat value={`${me?.counters.km ?? 0}`} label="Km" />
-        <Stat value={`${done}`} label="Done" />
       </div>
+
+      {/* The habit: today, this week, this month. */}
+      <h2 className="mt-3.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
+        Keep it going
+      </h2>
+      {recurring.length === 0 ? (
+        <Empty>Log a session and today&rsquo;s tick is yours.</Empty>
+      ) : (
+        <div className="mt-2 flex flex-col gap-1.5">
+          {recurring.map((p) => (
+            <RecurringRow key={p.challenge.key} p={p} />
+          ))}
+        </div>
+      )}
+      <p className="mt-2 px-0.5 text-[11px] leading-relaxed text-muted">
+        These come back — every day, every Monday, every 1st — and they pay every single time.
+        Nothing you have already logged is missed: every one of them counts back through your
+        whole history.
+      </p>
 
       <div className="mt-3.5 flex items-baseline justify-between">
         <h2 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-          Your challenges
+          Milestones
         </h2>
         <span className="text-[11px] text-muted">
           {done} of {rows.length}
