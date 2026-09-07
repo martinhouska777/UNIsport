@@ -34,6 +34,7 @@ import {
   type HouseCounters,
 } from "@/lib/challenges";
 import { fetchGroupBoard, type GroupRow } from "@/lib/leaderboards";
+import { emptyEventCounters, weekStartISO, type EventCounters } from "@/lib/events";
 import { residenceKind, type ResidenceKind } from "@/lib/onboarding";
 
 export type LeagueRow = {
@@ -105,7 +106,12 @@ function shape(r: RpcRow, universityKey: string): Omit<LeagueRow, "rank"> {
   };
 }
 
-async function read(universityKey: string, limit: number, onlyMe: boolean) {
+async function read(
+  universityKey: string,
+  limit: number,
+  onlyMe: boolean,
+  since?: string,
+) {
   if (!hasSupabaseEnv()) return [] as Omit<LeagueRow, "rank">[];
   const { data, error } = await createClient().rpc("league_counters", {
     limit_n: limit,
@@ -113,6 +119,7 @@ async function read(universityKey: string, limit: number, onlyMe: boolean) {
     xp_partner: sessionXp.partner,
     xp_new: sessionXp.newPartner,
     only_me: onlyMe,
+    since_date: since ?? null,
   });
   if (error || !data) return [] as Omit<LeagueRow, "rank">[];
   return (data as RpcRow[]).map((r) => shape(r, universityKey));
@@ -126,8 +133,10 @@ async function read(universityKey: string, limit: number, onlyMe: boolean) {
 export async function fetchLeagueBoard(
   universityKey: string,
   limit = 200,
+  /** Omitted = all time. The weekly events pass the Monday just gone. */
+  since?: string,
 ): Promise<LeagueRow[]> {
-  const rows = await read(universityKey, limit, false);
+  const rows = await read(universityKey, limit, false, since);
   // Ties share a rank, and the next rank skips — the same behaviour Postgres's
   // rank() gives the other boards, so the two screens never disagree.
   const sorted = rows.sort((a, b) => b.xp - a.xp || a.name.localeCompare(b.name));
@@ -277,16 +286,56 @@ export type CampusStats = {
   again per section would be three more copies of the same query for a screen
   that shows one moment in time.
 */
+/** One house's week, for the race. `xp` is its ALL-TIME total — the gate. */
+export type HouseWeek = {
+  key: string;
+  kind: ResidenceKind;
+  counters: EventCounters;
+  xp: number;
+  isMine: boolean;
+};
+
 export type LeagueData = {
   me: LeagueRow | null;
   people: LeagueRow[];
   houses: HouseStanding[];
   years: HouseStanding[];
   stats: CampusStats;
+  /** Monday to now — what the weekly events are measured on. */
+  week: { mine: EventCounters; houses: HouseWeek[] };
 };
 
+/**
+ * What the screen renders when a read fails. It must still SETTLE — a section
+ * stuck on "Counting…" forever tells nobody that anything went wrong.
+ */
+export function emptyLeague(): LeagueData {
+  return {
+    me: null,
+    people: [],
+    houses: [],
+    years: [],
+    stats: {
+      people: 0,
+      sessions: 0,
+      withPartner: 0,
+      km: 0,
+      partnerships: 0,
+      topLevel: 1,
+      busiestHouse: null,
+      avgSessions: 0,
+      totalXp: 0,
+    },
+    week: { mine: emptyEventCounters, houses: [] },
+  };
+}
+
 export async function fetchLeague(universityKey: string): Promise<LeagueData> {
-  const people = await fetchLeagueBoard(universityKey, 1000);
+  const since = weekStartISO();
+  const [people, weekPeople] = await Promise.all([
+    fetchLeagueBoard(universityKey, 1000),
+    fetchLeagueBoard(universityKey, 1000, since),
+  ]);
   const [houseGroups, yearGroups] = await Promise.all([
     fetchGroupBoard("house", "all", 1),
     fetchGroupBoard("year", "all", 1),
@@ -301,7 +350,55 @@ export async function fetchLeague(universityKey: string): Promise<LeagueData> {
     houses,
     years,
     stats: campusStats(people, houses),
+    week: buildWeek(weekPeople, houses),
   };
+}
+
+/**
+ * The week, folded up two ways: your own counters, and every house's.
+ *
+ * A house's MEMBERS and its XP come from the all-time standing — how many
+ * people live there does not change on a Monday, and the level that opens the
+ * race is the one the house has built over all time, not this week's effort.
+ * Everything else is counted from Monday.
+ */
+function buildWeek(weekPeople: LeagueRow[], houses: HouseStanding[]): LeagueData["week"] {
+  const mineRow = weekPeople.find((p) => p.isMe);
+  const mine: EventCounters = {
+    ...emptyEventCounters,
+    sessions: mineRow?.counters.sessions ?? 0,
+    partners: mineRow?.counters.partners ?? 0,
+    km: mineRow?.counters.km ?? 0,
+    gyms: mineRow?.counters.gyms ?? 0,
+  };
+
+  const byKey = new Map<string, HouseWeek>();
+  for (const h of houses) {
+    byKey.set(h.key, {
+      key: h.key,
+      kind: h.kind,
+      counters: { ...emptyEventCounters, members: h.counters.members },
+      xp: h.xp,
+      isMine: h.isMine,
+    });
+  }
+  for (const p of weekPeople) {
+    if (!p.residence) continue;
+    const house = byKey.get(p.residence);
+    if (!house) continue;
+    house.counters.sessions += p.counters.sessions;
+    house.counters.partners += p.counters.partners;
+    house.counters.km += p.counters.km;
+    // "Turnout" asks how many members trained AT ALL this week, so a person
+    // counts once however many times they went.
+    if (p.counters.sessions > 0) house.counters.actives += 1;
+  }
+
+  const list = [...byKey.values()].map((h) => ({
+    ...h,
+    counters: { ...h.counters, km: Math.round(h.counters.km * 10) / 10 },
+  }));
+  return { mine, houses: list };
 }
 
 /** The whole campus in one glance, worked out from what is already loaded. */

@@ -26,8 +26,10 @@
 --   exercise, a note, a photo or a date. Nobody can read a board backwards into
 --   what somebody actually did.
 --
--- ALL TIME, ALWAYS. Levels never reset — that is the point of them. There is no
---   period argument here on purpose.
+-- ALL TIME BY DEFAULT. Levels and the permanent ladder never reset — that is the
+--   point of them, so `since_date` is left NULL for those. The only caller that
+--   passes a date is the weekly events screen, which asks for the Monday just
+--   gone.
 --
 -- DEPENDS ON db/leaderboards.sql for initials_of(). Run that one first.
 --
@@ -53,12 +55,22 @@
 -- stop XP being farmed, and "trained at every gym on campus" is not something a
 -- busy Tuesday should be able to hide.
 -- ---------------------------------------------------------------------------
+-- The earlier version of this function had no `since_date`. Adding a parameter
+-- would leave BOTH versions in the database as overloads, and a call that omits
+-- the new one becomes ambiguous, so the old signature is dropped by name first.
+drop function if exists public.league_counters(int, int, int, int, boolean);
+
 create or replace function public.league_counters(
   limit_n    int default 200,
   xp_solo    int default 10,   -- from lib/xp.ts, used for ORDERING only
   xp_partner int default 15,
   xp_new     int default 25,
-  only_me    boolean default false
+  only_me    boolean default false,
+  -- NULL = all time, which is what levels and the permanent ladder use. The
+  -- weekly events pass the Monday just gone. Note that "new partner" is still
+  -- decided over ALL of history: somebody you met in October is not new again
+  -- in November just because the window moved.
+  since_date date default null
 )
 returns table (
   user_id      uuid,
@@ -99,6 +111,12 @@ as $$
       end as kind
     from public.workout_logs w
   ),
+  -- The window above runs over ALL history so "first time with this partner"
+  -- stays true; the period is applied here, after the tagging.
+  in_window as (
+    select t.* from tagged t
+    where since_date is null or t.log_date >= since_date
+  ),
   capped as (
     select t.user_id, t.log_date, t.kind
     from (
@@ -108,7 +126,7 @@ as $$
           partition by t2.user_id, t2.log_date
           order by t2.kind desc, t2.id
         ) as rn_day
-      from tagged t2
+      from in_window t2
     ) t
     where t.rn_day <= 2
   ),
@@ -137,12 +155,14 @@ as $$
     select l.user_id, count(distinct l.partner_id)::int as partners
     from public.workout_logs l
     where l.partner_id is not null
+      and (since_date is null or l.log_date >= since_date)
     group by 1
   ),
   gy as (
     select l.user_id, count(distinct btrim(l.gym))::int as gyms
     from public.workout_logs l
     where coalesce(btrim(l.gym), '') <> ''
+      and (since_date is null or l.log_date >= since_date)
     group by 1
   ),
   -- Distance, normalised to kilometres. Anything that is not a plain number is
@@ -165,6 +185,7 @@ as $$
                else 0
              end as v
     ) d
+    where since_date is null or l.log_date >= since_date
     group by 1
   )
   select
@@ -208,4 +229,4 @@ as $$
   limit greatest(coalesce(limit_n, 200), 1);
 $$;
 
-grant execute on function public.league_counters(int, int, int, int, boolean) to authenticated;
+grant execute on function public.league_counters(int, int, int, int, boolean, date) to authenticated;

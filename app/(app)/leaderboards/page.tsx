@@ -24,17 +24,24 @@ import HonorCode, { HonorCodeFooter, useHonorCode } from "@/components/leaderboa
 import { HouseChallenges, YouChallenges } from "@/components/leaderboards/ChallengesSection";
 import BoardsSection from "@/components/leaderboards/BoardsSection";
 import CampusStatsSection from "@/components/leaderboards/CampusStats";
+import EventsSection from "@/components/leaderboards/EventsSection";
 import { Segmented } from "@/components/leaderboards/pieces";
 import { schoolShortName } from "@/lib/honorCode";
-import { fetchLeague, type LeagueData } from "@/lib/league";
+import { emptyLeague, fetchLeague, type LeagueData } from "@/lib/league";
 
-type Section = "challenges" | "boards" | "stats";
+type Section = "challenges" | "events" | "boards" | "stats";
 type Side = "you" | "house";
 
+/*
+  Four now, so the labels are short enough to sit side by side on a phone:
+  "Boards" and "Campus" rather than "Leaderboards" and "Statistics". The
+  section headings inside say the longer word.
+*/
 const SECTIONS: { key: Section; label: string }[] = [
   { key: "challenges", label: "Challenges" },
-  { key: "boards", label: "Leaderboards" },
-  { key: "stats", label: "Statistics" },
+  { key: "events", label: "Events" },
+  { key: "boards", label: "Boards" },
+  { key: "stats", label: "Campus" },
 ];
 
 export default function LeaguePage() {
@@ -51,27 +58,7 @@ export default function LeaguePage() {
       .then((d) => active && setData(d))
       // A failed read must still settle, or every section says "Counting…"
       // forever with no way to tell that anything went wrong.
-      .catch(
-        () =>
-          active &&
-          setData({
-            me: null,
-            people: [],
-            houses: [],
-            years: [],
-            stats: {
-              people: 0,
-              sessions: 0,
-              withPartner: 0,
-              km: 0,
-              partnerships: 0,
-              topLevel: 1,
-              busiestHouse: null,
-              avgSessions: 0,
-              totalXp: 0,
-            },
-          }),
-      );
+      .catch(() => active && setData(emptyLeague()));
     return () => {
       active = false;
     };
@@ -120,6 +107,14 @@ export default function LeaguePage() {
             />
           )}
         </>
+      )}
+
+      {section === "events" && (
+        <EventsSection
+          mine={data?.week.mine ?? null}
+          houses={data?.week.houses ?? null}
+          residence={me?.residence ?? null}
+        />
       )}
 
       {section === "boards" && (
