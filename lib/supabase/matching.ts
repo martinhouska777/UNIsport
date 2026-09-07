@@ -62,6 +62,21 @@ export type MatchFacts = {
   activityFreq: string | null;
 };
 
+/*
+  THEIR OWN facts, shared or not. Everything in MatchFacts above is an overlap,
+  which is the right thing to rank on but leaves a card with nothing to say
+  about somebody you happen to have little in common with — and a card padded
+  out with blank space says nothing at all.
+
+  Neither is private: public_profile() already hands both to any signed-in
+  user, so a card showing them is one tap earlier than the profile it links to.
+  They are always marked on screen as THEIRS, never as something you share.
+*/
+export type TheirFacts = {
+  concentration: string | null;
+  interests: string[];
+};
+
 export type Match = {
   userId: string; // the candidate's profile id
   name: string;
@@ -72,6 +87,7 @@ export type Match = {
   score: number; // browse + pair: out of 100, session search: out of 92
   breakdown: MatchBreakdown;
   facts: MatchFacts;
+  theirs: TheirFacts;
 };
 
 /** The optional narrowing every match surface shares. Null = don't narrow. */
@@ -128,6 +144,8 @@ type RpcRow = {
   shared_activity: string | null;
   activity_note: string | null;
   their_activity_freq: string | null;
+  their_concentration: string | null;
+  their_interests: string[] | null;
 };
 
 const num = (v: number | string | undefined) => (v == null ? 0 : Number(v));
@@ -175,6 +193,10 @@ function toMatch(r: RpcRow): Match {
       activity: r.shared_activity,
       activityNote: activityNote(r.activity_note),
       activityFreq: r.their_activity_freq,
+    },
+    theirs: {
+      concentration: r.their_concentration,
+      interests: r.their_interests ?? [],
     },
   };
 }

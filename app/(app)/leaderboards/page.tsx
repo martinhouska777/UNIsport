@@ -15,8 +15,10 @@
     • Dorms       — the first-year Yard dorms, same way, kept separate because
                     a dorm of four freshmen has no business being ranked
                     against a house of four hundred
-    • My house    — you against the people you live with (reads "My dorm" for
-                    a first-year, because that is where they live)
+    • My house    — you against the people you live with, house or dorm. One
+                    label for everybody: a label that changes per person is
+                    worse than a slightly loose one, because two people
+                    comparing screens should read the same words.
     • Everyone    — the whole campus
     • Most partners — who trained with the most DIFFERENT people
     • Years       — class year vs class year, also per member
@@ -25,10 +27,11 @@
   vs house is the thing people already argue about at dinner, and it is the
   only board with a chance of making somebody drag a friend in.
 
-  TWO PERIODS, NOT THREE. "This semester" was dropped: for the whole of
-  September it is the same window as "This month", so it was two options
-  showing identical numbers, and by half term the semester board is already
-  decided and stops being a race. The month is the race; all time is the record.
+  THREE PERIODS. Month, semester, all time. The month is the short race, the
+  semester the long one, all time the record that never resets. (Worth knowing
+  when reading the screen in the first days of a term: until October, "this
+  semester" and "this month" are the same window and will show the same
+  numbers. That is honest, not a bug.)
 
   SCORED IN POINTS. A session alone is 10, with a partner 15, with somebody new
   25 — the rates live in lib/points.ts as data. Every row still says how many
@@ -50,7 +53,7 @@ import { IconArrowLeft, IconChevronDown, IconInfo, IconTrophy } from "@/componen
 import HonorCode, { HonorCodeFooter, useHonorCode } from "@/components/leaderboards/HonorCode";
 import ScoringSheet from "@/components/leaderboards/ScoringSheet";
 import OptionPickerSheet from "@/components/profile/OptionPickerSheet";
-import { houses, residenceKind, residenceLabel, yardDorms } from "@/lib/onboarding";
+import { houses, residenceLabel, yardDorms } from "@/lib/onboarding";
 import { pointsLabel, sessionsOf } from "@/lib/points";
 import {
   fetchGroupBoard,
@@ -126,7 +129,8 @@ const COMPETITIONS: Competition[] = [
 ];
 
 const PERIODS: { key: Period; label: string; note: string }[] = [
-  { key: "month", label: "This month", note: "Resets on the 1st — the race" },
+  { key: "month", label: "This month", note: "Resets on the 1st" },
+  { key: "semester", label: "This semester", note: "Resets each term" },
   { key: "all", label: "All time", note: "Never resets — the record" },
 ];
 
@@ -309,21 +313,16 @@ export default function LeaderboardsPage() {
     [competition],
   );
 
-  // "My house" is the wrong word for a first-year, who lives in a Yard dorm.
-  const iLiveInADorm = standing?.residence
-    ? residenceKind(standing.residence) === "dorm"
-    : false;
+  /*
+    One label for everybody. It used to read "My dorm" for a first-year, on the
+    grounds that a dorm is not a house — but the owner's call is that a
+    changing label is worse than a slightly loose one: two people comparing
+    screens should be looking at the same words.
+  */
   const competitionOptions = useMemo(
-    () =>
-      COMPETITIONS.map((c) => ({
-        value: c.key,
-        label: c.key === "myHouse" && iLiveInADorm ? "My dorm" : c.label,
-        note: c.note,
-      })),
-    [iLiveInADorm],
+    () => COMPETITIONS.map((c) => ({ value: c.key, label: c.label, note: c.note })),
+    [],
   );
-  const currentLabel =
-    competitionOptions.find((o) => o.value === competition)?.label ?? def.label;
 
   // The standing line reloads with the period, not with the board — changing
   // the competition shouldn't make the header flicker.
@@ -458,7 +457,7 @@ export default function LeaderboardsPage() {
         <div className="flex gap-2">
           <Picker
             caption="Competition"
-            value={currentLabel}
+            value={def.label}
             onOpen={() => setPicking("competition")}
           />
           <Picker

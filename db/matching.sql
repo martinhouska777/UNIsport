@@ -42,8 +42,14 @@
 --   ALREADY SHARES with the candidate — never the candidate's raw private json.
 --   In particular, shared_interests is the INTERSECTION with the searcher's own
 --   interests, so it can never leak an interest the searcher didn't already
---   have. The unfiltered lists stay internal to the engine (c_* columns) purely
---   so the wrappers can apply filters, and are not exposed by any wrapper.
+--   have.
+--
+--   TWO of the candidate's own values ARE returned: `their_concentration` and
+--   `their_interests`, so a result card can say something about a stranger it
+--   has little in common with. That is not a new disclosure — public_profile()
+--   already hands both to any signed-in user, and the card is one tap earlier
+--   than the profile they came from. Everything else in the c_* columns stays
+--   internal to the engine, purely so the wrappers can filter on it.
 --
 -- IDEMPOTENT: safe to paste into the Supabase SQL editor and re-run.
 -- ============================================================================
@@ -381,16 +387,26 @@ as $$
   from me, public.match_profiles c
   cross join lateral (
     select
-      -- Shared interests: 18 pts, full at 4+ overlapping.
+      /*
+        Shared interests: 18 pts, full at 4+ overlapping.
+
+        COUNT DISTINCT, not count(*). A stored interests array can hold the same
+        value twice — twelve seeded profiles did, and one real profile always
+        can — and joining two arrays on equality then multiplies the duplicates
+        together. Two people who each listed "Coffee" twice scored four
+        overlaps off one shared interest, which is the full 18 points, and both
+        their cards read "Coffee, Coffee". Distinct fixes the score and the
+        wording in the one place that decides both.
+      */
       18 * least((
-        select count(*)
+        select count(distinct x.val)
         from jsonb_array_elements_text(me.interests) as x(val)
         join jsonb_array_elements_text(c.interests)  as y(val) on x.val = y.val
       ), 4) / 4.0 as interests,
 
       -- ...and the interests themselves, for the "why" line on the card.
       (
-        select coalesce(array_agg(x.val order by x.val), '{}'::text[])
+        select coalesce(array_agg(distinct x.val order by x.val), '{}'::text[])
         from jsonb_array_elements_text(me.interests) as x(val)
         join jsonb_array_elements_text(c.interests)  as y(val) on x.val = y.val
       ) as shared_interests,
@@ -406,13 +422,15 @@ as $$
 
       -- Shared languages: 8 pts, full at 3+ overlapping.
       8 * least((
-        select count(*)
+        select count(distinct x.val)
         from jsonb_array_elements_text(me.languages) as x(val)
         join jsonb_array_elements_text(c.languages)  as y(val) on x.val = y.val
       ), 3) / 3.0 as languages,
 
+      -- Distinct here for the same reason as interests above: a duplicate in
+      -- either stored array would otherwise multiply into extra points.
       (
-        select coalesce(array_agg(x.val order by x.val), '{}'::text[])
+        select coalesce(array_agg(distinct x.val order by x.val), '{}'::text[])
         from jsonb_array_elements_text(me.languages) as x(val)
         join jsonb_array_elements_text(c.languages)  as y(val) on x.val = y.val
       ) as shared_languages,
@@ -588,6 +606,11 @@ $$;
 --                             runners.
 --      gym_filter / level_filter / gender_filter — as before.
 -- ============================================================================
+-- The return type gains columns below, and `create or replace` refuses to
+-- change a return type — so each wrapper is dropped by its exact signature
+-- first, which keeps the file re-runnable.
+drop function if exists public.match_browse(uuid, text, text[], text, text, text, text);
+
 create or replace function public.match_browse(
   searcher_id          uuid,
   concentration_filter text   default null,
@@ -623,7 +646,16 @@ returns table (
   level_note         text,
   shared_activity    text,
   activity_note      text,
-  their_activity_freq text
+  their_activity_freq text,
+  -- THEIR OWN values, shared or not. Everything above this line is an OVERLAP,
+  -- which is the right thing to rank on but leaves a card with nothing to say
+  -- about somebody you happen to have little in common with. A result card
+  -- fills its remaining room with these instead of blank space: their
+  -- concentration and what they are into are the two facts that make a stranger
+  -- worth a tap. They are plainly marked as theirs on screen, never dressed up
+  -- as something you share.
+  their_concentration text,
+  their_interests    text[]
 )
 language sql
 stable
@@ -639,7 +671,9 @@ as $$
     m.gym_pts, m.level_pts, m.activity_pts, m.schedule_pts, m.training_pts,
     m.shared_interests, m.shared_languages, m.same_concentration,
     m.shared_country, m.shared_region, m.shared_gym, m.level_note,
-    m.shared_activity, m.activity_note, m.their_activity_freq
+    m.shared_activity, m.activity_note, m.their_activity_freq,
+    m.c_concentration,
+    array(select distinct z.val from jsonb_array_elements_text(m.c_interests) as z(val))
   from public.match_candidates(searcher_id) m
   where (concentration_filter is null or m.c_concentration = concentration_filter)
     and (interests_filter is null or exists (
@@ -676,6 +710,9 @@ $$;
 --    better running partner than somebody who runs on the side, and the ranking
 --    should say so.
 -- ============================================================================
+drop function if exists public.match_session_search(
+  uuid, text, text, numeric, text, text, text, text, text[], numeric);
+
 create or replace function public.match_session_search(
   searcher_id          uuid,
   activity_filter      text,
@@ -720,7 +757,10 @@ returns table (
   level_note         text,
   shared_activity    text,
   activity_note      text,
-  their_activity_freq text
+  their_activity_freq text,
+  -- THEIR OWN values, shared or not — see match_browse above.
+  their_concentration text,
+  their_interests    text[]
 )
 language sql
 stable
@@ -735,7 +775,9 @@ as $$
     m.gym_pts, m.level_pts, m.activity_pts, m.training_pts,
     m.shared_interests, m.shared_languages, m.same_concentration,
     m.shared_country, m.shared_region, m.shared_gym, m.level_note,
-    m.shared_activity, m.activity_note, m.their_activity_freq
+    m.shared_activity, m.activity_note, m.their_activity_freq,
+    m.c_concentration,
+    array(select distinct z.val from jsonb_array_elements_text(m.c_interests) as z(val))
   from public.match_candidates(searcher_id) m
   -- "Do they do this AT ALL", not "is it their main thing". That one word is
   -- the whole fix: a gym-first person who also runs twice a week is now
@@ -766,6 +808,8 @@ $$;
 --    Scored out of 100 (schedule included) like browse. Returns no rows when
 --    the two don't pass the shared gates — the profile then shows no reasons.
 -- ============================================================================
+drop function if exists public.match_pair(uuid, uuid);
+
 create or replace function public.match_pair(searcher_id uuid, other_id uuid)
 returns table (
   candidate_id       uuid,
@@ -793,7 +837,10 @@ returns table (
   level_note         text,
   shared_activity    text,
   activity_note      text,
-  their_activity_freq text
+  their_activity_freq text,
+  -- THEIR OWN values, shared or not — see match_browse above.
+  their_concentration text,
+  their_interests    text[]
 )
 language sql
 stable
@@ -809,7 +856,9 @@ as $$
     m.gym_pts, m.level_pts, m.activity_pts, m.schedule_pts, m.training_pts,
     m.shared_interests, m.shared_languages, m.same_concentration,
     m.shared_country, m.shared_region, m.shared_gym, m.level_note,
-    m.shared_activity, m.activity_note, m.their_activity_freq
+    m.shared_activity, m.activity_note, m.their_activity_freq,
+    m.c_concentration,
+    array(select distinct z.val from jsonb_array_elements_text(m.c_interests) as z(val))
   from public.match_candidates(searcher_id) m
   where m.candidate_id = other_id;
 $$;

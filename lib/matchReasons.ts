@@ -283,3 +283,89 @@ export function topMatchReasons(
   // universal things, say the strongest one rather than showing an empty row.
   return (worthSaying.length > 0 ? worthSaying : ranked.slice(0, 1)).slice(0, count);
 }
+
+/* ══════════════════════  what a RESULT CARD shows  ══════════════════════ */
+
+/*
+  A card used to show shared reasons and then pad the leftover room with blank
+  grey boxes, which is the worst of both worlds: the card looks broken AND says
+  nothing about the person. So a card now shows two kinds of chip.
+
+    SHARED — something you actually have in common. Marked with a tick and the
+             school's own colour, so what is TRUE is always the thing wearing
+             colour. These come first and are never invented.
+    THEIRS  — their concentration and what they are into, in plain grey. Not a
+             claim about you: it is the answer to "who is this person", which
+             is what makes a stranger worth a tap.
+
+  TWO DELIBERATE OMISSIONS.
+    • "Both lift" and its siblings are dropped. The line above the chips already
+      says what they train, so the chip repeated a word that was two millimetres
+      higher up. "They run too" SURVIVES — that is the one person on a list of
+      lifters who also runs, which is genuinely rare and is not written anywhere
+      else on the card.
+    • Shared interests arrive from the engine as one chip ("Climbing, Coffee
+      +2"). On a card they are split one per chip: six short chips pack into the
+      rows and read at a glance, where one long one truncates and loses the tail.
+*/
+export type CardChip = {
+  key: string;
+  label: string;
+  /** True when it is an overlap — the tick and the school's colour. */
+  shared: boolean;
+  /** The longer wording, for a title attribute. */
+  full: string;
+};
+
+/** The chip the identity line above already carries, so it never repeats. */
+const SAID_ELSEWHERE = "activity";
+
+export function cardChips(
+  m: Match,
+  count: number,
+  rarity?: ReasonRarity,
+): CardChip[] {
+  const chips: CardChip[] = [];
+  const seen = new Set<string>();
+  const push = (chip: CardChip) => {
+    const id = chip.label.toLowerCase();
+    if (seen.has(id) || chips.length >= count) return;
+    seen.add(id);
+    chips.push(chip);
+  };
+
+  // Ask for more than we need: splitting interests and dropping the activity
+  // chip both change how many survive.
+  for (const r of topMatchReasons(m, count + 4, rarity)) {
+    if (r.key === SAID_ELSEWHERE) continue;
+    if (r.key === "interests") {
+      for (const one of m.facts.interests) {
+        push({ key: `interest-${one}`, label: one, shared: true, full: r.full });
+      }
+      continue;
+    }
+    push({ key: r.key, label: r.short, shared: true, full: r.full });
+  }
+
+  // Then who they are. Concentration first — it is the one fact everybody has
+  // answered and the one that most reliably means something to a stranger.
+  const theirs = m.theirs;
+  if (theirs.concentration) {
+    push({
+      key: "their-concentration",
+      label: theirs.concentration,
+      shared: false,
+      full: `They're concentrating in ${theirs.concentration}`,
+    });
+  }
+  for (const one of theirs.interests) {
+    push({
+      key: `their-interest-${one}`,
+      label: one,
+      shared: false,
+      full: `They're into ${one}`,
+    });
+  }
+
+  return chips;
+}

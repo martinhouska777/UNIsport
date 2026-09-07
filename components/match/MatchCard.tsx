@@ -1,8 +1,9 @@
 import type { Match } from "@/lib/supabase/matching";
 import { matchTier } from "@/lib/matchTier";
-import { topMatchReasons, type ReasonRarity } from "@/lib/matchReasons";
+import { cardChips, type ReasonRarity } from "@/lib/matchReasons";
 import { classYearLabel } from "@/lib/onboarding";
 import Button from "@/components/ui/Button";
+import { IconCheck } from "@/components/icons";
 import InitialsAvatar from "@/components/ui/InitialsAvatar";
 import { useAppState } from "@/components/AppState";
 import { houseColorsFor } from "@/lib/gyms";
@@ -16,21 +17,21 @@ import { houseColorsFor } from "@/lib/gyms";
   facts every member has, so it reads the same on every card and you learn to
   scan it.
 
-  The chips are WHY THEM RATHER THAN ANYONE ELSE, so they carry only what
-  differs: concentration, interests, where they're from, the gym you share.
-  Rarest first (see lib/matchReasons.ts) — a fact 90% of the list also has tells
-  you nothing, however many points it scored. Experience level lives on the full
-  profile for exactly that reason: it was on nine cards in ten.
+  The chips answer two questions at once. What you SHARE comes first, in the
+  school's colour with a tick — rarest first (see lib/matchReasons.ts), because
+  a fact 90% of the list also has tells you nothing however many points it
+  scored. Then WHO THEY ARE, in grey: their concentration and what they're
+  into. Every card fills its rows either way, and nothing on it is invented.
 
-  Every chip is a real overlap out of the matching engine. The mockup had a
-  made-up AI sentence here; a fact is more useful and we can stand behind it.
+  Experience level lives on the full profile: it was on nine cards in ten. So
+  does "Both lift" — the identity line above already says what they train.
 */
 export default function MatchCard({
   match,
   max,
   onView,
   rarity,
-  reasonCount = 5,
+  chipCount = 6,
 }: {
   match: Match;
   max: number; // 100 for browse, 92 for session search
@@ -38,7 +39,8 @@ export default function MatchCard({
   // How common each kind of reason is across the list this card belongs to.
   // Without it the chips fall back to strongest-first.
   rarity?: ReasonRarity;
-  reasonCount?: number;
+  /** How many chips to fill the rows with. Six fits the three rows. */
+  chipCount?: number;
 }) {
   // Their house's own colours, when they gave a house — see InitialsAvatar.
   const { universityKey } = useAppState();
@@ -55,13 +57,7 @@ export default function MatchCard({
   ]
     .filter(Boolean)
     .join(" · ");
-  const reasons = topMatchReasons(match, reasonCount, rarity);
-  /*
-    Enough blanks to fill the two rows out, in deliberately uneven widths — a
-    row of identical bars reads as a loading skeleton, an uneven one reads as
-    empty space. Overflow is clipped, so overshooting costs nothing.
-  */
-  const blankSlots = BLANK_WIDTHS.slice(0, Math.max(0, 4 - reasons.length));
+  const chips = cardChips(match, chipCount, rarity);
 
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-surface">
@@ -85,35 +81,40 @@ export default function MatchCard({
         )}
 
         {/*
-          WHY THEY'RE HERE — and always exactly two rows tall.
+          WHO THEY ARE AND WHAT YOU SHARE — always exactly three rows tall.
 
           The chips used to wrap freely, so a person with four overlaps made a
           card half again as tall as the person beside them with one, and the
-          grid came out ragged. The block is now a fixed two rows and clips.
+          grid came out ragged. The block is a fixed height and clips, which is
+          what keeps the grid even.
 
-          Somebody with fewer reasons is padded out with blank slots in the
-          card's own dark, rather than left with a hole: the card keeps its
-          shape, and an empty slot plainly says "nothing here" instead of
-          inventing a compliment. Real reasons keep the school's colour, so
-          what is true is always the thing with colour on it.
+          What it does NOT do any more is pad the leftover room with blank grey
+          boxes. A card with two overlaps and four empty slots looked broken and
+          said nothing; it now fills up with facts about the person instead (see
+          cardChips in lib/matchReasons.ts).
+
+          SHARED things wear the school's own colour and a tick, so what is
+          TRUE about the two of you is always the thing with colour on it.
+          Everything else is plainly theirs, in grey — it is never dressed up as
+          something you have in common.
         */}
-        <div className="mb-2 mt-1.5 flex h-[44px] flex-wrap content-start gap-1 overflow-hidden">
-          {reasons.map((r) => (
+        <div className="mb-2 mt-1.5 flex h-[64px] flex-wrap content-start gap-1 overflow-hidden">
+          {chips.map((c) => (
             <span
-              key={r.key}
-              title={r.full}
-              className="max-w-full truncate rounded-md border border-accent-line bg-accent-tint px-1.5 py-0.5 text-[11px] leading-tight text-text"
+              key={c.key}
+              title={c.full}
+              className={`flex max-w-full items-center gap-0.5 rounded-md border px-1.5 py-0.5 text-[11px] leading-tight ${
+                c.shared
+                  ? "border-primary-line bg-primary-tint text-primary"
+                  : "border-border bg-surface-2 text-muted"
+              }`}
             >
-              {r.short}
-            </span>
-          ))}
-          {blankSlots.map((w, i) => (
-            <span
-              key={`blank${i}`}
-              aria-hidden
-              className={`${w} rounded-md border border-border bg-surface-2 px-1.5 py-0.5 text-[11px] leading-tight`}
-            >
-              &nbsp;
+              {c.shared && (
+                <span className="flex-shrink-0" aria-label="You share this">
+                  <IconCheck size={10} />
+                </span>
+              )}
+              <span className="truncate">{c.label}</span>
             </span>
           ))}
         </div>
@@ -132,7 +133,5 @@ export default function MatchCard({
   What they train, as a verb, for the identity line. Kept beside the card
   because it is presentation — lib/onboarding.ts owns the keys themselves.
 */
-const BLANK_WIDTHS = ["w-14", "w-9", "w-16", "w-11"];
-
 const activityLabel = (a: string | null) =>
   a ? { gym: "Lifts", running: "Runs", cardio: "Cardio", other: "Other" }[a] ?? null : null;
