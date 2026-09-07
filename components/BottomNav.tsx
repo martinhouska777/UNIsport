@@ -49,6 +49,26 @@ export const tabs: Tab[] = [
     ),
   },
   {
+    /*
+      The League sits in the middle, where a thumb lands. The whole competitive
+      side of the app used to hide behind a one-centimetre strip halfway down
+      the Profile tab — you had to already know it was there, which is no way to
+      run the part that is meant to pull people back.
+    */
+    href: "/leaderboards",
+    label: "League",
+    icon: (
+      <svg {...iconProps}>
+        <path d="M8 4h8v5a4 4 0 0 1-8 0V4z" />
+        <path d="M8 5.5H5.5A2.5 2.5 0 0 0 8 9.5" />
+        <path d="M16 5.5h2.5A2.5 2.5 0 0 1 16 9.5" />
+        <path d="M12 13v3" />
+        <path d="M9 20h6" />
+        <path d="M10.5 16h3l.5 4h-4l.5-4z" />
+      </svg>
+    ),
+  },
+  {
     href: "/messages",
     label: "Messages",
     icon: (
