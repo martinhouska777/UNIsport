@@ -39,6 +39,20 @@
   --success: #16a34a;
   --warn: #d97706;
   --danger: #dc2626;
+  /*
+    THE PODIUM — gold, silver, bronze.
+    The only colours in the app that are NOT the school's, and deliberately not
+    part of a theme: first, second and third have meant the same three metals
+    for longer than any of these universities have existed, and a school does
+    not get to recolour a gold medal. They are tokens rather than hexes typed
+    inside a component (rule 1), and they are used as FILLS with --podium-ink
+    on top — never as small text on the page background — so they clear
+    contrast on a white screen and a near-black one alike.
+  */
+  --podium-1: #e0a51a;
+  --podium-2: #98a3b1;
+  --podium-3: #c07b3e;
+  --podium-ink: #17181c;
   /* Elevation. One shadow, for things that float ABOVE the page (sheets,
      overlays, popovers) — a card never gets one, it just uses a lighter
      surface. Per-theme because a shadow on near-black needs more weight than
@@ -81,6 +95,18 @@
   --color-warn-line: color-mix(in oklab, var(--warn) 36%, transparent);
   --color-danger-tint: color-mix(in oklab, var(--danger) 13%, transparent);
   --color-danger-line: color-mix(in oklab, var(--danger) 36%, transparent);
+  /* The medals. Solid fill + ink for the pedestals, a wash and a hairline for
+     the cards standing on them. */
+  --color-podium-1: var(--podium-1);
+  --color-podium-2: var(--podium-2);
+  --color-podium-3: var(--podium-3);
+  --color-podium-ink: var(--podium-ink);
+  --color-podium-1-tint: color-mix(in oklab, var(--podium-1) 16%, transparent);
+  --color-podium-2-tint: color-mix(in oklab, var(--podium-2) 16%, transparent);
+  --color-podium-3-tint: color-mix(in oklab, var(--podium-3) 16%, transparent);
+  --color-podium-1-line: color-mix(in oklab, var(--podium-1) 45%, transparent);
+  --color-podium-2-line: color-mix(in oklab, var(--podium-2) 45%, transparent);
+  --color-podium-3-line: color-mix(in oklab, var(--podium-3) 45%, transparent);
   --shadow-overlay: var(--overlay-shadow);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
@@ -1185,6 +1211,33 @@ body {
 /* Each star carries its own animation-delay, so a 4-star rating fills 1→4
    instead of all at once. */
 .react-star { animation: react-star 260ms cubic-bezier(0.2, 1.3, 0.4, 1) backwards; }
+
+/*
+  THE PODIUM — the three pedestals grow up out of the floor when a board lands,
+  second, then first, then third (each block carries its own delay). It is the
+  one moment on the leaderboard screen worth a beat of movement: a table that
+  arrives already finished says nothing about who won.
+*/
+@keyframes podium-rise {
+  from { transform: scaleY(0.15); opacity: 0.35; }
+  to { transform: scaleY(1); opacity: 1; }
+}
+.podium-rise {
+  transform-origin: bottom;
+  animation: podium-rise 460ms cubic-bezier(0.2, 0.9, 0.25, 1) backwards;
+}
+@keyframes podium-card-in {
+  from { transform: translateY(10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.podium-card-in { animation: podium-card-in 380ms cubic-bezier(0.2, 0.9, 0.25, 1) backwards; }
+
+@media (prefers-reduced-motion: reduce) {
+  .podium-rise,
+  .podium-card-in {
+    animation: none;
+  }
+}
 
 /*
   SKELETONS — the shape of the thing that's coming, instead of the word

@@ -10,8 +10,20 @@
   already use handles the same job. The list of competitions can grow without
   the screen growing.
 
+  THE PODIUM. Every board opens with its top three standing on gold, silver and
+  bronze pedestals (components/leaderboards/Podium.tsx) and the list carries on
+  underneath from fourth, so nobody appears twice. A leaderboard whose first
+  place looks exactly like its eleventh is a table, not a competition.
+
+  TWO WAYS TO READ A TEAM BOARD. Houses, dorms and years each rank two honest
+  ways, and the segmented control above the board says which one is on screen:
+  POINTS PER MEMBER (a big house can't win on size alone — it measures whether
+  a house is actually using the app) or TOTAL POINTS (the raw pile it put on
+  the board, which is the number people shout about). Both come back in the
+  same read, so switching is instant.
+
   THE COMPETITIONS
-    • Houses      — the twelve upperclassman Houses, by POINTS PER MEMBER
+    • Houses      — the twelve upperclassman Houses, per member or by total
     • Dorms       — the first-year Yard dorms, same way, kept separate because
                     a dorm of four freshmen has no business being ranked
                     against a house of four hundred
@@ -61,6 +73,7 @@ import {
 } from "@/components/icons";
 import HonorCode, { HonorCodeFooter, useHonorCode } from "@/components/leaderboards/HonorCode";
 import GroupSheet from "@/components/leaderboards/GroupSheet";
+import Podium, { type PodiumEntry } from "@/components/leaderboards/Podium";
 import ScoringSheet from "@/components/leaderboards/ScoringSheet";
 import OptionPickerSheet from "@/components/profile/OptionPickerSheet";
 import { houses, residenceLabel, yardDorms } from "@/lib/onboarding";
@@ -70,9 +83,13 @@ import {
   fetchPeopleBoard,
   fetchStanding,
   groupLabel,
+  groupScoreLabel,
   houseColor,
   nextUpLine,
+  rankGroups,
+  GROUP_METRICS,
   MIN_GROUP_MEMBERS,
+  type GroupMetric,
   type GroupRow,
   type LeaderRow,
   type Period,
@@ -97,15 +114,15 @@ const COMPETITIONS: Competition[] = [
   {
     key: "houses",
     label: "Houses",
-    note: "House vs house, per member",
-    blurb: `Points per member, so a big house can't win on size alone. A house needs ${MIN_GROUP_MEMBERS} members to appear.`,
+    note: "House vs house",
+    blurb: `House against house. A house needs ${MIN_GROUP_MEMBERS} members to appear.`,
     empty: "No house has enough members training yet.",
   },
   {
     key: "dorms",
     label: "Dorms",
     note: "First-year Yard dorms",
-    blurb: `The first-year dorms, also per member. A dorm needs ${MIN_GROUP_MEMBERS} members to appear.`,
+    blurb: `The first-year dorms, kept apart from the Houses. A dorm needs ${MIN_GROUP_MEMBERS} members to appear.`,
     empty: "No dorm has enough members training yet.",
   },
   {
@@ -126,10 +143,17 @@ const COMPETITIONS: Competition[] = [
     key: "years",
     label: "Years",
     note: "Class year vs class year",
-    blurb: `Class against class, also per member. A year needs ${MIN_GROUP_MEMBERS} members to appear.`,
+    blurb: `Class against class. A year needs ${MIN_GROUP_MEMBERS} members to appear.`,
     empty: "No class year has enough members training yet.",
   },
 ];
+
+/* What the metric switch means, said in one line under the bar. */
+const METRIC_BLURB: Record<GroupMetric, string> = {
+  perMember:
+    "Ranked by points per member, so size alone can't win it — it says how many of you are actually training.",
+  total: "Ranked by every point the group put on the board, so the bigger ones have the advantage.",
+};
 
 const PERIODS: { key: Period; label: string; note: string }[] = [
   { key: "month", label: "This month", note: "Resets on the 1st" },
@@ -149,20 +173,60 @@ const plural = (n: number, noun: string) => `${n} ${noun}${n === 1 ? "" : "s"}`;
 
 /* ─────────────────────────  pieces  ───────────────────────── */
 
-/* The top three are marked with the theme's accent rather than gold/silver/
-   bronze: medal colors would be three hardcoded hexes in a component, which is
-   the one thing this codebase never does. */
+/* The top three wear their medal. The colours are TOKENS (`--podium-1..3` in
+   globals.css), never hexes typed into a component — see Podium.tsx for why
+   these three are the one set of colours a school doesn't get to change.
+   Everything below third gets a quiet tile, so a rank still reads as a rank. */
+const MEDAL: Record<number, string> = {
+  1: "bg-podium-1 text-podium-ink",
+  2: "bg-podium-2 text-podium-ink",
+  3: "bg-podium-3 text-podium-ink",
+};
+
 function RankBadge({ rank }: { rank: number }) {
-  const top = rank <= 3;
   return (
     <span
       className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg text-[11px] font-semibold ${
-        top ? "bg-accent-tint text-accent" : "text-muted"
+        MEDAL[rank] ?? "bg-surface-2 text-muted"
       }`}
     >
       {rank}
     </span>
   );
+}
+
+/* The one control that changes what a team board MEANS, so it sits above the
+   board itself rather than inside a sheet: two words, both always visible. */
+function MetricSwitch({
+  value,
+  onPick,
+}: {
+  value: GroupMetric;
+  onPick: (m: GroupMetric) => void;
+}) {
+  return (
+    <div className="flex gap-1 rounded-full border border-border bg-surface-2 p-0.5">
+      {GROUP_METRICS.map((m) => (
+        <button
+          key={m.key}
+          type="button"
+          onClick={() => onPick(m.key)}
+          aria-pressed={value === m.key}
+          aria-label={m.label}
+          className={`tap44 flex-1 rounded-full px-3 py-1.5 text-[12px] font-medium transition-colors ${
+            value === m.key ? "bg-text text-background" : "text-muted"
+          }`}
+        >
+          {m.short}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** "Winthrop" → "W"; "'27" → "27". What a group wears in the podium avatar. */
+function groupInitials(kind: "house" | "year", key: string): string {
+  return kind === "year" ? key.replace(/'/g, "") : key.slice(0, 1).toUpperCase();
 }
 
 /* A score with its unit under it, so a bare number never has to be guessed at. */
@@ -213,6 +277,7 @@ function PersonRow({
   competition: CompetitionKey;
 }) {
   const sessions = sessionsOf(row.kinds);
+  const tint = houseColor(row.residence);
   // House, year and what the score was made of, in one line that survives a
   // narrow phone by simply dropping the parts that are missing.
   const detail =
@@ -231,7 +296,12 @@ function PersonRow({
       }`}
     >
       <RankBadge rank={row.rank} />
-      <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-primary-tint text-[11px] font-semibold text-primary">
+      <span
+        className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-primary-tint text-[11px] font-semibold text-primary"
+        // Their house's own colour, so a campus list isn't fifty identical
+        // grey circles — content data from lib/gyms.ts, applied inline.
+        style={tint ? { background: `${tint}26`, color: tint } : undefined}
+      >
         {row.initials}
       </span>
       <div className="min-w-0 flex-1">
@@ -253,14 +323,17 @@ function PersonRow({
 function GroupRowItem({
   row,
   kind,
+  metric,
   onOpen,
 }: {
   row: GroupRow;
   kind: "house" | "year";
+  metric: GroupMetric;
   /** Omitted for year rows, which have nothing worth opening. */
   onOpen?: () => void;
 }) {
   const tint = kind === "house" ? houseColor(row.key) : null;
+  const unit = GROUP_METRICS.find((m) => m.key === metric)?.unit ?? "pts";
   // A row that opens is a button; a row that does not stays a div, so nothing
   // on screen invites a tap that does nothing.
   const Tag = onOpen ? "button" : "div";
@@ -272,20 +345,29 @@ function GroupRowItem({
       } ${row.isMine ? "border-primary bg-primary-tint" : "border-border bg-surface"}`}
     >
       <RankBadge rank={row.rank} />
+      {/* The house's own colour, filled rather than a hairline — a board of
+          twelve houses is the one place on the screen where the colours ARE
+          the information. Content data from lib/gyms.ts, applied inline. */}
       <span
-        className="h-8 w-1.5 flex-shrink-0 rounded-full bg-primary"
-        style={tint ? { background: tint } : undefined}
-      />
+        className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-primary-tint text-[12px] font-semibold text-primary"
+        style={tint ? { background: `${tint}26`, color: tint } : undefined}
+      >
+        {groupInitials(kind, row.key)}
+      </span>
       <div className="min-w-0 flex-1">
         <div className="truncate text-[13px] font-medium text-text">
           {groupLabel(kind, row.key)}
           {row.isMine && <span className="ml-1.5 text-[11px] text-primary">Yours</span>}
         </div>
         <div className="truncate text-[11px] text-muted">
-          {row.actives} of {row.members} training · {pointsLabel(row.points)}
+          {row.actives} of {row.members} training ·{" "}
+          {/* Always the OTHER number, so the view you're not in is still there. */}
+          {metric === "total"
+            ? `${row.avgPoints.toFixed(1)} per member`
+            : pointsLabel(row.points)}
         </div>
       </div>
-      <Score value={row.avgPoints.toFixed(1)} unit="per member" />
+      <Score value={groupScoreLabel(row, metric)} unit={unit} />
       {onOpen && (
         <span className="flex-shrink-0 text-muted">
           <IconChevronRight size={15} />
@@ -304,6 +386,13 @@ export default function LeaderboardsPage() {
 
   const [period, setPeriod] = useState<Period>("month");
   const [competition, setCompetition] = useState<CompetitionKey>("houses");
+  /*
+    Which number a team board is ranked on. Per member opens first — it is the
+    fairer race, and the one the interhouse competition is gated on — but total
+    is one tap away and never hidden, because "we scored the most points in the
+    whole college" is a real claim a big house has every right to make.
+  */
+  const [metric, setMetric] = useState<GroupMetric>("perMember");
   // Only one of these is ever open, but they are separate so neither has to
   // know the other exists.
   const [picking, setPicking] = useState<"competition" | "period" | null>(null);
@@ -327,7 +416,12 @@ export default function LeaderboardsPage() {
   const want = `${competition}|${period}|${userId ?? ""}`;
   const loading = result?.for !== want;
   const people = result?.people ?? [];
-  const groups = result?.groups ?? [];
+  // The metric decides the ORDER, not the read: the database hands back every
+  // qualifying group with both numbers on it, so switching is a re-sort.
+  const groups = useMemo(
+    () => rankGroups(result?.groups ?? [], metric),
+    [result?.groups, metric],
+  );
 
   const def = useMemo(
     () => COMPETITIONS.find((c) => c.key === competition) ?? COMPETITIONS[0],
@@ -387,7 +481,47 @@ export default function LeaderboardsPage() {
   }, [competition, period, want]);
 
   const isGroupBoard = GROUP_BOARDS.includes(competition);
+  const groupKind: "house" | "year" = competition === "years" ? "year" : "house";
   const nudge = nextUpLine(standing);
+  const metricUnit = GROUP_METRICS.find((m) => m.key === metric)?.unit ?? "pts";
+
+  /*
+    The top three, lifted out of whichever board is on screen and handed to the
+    podium in one shape. The list below then starts at fourth, so nobody is
+    shown twice.
+  */
+  const podium: PodiumEntry[] = isGroupBoard
+    ? groups.slice(0, 3).map((g, i) => ({
+        id: g.key,
+        place: (i + 1) as 1 | 2 | 3,
+        // The board's own rank, which is not the place when two are level.
+        rank: g.rank,
+        title: groupLabel(groupKind, g.key),
+        // Always the number the board is NOT ranked on — the other half of
+        // the argument, without having to flip the switch to see it.
+        subtitle:
+          metric === "total"
+            ? `${g.avgPoints.toFixed(1)} per member`
+            : pointsLabel(g.points),
+        initials: groupInitials(groupKind, g.key),
+        value: groupScoreLabel(g, metric),
+        unit: metricUnit,
+        tint: groupKind === "house" ? houseColor(g.key) : null,
+        mineLabel: g.isMine ? "Yours" : undefined,
+        onOpen: groupKind === "year" ? undefined : () => setOpenGroup(g),
+      }))
+    : people.slice(0, 3).map((p, i) => ({
+        id: p.userId,
+        place: (i + 1) as 1 | 2 | 3,
+        rank: p.rank,
+        title: p.name,
+        subtitle: p.residence ? residenceLabel(p.residence) : (p.classYear ?? undefined),
+        initials: p.initials,
+        value: competition === "partners" ? String(p.score) : p.score.toLocaleString("en-US"),
+        unit: competition === "partners" ? "people" : "pts",
+        tint: houseColor(p.residence),
+        mineLabel: p.isMe ? "You" : undefined,
+      }));
 
   // Hooks are all above this line, so the honour code can gate the screen.
   if (accepted === false) {
@@ -491,7 +625,18 @@ export default function LeaderboardsPage() {
 
       {/* The board */}
       <div className="px-3.5 pt-3">
-        <p className="text-[11px] leading-relaxed text-muted">{def.blurb}</p>
+        {/* On a team board the switch above the words is what the words are
+            about, so it goes first and the line under it explains the choice
+            that is currently made. */}
+        {isGroupBoard && (
+          <div className="mb-2">
+            <MetricSwitch value={metric} onPick={setMetric} />
+          </div>
+        )}
+        <p className="text-[11px] leading-relaxed text-muted">
+          {def.blurb}
+          {isGroupBoard && ` ${METRIC_BLURB[metric]}`}
+        </p>
 
         {loading ? (
           <div className="px-4 py-16 text-center text-[12px] text-muted">Counting…</div>
@@ -501,18 +646,22 @@ export default function LeaderboardsPage() {
               {def.empty}
             </div>
           ) : (
-            <div className="mt-3 flex flex-col gap-1.5">
-              {groups.map((g) => (
-                <GroupRowItem
-                  key={g.key}
-                  row={g}
-                  kind={competition === "years" ? "year" : "house"}
-                  onOpen={
-                    competition === "years" ? undefined : () => setOpenGroup(g)
-                  }
-                />
-              ))}
-            </div>
+            <>
+              <Podium entries={podium} />
+              {groups.length > 3 && (
+                <div className="mt-2.5 flex flex-col gap-1.5">
+                  {groups.slice(3).map((g) => (
+                    <GroupRowItem
+                      key={g.key}
+                      row={g}
+                      kind={groupKind}
+                      metric={metric}
+                      onOpen={groupKind === "year" ? undefined : () => setOpenGroup(g)}
+                    />
+                  ))}
+                </div>
+              )}
+            </>
           )
         ) : people.length === 0 ? (
           <div className="mt-3 rounded-xl border border-dashed border-border bg-surface px-4 py-10 text-center text-[12px] text-muted">
@@ -520,11 +669,14 @@ export default function LeaderboardsPage() {
           </div>
         ) : (
           <>
-            <div className="mt-3 flex flex-col gap-1.5">
-              {people.map((r) => (
-                <PersonRow key={r.userId} row={r} competition={competition} />
-              ))}
-            </div>
+            <Podium entries={podium} />
+            {people.length > 3 && (
+              <div className="mt-2.5 flex flex-col gap-1.5">
+                {people.slice(3).map((r) => (
+                  <PersonRow key={r.userId} row={r} competition={competition} />
+                ))}
+              </div>
+            )}
             <div className="mt-2.5 px-0.5 text-[11px] text-muted">
               {competition === "partners"
                 ? `${plural(people[0].score, "partner")} leads`
@@ -568,6 +720,9 @@ export default function LeaderboardsPage() {
         <GroupSheet
           row={openGroup}
           kind="house"
+          // So the sheet's header says the same rank and the same number the
+          // row that opened it did.
+          metric={metric}
           period={period}
           periodLabel={PERIODS.find((p) => p.key === period)?.label ?? ""}
           onClose={() => setOpenGroup(null)}

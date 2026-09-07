@@ -95,6 +95,70 @@ export type Standing = {
 */
 export const MIN_GROUP_MEMBERS = 3;
 
+/* ────────────────────  the two ways to read a team board  ──────────────────── */
+
+/*
+  A house board can be read two honest ways and they disagree, which is exactly
+  why the screen now offers both instead of quietly picking one:
+
+    • per member — total points divided by everyone signed up, so a house of
+      four hundred can't win on size alone. It measures whether a house is
+      actually USING the app.
+    • total      — the raw pile of points the house put on the board. It is the
+      number people shout about, and the one a big house deserves credit for.
+
+  The database still does the counting; it returns EVERY qualifying group with
+  both numbers on it (there is no limit on a team board — twelve houses, four
+  dorms, four years), so switching between the two is a re-sort here rather
+  than a second round trip. Ties share a rank and skip the next number, exactly
+  as Postgres's rank() does in db/leaderboards.sql, so the two orderings can
+  never describe ranks differently.
+*/
+export type GroupMetric = "perMember" | "total";
+
+export const GROUP_METRICS: {
+  key: GroupMetric;
+  label: string;
+  /** Fits in a segmented pill on a narrow phone. */
+  short: string;
+  /** The unit written under the score on a row. */
+  unit: string;
+}[] = [
+  { key: "perMember", label: "Points per member", short: "Per member", unit: "per member" },
+  { key: "total", label: "Total points", short: "Total", unit: "pts" },
+];
+
+/** The number the board is ranked on, for one metric. */
+export function groupScore(row: GroupRow, metric: GroupMetric): number {
+  return metric === "total" ? row.points : row.avgPoints;
+}
+
+/** How that number is written on a row. */
+export function groupScoreLabel(row: GroupRow, metric: GroupMetric): string {
+  return metric === "total"
+    ? row.points.toLocaleString("en-US")
+    : row.avgPoints.toFixed(1);
+}
+
+/** Re-sorts and re-ranks a team board for the chosen metric. */
+export function rankGroups(rows: GroupRow[], metric: GroupMetric): GroupRow[] {
+  const sorted = [...rows].sort(
+    (a, b) =>
+      groupScore(b, metric) - groupScore(a, metric) ||
+      // The other measure breaks a tie before the name does.
+      (metric === "total" ? b.avgPoints - a.avgPoints : b.points - a.points) ||
+      a.key.localeCompare(b.key),
+  );
+  let rank = 0;
+  let previous: number | null = null;
+  return sorted.map((row, index) => {
+    const score = groupScore(row, metric);
+    if (previous === null || score !== previous) rank = index + 1;
+    previous = score;
+    return { ...row, rank };
+  });
+}
+
 /* ─────────────────────────────  labels  ───────────────────────────── */
 
 /** "Winthrop" → "Winthrop House"; "'27" → "Class of '27". */

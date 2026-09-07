@@ -27,22 +27,35 @@ import { pointsLabel, sessionsOf } from "@/lib/points";
 import {
   fetchPeopleBoard,
   groupLabel,
+  groupScoreLabel,
   houseColor,
+  GROUP_METRICS,
+  type GroupMetric,
   type GroupRow,
   type LeaderRow,
   type Period,
 } from "@/lib/leaderboards";
 import { classYearLabel } from "@/lib/onboarding";
 
+/* Gold, silver, bronze — the podium tokens from globals.css. */
+const MEDAL: Record<number, string> = {
+  1: "bg-podium-1 text-podium-ink",
+  2: "bg-podium-2 text-podium-ink",
+  3: "bg-podium-3 text-podium-ink",
+};
+
 export default function GroupSheet({
   row,
   kind,
+  metric,
   period,
   periodLabel,
   onClose,
 }: {
   row: GroupRow;
   kind: "house" | "year";
+  /** Which number the board that opened this was ranked on. */
+  metric: GroupMetric;
   period: Period;
   /** "This month" — so the sheet can say what window it is counting. */
   periodLabel: string;
@@ -88,7 +101,8 @@ export default function GroupSheet({
                   {groupLabel(kind, row.key)}
                 </div>
                 <div className="mt-0.5 text-[11px] text-muted">
-                  #{row.rank} · {row.avgPoints.toFixed(1)} per member ·{" "}
+                  #{row.rank} · {groupScoreLabel(row, metric)}{" "}
+                  {GROUP_METRICS.find((m) => m.key === metric)?.unit ?? "pts"} ·{" "}
                   {periodLabel.toLowerCase()}
                 </div>
               </div>
@@ -142,8 +156,10 @@ export default function GroupSheet({
                     }`}
                   >
                     <span
+                      /* The same medals the boards use — tokens, never hexes
+                         typed in here (rule 1). */
                       className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg text-[11px] font-semibold ${
-                        p.rank <= 3 ? "bg-accent-tint text-accent" : "text-muted"
+                        MEDAL[p.rank] ?? "bg-surface-2 text-muted"
                       }`}
                     >
                       {p.rank}
