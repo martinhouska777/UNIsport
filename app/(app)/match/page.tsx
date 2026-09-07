@@ -36,7 +36,6 @@ import {
   type MatchFilters,
 } from "@/lib/supabase/matching";
 import {
-  weekDays,
   primaryActivities,
   sessionTimeSlots,
   sessionTimeLabel,
@@ -45,7 +44,9 @@ import {
 } from "@/lib/onboarding";
 import { matchTier, isWorthShowing } from "@/lib/matchTier";
 import MatchCard from "@/components/match/MatchCard";
+import WeekPicker from "@/components/match/WeekPicker";
 import { reasonRarity } from "@/lib/matchReasons";
+import { dayKeyOf, dateLabel } from "@/lib/schedule";
 import BuddyBoard from "@/components/match/BuddyBoard";
 import FilterBar from "@/components/match/FilterBar";
 import FiltersSheet, {
@@ -53,7 +54,7 @@ import FiltersSheet, {
   activeFilterCount,
   activeFilterChips,
 } from "@/components/match/FiltersSheet";
-import { Pill, FieldLabel } from "@/components/onboarding/controls";
+import { Pill, FieldLabel, SelectField } from "@/components/onboarding/controls";
 import { IconChevronDown } from "@/components/icons";
 
 type SubTab = "people" | "sessions";
@@ -273,29 +274,49 @@ function MatchScreen() {
 
   // --- Session-search REQUIRED state ---
   const [activity, setActivity] = useState<string | null>(null);
-  const [day, setDay] = useState<string | null>(null);
+  /* A real DATE now, not "some Monday" — see components/match/WeekPicker.tsx.
+     Matching still searches on the weekday it falls on, because a training
+     schedule is a weekly habit rather than a diary. */
+  const [date, setDate] = useState<string | null>(null);
+  const [week, setWeek] = useState(0);
   const [hour, setHour] = useState<number | null>(null);
 
   const [results, setResults] = useState<Match[] | null>(null);
   const [searching, setSearching] = useState(false);
   const [sessionErr, setSessionErr] = useState<string | null>(null);
 
-  const canSearch = !!activity && !!day && hour !== null;
+  const canSearch = !!activity && !!date && hour !== null;
+  /*
+    True when the exact hour found nobody and we widened to the whole day. The
+    results are then real but looser, and the screen has to say so rather than
+    quietly pretending they were what was asked for.
+  */
+  const [widened, setWidened] = useState(false);
 
   const runSearch = async () => {
     if (!userId || !canSearch) return;
     setSearching(true);
     setSessionErr(null);
     try {
-      const rows = await getSessionMatches({
-        // Shared filters FIRST: the three below are this screen's own required
-        // answers and must win over anything left in the sheet.
+      // Shared filters FIRST: the three below are this screen's own required
+      // answers and must win over anything left in the sheet.
+      const ask = {
         ...filters,
         userId,
         activity: activity!,
-        day: day!,
+        day: dayKeyOf(date!),
         hour: hour!,
-      });
+      };
+      let rows = await getSessionMatches(ask);
+      /*
+        Nobody at 9? Then say who IS training that day rather than showing an
+        empty screen — three people two hours later is a far more useful answer
+        than "no one", and the heading above them says plainly that the time was
+        widened.
+      */
+      const wide = rows.length === 0;
+      if (wide) rows = await getSessionMatches({ ...ask, windowHours: 12 });
+      setWidened(wide && rows.length > 0);
       setResults(rows);
     } catch (e) {
       setSessionErr((e as Error).message);
@@ -399,35 +420,26 @@ function MatchScreen() {
               </div>
             </div>
 
-            {/* REQUIRED: Day */}
+            {/* REQUIRED: Day — a real date, up to a month out */}
             <div>
               <FieldLabel>Day</FieldLabel>
-              <div className="flex flex-wrap gap-1.5">
-                {weekDays.map((d) => (
-                  <Pill
-                    key={d.key}
-                    label={d.label.slice(0, 3)}
-                    selected={day === d.key}
-                    onClick={() => setDay(d.key)}
-                  />
-                ))}
-              </div>
+              <WeekPicker value={date} onChange={setDate} week={week} onWeekChange={setWeek} />
             </div>
 
-            {/* REQUIRED: Time (precise hour, scroll to pick) */}
+            {/* REQUIRED: Time — a dropdown, which is a wheel on a phone. It was
+                thirty pills you dragged sideways through to reach 7:30. */}
             <div>
               <FieldLabel>Time</FieldLabel>
-              <div className="-mx-0.5 chip-row flex gap-1.5 overflow-x-auto px-0.5 pb-1">
-                {sessionTimeSlots.map((s) => (
-                  <div key={s.value} className="flex-shrink-0">
-                    <Pill
-                      label={s.label}
-                      selected={hour === s.value}
-                      onClick={() => setHour(s.value)}
-                    />
-                  </div>
-                ))}
-              </div>
+              <SelectField
+                value={hour === null ? "" : String(hour)}
+                onChange={(v) => setHour(v === "" ? null : Number(v))}
+                options={sessionTimeSlots.map((t) => ({
+                  value: String(t.value),
+                  label: t.label,
+                }))}
+                placeholder="Pick a time"
+                ariaLabel="Time"
+              />
               <p className="mt-1 text-[11px] text-muted">
                 {hour !== null
                   ? `Shows people training within ${SESSION_WINDOW_HOURS}h of ${sessionTimeLabel(
@@ -467,9 +479,20 @@ function MatchScreen() {
           {!sessionErr && results && (
             <div className="pt-3">
               {results.length === 0 ? (
-                <Status>No one matches those filters yet. Try a different time.</Status>
+                <Status>No one is training that day yet. Try another day.</Status>
               ) : (
-                <Grid matches={results} max={92} onView={viewProfile} />
+                <>
+                  {/* Said out loud. These people are real, but they are not
+                      what was asked for, and a list that quietly answers a
+                      different question is worse than an empty one. */}
+                  {widened && hour !== null && (
+                    <p className="px-3 pb-2 text-[12px] text-muted">
+                      Nobody at {sessionTimeLabel(hour)} — here&apos;s who else is training
+                      {date ? ` ${dateLabel(date)}` : " that day"}.
+                    </p>
+                  )}
+                  <Grid matches={results} max={92} onView={viewProfile} />
+                </>
               )}
             </div>
           )}

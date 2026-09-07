@@ -10,6 +10,7 @@ export type BuddyPost = {
   id: string;
   author: string;
   focus: string;
+  date: string | null; // yyyy-mm-dd — WHICH Monday. Null on pre-dates posts.
   day: string;
   hour: number | null; // 24h clock, 30-min steps. Null on pre-hours posts.
   timeOfDay: string;
@@ -24,6 +25,7 @@ export type BuddyPost = {
 export type MyBuddyPost = {
   id: string;
   focus: string;
+  date: string | null;
   day: string;
   hour: number | null;
   timeOfDay: string;
@@ -41,14 +43,14 @@ export type BuddyFilters = {
 /** Post "looking for a partner". Returns the new post id. */
 export async function createBuddyPost(input: {
   focus: string;
-  day: string;
+  date: string; // yyyy-mm-dd
   hour: number;
   gym?: string | null;
   note?: string | null;
 }): Promise<string> {
   const { data, error } = await createClient().rpc("buddy_post_create", {
     p_focus: input.focus,
-    p_day: input.day,
+    p_date: input.date,
     p_hour: input.hour,
     p_gym: input.gym ?? null,
     p_note: input.note ?? null,
@@ -75,6 +77,7 @@ function toBuddyPost(r: Record<string, unknown>): BuddyPost {
     id: r.id as string,
     author: r.author as string,
     focus: r.focus as string,
+    date: (r.post_date as string) ?? null,
     day: r.day as string,
     // numeric comes back as a string from PostgREST; null stays null.
     hour: r.hour == null ? null : Number(r.hour),
@@ -120,6 +123,7 @@ export async function listMyBuddyPosts(): Promise<MyBuddyPost[]> {
   return (data as Record<string, unknown>[]).map((r) => ({
     id: r.id as string,
     focus: r.focus as string,
+    date: (r.post_date as string) ?? null,
     day: r.day as string,
     // numeric comes back as a string from PostgREST; null stays null.
     hour: r.hour == null ? null : Number(r.hour),

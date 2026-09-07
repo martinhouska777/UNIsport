@@ -196,6 +196,7 @@ drop function if exists public.match_browse(uuid, text, text[], text, text, text
 drop function if exists public.match_session_search(uuid, text, text, text, text, text);
 drop function if exists public.match_session_search(uuid, text, text, numeric, text, text, text);
 drop function if exists public.match_session_search(uuid, text, text, numeric, text, text, text, text, text[]);
+drop function if exists public.match_session_search(uuid, text, text, numeric, text, text, text, text, text[], numeric);
 drop function if exists public.match_pair(uuid, uuid);
 drop function if exists public.match_candidates(uuid);
 drop view if exists public.match_profiles;
@@ -684,7 +685,15 @@ create or replace function public.match_session_search(
   level_filter         text   default null,
   gender_filter        text   default null,
   concentration_filter text   default null,
-  interests_filter     text[] default null
+  interests_filter     text[] default null,
+  /*
+    How far either side of the hour still counts, in hours. Two by default.
+
+    The app widens it and asks again when the exact hour turns up nobody: an
+    empty result is not the honest answer when three people are training that
+    same day two hours later. Better to show them and say so.
+  */
+  window_hours         numeric default 2
 )
 returns table (
   candidate_id       uuid,
@@ -737,7 +746,8 @@ as $$
       from jsonb_array_elements_text(
              coalesce(m.c_schedule -> target_day, '[]'::jsonb)
            ) b
-      where public.block_range(b) && numrange(target_hour - 2, target_hour + 2)
+      where public.block_range(b)
+            && numrange(target_hour - window_hours, target_hour + window_hours)
     )
     and (concentration_filter is null or m.c_concentration = concentration_filter)
     and (interests_filter is null or exists (
@@ -816,6 +826,6 @@ revoke all on function public.match_candidates(uuid) from public;
 grant execute on function public.match_browse(uuid, text, text[], text, text, text, text)
   to authenticated;
 grant execute on function public.match_session_search(
-  uuid, text, text, numeric, text, text, text, text, text[]
+  uuid, text, text, numeric, text, text, text, text, text[], numeric
 ) to authenticated;
 grant execute on function public.match_pair(uuid, uuid) to authenticated;

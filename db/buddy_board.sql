@@ -42,6 +42,16 @@ create table if not exists public.buddy_posts (
 */
 alter table public.buddy_posts add column if not exists hour numeric;
 
+/*
+  WHICH Monday. The board stored a weekday and assumed you meant the next one,
+  so there was no way to put your hand up for a session the week after. The real
+  date is stored now and the weekday is DERIVED from it, which keeps every
+  filter and buddy_for_session() working unchanged.
+
+  Nullable for posts made before this existed; their expiry already covers them.
+*/
+alter table public.buddy_posts add column if not exists post_date date;
+
 create index if not exists buddy_posts_expires_idx on public.buddy_posts (expires_at);
 create index if not exists buddy_posts_when_idx    on public.buddy_posts (day, hour);
 create index if not exists buddy_posts_author_idx  on public.buddy_posts (author);
@@ -91,9 +101,10 @@ $$;
 -- timezone buffer) then drops off.
 -- ---------------------------------------------------------------------------
 drop function if exists public.buddy_post_create(text, text, text, text, text);
+drop function if exists public.buddy_post_create(text, text, numeric, text, text);
 
 create or replace function public.buddy_post_create(
-  p_focus text, p_day text, p_hour numeric, p_gym text, p_note text)
+  p_focus text, p_date date, p_hour numeric, p_gym text, p_note text)
 returns uuid
 language plpgsql
 volatile
@@ -105,20 +116,25 @@ declare
   nid uuid;
 begin
   if me is null then raise exception 'not authenticated'; end if;
-  if p_focus is null or p_day is null or p_hour is null then
-    raise exception 'focus, day and hour are required';
+  if p_focus is null or p_date is null or p_hour is null then
+    raise exception 'focus, date and hour are required';
   end if;
 
-  insert into public.buddy_posts (author, focus, day, hour, time_of_day, gym, note, expires_at)
+  insert into public.buddy_posts
+    (author, focus, post_date, day, hour, time_of_day, gym, note, expires_at)
   values (
-    me, p_focus, p_day, p_hour,
+    me, p_focus, p_date,
+    -- The weekday that date falls on. Derived, never asked: one answer in two
+    -- shapes, so the two can never disagree.
+    (array['sun','mon','tue','wed','thu','fri','sat'])[extract(dow from p_date)::int + 1],
+    p_hour,
     -- Derived, never asked: one answer, two shapes, so they can never disagree.
     case when p_hour < 12 then 'morning'
          when p_hour < 17 then 'afternoon'
          else 'evening' end,
     nullif(trim(coalesce(p_gym, '')), ''),
     nullif(trim(coalesce(p_note, '')), ''),
-    (public.buddy_next_date(p_day) + interval '1 day' + interval '12 hours')
+    (p_date + interval '1 day' + interval '12 hours')
   )
   returning id into nid;
 
@@ -143,6 +159,7 @@ returns table (
   id           uuid,
   author       uuid,
   focus        text,
+  post_date    date,
   day          text,
   hour         numeric,
   time_of_day  text,
@@ -157,7 +174,7 @@ security definer
 set search_path = public
 as $$
   select
-    b.id, b.author, b.focus, b.day, b.hour, b.time_of_day, b.gym, b.note, b.created_at,
+    b.id, b.author, b.focus, b.post_date, b.day, b.hour, b.time_of_day, b.gym, b.note, b.created_at,
     coalesce(p.data->>'name', 'Member') as author_name,
     p.data->>'photo'                    as author_photo
   from public.buddy_posts b
@@ -185,6 +202,8 @@ $$;
 -- written before hours existed have no hour and simply cannot be matched by
 -- time, so they stay on the board and out of the search.
 -- ---------------------------------------------------------------------------
+drop function if exists public.buddy_for_session(text, text, numeric, numeric);
+
 create or replace function public.buddy_for_session(
   activity_filter text,
   day_filter      text,
@@ -194,6 +213,7 @@ returns table (
   id           uuid,
   author       uuid,
   focus        text,
+  post_date    date,
   day          text,
   hour         numeric,
   time_of_day  text,
@@ -208,7 +228,7 @@ security definer
 set search_path = public
 as $$
   select
-    b.id, b.author, b.focus, b.day, b.hour, b.time_of_day, b.gym, b.note, b.created_at,
+    b.id, b.author, b.focus, b.post_date, b.day, b.hour, b.time_of_day, b.gym, b.note, b.created_at,
     coalesce(p.data->>'name', 'Member') as author_name,
     p.data->>'photo'                    as author_photo
   from public.buddy_posts b
@@ -232,6 +252,7 @@ create or replace function public.buddy_my_posts()
 returns table (
   id          uuid,
   focus       text,
+  post_date   date,
   day         text,
   hour        numeric,
   time_of_day text,
@@ -243,7 +264,7 @@ stable
 security definer
 set search_path = public
 as $$
-  select b.id, b.focus, b.day, b.hour, b.time_of_day, b.gym, b.note, b.created_at
+  select b.id, b.focus, b.post_date, b.day, b.hour, b.time_of_day, b.gym, b.note, b.created_at
   from public.buddy_posts b
   where b.author = auth.uid() and b.expires_at > now()
   order by b.created_at desc;
@@ -268,7 +289,7 @@ $$;
 
 grant execute on function public.buddy_next_date(text)                       to authenticated;
 grant execute on function public.buddy_focus_activity(text)                  to authenticated;
-grant execute on function public.buddy_post_create(text, text, numeric, text, text) to authenticated;
+grant execute on function public.buddy_post_create(text, date, numeric, text, text) to authenticated;
 grant execute on function public.buddy_board_list(text, text, text)          to authenticated;
 grant execute on function public.buddy_for_session(text, text, numeric, numeric) to authenticated;
 grant execute on function public.buddy_my_posts()                            to authenticated;

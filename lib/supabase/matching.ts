@@ -92,6 +92,12 @@ export type SessionMatchParams = MatchFilters & {
   activity: string; // 'gym' | 'running' | 'cardio' | 'other' (required)
   day: string; // 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun' (required)
   hour: number; // 24h clock, 30-min steps OK (15 = 3 PM, 15.5 = 3:30 PM) (required)
+  /*
+    How far either side of that hour still counts. Two by default; the screen
+    asks again with a whole day when the exact hour finds nobody, because three
+    people training later that day is a better answer than an empty list.
+  */
+  windowHours?: number;
 };
 
 // Raw row shape returned by the SQL functions (snake_case, schedule optional).
@@ -207,6 +213,7 @@ export async function getSessionMatches(params: SessionMatchParams): Promise<Mat
     activity_filter: params.activity,
     target_day: params.day,
     target_hour: params.hour,
+    window_hours: params.windowHours ?? 2,
     gym_filter: params.gym ?? null,
     level_filter: params.level ?? null,
     gender_filter: params.gender ?? null,

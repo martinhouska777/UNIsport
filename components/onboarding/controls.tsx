@@ -120,3 +120,54 @@ export function TextField({
     />
   );
 }
+
+/*
+  A NATIVE <select>, on purpose.
+
+  The times used to be a row of pills you scrolled sideways through — thirty of
+  them, so finding 7:30 meant dragging past everything before it. A native
+  select is a wheel on iOS and a proper dropdown everywhere else: the control
+  people already know for "one of a long list of numbers", and the one their
+  own phone renders best.
+
+  16px text so a phone doesn't zoom the page when it opens. Colors are theme
+  tokens; the arrow is drawn here because a native one can't be recoloured.
+*/
+export function SelectField({
+  value,
+  onChange,
+  options,
+  placeholder,
+  ariaLabel,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  options: { value: string; label: string }[];
+  placeholder?: string;
+  ariaLabel?: string;
+}) {
+  return (
+    <div className="relative">
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        aria-label={ariaLabel}
+        className={`w-full appearance-none rounded-[10px] border border-border bg-surface-2 px-3.5 py-3 pr-9 text-base focus:border-primary focus:outline-none ${
+          value ? "text-text" : "text-muted"
+        }`}
+      >
+        {placeholder && <option value="">{placeholder}</option>}
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+      <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+          <path d="M6 9l6 6 6-6" />
+        </svg>
+      </span>
+    </div>
+  );
+}

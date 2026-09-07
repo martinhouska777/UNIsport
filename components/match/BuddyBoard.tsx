@@ -26,7 +26,9 @@ import {
 import { startDirectConversation } from "@/lib/supabase/messages";
 import { buddyFocuses, focusLabel, postWhenLabel } from "@/lib/buddyBoard";
 import { weekDays, verifiedGyms, sessionTimeSlots } from "@/lib/onboarding";
-import { Pill, FieldLabel } from "@/components/onboarding/controls";
+import { dateLabel } from "@/lib/schedule";
+import { Pill, FieldLabel, SelectField } from "@/components/onboarding/controls";
+import WeekPicker from "@/components/match/WeekPicker";
 import FilterBar from "@/components/match/FilterBar";
 import BoardFiltersSheet, {
   NO_BOARD_FILTERS,
@@ -40,10 +42,22 @@ function dayShort(key: string): string {
   return weekDays.find((d) => d.key === key)?.label.slice(0, 3) ?? key;
 }
 
-// One line summarising a post: "Legs · Thu · 10:00 AM". Posts written before
-// hours existed still read "Legs · Thu · Afternoon".
-function summary(focus: string, day: string, hour: number | null, timeOfDay: string): string {
-  return `${focusLabel(focus)} · ${dayShort(day)} · ${postWhenLabel(hour, timeOfDay)}`;
+/*
+  One line summarising a post: "Legs · Thu 9 Oct · 10:00 AM".
+
+  Which Thursday matters now that you can post a fortnight out, so a post with a
+  real date says the date. Older posts kept only a weekday and still read
+  "Legs · Thu · Afternoon".
+*/
+function summary(
+  focus: string,
+  date: string | null,
+  day: string,
+  hour: number | null,
+  timeOfDay: string,
+): string {
+  const when = date ? dateLabel(date) : dayShort(day);
+  return `${focusLabel(focus)} · ${when} · ${postWhenLabel(hour, timeOfDay)}`;
 }
 
 function Status({ children }: { children: React.ReactNode }) {
@@ -55,7 +69,9 @@ export default function BuddyBoard() {
 
   // --- Post form state ---
   const [focus, setFocus] = useState<string | null>(null);
-  const [day, setDay] = useState<string | null>(null);
+  // A real date — you can put your hand up for Monday a week ahead.
+  const [date, setDate] = useState<string | null>(null);
+  const [week, setWeek] = useState(0);
   // The hour they actually mean to go. The board used to ask for a third of a
   // day, which is not an answer to "who trains around 9?".
   const [hour, setHour] = useState<number | null>(null);
@@ -110,17 +126,17 @@ export default function BuddyBoard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters]);
 
-  const canPost = !!focus && !!day && hour !== null && !posting;
+  const canPost = !!focus && !!date && hour !== null && !posting;
 
   const submit = async () => {
     if (!canPost) return;
     setPosting(true);
     setFormErr(null);
     try {
-      await createBuddyPost({ focus: focus!, day: day!, hour: hour!, gym, note });
+      await createBuddyPost({ focus: focus!, date: date!, hour: hour!, gym, note });
       // reset the form, keep filters; refresh both lists
       setFocus(null);
-      setDay(null);
+      setDate(null);
       setHour(null);
       setGym(null);
       setNote("");
@@ -190,44 +206,36 @@ export default function BuddyBoard() {
 
           <div>
             <FieldLabel>Day</FieldLabel>
-            <div className="flex flex-wrap gap-1.5">
-              {weekDays.map((d) => (
-                <Pill
-                  key={d.key}
-                  label={d.label.slice(0, 3)}
-                  selected={day === d.key}
-                  onClick={() => setDay(d.key)}
-                />
-              ))}
-            </div>
+            <WeekPicker value={date} onChange={setDate} week={week} onWeekChange={setWeek} />
           </div>
 
           <div>
             <FieldLabel>Time</FieldLabel>
             {/* The SAME hours the session search offers, so the two can be
                 compared — see sessionTimeSlots in lib/onboarding.ts. */}
-            <div className="-mx-0.5 chip-row flex gap-1.5 overflow-x-auto px-0.5 pb-1">
-              {sessionTimeSlots.map((t) => (
-                <div key={t.value} className="flex-shrink-0">
-                  <Pill
-                    label={t.label}
-                    selected={hour === t.value}
-                    onClick={() => setHour(t.value)}
-                  />
-                </div>
-              ))}
-            </div>
+            <SelectField
+              value={hour === null ? "" : String(hour)}
+              onChange={(v) => setHour(v === "" ? null : Number(v))}
+              options={sessionTimeSlots.map((t) => ({
+                value: String(t.value),
+                label: t.label,
+              }))}
+              placeholder="Pick a time"
+              ariaLabel="Time"
+            />
           </div>
 
           <div>
             <FieldLabel>Gym (optional)</FieldLabel>
-            <div className="-mx-0.5 chip-row flex gap-1.5 overflow-x-auto px-0.5 pb-1">
-              {verifiedGyms.map((g) => (
-                <div key={g} className="flex-shrink-0">
-                  <Pill label={g} selected={gym === g} onClick={() => setGym(gym === g ? null : g)} />
-                </div>
-              ))}
-            </div>
+            {/* Fifteen gyms is a list, not a row of buttons — the last few were
+                only reachable by dragging sideways past all the others. */}
+            <SelectField
+              value={gym ?? ""}
+              onChange={(v) => setGym(v || null)}
+              options={verifiedGyms.map((g) => ({ value: g, label: g }))}
+              placeholder="Any gym"
+              ariaLabel="Gym"
+            />
           </div>
 
           <div>
@@ -246,7 +254,7 @@ export default function BuddyBoard() {
           <Button size="lg" full onClick={submit} disabled={!canPost}>
             {posting ? "Posting…" : "Post to board"}
           </Button>
-          {!focus || !day || hour === null ? (
+          {!focus || !date || hour === null ? (
             <p className="text-center text-[11px] text-muted">Pick a focus, day, and time.</p>
           ) : null}
           {formErr && <p className="text-center text-[11px] text-danger">Couldn’t post: {formErr}</p>}
@@ -264,7 +272,7 @@ export default function BuddyBoard() {
                 className="flex items-center gap-2 rounded-xl border border-border bg-surface-2 px-3 py-2.5"
               >
                 <div className="min-w-0 flex-1">
-                  <div className="text-sm text-text">{summary(m.focus, m.day, m.hour, m.timeOfDay)}</div>
+                  <div className="text-sm text-text">{summary(m.focus, m.date, m.day, m.hour, m.timeOfDay)}</div>
                   {(m.gym || m.note) && (
                     <div className="truncate text-[11px] text-muted">
                       {[m.gym, m.note].filter(Boolean).join(" · ")}
@@ -328,7 +336,7 @@ export default function BuddyBoard() {
               <Avatar size={44} src={p.authorPhoto} alt={p.authorName} />
               <div className="min-w-0 flex-1">
                 <div className="truncate text-sm font-medium text-text">{p.authorName}</div>
-                <div className="text-[13px] text-text">{summary(p.focus, p.day, p.hour, p.timeOfDay)}</div>
+                <div className="text-[13px] text-text">{summary(p.focus, p.date, p.day, p.hour, p.timeOfDay)}</div>
                 {(p.gym || p.note) && (
                   <div className="truncate text-[11px] text-muted">
                     {[p.gym, p.note].filter(Boolean).join(" · ")}
