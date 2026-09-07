@@ -49,11 +49,18 @@ export default function CampusStatsSection({
 
   return (
     <div className="px-3.5 py-3">
+      {/* The tab is called "Stats", which is short enough to fit four across.
+          This says what it actually is, because "the whole school added up" is
+          not what anyone assumes a statistics tab means. */}
       <h2 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
         {schoolName} altogether
       </h2>
+      <p className="mt-1 text-[11px] leading-relaxed text-muted">
+        Not you — everybody. This is the whole school added up. Your own numbers are on the
+        Challenges tab.
+      </p>
 
-      <div className="mt-2 grid grid-cols-2 gap-1.5">
+      <div className="mt-2.5 grid grid-cols-2 gap-1.5">
         <Stat value={n(stats.sessions)} label="Sessions logged" />
         <Stat value={n(stats.people)} label="Students training" />
         <Stat value={`${stats.avgSessions}`} label="Sessions each" />

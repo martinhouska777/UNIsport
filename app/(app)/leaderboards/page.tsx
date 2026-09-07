@@ -20,7 +20,9 @@
 */
 import { useEffect, useMemo, useState } from "react";
 import { useAppState } from "@/components/AppState";
+import { IconInfo } from "@/components/icons";
 import HonorCode, { HonorCodeFooter, useHonorCode } from "@/components/leaderboards/HonorCode";
+import HowItWorks from "@/components/leaderboards/HowItWorks";
 import { HouseChallenges, YouChallenges } from "@/components/leaderboards/ChallengesSection";
 import BoardsSection from "@/components/leaderboards/BoardsSection";
 import CampusStatsSection from "@/components/leaderboards/CampusStats";
@@ -29,19 +31,22 @@ import { Segmented } from "@/components/leaderboards/pieces";
 import { schoolShortName } from "@/lib/honorCode";
 import { emptyLeague, fetchLeague, type LeagueData } from "@/lib/league";
 
-type Section = "challenges" | "events" | "boards" | "stats";
+type Section = "challenges" | "boards" | "events" | "stats";
 type Side = "you" | "house";
 
 /*
-  Four now, so the labels are short enough to sit side by side on a phone:
-  "Boards" and "Campus" rather than "Leaderboards" and "Statistics". The
-  section headings inside say the longer word.
+  In the order you meet them: what you're chasing, where you stand, what's on
+  this week, and then the whole campus.
+
+  The labels are short because four have to sit side by side on a phone —
+  "Boards" and "Stats", not "Leaderboards" and "Campus statistics". Each
+  section says its full name in its own heading.
 */
 const SECTIONS: { key: Section; label: string }[] = [
   { key: "challenges", label: "Challenges" },
-  { key: "events", label: "Events" },
   { key: "boards", label: "Boards" },
-  { key: "stats", label: "Campus" },
+  { key: "events", label: "Events" },
+  { key: "stats", label: "Stats" },
 ];
 
 export default function LeaguePage() {
@@ -50,6 +55,7 @@ export default function LeaguePage() {
 
   const [section, setSection] = useState<Section>("challenges");
   const [side, setSide] = useState<Side>("you");
+  const [explaining, setExplaining] = useState(false);
   const [data, setData] = useState<LeagueData | null>(null);
 
   useEffect(() => {
@@ -81,9 +87,25 @@ export default function LeaguePage() {
   return (
     <div className="mx-auto w-full max-w-screen-sm pb-10">
       <div className="sticky top-0 z-10 border-b border-border bg-surface px-3.5 py-3">
-        <div className="mb-2.5 text-center text-sm font-medium text-text">League</div>
+        <div className="mb-2.5 flex items-center justify-between">
+          {/* A spacer the same width as the button, so the title stays centred. */}
+          <span className="w-7" aria-hidden="true" />
+          <span className="text-sm font-medium text-text">League</span>
+          <button
+            type="button"
+            onClick={() => setExplaining(true)}
+            aria-label="How the League works"
+            className="tap44 press-icon flex h-7 w-7 items-center justify-center rounded-full bg-surface-2 text-muted"
+          >
+            <IconInfo size={14} />
+          </button>
+        </div>
         <Segmented value={section} options={SECTIONS} onChange={setSection} />
       </div>
+
+      {explaining && (
+        <HowItWorks universityKey={universityKey} onClose={() => setExplaining(false)} />
+      )}
 
       {section === "challenges" && (
         <>
@@ -134,21 +156,16 @@ export default function LeaguePage() {
         />
       )}
 
-      {/* How it works — said once, plainly, so nobody has to guess. */}
+      {/* The rules now live behind the ⓘ in the corner, where they can be
+          complete instead of a six-line summary under every screen. */}
       <div className="mt-4 px-3.5">
-        <div className="rounded-2xl border border-border bg-surface-2 px-3.5 py-3">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-            How it works
-          </div>
-          <ul className="mt-2 flex flex-col gap-1.5 text-[11px] leading-relaxed text-muted">
-            <li>Every session earns XP. A single day counts twice at most.</li>
-            <li>Training with someone is worth more. Someone new is worth most of all.</li>
-            <li>Finishing a challenge pays XP too, and each level costs more than the last.</li>
-            <li>Everything you earn also counts for your house.</li>
-            <li>Levels and challenges never reset. The session boards do, every month.</li>
-            <li>Only names, houses, years and totals are ever shown — never anyone&rsquo;s workouts.</li>
-          </ul>
-        </div>
+        <button
+          type="button"
+          onClick={() => setExplaining(true)}
+          className="tap44 w-full text-center text-[12px] font-medium text-primary"
+        >
+          How the League works
+        </button>
       </div>
 
       <div className="mt-3 px-3.5">
