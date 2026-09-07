@@ -1,7 +1,8 @@
 "use client";
 
 /*
-  THE LEAGUE — five boards behind one row of pills.
+  LEADERBOARDS — five boards behind one row of pills, reached from the strip on
+  the Profile tab.
   ---------------------------------------------------------------------------
     • Houses   — house vs house, ranked by POINTS PER MEMBER
     • My house — you against your own housemates
@@ -33,8 +34,9 @@
   the same exception the gym and lineup screens use.
 */
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useAppState } from "@/components/AppState";
-import { IconTrophy } from "@/components/icons";
+import { IconArrowLeft, IconTrophy } from "@/components/icons";
 import HonorCode, { HonorCodeFooter, useHonorCode } from "@/components/leaderboards/HonorCode";
 import { residenceLabel } from "@/lib/onboarding";
 import { pointsLabel, sessionPoints, sessionsOf } from "@/lib/points";
@@ -223,7 +225,8 @@ function GroupRowItem({ row, kind }: { row: GroupRow; kind: "house" | "year" }) 
 
 /* ─────────────────────────  screen  ───────────────────────── */
 
-export default function LeaguePage() {
+export default function LeaderboardsPage() {
+  const router = useRouter();
   const { userId, universityKey } = useAppState();
   const { accepted, accept } = useHonorCode(userId);
 
@@ -293,9 +296,13 @@ export default function LeaguePage() {
 
   return (
     <div className="mx-auto w-full max-w-screen-sm pb-10">
-      {/* A tab, not a pushed screen — the bottom nav is the way back. */}
-      <div className="sticky top-0 z-10 border-b border-border bg-surface px-3.5 py-3 text-center">
-        <span className="text-sm font-medium text-text">League</span>
+      {/* Reached from the strip on the Profile tab, so it pushes and pops. */}
+      <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-surface px-3 py-3">
+        <button type="button" aria-label="Back" onClick={() => router.back()} className="text-muted">
+          <IconArrowLeft size={18} />
+        </button>
+        <span className="text-sm font-medium text-text">Leaderboards</span>
+        <span className="w-[18px]" aria-hidden="true" />
       </div>
 
       {/* Your standing */}
