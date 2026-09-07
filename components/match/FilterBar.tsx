@@ -39,6 +39,7 @@ export default function FilterBar({
   onClearAll,
   total,
   noun = "result",
+  open = false,
 }: {
   /** How many filters are active — shown on the bar. */
   count: number;
@@ -52,6 +53,8 @@ export default function FilterBar({
   total?: number | null;
   /** What one row is called: "person", "post". Pluralised with an s. */
   noun?: string;
+  /** Turns the chevron over while the dropdown below is showing. */
+  open?: boolean;
 }) {
   const on = count > 0;
   return (
@@ -76,7 +79,11 @@ export default function FilterBar({
               {total} {total === 1 ? noun : `${noun}s`}
             </span>
           )}
-          <span className={on ? "text-primary" : "text-muted"}>
+          <span
+            className={`transition-transform duration-150 motion-reduce:transition-none ${
+              open ? "rotate-180" : ""
+            } ${on ? "text-primary" : "text-muted"}`}
+          >
             <IconChevronDown size={15} />
           </span>
         </button>

@@ -292,12 +292,20 @@ export default function BuddyBoard() {
         <FilterBar
           count={boardFilterCount(filters)}
           chips={boardFilterChips(filters)}
-          onOpen={() => setSheetOpen(true)}
+          onOpen={() => setSheetOpen((v) => !v)}
           onClear={(key) => setFilters({ ...filters, [key]: null })}
           onClearAll={() => setFilters(NO_BOARD_FILTERS)}
           total={board?.length ?? null}
           noun="post"
+          open={sheetOpen}
         />
+        {sheetOpen && (
+          <BoardFiltersSheet
+            value={filters}
+            onChange={setFilters}
+            onClose={() => setSheetOpen(false)}
+          />
+        )}
       </div>
 
       {/* BOARD LIST */}
@@ -340,13 +348,6 @@ export default function BuddyBoard() {
         </div>
       )}
 
-      {sheetOpen && (
-        <BoardFiltersSheet
-          value={filters}
-          onChange={setFilters}
-          onClose={() => setSheetOpen(false)}
-        />
-      )}
     </div>
   );
 }

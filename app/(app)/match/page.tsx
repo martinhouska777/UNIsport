@@ -107,28 +107,57 @@ function Status({ children }: { children: React.ReactNode }) {
 // FilterBar.tsx) so all three lists are narrowed the same way.
 function MatchFilterBar({
   filters,
-  onOpen,
+  onChange,
+  open,
+  onToggleOpen,
   onClear,
   onClearAll,
   total,
+  openRows,
+  onToggleRow,
+  myConcentration,
+  myInterests,
+  showActivity,
 }: {
   filters: MatchFilters;
-  onOpen: () => void;
+  onChange: (next: MatchFilters) => void;
+  open: boolean;
+  onToggleOpen: () => void;
   onClear: (key: keyof MatchFilters) => void;
   onClearAll: () => void;
   /** How many people survived — null while the list is still loading. */
   total?: number | null;
+  openRows: Set<string>;
+  onToggleRow: (key: keyof MatchFilters) => void;
+  myConcentration: string | null;
+  myInterests: string[];
+  showActivity?: boolean;
 }) {
   return (
-    <FilterBar
-      count={activeFilterCount(filters)}
-      chips={activeFilterChips(filters)}
-      onOpen={onOpen}
-      onClear={(key) => onClear(key as keyof MatchFilters)}
-      onClearAll={onClearAll}
-      total={total}
-      noun="person"
-    />
+    <>
+      <FilterBar
+        count={activeFilterCount(filters)}
+        chips={activeFilterChips(filters)}
+        onOpen={onToggleOpen}
+        onClear={(key) => onClear(key as keyof MatchFilters)}
+        onClearAll={onClearAll}
+        total={total}
+        noun="person"
+        open={open}
+      />
+      {open && (
+        <FiltersSheet
+          value={filters}
+          onChange={onChange}
+          openRows={openRows}
+          onToggleRow={onToggleRow}
+          onClose={onToggleOpen}
+          myConcentration={myConcentration}
+          myInterests={myInterests}
+          showActivity={showActivity}
+        />
+      )}
+    </>
   );
 }
 
@@ -309,10 +338,16 @@ function MatchScreen() {
           <div className="px-3 pb-2">
             <MatchFilterBar
               filters={filters}
-              onOpen={() => setSheetOpen(true)}
+              onChange={setFilters}
+              open={sheetOpen}
+              onToggleOpen={() => setSheetOpen((v) => !v)}
               onClear={clearFilter}
               onClearAll={() => setFilters(NO_FILTERS)}
               total={browse?.length ?? null}
+              openRows={openRows}
+              onToggleRow={toggleRow}
+              myConcentration={myConcentration}
+              myInterests={myInterests}
             />
           </div>
           {browseErr && <Status>Couldn’t load matches: {browseErr}</Status>}
@@ -405,9 +440,16 @@ function MatchScreen() {
             {/* OPTIONAL filters — the same sheet Browse uses */}
             <MatchFilterBar
               filters={filters}
-              onOpen={() => setSheetOpen(true)}
+              onChange={setFilters}
+              open={sheetOpen}
+              onToggleOpen={() => setSheetOpen((v) => !v)}
               onClear={clearFilter}
               onClearAll={() => setFilters(NO_FILTERS)}
+              openRows={openRows}
+              onToggleRow={toggleRow}
+              myConcentration={myConcentration}
+              myInterests={myInterests}
+              showActivity={false}
             />
 
             <Button size="lg" full onClick={runSearch} disabled={!canSearch || searching}>
@@ -438,21 +480,6 @@ function MatchScreen() {
       {/* The board itself — the default view of this tab. */}
       {tab === "sessions" && <BuddyBoard />}
 
-      {sheetOpen && (
-        <FiltersSheet
-          value={filters}
-          onChange={setFilters}
-          openRows={openRows}
-          onToggleRow={toggleRow}
-          onClose={() => setSheetOpen(false)}
-          myConcentration={myConcentration}
-          myInterests={myInterests}
-          /* The session search asks for the activity itself, as a required
-             answer. Offering it again in the sheet would be the same question
-             in two places with one quietly overriding the other. */
-          showActivity={tab === "people"}
-        />
-      )}
     </div>
   );
 }

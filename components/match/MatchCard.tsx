@@ -56,6 +56,12 @@ export default function MatchCard({
     .filter(Boolean)
     .join(" · ");
   const reasons = topMatchReasons(match, reasonCount, rarity);
+  /*
+    Enough blanks to fill the two rows out, in deliberately uneven widths — a
+    row of identical bars reads as a loading skeleton, an uneven one reads as
+    empty space. Overflow is clipped, so overshooting costs nothing.
+  */
+  const blankSlots = BLANK_WIDTHS.slice(0, Math.max(0, 4 - reasons.length));
 
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-surface">
@@ -78,25 +84,38 @@ export default function MatchCard({
           <div className="truncate text-[11px] text-muted">{subtitle}</div>
         )}
 
-        {/* Why they're here. Chips wrap, so a person with three overlaps gets a
-            slightly taller card than one with a single overlap — better than
-            truncating the reason someone actually cares about. */}
-        <div className="mb-2 mt-1.5 flex min-h-[18px] flex-wrap gap-1">
-          {reasons.length > 0 ? (
-            reasons.map((r) => (
-              <span
-                key={r.key}
-                title={r.full}
-                className="max-w-full truncate rounded-md border border-accent-line bg-accent-tint px-1.5 py-0.5 text-[11px] leading-tight text-text"
-              >
-                {r.short}
-              </span>
-            ))
-          ) : (
-            <span className="text-[11px] italic text-muted">
-              A possible workout partner.
+        {/*
+          WHY THEY'RE HERE — and always exactly two rows tall.
+
+          The chips used to wrap freely, so a person with four overlaps made a
+          card half again as tall as the person beside them with one, and the
+          grid came out ragged. The block is now a fixed two rows and clips.
+
+          Somebody with fewer reasons is padded out with blank slots in the
+          card's own dark, rather than left with a hole: the card keeps its
+          shape, and an empty slot plainly says "nothing here" instead of
+          inventing a compliment. Real reasons keep the school's colour, so
+          what is true is always the thing with colour on it.
+        */}
+        <div className="mb-2 mt-1.5 flex h-[44px] flex-wrap content-start gap-1 overflow-hidden">
+          {reasons.map((r) => (
+            <span
+              key={r.key}
+              title={r.full}
+              className="max-w-full truncate rounded-md border border-accent-line bg-accent-tint px-1.5 py-0.5 text-[11px] leading-tight text-text"
+            >
+              {r.short}
             </span>
-          )}
+          ))}
+          {blankSlots.map((w, i) => (
+            <span
+              key={`blank${i}`}
+              aria-hidden
+              className={`${w} rounded-md border border-border bg-surface-2 px-1.5 py-0.5 text-[11px] leading-tight`}
+            >
+              &nbsp;
+            </span>
+          ))}
         </div>
 
         {/* Was 22px tall with 10px text — the only action on the card and the
@@ -113,5 +132,7 @@ export default function MatchCard({
   What they train, as a verb, for the identity line. Kept beside the card
   because it is presentation — lib/onboarding.ts owns the keys themselves.
 */
+const BLANK_WIDTHS = ["w-14", "w-9", "w-16", "w-11"];
+
 const activityLabel = (a: string | null) =>
   a ? { gym: "Lifts", running: "Runs", cardio: "Cardio", other: "Other" }[a] ?? null : null;

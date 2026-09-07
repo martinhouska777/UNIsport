@@ -204,21 +204,21 @@ export default function FiltersSheet({
     interests.length === myInterests.length &&
     myInterests.every((i) => interests.includes(i));
 
+  /*
+    A DROPDOWN, not a sheet. It used to slide up from the bottom of the screen
+    while the button that opened it sat at the top — the two ends of one action
+    at opposite ends of the phone. It now opens downwards from the bar, where
+    the tap happened, the way a dropdown is expected to.
+  */
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/50"
-      onClick={onClose}
-    >
-      <div
-        className="max-h-[85dvh] w-full max-w-screen-sm overflow-y-auto rounded-t-2xl border-t border-border bg-surface p-4"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <div className="mt-2 max-h-[62dvh] overflow-y-auto rounded-xl border border-border bg-surface p-3.5">
+      <div>
         <div className="mb-1 flex items-center justify-between">
           <h2 className="text-sm font-medium text-text">Filters</h2>
           <button
             type="button"
             onClick={onClose}
-            className="text-[13px] font-medium text-primary"
+            className="tap44 text-[13px] font-medium text-primary"
           >
             Done
           </button>
@@ -299,6 +299,10 @@ export default function FiltersSheet({
           )}
           <SearchableDropdown
             multiple
+            /* Once you've picked it, it leaves the list. It was appearing in
+               both places at once — as a chip above and still as an option
+               below — which reads as though the tap didn't take. */
+            hideSelected
             options={interestOptions}
             value={interests}
             onChange={(v) => set({ interests: v.length > 0 ? v : null })}

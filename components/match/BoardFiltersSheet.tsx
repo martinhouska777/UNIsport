@@ -55,15 +55,11 @@ export default function BoardFiltersSheet({
   const set = (patch: Partial<BoardFilters>) => onChange({ ...value, ...patch });
   const count = boardFilterCount(value);
 
+  // A dropdown under the bar, not a sheet up from the floor — see the note in
+  // components/match/FiltersSheet.tsx.
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/50"
-      onClick={onClose}
-    >
-      <div
-        className="max-h-[85dvh] w-full max-w-screen-sm overflow-y-auto rounded-t-2xl border-t border-border bg-surface p-4"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <div className="mt-2 max-h-[62dvh] overflow-y-auto rounded-xl border border-border bg-surface p-3.5">
+      <div>
         <div className="mb-1 flex items-center justify-between">
           <h2 className="text-sm font-medium text-text">Filter open posts</h2>
           <button
