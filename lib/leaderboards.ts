@@ -8,9 +8,12 @@
 
   A score is POINTS for the period. The database counts sessions and splits
   them three ways — alone, with a partner, with somebody new — and what each
-  one is WORTH lives in lib/points.ts as data. Boards reset every month and
-  every semester: the reset is the feature, not an implementation detail, since
-  a table nobody can still win is a table nobody plays.
+  one is WORTH lives in lib/points.ts as data. The monthly board resets, and
+  the reset is the feature rather than an implementation detail: a table nobody
+  can still win is a table nobody plays. (`semester` is still a period the
+  database understands; the screen only offers month and all time, because in
+  the first weeks of a term "this semester" and "this month" are the same
+  window and reading the same numbers twice explains nothing.)
 
   Every row keeps its session counts alongside its points, because a score
   nobody can check is a score nobody trusts — the screens always show what the
@@ -20,9 +23,9 @@
   back empty and the screens say so, rather than showing a convincing fake.
 */
 import { createClient, hasSupabaseEnv } from "@/lib/supabase/client";
-import { residenceLabel } from "@/lib/onboarding";
+import { houses, residenceLabel, yardDorms } from "@/lib/onboarding";
 import { getGymByName } from "@/lib/gyms";
-import { pointsLabel, rateArgs, sessionPoints, type SessionKinds } from "@/lib/points";
+import { rateArgs, sessionPoints, type SessionKinds } from "@/lib/points";
 
 /* ─────────────────────────────  types  ───────────────────────────── */
 
@@ -93,12 +96,6 @@ export const MIN_GROUP_MEMBERS = 3;
 
 /* ─────────────────────────────  labels  ───────────────────────────── */
 
-export const periodLabel: Record<Period, string> = {
-  month: "This month",
-  semester: "This semester",
-  all: "All time",
-};
-
 /** "Winthrop" → "Winthrop House"; "'27" → "Class of '27". */
 export function groupLabel(kind: GroupBoard, key: string): string {
   return kind === "year" ? `Class of ${key}` : residenceLabel(key);
@@ -112,12 +109,6 @@ export function groupLabel(kind: GroupBoard, key: string): string {
 export function houseColor(key: string | null | undefined): string | null {
   if (!key) return null;
   return getGymByName(key)?.houseColors?.primary ?? null;
-}
-
-/** "310 pts", or "3 partners" on the one board that counts people. */
-export function scoreLabel(board: PeopleBoard, score: number): string {
-  if (board !== "partners") return pointsLabel(score);
-  return `${score} partner${score === 1 ? "" : "s"}`;
 }
 
 /* ─────────────────────────────  reads  ───────────────────────────── */
@@ -175,9 +166,15 @@ type GroupRpcRow = {
   is_mine: boolean | null;
 };
 
+/**
+ * `onlyKeys` limits the board to those group names — how the twelve Houses and
+ * the first-year Yard dorms stay in separate competitions. The lists are data
+ * (lib/onboarding.ts), so the database never learns a house name.
+ */
 export async function fetchGroupBoard(
   kind: GroupBoard,
   period: Period,
+  onlyKeys?: string[],
 ): Promise<GroupRow[]> {
   if (!hasSupabaseEnv()) return [];
   const { data, error } = await createClient().rpc("leaderboard_groups", {
@@ -185,6 +182,7 @@ export async function fetchGroupBoard(
     period,
     min_members: MIN_GROUP_MEMBERS,
     ...rateArgs,
+    only_keys: onlyKeys ?? null,
   });
   if (error || !data) return [];
   return (data as GroupRpcRow[]).map((r) => ({
@@ -227,6 +225,11 @@ export async function fetchStanding(period: Period): Promise<Standing | null> {
   const { data, error } = await createClient().rpc("my_leaderboard_standing", {
     period,
     ...rateArgs,
+    // Both lists, because we don't yet know where this person lives. The
+    // database ranks their residence against whichever one it belongs to, so
+    // the rank on the Profile strip is the rank on the board they'll open.
+    dorm_keys: yardDorms,
+    house_keys: houses,
   });
   if (error || !data) return null;
   const r = (data as StandingRpcRow[])[0];

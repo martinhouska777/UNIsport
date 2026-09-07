@@ -1,33 +1,43 @@
 "use client";
 
 /*
-  LEADERBOARDS — five boards behind one row of pills, reached from the strip on
-  the Profile tab.
+  LEADERBOARDS — reached from the strip on the Profile tab.
   ---------------------------------------------------------------------------
-    • Houses   — house vs house, ranked by POINTS PER MEMBER
-    • My house — you against your own housemates
-    • Campus   — everyone
-    • Partners — who trained with the most DIFFERENT people
-    • Years    — class year vs class year, also per member
+  TWO CONTROLS, NOT EIGHT. This screen used to carry three period buttons and
+  five board pills in two stacked rows — eleven tap targets before a single
+  name. Now there are two dropdowns that SAY what they are showing
+  ("Competition: Houses", "Period: This month"), which is how every app people
+  already use handles the same job. The list of competitions can grow without
+  the screen growing.
 
-  Houses opens first, on purpose. Campus is an anonymous list of names; house
+  THE COMPETITIONS
+    • Houses      — the twelve upperclassman Houses, by POINTS PER MEMBER
+    • Dorms       — the first-year Yard dorms, same way, kept separate because
+                    a dorm of four freshmen has no business being ranked
+                    against a house of four hundred
+    • My house    — you against the people you live with (reads "My dorm" for
+                    a first-year, because that is where they live)
+    • Everyone    — the whole campus
+    • Most partners — who trained with the most DIFFERENT people
+    • Years       — class year vs class year, also per member
+
+  Houses opens first, on purpose. Everyone is an anonymous list of names; house
   vs house is the thing people already argue about at dinner, and it is the
-  only board on here with a chance of making somebody drag a friend in.
+  only board with a chance of making somebody drag a friend in.
 
-  SCORED IN POINTS, NOT SESSIONS. A session alone is worth 10, with a partner
-  15, with somebody you have never trained with before 25 — the rates live in
-  lib/points.ts as data. The point of points is not that they are more fun than
-  a session count; it is that they can price the behaviour the app exists for.
-  Which is also why every row still says how many sessions it took: a score
-  nobody can check is a score nobody trusts.
+  TWO PERIODS, NOT THREE. "This semester" was dropped: for the whole of
+  September it is the same window as "This month", so it was two options
+  showing identical numbers, and by half term the semester board is already
+  decided and stops being a race. The month is the race; all time is the record.
+
+  SCORED IN POINTS. A session alone is 10, with a partner 15, with somebody new
+  25 — the rates live in lib/points.ts as data. Every row still says how many
+  sessions it took, because a score nobody can check is a score nobody trusts.
+  The full rules sit behind the ⓘ in the header.
 
   Everything is real: db/leaderboards.sql counts actual logged sessions. There
   are no placeholder numbers anywhere on this screen — a board with nothing in
   it says so.
-
-  Boards reset monthly / each semester (the period toggle). That reset is the
-  point: everybody starts level again, so the table is always still winnable —
-  the month is the short race, the semester the long one.
 
   Colors are theme tokens (rule 1). The only per-item colors are each house's
   identity color, which lives in lib/gyms.ts as DATA and is applied inline —
@@ -36,10 +46,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAppState } from "@/components/AppState";
-import { IconArrowLeft, IconTrophy } from "@/components/icons";
+import { IconArrowLeft, IconChevronDown, IconInfo, IconTrophy } from "@/components/icons";
 import HonorCode, { HonorCodeFooter, useHonorCode } from "@/components/leaderboards/HonorCode";
-import { residenceLabel } from "@/lib/onboarding";
-import { pointsLabel, sessionPoints, sessionsOf } from "@/lib/points";
+import ScoringSheet from "@/components/leaderboards/ScoringSheet";
+import OptionPickerSheet from "@/components/profile/OptionPickerSheet";
+import { houses, residenceKind, residenceLabel, yardDorms } from "@/lib/onboarding";
+import { pointsLabel, sessionsOf } from "@/lib/points";
 import {
   fetchGroupBoard,
   fetchPeopleBoard,
@@ -47,7 +59,6 @@ import {
   groupLabel,
   houseColor,
   nextUpLine,
-  scoreLabel,
   MIN_GROUP_MEMBERS,
   type GroupRow,
   type LeaderRow,
@@ -55,61 +66,71 @@ import {
   type Standing,
 } from "@/lib/leaderboards";
 
-/* ─────────────────────────  the boards, as data  ───────────────────────── */
+/* ──────────────────  the competitions, as data  ────────────────── */
 
-type BoardKey = "houses" | "myHouse" | "campus" | "partners" | "years";
+type CompetitionKey = "houses" | "dorms" | "myHouse" | "everyone" | "partners" | "years";
 
-type BoardDef = {
-  key: BoardKey;
-  pill: string;
-  title: string;
+type Competition = {
+  key: CompetitionKey;
+  label: string;
+  /** One line in the picker, saying what the board actually measures. */
+  note: string;
+  /** The same thing said under the bar, once it is the board on screen. */
   blurb: string;
   empty: string;
 };
 
-const BOARDS: BoardDef[] = [
+const COMPETITIONS: Competition[] = [
   {
     key: "houses",
-    pill: "Houses",
-    title: "House vs house",
+    label: "Houses",
+    note: "House vs house, per member",
     blurb: `Points per member, so a big house can't win on size alone. A house needs ${MIN_GROUP_MEMBERS} members to appear.`,
     empty: "No house has enough members training yet.",
   },
   {
-    key: "myHouse",
-    pill: "My house",
-    title: "Your house",
-    blurb: "You against the people you live with.",
-    empty: "Nobody in your house has logged a session yet.",
+    key: "dorms",
+    label: "Dorms",
+    note: "First-year Yard dorms",
+    blurb: `The first-year dorms, also per member. A dorm needs ${MIN_GROUP_MEMBERS} members to appear.`,
+    empty: "No dorm has enough members training yet.",
   },
   {
-    key: "campus",
-    pill: "Campus",
-    title: "Campus",
-    blurb: "Everyone, by points earned.",
+    key: "myHouse",
+    label: "My house",
+    note: "You vs the people you live with",
+    blurb: "You against the people you live with.",
+    empty: "Nobody where you live has logged a session yet.",
+  },
+  {
+    key: "everyone",
+    label: "Everyone",
+    note: "The whole campus, by points",
+    blurb: "Everyone on campus, by points earned.",
     empty: "Nobody has logged a session yet.",
   },
   {
     key: "partners",
-    pill: "Partners",
-    title: "Most partners",
+    label: "Most partners",
+    note: "Who trained with the most people",
     blurb: "How many different people you trained with. Training alone doesn't count here.",
     empty: "Nobody has logged a session with a partner yet.",
   },
   {
     key: "years",
-    pill: "Years",
-    title: "Year vs year",
+    label: "Years",
+    note: "Class year vs class year",
     blurb: `Class against class, also per member. A year needs ${MIN_GROUP_MEMBERS} members to appear.`,
     empty: "No class year has enough members training yet.",
   },
 ];
 
-const PERIODS: { key: Period; label: string }[] = [
-  { key: "month", label: "This month" },
-  { key: "semester", label: "This semester" },
-  { key: "all", label: "All time" },
+const PERIODS: { key: Period; label: string; note: string }[] = [
+  { key: "month", label: "This month", note: "Resets on the 1st — the race" },
+  { key: "all", label: "All time", note: "Never resets — the record" },
 ];
+
+const GROUP_BOARDS: CompetitionKey[] = ["houses", "dorms", "years"];
 
 const ordinal = (n: number): string => {
   const rem100 = n % 100;
@@ -119,7 +140,7 @@ const ordinal = (n: number): string => {
 
 const plural = (n: number, noun: string) => `${n} ${noun}${n === 1 ? "" : "s"}`;
 
-/* ─────────────────────────  rows  ───────────────────────── */
+/* ─────────────────────────  pieces  ───────────────────────── */
 
 /* The top three are marked with the theme's accent rather than gold/silver/
    bronze: medal colors would be three hardcoded hexes in a component, which is
@@ -149,13 +170,41 @@ function Score({ value, unit }: { value: string; unit?: string }) {
   );
 }
 
+/* One of the two dropdowns. It names the choice above the value, so the bar
+   explains itself instead of being two mystery words with chevrons. */
+function Picker({
+  caption,
+  value,
+  onOpen,
+}: {
+  caption: string;
+  value: string;
+  onOpen: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className="tap44 flex min-w-0 flex-1 items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2 text-left"
+    >
+      <span className="min-w-0 flex-1">
+        <span className="block text-[9px] uppercase tracking-[0.1em] text-muted">{caption}</span>
+        <span className="mt-0.5 block truncate text-[13px] font-medium text-text">{value}</span>
+      </span>
+      <span className="flex-shrink-0 text-muted">
+        <IconChevronDown size={15} />
+      </span>
+    </button>
+  );
+}
+
 function PersonRow({
   row,
-  board,
+  competition,
   showHouse,
 }: {
   row: LeaderRow;
-  board: BoardKey;
+  competition: CompetitionKey;
   showHouse: boolean;
 }) {
   const sessions = sessionsOf(row.kinds);
@@ -187,7 +236,7 @@ function PersonRow({
         </div>
         <div className="truncate text-[11px] text-muted">{detail}</div>
       </div>
-      {board === "partners" ? (
+      {competition === "partners" ? (
         <Score value={String(row.score)} unit="people" />
       ) : (
         <Score value={row.score.toLocaleString("en-US")} unit="pts" />
@@ -231,7 +280,11 @@ export default function LeaderboardsPage() {
   const { accepted, accept } = useHonorCode(userId);
 
   const [period, setPeriod] = useState<Period>("month");
-  const [board, setBoard] = useState<BoardKey>("houses");
+  const [competition, setCompetition] = useState<CompetitionKey>("houses");
+  // Only one of these is ever open, but they are separate so neither has to
+  // know the other exists.
+  const [picking, setPicking] = useState<"competition" | "period" | null>(null);
+  const [explaining, setExplaining] = useState(false);
 
   const [standing, setStanding] = useState<Standing | null>(null);
   /*
@@ -246,15 +299,34 @@ export default function LeaderboardsPage() {
     groups: GroupRow[];
   } | null>(null);
 
-  const want = `${board}|${period}|${userId ?? ""}`;
+  const want = `${competition}|${period}|${userId ?? ""}`;
   const loading = result?.for !== want;
   const people = result?.people ?? [];
   const groups = result?.groups ?? [];
 
-  const def = useMemo(() => BOARDS.find((b) => b.key === board) ?? BOARDS[0], [board]);
+  const def = useMemo(
+    () => COMPETITIONS.find((c) => c.key === competition) ?? COMPETITIONS[0],
+    [competition],
+  );
 
-  // The standing line reloads with the period, not with the board — the board
-  // pills shouldn't make the header flicker.
+  // "My house" is the wrong word for a first-year, who lives in a Yard dorm.
+  const iLiveInADorm = standing?.residence
+    ? residenceKind(standing.residence) === "dorm"
+    : false;
+  const competitionOptions = useMemo(
+    () =>
+      COMPETITIONS.map((c) => ({
+        value: c.key,
+        label: c.key === "myHouse" && iLiveInADorm ? "My dorm" : c.label,
+        note: c.note,
+      })),
+    [iLiveInADorm],
+  );
+  const currentLabel =
+    competitionOptions.find((o) => o.value === competition)?.label ?? def.label;
+
+  // The standing line reloads with the period, not with the board — changing
+  // the competition shouldn't make the header flicker.
   useEffect(() => {
     let active = true;
     fetchStanding(period).then((s) => active && setStanding(s));
@@ -265,18 +337,26 @@ export default function LeaderboardsPage() {
 
   useEffect(() => {
     let active = true;
-    const isGroup = board === "houses" || board === "years";
-    const run = isGroup
-      ? fetchGroupBoard(board === "houses" ? "house" : "year", period).then((rows) => ({
-          for: want,
-          people: [] as LeaderRow[],
-          groups: rows,
-        }))
-      : fetchPeopleBoard(
-          board === "myHouse" ? "house" : board === "partners" ? "partners" : "campus",
-          period,
-          50,
-        ).then((rows) => ({ for: want, people: rows, groups: [] as GroupRow[] }));
+    const asGroups = (rows: GroupRow[]) => ({
+      for: want,
+      people: [] as LeaderRow[],
+      groups: rows,
+    });
+    const asPeople = (rows: LeaderRow[]) => ({ for: want, people: rows, groups: [] as GroupRow[] });
+
+    const run =
+      competition === "houses"
+        ? fetchGroupBoard("house", period, houses).then(asGroups)
+        : competition === "dorms"
+          ? fetchGroupBoard("house", period, yardDorms).then(asGroups)
+          : competition === "years"
+            ? fetchGroupBoard("year", period).then(asGroups)
+            : fetchPeopleBoard(
+                competition === "myHouse" ? "house" : competition === "partners" ? "partners" : "campus",
+                period,
+                50,
+              ).then(asPeople);
+
     run
       .then((r) => active && setResult(r))
       // A failed read must still settle, or the board says "Counting…" forever.
@@ -284,9 +364,9 @@ export default function LeaderboardsPage() {
     return () => {
       active = false;
     };
-  }, [board, period, want]);
+  }, [competition, period, want]);
 
-  const isGroupBoard = board === "houses" || board === "years";
+  const isGroupBoard = GROUP_BOARDS.includes(competition);
   const nudge = nextUpLine(standing);
 
   // Hooks are all above this line, so the honour code can gate the screen.
@@ -302,7 +382,14 @@ export default function LeaderboardsPage() {
           <IconArrowLeft size={18} />
         </button>
         <span className="text-sm font-medium text-text">Leaderboards</span>
-        <span className="w-[18px]" aria-hidden="true" />
+        <button
+          type="button"
+          onClick={() => setExplaining(true)}
+          aria-label="How points work"
+          className="tap44 press-icon flex h-7 w-7 items-center justify-center rounded-full bg-surface-2 text-muted"
+        >
+          <IconInfo size={14} />
+        </button>
       </div>
 
       {/* Your standing */}
@@ -366,46 +453,25 @@ export default function LeaderboardsPage() {
         </div>
       </div>
 
-      {/* Period */}
+      {/* The two controls. */}
       <div className="border-b border-border px-3.5 py-2.5">
-        <div className="flex gap-1 rounded-xl border border-border bg-surface p-1">
-          {PERIODS.map((p) => (
-            <button
-              key={p.key}
-              type="button"
-              onClick={() => setPeriod(p.key)}
-              className={`flex-1 rounded-lg py-2 text-[12px] font-semibold transition-colors ${
-                period === p.key ? "bg-text text-background" : "text-muted"
-              }`}
-            >
-              {p.label}
-            </button>
-          ))}
+        <div className="flex gap-2">
+          <Picker
+            caption="Competition"
+            value={currentLabel}
+            onOpen={() => setPicking("competition")}
+          />
+          <Picker
+            caption="Period"
+            value={PERIODS.find((p) => p.key === period)?.label ?? ""}
+            onOpen={() => setPicking("period")}
+          />
         </div>
-      </div>
-
-      {/* Board pills — five of them, so they scroll sideways on a phone */}
-      <div className="flex gap-1.5 overflow-x-auto border-b border-border px-3.5 py-2.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {BOARDS.map((b) => (
-          <button
-            key={b.key}
-            type="button"
-            onClick={() => setBoard(b.key)}
-            className={`tap44 flex-shrink-0 rounded-full border px-3.5 py-1.5 text-[12px] font-medium transition-colors ${
-              board === b.key
-                ? "border-text bg-text text-background"
-                : "border-border bg-surface text-muted"
-            }`}
-          >
-            {b.pill}
-          </button>
-        ))}
       </div>
 
       {/* The board */}
       <div className="px-3.5 pt-3">
-        <h2 className="text-[15px] font-semibold text-text">{def.title}</h2>
-        <p className="mt-0.5 text-[11px] leading-relaxed text-muted">{def.blurb}</p>
+        <p className="text-[11px] leading-relaxed text-muted">{def.blurb}</p>
 
         {loading ? (
           <div className="px-4 py-16 text-center text-[12px] text-muted">Counting…</div>
@@ -417,7 +483,11 @@ export default function LeaderboardsPage() {
           ) : (
             <div className="mt-3 flex flex-col gap-1.5">
               {groups.map((g) => (
-                <GroupRowItem key={g.key} row={g} kind={board === "houses" ? "house" : "year"} />
+                <GroupRowItem
+                  key={g.key}
+                  row={g}
+                  kind={competition === "years" ? "year" : "house"}
+                />
               ))}
             </div>
           )
@@ -429,46 +499,52 @@ export default function LeaderboardsPage() {
           <>
             <div className="mt-3 flex flex-col gap-1.5">
               {people.map((r) => (
-                <PersonRow key={r.userId} row={r} board={board} showHouse={board !== "myHouse"} />
+                <PersonRow
+                  key={r.userId}
+                  row={r}
+                  competition={competition}
+                  showHouse={competition !== "myHouse"}
+                />
               ))}
             </div>
             <div className="mt-2.5 px-0.5 text-[11px] text-muted">
-              {board === "partners"
-                ? `${scoreLabel("partners", people[0].score)} leads`
+              {competition === "partners"
+                ? `${plural(people[0].score, "partner")} leads`
                 : `Top ${people.length}`}
             </div>
           </>
         )}
       </div>
 
-      {/* How scoring works — said once, plainly, so nobody has to guess. The
-          three rates are read from lib/points.ts, so this can never drift out
-          of step with what the boards actually pay. */}
       <div className="mt-4 px-3.5">
-        <div className="rounded-2xl border border-border bg-surface-2 px-3.5 py-3">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-            How points work
-          </div>
-          <ul className="mt-2 flex flex-col gap-1.5 text-[11px] leading-relaxed text-muted">
-            <li>
-              A session on your own is <span className="text-text">{sessionPoints.solo} pts</span>.
-              With a partner it&rsquo;s <span className="text-text">{sessionPoints.partner}</span>,
-              and with someone you&rsquo;ve never trained with before{" "}
-              <span className="text-text">{sessionPoints.newPartner}</span>.
-            </li>
-            <li>
-              A partner has to be picked from the app, and a single day counts twice at most.
-            </li>
-            <li>Team boards rank by points per member, not by total.</li>
-            <li>Monthly and semester boards reset, so everyone starts level again.</li>
-            <li>Only your name, house, year and totals are ever shown — never your workouts.</li>
-          </ul>
-        </div>
-      </div>
-
-      <div className="mt-3 px-3.5">
         <HonorCodeFooter universityKey={universityKey} />
       </div>
+
+      {picking === "competition" && (
+        <OptionPickerSheet
+          title="Competition"
+          hint="What the board is measuring."
+          options={competitionOptions}
+          selected={[competition]}
+          onSave={(values) => setCompetition(values[0] as CompetitionKey)}
+          onClose={() => setPicking(null)}
+        />
+      )}
+
+      {picking === "period" && (
+        <OptionPickerSheet
+          title="Period"
+          hint="How far back the board counts."
+          options={PERIODS.map((p) => ({ value: p.key, label: p.label, note: p.note }))}
+          selected={[period]}
+          onSave={(values) => setPeriod(values[0] as Period)}
+          onClose={() => setPicking(null)}
+        />
+      )}
+
+      {explaining && (
+        <ScoringSheet universityKey={universityKey} onClose={() => setExplaining(false)} />
+      )}
     </div>
   );
 }

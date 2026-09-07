@@ -16,7 +16,9 @@ import { useState } from "react";
 import Button from "@/components/ui/Button";
 import { IconCheck, IconX } from "@/components/icons";
 
-export type Option = { value: string; label: string };
+/** `note` is optional: one short line under the label, for a choice whose name
+    doesn't say enough on its own. */
+export type Option = { value: string; label: string; note?: string };
 
 export default function OptionPickerSheet({
   title,
@@ -103,7 +105,14 @@ export default function OptionPickerSheet({
                     : `border-border bg-surface-2 text-text ${full ? "opacity-40" : ""}`
                 }`}
               >
-                <span>{option.label}</span>
+                <span className="min-w-0">
+                  <span className="block">{option.label}</span>
+                  {option.note && (
+                    <span className="mt-0.5 block text-[11px] leading-snug text-muted">
+                      {option.note}
+                    </span>
+                  )}
+                </span>
                 {isPicked && (
                   <span className="flex items-center gap-1.5 text-primary">
                     {multiple && <span className="text-[11px] font-medium">#{rank + 1}</span>}

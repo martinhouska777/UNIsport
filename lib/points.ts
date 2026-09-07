@@ -66,25 +66,9 @@ export type SessionKinds = {
   newPartner: number;
 };
 
-export const noSessions: SessionKinds = { solo: 0, partner: 0, newPartner: 0 };
-
-/** What a set of sessions is worth. */
-export function pointsOf(k: SessionKinds): number {
-  return (
-    k.solo * sessionPoints.solo +
-    k.partner * sessionPoints.partner +
-    k.newPartner * sessionPoints.newPartner
-  );
-}
-
 /** How many sessions those points came from. */
 export function sessionsOf(k: SessionKinds): number {
   return k.solo + k.partner + k.newPartner;
-}
-
-/** How many of them were with another person. */
-export function socialSessionsOf(k: SessionKinds): number {
-  return k.partner + k.newPartner;
 }
 
 /* ─────────────────────────────  labels  ───────────────────────────── */
@@ -92,15 +76,6 @@ export function socialSessionsOf(k: SessionKinds): number {
 /** "310 pts". Short on purpose — it sits at the end of a narrow row. */
 export function pointsLabel(points: number): string {
   return `${points.toLocaleString("en-US")} pts`;
-}
-
-/** "23 sessions, 9 with someone new" — the line under a score. */
-export function breakdownLabel(k: SessionKinds): string {
-  const sessions = sessionsOf(k);
-  const noun = `${sessions} session${sessions === 1 ? "" : "s"}`;
-  if (k.newPartner > 0) return `${noun}, ${k.newPartner} with someone new`;
-  if (k.partner > 0) return `${noun}, ${k.partner} with a partner`;
-  return noun;
 }
 
 /**

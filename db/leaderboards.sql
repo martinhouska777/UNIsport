@@ -290,9 +290,18 @@ $$;
 -- is the number the interhouse competition will one day open on. A group needs
 -- at least `min_members` people signed up to appear at all, so one very keen
 -- person in an otherwise empty house can't top the table on their own.
+--
+-- `only_keys` is how the twelve upperclassman Houses and the first-year Yard
+-- dorms are kept in SEPARATE competitions: a dorm of four freshmen has no
+-- business being ranked against a house of four hundred. WHICH NAMES ARE WHICH
+-- IS DATA, and it lives in lib/onboarding.ts (`houses`, `yardDorms`) — the
+-- caller passes the list, so this file never has to learn a single house name.
+-- NULL means no filter. It also quietly drops "off campus" and the other
+-- non-residences, which were never a house to begin with.
 -- ---------------------------------------------------------------------------
 drop function if exists public.leaderboard_groups(text, text, int);
 drop function if exists public.leaderboard_groups(text, text, int, int, int, int);
+drop function if exists public.leaderboard_groups(text, text, int, int, int, int, text[]);
 
 create function public.leaderboard_groups(
   kind        text default 'house',
@@ -300,7 +309,8 @@ create function public.leaderboard_groups(
   min_members int  default 1,
   pts_solo    int  default 10,
   pts_partner int  default 15,
-  pts_new     int  default 25
+  pts_new     int  default 25,
+  only_keys   text[] default null
 )
 returns table (
   rank       int,
@@ -352,6 +362,7 @@ as $$
       round(sum(m.pts)::numeric / count(*), 1) as per_member
     from member_of m
     where m.grp is not null
+      and (only_keys is null or m.grp = any(only_keys))
     group by m.grp
     having count(*) >= greatest(coalesce(min_members, 1), 1)
   )
@@ -389,12 +400,20 @@ $$;
 -- ---------------------------------------------------------------------------
 drop function if exists public.my_leaderboard_standing(text);
 drop function if exists public.my_leaderboard_standing(text, int, int, int);
+drop function if exists public.my_leaderboard_standing(text, int, int, int, text[], text[]);
 
 create function public.my_leaderboard_standing(
   period      text default 'month',
   pts_solo    int  default 10,
   pts_partner int  default 15,
-  pts_new     int  default 25
+  pts_new     int  default 25,
+  -- Both residence lists, from lib/onboarding.ts. The caller cannot know which
+  -- one applies (it does not yet know where the user lives), so it sends both
+  -- and the rank below is worked out against whichever list the user is in.
+  -- That is what keeps `house_rank` here equal to the rank on the board they
+  -- are about to look at. Both NULL ranks every residence together, as before.
+  dorm_keys   text[] default null,
+  house_keys  text[] default null
 )
 returns table (
   points        int,
@@ -453,8 +472,19 @@ as $$
   ),
   -- Same minimum and same rates as the screen uses, so the rank shown on the
   -- strip is the rank shown on the board.
+  -- Against your own kind: a freshman is ranked among the Yard dorms, everybody
+  -- else among the twelve Houses. Anyone in neither list (off campus) falls
+  -- back to the unfiltered ranking, which is the only sensible thing left.
   hgrp as (
-    select * from public.leaderboard_groups('house', period, 3, pts_solo, pts_partner, pts_new)
+    select * from public.leaderboard_groups(
+      'house', period, 3, pts_solo, pts_partner, pts_new,
+      case
+        when (select m.res from myrow m) = any(coalesce(dorm_keys, '{}'::text[]))
+          then dorm_keys
+        when (select m.res from myrow m) = any(coalesce(house_keys, '{}'::text[]))
+          then house_keys
+      end
+    )
   ),
   ygrp as (
     select * from public.leaderboard_groups('year', period, 3, pts_solo, pts_partner, pts_new)
@@ -501,6 +531,6 @@ $$;
 
 grant execute on function public.leaderboard_since(text)                            to authenticated;
 grant execute on function public.initials_of(text)                                  to authenticated;
-grant execute on function public.leaderboard_people(text, text, int, int, int, int)  to authenticated;
-grant execute on function public.leaderboard_groups(text, text, int, int, int, int)  to authenticated;
-grant execute on function public.my_leaderboard_standing(text, int, int, int)        to authenticated;
+grant execute on function public.leaderboard_people(text, text, int, int, int, int)          to authenticated;
+grant execute on function public.leaderboard_groups(text, text, int, int, int, int, text[])  to authenticated;
+grant execute on function public.my_leaderboard_standing(text, int, int, int, text[], text[]) to authenticated;
