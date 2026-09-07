@@ -15,10 +15,6 @@
     • Dorms       — the first-year Yard dorms, same way, kept separate because
                     a dorm of four freshmen has no business being ranked
                     against a house of four hundred
-    • My house    — you against the people you live with, house or dorm. One
-                    label for everybody: a label that changes per person is
-                    worse than a slightly loose one, because two people
-                    comparing screens should read the same words.
     • Everyone    — the whole campus
     • Most partners — who trained with the most DIFFERENT people
     • Years       — class year vs class year, also per member
@@ -26,6 +22,13 @@
   Houses opens first, on purpose. Everyone is an anonymous list of names; house
   vs house is the thing people already argue about at dinner, and it is the
   only board with a chance of making somebody drag a friend in.
+
+  A HOUSE OR DORM OPENS. Its score is nothing but the points of the people
+  living in it, so tapping the row shows exactly who earned them and what share
+  each of them is (GroupSheet). There is no separate "my house" competition —
+  your own house is one of the rows, and opening it answers the same question
+  without a second entry in the list. Year rows do not open: a class year is
+  not somewhere you live, and nobody is going to scroll four hundred people.
 
   THREE PERIODS. Month, semester, all time. The month is the short race, the
   semester the long one, all time the record that never resets. (Worth knowing
@@ -49,8 +52,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAppState } from "@/components/AppState";
-import { IconArrowLeft, IconChevronDown, IconInfo, IconTrophy } from "@/components/icons";
+import {
+  IconArrowLeft,
+  IconChevronDown,
+  IconChevronRight,
+  IconInfo,
+  IconTrophy,
+} from "@/components/icons";
 import HonorCode, { HonorCodeFooter, useHonorCode } from "@/components/leaderboards/HonorCode";
+import GroupSheet from "@/components/leaderboards/GroupSheet";
 import ScoringSheet from "@/components/leaderboards/ScoringSheet";
 import OptionPickerSheet from "@/components/profile/OptionPickerSheet";
 import { houses, residenceLabel, yardDorms } from "@/lib/onboarding";
@@ -71,7 +81,7 @@ import {
 
 /* ──────────────────  the competitions, as data  ────────────────── */
 
-type CompetitionKey = "houses" | "dorms" | "myHouse" | "everyone" | "partners" | "years";
+type CompetitionKey = "houses" | "dorms" | "everyone" | "partners" | "years";
 
 type Competition = {
   key: CompetitionKey;
@@ -97,13 +107,6 @@ const COMPETITIONS: Competition[] = [
     note: "First-year Yard dorms",
     blurb: `The first-year dorms, also per member. A dorm needs ${MIN_GROUP_MEMBERS} members to appear.`,
     empty: "No dorm has enough members training yet.",
-  },
-  {
-    key: "myHouse",
-    label: "My house",
-    note: "You vs the people you live with",
-    blurb: "You against the people you live with.",
-    empty: "Nobody where you live has logged a session yet.",
   },
   {
     key: "everyone",
@@ -205,18 +208,16 @@ function Picker({
 function PersonRow({
   row,
   competition,
-  showHouse,
 }: {
   row: LeaderRow;
   competition: CompetitionKey;
-  showHouse: boolean;
 }) {
   const sessions = sessionsOf(row.kinds);
   // House, year and what the score was made of, in one line that survives a
   // narrow phone by simply dropping the parts that are missing.
   const detail =
     [
-      showHouse && row.residence ? residenceLabel(row.residence) : "",
+      row.residence ? residenceLabel(row.residence) : "",
       row.classYear ?? "",
       sessions > 0 ? plural(sessions, "session") : "",
     ]
@@ -249,13 +250,26 @@ function PersonRow({
   );
 }
 
-function GroupRowItem({ row, kind }: { row: GroupRow; kind: "house" | "year" }) {
+function GroupRowItem({
+  row,
+  kind,
+  onOpen,
+}: {
+  row: GroupRow;
+  kind: "house" | "year";
+  /** Omitted for year rows, which have nothing worth opening. */
+  onOpen?: () => void;
+}) {
   const tint = kind === "house" ? houseColor(row.key) : null;
+  // A row that opens is a button; a row that does not stays a div, so nothing
+  // on screen invites a tap that does nothing.
+  const Tag = onOpen ? "button" : "div";
   return (
-    <div
-      className={`flex items-center gap-2.5 rounded-xl border px-3 py-2.5 ${
-        row.isMine ? "border-primary bg-primary-tint" : "border-border bg-surface"
-      }`}
+    <Tag
+      {...(onOpen ? { type: "button" as const, onClick: onOpen } : {})}
+      className={`flex w-full items-center gap-2.5 rounded-xl border px-3 py-2.5 text-left ${
+        onOpen ? "tap44 active:bg-surface-2" : ""
+      } ${row.isMine ? "border-primary bg-primary-tint" : "border-border bg-surface"}`}
     >
       <RankBadge rank={row.rank} />
       <span
@@ -272,7 +286,12 @@ function GroupRowItem({ row, kind }: { row: GroupRow; kind: "house" | "year" }) 
         </div>
       </div>
       <Score value={row.avgPoints.toFixed(1)} unit="per member" />
-    </div>
+      {onOpen && (
+        <span className="flex-shrink-0 text-muted">
+          <IconChevronRight size={15} />
+        </span>
+      )}
+    </Tag>
   );
 }
 
@@ -289,6 +308,8 @@ export default function LeaderboardsPage() {
   // know the other exists.
   const [picking, setPicking] = useState<"competition" | "period" | null>(null);
   const [explaining, setExplaining] = useState(false);
+  // The house or dorm whose people are being looked at, if any.
+  const [openGroup, setOpenGroup] = useState<GroupRow | null>(null);
 
   const [standing, setStanding] = useState<Standing | null>(null);
   /*
@@ -351,7 +372,7 @@ export default function LeaderboardsPage() {
           : competition === "years"
             ? fetchGroupBoard("year", period).then(asGroups)
             : fetchPeopleBoard(
-                competition === "myHouse" ? "house" : competition === "partners" ? "partners" : "campus",
+                competition === "partners" ? "partners" : "campus",
                 period,
                 50,
               ).then(asPeople);
@@ -486,6 +507,9 @@ export default function LeaderboardsPage() {
                   key={g.key}
                   row={g}
                   kind={competition === "years" ? "year" : "house"}
+                  onOpen={
+                    competition === "years" ? undefined : () => setOpenGroup(g)
+                  }
                 />
               ))}
             </div>
@@ -498,12 +522,7 @@ export default function LeaderboardsPage() {
           <>
             <div className="mt-3 flex flex-col gap-1.5">
               {people.map((r) => (
-                <PersonRow
-                  key={r.userId}
-                  row={r}
-                  competition={competition}
-                  showHouse={competition !== "myHouse"}
-                />
+                <PersonRow key={r.userId} row={r} competition={competition} />
               ))}
             </div>
             <div className="mt-2.5 px-0.5 text-[11px] text-muted">
@@ -543,6 +562,16 @@ export default function LeaderboardsPage() {
 
       {explaining && (
         <ScoringSheet universityKey={universityKey} onClose={() => setExplaining(false)} />
+      )}
+
+      {openGroup && (
+        <GroupSheet
+          row={openGroup}
+          kind="house"
+          period={period}
+          periodLabel={PERIODS.find((p) => p.key === period)?.label ?? ""}
+          onClose={() => setOpenGroup(null)}
+        />
       )}
     </div>
   );

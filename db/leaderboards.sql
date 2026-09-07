@@ -41,8 +41,9 @@
 --
 -- PERIODS
 --   'month'    — since the 1st of the current month  (default)
---   'semester' — since the start of the current term: Sep 1 (fall), Jan 1
---                (spring), Jun 1 (summer)
+--   'semester' — since the start of the term that is running now. Two terms,
+--                as the school actually runs them: fall is 2 Sep to 17 Jan,
+--                spring is 18 Jan to 1 Sep. No summer board.
 --   'all'      — everything ever
 --   Boards reset, which is the point: a season nobody can still win is a season
 --   nobody plays. Every month, everyone starts level again — and the semester
@@ -57,25 +58,35 @@
 
 -- Start date of a leaderboard period.
 --
--- A "semester" is the academic term the calendar is in right now: Sep–Dec is
--- the fall term, Jan–May the spring term, Jun–Aug the summer. Deriving it from
--- the month means no term-dates table to maintain and nothing to forget to
--- update in August — the board rolls over on its own.
+-- THE TWO REAL TERMS, as the school actually runs them:
+--   FALL   — 2 September through 17 January (it crosses the new year)
+--   SPRING — 18 January through 1 September
+--
+-- There is no summer board. The year is two halves, so whatever day it is,
+-- exactly one term is running and the board never has a gap.
+--
+-- The awkward case is January: on 5 January the term that is running began on
+-- 2 SEPTEMBER OF LAST YEAR, so the year has to be stepped back. Deriving all
+-- of it from the date means no term-dates table to maintain and nothing to
+-- remember to update in August — it rolls over on its own.
 create or replace function public.leaderboard_since(period text)
 returns date
 language sql
 immutable
 as $$
   select case lower(coalesce(period, 'month'))
-           when 'all'      then '1900-01-01'::date
-           when 'semester' then make_date(
-             extract(year from current_date)::int,
-             case when extract(month from current_date) >= 9 then 9
-                  when extract(month from current_date) >= 6 then 6
-                  else 1
-             end,
-             1
-           )
+           when 'all' then '1900-01-01'::date
+           when 'semester' then
+             case
+               -- On or after 2 Sep: the fall term that started this year.
+               when current_date >= make_date(extract(year from current_date)::int, 9, 2)
+                 then make_date(extract(year from current_date)::int, 9, 2)
+               -- On or before 17 Jan: still the fall term, which began last year.
+               when current_date <= make_date(extract(year from current_date)::int, 1, 17)
+                 then make_date(extract(year from current_date)::int - 1, 9, 2)
+               -- Everything between: the spring term.
+               else make_date(extract(year from current_date)::int, 1, 18)
+             end
            else (date_trunc('month', current_date))::date
          end;
 $$;
@@ -177,14 +188,20 @@ revoke all on function public.leaderboard_session_kinds(date) from public;
 
 -- ---------------------------------------------------------------------------
 -- The individual boards
---   board = 'campus'   — everyone, by POINTS
---         = 'house'    — only the caller's own house/dorm, by points
---         = 'partners' — everyone, by how many DIFFERENT people they trained
---                        with. The one board not scored in points: counting
---                        people is the whole question it answers.
+--   board = 'campus'   — by POINTS
+--         = 'partners' — by how many DIFFERENT people they trained with. The
+--                        one board not scored in points: counting people is
+--                        the whole question it answers.
+--
+-- `residence_filter` narrows it to one house or dorm, which is what makes a
+-- house on the team board OPENABLE: a house's points are just the points of
+-- the people living in it, so tapping it shows exactly who put them there.
+-- Anybody can open anybody's house — a table you can't look inside is a
+-- number you have to take on trust.
 -- ---------------------------------------------------------------------------
 drop function if exists public.leaderboard_people(text, text, int);
 drop function if exists public.leaderboard_people(text, text, int, int, int, int);
+drop function if exists public.leaderboard_people(text, text, int, int, int, int, text);
 
 create function public.leaderboard_people(
   board       text default 'campus',
@@ -193,7 +210,8 @@ create function public.leaderboard_people(
   -- From lib/points.ts, for ORDERING only.
   pts_solo    int  default 10,
   pts_partner int  default 15,
-  pts_new     int  default 25
+  pts_new     int  default 25,
+  residence_filter text default null
 )
 returns table (
   rank        int,
@@ -251,12 +269,7 @@ as $$
     left join kinds k          on k.user_id = p.id
     left join partner_count pc on pc.uid    = p.id
     where p.onboarding_completed
-      and (
-        lower(board) <> 'house'
-        or p.data->>'residence' = (
-             select q.data->>'residence' from public.profiles q where q.id = auth.uid()
-           )
-      )
+      and (residence_filter is null or p.data->>'residence' = residence_filter)
   )
   -- WHERE runs before the window function, so a zero never takes up a rank:
   -- ranks describe the people who actually turned up.
@@ -531,6 +544,6 @@ $$;
 
 grant execute on function public.leaderboard_since(text)                            to authenticated;
 grant execute on function public.initials_of(text)                                  to authenticated;
-grant execute on function public.leaderboard_people(text, text, int, int, int, int)          to authenticated;
+grant execute on function public.leaderboard_people(text, text, int, int, int, int, text)  to authenticated;
 grant execute on function public.leaderboard_groups(text, text, int, int, int, int, text[])  to authenticated;
 grant execute on function public.my_leaderboard_standing(text, int, int, int, text[], text[]) to authenticated;

@@ -31,8 +31,9 @@ import { rateArgs, sessionPoints, type SessionKinds } from "@/lib/points";
 
 export type Period = "month" | "semester" | "all";
 
-// The individual boards. `house` always means the CALLER's own house.
-export type PeopleBoard = "campus" | "house" | "partners";
+// The individual boards. Narrow either of them to one house or dorm with
+// `residence` — that is what makes a house on the team board openable.
+export type PeopleBoard = "campus" | "partners";
 // The team boards.
 export type GroupBoard = "house" | "year";
 
@@ -128,10 +129,16 @@ type PeopleRpcRow = {
   is_me: boolean | null;
 };
 
+/**
+ * `residence` narrows the board to the people living in one house or dorm —
+ * which is exactly what a house's points ARE, so opening a house shows who
+ * put them there. Anybody may open anybody's house.
+ */
 export async function fetchPeopleBoard(
   board: PeopleBoard,
   period: Period,
   limit = 50,
+  residence?: string,
 ): Promise<LeaderRow[]> {
   if (!hasSupabaseEnv()) return [];
   const { data, error } = await createClient().rpc("leaderboard_people", {
@@ -139,6 +146,7 @@ export async function fetchPeopleBoard(
     period,
     limit_n: limit,
     ...rateArgs,
+    residence_filter: residence ?? null,
   });
   if (error || !data) return [];
   return (data as PeopleRpcRow[]).map((r) => ({
