@@ -355,6 +355,11 @@ as $$
     group by m.grp
     having count(*) >= greatest(coalesce(min_members, 1), 1)
   )
+  -- A group that scored nothing is left off, exactly as a person who scored
+  -- nothing is left off the individual boards: a table of twelve houses all
+  -- reading 0.0 looks broken rather than honest, and the screen has a proper
+  -- empty state to say so. WHERE runs before the window function, so a zero
+  -- never takes up a rank either.
   select
     (rank() over (order by g.per_member desc, g.n_points desc, g.grp))::int,
     g.grp,
@@ -365,6 +370,7 @@ as $$
     g.per_member,
     g.grp is not distinct from (select mk.grp from my_key mk)
   from grouped g
+  where g.n_points > 0
   order by 1;
 $$;
 
