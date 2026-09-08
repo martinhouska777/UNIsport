@@ -44,7 +44,6 @@
   needs real team membership (a later slice).
 */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import Button, { buttonClass } from "@/components/ui/Button";
 import {
   practiceStatusMeta,
   roster,
@@ -81,6 +80,8 @@ import {
 } from "@/lib/varsity/coachPlan";
 import { fetchPlan, type Plan } from "@/lib/varsity/planStore";
 import { notifySquad } from "@/lib/push/client";
+import SaveState from "@/components/varsity/coach/SaveState";
+import PublishBar from "@/components/varsity/coach/PublishBar";
 import {
   fetchLineup,
   fetchLineupStatuses,
@@ -95,8 +96,6 @@ import {
   IconClock,
   IconPlus,
   IconX,
-  IconSend,
-  IconCheck,
 } from "@/components/icons";
 
 /* a target slot inside a boat: a numbered seat, or the cox seat */
@@ -793,8 +792,8 @@ function Builder({
   const [boats, setBoats] = useState<Boat[]>([]);
   const [status, setStatus] = useState<LineupStatus>("draft");
   const [loading, setLoading] = useState(true);
-  const [busy, setBusy] = useState<null | "save" | "publish">(null);
-  const [justSaved, setJustSaved] = useState(false);
+  const [writing, setWriting] = useState(false);
+  const [failed, setFailed] = useState(false);
   const [typing, setTyping] = useState<Slot | null>(null);
   const [query, setQuery] = useState("");
   const [dropKey, setDropKey] = useState<string | null>(null);
@@ -802,12 +801,21 @@ function Builder({
   const [poolFilter, setPoolFilter] = useState<PoolFilter>("all");
 
   /*
-    What was loaded, as text. Anything else in `boats` means unsaved work —
-    which matters because the ‹ › arrows leave this practice, and a half-seated
-    eight is not something to lose to a mis-tap. Compared, not counted: a name
+    What the DATABASE holds, as text. Anything else in `boats` is work not
+    written yet — which matters because a half-seated eight is not something to
+    lose to a mis-tap, a closed app or an arrow. Compared, not counted: a name
     typed into a boat or an oar set is as much work as a seat filled.
+
+    State, not a ref, because the save line and the publish bar both read it
+    while rendering.
   */
-  const loaded = useRef("[]");
+  const [saved, setSaved] = useState("[]");
+  /*
+    And what the SQUAD was last told. A published lineup is live: it autosaves,
+    so a seat swapped at the dock is on their phones as it happens. So the only
+    thing left to offer is a heads-up — and only once it differs from this.
+  */
+  const [announced, setAnnounced] = useState<string | null>(null);
 
   // Load any existing lineup for this practice from the database.
   useEffect(() => {
@@ -815,7 +823,10 @@ function Builder({
     (async () => {
       const stored = await fetchLineup(dayKey);
       if (!active) return;
-      loaded.current = JSON.stringify(stored?.boats ?? []);
+      const text = JSON.stringify(stored?.boats ?? []);
+      setSaved(text);
+      // A lineup already live when this opened: the squad has seen this much.
+      setAnnounced(stored?.status === "published" ? text : null);
       setBoats(stored?.boats ?? []);
       setStatus(stored?.status ?? "draft");
       setLoading(false);
@@ -927,53 +938,94 @@ function Builder({
     setSheetOpen(false);
   };
 
-  const persist = async (newStatus: LineupStatus, which: "save" | "publish") => {
-    setBusy(which);
-    const { error } = await saveLineup(dayKey, boats, newStatus);
-    setBusy(null);
-    if (error) {
-      console.error("saveLineup:", error);
-      return;
-    }
-    loaded.current = JSON.stringify(boats);
-    setStatus(newStatus);
-    setJustSaved(true);
-    window.setTimeout(() => setJustSaved(false), 1500);
+  /* Is there a seat the database hasn't got yet? */
+  const text = useMemo(() => JSON.stringify(boats), [boats]);
+  const dirty = text !== saved;
 
-    /*
-      PUBLISHING TELLS THE SQUAD. Fired from here rather than from saveLineup(),
-      because the arrows auto-save on the way out — and an already-published
-      lineup saved by walking past it must not buzz forty phones. Only the
-      button does that.
-    */
-    if (which === "publish") {
-      notifySquad({
-        kind: "team_lineup",
-        preview: `${context.weekday} ${context.period}`,
-      });
-    }
+  /* Write the crew. Returns false if it failed, so a caller that must be sure
+     (publishing) can hold its notification back. */
+  const persist = useCallback(
+    async (newStatus?: LineupStatus) => {
+      const s = newStatus ?? status;
+      const snap = JSON.stringify(boats);
+      setWriting(true);
+      const { error } = await saveLineup(dayKey, boats, s);
+      setWriting(false);
+      if (error) {
+        console.error("saveLineup:", error);
+        setFailed(true);
+        return false;
+      }
+      setSaved(snap);
+      setStatus(s);
+      setFailed(false);
+      return true;
+    },
+    [boats, dayKey, status],
+  );
+
+  /*
+    THE AUTOSAVE. Same rule as the Plan tab: the coach's work saves itself, a
+    short pause after the last change, keeping whatever status this lineup
+    already has — a draft stays a draft, a live lineup stays live.
+  */
+  useEffect(() => {
+    if (loading || !dirty || writing) return;
+    const t = window.setTimeout(() => void persist(), 700);
+    return () => window.clearTimeout(t);
+  }, [loading, dirty, writing, persist]);
+
+  /* Leaving inside that pause — an arrow, the Days list, another tab — must not
+     outrun it, so the last crew is flushed on the way out. */
+  const pending = useRef<{ dirty: boolean; boats: Boat[]; status: LineupStatus }>({
+    dirty: false,
+    boats: [],
+    status: "draft",
+  });
+  useEffect(() => {
+    pending.current = { dirty, boats, status };
+  }, [dirty, boats, status]);
+  useEffect(
+    () => () => {
+      const p = pending.current;
+      if (p.dirty) void saveLineup(dayKey, p.boats, p.status);
+    },
+    [dayKey],
+  );
+
+  /*
+    PUBLISHING TELLS THE SQUAD — and it is the only thing that does. The
+    autosave writes constantly; forty phones must not buzz for a seat tried
+    and untried again.
+  */
+  const publish = async () => {
+    if (!(await persist("published"))) return;
+    setAnnounced(JSON.stringify(boats));
+    notifySquad({ kind: "team_lineup", preview: `${context.weekday} ${context.period}` });
+  };
+
+  /* Already live, already changed on their phones — this only sends the buzz. */
+  const tellSquad = async () => {
+    if (dirty && !(await persist())) return;
+    setAnnounced(JSON.stringify(boats));
+    notifySquad({ kind: "team_lineup", preview: `${context.weekday} ${context.period}` });
+  };
+
+  /* Back to a draft: the crew disappears from the squad's phones again. */
+  const unpublish = async () => {
+    if (!(await persist("draft"))) return;
+    setAnnounced(null);
   };
 
   /*
-    Step to the water session either side of this one.
-
-    Unsaved work is SAVED FIRST, keeping whatever status this lineup already
-    has — a draft stays a draft, a published lineup stays published. Losing a
-    seated crew to an arrow tap would be the worst thing this screen could do,
-    and the coach did not ask to leave the work behind, only to move on.
+    Step to the water session either side of this one. Whatever is on screen is
+    written first — losing a seated crew to an arrow tap would be the worst
+    thing this screen could do, and the coach did not ask to leave the work
+    behind, only to move on.
   */
   const step = async (key: string | null) => {
-    if (!key || busy) return;
-    if (JSON.stringify(boats) !== loaded.current) {
-      setBusy("save");
-      const { error } = await saveLineup(dayKey, boats, status);
-      setBusy(null);
-      if (error) {
-        console.error("saveLineup:", error);
-        return; // stay put rather than walk away from work that didn't save
-      }
-      loaded.current = JSON.stringify(boats);
-    }
+    if (!key || writing) return;
+    if (dirty && !(await persist())) return; // stay put rather than walk away from it
     nav.go(key);
   };
 
@@ -1024,7 +1076,7 @@ function Builder({
           never reflows under a thumb that is already reaching for it.
         */}
         <div className="mt-1 flex items-center gap-2">
-          <StepArrow dir="prev" to={nav.prev} label={nav.label} onGo={step} busy={busy !== null} />
+          <StepArrow dir="prev" to={nav.prev} label={nav.label} onGo={step} busy={writing} />
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
               <h1 className="truncate text-2xl font-semibold text-text">
@@ -1040,12 +1092,12 @@ function Builder({
                 <span
                   className={`h-1.5 w-1.5 rounded-full ${status === "published" ? "bg-success" : "bg-warn"}`}
                 />
-                {status === "published" ? "Published" : "Draft"}
+                {status === "published" ? "Live" : "Draft"}
               </span>
             </div>
             <div className="mt-0.5 text-[11px] text-muted">{context.sub}</div>
           </div>
-          <StepArrow dir="next" to={nav.next} label={nav.label} onGo={step} busy={busy !== null} />
+          <StepArrow dir="next" to={nav.next} label={nav.label} onGo={step} busy={writing} />
         </div>
 
         {/* prescribed session (from the published plan, if any) */}
@@ -1370,33 +1422,29 @@ function Builder({
         )}
       </div>
 
-      {/* save / publish bar */}
-      <div className="absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-background via-background to-transparent px-4 pb-6 pt-6">
-        {/* data-tour: the two buttons only — the bar around them is a tall
-            fade, and a ring drawn on that swallows half the pool. */}
-        <div data-tour="coach-lineup-publish" className="mx-auto flex max-w-screen-sm gap-2.5">
-          <button
-            type="button"
-            onClick={() => persist("draft", "save")}
-            disabled={busy !== null}
-            className={buttonClass({ variant: "secondary", size: "lg" })}
-          >
-            <IconCheck size={15} />
-            {busy === "save" ? "Saving…" : justSaved && status === "draft" ? "Saved" : "Save draft"}
-          </button>
-          <Button
-            size="lg"
-            onClick={() => persist("published", "publish")}
-            disabled={busy !== null}
-            className="flex-1"
-          >
-            <IconSend size={16} />
-            {busy === "publish"
-              ? "Publishing…"
-              : status === "published"
-                ? "Update live lineup"
-                : "Publish to team"}
-          </Button>
+      {/*
+        The publish bar. No Save button any more — the crew saves itself, and
+        the quiet line above says so. What is left is the one decision worth a
+        button, in the same three states and the same words as the Plan tab.
+      */}
+      <div className="absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-background via-background to-transparent px-4 pb-6 pt-8">
+        <div className="mx-auto max-w-screen-sm">
+          <div className="mb-1.5 flex justify-end">
+            <SaveState
+              status={failed ? "error" : writing || dirty ? "saving" : "saved"}
+              onRetry={() => void persist()}
+            />
+          </div>
+          <PublishBar
+            tourId="coach-lineup-publish"
+            what="lineup"
+            live={status === "published"}
+            changed={announced !== null && announced !== text}
+            busy={writing}
+            onPublish={publish}
+            onNotify={tellSquad}
+            onUnpublish={unpublish}
+          />
         </div>
       </div>
 

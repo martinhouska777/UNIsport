@@ -179,7 +179,7 @@ export type PracticeStatus = "draft" | "published" | "none" | "rest";
 
 export const practiceStatusMeta: Record<PracticeStatus, { label: string; dot: string }> = {
   draft: { label: "Draft", dot: "bg-warn" },
-  published: { label: "Published", dot: "bg-success" },
+  published: { label: "Live", dot: "bg-success" },
   none: { label: "Not started", dot: "bg-muted/50" },
   rest: { label: "Rest day", dot: "bg-muted/50" },
 };

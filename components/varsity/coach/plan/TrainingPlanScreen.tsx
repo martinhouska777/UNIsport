@@ -54,6 +54,7 @@ import { useMembership } from "@/components/varsity/useMembership";
 import { fetchPlan, savePlan } from "@/lib/varsity/planStore";
 import { notifySquad } from "@/lib/push/client";
 import SaveState from "@/components/varsity/coach/SaveState";
+import PublishBar from "@/components/varsity/coach/PublishBar";
 import {
   IconPlus,
   IconArrowLeft,
@@ -63,7 +64,7 @@ import {
   IconCheck,
   IconCalendar,
   IconRepeat,
-  IconSend,
+
   IconTrash,
   IconTrophy,
 } from "@/components/icons";
@@ -115,7 +116,7 @@ function DraftBadge() {
 function PublishedBadge() {
   return (
     <span className="rounded border border-success-line bg-success-tint px-1.5 py-px text-[8px] font-bold uppercase tracking-[0.08em] text-success">
-      Published
+      Live
     </span>
   );
 }
@@ -246,7 +247,7 @@ export default function TrainingPlanScreen() {
 
   // Publish a draft block: flip it to published, then persist so athletes see it.
   // Publishing is the one moment worth a notification — the squad's week has just
-  // changed under them. Only on success, and never on a plain Save: a draft is
+  // changed under them. Only on success, and never on an autosave: a draft is
   // the coach thinking, and nobody should have their phone buzz for that.
   const publishBlock = async (blockId: string) => {
     const next = blocks.map((b) =>
@@ -254,7 +255,24 @@ export default function TrainingPlanScreen() {
     );
     setBlocks(next);
     const ok = await persist({ blocks: next });
-    if (ok) notifySquad({ kind: "team_plan", preview: next.find((b) => b.id === blockId)?.name });
+    const b = next.find((x) => x.id === blockId);
+    if (ok && b) {
+      markAnnounced(b);
+      notifySquad({ kind: "team_plan", preview: b.name });
+    }
+  };
+
+  /*
+    The block is already live and already changed on their Home — this only
+    buzzes the phones. Anything still in the autosave's pause is written first,
+    so the squad never gets told about work the database hasn't got.
+  */
+  const tellSquad = async (blockId: string) => {
+    const b = blocks.find((x) => x.id === blockId);
+    if (!b) return;
+    if (dirty && !(await persist())) return;
+    markAnnounced(b);
+    notifySquad({ kind: "team_plan", preview: b.name });
   };
 
   // Move a published block back to draft (hides it from athletes again).
@@ -263,6 +281,11 @@ export default function TrainingPlanScreen() {
       b.id === blockId ? { ...b, status: "draft" as const } : b,
     );
     setBlocks(next);
+    setAnnounced((prev) => {
+      const rest = { ...prev };
+      delete rest[blockId];
+      return rest;
+    });
     await persist({ blocks: next });
   };
 
@@ -279,6 +302,48 @@ export default function TrainingPlanScreen() {
     for (const w of buildWeeks(b)) for (const d of w.days) for (const p of periods) keys.add(sessionKey(d.date, p));
     return keys;
   };
+
+  /*
+    WHAT THE SQUAD HAS ALREADY BEEN TOLD.
+    A published block is live: it autosaves, so every edit reaches the athletes'
+    Home as it is made. The only thing left to decide is whether their phones
+    should buzz — so we remember what each block looked like the last time it
+    was announced, and offer "Tell the squad" only once it actually differs.
+    In-session by design: it is a nudge about work you just did, not a promise
+    kept across days.
+  */
+  const [announced, setAnnounced] = useState<Record<string, string>>({});
+  const blockSnapshot = (b: Block) =>
+    JSON.stringify([
+      b.name,
+      b.start,
+      b.end,
+      b.raceName ?? "",
+      b.raceDate ?? "",
+      [...blockKeys(b)].sort().map((k) => [k, sessions[k] ?? null]),
+    ]);
+  const blockChanged = (b: Block) =>
+    announced[b.id] !== undefined && announced[b.id] !== blockSnapshot(b);
+  const markAnnounced = (b: Block) =>
+    setAnnounced((prev) => ({ ...prev, [b.id]: blockSnapshot(b) }));
+
+  /* A block that was ALREADY published when the screen opened starts from what
+     it looked like then — the squad has seen that much. */
+  useEffect(() => {
+    if (loading) return;
+    setAnnounced((prev) => {
+      let next = prev;
+      for (const b of blocks) {
+        if (b.status !== "published" || prev[b.id] !== undefined) continue;
+        if (next === prev) next = { ...prev };
+        next[b.id] = blockSnapshot(b);
+      }
+      return next;
+    });
+    // Only when the set of blocks changes — the snapshot itself must NOT be a
+    // dependency, or every edit would quietly re-baseline what was announced.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, blocks]);
 
   // Delete a block + its sessions (keeping any slot another block still covers).
   const deleteBlock = async (blockId: string) => {
@@ -652,40 +717,19 @@ export default function TrainingPlanScreen() {
           </div>
         )}
 
-        {/* publish status — controls whether athletes can see this block */}
-        <div
-          data-tour="coach-plan-status"
-          className="mt-4 flex items-center gap-3 rounded-xl border border-border bg-surface px-3.5 py-3"
-        >
-          <div className="flex-1">
-            <div className="flex items-center gap-1.5 text-[12px] font-semibold text-text">
-              <span
-                className={`h-2 w-2 rounded-full ${
-                  block.status === "published" ? "bg-success" : "bg-warn"
-                }`}
-              />
-              {block.status === "published" ? "Published" : "Draft"}
-            </div>
-            <div className="mt-0.5 text-[11px] text-muted">
-              {block.status === "published"
-                ? "Athletes can see this week on their Home."
-                : "Only you can see this — publish to share it with the team."}
-            </div>
-          </div>
-          {block.status === "published" ? (
-            <button
-              type="button"
-              onClick={() => unpublishBlock(block.id)}
-              disabled={writing}
-              className="rounded-lg border border-border px-3 py-2 text-[12px] font-semibold text-muted disabled:opacity-50"
-            >
-              Unpublish
-            </button>
-          ) : (
-            <Button size="sm" onClick={() => publishBlock(block.id)} disabled={writing}>
-              <IconSend size={13} /> Publish to team
-            </Button>
-          )}
+        {/* The one publish control — same component, same words, same three
+            states as the Lineup tab (components/varsity/coach/PublishBar). */}
+        <div className="mt-4">
+          <PublishBar
+            tourId="coach-plan-status"
+            what="block"
+            live={block.status === "published"}
+            changed={blockChanged(block)}
+            busy={writing}
+            onPublish={() => publishBlock(block.id)}
+            onNotify={() => tellSquad(block.id)}
+            onUnpublish={() => unpublishBlock(block.id)}
+          />
         </div>
 
         <div className="mt-5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">Weeks</div>

@@ -152,8 +152,8 @@ const steps: TourStep[] = [
   {
     group: PLAN_DIVE,
     anchor: "coach-plan-confirm",
-    title: "Confirm puts it in the week",
-    body: "And it is still a draft. It sits on your grid, coloured by its type, and the squad still has no idea it exists until you publish the block.",
+    title: "Done puts it in the week",
+    body: "It saves itself — there is no Save button in here, and the line at the top says so. And it is still a draft: it sits on your grid, coloured by its type, and the squad has no idea it exists until you publish the block.",
   },
   {
     group: PLAN_DIVE,
@@ -175,7 +175,7 @@ const steps: TourStep[] = [
   {
     anchor: "coach-lineup-first-day",
     title: "You never open a day to find out",
-    body: "Each day gives you its AM and its PM already saying what the plan prescribes and whether that lineup is not started, a draft, or published. Seven of these, so the week ahead answers itself.",
+    body: "Each day gives you its AM and its PM already saying what the plan prescribes and whether that lineup is not started, a draft, or live. Seven of these, so the week ahead answers itself.",
   },
   {
     press: "coach-lineup-first-practice",
@@ -197,7 +197,7 @@ const steps: TourStep[] = [
   {
     anchor: "coach-lineup-publish",
     title: "This is the part that saves the morning",
-    body: "Save a draft while you are still deciding. Publish, and every rower opens their own Home to their own seat lit up, with the push-off time and which oars to take. Nobody has to be told, and nobody can say they were not.",
+    body: "The crew saves itself as you seat it, and stays a draft nobody can see. Publish, and every rower opens their own Home to their own seat lit up, with the push-off time and which oars to take. After that it is live: a seat you swap is on their phones as you swap it, and the button only offers to buzz them about it.",
   },
 
   /* ── Notes ────────────────────────────────────────────────────────────── */
