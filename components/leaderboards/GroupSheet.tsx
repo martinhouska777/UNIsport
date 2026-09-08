@@ -22,7 +22,8 @@
   lib/gyms.ts, applied inline (rule 1's content-colour exception).
 */
 import { useEffect, useState } from "react";
-import { IconX } from "@/components/icons";
+import { useRouter } from "next/navigation";
+import { IconUser, IconX } from "@/components/icons";
 import { pointsLabel, sessionsOf } from "@/lib/points";
 import {
   fetchPeopleBoard,
@@ -61,6 +62,7 @@ export default function GroupSheet({
   periodLabel: string;
   onClose: () => void;
 }) {
+  const router = useRouter();
   const [people, setPeople] = useState<LeaderRow[] | null>(null);
   const tint = kind === "house" ? houseColor(row.key) : null;
 
@@ -149,9 +151,13 @@ export default function GroupSheet({
                 // this screen exists to answer.
                 const share = row.points > 0 ? Math.round((p.score / row.points) * 100) : 0;
                 return (
-                  <div
+                  /* Tapping a name opens that person — same as the boards
+                     behind this sheet (owner, 2026-09-06). */
+                  <button
                     key={p.userId}
-                    className={`flex items-center gap-2.5 rounded-xl border px-3 py-2.5 ${
+                    type="button"
+                    onClick={() => router.push(p.isMe ? "/profile" : `/people/${p.userId}`)}
+                    className={`tap44 flex w-full items-center gap-2.5 rounded-xl border px-3 py-2.5 text-left active:bg-surface-2 ${
                       p.isMe ? "border-primary bg-primary-tint" : "border-border bg-surface"
                     }`}
                   >
@@ -164,8 +170,10 @@ export default function GroupSheet({
                     >
                       {p.rank}
                     </span>
-                    <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-primary-tint text-[11px] font-semibold text-primary">
-                      {p.initials}
+                    {/* No initials (owner, same day) — a plain figure, and
+                        the name beside it does the naming. */}
+                    <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-primary-tint text-primary">
+                      <IconUser size={15} />
                     </span>
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-[13px] font-medium text-text">
@@ -190,7 +198,7 @@ export default function GroupSheet({
                         pts
                       </div>
                     </div>
-                  </div>
+                  </button>
                 );
               })}
             </div>

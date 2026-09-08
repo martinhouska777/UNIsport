@@ -24,7 +24,7 @@
   is the one place on this screen worth a beat of movement, and it turns itself
   off for anyone who asks for reduced motion.
 */
-import { IconTrophy } from "@/components/icons";
+import { IconTrophy, IconUser } from "@/components/icons";
 
 export type PodiumEntry = {
   /** React key — a user id or a house name. */
@@ -41,8 +41,13 @@ export type PodiumEntry = {
   title: string;
   /** One short line under the name: a house, a class year, a session count. */
   subtitle?: string;
-  /** Shown in the avatar. Initials for a person, for a house its first letter. */
-  initials: string;
+  /*
+    Shown in the avatar. A HOUSE puts its first letter here. A PERSON puts
+    nothing — the owner's call (2026-09-06: "u leaderboards dont do
+    inititials"), so a person's circle carries a plain figure and the name
+    under it does the naming.
+  */
+  initials?: string;
   /** The score, already formatted. */
   value: string;
   unit: string;
@@ -113,7 +118,7 @@ function Place({ entry }: { entry: PodiumEntry }) {
               : undefined
           }
         >
-          {entry.initials}
+          {entry.initials ?? <IconUser size={entry.place === 1 ? 22 : 19} />}
         </span>
 
         <div className="mt-1.5 w-full truncate px-0.5 text-center text-[12px] font-medium leading-tight text-text">

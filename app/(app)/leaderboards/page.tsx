@@ -70,6 +70,7 @@ import {
   IconChevronRight,
   IconInfo,
   IconTrophy,
+  IconUser,
 } from "@/components/icons";
 import HonorCode, { HonorCodeFooter, useHonorCode } from "@/components/leaderboards/HonorCode";
 import GroupSheet from "@/components/leaderboards/GroupSheet";
@@ -272,9 +273,12 @@ function Picker({
 function PersonRow({
   row,
   competition,
+  onOpen,
 }: {
   row: LeaderRow;
   competition: CompetitionKey;
+  /** Opens this person's profile — their bio, interests and training. */
+  onOpen: () => void;
 }) {
   const sessions = sessionsOf(row.kinds);
   const tint = houseColor(row.residence);
@@ -290,19 +294,27 @@ function PersonRow({
       .join(" · ") || "—";
 
   return (
-    <div
-      className={`flex items-center gap-2.5 rounded-xl border px-3 py-2.5 ${
+    /* A NAME ON A BOARD IS A PERSON — tapping one opens their profile, which is
+       where the bio, the interests and the training actually are (owner,
+       2026-09-06: "make so you can click their profile and see the bio and
+       interests etc"). Your own row goes to your own tab instead. */
+    <button
+      type="button"
+      onClick={onOpen}
+      className={`tap44 flex w-full items-center gap-2.5 rounded-xl border px-3 py-2.5 text-left active:bg-surface-2 ${
         row.isMe ? "border-primary bg-primary-tint" : "border-border bg-surface"
       }`}
     >
       <RankBadge rank={row.rank} />
       <span
-        className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-primary-tint text-[11px] font-semibold text-primary"
-        // Their house's own colour, so a campus list isn't fifty identical
-        // grey circles — content data from lib/gyms.ts, applied inline.
+        /* NO INITIALS (owner, same day). The tile stays, because it is what
+           carries their house's colour down a list of fifty names — content
+           data from lib/gyms.ts, applied inline — but what sits in it is a
+           plain figure, and the name beside it does the naming. */
+        className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-primary-tint text-primary"
         style={tint ? { background: `${tint}26`, color: tint } : undefined}
       >
-        {row.initials}
+        <IconUser size={15} />
       </span>
       <div className="min-w-0 flex-1">
         <div className="truncate text-[13px] font-medium text-text">
@@ -316,7 +328,7 @@ function PersonRow({
       ) : (
         <Score value={row.score.toLocaleString("en-US")} unit="pts" />
       )}
-    </div>
+    </button>
   );
 }
 
@@ -480,6 +492,14 @@ export default function LeaderboardsPage() {
     };
   }, [competition, period, want]);
 
+  /* Where a name goes when it is tapped. Somebody else's row opens the public
+     profile the Match tab already uses (bio, interests, training, follow);
+     your own goes to your own tab, because /people is written for someone
+     else's profile and reading your own there would be a stranger's view of
+     yourself. */
+  const openPerson = (p: { userId: string; isMe: boolean }) =>
+    router.push(p.isMe ? "/profile" : `/people/${p.userId}`);
+
   const isGroupBoard = GROUP_BOARDS.includes(competition);
   const groupKind: "house" | "year" = competition === "years" ? "year" : "house";
   const nudge = nextUpLine(standing);
@@ -516,11 +536,11 @@ export default function LeaderboardsPage() {
         rank: p.rank,
         title: p.name,
         subtitle: p.residence ? residenceLabel(p.residence) : (p.classYear ?? undefined),
-        initials: p.initials,
         value: competition === "partners" ? String(p.score) : p.score.toLocaleString("en-US"),
         unit: competition === "partners" ? "people" : "pts",
         tint: houseColor(p.residence),
         mineLabel: p.isMe ? "You" : undefined,
+        onOpen: () => openPerson(p),
       }));
 
   // Hooks are all above this line, so the honour code can gate the screen.
@@ -673,7 +693,12 @@ export default function LeaderboardsPage() {
             {people.length > 3 && (
               <div className="mt-2.5 flex flex-col gap-1.5">
                 {people.slice(3).map((r) => (
-                  <PersonRow key={r.userId} row={r} competition={competition} />
+                  <PersonRow
+                    key={r.userId}
+                    row={r}
+                    competition={competition}
+                    onOpen={() => openPerson(r)}
+                  />
                 ))}
               </div>
             )}
