@@ -128,18 +128,23 @@ const safeName = (s: string) => s.replace(/[\\/:*?"<>|]/g, "-").trim();
   pak pod jmenem cox a jestli neni cox tak pod jmenem stroka hlavne u lodi 2- a
   4-"). A coxed boat is the cox's boat to a boathouse; the stroke is who you
   name a boat by when there is no cox to name it after, which is exactly the
-  coxless 2- and 4-. This used to be the other way round. A boat with nobody in
-  it is left with its rigging, which is the only thing anybody could truthfully
-  call it.
+  coxless 2- and 4-. This used to be the other way round.
+
+  THE SURNAME ALONE — "Farkas 4-", not "stroke Farkas 4-" (owner, same day:
+  "kdyz je to treba dvojka nebo co nema nazev tak to pojmenuj podle prijmeni
+  toho stroka nebo kormidelnika"). Which seat the name came from is not worth a
+  word in a filename: a 4- has no cox, so it can only be the stroke, and a
+  crew is called by a name, not by a role. A boat with nobody in it is left with
+  its rigging, which is the only thing anybody could truthfully call it.
 */
 export function videoBoatName(boat: Boat): string {
   const named = boat.name.trim();
   if (named) return [named, boat.badge].filter(Boolean).join(" ");
   const crew = crewFromBoat(boat);
   const cox = crew.find((c) => c.cox);
-  if (cox) return [`cox ${lastName(cox.name)}`, boat.badge].filter(Boolean).join(" ");
+  if (cox) return [lastName(cox.name), boat.badge].filter(Boolean).join(" ");
   const stroke = strokeName(crew);
-  if (stroke) return [`stroke ${lastName(stroke)}`, boat.badge].filter(Boolean).join(" ");
+  if (stroke) return [lastName(stroke), boat.badge].filter(Boolean).join(" ");
   return boat.badge || "Boat";
 }
 
