@@ -314,6 +314,9 @@ function MonthOverlay({
                 type="button"
                 disabled={!day}
                 onClick={() => day && onSelect(day)}
+                /* Every day of the month is the same box, prescribed or not —
+                   a rest day is empty space inside its rectangle, not a gap in
+                   the grid. Only the days OUTSIDE the block stay blank. */
                 className={`flex min-h-[64px] flex-col overflow-hidden rounded-lg border p-[3px] text-left ${
                   sel
                     ? "border-primary bg-primary-tint ring-1 ring-primary"
@@ -331,12 +334,22 @@ function MonthOverlay({
                 >
                   {num}
                 </span>
-                {/* The coach's actual workout text, one tinted block per session. */}
-                <span className="mt-0.5 flex flex-1 flex-col gap-px overflow-hidden">
+                {/*
+                  The coach's actual workout text, one tinted block per session,
+                  in a box split into a MORNING half and an AFTERNOON half. A
+                  day with only an AM outing fills the top half and leaves the
+                  bottom empty — it used to stretch over the whole day, which
+                  made a single session look like a double.
+                */}
+                <span className="mt-0.5 grid min-h-0 flex-1 auto-rows-fr grid-rows-2 gap-px overflow-hidden">
                   {(day?.sessions ?? []).map((s, j) => (
                     <span
                       key={j}
-                      className="flex-1 overflow-hidden rounded px-1 py-0.5" style={kindBlock(s.kind)}
+                      className="overflow-hidden rounded px-1 py-0.5"
+                      /* The morning half is the top one. A PM-only day is put
+                         in the second row on purpose, so an afternoon session
+                         never sits where the morning goes. */
+                      style={{ ...kindBlock(s.kind), gridRowStart: s.time === "PM" ? 2 : 1 }}
                     >
                       <span className="block text-[6px] font-bold leading-none text-text-3">
                         {s.time}

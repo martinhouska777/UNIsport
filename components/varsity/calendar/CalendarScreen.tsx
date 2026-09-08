@@ -9,20 +9,24 @@
   Tap a day for the whole thing; tap a legend colour for that kind of
   training's month.
 
-  FOUR THINGS IT DOES DIFFERENTLY FROM THE PLAN'S MONTH VIEW, all of them
-  problems that view has:
+  IT IS A WALL CALENDAR, so it behaves like one:
 
-    1. ROWS SIZE TO THEIR CONTENT. That one shares the height equally between
-       rows (auto-rows-fr), so a long workout is cut off mid-word while an
-       empty week holds the same space. Here a busy week grows and a quiet week
-       shrinks, and no session text is ever clipped.
-    2. A DAY YOU DID NOTHING IS NOT A BOX. Only days you trained get a card;
-       the rest are just their number. Half a month of empty bordered boxes was
-       the loudest thing on that screen and it carried no information.
-    3. EVERY SESSION SAYS WHICH KIND IT WAS — the colour is the intensity, so
+    1. THE MONTH FILLS THE SCREEN. Every row is the same height and the rows
+       share whatever is left between the header and the legend, so the grid
+       ends where the screen ends. (It used to size each row to its busiest
+       day, which made a quiet week a thin strip and a heavy one a slab — the
+       owner asked for a calendar that looks like a calendar.)
+    2. EVERY DAY IS A BOX, trained or not. An empty Tuesday is the same
+       rectangle as a Monday with two sessions; it just has empty space in it.
+       That is what makes the grid read as a month rather than as a list of the
+       days something happened.
+    3. A SESSION TAKES HALF A DAY. The box is split in two, so one session
+       fills the top half and leaves the bottom empty rather than stretching to
+       swallow the whole day. Two sessions take a half each.
+    4. EVERY SESSION SAYS WHICH KIND IT WAS — the colour is the intensity, so
        water and erg are the same green and only the word tells them apart.
        The figures stay in the day sheet: a column is about 33px of text wide.
-    4. NO PAGE HEADER. The month is the title. The month's totals sit next to
+    5. NO PAGE HEADER. The month is the title. The month's totals sit next to
        it instead of in a bar at the bottom.
 
   The session blocks borrow the plan's own palette (`kindColor` in
@@ -246,11 +250,13 @@ export default function CalendarScreen() {
   const atCurrentMonth = view.y === now.getFullYear() && view.m === now.getMonth();
 
   return (
-    <div className="mx-auto w-full max-w-screen-sm px-2.5 pb-10 pt-3">
+    /* A full-height column: title, weekday header, THE MONTH, legend. Only the
+       month flexes, so the grid always reaches the bottom of the screen. */
+    <div className="mx-auto flex h-full w-full max-w-screen-sm flex-col px-2.5 pb-3 pt-3">
       {/* The month IS the title — no page header above it. Its totals sit here
           rather than in a bar underneath the grid, where they were the last
           thing you reached and the first thing scrolled off. */}
-      <div className="flex items-center justify-between px-1.5">
+      <div className="flex flex-shrink-0 items-center justify-between px-1.5">
         <div>
           <div className="flex items-baseline gap-1.5">
             <h1 className="text-xl font-semibold leading-none text-text">{MONTHS[view.m]}</h1>
@@ -297,7 +303,7 @@ export default function CalendarScreen() {
       </div>
 
       {/* Weekday header */}
-      <div className="mt-3 grid grid-cols-7 gap-1 border-b border-border pb-1.5">
+      <div className="mt-3 grid flex-shrink-0 grid-cols-7 gap-1 border-b border-border pb-1.5">
         {DAY_NAMES.map((d, i) => (
           <div key={i} className="text-center text-[11px] font-semibold tracking-[0.12em] text-muted">
             {d}
@@ -305,13 +311,9 @@ export default function CalendarScreen() {
         ))}
       </div>
 
-      {/* The month. Rows take the height their busiest day needs — a week of
-          doubles is tall, a week off is a single line — so nothing is clipped
-          and no empty week eats a fifth of the screen. */}
-      <div
-        className="mt-1.5 grid grid-cols-7 gap-1"
-        style={{ gridAutoRows: "minmax(2.75rem, auto)" }}
-      >
+      {/* The month. Every row the same height, sharing what is left of the
+          screen — a wall calendar, not a list that grows with the training. */}
+      <div className="mt-1.5 grid min-h-0 flex-1 auto-rows-fr grid-cols-7 gap-1 overflow-y-auto">
         {Array.from({ length: leadingEmpty }).map((_, i) => (
           <div key={`e${i}`} />
         ))}
@@ -324,20 +326,15 @@ export default function CalendarScreen() {
               type="button"
               onClick={() => setPicked({ iso: d.iso, label })}
               /*
-                A day with training stacks from the top, because the chips need
-                the room. A day with NOTHING sits its number in the middle
-                instead: rows are as tall as their busiest day, so a top-aligned
-                number on an empty Tuesday left a column of dead space under it
-                whenever a Monday beside it had two sessions.
+                EVERY day of the month is the same box, trained or not — the
+                empty ones simply have empty space under their number. A grid
+                where only the days you trained had a card read as a scatter of
+                cards; this reads as a month.
               */
-              className={`flex flex-col overflow-hidden rounded-lg p-[3px] text-left ${
-                has ? "" : "justify-center"
-              } ${
+              className={`flex flex-col overflow-hidden rounded-lg border p-[3px] text-left ${
                 d.today
-                  ? "border border-primary bg-primary-tint"
-                  : has
-                    ? "border border-border bg-surface active:bg-surface-2"
-                    : "border border-transparent active:bg-surface"
+                  ? "border-primary bg-primary-tint"
+                  : "border-border bg-surface active:bg-surface-2"
               }`}
             >
               <span
@@ -347,8 +344,16 @@ export default function CalendarScreen() {
               >
                 {d.num}
               </span>
-              {has && (
-                <span className="mt-0.5 flex flex-col gap-px">
+              {/*
+                HALF A DAY EACH. Two rows, so one session fills the top half and
+                leaves the bottom empty instead of stretching over the whole
+                box — a morning outing should not look like a day that was
+                trained twice. A third session (it happens) makes its own row
+                and the three share.
+              */}
+              <span className="mt-0.5 grid min-h-0 flex-1 auto-rows-fr grid-rows-2 gap-px">
+                {has && (
+                  <>
                   {d.logs.map((l) => {
                     const planned: Session | undefined = l.dayKey ? planSessions[l.dayKey] : undefined;
                     /*
@@ -364,10 +369,15 @@ export default function CalendarScreen() {
                       to the category word, so nothing is ever blank.
                     */
                     const sub = logVolumeLabel(l.category, l.metres, l.minutes);
+                    /* An afternoon session belongs in the afternoon half, not
+                       wherever it happened to be saved first. A log with no
+                       period on it just takes the next free half. */
+                    const half = l.period === "PM" ? 2 : l.period === "AM" ? 1 : undefined;
                     return (
                       <span
                         key={l.id}
-                        className="block rounded px-1 py-0.5" style={blockStyle(l, planned)}
+                        className="overflow-hidden rounded px-1 py-0.5"
+                        style={{ ...blockStyle(l, planned), gridRowStart: half }}
                       >
                         {/* Three lines, then an ellipsis. Without a cap, one
                             long title ("Main strength — squat, pull, press")
@@ -393,8 +403,9 @@ export default function CalendarScreen() {
                       </span>
                     );
                   })}
-                </span>
-              )}
+                  </>
+                )}
+              </span>
             </button>
           );
         })}
@@ -403,7 +414,7 @@ export default function CalendarScreen() {
       {/* What the colours mean — the plan's own legend, drawn from the same
           data, so the two month views can never explain themselves
           differently. */}
-      <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-border px-1 pt-2.5">
+      <div className="mt-3 flex flex-shrink-0 flex-wrap items-center gap-x-3 gap-y-1 border-t border-border px-1 pt-2.5">
         {kindLegend.map((l) => (
           <span key={l.kind} className="flex items-center gap-1 text-[11px] text-muted">
             <span className="h-1.5 w-3 rounded-sm" style={kindBar(l.kind)} />
@@ -415,7 +426,7 @@ export default function CalendarScreen() {
       {/* The month by kind of training — the axis the colours no longer carry.
           Each is a button: tap it for that training's sessions, time and
           distance this month. */}
-      <div className="mt-2 flex flex-wrap items-center gap-1.5 px-1">
+      <div className="mt-2 flex flex-shrink-0 flex-wrap items-center gap-1.5 px-1">
         {legendCategories.map((c) => {
           const count = monthCounts[c] ?? 0;
           return (
