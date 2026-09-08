@@ -24,7 +24,7 @@
   is the one place on this screen worth a beat of movement, and it turns itself
   off for anyone who asks for reduced motion.
 */
-import { IconTrophy, IconUser } from "@/components/icons";
+import { IconUser } from "@/components/icons";
 
 export type PodiumEntry = {
   /** React key — a user id or a house name. */
@@ -42,12 +42,13 @@ export type PodiumEntry = {
   /** One short line under the name: a house, a class year, a session count. */
   subtitle?: string;
   /*
-    Shown in the avatar. A HOUSE puts its first letter here. A PERSON puts
-    nothing — the owner's call (2026-09-06: "u leaderboards dont do
-    inititials"), so a person's circle carries a plain figure and the name
-    under it does the naming.
+    WHAT THE AVATAR IS. A person's is a tinted circle with a plain figure on
+    it; a group's is its colour and nothing else — no letter, no number
+    (owner, 2026-09-06: "ty hausy taky bez inicialu, jen ty jejich tabs at
+    jsou v barvach"). A group with no colour to show has no circle at all,
+    because an empty grey ring says less than the name under it already does.
   */
-  initials?: string;
+  kind?: "person" | "group";
   /** The score, already formatted. */
   value: string;
   unit: string;
@@ -104,16 +105,23 @@ function Place({ entry }: { entry: PodiumEntry }) {
         className="podium-card-in flex w-full min-w-0 flex-col items-center"
         style={{ animationDelay: p.delay }}
       >
-        <span
-          className={`flex flex-shrink-0 items-center justify-center rounded-full border-2 font-semibold text-text ${p.avatar} ${p.tintBg} ${p.line}`}
-          style={
-            entry.tint
-              ? { background: `${entry.tint}2e`, borderColor: entry.tint }
-              : undefined
-          }
-        >
-          {entry.initials ?? <IconUser size={entry.place === 1 ? 22 : 19} />}
-        </span>
+        {!(entry.kind === "group" && !entry.tint) && (
+          <span
+            className={`flex flex-shrink-0 items-center justify-center rounded-full border-2 text-text ${p.avatar} ${p.tintBg} ${p.line}`}
+            style={
+              entry.tint
+                ? {
+                    // A group IS its colour, so it gets the colour whole; a
+                    // person only wears theirs behind the figure.
+                    background: entry.kind === "group" ? entry.tint : `${entry.tint}2e`,
+                    borderColor: entry.tint,
+                  }
+                : undefined
+            }
+          >
+            {entry.kind === "group" ? null : <IconUser size={entry.place === 1 ? 22 : 19} />}
+          </span>
+        )}
 
         <div className="mt-1.5 w-full truncate px-0.5 text-center text-[12px] font-medium leading-tight text-text">
           {entry.title}
@@ -131,22 +139,14 @@ function Place({ entry }: { entry: PodiumEntry }) {
         <div className="mt-0.5 text-[8px] uppercase tracking-[0.08em] text-muted">{entry.unit}</div>
       </div>
 
-      {/* The pedestal, and on the winner's, the sticker. It used to float above
-          the avatar as a bare 16px outline, which read as an icon rather than a
-          prize; down here beside the number it is on the thing that was won
-          (owner, 2026-09-06). */}
+      {/* The pedestal. NO TROPHY on it — one floated above the winner's avatar,
+          then sat on the block as a sticker, and the owner's verdict on both was
+          "to je strasne" (2026-09-06). The gold block is already the thing that
+          says first. */}
       <div
-        className={`podium-rise mt-1.5 flex w-full items-center justify-center gap-1.5 rounded-t-xl ${p.block} ${p.bg}`}
+        className={`podium-rise mt-1.5 flex w-full items-center justify-center rounded-t-xl ${p.block} ${p.bg}`}
         style={{ animationDelay: p.delay }}
       >
-        {entry.place === 1 && (
-          <span
-            aria-hidden
-            className="podium-sticker flex h-[26px] w-[26px] flex-shrink-0 items-center justify-center rounded-full"
-          >
-            <IconTrophy size={14} />
-          </span>
-        )}
         <span className="text-[17px] font-bold leading-none text-podium-ink">{entry.rank}</span>
       </div>
     </Tag>

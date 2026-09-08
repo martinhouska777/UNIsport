@@ -225,11 +225,6 @@ function MetricSwitch({
   );
 }
 
-/** "Winthrop" → "W"; "'27" → "27". What a group wears in the podium avatar. */
-function groupInitials(kind: "house" | "year", key: string): string {
-  return kind === "year" ? key.replace(/'/g, "") : key.slice(0, 1).toUpperCase();
-}
-
 /* A score with its unit under it, so a bare number never has to be guessed at. */
 function Score({ value, unit }: { value: string; unit?: string }) {
   return (
@@ -357,15 +352,19 @@ function GroupRowItem({
       } ${row.isMine ? "border-primary bg-primary-tint" : "border-border bg-surface"}`}
     >
       <RankBadge rank={row.rank} />
-      {/* The house's own colour, filled rather than a hairline — a board of
-          twelve houses is the one place on the screen where the colours ARE
-          the information. Content data from lib/gyms.ts, applied inline. */}
-      <span
-        className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-primary-tint text-[12px] font-semibold text-primary"
-        style={tint ? { background: `${tint}26`, color: tint } : undefined}
-      >
-        {groupInitials(kind, row.key)}
-      </span>
+      {/* THE HOUSE'S COLOUR, AND NOTHING ELSE ON IT (owner, 2026-09-06: "ty
+          hausy taky bez inicialu, jen ty jejich tabs at jsou v barvach"). A
+          board of twelve houses is the one place on the screen where the
+          colours ARE the information, so the tile is filled whole rather than
+          tinted behind a letter. Content data from lib/gyms.ts, applied inline.
+          A class-year board has no colours, so it has no tiles: an empty grey
+          square says less than the year already written beside it. */}
+      {tint && (
+        <span
+          className="h-8 w-8 flex-shrink-0 rounded-lg"
+          style={{ background: tint }}
+        />
+      )}
       <div className="min-w-0 flex-1">
         <div className="truncate text-[13px] font-medium text-text">
           {groupLabel(kind, row.key)}
@@ -523,7 +522,7 @@ export default function LeaderboardsPage() {
           metric === "total"
             ? `${g.avgPoints.toFixed(1)} per member`
             : pointsLabel(g.points),
-        initials: groupInitials(groupKind, g.key),
+        kind: "group" as const,
         value: groupScoreLabel(g, metric),
         unit: metricUnit,
         tint: groupKind === "house" ? houseColor(g.key) : null,
@@ -536,6 +535,7 @@ export default function LeaderboardsPage() {
         rank: p.rank,
         title: p.name,
         subtitle: p.residence ? residenceLabel(p.residence) : (p.classYear ?? undefined),
+        kind: "person" as const,
         value: competition === "partners" ? String(p.score) : p.score.toLocaleString("en-US"),
         unit: competition === "partners" ? "people" : "pts",
         tint: houseColor(p.residence),
