@@ -199,6 +199,59 @@ export function metricDisplay(value: number | null, key: MetricKey): string {
   }
 }
 
+/* ── Rowed straight through, or in reps? ─────────────────────────────────── */
+
+/*
+  A monitor hands back a row per interval either way, and the two mean opposite
+  things:
+
+    8×500m   — eight SEPARATE efforts with rest between them. Rep 8 against
+               rep 1 is the fade, and it is the first thing a coach reads.
+    a 2k     — ONE effort the monitor happened to cut into four 500s. Everybody
+               goes out fast and comes home slower; "+0.6s last vs first" is the
+               shape of every 2k ever rowed, so printing it says nothing.
+
+  Nothing in the numbers separates them — 8×500m and a straight 4k are both
+  4,000 m in eight rows. What does separate them is the coach's own wording, so
+  that is what we read: a rep count in front of a number ("8×500m", "3×25'",
+  "2 x 2k"). Anything else is one piece rowed straight through.
+
+  Unworded sessions therefore read as one piece, which is the safer way round:
+  a fade line missing from a set of reps costs a glance at the rows underneath,
+  while a fade line on a 2k is a number that means nothing at all.
+*/
+const REPS_RE = /(^|[\s(“"'\-–])(\d{1,2})\s*[x×]\s*\d/i;
+
+export function rowedAsReps(session: Session): boolean {
+  return REPS_RE.test(session.description ?? "");
+}
+
+/*
+  What to head each interval column with. Reps are numbered R1…Rn; the splits
+  of one continuous piece are named by the mark they were taken at (500, 1000,
+  1500, 2000) — which is how a rower reads a 2k in the first place.
+*/
+export function intervalHeadings(session: Session, results: TeamResult[], count: number): string[] {
+  const fallback = Array.from({ length: count }, (_, i) => String(i + 1));
+  if (rowedAsReps(session)) return fallback.map((n) => `R${n}`);
+
+  // The longest interval row anyone logged decides the marks.
+  const longest = results.reduce<TeamResult["intervals"]>(
+    (best, r) => ((r.intervals?.length ?? 0) > (best?.length ?? 0) ? r.intervals : best),
+    null,
+  );
+  if (!longest || longest.length < count) return fallback;
+  let run = 0;
+  const marks: string[] = [];
+  for (let i = 0; i < count; i++) {
+    const m = longest[i]?.metres;
+    if (m == null || m <= 0) return fallback; // a gap makes every later mark a lie
+    run += m;
+    marks.push(String(Math.round(run)));
+  }
+  return marks;
+}
+
 /* ── The same piece, earlier ─────────────────────────────────────────────── */
 
 /*

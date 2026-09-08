@@ -38,6 +38,7 @@ import {
   metricMeta,
   metricValue,
   metricDisplay,
+  rowedAsReps,
   type PastPiece,
   type PieceKind,
   type MetricKey,
@@ -147,11 +148,19 @@ export default function ResultDetail({
   const wkg = wattsPerKg(watts, result.weightKg);
   const rows = result.intervals ?? [];
 
-  // The fade: how much slower the last rep was than the first. Negative means
-  // they finished faster than they started, which is the good kind of piece.
+  /*
+    The fade: how much slower the last rep was than the first. Negative means
+    they finished faster than they started, which is the good kind of piece.
+
+    ONLY FOR REPS. On a piece rowed straight through, the monitor's 500s are
+    not efforts, they are slices of one — everybody goes out fast, so "last vs
+    first" would say the same thing about every 2k anyone has ever pulled.
+    rowedAsReps() reads the coach's own wording to tell them apart.
+  */
+  const reps = rowedAsReps(workout.session);
   const first = rows[0]?.splitSec ?? null;
   const last = rows[rows.length - 1]?.splitSec ?? null;
-  const fade = first != null && last != null ? last - first : null;
+  const fade = reps && first != null && last != null ? last - first : null;
 
   // Bars are drawn against the fastest rep, so the slowest is visibly longest.
   const best = rows.reduce<number | null>(
@@ -204,7 +213,7 @@ export default function ResultDetail({
         <>
           <div className="mb-2 mt-4 flex items-baseline justify-between px-0.5">
             <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-              {rows.length} intervals
+              {reps ? `${rows.length} intervals` : "Splits"}
             </span>
             {fade != null && (
               <span
@@ -263,7 +272,7 @@ export default function ResultDetail({
             })}
           </div>
           <p className="mt-1.5 px-0.5 text-[11px] leading-relaxed text-muted">
-            Longer bar = slower rep. The fastest one is green.
+            Longer bar = slower {reps ? "rep" : "split"}. The fastest one is green.
           </p>
         </>
       )}

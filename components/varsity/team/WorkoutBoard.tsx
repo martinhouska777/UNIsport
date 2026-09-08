@@ -233,11 +233,14 @@ export default function WorkoutBoard({
           <BoardTable
             rows={board.rows}
             kind={kind}
+            session={workout.session}
             metric={metric}
             ranked={ranked}
             hasPrevious={!!previous}
           />
-          <p className="mt-1.5 px-0.5 text-[11px] text-muted">Swipe the table sideways for the rest.</p>
+          <p className="mt-1.5 px-0.5 text-[11px] leading-relaxed text-muted">
+            Swipe the table sideways for the rest. The name stays put.
+          </p>
         </div>
       ) : (
         <div className="mt-2 overflow-hidden rounded-2xl border border-border bg-surface">
@@ -246,7 +249,10 @@ export default function WorkoutBoard({
               key={row.result.id}
               type="button"
               onClick={() => setOpenRow(row.result.id)}
-              className={`flex w-full items-center gap-3 px-3 py-2.5 text-left ${
+              /* gap-2.5 / px-2.5, not gap-3 / px-3: it buys ten pixels, and
+                 ten pixels is the difference between "Mason Cruz-Abrams" and
+                 "Mason Cruz-Abra…". A ranked board is a list of PEOPLE. */
+              className={`flex w-full items-center gap-2.5 px-2.5 py-2.5 text-left ${
                 i > 0 ? "border-t border-border" : ""
               } ${row.mine ? "bg-primary-tint" : "active:bg-surface-2"}`}
             >
@@ -263,7 +269,7 @@ export default function WorkoutBoard({
                 {row.initials}
               </span>
               <div className="min-w-0 flex-1">
-                <div className="truncate text-[13px] font-medium text-text">
+                <div className="truncate text-[13px] font-semibold text-text">
                   {row.result.athleteName || "Unnamed"}
                 </div>
                 <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-muted">
