@@ -104,12 +104,6 @@ function Place({ entry }: { entry: PodiumEntry }) {
         className="podium-card-in flex w-full min-w-0 flex-col items-center"
         style={{ animationDelay: p.delay }}
       >
-        {entry.place === 1 && (
-          <span className="mb-1 text-podium-1">
-            <IconTrophy size={16} />
-          </span>
-        )}
-
         <span
           className={`flex flex-shrink-0 items-center justify-center rounded-full border-2 font-semibold text-text ${p.avatar} ${p.tintBg} ${p.line}`}
           style={
@@ -137,11 +131,22 @@ function Place({ entry }: { entry: PodiumEntry }) {
         <div className="mt-0.5 text-[8px] uppercase tracking-[0.08em] text-muted">{entry.unit}</div>
       </div>
 
-      {/* The pedestal. */}
+      {/* The pedestal, and on the winner's, the sticker. It used to float above
+          the avatar as a bare 16px outline, which read as an icon rather than a
+          prize; down here beside the number it is on the thing that was won
+          (owner, 2026-09-06). */}
       <div
-        className={`podium-rise mt-1.5 flex w-full items-center justify-center rounded-t-xl ${p.block} ${p.bg}`}
+        className={`podium-rise mt-1.5 flex w-full items-center justify-center gap-1.5 rounded-t-xl ${p.block} ${p.bg}`}
         style={{ animationDelay: p.delay }}
       >
+        {entry.place === 1 && (
+          <span
+            aria-hidden
+            className="podium-sticker flex h-[26px] w-[26px] flex-shrink-0 items-center justify-center rounded-full"
+          >
+            <IconTrophy size={14} />
+          </span>
+        )}
         <span className="text-[17px] font-bold leading-none text-podium-ink">{entry.rank}</span>
       </div>
     </Tag>

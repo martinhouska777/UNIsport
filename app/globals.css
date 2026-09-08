@@ -1232,6 +1232,33 @@ body {
 }
 .podium-card-in { animation: podium-card-in 380ms cubic-bezier(0.2, 0.9, 0.25, 1) backwards; }
 
+/*
+  THE WINNER'S STICKER — the trophy on the first pedestal, next to its "1".
+  The owner asked for it to read as something STUCK ON rather than printed
+  (2026-09-06: "put the trophy like next to 1 or under and make it better like
+  a sticker"), so it is a die-cut disc: a pale rim all the way round, a shadow
+  under one edge, and a tilt, because nobody ever puts a sticker on straight.
+
+  The colours are the medal tokens above — no hex reaches the component
+  (rule 1). The disc is the card's own ground so the gold trophy has something
+  to sit on: on a gold pedestal a gold trophy would simply vanish.
+*/
+.podium-sticker {
+  /*
+    THE RIM IS THE WHOLE TRICK. A sticker is a shape cut out of paper with a
+    margin left round it, so what says "stuck on" is a band in the colour of
+    the ground it was cut from — here the card's own surface, which is near
+    black in the dark theme and white in the light one, and reads strongly
+    against the gold either way. The disc inside stays gold so the pedestal
+    keeps its colour, and the trophy on it is the medal ink.
+  */
+  background: var(--podium-1);
+  color: var(--podium-ink);
+  border: 2.5px solid var(--surface);
+  box-shadow: 0 1.5px 3px color-mix(in oklab, var(--podium-ink) 45%, transparent);
+  rotate: -12deg;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .podium-rise,
   .podium-card-in {
