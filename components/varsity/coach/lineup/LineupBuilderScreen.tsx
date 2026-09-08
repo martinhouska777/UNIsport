@@ -5,8 +5,9 @@
   Two views:
     • "days"    — pick a practice (a real day's AM or PM) to build. Each shows a
                   status dot (none / draft / published) read from the database.
-    • "builder" — fill boats for that practice from the athlete pool, then Save
-                  (draft) or Publish to the team. Loads any existing lineup.
+    • "builder" — fill boats for that practice from the athlete pool. The crew
+                  autosaves as a draft; one button publishes it to the team.
+                  Loads any existing lineup.
 
   Seats are live: click an empty seat to TYPE a name (autocomplete from the pool),
   or DRAG a name from the pool (or another seat) onto a seat. The X clears a seat
