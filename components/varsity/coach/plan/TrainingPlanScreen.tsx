@@ -19,7 +19,7 @@
   session colours are content colours from that config (rule-1 exception),
   applied via inline style.
 */
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Button, { buttonClass } from "@/components/ui/Button";
 import { createPortal } from "react-dom";
 import ThemeProvider from "@/components/ThemeProvider";
@@ -53,6 +53,7 @@ import { fetchTrainingConfig } from "@/lib/varsity/configStore";
 import { useMembership } from "@/components/varsity/useMembership";
 import { fetchPlan, savePlan } from "@/lib/varsity/planStore";
 import { notifySquad } from "@/lib/push/client";
+import SaveState from "@/components/varsity/coach/SaveState";
 import {
   IconPlus,
   IconArrowLeft,
@@ -97,6 +98,11 @@ function Dot({ color }: { color: string }) {
 */
 const tint = (color: string) => `color-mix(in srgb, ${color} 13%, transparent)`;
 
+/* One string standing for the whole plan — this is how a real edit is told
+   apart from a re-render, and what the autosave compares against. */
+const snapshot = (blocks: Block[], sessions: SessionMap) =>
+  JSON.stringify({ blocks, sessions });
+
 
 function DraftBadge() {
   return (
@@ -128,8 +134,17 @@ export default function TrainingPlanScreen() {
   const [sessions, setSessions] = useState<SessionMap>({});
   const [view, setView] = useState<View>({ name: "blocks" });
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
+  /*
+    AUTOSAVE — there is no Save button on this screen any more.
+    `writing` is a request in flight; `failed` is the one state worth a control
+    (Retry); `lastSaved` is a snapshot of exactly what the database holds, so a
+    real edit can be told apart from a re-render and nothing is ever written
+    twice. Publishing still writes explicitly, because it must know it worked
+    before it buzzes forty phones.
+  */
+  const [writing, setWriting] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const [lastSaved, setLastSaved] = useState<string | null>(null);
 
   // Load the shared plan from the database (or localStorage fallback) on mount.
   useEffect(() => {
@@ -139,6 +154,10 @@ export default function TrainingPlanScreen() {
       if (!active) return;
       setBlocks(plan.blocks);
       setSessions(plan.sessions);
+      // What the database holds right now — the baseline every later edit is
+      // compared against. Set BEFORE loading flips, so the autosave below can
+      // never fire on the plan it just read back.
+      setLastSaved(snapshot(plan.blocks, plan.sessions));
       setLoading(false);
     })();
     return () => {
@@ -160,35 +179,69 @@ export default function TrainingPlanScreen() {
     };
   }, [membership?.teamId]);
 
-  // Persist the whole plan (manual Save button, accessible while building).
-  // Returns false if the save failed so callers (e.g. Publish) can react.
-  const persist = async (next?: { blocks?: Block[]; sessions?: SessionMap }) => {
-    setSaving(true);
-    const { error } = await savePlan({
-      blocks: next?.blocks ?? blocks,
-      sessions: next?.sessions ?? sessions,
-    });
-    setSaving(false);
-    if (error) {
-      console.error("savePlan:", error);
-      return false;
-    }
-    setSaved(true);
-    window.setTimeout(() => setSaved(false), 1500);
-    return true;
-  };
+  // Write the whole plan. Returns false if it failed, so callers that must be
+  // sure (Publish) can hold their notification back.
+  const persist = useCallback(
+    async (next?: { blocks?: Block[]; sessions?: SessionMap }) => {
+      const b = next?.blocks ?? blocks;
+      const s = next?.sessions ?? sessions;
+      const snap = snapshot(b, s);
+      setWriting(true);
+      const { error } = await savePlan({ blocks: b, sessions: s });
+      setWriting(false);
+      if (error) {
+        console.error("savePlan:", error);
+        setFailed(true);
+        return false;
+      }
+      setLastSaved(snap);
+      setFailed(false);
+      return true;
+    },
+    [blocks, sessions],
+  );
 
-  const saveButton = (
-    <button
-      type="button"
-      onClick={() => persist()}
-      disabled={saving}
-      className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[12px] font-semibold disabled:opacity-50 ${
-        saved ? "border-success-line bg-success-tint text-success" : "border-primary-line text-primary"
-      }`}
-    >
-      <IconCheck size={14} /> {saving ? "Saving…" : saved ? "Saved" : "Save"}
-    </button>
+  /* Is there anything the database hasn't got yet? */
+  const dirty = useMemo(
+    () => lastSaved !== null && lastSaved !== snapshot(blocks, sessions),
+    [lastSaved, blocks, sessions],
+  );
+
+  /*
+    THE AUTOSAVE. A short pause after the last edit, then it writes — so typing
+    a description isn't one request per keystroke, and closing the app is never
+    the thing that loses a week of training.
+  */
+  useEffect(() => {
+    if (loading || !dirty || writing) return; // never two writes in the air at once
+    const t = window.setTimeout(() => void persist(), 700);
+    return () => window.clearTimeout(t);
+  }, [loading, dirty, writing, persist]);
+
+  /*
+    Leaving the screen inside that pause (tapping another console tab) would
+    outrun the timer, so the last state is kept in a ref and flushed on the way
+    out. Not awaited — the component is going, the request isn't.
+  */
+  const pending = useRef<{ dirty: boolean; plan: { blocks: Block[]; sessions: SessionMap } }>({
+    dirty: false,
+    plan: { blocks: [], sessions: {} },
+  });
+  useEffect(() => {
+    pending.current = { dirty, plan: { blocks, sessions } };
+  }, [dirty, blocks, sessions]);
+  useEffect(
+    () => () => {
+      if (pending.current.dirty) void savePlan(pending.current.plan);
+    },
+    [],
+  );
+
+  const saveState = (
+    <SaveState
+      status={failed ? "error" : writing || dirty ? "saving" : "saved"}
+      onRetry={() => void persist()}
+    />
   );
 
   // Publish a draft block: flip it to published, then persist so athletes see it.
@@ -401,7 +454,7 @@ export default function TrainingPlanScreen() {
                   </button>
                   <button
                     type="button"
-                    disabled={saving}
+                    disabled={writing}
                     onClick={() =>
                       confirm.kind === "block"
                         ? deleteBlock(confirm.blockId)
@@ -576,7 +629,7 @@ export default function TrainingPlanScreen() {
           <button onClick={() => setView({ name: "blocks" })} className="flex items-center gap-1 text-[13px] text-muted">
             <IconArrowLeft size={16} /> Blocks
           </button>
-          {saveButton}
+          {saveState}
         </div>
         <div className="mt-3 flex items-center gap-2">
           <h1 className="text-2xl font-semibold text-text">{block.name}</h1>
@@ -623,13 +676,13 @@ export default function TrainingPlanScreen() {
             <button
               type="button"
               onClick={() => unpublishBlock(block.id)}
-              disabled={saving}
+              disabled={writing}
               className="rounded-lg border border-border px-3 py-2 text-[12px] font-semibold text-muted disabled:opacity-50"
             >
               Unpublish
             </button>
           ) : (
-            <Button size="sm" onClick={() => publishBlock(block.id)} disabled={saving}>
+            <Button size="sm" onClick={() => publishBlock(block.id)} disabled={writing}>
               <IconSend size={13} /> Publish to team
             </Button>
           )}
@@ -687,7 +740,7 @@ export default function TrainingPlanScreen() {
           >
             <IconArrowLeft size={16} /> {block.name}
           </button>
-          {saveButton}
+          {saveState}
         </div>
         <h1 className="mt-3 text-2xl font-semibold text-text">Week {week.index}</h1>
         <div className="mt-0.5 text-[11px] text-muted">{week.rangeLabel}</div>
@@ -1093,7 +1146,7 @@ export default function TrainingPlanScreen() {
               data-tour="coach-plan-confirm"
               className="flex-1"
             >
-              <IconCheck size={16} /> Confirm session
+              <IconCheck size={16} /> Done
             </Button>
           </div>
         </div>
