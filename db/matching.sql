@@ -696,7 +696,10 @@ $$;
 --    REQUIRED inputs (the search makes no sense without them):
 --      activity_filter — 'gym'|'running'|'cardio'|'other'; everyone who does
 --                        this at all, whether it is their main thing or one of
---                        the extras they added in onboarding.
+--                        the extras they added in onboarding. NULL means every
+--                        activity — what the screen's "Other" pill sends, since
+--                        on a campus still filling up, everyone training that
+--                        day beats an empty list.
 --      target_day      — a day key: 'mon'..'sun'.
 --      target_hour     — the hour you want to train, 24h clock, 30-min steps OK
 --                        (e.g. 15 = 3 PM, 15.5 = 3:30 PM). A candidate qualifies
@@ -787,7 +790,10 @@ as $$
   -- "Do they do this AT ALL", not "is it their main thing". That one word is
   -- the whole fix: a gym-first person who also runs twice a week is now
   -- findable by somebody looking for a running partner.
-  where m.c_activities ? lower(activity_filter)
+  -- NULL activity_filter = every activity. "Other" on the search screen sends
+  -- null: on a campus that is still filling up, somebody who ticked Other is
+  -- better served by everyone training that day than by an empty list.
+  where (activity_filter is null or m.c_activities ? lower(activity_filter))
     and exists (
       select 1
       from jsonb_array_elements_text(

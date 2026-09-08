@@ -107,7 +107,10 @@ export type MatchFilters = {
 
 export type SessionMatchParams = MatchFilters & {
   userId: string;
-  activity: string; // 'gym' | 'running' | 'cardio' | 'other' (required)
+  /* 'gym' | 'running' | 'cardio' | 'other', or NULL for EVERY activity — what
+     the search screen's "Other" sends, because on a campus still filling up,
+     everyone training that day beats an empty list. */
+  activity: string | null;
   day: string; // 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun' (required)
   hour: number; // 24h clock, 30-min steps OK (15 = 3 PM, 15.5 = 3:30 PM) (required)
   /*

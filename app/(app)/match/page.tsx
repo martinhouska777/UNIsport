@@ -7,9 +7,10 @@
   - People: all compatible partners, scored out of 100, best first.
   - Sessions: one screen for "I want to train on Thursday". The board of open
     posts is what you land on; posting your own is a button on it; and the timed
-    search — pick WHAT (activity) + WHEN (day + hour), all required, and it finds
-    people free within ~2h of that — is folded away above the board for when you
-    already know exactly when you're going.
+    search — pick WHAT (activity) and WHEN (a day; the hour is optional) — is
+    folded away above the board for when you already know when you are going.
+    "Other" means every activity, an empty Time means the whole day, and how far
+    either side of a chosen hour still counts is a preset you can move.
 
   Every result card carries the REASONS that person ranked where they did (see
   lib/matchReasons.ts) — the things you actually share. Tapping through to their
@@ -18,7 +19,8 @@
   FILTERS are shared by Browse and Session search: one sheet, one piece of state,
   so a concentration you picked on one tab still applies on the other. Browse
   re-runs the moment a filter changes; Session search waits for the Search button
-  because its required day/hour aren't a filter, they're the question.
+  because its activity and day aren't a filter, they're the question — and its
+  own filters therefore appear WITH the results, not above the button.
 
   Data comes from the SQL RPC functions via lib/supabase/matching.ts. All colors
   are theme tokens; the choice lists reuse the onboarding data so they stay
@@ -41,6 +43,7 @@ import {
   sessionTimeLabel,
   verifiedGyms,
   SESSION_WINDOW_HOURS,
+  sessionWindows,
 } from "@/lib/onboarding";
 import { matchTier, isWorthShowing } from "@/lib/matchTier";
 import MatchCard from "@/components/match/MatchCard";
@@ -286,13 +289,20 @@ function MatchScreen() {
      Matching still searches on the weekday it falls on, because a training
      schedule is a weekly habit rather than a diary. */
   const [date, setDate] = useState<string | null>(null);
+  /* OPTIONAL now. No time means "anyone training that day" — the honest answer
+     when you have a free Thursday rather than a 7 o'clock plan. */
   const [hour, setHour] = useState<number | null>(null);
+  /* Two hours is where it starts, not where it has to stay (lib/onboarding.ts).
+     Only means anything once an hour is picked. */
+  const [windowHours, setWindowHours] = useState(SESSION_WINDOW_HOURS);
 
   const [results, setResults] = useState<Match[] | null>(null);
   const [searching, setSearching] = useState(false);
   const [sessionErr, setSessionErr] = useState<string | null>(null);
 
-  const canSearch = !!activity && !!date && hour !== null;
+  // What and when. The hour is no longer part of the price of asking.
+  const canSearch = !!activity && !!date;
+  const anyTime = hour === null;
   /*
     True when the exact hour found nobody and we widened to the whole day. The
     results are then real but looser, and the screen has to say so rather than
@@ -307,22 +317,29 @@ function MatchScreen() {
     try {
       // Shared filters FIRST: the three below are this screen's own required
       // answers and must win over anything left in the sheet.
+      /* No hour asked for = the middle of the day, opened wide enough to
+         cover all of it. The matching needs a centre and a width; "any time"
+         is simply the widest width there is. */
       const ask = {
         ...withFilters,
         userId,
-        activity: activity!,
+        /* "Other" means EVERY activity, not the handful of people who ticked
+           the Other box themselves. Campus is still filling up; a search that
+           can only ever return three people is not a search. */
+        activity: activity === "other" ? null : activity,
         day: dayKeyOf(date!),
-        hour: hour!,
+        hour: anyTime ? 12 : hour!,
+        windowHours: anyTime ? 12 : windowHours,
       };
       let rows = await getSessionMatches(ask);
       /*
         Nobody at 9? Then say who IS training that day rather than showing an
         empty screen — three people two hours later is a far more useful answer
         than "no one", and the heading above them says plainly that the time was
-        widened.
+        widened. Nothing to widen when the whole day was already the question.
       */
-      const wide = rows.length === 0;
-      if (wide) rows = await getSessionMatches({ ...ask, windowHours: 12 });
+      const wide = rows.length === 0 && !anyTime && windowHours < 12;
+      if (wide) rows = await getSessionMatches({ ...ask, hour: 12, windowHours: 12 });
       setWidened(wide && rows.length > 0);
       setResults(rows);
     } catch (e) {
@@ -443,9 +460,15 @@ function MatchScreen() {
                   />
                 ))}
               </div>
+              {/* Said out loud, because the pill's own word doesn't say it. */}
+              {activity === "other" && (
+                <p className="mt-1 text-[11px] text-muted">
+                  Everyone training then, whatever they do.
+                </p>
+              )}
             </div>
 
-            {/* REQUIRED: Day — a real date, up to a month out */}
+            {/* REQUIRED: Day — a real date, a week out */}
             <div>
               <FieldLabel>Day</FieldLabel>
               <WeekPicker value={date} onChange={setDate} />
@@ -477,17 +500,45 @@ function MatchScreen() {
                     value: String(t.value),
                     label: t.label,
                   }))}
-                  placeholder="Pick a time"
+                  placeholder="Any time"
                   ariaLabel="Time"
                 />
               </div>
             </div>
+
+            {/*
+              HOW WIDE. Two hours was hard-wired, which quietly decided for
+              everyone: too narrow for a free evening, too wide for a 7 AM run.
+              It is a preset now — ± 2h is already chosen, and you can move it,
+              up to the whole day.
+
+              Leaving Time on "Any time" is the other way to say the same thing
+              — everyone training that day — so these only appear once there is
+              an hour for them to be either side of.
+            */}
+            {!anyTime && (
+              <div className="flex flex-wrap gap-1.5">
+                {sessionWindows.map((w) => (
+                  <Pill
+                    key={w.hours}
+                    label={w.label}
+                    selected={windowHours === w.hours}
+                    onClick={() => setWindowHours(w.hours)}
+                  />
+                ))}
+              </div>
+            )}
+
             <p className="-mt-1.5 text-[11px] text-muted">
-              {hour !== null
-                ? `Shows people training within ${SESSION_WINDOW_HOURS}h of ${sessionTimeLabel(
-                    hour,
-                  )}.`
-                : `Pick a time — we’ll find people training within ${SESSION_WINDOW_HOURS}h of it.`}
+              {anyTime
+                ? "Shows everyone training that day. Pick a time to narrow it down."
+                : windowHours >= 12
+                  ? `Shows everyone training that day, whatever time ${sessionTimeLabel(
+                      hour!,
+                    )} turns into.`
+                  : `Shows people training ${
+                      sessionWindows.find((w) => w.hours === windowHours)?.full ?? ""
+                    } of ${sessionTimeLabel(hour!)}.`}
             </p>
 
             <Button size="lg" full onClick={() => runSearch()} disabled={!canSearch || searching}>
@@ -495,7 +546,7 @@ function MatchScreen() {
             </Button>
             {!canSearch && (
               <p className="text-center text-[11px] text-muted">
-                Pick an activity, day, and time to search.
+                Pick an activity and a day to search.
               </p>
             )}
           </div>

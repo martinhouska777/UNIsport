@@ -299,6 +299,24 @@ export const DEFAULT_TRAINING_SLOT = "17:00-19:00";
 // same language. Change the range/step here to widen choices.
 export const SESSION_WINDOW_HOURS = 2;
 
+/*
+  HOW WIDE that window is, is the searcher's call — two hours is only where it
+  starts. Somebody with one free evening wants everyone who is there at all;
+  somebody meeting for a 7 AM run means seven.
+
+  "Whole day" is the same search with the window opened wide enough to cover
+  one — it is not a special case in the matching, just a big number, which is
+  why it lives in this list beside the others rather than as a flag.
+*/
+export type SessionWindow = { hours: number; label: string; full: string };
+
+export const sessionWindows: SessionWindow[] = [
+  { hours: 1, label: "± 1h", full: "within an hour" },
+  { hours: SESSION_WINDOW_HOURS, label: "± 2h", full: `within ${SESSION_WINDOW_HOURS}h` },
+  { hours: 3, label: "± 3h", full: "within 3h" },
+  { hours: 12, label: "Whole day", full: "any time that day" },
+];
+
 export type TimeSlot = { value: number; label: string };
 
 export const sessionTimeSlots: TimeSlot[] = (() => {
