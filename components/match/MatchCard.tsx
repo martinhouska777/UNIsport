@@ -98,7 +98,11 @@ export default function MatchCard({
           Everything else is plainly theirs, in grey — it is never dressed up as
           something you have in common.
         */}
-        <div className="mb-2 mt-1.5 flex h-[64px] flex-wrap content-start gap-1 overflow-hidden">
+        {/* 68px, not 64: a chip is 19.35px tall and the gap 4px, so three rows
+            come to 66px and the old box sliced 2px off the bottom row — which
+            read as the button sitting on top of the chips. A fourth row would
+            start at 70px, so it stays hidden and the grid stays even. */}
+        <div className="mb-2 mt-1.5 flex h-[68px] flex-wrap content-start gap-1 overflow-hidden">
           {chips.map((c) => (
             <span
               key={c.key}
