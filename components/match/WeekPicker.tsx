@@ -1,96 +1,70 @@
 "use client";
 
 /*
-  PICK A DAY — a real one, with a date on it.
+  PICK A DAY — a real one, with a date on it, called by its full name.
 
-  Both places that ask "when?" used to offer seven bare weekday pills. "Mon"
-  meant some Monday: you couldn't tell which one, and you couldn't ask for the
-  one after next. This shows a week at a time with the dates on, arrows to move
-  between weeks, and a month of forward planning (lib/schedule.ts).
+  Both places that ask "when?" once offered seven bare weekday pills: "Mon"
+  meant some Monday and you couldn't tell which. That was replaced by a calendar
+  week with arrows and a month of forward planning, which cost a header row, two
+  arrows, and half the strip greyed out as days already gone.
 
-  Days already gone are dead — you can't arrange to have trained yesterday — and
-  today is ringed so you can find your place without reading the numbers.
+  It is now THE NEXT SEVEN DAYS, today first, each with its full weekday name
+  and date. Nothing is dead, nothing needs paging to reach, and "Wednesday" is a
+  word you read rather than a "W" you decode. Two columns, because "Wednesday"
+  does not fit in a seventh of a phone.
+
+  Today and tomorrow say so, in a small line under the name — those are the two
+  days people actually book, and counting back from a date to work out whether
+  the 9th is today is exactly the sum a picker should do for you.
 
   Shared by the session search and the board post form, because they are the
   same question asked from two ends and must not drift apart.
 
   Presentational: it owns no state. Colors are theme tokens.
 */
-import { IconChevronLeft, IconChevronRight } from "@/components/icons";
-import { weekStrip, weekLabel, MAX_WEEKS_AHEAD } from "@/lib/schedule";
+import { nextDays } from "@/lib/schedule";
 
 export default function WeekPicker({
   value,
   onChange,
-  week,
-  onWeekChange,
 }: {
   /** The chosen date as yyyy-mm-dd, or null. */
   value: string | null;
   onChange: (iso: string) => void;
-  /** How many weeks ahead of this one we're looking at. */
-  week: number;
-  onWeekChange: (next: number) => void;
 }) {
-  const days = weekStrip(week);
-  const canBack = week > 0;
-  const canForward = week < MAX_WEEKS_AHEAD;
+  const days = nextDays();
 
   return (
-    <div>
-      <div className="mb-1.5 flex items-center justify-between">
-        <button
-          type="button"
-          onClick={() => canBack && onWeekChange(week - 1)}
-          disabled={!canBack}
-          aria-label="Previous week"
-          className={`tap44 flex h-8 w-8 items-center justify-center rounded-lg border border-border ${
-            canBack ? "text-text" : "text-muted/30"
-          }`}
-        >
-          <IconChevronLeft size={15} />
-        </button>
-        <span className="text-[13px] font-medium text-text">{weekLabel(week)}</span>
-        <button
-          type="button"
-          onClick={() => canForward && onWeekChange(week + 1)}
-          disabled={!canForward}
-          aria-label="Next week"
-          className={`tap44 flex h-8 w-8 items-center justify-center rounded-lg border border-border ${
-            canForward ? "text-text" : "text-muted/30"
-          }`}
-        >
-          <IconChevronRight size={15} />
-        </button>
-      </div>
-
-      <div className="flex gap-1">
-        {days.map((d) => {
-          const on = value === d.iso;
-          return (
-            <button
-              key={d.iso}
-              type="button"
-              disabled={d.isPast}
-              onClick={() => onChange(d.iso)}
-              aria-label={d.iso}
-              aria-pressed={on}
-              className={`flex flex-1 flex-col items-center gap-0.5 rounded-[10px] border py-2 transition-colors ${
-                on
-                  ? "border-primary bg-primary text-primary-contrast"
-                  : d.isPast
-                    ? "border-transparent text-muted/30"
-                    : d.isToday
-                      ? "border-primary bg-surface text-text"
-                      : "border-border bg-surface text-text"
+    <div className="grid grid-cols-2 gap-1.5">
+      {days.map((d) => {
+        const on = value === d.iso;
+        const when = d.isToday ? "Today" : d.isTomorrow ? "Tomorrow" : null;
+        return (
+          <button
+            key={d.iso}
+            type="button"
+            onClick={() => onChange(d.iso)}
+            aria-label={`${d.name} ${d.num} ${d.month}`}
+            aria-pressed={on}
+            className={`tap44 flex flex-col items-start rounded-[10px] border px-2.5 py-2 text-left transition-colors ${
+              on
+                ? "border-primary bg-primary text-primary-contrast"
+                : d.isToday
+                  ? "border-primary bg-surface text-text"
+                  : "border-border bg-surface text-text"
+            }`}
+          >
+            <span className="text-[13px] font-medium leading-tight">{d.name}</span>
+            <span
+              className={`text-[11px] leading-tight tabular-nums ${
+                on ? "opacity-80" : "text-muted"
               }`}
             >
-              <span className="text-[10px] leading-none opacity-70">{d.letter}</span>
-              <span className="text-[13px] font-medium leading-none tabular-nums">{d.num}</span>
-            </button>
-          );
-        })}
-      </div>
+              {when ?? `${d.num} ${d.month}`}
+            </span>
+          </button>
+        );
+      })}
     </div>
   );
 }

@@ -55,7 +55,7 @@ import FiltersSheet, {
   activeFilterChips,
 } from "@/components/match/FiltersSheet";
 import { Pill, FieldLabel, SelectField } from "@/components/onboarding/controls";
-import { IconChevronDown } from "@/components/icons";
+import { IconChevronDown, IconSearch } from "@/components/icons";
 
 type SubTab = "people" | "sessions";
 
@@ -220,21 +220,29 @@ function MatchScreen() {
     () => new Set(presetGym ? ["gym"] : []),
   );
 
+  /*
+    Every route a filter can change goes through here. Browse re-runs itself
+    from its own effect; the timed search is driven by its button, so a filter
+    changing under its results has to say so out loud (refilterSession, below).
+  */
+  const changeFilters = (next: MatchFilters) => {
+    setFilters(next);
+    refilterSession(next);
+  };
+
   const toggleRow = (key: keyof MatchFilters) => {
+    const wasOpen = openRows.has(key);
     setOpenRows((prev) => {
       const next = new Set(prev);
-      if (next.has(key)) {
-        next.delete(key);
-        setFilters((f) => ({ ...f, [key]: null })); // unticking clears the choice
-      } else {
-        next.add(key);
-      }
+      if (wasOpen) next.delete(key);
+      else next.add(key);
       return next;
     });
+    if (wasOpen) changeFilters({ ...filters, [key]: null }); // unticking clears it
   };
 
   const clearFilter = (key: keyof MatchFilters) => {
-    setFilters((f) => ({ ...f, [key]: null }));
+    changeFilters({ ...filters, [key]: null });
     setOpenRows((prev) => {
       const next = new Set(prev);
       next.delete(key);
@@ -278,7 +286,6 @@ function MatchScreen() {
      Matching still searches on the weekday it falls on, because a training
      schedule is a weekly habit rather than a diary. */
   const [date, setDate] = useState<string | null>(null);
-  const [week, setWeek] = useState(0);
   const [hour, setHour] = useState<number | null>(null);
 
   const [results, setResults] = useState<Match[] | null>(null);
@@ -293,7 +300,7 @@ function MatchScreen() {
   */
   const [widened, setWidened] = useState(false);
 
-  const runSearch = async () => {
+  const runSearch = async (withFilters: MatchFilters = filters) => {
     if (!userId || !canSearch) return;
     setSearching(true);
     setSessionErr(null);
@@ -301,7 +308,7 @@ function MatchScreen() {
       // Shared filters FIRST: the three below are this screen's own required
       // answers and must win over anything left in the sheet.
       const ask = {
-        ...filters,
+        ...withFilters,
         userId,
         activity: activity!,
         day: dayKeyOf(date!),
@@ -324,6 +331,16 @@ function MatchScreen() {
       setSearching(false);
     }
   };
+
+  /*
+    Once results are on screen the filters narrow them live, the way they do on
+    Browse. Before the first search they have nothing to act on — which is why
+    the bar sits with the RESULTS now instead of inside the form, where it was a
+    second full-width control competing with the Search button itself.
+  */
+  function refilterSession(next: MatchFilters) {
+    if (tab === "sessions" && results !== null) void runSearch(next);
+  }
 
   return (
     <div className="mx-auto w-full max-w-screen-sm">
@@ -359,11 +376,11 @@ function MatchScreen() {
           <div className="px-3 pb-2">
             <MatchFilterBar
               filters={filters}
-              onChange={setFilters}
+              onChange={changeFilters}
               open={sheetOpen}
               onToggleOpen={() => setSheetOpen((v) => !v)}
               onClear={clearFilter}
-              onClearAll={() => setFilters(NO_FILTERS)}
+              onClearAll={() => changeFilters(NO_FILTERS)}
               total={browse?.length ?? null}
               openRows={openRows}
               onToggleRow={toggleRow}
@@ -399,7 +416,15 @@ function MatchScreen() {
         <div className="px-3 pb-4">
           <details className="group rounded-xl border border-border bg-surface-2" open={!!presetGym}>
             <summary className="tap44 flex cursor-pointer list-none items-center justify-between px-3.5 py-3 [&::-webkit-details-marker]:hidden">
-              <span className="text-sm font-medium text-text">Find a partner by time</span>
+              <span className="flex items-center gap-2">
+                {/* The row is a search you open, so it wears a search icon —
+                    otherwise it reads as one more heading on a tab that
+                    already has several. */}
+                <span className="text-muted">
+                  <IconSearch size={15} />
+                </span>
+                <span className="text-sm font-medium text-text">Find a partner by time</span>
+              </span>
               <span className="text-muted transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none">
                 <IconChevronDown size={16} />
               </span>
@@ -423,48 +448,49 @@ function MatchScreen() {
             {/* REQUIRED: Day — a real date, up to a month out */}
             <div>
               <FieldLabel>Day</FieldLabel>
-              <WeekPicker value={date} onChange={setDate} week={week} onWeekChange={setWeek} />
+              <WeekPicker value={date} onChange={setDate} />
             </div>
 
-            {/* REQUIRED: Time — a dropdown, which is a wheel on a phone. It was
-                thirty pills you dragged sideways through to reach 7:30. */}
-            <div>
-              <FieldLabel>Time</FieldLabel>
-              <SelectField
-                value={hour === null ? "" : String(hour)}
-                onChange={(v) => setHour(v === "" ? null : Number(v))}
-                options={sessionTimeSlots.map((t) => ({
-                  value: String(t.value),
-                  label: t.label,
-                }))}
-                placeholder="Pick a time"
-                ariaLabel="Time"
-              />
-              <p className="mt-1 text-[11px] text-muted">
-                {hour !== null
-                  ? `Shows people training within ${SESSION_WINDOW_HOURS}h of ${sessionTimeLabel(
-                      hour,
-                    )}.`
-                  : `Pick a time — we’ll find people training within ${SESSION_WINDOW_HOURS}h of it.`}
-              </p>
+            {/* WHERE and WHEN, side by side. Time on its own spanned the whole
+                panel for a value four characters long, and it left Gym with
+                nowhere to live but the filter sheet. Two short answers on one
+                line read as one question: where, and at what time. */}
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <FieldLabel>Gym</FieldLabel>
+                <SelectField
+                  value={filters.gym ?? ""}
+                  onChange={(v) => changeFilters({ ...filters, gym: v === "" ? null : v })}
+                  options={verifiedGyms.map((g) => ({ value: g, label: g }))}
+                  placeholder="Any gym"
+                  ariaLabel="Gym"
+                />
+              </div>
+              {/* A dropdown, which is a wheel on a phone. It was thirty pills
+                  you dragged sideways through to reach 7:30. */}
+              <div>
+                <FieldLabel>Time</FieldLabel>
+                <SelectField
+                  value={hour === null ? "" : String(hour)}
+                  onChange={(v) => setHour(v === "" ? null : Number(v))}
+                  options={sessionTimeSlots.map((t) => ({
+                    value: String(t.value),
+                    label: t.label,
+                  }))}
+                  placeholder="Pick a time"
+                  ariaLabel="Time"
+                />
+              </div>
             </div>
+            <p className="-mt-1.5 text-[11px] text-muted">
+              {hour !== null
+                ? `Shows people training within ${SESSION_WINDOW_HOURS}h of ${sessionTimeLabel(
+                    hour,
+                  )}.`
+                : `Pick a time — we’ll find people training within ${SESSION_WINDOW_HOURS}h of it.`}
+            </p>
 
-            {/* OPTIONAL filters — the same sheet Browse uses */}
-            <MatchFilterBar
-              filters={filters}
-              onChange={setFilters}
-              open={sheetOpen}
-              onToggleOpen={() => setSheetOpen((v) => !v)}
-              onClear={clearFilter}
-              onClearAll={() => setFilters(NO_FILTERS)}
-              openRows={openRows}
-              onToggleRow={toggleRow}
-              myConcentration={myConcentration}
-              myInterests={myInterests}
-              showActivity={false}
-            />
-
-            <Button size="lg" full onClick={runSearch} disabled={!canSearch || searching}>
+            <Button size="lg" full onClick={() => runSearch()} disabled={!canSearch || searching}>
               {searching ? "Searching…" : "Search"}
             </Button>
             {!canSearch && (
@@ -478,6 +504,25 @@ function MatchScreen() {
           {sessionErr && <Status>Search failed: {sessionErr}</Status>}
           {!sessionErr && results && (
             <div className="pt-3">
+              {/* OPTIONAL filters — the same sheet Browse uses. They appear
+                  with the answer, because narrowing a list you haven't asked
+                  for yet is not a thing anyone does. */}
+              <div className="pb-3">
+                <MatchFilterBar
+                  filters={filters}
+                  onChange={changeFilters}
+                  open={sheetOpen}
+                  onToggleOpen={() => setSheetOpen((v) => !v)}
+                  onClear={clearFilter}
+                  onClearAll={() => changeFilters(NO_FILTERS)}
+                  total={results.length}
+                  openRows={openRows}
+                  onToggleRow={toggleRow}
+                  myConcentration={myConcentration}
+                  myInterests={myInterests}
+                  showActivity={false}
+                />
+              </div>
               {results.length === 0 ? (
                 <Status>No one is training that day yet. Try another day.</Status>
               ) : (

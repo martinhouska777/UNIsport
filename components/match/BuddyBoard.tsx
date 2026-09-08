@@ -71,7 +71,6 @@ export default function BuddyBoard() {
   const [focus, setFocus] = useState<string | null>(null);
   // A real date — you can put your hand up for Monday a week ahead.
   const [date, setDate] = useState<string | null>(null);
-  const [week, setWeek] = useState(0);
   // The hour they actually mean to go. The board used to ask for a third of a
   // day, which is not an answer to "who trains around 9?".
   const [hour, setHour] = useState<number | null>(null);
@@ -206,7 +205,7 @@ export default function BuddyBoard() {
 
           <div>
             <FieldLabel>Day</FieldLabel>
-            <WeekPicker value={date} onChange={setDate} week={week} onWeekChange={setWeek} />
+            <WeekPicker value={date} onChange={setDate} />
           </div>
 
           <div>
@@ -296,17 +295,33 @@ export default function BuddyBoard() {
           rows of pills identical to the three in the form above, which read as
           the same form repeated; they now live in a sheet (#7 in the audit). */}
       <div className="pt-5">
-        <div className="pb-2 text-[11px] tracking-[0.06em] text-muted">OPEN POSTS</div>
-        <FilterBar
-          count={boardFilterCount(filters)}
-          chips={boardFilterChips(filters)}
-          onOpen={() => setSheetOpen((v) => !v)}
-          onClear={(key) => setFilters({ ...filters, [key]: null })}
-          onClearAll={() => setFilters(NO_BOARD_FILTERS)}
-          total={board?.length ?? null}
-          noun="post"
-          open={sheetOpen}
-        />
+        {/* The heading and its filter share one line. The filter used to be a
+            full-width bar directly under "OPEN POSTS" — two headings for one
+            list, and a row of screen spent on a control most people never
+            touch. It is an icon now, with the count on it when it is doing
+            something, and the post count sits beside the title where it reads
+            as part of the heading. */}
+        <div className="flex items-center justify-between pb-2">
+          <div className="text-[11px] tracking-[0.06em] text-muted">
+            OPEN POSTS
+            {board != null && (
+              <span className="ml-1.5 tabular-nums">
+                · {board.length} {board.length === 1 ? "post" : "posts"}
+              </span>
+            )}
+          </div>
+          <FilterBar
+            count={boardFilterCount(filters)}
+            chips={boardFilterChips(filters)}
+            onOpen={() => setSheetOpen((v) => !v)}
+            onClear={(key) => setFilters({ ...filters, [key]: null })}
+            onClearAll={() => setFilters(NO_BOARD_FILTERS)}
+            total={board?.length ?? null}
+            noun="post"
+            open={sheetOpen}
+            compact
+          />
+        </div>
         {sheetOpen && (
           <BoardFiltersSheet
             value={filters}
