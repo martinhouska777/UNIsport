@@ -216,7 +216,7 @@ export default function TrainingSettingsScreen({ membership }: { membership: Mem
     setSaved(false);
   }, []);
 
-  const save = async () => {
+  const save = useCallback(async () => {
     setSaving(true);
     setError("");
     const { error: err } = await saveTrainingConfig(teamId, cfg);
@@ -227,7 +227,27 @@ export default function TrainingSettingsScreen({ membership }: { membership: Mem
     }
     setDirty(false);
     setSaved(true);
-  };
+  }, [teamId, cfg]);
+
+  /*
+    AUTOSAVE — the same rule as the Plan and Lineup tabs: the coach's work
+    saves itself, and there is no Save button anywhere in the console. A short
+    pause after the last change, so renaming a session type isn't one write per
+    keystroke.
+  */
+  useEffect(() => {
+    if (loading || !dirty || saving) return;
+    const t = window.setTimeout(() => void save(), 700);
+    return () => window.clearTimeout(t);
+  }, [loading, dirty, saving, save]);
+
+  /* "Saved for the squad." is worth showing, but not worth keeping on screen —
+     it steps out of the way a couple of seconds after it lands. */
+  useEffect(() => {
+    if (!saved) return;
+    const t = window.setTimeout(() => setSaved(false), 2200);
+    return () => window.clearTimeout(t);
+  }, [saved]);
 
   /* ── list moves ── */
   const move = <T,>(list: T[], i: number, dir: -1 | 1): T[] => {
@@ -390,16 +410,24 @@ export default function TrainingSettingsScreen({ membership }: { membership: Mem
         </div>
       </Section>
 
-      {/* save bar — only in the way once there is something to save */}
-      {(dirty || saved || error) && (
+      {/* The save line — never a button, and only on screen while it has
+          something to say. Retry is the exception: a save that failed is the
+          one moment the coach can do something about it. */}
+      {(dirty || saving || saved || error) && (
         <div className="fixed inset-x-0 bottom-[76px] z-20 px-3.5">
-          <div className="mx-auto flex max-w-screen-sm items-center gap-2.5 rounded-2xl border border-border bg-surface p-2.5 shadow-lg">
+          <div className="mx-auto flex max-w-screen-sm items-center gap-2.5 rounded-2xl border border-border bg-surface p-3 shadow-lg">
             <span className="flex-1 px-1 text-[12px] text-muted">
-              {error ? <span className="text-danger">{error}</span> : saved ? "Saved for the squad." : "Unsaved changes"}
+              {error ? (
+                <span className="text-danger">Not saved — {error}</span>
+              ) : saved ? (
+                "Saved for the squad."
+              ) : (
+                "Saving…"
+              )}
             </span>
-            {dirty && (
-              <Button size="md" onClick={save} disabled={saving}>
-                {saving ? "Saving…" : "Save"}
+            {error && (
+              <Button size="md" onClick={() => void save()} disabled={saving}>
+                Retry
               </Button>
             )}
           </div>
@@ -647,7 +675,7 @@ function TypeSheet({
           />
 
           <Button size="lg" className="mt-5 w-full" onClick={commit} disabled={!label.trim()}>
-            {existing ? "Save type" : "Add type"}
+            {existing ? "Done" : "Add type"}
           </Button>
           {existing && (
             <Button
@@ -706,7 +734,7 @@ function ZoneSheet({
       <ColorPicker value={color} onChange={setColor} />
 
       <Button size="lg" className="mt-5 w-full" onClick={commit} disabled={!label.trim()}>
-        {existing ? "Save zone" : "Add zone"}
+        {existing ? "Done" : "Add zone"}
       </Button>
       {existing && (
         <Button

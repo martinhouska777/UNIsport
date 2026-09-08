@@ -186,9 +186,20 @@ function Editor({
               Clear
             </button>
           )}
+          {/*
+            THE ONE SCREEN IN THE CONSOLE THAT KEEPS A BUTTON. Everywhere else
+            the coach's work saves itself — but a note is not work in progress,
+            it is words landing on one rower's Home and buzzing their phone, and
+            half a sentence must never do that. So the button stays, and says
+            who it is about to reach.
+          */}
           <Button size="lg" onClick={save} disabled={busy || !dirty} className="flex-1">
             <IconCheck size={16} />
-            {busy ? "Saving…" : "Save note"}
+            {busy
+              ? "Sending…"
+              : text.trim()
+                ? `Send to ${member.name.split(/\s+/)[0]}`
+                : "Clear the note"}
           </Button>
         </div>
       </div>
