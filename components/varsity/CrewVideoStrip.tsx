@@ -31,7 +31,9 @@ import { COX_COLOR, COX_INK, sideMeta, type Boat } from "@/lib/varsity/coachLine
 import {
   deleteCrewVideo,
   fetchBoatVideos,
+  suggestedNameFor,
   uploadCrewVideo,
+  videoBoatName,
   videoSrc,
   type CrewSeat,
   type CrewVideo,
@@ -225,6 +227,9 @@ export default function CrewVideoStrip({ dayKey, boat }: { dayKey: string; boat:
   const [videos, setVideos] = useState<CrewVideo[]>([]);
   const [playing, setPlaying] = useState<CrewVideo | null>(null);
   const [label, setLabel] = useState("");
+  /* Picked and waiting for its name to be agreed, and that name. */
+  const [picked, setPicked] = useState<File[] | null>(null);
+  const [name, setName] = useState("");
   const [busyText, setBusyText] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   /*
@@ -284,17 +289,42 @@ export default function CrewVideoStrip({ dayKey, boat }: { dayKey: string; boat:
     fileRef.current?.click();
   }, [needsConnect]);
 
+  /*
+    CHOSEN, NOT SENT. The picker closing used to start the upload on the spot,
+    with the file's name worked out behind the reader's back. It now waits here
+    while the name is agreed — the same two steps as the Upload video sheet, and
+    deliberately the same wording, because it is the same job (owner,
+    2026-09-06: "nevidim tam v te apce save it as" — they upload from HERE, the
+    strip under a boat, not from the sheet on Home).
+  */
   const pick = async (files: FileList | null) => {
     if (!files || !files.length) return;
     setError(null);
     const list = Array.from(files);
-    for (let i = 0; i < list.length; i++) {
+    setPicked(list);
+    // The suggestion needs the coach's words for this practice, which only the
+    // plan has. Until it lands the field holds the boat alone, never nothing.
+    setName(videoBoatName(boat));
+    const full = await suggestedNameFor(dayKey, boat);
+    // …unless somebody has already started typing over it.
+    setName((current) => (current === videoBoatName(boat) ? full : current));
+  };
+
+  const send = async () => {
+    if (!picked) return;
+    setError(null);
+    for (let i = 0; i < picked.length; i++) {
       // An outing video is big and the boathouse signal is not. A percentage is
       // the difference between "it's working" and "it's frozen".
-      const of = list.length > 1 ? ` (${i + 1}/${list.length})` : "";
+      const of = picked.length > 1 ? ` (${i + 1}/${picked.length})` : "";
       setBusyText(`Uploading${of}…`);
-      const { video, error: err } = await uploadCrewVideo(dayKey, boat, list[i], label, (f) =>
-        setBusyText(`Uploading${of} ${Math.round(f * 100)}%`),
+      const { video, error: err } = await uploadCrewVideo(
+        dayKey,
+        boat,
+        picked[i],
+        label,
+        (f) => setBusyText(`Uploading${of} ${Math.round(f * 100)}%`),
+        name.trim(),
       );
       if (err) {
         setError(err);
@@ -304,8 +334,13 @@ export default function CrewVideoStrip({ dayKey, boat }: { dayKey: string; boat:
     }
     setBusyText(null);
     setLabel("");
+    setPicked(null);
+    setName("");
     if (fileRef.current) fileRef.current.value = "";
   };
+
+  /* Whatever the phone called it — the one part of the name nobody chooses. */
+  const ext = picked ? (picked[0].name.split(".").pop() || "mp4").toLowerCase().slice(0, 5) : "";
 
   return (
     /*
@@ -350,21 +385,22 @@ export default function CrewVideoStrip({ dayKey, boat }: { dayKey: string; boat:
         </div>
       )}
 
-      <div className={`mt-2 flex items-center gap-2 ${open ? "" : "hidden"}`}>
+      <input
+        ref={fileRef}
+        type="file"
+        accept="video/*"
+        multiple
+        hidden
+        onChange={(e) => void pick(e.target.files)}
+      />
+
+      <div className={`mt-2 flex items-center gap-2 ${open && !picked ? "" : "hidden"}`}>
         <input
           value={label}
           onChange={(e) => setLabel(e.target.value)}
           aria-label="Video label"
           placeholder="Label — start, 20 stroke… (optional)"
           className="min-w-0 flex-1 rounded-lg border border-border bg-surface-2 px-2.5 py-1.5 text-base text-[12px] text-text outline-none placeholder:italic placeholder:text-text-3"
-        />
-        <input
-          ref={fileRef}
-          type="file"
-          accept="video/*"
-          multiple
-          hidden
-          onChange={(e) => void pick(e.target.files)}
         />
         {/* One button, two jobs. Before Drive is connected it signs you in —
             which has to be a real tap, because a browser only lets a popup
@@ -379,7 +415,60 @@ export default function CrewVideoStrip({ dayKey, boat }: { dayKey: string; boat:
         </button>
       </div>
 
-      {open && needsConnect && seated && (
+      {/* THE NAME, BEFORE THE UPLOAD — what the file will be called on the
+          squad's Drive, offered and editable. Nothing leaves the phone until
+          Upload is pressed. */}
+      {open && picked && (
+        <div className="mt-2">
+          <div className="pb-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
+            Save it as
+          </div>
+          <div className="flex items-center gap-1.5 rounded-lg border border-border bg-surface-2 px-2.5 py-1.5">
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              disabled={!!busyText}
+              aria-label="File name"
+              /* text-base: anything smaller and a phone zooms the page in when
+                 the field takes focus. */
+              className="min-w-0 flex-1 bg-transparent text-base text-[12px] text-text outline-none"
+            />
+            <span className="flex-shrink-0 text-[11px] text-muted">.{ext}</span>
+          </div>
+          <div className="pt-1 text-[11px] text-muted">
+            {picked.length === 1
+              ? picked[0].name
+              : `${picked.length} clips — the rest numbered (2), (3)…`}
+          </div>
+          <div className="mt-2 flex items-center gap-2">
+            <button
+              type="button"
+              disabled={!!busyText || !name.trim()}
+              onClick={() => void send()}
+              className="tap44 flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-primary px-2.5 py-2 text-[12px] font-semibold text-primary-contrast disabled:opacity-50"
+            >
+              <IconPlus size={13} /> {busyText ?? "Upload"}
+            </button>
+            {!busyText && (
+              <button
+                type="button"
+                onClick={() => {
+                  setPicked(null);
+                  setName("");
+                  if (fileRef.current) fileRef.current.value = "";
+                }}
+                className="tap44 flex-shrink-0 px-2 text-[12px] text-muted underline underline-offset-4"
+              >
+                Cancel
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Not while a name is being agreed — by then the sign-in has happened
+          (openPicker does it before the picker opens) and the line is stale. */}
+      {open && !picked && needsConnect && seated && (
         <div className="mt-1.5 text-[11px] italic text-muted">
           Sign in to Google once, and video goes straight to the squad&apos;s Drive folder.
         </div>

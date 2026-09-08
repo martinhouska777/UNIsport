@@ -168,6 +168,15 @@ export function videoSuggestedName(boat: Boat, workout = ""): string {
 }
 
 /*
+  The same suggestion when the caller has the practice but not the coach's words
+  for it — the strip under a boat card, which knows only its dayKey. Both upload
+  paths must offer the SAME name, so neither of them builds one of its own.
+*/
+export async function suggestedNameFor(dayKey: string, boat: Boat): Promise<string> {
+  return videoSuggestedName(boat, await sessionWorkout(dayKey));
+}
+
+/*
   The name the file itself gets — the one that was accepted upstairs, never
   guessed again here. `index` is how many clips this boat already has from this
   session: the second one must not arrive in Drive under the same name as the
