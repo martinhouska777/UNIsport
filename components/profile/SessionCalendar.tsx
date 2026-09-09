@@ -21,6 +21,11 @@ const SHORT_MUSCLE: Record<string, string> = {
   Calves: "Calf",
   Core: "Core",
   Forearms: "Fore",
+  // Runs and cardio fall through here too, and the slice() fallback below made
+  // "Running" read "Runni" on the tile.
+  Running: "Run",
+  Cardio: "Cardio",
+  Session: "Session",
 };
 const short = (label: string) => SHORT_MUSCLE[label] ?? label.slice(0, 5);
 
@@ -128,7 +133,7 @@ export default function SessionCalendar({
                   {chips.slice(0, 2).map((c) => (
                     <span
                       key={c}
-                      className="truncate rounded bg-primary-tint px-1 text-left text-[7px] font-medium leading-[1.4] text-primary"
+                      className="truncate rounded bg-primary-tint px-[3px] text-left text-[7px] font-medium leading-[1.4] text-primary"
                     >
                       {short(c)}
                     </span>

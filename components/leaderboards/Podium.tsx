@@ -146,7 +146,12 @@ function Place({ entry }: { entry: PodiumEntry }) {
           </span>
         )}
 
-        <div className="mt-1.5 w-full truncate px-0.5 text-center text-[12px] font-medium leading-tight text-text">
+        <div
+          /* Two lines, not one truncated one: "Pforzheimer House" does not fit
+             a third of a phone. The blocks are bottom-aligned, so a name that
+             takes two lines rises instead of pushing the podium out of line. */
+          className="mt-1.5 line-clamp-2 w-full px-0.5 text-center text-[12px] font-medium leading-tight text-text"
+        >
           {entry.title}
         </div>
         {entry.mineLabel && (

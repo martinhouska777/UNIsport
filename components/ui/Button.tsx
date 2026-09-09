@@ -57,7 +57,9 @@ const variants: Record<ButtonVariant, string> = {
 const sizes: Record<ButtonSize, string> = {
   lg: "h-12 rounded-xl px-5 text-[15px]",
   md: "h-10 rounded-xl px-4 text-[13px]",
-  sm: "h-8 rounded-full px-3.5 text-[12px]",
+  // tap44: the visible pill stays 32px, the HIT area grows to the 44px phones
+  // need — the same trick the icon buttons use.
+  sm: "tap44 h-8 rounded-full px-3.5 text-[12px]",
 };
 
 /*
