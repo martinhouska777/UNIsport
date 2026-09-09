@@ -36,6 +36,14 @@ export type WorkoutMetrics = {
   unit?: DistanceUnit;
   duration?: string;
   weightUnit?: WeightUnit; // gym / other — kg or lb
+  /*
+    QUICK LOG — the body parts you trained, when you do not write the session
+    out set by set. "Legs" on its own is a logged session: it counts, it fills
+    the calendar day with the same body-part chips a full log does, and it
+    scores the same on the boards. Owner (2026-09-09): "I would just write that
+    I did leg day — I do not want to type it all out."
+  */
+  muscles?: string[]; // gym / other
 };
 
 export type WorkoutLog = {
@@ -46,7 +54,7 @@ export type WorkoutLog = {
   partner: string; // display name (real person's name, or legacy free text)
   partnerId?: string; // real app person's profile id, when picked from people
   exercises: WorkoutExercise[]; // gym / other
-  metrics: WorkoutMetrics; // running / cardio
+  metrics: WorkoutMetrics; // running / cardio distances, gym unit + quick-log body parts
   photos: string[]; // session photos (downscaled data URLs) — "memories"
   note: string;
   verified?: boolean; // true when auto-logged from a confirmed chat session plan
@@ -134,8 +142,13 @@ const cleanMetrics = (activity: string, m: WorkoutMetrics): WorkoutMetrics => {
     if (m.duration?.trim()) out.duration = m.duration.trim();
     return out;
   }
-  // gym / other → remember the weight unit the sets were logged in.
-  return m.weightUnit ? { weightUnit: m.weightUnit } : {};
+  // gym / other → the weight unit the sets were logged in, plus the body parts
+  // of a quick log (deduped, blanks dropped).
+  const out: WorkoutMetrics = {};
+  if (m.weightUnit) out.weightUnit = m.weightUnit;
+  const muscles = (m.muscles ?? []).map((s) => s.trim()).filter(Boolean);
+  if (muscles.length > 0) out.muscles = [...new Set(muscles)];
+  return out;
 };
 
 const draftToRow = (userId: string, d: WorkoutDraft) => ({
@@ -419,17 +432,33 @@ export function exerciseSummary(e: WorkoutExercise, unit: WeightUnit = "kg"): st
   return [e.name.trim(), setsLabel, topLabel].filter(Boolean).join(" · ");
 }
 
-/** Distinct muscle groups trained in a log, in first-seen order (gym/other). */
+/**
+ * Distinct muscle groups trained in a log, in first-seen order (gym/other).
+ * Two sources, one answer: the exercises you wrote out, and the body parts of a
+ * QUICK log (metrics.muscles) for a session you did not write out. The calendar
+ * and the day sheet read this, so both kinds of log look the same on the month.
+ */
 export function logMuscles(log: WorkoutLog): string[] {
   const seen = new Set<string>();
   const out: string[] = [];
-  for (const e of log.exercises) {
-    if (e.muscle && !seen.has(e.muscle)) {
-      seen.add(e.muscle);
-      out.push(e.muscle);
+  const add = (m?: string) => {
+    if (m && !seen.has(m)) {
+      seen.add(m);
+      out.push(m);
     }
-  }
+  };
+  for (const e of log.exercises) add(e.muscle);
+  for (const m of log.metrics?.muscles ?? []) add(m);
   return out;
+}
+
+/**
+ * A session logged as body parts alone — "leg day", with no sets written down.
+ * Worth naming because the detail screen has no exercise table to show for one.
+ */
+export function isQuickLog(log: WorkoutLog): boolean {
+  if (log.activity === "running" || log.activity === "cardio") return false;
+  return log.exercises.length === 0 && (log.metrics?.muscles?.length ?? 0) > 0;
 }
 
 /**

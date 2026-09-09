@@ -5,9 +5,15 @@
 
   A full-screen overlay (rendered inside the app's themed tree, so theme tokens
   apply — same approach as SessionSheet, no portal). Captures the date, activity,
-  optional gym + partner, a structured list of exercises (name / sets / reps /
-  weight), and a note. Saves through lib/supabase/workouts.ts. All colors are
-  theme tokens (rule 1); inputs stay text-base so phones don't auto-zoom.
+  optional gym + partner, what was trained, and a note.
+
+  TWO WAYS TO LOG A GYM SESSION, and the quick one comes first: tap the body
+  parts you hit and you are done — "Legs" is a leg day and counts as a full
+  session. Under it is the written-out version (exercises, sets, reps, weight)
+  for the days that are worth recording properly.
+
+  Saves through lib/supabase/workouts.ts. All colors are theme tokens (rule 1);
+  inputs stay text-base so phones don't auto-zoom.
 */
 import { useEffect, useRef, useState } from "react";
 import Button from "@/components/ui/Button";
@@ -23,6 +29,7 @@ import {
   type WorkoutLog,
 } from "@/lib/supabase/workouts";
 import ExercisePicker from "@/components/profile/ExercisePicker";
+import { muscleGroups } from "@/lib/exercises";
 import PartnerPicker from "@/components/profile/PartnerPicker";
 import Avatar from "@/components/messages/Avatar";
 import GymCheckInPrompt from "@/components/gyms/GymCheckInPrompt";
@@ -64,6 +71,9 @@ export default function LogSessionSheet({
   const [exercises, setExercises] = useState<WorkoutExercise[]>(existing?.exercises ?? []);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [partnerPickerOpen, setPartnerPickerOpen] = useState(false);
+  // QUICK LOG — the body parts trained, for a session logged without writing
+  // the exercises out. On its own it is a complete gym session.
+  const [muscles, setMuscles] = useState<string[]>(existing?.metrics.muscles ?? []);
   // Weight unit for the gym sets (kg / lb), per workout.
   const [weightUnit, setWeightUnit] = useState<WeightUnit>(existing?.metrics.weightUnit ?? "kg");
   // Running / cardio metrics.
@@ -91,6 +101,9 @@ export default function LogSessionSheet({
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [onClose]);
+
+  const toggleMuscle = (m: string) =>
+    setMuscles((prev) => (prev.includes(m) ? prev.filter((x) => x !== m) : [...prev, m]));
 
   const removeExercise = (i: number) =>
     setExercises((prev) => prev.filter((_, idx) => idx !== i));
@@ -160,7 +173,7 @@ export default function LogSessionSheet({
       partner,
       partnerId,
       exercises,
-      metrics: { cardioType, distance, unit, duration, weightUnit },
+      metrics: { cardioType, distance, unit, duration, weightUnit, muscles },
       photos,
       note,
     };
@@ -272,8 +285,43 @@ export default function LogSessionSheet({
           {/* Exercises — gym / other (Hevy-style per-set logging) */}
           {usesExercises && (
             <>
+              {/*
+                THE QUICK LOG. Tapping body parts is a complete session on its
+                own: "Legs" is a leg day, it fills the calendar tile with the
+                same chips a written-out workout does, and it counts the same
+                everywhere sessions are counted. Everything below it — the sets,
+                the weights — is for the days you feel like writing them down.
+                Owner (2026-09-09): "I would just write that I did leg day. I
+                don't want to type it all out."
+              */}
+              <div className={`${labelCls} mt-5`}>What did you train?</div>
+              <div className="flex flex-wrap gap-1.5">
+                {muscleGroups.map((m) => {
+                  const on = muscles.includes(m);
+                  return (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => toggleMuscle(m)}
+                      aria-pressed={on}
+                      className={`tap44 rounded-full border px-3 py-1.5 text-[12px] font-medium ${
+                        on
+                          ? "border-primary bg-primary-tint text-primary"
+                          : "border-border bg-surface text-muted"
+                      }`}
+                    >
+                      {m}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="mt-2 text-[11px] leading-snug text-muted">
+                That&rsquo;s enough on its own — a body part is a logged session. Writing the
+                exercises out below is optional.
+              </p>
+
               <div className="mt-5 flex items-center justify-between">
-                <span className={labelCls.replace("mb-1.5", "mb-0")}>Exercises</span>
+                <span className={labelCls.replace("mb-1.5", "mb-0")}>Exercises (optional)</span>
                 {/* kg / lb toggle for this workout */}
                 <div className="flex overflow-hidden rounded-lg border border-border">
                   {(["kg", "lb"] as WeightUnit[]).map((u) => (
