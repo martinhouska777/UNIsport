@@ -53,6 +53,12 @@
   --podium-2: #98a3b1;
   --podium-3: #c07b3e;
   --podium-ink: #17181c;
+  /* The medal itself (components/leaderboards/Medal.tsx): the ribbon it hangs
+     from and the gloss across its face. Fixed for the same reason the three
+     metals are — a medal ribbon is red at every school on earth. */
+  --medal-ribbon: #e5384c;
+  --medal-ribbon-shade: #b3283c;
+  --medal-shine: #ffffff;
   /* Elevation. One shadow, for things that float ABOVE the page (sheets,
      overlays, popovers) — a card never gets one, it just uses a lighter
      surface. Per-theme because a shadow on near-black needs more weight than

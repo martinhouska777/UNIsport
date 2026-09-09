@@ -358,22 +358,57 @@ const mainGyms: Gym[] = [
   },
 ];
 
-// All 12 houses with their two identity colors (as data).
-const houseGyms: Gym[] = [
-  houseGym({ slug: "adams", name: "Adams", address: "26 Plympton Street", rating: 4.3, ratingCount: 38, colors: { primary: "#3b6fe0", secondary: "#9aa0a6" } }), // Blue & Gray
-  houseGym({ slug: "cabot", name: "Cabot", address: "60 Linnaean Street", rating: 4.1, ratingCount: 22, colors: { primary: "#34a85a", secondary: "#e8e8e8" } }), // Green & White
-  houseGym({ slug: "currier", name: "Currier", address: "64 Linnaean Street", rating: 4.2, ratingCount: 25, colors: { primary: "#9b6dff", secondary: "#e8e8e8" } }), // Purple & White
-  houseGym({ slug: "dunster", name: "Dunster", address: "945 Memorial Drive", rating: 4.4, ratingCount: 31, colors: { primary: "#9e2b4d", secondary: "#c4c8d0" } }), // Maroon & Silver
-  houseGym({ slug: "eliot", name: "Eliot", address: "101 Dunster Street", rating: 4.5, ratingCount: 41, colors: { primary: "#cf2b40", secondary: "#3b6fe0" } }), // Crimson & Blue
-  houseGym({ slug: "kirkland", name: "Kirkland", address: "95 Dunster Street", rating: 4.2, ratingCount: 27, colors: { primary: "#f0883e", secondary: "#2b2b2b" } }), // Orange & Black
-  houseGym({ slug: "leverett", name: "Leverett", address: "28 DeWolfe Street", rating: 4.2, ratingCount: 34, colors: { primary: "#df3b3b", secondary: "#c4c8d0" } }), // Red & Silver
-  houseGym({ slug: "lowell", name: "Lowell", address: "10 Holyoke Place", rating: 4.4, ratingCount: 36, colors: { primary: "#9b6dff", secondary: "#d4a843" } }), // Purple & Gold
-  houseGym({ slug: "mather", name: "Mather", address: "10 Cowperthwaite Street", rating: 4.3, ratingCount: 30, colors: { primary: "#d4a843", secondary: "#2b2b2b" } }), // Black & Gold
-  houseGym({ slug: "pforzheimer", name: "Pforzheimer", address: "56 Linnaean Street", rating: 4.0, ratingCount: 19, colors: { primary: "#34a85a", secondary: "#e8e8e8" } }), // Green & White
-  houseGym({ slug: "quincy", name: "Quincy", address: "58 Plympton Street", rating: 4.3, ratingCount: 33, colors: { primary: "#34a85a", secondary: "#e8e8e8" } }), // Green & White
-  houseGym({ slug: "winthrop", name: "Winthrop", address: "32 Mill Street", rating: 4.3, ratingCount: 29, colors: { primary: "#cf2b40", secondary: "#9aa0a6" } }), // Crimson & Gray
-];
+/*
+  ALL 12 HOUSES, IN THEIR REAL COLOURS.
+  ---------------------------------------------------------------------------
+  These were invented at first — a rainbow, so twelve houses could be told
+  apart at a glance — and the owner caught it ("why is quincy green?"). They
+  are now taken from each House's own arms and its published colours:
 
+    primary   = the field of the shield (or the colour the House itself names
+                first, where it publishes one)
+    secondary = the principal charge on it
+
+  House by house, with the source in brackets:
+    Adams        Or, five sprigs of oak gules      → gold + crimson
+    Cabot        "House colors, red and gold"      → red + gold
+    Currier      "Green, red, and black"           → green + red
+    Dunster      Gules, stags' heads within an orle or; "red and gold"
+    Eliot        "Blue, Red, White"                → blue + red
+    Kirkland     Gules, on a cross sable … three mullets argent → black + red
+    Leverett     "black and yellow"                → yellow + black
+    Lowell       "blue and white"                  → blue + white
+    Mather       Ermine, on a fess wavy gules …    → white + red
+    Pforzheimer  "Red, Black, White"               → red + black
+    Quincy       Gules, seven mascles conjoined or → red + gold
+    Winthrop     "burgundy"; argent, chevronels gules, lion sable
+
+  Kirkland and Pforzheimer lead with the tincture that tells them APART rather
+  than the one they share: Kirkland is the red field with the black cross,
+  Pforzheimer the black half of a shield that is half black and half red — its
+  black lifted to a graphite, because pure sable on the dark Zone 2 page is a
+  house with no colour at all.
+
+  Harvard's houses genuinely share a small palette — red, gold, black, white —
+  so the reds below are deliberately drawn from different points of that range
+  (crimson, brick, vermilion, burgundy) and each house is told apart by its
+  PAIR rather than by one colour. That is the honest version; it is less of a
+  rainbow than the invented one was.
+*/
+const houseGyms: Gym[] = [
+  houseGym({ slug: "adams", name: "Adams", address: "26 Plympton Street", rating: 4.3, ratingCount: 38, colors: { primary: "#c9a227", secondary: "#a51c30" } }), // Gold & crimson
+  houseGym({ slug: "cabot", name: "Cabot", address: "60 Linnaean Street", rating: 4.1, ratingCount: 22, colors: { primary: "#c8102e", secondary: "#e0b23c" } }), // Red & gold
+  houseGym({ slug: "currier", name: "Currier", address: "64 Linnaean Street", rating: 4.2, ratingCount: 25, colors: { primary: "#2e7d4f", secondary: "#c8102e" } }), // Green, red & black
+  houseGym({ slug: "dunster", name: "Dunster", address: "945 Memorial Drive", rating: 4.4, ratingCount: 31, colors: { primary: "#b4232f", secondary: "#e0b23c" } }), // Red & gold
+  houseGym({ slug: "eliot", name: "Eliot", address: "101 Dunster Street", rating: 4.5, ratingCount: 41, colors: { primary: "#1f4e9c", secondary: "#c8102e" } }), // Blue, red & white
+  houseGym({ slug: "kirkland", name: "Kirkland", address: "95 Dunster Street", rating: 4.2, ratingCount: 27, colors: { primary: "#b8112f", secondary: "#23262b" } }), // Red field, black cross
+  houseGym({ slug: "leverett", name: "Leverett", address: "28 DeWolfe Street", rating: 4.2, ratingCount: 34, colors: { primary: "#e4b429", secondary: "#23262b" } }), // Black & yellow
+  houseGym({ slug: "lowell", name: "Lowell", address: "10 Holyoke Place", rating: 4.4, ratingCount: 36, colors: { primary: "#3e6fb7", secondary: "#edeff2" } }), // Blue & white
+  houseGym({ slug: "mather", name: "Mather", address: "10 Cowperthwaite Street", rating: 4.3, ratingCount: 30, colors: { primary: "#cfd6de", secondary: "#c8102e" } }), // Ermine (silver) & red
+  houseGym({ slug: "pforzheimer", name: "Pforzheimer", address: "56 Linnaean Street", rating: 4.0, ratingCount: 19, colors: { primary: "#363b44", secondary: "#c8102e" } }), // Per bend black & red
+  houseGym({ slug: "quincy", name: "Quincy", address: "58 Plympton Street", rating: 4.3, ratingCount: 33, colors: { primary: "#d01c36", secondary: "#e0b23c" } }), // Red, gold, white & black
+  houseGym({ slug: "winthrop", name: "Winthrop", address: "32 Mill Street", rating: 4.3, ratingCount: 29, colors: { primary: "#7a1f35", secondary: "#edeff2" } }), // Burgundy & white
+];
 /*
   THE OTHER SEVEN IVIES.
   Main facilities are the real ones per campus (researched for the landing's

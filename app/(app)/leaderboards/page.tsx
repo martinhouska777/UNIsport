@@ -345,6 +345,23 @@ function GroupRowItem({
       className={`flex w-full items-center gap-2.5 rounded-xl border px-3 py-2.5 text-left ${
         onOpen ? "tap44 active:bg-surface-2" : ""
       } ${row.isMine ? "border-primary bg-primary-tint" : "border-border bg-surface"}`}
+      /*
+        THE WHOLE TILE IN THE HOUSE'S COLOUR — a wash of it inside and the edge
+        drawn in it (owner, 2026-09-09). Twelve houses in a column all wearing
+        the same grey card made the crest the only thing telling them apart; now
+        the row itself is the house. A wash rather than a fill, because the text
+        on it is theme ink and has to stay readable in both themes; YOUR house
+        keeps the theme's own border on top of the wash, so "mine" still reads.
+        Content colour from lib/gyms.ts, applied inline (rule 1's exception).
+      */
+      style={
+        crest
+          ? {
+              background: `${crest.primary}${row.isMine ? "24" : "14"}`,
+              ...(row.isMine ? {} : { borderColor: `${crest.primary}66` }),
+            }
+          : undefined
+      }
     >
       <RankBadge rank={row.rank} />
       {/* THE HOUSE'S CREST, in its own two colours and with no initial on it
