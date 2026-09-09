@@ -90,7 +90,7 @@ export default function TrainingScheduleSheet({
   const totalSlots = weekDays.reduce((n, d) => n + week[d.key].length, 0);
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col justify-end">
+    <div className="fixed inset-x-0 top-0 z-50 flex h-dvh flex-col justify-end">
       <button
         type="button"
         aria-label="Close"
@@ -101,7 +101,7 @@ export default function TrainingScheduleSheet({
       {/* Slides up from the bottom; closed with the X, Cancel, or the backdrop.
           Not drag-dismissible on purpose — dragging over a sheet full of time
           dropdowns would fight the pickers. */}
-      <div className="relative flex max-h-[90%] flex-col rounded-t-3xl border-t border-border bg-surface [animation:sheet-up_0.28s_cubic-bezier(0.2,0.8,0.2,1)]">
+      <div className="sheet-floor relative flex max-h-[90%] flex-col rounded-t-3xl border-t border-border bg-surface [animation:sheet-up_0.28s_cubic-bezier(0.2,0.8,0.2,1)]">
         <div>
           <div className="flex justify-center pb-1.5 pt-2.5">
             <div className="h-1 w-9 rounded-full bg-border" />

@@ -93,7 +93,7 @@ export default function PreferencesSheet({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col justify-end">
+    <div className="fixed inset-x-0 top-0 z-50 flex h-dvh flex-col justify-end">
       <button
         type="button"
         aria-label="Close"
@@ -103,7 +103,7 @@ export default function PreferencesSheet({
 
       <div
         style={sheetStyle}
-        className="relative flex max-h-[90%] flex-col rounded-t-3xl border-t border-border bg-surface [animation:sheet-up_0.28s_cubic-bezier(0.2,0.8,0.2,1)]"
+        className="sheet-floor relative flex max-h-[90%] flex-col rounded-t-3xl border-t border-border bg-surface [animation:sheet-up_0.28s_cubic-bezier(0.2,0.8,0.2,1)]"
       >
         {/* Grab area: the handle and the title. Drag it down to close. Stops
             here on purpose — extending it over the scrolling body below would

@@ -37,6 +37,7 @@ import type { MatchFilters } from "@/lib/supabase/matching";
 import SearchableDropdown from "@/components/onboarding/SearchableDropdown";
 import { Pill } from "@/components/onboarding/controls";
 import Button from "@/components/ui/Button";
+import DropdownPanel from "@/components/ui/DropdownPanel";
 
 export const genderOptions: { key: string; label: string }[] = [
   { key: "male", label: "Men" },
@@ -260,9 +261,13 @@ export default function FiltersSheet({
     while the button that opened it sat at the top — the two ends of one action
     at opposite ends of the phone. It now opens downwards from the bar, where
     the tap happened, the way a dropdown is expected to.
+
+    Its height is not a fixed share of the screen: DropdownPanel measures the
+    room actually left below the bar, so the panel always ends ON the screen
+    with the Apply row on its bottom edge.
   */
   return (
-    <div className="mt-2 max-h-[62dvh] overflow-y-auto rounded-xl border border-border bg-surface p-3.5">
+    <DropdownPanel className="rounded-xl border border-border bg-surface p-3.5">
       <div>
         <div className="mb-1 flex items-center justify-between">
           <h2 className="text-sm font-medium text-text">Filters</h2>
@@ -446,6 +451,6 @@ export default function FiltersSheet({
           </Button>
         </div>
       </div>
-    </div>
+    </DropdownPanel>
   );
 }

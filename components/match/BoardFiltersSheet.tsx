@@ -18,6 +18,7 @@ import { weekDays } from "@/lib/onboarding";
 import { Pill, FieldLabel } from "@/components/onboarding/controls";
 import type { FilterChip } from "@/components/match/FilterBar";
 import Button from "@/components/ui/Button";
+import DropdownPanel from "@/components/ui/DropdownPanel";
 
 /** What the board is currently narrowed to. All null = show everything. */
 export type BoardFilters = {
@@ -69,7 +70,7 @@ export default function BoardFiltersSheet({
   // A dropdown under the bar, not a sheet up from the floor — see the note in
   // components/match/FiltersSheet.tsx.
   return (
-    <div className="mt-2 max-h-[62dvh] overflow-y-auto rounded-xl border border-border bg-surface p-3.5">
+    <DropdownPanel className="rounded-xl border border-border bg-surface p-3.5">
       <div>
         <div className="mb-1 flex items-center justify-between">
           <h2 className="text-sm font-medium text-text">Filter open posts</h2>
@@ -146,6 +147,6 @@ export default function BoardFiltersSheet({
           </Button>
         </div>
       </div>
-    </div>
+    </DropdownPanel>
   );
 }

@@ -44,7 +44,7 @@ export default function PartnersSheet({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col justify-end">
+    <div className="fixed inset-x-0 top-0 z-50 flex h-dvh flex-col justify-end">
       <button
         type="button"
         aria-label="Close"
@@ -52,7 +52,7 @@ export default function PartnersSheet({
         className="absolute inset-0 bg-background/70 [animation:backdrop-in_0.2s_ease-out]"
       />
 
-      <div className="relative max-h-[82%] overflow-y-auto rounded-t-3xl border-t border-border bg-surface [animation:sheet-up_0.28s_cubic-bezier(0.2,0.8,0.2,1)]">
+      <div className="sheet-floor relative max-h-[82%] overflow-y-auto rounded-t-3xl border-t border-border bg-surface [animation:sheet-up_0.28s_cubic-bezier(0.2,0.8,0.2,1)]">
         <div className="flex justify-center pb-1.5 pt-2.5">
           <div className="h-1 w-9 rounded-full bg-border" />
         </div>

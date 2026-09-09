@@ -1284,3 +1284,14 @@ body {
   -webkit-mask-image: linear-gradient(to right, #000 88%, transparent 100%);
   mask-image: linear-gradient(to right, #000 88%, transparent 100%);
 }
+
+/*
+  .sheet-floor — the bottom edge of a sheet that sits on the floor of the screen.
+  On a phone the last strip of the screen belongs to the home indicator, so a
+  sheet that ends flush with the bottom ends UNDERNEATH it and its last row
+  can't be seen or tapped. This gives back exactly the phone's own safe area,
+  which is 0 on a laptop and on phones without one.
+*/
+.sheet-floor {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
