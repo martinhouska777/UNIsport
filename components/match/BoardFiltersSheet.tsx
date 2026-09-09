@@ -6,15 +6,18 @@
   Three short lists (focus, day, time of day), so unlike the people-matching
   sheet there is nothing to tick open or search: every option is on screen and
   tapping a picked one clears it. Same sheet chrome as FiltersSheet so the two
-  read as one control in two places.
+  read as one control in two places — including the one rule that matters: your
+  picks are a DRAFT and the board only changes when you press Apply.
 
   Option lists come from lib/buddyBoard.ts and lib/onboarding.ts; colors are
   theme tokens.
 */
+import { useState } from "react";
 import { buddyFocuses, buddyTimesOfDay, focusLabel, timeOfDayLabel } from "@/lib/buddyBoard";
 import { weekDays } from "@/lib/onboarding";
 import { Pill, FieldLabel } from "@/components/onboarding/controls";
 import type { FilterChip } from "@/components/match/FilterBar";
+import Button from "@/components/ui/Button";
 
 /** What the board is currently narrowed to. All null = show everything. */
 export type BoardFilters = {
@@ -45,15 +48,23 @@ export function boardFilterChips(f: BoardFilters): FilterChip[] {
 
 export default function BoardFiltersSheet({
   value,
-  onChange,
+  onApply,
   onClose,
 }: {
+  /** What the board is narrowed to right now — where the draft starts. */
   value: BoardFilters;
-  onChange: (next: BoardFilters) => void;
+  /** Pressed Apply: the only moment the board re-loads. */
+  onApply: (next: BoardFilters) => void;
+  /** Closes the sheet, throwing away anything not applied. */
   onClose: () => void;
 }) {
-  const set = (patch: Partial<BoardFilters>) => onChange({ ...value, ...patch });
-  const count = boardFilterCount(value);
+  /* A draft, not the board itself — see components/match/FiltersSheet.tsx. The
+     sheet is only mounted while open, so this starts as what was applied, and a
+     chip cleared on the bar outside remounts it (the parent's `key`). */
+  const [draft, setDraft] = useState<BoardFilters>(value);
+
+  const set = (patch: Partial<BoardFilters>) => setDraft((d) => ({ ...d, ...patch }));
+  const count = boardFilterCount(draft);
 
   // A dropdown under the bar, not a sheet up from the floor — see the note in
   // components/match/FiltersSheet.tsx.
@@ -62,13 +73,15 @@ export default function BoardFiltersSheet({
       <div>
         <div className="mb-1 flex items-center justify-between">
           <h2 className="text-sm font-medium text-text">Filter open posts</h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="tap44 text-[13px] font-medium text-primary"
-          >
-            Done
-          </button>
+          {count > 0 && (
+            <button
+              type="button"
+              onClick={() => setDraft(NO_BOARD_FILTERS)}
+              className="tap44 text-[13px] font-medium text-muted"
+            >
+              Clear all
+            </button>
+          )}
         </div>
         <p className="mb-3 text-[11px] text-muted">
           Narrows the board only — it doesn’t change the post you’re writing.
@@ -81,8 +94,8 @@ export default function BoardFiltersSheet({
               <Pill
                 key={f.key}
                 label={f.label}
-                selected={value.focus === f.key}
-                onClick={() => set({ focus: value.focus === f.key ? null : f.key })}
+                selected={draft.focus === f.key}
+                onClick={() => set({ focus: draft.focus === f.key ? null : f.key })}
               />
             ))}
           </div>
@@ -95,8 +108,8 @@ export default function BoardFiltersSheet({
               <Pill
                 key={d.key}
                 label={d.label.slice(0, 3)}
-                selected={value.day === d.key}
-                onClick={() => set({ day: value.day === d.key ? null : d.key })}
+                selected={draft.day === d.key}
+                onClick={() => set({ day: draft.day === d.key ? null : d.key })}
               />
             ))}
           </div>
@@ -109,22 +122,29 @@ export default function BoardFiltersSheet({
               <Pill
                 key={t.key}
                 label={t.label}
-                selected={value.timeOfDay === t.key}
-                onClick={() => set({ timeOfDay: value.timeOfDay === t.key ? null : t.key })}
+                selected={draft.timeOfDay === t.key}
+                onClick={() => set({ timeOfDay: draft.timeOfDay === t.key ? null : t.key })}
               />
             ))}
           </div>
         </div>
 
-        {count > 0 && (
-          <button
-            type="button"
-            onClick={() => onChange(NO_BOARD_FILTERS)}
-            className="tap44 w-full rounded-full border border-border bg-surface-2 py-2.5 text-[13px] text-muted"
+        {/* The commit, stuck to the foot of the sheet — see FiltersSheet. */}
+        <div className="sticky bottom-0 -mx-3.5 -mb-3.5 flex gap-2 border-t border-border bg-surface px-3.5 py-3">
+          <Button variant="secondary" size="md" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button
+            size="md"
+            full
+            onClick={() => {
+              onApply(draft);
+              onClose();
+            }}
           >
-            Clear all filters
-          </button>
-        )}
+            {count > 0 ? `Apply ${count} filter${count === 1 ? "" : "s"}` : "Show everything"}
+          </Button>
+        </div>
       </div>
     </div>
   );

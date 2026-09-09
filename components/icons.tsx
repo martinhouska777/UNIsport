@@ -376,6 +376,47 @@ export const IconExpand = (p: IconProps) => (
   </Base>
 );
 
+/*
+  A house's CREST — the shield, filled solid in its own colour.
+
+  The outline sigil below is for a line of text, where a shape has to sit
+  quietly beside words. This one is for the leaderboards, where twelve houses
+  are ranked against each other and the colour IS the information: it replaces
+  the plain coloured square a house used to get, so a house reads as a house
+  rather than as a swatch. Both colours are DATA from lib/gyms.ts (rule 1's
+  content exception), never theme tokens.
+*/
+export function HouseShield({
+  primary,
+  secondary,
+  size = 28,
+}: {
+  primary: string;
+  secondary: string;
+  size?: number;
+}) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M12 2.2l8.4 2.4v6.6c0 5.6-4.2 9.1-8.4 11-4.2-1.9-8.4-5.4-8.4-11V4.6z"
+        fill={primary}
+        stroke={secondary}
+        strokeWidth={1.3}
+        strokeLinejoin="round"
+      />
+      {/* The quartering — the second colour, so a house with a dark shield is
+          still telling you both of its colours. */}
+      <path
+        d="M12 3.6v18.2M4.4 11.6h15.2"
+        stroke={secondary}
+        strokeWidth={1.1}
+        strokeOpacity={0.9}
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 // House sigil drawn in a house's TWO identity colors (passed as data, not theme).
 export function HouseSigil({
   primary,

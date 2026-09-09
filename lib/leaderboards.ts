@@ -176,6 +176,15 @@ export function houseColor(key: string | null | undefined): string | null {
   return getGymByName(key)?.houseColors?.primary ?? null;
 }
 
+/** BOTH of a house's colours, for its crest. Null for anything but a house. */
+export function houseCrest(
+  key: string | null | undefined,
+): { primary: string; secondary: string } | null {
+  if (!key) return null;
+  const c = getGymByName(key)?.houseColors;
+  return c ? { primary: c.primary, secondary: c.secondary } : null;
+}
+
 /* ─────────────────────────────  reads  ───────────────────────────── */
 
 type PeopleRpcRow = {

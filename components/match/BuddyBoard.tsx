@@ -324,8 +324,10 @@ export default function BuddyBoard() {
         </div>
         {sheetOpen && (
           <BoardFiltersSheet
+            // Re-seeds the draft if a chip above is cleared while it is open.
+            key={JSON.stringify(filters)}
             value={filters}
-            onChange={setFilters}
+            onApply={setFilters}
             onClose={() => setSheetOpen(false)}
           />
         )}

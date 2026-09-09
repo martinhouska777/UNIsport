@@ -17,10 +17,11 @@
   profile shows the full list.
 
   FILTERS are shared by Browse and Session search: one sheet, one piece of state,
-  so a concentration you picked on one tab still applies on the other. Browse
-  re-runs the moment a filter changes; Session search waits for the Search button
-  because its activity and day aren't a filter, they're the question — and its
-  own filters therefore appear WITH the results, not above the button.
+  so a concentration you picked on one tab still applies on the other. They are a
+  DRAFT until you press Apply in the sheet (components/match/FiltersSheet.tsx) —
+  which is the only moment either list re-runs. Session search still waits for
+  its own Search button because its activity and day aren't a filter, they're the
+  question, and its filters therefore appear WITH the results, not above them.
 
   Data comes from the SQL RPC functions via lib/supabase/matching.ts. All colors
   are theme tokens; the choice lists reuse the onboarding data so they stay
@@ -111,28 +112,25 @@ function Status({ children }: { children: React.ReactNode }) {
 // FilterBar.tsx) so all three lists are narrowed the same way.
 function MatchFilterBar({
   filters,
-  onChange,
+  onApply,
   open,
   onToggleOpen,
   onClear,
   onClearAll,
   total,
-  openRows,
-  onToggleRow,
   myConcentration,
   myInterests,
   showActivity,
 }: {
   filters: MatchFilters;
-  onChange: (next: MatchFilters) => void;
+  /** Fired by the sheet's Apply button — nothing else changes the list. */
+  onApply: (next: MatchFilters) => void;
   open: boolean;
   onToggleOpen: () => void;
   onClear: (key: keyof MatchFilters) => void;
   onClearAll: () => void;
   /** How many people survived — null while the list is still loading. */
   total?: number | null;
-  openRows: Set<string>;
-  onToggleRow: (key: keyof MatchFilters) => void;
   myConcentration: string | null;
   myInterests: string[];
   showActivity?: boolean;
@@ -151,10 +149,11 @@ function MatchFilterBar({
       />
       {open && (
         <FiltersSheet
+          /* Re-seeds the sheet's draft if the applied filters change while it
+             is open — clearing a chip on the bar above, for instance. */
+          key={JSON.stringify(filters)}
           value={filters}
-          onChange={onChange}
-          openRows={openRows}
-          onToggleRow={onToggleRow}
+          onApply={onApply}
           onClose={onToggleOpen}
           myConcentration={myConcentration}
           myInterests={myInterests}
@@ -218,40 +217,25 @@ function MatchScreen() {
     presetGym ? { ...NO_FILTERS, gym: presetGym } : NO_FILTERS,
   );
   const [sheetOpen, setSheetOpen] = useState(false);
-  // Which rows are ticked open. A row open with no pick yet = no filter.
-  const [openRows, setOpenRows] = useState<Set<string>>(
-    () => new Set(presetGym ? ["gym"] : []),
-  );
 
   /*
-    Every route a filter can change goes through here. Browse re-runs itself
-    from its own effect; the timed search is driven by its button, so a filter
-    changing under its results has to say so out loud (refilterSession, below).
+    Every route a filter can change goes through here — the sheet's Apply
+    button, a chip cleared on the bar, Clear all, and the session form's own
+    Gym box. Browse re-runs itself from its own effect; the timed search is
+    driven by its button, so a filter changing under its results has to re-ask
+    for them (refilterSession, below).
+
+    Which ROWS are ticked open in the sheet is the sheet's own business now: it
+    is scratch state that only exists while the sheet is on screen, and a row
+    ticked open with nothing picked in it isn't a filter at all.
   */
   const changeFilters = (next: MatchFilters) => {
     setFilters(next);
     refilterSession(next);
   };
 
-  const toggleRow = (key: keyof MatchFilters) => {
-    const wasOpen = openRows.has(key);
-    setOpenRows((prev) => {
-      const next = new Set(prev);
-      if (wasOpen) next.delete(key);
-      else next.add(key);
-      return next;
-    });
-    if (wasOpen) changeFilters({ ...filters, [key]: null }); // unticking clears it
-  };
-
-  const clearFilter = (key: keyof MatchFilters) => {
+  const clearFilter = (key: keyof MatchFilters) =>
     changeFilters({ ...filters, [key]: null });
-    setOpenRows((prev) => {
-      const next = new Set(prev);
-      next.delete(key);
-      return next;
-    });
-  };
 
   /*
     --- Browse state ---
@@ -393,14 +377,12 @@ function MatchScreen() {
           <div className="px-3 pb-2">
             <MatchFilterBar
               filters={filters}
-              onChange={changeFilters}
+              onApply={changeFilters}
               open={sheetOpen}
               onToggleOpen={() => setSheetOpen((v) => !v)}
               onClear={clearFilter}
               onClearAll={() => changeFilters(NO_FILTERS)}
               total={browse?.length ?? null}
-              openRows={openRows}
-              onToggleRow={toggleRow}
               myConcentration={myConcentration}
               myInterests={myInterests}
             />
@@ -561,14 +543,12 @@ function MatchScreen() {
               <div className="pb-3">
                 <MatchFilterBar
                   filters={filters}
-                  onChange={changeFilters}
+                  onApply={changeFilters}
                   open={sheetOpen}
                   onToggleOpen={() => setSheetOpen((v) => !v)}
                   onClear={clearFilter}
                   onClearAll={() => changeFilters(NO_FILTERS)}
                   total={results.length}
-                  openRows={openRows}
-                  onToggleRow={toggleRow}
                   myConcentration={myConcentration}
                   myInterests={myInterests}
                   showActivity={false}

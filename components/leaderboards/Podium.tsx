@@ -13,6 +13,13 @@
   The rest of the board carries on underneath from fourth, so nobody is listed
   twice.
 
+  A HOUSE gets its crest — the shield in its own two colours (lib/gyms.ts) —
+  where a person gets an avatar, and each of the three wears its MEDAL on the
+  shoulder of that avatar: gold, silver, bronze, with the place stamped on it
+  (components/leaderboards/Medal.tsx). The pedestal underneath is therefore
+  bare colour now; the number used to be printed on it, and printing it twice
+  in one column is how a screen starts repeating itself.
+
   COLOURS. The pedestals are gold, silver and bronze — the only colours in the
   app that aren't the school's, which is why they are TOKENS (`--podium-1..3`
   in globals.css) rather than three hexes typed in here (rule 1). Everything
@@ -24,7 +31,8 @@
   is the one place on this screen worth a beat of movement, and it turns itself
   off for anyone who asks for reduced motion.
 */
-import { IconUser } from "@/components/icons";
+import { IconUser, HouseShield } from "@/components/icons";
+import Medal from "@/components/leaderboards/Medal";
 
 export type PodiumEntry = {
   /** React key — a user id or a house name. */
@@ -54,6 +62,8 @@ export type PodiumEntry = {
   unit: string;
   /** A house's identity colour, applied inline (rule 1's content exception). */
   tint?: string | null;
+  /** A house's TWO colours — its crest stands in for the avatar (data, again). */
+  crest?: { primary: string; secondary: string } | null;
   /** "You" on a people board, "Yours" on a house board. */
   mineLabel?: string;
   onOpen?: () => void;
@@ -69,6 +79,8 @@ const PLACE = {
     line: "border-podium-1-line",
     delay: "180ms",
     avatar: "h-14 w-14 text-[15px]",
+    crest: 56,
+    medal: 26,
   },
   2: {
     block: "h-[44px]",
@@ -77,6 +89,8 @@ const PLACE = {
     line: "border-podium-2-line",
     delay: "60ms",
     avatar: "h-12 w-12 text-[13px]",
+    crest: 46,
+    medal: 22,
   },
   3: {
     block: "h-[32px]",
@@ -85,6 +99,8 @@ const PLACE = {
     line: "border-podium-3-line",
     delay: "300ms",
     avatar: "h-12 w-12 text-[13px]",
+    crest: 46,
+    medal: 22,
   },
 } as const;
 
@@ -105,23 +121,40 @@ function Place({ entry }: { entry: PodiumEntry }) {
         className="podium-card-in flex w-full min-w-0 flex-col items-center"
         style={{ animationDelay: p.delay }}
       >
-        {!(entry.kind === "group" && !entry.tint) && (
+        {/* A house shows its crest, a person a tinted circle — and whichever it
+            is, the medal hangs on its shoulder. A group with no colours at all
+            (a class year) has no shape, so the medal stands on its own. */}
+        <div className="relative">
+          {entry.kind === "group" ? (
+            entry.crest && (
+              <HouseShield
+                primary={entry.crest.primary}
+                secondary={entry.crest.secondary}
+                size={p.crest}
+              />
+            )
+          ) : (
+            <span
+              className={`flex flex-shrink-0 items-center justify-center rounded-full border-2 text-text ${p.avatar} ${p.tintBg} ${p.line}`}
+              style={
+                entry.tint
+                  ? { background: `${entry.tint}2e`, borderColor: entry.tint }
+                  : undefined
+              }
+            >
+              <IconUser size={entry.place === 1 ? 22 : 19} />
+            </span>
+          )}
           <span
-            className={`flex flex-shrink-0 items-center justify-center rounded-full border-2 text-text ${p.avatar} ${p.tintBg} ${p.line}`}
-            style={
-              entry.tint
-                ? {
-                    // A group IS its colour, so it gets the colour whole; a
-                    // person only wears theirs behind the figure.
-                    background: entry.kind === "group" ? entry.tint : `${entry.tint}2e`,
-                    borderColor: entry.tint,
-                  }
-                : undefined
+            className={
+              entry.kind === "group" && !entry.crest
+                ? "block"
+                : "absolute -bottom-1 -right-1.5"
             }
           >
-            {entry.kind === "group" ? null : <IconUser size={entry.place === 1 ? 22 : 19} />}
+            <Medal place={entry.place} rank={entry.rank} size={p.medal} />
           </span>
-        )}
+        </div>
 
         <div className="mt-1.5 w-full truncate px-0.5 text-center text-[12px] font-medium leading-tight text-text">
           {entry.title}
@@ -142,13 +175,11 @@ function Place({ entry }: { entry: PodiumEntry }) {
       {/* The pedestal. NO TROPHY on it — one floated above the winner's avatar,
           then sat on the block as a sticker, and the owner's verdict on both was
           "to je strasne" (2026-09-06). The gold block is already the thing that
-          says first. */}
+          says first, and the medal above it says which place. */}
       <div
-        className={`podium-rise mt-1.5 flex w-full items-center justify-center rounded-t-xl ${p.block} ${p.bg}`}
+        className={`podium-rise mt-1.5 w-full rounded-t-xl ${p.block} ${p.bg}`}
         style={{ animationDelay: p.delay }}
-      >
-        <span className="text-[17px] font-bold leading-none text-podium-ink">{entry.rank}</span>
-      </div>
+      />
     </Tag>
   );
 }

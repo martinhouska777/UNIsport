@@ -71,10 +71,12 @@ import {
   IconInfo,
   IconTrophy,
   IconUser,
+  HouseShield,
 } from "@/components/icons";
 import HonorCode, { HonorCodeFooter, useHonorCode } from "@/components/leaderboards/HonorCode";
 import GroupSheet from "@/components/leaderboards/GroupSheet";
 import Podium, { type PodiumEntry } from "@/components/leaderboards/Podium";
+import Medal from "@/components/leaderboards/Medal";
 import ScoringSheet from "@/components/leaderboards/ScoringSheet";
 import OptionPickerSheet from "@/components/profile/OptionPickerSheet";
 import { houses, residenceLabel, yardDorms } from "@/lib/onboarding";
@@ -88,6 +90,7 @@ import {
   houseColor,
   nextUpLine,
   rankGroups,
+  houseCrest,
   GROUP_METRICS,
   MIN_GROUP_MEMBERS,
   type GroupMetric,
@@ -174,23 +177,15 @@ const plural = (n: number, noun: string) => `${n} ${noun}${n === 1 ? "" : "s"}`;
 
 /* ─────────────────────────  pieces  ───────────────────────── */
 
-/* The top three wear their medal. The colours are TOKENS (`--podium-1..3` in
-   globals.css), never hexes typed into a component — see Podium.tsx for why
-   these three are the one set of colours a school doesn't get to change.
-   Everything below third gets a quiet tile, so a rank still reads as a rank. */
-const MEDAL: Record<number, string> = {
-  1: "bg-podium-1 text-podium-ink",
-  2: "bg-podium-2 text-podium-ink",
-  3: "bg-podium-3 text-podium-ink",
-};
-
+/* The top three wear an actual medal (components/leaderboards/Medal.tsx) rather
+   than a number in a gold square. Everything below third gets a quiet tile, so
+   a rank still reads as a rank without pretending to be a prize. This is what
+   the member list inside a house uses; the three at the top of a board itself
+   are lifted out onto the podium. */
 function RankBadge({ rank }: { rank: number }) {
+  if (rank <= 3) return <Medal place={rank as 1 | 2 | 3} rank={rank} size={28} />;
   return (
-    <span
-      className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg text-[11px] font-semibold ${
-        MEDAL[rank] ?? "bg-surface-2 text-muted"
-      }`}
-    >
+    <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-surface-2 text-[11px] font-semibold text-muted">
       {rank}
     </span>
   );
@@ -339,7 +334,7 @@ function GroupRowItem({
   /** Omitted for year rows, which have nothing worth opening. */
   onOpen?: () => void;
 }) {
-  const tint = kind === "house" ? houseColor(row.key) : null;
+  const crest = kind === "house" ? houseCrest(row.key) : null;
   const unit = GROUP_METRICS.find((m) => m.key === metric)?.unit ?? "pts";
   // A row that opens is a button; a row that does not stays a div, so nothing
   // on screen invites a tap that does nothing.
@@ -352,18 +347,15 @@ function GroupRowItem({
       } ${row.isMine ? "border-primary bg-primary-tint" : "border-border bg-surface"}`}
     >
       <RankBadge rank={row.rank} />
-      {/* THE HOUSE'S COLOUR, AND NOTHING ELSE ON IT (owner, 2026-09-06: "ty
-          hausy taky bez inicialu, jen ty jejich tabs at jsou v barvach"). A
-          board of twelve houses is the one place on the screen where the
-          colours ARE the information, so the tile is filled whole rather than
-          tinted behind a letter. Content data from lib/gyms.ts, applied inline.
-          A class-year board has no colours, so it has no tiles: an empty grey
-          square says less than the year already written beside it. */}
-      {tint && (
-        <span
-          className="h-8 w-8 flex-shrink-0 rounded-lg"
-          style={{ background: tint }}
-        />
+      {/* THE HOUSE'S CREST, in its own two colours and with no initial on it
+          (owner, 2026-09-06: "ty hausy taky bez inicialu, jen ty jejich tabs at
+          jsou v barvach"). It was a plain filled square — the colours ARE the
+          information on a board of twelve houses, but a square of colour is a
+          swatch and a shield is a house. Content data from lib/gyms.ts.
+          A class-year board has no colours, so it has no crest: an empty grey
+          shield says less than the year already written beside it. */}
+      {crest && (
+        <HouseShield primary={crest.primary} secondary={crest.secondary} size={32} />
       )}
       <div className="min-w-0 flex-1">
         <div className="truncate text-[13px] font-medium text-text">
@@ -526,6 +518,7 @@ export default function LeaderboardsPage() {
         value: groupScoreLabel(g, metric),
         unit: metricUnit,
         tint: groupKind === "house" ? houseColor(g.key) : null,
+        crest: groupKind === "house" ? houseCrest(g.key) : null,
         mineLabel: g.isMine ? "Yours" : undefined,
         onOpen: groupKind === "year" ? undefined : () => setOpenGroup(g),
       }))

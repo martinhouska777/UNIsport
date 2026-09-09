@@ -7,6 +7,11 @@
   Every filter is optional: tick a row to open it, pick a value, untick to clear.
   Nothing ticked = see everyone.
 
+  Nothing takes effect until you press APPLY. Every tap used to re-run the list
+  behind the open sheet, so the results moved under your thumb while you were
+  still choosing and there was no way to back out of a pick. You now edit a
+  private copy and commit it in one go, the way filters work in every other app.
+
   Activity comes first: it is the largest single cut you can make to the list,
   and it reads "anyone who does this", main activity or one of the extras, so a
   gym-first person who also runs is found by a search for runners.
@@ -20,7 +25,7 @@
   Colors are theme tokens; the option lists are the onboarding data, so a new
   concentration or interest appears here automatically.
 */
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import {
   concentrations,
   interestOptions,
@@ -31,6 +36,7 @@ import {
 import type { MatchFilters } from "@/lib/supabase/matching";
 import SearchableDropdown from "@/components/onboarding/SearchableDropdown";
 import { Pill } from "@/components/onboarding/controls";
+import Button from "@/components/ui/Button";
 
 export const genderOptions: { key: string; label: string }[] = [
   { key: "male", label: "Men" },
@@ -95,6 +101,16 @@ export function activeFilterChips(
     });
   }
   return chips;
+}
+
+/** The rows that already carry a value — the ones the sheet opens ticked. */
+function rowsSetIn(f: MatchFilters): Set<string> {
+  const rows = new Set<string>();
+  (Object.keys(f) as (keyof MatchFilters)[]).forEach((k) => {
+    const v = f[k];
+    if (Array.isArray(v) ? v.length > 0 : v != null) rows.add(k);
+  });
+  return rows;
 }
 
 // A square tick-box. Ticking a row reveals its options; unticking clears it.
@@ -172,18 +188,17 @@ function MineButton({
 
 export default function FiltersSheet({
   value,
-  onChange,
-  openRows,
-  onToggleRow,
+  onApply,
   onClose,
   myConcentration,
   myInterests,
   showActivity = true,
 }: {
+  /** The filters currently narrowing the list — where the draft starts. */
   value: MatchFilters;
-  onChange: (next: MatchFilters) => void;
-  openRows: Set<string>;
-  onToggleRow: (key: keyof MatchFilters) => void;
+  /** Pressed Apply: the only moment the list is allowed to change. */
+  onApply: (next: MatchFilters) => void;
+  /** Closes the sheet, throwing away anything not applied. */
   onClose: () => void;
   /*
     Off on the session search, which asks for the activity itself as a required
@@ -195,9 +210,45 @@ export default function FiltersSheet({
   myConcentration: string | null;
   myInterests: string[];
 }) {
-  const set = (patch: Partial<MatchFilters>) => onChange({ ...value, ...patch });
+  /*
+    THE DRAFT. The sheet is only mounted while it is open, so this starts as
+    whatever was applied when it opened, and every pick below edits the copy.
+  */
+  const [draft, setDraft] = useState<MatchFilters>(value);
+  /*
+    Which rows are ticked open: the ones that already had a value when the sheet
+    opened, so you land looking at what you set last time. Local, because a
+    ticked row with nothing picked yet isn't a filter and the list outside has
+    no business knowing about it.
+  */
+  const [openRows, setOpenRows] = useState<Set<string>>(() => rowsSetIn(value));
+  /*
+    Clearing a chip on the bar outside changes the applied filters under us. The
+    parent hands this component a `key` made of them, so that clears the draft
+    by remounting the sheet — the sheet never shows a filter the bar says is
+    gone, and there is no effect copying props into state behind the scenes.
+  */
+  const set = (patch: Partial<MatchFilters>) => setDraft((d) => ({ ...d, ...patch }));
 
-  const interests = value.interests ?? [];
+  const count = activeFilterCount(draft);
+  const clearAll = () => {
+    setDraft(NO_FILTERS);
+    setOpenRows(new Set());
+  };
+
+  const onToggleRow = (key: keyof MatchFilters) => {
+    const wasOpen = openRows.has(key);
+    setOpenRows((prev) => {
+      const next = new Set(prev);
+      if (wasOpen) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+    if (wasOpen) set({ [key]: null } as Partial<MatchFilters>); // unticking clears it
+  };
+
+
+  const interests = draft.interests ?? [];
   // "Same as mine" is on only when the picked set is exactly my own.
   const usingMyInterests =
     myInterests.length > 0 &&
@@ -215,16 +266,21 @@ export default function FiltersSheet({
       <div>
         <div className="mb-1 flex items-center justify-between">
           <h2 className="text-sm font-medium text-text">Filters</h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="tap44 text-[13px] font-medium text-primary"
-          >
-            Done
-          </button>
+          {/* Reset sits up here beside the title; the commit is at the foot of
+              the sheet, where the thumb already is. */}
+          {count > 0 && (
+            <button
+              type="button"
+              onClick={clearAll}
+              className="tap44 text-[13px] font-medium text-muted"
+            >
+              Clear all
+            </button>
+          )}
         </div>
         <p className="mb-1 text-[11px] text-muted">
-          Tick a filter to narrow results. Leave all unticked to see everyone.
+          Tick a filter to narrow results, then press Apply. Leave all unticked
+          to see everyone.
         </p>
 
         {showActivity && (
@@ -232,15 +288,15 @@ export default function FiltersSheet({
             title="Activity"
             open={openRows.has("activity")}
             onToggle={() => onToggleRow("activity")}
-            summary={primaryActivities.find((a) => a.key === value.activity)?.label}
+            summary={primaryActivities.find((a) => a.key === draft.activity)?.label}
           >
             <div className="flex flex-wrap gap-1.5">
               {primaryActivities.map((a) => (
                 <Pill
                   key={a.key}
                   label={a.label}
-                  selected={value.activity === a.key}
-                  onClick={() => set({ activity: value.activity === a.key ? null : a.key })}
+                  selected={draft.activity === a.key}
+                  onClick={() => set({ activity: draft.activity === a.key ? null : a.key })}
                 />
               ))}
             </div>
@@ -254,23 +310,23 @@ export default function FiltersSheet({
           title="Concentration"
           open={openRows.has("concentration")}
           onToggle={() => onToggleRow("concentration")}
-          summary={value.concentration}
+          summary={draft.concentration}
         >
           {myConcentration && (
             <MineButton
               label={`Same as mine · ${myConcentration}`}
-              active={value.concentration === myConcentration}
+              active={draft.concentration === myConcentration}
               onClick={() =>
                 set({
                   concentration:
-                    value.concentration === myConcentration ? null : myConcentration,
+                    draft.concentration === myConcentration ? null : myConcentration,
                 })
               }
             />
           )}
           <SearchableDropdown
             options={concentrations}
-            value={value.concentration ?? ""}
+            value={draft.concentration ?? ""}
             onChange={(v) => set({ concentration: v || null })}
             placeholder="Any concentration"
             searchPlaceholder="Search concentrations…"
@@ -319,15 +375,15 @@ export default function FiltersSheet({
           title="Gym"
           open={openRows.has("gym")}
           onToggle={() => onToggleRow("gym")}
-          summary={value.gym}
+          summary={draft.gym}
         >
           <div className="flex flex-wrap gap-1.5">
             {verifiedGyms.map((g) => (
               <Pill
                 key={g}
                 label={g}
-                selected={value.gym === g}
-                onClick={() => set({ gym: value.gym === g ? null : g })}
+                selected={draft.gym === g}
+                onClick={() => set({ gym: draft.gym === g ? null : g })}
               />
             ))}
           </div>
@@ -337,15 +393,15 @@ export default function FiltersSheet({
           title="Level"
           open={openRows.has("level")}
           onToggle={() => onToggleRow("level")}
-          summary={experienceLevels.find((l) => l.key === value.level)?.name}
+          summary={experienceLevels.find((l) => l.key === draft.level)?.name}
         >
           <div className="flex flex-wrap gap-1.5">
             {experienceLevels.map((l) => (
               <Pill
                 key={l.key}
                 label={l.name}
-                selected={value.level === l.key}
-                onClick={() => set({ level: value.level === l.key ? null : l.key })}
+                selected={draft.level === l.key}
+                onClick={() => set({ level: draft.level === l.key ? null : l.key })}
               />
             ))}
           </div>
@@ -355,19 +411,40 @@ export default function FiltersSheet({
           title="Gender"
           open={openRows.has("gender")}
           onToggle={() => onToggleRow("gender")}
-          summary={genderOptions.find((g) => g.key === value.gender)?.label}
+          summary={genderOptions.find((g) => g.key === draft.gender)?.label}
         >
           <div className="flex flex-wrap gap-1.5">
             {genderOptions.map((g) => (
               <Pill
                 key={g.key}
                 label={g.label}
-                selected={value.gender === g.key}
-                onClick={() => set({ gender: value.gender === g.key ? null : g.key })}
+                selected={draft.gender === g.key}
+                onClick={() => set({ gender: draft.gender === g.key ? null : g.key })}
               />
             ))}
           </div>
         </FilterRow>
+
+        {/*
+          THE COMMIT. Stuck to the foot of the sheet so it is under the thumb
+          however far down the rows you have scrolled, with Cancel beside it so
+          backing out is a button rather than a guess about the chevron.
+        */}
+        <div className="sticky bottom-0 -mx-3.5 -mb-3.5 mt-1 flex gap-2 border-t border-border bg-surface px-3.5 py-3">
+          <Button variant="secondary" size="md" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button
+            size="md"
+            full
+            onClick={() => {
+              onApply(draft);
+              onClose();
+            }}
+          >
+            {count > 0 ? `Apply ${count} filter${count === 1 ? "" : "s"}` : "Show everyone"}
+          </Button>
+        </div>
       </div>
     </div>
   );

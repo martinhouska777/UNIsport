@@ -23,13 +23,13 @@
 */
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { IconUser, IconX } from "@/components/icons";
+import { IconUser, IconX, HouseShield } from "@/components/icons";
 import { pointsLabel, sessionsOf } from "@/lib/points";
 import {
   fetchPeopleBoard,
   groupLabel,
   groupScoreLabel,
-  houseColor,
+  houseCrest,
   GROUP_METRICS,
   type GroupMetric,
   type GroupRow,
@@ -64,7 +64,7 @@ export default function GroupSheet({
 }) {
   const router = useRouter();
   const [people, setPeople] = useState<LeaderRow[] | null>(null);
-  const tint = kind === "house" ? houseColor(row.key) : null;
+  const crest = kind === "house" ? houseCrest(row.key) : null;
 
   useEffect(() => {
     let active = true;
@@ -94,10 +94,13 @@ export default function GroupSheet({
 
           <div className="flex items-start justify-between gap-3 border-b border-border px-4 pb-3">
             <div className="flex min-w-0 items-center gap-2.5">
-              <span
-                className="h-9 w-1.5 flex-shrink-0 rounded-full bg-primary"
-                style={tint ? { background: tint } : undefined}
-              />
+              {/* The same crest the board row wore, so the sheet is clearly
+                  that house opened up and not another screen about it. */}
+              {crest ? (
+                <HouseShield primary={crest.primary} secondary={crest.secondary} size={32} />
+              ) : (
+                <span className="h-9 w-1.5 flex-shrink-0 rounded-full bg-primary" />
+              )}
               <div className="min-w-0">
                 <div className="truncate text-[15px] font-medium text-text">
                   {groupLabel(kind, row.key)}
