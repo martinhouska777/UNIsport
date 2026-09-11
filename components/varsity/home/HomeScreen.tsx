@@ -114,7 +114,7 @@ function RaceBar({ r }: { r: RaceData }) {
       <div className="text-right">
         <div className="text-2xl font-semibold leading-none text-accent">{r.big}</div>
         {r.small && (
-          <div className="text-[8px] font-semibold uppercase tracking-[0.12em] text-muted">
+          <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
             {r.small}
           </div>
         )}
@@ -159,7 +159,7 @@ function WeekFit({
             }`}
           >
             <div className={`px-0.5 py-1 text-center ${d.today ? "bg-primary-tint" : "bg-surface-2"}`}>
-              <div className={`text-[8px] font-semibold uppercase leading-none ${d.today ? "text-accent" : "text-muted"}`}>
+              <div className={`text-[10px] font-semibold uppercase leading-none ${d.today ? "text-accent" : "text-muted"}`}>
                 {d.letter}
               </div>
               <div className={`mt-0.5 text-[12px] font-semibold leading-none ${d.today ? "text-primary" : "text-text"}`}>
@@ -172,7 +172,7 @@ function WeekFit({
                 if (!s) return null;
                 return (
                   <div key={row} className="flex-1 rounded px-1 py-1" style={kindBlock(s.kind)}>
-                    <span className="block text-[7px] font-bold leading-none text-text-3">{row}</span>
+                    <span className="block text-[10px] font-bold leading-none text-text-3">{row}</span>
                     <span className="mt-0.5 block break-words text-[10px] font-medium leading-tight text-text">
                       {s.label}
                     </span>
@@ -308,12 +308,12 @@ function SessionCard({ s, lineups = [] }: { s: TodaySession; lineups?: Lineup[] 
         <div className="flex-1 p-3">
           <div className="mb-1 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="rounded border border-border bg-surface-2 px-1.5 py-0.5 text-[8px] font-semibold tracking-[0.06em] text-muted">
+              <span className="rounded border border-border bg-surface-2 px-1.5 py-0.5 text-[10px] font-semibold tracking-[0.06em] text-muted">
                 {s.period}
               </span>
               <span className="text-[11px] text-muted">{s.location}</span>
             </div>
-            <span className={`flex items-center gap-1 text-[8px] font-semibold tracking-[0.06em] ${st.cls}`}>
+            <span className={`flex items-center gap-1 text-[10px] font-semibold tracking-[0.06em] ${st.cls}`}>
               <st.Icon size={12} />
               {st.label}
             </span>
@@ -324,7 +324,7 @@ function SessionCard({ s, lineups = [] }: { s: TodaySession; lineups?: Lineup[] 
               <div className="mt-0.5 text-[11px] leading-relaxed text-muted">{s.detail}</div>
             </div>
             {openable && (
-              <span className="mt-0.5 flex flex-shrink-0 items-center gap-1 text-[8px] font-semibold tracking-[0.06em] text-accent">
+              <span className="mt-0.5 flex flex-shrink-0 items-center gap-1 text-[10px] font-semibold tracking-[0.06em] text-accent">
                 {open ? "HIDE BOAT" : "YOUR BOAT"}
                 {open ? <IconChevronUp size={12} /> : <IconChevronDown size={12} />}
               </span>
@@ -337,7 +337,7 @@ function SessionCard({ s, lineups = [] }: { s: TodaySession; lineups?: Lineup[] 
                 <IconMessage size={12} />
               </span>
               <div>
-                <div className="text-[7px] font-semibold tracking-[0.12em] text-accent">
+                <div className="text-[10px] font-semibold tracking-[0.12em] text-accent">
                   {s.coachNote.coach}
                 </div>
                 <div className="mt-0.5 text-[11px] leading-relaxed text-text-2">
@@ -356,7 +356,7 @@ function SessionCard({ s, lineups = [] }: { s: TodaySession; lineups?: Lineup[] 
                 rather than the stored display string, so a lineup whose old
                 dock field holds a BOATHOUSE doesn't print one where the time
                 goes (lib/varsity/home → dockTime). */}
-            <div className="mb-2 text-[8px] font-semibold tracking-[0.12em] text-muted">
+            <div className="mb-2 text-[10px] font-semibold tracking-[0.12em] text-muted">
               {[l.periodKey, crewName(l), dockTime(l)].filter(Boolean).join(" · ").toUpperCase()}
             </div>
             <LineupSeats l={l} />
@@ -365,14 +365,14 @@ function SessionCard({ s, lineups = [] }: { s: TodaySession; lineups?: Lineup[] 
             {shellName(l) && (
               <div className="mt-2 flex items-center gap-2 text-[11px] text-muted">
                 <IconAnchor size={13} />
-                <span className="font-mono text-[9px] tracking-[0.12em]">BOAT</span>
+                <span className="font-mono text-[10px] tracking-[0.12em]">BOAT</span>
                 <span className="text-text">{shellName(l)}</span>
               </div>
             )}
             {l.oars && (
               <div className="mt-1 flex items-center gap-2 text-[11px] text-muted">
                 <IconAnchor size={13} />
-                <span className="font-mono text-[9px] tracking-[0.12em]">OARS</span>
+                <span className="font-mono text-[10px] tracking-[0.12em]">OARS</span>
                 <span className="text-text">{l.oars}</span>
               </div>
             )}
