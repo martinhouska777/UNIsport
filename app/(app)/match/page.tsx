@@ -4,54 +4,38 @@
   MATCH TAB. TWO sub-tabs — it had three, and all three meant "find a partner",
   which left nobody able to say which one they were supposed to use:
 
-  - People: all compatible partners, scored out of 100, best first.
-  - Sessions: one screen for "I want to train on Thursday". The board of open
-    posts is what you land on; posting your own is a button on it; and the timed
-    search — pick WHAT (activity) and WHEN (a day; the hour is optional) — is
-    folded away above the board for when you already know when you are going.
-    "Other" means every activity, an empty Time means the whole day, and how far
-    either side of a chosen hour still counts is a preset you can move.
+  - People: everyone at your school, best fit first, then "Also on campus".
+  - Sessions: the Buddy Board — everyone who has said what they want to train
+    and when — IS the tab. You land on people, not on controls. Posting your
+    own is a button on it, and the timed search ("who is free Thursday around
+    7?") sits behind a small "Search by time" link that opens as its own sheet
+    with its results inside it (components/match/SessionSearchSheet.tsx). It
+    used to be a fold at the top of the tab with the results rendered inside
+    the fold, so collapsing it hid the answer.
 
   Every result card carries the REASONS that person ranked where they did (see
   lib/matchReasons.ts) — the things you actually share. Tapping through to their
   profile shows the full list.
 
-  FILTERS are shared by Browse and Session search: one sheet, one piece of state,
-  so a concentration you picked on one tab still applies on the other. They are a
-  DRAFT until you press Apply in the sheet (components/match/FiltersSheet.tsx) —
-  which is the only moment either list re-runs. Session search still waits for
-  its own Search button because its activity and day aren't a filter, they're the
-  question, and its filters therefore appear WITH the results, not above them.
+  FILTERS are shared by People and the session search: one sheet, one piece of
+  state, so a concentration you picked on one still applies on the other. They
+  are a DRAFT until you press Apply in the sheet (components/match/
+  FiltersSheet.tsx) — the only moment either list re-runs.
 
   Data comes from the SQL RPC functions via lib/supabase/matching.ts. All colors
   are theme tokens; the choice lists reuse the onboarding data so they stay
   data-driven.
 */
 import { Suspense, useEffect, useMemo, useState } from "react";
-import Button from "@/components/ui/Button";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAppState } from "@/components/AppState";
 import { useProfileData } from "@/components/profile/useProfileData";
-import {
-  getBrowseMatches,
-  getSessionMatches,
-  type Match,
-  type MatchFilters,
-} from "@/lib/supabase/matching";
-import {
-  primaryActivities,
-  sessionTimeSlots,
-  sessionTimeLabel,
-  verifiedGyms,
-  SESSION_WINDOW_HOURS,
-  sessionWindows,
-} from "@/lib/onboarding";
+import { getBrowseMatches, type Match, type MatchFilters } from "@/lib/supabase/matching";
+import { verifiedGyms } from "@/lib/onboarding";
 import { matchTier } from "@/lib/matchTier";
-import MatchCard from "@/components/match/MatchCard";
-import WeekPicker from "@/components/match/WeekPicker";
-import { reasonRarity } from "@/lib/matchReasons";
-import { dayKeyOf, dateLabel } from "@/lib/schedule";
+import MatchGrid from "@/components/match/MatchGrid";
 import BuddyBoard from "@/components/match/BuddyBoard";
+import SessionSearchSheet from "@/components/match/SessionSearchSheet";
 import ShareInviteButton from "@/components/ShareInviteButton";
 import FilterBar from "@/components/match/FilterBar";
 import FiltersSheet, {
@@ -59,8 +43,7 @@ import FiltersSheet, {
   activeFilterCount,
   activeFilterChips,
 } from "@/components/match/FiltersSheet";
-import { Pill, FieldLabel, SelectField } from "@/components/onboarding/controls";
-import { IconChevronDown, IconSearch } from "@/components/icons";
+import { IconSearch } from "@/components/icons";
 
 type SubTab = "people" | "sessions";
 
@@ -69,115 +52,8 @@ const subTabs: { key: SubTab; label: string }[] = [
   { key: "sessions", label: "Sessions" },
 ];
 
-function Grid({
-  matches,
-  max,
-  onView,
-}: {
-  matches: Match[];
-  max: number;
-  onView: (m: Match, max: number) => void;
-}) {
-  /*
-    EVERYBODY IS SHOWN. Candidates below the weakest fit tier used to be
-    dropped, so with a handful of accounts the tab could read "No matches yet"
-    while real people were signed up. Now the tiered people come first, and
-    everyone else follows under "Also on campus" with no fit label — a person
-    you can message is never hidden because a score was low.
-  */
-  const tiered = matches.filter((m) => matchTier(m.score, max) !== null);
-  const rest = matches.filter((m) => matchTier(m.score, max) === null);
-  /*
-    Measured ACROSS the list that is actually on screen, then handed to every
-    card, so each one can lead with the fact its neighbours don't have.
-  */
-  const rarity = reasonRarity(matches);
-  const cards = (list: Match[]) =>
-    list.map((m) => (
-      <MatchCard key={m.userId} match={m} max={max} rarity={rarity} onView={(x) => onView(x, max)} />
-    ));
-  return (
-    <div className="px-3 pb-4">
-      {tiered.length > 0 && <div className="grid grid-cols-2 items-start gap-2">{cards(tiered)}</div>}
-      {rest.length > 0 && (
-        <>
-          <div className={`pb-2 ${tiered.length > 0 ? "pt-4" : ""}`}>
-            <h2 className="text-[11px] font-medium uppercase tracking-[0.1em] text-muted">
-              {tiered.length > 0 ? "Also on campus" : "On campus"}
-            </h2>
-            <p className="mt-0.5 text-[11px] text-muted">
-              {tiered.length > 0
-                ? "Less in common on paper — still real people at your school."
-                : "Nobody overlaps with you much on paper yet. They are still real people at your school."}
-            </p>
-          </div>
-          <div className="grid grid-cols-2 items-start gap-2">{cards(rest)}</div>
-        </>
-      )}
-    </div>
-  );
-}
-
 function Status({ children }: { children: React.ReactNode }) {
   return <div className="px-3 py-16 text-center text-sm text-muted">{children}</div>;
-}
-
-// The Filters button plus the chips for whatever is currently narrowing the
-// list. Shown on both Browse and Session search, driven by the same state — and
-// the presentation itself is shared with the Buddy Board (components/match/
-// FilterBar.tsx) so all three lists are narrowed the same way.
-function MatchFilterBar({
-  filters,
-  onApply,
-  open,
-  onToggleOpen,
-  onClear,
-  onClearAll,
-  total,
-  myConcentration,
-  myInterests,
-  showActivity,
-}: {
-  filters: MatchFilters;
-  /** Fired by the sheet's Apply button — nothing else changes the list. */
-  onApply: (next: MatchFilters) => void;
-  open: boolean;
-  onToggleOpen: () => void;
-  onClear: (key: keyof MatchFilters) => void;
-  onClearAll: () => void;
-  /** How many people survived — null while the list is still loading. */
-  total?: number | null;
-  myConcentration: string | null;
-  myInterests: string[];
-  showActivity?: boolean;
-}) {
-  return (
-    <>
-      <FilterBar
-        count={activeFilterCount(filters)}
-        chips={activeFilterChips(filters)}
-        onOpen={onToggleOpen}
-        onClear={(key) => onClear(key as keyof MatchFilters)}
-        onClearAll={onClearAll}
-        total={total}
-        noun="person"
-        open={open}
-      />
-      {open && (
-        <FiltersSheet
-          /* Re-seeds the sheet's draft if the applied filters change while it
-             is open — clearing a chip on the bar above, for instance. */
-          key={JSON.stringify(filters)}
-          value={filters}
-          onApply={onApply}
-          onClose={onToggleOpen}
-          myConcentration={myConcentration}
-          myInterests={myInterests}
-          showActivity={showActivity}
-        />
-      )}
-    </>
-  );
 }
 
 // useSearchParams() needs a Suspense boundary or the production build fails
@@ -199,16 +75,16 @@ function MatchScreen() {
   const search = useSearchParams();
 
   /*
-    Arriving from a gym's "Find a partner at this gym" button (/match?gym=...):
-    open Sessions with the timed search unfolded and that gym already filtered
-    in, so the tap carries the user's intent instead of dropping them on a blank
-    list of everyone.
-    Only gym names the app knows are accepted — never arbitrary URL text.
+    Arriving from a gym page's "See who else is going" (/match?gym=...): open
+    Sessions with the board already narrowed to that gym, so the tap carries
+    the intent instead of dropping them on everyone. Only gym names the app
+    knows are accepted — never arbitrary URL text.
   */
   const gymParam = search.get("gym");
   const presetGym = gymParam && verifiedGyms.includes(gymParam) ? gymParam : null;
 
   const [tab, setTab] = useState<SubTab>(presetGym ? "sessions" : "people");
+  const [searchOpen, setSearchOpen] = useState(false);
 
   // My own answers, for the sheet's "Same as mine" shortcuts.
   const myConcentration = (myProfile?.concentration as string) || null;
@@ -228,38 +104,20 @@ function MatchScreen() {
     );
   };
 
-  // --- Shared filters (both Browse and Session search) ---
+  // --- Shared filters (People and the session search) ---
   const [filters, setFilters] = useState<MatchFilters>(() =>
     presetGym ? { ...NO_FILTERS, gym: presetGym } : NO_FILTERS,
   );
   const [sheetOpen, setSheetOpen] = useState(false);
+  const clearFilter = (key: keyof MatchFilters) => setFilters({ ...filters, [key]: null });
 
   /*
-    Every route a filter can change goes through here — the sheet's Apply
-    button, a chip cleared on the bar, Clear all, and the session form's own
-    Gym box. Browse re-runs itself from its own effect; the timed search is
-    driven by its button, so a filter changing under its results has to re-ask
-    for them (refilterSession, below).
-
-    Which ROWS are ticked open in the sheet is the sheet's own business now: it
-    is scratch state that only exists while the sheet is on screen, and a row
-    ticked open with nothing picked in it isn't a filter at all.
-  */
-  const changeFilters = (next: MatchFilters) => {
-    setFilters(next);
-    refilterSession(next);
-  };
-
-  const clearFilter = (key: keyof MatchFilters) =>
-    changeFilters({ ...filters, [key]: null });
-
-  /*
-    --- Browse state ---
+    --- People ---
     Re-runs whenever a filter changes. `filters` is a new object every time it's
     edited, so identity is the signal: a stored result is only shown while it
     still belongs to the filters on screen, which makes "loading" something we
-    derive rather than a flag to reset (resetting one inside the effect would
-    cascade a render) and drops a slow reply that a newer search has overtaken.
+    derive rather than a flag to reset, and drops a slow reply that a newer
+    search has overtaken.
   */
   type BrowseResult = { forFilters: MatchFilters; rows?: Match[]; error?: string };
   const [browseResult, setBrowseResult] = useState<BrowseResult | null>(null);
@@ -282,82 +140,6 @@ function MatchScreen() {
   const current = browseResult?.forFilters === filters ? browseResult : null;
   const browse = current?.rows ?? null;
   const browseErr = current?.error ?? null;
-
-  // --- Session-search REQUIRED state ---
-  const [activity, setActivity] = useState<string | null>(null);
-  /* A real DATE now, not "some Monday" — see components/match/WeekPicker.tsx.
-     Matching still searches on the weekday it falls on, because a training
-     schedule is a weekly habit rather than a diary. */
-  const [date, setDate] = useState<string | null>(null);
-  /* OPTIONAL now. No time means "anyone training that day" — the honest answer
-     when you have a free Thursday rather than a 7 o'clock plan. */
-  const [hour, setHour] = useState<number | null>(null);
-  /* Two hours is where it starts, not where it has to stay (lib/onboarding.ts).
-     Only means anything once an hour is picked. */
-  const [windowHours, setWindowHours] = useState(SESSION_WINDOW_HOURS);
-
-  const [results, setResults] = useState<Match[] | null>(null);
-  const [searching, setSearching] = useState(false);
-  const [sessionErr, setSessionErr] = useState<string | null>(null);
-
-  // What and when. The hour is no longer part of the price of asking.
-  const canSearch = !!activity && !!date;
-  const anyTime = hour === null;
-  /*
-    True when the exact hour found nobody and we widened to the whole day. The
-    results are then real but looser, and the screen has to say so rather than
-    quietly pretending they were what was asked for.
-  */
-  const [widened, setWidened] = useState(false);
-
-  const runSearch = async (withFilters: MatchFilters = filters) => {
-    if (!userId || !canSearch) return;
-    setSearching(true);
-    setSessionErr(null);
-    try {
-      // Shared filters FIRST: the three below are this screen's own required
-      // answers and must win over anything left in the sheet.
-      /* No hour asked for = the middle of the day, opened wide enough to
-         cover all of it. The matching needs a centre and a width; "any time"
-         is simply the widest width there is. */
-      const ask = {
-        ...withFilters,
-        userId,
-        /* "Other" means EVERY activity, not the handful of people who ticked
-           the Other box themselves. Campus is still filling up; a search that
-           can only ever return three people is not a search. */
-        activity: activity === "other" ? null : activity,
-        day: dayKeyOf(date!),
-        hour: anyTime ? 12 : hour!,
-        windowHours: anyTime ? 12 : windowHours,
-      };
-      let rows = await getSessionMatches(ask);
-      /*
-        Nobody at 9? Then say who IS training that day rather than showing an
-        empty screen — three people two hours later is a far more useful answer
-        than "no one", and the heading above them says plainly that the time was
-        widened. Nothing to widen when the whole day was already the question.
-      */
-      const wide = rows.length === 0 && !anyTime && windowHours < 12;
-      if (wide) rows = await getSessionMatches({ ...ask, hour: 12, windowHours: 12 });
-      setWidened(wide && rows.length > 0);
-      setResults(rows);
-    } catch (e) {
-      setSessionErr((e as Error).message);
-    } finally {
-      setSearching(false);
-    }
-  };
-
-  /*
-    Once results are on screen the filters narrow them live, the way they do on
-    Browse. Before the first search they have nothing to act on — which is why
-    the bar sits with the RESULTS now instead of inside the form, where it was a
-    second full-width control competing with the Search button itself.
-  */
-  function refilterSession(next: MatchFilters) {
-    if (tab === "sessions" && results !== null) void runSearch(next);
-  }
 
   return (
     <div className="mx-auto w-full max-w-screen-sm">
@@ -391,17 +173,28 @@ function MatchScreen() {
       {tab === "people" && (
         <>
           <div className="px-3 pb-2">
-            <MatchFilterBar
-              filters={filters}
-              onApply={changeFilters}
-              open={sheetOpen}
-              onToggleOpen={() => setSheetOpen((v) => !v)}
-              onClear={clearFilter}
-              onClearAll={() => changeFilters(NO_FILTERS)}
+            <FilterBar
+              count={activeFilterCount(filters)}
+              chips={activeFilterChips(filters)}
+              onOpen={() => setSheetOpen((v) => !v)}
+              onClear={(key) => clearFilter(key as keyof MatchFilters)}
+              onClearAll={() => setFilters(NO_FILTERS)}
               total={browse?.length ?? null}
-              myConcentration={myConcentration}
-              myInterests={myInterests}
+              noun="person"
+              open={sheetOpen}
             />
+            {sheetOpen && (
+              <FiltersSheet
+                /* Re-seeds the sheet's draft if the applied filters change while
+                   it is open — clearing a chip on the bar above, for instance. */
+                key={JSON.stringify(filters)}
+                value={filters}
+                onApply={setFilters}
+                onClose={() => setSheetOpen(false)}
+                myConcentration={myConcentration}
+                myInterests={myInterests}
+              />
+            )}
           </div>
           {browseErr && <Status>Couldn’t load matches: {browseErr}</Status>}
           {!browseErr && browse === null && <Status>Finding your matches…</Status>}
@@ -419,189 +212,43 @@ function MatchScreen() {
             </Status>
           )}
           {!browseErr && browse && browse.length > 0 && (
-            /* The count used to live in a small-caps heading here. It is on the
-               filter bar now, beside the control that changes it. */
-            <Grid matches={browse} max={100} onView={viewProfile} />
+            /* The count lives on the filter bar, beside the control that changes it. */
+            <MatchGrid matches={browse} max={100} onView={viewProfile} />
           )}
         </>
       )}
 
       {/*
-        SESSIONS. The timed search, folded away — it answers a narrower question
-        than the board underneath it ("who is free at 7 on Thursday" rather than
-        "who wants to train this week"), so it opens on demand instead of
-        standing between you and the posts. Arriving from a gym's "find a partner
-        here" button opens it, because that tap already said when-ish.
+        SESSIONS — the board is the whole tab. One list per screen: the timed
+        search is a link, and opens as its own sheet with its results inside.
       */}
       {tab === "sessions" && (
-        <div className="px-3 pb-4">
-          <details className="group rounded-xl border border-border bg-surface-2" open={!!presetGym}>
-            <summary className="tap44 flex cursor-pointer list-none items-center justify-between px-3.5 py-3 [&::-webkit-details-marker]:hidden">
-              <span className="flex items-center gap-2">
-                {/* The row is a search you open, so it wears a search icon —
-                    otherwise it reads as one more heading on a tab that
-                    already has several. */}
-                <span className="text-muted">
-                  <IconSearch size={15} />
-                </span>
-                <span className="text-sm font-medium text-text">Find a partner by time</span>
-              </span>
-              <span className="text-muted transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none">
-                <IconChevronDown size={16} />
-              </span>
-            </summary>
-            <div className="flex flex-col gap-3 border-t border-border p-3.5">
-            {/* REQUIRED: Activity */}
-            <div>
-              <FieldLabel>Activity</FieldLabel>
-              <div className="flex flex-wrap gap-1.5">
-                {primaryActivities.map((a) => (
-                  <Pill
-                    key={a.key}
-                    label={a.label}
-                    selected={activity === a.key}
-                    onClick={() => setActivity(a.key)}
-                  />
-                ))}
-              </div>
-              {/* Said out loud, because the pill's own word doesn't say it. */}
-              {activity === "other" && (
-                <p className="mt-1 text-[11px] text-muted">
-                  Everyone training then, whatever they do.
-                </p>
-              )}
-            </div>
-
-            {/* REQUIRED: Day — a real date, a week out */}
-            <div>
-              <FieldLabel>Day</FieldLabel>
-              <WeekPicker value={date} onChange={setDate} />
-            </div>
-
-            {/* WHERE and WHEN, side by side. Time on its own spanned the whole
-                panel for a value four characters long, and it left Gym with
-                nowhere to live but the filter sheet. Two short answers on one
-                line read as one question: where, and at what time. */}
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <FieldLabel>Gym</FieldLabel>
-                <SelectField
-                  value={filters.gym ?? ""}
-                  onChange={(v) => changeFilters({ ...filters, gym: v === "" ? null : v })}
-                  options={verifiedGyms.map((g) => ({ value: g, label: g }))}
-                  placeholder="Any gym"
-                  ariaLabel="Gym"
-                />
-              </div>
-              {/* A dropdown, which is a wheel on a phone. It was thirty pills
-                  you dragged sideways through to reach 7:30. */}
-              <div>
-                <FieldLabel>Time</FieldLabel>
-                <SelectField
-                  value={hour === null ? "" : String(hour)}
-                  onChange={(v) => setHour(v === "" ? null : Number(v))}
-                  options={sessionTimeSlots.map((t) => ({
-                    value: String(t.value),
-                    label: t.label,
-                  }))}
-                  placeholder="Any time"
-                  ariaLabel="Time"
-                />
-              </div>
-            </div>
-
-            {/*
-              HOW WIDE. Two hours was hard-wired, which quietly decided for
-              everyone: too narrow for a free evening, too wide for a 7 AM run.
-              It is a preset now — ± 2h is already chosen, and you can move it,
-              up to the whole day.
-
-              Leaving Time on "Any time" is the other way to say the same thing
-              — everyone training that day — so these only appear once there is
-              an hour for them to be either side of.
-            */}
-            {!anyTime && (
-              <div className="flex flex-wrap gap-1.5">
-                {sessionWindows.map((w) => (
-                  <Pill
-                    key={w.hours}
-                    label={w.label}
-                    selected={windowHours === w.hours}
-                    onClick={() => setWindowHours(w.hours)}
-                  />
-                ))}
-              </div>
-            )}
-
-            <p className="-mt-1.5 text-[11px] text-muted">
-              {anyTime
-                ? "Shows everyone training that day. Pick a time to narrow it down."
-                : windowHours >= 12
-                  ? `Shows everyone training that day, whatever time ${sessionTimeLabel(
-                      hour!,
-                    )} turns into.`
-                  : `Shows people training ${
-                      sessionWindows.find((w) => w.hours === windowHours)?.full ?? ""
-                    } of ${sessionTimeLabel(hour!)}.`}
-            </p>
-
-            <Button size="lg" full onClick={() => runSearch()} disabled={!canSearch || searching}>
-              {searching ? "Searching…" : "Search"}
-            </Button>
-            {!canSearch && (
-              <p className="text-center text-[11px] text-muted">
-                Pick an activity and a day to search.
-              </p>
-            )}
+        <>
+          <div className="flex items-center justify-end px-3 pb-1">
+            <button
+              type="button"
+              onClick={() => setSearchOpen(true)}
+              className="tap44 flex items-center gap-1.5 rounded-full px-2 py-1 text-[12px] font-medium text-primary"
+            >
+              <IconSearch size={13} />
+              Search by time
+            </button>
           </div>
-
-          {/* Results */}
-          {sessionErr && <Status>Search failed: {sessionErr}</Status>}
-          {!sessionErr && results && (
-            <div className="pt-3">
-              {/* OPTIONAL filters — the same sheet Browse uses. They appear
-                  with the answer, because narrowing a list you haven't asked
-                  for yet is not a thing anyone does. */}
-              <div className="pb-3">
-                <MatchFilterBar
-                  filters={filters}
-                  onApply={changeFilters}
-                  open={sheetOpen}
-                  onToggleOpen={() => setSheetOpen((v) => !v)}
-                  onClear={clearFilter}
-                  onClearAll={() => changeFilters(NO_FILTERS)}
-                  total={results.length}
-                  myConcentration={myConcentration}
-                  myInterests={myInterests}
-                  showActivity={false}
-                />
-              </div>
-              {results.length === 0 ? (
-                <Status>No one is training that day yet. Try another day.</Status>
-              ) : (
-                <>
-                  {/* Said out loud. These people are real, but they are not
-                      what was asked for, and a list that quietly answers a
-                      different question is worse than an empty one. */}
-                  {widened && hour !== null && (
-                    <p className="px-3 pb-2 text-[12px] text-muted">
-                      Nobody at {sessionTimeLabel(hour)} — here&apos;s who else is training
-                      {date ? ` ${dateLabel(date)}` : " that day"}.
-                    </p>
-                  )}
-                  <Grid matches={results} max={92} onView={viewProfile} />
-                </>
-              )}
-            </div>
-          )}
-          </details>
-        </div>
+          <BuddyBoard initialGym={presetGym} />
+        </>
       )}
 
-      {/* The board itself — the default view of this tab. A gym in the URL
-          (from a gym page's "See who else is going") narrows it to that gym. */}
-      {tab === "sessions" && <BuddyBoard initialGym={presetGym} />}
-
+      {searchOpen && userId && (
+        <SessionSearchSheet
+          userId={userId}
+          filters={filters}
+          onChangeFilters={setFilters}
+          myConcentration={myConcentration}
+          myInterests={myInterests}
+          onView={viewProfile}
+          onClose={() => setSearchOpen(false)}
+        />
+      )}
     </div>
   );
 }
