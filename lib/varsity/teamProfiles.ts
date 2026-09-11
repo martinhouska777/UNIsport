@@ -9,7 +9,7 @@
 
   This is mock DATA in lib (rule 7); the screens never invent values themselves.
 */
-import { rosterById, type Athlete } from "./coachLineup";
+import { rosterById } from "./coachLineup";
 import { defaultTeamYear } from "./athleteProfile";
 import { classYears } from "@/lib/onboarding";
 
@@ -57,9 +57,10 @@ export function secToClock(sec: number): string {
   return `${m}:${s.toFixed(1).padStart(4, "0")}`;
 }
 
-function statusFor(a: Athlete, r: () => number): string {
-  if (a.out === "INJ") return "Injured";
-  if (a.out === "SICK") return "Light training";
+// Who is out on a given day is the coach's call and lives in
+// availabilityStore, not on the roster — so a demo status is only ever
+// Active or, now and then, Away.
+function statusFor(r: () => number): string {
   const x = r();
   if (x > 0.92) return "Away";
   return "Active";
@@ -93,7 +94,7 @@ export function teamProfile(athleteId: string): TeamProfile {
     teamYear: defaultTeamYear(classYear),
     heightCm,
     weightKg,
-    status: a ? statusFor(a, r) : "Active",
+    status: a ? statusFor(r) : "Active",
     prs,
   };
   cache[athleteId] = profile;

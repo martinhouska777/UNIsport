@@ -51,9 +51,19 @@ export const COX_INK = "#18181b";
 /*
   Why somebody is out. Two reasons, because they are the two a coach acts on
   differently: an injury changes selection for weeks, a bug changes it for days.
+  That difference is the `span`: marking someone SICK puts them out for the day
+  being seated, marking them INJURED puts them out until the coach brings them
+  back. Who is out on which day lives in lib/varsity/availabilityStore.ts — it
+  is a fact about a DAY, so it is never written on the athlete here.
 */
 export type OutReason = "INJ" | "SICK";
 export const outMeta: Record<OutReason, string> = { INJ: "Injured", SICK: "Sick" };
+
+export type OutSpan = "day" | "open";
+export const outOptions: { reason: OutReason; label: string; sub: string; span: OutSpan }[] = [
+  { reason: "SICK", label: "Sick", sub: "Out today. Back in the pool tomorrow.", span: "day" },
+  { reason: "INJ", label: "Injured", sub: "Out until you bring them back in.", span: "open" },
+];
 
 /* ── The roster (every assignable athlete, keyed by id) ── */
 export type Athlete = {
@@ -62,7 +72,6 @@ export type Athlete = {
   name: string;
   side: Side;
   cox?: boolean; // a coxswain — can ONLY take the cox seat, never a rowing seat
-  out?: OutReason; // unavailable today → listed apart, can't be seated
 };
 
 /*
@@ -75,9 +84,10 @@ export type Athlete = {
   The sides below are a WORKING SPLIT while the roster is still demo data:
   roughly half port, half starboard, a few who row either way. A coach's own
   answer (the side question in /varsity/setup) replaces them the moment these
-  are real accounts. Same for `out`: five people are carrying something, so
-  "who can I actually put in a boat today" has an answer to show. The coxswains
-  take no side at all.
+  are real accounts. Nobody here is marked out: who is out is a fact about a
+  day, written by the coach from the Lineup pool and kept in
+  lib/varsity/availabilityStore.ts, never on the roster. The coxswains take no
+  side at all.
 */
 export const roster: Athlete[] = [
   // ── Coxswains ──
@@ -101,7 +111,7 @@ export const roster: Athlete[] = [
   { id: "john-brown", initials: "JBn", name: "John Brown", side: "S" },
   { id: "marco-gandola", initials: "MG", name: "Marco Gandola", side: "B" },
   { id: "apostolos-lykomitros", initials: "AL", name: "Apostolos Lykomitros", side: "P" },
-  { id: "tyler-horler", initials: "TH", name: "Tyler Horler", side: "S", out: "INJ" },
+  { id: "tyler-horler", initials: "TH", name: "Tyler Horler", side: "S" },
   { id: "teddy-plimpton", initials: "TP", name: "Teddy Plimpton", side: "P" },
   { id: "sam-davidson", initials: "SD", name: "Sam Davidson", side: "S" },
   { id: "jordan-dykema", initials: "JDy", name: "Jordan Dykema", side: "B" },
@@ -110,8 +120,8 @@ export const roster: Athlete[] = [
   { id: "owen-finnerty", initials: "OF", name: "Owen Finnerty", side: "S" },
   { id: "marco-vicino", initials: "MV", name: "Marco Vicino", side: "P" },
   { id: "pierce-lapham", initials: "PL", name: "Pierce Lapham", side: "S" },
-  { id: "julian-paul", initials: "JP", name: "Julian Paul", side: "B", out: "SICK" },
-  { id: "ben-scott", initials: "BS", name: "Ben Scott", side: "P", out: "INJ" },
+  { id: "julian-paul", initials: "JP", name: "Julian Paul", side: "B" },
+  { id: "ben-scott", initials: "BS", name: "Ben Scott", side: "P" },
   { id: "sam-woodgate", initials: "SW", name: "Sam Woodgate", side: "S" },
   { id: "mike-thomas", initials: "MT", name: "Mike Thomas", side: "P" },
   { id: "joseph-baker", initials: "JB", name: "Joseph Baker", side: "S" },
@@ -125,12 +135,12 @@ export const roster: Athlete[] = [
   { id: "elam-hughes", initials: "EH", name: "Elam Hughes", side: "S" },
   { id: "owen-marcovitz", initials: "OM", name: "Owen Marcovitz", side: "P" },
 
-  { id: "will-fowler", initials: "WF", name: "Will Fowler", side: "S", out: "INJ" },
+  { id: "will-fowler", initials: "WF", name: "Will Fowler", side: "S" },
   { id: "kevin-weldon", initials: "KW", name: "Kevin Weldon", side: "B" },
 
   { id: "leyth-sousou", initials: "LS", name: "Leyth Sousou", side: "P" },
 
-  { id: "cameron-beyki", initials: "CB", name: "Cameron Beyki", side: "S", out: "SICK" },
+  { id: "cameron-beyki", initials: "CB", name: "Cameron Beyki", side: "S" },
   { id: "max-morehead", initials: "MM", name: "Max Morehead", side: "P" },
 
   { id: "george-burney", initials: "GB", name: "George Burney", side: "S" },

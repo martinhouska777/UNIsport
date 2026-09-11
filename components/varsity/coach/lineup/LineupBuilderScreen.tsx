@@ -49,6 +49,13 @@
   UNAVAILABLE list underneath answers the same filter, and each name there
   carries its side as well as the reason it is out.
 
+  WHO IS OUT IS THE COACH'S CALL, MADE HERE. Tap a name in the pool to mark
+  them sick (out today) or injured (out until brought back); tap an out name
+  to bring them back in. It is written per DAY to lib/varsity/availabilityStore
+  — so the AM and PM agree, and an injury marked on Tuesday still holds when
+  Friday is seated — and marking someone out empties any seat they hold in
+  this lineup, so the boat shows the hole to fill.
+
   NOTE: the roster is still demo data (no real athlete accounts yet), so athletes
   see the published boats but not a personalised "your seat" highlight — that
   needs real team membership (a later slice).
@@ -72,6 +79,8 @@ import {
   boatTypes,
   makeSeats,
   defaultBoatName,
+  outOptions,
+  type OutReason,
   type Practice,
   type PracticeStatus,
   type Boat,
@@ -86,8 +95,11 @@ import {
   sessionColor,
   sessionKey,
   sessionLabel,
+  toISO,
   type Period,
 } from "@/lib/varsity/coachPlan";
+import { fetchOutOn, markBackIn, markOut } from "@/lib/varsity/availabilityStore";
+import Sheet from "@/components/varsity/Sheet";
 import { fetchPlan, type Plan } from "@/lib/varsity/planStore";
 import { notifySquad } from "@/lib/push/client";
 import SaveState from "@/components/varsity/coach/SaveState";
@@ -102,6 +114,7 @@ import {
 import CrewVideoStrip from "@/components/varsity/CrewVideoStrip";
 import {
   IconArrowLeft,
+  IconCheck,
   IconChevronLeft,
   IconChevronRight,
   IconClock,
@@ -681,8 +694,25 @@ function Seat({
   input and stays fully editable.
 */
 /* ─────────────────────────  pool chip  ───────────────────────── */
-function PoolChip({ a, onDragStart }: { a: Athlete; onDragStart: () => void }) {
-  if (a.out) {
+/*
+  TAP A CHIP TO SAY WHO IS OUT. The chip is where the coach is already
+  looking when someone texts "not coming" at 5:30, so it is also where they
+  are marked out — and where they are brought back. `out` is the reason they
+  are out on THIS practice's day (from availabilityStore), never a fact about
+  the person. Dragging still works on a desktop: a drag never fires the tap.
+*/
+function PoolChip({
+  a,
+  out,
+  onTap,
+  onDragStart,
+}: {
+  a: Athlete;
+  out?: OutReason;
+  onTap: () => void;
+  onDragStart: () => void;
+}) {
+  if (out) {
     /*
       Two facts, in the order a coach needs them: WHICH SIDE this person is
       (or that they cox), then WHY they are out. The side was missing here,
@@ -690,13 +720,18 @@ function PoolChip({ a, onDragStart }: { a: Athlete; onDragStart: () => void }) {
       the list to see what the injury costs them had to remember it.
     */
     return (
-      <div className="flex h-[38px] select-none items-center gap-2 rounded-[10px] border border-danger-line bg-danger-tint px-2.5 opacity-60">
+      <button
+        type="button"
+        onClick={onTap}
+        aria-label={`${a.name}, out — ${outMeta[out]}. Tap to bring back in.`}
+        className="flex h-[38px] select-none items-center gap-2 rounded-[10px] border border-danger-line bg-danger-tint px-2.5 opacity-60 active:opacity-90"
+      >
         <span className="text-[15px] font-medium text-muted">{a.name}</span>
         <AthleteTag a={a} />
         <span className="rounded bg-danger-tint px-1.5 py-px font-mono text-[9px] font-semibold uppercase tracking-[0.06em] text-danger">
-          {outMeta[a.out]}
+          {outMeta[out]}
         </span>
-      </div>
+      </button>
     );
   }
   /*
@@ -707,11 +742,21 @@ function PoolChip({ a, onDragStart }: { a: Athlete; onDragStart: () => void }) {
   */
   return (
     <div
+      role="button"
+      tabIndex={0}
       draggable
+      onClick={onTap}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onTap();
+        }
+      }}
       onDragStart={(e) => {
         e.dataTransfer.setData("text/plain", a.id);
         onDragStart();
       }}
+      aria-label={`${a.name}. Tap to mark out.`}
       className="flex h-[38px] cursor-grab select-none items-center gap-2 rounded-[10px] border border-border bg-surface px-2.5 active:cursor-grabbing active:border-primary-line active:bg-primary-tint"
     >
       <span className="text-[15px] font-medium text-text">{a.name}</span>
@@ -813,6 +858,30 @@ function Builder({
   const [poolFilter, setPoolFilter] = useState<PoolFilter>("all");
 
   /*
+    WHO IS OUT ON THIS DAY, and why. A fact about the day, read from the
+    availability store for the date this practice falls on — so the AM and PM
+    of one day agree, and a rower marked injured on Tuesday is still out when
+    Friday's boats are seated. `outSheet` is the person the coach has tapped.
+  */
+  const dayIso = useMemo(() => {
+    const parsed = parseSessionKey(dayKey);
+    return parsed ? toISO(parsed.date) : toISO(new Date());
+  }, [dayKey]);
+  const [outById, setOutById] = useState<Record<string, OutReason>>({});
+  const [outSheet, setOutSheet] = useState<Athlete | null>(null);
+  const [outBusy, setOutBusy] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    fetchOutOn(dayIso).then((o) => {
+      if (active) setOutById(o);
+    });
+    return () => {
+      active = false;
+    };
+  }, [dayIso]);
+
+  /*
     What the DATABASE holds, as text. Anything else in `boats` is work not
     written yet — which matters because a half-seated eight is not something to
     lose to a mis-tap, a closed app or an arrow. Compared, not counted: a name
@@ -888,12 +957,12 @@ function Builder({
   }, [boats]);
 
   const available = useMemo(
-    () => roster.filter((a) => !a.out && !seatedIds.has(a.id)),
-    [seatedIds],
+    () => roster.filter((a) => !outById[a.id] && !seatedIds.has(a.id)),
+    [seatedIds, outById],
   );
-  // Injured or ill: never seatable, and shown as one list rather than dimmed
-  // in among the training groups.
-  const unavailable = useMemo(() => roster.filter((a) => a.out), []);
+  // Injured or ill today: never seatable, and shown as one list rather than
+  // dimmed in among the rest.
+  const unavailable = useMemo(() => roster.filter((a) => !!outById[a.id]), [outById]);
   // The same list under the filter the pool is showing — an out rower is no
   // more relevant to the cox seat than an available one.
   const unavailableHere = useMemo(
@@ -950,6 +1019,46 @@ function Builder({
         return { ...b, seats: b.seats.map((s, i) => (i === slot.idx ? { ...s, athleteId: null } : s)) };
       }),
     );
+  };
+
+  /*
+    MARKING SOMEONE OUT. Written to the store for this day (or open-ended),
+    and — the part that matters at 5:30 — pulled out of any seat they hold in
+    THIS lineup, so the boat shows the hole the coach now has to fill. The
+    seat empties in this practice only: a Friday lineup already seated is not
+    rewritten because Tuesday's rower is ill, since Friday may be different.
+  */
+  const setOut = async (a: Athlete, reason: OutReason | null) => {
+    setOutBusy(true);
+    const { error } = reason
+      ? await markOut(
+          a.id,
+          reason,
+          dayIso,
+          outOptions.find((o) => o.reason === reason)?.span === "day" ? dayIso : null,
+        )
+      : await markBackIn(a.id, dayIso);
+    setOutBusy(false);
+    if (error) {
+      console.error("availability:", error);
+      return;
+    }
+    setOutById((prev) => {
+      const next = { ...prev };
+      if (reason) next[a.id] = reason;
+      else delete next[a.id];
+      return next;
+    });
+    if (reason) {
+      setBoats((prev) =>
+        prev.map((b) => ({
+          ...b,
+          seats: b.seats.map((s) => (s.athleteId === a.id ? { ...s, athleteId: null } : s)),
+          coxId: b.coxId === a.id ? null : b.coxId,
+        })),
+      );
+    }
+    setOutSheet(null);
   };
 
   const setNote = (boatId: string, note: string) =>
@@ -1457,7 +1566,12 @@ function Builder({
                   return (
                     <div className="flex flex-wrap gap-1.5">
                       {chips.map((a) => (
-                        <PoolChip key={a.id} a={a} onDragStart={() => setDropKey(null)} />
+                        <PoolChip
+                          key={a.id}
+                          a={a}
+                          onTap={() => setOutSheet(a)}
+                          onDragStart={() => setDropKey(null)}
+                        />
                       ))}
                     </div>
                   );
@@ -1479,7 +1593,13 @@ function Builder({
                     </div>
                     <div className="flex flex-wrap gap-1.5">
                       {unavailableHere.map((a) => (
-                        <PoolChip key={a.id} a={a} onDragStart={() => setDropKey(null)} />
+                        <PoolChip
+                          key={a.id}
+                          a={a}
+                          out={outById[a.id]}
+                          onTap={() => setOutSheet(a)}
+                          onDragStart={() => setDropKey(null)}
+                        />
                       ))}
                     </div>
                   </div>
@@ -1515,6 +1635,61 @@ function Builder({
           />
         </div>
       </div>
+
+      {/*
+        MARK OUT / BRING BACK. Opened by tapping a name in the pool. The two
+        ways of being out are data (outOptions): sick is today, injured is
+        until the coach says otherwise. Someone already out gets the way back
+        in first, then the other reason — a "sick" who turns out to be hurt is
+        one tap, not two.
+      */}
+      {outSheet && (
+        <Sheet
+          title={outById[outSheet.id] ? `${outSheet.name} is out` : `Mark ${outSheet.name} out`}
+          onClose={() => setOutSheet(null)}
+        >
+          <div className="flex flex-col gap-2">
+            {outById[outSheet.id] && (
+              <button
+                type="button"
+                disabled={outBusy}
+                onClick={() => void setOut(outSheet, null)}
+                className="flex w-full items-center gap-3 rounded-xl border border-success-line bg-success-tint px-3.5 py-3 text-left disabled:opacity-50"
+              >
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[13px] font-semibold text-text">Back in</span>
+                  <span className="mt-0.5 block text-[11px] leading-relaxed text-muted">
+                    Available from {dayKeyLabel(dayKey)}. The days missed stay on record.
+                  </span>
+                </span>
+                <IconCheck size={16} className="flex-shrink-0 text-success" />
+              </button>
+            )}
+            {outOptions
+              .filter((o) => o.reason !== outById[outSheet.id])
+              .map((o) => (
+                <button
+                  key={o.reason}
+                  type="button"
+                  disabled={outBusy}
+                  onClick={() => void setOut(outSheet, o.reason)}
+                  className="flex w-full items-center gap-3 rounded-xl border border-border bg-surface-2 px-3.5 py-3 text-left disabled:opacity-50"
+                >
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[13px] font-semibold text-text">{o.label}</span>
+                    <span className="mt-0.5 block text-[11px] leading-relaxed text-muted">{o.sub}</span>
+                  </span>
+                  <IconChevronRight size={14} className="flex-shrink-0 text-muted" />
+                </button>
+              ))}
+            {seatedIds.has(outSheet.id) && !outById[outSheet.id] && (
+              <p className="px-1 pt-1 text-[11px] leading-relaxed text-muted">
+                {outSheet.name.split(/\s+/)[0]} is in a boat — marking them out empties that seat.
+              </p>
+            )}
+          </div>
+        </Sheet>
+      )}
 
       {sheetOpen && (
         <div className="absolute inset-0 z-50 flex items-end bg-black/60" onClick={() => setSheetOpen(false)}>
