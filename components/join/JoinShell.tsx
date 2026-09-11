@@ -63,8 +63,12 @@ export default function JoinShell({ badge, children }: { badge: string; children
           </Link>
         )}
 
-        <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-l-varsity-soft bg-l-varsity-dim px-3 py-1.5 font-mono text-[11px] font-medium uppercase tracking-wider text-l-varsity">
-          {badge}
+        {/* On its own line under the wordmark: a short badge used to slide up
+            beside the logo, which read as one strange word. */}
+        <div className="mb-5 flex justify-center">
+          <span className="inline-flex items-center gap-2 rounded-full border border-l-varsity-soft bg-l-varsity-dim px-3 py-1.5 font-mono text-[11px] font-medium uppercase tracking-wider text-l-varsity">
+            {badge}
+          </span>
         </div>
 
         {children}
