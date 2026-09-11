@@ -1139,10 +1139,18 @@ body {
   50%  { opacity: 1; }
   to   { opacity: 1; transform: translateX(0); letter-spacing: 0.38em; }
 }
-.v-oar-in-left  { animation: v-oar-in-left  0.85s cubic-bezier(0.18, 0.7, 0.2, 1) both; }
-.v-oar-in-right { animation: v-oar-in-right 0.85s cubic-bezier(0.18, 0.7, 0.2, 1) both; }
-.v-crest-drop   { animation: v-crest-drop   0.75s 0.55s cubic-bezier(0.2, 0.85, 0.25, 1) both; }
-.v-motto-in     { animation: v-motto-in     0.8s  1.15s cubic-bezier(0.18, 0.7, 0.2, 1) both; }
+/*
+  TIMING. The whole film is ~1.7s including the fade (components/varsity/
+  VarsityIntro.tsx holds the two timers that have to agree with these delays).
+  It was 2.8s — fine the first time, and in the way by the third morning,
+  because a PWA cold-starts every day and every cold start was an "entrance".
+  Every beat is kept — oars, crest, motto — just tighter: the oars land at
+  0.55s, the crest at 0.85s, the motto at 1.25s, and the fade begins at 1.35s.
+*/
+.v-oar-in-left  { animation: v-oar-in-left  0.55s cubic-bezier(0.18, 0.7, 0.2, 1) both; }
+.v-oar-in-right { animation: v-oar-in-right 0.55s cubic-bezier(0.18, 0.7, 0.2, 1) both; }
+.v-crest-drop   { animation: v-crest-drop   0.5s  0.35s cubic-bezier(0.2, 0.85, 0.25, 1) both; }
+.v-motto-in     { animation: v-motto-in     0.55s 0.7s  cubic-bezier(0.18, 0.7, 0.2, 1) both; }
 
 @media (prefers-reduced-motion: reduce) {
   .v-oar-in-left, .v-oar-in-right, .v-crest-drop, .v-motto-in { animation: none; }

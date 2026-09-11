@@ -1,40 +1,48 @@
 "use client";
 
 /*
-  VARSITY MODE INTRO — a one-shot title sequence played when you enter Varsity
+  VARSITY MODE INTRO — a short title sequence played when you enter Varsity
   Mode. Two oars sweep in from the sides and cross in the middle; the crest then
-  drops from the top onto the crossing point; the whole overlay fades to reveal
-  the Home screen.
+  drops from the top onto the crossing point; the motto slides in under it; the
+  whole overlay fades to reveal the Home screen. About 1.7 seconds, and a tap
+  anywhere ends it early.
 
-  Plays ONLY on the switch into Varsity Mode from the normal app — not on every
-  tab switch, and not when you come back from a mode-neutral screen such as
-  Settings (which lives outside this layout, so returning re-mounts this).
-  Which mode you are in is remembered in lib/varsity/mode.ts. Disabled entirely
-  under prefers-reduced-motion.
+  WHEN IT PLAYS — three gates, any one of which skips it:
+    • the OS "reduce motion" setting
+    • already being in Varsity Mode this tab (lib/varsity/mode.ts → markMode):
+      a trip out to Settings and back is not an entrance
+    • having already played TODAY (markIntroShown): an installed PWA is a fresh
+      tab every morning, so "once per switch" used to mean every single day
+  Once a day is the ceiling: a rower checking whether he's in a boat at 5:12am
+  has seen the oars before.
 
   The oars are the landing page's oars (the Blade Lock closer's drawing): a
   dark handle, shaft and collar, and the school's own blade — Harvard's
   crimson with the two white wedges — from lib/landingSchools.ts, drawn by
   OarMark (shared with the Varsity Mode mark, VarsityCrest). 250px tall here.
+  The beat timings live with the keyframes in app/globals.css; the two timers
+  below have to agree with them.
 */
 import { useEffect, useState } from "react";
 import UniversityCrest from "@/components/UniversityCrest";
 import { useAppState } from "@/components/AppState";
 import { getUniversity } from "@/lib/themes";
 import OarMark from "@/components/varsity/OarMark";
-import { inVarsityMode, markMode } from "@/lib/varsity/mode";
+import { inVarsityMode, introShownToday, markIntroShown, markMode } from "@/lib/varsity/mode";
 import { consumeSignIn } from "@/lib/loginIntro";
+
+// The motto lands at ~1.25s (globals.css); hold it a beat, then fade.
+const FADE_AT_MS = 1350;
+const FADE_MS = 350;
 
 export default function VarsityIntro() {
   const [leaving, setLeaving] = useState(false);
   // Decided once, at mount — the varsity layout only renders this on the client
-  // (it waits for the app state), so reading the browser here is safe. Two
-  // reasons to skip it: the OS "reduce motion" setting, and already being in
-  // Varsity Mode (a trip out to Settings and back is not an entrance).
+  // (it waits for the app state), so reading the browser here is safe.
   const [done, setDone] = useState(() => {
     if (typeof window === "undefined") return true;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return true;
-    return inVarsityMode();
+    return inVarsityMode() || introShownToday();
   });
   // The motto is the UNIVERSITY's, not Varsity Mode's, so it comes from the
   // same theme data every school will eventually have a row in (rule 2).
@@ -53,23 +61,39 @@ export default function VarsityIntro() {
     consumeSignIn();
   }, []);
 
+  // Playing → that's today's showing, whether it runs to the end or is tapped away.
   useEffect(() => {
     if (done) return;
-    // The motto lands at ~1.95s; hold it a beat before fading the whole thing.
-    const fade = setTimeout(() => setLeaving(true), 2250); // start fade-out
-    const end = setTimeout(() => setDone(true), 2800); // unmount after fade
+    markIntroShown();
+    const fade = setTimeout(() => setLeaving(true), FADE_AT_MS);
+    const end = setTimeout(() => setDone(true), FADE_AT_MS + FADE_MS);
     return () => {
       clearTimeout(fade);
       clearTimeout(end);
     };
   }, [done]);
 
+  // Any tap ends it: fade now, unmount when the fade is through.
+  const skip = () => {
+    if (leaving) return;
+    setLeaving(true);
+    setTimeout(() => setDone(true), FADE_MS);
+  };
+
   if (done) return null;
 
   return (
-    <div
-      aria-hidden="true"
-      className={`absolute inset-0 z-50 flex items-center justify-center bg-background transition-opacity duration-500 ${
+    /*
+      A BUTTON, not a decoration: the whole overlay is the skip control, so it
+      is reachable by a tap, a key and a screen reader alike — the old version
+      was aria-hidden, which made it 2.8 seconds of nothing for anyone not
+      looking at it.
+    */
+    <button
+      type="button"
+      onClick={skip}
+      aria-label="Skip intro"
+      className={`absolute inset-0 z-50 flex cursor-default items-center justify-center bg-background transition-opacity duration-[350ms] ${
         leaving ? "opacity-0" : "opacity-100"
       }`}
     >
@@ -122,6 +146,6 @@ export default function VarsityIntro() {
           </div>
         )}
       </div>
-    </div>
+    </button>
   );
 }

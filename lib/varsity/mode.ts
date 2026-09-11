@@ -39,3 +39,33 @@ export function inVarsityMode(): boolean {
     return false;
   }
 }
+
+/*
+  ONCE A DAY, at most. The sessionStorage mark above dies with the tab — and an
+  installed PWA is a fresh tab every morning, because the phone throws it out
+  overnight. So "only on the switch into Varsity Mode" meant, in practice, 2.8
+  seconds of oars at 5:12am every single day. This second mark lives in
+  localStorage under the calendar date it last played on: the film plays the
+  first time you enter Varsity Mode on a given day, and not again that day.
+*/
+const INTRO_KEY = "unisport.varsityIntroDay";
+const todayKey = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+};
+
+export function introShownToday(): boolean {
+  try {
+    return localStorage.getItem(INTRO_KEY) === todayKey();
+  } catch {
+    return false;
+  }
+}
+
+export function markIntroShown() {
+  try {
+    localStorage.setItem(INTRO_KEY, todayKey());
+  } catch {
+    // Storage disabled: the intro plays once per tab instead, as before.
+  }
+}
