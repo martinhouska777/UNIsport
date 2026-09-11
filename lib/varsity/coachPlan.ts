@@ -120,10 +120,6 @@ export function suggestionsFor(category: Category, intensity?: Intensity): strin
   if (category === "flex") return flexLengths;
   return []; // weights + off → none
 }
-// Header shown above the quick options (different wording for flex's lengths).
-export const optionsLabel = (category: Category) =>
-  category === "flex" ? "Length" : "Most used · tap to fill";
-
 /* ── Team workouts ──────────────────────────────────────────────────────────
    The coach can mark a session as a TEAM WORKOUT: everyone who logs it lands on
    one shared board the whole squad can see (db/varsity_results.sql). A board is
