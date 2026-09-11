@@ -39,6 +39,9 @@ import BoardFiltersSheet, {
 } from "@/components/match/BoardFiltersSheet";
 import Avatar from "@/components/messages/Avatar";
 import { announceBoardChange } from "@/lib/gymGoing";
+import { useAppState } from "@/components/AppState";
+import { useSharedHooks } from "@/components/match/useSharedHooks";
+import HookChip from "@/components/match/HookChip";
 
 function dayShort(key: string): string {
   return weekDays.find((d) => d.key === key)?.label.slice(0, 3) ?? key;
@@ -75,6 +78,10 @@ export default function BuddyBoard({
   initialGym?: string | null;
 }) {
   const router = useRouter();
+  const { userId } = useAppState();
+  // One shared fact per poster — "Both into Climbing" — the reason to pick
+  // this row over the one below it (lib/matchReasons.ts).
+  const { hookFor } = useSharedHooks(userId);
 
   // --- Post form state ---
   const [focus, setFocus] = useState<string | null>(null);
@@ -403,7 +410,10 @@ export default function BuddyBoard({
             >
               <Avatar size={44} src={p.authorPhoto} alt={p.authorName} />
               <div className="min-w-0 flex-1">
-                <div className="truncate text-sm font-medium text-text">{p.authorName}</div>
+                <div className="flex min-w-0 items-center gap-1.5">
+                  <span className="truncate text-sm font-medium text-text">{p.authorName}</span>
+                  <HookChip hook={hookFor(p.author)} />
+                </div>
                 <div className="text-[13px] text-text">{summary(p.focus, p.date, p.day, p.hour, p.timeOfDay)}</div>
                 {(p.gym || p.note) && (
                   <div className="truncate text-[11px] text-muted">

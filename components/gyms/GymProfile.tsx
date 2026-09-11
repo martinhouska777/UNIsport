@@ -16,6 +16,8 @@ import { useBoardByGym } from "@/lib/gymGoing";
 import { focusLabel, postWhenLabel } from "@/lib/buddyBoard";
 import { useProfileData } from "@/components/profile/useProfileData";
 import { dateLabel } from "@/lib/schedule";
+import { useSharedHooks } from "@/components/match/useSharedHooks";
+import HookChip from "@/components/match/HookChip";
 import {
   IconArrowLeft,
   IconHeart,
@@ -32,6 +34,8 @@ export default function GymProfile({ gym }: { gym: Gym }) {
   // Who has already said they're coming here (the Buddy Board, by gym).
   const { goingFor } = useBoardByGym(userId);
   const going = goingFor(gym.name);
+  // One shared fact per person going — why you'd join THIS one.
+  const { hookFor } = useSharedHooks(userId);
   const [posting, setPosting] = useState(false);
   const [posted, setPosted] = useState(false);
   const favorite = isFavorite(gym.slug);
@@ -132,9 +136,12 @@ export default function GymProfile({ gym }: { gym: Gym }) {
               <li key={p.id} className="flex items-center gap-2.5 py-2">
                 <Avatar size={30} src={p.authorPhoto} alt={p.authorName} />
                 <div className="min-w-0 flex-1">
-                  <div className="truncate text-[13px] text-text">
-                    {p.authorName}
-                    {p.mine && <span className="text-muted"> · your post</span>}
+                  <div className="flex min-w-0 items-center gap-1.5 text-[13px] text-text">
+                    <span className="truncate">
+                      {p.authorName}
+                      {p.mine && <span className="text-muted"> · your post</span>}
+                    </span>
+                    {!p.mine && <HookChip hook={hookFor(p.authorId)} />}
                   </div>
                   <div className="text-[11px] text-muted">
                     {focusLabel(p.focus)}

@@ -12,7 +12,9 @@ import {
   type DmPlan,
 } from "@/lib/supabase/messages";
 import { getPublicProfile } from "@/lib/supabase/profiles";
-import { IconArrowLeft, IconCalendar } from "@/components/icons";
+import { getPairMatch } from "@/lib/supabase/matching";
+import { dmContextLine } from "@/lib/matchReasons";
+import { IconArrowLeft, IconCalendar, IconCheck } from "@/components/icons";
 import Avatar from "./Avatar";
 import Composer from "./Composer";
 import PlanCard from "./PlanCard";
@@ -44,6 +46,24 @@ export default function DmThread({
   const [planOpen, setPlanOpen] = useState(false); // "Plan a session" form
   const [editPlan, setEditPlan] = useState<DmPlan | null>(null); // reschedule editor
   const bottomRef = useRef<HTMLDivElement>(null);
+  /*
+    THE SHARED-CONTEXT LINE — "You both do CS · both into coffee." — at the
+    top of the thread. Two strangers who have never spoken need a reason to,
+    and the matcher already knows it; this asks for the pair once and says it
+    where the first message gets typed. Nothing is shown when there is
+    nothing to say.
+  */
+  const [context, setContext] = useState<string | null>(null);
+  useEffect(() => {
+    if (!otherId || !currentUserId || otherId === currentUserId) return;
+    let active = true;
+    getPairMatch(currentUserId, otherId)
+      .then((m) => active && setContext(m ? dmContextLine(m) : null))
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [otherId, currentUserId]);
 
   // Load the other person's profile photo for the header (RLS-safe public read).
   useEffect(() => {
@@ -128,6 +148,16 @@ export default function DmThread({
           <IconCalendar size={14} /> Plan
         </button>
       </div>
+
+      {/* What the two of you share, said once, where the first message goes. */}
+      {context && (
+        <div className="flex items-start gap-1.5 border-b border-border bg-primary-tint px-3.5 py-2 text-[12px] leading-snug text-primary">
+          <span className="mt-[2px] flex-shrink-0">
+            <IconCheck size={12} />
+          </span>
+          <span>{context}</span>
+        </div>
+      )}
 
       {/* Messages */}
       <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-3.5 py-3">
