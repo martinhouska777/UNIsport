@@ -6,14 +6,12 @@
   strip, today's prescribed sessions (with coach notes + watch-verify), the
   day's lineup, and the coach's weekly focus. All colors are theme tokens.
 */
-import { useEffect, useMemo, useState } from "react";
-import { createPortal } from "react-dom";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useAppState } from "@/components/AppState";
 import { useMembership } from "@/components/varsity/useMembership";
 import { can, canOpenConsole, roleLabel, type VarsityRole } from "@/lib/varsity/membership";
-import ThemeProvider from "@/components/ThemeProvider";
-import { useVarsityTheme } from "@/components/varsity/useVarsityTheme";
 import { fetchPlan } from "@/lib/varsity/planStore";
 import { fetchTodayLineups } from "@/lib/varsity/lineupStore";
 import { claimRosterSeat, fetchSeatIdentity, type SeatIdentity } from "@/lib/varsity/athleteProfile";
@@ -32,7 +30,6 @@ import {
   dockTime,
   kindBar,
   kindBlock,
-  kindLegend,
   shellName,
   type HomeData,
   type Greeting as GreetingData,
@@ -118,7 +115,7 @@ function RaceBar({ r }: { r: RaceData }) {
       <div className="text-right">
         <div className="text-2xl font-semibold leading-none text-accent">{r.big}</div>
         {r.small && (
-          <div className="text-[8px] font-semibold uppercase tracking-[0.12em] text-muted">
+          <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
             {r.small}
           </div>
         )}
@@ -128,9 +125,9 @@ function RaceBar({ r }: { r: RaceData }) {
 }
 
 /* ─── Week strip ───
-   Two views of the coach's plan. WEEK = the seven days side by side, styled
-   after the team's training Excel. MONTH = a full wall calendar, one month at a
-   time. Tap any cell/day to see the full workout. */
+   The coach's plan, seven days side by side, styled after the team's training
+   Excel. Tap a day to see its full workout below. The whole month is the
+   Calendar tab. */
 
 const PERIOD_ROWS = ["AM", "PM"] as const;
 
@@ -163,7 +160,7 @@ function WeekFit({
             }`}
           >
             <div className={`px-0.5 py-1 text-center ${d.today ? "bg-primary-tint" : "bg-surface-2"}`}>
-              <div className={`text-[8px] font-semibold uppercase leading-none ${d.today ? "text-accent" : "text-muted"}`}>
+              <div className={`text-[10px] font-semibold uppercase leading-none ${d.today ? "text-accent" : "text-muted"}`}>
                 {d.letter}
               </div>
               <div className={`mt-0.5 text-[12px] font-semibold leading-none ${d.today ? "text-primary" : "text-text"}`}>
@@ -176,7 +173,7 @@ function WeekFit({
                 if (!s) return null;
                 return (
                   <div key={row} className="flex-1 rounded px-1 py-1" style={kindBlock(s.kind)}>
-                    <span className="block text-[7px] font-bold leading-none text-text-3">{row}</span>
+                    <span className="block text-[10px] font-bold leading-none text-text-3">{row}</span>
                     <span className="mt-0.5 block break-words text-[10px] font-medium leading-tight text-text">
                       {s.label}
                     </span>
@@ -191,260 +188,9 @@ function WeekFit({
   );
 }
 
-// MONTH view: a full-screen wall calendar, opened from the Month button and
-// closed with the X. Taking over the whole screen is what buys the room to
-// print the coach's actual workout text inside each day instead of a dot.
-// One month at a time, Monday-first; days outside the block are greyed and dead.
-const MONTH_NAMES = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
-];
-const DAY_LETTERS = ["M", "T", "W", "T", "F", "S", "S"];
-
-function MonthOverlay({
-  weeks,
-  selected,
-  onSelect,
-  onClearDay,
-  onClose,
-}: {
-  weeks: WeekView[];
-  selected: WeekDay | null;
-  onSelect: (d: WeekDay) => void;
-  onClearDay: () => void;
-  onClose: () => void;
-}) {
-  const vTheme = useVarsityTheme();
-  // Every planned day, keyed by date, so any calendar month can be filled in
-  // from whichever weeks of the block overlap it.
-  const byIso = useMemo(() => {
-    const map: Record<string, WeekDay> = {};
-    for (const wk of weeks) for (const d of wk.days) map[d.iso] = d;
-    return map;
-  }, [weeks]);
-
-  // The block's span, as {y, m} bounds for the month arrows.
-  const isos = useMemo(() => Object.keys(byIso).sort(), [byIso]);
-  const monthOf = (iso: string) => {
-    const [y, m] = iso.split("-").map(Number);
-    return { y, m: m - 1 };
-  };
-  const firstMonth = monthOf(isos[0] ?? "2000-01-01");
-  const lastMonth = monthOf(isos[isos.length - 1] ?? "2000-01-01");
-
-  // Open on the month containing today, falling back to the block's start.
-  const [view, setView] = useState(() => {
-    const todayIso = isos.find((iso) => byIso[iso].today);
-    return monthOf(todayIso ?? isos[0] ?? "2000-01-01");
-  });
-
-  const goMonth = (delta: number) =>
-    setView((v) => {
-      const d = new Date(v.y, v.m + delta, 1);
-      return { y: d.getFullYear(), m: d.getMonth() };
-    });
-  const asNum = (v: { y: number; m: number }) => v.y * 12 + v.m;
-  const atStart = asNum(view) <= asNum(firstMonth);
-  const atEnd = asNum(view) >= asNum(lastMonth);
-
-  const daysInMonth = new Date(view.y, view.m + 1, 0).getDate();
-  const leadingEmpty = (new Date(view.y, view.m, 1).getDay() + 6) % 7; // Monday-first
-  const pad = (n: number) => String(n).padStart(2, "0");
-
-  // Escape closes, same as every other overlay in Varsity Mode.
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [onClose]);
-
-  // Portalled to <body> (and re-wrapped in the Varsity theme) so it covers the
-  // tab bar instead of being painted underneath it — same trick as <Sheet>.
-  return createPortal(
-    <ThemeProvider tokens={vTheme.dark} light={vTheme.light}>
-      <div className="fixed inset-0 z-[60] flex flex-col bg-background [animation:backdrop-in_0.18s_ease-out]">
-        {/* Header: month + arrows + close */}
-        <div className="flex flex-shrink-0 items-center justify-between border-b border-border px-3 py-3">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => goMonth(-1)}
-              disabled={atStart}
-              aria-label="Previous month"
-              className="tap44 press-icon flex h-7 w-7 items-center justify-center rounded-lg border border-border bg-surface text-muted disabled:opacity-30"
-            >
-              <IconArrowLeft size={14} />
-            </button>
-            <button
-              onClick={() => goMonth(1)}
-              disabled={atEnd}
-              aria-label="Next month"
-              className="tap44 press-icon flex h-7 w-7 items-center justify-center rounded-lg border border-border bg-surface text-muted disabled:opacity-30"
-            >
-              <IconArrowRight size={14} />
-            </button>
-          </div>
-          <div className="text-center">
-            <div className="text-[8px] font-semibold uppercase tracking-[0.16em] text-accent">
-              Training plan
-            </div>
-            <div className="flex items-baseline justify-center gap-1.5">
-              <span className="text-[15px] font-semibold leading-tight text-text">
-                {MONTH_NAMES[view.m]}
-              </span>
-              <span className="text-[11px] font-medium text-muted">{view.y}</span>
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            aria-label="Close month view"
-            className="tap44 press-icon flex h-7 w-7 items-center justify-center rounded-full bg-surface-2 text-muted"
-          >
-            <IconX size={15} />
-          </button>
-        </div>
-
-        {/* Weekday header */}
-        <div className="grid flex-shrink-0 grid-cols-7 gap-1 border-b border-border px-1.5 py-1">
-          {DAY_LETTERS.map((d, i) => (
-            <div key={i} className="text-center text-[11px] font-semibold tracking-[0.12em] text-muted">
-              {d}
-            </div>
-          ))}
-        </div>
-
-        {/* Days — the rows share whatever height is left, so the month always
-            fills the screen and the cells are big enough to read. */}
-        <div className="grid min-h-0 flex-1 auto-rows-fr grid-cols-7 gap-1 overflow-y-auto p-1.5">
-          {Array.from({ length: leadingEmpty }).map((_, i) => (
-            <div key={`e${i}`} />
-          ))}
-          {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((num) => {
-            const iso = `${view.y}-${pad(view.m + 1)}-${pad(num)}`;
-            const day = byIso[iso];
-            const sel = day != null && selected === day;
-            return (
-              <button
-                key={num}
-                type="button"
-                disabled={!day}
-                onClick={() => day && onSelect(day)}
-                /* Every day of the month is the same box, prescribed or not —
-                   a rest day is empty space inside its rectangle, not a gap in
-                   the grid. Only the days OUTSIDE the block stay blank. */
-                className={`flex min-h-[64px] flex-col overflow-hidden rounded-lg border p-[3px] text-left ${
-                  sel
-                    ? "border-primary bg-primary-tint ring-1 ring-primary"
-                    : day?.today
-                      ? "border-primary bg-primary-tint"
-                      : day
-                        ? "border-border bg-surface"
-                        : "border-transparent"
-                }`}
-              >
-                <span
-                  className={`px-px text-[11px] font-semibold leading-none ${
-                    day?.today ? "text-primary" : day ? "text-text" : "text-muted/40"
-                  }`}
-                >
-                  {num}
-                </span>
-                {/*
-                  The coach's actual workout text, one tinted block per session,
-                  in a box split into a MORNING half and an AFTERNOON half. A
-                  day with only an AM outing fills the top half and leaves the
-                  bottom empty — it used to stretch over the whole day, which
-                  made a single session look like a double.
-                */}
-                <span className="mt-0.5 grid min-h-0 flex-1 auto-rows-fr grid-rows-2 gap-px overflow-hidden">
-                  {(day?.sessions ?? []).map((s, j) => (
-                    <span
-                      key={j}
-                      className="overflow-hidden rounded px-1 py-0.5"
-                      /* The morning half is the top one. A PM-only day is put
-                         in the second row on purpose, so an afternoon session
-                         never sits where the morning goes. */
-                      style={{ ...kindBlock(s.kind), gridRowStart: s.time === "PM" ? 2 : 1 }}
-                    >
-                      <span className="block text-[6px] font-bold leading-none text-text-3">
-                        {s.time}
-                      </span>
-                      <span className="mt-px block break-words text-[8px] font-medium leading-[1.15] text-text">
-                        {s.label}
-                      </span>
-                    </span>
-                  ))}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* What the colors mean */}
-        <div className="flex flex-shrink-0 flex-wrap items-center justify-center gap-x-3 gap-y-1 border-t border-border bg-surface px-3 py-2">
-          {kindLegend.map((l) => (
-            <span key={l.kind} className="flex items-center gap-1 text-[11px] text-muted">
-              <span className="h-1.5 w-3 rounded-sm" style={kindBar(l.kind)} />
-              {l.label}
-            </span>
-          ))}
-        </div>
-
-        {/* Tapped day: the full workout, over the calendar. */}
-        {selected && (
-          <div className="absolute inset-x-0 bottom-0 max-h-[60%] overflow-y-auto border-t border-border bg-background px-3 pb-4 [animation:sheet-up_0.24s_cubic-bezier(0.2,0.8,0.2,1)]">
-            <DayDetail d={selected} onClose={onClearDay} />
-          </div>
-        )}
-      </div>
-    </ThemeProvider>,
-    document.body,
-  );
-}
-
-// The tapped day's full workout(s): period + time, type, description, note.
-function DayDetail({ d, onClose }: { d: WeekDay; onClose: () => void }) {
-  return (
-    <div className="mt-3 overflow-hidden rounded-xl border border-border bg-surface">
-      <div className="flex items-center justify-between border-b border-border bg-surface-2 px-3 py-2">
-        <span className="text-[12px] font-semibold text-text">
-          {d.dateLabel ?? `${d.letter} ${d.num}`}
-        </span>
-        <button onClick={onClose} aria-label="Close" className="text-muted">
-          <IconX size={14} />
-        </button>
-      </div>
-      {d.sessions.length > 0 ? (
-        <div className="flex flex-col divide-y divide-border">
-          {d.sessions.map((s, i) => (
-            <div key={i} className="flex items-stretch gap-2.5 px-3 py-2.5">
-              <div className="w-[3px] flex-shrink-0 rounded" style={kindBar(s.kind)} />
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <span className="rounded border border-border bg-surface-2 px-1.5 py-0.5 text-[8px] font-semibold tracking-[0.06em] text-muted">
-                    {s.time}
-                    {s.clock ? ` · ${s.clock}` : ""}
-                  </span>
-                  {s.type && <span className="text-[11px] text-muted">{s.type}</span>}
-                </div>
-                <div className="mt-1 text-[13px] font-medium text-text">{s.label}</div>
-                {s.note && (
-                  <div className="mt-1.5 flex gap-2 rounded-lg border border-accent-line bg-accent-tint px-2.5 py-1.5">
-                    <span className="mt-0.5 flex-shrink-0 text-accent">
-                      <IconMessage size={11} />
-                    </span>
-                    <span className="text-[11px] leading-relaxed text-text-2">{s.note}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="px-3 py-4 text-center text-[12px] text-muted">Nothing scheduled this day.</div>
-      )}
-    </div>
-  );
-}
+// The MONTH view used to be a full-screen overlay here, plan only. It lives in
+// the Calendar tab now, which shows one month from both sources: the plan
+// ahead of today, your own log behind it. The Month button below points there.
 
 /*
   The strip no longer owns which day is open. ONE day runs the middle of the
@@ -468,7 +214,6 @@ function WeekStrip({
   onSelect: (d: WeekDay) => void;
   onClearDay: () => void;
 }) {
-  const [monthOpen, setMonthOpen] = useState(false);
   const [idx, setIdx] = useState(startIndex);
 
   const last = weeks.length - 1;
@@ -486,15 +231,15 @@ function WeekStrip({
     <div className="px-3 pt-4">
       <div className="flex items-center justify-between px-0.5 pb-2">
         <SectionLabel>Training Plan</SectionLabel>
-        {/* The week always lives on the page; Month opens the whole thing
-            full-screen and the X drops you back here. */}
-        <button
-          onClick={() => setMonthOpen(true)}
+        {/* The week always lives on the page; the whole month is the Calendar
+            tab (plan ahead, log behind — one calendar, not two). */}
+        <Link
+          href="/varsity/calendar"
           className="press flex h-8 items-center gap-1.5 rounded-lg border border-border bg-surface px-3 text-[11px] font-medium text-text"
         >
           <IconCalendar size={13} />
           Month
-        </button>
+        </Link>
       </div>
 
       <div className="mb-2 flex items-center justify-between">
@@ -523,18 +268,6 @@ function WeekStrip({
       </div>
 
       <WeekFit week={current} selected={selected} onSelect={pick} />
-
-      {monthOpen && (
-        <MonthOverlay
-          weeks={weeks}
-          selected={selected}
-          onSelect={pick}
-          onClearDay={onClearDay}
-          /* Closing the month KEEPS the day you tapped: you opened the whole
-             calendar to find a day, and the page below is now showing it. */
-          onClose={() => setMonthOpen(false)}
-        />
-      )}
     </div>
   );
 }
@@ -576,12 +309,12 @@ function SessionCard({ s, lineups = [] }: { s: TodaySession; lineups?: Lineup[] 
         <div className="flex-1 p-3">
           <div className="mb-1 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="rounded border border-border bg-surface-2 px-1.5 py-0.5 text-[8px] font-semibold tracking-[0.06em] text-muted">
+              <span className="rounded border border-border bg-surface-2 px-1.5 py-0.5 text-[10px] font-semibold tracking-[0.06em] text-muted">
                 {s.period}
               </span>
               <span className="text-[11px] text-muted">{s.location}</span>
             </div>
-            <span className={`flex items-center gap-1 text-[8px] font-semibold tracking-[0.06em] ${st.cls}`}>
+            <span className={`flex items-center gap-1 text-[10px] font-semibold tracking-[0.06em] ${st.cls}`}>
               <st.Icon size={12} />
               {st.label}
             </span>
@@ -592,7 +325,7 @@ function SessionCard({ s, lineups = [] }: { s: TodaySession; lineups?: Lineup[] 
               <div className="mt-0.5 text-[11px] leading-relaxed text-muted">{s.detail}</div>
             </div>
             {openable && (
-              <span className="mt-0.5 flex flex-shrink-0 items-center gap-1 text-[8px] font-semibold tracking-[0.06em] text-accent">
+              <span className="mt-0.5 flex flex-shrink-0 items-center gap-1 text-[10px] font-semibold tracking-[0.06em] text-accent">
                 {open ? "HIDE BOAT" : "YOUR BOAT"}
                 {open ? <IconChevronUp size={12} /> : <IconChevronDown size={12} />}
               </span>
@@ -605,7 +338,7 @@ function SessionCard({ s, lineups = [] }: { s: TodaySession; lineups?: Lineup[] 
                 <IconMessage size={12} />
               </span>
               <div>
-                <div className="text-[7px] font-semibold tracking-[0.12em] text-accent">
+                <div className="text-[10px] font-semibold tracking-[0.12em] text-accent">
                   {s.coachNote.coach}
                 </div>
                 <div className="mt-0.5 text-[11px] leading-relaxed text-text-2">
@@ -624,7 +357,7 @@ function SessionCard({ s, lineups = [] }: { s: TodaySession; lineups?: Lineup[] 
                 rather than the stored display string, so a lineup whose old
                 dock field holds a BOATHOUSE doesn't print one where the time
                 goes (lib/varsity/home → dockTime). */}
-            <div className="mb-2 text-[8px] font-semibold tracking-[0.12em] text-muted">
+            <div className="mb-2 text-[10px] font-semibold tracking-[0.12em] text-muted">
               {[l.periodKey, crewName(l), dockTime(l)].filter(Boolean).join(" · ").toUpperCase()}
             </div>
             <LineupSeats l={l} />
@@ -633,14 +366,14 @@ function SessionCard({ s, lineups = [] }: { s: TodaySession; lineups?: Lineup[] 
             {shellName(l) && (
               <div className="mt-2 flex items-center gap-2 text-[11px] text-muted">
                 <IconAnchor size={13} />
-                <span className="font-mono text-[9px] tracking-[0.12em]">BOAT</span>
+                <span className="font-mono text-[10px] tracking-[0.12em]">BOAT</span>
                 <span className="text-text">{shellName(l)}</span>
               </div>
             )}
             {l.oars && (
               <div className="mt-1 flex items-center gap-2 text-[11px] text-muted">
                 <IconAnchor size={13} />
-                <span className="font-mono text-[9px] tracking-[0.12em]">OARS</span>
+                <span className="font-mono text-[10px] tracking-[0.12em]">OARS</span>
                 <span className="text-text">{l.oars}</span>
               </div>
             )}
@@ -937,8 +670,15 @@ function ConsoleDoor({ role }: { role: VarsityRole }) {
   );
 }
 
-export default function HomeScreen() {
+function HomeScreenInner() {
   const { userId } = useAppState();
+  /*
+    ARRIVED FROM A LINEUP PUSH? The notification links to /varsity/home?d=<date>
+    (app/api/push/notify), so the page opens on the practice's day rather than
+    today's. The link counts once: the first day the athlete picks themselves
+    takes over, and the × goes back to today as it always did.
+  */
+  const linkDay = useSearchParams().get("d");
   // Coach or captain? Decides whether the console door appears at the top.
   const { membership, isMember } = useMembership();
   const consoleRole =
@@ -957,6 +697,14 @@ export default function HomeScreen() {
     today" so the × knows whether there is anywhere to go back to.
   */
   const [dayIdx, setDayIdx] = useState<number | null>(null);
+  // Set once the athlete has chosen a day of their own; the link stops
+  // deciding from then on. Derived rather than written from an effect, so the
+  // page never renders today first and then jumps.
+  const [linkConsumed, setLinkConsumed] = useState(false);
+  const pickDay = (i: number | null) => {
+    setLinkConsumed(true);
+    setDayIdx(i);
+  };
   // Another day's published boats, remembered with the day they belong to so a
   // slow fetch can never paint Tuesday's eight under Thursday's session.
   const [awayLineups, setAwayLineups] = useState<{ iso: string; lineups: Lineup[] } | null>(null);
@@ -995,9 +743,14 @@ export default function HomeScreen() {
     const i = allDays.findIndex((d) => d.today);
     return i >= 0 ? i : 0; // a block that hasn't started yet opens on its first day
   }, [allDays]);
-  const viewIdx = dayIdx ?? todayIdx;
+  // The linked day, when the block has it and nothing has been picked since.
+  const linkIdx = useMemo(
+    () => (linkDay && !linkConsumed ? allDays.findIndex((d) => d.iso === linkDay) : -1),
+    [allDays, linkDay, linkConsumed],
+  );
+  const viewIdx = dayIdx ?? (linkIdx >= 0 ? linkIdx : todayIdx);
   const viewDay: WeekDay | null = allDays[viewIdx] ?? null;
-  const onToday = dayIdx === null;
+  const onToday = viewIdx === todayIdx;
 
   // Fetch the boats for a day that isn't today. Today's came with the page.
   useEffect(() => {
@@ -1108,9 +861,9 @@ export default function HomeScreen() {
         selected={onToday ? null : viewDay}
         onSelect={(d) => {
           const i = allDays.indexOf(d);
-          setDayIdx(i === todayIdx ? null : i);
+          pickDay(i === todayIdx ? null : i);
         }}
-        onClearDay={() => setDayIdx(null)}
+        onClearDay={() => pickDay(null)}
       />
 
       <DayHeader
@@ -1120,9 +873,9 @@ export default function HomeScreen() {
         canNext={viewIdx < allDays.length - 1}
         onStep={(delta) => {
           const next = Math.max(0, Math.min(allDays.length - 1, viewIdx + delta));
-          setDayIdx(next === todayIdx ? null : next);
+          pickDay(next === todayIdx ? null : next);
         }}
-        onToday={onToday ? undefined : () => setDayIdx(null)}
+        onToday={onToday ? undefined : () => pickDay(null)}
       />
 
       {sessions.length > 0 ? (
@@ -1161,5 +914,23 @@ export default function HomeScreen() {
 
       {uploadOpen && <UploadVideoSheet onClose={() => setUploadOpen(false)} />}
     </div>
+  );
+}
+
+/*
+  The day to open comes out of the URL, which a page has to be allowed to wait
+  for — same shape as the Log tab (LogScreen) and the All-boats page.
+*/
+export default function HomeScreen() {
+  return (
+    <Suspense
+      fallback={
+        <div className="px-3 pt-4">
+          <SkeletonLines count={2} />
+        </div>
+      }
+    >
+      <HomeScreenInner />
+    </Suspense>
   );
 }

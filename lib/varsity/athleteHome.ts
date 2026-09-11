@@ -70,9 +70,58 @@ function categoryLabel(s: Session): string {
 }
 
 // What shows in a calendar cell: the coach's actual workout ("3×25' UT2") when
-// there is one, otherwise the category name.
-function cellLabel(s: Session): string {
+// there is one, otherwise the category name. Exported so the Calendar tab
+// prints a planned day with exactly the words Home's week strip uses.
+export function cellLabel(s: Session): string {
   return s.description.trim() || categoryLabel(s);
+}
+
+/*
+  ONE MONTH OF THE PLAN, for the Calendar tab — every day of a PUBLISHED block
+  that falls in the month, with its prescribed sessions. The same gate as Home
+  and the Log tab (published blocks only), so the calendar never shows a draft
+  the coach has not sent. Keyed by ISO date; a day with nothing prescribed is
+  simply absent.
+*/
+export type PlannedSession = {
+  period: Period;
+  dayKey: string;
+  session: Session;
+  label: string; // the cell text (cellLabel)
+  kind: SessionKind;
+};
+export function prescribedForMonth(plan: Plan, year: number, month: number): Record<string, PlannedSession[]> {
+  const out: Record<string, PlannedSession[]> = {};
+  const first = toISO(new Date(year, month, 1));
+  const last = toISO(new Date(year, month + 1, 0));
+  for (const block of plan.blocks) {
+    if (block.status !== "published") continue;
+    // A block's days, only the ones inside its own dates and this month —
+    // buildWeeks pads to whole Mon–Sun weeks, and the padding is not the plan.
+    if (block.end < first || block.start > last) continue;
+    for (const wk of buildWeeks(block)) {
+      for (const d of wk.days) {
+        const iso = toISO(d.date);
+        if (iso < first || iso > last || iso < block.start || iso > block.end) continue;
+        const sessions = periods.flatMap((p) => {
+          const dayKey = sessionKey(d.date, p);
+          const s = plan.sessions[dayKey];
+          return s ? [{ period: p, dayKey, session: s, label: cellLabel(s), kind: kindOf(s) }] : [];
+        });
+        if (sessions.length) out[iso] = sessions;
+      }
+    }
+  }
+  return out;
+}
+
+/** The last day of the last published block — how far ahead a calendar can page. Null: nothing published. */
+export function planEndIso(plan: Plan): string | null {
+  let end: string | null = null;
+  for (const b of plan.blocks) {
+    if (b.status === "published" && (end === null || b.end > end)) end = b.end;
+  }
+  return end;
 }
 
 // Pick the published block to show today + which week within it is current.
@@ -166,7 +215,7 @@ export function daySessionToCard(s: DaySession, iso: string): TodaySession {
     periodKey: s.time === "PM" ? "PM" : "AM",
     dayKey: s.dayKey,
     iso,
-    location: "",
+    location: s.location ?? "",
     status: s.status,
     log: s.log,
     kind: s.kind,
@@ -219,6 +268,7 @@ export function buildAthleteHome(
             {
               time: p,
               clock: s.time,
+              location: s.location,
               label: cellLabel(s),
               type: sessionLabel(s),
               kind: kindOf(s),
@@ -248,7 +298,7 @@ export function buildAthleteHome(
             periodKey: p,
             dayKey,
             iso: todayIso,
-            location: "",
+            location: s.location ?? "",
             ...statusOf(dayKey, todayIso, todayIso, logsByKey),
             kind: kindOf(s),
             title: desc || label,

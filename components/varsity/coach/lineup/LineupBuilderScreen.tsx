@@ -1002,14 +1002,14 @@ function Builder({
   const publish = async () => {
     if (!(await persist("published"))) return;
     setAnnounced(JSON.stringify(boats));
-    notifySquad({ kind: "team_lineup", preview: `${context.weekday} ${context.period}` });
+    notifySquad({ kind: "team_lineup", dayKey, preview: `${context.weekday} ${context.period}` });
   };
 
   /* Already live, already changed on their phones — this only sends the buzz. */
   const tellSquad = async () => {
     if (dirty && !(await persist())) return;
     setAnnounced(JSON.stringify(boats));
-    notifySquad({ kind: "team_lineup", preview: `${context.weekday} ${context.period}` });
+    notifySquad({ kind: "team_lineup", dayKey, preview: `${context.weekday} ${context.period}` });
   };
 
   /* Back to a draft: the crew disappears from the squad's phones again. */

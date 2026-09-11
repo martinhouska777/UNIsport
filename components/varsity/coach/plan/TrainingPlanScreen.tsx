@@ -8,8 +8,8 @@
   Create a block (name + dates, usually before a race) → it shows the weeks → tap a
   week to see its 7 days → tap a day's AM/PM to open the editor → pick a type, an
   intensity if that type asks for one, fill the description (free text, or tap one
-  of the most-used chips) and an optional note. No duration, no location; the time
-  is a preset.
+  of the most-used chips), an optional place to be, and an optional note. No
+  duration; the time is a preset.
 
   NOTHING IN THE EDITOR IS HARDCODED ANY MORE. The types, the zones, the chips and
   the preset times all come from the squad's own config, which the coach edits at
@@ -80,6 +80,7 @@ type Form = {
   intensity?: string;
   description: string;
   time: string;
+  location: string;
   note: string;
   repeat: "once" | "weekly";
   teamWorkout: boolean;
@@ -379,6 +380,7 @@ export default function TrainingPlanScreen() {
   const [form, setForm] = useState<Form>({
     description: "",
     time: "",
+    location: "",
     note: "",
     repeat: "once",
     teamWorkout: false,
@@ -425,6 +427,7 @@ export default function TrainingPlanScreen() {
       intensity: existing?.intensity,
       description: existing?.description ?? "",
       time: existing?.time ?? cfg.times[period],
+      location: existing?.location ?? "",
       note: existing?.note ?? "",
       repeat: "once",
       teamWorkout: existing?.teamWorkout ?? false,
@@ -451,6 +454,7 @@ export default function TrainingPlanScreen() {
       intensity: asksZone(form.category) ? form.intensity : undefined,
       description: form.description.trim(),
       time: form.time.trim() || cfg.times[editor.period],
+      location: form.location.trim() || undefined,
       note: form.note.trim() || undefined,
       // Only a type the coach marked as boardable can carry one, so a session
       // that isn't one never keeps a stale flag.
@@ -866,6 +870,7 @@ export default function TrainingPlanScreen() {
                       </div>
                       <div className="mt-0.5 flex items-center gap-2 text-[11px] text-muted">
                         <span>{s.time}</span>
+                        {s.location && <span className="truncate">· {s.location}</span>}
                         {s.note && (
                           <span className="flex items-center gap-1">
                             <IconClipboard size={9} /> note
@@ -1052,6 +1057,19 @@ export default function TrainingPlanScreen() {
                 value={form.time}
                 onChange={(e) => setForm((f) => ({ ...f, time: e.target.value }))}
                 placeholder={cfg.times[editor.period]}
+                className={inputCls}
+              />
+            </>
+          )}
+
+          {/* where to be — optional, free text (not for Off) */}
+          {cat && cat !== "off" && (
+            <>
+              <div className={labelCls}>Location (optional)</div>
+              <input
+                value={form.location}
+                onChange={(e) => setForm((f) => ({ ...f, location: e.target.value }))}
+                placeholder="e.g. Weld Boathouse, or meet at the vans"
                 className={inputCls}
               />
             </>

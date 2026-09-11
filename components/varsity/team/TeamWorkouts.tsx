@@ -13,8 +13,13 @@
 
   One list rather than two tabs because that is how a week is read — this
   week's numbers — and because a rower's profile already puts their erg and
-  water side by side. Chips at the top narrow it to one kind. Water rows are
-  never ranked; a piece is a CREW result.
+  water side by side. Each row wears an Erg or Water tag, so no toggle is
+  needed to tell them apart (there used to be one; it hid half the week).
+  Water rows are never ranked; a piece is a CREW result.
+
+  "N of M logged" is shown only on a RANKED board, where who turned up is part
+  of the result. On an averages board it read as a compliance score over a
+  steady session, so there the row just says how many.
 
   This is the screen that replaces the spreadsheet: nobody types results into a
   shared sheet and hunts for their own name — everyone logs their own session
@@ -58,8 +63,7 @@ function outingDateLabel(dayKey: string): string {
   return `${dayKeyLabel(dayKey)}${parsed ? ` · ${parsed.period}` : ""}`;
 }
 
-type Kind = "erg" | "water";
-type Row = { key: string; date: Date; erg?: TeamWorkout; water?: Outing };
+type Row ={ key: string; date: Date; erg?: TeamWorkout; water?: Outing };
 
 export default function TeamWorkouts() {
   const { userId } = useAppState();
@@ -76,7 +80,6 @@ export default function TeamWorkouts() {
   const [outings, setOutings] = useState<Outing[]>([]);
   const [exampleWater, setExampleWater] = useState(false); // the outing is the worked example
   const [openOuting, setOpenOuting] = useState<string | null>(null);
-  const [kind, setKind] = useState<Kind>("erg");
 
   useEffect(() => {
     let active = true;
@@ -151,10 +154,8 @@ export default function TeamWorkouts() {
       date: parseSessionKey(o.dayKey)?.date ?? new Date(0),
       water: o,
     }));
-    return [...ergRows, ...waterRows]
-      .filter((r) => (kind === "erg" ? !!r.erg : !!r.water))
-      .sort((a, b) => b.date.getTime() - a.date.getTime());
-  }, [workouts, outings, kind]);
+    return [...ergRows, ...waterRows].sort((a, b) => b.date.getTime() - a.date.getTime());
+  }, [workouts, outings]);
 
   const opened = workouts.find((w) => w.dayKey === open) ?? null;
   const openedOuting = outings.find((o) => o.id === openOuting) ?? null;
@@ -175,22 +176,6 @@ export default function TeamWorkouts() {
 
   return (
     <div className="mt-4">
-      {/* erg / water */}
-      <div className="mb-2 flex gap-1 rounded-xl border border-border bg-surface p-1">
-        {(["erg", "water"] as Kind[]).map((k) => (
-          <button
-            key={k}
-            type="button"
-            onClick={() => setKind(k)}
-            className={`flex-1 rounded-lg py-1.5 text-[12px] font-semibold capitalize transition-colors ${
-              kind === k ? "bg-text text-background" : "text-muted"
-            }`}
-          >
-            {k}
-          </button>
-        ))}
-      </div>
-
       <div className="flex flex-col gap-1.5">
         {rows.length === 0 && (
           <div className="rounded-2xl border border-dashed border-border bg-surface-2 px-4 py-8 text-center text-[12px] text-muted">
@@ -201,6 +186,8 @@ export default function TeamWorkouts() {
           if (row.erg) {
             const w = row.erg;
             const n = counts.get(w.dayKey) ?? 0;
+            // The "of M" only where turning up is part of the result (ranked).
+            const ofSquad = w.board === "ranked" && shownSquadSize ? ` of ${shownSquadSize}` : "";
             return (
               <button
                 key={row.key}
@@ -229,7 +216,7 @@ export default function TeamWorkouts() {
                   </div>
                   <div className="mt-1 text-[11px] text-muted">
                     {w.dateLabel} · {w.period} ·{" "}
-                    {n === 0 ? "nobody logged yet" : `${n}${shownSquadSize ? ` of ${shownSquadSize}` : ""} logged`}
+                    {n === 0 ? "nobody logged yet" : `${n}${ofSquad} logged`}
                   </div>
                 </div>
                 <span className="text-muted">

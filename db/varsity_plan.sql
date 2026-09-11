@@ -58,3 +58,9 @@ create policy "Varsity sessions writable by signed-in users"
   on public.varsity_plan_sessions for all
   using (auth.role() = 'authenticated')
   with check (auth.role() = 'authenticated');
+
+-- WHERE TO BE (added later): an optional place on a session — "Weld", "Newell
+-- erg room", "meet at the vans". Free text; the session's time says when.
+-- Run this on an existing database; a session is only saved with a location
+-- once the column exists.
+alter table public.varsity_plan_sessions add column if not exists location text;

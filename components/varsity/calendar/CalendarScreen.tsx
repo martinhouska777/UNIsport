@@ -1,13 +1,19 @@
 "use client";
 
 /*
-  Varsity CALENDAR tab — your training history, day by day.
+  Varsity CALENDAR tab — one month, plan ahead and log behind.
   ---------------------------------------------------------------------------
-  A full month grid built from the athlete's OWN logged sessions
-  (lib/varsity/logStore), in the same wall-calendar language as the plan's
-  month view on Home — the coach's workout TEXT inside each day, not a dot.
-  Tap a day for the whole thing; tap a legend colour for that kind of
-  training's month.
+  A full month grid from TWO sources: days that have gone show what the athlete
+  LOGGED (lib/varsity/logStore); days still to come show what the coach
+  PRESCRIBED (the published plan, via lib/varsity/athleteHome). Today is where
+  they meet — a logged session is painted solid, a prescribed one not yet done
+  is painted faint with its colour round the edge (kindPlanned). Home used to
+  carry a second, plan-only month behind a "Month" button; it now points here,
+  so there is one calendar and it always answers both "what did I do" and
+  "what is coming".
+
+  The coach's workout TEXT sits inside each day, not a dot. Tap a day for the
+  whole thing; tap a legend colour for that kind of training's month.
 
   IT IS A WALL CALENDAR, so it behaves like one:
 
@@ -42,11 +48,11 @@ import { useAppState } from "@/components/AppState";
 import { useUnits } from "@/components/useUnits";
 import { formatDistance } from "@/lib/varsity/units";
 import { fetchLogsInRange, type LogEntry } from "@/lib/varsity/logStore";
-import { fetchPlan } from "@/lib/varsity/planStore";
-import { kindOf } from "@/lib/varsity/athleteHome";
-import { kindBar, kindBlock, kindLegend } from "@/lib/varsity/home";
+import { fetchPlan, type Plan } from "@/lib/varsity/planStore";
+import { kindOf, prescribedForMonth, planEndIso, type PlannedSession } from "@/lib/varsity/athleteHome";
+import { kindBar, kindBlock, kindPlanned, kindLegend } from "@/lib/varsity/home";
 import { formatMetrics } from "@/lib/varsity/logParse";
-import { toISO, type Session, type SessionMap } from "@/lib/varsity/coachPlan";
+import { toISO, sessionLabel, type Session, type SessionMap } from "@/lib/varsity/coachPlan";
 import {
   logCategoryColor,
   logCategoryLabel,
@@ -54,7 +60,7 @@ import {
   legendCategories,
   rowingCategories,
 } from "@/lib/varsity/athleteProfile";
-import { IconArrowLeft, IconArrowRight, IconChevronRight } from "@/components/icons";
+import { IconArrowLeft, IconArrowRight, IconChevronRight, IconClock, IconMessage } from "@/components/icons";
 
 const MONTHS = [
   "January", "February", "March", "April", "May", "June",
@@ -97,24 +103,39 @@ function blockStyle(l: LogEntry, planned: Session | undefined) {
   }
 }
 
-type CalDay = { num: number; iso: string; logs: LogEntry[]; today: boolean; future: boolean };
+type CalDay = {
+  num: number;
+  iso: string;
+  logs: LogEntry[];
+  /* Prescribed for the day and NOT logged against. Ahead of today that is the
+     plan; behind it, a session that was missed. */
+  planned: PlannedSession[];
+  today: boolean;
+  future: boolean;
+};
 
 function DaySheet({
   label,
+  iso,
+  past,
   logs,
+  planned,
   onClose,
   onOpen,
 }: {
   label: string;
+  iso: string;
+  past: boolean; // the day has gone (not today)
   logs: LogEntry[];
+  planned: PlannedSession[];
   onClose: () => void;
   onOpen: (log: LogEntry) => void;
 }) {
   return (
     <Sheet title={label} onClose={onClose}>
-      {logs.length === 0 ? (
+      {logs.length === 0 && planned.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border bg-surface-2 px-4 py-6 text-center text-[12px] text-muted">
-          Nothing logged this day.
+          {past ? "Nothing logged this day." : "Nothing prescribed this day."}
         </div>
       ) : (
         <div className="flex flex-col gap-2">
@@ -145,15 +166,55 @@ function DaySheet({
               </button>
             );
           })}
+          {/* The coach's sessions with no log against them: what is coming, or
+              — on a day that has gone — what was missed. Same fields Home's
+              day detail showed: period + time, type, the workout, the note. */}
+          {planned.map((p) => (
+            <div
+              key={p.dayKey}
+              className="flex items-stretch gap-2.5 rounded-2xl border border-border bg-surface-2 px-3.5 py-3"
+            >
+              <div className="w-[3px] flex-shrink-0 rounded" style={kindBar(p.kind)} />
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="flex items-center gap-1 text-[11px] text-muted">
+                    <IconClock size={11} /> {p.period} · {p.session.time}
+                    {p.session.location && ` · ${p.session.location}`}
+                  </span>
+                  <span className="text-[11px] text-muted">{sessionLabel(p.session)}</span>
+                  <span
+                    className={`ml-auto flex-shrink-0 rounded-md border px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide ${
+                      past ? "border-border text-muted" : "border-accent-line bg-accent-tint text-accent"
+                    }`}
+                  >
+                    {past ? "Not logged" : "Planned"}
+                  </span>
+                </div>
+                <div className="mt-1 text-[13px] font-semibold text-text">{p.label}</div>
+                {p.session.note && (
+                  <div className="mt-1.5 flex gap-2 rounded-lg border border-accent-line bg-accent-tint px-2.5 py-1.5">
+                    <span className="mt-0.5 flex-shrink-0 text-accent">
+                      <IconMessage size={11} />
+                    </span>
+                    <span className="text-[11px] leading-relaxed text-text-2">{p.session.note}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
         </div>
       )}
-      <Link
-        href="/varsity/log"
-        className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-surface px-4 py-3 text-[12px] font-medium text-text"
-      >
-        Open the log
-        <IconChevronRight size={14} />
-      </Link>
+      {/* A day you can still log opens the Log tab ON that day; a day ahead
+          has nothing to log yet, so no button. */}
+      {(past || logs.length > 0 || planned.length > 0) && iso <= toISO(new Date()) && (
+        <Link
+          href={`/varsity/log?day=${iso}`}
+          className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-surface px-4 py-3 text-[12px] font-medium text-text"
+        >
+          Open the log
+          <IconChevronRight size={14} />
+        </Link>
+      )}
     </Sheet>
   );
 }
@@ -168,20 +229,28 @@ export default function CalendarScreen() {
   const [picked, setPicked] = useState<{ iso: string; label: string } | null>(null);
   const [openLog, setOpenLog] = useState<LogEntry | null>(null); // full-screen detail
   const [statsFor, setStatsFor] = useState<string | null>(null); // legend → stats sheet
-  // The coach's sessions, only so a logged one can borrow its colour. Loaded
-  // once — the plan is shared and does not change while you scroll months.
-  const [planSessions, setPlanSessions] = useState<SessionMap>({});
+  // The coach's plan: what is prescribed ahead of today, and the colour a
+  // logged session borrows from the slot it came from. Loaded once — the plan
+  // is shared and does not change while you scroll months.
+  const [plan, setPlan] = useState<Plan | null>(null);
+  const planSessions: SessionMap = plan?.sessions ?? {};
   const { units } = useUnits();
 
   useEffect(() => {
     let active = true;
     fetchPlan().then((p) => {
-      if (active) setPlanSessions(p.sessions);
+      if (active) setPlan(p);
     });
     return () => {
       active = false;
     };
   }, []);
+
+  // This month's prescribed sessions, by day (published blocks only).
+  const planned = useMemo(
+    () => (plan ? prescribedForMonth(plan, view.y, view.m) : {}),
+    [plan, view],
+  );
 
   useEffect(() => {
     let active = true;
@@ -214,19 +283,25 @@ export default function CalendarScreen() {
     const out: CalDay[] = [];
     for (let n = 1; n <= daysInMonth; n++) {
       const iso = toISO(new Date(view.y, view.m, n));
+      const dayLogs = logsByDay[n] ?? [];
+      // A prescribed slot with a log against it is shown as the log, not twice.
+      const loggedKeys = new Set(dayLogs.map((l) => l.dayKey).filter(Boolean));
       out.push({
         num: n,
         iso,
-        logs: logsByDay[n] ?? [],
+        logs: dayLogs,
+        planned: (planned[iso] ?? []).filter((p) => !loggedKeys.has(p.dayKey)),
         today: iso === todayIso,
         future: iso > todayIso,
       });
     }
     return out;
-  }, [view, logsByDay, todayIso]);
+  }, [view, logsByDay, planned, todayIso]);
 
   const leadingEmpty = (new Date(view.y, view.m, 1).getDay() + 6) % 7; // Monday-first
   const monthSessions = logs.length;
+  // Sessions still ahead this month — the headline for a month with no log yet.
+  const monthPlanned = calendar.reduce((sum, d) => sum + (d.future || d.today ? d.planned.length : 0), 0);
   const monthMetres = logs.reduce(
     (sum, l) => sum + (rowingCategories.has(l.category ?? "") ? l.metres ?? 0 : 0),
     0,
@@ -247,7 +322,11 @@ export default function CalendarScreen() {
       const d = new Date(v.y, v.m + delta, 1);
       return { y: d.getFullYear(), m: d.getMonth() };
     });
-  const atCurrentMonth = view.y === now.getFullYear() && view.m === now.getMonth();
+  // Page forward as far as the published plan reaches, and never short of this
+  // month. Behind, as far as you like — that is your history.
+  const lastIso = planEndIso(plan ?? { blocks: [], sessions: {} } as Plan) ?? todayIso;
+  const lastMonth = Math.max(now.getFullYear() * 12 + now.getMonth(), Number(lastIso.slice(0, 4)) * 12 + Number(lastIso.slice(5, 7)) - 1);
+  const atLastMonth = view.y * 12 + view.m >= lastMonth;
 
   return (
     /* A full-height column: title, weekday header, THE MONTH, legend. Only the
@@ -264,7 +343,13 @@ export default function CalendarScreen() {
           </div>
           <div className="mt-1 text-[11px] text-muted">
             {monthSessions === 0 ? (
-              "Nothing logged yet"
+              monthPlanned > 0 ? (
+                <>
+                  <span className="font-semibold text-text">{monthPlanned}</span> sessions planned
+                </>
+              ) : (
+                "Nothing logged yet"
+              )
             ) : (
               <>
                 <span className="font-semibold text-text">{monthSessions}</span> sessions
@@ -294,7 +379,7 @@ export default function CalendarScreen() {
             type="button"
             aria-label="Next month"
             onClick={() => goMonth(1)}
-            disabled={atCurrentMonth}
+            disabled={atLastMonth}
             className="tap44 press-icon flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-surface text-muted disabled:opacity-30"
           >
             <IconArrowRight size={14} />
@@ -318,7 +403,10 @@ export default function CalendarScreen() {
           <div key={`e${i}`} />
         ))}
         {calendar.map((d) => {
-          const has = d.logs.length > 0;
+          // Ahead of today (and today itself) the unlogged plan is drawn too;
+          // behind it, only what was done — a missed day is empty space.
+          const ahead = d.future || d.today;
+          const has = d.logs.length > 0 || (ahead && d.planned.length > 0);
           const label = `${MONTHS[view.m]} ${d.num}, ${view.y}`;
           return (
             <button
@@ -339,7 +427,7 @@ export default function CalendarScreen() {
             >
               <span
                 className={`px-px text-[11px] font-semibold leading-none ${
-                  d.today ? "text-primary" : has ? "text-text" : d.future ? "text-muted/40" : "text-muted"
+                  d.today ? "text-primary" : has ? "text-text" : "text-muted"
                 }`}
               >
                 {d.num}
@@ -403,6 +491,28 @@ export default function CalendarScreen() {
                       </span>
                     );
                   })}
+                  {/* The plan for a day still to come: the coach's words, in the
+                      faint planned style, in the half the period belongs to. */}
+                  {ahead &&
+                    d.planned.map((p) => (
+                      <span
+                        key={p.dayKey}
+                        className="overflow-hidden rounded px-1 py-0.5"
+                        style={{ ...kindPlanned(p.kind), gridRowStart: p.period === "PM" ? 2 : 1 }}
+                      >
+                        <span
+                          className="block break-words text-[10px] font-medium leading-tight text-text"
+                          style={{
+                            display: "-webkit-box",
+                            WebkitLineClamp: 3,
+                            WebkitBoxOrient: "vertical",
+                            overflow: "hidden",
+                          }}
+                        >
+                          {p.label}
+                        </span>
+                      </span>
+                    ))}
                   </>
                 )}
               </span>
@@ -447,7 +557,10 @@ export default function CalendarScreen() {
       {picked && (
         <DaySheet
           label={picked.label}
+          iso={picked.iso}
+          past={picked.iso < todayIso}
           logs={logsByDay[Number(picked.iso.split("-")[2])] ?? []}
+          planned={calendar.find((d) => d.iso === picked.iso)?.planned ?? []}
           onClose={() => setPicked(null)}
           onOpen={(log) => setOpenLog(log)}
         />
