@@ -131,8 +131,10 @@ export default function WorkoutBoard({
             {workout.session.description}
           </p>
         )}
+        {/* "of M" only on a ranked board: on an averages board it read as a
+            compliance score over a steady session. */}
         <p className="mt-2 text-[11px] text-muted">
-          {board.logged} {squadSize ? `of ${squadSize} ` : ""}logged
+          {board.logged} {ranked && squadSize ? `of ${squadSize} ` : ""}logged
           {previous && ` · compared with ${previous.workout.dateLabel}`}
         </p>
       </div>
