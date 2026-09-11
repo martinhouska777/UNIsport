@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import LegalPage, { Section, List } from "@/components/landing/LegalPage";
+import { landingViewport } from "@/components/landing/routeMeta";
+
+/* Pinch-zoomable, like the landing: the root layout locks zoom for the APP,
+   and a legal page is a page to read (website review, 2026-09-10). */
+export const viewport = landingViewport;
 
 export const metadata: Metadata = {
   title: "Terms of Service — UNIsport",
