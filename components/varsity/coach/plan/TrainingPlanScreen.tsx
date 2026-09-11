@@ -27,6 +27,7 @@ import { useVarsityTheme } from "@/components/varsity/useVarsityTheme";
 import {
   periods,
   sessionKey,
+  parseSessionKey,
   boardOptions,
   defaultBoard,
   buildWeeks,
@@ -121,7 +122,12 @@ function PublishedBadge() {
   );
 }
 
-export default function TrainingPlanScreen() {
+export default function TrainingPlanScreen({
+  openSlot = null,
+}: {
+  /** A slot to open the editor on straight away (?slot= from the Today screen). */
+  openSlot?: string | null;
+}) {
   const vTheme = useVarsityTheme();
   const { membership } = useMembership();
   /*
@@ -440,6 +446,31 @@ export default function TrainingPlanScreen() {
     });
     setEditor({ date, period });
   };
+
+  /*
+    ARRIVING FROM TODAY. In the first render that has the plan, land on the
+    week that holds the slot and open its editor — once per link. A slot no
+    block covers falls back to the blocks list, where "New training block" is
+    the right answer. This is React's adjust-state-during-render pattern (the
+    one useMembership uses): the state is set in the render that first sees
+    the loaded plan, and React re-renders before anything is painted. Not an
+    effect, because the repo's lint forbids setState inside one. Sits after
+    openEditor, which it calls.
+  */
+  const [arrived, setArrived] = useState<string | null>(null);
+  if (!loading && openSlot && arrived !== openSlot) {
+    setArrived(openSlot);
+    const parsed = parseSessionKey(openSlot);
+    if (parsed) {
+      const iso = toISO(parsed.date);
+      const b = blocks.find((x) => x.start <= iso && iso <= x.end);
+      const idx = b ? buildWeeks(b).findIndex((w) => w.days.some((d) => toISO(d.date) === iso)) : -1;
+      if (b && idx !== -1) {
+        setView({ name: "week", blockId: b.id, weekIdx: idx });
+        openEditor(parsed.date, parsed.period);
+      }
+    }
+  }
 
   /* A type only asks for a zone if the coach said it does, AND there are zones
      to pick from — a squad that deleted them all must still be able to save. */

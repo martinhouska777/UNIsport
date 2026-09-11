@@ -41,6 +41,7 @@
 */
 import type { Tour, TourStep } from "@/lib/tour";
 
+const TODAY = "/varsity/coach";
 const PLAN = "/varsity/coach/plan";
 const LINEUP = "/varsity/coach/lineup";
 const NOTES = "/varsity/coach/notes";
@@ -57,7 +58,16 @@ const steps: TourStep[] = [
     route: PLAN,
     anchor: null,
     title: "The Coach Console",
-    body: "Four screens, and one idea behind all of them: write it down once here, and the whole squad already has it. No group chat, no spreadsheet, no photograph of a whiteboard. A minute — Skip, bottom left, stops it any time.",
+    body: "Five screens, and one idea behind all of them: write it down once here, and the whole squad already has it. No group chat, no spreadsheet, no photograph of a whiteboard. A minute — Skip, bottom left, stops it any time.",
+  },
+
+  /* ── Today ────────────────────────────────────────────────────────────── */
+  {
+    press: tab(TODAY),
+    route: TODAY,
+    anchor: tab(TODAY),
+    title: "Today — the morning on one screen",
+    body: "What the plan says for this morning and this afternoon, whether the boats are seated and live, and who is out — with one tap into the session or the lineup. It is the screen you open on the dock; the rest are where the work gets done.",
   },
 
   /* ── Plan ─────────────────────────────────────────────────────────────── */
@@ -233,7 +243,7 @@ const steps: TourStep[] = [
   {
     anchor: null,
     title: "That is the console",
-    body: "Plan, Lineup, Notes, Team — and the gear for anything to do with people. Walk through it again any time from Squad settings.",
+    body: "Today, Plan, Lineup, Notes, Team — and the gear for anything to do with people. Walk through it again any time from Squad settings.",
   },
 ];
 

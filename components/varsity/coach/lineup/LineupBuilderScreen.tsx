@@ -1903,7 +1903,12 @@ function Builder({
 }
 
 /* ─────────────────────────  screen  ───────────────────────── */
-export default function LineupBuilderScreen() {
+export default function LineupBuilderScreen({
+  openKey = null,
+}: {
+  /** A practice to open straight away (?practice= from the Today screen). */
+  openKey?: string | null;
+}) {
   const { membership } = useMembership();
   /*
     THE SQUAD'S OWN WORDS AND RULES — which types need a lineup, and what each
@@ -2038,6 +2043,18 @@ export default function LineupBuilderScreen() {
       })
       .sort((a, b) => a.time - b.time || (a.period === b.period ? 0 : a.period === "AM" ? -1 : 1));
   }, [plan, cfg]);
+
+  /*
+    ARRIVING FROM TODAY. Once the plan is in (so the prescribed-session card
+    has something to say), open the practice the link named — once per link,
+    so pressing ‹ Days afterwards does not throw the coach straight back in.
+  */
+  const opened = useRef<string | null>(null);
+  useEffect(() => {
+    if (!openKey || !plan || opened.current === openKey) return;
+    opened.current = openKey;
+    open(openKey);
+  }, [openKey, plan, open]);
 
   // The water session either side of the one open. Null at each end of the plan.
   const nav = useMemo(() => {
