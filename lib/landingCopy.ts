@@ -1202,12 +1202,15 @@ export const coach = {
         { text: "It automatically renames itself according to the lineup and saves into the right date", bold: true },
         { text: ", so your athletes know right away which piece they are watching." },
       ],
-      /* STAND-IN SHOT. The video strip sits on this same Lineup screen, below
-         the boats, so the screen is right but the frame is not — it repeats
-         step 3. Needs one capture run (scripts/landing/capture-coach.mjs, plus
-         a walk down to the strip) before launch. */
-      shot: "coach-4-lineup.webp",
-      alt: "The Lineup screen, where a boat's video strip sits under the seated crew",
+      /* ITS OWN FRAME since 2026-09-11 (website review: this step wore step
+         3's picture, so a coach reading six numbered screens saw five). The
+         same Lineup screen, scrolled to the 1V's foot: the boat's name, oars
+         and note, then the video strip open on its "Connect Drive" button and
+         the line about the squad's Drive folder, with the crew count under it.
+         Shot from the dev server with the capture bypass (scripts/landing/
+         README.md), light and dark, on the fake roster the other frames use. */
+      shot: "coach-4-video.webp",
+      alt: "The 1V's card on the Lineup screen: boat, oars and note, then the video strip open with its Connect Drive button and the line about the squad's Drive folder, and the crew count under it",
     },
     {
       n: "5",

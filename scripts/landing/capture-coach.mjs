@@ -225,7 +225,7 @@ await shot("lineup-picker");
 // 6. Tuesday AM (published) → the boats.
 await page.evaluate(() => {
   const cell = [...document.querySelectorAll("button,[role=button],div")]
-    .filter((e) => /Published/.test(e.textContent || "") && (e.textContent || "").length < 40)
+    .filter((e) => /Published|Live/.test(e.textContent || "") && (e.textContent || "").length < 40)
     .sort((a, b) => a.textContent.length - b.textContent.length)[0];
   (cell?.closest("button,[role=button]") || cell)?.click();
 });
@@ -266,7 +266,7 @@ async function tallshot(name) {
 await go("/varsity/coach/lineup", 3000);
 await page.evaluate(() => {
   const cell = [...document.querySelectorAll("button,[role=button],div")]
-    .filter((e) => /Published/.test(e.textContent || "") && (e.textContent || "").length < 40)
+    .filter((e) => /Published|Live/.test(e.textContent || "") && (e.textContent || "").length < 40)
     .sort((a, b) => a.textContent.length - b.textContent.length)[0];
   (cell?.closest("button,[role=button]") || cell)?.click();
 });

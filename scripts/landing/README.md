@@ -370,6 +370,14 @@ npm run dev
 node scripts/landing/capture-coach.mjs   # seeds localStorage, walks the console
 ```
 
+Two things learnt re-shooting step 4's frame (2026-09-11): the lineup picker
+lists only the NEXT 7 DAYS, so a seeded practice has to fall inside them or
+there is nothing to tap (the seed's Aug 18 no longer is — key the lineup and
+its session to today, `${y}-${monthIndex}-${day}-AM`); and a published
+lineup's cell now reads **Live**, not "Published" (the script matches both).
+With `NEXT_PUBLIC_GOOGLE_CLIENT_ID` set to any placeholder the video strip
+shows its real "Connect Drive" state, which is the frame step 4 wants.
+
 Frames are captured in the app's LIGHT theme (`uniThemeMode: "light"`), so the
 screens read as lit screens on the story's dark page — same as the student
 chapter. `coach-week-tall.webp` / `coach-boats-tall.webp` are full-scroll pan
