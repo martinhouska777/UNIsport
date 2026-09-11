@@ -179,6 +179,7 @@ function DaySheet({
                 <div className="flex items-center gap-2">
                   <span className="flex items-center gap-1 text-[11px] text-muted">
                     <IconClock size={11} /> {p.period} · {p.session.time}
+                    {p.session.location && ` · ${p.session.location}`}
                   </span>
                   <span className="text-[11px] text-muted">{sessionLabel(p.session)}</span>
                   <span

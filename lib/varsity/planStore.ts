@@ -56,6 +56,7 @@ type SessionRow = {
   intensity: string | null;
   description: string | null;
   time: string | null;
+  location?: string | null; // absent on a table that predates the column
   note: string | null;
   team_workout: boolean | null;
   board: string | null;
@@ -89,6 +90,7 @@ function rowToSession(r: SessionRow): Session {
     intensity: (r.intensity as Intensity) ?? undefined,
     description: r.description ?? "",
     time: r.time ?? "",
+    location: r.location || undefined,
     note: r.note ?? undefined,
     teamWorkout: r.team_workout ?? false,
     board: r.board === "ranked" ? "ranked" : "average",
@@ -105,6 +107,10 @@ function sessionToRow(dayKey: string, s: Session) {
     team_workout: s.teamWorkout ?? false,
     board: (s.board ?? "average") satisfies BoardKind,
     updated_at: new Date().toISOString(),
+    // Only sent when a session has one: a table that predates the column
+    // (db/varsity_plan.sql, bottom) would otherwise refuse EVERY save, not
+    // just the one with a location on it.
+    ...(s.location ? { location: s.location } : {}),
   };
 }
 

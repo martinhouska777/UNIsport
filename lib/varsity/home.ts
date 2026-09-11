@@ -100,6 +100,7 @@ export type LoggedSummary = { summary: string };
 export type DaySession = {
   time: string; // period: "AM" | "PM" | "ALL"
   clock?: string; // start time, e.g. "7:00 AM"
+  location?: string; // where to be, when the coach said
   label: string; // workout description ("3×25' UT2") or category name — shown in cells
   type?: string; // category · intensity, e.g. "Water · UT2" — shown in the day detail
   kind: SessionKind;

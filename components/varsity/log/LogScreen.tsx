@@ -458,6 +458,7 @@ function LogEditor({
                   <span className="text-[13px] font-semibold text-text">{sessionLabel(state.session)}</span>
                   <span className="ml-auto flex items-center gap-1 text-[11px] text-muted">
                     <IconClock size={12} /> {state.period} · {state.session.time}
+                    {state.session.location && ` · ${state.session.location}`}
                   </span>
                 </div>
                 {state.session.description.trim() && (

@@ -20,7 +20,7 @@
 export type Period = "AM" | "PM";
 export const periods: Period[] = ["AM", "PM"];
 
-// Usual start time per period (no duration, no location — those are implied).
+// Usual start time per period (no duration — that is implied; a location is optional per session).
 export const presetTime: Record<Period, string> = { AM: "7:00 AM", PM: "4:30 PM" };
 
 /* ── Categories ── */
@@ -167,6 +167,10 @@ export type Session = {
   intensity?: string;
   description: string;
   time: string; // preset per period, but editable
+  /* Where to be — "Weld Boathouse", "Newell erg room", "meet at the vans".
+     Optional and free text: a squad's places are its own, and the time already
+     on the session is when to be there. */
+  location?: string;
   note?: string;
   teamWorkout?: boolean; // results shared to a squad board
   board?: BoardKind; // which kind of board (only read when teamWorkout)
