@@ -29,12 +29,16 @@ export default function NotificationSettings({
   plans,
   team,
   follows,
+  partnerTags,
+  logReminders,
   showTeam,
   onChange,
 }: {
   messages: boolean;
   plans: boolean;
   follows: boolean;
+  partnerTags: boolean;
+  logReminders: boolean;
   team: boolean;
   /* Only squad members are offered the squad switch — a student with no team
      would be turning off something that can never reach them. */
@@ -43,6 +47,8 @@ export default function NotificationSettings({
     notifyMessages?: boolean;
     notifyPlans?: boolean;
     notifyFollows?: boolean;
+    notifyPartnerTags?: boolean;
+    notifyLogReminders?: boolean;
     notifyTeam?: boolean;
   }) => void;
 }) {
@@ -220,6 +226,33 @@ export default function NotificationSettings({
             on={plans}
             onChange={() => onChange({ notifyPlans: !plans })}
             ariaLabel="Notify me about session invites"
+          />
+        </div>
+        <div className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-surface px-4 py-3">
+          <div>
+            <div className="text-sm text-text">Partner tags</div>
+            <div className="text-[11px] text-muted">
+              When someone logs a session with you — “Did you train with Sam today?”
+            </div>
+          </div>
+          <Toggle
+            on={partnerTags}
+            onChange={() => onChange({ notifyPartnerTags: !partnerTags })}
+            ariaLabel="Notify me when someone logs a session with me"
+          />
+        </div>
+        <div className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-surface px-4 py-3">
+          <div>
+            <div className="text-sm text-text">Log reminder</div>
+            <div className="text-[11px] text-muted">
+              One push at your usual training time — “Train today? Log it”. Never on a day
+              you’ve already logged.
+            </div>
+          </div>
+          <Toggle
+            on={logReminders}
+            onChange={() => onChange({ notifyLogReminders: !logReminders })}
+            ariaLabel="Remind me to log at my usual training time"
           />
         </div>
         <div className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-surface px-4 py-3">

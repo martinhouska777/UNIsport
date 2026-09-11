@@ -12,8 +12,29 @@ import {
   type WorkoutSet,
 } from "@/lib/supabase/workouts";
 import { IconArrowLeft, IconUser, IconPencil, IconTrash, IconCheck } from "@/components/icons";
+import { PARTNER_CONFIRM_HOURS } from "@/lib/points";
 
 const SET_TYPE_LABEL: Record<string, string> = { W: "W", N: "N", D: "D", F: "F" };
+
+/*
+  Where the partner tag stands, in the logger's words. A pending tag scores as
+  solo, and the screen says so rather than letting the name imply the points
+  are in. Nothing is written for a confirmed tag (or a legacy one) — the name
+  on its own is the normal state.
+*/
+function partnerStatusLine(log: WorkoutLog): string | null {
+  if (!log.partnerId) return null;
+  switch (log.partnerStatus) {
+    case "pending":
+      return `Waiting for ${log.partner} to confirm · counts as solo until then`;
+    case "declined":
+      return `${log.partner} said they weren’t there · counted as solo`;
+    case "expired":
+      return `${log.partner} didn’t confirm within ${PARTNER_CONFIRM_HOURS}h · counted as solo`;
+    default:
+      return null;
+  }
+}
 
 /*
   WORKOUT DETAIL — one logged workout on its own full screen, reached by tapping
@@ -169,13 +190,16 @@ export default function WorkoutDetail({
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-primary bg-primary-tint text-primary">
             <IconUser size={15} />
           </div>
-          <div>
+          <div className="min-w-0">
             <div className="text-[11px] text-muted">{solo ? "Session" : "Training partner"}</div>
             <div className="text-[13px] font-medium text-primary">{solo ? "Solo session" : log.partner}</div>
+            {partnerStatusLine(log) && (
+              <div className="mt-0.5 text-[11px] leading-snug text-muted">{partnerStatusLine(log)}</div>
+            )}
           </div>
-          {log.verified && (
-            <span className="ml-auto flex items-center gap-1 rounded-full border border-success bg-success-tint px-2 py-1 text-[11px] font-medium text-success">
-              <IconCheck size={11} /> Verified
+          {(log.verified || log.partnerStatus === "confirmed") && (
+            <span className="ml-auto flex flex-shrink-0 items-center gap-1 rounded-full border border-success bg-success-tint px-2 py-1 text-[11px] font-medium text-success">
+              <IconCheck size={11} /> {log.verified ? "Verified" : "Confirmed"}
             </span>
           )}
         </div>

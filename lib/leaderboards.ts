@@ -23,8 +23,9 @@
   back empty and the screens say so, rather than showing a convincing fake.
 */
 import { createClient, hasSupabaseEnv } from "@/lib/supabase/client";
-import { houses, residenceLabel, yardDorms } from "@/lib/onboarding";
+import { classYears, houses, residenceLabel, yardDorms } from "@/lib/onboarding";
 import { getGymByName } from "@/lib/gyms";
+import { dormColors } from "@/lib/cohorts";
 import { rateArgs, sessionPoints, type SessionKinds } from "@/lib/points";
 
 /* ─────────────────────────────  types  ───────────────────────────── */
@@ -87,13 +88,14 @@ export type Standing = {
 };
 
 /*
-  A house or class year needs this many signed-up members before it appears on a
-  team board. One very keen person in an otherwise empty house would otherwise
-  top the table on their own, which reads as broken rather than impressive.
-  The same number is hard-coded in my_leaderboard_standing() so the rank on the
-  Profile strip is the rank on the board.
+  NO MINIMUM ON THE PLAIN BOARDS. Every house, every first-year dorm and every
+  class year is on its board, always — including the ones with nobody signed
+  up, which come last and read "0 pts · nobody yet". With a handful of test
+  accounts a board of two houses looks broken; a board of twelve, most at
+  zero, looks like a race that has just started, which is the truth. The one
+  place a minimum still gates anything is the interhouse race (lib/events.ts,
+  HOUSE_RACE_MIN_ACTIVE).
 */
-export const MIN_GROUP_MEMBERS = 3;
 
 /* ────────────────────  the two ways to read a team board  ──────────────────── */
 
@@ -173,15 +175,19 @@ export function groupLabel(kind: GroupBoard, key: string): string {
  */
 export function houseColor(key: string | null | undefined): string | null {
   if (!key) return null;
-  return getGymByName(key)?.houseColors?.primary ?? null;
+  return getGymByName(key)?.houseColors?.primary ?? dormColors(key)?.primary ?? null;
 }
 
-/** BOTH of a house's colours, for its crest. Null for anything but a house. */
+/**
+ * BOTH of a group's colours, for its crest. A house wears its own; a first-year
+ * dorm wears the entry-year cohort's (lib/cohorts.ts), so the Dorms board has
+ * no empty crests. Null for anything else (a class year, off campus).
+ */
 export function houseCrest(
   key: string | null | undefined,
 ): { primary: string; secondary: string } | null {
   if (!key) return null;
-  const c = getGymByName(key)?.houseColors;
+  const c = getGymByName(key)?.houseColors ?? dormColors(key);
   return c ? { primary: c.primary, secondary: c.secondary } : null;
 }
 
@@ -251,22 +257,28 @@ type GroupRpcRow = {
  * `onlyKeys` limits the board to those group names — how the twelve Houses and
  * the first-year Yard dorms stay in separate competitions. The lists are data
  * (lib/onboarding.ts), so the database never learns a house name.
+ *
+ * EVERY KEY COMES BACK. The database can only report groups that have at least
+ * one profile in them; a house nobody has joined yet is filled in here as a
+ * zero row (members 0), so the board is always the whole list. For the years
+ * board the list is the class years themselves.
  */
 export async function fetchGroupBoard(
   kind: GroupBoard,
   period: Period,
   onlyKeys?: string[],
 ): Promise<GroupRow[]> {
-  if (!hasSupabaseEnv()) return [];
+  const allKeys = onlyKeys ?? (kind === "year" ? classYears : []);
+  if (!hasSupabaseEnv()) return fillMissingGroups([], allKeys);
   const { data, error } = await createClient().rpc("leaderboard_groups", {
     kind,
     period,
-    min_members: MIN_GROUP_MEMBERS,
+    min_members: 0,
     ...rateArgs,
     only_keys: onlyKeys ?? null,
   });
-  if (error || !data) return [];
-  return (data as GroupRpcRow[]).map((r) => ({
+  if (error || !data) return fillMissingGroups([], allKeys);
+  const rows = (data as GroupRpcRow[]).map((r) => ({
     rank: r.rank,
     key: r.key,
     members: r.members,
@@ -276,7 +288,32 @@ export async function fetchGroupBoard(
     avgPoints: Number(r.avg_points),
     isMine: !!r.is_mine,
   }));
+  return fillMissingGroups(rows, allKeys);
 }
+
+/** Add a zero row for every group the database had nobody in. Ranked last, level. */
+function fillMissingGroups(rows: GroupRow[], keys: string[]): GroupRow[] {
+  const have = new Set(rows.map((r) => r.key));
+  const missing = keys.filter((k) => !have.has(k));
+  if (missing.length === 0) return rows;
+  const lastRank = rows.length + 1;
+  return [
+    ...rows,
+    ...missing.map((key) => ({
+      rank: lastRank,
+      key,
+      members: 0,
+      actives: 0,
+      sessions: 0,
+      points: 0,
+      avgPoints: 0,
+      isMine: false,
+    })),
+  ];
+}
+
+/** True for a group with nobody signed up at all — the "nobody yet" row. */
+export const nobodyYet = (row: GroupRow) => row.members === 0;
 
 type StandingRpcRow = {
   points: number;

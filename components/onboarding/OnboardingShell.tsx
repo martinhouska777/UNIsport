@@ -5,7 +5,9 @@ import { IconArrowLeft } from "@/components/icons";
 
 /*
   Shared shell for all onboarding screens:
-  - top progress segments (done = dim crimson, current = crimson, upcoming = border)
+  - top progress: one segment per CHAPTER (done = dim crimson, current = crimson
+    filling as you move through its screens, upcoming = border), with the
+    chapter's name and place above it — "How you train · 2 of 3"
   - back arrow (hidden on the first screen) + optional Skip
   - serif heading + subtext
   - scrollable body
@@ -15,6 +17,10 @@ import { IconArrowLeft } from "@/components/icons";
 export default function OnboardingShell({
   step,
   total,
+  chapterLabel,
+  chapterIndex,
+  chapterTotal,
+  chapterProgress,
   showBack,
   onBack,
   skippable,
@@ -31,8 +37,20 @@ export default function OnboardingShell({
   secondaryLabel,
   onSecondary,
 }: {
-  step: number; // 1-based
-  total: number;
+  /*
+    Two ways to say where you are. The student flow passes CHAPTERS (the four
+    props below). The plain step/total pair is kept for the short varsity setup,
+    which is one screen and has no chapters to count.
+  */
+  step?: number; // 1-based
+  total?: number;
+  /** "How you train · 2 of 3", or the tail's own label. */
+  chapterLabel?: string;
+  /** 0-based chapter; equal to chapterTotal on the tail (everything done). */
+  chapterIndex?: number;
+  chapterTotal?: number;
+  /** 0..1 — how far through the current chapter's screens. */
+  chapterProgress?: number;
   showBack: boolean;
   onBack: () => void;
   skippable: boolean;
@@ -69,21 +87,44 @@ export default function OnboardingShell({
         )}
       </div>
 
-      {/* Progress segments */}
-      <div className="my-4 flex gap-1" aria-label={`Step ${step} of ${total}`}>
-        {Array.from({ length: total }).map((_, i) => (
-          <span
-            key={i}
-            className={`h-[3px] flex-1 rounded-sm ${
-              i === step - 1
-                ? "bg-primary"
-                : i < step - 1
-                  ? "bg-primary/50"
-                  : "bg-border"
-            }`}
-          />
-        ))}
-      </div>
+      {/* Progress: chapters, not screens. Ten equal ticks read as a form; three
+          named steps read as a conversation with a shape. The current chapter's
+          segment fills as its screens go by, so nothing feels stuck. */}
+      {chapterLabel !== undefined && chapterIndex !== undefined && chapterTotal !== undefined ? (
+        <div className="mb-4 mt-4">
+          <div className="mb-1.5 text-[11px] font-medium uppercase tracking-[0.1em] text-primary">
+            {chapterLabel}
+          </div>
+          <div className="flex gap-1" role="progressbar" aria-label={chapterLabel}>
+            {Array.from({ length: chapterTotal }).map((_, i) => (
+              <span key={i} className="h-[3px] flex-1 overflow-hidden rounded-sm bg-border">
+                {i < chapterIndex ? (
+                  <span className="block h-full w-full bg-primary/50" />
+                ) : i === chapterIndex ? (
+                  <span
+                    className="block h-full rounded-sm bg-primary transition-[width] duration-300 motion-reduce:transition-none"
+                    style={{
+                      width: `${Math.round(Math.max(0.12, Math.min(1, chapterProgress ?? 1)) * 100)}%`,
+                    }}
+                  />
+                ) : null}
+              </span>
+            ))}
+          </div>
+        </div>
+      ) : (
+        /* The plain per-screen segments, for a flow with no chapters. */
+        <div className="my-4 flex gap-1" aria-label={`Step ${step ?? 1} of ${total ?? 1}`}>
+          {Array.from({ length: total ?? 1 }).map((_, i) => (
+            <span
+              key={i}
+              className={`h-[3px] flex-1 rounded-sm ${
+                i === (step ?? 1) - 1 ? "bg-primary" : i < (step ?? 1) - 1 ? "bg-primary/50" : "bg-border"
+              }`}
+            />
+          ))}
+        </div>
+      )}
 
       {/* Scrollable body */}
       <div className={`flex-1 overflow-y-auto ${centered ? "text-center" : ""}`}>

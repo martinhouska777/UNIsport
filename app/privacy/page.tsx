@@ -15,7 +15,8 @@ export const metadata: Metadata = {
 /*
   PRIVACY POLICY. Written to match what the app ACTUALLY does today — the
   onboarding fields in lib/onboarding.ts, the tables in db/, the browser
-  storage in lib/gymSocial.ts, the Drive permission in lib/varsity/drive.ts and
+  storage in lib/gymSocial.ts (crowd reports moved to the shared table in
+  db/gym_crowd.sql on 2026-09-11), the Drive permission in lib/varsity/drive.ts and
   the vision call in app/api/varsity/erg-scan/route.ts. If a feature starts
   collecting something new, this page has to change with it.
 
@@ -45,7 +46,7 @@ export const metadata: Metadata = {
 */
 export default function PrivacyPolicyPage() {
   return (
-    <LegalPage title="Privacy Policy" updated="6 September 2026">
+    <LegalPage title="Privacy Policy" updated="11 September 2026">
       <Section heading="The short version">
         <p>
           UNIsport is a fitness app for university students. To work, it needs to know who you
@@ -107,10 +108,17 @@ export default function PrivacyPolicyPage() {
           board posts, who you follow, and who you record as a training partner.
         </p>
         <p>
+          <span className="text-l-text">Gym crowd reports.</span>{" "}
+          If you tap how busy a gym is, we store that answer with your account and the time. Other
+          students at your school see it only as a level and a count (&ldquo;2 people said
+          Busy&rdquo;), never your name, and it stops being shown after two hours.
+        </p>
+        <p>
           <span className="text-l-text">Notifications.</span>{" "}
           If you turn on push notifications, we store the subscription your browser issues and
           your browser&apos;s user-agent string, so we can deliver notifications to the right
-          device.
+          device. If you leave the log reminder on, we also record the day each reminder was
+          sent, so you are never sent two in one day.
         </p>
         <p>
           <span className="text-l-text">Varsity athletes.</span>{" "}
@@ -125,8 +133,8 @@ export default function PrivacyPolicyPage() {
         </p>
         <p>
           <span className="text-l-text">Stored only on your device.</span>{" "}
-          Your gym favourites, gym ratings, crowd reports, and the email address of your last
-          sign-in stay in your browser&apos;s local storage and are not sent to our servers.
+          Your gym favourites, gym ratings, and the email address of your last sign-in stay in
+          your browser&apos;s local storage and are not sent to our servers.
           Clearing your browser data removes them.
         </p>
       </Section>

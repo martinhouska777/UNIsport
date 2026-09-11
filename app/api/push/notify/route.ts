@@ -6,6 +6,7 @@
 
     DM        "message" | "plan" | "plan_update"     needs conversationId
     Social    "follow"                               needs targetId
+              "partner"  (did you train with me?)    needs logId
     Varsity   "team_plan" | "team_lineup" | "note"   the coach telling the squad
                                                      ("note" needs athleteId)
 
@@ -26,7 +27,13 @@ export const runtime = "nodejs";
 const clip = (s: string, n = 120) => (s.length > n ? s.slice(0, n - 1) + "…" : s);
 
 const TEAM_KINDS = ["team_plan", "team_lineup", "note"] as const;
-type Kind = "message" | "plan" | "plan_update" | "follow" | (typeof TEAM_KINDS)[number];
+type Kind =
+  | "message"
+  | "plan"
+  | "plan_update"
+  | "follow"
+  | "partner"
+  | (typeof TEAM_KINDS)[number];
 const isTeamKind = (k: string): k is (typeof TEAM_KINDS)[number] =>
   (TEAM_KINDS as readonly string[]).includes(k);
 
@@ -37,6 +44,7 @@ export async function POST(request: Request) {
     conversationId?: string;
     athleteId?: string;
     targetId?: string;
+    logId?: string;
     kind?: string;
     preview?: string;
     dayKey?: string; // varsity kinds: the practice this is about (coachPlan → sessionKey)
@@ -50,7 +58,7 @@ export async function POST(request: Request) {
   const raw = body.kind ?? "";
   const kind: Kind = isTeamKind(raw)
     ? raw
-    : raw === "plan" || raw === "plan_update" || raw === "follow"
+    : raw === "plan" || raw === "plan_update" || raw === "follow" || raw === "partner"
       ? raw
       : "message";
   const preview = (body.preview ?? "").trim();
@@ -81,6 +89,13 @@ export async function POST(request: Request) {
           ? await supabase.rpc("athlete_push_targets", { p_athlete: body.athleteId })
           : { data: null, error: { message: "missing athleteId" } }
         : await supabase.rpc("team_push_targets");
+    if (error) return Response.json({ error: "forbidden" }, { status: 403 });
+    subs = (data as StoredSubscription[]) ?? [];
+  } else if (kind === "partner") {
+    // The person named as a training partner. The RPC hands over their devices
+    // only to that session's logger, and only while the tag is pending.
+    if (!body.logId) return Response.json({ error: "bad_request" }, { status: 400 });
+    const { data, error } = await supabase.rpc("partner_push_targets", { p_log_id: body.logId });
     if (error) return Response.json({ error: "forbidden" }, { status: 403 });
     subs = (data as StoredSubscription[]) ?? [];
   } else if (kind === "follow") {
@@ -138,6 +153,16 @@ export async function POST(request: Request) {
       title: who,
       body: preview ? `started following you · ${clip(preview)}` : "started following you",
       url: `/people/${user.id}`,
+    },
+    /* "Did you train with Sam today?" — a question, because it is one: the
+       tag counts for nobody until this person says yes. Opens the Profile tab,
+       where the Yes / No card sits at the top. */
+    partner: {
+      title: `Did you train with ${who} today?`,
+      body: preview
+        ? `${clip(preview)} · Confirm it and it goes on your calendar too`
+        : "Confirm it and the session goes on your calendar too",
+      url: "/profile",
     },
     // Everything that happens to a plan AFTER the invite: accepted, declined,
     // cancelled, moved, or "I've said we trained, your turn". The client sends

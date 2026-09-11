@@ -291,6 +291,143 @@ export function topMatchReasons(
   return (worthSaying.length > 0 ? worthSaying : ranked.slice(0, 1)).slice(0, count);
 }
 
+/* ═══════════════════  THE HOOK — one human fact, said first  ═══════════════════ */
+
+/*
+  Interests and concentration are what the app is about, and six identical
+  11px chips made "Economics", "Coffee" and "Malkin" read as equally important.
+  The HOOK is one shared HUMAN fact — never a gym, a time or a level — given
+  its own line in the school's colour: "Also does Neuroscience", "Both into
+  Climbing", "They run too". It is the reason you'd message this person rather
+  than the one below them.
+
+  Which fact wins: the rarest across the list on screen (see reasonRarity), so
+  on a list of economists the concentration goes quiet and the one shared
+  hobby becomes the line. Without a list, the strongest.
+
+  The wording is data here, per kind of fact, and the same function feeds the
+  match card, the board rows and the "going tonight" rows — so the hook you
+  read on a board is the hook you read on the card.
+*/
+export type Hook = {
+  /** "Also does Neuroscience" */
+  text: string;
+  /** The reason it came from, so a card can leave that chip out. */
+  key: string;
+  /** Chip keys the card should drop, because the line already says them. */
+  chipKeys: string[];
+};
+
+// The human facts, in the order they win a tie. Logistics never hook.
+const HOOK_KEYS = ["interests", "concentration", "activity-also", "origin", "languages", "mentor"] as const;
+
+function hookWording(m: Match, r: MatchReason): { text: string; chipKeys: string[] } | null {
+  const f = m.facts;
+  switch (r.key) {
+    case "concentration":
+      return f.concentration
+        ? { text: `Also does ${f.concentration}`, chipKeys: ["concentration"] }
+        : null;
+    case "interests": {
+      const [a, b] = f.interests;
+      if (!a) return null;
+      return {
+        text: b ? `Both into ${a} and ${b}` : `Both into ${a}`,
+        chipKeys: f.interests.slice(0, b ? 2 : 1).map((i) => `interest-${i}`),
+      };
+    }
+    case "origin":
+      return { text: `Also from ${f.country ?? f.region}`, chipKeys: ["origin"] };
+    case "languages": {
+      const lang = f.languages.find((l) => l !== campusLanguage);
+      return lang ? { text: `Also speaks ${lang}`, chipKeys: ["languages"] } : null;
+    }
+    case "activity-also": {
+      const w = activityWording[f.activity ?? "other"] ?? activityWording.other;
+      return { text: w.they, chipKeys: ["activity-also"] };
+    }
+    case "mentor":
+      return { text: levelWording.mentor.full, chipKeys: ["mentor"] };
+    default:
+      return null;
+  }
+}
+
+/** The one line under a name. Null when the two share no human fact at all. */
+export function hookLine(m: Match, rarity?: ReasonRarity): Hook | null {
+  const ranked = topMatchReasons(m, 99, rarity).filter((r) =>
+    (HOOK_KEYS as readonly string[]).includes(r.key),
+  );
+  // Rarest first already; among equals, the order of HOOK_KEYS decides.
+  ranked.sort((a, b) => {
+    if (rarity && rarity.total >= 5) {
+      const share = (k: string) => (rarity.counts.get(k) ?? 0) / rarity.total;
+      const d = share(a.key) - share(b.key);
+      if (d !== 0) return d;
+    }
+    return HOOK_KEYS.indexOf(a.key as (typeof HOOK_KEYS)[number]) - HOOK_KEYS.indexOf(b.key as (typeof HOOK_KEYS)[number]);
+  });
+  for (const r of ranked) {
+    const w = hookWording(m, r);
+    if (w) return { text: w.text, key: r.key, chipKeys: w.chipKeys };
+  }
+  return null;
+}
+
+/*
+  WHERE AND WHEN — the small grey line under the hook: their gym (yours too
+  when it is shared) and whether they train when you do. Logistics, said
+  quietly; the human fact above it is what gets the colour.
+*/
+export function whereWhenLine(m: Match): string | null {
+  const gym = m.facts.gym ?? m.theirs.gym;
+  const when = (m.breakdown.schedule ?? 0) > 0 ? "trains when you do" : null;
+  const parts = [gym, when].filter(Boolean);
+  return parts.length > 0 ? parts.join(" · ") : null;
+}
+
+/*
+  THE FIRST LINE OF A NEW CONVERSATION — "You both do CS · both into coffee."
+  Two human facts at most, strongest first, joined the way a person would say
+  them. Null when there is nothing to say; the thread then opens as it did.
+*/
+export function dmContextLine(m: Match): string | null {
+  const f = m.facts;
+  const parts: string[] = [];
+  for (const r of matchReasons(m)) {
+    if (parts.length >= 2) break;
+    switch (r.key) {
+      case "concentration":
+        if (f.concentration) parts.push(`you both do ${f.concentration}`);
+        break;
+      case "interests":
+        if (f.interests[0]) parts.push(`both into ${f.interests[0].toLowerCase()}`);
+        break;
+      case "origin":
+        parts.push(`both from ${f.country ?? f.region}`);
+        break;
+      case "languages": {
+        const lang = f.languages.find((l) => l !== campusLanguage);
+        if (lang) parts.push(`both speak ${lang}`);
+        break;
+      }
+      case "activity-also": {
+        const w = activityWording[f.activity ?? "other"] ?? activityWording.other;
+        parts.push(w.they.toLowerCase());
+        break;
+      }
+      case "gym":
+        if (f.gym) parts.push(`both train at ${f.gym}`);
+        break;
+      default:
+        break;
+    }
+  }
+  if (parts.length === 0) return null;
+  const line = parts.join(" · ");
+  return line[0].toUpperCase() + line.slice(1) + ".";
+}
+
 /* ══════════════════════  what a RESULT CARD shows  ══════════════════════ */
 
 /*

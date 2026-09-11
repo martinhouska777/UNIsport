@@ -35,6 +35,8 @@ import Avatar from "@/components/messages/Avatar";
 import GymCheckInPrompt from "@/components/gyms/GymCheckInPrompt";
 import { getGymByName } from "@/lib/gyms";
 import { fileToDataUrl } from "@/lib/image";
+import { notifyPartnerTag } from "@/lib/push/client";
+import { PARTNER_CONFIRM_HOURS, sessionPoints } from "@/lib/points";
 import { IconArrowLeft, IconCheck, IconPlus, IconTrash, IconX } from "@/components/icons";
 
 const todayIso = () => {
@@ -54,18 +56,21 @@ export default function LogSessionSheet({
   userId,
   existing,
   initialDate,
+  initialGym,
   onClose,
   onSaved,
 }: {
   userId: string;
   existing?: WorkoutLog;
   initialDate?: string;
+  /** Prefilled by the log reminder's deep link — the person's usual gym. */
+  initialGym?: string;
   onClose: () => void;
   onSaved: () => void;
 }) {
   const [date, setDate] = useState(existing?.date ?? initialDate ?? todayIso());
   const [activity, setActivity] = useState(existing?.activity ?? "gym");
-  const [gym, setGym] = useState(existing?.gym ?? "");
+  const [gym, setGym] = useState(existing?.gym ?? initialGym ?? "");
   const [partner, setPartner] = useState(existing?.partner ?? "");
   const [partnerId, setPartnerId] = useState<string | undefined>(existing?.partnerId);
   const [exercises, setExercises] = useState<WorkoutExercise[]>(existing?.exercises ?? []);
@@ -166,12 +171,19 @@ export default function LogSessionSheet({
     if (!date || busy) return;
     setBusy(true);
     setError(null);
+    /*
+      The same partner kept on an edit keeps their answer (a confirmed session
+      is not re-asked; a row from before tags had to be accepted stays counted).
+      A new or changed partner is a new request — saveWorkout marks it pending.
+    */
+    const samePartner = !!partnerId && partnerId === existing?.partnerId;
     const draft: WorkoutDraft = {
       date,
       activity,
       gym,
       partner,
       partnerId,
+      ...(samePartner ? { partnerStatus: existing?.partnerStatus ?? "confirmed" } : {}),
       exercises,
       metrics: { cardioType, distance, unit, duration, weightUnit, muscles },
       photos,
@@ -184,6 +196,12 @@ export default function LogSessionSheet({
     if (res.error) {
       setError(res.error);
       return;
+    }
+    // A fresh partner tag asks them — "Did you train with Sam today?" — and
+    // counts for nobody until they say yes. Fire-and-forget, never blocks.
+    if (partnerId && !samePartner) {
+      const newId = existing ? existing.id : (res as { id?: string }).id;
+      if (newId && !newId.startsWith("local-")) notifyPartnerTag(newId, gym.trim() || undefined);
     }
     // If this session was at a recognised gym, offer the optional rating + crowd
     // check-in before closing; otherwise finish straight away.
@@ -281,6 +299,15 @@ export default function LogSessionSheet({
               <span className="flex-1 text-muted">Solo · tap to add a partner</span>
             )}
           </button>
+          {/* Said before the save, because it changes what the save does: the
+              multiplier is not yours to take, it is theirs to confirm. */}
+          {partnerId && (
+            <p className="mt-1.5 text-[11px] leading-snug text-muted">
+              {existing?.partnerId === partnerId && existing?.partnerStatus !== "pending"
+                ? `${partner} has confirmed this session.`
+                : `${partner} will be asked to confirm. Once they say yes it counts for both of you (${sessionPoints.partner}–${sessionPoints.newPartner} pts each) and lands on their calendar too. No answer in ${PARTNER_CONFIRM_HOURS}h and it counts as solo.`}
+            </p>
+          )}
 
           {/* Exercises — gym / other (Hevy-style per-set logging) */}
           {usesExercises && (

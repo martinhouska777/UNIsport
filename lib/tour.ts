@@ -102,7 +102,7 @@ export const tourSteps: TourStep[] = [
     route: aGym,
     anchor: "gym-rate",
     title: "This part is you telling the app",
-    body: "A rating, and “how busy right now”, only ever know what people report. Tap a star after you've trained and say what you walked into.",
+    body: "“How busy right now” only ever knows what people report — yours goes to everyone at your school. The stars are your own private rating.",
   },
   {
     anchor: "gym-partner",
@@ -128,7 +128,7 @@ export const tourSteps: TourStep[] = [
     press: "match-tab-sessions",
     anchor: "match-tab-sessions",
     title: "Sessions — this coming week",
-    body: "Everyone who has said what they want to train and when. Put your own up with the button, message anyone whose plan suits you — or open “Free at a set time?” to search for people free at one exact hour.",
+    body: "Everyone who has said what they want to train and when. Put your own up with the button, tap “I’m in” on a plan that suits you — or use “Search by time” to find people free at one exact hour.",
   },
 
   /* ── Messages ─────────────────────────────────────────────────────────── */

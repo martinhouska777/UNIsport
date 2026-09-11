@@ -17,7 +17,7 @@
 */
 import { IconX } from "@/components/icons";
 import { DAILY_SESSION_CAP, sessionPoints } from "@/lib/points";
-import { MIN_GROUP_MEMBERS } from "@/lib/leaderboards";
+import { HOUSE_RACE_MIN_ACTIVE } from "@/lib/events";
 import { honorCodeFor } from "@/lib/honorCode";
 
 function Rate({ points, what }: { points: number; what: string }) {
@@ -118,8 +118,9 @@ export default function ScoringSheet({
               Points divided by everyone who lives there, not the total — otherwise the
               biggest house wins every month forever. It also means a few very keen people
               can&rsquo;t carry a house on their own: getting more of you logging is the
-              only way the number moves. A house needs {MIN_GROUP_MEMBERS} members signed
-              up to appear at all.
+              only way the number moves. Every house is on the board, always. The one
+              thing with a minimum is the interhouse race: a house is in once{" "}
+              {HOUSE_RACE_MIN_ACTIVE} of its people have trained this month.
             </Rule>
 
             <Rule title="Nobody can see your workouts">

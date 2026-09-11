@@ -8,6 +8,63 @@
 
 import { gyms } from "./gyms";
 
+/* ---- THE THREE CHAPTERS ------------------------------------------------------
+  Ten screens read as an unexplained form. Grouped, they are three questions a
+  person can hold in their head — who are you, how do you train, what else are
+  you — and each chapter opens by saying WHY it asks. The progress bar counts
+  chapters, not screens. Nothing is removed or shortened; the screens are the
+  same ten, in the same order. The short tail (preferences, photo, notifications)
+  sits outside the chapters as "last details".
+
+  DATA (rule 7): which screens belong to which chapter, and what each chapter
+  says for itself, lives here — the flow only reads it.
+*/
+export type OnboardingChapter = {
+  key: string;
+  title: string;
+  /** The one line under the chapter's first heading: why we ask. */
+  why: string;
+  /** Screen keys (see STEPS in OnboardingFlow), in order. */
+  steps: string[];
+};
+
+export const onboardingChapters: OnboardingChapter[] = [
+  {
+    key: "you",
+    title: "About you",
+    why: "Your house is your team on the leaderboard. Your year is how people know who you are.",
+    steps: ["basics", "residence"],
+  },
+  {
+    key: "train",
+    title: "How you train",
+    why: "This is what the match runs on — we look for people at your gym, at your hour.",
+    steps: ["activity", "alsodo", "topgyms", "schedule"],
+  },
+  {
+    key: "outside",
+    title: "Who you are outside the gym",
+    why: "Two people at the same gym at the same time still need a reason to say hi. This is that reason.",
+    steps: ["background"],
+  },
+];
+
+/** What the progress bar calls the screens after the third chapter. */
+export const ONBOARDING_TAIL_LABEL = "Last details";
+
+/** Which chapter a screen belongs to (index into onboardingChapters), or -1 for the tail. */
+export function chapterOf(stepKey: string): number {
+  return onboardingChapters.findIndex((c) => c.steps.includes(stepKey));
+}
+
+/*
+  Chapter 3 is no longer skippable. Interests and a concentration are what the
+  app is FOR — the reason to say hi — so a profile without them is a profile
+  the match cannot use. "Undecided" is a concentration; hometown and languages
+  stay optional.
+*/
+export const MIN_INTERESTS = 3;
+
 // ---- Screen 1: Basics --------------------------------------------------------
 
 // Editable list of class-year pills. (Set the real years here.)
@@ -33,6 +90,15 @@ export function classYearLabel(classYear: string): string {
   if (i < 0 || first < 0) return classYear;
   return ["Fr", "So", "Jr", "Sr"][first - i] ?? classYear;
 }
+
+/*
+  A FIRST-YEAR'S FIRST MONTH. A new first-year opens Match narrowed to their
+  own class year for this many days after signing up — the people they will
+  actually meet in September are other first-years, and a list of seniors on
+  day one says "not for you". It is a default, not a wall: the chip clears
+  with a tap. lib/cohorts.ts holds what a first-year's team is.
+*/
+export const FIRST_YEAR_OWN_YEAR_DAYS = 30;
 
 // Sex options (editable).
 export const sexOptions: string[] = ["Male", "Female"];
@@ -515,12 +581,18 @@ export const gymMentorship: { key: ToggleKey; label: string; sub: string }[] = [
 ];
 
 // ---- Screen 9: Notifications -------------------------------------------------
-// What users get notified about (NO streaks). Icons map to the icon set.
+/*
+  ONLY WHAT ACTUALLY SENDS. This list used to promise "Someone matches with
+  you" and "Session reminders", and neither existed. Every line here has a
+  real sender behind it (app/api/push/notify and app/api/push/remind); adding
+  a promise means adding the code first. Icons map to the icon set.
+*/
 export const notificationItems: { icon: string; label: string }[] = [
-  { icon: "heart", label: "Someone matches with you" },
   { icon: "message", label: "New messages" },
-  { icon: "calendar", label: "Session invites" },
-  { icon: "clock", label: "Session reminders" },
+  { icon: "calendar", label: "Session plans — invites, answers and changes" },
+  { icon: "user", label: "Partner tags — “Did you train with Sam today?”" },
+  { icon: "heart", label: "New followers" },
+  { icon: "clock", label: "One reminder to log, at your usual training time" },
 ];
 
 export const countries: string[] = [

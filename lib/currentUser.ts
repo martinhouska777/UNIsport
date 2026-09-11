@@ -40,6 +40,10 @@ export type CurrentUser = OnboardingProfile & {
   notifyPlans: boolean;
   // Someone tapped Follow on your profile.
   notifyFollows: boolean;
+  // Someone named you as their training partner — "Did you train with Sam today?"
+  notifyPartnerTags: boolean;
+  // One push at your usual training time: "Train today? Log it".
+  notifyLogReminders: boolean;
   // Everything the coach publishes to the squad: the week, the boats, and a
   // technical note written to you. One switch, because they are one voice.
   notifyTeam: boolean;
@@ -100,6 +104,8 @@ export const currentUser: CurrentUser = {
   notifyMessages: true,
   notifyPlans: true,
   notifyFollows: true,
+  notifyPartnerTags: true,
+  notifyLogReminders: true,
   notifyTeam: true,
   sessions: [
     { day: 3, activity: "Push day", gym: "Malkin Athletic Center", partner: "Alex Chen", exercises: ["Bench 5×5", "OHP 4×8", "Triceps"], photos: [] },
@@ -157,6 +163,8 @@ export function profileFromOnboarding(raw: Record<string, unknown>): CurrentUser
     notifyMessages?: boolean;
     notifyPlans?: boolean;
     notifyFollows?: boolean;
+    notifyPartnerTags?: boolean;
+    notifyLogReminders?: boolean;
     notifyTeam?: boolean;
     // Set by get_public_profile when viewing SOMEONE ELSE: true if they're an
     // approved member of a squad. Absent when reading your own profiles.data
@@ -178,6 +186,8 @@ export function profileFromOnboarding(raw: Record<string, unknown>): CurrentUser
     notifyMessages: extra.notifyMessages ?? true,
     notifyPlans: extra.notifyPlans ?? true,
     notifyFollows: extra.notifyFollows ?? true,
+    notifyPartnerTags: extra.notifyPartnerTags ?? true,
+    notifyLogReminders: extra.notifyLogReminders ?? true,
     notifyTeam: extra.notifyTeam ?? true,
     sessions: [],
   };

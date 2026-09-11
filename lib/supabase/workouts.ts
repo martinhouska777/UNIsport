@@ -7,6 +7,7 @@
   log store, so the app still works in a no-database environment).
 */
 import { createClient, hasSupabaseEnv } from "@/lib/supabase/client";
+import { PARTNER_CONFIRM_HOURS, type PartnerStatus } from "@/lib/points";
 
 // Hevy-style gym logging: an exercise has a primary muscle group and a list of
 // SETS, each with its own weight + reps, an optional type (Warmup/Normal/Drop/
@@ -53,6 +54,13 @@ export type WorkoutLog = {
   gym: string;
   partner: string; // display name (real person's name, or legacy free text)
   partnerId?: string; // real app person's profile id, when picked from people
+  /*
+    Where the partner tag stands (db/partner_requests.sql). A tag is a REQUEST
+    until the partner accepts: 'pending' scores as solo, 'confirmed' scores for
+    both, 'declined' / 'expired' stay solo. Undefined on rows from before this
+    existed and on rows a confirmed chat plan wrote — both read as confirmed.
+  */
+  partnerStatus?: PartnerStatus;
   exercises: WorkoutExercise[]; // gym / other
   metrics: WorkoutMetrics; // running / cardio distances, gym unit + quick-log body parts
   photos: string[]; // session photos (downscaled data URLs) — "memories"
@@ -71,6 +79,7 @@ type Row = {
   gym: string | null;
   partner: string | null;
   partner_id: string | null;
+  partner_status: string | null;
   exercises: unknown; // new per-set shape, or the old flat shape — normalized on read
   metrics: WorkoutMetrics | null;
   photos: string[] | null;
@@ -115,6 +124,9 @@ function normalizeExercises(raw: unknown): WorkoutExercise[] {
   });
 }
 
+const isPartnerStatus = (s: string | null): s is PartnerStatus =>
+  s === "pending" || s === "confirmed" || s === "declined" || s === "expired";
+
 const rowToLog = (r: Row): WorkoutLog => ({
   id: r.id,
   date: r.log_date,
@@ -122,6 +134,7 @@ const rowToLog = (r: Row): WorkoutLog => ({
   gym: r.gym ?? "",
   partner: r.partner ?? "",
   ...(r.partner_id ? { partnerId: r.partner_id } : {}),
+  ...(isPartnerStatus(r.partner_status) ? { partnerStatus: r.partner_status } : {}),
   exercises: normalizeExercises(r.exercises),
   metrics: r.metrics && typeof r.metrics === "object" ? r.metrics : {},
   photos: Array.isArray(r.photos) ? r.photos : [],
@@ -158,6 +171,12 @@ const draftToRow = (userId: string, d: WorkoutDraft) => ({
   gym: d.gym.trim() || null,
   partner: d.partner.trim() || null,
   partner_id: d.partnerId ?? null,
+  /*
+    A real partner starts as a REQUEST. The editor passes the existing status
+    through when the same partner is kept on an edit, so re-saving a confirmed
+    session never asks them again; a new or changed partner is asked afresh.
+  */
+  partner_status: d.partnerId ? (d.partnerStatus ?? "pending") : null,
   // Exercises only apply to gym/other; keep any named exercise, drop empty sets.
   exercises:
     d.activity === "running" || d.activity === "cardio"
@@ -191,6 +210,10 @@ function saveLocal(userId: string, all: WorkoutLog[]) {
   }
 }
 
+// Every column a log is read with, in one place.
+const LOG_COLUMNS =
+  "id, log_date, activity, gym, partner, partner_id, partner_status, exercises, metrics, photos, note, verified, plan_id";
+
 /* ── Read one calendar month (inclusive ISO bounds) ── */
 export async function listMonth(
   userId: string,
@@ -203,7 +226,7 @@ export async function listMonth(
   }
   const { data, error } = await createClient()
     .from("workout_logs")
-    .select("id, log_date, activity, gym, partner, partner_id, exercises, metrics, photos, note, verified, plan_id")
+    .select(LOG_COLUMNS)
     .eq("user_id", userId)
     .gte("log_date", fromIso)
     .lte("log_date", toIso)
@@ -238,7 +261,7 @@ export async function listPhotoLogs(
   }
   const { data, error } = await createClient()
     .from("workout_logs")
-    .select("id, log_date, activity, gym, partner, partner_id, exercises, metrics, photos, note, verified, plan_id")
+    .select(LOG_COLUMNS)
     .eq("user_id", userId)
     .neq("photos", "[]")
     .order("log_date", { ascending: false })
@@ -260,8 +283,13 @@ export async function countWorkouts(userId: string): Promise<number> {
 
 /* ── Distinct training partners (real app people) across ALL logs ──
    Powers the Profile "Partners" stat + the "who did I train with" list. Only
-   counts sessions logged with a real picked person (partner_id), grouped by that
-   person; keeps their most-recent display name + how many sessions + last date. */
+   counts sessions logged with a real picked person (partner_id) WHO ACCEPTED
+   the tag (or from before tags had to be accepted), grouped by that person;
+   keeps their most-recent display name + how many sessions + last date. */
+
+/** The same rule db/leaderboards.sql applies: null (legacy) or confirmed counts. */
+export const partnerCounts = (status: PartnerStatus | undefined) =>
+  status === undefined || status === "confirmed";
 export type PartnerSummary = {
   id: string;
   name: string;
@@ -294,23 +322,82 @@ export async function listPartners(userId: string): Promise<PartnerSummary[]> {
   if (!userId) return [];
   if (!hasSupabaseEnv()) {
     return aggregatePartners(
-      loadLocal(userId).map((l) => ({ partnerId: l.partnerId, partner: l.partner, date: l.date })),
+      loadLocal(userId)
+        .filter((l) => partnerCounts(l.partnerStatus))
+        .map((l) => ({ partnerId: l.partnerId, partner: l.partner, date: l.date })),
     );
   }
   const { data, error } = await createClient()
     .from("workout_logs")
-    .select("partner_id, partner, log_date")
+    .select("partner_id, partner, partner_status, log_date")
     .eq("user_id", userId)
     .not("partner_id", "is", null)
     .order("log_date", { ascending: false });
   if (error || !data) return [];
   return aggregatePartners(
-    (data as { partner_id: string; partner: string | null; log_date: string }[]).map((r) => ({
-      partnerId: r.partner_id,
-      partner: r.partner ?? "",
-      date: r.log_date,
-    })),
+    (
+      data as {
+        partner_id: string;
+        partner: string | null;
+        partner_status: string | null;
+        log_date: string;
+      }[]
+    )
+      .filter((r) => r.partner_status === null || r.partner_status === "confirmed")
+      .map((r) => ({
+        partnerId: r.partner_id,
+        partner: r.partner ?? "",
+        date: r.log_date,
+      })),
   );
+}
+
+/* ── Partner requests: "Did you train with Sam today?" ──
+   Someone named ME as their partner and I haven't answered. Accepting scores
+   for both of us and puts the session on my calendar too; declining leaves it
+   solo for them. Nothing here without a database — in the localStorage
+   fallback there is only one person, so there is nobody to ask. */
+export type PartnerRequest = {
+  logId: string;
+  loggerId: string;
+  loggerName: string;
+  loggerPhoto: string | null;
+  date: string;
+  activity: string;
+  gym: string;
+  createdAt: string;
+};
+
+export async function listPartnerRequests(): Promise<PartnerRequest[]> {
+  if (!hasSupabaseEnv()) return [];
+  const { data, error } = await createClient().rpc("partner_requests_for_me", {
+    p_hours: PARTNER_CONFIRM_HOURS,
+  });
+  if (error || !data) return [];
+  return (data as Record<string, unknown>[]).map((r) => ({
+    logId: r.log_id as string,
+    loggerId: r.logger_id as string,
+    loggerName: (r.logger_name as string) ?? "Member",
+    loggerPhoto: (r.logger_photo as string) ?? null,
+    date: r.log_date as string,
+    activity: (r.activity as string) ?? "gym",
+    gym: (r.gym as string) ?? "",
+    createdAt: r.created_at as string,
+  }));
+}
+
+/** Answer one request. Returns the resulting status. */
+export async function respondPartnerRequest(
+  logId: string,
+  accept: boolean,
+): Promise<{ status?: string; error?: string }> {
+  if (!hasSupabaseEnv()) return { error: "no database" };
+  const { data, error } = await createClient().rpc("partner_request_respond", {
+    p_log_id: logId,
+    p_accept: accept,
+    p_hours: PARTNER_CONFIRM_HOURS,
+  });
+  return error ? { error: error.message } : { status: data as string };
 }
 
 /* ── Streak & points (Slice D) ──
@@ -359,19 +446,25 @@ export async function listVerifiedDays(userId: string): Promise<string[]> {
   return (data as { log_date: string }[]).map((r) => r.log_date);
 }
 
-/* ── Create a new log ── */
+/* ── Create a new log. Returns the new row's id so the caller can ask the
+      partner (notifyPartnerTag) about THIS session. ── */
 export async function saveWorkout(
   userId: string,
   draft: WorkoutDraft,
-): Promise<{ error?: string }> {
+): Promise<{ id?: string; error?: string }> {
   if (!hasSupabaseEnv()) {
     const all = loadLocal(userId);
-    all.push({ ...draft, id: `local-${Date.now()}` });
+    const id = `local-${Date.now()}`;
+    all.push({ ...draft, id });
     saveLocal(userId, all);
-    return {};
+    return { id };
   }
-  const { error } = await createClient().from("workout_logs").insert(draftToRow(userId, draft));
-  return error ? { error: error.message } : {};
+  const { data, error } = await createClient()
+    .from("workout_logs")
+    .insert(draftToRow(userId, draft))
+    .select("id")
+    .single();
+  return error ? { error: error.message } : { id: (data as { id: string }).id };
 }
 
 /* ── Update an existing log by id ── */

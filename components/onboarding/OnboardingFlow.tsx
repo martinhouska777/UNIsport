@@ -25,6 +25,7 @@ import {
   IconClock,
   IconHeart,
   IconCheck,
+  IconUser,
 } from "@/components/icons";
 import {
   classYears,
@@ -62,6 +63,10 @@ import {
   notificationItems,
   emptyProfile,
   nameError,
+  onboardingChapters,
+  chapterOf,
+  ONBOARDING_TAIL_LABEL,
+  MIN_INTERESTS,
   readOnboardingDraft,
   writeOnboardingDraft,
   clearOnboardingDraft,
@@ -92,6 +97,7 @@ const notifIcons: Record<string, (p: { size?: number; className?: string }) => R
   message: IconMessage,
   calendar: IconCalendar,
   clock: IconClock,
+  user: IconUser,
 };
 
 /*
@@ -129,10 +135,16 @@ type StepMeta = {
   centered?: boolean;
 };
 
-// The 9 screens (structure per spec). Bodies are filled in screen by screen.
+/*
+  The ten screens, in three chapters plus a short tail (lib/onboarding.ts,
+  onboardingChapters). Every question is still asked; what changed is that the
+  first screen of a chapter opens with WHY the chapter asks (the chapter's
+  `why` line replaces that screen's subtitle), and the progress bar counts
+  chapters rather than screens.
+*/
 const STEPS: StepMeta[] = [
   { key: "basics", title: "Let's get to know you.", subtitle: "A few quick basics so other members can find you." },
-  { key: "residence", title: "Where do you live on campus?", subtitle: "We'll connect you with people nearby." },
+  { key: "residence", title: "Where do you live on campus?", subtitle: "Your house is your team on the leaderboard — and how we find people who train near you." },
   { key: "activity", title: "What do you train?", subtitle: "Pick your main thing — you can do everything else too." },
   /*
     The follow-up to the screen above. Skippable, because plenty of people
@@ -145,13 +157,44 @@ const STEPS: StepMeta[] = [
     subtitle: "Your main thing is covered. Tell us what else you get up to and we can match you for that too.",
     skippable: true,
   },
-  { key: "topgyms", title: "Your top gyms.", subtitle: "Where do you actually train? Pick and rank your top 3." },
+  { key: "topgyms", title: "Your top gyms.", subtitle: "Where do you actually train? The match looks for people at your gym — pick and rank your top 3." },
   { key: "schedule", title: "When do you usually train?", subtitle: "Pick your days, then the time — this is how we find people who are there when you are." },
-  { key: "background", title: "Who are you, outside the gym?", subtitle: "All optional — shared backgrounds make better gym friends.", skippable: true },
+  /*
+    No longer skippable. A concentration and three interests are required; the
+    hometown and languages stay optional. This chapter is the reason two
+    strangers at the same rack say hello, so a profile without it is one the
+    match has nothing to say about.
+  */
+  { key: "background", title: "Who are you, outside the gym?", subtitle: "Shared backgrounds make better gym friends." },
   { key: "preferences", title: "Your preferences.", subtitle: "Who you'd like to train with and how you want to help out." },
-  { key: "finish", title: "Finish your profile.", subtitle: "All optional — add a little more about you.", skippable: true },
-  { key: "notifications", title: "Stay in the loop.", subtitle: "Get notified the moment something matters.", centered: true },
+  { key: "finish", title: "Finish your profile.", subtitle: "All optional — a face and a line make people far more likely to say yes.", skippable: true },
+  { key: "notifications", title: "Stay in the loop.", subtitle: "Only the things below — nothing else, ever.", centered: true },
 ];
+
+/*
+  What the progress bar says for a screen: the chapter and where it sits —
+  "How you train · 2 of 3" — or the tail's own label. Also hands back the
+  chapter's `why` for its FIRST screen, which the shell shows as the subtitle.
+*/
+function chapterMeta(stepKey: string): {
+  label: string;
+  index: number; // 0-based chapter, or onboardingChapters.length for the tail
+  progress: number; // 0..1 through the current chapter's screens
+  why: string | null;
+} {
+  const i = chapterOf(stepKey);
+  if (i < 0) {
+    return { label: ONBOARDING_TAIL_LABEL, index: onboardingChapters.length, progress: 1, why: null };
+  }
+  const chapter = onboardingChapters[i];
+  const at = chapter.steps.indexOf(stepKey);
+  return {
+    label: `${chapter.title} · ${i + 1} of ${onboardingChapters.length}`,
+    index: i,
+    progress: (at + 1) / chapter.steps.length,
+    why: at === 0 ? chapter.why : null,
+  };
+}
 
 export default function OnboardingFlow() {
   const router = useRouter();
@@ -230,6 +273,10 @@ export default function OnboardingFlow() {
         );
       case "residence":
         return profile.residence !== "";
+      case "background":
+        // The chapter that gives two strangers something to say. "Undecided"
+        // is a concentration; three interests is the floor (lib/onboarding.ts).
+        return profile.concentration !== "" && profile.interests.length >= MIN_INTERESTS;
       case "topgyms":
         return profile.topGyms.length > 0;
       case "schedule":
@@ -1033,10 +1080,13 @@ export default function OnboardingFlow() {
                 placeholder="Select your concentration"
                 ariaLabel="Concentration"
               />
+              <p className="mt-1.5 text-[11px] text-muted">
+                &ldquo;Undecided&rdquo; counts — it&apos;s at the bottom of the list.
+              </p>
             </div>
 
             <div>
-              <FieldLabel>Where are you from?</FieldLabel>
+              <FieldLabel>Where are you from? — optional</FieldLabel>
               <SearchableDropdown
                 options={countries}
                 value={profile.hometownCountry}
@@ -1048,7 +1098,7 @@ export default function OnboardingFlow() {
             </div>
 
             <div>
-              <FieldLabel>Languages you speak</FieldLabel>
+              <FieldLabel>Languages you speak — optional</FieldLabel>
               {/* English is on and can't be taken off — you're at Harvard. Every
                   language you do add leaves the list, so what's left to scroll
                   is only what you haven't said yet. */}
@@ -1066,7 +1116,20 @@ export default function OnboardingFlow() {
             </div>
 
             <div>
-              <FieldLabel>Interests outside training</FieldLabel>
+              <div className="mb-2 flex items-baseline justify-between gap-2">
+                <FieldLabel>Interests outside training</FieldLabel>
+                {/* The floor, and how far off it you are — said as a count, so
+                    the disabled Continue button is never a mystery. */}
+                <span
+                  className={`mb-2 text-[11px] tabular-nums ${
+                    profile.interests.length >= MIN_INTERESTS ? "text-success" : "text-muted"
+                  }`}
+                >
+                  {profile.interests.length >= MIN_INTERESTS
+                    ? `${profile.interests.length} picked`
+                    : `pick ${MIN_INTERESTS - profile.interests.length} more`}
+                </span>
+              </div>
               <div className="flex flex-wrap gap-1.5">
                 {interestOptions.map((i) => (
                   <Pill
@@ -1300,16 +1363,22 @@ export default function OnboardingFlow() {
       </div>
     ) : undefined;
 
+  // The chapter this screen sits in — what the progress bar counts — and, on
+  // a chapter's first screen, the line that says why the chapter asks.
+  const chapter = chapterMeta(meta.key);
+
   return (
     <OnboardingShell
-      step={step + 1}
-      total={STEPS.length}
+      chapterLabel={chapter.label}
+      chapterIndex={chapter.index}
+      chapterTotal={onboardingChapters.length}
+      chapterProgress={chapter.progress}
       showBack={step > 0}
       onBack={goBack}
       skippable={!!meta.skippable}
       onSkip={goNext}
       title={meta.title}
-      subtitle={meta.subtitle}
+      subtitle={chapter.why ?? meta.subtitle}
       centered={meta.centered}
       headerSlot={headerSlot}
       {...ctaProps}

@@ -87,7 +87,21 @@ export type University = {
   houseSection: string; // the list's section heading ("House gyms")
   houseNoun: string; // one gym's own label on its card ("House gym")
   housePill: string; // the filter pill's one word ("House")
+  /*
+    Where the campus's clock is. The log reminder fires "at your usual training
+    time", and a server has no idea what 5 pm means without this. Optional:
+    every school so far is on the US east coast (DEFAULT_TIMEZONE); a campus
+    elsewhere sets its own.
+  */
+  timezone?: string;
 };
+
+export const DEFAULT_TIMEZONE = "America/New_York";
+
+/** The IANA timezone a university runs on. */
+export function universityTimezone(key: string | null | undefined): string {
+  return (key && universities[key]?.timezone) || DEFAULT_TIMEZONE;
+}
 
 /*
   THE NEUTRALS are the app's own and do not change per school — a theme is a

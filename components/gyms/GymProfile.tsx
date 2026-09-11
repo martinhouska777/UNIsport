@@ -3,12 +3,21 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useAppState } from "@/components/AppState";
-import { useFavorites, useGymStats, timeAgo } from "@/lib/gymSocial";
-import { StarRater, CrowdPicker, RatingValue, BusyBars } from "@/components/gyms/RateCrowd";
+import { useFavorites, useGymRatings, useGymCrowd, timeAgo, CROWD_FRESH_LABEL } from "@/lib/gymSocial";
+import { StarRater, CrowdPicker, CrowdSentence, BusyBars } from "@/components/gyms/RateCrowd";
 import OpenNow from "@/components/gyms/OpenNow";
+import GoingLine, { boardHref } from "@/components/gyms/GoingLine";
+import PostGoingSheet from "@/components/gyms/PostGoingSheet";
+import Avatar from "@/components/messages/Avatar";
 import { useClock } from "@/lib/gymHours";
-import { ButtonLink } from "@/components/ui/Button";
+import Button, { ButtonLink } from "@/components/ui/Button";
 import { gymHighlights, type Gym } from "@/lib/gyms";
+import { useBoardByGym } from "@/lib/gymGoing";
+import { focusLabel, postWhenLabel } from "@/lib/buddyBoard";
+import { useProfileData } from "@/components/profile/useProfileData";
+import { dateLabel } from "@/lib/schedule";
+import { useSharedHooks } from "@/components/match/useSharedHooks";
+import HookChip from "@/components/match/HookChip";
 import {
   IconArrowLeft,
   IconHeart,
@@ -18,8 +27,17 @@ import {
 
 export default function GymProfile({ gym }: { gym: Gym }) {
   const { userId } = useAppState();
+  const { data: myProfile } = useProfileData();
   const { isFavorite, toggle } = useFavorites(userId);
-  const { getRating, setRating, getCrowd, reportCrowd } = useGymStats(userId);
+  const { getRating, setRating } = useGymRatings(userId);
+  const { getCrowd, reportCrowd } = useGymCrowd(userId);
+  // Who has already said they're coming here (the Buddy Board, by gym).
+  const { goingFor } = useBoardByGym(userId);
+  const going = goingFor(gym.name);
+  // One shared fact per person going — why you'd join THIS one.
+  const { hookFor } = useSharedHooks(userId);
+  const [posting, setPosting] = useState(false);
+  const [posted, setPosted] = useState(false);
   const favorite = isFavorite(gym.slug);
   const rating = getRating(gym.slug);
   const highlights = gymHighlights(gym);
@@ -77,7 +95,8 @@ export default function GymProfile({ gym }: { gym: Gym }) {
         <h1 className="mb-1.5 text-[15px] font-medium text-text">{gym.name}</h1>
         <div className="flex flex-wrap gap-x-3.5 gap-y-1 text-[11px] text-muted">
           <OpenNow hours={gym.hours} now={now} />
-          <RatingValue value={gym.rating} count={gym.ratingCount} />
+          {/* No star average: the numbers in lib/gyms.ts are placeholders
+              (see the gyms list). Back when real ratings exist. */}
           <span className="flex items-center gap-1.5">
             <IconMapPin size={13} /> {gym.address}
           </span>
@@ -103,15 +122,50 @@ export default function GymProfile({ gym }: { gym: Gym }) {
         )}
       </div>
 
+      {/*
+        WHO'S GOING. The Buddy Board already holds people who volunteered for
+        a session here; this is where somebody deciding whether to go finds
+        them. One row per post, nearest first; the header line opens the board
+        narrowed to this gym. Hidden entirely when nobody has posted.
+      */}
+      {going && (
+        <div className="border-b border-border px-3.5 py-3.5">
+          <GoingLine going={going} gymName={gym.name} />
+          <ul className="mt-2 flex flex-col divide-y divide-border">
+            {going.posts.slice(0, 6).map((p) => (
+              <li key={p.id} className="flex items-center gap-2.5 py-2">
+                <Avatar size={30} src={p.authorPhoto} alt={p.authorName} />
+                <div className="min-w-0 flex-1">
+                  <div className="flex min-w-0 items-center gap-1.5 text-[13px] text-text">
+                    <span className="truncate">
+                      {p.authorName}
+                      {p.mine && <span className="text-muted"> · your post</span>}
+                    </span>
+                    {!p.mine && <HookChip hook={hookFor(p.authorId)} />}
+                  </div>
+                  <div className="text-[11px] text-muted">
+                    {focusLabel(p.focus)}
+                    {p.date ? ` · ${dateLabel(p.date)}` : ""} · {postWhenLabel(p.hour, p.timeOfDay)}
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {/* Your rating + live crowd — what you fill in after / during a workout */}
       {/* data-tour: the gym tour lights this pair (lib/tour.ts). */}
       <div data-tour="gym-rate" className="border-b border-border px-3.5 py-3.5">
+        {/* Plainly YOURS. It is stored for you alone (lib/gymSocial.ts) and
+            averaged with nobody's, so the heading says so instead of implying
+            the stars feed a score somewhere. */}
         <div className="flex items-center justify-between">
           <h2 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-            Rate this gym
+            Your rating
           </h2>
           <span className="text-[11px] text-muted">
-            {rating ? `You rated · ${timeAgo(rating.at)}` : "Tap a star"}
+            {rating ? `You rated · ${timeAgo(rating.at)}` : "Tap a star · just for you"}
           </span>
         </div>
         <div className="mt-2">
@@ -122,10 +176,11 @@ export default function GymProfile({ gym }: { gym: Gym }) {
           <h2 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
             How busy right now?
           </h2>
-          {/* A live report if somebody filed one; otherwise the app says what
+          {/* Fresh reports if anybody filed one — with the honest headcount,
+              "2 people said Busy in the last hour"; otherwise the app says what
               it actually knows — the typical week — and says that it is typical. */}
-          <span className="text-[11px] text-muted">
-            {crowd ? `Reported ${timeAgo(crowd.at)}` : "Typical for this time"}
+          <span className="text-right text-[11px] text-muted">
+            {crowd ? <CrowdSentence crowd={crowd} /> : "Typical for this time"}
           </span>
         </div>
         {/* The next six hours, so "come back at nine" is an answer the page can
@@ -135,8 +190,15 @@ export default function GymProfile({ gym }: { gym: Gym }) {
             <BusyBars kind={gym.kind} now={now} />
           </div>
         )}
+        {/* The highlighted button is YOUR answer. Tapping another replaces it —
+            one person is always one voice in the count, never two. */}
         <div className="mt-3">
-          <CrowdPicker value={crowd?.level ?? null} onReport={(l) => reportCrowd(gym.slug, l)} />
+          <CrowdPicker value={crowd?.myLevel ?? null} onReport={(l) => reportCrowd(gym.slug, l)} />
+        </div>
+        <div className="mt-2 text-[11px] text-muted">
+          {crowd?.myLevel
+            ? `Your report is in — everyone at your school sees it for the next ${CROWD_FRESH_LABEL}. Tap another to change it.`
+            : `Tap one — everyone at your school sees it for the next ${CROWD_FRESH_LABEL}.`}
         </div>
       </div>
 
@@ -160,8 +222,7 @@ export default function GymProfile({ gym }: { gym: Gym }) {
               <h2 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
                 {section.title}
               </h2>
-              {/* Chevron only. A bare row-count here read as a score on a page
-                  that already shows "4.8 (142)" and a ratings breakdown. */}
+              {/* Chevron only. A bare row-count here read as a score. */}
               <span className="text-muted transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none">
                 <IconChevronDown size={16} />
               </span>
@@ -180,55 +241,44 @@ export default function GymProfile({ gym }: { gym: Gym }) {
           </details>
         ))}
 
-      {/* Ratings breakdown — one gold bar per category */}
-      {gym.ratings.length > 0 && (
-        <div className="px-3.5 py-3">
-          {/* An average with no sample size is meaningless — 4.6 from two
-              people reads the same as 4.6 from two hundred. */}
-          <div className="mb-2.5 flex items-baseline justify-between">
-            <h2 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-              Ratings Breakdown
-            </h2>
-            {gym.ratingCount > 0 && (
-              <span className="text-[11px] text-muted">
-                {gym.ratingCount} {gym.ratingCount === 1 ? "rating" : "ratings"}
-              </span>
-            )}
-          </div>
-          <div className="flex flex-col gap-2">
-            {gym.ratings.map((r) => (
-              <div key={r.label} className="flex items-center gap-2.5">
-                <span className="min-w-[90px] text-[11px] text-muted">{r.label}</span>
-                <span className="h-1 flex-1 rounded-sm bg-surface-2">
-                  <span
-                    className="block h-1 rounded-sm bg-accent"
-                    style={{ width: `${(r.value / 5) * 100}%` }}
-                  />
-                </span>
-                <span className="min-w-[24px] text-right text-[11px] text-text">
-                  {r.value}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      {/*
+        WHERE "RATINGS BREAKDOWN" USED TO BE — three gold bars (Equipment,
+        Cleanliness, Atmosphere) and "142 ratings". Every one of those numbers
+        was invented in lib/gyms.ts and shown on a real, named campus gym; a
+        student rating the gym changed none of them. Gone until real ratings
+        exist. The fields stay in the data for that day.
+      */}
 
       {/*
-        The page's one conversion action. It used to be a dead <button> with no
-        handler, sitting below ~25 rows of equipment where nobody scrolled — so
-        it is now a real link AND sticks to the bottom of the viewport (above
-        the tab bar) instead of waiting at the end of the page.
+        The page's one conversion action, stuck to the bottom of the viewport
+        (above the tab bar). It used to say "Find a partner at this gym" and
+        open a search form — a question. This is an ANSWER: two taps and you
+        are on the board, on this card, and findable by time. Seeing who else
+        is going is the second action, because that is what it is.
       */}
       <div
         data-tour="gym-partner"
-        className="sticky bottom-0 z-10 border-t border-border bg-surface px-3.5 pb-4 pt-3"
+        className="sticky bottom-0 z-10 flex flex-col gap-2 border-t border-border bg-surface px-3.5 pb-4 pt-3"
       >
-        <ButtonLink href={`/match?gym=${encodeURIComponent(gym.name)}`} size="lg" full>
-          Find a partner at this gym{" "}
-          <span className="text-primary-contrast/60">→</span>
+        <Button size="lg" full onClick={() => setPosting(true)}>
+          {posted ? "Posted · post another time" : "Post that you’re going"}
+        </Button>
+        <ButtonLink href={boardHref(gym.name)} variant="secondary" size="md" full>
+          {going ? `See who else is going (${going.posts.length})` : "See who else is going"}
         </ButtonLink>
       </div>
+
+      {posting && (
+        <PostGoingSheet
+          gymName={gym.name}
+          primaryActivity={myProfile?.primaryActivity as string | undefined}
+          onClose={() => setPosting(false)}
+          onPosted={() => {
+            setPosting(false);
+            setPosted(true);
+          }}
+        />
+      )}
     </div>
   );
 }

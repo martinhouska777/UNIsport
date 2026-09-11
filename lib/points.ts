@@ -46,6 +46,17 @@ export const NEW_PARTNER_MULTIPLIER = 2.5;
 /** How many sessions in one day can count. */
 export const DAILY_SESSION_CAP = 2;
 
+/*
+  A PARTNER HAS TO SAY YES. Naming someone in Log Session sends them a
+  request; only when they accept do both sides get the partner multiplier, and
+  the session lands on their calendar too. Unanswered for this long, it scores
+  as solo for the logger (db/partner_requests.sql reads this number).
+*/
+export const PARTNER_CONFIRM_HOURS = 24;
+
+/** What a partner tag is in, right now. Null = from before tags had to be accepted. */
+export type PartnerStatus = "pending" | "confirmed" | "declined" | "expired";
+
 /** What one session is worth in each of the three cases. */
 export const sessionPoints = {
   solo: POINTS_PER_SESSION,

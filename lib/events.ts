@@ -27,11 +27,13 @@
   case.
 
   THE INTERHOUSE RACE is one a month, run by every eligible house at once and
-  ranked, and it pays into the HOUSE's points. It is GATED: a house has to have
-  earned `HOUSE_ENTRY_PER_MEMBER` points per member, all time, before it can
-  enter. That turns "we need more people using this" from a wish into a door
-  with a number on it — and because it is per member, a big house cannot open
-  it on size and three keen people cannot carry a house of forty.
+  ranked, and it pays into the HOUSE's points. It is GATED: a house needs
+  `HOUSE_RACE_MIN_ACTIVE` people who have actually trained this month before
+  it is in the race. That turns "we need more people using this" from a wish
+  into a door with a number on it, and the screen says the number out loud —
+  "Adams needs 2 more active people to enter" — with a way to invite them.
+  This is the ONE place a minimum still gates anything; the plain boards show
+  every house, always (lib/leaderboards.ts).
 
   NO ADMIN, EVER. Which event runs is decided by the WEEK or MONTH NUMBER, so
   the whole campus sees the same one, it changes on its own, and nobody has to
@@ -43,16 +45,12 @@
 /* ─────────────────────────────  the gate  ───────────────────────────── */
 
 /**
- * Points per member, all time, that a house needs before it can enter the
- * interhouse race.
- *
- * Sixty is roughly four to six sessions from every single person who lives
- * there — reachable in a first term by a house that is actually using the app,
- * and out of reach for one where three people are. It is a guess until there
- * is real data to tune it against, which is exactly why it is one number in
- * one file.
+ * How many ACTIVE members (people who logged anything this month) a house
+ * needs before it is in the interhouse race. Below it the house is still on
+ * every board — it just isn't racing yet, and the screen says how many more
+ * it needs. Three: two people is a pair of friends, three is a house.
  */
-export const HOUSE_ENTRY_PER_MEMBER = 60;
+export const HOUSE_RACE_MIN_ACTIVE = 3;
 
 /* ══════════════════════  distance, and what it's worth  ══════════════════════ */
 
@@ -421,13 +419,50 @@ export function bestRoute(
 
 /* ─────────────────────────────  the gate  ───────────────────────────── */
 
-/** Whether a house has earned its way into the race. */
-export function houseCanEnter(points: number, members: number): boolean {
-  if (members <= 0) return false;
-  return points / members >= HOUSE_ENTRY_PER_MEMBER;
+/** Whether a house is in this month's race: enough people have trained. */
+export function houseCanEnter(actives: number): boolean {
+  return actives >= HOUSE_RACE_MIN_ACTIVE;
 }
 
-/** How many more points a house needs before the race opens to it. */
-export function pointsToEntry(points: number, members: number): number {
-  return Math.max(HOUSE_ENTRY_PER_MEMBER * Math.max(members, 0) - points, 0);
+/** How many more active people a house needs before it is racing. */
+export function activesToEntry(actives: number): number {
+  return Math.max(HOUSE_RACE_MIN_ACTIVE - Math.max(actives, 0), 0);
+}
+
+/** "Adams needs 2 more active people to enter" / "…needs 1 more active person…". */
+export function entryLine(houseLabel: string, actives: number): string {
+  const n = activesToEntry(actives);
+  return `${houseLabel} needs ${n} more active ${n === 1 ? "person" : "people"} to enter`;
+}
+
+/* ─────────────────────────────  the calendar  ───────────────────────────── */
+
+const pad2 = (n: number) => String(n).padStart(2, "0");
+const isoOf = (d: Date) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+
+/** The Monday this week's event opened on, as yyyy-mm-dd (local). */
+export function weekStartIso(now = new Date()): string {
+  const d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const back = (d.getDay() + 6) % 7; // Monday = 0
+  d.setDate(d.getDate() - back);
+  return isoOf(d);
+}
+
+/** The 1st of this month, as yyyy-mm-dd (local). */
+export function monthStartIso(now = new Date()): string {
+  return isoOf(new Date(now.getFullYear(), now.getMonth(), 1));
+}
+
+/** "ends Sunday" / "ends tonight" — when this week's event closes. */
+export function weekEndsLabel(now = new Date()): string {
+  const day = now.getDay(); // 0 = Sunday
+  if (day === 0) return "ends tonight";
+  return "ends Sunday";
+}
+
+/** "ends 30 Sep" — when this month's race closes. */
+export function monthEndsLabel(now = new Date()): string {
+  const last = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  return `ends ${last.getDate()} ${months[last.getMonth()]}`;
 }

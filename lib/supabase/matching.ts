@@ -103,7 +103,20 @@ export type MatchFilters = {
   gym?: string | null; // gym name exactly as in lib/gyms.ts
   level?: string | null; // 'beginner' | 'intermediate' | 'advanced'
   gender?: string | null; // 'male' | 'female'
+  /*
+    Class year ("'30"). Applied HERE, after the RPC (see applyClientFilters),
+    rather than in the database: the rows already carry the year, the lists
+    are short, and it keeps the SQL signatures put. A new first-year's Match
+    opens on their own year by default (lib/onboarding.ts).
+  */
+  classYear?: string | null;
 };
+
+/** The filters the database doesn't know about, applied to what it returned. */
+export function applyClientFilters(rows: Match[], filters: MatchFilters): Match[] {
+  if (!filters.classYear) return rows;
+  return rows.filter((m) => m.classYear === filters.classYear);
+}
 
 export type SessionMatchParams = MatchFilters & {
   userId: string;
@@ -228,7 +241,7 @@ export async function getBrowseMatches(
     activity_filter: filters.activity ?? null,
   });
   if (error) throw new Error(`getBrowseMatches failed: ${error.message}`);
-  return (data as RpcRow[]).map(toMatch);
+  return applyClientFilters((data as RpcRow[]).map(toMatch), filters);
 }
 
 /**
@@ -250,7 +263,7 @@ export async function getSessionMatches(params: SessionMatchParams): Promise<Mat
     interests_filter: arrayOrNull(params.interests),
   });
   if (error) throw new Error(`getSessionMatches failed: ${error.message}`);
-  return (data as RpcRow[]).map(toMatch);
+  return applyClientFilters((data as RpcRow[]).map(toMatch), params);
 }
 
 /**

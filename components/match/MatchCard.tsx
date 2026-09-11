@@ -1,12 +1,12 @@
 import type { Match } from "@/lib/supabase/matching";
 import { matchTier } from "@/lib/matchTier";
-import { cardChips, type ReasonRarity } from "@/lib/matchReasons";
+import { cardChips, hookLine, whereWhenLine, type ReasonRarity } from "@/lib/matchReasons";
 import { classYearLabel } from "@/lib/onboarding";
 import Button from "@/components/ui/Button";
 import { IconCheck } from "@/components/icons";
 import InitialsAvatar from "@/components/ui/InitialsAvatar";
 import { useAppState } from "@/components/AppState";
-import { houseColorsFor } from "@/lib/gyms";
+import { teamFor } from "@/lib/cohorts";
 
 /*
   One result card in the Match grid: avatar block with a compatibility badge,
@@ -42,9 +42,10 @@ export default function MatchCard({
   /** How many chips to fill the rows with. Six fits the three rows. */
   chipCount?: number;
 }) {
-  // Their house's own colours, when they gave a house — see InitialsAvatar.
+  // Their TEAM's colours: the house when they have one, the first-year cohort
+  // when they don't (lib/cohorts.ts) — so a first-year's card is never grey.
   const { universityKey } = useAppState();
-  const houseColors = houseColorsFor(universityKey, match.residence);
+  const houseColors = teamFor(universityKey, match.residence, match.classYear)?.colors ?? null;
 
   // A qualitative tier, not a raw percentage — see lib/matchTier.ts for why.
   const tier = matchTier(match.score, max);
@@ -57,7 +58,15 @@ export default function MatchCard({
   ]
     .filter(Boolean)
     .join(" · ");
-  const chips = cardChips(match, chipCount, rarity);
+  /*
+    THE HOOK: one shared human fact on its own line, in the school's colour —
+    "Also does Neuroscience", "Both into Climbing". Then where and when, small
+    and grey. The chips underneath carry the rest, minus what the hook already
+    said, so nothing is read twice.
+  */
+  const hook = hookLine(match, rarity);
+  const whereWhen = whereWhenLine(match);
+  const chips = cardChips(match, chipCount, rarity).filter((c) => !hook?.chipKeys.includes(c.key));
 
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-surface">
@@ -80,6 +89,19 @@ export default function MatchCard({
           <div className="truncate text-[11px] text-muted">{subtitle}</div>
         )}
 
+        {/* The reason to say hi, given a line of its own. Held to one line each
+            so the grid stays even; an absent hook keeps its height so cards
+            beside each other still line up. */}
+        <div className="mt-1.5 h-[34px]">
+          <div
+            className={`truncate text-[13px] font-medium leading-tight ${hook ? "text-primary" : "text-text-3"}`}
+            title={hook?.text}
+          >
+            {hook ? hook.text : "Nothing in common yet"}
+          </div>
+          {whereWhen && <div className="truncate text-[11px] leading-tight text-muted">{whereWhen}</div>}
+        </div>
+
         {/*
           WHO THEY ARE AND WHAT YOU SHARE — always exactly three rows tall.
 
@@ -98,11 +120,10 @@ export default function MatchCard({
           Everything else is plainly theirs, in grey — it is never dressed up as
           something you have in common.
         */}
-        {/* 68px, not 64: a chip is 19.35px tall and the gap 4px, so three rows
-            come to 66px and the old box sliced 2px off the bottom row — which
-            read as the button sitting on top of the chips. A fourth row would
-            start at 70px, so it stays hidden and the grid stays even. */}
-        <div className="mb-2 mt-1.5 flex h-[68px] flex-wrap content-start gap-1 overflow-hidden">
+        {/* Two rows of chips now that the hook has its own line above — 45px:
+            two 19.35px chips plus the 4px gap, with a hair to spare so the
+            second row is never sliced; a third row would start at 47px. */}
+        <div className="mb-2 mt-1.5 flex h-[45px] flex-wrap content-start gap-1 overflow-hidden">
           {chips.map((c) => (
             <span
               key={c.key}

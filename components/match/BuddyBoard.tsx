@@ -24,7 +24,8 @@ import {
   type MyBuddyPost,
 } from "@/lib/supabase/buddyBoard";
 import { startDirectConversation } from "@/lib/supabase/messages";
-import { buddyFocuses, focusLabel, postWhenLabel } from "@/lib/buddyBoard";
+import { createPlan } from "@/lib/supabase/sessionPlans";
+import { buddyFocuses, focusLabel, focusActivity, postWhenLabel } from "@/lib/buddyBoard";
 import { weekDays, verifiedGyms, sessionTimeSlots } from "@/lib/onboarding";
 import { dateLabel } from "@/lib/schedule";
 import { Pill, FieldLabel, SelectField } from "@/components/onboarding/controls";
@@ -37,6 +38,10 @@ import BoardFiltersSheet, {
   type BoardFilters,
 } from "@/components/match/BoardFiltersSheet";
 import Avatar from "@/components/messages/Avatar";
+import { announceBoardChange } from "@/lib/gymGoing";
+import { useAppState } from "@/components/AppState";
+import { useSharedHooks } from "@/components/match/useSharedHooks";
+import HookChip from "@/components/match/HookChip";
 
 function dayShort(key: string): string {
   return weekDays.find((d) => d.key === key)?.label.slice(0, 3) ?? key;
@@ -64,8 +69,19 @@ function Status({ children }: { children: React.ReactNode }) {
   return <div className="px-3 py-12 text-center text-sm text-muted">{children}</div>;
 }
 
-export default function BuddyBoard() {
+export default function BuddyBoard({
+  initialGym = null,
+}: {
+  /* Arriving from a gym's "See who else is going": the board opens already
+     narrowed to that gym. Only names the app knows are accepted (the Match
+     page checks) — never arbitrary URL text. */
+  initialGym?: string | null;
+}) {
   const router = useRouter();
+  const { userId } = useAppState();
+  // One shared fact per poster — "Both into Climbing" — the reason to pick
+  // this row over the one below it (lib/matchReasons.ts).
+  const { hookFor } = useSharedHooks(userId);
 
   // --- Post form state ---
   const [focus, setFocus] = useState<string | null>(null);
@@ -92,7 +108,9 @@ export default function BuddyBoard() {
   const [messagingId, setMessagingId] = useState<string | null>(null);
 
   // --- Optional board filters (behind the Filters button, not a second form) ---
-  const [filters, setFilters] = useState<BoardFilters>(NO_BOARD_FILTERS);
+  const [filters, setFilters] = useState<BoardFilters>(() =>
+    initialGym ? { ...NO_BOARD_FILTERS, gym: initialGym } : NO_BOARD_FILTERS,
+  );
   const [sheetOpen, setSheetOpen] = useState(false);
 
   // Nothing is set before the first await on purpose: a setState in the
@@ -105,6 +123,7 @@ export default function BuddyBoard() {
           focus: filters.focus,
           day: filters.day,
           timeOfDay: filters.timeOfDay,
+          gym: filters.gym,
         }),
         listMyBuddyPosts(),
       ]);
@@ -140,6 +159,7 @@ export default function BuddyBoard() {
       setGym(null);
       setNote("");
       setComposing(false);
+      announceBoardChange(); // the Gyms tab's "going" lines follow
       await load();
     } catch (e) {
       setFormErr((e as Error).message);
@@ -151,21 +171,57 @@ export default function BuddyBoard() {
   const remove = async (id: string) => {
     try {
       await deleteBuddyPost(id);
+      announceBoardChange();
       await load();
     } catch (e) {
       setBoardErr((e as Error).message);
     }
   };
 
+  // Into the conversation with this post's author — the same thread either
+  // action lands in. `uid` matters: without it the thread header has no photo
+  // and the name isn't tappable through to their profile.
+  const openThread = (post: BuddyPost, convId: string) =>
+    router.push(
+      `/messages?dm=${convId}&name=${encodeURIComponent(post.authorName)}&uid=${encodeURIComponent(post.author)}`,
+    );
+
   const message = async (post: BuddyPost) => {
     setMessagingId(post.id);
     try {
+      openThread(post, await startDirectConversation(post.author));
+    } catch (e) {
+      setBoardErr((e as Error).message);
+      setMessagingId(null);
+    }
+  };
+
+  /*
+    "I'M IN" — one tap, no typing. Typing the first message to a stranger is
+    where the funnel dies, so the primary action on a post sends a PLAN CARD
+    instead: the post's focus (as an activity), its gym and its hour, already
+    filled in, into a fresh thread with the poster — who accepts it the way
+    every plan card is accepted. Only posts with a real date and hour can be
+    turned into a plan; the older ones keep Message as their only action.
+  */
+  const canJoin = (post: BuddyPost) => !!post.date && post.hour != null;
+
+  const imIn = async (post: BuddyPost) => {
+    if (!canJoin(post)) return message(post);
+    setMessagingId(post.id);
+    try {
       const convId = await startDirectConversation(post.author);
-      // `uid` matters: without it the thread header has no photo and the name
-      // isn't tappable through to their profile.
-      router.push(
-        `/messages?dm=${convId}&name=${encodeURIComponent(post.authorName)}&uid=${encodeURIComponent(post.author)}`,
-      );
+      const h = Math.floor(post.hour!);
+      const m = Math.round((post.hour! - h) * 60);
+      const scheduledAt = new Date(
+        `${post.date}T${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:00`,
+      ).toISOString();
+      await createPlan(convId, {
+        activity: focusActivity(post.focus),
+        place: post.gym ?? "",
+        scheduledAt,
+      });
+      openThread(post, convId);
     } catch (e) {
       setBoardErr((e as Error).message);
       setMessagingId(null);
@@ -338,9 +394,11 @@ export default function BuddyBoard() {
       {!boardErr && board === null && <SkeletonRows count={4} />}
       {!boardErr && board && board.length === 0 && (
         <Status>
-          {anyFilter
-            ? "No posts match those filters yet."
-            : "No open posts yet. Put yours up with the button above and check back as more people join."}
+          {filters.gym && boardFilterCount(filters) === 1
+            ? `Nobody has posted for ${filters.gym} yet. Be the first — post above and it shows on that gym's card.`
+            : anyFilter
+              ? "No posts match those filters yet."
+              : "No open posts yet. Put yours up with the button above and check back as more people join."}
         </Status>
       )}
       {!boardErr && board && board.length > 0 && (
@@ -352,7 +410,10 @@ export default function BuddyBoard() {
             >
               <Avatar size={44} src={p.authorPhoto} alt={p.authorName} />
               <div className="min-w-0 flex-1">
-                <div className="truncate text-sm font-medium text-text">{p.authorName}</div>
+                <div className="flex min-w-0 items-center gap-1.5">
+                  <span className="truncate text-sm font-medium text-text">{p.authorName}</span>
+                  <HookChip hook={hookFor(p.author)} />
+                </div>
                 <div className="text-[13px] text-text">{summary(p.focus, p.date, p.day, p.hour, p.timeOfDay)}</div>
                 {(p.gym || p.note) && (
                   <div className="truncate text-[11px] text-muted">
@@ -360,14 +421,27 @@ export default function BuddyBoard() {
                   </div>
                 )}
               </div>
-              <Button
-                size="sm"
-                onClick={() => message(p)}
-                disabled={messagingId === p.id}
-                className="flex-shrink-0"
-              >
-                {messagingId === p.id ? "…" : "Message"}
-              </Button>
+              {/* Primary: "I'm in" — a plan card with this post's time, gym and
+                  focus already on it. Message is the small way round it. */}
+              <div className="flex flex-shrink-0 flex-col items-end gap-1">
+                <Button
+                  size="sm"
+                  onClick={() => (canJoin(p) ? imIn(p) : message(p))}
+                  disabled={messagingId === p.id}
+                >
+                  {messagingId === p.id ? "…" : canJoin(p) ? "I’m in" : "Message"}
+                </Button>
+                {canJoin(p) && (
+                  <button
+                    type="button"
+                    onClick={() => message(p)}
+                    disabled={messagingId === p.id}
+                    className="tap44 px-1 text-[11px] font-medium text-muted disabled:opacity-40"
+                  >
+                    Message
+                  </button>
+                )}
+              </div>
             </div>
           ))}
         </div>

@@ -28,6 +28,28 @@ const SHORT_MUSCLE: Record<string, string> = {
   Session: "Session",
 };
 const short = (label: string) => SHORT_MUSCLE[label] ?? label.slice(0, 5);
+/** The tile-sized word for a chip — shared with the week strip. */
+export const shortMuscle = short;
+
+/*
+  What one day's logs say on a tile: the distinct body parts trained
+  (gym/other), falling back to the distinct activity names (Run / Cardio) when
+  there are no muscles. Shared by the month and the week calendar, so the same
+  day reads the same on both. Empty for a day with nothing logged.
+*/
+export function dayChips(logs: WorkoutLog[], iso: string): string[] {
+  const dayLogs = logs.filter((l) => l.date === iso);
+  if (dayLogs.length === 0) return [];
+  const muscles: string[] = [];
+  for (const l of dayLogs) for (const m of logMuscles(l)) if (!muscles.includes(m)) muscles.push(m);
+  if (muscles.length > 0) return muscles;
+  const acts: string[] = [];
+  for (const l of dayLogs) {
+    const a = activityLabel(l.activity);
+    if (!acts.includes(a)) acts.push(a);
+  }
+  return acts;
+}
 
 /*
   Month calendar driven by the user's logged workouts. Each trained day shows the
@@ -52,28 +74,11 @@ export default function SessionCalendar({
   const firstDow = new Date(year, month, 1).getDay(); // 0=Sun
   const lead = (firstDow + 6) % 7; // shift so Monday is the first column
 
-  // Per day-of-month: the distinct body parts trained (gym/other), falling back
-  // to the distinct activity names (Run / Cardio) when there are no muscles.
+  // Per day-of-month: what that day's tile says (see dayChips).
   const chipsByDay = new Map<number, string[]>();
   for (let day = 1; day <= daysInMonth; day++) {
-    const dayLogs = logs.filter((l) => {
-      const d = new Date(`${l.date}T00:00:00`);
-      return d.getFullYear() === year && d.getMonth() === month && d.getDate() === day;
-    });
-    if (dayLogs.length === 0) continue;
-    const muscles: string[] = [];
-    for (const l of dayLogs) for (const m of logMuscles(l)) if (!muscles.includes(m)) muscles.push(m);
-    if (muscles.length > 0) {
-      chipsByDay.set(day, muscles);
-    } else {
-      // No tagged muscles → show the activity name(s) instead.
-      const acts: string[] = [];
-      for (const l of dayLogs) {
-        const a = activityLabel(l.activity);
-        if (!acts.includes(a)) acts.push(a);
-      }
-      chipsByDay.set(day, acts);
-    }
+    const chips = dayChips(logs, isoFor(year, month, day));
+    if (chips.length > 0) chipsByDay.set(day, chips);
   }
 
   const cells: (number | null)[] = [
