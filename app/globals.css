@@ -510,7 +510,16 @@
 @media (max-width: 1023px) {
   .ls-stage {
     grid-template-columns: 1fr; grid-template-rows: auto 1fr;
-    padding: 12px 20px 20px; gap: 6px; align-items: start;
+    /* The bottom clears the light/dark pill (PhoneMode.tsx: 40px tall, 16px
+       off the floor, 24px from sm up) plus the phone's own home indicator.
+       It was 20px, and the pill — pinned bottom-right, shown on exactly
+       these sections — sat on the phone's lower corner on every beat
+       (website review, 2026-09-10). The phone is sized off the row's height
+       (cqh, .ls-phone-col), so it gives up the strip by itself. */
+    padding: 12px 20px calc(68px + env(safe-area-inset-bottom, 0px)); gap: 6px; align-items: start;
+  }
+  @media (min-width: 640px) {
+    .ls-stage { padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
   }
   /* A floor, not a ceiling, now that the row sizes itself to the tallest beat. */
   .ls-copy { min-height: 148px; }

@@ -183,7 +183,10 @@ export function PhoneModeToggle() {
       role="group"
       aria-label="Phone screens"
       aria-hidden={!shown}
-      className={`fixed right-4 bottom-4 z-[60] flex items-center gap-0.5 rounded-full border border-l-line bg-l-surface/90 p-1 shadow-2xl backdrop-blur transition-[opacity,transform] duration-300 ease-out print:hidden motion-reduce:transition-none sm:right-6 sm:bottom-6 ${
+      /* bottom: 16px (24 from sm), or the phone's home-indicator inset if that
+         is more — it used to sit on the indicator. The story stages leave a
+         strip for it on phones (.ls-stage in globals.css). */
+      className={`fixed right-4 bottom-[max(1rem,env(safe-area-inset-bottom))] z-[60] flex items-center gap-0.5 rounded-full border border-l-line bg-l-surface/90 p-1 shadow-2xl backdrop-blur transition-[opacity,transform] duration-300 ease-out print:hidden motion-reduce:transition-none sm:right-6 sm:bottom-[max(1.5rem,env(safe-area-inset-bottom))] ${
         shown ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-2 opacity-0"
       }`}
     >
