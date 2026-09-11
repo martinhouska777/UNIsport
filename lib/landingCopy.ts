@@ -1029,6 +1029,20 @@ export const contact = {
   ] as SocialLink[],
 };
 
+/* ───────────────────────── PAGE NOT FOUND ───────────────────────── */
+
+/* A mistyped or outdated link used to land on Next.js's own white "404 —
+   This page could not be found." with no wordmark and no way back (website
+   review, 2026-09-10). This is what app/not-found.tsx says instead. Neutral
+   brand only: a stranger can arrive here before signing in. DRAFT for the
+   owner. */
+export const notFound = {
+  kicker: "404",
+  headline: "This page isn’t here.",
+  sub: "The link may be old, or mistyped. Everything the app does is one tap away.",
+  cta: "Back to the home page",
+};
+
 /* ─────────────────────────── FOOTER ─────────────────────────── */
 
 export const footer = {
