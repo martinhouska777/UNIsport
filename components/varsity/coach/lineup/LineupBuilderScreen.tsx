@@ -1435,13 +1435,13 @@ function Builder({
               className="h-2.5 w-2.5 flex-shrink-0 rounded-full"
               style={{ background: planContext.color }}
             />
+            {/* Read-only: what the plan says for this practice. No chevron —
+                it used to wear one and led nowhere, which is a promise a card
+                should not make. */}
             <div className="flex-1">
               <div className="text-[13px] font-semibold text-text">{planContext.title}</div>
               <div className="mt-0.5 text-[11px] text-muted">{planContext.sub}</div>
             </div>
-            <span className="text-muted">
-              <IconChevronRight size={14} />
-            </span>
           </div>
         )}
 
