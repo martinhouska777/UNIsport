@@ -512,6 +512,7 @@ function Seat({
   typing,
   query,
   matches,
+  selected,
   dropActive,
   onStartType,
   onQuery,
@@ -527,7 +528,10 @@ function Seat({
   label: string;
   athlete?: Athlete;
   cox?: boolean;
+  /** The text field is open here (the second tap on a filled seat, or the first on an empty one). */
   typing: boolean;
+  /** Picked up, no keyboard: the next seat tapped is where this rower goes. */
+  selected: boolean;
   query: string;
   /** Who can come into this seat, and — for anyone already seated — where they are now. */
   matches: Match[];
@@ -652,11 +656,18 @@ function Seat({
           onDragStartSeat();
         }}
         {...dropHandlers}
-        aria-label={`${athlete.name} in seat ${label}. Tap to swap or move.`}
+        aria-label={
+          selected
+            ? `${athlete.name} in seat ${label}, picked up. Tap another seat to move them there, or tap again to type a name.`
+            : `${athlete.name} in seat ${label}. Tap to pick up.`
+        }
+        aria-pressed={selected}
+        /* Picked up looks like a drop target looks — the same primary ring —
+           because it is the same idea: this seat is the one in play. */
         className={`flex h-10 cursor-grab select-none items-center gap-2 rounded-[10px] border pl-[7px] pr-[6px] active:cursor-grabbing ${
-          dropActive ? "border-primary bg-primary-tint" : "border-border bg-surface"
+          dropActive || selected ? "border-primary bg-primary-tint" : "border-border bg-surface"
         }`}
-        style={dropActive ? undefined : coxEdge}
+        style={dropActive || selected ? undefined : coxEdge}
       >
         {chip}
         <span className="min-w-0 flex-1 truncate text-[16px] font-medium text-text">
@@ -894,7 +905,16 @@ function Builder({
   const [loading, setLoading] = useState(true);
   const [writing, setWriting] = useState(false);
   const [failed, setFailed] = useState(false);
+  /*
+    THE SEAT IN PLAY, in two stages. `typing` is the active slot. `keyboard`
+    says whether its text field is open: a FILLED seat is first PICKED UP
+    (highlighted, no keyboard — the next seat tapped is where its rower goes)
+    and only a second tap opens the field. An EMPTY seat opens the field on
+    the first tap, because there is nobody in it to move. Two taps to swap,
+    and the phone's keyboard never comes up unless a name is about to be typed.
+  */
   const [typing, setTyping] = useState<Slot | null>(null);
+  const [keyboard, setKeyboard] = useState(false);
   const [query, setQuery] = useState("");
   const [dropKey, setDropKey] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -1073,6 +1093,7 @@ function Builder({
     const displaced = athleteAt(slot);
     if (from && slotKey(from) === slotKey(slot)) {
       setTyping(null);
+      setKeyboard(false);
       setQuery("");
       setDropKey(null);
       return true; // dropped back where they were
@@ -1095,23 +1116,40 @@ function Builder({
       return next;
     });
     setTyping(null);
+    setKeyboard(false);
     setQuery("");
     setDropKey(null);
     return true;
   };
 
   /*
-    A TAP ON A SEAT. With no seat active, it starts typing there. With a FILLED
-    seat active, it moves that rower here — swapping with whoever is here —
-    unless the move is not allowed (a rower onto the cox seat), in which case
-    the tap simply makes this the active seat instead.
+    A TAP ON A SEAT.
+      • Nothing in play → this seat is. Filled: picked up, no keyboard. Empty:
+        the text field opens, because there is nobody here to move.
+      • The seat in play is FILLED and this is a different seat → its rower
+        moves here, swapping with whoever is here. If that move is not allowed
+        (a rower onto the cox seat) the tap picks this seat up instead.
+      • The seat in play is this very seat, picked up → second tap: open the
+        field, to swap a name in by typing.
   */
   const tapSeat = (slot: Slot) => {
-    if (typing && slotKey(typing) !== slotKey(slot)) {
+    const here = athleteAt(slot);
+    if (typing && slotKey(typing) === slotKey(slot)) {
+      if (!keyboard) setKeyboard(true);
+      return;
+    }
+    if (typing) {
       const moving = athleteAt(typing);
       if (moving && assign(slot, moving)) return;
     }
     setTyping(slot);
+    setKeyboard(here === null);
+    setQuery("");
+  };
+
+  const putDown = () => {
+    setTyping(null);
+    setKeyboard(false);
     setQuery("");
   };
 
@@ -1291,7 +1329,8 @@ function Builder({
         label={label}
         cox={cox}
         athlete={athleteId ? rosterById[athleteId] : undefined}
-        typing={!!typing && slotKey(typing) === key}
+        typing={!!typing && slotKey(typing) === key && keyboard}
+        selected={!!typing && slotKey(typing) === key && !keyboard}
         query={query}
         matches={matches}
         dropActive={dropKey === key}
@@ -1300,13 +1339,9 @@ function Builder({
         onAssign={(id) => void assign(slot, id)}
         onClear={() => {
           if (athleteId) clear(slot);
-          setTyping(null);
-          setQuery("");
+          putDown();
         }}
-        onCancelType={() => {
-          setTyping(null);
-          setQuery("");
-        }}
+        onCancelType={putDown}
         onDragStartSeat={() => setDropKey(null)}
         onDropSlot={(id) => assign(slot, id)}
         onDragOverSlot={() => setDropKey(key)}
