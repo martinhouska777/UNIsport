@@ -89,17 +89,21 @@ export default function Contact({ solo = false }: { solo?: boolean }) {
 
           <p className="mt-8 font-mono text-[13px] tracking-wide text-l-text-2">
             <span className="uppercase">{contact.emailLabel}</span>{" "}
-            <a href={`mailto:${about.email}`} className="ml-3 text-l-text underline-offset-4 transition-colors hover:underline">
+            <a href={`mailto:${about.email}`} className="tap44 ml-3 inline-block text-l-text underline-offset-4 transition-colors hover:underline">
               {about.email}
             </a>
           </p>
 
-          <div className="mt-6 flex flex-wrap items-center gap-x-3 gap-y-3">
-            <span className="mr-1 font-mono text-[13px] uppercase tracking-wide text-l-text-2">{contact.socialsLabel}</span>
-            {contact.socials.map((s) => (
-              <Social key={s.name} s={s} />
-            ))}
-          </div>
+          {/* Only once there is an account to find — the rows are data, and
+              an empty list draws nothing (website review, 2026-09-10). */}
+          {contact.socials.length > 0 && (
+            <div className="mt-6 flex flex-wrap items-center gap-x-3 gap-y-3">
+              <span className="mr-1 font-mono text-[13px] uppercase tracking-wide text-l-text-2">{contact.socialsLabel}</span>
+              {contact.socials.map((s) => (
+                <Social key={s.name} s={s} />
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </section>

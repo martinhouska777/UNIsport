@@ -843,7 +843,8 @@ export const studentFeatures: { kicker: string; rows: FeatureRow[]; cta: Feature
          channels in db/messages.sql: general, form & programming, nutrition, wins & PRs, running */
       icon: "channels",
       title: "Community channels.",
-      detail: "Take part in community channels and get advice from your peers about nutrition, personal best, form, etc.",
+      /* "etc." was the one abbreviation on the page (website review, 2026-09-10). */
+      detail: "Take part in community channels and get advice from your peers on nutrition, form, personal bests and more.",
     },
   ],
 };
@@ -871,8 +872,10 @@ export const varsityFeatures: { kicker: string; rows: FeatureRow[]; cta: Feature
       /* race countdown + the coach's note on Home (V3, coach step 1 & 5).
          Owner-dictated 2026-09-03. */
       icon: "race",
-      title: "Countdown to the next race and technical note from a coach.",
-      detail: "Keep your focus up. Have your next race and note from a coach on what to fix always in front of your eyes.",
+      /* Grammar only (website review, 2026-09-10): the articles, and "in front
+         of your eyes" → "in front of you". The sense is the owner's. */
+      title: "Countdown to the next race, and your coach's note.",
+      detail: "Keep your focus up: your next race and your coach's note on what to fix are always in front of you.",
     },
     {
       /* /varsity/log — one tap per prescribed session, "Add extra session", and
@@ -928,6 +931,16 @@ export const faq: { q: string; a: string; on: FaqAudience[] }[] = [
     on: ["students", "varsity", "coaches"],
     q: "Who can join?",
     a: "Students at a live university sign up with their university email. Varsity athletes join through the link their captain or coach sends; coaches get the console with their team.",
+  },
+  {
+    on: ["students", "varsity", "coaches"],
+    /* The pill above the headline says "Free for students" and the FAQ never
+       confirmed it (website review, 2026-09-10). Says what the page already
+       claims, in a full sentence, and no more: the varsity and coach halves
+       state how those doors OPEN, not what they cost — the owner has not
+       said. DRAFT for the owner. */
+    q: "Is it free?",
+    a: "Yes, for students. Varsity Mode opens from your team's invite; for the Coach's Console, write to me.",
   },
   {
     on: ["students", "varsity"],
@@ -1022,11 +1035,12 @@ export const contact = {
   emailLabel: "Email",
   socialsLabel: "Find us",
   comingSoon: "coming soon",
-  socials: [
-    { name: "Instagram", handle: "", href: null, icon: "instagram" },
-    { name: "TikTok", handle: "", href: null, icon: "tiktok" },
-    { name: "X", handle: "", href: null, icon: "x" },
-  ] as SocialLink[],
+  /* EMPTY until an account exists (website review, 2026-09-10): three chips
+     reading COMING SOON on a marketing page said "not finished", three times.
+     The rows are data — add one back the day the account is real, e.g.
+       { name: "Instagram", handle: "@unisportcampus", href: "https://instagram.com/unisportcampus", icon: "instagram" }
+     and the "Find us" row draws itself again. */
+  socials: [] as SocialLink[],
 };
 
 /* ───────────────────────── PAGE NOT FOUND ───────────────────────── */
