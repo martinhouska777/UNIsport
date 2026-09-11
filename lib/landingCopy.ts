@@ -812,7 +812,15 @@ export const studentFeatures: { kicker: string; rows: FeatureRow[]; cta: Feature
          toggles, one row. New 2026-09-03, owner-dictated. */
       icon: "mentor",
       title: "New to the gym or campus?",
-      detail: "Newcomers start easily. The app has a feature of mentoring in the gym by more advanced people who are interested in helping out, or get matched with an upperclassman with a similar concentration to mentor you.",
+      /* REWORDED with the owner's go-ahead (2026-09-11; website review). The
+         dictated line changed subject halfway ("the app has … or get matched")
+         and "has a feature of mentoring" is how a developer talks. Same two
+         offers — a gym mentor, an upperclassman in your concentration — in
+         the page's voice. The old line, for the record: "Newcomers start
+         easily. The app has a feature of mentoring in the gym by more advanced
+         people who are interested in helping out, or get matched with an
+         upperclassman with a similar concentration to mentor you." */
+      detail: "Start with someone beside you. Get paired with an experienced student who has offered to help in the gym, or with an upperclassman in your concentration who can show you the ropes.",
     },
     {
       /* messages/PlanCard.tsx — propose, accept, both calendars */
@@ -1159,7 +1167,12 @@ export const coach = {
      its sentence are gone, and this is the same outlined pill the interlude
      wears (see interlude.overview). The section itself stays static — no
      scroll choreography here; the owner asked for the link, not the film. */
-  overview: { label: "See how it works", href: "#coach-steps" },
+  /* `href` on the Coaches page, where the six screens are right below.
+     `teaserHref` on "/", where the section is its opener alone since
+     2026-09-11 (the owner: the home page says "The Coach's Console" and "See
+     how it works", and that takes you to the coaches' page — "další telefony
+     jsou zbytečné"). Same words on both; only where the arrow points differs. */
+  overview: { label: "See how it works", href: "#coach-steps", teaserHref: "/for/coaches" },
 
   steps: [
     {
