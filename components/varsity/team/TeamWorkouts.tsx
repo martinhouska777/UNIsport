@@ -28,16 +28,21 @@
   category dot is a content color from data, applied via inline style (rule-1
   exception).
 
-  The example rows carry NO "this is an example" note any more — the owner asked
-  for the explanation to go. If seeded data ever gets mistaken for real results,
-  that is the thing to put back (a small tag on the row, not a paragraph).
+  EVERY EXAMPLE SAYS SO — a small EXAMPLE pill on its row, and one line at the
+  top of the sheet it opens (components/varsity/ExampleTag). The pills had been
+  taken off once; they are back because a rower on their first day could not
+  tell a made-up 2k board from the squad's, which is exactly the harm a worked
+  example must never do. And the example board no longer writes the VIEWER'S
+  name onto a made-up result: seeing yourself ranked 22nd at a split you never
+  pulled is not a lesson about the board, it is a lie about you.
 */
 import { useEffect, useMemo, useState } from "react";
 import { useAppState } from "@/components/AppState";
 import { useMembership } from "@/components/varsity/useMembership";
 import WorkoutBoard from "@/components/varsity/team/WorkoutBoard";
 import TelemetryOuting from "@/components/varsity/team/TelemetryOuting";
-import { fetchPlan, fetchProfileFullName } from "@/lib/varsity/planStore";
+import { ExampleTag } from "@/components/varsity/ExampleTag";
+import { fetchPlan } from "@/lib/varsity/planStore";
 import { demoTeamPlan, demoSquadSize } from "@/lib/varsity/demoWorkouts";
 import { fetchResults, fetchSquadSize, type TeamResult } from "@/lib/varsity/resultsStore";
 import { teamWorkouts, type TeamWorkout } from "@/lib/varsity/teamBoard";
@@ -69,6 +74,7 @@ export default function TeamWorkouts() {
   const [open, setOpen] = useState<string | null>(null);
   // the water side
   const [outings, setOutings] = useState<Outing[]>([]);
+  const [exampleWater, setExampleWater] = useState(false); // the outing is the worked example
   const [openOuting, setOpenOuting] = useState<string | null>(null);
   const [kind, setKind] = useState<Kind>("erg");
 
@@ -85,11 +91,9 @@ export default function TeamWorkouts() {
         if (!active) return;
         setResults(rows);
       } else {
-        // Nothing flagged yet → the worked example, with the viewer standing in
-        // for the squad's median rower so they can see their own row.
-        const name = await fetchProfileFullName(userId);
-        if (!active) return;
-        const demo = demoTeamPlan(new Date(), userId ? { id: userId, name } : null);
+        // Nothing flagged yet → the worked example. Nobody real is in it: the
+        // viewer's own name never goes on a result they didn't pull.
+        const demo = demoTeamPlan(new Date());
         setWorkouts(teamWorkouts(demo.sessions));
         setResults(demo.results);
         setExample(true);
@@ -117,8 +121,9 @@ export default function TeamWorkouts() {
         setOutings(list);
       } else {
         // No import yet → the one transcribed outing, so the water side can
-        // be looked at (see demoTelemetry.ts).
+        // be looked at (see demoTelemetry.ts) — tagged as the example it is.
         setOutings(demoOutings);
+        setExampleWater(true);
       }
     });
     return () => {
@@ -215,6 +220,7 @@ export default function TeamWorkouts() {
                     <span className="flex-shrink-0 rounded border border-border px-1.5 py-px text-[8px] font-bold uppercase tracking-[0.08em] text-muted">
                       Erg
                     </span>
+                    {example && <ExampleTag />}
                     {w.board === "ranked" && (
                       <span className="flex-shrink-0 rounded border border-primary-line bg-primary-tint px-1.5 py-px text-[8px] font-bold uppercase tracking-[0.08em] text-primary">
                         Ranked
@@ -255,6 +261,7 @@ export default function TeamWorkouts() {
                   <span className="flex-shrink-0 rounded border border-border px-1.5 py-px text-[8px] font-bold uppercase tracking-[0.08em] text-muted">
                     {o.source === "peach" ? "Peach" : "SpeedCoach"}
                   </span>
+                  {exampleWater && <ExampleTag />}
                 </div>
                 <div className="mt-1 text-[11px] tabular-nums text-muted">
                   {outingDateLabel(o.dayKey)} · {totals.metres.toLocaleString("en-US")} m
@@ -274,6 +281,7 @@ export default function TeamWorkouts() {
           outing={openedOuting}
           dateLabel={outingDateLabel(openedOuting.dayKey)}
           allOutings={outings}
+          example={exampleWater}
           onClose={() => setOpenOuting(null)}
         />
       )}
@@ -286,6 +294,7 @@ export default function TeamWorkouts() {
           workouts={workouts}
           allResults={results}
           squadSize={shownSquadSize}
+          example={example}
           myId={userId}
           onClose={() => setOpen(null)}
           onOpenWorkout={(dayKey) => setOpen(dayKey)}

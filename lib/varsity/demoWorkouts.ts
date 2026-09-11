@@ -106,16 +106,6 @@ export const demoSquadSize = rowers().length;
 // Each rower's own 2K pace per 500 m, the number every piece is built from.
 const base500 = (athleteId: string) => clockToSec(teamProfile(athleteId).prs["2K"]) / 4;
 
-/*
-  Who stands in for the person looking at the screen, so they can see their own
-  row highlighted where it would really sit. The MEDIAN rower by 2K — a demo
-  that always puts you on top teaches you nothing about the board.
-*/
-function medianRowerId(): string {
-  const sorted = [...rowers()].sort((a, b) => base500(a.id) - base500(b.id));
-  return sorted[Math.floor(sorted.length / 2)]?.id ?? "";
-}
-
 /* The rep-by-rep rows for one athlete's piece, from the shape in `reps`. */
 function demoIntervals(piece: DemoPiece, splitSec: number, rate: number): ResultInterval[] | null {
   if (!piece.reps) return null;
@@ -179,13 +169,16 @@ ${rows
   return `data:image/svg+xml,${encodeURIComponent(svg)}`;
 }
 
-export function demoTeamPlan(
-  today = new Date(),
-  me?: { id: string; name: string } | null,
-): { sessions: SessionMap; results: TeamResult[] } {
+/*
+  Nobody real is on these boards. An earlier version stood the VIEWER in for
+  the squad's median rower, so they could see "their" row — which put their
+  name on a 2k time they never pulled, on a screen with no note that it was
+  invented. A worked example teaches the shape of a board; it must not make a
+  claim about the person reading it.
+*/
+export function demoTeamPlan(today = new Date()): { sessions: SessionMap; results: TeamResult[] } {
   const sessions: SessionMap = {};
   const results: TeamResult[] = [];
-  const standIn = me?.id ? medianRowerId() : "";
 
   for (const piece of demoPieces) {
     const date = new Date(today.getFullYear(), today.getMonth(), today.getDate() - piece.daysAgo);
@@ -212,14 +205,13 @@ export function demoTeamPlan(
         ? (splitSec * piece.metres) / 500
         : (piece.minutes ?? 0) * 60;
       const metres = piece.metres ?? Math.round((totalSec / splitSec) * 500 / 10) * 10;
-      const mine = !!standIn && a.id === standIn;
       const intervals = demoIntervals(piece, splitSec, piece.rate);
 
       results.push({
         id: `demo-${dayKey}-${a.id}`,
         dayKey,
-        athleteId: mine ? me!.id : a.id,
-        athleteName: mine ? me!.name || "You" : a.name,
+        athleteId: a.id,
+        athleteName: a.name,
         minutes: totalSec / 60,
         metres,
         split: null,
@@ -229,7 +221,7 @@ export function demoTeamPlan(
         weightKg: teamProfile(a.id).weightKg,
         monitor: a.id === RP3_ATHLETE ? "RP3" : "C2",
         photoPath: demoMonitorImage(
-          mine ? me!.name || "You" : a.name,
+          a.name,
           totalSec,
           metres,
           splitSec,

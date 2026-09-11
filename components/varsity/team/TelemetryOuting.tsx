@@ -12,6 +12,7 @@
 */
 import { useState } from "react";
 import Sheet from "@/components/varsity/Sheet";
+import { ExampleNote } from "@/components/varsity/ExampleTag";
 import TelemetryPiece from "@/components/varsity/team/TelemetryPiece";
 import type { CompareCandidate } from "@/components/varsity/team/TelemetryPiece";
 import { fmtDuration, fmtSplit, outingTotals, type TelemetryOuting as Outing } from "@/lib/varsity/telemetry";
@@ -22,6 +23,7 @@ export default function TelemetryOuting({
   outing,
   dateLabel,
   allOutings,
+  example = false,
   onClose,
 }: {
   outing: Outing;
@@ -29,6 +31,8 @@ export default function TelemetryOuting({
   /* Every outing there is, so a piece can be compared with one of about the
      same length from another day. */
   allOutings?: Outing[];
+  /** A worked example, not the squad's own outing — says so at the top. */
+  example?: boolean;
   onClose: () => void;
 }) {
   const [openPiece, setOpenPiece] = useState<string | null>(null);
@@ -56,6 +60,7 @@ export default function TelemetryOuting({
 
   return (
     <Sheet title="Water" onClose={onClose}>
+      {example && <ExampleNote what="outing" />}
       {/* the outing */}
       <div className="rounded-2xl border border-border bg-surface-2 px-3.5 py-3">
         <div className="flex items-center gap-2">

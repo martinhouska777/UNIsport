@@ -27,6 +27,7 @@
 */
 import { useMemo, useState } from "react";
 import Sheet from "@/components/varsity/Sheet";
+import { ExampleNote } from "@/components/varsity/ExampleTag";
 import ResultDetail from "@/components/varsity/team/ResultDetail";
 import BoardTable from "@/components/varsity/team/BoardTable";
 import Delta from "@/components/varsity/team/Delta";
@@ -64,6 +65,7 @@ export default function WorkoutBoard({
   workouts,
   allResults,
   squadSize,
+  example = false,
   myId,
   onClose,
   onOpenWorkout,
@@ -73,6 +75,8 @@ export default function WorkoutBoard({
   workouts: TeamWorkout[]; // every team workout, for finding earlier goes at this piece
   allResults: TeamResult[];
   squadSize: number | null;
+  /** A worked example, not the squad's own results — says so at the top. */
+  example?: boolean;
   myId: string | null;
   onClose: () => void;
   /* Open another team workout in this board's place — how a previous edition
@@ -107,6 +111,7 @@ export default function WorkoutBoard({
 
   return (
     <Sheet title={ranked ? "Ranked" : "Squad"} onClose={onClose}>
+      {example && <ExampleNote what="board" />}
       {/* what the workout was */}
       <div className="rounded-2xl border border-border bg-surface-2 px-3.5 py-3">
         <div className="flex items-center gap-2">
