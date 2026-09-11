@@ -25,6 +25,11 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: "UNIsport",
   description: "Campus fitness — gyms, partners, and sessions at your university.",
+  /* Safari ignores the manifest's icons for "Add to Home Screen" and looks
+     for apple-touch-icon; without one an iPhone gets a screenshot of the page
+     as the icon (website review, 2026-09-10). 180px and opaque — iOS paints
+     transparent corners black — cut from the same 512 the manifest uses. */
+  icons: { apple: "/icons/apple-touch-icon.png" },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
