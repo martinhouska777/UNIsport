@@ -43,7 +43,9 @@ export function matchTier(score: number, max: number): MatchTier | null {
   return tier ? { key: tier.key, label: tier.label } : null;
 }
 
-/** True when a candidate is worth showing. */
-export function isWorthShowing(score: number, max: number): boolean {
-  return matchTier(score, max) !== null;
-}
+/*
+  A candidate below every tier is still SHOWN (Match → People, "Also on
+  campus"), just without a fit label — hiding real people behind a score made
+  the tab say "No matches yet" on a campus that had them. `matchTier` returning
+  null is the whole signal; there is no separate hide rule any more.
+*/

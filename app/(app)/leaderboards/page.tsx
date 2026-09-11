@@ -75,6 +75,7 @@ import {
 } from "@/components/icons";
 import HonorCode, { HonorCodeFooter, useHonorCode } from "@/components/leaderboards/HonorCode";
 import GroupSheet from "@/components/leaderboards/GroupSheet";
+import HouseRace from "@/components/leaderboards/HouseRace";
 import Podium, { type PodiumEntry } from "@/components/leaderboards/Podium";
 import Medal from "@/components/leaderboards/Medal";
 import ScoringSheet from "@/components/leaderboards/ScoringSheet";
@@ -91,8 +92,8 @@ import {
   nextUpLine,
   rankGroups,
   houseCrest,
+  nobodyYet,
   GROUP_METRICS,
-  MIN_GROUP_MEMBERS,
   type GroupMetric,
   type GroupRow,
   type LeaderRow,
@@ -119,15 +120,15 @@ const COMPETITIONS: Competition[] = [
     key: "houses",
     label: "Houses",
     note: "House vs house",
-    blurb: `House against house. A house needs ${MIN_GROUP_MEMBERS} members to appear.`,
-    empty: "No house has enough members training yet.",
+    blurb: "House against house — all twelve, always. A house nobody has joined yet reads “nobody yet”.",
+    empty: "No houses to show.",
   },
   {
     key: "dorms",
     label: "Dorms",
     note: "First-year Yard dorms",
-    blurb: `The first-year dorms, kept apart from the Houses. A dorm needs ${MIN_GROUP_MEMBERS} members to appear.`,
-    empty: "No dorm has enough members training yet.",
+    blurb: "The first-year dorms, kept apart from the Houses. Every dorm is on the board.",
+    empty: "No dorms to show.",
   },
   {
     key: "everyone",
@@ -147,8 +148,8 @@ const COMPETITIONS: Competition[] = [
     key: "years",
     label: "Years",
     note: "Class year vs class year",
-    blurb: `Class against class. A year needs ${MIN_GROUP_MEMBERS} members to appear.`,
-    empty: "No class year has enough members training yet.",
+    blurb: "Class against class. Every year is on the board.",
+    empty: "No class years to show.",
   },
 ];
 
@@ -380,14 +381,18 @@ function GroupRowItem({
           {row.isMine && <span className="ml-1.5 text-[11px] text-primary">Yours</span>}
         </div>
         <div className="truncate text-[11px] text-muted">
-          {row.actives} of {row.members} training ·{" "}
-          {/* Always the OTHER number, so the view you're not in is still there. */}
-          {metric === "total"
-            ? `${row.avgPoints.toFixed(1)} per member`
-            : pointsLabel(row.points)}
+          {/* A house nobody has joined says so, instead of "0 of 0 training". */}
+          {nobodyYet(row)
+            ? "0 pts · nobody yet"
+            : row.points === 0
+              ? `${row.members} signed up · nobody has trained yet`
+              : `${row.actives} of ${row.members} training · ${
+                  /* Always the OTHER number, so the view you're not in is still there. */
+                  metric === "total" ? `${row.avgPoints.toFixed(1)} per member` : pointsLabel(row.points)
+                }`}
         </div>
       </div>
-      <Score value={groupScoreLabel(row, metric)} unit={unit} />
+      {!nobodyYet(row) && <Score value={groupScoreLabel(row, metric)} unit={unit} />}
       {onOpen && (
         <span className="flex-shrink-0 text-muted">
           <IconChevronRight size={15} />
@@ -515,11 +520,16 @@ export default function LeaderboardsPage() {
 
   /*
     The top three, lifted out of whichever board is on screen and handed to the
-    podium in one shape. The list below then starts at fourth, so nobody is
-    shown twice.
+    podium in one shape. The list below then carries everyone else, so nobody
+    is shown twice. Only groups that have SCORED stand on a pedestal: a podium
+    of three houses at zero is not a podium, so on a campus with one active
+    house the pedestal has one house on it and the other eleven are the list.
   */
+  const scoredGroups = groups.filter((g) => g.points > 0);
+  const podiumGroups = scoredGroups.slice(0, 3);
+  const listGroups = groups.filter((g) => !podiumGroups.includes(g));
   const podium: PodiumEntry[] = isGroupBoard
-    ? groups.slice(0, 3).map((g, i) => ({
+    ? podiumGroups.map((g, i) => ({
         id: g.key,
         place: (i + 1) as 1 | 2 | 3,
         // The board's own rank, which is not the place when two are level.
@@ -655,6 +665,14 @@ export default function LeaderboardsPage() {
 
       {/* The board */}
       <div className="px-3.5 pt-3">
+        {/* THE RACE, above the Houses board: this month's interhouse event,
+            who is in, and — for the houses that aren't — exactly how many more
+            active people would put them in (the one minimum left anywhere). */}
+        {competition === "houses" && (
+          <div className="mb-3">
+            <HouseRace />
+          </div>
+        )}
         {/* On a team board the switch above the words is what the words are
             about, so it goes first and the line under it explains the choice
             that is currently made. */}
@@ -677,16 +695,23 @@ export default function LeaderboardsPage() {
             </div>
           ) : (
             <>
-              <Podium entries={podium} />
-              {groups.length > 3 && (
+              {podium.length > 0 ? (
+                <Podium entries={podium} />
+              ) : (
+                <div className="mt-3 rounded-xl border border-dashed border-border bg-surface px-4 py-6 text-center text-[12px] text-muted">
+                  Nobody has logged a session this period. The first one puts a{" "}
+                  {groupKind === "year" ? "year" : "house"} on the podium.
+                </div>
+              )}
+              {listGroups.length > 0 && (
                 <div className="mt-2.5 flex flex-col gap-1.5">
-                  {groups.slice(3).map((g) => (
+                  {listGroups.map((g) => (
                     <GroupRowItem
                       key={g.key}
                       row={g}
                       kind={groupKind}
                       metric={metric}
-                      onOpen={groupKind === "year" ? undefined : () => setOpenGroup(g)}
+                      onOpen={groupKind === "year" || nobodyYet(g) ? undefined : () => setOpenGroup(g)}
                     />
                   ))}
                 </div>

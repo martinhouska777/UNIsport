@@ -321,10 +321,16 @@ $$;
 --
 -- Ranked by POINTS PER MEMBER, not by total: otherwise the biggest group wins
 -- every month forever and the small ones stop trying by week two. Per member is
--- also the honest measure of whether a house is actually USING the app, which
--- is the number the interhouse competition will one day open on. A group needs
--- at least `min_members` people signed up to appear at all, so one very keen
--- person in an otherwise empty house can't top the table on their own.
+-- also the honest measure of whether a house is actually USING the app.
+--
+-- EVERY GROUP WITH A MEMBER COMES BACK, points or none. A house that has
+-- signed up but not trained is a row reading zero, not a row that vanished:
+-- with a handful of accounts on campus a board of two houses looks broken and
+-- a board of twelve, most of them at zero, looks like a race that has just
+-- started. `min_members` stays as a knob (0 = everyone) but the plain boards
+-- pass 0; the only place a minimum still gates anything is the interhouse
+-- race (lib/events.ts). Houses with NOBODY signed up are not in profiles at
+-- all, so the caller (lib/leaderboards.ts) fills those in from its own list.
 --
 -- `only_keys` is how the twelve upperclassman Houses and the first-year Yard
 -- dorms are kept in SEPARATE competitions: a dorm of four freshmen has no
@@ -341,7 +347,7 @@ drop function if exists public.leaderboard_groups(text, text, int, int, int, int
 create function public.leaderboard_groups(
   kind        text default 'house',
   period      text default 'month',
-  min_members int  default 1,
+  min_members int  default 0,
   pts_solo    int  default 10,
   pts_partner int  default 15,
   pts_new     int  default 25,
@@ -399,13 +405,11 @@ as $$
     where m.grp is not null
       and (only_keys is null or m.grp = any(only_keys))
     group by m.grp
-    having count(*) >= greatest(coalesce(min_members, 1), 1)
+    having count(*) >= greatest(coalesce(min_members, 0), 0)
   )
-  -- A group that scored nothing is left off, exactly as a person who scored
-  -- nothing is left off the individual boards: a table of twelve houses all
-  -- reading 0.0 looks broken rather than honest, and the screen has a proper
-  -- empty state to say so. WHERE runs before the window function, so a zero
-  -- never takes up a rank either.
+  -- Zero-point groups stay on, ranked last and level with each other: on a
+  -- campus that is still filling up, "Adams · 0 pts" is the honest row, and
+  -- the screen words it as "nobody yet" rather than hiding it.
   select
     (rank() over (order by g.per_member desc, g.n_points desc, g.grp))::int,
     g.grp,
@@ -416,7 +420,6 @@ as $$
     g.per_member,
     g.grp is not distinct from (select mk.grp from my_key mk)
   from grouped g
-  where g.n_points > 0
   order by 1;
 $$;
 
@@ -506,14 +509,14 @@ as $$
     where w.user_id = auth.uid() and w.log_date >= b.since and w.partner_id is not null
       and public.partner_counts(w.partner_status)
   ),
-  -- Same minimum and same rates as the screen uses, so the rank shown on the
-  -- strip is the rank shown on the board.
+  -- Same (no) minimum and same rates as the screen uses, so the rank shown on
+  -- the strip is the rank shown on the board.
   -- Against your own kind: a freshman is ranked among the Yard dorms, everybody
   -- else among the twelve Houses. Anyone in neither list (off campus) falls
   -- back to the unfiltered ranking, which is the only sensible thing left.
   hgrp as (
     select * from public.leaderboard_groups(
-      'house', period, 3, pts_solo, pts_partner, pts_new,
+      'house', period, 0, pts_solo, pts_partner, pts_new,
       case
         when (select m.res from myrow m) = any(coalesce(dorm_keys, '{}'::text[]))
           then dorm_keys
@@ -523,7 +526,7 @@ as $$
     )
   ),
   ygrp as (
-    select * from public.leaderboard_groups('year', period, 3, pts_solo, pts_partner, pts_new)
+    select * from public.leaderboard_groups('year', period, 0, pts_solo, pts_partner, pts_new)
   ),
   -- Nearest person above me: housemates first (pri 0), then anyone (pri 1).
   nxt as (
