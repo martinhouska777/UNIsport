@@ -142,28 +142,38 @@ async function ask(token, query) {
   return JSON.parse(body);
 }
 
-/* One read of the catalog: everything that exists in the public schema. */
+/*
+  One read of the catalog: everything that exists in the public schema.
+
+  EVERY NAME IS CAST TO text ON PURPOSE — do not remove those casts. pg_class
+  .relname is Postgres's `name` type, which holds 63 bytes. Leave the first
+  branch of the union uncast and the whole column resolves to `name`, so the
+  policy keys in the later branches are silently TRUNCATED at 63 characters:
+  "public.varsity_lineups::Varsity lineups readable by signed-in users" (66)
+  became "…by signed-in u" and could never match, so five files reported as
+  half-run when they were fully applied. No error, just a wrong answer.
+*/
 const CATALOG_SQL = `
-select 'table' as kind, c.relname as name, c.relrowsecurity::text as extra
+select 'table' as kind, c.relname::text as name, c.relrowsecurity::text as extra
   from pg_class c join pg_namespace n on n.oid = c.relnamespace
  where n.nspname = 'public' and c.relkind in ('r','p')
 union all
-select 'view', c.relname, coalesce(array_to_string(c.reloptions, ','), '')
+select 'view', c.relname::text, coalesce(array_to_string(c.reloptions, ','), '')
   from pg_class c join pg_namespace n on n.oid = c.relnamespace
  where n.nspname = 'public' and c.relkind in ('v','m')
 union all
-select 'column', c.relname || '.' || a.attname, ''
+select 'column', c.relname::text || '.' || a.attname, ''
   from pg_class c
   join pg_namespace n on n.oid = c.relnamespace
   join pg_attribute a on a.attrelid = c.oid
  where n.nspname = 'public' and c.relkind in ('r','p')
    and a.attnum > 0 and not a.attisdropped
 union all
-select 'function', p.proname, ''
+select 'function', p.proname::text, ''
   from pg_proc p join pg_namespace n on n.oid = p.pronamespace
  where n.nspname = 'public'
 union all
-select 'policy', n.nspname || '.' || c.relname || '::' || pol.polname, ''
+select 'policy', n.nspname::text || '.' || c.relname || '::' || pol.polname, ''
   from pg_policy pol
   join pg_class c on c.oid = pol.polrelid
   join pg_namespace n on n.oid = c.relnamespace
@@ -286,27 +296,32 @@ ${rlsValues}
 ),
 
 -- Everything that actually exists right now.
+--
+-- The ::text casts are load-bearing. relname is Postgres's "name" type (63
+-- bytes); without them the union's column resolves to "name" and every policy
+-- key longer than 63 characters is silently truncated, so a file that HAS been
+-- run reports as half-run. Five files did exactly that.
 present (kind, name) as (
-  select distinct 'table', c.relname
+  select distinct 'table', c.relname::text
     from pg_class c join pg_namespace n on n.oid = c.relnamespace
    where n.nspname = 'public' and c.relkind in ('r','p')
   union
-  select distinct 'view', c.relname
+  select distinct 'view', c.relname::text
     from pg_class c join pg_namespace n on n.oid = c.relnamespace
    where n.nspname = 'public' and c.relkind in ('v','m')
   union
-  select distinct 'column', c.relname || '.' || a.attname
+  select distinct 'column', c.relname::text || '.' || a.attname
     from pg_class c
     join pg_namespace n on n.oid = c.relnamespace
     join pg_attribute a on a.attrelid = c.oid
    where n.nspname = 'public' and c.relkind in ('r','p')
      and a.attnum > 0 and not a.attisdropped
   union
-  select distinct 'function', p.proname
+  select distinct 'function', p.proname::text
     from pg_proc p join pg_namespace n on n.oid = p.pronamespace
    where n.nspname = 'public'
   union
-  select distinct 'policy', n.nspname || '.' || c.relname || '::' || pol.polname
+  select distinct 'policy', n.nspname::text || '.' || c.relname || '::' || pol.polname
     from pg_policy pol
     join pg_class c on c.oid = pol.polrelid
     join pg_namespace n on n.oid = c.relnamespace

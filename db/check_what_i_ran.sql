@@ -234,27 +234,32 @@ expect_rls (tbl) as (
 ),
 
 -- Everything that actually exists right now.
+--
+-- The ::text casts are load-bearing. relname is Postgres's "name" type (63
+-- bytes); without them the union's column resolves to "name" and every policy
+-- key longer than 63 characters is silently truncated, so a file that HAS been
+-- run reports as half-run. Five files did exactly that.
 present (kind, name) as (
-  select distinct 'table', c.relname
+  select distinct 'table', c.relname::text
     from pg_class c join pg_namespace n on n.oid = c.relnamespace
    where n.nspname = 'public' and c.relkind in ('r','p')
   union
-  select distinct 'view', c.relname
+  select distinct 'view', c.relname::text
     from pg_class c join pg_namespace n on n.oid = c.relnamespace
    where n.nspname = 'public' and c.relkind in ('v','m')
   union
-  select distinct 'column', c.relname || '.' || a.attname
+  select distinct 'column', c.relname::text || '.' || a.attname
     from pg_class c
     join pg_namespace n on n.oid = c.relnamespace
     join pg_attribute a on a.attrelid = c.oid
    where n.nspname = 'public' and c.relkind in ('r','p')
      and a.attnum > 0 and not a.attisdropped
   union
-  select distinct 'function', p.proname
+  select distinct 'function', p.proname::text
     from pg_proc p join pg_namespace n on n.oid = p.pronamespace
    where n.nspname = 'public'
   union
-  select distinct 'policy', n.nspname || '.' || c.relname || '::' || pol.polname
+  select distinct 'policy', n.nspname::text || '.' || c.relname || '::' || pol.polname
     from pg_policy pol
     join pg_class c on c.oid = pol.polrelid
     join pg_namespace n on n.oid = c.relnamespace
