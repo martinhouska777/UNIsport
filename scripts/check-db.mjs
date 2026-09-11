@@ -1,0 +1,391 @@
+/*
+  WHAT HAVE I RUN, AND WHAT IS LEFT — a checklist for the db/ folder.
+
+    node scripts/check-db.mjs            # ask the live database and report
+    node scripts/check-db.mjs --offline  # just list what each file expects
+
+  Every file in db/ creates things: tables, columns, views, functions, policies.
+  This reads each file, works out what it would create, asks the live project
+  what actually exists, and sorts the folder into three piles — already run,
+  partly run, still to run — then prints the exact commands for the ones left.
+
+  It never writes anything. The only statement it sends is a read of the
+  catalog (pg_class and friends), so it is safe to run at any time.
+
+  WHY IT PARSES THE FILES rather than keeping a list: a list would go stale the
+  first time somebody adds a file. The folder stays the source of truth, which
+  is the same rule the app follows for its own data (CLAUDE.md rule 7).
+
+  Needs SUPABASE_ACCESS_TOKEN in .env.local, same as scripts/run-sql.mjs.
+*/
+import fs from "node:fs";
+import path from "node:path";
+
+const PROJECT_REF = "wavxyrgtaotrhnyepyor"; // the one live UNIsport project
+const DB_DIR = "db";
+
+/*
+  NOT EVERY FILE IN db/ IS A MIGRATION. Four kinds are judged differently, and
+  none of them belongs in a "you still need to run this" list:
+
+    schema.sql        a planning artifact — CLAUDE.md says it is not connected
+    *_test.sql        queries to paste in by hand when checking something
+    seed_*.sql        demo rows; run one when a screen looks empty, not to work
+    *_undo.sql        removes demo rows again
+
+  Everything else is a migration, and the catalog can say whether it ran.
+*/
+const DESIGN_ONLY = new Set(["schema.sql"]);
+const kindOf = (file) =>
+  DESIGN_ONLY.has(file) ? "design"
+  : /_test\.sql$/.test(file) ? "test"
+  : /_undo\.sql$/.test(file) ? "undo"
+  : /^seed_/.test(file) ? "seed"
+  : "migration";
+
+/* ------------------------------------------------------------------ parsing */
+
+/* Comments first, or the examples inside them get read as real statements. */
+function stripComments(sql) {
+  return sql
+    .replace(/\/\*[\s\S]*?\*\//g, " ") // /* … */
+    .replace(/--[^\n]*/g, " "); // -- to end of line
+}
+
+const RX = {
+  table: /\bcreate\s+table\s+(?:if\s+not\s+exists\s+)?(?:public\.)?"?(\w+)"?/gi,
+  view: /\bcreate\s+(?:or\s+replace\s+)?(?:materialized\s+)?view\s+(?:if\s+not\s+exists\s+)?(?:public\.)?"?(\w+)"?/gi,
+  func: /\bcreate\s+(?:or\s+replace\s+)?function\s+(?:public\.)?"?(\w+)"?\s*\(/gi,
+  column:
+    /\balter\s+table\s+(?:if\s+exists\s+)?(?:public\.)?"?(\w+)"?\s+add\s+column\s+(?:if\s+not\s+exists\s+)?"?(\w+)"?/gi,
+  /* Policies are not all on public tables — varsity_videos.sql puts four on
+     storage.objects, so the schema has to be carried through or that file would
+     report as half-run forever. */
+  policy: /\bcreate\s+policy\s+"?([^"\n]+?)"?\s+on\s+(?:"?(\w+)"?\.)?"?(\w+)"?/gi,
+  rls: /\balter\s+table\s+(?:public\.)?"?(\w+)"?\s+enable\s+row\s+level\s+security/gi,
+  /* Rows, not schema — a seed is judged by whether its table has any. */
+  insert: /\binsert\s+into\s+(?:public\.)?"?(\w+)"?/gi,
+};
+
+function matchAll(sql, rx) {
+  const out = [];
+  rx.lastIndex = 0;
+  for (let m; (m = rx.exec(sql)); ) out.push(m.slice(1));
+  return out;
+}
+
+function parseFile(file) {
+  const sql = stripComments(fs.readFileSync(path.join(DB_DIR, file), "utf8"));
+  const uniq = (a) => [...new Set(a)];
+  return {
+    file,
+    tables: uniq(matchAll(sql, RX.table).map(([t]) => t)),
+    views: uniq(matchAll(sql, RX.view).map(([v]) => v)),
+    functions: uniq(matchAll(sql, RX.func).map(([f]) => f)),
+    columns: uniq(matchAll(sql, RX.column).map(([t, c]) => `${t}.${c}`)),
+    policies: uniq(
+      matchAll(sql, RX.policy).map(([p, schema, t]) => `${schema || "public"}.${t}::${p.trim()}`),
+    ),
+    rlsOn: uniq(matchAll(sql, RX.rls).map(([t]) => t)),
+    inserts: uniq(matchAll(sql, RX.insert).map(([t]) => t)),
+  };
+}
+
+const countOf = (p) =>
+  p.tables.length + p.views.length + p.functions.length + p.columns.length + p.policies.length;
+
+/* --------------------------------------------------------------- the project */
+
+function tokenFromEnvFile() {
+  if (process.env.SUPABASE_ACCESS_TOKEN) return process.env.SUPABASE_ACCESS_TOKEN;
+  const envPath = path.join(process.cwd(), ".env.local");
+  if (!fs.existsSync(envPath)) return null;
+  const line = fs
+    .readFileSync(envPath, "utf8")
+    .split(/\r?\n/)
+    .find((l) => l.trim().startsWith("SUPABASE_ACCESS_TOKEN="));
+  return line ? line.slice(line.indexOf("=") + 1).trim() : null;
+}
+
+async function ask(token, query) {
+  const res = await fetch(
+    `https://api.supabase.com/v1/projects/${PROJECT_REF}/database/query`,
+    {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ query }),
+    },
+  );
+  const body = await res.text();
+  if (!res.ok) throw new Error(`HTTP ${res.status} from Supabase:\n${body}`);
+  return JSON.parse(body);
+}
+
+/* One read of the catalog: everything that exists in the public schema. */
+const CATALOG_SQL = `
+select 'table' as kind, c.relname as name, c.relrowsecurity::text as extra
+  from pg_class c join pg_namespace n on n.oid = c.relnamespace
+ where n.nspname = 'public' and c.relkind in ('r','p')
+union all
+select 'view', c.relname, coalesce(array_to_string(c.reloptions, ','), '')
+  from pg_class c join pg_namespace n on n.oid = c.relnamespace
+ where n.nspname = 'public' and c.relkind in ('v','m')
+union all
+select 'column', c.relname || '.' || a.attname, ''
+  from pg_class c
+  join pg_namespace n on n.oid = c.relnamespace
+  join pg_attribute a on a.attrelid = c.oid
+ where n.nspname = 'public' and c.relkind in ('r','p')
+   and a.attnum > 0 and not a.attisdropped
+union all
+select 'function', p.proname, ''
+  from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+ where n.nspname = 'public'
+union all
+select 'policy', n.nspname || '.' || c.relname || '::' || pol.polname, ''
+  from pg_policy pol
+  join pg_class c on c.oid = pol.polrelid
+  join pg_namespace n on n.oid = c.relnamespace
+`;
+
+/* ---------------------------------------------------------------- reporting */
+
+const GREEN = "\x1b[32m", YELLOW = "\x1b[33m", RED = "\x1b[31m";
+const DIM = "\x1b[2m", BOLD = "\x1b[1m", OFF = "\x1b[0m";
+const plural = (n, one, many = one + "s") => `${n} ${n === 1 ? one : many}`;
+
+function describe(p) {
+  const bits = [];
+  if (p.tables.length) bits.push(plural(p.tables.length, "table"));
+  if (p.views.length) bits.push(plural(p.views.length, "view"));
+  if (p.functions.length) bits.push(plural(p.functions.length, "function"));
+  if (p.columns.length) bits.push(plural(p.columns.length, "column"));
+  if (p.policies.length) bits.push(plural(p.policies.length, "policy", "policies"));
+  return bits.join(", ") || "nothing the catalog can show";
+}
+
+/*
+  A PATCH MUST NOT BE LISTED BEFORE THE FILE THAT MAKES ITS TABLE. Alphabetical
+  order puts patch_announced.sql above varsity_lineups.sql, and running it there
+  would just fail. So: a file waits for whichever file creates a table it only
+  adds to. Anything left in a cycle (there are none today) keeps its place.
+*/
+function order(list, creator) {
+  const inList = new Set(list.map((p) => p.file));
+  const needs = new Map(
+    list.map((p) => {
+      const own = new Set(p.tables);
+      const deps = new Set();
+      /* A column reads "table.column"; a policy reads "schema.table::name". */
+      const tables = [
+        ...p.columns.map((c) => c.slice(0, c.indexOf("."))),
+        ...p.policies.map((pol) => {
+          const q = pol.split("::")[0];
+          return q.slice(q.indexOf(".") + 1);
+        }),
+      ];
+      for (const table of tables) {
+        const from = creator.get(table);
+        if (from && from !== p.file && inList.has(from) && !own.has(table)) deps.add(from);
+      }
+      return [p.file, deps];
+    }),
+  );
+
+  const out = [];
+  const placed = new Set();
+  let moved = true;
+  while (moved && out.length < list.length) {
+    moved = false;
+    for (const p of list) {
+      if (placed.has(p.file)) continue;
+      if ([...needs.get(p.file)].every((d) => placed.has(d))) {
+        out.push(p);
+        placed.add(p.file);
+        moved = true;
+      }
+    }
+  }
+  for (const p of list) if (!placed.has(p.file)) out.push(p); // a cycle: leave as found
+  return out;
+}
+
+function main() {
+  const offline = process.argv.includes("--offline");
+  const files = fs
+    .readdirSync(DB_DIR)
+    .filter((f) => f.endsWith(".sql"))
+    .sort();
+  const parsed = files.map(parseFile);
+
+  console.log(`\n${BOLD}UNIsport — what has been run in the database${OFF}`);
+  console.log(`${DIM}${files.length} files in ${DB_DIR}/  ·  project ${PROJECT_REF}${OFF}\n`);
+
+  if (offline) {
+    for (const p of parsed) {
+      const kind = kindOf(p.file);
+      const tag = kind === "migration" ? "" : `  (${kind})`;
+      console.log(`  ${p.file.padEnd(38)} ${describe(p)}${DIM}${tag}${OFF}`);
+    }
+    console.log(`\n${DIM}Offline: nothing was asked of the database.${OFF}\n`);
+    return;
+  }
+
+  const token = tokenFromEnvFile();
+  if (!token) {
+    console.error(
+      `${RED}No SUPABASE_ACCESS_TOKEN found.${OFF}\n\n` +
+        `Add one to .env.local (the file is gitignored, so it stays on this machine):\n\n` +
+        `    SUPABASE_ACCESS_TOKEN=sbp_…\n\n` +
+        `Generate it at https://supabase.com/dashboard/account/tokens\n` +
+        `Or run \`node scripts/check-db.mjs --offline\` to see what each file expects\n` +
+        `without touching the database.\n`,
+    );
+    process.exit(1);
+  }
+  return report(token, parsed);
+}
+
+async function report(token, parsed) {
+  let rows;
+  try {
+    rows = await ask(token, CATALOG_SQL);
+  } catch (e) {
+    console.error(`${RED}Could not read the database.${OFF}\n${e.message}\n`);
+    process.exit(1);
+  }
+
+  const live = { table: new Map(), view: new Map(), column: new Set(), function: new Set(), policy: new Set() };
+  for (const r of rows) {
+    if (r.kind === "table") live.table.set(r.name, r.extra === "true");
+    else if (r.kind === "view") live.view.set(r.name, r.extra);
+    else live[r.kind].add(r.name);
+  }
+
+  const done = [], partial = [], todo = [], unknown = [];
+  const seeds = [], undos = [], others = [];
+  const warnings = [];
+
+  /* Which file creates which table — so a missing column can name the file that
+     has to run first. */
+  const creator = new Map();
+  for (const p of parsed) {
+    if (kindOf(p.file) !== "migration") continue;
+    for (const t of p.tables) if (!creator.has(t)) creator.set(t, p.file);
+  }
+
+  for (const p of parsed) {
+    const kind = kindOf(p.file);
+    if (kind === "seed") { seeds.push(p); continue; }
+    if (kind === "undo") { undos.push(p); continue; }
+    if (kind === "design" || kind === "test") { others.push({ ...p, kind }); continue; }
+
+    /* A migration the catalog cannot speak for — a one-off UPDATE, say. */
+    if (countOf(p) === 0) { unknown.push(p); continue; }
+
+    const missing = [];
+    for (const t of p.tables) if (!live.table.has(t)) missing.push(`table ${t}`);
+    for (const v of p.views) if (!live.view.has(v)) missing.push(`view ${v}`);
+    for (const f of p.functions) if (!live.function.has(f)) missing.push(`function ${f}()`);
+    for (const c of p.columns) {
+      if (live.column.has(c)) continue;
+      const table = c.slice(0, c.indexOf("."));
+      const first = !live.table.has(table) && creator.get(table) && creator.get(table) !== p.file
+        ? ` ${DIM}(needs ${creator.get(table)} first)${OFF}`
+        : "";
+      missing.push(`column ${c}${first}`);
+    }
+    for (const pol of p.policies) if (!live.policy.has(pol)) missing.push(`policy ${pol.replace("::", " → ")}`);
+
+    const total = countOf(p);
+    const entry = { ...p, missing, total };
+    if (missing.length === 0) done.push(entry);
+    else if (missing.length === total) todo.push(entry);
+    else partial.push(entry);
+
+    /* Row security the file turns on, but the live table has off. */
+    for (const t of p.rlsOn) {
+      if (live.table.has(t) && live.table.get(t) === false) {
+        warnings.push(`${t} exists but row-level security is OFF — ${p.file} turns it on`);
+      }
+    }
+  }
+
+  /* The match_profiles fix is a security change, not a new object, so the piles
+     above cannot see it. Check it on its own terms. */
+  const mp = live.view.get("match_profiles");
+  if (mp !== undefined) {
+    if (!/security_invoker=(true|on)/i.test(mp)) {
+      warnings.push(
+        "match_profiles still runs with its OWNER's rights — the last two lines of " +
+          "db/matching.sql have not been run. Any signed-in user can read every " +
+          "onboarded profile until they are.",
+      );
+    }
+    try {
+      const g = await ask(
+        token,
+        `select has_table_privilege('authenticated','public.match_profiles','select') as can`,
+      );
+      if (g?.[0]?.can === true) {
+        warnings.push(
+          "match_profiles is still readable by signed-in users — run the revoke at " +
+            "the bottom of db/matching.sql.",
+        );
+      }
+    } catch {
+      /* the role may not exist on a local copy; the reloptions check is the important one */
+    }
+  }
+
+  const show = (title, list, color, note) => {
+    if (!list.length) return;
+    console.log(`${color}${BOLD}${title} (${list.length})${OFF}`);
+    if (note) console.log(`${DIM}  ${note}${OFF}`);
+    for (const p of list) {
+      console.log(`  ${p.file.padEnd(36)} ${DIM}${describe(p)}${OFF}`);
+      if (p.missing?.length) {
+        const head = p.missing.slice(0, 6).join(", ");
+        const rest = p.missing.length > 6 ? `, +${p.missing.length - 6} more` : "";
+        console.log(`      ${YELLOW}missing:${OFF} ${head}${rest}`);
+      }
+    }
+    console.log("");
+  };
+
+  show("ALREADY RUN", done, GREEN, "everything these files create is in the database");
+  show("PARTLY RUN", partial, YELLOW, "some of this landed — re-run the file, they are written to be safe to re-run");
+  show("STILL TO RUN", todo, RED, "nothing from these files is in the database yet");
+  show(
+    "CANNOT BE CHECKED", unknown, DIM,
+    "these only change existing rows, so the catalog cannot say — re-run if unsure, they are safe",
+  );
+  show(
+    "SEEDS — demo rows, not structure", seeds, DIM,
+    "not needed for the app to work; run one when a screen looks empty",
+  );
+  show("UNDO — removes demo rows again", undos, DIM, "only run these to clear a seed");
+  show("NOT MIGRATIONS", others, DIM, "a planning file and hand-run test queries — leave them alone");
+
+  if (warnings.length) {
+    console.log(`${RED}${BOLD}NEEDS ATTENTION (${warnings.length})${OFF}`);
+    for (const w of warnings) console.log(`  ${RED}!${OFF} ${w}`);
+    console.log("");
+  }
+
+  const left = order([...todo, ...partial], creator);
+  if (left.length) {
+    console.log(`${BOLD}Copy and paste this to run what is left, in this order:${OFF}\n`);
+    for (const p of left) console.log(`node scripts/run-sql.mjs ${DB_DIR}/${p.file}`);
+    console.log("");
+    console.log(
+      `${DIM}A file whose policies already exist will complain "policy already exists" —\n` +
+        `that means it was already run, and nothing is wrong. Everything else in\n` +
+        `these files is written with "if not exists", so re-running is safe.${OFF}\n`,
+    );
+  } else {
+    console.log(`${GREEN}${BOLD}Nothing left to run — the database has everything db/ describes.${OFF}\n`);
+  }
+}
+
+main();
