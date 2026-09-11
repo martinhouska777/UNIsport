@@ -22,8 +22,9 @@ import UploadVideoSheet from "@/components/varsity/UploadVideoSheet";
 import ClaimSeatSheet from "@/components/varsity/ClaimSeatSheet";
 import { driveConfigured, driveFolderLink } from "@/lib/varsity/drive";
 import { fetchNote } from "@/lib/varsity/notesStore";
-import { sessionKey, parseDate } from "@/lib/varsity/coachPlan";
-import { buildAthleteHome, daySessionToCard } from "@/lib/varsity/athleteHome";
+import { sessionKey, parseDate, toISO } from "@/lib/varsity/coachPlan";
+import { buildAthleteHome, daySessionToCard, logSpanFor } from "@/lib/varsity/athleteHome";
+import { fetchLogsInRange, LOG_DAYS_BACK } from "@/lib/varsity/logStore";
 import { SkeletonCards, SkeletonLines } from "@/components/ui/Skeleton";
 import SectionLabel from "@/components/ui/SectionLabel";
 import {
@@ -45,7 +46,6 @@ import {
 import {
   IconFlag,
   IconClock,
-  IconCheck,
   IconCheckCircle,
   IconMessage,
   IconX,
@@ -62,15 +62,26 @@ import {
   IconUser,
 } from "@/components/icons";
 
+// Three states, all read off the athlete's own log (lib/varsity/athleteHome).
 const statusStyle: Record<
   SessionStatus,
   { cls: string; label: string; Icon: (p: { size?: number }) => React.ReactElement }
 > = {
-  verified: { cls: "text-success", label: "VERIFIED", Icon: IconCheckCircle },
   upcoming: { cls: "text-muted", label: "UPCOMING", Icon: IconClock },
-  flagged: { cls: "text-warn", label: "FLAGGED", Icon: IconFlag },
+  done: { cls: "text-success", label: "LOGGED", Icon: IconCheckCircle },
   missed: { cls: "text-danger", label: "MISSED", Icon: IconX },
 };
+
+/*
+  CAN THIS SESSION STILL BE LOGGED? The Log tab reaches back LOG_DAYS_BACK days
+  (today included) and no further, so a card offers its Log button exactly when
+  the tab could open that day — anything older is simply "missed".
+*/
+function loggable(iso: string): boolean {
+  const oldest = new Date();
+  oldest.setDate(oldest.getDate() - (LOG_DAYS_BACK - 1));
+  return iso >= toISO(oldest) && iso <= toISO(new Date());
+}
 
 /* The section label used to be defined here, one of more than ten versions of
    the same heading across the app. It lives in components/ui now. */
@@ -636,17 +647,32 @@ function SessionCard({ s, lineups = [] }: { s: TodaySession; lineups?: Lineup[] 
           </div>
         ))}
 
-      {s.verify && (
-        <div className="flex items-center gap-3 border-t border-border bg-background/60 px-3 py-2">
-          {s.verify.map((v, i) => (
-            <div key={i} className="flex items-center gap-1 text-[11px]">
-              <span className="text-success">
-                <IconCheck size={11} />
-              </span>
-              <span className="text-muted">{v.label}</span>
-              <span className="font-medium text-text">{v.value}</span>
-            </div>
-          ))}
+      {/*
+        THE FOOT OF THE CARD: what the log says about this session, and the way
+        to the log. Done → the figures you saved, and Edit. Not yet → a Log
+        button, as long as the Log tab can still open that day; older than that
+        and the card only says so. Both open EXACTLY this session's editor
+        (/varsity/log?day=…&open=…), not the tab's front page.
+      */}
+      {(s.status === "done" || loggable(s.iso)) && (
+        <div className="flex items-center justify-between gap-3 border-t border-border bg-background/60 px-3 py-2">
+          <span className="min-w-0 truncate text-[12px] text-text-2">
+            {s.status === "done"
+              ? s.log?.summary || "Logged"
+              : s.status === "missed"
+                ? "Not logged yet"
+                : "Log it when you're done"}
+          </span>
+          <Link
+            href={`/varsity/log?day=${s.iso}&open=${s.dayKey}`}
+            className={
+              s.status === "done"
+                ? "flex-shrink-0 text-[12px] font-semibold text-primary"
+                : "flex-shrink-0 rounded-lg bg-primary-live px-3 py-1.5 text-[12px] font-semibold text-primary-contrast"
+            }
+          >
+            {s.status === "done" ? "Edit" : "Log"}
+          </Link>
         </div>
       )}
     </div>
@@ -943,16 +969,18 @@ export default function HomeScreen() {
     let active = true;
     (async () => {
       const today = new Date();
-      const identity = await fetchSeatIdentity(userId);
-      const [plan, lineups, coachNote] = await Promise.all([
-        fetchPlan(),
+      // The plan first: which days the log is needed for depends on it.
+      const [identity, plan] = await Promise.all([fetchSeatIdentity(userId), fetchPlan()]);
+      const span = logSpanFor(plan, today);
+      const [lineups, coachNote, logs] = await Promise.all([
         fetchTodayLineups((p) => sessionKey(today, p), identity),
         fetchNote(userId),
+        span && userId ? fetchLogsInRange(userId, span.from, span.to) : Promise.resolve([]),
       ]);
       if (!active) return;
       const firstName = identity.name.split(/\s+/)[0] ?? "";
       setMe(identity);
-      setData(buildAthleteHome(plan, firstName, lineups, today));
+      setData(buildAthleteHome(plan, firstName, lineups, today, logs));
       setNote(coachNote);
       setLoading(false);
     })();
@@ -1052,7 +1080,7 @@ export default function HomeScreen() {
   */
   const sessions: TodaySession[] = onToday
     ? data.today
-    : (viewDay?.sessions ?? []).map(daySessionToCard);
+    : (viewDay?.sessions ?? []).map((s) => daySessionToCard(s, viewDay!.iso));
   const lineups: Lineup[] = onToday
     ? data.lineups
     : awayLineups?.iso === viewDay?.iso

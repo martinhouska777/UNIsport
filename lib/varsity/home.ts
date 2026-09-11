@@ -1,10 +1,10 @@
 /*
   VARSITY HOME — DATA (source of truth for the Home screen)
   ------------------------------------------------------------------
-  Everything the Home screen shows lives here as data, so the screen is just a
-  renderer. Later this comes from the database (coach's plan, the athlete's
-  logged sessions, the day's lineup). For now it's the mock day from the
-  mockup so the layout can be reviewed.
+  The TYPES the Home screen renders and the colour axis they share, so the
+  screen is just a renderer. The data itself is built in lib/varsity/
+  athleteHome.ts from the coach's published plan, the athlete's own log and
+  the day's published boats.
 
   Session "kind" is the CALENDAR's colour axis — the thing a month of squares
   is read by. It answers "how hard was that day", which is why the three
@@ -69,7 +69,21 @@ export const kindLegend: { kind: SessionKind; label: string }[] = [
   { kind: "race", label: "Race" },
 ];
 
-export type SessionStatus = "verified" | "upcoming" | "flagged" | "missed";
+/*
+  WHERE A SESSION STANDS, read off the athlete's own log (lib/varsity/logStore):
+
+    upcoming  — not logged, and the day is today or later
+    done      — a log exists for this plan slot
+    missed    — not logged, and the day has gone
+
+  Three states, all derived. There used to be five, and only "upcoming" was
+  ever reachable — Home did not read the log at all, so this morning's erg said
+  UPCOMING in grey at nine at night.
+*/
+export type SessionStatus = "upcoming" | "done" | "missed";
+
+/** The logged result, as one line: "75 min · 18,000 m · 1:52". */
+export type LoggedSummary = { summary: string };
 
 export type DaySession = {
   time: string; // period: "AM" | "PM" | "ALL"
@@ -78,6 +92,9 @@ export type DaySession = {
   type?: string; // category · intensity, e.g. "Water · UT2" — shown in the day detail
   kind: SessionKind;
   note?: string; // coach note for this session
+  dayKey: string; // the plan slot (coachPlan → sessionKey) this session lives in
+  status: SessionStatus;
+  log?: LoggedSummary;
 };
 export type WeekDay = {
   letter: string;
@@ -89,7 +106,6 @@ export type WeekDay = {
   sessions: DaySession[];
 };
 
-export type VerifyStat = { label: string; value: string; ok: boolean };
 export type CoachNote = { coach: string; text: string };
 export type TodaySession = {
   period: string; // what's SHOWN, e.g. "AM · 6:00"
@@ -97,13 +113,17 @@ export type TodaySession = {
      it to find its own boat among the day's lineups — reading "AM" back out of
      the display string would break the first time the label changes. */
   periodKey: "AM" | "PM";
+  /* The plan slot and the calendar day, so a Log button on the card can open
+     exactly this session's editor (/varsity/log?day=…&open=…). */
+  dayKey: string;
+  iso: string; // yyyy-mm-dd
   location: string;
   status: SessionStatus;
+  log?: LoggedSummary;
   kind: SessionKind;
   title: string;
   detail: string;
   coachNote?: CoachNote;
-  verify?: VerifyStat[];
 };
 
 /*
@@ -213,15 +233,20 @@ export type Greeting = { date: string; name: string; block: string; week: string
 // `small` is the optional caption under a number ("Days"/"Day"). When the race
 // has already passed, the Home screen drops the race entirely (race = null).
 export type Race = { name: string; location: string; big: string; small?: string };
-export type Focus = { coach: string; when: string; text: string; tags: string[] };
 
 // One Mon–Sun week of the plan, with a short range label ("May 18 – 24").
 export type WeekView = { label: string; days: WeekDay[] };
 
-// The full shape the Home screen renders. The athlete view builds this from the
-// published plan (lib/varsity/athleteHome.ts); the object below is demo data.
-// `weeks` is every week of the current block (so the strip can swipe / show the
-// month); `weekIndex` is the one containing today.
+/*
+  The full shape the Home screen renders. Built from the published plan AND the
+  athlete's own log by lib/varsity/athleteHome.ts. `weeks` is every week of the
+  current block (so the strip can swipe / show the month); `weekIndex` is the
+  one containing today.
+
+  A demo copy of this object used to live here, from the original mockup. It
+  fed exactly one field — a "coach's focus" paragraph the screen no longer
+  rendered — and carried the statuses that were never reachable, so it went.
+*/
 export type HomeData = {
   greeting: Greeting;
   race: Race | null;
@@ -229,86 +254,5 @@ export type HomeData = {
   weekIndex: number;
   today: TodaySession[];
   lineups: Lineup[];
-  focus: Focus;
 };
 
-export const home: HomeData = {
-  greeting: {
-    date: "Friday · May 22",
-    name: "Martin",
-    block: "SPRING BLOCK 3",
-    week: "Week 8 of 12",
-  },
-  race: {
-    name: "Harvard vs Yale Regatta",
-    location: "Thames River, CT · 8:00 AM start",
-    big: "Tomorrow",
-  },
-  weekIndex: 0,
-  weeks: [
-    {
-      label: "May 18 – 24",
-      days: [
-        { letter: "M", num: 18, iso: "2026-05-18", sessions: [
-          { time: "AM", label: "UT2 erg", kind: "ut2" },
-          { time: "PM", label: "Weights", kind: "weights" },
-        ] },
-        { letter: "T", num: 19, iso: "2026-05-19", sessions: [{ time: "AM", label: "UT2 run", kind: "ut2" }] },
-        { letter: "W", num: 20, iso: "2026-05-20", sessions: [{ time: "ALL", label: "OFF", kind: "off" }] },
-        { letter: "T", num: 21, iso: "2026-05-21", sessions: [
-          { time: "AM", label: "UT2 erg", kind: "ut2" },
-          { time: "PM", label: "RP3", kind: "hard" },
-        ] },
-        { letter: "F", num: 22, iso: "2026-05-22", today: true, sessions: [
-          { time: "AM", label: "UT2 run", kind: "ut2" },
-          { time: "PM", label: "RP3 4x5'", kind: "hard" },
-        ] },
-        { letter: "S", num: 23, iso: "2026-05-23", sessions: [{ time: "AM", label: "RACE", kind: "race" }] },
-        { letter: "S", num: 24, iso: "2026-05-24", dimmed: true, sessions: [{ time: "ALL", label: "Flex", kind: "flex" }] },
-      ] as WeekDay[],
-    },
-  ],
-  today: [
-    {
-      period: "AM · 7:00",
-      periodKey: "AM" as const,
-      location: "In house",
-      status: "verified",
-      kind: "ut2",
-      title: "UT2 · 6 mile run",
-      detail: "Easy aerobic · keep HR under 155",
-      coachNote: {
-        coach: "COACH DORNEY",
-        text: "Save the legs. Tomorrow is race day — stay easy, stay fresh.",
-      },
-      verify: [
-        { label: "Duration", value: "52:18", ok: true },
-        { label: "HR avg", value: "148", ok: true },
-        { label: "Zone", value: "UT2 ✓", ok: true },
-      ],
-    },
-    {
-      period: "PM · 4:30",
-      periodKey: "PM" as const,
-      location: "Palmer Dixon",
-      status: "upcoming",
-      kind: "hard",
-      title: "RP3 · 4x5' (1:30 at r32, 2k+2)",
-      detail: "Target: 1:28.5 avg · hold rate",
-      coachNote: {
-        coach: "COACH DORNEY",
-        text: "Last hard piece before race. Hit splits, don't bury yourself. Get out clean.",
-      },
-    },
-  ] as TodaySession[],
-  // The real Home builds lineups from the published DB lineup (see
-  // lib/varsity/lineupStore.ts → fetchTodayLineups); this demo object only
-  // still feeds `focus`, so the lineup sample is left empty.
-  lineups: [] as Lineup[],
-  focus: {
-    coach: "COACH DORNEY · FOCUS THIS WEEK",
-    when: "Updated Monday",
-    text: "Finish the stroke. You're all rushing at the catch and leaving the drive unfinished. Drive through to the hips before you extract.",
-    tags: ["Finish", "Drive", "Ratio"],
-  },
-};

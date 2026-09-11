@@ -10,6 +10,14 @@ import { createClient, hasSupabaseEnv } from "@/lib/supabase/client";
 
 export type LogSource = "plan" | "extra";
 
+/*
+  HOW FAR BACK A SESSION CAN STILL BE LOGGED: today and the six days before it.
+  The Log tab's day strip is built from this, and so is the Log button on a
+  Home session card — a card older than this says "missed" and offers nothing,
+  because the Log tab could not open that day anyway.
+*/
+export const LOG_DAYS_BACK = 7;
+
 export type LogEntry = {
   id: string;
   logDate: string; // ISO yyyy-mm-dd

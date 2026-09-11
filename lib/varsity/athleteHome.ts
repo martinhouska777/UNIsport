@@ -1,13 +1,18 @@
 /*
-  ATHLETE HOME — derive the Home screen from the coach's PUBLISHED plan.
+  ATHLETE HOME — derive the Home screen from the coach's PUBLISHED plan and the
+  athlete's OWN log.
   ------------------------------------------------------------------------
-  Given the shared plan (blocks + sessions), build the data the Home screen
-  renders FOR TODAY: the greeting (block + week-of), the race countdown, this
-  week's strip, and today's AM/PM sessions. Athletes only ever see the current
+  Given the shared plan (blocks + sessions) and the athlete's logs for the
+  block, build the data the Home screen renders: the greeting (block + week-of),
+  the race countdown, every week's strip, and the day's AM/PM sessions — each
+  one knowing whether it has been LOGGED. Athletes only ever see the current
   week of a PUBLISHED block — never the whole block ahead (per the spec).
 
-  Lineup + coach-focus are separate features (next slices); for now they reuse
-  the demo data so the screen stays whole.
+  Why the log is in here at all: Home used to paint every session "upcoming"
+  forever, because it never looked at what the athlete had done. So this
+  morning's erg still said UPCOMING at nine at night, and nothing on the screen
+  led to the Log. Now a session card is a fact about the day — planned, done,
+  or missed — and the Log is one tap from it.
 */
 import {
   buildWeeks,
@@ -20,16 +25,19 @@ import {
   type Session,
   type Block,
 } from "./coachPlan";
-import {
-  home,
-  type HomeData,
-  type SessionKind,
-  type WeekView,
-  type DaySession,
-  type TodaySession,
-  type Lineup,
+import type {
+  HomeData,
+  SessionKind,
+  SessionStatus,
+  LoggedSummary,
+  WeekView,
+  DaySession,
+  TodaySession,
+  Lineup,
 } from "./home";
 import type { Plan } from "./planStore";
+import type { LogEntry } from "./logStore";
+import { formatMetrics } from "./logParse";
 
 // Plan category/intensity → the Home screen's color "kind". Exported because the
 // Calendar tab colours a LOGGED session by the plan session it came from, so
@@ -86,6 +94,20 @@ function pickActive(blocks: Block[], today: Date) {
   return null;
 }
 
+/*
+  THE DATES THE LOG IS NEEDED FOR: the active block's first day up to today.
+  Home fetches the athlete's logs for this span in one go, so every card on
+  every day of the block can say whether it was done. Null when there is no
+  published block, in which case there is nothing to ask the log about.
+*/
+export function logSpanFor(plan: Plan, today = new Date()): { from: string; to: string } | null {
+  const active = pickActive(plan.blocks, today);
+  if (!active) return null;
+  const first = active.weeks[0].days[0].date;
+  const from = toISO(first < today ? first : today);
+  return { from, to: toISO(today) };
+}
+
 // A day's PRESCRIBED sessions (for the Log tab) — the same published-block gate
 // as Home, so athletes log exactly what they're shown. Works for any day (today
 // or a recent one). Empty when the day isn't in a published block or has none.
@@ -105,24 +127,45 @@ export function prescribedForDay(
 }
 
 /*
+  WHERE A SESSION STANDS. A plan log is stored against its slot (`dayKey`), so
+  "done" is a lookup. "Missed" is only ever said about a day that has GONE —
+  today's unlogged session is still ahead of you, or you simply haven't got to
+  your phone yet, and neither deserves a red word.
+*/
+function statusOf(
+  dayKey: string,
+  iso: string,
+  todayIso: string,
+  logsByKey: Record<string, LogEntry>,
+): { status: SessionStatus; log?: LoggedSummary } {
+  const entry = logsByKey[dayKey];
+  if (entry) {
+    const summary = formatMetrics(entry.minutes, entry.metres, entry.split);
+    return { status: "done", log: { summary } };
+  }
+  return { status: iso < todayIso ? "missed" : "upcoming" };
+}
+
+/*
   A day-strip session, drawn as a full session card.
 
   The Home screen shows ANY day in the place today's sessions sit, and it must
   look the same whichever day that is — a second, smaller design for "some
   other Wednesday" is how the screen used to feel wrong. The week strip already
-  carries every day's workout, so this is a rename of fields rather than a
-  second trip to the plan.
+  carries every day's workout AND its status, so this is a rename of fields
+  rather than a second trip to the plan or the log.
 */
-export function daySessionToCard(s: DaySession): TodaySession {
+export function daySessionToCard(s: DaySession, iso: string): TodaySession {
   return {
     period: s.clock ? `${s.time} · ${s.clock}` : s.time,
     // "ALL" is a whole-day entry and belongs to neither half; it can't own a
     // boat, so it falls to AM rather than inventing a third period.
     periodKey: s.time === "PM" ? "PM" : "AM",
+    dayKey: s.dayKey,
+    iso,
     location: "",
-    // Nothing is claimed about a day that hasn't happened, or one that has:
-    // verification is today's business and lives on today's cards only.
-    status: "upcoming",
+    status: s.status,
+    log: s.log,
     kind: s.kind,
     title: s.label,
     detail: s.type ?? "",
@@ -135,11 +178,18 @@ export function buildAthleteHome(
   firstName: string,
   lineups: Lineup[],
   today = new Date(),
+  logs: LogEntry[] = [],
 ): HomeData | null {
   const active = pickActive(plan.blocks, today);
   if (!active) return null;
   const { block, weeks, weekIdx } = active;
   const weekRow = weeks[weekIdx];
+  const todayIso = toISO(today);
+
+  // The athlete's plan logs, by the slot they were logged against. Extra
+  // training has no slot and is the Log tab's business, not a card's.
+  const logsByKey: Record<string, LogEntry> = {};
+  for (const l of logs) if (l.source === "plan" && l.dayKey) logsByKey[l.dayKey] = l;
 
   const dateLabel =
     today.toLocaleDateString("en-US", { weekday: "long" }) +
@@ -150,27 +200,33 @@ export function buildAthleteHome(
   // month overview. weekIdx (0-based) is the week containing today.
   const weekViews: WeekView[] = weeks.map((wk) => ({
     label: wk.rangeLabel,
-    days: wk.days.map((d) => ({
-      letter: d.weekday[0],
-      num: d.dayNum,
-      iso: toISO(d.date),
-      dateLabel: `${d.weekday} · ${d.month} ${d.dayNum}`,
-      today: d.today || undefined,
-      sessions: periods.flatMap((p) => {
-        const s = plan.sessions[sessionKey(d.date, p)];
-        if (!s) return [];
-        return [
-          {
-            time: p,
-            clock: s.time,
-            label: cellLabel(s),
-            type: sessionLabel(s),
-            kind: kindOf(s),
-            note: s.note || undefined,
-          },
-        ];
-      }),
-    })),
+    days: wk.days.map((d) => {
+      const iso = toISO(d.date);
+      return {
+        letter: d.weekday[0],
+        num: d.dayNum,
+        iso,
+        dateLabel: `${d.weekday} · ${d.month} ${d.dayNum}`,
+        today: d.today || undefined,
+        sessions: periods.flatMap((p) => {
+          const dayKey = sessionKey(d.date, p);
+          const s = plan.sessions[dayKey];
+          if (!s) return [];
+          return [
+            {
+              time: p,
+              clock: s.time,
+              label: cellLabel(s),
+              type: sessionLabel(s),
+              kind: kindOf(s),
+              note: s.note || undefined,
+              dayKey,
+              ...statusOf(dayKey, iso, todayIso, logsByKey),
+            },
+          ];
+        }),
+      };
+    }),
   }));
 
   // Today's AM/PM sessions (empty if today isn't inside this week — e.g. a block
@@ -178,7 +234,8 @@ export function buildAthleteHome(
   const todayCell = weekRow.days.find((d) => d.today);
   const todaySessions: TodaySession[] = todayCell
     ? periods.flatMap((p) => {
-        const s = plan.sessions[sessionKey(todayCell.date, p)];
+        const dayKey = sessionKey(todayCell.date, p);
+        const s = plan.sessions[dayKey];
         if (!s) return [];
         const label = sessionLabel(s);
         const desc = s.description.trim();
@@ -186,8 +243,10 @@ export function buildAthleteHome(
           {
             period: `${p} · ${s.time}`,
             periodKey: p,
+            dayKey,
+            iso: todayIso,
             location: "",
-            status: "upcoming" as const,
+            ...statusOf(dayKey, todayIso, todayIso, logsByKey),
             kind: kindOf(s),
             title: desc || label,
             detail: desc ? label : "",
@@ -236,6 +295,5 @@ export function buildAthleteHome(
     weekIndex: weekIdx,
     today: todaySessions,
     lineups, // today's published boats (empty if none posted)
-    focus: home.focus, // placeholder until the notes slice
   };
 }

@@ -13,7 +13,8 @@
   so its Save bar stays pinned). Colors are theme tokens; the per-category dot is
   a content color applied via inline style (rule-1 exception).
 */
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Button, { buttonClass } from "@/components/ui/Button";
 import { createPortal } from "react-dom";
 import ThemeProvider from "@/components/ThemeProvider";
@@ -41,6 +42,7 @@ import {
   saveExtraLog,
   updateLog,
   deleteLog,
+  LOG_DAYS_BACK,
   type LogEntry,
   type LogDraft,
 } from "@/lib/varsity/logStore";
@@ -597,7 +599,9 @@ function DayChip({
 }
 
 /* ─────────────────────────  screen  ───────────────────────── */
-const DAYS_BACK = 7; // today + the past 6 days
+// How far back the day strip reaches (today + the six days before it) lives
+// with the log itself — Home's session cards use the same number to decide
+// whether to offer a Log button at all.
 
 function startOfDay(d: Date) {
   const x = new Date(d);
@@ -605,15 +609,23 @@ function startOfDay(d: Date) {
   return x;
 }
 
-export default function LogScreen() {
+function LogScreenInner() {
   const { userId } = useAppState();
+  /*
+    ARRIVED FROM A SESSION CARD ON HOME? The link carries the day to open and
+    the plan slot to log (/varsity/log?day=yyyy-mm-dd&open=<dayKey>), so a tap
+    on "Log" lands in THAT session's editor, not on the tab's front page.
+  */
+  const params = useSearchParams();
+  const linkDay = params.get("day");
+  const linkOpen = params.get("open");
   const today = useMemo(() => startOfDay(new Date()), []);
   // The last 7 days, oldest → newest (today on the right).
   const days = useMemo(
     () =>
-      Array.from({ length: DAYS_BACK }, (_, i) => {
+      Array.from({ length: LOG_DAYS_BACK }, (_, i) => {
         const d = new Date(today);
-        d.setDate(today.getDate() - (DAYS_BACK - 1 - i));
+        d.setDate(today.getDate() - (LOG_DAYS_BACK - 1 - i));
         return d;
       }),
     [today],
@@ -624,7 +636,10 @@ export default function LogScreen() {
   const [plan, setPlan] = useState<Plan | null>(null);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selected, setSelected] = useState<Date>(today);
+  // The linked day when there is one and the strip reaches it; today otherwise.
+  const [selected, setSelected] = useState<Date>(
+    () => days.find((d) => toISO(d) === linkDay) ?? today,
+  );
   const [editor, setEditor] = useState<EditorState | null>(null);
 
   const reloadLogs = async () => {
@@ -663,6 +678,32 @@ export default function LogScreen() {
     () => (plan ? prescribedForDay(plan, selected) : []),
     [plan, selected],
   );
+
+  /*
+    The linked session's editor, open the moment the plan and the logs are in.
+    DERIVED, not set from an effect: it is on screen for as long as the link is
+    unconsumed, and closing or saving it (below) consumes the link — so after
+    backing out the athlete is on the tab with the link still in the address
+    bar and the editor does NOT spring open again.
+  */
+  const [linkConsumed, setLinkConsumed] = useState(false);
+  const linkedEditor: EditorState | null = useMemo(() => {
+    if (linkConsumed || loading || !linkOpen) return null;
+    const p = prescribed.find((x) => x.dayKey === linkOpen);
+    if (!p) return null;
+    return {
+      mode: "plan",
+      period: p.period,
+      dayKey: p.dayKey,
+      session: p.session,
+      existing: planLogByKey[p.dayKey],
+    };
+  }, [linkConsumed, loading, linkOpen, prescribed, planLogByKey]);
+  const activeEditor = editor ?? linkedEditor;
+  const closeEditor = () => {
+    setEditor(null);
+    setLinkConsumed(true);
+  };
 
   // Per-day status for the strip dots.
   const dayStat = useMemo(() => {
@@ -783,18 +824,36 @@ export default function LogScreen() {
         </div>
       </div>
 
-      {editor && userId && (
+      {activeEditor && userId && (
         <LogEditor
-          state={editor}
+          state={activeEditor}
           athleteId={userId}
           logDate={selectedIso}
-          onClose={() => setEditor(null)}
+          onClose={closeEditor}
           onSaved={async () => {
             await reloadLogs();
-            setEditor(null);
+            closeEditor();
           }}
         />
       )}
     </>
+  );
+}
+
+/*
+  The day and session to open come out of the URL, which a page has to be
+  allowed to wait for — same shape as the All-boats page (AllLineupsScreen).
+*/
+export default function LogScreen() {
+  return (
+    <Suspense
+      fallback={
+        <div className="mx-auto w-full max-w-screen-sm px-4 pt-4">
+          <div className="py-6 text-center text-[12px] text-muted">Loading…</div>
+        </div>
+      }
+    >
+      <LogScreenInner />
+    </Suspense>
   );
 }
