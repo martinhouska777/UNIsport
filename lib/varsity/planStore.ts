@@ -49,6 +49,7 @@ type BlockRow = {
   status: string;
   race_name: string | null;
   race_date: string | null;
+  announced: string | null; // what the squad was last told — db/patch_announced.sql
 };
 type SessionRow = {
   day_key: string;
@@ -71,6 +72,7 @@ function rowToBlock(r: BlockRow): Block {
     status: r.status === "published" ? "published" : "draft",
     raceName: r.race_name ?? undefined,
     raceDate: r.race_date ?? undefined,
+    announced: r.announced ?? null,
   };
 }
 function blockToRow(b: Block): BlockRow {
@@ -82,6 +84,7 @@ function blockToRow(b: Block): BlockRow {
     status: b.status,
     race_name: b.raceName ?? null,
     race_date: b.raceDate ?? null,
+    announced: b.announced ?? null,
   };
 }
 function rowToSession(r: SessionRow): Session {

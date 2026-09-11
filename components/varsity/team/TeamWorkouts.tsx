@@ -52,6 +52,7 @@ import { demoTeamPlan, demoSquadSize } from "@/lib/varsity/demoWorkouts";
 import { fetchResults, fetchSquadSize, type TeamResult } from "@/lib/varsity/resultsStore";
 import { teamWorkouts, type TeamWorkout } from "@/lib/varsity/teamBoard";
 import { sessionLabel, sessionColor, dayKeyLabel, parseSessionKey } from "@/lib/varsity/coachPlan";
+import { fetchTrainingConfig } from "@/lib/varsity/configStore";
 import { fetchOutings } from "@/lib/varsity/telemetryStore";
 import { demoOutings } from "@/lib/varsity/demoTelemetry";
 import { outingTotals, type TelemetryOuting as Outing } from "@/lib/varsity/telemetry";
@@ -84,8 +85,11 @@ export default function TeamWorkouts() {
   useEffect(() => {
     let active = true;
     (async () => {
-      const plan = await fetchPlan();
-      const list = teamWorkouts(plan.sessions);
+      // Which types may carry a board is the coach's setting, so the plan is
+      // read alongside the squad's config (the rowing default until it loads,
+      // or for a squad that never opened Settings).
+      const [plan, cfg] = await Promise.all([fetchPlan(), fetchTrainingConfig(teamId)]);
+      const list = teamWorkouts(plan.sessions, cfg);
       if (!active) return;
 
       if (list.length > 0) {
@@ -95,9 +99,11 @@ export default function TeamWorkouts() {
         setResults(rows);
       } else {
         // Nothing flagged yet → the worked example. Nobody real is in it: the
-        // viewer's own name never goes on a result they didn't pull.
+        // viewer's own name never goes on a result they didn't pull. The board
+        // still obeys the coach's own canBoard switch, so the example shows the
+        // same session types a real week would.
         const demo = demoTeamPlan(new Date());
-        setWorkouts(teamWorkouts(demo.sessions));
+        setWorkouts(teamWorkouts(demo.sessions, cfg));
         setResults(demo.results);
         setExample(true);
       }
@@ -106,7 +112,7 @@ export default function TeamWorkouts() {
     return () => {
       active = false;
     };
-  }, [userId]);
+  }, [userId, teamId]);
 
   useEffect(() => {
     let active = true;

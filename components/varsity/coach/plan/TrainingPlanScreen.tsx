@@ -27,6 +27,7 @@ import { useVarsityTheme } from "@/components/varsity/useVarsityTheme";
 import {
   periods,
   sessionKey,
+  parseSessionKey,
   boardOptions,
   defaultBoard,
   buildWeeks,
@@ -122,7 +123,12 @@ function PublishedBadge() {
   );
 }
 
-export default function TrainingPlanScreen() {
+export default function TrainingPlanScreen({
+  openSlot = null,
+}: {
+  /** A slot to open the editor on straight away (?slot= from the Today screen). */
+  openSlot?: string | null;
+}) {
   const vTheme = useVarsityTheme();
   const { membership } = useMembership();
   /*
@@ -251,35 +257,41 @@ export default function TrainingPlanScreen() {
   // changed under them. Only on success, and never on an autosave: a draft is
   // the coach thinking, and nobody should have their phone buzz for that.
   const publishBlock = async (blockId: string) => {
+    const target = blocks.find((x) => x.id === blockId);
+    if (!target) return;
+    // What the squad is about to be told, written on the block itself so it
+    // is still known next time the app opens (db/patch_announced.sql).
+    const snap = blockSnapshot(target);
     const next = blocks.map((b) =>
-      b.id === blockId ? { ...b, status: "published" as const } : b,
+      b.id === blockId ? { ...b, status: "published" as const, announced: snap } : b,
     );
     setBlocks(next);
-    const ok = await persist({ blocks: next });
-    const b = next.find((x) => x.id === blockId);
-    if (ok && b) {
-      markAnnounced(b);
-      notifySquad({ kind: "team_plan", preview: b.name });
-    }
+    if (!(await persist({ blocks: next }))) return;
+    setAnnounced((prev) => ({ ...prev, [blockId]: snap }));
+    notifySquad({ kind: "team_plan", preview: target.name });
   };
 
   /*
-    The block is already live and already changed on their Home — this only
-    buzzes the phones. Anything still in the autosave's pause is written first,
-    so the squad never gets told about work the database hasn't got.
+    The block is already live and already changed on their Home — this buzzes
+    the phones and writes down that it did. Anything still in the autosave's
+    pause goes with it, so the squad never gets told about work the database
+    hasn't got.
   */
   const tellSquad = async (blockId: string) => {
-    const b = blocks.find((x) => x.id === blockId);
-    if (!b) return;
-    if (dirty && !(await persist())) return;
-    markAnnounced(b);
-    notifySquad({ kind: "team_plan", preview: b.name });
+    const target = blocks.find((x) => x.id === blockId);
+    if (!target) return;
+    const snap = blockSnapshot(target);
+    const next = blocks.map((b) => (b.id === blockId ? { ...b, announced: snap } : b));
+    setBlocks(next);
+    if (!(await persist({ blocks: next }))) return;
+    setAnnounced((prev) => ({ ...prev, [blockId]: snap }));
+    notifySquad({ kind: "team_plan", preview: target.name });
   };
 
   // Move a published block back to draft (hides it from athletes again).
   const unpublishBlock = async (blockId: string) => {
     const next = blocks.map((b) =>
-      b.id === blockId ? { ...b, status: "draft" as const } : b,
+      b.id === blockId ? { ...b, status: "draft" as const, announced: null } : b,
     );
     setBlocks(next);
     setAnnounced((prev) => {
@@ -310,8 +322,11 @@ export default function TrainingPlanScreen() {
     Home as it is made. The only thing left to decide is whether their phones
     should buzz — so we remember what each block looked like the last time it
     was announced, and offer "Tell the squad" only once it actually differs.
-    In-session by design: it is a nudge about work you just did, not a promise
-    kept across days.
+
+    The memory is on the block row (`announced`, db/patch_announced.sql), so
+    an edit made to a live block and then closed still offers the buzz next
+    time — this map is just the row's value held for rendering. A block
+    published before that was recorded (null) is taken as up to date.
   */
   const [announced, setAnnounced] = useState<Record<string, string>>({});
   const blockSnapshot = (b: Block) =>
@@ -325,11 +340,10 @@ export default function TrainingPlanScreen() {
     ]);
   const blockChanged = (b: Block) =>
     announced[b.id] !== undefined && announced[b.id] !== blockSnapshot(b);
-  const markAnnounced = (b: Block) =>
-    setAnnounced((prev) => ({ ...prev, [b.id]: blockSnapshot(b) }));
 
-  /* A block that was ALREADY published when the screen opened starts from what
-     it looked like then — the squad has seen that much. */
+  /* A block that was ALREADY published when the screen opened starts from
+     what the squad was last told (on the row) — or, for a block published
+     before that was recorded, from what it looks like now. */
   useEffect(() => {
     if (loading) return;
     setAnnounced((prev) => {
@@ -337,7 +351,7 @@ export default function TrainingPlanScreen() {
       for (const b of blocks) {
         if (b.status !== "published" || prev[b.id] !== undefined) continue;
         if (next === prev) next = { ...prev };
-        next[b.id] = blockSnapshot(b);
+        next[b.id] = b.announced ?? blockSnapshot(b);
       }
       return next;
     });
@@ -436,6 +450,31 @@ export default function TrainingPlanScreen() {
     setEditor({ date, period });
   };
 
+  /*
+    ARRIVING FROM TODAY. In the first render that has the plan, land on the
+    week that holds the slot and open its editor — once per link. A slot no
+    block covers falls back to the blocks list, where "New training block" is
+    the right answer. This is React's adjust-state-during-render pattern (the
+    one useMembership uses): the state is set in the render that first sees
+    the loaded plan, and React re-renders before anything is painted. Not an
+    effect, because the repo's lint forbids setState inside one. Sits after
+    openEditor, which it calls.
+  */
+  const [arrived, setArrived] = useState<string | null>(null);
+  if (!loading && openSlot && arrived !== openSlot) {
+    setArrived(openSlot);
+    const parsed = parseSessionKey(openSlot);
+    if (parsed) {
+      const iso = toISO(parsed.date);
+      const b = blocks.find((x) => x.start <= iso && iso <= x.end);
+      const idx = b ? buildWeeks(b).findIndex((w) => w.days.some((d) => toISO(d.date) === iso)) : -1;
+      if (b && idx !== -1) {
+        setView({ name: "week", blockId: b.id, weekIdx: idx });
+        openEditor(parsed.date, parsed.period);
+      }
+    }
+  }
+
   /* A type only asks for a zone if the coach said it does, AND there are zones
      to pick from — a squad that deleted them all must still be able to save. */
   const asksZone = (typeKey?: string) =>
@@ -446,6 +485,25 @@ export default function TrainingPlanScreen() {
   /* A session's colour and words, read through the squad's own config. */
   const sColor = (s: Session) => configSessionColor(cfg, s.category, s.intensity);
   const sLabel = (s: Session) => configSessionLabel(cfg, s.category, s.intensity);
+
+  /*
+    WHERE "EVERY WEEK" LANDS: the same weekday and period, from the day being
+    edited FORWARD to the end of the block — never backwards. It used to write
+    every week of the block, so changing Tuesday AM in week five rewrote weeks
+    one to four as well: training that had already happened and been logged
+    against. A repeat is a decision about the weeks still to come.
+  */
+  const weeklyTargets = (from: Date, period: Period): string[] => {
+    const weekday = from.getDay();
+    const start = new Date(from.getFullYear(), from.getMonth(), from.getDate());
+    const keys: string[] = [];
+    for (const w of weeks) {
+      for (const d of w.days) {
+        if (d.date.getDay() === weekday && d.date >= start) keys.push(sessionKey(d.date, period));
+      }
+    }
+    return keys;
+  };
 
   const saveSession = () => {
     if (!editor || !form.category || !editorValid) return;
@@ -462,15 +520,9 @@ export default function TrainingPlanScreen() {
       board: form.board,
     };
     if (form.repeat === "weekly") {
-      // apply to the same weekday + period across every week in the block
-      const weekday = editor.date.getDay();
       setSessions((prev) => {
         const next = { ...prev };
-        for (const w of weeks) {
-          for (const d of w.days) {
-            if (d.date.getDay() === weekday) next[sessionKey(d.date, editor.period)] = s;
-          }
-        }
+        for (const key of weeklyTargets(editor.date, editor.period)) next[key] = s;
         return next;
       });
     } else {
@@ -1179,12 +1231,27 @@ export default function TrainingPlanScreen() {
                   );
                 })}
               </div>
-              {form.repeat === "weekly" && (
-                <p className="mt-1.5 text-[11px] text-muted">
-                  Adds this to every {editor.date.toLocaleDateString("en-US", { weekday: "long" })} {editor.period}{" "}
-                  in the block.
-                </p>
-              )}
+              {form.repeat === "weekly" &&
+                (() => {
+                  /* Say exactly what is about to be written, and what it is
+                     about to write OVER — a count the coach can check against
+                     the weeks list before pressing Done. */
+                  const targets = weeklyTargets(editor.date, editor.period);
+                  const others = targets.filter((k) => k !== sessionKey(editor.date, editor.period));
+                  const replaced = others.filter((k) => !!sessions[k]).length;
+                  return (
+                    <p className="mt-1.5 text-[11px] leading-relaxed text-muted">
+                      Puts this on every {weekday} {editor.period} from this week to the end of the
+                      block — {others.length} more {others.length === 1 ? "week" : "weeks"}
+                      {replaced > 0 && (
+                        <>
+                          , <span className="text-warn">{replaced} already set</span> and replaced
+                        </>
+                      )}
+                      . Earlier weeks are left alone.
+                    </p>
+                  );
+                })()}
             </>
           )}
         </div>

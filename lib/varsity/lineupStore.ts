@@ -7,12 +7,21 @@
   Falls back to localStorage when Supabase env isn't configured.
 */
 import { createClient, hasSupabaseEnv } from "@/lib/supabase/client";
-import { rosterById, boatTypes, seatLabel, type Boat } from "./coachLineup";
+import { rosterById, boatTypes, seatLabel, carryBoats, type Boat } from "./coachLineup";
+import { parseSessionKey } from "./coachPlan";
 import { isPushOffTime, type Lineup } from "./home";
 import type { SeatIdentity } from "./athleteProfile";
 
 export type LineupStatus = "draft" | "published";
-export type StoredLineup = { boats: Boat[]; status: LineupStatus };
+/*
+  `announced` is what the squad was last TOLD — the boats as JSON text at the
+  moment the coach published or pressed Tell the squad (db/patch_announced.sql).
+  The builder compares the current boats to it, so a live lineup edited and
+  then closed still offers the buzz next time. Null: never told, or written
+  before this was recorded — the builder treats a published lineup with null
+  as up to date.
+*/
+export type StoredLineup = { boats: Boat[]; status: LineupStatus; announced: string | null };
 
 /* ── localStorage fallback ── */
 const keyFor = (dayKey: string) => `varsityLineup:${dayKey}`;
@@ -20,7 +29,9 @@ function loadLocal(dayKey: string): StoredLineup | null {
   if (typeof window === "undefined") return null;
   try {
     const raw = window.localStorage.getItem(keyFor(dayKey));
-    return raw ? (JSON.parse(raw) as StoredLineup) : null;
+    if (!raw) return null;
+    const v = JSON.parse(raw) as Partial<StoredLineup>;
+    return { boats: v.boats ?? [], status: v.status ?? "draft", announced: v.announced ?? null };
   } catch {
     return null;
   }
@@ -48,11 +59,15 @@ export async function fetchLineup(dayKey: string): Promise<StoredLineup | null> 
   const supabase = createClient();
   const { data, error } = await supabase
     .from("varsity_lineups")
-    .select("boats,status")
+    .select("boats,status,announced")
     .eq("day_key", dayKey)
     .maybeSingle();
   if (error || !data) return null;
-  return { boats: (data.boats as Boat[]) ?? [], status: data.status as LineupStatus };
+  return {
+    boats: (data.boats as Boat[]) ?? [],
+    status: data.status as LineupStatus,
+    announced: (data.announced as string | null) ?? null,
+  };
 }
 
 /* ── Status of every practice that has a lineup (powers the day-picker dots) ── */
@@ -66,22 +81,82 @@ export async function fetchLineupStatuses(): Promise<Record<string, LineupStatus
   return out;
 }
 
-/* ── Save / publish a practice's lineup ── */
+/* ── Which practice a new lineup starts from ────────────────────────────────
+   The most recent PUBLISHED practice strictly before this one. Published, not
+   draft: a draft is the coach half-way through a thought, and a chain of
+   drafts each copied from the last would compound whatever was unfinished in
+   the first. What the squad was actually given is the safe thing to start from.
+
+   Compared on the parsed date, never on the key as text — the key holds a
+   zero-based, unpadded month (see parseSessionKey), so "2026-9-1" sorts before
+   "2026-10-1" as a date and after it as a string. Same day, AM before PM. */
+export function latestPublishedBefore(
+  statuses: Record<string, LineupStatus>,
+  dayKey: string,
+): string | null {
+  const here = parseSessionKey(dayKey);
+  if (!here) return null;
+  const order = (p: { date: Date; period: "AM" | "PM" }) =>
+    p.date.getTime() * 2 + (p.period === "PM" ? 1 : 0);
+  const cutoff = order(here);
+  let best: { key: string; at: number } | null = null;
+  for (const [key, status] of Object.entries(statuses)) {
+    if (status !== "published") continue;
+    const parsed = parseSessionKey(key);
+    if (!parsed) continue;
+    const at = order(parsed);
+    if (at < cutoff && (!best || at > best.at)) best = { key, at };
+  }
+  return best?.key ?? null;
+}
+
+/*
+  The boats a practice with NO lineup opens on. Null when the squad has never
+  been given a lineup before this day — then the builder starts empty, as it
+  always did. `from` is the practice it came from, so the screen can say so.
+*/
+export async function fetchCarriedLineup(
+  dayKey: string,
+): Promise<{ from: string; boats: Boat[] } | null> {
+  const from = latestPublishedBefore(await fetchLineupStatuses(), dayKey);
+  if (!from) return null;
+  const source = await fetchLineup(from);
+  if (!source || source.boats.length === 0) return null;
+  return { from, boats: carryBoats(source.boats) };
+}
+
+/* ── Save / publish a practice's lineup ──
+   `announced`: pass the boats' snapshot when the squad is being TOLD (publish,
+   Tell the squad), null when the lineup goes back to a draft, and leave it
+   out for an ordinary autosave — an upsert only writes the columns it is
+   given, so what the squad was last told survives every autosave in between. */
 export async function saveLineup(
   dayKey: string,
   boats: Boat[],
   status: LineupStatus,
+  announced?: string | null,
 ): Promise<{ error?: string }> {
   if (!hasSupabaseEnv()) {
     if (typeof window !== "undefined") {
-      window.localStorage.setItem(keyFor(dayKey), JSON.stringify({ boats, status }));
+      const prev = loadLocal(dayKey);
+      const next: StoredLineup = {
+        boats,
+        status,
+        announced: announced === undefined ? (prev?.announced ?? null) : announced,
+      };
+      window.localStorage.setItem(keyFor(dayKey), JSON.stringify(next));
     }
     return {};
   }
   const supabase = createClient();
-  const { error } = await supabase
-    .from("varsity_lineups")
-    .upsert({ day_key: dayKey, boats, status, updated_at: new Date().toISOString() });
+  const row: Record<string, unknown> = {
+    day_key: dayKey,
+    boats,
+    status,
+    updated_at: new Date().toISOString(),
+  };
+  if (announced !== undefined) row.announced = announced;
+  const { error } = await supabase.from("varsity_lineups").upsert(row);
   return error ? { error: error.message } : {};
 }
 

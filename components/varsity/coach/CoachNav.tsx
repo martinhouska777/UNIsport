@@ -3,20 +3,30 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
-import { IconCalendar, IconAnchor, IconClipboard, IconUser } from "@/components/icons";
+import { IconSun, IconCalendar, IconAnchor, IconClipboard, IconUser } from "@/components/icons";
 import { can, type VarsityRole } from "@/lib/varsity/membership";
 
 /*
   Coach Console bottom nav. Which tabs exist depends on the role, and that rule
   lives in the tab DATA below (`allowed`), not in the markup:
-    coach   — Plan · Lineup · Notes · Team
+    coach   — Today · Plan · Lineup · Notes · Team
     captain — Team only (a captain handles people, never training)
   Active tab is crimson. The server enforces the same split, so a captain who
   types a plan URL still can't save anything.
+
+  Today is the console's own root, so it is the one tab matched EXACTLY — a
+  prefix match on /varsity/coach would light it on every other tab too.
 */
-type Tab = { href: string; label: string; icon: ReactNode; allowed: (r: VarsityRole) => boolean };
+type Tab = {
+  href: string;
+  label: string;
+  icon: ReactNode;
+  allowed: (r: VarsityRole) => boolean;
+  exact?: boolean;
+};
 
 const tabs: Tab[] = [
+  { href: "/varsity/coach", label: "Today", icon: <IconSun size={22} />, allowed: can.buildPlan, exact: true },
   { href: "/varsity/coach/plan", label: "Plan", icon: <IconCalendar size={22} />, allowed: can.buildPlan },
   { href: "/varsity/coach/lineup", label: "Lineup", icon: <IconAnchor size={22} />, allowed: can.buildLineup },
   { href: "/varsity/coach/notes", label: "Notes", icon: <IconClipboard size={22} />, allowed: can.writeNotes },
@@ -25,7 +35,8 @@ const tabs: Tab[] = [
 
 export default function CoachNav({ role }: { role: VarsityRole }) {
   const pathname = usePathname();
-  const isActive = (href: string) => pathname === href || pathname.startsWith(href + "/");
+  const isActive = (tab: Tab) =>
+    pathname === tab.href || (!tab.exact && pathname.startsWith(tab.href + "/"));
   const visible = tabs.filter((t) => t.allowed(role));
 
   return (
@@ -35,9 +46,9 @@ export default function CoachNav({ role }: { role: VarsityRole }) {
           <li key={tab.href} className="flex-1">
             <Link
               href={tab.href}
-              aria-current={isActive(tab.href) ? "page" : undefined}
+              aria-current={isActive(tab) ? "page" : undefined}
               className={`flex flex-col items-center gap-1 py-1 text-[11px] font-medium transition-colors ${
-                isActive(tab.href) ? "text-primary" : "text-muted"
+                isActive(tab) ? "text-primary" : "text-muted"
               }`}
             >
               {/* data-tour: the console tour presses these to cross tabs

@@ -41,6 +41,7 @@
 */
 import type { Tour, TourStep } from "@/lib/tour";
 
+const TODAY = "/varsity/coach";
 const PLAN = "/varsity/coach/plan";
 const LINEUP = "/varsity/coach/lineup";
 const NOTES = "/varsity/coach/notes";
@@ -57,7 +58,16 @@ const steps: TourStep[] = [
     route: PLAN,
     anchor: null,
     title: "The Coach Console",
-    body: "Four screens, and one idea behind all of them: write it down once here, and the whole squad already has it. No group chat, no spreadsheet, no photograph of a whiteboard. A minute — Skip, bottom left, stops it any time.",
+    body: "Five screens, and one idea behind all of them: write it down once here, and the whole squad already has it. No group chat, no spreadsheet, no photograph of a whiteboard. A minute — Skip, bottom left, stops it any time.",
+  },
+
+  /* ── Today ────────────────────────────────────────────────────────────── */
+  {
+    press: tab(TODAY),
+    route: TODAY,
+    anchor: tab(TODAY),
+    title: "Today — the morning on one screen",
+    body: "What the plan says for this morning and this afternoon, whether the boats are seated and live, and who is out — with one tap into the session or the lineup. It is the screen you open on the dock; the rest are where the work gets done.",
   },
 
   /* ── Plan ─────────────────────────────────────────────────────────────── */
@@ -147,7 +157,7 @@ const steps: TourStep[] = [
     group: PLAN_DIVE,
     anchor: "coach-plan-repeat",
     title: "This one saves the most",
-    body: "“Every week” drops this session onto the SAME slot in every week of the block — this weekday, this AM or PM, all the way to the race. A normal training week is therefore typed once: you build the pattern, then go back and change only the days that break it.",
+    body: "“Every week” drops this session onto the SAME slot in every week from this one to the race — this weekday, this AM or PM. Weeks already behind you are left alone. A normal training week is therefore typed once: you build the pattern, then change only the days that break it.",
   },
   {
     group: PLAN_DIVE,
@@ -191,8 +201,8 @@ const steps: TourStep[] = [
   },
   {
     anchor: "coach-lineup-add-boat",
-    title: "Fill seats by typing or dragging",
-    body: "A boat lays itself out 8 down to 1 with the cox on top. Type the first few letters of a name, or drag one up from the pool. Nothing is locked to a side — you rig the boat, the app just holds the sheet.",
+    title: "Fill seats by typing, swap them by tapping",
+    body: "A boat lays itself out bow to stroke with the cox in the stern. Type the first few letters of a name into an empty seat. To swap two rowers, tap one seat to pick it up and then tap the other — two taps, no keyboard, gloves on. Tap a picked-up seat again to type a name into it instead. Nothing is locked to a side — you rig the boat, the app just holds the sheet.",
   },
   {
     anchor: "coach-lineup-publish",
@@ -233,7 +243,7 @@ const steps: TourStep[] = [
   {
     anchor: null,
     title: "That is the console",
-    body: "Plan, Lineup, Notes, Team — and the gear for anything to do with people. Walk through it again any time from Squad settings.",
+    body: "Today, Plan, Lineup, Notes, Team — and the gear for anything to do with people. Walk through it again any time from Squad settings.",
   },
 ];
 
