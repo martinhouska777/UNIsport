@@ -106,7 +106,7 @@ export default function LandingHero() {
 
         {/* 2 · The one fact, and the headline. */}
         <div className="l-in-2 flex flex-col items-center">
-          <div className="mb-[clamp(8px,1.6vh,16px)] inline-flex items-center gap-2 rounded-full border border-l-accent-soft bg-l-accent-dim px-3 py-1.5 font-mono text-[11px] font-medium tracking-wider uppercase text-l-accent">
+          <div className="mb-[clamp(8px,1.6vh,16px)] inline-flex items-center gap-2 rounded-full border border-l-accent-soft bg-l-accent-dim px-3 py-1.5 font-mono text-[12.5px] font-medium tracking-wider uppercase text-l-accent">
             <span className="l-pulse h-1.5 w-1.5 rounded-full bg-l-accent shadow-[0_0_8px_var(--color-l-accent)]" />
             {hero.badge}
           </div>

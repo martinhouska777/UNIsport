@@ -871,15 +871,22 @@
   big one is on screen; it fades in as the intro leaves. Only on the views that
   HAVE the big one — LandingNav puts this class on then (heroMark).
 */
-.l-nav-mark { opacity: 0; pointer-events: none; transition: opacity 0.3s ease-out; }
-[data-hero-mark="gone"] .l-nav-mark { opacity: 1; pointer-events: auto; }
+.l-nav-mark { opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 0.3s ease-out, visibility 0.3s; }
+[data-hero-mark="gone"] .l-nav-mark { opacity: 1; visibility: visible; pointer-events: auto; }
+/* The bar's "Get started" does the same on PHONES only: there the intro's
+   big button stands right under it and the two read as different doors.
+   (visibility, so neither is a tab stop while it cannot be seen.) */
+@media (max-width: 767px) {
+  .l-nav-cta { opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 0.3s ease-out, visibility 0.3s; }
+  [data-hero-mark="gone"] .l-nav-cta { opacity: 1; visibility: visible; pointer-events: auto; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .l-in-1, .l-in-2, .l-in-3, .l-in-4, .l-in-5 { animation: none; }
   /* Straight to the end state: in place, and the glow at full strength. */
   .l-hero-rise { animation: none; }
   .l-hero-glow { animation: none; opacity: 0.36; }
-  .l-nav-mark { transition: none; }
+  .l-nav-mark, .l-nav-cta { transition: none; }
 }
 
 /*

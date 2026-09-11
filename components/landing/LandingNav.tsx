@@ -70,9 +70,14 @@ export default function LandingNav({ view = "all", heroMark = false }: { view?: 
             >
               {nav.login}
             </Link>
+            {/* On a phone the intro's own button stands directly under this one,
+                so the pair read as two different doors (website review,
+                2026-09-10). This copy follows the wordmark's rule there —
+                not drawn while the intro is on screen (.l-nav-cta, phones
+                only); a laptop keeps both, where the bar is a thin line. */}
             <Link
               href={hero.primaryHref}
-              className="rounded-full bg-l-text px-[18px] py-2.5 text-sm font-medium tracking-tight text-l-bg transition-colors hover:bg-l-accent"
+              className={`rounded-full bg-l-text px-[18px] py-2.5 text-sm font-medium tracking-tight text-l-bg transition-colors hover:bg-l-accent ${heroMark ? "l-nav-cta" : ""}`}
             >
               {nav.cta}
             </Link>

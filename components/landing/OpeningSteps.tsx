@@ -47,7 +47,7 @@ export default function OpeningSteps({
             className={`flex items-center gap-1.5 rounded-full border border-transparent px-3 py-1.5 transition-colors ${edge}`}
           >
             <FeatureIcon name={s.icon} className={`h-[17px] w-[17px] ${tint}`} />
-            <span className="font-mono text-[10px] tracking-[0.12em] text-l-text-2">{s.n}</span>
+            <span className="font-mono text-[12px] tracking-[0.12em] text-l-text-2">{s.n}</span>
             <span className="text-[13px] tracking-tight text-l-text-2">{s.word}</span>
           </a>
         </li>
