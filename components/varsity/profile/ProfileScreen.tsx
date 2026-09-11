@@ -68,6 +68,8 @@ import Plot from "@/components/varsity/profile/Plot";
 import Dropdown from "@/components/varsity/profile/Dropdown";
 import StatsFullScreen from "@/components/varsity/profile/StatsFullScreen";
 import TrainingMixSheet from "@/components/varsity/profile/TrainingMixSheet";
+import ClaimSeatSheet from "@/components/varsity/ClaimSeatSheet";
+import { rosterById } from "@/lib/varsity/coachLineup";
 import { fetchPlan } from "@/lib/varsity/planStore";
 import {
   IconPencil,
@@ -623,7 +625,7 @@ export default function ProfileScreen() {
   const [planSessions, setPlanSessions] = useState<SessionMap>({});
   const [mixOpen, setMixOpen] = useState(false);
 
-  type Modal = "identity" | "status" | "prs" | null;
+  type Modal = "identity" | "status" | "prs" | "seat" | null;
   const [modal, setModal] = useState<Modal>(null);
   const [copied, setCopied] = useState(false);
 
@@ -835,6 +837,22 @@ export default function ProfileScreen() {
                   ? "Coxswain"
                   : (sideLabel(profile.boatRole, profile.side) ?? "Both")}
               </span>
+              {/* Which name on the squad list is you — the join that lets a
+                  published boat mark your seat. A button, because a wrong
+                  pick on Home must be one tap to change from here. */}
+              <button
+                type="button"
+                onClick={() => setModal("seat")}
+                className={`rounded-md border px-2 py-1 text-[11px] ${
+                  profile.rosterId
+                    ? "border-border bg-surface text-text"
+                    : "border-primary-line bg-primary-tint font-medium text-primary"
+                }`}
+              >
+                {profile.rosterId
+                  ? `On the list as ${rosterById[profile.rosterId]?.name ?? "—"}`
+                  : "Pick your name on the squad list"}
+              </button>
               {profile.heightCm != null && (
                 <span className="rounded-md border border-border bg-surface px-2 py-1 text-[11px] text-text">
                   {profile.heightCm} cm
@@ -1084,6 +1102,13 @@ export default function ProfileScreen() {
       )}
       {modal === "prs" && (
         <PrSheet prs={profile.prs} onSave={patchProfile} onClose={() => setModal(null)} />
+      )}
+      {modal === "seat" && (
+        <ClaimSeatSheet
+          current={profile.rosterId}
+          onClaim={(rosterId) => patchProfile({ rosterId })}
+          onClose={() => setModal(null)}
+        />
       )}
     </div>
   );

@@ -14,10 +14,12 @@ import { useMembership } from "@/components/varsity/useMembership";
 import { can, canOpenConsole, roleLabel, type VarsityRole } from "@/lib/varsity/membership";
 import ThemeProvider from "@/components/ThemeProvider";
 import { useVarsityTheme } from "@/components/varsity/useVarsityTheme";
-import { fetchPlan, fetchProfileFullName } from "@/lib/varsity/planStore";
+import { fetchPlan } from "@/lib/varsity/planStore";
 import { fetchTodayLineups } from "@/lib/varsity/lineupStore";
+import { claimRosterSeat, fetchSeatIdentity, type SeatIdentity } from "@/lib/varsity/athleteProfile";
 import LineupBoatCard, { LineupSeats, isMyBoat } from "@/components/varsity/LineupBoatCard";
 import UploadVideoSheet from "@/components/varsity/UploadVideoSheet";
+import ClaimSeatSheet from "@/components/varsity/ClaimSeatSheet";
 import { driveConfigured, driveFolderLink } from "@/lib/varsity/drive";
 import { fetchNote } from "@/lib/varsity/notesStore";
 import { sessionKey, parseDate } from "@/lib/varsity/coachPlan";
@@ -57,6 +59,7 @@ import {
   IconAnchor,
   IconPlus,
   IconVideo,
+  IconUser,
 } from "@/components/icons";
 
 const statusStyle: Record<
@@ -820,6 +823,37 @@ function CoachNoteCard({ note }: { note: string }) {
   );
 }
 
+/*
+  CLAIM YOUR SEAT — the card an UNCLAIMED athlete sees until they pick their
+  name on the squad list. Without it a published boat cannot know which seat
+  is theirs, so the whole lineup section below stays empty and looks exactly
+  like "nothing published". It sits under the greeting because it is the one
+  thing standing between this person and the answer they open the app for.
+  Gone the moment a name is picked (see ClaimSeatSheet).
+*/
+function ClaimSeatCard({ onOpen }: { onOpen: () => void }) {
+  return (
+    <div className="px-3 pt-3">
+      <button
+        type="button"
+        onClick={onOpen}
+        className="flex w-full items-center gap-3 rounded-xl border border-primary-line bg-primary-tint px-3.5 py-3 text-left"
+      >
+        <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary text-primary-contrast">
+          <IconUser size={15} />
+        </span>
+        <span className="flex min-w-0 flex-1 flex-col leading-tight">
+          <span className="text-[14px] font-semibold text-text">Which of these is you?</span>
+          <span className="mt-0.5 text-[11px] text-muted">
+            Pick your name on the squad list so your boat shows up here.
+          </span>
+        </span>
+        <IconChevronRight size={16} className="flex-shrink-0 text-muted" />
+      </button>
+    </div>
+  );
+}
+
 /* ─── Empty state (no published plan for this week) ─── */
 function EmptyHome() {
   return (
@@ -886,7 +920,10 @@ export default function HomeScreen() {
   const [data, setData] = useState<HomeData | null>(null);
   const [loading, setLoading] = useState(true);
   const [note, setNote] = useState<string | null>(null); // null = still loading
-  const [myName, setMyName] = useState<string | null>(null); // for "your seat"
+  // Who I am to a boat: my name, and the roster seat I claimed (null until I
+  // pick one). Both decide "your seat"; the id wins whenever it is set.
+  const [me, setMe] = useState<SeatIdentity | null>(null);
+  const [claimOpen, setClaimOpen] = useState(false);
 
   /*
     WHICH DAY the middle of the page is showing, as an index into the block's
@@ -906,15 +943,15 @@ export default function HomeScreen() {
     let active = true;
     (async () => {
       const today = new Date();
-      const fullName = await fetchProfileFullName(userId);
+      const identity = await fetchSeatIdentity(userId);
       const [plan, lineups, coachNote] = await Promise.all([
         fetchPlan(),
-        fetchTodayLineups((p) => sessionKey(today, p), fullName),
+        fetchTodayLineups((p) => sessionKey(today, p), identity),
         fetchNote(userId),
       ]);
       if (!active) return;
-      const firstName = fullName.split(/\s+/)[0] ?? "";
-      setMyName(fullName);
+      const firstName = identity.name.split(/\s+/)[0] ?? "";
+      setMe(identity);
       setData(buildAthleteHome(plan, firstName, lineups, today));
       setNote(coachNote);
       setLoading(false);
@@ -940,13 +977,28 @@ export default function HomeScreen() {
     const iso = viewDay.iso;
     let active = true;
     (async () => {
-      const found = await fetchTodayLineups((p) => sessionKey(parseDate(iso), p), myName);
+      const found = await fetchTodayLineups((p) => sessionKey(parseDate(iso), p), me);
       if (active) setAwayLineups({ iso, lineups: found });
     })();
     return () => {
       active = false;
     };
-  }, [onToday, viewDay, myName]);
+  }, [onToday, viewDay, me]);
+
+  /*
+    PICKED A NAME. Save it, then re-read the boats with the new identity so the
+    seat lights up on the spot — today's from the page, any other day through
+    the effect above (which re-runs because `me` changed).
+  */
+  const claimSeat = async (rosterId: string | null) => {
+    const next = me ? { ...me, rosterId } : { name: "", rosterId };
+    setMe(next);
+    setAwayLineups(null);
+    await claimRosterSeat(userId, rosterId);
+    const today = new Date();
+    const lineups = await fetchTodayLineups((p) => sessionKey(today, p), next);
+    setData((d) => (d ? { ...d, lineups } : d));
+  };
 
   // The coach's note sits at the bottom of the page (shown in every state,
   // even before a plan is published).
@@ -966,10 +1018,27 @@ export default function HomeScreen() {
       </div>
     );
   }
+  // The claim card and its sheet, shown in every loaded state — a squad with no
+  // plan published yet is exactly when a new rower is picking their name.
+  const unclaimed = me !== null && me.rosterId === null;
+  const claimUi = (
+    <>
+      {unclaimed && <ClaimSeatCard onOpen={() => setClaimOpen(true)} />}
+      {claimOpen && (
+        <ClaimSeatSheet
+          current={me?.rosterId ?? null}
+          onClaim={(id) => void claimSeat(id)}
+          onClose={() => setClaimOpen(false)}
+        />
+      )}
+    </>
+  );
+
   if (!data) {
     return (
       <div className="mx-auto w-full max-w-screen-sm pb-6">
         {consoleRole && <ConsoleDoor role={consoleRole} />}
+        {claimUi}
         <EmptyHome />
         {noteCard}
       </div>
@@ -1003,6 +1072,7 @@ export default function HomeScreen() {
     <div className="mx-auto w-full max-w-screen-sm pb-6">
       {consoleRole && <ConsoleDoor role={consoleRole} />}
       <Greeting g={data.greeting} />
+      {claimUi}
       <DriveBar onUpload={() => setUploadOpen(true)} />
       <WeekStrip
         weeks={data.weeks}
