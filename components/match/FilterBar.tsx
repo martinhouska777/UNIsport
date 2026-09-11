@@ -39,6 +39,7 @@ export default function FilterBar({
   onClearAll,
   total,
   noun = "result",
+  plural,
   open = false,
   compact = false,
 }: {
@@ -52,8 +53,10 @@ export default function FilterBar({
   onClearAll?: () => void;
   /** How many rows survived the filters. Omit when the list isn't loaded yet. */
   total?: number | null;
-  /** What one row is called: "person", "post". Pluralised with an s. */
+  /** What one row is called: "person", "post". Pluralised with an s… */
   noun?: string;
+  /** …unless the plural is irregular: "people". */
+  plural?: string;
   /** Turns the chevron over while the dropdown below is showing. */
   open?: boolean;
   /**
@@ -105,7 +108,7 @@ export default function FilterBar({
           </span>
           {total != null && (
             <span className="text-[12px] tabular-nums text-muted">
-              {total} {total === 1 ? noun : `${noun}s`}
+              {total} {total === 1 ? noun : (plural ?? `${noun}s`)}
             </span>
           )}
           <span

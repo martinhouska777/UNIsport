@@ -202,6 +202,7 @@ function MatchScreen() {
               onClearAll={() => setFilters(NO_FILTERS)}
               total={browse?.length ?? null}
               noun="person"
+              plural="people"
               open={sheetOpen}
             />
             {sheetOpen && (

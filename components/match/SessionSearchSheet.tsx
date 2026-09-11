@@ -230,6 +230,7 @@ export default function SessionSearchSheet({
                   onClearAll={() => changeFilters(NO_FILTERS)}
                   total={results.length}
                   noun="person"
+                  plural="people"
                   open={filtersOpen}
                 />
                 {filtersOpen && (
