@@ -76,6 +76,7 @@ import {
 import HonorCode, { HonorCodeFooter, useHonorCode } from "@/components/leaderboards/HonorCode";
 import GroupSheet from "@/components/leaderboards/GroupSheet";
 import HouseRace from "@/components/leaderboards/HouseRace";
+import ShareInviteButton from "@/components/ShareInviteButton";
 import Podium, { type PodiumEntry } from "@/components/leaderboards/Podium";
 import Medal from "@/components/leaderboards/Medal";
 import ScoringSheet from "@/components/leaderboards/ScoringSheet";
@@ -340,7 +341,14 @@ function GroupRowItem({
   // A row that opens is a button; a row that does not stays a div, so nothing
   // on screen invites a tap that does nothing.
   const Tag = onOpen ? "button" : "div";
+  /* THE INVITE, beside every house row. A house's number only moves when more
+     of it logs, and the fastest way to that is a housemate with the link —
+     so the Share sits where the number is, not three screens away. Outside
+     the row's own button (a button inside a button is not allowed), for any
+     house, because inviting into a rival's house is still a person on the
+     app. Years have nobody to invite "into". */
   return (
+    <div className="flex items-center gap-1.5">
     <Tag
       {...(onOpen ? { type: "button" as const, onClick: onOpen } : {})}
       className={`flex w-full items-center gap-2.5 rounded-xl border px-3 py-2.5 text-left ${
@@ -399,6 +407,8 @@ function GroupRowItem({
         </span>
       )}
     </Tag>
+    {kind === "house" && <ShareInviteButton iconOnly residence={row.key} />}
+    </div>
   );
 }
 
@@ -670,7 +680,7 @@ export default function LeaderboardsPage() {
             active people would put them in (the one minimum left anywhere). */}
         {competition === "houses" && (
           <div className="mb-3">
-            <HouseRace />
+            <HouseRace renderShare={(houseKey) => <ShareInviteButton iconOnly residence={houseKey} />} />
           </div>
         )}
         {/* On a team board the switch above the words is what the words are

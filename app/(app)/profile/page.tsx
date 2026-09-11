@@ -19,6 +19,7 @@ import LogSessionSheet from "@/components/profile/LogSessionSheet";
 import PartnersSheet from "@/components/profile/PartnersSheet";
 import UpcomingSessions from "@/components/profile/UpcomingSessions";
 import PartnerRequests from "@/components/profile/PartnerRequests";
+import ShareInviteButton from "@/components/ShareInviteButton";
 import LeaderboardStrip from "@/components/leaderboards/LeaderboardStrip";
 import MemoriesStrip from "@/components/profile/MemoriesStrip";
 import PersonalRecords from "@/components/profile/PersonalRecords";
@@ -566,10 +567,10 @@ export default function ProfilePage() {
       {/* Bottom action bar (sticks above the tab nav) */}
       <div className="sticky bottom-0 z-20 flex gap-2.5 border-t border-border bg-surface px-3.5 py-3">
         {/* "Log Session" is the job of this screen, so it gets the weight —
-            these used to be two equal halves. */}
-        <Button variant="secondary" size="lg" className="flex-1">
-          Share
-        </Button>
+            these used to be two equal halves. Share is REAL: it opens the
+            phone's share sheet with an invite link into /join that names your
+            school and your house (lib/invite.ts). */}
+        <ShareInviteButton variant="secondary" size="lg" className="flex-1" />
         {/* data-tour: the Profile tour opens on this button (lib/tour.ts). */}
         <Button
           data-tour="profile-log"

@@ -52,6 +52,7 @@ import WeekPicker from "@/components/match/WeekPicker";
 import { reasonRarity } from "@/lib/matchReasons";
 import { dayKeyOf, dateLabel } from "@/lib/schedule";
 import BuddyBoard from "@/components/match/BuddyBoard";
+import ShareInviteButton from "@/components/ShareInviteButton";
 import FilterBar from "@/components/match/FilterBar";
 import FiltersSheet, {
   NO_FILTERS,
@@ -409,6 +410,12 @@ function MatchScreen() {
               {activeFilterCount(filters) > 0
                 ? "Nobody matches those filters yet. Try clearing one."
                 : "Nobody else at your school has finished signing up yet. Everyone who does shows up here."}
+              {/* An empty Match tab has exactly one fix, and this is it. */}
+              {activeFilterCount(filters) === 0 && (
+                <div className="mx-auto mt-4 max-w-xs">
+                  <ShareInviteButton variant="primary" size="lg" full label="Invite a housemate" />
+                </div>
+              )}
             </Status>
           )}
           {!browseErr && browse && browse.length > 0 && (
