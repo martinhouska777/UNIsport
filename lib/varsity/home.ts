@@ -51,6 +51,18 @@ export const kindBlock = (k: SessionKind) => ({
 });
 
 /*
+  PLANNED, NOT YET DONE — the same colour, but a fainter fill with the colour
+  drawn round the edge. The Calendar tab paints one month from two sources
+  (the coach's plan ahead of today, your own log behind it), and today is the
+  one day both can appear in a single cell, so a prescribed session that has not
+  been logged must not look like one that has.
+*/
+export const kindPlanned = (k: SessionKind) => ({
+  background: `color-mix(in oklab, ${kindColor[k]} 12%, transparent)`,
+  boxShadow: `inset 0 0 0 1px color-mix(in oklab, ${kindColor[k]} 55%, transparent)`,
+});
+
+/*
   What the colours mean, in the order they are shown. Lives here rather than in
   a screen because BOTH month calendars print it — the plan's (Home) and the
   athlete's own training history (Calendar) — and two copies would drift the
