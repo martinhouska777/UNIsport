@@ -7,6 +7,7 @@ import { playfair } from "@/components/landing/fonts";
 import { AppStateProvider } from "@/components/AppState";
 import { ThemeModeProvider } from "@/components/ThemeMode";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
+import { SITE_URL } from "@/lib/siteUrl";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -20,12 +21,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   // Absolute URLs for the link-card images (og:image must be absolute). The
-  // production host; Vercel sets VERCEL_PROJECT_PRODUCTION_URL, so previews
-  // still point their cards at the real site.
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL ??
-      (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : "https://un-isport.vercel.app"),
-  ),
+  // same address robots.txt and the sitemap use — lib/siteUrl.ts.
+  metadataBase: new URL(SITE_URL),
   title: "UNIsport",
   description: "Campus fitness — gyms, partners, and sessions at your university.",
   appleWebApp: {
