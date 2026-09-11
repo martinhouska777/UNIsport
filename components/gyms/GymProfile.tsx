@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useAppState } from "@/components/AppState";
 import { useFavorites, useGymRatings, useGymCrowd, timeAgo, CROWD_FRESH_LABEL } from "@/lib/gymSocial";
-import { StarRater, CrowdPicker, CrowdSentence, RatingValue, BusyBars } from "@/components/gyms/RateCrowd";
+import { StarRater, CrowdPicker, CrowdSentence, BusyBars } from "@/components/gyms/RateCrowd";
 import OpenNow from "@/components/gyms/OpenNow";
 import { useClock } from "@/lib/gymHours";
 import { ButtonLink } from "@/components/ui/Button";
@@ -78,7 +78,8 @@ export default function GymProfile({ gym }: { gym: Gym }) {
         <h1 className="mb-1.5 text-[15px] font-medium text-text">{gym.name}</h1>
         <div className="flex flex-wrap gap-x-3.5 gap-y-1 text-[11px] text-muted">
           <OpenNow hours={gym.hours} now={now} />
-          <RatingValue value={gym.rating} count={gym.ratingCount} />
+          {/* No star average: the numbers in lib/gyms.ts are placeholders
+              (see the gyms list). Back when real ratings exist. */}
           <span className="flex items-center gap-1.5">
             <IconMapPin size={13} /> {gym.address}
           </span>
@@ -107,12 +108,15 @@ export default function GymProfile({ gym }: { gym: Gym }) {
       {/* Your rating + live crowd — what you fill in after / during a workout */}
       {/* data-tour: the gym tour lights this pair (lib/tour.ts). */}
       <div data-tour="gym-rate" className="border-b border-border px-3.5 py-3.5">
+        {/* Plainly YOURS. It is stored for you alone (lib/gymSocial.ts) and
+            averaged with nobody's, so the heading says so instead of implying
+            the stars feed a score somewhere. */}
         <div className="flex items-center justify-between">
           <h2 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-            Rate this gym
+            Your rating
           </h2>
           <span className="text-[11px] text-muted">
-            {rating ? `You rated · ${timeAgo(rating.at)}` : "Tap a star"}
+            {rating ? `You rated · ${timeAgo(rating.at)}` : "Tap a star · just for you"}
           </span>
         </div>
         <div className="mt-2">
@@ -169,8 +173,7 @@ export default function GymProfile({ gym }: { gym: Gym }) {
               <h2 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
                 {section.title}
               </h2>
-              {/* Chevron only. A bare row-count here read as a score on a page
-                  that already shows "4.8 (142)" and a ratings breakdown. */}
+              {/* Chevron only. A bare row-count here read as a score. */}
               <span className="text-muted transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none">
                 <IconChevronDown size={16} />
               </span>
@@ -189,39 +192,13 @@ export default function GymProfile({ gym }: { gym: Gym }) {
           </details>
         ))}
 
-      {/* Ratings breakdown — one gold bar per category */}
-      {gym.ratings.length > 0 && (
-        <div className="px-3.5 py-3">
-          {/* An average with no sample size is meaningless — 4.6 from two
-              people reads the same as 4.6 from two hundred. */}
-          <div className="mb-2.5 flex items-baseline justify-between">
-            <h2 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-              Ratings Breakdown
-            </h2>
-            {gym.ratingCount > 0 && (
-              <span className="text-[11px] text-muted">
-                {gym.ratingCount} {gym.ratingCount === 1 ? "rating" : "ratings"}
-              </span>
-            )}
-          </div>
-          <div className="flex flex-col gap-2">
-            {gym.ratings.map((r) => (
-              <div key={r.label} className="flex items-center gap-2.5">
-                <span className="min-w-[90px] text-[11px] text-muted">{r.label}</span>
-                <span className="h-1 flex-1 rounded-sm bg-surface-2">
-                  <span
-                    className="block h-1 rounded-sm bg-accent"
-                    style={{ width: `${(r.value / 5) * 100}%` }}
-                  />
-                </span>
-                <span className="min-w-[24px] text-right text-[11px] text-text">
-                  {r.value}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      {/*
+        WHERE "RATINGS BREAKDOWN" USED TO BE — three gold bars (Equipment,
+        Cleanliness, Atmosphere) and "142 ratings". Every one of those numbers
+        was invented in lib/gyms.ts and shown on a real, named campus gym; a
+        student rating the gym changed none of them. Gone until real ratings
+        exist. The fields stay in the data for that day.
+      */}
 
       {/*
         The page's one conversion action. It used to be a dead <button> with no

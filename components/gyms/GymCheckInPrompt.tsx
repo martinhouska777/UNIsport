@@ -36,9 +36,11 @@ export default function GymCheckInPrompt({
 
         <div className="mt-4 flex items-center justify-between">
           <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-            How was it?
+            Your rating
           </span>
-          {rating && <span className="text-[11px] text-muted">{rating.value.toFixed(1)} / 5</span>}
+          <span className="text-[11px] text-muted">
+            {rating ? `${rating.value.toFixed(1)} / 5 · just for you` : "Just for you"}
+          </span>
         </div>
         <div className="mt-2">
           <StarRater value={rating?.value ?? 0} onRate={(n) => setRating(gymSlug, n)} />

@@ -102,7 +102,7 @@ export const tourSteps: TourStep[] = [
     route: aGym,
     anchor: "gym-rate",
     title: "This part is you telling the app",
-    body: "A rating, and “how busy right now”, only ever know what people report. Tap a star after you've trained and say what you walked into.",
+    body: "“How busy right now” only ever knows what people report — yours goes to everyone at your school. The stars are your own private rating.",
   },
   {
     anchor: "gym-partner",

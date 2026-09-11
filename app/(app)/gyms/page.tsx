@@ -8,7 +8,7 @@ import { getUniversity } from "@/lib/themes";
 import { useFavorites, useGymCrowd, type GymCrowd } from "@/lib/gymSocial";
 import { gymOpenState, useClock, type Clock } from "@/lib/gymHours";
 import OpenNow from "@/components/gyms/OpenNow";
-import { RatingValue, CrowdChip, PredictedChip } from "@/components/gyms/RateCrowd";
+import { CrowdChip, PredictedChip } from "@/components/gyms/RateCrowd";
 import {
   IconSearch,
   IconFloors,
@@ -68,8 +68,9 @@ function StatsRow({ gym, crowd, now }: { gym: Gym; crowd: GymCrowd | null; now: 
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
         {/* Can you walk in right now — the one thing the timetable was hiding */}
         <OpenNow hours={gym.hours} now={now} />
-        {/* The gym's rating + how many rated it (hidden if nobody has) */}
-        <RatingValue value={gym.rating} count={gym.ratingCount} />
+        {/* No star average here. gym.rating / gym.ratingCount in lib/gyms.ts are
+            placeholder numbers, and "4.8 · 142 ratings" on a real named gym is
+            a claim nobody made. They come back when real ratings exist. */}
         {/* How busy it is. Fresh reports if there are any — with how many
             people said so; otherwise how busy this gym USUALLY is at this
             hour, so the line is never blank. */}

@@ -100,14 +100,11 @@ export function CrowdPicker({
 }
 
 /*
-  Compact rating for rows: gold star + THE GYM'S average and how many people
-  rated it. This reads the gym's own rating — the same source the profile's
-  "Ratings Breakdown" derives from — so the two can never contradict each other.
-  (It used to show YOUR private rating here, which is why a gym could read "n/a"
-  at the top while showing 4.6 / 4.8 / 4.4 bars at the bottom.)
-
-  A gym nobody has rated renders NOTHING rather than a placeholder — the
-  remaining stats close up and take the space.
+  Compact rating for rows: gold star + an average and how many people gave it.
+  PARKED — not rendered anywhere right now. The only averages the app has are
+  the placeholder numbers in lib/gyms.ts, and showing "4.8 (142)" on a real gym
+  nobody has rated is a claim nobody made. This comes back the day real ratings
+  exist; the display already refuses to draw when `count` is zero.
 */
 export function RatingValue({ value, count }: { value: number; count: number }) {
   if (!count) return null;
