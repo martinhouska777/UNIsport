@@ -25,6 +25,7 @@ import {
   IconClock,
   IconHeart,
   IconCheck,
+  IconUser,
 } from "@/components/icons";
 import {
   classYears,
@@ -96,6 +97,7 @@ const notifIcons: Record<string, (p: { size?: number; className?: string }) => R
   message: IconMessage,
   calendar: IconCalendar,
   clock: IconClock,
+  user: IconUser,
 };
 
 /*

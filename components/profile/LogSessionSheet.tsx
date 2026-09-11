@@ -56,18 +56,21 @@ export default function LogSessionSheet({
   userId,
   existing,
   initialDate,
+  initialGym,
   onClose,
   onSaved,
 }: {
   userId: string;
   existing?: WorkoutLog;
   initialDate?: string;
+  /** Prefilled by the log reminder's deep link — the person's usual gym. */
+  initialGym?: string;
   onClose: () => void;
   onSaved: () => void;
 }) {
   const [date, setDate] = useState(existing?.date ?? initialDate ?? todayIso());
   const [activity, setActivity] = useState(existing?.activity ?? "gym");
-  const [gym, setGym] = useState(existing?.gym ?? "");
+  const [gym, setGym] = useState(existing?.gym ?? initialGym ?? "");
   const [partner, setPartner] = useState(existing?.partner ?? "");
   const [partnerId, setPartnerId] = useState<string | undefined>(existing?.partnerId);
   const [exercises, setExercises] = useState<WorkoutExercise[]>(existing?.exercises ?? []);

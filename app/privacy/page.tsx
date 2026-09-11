@@ -117,7 +117,8 @@ export default function PrivacyPolicyPage() {
           <span className="text-l-text">Notifications.</span>{" "}
           If you turn on push notifications, we store the subscription your browser issues and
           your browser&apos;s user-agent string, so we can deliver notifications to the right
-          device.
+          device. If you leave the log reminder on, we also record the day each reminder was
+          sent, so you are never sent two in one day.
         </p>
         <p>
           <span className="text-l-text">Varsity athletes.</span>{" "}

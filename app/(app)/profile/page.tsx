@@ -41,6 +41,7 @@ import {
 } from "@/lib/supabase/workouts";
 import { fileToDataUrl } from "@/lib/image";
 import { getMyFollowCounts } from "@/lib/supabase/follows";
+import { readLogLink } from "@/lib/reminders";
 import {
   residenceLabel,
   nameError,
@@ -67,6 +68,8 @@ export default function ProfilePage() {
   const [openDate, setOpenDate] = useState<string | null>(null); // day sheet
   const [openLog, setOpenLog] = useState<WorkoutLog | null>(null); // full-screen workout detail
   const [logging, setLogging] = useState(false); // "Log session" (new) editor open
+  // What the log reminder's deep link asked for: today's date and the usual gym.
+  const [logPrefill, setLogPrefill] = useState<{ date?: string; gym?: string } | null>(null);
   const [editLog, setEditLog] = useState<WorkoutLog | null>(null); // editing an existing log
   const [editingPrefs, setEditingPrefs] = useState(false);
   // Which Training row is being picked, if any.
@@ -109,6 +112,23 @@ export default function ProfilePage() {
       // Ignore images that won't decode.
     }
   };
+
+  /*
+    ARRIVING FROM THE LOG REMINDER (/profile?log=1&date=…&gym=…): open the log
+    sheet straight away with that date and gym filled in — the ten seconds the
+    push promised. Read off the URL after mount (useSearchParams would force a
+    Suspense boundary), then cleared so a refresh doesn't reopen it.
+  */
+  useEffect(() => {
+    const id = requestAnimationFrame(() => {
+      const link = readLogLink(window.location.search);
+      if (!link) return;
+      setLogPrefill({ date: link.date ?? undefined, gym: link.gym ?? undefined });
+      setLogging(true);
+      router.replace("/profile");
+    });
+    return () => cancelAnimationFrame(id);
+  }, [router]);
 
   // Real "Following" count from the follow graph.
   useEffect(() => {
@@ -616,13 +636,17 @@ export default function ProfilePage() {
         <LogSessionSheet
           userId={userId}
           existing={editLog ?? undefined}
+          initialDate={logPrefill?.date}
+          initialGym={logPrefill?.gym}
           onClose={() => {
             setLogging(false);
+            setLogPrefill(null);
             setEditLog(null);
           }}
           onSaved={async () => {
             await reloadLogs();
             setLogging(false);
+            setLogPrefill(null);
             setEditLog(null);
           }}
         />

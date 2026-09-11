@@ -572,12 +572,18 @@ export const gymMentorship: { key: ToggleKey; label: string; sub: string }[] = [
 ];
 
 // ---- Screen 9: Notifications -------------------------------------------------
-// What users get notified about (NO streaks). Icons map to the icon set.
+/*
+  ONLY WHAT ACTUALLY SENDS. This list used to promise "Someone matches with
+  you" and "Session reminders", and neither existed. Every line here has a
+  real sender behind it (app/api/push/notify and app/api/push/remind); adding
+  a promise means adding the code first. Icons map to the icon set.
+*/
 export const notificationItems: { icon: string; label: string }[] = [
-  { icon: "heart", label: "Someone matches with you" },
   { icon: "message", label: "New messages" },
-  { icon: "calendar", label: "Session invites" },
-  { icon: "clock", label: "Session reminders" },
+  { icon: "calendar", label: "Session plans — invites, answers and changes" },
+  { icon: "user", label: "Partner tags — “Did you train with Sam today?”" },
+  { icon: "heart", label: "New followers" },
+  { icon: "clock", label: "One reminder to log, at your usual training time" },
 ];
 
 export const countries: string[] = [
