@@ -10,6 +10,10 @@ import { roleLabel, type VarsityRole } from "@/lib/varsity/membership";
   person is wearing — a captain sees a much smaller console than a coach, so it
   should be obvious which one they are. Exit goes back to the athlete side.
 */
+
+/* "Harvard Heavyweight Rowing" → "H". The first letter of the squad's name;
+   a squad with no name yet shows nothing rather than somebody else's letter. */
+const teamInitial = (teamName: string) => teamName.trim().charAt(0).toUpperCase();
 export default function CoachTopBar({
   role,
   teamName,
@@ -20,8 +24,10 @@ export default function CoachTopBar({
   return (
     <div className="relative z-10 flex flex-shrink-0 items-center justify-between border-b border-border bg-background px-4 py-3">
       <div className="flex min-w-0 items-center gap-2.5">
+        {/* The squad's initial, from its name — never a letter typed into the
+            component: this bar is the same for every university (rule 2). */}
         <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-primary text-sm font-semibold text-primary-contrast">
-          H
+          {teamInitial(teamName)}
         </span>
         <div className="flex min-w-0 flex-col leading-none">
           <span className="truncate text-sm font-semibold text-text">
