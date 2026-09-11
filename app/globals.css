@@ -590,6 +590,9 @@
   50% { opacity: 0.4; }
 }
 .l-pulse { animation: l-pulse 2s infinite; }
+/* The one animation on the page that kept going under reduced motion
+   (website review, 2026-09-10). A still dot says "live" just as well. */
+@media (prefers-reduced-motion: reduce) { .l-pulse { animation: none; } }
 
 /* The small scroll cue under the hero and the interlude: a word and a
    bobbing hairline. Stops bobbing under reduced motion. */
