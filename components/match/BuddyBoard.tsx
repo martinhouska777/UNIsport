@@ -24,7 +24,8 @@ import {
   type MyBuddyPost,
 } from "@/lib/supabase/buddyBoard";
 import { startDirectConversation } from "@/lib/supabase/messages";
-import { buddyFocuses, focusLabel, postWhenLabel } from "@/lib/buddyBoard";
+import { createPlan } from "@/lib/supabase/sessionPlans";
+import { buddyFocuses, focusLabel, focusActivity, postWhenLabel } from "@/lib/buddyBoard";
 import { weekDays, verifiedGyms, sessionTimeSlots } from "@/lib/onboarding";
 import { dateLabel } from "@/lib/schedule";
 import { Pill, FieldLabel, SelectField } from "@/components/onboarding/controls";
@@ -170,15 +171,50 @@ export default function BuddyBoard({
     }
   };
 
+  // Into the conversation with this post's author — the same thread either
+  // action lands in. `uid` matters: without it the thread header has no photo
+  // and the name isn't tappable through to their profile.
+  const openThread = (post: BuddyPost, convId: string) =>
+    router.push(
+      `/messages?dm=${convId}&name=${encodeURIComponent(post.authorName)}&uid=${encodeURIComponent(post.author)}`,
+    );
+
   const message = async (post: BuddyPost) => {
     setMessagingId(post.id);
     try {
+      openThread(post, await startDirectConversation(post.author));
+    } catch (e) {
+      setBoardErr((e as Error).message);
+      setMessagingId(null);
+    }
+  };
+
+  /*
+    "I'M IN" — one tap, no typing. Typing the first message to a stranger is
+    where the funnel dies, so the primary action on a post sends a PLAN CARD
+    instead: the post's focus (as an activity), its gym and its hour, already
+    filled in, into a fresh thread with the poster — who accepts it the way
+    every plan card is accepted. Only posts with a real date and hour can be
+    turned into a plan; the older ones keep Message as their only action.
+  */
+  const canJoin = (post: BuddyPost) => !!post.date && post.hour != null;
+
+  const imIn = async (post: BuddyPost) => {
+    if (!canJoin(post)) return message(post);
+    setMessagingId(post.id);
+    try {
       const convId = await startDirectConversation(post.author);
-      // `uid` matters: without it the thread header has no photo and the name
-      // isn't tappable through to their profile.
-      router.push(
-        `/messages?dm=${convId}&name=${encodeURIComponent(post.authorName)}&uid=${encodeURIComponent(post.author)}`,
-      );
+      const h = Math.floor(post.hour!);
+      const m = Math.round((post.hour! - h) * 60);
+      const scheduledAt = new Date(
+        `${post.date}T${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:00`,
+      ).toISOString();
+      await createPlan(convId, {
+        activity: focusActivity(post.focus),
+        place: post.gym ?? "",
+        scheduledAt,
+      });
+      openThread(post, convId);
     } catch (e) {
       setBoardErr((e as Error).message);
       setMessagingId(null);
@@ -375,14 +411,27 @@ export default function BuddyBoard({
                   </div>
                 )}
               </div>
-              <Button
-                size="sm"
-                onClick={() => message(p)}
-                disabled={messagingId === p.id}
-                className="flex-shrink-0"
-              >
-                {messagingId === p.id ? "…" : "Message"}
-              </Button>
+              {/* Primary: "I'm in" — a plan card with this post's time, gym and
+                  focus already on it. Message is the small way round it. */}
+              <div className="flex flex-shrink-0 flex-col items-end gap-1">
+                <Button
+                  size="sm"
+                  onClick={() => (canJoin(p) ? imIn(p) : message(p))}
+                  disabled={messagingId === p.id}
+                >
+                  {messagingId === p.id ? "…" : canJoin(p) ? "I’m in" : "Message"}
+                </Button>
+                {canJoin(p) && (
+                  <button
+                    type="button"
+                    onClick={() => message(p)}
+                    disabled={messagingId === p.id}
+                    className="tap44 px-1 text-[11px] font-medium text-muted disabled:opacity-40"
+                  >
+                    Message
+                  </button>
+                )}
+              </div>
             </div>
           ))}
         </div>
