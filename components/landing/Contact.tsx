@@ -62,15 +62,17 @@ function Social({ s }: { s: SocialLink }) {
   );
 }
 
-export default function Contact() {
+/* `solo`: on /contact this section is the page, so its line is the h1. */
+export default function Contact({ solo = false }: { solo?: boolean }) {
+  const Heading = solo ? "h1" : "h2";
   return (
     <section id="contact" className="relative z-[1] scroll-mt-20 border-t border-l-line px-6 py-24 sm:px-8">
       <div className="mx-auto grid max-w-[1160px] gap-10 lg:grid-cols-[1fr_2fr]">
         <div className="font-mono text-[11px] tracking-[0.14em] uppercase text-l-accent">{contact.kicker}</div>
         <div>
-          <h2 className="font-display text-[clamp(36px,5vw,56px)] leading-[1.02] tracking-tight text-balance text-l-text">
+          <Heading className="font-display text-[clamp(36px,5vw,56px)] leading-[1.02] tracking-tight text-balance text-l-text">
             {contact.headline}
-          </h2>
+          </Heading>
           <p className="mt-6 max-w-[62ch] text-[clamp(16px,1.8vw,18px)] leading-[1.65] text-l-text-2">{contact.body}</p>
 
           {/* The owner, 2026-09-04: the Why is important for students, so it is

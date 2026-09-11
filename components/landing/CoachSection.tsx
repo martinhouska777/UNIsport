@@ -40,6 +40,8 @@ function Body({ parts, className = "" }: { parts: Segment[]; className?: string 
     at the foot), and the three lines that leant on the varsity story above
     (lead-in, sub, bridge) read their solo variants. */
 export default function CoachSection({ solo = false }: { solo?: boolean }) {
+  // On /for/coaches the Console opens the page, so its name is the h1.
+  const Heading = solo ? "h1" : "h2";
   return (
     <section
       id="coaches"
@@ -52,9 +54,9 @@ export default function CoachSection({ solo = false }: { solo?: boolean }) {
           <div className="inline-flex items-center gap-2 rounded-full border border-l-varsity-soft bg-l-varsity-dim px-3.5 py-1.5 font-mono text-[11px] uppercase tracking-wider text-l-varsity">
             {coach.badge}
           </div>
-          <h2 className="max-w-[14ch] font-display text-[clamp(40px,min(7vw,8.6vh),68px)] font-normal leading-[1.02] tracking-tight text-balance text-l-text">
+          <Heading className="max-w-[14ch] font-display text-[clamp(40px,min(7vw,8.6vh),68px)] font-normal leading-[1.02] tracking-tight text-balance text-l-text">
             {coach.headline} <em className="italic text-l-varsity">{coach.headlineEm}</em>
-          </h2>
+          </Heading>
           <Body
             parts={solo ? coach.subSolo : coach.sub}
             className="max-w-[60ch] text-[clamp(15px,1.9vw,17px)] leading-[1.6] text-balance text-l-text-2"

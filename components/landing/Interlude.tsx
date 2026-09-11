@@ -29,6 +29,8 @@ import { cues, hero, interlude } from "@/lib/landingCopy";
   cue says "Scroll" like the hero's, not "Keep going".
 */
 export default function Interlude({ solo = false }: { solo?: boolean }) {
+  // On /for/varsity this card opens the page, so "Varsity Mode." is its h1.
+  const Heading = solo ? "h1" : "h2";
   const card = useRef<HTMLElement>(null);
   const shown = useReveal(card);
   // The entrance belongs to "/" only; a card that opens its own page is there.
@@ -47,7 +49,7 @@ export default function Interlude({ solo = false }: { solo?: boolean }) {
         {solo ? interlude.leadInSolo : interlude.leadIn}
       </p>
 
-      <h2 className="max-w-[12ch] font-display text-[clamp(48px,10vw,104px)] font-normal leading-[0.98] tracking-[-0.02em] text-balance text-l-text">
+      <Heading className="max-w-[12ch] font-display text-[clamp(48px,10vw,104px)] font-normal leading-[0.98] tracking-[-0.02em] text-balance text-l-text">
         {/* Two halves, one behind the other — see StudentIntro. */}
         <span className="l-tc inline-block" style={{ "--d": "90ms" } as CSSProperties}>
           {interlude.headline}
@@ -55,7 +57,7 @@ export default function Interlude({ solo = false }: { solo?: boolean }) {
         <em className="l-tc inline-block italic text-l-varsity" style={{ "--d": "190ms" } as CSSProperties}>
           {interlude.headlineEm}
         </em>
-      </h2>
+      </Heading>
 
       <p
         className="l-tc max-w-[36ch] text-[clamp(16px,2.4vw,19px)] leading-[1.55] tracking-[-0.01em] text-balance text-l-text-2"

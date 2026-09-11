@@ -145,6 +145,9 @@ function Typed({
 }
 
 export default function StudentIntro({ solo = false }: { solo?: boolean }) {
+  // On /for/students this card opens the page, so its line is the page's h1
+  // (the views had none — website review, 2026-09-10). On "/" the hero has it.
+  const Heading = solo ? "h1" : "h2";
   const card = useRef<HTMLElement>(null);
   const cycle = useRef<HTMLElement>(null);
   const { school } = useSchoolCycle(cycle, HERO_CYCLE_MS);
@@ -179,7 +182,7 @@ export default function StudentIntro({ solo = false }: { solo?: boolean }) {
         anim ? "l-anim" : ""
       } ${shown ? "is-in" : ""}`}
     >
-      <h2 className="max-w-[13ch] font-display text-[clamp(40px,8vw,76px)] font-normal leading-[0.98] tracking-[-0.02em] text-balance text-l-text">
+      <Heading className="max-w-[13ch] font-display text-[clamp(40px,8vw,76px)] font-normal leading-[0.98] tracking-[-0.02em] text-balance text-l-text">
         <Typed
           /* Leaving the card rewinds the line: a fresh Typed starts at nought,
              so coming back to it writes it out again. */
@@ -194,7 +197,7 @@ export default function StudentIntro({ solo = false }: { solo?: boolean }) {
               : "italic text-l-accent"
           }
         />
-      </h2>
+      </Heading>
 
       <p
         className="l-tc max-w-[38ch] text-[clamp(15px,2.2vw,18px)] leading-[1.55] tracking-[-0.01em] text-balance text-l-text-2"
