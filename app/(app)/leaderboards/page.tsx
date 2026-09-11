@@ -76,6 +76,7 @@ import {
 import HonorCode, { HonorCodeFooter, useHonorCode } from "@/components/leaderboards/HonorCode";
 import GroupSheet from "@/components/leaderboards/GroupSheet";
 import HouseRace from "@/components/leaderboards/HouseRace";
+import WeekEventLine from "@/components/leaderboards/WeekEventLine";
 import ShareInviteButton from "@/components/ShareInviteButton";
 import Podium, { type PodiumEntry } from "@/components/leaderboards/Podium";
 import Medal from "@/components/leaderboards/Medal";
@@ -594,6 +595,13 @@ export default function LeaderboardsPage() {
         >
           <IconInfo size={14} />
         </button>
+      </div>
+
+      {/* THIS WEEK'S EVENT — the first thing on the boards: a task with a
+          deadline, not a standing. The interhouse race's gate (the card above
+          the Houses board) is the same machinery at the house's scale. */}
+      <div className="border-b border-border px-3.5 pt-3">
+        <WeekEventLine />
       </div>
 
       {/* Your standing */}

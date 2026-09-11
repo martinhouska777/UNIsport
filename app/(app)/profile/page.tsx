@@ -22,6 +22,7 @@ import UpcomingSessions from "@/components/profile/UpcomingSessions";
 import PartnerRequests from "@/components/profile/PartnerRequests";
 import ShareInviteButton from "@/components/ShareInviteButton";
 import LeaderboardStrip from "@/components/leaderboards/LeaderboardStrip";
+import WeekEventLine from "@/components/leaderboards/WeekEventLine";
 import MemoriesStrip from "@/components/profile/MemoriesStrip";
 import PersonalRecords from "@/components/profile/PersonalRecords";
 import PhotoGrid from "@/components/profile/PhotoGrid";
@@ -417,8 +418,11 @@ export default function ProfilePage() {
         <SessionCalendar logs={logs} onPickDate={(d) => setOpenDate(d)} />
       )}
 
-      {/* 3 · WHERE YOU STAND — one line, straight into the full boards. */}
+      {/* 3 · WHERE YOU STAND — one line, straight into the full boards — and
+          this week's event under it, with your real count against it. It
+          changes on Monday and ticks over when you log what it asks for. */}
       <LeaderboardStrip />
+      <WeekEventLine compact />
 
       {/* Upcoming accepted sessions (chat-planned) — a date in your diary
           belongs above the fold. Hides itself when there is none. */}
