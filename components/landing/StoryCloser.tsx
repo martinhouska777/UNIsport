@@ -97,6 +97,21 @@ const JUMP = 0.32;
 const DUR_BACK = 860;
 const easeInOut = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 
+/* The flight takes the story's screens with it as clones of their <img>. Since
+   2026-09-10 that <img> may sit inside a <picture> that picks the dark twin by
+   media query (Shot.tsx), and a bare clone of the <img> alone would fall back
+   to its light `src`. So the clone is pinned to the source the browser
+   actually chose — the same URL, already in cache, nothing fetched. */
+function cloneShot(img: HTMLImageElement) {
+  const c = img.cloneNode(true) as HTMLImageElement;
+  if (img.currentSrc) {
+    c.src = img.currentSrc;
+    c.removeAttribute("srcset");
+    c.removeAttribute("sizes");
+  }
+  return c;
+}
+
 /* Where the flight exists: the two-column layout, without reduced motion.
    1280 is CloserSplit's own breakpoint and the two MUST agree — the pinned
    stage is one screen tall with overflow hidden, so wrapping it around a
@@ -267,8 +282,8 @@ export default function StoryCloser({ storyId, beats, accent, closer, closerId, 
       // from the left. `translate`, so the strip's own transform (the vertical
       // pan) survives.
       fs.innerHTML = "";
-      const a = fromShot.cloneNode(true) as HTMLElement;
-      const b = toShot.cloneNode(true) as HTMLElement;
+      const a = cloneShot(fromShot);
+      const b = cloneShot(toShot);
       b.style.transform = "translateY(0px)"; // the new screen starts at its top
       a.style.opacity = "1";
       b.style.opacity = "1";
@@ -382,8 +397,8 @@ export default function StoryCloser({ storyId, beats, accent, closer, closerId, 
       c!.setPhoneHidden(true);
 
       fs.innerHTML = "";
-      const a = fromShot.cloneNode(true) as HTMLElement;
-      const b = toShot.cloneNode(true) as HTMLElement;
+      const a = cloneShot(fromShot);
+      const b = cloneShot(toShot);
       a.style.opacity = "1";
       a.style.transform = "translateY(0px)";
       b.style.opacity = "1";

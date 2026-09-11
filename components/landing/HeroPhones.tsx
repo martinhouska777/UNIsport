@@ -1,8 +1,9 @@
 "use client";
 
-import Image from "next/image";
+import { useSyncExternalStore } from "react";
 import Phone from "@/components/landing/Phone";
-import { shotSrc, usePhoneMode } from "@/components/landing/PhoneMode";
+import { usePhoneMode } from "@/components/landing/PhoneMode";
+import Shot from "@/components/landing/Shot";
 import { lift, schools } from "@/lib/landingSchools";
 
 /*
@@ -77,10 +78,25 @@ const PHONES = [
   { side: "right" as const, shot: "match", what: "The Match screen" },
 ];
 
+/* Tailwind's xl — the `hidden xl:block` on the wrapper below. Hiding with
+   CSS alone still let a phone DOWNLOAD both screens (88 KB) for a backdrop
+   it can never show (website review, 2026-09-10); so below this width the
+   component renders nothing at all. The server renders nothing either and
+   the wide client fills it in on hydration — the phones arrive on their own
+   rise anyway. */
+const XL = "(min-width: 1280px)";
+function subscribeWide(cb: () => void) {
+  const mq = window.matchMedia(XL);
+  mq.addEventListener("change", cb);
+  return () => mq.removeEventListener("change", cb);
+}
+
 export default function HeroPhones({ i, count }: { i: number; count: number }) {
   const { mode, chosen } = usePhoneMode();
+  const wide = useSyncExternalStore(subscribeWide, () => window.matchMedia(XL).matches, () => false);
   // The visitor's choice if they made one; white if they have not.
   const shown = chosen ? mode : "light";
+  if (!wide) return null;
 
   const school = schools[i];
 
@@ -103,9 +119,10 @@ export default function HeroPhones({ i, count }: { i: number; count: number }) {
               <Phone className="relative opacity-[0.82]">
                 <div className="relative aspect-[900/1480] overflow-hidden bg-l-phone-screen">
                   {schools.slice(0, count).map((sc, n) => (
-                    <Image
+                    <Shot
                       key={sc.key}
-                      src={shotSrc(`/landing/closers/${p.shot}-${sc.key}.webp`, shown)}
+                      shot={`/landing/closers/${p.shot}-${sc.key}.webp`}
+                      mode={shown}
                       alt={`${p.what} in ${sc.name}'s colours`}
                       fill
                       sizes="(min-width: 1536px) 290px, 230px"

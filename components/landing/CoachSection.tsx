@@ -115,9 +115,9 @@ export default function CoachSection({ solo = false }: { solo?: boolean }) {
               key={s.n}
               className="flex shrink grow-0 basis-[300px] flex-col items-center gap-[20px] text-center"
             >
-              {/* Only the first capture preloads; the rest are far below the fold.
-                  (Next 16 deprecated `priority` in favour of `preload`.) */}
-              <CoachPhone shot={s.shot} alt={s.alt} preload={i === 0} />
+              {/* Only the first capture loads up front; the rest are far below
+                  the fold and arrive as the reader scrolls (CoachPhone). */}
+              <CoachPhone shot={s.shot} alt={s.alt} first={i === 0} />
               <div>
                 {/* THE STEP NUMBER — a small gold coin BESIDE the headline (the
                     owner, 2026-09-05: "udělej ho hezčí a třeba v kolečku a vedle

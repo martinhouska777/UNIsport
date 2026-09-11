@@ -1,9 +1,8 @@
 "use client";
 
-import Image from "next/image";
+import Shot from "@/components/landing/Shot";
 import { useCallback, useEffect, useImperativeHandle, useRef, useState, type ReactNode, type Ref } from "react";
 import Phone from "@/components/landing/Phone";
-import { shotSrc, usePhoneMode } from "@/components/landing/PhoneMode";
 import VarsityTabBar from "@/components/landing/VarsityTabBar";
 import CloserSplit from "@/components/landing/CloserSplit";
 import { useCloserGate } from "@/components/landing/useCloserGate";
@@ -464,7 +463,6 @@ export default function BladeLock({
 
   const s = schools[active];
   const copy = closers.blades;
-  const { mode } = usePhoneMode();
   const ct = "transition-colors duration-[600ms] ease-in-out motion-reduce:transition-none";
 
   return (
@@ -538,9 +536,9 @@ export default function BladeLock({
           >
             <div className="relative aspect-[900/1480] overflow-hidden bg-l-phone-screen">
               {schools.map((sc, i) => (
-                <Image
+                <Shot
                   key={sc.key}
-                  src={shotSrc(`/landing/closers/vhome-${sc.key}.webp`, mode)}
+                  shot={`/landing/closers/vhome-${sc.key}.webp`}
                   alt={`Varsity Home in ${sc.name}'s colours`}
                   fill
                   sizes="272px"

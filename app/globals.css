@@ -218,6 +218,23 @@
   --color-l-phone-line: #262626;
   --color-l-phone-frame: #3d3d3d;
 }
+/* Until the visitor presses the switch the wrapper says "system" — also what
+   the server renders — and the captures inside follow the machine's scheme
+   by <picture> (components/landing/Shot.tsx). So the chrome follows the
+   machine here too, before any JavaScript has run, and screen and shell
+   never disagree for a frame. THE SAME EIGHT VALUES AS ABOVE — change both. */
+@media (prefers-color-scheme: dark) {
+  [data-phone-mode="system"] {
+    --color-l-phone-screen: #0b0b0c;
+    --color-l-phone-ink: #f5f5f5;
+    --color-l-phone-ink-2: #8a8a8a;
+    --color-l-phone-island: #000000;
+    --color-l-phone-island-line: #2a2a2a;
+    --color-l-phone-bar: #3a3a3a;
+    --color-l-phone-line: #262626;
+    --color-l-phone-frame: #3d3d3d;
+  }
+}
 /* The display face is a plain utility, not a theme alias: next/font puts
    --font-instrument-serif on the landing's root <div>, not on :root, so an
    alias emitted at :root would resolve to nothing. This reads the variable

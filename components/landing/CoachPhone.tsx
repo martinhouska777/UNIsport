@@ -1,15 +1,18 @@
 "use client";
 
-import Image from "next/image";
 import Phone from "@/components/landing/Phone";
-import { shotSrc, usePhoneMode } from "@/components/landing/PhoneMode";
+import Shot from "@/components/landing/Shot";
 
 /* The phone frame the coach captures sit in — the shared landing Phone, so a
    reader who scrolled through the stories meets a familiar object here. A
-   client component only so it can follow the light/dark switch; the section
-   around it stays server-rendered. */
-export default function CoachPhone({ shot, alt, preload }: { shot: string; alt: string; preload?: boolean }) {
-  const { mode } = usePhoneMode();
+   client component only so it can follow the light/dark switch (Shot); the
+   section around it stays server-rendered.
+
+   `first`: the opening capture loads eagerly at high priority so it is there
+   when the section arrives; the rest are far below the fold and lazy. (It was
+   a <link rel=preload> until 2026-09-10, which fetched the picture on "/"
+   too — twenty screens above where it is drawn.) */
+export default function CoachPhone({ shot, alt, first }: { shot: string; alt: string; first?: boolean }) {
   return (
     /* SMALLER THAN THE STORY PHONES, on the owner's instruction 2026-09-04:
        "make the phones on the coaches console smaller so u can read the text
@@ -33,12 +36,13 @@ export default function CoachPhone({ shot, alt, preload }: { shot: string; alt: 
        nothing changes on a normal desktop; the 140 floor keeps it sane in a
        window too short for any of this. */
     <Phone className="w-full max-w-[210px] sm:max-w-[clamp(140px,calc((100svh_-_356px)/1.771),240px)]">
-      <Image
-        src={shotSrc(`/landing/${shot}`, mode)}
+      <Shot
+        shot={`/landing/${shot}`}
         alt={alt}
         width={900}
         height={1479}
-        preload={preload}
+        loading={first ? "eager" : "lazy"}
+        fetchPriority={first ? "high" : undefined}
         sizes="(min-width: 640px) 240px, 210px"
         quality={90}
         className="block h-auto w-full"

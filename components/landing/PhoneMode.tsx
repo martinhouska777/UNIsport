@@ -15,16 +15,22 @@ import { createContext, useContext, useEffect, useState, useSyncExternalStore, t
   Files: a light capture at /landing/<x>.webp has its dark twin at
   /landing/dark/<x>.webp — same name, one folder down (closers included:
   /landing/dark/closers/<x>.webp). shotSrc() is the only place that rule
-  lives. Until the dark folder is re-shot from the app (capture-light.mjs
-  --mode dark, which needs the owner's login), it holds provisional frames
-  derived from the light ones — see scripts/landing/dark-placeholders.mjs.
+  lives, and Shot.tsx is the only place a capture is drawn.
 
   Default: the visitor's own preference (prefers-color-scheme), then whatever
-  they last chose here (localStorage). Server-rendered light, resolved on
-  the client — invisible, because the first phone is a screen below the fold.
-  A tiny external store read through useSyncExternalStore: the server
-  snapshot is "light", the client snapshot is the resolved mode, and React
-  reconciles the two on hydration without a setState-in-effect.
+  they last chose here (localStorage). A tiny external store read through
+  useSyncExternalStore: the server snapshot is "light" / not chosen, the
+  client snapshot is the resolved mode, and React reconciles the two on
+  hydration without a setState-in-effect.
+
+  THE PICTURES DO NOT WAIT FOR THAT (2026-09-10). The server cannot know the
+  visitor's scheme, so it used to write the light capture into every <img>;
+  a dark machine then fetched the light set, hydrated, and fetched the dark
+  set — every screen twice. Now every capture goes through Shot.tsx, which
+  hands the browser BOTH twins in a <picture> until the visitor has actually
+  pressed the switch, and the browser picks one at parse time. The attribute
+  on the wrapper follows the same split: "system" until a choice is made
+  (the machine decides, in CSS), then "light" or "dark".
 
   `chosen` says whether that mode is the visitor's OWN choice or merely the
   default we picked for them. Only the intro's backdrop phones care: the owner
@@ -95,7 +101,7 @@ export function PhoneModeProvider({ children }: { children: ReactNode }) {
   const chosenNow = useSyncExternalStore(subscribe, readChosen, () => false);
   return (
     <Ctx.Provider value={{ mode, chosen: chosenNow, setMode: writeMode }}>
-      <div data-phone-mode={mode} className="contents">
+      <div data-phone-mode={chosenNow ? mode : "system"} className="contents">
         {children}
       </div>
     </Ctx.Provider>

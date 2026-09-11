@@ -1,9 +1,8 @@
 "use client";
 
-import Image from "next/image";
-import { useCallback, useEffect, useImperativeHandle, useMemo, useRef, type CSSProperties, type Ref } from "react";
+import { useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState, type CSSProperties, type Ref } from "react";
 import Phone from "@/components/landing/Phone";
-import { shotSrc, usePhoneMode } from "@/components/landing/PhoneMode";
+import Shot from "@/components/landing/Shot";
 import type { Beat } from "@/lib/landingCopy";
 import { motion as motionByBeat, shotSize } from "@/lib/landingMotion";
 
@@ -90,10 +89,46 @@ export default function ScrollStory({ id, beats, accent, ref }: Props) {
   const glideT = useRef(0);
 
   const mo = useMemo(() => beats.map((b) => motionByBeat[b.id] || {}), [beats]);
-  // Light or dark captures. A mode change re-renders the <Image>s with the
-  // twin src and nothing else: the choreography lives in refs and DOM
-  // classes, which a re-render leaves alone.
-  const { mode } = usePhoneMode();
+  // Light or dark captures are Shot's business. A mode change re-renders the
+  // images with the twin src and nothing else: the choreography lives in refs
+  // and DOM classes, which a re-render leaves alone.
+
+  /*
+    WHEN THE FRAMES LOAD. Every frame used to be `loading="eager"` from the
+    first byte of the page, because a lazy frame parked off-screen inside the
+    phone (translated out, opacity 0, clipped by the shell) is never "near the
+    viewport" as far as the browser can tell — so a reader scrolling fast used
+    to reach a beat whose picture had not started downloading and see a white
+    screen. But eager-from-the-start meant a phone fetched all thirteen
+    frames of both stories — the varsity ones ten screens down — before it had
+    drawn the intro (website review, 2026-09-10: 1 MB of screens before the
+    first scroll, 2 MB in dark mode).
+
+    So the story itself decides: the first frame is eager (it is the one the
+    reader meets), the rest stay lazy until the story is within one screen of
+    the viewport, and then ALL of them go eager at once — a screen of
+    scrolling to reach the story, then its opening hold, before the second
+    beat can be reached. (A screen and a half caught the student story from
+    the first frame of a phone, where it starts 2.3 screens down.) Flipping
+    `loading` from lazy to eager on an element that has not loaded starts the
+    fetch; that is what the spec says and what browsers do.
+  */
+  const [near, setNear] = useState(false);
+  useEffect(() => {
+    const el = root.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          setNear(true);
+          io.disconnect();
+        }
+      },
+      { rootMargin: "100% 0px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
 
   useImperativeHandle(ref, () => ({
     phoneRect: () => phoneEl.current?.getBoundingClientRect() ?? null,
@@ -312,8 +347,10 @@ export default function ScrollStory({ id, beats, accent, ref }: Props) {
       const [from, to] = m.pan;
       // `to` past 1 means: reach the bottom early, then rest there.
       const frac = Math.min(1, from + (to - from) * p);
-      const parent = img.parentElement;
-      const travel = img.offsetHeight - (parent ? parent.offsetHeight : 0);
+      // Against the FRAME, not img.parentElement: the image may sit inside a
+      // <picture> (Shot.tsx), which has no box of its own.
+      const frameEl = frames.current[i];
+      const travel = img.offsetHeight - (frameEl ? frameEl.offsetHeight : 0);
       if (travel > 0) target.current.pans[i] = frac * travel;
     });
     glide();
@@ -492,20 +529,19 @@ export default function ScrollStory({ id, beats, accent, ref }: Props) {
                       data-i={i}
                       data-enter={m.enter || "fade"}
                     >
-                      <Image
+                      <Shot
                         ref={(el) => {
                           shots.current[i] = el;
                         }}
-                        src={shotSrc(`/landing/${b.shot}`, mode)}
+                        shot={`/landing/${b.shot}`}
                         alt={`${b.kicker.replace(/^\S+\s·\s/, "")}: ${b.head}`}
                         width={size.w}
                         height={size.h}
                         sizes="360px"
                         quality={90}
-                        /* Every frame loads up front (the first with priority):
-                           a phone scrolled fast used to reach a beat whose
-                           lazy frame had not arrived and show a white screen. */
-                        loading="eager"
+                        /* The first frame up front (with priority); the rest the
+                           moment the story is near — see `near` above. */
+                        loading={i === 0 || near ? "eager" : "lazy"}
                         fetchPriority={i === 0 ? "high" : "low"}
                         className={`ls-shot${m.pan ? " ls-tall" : ""}`}
                       />

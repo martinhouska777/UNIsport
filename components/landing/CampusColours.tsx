@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import Shot from "@/components/landing/Shot";
 import Link from "next/link";
 import {
   useCallback,
@@ -13,7 +13,6 @@ import {
   type TouchEvent as ReactTouchEvent,
 } from "react";
 import Phone from "@/components/landing/Phone";
-import { shotSrc, usePhoneMode } from "@/components/landing/PhoneMode";
 import CloserSplit from "@/components/landing/CloserSplit";
 import { useCloserGate } from "@/components/landing/useCloserGate";
 import type { CloserHandle } from "@/components/landing/closer";
@@ -222,7 +221,6 @@ export default function CampusColours({
   const s = schools[idx];
   const animate = prev != null && !reduced;
   const copy = closers.campus;
-  const { mode } = usePhoneMode();
   const letterCls =
     letter === "pre" ? "lc-pre" : letter === "now" ? "lc-now" : letter === "rev" ? "lc-rev lc-pre" : "";
 
@@ -333,9 +331,9 @@ export default function CampusColours({
           >
             <div className="relative aspect-[900/1480] overflow-hidden bg-l-phone-screen">
               {schools.map((sc, i) => (
-                <Image
+                <Shot
                   key={sc.key}
-                  src={shotSrc(`/landing/closers/gyms-${sc.key}.webp`, mode)}
+                  shot={`/landing/closers/gyms-${sc.key}.webp`}
                   alt={`The Gyms screen in ${sc.name}'s colours`}
                   fill
                   sizes="270px"
