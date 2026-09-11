@@ -14,14 +14,17 @@ import { useMembership } from "@/components/varsity/useMembership";
 import { can, canOpenConsole, roleLabel, type VarsityRole } from "@/lib/varsity/membership";
 import ThemeProvider from "@/components/ThemeProvider";
 import { useVarsityTheme } from "@/components/varsity/useVarsityTheme";
-import { fetchPlan, fetchProfileFullName } from "@/lib/varsity/planStore";
+import { fetchPlan } from "@/lib/varsity/planStore";
 import { fetchTodayLineups } from "@/lib/varsity/lineupStore";
+import { claimRosterSeat, fetchSeatIdentity, type SeatIdentity } from "@/lib/varsity/athleteProfile";
 import LineupBoatCard, { LineupSeats, isMyBoat } from "@/components/varsity/LineupBoatCard";
 import UploadVideoSheet from "@/components/varsity/UploadVideoSheet";
+import ClaimSeatSheet from "@/components/varsity/ClaimSeatSheet";
 import { driveConfigured, driveFolderLink } from "@/lib/varsity/drive";
 import { fetchNote } from "@/lib/varsity/notesStore";
-import { sessionKey, parseDate } from "@/lib/varsity/coachPlan";
-import { buildAthleteHome, daySessionToCard } from "@/lib/varsity/athleteHome";
+import { sessionKey, parseDate, toISO } from "@/lib/varsity/coachPlan";
+import { buildAthleteHome, daySessionToCard, logSpanFor } from "@/lib/varsity/athleteHome";
+import { fetchLogsInRange, LOG_DAYS_BACK } from "@/lib/varsity/logStore";
 import { SkeletonCards, SkeletonLines } from "@/components/ui/Skeleton";
 import SectionLabel from "@/components/ui/SectionLabel";
 import {
@@ -43,7 +46,6 @@ import {
 import {
   IconFlag,
   IconClock,
-  IconCheck,
   IconCheckCircle,
   IconMessage,
   IconX,
@@ -57,17 +59,29 @@ import {
   IconAnchor,
   IconPlus,
   IconVideo,
+  IconUser,
 } from "@/components/icons";
 
+// Three states, all read off the athlete's own log (lib/varsity/athleteHome).
 const statusStyle: Record<
   SessionStatus,
   { cls: string; label: string; Icon: (p: { size?: number }) => React.ReactElement }
 > = {
-  verified: { cls: "text-success", label: "VERIFIED", Icon: IconCheckCircle },
   upcoming: { cls: "text-muted", label: "UPCOMING", Icon: IconClock },
-  flagged: { cls: "text-warn", label: "FLAGGED", Icon: IconFlag },
+  done: { cls: "text-success", label: "LOGGED", Icon: IconCheckCircle },
   missed: { cls: "text-danger", label: "MISSED", Icon: IconX },
 };
+
+/*
+  CAN THIS SESSION STILL BE LOGGED? The Log tab reaches back LOG_DAYS_BACK days
+  (today included) and no further, so a card offers its Log button exactly when
+  the tab could open that day — anything older is simply "missed".
+*/
+function loggable(iso: string): boolean {
+  const oldest = new Date();
+  oldest.setDate(oldest.getDate() - (LOG_DAYS_BACK - 1));
+  return iso >= toISO(oldest) && iso <= toISO(new Date());
+}
 
 /* The section label used to be defined here, one of more than ten versions of
    the same heading across the app. It lives in components/ui now. */
@@ -633,17 +647,32 @@ function SessionCard({ s, lineups = [] }: { s: TodaySession; lineups?: Lineup[] 
           </div>
         ))}
 
-      {s.verify && (
-        <div className="flex items-center gap-3 border-t border-border bg-background/60 px-3 py-2">
-          {s.verify.map((v, i) => (
-            <div key={i} className="flex items-center gap-1 text-[11px]">
-              <span className="text-success">
-                <IconCheck size={11} />
-              </span>
-              <span className="text-muted">{v.label}</span>
-              <span className="font-medium text-text">{v.value}</span>
-            </div>
-          ))}
+      {/*
+        THE FOOT OF THE CARD: what the log says about this session, and the way
+        to the log. Done → the figures you saved, and Edit. Not yet → a Log
+        button, as long as the Log tab can still open that day; older than that
+        and the card only says so. Both open EXACTLY this session's editor
+        (/varsity/log?day=…&open=…), not the tab's front page.
+      */}
+      {(s.status === "done" || loggable(s.iso)) && (
+        <div className="flex items-center justify-between gap-3 border-t border-border bg-background/60 px-3 py-2">
+          <span className="min-w-0 truncate text-[12px] text-text-2">
+            {s.status === "done"
+              ? s.log?.summary || "Logged"
+              : s.status === "missed"
+                ? "Not logged yet"
+                : "Log it when you're done"}
+          </span>
+          <Link
+            href={`/varsity/log?day=${s.iso}&open=${s.dayKey}`}
+            className={
+              s.status === "done"
+                ? "flex-shrink-0 text-[12px] font-semibold text-primary"
+                : "flex-shrink-0 rounded-lg bg-primary-live px-3 py-1.5 text-[12px] font-semibold text-primary-contrast"
+            }
+          >
+            {s.status === "done" ? "Edit" : "Log"}
+          </Link>
         </div>
       )}
     </div>
@@ -820,6 +849,37 @@ function CoachNoteCard({ note }: { note: string }) {
   );
 }
 
+/*
+  CLAIM YOUR SEAT — the card an UNCLAIMED athlete sees until they pick their
+  name on the squad list. Without it a published boat cannot know which seat
+  is theirs, so the whole lineup section below stays empty and looks exactly
+  like "nothing published". It sits under the greeting because it is the one
+  thing standing between this person and the answer they open the app for.
+  Gone the moment a name is picked (see ClaimSeatSheet).
+*/
+function ClaimSeatCard({ onOpen }: { onOpen: () => void }) {
+  return (
+    <div className="px-3 pt-3">
+      <button
+        type="button"
+        onClick={onOpen}
+        className="flex w-full items-center gap-3 rounded-xl border border-primary-line bg-primary-tint px-3.5 py-3 text-left"
+      >
+        <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary text-primary-contrast">
+          <IconUser size={15} />
+        </span>
+        <span className="flex min-w-0 flex-1 flex-col leading-tight">
+          <span className="text-[14px] font-semibold text-text">Which of these is you?</span>
+          <span className="mt-0.5 text-[11px] text-muted">
+            Pick your name on the squad list so your boat shows up here.
+          </span>
+        </span>
+        <IconChevronRight size={16} className="flex-shrink-0 text-muted" />
+      </button>
+    </div>
+  );
+}
+
 /* ─── Empty state (no published plan for this week) ─── */
 function EmptyHome() {
   return (
@@ -886,7 +946,10 @@ export default function HomeScreen() {
   const [data, setData] = useState<HomeData | null>(null);
   const [loading, setLoading] = useState(true);
   const [note, setNote] = useState<string | null>(null); // null = still loading
-  const [myName, setMyName] = useState<string | null>(null); // for "your seat"
+  // Who I am to a boat: my name, and the roster seat I claimed (null until I
+  // pick one). Both decide "your seat"; the id wins whenever it is set.
+  const [me, setMe] = useState<SeatIdentity | null>(null);
+  const [claimOpen, setClaimOpen] = useState(false);
 
   /*
     WHICH DAY the middle of the page is showing, as an index into the block's
@@ -906,16 +969,18 @@ export default function HomeScreen() {
     let active = true;
     (async () => {
       const today = new Date();
-      const fullName = await fetchProfileFullName(userId);
-      const [plan, lineups, coachNote] = await Promise.all([
-        fetchPlan(),
-        fetchTodayLineups((p) => sessionKey(today, p), fullName),
+      // The plan first: which days the log is needed for depends on it.
+      const [identity, plan] = await Promise.all([fetchSeatIdentity(userId), fetchPlan()]);
+      const span = logSpanFor(plan, today);
+      const [lineups, coachNote, logs] = await Promise.all([
+        fetchTodayLineups((p) => sessionKey(today, p), identity),
         fetchNote(userId),
+        span && userId ? fetchLogsInRange(userId, span.from, span.to) : Promise.resolve([]),
       ]);
       if (!active) return;
-      const firstName = fullName.split(/\s+/)[0] ?? "";
-      setMyName(fullName);
-      setData(buildAthleteHome(plan, firstName, lineups, today));
+      const firstName = identity.name.split(/\s+/)[0] ?? "";
+      setMe(identity);
+      setData(buildAthleteHome(plan, firstName, lineups, today, logs));
       setNote(coachNote);
       setLoading(false);
     })();
@@ -940,13 +1005,28 @@ export default function HomeScreen() {
     const iso = viewDay.iso;
     let active = true;
     (async () => {
-      const found = await fetchTodayLineups((p) => sessionKey(parseDate(iso), p), myName);
+      const found = await fetchTodayLineups((p) => sessionKey(parseDate(iso), p), me);
       if (active) setAwayLineups({ iso, lineups: found });
     })();
     return () => {
       active = false;
     };
-  }, [onToday, viewDay, myName]);
+  }, [onToday, viewDay, me]);
+
+  /*
+    PICKED A NAME. Save it, then re-read the boats with the new identity so the
+    seat lights up on the spot — today's from the page, any other day through
+    the effect above (which re-runs because `me` changed).
+  */
+  const claimSeat = async (rosterId: string | null) => {
+    const next = me ? { ...me, rosterId } : { name: "", rosterId };
+    setMe(next);
+    setAwayLineups(null);
+    await claimRosterSeat(userId, rosterId);
+    const today = new Date();
+    const lineups = await fetchTodayLineups((p) => sessionKey(today, p), next);
+    setData((d) => (d ? { ...d, lineups } : d));
+  };
 
   // The coach's note sits at the bottom of the page (shown in every state,
   // even before a plan is published).
@@ -966,10 +1046,27 @@ export default function HomeScreen() {
       </div>
     );
   }
+  // The claim card and its sheet, shown in every loaded state — a squad with no
+  // plan published yet is exactly when a new rower is picking their name.
+  const unclaimed = me !== null && me.rosterId === null;
+  const claimUi = (
+    <>
+      {unclaimed && <ClaimSeatCard onOpen={() => setClaimOpen(true)} />}
+      {claimOpen && (
+        <ClaimSeatSheet
+          current={me?.rosterId ?? null}
+          onClaim={(id) => void claimSeat(id)}
+          onClose={() => setClaimOpen(false)}
+        />
+      )}
+    </>
+  );
+
   if (!data) {
     return (
       <div className="mx-auto w-full max-w-screen-sm pb-6">
         {consoleRole && <ConsoleDoor role={consoleRole} />}
+        {claimUi}
         <EmptyHome />
         {noteCard}
       </div>
@@ -983,7 +1080,7 @@ export default function HomeScreen() {
   */
   const sessions: TodaySession[] = onToday
     ? data.today
-    : (viewDay?.sessions ?? []).map(daySessionToCard);
+    : (viewDay?.sessions ?? []).map((s) => daySessionToCard(s, viewDay!.iso));
   const lineups: Lineup[] = onToday
     ? data.lineups
     : awayLineups?.iso === viewDay?.iso
@@ -1003,6 +1100,7 @@ export default function HomeScreen() {
     <div className="mx-auto w-full max-w-screen-sm pb-6">
       {consoleRole && <ConsoleDoor role={consoleRole} />}
       <Greeting g={data.greeting} />
+      {claimUi}
       <DriveBar onUpload={() => setUploadOpen(true)} />
       <WeekStrip
         weeks={data.weeks}

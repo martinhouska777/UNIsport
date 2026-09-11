@@ -13,8 +13,10 @@
   so its Save bar stays pinned). Colors are theme tokens; the per-category dot is
   a content color applied via inline style (rule-1 exception).
 */
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Button, { buttonClass } from "@/components/ui/Button";
+import Sheet from "@/components/varsity/Sheet";
 import { createPortal } from "react-dom";
 import ThemeProvider from "@/components/ThemeProvider";
 import { useVarsityTheme } from "@/components/varsity/useVarsityTheme";
@@ -34,13 +36,16 @@ import { deriveSplitSec, deriveTotalSec } from "@/lib/varsity/ergMath";
 import { fetchAthleteProfile } from "@/lib/varsity/athleteProfile";
 import { shareResult, unshareResult, intervalsFromScan } from "@/lib/varsity/resultsStore";
 import { uploadErgPhoto } from "@/lib/varsity/ergPhotos";
-import type { ErgScanInterval } from "@/lib/varsity/ergScan";
+import type { ErgScanInterval, ScanResult } from "@/lib/varsity/ergScan";
 import {
   fetchLogsInRange,
   savePlanLog,
   saveExtraLog,
   updateLog,
   deleteLog,
+  LOG_DAYS_BACK,
+  effortOptions,
+  effortLabel,
   type LogEntry,
   type LogDraft,
 } from "@/lib/varsity/logStore";
@@ -63,6 +68,10 @@ const extraCategories = ["erg", "water", "weights", "run", "bike", "other"] as c
    say what the session was — the athlete does, and that answer is what the
    calendar counts. Which is why a logged flex day never stays category "flex". */
 const flexCategories = ["run", "bike", "other"] as const;
+/* One line for a saved log: the figures, then how it felt — "75 min · 18,000 m · Hard". */
+const summaryOf = (l: LogEntry): string =>
+  [formatMetrics(l.minutes, l.metres, l.split), effortLabel(l.effort)].filter(Boolean).join(" · ");
+
 function Dot({ color }: { color: string }) {
   return <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ background: color }} />;
 }
@@ -77,9 +86,16 @@ function SectionLabel({ children, hint }: { children: React.ReactNode; hint?: st
 }
 
 /* ─────────────────────────  editor (portal)  ───────────────────────── */
+/*
+  `scanFile` is a monitor photo already taken: the screen's own "Scan" button
+  opens the camera FIRST (on the athlete's tap, which is the only moment a
+  phone will open it) and hands the photo to the editor, which reads it the
+  moment it mounts. So one tap on the tab = camera, and the numbers land in
+  the right session.
+*/
 type EditorState =
-  | { mode: "plan"; period: Period; dayKey: string; session: Session; existing?: LogEntry }
-  | { mode: "extra"; existing?: LogEntry };
+  | { mode: "plan"; period: Period; dayKey: string; session: Session; existing?: LogEntry; scanFile?: File }
+  | { mode: "extra"; existing?: LogEntry; scanFile?: File };
 
 function LogEditor({
   state,
@@ -114,12 +130,19 @@ function LogEditor({
   const [metres, setMetres] = useState<string>(numStr(existing?.metres ?? est?.metres));
   const [split, setSplit] = useState<string>(existing?.split ?? "");
   const [note, setNote] = useState(existing?.note ?? "");
+  // How hard it felt, 1–5; null until tapped, and a second tap clears it.
+  const [effort, setEffort] = useState<number | null>(existing?.effort ?? null);
   const [busy, setBusy] = useState(false);
+  // A save that didn't land. Shown in red above the Save bar with the form
+  // still full — it used to go to the console only, and the sheet just sat
+  // there looking saved.
+  const [saveError, setSaveError] = useState<string | null>(null);
   const fromPlan = !!est && (est.minutes != null || est.metres != null);
 
   // C2/RP3 photo scan (erg only) → fills the fields via Claude vision.
   const fileRef = useRef<HTMLInputElement>(null);
-  const [scanning, setScanning] = useState(false);
+  // Already reading when the editor opened with a photo in hand (tab's Scan button).
+  const [scanning, setScanning] = useState(!!state.scanFile);
   const [scanMsg, setScanMsg] = useState<string | null>(null);
   /*
     What the scan produced beyond the three visible fields. Rate and watts have
@@ -161,45 +184,70 @@ function LogEditor({
     };
   }, [teamWorkout, athleteId]);
 
-  const handleScan = async (file: File | undefined) => {
+  // Stable (only setters and the editor's mode inside), so the mount-time scan
+  // below can list it as a dependency honestly.
+  const isExtra = state.mode === "extra";
+  // What a finished scan does to the form. Always reached from a `.then`, so
+  // it is a callback wherever it runs — including from the mount-time read.
+  const applyScan = useCallback(
+    ({ result, error, image }: ScanResult) => {
+      setScanning(false);
+      if (error || !result) {
+        // Keep the photo even when the read failed — an unreadable screen is
+        // exactly the one a human needs to look at.
+        setScanned({ strokeRate: null, watts: null, monitor: null, intervals: [], image: image ?? null });
+        setScanMsg(
+          error === "unconfigured"
+            ? "Photo scanning isn't switched on yet — enter the numbers by hand."
+            : error === "network"
+              ? "No signal — couldn't send the photo. Enter the numbers by hand, or try again."
+              : "Couldn't read that photo — enter the numbers by hand.",
+        );
+        return;
+      }
+      setScanned({
+        strokeRate: result.strokeRate,
+        watts: result.avgWatts,
+        monitor: result.monitor,
+        intervals: result.intervals ?? [],
+        image: image ?? null,
+      });
+      if (result.totalMinutes != null) setMinutes(String(Math.round(result.totalMinutes)));
+      if (result.totalMetres != null) setMetres(String(result.totalMetres));
+      if (result.splitPer500) setSplit(result.splitPer500);
+      // An extra session that came straight off a monitor photo has no title
+      // yet; give it the honest one so Save isn't held up by an empty field.
+      if (isExtra) setTitle((prev) => prev.trim() || "Erg");
+      // The minutes field is whole-number, so keep the exact time + rate + watts in the note.
+      const bits: string[] = [];
+      if (result.totalMinutes != null) bits.push(minutesToClock(result.totalMinutes));
+      if (result.strokeRate != null) bits.push(`r${result.strokeRate}`);
+      if (result.avgWatts != null) bits.push(`${result.avgWatts}W`);
+      if (bits.length) setNote((prev) => [bits.join(" · "), prev].filter(Boolean).join(" · "));
+      setScanMsg(
+        result.confident
+          ? "Filled from your photo — check it and save."
+          : "Read it, but I wasn't fully sure — please double-check.",
+      );
+    },
+    [isExtra],
+  );
+  // The in-editor camera button: mark the read as under way, then read.
+  const handleScan = (file: File | undefined) => {
     if (!file) return;
     setScanning(true);
     setScanMsg(null);
-    const { result, error, image } = await scanErgPhoto(file);
-    setScanning(false);
-    if (error || !result) {
-      // Keep the photo even when the read failed — an unreadable screen is
-      // exactly the one a human needs to look at.
-      setScanned({ strokeRate: null, watts: null, monitor: null, intervals: [], image: image ?? null });
-      setScanMsg(
-        error === "unconfigured"
-          ? "Photo scanning isn't switched on yet — enter the numbers by hand."
-          : "Couldn't read that photo — enter the numbers by hand.",
-      );
-      return;
-    }
-    setScanned({
-      strokeRate: result.strokeRate,
-      watts: result.avgWatts,
-      monitor: result.monitor,
-      intervals: result.intervals ?? [],
-      image: image ?? null,
-    });
-    if (result.totalMinutes != null) setMinutes(String(Math.round(result.totalMinutes)));
-    if (result.totalMetres != null) setMetres(String(result.totalMetres));
-    if (result.splitPer500) setSplit(result.splitPer500);
-    // The minutes field is whole-number, so keep the exact time + rate + watts in the note.
-    const bits: string[] = [];
-    if (result.totalMinutes != null) bits.push(minutesToClock(result.totalMinutes));
-    if (result.strokeRate != null) bits.push(`r${result.strokeRate}`);
-    if (result.avgWatts != null) bits.push(`${result.avgWatts}W`);
-    if (bits.length) setNote((prev) => [bits.join(" · "), prev].filter(Boolean).join(" · "));
-    setScanMsg(
-      result.confident
-        ? "Filled from your photo — check it and save."
-        : "Read it, but I wasn't fully sure — please double-check.",
-    );
+    void scanErgPhoto(file).then(applyScan);
   };
+
+  // A photo taken BEFORE the editor opened (the tab's Scan button) is read the
+  // moment the editor mounts. `scanning` already starts true for it (above), so
+  // the effect only starts the upload and lets the form be filled in the
+  // callback when it comes back. Once: the file object never changes after that.
+  const scanFile = state.scanFile;
+  useEffect(() => {
+    if (scanFile) void scanErgPhoto(scanFile).then(applyScan);
+  }, [scanFile, applyScan]);
 
   const inputCls =
     "w-full rounded-xl border border-border bg-surface-2 px-3.5 py-3 text-base text-text outline-none focus:border-primary placeholder:text-muted";
@@ -229,6 +277,7 @@ function LogEditor({
 
   const save = async () => {
     setBusy(true);
+    setSaveError(null);
     const draft: LogDraft = {
       logDate,
       period: state.mode === "plan" ? state.period : null,
@@ -239,6 +288,7 @@ function LogEditor({
       minutes: minutes.trim() ? Number(minutes) : null,
       metres: metres.trim() ? Number(metres) : null,
       split: split.trim() || null,
+      effort,
       note: note.trim(),
     };
     const res =
@@ -250,6 +300,7 @@ function LogEditor({
     if (res.error) {
       setBusy(false);
       console.error("save log:", res.error);
+      setSaveError("Couldn't save — check your signal and try again. Your numbers are still here.");
       return;
     }
 
@@ -354,8 +405,10 @@ function LogEditor({
           ) : (
             <>
               <div className={labelCls.replace("mt-4", "mt-0")}>What did you do?</div>
+              {/* No autoFocus: this editor opens on a phone with wet hands,
+                  often straight from the camera, and a keyboard over the form
+                  is the wrong first move. Tap the field when you want to type. */}
               <input
-                autoFocus
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="e.g. Easy shakeout run"
@@ -432,6 +485,38 @@ function LogEditor({
             />
           </div>
 
+          {/* Five taps, no typing. The words come from data (logStore →
+              effortOptions); tapping the chosen one again clears it. */}
+          <div className={labelCls}>How did it feel?</div>
+          <div className="grid grid-cols-5 gap-1.5" role="radiogroup" aria-label="How hard it felt">
+            {effortOptions.map((o) => {
+              const on = effort === o.value;
+              return (
+                <button
+                  key={o.value}
+                  type="button"
+                  role="radio"
+                  aria-checked={on}
+                  title={o.hint}
+                  onClick={() => setEffort(on ? null : o.value)}
+                  className={`flex flex-col items-center rounded-xl border py-2 ${
+                    on ? "border-primary bg-primary-tint" : "border-border bg-surface"
+                  }`}
+                >
+                  <span className={`text-[15px] font-semibold leading-none ${on ? "text-primary" : "text-text"}`}>
+                    {o.value}
+                  </span>
+                  <span className="mt-1 text-[10px] leading-none text-muted">{o.label}</span>
+                </button>
+              );
+            })}
+          </div>
+          {effort != null && (
+            <p className="mt-1.5 text-[11px] text-muted">
+              {effortOptions.find((o) => o.value === effort)?.hint}
+            </p>
+          )}
+
           <div className={labelCls}>Note (optional)</div>
           <input
             value={note}
@@ -443,6 +528,11 @@ function LogEditor({
       </div>
 
       <div className="flex-shrink-0 border-t border-border bg-background px-4 pb-6 pt-3">
+        {saveError && (
+          <p role="alert" className="mx-auto mb-2 max-w-screen-sm text-[12px] leading-snug text-danger">
+            {saveError}
+          </p>
+        )}
         <div className="mx-auto flex max-w-screen-sm gap-2.5">
           {existing && (
             <button
@@ -507,10 +597,8 @@ function PrescribedRow({
           </span>
         </div>
         {detail && <div className="mt-0.5 truncate text-[11px] text-muted">{detail}</div>}
-        {log && formatMetrics(log.minutes, log.metres, log.split) && (
-          <div className="mt-1 text-[12px] font-medium text-text-2">
-            {formatMetrics(log.minutes, log.metres, log.split)}
-          </div>
+        {log && summaryOf(log) && (
+          <div className="mt-1 text-[12px] font-medium text-text-2">{summaryOf(log)}</div>
         )}
       </div>
       {log ? (
@@ -539,11 +627,7 @@ function ExtraRow({ log, onEdit }: { log: LogEntry; onEdit: () => void }) {
       </span>
       <div className="min-w-0 flex-1">
         <span className="text-[14px] font-semibold text-text">{log.title}</span>
-        {formatMetrics(log.minutes, log.metres, log.split) && (
-          <div className="mt-0.5 text-[12px] text-text-2">
-            {formatMetrics(log.minutes, log.metres, log.split)}
-          </div>
-        )}
+        {summaryOf(log) && <div className="mt-0.5 text-[12px] text-text-2">{summaryOf(log)}</div>}
         {log.note && <div className="mt-0.5 truncate text-[11px] text-muted">{log.note}</div>}
       </div>
       <span className="flex-shrink-0 rounded-md border border-border px-2 py-0.5 text-[11px] font-medium text-muted">
@@ -597,7 +681,9 @@ function DayChip({
 }
 
 /* ─────────────────────────  screen  ───────────────────────── */
-const DAYS_BACK = 7; // today + the past 6 days
+// How far back the day strip reaches (today + the six days before it) lives
+// with the log itself — Home's session cards use the same number to decide
+// whether to offer a Log button at all.
 
 function startOfDay(d: Date) {
   const x = new Date(d);
@@ -605,15 +691,23 @@ function startOfDay(d: Date) {
   return x;
 }
 
-export default function LogScreen() {
+function LogScreenInner() {
   const { userId } = useAppState();
+  /*
+    ARRIVED FROM A SESSION CARD ON HOME? The link carries the day to open and
+    the plan slot to log (/varsity/log?day=yyyy-mm-dd&open=<dayKey>), so a tap
+    on "Log" lands in THAT session's editor, not on the tab's front page.
+  */
+  const params = useSearchParams();
+  const linkDay = params.get("day");
+  const linkOpen = params.get("open");
   const today = useMemo(() => startOfDay(new Date()), []);
   // The last 7 days, oldest → newest (today on the right).
   const days = useMemo(
     () =>
-      Array.from({ length: DAYS_BACK }, (_, i) => {
+      Array.from({ length: LOG_DAYS_BACK }, (_, i) => {
         const d = new Date(today);
-        d.setDate(today.getDate() - (DAYS_BACK - 1 - i));
+        d.setDate(today.getDate() - (LOG_DAYS_BACK - 1 - i));
         return d;
       }),
     [today],
@@ -624,8 +718,39 @@ export default function LogScreen() {
   const [plan, setPlan] = useState<Plan | null>(null);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selected, setSelected] = useState<Date>(today);
+  // The linked day when there is one and the strip reaches it; today otherwise.
+  const [selected, setSelected] = useState<Date>(
+    () => days.find((d) => toISO(d) === linkDay) ?? today,
+  );
   const [editor, setEditor] = useState<EditorState | null>(null);
+
+  /*
+    THE TAB'S OWN SCAN BUTTON. It used to open an untitled EXTRA session with
+    the keyboard up and the real camera button a scroll below — and the result
+    never reached the prescribed slot, the team board, or the calendar's colour.
+
+    Now the camera opens on the tap itself (a phone only opens it inside a user
+    gesture, so the file input lives HERE, not in the editor) and the photo is
+    handed to the editor for the RIGHT session: the day's prescribed erg when
+    there is one, a chooser when there are several, and only when the plan has
+    no erg at all does it fall back to extra training — and the button's own
+    subtitle says which of those it is about to do.
+  */
+  const scanInputRef = useRef<HTMLInputElement>(null);
+  const scanTarget = useRef<EditorState | null>(null);
+  const [ergChooser, setErgChooser] = useState(false);
+  const startScan = (target: EditorState) => {
+    scanTarget.current = target;
+    scanInputRef.current?.click();
+  };
+  const onScanPicked = (file: File | undefined) => {
+    const target = scanTarget.current;
+    scanTarget.current = null;
+    // Let the same input fire again for the next photo.
+    if (scanInputRef.current) scanInputRef.current.value = "";
+    if (!file || !target) return;
+    setEditor({ ...target, scanFile: file });
+  };
 
   const reloadLogs = async () => {
     if (userId) setLogs(await fetchLogsInRange(userId, rangeFrom, rangeTo));
@@ -662,6 +787,59 @@ export default function LogScreen() {
   const prescribed: { period: Period; dayKey: string; session: Session }[] = useMemo(
     () => (plan ? prescribedForDay(plan, selected) : []),
     [plan, selected],
+  );
+
+  /*
+    The linked session's editor, open the moment the plan and the logs are in.
+    DERIVED, not set from an effect: it is on screen for as long as the link is
+    unconsumed, and closing or saving it (below) consumes the link — so after
+    backing out the athlete is on the tab with the link still in the address
+    bar and the editor does NOT spring open again.
+  */
+  const [linkConsumed, setLinkConsumed] = useState(false);
+  const linkedEditor: EditorState | null = useMemo(() => {
+    if (linkConsumed || loading || !linkOpen) return null;
+    const p = prescribed.find((x) => x.dayKey === linkOpen);
+    if (!p) return null;
+    return {
+      mode: "plan",
+      period: p.period,
+      dayKey: p.dayKey,
+      session: p.session,
+      existing: planLogByKey[p.dayKey],
+    };
+  }, [linkConsumed, loading, linkOpen, prescribed, planLogByKey]);
+  const activeEditor = editor ?? linkedEditor;
+  const closeEditor = () => {
+    setEditor(null);
+    setLinkConsumed(true);
+  };
+
+  /*
+    Where a monitor photo can go on this day: every prescribed ERG session,
+    each as the editor state that would log it (an existing log is edited, not
+    doubled). Water, weights and flex are not scannable — a C2 screen belongs
+    to an erg session — so they are not offered.
+  */
+  const ergTargets = useMemo(
+    () =>
+      prescribed
+        .filter((p) => p.session.category === "erg")
+        .map((p) => ({
+          dayKey: p.dayKey,
+          label: p.session.description.trim() || sessionLabel(p.session),
+          period: p.period,
+          time: p.session.time,
+          logged: !!planLogByKey[p.dayKey],
+          editor: {
+            mode: "plan" as const,
+            period: p.period,
+            dayKey: p.dayKey,
+            session: p.session,
+            existing: planLogByKey[p.dayKey],
+          },
+        })),
+    [prescribed, planLogByKey],
   );
 
   // Per-day status for the strip dots.
@@ -709,18 +887,41 @@ export default function LogScreen() {
           })}
         </div>
 
-        {/* C2 photo — opens an erg log with the photo scanner ready */}
+        {/* Monitor photo → the right session's editor, numbers filled in. */}
+        <input
+          ref={scanInputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          className="hidden"
+          onChange={(e) => onScanPicked(e.target.files?.[0])}
+        />
         <button
           type="button"
-          onClick={() => setEditor({ mode: "extra" })}
-          className="mt-4 flex w-full items-center gap-3 rounded-2xl border border-dashed border-primary-line bg-primary-tint px-4 py-3.5 text-left active:bg-primary-tint"
+          disabled={loading}
+          onClick={() => {
+            if (ergTargets.length === 1) startScan(ergTargets[0].editor);
+            else if (ergTargets.length > 1) setErgChooser(true);
+            else startScan({ mode: "extra" });
+          }}
+          className="mt-4 flex w-full items-center gap-3 rounded-2xl border border-dashed border-primary-line bg-primary-tint px-4 py-3.5 text-left active:bg-primary-tint disabled:opacity-60"
         >
           <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-primary-tint text-primary">
             <IconCamera size={20} />
           </span>
-          <div className="flex-1">
+          <div className="min-w-0 flex-1">
             <div className="text-[14px] font-semibold text-text">Scan C2 / RP3 monitor</div>
-            <div className="text-[11px] text-muted">Snap the screen — splits read automatically</div>
+            {/* Says what the tap is about to do, so the photo never lands
+                somewhere the athlete didn't expect. */}
+            <div className="truncate text-[11px] text-muted">
+              {loading
+                ? "Loading the plan…"
+                : ergTargets.length === 1
+                  ? `Logs ${isToday ? "today's" : "the day's"} ${ergTargets[0].label}`
+                  : ergTargets.length > 1
+                    ? `Pick which of ${ergTargets.length} erg sessions, then snap the screen`
+                    : "No erg in the plan this day — logs it as extra training"}
+            </div>
           </div>
           <IconChevronRight size={16} />
         </button>
@@ -783,18 +984,69 @@ export default function LogScreen() {
         </div>
       </div>
 
-      {editor && userId && (
+      {/* Two erg sessions prescribed on one day: which one is the photo of? */}
+      {ergChooser && (
+        <Sheet title="Which session is this?" onClose={() => setErgChooser(false)}>
+          <div className="flex flex-col gap-2">
+            {ergTargets.map((t) => (
+              <button
+                key={t.dayKey}
+                type="button"
+                onClick={() => {
+                  setErgChooser(false);
+                  startScan(t.editor);
+                }}
+                className="flex w-full items-center gap-3 rounded-2xl border border-border bg-surface-2 px-3.5 py-3 text-left active:bg-surface"
+              >
+                <Dot color={catMeta.erg.color} />
+                <div className="min-w-0 flex-1">
+                  <div className="text-[14px] font-semibold text-text">{t.label}</div>
+                  <div className="mt-0.5 flex items-center gap-1 text-[11px] text-muted">
+                    <IconClock size={11} /> {t.period} · {t.time}
+                  </div>
+                </div>
+                {t.logged && (
+                  <span className="flex flex-shrink-0 items-center gap-1 text-[11px] font-semibold text-success">
+                    <IconCheckCircle size={14} /> Logged
+                  </span>
+                )}
+                <IconCamera size={16} className="flex-shrink-0 text-primary" />
+              </button>
+            ))}
+          </div>
+        </Sheet>
+      )}
+
+      {activeEditor && userId && (
         <LogEditor
-          state={editor}
+          state={activeEditor}
           athleteId={userId}
           logDate={selectedIso}
-          onClose={() => setEditor(null)}
+          onClose={closeEditor}
           onSaved={async () => {
             await reloadLogs();
-            setEditor(null);
+            closeEditor();
           }}
         />
       )}
     </>
+  );
+}
+
+/*
+  The day and session to open come out of the URL, which a page has to be
+  allowed to wait for — same shape as the All-boats page (AllLineupsScreen).
+*/
+export default function LogScreen() {
+  return (
+    <Suspense
+      fallback={
+        <div className="mx-auto w-full max-w-screen-sm px-4 pt-4">
+          <div className="py-6 text-center text-[12px] text-muted">Loading…</div>
+        </div>
+      }
+    >
+      <LogScreenInner />
+    </Suspense>
   );
 }

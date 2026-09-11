@@ -82,6 +82,7 @@ export function demoAthleteLogs(rosterId: string, y: number, m: number): LogEntr
         minutes: s.minutes,
         metres: s.metres,
         split: s.split,
+        effort: null, // the example never claims how a made-up session felt
         note: "",
       });
     });

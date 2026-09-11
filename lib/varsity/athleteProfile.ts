@@ -150,6 +150,15 @@ export type VarsityAthleteProfile = {
   prs: Record<string, string>; // piece label -> value (e.g. "2K" -> "6:08.4")
   statMetric: string; // what the Statistics graph (and its three numbers) shows
   statChart: string; // how it is drawn — "bars" | "line" (lib/varsity/athleteStats)
+  /*
+    WHICH NAME ON THE SQUAD LIST IS YOU. The coach's roster (lib/varsity/
+    coachLineup.ts) and the athlete's account were two lists with nothing
+    joining them, so "your seat" in a published boat was found by comparing
+    the name you typed at setup with the name the coach typed on the roster —
+    one accent or a nickname apart and you were never in a boat. This is the
+    join: the roster id you claimed as yours. Null until you pick one.
+  */
+  rosterId: string | null;
 };
 
 // Best guess at class standing from the academic class year (e.g. '30 = Freshman
@@ -175,6 +184,7 @@ export function defaultProfile(classYear: string): VarsityAthleteProfile {
     prs: {},
     statMetric: defaultStatMetric,
     statChart: "bars",
+    rosterId: null,
   };
 }
 
@@ -203,7 +213,30 @@ export function withDefaults(
     // Same story as the measure: checked against the real list where it's used,
     // so a key from an older build falls back to columns rather than to nothing.
     statChart: saved?.statChart || base.statChart,
+    rosterId: saved?.rosterId || null,
   };
+}
+
+/*
+  THE TWO THINGS A BOAT IS READ BY: the name you go by, and the roster id you
+  claimed. Everything that decides "is this my seat" (lib/varsity/lineupStore)
+  takes this pair rather than a bare name, so the id wins whenever there is
+  one and the name is only ever a fallback for an account that hasn't claimed.
+*/
+export type SeatIdentity = { name: string; rosterId: string | null };
+
+export async function fetchSeatIdentity(userId: string | null): Promise<SeatIdentity> {
+  const b = await fetchAthleteProfile(userId);
+  return { name: b.name, rosterId: b.profile.rosterId };
+}
+
+/** Claim (or, with null, let go of) a roster seat. One read, one merged write. */
+export async function claimRosterSeat(
+  userId: string | null,
+  rosterId: string | null,
+): Promise<{ error?: string }> {
+  const b = await fetchAthleteProfile(userId);
+  return saveAthleteProfile(userId, { ...b.profile, rosterId });
 }
 
 /* ── localStorage fallback (no Supabase env) ── */

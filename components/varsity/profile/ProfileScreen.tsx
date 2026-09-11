@@ -13,7 +13,10 @@
     (lib/varsity/logStore), with the coach plan read only to name intensities.
   • A button into the Calendar tab — the day-by-day training history lives there.
   • Personal bests: 2K / 5K / 6K / 30′ r20 — editable.
-  • Send to coaches abroad: a shareable link (copy / share sheet).
+  (A "send to coaches abroad" card used to sit at the bottom: a shareable
+  training-report link. It was cut — the link pointed at a page that did not
+  exist, under a hardcoded club domain and year, which broke the white-label
+  rule as well as the promise. It comes back when there is a real page to link.)
 
   Editable data persists via lib/varsity/athleteProfile (profiles.data.varsity).
   All colors are theme tokens. Editor sheets use the shared <Sheet> (portalled).
@@ -68,6 +71,8 @@ import Plot from "@/components/varsity/profile/Plot";
 import Dropdown from "@/components/varsity/profile/Dropdown";
 import StatsFullScreen from "@/components/varsity/profile/StatsFullScreen";
 import TrainingMixSheet from "@/components/varsity/profile/TrainingMixSheet";
+import ClaimSeatSheet from "@/components/varsity/ClaimSeatSheet";
+import { rosterById } from "@/lib/varsity/coachLineup";
 import { fetchPlan } from "@/lib/varsity/planStore";
 import {
   IconPencil,
@@ -76,8 +81,6 @@ import {
   IconActivity,
   IconChevronRight,
   IconCalendar,
-  IconGlobe,
-  IconCopy,
   IconCheck,
 } from "@/components/icons";
 
@@ -107,9 +110,6 @@ function initialsOf(name: string): string {
   const parts = name.split(/\s+/).filter(Boolean);
   if (parts.length === 0) return "—";
   return (parts[0][0] + (parts[1]?.[0] ?? "")).toUpperCase();
-}
-function slugify(name: string): string {
-  return name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "athlete";
 }
 function mondayOf(d: Date): Date {
   const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
@@ -623,9 +623,8 @@ export default function ProfileScreen() {
   const [planSessions, setPlanSessions] = useState<SessionMap>({});
   const [mixOpen, setMixOpen] = useState(false);
 
-  type Modal = "identity" | "status" | "prs" | null;
+  type Modal = "identity" | "status" | "prs" | "seat" | null;
   const [modal, setModal] = useState<Modal>(null);
-  const [copied, setCopied] = useState(false);
 
   // Identity + saved varsity record.
   useEffect(() => {
@@ -767,28 +766,6 @@ export default function ProfileScreen() {
 
   const status = statusByTitle(profile.status);
   const classLine = [classYear, profile.teamYear].filter(Boolean).join(" · ") || "Add your details";
-  const shareUrl = `hubc.app/m/${slugify(name)}-2026`;
-
-  const copyLink = async () => {
-    try {
-      await navigator.clipboard.writeText(`https://${shareUrl}`);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1600);
-    } catch {
-      /* clipboard blocked — no-op */
-    }
-  };
-  const share = async () => {
-    if (typeof navigator !== "undefined" && "share" in navigator) {
-      try {
-        await navigator.share({ title: "My training", url: `https://${shareUrl}` });
-        return;
-      } catch {
-        /* cancelled — fall through to copy */
-      }
-    }
-    copyLink();
-  };
 
   /*
     One measure and one window for the whole block: the graph plots the measure
@@ -835,6 +812,22 @@ export default function ProfileScreen() {
                   ? "Coxswain"
                   : (sideLabel(profile.boatRole, profile.side) ?? "Both")}
               </span>
+              {/* Which name on the squad list is you — the join that lets a
+                  published boat mark your seat. A button, because a wrong
+                  pick on Home must be one tap to change from here. */}
+              <button
+                type="button"
+                onClick={() => setModal("seat")}
+                className={`rounded-md border px-2 py-1 text-[11px] ${
+                  profile.rosterId
+                    ? "border-border bg-surface text-text"
+                    : "border-primary-line bg-primary-tint font-medium text-primary"
+                }`}
+              >
+                {profile.rosterId
+                  ? `On the list as ${rosterById[profile.rosterId]?.name ?? "—"}`
+                  : "Pick your name on the squad list"}
+              </button>
               {profile.heightCm != null && (
                 <span className="rounded-md border border-border bg-surface px-2 py-1 text-[11px] text-text">
                   {profile.heightCm} cm
@@ -1013,49 +1006,6 @@ export default function ProfileScreen() {
         })}
       </div>
 
-      {/* ── Send to coaches abroad (shareable report link) ── */}
-      <div className="px-4 pb-2 pt-5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-        Recruiting
-      </div>
-      <div className="relative mx-3.5 overflow-hidden rounded-2xl border border-accent-line bg-gradient-to-br from-accent/10 to-surface">
-        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent to-transparent" />
-        <div className="flex items-start gap-3 px-4 pb-3 pt-3.5">
-          <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border border-accent-line bg-accent-tint text-accent">
-            <IconGlobe size={20} />
-          </span>
-          <div className="flex-1">
-            <div className="mb-0.5 text-[8px] font-semibold uppercase tracking-[0.16em] text-accent">
-              Shareable training report
-            </div>
-            <div className="text-base font-semibold leading-tight text-text">Send to coaches abroad</div>
-            <div className="mt-1.5 text-[11px] leading-relaxed text-muted">
-              A live page of your full training year — calendar, every session and test, with verified
-              data. Paste the link into an email or WhatsApp.
-            </div>
-          </div>
-        </div>
-        <div className="flex items-center gap-2 border-t border-accent/15 bg-[color-mix(in_srgb,var(--text)_8%,transparent)] px-3.5 py-2.5">
-          <div className="flex-1 truncate rounded-md border border-border bg-surface-2 px-2.5 py-1.5 text-[11px] text-muted">
-            {shareUrl}
-          </div>
-          <button
-            type="button"
-            onClick={copyLink}
-            className="flex items-center gap-1 rounded-md border border-border bg-surface px-2.5 py-1.5 text-[11px] font-semibold tracking-[0.06em] text-text"
-          >
-            {copied ? <IconCheck size={12} /> : <IconCopy size={12} />}
-            {copied ? "COPIED" : "COPY"}
-          </button>
-          <button
-            type="button"
-            onClick={share}
-            className="flex items-center gap-1 rounded-md bg-accent px-2.5 py-1.5 text-[11px] font-semibold tracking-[0.06em] text-background"
-          >
-            SEND
-          </button>
-        </div>
-      </div>
-
       {/* The door into the console, for the people who run the squad. A plain
           athlete never sees it, and the database refuses them anyway. */}
       {consoleRole && (
@@ -1084,6 +1034,13 @@ export default function ProfileScreen() {
       )}
       {modal === "prs" && (
         <PrSheet prs={profile.prs} onSave={patchProfile} onClose={() => setModal(null)} />
+      )}
+      {modal === "seat" && (
+        <ClaimSeatSheet
+          current={profile.rosterId}
+          onClaim={(rosterId) => patchProfile({ rosterId })}
+          onClose={() => setModal(null)}
+        />
       )}
     </div>
   );

@@ -26,7 +26,7 @@ import { SkeletonCards } from "@/components/ui/Skeleton";
 import { IconArrowLeft, IconSearch, IconX } from "@/components/icons";
 import { parseDate, sessionKey, toISO } from "@/lib/varsity/coachPlan";
 import { fetchTodayLineups } from "@/lib/varsity/lineupStore";
-import { fetchProfileFullName } from "@/lib/varsity/planStore";
+import { fetchSeatIdentity } from "@/lib/varsity/athleteProfile";
 import { crewNames, type Lineup } from "@/lib/varsity/home";
 
 /* "Fri · 4 Sep" — the same shape the day detail on Home uses. */
@@ -117,8 +117,8 @@ function AllLineups() {
   useEffect(() => {
     let active = true;
     void (async () => {
-      const name = await fetchProfileFullName(userId);
-      const found = await fetchTodayLineups((p) => sessionKey(parseDate(iso), p), name);
+      const me = await fetchSeatIdentity(userId);
+      const found = await fetchTodayLineups((p) => sessionKey(parseDate(iso), p), me);
       if (active) setLineups(found);
     })();
     return () => {

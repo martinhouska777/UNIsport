@@ -9,6 +9,7 @@
 import { createClient, hasSupabaseEnv } from "@/lib/supabase/client";
 import { rosterById, boatTypes, seatLabel, type Boat } from "./coachLineup";
 import { isPushOffTime, type Lineup } from "./home";
+import type { SeatIdentity } from "./athleteProfile";
 
 export type LineupStatus = "draft" | "published";
 export type StoredLineup = { boats: Boat[]; status: LineupStatus };
@@ -88,23 +89,34 @@ export async function saveLineup(
 const boatTypeName = (badge: string) => boatTypes.find((b) => b.type === badge)?.name ?? badge;
 const norm = (s: string) => s.trim().toLowerCase();
 
-// `myName` is the signed-in athlete's full profile name. We have no real link
-// between accounts and the (still-mock) roster yet, so we highlight "your seat"
-// by matching that name to the seated athlete's name — works for anyone who's
-// both a real account and in the squad (e.g. John Brown, the demo account).
+/*
+  IS THIS SEAT MINE? By the roster id the athlete CLAIMED as theirs
+  (lib/varsity/athleteProfile → rosterId), which is an exact answer. The old
+  way — comparing the name typed at setup with the name on the coach's roster —
+  is kept ONLY for an account that has never claimed a seat, so the demo
+  account (John Brown) keeps working until it does; the moment an id is set the
+  name is ignored, because "Martin Houska" ≠ "Martin Houška" is precisely the
+  failure the id exists to end.
+*/
+export function isMine(athleteId: string | null, me: SeatIdentity | null): boolean {
+  if (!athleteId || !me) return false;
+  if (me.rosterId) return athleteId === me.rosterId;
+  const a = rosterById[athleteId];
+  return !!(a && me.name && norm(a.name) === norm(me.name));
+}
+
 function boatToLineup(
   period: string,
   boat: Boat,
-  myName: string | null,
+  me: SeatIdentity | null,
   dayKey?: string,
 ): Lineup {
-  const me = myName ? norm(myName) : null;
   const fill = (athleteId: string | null) => {
     const a = athleteId ? rosterById[athleteId] : undefined;
     return {
       init: a?.initials ?? "—",
       name: a?.name ?? "—",
-      mine: !!(me && a && norm(a.name) === me),
+      mine: isMine(athleteId, me),
       // Which way this PERSON rows — the only marker beside their name in the
       // boat. A coxswain has no side, so a cox row simply carries none.
       side: a?.side,
@@ -137,7 +149,7 @@ function boatToLineup(
 
 export async function fetchTodayLineups(
   dayKeyFor: (period: "AM" | "PM") => string,
-  myName: string | null = null,
+  me: SeatIdentity | null = null,
 ): Promise<Lineup[]> {
   const periods: ("AM" | "PM")[] = ["AM", "PM"];
   const stored = await Promise.all(periods.map((p) => fetchLineup(dayKeyFor(p))));
@@ -145,7 +157,7 @@ export async function fetchTodayLineups(
   periods.forEach((p, i) => {
     const s = stored[i];
     if (s && s.status === "published") {
-      for (const boat of s.boats) out.push(boatToLineup(p, boat, myName, dayKeyFor(p)));
+      for (const boat of s.boats) out.push(boatToLineup(p, boat, me, dayKeyFor(p)));
     }
   });
   return out;
