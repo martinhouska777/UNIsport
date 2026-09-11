@@ -56,15 +56,18 @@ const RX = {
   table: /\bcreate\s+table\s+(?:if\s+not\s+exists\s+)?(?:public\.)?"?(\w+)"?/gi,
   view: /\bcreate\s+(?:or\s+replace\s+)?(?:materialized\s+)?view\s+(?:if\s+not\s+exists\s+)?(?:public\.)?"?(\w+)"?/gi,
   func: /\bcreate\s+(?:or\s+replace\s+)?function\s+(?:public\.)?"?(\w+)"?\s*\(/gi,
+  /* "add column x" and the shorter "add x" both count. Only the first action of
+     a multi-action ALTER is seen; nothing in db/ writes one, and a comma list
+     would need a real parser to split safely. */
   column:
-    /\balter\s+table\s+(?:if\s+exists\s+)?(?:public\.)?"?(\w+)"?\s+add\s+column\s+(?:if\s+not\s+exists\s+)?"?(\w+)"?/gi,
+    /\balter\s+table\s+(?:if\s+exists\s+)?(?:public\.)?"?(\w+)"?\s+add\s+(?:column\s+)?(?:if\s+not\s+exists\s+)?"?(\w+)"?/gi,
+  /* A table this file points a foreign key at has to exist before it runs. */
+  references: /\breferences\s+(?:public\.)?"?(\w+)"?/gi,
   /* Policies are not all on public tables — varsity_videos.sql puts four on
      storage.objects, so the schema has to be carried through or that file would
      report as half-run forever. */
   policy: /\bcreate\s+policy\s+"?([^"\n]+?)"?\s+on\s+(?:"?(\w+)"?\.)?"?(\w+)"?/gi,
   rls: /\balter\s+table\s+(?:public\.)?"?(\w+)"?\s+enable\s+row\s+level\s+security/gi,
-  /* Rows, not schema — a seed is judged by whether its table has any. */
-  insert: /\binsert\s+into\s+(?:public\.)?"?(\w+)"?/gi,
 };
 
 function matchAll(sql, rx) {
@@ -87,8 +90,22 @@ function parseFile(file) {
       matchAll(sql, RX.policy).map(([p, schema, t]) => `${schema || "public"}.${t}::${p.trim()}`),
     ),
     rlsOn: uniq(matchAll(sql, RX.rls).map(([t]) => t)),
-    inserts: uniq(matchAll(sql, RX.insert).map(([t]) => t)),
+    refs: uniq(matchAll(sql, RX.references).map(([t]) => t)),
+    /* The exact "add column" statements, so a partly-run file can be finished
+       without re-running the whole thing (see the note under PARTLY RUN). */
+    columnSql: columnStatements(sql),
   };
+}
+
+/* Pull each "alter table … add column …;" out whole, keyed by table.column. */
+function columnStatements(sql) {
+  const out = new Map();
+  const rx =
+    /\balter\s+table\s+(?:if\s+exists\s+)?(?:public\.)?"?(\w+)"?\s+add\s+(?:column\s+)?(?:if\s+not\s+exists\s+)?"?(\w+)"?[^;]*;/gi;
+  for (let m; (m = rx.exec(sql)); ) {
+    out.set(`${m[1]}.${m[2]}`, m[0].replace(/\s+/g, " ").trim());
+  }
+  return out;
 }
 
 const countOf = (p) =>
@@ -176,13 +193,16 @@ function order(list, creator) {
     list.map((p) => {
       const own = new Set(p.tables);
       const deps = new Set();
-      /* A column reads "table.column"; a policy reads "schema.table::name". */
+      /* A column reads "table.column"; a policy reads "schema.table::name".
+         Foreign keys count too: gym_crowd.sql makes its own table but points at
+         public.profiles, so profiles.sql has to have run first. */
       const tables = [
         ...p.columns.map((c) => c.slice(0, c.indexOf("."))),
         ...p.policies.map((pol) => {
           const q = pol.split("::")[0];
           return q.slice(q.indexOf(".") + 1);
         }),
+        ...p.refs,
       ];
       for (const table of tables) {
         const from = creator.get(table);
@@ -250,6 +270,11 @@ async function report(token, parsed) {
   let rows;
   try {
     rows = await ask(token, CATALOG_SQL);
+    /* run-sql.mjs guards this too: a 200 can still carry something that is not
+       a list of rows, and walking it would die as a stack trace. */
+    if (!Array.isArray(rows)) {
+      throw new Error(`Expected rows, got: ${JSON.stringify(rows).slice(0, 300)}`);
+    }
   } catch (e) {
     console.error(`${RED}Could not read the database.${OFF}\n${e.message}\n`);
     process.exit(1);
@@ -317,9 +342,11 @@ async function report(token, parsed) {
   if (mp !== undefined) {
     if (!/security_invoker=(true|on)/i.test(mp)) {
       warnings.push(
-        "match_profiles still runs with its OWNER's rights — the last two lines of " +
-          "db/matching.sql have not been run. Any signed-in user can read every " +
-          "onboarded profile until they are.",
+        "match_profiles still runs with its OWNER's rights. Any signed-in user " +
+          "can read every onboarded profile until this runs — the two statements " +
+          "just after the view definition in db/matching.sql:\n" +
+          "      alter view public.match_profiles set (security_invoker = on);\n" +
+          "      revoke all on public.match_profiles from anon, authenticated;",
       );
     }
     try {
@@ -330,13 +357,57 @@ async function report(token, parsed) {
       if (g?.[0]?.can === true) {
         warnings.push(
           "match_profiles is still readable by signed-in users — run the revoke at " +
-            "the bottom of db/matching.sql.",
+            "the view definition in db/matching.sql:\n" +
+            "      revoke all on public.match_profiles from anon, authenticated;",
         );
       }
     } catch {
       /* the role may not exist on a local copy; the reloptions check is the important one */
     }
   }
+
+  /*
+    RE-RUNNING A PARTLY-RUN FILE IS NOT SAFE, and saying otherwise would be the
+    worst thing this script could do. run-sql.mjs posts the whole file as ONE
+    query, so Postgres wraps it in a single implicit transaction: the first
+    `create policy` that already exists (nine files in db/ create policies with
+    no `drop policy if exists` first) aborts the lot and rolls back the very
+    column the re-run was for. The file looks like it ran; nothing changed.
+
+    So for these, print the missing pieces to run on their own.
+  */
+  const partialAdvice = (list) => {
+    console.log(`${YELLOW}  Do not simply re-run a file above.${OFF}`);
+    console.log(
+      `${DIM}  The whole file is sent as one statement, so a policy that already exists\n` +
+        `  stops it and undoes everything in it — including the part you need.\n` +
+        `  Run just the missing pieces instead:${OFF}\n`,
+    );
+    let printed = 0;
+    for (const p of list) {
+      const stmts = [...p.columns]
+        .filter((c) => p.missing.some((m) => m.startsWith(`column ${c}`)))
+        .map((c) => p.columnSql.get(c))
+        .filter(Boolean);
+      if (!stmts.length) continue;
+      console.log(`  ${DIM}from ${p.file}:${OFF}`);
+      for (const s of stmts) console.log(`    node scripts/run-sql.mjs ${JSON.stringify(s)}`);
+      printed += stmts.length;
+    }
+    const others = list.filter((p) =>
+      p.missing.some((m) => !m.startsWith("column ")),
+    );
+    if (others.length) {
+      console.log(
+        `\n${DIM}  ${others.map((p) => p.file).join(", ")} also ${others.length === 1 ? "has" : "have"} a missing\n` +
+          `  view, function or policy. Open the file and run those statements in the\n` +
+          `  Supabase SQL editor — a function is safe (they are all "create or\n` +
+          `  replace"), and a policy needs its "drop policy if exists" line first.${OFF}`,
+      );
+    }
+    if (!printed && !others.length) console.log(`${DIM}  (nothing to print)${OFF}`);
+    console.log("");
+  };
 
   const show = (title, list, color, note) => {
     if (!list.length) return;
@@ -354,7 +425,11 @@ async function report(token, parsed) {
   };
 
   show("ALREADY RUN", done, GREEN, "everything these files create is in the database");
-  show("PARTLY RUN", partial, YELLOW, "some of this landed — re-run the file, they are written to be safe to re-run");
+  show(
+    "PARTLY RUN", partial, YELLOW,
+    "some of this landed — read the note below before re-running one of these",
+  );
+  if (partial.length) partialAdvice(partial);
   show("STILL TO RUN", todo, RED, "nothing from these files is in the database yet");
   show(
     "CANNOT BE CHECKED", unknown, DIM,
@@ -373,19 +448,32 @@ async function report(token, parsed) {
     console.log("");
   }
 
-  const left = order([...todo, ...partial], creator);
+  /* Only the files with NOTHING in the database yet. A partly-run file must not
+     be in a paste-this block — see partialAdvice above for why. */
+  const left = order(todo, creator);
   if (left.length) {
     console.log(`${BOLD}Copy and paste this to run what is left, in this order:${OFF}\n`);
     for (const p of left) console.log(`node scripts/run-sql.mjs ${DB_DIR}/${p.file}`);
     console.log("");
     console.log(
-      `${DIM}A file whose policies already exist will complain "policy already exists" —\n` +
-        `that means it was already run, and nothing is wrong. Everything else in\n` +
-        `these files is written with "if not exists", so re-running is safe.${OFF}\n`,
+      `${DIM}The order matters: a file that adds a column or points a foreign key at\n` +
+        `another file's table comes after it. These have not been run at all, so\n` +
+        `each should go through cleanly — if one reports "already exists", it had\n` +
+        `been run after all, and the next check will move it up into ALREADY RUN.${OFF}\n`,
     );
-  } else {
+  } else if (!partial.length) {
     console.log(`${GREEN}${BOLD}Nothing left to run — the database has everything db/ describes.${OFF}\n`);
   }
+
+  console.log(
+    `${DIM}One limit worth knowing: a function is matched by name only, so if its\n` +
+      `arguments changed since it was last run (db/matching.sql has rewritten a\n` +
+      `few), this script still counts it as present. If an app screen reports a\n` +
+      `missing function while everything here looks green, re-run that file — a\n` +
+      `function is always "create or replace", so that is safe.${OFF}\n`,
+  );
 }
 
-main();
+/* Awaited, so a failure inside report() prints its message instead of an
+   unhandled-rejection stack trace. */
+await main();
