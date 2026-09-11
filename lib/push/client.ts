@@ -182,6 +182,23 @@ export function notifyConversation(input: {
 }
 
 /*
+  Fire-and-forget: you named someone as your training partner, ask them.
+
+  Same contract as notifyConversation. `logId` is the session you just saved;
+  the database hands over the partner's devices only if you are that session's
+  logger and the tag is still pending, so this can't be used to ping a stranger.
+*/
+export function notifyPartnerTag(logId: string, preview?: string): void {
+  if (typeof window === "undefined") return;
+  void fetch("/api/push/notify", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ kind: "partner", logId, preview }),
+    keepalive: true,
+  }).catch(() => {});
+}
+
+/*
   Fire-and-forget: you followed someone, tell them.
 
   Same contract as notifyConversation. `targetId` is the person you followed;

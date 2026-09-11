@@ -364,6 +364,7 @@ export default function SettingsPage() {
             messages={user.notifyMessages}
             plans={user.notifyPlans}
             follows={user.notifyFollows}
+            partnerTags={user.notifyPartnerTags}
             team={user.notifyTeam}
             /* The coach's switch only exists for people who have a coach. */
             showTeam={membership?.status === "approved"}

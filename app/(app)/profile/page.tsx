@@ -18,6 +18,7 @@ import WorkoutDetail from "@/components/profile/WorkoutDetail";
 import LogSessionSheet from "@/components/profile/LogSessionSheet";
 import PartnersSheet from "@/components/profile/PartnersSheet";
 import UpcomingSessions from "@/components/profile/UpcomingSessions";
+import PartnerRequests from "@/components/profile/PartnerRequests";
 import LeaderboardStrip from "@/components/leaderboards/LeaderboardStrip";
 import MemoriesStrip from "@/components/profile/MemoriesStrip";
 import PersonalRecords from "@/components/profile/PersonalRecords";
@@ -110,14 +111,12 @@ export default function ProfilePage() {
 
   // Real "Following" count from the follow graph.
   useEffect(() => {
-    // Settle on zeros when there's nobody to ask, so the stats block doesn't sit
-    // in "still loading" forever.
-    if (!supabase || !userId) {
-      setFollowCounts({ following: 0, followers: 0 });
-      return;
-    }
     let active = true;
-    getMyFollowCounts()
+    // Settle on zeros when there's nobody to ask, so the stats block doesn't sit
+    // in "still loading" forever. Resolved through a promise like the real
+    // read, so nothing is set synchronously inside the effect body.
+    const read = supabase && userId ? getMyFollowCounts() : Promise.resolve({ following: 0, followers: 0 });
+    read
       .then((c) => active && setFollowCounts(c))
       .catch(() => active && setFollowCounts({ following: 0, followers: 0 }));
     return () => {
@@ -406,6 +405,11 @@ export default function ProfilePage() {
         ))}
       </div>
       )}
+
+      {/* "Did you train with Sam today?" — a partner tag waiting for your yes.
+          First, because it is the one thing on this page someone else is
+          waiting on; saying yes also puts the session on YOUR calendar. */}
+      <PartnerRequests onChanged={reloadLogs} />
 
       {/* Upcoming accepted sessions (chat-planned) */}
       <UpcomingSessions />

@@ -33,6 +33,11 @@
 --   list. A name typed into a box is not a partner, here or anywhere else in
 --   this file: you cannot invent people to score off.
 --
+--   AND THE PARTNER HAS TO HAVE SAID YES (db/partner_requests.sql). A tag is a
+--   request until they accept it: pending, declined or expired all score as
+--   solo. Rows from before that existed carry a NULL status and read as
+--   confirmed — see partner_counts() below, the ONE place this is decided.
+--
 --   THE CAP: a single day counts at most TWICE, and when a day holds more than
 --   two sessions the most valuable two are the ones kept. Without the cap the
 --   board is won by whoever taps "Log Session" the most times in an evening
@@ -110,6 +115,21 @@ as $$
   ) s;
 $$;
 
+-- The column this file reads. Also created by db/partner_requests.sql; repeated
+-- here (idempotently) so the two files can be run in either order.
+alter table public.workout_logs add column if not exists partner_status text;
+
+-- Does this row's partner COUNT? Only once they have accepted the tag. NULL is
+-- a row from before tags had to be accepted (or one written by a confirmed
+-- chat plan) and counts as confirmed.
+create or replace function public.partner_counts(status text)
+returns boolean
+language sql
+immutable
+as $$
+  select coalesce(status, 'confirmed') = 'confirmed';
+$$;
+
 -- ---------------------------------------------------------------------------
 -- The one place a session is tagged and capped
 --
@@ -143,9 +163,10 @@ as $$
       w.log_date,
       w.id,
       case
-        when w.partner_id is null then 0
+        when w.partner_id is null or not public.partner_counts(w.partner_status) then 0
         when row_number() over (
-               partition by w.user_id, w.partner_id
+               partition by w.user_id,
+                            case when public.partner_counts(w.partner_status) then w.partner_id end
                order by w.log_date, w.id
              ) = 1 then 2
         else 1
@@ -247,6 +268,7 @@ as $$
     select w.user_id as uid, count(distinct w.partner_id)::int as n
     from public.workout_logs w, bounds b
     where w.log_date >= b.since and w.partner_id is not null
+      and public.partner_counts(w.partner_status)
     group by 1
   ),
   scored as (
@@ -482,6 +504,7 @@ as $$
     select count(distinct w.partner_id)::int as n
     from public.workout_logs w, bounds b
     where w.user_id = auth.uid() and w.log_date >= b.since and w.partner_id is not null
+      and public.partner_counts(w.partner_status)
   ),
   -- Same minimum and same rates as the screen uses, so the rank shown on the
   -- strip is the rank shown on the board.
@@ -542,6 +565,7 @@ as $$
   from myrow m;
 $$;
 
+grant execute on function public.partner_counts(text)                               to authenticated;
 grant execute on function public.leaderboard_since(text)                            to authenticated;
 grant execute on function public.initials_of(text)                                  to authenticated;
 grant execute on function public.leaderboard_people(text, text, int, int, int, int, text)  to authenticated;
