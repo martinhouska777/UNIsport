@@ -2,10 +2,11 @@
 
 /*
   Shown right after you save a workout logged at a known gym: an optional
-  one-tap "rate the gym + how busy was it" card. Taps save immediately (through
-  useGymStats), so "Done" and "Skip" both just dismiss. All color = theme tokens.
+  one-tap "rate the gym + how busy was it" card. Taps save immediately (your
+  rating to this browser, the crowd report to the shared campus table), so
+  "Done" and "Skip" both just dismiss. All color = theme tokens.
 */
-import { useGymStats } from "@/lib/gymSocial";
+import { useGymRatings, useGymCrowd } from "@/lib/gymSocial";
 import { StarRater, CrowdPicker } from "@/components/gyms/RateCrowd";
 import Button from "@/components/ui/Button";
 
@@ -20,7 +21,8 @@ export default function GymCheckInPrompt({
   gymName: string;
   onDone: () => void;
 }) {
-  const { getRating, setRating, getCrowd, reportCrowd } = useGymStats(userId);
+  const { getRating, setRating } = useGymRatings(userId);
+  const { getCrowd, reportCrowd } = useGymCrowd(userId);
   const rating = getRating(gymSlug);
   const crowd = getCrowd(gymSlug);
 
@@ -45,8 +47,9 @@ export default function GymCheckInPrompt({
         <div className="mt-4 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
           How busy was it?
         </div>
+        {/* Highlights YOUR answer; the report goes to everyone at the school. */}
         <div className="mt-2">
-          <CrowdPicker value={crowd?.level ?? null} onReport={(l) => reportCrowd(gymSlug, l)} />
+          <CrowdPicker value={crowd?.myLevel ?? null} onReport={(l) => reportCrowd(gymSlug, l)} />
         </div>
 
         <Button size="lg" full onClick={onDone} className="mt-5">

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { gymsFor, type Gym, type GalleryIcon } from "@/lib/gyms";
 import { useAppState } from "@/components/AppState";
 import { getUniversity } from "@/lib/themes";
-import { useFavorites, useGymStats, type GymCrowd } from "@/lib/gymSocial";
+import { useFavorites, useGymCrowd, type GymCrowd } from "@/lib/gymSocial";
 import { gymOpenState, useClock, type Clock } from "@/lib/gymHours";
 import OpenNow from "@/components/gyms/OpenNow";
 import { RatingValue, CrowdChip, PredictedChip } from "@/components/gyms/RateCrowd";
@@ -70,8 +70,9 @@ function StatsRow({ gym, crowd, now }: { gym: Gym; crowd: GymCrowd | null; now: 
         <OpenNow hours={gym.hours} now={now} />
         {/* The gym's rating + how many rated it (hidden if nobody has) */}
         <RatingValue value={gym.rating} count={gym.ratingCount} />
-{/* How busy it is. A fresh report if there is one; otherwise how busy this
-            gym USUALLY is at this hour, so the line is never blank. */}
+        {/* How busy it is. Fresh reports if there are any — with how many
+            people said so; otherwise how busy this gym USUALLY is at this
+            hour, so the line is never blank. */}
         {crowd ? (
           <CrowdChip crowd={crowd} />
         ) : closed ? null : (
@@ -191,7 +192,9 @@ function HouseCard({ gym, fav, onToggleFav, crowd, now, sub }: CardProps & { sub
 export default function GymsPage() {
   const { userId, universityKey } = useAppState();
   const { isFavorite, toggle } = useFavorites(userId);
-  const { getCrowd } = useGymStats(userId);
+  // Shared campus reports (db/gym_crowd.sql) — what OTHER people tapped, not
+  // just this phone's own answer. One read covers every card.
+  const { getCrowd } = useGymCrowd(userId);
   // One clock for the whole list, so every card agrees on what time it is.
   const now = useClock();
   const [filter, setFilter] = useState<Filter>("all");

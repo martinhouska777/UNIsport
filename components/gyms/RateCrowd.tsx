@@ -9,7 +9,9 @@ import {
   CROWD_LEVELS,
   crowdLabel,
   crowdTone,
-  timeAgo,
+  crowdPeople,
+  crowdSentence,
+  crowdSummary,
   type CrowdLevel,
   type GymCrowd,
 } from "@/lib/gymSocial";
@@ -65,7 +67,8 @@ export function StarRater({
   );
 }
 
-// Four "how busy right now" buttons; the current fresh report is highlighted.
+// Four "how busy right now" buttons. The highlighted one is YOUR OWN current
+// answer (not the campus's) — the campus's answer is the sentence above them.
 export function CrowdPicker({
   value,
   onReport,
@@ -118,22 +121,39 @@ export function RatingValue({ value, count }: { value: number; count: number }) 
 }
 
 /*
-  Compact crowd for rows: person glyph + level. An unknown or stale crowd
-  renders NOTHING — "how busy is it" with no answer is noise, and thirty of
-  them across a list reads as "this app has no data".
+  Compact crowd for rows: person glyph + level + HOW MANY said so ("Busy · 2
+  people"). The count is not decoration — one voice and twelve voices are
+  different facts, and a card that hid the number was claiming the campus had
+  spoken when one person had. The full sentence rides in the title / aria-label
+  for anyone who wants the "when". An unknown or stale crowd renders NOTHING —
+  "how busy is it" with no answer is noise, and thirty of them across a list
+  reads as "this app has no data".
 */
-export function CrowdChip({
-  crowd,
-  showAgo = false,
-}: {
-  crowd: GymCrowd | null;
-  showAgo?: boolean;
-}) {
+export function CrowdChip({ crowd }: { crowd: GymCrowd | null }) {
   if (!crowd) return null;
+  const summary = crowdSummary(crowd);
   return (
-    <span className={`flex items-center gap-1 ${crowdTone(crowd.level)}`}>
+    <span
+      className={`flex items-center gap-1 ${crowdTone(crowd.level)}`}
+      title={summary}
+      aria-label={summary}
+    >
       <IconUser size={12} /> {crowdLabel(crowd.level)}
-      {showAgo && <span className="text-text-3">· {timeAgo(crowd.at)}</span>}
+      <span className="text-text-3">· {crowdPeople(crowd)}</span>
+    </span>
+  );
+}
+
+/*
+  The honest sentence for a gym page: "2 people said Busy in the last hour" /
+  "1 person said Quiet 20 min ago". Only the level word is coloured, so the
+  eye lands on the answer and the sample size stays legible beside it.
+*/
+export function CrowdSentence({ crowd }: { crowd: GymCrowd }) {
+  const s = crowdSentence(crowd);
+  return (
+    <span className="text-text-2">
+      {s.who} <span className={`font-medium ${crowdTone(crowd.level)}`}>{s.level}</span> {s.when}
     </span>
   );
 }

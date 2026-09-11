@@ -3,8 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useAppState } from "@/components/AppState";
-import { useFavorites, useGymStats, timeAgo } from "@/lib/gymSocial";
-import { StarRater, CrowdPicker, RatingValue, BusyBars } from "@/components/gyms/RateCrowd";
+import { useFavorites, useGymRatings, useGymCrowd, timeAgo, CROWD_FRESH_LABEL } from "@/lib/gymSocial";
+import { StarRater, CrowdPicker, CrowdSentence, RatingValue, BusyBars } from "@/components/gyms/RateCrowd";
 import OpenNow from "@/components/gyms/OpenNow";
 import { useClock } from "@/lib/gymHours";
 import { ButtonLink } from "@/components/ui/Button";
@@ -19,7 +19,8 @@ import {
 export default function GymProfile({ gym }: { gym: Gym }) {
   const { userId } = useAppState();
   const { isFavorite, toggle } = useFavorites(userId);
-  const { getRating, setRating, getCrowd, reportCrowd } = useGymStats(userId);
+  const { getRating, setRating } = useGymRatings(userId);
+  const { getCrowd, reportCrowd } = useGymCrowd(userId);
   const favorite = isFavorite(gym.slug);
   const rating = getRating(gym.slug);
   const highlights = gymHighlights(gym);
@@ -122,10 +123,11 @@ export default function GymProfile({ gym }: { gym: Gym }) {
           <h2 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
             How busy right now?
           </h2>
-          {/* A live report if somebody filed one; otherwise the app says what
+          {/* Fresh reports if anybody filed one — with the honest headcount,
+              "2 people said Busy in the last hour"; otherwise the app says what
               it actually knows — the typical week — and says that it is typical. */}
-          <span className="text-[11px] text-muted">
-            {crowd ? `Reported ${timeAgo(crowd.at)}` : "Typical for this time"}
+          <span className="text-right text-[11px] text-muted">
+            {crowd ? <CrowdSentence crowd={crowd} /> : "Typical for this time"}
           </span>
         </div>
         {/* The next six hours, so "come back at nine" is an answer the page can
@@ -135,8 +137,15 @@ export default function GymProfile({ gym }: { gym: Gym }) {
             <BusyBars kind={gym.kind} now={now} />
           </div>
         )}
+        {/* The highlighted button is YOUR answer. Tapping another replaces it —
+            one person is always one voice in the count, never two. */}
         <div className="mt-3">
-          <CrowdPicker value={crowd?.level ?? null} onReport={(l) => reportCrowd(gym.slug, l)} />
+          <CrowdPicker value={crowd?.myLevel ?? null} onReport={(l) => reportCrowd(gym.slug, l)} />
+        </div>
+        <div className="mt-2 text-[11px] text-muted">
+          {crowd?.myLevel
+            ? `Your report is in — everyone at your school sees it for the next ${CROWD_FRESH_LABEL}. Tap another to change it.`
+            : `Tap one — everyone at your school sees it for the next ${CROWD_FRESH_LABEL}.`}
         </div>
       </div>
 
