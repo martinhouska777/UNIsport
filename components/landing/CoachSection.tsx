@@ -1,3 +1,4 @@
+import Link from "next/link";
 import CoachPhone from "@/components/landing/CoachPhone";
 import { coach, mailtoHref, type Segment } from "@/lib/landingCopy";
 
@@ -39,14 +40,20 @@ function Body({ parts, className = "" }: { parts: Segment[]; className?: string 
     the coach's own button right under the opener (the same mail as the one
     at the foot), and the three lines that leant on the varsity story above
     (lead-in, sub, bridge) read their solo variants. */
-export default function CoachSection({ solo = false }: { solo?: boolean }) {
+/** `teaser`: on "/" the section is its OPENER ALONE — the badge, the name, the
+    sentence, and "See how it works →" leading to /for/coaches, where the six
+    screens live (the owner, 2026-09-11: coaches are the smallest audience, and
+    a student scrolling the whole page was walking through six coach screens
+    to reach the FAQ; "další telefony jsou zbytečné"). No phone screens here
+    then, so no data-phone-screens either — the light/dark pill stays away. */
+export default function CoachSection({ solo = false, teaser = false }: { solo?: boolean; teaser?: boolean }) {
   // On /for/coaches the Console opens the page, so its name is the h1.
   const Heading = solo ? "h1" : "h2";
   return (
     <section
       id="coaches"
-      data-phone-screens
-      className={`relative z-[1] scroll-mt-20 px-6 pb-28 sm:px-8 ${solo ? "l-glow-varsity pt-10 sm:pt-14" : "border-t border-l-line pt-24"}`}
+      {...(teaser ? {} : { "data-phone-screens": true })}
+      className={`relative z-[1] scroll-mt-20 px-6 sm:px-8 ${teaser ? "pb-24" : "pb-28"} ${solo ? "l-glow-varsity pt-10 sm:pt-14" : "border-t border-l-line pt-24"}`}
     >
       <div className="mx-auto max-w-[1160px]">
         {/* ── The opener ── */}
@@ -82,29 +89,46 @@ export default function CoachSection({ solo = false }: { solo?: boolean }) {
               look like a button; this one only says "keep going" — what it
               points at is the next thing down. So the chrome goes and the
               arrow turns to face the way it means. */}
-          <a
-            href={coach.overview.href}
-            className="tap44 mt-1 inline-flex flex-col items-center gap-1.5 px-3 py-2 text-[14px] font-medium tracking-tight text-l-text-2 transition-colors hover:text-l-text"
-          >
-            {coach.overview.label}
-            <svg
-              width="19"
-              height="19"
-              viewBox="0 0 24 24"
-              fill="none"
-              aria-hidden
-              className="text-l-varsity"
+          {teaser ? (
+            /* On "/" the six screens are a page away, so this is a real button
+               in the section's gold — the same shape as the coach's own way in
+               below the steps on /for/coaches — and the arrow points forward,
+               not down. */
+            <Link
+              href={coach.overview.teaserHref}
+              className="mt-3 inline-flex items-center gap-2 rounded-full border border-l-varsity-soft bg-l-varsity-dim px-6 py-3.5 text-[15px] font-semibold tracking-tight text-l-varsity transition-colors hover:border-l-varsity focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-l-text"
             >
-              <path
-                d="M12 5.5v13m0 0-5.6-5.6M12 18.5l5.6-5.6"
-                stroke="currentColor"
-                strokeWidth="1.7"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </a>
+              {coach.overview.label} →
+            </Link>
+          ) : (
+            <a
+              href={coach.overview.href}
+              className="tap44 mt-1 inline-flex flex-col items-center gap-1.5 px-3 py-2 text-[14px] font-medium tracking-tight text-l-text-2 transition-colors hover:text-l-text"
+            >
+              {coach.overview.label}
+              <svg
+                width="19"
+                height="19"
+                viewBox="0 0 24 24"
+                fill="none"
+                aria-hidden
+                className="text-l-varsity"
+              >
+                <path
+                  d="M12 5.5v13m0 0-5.6-5.6M12 18.5l5.6-5.6"
+                  stroke="currentColor"
+                  strokeWidth="1.7"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </a>
+          )}
         </div>
+
+        {/* Everything below the opener — the six screens, the summary and the
+            coach's own way in — belongs to /for/coaches. */}
+        {!teaser && (<>
 
         {/* ── Six screens, six explanations. The rule is all that stands
             between them and the opener now. ── */}
@@ -172,6 +196,7 @@ export default function CoachSection({ solo = false }: { solo?: boolean }) {
             {coach.cta.label} →
           </a>
         </div>
+        </>)}
       </div>
     </section>
   );

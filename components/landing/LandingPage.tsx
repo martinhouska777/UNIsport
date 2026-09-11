@@ -54,7 +54,8 @@ import { seeAll, studentFeatures, studentStory, varsityFeatures, varsityStory, t
      Story A → Campus Colours (+ the student features beside it)
      Varsity Mode.
      Story B → Blade Lock (+ the varsity features beside it)
-     The Coach's Console
+     The Coach's Console — its opener and "See how it works →" only; the six
+                           screens live on /for/coaches (owner, 2026-09-11)
      FAQ · About · Contact
      The close · footer
 
@@ -112,7 +113,7 @@ export default function LandingPage({ view = "all" }: { view?: LandingView }) {
             aside={<FeatureList kicker={varsityFeatures.kicker} rows={varsityFeatures.rows} cta={varsityFeatures.cta} />}
           />
         )}
-        {coaches && <CoachSection solo={!all} />}
+        {coaches && <CoachSection solo={!all} teaser={all} />}
         {audience && <Faq view={view} />}
         {(all || view === "about") && <About full={!all} />}
         {(all || view === "contact") && <Contact solo={!all} />}
