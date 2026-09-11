@@ -6,7 +6,19 @@
   they train: "Train today? Log it — 10 seconds", deep-linked into the log
   sheet with today's date and their usual gym already filled in.
 
-  RUN HOURLY by the platform cron (vercel.json). On each run it:
+  RUN BY THE PLATFORM CRON (vercel.json). The route is written to run HOURLY —
+  it reminds whoever trains in the hour it happens to run, so an hourly cron
+  reaches everybody, each at their own time.
+
+  The Vercel Hobby plan allows a cron only ONCE A DAY, so vercel.json currently
+  asks for 22:00 UTC (6pm Eastern in summer, 5pm in winter — Vercel crons do
+  not follow daylight saving). The consequence is real and worth knowing: only
+  students whose usual slot starts in THAT hour get the nudge; everyone else
+  gets nothing. Restoring hourly means either a paid Vercel plan or calling
+  this route hourly from a scheduler that has no such limit (Supabase's
+  pg_cron), at which point the schedule here should go back to "0 * * * *".
+
+  On each run it:
     1. works out the campus-local date, weekday and hour (lib/themes.ts holds
        each university's timezone);
     2. finds everyone whose training schedule has a slot STARTING this hour
