@@ -103,21 +103,26 @@ function AthleteSheet({ athleteId, onClose }: { athleteId: string; onClose: () =
         </div>
       )}
 
-      {/* erg PRs */}
-      <div className="mb-2 mt-4 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-        Personal Bests
-      </div>
-      <div className="grid grid-cols-2 gap-1.5">
-        {prPieces.map((piece) => (
-          <div
-            key={piece}
-            className="flex items-baseline justify-between rounded-xl border border-border bg-surface-2 px-3 py-2.5"
-          >
-            <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">{piece}</span>
-            <span className="text-[14px] font-semibold text-text">{p.prs[piece] ?? "—"}</span>
+      {/* erg PRs — not for a coxswain: nobody compares a cox's 2k, and a card
+          that printed one would be asking to be. */}
+      {!a?.cox && (
+        <>
+          <div className="mb-2 mt-4 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
+            Personal Bests
           </div>
-        ))}
-      </div>
+          <div className="grid grid-cols-2 gap-1.5">
+            {prPieces.map((piece) => (
+              <div
+                key={piece}
+                className="flex items-baseline justify-between rounded-xl border border-border bg-surface-2 px-3 py-2.5"
+              >
+                <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">{piece}</span>
+                <span className="text-[14px] font-semibold text-text">{p.prs[piece] ?? "—"}</span>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
     </Sheet>
   );
 }
@@ -193,14 +198,22 @@ export default function TeamScreen({
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState<string | null>(null);
 
-  // Rowers only (coxswains aren't on the squad roster here), in name order.
-  const rowers = useMemo(
-    () => roster.filter((a) => !a.cox).sort((a, b) => a.name.localeCompare(b.name)),
-    [],
-  );
+  /*
+    THE WHOLE SQUAD, in two groups: rowers, then coxswains, each in name order.
+    Coxswains used to be filtered out of this list altogether — on a roster for
+    an app whose setup screen asks "Rower or Coxswain", a cox who joined could
+    never find themselves. They are listed apart, as a boathouse lists them,
+    not left off.
+  */
+  const byName = (a: Athlete, b: Athlete) => a.name.localeCompare(b.name);
+  const rowers = useMemo(() => roster.filter((a) => !a.cox).sort(byName), []);
+  const coxes = useMemo(() => roster.filter((a) => a.cox).sort(byName), []);
 
   const q = query.trim().toLowerCase();
-  const shown = q ? rowers.filter((a) => a.name.toLowerCase().includes(q)) : rowers;
+  const matches = (a: Athlete) => !q || a.name.toLowerCase().includes(q);
+  const shownRowers = rowers.filter(matches);
+  const shownCoxes = coxes.filter(matches);
+  const shownCount = shownRowers.length + shownCoxes.length;
 
   return (
     <div className="mx-auto w-full max-w-screen-sm px-4 pb-10 pt-4">
@@ -237,10 +250,13 @@ export default function TeamScreen({
               className="w-full bg-transparent text-base text-text outline-none placeholder:text-muted"
             />
           </div>
-          <div className="mt-1.5 px-0.5 text-[11px] text-muted">{rowers.length} rowers</div>
+          <div className="mt-1.5 px-0.5 text-[11px] text-muted">
+            {rowers.length} rowers
+            {coxes.length > 0 && ` · ${coxes.length} ${coxes.length === 1 ? "coxswain" : "coxswains"}`}
+          </div>
 
           <div className="mt-3 flex flex-col gap-1.5">
-            {shown.map((a, i) => (
+            {shownRowers.map((a, i) => (
               <RosterRow
                 key={a.id}
                 a={a}
@@ -249,7 +265,21 @@ export default function TeamScreen({
                 href={athleteHref?.(a) ?? undefined}
               />
             ))}
-            {shown.length === 0 && (
+            {/* Coxswains, under their own heading — only when there are any to show. */}
+            {shownCoxes.length > 0 && (
+              <div className={`px-0.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted ${shownRowers.length > 0 ? "mt-3 mb-0.5" : "mb-0.5"}`}>
+                Coxswains
+              </div>
+            )}
+            {shownCoxes.map((a) => (
+              <RosterRow
+                key={a.id}
+                a={a}
+                onOpen={() => setOpen(a.id)}
+                href={athleteHref?.(a) ?? undefined}
+              />
+            ))}
+            {shownCount === 0 && (
               <div className="rounded-xl border border-dashed border-border bg-surface px-4 py-8 text-center text-[12px] text-muted">
                 No one matches “{query}”.
               </div>
