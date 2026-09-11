@@ -444,6 +444,25 @@ export default function TrainingPlanScreen() {
   const sColor = (s: Session) => configSessionColor(cfg, s.category, s.intensity);
   const sLabel = (s: Session) => configSessionLabel(cfg, s.category, s.intensity);
 
+  /*
+    WHERE "EVERY WEEK" LANDS: the same weekday and period, from the day being
+    edited FORWARD to the end of the block — never backwards. It used to write
+    every week of the block, so changing Tuesday AM in week five rewrote weeks
+    one to four as well: training that had already happened and been logged
+    against. A repeat is a decision about the weeks still to come.
+  */
+  const weeklyTargets = (from: Date, period: Period): string[] => {
+    const weekday = from.getDay();
+    const start = new Date(from.getFullYear(), from.getMonth(), from.getDate());
+    const keys: string[] = [];
+    for (const w of weeks) {
+      for (const d of w.days) {
+        if (d.date.getDay() === weekday && d.date >= start) keys.push(sessionKey(d.date, period));
+      }
+    }
+    return keys;
+  };
+
   const saveSession = () => {
     if (!editor || !form.category || !editorValid) return;
     const s: Session = {
@@ -458,15 +477,9 @@ export default function TrainingPlanScreen() {
       board: form.board,
     };
     if (form.repeat === "weekly") {
-      // apply to the same weekday + period across every week in the block
-      const weekday = editor.date.getDay();
       setSessions((prev) => {
         const next = { ...prev };
-        for (const w of weeks) {
-          for (const d of w.days) {
-            if (d.date.getDay() === weekday) next[sessionKey(d.date, editor.period)] = s;
-          }
-        }
+        for (const key of weeklyTargets(editor.date, editor.period)) next[key] = s;
         return next;
       });
     } else {
@@ -1161,12 +1174,27 @@ export default function TrainingPlanScreen() {
                   );
                 })}
               </div>
-              {form.repeat === "weekly" && (
-                <p className="mt-1.5 text-[11px] text-muted">
-                  Adds this to every {editor.date.toLocaleDateString("en-US", { weekday: "long" })} {editor.period}{" "}
-                  in the block.
-                </p>
-              )}
+              {form.repeat === "weekly" &&
+                (() => {
+                  /* Say exactly what is about to be written, and what it is
+                     about to write OVER — a count the coach can check against
+                     the weeks list before pressing Done. */
+                  const targets = weeklyTargets(editor.date, editor.period);
+                  const others = targets.filter((k) => k !== sessionKey(editor.date, editor.period));
+                  const replaced = others.filter((k) => !!sessions[k]).length;
+                  return (
+                    <p className="mt-1.5 text-[11px] leading-relaxed text-muted">
+                      Puts this on every {weekday} {editor.period} from this week to the end of the
+                      block — {others.length} more {others.length === 1 ? "week" : "weeks"}
+                      {replaced > 0 && (
+                        <>
+                          , <span className="text-warn">{replaced} already set</span> and replaced
+                        </>
+                      )}
+                      . Earlier weeks are left alone.
+                    </p>
+                  );
+                })()}
             </>
           )}
         </div>

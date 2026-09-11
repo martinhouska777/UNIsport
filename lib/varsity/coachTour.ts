@@ -147,7 +147,7 @@ const steps: TourStep[] = [
     group: PLAN_DIVE,
     anchor: "coach-plan-repeat",
     title: "This one saves the most",
-    body: "“Every week” drops this session onto the SAME slot in every week of the block — this weekday, this AM or PM, all the way to the race. A normal training week is therefore typed once: you build the pattern, then go back and change only the days that break it.",
+    body: "“Every week” drops this session onto the SAME slot in every week from this one to the race — this weekday, this AM or PM. Weeks already behind you are left alone. A normal training week is therefore typed once: you build the pattern, then change only the days that break it.",
   },
   {
     group: PLAN_DIVE,
