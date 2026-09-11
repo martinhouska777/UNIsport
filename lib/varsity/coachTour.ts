@@ -192,7 +192,7 @@ const steps: TourStep[] = [
   {
     anchor: "coach-lineup-add-boat",
     title: "Fill seats by typing, swap them by tapping",
-    body: "A boat lays itself out bow to stroke with the cox in the stern. Type the first few letters of a name into an empty seat. To swap two rowers, tap one seat and then the other — two taps, no keyboard, gloves on. Nothing is locked to a side — you rig the boat, the app just holds the sheet.",
+    body: "A boat lays itself out bow to stroke with the cox in the stern. Type the first few letters of a name into an empty seat. To swap two rowers, tap one seat to pick it up and then tap the other — two taps, no keyboard, gloves on. Tap a picked-up seat again to type a name into it instead. Nothing is locked to a side — you rig the boat, the app just holds the sheet.",
   },
   {
     anchor: "coach-lineup-publish",

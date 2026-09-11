@@ -13,9 +13,11 @@
   or DRAG a name from the pool (or another seat) onto a seat. The X clears a seat
   back to the pool. There is ONE roster, so each athlete is in exactly one place.
 
-  SWAPPING IS TWO TAPS. Tap a filled seat, then tap any other seat: the two
-  rowers trade places (or the first one moves, if the second was empty). The
-  same holds for a drag onto a filled seat, and for typing a seated rower's
+  SWAPPING IS TWO TAPS, AND THE KEYBOARD STAYS DOWN. Tap a filled seat to
+  pick it up (highlighted, no field), then tap any other seat: the two rowers
+  trade places (or the first one moves, if the second was empty). Tap the
+  same seat again instead and its field opens, to type a name in. The same
+  swap holds for a drag onto a filled seat, and for typing a seated rower's
   name into a seat — nobody is ever knocked out of the boat by somebody
   arriving; they go where the newcomer came from. Only a pool name replacing
   a seated one sends anyone back to the pool.
@@ -496,12 +498,14 @@ function DayPicker({ days, onPick }: { days: PickDay[]; onPick: (day: PickDay, p
   own phone — number, name, side — so a coach seating a boat is looking at the
   thing the squad will see, not at a different rendering of it.
 
-  A FILLED SEAT IS TAPPABLE TOO. Tapping it makes it the ACTIVE seat: tap any
-  other seat and the two rowers swap (or this one moves, if that seat was
-  empty); or type a name — anyone in the pool, or anyone already seated — and
-  they come in here while whoever was here goes where they came from. Two
-  taps, no keyboard, is the version for a dock at dawn. Escape, or tapping the
-  seat's badge again, puts it down without clearing anyone.
+  A FILLED SEAT IS TAPPABLE TOO, in two stages. The first tap PICKS IT UP —
+  highlighted, no keyboard: tap any other seat and the two rowers swap (or
+  this one moves, if that seat was empty). A second tap on the same seat opens
+  its text field, to type a name in — anyone in the pool, or anyone already
+  seated — and whoever was here goes where the newcomer came from. Two taps,
+  no keyboard, is the version for a dock at dawn. Tapping the seat's number
+  badge puts it down without clearing anyone; so does Escape once the field
+  is open.
 */
 type Match = { a: Athlete; where: string | null };
 
@@ -640,63 +644,87 @@ function Seat({
 
   if (athlete) {
     return (
-      <div
-        draggable
-        role="button"
-        tabIndex={0}
-        onClick={onStartType}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            onStartType();
-          }
-        }}
-        onDragStart={(e) => {
-          e.dataTransfer.setData("text/plain", athlete.id);
-          onDragStartSeat();
-        }}
-        {...dropHandlers}
-        aria-label={
-          selected
-            ? `${athlete.name} in seat ${label}, picked up. Tap another seat to move them there, or tap again to type a name.`
-            : `${athlete.name} in seat ${label}. Tap to pick up.`
-        }
-        aria-pressed={selected}
-        /* Picked up looks like a drop target looks — the same primary ring —
-           because it is the same idea: this seat is the one in play. */
-        className={`flex h-10 cursor-grab select-none items-center gap-2 rounded-[10px] border pl-[7px] pr-[6px] active:cursor-grabbing ${
-          dropActive || selected ? "border-primary bg-primary-tint" : "border-border bg-surface"
-        }`}
-        style={dropActive || selected ? undefined : coxEdge}
-      >
-        {chip}
-        <span className="min-w-0 flex-1 truncate text-[16px] font-medium text-text">
-          {athlete.name}
-        </span>
-        {/* The rower's OWN side, which is a fact about them. The seat has none.
-            A coxswain takes no side, so their row says COX instead. */}
-        {cox ? (
-          <span
-            className="flex h-[21px] flex-shrink-0 items-center rounded-md px-[7px] font-mono text-[10px] font-semibold tracking-[0.06em]"
-            style={blade(COX_COLOR, COX_INK)}
-          >
-            {COX_LABEL}
-          </span>
-        ) : (
-          <SidePill side={athlete.side} />
-        )}
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation(); // the row underneath is the tap-to-swap
-            onClear();
+      <>
+        <div
+          draggable
+          role="button"
+          tabIndex={0}
+          onClick={onStartType}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              onStartType();
+            }
           }}
-          aria-label={`Clear ${athlete.name} from this seat`}
-          className="-mr-1 flex h-10 w-[34px] flex-shrink-0 items-center justify-center text-[17px] leading-none text-muted hover:text-danger"
+          onDragStart={(e) => {
+            e.dataTransfer.setData("text/plain", athlete.id);
+            onDragStartSeat();
+          }}
+          {...dropHandlers}
+          aria-label={
+            selected
+              ? `${athlete.name} in seat ${label}, picked up. Tap another seat to move them there, or tap again to type a name.`
+              : `${athlete.name} in seat ${label}. Tap to pick up.`
+          }
+          aria-pressed={selected}
+          /* Picked up looks like a drop target looks — the same primary ring —
+             because it is the same idea: this seat is the one in play. */
+          className={`flex h-10 cursor-grab select-none items-center gap-2 rounded-[10px] border pl-[7px] pr-[6px] active:cursor-grabbing ${
+            dropActive || selected ? "border-primary bg-primary-tint" : "border-border bg-surface"
+          }`}
+          style={dropActive || selected ? undefined : coxEdge}
         >
-          <IconX size={15} />
-        </button>
-      </div>
+          {/* Picked up: the badge is the way to put it down again without
+              opening the keyboard — the rest of the row is the second tap. */}
+          {selected ? (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onCancelType();
+              }}
+              aria-label="Put this seat down"
+              className="flex"
+            >
+              {chip}
+            </button>
+          ) : (
+            chip
+          )}
+          <span className="min-w-0 flex-1 truncate text-[16px] font-medium text-text">
+            {athlete.name}
+          </span>
+          {/* The rower's OWN side, which is a fact about them. The seat has none.
+              A coxswain takes no side, so their row says COX instead. */}
+          {cox ? (
+            <span
+              className="flex h-[21px] flex-shrink-0 items-center rounded-md px-[7px] font-mono text-[10px] font-semibold tracking-[0.06em]"
+              style={blade(COX_COLOR, COX_INK)}
+            >
+              {COX_LABEL}
+            </span>
+          ) : (
+            <SidePill side={athlete.side} />
+          )}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation(); // the row underneath is the tap-to-swap
+              onClear();
+            }}
+            aria-label={`Clear ${athlete.name} from this seat`}
+            className="-mr-1 flex h-10 w-[34px] flex-shrink-0 items-center justify-center text-[17px] leading-none text-muted hover:text-danger"
+          >
+            <IconX size={15} />
+          </button>
+        </div>
+        {/* What the pick-up means, said once, under the seat it is about. */}
+        {selected && (
+          <div className="px-1 pb-0.5 text-[11px] leading-snug text-muted" aria-live="polite">
+            Tap another seat to swap · tap again to type a name · tap the number to put down
+          </div>
+        )}
+      </>
     );
   }
 
