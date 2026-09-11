@@ -191,8 +191,8 @@ const steps: TourStep[] = [
   },
   {
     anchor: "coach-lineup-add-boat",
-    title: "Fill seats by typing or dragging",
-    body: "A boat lays itself out 8 down to 1 with the cox on top. Type the first few letters of a name, or drag one up from the pool. Nothing is locked to a side — you rig the boat, the app just holds the sheet.",
+    title: "Fill seats by typing, swap them by tapping",
+    body: "A boat lays itself out bow to stroke with the cox in the stern. Type the first few letters of a name into an empty seat. To swap two rowers, tap one seat and then the other — two taps, no keyboard, gloves on. Nothing is locked to a side — you rig the boat, the app just holds the sheet.",
   },
   {
     anchor: "coach-lineup-publish",

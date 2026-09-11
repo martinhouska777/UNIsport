@@ -9,9 +9,16 @@
                   autosaves as a draft; one button publishes it to the team.
                   Loads any existing lineup.
 
-  Seats are live: click an empty seat to TYPE a name (autocomplete from the pool),
+  Seats are live: tap an empty seat to TYPE a name (autocomplete from the pool),
   or DRAG a name from the pool (or another seat) onto a seat. The X clears a seat
   back to the pool. There is ONE roster, so each athlete is in exactly one place.
+
+  SWAPPING IS TWO TAPS. Tap a filled seat, then tap any other seat: the two
+  rowers trade places (or the first one moves, if the second was empty). The
+  same holds for a drag onto a filled seat, and for typing a seated rower's
+  name into a seat — nobody is ever knocked out of the boat by somebody
+  arriving; they go where the newcomer came from. Only a pool name replacing
+  a seated one sends anyone back to the pool.
   Lineups persist per practice (day_key) via lib/varsity/lineupStore.ts. Colors
   are theme tokens; rowing-side colors are content colors (rule-1 exception).
 
@@ -488,7 +495,16 @@ function DayPicker({ days, onPick }: { days: PickDay[]; onPick: (day: PickDay, p
   the ×. It is drawn to the same anatomy as the seat an ATHLETE reads on their
   own phone — number, name, side — so a coach seating a boat is looking at the
   thing the squad will see, not at a different rendering of it.
+
+  A FILLED SEAT IS TAPPABLE TOO. Tapping it makes it the ACTIVE seat: tap any
+  other seat and the two rowers swap (or this one moves, if that seat was
+  empty); or type a name — anyone in the pool, or anyone already seated — and
+  they come in here while whoever was here goes where they came from. Two
+  taps, no keyboard, is the version for a dock at dawn. Escape, or tapping the
+  seat's badge again, puts it down without clearing anyone.
 */
+type Match = { a: Athlete; where: string | null };
+
 function Seat({
   label,
   athlete,
@@ -501,6 +517,7 @@ function Seat({
   onQuery,
   onAssign,
   onClear,
+  onCancelType,
   onDragStartSeat,
   onDropSlot,
   onDragOverSlot,
@@ -512,12 +529,15 @@ function Seat({
   cox?: boolean;
   typing: boolean;
   query: string;
-  matches: Athlete[];
+  /** Who can come into this seat, and — for anyone already seated — where they are now. */
+  matches: Match[];
   dropActive: boolean;
   onStartType: () => void;
   onQuery: (v: string) => void;
   onAssign: (id: string) => void;
   onClear: () => void;
+  /** Stop typing into this seat, leaving whoever is in it alone. */
+  onCancelType: () => void;
   onDragStartSeat: () => void;
   onDropSlot: (id: string) => void;
   onDragOverSlot: () => void;
@@ -565,16 +585,21 @@ function Seat({
           className="flex h-10 items-center gap-2 rounded-[10px] border bg-surface-2 pl-[7px] pr-2.5"
           style={coxEdge ?? { borderColor: "var(--primary)" }}
         >
-          {chip}
+          {/* Tapping the active seat's own badge puts it down again. */}
+          <button type="button" onClick={onCancelType} aria-label="Stop editing this seat" className="flex">
+            {chip}
+          </button>
           <input
             autoFocus
             value={query}
             onChange={(e) => onQuery(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter" && matches[0]) onAssign(matches[0].id);
-              if (e.key === "Escape") onClear();
+              if (e.key === "Enter" && matches[0]) onAssign(matches[0].a.id);
+              if (e.key === "Escape") onCancelType();
             }}
-            placeholder="Type a name…"
+            /* A filled seat says what a tap elsewhere will do; an empty one
+               just asks for a name. */
+            placeholder={athlete ? "Swap in a name, or tap another seat" : "Type a name…"}
             /* 16px, so a phone does not zoom the whole boat when it focuses. */
             className="w-full min-w-0 flex-1 bg-transparent text-[16px] font-medium text-text outline-none placeholder:text-text-3"
           />
@@ -583,19 +608,24 @@ function Seat({
           <div className="absolute left-0 right-0 top-[calc(100%+4px)] z-30 select-none overflow-hidden rounded-xl border border-border bg-surface-2 shadow-xl">
             {matches.slice(0, 5).map((m) => (
               <button
-                key={m.id}
+                key={m.a.id}
                 type="button"
                 onMouseDown={(e) => {
                   e.preventDefault();
-                  onAssign(m.id);
+                  onAssign(m.a.id);
                 }}
                 className="flex w-full items-center gap-2.5 border-b border-border px-3 py-2.5 text-left last:border-b-0 active:bg-primary-tint"
               >
-                <Avatar initials={m.initials} side={m.side} cox={m.cox} />
-                <span className="flex-1 truncate text-[13px] font-semibold text-text">
-                  {m.name}
+                <Avatar initials={m.a.initials} side={m.a.side} cox={m.a.cox} />
+                <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-text">
+                  {m.a.name}
+                  {/* Already in a boat: say where, because picking them is a
+                      swap and the coach should know what it costs. */}
+                  {m.where && (
+                    <span className="ml-1.5 font-normal text-muted">· {m.where}</span>
+                  )}
                 </span>
-                <AthleteTag a={m} />
+                <AthleteTag a={m.a} />
               </button>
             ))}
           </div>
@@ -608,11 +638,21 @@ function Seat({
     return (
       <div
         draggable
+        role="button"
+        tabIndex={0}
+        onClick={onStartType}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onStartType();
+          }
+        }}
         onDragStart={(e) => {
           e.dataTransfer.setData("text/plain", athlete.id);
           onDragStartSeat();
         }}
         {...dropHandlers}
+        aria-label={`${athlete.name} in seat ${label}. Tap to swap or move.`}
         className={`flex h-10 cursor-grab select-none items-center gap-2 rounded-[10px] border pl-[7px] pr-[6px] active:cursor-grabbing ${
           dropActive ? "border-primary bg-primary-tint" : "border-border bg-surface"
         }`}
@@ -636,7 +676,10 @@ function Seat({
         )}
         <button
           type="button"
-          onClick={onClear}
+          onClick={(e) => {
+            e.stopPropagation(); // the row underneath is the tap-to-swap
+            onClear();
+          }}
           aria-label={`Clear ${athlete.name} from this seat`}
           className="-mr-1 flex h-10 w-[34px] flex-shrink-0 items-center justify-center text-[17px] leading-none text-muted hover:text-danger"
         >
@@ -969,46 +1012,107 @@ function Builder({
     () => unavailable.filter((a) => inPool(a, poolFilter)),
     [unavailable, poolFilter],
   );
-  const matches = useMemo(() => {
+  /* Where everyone seated is right now: id → the slot, and id → words for it. */
+  const seatOf = useMemo(() => {
+    const slots: Record<string, Slot> = {};
+    const words: Record<string, string> = {};
+    for (const b of boats) {
+      b.seats.forEach((s, i) => {
+        if (!s.athleteId) return;
+        slots[s.athleteId] = { boatId: b.id, kind: "seat", idx: i };
+        words[s.athleteId] = `${b.name}, ${seatLabel(i)}`;
+      });
+      if (b.coxId) {
+        slots[b.coxId] = { boatId: b.id, kind: "cox" };
+        words[b.coxId] = `${b.name}, ${COX_LABEL.toLowerCase()}`;
+      }
+    }
+    return { slots, words };
+  }, [boats]);
+
+  const athleteAt = (slot: Slot): string | null => {
+    const b = boats.find((x) => x.id === slot.boatId);
+    if (!b) return null;
+    return slot.kind === "cox" ? b.coxId : b.seats[slot.idx]?.athleteId ?? null;
+  };
+
+  const matches = useMemo<Match[]>(() => {
     // A cox seat only offers coxes and a rowing seat never does — the one hard
     // rule left in a seat, because a cox does not row. Which SIDE a rower pulls
     // no longer narrows anything: a seat is a number, so every available rower
     // is offered for every seat, and the coach rigs the boat.
-    const wantCox = typing?.kind === "cox";
-    const list = available.filter((a) => !!a.cox === wantCox);
+    //
+    // EVERYONE NOT OUT IS OFFERED, seated or not — picking someone already in
+    // a boat is a swap, and the coach can see where they are. The pool comes
+    // first, because filling a hole is the common case and a swap the rarer.
+    if (!typing) return [];
+    const wantCox = typing.kind === "cox";
+    const here = athleteAt(typing);
     const q = query.trim().toLowerCase();
-    if (!q) return list;
-    return list.filter(
-      (a) => a.name.toLowerCase().includes(q) || a.initials.toLowerCase().includes(q),
-    );
-  }, [available, query, typing]);
+    return roster
+      .filter((a) => !!a.cox === wantCox && !outById[a.id] && a.id !== here)
+      .filter((a) => !q || a.name.toLowerCase().includes(q) || a.initials.toLowerCase().includes(q))
+      .map((a) => ({ a, where: seatOf.words[a.id] ?? null }))
+      .sort((x, y) => Number(!!x.where) - Number(!!y.where) || x.a.name.localeCompare(y.a.name));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roster, query, typing, outById, seatOf]);
 
-  // put `athleteId` into `slot`, removing them from wherever they were first.
-  // The cox seat is locked to coxes; coxes can't take a rowing seat.
-  const assign = (slot: Slot, athleteId: string) => {
+  /*
+    Put `athleteId` into `slot`. Whoever was in that slot does not fall out of
+    the boat: if the newcomer came from another seat, the two SWAP; if they came
+    from the pool, the old occupant goes back to the pool. The cox seat is
+    locked to coxes and coxes never take a rowing seat, so a swap can only
+    ever be like for like. Returns false if the move is not allowed at all.
+  */
+  const assign = (slot: Slot, athleteId: string): boolean => {
     const a = rosterById[athleteId];
-    if (!a) return;
-    if (slot.kind === "cox" && !a.cox) return;
-    if (slot.kind === "seat" && a.cox) return;
-    setBoats((prev) =>
-      prev
-        .map((b) => ({
-          ...b,
-          seats: b.seats.map((s) => (s.athleteId === athleteId ? { ...s, athleteId: null } : s)),
-          coxId: b.coxId === athleteId ? null : b.coxId,
-        }))
-        .map((b) => {
-          if (b.id !== slot.boatId) return b;
-          if (slot.kind === "cox") return { ...b, coxId: athleteId };
-          return {
-            ...b,
-            seats: b.seats.map((s, i) => (i === slot.idx ? { ...s, athleteId } : s)),
-          };
-        }),
-    );
+    if (!a) return false;
+    if (slot.kind === "cox" && !a.cox) return false;
+    if (slot.kind === "seat" && a.cox) return false;
+    const from = seatOf.slots[athleteId] ?? null;
+    const displaced = athleteAt(slot);
+    if (from && slotKey(from) === slotKey(slot)) {
+      setTyping(null);
+      setQuery("");
+      setDropKey(null);
+      return true; // dropped back where they were
+    }
+    const put = (b: Boat, target: Slot, id: string | null): Boat => {
+      if (b.id !== target.boatId) return b;
+      if (target.kind === "cox") return { ...b, coxId: id };
+      return { ...b, seats: b.seats.map((s, i) => (i === target.idx ? { ...s, athleteId: id } : s)) };
+    };
+    setBoats((prev) => {
+      // Lift the newcomer out of wherever they were…
+      let next = prev.map((b) => ({
+        ...b,
+        seats: b.seats.map((s) => (s.athleteId === athleteId ? { ...s, athleteId: null } : s)),
+        coxId: b.coxId === athleteId ? null : b.coxId,
+      }));
+      // …seat them, and send whoever was there to the newcomer's old seat.
+      next = next.map((b) => put(b, slot, athleteId));
+      if (displaced && displaced !== athleteId && from) next = next.map((b) => put(b, from, displaced));
+      return next;
+    });
     setTyping(null);
     setQuery("");
     setDropKey(null);
+    return true;
+  };
+
+  /*
+    A TAP ON A SEAT. With no seat active, it starts typing there. With a FILLED
+    seat active, it moves that rower here — swapping with whoever is here —
+    unless the move is not allowed (a rower onto the cox seat), in which case
+    the tap simply makes this the active seat instead.
+  */
+  const tapSeat = (slot: Slot) => {
+    if (typing && slotKey(typing) !== slotKey(slot)) {
+      const moving = athleteAt(typing);
+      if (moving && assign(slot, moving)) return;
+    }
+    setTyping(slot);
+    setQuery("");
   };
 
   const clear = (slot: Slot) => {
@@ -1191,18 +1295,17 @@ function Builder({
         query={query}
         matches={matches}
         dropActive={dropKey === key}
-        onStartType={() => {
-          setTyping(slot);
-          setQuery("");
-        }}
+        onStartType={() => tapSeat(slot)}
         onQuery={setQuery}
-        onAssign={(id) => assign(slot, id)}
+        onAssign={(id) => void assign(slot, id)}
         onClear={() => {
           if (athleteId) clear(slot);
-          else {
-            setTyping(null);
-            setQuery("");
-          }
+          setTyping(null);
+          setQuery("");
+        }}
+        onCancelType={() => {
+          setTyping(null);
+          setQuery("");
         }}
         onDragStartSeat={() => setDropKey(null)}
         onDropSlot={(id) => assign(slot, id)}
