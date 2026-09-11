@@ -6,8 +6,9 @@
   strip, today's prescribed sessions (with coach notes + watch-verify), the
   day's lineup, and the coach's weekly focus. All colors are theme tokens.
 */
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useAppState } from "@/components/AppState";
 import { useMembership } from "@/components/varsity/useMembership";
 import { can, canOpenConsole, roleLabel, type VarsityRole } from "@/lib/varsity/membership";
@@ -669,8 +670,15 @@ function ConsoleDoor({ role }: { role: VarsityRole }) {
   );
 }
 
-export default function HomeScreen() {
+function HomeScreenInner() {
   const { userId } = useAppState();
+  /*
+    ARRIVED FROM A LINEUP PUSH? The notification links to /varsity/home?d=<date>
+    (app/api/push/notify), so the page opens on the practice's day rather than
+    today's. The link counts once: the first day the athlete picks themselves
+    takes over, and the × goes back to today as it always did.
+  */
+  const linkDay = useSearchParams().get("d");
   // Coach or captain? Decides whether the console door appears at the top.
   const { membership, isMember } = useMembership();
   const consoleRole =
@@ -689,6 +697,14 @@ export default function HomeScreen() {
     today" so the × knows whether there is anywhere to go back to.
   */
   const [dayIdx, setDayIdx] = useState<number | null>(null);
+  // Set once the athlete has chosen a day of their own; the link stops
+  // deciding from then on. Derived rather than written from an effect, so the
+  // page never renders today first and then jumps.
+  const [linkConsumed, setLinkConsumed] = useState(false);
+  const pickDay = (i: number | null) => {
+    setLinkConsumed(true);
+    setDayIdx(i);
+  };
   // Another day's published boats, remembered with the day they belong to so a
   // slow fetch can never paint Tuesday's eight under Thursday's session.
   const [awayLineups, setAwayLineups] = useState<{ iso: string; lineups: Lineup[] } | null>(null);
@@ -727,9 +743,14 @@ export default function HomeScreen() {
     const i = allDays.findIndex((d) => d.today);
     return i >= 0 ? i : 0; // a block that hasn't started yet opens on its first day
   }, [allDays]);
-  const viewIdx = dayIdx ?? todayIdx;
+  // The linked day, when the block has it and nothing has been picked since.
+  const linkIdx = useMemo(
+    () => (linkDay && !linkConsumed ? allDays.findIndex((d) => d.iso === linkDay) : -1),
+    [allDays, linkDay, linkConsumed],
+  );
+  const viewIdx = dayIdx ?? (linkIdx >= 0 ? linkIdx : todayIdx);
   const viewDay: WeekDay | null = allDays[viewIdx] ?? null;
-  const onToday = dayIdx === null;
+  const onToday = viewIdx === todayIdx;
 
   // Fetch the boats for a day that isn't today. Today's came with the page.
   useEffect(() => {
@@ -840,9 +861,9 @@ export default function HomeScreen() {
         selected={onToday ? null : viewDay}
         onSelect={(d) => {
           const i = allDays.indexOf(d);
-          setDayIdx(i === todayIdx ? null : i);
+          pickDay(i === todayIdx ? null : i);
         }}
-        onClearDay={() => setDayIdx(null)}
+        onClearDay={() => pickDay(null)}
       />
 
       <DayHeader
@@ -852,9 +873,9 @@ export default function HomeScreen() {
         canNext={viewIdx < allDays.length - 1}
         onStep={(delta) => {
           const next = Math.max(0, Math.min(allDays.length - 1, viewIdx + delta));
-          setDayIdx(next === todayIdx ? null : next);
+          pickDay(next === todayIdx ? null : next);
         }}
-        onToday={onToday ? undefined : () => setDayIdx(null)}
+        onToday={onToday ? undefined : () => pickDay(null)}
       />
 
       {sessions.length > 0 ? (
@@ -893,5 +914,23 @@ export default function HomeScreen() {
 
       {uploadOpen && <UploadVideoSheet onClose={() => setUploadOpen(false)} />}
     </div>
+  );
+}
+
+/*
+  The day to open comes out of the URL, which a page has to be allowed to wait
+  for — same shape as the Log tab (LogScreen) and the All-boats page.
+*/
+export default function HomeScreen() {
+  return (
+    <Suspense
+      fallback={
+        <div className="px-3 pt-4">
+          <SkeletonLines count={2} />
+        </div>
+      }
+    >
+      <HomeScreenInner />
+    </Suspense>
   );
 }

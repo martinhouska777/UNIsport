@@ -214,6 +214,8 @@ export function notifySquad(input: {
   /** required for "note" — which athlete it was written to */
   athleteId?: string;
   preview?: string;
+  /** for "team_lineup" — the practice's slot key, so the tap opens Home on that day */
+  dayKey?: string;
 }): void {
   if (typeof window === "undefined") return;
   void fetch("/api/push/notify", {

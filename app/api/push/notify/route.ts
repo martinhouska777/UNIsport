@@ -19,6 +19,7 @@
 */
 import { createClient } from "@/lib/supabase/server";
 import { sendToSubscriptions, hasVapidConfig, type StoredSubscription } from "@/lib/push/server";
+import { parseSessionKey, toISO } from "@/lib/varsity/coachPlan";
 
 export const runtime = "nodejs";
 
@@ -38,6 +39,7 @@ export async function POST(request: Request) {
     targetId?: string;
     kind?: string;
     preview?: string;
+    dayKey?: string; // varsity kinds: the practice this is about (coachPlan → sessionKey)
   };
   try {
     body = await request.json();
@@ -52,6 +54,15 @@ export async function POST(request: Request) {
       ? raw
       : "message";
   const preview = (body.preview ?? "").trim();
+  /*
+    WHERE THE TAP LANDS for a lineup: Home, open on the practice's DAY, so a
+    Thursday-afternoon buzz does not drop the rower on today's page with the
+    boats a scroll and two arrow taps away. Only a date ever reaches the URL —
+    the key is parsed here and rebuilt, and a key that isn't one falls back to
+    plain Home.
+  */
+  const practiceDay = body.dayKey ? parseSessionKey(body.dayKey) : null;
+  const homeUrl = practiceDay ? `/varsity/home?d=${toISO(practiceDay.date)}` : "/varsity/home";
 
   const supabase = await createClient();
   const {
@@ -147,7 +158,7 @@ export async function POST(request: Request) {
       // so which seat belongs to which ACCOUNT isn't known yet. Says what is
       // true and sends them to the boats.
       body: preview ? `Lineups are up — ${clip(preview)}` : "Lineups are up",
-      url: "/varsity/home",
+      url: homeUrl,
     },
     note: {
       title: `${who} left you a note`,
