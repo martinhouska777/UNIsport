@@ -267,6 +267,19 @@ export function workoutsFor(cfg: TrainingConfig, typeKey?: string, zoneKey?: str
   return cfg.library[libraryKey(typeKey, t?.hasZones ? zoneKey : undefined)] ?? [];
 }
 
+/*
+  THE TWO RULES A TYPE CARRIES, read from the squad's own settings and nowhere
+  else. These used to be answered by the rowing default ("water needs a
+  lineup", "erg can have a board") no matter what the coach had set — so the
+  toggles in Settings were decoration, and a swimming squad's Lineup tab
+  dimmed every slot and warned about "water" on each. Every screen that asks
+  either question asks it here. An unknown type answers no to both.
+*/
+export const configNeedsLineup = (cfg: TrainingConfig, typeKey: string | undefined): boolean =>
+  !!typeKey && findType(cfg, typeKey).needsLineup;
+export const configCanBoard = (cfg: TrainingConfig, typeKey: string | undefined): boolean =>
+  !!typeKey && findType(cfg, typeKey).canBoard;
+
 /* The colour + label a planned session shows: the zone wins when there is one,
    because that is the thing a coach reads off the page first. */
 export function configSessionColor(cfg: TrainingConfig, typeKey: string, zoneKey?: string): string {

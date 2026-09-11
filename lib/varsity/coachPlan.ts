@@ -10,7 +10,11 @@
   description (or taps one of the 5 most-used suggestions to fill it) and can add
   a note. There is no duration and no location; the time is a preset per period.
 
-  Only WATER sessions need a boat lineup — the Lineup Builder reads `isOnWater`.
+  Which types need a boat lineup, and which may carry a squad board, are the
+  coach's SETTINGS (needsLineup / canBoard in lib/varsity/trainingConfig.ts),
+  read through configNeedsLineup() / configCanBoard(). Nothing here answers
+  either question any more — the rowing answers (water / erg) live in the
+  rowing preset, where a coach can change them.
 
   Workout colors are CONTENT colors (rule-1 exception): mapped to theme tokens
   where one exists (UT2→success, Hard→danger, Flex→muted), otherwise a hex value,
@@ -141,19 +145,6 @@ export const boardOptions: { key: BoardKind; label: string; sub: string }[] = [
 export const defaultBoard = (intensity?: string): BoardKind =>
   intensity === "hard" ? "ranked" : "average";
 
-/*
-  Which sessions can have a board at all: ERG only.
-
-  Water was the obvious second candidate and is deliberately left out. A boat's
-  numbers belong to the boat, not the rower — eight people share one split, the
-  stream and the wind move it more than the crew does, and no two outings are
-  comparable. Ranking rowers on it would be measuring the river. An erg piece is
-  the same machine, the same distance, indoors, for everybody.
-
-  The rule lives here, in data, so the coach's editor and the team board can
-  never disagree about it (rule 7).
-*/
-export const canBeTeamWorkout = (category?: string): boolean => category === "erg";
 
 /* ── A session and how sessions are stored ──────────────────────────────────
    `category` and `intensity` are plain STRINGS, not the unions above, because a
@@ -198,8 +189,6 @@ export function dayKeyLabel(key: string): string {
   const d = parsed.date;
   return `${WD[d.getDay()]} ${d.getDate()} ${MO[d.getMonth()]}`;
 }
-
-export const isOnWater = (s: Session | undefined) => s?.category === "water";
 
 /*
   The colour + label to show for a session (the intensity wins when there is

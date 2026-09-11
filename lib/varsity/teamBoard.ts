@@ -42,11 +42,11 @@ import { deriveSplitSec, deriveWatts, wattsPerKg, secToSplit, secToClock } from 
 import {
   parseSessionKey,
   dayKeyLabel,
-  canBeTeamWorkout,
   type Session,
   type SessionMap,
   type BoardKind,
 } from "./coachPlan";
+import { configCanBoard, type TrainingConfig } from "./trainingConfig";
 import type { TeamResult } from "./resultsStore";
 
 /* ── Which sessions have a board ─────────────────────────────────────────── */
@@ -63,14 +63,20 @@ export type TeamWorkout = {
 /*
   Every team workout in the plan, newest first. Two things are left out:
   sessions in the FUTURE (a board nobody could have rowed yet is just an empty
-  screen), and anything canBeTeamWorkout() says can't carry one — so a flag left
-  behind on a non-erg session by an older build can never raise a board.
+  screen), and anything whose type the squad's own settings say cannot carry a
+  board — so a flag left behind on such a session by an older build, or by a
+  type the coach later switched off, can never raise one. The rule is the
+  coach's (`canBoard` in Training settings), not a fixed "erg only".
 */
-export function teamWorkouts(sessions: SessionMap, today = new Date()): TeamWorkout[] {
+export function teamWorkouts(
+  sessions: SessionMap,
+  cfg: TrainingConfig,
+  today = new Date(),
+): TeamWorkout[] {
   const endOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
   const out: TeamWorkout[] = [];
   for (const [dayKey, session] of Object.entries(sessions)) {
-    if (!session.teamWorkout || !canBeTeamWorkout(session.category)) continue;
+    if (!session.teamWorkout || !configCanBoard(cfg, session.category)) continue;
     const parsed = parseSessionKey(dayKey);
     if (!parsed || parsed.date > endOfToday) continue;
     out.push({

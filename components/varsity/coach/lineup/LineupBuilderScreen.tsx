@@ -99,14 +99,20 @@ import {
 } from "@/lib/varsity/coachLineup";
 import {
   dayKeyLabel,
-  isOnWater,
   parseSessionKey,
-  sessionColor,
   sessionKey,
-  sessionLabel,
   toISO,
   type Period,
 } from "@/lib/varsity/coachPlan";
+import {
+  configNeedsLineup,
+  configSessionColor,
+  configSessionLabel,
+  defaultConfig,
+  type TrainingConfig,
+} from "@/lib/varsity/trainingConfig";
+import { fetchTrainingConfig } from "@/lib/varsity/configStore";
+import { useMembership } from "@/components/varsity/useMembership";
 import { fetchOutOn, markBackIn, markOut } from "@/lib/varsity/availabilityStore";
 import Sheet from "@/components/varsity/Sheet";
 import { fetchPlan, type Plan } from "@/lib/varsity/planStore";
@@ -140,9 +146,12 @@ const slotKey = (s: Slot) => (s.kind === "cox" ? `${s.boatId}:cox` : `${s.boatId
   What the training plan prescribes for one AM or PM slot, reduced to the few
   things worth showing on a picker button. Null when the plan has nothing there.
 
-  `water` is the one that decides whether the slot can be tapped at all: a
-  lineup seats a BOAT, so an erg, a lift, a flex session or a day off has no
-  lineup to build. The owner's rule, and the reason `isOnWater` exists.
+  `water` is whether this session's TYPE needs a lineup — the coach's own rule
+  from Training settings (needsLineup), read through configNeedsLineup(). For
+  a rowing squad that is the water sessions, hence the name; a swimming coach
+  who says their Pool sessions need one gets exactly the same treatment. It
+  decides how loud the slot is drawn and where the ‹ › arrows stop; it never
+  locks a slot.
 */
 type PlanCell = { label: string; description: string; color: string; water: boolean } | null;
 
@@ -1889,6 +1898,27 @@ function Builder({
 
 /* ─────────────────────────  screen  ───────────────────────── */
 export default function LineupBuilderScreen() {
+  const { membership } = useMembership();
+  /*
+    THE SQUAD'S OWN WORDS AND RULES — which types need a lineup, and what each
+    session is called and coloured. The same config the Plan tab edits by, so
+    a "Pool" session a swimming coach marked as needing a lineup lights up
+    here exactly as a rowing coach's "Water" does. Until it loads (and for a
+    squad that never opened Settings) it is the rowing default.
+  */
+  const [cfg, setCfg] = useState<TrainingConfig>(defaultConfig);
+  useEffect(() => {
+    const teamId = membership?.teamId;
+    if (!teamId) return;
+    let active = true;
+    fetchTrainingConfig(teamId).then((c) => {
+      if (active) setCfg(c);
+    });
+    return () => {
+      active = false;
+    };
+  }, [membership?.teamId]);
+
   const [statuses, setStatuses] = useState<Record<string, LineupStatus>>({});
   const [plan, setPlan] = useState<Plan | null>(null);
   const [practice, setPractice] = useState<{
@@ -1907,15 +1937,15 @@ export default function LineupBuilderScreen() {
       const sess = plan?.sessions[dayKey];
       if (!sess) return null;
       return {
-        label: sessionLabel(sess),
+        label: configSessionLabel(cfg, sess.category, sess.intensity),
         description: sess.description.trim(),
         // The INTENSITY's colour when the session has one, exactly as the plan
         // grid paints it — so a UT2 outing is the same green in both screens.
-        color: sessionColor(sess),
-        water: isOnWater(sess),
+        color: configSessionColor(cfg, sess.category, sess.intensity),
+        water: configNeedsLineup(cfg, sess.category),
       };
     },
-    [plan],
+    [plan, cfg],
   );
 
   useEffect(() => {
@@ -1971,15 +2001,15 @@ export default function LineupBuilderScreen() {
         },
         planContext: s
           ? {
-              title: s.description.trim() || sessionLabel(s),
-              sub: sessionLabel(s),
-              color: sessionColor(s),
-              water: isOnWater(s),
+              title: s.description.trim() || configSessionLabel(cfg, s.category, s.intensity),
+              sub: configSessionLabel(cfg, s.category, s.intensity),
+              color: configSessionColor(cfg, s.category, s.intensity),
+              water: configNeedsLineup(cfg, s.category),
             }
           : null,
       });
     },
-    [plan],
+    [plan, cfg],
   );
 
   /*
@@ -1995,13 +2025,13 @@ export default function LineupBuilderScreen() {
   const waterStops = useMemo(() => {
     if (!plan) return [] as { key: string; time: number; period: Period }[];
     return Object.entries(plan.sessions)
-      .filter(([, s]) => isOnWater(s))
+      .filter(([, s]) => configNeedsLineup(cfg, s.category))
       .flatMap(([key]) => {
         const p = parseSessionKey(key);
         return p ? [{ key, time: p.date.getTime(), period: p.period }] : [];
       })
       .sort((a, b) => a.time - b.time || (a.period === b.period ? 0 : a.period === "AM" ? -1 : 1));
-  }, [plan]);
+  }, [plan, cfg]);
 
   // The water session either side of the one open. Null at each end of the plan.
   const nav = useMemo(() => {

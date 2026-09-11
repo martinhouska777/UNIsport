@@ -26,7 +26,10 @@
 import { useEffect, useRef, useState } from "react";
 import Sheet from "@/components/varsity/Sheet";
 import { IconPlus, IconVideo, IconCheckCircle } from "@/components/icons";
-import { dayKeyLabel, isOnWater, parseSessionKey, sessionLabel } from "@/lib/varsity/coachPlan";
+import { dayKeyLabel, parseSessionKey, sessionLabel } from "@/lib/varsity/coachPlan";
+import { configNeedsLineup } from "@/lib/varsity/trainingConfig";
+import { fetchTrainingConfig } from "@/lib/varsity/configStore";
+import { useMembership } from "@/components/varsity/useMembership";
 import { fetchLineup, fetchLineupStatuses } from "@/lib/varsity/lineupStore";
 import { fetchPlan } from "@/lib/varsity/planStore";
 import { uploadCrewVideo, videoBoatName, videoSuggestedName } from "@/lib/varsity/crewVideos";
@@ -43,16 +46,23 @@ const DAYS_BACK = 7;
   Every published WATER practice in that window, newest first — the order
   somebody posting footage thinks in ("this morning", "yesterday afternoon").
 
-  WATER ONLY, on the owner's call: video here is footage of a crew rowing, and
-  an erg session or a lift has no boat to film. Drafts are left out too — a
-  lineup the squad cannot see yet is not one they can film.
+  ONLY SESSIONS WHOSE TYPE NEEDS A LINEUP, on the owner's call: video here is
+  footage of a crew, and a session with no crew has nothing to film. Which
+  types those are is the coach's setting (needsLineup in Training settings) —
+  water for a rowing squad, whatever a swimming or running coach says for
+  theirs. Drafts are left out too — a lineup the squad cannot see yet is not
+  one they can film.
 
   Each row also carries WHAT WAS DONE, in the coach's own words out of the
   plan — "Thu 3 Sep · PM" alone does not tell you which of two outings you are
   about to file a video under, and "3×25' UT2" does.
 */
-async function fetchPractices(): Promise<Practice[]> {
-  const [statuses, plan] = await Promise.all([fetchLineupStatuses(), fetchPlan()]);
+async function fetchPractices(teamId: string | null): Promise<Practice[]> {
+  const [statuses, plan, cfg] = await Promise.all([
+    fetchLineupStatuses(),
+    fetchPlan(),
+    fetchTrainingConfig(teamId),
+  ]);
 
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
@@ -66,9 +76,9 @@ async function fetchPractices(): Promise<Practice[]> {
       const day = parsed.date.getTime();
       if (day < oldest || day > todayStart.getTime()) return null;
       const session = plan.sessions[dayKey];
-      // Not on the water, not filmable. A published lineup that has lost its
-      // plan session is left out with them: nothing says it was an outing.
-      if (!isOnWater(session)) return null;
+      // No crew to film. A published lineup that has lost its plan session is
+      // left out with them: nothing says it was an outing.
+      if (!configNeedsLineup(cfg, session?.category)) return null;
       // A nudge for PM, so two practices on one day sort morning-then-afternoon.
       const at = day + (parsed.period === "PM" ? 1 : 0);
       return {
@@ -122,6 +132,8 @@ function Label({ children }: { children: React.ReactNode }) {
 }
 
 export default function UploadVideoSheet({ onClose }: { onClose: () => void }) {
+  const { membership } = useMembership();
+  const teamId = membership?.teamId ?? null;
   const fileRef = useRef<HTMLInputElement>(null);
   const [practices, setPractices] = useState<Practice[] | null>(null);
   const [dayKey, setDayKey] = useState<string | null>(null);
@@ -146,13 +158,13 @@ export default function UploadVideoSheet({ onClose }: { onClose: () => void }) {
 
   useEffect(() => {
     let active = true;
-    void fetchPractices().then((p) => {
+    void fetchPractices(teamId).then((p) => {
       if (active) setPractices(p);
     });
     return () => {
       active = false;
     };
-  }, []);
+  }, [teamId]);
 
   useEffect(() => {
     if (!dayKey) return;
