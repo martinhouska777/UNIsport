@@ -33,6 +33,12 @@ alter table public.varsity_logs add column if not exists minutes int;
 alter table public.varsity_logs add column if not exists metres  int;
 alter table public.varsity_logs add column if not exists split   text;
 
+-- How hard it felt, 1 (easy) … 5 (flat out). The one thing forty athletes know
+-- twice a day and their coach doesn't: the plan says what was prescribed, the
+-- figures say what was done, this says what it cost. Null = not answered.
+alter table public.varsity_logs add column if not exists effort smallint
+  check (effort between 1 and 5);
+
 -- At most one plan-log per athlete per plan slot (extras have null day_key, and
 -- Postgres treats nulls as distinct, so many extras per day are allowed).
 create unique index if not exists varsity_logs_athlete_daykey

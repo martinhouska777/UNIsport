@@ -29,11 +29,34 @@ export type LogEntry = {
   minutes: number | null; // total time done
   metres: number | null; // total distance done
   split: string | null; // e.g. "1:52" (mainly erg)
+  effort: number | null; // how hard it felt, 1–5 (effortOptions); null = not answered
   note: string;
 };
 
 // What you pass in to create/update a log (id + created server-side).
 export type LogDraft = Omit<LogEntry, "id">;
+
+/*
+  HOW HARD IT FELT — five taps, no typing. The plan says what was prescribed
+  and the figures say what was done; this is what it cost, which is the one
+  thing the athlete knows and the coach doesn't. Five steps because a rower
+  with wet hands will not place a finger on a ten-point scale, and because
+  "hard" and "very hard" are the words a boathouse already uses.
+
+  Data, not component code (rule 7): the editor draws whatever is here, and
+  the words are not tied to any sport.
+*/
+export const effortOptions: { value: number; label: string; hint: string }[] = [
+  { value: 1, label: "Easy", hint: "Could have talked the whole way" },
+  { value: 2, label: "Steady", hint: "Working, comfortable" },
+  { value: 3, label: "Hard", hint: "Focused, breathing hard" },
+  { value: 4, label: "Very hard", hint: "Close to the limit" },
+  { value: 5, label: "Flat out", hint: "Nothing left" },
+];
+
+/** "Hard" for 3; null when unanswered or out of range. */
+export const effortLabel = (effort: number | null | undefined): string | null =>
+  effortOptions.find((o) => o.value === effort)?.label ?? null;
 
 type Row = {
   id: string;
@@ -46,6 +69,7 @@ type Row = {
   minutes: number | null;
   metres: number | null;
   split: string | null;
+  effort?: number | null; // absent on a table that predates the column
   note: string;
 };
 
@@ -60,6 +84,7 @@ const rowToEntry = (r: Row): LogEntry => ({
   minutes: r.minutes,
   metres: r.metres,
   split: r.split,
+  effort: r.effort ?? null,
   note: r.note ?? "",
 });
 
@@ -74,6 +99,7 @@ const draftToRow = (athleteId: string, d: LogDraft) => ({
   minutes: d.minutes,
   metres: d.metres,
   split: d.split,
+  effort: d.effort ?? null,
   note: d.note,
 });
 

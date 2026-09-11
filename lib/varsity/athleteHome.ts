@@ -36,7 +36,7 @@ import type {
   Lineup,
 } from "./home";
 import type { Plan } from "./planStore";
-import type { LogEntry } from "./logStore";
+import { effortLabel, type LogEntry } from "./logStore";
 import { formatMetrics } from "./logParse";
 
 // Plan category/intensity → the Home screen's color "kind". Exported because the
@@ -140,7 +140,10 @@ function statusOf(
 ): { status: SessionStatus; log?: LoggedSummary } {
   const entry = logsByKey[dayKey];
   if (entry) {
-    const summary = formatMetrics(entry.minutes, entry.metres, entry.split);
+    // The figures, then how it felt: "75 min · 18,000 m · Hard".
+    const summary = [formatMetrics(entry.minutes, entry.metres, entry.split), effortLabel(entry.effort)]
+      .filter(Boolean)
+      .join(" · ");
     return { status: "done", log: { summary } };
   }
   return { status: iso < todayIso ? "missed" : "upcoming" };

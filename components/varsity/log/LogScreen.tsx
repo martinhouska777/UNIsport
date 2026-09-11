@@ -44,6 +44,8 @@ import {
   updateLog,
   deleteLog,
   LOG_DAYS_BACK,
+  effortOptions,
+  effortLabel,
   type LogEntry,
   type LogDraft,
 } from "@/lib/varsity/logStore";
@@ -66,6 +68,10 @@ const extraCategories = ["erg", "water", "weights", "run", "bike", "other"] as c
    say what the session was — the athlete does, and that answer is what the
    calendar counts. Which is why a logged flex day never stays category "flex". */
 const flexCategories = ["run", "bike", "other"] as const;
+/* One line for a saved log: the figures, then how it felt — "75 min · 18,000 m · Hard". */
+const summaryOf = (l: LogEntry): string =>
+  [formatMetrics(l.minutes, l.metres, l.split), effortLabel(l.effort)].filter(Boolean).join(" · ");
+
 function Dot({ color }: { color: string }) {
   return <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ background: color }} />;
 }
@@ -124,6 +130,8 @@ function LogEditor({
   const [metres, setMetres] = useState<string>(numStr(existing?.metres ?? est?.metres));
   const [split, setSplit] = useState<string>(existing?.split ?? "");
   const [note, setNote] = useState(existing?.note ?? "");
+  // How hard it felt, 1–5; null until tapped, and a second tap clears it.
+  const [effort, setEffort] = useState<number | null>(existing?.effort ?? null);
   const [busy, setBusy] = useState(false);
   // A save that didn't land. Shown in red above the Save bar with the form
   // still full — it used to go to the console only, and the sheet just sat
@@ -280,6 +288,7 @@ function LogEditor({
       minutes: minutes.trim() ? Number(minutes) : null,
       metres: metres.trim() ? Number(metres) : null,
       split: split.trim() || null,
+      effort,
       note: note.trim(),
     };
     const res =
@@ -476,6 +485,38 @@ function LogEditor({
             />
           </div>
 
+          {/* Five taps, no typing. The words come from data (logStore →
+              effortOptions); tapping the chosen one again clears it. */}
+          <div className={labelCls}>How did it feel?</div>
+          <div className="grid grid-cols-5 gap-1.5" role="radiogroup" aria-label="How hard it felt">
+            {effortOptions.map((o) => {
+              const on = effort === o.value;
+              return (
+                <button
+                  key={o.value}
+                  type="button"
+                  role="radio"
+                  aria-checked={on}
+                  title={o.hint}
+                  onClick={() => setEffort(on ? null : o.value)}
+                  className={`flex flex-col items-center rounded-xl border py-2 ${
+                    on ? "border-primary bg-primary-tint" : "border-border bg-surface"
+                  }`}
+                >
+                  <span className={`text-[15px] font-semibold leading-none ${on ? "text-primary" : "text-text"}`}>
+                    {o.value}
+                  </span>
+                  <span className="mt-1 text-[10px] leading-none text-muted">{o.label}</span>
+                </button>
+              );
+            })}
+          </div>
+          {effort != null && (
+            <p className="mt-1.5 text-[11px] text-muted">
+              {effortOptions.find((o) => o.value === effort)?.hint}
+            </p>
+          )}
+
           <div className={labelCls}>Note (optional)</div>
           <input
             value={note}
@@ -556,10 +597,8 @@ function PrescribedRow({
           </span>
         </div>
         {detail && <div className="mt-0.5 truncate text-[11px] text-muted">{detail}</div>}
-        {log && formatMetrics(log.minutes, log.metres, log.split) && (
-          <div className="mt-1 text-[12px] font-medium text-text-2">
-            {formatMetrics(log.minutes, log.metres, log.split)}
-          </div>
+        {log && summaryOf(log) && (
+          <div className="mt-1 text-[12px] font-medium text-text-2">{summaryOf(log)}</div>
         )}
       </div>
       {log ? (
@@ -588,11 +627,7 @@ function ExtraRow({ log, onEdit }: { log: LogEntry; onEdit: () => void }) {
       </span>
       <div className="min-w-0 flex-1">
         <span className="text-[14px] font-semibold text-text">{log.title}</span>
-        {formatMetrics(log.minutes, log.metres, log.split) && (
-          <div className="mt-0.5 text-[12px] text-text-2">
-            {formatMetrics(log.minutes, log.metres, log.split)}
-          </div>
-        )}
+        {summaryOf(log) && <div className="mt-0.5 text-[12px] text-text-2">{summaryOf(log)}</div>}
         {log.note && <div className="mt-0.5 truncate text-[11px] text-muted">{log.note}</div>}
       </div>
       <span className="flex-shrink-0 rounded-md border border-border px-2 py-0.5 text-[11px] font-medium text-muted">
