@@ -2,7 +2,7 @@ import Link from "next/link";
 import StickyBar from "@/components/landing/StickyBar";
 import Wordmark from "@/components/landing/Wordmark";
 import TabRow from "@/components/landing/TabRow";
-import { nav, views, type LandingView } from "@/lib/landingCopy";
+import { hero, nav, views, type LandingView } from "@/lib/landingCopy";
 
 /*
   The top bar: the wordmark, the TABS (Students · Varsity · Coaches · About ·
@@ -71,7 +71,7 @@ export default function LandingNav({ view = "all", heroMark = false }: { view?: 
               {nav.login}
             </Link>
             <Link
-              href="/login"
+              href={hero.primaryHref}
               className="rounded-full bg-l-text px-[18px] py-2.5 text-sm font-medium tracking-tight text-l-bg transition-colors hover:bg-l-accent"
             >
               {nav.cta}

@@ -83,6 +83,18 @@ export default function LoginPage() {
     else router.replace("/onboarding");
   }, [ready, loggedIn, studentReady, varsityReady, router]);
 
+  /*
+    "Get started with .edu" is a promise to a NEW student, so every button that
+    says it arrives as /login?mode=signup and the page opens on Sign up. Until
+    2026-09-10 it opened on Log in for everyone — "Welcome back — log in to your
+    account." to a person who has never been here (website review). The bar's
+    "Log in" link still comes in plain and gets the log-in form. Read off the
+    URL like `next` above, so the page stays out of a Suspense boundary.
+  */
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("mode") === "signup") setMode("signup");
+  }, []);
+
   // Prefill the email from the last sign-in on this device (password never is).
   useEffect(() => {
     const saved = readRememberedEmail();
@@ -238,9 +250,18 @@ export default function LoginPage() {
           UNI<span className="text-l-accent">sport</span>
         </Link>
 
-        <h1 className="font-display text-3xl text-l-text">Welcome</h1>
+        {/* The heading says which door this is. Sign up leads with the one
+            thing a new student has to know — why it must be the university
+            address; log in is just the way back in. The small hint line that
+            used to sit above the form said the same thing a second time and
+            is gone. */}
+        <h1 className="font-display text-3xl text-l-text">
+          {isSignup ? "Create your account" : "Welcome back"}
+        </h1>
         <p className="mt-2 text-sm text-l-text-2">
-          Find gyms, partners, and sessions at your university.
+          {isSignup
+            ? "Use your university email — that’s how we know which campus is yours."
+            : "Log in to your account."}
         </p>
 
         {!hasSupabaseEnv() ? (
@@ -280,9 +301,6 @@ export default function LoginPage() {
               </button>
             </div>
 
-            <p className="mb-3 text-xs text-l-text-2">
-              {isSignup ? "New here? Create your account." : "Welcome back — log in to your account."}
-            </p>
 
             <form onSubmit={submit} className="flex flex-col gap-2.5">
               <input

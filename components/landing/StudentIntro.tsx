@@ -208,7 +208,7 @@ export default function StudentIntro({ solo = false }: { solo?: boolean }) {
       {solo && (
         <div className="l-tc mt-2 flex flex-col items-center gap-3" style={at(610)}>
           <Link
-            href="/login"
+            href={hero.primaryHref}
             className="inline-flex items-center gap-2 rounded-full bg-(--sc) py-4 pr-7 pl-5 text-[15px] font-semibold tracking-tight text-(--sc-ink) transition-[transform,background-color,color] duration-700 ease-in-out hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-l-text motion-reduce:transition-none"
           >
             <SchoolCrest crest={crestFor(school.key)} className="l-cta-mark" />

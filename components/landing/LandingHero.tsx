@@ -125,7 +125,7 @@ export default function LandingHero() {
         {/* 3 · The way in. */}
         <div className="l-in-3 mt-[clamp(12px,2.4vh,24px)] flex flex-col items-center">
           <Link
-            href="/login"
+            href={hero.primaryHref}
             className="group inline-flex items-center justify-center gap-2 rounded-full bg-(--sc) py-4 pr-7 pl-5 text-[15px] font-semibold tracking-tight text-(--sc-ink) transition-[transform,background-color,color] duration-700 ease-in-out hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-l-text motion-reduce:transition-none"
           >
             {/* The school showing, as its crest. The intro wears eight

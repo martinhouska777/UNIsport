@@ -80,6 +80,12 @@ export const hero = {
      was really for. */
   body: "Find every gym on campus. Match with students verified by their .edu email. Plan the session in the chat. Log it together.",
   primaryCta: "Get started with .edu",
+  /* Where "Get started" goes. The sign-in page opens on LOG IN by default,
+     which greeted every new student with "Welcome back" (website review,
+     2026-09-10). "Get started" is a new-account promise, so every button that
+     carries those words opens the page in its sign-up state; the bar's
+     "Log in" link keeps the plain address. One value, used everywhere. */
+  primaryHref: "/login?mode=signup",
   inviteNote: "Got a link from your team?",
   inviteCta: "Join with your invite",
   /* The way to the story behind the app, on the FIRST screen (owner,
@@ -750,7 +756,7 @@ export type FeatureCta = { label: string; href: string };
 
 export const studentFeatures: { kicker: string; rows: FeatureRow[]; cta: FeatureCta } = {
   kicker: "The app",
-  cta: { label: hero.primaryCta, href: "/login" },
+  cta: { label: hero.primaryCta, href: hero.primaryHref },
   rows: [
     {
       /* /gyms — hours, ratings, equipment lists, favourites, the crowd meter (lib/gymSocial.ts) */
