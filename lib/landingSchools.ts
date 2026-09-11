@@ -286,6 +286,30 @@ export function accent(hex: string): { color: string; ink: "l-bg" | "l-text" } {
   return { color: lift(hex, 0.46), ink: "l-text" };
 }
 
+/*
+  THE SCHOOL'S COLOUR AS TEXT ON THE PAGE — the closers' "your colours.",
+  "Bring it to yours next.", "HARVARD", "HARVARD ROWING".
+
+  `ink` was described as the legible version of the school's colour, but for
+  most schools it is the colour itself, and on the near-black ground Harvard's
+  crimson measures 2.65:1, Yale's navy 1.6:1, Penn's 1.3:1 — under the 4.5:1
+  that text needs (website review, 2026-09-10). Blade Lock brightened its two
+  lines with a CSS filter, which got Harvard to 4:1 and the navies nowhere.
+
+  So: the same lift() the intro's button uses, but only as far as this colour
+  needs — start at its own lightness and step up until it clears the ratio.
+  Princeton's orange passes untouched; the crimsons turn a shade brighter; the
+  navies come up to a readable blue, as they already do on the hero button.
+  The colour still says which school; it just clears the line.
+*/
+export function onGround(hex: string, min = 4.5): string {
+  for (let floor = 0.3; floor <= 0.9; floor += 0.02) {
+    const color = lift(hex, floor); // unchanged while the colour is already lighter than `floor`
+    if (contrast(luminance(color), INK["l-bg"]) >= min) return color;
+  }
+  return lift(hex, 0.9);
+}
+
 export function rgba(hex: string, a: number): string {
   const n = parseInt(hex.slice(1), 16);
   return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;

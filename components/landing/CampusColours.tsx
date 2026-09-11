@@ -17,7 +17,7 @@ import CloserSplit from "@/components/landing/CloserSplit";
 import { useCloserGate } from "@/components/landing/useCloserGate";
 import type { CloserHandle } from "@/components/landing/closer";
 import { closers } from "@/lib/landingCopy";
-import { schools, rgba, SCHOOL_CYCLE_MS } from "@/lib/landingSchools";
+import { onGround, schools, rgba, SCHOOL_CYCLE_MS } from "@/lib/landingSchools";
 
 /*
   CAMPUS COLOURS — the closer of the student story.
@@ -219,6 +219,10 @@ export default function CampusColours({
   }));
 
   const s = schools[idx];
+  // The school's colour as TEXT on the page — lifted only as far as 4.5:1
+  // needs (lib/landingSchools.ts onGround). The letter keeps the raw colour:
+  // it is the school's mark, not a line to be read.
+  const inkText = onGround(s.ink);
   const animate = prev != null && !reduced;
   const copy = closers.campus;
   const letterCls =
@@ -256,7 +260,7 @@ export default function CampusColours({
             {copy.headline}{" "}
             <em
               className="italic transition-colors duration-[600ms] ease-in-out motion-reduce:transition-none"
-              style={{ color: s.ink }}
+              style={{ color: inkText }}
             >
               {copy.headlineEm}
             </em>
@@ -277,7 +281,7 @@ export default function CampusColours({
             <Link
               href={copy.ctaHref}
               className="tap44 font-medium underline underline-offset-4 transition-colors duration-[600ms] ease-in-out focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-l-text motion-reduce:transition-none"
-              style={{ color: s.ink }}
+              style={{ color: inkText }}
             >
               {copy.cta}
             </Link>
@@ -381,7 +385,7 @@ export default function CampusColours({
             </div>
             <div
               className="relative mt-3 font-mono text-[22px] uppercase tracking-[0.2em] lg:mt-[26px] lg:text-[26px] transition-colors duration-[600ms] ease-in-out motion-reduce:transition-none"
-              style={{ color: s.ink }}
+              style={{ color: inkText }}
             >
               {s.name}
             </div>

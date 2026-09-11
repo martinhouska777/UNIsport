@@ -8,7 +8,7 @@ import CloserSplit from "@/components/landing/CloserSplit";
 import { useCloserGate } from "@/components/landing/useCloserGate";
 import type { CloserHandle } from "@/components/landing/closer";
 import { closers } from "@/lib/landingCopy";
-import { BLADE_PATH, OAR_ART, schools, rgba } from "@/lib/landingSchools";
+import { BLADE_PATH, OAR_ART, onGround, schools, rgba } from "@/lib/landingSchools";
 
 /*
   BLADE LOCK — the closer of the varsity story.
@@ -462,6 +462,12 @@ export default function BladeLock({
   }));
 
   const s = schools[active];
+  // The school's colour as TEXT on the page, lifted only as far as 4.5:1
+  // needs (lib/landingSchools.ts onGround). This replaces the brightness
+  // filters the two lines below wore: those got Harvard to 4:1 and left the
+  // navies (Yale 2.1:1, Penn 1.5:1) unreadable. The oars and the tab bar
+  // keep the raw colour — they are the crew's mark, not lines to be read.
+  const inkText = onGround(s.ink);
   const copy = closers.blades;
   const ct = "transition-colors duration-[600ms] ease-in-out motion-reduce:transition-none";
 
@@ -490,8 +496,8 @@ export default function BladeLock({
           <h2 className="mt-1 mb-1.5 font-display text-[clamp(32px,4.2vw,52px)] font-normal leading-[1.05] tracking-tight text-balance text-l-text">
             {copy.headline}{" "}
             <em
-              className={`italic brightness-[1.3] ${ct} transition-[color,text-shadow]`}
-              style={{ color: s.ink, textShadow: `0 0 18px ${rgba(s.ink, 0.6)}` }}
+              className={`italic ${ct} transition-[color,text-shadow]`}
+              style={{ color: inkText, textShadow: `0 0 18px ${rgba(inkText, 0.6)}` }}
             >
               {copy.headlineEm}
             </em>
@@ -558,8 +564,8 @@ export default function BladeLock({
         {/* ── The crew's name ── */}
         <div
           ref={labelEl}
-          className={`lc-label pt-3 font-mono text-[17px] font-bold tracking-[5px] uppercase brightness-[1.35] saturate-[1.1] ${labelPre ? "lc-pre" : ""}`}
-          style={{ color: s.ink, textShadow: `0 0 14px ${rgba(s.ink, 0.9)}, 0 0 34px ${rgba(s.ink, 0.55)}` }}
+          className={`lc-label pt-3 font-mono text-[17px] font-bold tracking-[5px] uppercase ${labelPre ? "lc-pre" : ""}`}
+          style={{ color: inkText, textShadow: `0 0 14px ${rgba(inkText, 0.9)}, 0 0 34px ${rgba(inkText, 0.55)}` }}
         >
           {s.name} {copy.label}
         </div>
