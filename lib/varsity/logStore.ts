@@ -119,6 +119,44 @@ function saveLocal(athleteId: string, all: LogEntry[]) {
   }
 }
 
+/*
+  ── An unsaved draft, kept on the phone after a FAILED save ──
+  A boathouse has bad signal. When Save fails the editor shows the red line
+  and keeps the form full; but backing out used to throw the numbers away.
+  Now the failed draft is parked here, keyed by the slot it was for, and the
+  editor for that slot picks it back up — until a save lands (or the athlete
+  discards it), which clears it. Only ever this phone; nothing leaves it.
+
+  Slot keys: a plan session is its dayKey; an existing extra log is
+  "extra:<id>"; a brand-new extra session is "extra:new:<date>".
+*/
+const pendingKeyFor = (athleteId: string, slot: string) => `varsityLogDraft:${athleteId}:${slot}`;
+export function loadPendingDraft(athleteId: string, slot: string): LogDraft | null {
+  if (typeof window === "undefined" || !athleteId) return null;
+  try {
+    const raw = window.localStorage.getItem(pendingKeyFor(athleteId, slot));
+    return raw ? (JSON.parse(raw) as LogDraft) : null;
+  } catch {
+    return null;
+  }
+}
+export function keepPendingDraft(athleteId: string, slot: string, draft: LogDraft) {
+  if (typeof window === "undefined" || !athleteId) return;
+  try {
+    window.localStorage.setItem(pendingKeyFor(athleteId, slot), JSON.stringify(draft));
+  } catch {
+    // Storage full or blocked: the form is still on screen, nothing else to do.
+  }
+}
+export function clearPendingDraft(athleteId: string, slot: string) {
+  if (typeof window === "undefined" || !athleteId) return;
+  try {
+    window.localStorage.removeItem(pendingKeyFor(athleteId, slot));
+  } catch {
+    // Same as above.
+  }
+}
+
 /* ── Read one day's logs ── */
 export async function fetchLogsForDate(athleteId: string, dateIso: string): Promise<LogEntry[]> {
   if (!athleteId) return [];

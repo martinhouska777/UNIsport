@@ -43,6 +43,9 @@ import {
   saveExtraLog,
   updateLog,
   deleteLog,
+  loadPendingDraft,
+  keepPendingDraft,
+  clearPendingDraft,
   LOG_DAYS_BACK,
   effortOptions,
   effortLabel,
@@ -114,30 +117,71 @@ function LogEditor({
   const existing = state.existing;
   // For a planned session with no log yet, pre-fill minutes/metres from the plan.
   const est = state.mode === "plan" && !existing ? estimateForSession(state.session) : null;
-  const [title, setTitle] = useState(
-    existing?.title ?? (state.mode === "plan" ? sessionLabel(state.session) : ""),
-  );
-  const [category, setCategory] = useState<string>(
-    existing?.category ??
+  const numStr = (n: number | null | undefined) => (n != null ? String(n) : "");
+  // What the form would open with from the plan / the saved log alone.
+  const defaults = {
+    title: existing?.title ?? (state.mode === "plan" ? sessionLabel(state.session) : ""),
+    category:
+      existing?.category ??
       (state.mode === "plan"
         ? state.session.category === "flex"
           ? flexCategories[0]
           : state.session.category
         : "erg"),
-  );
-  const numStr = (n: number | null | undefined) => (n != null ? String(n) : "");
-  const [minutes, setMinutes] = useState<string>(numStr(existing?.minutes ?? est?.minutes));
-  const [metres, setMetres] = useState<string>(numStr(existing?.metres ?? est?.metres));
-  const [split, setSplit] = useState<string>(existing?.split ?? "");
-  const [note, setNote] = useState(existing?.note ?? "");
+    minutes: numStr(existing?.minutes ?? est?.minutes),
+    metres: numStr(existing?.metres ?? est?.metres),
+    split: existing?.split ?? "",
+    note: existing?.note ?? "",
+    effort: existing?.effort ?? null,
+  };
+  // The same shape, filled from a draft that failed to save last time.
+  const fieldsOf = (d: LogDraft) => ({
+    title: d.title,
+    category: d.category ?? defaults.category,
+    minutes: numStr(d.minutes),
+    metres: numStr(d.metres),
+    split: d.split ?? "",
+    note: d.note,
+    effort: d.effort,
+  });
+  /*
+    WHICH SLOT THIS EDITOR IS FOR, so a failed save can be parked on the phone
+    and picked back up by the next editor for the same session (logStore →
+    keepPendingDraft). A draft is restored ONCE, when the editor opens, and the
+    form starts from it instead of the plan.
+  */
+  const slot =
+    state.mode === "plan" ? state.dayKey : existing ? `extra:${existing.id}` : `extra:new:${logDate}`;
+  const [restored, setRestored] = useState<LogDraft | null>(() => loadPendingDraft(athleteId, slot));
+  const start = restored ? fieldsOf(restored) : defaults;
+  const [title, setTitle] = useState(start.title);
+  const [category, setCategory] = useState<string>(start.category);
+  const [minutes, setMinutes] = useState<string>(start.minutes);
+  const [metres, setMetres] = useState<string>(start.metres);
+  const [split, setSplit] = useState<string>(start.split);
+  const [note, setNote] = useState(start.note);
   // How hard it felt, 1–5; null until tapped, and a second tap clears it.
-  const [effort, setEffort] = useState<number | null>(existing?.effort ?? null);
+  const [effort, setEffort] = useState<number | null>(start.effort);
   const [busy, setBusy] = useState(false);
   // A save that didn't land. Shown in red above the Save bar with the form
   // still full — it used to go to the console only, and the sheet just sat
   // there looking saved.
   const [saveError, setSaveError] = useState<string | null>(null);
-  const fromPlan = !!est && (est.minutes != null || est.metres != null);
+  const fromPlan = !!est && (est.minutes != null || est.metres != null) && !restored;
+
+  // "That's not what I meant to keep": drop the parked draft and start over
+  // from the plan / the saved log, the way the editor would have opened.
+  const discardRestored = () => {
+    clearPendingDraft(athleteId, slot);
+    setRestored(null);
+    setTitle(defaults.title);
+    setCategory(defaults.category);
+    setMinutes(defaults.minutes);
+    setMetres(defaults.metres);
+    setSplit(defaults.split);
+    setNote(defaults.note);
+    setEffort(defaults.effort);
+  };
 
   // C2/RP3 photo scan (erg only) → fills the fields via Claude vision.
   const fileRef = useRef<HTMLInputElement>(null);
@@ -275,22 +319,32 @@ function LogEditor({
 
   const valid = state.mode === "plan" || title.trim().length > 0;
 
+  // The form as a record, exactly what Save sends and what a failed save parks.
+  const currentDraft = (): LogDraft => ({
+    logDate,
+    period: state.mode === "plan" ? state.period : null,
+    dayKey: state.mode === "plan" ? state.dayKey : null,
+    source: state.mode,
+    title: title.trim() || (state.mode === "plan" ? sessionLabel(state.session) : "Extra session"),
+    category,
+    minutes: minutes.trim() ? Number(minutes) : null,
+    metres: metres.trim() ? Number(metres) : null,
+    split: split.trim() || null,
+    effort,
+    note: note.trim(),
+  });
+
+  // Back. After a failed save the draft is already parked; but anything typed
+  // since the red line appeared should be parked too, so Back keeps the latest.
+  const close = () => {
+    if (saveError) keepPendingDraft(athleteId, slot, currentDraft());
+    onClose();
+  };
+
   const save = async () => {
     setBusy(true);
     setSaveError(null);
-    const draft: LogDraft = {
-      logDate,
-      period: state.mode === "plan" ? state.period : null,
-      dayKey: state.mode === "plan" ? state.dayKey : null,
-      source: state.mode,
-      title: title.trim() || (state.mode === "plan" ? sessionLabel(state.session) : "Extra session"),
-      category,
-      minutes: minutes.trim() ? Number(minutes) : null,
-      metres: metres.trim() ? Number(metres) : null,
-      split: split.trim() || null,
-      effort,
-      note: note.trim(),
-    };
+    const draft = currentDraft();
     const res =
       state.mode === "plan"
         ? await savePlanLog(athleteId, draft)
@@ -300,9 +354,15 @@ function LogEditor({
     if (res.error) {
       setBusy(false);
       console.error("save log:", res.error);
-      setSaveError("Couldn't save — check your signal and try again. Your numbers are still here.");
+      // Parked on the phone: backing out now loses nothing, and the next
+      // editor for this session opens with these numbers in it.
+      keepPendingDraft(athleteId, slot, draft);
+      setSaveError(
+        "Couldn't save — check your signal and try again. Your numbers are kept on this phone until they save.",
+      );
       return;
     }
+    clearPendingDraft(athleteId, slot);
 
     // Team workout → also put this on the squad board. The split is stored in
     // seconds so the board can rank without re-parsing text, and the time is
@@ -345,6 +405,8 @@ function LogEditor({
     if (!existing) return;
     setBusy(true);
     await deleteLog(athleteId, existing.id);
+    // A deleted session has no draft worth keeping.
+    clearPendingDraft(athleteId, slot);
     // Deleting the log takes the result off the board with it — otherwise a
     // time stays up for a session its owner says they never did.
     if (state.mode === "plan" && state.session.teamWorkout) {
@@ -357,7 +419,7 @@ function LogEditor({
   const overlay = (
     <div className="fixed inset-0 z-[60] flex h-dvh flex-col bg-background">
       <div className="flex flex-shrink-0 items-center gap-2 border-b border-border px-4 py-3">
-        <button type="button" onClick={onClose} className="flex items-center gap-1 text-[13px] text-muted">
+        <button type="button" onClick={close} className="flex items-center gap-1 text-[13px] text-muted">
           <IconArrowLeft size={18} /> Back
         </button>
         <div className="ml-1 text-[15px] font-semibold text-text">
@@ -367,6 +429,27 @@ function LogEditor({
 
       <div className="flex-1 overflow-y-auto px-4 pb-6 pt-4">
         <div className="mx-auto w-full max-w-screen-sm">
+          {/* The form opened from a draft that never saved. Say so, and offer
+              the way back to a clean form — otherwise a wrong draft would sit
+              in this slot for good. */}
+          {restored && (
+            <div
+              role="status"
+              className="mb-3 flex items-start gap-2 rounded-xl border border-border bg-surface-2 px-3.5 py-2.5"
+            >
+              <p className="flex-1 text-[12px] leading-snug text-text-2">
+                <span className="font-semibold text-text">Picked up where you left off.</span> These
+                numbers didn&rsquo;t save last time — check them and save again.
+              </p>
+              <button
+                type="button"
+                onClick={discardRestored}
+                className="flex-shrink-0 text-[12px] font-semibold text-primary"
+              >
+                Discard
+              </button>
+            </div>
+          )}
           {state.mode === "plan" ? (
             <>
               <div className="rounded-2xl border border-border bg-surface px-3.5 py-3">
