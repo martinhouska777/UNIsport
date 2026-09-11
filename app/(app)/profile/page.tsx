@@ -13,6 +13,7 @@ import { useMembership } from "@/components/varsity/useMembership";
 import { VARSITY_HOME } from "@/lib/varsity/theme";
 import InlineEdit from "@/components/profile/InlineEdit";
 import SessionCalendar from "@/components/profile/SessionCalendar";
+import WeekCalendar, { thisWeek } from "@/components/profile/WeekCalendar";
 import SessionSheet from "@/components/profile/SessionSheet";
 import WorkoutDetail from "@/components/profile/WorkoutDetail";
 import LogSessionSheet from "@/components/profile/LogSessionSheet";
@@ -52,6 +53,7 @@ import {
   IconCamera,
   IconPencil,
   IconChevronDown,
+  IconPlus,
 } from "@/components/icons";
 
 export default function ProfilePage() {
@@ -79,6 +81,7 @@ export default function ProfilePage() {
   // them — the exact "0 / 0 / 0" moment this slice exists to remove.
   const [statsLoaded, setStatsLoaded] = useState(false);
   const [switchingMode, setSwitchingMode] = useState(false); // mode switcher sheet
+  const [showMonth, setShowMonth] = useState(false); // the full month, under the week
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const { resetOnboarding } = useAppState();
@@ -157,8 +160,11 @@ export default function ProfilePage() {
     const y = now.getFullYear();
     const m = now.getMonth();
     const pad = (n: number) => String(n).padStart(2, "0");
-    const from = `${y}-${pad(m + 1)}-01`;
-    const to = `${y}-${pad(m + 1)}-${pad(new Date(y, m + 1, 0).getDate())}`;
+    // The month AND this week, whichever reaches further — a week straddling
+    // the 1st has days the month alone would miss.
+    const week = thisWeek(now);
+    const from = [`${y}-${pad(m + 1)}-01`, week[0].iso].sort()[0];
+    const to = [`${y}-${pad(m + 1)}-${pad(new Date(y, m + 1, 0).getDate())}`, week[6].iso].sort()[1];
     const [logs, total, partners] = await Promise.all([
       listMonth(userId, from, to),
       countWorkouts(userId),
@@ -367,6 +373,72 @@ export default function ProfilePage() {
         </div>
       </div>
 
+      {/*
+        THE HIERARCHY. Nine blocks of identical weight had Log Session competing
+        with a photo grid. The order now is the order of use: the button that
+        adds to everything, this week, where you stand — then everything else
+        folded behind "More about you". On a phone, without scrolling: who you
+        are, your week, and the button.
+      */}
+
+      {/* 1 · LOG SESSION — the job of this screen, at the top, with Share
+          beside it (real: an invite link, lib/invite.ts). */}
+      <div className="flex gap-2.5 border-b border-border px-3.5 py-3">
+        {/* data-tour: the Profile tour opens on this button (lib/tour.ts). */}
+        <Button data-tour="profile-log" size="lg" onClick={() => setLogging(true)} className="flex-[2]">
+          <IconPlus size={16} /> Log Session
+        </Button>
+        <ShareInviteButton variant="secondary" size="lg" className="flex-1" />
+      </div>
+
+      {/* "Did you train with Sam today?" — a partner tag waiting for your yes.
+          Right under the button, because it is the one thing on this page
+          someone else is waiting on; saying yes also puts the session on YOUR
+          calendar. Hidden when there is nothing to answer. */}
+      <PartnerRequests onChanged={reloadLogs} />
+
+      {/* 2 · THIS WEEK — seven days, from the logs. The full month is one tap
+          underneath, and only once there is something to show on it. */}
+      <WeekCalendar logs={logs} onPickDate={(d) => setOpenDate(d)} />
+      {statsReady && sessionsCount > 0 && (
+        <div className="border-b border-border px-3.5 py-2">
+          <button
+            type="button"
+            onClick={() => setShowMonth((v) => !v)}
+            aria-expanded={showMonth}
+            className="tap44 flex items-center gap-1 text-[12px] font-medium text-primary"
+          >
+            {showMonth ? "Hide the month" : "Show the whole month"}
+            <IconChevronDown size={14} className={`transition-transform ${showMonth ? "rotate-180" : ""}`} />
+          </button>
+        </div>
+      )}
+      {showMonth && statsReady && sessionsCount > 0 && (
+        <SessionCalendar logs={logs} onPickDate={(d) => setOpenDate(d)} />
+      )}
+
+      {/* 3 · WHERE YOU STAND — one line, straight into the full boards. */}
+      <LeaderboardStrip />
+
+      {/* Upcoming accepted sessions (chat-planned) — a date in your diary
+          belongs above the fold. Hides itself when there is none. */}
+      <UpcomingSessions />
+
+      {/* 4 · EVERYTHING ELSE, folded. A <details>, so it opens without
+          JavaScript and is announced for free. */}
+      <details className="group border-b border-border">
+        <summary className="tap44 flex cursor-pointer list-none items-center justify-between px-3.5 py-3 [&::-webkit-details-marker]:hidden">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
+            More about you
+          </span>
+          <span className="flex items-center gap-2 text-[11px] text-muted">
+            {statsReady && !brandNew && `${sessionsCount} sessions · ${partners.length} partners · ${following} following`}
+            <span className="transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none">
+              <IconChevronDown size={16} />
+            </span>
+          </span>
+        </summary>
+
       {/* Bio */}
       <div className="border-b border-border px-3.5 py-3">
         <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">Bio</div>
@@ -427,29 +499,9 @@ export default function ProfilePage() {
       </div>
       )}
 
-      {/* "Did you train with Sam today?" — a partner tag waiting for your yes.
-          First, because it is the one thing on this page someone else is
-          waiting on; saying yes also puts the session on YOUR calendar. */}
-      <PartnerRequests onChanged={reloadLogs} />
-
-      {/* Upcoming accepted sessions (chat-planned) */}
-      <UpcomingSessions />
-
-      {/* Leaderboards — one line, roughly a centimetre tall, straight into the
-          full boards. It sits ABOVE the calendar deliberately: it's the thing
-          worth glancing at every time this tab opens. */}
-      <LeaderboardStrip />
-
-      {/* Session calendar — an all-blank month says nothing, so it only appears
-          once there's at least one logged session to mark on it. */}
-      {statsReady && sessionsCount > 0 && (
-        <SessionCalendar logs={logs} onPickDate={(d) => setOpenDate(d)} />
-      )}
-
-      {/* Memories — the same history as pictures. Directly under the calendar
-          because it answers the other half of the question: the calendar says
-          what you did, this says what it looked like. Hides itself entirely
-          until there's a photo to show. */}
+      {/* Memories — the same history as pictures: the calendar says what you
+          did, this says what it looked like. Hides itself entirely until
+          there's a photo to show. */}
       <MemoriesStrip />
 
       {/*
@@ -583,24 +635,11 @@ export default function ProfilePage() {
           </button>
         )}
       </div>
+      </details>
 
-      {/* Bottom action bar (sticks above the tab nav) */}
-      <div className="sticky bottom-0 z-20 flex gap-2.5 border-t border-border bg-surface px-3.5 py-3">
-        {/* "Log Session" is the job of this screen, so it gets the weight —
-            these used to be two equal halves. Share is REAL: it opens the
-            phone's share sheet with an invite link into /join that names your
-            school and your house (lib/invite.ts). */}
-        <ShareInviteButton variant="secondary" size="lg" className="flex-1" />
-        {/* data-tour: the Profile tour opens on this button (lib/tour.ts). */}
-        <Button
-          data-tour="profile-log"
-          size="lg"
-          onClick={() => setLogging(true)}
-          className="flex-[2]"
-        >
-          Log Session
-        </Button>
-      </div>
+      {/* No sticky bottom bar any more: Log Session and Share moved to the top
+          of the page, where the screen's job is, instead of floating over the
+          photo grid. */}
 
       {switchingMode && (
         <ModeSwitcherSheet
