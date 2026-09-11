@@ -35,6 +35,15 @@
   The builder's ‹ › arrows step to the next WATER session in the plan, saving
   anything unsaved on the way out, so a week of outings is seated in one run.
 
+  A PRACTICE WITH NO LINEUP DOES NOT OPEN EMPTY. It opens on the last crew the
+  squad was given — the most recent PUBLISHED practice before it — as a draft,
+  with a line saying which day it came from and a button to start empty
+  instead. Tuesday's eight is Monday's eight minus one person; seating
+  twenty-seven names again to change one seat was the reason a coach would
+  stop opening this tab. What carries and what does not is decided in
+  lib/varsity/coachLineup.ts (carryBoats); which practice it comes from in
+  lib/varsity/lineupStore.ts (latestPublishedBefore).
+
   The POOL is filtered four ways and grouped none: All, Port, Starboard, Cox,
   with the both-sides rowers appearing under both Port and Starboard. The
   UNAVAILABLE list underneath answers the same filter, and each name there
@@ -84,6 +93,7 @@ import { notifySquad } from "@/lib/push/client";
 import SaveState from "@/components/varsity/coach/SaveState";
 import PublishBar from "@/components/varsity/coach/PublishBar";
 import {
+  fetchCarriedLineup,
   fetchLineup,
   fetchLineupStatuses,
   saveLineup,
@@ -96,6 +106,7 @@ import {
   IconChevronRight,
   IconClock,
   IconPlus,
+  IconRepeat,
   IconX,
 } from "@/components/icons";
 
@@ -817,25 +828,54 @@ function Builder({
     thing left to offer is a heads-up — and only once it differs from this.
   */
   const [announced, setAnnounced] = useState<string | null>(null);
+  /*
+    Which practice this crew was CARRIED from, when it was. Null for a practice
+    that already had a lineup of its own (even an empty one the coach cleared
+    — that was a decision, and it stands) and for a squad never given one.
+  */
+  const [carriedFrom, setCarriedFrom] = useState<string | null>(null);
 
-  // Load any existing lineup for this practice from the database.
+  // Load this practice's lineup — or, when it has none, the last one published.
   useEffect(() => {
     let active = true;
     (async () => {
       const stored = await fetchLineup(dayKey);
       if (!active) return;
-      const text = JSON.stringify(stored?.boats ?? []);
-      setSaved(text);
-      // A lineup already live when this opened: the squad has seen this much.
-      setAnnounced(stored?.status === "published" ? text : null);
-      setBoats(stored?.boats ?? []);
-      setStatus(stored?.status ?? "draft");
+      if (stored) {
+        const text = JSON.stringify(stored.boats);
+        setSaved(text);
+        // A lineup already live when this opened: the squad has seen this much.
+        setAnnounced(stored.status === "published" ? text : null);
+        setBoats(stored.boats);
+        setStatus(stored.status);
+        setLoading(false);
+        return;
+      }
+      /*
+        Nothing here yet. Start from the last crew the squad was given, as a
+        draft. `saved` stays "[]" — the database really does hold nothing — so
+        the carried crew is dirty from the first frame and the autosave writes
+        it as this practice's draft, exactly as if the coach had seated it.
+      */
+      const carried = await fetchCarriedLineup(dayKey);
+      if (!active) return;
+      setSaved("[]");
+      setAnnounced(null);
+      setBoats(carried?.boats ?? []);
+      setCarriedFrom(carried?.from ?? null);
+      setStatus("draft");
       setLoading(false);
     })();
     return () => {
       active = false;
     };
   }, [dayKey]);
+
+  /* The coach would rather build this one from scratch. */
+  const startEmpty = () => {
+    setBoats([]);
+    setCarriedFrom(null);
+  };
 
   // who's seated right now (across all boats)
   const seatedIds = useMemo(() => {
@@ -1138,6 +1178,33 @@ function Builder({
           <div className="mt-8 text-center text-[13px] text-muted">Loading lineup…</div>
         ) : (
           <>
+            {/*
+              WHERE THESE BOATS CAME FROM. Said plainly, because a coach opening
+              a blank Friday and finding Tuesday's crews already seated has to
+              be able to tell that nothing was decided for Friday yet — these
+              are a starting point, and the one button undoes the whole thing.
+              It stays until the coach leaves or starts empty: a crew you have
+              already changed three seats of still began as somebody else's.
+            */}
+            {carriedFrom && (
+              <div className="mt-4 flex items-center gap-2.5 rounded-xl border border-border bg-surface px-3 py-2.5">
+                <span className="flex-shrink-0 text-muted">
+                  <IconRepeat size={14} />
+                </span>
+                <span className="min-w-0 flex-1 text-[12px] leading-snug text-text">
+                  Started from <span className="font-semibold">{nav.label(carriedFrom)}</span>
+                  &rsquo;s boats. Change what&rsquo;s different.
+                </span>
+                <button
+                  type="button"
+                  onClick={startEmpty}
+                  className="flex-shrink-0 rounded-lg border border-border px-2.5 py-1.5 text-[12px] font-semibold text-muted active:bg-surface-2"
+                >
+                  Start empty
+                </button>
+              </div>
+            )}
+
             {/* boats */}
             <div className="mt-4 flex flex-col gap-3">
               {boats.length === 0 && (

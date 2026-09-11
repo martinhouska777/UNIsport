@@ -7,7 +7,8 @@
   Falls back to localStorage when Supabase env isn't configured.
 */
 import { createClient, hasSupabaseEnv } from "@/lib/supabase/client";
-import { rosterById, boatTypes, seatLabel, type Boat } from "./coachLineup";
+import { rosterById, boatTypes, seatLabel, carryBoats, type Boat } from "./coachLineup";
+import { parseSessionKey } from "./coachPlan";
 import { isPushOffTime, type Lineup } from "./home";
 
 export type LineupStatus = "draft" | "published";
@@ -63,6 +64,50 @@ export async function fetchLineupStatuses(): Promise<Record<string, LineupStatus
   const out: Record<string, LineupStatus> = {};
   for (const r of data as { day_key: string; status: LineupStatus }[]) out[r.day_key] = r.status;
   return out;
+}
+
+/* ── Which practice a new lineup starts from ────────────────────────────────
+   The most recent PUBLISHED practice strictly before this one. Published, not
+   draft: a draft is the coach half-way through a thought, and a chain of
+   drafts each copied from the last would compound whatever was unfinished in
+   the first. What the squad was actually given is the safe thing to start from.
+
+   Compared on the parsed date, never on the key as text — the key holds a
+   zero-based, unpadded month (see parseSessionKey), so "2026-9-1" sorts before
+   "2026-10-1" as a date and after it as a string. Same day, AM before PM. */
+export function latestPublishedBefore(
+  statuses: Record<string, LineupStatus>,
+  dayKey: string,
+): string | null {
+  const here = parseSessionKey(dayKey);
+  if (!here) return null;
+  const order = (p: { date: Date; period: "AM" | "PM" }) =>
+    p.date.getTime() * 2 + (p.period === "PM" ? 1 : 0);
+  const cutoff = order(here);
+  let best: { key: string; at: number } | null = null;
+  for (const [key, status] of Object.entries(statuses)) {
+    if (status !== "published") continue;
+    const parsed = parseSessionKey(key);
+    if (!parsed) continue;
+    const at = order(parsed);
+    if (at < cutoff && (!best || at > best.at)) best = { key, at };
+  }
+  return best?.key ?? null;
+}
+
+/*
+  The boats a practice with NO lineup opens on. Null when the squad has never
+  been given a lineup before this day — then the builder starts empty, as it
+  always did. `from` is the practice it came from, so the screen can say so.
+*/
+export async function fetchCarriedLineup(
+  dayKey: string,
+): Promise<{ from: string; boats: Boat[] } | null> {
+  const from = latestPublishedBefore(await fetchLineupStatuses(), dayKey);
+  if (!from) return null;
+  const source = await fetchLineup(from);
+  if (!source || source.boats.length === 0) return null;
+  return { from, boats: carryBoats(source.boats) };
 }
 
 /* ── Save / publish a practice's lineup ── */

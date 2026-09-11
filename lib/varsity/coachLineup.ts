@@ -255,6 +255,28 @@ export function makeSeats(type: BoatType): SeatSlot[] {
 }
 
 /*
+  CARRYING A CREW FORWARD. A squad's Tuesday eight is Monday's eight minus one
+  person, so a practice with no lineup yet starts from the last one the squad
+  was given (lineupStore → fetchCarriedLineup) rather than from nothing.
+
+  What comes across is everything that is true of the boat rather than of the
+  outing: the rigging, which shell, which oars, when it pushes off, and who
+  sits where. The crew NOTE does not — "watch the bridge crew" is about one
+  morning, and a note carried into a day it was never written for would be
+  read as if it had been. Every boat gets a new id, because this is a new
+  record for a new day, not the old one edited.
+*/
+export function carryBoats(boats: Boat[]): Boat[] {
+  const stamp = Date.now();
+  return boats.map((b, i) => ({
+    ...b,
+    id: `boat-${stamp}-${i}`,
+    note: "",
+    seats: b.seats.map((s) => ({ ...s })),
+  }));
+}
+
+/*
   WHEN THE BOAT PUSHES OFF. A plain dropdown of every five minutes from early
   morning to late evening — the classic scroll-through, which on a phone is the
   native wheel. A new boat opens on 7:15am, the squad's usual first push-off,
