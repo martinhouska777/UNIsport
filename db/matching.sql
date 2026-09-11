@@ -275,6 +275,23 @@ select
 from public.profiles p
 where p.onboarding_completed = true;
 
+/*
+  THE VIEW IS PRIVATE. Two things close it:
+
+  security_invoker — a view normally runs with its OWNER's rights, which here
+  means it walks straight past the row security on profiles. With this on, it
+  runs as whoever is reading it: a signed-in user sees only their own row, and
+  the SECURITY DEFINER functions below (which run as the owner) still see all.
+  This is the "Security Definer View" finding in the Supabase advisor.
+
+  revoke — Supabase exposes every view in public over its REST API, and new
+  objects are readable by anon/authenticated by default. Nothing in the app
+  reads this view directly (only the functions do), so nobody outside this file
+  needs SELECT on it at all.
+*/
+alter view public.match_profiles set (security_invoker = on);
+revoke all on public.match_profiles from anon, authenticated;
+
 
 -- ============================================================================
 -- 4. THE ENGINE — match_candidates(searcher_id)
