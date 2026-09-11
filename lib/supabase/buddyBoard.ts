@@ -38,6 +38,10 @@ export type BuddyFilters = {
   focus?: string | null;
   day?: string | null;
   timeOfDay?: string | null;
+  /* Narrowed HERE rather than in the RPC: the board is a few dozen rows at
+     most, and keeping buddy_board_list's signature means nothing has to be
+     re-run in the database for the Gyms tab to ask "who is going to Malkin". */
+  gym?: string | null;
 };
 
 /** Post "looking for a partner". Returns the new post id. */
@@ -67,7 +71,8 @@ export async function listBuddyBoard(filters: BuddyFilters = {}): Promise<BuddyP
     time_filter: filters.timeOfDay ?? null,
   });
   if (error) throw new Error(`listBuddyBoard failed: ${error.message}`);
-  return (data as Record<string, unknown>[]).map(toBuddyPost);
+  const posts = (data as Record<string, unknown>[]).map(toBuddyPost);
+  return filters.gym ? posts.filter((p) => p.gym === filters.gym) : posts;
 }
 
 // One row -> one post. Shared by the open board and the session search, so the

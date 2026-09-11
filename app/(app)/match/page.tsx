@@ -576,8 +576,9 @@ function MatchScreen() {
         </div>
       )}
 
-      {/* The board itself — the default view of this tab. */}
-      {tab === "sessions" && <BuddyBoard />}
+      {/* The board itself — the default view of this tab. A gym in the URL
+          (from a gym page's "See who else is going") narrows it to that gym. */}
+      {tab === "sessions" && <BuddyBoard initialGym={presetGym} />}
 
     </div>
   );

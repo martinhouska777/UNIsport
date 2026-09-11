@@ -9,6 +9,9 @@ import { useFavorites, useGymCrowd, type GymCrowd } from "@/lib/gymSocial";
 import { gymOpenState, useClock, type Clock } from "@/lib/gymHours";
 import OpenNow from "@/components/gyms/OpenNow";
 import { CrowdChip, PredictedChip } from "@/components/gyms/RateCrowd";
+import GoingLine from "@/components/gyms/GoingLine";
+import { useBoardByGym } from "@/lib/gymGoing";
+import type { GoingSummary } from "@/lib/buddyBoard";
 import {
   IconSearch,
   IconFloors,
@@ -60,11 +63,25 @@ function FavHeart({ fav, onToggle }: { fav: boolean; onToggle: () => void }) {
   );
 }
 
-function StatsRow({ gym, crowd, now }: { gym: Gym; crowd: GymCrowd | null; now: Clock | null }) {
+function StatsRow({
+  gym,
+  crowd,
+  now,
+  going,
+}: {
+  gym: Gym;
+  crowd: GymCrowd | null;
+  now: Clock | null;
+  going: GoingSummary | null;
+}) {
   // A shut gym is not "usually quiet", it's shut — the open line already says so.
   const closed = now !== null && gymOpenState(gym.hours, now.minutes)?.open === false;
   return (
-    <div className="flex items-center justify-between gap-2 bg-surface px-3 py-2.5">
+    <div className="flex flex-col gap-1.5 bg-surface px-3 py-2.5">
+      {/* The Buddy Board, one line: who has already said they're going here.
+          Nothing is drawn when nobody has — see GoingLine. */}
+      <GoingLine going={going} gymName={gym.name} compact />
+    <div className="flex items-center justify-between gap-2">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
         {/* Can you walk in right now — the one thing the timetable was hiding */}
         <OpenNow hours={gym.hours} now={now} />
@@ -87,6 +104,7 @@ function StatsRow({ gym, crowd, now }: { gym: Gym; crowd: GymCrowd | null; now: 
         <IconChevronRight size={16} />
       </span>
     </div>
+    </div>
   );
 }
 
@@ -96,6 +114,7 @@ type CardProps = {
   onToggleFav: () => void;
   crowd: GymCrowd | null;
   now: Clock | null;
+  going: GoingSummary | null;
   /* The tour presses the first card to open a gym in front of you, rather than
      arriving there behind your back (lib/tour.ts). Only that card gets one. */
   tour?: string;
@@ -126,7 +145,7 @@ function Watermark({ gym }: { gym: Gym }) {
   );
 }
 
-function MainCard({ gym, fav, onToggleFav, crowd, now, tour }: CardProps) {
+function MainCard({ gym, fav, onToggleFav, crowd, now, going, tour }: CardProps) {
   return (
     <Link
       href={`/gyms/${gym.slug}`}
@@ -152,12 +171,12 @@ function MainCard({ gym, fav, onToggleFav, crowd, now, tour }: CardProps) {
           <div className="text-[11px] text-text-2">{gym.address}</div>
         </div>
       </div>
-      <StatsRow gym={gym} crowd={crowd} now={now} />
+      <StatsRow gym={gym} crowd={crowd} now={now} going={going} />
     </Link>
   );
 }
 
-function HouseCard({ gym, fav, onToggleFav, crowd, now, sub }: CardProps & { sub: string }) {
+function HouseCard({ gym, fav, onToggleFav, crowd, now, going, sub }: CardProps & { sub: string }) {
   const colors = gym.houseColors;
   return (
     <Link
@@ -185,7 +204,7 @@ function HouseCard({ gym, fav, onToggleFav, crowd, now, sub }: CardProps & { sub
           <div className="text-[11px] text-text-2">{sub}</div>
         </div>
       </div>
-      <StatsRow gym={gym} crowd={crowd} now={now} />
+      <StatsRow gym={gym} crowd={crowd} now={now} going={going} />
     </Link>
   );
 }
@@ -196,6 +215,8 @@ export default function GymsPage() {
   // Shared campus reports (db/gym_crowd.sql) — what OTHER people tapped, not
   // just this phone's own answer. One read covers every card.
   const { getCrowd } = useGymCrowd(userId);
+  // The Buddy Board by gym — "3 going tonight" on the card people choose from.
+  const { goingFor } = useBoardByGym(userId);
   // One clock for the whole list, so every card agrees on what time it is.
   const now = useClock();
   const [filter, setFilter] = useState<Filter>("all");
@@ -305,6 +326,7 @@ export default function GymsPage() {
             onToggleFav={() => toggle(g.slug)}
             crowd={getCrowd(g.slug)}
             now={now}
+            going={goingFor(g.name)}
             tour={idx === 0 ? "gyms-first-card" : undefined}
           />
         ))}
@@ -326,6 +348,7 @@ export default function GymsPage() {
             onToggleFav={() => toggle(g.slug)}
             crowd={getCrowd(g.slug)}
             now={now}
+            going={goingFor(g.name)}
             sub={uni?.houseNoun ?? "House gym"}
           />
         ))}

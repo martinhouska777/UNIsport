@@ -14,8 +14,8 @@
 */
 import { useState } from "react";
 import { buddyFocuses, buddyTimesOfDay, focusLabel, timeOfDayLabel } from "@/lib/buddyBoard";
-import { weekDays } from "@/lib/onboarding";
-import { Pill, FieldLabel } from "@/components/onboarding/controls";
+import { weekDays, verifiedGyms } from "@/lib/onboarding";
+import { Pill, FieldLabel, SelectField } from "@/components/onboarding/controls";
 import type { FilterChip } from "@/components/match/FilterBar";
 import Button from "@/components/ui/Button";
 import DropdownPanel from "@/components/ui/DropdownPanel";
@@ -25,17 +25,21 @@ export type BoardFilters = {
   focus: string | null;
   day: string | null;
   timeOfDay: string | null;
+  /* A gym name from lib/gyms.ts. Posts always carried one; the board just
+     couldn't be narrowed by it, so "who is going to Malkin" was unanswerable. */
+  gym: string | null;
 };
 
-export const NO_BOARD_FILTERS: BoardFilters = { focus: null, day: null, timeOfDay: null };
+export const NO_BOARD_FILTERS: BoardFilters = { focus: null, day: null, timeOfDay: null, gym: null };
 
 export function boardFilterCount(f: BoardFilters): number {
-  return [f.focus, f.day, f.timeOfDay].filter(Boolean).length;
+  return [f.focus, f.day, f.timeOfDay, f.gym].filter(Boolean).length;
 }
 
 /** The chips shown under the Filters button, each tappable to clear itself. */
 export function boardFilterChips(f: BoardFilters): FilterChip[] {
   const chips: FilterChip[] = [];
+  if (f.gym) chips.push({ key: "gym", label: f.gym });
   if (f.focus) chips.push({ key: "focus", label: focusLabel(f.focus) });
   if (f.day) {
     chips.push({
@@ -87,6 +91,18 @@ export default function BoardFiltersSheet({
         <p className="mb-3 text-[11px] text-muted">
           Narrows the board only — it doesn’t change the post you’re writing.
         </p>
+
+        <div className="mb-4">
+          <FieldLabel>Gym</FieldLabel>
+          {/* A dropdown, like the post form: fifteen gyms is a list. */}
+          <SelectField
+            value={draft.gym ?? ""}
+            onChange={(v) => set({ gym: v || null })}
+            options={verifiedGyms.map((g) => ({ value: g, label: g }))}
+            placeholder="Any gym"
+            ariaLabel="Gym"
+          />
+        </div>
 
         <div className="mb-4">
           <FieldLabel>Focus</FieldLabel>

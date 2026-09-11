@@ -37,6 +37,7 @@ import BoardFiltersSheet, {
   type BoardFilters,
 } from "@/components/match/BoardFiltersSheet";
 import Avatar from "@/components/messages/Avatar";
+import { announceBoardChange } from "@/lib/gymGoing";
 
 function dayShort(key: string): string {
   return weekDays.find((d) => d.key === key)?.label.slice(0, 3) ?? key;
@@ -64,7 +65,14 @@ function Status({ children }: { children: React.ReactNode }) {
   return <div className="px-3 py-12 text-center text-sm text-muted">{children}</div>;
 }
 
-export default function BuddyBoard() {
+export default function BuddyBoard({
+  initialGym = null,
+}: {
+  /* Arriving from a gym's "See who else is going": the board opens already
+     narrowed to that gym. Only names the app knows are accepted (the Match
+     page checks) — never arbitrary URL text. */
+  initialGym?: string | null;
+}) {
   const router = useRouter();
 
   // --- Post form state ---
@@ -92,7 +100,9 @@ export default function BuddyBoard() {
   const [messagingId, setMessagingId] = useState<string | null>(null);
 
   // --- Optional board filters (behind the Filters button, not a second form) ---
-  const [filters, setFilters] = useState<BoardFilters>(NO_BOARD_FILTERS);
+  const [filters, setFilters] = useState<BoardFilters>(() =>
+    initialGym ? { ...NO_BOARD_FILTERS, gym: initialGym } : NO_BOARD_FILTERS,
+  );
   const [sheetOpen, setSheetOpen] = useState(false);
 
   // Nothing is set before the first await on purpose: a setState in the
@@ -105,6 +115,7 @@ export default function BuddyBoard() {
           focus: filters.focus,
           day: filters.day,
           timeOfDay: filters.timeOfDay,
+          gym: filters.gym,
         }),
         listMyBuddyPosts(),
       ]);
@@ -140,6 +151,7 @@ export default function BuddyBoard() {
       setGym(null);
       setNote("");
       setComposing(false);
+      announceBoardChange(); // the Gyms tab's "going" lines follow
       await load();
     } catch (e) {
       setFormErr((e as Error).message);
@@ -151,6 +163,7 @@ export default function BuddyBoard() {
   const remove = async (id: string) => {
     try {
       await deleteBuddyPost(id);
+      announceBoardChange();
       await load();
     } catch (e) {
       setBoardErr((e as Error).message);
@@ -338,9 +351,11 @@ export default function BuddyBoard() {
       {!boardErr && board === null && <SkeletonRows count={4} />}
       {!boardErr && board && board.length === 0 && (
         <Status>
-          {anyFilter
-            ? "No posts match those filters yet."
-            : "No open posts yet. Put yours up with the button above and check back as more people join."}
+          {filters.gym && boardFilterCount(filters) === 1
+            ? `Nobody has posted for ${filters.gym} yet. Be the first — post above and it shows on that gym's card.`
+            : anyFilter
+              ? "No posts match those filters yet."
+              : "No open posts yet. Put yours up with the button above and check back as more people join."}
         </Status>
       )}
       {!boardErr && board && board.length > 0 && (
