@@ -15,14 +15,16 @@ import { social, views, type LandingView } from "@/lib/landingCopy";
 export function landingMetadata(view: LandingView = "all"): Metadata {
   const v = views.find((x) => x.view === view);
   const title = v ? v.title : social.title;
+  // Each view says what IT is (lib/landingCopy.ts `views`); "/" keeps the page's own line.
+  const description = v ? v.description : social.description;
   const url = v ? v.href : "/";
   return {
     title,
-    description: social.description,
+    description,
     alternates: { canonical: url },
     openGraph: {
       title,
-      description: social.description,
+      description,
       url,
       siteName: "UNIsport",
       type: "website",
@@ -32,7 +34,7 @@ export function landingMetadata(view: LandingView = "all"): Metadata {
     twitter: {
       card: "summary_large_image",
       title,
-      description: social.description,
+      description,
       images: ["/og.png"],
     },
   };

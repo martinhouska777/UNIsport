@@ -124,15 +124,51 @@ export const nav = {
    `/varsity` is the app's own varsity area (post-login), so the audience
    views live under `/for/…`. */
 export type LandingView = "all" | "students" | "varsity" | "coaches" | "about" | "contact";
-export const views: { view: LandingView; label: string; href: string; title: string }[] = [
+/* `description`: the line under the title in a search result or a pasted
+   link. Every view used to carry the home page's ("Find the gym. Find someone
+   to go with. Free for students.") — under the Coaches page too (website
+   review, 2026-09-10). One sentence each, saying what THAT page is, in the
+   page's own words; the home page keeps social.description. DRAFT for the
+   owner — review in a search result or a pasted link, not here. */
+export const views: { view: LandingView; label: string; href: string; title: string; description: string }[] = [
   /* Home = the whole page, first in the row (owner, 2026-08-18). Its title
      is the page's own, so the link card on "/" is unchanged. */
-  { view: "all", label: "Home", href: "/", title: social.title },
-  { view: "students", label: "The app", href: "/for/students", title: "UNIsport — the app" },
-  { view: "varsity", label: "Varsity Mode", href: "/for/varsity", title: "UNIsport — Varsity Mode" },
-  { view: "coaches", label: "Coaches", href: "/for/coaches", title: "UNIsport — the Coach's Console" },
-  { view: "about", label: "About", href: "/about", title: "About UNIsport" },
-  { view: "contact", label: "Contact", href: "/contact", title: "Contact UNIsport" },
+  { view: "all", label: "Home", href: "/", title: social.title, description: social.description },
+  {
+    view: "students",
+    label: "The app",
+    href: "/for/students",
+    title: "UNIsport — the app",
+    description: "Every gym on campus, training partners matched by fit, sessions planned in the chat and logged together. Free for students.",
+  },
+  {
+    view: "varsity",
+    label: "Varsity Mode",
+    href: "/for/varsity",
+    title: "UNIsport — Varsity Mode",
+    description: "Your coach's training plan, the lineups, the race countdown and their notes on your phone — and logging straight off the plan. For rowing, by team invite.",
+  },
+  {
+    view: "coaches",
+    label: "Coaches",
+    href: "/for/coaches",
+    title: "UNIsport — the Coach's Console",
+    description: "Build a training block around a race, publish the week and the lineups to every athlete's phone, keep every result. For college rowing programs.",
+  },
+  {
+    view: "about",
+    label: "About",
+    href: "/about",
+    title: "About UNIsport",
+    description: "Who built UNIsport and why: a Harvard heavyweight rower who kept arriving at the gym with nobody to train with.",
+  },
+  {
+    view: "contact",
+    label: "Contact",
+    href: "/contact",
+    title: "Contact UNIsport",
+    description: "Write to bring UNIsport to your university or to use it for your team. All feedback and suggestions are welcome.",
+  },
 ];
 
 /* At the foot of every tabbed view, above the footer: the way back to the
