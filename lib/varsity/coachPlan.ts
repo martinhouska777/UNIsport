@@ -214,6 +214,14 @@ export type Block = {
   status: BlockStatus; // new blocks start as a draft
   raceName?: string;
   raceDate?: string; // ISO
+  /*
+    What the squad was last TOLD about this block — the snapshot the Plan tab
+    computes (name, dates, race, every session in range) at the moment it was
+    published or the coach pressed Tell the squad. Compared to the current
+    snapshot to decide whether that button is offered. Null / absent: never
+    told, or published before this was recorded (db/patch_announced.sql).
+  */
+  announced?: string | null;
 };
 
 const WD = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];

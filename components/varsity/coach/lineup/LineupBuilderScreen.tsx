@@ -1013,8 +1013,11 @@ function Builder({
       if (stored) {
         const text = JSON.stringify(stored.boats);
         setSaved(text);
-        // A lineup already live when this opened: the squad has seen this much.
-        setAnnounced(stored.status === "published" ? text : null);
+        // A lineup already live when this opened: what the squad was last
+        // TOLD is on the row, so an edit made and closed on last sitting still
+        // offers the buzz. A live row from before that was recorded is taken
+        // as up to date — nothing honest can be said about it.
+        setAnnounced(stored.status === "published" ? (stored.announced ?? text) : null);
         setBoats(stored.boats);
         setStatus(stored.status);
         setLoading(false);
@@ -1274,11 +1277,11 @@ function Builder({
   /* Write the crew. Returns false if it failed, so a caller that must be sure
      (publishing) can hold its notification back. */
   const persist = useCallback(
-    async (newStatus?: LineupStatus) => {
+    async (newStatus?: LineupStatus, announcedNow?: string | null) => {
       const s = newStatus ?? status;
       const snap = JSON.stringify(boats);
       setWriting(true);
-      const { error } = await saveLineup(dayKey, boats, s);
+      const { error } = await saveLineup(dayKey, boats, s, announcedNow);
       setWriting(false);
       if (error) {
         console.error("saveLineup:", error);
@@ -1328,21 +1331,24 @@ function Builder({
     and untried again.
   */
   const publish = async () => {
-    if (!(await persist("published"))) return;
-    setAnnounced(JSON.stringify(boats));
+    const snap = JSON.stringify(boats);
+    if (!(await persist("published", snap))) return;
+    setAnnounced(snap);
     notifySquad({ kind: "team_lineup", preview: `${context.weekday} ${context.period}` });
   };
 
-  /* Already live, already changed on their phones — this only sends the buzz. */
+  /* Already live, already changed on their phones — this sends the buzz, and
+     writes down that it was sent, so the offer does not come back tomorrow. */
   const tellSquad = async () => {
-    if (dirty && !(await persist())) return;
-    setAnnounced(JSON.stringify(boats));
+    const snap = JSON.stringify(boats);
+    if (!(await persist(undefined, snap))) return;
+    setAnnounced(snap);
     notifySquad({ kind: "team_lineup", preview: `${context.weekday} ${context.period}` });
   };
 
   /* Back to a draft: the crew disappears from the squad's phones again. */
   const unpublish = async () => {
-    if (!(await persist("draft"))) return;
+    if (!(await persist("draft", null))) return;
     setAnnounced(null);
   };
 

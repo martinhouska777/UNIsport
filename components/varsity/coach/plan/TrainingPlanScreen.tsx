@@ -250,35 +250,41 @@ export default function TrainingPlanScreen() {
   // changed under them. Only on success, and never on an autosave: a draft is
   // the coach thinking, and nobody should have their phone buzz for that.
   const publishBlock = async (blockId: string) => {
+    const target = blocks.find((x) => x.id === blockId);
+    if (!target) return;
+    // What the squad is about to be told, written on the block itself so it
+    // is still known next time the app opens (db/patch_announced.sql).
+    const snap = blockSnapshot(target);
     const next = blocks.map((b) =>
-      b.id === blockId ? { ...b, status: "published" as const } : b,
+      b.id === blockId ? { ...b, status: "published" as const, announced: snap } : b,
     );
     setBlocks(next);
-    const ok = await persist({ blocks: next });
-    const b = next.find((x) => x.id === blockId);
-    if (ok && b) {
-      markAnnounced(b);
-      notifySquad({ kind: "team_plan", preview: b.name });
-    }
+    if (!(await persist({ blocks: next }))) return;
+    setAnnounced((prev) => ({ ...prev, [blockId]: snap }));
+    notifySquad({ kind: "team_plan", preview: target.name });
   };
 
   /*
-    The block is already live and already changed on their Home — this only
-    buzzes the phones. Anything still in the autosave's pause is written first,
-    so the squad never gets told about work the database hasn't got.
+    The block is already live and already changed on their Home — this buzzes
+    the phones and writes down that it did. Anything still in the autosave's
+    pause goes with it, so the squad never gets told about work the database
+    hasn't got.
   */
   const tellSquad = async (blockId: string) => {
-    const b = blocks.find((x) => x.id === blockId);
-    if (!b) return;
-    if (dirty && !(await persist())) return;
-    markAnnounced(b);
-    notifySquad({ kind: "team_plan", preview: b.name });
+    const target = blocks.find((x) => x.id === blockId);
+    if (!target) return;
+    const snap = blockSnapshot(target);
+    const next = blocks.map((b) => (b.id === blockId ? { ...b, announced: snap } : b));
+    setBlocks(next);
+    if (!(await persist({ blocks: next }))) return;
+    setAnnounced((prev) => ({ ...prev, [blockId]: snap }));
+    notifySquad({ kind: "team_plan", preview: target.name });
   };
 
   // Move a published block back to draft (hides it from athletes again).
   const unpublishBlock = async (blockId: string) => {
     const next = blocks.map((b) =>
-      b.id === blockId ? { ...b, status: "draft" as const } : b,
+      b.id === blockId ? { ...b, status: "draft" as const, announced: null } : b,
     );
     setBlocks(next);
     setAnnounced((prev) => {
@@ -309,8 +315,11 @@ export default function TrainingPlanScreen() {
     Home as it is made. The only thing left to decide is whether their phones
     should buzz — so we remember what each block looked like the last time it
     was announced, and offer "Tell the squad" only once it actually differs.
-    In-session by design: it is a nudge about work you just did, not a promise
-    kept across days.
+
+    The memory is on the block row (`announced`, db/patch_announced.sql), so
+    an edit made to a live block and then closed still offers the buzz next
+    time — this map is just the row's value held for rendering. A block
+    published before that was recorded (null) is taken as up to date.
   */
   const [announced, setAnnounced] = useState<Record<string, string>>({});
   const blockSnapshot = (b: Block) =>
@@ -324,11 +333,10 @@ export default function TrainingPlanScreen() {
     ]);
   const blockChanged = (b: Block) =>
     announced[b.id] !== undefined && announced[b.id] !== blockSnapshot(b);
-  const markAnnounced = (b: Block) =>
-    setAnnounced((prev) => ({ ...prev, [b.id]: blockSnapshot(b) }));
 
-  /* A block that was ALREADY published when the screen opened starts from what
-     it looked like then — the squad has seen that much. */
+  /* A block that was ALREADY published when the screen opened starts from
+     what the squad was last told (on the row) — or, for a block published
+     before that was recorded, from what it looks like now. */
   useEffect(() => {
     if (loading) return;
     setAnnounced((prev) => {
@@ -336,7 +344,7 @@ export default function TrainingPlanScreen() {
       for (const b of blocks) {
         if (b.status !== "published" || prev[b.id] !== undefined) continue;
         if (next === prev) next = { ...prev };
-        next[b.id] = blockSnapshot(b);
+        next[b.id] = b.announced ?? blockSnapshot(b);
       }
       return next;
     });
