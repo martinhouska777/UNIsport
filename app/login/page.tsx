@@ -281,12 +281,16 @@ export default function LoginPage() {
           </div>
         ) : (
           <div className="mt-7">
-            {/* Log in / Sign up toggle */}
+            {/* Log in / Sign up toggle. DARK ink on the blue, here and on the
+                submit button below: the page's white text on l-accent measured
+                2.75:1 (website review, 2026-09-10) — the same light-on-blue the
+                landing's own primary button gave up on 2026-08-18 for the same
+                reason. l-bg on l-accent is 7.2:1. */}
             <div className="mb-4 flex rounded-full border border-l-line bg-l-surface p-1 text-sm font-medium">
               <button
                 onClick={() => switchMode("login")}
                 className={`flex-1 rounded-full py-2 transition-colors ${
-                  !isSignup ? "bg-l-accent text-l-text" : "text-l-text-2"
+                  !isSignup ? "bg-l-accent text-l-bg" : "text-l-text-2"
                 }`}
               >
                 Log in
@@ -294,7 +298,7 @@ export default function LoginPage() {
               <button
                 onClick={() => switchMode("signup")}
                 className={`flex-1 rounded-full py-2 transition-colors ${
-                  isSignup ? "bg-l-accent text-l-text" : "text-l-text-2"
+                  isSignup ? "bg-l-accent text-l-bg" : "text-l-text-2"
                 }`}
               >
                 Sign up
@@ -334,7 +338,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full rounded-full bg-l-accent px-5 py-3 text-sm font-semibold text-l-text transition-opacity hover:opacity-90 disabled:opacity-60"
+                className="w-full rounded-full bg-l-accent px-5 py-3 text-sm font-semibold text-l-bg transition-opacity hover:opacity-90 disabled:opacity-60"
               >
                 {loading ? "Please wait…" : isSignup ? "Create account" : "Log in"}
               </button>
