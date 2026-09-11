@@ -40,6 +40,13 @@ type AppState = {
   loggedIn: boolean;
   userId: string | null;
   email: string | null; // which account you're signed in as — shown on Profile
+  /*
+    When this account was made (ISO), from the auth record. What "new here"
+    means to the app — a first-year's Match narrows to their own year for the
+    first FIRST_YEAR_OWN_YEAR_DAYS of it (lib/onboarding.ts). Null without a
+    session.
+  */
+  signedUpAt: string | null;
   studentReady: boolean;
   varsityReady: boolean;
   /*
@@ -319,6 +326,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         loggedIn: !!session,
         userId: session?.user.id ?? null,
         email: session?.user.email ?? null,
+        signedUpAt: session?.user.created_at ?? null,
         studentReady,
         varsityReady,
         universityKey,

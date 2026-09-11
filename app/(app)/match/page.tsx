@@ -32,6 +32,7 @@ import { useAppState } from "@/components/AppState";
 import { useProfileData } from "@/components/profile/useProfileData";
 import { getBrowseMatches, type Match, type MatchFilters } from "@/lib/supabase/matching";
 import { verifiedGyms } from "@/lib/onboarding";
+import { isNewFirstYear as newFirstYear } from "@/lib/cohorts";
 import { matchTier } from "@/lib/matchTier";
 import MatchGrid from "@/components/match/MatchGrid";
 import BuddyBoard from "@/components/match/BuddyBoard";
@@ -69,7 +70,7 @@ export default function MatchPage() {
 }
 
 function MatchScreen() {
-  const { userId } = useAppState();
+  const { userId, signedUpAt } = useAppState();
   const { data: myProfile } = useProfileData();
   const router = useRouter();
   const search = useSearchParams();
@@ -105,9 +106,29 @@ function MatchScreen() {
   };
 
   // --- Shared filters (People and the session search) ---
-  const [filters, setFilters] = useState<MatchFilters>(() =>
-    presetGym ? { ...NO_FILTERS, gym: presetGym } : NO_FILTERS,
+  /*
+    A FIRST-YEAR'S FIRST MONTH opens on their own class year: the people they
+    will actually meet in September are other first-years, and a list of
+    seniors on day one says "not for you". A default, not a wall — the chip
+    clears with a tap. `chosen` is null until the person touches a filter, so
+    the default can be worked out once the profile has loaded without an
+    effect writing state; anything they set replaces it entirely.
+  */
+  const myYear = (myProfile?.classYear as string | undefined) ?? null;
+  // The clock is read once, when the screen opens — a render must stay pure.
+  const [openedAt] = useState(() => Date.now());
+  const isNewFirstYear = newFirstYear(myYear, signedUpAt, openedAt);
+  const defaultFilters = useMemo<MatchFilters>(
+    () => ({
+      ...NO_FILTERS,
+      ...(presetGym ? { gym: presetGym } : {}),
+      ...(isNewFirstYear && myYear ? { classYear: myYear } : {}),
+    }),
+    [presetGym, isNewFirstYear, myYear],
   );
+  const [chosen, setChosen] = useState<MatchFilters | null>(null);
+  const filters = chosen ?? defaultFilters;
+  const setFilters = (next: MatchFilters) => setChosen(next);
   const [sheetOpen, setSheetOpen] = useState(false);
   const clearFilter = (key: keyof MatchFilters) => setFilters({ ...filters, [key]: null });
 
@@ -196,6 +217,13 @@ function MatchScreen() {
               />
             )}
           </div>
+          {/* Said out loud while the first-month default is on, so a narrowed
+              list never reads as "this is everyone". */}
+          {chosen === null && isNewFirstYear && (
+            <p className="px-4 pb-2 text-[11px] text-muted">
+              Showing your class year first while you&apos;re new. Tap the chip to see everyone.
+            </p>
+          )}
           {browseErr && <Status>Couldn’t load matches: {browseErr}</Status>}
           {!browseErr && browse === null && <Status>Finding your matches…</Status>}
           {!browseErr && browse && browse.length === 0 && (

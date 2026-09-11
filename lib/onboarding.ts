@@ -91,6 +91,15 @@ export function classYearLabel(classYear: string): string {
   return ["Fr", "So", "Jr", "Sr"][first - i] ?? classYear;
 }
 
+/*
+  A FIRST-YEAR'S FIRST MONTH. A new first-year opens Match narrowed to their
+  own class year for this many days after signing up — the people they will
+  actually meet in September are other first-years, and a list of seniors on
+  day one says "not for you". It is a default, not a wall: the chip clears
+  with a tap. lib/cohorts.ts holds what a first-year's team is.
+*/
+export const FIRST_YEAR_OWN_YEAR_DAYS = 30;
+
 // Sex options (editable).
 export const sexOptions: string[] = ["Male", "Female"];
 

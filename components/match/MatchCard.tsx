@@ -6,7 +6,7 @@ import Button from "@/components/ui/Button";
 import { IconCheck } from "@/components/icons";
 import InitialsAvatar from "@/components/ui/InitialsAvatar";
 import { useAppState } from "@/components/AppState";
-import { houseColorsFor } from "@/lib/gyms";
+import { teamFor } from "@/lib/cohorts";
 
 /*
   One result card in the Match grid: avatar block with a compatibility badge,
@@ -42,9 +42,10 @@ export default function MatchCard({
   /** How many chips to fill the rows with. Six fits the three rows. */
   chipCount?: number;
 }) {
-  // Their house's own colours, when they gave a house — see InitialsAvatar.
+  // Their TEAM's colours: the house when they have one, the first-year cohort
+  // when they don't (lib/cohorts.ts) — so a first-year's card is never grey.
   const { universityKey } = useAppState();
-  const houseColors = houseColorsFor(universityKey, match.residence);
+  const houseColors = teamFor(universityKey, match.residence, match.classYear)?.colors ?? null;
 
   // A qualitative tier, not a raw percentage — see lib/matchTier.ts for why.
   const tier = matchTier(match.score, max);

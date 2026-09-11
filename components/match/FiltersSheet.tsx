@@ -32,6 +32,8 @@ import {
   experienceLevels,
   verifiedGyms,
   primaryActivities,
+  classYears,
+  classYearLabel,
 } from "@/lib/onboarding";
 import type { MatchFilters } from "@/lib/supabase/matching";
 import SearchableDropdown from "@/components/onboarding/SearchableDropdown";
@@ -52,6 +54,7 @@ export const NO_FILTERS: MatchFilters = {
   gym: null,
   level: null,
   gender: null,
+  classYear: null,
 };
 
 /** How many filters are actually narrowing the results right now. */
@@ -63,8 +66,12 @@ export function activeFilterCount(f: MatchFilters): number {
     f.gym,
     f.level,
     f.gender,
+    f.classYear,
   ].filter(Boolean).length;
 }
+
+/** "Fr '30" — a class year as a pill reads best with the word people say. */
+const yearPill = (y: string) => `${classYearLabel(y)} ${y}`;
 
 /** The chips shown under the Filters button, each tappable to clear itself. */
 export function activeFilterChips(
@@ -101,6 +108,7 @@ export function activeFilterChips(
       label: genderOptions.find((g) => g.key === f.gender)?.label ?? f.gender,
     });
   }
+  if (f.classYear) chips.push({ key: "classYear", label: yearPill(f.classYear) });
   return chips;
 }
 
@@ -425,6 +433,26 @@ export default function FiltersSheet({
                 label={g.label}
                 selected={draft.gender === g.key}
                 onClick={() => set({ gender: draft.gender === g.key ? null : g.key })}
+              />
+            ))}
+          </div>
+        </FilterRow>
+
+        {/* A first-year's Match opens on this by default for their first
+            month (lib/onboarding.ts); for everyone it is one more way in. */}
+        <FilterRow
+          title="Class year"
+          open={openRows.has("classYear")}
+          onToggle={() => onToggleRow("classYear")}
+          summary={draft.classYear ? yearPill(draft.classYear) : null}
+        >
+          <div className="flex flex-wrap gap-1.5">
+            {classYears.map((y) => (
+              <Pill
+                key={y}
+                label={yearPill(y)}
+                selected={draft.classYear === y}
+                onClick={() => set({ classYear: draft.classYear === y ? null : y })}
               />
             ))}
           </div>

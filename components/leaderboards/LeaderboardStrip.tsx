@@ -22,11 +22,11 @@ import { useAppState } from "@/components/AppState";
 import { IconTrophy, IconChevronRight } from "@/components/icons";
 import {
   fetchStanding,
-  houseColor,
   type Period,
   type Standing,
 } from "@/lib/leaderboards";
 import { residenceLabel } from "@/lib/onboarding";
+import { teamFor } from "@/lib/cohorts";
 
 const ordinal = (n: number): string => {
   const rem100 = n % 100;
@@ -44,7 +44,7 @@ function Cell({ value, label }: { value: string; label: string }) {
 }
 
 export default function LeaderboardStrip({ period = "month" }: { period?: Period }) {
-  const { userId } = useAppState();
+  const { userId, universityKey } = useAppState();
   const [standing, setStanding] = useState<Standing | null>(null);
   const [loaded, setLoaded] = useState(false);
 
@@ -66,7 +66,10 @@ export default function LeaderboardStrip({ period = "month" }: { period?: Period
   if (!loaded) return <div className="h-[53px] border-b border-border" />;
 
   const house = standing?.residence ?? null;
-  const tint = houseColor(house);
+  // Your TEAM's colour: the house, or the first-year cohort's (lib/cohorts.ts)
+  // — a first-year in a Yard dorm is never the theme's fallback grey.
+  const team = teamFor(universityKey, house, standing?.classYear);
+  const tint = team?.colors.primary ?? null;
   const ranked = !!standing && standing.campusRank !== null;
 
   return (
@@ -89,14 +92,17 @@ export default function LeaderboardStrip({ period = "month" }: { period?: Period
 
       {ranked && standing ? (
         <div className="flex min-w-0 flex-1 items-center">
+          {/* Never a dash: with every group on the boards (lib/leaderboards.ts)
+              a rank exists the moment you've logged, and a group with a name
+              says the name. */}
           <Cell
-            value={standing.houseRankIn ? ordinal(standing.houseRankIn) : "—"}
-            label={house ? `in ${house}` : "in house"}
+            value={standing.houseRankIn ? ordinal(standing.houseRankIn) : `#${standing.campusRank}`}
+            label={house ? `in ${house}` : team ? `in ${team.label}` : "on campus"}
           />
           <div className="h-6 w-px bg-border" />
           <Cell
-            value={standing.houseRank ? `#${standing.houseRank}` : "—"}
-            label={house ? residenceLabel(house) : "your house"}
+            value={standing.houseRank ? `#${standing.houseRank}` : team ? team.label : "—"}
+            label={house ? residenceLabel(house) : team ? "your team" : "your house"}
           />
           <div className="h-6 w-px bg-border" />
           <Cell value={`#${standing.campusRank}`} label="on campus" />
@@ -105,7 +111,7 @@ export default function LeaderboardStrip({ period = "month" }: { period?: Period
         <div className="min-w-0 flex-1">
           <div className="text-[13px] font-medium leading-tight text-text">Leaderboards</div>
           <div className="mt-0.5 truncate text-[11px] text-muted">
-            Log a session to take your place{house ? ` for ${residenceLabel(house)}` : ""}.
+            Log a session to take your place{team ? ` for ${team.label}` : ""}.
           </div>
         </div>
       )}

@@ -25,6 +25,7 @@
 import { createClient, hasSupabaseEnv } from "@/lib/supabase/client";
 import { classYears, houses, residenceLabel, yardDorms } from "@/lib/onboarding";
 import { getGymByName } from "@/lib/gyms";
+import { dormColors } from "@/lib/cohorts";
 import { rateArgs, sessionPoints, type SessionKinds } from "@/lib/points";
 
 /* ─────────────────────────────  types  ───────────────────────────── */
@@ -174,15 +175,19 @@ export function groupLabel(kind: GroupBoard, key: string): string {
  */
 export function houseColor(key: string | null | undefined): string | null {
   if (!key) return null;
-  return getGymByName(key)?.houseColors?.primary ?? null;
+  return getGymByName(key)?.houseColors?.primary ?? dormColors(key)?.primary ?? null;
 }
 
-/** BOTH of a house's colours, for its crest. Null for anything but a house. */
+/**
+ * BOTH of a group's colours, for its crest. A house wears its own; a first-year
+ * dorm wears the entry-year cohort's (lib/cohorts.ts), so the Dorms board has
+ * no empty crests. Null for anything else (a class year, off campus).
+ */
 export function houseCrest(
   key: string | null | undefined,
 ): { primary: string; secondary: string } | null {
   if (!key) return null;
-  const c = getGymByName(key)?.houseColors;
+  const c = getGymByName(key)?.houseColors ?? dormColors(key);
   return c ? { primary: c.primary, secondary: c.secondary } : null;
 }
 
