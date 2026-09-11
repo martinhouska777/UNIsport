@@ -36,8 +36,12 @@ const DB_DIR = "db";
   Everything else is a migration, and the catalog can say whether it ran.
 */
 const DESIGN_ONLY = new Set(["schema.sql"]);
+/* This script's own output lives in db/ so it can be pasted from there. It is a
+   read-only report, not a migration, and must never be judged as one. */
+const GENERATED = new Set(["check_what_i_ran.sql"]);
 const kindOf = (file) =>
-  DESIGN_ONLY.has(file) ? "design"
+  GENERATED.has(file) ? "generated"
+  : DESIGN_ONLY.has(file) ? "design"
   : /_test\.sql$/.test(file) ? "test"
   : /_undo\.sql$/.test(file) ? "undo"
   : /^seed_/.test(file) ? "seed"
@@ -230,8 +234,161 @@ function order(list, creator) {
   return out;
 }
 
+/*
+  THE SAME CHECK AS ONE SQL QUERY — for the Supabase SQL editor, which is where
+  the work actually happens. Everything this script knows about db/ is baked in
+  as a list of expected objects, so the query needs no files and no terminal.
+
+  Regenerate it whenever db/ changes:
+      node scripts/check-db.mjs --sql > db/check_what_i_ran.sql
+*/
+const q = (s) => `'${String(s).replace(/'/g, "''")}'`;
+
+function toSql(parsed) {
+  const expected = [];
+  const rls = new Set();
+  for (const p of parsed) {
+    if (kindOf(p.file) !== "migration") continue;
+    for (const t of p.tables) expected.push([p.file, "table", t]);
+    for (const v of p.views) expected.push([p.file, "view", v]);
+    for (const f of p.functions) expected.push([p.file, "function", f]);
+    for (const c of p.columns) expected.push([p.file, "column", c]);
+    for (const pol of p.policies) expected.push([p.file, "policy", pol]);
+    for (const t of p.rlsOn) rls.add(t);
+  }
+
+  const values = expected.map(([f, k, n]) => `    (${q(f)},${q(k)},${q(n)})`).join(",\n");
+  const rlsValues = [...rls].map((t) => `    (${q(t)})`).join(",\n");
+
+  return `/*
+  WHAT HAVE I RUN, AND WHAT IS LEFT — paste this whole file into the Supabase
+  SQL editor and press Run. It only READS; it changes nothing.
+
+  Read the result top to bottom: anything that needs doing is at the top, and
+  everything already in place is at the bottom.
+
+  GENERATED FILE — do not edit by hand. It is the same check as
+  scripts/check-db.mjs, frozen into one query. Regenerate after changing db/:
+
+      node scripts/check-db.mjs --sql > db/check_what_i_ran.sql
+
+  Covers ${expected.length} objects across the migration files in db/.
+  Seeds, undo scripts, schema.sql and the *_test.sql files are left out on
+  purpose — none of them has to run for the app to work.
+*/
+with expected (file, kind, name) as (
+  values
+${values}
+),
+expect_rls (tbl) as (
+  values
+${rlsValues}
+),
+
+-- Everything that actually exists right now.
+present (kind, name) as (
+  select distinct 'table', c.relname
+    from pg_class c join pg_namespace n on n.oid = c.relnamespace
+   where n.nspname = 'public' and c.relkind in ('r','p')
+  union
+  select distinct 'view', c.relname
+    from pg_class c join pg_namespace n on n.oid = c.relnamespace
+   where n.nspname = 'public' and c.relkind in ('v','m')
+  union
+  select distinct 'column', c.relname || '.' || a.attname
+    from pg_class c
+    join pg_namespace n on n.oid = c.relnamespace
+    join pg_attribute a on a.attrelid = c.oid
+   where n.nspname = 'public' and c.relkind in ('r','p')
+     and a.attnum > 0 and not a.attisdropped
+  union
+  select distinct 'function', p.proname
+    from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+   where n.nspname = 'public'
+  union
+  select distinct 'policy', n.nspname || '.' || c.relname || '::' || pol.polname
+    from pg_policy pol
+    join pg_class c on c.oid = pol.polrelid
+    join pg_namespace n on n.oid = c.relnamespace
+),
+
+per_file as (
+  select e.file,
+         count(*) as expects,
+         count(p.name) as found,
+         string_agg(e.kind || ' ' || e.name, ', ' order by e.kind, e.name)
+           filter (where p.name is null) as missing
+    from expected e
+    left join present p on p.kind = e.kind and p.name = e.name
+   group by e.file
+),
+
+-- One line per file: run it, finish it, or leave it alone.
+files as (
+  select case when found = expects then 4 when found = 0 then 2 else 3 end as sort,
+         case when found = expects then 'OK — already run'
+              when found = 0      then 'RUN THIS'
+              else                     'PARTLY RUN — see note'
+         end as status,
+         file as item,
+         case when found = expects
+              then expects || ' objects all present'
+              else found || ' of ' || expects || ' present · missing: ' || missing
+         end as detail
+    from per_file
+),
+
+-- Row security a file turns on, but the live table has off.
+rls_off as (
+  select 1 as sort,
+         'ROW SECURITY IS OFF' as status,
+         r.tbl as item,
+         'this table is readable by anyone until its file is re-run' as detail
+    from expect_rls r
+    join pg_class c on c.relname = r.tbl
+    join pg_namespace n on n.oid = c.relnamespace and n.nspname = 'public'
+   where c.relkind in ('r','p') and c.relrowsecurity = false
+),
+
+-- The match_profiles fix creates no object, so the piles above cannot see it.
+-- It is two statements in db/matching.sql, just after the view definition.
+security as (
+  select 0 as sort,
+         'SECURITY — NOT FIXED YET' as status,
+         'match_profiles' as item,
+         'every signed-in user can read every onboarded profile. Run: alter view '
+         || 'public.match_profiles set (security_invoker = on); '
+         || 'revoke all on public.match_profiles from anon, authenticated;' as detail
+    from pg_class c
+    join pg_namespace n on n.oid = c.relnamespace and n.nspname = 'public'
+   where c.relname = 'match_profiles'
+     and c.relkind = 'v'
+     and (
+       coalesce(array_to_string(c.reloptions, ','), '') not like '%security_invoker=%'
+       or (
+         exists (select 1 from pg_roles where rolname = 'authenticated')
+         and has_table_privilege('authenticated', c.oid, 'select')
+       )
+     )
+)
+
+select status, item, detail
+  from (
+    select * from security
+    union all select * from rls_off
+    union all select * from files
+  ) all_rows
+ order by sort, item;
+`;
+}
+
 function main() {
   const offline = process.argv.includes("--offline");
+  if (process.argv.includes("--sql")) {
+    const files = fs.readdirSync(DB_DIR).filter((f) => f.endsWith(".sql")).sort();
+    process.stdout.write(toSql(files.map(parseFile)));
+    return;
+  }
   const files = fs
     .readdirSync(DB_DIR)
     .filter((f) => f.endsWith(".sql"))
@@ -303,7 +460,10 @@ async function report(token, parsed) {
     const kind = kindOf(p.file);
     if (kind === "seed") { seeds.push(p); continue; }
     if (kind === "undo") { undos.push(p); continue; }
-    if (kind === "design" || kind === "test") { others.push({ ...p, kind }); continue; }
+    if (kind === "design" || kind === "test" || kind === "generated") {
+      others.push({ ...p, kind });
+      continue;
+    }
 
     /* A migration the catalog cannot speak for — a one-off UPDATE, say. */
     if (countOf(p) === 0) { unknown.push(p); continue; }
