@@ -56,11 +56,20 @@ export function calendarRange(anchor: Date, mode: CalendarMode): { from: string;
   return { from: isoOf(first), to: isoOf(last) };
 }
 
-/** The anchor moved one week / one month, in either direction. */
+/**
+ * The anchor moved one week / one month, in either direction. Paging months
+ * keeps the day of the month (clamped to a short month) rather than snapping
+ * to the 1st, so the anchor stays a real day — which is what the month grid
+ * marks as "the week you're on".
+ */
 export function shiftAnchor(anchor: Date, mode: CalendarMode, step: number) {
-  return mode === "week"
-    ? new Date(anchor.getFullYear(), anchor.getMonth(), anchor.getDate() + step * 7)
-    : new Date(anchor.getFullYear(), anchor.getMonth() + step, 1);
+  if (mode === "week") {
+    return new Date(anchor.getFullYear(), anchor.getMonth(), anchor.getDate() + step * 7);
+  }
+  const y = anchor.getFullYear();
+  const m = anchor.getMonth() + step;
+  const lastDay = new Date(y, m + 1, 0).getDate();
+  return new Date(y, m, Math.min(anchor.getDate(), lastDay));
 }
 
 // Short, readable label for a muscle group on the tiny calendar tiles.
@@ -173,7 +182,6 @@ export default function TrainingCalendar({
   };
 
   const days = nextDays(7, mondayOf(anchor));
-  const trained = days.filter((d) => dayChips(logs, d.iso).length > 0).length;
 
   // Month grid: Monday-first, with the blank lead-in cells.
   const year = anchor.getFullYear();
@@ -184,29 +192,40 @@ export default function TrainingCalendar({
     ...Array(lead).fill(null),
     ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
   ];
-  const monthTrained = cells.filter(
-    (n) => n !== null && dayChips(logs, isoFor(year, month, n)).length > 0,
-  ).length;
+  /*
+    WHERE THE WEEK IS. Switching to Month is an expansion, not a jump to
+    somewhere else: the week you were looking at is marked in the grid so you
+    can see it sitting inside the month. That's this row.
+  */
+  const weekIsos = new Set(days.map((d) => d.iso));
+  // The month, chunked into its calendar weeks — the rows the grid draws.
+  const rows: (number | null)[][] = [];
+  for (let i = 0; i < cells.length; i += 7) rows.push(cells.slice(i, i + 7));
+  const lastRow = rows[rows.length - 1];
+  if (lastRow) while (lastRow.length < 7) lastRow.push(null);
 
   // "8 – 14 Sep" for a week; "September 2026" for a month.
   const label =
     mode === "week"
       ? `${days[0].num} ${days[0].month} – ${days[6].num} ${days[6].month}`
       : new Date(year, month, 1).toLocaleString("en-US", { month: "long", year: "numeric" });
-  const done = mode === "week" ? trained : monthTrained;
 
   return (
     <div className="border-b border-border px-3.5 py-3">
-      {/* Header: which week/month, the arrows, and the zoom. */}
-      <div className="mb-2 flex items-center justify-between gap-2">
-        <div className="min-w-0">
-          <div className="truncate text-[13px] font-semibold text-text">{label}</div>
-          <div className="text-[11px] text-muted">
-            {done === 0 ? "Nothing logged" : `${done} ${done === 1 ? "day" : "days"} trained`}
-          </div>
-        </div>
+      {/* Header: an arrow at each end, the week or month between them, and the
+          zoom under it. Nothing counts your days at you. */}
+      <div className="mb-2 flex items-center gap-2">
+        <button
+          type="button"
+          aria-label={mode === "week" ? "Previous week" : "Previous month"}
+          onClick={() => go(-1)}
+          className="tap44 press-icon flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg border border-border bg-surface text-muted"
+        >
+          <IconArrowLeft size={14} />
+        </button>
 
-        <div className="flex flex-shrink-0 items-center gap-1.5">
+        <div className="flex min-w-0 flex-1 flex-col items-center gap-1">
+          <div className="truncate text-[13px] font-semibold text-text">{label}</div>
           {/* Week / Month — the same block, zoomed. */}
           <div className="flex overflow-hidden rounded-full border border-border">
             {(["week", "month"] as CalendarMode[]).map((m) => (
@@ -215,7 +234,7 @@ export default function TrainingCalendar({
                 type="button"
                 onClick={() => onModeChange(m)}
                 aria-pressed={mode === m}
-                className={`px-2.5 py-1 text-[11px] font-medium capitalize ${
+                className={`px-3 py-0.5 text-[11px] font-medium capitalize ${
                   mode === m ? "bg-primary text-primary-contrast" : "bg-surface-2 text-muted"
                 }`}
               >
@@ -223,24 +242,17 @@ export default function TrainingCalendar({
               </button>
             ))}
           </div>
-          <button
-            type="button"
-            aria-label={mode === "week" ? "Previous week" : "Previous month"}
-            onClick={() => go(-1)}
-            className="tap44 press-icon flex h-7 w-7 items-center justify-center rounded-lg border border-border bg-surface text-muted"
-          >
-            <IconArrowLeft size={13} />
-          </button>
-          <button
-            type="button"
-            aria-label={mode === "week" ? "Next week" : "Next month"}
-            onClick={() => go(1)}
-            disabled={atLatest}
-            className="tap44 press-icon flex h-7 w-7 items-center justify-center rounded-lg border border-border bg-surface text-muted disabled:opacity-30"
-          >
-            <IconArrowRight size={13} />
-          </button>
         </div>
+
+        <button
+          type="button"
+          aria-label={mode === "week" ? "Next week" : "Next month"}
+          onClick={() => go(1)}
+          disabled={atLatest}
+          className="tap44 press-icon flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg border border-border bg-surface text-muted disabled:opacity-30"
+        >
+          <IconArrowRight size={14} />
+        </button>
       </div>
 
       {/* The grid. Swiping it left/right is the same as the arrows. */}
@@ -295,37 +307,55 @@ export default function TrainingCalendar({
                 </div>
               ))}
             </div>
-            <div className="grid grid-cols-7 gap-1">
-              {cells.map((n, idx) => {
-                if (n === null) return <div key={idx} />;
-                const iso = isoFor(year, month, n);
-                const chips = dayChips(logs, iso);
-                const has = chips.length > 0;
-                const isToday = iso === todayIso;
+            {/* One block per calendar week, so THE WEEK YOU CAME FROM can be
+                marked: it keeps a ring around it inside the month, which is
+                how you see where it sits. The whole thing unfolds (the
+                cal-month-expand keyframe) rather than appearing whole. */}
+            <div className="cal-month-expand origin-center space-y-1">
+              {rows.map((row, r) => {
+                const isThisWeek = row.some(
+                  (n) => n !== null && weekIsos.has(isoFor(year, month, n)),
+                );
                 return (
-                  <button
-                    key={idx}
-                    type="button"
-                    disabled={!has}
-                    onClick={() => has && onPickDate(iso)}
-                    aria-label={has ? `${chips.join(", ")} on day ${n}` : `Day ${n}`}
-                    className={`flex aspect-square flex-col items-stretch overflow-hidden rounded-md p-1 ${
-                      has
-                        ? "border border-primary-line bg-primary-tint"
-                        : isToday
-                          ? "border border-primary bg-primary-tint"
-                          : "bg-surface-2"
-                    } ${isToday ? "ring-1 ring-primary" : ""} disabled:cursor-default`}
+                  <div
+                    key={r}
+                    className={`grid grid-cols-7 gap-1 rounded-lg ${
+                      isThisWeek ? "bg-primary-tint/40 p-0.5 ring-1 ring-primary-line" : ""
+                    }`}
                   >
-                    <span
-                      className={`text-left text-[11px] font-medium leading-none ${
-                        has || isToday ? "text-text" : "text-muted"
-                      }`}
-                    >
-                      {n}
-                    </span>
-                    {has && <Chips chips={chips} />}
-                  </button>
+                    {row.map((n, idx) => {
+                      if (n === null) return <div key={idx} />;
+                      const iso = isoFor(year, month, n);
+                      const chips = dayChips(logs, iso);
+                      const has = chips.length > 0;
+                      const isToday = iso === todayIso;
+                      return (
+                        <button
+                          key={idx}
+                          type="button"
+                          disabled={!has}
+                          onClick={() => has && onPickDate(iso)}
+                          aria-label={has ? `${chips.join(", ")} on day ${n}` : `Day ${n}`}
+                          className={`flex aspect-square flex-col items-stretch overflow-hidden rounded-md p-1 ${
+                            has
+                              ? "border border-primary-line bg-primary-tint"
+                              : isToday
+                                ? "border border-primary bg-primary-tint"
+                                : "bg-surface-2"
+                          } ${isToday ? "ring-1 ring-primary" : ""} disabled:cursor-default`}
+                        >
+                          <span
+                            className={`text-left text-[11px] font-medium leading-none ${
+                              has || isToday ? "text-text" : "text-muted"
+                            }`}
+                          >
+                            {n}
+                          </span>
+                          {has && <Chips chips={chips} />}
+                        </button>
+                      );
+                    })}
+                  </div>
                 );
               })}
             </div>

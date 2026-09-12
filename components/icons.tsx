@@ -74,11 +74,18 @@ export const IconFlag = (p: IconProps) => (
   </Base>
 );
 
+/*
+  A trophy that reads as a trophy at 18px: a proper cup with a rim, two
+  handles, a stem and a plinth. The old one drew the base as a second little
+  trapezoid under the stem, which at this size looked like a typo.
+*/
 export const IconTrophy = (p: IconProps) => (
   <Base {...p}>
-    <path d="M7 4h10v5a5 5 0 0 1-10 0V4z" />
-    <path d="M7 6H4v1a4 4 0 0 0 3 3.9M17 6h3v1a4 4 0 0 1-3 3.9" />
-    <path d="M12 14v3M9 20h6M10 17h4l.5 3h-5l.5-3z" />
+    <path d="M7 4h10v5.5a5 5 0 0 1-10 0V4z" />
+    <path d="M7 6.5H4.2V8a3.8 3.8 0 0 0 2.9 3.7M17 6.5h2.8V8a3.8 3.8 0 0 1-2.9 3.7" />
+    <path d="M12 14.5V17" />
+    <path d="M8.5 20h7" />
+    <path d="M10 20v-1.5a2 2 0 0 1 4 0V20" />
   </Base>
 );
 

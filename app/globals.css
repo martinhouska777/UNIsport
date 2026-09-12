@@ -1107,6 +1107,23 @@ body {
 }
 
 /*
+  THE MONTH OPENING OUT OF THE WEEK (components/profile/TrainingCalendar).
+  Tapping "Month" is an expansion, not a jump somewhere else: the weeks above
+  and below unfold from the row you were already looking at, which is why the
+  grid grows from a squeezed state rather than appearing whole. The week you
+  came from stays marked inside it.
+*/
+@keyframes cal-month-expand {
+  from { opacity: 0; transform: scaleY(0.55); }
+  to   { opacity: 1; transform: scaleY(1); }
+}
+.cal-month-expand { animation: cal-month-expand 0.26s ease-out backwards; }
+
+@media (prefers-reduced-motion: reduce) {
+  .cal-month-expand { animation: none; }
+}
+
+/*
   FIRST-RUN TOUR — the lit hole gliding from one tab to the next.
   The dim itself is the element's box-shadow (see components/tour/TourOverlay),
   so animating the box travels the light across the nav in one move. Size and

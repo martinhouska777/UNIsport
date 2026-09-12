@@ -37,8 +37,8 @@ const ordinal = (n: number): string => {
 function Cell({ value, label }: { value: string; label: string }) {
   return (
     <div className="min-w-0 flex-1 text-center">
-      <div className="truncate text-[13px] font-semibold leading-none text-text">{value}</div>
-      <div className="mt-1 truncate text-[8px] uppercase tracking-[0.08em] text-muted">{label}</div>
+      <div className="truncate text-[15px] font-semibold leading-none text-text">{value}</div>
+      <div className="mt-1 truncate text-[9px] uppercase tracking-[0.08em] text-muted">{label}</div>
     </div>
   );
 }
@@ -63,13 +63,12 @@ export default function LeaderboardStrip({ period = "month" }: { period?: Period
   }, [period, userId]);
 
   // Same height either way, so nothing below moves when the numbers land.
-  if (!loaded) return <div className="h-[53px] border-b border-border" />;
+  if (!loaded) return <div className="h-[66px] border-b border-border" />;
 
   const house = standing?.residence ?? null;
   // Your TEAM's colour: the house, or the first-year cohort's (lib/cohorts.ts)
   // — a first-year in a Yard dorm is never the theme's fallback grey.
   const team = teamFor(universityKey, house, standing?.classYear);
-  const tint = team?.colors.primary ?? null;
   const ranked = !!standing && standing.campusRank !== null;
 
   return (
@@ -79,15 +78,14 @@ export default function LeaderboardStrip({ period = "month" }: { period?: Period
          it is deliberately NOT on the placeholder above, so the tour waits for
          real numbers rather than pointing at an empty bar (lib/tour.ts). */
       data-tour="profile-leaderboards"
-      className="flex items-center gap-2 border-b border-border px-3.5 py-2.5 active:bg-surface-2"
+      className="flex items-center gap-2.5 border-b border-border px-3.5 py-3.5 active:bg-surface-2"
     >
-      <span
-        className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg text-primary"
-        style={tint ? { background: `${tint}22`, color: tint } : undefined}
-        // No tint for a Yard dorm (only the 12 Houses carry identity colors),
-        // in which case it falls back to the theme's primary.
-      >
-        <IconTrophy size={15} />
+      {/* GOLD. A trophy is gold everywhere else in the world and everywhere
+          else in this app (the podium colours, the varsity mark) — it is the
+          school's accent token, so a school whose accent isn't gold still gets
+          its own colour rather than a hardcoded one (rule 1). */}
+      <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-accent-tint text-accent">
+        <IconTrophy size={19} />
       </span>
 
       {ranked && standing ? (
@@ -109,7 +107,7 @@ export default function LeaderboardStrip({ period = "month" }: { period?: Period
         </div>
       ) : (
         <div className="min-w-0 flex-1">
-          <div className="text-[13px] font-medium leading-tight text-text">Leaderboards</div>
+          <div className="text-[14px] font-semibold leading-tight text-text">Leaderboards</div>
           <div className="mt-0.5 truncate text-[11px] text-muted">
             Log a session to take your place{team ? ` for ${team.label}` : ""}.
           </div>

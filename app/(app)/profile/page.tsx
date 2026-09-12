@@ -24,7 +24,6 @@ import UpcomingSessions from "@/components/profile/UpcomingSessions";
 import PartnerRequests from "@/components/profile/PartnerRequests";
 import ShareInviteButton from "@/components/ShareInviteButton";
 import LeaderboardStrip from "@/components/leaderboards/LeaderboardStrip";
-import WeekEventLine from "@/components/leaderboards/WeekEventLine";
 import MemoriesStrip from "@/components/profile/MemoriesStrip";
 import PersonalRecords from "@/components/profile/PersonalRecords";
 import PhotoGrid from "@/components/profile/PhotoGrid";
@@ -361,25 +360,29 @@ export default function ProfilePage() {
               textClassName="text-[15px] font-medium text-text"
             />
 
-            <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
-              <span className="text-[11px] text-muted">
-                {user.residence ? `${residenceLabel(user.residence)} · ` : ""}
-                {classOfLabel(user.classYear)}
-              </span>
-              {/* On your OWN profile the varsity badge comes from live
-                  membership: profiles.data has no record of it (the squad lives
-                  in its own table). Gold, as it is everywhere else. */}
-              {isMember && (
-                <span className="rounded bg-accent px-1.5 py-0.5 text-[8px] font-medium tracking-wide text-background">
-                  VARSITY
-                </span>
-              )}
-              {user.badges.mentor && (
-                <span className="rounded border border-success bg-success-tint px-1.5 py-0.5 text-[8px] font-medium tracking-wide text-success">
-                  MENTOR
-                </span>
-              )}
+            <div className="mt-0.5 text-[11px] text-muted">
+              {user.residence ? `${residenceLabel(user.residence)} · ` : ""}
+              {classOfLabel(user.classYear)}
             </div>
+
+            {/* The badges get their own line UNDER the house and class, so the
+                house isn't squeezed by them. On your OWN profile the varsity
+                badge comes from live membership: profiles.data has no record of
+                it (the squad lives in its own table). Gold, as everywhere. */}
+            {(isMember || user.badges.mentor) && (
+              <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                {isMember && (
+                  <span className="rounded bg-accent px-1.5 py-0.5 text-[8px] font-medium tracking-wide text-background">
+                    VARSITY
+                  </span>
+                )}
+                {user.badges.mentor && (
+                  <span className="rounded border border-success bg-success-tint px-1.5 py-0.5 text-[8px] font-medium tracking-wide text-success">
+                    MENTOR
+                  </span>
+                )}
+              </div>
+            )}
 
             {/* The counts, across rather than down: three columns of the width
                 left beside the photo. */}
@@ -433,10 +436,10 @@ export default function ProfilePage() {
           when there is nothing to answer. */}
       <PartnerRequests onChanged={reloadLogs} />
 
-      {/* 2 · WHERE YOU STAND — one line, straight into the full boards — and
-          this week's event under it, with your real count against it. */}
+      {/* 2 · WHERE YOU STAND — one row, straight into the full boards. This
+          week's event line ("Train 5 days") used to sit under it and is gone
+          from the profile: it belongs on the boards, not on your own page. */}
       <LeaderboardStrip />
-      <WeekEventLine compact />
 
       {/* Upcoming accepted sessions (chat-planned) — a date in your diary
           belongs above the fold. Hides itself when there is none. */}
@@ -453,16 +456,21 @@ export default function ProfilePage() {
         onPickDate={(d) => setOpenDate(d)}
       />
 
-      {/* 4 · LOG A SESSION, and MEMORIES beside it — the button that fills the
-          calendar next to what the calendar looked like. Memories takes itself
-          away until there is a photo, and then Log a session has the row. */}
-      <div className="flex items-stretch gap-2.5 border-b border-border px-3.5 py-3">
+      {/* 4 · MEMORIES — the full row back, the same history as pictures: the
+          calendar says what you did, this says what it looked like. It hides
+          itself entirely until there's a photo to show. */}
+      <MemoriesStrip />
+
+      {/* 5 · LOG A SESSION, right under them — the button that fills both the
+          calendar above and the memories row, full width so it can't be
+          missed. */}
+      <div className="border-b border-border px-3.5 py-3">
         {brandNew ? (
           <button
             type="button"
             onClick={() => setLogging(true)}
             data-tour="profile-log"
-            className="min-w-0 flex-1 rounded-xl border border-border bg-surface-2 px-3 py-2.5 text-left active:bg-surface"
+            className="w-full rounded-xl border border-border bg-surface-2 px-3.5 py-3 text-left active:bg-surface"
           >
             <div className="text-[13px] font-semibold text-text">Log your first session</div>
             <p className="mt-0.5 text-[11px] leading-relaxed text-muted">
@@ -472,19 +480,13 @@ export default function ProfilePage() {
           </button>
         ) : (
           /* data-tour: the Profile tour opens on this button (lib/tour.ts). */
-          <Button
-            data-tour="profile-log"
-            size="lg"
-            onClick={() => setLogging(true)}
-            className="min-w-0 flex-1"
-          >
+          <Button data-tour="profile-log" size="lg" full onClick={() => setLogging(true)}>
             <IconPlus size={16} /> Log a session
           </Button>
         )}
-        <MemoriesStrip card />
       </div>
 
-      {/* 5 · YOUR PHOTOS, under them. */}
+      {/* 6 · YOUR PHOTOS, under it. */}
       <PhotoGrid
         photos={user.photos}
         onChange={(photos) => update({ photos })}
@@ -492,7 +494,7 @@ export default function ProfilePage() {
         onVisibleChange={(v) => update({ showPhotos: v })}
       />
 
-      {/* 6 · EVERYTHING ELSE, folded. A <details>, so it opens without
+      {/* 7 · EVERYTHING ELSE, folded. A <details>, so it opens without
           JavaScript and is announced for free. */}
       <details className="group border-b border-border">
         <summary className="tap44 flex cursor-pointer list-none items-center justify-between px-3.5 py-3 [&::-webkit-details-marker]:hidden">
