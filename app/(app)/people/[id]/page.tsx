@@ -386,35 +386,11 @@ function PersonProfile() {
             </div>
           )}
 
-          {/* Photos (only present when they chose to show them) */}
-          {user.photos.length > 0 && (
-            <div className="border-b border-border px-4 py-3">
-              <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-                Photos
-              </div>
-              <PhotoGallery photos={user.photos} />
-            </div>
-          )}
-
-          {/* Personal records — now the lower of the two, swapped with
-              Interests above (only present when they chose to show them). */}
-          {user.personalRecords.length > 0 && (
-            <div className="border-b border-border px-4 py-3">
-              <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-                Personal records
-              </div>
-              <div className="flex flex-col divide-y divide-border">
-                {user.personalRecords.map((pr, i) => (
-                  <div key={i} className="flex items-center justify-between py-2">
-                    <span className="text-xs text-muted">{pr.lift}</span>
-                    <span className="text-xs font-medium text-text">{pr.value}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* About */}
+          {/* About — who they are off the gym floor: what they study, where
+              they're from, what they speak. Sits directly under Interests (it
+              used to be the last block on the page, below Photos and Personal
+              records) because this and Interests are the same question — what
+              you'd actually talk about — and they read as one stretch. */}
           {(user.concentration || user.hometownCountry || user.languages.length > 0) && (
             <div className="border-b border-border px-4 py-3">
               <div className="mb-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
@@ -445,6 +421,34 @@ function PersonProfile() {
                     </span>
                   </div>
                 )}
+              </div>
+            </div>
+          )}
+
+          {/* Photos (only present when they chose to show them) */}
+          {user.photos.length > 0 && (
+            <div className="border-b border-border px-4 py-3">
+              <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
+                Photos
+              </div>
+              <PhotoGallery photos={user.photos} />
+            </div>
+          )}
+
+          {/* Personal records — now the lower of the two, swapped with
+              Interests above (only present when they chose to show them). */}
+          {user.personalRecords.length > 0 && (
+            <div className="border-b border-border px-4 py-3">
+              <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
+                Personal records
+              </div>
+              <div className="flex flex-col divide-y divide-border">
+                {user.personalRecords.map((pr, i) => (
+                  <div key={i} className="flex items-center justify-between py-2">
+                    <span className="text-xs text-muted">{pr.lift}</span>
+                    <span className="text-xs font-medium text-text">{pr.value}</span>
+                  </div>
+                ))}
               </div>
             </div>
           )}
