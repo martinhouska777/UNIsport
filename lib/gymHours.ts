@@ -76,6 +76,8 @@ function clockLabel(minutes: number): string {
   and so this stays a pure function that can be tested without waiting for 6am.
 */
 export function gymOpenState(hours: string, now: number): GymOpenState | null {
+  // Never shuts (the house gyms) — nothing to count down to.
+  if (hours.trim() === "24/7") return { open: true, closingSoon: false, label: "Open 24/7" };
   const span = parseHours(hours);
   if (!span) return null;
 

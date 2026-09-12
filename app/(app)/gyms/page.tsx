@@ -8,13 +8,12 @@ import { getUniversity } from "@/lib/themes";
 import { useFavorites, useGymCrowd, type GymCrowd } from "@/lib/gymSocial";
 import { gymOpenState, useClock, type Clock } from "@/lib/gymHours";
 import OpenNow from "@/components/gyms/OpenNow";
-import { CrowdChip, PredictedChip } from "@/components/gyms/RateCrowd";
+import { CrowdChip } from "@/components/gyms/RateCrowd";
 import GoingLine from "@/components/gyms/GoingLine";
 import { useBoardByGym } from "@/lib/gymGoing";
 import type { GoingSummary } from "@/lib/buddyBoard";
 import {
   IconSearch,
-  IconFloors,
   IconHeart,
   IconChevronRight,
   IconBarbell,
@@ -74,8 +73,6 @@ function StatsRow({
   now: Clock | null;
   going: GoingSummary | null;
 }) {
-  // A shut gym is not "usually quiet", it's shut — the open line already says so.
-  const closed = now !== null && gymOpenState(gym.hours, now.minutes)?.open === false;
   return (
     <div className="flex flex-col gap-1.5 bg-surface px-3 py-2.5">
       {/* The Buddy Board, one line: who has already said they're going here.
@@ -88,17 +85,9 @@ function StatsRow({
         {/* No star average here. gym.rating / gym.ratingCount in lib/gyms.ts are
             placeholder numbers, and "4.8 · 142 ratings" on a real named gym is
             a claim nobody made. They come back when real ratings exist. */}
-        {/* How busy it is. Fresh reports if there are any — with how many
-            people said so; otherwise how busy this gym USUALLY is at this
-            hour, so the line is never blank. */}
-        {crowd ? (
-          <CrowdChip crowd={crowd} />
-        ) : closed ? null : (
-          <PredictedChip kind={gym.kind} now={now} />
-        )}
-        <span className="flex items-center gap-1">
-          <IconFloors size={13} /> {gym.floors} {gym.floors === 1 ? "floor" : "floors"}
-        </span>
+        {/* How busy it is — only when people have actually reported it. No
+            "Usually …" guess and no floor count: the owner cut both as noise. */}
+        {crowd && <CrowdChip crowd={crowd} />}
       </div>
       <span className="flex-shrink-0 text-muted">
         <IconChevronRight size={16} />
@@ -163,9 +152,6 @@ function MainCard({ gym, fav, onToggleFav, crowd, now, going, tour }: CardProps)
       */}
       <div className="relative flex h-24 items-end overflow-hidden bg-gradient-to-br from-surface-2 to-background">
         <Watermark gym={gym} />
-        <span className="absolute left-2.5 top-2 rounded-lg bg-background/60 px-2 py-0.5 text-[11px] tracking-wider text-text-2">
-          MAIN GYM
-        </span>
         <div className="relative p-3">
           <div className="text-[15px] font-medium text-text">{gym.name}</div>
           <div className="text-[11px] text-text-2">{gym.address}</div>

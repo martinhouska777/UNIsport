@@ -291,10 +291,6 @@ export default function FiltersSheet({
             </button>
           )}
         </div>
-        <p className="mb-1 text-[11px] text-muted">
-          Tick a filter to narrow results, then press Apply. Leave all unticked
-          to see everyone.
-        </p>
 
         {showActivity && (
           <FilterRow
@@ -313,9 +309,6 @@ export default function FiltersSheet({
                 />
               ))}
             </div>
-            <p className="mt-1.5 text-[11px] text-muted">
-              Anyone who does this — their main thing or one of their extras.
-            </p>
           </FilterRow>
         )}
 
@@ -379,9 +372,6 @@ export default function FiltersSheet({
             searchPlaceholder="Search interests…"
             ariaLabel="Interests filter"
           />
-          <p className="mt-1.5 text-[11px] text-muted">
-            Shows people into any of these. Sharing more still ranks higher.
-          </p>
         </FilterRow>
 
         <FilterRow

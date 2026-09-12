@@ -52,7 +52,7 @@ function houseGym(opts: {
     name: opts.name,
     kind: "house",
     address: opts.address,
-    hours: "7am–12am",
+    hours: "24/7",
     rating,
     ratingCount: opts.ratingCount,
     floors: 1,
