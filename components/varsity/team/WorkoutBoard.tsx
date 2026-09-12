@@ -33,6 +33,7 @@ import BoardTable from "@/components/varsity/team/BoardTable";
 import Delta from "@/components/varsity/team/Delta";
 import { sessionLabel, sessionColor } from "@/lib/varsity/coachPlan";
 import {
+  athleteHistory,
   buildBoard,
   metricsFor,
   metricMeta,
@@ -109,6 +110,25 @@ export default function WorkoutBoard({
   const readable = board.rows.some((r) => r.value != null);
   const mine = board.rows.find((r) => r.mine);
 
+  /*
+    YOUR OWN RUN AT THIS PIECE, ready for the block above the leaderboard.
+
+    The board answers "how did the squad go"; this answers "how did I go, and
+    is that better than last time" — which is the question the owner opens an
+    8x500 to ask. It was reachable already, but only by finding your own name
+    in the ranking and opening the sheet behind it; here it is simply on the
+    board, under the piece it belongs to.
+
+    Today's go is included (`past` is only the EARLIER ones), and the metric
+    follows the pills below, so this block and the You row above it always
+    speak the same units.
+  */
+  const myRun = useMemo(
+    () =>
+      mine ? athleteHistory([{ workout, results }, ...past], mine.result.athleteId, metric) : [],
+    [mine, workout, results, past, metric],
+  );
+
   return (
     <Sheet title={ranked ? "Ranked" : "Squad"} onClose={onClose}>
       {example && <ExampleNote what="board" />}
@@ -181,6 +201,60 @@ export default function WorkoutBoard({
             <IconChevronRight size={14} />
           </span>
         </button>
+      )}
+
+      {/*
+        HOW YOU'VE GONE AT THIS PIECE — just you, above the squad's ranking.
+        Only worth drawing when there is something to compare against, so it
+        appears from your SECOND go at a piece onwards.
+
+        Each earlier row opens that day's board (the same onOpenWorkout the
+        "compared with" link uses), so a number you want the context for is
+        one tap from the day it was set.
+      */}
+      {myRun.length > 1 && (
+        <div className="mt-2 rounded-2xl border border-border bg-surface px-3.5 py-3">
+          <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
+            Your previous goes
+          </div>
+          <div className="flex flex-col divide-y divide-border">
+            {myRun.map((h) => {
+              const isToday = h.dayKey === workout.dayKey;
+              const rowInner = (
+                <>
+                  <span
+                    className={`text-[12px] ${isToday ? "font-semibold text-primary" : "text-muted"}`}
+                  >
+                    {isToday ? "This one" : h.dateLabel}
+                  </span>
+                  {h.best && myRun.length > 1 && (
+                    <span className="rounded border border-accent-line bg-accent-tint px-1 py-px text-[10px] font-semibold uppercase tracking-wide text-accent">
+                      Best
+                    </span>
+                  )}
+                  <span className="ml-auto text-[13px] font-semibold tabular-nums text-text">
+                    {h.display}
+                  </span>
+                  {h.improvement != null && <Delta improvement={h.improvement} metric={metric} />}
+                </>
+              );
+              return isToday || !onOpenWorkout ? (
+                <div key={h.dayKey} className="flex items-center gap-2 py-1.5">
+                  {rowInner}
+                </div>
+              ) : (
+                <button
+                  key={h.dayKey}
+                  type="button"
+                  onClick={() => onOpenWorkout(h.dayKey)}
+                  className="flex items-center gap-2 py-1.5 text-left active:opacity-70"
+                >
+                  {rowInner}
+                </button>
+              );
+            })}
+          </div>
+        </div>
       )}
 
       {/* metric filter */}
