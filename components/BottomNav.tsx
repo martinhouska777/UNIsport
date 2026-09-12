@@ -103,8 +103,11 @@ export default function BottomNav() {
   const unread = useUnreadCount();
 
   return (
-    <nav className="sticky bottom-0 z-10 border-t border-border bg-surface lg:hidden">
-      <ul className="mx-auto flex max-w-screen-sm items-stretch">
+    /* A floating capsule, Instagram-style: the bar is a pill held off the
+       screen's edges (and above the iPhone home indicator), with the current
+       tab lit as a smaller pill inside it. */
+    <nav className="sticky bottom-0 z-10 bg-background px-4 pb-[max(env(safe-area-inset-bottom),10px)] pt-1.5 lg:hidden">
+      <ul className="mx-auto flex max-w-sm items-stretch gap-1 rounded-full border border-border bg-surface p-1.5 shadow-overlay">
         {tabs.map((tab) => {
           const active = pathname === tab.href;
           return (
@@ -112,8 +115,8 @@ export default function BottomNav() {
               <Link
                 href={tab.href}
                 aria-current={active ? "page" : undefined}
-                className={`flex flex-col items-center py-2.5 text-[11px] font-medium transition-[color,transform] duration-150 active:scale-90 ${
-                  active ? "text-primary" : "text-muted"
+                className={`flex flex-col items-center rounded-full py-1.5 text-[10px] font-semibold transition-[color,background-color,transform] duration-150 active:scale-90 ${
+                  active ? "bg-primary-tint text-primary" : "text-muted"
                 }`}
               >
                 {/*

@@ -114,7 +114,10 @@
   --color-podium-2-line: color-mix(in oklab, var(--podium-2) 45%, transparent);
   --color-podium-3-line: color-mix(in oklab, var(--podium-3) 45%, transparent);
   --shadow-overlay: var(--overlay-shadow);
-  --font-sans: var(--font-geist-sans);
+  /* The phone's own face, the way Instagram does it: SF Pro on an iPhone,
+     Roboto on Android, Segoe UI on Windows. Geist (the framework default)
+     is what made the app read as generated. */
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: var(--font-geist-mono);
 }
 

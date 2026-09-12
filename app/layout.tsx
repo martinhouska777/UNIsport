@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist_Mono } from "next/font/google";
 import "./globals.css";
 // The crest letter's face (Playfair 900) — the crest is worn everywhere now
 // (landing button, app top bars, mode switcher), so its variable lives here.
@@ -8,11 +8,6 @@ import { AppStateProvider } from "@/components/AppState";
 import { ThemeModeProvider } from "@/components/ThemeMode";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import { SITE_URL } from "@/lib/siteUrl";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
@@ -65,7 +60,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} h-full antialiased`}
+      className={`${geistMono.variable} ${playfair.variable} h-full antialiased`}
     >
       <body className="min-h-full">
         <ThemeModeProvider>
