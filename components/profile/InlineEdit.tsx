@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { IconPencil } from "@/components/icons";
 
 /*
@@ -18,6 +18,7 @@ export default function InlineEdit({
   multiline = false,
   textClassName = "",
   validate,
+  startEditingToken,
 }: {
   value: string;
   onChange: (v: string) => void;
@@ -28,6 +29,12 @@ export default function InlineEdit({
   textClassName?: string;
   /** Returns why the draft can't be saved, or null when it's fine. */
   validate?: (v: string) => string | null;
+  /**
+   * Bump this (e.g. a counter) to open editing from OUTSIDE — the profile's
+   * top-bar pencil edits name + bio together this way. Ignored on mount, so
+   * passing 0 doesn't open every field as soon as the page loads.
+   */
+  startEditingToken?: number;
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
@@ -39,6 +46,16 @@ export default function InlineEdit({
     setError(null);
     setEditing(true);
   };
+
+  const mounted = useRef(false);
+  useEffect(() => {
+    if (!mounted.current) {
+      mounted.current = true;
+      return;
+    }
+    if (startEditingToken !== undefined) start();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [startEditingToken]);
   /*
     A rejected draft stays open with the reason under it rather than being
     silently discarded — losing what someone typed is worse than the mistake.

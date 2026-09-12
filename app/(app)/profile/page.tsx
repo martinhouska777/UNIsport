@@ -22,7 +22,6 @@ import LogSessionSheet from "@/components/profile/LogSessionSheet";
 import PartnersSheet from "@/components/profile/PartnersSheet";
 import UpcomingSessions from "@/components/profile/UpcomingSessions";
 import PartnerRequests from "@/components/profile/PartnerRequests";
-import ShareInviteButton from "@/components/ShareInviteButton";
 import LeaderboardStrip from "@/components/leaderboards/LeaderboardStrip";
 import MemoriesStrip from "@/components/profile/MemoriesStrip";
 import PersonalRecords from "@/components/profile/PersonalRecords";
@@ -81,6 +80,8 @@ export default function ProfilePage() {
   // doesn't flash a starter card at someone who has trained all year.
   const [statsLoaded, setStatsLoaded] = useState(false);
   const [switchingMode, setSwitchingMode] = useState(false); // mode switcher sheet
+  // Bumped by the top-bar pencil to open name + bio editing together.
+  const [identityEditTick, setIdentityEditTick] = useState(0);
   /*
     WHICH WEEK / MONTH the calendar is showing. The anchor is any day inside it;
     the arrows and the swipe move it, and the fetch below follows — so paging
@@ -305,10 +306,18 @@ export default function ProfilePage() {
               {saveState === "saving" ? "Saving…" : saveState === "saved" ? "Saved ✓" : "Couldn’t save"}
             </span>
           )}
-          {/* Share is a small icon up here beside the cog, not a half-width
-              button competing with Log Session (real: an invite link,
-              lib/invite.ts). */}
-          <ShareInviteButton iconOnly />
+          {/* Inviting someone moved to Settings — this pencil is the one way
+              in to edit name + bio, opening both InlineEdit fields below via
+              startEditingToken rather than making people find the small
+              per-field pencils themselves. */}
+          <button
+            type="button"
+            onClick={() => setIdentityEditTick((t) => t + 1)}
+            aria-label="Edit name and bio"
+            className="tap44 press-icon flex items-center justify-center text-muted"
+          >
+            <IconPencil size={18} />
+          </button>
           <Link href="/settings" aria-label="Settings" className="text-muted">
             <IconSettings size={18} />
           </Link>
@@ -358,6 +367,7 @@ export default function ProfilePage() {
               /* The name everyone else sees — it has to be one (lib/onboarding). */
               validate={nameError}
               textClassName="text-[15px] font-medium text-text"
+              startEditingToken={identityEditTick}
             />
 
             <div className="mt-0.5 text-[11px] text-muted">
@@ -426,6 +436,7 @@ export default function ProfilePage() {
             maxLength={160}
             multiline
             textClassName="text-[12px] leading-relaxed text-muted"
+            startEditingToken={identityEditTick}
           />
         </div>
       </div>
@@ -479,10 +490,15 @@ export default function ProfilePage() {
             </p>
           </button>
         ) : (
-          /* data-tour: the Profile tour opens on this button (lib/tour.ts). */
-          <Button data-tour="profile-log" size="lg" full onClick={() => setLogging(true)}>
-            <IconPlus size={16} /> Log a session
-          </Button>
+          /* Smaller and left-aligned, not the full-width "lg" button — it was
+             reading as heavier than any other action on the page. Room stays
+             open to its right for whatever goes there next.
+             data-tour: the Profile tour opens on this button (lib/tour.ts). */
+          <div className="flex items-center gap-2">
+            <Button data-tour="profile-log" size="md" onClick={() => setLogging(true)}>
+              <IconPlus size={15} /> Log a session
+            </Button>
+          </div>
         )}
       </div>
 

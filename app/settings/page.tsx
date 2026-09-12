@@ -25,6 +25,8 @@ import type { OnboardingProfile } from "@/lib/onboarding";
 import PreferencesSheet from "@/components/profile/PreferencesSheet";
 import NotificationSettings from "@/components/profile/NotificationSettings";
 import { useMembership } from "@/components/varsity/useMembership";
+import ShareInviteButton from "@/components/ShareInviteButton";
+import { Toggle } from "@/components/onboarding/controls";
 import { useUnits } from "@/components/useUnits";
 import { distanceOptions, weightOptions } from "@/lib/varsity/units";
 import { profileFromOnboarding } from "@/lib/currentUser";
@@ -151,6 +153,11 @@ export default function SettingsPage() {
   const uni = getUniversity(universityKey);
   const theme = uni?.theme ?? neutralTheme;
   const user = data ? profileFromOnboarding(data) : null;
+  // trainingType already carries "solo" end-to-end (matching already excludes
+  // it, db/matching.sql) — this just gives it one obvious, standalone switch
+  // instead of leaving it buried inside "Edit answers → Train with". Default
+  // stays "either", so everyone is in Match unless they flip this themselves.
+  const trainsAlone = (data as Partial<OnboardingProfile> | null)?.trainingType === "solo";
 
   return (
     <ThemeProvider
@@ -199,6 +206,13 @@ export default function SettingsPage() {
             <span className="flex-1 text-sm text-text">Appearance</span>
             <span className="text-xs text-muted">{mode === "dark" ? "Dark" : "Light"}</span>
           </button>
+        </Section>
+
+        {/* Invite — moved off the profile top bar, where it was a small icon
+            competing for space with editing your name/bio. A full-width
+            button reads better as a deliberate action here than as an icon. */}
+        <Section title="Invite">
+          <ShareInviteButton label="Invite a friend" full size="lg" />
         </Section>
 
         {/*
@@ -333,6 +347,25 @@ export default function SettingsPage() {
               <p className="mt-2 px-1 text-[11px] text-muted">
                 All of this decides who you&apos;re matched with.
               </p>
+            </Section>
+
+            {/* Match — one standalone switch, not folded into a Training row,
+                because this is the one that removes you from Match entirely
+                rather than tuning who you're shown. Everyone starts included. */}
+            <Section title="Match">
+              <div className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-surface px-4 py-3">
+                <div className="min-w-0">
+                  <div className="text-sm text-text">Train alone</div>
+                  <div className="mt-0.5 text-[11px] text-muted">
+                    Hide me from Match — nobody can find or request to train with me.
+                  </div>
+                </div>
+                <Toggle
+                  on={trainsAlone}
+                  onChange={() => savePreferences({ trainingType: trainsAlone ? "either" : "solo" })}
+                  ariaLabel="Train alone — hide me from Match"
+                />
+              </div>
             </Section>
 
             <Section title="Your answers">
