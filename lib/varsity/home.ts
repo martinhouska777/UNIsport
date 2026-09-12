@@ -32,14 +32,21 @@ export type SessionKind = "ut2" | "ut1" | "hard" | "weights" | "flex" | "race" |
   day the training was for.
 */
 export const kindColor: Record<SessionKind, string> = {
-  ut2: "var(--success)",
+  // The two greens are a PAIR and are meant to be read as one: UT2 is the
+  // steady mileage the season is built on, and OFF is the rest that pays for
+  // it. Light green for the work, dark green for the rest — so a month of
+  // sensible training reads as one colour family at two weights, and the
+  // loud colours (amber, red) are only ever the hard days.
+  ut2: "#86efac",
   ut1: "#eab308",
   hard: "var(--danger)",
   weights: "#c084fc",
-  flex: "#ec4899",
+  // Grey: "flex" is the coach saying train how you like. It is the one kind
+  // that prescribes nothing, so it shouldn't wear a colour that competes with
+  // the kinds that do.
+  flex: "var(--muted)",
   race: "#3b82f6",
-  // Not in the legend (see below) — a rest day still needs SOMETHING to draw.
-  off: "var(--muted)",
+  off: "#15803d",
 };
 
 /** Solid edge — the 3px bar down the side of a session row. */

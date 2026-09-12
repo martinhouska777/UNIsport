@@ -26,8 +26,11 @@
     4. EVERY SESSION SAYS WHICH KIND IT WAS — the colour is the intensity, so
        water and erg are the same green and only the word tells them apart.
        The figures stay in the day sheet: a column is about 33px of text wide.
-    5. NO PAGE HEADER. The month is the title. The month's totals sit next to
-       it instead of in a bar at the bottom.
+    5. NO PAGE HEADER. The month is the title, and the colour key sits
+       directly under it — you need to know what the colours mean BEFORE you
+       read the grid, not after scrolling past it. The month's totals used to
+       hold that row; they were the same numbers the per-kind buttons under
+       the grid already give you, one kind at a time and tappable.
 
   The session blocks borrow the plan's own palette (`kindColor` in
   lib/varsity/home) rather than declaring one of their own, so a practice is the
@@ -40,7 +43,6 @@ import WorkoutDetail from "@/components/varsity/calendar/WorkoutDetail";
 import CategoryStatsSheet from "@/components/varsity/calendar/CategoryStatsSheet";
 import { useAppState } from "@/components/AppState";
 import { useUnits } from "@/components/useUnits";
-import { formatDistance } from "@/lib/varsity/units";
 import { fetchLogsInRange, type LogEntry } from "@/lib/varsity/logStore";
 import { fetchPlan } from "@/lib/varsity/planStore";
 import { kindOf } from "@/lib/varsity/athleteHome";
@@ -52,7 +54,6 @@ import {
   logCategoryLabel,
   logVolumeLabel,
   legendCategories,
-  rowingCategories,
 } from "@/lib/varsity/athleteProfile";
 import { IconArrowLeft, IconArrowRight, IconChevronRight } from "@/components/icons";
 
@@ -75,7 +76,8 @@ const colorOf = (category: string | null) => logCategoryColor[category ?? "other
 
   Water and erg are therefore NOT told apart by colour (the plan doesn't either
   — a UT2 outing and a UT2 erg are both green). Each block prints which it was,
-  and the legend at the bottom is still what the month's statistics hang off.
+  and the per-kind buttons under the grid are still what the month's
+  statistics hang off.
 
   A session logged outside the plan has no intensity to read. Weights, flex and
   off still land on the right colour from their category alone; anything else
@@ -226,11 +228,9 @@ export default function CalendarScreen() {
   }, [view, logsByDay, todayIso]);
 
   const leadingEmpty = (new Date(view.y, view.m, 1).getDay() + 6) % 7; // Monday-first
-  const monthSessions = logs.length;
-  const monthMetres = logs.reduce(
-    (sum, l) => sum + (rowingCategories.has(l.category ?? "") ? l.metres ?? 0 : 0),
-    0,
-  );
+  // The month's session count and metres rowed used to sit under the title.
+  // The colour key took that row: those two figures are the same ones the
+  // per-kind buttons under the grid already give you, one kind at a time.
   // How many sessions of each kind — shown on the legend so the colours carry a
   // number even before you tap one.
   const monthCounts = useMemo(() => {
@@ -264,24 +264,6 @@ export default function CalendarScreen() {
             <h1 className="text-lg font-semibold leading-none text-text">{MONTHS[view.m]}</h1>
             <span className="text-[12px] font-medium text-muted">{view.y}</span>
           </div>
-          <div className="mt-0.5 text-[11px] text-muted">
-            {monthSessions === 0 ? (
-              "Nothing logged yet"
-            ) : (
-              <>
-                <span className="font-semibold text-text">{monthSessions}</span> sessions
-                {monthMetres > 0 && (
-                  <>
-                    {" · "}
-                    <span className="font-semibold text-text">
-                      {formatDistance(monthMetres, units.distance)}
-                    </span>{" "}
-                    rowed
-                  </>
-                )}
-              </>
-            )}
-          </div>
         </div>
         <div className="flex gap-1.5">
           <button
@@ -302,6 +284,21 @@ export default function CalendarScreen() {
             <IconArrowRight size={14} />
           </button>
         </div>
+      </div>
+
+      {/* WHAT THE COLOURS MEAN, directly under the month — the key you need
+          BEFORE you read the grid, not after it. It used to sit at the very
+          bottom, under the month and the per-kind totals, which is the last
+          place you reach. It takes the row the month's "31 sessions · 351 km
+          rowed" had: those totals are the same numbers the per-kind buttons
+          below the grid already carry, one kind at a time and tappable. */}
+      <div className="mt-1.5 flex flex-shrink-0 flex-wrap items-center gap-x-3 gap-y-1 px-1.5">
+        {kindLegend.map((l) => (
+          <span key={l.kind} className="flex items-center gap-1 text-[11px] text-muted">
+            <span className="h-1.5 w-3 rounded-sm" style={kindBar(l.kind)} />
+            {l.label}
+          </span>
+        ))}
       </div>
 
       {/* Weekday header */}
@@ -431,18 +428,6 @@ export default function CalendarScreen() {
             </button>
           );
         })}
-      </div>
-
-      {/* What the colours mean — the plan's own legend, drawn from the same
-          data, so the two month views can never explain themselves
-          differently. */}
-      <div className="mt-3 flex flex-shrink-0 flex-wrap items-center gap-x-3 gap-y-1 border-t border-border px-1 pt-2.5">
-        {kindLegend.map((l) => (
-          <span key={l.kind} className="flex items-center gap-1 text-[11px] text-muted">
-            <span className="h-1.5 w-3 rounded-sm" style={kindBar(l.kind)} />
-            {l.label}
-          </span>
-        ))}
       </div>
 
       {/* The month by kind of training — the axis the colours no longer carry.

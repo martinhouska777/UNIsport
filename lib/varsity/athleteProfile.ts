@@ -36,10 +36,10 @@ export type BoatRole = (typeof boatRoleOptions)[number];
   just gives the ATHLETE a way to answer it about themselves instead of leaving
   the coach to set thirty of them by hand.
 
-  ONE name per side, taken straight from sideMeta: Stroke, Bow, Both — reverted
-  back to this (from Port/Starboard) on the owner's later instruction. An
-  athlete answering this should read the same word here that the coach reads
-  on the roster and on the seat in the boat.
+  ONE name per side, taken straight from sideMeta: Port, Starboard, Both. An
+  athlete answering this reads the same word here that the coach reads on the
+  roster and on the seat in the boat — and the same colour, since the roster
+  now draws the blade colours again rather than one blue for everybody.
 */
 export const sideOptions: { key: Side; label: string }[] = [
   { key: "P", label: sideMeta.P.label },
@@ -119,8 +119,8 @@ const trimNum = (v: number) => (Number.isInteger(v) ? String(v) : v.toFixed(1));
 
   Rowing is measured in metres and spoken in k ("6k", "7.5k"). Everything else
   is measured in minutes. A run logged with a distance instead gets kilometres,
-  because that is how a run is talked about. Anything logged with no figures at
-  all falls back to the category word, so a cell is never left blank.
+  because that is how a run is talked about. A rest day, a lifting session and
+  anything logged with no figures get NO second line at all — see below.
 
   Kept SHORT on purpose: the column is about 33px of text, so "Water · 16k"
   truncates to "Wate…" and loses the number it was there for.
@@ -131,10 +131,25 @@ export function logVolumeLabel(
   minutes: number | null,
 ): string {
   const key = category ?? "other";
+  /*
+    SOME KINDS GET NO SECOND LINE AT ALL.
+
+    A rest day is not a quantity — "Off" under a block that already says Off
+    was the word twice in a cell 33px wide. And a lifting session's minutes
+    are the least interesting thing about it (the lifts and the weights are,
+    and those are in the day sheet): it was printing "60 min" where the erg
+    beside it printed the metres that actually say how big the session was.
+  */
+  if (key === "off" || key === "weights") return "";
   if (rowingCategories.has(key) && metres) return `${trimNum(metres / 1000)}k`;
   if (minutes) return `${minutes} min`;
   if (metres) return `${trimNum(metres / 1000)} km`;
-  return logCategoryLabel[key] ?? "";
+  /*
+    No figures logged: say NOTHING rather than falling back to the category
+    word. The title directly above is already that word, so the fallback only
+    ever produced "Erg" under "Erg" — the duplicate it was meant to avoid.
+  */
+  return "";
 }
 
 // What the profile's graph charts before anyone touches the arrows on it.

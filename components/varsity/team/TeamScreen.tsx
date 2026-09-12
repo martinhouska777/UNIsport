@@ -44,22 +44,6 @@ const sideDot = (a: Athlete): React.CSSProperties => {
   return { background: color, border: `1px solid color-mix(in oklab, ${ink} 30%, transparent)` };
 };
 const sideLabel = (a: Athlete) => (a.cox ? "Cox" : sideMeta[a.side].label);
-/*
-  The roster row's OWN dot — P and S read blue here, same as Both, rather than
-  the oar-blade red/green. That split earns its keep in the Lineup Builder
-  (which side a rower can take is a real seating constraint); on a plain
-  roster it was just noise, so this list gets one colour for "on a side" and
-  leaves sideDot() (still red/green) for the seat-picking screens.
-*/
-const rosterSideDot = (a: Athlete): React.CSSProperties => {
-  if (a.cox) {
-    return { background: COX_COLOR, border: `1px solid color-mix(in oklab, ${COX_INK} 30%, transparent)` };
-  }
-  return {
-    background: sideMeta.B.color,
-    border: `1px solid color-mix(in oklab, ${sideMeta.B.ink} 30%, transparent)`,
-  };
-};
 
 /* ─────────────────────────  athlete profile sheet  ───────────────────────── */
 /*
@@ -180,7 +164,7 @@ function RosterRow({
       </span>
       <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-text">{a.name}</span>
       <span className="flex items-center gap-1 text-[11px] text-muted">
-        <span className="h-2 w-2 rounded-full" style={rosterSideDot(a)} />
+        <span className="h-2 w-2 rounded-full" style={sideDot(a)} />
         {sideLabel(a)}
       </span>
       <span className="text-muted">

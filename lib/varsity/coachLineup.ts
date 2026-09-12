@@ -40,16 +40,20 @@ export type Side = "P" | "S" | "B"; // port · starboard · both (bisweptual)
   The owner's call: P, S, B in the console.
 */
 /*
-  REVERTED on the owner's own later instruction — back to "Stroke" / "Bow"
-  (P / S kept their letters; only the label text changes). Colors and tags are
-  untouched: the Lineup Builder still paints port red / starboard green on the
-  oar blades, which is functional there (a coach reads side at a glance when
-  seating a boat), not just decorative — only the roster list's own dot is
-  unified to blue, done locally in TeamScreen.tsx rather than here.
+  PORT / STARBOARD / BOTH. This wording has now been round the houses twice —
+  Port/Starboard, then Stroke/Bow, and back again on the owner's instruction.
+  It stays here because it is the SIDE OF THE BOAT, which is what the blade
+  colour, the seat marker and the athlete's own answer all mean; stroke side
+  and bow side are the British dialect for the same two things.
+
+  The colours are the painted blades and are used everywhere the side is
+  shown, the Team roster included — red port, green starboard, blue for a
+  rower who takes either. (The roster briefly drew all three blue; one colour
+  for "on a side" threw away the only thing the dot was there to say.)
 */
 export const sideMeta: Record<Side, { label: string; tag: string; color: string; ink: string }> = {
-  P: { label: "Stroke", tag: "P", color: "#d93025", ink: "#ffffff" },
-  S: { label: "Bow", tag: "S", color: "#1e8e3e", ink: "#ffffff" },
+  P: { label: "Port", tag: "P", color: "#d93025", ink: "#ffffff" },
+  S: { label: "Starboard", tag: "S", color: "#1e8e3e", ink: "#ffffff" },
   B: { label: "Both", tag: "B", color: "#2563eb", ink: "#ffffff" },
 };
 
