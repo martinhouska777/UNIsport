@@ -97,8 +97,13 @@ export default function HonorCode({
   const signed = name.trim().length > 0;
 
   return (
-    <div className="mx-auto w-full max-w-screen-sm px-3.5 py-8">
-      <div className="rounded-2xl border border-border bg-surface px-4 py-6">
+    /*
+      The card is the whole screen, not a box floating in the middle of it: it
+      reaches the bottom, and the signature sits down there where a signature
+      goes — under the text, at the foot of the page.
+    */
+    <div className="mx-auto flex min-h-full w-full max-w-screen-sm flex-col px-3.5 py-8">
+      <div className="flex flex-1 flex-col rounded-2xl border border-border bg-surface px-4 py-6">
         <h1 className="text-center text-[17px] font-semibold leading-snug text-text">
           {code.title}
         </h1>
@@ -111,20 +116,23 @@ export default function HonorCode({
         ))}
 
         {/* The signature: a name written on a line. 16px so phones don't zoom. */}
-        <input
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder={code.signature}
-          aria-label="Signature"
-          autoComplete="name"
-          maxLength={60}
-          className="mt-6 w-full border-b border-border bg-transparent px-1 pb-2 text-center text-base italic text-text placeholder:not-italic placeholder:text-muted focus:border-primary focus:outline-none"
-        />
+        <div className="mt-auto pt-8">
+          <p className="text-center text-[13px] leading-relaxed text-text-2">{code.sign}</p>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder={code.signature}
+            aria-label="Signature"
+            autoComplete="name"
+            maxLength={60}
+            className="mt-3 w-full border-b border-border bg-transparent px-1 pb-2 text-center text-base italic text-text placeholder:not-italic placeholder:text-muted focus:border-primary focus:outline-none"
+          />
 
-        <Button size="md" className="mt-4 w-full" onClick={onAgree} disabled={!signed}>
-          {code.agree}
-        </Button>
+          <Button size="md" className="mt-4 w-full" onClick={onAgree} disabled={!signed}>
+            {code.agree}
+          </Button>
+        </div>
       </div>
     </div>
   );

@@ -9,9 +9,13 @@
   Monday on its own), with YOUR real count against it from db/events.sql and
   when it closes. Finishing it pays the bonus points the event names.
 
-  On the Profile tab it sits with the leaderboard line; on Leaderboards it is
-  the first thing under the header. Same component, so the two can never
-  disagree. Hides itself when there is no database to count from.
+  On the Profile tab it sits with the leaderboard line; on the Leaderboards'
+  Rankings tab it is the challenge above the board. Same component, so the two
+  can never disagree. Hides itself when there is no database to count from.
+
+  The ROW itself is exported as `EventLine`, because the monthly challenges on
+  the Events tab are the same thing at a month's scale and should not be a
+  second drawing of it (components/leaderboards/MonthChallenges.tsx).
   Colours are theme tokens.
 */
 import { useEffect, useState } from "react";
@@ -26,26 +30,26 @@ import {
   bestRoute,
   partTarget,
   type EventCounts,
+  type SportEvent,
 } from "@/lib/events";
 import { fetchMyEventCounts } from "@/lib/supabase/events";
 
-export default function WeekEventLine({ compact = false }: { compact?: boolean }) {
-  const { userId } = useAppState();
-  const event = weeklyEventNow();
-  const [counts, setCounts] = useState<EventCounts | null | undefined>(undefined);
-
-  useEffect(() => {
-    let active = true;
-    fetchMyEventCounts(weekStartIso())
-      .then((c) => active && setCounts(c))
-      .catch(() => active && setCounts(null));
-    return () => {
-      active = false;
-    };
-  }, [userId]);
-
-  // undefined = still counting; null = no database → nothing to show honestly.
-  if (counts === null) return null;
+/**
+ * One event as a line: what it asks, how far along you are, when it closes.
+ * `counts` is undefined while it is still being counted.
+ */
+export function EventLine({
+  event,
+  counts,
+  ends,
+  compact = false,
+}: {
+  event: SportEvent;
+  counts: EventCounts | undefined;
+  /** "ends Sunday" / "ends on the 30th" — the window this event closes at. */
+  ends: string;
+  compact?: boolean;
+}) {
   const have = counts ?? {};
   const route = bestRoute(event, have);
   const done = eventDone(event, have);
@@ -71,7 +75,7 @@ export default function WeekEventLine({ compact = false }: { compact?: boolean }
         <div className="flex items-baseline gap-1.5 text-[13px]">
           <span className="truncate font-medium text-text">{event.title}</span>
           <span className="flex-shrink-0 tabular-nums text-muted">
-            · {counts === undefined ? "…" : tally} · {done ? `done · +${event.points} pts` : weekEndsLabel()}
+            · {counts === undefined ? "…" : tally} · {done ? `done · +${event.points} pts` : ends}
           </span>
         </div>
         <div className="mt-1 h-1 overflow-hidden rounded-sm bg-border">
@@ -84,4 +88,25 @@ export default function WeekEventLine({ compact = false }: { compact?: boolean }
       </div>
     </div>
   );
+}
+
+export default function WeekEventLine({ compact = false }: { compact?: boolean }) {
+  const { userId } = useAppState();
+  const event = weeklyEventNow();
+  const [counts, setCounts] = useState<EventCounts | null | undefined>(undefined);
+
+  useEffect(() => {
+    let active = true;
+    fetchMyEventCounts(weekStartIso())
+      .then((c) => active && setCounts(c))
+      .catch(() => active && setCounts(null));
+    return () => {
+      active = false;
+    };
+  }, [userId]);
+
+  // undefined = still counting; null = no database → nothing to show honestly.
+  if (counts === null) return null;
+
+  return <EventLine event={event} counts={counts} ends={weekEndsLabel()} compact={compact} />;
 }

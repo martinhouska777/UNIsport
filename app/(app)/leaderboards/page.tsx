@@ -3,6 +3,13 @@
 /*
   LEADERBOARDS — reached from the strip on the Profile tab.
   ---------------------------------------------------------------------------
+  TWO TABS. Everything with a deadline that isn't only about you moved to
+  EVENTS — the interhouse race and the month's two special challenges — and
+  RANKINGS keeps your standing, this week's challenge and the board itself.
+  The race is a tall card and it used to sit directly on top of the Houses
+  board, which meant the leaderboard the screen is named after opened below the
+  fold. One tap now, and the board starts where the screen does.
+
   TWO CONTROLS, NOT EIGHT. This screen used to carry three period buttons and
   five board pills in two stacked rows — eleven tap targets before a single
   name. Now there are two dropdowns that SAY what they are showing
@@ -77,11 +84,13 @@ import HonorCode, { HonorCodeFooter, useHonorCode } from "@/components/leaderboa
 import GroupSheet from "@/components/leaderboards/GroupSheet";
 import HouseRace from "@/components/leaderboards/HouseRace";
 import WeekEventLine from "@/components/leaderboards/WeekEventLine";
+import MonthChallenges from "@/components/leaderboards/MonthChallenges";
 import ShareInviteButton from "@/components/ShareInviteButton";
 import Podium, { type PodiumEntry } from "@/components/leaderboards/Podium";
 import Medal from "@/components/leaderboards/Medal";
 import ScoringSheet from "@/components/leaderboards/ScoringSheet";
 import OptionPickerSheet from "@/components/profile/OptionPickerSheet";
+import SectionLabel from "@/components/ui/SectionLabel";
 import { houses, residenceLabel, yardDorms } from "@/lib/onboarding";
 import { pointsLabel, sessionsOf } from "@/lib/points";
 import {
@@ -106,6 +115,9 @@ import {
 /* ──────────────────  the competitions, as data  ────────────────── */
 
 type CompetitionKey = "houses" | "dorms" | "everyone" | "partners" | "years";
+
+/** Which half of the screen you are on. */
+type TabKey = "rankings" | "events";
 
 type Competition = {
   key: CompetitionKey;
@@ -217,6 +229,38 @@ function MetricSwitch({
           }`}
         >
           {m.short}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/* THE TWO TABS. Rankings is the boards and the challenge you are on this week;
+   Events is everything with a deadline that isn't just you — the interhouse
+   race and the month's special challenges. They used to be stacked on one
+   screen, which pushed the leaderboard itself below the fold. */
+const TABS: { key: TabKey; label: string }[] = [
+  { key: "rankings", label: "Rankings" },
+  { key: "events", label: "Events" },
+];
+
+function TabBar({ value, onPick }: { value: TabKey; onPick: (t: TabKey) => void }) {
+  return (
+    <div role="tablist" aria-label="Leaderboards" className="flex gap-5 px-3.5">
+      {TABS.map((t) => (
+        <button
+          key={t.key}
+          type="button"
+          role="tab"
+          aria-selected={value === t.key}
+          onClick={() => onPick(t.key)}
+          className={`tap44 -mb-px border-b-2 py-2.5 text-[13px] font-medium transition-colors ${
+            value === t.key
+              ? "border-primary text-text"
+              : "border-transparent text-muted"
+          }`}
+        >
+          {t.label}
         </button>
       ))}
     </div>
@@ -420,6 +464,7 @@ export default function LeaderboardsPage() {
   const { userId, universityKey } = useAppState();
   const { accepted, accept } = useHonorCode(userId);
 
+  const [tab, setTab] = useState<TabKey>("rankings");
   const [period, setPeriod] = useState<Period>("month");
   const [competition, setCompetition] = useState<CompetitionKey>("houses");
   /*
@@ -582,187 +627,204 @@ export default function LeaderboardsPage() {
   return (
     <div className="mx-auto w-full max-w-screen-sm pb-10">
       {/* Reached from the strip on the Profile tab, so it pushes and pops. */}
-      <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-surface px-3 py-3">
-        <button type="button" aria-label="Back" onClick={() => router.back()} className="text-muted">
-          <IconArrowLeft size={18} />
-        </button>
-        <span className="text-sm font-medium text-text">Leaderboards</span>
-        <button
-          type="button"
-          onClick={() => setExplaining(true)}
-          aria-label="How points work"
-          className="tap44 press-icon flex h-7 w-7 items-center justify-center rounded-full bg-surface-2 text-muted"
-        >
-          <IconInfo size={14} />
-        </button>
-      </div>
-
-      {/* THIS WEEK'S EVENT — the first thing on the boards: a task with a
-          deadline, not a standing. The interhouse race's gate (the card above
-          the Houses board) is the same machinery at the house's scale. */}
-      <div className="border-b border-border px-3.5 pt-3">
-        <WeekEventLine />
-      </div>
-
-      {/* Your standing */}
-      <div className="border-b border-border px-3.5 py-3">
-        <div className="rounded-2xl border border-border bg-surface-2 px-3.5 py-3">
-          <div className="flex items-center gap-2.5">
-            <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-accent-tint text-accent">
-              <IconTrophy size={16} />
-            </span>
-            <div className="min-w-0 flex-1">
-              <div className="text-[13px] font-semibold text-text">
-                {standing && standing.points > 0
-                  ? pointsLabel(standing.points)
-                  : "Not on the board yet"}
-              </div>
-              <div className="mt-0.5 text-[11px] text-muted">
-                {standing && standing.points > 0
-                  ? [
-                      standing.campusRank
-                        ? `${ordinal(standing.campusRank)} of ${standing.campusTotal} on campus`
-                        : "",
-                      plural(standing.sessions, "session"),
-                      standing.kinds.newPartner > 0
-                        ? `${standing.kinds.newPartner} with someone new`
-                        : "",
-                    ]
-                      .filter(Boolean)
-                      .join(" · ")
-                  : "Log a session and you're on it."}
-              </div>
-            </div>
-          </div>
-
-          {/* The single most useful line on the screen. */}
-          {nudge && (
-            <div className="mt-2.5 rounded-xl border border-primary-line bg-primary-tint px-3 py-2 text-[11px] font-medium text-primary">
-              {nudge}
-            </div>
-          )}
-
-          {standing?.residence && (
-            <div className="mt-2.5 grid grid-cols-2 gap-1.5">
-              <div className="rounded-xl border border-border bg-surface px-3 py-2">
-                <div className="text-[13px] font-semibold text-text">
-                  {standing.houseRankIn ? ordinal(standing.houseRankIn) : "—"}
-                </div>
-                <div className="mt-0.5 text-[11px] uppercase tracking-[0.08em] text-muted">
-                  in {residenceLabel(standing.residence)}
-                </div>
-              </div>
-              <div className="rounded-xl border border-border bg-surface px-3 py-2">
-                <div className="text-[13px] font-semibold text-text">
-                  {standing.houseRank ? `#${standing.houseRank} of ${standing.houseTotal}` : "—"}
-                </div>
-                <div className="mt-0.5 text-[11px] uppercase tracking-[0.08em] text-muted">
-                  {residenceLabel(standing.residence)} overall
-                </div>
-              </div>
-            </div>
-          )}
+      <div className="sticky top-0 z-10 border-b border-border bg-surface">
+        <div className="flex items-center justify-between px-3 py-3">
+          <button type="button" aria-label="Back" onClick={() => router.back()} className="text-muted">
+            <IconArrowLeft size={18} />
+          </button>
+          <span className="text-sm font-medium text-text">Leaderboards</span>
+          <button
+            type="button"
+            onClick={() => setExplaining(true)}
+            aria-label="How points work"
+            className="tap44 press-icon flex h-7 w-7 items-center justify-center rounded-full bg-surface-2 text-muted"
+          >
+            <IconInfo size={14} />
+          </button>
         </div>
+        <TabBar value={tab} onPick={setTab} />
       </div>
 
-      {/* The two controls. */}
-      <div className="border-b border-border px-3.5 py-2.5">
-        <div className="flex gap-2">
-          <Picker
-            caption="Competition"
-            value={def.label}
-            onOpen={() => setPicking("competition")}
-          />
-          <Picker
-            caption="Period"
-            value={PERIODS.find((p) => p.key === period)?.label ?? ""}
-            onOpen={() => setPicking("period")}
-          />
+      {tab === "events" ? (
+        <div className="flex flex-col gap-5 px-3.5 py-4">
+          {/* THE INTERHOUSE RACE. It used to sit on top of the Houses board,
+              where it pushed the board itself off the screen. It says what it
+              is on its own, so it needs no heading here. */}
+          <HouseRace renderShare={(houseKey) => <ShareInviteButton iconOnly residence={houseKey} />} />
+
+          {/* THE MONTH'S SPECIAL CHALLENGES — two personal ones, changing on
+              the 1st. The weekly challenge stays on Rankings, next to the
+              board it pays into. */}
+          <div>
+            <SectionLabel>Special challenges</SectionLabel>
+            <p className="mt-1 mb-2 text-[11px] leading-relaxed text-muted">
+              Two of them a month, for you rather than your house. Finish one and the points are yours.
+            </p>
+            <MonthChallenges />
+          </div>
         </div>
-      </div>
+      ) : (
+        <>
+          {/* Your standing */}
+          <div className="border-b border-border px-3.5 py-3">
+            <div className="rounded-2xl border border-border bg-surface-2 px-3.5 py-3">
+              <div className="flex items-center gap-2.5">
+                <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-accent-tint text-accent">
+                  <IconTrophy size={16} />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="text-[13px] font-semibold text-text">
+                    {standing && standing.points > 0
+                      ? pointsLabel(standing.points)
+                      : "Not on the board yet"}
+                  </div>
+                  <div className="mt-0.5 text-[11px] text-muted">
+                    {standing && standing.points > 0
+                      ? [
+                          standing.campusRank
+                            ? `${ordinal(standing.campusRank)} of ${standing.campusTotal} on campus`
+                            : "",
+                          plural(standing.sessions, "session"),
+                          standing.kinds.newPartner > 0
+                            ? `${standing.kinds.newPartner} with someone new`
+                            : "",
+                        ]
+                          .filter(Boolean)
+                          .join(" · ")
+                      : "Log a session and you're on it."}
+                  </div>
+                </div>
+              </div>
 
-      {/* The board */}
-      <div className="px-3.5 pt-3">
-        {/* THE RACE, above the Houses board: this month's interhouse event,
-            who is in, and — for the houses that aren't — exactly how many more
-            active people would put them in (the one minimum left anywhere). */}
-        {competition === "houses" && (
-          <div className="mb-3">
-            <HouseRace renderShare={(houseKey) => <ShareInviteButton iconOnly residence={houseKey} />} />
-          </div>
-        )}
-        {/* On a team board the switch above the words is what the words are
-            about, so it goes first and the line under it explains the choice
-            that is currently made. */}
-        {isGroupBoard && (
-          <div className="mb-2">
-            <MetricSwitch value={metric} onPick={setMetric} />
-          </div>
-        )}
-        <p className="text-[11px] leading-relaxed text-muted">
-          {def.blurb}
-          {isGroupBoard && ` ${METRIC_BLURB[metric]}`}
-        </p>
-
-        {loading ? (
-          <div className="px-4 py-16 text-center text-[12px] text-muted">Counting…</div>
-        ) : isGroupBoard ? (
-          groups.length === 0 ? (
-            <div className="mt-3 rounded-xl border border-dashed border-border bg-surface px-4 py-10 text-center text-[12px] text-muted">
-              {def.empty}
-            </div>
-          ) : (
-            <>
-              {podium.length > 0 ? (
-                <Podium entries={podium} />
-              ) : (
-                <div className="mt-3 rounded-xl border border-dashed border-border bg-surface px-4 py-6 text-center text-[12px] text-muted">
-                  Nobody has logged a session this period. The first one puts a{" "}
-                  {groupKind === "year" ? "year" : "house"} on the podium.
+              {/* The single most useful line on the screen. */}
+              {nudge && (
+                <div className="mt-2.5 rounded-xl border border-primary-line bg-primary-tint px-3 py-2 text-[11px] font-medium text-primary">
+                  {nudge}
                 </div>
               )}
-              {listGroups.length > 0 && (
-                <div className="mt-2.5 flex flex-col gap-1.5">
-                  {listGroups.map((g) => (
-                    <GroupRowItem
-                      key={g.key}
-                      row={g}
-                      kind={groupKind}
-                      metric={metric}
-                      onOpen={groupKind === "year" || nobodyYet(g) ? undefined : () => setOpenGroup(g)}
-                    />
-                  ))}
+
+              {standing?.residence && (
+                <div className="mt-2.5 grid grid-cols-2 gap-1.5">
+                  <div className="rounded-xl border border-border bg-surface px-3 py-2">
+                    <div className="text-[13px] font-semibold text-text">
+                      {standing.houseRankIn ? ordinal(standing.houseRankIn) : "—"}
+                    </div>
+                    <div className="mt-0.5 text-[11px] uppercase tracking-[0.08em] text-muted">
+                      in {residenceLabel(standing.residence)}
+                    </div>
+                  </div>
+                  <div className="rounded-xl border border-border bg-surface px-3 py-2">
+                    <div className="text-[13px] font-semibold text-text">
+                      {standing.houseRank ? `#${standing.houseRank} of ${standing.houseTotal}` : "—"}
+                    </div>
+                    <div className="mt-0.5 text-[11px] uppercase tracking-[0.08em] text-muted">
+                      {residenceLabel(standing.residence)} overall
+                    </div>
+                  </div>
                 </div>
               )}
-            </>
-          )
-        ) : people.length === 0 ? (
-          <div className="mt-3 rounded-xl border border-dashed border-border bg-surface px-4 py-10 text-center text-[12px] text-muted">
-            {def.empty}
+            </div>
           </div>
-        ) : (
-          <>
-            <Podium entries={podium} />
-            {people.length > 3 && (
-              <div className="mt-2.5 flex flex-col gap-1.5">
-                {people.slice(3).map((r) => (
-                  <PersonRow
-                    key={r.userId}
-                    row={r}
-                    competition={competition}
-                    onOpen={() => openPerson(r)}
-                  />
-                ))}
+
+          {/* THIS WEEK'S CHALLENGE — a task with a deadline, right above the board
+              it pays into. The interhouse race is the same machinery at a house's
+              scale, and it lives on the Events tab. */}
+          <div className="border-b border-border px-3.5 py-3">
+            <WeekEventLine />
+          </div>
+
+          {/* The two controls. */}
+          <div className="border-b border-border px-3.5 py-2.5">
+            <div className="flex gap-2">
+              <Picker
+                caption="Competition"
+                value={def.label}
+                onOpen={() => setPicking("competition")}
+              />
+              <Picker
+                caption="Period"
+                value={PERIODS.find((p) => p.key === period)?.label ?? ""}
+                onOpen={() => setPicking("period")}
+              />
+            </div>
+          </div>
+
+          {/* The board */}
+          <div className="px-3.5 pt-3">
+            {/* On a team board the switch above the words is what the words are
+                about, so it goes first and the line under it explains the choice
+                that is currently made. */}
+            {isGroupBoard && (
+              <div className="mb-2">
+                <MetricSwitch value={metric} onPick={setMetric} />
               </div>
             )}
-            <div className="mt-2.5 px-0.5 text-[11px] text-muted">
-              {competition === "partners"
-                ? `${plural(people[0].score, "partner")} leads`
-                : `Top ${people.length}`}
-            </div>
-          </>
-        )}
-      </div>
+            <p className="text-[11px] leading-relaxed text-muted">
+              {def.blurb}
+              {isGroupBoard && ` ${METRIC_BLURB[metric]}`}
+            </p>
+
+            {loading ? (
+              <div className="px-4 py-16 text-center text-[12px] text-muted">Counting…</div>
+            ) : isGroupBoard ? (
+              groups.length === 0 ? (
+                <div className="mt-3 rounded-xl border border-dashed border-border bg-surface px-4 py-10 text-center text-[12px] text-muted">
+                  {def.empty}
+                </div>
+              ) : (
+                <>
+                  {podium.length > 0 ? (
+                    <Podium entries={podium} />
+                  ) : (
+                    <div className="mt-3 rounded-xl border border-dashed border-border bg-surface px-4 py-6 text-center text-[12px] text-muted">
+                      Nobody has logged a session this period. The first one puts a{" "}
+                      {groupKind === "year" ? "year" : "house"} on the podium.
+                    </div>
+                  )}
+                  {listGroups.length > 0 && (
+                    <div className="mt-2.5 flex flex-col gap-1.5">
+                      {listGroups.map((g) => (
+                        <GroupRowItem
+                          key={g.key}
+                          row={g}
+                          kind={groupKind}
+                          metric={metric}
+                          onOpen={groupKind === "year" || nobodyYet(g) ? undefined : () => setOpenGroup(g)}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </>
+              )
+            ) : people.length === 0 ? (
+              <div className="mt-3 rounded-xl border border-dashed border-border bg-surface px-4 py-10 text-center text-[12px] text-muted">
+                {def.empty}
+              </div>
+            ) : (
+              <>
+                <Podium entries={podium} />
+                {people.length > 3 && (
+                  <div className="mt-2.5 flex flex-col gap-1.5">
+                    {people.slice(3).map((r) => (
+                      <PersonRow
+                        key={r.userId}
+                        row={r}
+                        competition={competition}
+                        onOpen={() => openPerson(r)}
+                      />
+                    ))}
+                  </div>
+                )}
+                <div className="mt-2.5 px-0.5 text-[11px] text-muted">
+                  {competition === "partners"
+                    ? `${plural(people[0].score, "partner")} leads`
+                    : `Top ${people.length}`}
+                </div>
+              </>
+            )}
+          </div>
+        </>
+      )}
 
       <div className="mt-4 px-3.5">
         <HonorCodeFooter universityKey={universityKey} />
