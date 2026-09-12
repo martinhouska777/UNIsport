@@ -533,9 +533,14 @@ export default function ProfilePage() {
         user.concentration ||
         user.hometownCity ||
         user.hometownCountry) && (
-        <div className="border-b border-border px-3.5 py-3">
-          {/* No "About you" label — "More about you" right above already says it. */}
-          <div className="mb-2 flex items-center justify-end">
+        <div className="border-b border-border px-3.5 pb-3 pt-1.5">
+          {/* No "About you" label — "More about you" right above already says it.
+              The Edit pencil SHARES the first line with the Interests heading; on
+              a row of its own it left an empty band under "More about you". */}
+          <div className="mb-1.5 flex items-center justify-between gap-2">
+            <span className="text-[11px] text-muted">
+              {user.interests.length > 0 ? "Interests" : ""}
+            </span>
             <button
               type="button"
               onClick={() => setEditingPrefs(true)}
@@ -547,18 +552,15 @@ export default function ProfilePage() {
           </div>
 
           {user.interests.length > 0 && (
-            <div>
-              <div className="mb-1.5 text-[11px] text-muted">Interests</div>
-              <div className="flex flex-wrap gap-1.5">
-                {user.interests.map((i) => (
-                  <span
-                    key={i}
-                    className="rounded-full border border-accent bg-accent-tint px-2.5 py-1 text-[11px] text-accent"
-                  >
-                    {i}
-                  </span>
-                ))}
-              </div>
+            <div className="flex flex-wrap gap-1.5">
+              {user.interests.map((i) => (
+                <span
+                  key={i}
+                  className="rounded-full border border-accent bg-accent-tint px-2.5 py-1 text-[11px] text-accent"
+                >
+                  {i}
+                </span>
+              ))}
             </div>
           )}
 
@@ -578,32 +580,31 @@ export default function ProfilePage() {
             </div>
           )}
 
-          {/* WHAT YOU STUDY AND WHERE YOU'RE FROM — the other two things
-              somebody opens a profile to find out, and until now the only
-              place they existed was inside onboarding. Rows rather than
-              chips: there is one of each, and a lone chip reads as a filter.
+          {/* WHAT YOU STUDY — a chip, the same pill as Interests and Languages
+              above it, rather than the label-and-value row it used to be. */}
+          {user.concentration && (
+            <div className="mt-2.5">
+              <div className="mb-1.5 text-[11px] text-muted">Concentration</div>
+              <div className="flex flex-wrap gap-1.5">
+                <span className="rounded-full border border-border bg-surface-2 px-2.5 py-1 text-[11px] text-text">
+                  {user.concentration}
+                </span>
+              </div>
+            </div>
+          )}
 
+          {/* WHERE YOU'RE FROM stays a row: it is one line of prose, not a tag.
               The hometown leads with the CITY. On a campus where most of the
               list answers "United States", the country on its own says almost
               nothing — "New York" is the half that gets recognised. */}
-          {(user.concentration || user.hometownCity || user.hometownCountry) && (
-            <div className="mt-2.5 flex flex-col divide-y divide-border border-t border-border pt-1">
-              {user.concentration && (
-                <div className="flex items-center justify-between gap-3 py-2">
-                  <span className="text-[11px] text-muted">Concentration</span>
-                  <span className="text-right text-[11px] font-medium text-text">
-                    {user.concentration}
-                  </span>
-                </div>
-              )}
-              {(user.hometownCity || user.hometownCountry) && (
-                <div className="flex items-center justify-between gap-3 py-2">
-                  <span className="text-[11px] text-muted">From</span>
-                  <span className="text-right text-[11px] font-medium text-text">
-                    {hometownLabel(user.hometownCity, user.hometownCountry)}
-                  </span>
-                </div>
-              )}
+          {(user.hometownCity || user.hometownCountry) && (
+            <div className="mt-2.5 border-t border-border pt-1">
+              <div className="flex items-center justify-between gap-3 py-2">
+                <span className="text-[11px] text-muted">From</span>
+                <span className="text-right text-[11px] font-medium text-text">
+                  {hometownLabel(user.hometownCity, user.hometownCountry)}
+                </span>
+              </div>
             </div>
           )}
         </div>
