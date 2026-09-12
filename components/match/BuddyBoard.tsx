@@ -71,11 +71,19 @@ function Status({ children }: { children: React.ReactNode }) {
 
 export default function BuddyBoard({
   initialGym = null,
+  searchAction = null,
+  hideActions = false,
 }: {
   /* Arriving from a gym's "See who else is going": the board opens already
      narrowed to that gym. Only names the app knows are accepted (the Match
      page checks) — never arbitrary URL text. */
   initialGym?: string | null;
+  /* "Search by time", handed down from the Match page so it can sit BESIDE the
+     post button on one line instead of on a line of its own above the board. */
+  searchAction?: React.ReactNode;
+  /* Hide that row entirely — the Match page sets this while the search sheet
+     is open, so the bar isn't underneath it waiting to be tapped again. */
+  hideActions?: boolean;
 }) {
   const router = useRouter();
   const { userId } = useAppState();
@@ -232,11 +240,18 @@ export default function BuddyBoard({
 
   return (
     <div className="px-3 pb-4">
-      {/* POST — a button until you want it, then the form in its place. */}
+      {/* POST — a button until you want it, then the form in its place, with
+          "Search by time" beside it so the two ways into a session share one
+          line. The whole row goes away while the search sheet is open. */}
       {!composing ? (
-        <Button size="lg" full onClick={() => setComposing(true)}>
-          + Post your session to the board
-        </Button>
+        !hideActions && (
+          <div className="flex items-center gap-2">
+            <Button size="lg" onClick={() => setComposing(true)} className="min-w-0 flex-1">
+              + Post your session
+            </Button>
+            {searchAction}
+          </div>
+        )
       ) : (
         <div className="flex flex-col gap-3 rounded-xl border border-border bg-surface-2 p-3.5">
           <div className="flex items-center justify-between">
