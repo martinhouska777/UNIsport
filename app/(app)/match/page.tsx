@@ -8,7 +8,7 @@
   - Sessions: the Buddy Board — everyone who has said what they want to train
     and when — IS the tab. You land on people, not on controls. Posting your
     own is a button on it, and the timed search ("who is free Thursday around
-    7?") sits behind a small "Search by time" link that opens as its own sheet
+    7?") sits BESIDE that button on the same row, opening as its own sheet
     with its results inside it (components/match/SessionSearchSheet.tsx). It
     used to be a fold at the top of the tab with the results rendered inside
     the fold, so collapsing it hid the answer.
@@ -248,23 +248,25 @@ function MatchScreen() {
       )}
 
       {/*
-        SESSIONS — the board is the whole tab. One list per screen: the timed
-        search is a link, and opens as its own sheet with its results inside.
+        SESSIONS — the board is the whole tab. One list per screen: "Search by
+        time" sits beside the post button on the board's own top row and opens
+        as its own sheet with its results inside; the row hides while it's open.
       */}
       {tab === "sessions" && (
-        <>
-          <div className="flex items-center justify-end px-3 pb-1">
+        <BuddyBoard
+          initialGym={presetGym}
+          hideActions={searchOpen}
+          searchAction={
             <button
               type="button"
               onClick={() => setSearchOpen(true)}
-              className="tap44 flex items-center gap-1.5 rounded-full px-2 py-1 text-[12px] font-medium text-primary"
+              className="tap44 flex h-12 flex-shrink-0 items-center gap-1.5 rounded-full border border-border bg-surface-2 px-4 text-[13px] font-semibold text-primary"
             >
-              <IconSearch size={13} />
+              <IconSearch size={14} />
               Search by time
             </button>
-          </div>
-          <BuddyBoard initialGym={presetGym} />
-        </>
+          }
+        />
       )}
 
       {searchOpen && userId && (

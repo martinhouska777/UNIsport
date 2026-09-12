@@ -641,6 +641,14 @@ export default function ProfilePage() {
       </div>
       </details>
 
+      {/* The way to the layout preview (app/(app)/profile/preview/page.tsx).
+          One line, outside the fold, so it doesn't compete with the page. */}
+      <div className="px-3.5 pb-6">
+        <Link href="/profile/preview" className="text-[11px] font-medium text-primary">
+          See the new layout preview →
+        </Link>
+      </div>
+
       {/* No sticky bottom bar any more: Log Session and Share moved to the top
           of the page, where the screen's job is, instead of floating over the
           photo grid. */}
