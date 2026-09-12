@@ -4,17 +4,19 @@
   VARSITY MODE INTRO — a short title sequence played when you enter Varsity
   Mode. Two oars sweep in from the sides and cross in the middle; the crest then
   drops from the top onto the crossing point; the motto slides in under it; the
-  whole overlay fades to reveal the Home screen. About 1.7 seconds, and a tap
+  whole overlay fades to reveal the Home screen. About 2.1 seconds, and a tap
   anywhere ends it early.
 
-  WHEN IT PLAYS — three gates, any one of which skips it:
+  WHEN IT PLAYS — EVERY time you cross into Varsity Mode, and every time you
+  sign in. The owner's call: every time you change from student to varsity you
+  get the animation, or when you log in — "I think it's pretty cool". There was
+  a once-a-day ceiling on it for a while; it is gone.
+
+  Two gates are left, and neither is about how often:
     • the OS "reduce motion" setting
-    • already being in Varsity Mode this tab (lib/varsity/mode.ts → markMode):
-      a trip out to Settings and back is not an entrance
-    • having already played TODAY (markIntroShown): an installed PWA is a fresh
-      tab every morning, so "once per switch" used to mean every single day
-  Once a day is the ceiling: a rower checking whether he's in a boat at 5:12am
-  has seen the oars before.
+    • already being in Varsity Mode THIS TAB (lib/varsity/mode.ts → markMode):
+      a trip out to Settings and back is not an entrance, and neither is a
+      reload — that is what makes this a switch rather than a mount.
 
   The oars are the landing page's oars (the Blade Lock closer's drawing): a
   dark handle, shaft and collar, and the school's own blade — Harvard's
@@ -28,11 +30,11 @@ import UniversityCrest from "@/components/UniversityCrest";
 import { useAppState } from "@/components/AppState";
 import { getUniversity } from "@/lib/themes";
 import OarMark from "@/components/varsity/OarMark";
-import { inVarsityMode, introShownToday, markIntroShown, markMode } from "@/lib/varsity/mode";
+import { inVarsityMode, markMode } from "@/lib/varsity/mode";
 import { consumeSignIn } from "@/lib/loginIntro";
 
-// The motto lands at ~1.25s (globals.css); hold it a beat, then fade.
-const FADE_AT_MS = 1350;
+// The motto lands at ~1.6s (globals.css); hold it a beat, then fade.
+const FADE_AT_MS = 1750;
 const FADE_MS = 350;
 
 export default function VarsityIntro() {
@@ -42,7 +44,7 @@ export default function VarsityIntro() {
   const [done, setDone] = useState(() => {
     if (typeof window === "undefined") return true;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return true;
-    return inVarsityMode() || introShownToday();
+    return inVarsityMode();
   });
   // The motto is the UNIVERSITY's, not Varsity Mode's, so it comes from the
   // same theme data every school will eventually have a row in (rule 2).
@@ -61,10 +63,8 @@ export default function VarsityIntro() {
     consumeSignIn();
   }, []);
 
-  // Playing → that's today's showing, whether it runs to the end or is tapped away.
   useEffect(() => {
     if (done) return;
-    markIntroShown();
     const fade = setTimeout(() => setLeaving(true), FADE_AT_MS);
     const end = setTimeout(() => setDone(true), FADE_AT_MS + FADE_MS);
     return () => {

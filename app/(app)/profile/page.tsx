@@ -324,9 +324,9 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* 1 · WHO YOU ARE — photo on the left, name and the three counts beside
-          it, bio full width underneath. */}
-      <div className="border-b border-border px-3.5 pb-3 pt-3.5">
+      {/* 1 · WHO YOU ARE — photo on the left with the name, house and badges
+          beside it; bio full width underneath; the three counts under that. */}
+      <div className="border-b border-border px-3.5 pb-3 pt-2.5">
         <div className="flex items-start gap-3">
           <div className="relative flex-shrink-0">
             <div className="flex h-[68px] w-[68px] items-center justify-center overflow-hidden rounded-full border-2 border-primary bg-primary-tint text-primary">
@@ -394,35 +394,6 @@ export default function ProfilePage() {
               </div>
             )}
 
-            {/* The counts, across rather than down: three columns of the width
-                left beside the photo. */}
-            <div className="mt-2.5 flex items-start">
-              {stats.map((s) => {
-                const body = (
-                  <>
-                    <div
-                      className={`text-[11px] ${s.onClick ? "text-primary" : "text-muted"}`}
-                    >
-                      {s.label}
-                    </div>
-                    <div className="mt-0.5 text-[15px] font-medium leading-none text-text">
-                      {statsReady ? s.value : "—"}
-                    </div>
-                  </>
-                );
-                return (
-                  <div key={s.label} className="min-w-0 flex-1">
-                    {s.onClick ? (
-                      <button type="button" onClick={s.onClick} className="block text-left">
-                        {body}
-                      </button>
-                    ) : (
-                      body
-                    )}
-                  </div>
-                );
-              })}
-            </div>
           </div>
         </div>
 
@@ -438,6 +409,36 @@ export default function ProfilePage() {
             textClassName="text-[12px] leading-relaxed text-muted"
             startEditingToken={identityEditTick}
           />
+        </div>
+
+        {/* The counts, UNDER the bio and across the whole width. They used to
+            be squeezed into the column beside the photo, three narrow labels
+            under the badges; the owner's call is that who you are reads top to
+            bottom — photo, badges, bio — and the numbers come after it. */}
+        <div className="mt-3 flex items-start">
+          {stats.map((s) => {
+            const body = (
+              <>
+                <div className={`text-[11px] ${s.onClick ? "text-primary" : "text-muted"}`}>
+                  {s.label}
+                </div>
+                <div className="mt-0.5 text-[15px] font-medium leading-none text-text">
+                  {statsReady ? s.value : "—"}
+                </div>
+              </>
+            );
+            return (
+              <div key={s.label} className="min-w-0 flex-1">
+                {s.onClick ? (
+                  <button type="button" onClick={s.onClick} className="block text-left">
+                    {body}
+                  </button>
+                ) : (
+                  body
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
 
