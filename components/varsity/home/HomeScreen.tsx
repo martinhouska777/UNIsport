@@ -7,11 +7,14 @@
   day's lineup, and the coach's weekly focus. All colors are theme tokens.
 */
 import { Suspense, useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useAppState } from "@/components/AppState";
 import { useMembership } from "@/components/varsity/useMembership";
 import { can, canOpenConsole, roleLabel, type VarsityRole } from "@/lib/varsity/membership";
+import ThemeProvider from "@/components/ThemeProvider";
+import { useVarsityTheme } from "@/components/varsity/useVarsityTheme";
 import { fetchPlan } from "@/lib/varsity/planStore";
 import { fetchTodayLineups } from "@/lib/varsity/lineupStore";
 import { claimRosterSeat, fetchSeatIdentity, type SeatIdentity } from "@/lib/varsity/athleteProfile";
@@ -30,6 +33,7 @@ import {
   dockTime,
   kindBar,
   kindBlock,
+  kindLegend,
   shellName,
   type HomeData,
   type Greeting as GreetingData,
@@ -125,9 +129,9 @@ function RaceBar({ r }: { r: RaceData }) {
 }
 
 /* ─── Week strip ───
-   The coach's plan, seven days side by side, styled after the team's training
-   Excel. Tap a day to see its full workout below. The whole month is the
-   Calendar tab. */
+   Two views of the coach's plan. WEEK = the seven days side by side, styled
+   after the team's training Excel. MONTH = a full wall calendar, one month at a
+   time. Tap any cell/day to see the full workout. */
 
 const PERIOD_ROWS = ["AM", "PM"] as const;
 
@@ -188,9 +192,260 @@ function WeekFit({
   );
 }
 
-// The MONTH view used to be a full-screen overlay here, plan only. It lives in
-// the Calendar tab now, which shows one month from both sources: the plan
-// ahead of today, your own log behind it. The Month button below points there.
+// MONTH view: a full-screen wall calendar, opened from the Month button and
+// closed with the X. Taking over the whole screen is what buys the room to
+// print the coach's actual workout text inside each day instead of a dot.
+// One month at a time, Monday-first; days outside the block are greyed and dead.
+const MONTH_NAMES = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+const DAY_LETTERS = ["M", "T", "W", "T", "F", "S", "S"];
+
+function MonthOverlay({
+  weeks,
+  selected,
+  onSelect,
+  onClearDay,
+  onClose,
+}: {
+  weeks: WeekView[];
+  selected: WeekDay | null;
+  onSelect: (d: WeekDay) => void;
+  onClearDay: () => void;
+  onClose: () => void;
+}) {
+  const vTheme = useVarsityTheme();
+  // Every planned day, keyed by date, so any calendar month can be filled in
+  // from whichever weeks of the block overlap it.
+  const byIso = useMemo(() => {
+    const map: Record<string, WeekDay> = {};
+    for (const wk of weeks) for (const d of wk.days) map[d.iso] = d;
+    return map;
+  }, [weeks]);
+
+  // The block's span, as {y, m} bounds for the month arrows.
+  const isos = useMemo(() => Object.keys(byIso).sort(), [byIso]);
+  const monthOf = (iso: string) => {
+    const [y, m] = iso.split("-").map(Number);
+    return { y, m: m - 1 };
+  };
+  const firstMonth = monthOf(isos[0] ?? "2000-01-01");
+  const lastMonth = monthOf(isos[isos.length - 1] ?? "2000-01-01");
+
+  // Open on the month containing today, falling back to the block's start.
+  const [view, setView] = useState(() => {
+    const todayIso = isos.find((iso) => byIso[iso].today);
+    return monthOf(todayIso ?? isos[0] ?? "2000-01-01");
+  });
+
+  const goMonth = (delta: number) =>
+    setView((v) => {
+      const d = new Date(v.y, v.m + delta, 1);
+      return { y: d.getFullYear(), m: d.getMonth() };
+    });
+  const asNum = (v: { y: number; m: number }) => v.y * 12 + v.m;
+  const atStart = asNum(view) <= asNum(firstMonth);
+  const atEnd = asNum(view) >= asNum(lastMonth);
+
+  const daysInMonth = new Date(view.y, view.m + 1, 0).getDate();
+  const leadingEmpty = (new Date(view.y, view.m, 1).getDay() + 6) % 7; // Monday-first
+  const pad = (n: number) => String(n).padStart(2, "0");
+
+  // Escape closes, same as every other overlay in Varsity Mode.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  // Portalled to <body> (and re-wrapped in the Varsity theme) so it covers the
+  // tab bar instead of being painted underneath it — same trick as <Sheet>.
+  return createPortal(
+    <ThemeProvider tokens={vTheme.dark} light={vTheme.light}>
+      <div className="fixed inset-0 z-[60] flex flex-col bg-background [animation:backdrop-in_0.18s_ease-out]">
+        {/* Header: month + arrows + close */}
+        <div className="flex flex-shrink-0 items-center justify-between border-b border-border px-3 py-3">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => goMonth(-1)}
+              disabled={atStart}
+              aria-label="Previous month"
+              className="tap44 press-icon flex h-7 w-7 items-center justify-center rounded-lg border border-border bg-surface text-muted disabled:opacity-30"
+            >
+              <IconArrowLeft size={14} />
+            </button>
+            <button
+              onClick={() => goMonth(1)}
+              disabled={atEnd}
+              aria-label="Next month"
+              className="tap44 press-icon flex h-7 w-7 items-center justify-center rounded-lg border border-border bg-surface text-muted disabled:opacity-30"
+            >
+              <IconArrowRight size={14} />
+            </button>
+          </div>
+          <div className="text-center">
+            <div className="text-[8px] font-semibold uppercase tracking-[0.16em] text-accent">
+              Training plan
+            </div>
+            <div className="flex items-baseline justify-center gap-1.5">
+              <span className="text-[15px] font-semibold leading-tight text-text">
+                {MONTH_NAMES[view.m]}
+              </span>
+              <span className="text-[11px] font-medium text-muted">{view.y}</span>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            aria-label="Close month view"
+            className="tap44 press-icon flex h-7 w-7 items-center justify-center rounded-full bg-surface-2 text-muted"
+          >
+            <IconX size={15} />
+          </button>
+        </div>
+
+        {/* Weekday header */}
+        <div className="grid flex-shrink-0 grid-cols-7 gap-1 border-b border-border px-1.5 py-1">
+          {DAY_LETTERS.map((d, i) => (
+            <div key={i} className="text-center text-[11px] font-semibold tracking-[0.12em] text-muted">
+              {d}
+            </div>
+          ))}
+        </div>
+
+        {/* Days — the rows share whatever height is left, so the month always
+            fills the screen and the cells are big enough to read. */}
+        <div className="grid min-h-0 flex-1 auto-rows-fr grid-cols-7 gap-1 overflow-y-auto p-1.5">
+          {Array.from({ length: leadingEmpty }).map((_, i) => (
+            <div key={`e${i}`} />
+          ))}
+          {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((num) => {
+            const iso = `${view.y}-${pad(view.m + 1)}-${pad(num)}`;
+            const day = byIso[iso];
+            const sel = day != null && selected === day;
+            return (
+              <button
+                key={num}
+                type="button"
+                disabled={!day}
+                onClick={() => day && onSelect(day)}
+                /* Every day of the month is the same box, prescribed or not —
+                   a rest day is empty space inside its rectangle, not a gap in
+                   the grid. Only the days OUTSIDE the block stay blank. */
+                className={`flex min-h-[64px] flex-col overflow-hidden rounded-lg border p-[3px] text-left ${
+                  sel
+                    ? "border-primary bg-primary-tint ring-1 ring-primary"
+                    : day?.today
+                      ? "border-primary bg-primary-tint"
+                      : day
+                        ? "border-border bg-surface"
+                        : "border-transparent"
+                }`}
+              >
+                <span
+                  className={`px-px text-[11px] font-semibold leading-none ${
+                    day?.today ? "text-primary" : day ? "text-text" : "text-muted/40"
+                  }`}
+                >
+                  {num}
+                </span>
+                {/*
+                  The coach's actual workout text, one tinted block per session,
+                  in a box split into a MORNING half and an AFTERNOON half. A
+                  day with only an AM outing fills the top half and leaves the
+                  bottom empty — it used to stretch over the whole day, which
+                  made a single session look like a double.
+                */}
+                <span className="mt-0.5 grid min-h-0 flex-1 auto-rows-fr grid-rows-2 gap-px overflow-hidden">
+                  {(day?.sessions ?? []).map((s, j) => (
+                    <span
+                      key={j}
+                      className="overflow-hidden rounded px-1 py-0.5"
+                      /* The morning half is the top one. A PM-only day is put
+                         in the second row on purpose, so an afternoon session
+                         never sits where the morning goes. */
+                      style={{ ...kindBlock(s.kind), gridRowStart: s.time === "PM" ? 2 : 1 }}
+                    >
+                      <span className="block text-[6px] font-bold leading-none text-text-3">
+                        {s.time}
+                      </span>
+                      <span className="mt-px block break-words text-[8px] font-medium leading-[1.15] text-text">
+                        {s.label}
+                      </span>
+                    </span>
+                  ))}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* What the colors mean */}
+        <div className="flex flex-shrink-0 flex-wrap items-center justify-center gap-x-3 gap-y-1 border-t border-border bg-surface px-3 py-2">
+          {kindLegend.map((l) => (
+            <span key={l.kind} className="flex items-center gap-1 text-[11px] text-muted">
+              <span className="h-1.5 w-3 rounded-sm" style={kindBar(l.kind)} />
+              {l.label}
+            </span>
+          ))}
+        </div>
+
+        {/* Tapped day: the full workout, over the calendar. */}
+        {selected && (
+          <div className="absolute inset-x-0 bottom-0 max-h-[60%] overflow-y-auto border-t border-border bg-background px-3 pb-4 [animation:sheet-up_0.24s_cubic-bezier(0.2,0.8,0.2,1)]">
+            <DayDetail d={selected} onClose={onClearDay} />
+          </div>
+        )}
+      </div>
+    </ThemeProvider>,
+    document.body,
+  );
+}
+
+// The tapped day's full workout(s): period + time, type, description, note.
+function DayDetail({ d, onClose }: { d: WeekDay; onClose: () => void }) {
+  return (
+    <div className="mt-3 overflow-hidden rounded-xl border border-border bg-surface">
+      <div className="flex items-center justify-between border-b border-border bg-surface-2 px-3 py-2">
+        <span className="text-[12px] font-semibold text-text">
+          {d.dateLabel ?? `${d.letter} ${d.num}`}
+        </span>
+        <button onClick={onClose} aria-label="Close" className="text-muted">
+          <IconX size={14} />
+        </button>
+      </div>
+      {d.sessions.length > 0 ? (
+        <div className="flex flex-col divide-y divide-border">
+          {d.sessions.map((s, i) => (
+            <div key={i} className="flex items-stretch gap-2.5 px-3 py-2.5">
+              <div className="w-[3px] flex-shrink-0 rounded" style={kindBar(s.kind)} />
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="rounded border border-border bg-surface-2 px-1.5 py-0.5 text-[8px] font-semibold tracking-[0.06em] text-muted">
+                    {s.time}
+                    {s.clock ? ` · ${s.clock}` : ""}
+                  </span>
+                  {s.type && <span className="text-[11px] text-muted">{s.type}</span>}
+                </div>
+                <div className="mt-1 text-[13px] font-medium text-text">{s.label}</div>
+                {s.note && (
+                  <div className="mt-1.5 flex gap-2 rounded-lg border border-accent-line bg-accent-tint px-2.5 py-1.5">
+                    <span className="mt-0.5 flex-shrink-0 text-accent">
+                      <IconMessage size={11} />
+                    </span>
+                    <span className="text-[11px] leading-relaxed text-text-2">{s.note}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="px-3 py-4 text-center text-[12px] text-muted">Nothing scheduled this day.</div>
+      )}
+    </div>
+  );
+}
 
 /*
   The strip no longer owns which day is open. ONE day runs the middle of the
@@ -214,6 +469,7 @@ function WeekStrip({
   onSelect: (d: WeekDay) => void;
   onClearDay: () => void;
 }) {
+  const [monthOpen, setMonthOpen] = useState(false);
   const [idx, setIdx] = useState(startIndex);
 
   const last = weeks.length - 1;
@@ -231,15 +487,15 @@ function WeekStrip({
     <div className="px-3 pt-4">
       <div className="flex items-center justify-between px-0.5 pb-2">
         <SectionLabel>Training Plan</SectionLabel>
-        {/* The week always lives on the page; the whole month is the Calendar
-            tab (plan ahead, log behind — one calendar, not two). */}
-        <Link
-          href="/varsity/calendar"
+        {/* The week always lives on the page; Month opens the whole thing
+            full-screen and the X drops you back here. */}
+        <button
+          onClick={() => setMonthOpen(true)}
           className="press flex h-8 items-center gap-1.5 rounded-lg border border-border bg-surface px-3 text-[11px] font-medium text-text"
         >
           <IconCalendar size={13} />
           Month
-        </Link>
+        </button>
       </div>
 
       <div className="mb-2 flex items-center justify-between">
@@ -268,6 +524,18 @@ function WeekStrip({
       </div>
 
       <WeekFit week={current} selected={selected} onSelect={pick} />
+
+      {monthOpen && (
+        <MonthOverlay
+          weeks={weeks}
+          selected={selected}
+          onSelect={pick}
+          onClearDay={onClearDay}
+          /* Closing the month KEEPS the day you tapped: you opened the whole
+             calendar to find a day, and the page below is now showing it. */
+          onClose={() => setMonthOpen(false)}
+        />
+      )}
     </div>
   );
 }
