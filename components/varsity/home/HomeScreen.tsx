@@ -18,7 +18,7 @@ import { useVarsityTheme } from "@/components/varsity/useVarsityTheme";
 import { fetchPlan } from "@/lib/varsity/planStore";
 import { fetchTodayLineups } from "@/lib/varsity/lineupStore";
 import { claimRosterSeat, fetchSeatIdentity, type SeatIdentity } from "@/lib/varsity/athleteProfile";
-import LineupBoatCard, { LineupSeats, isMyBoat } from "@/components/varsity/LineupBoatCard";
+import { LineupSeats, isMyBoat } from "@/components/varsity/LineupBoatCard";
 import UploadVideoSheet from "@/components/varsity/UploadVideoSheet";
 import ClaimSeatSheet from "@/components/varsity/ClaimSeatSheet";
 import { driveConfigured, driveFolderLink } from "@/lib/varsity/drive";
@@ -626,12 +626,6 @@ function SessionCard({ s, lineups = [] }: { s: TodaySession; lineups?: Lineup[] 
                 </div>
               )}
             </div>
-            {openable && (
-              <span className="mt-0.5 flex flex-shrink-0 items-center gap-1 text-[10px] font-semibold tracking-[0.06em] text-accent">
-                {open ? "HIDE BOAT" : "YOUR BOAT"}
-                {open ? <IconChevronUp size={12} /> : <IconChevronDown size={12} />}
-              </span>
-            )}
           </div>
 
           {s.coachNote && (
@@ -649,6 +643,21 @@ function SessionCard({ s, lineups = [] }: { s: TodaySession; lineups?: Lineup[] 
               </div>
             </div>
           )}
+
+          {/* YOUR BOAT — a pill in the bottom-right corner of the card, which
+              is where a thing you press belongs. It used to be two small words
+              beside the workout, and the boat itself was ALSO listed again in a
+              "Your Lineup" section further down the page; the section is gone
+              and this opens the crew in place. */}
+          {openable && (
+            <div className="mt-2 flex justify-end">
+              <span className="inline-flex items-center gap-1 rounded-full border border-accent-line bg-accent-tint px-2.5 py-1 text-[10px] font-semibold tracking-[0.06em] text-accent">
+                {open ? "HIDE BOAT" : "YOUR BOAT"}
+                {open ? <IconChevronUp size={12} /> : <IconChevronDown size={12} />}
+              </span>
+            </div>
+          )}
+
         </div>
       </div>
 
@@ -744,61 +753,6 @@ function DriveBar({ onUpload }: { onUpload: () => void }) {
 }
 
 /*
-  THE LINEUP SECTION — YOUR boat, and a door to everyone else's.
-
-  It used to list every published boat, under a heading that said "Your Lineup".
-  Three eights is nine names each: a screen and a half of other people's crews
-  before the rest of the page. Now the section holds only the boat you are in,
-  already open, and "All boats" opens the day's full sheet on its own page.
-
-  When you are not in a boat, the section is simply EMPTY — see below. The two
-  doors out of an empty day are already on the screen: the arrows above step to
-  another day, and "All boats" opens this day's full sheet.
-*/
-function LineupCard({
-  lineups,
-  onToday,
-  allHref,
-  total,
-}: {
-  lineups: Lineup[];
-  onToday: boolean;
-  allHref: string;
-  total: number;
-}) {
-  const mine = lineups.filter(isMyBoat);
-  return (
-    <div>
-      <div className="mb-2 flex items-center justify-between px-1">
-        {/* "Your Lineup" reads as today's. On another day it says whose day
-            it is, so the boats below are never mistaken for this morning's. */}
-        <SectionLabel>{onToday ? "Your Lineup" : "Lineup That Day"}</SectionLabel>
-        <Link
-          href={allHref}
-          className="flex items-center gap-0.5 text-[11px] font-semibold text-primary"
-        >
-          All boats{total ? ` · ${total}` : ""} <IconChevronRight size={12} />
-        </Link>
-      </div>
-      {/*
-        NOT IN A BOAT? Then nothing — on the owner's call. A paragraph
-        explaining that you are not in a boat is a paragraph telling you what
-        the empty space already said, and it said it every single day somebody
-        was ashore. The two ways on are still right there: the arrows step to
-        another day, and "All boats" opens the day's full sheet.
-      */}
-      {mine.length > 0 && (
-        <div className="flex flex-col gap-3">
-          {mine.map((l, i) => (
-            <LineupBoatCard key={i} l={l} defaultOpen />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-/*
   THE DAY HEADER — the one control for the middle of the page. What sits under
   it (the sessions, and the lineup under those) is whatever day this says.
 
@@ -816,7 +770,7 @@ function DayHeader({
   onToday,
 }: {
   title: string;
-  right?: string;
+  right?: React.ReactNode;
   canPrev: boolean;
   canNext: boolean;
   onStep: (delta: -1 | 1) => void;
@@ -836,7 +790,7 @@ function DayHeader({
     <div className="flex items-center justify-between gap-2 px-4 pb-2 pt-4">
       <SectionLabel>{title}</SectionLabel>
       <div className="flex items-center gap-1.5">
-        {right && <span className="mr-1 text-[11px] text-muted">{right}</span>}
+        {right && <span className="mr-1">{right}</span>}
         {arrow(-1, canPrev)}
         {arrow(1, canNext)}
         {onToday && (
@@ -1203,7 +1157,22 @@ function HomeScreenInner() {
 
       <DayHeader
         title={onToday ? "Today's Sessions" : (viewDay?.dateLabel ?? "")}
-        right={onToday ? `${sessions.length} prescribed` : undefined}
+        /* "All boats" used to be the corner of the Your Lineup section. That
+           section is gone — your own crew opens inside its session now — so
+           the door to everyone else's moved up here, onto the day's own
+           control row, where it is about the day the arrows are pointing at.
+           It replaces the "3 prescribed" count, which was counting the cards
+           directly underneath it. */
+        right={
+          lineups.length > 0 ? (
+            <Link
+              href={allBoatsHref}
+              className="flex items-center gap-0.5 text-[11px] font-semibold text-primary"
+            >
+              All boats · {lineups.length} <IconChevronRight size={12} />
+            </Link>
+          ) : undefined
+        }
         canPrev={viewIdx > 0}
         canNext={viewIdx < allDays.length - 1}
         onStep={stepDay}
@@ -1223,17 +1192,6 @@ function HomeScreenInner() {
           </div>
         )}
       </div>
-
-      {lineups.length > 0 && (
-        <div className="px-3 pt-3">
-          <LineupCard
-            lineups={lineups}
-            onToday={onToday}
-            allHref={allBoatsHref}
-            total={lineups.length}
-          />
-        </div>
-      )}
 
       {data.race && (
         <div className="pt-4">
