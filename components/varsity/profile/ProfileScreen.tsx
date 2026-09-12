@@ -25,6 +25,7 @@ import { useEffect, useMemo, useState } from "react";
 import Button from "@/components/ui/Button";
 import Link from "next/link";
 import Sheet from "@/components/varsity/Sheet";
+import { useRouter } from "next/navigation";
 import { useAppState } from "@/components/AppState";
 import { useMembership } from "@/components/varsity/useMembership";
 import { useUnits } from "@/components/useUnits";
@@ -72,12 +73,11 @@ import Dropdown from "@/components/varsity/profile/Dropdown";
 import StatsFullScreen from "@/components/varsity/profile/StatsFullScreen";
 import TrainingMixSheet from "@/components/varsity/profile/TrainingMixSheet";
 import ClaimSeatSheet from "@/components/varsity/ClaimSeatSheet";
-import { rosterById } from "@/lib/varsity/coachLineup";
+import { sideMeta, COX_COLOR, type Side } from "@/lib/varsity/coachLineup";
 import { fetchPlan } from "@/lib/varsity/planStore";
 import {
   IconPencil,
   IconExpand,
-  IconAnchor,
   IconActivity,
   IconChevronRight,
   IconCalendar,
@@ -105,6 +105,23 @@ const toneRing: Record<StatusTone, string> = {
 };
 const statusByTitle = (title: string) =>
   statusOptions.find((s) => s.title === title) ?? statusOptions[0];
+
+/*
+  THE SIDE CHIP, in the side's own colour — port red, starboard green, both
+  blue, a cox gold. It is the same content data the lineup pool and the coach's
+  seating screen paint with (lib/varsity/coachLineup → sideMeta / COX_COLOR),
+  applied inline: a per-entity colour out of a data file is the one exception
+  to "colours come from tokens" (rule 1), and this is it.
+*/
+function sideChip(p: { boatRole: string; side: Side }): React.CSSProperties {
+  const cox = p.boatRole === "Coxswain";
+  const color = cox ? COX_COLOR : sideMeta[p.side].color;
+  return {
+    color,
+    borderColor: `color-mix(in oklab, ${color} 45%, transparent)`,
+    background: `color-mix(in oklab, ${color} 14%, transparent)`,
+  };
+}
 
 function initialsOf(name: string): string {
   const parts = name.split(/\s+/).filter(Boolean);
@@ -625,6 +642,23 @@ export default function ProfileScreen() {
 
   type Modal = "identity" | "status" | "prs" | "seat" | null;
   const [modal, setModal] = useState<Modal>(null);
+  const router = useRouter();
+
+  /*
+    ARRIVING FROM THE PENCIL IN THE TOP BAR (/varsity/profile?edit=1). The bar
+    lives in the layout and this editor lives here, so the link is the message.
+    Read off the URL after mount — useSearchParams would force a Suspense
+    boundary around the whole screen — then cleared, so a refresh doesn't
+    reopen it. Same shape as the log reminder's deep link on Home.
+  */
+  useEffect(() => {
+    const id = requestAnimationFrame(() => {
+      if (!new URLSearchParams(window.location.search).has("edit")) return;
+      setModal("identity");
+      router.replace("/varsity/profile");
+    });
+    return () => cancelAnimationFrame(id);
+  }, [router]);
 
   // Identity + saved varsity record.
   useEffect(() => {
@@ -787,11 +821,8 @@ export default function ProfileScreen() {
       {/* ── Identity ── */}
       <div className="border-b border-border bg-[radial-gradient(circle_at_0%_0%,color-mix(in_srgb,var(--primary)_9%,transparent),transparent_60%)] px-4 pb-4 pt-4">
         <div className="flex items-start gap-3.5">
-          <div className="relative flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-2xl border border-primary-line bg-gradient-to-br from-primary/15 to-primary/5">
+          <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-2xl border border-primary-line bg-gradient-to-br from-primary/15 to-primary/5">
             <span className="text-xl font-semibold text-primary">{initialsOf(name)}</span>
-            <span
-              className={`absolute bottom-0.5 right-0.5 h-3 w-3 rounded-full border-[2.5px] border-background ${toneDot[status.tone]}`}
-            />
           </div>
           <div className="min-w-0 flex-1 pt-0.5">
             <div className="truncate text-xl font-semibold leading-tight text-text">
@@ -799,35 +830,36 @@ export default function ProfileScreen() {
             </div>
             <div className="mt-1 text-[11px] text-muted">{classLine}</div>
             <div className="mt-2 flex flex-wrap items-center gap-1.5">
-              <span className="inline-flex items-center gap-1 rounded-md border border-border bg-surface px-2 py-1 text-[11px] text-text">
-                <span className="text-accent">
-                  <IconAnchor size={11} />
-                </span>
-                {profile.teamYear || "Team"}
-              </span>
-              {/* Coxswain, or which side you row — the answer from setup, so it
-                  doesn't vanish into the database the moment it's given. */}
-              <span className="rounded-md border border-border bg-surface px-2 py-1 text-[11px] text-text">
+              {/*
+                WHICH SIDE YOU ROW, in the side's own colour — port red,
+                starboard green, both blue, a cox gold. Those are the colours
+                the lineup screens and the coach's pool already use for the
+                same fact (lib/varsity/coachLineup → sideMeta), so a rower
+                reads it here the way they read it in a boat.
+
+                Gone from this row with the owner's polish pass: the team-year
+                rectangle ("Freshman" — it is already in the line above), and
+                "On the list as <name>", which told you your own name back. The
+                prompt to PICK a name stays while there is nothing picked,
+                because a published boat cannot mark your seat without it.
+              */}
+              <span
+                className="rounded-md border px-2 py-1 text-[11px] font-medium"
+                style={sideChip(profile)}
+              >
                 {profile.boatRole === "Coxswain"
                   ? "Coxswain"
                   : (sideLabel(profile.boatRole, profile.side) ?? "Both")}
               </span>
-              {/* Which name on the squad list is you — the join that lets a
-                  published boat mark your seat. A button, because a wrong
-                  pick on Home must be one tap to change from here. */}
-              <button
-                type="button"
-                onClick={() => setModal("seat")}
-                className={`rounded-md border px-2 py-1 text-[11px] ${
-                  profile.rosterId
-                    ? "border-border bg-surface text-text"
-                    : "border-primary-line bg-primary-tint font-medium text-primary"
-                }`}
-              >
-                {profile.rosterId
-                  ? `On the list as ${rosterById[profile.rosterId]?.name ?? "—"}`
-                  : "Pick your name on the squad list"}
-              </button>
+              {!profile.rosterId && (
+                <button
+                  type="button"
+                  onClick={() => setModal("seat")}
+                  className="rounded-md border border-primary-line bg-primary-tint px-2 py-1 text-[11px] font-medium text-primary"
+                >
+                  Pick your name on the squad list
+                </button>
+              )}
               {profile.heightCm != null && (
                 <span className="rounded-md border border-border bg-surface px-2 py-1 text-[11px] text-text">
                   {profile.heightCm} cm
@@ -840,37 +872,25 @@ export default function ProfileScreen() {
               )}
             </div>
           </div>
+          {/*
+            YOUR STATUS, beside your name — where the edit pencil used to be.
+            The pencil moved up to the top bar, next to the cog (the profile
+            screen is the only one that shows it), and the status took the
+            corner it left: it is the one thing on this page that changes week
+            to week, and it used to need a whole card of its own underneath to
+            say one word. Tap it to change it, exactly as that card did.
+          */}
           <button
             type="button"
-            onClick={() => setModal("identity")}
-            aria-label="Edit profile"
-            className="tap44 press-icon flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[10px] border border-border bg-surface text-muted"
+            onClick={() => setModal("status")}
+            aria-label={`Current status: ${status.title}. Change it`}
+            className={`press-icon flex flex-shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1.5 ${toneRing[status.tone]}`}
           >
-            <IconPencil size={15} />
+            <IconActivity size={13} />
+            <span className={`text-[11px] font-medium ${toneText[status.tone]}`}>{status.title}</span>
           </button>
         </div>
       </div>
-
-      {/* ── Current status (tap to change) ── */}
-      <button
-        type="button"
-        onClick={() => setModal("status")}
-        className="mx-3.5 mt-3.5 flex w-[calc(100%-1.75rem)] items-center gap-3 overflow-hidden rounded-2xl border border-border bg-surface px-3.5 py-3 text-left"
-      >
-        <span className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[10px] border ${toneRing[status.tone]}`}>
-          <IconActivity size={18} />
-        </span>
-        <div className="min-w-0 flex-1">
-          <div className="text-[8px] font-semibold uppercase tracking-[0.14em] text-muted">
-            Current status
-          </div>
-          <div className={`mt-0.5 text-[13px] font-medium ${toneText[status.tone]}`}>{status.title}</div>
-          <div className="mt-0.5 truncate text-[11px] text-muted">{status.sub}</div>
-        </div>
-        <span className="text-muted">
-          <IconChevronRight size={17} />
-        </span>
-      </button>
 
       {/* ── Statistics ── */}
       <div className="px-4 pb-2 pt-5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
