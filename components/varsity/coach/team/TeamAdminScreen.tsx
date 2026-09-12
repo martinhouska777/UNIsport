@@ -109,9 +109,20 @@ export default function TeamAdminScreen({ membership }: { membership: Membership
     setLoading(false);
   }, [teamId]);
 
+  // The first read is its own effect (not a call to reload) so the state is set
+  // from the promise, and a screen left mid-fetch doesn't set state after unmount.
   useEffect(() => {
-    reload();
-  }, [reload]);
+    let active = true;
+    Promise.all([fetchSquad(teamId), listInvites(teamId)]).then(([s, i]) => {
+      if (!active) return;
+      setSquad(s);
+      setInvites(i);
+      setLoading(false);
+    });
+    return () => {
+      active = false;
+    };
+  }, [teamId]);
 
   const pending = squad.filter((m) => m.status === "pending");
   const approved = squad.filter((m) => m.status === "approved");
@@ -455,7 +466,7 @@ export default function TeamAdminScreen({ membership }: { membership: Membership
           </Link>
           <p className="mt-2 px-1 text-[11px] leading-relaxed text-muted">
             Your session types, intensity zones, favourite workouts and session times — the words
-            the whole squad's plan is written in.
+            the whole squad’s plan is written in.
           </p>
         </Section>
       )}
