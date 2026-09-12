@@ -6,7 +6,7 @@
   strip, today's prescribed sessions (with coach notes + watch-verify), the
   day's lineup, and the coach's weekly focus. All colors are theme tokens.
 */
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -1117,6 +1117,36 @@ function HomeScreenInner() {
   const myLineups = lineups.filter(isMyBoat);
   const allBoatsHref = `/varsity/lineups${viewDay?.iso ? `?d=${viewDay.iso}` : ""}`;
 
+  // Move the day by `delta`, clamped to the block — the same step DayHeader's
+  // arrows take, so swiping and tapping an arrow always land on the same day.
+  const stepDay = (delta: number) => {
+    const next = Math.max(0, Math.min(allDays.length - 1, viewIdx + delta));
+    pickDay(next === todayIdx ? null : next);
+  };
+
+  /*
+    SWIPE the sessions list to move a day — swipe right for the NEXT day (the
+    owner's own stated direction, not the "swipe right = back" a calendar
+    might default to). Same shape as the profile's own TrainingCalendar swipe:
+    only a decisively horizontal drag counts, so scrolling the page past the
+    list never moves the day.
+  */
+  const touch = useRef<{ x: number; y: number } | null>(null);
+  const onTouchStart = (e: React.TouchEvent) => {
+    const t = e.changedTouches[0];
+    touch.current = { x: t.clientX, y: t.clientY };
+  };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    const start = touch.current;
+    touch.current = null;
+    if (!start) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - start.x;
+    const dy = t.clientY - start.y;
+    if (Math.abs(dx) < 45 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    stepDay(dx > 0 ? 1 : -1);
+  };
+
   return (
     <div className="mx-auto w-full max-w-screen-sm pb-6">
       {consoleRole && <ConsoleDoor role={consoleRole} />}
@@ -1139,24 +1169,23 @@ function HomeScreenInner() {
         right={onToday ? `${sessions.length} prescribed` : undefined}
         canPrev={viewIdx > 0}
         canNext={viewIdx < allDays.length - 1}
-        onStep={(delta) => {
-          const next = Math.max(0, Math.min(allDays.length - 1, viewIdx + delta));
-          pickDay(next === todayIdx ? null : next);
-        }}
+        onStep={stepDay}
         onToday={onToday ? undefined : () => pickDay(null)}
       />
 
-      {sessions.length > 0 ? (
-        <div className="flex flex-col gap-2 px-3">
-          {sessions.map((sess, i) => (
-            <SessionCard key={i} s={sess} lineups={myLineups} />
-          ))}
-        </div>
-      ) : (
-        <div className="mx-3 rounded-xl border border-dashed border-border bg-surface px-4 py-5 text-center text-[12px] text-muted">
-          {onToday ? "Nothing scheduled for today." : "Nothing scheduled this day."}
-        </div>
-      )}
+      <div onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+        {sessions.length > 0 ? (
+          <div className="flex flex-col gap-2 px-3">
+            {sessions.map((sess, i) => (
+              <SessionCard key={i} s={sess} lineups={myLineups} />
+            ))}
+          </div>
+        ) : (
+          <div className="mx-3 rounded-xl border border-dashed border-border bg-surface px-4 py-5 text-center text-[12px] text-muted">
+            {onToday ? "Nothing scheduled for today." : "Nothing scheduled this day."}
+          </div>
+        )}
+      </div>
 
       {lineups.length > 0 && (
         <div className="px-3 pt-3">
