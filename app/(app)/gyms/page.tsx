@@ -150,7 +150,8 @@ function MainCard({ gym, fav, onToggleFav, crowd, now, going, tour }: CardProps)
         into it, the same treatment the photo gallery on the gym page uses, so
         an empty slot reads as "photo coming" rather than as a void.
       */}
-      <div className="relative flex h-24 items-end overflow-hidden bg-gradient-to-br from-surface-2 to-background">
+      {/* The name sits in the TOP-left corner (owner's call), clear of the heart. */}
+      <div className="relative flex h-24 items-start overflow-hidden bg-gradient-to-br from-surface-2 to-background pr-11">
         <Watermark gym={gym} />
         <div className="relative p-3">
           <div className="text-[15px] font-medium text-text">{gym.name}</div>
@@ -162,7 +163,7 @@ function MainCard({ gym, fav, onToggleFav, crowd, now, going, tour }: CardProps)
   );
 }
 
-function HouseCard({ gym, fav, onToggleFav, crowd, now, going, sub }: CardProps & { sub: string }) {
+function HouseCard({ gym, fav, onToggleFav, crowd, now, going }: CardProps) {
   const colors = gym.houseColors;
   return (
     <Link
@@ -182,13 +183,9 @@ function HouseCard({ gym, fav, onToggleFav, crowd, now, going, sub }: CardProps 
         {colors ? (
           <HouseSigil primary={colors.primary} secondary={colors.secondary} size={28} />
         ) : null}
-        <div>
-          <div className="text-sm font-medium text-text">{gym.name}</div>
-          {/* 9px muted was too faint to read in light mode; 10px + a stronger
-              colour, still clearly secondary to the gym name. The word is the
-              school's own — houses, colleges, dorms (lib/themes.ts). */}
-          <div className="text-[11px] text-text-2">{sub}</div>
-        </div>
+        {/* Just the name — no "House gym" / "Dorm gym" under it; the section
+            heading above the cards already says what they are. */}
+        <div className="text-sm font-medium text-text">{gym.name}</div>
       </div>
       <StatsRow gym={gym} crowd={crowd} now={now} going={going} />
     </Link>
@@ -335,7 +332,6 @@ export default function GymsPage() {
             crowd={getCrowd(g.slug)}
             now={now}
             going={goingFor(g.name)}
-            sub={uni?.houseNoun ?? "House gym"}
           />
         ))}
 

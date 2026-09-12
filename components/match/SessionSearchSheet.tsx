@@ -26,7 +26,6 @@ import {
   sessionTimeLabel,
   verifiedGyms,
   SESSION_WINDOW_HOURS,
-  sessionWindows,
 } from "@/lib/onboarding";
 import { dayKeyOf, dateLabel } from "@/lib/schedule";
 import { Pill, FieldLabel, SelectField } from "@/components/onboarding/controls";
@@ -66,7 +65,7 @@ export default function SessionSearchSheet({
   const [date, setDate] = useState<string | null>(null);
   /* OPTIONAL. No time means "anyone training that day". */
   const [hour, setHour] = useState<number | null>(null);
-  const [windowHours, setWindowHours] = useState(SESSION_WINDOW_HOURS);
+  const windowHours = SESSION_WINDOW_HOURS;
 
   const [results, setResults] = useState<Match[] | null>(null);
   const [searching, setSearching] = useState(false);
@@ -134,12 +133,7 @@ export default function SessionSearchSheet({
           <div className="h-1 w-9 rounded-full bg-border" />
         </div>
         <div className="flex items-center justify-between border-b border-border px-4 pb-3">
-          <div>
-            <div className="text-[15px] font-medium text-text">Search by time</div>
-            <div className="mt-0.5 text-[11px] text-muted">
-              Who is free to train on a day, at an hour — from people’s weekly schedules.
-            </div>
-          </div>
+          <div className="text-[15px] font-medium text-text">Search by time</div>
           <button
             type="button"
             onClick={onClose}
@@ -159,9 +153,6 @@ export default function SessionSearchSheet({
                   <Pill key={a.key} label={a.label} selected={activity === a.key} onClick={() => setActivity(a.key)} />
                 ))}
               </div>
-              {activity === "other" && (
-                <p className="mt-1 text-[11px] text-muted">Everyone training then, whatever they do.</p>
-              )}
             </div>
 
             <div>
@@ -192,28 +183,11 @@ export default function SessionSearchSheet({
               </div>
             </div>
 
-            {!anyTime && (
-              <div className="flex flex-wrap gap-1.5">
-                {sessionWindows.map((w) => (
-                  <Pill key={w.hours} label={w.label} selected={windowHours === w.hours} onClick={() => setWindowHours(w.hours)} />
-                ))}
-              </div>
-            )}
-
-            <p className="-mt-1.5 text-[11px] text-muted">
-              {anyTime
-                ? "Shows everyone training that day. Pick a time to narrow it down."
-                : windowHours >= 12
-                  ? `Shows everyone training that day, whatever time ${sessionTimeLabel(hour!)} turns into.`
-                  : `Shows people training ${sessionWindows.find((w) => w.hours === windowHours)?.full ?? ""} of ${sessionTimeLabel(hour!)}.`}
-            </p>
-
+            {/* Only the four answers and the button — the explainer lines and
+                the ±hours pills were cut as noise (the default window applies). */}
             <Button size="lg" full onClick={() => runSearch()} disabled={!canSearch || searching}>
               {searching ? "Searching…" : "Search"}
             </Button>
-            {!canSearch && (
-              <p className="text-center text-[11px] text-muted">Pick an activity and a day to search.</p>
-            )}
           </div>
 
           {/* RESULTS — inside the same sheet, under the form, so the answer is
