@@ -46,7 +46,7 @@ import { useUnits } from "@/components/useUnits";
 import { fetchLogsInRange, type LogEntry } from "@/lib/varsity/logStore";
 import { fetchPlan } from "@/lib/varsity/planStore";
 import { kindOf } from "@/lib/varsity/athleteHome";
-import { kindBar, kindBlock, kindLegend } from "@/lib/varsity/home";
+import { kindBar, kindBlock, kindColor, kindLegend } from "@/lib/varsity/home";
 import { formatMetrics } from "@/lib/varsity/logParse";
 import { toISO, type Session, type SessionMap } from "@/lib/varsity/coachPlan";
 import {
@@ -63,25 +63,37 @@ const MONTHS = [
 ];
 const DAY_NAMES = ["M", "T", "W", "T", "F", "S", "S"];
 
-const colorOf = (category: string | null) => logCategoryColor[category ?? "other"] ?? "var(--muted)";
+/*
+  ONE COLOUR PER SESSION, on all three screens.
+
+  The month grid painted a session with the PLAN's palette (an erg UT1 is
+  yellow) and then the day list and the opened workout painted the same session
+  with the LOG's category palette (an erg is blue) — so tapping a yellow block
+  opened a blue one, and the two vocabularies sat on top of each other. The
+  owner's note: "erg UT1 should be yellow — when I click it, it has different
+  colours".
+
+  So: a session the coach prescribed is coloured by WHAT THE COACH PRESCRIBED,
+  wherever it appears. A session logged outside the plan has no intensity to
+  read and keeps the category colour — the grid leaves those blocks neutral
+  rather than guessing (see blockStyle), but a dot has to be something, and the
+  category is the only honest thing it can be.
+*/
+const logColor = (l: LogEntry, planned: Session | undefined) =>
+  planned
+    ? kindColor[kindOf(planned)]
+    : (logCategoryColor[l.category ?? "other"] ?? "var(--muted)");
 
 /*
-  WHAT COLOUR A LOGGED SESSION IS.
+  THE BLOCK IN A GRID CELL — the same colour as above, as a 28% tint.
 
-  The same colour the PLAN gave it — green UT2, amber UT1, red hard, purple
-  weights — so a practice looks the same on the coach's month view and in your own history
-  instead of the two screens using different palettes for the same day. A log
-  carries the plan slot it came from (`dayKey`), which is how we find the
-  coach's session and read its intensity.
+  Water and erg are NOT told apart by it (the plan doesn't either — a UT2
+  outing and a UT2 erg are both green); each block prints which it was, and the
+  per-kind buttons under the grid are what the month's statistics hang off.
 
-  Water and erg are therefore NOT told apart by colour (the plan doesn't either
-  — a UT2 outing and a UT2 erg are both green). Each block prints which it was,
-  and the per-kind buttons under the grid are still what the month's
-  statistics hang off.
-
-  A session logged outside the plan has no intensity to read. Weights, flex and
-  off still land on the right colour from their category alone; anything else
-  stays neutral rather than being coloured with a guess.
+  Outside the plan there is no intensity to read: weights, flex and off still
+  land on the right colour from their category alone, and anything else stays
+  neutral rather than being coloured with a guess.
 */
 const NEUTRAL_BLOCK = { background: "color-mix(in oklab, var(--muted) 20%, transparent)" };
 
@@ -104,11 +116,14 @@ type CalDay = { num: number; iso: string; logs: LogEntry[]; today: boolean; futu
 function DaySheet({
   label,
   logs,
+  planSessions,
   onClose,
   onOpen,
 }: {
   label: string;
   logs: LogEntry[];
+  /** The published plan, keyed by slot — the dots read their colour off it. */
+  planSessions: Record<string, Session>;
   onClose: () => void;
   onOpen: (log: LogEntry) => void;
 }) {
@@ -131,7 +146,7 @@ function DaySheet({
               >
                 <span
                   className="mt-1 h-2.5 w-2.5 flex-shrink-0 rounded-full"
-                  style={{ background: colorOf(l.category) }}
+                  style={{ background: logColor(l, l.dayKey ? planSessions[l.dayKey] : undefined) }}
                 />
                 <div className="min-w-0 flex-1">
                   <div className="text-[13px] font-semibold text-text">{l.title}</div>
@@ -451,6 +466,7 @@ export default function CalendarScreen() {
         <DaySheet
           label={picked.label}
           logs={logsByDay[Number(picked.iso.split("-")[2])] ?? []}
+          planSessions={planSessions}
           onClose={() => setPicked(null)}
           onOpen={(log) => setOpenLog(log)}
         />
@@ -467,7 +483,16 @@ export default function CalendarScreen() {
       )}
 
       {openLog && (
-        <WorkoutDetail key={openLog.id} log={openLog} userId={userId} onClose={() => setOpenLog(null)} />
+        <WorkoutDetail
+          key={openLog.id}
+          log={openLog}
+          userId={userId}
+          /* The same rule the grid and the day list use, so a session keeps its
+             colour all the way in — including a Compare row, which swaps the
+             workout on screen without leaving. */
+          colorOf={(l) => logColor(l, l.dayKey ? planSessions[l.dayKey] : undefined)}
+          onClose={() => setOpenLog(null)}
+        />
       )}
     </div>
   );

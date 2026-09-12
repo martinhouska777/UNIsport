@@ -14,7 +14,7 @@ import ThemeProvider from "@/components/ThemeProvider";
 import { useVarsityTheme } from "@/components/varsity/useVarsityTheme";
 import { fetchLogsByCategory, type LogEntry } from "@/lib/varsity/logStore";
 import { formatMetrics } from "@/lib/varsity/logParse";
-import { logCategoryColor, logCategoryLabel } from "@/lib/varsity/athleteProfile";
+import { logCategoryLabel } from "@/lib/varsity/athleteProfile";
 import { IconArrowLeft, IconClock, IconChevronDown, IconChevronRight } from "@/components/icons";
 
 function Stat({ label, value }: { label: string; value: string }) {
@@ -98,10 +98,14 @@ const rowMetric = (l: LogEntry) =>
 export default function WorkoutDetail({
   log,
   userId,
+  colorOf,
   onClose,
 }: {
   log: LogEntry;
   userId: string | null;
+  /* What colour this session is, decided by the calendar so the grid, the day
+     list and this screen can never disagree (CalendarScreen → logColor). */
+  colorOf: (l: LogEntry) => string;
   onClose: () => void;
 }) {
   const vTheme = useVarsityTheme();
@@ -118,7 +122,7 @@ export default function WorkoutDetail({
   }, [onClose]);
 
   const cat = current.category ?? "other";
-  const color = logCategoryColor[cat] ?? "var(--muted)";
+  const color = colorOf(current);
   const catLabel = logCategoryLabel[cat] ?? "Other";
   const dateLabel = new Date(`${current.logDate}T00:00:00`).toLocaleDateString("en-US", {
     weekday: "long",
