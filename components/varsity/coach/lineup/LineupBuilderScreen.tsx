@@ -172,14 +172,6 @@ type PickDay = {
 type PlanContext = { title: string; sub: string; color: string; water: boolean } | null;
 
 /* ─────────────────────────  shared bits  ───────────────────────── */
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="mb-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-      {children}
-    </div>
-  );
-}
-
 type Side = Athlete["side"];
 
 /*
@@ -477,15 +469,12 @@ function DayCard({
 function DayPicker({ days, onPick }: { days: PickDay[]; onPick: (day: PickDay, p: Practice) => void }) {
   return (
     <div className="mx-auto w-full max-w-screen-sm px-4 pb-8 pt-4">
-      <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-accent">Lineup</div>
-      <h1 className="mt-0.5 text-2xl font-semibold text-text">Create Lineup</h1>
-      <p className="mt-1 text-[12px] text-muted">
-        Pick a practice to build. A lineup seats a boat, so the water sessions are
-        the usual ones — but any slot opens.
-      </p>
+      {/* The name of the tab, then straight into the days. The eyebrow, the
+          instructions and the "Next 7 days" label were three lines explaining
+          a list of seven dated cards that explains itself. */}
+      <h1 className="text-2xl font-semibold text-text">Lineups</h1>
 
-      <div className="mt-5">
-        <SectionLabel>Next 7 days</SectionLabel>
+      <div className="mt-4">
         {/* data-tour: the tour lights the FIRST card (coach-lineup-first-day,
             on DayCard) rather than the list — seven cards are taller than the
             screen, and a hole that size lights nothing. */}

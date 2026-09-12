@@ -30,6 +30,7 @@ import {
   IconCheckCircle,
   IconCheck,
   IconUser,
+  IconSearch,
 } from "@/components/icons";
 
 const initialsOf = (name: string) =>
@@ -221,6 +222,7 @@ export default function CoachNotesScreen() {
   const [roster, setRoster] = useState<TeamMember[] | null>(null);
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [editing, setEditing] = useState<TeamMember | null>(null);
+  const [query, setQuery] = useState("");
 
   useEffect(() => {
     (async () => {
@@ -235,14 +237,17 @@ export default function CoachNotesScreen() {
     [roster, notes],
   );
 
+  const shown = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return (roster ?? []).filter((m) => !q || m.name.toLowerCase().includes(q));
+  }, [roster, query]);
+
   return (
     <>
       <div className="mx-auto w-full max-w-screen-sm px-4 pb-8 pt-4">
-        <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-accent">Notes</div>
-        <h1 className="mt-0.5 text-2xl font-semibold text-text">Athlete Notes</h1>
-        <p className="mt-1 text-[12px] text-muted">
-          Tap an athlete to write a technical note. They see it on their Home.
-        </p>
+        {/* One line, saying what these notes are. The eyebrow and the
+            instruction under it were explaining a list of names. */}
+        <h1 className="text-2xl font-semibold text-text">Technical notes for athletes</h1>
 
         {roster === null ? (
           <div className="mt-10 text-center text-[13px] text-muted">Loading team…</div>
@@ -258,18 +263,37 @@ export default function CoachNotesScreen() {
           </div>
         ) : (
           <>
-            <div className="mt-4 flex items-center justify-between">
+            {/* Search, drawn exactly like the one on the Team tab — a squad is
+                forty names and a coach comes here looking for one of them. */}
+            <div className="mt-3 flex items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2.5">
+              <span className="text-muted">
+                <IconSearch size={16} />
+              </span>
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search athlete"
+                className="w-full bg-transparent text-base text-text outline-none placeholder:text-muted"
+              />
+            </div>
+
+            <div className="mt-3 flex items-center justify-between">
               <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-                {roster.length} athlete{roster.length === 1 ? "" : "s"}
+                {shown.length} athlete{shown.length === 1 ? "" : "s"}
               </span>
               <span className="rounded-full border border-border bg-surface px-2 py-0.5 text-[11px] text-muted">
                 {withNote} with a note
               </span>
             </div>
             <div className="mt-2.5 flex flex-col gap-2">
-              {roster.map((m) => (
+              {shown.map((m) => (
                 <AthleteRow key={m.id} member={m} note={notes[m.id]} onPick={() => setEditing(m)} />
               ))}
+              {shown.length === 0 && (
+                <div className="rounded-xl border border-dashed border-border bg-surface px-4 py-8 text-center text-[12px] text-muted">
+                  No one matches “{query}”.
+                </div>
+              )}
             </div>
           </>
         )}

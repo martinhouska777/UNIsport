@@ -606,10 +606,11 @@ export default function TrainingPlanScreen({
     return (
       <div className="mx-auto w-full max-w-screen-sm px-4 pb-8 pt-4">
         {/* data-tour: the console tour lights this pair (lib/varsity/coachTour.ts). */}
+        {/* Just the name of the tab. The eyebrow, the word "Blocks" and the
+            line explaining what a block is all sat above a list that already
+            says it — a coach who is here knows what they came to do. */}
         <div data-tour="coach-plan-header">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-accent">Training Plan</div>
-          <h1 className="mt-0.5 text-2xl font-semibold text-text">Blocks</h1>
-          <p className="mt-1 text-[12px] text-muted">A block is a stretch of training, usually up to a race.</p>
+          <h1 className="text-2xl font-semibold text-text">Training plan</h1>
         </div>
 
         {blocks.length === 0 ? (
@@ -690,7 +691,7 @@ export default function TrainingPlanScreen({
     return (
       <div className="mx-auto w-full max-w-screen-sm px-4 pb-8 pt-4">
         <button onClick={() => setView({ name: "blocks" })} className="flex items-center gap-1 text-[13px] text-muted">
-          <IconArrowLeft size={16} /> Blocks
+          <IconArrowLeft size={16} /> Training plan
         </button>
         <h1 className="mt-1 text-2xl font-semibold text-text">New training block</h1>
 
@@ -748,7 +749,7 @@ export default function TrainingPlanScreen({
       <div className="mx-auto w-full max-w-screen-sm px-4 pb-8 pt-4">
         <div className="sticky top-0 z-20 -mx-4 flex items-center justify-between border-b border-border bg-background/95 px-4 py-2.5 backdrop-blur">
           <button onClick={() => setView({ name: "blocks" })} className="flex items-center gap-1 text-[13px] text-muted">
-            <IconArrowLeft size={16} /> Blocks
+            <IconArrowLeft size={16} /> Training plan
           </button>
           {saveState}
         </div>
