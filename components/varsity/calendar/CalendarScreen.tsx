@@ -252,17 +252,19 @@ export default function CalendarScreen() {
   return (
     /* A full-height column: title, weekday header, THE MONTH, legend. Only the
        month flexes, so the grid always reaches the bottom of the screen. */
-    <div className="mx-auto flex h-full w-full max-w-screen-sm flex-col px-2.5 pb-3 pt-3">
+    /* The header above the grid is deliberately tight — every pixel it gives
+       up is a pixel the month gets, and the month is the screen. */
+    <div className="mx-auto flex h-full w-full max-w-screen-sm flex-col px-2.5 pb-3 pt-2">
       {/* The month IS the title — no page header above it. Its totals sit here
           rather than in a bar underneath the grid, where they were the last
           thing you reached and the first thing scrolled off. */}
       <div className="flex flex-shrink-0 items-center justify-between px-1.5">
         <div>
           <div className="flex items-baseline gap-1.5">
-            <h1 className="text-xl font-semibold leading-none text-text">{MONTHS[view.m]}</h1>
+            <h1 className="text-lg font-semibold leading-none text-text">{MONTHS[view.m]}</h1>
             <span className="text-[12px] font-medium text-muted">{view.y}</span>
           </div>
-          <div className="mt-1 text-[11px] text-muted">
+          <div className="mt-0.5 text-[11px] text-muted">
             {monthSessions === 0 ? (
               "Nothing logged yet"
             ) : (
@@ -303,7 +305,7 @@ export default function CalendarScreen() {
       </div>
 
       {/* Weekday header */}
-      <div className="mt-3 grid flex-shrink-0 grid-cols-7 gap-1 border-b border-border pb-1.5">
+      <div className="mt-2 grid flex-shrink-0 grid-cols-7 gap-1 border-b border-border pb-1">
         {DAY_NAMES.map((d, i) => (
           <div key={i} className="text-center text-[11px] font-semibold tracking-[0.12em] text-muted">
             {d}
@@ -313,7 +315,7 @@ export default function CalendarScreen() {
 
       {/* The month. Every row the same height, sharing what is left of the
           screen — a wall calendar, not a list that grows with the training. */}
-      <div className="mt-1.5 grid min-h-0 flex-1 auto-rows-fr grid-cols-7 gap-1 overflow-y-auto">
+      <div className="mt-1 grid min-h-0 flex-1 auto-rows-fr grid-cols-7 gap-1 overflow-y-auto">
         {Array.from({ length: leadingEmpty }).map((_, i) => (
           <div key={`e${i}`} />
         ))}
@@ -331,7 +333,16 @@ export default function CalendarScreen() {
                 where only the days you trained had a card read as a scatter of
                 cards; this reads as a month.
               */
-              className={`flex flex-col overflow-hidden rounded-lg border p-[3px] text-left ${
+              /*
+                A FLOOR UNDER EVERY CELL, the same 64px the plan's own month
+                view uses. Without it the rows only shared whatever height the
+                screen had left: a month that needs SIX rows instead of the
+                usual five (August 2026 starts on a Saturday) squeezed every
+                row a sixth shorter, and the text inside stopped fitting. With
+                a floor the grid simply scrolls — the cells stay readable and
+                a six-row month looks like the five-row one above it.
+              */
+              className={`flex min-h-[64px] flex-col overflow-hidden rounded-lg border p-[3px] text-left ${
                 d.today
                   ? "border-primary bg-primary-tint"
                   : "border-border bg-surface active:bg-surface-2"
@@ -379,13 +390,24 @@ export default function CalendarScreen() {
                         className="overflow-hidden rounded px-1 py-0.5"
                         style={{ ...blockStyle(l, planned), gridRowStart: half }}
                       >
-                        {/* Three lines, then an ellipsis. Without a cap, one
-                            long title ("Main strength — squat, pull, press")
-                            makes its whole week twice as tall as the rest of
-                            the month; with a hard clip it breaks mid-word, the
-                            way the plan's month view does. */}
+                        {/* AM / PM, the same 6px tag the plan's month view
+                            puts on its blocks — so a day here and the same day
+                            on Home read as the same object. */}
+                        {l.period && (
+                          <span className="block text-[6px] font-bold leading-none text-text-3">
+                            {l.period}
+                          </span>
+                        )}
+                        {/* 8px, matching the plan's month view rather than the
+                            10px this used to run at. Two sessions, a number
+                            and a day of the month do not fit a cell this wide
+                            at 10px — that size is why the grid had to steal
+                            height it didn't have. Still capped at three lines:
+                            without a cap one long title ("Main strength —
+                            squat, pull, press") makes its whole week twice as
+                            tall as the rest of the month. */}
                         <span
-                          className="block break-words text-[10px] font-medium leading-tight text-text"
+                          className="mt-px block break-words text-[8px] font-medium leading-[1.15] text-text"
                           style={{
                             display: "-webkit-box",
                             WebkitLineClamp: 3,
@@ -396,7 +418,7 @@ export default function CalendarScreen() {
                           {l.title}
                         </span>
                         {sub && (
-                          <span className="mt-px block truncate text-[10px] leading-none text-text-2">
+                          <span className="mt-px block truncate text-[8px] leading-none text-text-2">
                             {sub}
                           </span>
                         )}

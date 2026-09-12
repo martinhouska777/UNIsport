@@ -595,6 +595,16 @@ export const notificationItems: { icon: string; label: string }[] = [
   { icon: "clock", label: "One reminder to log, at your usual training time" },
 ];
 
+/*
+  WHERE SOMEBODY IS FROM, as one line. "New York, United States" when they gave
+  both, and whichever half they gave when they only gave one — so a profile
+  never shows a stray comma or an empty row. Lives here beside the country list
+  so every screen that prints a hometown prints it the same way.
+*/
+export function hometownLabel(city: string, country: string): string {
+  return [city.trim(), country.trim()].filter(Boolean).join(", ");
+}
+
 export const countries: string[] = [
   "United States", "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Argentina",
   "Armenia", "Australia", "Austria", "Azerbaijan", "Bahamas", "Bahrain", "Bangladesh",
@@ -685,6 +695,13 @@ export type OnboardingProfile = {
 
   // Screen 6 — Background (all optional)
   concentration: string;
+  // Where they're from, in two parts. The COUNTRY is a picked value (see
+  // `countries`) because the matcher groups it into regions — a typed country
+  // would never group. The CITY is free text on purpose: there is no city list
+  // in the app, most of the country lists that exist are US-shaped, and the
+  // point of the line is recognition, not filtering. "Both from New York" is
+  // something two people say to each other, not something the app scores.
+  hometownCity: string;
   hometownCountry: string;
   languages: string[];
   interests: string[];
@@ -721,6 +738,7 @@ export const emptyProfile: OnboardingProfile = {
   topGyms: [],
   trainingSchedule: {},
   concentration: "",
+  hometownCity: "",
   hometownCountry: "",
   languages: [campusLanguage],
   interests: [],

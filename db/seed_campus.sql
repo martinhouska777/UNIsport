@@ -44,6 +44,7 @@ create table public.campus_seed_people (
   gyms       jsonb,
   sched      jsonb,
   conc       text,
+  city       text,
   country    text,
   langs      jsonb,
   ints       jsonb,
@@ -74,7 +75,8 @@ select
   end,
   scheds[((i * 17) % 4) + 1],
   concs[((i * 19) % 10) + 1],
-  countries[((i * 23) % 8) + 1],
+  cities[((i * 23) % 12) + 1],
+  countries[((i * 23) % 12) + 1],
   to_jsonb(array['English']),
   to_jsonb(array[ints_pool[((i * 29) % 10) + 1], ints_pool[((i * 31) % 10) + 1]]),
   ttypes[((i * 37) % 3) + 1],
@@ -117,8 +119,20 @@ from (
     ] as scheds,
     array['Economics','Computer Science','Mathematics','Government','History',
           'Psychology','Biology','Statistics','English','Physics'] as concs,
-    array['United States','Germany','Brazil','Japan','Nigeria',
-          'Sweden','India','Spain'] as countries,
+    /*
+      Country and CITY, as two arrays read with the same index so they always
+      agree — nobody seeded is a German from Boston. The United States takes
+      five of the twelve slots with a different city each: on this campus most
+      of the list is American, and "from New York" / "from Chicago" is the
+      half of the answer somebody actually recognises. One US city for all of
+      them would have made the new line look broken.
+    */
+    array['United States','Germany','Brazil','Japan','United States',
+          'Nigeria','Sweden','India','United States','Spain',
+          'United States','United States'] as countries,
+    array['New York','Berlin','São Paulo','Tokyo','Boston',
+          'Lagos','Stockholm','Mumbai','Los Angeles','Madrid',
+          'Chicago','Houston'] as cities,
     array['Coffee','Climbing','Travel','Music','Film',
           'Cooking','Reading','Football','Photography','Hiking'] as ints_pool,
     array['partner','solo','group'] as ttypes
@@ -165,6 +179,7 @@ select
     'topGyms',           c.gyms,
     'trainingSchedule',  c.sched,
     'concentration',     c.conc,
+    'hometownCity',      c.city,
     'hometownCountry',   c.country,
     'languages',         c.langs,
     'interests',         c.ints,

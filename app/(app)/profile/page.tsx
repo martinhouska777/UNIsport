@@ -46,6 +46,7 @@ import { getMyFollowCounts } from "@/lib/supabase/follows";
 import { readLogLink } from "@/lib/reminders";
 import {
   residenceLabel,
+  hometownLabel,
   nameError,
 } from "@/lib/onboarding";
 import {
@@ -502,15 +503,7 @@ export default function ProfilePage() {
         )}
       </div>
 
-      {/* 6 · YOUR PHOTOS, under it. */}
-      <PhotoGrid
-        photos={user.photos}
-        onChange={(photos) => update({ photos })}
-        visible={user.showPhotos}
-        onVisibleChange={(v) => update({ showPhotos: v })}
-      />
-
-      {/* 7 · EVERYTHING ELSE, folded. A <details>, so it opens without
+      {/* 6 · EVERYTHING ELSE, folded. A <details>, so it opens without
           JavaScript and is announced for free. */}
       <details className="group border-b border-border">
         <summary className="tap44 flex cursor-pointer list-none items-center justify-between px-3.5 py-3 [&::-webkit-details-marker]:hidden">
@@ -536,7 +529,11 @@ export default function ProfilePage() {
         The pencil edits them here rather than sending you to Settings to find
         them: you should be able to change a thing where you can see it.
       */}
-      {(user.interests.length > 0 || user.languages.length > 0) && (
+      {(user.interests.length > 0 ||
+        user.languages.length > 0 ||
+        user.concentration ||
+        user.hometownCity ||
+        user.hometownCountry) && (
         <div className="border-b border-border px-3.5 py-3">
           <div className="mb-2 flex items-center justify-between">
             <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
@@ -581,6 +578,35 @@ export default function ProfilePage() {
                   </span>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* WHAT YOU STUDY AND WHERE YOU'RE FROM — the other two things
+              somebody opens a profile to find out, and until now the only
+              place they existed was inside onboarding. Rows rather than
+              chips: there is one of each, and a lone chip reads as a filter.
+
+              The hometown leads with the CITY. On a campus where most of the
+              list answers "United States", the country on its own says almost
+              nothing — "New York" is the half that gets recognised. */}
+          {(user.concentration || user.hometownCity || user.hometownCountry) && (
+            <div className="mt-2.5 flex flex-col divide-y divide-border border-t border-border pt-1">
+              {user.concentration && (
+                <div className="flex items-center justify-between gap-3 py-2">
+                  <span className="text-[11px] text-muted">Concentration</span>
+                  <span className="text-right text-[11px] font-medium text-text">
+                    {user.concentration}
+                  </span>
+                </div>
+              )}
+              {(user.hometownCity || user.hometownCountry) && (
+                <div className="flex items-center justify-between gap-3 py-2">
+                  <span className="text-[11px] text-muted">From</span>
+                  <span className="text-right text-[11px] font-medium text-text">
+                    {hometownLabel(user.hometownCity, user.hometownCountry)}
+                  </span>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -649,6 +675,19 @@ export default function ProfilePage() {
         )}
       </div>
       </details>
+
+      {/* 7 · YOUR PHOTOS, the last thing on the page. They used to sit directly
+          under Log a session, above everything you'd actually read about a
+          person; the order the owner wants is what you're LIKE first (More
+          about you, then your records) and the pictures at the bottom. Kept
+          out of the fold above — a photo grid you have to unfold to edit is a
+          photo grid nobody updates. */}
+      <PhotoGrid
+        photos={user.photos}
+        onChange={(photos) => update({ photos })}
+        visible={user.showPhotos}
+        onVisibleChange={(v) => update({ showPhotos: v })}
+      />
 
       {switchingMode && (
         <ModeSwitcherSheet

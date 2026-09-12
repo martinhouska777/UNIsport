@@ -18,7 +18,7 @@ import Button from "@/components/ui/Button";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { getPublicProfile } from "@/lib/supabase/profiles";
 import { profileFromOnboarding, classOfLabel, type CurrentUser } from "@/lib/currentUser";
-import { residenceLabel } from "@/lib/onboarding";
+import { residenceLabel, hometownLabel } from "@/lib/onboarding";
 import { MATCH_TIER_LABELS } from "@/lib/matchTier";
 import { getPairMatch, type Match } from "@/lib/supabase/matching";
 import { matchReasons, type MatchReason } from "@/lib/matchReasons";
@@ -391,7 +391,10 @@ function PersonProfile() {
               used to be the last block on the page, below Photos and Personal
               records) because this and Interests are the same question — what
               you'd actually talk about — and they read as one stretch. */}
-          {(user.concentration || user.hometownCountry || user.languages.length > 0) && (
+          {(user.concentration ||
+            user.hometownCity ||
+            user.hometownCountry ||
+            user.languages.length > 0) && (
             <div className="border-b border-border px-4 py-3">
               <div className="mb-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
                 About
@@ -405,11 +408,11 @@ function PersonProfile() {
                     </span>
                   </div>
                 )}
-                {user.hometownCountry && (
+                {(user.hometownCity || user.hometownCountry) && (
                   <div className="flex items-center justify-between gap-3 py-2">
                     <span className="text-xs text-muted">From</span>
                     <span className="text-right text-xs font-medium text-text">
-                      {user.hometownCountry}
+                      {hometownLabel(user.hometownCity, user.hometownCountry)}
                     </span>
                   </div>
                 )}

@@ -1087,6 +1087,19 @@ export default function OnboardingFlow() {
 
             <div>
               <FieldLabel>Where are you from? — optional</FieldLabel>
+              {/* The CITY, above the country it sits in. On a campus where most
+                  of the list answers "United States", the country alone says
+                  almost nothing — "New York" is the half somebody recognises
+                  and opens with. Free text, because there is no city list here
+                  and this line is for reading, not filtering. */}
+              <input
+                value={profile.hometownCity}
+                maxLength={40}
+                onChange={(e) => set("hometownCity", e.target.value)}
+                placeholder="Your city or town"
+                aria-label="City or town"
+                className="mb-2 w-full rounded-[10px] border border-border bg-surface-2 px-3.5 py-3 text-base text-text placeholder:text-muted focus:border-primary focus:outline-none"
+              />
               <SearchableDropdown
                 options={countries}
                 value={profile.hometownCountry}

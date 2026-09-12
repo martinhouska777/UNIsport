@@ -71,6 +71,7 @@ export const currentUser: CurrentUser = {
   topGyms: ["Malkin Athletic Center", "Murr Center"],
   trainingSchedule: { mon: ["PM"], wed: ["PM"], fri: ["AM"] },
   concentration: "Economics",
+  hometownCity: "New York",
   hometownCountry: "United States",
   languages: ["English"],
   interests: ["Powerlifting", "Chess", "Jazz"],

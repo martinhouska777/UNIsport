@@ -36,6 +36,11 @@ as $$
     'topGyms',          coalesce(p.data->'topGyms', '[]'::jsonb),
     'trainingSchedule', coalesce(p.data->'trainingSchedule', '{}'::jsonb),
     'concentration',    p.data->>'concentration',
+    -- The hometown CITY alongside the country. Same privacy class as the
+    -- country already here: the owner typed it into the optional "Where are
+    -- you from?" question, and it's shown on the profile people open from
+    -- Match — it is what somebody recognises and opens a conversation with.
+    'hometownCity',     p.data->>'hometownCity',
     'hometownCountry',  p.data->>'hometownCountry',
     'languages',        coalesce(p.data->'languages', '[]'::jsonb),
     'interests',        coalesce(p.data->'interests', '[]'::jsonb),

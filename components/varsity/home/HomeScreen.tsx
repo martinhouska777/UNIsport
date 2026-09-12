@@ -174,7 +174,16 @@ function WeekFit({
             <div className="flex flex-1 flex-col gap-0.5 p-0.5">
               {PERIOD_ROWS.map((row) => {
                 const s = d.sessions.find((x) => x.time === row);
-                if (!s) return null;
+                /*
+                  A MISSING PERIOD KEEPS ITS HALF, empty. Skipping it entirely
+                  let the one session that IS there stretch over the whole cell
+                  (it's flex-1), so an AM-only day looked exactly as full as a
+                  day with both — and the AM block sat where the PM one does on
+                  the day beside it. Now AM is always the top half and PM the
+                  bottom, whether or not the other one exists, and an empty half
+                  simply shows the cell underneath.
+                */
+                if (!s) return <div key={row} className="flex-1" />;
                 return (
                   <div key={row} className="flex-1 rounded px-1 py-1" style={kindBlock(s.kind)}>
                     <span className="block text-[10px] font-bold leading-none text-text-3">{row}</span>
