@@ -16,7 +16,7 @@
   favourites use. It is not a contract and there is nothing to enforce, so it
   does not need a table.
 */
-import { useCallback, useSyncExternalStore } from "react";
+import { useCallback, useState, useSyncExternalStore } from "react";
 import { honorCodeFor, honorCodeKey } from "@/lib/honorCode";
 import Button from "@/components/ui/Button";
 
@@ -92,6 +92,9 @@ export default function HonorCode({
   onAgree: () => void;
 }) {
   const code = honorCodeFor(universityKey);
+  // Signed by typing your name — "I agree" waits until there is one.
+  const [name, setName] = useState("");
+  const signed = name.trim().length > 0;
 
   return (
     <div className="mx-auto w-full max-w-screen-sm px-3.5 py-8">
@@ -107,14 +110,22 @@ export default function HonorCode({
           </p>
         ))}
 
-        <Button size="md" className="mt-6 w-full" onClick={onAgree}>
+        {/* The signature: a name written on a line. 16px so phones don't zoom. */}
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder={code.signature}
+          aria-label="Signature"
+          autoComplete="name"
+          maxLength={60}
+          className="mt-6 w-full border-b border-border bg-transparent px-1 pb-2 text-center text-base italic text-text placeholder:not-italic placeholder:text-muted focus:border-primary focus:outline-none"
+        />
+
+        <Button size="md" className="mt-4 w-full" onClick={onAgree} disabled={!signed}>
           {code.agree}
         </Button>
       </div>
-
-      <p className="mt-3 px-1 text-center text-[11px] leading-relaxed text-muted">
-        Shown once. You can train however you like — this is only about what you type in.
-      </p>
     </div>
   );
 }

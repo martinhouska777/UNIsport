@@ -31,6 +31,8 @@ export type HonorCode = {
   paragraphs: string[];
   /** The button. */
   agree: string;
+  /** Placeholder on the name you type as your signature, above the button. */
+  signature: string;
   /** The quieter one-liner that lives under the boards ever after. */
   footer: string;
 };
@@ -72,6 +74,7 @@ function defaultHonorCode(school: string): HonorCode {
       `Logging a session that did not happen, claiming a partner who was not there, passing off a warm-up as a working set, inflating a distance, or any other instance of athletic dishonesty violates the standards of our community, as well as the standards of the wider world of gyms and group chats.`,
     ],
     agree: "I agree",
+    signature: "Your full name",
     footer: "Every number here is self-reported. We trust you.",
   };
 }
