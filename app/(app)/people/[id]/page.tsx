@@ -20,7 +20,7 @@ import { getPublicProfile } from "@/lib/supabase/profiles";
 import { profileFromOnboarding, classOfLabel, type CurrentUser } from "@/lib/currentUser";
 import { residenceLabel } from "@/lib/onboarding";
 import { MATCH_TIER_LABELS } from "@/lib/matchTier";
-import { getPairMatch } from "@/lib/supabase/matching";
+import { getPairMatch, type Match } from "@/lib/supabase/matching";
 import { matchReasons, type MatchReason } from "@/lib/matchReasons";
 import { useAppState } from "@/components/AppState";
 import { startDirectConversation } from "@/lib/supabase/messages";
@@ -68,13 +68,20 @@ function PersonProfile() {
   */
   const { userId: meId } = useAppState();
   const [reasons, setReasons] = useState<MatchReason[]>([]);
+  // Kept alongside `reasons` so the interests grid below can tell which of
+  // THEIR interests are actually shared with the viewer (m.facts.interests is
+  // already that overlap — see lib/supabase/matching.ts) rather than colouring
+  // every interest the same regardless of whether the two of you share it.
+  const [match, setMatch] = useState<Match | null>(null);
 
   useEffect(() => {
     if (!meId || !id || meId === id) return;
     let active = true;
     getPairMatch(meId, id)
       .then((m) => {
-        if (active && m) setReasons(matchReasons(m));
+        if (!active || !m) return;
+        setMatch(m);
+        setReasons(matchReasons(m));
       })
       .catch(() => {
         /* The profile itself is the point; no reasons is a fine outcome. */
@@ -83,6 +90,8 @@ function PersonProfile() {
       active = false;
     };
   }, [meId, id]);
+
+  const sharedInterests = new Set(match?.facts.interests ?? []);
 
   // Toggle follow/unfollow, updating the button optimistically.
   const toggleFollow = async () => {
@@ -291,19 +300,34 @@ function PersonProfile() {
             </div>
           </div>
 
-          {/* Personal records (only present when they chose to show them) */}
-          {user.personalRecords.length > 0 && (
+          {/* Interests — moved above Personal records (same order the owner's
+              own profile uses). Squares now only pick up the school's colour
+              when it's an interest you ACTUALLY SHARE with them — before, every
+              one of their interests was coloured the same, so there was no way
+              to tell an overlap from any other of their hobbies at a glance.
+              Unshared ones stay a plain grey square, same shape, same grid. */}
+          {user.interests.length > 0 && (
             <div className="border-b border-border px-4 py-3">
               <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-                Personal records
+                Interests
               </div>
-              <div className="flex flex-col divide-y divide-border">
-                {user.personalRecords.map((pr, i) => (
-                  <div key={i} className="flex items-center justify-between py-2">
-                    <span className="text-xs text-muted">{pr.lift}</span>
-                    <span className="text-xs font-medium text-text">{pr.value}</span>
-                  </div>
-                ))}
+              <div className="grid grid-cols-3 gap-1.5">
+                {user.interests.map((tag) => {
+                  const shared = sharedInterests.has(tag);
+                  return (
+                    <span
+                      key={tag}
+                      title={shared ? "You both like this" : undefined}
+                      className={`truncate rounded-md border px-2 py-1.5 text-center text-[11px] font-medium ${
+                        shared
+                          ? "border-accent-line bg-accent-tint text-accent"
+                          : "border-border bg-surface-2 text-muted"
+                      }`}
+                    >
+                      {tag}
+                    </span>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -318,23 +342,19 @@ function PersonProfile() {
             </div>
           )}
 
-          {/* Interests — the reason you'd train with this person, so they get
-              the school's own colour and a rectangle each, three to a row,
-              rather than a grey run-on of pills. Colour is theme tokens, so a
-              different university re-skins them by changing data (rule 1). */}
-          {user.interests.length > 0 && (
+          {/* Personal records — now the lower of the two, swapped with
+              Interests above (only present when they chose to show them). */}
+          {user.personalRecords.length > 0 && (
             <div className="border-b border-border px-4 py-3">
               <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-                Interests
+                Personal records
               </div>
-              <div className="grid grid-cols-3 gap-1.5">
-                {user.interests.map((tag) => (
-                  <span
-                    key={tag}
-                    className="truncate rounded-md border border-accent-line bg-accent-tint px-2 py-1.5 text-center text-[11px] font-medium text-accent"
-                  >
-                    {tag}
-                  </span>
+              <div className="flex flex-col divide-y divide-border">
+                {user.personalRecords.map((pr, i) => (
+                  <div key={i} className="flex items-center justify-between py-2">
+                    <span className="text-xs text-muted">{pr.lift}</span>
+                    <span className="text-xs font-medium text-text">{pr.value}</span>
+                  </div>
                 ))}
               </div>
             </div>
