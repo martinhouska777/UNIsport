@@ -24,7 +24,7 @@ import { formatWeight } from "@/lib/varsity/units";
 import { roster, rosterById, sideMeta, COX_COLOR, COX_INK, type Athlete } from "@/lib/varsity/coachLineup";
 import { teamProfile } from "@/lib/varsity/teamProfiles";
 import { statusOptions, prPieces, type StatusTone } from "@/lib/varsity/athleteProfile";
-import { IconSearch, IconChevronRight } from "@/components/icons";
+import { IconSearch, IconChevronRight, IconUser } from "@/components/icons";
 
 const toneDot: Record<StatusTone, string> = {
   success: "bg-success",
@@ -32,8 +32,6 @@ const toneDot: Record<StatusTone, string> = {
   danger: "bg-danger",
   muted: "bg-muted",
 };
-const toneOf = (title: string): StatusTone =>
-  statusOptions.find((s) => s.title === title)?.tone ?? "muted";
 /*
   The side dot. It carries a hairline of its own ink so the dot keeps a crisp
   edge on both the light and the dark varsity theme, whatever colour it is.
@@ -71,8 +69,9 @@ function AthleteSheet({ athleteId, onClose }: { athleteId: string; onClose: () =
   return (
     <Sheet title="Athlete" onClose={onClose}>
       <div className="flex items-start gap-3.5">
-        <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-2xl border border-primary-line bg-gradient-to-br from-primary/15 to-primary/5">
-          <span className="text-xl font-semibold text-primary">{a?.initials ?? "—"}</span>
+        {/* The same rule as the roster row: a person, not a monogram. */}
+        <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-primary-line bg-gradient-to-br from-primary/15 to-primary/5 text-primary">
+          <IconUser size={30} />
         </div>
         <div className="min-w-0 flex-1 pt-0.5">
           <div className="text-lg font-semibold leading-tight text-text">{a?.name ?? "Unknown"}</div>
@@ -147,20 +146,24 @@ function RosterRow({
   href?: string;
   tour?: string;
 }) {
-  const tone = toneOf(teamProfile(a.id).status);
   const cls =
     "relative flex w-full items-center gap-3 rounded-xl border border-border bg-surface px-3 py-2.5 text-left active:bg-surface-2";
   const inner = (
     <>
-      {/* Status — top-right corner of the row, off the avatar (it used to sit
-          as a tiny dot on the avatar's own corner, which read as part of the
-          person rather than a fact about today). */}
-      <span
-        className={`absolute right-2 top-2 h-2 w-2 rounded-full ${toneDot[tone]}`}
-        aria-hidden="true"
-      />
-      <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-primary-tint text-[11px] font-semibold text-primary">
-        {a.initials}
+      {/*
+        A PERSON, NOT TWO LETTERS. The owner does not want initials on a roster:
+        a person is their photo, and somebody we have no photo of is a
+        person-shaped glyph rather than a monogram. Nobody on the squad has one
+        yet — these are demo profiles and real accounts are not linked to roster
+        seats — so today this is always the glyph, and it is where the photo goes
+        the day they are.
+
+        (The status dot that used to sit in the top-right corner of the row went
+        with it, also the owner's call. The status itself is still on the
+        athlete's own screen, said in words.)
+      */}
+      <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center overflow-hidden rounded-lg bg-primary-tint text-primary">
+        <IconUser size={18} />
       </span>
       <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-text">{a.name}</span>
       <span className="flex items-center gap-1 text-[11px] text-muted">
@@ -255,10 +258,6 @@ export default function TeamScreen({
               placeholder="Search the squad"
               className="w-full bg-transparent text-base text-text outline-none placeholder:text-muted"
             />
-          </div>
-          <div className="mt-1.5 px-0.5 text-[11px] text-muted">
-            {rowers.length} rowers
-            {coxes.length > 0 && ` · ${coxes.length} ${coxes.length === 1 ? "coxswain" : "coxswains"}`}
           </div>
 
           <div className="mt-3 flex flex-col gap-1.5">

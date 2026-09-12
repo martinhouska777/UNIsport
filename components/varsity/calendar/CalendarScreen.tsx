@@ -354,14 +354,14 @@ export default function CalendarScreen() {
                 a floor the grid simply scrolls — the cells stay readable and
                 a six-row month looks like the five-row one above it.
               */
-              className={`flex min-h-[64px] flex-col overflow-hidden rounded-lg border p-[3px] text-left ${
+              className={`flex min-h-[64px] flex-col overflow-hidden rounded-lg border text-left ${
                 d.today
                   ? "border-primary bg-primary-tint"
                   : "border-border bg-surface active:bg-surface-2"
               }`}
             >
               <span
-                className={`px-px text-[11px] font-semibold leading-none ${
+                className={`px-1 pt-1 text-[11px] font-semibold leading-none ${
                   d.today ? "text-primary" : has ? "text-text" : d.future ? "text-muted/40" : "text-muted"
                 }`}
               >
@@ -399,7 +399,7 @@ export default function CalendarScreen() {
                     return (
                       <span
                         key={l.id}
-                        className="overflow-hidden rounded px-1 py-0.5"
+                        className="overflow-hidden px-1 py-0.5"
                         style={{ ...blockStyle(l, planned), gridRowStart: half }}
                       >
                         {/* No AM / PM tag. Which half of the day this was is

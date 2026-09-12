@@ -807,7 +807,11 @@ function DayHeader({
   );
 }
 
-/* ─── Coach's note for you (red = work on this · green = all clear) ─── */
+/* ─── The TECHNICAL NOTE for you (red = work on this · green = all clear) ───
+   It is the coach writing, but what he writes is a technical point — catch
+   timing, a body angle, where the pressure went. The owner's word, and the
+   better one: 'Coach's note' said who sent it, 'Technical note' says what it
+   is, and the card it sits on is already unmistakably from the coach. */
 function CoachNoteCard({ note }: { note: string }) {
   if (note.trim()) {
     return (
@@ -817,7 +821,7 @@ function CoachNoteCard({ note }: { note: string }) {
             !
           </span>
           <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-danger">
-            Coach&apos;s note · work on this
+            Technical note · work on this
           </span>
         </div>
         <p className="px-3.5 py-3 text-[13px] leading-relaxed text-text-2">{note}</p>
