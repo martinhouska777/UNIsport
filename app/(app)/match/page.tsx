@@ -171,7 +171,8 @@ function MatchScreen() {
 
       {/* Sub-tab switch */}
       <div className="px-3 pb-2 pt-2.5">
-        <div className="flex overflow-hidden rounded-xl border border-border">
+        {/* A capsule with the chosen tab as a pill inside it (Instagram-style). */}
+        <div className="flex rounded-full border border-border bg-surface-2 p-1">
           {subTabs.map((s) => (
             <button
               key={s.key}
@@ -180,8 +181,8 @@ function MatchScreen() {
                  the screen it just switched to (lib/tour.ts). */
               data-tour={`match-tab-${s.key}`}
               onClick={() => setTab(s.key)}
-              className={`min-h-11 flex-1 py-2 text-xs font-medium transition-colors ${
-                tab === s.key ? "bg-text text-background" : "bg-surface-2 text-muted"
+              className={`min-h-10 flex-1 rounded-full py-2 text-[13px] font-semibold transition-colors ${
+                tab === s.key ? "bg-text text-background" : "text-muted"
               }`}
             >
               {s.label}

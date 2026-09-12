@@ -106,14 +106,15 @@ export default function MessagesList({
 
       {/* Direct / Community toggle */}
       <div className="bg-surface px-3 pb-2 pt-2.5">
-        <div className="flex overflow-hidden rounded-xl border border-border">
+        {/* Same capsule as the Match tabs: the chosen one is a pill inside it. */}
+        <div className="flex rounded-full border border-border bg-surface-2 p-1">
           {(["direct", "community"] as Tab[]).map((t) => (
             <button
               key={t}
               type="button"
               onClick={() => setTab(t)}
-              className={`min-h-11 flex-1 py-2 text-center text-xs font-medium capitalize transition-colors ${
-                tab === t ? "bg-text text-background" : "bg-surface-2 text-muted"
+              className={`min-h-10 flex-1 rounded-full py-2 text-center text-[13px] font-semibold capitalize transition-colors ${
+                tab === t ? "bg-text text-background" : "text-muted"
               }`}
             >
               {t === "direct" ? "Direct" : "Community"}
