@@ -981,6 +981,11 @@ function HomeScreenInner() {
   // guessing (components/varsity/UploadVideoSheet.tsx).
   const [uploadOpen, setUploadOpen] = useState(false);
 
+  // Where a swipe on the sessions list started. A hook, so it has to live up
+  // here with the others — the loading and empty states below return early,
+  // and a hook called after them runs on some renders but not others.
+  const touch = useRef<{ x: number; y: number } | null>(null);
+
   useEffect(() => {
     let active = true;
     (async () => {
@@ -1131,7 +1136,6 @@ function HomeScreenInner() {
     only a decisively horizontal drag counts, so scrolling the page past the
     list never moves the day.
   */
-  const touch = useRef<{ x: number; y: number } | null>(null);
   const onTouchStart = (e: React.TouchEvent) => {
     const t = e.changedTouches[0];
     touch.current = { x: t.clientX, y: t.clientY };
