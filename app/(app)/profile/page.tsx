@@ -235,7 +235,6 @@ export default function ProfilePage() {
     );
   }
 
-  const following = followCounts?.following ?? user.stats.following;
   const followers = followCounts?.followers ?? 0;
   const statsReady = statsLoaded && followCounts !== null;
   /*
@@ -503,15 +502,15 @@ export default function ProfilePage() {
         )}
       </div>
 
-      {/* 6 · EVERYTHING ELSE, folded. A <details>, so it opens without
-          JavaScript and is announced for free. */}
-      <details className="group border-b border-border">
+      {/* 6 · EVERYTHING ELSE, in a <details> that starts OPEN — the owner wants
+          it read, not hunted for — but can still be folded away. */}
+      <details open className="group border-b border-border">
         <summary className="tap44 flex cursor-pointer list-none items-center justify-between px-3.5 py-3 [&::-webkit-details-marker]:hidden">
           <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
             More about you
           </span>
+          {/* No counts here: they're already beside the photo at the top. */}
           <span className="flex items-center gap-2 text-[11px] text-muted">
-            {statsReady && !brandNew && `${sessionsCount} sessions · ${partners.length} partners · ${following} following`}
             <span className="transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none">
               <IconChevronDown size={16} />
             </span>
@@ -535,10 +534,8 @@ export default function ProfilePage() {
         user.hometownCity ||
         user.hometownCountry) && (
         <div className="border-b border-border px-3.5 py-3">
-          <div className="mb-2 flex items-center justify-between">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-              About you
-            </div>
+          {/* No "About you" label — "More about you" right above already says it. */}
+          <div className="mb-2 flex items-center justify-end">
             <button
               type="button"
               onClick={() => setEditingPrefs(true)}
