@@ -5,7 +5,7 @@
   ---------------------------------------------------------------------------
   • Identity: the SAME name as the normal app profile (profiles.data.name), the
     year on the team (Freshman/Sophomore/…), and height/weight — all editable.
-  • Current status: tap to change (Active / Light training / Injured / Away).
+  • Current status: tap to change (Active / Sick / Injured / Away).
   • Statistics: pick a WINDOW (week / 2 weeks / month / 3 months, or two dates
     of your own) and a MEASURE (metres / hours / consistency); three numbers and
     a graph — columns or a line — follow both, the graph opens full size, and

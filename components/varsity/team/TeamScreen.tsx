@@ -44,6 +44,22 @@ const sideDot = (a: Athlete): React.CSSProperties => {
   return { background: color, border: `1px solid color-mix(in oklab, ${ink} 30%, transparent)` };
 };
 const sideLabel = (a: Athlete) => (a.cox ? "Cox" : sideMeta[a.side].label);
+/*
+  The roster row's OWN dot — P and S read blue here, same as Both, rather than
+  the oar-blade red/green. That split earns its keep in the Lineup Builder
+  (which side a rower can take is a real seating constraint); on a plain
+  roster it was just noise, so this list gets one colour for "on a side" and
+  leaves sideDot() (still red/green) for the seat-picking screens.
+*/
+const rosterSideDot = (a: Athlete): React.CSSProperties => {
+  if (a.cox) {
+    return { background: COX_COLOR, border: `1px solid color-mix(in oklab, ${COX_INK} 30%, transparent)` };
+  }
+  return {
+    background: sideMeta.B.color,
+    border: `1px solid color-mix(in oklab, ${sideMeta.B.ink} 30%, transparent)`,
+  };
+};
 
 /* ─────────────────────────  athlete profile sheet  ───────────────────────── */
 /*
@@ -149,17 +165,23 @@ function RosterRow({
 }) {
   const tone = toneOf(teamProfile(a.id).status);
   const cls =
-    "flex w-full items-center gap-3 rounded-xl border border-border bg-surface px-3 py-2.5 text-left active:bg-surface-2";
+    "relative flex w-full items-center gap-3 rounded-xl border border-border bg-surface px-3 py-2.5 text-left active:bg-surface-2";
   const inner = (
     <>
-      <span className="relative flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-primary-tint text-[11px] font-semibold text-primary">
+      {/* Status — top-right corner of the row, off the avatar (it used to sit
+          as a tiny dot on the avatar's own corner, which read as part of the
+          person rather than a fact about today). */}
+      <span
+        className={`absolute right-2 top-2 h-2 w-2 rounded-full ${toneDot[tone]}`}
+        aria-hidden="true"
+      />
+      <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-primary-tint text-[11px] font-semibold text-primary">
         {a.initials}
-        <span className={`absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-surface ${toneDot[tone]}`} />
       </span>
       <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-text">{a.name}</span>
       <span className="flex items-center gap-1 text-[11px] text-muted">
-        <span className="h-2 w-2 rounded-full" style={sideDot(a)} />
-        {a.cox ? "Cox" : a.side}
+        <span className="h-2 w-2 rounded-full" style={rosterSideDot(a)} />
+        {sideLabel(a)}
       </span>
       <span className="text-muted">
         <IconChevronRight size={15} />

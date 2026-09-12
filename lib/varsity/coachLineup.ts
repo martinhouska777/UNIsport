@@ -39,9 +39,17 @@ export type Side = "P" | "S" | "B"; // port · starboard · both (bisweptual)
   marker sits beside a name in a seat and a whole word would crowd it out.
   The owner's call: P, S, B in the console.
 */
+/*
+  REVERTED on the owner's own later instruction — back to "Stroke" / "Bow"
+  (P / S kept their letters; only the label text changes). Colors and tags are
+  untouched: the Lineup Builder still paints port red / starboard green on the
+  oar blades, which is functional there (a coach reads side at a glance when
+  seating a boat), not just decorative — only the roster list's own dot is
+  unified to blue, done locally in TeamScreen.tsx rather than here.
+*/
 export const sideMeta: Record<Side, { label: string; tag: string; color: string; ink: string }> = {
-  P: { label: "Port", tag: "P", color: "#d93025", ink: "#ffffff" },
-  S: { label: "Starboard", tag: "S", color: "#1e8e3e", ink: "#ffffff" },
+  P: { label: "Stroke", tag: "P", color: "#d93025", ink: "#ffffff" },
+  S: { label: "Bow", tag: "S", color: "#1e8e3e", ink: "#ffffff" },
   B: { label: "Both", tag: "B", color: "#2563eb", ink: "#ffffff" },
 };
 

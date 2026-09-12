@@ -36,10 +36,10 @@ export type BoatRole = (typeof boatRoleOptions)[number];
   just gives the ATHLETE a way to answer it about themselves instead of leaving
   the coach to set thirty of them by hand.
 
-  ONE name per side, taken straight from sideMeta: Port, Starboard, Both. The
-  old second line (the British strokeside/bowside dialect) is gone on the
-  owner's instruction — an athlete answering this should read the same word here
-  that the coach reads on the roster and on the seat in the boat.
+  ONE name per side, taken straight from sideMeta: Stroke, Bow, Both — reverted
+  back to this (from Port/Starboard) on the owner's later instruction. An
+  athlete answering this should read the same word here that the coach reads
+  on the roster and on the seat in the boat.
 */
 export const sideOptions: { key: Side; label: string }[] = [
   { key: "P", label: sideMeta.P.label },
@@ -57,7 +57,9 @@ export function sideLabel(role: BoatRole, side: Side): string | null {
 export type StatusTone = "success" | "warn" | "danger" | "muted";
 export const statusOptions: { title: string; sub: string; tone: StatusTone }[] = [
   { title: "Active", sub: "Available for training and selection", tone: "success" },
-  { title: "Light training", sub: "Training modified — managing a niggle", tone: "warn" },
+  // Same word as the lineup's own out-reason (outMeta.SICK in coachLineup.ts)
+  // — a day or two, not weeks, which is what separates it from Injured below.
+  { title: "Sick", sub: "Out today — back tomorrow", tone: "warn" },
   { title: "Injured", sub: "Out of selection — rehab in progress", tone: "danger" },
   { title: "Away", sub: "Travelling / off the water this week", tone: "muted" },
 ];
