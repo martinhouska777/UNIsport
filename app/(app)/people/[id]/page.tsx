@@ -25,7 +25,8 @@ import { matchReasons, type MatchReason } from "@/lib/matchReasons";
 import { useAppState } from "@/components/AppState";
 import { startDirectConversation } from "@/lib/supabase/messages";
 import { getFollowStatus, followUser, unfollowUser } from "@/lib/supabase/follows";
-import { IconArrowLeft, IconUser, IconCheck } from "@/components/icons";
+import { weekSchedule, slotLabel } from "@/lib/schedule";
+import { IconArrowLeft, IconUser, IconCheck, IconChevronDown } from "@/components/icons";
 import PhotoGallery from "@/components/profile/PhotoGallery";
 
 // useSearchParams() requires a Suspense boundary or the production build fails
@@ -59,6 +60,9 @@ function PersonProfile() {
   const [following, setFollowing] = useState<boolean | null>(null); // null until known
   const [followsBack, setFollowsBack] = useState(false);
   const [followBusy, setFollowBusy] = useState(false);
+  // The Schedule row expands into their whole week in place, rather than
+  // stopping at "Mon · Wed · Fri" with no times.
+  const [scheduleOpen, setScheduleOpen] = useState(false);
 
   /*
     "Why you match" is re-asked of the database rather than carried over from the
@@ -289,14 +293,64 @@ function PersonProfile() {
               Training
             </div>
             <div className="flex flex-col divide-y divide-border">
-              {trainingRows.map((row) => (
-                <div key={row.key} className="flex items-center justify-between gap-3 py-2">
-                  <span className="text-xs text-muted">{row.label}</span>
-                  <span className="text-right text-xs font-medium text-text">
-                    {user.trainingDisplay[row.key] || "—"}
-                  </span>
-                </div>
-              ))}
+              {trainingRows.map((row) => {
+                /*
+                  Schedule used to be a plain row saying "Mon · Wed · Fri" — you
+                  couldn't tell what time without asking them. It's the one row
+                  that expands: tap it and their whole week opens below, in the
+                  same times they set for themselves (lib/schedule.ts).
+                */
+                if (row.key === "schedule") {
+                  return (
+                    <div key={row.key}>
+                      <button
+                        type="button"
+                        onClick={() => setScheduleOpen((v) => !v)}
+                        aria-expanded={scheduleOpen}
+                        className="tap44 flex w-full items-center justify-between gap-3 py-2 text-left"
+                      >
+                        <span className="text-xs text-muted">{row.label}</span>
+                        <span className="flex items-center gap-1 text-right text-xs font-medium text-text">
+                          {user.trainingDisplay.schedule || "—"}
+                          <span
+                            className={`text-muted transition-transform duration-150 motion-reduce:transition-none ${
+                              scheduleOpen ? "rotate-180" : ""
+                            }`}
+                          >
+                            <IconChevronDown size={13} />
+                          </span>
+                        </span>
+                      </button>
+                      {scheduleOpen && (
+                        <div className="flex flex-col gap-1 pb-2.5 pl-0.5 pt-0.5">
+                          {weekSchedule(user.trainingSchedule).map((d) => (
+                            <div key={d.key} className="flex items-center justify-between gap-3 py-0.5">
+                              <span className="text-[11px] text-muted">{d.name}</span>
+                              <span
+                                className={`text-right text-[11px] ${
+                                  d.slots.length > 0 ? "font-medium text-text" : "text-text-3"
+                                }`}
+                              >
+                                {d.slots.length > 0
+                                  ? d.slots.map(slotLabel).join(", ")
+                                  : "Rest"}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+                return (
+                  <div key={row.key} className="flex items-center justify-between gap-3 py-2">
+                    <span className="text-xs text-muted">{row.label}</span>
+                    <span className="text-right text-xs font-medium text-text">
+                      {user.trainingDisplay[row.key] || "—"}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           </div>
 

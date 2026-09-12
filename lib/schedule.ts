@@ -98,6 +98,27 @@ export function usualSlot(schedule: Record<string, string[]>): string | null {
 /* "Mon 07:00–09:00" style, for one slot. */
 export const slotLabel = (s: Slot) => `${s.start}–${s.end}`;
 
+const WEEK_DAY_NAMES: Record<string, string> = {
+  mon: "Monday", tue: "Tuesday", wed: "Wednesday", thu: "Thursday",
+  fri: "Friday", sat: "Saturday", sun: "Sunday",
+};
+
+export type WeekDaySchedule = { key: string; name: string; slots: Slot[] };
+
+/**
+ * Monday through Sunday, each with that day's slots (empty on a rest day).
+ * Built for showing someone else's WHOLE WEEK at a glance — their profile
+ * used to only say which days in three letters ("Mon · Wed · Fri"), never
+ * what time.
+ */
+export function weekSchedule(schedule: Record<string, string[]> | undefined): WeekDaySchedule[] {
+  return ["mon", "tue", "wed", "thu", "fri", "sat", "sun"].map((key) => ({
+    key,
+    name: WEEK_DAY_NAMES[key],
+    slots: daySlots(schedule?.[key]),
+  }));
+}
+
 
 /* ---- THE NEXT SEVEN DAYS ---------------------------------------------------
   "Find a partner by time" used to offer seven bare weekday pills. Mon meant
