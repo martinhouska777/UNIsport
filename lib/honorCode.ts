@@ -35,7 +35,7 @@ export type HonorCode = {
   sign: string;
   /** Placeholder on the name you type as your signature, above the button. */
   signature: string;
-  /** The quieter one-liner that lives under the boards ever after. */
+  /** The quieter one-liner, at the foot of the ⓘ rules sheet. */
   footer: string;
 };
 

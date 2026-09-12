@@ -3,12 +3,16 @@
 /*
   LEADERBOARDS — reached from the strip on the Profile tab.
   ---------------------------------------------------------------------------
-  TWO TABS. Everything with a deadline that isn't only about you moved to
-  EVENTS — the interhouse race and the month's two special challenges — and
-  RANKINGS keeps your standing, this week's challenge and the board itself.
-  The race is a tall card and it used to sit directly on top of the Houses
-  board, which meant the leaderboard the screen is named after opened below the
-  fold. One tap now, and the board starts where the screen does.
+  TWO TABS, FULL WIDTH. Everything with a deadline moved to EVENTS — the
+  challenges (the week's and the month's two) and the interhouse race — and
+  RANKINGS is your one line plus the board.
+
+  THE BOARD IS THE SCREEN. It had drifted under four things that were all, in
+  the end, explanation: a nudge line, two house tiles, a paragraph saying what
+  "Houses" means, and a footnote saying the numbers are self-reported. The
+  owner cut every one of them ("cut all that extra text"), and the top three
+  houses are on screen the moment it opens. The two pickers say what is being
+  ranked and over what; anything longer lives behind the ⓘ.
 
   TWO CONTROLS, NOT EIGHT. This screen used to carry three period buttons and
   five board pills in two stacked rows — eleven tap targets before a single
@@ -80,7 +84,7 @@ import {
   IconUser,
   HouseShield,
 } from "@/components/icons";
-import HonorCode, { HonorCodeFooter, useHonorCode } from "@/components/leaderboards/HonorCode";
+import HonorCode, { useHonorCode } from "@/components/leaderboards/HonorCode";
 import GroupSheet from "@/components/leaderboards/GroupSheet";
 import HouseRace from "@/components/leaderboards/HouseRace";
 import WeekEventLine from "@/components/leaderboards/WeekEventLine";
@@ -100,7 +104,6 @@ import {
   groupLabel,
   groupScoreLabel,
   houseColor,
-  nextUpLine,
   rankGroups,
   houseCrest,
   nobodyYet,
@@ -124,8 +127,6 @@ type Competition = {
   label: string;
   /** One line in the picker, saying what the board actually measures. */
   note: string;
-  /** The same thing said under the bar, once it is the board on screen. */
-  blurb: string;
   empty: string;
 };
 
@@ -134,45 +135,33 @@ const COMPETITIONS: Competition[] = [
     key: "houses",
     label: "Houses",
     note: "House vs house",
-    blurb: "House against house — all twelve, always. A house nobody has joined yet reads “nobody yet”.",
     empty: "No houses to show.",
   },
   {
     key: "dorms",
     label: "Dorms",
     note: "First-year Yard dorms",
-    blurb: "The first-year dorms, kept apart from the Houses. Every dorm is on the board.",
     empty: "No dorms to show.",
   },
   {
     key: "everyone",
     label: "Everyone",
     note: "The whole campus, by points",
-    blurb: "Everyone on campus, by points earned.",
     empty: "Nobody has logged a session yet.",
   },
   {
     key: "partners",
     label: "Most partners",
     note: "Who trained with the most people",
-    blurb: "How many different people you trained with. Training alone doesn't count here.",
     empty: "Nobody has logged a session with a partner yet.",
   },
   {
     key: "years",
     label: "Years",
     note: "Class year vs class year",
-    blurb: "Class against class. Every year is on the board.",
     empty: "No class years to show.",
   },
 ];
-
-/* What the metric switch means, said in one line under the bar. */
-const METRIC_BLURB: Record<GroupMetric, string> = {
-  perMember:
-    "Ranked by points per member, so size alone can't win it — it says how many of you are actually training.",
-  total: "Ranked by every point the group put on the board, so the bigger ones have the advantage.",
-};
 
 const PERIODS: { key: Period; label: string; note: string }[] = [
   { key: "month", label: "This month", note: "Resets on the 1st" },
@@ -246,7 +235,7 @@ const TABS: { key: TabKey; label: string }[] = [
 
 function TabBar({ value, onPick }: { value: TabKey; onPick: (t: TabKey) => void }) {
   return (
-    <div role="tablist" aria-label="Leaderboards" className="flex gap-5 px-3.5">
+    <div role="tablist" aria-label="Leaderboards" className="flex">
       {TABS.map((t) => (
         <button
           key={t.key}
@@ -254,7 +243,7 @@ function TabBar({ value, onPick }: { value: TabKey; onPick: (t: TabKey) => void 
           role="tab"
           aria-selected={value === t.key}
           onClick={() => onPick(t.key)}
-          className={`tap44 -mb-px border-b-2 py-2.5 text-[13px] font-medium transition-colors ${
+          className={`tap44 -mb-px flex-1 border-b-2 py-2.5 text-center text-[13px] font-medium transition-colors ${
             value === t.key
               ? "border-primary text-text"
               : "border-transparent text-muted"
@@ -571,7 +560,6 @@ export default function LeaderboardsPage() {
 
   const isGroupBoard = GROUP_BOARDS.includes(competition);
   const groupKind: "house" | "year" = competition === "years" ? "year" : "house";
-  const nudge = nextUpLine(standing);
   const metricUnit = GROUP_METRICS.find((m) => m.key === metric)?.unit ?? "pts";
 
   /*
@@ -647,90 +635,54 @@ export default function LeaderboardsPage() {
 
       {tab === "events" ? (
         <div className="flex flex-col gap-5 px-3.5 py-4">
+          {/* EVERY CHALLENGE IN ONE PLACE — the week's, and the month's two.
+              They are all the same thing (a task, a deadline, extra points),
+              so they are one list rather than a heading each, and the line
+              itself says which window it closes in. */}
+          <div>
+            <SectionLabel className="mb-2">Challenges</SectionLabel>
+            <div className="flex flex-col gap-2">
+              <WeekEventLine />
+              <MonthChallenges />
+            </div>
+          </div>
+
           {/* THE INTERHOUSE RACE. It used to sit on top of the Houses board,
               where it pushed the board itself off the screen. It says what it
               is on its own, so it needs no heading here. */}
           <HouseRace renderShare={(houseKey) => <ShareInviteButton iconOnly residence={houseKey} />} />
-
-          {/* THE MONTH'S SPECIAL CHALLENGES — two personal ones, changing on
-              the 1st. The weekly challenge stays on Rankings, next to the
-              board it pays into. */}
-          <div>
-            <SectionLabel>Special challenges</SectionLabel>
-            <p className="mt-1 mb-2 text-[11px] leading-relaxed text-muted">
-              Two of them a month, for you rather than your house. Finish one and the points are yours.
-            </p>
-            <MonthChallenges />
-          </div>
         </div>
       ) : (
         <>
-          {/* Your standing */}
-          <div className="border-b border-border px-3.5 py-3">
-            <div className="rounded-2xl border border-border bg-surface-2 px-3.5 py-3">
-              <div className="flex items-center gap-2.5">
-                <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-accent-tint text-accent">
-                  <IconTrophy size={16} />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <div className="text-[13px] font-semibold text-text">
-                    {standing && standing.points > 0
-                      ? pointsLabel(standing.points)
-                      : "Not on the board yet"}
-                  </div>
-                  <div className="mt-0.5 text-[11px] text-muted">
-                    {standing && standing.points > 0
-                      ? [
-                          standing.campusRank
-                            ? `${ordinal(standing.campusRank)} of ${standing.campusTotal} on campus`
-                            : "",
-                          plural(standing.sessions, "session"),
-                          standing.kinds.newPartner > 0
-                            ? `${standing.kinds.newPartner} with someone new`
-                            : "",
-                        ]
-                          .filter(Boolean)
-                          .join(" · ")
-                      : "Log a session and you're on it."}
-                  </div>
-                </div>
+          {/*
+            YOU, IN ONE LINE. This was a card with a nudge line and two house
+            tiles under it — four blocks of text before the board, on a screen
+            whose whole job is the board. What is left is the only part nobody
+            can look up somewhere else: your points, and where that puts you.
+          */}
+          <div className="flex items-center gap-2.5 border-b border-border px-3.5 py-2.5">
+            <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-accent-tint text-accent">
+              <IconTrophy size={14} />
+            </span>
+            <div className="min-w-0 flex-1">
+              <div className="text-[13px] font-semibold text-text">
+                {standing && standing.points > 0
+                  ? `You · ${pointsLabel(standing.points)}`
+                  : "Not on the board yet"}
               </div>
-
-              {/* The single most useful line on the screen. */}
-              {nudge && (
-                <div className="mt-2.5 rounded-xl border border-primary-line bg-primary-tint px-3 py-2 text-[11px] font-medium text-primary">
-                  {nudge}
-                </div>
-              )}
-
-              {standing?.residence && (
-                <div className="mt-2.5 grid grid-cols-2 gap-1.5">
-                  <div className="rounded-xl border border-border bg-surface px-3 py-2">
-                    <div className="text-[13px] font-semibold text-text">
-                      {standing.houseRankIn ? ordinal(standing.houseRankIn) : "—"}
-                    </div>
-                    <div className="mt-0.5 text-[11px] uppercase tracking-[0.08em] text-muted">
-                      in {residenceLabel(standing.residence)}
-                    </div>
-                  </div>
-                  <div className="rounded-xl border border-border bg-surface px-3 py-2">
-                    <div className="text-[13px] font-semibold text-text">
-                      {standing.houseRank ? `#${standing.houseRank} of ${standing.houseTotal}` : "—"}
-                    </div>
-                    <div className="mt-0.5 text-[11px] uppercase tracking-[0.08em] text-muted">
-                      {residenceLabel(standing.residence)} overall
-                    </div>
-                  </div>
-                </div>
-              )}
+              <div className="mt-0.5 truncate text-[11px] text-muted">
+                {standing && standing.points > 0
+                  ? [
+                      standing.campusRank
+                        ? `${ordinal(standing.campusRank)} of ${standing.campusTotal} on campus`
+                        : "",
+                      plural(standing.sessions, "session"),
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")
+                  : "Log a session and you're on it."}
+              </div>
             </div>
-          </div>
-
-          {/* THIS WEEK'S CHALLENGE — a task with a deadline, right above the board
-              it pays into. The interhouse race is the same machinery at a house's
-              scale, and it lives on the Events tab. */}
-          <div className="border-b border-border px-3.5 py-3">
-            <WeekEventLine />
           </div>
 
           {/* The two controls. */}
@@ -749,20 +701,15 @@ export default function LeaderboardsPage() {
             </div>
           </div>
 
-          {/* The board */}
-          <div className="px-3.5 pt-3">
-            {/* On a team board the switch above the words is what the words are
-                about, so it goes first and the line under it explains the choice
-                that is currently made. */}
+          {/* The board. No paragraph explaining it: the two pickers above
+              already say what is being ranked and over what, the switch says
+              how, and everything longer than that is in the ⓘ. */}
+          <div className="px-3.5 pt-2.5">
             {isGroupBoard && (
-              <div className="mb-2">
+              <div className="mb-2.5">
                 <MetricSwitch value={metric} onPick={setMetric} />
               </div>
             )}
-            <p className="text-[11px] leading-relaxed text-muted">
-              {def.blurb}
-              {isGroupBoard && ` ${METRIC_BLURB[metric]}`}
-            </p>
 
             {loading ? (
               <div className="px-4 py-16 text-center text-[12px] text-muted">Counting…</div>
@@ -825,10 +772,6 @@ export default function LeaderboardsPage() {
           </div>
         </>
       )}
-
-      <div className="mt-4 px-3.5">
-        <HonorCodeFooter universityKey={universityKey} />
-      </div>
 
       {picking === "competition" && (
         <OptionPickerSheet

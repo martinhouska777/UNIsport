@@ -8,9 +8,9 @@
   student has already signed. The wording lives in lib/honorCode.ts as DATA so
   each school can have its own; this file is only the screen.
 
-  It gates the League on first open and is never shown again. Afterwards it
-  shrinks to one quiet line under the boards (`HonorCodeFooter`), which turns
-  out to be the more effective guilt trip of the two.
+  It gates the League on first open and is never shown again. (There used to be
+  a quiet "every number here is self-reported" line under the boards ever
+  after; the owner cut it — the boards are for the boards.)
 
   Accepted per person, in this browser — the same localStorage fallback the gym
   favourites use. It is not a contract and there is nothing to enforce, so it
@@ -138,11 +138,3 @@ export default function HonorCode({
   );
 }
 
-/** The quiet reminder that lives under the boards ever after. */
-export function HonorCodeFooter({ universityKey }: { universityKey: string }) {
-  return (
-    <p className="px-1 text-center text-[11px] text-muted">
-      {honorCodeFor(universityKey).footer}
-    </p>
-  );
-}

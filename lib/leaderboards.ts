@@ -26,7 +26,7 @@ import { createClient, hasSupabaseEnv } from "@/lib/supabase/client";
 import { classYears, houses, residenceLabel, yardDorms } from "@/lib/onboarding";
 import { getGymByName } from "@/lib/gyms";
 import { dormColors } from "@/lib/cohorts";
-import { rateArgs, sessionPoints, type SessionKinds } from "@/lib/points";
+import { rateArgs, type SessionKinds } from "@/lib/points";
 
 /* ─────────────────────────────  types  ───────────────────────────── */
 
@@ -377,21 +377,3 @@ export async function fetchStanding(period: Period): Promise<Standing | null> {
   };
 }
 
-/**
- * The nudge that makes the whole feature worth having: "40 pts and you pass
- * Marcus" is a reason to train tonight in a way that "you are 7th" is not.
- * Returns null when there is nobody above you (or nothing logged yet).
- *
- * A points gap on its own is not actionable, so when the gap is small enough
- * to close it also says the CHEAPEST way to — which is always the sociable
- * one, because that is what the multipliers are for.
- */
-export function nextUpLine(s: Standing | null): string | null {
-  if (!s || !s.nextName || !s.nextGap || s.nextGap < 1) return null;
-  const where = s.nextScope === "house" ? "in your house" : "on campus";
-  const lead = `${s.nextGap} pts to pass ${s.nextName} ${where}`;
-  const runs = Math.ceil(s.nextGap / sessionPoints.newPartner);
-  // Beyond three it stops being tonight's problem and reads as nagging.
-  if (runs > 3) return lead;
-  return `${lead} — ${runs} session${runs === 1 ? "" : "s"} with someone new`;
-}
