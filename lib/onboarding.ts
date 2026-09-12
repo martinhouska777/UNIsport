@@ -601,8 +601,25 @@ export const notificationItems: { icon: string; label: string }[] = [
   never shows a stray comma or an empty row. Lives here beside the country list
   so every screen that prints a hometown prints it the same way.
 */
-export function hometownLabel(city: string, country: string): string {
-  return [city.trim(), country.trim()].filter(Boolean).join(", ");
+export function hometownLabel(
+  city: string | null | undefined,
+  country: string | null | undefined,
+): string {
+  /*
+    NULL-TOLERANT ON PURPOSE, and it has to be. The type above says these are
+    strings, but the DATABASE disagrees: get_public_profile builds its JSON
+    with `data->>'hometownCity'`, which is NULL for anybody whose profile
+    predates the field — 58 of 118 accounts the day it shipped. That null then
+    beats the empty-string default in profileFromOnboarding's
+    `{ ...emptyProfile, ...raw }`, because spreading a present key overrides
+    the default even when its value is null.
+
+    So a plain `city.trim()` here threw on half the profiles in the app and
+    took the whole "View profile" page down with it. Optional chaining, not a
+    cast: the value really can be absent, and pretending otherwise is what
+    broke it.
+  */
+  return [city?.trim(), country?.trim()].filter(Boolean).join(", ");
 }
 
 export const countries: string[] = [
