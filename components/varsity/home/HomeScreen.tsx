@@ -32,6 +32,7 @@ import {
   crewName,
   dockTime,
   kindBar,
+  kindWash,
   kindBlock,
   kindLegend,
   shellName,
@@ -58,6 +59,7 @@ import {
   IconClipboard,
   IconAnchor,
   IconPlus,
+  IconPencil,
   IconVideo,
   IconUser,
 } from "@/components/icons";
@@ -70,8 +72,8 @@ const statusStyle: Record<
   /*
     UPCOMING is deliberately blank. Everything on today's screen is upcoming
     until it isn't, so the badge told nobody anything — the owner's words were
-    "it's there and it's to nothing". The corner it was sitting in is worth
-    more as the way into your boat, which is what is there now.
+    "it's there and it's to nothing". LOGGED and MISSED stay: those are states
+    you can act on.
   */
   upcoming: null,
   done: { cls: "text-success", label: "LOGGED", Icon: IconCheckCircle },
@@ -570,12 +572,13 @@ function SessionCard({ s, lineups = [] }: { s: TodaySession; lineups?: Lineup[] 
 
   return (
     /*
-      A FAINT GREEN CARD. The owner asked for today's sessions to be "a little
-      bit green, the whole thing, just a little bit" — so the tint is the
-      success token at a whisper, and the coloured stripe down the left still
-      says which kind of session it is.
+      THE CARD IS WASHED IN ITS OWN COLOUR. The 3px bar down the left is the
+      kind at full strength and the wash carries it across, fading out before
+      the right edge (kindWash, lib/varsity/home.ts) — so a card says what it
+      is without a word. Nothing else is painted on top of it: no foot bar, no
+      second border colour.
     */
-    <div className="overflow-hidden rounded-xl border border-success-line bg-success-tint/30">
+    <div className="relative overflow-hidden rounded-xl border border-border bg-surface" style={kindWash(s.kind)}>
       <div
         className="flex"
         onClick={openable ? () => setOpen((o) => !o) : undefined}
@@ -602,34 +605,31 @@ function SessionCard({ s, lineups = [] }: { s: TodaySession; lineups?: Lineup[] 
               </span>
               <span className="text-[11px] text-muted">{s.location}</span>
             </div>
-            {/* The top-right corner: your boat, which is the thing worth a tap
-                up here. A status only appears once there IS one — logged, or
-                missed. */}
-            {openable ? (
-              <span className="flex flex-shrink-0 items-center gap-1 text-[10px] font-semibold tracking-[0.06em] text-accent">
-                {open ? "HIDE BOAT" : "YOUR BOAT"}
-                {open ? <IconChevronUp size={12} /> : <IconChevronDown size={12} />}
+            {/* Whatever this session's state is, said in the header line. The
+                corner itself belongs to the log button (below). */}
+            {st && (
+              <span className={`mr-9 flex items-center gap-1 text-[10px] font-semibold tracking-[0.06em] ${st.cls}`}>
+                <st.Icon size={12} />
+                {st.label}
               </span>
-            ) : (
-              st && (
-                <span className={`flex items-center gap-1 text-[10px] font-semibold tracking-[0.06em] ${st.cls}`}>
-                  <st.Icon size={12} />
-                  {st.label}
-                </span>
-              )
             )}
           </div>
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 flex-1">
               <div className="text-[13px] font-medium text-text">{s.title}</div>
               <div className="mt-0.5 text-[11px] leading-relaxed text-muted">{s.detail}</div>
+              {/* What you logged, on its own line instead of in a bar across
+                  the foot of the card. */}
+              {s.status === "done" && (
+                <div className="mt-0.5 truncate text-[11px] text-text-2">
+                  {s.log?.summary || "Logged"}
+                </div>
+              )}
             </div>
-            {/* When the corner above is taken by the boat, the status comes
-                back down here rather than disappearing. */}
-            {openable && st && (
-              <span className={`mt-0.5 flex flex-shrink-0 items-center gap-1 text-[10px] font-semibold tracking-[0.06em] ${st.cls}`}>
-                <st.Icon size={12} />
-                {st.label}
+            {openable && (
+              <span className="mt-0.5 flex flex-shrink-0 items-center gap-1 text-[10px] font-semibold tracking-[0.06em] text-accent">
+                {open ? "HIDE BOAT" : "YOUR BOAT"}
+                {open ? <IconChevronUp size={12} /> : <IconChevronDown size={12} />}
               </span>
             )}
           </div>
@@ -683,34 +683,31 @@ function SessionCard({ s, lineups = [] }: { s: TodaySession; lineups?: Lineup[] 
         ))}
 
       {/*
-        THE FOOT OF THE CARD. It used to be a full-width bar saying "Log it
-        when you're done" with the button beside it; the owner cut the sentence
-        ("cut the log-it-when-you-are-done, just the log on the bottom right")
-        and what is left is the button, in the corner. A session you already
-        logged still shows what you saved — that is the one line down here that
-        is worth its space — with Edit beside it.
+        THE LOG BUTTON, in the top-right corner of the card. It was a bar
+        across the foot — a whole rectangle of card carrying one sentence
+        ("Log it when you're done") and a button. The sentence is gone and the
+        button is a round one up here, so a card is only as tall as the session
+        it describes.
 
-        Either way it opens EXACTLY this session's editor
+        It sits ON the card rather than in the header row so nothing has to
+        make room for it, and it is a plus because that is what it does: adds
+        today's numbers. Once they are in it becomes a pencil, and opens the
+        same editor to change them — EXACTLY this session's
         (/varsity/log?day=…&open=…), not the tab's front page.
       */}
       {(s.status === "done" || loggable(s.iso)) && (
-        <div className="flex items-center justify-end gap-3 px-3 pb-2.5">
-          {s.status === "done" && (
-            <span className="min-w-0 flex-1 truncate text-[12px] text-text-2">
-              {s.log?.summary || "Logged"}
-            </span>
-          )}
-          <Link
-            href={`/varsity/log?day=${s.iso}&open=${s.dayKey}`}
-            className={
-              s.status === "done"
-                ? "flex-shrink-0 text-[12px] font-semibold text-primary"
-                : "flex-shrink-0 rounded-lg bg-primary-live px-3 py-1.5 text-[12px] font-semibold text-primary-contrast"
-            }
-          >
-            {s.status === "done" ? "Edit" : "Log"}
-          </Link>
-        </div>
+        <Link
+          href={`/varsity/log?day=${s.iso}&open=${s.dayKey}`}
+          aria-label={s.status === "done" ? `Edit ${s.title}` : `Log ${s.title}`}
+          onClick={(e) => e.stopPropagation()}
+          className={`tap44 press-icon absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full ${
+            s.status === "done"
+              ? "border border-primary-line bg-surface text-primary"
+              : "bg-primary-live text-primary-contrast"
+          }`}
+        >
+          {s.status === "done" ? <IconPencil size={13} /> : <IconPlus size={15} />}
+        </Link>
       )}
     </div>
   );

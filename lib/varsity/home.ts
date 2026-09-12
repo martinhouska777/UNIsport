@@ -52,6 +52,21 @@ export const kindColor: Record<SessionKind, string> = {
 /** Solid edge — the 3px bar down the side of a session row. */
 export const kindBar = (k: SessionKind) => ({ background: kindColor[k] });
 
+/*
+  THE WASH ACROSS A SESSION CARD. The 3px bar above is the kind at full
+  strength; this carries that same colour on across the card and lets it fade
+  out before the right-hand edge, so the card is tinted by what it IS. (It was
+  briefly a flat green on every card, which said nothing — the owner's note was
+  "not a green frame, the workout's colour, shining through left to right".)
+
+  It is `backgroundImage`, not `background`, so it LAYERS over whatever surface
+  colour the card already has instead of replacing it — a gradient that fades
+  to transparent would otherwise fade to the page behind the card.
+*/
+export const kindWash = (k: SessionKind) => ({
+  backgroundImage: `linear-gradient(to right, color-mix(in oklab, ${kindColor[k]} 20%, transparent), transparent 72%)`,
+});
+
 /** Tinted fill — the block a calendar cell is painted with. */
 export const kindBlock = (k: SessionKind) => ({
   background: `color-mix(in oklab, ${kindColor[k]} 28%, transparent)`,
