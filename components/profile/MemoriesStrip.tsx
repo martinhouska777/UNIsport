@@ -29,7 +29,7 @@ import { dayLabel, toMemories } from "@/lib/memories";
 const PREVIEW_SESSIONS = 4;
 const PREVIEW_TILES = 4;
 
-export default function MemoriesStrip() {
+export default function MemoriesStrip({ card = false }: { card?: boolean }) {
   const { userId } = useAppState();
   const [logs, setLogs] = useState<WorkoutLog[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -48,13 +48,50 @@ export default function MemoriesStrip() {
   }, [userId]);
 
   // Holds the row's height while the photos are on their way.
-  if (!loaded) return <div className="h-[68px] border-b border-border" aria-hidden="true" />;
+  if (!loaded)
+    return card ? null : <div className="h-[68px] border-b border-border" aria-hidden="true" />;
 
   const memories = toMemories(logs);
   if (memories.length === 0) return null;
 
   const tiles = memories.slice(0, PREVIEW_TILES);
   const latest = memories[0];
+
+  /*
+    THE CARD — the same row, folded into half the width, so it can sit beside
+    "Log a session" under the calendar. Two thumbnails instead of four, because
+    that is what fits next to the words at 180px.
+  */
+  if (card) {
+    return (
+      <Link
+        href="/memories"
+        className="flex min-w-0 flex-1 flex-col justify-between gap-2 rounded-xl border border-border bg-surface-2 px-3 py-2.5 active:bg-surface"
+      >
+        <div className="flex items-center gap-1.5">
+          <span className="flex-shrink-0 text-primary">
+            <IconCamera size={14} />
+          </span>
+          <span className="truncate text-[13px] font-semibold text-text">Memories</span>
+          <span className="ml-auto flex-shrink-0 text-muted">
+            <IconChevronRight size={14} />
+          </span>
+        </div>
+        <div className="flex items-center gap-1">
+          {tiles.slice(0, 2).map((m) => (
+            <span
+              key={m.id}
+              className="h-8 w-8 overflow-hidden rounded-md border border-border bg-surface"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={m.src} alt="" className="h-full w-full object-cover" />
+            </span>
+          ))}
+          <span className="truncate text-[11px] text-muted">{dayLabel(latest.date)}</span>
+        </div>
+      </Link>
+    );
+  }
 
   return (
     <Link

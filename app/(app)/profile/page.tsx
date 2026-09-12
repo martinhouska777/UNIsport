@@ -12,8 +12,10 @@ import useTapOrDoubleTap from "@/components/useTapOrDoubleTap";
 import { useMembership } from "@/components/varsity/useMembership";
 import { VARSITY_HOME } from "@/lib/varsity/theme";
 import InlineEdit from "@/components/profile/InlineEdit";
-import SessionCalendar from "@/components/profile/SessionCalendar";
-import WeekCalendar, { thisWeek } from "@/components/profile/WeekCalendar";
+import TrainingCalendar, {
+  calendarRange,
+  type CalendarMode,
+} from "@/components/profile/TrainingCalendar";
 import SessionSheet from "@/components/profile/SessionSheet";
 import WorkoutDetail from "@/components/profile/WorkoutDetail";
 import LogSessionSheet from "@/components/profile/LogSessionSheet";
@@ -63,7 +65,7 @@ export default function ProfilePage() {
   const { data, loading, saveState, update, savePreferences, supabase, userId } =
     useProfileData();
 
-  // Logged workouts for the current month + the all-time count (Sessions stat).
+  // Logged workouts for the week/month on screen + the all-time count.
   const [logs, setLogs] = useState<WorkoutLog[]>([]);
   const [sessionsCount, setSessionsCount] = useState(0);
   const [partners, setPartners] = useState<PartnerSummary[]>([]);
@@ -75,14 +77,19 @@ export default function ProfilePage() {
   const [logPrefill, setLogPrefill] = useState<{ date?: string; gym?: string } | null>(null);
   const [editLog, setEditLog] = useState<WorkoutLog | null>(null); // editing an existing log
   const [editingPrefs, setEditingPrefs] = useState(false);
-  // Which Training row is being picked, if any.
   const [followCounts, setFollowCounts] = useState<{ following: number; followers: number } | null>(null);
-  // True once the counts have actually been fetched. Without it a brand-new
-  // profile would show three zeros for a beat before the starter card replaced
-  // them — the exact "0 / 0 / 0" moment this slice exists to remove.
+  // True once the counts have actually been fetched, so a brand-new profile
+  // doesn't flash a starter card at someone who has trained all year.
   const [statsLoaded, setStatsLoaded] = useState(false);
   const [switchingMode, setSwitchingMode] = useState(false); // mode switcher sheet
-  const [showMonth, setShowMonth] = useState(false); // the full month, under the week
+  /*
+    WHICH WEEK / MONTH the calendar is showing. The anchor is any day inside it;
+    the arrows and the swipe move it, and the fetch below follows — so paging
+    back to April loads April. Zoom and anchor live here rather than in the
+    calendar because the fetch depends on both.
+  */
+  const [calMode, setCalMode] = useState<CalendarMode>("week");
+  const [calAnchor, setCalAnchor] = useState(() => new Date());
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const { resetOnboarding } = useAppState();
@@ -134,7 +141,7 @@ export default function ProfilePage() {
     return () => cancelAnimationFrame(id);
   }, [router]);
 
-  // Real "Following" count from the follow graph.
+  // Real follower / following counts from the follow graph.
   useEffect(() => {
     let active = true;
     // Settle on zeros when there's nobody to ask, so the stats block doesn't sit
@@ -149,30 +156,25 @@ export default function ProfilePage() {
     };
   }, [supabase, userId]);
 
-  // Fetch this month's logged workouts (for the calendar) + the all-time count.
-  // Pure (no setState) so it's safe to call from both the effect and handlers.
+  /*
+    Fetch the logs the calendar is showing (whatever week or month that is) +
+    the all-time count. Pure (no setState) so it's safe to call from both the
+    effect and the handlers.
+  */
   const fetchLogs = useCallback(async (): Promise<{
     logs: WorkoutLog[];
     total: number;
     partners: PartnerSummary[];
   }> => {
     if (!userId) return { logs: [], total: 0, partners: [] };
-    const now = new Date();
-    const y = now.getFullYear();
-    const m = now.getMonth();
-    const pad = (n: number) => String(n).padStart(2, "0");
-    // The month AND this week, whichever reaches further — a week straddling
-    // the 1st has days the month alone would miss.
-    const week = thisWeek(now);
-    const from = [`${y}-${pad(m + 1)}-01`, week[0].iso].sort()[0];
-    const to = [`${y}-${pad(m + 1)}-${pad(new Date(y, m + 1, 0).getDate())}`, week[6].iso].sort()[1];
+    const { from, to } = calendarRange(calAnchor, calMode);
     const [logs, total, partners] = await Promise.all([
       listMonth(userId, from, to),
       countWorkouts(userId),
       listPartners(userId),
     ]);
     return { logs, total, partners };
-  }, [userId]);
+  }, [userId, calAnchor, calMode]);
 
   useEffect(() => {
     let active = true;
@@ -233,26 +235,42 @@ export default function ProfilePage() {
   }
 
   const following = followCounts?.following ?? user.stats.following;
+  const followers = followCounts?.followers ?? 0;
+  const statsReady = statsLoaded && followCounts !== null;
+  /*
+    A profile with nothing on it yet. The three counts still show (zeros are
+    honest, and the row is the shape of the page), but the tile that would say
+    "Log a session" says what logging one gets you instead.
+  */
+  const brandNew = statsReady && sessionsCount === 0 && partners.length === 0 && followers === 0;
+
+  /*
+    THE THREE NUMBERS, across the top beside the photo — sessions you've logged,
+    people you've trained with, people following you. Partners is the only one
+    that opens something.
+  */
   const stats: { label: string; value: number; onClick?: () => void }[] = [
-    { label: "Sessions", value: sessionsCount },
+    { label: "Workouts", value: sessionsCount },
     { label: "Partners", value: partners.length, onClick: () => setPartnersOpen(true) },
-    { label: "Following", value: following },
+    { label: "Followers", value: followers },
   ];
 
   /*
-    A profile with nothing on it yet. Counters that all read 0 tell you nothing
-    except that you're behind, so until there's a single session, partner or
-    follow, the stats strip is replaced by the one thing that starts all three.
-  */
-  const statsReady = statsLoaded && followCounts !== null;
-  const brandNew = sessionsCount === 0 && partners.length === 0 && following === 0;
+    THE ORDER OF THE PAGE, and the reason for it:
 
-  // "Who you train with" summary, e.g. "Partner · Any".
-  /*
-    Training, the schedule, the gyms and who you'll train with all moved to
-    Settings — see components/settings/TrainingSettings.tsx. They are answers
-    the app runs on, not things a visitor to your profile reads, and they took
-    about 200px of a page that should be about you.
+      1. WHO YOU ARE — photo, name, the three counts beside it, bio underneath.
+         Wide, not stacked down the middle, so the screen is used.
+      2. WHERE YOU STAND — the boards and this week's event, one line each.
+      3. YOUR TRAINING — one calendar: this week, or the month, with arrows and
+         a swipe (components/profile/TrainingCalendar.tsx).
+      4. LOG A SESSION, beside Memories — the button that fills the calendar,
+         next to what the calendar looked like.
+      5. YOUR PHOTOS, under them.
+      6. Everything else folded behind "More about you".
+
+    Training, the schedule, the gyms and who you'll train with live in Settings
+    (components/settings/TrainingSettings.tsx): they are answers the app runs
+    on, not things a visitor to your profile reads.
   */
   return (
     <div className="mx-auto w-full max-w-screen-sm">
@@ -260,11 +278,9 @@ export default function ProfilePage() {
       <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-surface px-3.5 py-3">
         {/* The university sigil LEADS the top bar for EVERYONE — it's the
             school's mark, the same one the student mode uses, and says nothing
-            about varsity. It sits first and big (26px) so the student side has
-            a logo in the corner the way Varsity Mode does, rather than a
-            trailing decoration after the name. What only a squad member gets is
-            the chevron and the tap: the title then doubles as the mode switcher
-            (tap for the sheet, double-tap to go straight into Varsity Mode). */}
+            about varsity. What only a squad member gets is the chevron and the
+            tap: the title then doubles as the mode switcher (tap for the sheet,
+            double-tap to go straight into Varsity Mode). */}
         {isMember ? (
           <button
             type="button"
@@ -290,70 +306,69 @@ export default function ProfilePage() {
               {saveState === "saving" ? "Saving…" : saveState === "saved" ? "Saved ✓" : "Couldn’t save"}
             </span>
           )}
-          {/* One button, and it's a cog. The light/dark toggle used to sit here
-              too, but IconSettings was drawn as a circle with rays — the same
-              picture as IconSun — so this read as two sun buttons. Both the
-              toggle and the preferences sheet now live on /settings. */}
+          {/* Share is a small icon up here beside the cog, not a half-width
+              button competing with Log Session (real: an invite link,
+              lib/invite.ts). */}
+          <ShareInviteButton iconOnly />
           <Link href="/settings" aria-label="Settings" className="text-muted">
             <IconSettings size={18} />
           </Link>
         </div>
       </div>
 
-      {/* Identity block */}
-      <div className="flex flex-col items-center gap-2 border-b border-border px-3.5 pb-3 pt-4">
-        <div className="relative">
-          <div className="flex h-[72px] w-[72px] items-center justify-center overflow-hidden rounded-full border-2 border-primary bg-primary-tint text-primary">
-            {user.photo ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={user.photo} alt={user.name || "Profile photo"} className="h-full w-full object-cover" />
-            ) : (
-              <IconUser size={30} />
-            )}
+      {/* 1 · WHO YOU ARE — photo on the left, name and the three counts beside
+          it, bio full width underneath. */}
+      <div className="border-b border-border px-3.5 pb-3 pt-3.5">
+        <div className="flex items-start gap-3">
+          <div className="relative flex-shrink-0">
+            <div className="flex h-[68px] w-[68px] items-center justify-center overflow-hidden rounded-full border-2 border-primary bg-primary-tint text-primary">
+              {user.photo ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={user.photo} alt={user.name || "Profile photo"} className="h-full w-full object-cover" />
+              ) : (
+                <IconUser size={28} />
+              )}
+            </div>
+            <input
+              ref={avatarInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                pickAvatar(e.target.files?.[0]);
+                e.target.value = "";
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => avatarInputRef.current?.click()}
+              aria-label={user.photo ? "Change photo" : "Add photo"}
+              className="tap44 press-icon absolute -bottom-0.5 -right-0.5 flex h-6 w-6 items-center justify-center rounded-full border border-border bg-surface-2 text-muted"
+            >
+              <IconCamera size={12} />
+            </button>
           </div>
-          <input
-            ref={avatarInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => {
-              pickAvatar(e.target.files?.[0]);
-              e.target.value = "";
-            }}
-          />
-          <button
-            type="button"
-            onClick={() => avatarInputRef.current?.click()}
-            aria-label={user.photo ? "Change photo" : "Add photo"}
-            className="tap44 press-icon absolute -bottom-0.5 -right-0.5 flex h-6 w-6 items-center justify-center rounded-full border border-border bg-surface-2 text-muted"
-          >
-            <IconCamera size={12} />
-          </button>
 
-          {/* No varsity crest pinned to the photo. It used to sit here as a
-              quiet hint that another mode exists, but the switcher in the top
-              bar and the VARSITY badge under the name already say it — on the
-              photo it just crowded the face. */}
-        </div>
+          <div className="min-w-0 flex-1">
+            <InlineEdit
+              value={user.name}
+              onChange={(v) => update({ name: v })}
+              ariaLabel="name"
+              placeholder="Your name"
+              maxLength={40}
+              /* The name everyone else sees — it has to be one (lib/onboarding). */
+              validate={nameError}
+              textClassName="text-[15px] font-medium text-text"
+            />
 
-        <div className="flex flex-col items-center gap-1">
-          <InlineEdit
-            value={user.name}
-            onChange={(v) => update({ name: v })}
-            ariaLabel="name"
-            placeholder="Your name"
-            maxLength={40}
-            /* The name everyone else sees — it has to be one (lib/onboarding). */
-            validate={nameError}
-            textClassName="text-base font-medium text-text"
-          />
-
-          {/* On your OWN profile the varsity badge comes from live membership:
-              profiles.data has no record of it (the squad lives in its own
-              table), so unlike a profile you're viewing, it can't come through
-              profileFromOnboarding. */}
-          {(isMember || user.badges.mentor) && (
-            <div className="flex items-center justify-center gap-1.5">
+            <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
+              <span className="text-[11px] text-muted">
+                {user.residence ? `${residenceLabel(user.residence)} · ` : ""}
+                {classOfLabel(user.classYear)}
+              </span>
+              {/* On your OWN profile the varsity badge comes from live
+                  membership: profiles.data has no record of it (the squad lives
+                  in its own table). Gold, as it is everywhere else. */}
               {isMember && (
                 <span className="rounded bg-accent px-1.5 py-0.5 text-[8px] font-medium tracking-wide text-background">
                   VARSITY
@@ -365,62 +380,61 @@ export default function ProfilePage() {
                 </span>
               )}
             </div>
-          )}
 
-          <div className="text-[11px] text-muted">
-            {user.residence ? `${residenceLabel(user.residence)} · ` : ""}
-            {classOfLabel(user.classYear)}
+            {/* The counts, across rather than down: three columns of the width
+                left beside the photo. */}
+            <div className="mt-2.5 flex items-start">
+              {stats.map((s) => {
+                const body = (
+                  <>
+                    <div
+                      className={`text-[11px] ${s.onClick ? "text-primary" : "text-muted"}`}
+                    >
+                      {s.label}
+                    </div>
+                    <div className="mt-0.5 text-[15px] font-medium leading-none text-text">
+                      {statsReady ? s.value : "—"}
+                    </div>
+                  </>
+                );
+                return (
+                  <div key={s.label} className="min-w-0 flex-1">
+                    {s.onClick ? (
+                      <button type="button" onClick={s.onClick} className="block text-left">
+                        {body}
+                      </button>
+                    ) : (
+                      body
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
-      </div>
 
-      {/*
-        THE HIERARCHY. Nine blocks of identical weight had Log Session competing
-        with a photo grid. The order now is the order of use: the button that
-        adds to everything, this week, where you stand — then everything else
-        folded behind "More about you". On a phone, without scrolling: who you
-        are, your week, and the button.
-      */}
-
-      {/* 1 · LOG SESSION — the job of this screen, at the top, with Share
-          beside it (real: an invite link, lib/invite.ts). */}
-      <div className="flex gap-2.5 border-b border-border px-3.5 py-3">
-        {/* data-tour: the Profile tour opens on this button (lib/tour.ts). */}
-        <Button data-tour="profile-log" size="lg" onClick={() => setLogging(true)} className="flex-[2]">
-          <IconPlus size={16} /> Log Session
-        </Button>
-        <ShareInviteButton variant="secondary" size="lg" className="flex-1" />
+        {/* Bio — full width under the block, where a line of text belongs. */}
+        <div className="mt-2.5">
+          <InlineEdit
+            value={user.bio}
+            onChange={(v) => update({ bio: v })}
+            ariaLabel="bio"
+            placeholder="Add a short bio"
+            maxLength={160}
+            multiline
+            textClassName="text-[12px] leading-relaxed text-muted"
+          />
+        </div>
       </div>
 
       {/* "Did you train with Sam today?" — a partner tag waiting for your yes.
-          Right under the button, because it is the one thing on this page
-          someone else is waiting on; saying yes also puts the session on YOUR
-          calendar. Hidden when there is nothing to answer. */}
+          High up, because it is the one thing on this page someone else is
+          waiting on; saying yes also puts the session on YOUR calendar. Hidden
+          when there is nothing to answer. */}
       <PartnerRequests onChanged={reloadLogs} />
 
-      {/* 2 · THIS WEEK — seven days, from the logs. The full month is one tap
-          underneath, and only once there is something to show on it. */}
-      <WeekCalendar logs={logs} onPickDate={(d) => setOpenDate(d)} />
-      {statsReady && sessionsCount > 0 && (
-        <div className="border-b border-border px-3.5 py-2">
-          <button
-            type="button"
-            onClick={() => setShowMonth((v) => !v)}
-            aria-expanded={showMonth}
-            className="tap44 flex items-center gap-1 text-[12px] font-medium text-primary"
-          >
-            {showMonth ? "Hide the month" : "Show the whole month"}
-            <IconChevronDown size={14} className={`transition-transform ${showMonth ? "rotate-180" : ""}`} />
-          </button>
-        </div>
-      )}
-      {showMonth && statsReady && sessionsCount > 0 && (
-        <SessionCalendar logs={logs} onPickDate={(d) => setOpenDate(d)} />
-      )}
-
-      {/* 3 · WHERE YOU STAND — one line, straight into the full boards — and
-          this week's event under it, with your real count against it. It
-          changes on Monday and ticks over when you log what it asks for. */}
+      {/* 2 · WHERE YOU STAND — one line, straight into the full boards — and
+          this week's event under it, with your real count against it. */}
       <LeaderboardStrip />
       <WeekEventLine compact />
 
@@ -428,7 +442,57 @@ export default function ProfilePage() {
           belongs above the fold. Hides itself when there is none. */}
       <UpcomingSessions />
 
-      {/* 4 · EVERYTHING ELSE, folded. A <details>, so it opens without
+      {/* 3 · YOUR TRAINING — this week, or the whole month, with arrows or a
+          swipe to move through either. */}
+      <TrainingCalendar
+        logs={logs}
+        anchor={calAnchor}
+        mode={calMode}
+        onAnchorChange={setCalAnchor}
+        onModeChange={setCalMode}
+        onPickDate={(d) => setOpenDate(d)}
+      />
+
+      {/* 4 · LOG A SESSION, and MEMORIES beside it — the button that fills the
+          calendar next to what the calendar looked like. Memories takes itself
+          away until there is a photo, and then Log a session has the row. */}
+      <div className="flex items-stretch gap-2.5 border-b border-border px-3.5 py-3">
+        {brandNew ? (
+          <button
+            type="button"
+            onClick={() => setLogging(true)}
+            data-tour="profile-log"
+            className="min-w-0 flex-1 rounded-xl border border-border bg-surface-2 px-3 py-2.5 text-left active:bg-surface"
+          >
+            <div className="text-[13px] font-semibold text-text">Log your first session</div>
+            <p className="mt-0.5 text-[11px] leading-relaxed text-muted">
+              Your calendar, your partners and the people who follow you all start
+              here. About ten seconds.
+            </p>
+          </button>
+        ) : (
+          /* data-tour: the Profile tour opens on this button (lib/tour.ts). */
+          <Button
+            data-tour="profile-log"
+            size="lg"
+            onClick={() => setLogging(true)}
+            className="min-w-0 flex-1"
+          >
+            <IconPlus size={16} /> Log a session
+          </Button>
+        )}
+        <MemoriesStrip card />
+      </div>
+
+      {/* 5 · YOUR PHOTOS, under them. */}
+      <PhotoGrid
+        photos={user.photos}
+        onChange={(photos) => update({ photos })}
+        visible={user.showPhotos}
+        onVisibleChange={(v) => update({ showPhotos: v })}
+      />
+
+      {/* 6 · EVERYTHING ELSE, folded. A <details>, so it opens without
           JavaScript and is announced for free. */}
       <details className="group border-b border-border">
         <summary className="tap44 flex cursor-pointer list-none items-center justify-between px-3.5 py-3 [&::-webkit-details-marker]:hidden">
@@ -443,78 +507,13 @@ export default function ProfilePage() {
           </span>
         </summary>
 
-      {/* Bio */}
-      <div className="border-b border-border px-3.5 py-3">
-        <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">Bio</div>
-        <InlineEdit
-          value={user.bio}
-          onChange={(v) => update({ bio: v })}
-          ariaLabel="bio"
-          placeholder="Add a short bio"
-          maxLength={160}
-          multiline
-          textClassName="text-[13px] leading-relaxed text-muted"
-        />
-      </div>
-
-      {/* Stats — or, on a profile with nothing on it yet, the first step */}
-      {!statsReady ? (
-        // Same height as either block, so nothing jumps when the counts land.
-        <div className="h-[58px] border-b border-border" />
-      ) : brandNew ? (
-        <div className="border-b border-border px-3.5 py-3">
-          <div className="rounded-2xl border border-border bg-surface-2 px-4 py-4">
-            <div className="text-sm font-medium text-text">Log your first session</div>
-            <p className="mt-1 text-[12px] leading-relaxed text-muted">
-              Your calendar, your sessions and the people you train with all start here.
-              It takes about ten seconds.
-            </p>
-            <Button size="md" onClick={() => setLogging(true)} className="mt-3">
-              Log a session
-            </Button>
-          </div>
-        </div>
-      ) : (
-      <div className="flex items-stretch justify-around border-b border-border px-3.5 py-2.5">
-        {stats.map((s, i) => (
-          <div key={s.label} className="flex items-stretch">
-            {i > 0 && <div className="mr-0 w-px self-stretch bg-border" />}
-            {s.onClick ? (
-              <button
-                type="button"
-                onClick={s.onClick}
-                className="px-4 text-center transition-colors active:bg-surface-2"
-              >
-                <div className="text-[17px] font-medium text-text">{s.value}</div>
-                <div className="mt-0.5 text-[11px] uppercase tracking-[0.06em] text-primary">
-                  {s.label}
-                </div>
-              </button>
-            ) : (
-              <div className="px-4 text-center">
-                <div className="text-[17px] font-medium text-text">{s.value}</div>
-                <div className="mt-0.5 text-[11px] uppercase tracking-[0.06em] text-muted">
-                  {s.label}
-                </div>
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-      )}
-
-      {/* Memories — the same history as pictures: the calendar says what you
-          did, this says what it looked like. Hides itself entirely until
-          there's a photo to show. */}
-      <MemoriesStrip />
-
       {/*
         WHAT OTHER PEOPLE SEE. Interests and languages used to sit inside a
         "Preferences" block, beside how you want to be matched and who with —
         which is why they read as settings. They aren't: they're public, they're
         what somebody else matches with you ON, and interests are the single most
-        useful line on a match card. Training, the schedule, gyms and your
-        matching preferences went to Settings; these stayed.
+        useful line on a match card — which is where they're SHOWN big, on the
+        profile somebody opens from Match. Here they just need to be editable.
 
         The pencil edits them here rather than sending you to Settings to find
         them: you should be able to change a thing where you can see it.
@@ -577,14 +576,6 @@ export default function ProfilePage() {
         onVisibleChange={(v) => update({ showPersonalRecords: v })}
       />
 
-      {/* Photos */}
-      <PhotoGrid
-        photos={user.photos}
-        onChange={(photos) => update({ photos })}
-        visible={user.showPhotos}
-        onVisibleChange={(v) => update({ showPhotos: v })}
-      />
-
       {/* Varsity Mode isn't a row down here any more — it's the switcher on the
           name in the top bar (tap = sheet, double-tap = straight in). */}
 
@@ -640,18 +631,6 @@ export default function ProfilePage() {
         )}
       </div>
       </details>
-
-      {/* The way to the layout preview (app/(app)/profile/preview/page.tsx).
-          One line, outside the fold, so it doesn't compete with the page. */}
-      <div className="px-3.5 pb-6">
-        <Link href="/profile/preview" className="text-[11px] font-medium text-primary">
-          See the new layout preview →
-        </Link>
-      </div>
-
-      {/* No sticky bottom bar any more: Log Session and Share moved to the top
-          of the page, where the screen's job is, instead of floating over the
-          photo grid. */}
 
       {switchingMode && (
         <ModeSwitcherSheet
