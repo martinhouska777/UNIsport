@@ -18,7 +18,7 @@ import { useVarsityTheme } from "@/components/varsity/useVarsityTheme";
 import { fetchPlan } from "@/lib/varsity/planStore";
 import { fetchTodayLineups } from "@/lib/varsity/lineupStore";
 import { claimRosterSeat, fetchSeatIdentity, type SeatIdentity } from "@/lib/varsity/athleteProfile";
-import { LineupSeats, isMyBoat } from "@/components/varsity/LineupBoatCard";
+import LineupBoatCard, { isMyBoat } from "@/components/varsity/LineupBoatCard";
 import UploadVideoSheet from "@/components/varsity/UploadVideoSheet";
 import ClaimSeatSheet from "@/components/varsity/ClaimSeatSheet";
 import { driveConfigured, driveFolderLink } from "@/lib/varsity/drive";
@@ -29,13 +29,10 @@ import { fetchLogsInRange, LOG_DAYS_BACK } from "@/lib/varsity/logStore";
 import { SkeletonCards, SkeletonLines } from "@/components/ui/Skeleton";
 import SectionLabel from "@/components/ui/SectionLabel";
 import {
-  crewName,
-  dockTime,
   kindBar,
   kindWash,
   kindBlock,
   kindLegend,
-  shellName,
   type HomeData,
   type Greeting as GreetingData,
   type Race as RaceData,
@@ -57,7 +54,6 @@ import {
   IconChevronDown,
   IconChevronUp,
   IconClipboard,
-  IconAnchor,
   IconPlus,
   IconPencil,
   IconVideo,
@@ -564,13 +560,24 @@ function WeekStrip({
   card is only openable when a boat has actually been published for it, which
   doubles as the answer to "are the lineups up yet?" without tapping anything.
 */
-function SessionCard({ s, lineups = [] }: { s: TodaySession; lineups?: Lineup[] }) {
+function SessionCard({
+  s,
+  lineups = [],
+  allBoatsHref,
+  allBoatsCount = 0,
+}: {
+  s: TodaySession;
+  lineups?: Lineup[];
+  /** Where "All boats" goes when the crew is open — the day's full lineup page. */
+  allBoatsHref?: string;
+  allBoatsCount?: number;
+}) {
   const st = statusStyle[s.status];
   const [open, setOpen] = useState(false);
   const boats = lineups.filter((l) => l.periodKey === s.periodKey);
   const openable = boats.length > 0;
 
-  return (
+  const card = (
     /*
       THE CARD IS WASHED IN ITS OWN COLOUR. The 3px bar down the left is the
       kind at full strength and the wash carries it across, fading out before
@@ -626,6 +633,19 @@ function SessionCard({ s, lineups = [] }: { s: TodaySession; lineups?: Lineup[] 
                 </div>
               )}
             </div>
+
+            {/* YOUR BOAT — the pill sits in the bottom-right corner OF THE ROW
+                the workout is written on, not on a line of its own underneath
+                it. On its own line it made every session that has a boat a
+                whole row taller than one that doesn't, so two cards stacked on
+                the same morning were different sizes for no reason a rower
+                could see. Here it costs no height at all. */}
+            {openable && (
+              <span className="mt-auto inline-flex flex-shrink-0 items-center gap-1 self-end rounded-full border border-accent-line bg-accent-tint px-2.5 py-1 text-[10px] font-semibold tracking-[0.06em] text-accent">
+                {open ? "HIDE BOAT" : "YOUR BOAT"}
+                {open ? <IconChevronUp size={12} /> : <IconChevronDown size={12} />}
+              </span>
+            )}
           </div>
 
           {s.coachNote && (
@@ -644,52 +664,8 @@ function SessionCard({ s, lineups = [] }: { s: TodaySession; lineups?: Lineup[] 
             </div>
           )}
 
-          {/* YOUR BOAT — a pill in the bottom-right corner of the card, which
-              is where a thing you press belongs. It used to be two small words
-              beside the workout, and the boat itself was ALSO listed again in a
-              "Your Lineup" section further down the page; the section is gone
-              and this opens the crew in place. */}
-          {openable && (
-            <div className="mt-2 flex justify-end">
-              <span className="inline-flex items-center gap-1 rounded-full border border-accent-line bg-accent-tint px-2.5 py-1 text-[10px] font-semibold tracking-[0.06em] text-accent">
-                {open ? "HIDE BOAT" : "YOUR BOAT"}
-                {open ? <IconChevronUp size={12} /> : <IconChevronDown size={12} />}
-              </span>
-            </div>
-          )}
-
         </div>
       </div>
-
-      {open &&
-        boats.map((l, i) => (
-          <div key={i} className="border-t border-border bg-background/40 px-3 py-3">
-            {/* Which boat this is and when it pushes off. Built from the parts
-                rather than the stored display string, so a lineup whose old
-                dock field holds a BOATHOUSE doesn't print one where the time
-                goes (lib/varsity/home → dockTime). */}
-            <div className="mb-2 text-[10px] font-semibold tracking-[0.12em] text-muted">
-              {[l.periodKey, crewName(l), dockTime(l)].filter(Boolean).join(" · ").toUpperCase()}
-            </div>
-            <LineupSeats l={l} />
-            {/* The two things you carry down to the water, in the same order
-                the full boat card gives them: which shell, then which oars. */}
-            {shellName(l) && (
-              <div className="mt-2 flex items-center gap-2 text-[11px] text-muted">
-                <IconAnchor size={13} />
-                <span className="font-mono text-[10px] tracking-[0.12em]">BOAT</span>
-                <span className="text-text">{shellName(l)}</span>
-              </div>
-            )}
-            {l.oars && (
-              <div className="mt-1 flex items-center gap-2 text-[11px] text-muted">
-                <IconAnchor size={13} />
-                <span className="font-mono text-[10px] tracking-[0.12em]">OARS</span>
-                <span className="text-text">{l.oars}</span>
-              </div>
-            )}
-          </div>
-        ))}
 
       {/*
         THE LOG BUTTON, in the top-right corner of the card. It was a bar
@@ -717,6 +693,47 @@ function SessionCard({ s, lineups = [] }: { s: TodaySession; lineups?: Lineup[] 
         >
           {s.status === "done" ? <IconPencil size={13} /> : <IconPlus size={15} />}
         </Link>
+      )}
+    </div>
+  );
+
+  if (!openable) return card;
+
+  /*
+    THE CREW LIVES UNDER THE SESSION, NOT INSIDE IT.
+
+    It used to be drawn into the bottom of the coloured card, which meant the
+    boat was washed in the session's colour — a green crew on a UT2 morning, a
+    yellow one that afternoon — and drawn in a cut-down way that existed
+    nowhere else: a line of small grey capitals, the hull, then BOAT and OARS
+    as two little grey lines. The squad already HAS a boat card, the one the
+    Lineups page uses, and it is the polished one: its own title bar with the
+    rig and the push-off time, the coach's note to the crew, the hull, BOAT and
+    OARS on proper rows, and the crew's video.
+
+    So pressing YOUR BOAT now drops exactly THAT card underneath, in the app's
+    normal colours. Same component, one design.
+  */
+  return (
+    <div className="flex flex-col gap-2">
+      {card}
+      {open && (
+        <>
+          {boats.map((l, i) => (
+            <LineupBoatCard key={i} l={l} defaultOpen />
+          ))}
+          {/* And the door to everyone else's boat, right where you are already
+              looking at your own — the same page the day's header links to. */}
+          {allBoatsHref && (
+            <Link
+              href={allBoatsHref}
+              className="tap44 flex items-center justify-center gap-1 rounded-xl border border-border bg-surface py-2.5 text-[12px] font-semibold text-primary active:border-primary-line"
+            >
+              All boats{allBoatsCount > 0 ? ` · ${allBoatsCount}` : ""}
+              <IconChevronRight size={13} />
+            </Link>
+          )}
+        </>
       )}
     </div>
   );
@@ -1187,7 +1204,13 @@ function HomeScreenInner() {
         {sessions.length > 0 ? (
           <div className="flex flex-col gap-2 px-3">
             {sessions.map((sess, i) => (
-              <SessionCard key={i} s={sess} lineups={myLineups} />
+              <SessionCard
+                key={i}
+                s={sess}
+                lineups={myLineups}
+                allBoatsHref={lineups.length > 0 ? allBoatsHref : undefined}
+                allBoatsCount={lineups.length}
+              />
             ))}
           </div>
         ) : (
