@@ -387,14 +387,10 @@ export default function CalendarScreen() {
                         className="overflow-hidden rounded px-1 py-0.5"
                         style={{ ...blockStyle(l, planned), gridRowStart: half }}
                       >
-                        {/* AM / PM, the same 6px tag the plan's month view
-                            puts on its blocks — so a day here and the same day
-                            on Home read as the same object. */}
-                        {l.period && (
-                          <span className="block text-[6px] font-bold leading-none text-text-3">
-                            {l.period}
-                          </span>
-                        )}
+                        {/* No AM / PM tag. Which half of the day this was is
+                            already said by WHICH HALF OF THE CELL it sits in
+                            (the two rows above), and the two letters were
+                            eating the line the title needed to fit. */}
                         {/* 8px, matching the plan's month view rather than the
                             10px this used to run at. Two sessions, a number
                             and a day of the month do not fit a cell this wide
@@ -404,7 +400,7 @@ export default function CalendarScreen() {
                             squat, pull, press") makes its whole week twice as
                             tall as the rest of the month. */}
                         <span
-                          className="mt-px block break-words text-[8px] font-medium leading-[1.15] text-text"
+                          className="block break-words text-[8px] font-medium leading-[1.15] text-text"
                           style={{
                             display: "-webkit-box",
                             WebkitLineClamp: 3,
