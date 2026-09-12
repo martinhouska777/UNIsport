@@ -132,10 +132,28 @@ export default function WorkoutBoard({
           </p>
         )}
         {/* "of M" only on a ranked board: on an averages board it read as a
-            compliance score over a steady session. */}
+            compliance score over a steady session. "compared with" is
+            clickable again — it opens THAT day's board in this one's place
+            (onOpenWorkout, same trick a previous edition inside ResultDetail
+            uses), so you can actually go look at the piece you're being
+            compared against instead of just being told its date. */}
         <p className="mt-2 text-[11px] text-muted">
           {board.logged} {ranked && squadSize ? `of ${squadSize} ` : ""}logged
-          {previous && ` · compared with ${previous.workout.dateLabel}`}
+          {previous &&
+            (onOpenWorkout ? (
+              <>
+                {" · compared with "}
+                <button
+                  type="button"
+                  onClick={() => onOpenWorkout(previous.workout.dayKey)}
+                  className="font-medium text-primary underline decoration-dotted underline-offset-2"
+                >
+                  {previous.workout.dateLabel}
+                </button>
+              </>
+            ) : (
+              ` · compared with ${previous.workout.dateLabel}`
+            ))}
         </p>
       </div>
 
