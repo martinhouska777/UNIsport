@@ -264,6 +264,7 @@ select
   coalesce((p.data->>'helpOthers')::boolean, false)              as give_mentor,
   coalesce((p.data->>'getHelp')::boolean, false)                 as receive_mentor,
   nullif(p.data->>'concentration', '')                          as concentration,
+  nullif(p.data->>'hometownCity', '')                           as city,
   nullif(p.data->>'hometownCountry', '')                        as country,
   public.match_region(nullif(p.data->>'hometownCountry', ''))   as region,
   nullif(p.data->>'residence', '')                             as residence,
@@ -336,6 +337,7 @@ returns table (
   shared_languages   text[],
   same_concentration text,
   shared_country     text,
+  shared_city        text,
   shared_region      text,
   shared_gym         text,
   level_note         text,
@@ -386,6 +388,27 @@ as $$
     -- never described as merely "both from Europe".
     case when me.country is not null and me.country = c.country
          then c.country end,
+    /*
+      THE HOMETOWN CITY — between two Americans only, and worth NO POINTS.
+
+      Why US-only: the city is free text (there is no city list to pick from),
+      and it only reads as a fact about a person where the country doesn't
+      already say it. On a campus where most of the list answers "United
+      States", "New York" is the half that means something; between a Czech
+      and a Brazilian the country is already the whole story, and two people
+      who both typed "Cambridge" from different countries share nothing.
+
+      Why no points: this is a thing to SAY to somebody, not a reason the
+      matcher should rank them higher — the owner asked for it as an
+      interesting fact. Same-country already scores; adding the city on top
+      would quietly double-count being from the same place.
+
+      Compared case- and space-insensitively, because it is typed by hand.
+    */
+    case when me.country = 'United States' and c.country = 'United States'
+          and me.city is not null and c.city is not null
+          and lower(btrim(me.city)) = lower(btrim(c.city))
+         then c.city end,
     case when me.region is not null and me.region = c.region
           and me.country is distinct from c.country
          then c.region end,
@@ -658,6 +681,7 @@ returns table (
   shared_languages   text[],
   same_concentration text,
   shared_country     text,
+  shared_city        text,
   shared_region      text,
   shared_gym         text,
   level_note         text,
@@ -689,7 +713,7 @@ as $$
     m.interests_pts, m.concentration_pts, m.origin_pts, m.languages_pts,
     m.gym_pts, m.level_pts, m.activity_pts, m.schedule_pts, m.training_pts,
     m.shared_interests, m.shared_languages, m.same_concentration,
-    m.shared_country, m.shared_region, m.shared_gym, m.level_note,
+    m.shared_country, m.shared_city, m.shared_region, m.shared_gym, m.level_note,
     m.shared_activity, m.activity_note, m.their_activity_freq,
     m.c_concentration,
     array(select distinct z.val from jsonb_array_elements_text(m.c_interests) as z(val)),
@@ -775,6 +799,7 @@ returns table (
   shared_languages   text[],
   same_concentration text,
   shared_country     text,
+  shared_city        text,
   shared_region      text,
   shared_gym         text,
   level_note         text,
@@ -798,7 +823,7 @@ as $$
     m.interests_pts, m.concentration_pts, m.origin_pts, m.languages_pts,
     m.gym_pts, m.level_pts, m.activity_pts, m.training_pts,
     m.shared_interests, m.shared_languages, m.same_concentration,
-    m.shared_country, m.shared_region, m.shared_gym, m.level_note,
+    m.shared_country, m.shared_city, m.shared_region, m.shared_gym, m.level_note,
     m.shared_activity, m.activity_note, m.their_activity_freq,
     m.c_concentration,
     array(select distinct z.val from jsonb_array_elements_text(m.c_interests) as z(val)),
@@ -860,6 +885,7 @@ returns table (
   shared_languages   text[],
   same_concentration text,
   shared_country     text,
+  shared_city        text,
   shared_region      text,
   shared_gym         text,
   level_note         text,
@@ -884,7 +910,7 @@ as $$
     m.interests_pts, m.concentration_pts, m.origin_pts, m.languages_pts,
     m.gym_pts, m.level_pts, m.activity_pts, m.schedule_pts, m.training_pts,
     m.shared_interests, m.shared_languages, m.same_concentration,
-    m.shared_country, m.shared_region, m.shared_gym, m.level_note,
+    m.shared_country, m.shared_city, m.shared_region, m.shared_gym, m.level_note,
     m.shared_activity, m.activity_note, m.their_activity_freq,
     m.c_concentration,
     array(select distinct z.val from jsonb_array_elements_text(m.c_interests) as z(val)),

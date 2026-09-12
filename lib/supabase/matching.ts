@@ -40,6 +40,12 @@ export type MatchFacts = {
   languages: string[];
   concentration: string | null; // set only when it's the same
   country: string | null; // same country
+  /*
+    The same hometown CITY — set only between two people who both gave the
+    United States, and worth no points (db/matching.sql explains why). It is
+    something to open with, not a reason the matcher ranks anybody higher.
+  */
+  city: string | null;
   region: string | null; // same region, different country
   gym: string | null; // the best-ranked gym they both list
   // How the experience levels relate: same, one step apart, or a deliberate
@@ -155,6 +161,7 @@ type RpcRow = {
   shared_languages: string[] | null;
   same_concentration: string | null;
   shared_country: string | null;
+  shared_city: string | null;
   shared_region: string | null;
   shared_gym: string | null;
   level_note: string | null;
@@ -206,6 +213,7 @@ function toMatch(r: RpcRow): Match {
       languages: r.shared_languages ?? [],
       concentration: r.same_concentration,
       country: r.shared_country,
+      city: r.shared_city,
       region: r.shared_region,
       gym: r.shared_gym,
       levelNote: levelNote(r.level_note),

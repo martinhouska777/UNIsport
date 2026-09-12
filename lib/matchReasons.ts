@@ -139,9 +139,29 @@ export function matchReasons(m: Match): MatchReason[] {
     });
   }
 
-  // Country and region are mutually exclusive by construction: the database
-  // only fills in a region when the countries differ.
-  if (f.country) {
+  /*
+    ORIGIN, most specific true thing first. City, then country, then region —
+    one chip either way, because they are all the same answer at different
+    zoom levels and "New York" already tells you the country.
+
+    The city is only ever set between two Americans (db/matching.sql), which
+    is the case where the country on its own says almost nothing: half the
+    campus answers "United States". It carries the same points as the country
+    match that must also be true underneath it — it is a better WORDING of
+    that fact, not an extra one.
+
+    Country and region stay mutually exclusive by construction: the database
+    only fills in a region when the countries differ.
+  */
+  if (f.city) {
+    candidates.push({
+      key: "origin",
+      short: f.city,
+      full: `You're both from ${f.city}`,
+      pts: b.origin,
+      weight: 4,
+    });
+  } else if (f.country) {
     candidates.push({
       key: "origin",
       short: f.country,
@@ -337,7 +357,7 @@ function hookWording(m: Match, r: MatchReason): { text: string; chipKeys: string
       };
     }
     case "origin":
-      return { text: `Also from ${f.country ?? f.region}`, chipKeys: ["origin"] };
+      return { text: `Also from ${f.city ?? f.country ?? f.region}`, chipKeys: ["origin"] };
     case "languages": {
       const lang = f.languages.find((l) => l !== campusLanguage);
       return lang ? { text: `Also speaks ${lang}`, chipKeys: ["languages"] } : null;
@@ -404,7 +424,7 @@ export function dmContextLine(m: Match): string | null {
         if (f.interests[0]) parts.push(`both into ${f.interests[0].toLowerCase()}`);
         break;
       case "origin":
-        parts.push(`both from ${f.country ?? f.region}`);
+        parts.push(`both from ${f.city ?? f.country ?? f.region}`);
         break;
       case "languages": {
         const lang = f.languages.find((l) => l !== campusLanguage);
