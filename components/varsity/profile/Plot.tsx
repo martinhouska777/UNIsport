@@ -117,6 +117,7 @@ export default function Plot({
   selected = null,
   onSelect,
   onRangeSelect,
+  shaded,
 }: {
   points: PlotPoint[];
   metric: StatMetric;
@@ -137,6 +138,8 @@ export default function Plot({
    * index, in order) — the full screen zooms into it. A tap still selects.
    */
   onRangeSelect?: (from: number, to: number) => void;
+  /** Per bucket: does it hold a day marked out (sick, injured, away)? Shaded. */
+  shaded?: boolean[];
 }) {
   /*
     THE DRAG. Where the finger (or mouse) went down and where it is now, as
@@ -284,6 +287,23 @@ export default function Plot({
           </g>
         );
       })}
+
+      {/* DAYS OUT — a soft warm wash behind every column that holds a day
+          marked sick, injured or away, so a dip in the training has its reason
+          drawn right there (lib/varsity/daysOut.ts). */}
+      {shaded?.map((on, i) =>
+        on ? (
+          <rect
+            key={`out-${i}`}
+            x={cx(i) - slot / 2}
+            y={padT - 4}
+            width={slot}
+            height={plotH + 4}
+            fill="var(--warn)"
+            fillOpacity={0.12}
+          />
+        ) : null,
+      )}
 
       {/* THE STRETCH BEING DRAGGED — one band over every column in it, so you
           can see what you are about to zoom into before you let go. */}

@@ -26,6 +26,11 @@
     4. EVERY SESSION SAYS WHICH KIND IT WAS — the colour is the intensity, so
        water and erg are the same green and only the word tells them apart.
        The figures stay in the day sheet: a column is about 33px of text wide.
+    6. A DAY CAN BE OUT. Sick, injured, away or missed-for-another-reason
+       (lib/varsity/daysOut.ts): a coloured dot by the date, and on a day with
+       nothing logged the reason written in the box. Tap the day to mark one —
+       Sick and Away are one tap; Missed (only on a past day with nothing
+       logged) asks why, with a short note.
     5. NO PAGE HEADER. The month is the title, and the colour key sits
        directly under it — you need to know what the colours mean BEFORE you
        read the grid, not after scrolling past it. The month's totals used to
@@ -61,7 +66,17 @@ import {
   logVolumeLabel,
   legendCategories,
 } from "@/lib/varsity/athleteProfile";
-import { IconArrowLeft, IconArrowRight, IconChevronRight } from "@/components/icons";
+import { IconArrowLeft, IconArrowRight, IconChevronRight, IconX } from "@/components/icons";
+import { fetchDaysOut, saveDaysOut } from "@/lib/varsity/athleteProfile";
+import {
+  dayOutDot,
+  dayOutReasons,
+  dayOutText,
+  reasonMeta,
+  type DayOut,
+  type DayOutReason,
+  type DaysOut,
+} from "@/lib/varsity/daysOut";
 
 const MONTHS = [
   "January", "February", "March", "April", "May", "June",
@@ -126,10 +141,134 @@ const calendarLegend = kindLegend.filter((l) => l.kind !== "race");
 
 type CalDay = { num: number; iso: string; logs: LogEntry[]; today: boolean; future: boolean };
 
+/*
+  THE DAY OUT, in the day sheet (lib/varsity/daysOut.ts).
+
+  A day already marked says so — the reason, the note — with a way to clear it.
+  Otherwise: Sick and Away are one tap each, and MISSED, offered only on a day
+  that has happened with nothing logged, opens the reasons (Sick, Injured,
+  Away, Other) with a line for why.
+*/
+function DayOutSection({
+  value,
+  canMiss,
+  onSave,
+}: {
+  value: DayOut | undefined;
+  /** A past (or today's) day with no training on it. */
+  canMiss: boolean;
+  onSave: (v: DayOut | null) => void;
+}) {
+  const [missing, setMissing] = useState(false);
+  const [reason, setReason] = useState<DayOutReason>("sick");
+  const [note, setNote] = useState("");
+
+  if (value) {
+    const meta = reasonMeta(value.reason);
+    return (
+      <div className="mt-3 flex items-start gap-3 rounded-2xl border border-border bg-surface-2 px-3.5 py-3">
+        <span className={`mt-1 h-2.5 w-2.5 flex-shrink-0 rounded-full ${dayOutDot[meta.tone]}`} />
+        <div className="min-w-0 flex-1">
+          <div className={`text-[13px] font-semibold ${dayOutText[meta.tone]}`}>
+            {value.reason === "other" ? "Missed" : meta.label}
+          </div>
+          {value.note && <div className="mt-0.5 text-[12px] leading-relaxed text-text-2">{value.note}</div>}
+        </div>
+        <button
+          type="button"
+          onClick={() => onSave(null)}
+          aria-label="Clear this day"
+          className="tap44 press-icon flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-surface text-muted"
+        >
+          <IconX size={13} />
+        </button>
+      </div>
+    );
+  }
+
+  if (missing) {
+    return (
+      <div className="mt-3 rounded-2xl border border-border bg-surface-2 px-3.5 py-3">
+        <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">Missed — why?</div>
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {dayOutReasons.map((r) => (
+            <button
+              key={r.key}
+              type="button"
+              onClick={() => setReason(r.key)}
+              aria-pressed={reason === r.key}
+              className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12px] font-medium ${
+                reason === r.key ? "border-primary bg-primary-tint text-text" : "border-border bg-surface text-muted"
+              }`}
+            >
+              <span className={`h-2 w-2 rounded-full ${dayOutDot[r.tone]}`} />
+              {r.label}
+            </button>
+          ))}
+        </div>
+        <input
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          maxLength={120}
+          placeholder="Why? (optional)"
+          aria-label="Why you missed it"
+          // 16px so a phone doesn't zoom in on focus.
+          className="mt-2.5 w-full rounded-xl border border-border bg-surface px-3 py-2.5 text-base text-text outline-none placeholder:text-muted focus:border-primary"
+        />
+        <div className="mt-2.5 flex gap-2">
+          <button
+            type="button"
+            onClick={() => setMissing(false)}
+            className="flex-1 rounded-xl border border-border bg-surface py-2.5 text-[12px] font-medium text-muted"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={() => onSave({ reason, ...(note.trim() ? { note: note.trim() } : {}) })}
+            className="flex-1 rounded-xl bg-primary-live py-2.5 text-[12px] font-semibold text-primary-contrast"
+          >
+            Save
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const quick = dayOutReasons.filter((r) => r.key === "sick" || r.key === "away");
+  return (
+    <div className="mt-3 flex gap-2">
+      {quick.map((r) => (
+        <button
+          key={r.key}
+          type="button"
+          onClick={() => onSave({ reason: r.key })}
+          className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-border bg-surface-2 py-2.5 text-[12px] font-medium text-text active:bg-surface"
+        >
+          <span className={`h-2 w-2 rounded-full ${dayOutDot[r.tone]}`} />
+          {r.label}
+        </button>
+      ))}
+      {canMiss && (
+        <button
+          type="button"
+          onClick={() => setMissing(true)}
+          className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-border bg-surface-2 py-2.5 text-[12px] font-medium text-text active:bg-surface"
+        >
+          Missed…
+        </button>
+      )}
+    </div>
+  );
+}
+
 function DaySheet({
   label,
   logs,
   planSessions,
+  dayOut,
+  canMiss,
+  onDayOut,
   onClose,
   onOpen,
 }: {
@@ -137,15 +276,20 @@ function DaySheet({
   logs: LogEntry[];
   /** The published plan, keyed by slot — the dots read their colour off it. */
   planSessions: Record<string, Session>;
+  dayOut: DayOut | undefined;
+  canMiss: boolean;
+  onDayOut: (v: DayOut | null) => void;
   onClose: () => void;
   onOpen: (log: LogEntry) => void;
 }) {
   return (
     <Sheet title={label} onClose={onClose}>
       {logs.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border bg-surface-2 px-4 py-6 text-center text-[12px] text-muted">
-          Nothing logged this day.
-        </div>
+        dayOut ? null : (
+          <div className="rounded-2xl border border-dashed border-border bg-surface-2 px-4 py-6 text-center text-[12px] text-muted">
+            Nothing logged this day.
+          </div>
+        )
       ) : (
         <div className="flex flex-col gap-2">
           {logs.map((l) => {
@@ -186,6 +330,7 @@ function DaySheet({
           })}
         </div>
       )}
+      <DayOutSection value={dayOut} canMiss={canMiss} onSave={onDayOut} />
       <Link
         href="/varsity/log"
         className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-surface px-4 py-3 text-[12px] font-medium text-text"
@@ -211,6 +356,27 @@ export default function CalendarScreen() {
   // once — the plan is shared and does not change while you scroll months.
   const [planSessions, setPlanSessions] = useState<SessionMap>({});
   const { units } = useUnits();
+  // Days marked sick / injured / away / missed, keyed by ISO date.
+  const [daysOut, setDaysOut] = useState<DaysOut>({});
+
+  useEffect(() => {
+    let active = true;
+    fetchDaysOut(userId).then((d) => active && setDaysOut(d));
+    return () => {
+      active = false;
+    };
+  }, [userId]);
+
+  // Shown at once, saved behind it; the saved map (merged fresh) wins when it lands.
+  const markDay = (iso: string, v: DayOut | null) => {
+    setDaysOut((prev) => {
+      const next = { ...prev };
+      if (v) next[iso] = v;
+      else delete next[iso];
+      return next;
+    });
+    void saveDaysOut(userId, { [iso]: v }).then(setDaysOut);
+  };
 
   useEffect(() => {
     let active = true;
@@ -393,6 +559,8 @@ export default function CalendarScreen() {
         {calendar.map((d) => {
           const has = d.logs.length > 0;
           const label = `${MONTHS[view.m]} ${d.num}, ${view.y}`;
+          const out = daysOut[d.iso];
+          const outMeta = out ? reasonMeta(out.reason) : null;
           return (
             <button
               key={d.num}
@@ -420,12 +588,20 @@ export default function CalendarScreen() {
               }`}
             >
               <span
-                className={`px-1 pt-1 text-[12px] font-semibold leading-none ${
+                className={`flex items-center justify-between px-1 pt-1 text-[12px] font-semibold leading-none ${
                   d.today ? "text-primary" : has ? "text-text" : d.future ? "text-muted/40" : "text-muted"
                 }`}
               >
                 {d.num}
+                {/* A DAY OUT — the dot by the date (lib/varsity/daysOut.ts). */}
+                {outMeta && (
+                  <span
+                    aria-label={outMeta.label}
+                    className={`h-[7px] w-[7px] flex-shrink-0 rounded-full ${dayOutDot[outMeta.tone]}`}
+                  />
+                )}
               </span>
+
               {/*
                 HALF A DAY EACH. Two rows, so one session fills the top half and
                 leaves the bottom empty instead of stretching over the whole
@@ -516,6 +692,12 @@ export default function CalendarScreen() {
                   </>
                 )}
               </span>
+              {/* …and on a day with nothing logged, the reason at the foot of the box. */}
+              {outMeta && !has && (
+                <span className={`truncate px-1 pb-1 text-[9px] font-semibold ${dayOutText[outMeta.tone]}`}>
+                  {out!.reason === "other" ? "Missed" : outMeta.label}
+                </span>
+              )}
             </button>
           );
         })}
@@ -544,9 +726,16 @@ export default function CalendarScreen() {
 
       {picked && (
         <DaySheet
+          key={picked.iso}
           label={picked.label}
           logs={logsByDay[Number(picked.iso.split("-")[2])] ?? []}
           planSessions={planSessions}
+          dayOut={daysOut[picked.iso]}
+          canMiss={
+            picked.iso <= todayIso &&
+            !(logsByDay[Number(picked.iso.split("-")[2])] ?? []).some((l) => l.category !== "off")
+          }
+          onDayOut={(v) => markDay(picked.iso, v)}
           onClose={() => setPicked(null)}
           onOpen={(log) => setOpenLog(log)}
         />

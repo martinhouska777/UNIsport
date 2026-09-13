@@ -25,6 +25,7 @@ import { parseSessionKey } from "@/lib/varsity/coachPlan";
 import { formatDistance, formatDuration, type Units } from "@/lib/varsity/units";
 import { rowingCategories } from "@/lib/varsity/athleteProfile";
 import { expectedDays, trainedDays, type Span } from "@/lib/varsity/athleteStats";
+import { dayOutReasons, type DaysOut, type DayOutReason } from "@/lib/varsity/daysOut";
 
 /* A number on the screen. `tone` is the only styling this file decides, and it
    decides it as a word — the screen maps it to a theme token (rule 1). */
@@ -88,7 +89,7 @@ function streaks(logs: LogEntry[], span: Span): { longest: number; current: numb
  * calendar's tick means, so the two screens can never disagree. Rest slots are
  * not sessions and are left out of all four numbers.
  */
-function planCounts(logs: LogEntry[], plan: SessionMap, span: Span) {
+function planCounts(logs: LogEntry[], plan: SessionMap, span: Span, daysOut: DaysOut) {
   const start = asDate(span.startIso);
   const end = asDate(span.endIso);
 
@@ -105,7 +106,26 @@ function planCounts(logs: LogEntry[], plan: SessionMap, span: Span) {
   const done = planned.filter((k) => loggedKeys.has(k)).length;
   const extra = logs.filter((l) => isTraining(l) && !l.dayKey).length;
 
-  return { planned: planned.length, done, missed: Math.max(0, planned.length - done), extra };
+  /* WHY THEY WERE MISSED — a missed slot on a day marked out (sick, injured,
+     away, other) is counted under that reason; the rest have none given. */
+  const missedWhy: Record<DayOutReason, number> = { sick: 0, injured: 0, away: 0, other: 0 };
+  let missedNoReason = 0;
+  for (const k of planned) {
+    if (loggedKeys.has(k)) continue;
+    const parsed = parseSessionKey(k);
+    const out = parsed ? daysOut[toIso(parsed.date)] : undefined;
+    if (out) missedWhy[out.reason]++;
+    else missedNoReason++;
+  }
+
+  return {
+    planned: planned.length,
+    done,
+    missed: Math.max(0, planned.length - done),
+    extra,
+    missedWhy,
+    missedNoReason,
+  };
 }
 
 /**
@@ -118,6 +138,8 @@ export function rowingReport(
   plan: SessionMap,
   span: Span,
   units: Units,
+  /** The days marked out, so a missed session can say why. */
+  daysOut: DaysOut = {},
 ): StatGroup[] {
   const training = logs.filter(isTraining);
   const rowed = training.filter(isRowed);
@@ -151,7 +173,7 @@ export function rowingReport(
   const consistency = expected ? Math.min(100, Math.round((days / expected) * 100)) : 0;
   const { longest: longestStreak } = streaks(training, span);
 
-  const counts = planCounts(logs, plan, span);
+  const counts = planCounts(logs, plan, span, daysOut);
 
   const groups: StatGroup[] = [
     {
@@ -264,6 +286,23 @@ export function rowingReport(
           value: `${counts.extra}`,
           tone: counts.extra ? "success" : "muted",
         },
+        /* MISSED, BY WHY — one cell per reason that actually happened, and
+           "no reason" for the rest, only when at least one had a reason. */
+        ...(counts.missed > counts.missedNoReason
+          ? [
+              ...dayOutReasons
+                .filter((r) => counts.missedWhy[r.key] > 0)
+                .map((r) => ({
+                  key: `missed-${r.key}`,
+                  label: `Missed · ${r.label.toLowerCase()}`,
+                  value: `${counts.missedWhy[r.key]}`,
+                  tone: "muted" as StatTone,
+                })),
+              ...(counts.missedNoReason > 0
+                ? [{ key: "missed-none", label: "Missed · no reason", value: `${counts.missedNoReason}`, tone: "muted" as StatTone }]
+                : []),
+            ]
+          : []),
       ],
     });
   }

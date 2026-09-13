@@ -16,6 +16,7 @@
 import { createClient, hasSupabaseEnv } from "@/lib/supabase/client";
 import { classYears, freshmanClassYear } from "@/lib/onboarding";
 import { sideMeta, type Side } from "@/lib/varsity/coachLineup";
+import { cleanDaysOut, type DayOut, type DaysOut } from "@/lib/varsity/daysOut";
 
 /* ── Editable option lists ── */
 
@@ -176,6 +177,14 @@ export type VarsityAthleteProfile = {
     join: the roster id you claimed as yours. Null until you pick one.
   */
   rosterId: string | null;
+  /*
+    DAYS OUT — the days you didn't train and why (lib/varsity/daysOut.ts), keyed
+    by ISO date. Written by the status, the calendar and the Missed button.
+  */
+  daysOut: DaysOut;
+  /* The day the status last turned Sick / Injured / Away — so switching back
+     knows which days to offer to log. Null while Active. */
+  statusSince: string | null;
 };
 
 // Best guess at class standing from the academic class year (e.g. '30 = Freshman
@@ -202,6 +211,8 @@ export function defaultProfile(classYear: string): VarsityAthleteProfile {
     statMetric: defaultStatMetric,
     statChart: "bars",
     rosterId: null,
+    daysOut: {},
+    statusSince: null,
   };
 }
 
@@ -231,6 +242,13 @@ export function withDefaults(
     // so a key from an older build falls back to columns rather than to nothing.
     statChart: saved?.statChart || base.statChart,
     rosterId: saved?.rosterId || null,
+    // Older accounts have null / nothing here, never a map (see the memory on
+    // DB nulls): cleaned into a safe object every time.
+    daysOut: cleanDaysOut(saved?.daysOut),
+    statusSince:
+      typeof saved?.statusSince === "string" && /^\d{4}-\d{2}-\d{2}$/.test(saved.statusSince)
+        ? saved.statusSince
+        : null,
   };
 }
 
@@ -320,4 +338,31 @@ export async function saveAthleteProfile(
     .update({ data: merged, updated_at: new Date().toISOString() })
     .eq("id", userId);
   return error ? { error: error.message } : {};
+}
+
+/* ── Days out (lib/varsity/daysOut.ts), read and written on this same record ── */
+
+/** The athlete's days out. */
+export async function fetchDaysOut(userId: string | null): Promise<DaysOut> {
+  const { profile } = await fetchAthleteProfile(userId);
+  return profile.daysOut;
+}
+
+/**
+ * Write some days (a value) or clear them (null), merged onto what is saved
+ * NOW — read fresh, so a day marked here never wipes a profile edit made
+ * somewhere else. Returns the whole map as saved.
+ */
+export async function saveDaysOut(
+  userId: string | null,
+  patch: Record<string, DayOut | null>,
+): Promise<DaysOut> {
+  const { profile } = await fetchAthleteProfile(userId);
+  const next: DaysOut = { ...profile.daysOut };
+  for (const [iso, v] of Object.entries(patch)) {
+    if (v) next[iso] = v;
+    else delete next[iso];
+  }
+  await saveAthleteProfile(userId, { ...profile, daysOut: next });
+  return next;
 }

@@ -76,6 +76,15 @@ import ClaimSeatSheet from "@/components/varsity/ClaimSeatSheet";
 import { sideMeta, COX_COLOR, type Side } from "@/lib/varsity/coachLineup";
 import { fetchPlan } from "@/lib/varsity/planStore";
 import {
+  isoDays,
+  reasonMeta,
+  spanLabel,
+  spellDays,
+  statusReason,
+  type DayOutReason,
+  type DaysOut,
+} from "@/lib/varsity/daysOut";
+import {
   IconPencil,
   IconExpand,
   IconActivity,
@@ -284,6 +293,45 @@ function EditIdentitySheet({
   );
 }
 
+/* ─────────────────────────  log the spell?  ───────────────────────── */
+/*
+  Asked when the status stops being Sick / Injured / Away: "You were sick
+  10–14 Sep, 5 days. Log it in your calendar?" One tap logs every one of those
+  days with that reason; Not now leaves the calendar as it is.
+*/
+function LogSpellSheet({
+  spell,
+  onLog,
+  onClose,
+}: {
+  spell: { reason: DayOutReason; from: string; to: string };
+  onLog: () => void;
+  onClose: () => void;
+}) {
+  const days = isoDays(spell.from, spell.to).length;
+  const word = reasonMeta(spell.reason).label.toLowerCase();
+  return (
+    <Sheet title="Log it in your calendar?" onClose={onClose}>
+      <p className="text-[14px] leading-relaxed text-text">
+        You were {word === "other" ? "out" : word}{" "}
+        <span className="font-semibold">{spanLabel(spell.from, spell.to)}</span> —{" "}
+        {days} day{days === 1 ? "" : "s"}.
+      </p>
+      <p className="mt-1 text-[12px] leading-relaxed text-muted">
+        Each day gets a mark in your calendar, and your statistics show why you didn&apos;t train.
+      </p>
+      <div className="mt-4 flex gap-2.5">
+        <Button variant="secondary" size="lg" onClick={onClose} className="flex-1">
+          Not now
+        </Button>
+        <Button size="lg" onClick={onLog} className="flex-1">
+          Log {days} day{days === 1 ? "" : "s"}
+        </Button>
+      </div>
+    </Sheet>
+  );
+}
+
 /* ─────────────────────────  status picker sheet  ───────────────────────── */
 function StatusSheet({
   current,
@@ -488,6 +536,7 @@ function WeeklyGraph({
   onZoom,
   onZoomOut,
   zoomed,
+  daysOut,
 }: {
   /** The same buckets the points came from — the full screen reads them. */
   buckets: Bucket[];
@@ -508,6 +557,7 @@ function WeeklyGraph({
   onZoom: (start: string, end: string) => void;
   onZoomOut: () => void;
   zoomed: boolean;
+  daysOut: DaysOut;
 }) {
   const [openMenu, setOpenMenu] = useState<"metric" | "range" | "chart" | null>(null);
   const [picking, setPicking] = useState(false); // the custom-dates sheet
@@ -614,6 +664,7 @@ function WeeklyGraph({
           onZoom={onZoom}
           onZoomOut={onZoomOut}
           zoomed={zoomed}
+          daysOut={daysOut}
           onClose={() => setFull(false)}
         />
       )}
@@ -748,6 +799,46 @@ export default function ProfileScreen() {
       return next;
     });
   };
+
+  /*
+    THE STATUS, WITH DATES (lib/varsity/daysOut.ts). Switching to Sick, Injured
+    or Away notes the day it started. Switching away from one of them — back to
+    Active, or on to another — asks whether to put the days since into the
+    calendar, so a week in bed is on record as a week in bed. Saying no still
+    changes the status; the days are just not logged.
+  */
+  const [spell, setSpell] = useState<{ reason: DayOutReason; from: string; to: string } | null>(null);
+  const changeStatus = (patch: Partial<VarsityAthleteProfile>) => {
+    if (!profile || patch.status === undefined || patch.status === profile.status) return;
+    const today = toISO(now);
+    const was = statusReason(profile.status);
+    if (was && profile.statusSince) setSpell({ reason: was, ...spellDays(profile.statusSince, today) });
+    patchProfile({ status: patch.status, statusSince: statusReason(patch.status) ? today : null });
+  };
+  const logSpell = (s: { reason: DayOutReason; from: string; to: string }) => {
+    if (!profile) return;
+    const next: DaysOut = { ...profile.daysOut };
+    // A day already marked keeps what it says (and its note).
+    for (const iso of isoDays(s.from, s.to)) next[iso] ??= { reason: s.reason };
+    patchProfile({ daysOut: next });
+  };
+
+  /*
+    ARRIVING FROM HOME'S "Still sick? · I'm back" (/varsity/profile?back=1):
+    switch to Active on the spot, which asks about the days as above. Cleared
+    off the URL so a refresh doesn't do it twice.
+  */
+  useEffect(() => {
+    if (!profile) return;
+    const id = requestAnimationFrame(() => {
+      if (!new URLSearchParams(window.location.search).has("back")) return;
+      router.replace("/varsity/profile");
+      changeStatus({ status: statusOptions[0].title });
+    });
+    return () => cancelAnimationFrame(id);
+    // Once, when the profile has loaded.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile === null]);
 
   /*
     THE BUCKETS THE GRAPH PLOTS, for whichever range is chosen.
@@ -974,6 +1065,7 @@ export default function ProfileScreen() {
           onZoom={zoomTo}
           onZoomOut={zoomOut}
           zoomed={beforeZoom !== null}
+          daysOut={profile.daysOut}
         />
 
         {/* The way into the detail. A row of its own rather than making the
@@ -1089,7 +1181,17 @@ export default function ProfileScreen() {
         />
       )}
       {modal === "status" && (
-        <StatusSheet current={profile.status} onSave={patchProfile} onClose={() => setModal(null)} />
+        <StatusSheet current={profile.status} onSave={changeStatus} onClose={() => setModal(null)} />
+      )}
+      {spell && (
+        <LogSpellSheet
+          spell={spell}
+          onLog={() => {
+            logSpell(spell);
+            setSpell(null);
+          }}
+          onClose={() => setSpell(null)}
+        />
       )}
       {modal === "prs" && (
         <PrSheet prs={profile.prs} onSave={patchProfile} onClose={() => setModal(null)} />

@@ -21,6 +21,7 @@ import { claimRosterSeat, fetchSeatIdentity, type SeatIdentity } from "@/lib/var
 import LineupBoatCard, { isMyBoat } from "@/components/varsity/LineupBoatCard";
 import UploadVideoSheet from "@/components/varsity/UploadVideoSheet";
 import ClaimSeatSheet from "@/components/varsity/ClaimSeatSheet";
+import StillOutCard from "@/components/varsity/home/StillOutCard";
 import { driveConfigured, driveFolderLink } from "@/lib/varsity/drive";
 import { fetchNote } from "@/lib/varsity/notesStore";
 import { sessionKey, parseDate, toISO } from "@/lib/varsity/coachPlan";
@@ -1108,6 +1109,7 @@ function HomeScreenInner() {
       <div className="mx-auto w-full max-w-screen-sm pb-6">
         {consoleRole && <ConsoleDoor role={consoleRole} />}
         {claimUi}
+        <StillOutCard userId={userId} />
         <EmptyHome />
         {noteCard}
       </div>
@@ -1171,6 +1173,7 @@ function HomeScreenInner() {
       {consoleRole && <ConsoleDoor role={consoleRole} />}
       <Greeting g={data.greeting} />
       {claimUi}
+      <StillOutCard userId={userId} />
       <DriveBar onUpload={() => setUploadOpen(true)} />
       <WeekStrip
         weeks={data.weeks}

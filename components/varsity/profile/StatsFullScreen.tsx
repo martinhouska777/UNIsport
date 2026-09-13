@@ -59,6 +59,7 @@ import {
 } from "@/lib/varsity/athleteStats";
 import { rowingReport, bucketDetail, type StatTone } from "@/lib/varsity/rowingStats";
 import { trainingMix } from "@/lib/varsity/trainingMix";
+import { countDaysOut, dayOutDot, dayOutReasons, type DaysOut } from "@/lib/varsity/daysOut";
 
 /* A word from the data → a theme token. The data never names a colour. */
 const toneClass: Record<StatTone, string> = {
@@ -90,6 +91,7 @@ export default function StatsFullScreen({
   onZoom,
   onZoomOut,
   zoomed,
+  daysOut,
   onClose,
 }: {
   buckets: Bucket[];
@@ -110,6 +112,8 @@ export default function StatsFullScreen({
   /** Back to the window from before the first zoom. */
   onZoomOut: () => void;
   zoomed: boolean;
+  /** The days marked sick / injured / away — shaded on the graph, counted below. */
+  daysOut: DaysOut;
   onClose: () => void;
 }) {
   const vTheme = useVarsityTheme();
@@ -157,7 +161,12 @@ export default function StatsFullScreen({
     endIso: buckets[buckets.length - 1]?.span.endIso ?? today,
   };
   const allLogs = buckets.flatMap((b) => b.logs);
-  const groups = rowingReport(allLogs, plan, whole, units);
+  const groups = rowingReport(allLogs, plan, whole, units, daysOut);
+  const outCounts = countDaysOut(daysOut, whole.startIso, whole.endIso);
+  const outRows = dayOutReasons.filter((r) => outCounts[r.key] > 0);
+  const shaded = buckets.map((b) =>
+    Object.keys(daysOut).some((iso) => iso >= b.span.startIso && iso <= b.span.endIso),
+  );
   const mix = trainingMix(allLogs, plan);
   const detail = current ? bucketDetail(current.logs, units) : null;
 
@@ -244,6 +253,7 @@ export default function StatsFullScreen({
                   average={metric.axisMax ? null : average}
                   selected={at}
                   onSelect={setSelected}
+                  shaded={shaded}
                   onRangeSelect={(from, to) => {
                     const a = buckets[from];
                     const b = buckets[to];
@@ -339,8 +349,9 @@ export default function StatsFullScreen({
               </div>
             ))}
 
-            {/* ── What all that training actually was. ── */}
-            {mix.length > 0 && (
+            {/* ── What all that training actually was — and the days that
+                weren't training at all (sick, injured, away), under it. ── */}
+            {(mix.length > 0 || outRows.length > 0) && (
               <div className="mt-5">
                 <div className="pb-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
                   Training mix
@@ -375,6 +386,21 @@ export default function StatsFullScreen({
                       </div>
                     </div>
                   ))}
+                  {outRows.length > 0 && (
+                    <div className={`flex flex-col gap-1.5 ${mix.length > 0 ? "border-t border-border pt-2.5" : ""}`}>
+                      {outRows.map((r) => (
+                        <div key={r.key} className="flex items-baseline justify-between gap-3">
+                          <span className="flex min-w-0 items-center gap-2">
+                            <span className={`h-2.5 w-2.5 flex-shrink-0 rounded-full ${dayOutDot[r.tone]}`} />
+                            <span className="truncate text-[13px] font-medium text-text">{r.label}</span>
+                          </span>
+                          <span className="flex-shrink-0 text-[12px] font-semibold text-text">
+                            {outCounts[r.key]} day{outCounts[r.key] === 1 ? "" : "s"}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
