@@ -81,8 +81,6 @@ export default function ProfilePage() {
   // doesn't flash a starter card at someone who has trained all year.
   const [statsLoaded, setStatsLoaded] = useState(false);
   const [switchingMode, setSwitchingMode] = useState(false); // mode switcher sheet
-  // Bumped by the top-bar pencil to open name + bio editing together.
-  const [identityEditTick, setIdentityEditTick] = useState(0);
   /*
     WHICH WEEK / MONTH the calendar is showing. The anchor is any day inside it;
     the arrows and the swipe move it, and the fetch below follows — so paging
@@ -245,9 +243,9 @@ export default function ProfilePage() {
   const brandNew = statsReady && sessionsCount === 0 && partners.length === 0 && followers === 0;
 
   /*
-    THE THREE NUMBERS, across the top beside the photo — sessions you've logged,
-    people you've trained with, people following you. Partners is the only one
-    that opens something.
+    THE THREE NUMBERS, in a row under the bio — sessions you've logged, people
+    you've trained with, people following you. Partners is the only one that
+    opens something.
   */
   const stats: { label: string; value: number; onClick?: () => void }[] = [
     { label: "Workouts", value: sessionsCount },
@@ -258,8 +256,8 @@ export default function ProfilePage() {
   /*
     THE ORDER OF THE PAGE, and the reason for it:
 
-      1. WHO YOU ARE — photo, name, the three counts beside it, bio underneath.
-         Wide, not stacked down the middle, so the screen is used.
+      1. WHO YOU ARE — photo, name, badges, house and class down the middle,
+         then the bio, then the three counts.
       2. WHERE YOU STAND — the boards and this week's event, one line each.
       3. YOUR TRAINING — one calendar: this week, or the month, with arrows and
          a swipe (components/profile/TrainingCalendar.tsx).
@@ -306,8 +304,8 @@ export default function ProfilePage() {
               {saveState === "saving" ? "Saving…" : saveState === "saved" ? "Saved ✓" : "Couldn’t save"}
             </span>
           )}
-          {/* The pencil that opened name + bio lives on the wide Edit profile
-              button under the bio now, where a profile screen puts it. */}
+          {/* One button, and it's a cog: name and bio are edited by their own
+              pencils, so a second pencil up here did the same job twice. */}
           <Link href="/settings" aria-label="Settings" className="text-muted">
             <IconSettings size={18} />
           </Link>
@@ -315,89 +313,54 @@ export default function ProfilePage() {
       </div>
 
       {/*
-        1 · WHO YOU ARE — laid out the way every profile a student has ever
-        opened is laid out, because that is the shape they can already read
-        without being taught it:
+        1 · WHO YOU ARE — back down the middle, the way this page was laid out
+        before and the way the owner wants it read:
 
-          ( photo )   N          N          N
-                   workouts   partners   followers
-
-          Martin Houska            [VARSITY] [MENTOR]
+          ( photo )
+          Martin Houska
+          [VARSITY] [MENTOR]
           Mather House · Class of 2029
+
+          BIO
           a line of bio
 
-          [           Edit profile           ]
+          N workouts  |  N partners  |  N followers
 
-        The numbers move UP beside the photo, big first and labelled under —
-        they used to run full width below the bio as three small labels with
-        the figure beneath, which is the one arrangement nobody's phone uses.
-        Everything that is WORDS about you — name, badges, house, bio — is now
-        one column under the row, full width, in reading order.
+        The wide row (photo on the left, the counts beside it) is gone, and so
+        is the "Edit profile" button that came with it: every field is edited
+        by its own pencil again (components/profile/InlineEdit.tsx).
       */}
-      <div className="border-b border-border px-3.5 pb-3.5 pt-3">
-        <div className="flex items-center gap-4">
-          <div className="relative flex-shrink-0">
-            <div className="flex h-[86px] w-[86px] items-center justify-center overflow-hidden rounded-full border-2 border-primary bg-primary-tint text-primary">
-              {user.photo ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={user.photo} alt={user.name || "Profile photo"} className="h-full w-full object-cover" />
-              ) : (
-                <IconUser size={34} />
-              )}
-            </div>
-            <input
-              ref={avatarInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => {
-                pickAvatar(e.target.files?.[0]);
-                e.target.value = "";
-              }}
-            />
-            <button
-              type="button"
-              onClick={() => avatarInputRef.current?.click()}
-              aria-label={user.photo ? "Change photo" : "Add photo"}
-              className="tap44 press-icon absolute -bottom-0.5 -right-0.5 flex h-7 w-7 items-center justify-center rounded-full border border-border bg-surface-2 text-muted"
-            >
-              <IconCamera size={13} />
-            </button>
+      <div className="flex flex-col items-center gap-2 border-b border-border px-3.5 pb-3 pt-4">
+        <div className="relative">
+          <div className="flex h-[72px] w-[72px] items-center justify-center overflow-hidden rounded-full border-2 border-primary bg-primary-tint text-primary">
+            {user.photo ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={user.photo} alt={user.name || "Profile photo"} className="h-full w-full object-cover" />
+            ) : (
+              <IconUser size={30} />
+            )}
           </div>
-
-          {/* The three numbers, spread across the rest of the row: the figure
-              big, the word small under it. Partners is the only one that
-              opens anything, so it is the only one that looks pressable. */}
-          <div className="flex min-w-0 flex-1 items-start justify-around">
-            {stats.map((s) => {
-              const body = (
-                <>
-                  <div className="text-[19px] font-semibold leading-none tabular-nums text-text">
-                    {statsReady ? s.value : "—"}
-                  </div>
-                  <div className={`mt-1 text-[12px] ${s.onClick ? "text-primary" : "text-muted"}`}>
-                    {s.label}
-                  </div>
-                </>
-              );
-              return s.onClick ? (
-                <button key={s.label} type="button" onClick={s.onClick} className="px-1 text-center">
-                  {body}
-                </button>
-              ) : (
-                <div key={s.label} className="px-1 text-center">
-                  {body}
-                </div>
-              );
-            })}
-          </div>
+          <input
+            ref={avatarInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              pickAvatar(e.target.files?.[0]);
+              e.target.value = "";
+            }}
+          />
+          <button
+            type="button"
+            onClick={() => avatarInputRef.current?.click()}
+            aria-label={user.photo ? "Change photo" : "Add photo"}
+            className="tap44 press-icon absolute -bottom-0.5 -right-0.5 flex h-6 w-6 items-center justify-center rounded-full border border-border bg-surface-2 text-muted"
+          >
+            <IconCamera size={12} />
+          </button>
         </div>
 
-        {/* THE WORDS, under the row and full width. Name first, with the
-            badges on its own line — on your OWN profile the varsity one comes
-            from live membership, because profiles.data has no record of it
-            (the squad lives in its own table). Gold, as everywhere. */}
-        <div className="mt-3">
+        <div className="flex flex-col items-center gap-1">
           <InlineEdit
             value={user.name}
             onChange={(v) => update({ name: v })}
@@ -406,12 +369,15 @@ export default function ProfilePage() {
             maxLength={40}
             /* The name everyone else sees — it has to be one (lib/onboarding). */
             validate={nameError}
-            textClassName="text-[15px] font-semibold text-text"
-            startEditingToken={identityEditTick}
+            textClassName="text-base font-medium text-text"
           />
 
+          {/* On your OWN profile the varsity badge comes from live membership:
+              profiles.data has no record of it (the squad lives in its own
+              table), so unlike a profile you're viewing, it can't come through
+              profileFromOnboarding. */}
           {(isMember || user.badges.mentor) && (
-            <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+            <div className="flex items-center justify-center gap-1.5">
               {isMember && (
                 <span className="rounded bg-accent px-1.5 py-0.5 text-[8px] font-medium tracking-wide text-background">
                   VARSITY
@@ -425,35 +391,62 @@ export default function ProfilePage() {
             </div>
           )}
 
-          <div className="mt-1 text-[12px] text-muted">
+          <div className="text-[11px] text-muted">
             {user.residence ? `${residenceLabel(user.residence)} · ` : ""}
             {classOfLabel(user.classYear)}
           </div>
-
-          <div className="mt-1">
-            <InlineEdit
-              value={user.bio}
-              onChange={(v) => update({ bio: v })}
-              ariaLabel="bio"
-              placeholder="Add a short bio"
-              maxLength={160}
-              multiline
-              textClassName="text-[12px] leading-relaxed text-muted"
-              startEditingToken={identityEditTick}
-            />
-          </div>
         </div>
+      </div>
 
-        {/* One wide button for editing, where the profile you already use puts
-            it. It is the same action the small pencil in the top bar was — that
-            pencil is gone rather than doing the identical job twice. */}
-        <button
-          type="button"
-          onClick={() => setIdentityEditTick((t) => t + 1)}
-          className="tap44 mt-3 w-full rounded-lg border border-border bg-surface-2 py-2 text-[13px] font-semibold text-text active:bg-surface"
-        >
-          Edit profile
-        </button>
+      {/* Bio — its own block under the identity, labelled, full width. */}
+      <div className="border-b border-border px-3.5 py-3">
+        <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">Bio</div>
+        <InlineEdit
+          value={user.bio}
+          onChange={(v) => update({ bio: v })}
+          ariaLabel="bio"
+          placeholder="Add a short bio"
+          maxLength={160}
+          multiline
+          textClassName="text-[13px] leading-relaxed text-muted"
+        />
+      </div>
+
+      {/* The three counts, full width under the bio, divided. They show a dash
+          until the numbers have actually landed, so the row never jumps. */}
+      <div className="flex items-stretch justify-around border-b border-border px-3.5 py-2.5">
+        {stats.map((s, i) => {
+          const body = (
+            <>
+              <div className="text-[17px] font-medium tabular-nums text-text">
+                {statsReady ? s.value : "—"}
+              </div>
+              <div
+                className={`mt-0.5 text-[11px] uppercase tracking-[0.06em] ${
+                  s.onClick ? "text-primary" : "text-muted"
+                }`}
+              >
+                {s.label}
+              </div>
+            </>
+          );
+          return (
+            <div key={s.label} className="flex items-stretch">
+              {i > 0 && <div className="w-px self-stretch bg-border" />}
+              {s.onClick ? (
+                <button
+                  type="button"
+                  onClick={s.onClick}
+                  className="px-4 text-center transition-colors active:bg-surface-2"
+                >
+                  {body}
+                </button>
+              ) : (
+                <div className="px-4 text-center">{body}</div>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       {/* "Did you train with Sam today?" — a partner tag waiting for your yes.
@@ -524,7 +517,7 @@ export default function ProfilePage() {
           <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
             More about you
           </span>
-          {/* No counts here: they're already beside the photo at the top. */}
+          {/* No counts here: they're already in the row under the bio. */}
           <span className="flex items-center gap-2 text-[11px] text-muted">
             <span className="transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none">
               <IconChevronDown size={16} />
