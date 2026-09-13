@@ -178,9 +178,9 @@ export default function StudentIntro({ solo = false }: { solo?: boolean }) {
             : "color-mix(in srgb, var(--color-l-accent) 20%, transparent)",
         } as CSSProperties
       }
-      className={`l-titlecard relative z-[1] flex min-h-svh flex-col items-center justify-center gap-[clamp(10px,1.8vh,18px)] border-t border-l-line bg-l-surface px-6 pt-14 pb-8 text-center ${anim ? "l-anim" : ""} ${shown ? "is-in" : ""}`}
+      className={`l-titlecard relative z-[1] flex min-h-svh flex-col items-center justify-center gap-[clamp(12px,2.4svh,26px)] border-t border-l-line bg-l-surface px-6 pt-14 pb-8 text-center ${anim ? "l-anim" : ""} ${shown ? "is-in" : ""}`}
     >
-      <Heading className="max-w-[13ch] font-display text-[clamp(40px,8vw,76px)] font-normal leading-[0.98] tracking-[-0.02em] text-balance text-l-text">
+      <Heading className="max-w-[13ch] font-display text-[clamp(54px,min(9vw,13svh),100px)] font-normal leading-[0.98] tracking-[-0.02em] text-balance text-l-text">
         <Typed
           /* Leaving the card rewinds the line: a fresh Typed starts at nought,
              so coming back to it writes it out again. */
@@ -197,14 +197,7 @@ export default function StudentIntro({ solo = false }: { solo?: boolean }) {
         />
       </Heading>
 
-      <p
-        className="l-tc max-w-[38ch] text-[clamp(15px,2.2vw,18px)] leading-[1.55] tracking-[-0.01em] text-balance text-l-text-2"
-        style={at(120)}
-      >
-        {studentIntro.sub}
-      </p>
-
-      <OpeningSteps steps={studentIntro.steps} accent="accent" storyId="story1" delay={after + 200} />
+      <OpeningSteps steps={studentIntro.steps} accent="accent" storyId="story1" delay={after + 120} />
 
       {solo && (
         <div className="l-tc mt-2 flex flex-col items-center gap-3" style={at(610)}>
@@ -221,14 +214,17 @@ export default function StudentIntro({ solo = false }: { solo?: boolean }) {
 
       <a
         href={studentIntro.overview.href}
-        className="l-tc mt-1 inline-flex items-center gap-2 rounded-full border border-l-accent-soft px-6 py-3 text-[14px] font-medium tracking-tight text-l-text transition-colors hover:border-l-accent hover:bg-l-accent-dim"
+        className="l-tc mt-2 inline-flex items-center gap-2 rounded-full border border-l-accent bg-l-accent-dim px-9 py-4 text-[clamp(16px,1.5vw,18px)] font-semibold tracking-tight text-l-text transition-colors hover:bg-l-accent-soft"
         style={at(670)}
       >
         {studentIntro.overview.label} →
       </a>
 
-      <div className="l-tc l-cue mt-[22px]" style={at(750)}>
-        {cues.hero}
+      {/* The sentence that used to sit under the headline is the cue now
+          (owner, 2026-09-13): headline, steps, Features, then "Scroll down to
+          explore the app." with the arrow under it. */}
+      <div className="l-tc l-cue l-cue-lg mt-3" style={at(750)}>
+        {cues.student}
       </div>
     </section>
   );

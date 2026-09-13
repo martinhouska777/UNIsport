@@ -629,6 +629,13 @@
   animation: l-cue-bob 1.8s ease-in-out infinite;
 }
 @keyframes l-cue-bob { 0%,100%{transform:translateY(0);opacity:.7} 50%{transform:translateY(8px);opacity:1} }
+/* The title cards' cue is a sentence, not a mono label, and its arrow a size
+   up (owner, 2026-09-13). */
+.l-cue-lg {
+  font-family: inherit; text-transform: none; letter-spacing: -0.01em;
+  font-size: clamp(15px, 1.4vw, 17px); gap: 12px;
+}
+.l-cue-lg::after { width: 2px; height: 58px; }
 @media (prefers-reduced-motion: reduce) { .l-cue::after { animation: none; } }
 
 @keyframes l-fade-up {

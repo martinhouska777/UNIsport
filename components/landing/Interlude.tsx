@@ -41,13 +41,13 @@ export default function Interlude({ solo = false }: { solo?: boolean }) {
       id="interlude"
       ref={card}
       style={{ "--tg": "color-mix(in srgb, var(--color-l-varsity) 18%, transparent)" } as CSSProperties}
-      className={`l-titlecard relative z-[1] flex min-h-svh flex-col items-center justify-center gap-[clamp(10px,1.8vh,18px)] border-t border-l-line bg-l-surface px-6 pt-14 pb-8 text-center ${anim ? "l-anim" : ""} ${shown ? "is-in" : ""}`}
+      className={`l-titlecard relative z-[1] flex min-h-svh flex-col items-center justify-center gap-[clamp(10px,1.8svh,22px)] border-t border-l-line bg-l-surface px-6 pt-14 pb-8 text-center ${anim ? "l-anim" : ""} ${shown ? "is-in" : ""}`}
     >
-      <p className="l-tc font-display text-[clamp(20px,3.4vw,30px)] tracking-[-0.01em] text-l-text-2">
+      <p className="l-tc font-display text-[clamp(20px,min(3.4vw,4.6svh),34px)] tracking-[-0.01em] text-l-text-2">
         {solo ? interlude.leadInSolo : interlude.leadIn}
       </p>
 
-      <Heading className="max-w-[12ch] font-display text-[clamp(48px,10vw,104px)] font-normal leading-[0.98] tracking-[-0.02em] text-balance text-l-text">
+      <Heading className="max-w-[12ch] font-display text-[clamp(48px,min(10vw,14svh),112px)] font-normal leading-[0.98] tracking-[-0.02em] text-balance text-l-text">
         {/* Two halves, one behind the other — see StudentIntro. */}
         <span className="l-tc inline-block" style={{ "--d": "90ms" } as CSSProperties}>
           {interlude.headline}
@@ -58,7 +58,7 @@ export default function Interlude({ solo = false }: { solo?: boolean }) {
       </Heading>
 
       <p
-        className="l-tc max-w-[36ch] text-[clamp(16px,2.4vw,19px)] leading-[1.55] tracking-[-0.01em] text-balance text-l-text-2"
+        className="l-tc max-w-[36ch] text-[clamp(16px,min(2.4vw,3.1svh),21px)] leading-[1.55] tracking-[-0.01em] text-balance text-l-text-2"
         style={{ "--d": "280ms" } as CSSProperties}
       >
         {interlude.sub}
@@ -90,14 +90,14 @@ export default function Interlude({ solo = false }: { solo?: boolean }) {
 
       <a
         href={interlude.overview.href}
-        className="l-tc mt-1 inline-flex items-center gap-2 rounded-full border border-l-varsity-soft px-6 py-3 text-[14px] font-medium tracking-tight text-l-text transition-colors hover:border-l-varsity hover:bg-l-varsity-dim"
+        className="l-tc mt-2 inline-flex items-center gap-2 rounded-full border border-l-varsity bg-l-varsity-dim px-9 py-4 text-[clamp(16px,1.5vw,18px)] font-semibold tracking-tight text-l-text transition-colors hover:bg-l-varsity-soft"
         style={{ "--d": "890ms" } as CSSProperties}
       >
         {interlude.overview.label} →
       </a>
 
-      <div className="l-tc l-cue mt-[22px]" style={{ "--d": "960ms" } as CSSProperties}>
-        {solo ? cues.hero : cues.interlude}
+      <div className="l-tc l-cue l-cue-lg mt-3" style={{ "--d": "960ms" } as CSSProperties}>
+        {cues.varsity}
       </div>
     </section>
   );

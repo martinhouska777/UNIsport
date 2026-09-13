@@ -265,7 +265,8 @@ export const studentIntro = {
      sentence on the page and it used to be seven screens down. */
   headline: "Never train",
   headlineEm: "alone again.",
-  sub: "Scroll down to explore the app.",
+  /* "Scroll down to explore the app." used to be the sub here; it is the
+     card's scroll cue now (`cues.student`, owner 2026-09-13). */
   /* The walk, laid out under the quote — it says how long the scroll is, and
      each step jumps to its own beat. It also fills a card that is two lines
      tall on a full-height section. */
@@ -281,7 +282,7 @@ export const studentIntro = {
   /* The way past the story for someone who wants the list rather than the
      walk. It points AT the feature block beside Campus Colours rather than
      repeating it here — the overview exists once. */
-  overview: { label: "Or see everything it does", href: "#campus-colours" },
+  overview: { label: "Features", href: "#campus-colours" },
 };
 
 /* ───────────────────── S1–S7 · THE STUDENT STORY ───────────────────── */
@@ -458,13 +459,14 @@ export const interlude = {
   ] as OpeningStep[],
   /* Same door as the student card's: the varsity feature block beside Blade
      Lock, which is where the overview lives — once. */
-  overview: { label: "Or see everything it does", href: "#blade-lock" },
+  overview: { label: "Features", href: "#blade-lock" },
 };
 
-/* The two small scroll cues — under the hero, and under the interlude. */
+/* The scroll cues at the foot of the two title cards (owner, 2026-09-13:
+   "not Keep going, but also scroll down to see something"). */
 export const cues = {
-  hero: "Scroll",
-  interlude: "Keep going",
+  student: "Scroll down to explore the app.",
+  varsity: "Scroll down to explore Varsity Mode.",
 };
 
 /* ───────────────────── V1–V7 · THE VARSITY STORY ───────────────────── */

@@ -18,9 +18,9 @@ import type { OpeningStep } from "@/lib/landingCopy";
   Wraps rather than scrolls, so seven items on a phone become two or three
   tidy rows instead of a strip running off the side.
 
-  THEY ARE PILLS (owner, 2026-09-13: "make them so they are elliptical tabs,
-  like they have borders, and make them bigger so it fills the page"): a
-  border on every step, not only on hover, and a size up in every part.
+  THEY ARE PILLS (owner, 2026-09-13: "elliptical tabs, like they have
+  borders"): a border on every step, not only on hover. Sized a step BELOW the
+  card's Features button, which has to read as the bigger thing.
 
   They arrive one after another when the card comes on screen: `delay` is when
   the first one lands, and each following one is 55ms behind the last (the
@@ -43,16 +43,16 @@ export default function OpeningSteps({
   const edge = accent === "accent" ? "hover:border-l-accent hover:bg-l-accent-dim" : "hover:border-l-varsity hover:bg-l-varsity-dim";
 
   return (
-    <ol className="mt-3 flex max-w-[980px] flex-wrap items-center justify-center gap-2.5 sm:gap-3">
+    <ol className="mt-1 flex max-w-[860px] flex-wrap items-center justify-center gap-2 sm:gap-2.5">
       {steps.map((s, i) => (
         <li key={s.n} className="l-tc" style={{ "--d": `${delay + i * 55}ms` } as CSSProperties}>
           <a
             href={`#${storyId}-b${i}`}
-            className={`flex items-center gap-2 rounded-full border border-l-line-hover bg-l-bg-elevated px-4 py-2.5 transition-colors sm:gap-2.5 sm:px-5 sm:py-3 ${edge}`}
+            className={`flex items-center gap-2 rounded-full border border-l-line-hover bg-l-bg-elevated px-3.5 py-2 transition-colors sm:px-4 ${edge}`}
           >
-            <FeatureIcon name={s.icon} className={`h-[20px] w-[20px] sm:h-[22px] sm:w-[22px] ${tint}`} />
-            <span className="font-mono text-[12px] tracking-[0.12em] text-l-text-2 sm:text-[13px]">{s.n}</span>
-            <span className="text-[15px] tracking-tight text-l-text sm:text-[17px]">{s.word}</span>
+            <FeatureIcon name={s.icon} className={`h-[18px] w-[18px] ${tint}`} />
+            <span className="font-mono text-[12px] tracking-[0.12em] text-l-text-2">{s.n}</span>
+            <span className="text-[14px] tracking-tight text-l-text sm:text-[15px]">{s.word}</span>
           </a>
         </li>
       ))}
