@@ -46,7 +46,6 @@ import { useAppState } from "@/components/AppState";
 import { useMembership } from "@/components/varsity/useMembership";
 import WorkoutBoard from "@/components/varsity/team/WorkoutBoard";
 import TelemetryOuting from "@/components/varsity/team/TelemetryOuting";
-import { ExampleTag } from "@/components/varsity/ExampleTag";
 import { fetchPlan } from "@/lib/varsity/planStore";
 import { demoTeamPlan, demoSquadSize } from "@/lib/varsity/demoWorkouts";
 import { fetchResults, fetchSquadSize, type TeamResult } from "@/lib/varsity/resultsStore";
@@ -211,15 +210,15 @@ export default function TeamWorkouts() {
                     <span className="truncate text-[13px] font-semibold text-text">
                       {w.session.description.trim() || sessionLabel(w.session)}
                     </span>
+                    {/* ONE TAG ON A ROW, and it is the only one that changes
+                        what you are about to read: erg or water. RANKED went
+                        — it is the shape of the board, which the board itself
+                        shows the moment it opens — and so did EXAMPLE, on the
+                        owner's call; the example still says so where it can't
+                        be missed, on the row that opens inside the board. */}
                     <span className="flex-shrink-0 rounded border border-border px-1.5 py-px text-[8px] font-bold uppercase tracking-[0.08em] text-muted">
                       Erg
                     </span>
-                    {example && <ExampleTag />}
-                    {w.board === "ranked" && (
-                      <span className="flex-shrink-0 rounded border border-primary-line bg-primary-tint px-1.5 py-px text-[8px] font-bold uppercase tracking-[0.08em] text-primary">
-                        Ranked
-                      </span>
-                    )}
                   </div>
                   <div className="mt-1 text-[11px] text-muted">
                     {w.dateLabel} · {w.period} ·{" "}
@@ -252,10 +251,6 @@ export default function TeamWorkouts() {
                   <span className="flex-shrink-0 rounded border border-border px-1.5 py-px text-[8px] font-bold uppercase tracking-[0.08em] text-muted">
                     Water
                   </span>
-                  <span className="flex-shrink-0 rounded border border-border px-1.5 py-px text-[8px] font-bold uppercase tracking-[0.08em] text-muted">
-                    {o.source === "peach" ? "Peach" : "SpeedCoach"}
-                  </span>
-                  {exampleWater && <ExampleTag />}
                 </div>
                 <div className="mt-1 text-[11px] tabular-nums text-muted">
                   {outingDateLabel(o.dayKey)} · {totals.metres.toLocaleString("en-US")} m

@@ -33,7 +33,6 @@ import BoardTable from "@/components/varsity/team/BoardTable";
 import Delta from "@/components/varsity/team/Delta";
 import { sessionLabel, sessionColor } from "@/lib/varsity/coachPlan";
 import {
-  athleteHistory,
   buildBoard,
   metricsFor,
   metricMeta,
@@ -41,6 +40,7 @@ import {
   pieceSignature,
   rowedAsReps,
   samePieceHistory,
+  type BoardRow,
   type MetricKey,
   type TeamWorkout,
 } from "@/lib/varsity/teamBoard";
@@ -60,6 +60,30 @@ function Tile({ value, label }: { value: string; label: string }) {
 }
 
 type View = "list" | "table";
+
+/*
+  The face of the board's top card. It is a BUTTON when there is a result on it
+  to open, and a plain block when there isn't (a board you never logged) — so
+  nothing is pressable that leads nowhere.
+*/
+function Face({
+  top,
+  onOpen,
+  children,
+}: {
+  top: BoardRow | undefined;
+  onOpen?: () => void;
+  children: React.ReactNode;
+}) {
+  const cls = "w-full px-3.5 py-3 text-left";
+  return top && onOpen ? (
+    <button type="button" onClick={onOpen} className={`${cls} active:bg-surface`}>
+      {children}
+    </button>
+  ) : (
+    <div className={cls}>{children}</div>
+  );
+}
 
 export default function WorkoutBoard({
   workout,
@@ -128,19 +152,6 @@ export default function WorkoutBoard({
   */
   const top = mine ?? (example ? board.rows[Math.floor(board.rows.length / 2)] : undefined);
 
-  /*
-    THAT PERSON'S RUN AT THIS PIECE, for the block under it: not "how did the
-    squad go" but "am I getting faster", which is the question the owner opens
-    an 8x500 to ask. Today's go is included (`past` is only the EARLIER ones),
-    and the metric follows the pills below, so this block and the row above it
-    always speak the same units.
-  */
-  const topRun = useMemo(
-    () =>
-      top ? athleteHistory([{ workout, results }, ...past], top.result.athleteId, metric) : [],
-    [top, workout, results, past, metric],
-  );
-
   return (
     /*
       NO TITLE ON THE SHEET. "Ranked" / "Squad" was a word for the shape of the
@@ -149,34 +160,80 @@ export default function WorkoutBoard({
       handle and the X.
     */
     <Sheet title="" onClose={onClose}>
-      {/* what the workout was */}
-      <div className="rounded-2xl border border-border bg-surface-2 px-3.5 py-3">
-        <div className="flex items-center gap-2">
-          <span
-            className="h-2.5 w-2.5 flex-shrink-0 rounded-full"
-            style={{ background: sessionColor(workout.session) }}
-          />
-          <span className="text-[13px] font-semibold text-text">
-            {sessionLabel(workout.session)}
-          </span>
-          <span className="ml-auto text-[11px] text-muted">
-            {workout.dateLabel} · {workout.period}
-          </span>
-        </div>
-        {workout.session.description.trim() && (
-          <p className="mt-1.5 text-[12px] leading-relaxed text-muted">
-            {workout.session.description}
-          </p>
-        )}
-        {/* The turnout count ("43 of 43 logged") is gone — on a squad where
-            everybody logs, it said 43 of 43 every single time. What stays is
-            the day this board is measured against, still clickable: it opens
-            THAT day's board in this one's place (onOpenWorkout, the same trick
-            a previous edition inside ResultDetail uses), so you can go look at
-            the piece you're being compared with instead of just being told its
-            date. */}
+      {/*
+        THE WORKOUT AND YOUR OWN RESULT, IN ONE CARD.
+
+        They used to be two cards stacked, which read as two separate facts —
+        the piece, then a coloured strip about a person. They are one thing: my
+        go at this piece. So the session, the day and the result now share a
+        card, and the whole of it presses through to the full screen (the same
+        one a tap on anybody in the ranking opens): the numbers, the reps rep
+        by rep, the monitor photo, and every previous go at this piece.
+
+        That last part is why the "Previous goes" block that used to sit under
+        here is gone — it was a second, smaller copy of a run of results that
+        the screen behind this card already lays out properly.
+
+        "Compared with" keeps its own row at the foot, outside the button: it
+        goes somewhere else (that day's board), and a button inside a button is
+        not a thing.
+      */}
+      <div className="overflow-hidden rounded-2xl border border-border bg-surface-2">
+        <Face top={top} onOpen={top ? () => setOpenRow(top.result.id) : undefined}>
+          <div className="flex items-center gap-2">
+            <span
+              className="h-2.5 w-2.5 flex-shrink-0 rounded-full"
+              style={{ background: sessionColor(workout.session) }}
+            />
+            <span className="text-[13px] font-semibold text-text">
+              {sessionLabel(workout.session)}
+            </span>
+            <span className="ml-auto text-[11px] text-muted">
+              {workout.dateLabel} · {workout.period}
+            </span>
+          </div>
+          {workout.session.description.trim() && (
+            <p className="mt-1 text-[12px] leading-relaxed text-muted">
+              {workout.session.description}
+            </p>
+          )}
+
+          {/* The result itself, big, on its own line under the piece. */}
+          {top && (
+            <div className="mt-2.5 flex items-center gap-2.5 border-t border-border pt-2.5">
+              {top.mine ? (
+                <span className="flex-shrink-0 text-[11px] font-semibold uppercase tracking-[0.12em] text-primary">
+                  You
+                </span>
+              ) : (
+                <>
+                  <ExampleTag />
+                  <span className="min-w-0 truncate text-[13px] font-semibold text-text">
+                    {top.result.athleteName || "Unnamed"}
+                  </span>
+                </>
+              )}
+              {ranked && top.rank != null && (
+                <span className="flex-shrink-0 text-[12px] text-muted">
+                  {top.rank} of {board.rows.length}
+                </span>
+              )}
+              <span className="ml-auto flex-shrink-0 text-[19px] font-semibold leading-none tabular-nums text-text">
+                {top.display}
+              </span>
+              {top.improvement != null && <Delta improvement={top.improvement} metric={metric} />}
+              <span className="flex-shrink-0 text-muted">
+                <IconChevronRight size={15} />
+              </span>
+            </div>
+          )}
+        </Face>
+
+        {/* The day this board is measured against — tappable: it opens THAT
+            day's board in this one's place (onOpenWorkout, the same trick a
+            previous edition inside ResultDetail uses). */}
         {previous && (
-          <p className="mt-2 text-[11px] text-muted">
+          <p className="border-t border-border px-3.5 py-2 text-[11px] text-muted">
             Compared with{" "}
             {onOpenWorkout ? (
               <button
@@ -192,97 +249,6 @@ export default function WorkoutBoard({
           </p>
         )}
       </div>
-
-      {/* One person's line, first — the thing you opened this board to see.
-          Tapping it opens the same full screen a tap on anyone in the ranking
-          opens. It says YOU when it is you, and carries the stand-in's name
-          under an EXAMPLE tag when the board is the worked example. */}
-      {top && (
-        <button
-          type="button"
-          onClick={() => setOpenRow(top.result.id)}
-          className="mt-2 flex w-full items-center gap-2.5 rounded-2xl border border-primary-line bg-primary-tint px-3.5 py-2.5 text-left"
-        >
-          {top.mine ? (
-            <span className="flex-shrink-0 text-[11px] font-semibold uppercase tracking-[0.12em] text-primary">
-              You
-            </span>
-          ) : (
-            <>
-              <ExampleTag />
-              <span className="min-w-0 truncate text-[13px] font-semibold text-text">
-                {top.result.athleteName || "Unnamed"}
-              </span>
-            </>
-          )}
-          {ranked && top.rank != null && (
-            <span className="flex-shrink-0 text-[12px] text-text">
-              {top.rank} of {board.rows.length}
-            </span>
-          )}
-          <span className="ml-auto flex-shrink-0 text-[14px] font-semibold tabular-nums text-text">
-            {top.display}
-          </span>
-          {top.improvement != null && <Delta improvement={top.improvement} metric={metric} />}
-          <span className="flex-shrink-0 text-muted">
-            <IconChevronRight size={14} />
-          </span>
-        </button>
-      )}
-
-      {/*
-        HOW YOU'VE GONE AT THIS PIECE — just you, above the squad's ranking.
-        Only worth drawing when there is something to compare against, so it
-        appears from your SECOND go at a piece onwards.
-
-        Each earlier row opens that day's board (the same onOpenWorkout the
-        "compared with" link uses), so a number you want the context for is
-        one tap from the day it was set.
-      */}
-      {topRun.length > 1 && (
-        <div className="mt-2 rounded-2xl border border-border bg-surface px-3.5 py-3">
-          <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-            {top?.mine ? "Your previous goes" : "Previous goes"}
-          </div>
-          <div className="flex flex-col divide-y divide-border">
-            {topRun.map((h) => {
-              const isToday = h.dayKey === workout.dayKey;
-              const rowInner = (
-                <>
-                  <span
-                    className={`text-[12px] ${isToday ? "font-semibold text-primary" : "text-muted"}`}
-                  >
-                    {isToday ? "This one" : h.dateLabel}
-                  </span>
-                  {h.best && topRun.length > 1 && (
-                    <span className="rounded border border-accent-line bg-accent-tint px-1 py-px text-[10px] font-semibold uppercase tracking-wide text-accent">
-                      Best
-                    </span>
-                  )}
-                  <span className="ml-auto text-[13px] font-semibold tabular-nums text-text">
-                    {h.display}
-                  </span>
-                  {h.improvement != null && <Delta improvement={h.improvement} metric={metric} />}
-                </>
-              );
-              return isToday || !onOpenWorkout ? (
-                <div key={h.dayKey} className="flex items-center gap-2 py-1.5">
-                  {rowInner}
-                </div>
-              ) : (
-                <button
-                  key={h.dayKey}
-                  type="button"
-                  onClick={() => onOpenWorkout(h.dayKey)}
-                  className="flex items-center gap-2 py-1.5 text-left active:opacity-70"
-                >
-                  {rowInner}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
 
       {/* metric filter */}
       <div className="mt-3 grid grid-cols-4 gap-1">
