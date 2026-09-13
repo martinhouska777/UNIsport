@@ -15,12 +15,12 @@
       stretch you dragged across, is read out as totals instead: how much water,
       erg, weights… (owner, 2026-09-13 — a list of every session in 13–19 Jul
       is noise; what you want is how much you rowed and how long you lifted)
-    • CONSISTENCY: how steady, days trained and, with a plan up, planned /
-      done / missed / extra (never "against the plan" — owner, 2026-09-13),
-      then the days out — sick, injured, away — counted in days
-    • DISTANCE on the water and the erg with the average row, and TIME: in
-      total, in an average week and the best week, per day, per session, and
-      on each thing (no splits, no streaks)
+    • DISTANCE first — the total, the water and the erg it is made of, the
+      average row — then TIME: in total, in an average week, per day, and on
+      each thing, and only then CONSISTENCY: how steady, days trained, and
+      with a plan up planned / done / missed / extra (never "against the
+      plan"), ending in the days out — sick, injured, away — counted in days.
+      How far, how long, how steady: the judgement goes last.
     • the training mix — what all that time actually was, named by what was
       logged (a bike on a flex day is Bike), distance first
 
@@ -56,7 +56,6 @@ import {
   chartTypes,
   statMetrics,
   statRanges,
-  summarise,
   shortDate,
   CUSTOM_RANGE,
   type Bucket,
@@ -156,7 +155,6 @@ export default function StatsFullScreen({
   const at = selected === null ? null : Math.min(selected, buckets.length - 1);
 
   const anyData = points.some((p) => p.value > 0);
-  const tiles = summarise(buckets, metric, units, range);
 
   /*
     THE DASHED AVERAGE is the average of the buckets that HAVE something in
@@ -296,11 +294,16 @@ export default function StatsFullScreen({
                   <span className="text-[13px] font-semibold text-text">
                     {bucketTitle(current)}
                   </span>
+                  {/* HOW MANY AND HOW LONG, and nothing else. The metres used
+                      to sit here too, but this line covers the weights and the
+                      runs as well as the rowing, so a distance across the top
+                      of it was only ever part of the story (owner,
+                      2026-09-13). The metres are on the Water and Erg rows
+                      underneath, where they belong to something. */}
                   <span className="flex-shrink-0 text-[11px] text-muted">
                     {detail && detail.sessions > 0
                       ? [
                           `${detail.sessions} session${detail.sessions === 1 ? "" : "s"}`,
-                          detail.metres > 0 ? formatDistance(detail.metres, units.distance) : null,
                           detail.minutes > 0 ? formatDuration(Math.round(detail.minutes)) : null,
                         ]
                           .filter(Boolean)
@@ -345,26 +348,11 @@ export default function StatsFullScreen({
               </div>
             )}
 
-            {/* ── The measure's own three numbers, the card's exactly. ── */}
-            <div className="mt-4 grid grid-cols-3 gap-2">
-              {tiles.map((t) => (
-                <div
-                  key={t.label}
-                  className="rounded-xl border border-border bg-surface px-2 py-3 text-center"
-                >
-                  <div
-                    className={`${t.value.length > 6 ? "text-[15px]" : "text-[18px]"} font-semibold leading-none text-text`}
-                  >
-                    {t.value}
-                  </div>
-                  <div className="mt-1.5 text-[9px] font-semibold uppercase tracking-[0.08em] text-muted">
-                    {t.label}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* ── Everything else the window contained. ── */}
+            {/* ── Everything the window contained: how far, how long, how
+                steady. The three big tiles (Total / Avg week / Best week) that
+                used to sit here are CUT (owner, 2026-09-13) — they were the
+                same measure said a third time, and the groups below say it
+                over every measure at once rather than only the graph's. ── */}
             {groups.map((g) => (
               <div key={g.key} className="mt-5">
                 <div className="pb-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">

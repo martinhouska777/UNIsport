@@ -6,22 +6,24 @@
   This answers the rest of them, over the very same window, from the very same
   logs — so nothing on the screen can disagree with anything else on it.
 
-  Three groups — what a rower asks of a stretch of training is "was I there,
-  how far, how long" (owner, 2026-09-13):
+  Three groups, IN THIS ORDER — how far, how long, and only then how steady:
 
+    Distance    — the total, then the water and the erg it is made of, then
+                  the average row
+    Time        — how long you trained in total, in an average week, and per
+                  day, then how long went on each thing: the water, the erg,
+                  weights, a run, a bike
     Consistency — how steady, how many days, and, when a plan is up, what the
                   coach put up, what got done, what got missed and what was
                   done on top. It used to be called "Against the plan", which
                   made thirty sessions with two missed read like a charge sheet.
                   The days OUT (sick, injured, away) end this group: they are
                   the reason a thin window was thin, so they belong beside it.
-    Distance    — the metres, on the water and on the erg, and the average row
-    Time        — how long you trained in total, in an average week and in the
-                  best one, per day, per session, and how long went on each
-                  thing: the water, the erg, weights, a run, a bike
 
-  CUT the same day as useless to a rower: the longest streak, the average split
-  and the best split. These are statistics about how MUCH was done, not how fast.
+  CUT as useless to a rower, and not to be brought back: the longest streak,
+  the average split, the best split (statistics about how FAST, when the
+  question is how much), the session COUNT and the average session ("it doesn't
+  tell us anything much"), and the best week.
 
   Everything comes back as DATA (a title and rows of label/value/caption), so
   the screen renders whatever this file decides to say and adding a number here
@@ -144,7 +146,6 @@ export function rowingReport(
   const measured = rowed.filter((l) => (l.metres ?? 0) > 0);
 
   const minutes = sum(training.map((l) => l.minutes ?? 0));
-  const timed = training.filter((l) => (l.minutes ?? 0) > 0);
 
   const expected = expectedDays(span);
   const trained = trainedDays(training);
@@ -155,11 +156,15 @@ export function rowingReport(
   const hasPlan = counts.planned > 0 || counts.extra > 0;
 
   /*
-    HOW MUCH IN A WEEK. The total says how much the window held; these two say
-    what a week of it actually looks like, and what the biggest one was. The
-    average starts at the first week with anything in it — the empty weeks
-    before someone joined the squad would only halve a number they earned.
-    A window that IS one week has nothing to average, so it says neither.
+    HOW MUCH IN A WEEK. The total says how much the window held; this says what
+    a week of it actually looks like. It starts at the first week with anything
+    in it — the empty weeks before someone joined the squad would only halve a
+    number they earned. A window that IS one week has nothing to average, so it
+    doesn't say it.
+
+    "Best week" was here too and was cut the same day: the biggest number you
+    ever put up is a trophy, not a reading, and it doesn't change with the
+    window you are looking at the way everything beside it does.
   */
   const spanDays =
     Math.round((asDate(span.endIso).getTime() - asDate(span.startIso).getTime()) / 86_400_000) + 1;
@@ -172,11 +177,6 @@ export function rowingReport(
           key: "avgWeek",
           label: "Avg week",
           value: formatDuration(Math.round(sum(countedWeeks) / countedWeeks.length)),
-        },
-        {
-          key: "bestWeek",
-          label: "Best week",
-          value: formatDuration(Math.round(Math.max(...weeks))),
         },
       ]
     : [];
@@ -227,22 +227,17 @@ export function rowingReport(
       ]
     : [];
 
+  /*
+    DISTANCE FIRST, then TIME, then CONSISTENCY (owner, 2026-09-13). The big
+    three tiles that used to sit above these are gone, so the first group is
+    now the top of the screen's reading and it should be the one a rower looks
+    for: how far. Consistency is the judgement, and a judgement goes last.
+
+    The cells are ordered to be READ IN A TWO-WIDE GRID: distance is
+    "total rowed | on the water" over "on the erg | avg row", so the two that
+    add up to the total sit next to each other.
+  */
   return [
-    {
-      key: "consistency",
-      title: "Consistency",
-      cells: [
-        {
-          key: "consistency",
-          label: "Consistency",
-          value: `${consistency}%`,
-          tone: consistency >= 80 ? "success" : consistency >= 50 ? "text" : "warn",
-        },
-        { key: "days", label: "Days trained", value: `${days}` },
-        ...planCells,
-        ...outCells,
-      ],
-    },
     {
       key: "distance",
       title: "Distance",
@@ -253,11 +248,6 @@ export function rowingReport(
           value: metres ? formatDistance(metres, units.distance) : dash,
         },
         {
-          key: "avg",
-          label: "Avg row",
-          value: measured.length ? formatDistance(metres / measured.length, units.distance) : dash,
-        },
-        {
           key: "water",
           label: "On the water",
           value: water ? formatDistance(water, units.distance) : dash,
@@ -266,6 +256,11 @@ export function rowingReport(
           key: "erg",
           label: "On the erg",
           value: erg ? formatDistance(erg, units.distance) : dash,
+        },
+        {
+          key: "avg",
+          label: "Avg row",
+          value: measured.length ? formatDistance(metres / measured.length, units.distance) : dash,
         },
       ],
     },
@@ -285,17 +280,26 @@ export function rowingReport(
           label: "Avg per day",
           value: minutes && trained ? formatDuration(Math.round(minutes / trained)) : dash,
         },
-        { key: "sessions", label: "Sessions", value: `${training.length}` },
-        {
-          key: "perSession",
-          label: "Avg session",
-          value: timed.length ? formatDuration(Math.round(minutes / timed.length)) : dash,
-        },
         ...timeOn.map((c) => ({
           key: `on-${c.cat}`,
           label: TIME_LABEL[c.cat],
           value: formatDuration(Math.round(c.minutes)),
         })),
+      ],
+    },
+    {
+      key: "consistency",
+      title: "Consistency",
+      cells: [
+        {
+          key: "consistency",
+          label: "Consistency",
+          value: `${consistency}%`,
+          tone: consistency >= 80 ? "success" : consistency >= 50 ? "text" : "warn",
+        },
+        { key: "days", label: "Days trained", value: `${days}` },
+        ...planCells,
+        ...outCells,
       ],
     },
   ];

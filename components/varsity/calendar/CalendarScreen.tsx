@@ -574,10 +574,6 @@ export default function CalendarScreen() {
                   ? "border-primary bg-primary-tint"
                   : "border-border bg-surface active:bg-surface-2"
               }`}
-              /* A DAY OUT PAINTS THE WHOLE DAY in its own colour (sick pink,
-                 injured orange, away cyan, missed slate — lib/varsity/daysOut.ts),
-                 the way a session paints its half. */
-              style={outFill ? { background: outFill } : undefined}
             >
               <span
                 className={`flex items-center justify-between px-1 pt-1 text-[12px] font-semibold leading-none ${
@@ -602,9 +598,22 @@ export default function CalendarScreen() {
                 trained twice. A third session (it happens) makes its own row
                 and the three share.
               */}
-              {/* …and on a day out with nothing logged, its name in the middle. */}
+              {/*
+                A DAY OUT, with nothing logged: its colour fills the day (sick
+                pink, injured orange, away cyan, missed slate —
+                lib/varsity/daysOut.ts) with its name in the middle.
+
+                It fills the BODY of the cell, not the cell — the date keeps
+                the same dark strip across the top that every trained day has
+                (owner, 2026-09-13). Painting the whole box made a sick day the
+                one cell in the month whose number sat on colour, and the grid
+                stopped reading as one calendar.
+              */}
               {outFill && (
-                <span className="flex min-h-0 flex-1 items-center justify-center px-0.5 pb-3">
+                <span
+                  className="mt-0.5 flex min-h-0 flex-1 items-center justify-center rounded-b-[5px] px-0.5"
+                  style={{ background: outFill }}
+                >
                   <span className="truncate text-[9px] font-semibold text-text">{dayOutName(out!.reason)}</span>
                 </span>
               )}
