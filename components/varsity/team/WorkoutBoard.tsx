@@ -27,6 +27,7 @@
 */
 import { useMemo, useState } from "react";
 import Sheet from "@/components/varsity/Sheet";
+import { ExampleTag } from "@/components/varsity/ExampleTag";
 import ResultDetail from "@/components/varsity/team/ResultDetail";
 import BoardTable from "@/components/varsity/team/BoardTable";
 import Delta from "@/components/varsity/team/Delta";
@@ -65,6 +66,7 @@ export default function WorkoutBoard({
   results,
   workouts,
   allResults,
+  example = false,
   myId,
   onClose,
   onOpenWorkout,
@@ -73,6 +75,9 @@ export default function WorkoutBoard({
   results: TeamResult[];
   workouts: TeamWorkout[]; // every team workout, for finding earlier goes at this piece
   allResults: TeamResult[];
+  /* A worked example, not the squad's own results. Nobody real is on it, so
+     the block at the top stands in for you rather than being you — see `top`. */
+  example?: boolean;
   myId: string | null;
   onClose: () => void;
   /* Open another team workout in this board's place — how a previous edition
@@ -110,22 +115,30 @@ export default function WorkoutBoard({
   const mine = board.rows.find((r) => r.mine);
 
   /*
-    YOUR OWN RUN AT THIS PIECE, ready for the block above the leaderboard.
+    THE ROW AT THE TOP — one person's piece, which is what everybody actually
+    opens this board to read. Tapping it opens the SAME full screen a tap on
+    anyone in the ranking opens: the numbers in full, the reps rep by rep, the
+    monitor photo, and that person's whole run of this piece.
 
-    The board answers "how did the squad go"; this answers "how did I go, and
-    is that better than last time" — which is the question the owner opens an
-    8x500 to ask. It was reachable already, but only by finding your own name
-    in the ranking and opening the sheet behind it; here it is simply on the
-    board, under the piece it belongs to.
-
-    Today's go is included (`past` is only the EARLIER ones), and the metric
-    follows the pills below, so this block and the You row above it always
-    speak the same units.
+    Normally it is YOU. On the WORKED EXAMPLE nobody real is on the board, so
+    there was no top row at all and the screen could not be seen before the
+    squad had logged anything. It now stands in with the median rower, under
+    their own (invented) name and an EXAMPLE tag — so the block can be read and
+    pressed, without putting the viewer's name on a 2k they never pulled.
   */
-  const myRun = useMemo(
+  const top = mine ?? (example ? board.rows[Math.floor(board.rows.length / 2)] : undefined);
+
+  /*
+    THAT PERSON'S RUN AT THIS PIECE, for the block under it: not "how did the
+    squad go" but "am I getting faster", which is the question the owner opens
+    an 8x500 to ask. Today's go is included (`past` is only the EARLIER ones),
+    and the metric follows the pills below, so this block and the row above it
+    always speak the same units.
+  */
+  const topRun = useMemo(
     () =>
-      mine ? athleteHistory([{ workout, results }, ...past], mine.result.athleteId, metric) : [],
-    [mine, workout, results, past, metric],
+      top ? athleteHistory([{ workout, results }, ...past], top.result.athleteId, metric) : [],
+    [top, workout, results, past, metric],
   );
 
   return (
@@ -180,27 +193,38 @@ export default function WorkoutBoard({
         )}
       </div>
 
-      {/* your own line, first — the thing you opened this to see. Tap it for
-          your full result and your run of this piece over time. */}
-      {mine && (
+      {/* One person's line, first — the thing you opened this board to see.
+          Tapping it opens the same full screen a tap on anyone in the ranking
+          opens. It says YOU when it is you, and carries the stand-in's name
+          under an EXAMPLE tag when the board is the worked example. */}
+      {top && (
         <button
           type="button"
-          onClick={() => setOpenRow(mine.result.id)}
+          onClick={() => setOpenRow(top.result.id)}
           className="mt-2 flex w-full items-center gap-2.5 rounded-2xl border border-primary-line bg-primary-tint px-3.5 py-2.5 text-left"
         >
-          <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-primary">
-            You
-          </span>
-          {ranked && mine.rank != null && (
-            <span className="text-[12px] text-text">
-              {mine.rank} of {board.rows.length}
+          {top.mine ? (
+            <span className="flex-shrink-0 text-[11px] font-semibold uppercase tracking-[0.12em] text-primary">
+              You
+            </span>
+          ) : (
+            <>
+              <ExampleTag />
+              <span className="min-w-0 truncate text-[13px] font-semibold text-text">
+                {top.result.athleteName || "Unnamed"}
+              </span>
+            </>
+          )}
+          {ranked && top.rank != null && (
+            <span className="flex-shrink-0 text-[12px] text-text">
+              {top.rank} of {board.rows.length}
             </span>
           )}
-          <span className="ml-auto text-[14px] font-semibold tabular-nums text-text">
-            {mine.display}
+          <span className="ml-auto flex-shrink-0 text-[14px] font-semibold tabular-nums text-text">
+            {top.display}
           </span>
-          {mine.improvement != null && <Delta improvement={mine.improvement} metric={metric} />}
-          <span className="text-muted">
+          {top.improvement != null && <Delta improvement={top.improvement} metric={metric} />}
+          <span className="flex-shrink-0 text-muted">
             <IconChevronRight size={14} />
           </span>
         </button>
@@ -215,13 +239,13 @@ export default function WorkoutBoard({
         "compared with" link uses), so a number you want the context for is
         one tap from the day it was set.
       */}
-      {myRun.length > 1 && (
+      {topRun.length > 1 && (
         <div className="mt-2 rounded-2xl border border-border bg-surface px-3.5 py-3">
           <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-            Your previous goes
+            {top?.mine ? "Your previous goes" : "Previous goes"}
           </div>
           <div className="flex flex-col divide-y divide-border">
-            {myRun.map((h) => {
+            {topRun.map((h) => {
               const isToday = h.dayKey === workout.dayKey;
               const rowInner = (
                 <>
@@ -230,7 +254,7 @@ export default function WorkoutBoard({
                   >
                     {isToday ? "This one" : h.dateLabel}
                   </span>
-                  {h.best && myRun.length > 1 && (
+                  {h.best && topRun.length > 1 && (
                     <span className="rounded border border-accent-line bg-accent-tint px-1 py-px text-[10px] font-semibold uppercase tracking-wide text-accent">
                       Best
                     </span>

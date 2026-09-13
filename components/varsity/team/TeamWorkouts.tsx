@@ -287,6 +287,7 @@ export default function TeamWorkouts() {
           results={openedResults}
           workouts={workouts}
           allResults={results}
+          example={example}
           myId={userId}
           onClose={() => setOpen(null)}
           onOpenWorkout={(dayKey) => setOpen(dayKey)}
