@@ -3,9 +3,12 @@
 /*
   LEADERBOARDS — reached from the strip on the Profile tab.
   ---------------------------------------------------------------------------
-  TWO TABS, FULL WIDTH. Everything with a deadline moved to EVENTS — the
-  challenges (the week's and the month's two) and the interhouse race — and
-  RANKINGS is your one line plus the board.
+  TWO TABS, in the header where the title was — the same pill-in-a-capsule
+  switch as Match and Messages (owner, 2026-09-13: no "Leaderboards" title, and
+  "proper tabs"). EVENTS is the challenges, this week's and this month's; the
+  interhouse race was cut from it the same day, to be rethought later
+  (components/leaderboards/HouseRace.tsx is kept, unused, for that). RANKINGS is
+  your one line plus the board.
 
   THE BOARD IS THE SCREEN. It had drifted under four things that were all, in
   the end, explanation: a nudge line, two house tiles, a paragraph saying what
@@ -86,16 +89,15 @@ import {
 } from "@/components/icons";
 import HonorCode, { useHonorCode } from "@/components/leaderboards/HonorCode";
 import GroupSheet from "@/components/leaderboards/GroupSheet";
-import HouseRace from "@/components/leaderboards/HouseRace";
 import WeekEventLine from "@/components/leaderboards/WeekEventLine";
 import MonthChallenges from "@/components/leaderboards/MonthChallenges";
-import ShareInviteButton from "@/components/ShareInviteButton";
 import Podium, { type PodiumEntry } from "@/components/leaderboards/Podium";
 import Medal from "@/components/leaderboards/Medal";
 import ScoringSheet from "@/components/leaderboards/ScoringSheet";
 import YouSheet from "@/components/leaderboards/YouSheet";
 import OptionPickerSheet from "@/components/profile/OptionPickerSheet";
 import SectionLabel from "@/components/ui/SectionLabel";
+import { useProfileData } from "@/components/profile/useProfileData";
 import { houses, residenceLabel, yardDorms } from "@/lib/onboarding";
 import { pointsLabel, sessionsOf } from "@/lib/points";
 import {
@@ -225,18 +227,19 @@ function MetricSwitch({
   );
 }
 
-/* THE TWO TABS. Rankings is the boards and the challenge you are on this week;
-   Events is everything with a deadline that isn't just you — the interhouse
-   race and the month's special challenges. They used to be stacked on one
+/* THE TWO TABS. Rankings is the boards; Events is the challenges with a
+   deadline — this week's and this month's. They used to be stacked on one
    screen, which pushed the leaderboard itself below the fold. */
 const TABS: { key: TabKey; label: string }[] = [
   { key: "rankings", label: "Rankings" },
   { key: "events", label: "Events" },
 ];
 
+/* The same capsule as the Match and Messages tabs: the chosen tab is a pill
+   inside it. It sits in the header between Back and ⓘ, where the title was. */
 function TabBar({ value, onPick }: { value: TabKey; onPick: (t: TabKey) => void }) {
   return (
-    <div role="tablist" aria-label="Leaderboards" className="flex">
+    <div role="tablist" aria-label="Leaderboards" className="flex min-w-0 flex-1 rounded-full border border-border bg-surface-2 p-1">
       {TABS.map((t) => (
         <button
           key={t.key}
@@ -244,10 +247,8 @@ function TabBar({ value, onPick }: { value: TabKey; onPick: (t: TabKey) => void 
           role="tab"
           aria-selected={value === t.key}
           onClick={() => onPick(t.key)}
-          className={`tap44 -mb-px flex-1 border-b-2 py-2.5 text-center text-[13px] font-medium transition-colors ${
-            value === t.key
-              ? "border-primary text-text"
-              : "border-transparent text-muted"
+          className={`min-h-9 flex-1 rounded-full py-1.5 text-center text-[13px] font-semibold transition-colors ${
+            value === t.key ? "bg-text text-background" : "text-muted"
           }`}
         >
           {t.label}
@@ -451,6 +452,9 @@ export default function LeaderboardsPage() {
   const router = useRouter();
   const { userId, universityKey } = useAppState();
   const { accepted, accept } = useHonorCode(userId);
+  // Your own photo, for the "You" line at the top of Rankings.
+  const { data: myProfile } = useProfileData();
+  const myPhoto = typeof myProfile?.photo === "string" ? myProfile.photo : "";
 
   const [tab, setTab] = useState<TabKey>("rankings");
   const [period, setPeriod] = useState<Period>("month");
@@ -617,41 +621,37 @@ export default function LeaderboardsPage() {
     <div className="mx-auto w-full max-w-screen-sm pb-10">
       {/* Reached from the strip on the Profile tab, so it pushes and pops. */}
       <div className="sticky top-0 z-10 border-b border-border bg-surface">
-        <div className="flex items-center justify-between px-3 py-3">
-          <button type="button" aria-label="Back" onClick={() => router.back()} className="text-muted">
+        {/* No "Leaderboards" title — the tabs take its place. */}
+        <h1 className="sr-only">Leaderboards</h1>
+        <div className="flex items-center gap-2.5 px-3 py-2.5">
+          <button type="button" aria-label="Back" onClick={() => router.back()} className="tap44 flex-shrink-0 text-muted">
             <IconArrowLeft size={18} />
           </button>
-          <span className="text-sm font-medium text-text">Leaderboards</span>
+          <TabBar value={tab} onPick={setTab} />
           <button
             type="button"
             onClick={() => setExplaining(true)}
             aria-label="How points work"
-            className="tap44 press-icon flex h-7 w-7 items-center justify-center rounded-full bg-surface-2 text-muted"
+            className="tap44 press-icon flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-surface-2 text-muted"
           >
             <IconInfo size={14} />
           </button>
         </div>
-        <TabBar value={tab} onPick={setTab} />
       </div>
 
       {tab === "events" ? (
         <div className="flex flex-col gap-5 px-3.5 py-4">
-          {/* EVERY CHALLENGE IN ONE PLACE — the week's, and the month's two.
-              They are all the same thing (a task, a deadline, extra points),
-              so they are one list rather than a heading each, and the line
-              itself says which window it closes in. */}
+          {/* THE CHALLENGES, WEEKLY AND MONTHLY — the week's one, then the
+              month's two, each under its own heading (owner, 2026-09-13). The
+              interhouse race that sat below them is cut for now. */}
           <div>
-            <SectionLabel className="mb-2">Challenges</SectionLabel>
-            <div className="flex flex-col gap-2">
-              <WeekEventLine />
-              <MonthChallenges />
-            </div>
+            <SectionLabel className="mb-2">This week</SectionLabel>
+            <WeekEventLine />
           </div>
-
-          {/* THE INTERHOUSE RACE. It used to sit on top of the Houses board,
-              where it pushed the board itself off the screen. It says what it
-              is on its own, so it needs no heading here. */}
-          <HouseRace renderShare={(houseKey) => <ShareInviteButton iconOnly residence={houseKey} />} />
+          <div>
+            <SectionLabel className="mb-2">This month</SectionLabel>
+            <MonthChallenges />
+          </div>
         </div>
       ) : (
         <>
@@ -670,8 +670,21 @@ export default function LeaderboardsPage() {
             onClick={() => setOpeningSelf(true)}
             className="tap44 flex w-full items-center gap-2.5 border-b border-border px-3.5 py-2.5 text-left active:bg-surface-2"
           >
-            <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-accent-tint text-accent">
-              <IconTrophy size={14} />
+            {/* YOU, as you: your own photo in a ring of the school colour, with
+                a small gold trophy on its corner — it was a trophy in a little
+                square, which said "leaderboard" but not "you". */}
+            <span className="relative flex-shrink-0">
+              <span className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border-2 border-primary bg-primary-tint text-primary">
+                {myPhoto ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={myPhoto} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  <IconUser size={18} />
+                )}
+              </span>
+              <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-surface bg-accent text-background">
+                <IconTrophy size={10} />
+              </span>
             </span>
             <div className="min-w-0 flex-1">
               <div className="text-[13px] font-semibold text-text">
