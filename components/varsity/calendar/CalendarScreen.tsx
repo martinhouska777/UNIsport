@@ -117,6 +117,13 @@ function blockStyle(l: LogEntry, planned: Session | undefined) {
   }
 }
 
+/*
+  THE KEY FOR THIS CALENDAR — the plan's key without Race. Nobody logs a
+  "race": you log the piece you rowed (a 2k) and write "race" on it, so no
+  block in this calendar is ever blue and the key does not spend a slot on it.
+*/
+const calendarLegend = kindLegend.filter((l) => l.kind !== "race");
+
 type CalDay = { num: number; iso: string; logs: LogEntry[]; today: boolean; future: boolean };
 
 function DaySheet({
@@ -284,18 +291,32 @@ export default function CalendarScreen() {
        month flexes, so the grid always reaches the bottom of the screen. */
     /* The header above the grid is deliberately tight — every pixel it gives
        up is a pixel the month gets, and the month is the screen. */
-    <div className="mx-auto flex h-full w-full max-w-screen-sm flex-col px-2.5 pb-3 pt-2">
-      {/* The month IS the title — no page header above it. Its totals sit here
-          rather than in a bar underneath the grid, where they were the last
-          thing you reached and the first thing scrolled off. */}
-      <div className="flex flex-shrink-0 items-center justify-between px-1.5">
-        <div>
-          <div className="flex items-baseline gap-1.5">
-            <h1 className="text-lg font-semibold leading-none text-text">{MONTHS[view.m]}</h1>
-            <span className="text-[12px] font-medium text-muted">{view.y}</span>
-          </div>
+    <div className="mx-auto flex h-full w-full max-w-screen-sm flex-col px-1.5 pb-3 pt-2.5">
+      {/* The month IS the title — no page header above it, and nothing beside
+          it: the arrows moved down to the colour key's row. */}
+      <div className="flex flex-shrink-0 items-baseline gap-1.5 px-1.5">
+        <h1 className="text-xl font-semibold leading-none text-text">{MONTHS[view.m]}</h1>
+        <span className="text-[13px] font-medium text-muted">{view.y}</span>
+      </div>
+
+      {/* WHAT THE COLOURS MEAN, directly under the month — the key you need
+          BEFORE you read the grid, not after it. It takes the row the month's
+          "31 sessions · 351 km rowed" had: those totals are the same numbers
+          the per-kind buttons below the grid already carry.
+
+          THE ARROWS SHARE THIS ROW. They used to sit beside the month name,
+          and the key needed the full width to itself. Without Race (calendarLegend) the
+          key is short enough to leave room for them on the right. */}
+      <div className="mt-2 flex flex-shrink-0 items-center justify-between gap-2 px-1.5">
+        <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
+          {calendarLegend.map((l) => (
+            <span key={l.kind} className="flex items-center gap-1 text-[11px] text-muted">
+              <span className="h-1.5 w-3 rounded-sm" style={kindBar(l.kind)} />
+              {l.label}
+            </span>
+          ))}
         </div>
-        <div className="flex gap-1.5">
+        <div className="flex flex-shrink-0 gap-1.5">
           <button
             type="button"
             aria-label="Previous month"
@@ -314,21 +335,6 @@ export default function CalendarScreen() {
             <IconArrowRight size={14} />
           </button>
         </div>
-      </div>
-
-      {/* WHAT THE COLOURS MEAN, directly under the month — the key you need
-          BEFORE you read the grid, not after it. It used to sit at the very
-          bottom, under the month and the per-kind totals, which is the last
-          place you reach. It takes the row the month's "31 sessions · 351 km
-          rowed" had: those totals are the same numbers the per-kind buttons
-          below the grid already carry, one kind at a time and tappable. */}
-      <div className="mt-1.5 flex flex-shrink-0 flex-wrap items-center gap-x-3 gap-y-1 px-1.5">
-        {kindLegend.map((l) => (
-          <span key={l.kind} className="flex items-center gap-1 text-[11px] text-muted">
-            <span className="h-1.5 w-3 rounded-sm" style={kindBar(l.kind)} />
-            {l.label}
-          </span>
-        ))}
       </div>
 
       {/* Weekday header */}
@@ -376,7 +382,7 @@ export default function CalendarScreen() {
               }`}
             >
               <span
-                className={`px-1 pt-1 text-[11px] font-semibold leading-none ${
+                className={`px-1 pt-1 text-[12px] font-semibold leading-none ${
                   d.today ? "text-primary" : has ? "text-text" : d.future ? "text-muted/40" : "text-muted"
                 }`}
               >
@@ -430,11 +436,11 @@ export default function CalendarScreen() {
                             already said by WHICH HALF OF THE CELL it sits in
                             (the two rows above), and the two letters were
                             eating the line the title needed to fit. */}
-                        {/* 8px, matching the plan's month view rather than the
-                            10px this used to run at. Two sessions, a number
-                            and a day of the month do not fit a cell this wide
-                            at 10px — that size is why the grid had to steal
-                            height it didn't have.
+                        {/* 9px. It ran at 8px to match the plan's month view;
+                            the owner asked for the calendar a size up. 10px
+                            was tried and cut "UT2" to "U…" beside a figure
+                            on a 360px-wide phone — 9px is the largest size
+                            that keeps the whole bottom line.
 
                             THE KIND GETS THE WHOLE TOP LINE. It used to share
                             it with the figure ("Water" left, "14k" right), and
@@ -443,7 +449,7 @@ export default function CalendarScreen() {
                             kilometres bottom-right "so you can see the whole
                             thing". So the name runs the full width of the
                             block, and the figure drops to the line below. */}
-                        <span className="block truncate text-[8px] font-medium leading-[1.15] text-text">
+                        <span className="block truncate text-[9px] font-medium leading-[1.15] text-text">
                           {kind}
                         </span>
                         {/* THE BOTTOM LINE: what it was (UT2 / Hard) on the
@@ -456,11 +462,11 @@ export default function CalendarScreen() {
                             place from day to day. */}
                         {(intensity || sub) && (
                           <span className="mt-px flex items-baseline gap-px">
-                            <span className="min-w-0 flex-1 truncate text-[8px] leading-[1.15] text-text-2">
+                            <span className="min-w-0 flex-1 truncate text-[9px] leading-[1.15] text-text-2">
                               {intensity}
                             </span>
                             {sub && (
-                              <span className="flex-shrink-0 text-[8px] font-medium leading-[1.15] text-text-2">
+                              <span className="flex-shrink-0 text-[9px] font-medium leading-[1.15] text-text-2">
                                 {sub}
                               </span>
                             )}
