@@ -200,10 +200,15 @@ type Tab = "roster" | "workouts";
 */
 export default function TeamScreen({
   athleteHref,
+  only,
 }: {
   athleteHref?: (a: Athlete) => string | null;
+  /* The Coach Console shows the two halves as two bottom tabs (Team = roster,
+     Workouts = the boards), so it asks for one half and gets no switch. */
+  only?: Tab;
 } = {}) {
-  const [tab, setTab] = useState<Tab>("roster");
+  const [picked, setTab] = useState<Tab>("roster");
+  const tab = only ?? picked;
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState<string | null>(null);
 
@@ -228,28 +233,30 @@ export default function TeamScreen({
     <div className="mx-auto w-full max-w-screen-sm px-4 pb-10 pt-4">
       {/* No "Team" title — the tab bar already says it; the Roster / Workouts
           switch is the top of the screen. */}
-      <h1 className="sr-only">Team</h1>
+      <h1 className="sr-only">{only === "workouts" ? "Workouts" : "Team"}</h1>
 
       {/* sub-navigation */}
-      <div className="flex gap-1 rounded-xl border border-border bg-surface p-1">
-        {(["roster", "workouts"] as Tab[]).map((t) => (
-          <button
-            key={t}
-            type="button"
-            onClick={() => setTab(t)}
-            className={`flex-1 rounded-lg py-2 text-[12px] font-semibold capitalize transition-colors ${
-              tab === t ? "bg-text text-background" : "text-muted"
-            }`}
-          >
-            {t}
-          </button>
-        ))}
-      </div>
+      {!only && (
+        <div className="flex gap-1 rounded-xl border border-border bg-surface p-1">
+          {(["roster", "workouts"] as Tab[]).map((t) => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => setTab(t)}
+              className={`flex-1 rounded-lg py-2 text-[12px] font-semibold capitalize transition-colors ${
+                tab === t ? "bg-text text-background" : "text-muted"
+              }`}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
+      )}
 
       {tab === "roster" ? (
         <>
           {/* search */}
-          <div className="mt-3 flex items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2.5">
+          <div className={`${only ? "" : "mt-3 "}flex items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2.5`}>
             <span className="text-muted">
               <IconSearch size={16} />
             </span>

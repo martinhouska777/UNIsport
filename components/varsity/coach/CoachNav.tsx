@@ -9,7 +9,7 @@ import { can, type VarsityRole } from "@/lib/varsity/membership";
 /*
   Coach Console bottom nav. Which tabs exist depends on the role, and that rule
   lives in the tab DATA below (`allowed`), not in the markup:
-    coach   — Today · Plan · Lineup · Notes · Team
+    coach   — Today · Plan · Lineup · Workouts · Team
     captain — Team only (a captain handles people, never training)
   Active tab is crimson. The server enforces the same split, so a captain who
   types a plan URL still can't save anything.
@@ -29,7 +29,7 @@ const tabs: Tab[] = [
   { href: "/varsity/coach", label: "Today", icon: <IconSun size={22} />, allowed: can.buildPlan, exact: true },
   { href: "/varsity/coach/plan", label: "Plan", icon: <IconCalendar size={22} />, allowed: can.buildPlan },
   { href: "/varsity/coach/lineup", label: "Lineup", icon: <IconAnchor size={22} />, allowed: can.buildLineup },
-  { href: "/varsity/coach/notes", label: "Notes", icon: <IconClipboard size={22} />, allowed: can.writeNotes },
+  { href: "/varsity/coach/workouts", label: "Workouts", icon: <IconClipboard size={22} />, allowed: can.buildPlan },
   { href: "/varsity/coach/team", label: "Team", icon: <IconUser size={22} />, allowed: can.invite },
 ];
 

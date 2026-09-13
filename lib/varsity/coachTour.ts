@@ -44,7 +44,7 @@ import type { Tour, TourStep } from "@/lib/tour";
 const TODAY = "/varsity/coach";
 const PLAN = "/varsity/coach/plan";
 const LINEUP = "/varsity/coach/lineup";
-const NOTES = "/varsity/coach/notes";
+const WORKOUTS = "/varsity/coach/workouts";
 const TEAM = "/varsity/coach/team";
 
 /** The console's nav anchors are named after their route, as the app's are. */
@@ -210,13 +210,13 @@ const steps: TourStep[] = [
     body: "The crew saves itself as you seat it, and stays a draft nobody can see. Publish, and every rower opens their own Home to their own seat lit up, with the push-off time and which oars to take. After that it is live: a seat you swap is on their phones as you swap it, and the button only offers to buzz them about it.",
   },
 
-  /* ── Notes ────────────────────────────────────────────────────────────── */
+  /* ── Workouts ─────────────────────────────────────────────────────────── */
   {
-    press: tab(NOTES),
-    route: NOTES,
-    anchor: tab(NOTES),
-    title: "Notes — the thing you said on the dock",
-    body: "One technical note per rower, and it goes straight onto their Home where they will read it again on Thursday. It replaces telling somebody something once, at the end of a session, and hoping.",
+    press: tab(WORKOUTS),
+    route: WORKOUTS,
+    anchor: tab(WORKOUTS),
+    title: "Workouts — the same boards they see",
+    body: "Every team workout and everyone's result on one board: the erg pieces ranked or averaged, the water outings by boat. Deliberately the athletes' own boards rather than a private coach's version, so nobody is arguing about whose numbers are right.",
   },
 
   /* ── Team ─────────────────────────────────────────────────────────────── */
@@ -224,13 +224,13 @@ const steps: TourStep[] = [
     press: tab(TEAM),
     route: TEAM,
     anchor: tab(TEAM),
-    title: "Team — the same numbers they see",
-    body: "Deliberately the athletes' own Team screen rather than a private coach's version. The roster, the erg boards, the water telemetry: one set of numbers, so nobody is arguing about whose are right.",
+    title: "Team — the whole squad",
+    body: "The roster, rowers and coxswains, searchable. It is where you go when you are thinking about one person.",
   },
   {
     anchor: "coach-team-first-rower",
     title: "Stop asking people what they did",
-    body: "Open any rower and their training month is already there — what they logged, how much of it, and their erg PRs. You stop running a register, and the conversation starts somewhere further along.",
+    body: "Open any rower and their training month is already there — what they logged, how much of it, and their erg PRs. Their technical note is there too: the thing you said on the dock, straight onto their Home where they will read it again on Thursday.",
   },
 
   /* ── The gear ─────────────────────────────────────────────────────────── */
@@ -243,7 +243,7 @@ const steps: TourStep[] = [
   {
     anchor: null,
     title: "That is the console",
-    body: "Today, Plan, Lineup, Notes, Team — and the gear for anything to do with people. Walk through it again any time from Squad settings.",
+    body: "Today, Plan, Lineup, Workouts, Team — and the gear for anything to do with people. Walk through it again any time from Squad settings.",
   },
 ];
 

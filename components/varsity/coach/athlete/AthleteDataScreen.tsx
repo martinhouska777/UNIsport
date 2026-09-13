@@ -52,6 +52,7 @@ import {
   type StatusTone,
 } from "@/lib/varsity/athleteProfile";
 import { IconArrowLeft, IconChevronDown } from "@/components/icons";
+import AthleteNote from "@/components/varsity/coach/athlete/AthleteNote";
 
 const MONTHS = [
   "January", "February", "March", "April", "May", "June",
@@ -330,6 +331,10 @@ export default function AthleteDataScreen({ athleteId }: { athleteId: string }) 
           {p.status}
         </span>
       </div>
+
+      {/* The technical note — it used to have a Notes tab of its own. */}
+      <SectionLabel>Technical note</SectionLabel>
+      <AthleteNote athleteId={athleteId} name={card.name || "this athlete"} />
 
       {pinned.length > 0 && (
         <>

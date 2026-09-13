@@ -54,6 +54,8 @@ export default function CoachTeamPage() {
 
   return (
     <TeamScreen
+      /* Just the roster — Workouts is its own tab in the console. */
+      only="roster"
       athleteHref={(a) => {
         const userId = accounts[a.id];
         return userId ? `/varsity/coach/athlete/${userId}` : null;
