@@ -261,29 +261,22 @@ const INK = { "l-bg": 0.0056, "l-text": 0.9067 } as const; // luminance of #0a0a
   THE SCHOOL'S COLOUR AS AN ACCENT — what the intro paints the wordmark's
   second half, "Your people" and the button with while that school is showing.
 
-  Two jobs. It has to be readable as type on the near-black page (the display
-  sizes need 3:1), and the BUTTON's label has to clear 4.5:1 against it — the
-  contrast promise this page already made for the blue it replaces. So: lift to
-  a floor that keeps every school recognisably itself, pick whichever ink reads
-  better on the result, and if that still falls short, walk the lightness away
-  from the middle until it does. Yale and Brown are the two that need the walk.
+  It used to LIFT the colour until type cleared 3:1 and the button's label
+  4.5:1, which turned Harvard's crimson pink. The owner chose the real colours
+  over that (2026-09-13), so the colour is the school's own and only the
+  button's ink is still chosen. The navies read dark on the page — accepted.
 
   `ink` is a TOKEN name, never a colour, so nothing is written into a
   component (rule 1).
 */
 export function accent(hex: string): { color: string; ink: "l-bg" | "l-text" } {
-  let floor = 0.46;
-  for (let step = 0; step < 8; step++) {
-    const color = lift(hex, floor);
-    const lum = luminance(color);
-    const dark = contrast(lum, INK["l-bg"]);
-    const light = contrast(lum, INK["l-text"]);
-    const ink = dark >= light ? "l-bg" : "l-text";
-    if (Math.max(dark, light) >= 4.5) return { color, ink };
-    // Move AWAY from the middle, in the direction the better ink wants.
-    floor += ink === "l-bg" ? 0.03 : -0.03;
-  }
-  return { color: lift(hex, 0.46), ink: "l-text" };
+  /* THE SCHOOL'S OWN COLOUR, NOT LIFTED (owner, 2026-09-13: "make the top
+     crimson too" — the same call that set the closers' words in raw colour, so
+     the whole page shows one crimson). Only the button's label still picks
+     whichever of the page's two inks reads better on it. */
+  const lum = luminance(hex);
+  const ink = contrast(lum, INK["l-bg"]) >= contrast(lum, INK["l-text"]) ? "l-bg" : "l-text";
+  return { color: hex, ink };
 }
 
 /*

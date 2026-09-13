@@ -41,9 +41,7 @@ export default function Interlude({ solo = false }: { solo?: boolean }) {
       id="interlude"
       ref={card}
       style={{ "--tg": "color-mix(in srgb, var(--color-l-varsity) 18%, transparent)" } as CSSProperties}
-      className={`l-titlecard relative z-[1] flex flex-col items-center justify-center gap-[clamp(10px,1.8vh,18px)] border-t border-l-line bg-l-surface px-6 text-center ${
-        solo ? "min-h-svh pt-14 pb-8" : "pt-24 pb-6"
-      } ${anim ? "l-anim" : ""} ${shown ? "is-in" : ""}`}
+      className={`l-titlecard relative z-[1] flex min-h-svh flex-col items-center justify-center gap-[clamp(10px,1.8vh,18px)] border-t border-l-line bg-l-surface px-6 pt-14 pb-8 text-center ${anim ? "l-anim" : ""} ${shown ? "is-in" : ""}`}
     >
       <p className="l-tc font-display text-[clamp(20px,3.4vw,30px)] tracking-[-0.01em] text-l-text-2">
         {solo ? interlude.leadInSolo : interlude.leadIn}

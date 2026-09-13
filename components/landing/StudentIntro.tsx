@@ -178,9 +178,7 @@ export default function StudentIntro({ solo = false }: { solo?: boolean }) {
             : "color-mix(in srgb, var(--color-l-accent) 20%, transparent)",
         } as CSSProperties
       }
-      className={`l-titlecard relative z-[1] flex flex-col items-center justify-center gap-[clamp(10px,1.8vh,18px)] border-t border-l-line bg-l-surface px-6 text-center ${
-        solo ? "min-h-svh pt-14 pb-8" : "pt-24 pb-6"
-      } ${anim ? "l-anim" : ""} ${shown ? "is-in" : ""}`}
+      className={`l-titlecard relative z-[1] flex min-h-svh flex-col items-center justify-center gap-[clamp(10px,1.8vh,18px)] border-t border-l-line bg-l-surface px-6 pt-14 pb-8 text-center ${anim ? "l-anim" : ""} ${shown ? "is-in" : ""}`}
     >
       <Heading className="max-w-[13ch] font-display text-[clamp(40px,8vw,76px)] font-normal leading-[0.98] tracking-[-0.02em] text-balance text-l-text">
         <Typed
