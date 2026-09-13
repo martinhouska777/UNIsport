@@ -10,8 +10,11 @@
   What is here that isn't on the card:
     • the graph at full size, with the best bucket's number printed on it and a
       dashed average across it, so every column is visibly above or below par
-    • a column you can TAP: the day (or week) is then read out underneath —
-      every session in it, with its metres, its time and its split
+    • a column you can TAP: a DAY is then read out underneath — every session
+      in it, with its metres, its time and its split. A WEEK column, or a
+      stretch you dragged across, is read out as totals instead: how much water,
+      erg, weights… (owner, 2026-09-13 — a list of every session in 13–19 Jul
+      is noise; what you want is how much you rowed and how long you lifted)
     • the plan: planned, done, MISSED, and the sessions done on top of it
     • the metres split between the water and the erg, the longest piece, the
       average split per 500 m, the best split, the longest streak
@@ -122,8 +125,12 @@ export default function StatsFullScreen({
     THE COLUMN BEING READ. It opens on the newest one — the day you just
     trained is the day you came to look at — and any column can be tapped for
     the rest.
+
+    null = no single column: the card reads out the WHOLE window. That is where
+    a drag-to-zoom lands, so the stretch you just selected is summed up rather
+    than its first day being listed.
   */
-  const [selected, setSelected] = useState<number>(Math.max(0, buckets.length - 1));
+  const [selected, setSelected] = useState<number | null>(Math.max(0, buckets.length - 1));
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -142,8 +149,7 @@ export default function StatsFullScreen({
 
   // A window that changed under us (a different range) must not leave the
   // selection pointing past the end of the new one.
-  const at = Math.min(selected, buckets.length - 1);
-  const current = buckets[at];
+  const at = selected === null ? null : Math.min(selected, buckets.length - 1);
 
   const anyData = points.some((p) => p.value > 0);
   const tiles = summarise(buckets, metric, units, range);
@@ -168,7 +174,16 @@ export default function StatsFullScreen({
     Object.keys(daysOut).some((iso) => iso >= b.span.startIso && iso <= b.span.endIso),
   );
   const mix = trainingMix(allLogs, plan);
+  /* What the card under the graph reads: the tapped column, or the whole window. */
+  const current: Bucket | null =
+    at !== null
+      ? (buckets[at] ?? null)
+      : buckets.length > 0
+        ? { ...buckets[0], span: whole, logs: allLogs }
+        : null;
   const detail = current ? bucketDetail(current.logs, units) : null;
+  // More than one day in it → totals by kind; one day → the sessions themselves.
+  const manyDays = current ? current.span.startIso !== current.span.endIso : false;
 
   const rangeOptions = [
     ...statRanges.map((r) => ({ key: r.key, label: r.label })),
@@ -262,7 +277,7 @@ export default function StatsFullScreen({
                     // (or more) of anything opens up day by day.
                     if (from === to && range.bucket === "day") return setSelected(from);
                     onZoom(a.span.startIso, b.span.endIso);
-                    setSelected(0);
+                    setSelected(null);
                   }}
                 />
               </div>
@@ -291,12 +306,36 @@ export default function StatsFullScreen({
                       : "nothing logged"}
                   </span>
                 </div>
-                {detail && detail.rows.length > 0 && (
+                {detail && !manyDays && detail.rows.length > 0 && (
                   <div className="mt-2 flex flex-col gap-1.5 border-t border-border pt-2">
                     {detail.rows.map((r) => (
                       <div key={r.key} className="flex items-baseline justify-between gap-3">
                         <span className="truncate text-[12px] text-text">{r.title}</span>
                         <span className="flex-shrink-0 text-[11px] text-muted">{r.sub}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {detail && manyDays && detail.byCategory.length > 0 && (
+                  <div className="mt-2 flex flex-col gap-1.5 border-t border-border pt-2">
+                    {detail.byCategory.map((c) => (
+                      <div key={c.key} className="flex items-baseline justify-between gap-3">
+                        <span className="flex min-w-0 items-center gap-2">
+                          <span
+                            className="h-2 w-2 flex-shrink-0 rounded-full"
+                            style={{ background: c.color }}
+                          />
+                          <span className="truncate text-[12px] font-medium text-text">{c.label}</span>
+                        </span>
+                        <span className="flex-shrink-0 text-[11px] text-muted">
+                          {[
+                            c.metres > 0 ? formatDistance(c.metres, units.distance) : null,
+                            c.minutes > 0 ? formatDuration(Math.round(c.minutes)) : null,
+                            `${c.sessions}×`,
+                          ]
+                            .filter(Boolean)
+                            .join(" · ")}
+                        </span>
                       </div>
                     ))}
                   </div>

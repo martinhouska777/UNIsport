@@ -23,7 +23,7 @@ import type { LogEntry } from "@/lib/varsity/logStore";
 import type { SessionMap } from "@/lib/varsity/coachPlan";
 import { parseSessionKey } from "@/lib/varsity/coachPlan";
 import { formatDistance, formatDuration, type Units } from "@/lib/varsity/units";
-import { rowingCategories } from "@/lib/varsity/athleteProfile";
+import { rowingCategories, logCategoryColor, logCategoryLabel } from "@/lib/varsity/athleteProfile";
 import { expectedDays, trainedDays, type Span } from "@/lib/varsity/athleteStats";
 import { dayOutReasons, type DaysOut, type DayOutReason } from "@/lib/varsity/daysOut";
 
@@ -323,6 +323,14 @@ export type BucketDetail = {
   minutes: number;
   /** One line per logged session, in the order they were done. */
   rows: { key: string; title: string; sub: string }[];
+  /*
+    THE SAME SESSIONS ADDED UP BY WHAT THEY WERE — water, erg, weights, run…
+    For a stretch longer than a day (a week column, a dragged selection) a list
+    of every session is noise (owner, 2026-09-13: "it doesn't make sense to put
+    all the sessions under it"); what you want is how much you rowed and how
+    long you were in the gym. One line per category, biggest first.
+  */
+  byCategory: { key: string; label: string; color: string; sessions: number; metres: number; minutes: number }[];
 };
 
 export function bucketDetail(logs: LogEntry[], units: Units): BucketDetail {
@@ -336,10 +344,29 @@ export function bucketDetail(logs: LogEntry[], units: Units): BucketDetail {
     if (!l.dayKey) bits.push("extra");
     return { key: l.id, title: l.title || (l.category ?? "Session"), sub: bits.join(" · ") };
   });
+  const cats = new Map<string, LogEntry[]>();
+  for (const l of training) {
+    const key = l.category && logCategoryLabel[l.category] ? l.category : "other";
+    cats.set(key, [...(cats.get(key) ?? []), l]);
+  }
+  const byCategory = [...cats.entries()]
+    .map(([key, ls]) => ({
+      key,
+      label: logCategoryLabel[key],
+      color: logCategoryColor[key],
+      sessions: ls.length,
+      metres: sum(ls.map((l) => l.metres ?? 0)),
+      minutes: sum(ls.map((l) => l.minutes ?? 0)),
+    }))
+    // Most time first (count when nothing was timed); Other always last.
+    .sort((a, b) =>
+      a.key === "other" ? 1 : b.key === "other" ? -1 : b.minutes - a.minutes || b.sessions - a.sessions,
+    );
   return {
     sessions: training.length,
     metres: sum(training.filter(isRowed).map((l) => l.metres ?? 0)),
     minutes: sum(training.map((l) => l.minutes ?? 0)),
     rows,
+    byCategory,
   };
 }
