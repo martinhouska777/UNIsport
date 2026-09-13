@@ -121,7 +121,7 @@ export default function LeaderboardStrip({
         <div className="min-w-0 flex-1">
           {/* The word, so the two numbers say what they are ranks ON. */}
           {compact && (
-            <div className="mb-1 truncate text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">
+            <div className="mb-1 truncate text-center text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">
               Leaderboards
             </div>
           )}

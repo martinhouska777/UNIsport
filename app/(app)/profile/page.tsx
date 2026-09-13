@@ -456,7 +456,7 @@ export default function ProfilePage() {
               maxLength={160}
               aria-label="Bio"
               placeholder="Add a short bio"
-              className="min-h-[72px] w-full resize-none rounded-lg border border-primary bg-surface-2 px-3 py-2 text-center text-base text-text focus:outline-none"
+              className="min-h-[96px] w-full resize-none rounded-lg border border-primary bg-surface-2 px-3 py-2 text-center text-base text-text focus:outline-none"
             />
             <div className="mt-1 text-right text-[11px] text-muted">{bioDraft.length} / 160</div>
           </div>
