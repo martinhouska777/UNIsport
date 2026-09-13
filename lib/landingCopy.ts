@@ -282,7 +282,7 @@ export const studentIntro = {
   /* The way past the story for someone who wants the list rather than the
      walk. It points AT the feature block beside Campus Colours rather than
      repeating it here — the overview exists once. */
-  overview: { label: "Features", href: "#campus-colours" },
+  overview: { label: "See every feature", href: "#campus-colours" },
 };
 
 /* ───────────────────── S1–S7 · THE STUDENT STORY ───────────────────── */
@@ -459,7 +459,7 @@ export const interlude = {
   ] as OpeningStep[],
   /* Same door as the student card's: the varsity feature block beside Blade
      Lock, which is where the overview lives — once. */
-  overview: { label: "Features", href: "#blade-lock" },
+  overview: { label: "See every feature", href: "#blade-lock" },
 };
 
 /* The scroll cues at the foot of the two title cards (owner, 2026-09-13:

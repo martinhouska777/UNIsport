@@ -20,7 +20,12 @@ import type { OpeningStep } from "@/lib/landingCopy";
 
   THEY ARE PILLS (owner, 2026-09-13: "elliptical tabs, like they have
   borders"): a border on every step, not only on hover. Sized a step BELOW the
-  card's Features button, which has to read as the bigger thing.
+  card's "See every feature" button, which has to read as the bigger thing.
+
+  TWO EVEN LINES from sm up (owner, same day: "center them better … it should
+  be in two lines"): a full-width break after the first half, so seven read
+  4 + 3 instead of 6 + 1. On a phone they simply wrap. The break is a line of
+  its own, so the row gap is HALVED from sm up — two half-gaps make one.
 
   They arrive one after another when the card comes on screen: `delay` is when
   the first one lands, and each following one is 55ms behind the last (the
@@ -43,8 +48,11 @@ export default function OpeningSteps({
   const edge = accent === "accent" ? "hover:border-l-accent hover:bg-l-accent-dim" : "hover:border-l-varsity hover:bg-l-varsity-dim";
 
   return (
-    <ol className="mt-1 flex max-w-[860px] flex-wrap items-center justify-center gap-2 sm:gap-2.5">
-      {steps.map((s, i) => (
+    <ol className="mt-1 flex max-w-[860px] flex-wrap items-center justify-center gap-2 sm:gap-x-2.5 sm:gap-y-[5px]">
+      {steps.map((s, i) => [
+        i === Math.ceil(steps.length / 2) && (
+          <li key="break" aria-hidden className="hidden h-0 basis-full sm:block" />
+        ),
         <li key={s.n} className="l-tc" style={{ "--d": `${delay + i * 55}ms` } as CSSProperties}>
           <a
             href={`#${storyId}-b${i}`}
@@ -54,8 +62,8 @@ export default function OpeningSteps({
             <span className="font-mono text-[12px] tracking-[0.12em] text-l-text-2">{s.n}</span>
             <span className="text-[14px] tracking-tight text-l-text sm:text-[15px]">{s.word}</span>
           </a>
-        </li>
-      ))}
+        </li>,
+      ])}
     </ol>
   );
 }
