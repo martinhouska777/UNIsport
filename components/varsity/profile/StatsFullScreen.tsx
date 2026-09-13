@@ -15,10 +15,12 @@
       stretch you dragged across, is read out as totals instead: how much water,
       erg, weights… (owner, 2026-09-13 — a list of every session in 13–19 Jul
       is noise; what you want is how much you rowed and how long you lifted)
-    • the plan: planned, done, MISSED, and the sessions done on top of it
-    • the metres split between the water and the erg, the longest piece, the
-      average split per 500 m, the best split, the longest streak
-    • the training mix — what all that time actually was
+    • CONSISTENCY: how steady, days trained and, with a plan up, planned /
+      done / missed / extra (never "against the plan" — owner, 2026-09-13)
+    • DISTANCE on the water and the erg with the average row, and TIME: in
+      total, per day, per session, and on each thing (no splits, no streaks)
+    • the training mix — what all that time actually was, named by what was
+      logged (a bike on a flex day is Bike), distance first
 
   DRAG TO ZOOM (owner, 2026-09-13). Drag a thumb or the mouse sideways across
   the graph and it zooms into that stretch — three weeks out of three months
@@ -61,7 +63,7 @@ import {
   type StatRange,
 } from "@/lib/varsity/athleteStats";
 import { rowingReport, bucketDetail, type StatTone } from "@/lib/varsity/rowingStats";
-import { trainingMix } from "@/lib/varsity/trainingMix";
+import { trainingMix, mixLine } from "@/lib/varsity/trainingMix";
 import { countDaysOut, dayOutDot, dayOutReasons, type DaysOut } from "@/lib/varsity/daysOut";
 
 /* A word from the data → a theme token. The data never names a colour. */
@@ -419,9 +421,7 @@ export default function StatsFullScreen({
                         />
                       </div>
                       <div className="mt-1 text-[10px] text-muted">
-                        {r.sessions} session{r.sessions === 1 ? "" : "s"}
-                        {r.minutes > 0 && <> · {formatDuration(Math.round(r.minutes))}</>}
-                        {r.metres > 0 && <> · {formatDistance(r.metres, units.distance)}</>}
+                        {mixLine(r, units.distance)}
                       </div>
                     </div>
                   ))}

@@ -6,13 +6,19 @@
   This answers the rest of them, over the very same window, from the very same
   logs — so nothing on the screen can disagree with anything else on it.
 
-  Four groups, because that is how a rower actually asks:
+  Three groups — what a rower asks of a stretch of training is "was I there,
+  how far, how long" (owner, 2026-09-13):
 
-    Training        — how many sessions, how many days, how steady, how long a run
-    Against the plan— what the coach put up, what got done, what got missed,
-                      and what was done on top of it
-    Distance        — the metres, split between the water and the erg
-    Time & pace     — the hours, and the split those hours were rowed at
+    Consistency — how steady, how many days, and, when a plan is up, what the
+                  coach put up, what got done, what got missed and what was
+                  done on top. It used to be called "Against the plan", which
+                  made thirty sessions with two missed read like a charge sheet.
+    Distance    — the metres, on the water and on the erg, and the average row
+    Time        — how long you trained, per day, per session, and how long went
+                  on each thing: the water, the erg, weights, a run, a bike
+
+  CUT the same day as useless to a rower: the longest streak, the average split
+  and the best split. These are statistics about how MUCH was done, not how fast.
 
   Everything comes back as DATA (a title and rows of label/value/caption), so
   the screen renders whatever this file decides to say and adding a number here
@@ -46,40 +52,6 @@ const dash = "—";
 /* A rest day is a note that nothing happened, so it is never a session. */
 const isTraining = (l: LogEntry) => l.category !== "off";
 const isRowed = (l: LogEntry) => rowingCategories.has(l.category ?? "");
-
-/** "1:52" / "1:52.4" as seconds. Anything else is not a split. */
-function splitSeconds(text: string | null): number | null {
-  if (!text) return null;
-  const m = /^(\d{1,2}):(\d{2}(?:\.\d+)?)$/.exec(text.trim());
-  if (!m) return null;
-  const s = Number(m[1]) * 60 + Number(m[2]);
-  return s > 0 ? s : null;
-}
-
-/** Seconds back as "1:52" — how a rower says a split. */
-function asSplit(seconds: number): string {
-  const total = Math.round(seconds);
-  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
-}
-
-/**
- * THE LONGEST RUN OF TRAINING DAYS in the window, and the one still going.
- * Sunday neither counts nor breaks it: the squad doesn't train on Sundays, so
- * a rest day the plan itself gave you should not end a streak.
- */
-function streaks(logs: LogEntry[], span: Span): { longest: number; current: number } {
-  const trained = new Set(logs.filter(isTraining).map((l) => l.logDate));
-  let run = 0;
-  let longest = 0;
-  const end = asDate(span.endIso);
-  for (const d = asDate(span.startIso); d <= end; d.setDate(d.getDate() + 1)) {
-    if (d.getDay() === 0) continue; // Sunday: skipped, not counted, not broken
-    run = trained.has(toIso(d)) ? run + 1 : 0;
-    longest = Math.max(longest, run);
-  }
-  // `run` finished on the window's last day, so it IS the streak still going.
-  return { longest, current: run };
-}
 
 /**
  * WHAT THE COACH PUT UP INSIDE THE WINDOW, and what became of it.
@@ -128,6 +100,17 @@ function planCounts(logs: LogEntry[], plan: SessionMap, span: Span, daysOut: Day
   };
 }
 
+/* The kinds of training that get their own "time on" cell, boat first. */
+const TIME_CATEGORIES = ["water", "erg", "weights", "run", "bike", "other"] as const;
+const TIME_LABEL: Record<(typeof TIME_CATEGORIES)[number], string> = {
+  water: "Time on water",
+  erg: "Time on erg",
+  weights: "Weights",
+  run: "Run",
+  bike: "Bike",
+  other: "Other",
+};
+
 /**
  * Everything the big screen shows under the graph, for one window.
  * `plan` may be empty — a squad with no plan up simply loses that one group
@@ -147,60 +130,82 @@ export function rowingReport(
   const metres = sum(rowed.map((l) => l.metres ?? 0));
   const water = sum(rowed.filter((l) => l.category === "water").map((l) => l.metres ?? 0));
   const erg = sum(rowed.filter((l) => l.category === "erg").map((l) => l.metres ?? 0));
-  const longest = Math.max(0, ...rowed.map((l) => l.metres ?? 0));
+  // The average row: over the rowing sessions that logged a distance.
+  const measured = rowed.filter((l) => (l.metres ?? 0) > 0);
 
   const minutes = sum(training.map((l) => l.minutes ?? 0));
   const timed = training.filter((l) => (l.minutes ?? 0) > 0);
 
-  /*
-    THE AVERAGE SPLIT is only honest over sessions that logged BOTH a time and
-    a distance — an hour of weights in the numerator would make every rower on
-    the squad look slow.
-  */
-  const paced = rowed.filter((l) => (l.metres ?? 0) > 0 && (l.minutes ?? 0) > 0);
-  const pacedMetres = sum(paced.map((l) => l.metres ?? 0));
-  const pacedSeconds = sum(paced.map((l) => (l.minutes ?? 0) * 60));
-  const avgSplit = pacedMetres > 0 ? (pacedSeconds / pacedMetres) * 500 : null;
-
-  const bestSplitSeconds = Math.min(
-    Infinity,
-    ...rowed.map((l) => splitSeconds(l.split) ?? Infinity),
-  );
-  const bestSplit = Number.isFinite(bestSplitSeconds) ? bestSplitSeconds : null;
-
   const expected = expectedDays(span);
-  const days = Math.min(trainedDays(training), expected);
+  const trained = trainedDays(training);
+  const days = Math.min(trained, expected);
   const consistency = expected ? Math.min(100, Math.round((days / expected) * 100)) : 0;
-  const { longest: longestStreak } = streaks(training, span);
 
   const counts = planCounts(logs, plan, span, daysOut);
+  const hasPlan = counts.planned > 0 || counts.extra > 0;
 
-  const groups: StatGroup[] = [
+  /*
+    TIME ON EACH THING — one cell per kind of training that actually has time
+    logged in the window, in a fixed order (the boat first), so a squad that
+    never bikes never sees an empty "Bike" cell.
+  */
+  const timeOn = TIME_CATEGORIES.map((cat) => ({
+    cat,
+    minutes: sum(training.filter((l) => (l.category ?? "other") === cat).map((l) => l.minutes ?? 0)),
+  })).filter((c) => c.minutes > 0);
+
+  /* MISSED, BY WHY — one cell per reason that actually happened, and "no
+     reason" for the rest, only when at least one had a reason. */
+  const missedWhy: StatCell[] =
+    counts.missed > counts.missedNoReason
+      ? [
+          ...dayOutReasons
+            .filter((r) => counts.missedWhy[r.key] > 0)
+            .map((r) => ({
+              key: `missed-${r.key}`,
+              label: `Missed · ${r.label.toLowerCase()}`,
+              value: `${counts.missedWhy[r.key]}`,
+              tone: "muted" as StatTone,
+            })),
+          ...(counts.missedNoReason > 0
+            ? [{ key: "missed-none", label: "Missed · no reason", value: `${counts.missedNoReason}`, tone: "muted" as StatTone }]
+            : []),
+        ]
+      : [];
+
+  /*
+    THE PLAN'S NUMBERS ONLY WHEN THERE IS A PLAN in this window. With none up,
+    "0 planned · 0 missed" is not a fact about the athlete, and "missed" is far
+    too heavy a word to print by accident.
+  */
+  const planCells: StatCell[] = hasPlan
+    ? [
+        { key: "planned", label: "Planned", value: `${counts.planned}` },
+        {
+          key: "done",
+          label: "Done",
+          value: `${counts.done}`,
+          tone: counts.planned && counts.done === counts.planned ? "success" : "text",
+        },
+        { key: "missed", label: "Missed", value: `${counts.missed}`, tone: counts.missed ? "warn" : "muted" },
+        { key: "extra", label: "Extra", value: `${counts.extra}`, tone: counts.extra ? "success" : "muted" },
+        ...missedWhy,
+      ]
+    : [];
+
+  return [
     {
-      key: "training",
-      title: "Training",
+      key: "consistency",
+      title: "Consistency",
       cells: [
-        {
-          key: "sessions",
-          label: "Sessions",
-          value: `${training.length}`,
-        },
-        {
-          key: "days",
-          label: "Days trained",
-          value: `${days}`,
-        },
         {
           key: "consistency",
           label: "Consistency",
           value: `${consistency}%`,
           tone: consistency >= 80 ? "success" : consistency >= 50 ? "text" : "warn",
         },
-        {
-          key: "streak",
-          label: "Longest streak",
-          value: longestStreak ? `${longestStreak} d` : dash,
-        },
+        { key: "days", label: "Days trained", value: `${days}` },
+        ...planCells,
       ],
     },
     {
@@ -213,6 +218,11 @@ export function rowingReport(
           value: metres ? formatDistance(metres, units.distance) : dash,
         },
         {
+          key: "avg",
+          label: "Avg row",
+          value: measured.length ? formatDistance(metres / measured.length, units.distance) : dash,
+        },
+        {
           key: "water",
           label: "On the water",
           value: water ? formatDistance(water, units.distance) : dash,
@@ -222,16 +232,11 @@ export function rowingReport(
           label: "On the erg",
           value: erg ? formatDistance(erg, units.distance) : dash,
         },
-        {
-          key: "avg",
-          label: "Longest piece",
-          value: longest ? formatDistance(longest, units.distance) : dash,
-        },
       ],
     },
     {
       key: "time",
-      title: "Time & pace",
+      title: "Time",
       cells: [
         {
           key: "total",
@@ -239,75 +244,25 @@ export function rowingReport(
           value: minutes ? formatDuration(Math.round(minutes)) : dash,
         },
         {
-          key: "avg",
+          // Per day actually trained, so a sick week does not shrink it.
+          key: "perDay",
+          label: "Avg per day",
+          value: minutes && trained ? formatDuration(Math.round(minutes / trained)) : dash,
+        },
+        { key: "sessions", label: "Sessions", value: `${training.length}` },
+        {
+          key: "perSession",
           label: "Avg session",
           value: timed.length ? formatDuration(Math.round(minutes / timed.length)) : dash,
         },
-        {
-          key: "split",
-          label: "Avg split",
-          value: avgSplit ? `${asSplit(avgSplit)}` : dash,
-        },
-        {
-          key: "best",
-          label: "Best split",
-          value: bestSplit ? `${asSplit(bestSplit)}` : dash,
-        },
+        ...timeOn.map((c) => ({
+          key: `on-${c.cat}`,
+          label: TIME_LABEL[c.cat],
+          value: formatDuration(Math.round(c.minutes)),
+        })),
       ],
     },
   ];
-
-  /*
-    THE PLAN GROUP ONLY APPEARS WHEN THERE IS A PLAN in this window. With none
-    up, "0 planned · 0 missed" is not a fact about the athlete, and "missed"
-    is far too heavy a word to print by accident.
-  */
-  if (counts.planned > 0 || counts.extra > 0) {
-    groups.splice(1, 0, {
-      key: "plan",
-      title: "Against the plan",
-      cells: [
-        { key: "planned", label: "Planned", value: `${counts.planned}` },
-        {
-          key: "done",
-          label: "Done",
-          value: `${counts.done}`,
-          tone: counts.planned && counts.done === counts.planned ? "success" : "text",
-        },
-        {
-          key: "missed",
-          label: "Missed",
-          value: `${counts.missed}`,
-          tone: counts.missed ? "warn" : "muted",
-        },
-        {
-          key: "extra",
-          label: "Extra",
-          value: `${counts.extra}`,
-          tone: counts.extra ? "success" : "muted",
-        },
-        /* MISSED, BY WHY — one cell per reason that actually happened, and
-           "no reason" for the rest, only when at least one had a reason. */
-        ...(counts.missed > counts.missedNoReason
-          ? [
-              ...dayOutReasons
-                .filter((r) => counts.missedWhy[r.key] > 0)
-                .map((r) => ({
-                  key: `missed-${r.key}`,
-                  label: `Missed · ${r.label.toLowerCase()}`,
-                  value: `${counts.missedWhy[r.key]}`,
-                  tone: "muted" as StatTone,
-                })),
-              ...(counts.missedNoReason > 0
-                ? [{ key: "missed-none", label: "Missed · no reason", value: `${counts.missedNoReason}`, tone: "muted" as StatTone }]
-                : []),
-            ]
-          : []),
-      ],
-    });
-  }
-
-  return groups;
 }
 
 /** Whether a window has anything in it at all — the screen's empty state. */

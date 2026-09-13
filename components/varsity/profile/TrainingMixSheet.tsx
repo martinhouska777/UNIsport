@@ -14,8 +14,8 @@
   exception to rule 1.
 */
 import Sheet from "@/components/varsity/Sheet";
-import { formatDistance, formatDuration, type Units } from "@/lib/varsity/units";
-import type { MixRow } from "@/lib/varsity/trainingMix";
+import { formatDuration, type Units } from "@/lib/varsity/units";
+import { mixLine, type MixRow } from "@/lib/varsity/trainingMix";
 
 export default function TrainingMixSheet({
   rows,
@@ -72,9 +72,7 @@ export default function TrainingMixSheet({
                 </div>
 
                 <div className="mt-1 text-[11px] text-muted">
-                  {r.sessions} session{r.sessions === 1 ? "" : "s"}
-                  {r.minutes > 0 && <> · {formatDuration(Math.round(r.minutes))}</>}
-                  {r.metres > 0 && <> · {formatDistance(r.metres, units.distance)}</>}
+                  {mixLine(r, units.distance)}
                 </div>
               </div>
             ))}

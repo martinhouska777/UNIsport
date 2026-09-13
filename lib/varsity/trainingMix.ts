@@ -8,14 +8,16 @@
   calendar colours it (components/varsity/calendar → blockStyle), so a session
   is the same kind and the same colour wherever you meet it. A log carries the
   plan slot it came from (`dayKey`); when it has one, its intensity is the
-  coach's. When it doesn't — a lift you added yourself, a run on a rest day —
-  the category alone decides, and anything the category can't answer for lands
-  in "Other" rather than being guessed into a colour it didn't earn.
+  coach's. When it doesn't — a lift you added yourself, a run on a rest day, a
+  bike on a flex day — what you logged decides (Run, Bike, Erg…), and only a
+  session logged as "Other" lands in Other.
 */
 import type { LogEntry } from "@/lib/varsity/logStore";
 import type { SessionMap } from "@/lib/varsity/coachPlan";
+import { logCategoryColor, logCategoryLabel } from "@/lib/varsity/athleteProfile";
 import { kindOf } from "@/lib/varsity/athleteHome";
-import { kindColor, kindLegend, type SessionKind } from "@/lib/varsity/home";
+import { kindColor, kindLegend } from "@/lib/varsity/home";
+import { formatDistance, formatDuration, type DistanceUnit } from "@/lib/varsity/units";
 
 /** A row of the breakdown: one kind of training, and what it added up to. */
 export type MixRow = {
@@ -30,41 +32,58 @@ export type MixRow = {
   share: number;
 };
 
-const OTHER = { key: "other", label: "Other", color: "var(--muted)" };
+type Entry = { key: string; label: string; color: string };
 
-/** Which kind a single logged session belongs to. */
-function kindOfLog(l: LogEntry, plan: SessionMap): SessionKind | null {
+const OTHER: Entry = { key: "other", label: "Other", color: "var(--muted)" };
+
+/*
+  WHICH ROW A SESSION BELONGS TO.
+
+  A rowing slot on the plan (water / erg) is its INTENSITY — UT2, UT1, Hard —
+  and a weights slot is Weights. Everything else is named by WHAT WAS LOGGED:
+  a Run, a Bike, an Erg or Water row done on your own. There is no "Flex" row
+  (owner, 2026-09-13): flex is the coach's permission to train how you like,
+  not a kind of training, so a bike on a flex day is counted as Bike.
+*/
+function entryOf(l: LogEntry, plan: SessionMap): Entry | null {
+  if (l.category === "off") return null;
   const planned = l.dayKey ? plan[l.dayKey] : undefined;
-  if (planned) return kindOf(planned);
-  switch (l.category) {
-    case "weights":
-      return "weights";
-    case "flex":
-      return "flex";
-    case "off":
-      return "off";
-    default:
-      // Rowed, but nobody said how hard — that is not a UT2.
-      return null;
+  if (planned && planned.category !== "flex" && planned.category !== "off") {
+    const kind = kindOf(planned);
+    const legend = kindLegend.find((x) => x.kind === kind);
+    if (legend) return { key: kind, label: legend.label, color: kindColor[kind] };
   }
+  if (l.category === "weights") return { key: "weights", label: "Weights", color: kindColor.weights };
+  // The calendar legend's own colours, so a run is the same colour in both.
+  const cat = l.category ?? "other";
+  if (logCategoryLabel[cat] && cat !== "flex" && cat !== "other") {
+    return { key: `log-${cat}`, label: logCategoryLabel[cat], color: logCategoryColor[cat] };
+  }
+  return OTHER;
+}
+
+/** "42.0 km · 3h 30m · 4 sessions" — distance first, because that is what a rower reads. */
+export function mixLine(r: MixRow, distance: DistanceUnit): string {
+  return [
+    r.metres > 0 ? formatDistance(r.metres, distance) : null,
+    r.minutes > 0 ? formatDuration(Math.round(r.minutes)) : null,
+    `${r.sessions} session${r.sessions === 1 ? "" : "s"}`,
+  ]
+    .filter(Boolean)
+    .join(" · ");
 }
 
 /*
   Rest days are not training. An "off" log is a note that nothing happened, so
   counting it as a slice of the mix would make a light week look varied.
 */
-const COUNTED = kindLegend.map((l) => l.kind);
 
 export function trainingMix(logs: LogEntry[], plan: SessionMap): MixRow[] {
   const acc = new Map<string, { label: string; color: string; logs: LogEntry[] }>();
 
   for (const l of logs) {
-    const kind = kindOfLog(l, plan);
-    if (kind === "off") continue;
-    const entry =
-      kind && COUNTED.includes(kind)
-        ? { key: kind, label: kindLegend.find((x) => x.kind === kind)!.label, color: kindColor[kind] }
-        : OTHER;
+    const entry = entryOf(l, plan);
+    if (!entry) continue;
     const bucket = acc.get(entry.key) ?? { label: entry.label, color: entry.color, logs: [] };
     bucket.logs.push(l);
     acc.set(entry.key, bucket);
