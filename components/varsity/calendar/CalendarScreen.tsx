@@ -36,7 +36,7 @@
   lib/varsity/home) rather than declaring one of their own, so a practice is the
   same colour here as on the coach's month view.
 */
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import Sheet from "@/components/varsity/Sheet";
 import WorkoutDetail from "@/components/varsity/calendar/WorkoutDetail";
@@ -286,6 +286,29 @@ export default function CalendarScreen() {
     });
   const atCurrentMonth = view.y === now.getFullYear() && view.m === now.getMonth();
 
+  /*
+    SWIPE THE MONTH — the same gesture as the arrows, and the same rule the
+    Profile calendar uses (components/profile/TrainingCalendar): only a
+    decisively horizontal drag counts, so scrolling a six-row month up and
+    down never changes it. Swiping forward stops at this month, like the arrow.
+  */
+  const touch = useRef<{ x: number; y: number } | null>(null);
+  const onTouchStart = (e: React.TouchEvent) => {
+    const t = e.changedTouches[0];
+    touch.current = { x: t.clientX, y: t.clientY };
+  };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    const start = touch.current;
+    touch.current = null;
+    if (!start) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - start.x;
+    const dy = t.clientY - start.y;
+    if (Math.abs(dx) < 45 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    if (dx < 0 && atCurrentMonth) return;
+    goMonth(dx > 0 ? -1 : 1);
+  };
+
   return (
     /* A full-height column: title, weekday header, THE MONTH, legend. Only the
        month flexes, so the grid always reaches the bottom of the screen. */
@@ -300,40 +323,47 @@ export default function CalendarScreen() {
         and 106px stood between the top of the tab and the first week; this
         row and the weekday letters take about half that.
 
-        The month is "Sep 2026", not "September 2026" — the full name does not
-        fit on one line beside the key on a 360px phone. The day sheet still
-        says "September 13, 2026".
+        THE KEY SPREADS over whatever the month leaves (flex-1 +
+        justify-between), so the row reads as full on any phone rather than a
+        cluster on the right with a gap in the middle.
+
+        The month is "Sep" on a normal phone and "September" from 420px up:
+        measured, the full name plus 32px arrows plus the key need ~382px of
+        row, and a 390px phone has 370. The day sheet always says the whole
+        date.
 
         No Race in the key (calendarLegend): nobody logs a race, they log the
         2k they rowed and write "race" on it.
       */}
-      <div className="flex h-7 flex-shrink-0 items-center justify-between gap-2 px-1">
+      <div className="flex h-8 flex-shrink-0 items-center gap-2 px-1">
         <div className="flex flex-shrink-0 items-center gap-1">
           <button
             type="button"
             aria-label="Previous month"
             onClick={() => goMonth(-1)}
-            className="tap44 press-icon flex h-6 w-6 items-center justify-center rounded-md border border-border bg-surface text-muted"
+            className="tap44 press-icon flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-surface text-muted"
           >
-            <IconArrowLeft size={12} />
+            <IconArrowLeft size={14} />
           </button>
-          <h1 className="px-0.5 text-[15px] font-semibold leading-none text-text">
-            {MONTHS[view.m].slice(0, 3)} <span className="text-[12px] font-medium text-muted">{view.y}</span>
+          <h1 className="px-0.5 text-[16px] font-semibold leading-none text-text">
+            {MONTHS[view.m].slice(0, 3)}
+            <span className="hidden min-[420px]:inline">{MONTHS[view.m].slice(3)}</span>{" "}
+            <span className="text-[12px] font-medium text-muted">{view.y}</span>
           </h1>
           <button
             type="button"
             aria-label="Next month"
             onClick={() => goMonth(1)}
             disabled={atCurrentMonth}
-            className="tap44 press-icon flex h-6 w-6 items-center justify-center rounded-md border border-border bg-surface text-muted disabled:opacity-30"
+            className="tap44 press-icon flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-surface text-muted disabled:opacity-30"
           >
-            <IconArrowRight size={12} />
+            <IconArrowRight size={14} />
           </button>
         </div>
-        <div className="flex min-w-0 items-center gap-x-2 overflow-hidden">
+        <div className="flex min-w-0 flex-1 items-center justify-between gap-x-1.5 pl-1">
           {calendarLegend.map((l) => (
-            <span key={l.kind} className="flex flex-shrink-0 items-center gap-[3px] text-[10px] leading-none text-muted">
-              <span className="h-1.5 w-1.5 rounded-full" style={kindBar(l.kind)} />
+            <span key={l.kind} className="flex flex-shrink-0 items-center gap-[3px] text-[11px] leading-tight text-muted">
+              <span className="h-[7px] w-[7px] rounded-full" style={kindBar(l.kind)} />
               {l.label}
             </span>
           ))}
@@ -351,7 +381,12 @@ export default function CalendarScreen() {
 
       {/* The month. Every row the same height, sharing what is left of the
           screen — a wall calendar, not a list that grows with the training. */}
-      <div className="mt-1 grid min-h-0 flex-1 auto-rows-fr grid-cols-7 gap-1 overflow-y-auto">
+      {/* Swiping it left / right is the same as the arrows. */}
+      <div
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
+        className="mt-1 grid min-h-0 flex-1 auto-rows-fr grid-cols-7 gap-1 overflow-y-auto"
+      >
         {Array.from({ length: leadingEmpty }).map((_, i) => (
           <div key={`e${i}`} />
         ))}
