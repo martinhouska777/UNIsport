@@ -93,6 +93,7 @@ import ShareInviteButton from "@/components/ShareInviteButton";
 import Podium, { type PodiumEntry } from "@/components/leaderboards/Podium";
 import Medal from "@/components/leaderboards/Medal";
 import ScoringSheet from "@/components/leaderboards/ScoringSheet";
+import YouSheet from "@/components/leaderboards/YouSheet";
 import OptionPickerSheet from "@/components/profile/OptionPickerSheet";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { houses, residenceLabel, yardDorms } from "@/lib/onboarding";
@@ -375,14 +376,14 @@ function GroupRowItem({
   // A row that opens is a button; a row that does not stays a div, so nothing
   // on screen invites a tap that does nothing.
   const Tag = onOpen ? "button" : "div";
-  /* THE INVITE, beside every house row. A house's number only moves when more
-     of it logs, and the fastest way to that is a housemate with the link —
-     so the Share sits where the number is, not three screens away. Outside
-     the row's own button (a button inside a button is not allowed), for any
-     house, because inviting into a rival's house is still a person on the
-     app. Years have nobody to invite "into". */
+  /* NO SHARE BESIDE THE ROW (owner, 2026-09-12: "cut the share on the right,
+     each house has it, it's strange"). A share icon repeated down twelve
+     house rows reads as part of the house rather than as an invitation, and
+     it put a second tap target on a row whose whole job is to open. The
+     invite still lives on the Events tab, beside the houses that are NOT YET
+     IN the interhouse race — which is the one place it is an answer to
+     something on screen. */
   return (
-    <div className="flex items-center gap-1.5">
     <Tag
       {...(onOpen ? { type: "button" as const, onClick: onOpen } : {})}
       className={`flex w-full items-center gap-2.5 rounded-xl border px-3 py-2.5 text-left ${
@@ -441,8 +442,6 @@ function GroupRowItem({
         </span>
       )}
     </Tag>
-    {kind === "house" && <ShareInviteButton iconOnly residence={row.key} />}
-    </div>
   );
 }
 
@@ -467,6 +466,8 @@ export default function LeaderboardsPage() {
   // know the other exists.
   const [picking, setPicking] = useState<"competition" | "period" | null>(null);
   const [explaining, setExplaining] = useState(false);
+  // Your own line, opened up: the ranks, the breakdown and your friends.
+  const [openingSelf, setOpeningSelf] = useState(false);
   // The house or dorm whose people are being looked at, if any.
   const [openGroup, setOpenGroup] = useState<GroupRow | null>(null);
 
@@ -655,12 +656,20 @@ export default function LeaderboardsPage() {
       ) : (
         <>
           {/*
-            YOU, IN ONE LINE. This was a card with a nudge line and two house
-            tiles under it — four blocks of text before the board, on a screen
-            whose whole job is the board. What is left is the only part nobody
-            can look up somewhere else: your points, and where that puts you.
+            YOU, IN ONE LINE — AND IT OPENS. This was a card with a nudge line
+            and two house tiles under it: four blocks of text before the board,
+            on a screen whose whole job is the board. What is left on the line
+            is the only part nobody can look up somewhere else — your points,
+            and where that puts you — and everything that was cut, plus your
+            ranks, what the points were made of and the small board of the
+            people you follow, is behind a tap (YouSheet). One line at rest,
+            the whole of your standing when you want it.
           */}
-          <div className="flex items-center gap-2.5 border-b border-border px-3.5 py-2.5">
+          <button
+            type="button"
+            onClick={() => setOpeningSelf(true)}
+            className="tap44 flex w-full items-center gap-2.5 border-b border-border px-3.5 py-2.5 text-left active:bg-surface-2"
+          >
             <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-accent-tint text-accent">
               <IconTrophy size={14} />
             </span>
@@ -683,7 +692,12 @@ export default function LeaderboardsPage() {
                   : "Log a session and you're on it."}
               </div>
             </div>
-          </div>
+            {/* The line looked like a label, so nobody would have tried
+                tapping it. The chevron is the whole difference. */}
+            <span className="flex-shrink-0 text-muted">
+              <IconChevronRight size={15} />
+            </span>
+          </button>
 
           {/* The two controls. */}
           <div className="border-b border-border px-3.5 py-2.5">
@@ -797,6 +811,15 @@ export default function LeaderboardsPage() {
 
       {explaining && (
         <ScoringSheet universityKey={universityKey} onClose={() => setExplaining(false)} />
+      )}
+
+      {openingSelf && (
+        <YouSheet
+          standing={standing}
+          period={period}
+          periodLabel={PERIODS.find((p) => p.key === period)?.label ?? ""}
+          onClose={() => setOpeningSelf(false)}
+        />
       )}
 
       {openGroup && (

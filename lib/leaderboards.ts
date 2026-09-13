@@ -32,9 +32,12 @@ import { rateArgs, type SessionKinds } from "@/lib/points";
 
 export type Period = "month" | "semester" | "all";
 
-// The individual boards. Narrow either of them to one house or dorm with
+// The individual boards. Narrow any of them to one house or dorm with
 // `residence` — that is what makes a house on the team board openable.
-export type PeopleBoard = "campus" | "partners";
+// `friends` is the campus board cut to the people you follow, plus you; it is
+// the only one that keeps people on nought, because seeing a friend who hasn't
+// trained yet is the whole reason to look at it.
+export type PeopleBoard = "campus" | "partners" | "friends";
 // The team boards.
 export type GroupBoard = "house" | "year";
 

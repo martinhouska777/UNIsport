@@ -213,6 +213,12 @@ revoke all on function public.leaderboard_session_kinds(date) from public;
 --         = 'partners' — by how many DIFFERENT people they trained with. The
 --                        one board not scored in points: counting people is
 --                        the whole question it answers.
+--         = 'friends'  — the same points board, cut down to the people the
+--                        CALLER follows (db/follows.sql), plus the caller.
+--                        A campus board of four hundred names is a table; the
+--                        eight people you actually know is a race. This is the
+--                        one board that keeps its zeros: a friend who hasn't
+--                        trained yet is exactly who you want to see on it.
 --
 -- `residence_filter` narrows it to one house or dorm, which is what makes a
 -- house on the team board OPENABLE: a house's points are just the points of
@@ -292,6 +298,16 @@ as $$
     left join partner_count pc on pc.uid    = p.id
     where p.onboarding_completed
       and (residence_filter is null or p.data->>'residence' = residence_filter)
+      -- The friends board is the campus board with everyone you don't follow
+      -- taken out. You are always on it, so it is somewhere you stand.
+      and (
+        lower(board) <> 'friends'
+        or p.id = auth.uid()
+        or exists (
+          select 1 from public.follows f
+          where f.follower_id = auth.uid() and f.followee_id = p.id
+        )
+      )
   )
   -- WHERE runs before the window function, so a zero never takes up a rank:
   -- ranks describe the people who actually turned up.
@@ -309,7 +325,9 @@ as $$
     sc.n_partners,
     sc.id = auth.uid()
   from scored sc
-  where sc.pts > 0
+  -- Zero never takes a rank on a public board. On the friends board it does:
+  -- the list IS the people, and one of them at nought is the point.
+  where sc.pts > 0 or lower(board) = 'friends'
   order by 1
   limit greatest(coalesce(limit_n, 50), 1);
 $$;
