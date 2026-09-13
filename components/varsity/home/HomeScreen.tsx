@@ -188,9 +188,16 @@ function WeekFit({
                 */
                 if (!s) return <div key={row} className="flex-1" />;
                 return (
-                  <div key={row} className="flex-1 rounded px-1 py-1" style={kindBlock(s.kind)}>
+                  /*
+                    9px ON 2px SIDES, so one word stays one word. At 10px inside
+                    4px sides a block had ~31px of text on a 360px phone, and
+                    "Weights" (37px) broke into "Weight / s", "8×500m" into
+                    "8×500 / m". At 9px they are 33px and 34px, and the
+                    narrower sides leave 35px — the whole word on one line.
+                  */
+                  <div key={row} className="flex-1 rounded px-0.5 py-1" style={kindBlock(s.kind)}>
                     <span className="block text-[10px] font-bold leading-none text-text-3">{row}</span>
-                    <span className="mt-0.5 block break-words text-[10px] font-medium leading-tight text-text">
+                    <span className="mt-0.5 block break-words text-[9px] font-medium leading-tight text-text">
                       {s.label}
                     </span>
                   </div>
