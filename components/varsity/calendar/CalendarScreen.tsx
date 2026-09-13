@@ -48,7 +48,7 @@ import { fetchPlan } from "@/lib/varsity/planStore";
 import { kindOf } from "@/lib/varsity/athleteHome";
 import { kindBar, kindBlock, kindColor, kindLegend } from "@/lib/varsity/home";
 import { formatMetrics } from "@/lib/varsity/logParse";
-import { toISO, type Session, type SessionMap } from "@/lib/varsity/coachPlan";
+import { logLabel, toISO, type Session, type SessionMap } from "@/lib/varsity/coachPlan";
 import {
   logCategoryColor,
   logCategoryLabel,
@@ -137,6 +137,14 @@ function DaySheet({
         <div className="flex flex-col gap-2">
           {logs.map((l) => {
             const metrics = formatMetrics(l.minutes, l.metres, l.split);
+            const planned = l.dayKey ? planSessions[l.dayKey] : undefined;
+            /* The same name the month grid uses, so one session is called one
+               thing on both screens. What it actually WAS — the coach's
+               "14k UT2", or whatever the athlete called their own — goes on
+               the line under it, and only when it says something the name
+               doesn't already. */
+            const name = logLabel(l, planned);
+            const said = l.title.trim() && l.title.trim() !== name ? l.title.trim() : "";
             return (
               <button
                 key={l.id}
@@ -146,10 +154,11 @@ function DaySheet({
               >
                 <span
                   className="mt-1 h-2.5 w-2.5 flex-shrink-0 rounded-full"
-                  style={{ background: logColor(l, l.dayKey ? planSessions[l.dayKey] : undefined) }}
+                  style={{ background: logColor(l, planned) }}
                 />
                 <div className="min-w-0 flex-1">
-                  <div className="text-[13px] font-semibold text-text">{l.title}</div>
+                  <div className="text-[13px] font-semibold text-text">{name}</div>
+                  {said && <div className="mt-0.5 truncate text-[12px] text-text-2">{said}</div>}
                   {metrics && <div className="mt-0.5 text-[12px] text-text-2">{metrics}</div>}
                   {l.note && <div className="mt-0.5 truncate text-[11px] text-muted">{l.note}</div>}
                 </div>
@@ -392,6 +401,10 @@ export default function CalendarScreen() {
                       to the category word, so nothing is ever blank.
                     */
                     const sub = logVolumeLabel(l.category, l.metres, l.minutes);
+                    /* Named the same way every time — "Erg · UT2", "Water · UT2"
+                       — rather than whatever each log happened to be titled
+                       (lib/varsity/coachPlan → logLabel). */
+                    const name = logLabel(l, planned);
                     /* An afternoon session belongs in the afternoon half, not
                        wherever it happened to be saved first. A log with no
                        period on it just takes the next free half. */
@@ -423,7 +436,7 @@ export default function CalendarScreen() {
                             overflow: "hidden",
                           }}
                         >
-                          {l.title}
+                          {name}
                         </span>
                         {sub && (
                           <span className="mt-px block truncate text-[8px] leading-none text-text-2">

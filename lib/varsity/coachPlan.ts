@@ -208,6 +208,40 @@ export function sessionLabel(s: Session): string {
   return `${cat} · ${intensityMeta[s.intensity as Intensity]?.label ?? s.intensity}`;
 }
 
+/*
+  WHAT A LOGGED SESSION IS CALLED wherever it is LISTED — the month grid, the
+  day sheet.
+
+  It used to print the log's own `title`, and a title is whatever it happened
+  to be: the coach's description for a prescribed session ("14k UT2", "3x5' @
+  30"), whatever the athlete typed for their own ("Main strength — squat, pull,
+  press", "Easy run"), or the words "Extra session". So a month of training
+  read as a month of unrelated sentences, and two identical outings a week
+  apart could look like different kinds of training.
+
+  Now every entry is named the same way — the KIND, and the intensity when the
+  session has one:
+
+      Erg · UT2        Water · UT2        Weights        Run
+
+  which is exactly `sessionLabel` for a session the coach prescribed. A
+  session the athlete added themselves has no prescribed intensity, so it is
+  named by its kind alone. The SIZE of it — the kilometres — is the line
+  underneath (logVolumeLabel, lib/varsity/athleteProfile), and what was
+  actually done is in the day sheet and the workout itself.
+*/
+export function logLabel(
+  log: { title: string; category: string | null },
+  planned?: Session,
+): string {
+  if (planned) return sessionLabel(planned);
+  const meta = logCategoryMeta[(log.category ?? "other") as LogCategory];
+  /* "Other" is not a name for anything, so a log filed under it keeps whatever
+     the athlete called it rather than being flattened to a shrug. */
+  if (meta && log.category && log.category !== "other") return meta.label;
+  return log.title.trim() || "Session";
+}
+
 /* ── Blocks + week math ── */
 export type BlockStatus = "draft" | "published";
 export type Block = {
