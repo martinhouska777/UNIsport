@@ -21,38 +21,38 @@
   keyed by ISO date) — no new table. The coach doesn't see it yet; that is an
   open question for the owner and the coaches.
 
-  Reasons are DATA below: the label and a tone word the screens map to a theme
-  token (rule 1). Adding a reason is an entry here, not a component change.
+  Reasons are DATA below: the label and a COLOUR. The colours are per-entity
+  content colours living in a data file — rule 1's documented exception, the
+  same one the session kinds use (lib/varsity/home.ts kindColor) — and they are
+  picked to be none of the training colours (owner, 2026-09-13: a sick day
+  should be its own colour, painting the whole day in the calendar):
+    Sick    pink    — no session kind is pink
+    Injured orange  — warmer than UT1's yellow, lighter than Hard's red
+    Away    cyan    — cooler and brighter than the water's teal
+    Missed  slate   — a day that simply didn't happen, not a grey rest day
+  Adding a reason is an entry here, not a component change.
 */
 export type DayOutReason = "sick" | "injured" | "away" | "other";
 export type DayOut = { reason: DayOutReason; note?: string };
 /** ISO date (yyyy-mm-dd) → why that day was out. */
 export type DaysOut = Record<string, DayOut>;
 
-export type DayOutTone = "warn" | "danger" | "muted";
-
-export const dayOutReasons: { key: DayOutReason; label: string; tone: DayOutTone }[] = [
-  { key: "sick", label: "Sick", tone: "warn" },
-  { key: "injured", label: "Injured", tone: "danger" },
-  { key: "away", label: "Away", tone: "muted" },
-  { key: "other", label: "Other", tone: "muted" },
+export const dayOutReasons: { key: DayOutReason; label: string; color: string }[] = [
+  { key: "sick", label: "Sick", color: "#f472b6" },
+  { key: "injured", label: "Injured", color: "#fb923c" },
+  { key: "away", label: "Away", color: "#22d3ee" },
+  { key: "other", label: "Other", color: "#94a3b8" },
 ];
 
 export const reasonMeta = (r: DayOutReason) =>
   dayOutReasons.find((x) => x.key === r) ?? dayOutReasons[dayOutReasons.length - 1];
 
-/** tone → the dot's theme-token class. */
-export const dayOutDot: Record<DayOutTone, string> = {
-  warn: "bg-warn",
-  danger: "bg-danger",
-  muted: "bg-muted",
-};
-/** tone → the word's theme-token class. */
-export const dayOutText: Record<DayOutTone, string> = {
-  warn: "text-warn",
-  danger: "text-danger",
-  muted: "text-muted",
-};
+/** What a marked day is CALLED on screen: "other" reads as "Missed". */
+export const dayOutName = (r: DayOutReason) => (r === "other" ? "Missed" : reasonMeta(r).label);
+
+/** The whole-day fill in the calendar — the same 28% tint a session block uses. */
+export const dayOutFill = (r: DayOutReason) =>
+  `color-mix(in oklab, ${reasonMeta(r).color} 28%, transparent)`;
 
 /** The profile status that means "out", as a reason. Active (or anything else) is null. */
 export function statusReason(status: string): DayOutReason | null {

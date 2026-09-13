@@ -13,7 +13,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { fetchAthleteProfile } from "@/lib/varsity/athleteProfile";
-import { dayOutDot, reasonMeta, spanLabel, statusReason, type DayOutReason } from "@/lib/varsity/daysOut";
+import { reasonMeta, spanLabel, statusReason, type DayOutReason } from "@/lib/varsity/daysOut";
 
 const DAYS_BEFORE_ASKING = 3;
 
@@ -60,7 +60,7 @@ export default function StillOutCard({ userId }: { userId: string | null }) {
     <div className="px-3 pt-3">
       <div className="rounded-xl border border-border bg-surface px-3.5 py-3">
         <div className="flex items-center gap-2">
-          <span className={`h-2.5 w-2.5 flex-shrink-0 rounded-full ${dayOutDot[meta.tone]}`} />
+          <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ background: meta.color }} />
           <span className="text-[14px] font-semibold text-text">
             {spell.reason === "away" ? "Still away?" : `Still ${word}?`}
           </span>

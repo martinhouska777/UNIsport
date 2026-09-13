@@ -27,8 +27,8 @@
        water and erg are the same green and only the word tells them apart.
        The figures stay in the day sheet: a column is about 33px of text wide.
     6. A DAY CAN BE OUT. Sick, injured, away or missed-for-another-reason
-       (lib/varsity/daysOut.ts): a coloured dot by the date, and on a day with
-       nothing logged the reason written in the box. Only a day with nothing
+       (lib/varsity/daysOut.ts): the whole day painted in that reason's own
+       colour, with its name in the middle. Only a day with nothing
        done on it can be marked: tap it, tap Missed, and it asks why (Sick,
        Injured, Away, Other) with a short note.
     5. NO PAGE HEADER. The month is the title, and the colour key sits
@@ -69,9 +69,9 @@ import {
 import { IconArrowLeft, IconArrowRight, IconChevronRight, IconX } from "@/components/icons";
 import { fetchDaysOut, saveDaysOut } from "@/lib/varsity/athleteProfile";
 import {
-  dayOutDot,
+  dayOutFill,
+  dayOutName,
   dayOutReasons,
-  dayOutText,
   reasonMeta,
   type DayOut,
   type DayOutReason,
@@ -168,11 +168,9 @@ function DayOutSection({
     const meta = reasonMeta(value.reason);
     return (
       <div className="mt-3 flex items-start gap-3 rounded-2xl border border-border bg-surface-2 px-3.5 py-3">
-        <span className={`mt-1 h-2.5 w-2.5 flex-shrink-0 rounded-full ${dayOutDot[meta.tone]}`} />
+        <span className="mt-1 h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ background: meta.color }} />
         <div className="min-w-0 flex-1">
-          <div className={`text-[13px] font-semibold ${dayOutText[meta.tone]}`}>
-            {value.reason === "other" ? "Missed" : meta.label}
-          </div>
+          <div className="text-[13px] font-semibold text-text">{dayOutName(value.reason)}</div>
           {value.note && <div className="mt-0.5 text-[12px] leading-relaxed text-text-2">{value.note}</div>}
         </div>
         <button
@@ -202,7 +200,7 @@ function DayOutSection({
                 reason === r.key ? "border-primary bg-primary-tint text-text" : "border-border bg-surface text-muted"
               }`}
             >
-              <span className={`h-2 w-2 rounded-full ${dayOutDot[r.tone]}`} />
+              <span className="h-2 w-2 rounded-full" style={{ background: r.color }} />
               {r.label}
             </button>
           ))}
@@ -549,6 +547,8 @@ export default function CalendarScreen() {
           const label = `${MONTHS[view.m]} ${d.num}, ${view.y}`;
           const out = daysOut[d.iso];
           const outMeta = out ? reasonMeta(out.reason) : null;
+          // Only an EMPTY day is painted; an older mark on a trained day keeps a dot.
+          const outFill = out && !has ? dayOutFill(out.reason) : null;
           return (
             <button
               key={d.num}
@@ -574,6 +574,10 @@ export default function CalendarScreen() {
                   ? "border-primary bg-primary-tint"
                   : "border-border bg-surface active:bg-surface-2"
               }`}
+              /* A DAY OUT PAINTS THE WHOLE DAY in its own colour (sick pink,
+                 injured orange, away cyan, missed slate — lib/varsity/daysOut.ts),
+                 the way a session paints its half. */
+              style={outFill ? { background: outFill } : undefined}
             >
               <span
                 className={`flex items-center justify-between px-1 pt-1 text-[12px] font-semibold leading-none ${
@@ -582,10 +586,11 @@ export default function CalendarScreen() {
               >
                 {d.num}
                 {/* A DAY OUT — the dot by the date (lib/varsity/daysOut.ts). */}
-                {outMeta && (
+                {outMeta && has && (
                   <span
                     aria-label={outMeta.label}
-                    className={`h-[7px] w-[7px] flex-shrink-0 rounded-full ${dayOutDot[outMeta.tone]}`}
+                    className="h-[7px] w-[7px] flex-shrink-0 rounded-full"
+                    style={{ background: outMeta.color }}
                   />
                 )}
               </span>
@@ -597,7 +602,13 @@ export default function CalendarScreen() {
                 trained twice. A third session (it happens) makes its own row
                 and the three share.
               */}
-              <span className="mt-0.5 grid min-h-0 flex-1 auto-rows-fr grid-rows-2 gap-px">
+              {/* …and on a day out with nothing logged, its name in the middle. */}
+              {outFill && (
+                <span className="flex min-h-0 flex-1 items-center justify-center px-0.5 pb-3">
+                  <span className="truncate text-[9px] font-semibold text-text">{dayOutName(out!.reason)}</span>
+                </span>
+              )}
+              <span className={`mt-0.5 min-h-0 flex-1 auto-rows-fr grid-rows-2 gap-px ${outFill ? "hidden" : "grid"}`}>
                 {has && (
                   <>
                   {d.logs.map((l) => {
@@ -680,12 +691,6 @@ export default function CalendarScreen() {
                   </>
                 )}
               </span>
-              {/* …and on a day with nothing logged, the reason at the foot of the box. */}
-              {outMeta && !has && (
-                <span className={`truncate px-1 pb-1 text-[9px] font-semibold ${dayOutText[outMeta.tone]}`}>
-                  {out!.reason === "other" ? "Missed" : outMeta.label}
-                </span>
-              )}
             </button>
           );
         })}

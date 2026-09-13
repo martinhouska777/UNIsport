@@ -64,7 +64,7 @@ import {
 } from "@/lib/varsity/athleteStats";
 import { rowingReport, bucketDetail, type StatTone } from "@/lib/varsity/rowingStats";
 import { trainingMix, mixLine } from "@/lib/varsity/trainingMix";
-import { countDaysOut, dayOutDot, dayOutReasons, type DaysOut } from "@/lib/varsity/daysOut";
+import { countDaysOut, dayOutName, dayOutReasons, type DaysOut } from "@/lib/varsity/daysOut";
 
 /* A word from the data → a theme token. The data never names a colour. */
 const toneClass: Record<StatTone, string> = {
@@ -430,8 +430,8 @@ export default function StatsFullScreen({
                       {outRows.map((r) => (
                         <div key={r.key} className="flex items-baseline justify-between gap-3">
                           <span className="flex min-w-0 items-center gap-2">
-                            <span className={`h-2.5 w-2.5 flex-shrink-0 rounded-full ${dayOutDot[r.tone]}`} />
-                            <span className="truncate text-[13px] font-medium text-text">{r.key === "other" ? "Missed" : r.label}</span>
+                            <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ background: r.color }} />
+                            <span className="truncate text-[13px] font-medium text-text">{dayOutName(r.key)}</span>
                           </span>
                           <span className="flex-shrink-0 text-[12px] font-semibold text-text">
                             {outCounts[r.key]} day{outCounts[r.key] === 1 ? "" : "s"}
