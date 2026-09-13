@@ -17,7 +17,7 @@ import { buddyFocuses, buddyTimesOfDay, focusLabel, timeOfDayLabel } from "@/lib
 import { weekDays, verifiedGyms } from "@/lib/onboarding";
 import { Pill, FieldLabel, SelectField } from "@/components/onboarding/controls";
 import type { FilterChip } from "@/components/match/FilterBar";
-import Button from "@/components/ui/Button";
+import { FilterFooter } from "@/components/match/FiltersSheet";
 import DropdownPanel from "@/components/ui/DropdownPanel";
 
 /** What the board is currently narrowed to. All null = show everything. */
@@ -74,24 +74,22 @@ export default function BoardFiltersSheet({
   // A dropdown under the bar, not a sheet up from the floor — see the note in
   // components/match/FiltersSheet.tsx.
   return (
-    <DropdownPanel className="rounded-xl border border-border bg-surface p-3.5">
+    <DropdownPanel
+      footer={
+        <FilterFooter
+          count={count}
+          emptyLabel="Show everything"
+          onCancel={onClose}
+          onApply={() => {
+            onApply(draft);
+            onClose();
+          }}
+        />
+      }
+    >
+      {/* Straight into Gym: the "Filter open posts" title and the line under
+          it were cut — the Filters button right above already says what this is. */}
       <div>
-        <div className="mb-1 flex items-center justify-between">
-          <h2 className="text-sm font-medium text-text">Filter open posts</h2>
-          {count > 0 && (
-            <button
-              type="button"
-              onClick={() => setDraft(NO_BOARD_FILTERS)}
-              className="tap44 text-[13px] font-medium text-muted"
-            >
-              Clear all
-            </button>
-          )}
-        </div>
-        <p className="mb-3 text-[11px] text-muted">
-          Narrows the board only — it doesn’t change the post you’re writing.
-        </p>
-
         <div className="mb-4">
           <FieldLabel>Gym</FieldLabel>
           {/* A dropdown, like the post form: fifteen gyms is a list. */}
@@ -132,7 +130,7 @@ export default function BoardFiltersSheet({
           </div>
         </div>
 
-        <div className="mb-4">
+        <div>
           <FieldLabel>Time of day</FieldLabel>
           <div className="flex flex-wrap gap-1.5">
             {buddyTimesOfDay.map((t) => (
@@ -144,23 +142,6 @@ export default function BoardFiltersSheet({
               />
             ))}
           </div>
-        </div>
-
-        {/* The commit, stuck to the foot of the sheet — see FiltersSheet. */}
-        <div className="sticky bottom-0 -mx-3.5 -mb-3.5 flex gap-2 border-t border-border bg-surface px-3.5 py-3">
-          <Button variant="secondary" size="md" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button
-            size="md"
-            full
-            onClick={() => {
-              onApply(draft);
-              onClose();
-            }}
-          >
-            {count > 0 ? `Apply ${count} filter${count === 1 ? "" : "s"}` : "Show everything"}
-          </Button>
         </div>
       </div>
     </DropdownPanel>

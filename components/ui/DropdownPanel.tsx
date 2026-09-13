@@ -17,6 +17,12 @@
 
   It re-measures on resize and when the phone's keyboard changes the visible
   area (visualViewport), so an opened panel stays inside the screen.
+
+  The FOOTER (Cancel / Apply) is its own row under the scrolling part, not a
+  sticky strip inside it. The sticky version stopped at the panel's padding
+  rather than its edge, so it floated a few pixels above the bottom with the
+  last options scrolling out underneath it — the owner saw the buttons "going
+  under" the list on the Sessions filters.
 */
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
@@ -40,11 +46,11 @@ function scrollParent(el: HTMLElement): HTMLElement | null {
 
 export default function DropdownPanel({
   children,
-  className = "",
+  footer,
 }: {
   children: ReactNode;
-  /** Extra classes for the panel box itself (the look; the height is ours). */
-  className?: string;
+  /** The row pinned to the panel's bottom edge — the Cancel / Apply buttons. */
+  footer?: ReactNode;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const [maxHeight, setMaxHeight] = useState<number | null>(null);
@@ -87,9 +93,12 @@ export default function DropdownPanel({
       // Until the first measure lands, the old cap keeps it sane (and it is
       // what a server-rendered pass shows).
       style={{ maxHeight: maxHeight === null ? "62dvh" : `${maxHeight}px` }}
-      className={`mt-2 overflow-y-auto overscroll-contain ${className}`}
+      className="mt-2 flex flex-col overflow-hidden rounded-xl border border-border bg-surface"
     >
-      {children}
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-3.5">{children}</div>
+      {footer && (
+        <div className="flex flex-shrink-0 gap-2 border-t border-border px-3.5 py-3">{footer}</div>
+      )}
     </div>
   );
 }

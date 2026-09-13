@@ -4,8 +4,9 @@
   THE MATCH FILTER SHEET — one sheet, used by both Browse and Session search, so
   the two never offer different ways to narrow the same list.
 
-  Every filter is optional: tick a row to open it, pick a value, untick to clear.
-  Nothing ticked = see everyone.
+  Every filter is optional and has its own small tab: tap a tab to see its
+  options, pick a value, tap the value again (or Clear) to drop it. Nothing
+  picked = see everyone.
 
   Nothing takes effect until you press APPLY. Every tap used to re-run the list
   behind the open sheet, so the results moved under your thumb while you were
@@ -25,7 +26,7 @@
   Colors are theme tokens; the option lists are the onboarding data, so a new
   concentration or interest appears here automatically.
 */
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
 import {
   concentrations,
   interestOptions,
@@ -112,61 +113,78 @@ export function activeFilterChips(
   return chips;
 }
 
-/** The rows that already carry a value — the ones the sheet opens ticked. */
-function rowsSetIn(f: MatchFilters): Set<string> {
-  const rows = new Set<string>();
-  (Object.keys(f) as (keyof MatchFilters)[]).forEach((k) => {
-    const v = f[k];
-    if (Array.isArray(v) ? v.length > 0 : v != null) rows.add(k);
-  });
-  return rows;
-}
-
-// A square tick-box. Ticking a row reveals its options; unticking clears it.
-function CheckSquare({ checked }: { checked: boolean }) {
+/*
+  THE BUTTONS AT THE FOOT OF BOTH FILTER PANELS — Cancel and Apply, the same
+  width, side by side. Shared with the Buddy Board's panel so the two never
+  drift apart. Cancel used to be a narrow button beside a wide one, which read
+  as off-centre.
+*/
+export function FilterFooter({
+  count,
+  emptyLabel,
+  onCancel,
+  onApply,
+}: {
+  count: number;
+  /** What Apply says while nothing is picked: "Show everyone", "Show everything". */
+  emptyLabel: string;
+  onCancel: () => void;
+  onApply: () => void;
+}) {
   return (
-    <span
-      className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-[5px] border text-[11px] font-bold ${
-        checked
-          ? "border-text bg-text text-background"
-          : "border-border bg-surface-2 text-transparent"
-      }`}
-    >
-      ✓
-    </span>
+    <>
+      <Button variant="secondary" size="md" className="flex-1" onClick={onCancel}>
+        Cancel
+      </Button>
+      <Button size="md" className="flex-1" onClick={onApply}>
+        {count > 0 ? `Apply ${count} filter${count === 1 ? "" : "s"}` : emptyLabel}
+      </Button>
+    </>
   );
 }
 
-// One collapsible row: tick-box + title, and when ticked, whatever control the
-// filter needs (pills for short lists, a searchable dropdown for long ones).
-function FilterRow({
-  title,
+type TabKey = keyof MatchFilters;
+
+/*
+  A FILTER TAB. The panel used to be seven full-width rows — a tick-box and a
+  name on the left, the picked value far off on the right — so it took most of
+  the screen before you had chosen anything. Now each filter is a small tab in a
+  row that wraps; tapping one shows its options underneath, tapping it again
+  hides them. A tab that already has something picked is tinted and carries a
+  dot, so you can see what is set without opening anything.
+*/
+function FilterTab({
+  label,
   open,
-  onToggle,
-  summary,
-  children,
+  set,
+  onClick,
 }: {
-  title: string;
+  label: string;
   open: boolean;
-  onToggle: () => void;
-  summary?: string | null;
-  children: ReactNode;
+  set: boolean;
+  onClick: () => void;
 }) {
   return (
-    <div className="border-b border-border py-3 last:border-b-0">
-      <button
-        type="button"
-        onClick={onToggle}
-        className="flex w-full items-center gap-2.5 text-left"
-      >
-        <CheckSquare checked={open} />
-        <span className="text-sm text-text">{title}</span>
-        {summary && !open && (
-          <span className="ml-auto truncate pl-2 text-xs text-muted">{summary}</span>
-        )}
-      </button>
-      {open && <div className="mt-2.5 pl-[30px]">{children}</div>}
-    </div>
+    <button
+      type="button"
+      onClick={onClick}
+      aria-expanded={open}
+      className={`tap44 flex h-8 items-center gap-1.5 rounded-full border px-3 text-[12px] font-medium transition-colors ${
+        open
+          ? "border-text bg-text text-background"
+          : set
+            ? "border-primary bg-primary-tint text-primary"
+            : "border-border bg-surface-2 text-muted"
+      }`}
+    >
+      {label}
+      {set && (
+        <span
+          aria-hidden
+          className={`h-1.5 w-1.5 rounded-full ${open ? "bg-background" : "bg-primary"}`}
+        />
+      )}
+    </button>
   );
 }
 
@@ -225,12 +243,10 @@ export default function FiltersSheet({
   */
   const [draft, setDraft] = useState<MatchFilters>(value);
   /*
-    Which rows are ticked open: the ones that already had a value when the sheet
-    opened, so you land looking at what you set last time. Local, because a
-    ticked row with nothing picked yet isn't a filter and the list outside has
-    no business knowing about it.
+    Which tab is showing its options. None when the panel opens: the tabs alone
+    are a short block, and the dot on a tab already says what is set.
   */
-  const [openRows, setOpenRows] = useState<Set<string>>(() => rowsSetIn(value));
+  const [openTab, setOpenTab] = useState<TabKey | null>(null);
   /*
     Clearing a chip on the bar outside changes the applied filters under us. The
     parent hands this component a `key` made of them, so that clears the draft
@@ -240,22 +256,21 @@ export default function FiltersSheet({
   const set = (patch: Partial<MatchFilters>) => setDraft((d) => ({ ...d, ...patch }));
 
   const count = activeFilterCount(draft);
-  const clearAll = () => {
-    setDraft(NO_FILTERS);
-    setOpenRows(new Set());
+  const toggleTab = (key: TabKey) => setOpenTab((t) => (t === key ? null : key));
+  const isSet = (key: TabKey) => {
+    const v = draft[key];
+    return Array.isArray(v) ? v.length > 0 : v != null;
   };
 
-  const onToggleRow = (key: keyof MatchFilters) => {
-    const wasOpen = openRows.has(key);
-    setOpenRows((prev) => {
-      const next = new Set(prev);
-      if (wasOpen) next.delete(key);
-      else next.add(key);
-      return next;
-    });
-    if (wasOpen) set({ [key]: null } as Partial<MatchFilters>); // unticking clears it
-  };
-
+  const tabs: { key: TabKey; label: string }[] = [
+    ...(showActivity ? [{ key: "activity" as const, label: "Activity" }] : []),
+    { key: "concentration", label: "Concentration" },
+    { key: "interests", label: "Interests" },
+    { key: "gym", label: "Gym" },
+    { key: "level", label: "Level" },
+    { key: "gender", label: "Gender" },
+    { key: "classYear", label: "Class year" },
+  ];
 
   const interests = draft.interests ?? [];
   // "Same as mine" is on only when the picked set is exactly my own.
@@ -265,40 +280,39 @@ export default function FiltersSheet({
     myInterests.every((i) => interests.includes(i));
 
   /*
-    A DROPDOWN, not a sheet. It used to slide up from the bottom of the screen
-    while the button that opened it sat at the top — the two ends of one action
-    at opposite ends of the phone. It now opens downwards from the bar, where
-    the tap happened, the way a dropdown is expected to.
-
-    Its height is not a fixed share of the screen: DropdownPanel measures the
-    room actually left below the bar, so the panel always ends ON the screen
-    with the Apply row on its bottom edge.
+    A DROPDOWN, not a sheet: it opens downwards from the Filters button, where
+    the tap happened. DropdownPanel measures the room left below the button so
+    the panel always ends ON the screen, with Cancel / Apply on its bottom edge.
   */
   return (
-    <DropdownPanel className="rounded-xl border border-border bg-surface p-3.5">
-      <div>
-        <div className="mb-1 flex items-center justify-between">
-          <h2 className="text-sm font-medium text-text">Filters</h2>
-          {/* Reset sits up here beside the title; the commit is at the foot of
-              the sheet, where the thumb already is. */}
-          {count > 0 && (
-            <button
-              type="button"
-              onClick={clearAll}
-              className="tap44 text-[13px] font-medium text-muted"
-            >
-              Clear all
-            </button>
-          )}
-        </div>
+    <DropdownPanel
+      footer={
+        <FilterFooter
+          count={count}
+          emptyLabel="Show everyone"
+          onCancel={onClose}
+          onApply={() => {
+            onApply(draft);
+            onClose();
+          }}
+        />
+      }
+    >
+      <div className="flex flex-wrap gap-1.5">
+        {tabs.map((t) => (
+          <FilterTab
+            key={t.key}
+            label={t.label}
+            open={openTab === t.key}
+            set={isSet(t.key)}
+            onClick={() => toggleTab(t.key)}
+          />
+        ))}
+      </div>
 
-        {showActivity && (
-          <FilterRow
-            title="Activity"
-            open={openRows.has("activity")}
-            onToggle={() => onToggleRow("activity")}
-            summary={primaryActivities.find((a) => a.key === draft.activity)?.label}
-          >
+      {openTab && (
+        <div className="mt-3 border-t border-border pt-3">
+          {openTab === "activity" && (
             <div className="flex flex-wrap gap-1.5">
               {primaryActivities.map((a) => (
                 <Pill
@@ -309,166 +323,125 @@ export default function FiltersSheet({
                 />
               ))}
             </div>
-          </FilterRow>
-        )}
-
-        <FilterRow
-          title="Concentration"
-          open={openRows.has("concentration")}
-          onToggle={() => onToggleRow("concentration")}
-          summary={draft.concentration}
-        >
-          {myConcentration && (
-            <MineButton
-              label={`Same as mine · ${myConcentration}`}
-              active={draft.concentration === myConcentration}
-              onClick={() =>
-                set({
-                  concentration:
-                    draft.concentration === myConcentration ? null : myConcentration,
-                })
-              }
-            />
           )}
-          <SearchableDropdown
-            options={concentrations}
-            value={draft.concentration ?? ""}
-            onChange={(v) => set({ concentration: v || null })}
-            placeholder="Any concentration"
-            searchPlaceholder="Search concentrations…"
-            ariaLabel="Concentration filter"
-          />
-        </FilterRow>
 
-        <FilterRow
-          title="Interests"
-          open={openRows.has("interests")}
-          onToggle={() => onToggleRow("interests")}
-          summary={
-            interests.length > 0
-              ? interests.length === 1
-                ? interests[0]
-                : `${interests.length} picked`
-              : null
-          }
-        >
-          {myInterests.length > 0 && (
-            <MineButton
-              label="Same as mine"
-              active={usingMyInterests}
-              onClick={() => set({ interests: usingMyInterests ? null : myInterests })}
-            />
+          {openTab === "concentration" && (
+            <>
+              {myConcentration && (
+                <MineButton
+                  label={`Same as mine · ${myConcentration}`}
+                  active={draft.concentration === myConcentration}
+                  onClick={() =>
+                    set({
+                      concentration:
+                        draft.concentration === myConcentration ? null : myConcentration,
+                    })
+                  }
+                />
+              )}
+              <SearchableDropdown
+                options={concentrations}
+                value={draft.concentration ?? ""}
+                onChange={(v) => set({ concentration: v || null })}
+                placeholder="Any concentration"
+                searchPlaceholder="Search concentrations…"
+                ariaLabel="Concentration filter"
+              />
+            </>
           )}
-          <SearchableDropdown
-            multiple
-            /* Once you've picked it, it leaves the list. It was appearing in
-               both places at once — as a chip above and still as an option
-               below — which reads as though the tap didn't take. */
-            hideSelected
-            options={interestOptions}
-            value={interests}
-            onChange={(v) => set({ interests: v.length > 0 ? v : null })}
-            placeholder="Any interest"
-            searchPlaceholder="Search interests…"
-            ariaLabel="Interests filter"
-          />
-        </FilterRow>
 
-        <FilterRow
-          title="Gym"
-          open={openRows.has("gym")}
-          onToggle={() => onToggleRow("gym")}
-          summary={draft.gym}
-        >
-          <div className="flex flex-wrap gap-1.5">
-            {verifiedGyms.map((g) => (
-              <Pill
-                key={g}
-                label={g}
-                selected={draft.gym === g}
-                onClick={() => set({ gym: draft.gym === g ? null : g })}
+          {openTab === "interests" && (
+            <>
+              {myInterests.length > 0 && (
+                <MineButton
+                  label="Same as mine"
+                  active={usingMyInterests}
+                  onClick={() => set({ interests: usingMyInterests ? null : myInterests })}
+                />
+              )}
+              <SearchableDropdown
+                multiple
+                /* Once you've picked it, it leaves the list. It was appearing in
+                   both places at once — as a chip above and still as an option
+                   below — which reads as though the tap didn't take. */
+                hideSelected
+                options={interestOptions}
+                value={interests}
+                onChange={(v) => set({ interests: v.length > 0 ? v : null })}
+                placeholder="Any interest"
+                searchPlaceholder="Search interests…"
+                ariaLabel="Interests filter"
               />
-            ))}
-          </div>
-        </FilterRow>
+            </>
+          )}
 
-        <FilterRow
-          title="Level"
-          open={openRows.has("level")}
-          onToggle={() => onToggleRow("level")}
-          summary={experienceLevels.find((l) => l.key === draft.level)?.name}
-        >
-          <div className="flex flex-wrap gap-1.5">
-            {experienceLevels.map((l) => (
-              <Pill
-                key={l.key}
-                label={l.name}
-                selected={draft.level === l.key}
-                onClick={() => set({ level: draft.level === l.key ? null : l.key })}
-              />
-            ))}
-          </div>
-        </FilterRow>
+          {openTab === "gym" && (
+            <div className="flex flex-wrap gap-1.5">
+              {verifiedGyms.map((g) => (
+                <Pill
+                  key={g}
+                  label={g}
+                  selected={draft.gym === g}
+                  onClick={() => set({ gym: draft.gym === g ? null : g })}
+                />
+              ))}
+            </div>
+          )}
 
-        <FilterRow
-          title="Gender"
-          open={openRows.has("gender")}
-          onToggle={() => onToggleRow("gender")}
-          summary={genderOptions.find((g) => g.key === draft.gender)?.label}
-        >
-          <div className="flex flex-wrap gap-1.5">
-            {genderOptions.map((g) => (
-              <Pill
-                key={g.key}
-                label={g.label}
-                selected={draft.gender === g.key}
-                onClick={() => set({ gender: draft.gender === g.key ? null : g.key })}
-              />
-            ))}
-          </div>
-        </FilterRow>
+          {openTab === "level" && (
+            <div className="flex flex-wrap gap-1.5">
+              {experienceLevels.map((l) => (
+                <Pill
+                  key={l.key}
+                  label={l.name}
+                  selected={draft.level === l.key}
+                  onClick={() => set({ level: draft.level === l.key ? null : l.key })}
+                />
+              ))}
+            </div>
+          )}
 
-        {/* A first-year's Match opens on this by default for their first
-            month (lib/onboarding.ts); for everyone it is one more way in. */}
-        <FilterRow
-          title="Class year"
-          open={openRows.has("classYear")}
-          onToggle={() => onToggleRow("classYear")}
-          summary={draft.classYear ? yearPill(draft.classYear) : null}
-        >
-          <div className="flex flex-wrap gap-1.5">
-            {classYears.map((y) => (
-              <Pill
-                key={y}
-                label={yearPill(y)}
-                selected={draft.classYear === y}
-                onClick={() => set({ classYear: draft.classYear === y ? null : y })}
-              />
-            ))}
-          </div>
-        </FilterRow>
+          {openTab === "gender" && (
+            <div className="flex flex-wrap gap-1.5">
+              {genderOptions.map((g) => (
+                <Pill
+                  key={g.key}
+                  label={g.label}
+                  selected={draft.gender === g.key}
+                  onClick={() => set({ gender: draft.gender === g.key ? null : g.key })}
+                />
+              ))}
+            </div>
+          )}
 
-        {/*
-          THE COMMIT. Stuck to the foot of the sheet so it is under the thumb
-          however far down the rows you have scrolled, with Cancel beside it so
-          backing out is a button rather than a guess about the chevron.
-        */}
-        <div className="sticky bottom-0 -mx-3.5 -mb-3.5 mt-1 flex gap-2 border-t border-border bg-surface px-3.5 py-3">
-          <Button variant="secondary" size="md" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button
-            size="md"
-            full
-            onClick={() => {
-              onApply(draft);
-              onClose();
-            }}
-          >
-            {count > 0 ? `Apply ${count} filter${count === 1 ? "" : "s"}` : "Show everyone"}
-          </Button>
+          {/* A first-year's Match opens on this by default for their first
+              month (lib/onboarding.ts); for everyone it is one more way in. */}
+          {openTab === "classYear" && (
+            <div className="flex flex-wrap gap-1.5">
+              {classYears.map((y) => (
+                <Pill
+                  key={y}
+                  label={yearPill(y)}
+                  selected={draft.classYear === y}
+                  onClick={() => set({ classYear: draft.classYear === y ? null : y })}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Drops just this one filter. The concentration dropdown has no
+              "none" row, so without this a picked one couldn't be undone here. */}
+          {isSet(openTab) && (
+            <button
+              type="button"
+              onClick={() => set({ [openTab]: null } as Partial<MatchFilters>)}
+              className="tap44 mt-2 text-[12px] text-muted"
+            >
+              Clear {tabs.find((t) => t.key === openTab)?.label.toLowerCase()}
+            </button>
+          )}
         </div>
-      </div>
+      )}
     </DropdownPanel>
   );
 }
