@@ -306,35 +306,43 @@ export default function ProfilePage() {
               {saveState === "saving" ? "Saving…" : saveState === "saved" ? "Saved ✓" : "Couldn’t save"}
             </span>
           )}
-          {/* Inviting someone moved to Settings — this pencil is the one way
-              in to edit name + bio, opening both InlineEdit fields below via
-              startEditingToken rather than making people find the small
-              per-field pencils themselves. */}
-          <button
-            type="button"
-            onClick={() => setIdentityEditTick((t) => t + 1)}
-            aria-label="Edit name and bio"
-            className="tap44 press-icon flex items-center justify-center text-muted"
-          >
-            <IconPencil size={18} />
-          </button>
+          {/* The pencil that opened name + bio lives on the wide Edit profile
+              button under the bio now, where a profile screen puts it. */}
           <Link href="/settings" aria-label="Settings" className="text-muted">
             <IconSettings size={18} />
           </Link>
         </div>
       </div>
 
-      {/* 1 · WHO YOU ARE — photo on the left with the name, house and badges
-          beside it; bio full width underneath; the three counts under that. */}
-      <div className="border-b border-border px-3.5 pb-3 pt-2.5">
-        <div className="flex items-start gap-3">
+      {/*
+        1 · WHO YOU ARE — laid out the way every profile a student has ever
+        opened is laid out, because that is the shape they can already read
+        without being taught it:
+
+          ( photo )   N          N          N
+                   workouts   partners   followers
+
+          Martin Houska            [VARSITY] [MENTOR]
+          Mather House · Class of 2029
+          a line of bio
+
+          [           Edit profile           ]
+
+        The numbers move UP beside the photo, big first and labelled under —
+        they used to run full width below the bio as three small labels with
+        the figure beneath, which is the one arrangement nobody's phone uses.
+        Everything that is WORDS about you — name, badges, house, bio — is now
+        one column under the row, full width, in reading order.
+      */}
+      <div className="border-b border-border px-3.5 pb-3.5 pt-3">
+        <div className="flex items-center gap-4">
           <div className="relative flex-shrink-0">
-            <div className="flex h-[68px] w-[68px] items-center justify-center overflow-hidden rounded-full border-2 border-primary bg-primary-tint text-primary">
+            <div className="flex h-[86px] w-[86px] items-center justify-center overflow-hidden rounded-full border-2 border-primary bg-primary-tint text-primary">
               {user.photo ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={user.photo} alt={user.name || "Profile photo"} className="h-full w-full object-cover" />
               ) : (
-                <IconUser size={28} />
+                <IconUser size={34} />
               )}
             </div>
             <input
@@ -351,95 +359,101 @@ export default function ProfilePage() {
               type="button"
               onClick={() => avatarInputRef.current?.click()}
               aria-label={user.photo ? "Change photo" : "Add photo"}
-              className="tap44 press-icon absolute -bottom-0.5 -right-0.5 flex h-6 w-6 items-center justify-center rounded-full border border-border bg-surface-2 text-muted"
+              className="tap44 press-icon absolute -bottom-0.5 -right-0.5 flex h-7 w-7 items-center justify-center rounded-full border border-border bg-surface-2 text-muted"
             >
-              <IconCamera size={12} />
+              <IconCamera size={13} />
             </button>
           </div>
 
-          <div className="min-w-0 flex-1">
-            <InlineEdit
-              value={user.name}
-              onChange={(v) => update({ name: v })}
-              ariaLabel="name"
-              placeholder="Your name"
-              maxLength={40}
-              /* The name everyone else sees — it has to be one (lib/onboarding). */
-              validate={nameError}
-              textClassName="text-[15px] font-medium text-text"
-              startEditingToken={identityEditTick}
-            />
-
-            <div className="mt-0.5 text-[11px] text-muted">
-              {user.residence ? `${residenceLabel(user.residence)} · ` : ""}
-              {classOfLabel(user.classYear)}
-            </div>
-
-            {/* The badges get their own line UNDER the house and class, so the
-                house isn't squeezed by them. On your OWN profile the varsity
-                badge comes from live membership: profiles.data has no record of
-                it (the squad lives in its own table). Gold, as everywhere. */}
-            {(isMember || user.badges.mentor) && (
-              <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                {isMember && (
-                  <span className="rounded bg-accent px-1.5 py-0.5 text-[8px] font-medium tracking-wide text-background">
-                    VARSITY
-                  </span>
-                )}
-                {user.badges.mentor && (
-                  <span className="rounded border border-success bg-success-tint px-1.5 py-0.5 text-[8px] font-medium tracking-wide text-success">
-                    MENTOR
-                  </span>
-                )}
-              </div>
-            )}
-
+          {/* The three numbers, spread across the rest of the row: the figure
+              big, the word small under it. Partners is the only one that
+              opens anything, so it is the only one that looks pressable. */}
+          <div className="flex min-w-0 flex-1 items-start justify-around">
+            {stats.map((s) => {
+              const body = (
+                <>
+                  <div className="text-[19px] font-semibold leading-none tabular-nums text-text">
+                    {statsReady ? s.value : "—"}
+                  </div>
+                  <div className={`mt-1 text-[12px] ${s.onClick ? "text-primary" : "text-muted"}`}>
+                    {s.label}
+                  </div>
+                </>
+              );
+              return s.onClick ? (
+                <button key={s.label} type="button" onClick={s.onClick} className="px-1 text-center">
+                  {body}
+                </button>
+              ) : (
+                <div key={s.label} className="px-1 text-center">
+                  {body}
+                </div>
+              );
+            })}
           </div>
         </div>
 
-        {/* Bio — full width under the block, where a line of text belongs. */}
-        <div className="mt-2.5">
+        {/* THE WORDS, under the row and full width. Name first, with the
+            badges on its own line — on your OWN profile the varsity one comes
+            from live membership, because profiles.data has no record of it
+            (the squad lives in its own table). Gold, as everywhere. */}
+        <div className="mt-3">
           <InlineEdit
-            value={user.bio}
-            onChange={(v) => update({ bio: v })}
-            ariaLabel="bio"
-            placeholder="Add a short bio"
-            maxLength={160}
-            multiline
-            textClassName="text-[12px] leading-relaxed text-muted"
+            value={user.name}
+            onChange={(v) => update({ name: v })}
+            ariaLabel="name"
+            placeholder="Your name"
+            maxLength={40}
+            /* The name everyone else sees — it has to be one (lib/onboarding). */
+            validate={nameError}
+            textClassName="text-[15px] font-semibold text-text"
             startEditingToken={identityEditTick}
           />
+
+          {(isMember || user.badges.mentor) && (
+            <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+              {isMember && (
+                <span className="rounded bg-accent px-1.5 py-0.5 text-[8px] font-medium tracking-wide text-background">
+                  VARSITY
+                </span>
+              )}
+              {user.badges.mentor && (
+                <span className="rounded border border-success bg-success-tint px-1.5 py-0.5 text-[8px] font-medium tracking-wide text-success">
+                  MENTOR
+                </span>
+              )}
+            </div>
+          )}
+
+          <div className="mt-1 text-[12px] text-muted">
+            {user.residence ? `${residenceLabel(user.residence)} · ` : ""}
+            {classOfLabel(user.classYear)}
+          </div>
+
+          <div className="mt-1">
+            <InlineEdit
+              value={user.bio}
+              onChange={(v) => update({ bio: v })}
+              ariaLabel="bio"
+              placeholder="Add a short bio"
+              maxLength={160}
+              multiline
+              textClassName="text-[12px] leading-relaxed text-muted"
+              startEditingToken={identityEditTick}
+            />
+          </div>
         </div>
 
-        {/* The counts, UNDER the bio and across the whole width. They used to
-            be squeezed into the column beside the photo, three narrow labels
-            under the badges; the owner's call is that who you are reads top to
-            bottom — photo, badges, bio — and the numbers come after it. */}
-        <div className="mt-3 flex items-start">
-          {stats.map((s) => {
-            const body = (
-              <>
-                <div className={`text-[11px] ${s.onClick ? "text-primary" : "text-muted"}`}>
-                  {s.label}
-                </div>
-                <div className="mt-0.5 text-[15px] font-medium leading-none text-text">
-                  {statsReady ? s.value : "—"}
-                </div>
-              </>
-            );
-            return (
-              <div key={s.label} className="min-w-0 flex-1">
-                {s.onClick ? (
-                  <button type="button" onClick={s.onClick} className="block text-left">
-                    {body}
-                  </button>
-                ) : (
-                  body
-                )}
-              </div>
-            );
-          })}
-        </div>
+        {/* One wide button for editing, where the profile you already use puts
+            it. It is the same action the small pencil in the top bar was — that
+            pencil is gone rather than doing the identical job twice. */}
+        <button
+          type="button"
+          onClick={() => setIdentityEditTick((t) => t + 1)}
+          className="tap44 mt-3 w-full rounded-lg border border-border bg-surface-2 py-2 text-[13px] font-semibold text-text active:bg-surface"
+        >
+          Edit profile
+        </button>
       </div>
 
       {/* "Did you train with Sam today?" — a partner tag waiting for your yes.
