@@ -287,55 +287,6 @@ export function samePieceHistory(
     .sort((a, b) => b.workout.date.getTime() - a.workout.date.getTime());
 }
 
-/* One athlete's own run of a piece, over time. */
-export type HistoryPoint = {
-  dayKey: string;
-  dateLabel: string;
-  value: number | null;
-  display: string;
-  /* Improvement on the point BEFORE it, already signed so positive is always
-     better whichever way the metric runs. Null for the earliest one. */
-  improvement: number | null;
-  best: boolean;
-};
-
-export function athleteHistory(
-  past: PastPiece[],
-  athleteId: string,
-  metric: MetricKey,
-): HistoryPoint[] {
-  const lowerIsBetter = metricMeta(metric).lowerIsBetter;
-  // Oldest first while we walk it, so each point can look one step back.
-  const points = [...past]
-    .reverse()
-    .map((p) => {
-      const mine = p.results.find((r) => r.athleteId === athleteId);
-      return mine
-        ? { dayKey: p.workout.dayKey, dateLabel: p.workout.dateLabel, value: metricValue(mine, metric) }
-        : null;
-    })
-    .filter((p): p is { dayKey: string; dateLabel: string; value: number | null } => p != null);
-
-  const values = points.map((p) => p.value).filter((v): v is number => v != null);
-  const bestValue = values.length
-    ? lowerIsBetter
-      ? Math.min(...values)
-      : Math.max(...values)
-    : null;
-
-  const out: HistoryPoint[] = points.map((p, i) => {
-    const prev = points[i - 1]?.value ?? null;
-    return {
-      ...p,
-      display: metricDisplay(p.value, metric),
-      improvement:
-        p.value != null && prev != null ? (lowerIsBetter ? prev - p.value : p.value - prev) : null,
-      best: p.value != null && p.value === bestValue,
-    };
-  });
-  return out.reverse(); // newest first for display
-}
-
 /*
   "−2.3s" / "+140 m" — an improvement, in the units of its metric.
 

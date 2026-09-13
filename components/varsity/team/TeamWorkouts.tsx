@@ -33,13 +33,19 @@
   category dot is a content color from data, applied via inline style (rule-1
   exception).
 
-  EVERY EXAMPLE SAYS SO — a small EXAMPLE pill on its row, and one line at the
-  top of the sheet it opens (components/varsity/ExampleTag). The pills had been
-  taken off once; they are back because a rower on their first day could not
-  tell a made-up 2k board from the squad's, which is exactly the harm a worked
-  example must never do. And the example board no longer writes the VIEWER'S
-  name onto a made-up result: seeing yourself ranked 22nd at a split you never
-  pulled is not a lesson about the board, it is a lie about you.
+  A ROW WEARS ONE TAG, and it is the only one that changes what you are about
+  to read: ERG or WATER. The EXAMPLE pill used to ride here too, and so did
+  RANKED and the telemetry source (PEACH / SPEEDCOACH); all three came off on
+  the owner's call — four pills down one line is a row you have to decode.
+
+  THE EXAMPLE STILL SAYS SO, where it cannot be missed instead of where it was
+  merely present: on the result row at the top of the board it opens
+  (components/varsity/ExampleTag → WorkoutBoard), and on the water side as a
+  line across the top of the outing. It has to say it somewhere, because a
+  rower on their first day cannot otherwise tell a made-up 2k board from the
+  squad's. What it must never do is write the VIEWER'S name onto a made-up
+  result: seeing yourself ranked 22nd at a split you never pulled is not a
+  lesson about the board, it is a lie about you.
 */
 import { useEffect, useMemo, useState } from "react";
 import { useAppState } from "@/components/AppState";
