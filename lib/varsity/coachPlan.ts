@@ -234,12 +234,39 @@ export function logLabel(
   log: { title: string; category: string | null },
   planned?: Session,
 ): string {
-  if (planned) return sessionLabel(planned);
+  const { kind, intensity } = logLabelParts(log, planned);
+  return intensity ? `${kind} · ${intensity}` : kind;
+}
+
+/*
+  The same name, in its two pieces — for the month grid, where a cell is about
+  40px wide and one line cannot hold both. There the kind goes on the first
+  line with the kilometres to its right, and the intensity sits underneath:
+
+      Water  14k          Erg  18k          Weights
+      UT2                 Hard
+
+  rather than "Water · UT2" wrapping onto two of the cell's three lines with
+  the figure pushed to a third.
+*/
+export function logLabelParts(
+  log: { title: string; category: string | null },
+  planned?: Session,
+): { kind: string; intensity: string | null } {
+  if (planned) {
+    const cat = categoryMeta[planned.category as Category]?.label ?? planned.category;
+    const intensity = planned.intensity
+      ? (intensityMeta[planned.intensity as Intensity]?.label ?? planned.intensity)
+      : null;
+    return { kind: cat, intensity };
+  }
   const meta = logCategoryMeta[(log.category ?? "other") as LogCategory];
   /* "Other" is not a name for anything, so a log filed under it keeps whatever
-     the athlete called it rather than being flattened to a shrug. */
-  if (meta && log.category && log.category !== "other") return meta.label;
-  return log.title.trim() || "Session";
+     the athlete called it rather than being flattened to a shrug. A session the
+     athlete added themselves has no prescribed intensity, so there is no second
+     line to write. */
+  if (meta && log.category && log.category !== "other") return { kind: meta.label, intensity: null };
+  return { kind: log.title.trim() || "Session", intensity: null };
 }
 
 /* ── Blocks + week math ── */

@@ -48,7 +48,13 @@ import { fetchPlan } from "@/lib/varsity/planStore";
 import { kindOf } from "@/lib/varsity/athleteHome";
 import { kindBar, kindBlock, kindColor, kindLegend } from "@/lib/varsity/home";
 import { formatMetrics } from "@/lib/varsity/logParse";
-import { logLabel, toISO, type Session, type SessionMap } from "@/lib/varsity/coachPlan";
+import {
+  logLabel,
+  logLabelParts,
+  toISO,
+  type Session,
+  type SessionMap,
+} from "@/lib/varsity/coachPlan";
 import {
   logCategoryColor,
   logCategoryLabel,
@@ -401,10 +407,11 @@ export default function CalendarScreen() {
                       to the category word, so nothing is ever blank.
                     */
                     const sub = logVolumeLabel(l.category, l.metres, l.minutes);
-                    /* Named the same way every time — "Erg · UT2", "Water · UT2"
-                       — rather than whatever each log happened to be titled
-                       (lib/varsity/coachPlan → logLabel). */
-                    const name = logLabel(l, planned);
+                    /* Named the same way every time, and in two pieces: the
+                       KIND on the first line with the figure to its right, the
+                       INTENSITY under it (lib/varsity/coachPlan →
+                       logLabelParts). */
+                    const { kind, intensity } = logLabelParts(l, planned);
                     /* An afternoon session belongs in the afternoon half, not
                        wherever it happened to be saved first. A log with no
                        period on it just takes the next free half. */
@@ -412,7 +419,10 @@ export default function CalendarScreen() {
                     return (
                       <span
                         key={l.id}
-                        className="overflow-hidden px-1 py-0.5"
+                        /* px-0.5, not px-1: those four pixels are what let
+                           "Water" and "22.5k" share the first line without
+                           either one truncating (measured at 390px). */
+                        className="overflow-hidden px-0.5 py-0.5"
                         style={{ ...blockStyle(l, planned), gridRowStart: half }}
                       >
                         {/* No AM / PM tag. Which half of the day this was is
@@ -423,24 +433,38 @@ export default function CalendarScreen() {
                             10px this used to run at. Two sessions, a number
                             and a day of the month do not fit a cell this wide
                             at 10px — that size is why the grid had to steal
-                            height it didn't have. Still capped at three lines:
-                            without a cap one long title ("Main strength —
-                            squat, pull, press") makes its whole week twice as
-                            tall as the rest of the month. */}
-                        <span
-                          className="block break-words text-[8px] font-medium leading-[1.15] text-text"
-                          style={{
-                            display: "-webkit-box",
-                            WebkitLineClamp: 3,
-                            WebkitBoxOrient: "vertical",
-                            overflow: "hidden",
-                          }}
-                        >
-                          {name}
+                            height it didn't have.
+
+                            THE KIND AND THE FIGURE SHARE THE FIRST LINE —
+                            "Water" left, "14k" right. They used to be stacked,
+                            which cost the cell a whole line and pushed
+                            "Water · UT2" into a wrap. The figure never shrinks
+                            and never truncates (it is the number the line is
+                            there for); the word gives way first. */}
+                        <span className="flex items-baseline gap-px">
+                          <span className="min-w-0 flex-1 truncate text-[8px] font-medium leading-[1.15] text-text">
+                            {kind}
+                          </span>
+                          {sub && (
+                            <span className="flex-shrink-0 text-[8px] font-medium leading-[1.15] text-text-2">
+                              {sub}
+                            </span>
+                          )}
                         </span>
-                        {sub && (
-                          <span className="mt-px block truncate text-[8px] leading-none text-text-2">
-                            {sub}
+                        {/* UT2 / Hard — its own line under the kind, capped at
+                            two so a renamed intensity can never make its week
+                            taller than the rest of the month. */}
+                        {intensity && (
+                          <span
+                            className="mt-px block break-words text-[8px] leading-[1.15] text-text-2"
+                            style={{
+                              display: "-webkit-box",
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: "vertical",
+                              overflow: "hidden",
+                            }}
+                          >
+                            {intensity}
                           </span>
                         )}
                       </span>
