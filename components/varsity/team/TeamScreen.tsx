@@ -226,11 +226,12 @@ export default function TeamScreen({
 
   return (
     <div className="mx-auto w-full max-w-screen-sm px-4 pb-10 pt-4">
-      {/* Just the word. "The squad" sat above it saying the same thing twice. */}
-      <h1 className="text-2xl font-semibold text-text">Team</h1>
+      {/* No "Team" title — the tab bar already says it; the Roster / Workouts
+          switch is the top of the screen. */}
+      <h1 className="sr-only">Team</h1>
 
       {/* sub-navigation */}
-      <div className="mt-3 flex gap-1 rounded-xl border border-border bg-surface p-1">
+      <div className="flex gap-1 rounded-xl border border-border bg-surface p-1">
         {(["roster", "workouts"] as Tab[]).map((t) => (
           <button
             key={t}

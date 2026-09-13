@@ -469,12 +469,11 @@ function DayCard({
 function DayPicker({ days, onPick }: { days: PickDay[]; onPick: (day: PickDay, p: Practice) => void }) {
   return (
     <div className="mx-auto w-full max-w-screen-sm px-4 pb-8 pt-4">
-      {/* The name of the tab, then straight into the days. The eyebrow, the
-          instructions and the "Next 7 days" label were three lines explaining
-          a list of seven dated cards that explains itself. */}
-      <h1 className="text-2xl font-semibold text-text">Lineups</h1>
+      {/* Straight into the days — no "Lineups" title either; the tab bar
+          already says it, and seven dated cards explain themselves. */}
+      <h1 className="sr-only">Lineups</h1>
 
-      <div className="mt-4">
+      <div>
         {/* data-tour: the tour lights the FIRST card (coach-lineup-first-day,
             on DayCard) rather than the list — seven cards are taller than the
             screen, and a hole that size lights nothing. */}

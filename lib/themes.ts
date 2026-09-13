@@ -85,6 +85,7 @@ export type University = {
     so the Gyms tab reads natively at every school without a component change.
   */
   houseSection: string; // the list's section heading ("House gyms")
+  mainSection?: string; // the heading over the campus-wide gyms (default "Main gyms")
   houseNoun: string; // one gym's own label on its card ("House gym")
   housePill: string; // the filter pill's one word ("House")
   /*

@@ -99,13 +99,10 @@ export default function MessagesList({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      {/* Header */}
-      <div className="flex items-center justify-between border-b border-border bg-surface px-3.5 py-3">
-        <h1 className="text-base font-medium text-text">Messages</h1>
-      </div>
-
-      {/* Direct / Community toggle */}
-      <div className="bg-surface px-3 pb-2 pt-2.5">
+      {/* No "Messages" title: the tab bar already says where you are, so the
+          Direct / Community toggle is the top of the screen. */}
+      <h1 className="sr-only">Messages</h1>
+      <div className="bg-surface px-3 pb-2 pt-3">
         {/* Same capsule as the Match tabs: the chosen one is a pill inside it. */}
         <div className="flex rounded-full border border-border bg-surface-2 p-1">
           {(["direct", "community"] as Tab[]).map((t) => (

@@ -241,6 +241,8 @@ export default function GymsPage() {
   const nothing = visibleMain.length === 0 && visibleHouse.length === 0;
   // House gyms get their own section header in the mixed views.
   const showHouseHeader = (filter === "all" || filter === "fav") && visibleHouse.length > 0;
+  // …and so do the main gyms above them, in the same small heading.
+  const showMainHeader = (filter === "all" || filter === "fav") && visibleMain.length > 0;
 
   return (
     /*
@@ -249,12 +251,9 @@ export default function GymsPage() {
       instead of one narrow strip in the middle of the page.
     */
     <div className="mx-auto w-full max-w-screen-sm lg:max-w-5xl lg:px-4 lg:pt-3">
-      {/* The route's title. Hidden on phones, where the design has no header
-          bar; on a laptop there's room for a real one. Either way screen
-          readers and the document outline get their heading. */}
-      <h1 className="sr-only px-3 text-lg font-semibold text-text lg:not-sr-only lg:mb-1 lg:block">
-        Gyms
-      </h1>
+      {/* The route's title, for screen readers only — no visible "Gyms" on any
+          screen size; the tab bar already says where you are. */}
+      <h1 className="sr-only">Gyms</h1>
 
       {/* Search bar — filters the list as you type */}
       <div className="px-3 pt-3">
@@ -301,6 +300,14 @@ export default function GymsPage() {
 
       {/* Cards — one column on a phone, two or three across on a laptop. */}
       <div className="grid grid-cols-1 items-start gap-2.5 px-3 pb-4 lg:grid-cols-2 xl:grid-cols-3">
+        {showMainHeader && (
+          <div className="pb-0.5 lg:col-span-full">
+            <h2 className="text-[11px] font-medium uppercase tracking-[0.1em] text-muted">
+              {uni?.mainSection ?? "Main gyms"}
+            </h2>
+          </div>
+        )}
+
         {visibleMain.map((g, idx) => (
           <MainCard
             key={g.slug}

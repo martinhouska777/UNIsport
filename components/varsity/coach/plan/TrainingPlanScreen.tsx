@@ -605,16 +605,12 @@ export default function TrainingPlanScreen({
   if (view.name === "blocks") {
     return (
       <div className="mx-auto w-full max-w-screen-sm px-4 pb-8 pt-4">
-        {/* data-tour: the console tour lights this pair (lib/varsity/coachTour.ts). */}
-        {/* Just the name of the tab. The eyebrow, the word "Blocks" and the
-            line explaining what a block is all sat above a list that already
-            says it — a coach who is here knows what they came to do. */}
-        <div data-tour="coach-plan-header">
-          <h1 className="text-2xl font-semibold text-text">Training plan</h1>
-        </div>
+        {/* No "Training plan" title — the tab bar already says it, and the
+            list of blocks is the top of the screen. */}
+        <h1 className="sr-only">Training plan</h1>
 
         {blocks.length === 0 ? (
-          <div className="mt-8 rounded-2xl border border-dashed border-border bg-surface px-5 py-10 text-center">
+          <div className="mt-2 rounded-2xl border border-dashed border-border bg-surface px-5 py-10 text-center">
             <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary-tint text-primary">
               <IconCalendar size={22} />
             </div>
@@ -629,7 +625,7 @@ export default function TrainingPlanScreen({
             </Button>
           </div>
         ) : (
-          <div className="mt-5 flex flex-col gap-2.5">
+          <div className="flex flex-col gap-2.5">
             {blocks.map((b, bi) => (
               <div
                 key={b.id}
