@@ -1177,7 +1177,17 @@ function HomeScreenInner() {
       />
 
       <DayHeader
-        title={onToday ? "Today's Sessions" : (viewDay?.dateLabel ?? "")}
+        /* THE DAY, IN THE WORD YOU'D USE FOR IT. "Today's Sessions" was the
+           day plus a word for the cards under it, which are plainly sessions.
+           Today is "Today", the day after is "Tomorrow", and past that there
+           is no word for it so it is simply the date. */
+        title={
+          viewIdx === todayIdx
+            ? "Today"
+            : viewIdx === todayIdx + 1
+              ? "Tomorrow"
+              : (viewDay?.dateLabel ?? "")
+        }
         /* "All boats" used to be the corner of the Your Lineup section. That
            section is gone — your own crew opens inside its session now — so
            the door to everyone else's moved up here, onto the day's own

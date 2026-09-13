@@ -21,7 +21,6 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useAppState } from "@/components/AppState";
 import LineupBoatCard, { isMyBoat } from "@/components/varsity/LineupBoatCard";
-import SectionLabel from "@/components/ui/SectionLabel";
 import { SkeletonCards } from "@/components/ui/Skeleton";
 import { IconArrowLeft, IconSearch, IconX } from "@/components/icons";
 import { parseDate, sessionKey, toISO } from "@/lib/varsity/coachPlan";
@@ -83,13 +82,9 @@ function BoatSearchList({ lineups }: { lineups: Lineup[] }) {
         )}
       </div>
 
-      <div className="mb-2 flex items-center justify-between gap-3 px-1">
-        <SectionLabel>{shown.length === 1 ? "1 boat" : `${shown.length} boats`}</SectionLabel>
-        <span className="truncate text-[11px] text-muted">
-          {needle ? `with “${q.trim()}”` : "Tap one to open it"}
-        </span>
-      </div>
-
+      {/* No count and no "Tap one to open it" above the list. The boats are
+          right there to be counted, and a card that looks like a card does not
+          need a caption telling you it can be pressed. */}
       {shown.length === 0 ? (
         <div className="rounded-xl border border-dashed border-border bg-surface px-4 py-6 text-center text-[12px] text-muted">
           Nobody by that name is in a boat this day.
