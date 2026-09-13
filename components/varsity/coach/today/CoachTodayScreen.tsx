@@ -82,18 +82,25 @@ function LineupPill({ slot }: { slot: TodaySlot }) {
 }
 
 /*
-  ONE SLOT. The whole card is washed in the session's colour — the way the
-  coach's own spreadsheet paints a square, and the way the Lineup picker
-  already does — so the day reads as a pattern before a word of it is read.
-  An empty slot is dashed, and its one action is to add a session.
+  ONE SLOT — a plain card, and the session's colour is the DOT.
+
+  The whole card used to be washed in that colour. Two things were wrong with
+  it. The wash is a `background`, so it REPLACED the card's own surface — which
+  meant the hairline between the workout and its two buttons, and the one
+  between Edit session and Boats, were being drawn across a tint instead of on
+  a surface and had all but vanished; the two doors read as loose words at the
+  bottom of a green rectangle. And with every water session the same colour, a
+  morning and an afternoon were two big green blocks that said nothing apart.
+
+  So the card is the app's normal surface, the divider lines are back, and the
+  colour lives where it can still be read at a glance without swallowing the
+  card: the dot beside the session's name.
 */
 function SlotCard({ slot }: { slot: TodaySlot }) {
   const s = slot.session;
-  const wash = s ? { background: `color-mix(in oklab, ${s.color} 14%, transparent)` } : undefined;
   const showBoats = slot.needsLineup || !!slot.lineup;
   return (
     <div
-      style={wash}
       className={`overflow-hidden rounded-2xl border bg-surface ${s ? "border-border" : "border-dashed border-border"}`}
     >
       <div className="flex items-center justify-between gap-2 px-3.5 pt-3">
@@ -281,11 +288,12 @@ export default function CoachTodayScreen() {
 
   return (
     <div className="mx-auto w-full max-w-screen-sm px-4 pb-8 pt-4">
-      <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-accent">Coach Console</div>
+      {/* No "Coach Console" eyebrow. The bar at the top of every screen in here
+          already says which console this is and whose squad it belongs to. */}
       {loading ? (
         <div className="mt-10 text-center text-[13px] text-muted">Loading the morning…</div>
       ) : (
-        <div className="mt-1 flex flex-col gap-7">
+        <div className="flex flex-col gap-7">
           {days.map((d) => (
             <DaySection key={d.iso} day={d} />
           ))}

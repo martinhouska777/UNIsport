@@ -232,11 +232,6 @@ export default function CoachNotesScreen() {
     })();
   }, []);
 
-  const withNote = useMemo(
-    () => (roster ?? []).filter((m) => notes[m.id]?.trim()).length,
-    [roster, notes],
-  );
-
   const shown = useMemo(() => {
     const q = query.trim().toLowerCase();
     return (roster ?? []).filter((m) => !q || m.name.toLowerCase().includes(q));
@@ -277,15 +272,9 @@ export default function CoachNotesScreen() {
               />
             </div>
 
-            <div className="mt-3 flex items-center justify-between">
-              <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-                {shown.length} athlete{shown.length === 1 ? "" : "s"}
-              </span>
-              <span className="rounded-full border border-border bg-surface px-2 py-0.5 text-[11px] text-muted">
-                {withNote} with a note
-              </span>
-            </div>
-            <div className="mt-2.5 flex flex-col gap-2">
+            {/* No "117 athletes" and no "2 with a note". The list is the count,
+                and each row already wears its own red note / green all-clear. */}
+            <div className="mt-3 flex flex-col gap-2">
               {shown.map((m) => (
                 <AthleteRow key={m.id} member={m} note={notes[m.id]} onPick={() => setEditing(m)} />
               ))}
