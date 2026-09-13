@@ -17,7 +17,7 @@ import CloserSplit from "@/components/landing/CloserSplit";
 import { useCloserGate } from "@/components/landing/useCloserGate";
 import type { CloserHandle } from "@/components/landing/closer";
 import { closers } from "@/lib/landingCopy";
-import { onGround, schools, rgba, SCHOOL_CYCLE_MS } from "@/lib/landingSchools";
+import { schools, rgba, SCHOOL_CYCLE_MS } from "@/lib/landingSchools";
 
 /*
   CAMPUS COLOURS — the closer of the student story.
@@ -219,10 +219,11 @@ export default function CampusColours({
   }));
 
   const s = schools[idx];
-  // The school's colour as TEXT on the page — lifted only as far as 4.5:1
-  // needs (lib/landingSchools.ts onGround). The letter keeps the raw colour:
-  // it is the school's mark, not a line to be read.
-  const inkText = onGround(s.ink);
+  // The school's colour as TEXT on the page: its OWN colour, not lifted
+  // (owner, 2026-09-13: "just do it in normal colors … for Harvard make it
+  // crimson red, now the red is really light"). This undoes the 4.5:1 lift of
+  // 223467c on their call — the navies (Yale, Penn) read dark on the page.
+  const inkText = s.ink;
   const animate = prev != null && !reduced;
   const copy = closers.campus;
   const letterCls =
@@ -356,12 +357,8 @@ export default function CampusColours({
           <div
             className={`lc-letter relative z-[1] order-1 flex min-w-[240px] flex-none flex-col items-center text-center lg:order-2 ${letterCls}`}
           >
-            {/* the school-coloured glow behind the letter */}
-            <div
-              aria-hidden
-              className="pointer-events-none absolute -inset-[60px] transition-[background] duration-[600ms] ease-in-out motion-reduce:transition-none"
-              style={{ background: `radial-gradient(circle at 50% 42%, ${rgba(s.color, 0.08)} 0%, transparent 62%)` }}
-            />
+            {/* No school-coloured glow behind the letter any more (owner,
+                2026-09-13: "I don't want … the schools to glow"). */}
             <div className="relative grid place-items-center">
               {animate && prev != null && (
                 <span

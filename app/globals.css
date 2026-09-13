@@ -275,7 +275,7 @@
 .lc-words.lc-pre { translate: 52vw 0; opacity: 0; }
 /* The crew's name under the phone: held back until the oars are in place
    (its colour and glow follow the crew, so those transitions live here too). */
-.lc-label { transition: opacity 0.5s ease, color 0.6s ease-in-out, text-shadow 0.6s ease-in-out; }
+.lc-label { transition: opacity 0.5s ease, color 0.6s ease-in-out; }
 .lc-label.lc-pre { opacity: 0; }
 /* LEAVING IS NOT ARRIVING PLAYED BACKWARDS. Coming in, the letter has a full
    second to swing out and the words 0.6s to walk in from the right, because
