@@ -240,11 +240,11 @@ export function logLabel(
 
 /*
   The same name, in its two pieces — for the month grid, where a cell is about
-  40px wide and one line cannot hold both. There the kind goes on the first
-  line with the kilometres to its right, and the intensity sits underneath:
+  40px wide and one line cannot hold both. There the kind takes the whole first
+  line, and the second line carries the intensity with the figure at its right:
 
-      Water  14k          Erg  18k          Weights
-      UT2                 Hard
+      Water               Erg                 Weights
+      UT2      14k        Hard      18k
 
   rather than "Water · UT2" wrapping onto two of the cell's three lines with
   the figure pushed to a third.
@@ -254,6 +254,21 @@ export function logLabelParts(
   planned?: Session,
 ): { kind: string; intensity: string | null } {
   if (planned) {
+    /*
+      A FLEX DAY IS NAMED BY WHAT WAS ACTUALLY DONE.
+
+      "Flex" is the coach saying "train how you like" — it is a permission, not
+      a kind of training, and the athlete answers it in the log ("What did you
+      do?" → Run / Bike / Erg / Other). Reading the PLAN first meant the answer
+      was thrown away: a 40-minute bike on a flex day showed up in the calendar
+      as "Flex", the one word that says nothing. So on a flex day the log's own
+      category wins, and only a log with nothing said falls back to "Flex".
+    */
+    if (planned.category === "flex" && log.category && log.category !== "flex") {
+      const own = logCategoryMeta[log.category as LogCategory];
+      if (own && log.category !== "other") return { kind: own.label, intensity: null };
+      return { kind: log.title.trim() || "Flex", intensity: null };
+    }
     const cat = categoryMeta[planned.category as Category]?.label ?? planned.category;
     const intensity = planned.intensity
       ? (intensityMeta[planned.intensity as Intensity]?.label ?? planned.intensity)

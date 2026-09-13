@@ -70,7 +70,10 @@ const extraCategories = ["erg", "water", "weights", "run", "bike", "other"] as c
 /* A FLEX day is the coach saying "train how you like", so the plan itself cannot
    say what the session was — the athlete does, and that answer is what the
    calendar counts. Which is why a logged flex day never stays category "flex". */
-const flexCategories = ["run", "bike", "other"] as const;
+/* Erg belongs here too: "train how you like" is very often answered with an
+   easy paddle on the machine, and leaving it out meant that session had to be
+   filed as "Other" and lost its name in the calendar. */
+const flexCategories = ["run", "bike", "erg", "other"] as const;
 /* One line for a saved log: the figures, then how it felt — "75 min · 18,000 m · Hard". */
 const summaryOf = (l: LogEntry): string =>
   [formatMetrics(l.minutes, l.metres, l.split), effortLabel(l.effort)].filter(Boolean).join(" · ");

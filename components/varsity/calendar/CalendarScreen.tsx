@@ -403,8 +403,9 @@ export default function CalendarScreen() {
                       minutes for everything else (see logVolumeLabel). Still the
                       figure ALONE, because the column is about 33px of text wide
                       and "Water · 16k" truncates to "Wate…", losing the number it
-                      was there for. A session logged with no figures falls back
-                      to the category word, so nothing is ever blank.
+                      was there for. It sits in the BOTTOM-RIGHT of the block,
+                      beside the intensity, so the name above it gets the full
+                      width and nothing is cut off.
                     */
                     const sub = logVolumeLabel(l.category, l.metres, l.minutes);
                     /* Named the same way every time, and in two pieces: the
@@ -435,36 +436,34 @@ export default function CalendarScreen() {
                             at 10px — that size is why the grid had to steal
                             height it didn't have.
 
-                            THE KIND AND THE FIGURE SHARE THE FIRST LINE —
-                            "Water" left, "14k" right. They used to be stacked,
-                            which cost the cell a whole line and pushed
-                            "Water · UT2" into a wrap. The figure never shrinks
-                            and never truncates (it is the number the line is
-                            there for); the word gives way first. */}
-                        <span className="flex items-baseline gap-px">
-                          <span className="min-w-0 flex-1 truncate text-[8px] font-medium leading-[1.15] text-text">
-                            {kind}
-                          </span>
-                          {sub && (
-                            <span className="flex-shrink-0 text-[8px] font-medium leading-[1.15] text-text-2">
-                              {sub}
-                            </span>
-                          )}
+                            THE KIND GETS THE WHOLE TOP LINE. It used to share
+                            it with the figure ("Water" left, "14k" right), and
+                            in a column ~33px wide that is what made the longer
+                            names give way — the owner's note: put the
+                            kilometres bottom-right "so you can see the whole
+                            thing". So the name runs the full width of the
+                            block, and the figure drops to the line below. */}
+                        <span className="block truncate text-[8px] font-medium leading-[1.15] text-text">
+                          {kind}
                         </span>
-                        {/* UT2 / Hard — its own line under the kind, capped at
-                            two so a renamed intensity can never make its week
-                            taller than the rest of the month. */}
-                        {intensity && (
-                          <span
-                            className="mt-px block break-words text-[8px] leading-[1.15] text-text-2"
-                            style={{
-                              display: "-webkit-box",
-                              WebkitLineClamp: 2,
-                              WebkitBoxOrient: "vertical",
-                              overflow: "hidden",
-                            }}
-                          >
-                            {intensity}
+                        {/* THE BOTTOM LINE: what it was (UT2 / Hard) on the
+                            left, HOW MUCH on the right. One line, because the
+                            figure must never be pushed out of a cell this
+                            short — the intensity truncates first, the number
+                            never does. A session with no intensity leaves the
+                            left half empty and the figure still sits in the
+                            bottom-right corner, where it is always in the same
+                            place from day to day. */}
+                        {(intensity || sub) && (
+                          <span className="mt-px flex items-baseline gap-px">
+                            <span className="min-w-0 flex-1 truncate text-[8px] leading-[1.15] text-text-2">
+                              {intensity}
+                            </span>
+                            {sub && (
+                              <span className="flex-shrink-0 text-[8px] font-medium leading-[1.15] text-text-2">
+                                {sub}
+                              </span>
+                            )}
                           </span>
                         )}
                       </span>
