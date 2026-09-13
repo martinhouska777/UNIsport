@@ -38,18 +38,13 @@ import MatchGrid from "@/components/match/MatchGrid";
 import BuddyBoard from "@/components/match/BuddyBoard";
 import SessionSearchSheet from "@/components/match/SessionSearchSheet";
 import ShareInviteButton from "@/components/ShareInviteButton";
-import FilterBar, { ActiveFilters } from "@/components/match/FilterBar";
+import { FilterRow } from "@/components/match/FilterBar";
 import FiltersSheet, {
   NO_FILTERS,
   activeFilterCount,
   activeFilterChips,
 } from "@/components/match/FiltersSheet";
-import {
-  NO_BOARD_FILTERS,
-  boardFilterCount,
-  boardFilterChips,
-  type BoardFilters,
-} from "@/components/match/BoardFiltersSheet";
+import { NO_BOARD_FILTERS, type BoardFilters } from "@/components/match/BoardFiltersSheet";
 import { IconSearch } from "@/components/icons";
 
 type SubTab = "people" | "sessions";
@@ -138,8 +133,8 @@ function MatchScreen() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const clearFilter = (key: keyof MatchFilters) => setFilters({ ...filters, [key]: null });
 
-  // --- Sessions (Buddy Board) filters — held here so their icon can sit in
-  // the same spot as the People one, left of the tab switch. ---
+  // --- Sessions (Buddy Board) filters — held here so they survive switching
+  // to People and back. ---
   const [boardFilters, setBoardFilters] = useState<BoardFilters>(() =>
     presetGym ? { ...NO_BOARD_FILTERS, gym: presetGym } : NO_BOARD_FILTERS,
   );
@@ -177,36 +172,11 @@ function MatchScreen() {
 
   return (
     <div className="mx-auto w-full max-w-screen-sm">
-      {/* Header */}
-      <div className="flex items-center px-4 pt-3">
-        <h1 className="text-base font-medium text-text">Match</h1>
-      </div>
-
-      {/* The filter icon on the left, the sub-tab switch beside it. The icon is
-          the same on both tabs and filters whichever list is showing: people on
-          People, posts on Sessions. */}
-      <div className="flex items-center gap-2 px-3 pb-2 pt-2.5">
-        {tab === "people" ? (
-          <FilterBar
-            count={activeFilterCount(filters)}
-            chips={activeFilterChips(filters)}
-            onOpen={() => setSheetOpen((v) => !v)}
-            onClear={(key) => clearFilter(key as keyof MatchFilters)}
-            open={sheetOpen}
-            pill
-          />
-        ) : (
-          <FilterBar
-            count={boardFilterCount(boardFilters)}
-            chips={boardFilterChips(boardFilters)}
-            onOpen={() => setBoardSheetOpen((v) => !v)}
-            onClear={(key) => setBoardFilters({ ...boardFilters, [key]: null })}
-            open={boardSheetOpen}
-            pill
-          />
-        )}
+      {/* Sub-tab switch — the top of the screen. The "Match" title above it
+          went: the tab bar already says where you are. */}
+      <div className="px-3 pb-2 pt-3">
         {/* A capsule with the chosen tab as a pill inside it (Instagram-style). */}
-        <div className="flex flex-1 rounded-full border border-border bg-surface-2 p-1">
+        <div className="flex rounded-full border border-border bg-surface-2 p-1">
           {subTabs.map((s) => (
             <button
               key={s.key}
@@ -229,9 +199,13 @@ function MatchScreen() {
       {tab === "people" && (
         <>
           <div className="px-3 pb-2">
-            {/* Count, Clear and chips — only once a filter is actually set. */}
-            <ActiveFilters
+            {/* "[icon] Filters" on the left, under the switch. Count, Clear and
+                chips join it only once a filter is actually set. */}
+            <FilterRow
+              count={activeFilterCount(filters)}
               chips={activeFilterChips(filters)}
+              onOpen={() => setSheetOpen((v) => !v)}
+              open={sheetOpen}
               onClear={(key) => clearFilter(key as keyof MatchFilters)}
               onClearAll={() => setFilters(NO_FILTERS)}
               total={browse?.length ?? null}
@@ -290,6 +264,7 @@ function MatchScreen() {
           filters={boardFilters}
           onChangeFilters={setBoardFilters}
           sheetOpen={boardSheetOpen}
+          onOpenSheet={() => setBoardSheetOpen(true)}
           onCloseSheet={() => setBoardSheetOpen(false)}
           hideActions={searchOpen}
           searchAction={

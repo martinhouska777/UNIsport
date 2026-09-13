@@ -32,57 +32,93 @@ import { IconSliders, IconChevronDown } from "@/components/icons";
 export type FilterChip = { key: string; label: string };
 
 /*
-  WHAT THE COMPACT ICON HAS DONE — shown under the list's header only while a
-  filter is set: how many rows survived, a Clear, and a chip per filter. With
-  nothing set there is nothing to say, so it renders nothing (the People tab
-  used to print "Filter these results · 66 people" over an unfiltered list).
+  THE FILTER ROW — what Match uses under People (under the tab switch) and
+  under "+ Post your session" on Sessions: a small "[icon] Filters" button on
+  the LEFT, and nothing else while no filter is set. Once one is, the button
+  carries the number, the surviving count and a Clear sit at the right of the
+  same line, and a chip per filter goes underneath.
+
+  It replaced a full-width "Filter these results · 66 people" bar (the count
+  on an unfiltered list said nothing), then an icon next to the tab switch,
+  which the owner found awkward.
 */
-export function ActiveFilters({
+export function FilterRow({
+  count,
   chips,
+  onOpen,
   onClear,
   onClearAll,
   total,
   noun = "result",
   plural,
+  open = false,
 }: {
+  count: number;
   chips: FilterChip[];
+  onOpen: () => void;
   onClear: (key: string) => void;
   onClearAll?: () => void;
   total?: number | null;
   noun?: string;
   plural?: string;
+  open?: boolean;
 }) {
-  if (chips.length === 0) return null;
+  const on = count > 0;
   return (
     <div>
-      <div className="flex min-h-6 items-center justify-between gap-2">
-        <span className="text-[12px] tabular-nums text-muted">
-          {total != null ? `${total} ${total === 1 ? noun : (plural ?? `${noun}s`)}` : "…"}
-        </span>
-        {onClearAll && (
-          <button
-            type="button"
-            onClick={onClearAll}
-            className="tap44 rounded-lg px-2 text-[12px] text-primary"
-          >
-            Clear
-          </button>
+      <div className="flex items-center justify-between gap-2">
+        <button
+          type="button"
+          onClick={onOpen}
+          aria-expanded={open}
+          aria-label={on ? `Filters, ${count} set` : "Open filters"}
+          className={`tap44 flex h-9 items-center gap-1.5 rounded-full border px-3 text-[13px] font-medium transition-colors ${
+            on ? "border-primary bg-primary-tint text-primary" : "border-border bg-surface text-muted"
+          }`}
+        >
+          <IconSliders size={15} />
+          Filters
+          {on && (
+            <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold tabular-nums text-primary-contrast">
+              {count}
+            </span>
+          )}
+        </button>
+        {on && (
+          <div className="flex items-center gap-1">
+            {total != null && (
+              <span className="text-[12px] tabular-nums text-muted">
+                {total} {total === 1 ? noun : (plural ?? `${noun}s`)}
+              </span>
+            )}
+            {onClearAll && (
+              <button
+                type="button"
+                onClick={onClearAll}
+                className="tap44 rounded-lg px-2 text-[12px] text-primary"
+              >
+                Clear
+              </button>
+            )}
+          </div>
         )}
       </div>
-      <div className="chip-row -mx-0.5 mt-1 flex gap-1.5 overflow-x-auto px-0.5 pb-1">
-        {chips.map((c) => (
-          <button
-            key={c.key}
-            type="button"
-            onClick={() => onClear(c.key)}
-            aria-label={`Clear filter ${c.label}`}
-            className="tap44 flex flex-shrink-0 items-center gap-1 rounded-full border border-primary bg-primary-tint px-3 py-1.5 text-[12px] text-primary"
-          >
-            {c.label}
-            <span className="text-[13px] leading-none">×</span>
-          </button>
-        ))}
-      </div>
+      {chips.length > 0 && (
+        <div className="chip-row -mx-0.5 mt-2 flex gap-1.5 overflow-x-auto px-0.5 pb-1">
+          {chips.map((c) => (
+            <button
+              key={c.key}
+              type="button"
+              onClick={() => onClear(c.key)}
+              aria-label={`Clear filter ${c.label}`}
+              className="tap44 flex flex-shrink-0 items-center gap-1 rounded-full border border-primary bg-primary-tint px-3 py-1.5 text-[12px] text-primary"
+            >
+              {c.label}
+              <span className="text-[13px] leading-none">×</span>
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -97,8 +133,6 @@ export default function FilterBar({
   noun = "result",
   plural,
   open = false,
-  compact = false,
-  pill = false,
 }: {
   /** How many filters are active — shown on the bar. */
   count: number;
@@ -116,39 +150,8 @@ export default function FilterBar({
   plural?: string;
   /** Turns the chevron over while the dropdown below is showing. */
   open?: boolean;
-  /**
-   * Icon only, sized to sit on a heading's line instead of taking a row of its
-   * own. Used where the list already has a title saying what it is — a second
-   * full-width bar directly under "OPEN POSTS" was two headings for one list.
-   */
-  compact?: boolean;
-  /** Compact, but round and as tall as the People/Sessions capsule it sits beside. */
-  pill?: boolean;
 }) {
   const on = count > 0;
-
-  if (compact || pill) {
-    return (
-      <button
-        type="button"
-        onClick={onOpen}
-        aria-label={on ? `Filters, ${count} set` : "Open filters"}
-        aria-expanded={open}
-        className={`tap44 relative flex flex-shrink-0 items-center justify-center border transition-colors ${
-          pill ? "h-[50px] w-[50px] rounded-full" : "h-9 w-9 rounded-xl"
-        } ${
-          on ? "border-primary bg-primary-tint text-primary" : "border-border bg-surface text-muted"
-        }`}
-      >
-        <IconSliders size={pill ? 18 : 16} />
-        {on && (
-          <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold tabular-nums text-primary-contrast">
-            {count}
-          </span>
-        )}
-      </button>
-    );
-  }
 
   return (
     <div>

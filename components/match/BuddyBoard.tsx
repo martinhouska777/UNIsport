@@ -30,7 +30,7 @@ import { weekDays, verifiedGyms, sessionTimeSlots } from "@/lib/onboarding";
 import { dateLabel } from "@/lib/schedule";
 import { Pill, FieldLabel, SelectField } from "@/components/onboarding/controls";
 import WeekPicker from "@/components/match/WeekPicker";
-import { ActiveFilters } from "@/components/match/FilterBar";
+import { FilterRow } from "@/components/match/FilterBar";
 import BoardFiltersSheet, {
   NO_BOARD_FILTERS,
   boardFilterCount,
@@ -73,16 +73,18 @@ export default function BuddyBoard({
   filters,
   onChangeFilters: setFilters,
   sheetOpen,
+  onOpenSheet,
   onCloseSheet,
   searchAction = null,
   hideActions = false,
 }: {
   /* The board's filters and whether their sheet is open live on the Match page,
-     so the filter icon can sit left of the People/Sessions switch like the
-     People one does. The page also seeds a gym from "See who else is going". */
+     so they survive a trip to People and back. The page also seeds a gym from
+     "See who else is going". */
   filters: BoardFilters;
   onChangeFilters: (next: BoardFilters) => void;
   sheetOpen: boolean;
+  onOpenSheet: () => void;
   onCloseSheet: () => void;
   /* "Search by time", handed down from the Match page so it can sit BESIDE the
      post button on one line instead of on a line of its own above the board. */
@@ -240,29 +242,6 @@ export default function BuddyBoard({
 
   return (
     <div className="px-3 pb-4">
-      {/* FILTERS — the icon is on the Match page's tab row. Here: the sheet
-          while it's open, and the post count + chips only while a filter is set. */}
-      {(anyFilter || sheetOpen) && (
-        <div className="pb-3">
-          <ActiveFilters
-            chips={boardFilterChips(filters)}
-            onClear={(key) => setFilters({ ...filters, [key]: null })}
-            onClearAll={() => setFilters(NO_BOARD_FILTERS)}
-            total={board?.length ?? null}
-            noun="post"
-          />
-          {sheetOpen && (
-            <BoardFiltersSheet
-              // Re-seeds the draft if a chip above is cleared while it is open.
-              key={JSON.stringify(filters)}
-              value={filters}
-              onApply={setFilters}
-              onClose={onCloseSheet}
-            />
-          )}
-        </div>
-      )}
-
       {/* POST — a button until you want it, then the form in its place, with
           "Search by time" beside it so the two ways into a session share one
           line. The whole row goes away while the search sheet is open. */}
@@ -353,6 +332,30 @@ export default function BuddyBoard({
           {formErr && <p className="text-center text-[11px] text-danger">Couldn’t post: {formErr}</p>}
         </div>
       )}
+
+      {/* FILTERS — "[icon] Filters" on the left, under the post button; the
+          post count, Clear and chips join it only while a filter is set. */}
+      <div className="pt-3">
+        <FilterRow
+          count={boardFilterCount(filters)}
+          chips={boardFilterChips(filters)}
+          onOpen={() => (sheetOpen ? onCloseSheet() : onOpenSheet())}
+          onClear={(key) => setFilters({ ...filters, [key]: null })}
+          onClearAll={() => setFilters(NO_BOARD_FILTERS)}
+          total={board?.length ?? null}
+          noun="post"
+          open={sheetOpen}
+        />
+        {sheetOpen && (
+          <BoardFiltersSheet
+            // Re-seeds the draft if a chip above is cleared while it is open.
+            key={JSON.stringify(filters)}
+            value={filters}
+            onApply={setFilters}
+            onClose={onCloseSheet}
+          />
+        )}
+      </div>
 
       {/* YOUR POSTS */}
       {mine && mine.length > 0 && (
