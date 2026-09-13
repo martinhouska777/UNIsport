@@ -178,7 +178,7 @@ export default function StudentIntro({ solo = false }: { solo?: boolean }) {
             : "color-mix(in srgb, var(--color-l-accent) 20%, transparent)",
         } as CSSProperties
       }
-      className={`l-titlecard relative z-[1] flex min-h-svh flex-col items-center justify-center gap-[clamp(10px,1.8vh,18px)] border-t border-l-line bg-l-surface px-6 pt-14 pb-8 text-center ${
+      className={`l-titlecard relative z-[1] flex min-h-svh flex-col items-center justify-center gap-[clamp(10px,1.8vh,18px)] border-t border-l-line bg-l-surface px-6 pt-14 pb-[128px] text-center ${
         anim ? "l-anim" : ""
       } ${shown ? "is-in" : ""}`}
     >
@@ -229,8 +229,14 @@ export default function StudentIntro({ solo = false }: { solo?: boolean }) {
         {studentIntro.overview.label} →
       </a>
 
-      <div className="l-tc l-cue mt-[22px]" style={at(750)}>
-        {cues.hero}
+      {/* The cue sits at the foot of the card, not under the link (owner,
+          2026-09-13: "shift it down … there is a lot of space under it"). It
+          is out of the flow, so the section's bottom padding keeps the words
+          above from ever reaching it on a short screen. */}
+      <div className="absolute inset-x-0 bottom-[clamp(16px,3vh,32px)] flex justify-center">
+        <div className="l-tc l-cue" style={at(750)}>
+          {cues.hero}
+        </div>
       </div>
     </section>
   );

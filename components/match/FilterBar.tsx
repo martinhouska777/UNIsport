@@ -31,6 +31,62 @@ import { IconSliders, IconChevronDown } from "@/components/icons";
 
 export type FilterChip = { key: string; label: string };
 
+/*
+  WHAT THE COMPACT ICON HAS DONE — shown under the list's header only while a
+  filter is set: how many rows survived, a Clear, and a chip per filter. With
+  nothing set there is nothing to say, so it renders nothing (the People tab
+  used to print "Filter these results · 66 people" over an unfiltered list).
+*/
+export function ActiveFilters({
+  chips,
+  onClear,
+  onClearAll,
+  total,
+  noun = "result",
+  plural,
+}: {
+  chips: FilterChip[];
+  onClear: (key: string) => void;
+  onClearAll?: () => void;
+  total?: number | null;
+  noun?: string;
+  plural?: string;
+}) {
+  if (chips.length === 0) return null;
+  return (
+    <div>
+      <div className="flex min-h-6 items-center justify-between gap-2">
+        <span className="text-[12px] tabular-nums text-muted">
+          {total != null ? `${total} ${total === 1 ? noun : (plural ?? `${noun}s`)}` : "…"}
+        </span>
+        {onClearAll && (
+          <button
+            type="button"
+            onClick={onClearAll}
+            className="tap44 rounded-lg px-2 text-[12px] text-primary"
+          >
+            Clear
+          </button>
+        )}
+      </div>
+      <div className="chip-row -mx-0.5 mt-1 flex gap-1.5 overflow-x-auto px-0.5 pb-1">
+        {chips.map((c) => (
+          <button
+            key={c.key}
+            type="button"
+            onClick={() => onClear(c.key)}
+            aria-label={`Clear filter ${c.label}`}
+            className="tap44 flex flex-shrink-0 items-center gap-1 rounded-full border border-primary bg-primary-tint px-3 py-1.5 text-[12px] text-primary"
+          >
+            {c.label}
+            <span className="text-[13px] leading-none">×</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function FilterBar({
   count,
   chips,

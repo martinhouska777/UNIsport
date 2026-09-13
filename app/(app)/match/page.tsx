@@ -38,7 +38,7 @@ import MatchGrid from "@/components/match/MatchGrid";
 import BuddyBoard from "@/components/match/BuddyBoard";
 import SessionSearchSheet from "@/components/match/SessionSearchSheet";
 import ShareInviteButton from "@/components/ShareInviteButton";
-import FilterBar from "@/components/match/FilterBar";
+import FilterBar, { ActiveFilters } from "@/components/match/FilterBar";
 import FiltersSheet, {
   NO_FILTERS,
   activeFilterCount,
@@ -165,8 +165,20 @@ function MatchScreen() {
   return (
     <div className="mx-auto w-full max-w-screen-sm">
       {/* Header */}
-      <div className="flex items-center px-4 pt-3">
+      {/* The People filter is just an icon on the title's line. The line keeps
+          the icon's height on both tabs so switching tabs doesn't nudge the page. */}
+      <div className="flex min-h-9 items-center justify-between px-4 pt-3">
         <h1 className="text-base font-medium text-text">Match</h1>
+        {tab === "people" && (
+          <FilterBar
+            count={activeFilterCount(filters)}
+            chips={activeFilterChips(filters)}
+            onOpen={() => setSheetOpen((v) => !v)}
+            onClear={(key) => clearFilter(key as keyof MatchFilters)}
+            open={sheetOpen}
+            compact
+          />
+        )}
       </div>
 
       {/* Sub-tab switch */}
@@ -195,16 +207,14 @@ function MatchScreen() {
       {tab === "people" && (
         <>
           <div className="px-3 pb-2">
-            <FilterBar
-              count={activeFilterCount(filters)}
+            {/* Count, Clear and chips — only once a filter is actually set. */}
+            <ActiveFilters
               chips={activeFilterChips(filters)}
-              onOpen={() => setSheetOpen((v) => !v)}
               onClear={(key) => clearFilter(key as keyof MatchFilters)}
               onClearAll={() => setFilters(NO_FILTERS)}
               total={browse?.length ?? null}
               noun="person"
               plural="people"
-              open={sheetOpen}
             />
             {sheetOpen && (
               <FiltersSheet
@@ -242,7 +252,7 @@ function MatchScreen() {
             </Status>
           )}
           {!browseErr && browse && browse.length > 0 && (
-            /* The count lives on the filter bar, beside the control that changes it. */
+            /* No count on an unfiltered list — it appears above once a filter is set. */
             <MatchGrid matches={browse} max={100} onView={viewProfile} />
           )}
         </>
