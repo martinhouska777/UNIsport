@@ -258,13 +258,12 @@ export default function ProfilePage() {
 
       1. WHO YOU ARE — photo, name, badges, house and class down the middle,
          then the bio, then the three counts.
-      2. WHERE YOU STAND — the boards and this week's event, one line each.
+      2. MEMORIES — what your training looked like.
       3. YOUR TRAINING — one calendar: this week, or the month, with arrows and
          a swipe (components/profile/TrainingCalendar.tsx).
-      4. LOG A SESSION, beside Memories — the button that fills the calendar,
-         next to what the calendar looked like.
-      5. YOUR PHOTOS, under them.
-      6. Everything else folded behind "More about you".
+      4. WHERE YOU STAND, beside LOG A SESSION — your rank and the one button
+         that changes it, sharing a row.
+      5. Everything else folded behind "More about you".
 
     Training, the schedule, the gyms and who you'll train with live in Settings
     (components/settings/TrainingSettings.tsx): they are answers the app runs
@@ -455,14 +454,14 @@ export default function ProfilePage() {
           when there is nothing to answer. */}
       <PartnerRequests onChanged={reloadLogs} />
 
-      {/* 2 · WHERE YOU STAND — one row, straight into the full boards. This
-          week's event line ("Train 5 days") used to sit under it and is gone
-          from the profile: it belongs on the boards, not on your own page. */}
-      <LeaderboardStrip />
-
       {/* Upcoming accepted sessions (chat-planned) — a date in your diary
           belongs above the fold. Hides itself when there is none. */}
       <UpcomingSessions />
+
+      {/* 2 · MEMORIES — above the calendar now: the pictures are the part of
+          your training you actually want to look at, and the calendar is the
+          part you read. It hides itself entirely until there's a photo. */}
+      <MemoriesStrip />
 
       {/* 3 · YOUR TRAINING — this week, or the whole month, with arrows or a
           swipe to move through either. */}
@@ -475,14 +474,18 @@ export default function ProfilePage() {
         onPickDate={(d) => setOpenDate(d)}
       />
 
-      {/* 4 · MEMORIES — the full row back, the same history as pictures: the
-          calendar says what you did, this says what it looked like. It hides
-          itself entirely until there's a photo to show. */}
-      <MemoriesStrip />
+      {/* 4 · WHERE YOU STAND, AND THE BUTTON THAT MOVES YOU — one row under
+          the calendar. The boards used to be a full-width band of their own up
+          near the top; here they share the line with "Log a session", which
+          puts the rank and the one action that changes it side by side.
 
-      {/* 5 · LOG A SESSION, right under them — the button that fills both the
-          calendar above and the memories row, full width so it can't be
-          missed. */}
+          The compact card drops the middle number (your HOUSE's own rank) so
+          two numbers and the button fit a phone: what's left is where you sit
+          among your housemates and where you sit on campus — both about you.
+
+          A profile with nothing logged yet gets the starter card full width
+          instead: there is no rank to show, and the card says the same thing
+          the empty boards would. */}
       <div className="border-b border-border px-3.5 py-3">
         {brandNew ? (
           <button
@@ -498,11 +501,9 @@ export default function ProfilePage() {
             </p>
           </button>
         ) : (
-          /* Smaller and left-aligned, not the full-width "lg" button — it was
-             reading as heavier than any other action on the page. Room stays
-             open to its right for whatever goes there next.
-             data-tour: the Profile tour opens on this button (lib/tour.ts). */
-          <div className="flex items-center gap-2">
+          /* data-tour: the Profile tour opens on this button (lib/tour.ts). */
+          <div className="flex items-center gap-2.5">
+            <LeaderboardStrip compact />
             <Button data-tour="profile-log" size="md" onClick={() => setLogging(true)}>
               <IconPlus size={15} /> Log a session
             </Button>

@@ -3,10 +3,13 @@
 /*
   The one-line leaderboard strip on the Profile tab.
   ---------------------------------------------------------------------------
-  Deliberately about a centimetre tall. It sits above the session calendar and
-  is the ONLY leaderboard surface on the profile: three numbers — where you sit
-  among your housemates, where your house sits, and where you sit on campus —
-  and a chevron into the full boards.
+  Deliberately about a centimetre tall, and the ONLY leaderboard surface on the
+  profile: three numbers — where you sit among your housemates, where your house
+  sits, and where you sit on campus — and a chevron into the full boards.
+
+  `compact` is the half-width card that shares a row with "Log a session" under
+  the calendar (that is what the Profile tab uses); it drops the house's own
+  rank so two numbers and the button fit a phone.
 
   It never shows a row of dashes. Before you've logged anything for the period
   there is no rank to report, so it becomes a single invitation instead; and it
@@ -43,7 +46,20 @@ function Cell({ value, label }: { value: string; label: string }) {
   );
 }
 
-export default function LeaderboardStrip({ period = "month" }: { period?: Period }) {
+export default function LeaderboardStrip({
+  period = "month",
+  compact = false,
+}: {
+  period?: Period;
+  /*
+    COMPACT — the half-width version that shares a row with the "Log a session"
+    button on the Profile tab. It drops the house's own rank (the one number of
+    the three that isn't about YOU; the house race has the boards to itself) and
+    becomes a bordered card rather than a full-width band, so it balances the
+    filled button beside it. The full-width version is unchanged.
+  */
+  compact?: boolean;
+}) {
   const { userId, universityKey } = useAppState();
   const [standing, setStanding] = useState<Standing | null>(null);
   const [loaded, setLoaded] = useState(false);
@@ -63,7 +79,12 @@ export default function LeaderboardStrip({ period = "month" }: { period?: Period
   }, [period, userId]);
 
   // Same height either way, so nothing below moves when the numbers land.
-  if (!loaded) return <div className="h-[66px] border-b border-border" />;
+  if (!loaded)
+    return compact ? (
+      <div className="h-[52px] min-w-0 flex-1 rounded-xl border border-border" />
+    ) : (
+      <div className="h-[66px] border-b border-border" />
+    );
 
   const house = standing?.residence ?? null;
   // Your TEAM's colour: the house, or the first-year cohort's (lib/cohorts.ts)
@@ -78,14 +99,22 @@ export default function LeaderboardStrip({ period = "month" }: { period?: Period
          it is deliberately NOT on the placeholder above, so the tour waits for
          real numbers rather than pointing at an empty bar (lib/tour.ts). */
       data-tour="profile-leaderboards"
-      className="flex items-center gap-2.5 border-b border-border px-3.5 py-3.5 active:bg-surface-2"
+      className={
+        compact
+          ? "flex min-w-0 flex-1 items-center gap-2 rounded-xl border border-border bg-surface-2 px-2.5 py-2 active:bg-surface"
+          : "flex items-center gap-2.5 border-b border-border px-3.5 py-3.5 active:bg-surface-2"
+      }
     >
       {/* GOLD. A trophy is gold everywhere else in the world and everywhere
           else in this app (the podium colours, the varsity mark) — it is the
           school's accent token, so a school whose accent isn't gold still gets
           its own colour rather than a hardcoded one (rule 1). */}
-      <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-accent-tint text-accent">
-        <IconTrophy size={19} />
+      <span
+        className={`flex flex-shrink-0 items-center justify-center rounded-lg bg-accent-tint text-accent ${
+          compact ? "h-8 w-8" : "h-9 w-9"
+        }`}
+      >
+        <IconTrophy size={compact ? 17 : 19} />
       </span>
 
       {ranked && standing ? (
@@ -95,28 +124,55 @@ export default function LeaderboardStrip({ period = "month" }: { period?: Period
               says the name. */}
           <Cell
             value={standing.houseRankIn ? ordinal(standing.houseRankIn) : `#${standing.campusRank}`}
-            label={house ? `in ${house}` : team ? `in ${team.label}` : "on campus"}
+            /* Compact drops the "in": on a 320px phone "IN MATHER" is what
+               pushes the labels into an ellipsis. */
+            label={
+              house
+                ? compact
+                  ? house
+                  : `in ${house}`
+                : team
+                  ? compact
+                    ? team.label
+                    : `in ${team.label}`
+                  : "on campus"
+            }
           />
+          {/* Your HOUSE's own rank — only on the full-width strip. */}
+          {!compact && (
+            <>
+              <div className="h-6 w-px bg-border" />
+              <Cell
+                value={standing.houseRank ? `#${standing.houseRank}` : team ? team.label : "—"}
+                label={house ? residenceLabel(house) : team ? "your team" : "your house"}
+              />
+            </>
+          )}
           <div className="h-6 w-px bg-border" />
-          <Cell
-            value={standing.houseRank ? `#${standing.houseRank}` : team ? team.label : "—"}
-            label={house ? residenceLabel(house) : team ? "your team" : "your house"}
-          />
-          <div className="h-6 w-px bg-border" />
-          <Cell value={`#${standing.campusRank}`} label="on campus" />
+          <Cell value={`#${standing.campusRank}`} label={compact ? "campus" : "on campus"} />
         </div>
       ) : (
         <div className="min-w-0 flex-1">
-          <div className="text-[14px] font-semibold leading-tight text-text">Leaderboards</div>
-          <div className="mt-0.5 truncate text-[11px] text-muted">
-            Log a session to take your place{team ? ` for ${team.label}` : ""}.
+          <div
+            className={`font-semibold leading-tight text-text ${compact ? "text-[13px]" : "text-[14px]"}`}
+          >
+            Leaderboards
+          </div>
+          <div className={`mt-0.5 truncate text-muted ${compact ? "text-[10px]" : "text-[11px]"}`}>
+            {compact
+              ? "Log to take your place"
+              : `Log a session to take your place${team ? ` for ${team.label}` : ""}.`}
           </div>
         </div>
       )}
 
-      <span className="flex-shrink-0 text-muted">
-        <IconChevronRight size={16} />
-      </span>
+      {/* No chevron on the compact card: the border already says it's a card
+          you can press, and every pixel goes to the numbers. */}
+      {!compact && (
+        <span className="flex-shrink-0 text-muted">
+          <IconChevronRight size={16} />
+        </span>
+      )}
     </Link>
   );
 }
