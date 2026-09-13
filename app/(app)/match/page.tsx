@@ -44,6 +44,12 @@ import FiltersSheet, {
   activeFilterCount,
   activeFilterChips,
 } from "@/components/match/FiltersSheet";
+import {
+  NO_BOARD_FILTERS,
+  boardFilterCount,
+  boardFilterChips,
+  type BoardFilters,
+} from "@/components/match/BoardFiltersSheet";
 import { IconSearch } from "@/components/icons";
 
 type SubTab = "people" | "sessions";
@@ -132,6 +138,13 @@ function MatchScreen() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const clearFilter = (key: keyof MatchFilters) => setFilters({ ...filters, [key]: null });
 
+  // --- Sessions (Buddy Board) filters — held here so their icon can sit in
+  // the same spot as the People one, left of the tab switch. ---
+  const [boardFilters, setBoardFilters] = useState<BoardFilters>(() =>
+    presetGym ? { ...NO_BOARD_FILTERS, gym: presetGym } : NO_BOARD_FILTERS,
+  );
+  const [boardSheetOpen, setBoardSheetOpen] = useState(false);
+
   /*
     --- People ---
     Re-runs whenever a filter changes. `filters` is a new object every time it's
@@ -165,26 +178,35 @@ function MatchScreen() {
   return (
     <div className="mx-auto w-full max-w-screen-sm">
       {/* Header */}
-      {/* The People filter is just an icon on the title's line. The line keeps
-          the icon's height on both tabs so switching tabs doesn't nudge the page. */}
-      <div className="flex min-h-9 items-center justify-between px-4 pt-3">
+      <div className="flex items-center px-4 pt-3">
         <h1 className="text-base font-medium text-text">Match</h1>
-        {tab === "people" && (
+      </div>
+
+      {/* The filter icon on the left, the sub-tab switch beside it. The icon is
+          the same on both tabs and filters whichever list is showing: people on
+          People, posts on Sessions. */}
+      <div className="flex items-center gap-2 px-3 pb-2 pt-2.5">
+        {tab === "people" ? (
           <FilterBar
             count={activeFilterCount(filters)}
             chips={activeFilterChips(filters)}
             onOpen={() => setSheetOpen((v) => !v)}
             onClear={(key) => clearFilter(key as keyof MatchFilters)}
             open={sheetOpen}
-            compact
+            pill
+          />
+        ) : (
+          <FilterBar
+            count={boardFilterCount(boardFilters)}
+            chips={boardFilterChips(boardFilters)}
+            onOpen={() => setBoardSheetOpen((v) => !v)}
+            onClear={(key) => setBoardFilters({ ...boardFilters, [key]: null })}
+            open={boardSheetOpen}
+            pill
           />
         )}
-      </div>
-
-      {/* Sub-tab switch */}
-      <div className="px-3 pb-2 pt-2.5">
         {/* A capsule with the chosen tab as a pill inside it (Instagram-style). */}
-        <div className="flex rounded-full border border-border bg-surface-2 p-1">
+        <div className="flex flex-1 rounded-full border border-border bg-surface-2 p-1">
           {subTabs.map((s) => (
             <button
               key={s.key}
@@ -265,7 +287,10 @@ function MatchScreen() {
       */}
       {tab === "sessions" && (
         <BuddyBoard
-          initialGym={presetGym}
+          filters={boardFilters}
+          onChangeFilters={setBoardFilters}
+          sheetOpen={boardSheetOpen}
+          onCloseSheet={() => setBoardSheetOpen(false)}
           hideActions={searchOpen}
           searchAction={
             <button

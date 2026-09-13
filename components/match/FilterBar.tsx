@@ -98,6 +98,7 @@ export default function FilterBar({
   plural,
   open = false,
   compact = false,
+  pill = false,
 }: {
   /** How many filters are active — shown on the bar. */
   count: number;
@@ -121,21 +122,25 @@ export default function FilterBar({
    * full-width bar directly under "OPEN POSTS" was two headings for one list.
    */
   compact?: boolean;
+  /** Compact, but round and as tall as the People/Sessions capsule it sits beside. */
+  pill?: boolean;
 }) {
   const on = count > 0;
 
-  if (compact) {
+  if (compact || pill) {
     return (
       <button
         type="button"
         onClick={onOpen}
         aria-label={on ? `Filters, ${count} set` : "Open filters"}
         aria-expanded={open}
-        className={`tap44 relative flex h-9 w-9 items-center justify-center rounded-xl border transition-colors ${
+        className={`tap44 relative flex flex-shrink-0 items-center justify-center border transition-colors ${
+          pill ? "h-[50px] w-[50px] rounded-full" : "h-9 w-9 rounded-xl"
+        } ${
           on ? "border-primary bg-primary-tint text-primary" : "border-border bg-surface text-muted"
         }`}
       >
-        <IconSliders size={16} />
+        <IconSliders size={pill ? 18 : 16} />
         {on && (
           <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold tabular-nums text-primary-contrast">
             {count}

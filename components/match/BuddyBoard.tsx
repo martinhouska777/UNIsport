@@ -30,7 +30,7 @@ import { weekDays, verifiedGyms, sessionTimeSlots } from "@/lib/onboarding";
 import { dateLabel } from "@/lib/schedule";
 import { Pill, FieldLabel, SelectField } from "@/components/onboarding/controls";
 import WeekPicker from "@/components/match/WeekPicker";
-import FilterBar from "@/components/match/FilterBar";
+import { ActiveFilters } from "@/components/match/FilterBar";
 import BoardFiltersSheet, {
   NO_BOARD_FILTERS,
   boardFilterCount,
@@ -70,14 +70,20 @@ function Status({ children }: { children: React.ReactNode }) {
 }
 
 export default function BuddyBoard({
-  initialGym = null,
+  filters,
+  onChangeFilters: setFilters,
+  sheetOpen,
+  onCloseSheet,
   searchAction = null,
   hideActions = false,
 }: {
-  /* Arriving from a gym's "See who else is going": the board opens already
-     narrowed to that gym. Only names the app knows are accepted (the Match
-     page checks) — never arbitrary URL text. */
-  initialGym?: string | null;
+  /* The board's filters and whether their sheet is open live on the Match page,
+     so the filter icon can sit left of the People/Sessions switch like the
+     People one does. The page also seeds a gym from "See who else is going". */
+  filters: BoardFilters;
+  onChangeFilters: (next: BoardFilters) => void;
+  sheetOpen: boolean;
+  onCloseSheet: () => void;
   /* "Search by time", handed down from the Match page so it can sit BESIDE the
      post button on one line instead of on a line of its own above the board. */
   searchAction?: React.ReactNode;
@@ -114,12 +120,6 @@ export default function BuddyBoard({
   const [mine, setMine] = useState<MyBuddyPost[] | null>(null);
   const [boardErr, setBoardErr] = useState<string | null>(null);
   const [messagingId, setMessagingId] = useState<string | null>(null);
-
-  // --- Optional board filters (behind the Filters button, not a second form) ---
-  const [filters, setFilters] = useState<BoardFilters>(() =>
-    initialGym ? { ...NO_BOARD_FILTERS, gym: initialGym } : NO_BOARD_FILTERS,
-  );
-  const [sheetOpen, setSheetOpen] = useState(false);
 
   // Nothing is set before the first await on purpose: a setState in the
   // synchronous part of an effect body cascades a render (react-hooks/
@@ -240,6 +240,29 @@ export default function BuddyBoard({
 
   return (
     <div className="px-3 pb-4">
+      {/* FILTERS — the icon is on the Match page's tab row. Here: the sheet
+          while it's open, and the post count + chips only while a filter is set. */}
+      {(anyFilter || sheetOpen) && (
+        <div className="pb-3">
+          <ActiveFilters
+            chips={boardFilterChips(filters)}
+            onClear={(key) => setFilters({ ...filters, [key]: null })}
+            onClearAll={() => setFilters(NO_BOARD_FILTERS)}
+            total={board?.length ?? null}
+            noun="post"
+          />
+          {sheetOpen && (
+            <BoardFiltersSheet
+              // Re-seeds the draft if a chip above is cleared while it is open.
+              key={JSON.stringify(filters)}
+              value={filters}
+              onApply={setFilters}
+              onClose={onCloseSheet}
+            />
+          )}
+        </div>
+      )}
+
       {/* POST — a button until you want it, then the form in its place, with
           "Search by time" beside it so the two ways into a session share one
           line. The whole row goes away while the search sheet is open. */}
@@ -362,49 +385,8 @@ export default function BuddyBoard({
         </div>
       )}
 
-      {/* BOARD — heading + the Filters button. The filters used to be three
-          rows of pills identical to the three in the form above, which read as
-          the same form repeated; they now live in a sheet (#7 in the audit). */}
-      <div className="pt-5">
-        {/* The heading and its filter share one line. The filter used to be a
-            full-width bar directly under "OPEN POSTS" — two headings for one
-            list, and a row of screen spent on a control most people never
-            touch. It is an icon now, with the count on it when it is doing
-            something, and the post count sits beside the title where it reads
-            as part of the heading. */}
-        <div className="flex items-center justify-between pb-2">
-          <div className="text-[11px] tracking-[0.06em] text-muted">
-            OPEN POSTS
-            {board != null && (
-              <span className="ml-1.5 tabular-nums">
-                · {board.length} {board.length === 1 ? "post" : "posts"}
-              </span>
-            )}
-          </div>
-          <FilterBar
-            count={boardFilterCount(filters)}
-            chips={boardFilterChips(filters)}
-            onOpen={() => setSheetOpen((v) => !v)}
-            onClear={(key) => setFilters({ ...filters, [key]: null })}
-            onClearAll={() => setFilters(NO_BOARD_FILTERS)}
-            total={board?.length ?? null}
-            noun="post"
-            open={sheetOpen}
-            compact
-          />
-        </div>
-        {sheetOpen && (
-          <BoardFiltersSheet
-            // Re-seeds the draft if a chip above is cleared while it is open.
-            key={JSON.stringify(filters)}
-            value={filters}
-            onApply={setFilters}
-            onClose={() => setSheetOpen(false)}
-          />
-        )}
-      </div>
-
-      {/* BOARD LIST */}
+      {/* BOARD LIST — no "OPEN POSTS · N posts" heading; the posts speak for
+          themselves, and the count shows above only while a filter is set. */}
       {boardErr && <Status>Couldn’t load the board: {boardErr}</Status>}
       {!boardErr && board === null && <SkeletonRows count={4} />}
       {!boardErr && board && board.length === 0 && (
@@ -413,7 +395,7 @@ export default function BuddyBoard({
             ? `Nobody has posted for ${filters.gym} yet. Be the first — post above and it shows on that gym's card.`
             : anyFilter
               ? "No posts match those filters yet."
-              : "No open posts yet. Put yours up with the button above and check back as more people join."}
+              : "No open posts yet."}
         </Status>
       )}
       {!boardErr && board && board.length > 0 && (
