@@ -1,9 +1,12 @@
 "use client";
 
-import { IconEye } from "@/components/icons";
+import { IconEye, IconEyeOff } from "@/components/icons";
 
 /*
-  Small "shown to others / hidden" control used in profile section headers.
+  The "shown to others / hidden" control used in profile section headers — an
+  open eye when other people can see the section, a struck-through eye when
+  they can't. It used to spell it out ("Shown to others" / "Hidden"); the owner
+  wanted just the eye.
   It does NOT hide the section from the owner — it only flips whether other
   people see this section on the public profile (enforced server-side too).
   Colors come from theme variables.
@@ -21,14 +24,13 @@ export default function VisibilityToggle({
       onClick={() => onChange(!visible)}
       aria-pressed={visible}
       aria-label={visible ? "Shown to others — tap to hide" : "Hidden from others — tap to show"}
-      className={`tap44 flex items-center gap-1 rounded-full border px-2 py-1 text-[11px] font-medium transition-colors ${
+      className={`tap44 flex h-7 w-7 items-center justify-center rounded-full border transition-colors ${
         visible
           ? "border-success-line bg-success-tint text-success"
           : "border-border bg-surface-2 text-muted"
       }`}
     >
-      <IconEye size={12} />
-      {visible ? "Shown to others" : "Hidden"}
+      {visible ? <IconEye size={14} /> : <IconEyeOff size={14} />}
     </button>
   );
 }

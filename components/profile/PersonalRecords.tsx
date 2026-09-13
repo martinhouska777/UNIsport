@@ -2,12 +2,12 @@
 
 import { useState } from "react";
 import type { PersonalRecord } from "@/lib/currentUser";
-import { IconPencil, IconCheck, IconTrash, IconPlus } from "@/components/icons";
+import { IconCheck, IconTrash, IconPlus } from "@/components/icons";
 import VisibilityToggle from "@/components/profile/VisibilityToggle";
 
 /*
   Personal records block: a read-only list that flips into an editor when the
-  pencil is tapped. In edit mode each record is two inputs (lift + value) with a
+  "+" is tapped. In edit mode each record is two inputs (lift + value) with a
   trash button, plus an "Add record" row. Changes are pushed up via onChange and
   persisted by the page. Colors come from theme variables; inputs use 16px text
   (text-base) so phones don't auto-zoom.
@@ -45,13 +45,20 @@ export default function PersonalRecords({
         </div>
         <div className="flex items-center gap-2">
           <VisibilityToggle visible={visible} onChange={onVisibleChange} />
+          {/* A "+" rather than a pencil: on an empty list the pencil opened an
+              editor that looked just like the empty state, so it seemed to do
+              nothing. "+" adds a row and opens every record for editing. */}
           <button
             type="button"
-            onClick={() => (editing ? done() : setEditing(true))}
-            aria-label={editing ? "Done editing personal records" : "Edit personal records"}
-            className="rounded-full p-1 text-muted transition-colors hover:bg-muted/20"
+            onClick={() => {
+              if (editing) return done();
+              addRecord();
+              setEditing(true);
+            }}
+            aria-label={editing ? "Done editing personal records" : "Add a personal record"}
+            className="tap44 flex h-7 w-7 items-center justify-center rounded-full border border-border bg-surface-2 text-muted transition-colors"
           >
-            {editing ? <IconCheck size={14} /> : <IconPencil size={13} />}
+            {editing ? <IconCheck size={14} /> : <IconPlus size={14} />}
           </button>
         </div>
       </div>

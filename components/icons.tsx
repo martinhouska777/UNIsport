@@ -315,6 +315,15 @@ export const IconEye = (p: IconProps) => (
   </Base>
 );
 
+/* The same eye, struck through — "hidden from others". */
+export const IconEyeOff = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" />
+    <circle cx="12" cy="12" r="3" />
+    <path d="M4 4l16 16" />
+  </Base>
+);
+
 export const IconDots = (p: IconProps) => (
   <Base {...p}>
     <circle cx="12" cy="5" r="1" />

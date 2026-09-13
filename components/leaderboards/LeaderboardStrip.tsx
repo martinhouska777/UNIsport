@@ -81,7 +81,7 @@ export default function LeaderboardStrip({
   // Same height either way, so nothing below moves when the numbers land.
   if (!loaded)
     return compact ? (
-      <div className="h-[52px] min-w-0 flex-1 rounded-xl border border-border" />
+      <div className="min-h-[64px] min-w-0 flex-1 rounded-xl border border-border" />
     ) : (
       <div className="h-[66px] border-b border-border" />
     );
@@ -101,7 +101,7 @@ export default function LeaderboardStrip({
       data-tour="profile-leaderboards"
       className={
         compact
-          ? "flex min-w-0 flex-1 items-center gap-2 rounded-xl border border-border bg-surface-2 px-2.5 py-2 active:bg-surface"
+          ? "flex min-h-[64px] min-w-0 flex-1 items-center gap-2 rounded-xl border border-border bg-surface-2 px-2.5 py-2 active:bg-surface"
           : "flex items-center gap-2.5 border-b border-border px-3.5 py-3.5 active:bg-surface-2"
       }
     >
@@ -118,38 +118,46 @@ export default function LeaderboardStrip({
       </span>
 
       {ranked && standing ? (
-        <div className="flex min-w-0 flex-1 items-center">
-          {/* Never a dash: with every group on the boards (lib/leaderboards.ts)
-              a rank exists the moment you've logged, and a group with a name
-              says the name. */}
-          <Cell
-            value={standing.houseRankIn ? ordinal(standing.houseRankIn) : `#${standing.campusRank}`}
-            /* Compact drops the "in": on a 320px phone "IN MATHER" is what
-               pushes the labels into an ellipsis. */
-            label={
-              house
-                ? compact
-                  ? house
-                  : `in ${house}`
-                : team
-                  ? compact
-                    ? team.label
-                    : `in ${team.label}`
-                  : "on campus"
-            }
-          />
-          {/* Your HOUSE's own rank — only on the full-width strip. */}
-          {!compact && (
-            <>
-              <div className="h-6 w-px bg-border" />
-              <Cell
-                value={standing.houseRank ? `#${standing.houseRank}` : team ? team.label : "—"}
-                label={house ? residenceLabel(house) : team ? "your team" : "your house"}
-              />
-            </>
+        <div className="min-w-0 flex-1">
+          {/* The word, so the two numbers say what they are ranks ON. */}
+          {compact && (
+            <div className="mb-1 truncate text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">
+              Leaderboards
+            </div>
           )}
-          <div className="h-6 w-px bg-border" />
-          <Cell value={`#${standing.campusRank}`} label={compact ? "campus" : "on campus"} />
+          <div className="flex min-w-0 items-center">
+            {/* Never a dash: with every group on the boards (lib/leaderboards.ts)
+                a rank exists the moment you've logged, and a group with a name
+                says the name. */}
+            <Cell
+              value={standing.houseRankIn ? ordinal(standing.houseRankIn) : `#${standing.campusRank}`}
+              /* Compact drops the "in": on a 320px phone "IN MATHER" is what
+                 pushes the labels into an ellipsis. */
+              label={
+                house
+                  ? compact
+                    ? house
+                    : `in ${house}`
+                  : team
+                    ? compact
+                      ? team.label
+                      : `in ${team.label}`
+                    : "on campus"
+              }
+            />
+            {/* Your HOUSE's own rank — only on the full-width strip. */}
+            {!compact && (
+              <>
+                <div className="h-6 w-px bg-border" />
+                <Cell
+                  value={standing.houseRank ? `#${standing.houseRank}` : team ? team.label : "—"}
+                  label={house ? residenceLabel(house) : team ? "your team" : "your house"}
+                />
+              </>
+            )}
+            <div className="h-6 w-px bg-border" />
+            <Cell value={`#${standing.campusRank}`} label={compact ? "campus" : "on campus"} />
+          </div>
         </div>
       ) : (
         <div className="min-w-0 flex-1">

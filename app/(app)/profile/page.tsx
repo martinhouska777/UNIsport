@@ -11,7 +11,6 @@ import ModeSwitcherSheet from "@/components/ModeSwitcherSheet";
 import useTapOrDoubleTap from "@/components/useTapOrDoubleTap";
 import { useMembership } from "@/components/varsity/useMembership";
 import { VARSITY_HOME } from "@/lib/varsity/theme";
-import InlineEdit from "@/components/profile/InlineEdit";
 import TrainingCalendar, {
   calendarRange,
   type CalendarMode,
@@ -54,6 +53,7 @@ import {
   IconUser,
   IconCamera,
   IconPencil,
+  IconCheck,
   IconChevronDown,
   IconPlus,
 } from "@/components/icons";
@@ -94,6 +94,16 @@ export default function ProfilePage() {
   const { resetOnboarding } = useAppState();
   // Two taps, because finishing a replay OVERWRITES the answers on this page.
   const [replayArmed, setReplayArmed] = useState(false);
+  /*
+    EDITING THE TOP OF THE PROFILE — photo, name and bio — is one pencil in the
+    top bar, left of the cog. The name and bio used to carry a pencil each,
+    which pushed the name off the centre line. Tap the pencil: the photo gets
+    its camera, the name and bio become fields; tap the tick to save them.
+  */
+  const [editingTop, setEditingTop] = useState(false);
+  const [nameDraft, setNameDraft] = useState("");
+  const [bioDraft, setBioDraft] = useState("");
+  const [nameErr, setNameErr] = useState<string | null>(null);
 
   /*
     Only an APPROVED member sees any varsity mark on this page — not someone
@@ -303,9 +313,32 @@ export default function ProfilePage() {
               {saveState === "saving" ? "Saving…" : saveState === "saved" ? "Saved ✓" : "Couldn’t save"}
             </span>
           )}
-          {/* One button, and it's a cog: name and bio are edited by their own
-              pencils, so a second pencil up here did the same job twice. */}
-          <Link href="/settings" aria-label="Settings" className="text-muted">
+          {/* The pencil edits the top of the profile (photo, name, bio); the
+              cog is everything else. While editing, the pencil is a tick. */}
+          <button
+            type="button"
+            onClick={() => {
+              if (!editingTop) {
+                setNameDraft(user.name);
+                setBioDraft(user.bio);
+                setNameErr(null);
+                setEditingTop(true);
+                return;
+              }
+              const why = nameError(nameDraft);
+              if (why) return setNameErr(why);
+              const patch: { name?: string; bio?: string } = {};
+              if (nameDraft !== user.name) patch.name = nameDraft;
+              if (bioDraft !== user.bio) patch.bio = bioDraft;
+              if (Object.keys(patch).length) update(patch);
+              setEditingTop(false);
+            }}
+            aria-label={editingTop ? "Save profile" : "Edit profile"}
+            className={`tap44 press-icon ${editingTop ? "text-primary" : "text-muted"}`}
+          >
+            {editingTop ? <IconCheck size={18} /> : <IconPencil size={17} />}
+          </button>
+          <Link href="/settings" aria-label="Settings" className="tap44 text-muted">
             <IconSettings size={18} />
           </Link>
         </div>
@@ -326,8 +359,8 @@ export default function ProfilePage() {
           N workouts  |  N partners  |  N followers
 
         The wide row (photo on the left, the counts beside it) is gone, and so
-        is the "Edit profile" button that came with it: every field is edited
-        by its own pencil again (components/profile/InlineEdit.tsx).
+        is the "Edit profile" button that came with it. Photo, name and bio are
+        edited from the pencil in the top bar (see editingTop).
       */}
       <div className="flex flex-col items-center gap-2 border-b border-border px-3.5 pb-3 pt-4">
         <div className="relative">
@@ -349,27 +382,42 @@ export default function ProfilePage() {
               e.target.value = "";
             }}
           />
-          <button
-            type="button"
-            onClick={() => avatarInputRef.current?.click()}
-            aria-label={user.photo ? "Change photo" : "Add photo"}
-            className="tap44 press-icon absolute -bottom-0.5 -right-0.5 flex h-6 w-6 items-center justify-center rounded-full border border-border bg-surface-2 text-muted"
-          >
-            <IconCamera size={12} />
-          </button>
+          {editingTop && (
+            <button
+              type="button"
+              onClick={() => avatarInputRef.current?.click()}
+              aria-label={user.photo ? "Change photo" : "Add photo"}
+              className="tap44 press-icon absolute -bottom-0.5 -right-0.5 flex h-6 w-6 items-center justify-center rounded-full border border-border bg-surface-2 text-muted"
+            >
+              <IconCamera size={12} />
+            </button>
+          )}
         </div>
 
         <div className="flex flex-col items-center gap-1">
-          <InlineEdit
-            value={user.name}
-            onChange={(v) => update({ name: v })}
-            ariaLabel="name"
-            placeholder="Your name"
-            maxLength={40}
-            /* The name everyone else sees — it has to be one (lib/onboarding). */
-            validate={nameError}
-            textClassName="text-base font-medium text-text"
-          />
+          {editingTop ? (
+            <div className="flex flex-col items-center">
+              <input
+                value={nameDraft}
+                onChange={(e) => {
+                  setNameDraft(e.target.value);
+                  if (nameErr) setNameErr(null);
+                }}
+                maxLength={40}
+                aria-label="Name"
+                placeholder="Your name"
+                aria-invalid={nameErr ? true : undefined}
+                /* 16px so a phone doesn't zoom in on focus. */
+                className={`w-56 border-b bg-transparent text-center text-base font-medium text-text focus:outline-none ${
+                  nameErr ? "border-danger" : "border-primary"
+                }`}
+              />
+              {/* The name everyone else sees — it has to be one (lib/onboarding). */}
+              {nameErr && <span className="mt-1 text-[11px] text-danger">{nameErr}</span>}
+            </div>
+          ) : (
+            <div className="text-center text-base font-medium text-text">{user.name || "Your name"}</div>
+          )}
 
           {/* On your OWN profile the varsity badge comes from live membership:
               profiles.data has no record of it (the squad lives in its own
@@ -397,23 +445,34 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* Bio — its own block under the identity, labelled, full width. */}
-      <div className="border-b border-border px-3.5 py-3">
+      {/* Bio — its own block under the identity, down the same centre line. */}
+      <div className="border-b border-border px-3.5 py-3 text-center">
         <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">Bio</div>
-        <InlineEdit
-          value={user.bio}
-          onChange={(v) => update({ bio: v })}
-          ariaLabel="bio"
-          placeholder="Add a short bio"
-          maxLength={160}
-          multiline
-          textClassName="text-[13px] leading-relaxed text-muted"
-        />
+        {editingTop ? (
+          <div>
+            <textarea
+              value={bioDraft}
+              onChange={(e) => setBioDraft(e.target.value)}
+              maxLength={160}
+              aria-label="Bio"
+              placeholder="Add a short bio"
+              className="min-h-[72px] w-full resize-none rounded-lg border border-primary bg-surface-2 px-3 py-2 text-center text-base text-text focus:outline-none"
+            />
+            <div className="mt-1 text-right text-[11px] text-muted">{bioDraft.length} / 160</div>
+          </div>
+        ) : (
+          <p className="text-[13px] leading-relaxed text-muted">
+            {user.bio || "Add a short bio with the pencil above."}
+          </p>
+        )}
       </div>
 
-      {/* The three counts, full width under the bio, divided. They show a dash
-          until the numbers have actually landed, so the row never jumps. */}
-      <div className="flex items-stretch justify-around border-b border-border px-3.5 py-2.5">
+      {/* The three counts, full width under the bio, divided. Three EQUAL
+          columns, so the two dividers sit at exactly a third and two thirds and
+          Partners is the same distance from both — with space-around the gaps
+          followed the width of each word. They show a dash until the numbers
+          have actually landed, so the row never jumps. */}
+      <div className="grid grid-cols-3 border-b border-border py-2.5">
         {stats.map((s, i) => {
           const body = (
             <>
@@ -430,18 +489,17 @@ export default function ProfilePage() {
             </>
           );
           return (
-            <div key={s.label} className="flex items-stretch">
-              {i > 0 && <div className="w-px self-stretch bg-border" />}
+            <div key={s.label} className={`flex items-stretch ${i > 0 ? "border-l border-border" : ""}`}>
               {s.onClick ? (
                 <button
                   type="button"
                   onClick={s.onClick}
-                  className="px-4 text-center transition-colors active:bg-surface-2"
+                  className="w-full text-center transition-colors active:bg-surface-2"
                 >
                   {body}
                 </button>
               ) : (
-                <div className="px-4 text-center">{body}</div>
+                <div className="w-full text-center">{body}</div>
               )}
             </div>
           );
@@ -502,9 +560,11 @@ export default function ProfilePage() {
           </button>
         ) : (
           /* data-tour: the Profile tour opens on this button (lib/tour.ts). */
-          <div className="flex items-center gap-2.5">
+          /* items-stretch + h-auto: the button is exactly as tall as the
+             leaderboard card beside it, not a shorter pill next to a box. */
+          <div className="flex items-stretch gap-2.5">
             <LeaderboardStrip compact />
-            <Button data-tour="profile-log" size="md" onClick={() => setLogging(true)}>
+            <Button data-tour="profile-log" size="md" className="h-auto!" onClick={() => setLogging(true)}>
               <IconPlus size={15} /> Log a session
             </Button>
           </div>
@@ -514,7 +574,7 @@ export default function ProfilePage() {
       {/* 6 · EVERYTHING ELSE, in a <details> that starts OPEN — the owner wants
           it read, not hunted for — but can still be folded away. */}
       <details open className="group border-b border-border">
-        <summary className="tap44 flex cursor-pointer list-none items-center justify-between px-3.5 py-3 [&::-webkit-details-marker]:hidden">
+        <summary className="tap44 flex cursor-pointer list-none items-center justify-between px-3.5 pb-1 pt-3 [&::-webkit-details-marker]:hidden">
           <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
             More about you
           </span>
@@ -542,7 +602,7 @@ export default function ProfilePage() {
         user.concentration ||
         user.hometownCity ||
         user.hometownCountry) && (
-        <div className="border-b border-border px-3.5 pb-3 pt-1.5">
+        <div className="border-b border-border px-3.5 pb-3 pt-0">
           {/* No "About you" label — "More about you" right above already says it.
               The Edit pencil SHARES the first line with the Interests heading; on
               a row of its own it left an empty band under "More about you". */}
@@ -627,6 +687,16 @@ export default function ProfilePage() {
         onVisibleChange={(v) => update({ showPersonalRecords: v })}
       />
 
+      {/* YOUR PHOTOS — inside "More about you", straight after the records and
+          above Replay onboarding (which is going away later), as the owner
+          asked. They used to sit below the fold as the very last thing. */}
+      <PhotoGrid
+        photos={user.photos}
+        onChange={(photos) => update({ photos })}
+        visible={user.showPhotos}
+        onVisibleChange={(v) => update({ showPhotos: v })}
+      />
+
       {/* Varsity Mode isn't a row down here any more — it's the switcher on the
           name in the top bar (tap = sheet, double-tap = straight in). */}
 
@@ -682,19 +752,6 @@ export default function ProfilePage() {
         )}
       </div>
       </details>
-
-      {/* 7 · YOUR PHOTOS, the last thing on the page. They used to sit directly
-          under Log a session, above everything you'd actually read about a
-          person; the order the owner wants is what you're LIKE first (More
-          about you, then your records) and the pictures at the bottom. Kept
-          out of the fold above — a photo grid you have to unfold to edit is a
-          photo grid nobody updates. */}
-      <PhotoGrid
-        photos={user.photos}
-        onChange={(photos) => update({ photos })}
-        visible={user.showPhotos}
-        onVisibleChange={(v) => update({ showPhotos: v })}
-      />
 
       {switchingMode && (
         <ModeSwitcherSheet
