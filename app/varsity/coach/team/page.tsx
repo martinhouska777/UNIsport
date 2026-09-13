@@ -19,6 +19,7 @@
 */
 import { useEffect, useState } from "react";
 import TeamScreen from "@/components/varsity/team/TeamScreen";
+import WriteNoteButton from "@/components/varsity/coach/notes/WriteNoteButton";
 import { useMembership } from "@/components/varsity/useMembership";
 import { can, fetchSquad } from "@/lib/varsity/membership";
 import { rosterIdForName } from "@/lib/varsity/demoAthlete";
@@ -56,6 +57,8 @@ export default function CoachTeamPage() {
     <TeamScreen
       /* Just the roster — Workouts is its own tab in the console. */
       only="roster"
+      /* A coach (not a captain) gets the quick way to a technical note on top. */
+      topAction={role && can.writeNotes(role) ? <WriteNoteButton /> : undefined}
       athleteHref={(a) => {
         const userId = accounts[a.id];
         return userId ? `/varsity/coach/athlete/${userId}` : null;

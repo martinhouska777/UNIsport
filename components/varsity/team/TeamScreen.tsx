@@ -201,11 +201,14 @@ type Tab = "roster" | "workouts";
 export default function TeamScreen({
   athleteHref,
   only,
+  topAction,
 }: {
   athleteHref?: (a: Athlete) => string | null;
   /* The Coach Console shows the two halves as two bottom tabs (Team = roster,
      Workouts = the boards), so it asks for one half and gets no switch. */
   only?: Tab;
+  /* Something to put above the roster — the coach's "Write a technical note". */
+  topAction?: React.ReactNode;
 } = {}) {
   const [picked, setTab] = useState<Tab>("roster");
   const tab = only ?? picked;
@@ -255,6 +258,7 @@ export default function TeamScreen({
 
       {tab === "roster" ? (
         <>
+          {topAction && <div className={only ? "mb-3" : "mt-3"}>{topAction}</div>}
           {/* search */}
           <div className={`${only ? "" : "mt-3 "}flex items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2.5`}>
             <span className="text-muted">
