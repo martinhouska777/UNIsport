@@ -485,6 +485,9 @@ function WeeklyGraph({
   onRange,
   onCustom,
   onChart,
+  onZoom,
+  onZoomOut,
+  zoomed,
 }: {
   /** The same buckets the points came from — the full screen reads them. */
   buckets: Bucket[];
@@ -502,6 +505,9 @@ function WeeklyGraph({
   onRange: (key: string) => void;
   onCustom: (start: string, end: string) => void;
   onChart: (key: string) => void;
+  onZoom: (start: string, end: string) => void;
+  onZoomOut: () => void;
+  zoomed: boolean;
 }) {
   const [openMenu, setOpenMenu] = useState<"metric" | "range" | "chart" | null>(null);
   const [picking, setPicking] = useState(false); // the custom-dates sheet
@@ -605,6 +611,9 @@ function WeeklyGraph({
           onRange={onRange}
           onCustomRange={() => setPicking(true)}
           onChart={onChart}
+          onZoom={onZoom}
+          onZoomOut={onZoomOut}
+          zoomed={zoomed}
           onClose={() => setFull(false)}
         />
       )}
@@ -632,9 +641,27 @@ export default function ProfileScreen() {
   const [rangeKey, setRangeKey] = useState(defaultStatRange);
   const [custom, setCustom] = useState<{ start: string; end: string } | null>(null);
   const range: StatRange = custom ? customRange(custom.start, custom.end) : rangeByKey(rangeKey);
+  /*
+    ZOOM (the full-screen graph's drag). A zoom is a window of dates like any
+    other; what it adds is a way BACK — the window you were on before the first
+    zoom, so "Zoom out" undoes however many zooms in one press. Picking a window
+    by hand forgets it.
+  */
+  const [beforeZoom, setBeforeZoom] = useState<{ rangeKey: string; custom: { start: string; end: string } | null } | null>(null);
   const pickRange = (key: string) => {
+    setBeforeZoom(null);
     setCustom(null);
     setRangeKey(key);
+  };
+  const zoomTo = (start: string, end: string) => {
+    if (!beforeZoom) setBeforeZoom({ rangeKey, custom });
+    setCustom({ start, end });
+  };
+  const zoomOut = () => {
+    if (!beforeZoom) return;
+    setRangeKey(beforeZoom.rangeKey);
+    setCustom(beforeZoom.custom);
+    setBeforeZoom(null);
   };
   // The coach's sessions, only so the Training mix can name intensities.
   const [planSessions, setPlanSessions] = useState<SessionMap>({});
@@ -923,7 +950,6 @@ export default function ProfileScreen() {
             <div className="mt-1.5 text-[8px] font-semibold uppercase tracking-[0.08em] text-muted">
               {t.label}
             </div>
-            <div className="mt-0.5 truncate text-[8px] text-muted">{t.sub}</div>
           </div>
         ))}
       </div>
@@ -940,8 +966,14 @@ export default function ProfileScreen() {
           windowStart={buckets[0]?.span.startIso ?? toISO(now)}
           onMetric={(key) => patchProfile({ statMetric: key })}
           onRange={pickRange}
-          onCustom={(start, end) => setCustom({ start, end })}
+          onCustom={(start, end) => {
+            setBeforeZoom(null);
+            setCustom({ start, end });
+          }}
           onChart={(key) => patchProfile({ statChart: key })}
+          onZoom={zoomTo}
+          onZoomOut={zoomOut}
+          zoomed={beforeZoom !== null}
         />
 
         {/* The way into the detail. A row of its own rather than making the

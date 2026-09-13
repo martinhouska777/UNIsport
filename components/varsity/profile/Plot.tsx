@@ -17,6 +17,7 @@
   Everything is one SVG on a viewBox, so it stretches to whatever width it is
   given and stays sharp. All colours are theme tokens (rule 1).
 */
+import { useRef, useState } from "react";
 import type { StatMetric } from "@/lib/varsity/athleteStats";
 import type { Units } from "@/lib/varsity/units";
 import type { ChartType } from "@/lib/varsity/athleteStats";
@@ -115,6 +116,7 @@ export default function Plot({
   average = null,
   selected = null,
   onSelect,
+  onRangeSelect,
 }: {
   points: PlotPoint[];
   metric: StatMetric;
@@ -130,7 +132,19 @@ export default function Plot({
   selected?: number | null;
   /** Given, every column becomes a tap target. */
   onSelect?: (index: number) => void;
+  /**
+   * Given, a DRAG across the columns picks a stretch of them (first and last
+   * index, in order) — the full screen zooms into it. A tap still selects.
+   */
+  onRangeSelect?: (from: number, to: number) => void;
 }) {
+  /*
+    THE DRAG. Where the finger (or mouse) went down and where it is now, as
+    bucket indexes. It only becomes a drag once it has moved a few pixels —
+    below that it is a tap, and a tap reads one column as it always did.
+  */
+  const svgRef = useRef<SVGSVGElement>(null);
+  const [drag, setDrag] = useState<{ from: number; to: number; x0: number; moved: boolean } | null>(null);
   /*
     THE TOP OF THE AXIS. A percentage is always drawn against a full 100, or a
     consistent 40% week would fill the card and read like a good one. Everything
@@ -168,6 +182,16 @@ export default function Plot({
   const cx = (i: number) => padL + slot * (i + 0.5);
   const yOf = (v: number) => baseline - plotH * (Math.min(v, max) / max);
 
+  /* A screen x (a pointer event) → the bucket under it, clamped to the plot. */
+  const indexAt = (clientX: number) => {
+    const box = svgRef.current?.getBoundingClientRect();
+    if (!box || box.width === 0) return 0;
+    const x = ((clientX - box.left) * W) / box.width;
+    return Math.min(n - 1, Math.max(0, Math.floor((x - padL) / slot)));
+  };
+  const dragLo = drag?.moved ? Math.min(drag.from, drag.to) : null;
+  const dragHi = drag?.moved ? Math.max(drag.from, drag.to) : null;
+
   const line = points.map((p, i) => `${cx(i)},${yOf(p.value)}`).join(" ");
   const area = `M ${cx(0)},${baseline} L ${line.replaceAll(" ", " L ")} L ${cx(n - 1)},${baseline} Z`;
 
@@ -203,11 +227,37 @@ export default function Plot({
 
   return (
     <svg
+      ref={svgRef}
       viewBox={`0 0 ${W} ${H}`}
       width="100%"
-      className="block text-primary"
+      /* pan-y: a sideways drag is ours (it picks a stretch), an up-and-down
+         one still scrolls the screen. select-none so a mouse drag doesn't
+         highlight the dates as text. */
+      className={`block text-primary ${onRangeSelect ? "touch-pan-y select-none" : ""}`}
       role="img"
       aria-label={`${metric.label} by ${n} buckets`}
+      {...(onRangeSelect
+        ? {
+            onPointerDown: (e: React.PointerEvent<SVGSVGElement>) => {
+              const i = indexAt(e.clientX);
+              e.currentTarget.setPointerCapture(e.pointerId);
+              setDrag({ from: i, to: i, x0: e.clientX, moved: false });
+            },
+            onPointerMove: (e: React.PointerEvent<SVGSVGElement>) => {
+              if (!drag) return;
+              const moved = drag.moved || Math.abs(e.clientX - drag.x0) > 8;
+              setDrag({ ...drag, to: indexAt(e.clientX), moved });
+            },
+            onPointerUp: (e: React.PointerEvent<SVGSVGElement>) => {
+              if (!drag) return;
+              const to = indexAt(e.clientX);
+              if (drag.moved) onRangeSelect(Math.min(drag.from, to), Math.max(drag.from, to));
+              else onSelect?.(drag.from);
+              setDrag(null);
+            },
+            onPointerCancel: () => setDrag(null),
+          }
+        : {})}
     >
       {/*
         THE Y AXIS — three gridlines (top, middle, zero) and what each is worth,
@@ -234,6 +284,23 @@ export default function Plot({
           </g>
         );
       })}
+
+      {/* THE STRETCH BEING DRAGGED — one band over every column in it, so you
+          can see what you are about to zoom into before you let go. */}
+      {dragLo != null && dragHi != null && (
+        <rect
+          x={cx(dragLo) - slot / 2}
+          y={padT - 4}
+          width={slot * (dragHi - dragLo + 1)}
+          height={plotH + 4}
+          rx={3}
+          fill="var(--primary)"
+          fillOpacity={0.14}
+          stroke="var(--primary)"
+          strokeOpacity={0.5}
+          strokeWidth={1}
+        />
+      )}
 
       {/* THE BUCKET BEING READ — a band behind it, so the detail underneath
           the graph is visibly about THIS column. */}
@@ -369,6 +436,7 @@ export default function Plot({
           so nothing sits on top of them. A whole column is a far easier thing to
           hit than a 6px-wide bar. */}
       {onSelect &&
+        !onRangeSelect &&
         points.map((p, i) => (
           <rect
             key={`hit-${i}`}

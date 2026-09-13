@@ -29,7 +29,7 @@ import { expectedDays, trainedDays, type Span } from "@/lib/varsity/athleteStats
 /* A number on the screen. `tone` is the only styling this file decides, and it
    decides it as a word — the screen maps it to a theme token (rule 1). */
 export type StatTone = "text" | "success" | "warn" | "muted";
-export type StatCell = { key: string; label: string; value: string; sub?: string; tone?: StatTone };
+export type StatCell = { key: string; label: string; value: string; tone?: StatTone };
 export type StatGroup = { key: string; title: string; cells: StatCell[] };
 
 const asDate = (iso: string) => {
@@ -126,7 +126,6 @@ export function rowingReport(
   const water = sum(rowed.filter((l) => l.category === "water").map((l) => l.metres ?? 0));
   const erg = sum(rowed.filter((l) => l.category === "erg").map((l) => l.metres ?? 0));
   const longest = Math.max(0, ...rowed.map((l) => l.metres ?? 0));
-  const withMetres = rowed.filter((l) => (l.metres ?? 0) > 0);
 
   const minutes = sum(training.map((l) => l.minutes ?? 0));
   const timed = training.filter((l) => (l.minutes ?? 0) > 0);
@@ -150,7 +149,7 @@ export function rowingReport(
   const expected = expectedDays(span);
   const days = Math.min(trainedDays(training), expected);
   const consistency = expected ? Math.min(100, Math.round((days / expected) * 100)) : 0;
-  const { longest: longestStreak, current: currentStreak } = streaks(training, span);
+  const { longest: longestStreak } = streaks(training, span);
 
   const counts = planCounts(logs, plan, span);
 
@@ -163,26 +162,22 @@ export function rowingReport(
           key: "sessions",
           label: "Sessions",
           value: `${training.length}`,
-          sub: training.length ? `${(training.length / Math.max(1, days)).toFixed(1)} a day` : "none yet",
         },
         {
           key: "days",
           label: "Days trained",
           value: `${days}`,
-          sub: expected ? `of ${expected} days` : dash,
         },
         {
           key: "consistency",
           label: "Consistency",
           value: `${consistency}%`,
-          sub: "days you turned up",
           tone: consistency >= 80 ? "success" : consistency >= 50 ? "text" : "warn",
         },
         {
           key: "streak",
           label: "Longest streak",
           value: longestStreak ? `${longestStreak} d` : dash,
-          sub: currentStreak ? `${currentStreak} d running now` : "nothing running",
         },
       ],
     },
@@ -194,27 +189,21 @@ export function rowingReport(
           key: "total",
           label: "Total rowed",
           value: metres ? formatDistance(metres, units.distance) : dash,
-          sub: `${withMetres.length} session${withMetres.length === 1 ? "" : "s"}`,
         },
         {
           key: "water",
           label: "On the water",
           value: water ? formatDistance(water, units.distance) : dash,
-          sub: metres ? `${Math.round((water / metres) * 100)}% of it` : dash,
         },
         {
           key: "erg",
           label: "On the erg",
           value: erg ? formatDistance(erg, units.distance) : dash,
-          sub: metres ? `${Math.round((erg / metres) * 100)}% of it` : dash,
         },
         {
           key: "avg",
           label: "Longest piece",
           value: longest ? formatDistance(longest, units.distance) : dash,
-          sub: withMetres.length
-            ? `avg ${formatDistance(metres / withMetres.length, units.distance)}`
-            : dash,
         },
       ],
     },
@@ -226,25 +215,21 @@ export function rowingReport(
           key: "total",
           label: "Time trained",
           value: minutes ? formatDuration(Math.round(minutes)) : dash,
-          sub: days ? `${formatDuration(Math.round(minutes / days))} a day` : dash,
         },
         {
           key: "avg",
           label: "Avg session",
           value: timed.length ? formatDuration(Math.round(minutes / timed.length)) : dash,
-          sub: timed.length ? `over ${timed.length} timed` : "nothing timed",
         },
         {
           key: "split",
           label: "Avg split",
           value: avgSplit ? `${asSplit(avgSplit)}` : dash,
-          sub: avgSplit ? "per 500 m" : "needs time + metres",
         },
         {
           key: "best",
           label: "Best split",
           value: bestSplit ? `${asSplit(bestSplit)}` : dash,
-          sub: bestSplit ? "per 500 m" : "none logged",
         },
       ],
     },
@@ -260,28 +245,23 @@ export function rowingReport(
       key: "plan",
       title: "Against the plan",
       cells: [
-        { key: "planned", label: "Planned", value: `${counts.planned}`, sub: "by your coach" },
+        { key: "planned", label: "Planned", value: `${counts.planned}` },
         {
           key: "done",
           label: "Done",
           value: `${counts.done}`,
-          sub: counts.planned
-            ? `${Math.round((counts.done / counts.planned) * 100)}% of them`
-            : dash,
           tone: counts.planned && counts.done === counts.planned ? "success" : "text",
         },
         {
           key: "missed",
           label: "Missed",
           value: `${counts.missed}`,
-          sub: counts.missed ? "not logged" : "none missed",
           tone: counts.missed ? "warn" : "muted",
         },
         {
           key: "extra",
           label: "Extra",
           value: `${counts.extra}`,
-          sub: counts.extra ? "on top of the plan" : "none added",
           tone: counts.extra ? "success" : "muted",
         },
       ],

@@ -17,6 +17,16 @@
       average split per 500 m, the best split, the longest streak
     • the training mix — what all that time actually was
 
+  DRAG TO ZOOM (owner, 2026-09-13). Drag a thumb or the mouse sideways across
+  the graph and it zooms into that stretch — three weeks out of three months
+  become those three weeks, day by day. It is simply a window of those dates,
+  so the three numbers, the groups and the mix under the graph all follow it.
+  "Zoom out" puts back the window you were on before the first zoom.
+
+  NO CAPTIONS under the numbers (same day: "just do the data"). Every number
+  is its label and its value; the grey line under each ("of 12 days", "not
+  logged", "per 500 m"…) and the explainer lines are gone.
+
   The three choices (measure, window, shape) are the SAME three the card has,
   and they are the same dropdowns; changing one here changes it on the card,
   because both read the one saved profile.
@@ -32,7 +42,7 @@ import ThemeProvider from "@/components/ThemeProvider";
 import { useVarsityTheme } from "@/components/varsity/useVarsityTheme";
 import Plot from "@/components/varsity/profile/Plot";
 import Dropdown from "@/components/varsity/profile/Dropdown";
-import { IconX, IconCalendar } from "@/components/icons";
+import { IconX, IconCalendar, IconArrowLeft } from "@/components/icons";
 import { formatDistance, formatDuration, type Units } from "@/lib/varsity/units";
 import type { SessionMap } from "@/lib/varsity/coachPlan";
 import {
@@ -77,6 +87,9 @@ export default function StatsFullScreen({
   onRange,
   onCustomRange,
   onChart,
+  onZoom,
+  onZoomOut,
+  zoomed,
   onClose,
 }: {
   buckets: Bucket[];
@@ -92,6 +105,11 @@ export default function StatsFullScreen({
   onRange: (key: string) => void;
   onCustomRange: () => void;
   onChart: (key: string) => void;
+  /** Zoom into the dates of a dragged stretch of columns. */
+  onZoom: (startIso: string, endIso: string) => void;
+  /** Back to the window from before the first zoom. */
+  onZoomOut: () => void;
+  zoomed: boolean;
   onClose: () => void;
 }) {
   const vTheme = useVarsityTheme();
@@ -171,6 +189,15 @@ export default function StatsFullScreen({
               {range.bucket === "day" ? "day by day" : "week by week"}
             </div>
           </div>
+          {zoomed && (
+            <button
+              type="button"
+              onClick={onZoomOut}
+              className="tap44 flex flex-shrink-0 items-center gap-1 rounded-full border border-border bg-surface-2 px-3 py-1.5 text-[12px] font-medium text-text"
+            >
+              <IconArrowLeft size={13} /> Zoom out
+            </button>
+          )}
         </div>
 
         <div className="flex-1 overflow-y-auto overscroll-contain pb-[max(2rem,env(safe-area-inset-bottom))]">
@@ -217,6 +244,16 @@ export default function StatsFullScreen({
                   average={metric.axisMax ? null : average}
                   selected={at}
                   onSelect={setSelected}
+                  onRangeSelect={(from, to) => {
+                    const a = buckets[from];
+                    const b = buckets[to];
+                    if (!a || !b) return;
+                    // One DAY is already as close as the graph goes; one week
+                    // (or more) of anything opens up day by day.
+                    if (from === to && range.bucket === "day") return setSelected(from);
+                    onZoom(a.span.startIso, b.span.endIso);
+                    setSelected(0);
+                  }}
                 />
               </div>
             ) : (
@@ -254,9 +291,6 @@ export default function StatsFullScreen({
                     ))}
                   </div>
                 )}
-                <div className="mt-2 text-[10px] text-muted">
-                  Tap any column to read that {range.bucket === "day" ? "day" : "week"}.
-                </div>
               </div>
             )}
 
@@ -275,7 +309,6 @@ export default function StatsFullScreen({
                   <div className="mt-1.5 text-[9px] font-semibold uppercase tracking-[0.08em] text-muted">
                     {t.label}
                   </div>
-                  <div className="mt-0.5 truncate text-[9px] text-muted">{t.sub}</div>
                 </div>
               ))}
             </div>
@@ -300,7 +333,6 @@ export default function StatsFullScreen({
                       >
                         {c.value}
                       </div>
-                      {c.sub && <div className="mt-1 truncate text-[10px] text-muted">{c.sub}</div>}
                     </div>
                   ))}
                 </div>
@@ -347,10 +379,6 @@ export default function StatsFullScreen({
               </div>
             )}
 
-            <p className="mt-5 text-center text-[10px] leading-relaxed text-muted">
-              Everything here comes from your own logs over{" "}
-              {shortDate(whole.startIso)} – {shortDate(whole.endIso)}.
-            </p>
           </div>
         </div>
       </div>
