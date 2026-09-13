@@ -291,56 +291,59 @@ export default function CalendarScreen() {
        month flexes, so the grid always reaches the bottom of the screen. */
     /* The header above the grid is deliberately tight — every pixel it gives
        up is a pixel the month gets, and the month is the screen. */
-    <div className="mx-auto flex h-full w-full max-w-screen-sm flex-col px-1.5 pb-3 pt-2.5">
-      {/* The month IS the title — no page header above it, and nothing beside
-          it: the arrows moved down to the colour key's row. */}
-      <div className="flex flex-shrink-0 items-baseline gap-1.5 px-1.5">
-        <h1 className="text-xl font-semibold leading-none text-text">{MONTHS[view.m]}</h1>
-        <span className="text-[13px] font-medium text-muted">{view.y}</span>
-      </div>
+    <div className="mx-auto flex h-full w-full max-w-screen-sm flex-col px-1.5 pb-3 pt-1.5">
+      {/*
+        ONE ROW ABOVE THE GRID — the month with its arrows on the left, the
+        colour key on the right. The owner's note: as little bar at the top as
+        possible, so the month itself gets the room and the workouts fit. It
+        was two rows (the month name on its own, then the key with the arrows)
+        and 106px stood between the top of the tab and the first week; this
+        row and the weekday letters take about half that.
 
-      {/* WHAT THE COLOURS MEAN, directly under the month — the key you need
-          BEFORE you read the grid, not after it. It takes the row the month's
-          "31 sessions · 351 km rowed" had: those totals are the same numbers
-          the per-kind buttons below the grid already carry.
+        The month is "Sep 2026", not "September 2026" — the full name does not
+        fit on one line beside the key on a 360px phone. The day sheet still
+        says "September 13, 2026".
 
-          THE ARROWS SHARE THIS ROW. They used to sit beside the month name,
-          and the key needed the full width to itself. Without Race (calendarLegend) the
-          key is short enough to leave room for them on the right. */}
-      <div className="mt-2 flex flex-shrink-0 items-center justify-between gap-2 px-1.5">
-        <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
-          {calendarLegend.map((l) => (
-            <span key={l.kind} className="flex items-center gap-1 text-[11px] text-muted">
-              <span className="h-1.5 w-3 rounded-sm" style={kindBar(l.kind)} />
-              {l.label}
-            </span>
-          ))}
-        </div>
-        <div className="flex flex-shrink-0 gap-1.5">
+        No Race in the key (calendarLegend): nobody logs a race, they log the
+        2k they rowed and write "race" on it.
+      */}
+      <div className="flex h-7 flex-shrink-0 items-center justify-between gap-2 px-1">
+        <div className="flex flex-shrink-0 items-center gap-1">
           <button
             type="button"
             aria-label="Previous month"
             onClick={() => goMonth(-1)}
-            className="tap44 press-icon flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-surface text-muted"
+            className="tap44 press-icon flex h-6 w-6 items-center justify-center rounded-md border border-border bg-surface text-muted"
           >
-            <IconArrowLeft size={14} />
+            <IconArrowLeft size={12} />
           </button>
+          <h1 className="px-0.5 text-[15px] font-semibold leading-none text-text">
+            {MONTHS[view.m].slice(0, 3)} <span className="text-[12px] font-medium text-muted">{view.y}</span>
+          </h1>
           <button
             type="button"
             aria-label="Next month"
             onClick={() => goMonth(1)}
             disabled={atCurrentMonth}
-            className="tap44 press-icon flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-surface text-muted disabled:opacity-30"
+            className="tap44 press-icon flex h-6 w-6 items-center justify-center rounded-md border border-border bg-surface text-muted disabled:opacity-30"
           >
-            <IconArrowRight size={14} />
+            <IconArrowRight size={12} />
           </button>
+        </div>
+        <div className="flex min-w-0 items-center gap-x-2 overflow-hidden">
+          {calendarLegend.map((l) => (
+            <span key={l.kind} className="flex flex-shrink-0 items-center gap-[3px] text-[10px] leading-none text-muted">
+              <span className="h-1.5 w-1.5 rounded-full" style={kindBar(l.kind)} />
+              {l.label}
+            </span>
+          ))}
         </div>
       </div>
 
       {/* Weekday header */}
-      <div className="mt-2 grid flex-shrink-0 grid-cols-7 gap-1 border-b border-border pb-1">
+      <div className="mt-1 grid flex-shrink-0 grid-cols-7 gap-1 border-b border-border pb-0.5">
         {DAY_NAMES.map((d, i) => (
-          <div key={i} className="text-center text-[11px] font-semibold tracking-[0.12em] text-muted">
+          <div key={i} className="text-center text-[10px] font-semibold leading-tight tracking-[0.12em] text-muted">
             {d}
           </div>
         ))}
