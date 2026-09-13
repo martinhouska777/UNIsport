@@ -140,8 +140,9 @@ export default function TeamWorkouts() {
     };
   }, []);
 
-  /* An example board counts against the EXAMPLE roster, never the real squad —
-     "37 of 3 logged" is nonsense on a squad that hasn't signed up yet. */
+  /* The turnout count on a LIST ROW here — the board itself stopped printing
+     one. An example board counts against the EXAMPLE roster, never the real
+     squad: "37 of 3 logged" is nonsense on a squad that hasn't signed up yet. */
   const shownSquadSize = example ? demoSquadSize : squadSize;
 
   // How many results each workout has, so the list can show it without
@@ -286,8 +287,6 @@ export default function TeamWorkouts() {
           results={openedResults}
           workouts={workouts}
           allResults={results}
-          squadSize={shownSquadSize}
-          example={example}
           myId={userId}
           onClose={() => setOpen(null)}
           onOpenWorkout={(dayKey) => setOpen(dayKey)}

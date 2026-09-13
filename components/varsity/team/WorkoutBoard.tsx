@@ -27,7 +27,6 @@
 */
 import { useMemo, useState } from "react";
 import Sheet from "@/components/varsity/Sheet";
-import { ExampleNote } from "@/components/varsity/ExampleTag";
 import ResultDetail from "@/components/varsity/team/ResultDetail";
 import BoardTable from "@/components/varsity/team/BoardTable";
 import Delta from "@/components/varsity/team/Delta";
@@ -39,13 +38,14 @@ import {
   metricMeta,
   pieceKindOf,
   pieceSignature,
+  rowedAsReps,
   samePieceHistory,
   type MetricKey,
   type TeamWorkout,
 } from "@/lib/varsity/teamBoard";
 import { secToClock } from "@/lib/varsity/ergMath";
 import type { TeamResult } from "@/lib/varsity/resultsStore";
-import { IconCamera, IconFloors, IconChevronRight } from "@/components/icons";
+import { IconFloors, IconChevronRight } from "@/components/icons";
 
 function Tile({ value, label }: { value: string; label: string }) {
   return (
@@ -65,8 +65,6 @@ export default function WorkoutBoard({
   results,
   workouts,
   allResults,
-  squadSize,
-  example = false,
   myId,
   onClose,
   onOpenWorkout,
@@ -75,9 +73,6 @@ export default function WorkoutBoard({
   results: TeamResult[];
   workouts: TeamWorkout[]; // every team workout, for finding earlier goes at this piece
   allResults: TeamResult[];
-  squadSize: number | null;
-  /** A worked example, not the squad's own results — says so at the top. */
-  example?: boolean;
   myId: string | null;
   onClose: () => void;
   /* Open another team workout in this board's place — how a previous edition
@@ -85,6 +80,10 @@ export default function WorkoutBoard({
   onOpenWorkout?: (dayKey: string) => void;
 }) {
   const ranked = workout.board === "ranked";
+  /* Was this written as a set of reps ("8×500m", "3×25'"), or as one piece
+     rowed straight through (a 2k, a 30')? The coach's own wording decides, and
+     it is what says whether a row shows its total time. */
+  const reps = rowedAsReps(workout.session);
   const [view, setView] = useState<View>("list");
   const [openRow, setOpenRow] = useState<string | null>(null);
 
@@ -103,8 +102,8 @@ export default function WorkoutBoard({
   const previous = past[0];
 
   const board = useMemo(
-    () => buildBoard(results, workout.board, metric, myId, previous?.results),
-    [results, workout.board, metric, myId, previous],
+    () => buildBoard(results, workout.board, metric, myId, previous?.results, reps),
+    [results, workout.board, metric, myId, previous, reps],
   );
 
   const readable = board.rows.some((r) => r.value != null);
@@ -130,8 +129,13 @@ export default function WorkoutBoard({
   );
 
   return (
-    <Sheet title={ranked ? "Ranked" : "Squad"} onClose={onClose}>
-      {example && <ExampleNote what="board" />}
+    /*
+      NO TITLE ON THE SHEET. "Ranked" / "Squad" was a word for the shape of the
+      screen, sitting directly above a card that already says what this is —
+      the session, the workout and the day it was pulled. The bar keeps the
+      handle and the X.
+    */
+    <Sheet title="" onClose={onClose}>
       {/* what the workout was */}
       <div className="rounded-2xl border border-border bg-surface-2 px-3.5 py-3">
         <div className="flex items-center gap-2">
@@ -151,30 +155,29 @@ export default function WorkoutBoard({
             {workout.session.description}
           </p>
         )}
-        {/* "of M" only on a ranked board: on an averages board it read as a
-            compliance score over a steady session. "compared with" is
-            clickable again — it opens THAT day's board in this one's place
-            (onOpenWorkout, same trick a previous edition inside ResultDetail
-            uses), so you can actually go look at the piece you're being
-            compared against instead of just being told its date. */}
-        <p className="mt-2 text-[11px] text-muted">
-          {board.logged} {ranked && squadSize ? `of ${squadSize} ` : ""}logged
-          {previous &&
-            (onOpenWorkout ? (
-              <>
-                {" · compared with "}
-                <button
-                  type="button"
-                  onClick={() => onOpenWorkout(previous.workout.dayKey)}
-                  className="font-medium text-primary underline decoration-dotted underline-offset-2"
-                >
-                  {previous.workout.dateLabel}
-                </button>
-              </>
+        {/* The turnout count ("43 of 43 logged") is gone — on a squad where
+            everybody logs, it said 43 of 43 every single time. What stays is
+            the day this board is measured against, still clickable: it opens
+            THAT day's board in this one's place (onOpenWorkout, the same trick
+            a previous edition inside ResultDetail uses), so you can go look at
+            the piece you're being compared with instead of just being told its
+            date. */}
+        {previous && (
+          <p className="mt-2 text-[11px] text-muted">
+            Compared with{" "}
+            {onOpenWorkout ? (
+              <button
+                type="button"
+                onClick={() => onOpenWorkout(previous.workout.dayKey)}
+                className="font-medium text-primary underline decoration-dotted underline-offset-2"
+              >
+                {previous.workout.dateLabel}
+              </button>
             ) : (
-              ` · compared with ${previous.workout.dateLabel}`
-            ))}
-        </p>
+              previous.workout.dateLabel
+            )}
+          </p>
+        )}
       </div>
 
       {/* your own line, first — the thing you opened this to see. Tap it for
@@ -275,7 +278,9 @@ export default function WorkoutBoard({
             >
               {m.label}
             </div>
-            <div className="mt-1 text-[8px] uppercase tracking-[0.1em] text-muted">{m.sub}</div>
+            {/* The gloss under each pill — PER 500 M, TOTAL, AVERAGE POWER,
+                POWER PER KILO — is gone. Anyone reading an erg board knows what
+                a split is, and four captions made the row twice as tall. */}
           </button>
         ))}
       </div>
@@ -364,24 +369,22 @@ export default function WorkoutBoard({
                   {row.rank ?? "—"}
                 </span>
               )}
-              <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-primary-tint text-[11px] font-semibold text-primary">
-                {row.initials}
-              </span>
+              {/* No initials tile. On a board of forty names it was forty
+                  identical squares repeating the first letters of the name
+                  written beside them. */}
               <div className="min-w-0 flex-1">
                 <div className="truncate text-[13px] font-semibold text-text">
                   {row.result.athleteName || "Unnamed"}
                 </div>
                 <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-muted">
                   {row.detail && <span className="truncate">{row.detail}</span>}
-                  {!!row.result.intervals?.length && (
+                  {/* How many REPS they logged — on a set of reps. A 2k also
+                      stores four rows, but those are its 500s, not four
+                      efforts, and "4" beside a 2k said nothing. */}
+                  {reps && !!row.result.intervals?.length && (
                     <span className="flex flex-shrink-0 items-center gap-0.5">
                       <IconFloors size={11} />
                       {row.result.intervals.length}
-                    </span>
-                  )}
-                  {row.result.photoPath && (
-                    <span className="flex-shrink-0">
-                      <IconCamera size={11} />
                     </span>
                   )}
                 </div>
@@ -430,10 +433,6 @@ export default function WorkoutBoard({
               </button>
             ))}
           </div>
-          <p className="mt-1.5 px-0.5 text-[11px] leading-relaxed text-muted">
-            An RP3 reads a different split for the same effort, so these sit outside the ranking and
-            outside the averages.
-          </p>
         </>
       )}
 

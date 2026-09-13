@@ -369,7 +369,7 @@ export type BoardRow = {
   display: string;
   rank: number | null; // ranked boards only; null when the metric can't read them
   mine: boolean;
-  detail: string; // "22:30 · 6,240 m · r24"
+  detail: string; // "22:30 · r24" on a straight piece, "r24" on one rowed as reps
   /* Against their own last go at this same piece. Positive = better. Null when
      they have never done it before (or the metric can't read one of the two). */
   improvement: number | null;
@@ -401,11 +401,26 @@ export function initialsOf(name: string): string {
   return (first + last).toUpperCase();
 }
 
-// The small line under a name: whatever of time / distance / rate exists.
-function detailLine(r: TeamResult): string {
+/*
+  THE SMALL LINE UNDER A NAME — and it only carries what differs between one
+  rower and the next.
+
+  It used to read "6:04 · 2,000 m · r34". The DISTANCE is gone: a team workout
+  is one prescribed piece, so every single row said 2,000 m, and a column of
+  forty identical numbers is not information.
+
+  The TOTAL TIME stays on a piece rowed STRAIGHT THROUGH — on a 2k the total
+  IS the result, and it is the number the squad says out loud. On a set of REPS
+  it goes: the total of an 8×500m is just eight efforts added up, and the time
+  that matters there is already the headline on the right. Which of the two a
+  session is comes from the coach's own wording, not from the row count, so a
+  2k's four 500s are never mistaken for four reps (see rowedAsReps above).
+
+  What is always worth a rower's eye is the RATE they held to get it.
+*/
+function detailLine(r: TeamResult, reps: boolean): string {
   const bits: string[] = [];
-  if (r.minutes != null && r.minutes > 0) bits.push(secToClock(r.minutes * 60));
-  if (r.metres != null && r.metres > 0) bits.push(`${Math.round(r.metres).toLocaleString("en-US")} m`);
+  if (!reps && r.minutes != null && r.minutes > 0) bits.push(secToClock(r.minutes * 60));
   if (r.strokeRate != null) bits.push(`r${r.strokeRate}`);
   return bits.join(" · ");
 }
@@ -426,6 +441,9 @@ export function buildBoard(
      that person has done since. Omit it and the improvement column is simply
      absent — never wrong, just missing. */
   previous?: TeamResult[],
+  /* Was this session written as a set of reps ("8×500m")? It decides whether a
+     row carries its total time — see detailLine. */
+  reps = false,
 ): Board {
   const lowerIsBetter = metricMeta(metric).lowerIsBetter;
   const before = new Map((previous ?? []).map((r) => [r.athleteId, r]));
@@ -441,7 +459,7 @@ export function buildBoard(
       display: metricDisplay(value, metric),
       rank: null,
       mine: !!myId && result.athleteId === myId,
-      detail: detailLine(result),
+      detail: detailLine(result, reps),
       improvement:
         value != null && prevValue != null
           ? lowerIsBetter
