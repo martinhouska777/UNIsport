@@ -13,9 +13,12 @@
                   coach put up, what got done, what got missed and what was
                   done on top. It used to be called "Against the plan", which
                   made thirty sessions with two missed read like a charge sheet.
+                  The days OUT (sick, injured, away) end this group: they are
+                  the reason a thin window was thin, so they belong beside it.
     Distance    — the metres, on the water and on the erg, and the average row
-    Time        — how long you trained, per day, per session, and how long went
-                  on each thing: the water, the erg, weights, a run, a bike
+    Time        — how long you trained in total, in an average week and in the
+                  best one, per day, per session, and how long went on each
+                  thing: the water, the erg, weights, a run, a bike
 
   CUT the same day as useless to a rower: the longest streak, the average split
   and the best split. These are statistics about how MUCH was done, not how fast.
@@ -31,7 +34,7 @@ import { parseSessionKey } from "@/lib/varsity/coachPlan";
 import { formatDistance, formatDuration, type Units } from "@/lib/varsity/units";
 import { rowingCategories, logCategoryColor, logCategoryLabel } from "@/lib/varsity/athleteProfile";
 import { expectedDays, trainedDays, type Span } from "@/lib/varsity/athleteStats";
-import { dayOutReasons, type DaysOut, type DayOutReason } from "@/lib/varsity/daysOut";
+import { dayOutReasons, dayOutName, countDaysOut, type DaysOut } from "@/lib/varsity/daysOut";
 
 /* A number on the screen. `tone` is the only styling this file decides, and it
    decides it as a word — the screen maps it to a theme token (rule 1). */
@@ -61,7 +64,7 @@ const isRowed = (l: LogEntry) => rowingCategories.has(l.category ?? "");
  * calendar's tick means, so the two screens can never disagree. Rest slots are
  * not sessions and are left out of all four numbers.
  */
-function planCounts(logs: LogEntry[], plan: SessionMap, span: Span, daysOut: DaysOut) {
+function planCounts(logs: LogEntry[], plan: SessionMap, span: Span) {
   const start = asDate(span.startIso);
   const end = asDate(span.endIso);
 
@@ -78,26 +81,33 @@ function planCounts(logs: LogEntry[], plan: SessionMap, span: Span, daysOut: Day
   const done = planned.filter((k) => loggedKeys.has(k)).length;
   const extra = logs.filter((l) => isTraining(l) && !l.dayKey).length;
 
-  /* WHY THEY WERE MISSED — a missed slot on a day marked out (sick, injured,
-     away, other) is counted under that reason; the rest have none given. */
-  const missedWhy: Record<DayOutReason, number> = { sick: 0, injured: 0, away: 0, other: 0 };
-  let missedNoReason = 0;
-  for (const k of planned) {
-    if (loggedKeys.has(k)) continue;
-    const parsed = parseSessionKey(k);
-    const out = parsed ? daysOut[toIso(parsed.date)] : undefined;
-    if (out) missedWhy[out.reason]++;
-    else missedNoReason++;
-  }
-
   return {
     planned: planned.length,
     done,
     missed: Math.max(0, planned.length - done),
     extra,
-    missedWhy,
-    missedNoReason,
   };
+}
+
+/**
+ * THE WINDOW CUT INTO WEEKS, from its first day, as minutes trained in each.
+ *
+ * Every built-in window is a whole number of weeks (7, 14, 28, 84 days), so
+ * these are real weeks; only a hand-picked window can end on a short one.
+ */
+function weekMinutes(logs: LogEntry[], span: Span): number[] {
+  const end = asDate(span.endIso);
+  const totals: number[] = [];
+  for (const d = asDate(span.startIso); d <= end; d.setDate(d.getDate() + 7)) {
+    const from = toIso(d);
+    const stop = new Date(d);
+    stop.setDate(stop.getDate() + 6);
+    const to = toIso(stop > end ? end : stop);
+    totals.push(
+      sum(logs.filter((l) => l.logDate >= from && l.logDate <= to).map((l) => l.minutes ?? 0)),
+    );
+  }
+  return totals;
 }
 
 /* The kinds of training that get their own "time on" cell, boat first. */
@@ -141,8 +151,52 @@ export function rowingReport(
   const days = Math.min(trained, expected);
   const consistency = expected ? Math.min(100, Math.round((days / expected) * 100)) : 0;
 
-  const counts = planCounts(logs, plan, span, daysOut);
+  const counts = planCounts(logs, plan, span);
   const hasPlan = counts.planned > 0 || counts.extra > 0;
+
+  /*
+    HOW MUCH IN A WEEK. The total says how much the window held; these two say
+    what a week of it actually looks like, and what the biggest one was. The
+    average starts at the first week with anything in it — the empty weeks
+    before someone joined the squad would only halve a number they earned.
+    A window that IS one week has nothing to average, so it says neither.
+  */
+  const spanDays =
+    Math.round((asDate(span.endIso).getTime() - asDate(span.startIso).getTime()) / 86_400_000) + 1;
+  const weeks = spanDays > 7 ? weekMinutes(training, span) : [];
+  const firstWeek = weeks.findIndex((v) => v > 0);
+  const countedWeeks = firstWeek < 0 ? [] : weeks.slice(firstWeek);
+  const weekCells: StatCell[] = countedWeeks.length
+    ? [
+        {
+          key: "avgWeek",
+          label: "Avg week",
+          value: formatDuration(Math.round(sum(countedWeeks) / countedWeeks.length)),
+        },
+        {
+          key: "bestWeek",
+          label: "Best week",
+          value: formatDuration(Math.round(Math.max(...weeks))),
+        },
+      ]
+    : [];
+
+  /*
+    THE DAYS THAT WEREN'T TRAINING AT ALL — sick, injured, away, or missed for
+    a reason not given — sit with the consistency they explain (owner,
+    2026-09-13), next to the missed and extra sessions, rather than at the
+    bottom of the training mix. They are counted in DAYS, and say so, because
+    everything else in that group is counted in sessions.
+  */
+  const outCounts = countDaysOut(daysOut, span.startIso, span.endIso);
+  const outCells: StatCell[] = dayOutReasons
+    .filter((r) => outCounts[r.key] > 0)
+    .map((r) => ({
+      key: `out-${r.key}`,
+      label: dayOutName(r.key),
+      value: `${outCounts[r.key]} day${outCounts[r.key] === 1 ? "" : "s"}`,
+      tone: "muted" as StatTone,
+    }));
 
   /*
     TIME ON EACH THING — one cell per kind of training that actually has time
@@ -153,25 +207,6 @@ export function rowingReport(
     cat,
     minutes: sum(training.filter((l) => (l.category ?? "other") === cat).map((l) => l.minutes ?? 0)),
   })).filter((c) => c.minutes > 0);
-
-  /* MISSED, BY WHY — one cell per reason that actually happened, and "no
-     reason" for the rest, only when at least one had a reason. */
-  const missedWhy: StatCell[] =
-    counts.missed > counts.missedNoReason
-      ? [
-          ...dayOutReasons
-            .filter((r) => counts.missedWhy[r.key] > 0)
-            .map((r) => ({
-              key: `missed-${r.key}`,
-              label: `Missed · ${r.label.toLowerCase()}`,
-              value: `${counts.missedWhy[r.key]}`,
-              tone: "muted" as StatTone,
-            })),
-          ...(counts.missedNoReason > 0
-            ? [{ key: "missed-none", label: "Missed · no reason", value: `${counts.missedNoReason}`, tone: "muted" as StatTone }]
-            : []),
-        ]
-      : [];
 
   /*
     THE PLAN'S NUMBERS ONLY WHEN THERE IS A PLAN in this window. With none up,
@@ -189,7 +224,6 @@ export function rowingReport(
         },
         { key: "missed", label: "Missed", value: `${counts.missed}`, tone: counts.missed ? "warn" : "muted" },
         { key: "extra", label: "Extra", value: `${counts.extra}`, tone: counts.extra ? "success" : "muted" },
-        ...missedWhy,
       ]
     : [];
 
@@ -206,6 +240,7 @@ export function rowingReport(
         },
         { key: "days", label: "Days trained", value: `${days}` },
         ...planCells,
+        ...outCells,
       ],
     },
     {
@@ -243,6 +278,7 @@ export function rowingReport(
           label: "Time trained",
           value: minutes ? formatDuration(Math.round(minutes)) : dash,
         },
+        ...weekCells,
         {
           // Per day actually trained, so a sick week does not shrink it.
           key: "perDay",

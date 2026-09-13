@@ -16,9 +16,11 @@
       erg, weights… (owner, 2026-09-13 — a list of every session in 13–19 Jul
       is noise; what you want is how much you rowed and how long you lifted)
     • CONSISTENCY: how steady, days trained and, with a plan up, planned /
-      done / missed / extra (never "against the plan" — owner, 2026-09-13)
+      done / missed / extra (never "against the plan" — owner, 2026-09-13),
+      then the days out — sick, injured, away — counted in days
     • DISTANCE on the water and the erg with the average row, and TIME: in
-      total, per day, per session, and on each thing (no splits, no streaks)
+      total, in an average week and the best week, per day, per session, and
+      on each thing (no splits, no streaks)
     • the training mix — what all that time actually was, named by what was
       logged (a bike on a flex day is Bike), distance first
 
@@ -64,7 +66,7 @@ import {
 } from "@/lib/varsity/athleteStats";
 import { rowingReport, bucketDetail, type StatTone } from "@/lib/varsity/rowingStats";
 import { trainingMix, mixLine } from "@/lib/varsity/trainingMix";
-import { countDaysOut, dayOutName, dayOutReasons, type DaysOut } from "@/lib/varsity/daysOut";
+import { type DaysOut } from "@/lib/varsity/daysOut";
 
 /* A word from the data → a theme token. The data never names a colour. */
 const toneClass: Record<StatTone, string> = {
@@ -170,8 +172,6 @@ export default function StatsFullScreen({
   };
   const allLogs = buckets.flatMap((b) => b.logs);
   const groups = rowingReport(allLogs, plan, whole, units, daysOut);
-  const outCounts = countDaysOut(daysOut, whole.startIso, whole.endIso);
-  const outRows = dayOutReasons.filter((r) => outCounts[r.key] > 0);
   const shaded = buckets.map((b) =>
     Object.keys(daysOut).some((iso) => iso >= b.span.startIso && iso <= b.span.endIso),
   );
@@ -390,9 +390,11 @@ export default function StatsFullScreen({
               </div>
             ))}
 
-            {/* ── What all that training actually was — and the days that
-                weren't training at all (sick, injured, away), under it. ── */}
-            {(mix.length > 0 || outRows.length > 0) && (
+            {/* ── What all that training actually was. The days that weren't
+                training at all (sick, injured, away) used to hang off the
+                bottom of this; they sit up in Consistency now, beside the
+                missed sessions they explain. ── */}
+            {mix.length > 0 && (
               <div className="mt-5">
                 <div className="pb-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
                   Training mix
@@ -425,21 +427,6 @@ export default function StatsFullScreen({
                       </div>
                     </div>
                   ))}
-                  {outRows.length > 0 && (
-                    <div className={`flex flex-col gap-1.5 ${mix.length > 0 ? "border-t border-border pt-2.5" : ""}`}>
-                      {outRows.map((r) => (
-                        <div key={r.key} className="flex items-baseline justify-between gap-3">
-                          <span className="flex min-w-0 items-center gap-2">
-                            <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ background: r.color }} />
-                            <span className="truncate text-[13px] font-medium text-text">{dayOutName(r.key)}</span>
-                          </span>
-                          <span className="flex-shrink-0 text-[12px] font-semibold text-text">
-                            {outCounts[r.key]} day{outCounts[r.key] === 1 ? "" : "s"}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
                 </div>
               </div>
             )}

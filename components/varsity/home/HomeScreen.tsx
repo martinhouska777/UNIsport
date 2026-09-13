@@ -91,23 +91,11 @@ function loggable(iso: string): boolean {
 /* The section label used to be defined here, one of more than ten versions of
    the same heading across the app. It lives in components/ui now. */
 
-/* ─── Greeting ─── */
-function Greeting({ g }: { g: GreetingData }) {
-  return (
-    <div className="flex items-end justify-between px-4 pb-1 pt-3">
-      <div>
-        <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-          {g.date}
-        </div>
-        <div className="text-2xl font-semibold leading-none text-text">{g.name}</div>
-      </div>
-      <div className="text-right">
-        <div className="text-[11px] font-semibold tracking-[0.1em] text-accent">{g.block}</div>
-        <div className="text-[11px] text-muted">{g.week}</div>
-      </div>
-    </div>
-  );
-}
+/* The greeting — today's date over the athlete's own first name — is gone
+   (owner, 2026-09-13). You know your name and your phone knows the date; the
+   block and the week-of it carried are worth keeping, so they moved down onto
+   the training plan's own heading, where they say what plan you are looking
+   at. See WeekStrip. */
 
 /* ─── Race countdown ─── */
 function RaceBar({ r }: { r: RaceData }) {
@@ -479,12 +467,15 @@ function DayDetail({ d, onClose }: { d: WeekDay; onClose: () => void }) {
 function WeekStrip({
   weeks,
   startIndex,
+  greeting,
   selected,
   onSelect,
   onClearDay,
 }: {
   weeks: WeekView[];
   startIndex: number;
+  /** The block's name and "Week 10 of 15" — this section's heading now. */
+  greeting: GreetingData;
   selected: WeekDay | null;
   onSelect: (d: WeekDay) => void;
   onClearDay: () => void;
@@ -505,8 +496,17 @@ function WeekStrip({
 
   return (
     <div className="px-3 pt-4">
-      <div className="flex items-center justify-between px-0.5 pb-2">
-        <SectionLabel>Training Plan</SectionLabel>
+      <div className="flex items-center justify-between gap-3 px-0.5 pb-2">
+        {/* The heading names the PLAN, not the category. "Training Plan" told
+            you what the thing under it was, which the calendar already does;
+            "SPRING BLOCK · Week 10 of 15" tells you which plan and how far in
+            (owner, 2026-09-13 — it used to sit up in the greeting). */}
+        <div className="flex min-w-0 items-baseline gap-1.5">
+          <span className="truncate text-[11px] font-semibold uppercase tracking-[0.12em] text-accent">
+            {greeting.block}
+          </span>
+          <span className="flex-shrink-0 text-[11px] text-muted">{greeting.week}</span>
+        </div>
         {/* The week always lives on the page; Month opens the whole thing
             full-screen and the X drops you back here. */}
         <button
@@ -527,12 +527,10 @@ function WeekStrip({
         >
           <IconArrowLeft size={13} />
         </button>
-        <span className="text-[11px] font-medium text-text">
-          {current.label}
-          {(weekOf >= 0 ? weekOf : idx) === startIndex && (
-            <span className="text-muted"> · this week</span>
-          )}
-        </span>
+        {/* Just the dates. "· this week" was a caption on the week you are
+            standing in, which the strip under it already shows by highlighting
+            today (owner, 2026-09-13). */}
+        <span className="text-[11px] font-medium text-text">{current.label}</span>
         <button
           onClick={() => go(1)}
           disabled={(weekOf >= 0 ? weekOf : idx) === last}
@@ -1171,13 +1169,13 @@ function HomeScreenInner() {
   return (
     <div className="mx-auto w-full max-w-screen-sm pb-6">
       {consoleRole && <ConsoleDoor role={consoleRole} />}
-      <Greeting g={data.greeting} />
       {claimUi}
       <StillOutCard userId={userId} />
       <DriveBar onUpload={() => setUploadOpen(true)} />
       <WeekStrip
         weeks={data.weeks}
         startIndex={data.weekIndex}
+        greeting={data.greeting}
         selected={onToday ? null : viewDay}
         onSelect={(d) => {
           const i = allDays.indexOf(d);
