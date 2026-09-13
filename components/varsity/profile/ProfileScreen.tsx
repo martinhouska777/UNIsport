@@ -799,7 +799,15 @@ export default function ProfileScreen() {
   }
 
   const status = statusByTitle(profile.status);
-  const classLine = [classYear, profile.teamYear].filter(Boolean).join(" · ") || "Add your details";
+  /*
+    JUST THE CLASS YEAR. It used to read "'30 · Freshman", and the second half
+    was a stored word, not a live one: nothing moves it on to "Sophomore" when
+    the year turns, so a returning rower's own profile would keep calling them
+    a freshman until they went and edited it. The year alone is always true.
+    (The word is still on the athlete's record and still shown to the coach and
+    on the Team screen — it just isn't a line on your own page.)
+  */
+  const classLine = classYear || "Add your details";
 
   /*
     One measure and one window for the whole block: the graph plots the measure
@@ -819,58 +827,57 @@ export default function ProfileScreen() {
   return (
     <div className="mx-auto w-full max-w-screen-sm pb-10">
       {/* ── Identity ── */}
-      <div className="border-b border-border bg-[radial-gradient(circle_at_0%_0%,color-mix(in_srgb,var(--primary)_9%,transparent),transparent_60%)] px-4 pb-4 pt-4">
-        <div className="flex items-start gap-3.5">
-          <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-2xl border border-primary-line bg-gradient-to-br from-primary/15 to-primary/5">
-            <span className="text-xl font-semibold text-primary">{initialsOf(name)}</span>
+      <div className="border-b border-border bg-[radial-gradient(circle_at_0%_0%,color-mix(in_srgb,var(--primary)_9%,transparent),transparent_60%)] px-4 pb-3 pt-3">
+        <div className="flex items-start gap-3">
+          {/* 56px, not 64: the block is a header, not a portrait. */}
+          <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl border border-primary-line bg-gradient-to-br from-primary/15 to-primary/5">
+            <span className="text-lg font-semibold text-primary">{initialsOf(name)}</span>
           </div>
           <div className="min-w-0 flex-1 pt-0.5">
-            <div className="truncate text-xl font-semibold leading-tight text-text">
+            <div className="truncate text-lg font-semibold leading-tight text-text">
               {name || "Your name"}
             </div>
-            <div className="mt-1 text-[11px] text-muted">{classLine}</div>
-            <div className="mt-2 flex flex-wrap items-center gap-1.5">
-              {/*
-                WHICH SIDE YOU ROW, in the side's own colour — port red,
-                starboard green, both blue, a cox gold. Those are the colours
-                the lineup screens and the coach's pool already use for the
-                same fact (lib/varsity/coachLineup → sideMeta), so a rower
-                reads it here the way they read it in a boat.
+            {/*
+              ONE LINE UNDER THE NAME, not three rows of boxes. The year, the
+              side you row and your measurements used to be a text line plus a
+              wrapping row of four bordered chips, which made the header the
+              tallest thing on the screen before a single number of training.
 
-                Gone from this row with the owner's polish pass: the team-year
-                rectangle ("Freshman" — it is already in the line above), and
-                "On the list as <name>", which told you your own name back. The
-                prompt to PICK a name stays while there is nothing picked,
-                because a published boat cannot mark your seat without it.
-              */}
+              The side keeps its chip and its COLOUR — port red, starboard
+              green, both blue, a cox gold, the same colours the lineup screens
+              and the coach's pool paint the same fact with
+              (lib/varsity/coachLineup → sideMeta). A per-entity colour out of a
+              data file is the one exception to "colours come from tokens"
+              (rule 1), and this is it. Height and weight lose their boxes and
+              become what they are: two more facts on the line.
+            */}
+            <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted">
+              <span>{classLine}</span>
               <span
-                className="rounded-md border px-2 py-1 text-[11px] font-medium"
+                className="rounded-md border px-1.5 py-px text-[11px] font-medium"
                 style={sideChip(profile)}
               >
                 {profile.boatRole === "Coxswain"
                   ? "Coxswain"
                   : (sideLabel(profile.boatRole, profile.side) ?? "Both")}
               </span>
-              {!profile.rosterId && (
-                <button
-                  type="button"
-                  onClick={() => setModal("seat")}
-                  className="rounded-md border border-primary-line bg-primary-tint px-2 py-1 text-[11px] font-medium text-primary"
-                >
-                  Pick your name on the squad list
-                </button>
-              )}
-              {profile.heightCm != null && (
-                <span className="rounded-md border border-border bg-surface px-2 py-1 text-[11px] text-text">
-                  {profile.heightCm} cm
-                </span>
-              )}
+              {profile.heightCm != null && <span>{profile.heightCm} cm</span>}
               {profile.weightKg != null && (
-                <span className="rounded-md border border-border bg-surface px-2 py-1 text-[11px] text-text">
-                  {formatWeight(profile.weightKg, units.weight)}
-                </span>
+                <span>{formatWeight(profile.weightKg, units.weight)}</span>
               )}
             </div>
+            {/* The prompt to PICK a name stays while there is nothing picked —
+                a published boat cannot mark your seat without it — but on its
+                own line, because it is an ACTION and the line above is facts. */}
+            {!profile.rosterId && (
+              <button
+                type="button"
+                onClick={() => setModal("seat")}
+                className="mt-1.5 rounded-md border border-primary-line bg-primary-tint px-2 py-1 text-[11px] font-medium text-primary"
+              >
+                Pick your name on the squad list
+              </button>
+            )}
           </div>
           {/*
             YOUR STATUS, beside your name — where the edit pencil used to be.
