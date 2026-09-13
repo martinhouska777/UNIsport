@@ -174,9 +174,8 @@ export default function WorkoutBoard({
         here is gone — it was a second, smaller copy of a run of results that
         the screen behind this card already lays out properly.
 
-        "Compared with" keeps its own row at the foot, outside the button: it
-        goes somewhere else (that day's board), and a button inside a button is
-        not a thing.
+        Under the piece: YOU, your place in the squad, your result and the ±
+        on your last go. Nothing else — that is the whole card.
       */}
       <div className="overflow-hidden rounded-2xl border border-border bg-surface-2">
         <Face top={top} onOpen={top ? () => setOpenRow(top.result.id) : undefined}>
@@ -229,25 +228,10 @@ export default function WorkoutBoard({
           )}
         </Face>
 
-        {/* The day this board is measured against — tappable: it opens THAT
-            day's board in this one's place (onOpenWorkout, the same trick a
-            previous edition inside ResultDetail uses). */}
-        {previous && (
-          <p className="border-t border-border px-3.5 py-2 text-[11px] text-muted">
-            Compared with{" "}
-            {onOpenWorkout ? (
-              <button
-                type="button"
-                onClick={() => onOpenWorkout(previous.workout.dayKey)}
-                className="font-medium text-primary underline decoration-dotted underline-offset-2"
-              >
-                {previous.workout.dateLabel}
-              </button>
-            ) : (
-              previous.workout.dateLabel
-            )}
-          </p>
-        )}
+        {/* NO "Compared with 12 Oct" row. The previous go is still what the
+            ± on your result is measured against — it just doesn't need a line
+            of its own saying so, and the full screen behind this card lists
+            every earlier go properly. The card is shorter for it. */}
       </div>
 
       {/* metric filter */}

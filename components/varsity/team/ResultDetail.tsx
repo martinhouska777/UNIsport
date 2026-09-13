@@ -16,15 +16,19 @@
       what makes a misread scan fixable.
 
   And the question a single result can never answer on its own: AM I GETTING
-  FASTER. "Compared with previous" is this ONE person's run of the piece: a
-  headline (this go against the last one, against the first one, and their
-  best), then every edition newest first — the piece's own result big (time on
-  a 2K, metres on a 30'), the split / rate / watts / W/kg under it, the change
-  on the go before as a chip, and a bar where the best go is the longest. Each
-  previous edition is a button: tapping it opens THAT day's board in place of
-  this one (onOpenWorkout), so a run of results can be walked back through.
-  "Same piece" is decided by fingerprint, not by the coach's wording — a 2K is
-  a 2K whether it was typed as "2k test" or "2000m".
+  FASTER. Under the piece, with no heading over it, is this ONE person's run of
+  it: every go newest first — the result big (time on a 2K, metres on a 30'),
+  the split / rate / watts / W/kg under it, the change on the go before as a
+  chip, and a bar where the best go is the longest. Each earlier edition is a
+  button: tapping it opens THAT day's board in place of this one
+  (onOpenWorkout), so a run of results can be walked back through. "Same piece"
+  is decided by fingerprint, not by the coach's wording — a 2K is a 2K whether
+  it was typed as "2k test" or "2000m".
+
+  EVERY BAR IS THE SAME COLOUR, on the reps and on the run. Length is the whole
+  message: a bar picked out in green or crimson makes the eye read the colour
+  first and then need a sentence underneath explaining what the colour meant.
+  The words that matter — "this one", "Best" — are words.
 
   All colours are theme tokens.
 */
@@ -133,16 +137,6 @@ export default function ResultDetail({
       };
     });
   }, [history, result.athleteId, primary]);
-  const thisEdition = editions.find((e) => e.workout.dayKey === workout.dayKey) ?? null;
-  const bestEdition = editions.find((e) => e.best) ?? null;
-  const firstEdition = editions[editions.length - 1] ?? null;
-  const vsFirst =
-    thisEdition && firstEdition && thisEdition !== firstEdition && thisEdition.value != null && firstEdition.value != null
-      ? metricMeta(primary).lowerIsBetter
-        ? firstEdition.value - thisEdition.value
-        : thisEdition.value - firstEdition.value
-      : null;
-
   const splitSec = result.splitSec;
   const watts = deriveWatts(result.watts, splitSec);
   const wkg = wattsPerKg(watts, result.weightKg);
@@ -236,7 +230,6 @@ export default function ResultDetail({
                 r.splitSec != null && best != null && span > 0.01
                   ? 0.4 + 0.6 * ((r.splitSec - best) / span)
                   : 1;
-              const fastest = r.splitSec != null && r.splitSec === best;
               return (
                 <div
                   key={i}
@@ -251,19 +244,17 @@ export default function ResultDetail({
                       {r.timeSec != null && ` · ${secToClock(r.timeSec)}`}
                       {r.strokeRate != null && ` · r${r.strokeRate}`}
                     </span>
-                    <span
-                      className={`flex-shrink-0 text-[13px] font-semibold tabular-nums ${
-                        fastest ? "text-success" : "text-text"
-                      }`}
-                    >
+                    <span className="flex-shrink-0 text-[13px] font-semibold tabular-nums text-text">
                       {r.splitSec != null ? secToSplit(r.splitSec, true) : "—"}
                     </span>
                   </div>
                   <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-surface-2">
                     <div
-                      // Neutral by default: the BAR'S LENGTH carries the
-                      // meaning, and eight crimson bars read as eight warnings.
-                      className={`h-full rounded-full ${fastest ? "bg-success" : "bg-muted"}`}
+                      /* ONE COLOUR for every bar. The LENGTH is the whole
+                         message; picking the fastest rep out in green made the
+                         eye read the colour first and then need a caption to
+                         say what the colour meant. */
+                      className="h-full rounded-full bg-muted"
                       style={{ width: `${Math.round(frac * 100)}%` }}
                     />
                   </div>
@@ -271,70 +262,21 @@ export default function ResultDetail({
               );
             })}
           </div>
-          <p className="mt-1.5 px-0.5 text-[11px] leading-relaxed text-muted">
-            Longer bar = slower {reps ? "rep" : "split"}. The fastest one is green.
-          </p>
         </>
       )}
 
       {/* am I getting faster — this person's every go at the piece */}
       {editions.length > 1 && (
         <>
-          <div className="mb-2 mt-4 flex items-baseline justify-between px-0.5">
-            <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-              Compared with previous
-            </span>
-            <span className="text-[11px] text-muted">
-              {editions.length} × this piece
-            </span>
-          </div>
-
-          {/* the headline: this go against the last one and against the first,
-              and the best they have ever done it in */}
-          {thisEdition && (
-            <div className="grid grid-cols-3 gap-1.5">
-              <div className="rounded-xl border border-border bg-surface-2 px-2 py-2.5 text-center">
-                <div className="flex justify-center">
-                  {thisEdition.improvement != null ? (
-                    <Delta improvement={thisEdition.improvement} metric={primary} size="lg" />
-                  ) : (
-                    <span className="text-[13px] font-semibold text-muted">—</span>
-                  )}
-                </div>
-                <div className="mt-1.5 text-[8px] font-semibold uppercase tracking-[0.12em] text-muted">
-                  vs last time
-                </div>
-              </div>
-              <div className="rounded-xl border border-border bg-surface-2 px-2 py-2.5 text-center">
-                <div className="flex justify-center">
-                  {vsFirst != null ? (
-                    <Delta improvement={vsFirst} metric={primary} size="lg" />
-                  ) : (
-                    <span className="text-[13px] font-semibold text-muted">—</span>
-                  )}
-                </div>
-                <div className="mt-1.5 text-[8px] font-semibold uppercase tracking-[0.12em] text-muted">
-                  vs first · {editions[editions.length - 1].workout.dateLabel.replace(/^\w{3} /, "")}
-                </div>
-              </div>
-              <div className="rounded-xl border border-border bg-surface-2 px-2 py-2.5 text-center">
-                <div className="flex items-center justify-center gap-1 text-[15px] font-semibold leading-none tabular-nums text-text">
-                  <span className="text-accent">
-                    <IconStar size={12} />
-                  </span>
-                  {bestEdition ? bestEdition.display : "—"}
-                </div>
-                <div className="mt-1.5 text-[8px] font-semibold uppercase tracking-[0.12em] text-muted">
-                  Best{bestEdition && bestEdition.workout.dayKey !== workout.dayKey ? ` · ${bestEdition.workout.dateLabel}` : bestEdition ? " · this one" : ""}
-                </div>
-              </div>
-            </div>
-          )}
-
+          {/* NO HEADING, NO SUMMARY TILES. "Compared with previous · 3 × this
+              piece" was a label for a list that says it itself — every go at
+              this piece, dated, newest first. The three tiles above it (vs last
+              time, vs first, best) were three numbers the list already carries,
+              read out a second time. What is left is the run itself. */}
           {/* every edition, newest first: the piece's own result big, the rest
               of the numbers under it, the change on the go before, and a bar —
               the longest bar is the best go. Tap one to open that day's board. */}
-          <div className="mt-2 overflow-hidden rounded-2xl border border-border bg-surface">
+          <div className="mt-4 overflow-hidden rounded-2xl border border-border bg-surface">
             {editions.map((e, i) => {
               const current = e.workout.dayKey === workout.dayKey;
               const canOpen = !current && !!onOpenWorkout;
@@ -395,7 +337,9 @@ export default function ResultDetail({
                   </div>
                   <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-surface-2">
                     <div
-                      className={`h-full rounded-full ${e.best ? "bg-success" : current ? "bg-primary" : "bg-muted"}`}
+                      /* One colour here too — "Best" and "this one" are
+                         already said in words on the row above. */
+                      className="h-full rounded-full bg-muted"
                       style={{ width: `${Math.round(e.frac * 100)}%` }}
                     />
                   </div>
