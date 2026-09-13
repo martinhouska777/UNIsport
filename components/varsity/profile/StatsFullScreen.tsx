@@ -392,7 +392,7 @@ export default function StatsFullScreen({
                         <div key={r.key} className="flex items-baseline justify-between gap-3">
                           <span className="flex min-w-0 items-center gap-2">
                             <span className={`h-2.5 w-2.5 flex-shrink-0 rounded-full ${dayOutDot[r.tone]}`} />
-                            <span className="truncate text-[13px] font-medium text-text">{r.label}</span>
+                            <span className="truncate text-[13px] font-medium text-text">{r.key === "other" ? "Missed" : r.label}</span>
                           </span>
                           <span className="flex-shrink-0 text-[12px] font-semibold text-text">
                             {outCounts[r.key]} day{outCounts[r.key] === 1 ? "" : "s"}
