@@ -297,25 +297,37 @@ function EditIdentitySheet({
 /*
   Asked when the status stops being Sick / Injured / Away: "You were sick
   10–14 Sep, 5 days. Log it in your calendar?" One tap logs every one of those
-  days with that reason; Not now leaves the calendar as it is.
+  days with that reason; Not now leaves the calendar as it is. Days you trained
+  on during the spell are left out — only the empty days are offered.
 */
+type Spell = {
+  reason: DayOutReason;
+  from: string;
+  to: string;
+  /** The days in from…to with no training logged — the only ones to mark. */
+  days: string[];
+};
+
 function LogSpellSheet({
   spell,
   onLog,
   onClose,
 }: {
-  spell: { reason: DayOutReason; from: string; to: string };
+  spell: Spell;
   onLog: () => void;
   onClose: () => void;
 }) {
-  const days = isoDays(spell.from, spell.to).length;
+  const days = spell.days.length;
+  const all = isoDays(spell.from, spell.to).length;
   const word = reasonMeta(spell.reason).label.toLowerCase();
   return (
     <Sheet title="Log it in your calendar?" onClose={onClose}>
       <p className="text-[14px] leading-relaxed text-text">
         You were {word === "other" ? "out" : word}{" "}
         <span className="font-semibold">{spanLabel(spell.from, spell.to)}</span> —{" "}
-        {days} day{days === 1 ? "" : "s"}.
+        {days === all
+          ? `${days} day${days === 1 ? "" : "s"}.`
+          : `${days} of those ${all} days with no training.`}
       </p>
       <p className="mt-1 text-[12px] leading-relaxed text-muted">
         Each day gets a mark in your calendar, and your statistics show why you didn&apos;t train.
@@ -807,19 +819,32 @@ export default function ProfileScreen() {
     calendar, so a week in bed is on record as a week in bed. Saying no still
     changes the status; the days are just not logged.
   */
-  const [spell, setSpell] = useState<{ reason: DayOutReason; from: string; to: string } | null>(null);
+  const [spell, setSpell] = useState<Spell | null>(null);
   const changeStatus = (patch: Partial<VarsityAthleteProfile>) => {
     if (!profile || patch.status === undefined || patch.status === profile.status) return;
     const today = toISO(now);
     const was = statusReason(profile.status);
-    if (was && profile.statusSince) setSpell({ reason: was, ...spellDays(profile.statusSince, today) });
+    if (was && profile.statusSince) {
+      /*
+        Only the days you did NOTHING (owner, 2026-09-13). A day with training
+        on it wasn't a sick day, whatever the status said — so the spell's days
+        are read against the logs first, and if you trained every one of them
+        there is nothing to ask.
+      */
+      const { from, to } = spellDays(profile.statusSince, today);
+      void fetchLogsInRange(userId ?? "", from, to).then((rows) => {
+        const trained = new Set(rows.filter((l) => l.category !== "off").map((l) => l.logDate));
+        const days = isoDays(from, to).filter((d) => !trained.has(d));
+        if (days.length > 0) setSpell({ reason: was, from, to, days });
+      });
+    }
     patchProfile({ status: patch.status, statusSince: statusReason(patch.status) ? today : null });
   };
-  const logSpell = (s: { reason: DayOutReason; from: string; to: string }) => {
+  const logSpell = (s: Spell) => {
     if (!profile) return;
     const next: DaysOut = { ...profile.daysOut };
     // A day already marked keeps what it says (and its note).
-    for (const iso of isoDays(s.from, s.to)) next[iso] ??= { reason: s.reason };
+    for (const iso of s.days) next[iso] ??= { reason: s.reason };
     patchProfile({ daysOut: next });
   };
 

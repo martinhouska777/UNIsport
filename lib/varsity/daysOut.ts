@@ -7,10 +7,12 @@
 
   ONE RECORD, THREE WAYS IN (owner, 2026-09-13):
     • the STATUS on the Varsity profile — switch to Sick, and when you switch
-      back the app offers to log every day since into the calendar;
-    • the CALENDAR — tap a day and mark it Sick or Away;
-    • MISSED — a past day with nothing logged gets a Missed button that asks
-      why (Sick, Injured, Away, Other) with a short note.
+      back the app offers to log the days since into the calendar (only the
+      days with no training on them);
+    • MISSED, in the CALENDAR — a past day with nothing logged gets a Missed
+      button that asks why (Sick, Injured, Away, Other) with a short note. A
+      day with training gets no button: it wasn't a day out.
+  (The calendar's one-tap Sick / Away buttons were cut the same evening.)
   All three write the same map (saved through saveDaysOut in
   lib/varsity/athleteProfile.ts), so the calendar's dot, the statistics and the
   status can never disagree.

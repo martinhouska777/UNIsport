@@ -28,9 +28,9 @@
        The figures stay in the day sheet: a column is about 33px of text wide.
     6. A DAY CAN BE OUT. Sick, injured, away or missed-for-another-reason
        (lib/varsity/daysOut.ts): a coloured dot by the date, and on a day with
-       nothing logged the reason written in the box. Tap the day to mark one —
-       Sick and Away are one tap; Missed (only on a past day with nothing
-       logged) asks why, with a short note.
+       nothing logged the reason written in the box. Only a day with nothing
+       done on it can be marked: tap it, tap Missed, and it asks why (Sick,
+       Injured, Away, Other) with a short note.
     5. NO PAGE HEADER. The month is the title, and the colour key sits
        directly under it — you need to know what the colours mean BEFORE you
        read the grid, not after scrolling past it. The month's totals used to
@@ -145,9 +145,10 @@ type CalDay = { num: number; iso: string; logs: LogEntry[]; today: boolean; futu
   THE DAY OUT, in the day sheet (lib/varsity/daysOut.ts).
 
   A day already marked says so — the reason, the note — with a way to clear it.
-  Otherwise: Sick and Away are one tap each, and MISSED, offered only on a day
-  that has happened with nothing logged, opens the reasons (Sick, Injured,
-  Away, Other) with a line for why.
+  Otherwise there is ONE button, MISSED, and only on a day that has happened
+  with nothing logged; it opens the reasons (Sick, Injured, Away, Other) with a
+  line for why. The one-tap Sick / Away buttons were cut: they also showed on
+  days with training on them, which is not a day out.
 */
 function DayOutSection({
   value,
@@ -235,30 +236,17 @@ function DayOutSection({
     );
   }
 
-  const quick = dayOutReasons.filter((r) => r.key === "sick" || r.key === "away");
+  // Only a day you did nothing on can be missed — a day with training, or one
+  // still to come, gets no button at all (owner, 2026-09-13).
+  if (!canMiss) return null;
   return (
-    <div className="mt-3 flex gap-2">
-      {quick.map((r) => (
-        <button
-          key={r.key}
-          type="button"
-          onClick={() => onSave({ reason: r.key })}
-          className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-border bg-surface-2 py-2.5 text-[12px] font-medium text-text active:bg-surface"
-        >
-          <span className={`h-2 w-2 rounded-full ${dayOutDot[r.tone]}`} />
-          {r.label}
-        </button>
-      ))}
-      {canMiss && (
-        <button
-          type="button"
-          onClick={() => setMissing(true)}
-          className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-border bg-surface-2 py-2.5 text-[12px] font-medium text-text active:bg-surface"
-        >
-          Missed…
-        </button>
-      )}
-    </div>
+    <button
+      type="button"
+      onClick={() => setMissing(true)}
+      className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl border border-border bg-surface-2 py-2.5 text-[12px] font-medium text-text active:bg-surface"
+    >
+      Missed
+    </button>
   );
 }
 
