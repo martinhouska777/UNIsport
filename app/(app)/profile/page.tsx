@@ -356,16 +356,17 @@ export default function ProfilePage() {
       </div>
 
       {/*
-        1 · WHO YOU ARE — photo on the LEFT, the three counts beside it, then
-        your name and your bio underneath (owner, 2026-09-14, picking the
-        "lines only" preview):
+        1 · WHO YOU ARE — your name first, then the photo with the three
+        counts beside it, then the rest of you (owner, 2026-09-14, picking the
+        "lines only" preview and then asking for the Instagram order):
+
+          Martin Houska
 
           ( photo )   48 | 12 | 96
                       workouts partners followers
 
-          Martin Houska
-          [VARSITY] [MENTOR]
           Mather House · Class of 2029
+          [VARSITY] [MENTOR]
           a line of bio
           ──────────────────────────
 
@@ -378,7 +379,51 @@ export default function ProfilePage() {
         Photo, name and bio are still edited from the pencil in the top bar
         (see editingTop); only the arrangement changed.
       */}
-      <div className="flex items-center gap-4 px-3.5 pb-3 pt-4">
+      {/* YOUR NAME leads the page, above the photo and the counts (owner,
+          2026-09-14: "same as Instagram" — there the handle sits at the top
+          and everything else hangs off it). */}
+      <div className="px-3.5 pt-4">
+        {editingTop && editField === "name" ? (
+          <div>
+            <input
+              autoFocus
+              value={nameDraft}
+              onChange={(e) => {
+                setNameDraft(e.target.value);
+                if (nameErr) setNameErr(null);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !nameError(nameDraft)) setEditField(null);
+              }}
+              maxLength={40}
+              aria-label="Name"
+              placeholder="Your name"
+              aria-invalid={nameErr ? true : undefined}
+              /* 16px so a phone doesn't zoom in on focus. Red only when
+                 something is actually wrong. */
+              className={`w-full border-b bg-transparent text-base font-medium text-text focus:outline-none ${
+                nameErr ? "border-danger" : "border-border"
+              }`}
+            />
+            {/* The name everyone else sees — it has to be one (lib/onboarding). */}
+            {nameErr && <span className="mt-1 block text-[11px] text-danger">{nameErr}</span>}
+          </div>
+        ) : editingTop ? (
+          <button
+            type="button"
+            onClick={() => setEditField("name")}
+            aria-label="Edit name"
+            className="flex items-center gap-1.5 text-left text-base font-medium text-text"
+          >
+            {nameDraft || "Your name"}
+            <IconPencil size={12} className="text-muted" />
+          </button>
+        ) : (
+          <div className="text-base font-medium text-text">{user.name || "Your name"}</div>
+        )}
+      </div>
+
+      <div className="flex items-center gap-4 px-3.5 pb-3 pt-2.5">
         <div className="relative shrink-0">
           {/* While editing, the photo itself is a tap target too, not just
               the little camera on its edge. */}
@@ -460,47 +505,15 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* NAME, BADGES, CLASS — left-aligned now that the photo is not above
-          them. A centred name under a left-hand photo has nothing to centre on. */}
-      <div className="flex flex-col gap-1 px-3.5">
-        {editingTop && editField === "name" ? (
-          <div>
-            <input
-              autoFocus
-              value={nameDraft}
-              onChange={(e) => {
-                setNameDraft(e.target.value);
-                if (nameErr) setNameErr(null);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !nameError(nameDraft)) setEditField(null);
-              }}
-              maxLength={40}
-              aria-label="Name"
-              placeholder="Your name"
-              aria-invalid={nameErr ? true : undefined}
-              /* 16px so a phone doesn't zoom in on focus. Red only when
-                 something is actually wrong. */
-              className={`w-full border-b bg-transparent text-base font-medium text-text focus:outline-none ${
-                nameErr ? "border-danger" : "border-border"
-              }`}
-            />
-            {/* The name everyone else sees — it has to be one (lib/onboarding). */}
-            {nameErr && <span className="mt-1 block text-[11px] text-danger">{nameErr}</span>}
-          </div>
-        ) : editingTop ? (
-          <button
-            type="button"
-            onClick={() => setEditField("name")}
-            aria-label="Edit name"
-            className="flex items-center gap-1.5 text-left text-base font-medium text-text"
-          >
-            {nameDraft || "Your name"}
-            <IconPencil size={12} className="text-muted" />
-          </button>
-        ) : (
-          <div className="text-base font-medium text-text">{user.name || "Your name"}</div>
-        )}
+      {/* WHERE YOU LIVE, THEN WHAT YOU ARE — the house and class year read as
+          part of your name, so they come first; VARSITY and MENTOR sit under
+          them (owner, 2026-09-14) rather than splitting the two apart. All
+          left-aligned, since the photo is no longer above them. */}
+      <div className="flex flex-col gap-1.5 px-3.5">
+        <div className="text-[11px] text-muted">
+          {user.residence ? `${residenceLabel(user.residence)} · ` : ""}
+          {classOfLabel(user.classYear)}
+        </div>
 
         {/* On your OWN profile the varsity badge comes from live membership:
             profiles.data has no record of it (the squad lives in its own
@@ -520,11 +533,6 @@ export default function ProfilePage() {
             )}
           </div>
         )}
-
-        <div className="text-[11px] text-muted">
-          {user.residence ? `${residenceLabel(user.residence)} · ` : ""}
-          {classOfLabel(user.classYear)}
-        </div>
       </div>
 
       {/* BIO — plain text, no card. The grey panel it used to sit in was the
