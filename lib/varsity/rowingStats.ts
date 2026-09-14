@@ -316,8 +316,13 @@ export type BucketDetail = {
   sessions: number;
   metres: number;
   minutes: number;
-  /** One line per logged session, in the order they were done. */
-  rows: { key: string; title: string; sub: string }[];
+  /*
+    One line per logged session, in the order they were done: its colour, its
+    name, and how long + how far (owner, 2026-09-13). No split, no AM/PM and no
+    "extra" — on a day you tapped you want how long you were on the erg and how
+    much you rowed, not the pace.
+  */
+  rows: { key: string; title: string; sub: string; color: string }[];
   /*
     THE SAME SESSIONS ADDED UP BY WHAT THEY WERE — water, erg, weights, run…
     For a stretch longer than a day (a week column, a dragged selection) a list
@@ -332,12 +337,15 @@ export function bucketDetail(logs: LogEntry[], units: Units): BucketDetail {
   const training = logs.filter(isTraining);
   const rows = training.map((l) => {
     const bits: string[] = [];
-    if (l.period) bits.push(l.period);
-    if ((l.metres ?? 0) > 0) bits.push(formatDistance(l.metres!, units.distance));
     if ((l.minutes ?? 0) > 0) bits.push(formatDuration(Math.round(l.minutes!)));
-    if (l.split) bits.push(`${l.split}/500`);
-    if (!l.dayKey) bits.push("extra");
-    return { key: l.id, title: l.title || (l.category ?? "Session"), sub: bits.join(" · ") };
+    if ((l.metres ?? 0) > 0) bits.push(formatDistance(l.metres!, units.distance));
+    const cat = l.category && logCategoryColor[l.category] ? l.category : "other";
+    return {
+      key: l.id,
+      title: l.title || (l.category ?? "Session"),
+      sub: bits.join(" · "),
+      color: logCategoryColor[cat],
+    };
   });
   const cats = new Map<string, LogEntry[]>();
   for (const l of training) {

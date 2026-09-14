@@ -11,7 +11,7 @@
     • the graph at full size, with the best bucket's number printed on it and a
       dashed average across it, so every column is visibly above or below par
     • a column you can TAP: a DAY is then read out underneath — every session
-      in it, with its metres, its time and its split. A WEEK column, or a
+      in it, in its colour, with how long and how far (no split). A WEEK column, or a
       stretch you dragged across, is read out as totals instead: how much water,
       erg, weights… (owner, 2026-09-13 — a list of every session in 13–19 Jul
       is noise; what you want is how much you rowed and how long you lifted)
@@ -295,16 +295,20 @@ export default function StatsFullScreen({
                   <span className="text-[13px] font-semibold text-text">
                     {bucketTitle(current)}
                   </span>
-                  {/* HOW MANY AND HOW LONG, and nothing else. The metres used
-                      to sit here too, but this line covers the weights and the
-                      runs as well as the rowing, so a distance across the top
-                      of it was only ever part of the story (owner,
-                      2026-09-13). The metres are on the Water and Erg rows
-                      underneath, where they belong to something. */}
+                  {/* HOW LONG, and on a week how many. The metres used to sit
+                      here too, but this line covers the weights and the runs
+                      as well as the rowing, so a distance across the top of it
+                      was only ever part of the story (owner, 2026-09-13). On
+                      ONE DAY the session count goes too (same day): the
+                      sessions are listed right under it, so "2 sessions" was
+                      counting what you can already see — the day says only
+                      its total time. */}
                   <span className="flex-shrink-0 text-[11px] text-muted">
                     {detail && detail.sessions > 0
                       ? [
-                          `${detail.sessions} session${detail.sessions === 1 ? "" : "s"}`,
+                          manyDays
+                            ? `${detail.sessions} session${detail.sessions === 1 ? "" : "s"}`
+                            : null,
                           detail.minutes > 0 ? formatDuration(Math.round(detail.minutes)) : null,
                         ]
                           .filter(Boolean)
@@ -314,9 +318,17 @@ export default function StatsFullScreen({
                 </div>
                 {detail && !manyDays && detail.rows.length > 0 && (
                   <div className="mt-2 flex flex-col gap-1.5 border-t border-border pt-2">
+                    {/* Each session in its workout's colour — the same dot
+                        the calendar and the week totals below use. */}
                     {detail.rows.map((r) => (
                       <div key={r.key} className="flex items-baseline justify-between gap-3">
-                        <span className="truncate text-[12px] text-text">{r.title}</span>
+                        <span className="flex min-w-0 items-center gap-2">
+                          <span
+                            className="h-2 w-2 flex-shrink-0 rounded-full"
+                            style={{ background: r.color }}
+                          />
+                          <span className="truncate text-[12px] font-medium text-text">{r.title}</span>
+                        </span>
                         <span className="flex-shrink-0 text-[11px] text-muted">{r.sub}</span>
                       </div>
                     ))}
