@@ -129,7 +129,7 @@ export default function MessagesList({
   };
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
+    <div className="flex h-full min-h-0 flex-col bg-surface">
       {/* No "Messages" title: the tab bar already says where you are, so the
           Direct / Community toggle is the top of the screen. */}
       <h1 className="sr-only">Messages</h1>
@@ -154,7 +154,7 @@ export default function MessagesList({
       {/* Search — with a small + beside it on Community to start a channel
           (owner, 2026-09-14: "just a small plus", like WhatsApp). */}
       <div className="flex items-center gap-2 bg-surface px-3 pb-2">
-        <div className="flex min-w-0 flex-1 items-center gap-2 rounded-full border border-border bg-surface px-3 py-2 text-muted">
+        <div className="flex min-w-0 flex-1 items-center gap-2 rounded-full bg-surface-2 px-3 py-2 text-muted">
           <IconSearch size={14} />
           <input
             value={query}
@@ -177,7 +177,7 @@ export default function MessagesList({
       </div>
 
       {/* List */}
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div className="min-h-0 flex-1 overflow-y-auto bg-surface">
         {error && (
           <div className="px-6 py-16 text-center text-sm text-muted">
             Couldn’t load messages: {error}
@@ -229,23 +229,43 @@ function DirectList({
           key={c.conversationId}
           type="button"
           onClick={() => onOpen(c)}
-          className="flex w-full items-center gap-3 border-b border-border px-3.5 py-3 text-left"
+          className="flex w-full items-stretch gap-3 pl-3.5 text-left active:bg-surface-2"
         >
-          <Avatar size={48} name={c.otherName} />
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center justify-between gap-2">
-              <span className="truncate text-[13px] font-medium text-text">{c.otherName}</span>
-              <span className="shrink-0 text-[11px] text-muted">{relativeTime(c.lastAt)}</span>
-            </div>
-            <div className="truncate text-[11px] text-muted">
-              {c.lastBody
-                ? `${c.lastFromMe ? "You: " : ""}${c.lastBody}`
-                : "No messages yet"}
-            </div>
-          </div>
-          {c.unread > 0 && (
-            <span className="h-2 w-2 shrink-0 rounded-full bg-primary-live" aria-label="unread" />
-          )}
+          <span className="flex items-center py-2.5">
+            <Avatar size={48} name={c.otherName} />
+          </span>
+          {/* The hairline starts AFTER the avatar and the time sits above the
+              unread badge — that inset divider is what makes a list read as
+              WhatsApp rather than as a table of rows. */}
+          <span className="flex min-w-0 flex-1 items-center gap-3 border-b border-border py-2.5 pr-3.5">
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-[15px] font-semibold text-text">
+                {c.otherName}
+              </span>
+              <span className="mt-0.5 block truncate text-[13px] text-muted">
+                {c.lastBody
+                  ? `${c.lastFromMe ? "You: " : ""}${c.lastBody}`
+                  : "No messages yet"}
+              </span>
+            </span>
+            <span className="flex shrink-0 flex-col items-end gap-1">
+              <span
+                className={`text-[11px] ${
+                  c.unread > 0 ? "font-semibold text-primary-live" : "text-text-3"
+                }`}
+              >
+                {relativeTime(c.lastAt)}
+              </span>
+              {c.unread > 0 && (
+                <span
+                  className="flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-primary-live px-1 text-[11px] font-semibold text-primary-contrast"
+                  aria-label={`${c.unread} unread`}
+                >
+                  {c.unread}
+                </span>
+              )}
+            </span>
+          </span>
         </button>
       ))}
     </div>
@@ -298,39 +318,52 @@ function CommunityList({
               key={c.channelId}
               type="button"
               onClick={() => onOpen(c)}
-              className="flex w-full items-center gap-3 border-b border-border px-3.5 py-2.5 text-left"
+              className="flex w-full items-stretch gap-3 pl-3.5 text-left active:bg-surface-2"
             >
-              <ChannelTile icon={c.icon} />
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center justify-between gap-2">
+              <span className="flex items-center py-2.5">
+                <ChannelTile icon={c.icon} />
+              </span>
+              <span className="flex min-w-0 flex-1 items-center gap-3 border-b border-border py-2.5 pr-3.5">
+                <span className="min-w-0 flex-1">
                   <span className="flex min-w-0 items-center gap-1">
-                    <span className="truncate text-[13px] font-medium text-text">#&nbsp;{c.name}</span>
+                    <span className="truncate text-[15px] font-semibold text-text">#&nbsp;{c.name}</span>
                     {c.private && (
                       <span className="shrink-0 text-muted" aria-label="Private">
-                        <IconLock size={11} />
+                        <IconLock size={12} />
                       </span>
                     )}
                   </span>
-                  <span className="shrink-0 text-[11px] text-muted">{relativeTime(c.lastAt)}</span>
-                </div>
-                {/* The admin of a private channel sees who is waiting first. */}
-                {c.requests > 0 ? (
-                  <div className="truncate text-[11px] font-medium text-primary-live">
-                    {c.requests} asking to join
-                  </div>
-                ) : (
-                  <div className="truncate text-[11px] text-muted">
-                    {c.lastBody
-                      ? `${c.lastSenderName ?? "Someone"}: ${c.lastBody}`
-                      : "No messages yet"}
-                  </div>
-                )}
-              </div>
-              {c.unread > 0 && (
-                <span className="flex h-[18px] min-w-[18px] shrink-0 items-center justify-center rounded-full bg-primary-live px-1 text-[11px] font-semibold text-primary-contrast">
-                  {c.unread}
+                  {/* The admin of a private channel sees who is waiting first. */}
+                  {c.requests > 0 ? (
+                    <span className="mt-0.5 block truncate text-[13px] font-medium text-primary-live">
+                      {c.requests} asking to join
+                    </span>
+                  ) : (
+                    <span className="mt-0.5 block truncate text-[13px] text-muted">
+                      {c.lastBody
+                        ? `${c.lastSenderName ?? "Someone"}: ${c.lastBody}`
+                        : "No messages yet"}
+                    </span>
+                  )}
                 </span>
-              )}
+                <span className="flex shrink-0 flex-col items-end gap-1">
+                  <span
+                    className={`text-[11px] ${
+                      c.unread > 0 ? "font-semibold text-primary-live" : "text-text-3"
+                    }`}
+                  >
+                    {relativeTime(c.lastAt)}
+                  </span>
+                  {c.unread > 0 && (
+                    <span
+                      className="flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-primary-live px-1 text-[11px] font-semibold text-primary-contrast"
+                      aria-label={`${c.unread} unread`}
+                    >
+                      {c.unread}
+                    </span>
+                  )}
+                </span>
+              </span>
             </button>
           ))}
         </>
@@ -342,36 +375,40 @@ function CommunityList({
         <>
           <SectionHeader>Browse channels</SectionHeader>
           {discover.map((c) => (
-            <div
-              key={c.channelId}
-              className="flex w-full items-center gap-3 border-b border-border px-3.5 py-2.5"
-            >
+            <div key={c.channelId} className="flex w-full items-stretch gap-3 pl-3.5">
               {/* A private channel can't be opened from outside: its row says
                   so, and the button asks to join (owner, 2026-09-14). */}
               <button
                 type="button"
                 onClick={() => !c.private && onOpen(c)}
-                className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                aria-label={c.name}
+                tabIndex={-1}
+                className="flex items-center py-2.5"
               >
                 <ChannelTile icon={c.icon} />
-                <div className="min-w-0 flex-1">
+              </button>
+              <div className="flex min-w-0 flex-1 items-center gap-3 border-b border-border py-2.5 pr-3.5">
+                <button
+                  type="button"
+                  onClick={() => !c.private && onOpen(c)}
+                  className="min-w-0 flex-1 text-left"
+                >
                   <span className="flex min-w-0 items-center gap-1">
-                    <span className="truncate text-[13px] font-medium text-text">#&nbsp;{c.name}</span>
+                    <span className="truncate text-[15px] font-semibold text-text">#&nbsp;{c.name}</span>
                     {c.private && (
                       <span className="shrink-0 text-muted" aria-label="Private">
-                        <IconLock size={11} />
+                        <IconLock size={12} />
                       </span>
                     )}
                   </span>
-                  <span className="block truncate text-[11px] text-muted">
+                  <span className="mt-0.5 block truncate text-[13px] text-muted">
                     {c.private
                       ? "Private channel"
                       : c.lastBody
                         ? `${c.lastSenderName ?? "Someone"}: ${c.lastBody}`
                         : "No messages yet"}
                   </span>
-                </div>
-              </button>
+                </button>
               {!c.private ? (
                 <Button size="sm" onClick={() => onJoin(c.channelId)} className="shrink-0">
                   Join
@@ -391,6 +428,7 @@ function CommunityList({
                   Ask to join
                 </Button>
               )}
+              </div>
             </div>
           ))}
         </>
