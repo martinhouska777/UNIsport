@@ -82,6 +82,7 @@ import {
   spanLabel,
   spellDays,
   statusReason,
+  type DayOut,
   type DayOutReason,
   type DaysOut,
 } from "@/lib/varsity/daysOut";
@@ -299,7 +300,10 @@ function EditIdentitySheet({
   Asked when the status stops being Sick / Injured / Away: "You were sick
   10–14 Sep, 5 days. Log it in your calendar?" One tap logs every one of those
   days with that reason; Not now leaves the calendar as it is. Days you trained
-  on during the spell are left out — only the empty days are offered.
+  on during the spell are left out — only the empty days are offered — and so
+  is a day already in the calendar (the first one, marked when the status was
+  picked). The grey explainer line went on 2026-09-14 (owner): a box to write
+  what goes in the calendar took its place, filled with the first day's note.
 */
 type Spell = {
   reason: DayOutReason;
@@ -307,6 +311,8 @@ type Spell = {
   to: string;
   /** The days in from…to with no training logged — the only ones to mark. */
   days: string[];
+  /** What was written when the status was picked — the box starts with it. */
+  note: string;
 };
 
 function LogSpellSheet({
@@ -315,9 +321,10 @@ function LogSpellSheet({
   onClose,
 }: {
   spell: Spell;
-  onLog: () => void;
+  onLog: (note: string) => void;
   onClose: () => void;
 }) {
+  const [note, setNote] = useState(spell.note);
   const days = spell.days.length;
   const all = isoDays(spell.from, spell.to).length;
   const word = reasonMeta(spell.reason).label.toLowerCase();
@@ -330,14 +337,12 @@ function LogSpellSheet({
           ? `${days} day${days === 1 ? "" : "s"}.`
           : `${days} of those ${all} days with no training.`}
       </p>
-      <p className="mt-1 text-[12px] leading-relaxed text-muted">
-        Each day gets a mark in your calendar, and your statistics show why you didn&apos;t train.
-      </p>
+      <CalendarNote value={note} onChange={setNote} />
       <div className="mt-4 flex gap-2.5">
         <Button variant="secondary" size="lg" onClick={onClose} className="flex-1">
           Not now
         </Button>
-        <Button size="lg" onClick={onLog} className="flex-1">
+        <Button size="lg" onClick={() => onLog(note)} className="flex-1">
           Log {days} day{days === 1 ? "" : "s"}
         </Button>
       </div>
@@ -345,27 +350,59 @@ function LogSpellSheet({
   );
 }
 
+/*
+  THE BOX FOR WHAT GOES IN THE CALENDAR — shared by the status sheet and the
+  "Log it in your calendar?" sheet, so both ask the same way.
+*/
+function CalendarNote({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  return (
+    <textarea
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      maxLength={200}
+      rows={3}
+      placeholder="Write what to put in your calendar (optional)"
+      aria-label="Note for your calendar"
+      // 16px so a phone doesn't zoom in on focus.
+      className="mt-3 w-full resize-none rounded-xl border border-border bg-surface-2 px-3 py-2.5 text-base leading-snug text-text outline-none placeholder:text-muted focus:border-primary"
+    />
+  );
+}
+
 /* ─────────────────────────  status picker sheet  ───────────────────────── */
+/*
+  Just the four names — the grey line under each came off on 2026-09-14
+  (owner). Active saves at once. Sick, Injured or Away opens a box to write
+  what happened, and Save puts TODAY in the calendar with that reason and the
+  note (unless today already has training on it — only an empty day is out).
+*/
 function StatusSheet({
   current,
   onSave,
   onClose,
 }: {
   current: string;
-  onSave: (patch: Partial<VarsityAthleteProfile>) => void;
+  onSave: (patch: Partial<VarsityAthleteProfile>, note: string) => void;
   onClose: () => void;
 }) {
+  const [picked, setPicked] = useState<string | null>(null);
+  const [note, setNote] = useState("");
+  const shown = picked ?? current;
   return (
     <Sheet title="Current status" onClose={onClose}>
       <div className="flex flex-col gap-2">
         {statusOptions.map((s) => {
-          const active = s.title === current;
+          const active = s.title === shown;
           return (
             <button
               key={s.title}
               type="button"
               onClick={() => {
-                onSave({ status: s.title });
+                if (statusReason(s.title) && s.title !== current) {
+                  setPicked(s.title);
+                  return;
+                }
+                onSave({ status: s.title }, "");
                 onClose();
               }}
               className={`flex items-center gap-3 rounded-2xl border px-3.5 py-3 text-left ${
@@ -373,10 +410,7 @@ function StatusSheet({
               }`}
             >
               <span className={`h-2.5 w-2.5 flex-shrink-0 rounded-full ${toneDot[s.tone]}`} />
-              <div className="min-w-0 flex-1">
-                <div className="text-[13px] font-semibold text-text">{s.title}</div>
-                <div className="text-[11px] text-muted">{s.sub}</div>
-              </div>
+              <div className="min-w-0 flex-1 text-[13px] font-semibold text-text">{s.title}</div>
               {active && (
                 <span className="text-primary">
                   <IconCheck size={16} />
@@ -386,6 +420,22 @@ function StatusSheet({
           );
         })}
       </div>
+      {picked && (
+        <>
+          <CalendarNote value={note} onChange={setNote} />
+          <Button
+            size="lg"
+            full
+            className="mt-3"
+            onClick={() => {
+              onSave({ status: picked }, note);
+              onClose();
+            }}
+          >
+            <IconCheck size={16} /> Save
+          </Button>
+        </>
+      )}
     </Sheet>
   );
 }
@@ -821,10 +871,25 @@ export default function ProfileScreen() {
     changes the status; the days are just not logged.
   */
   const [spell, setSpell] = useState<Spell | null>(null);
-  const changeStatus = (patch: Partial<VarsityAthleteProfile>) => {
+  // Days written onto the calendar record, merged onto the LATEST profile (the
+  // status change just before may not be in this closure yet). `keep`: a day
+  // already marked keeps what it says.
+  const markDays = (days: string[], v: DayOut, keep: boolean) => {
+    setProfile((prev) => {
+      if (!prev) return prev;
+      const daysOut: DaysOut = { ...prev.daysOut };
+      for (const iso of days) daysOut[iso] = keep ? (daysOut[iso] ?? v) : v;
+      const next = { ...prev, daysOut };
+      void saveAthleteProfile(userId, next);
+      return next;
+    });
+  };
+  const changeStatus = (patch: Partial<VarsityAthleteProfile>, note = "") => {
     if (!profile || patch.status === undefined || patch.status === profile.status) return;
     const today = toISO(now);
     const was = statusReason(profile.status);
+    const becomes = statusReason(patch.status);
+    const marked = profile.daysOut;
     if (was && profile.statusSince) {
       /*
         Only the days you did NOTHING (owner, 2026-09-13). A day with training
@@ -835,18 +900,30 @@ export default function ProfileScreen() {
       const { from, to } = spellDays(profile.statusSince, today);
       void fetchLogsInRange(userId ?? "", from, to).then((rows) => {
         const trained = new Set(rows.filter((l) => l.category !== "off").map((l) => l.logDate));
-        const days = isoDays(from, to).filter((d) => !trained.has(d));
-        if (days.length > 0) setSpell({ reason: was, from, to, days });
+        // A day already in the calendar isn't asked about again.
+        const days = isoDays(from, to).filter((d) => !trained.has(d) && !marked[d]);
+        const firstNote = marked[profile.statusSince ?? ""]?.note ?? "";
+        if (days.length > 0) setSpell({ reason: was, from, to, days, note: firstNote });
       });
     }
-    patchProfile({ status: patch.status, statusSince: statusReason(patch.status) ? today : null });
+    patchProfile({ status: patch.status, statusSince: becomes ? today : null });
+    /*
+      PICKING Sick / Injured / Away LOGS TODAY (owner, 2026-09-14: "when I log
+      injured or away, it doesn't log"). Today goes in the calendar with the
+      reason and the note, unless today already has training, which no day out
+      can have.
+    */
+    if (becomes) {
+      const text = note.trim();
+      void fetchLogsInRange(userId ?? "", today, today).then((rows) => {
+        if (rows.some((l) => l.category !== "off")) return;
+        markDays([today], { reason: becomes, ...(text ? { note: text } : {}) }, false);
+      });
+    }
   };
-  const logSpell = (s: Spell) => {
-    if (!profile) return;
-    const next: DaysOut = { ...profile.daysOut };
-    // A day already marked keeps what it says (and its note).
-    for (const iso of s.days) next[iso] ??= { reason: s.reason };
-    patchProfile({ daysOut: next });
+  const logSpell = (s: Spell, note: string) => {
+    const text = note.trim();
+    markDays(s.days, { reason: s.reason, ...(text ? { note: text } : {}) }, true);
   };
 
   /*
@@ -1202,8 +1279,8 @@ export default function ProfileScreen() {
       {spell && (
         <LogSpellSheet
           spell={spell}
-          onLog={() => {
-            logSpell(spell);
+          onLog={(note) => {
+            logSpell(spell, note);
             setSpell(null);
           }}
           onClose={() => setSpell(null)}
