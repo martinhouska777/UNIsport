@@ -97,25 +97,23 @@ function loggable(iso: string): boolean {
    the training plan's own heading, where they say what plan you are looking
    at. See WeekStrip. */
 
-/* ─── Race countdown ─── */
-function RaceBar({ r }: { r: RaceData }) {
+/* ─── Race countdown ───
+   ONE SMALL LINE under the plan's name (owner, 2026-09-14: "it doesn't need
+   to be the whole screen"). It used to be a full-width "Next Race" banner of
+   its own at the bottom of the page, with the number set at 24px; now it reads
+   "Head of the Charles · 12 days" at 11px, the flag in the school colour. */
+function RaceLine({ r }: { r: RaceData }) {
   return (
-    <div className="mx-3 mt-2 flex items-center gap-3 rounded-xl border border-primary-line bg-gradient-to-r from-primary/20 to-accent/10 px-3.5 py-2.5">
-      <span className="text-primary">
-        <IconFlag size={18} />
+    <div className="mt-0.5 flex min-w-0 items-center gap-1 text-[11px] text-muted">
+      <span className="flex-shrink-0 text-primary">
+        <IconFlag size={11} />
       </span>
-      <div className="flex-1">
-        <div className="text-xs font-medium text-text">{r.name}</div>
-        <div className="text-[11px] text-muted">{r.location}</div>
-      </div>
-      <div className="text-right">
-        <div className="text-2xl font-semibold leading-none text-accent">{r.big}</div>
-        {r.small && (
-          <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
-            {r.small}
-          </div>
-        )}
-      </div>
+      <span className="truncate">
+        <span className="font-medium text-text">{r.name}</span>
+        {" · "}
+        <span className="font-semibold text-accent">{r.big}</span>
+        {r.small && ` ${r.small.toLowerCase()}`}
+      </span>
     </div>
   );
 }
@@ -167,7 +165,12 @@ function WeekFit({
                 {d.num}
               </div>
             </div>
-            <div className="flex flex-1 flex-col gap-0.5 p-0.5">
+            {/* TALLER, AND EDGE TO EDGE (owner, 2026-09-14). The body has a
+                floor of 96px so the strip keeps its presence now that the
+                page around it is lighter, and the blocks run to the cell's
+                edges — no padding, no rounding — with only a hairline
+                between two sessions on the same day. */}
+            <div className="flex min-h-[96px] flex-1 flex-col divide-y divide-border">
               {d.sessions.map((s, j) => (
                 /*
                   9px ON 2px SIDES, so one word stays one word. At 10px inside
@@ -176,7 +179,7 @@ function WeekFit({
                   "8×500 / m". At 9px they are 33px and 34px, and the
                   narrower sides leave 35px — the whole word on one line.
                 */
-                <div key={j} className="flex flex-1 items-center rounded px-0.5 py-1" style={kindBlock(s.kind)}>
+                <div key={j} className="flex flex-1 items-center px-0.5 py-1" style={kindBlock(s.kind)}>
                   <span className="block break-words text-[9px] font-medium leading-tight text-text">
                     {s.label}
                   </span>
@@ -451,6 +454,7 @@ function WeekStrip({
   weeks,
   startIndex,
   greeting,
+  race,
   selected,
   onSelect,
   onClearDay,
@@ -459,6 +463,8 @@ function WeekStrip({
   startIndex: number;
   /** The block's name and "Week 10 of 15" — this section's heading now. */
   greeting: GreetingData;
+  /** The next race, one small line under the plan's name (see RaceLine). */
+  race: RaceData | null;
   selected: WeekDay | null;
   onSelect: (d: WeekDay) => void;
   onClearDay: () => void;
@@ -484,11 +490,14 @@ function WeekStrip({
             you what the thing under it was, which the calendar already does;
             "SPRING BLOCK · Week 10 of 15" tells you which plan and how far in
             (owner, 2026-09-13 — it used to sit up in the greeting). */}
-        <div className="flex min-w-0 items-baseline gap-1.5">
-          <span className="truncate text-[11px] font-semibold uppercase tracking-[0.12em] text-accent">
-            {greeting.block}
-          </span>
-          <span className="flex-shrink-0 text-[11px] text-muted">{greeting.week}</span>
+        <div className="min-w-0">
+          <div className="flex min-w-0 items-baseline gap-1.5">
+            <span className="truncate text-[11px] font-semibold uppercase tracking-[0.12em] text-accent">
+              {greeting.block}
+            </span>
+            <span className="flex-shrink-0 text-[11px] text-muted">{greeting.week}</span>
+          </div>
+          {race && <RaceLine r={race} />}
         </div>
         {/* The week always lives on the page; Month opens the whole thing
             full-screen and the X drops you back here. */}
@@ -1159,6 +1168,7 @@ function HomeScreenInner() {
         weeks={data.weeks}
         startIndex={data.weekIndex}
         greeting={data.greeting}
+        race={data.race}
         selected={onToday ? null : viewDay}
         onSelect={(d) => {
           const i = allDays.indexOf(d);
@@ -1220,15 +1230,6 @@ function HomeScreenInner() {
           </div>
         )}
       </div>
-
-      {data.race && (
-        <div className="pt-4">
-          <div className="px-4 pb-1">
-            <SectionLabel>Next Race</SectionLabel>
-          </div>
-          <RaceBar r={data.race} />
-        </div>
-      )}
 
       {noteCard}
 

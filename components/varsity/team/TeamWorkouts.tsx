@@ -69,7 +69,8 @@ function outingDateLabel(dayKey: string): string {
 type Row ={ key: string; date: Date; erg?: TeamWorkout; water?: Outing };
 
 /*
-  SEARCH BY NAME OR DATE (Coach Console only, owner 2026-09-14). A row matches
+  SEARCH BY NAME OR DATE (owner 2026-09-14; first Coach Console only, then the
+  Team tab too the same day). A row matches
   when every word typed is found in its name or in any of the ways its date is
   written: "Tue 22 Jun", "Tuesday", "June", "22/6", "6/22", "2026-06-22".
 */
@@ -210,7 +211,7 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
 
   return (
     <div className="mt-4">
-      {inConsole && rows.length > 0 && (
+      {rows.length > 0 && (
         // The same search box the Team roster uses.
         <div className="mb-3 flex items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2.5">
           <span className="text-muted">
