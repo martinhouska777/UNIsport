@@ -22,6 +22,7 @@ import {
 } from "@/components/icons";
 import Avatar from "./Avatar";
 import Composer from "./Composer";
+import ChannelInfo from "./ChannelInfo";
 import { dayLabel, sameDay } from "./dayLabel";
 
 const CHANNEL_ICONS: Record<string, (p: { size?: number }) => React.ReactElement> = {
@@ -45,6 +46,7 @@ export default function ChannelThread({
   joined: joinedInitial,
   isPrivate = false,
   onBack,
+  onMessagePerson,
 }: {
   channelId: string;
   title: string;
@@ -52,7 +54,12 @@ export default function ChannelThread({
   joined: boolean;
   isPrivate?: boolean;
   onBack: () => void;
+  /** "Message" on a member in Channel info — opens a chat with them. */
+  onMessagePerson?: (person: { id: string; name: string }) => void;
 }) {
+  // The name can change under you: the admin renames it in Channel info.
+  const [name, setName] = useState(title);
+  const [info, setInfo] = useState(false);
   const [messages, setMessages] = useState<ChannelMessage[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [joined, setJoined] = useState(joinedInitial);
@@ -104,22 +111,42 @@ export default function ChannelThread({
     setMessages((prev) => [...(prev ?? []), msg]);
   };
 
+  if (info) {
+    return (
+      <ChannelInfo
+        channelId={channelId}
+        icon={icon}
+        onBack={() => setInfo(false)}
+        onRenamed={setName}
+        onLeft={onBack}
+        onMessage={(p) => onMessagePerson?.(p)}
+      />
+    );
+  }
+
   return (
     <div className="flex h-full min-h-0 flex-col">
-      {/* Header */}
+      {/* Header — the icon and name open Channel info, as a WhatsApp group does. */}
       <div className="flex items-center gap-3 border-b border-border bg-surface px-3 py-2.5">
         <button type="button" onClick={onBack} aria-label="Back" className="text-muted">
           <IconArrowLeft size={18} />
         </button>
-        <div className="flex h-9 w-9 items-center justify-center rounded-[10px] border border-primary bg-primary-tint text-primary">
-          <Glyph size={16} />
-        </div>
-        <span className="text-[13px] font-medium text-text">#&nbsp;{title}</span>
-        {isPrivate && (
-          <span className="text-muted" aria-label="Private">
-            <IconLock size={12} />
-          </span>
-        )}
+        <button
+          type="button"
+          onClick={() => setInfo(true)}
+          aria-label="Channel info"
+          className="flex min-w-0 flex-1 items-center gap-3 text-left active:opacity-70"
+        >
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] border border-primary bg-primary-tint text-primary">
+            <Glyph size={16} />
+          </div>
+          <span className="truncate text-[13px] font-medium text-text">#&nbsp;{name}</span>
+          {isPrivate && (
+            <span className="shrink-0 text-muted" aria-label="Private">
+              <IconLock size={12} />
+            </span>
+          )}
+        </button>
       </div>
 
       {/* Messages */}
@@ -164,10 +191,10 @@ export default function ChannelThread({
       </div>
 
       {joined ? (
-        <Composer placeholder={`Message # ${title}...`} onSend={send} />
+        <Composer placeholder={`Message # ${name}...`} onSend={send} />
       ) : (
         <div className="flex items-center justify-between gap-3 border-t border-border bg-surface px-3.5 py-3">
-          <span className="text-[12px] text-muted">Join # {title} to post a message.</span>
+          <span className="text-[12px] text-muted">Join # {name} to post a message.</span>
           <Button size="sm" onClick={join} disabled={joining} className="shrink-0">
             {joining ? "Joining…" : "Join"}
           </Button>

@@ -16,7 +16,7 @@ import MessagesList from "@/components/messages/MessagesList";
 import DmThread from "@/components/messages/DmThread";
 import ChannelThread from "@/components/messages/ChannelThread";
 import NewChannel from "@/components/messages/NewChannel";
-import type { Channel, DmConversation } from "@/lib/supabase/messages";
+import { startDirectConversation, type Channel, type DmConversation } from "@/lib/supabase/messages";
 
 type Open =
   | { type: "dm"; id: string; name: string; otherId: string | null }
@@ -56,6 +56,16 @@ function Messages() {
     if (search.get("dm")) router.replace("/messages");
   };
 
+  // "Message" on someone in Channel info: straight into your chat with them.
+  const openDmWith = async (person: { id: string; name: string }) => {
+    try {
+      const conversationId = await startDirectConversation(person.id);
+      setOpen({ type: "dm", id: conversationId, name: person.name, otherId: person.id });
+    } catch {
+      // The chat couldn't be started — stay on Channel info.
+    }
+  };
+
   return (
     <div className="mx-auto flex h-full w-full max-w-screen-sm flex-1 flex-col">
       {open?.type === "dm" ? (
@@ -89,6 +99,7 @@ function Messages() {
           joined={open.joined}
           isPrivate={open.isPrivate}
           onBack={back}
+          onMessagePerson={(p) => void openDmWith(p)}
         />
       ) : (
         <MessagesList

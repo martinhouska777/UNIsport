@@ -149,18 +149,28 @@ export default function NewChannel({
   );
 }
 
-function AddMembers({
+/*
+  ADD MEMBERS — used here when starting a private channel, and from Channel
+  info to add people to one that exists (`excludeIds` hides who is already in).
+*/
+export function AddMembers({
   picked,
   onChange,
   busy,
   onBack,
   onDone,
+  excludeIds = [],
+  title = "Add members",
+  doneLabel = "Create channel",
 }: {
   picked: ChannelPerson[];
   onChange: (next: ChannelPerson[]) => void;
   busy: boolean;
   onBack: () => void;
   onDone: () => void;
+  excludeIds?: string[];
+  title?: string;
+  doneLabel?: string;
 }) {
   const [query, setQuery] = useState("");
   const [people, setPeople] = useState<ChannelPerson[] | null>(null);
@@ -183,6 +193,7 @@ function AddMembers({
     };
   }, [typed]);
 
+  const shown = people === null ? null : people.filter((p) => !excludeIds.includes(p.id));
   const isPicked = (id: string) => picked.some((p) => p.id === id);
   const toggle = (p: ChannelPerson) =>
     onChange(isPicked(p.id) ? picked.filter((x) => x.id !== p.id) : [...picked, p]);
@@ -190,7 +201,7 @@ function AddMembers({
   return (
     <div className="relative flex h-full min-h-0 flex-col">
       <Header
-        title="Add members"
+        title={title}
         sub={picked.length ? `${picked.length} selected` : undefined}
         onBack={onBack}
       />
@@ -232,9 +243,9 @@ function AddMembers({
       )}
 
       <div className="min-h-0 flex-1 overflow-y-auto pb-24">
-        {people === null ? (
+        {shown === null ? (
           <SkeletonRows count={6} />
-        ) : people.length === 0 ? (
+        ) : shown.length === 0 ? (
           <div className="px-6 py-14 text-center text-sm text-muted">
             {typed ? "No one by that name." : "Search for anyone by name."}
           </div>
@@ -245,7 +256,7 @@ function AddMembers({
                 People you know
               </div>
             )}
-            {people.map((p) => {
+            {shown.map((p) => {
               const on = isPicked(p.id);
               const sub = [p.residence ? residenceLabel(p.residence) : null, p.classYear]
                 .filter(Boolean)
@@ -277,7 +288,7 @@ function AddMembers({
         )}
       </div>
 
-      <Fab label="Create channel" disabled={busy} onClick={onDone}>
+      <Fab label={doneLabel} disabled={busy} onClick={onDone}>
         <IconCheck size={22} />
       </Fab>
     </div>

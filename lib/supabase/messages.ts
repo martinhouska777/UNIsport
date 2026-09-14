@@ -257,6 +257,84 @@ function toChannelMessage(r: Record<string, unknown>): ChannelMessage {
   };
 }
 
+// --- Channel info (db/channels_settings.sql) -------------------------------
+
+/** The top of a channel's info screen. */
+export type ChannelDetails = {
+  name: string;
+  private: boolean;
+  memberCount: number;
+  amMember: boolean;
+  /** You started it — you can rename it, remove people and delete it. */
+  amAdmin: boolean;
+};
+
+export type ChannelMember = ChannelPerson & { isAdmin: boolean; isMe: boolean };
+
+export async function getChannelDetails(channelId: string): Promise<ChannelDetails> {
+  const { data, error } = await createClient().rpc("channel_info", { chan_id: channelId });
+  if (error) throw new Error(error.message);
+  const r = (data as Record<string, unknown>[])[0];
+  if (!r) throw new Error("This channel no longer exists.");
+  return {
+    name: r.name as string,
+    private: !!r.private,
+    memberCount: Number(r.member_count ?? 0),
+    amMember: !!r.am_member,
+    amAdmin: !!r.am_admin,
+  };
+}
+
+/** Everyone in a channel: you first, then the admin, then by name. */
+export async function listChannelMembers(channelId: string): Promise<ChannelMember[]> {
+  const { data, error } = await createClient().rpc("channel_members_list", { chan_id: channelId });
+  if (error) throw new Error(error.message);
+  return (data as Record<string, unknown>[]).map((r) => ({
+    id: r.id as string,
+    name: (r.name as string) || "Member",
+    residence: (r.residence as string) ?? null,
+    classYear: (r.class_year as string) ?? null,
+    photo: (r.photo as string) ?? null,
+    isAdmin: !!r.is_admin,
+    isMe: !!r.is_me,
+  }));
+}
+
+/** Add people (any member can). Returns how many were new. */
+export async function addChannelMembers(channelId: string, memberIds: string[]): Promise<number> {
+  const { data, error } = await createClient().rpc("channel_add_members", {
+    chan_id: channelId,
+    member_ids: memberIds,
+  });
+  if (error) throw new Error(error.message);
+  return Number(data ?? 0);
+}
+
+/** Remove someone — the admin only. */
+export async function removeChannelMember(channelId: string, memberId: string): Promise<void> {
+  const { error } = await createClient().rpc("channel_remove_member", {
+    chan_id: channelId,
+    member_id: memberId,
+  });
+  if (error) throw new Error(error.message);
+}
+
+/** Rename — the admin only. Returns the name as saved; a refusal throws its sentence. */
+export async function renameChannel(channelId: string, name: string): Promise<string> {
+  const { data, error } = await createClient().rpc("channel_rename", {
+    chan_id: channelId,
+    new_name: name,
+  });
+  if (error) throw new Error(error.message);
+  return data as string;
+}
+
+/** Delete the channel and its messages — the admin only. */
+export async function deleteChannel(channelId: string): Promise<void> {
+  const { error } = await createClient().rpc("channel_delete", { chan_id: channelId });
+  if (error) throw new Error(error.message);
+}
+
 // --- Unread badge ----------------------------------------------------------
 
 /** Total unread messages across DMs + joined channels — for the nav badge. */
