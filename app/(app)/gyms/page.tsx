@@ -74,7 +74,7 @@ function StatsRow({
   going: GoingSummary | null;
 }) {
   return (
-    <div className="flex flex-col gap-1.5 bg-surface px-3 py-2.5">
+    <div className="flex flex-col gap-1.5 bg-surface-2 px-3 py-2.5">
       {/* The Buddy Board, one line: who has already said they're going here.
           Nothing is drawn when nobody has — see GoingLine. */}
       <GoingLine going={going} gymName={gym.name} compact />
@@ -151,7 +151,7 @@ function MainCard({ gym, fav, onToggleFav, crowd, now, going, tour }: CardProps)
         an empty slot reads as "photo coming" rather than as a void.
       */}
       {/* The name sits in the TOP-left corner (owner's call), clear of the heart. */}
-      <div className="relative flex h-24 items-start overflow-hidden bg-gradient-to-br from-surface-2 to-background pr-11">
+      <div className="relative flex h-24 items-start overflow-hidden bg-surface pr-11">
         <Watermark gym={gym} />
         <div className="relative p-3">
           <div className="text-[15px] font-medium text-text">{gym.name}</div>
@@ -171,7 +171,7 @@ function HouseCard({ gym, fav, onToggleFav, crowd, now, going }: CardProps) {
       className="relative block overflow-hidden rounded-2xl border border-border"
     >
       <FavHeart fav={fav} onToggle={onToggleFav} />
-      <div className="relative flex h-[75px] items-center gap-2.5 bg-surface-2 px-3 pr-11">
+      <div className="relative flex h-[75px] items-center gap-2.5 bg-surface px-3 pr-11">
         <span
           className="absolute inset-x-0 top-0 h-[3px]"
           style={

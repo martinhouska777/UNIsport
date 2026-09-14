@@ -101,7 +101,7 @@ export default function MemoriesPage() {
 
       {loaded &&
         days.map((day) => (
-          <section key={day.date} className="px-3.5 pt-4">
+          <section key={day.date} className="mx-3.5 mt-3 rounded-2xl border border-border bg-surface p-3">
             {/* The day, then each session in it: what you did, where, and
                 who with (owner, 2026-09-13). The photo count that sat on the
                 right is gone; the grid below already shows it. */}

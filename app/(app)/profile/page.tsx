@@ -518,7 +518,7 @@ export default function ProfilePage() {
           Partners is the same distance from both — with space-around the gaps
           followed the width of each word. They show a dash until the numbers
           have actually landed, so the row never jumps. */}
-      <div className="grid grid-cols-3 border-y border-border py-2.5">
+      <div className="mx-3.5 mb-1 grid grid-cols-3 overflow-hidden rounded-2xl border border-border bg-surface py-2.5">
         {stats.map((s, i) => {
           const body = (
             <>

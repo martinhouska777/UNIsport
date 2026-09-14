@@ -48,7 +48,7 @@ export default function MemoriesStrip() {
   }, [userId]);
 
   // Holds the row's height while the photos are on their way.
-  if (!loaded) return <div className="h-[68px] border-b border-border" aria-hidden="true" />;
+  if (!loaded) return <div className="mx-3.5 my-2 h-[66px] rounded-2xl border border-border bg-surface" aria-hidden="true" />;
 
   const memories = toMemories(logs);
   if (memories.length === 0) return null;
@@ -58,7 +58,7 @@ export default function MemoriesStrip() {
   return (
     <Link
       href="/memories"
-      className="flex items-center gap-3 border-b border-border px-3.5 py-3 active:bg-surface-2"
+      className="mx-3.5 my-2 flex items-center gap-3 rounded-2xl border border-border bg-surface px-3.5 py-3 active:bg-surface-2"
     >
       <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-primary-tint text-primary">
         <IconCamera size={16} />
@@ -76,7 +76,7 @@ export default function MemoriesStrip() {
         {tiles.map((m) => (
           <span
             key={m.id}
-            className="h-9 w-9 overflow-hidden rounded-md border border-border bg-surface-2"
+            className="h-9 w-9 overflow-hidden rounded-md border border-border bg-surface"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={m.src} alt="" className="h-full w-full object-cover" />
