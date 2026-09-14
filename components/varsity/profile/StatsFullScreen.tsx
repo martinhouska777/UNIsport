@@ -22,8 +22,8 @@
       plan"), ending in the days out — sick, injured, away — counted in days.
       How far, how long, how steady: the judgement goes last.
     • the training mix — what all that time actually was, named by what was
-      logged (a bike on a flex day is Bike): the kind, the share, the bar, and
-      no figures under it
+      logged (a bike on a flex day is Bike), distance first, with the figures
+      in small grey text under each bar
 
   DRAG TO ZOOM (owner, 2026-09-13). Drag a thumb or the mouse sideways across
   the graph and it zooms into that stretch — three weeks out of three months
@@ -65,7 +65,7 @@ import {
   type StatRange,
 } from "@/lib/varsity/athleteStats";
 import { rowingReport, bucketDetail, type StatTone } from "@/lib/varsity/rowingStats";
-import { trainingMix } from "@/lib/varsity/trainingMix";
+import { trainingMix, mixLine } from "@/lib/varsity/trainingMix";
 import { type DaysOut } from "@/lib/varsity/daysOut";
 
 /* A word from the data → a theme token. The data never names a colour. */
@@ -411,13 +411,12 @@ export default function StatsFullScreen({
                           style={{ width: `${r.share}%`, background: r.color }}
                         />
                       </div>
-                      {/* The grey line under each bar — "42.0 km · 3h 30m · 4
-                          sessions" — is CUT (owner, 2026-09-13). The kind, the
-                          share and the bar are the mix; the figures behind it
-                          are already the two groups above, and a caption under
-                          every row turned a shape you read at a glance into a
-                          wall. They are still in the Training mix sheet off
-                          the profile card, which exists to carry them. */}
+                      {/* The small grey line under each bar — "42.0 km · 3h
+                          30m · 4 sessions". Cut on 2026-09-13 and put back the
+                          same day: the owner wants to read the figures here. */}
+                      <div className="mt-1 text-[10px] text-muted">
+                        {mixLine(r, units.distance)}
+                      </div>
                     </div>
                   ))}
                 </div>

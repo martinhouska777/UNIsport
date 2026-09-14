@@ -1086,15 +1086,10 @@ export default function ProfileScreen() {
             <IconActivity size={18} />
           </span>
           <div className="min-w-0 flex-1">
+            {/* Its name only. The grey line under it ("Rowing 60% · Bike
+                20%…") was cut on 2026-09-13 at the owner's ask; the figures
+                live on the statistics full screen and in the sheet. */}
             <div className="text-[13px] font-medium text-text">Training mix</div>
-            <div className="mt-0.5 truncate text-[11px] text-muted">
-              {mix.length
-                ? mix
-                    .slice(0, 3)
-                    .map((r) => `${r.label} ${r.share}%`)
-                    .join(" · ")
-                : "Nothing logged in this range yet"}
-            </div>
           </div>
           <span className="text-muted">
             <IconChevronRight size={17} />
