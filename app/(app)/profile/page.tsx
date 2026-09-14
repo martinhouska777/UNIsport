@@ -356,30 +356,35 @@ export default function ProfilePage() {
       </div>
 
       {/*
-        1 · WHO YOU ARE — back down the middle, the way this page was laid out
-        before and the way the owner wants it read:
+        1 · WHO YOU ARE — photo on the LEFT, the three counts beside it, then
+        your name and your bio underneath (owner, 2026-09-14, picking the
+        "lines only" preview):
 
-          ( photo )
+          ( photo )   48 | 12 | 96
+                      workouts partners followers
+
           Martin Houska
           [VARSITY] [MENTOR]
           Mather House · Class of 2029
-
-          BIO
           a line of bio
+          ──────────────────────────
 
-          N workouts  |  N partners  |  N followers
+        LINES ONLY is the point of it. Nothing in this block is a box: the
+        counts are separated by hairlines rather than sitting in a rounded
+        card, and the bio is plain text rather than a grey panel. A rule under
+        the bio closes the block off. Everything below it — the leaderboard row
+        included — is deliberately left exactly as it was.
 
-        The wide row (photo on the left, the counts beside it) is gone, and so
-        is the "Edit profile" button that came with it. Photo, name and bio are
-        edited from the pencil in the top bar (see editingTop).
+        Photo, name and bio are still edited from the pencil in the top bar
+        (see editingTop); only the arrangement changed.
       */}
-      <div className="flex flex-col items-center gap-2 px-3.5 pb-3 pt-4">
-        <div className="relative">
+      <div className="flex items-center gap-4 px-3.5 pb-3 pt-4">
+        <div className="relative shrink-0">
           {/* While editing, the photo itself is a tap target too, not just
               the little camera on its edge. */}
           <div
             onClick={editingTop ? () => avatarInputRef.current?.click() : undefined}
-            className={`flex h-[72px] w-[72px] items-center justify-center overflow-hidden rounded-full border-2 border-primary bg-primary-tint text-primary ${
+            className={`flex h-[76px] w-[76px] items-center justify-center overflow-hidden rounded-full border-2 border-primary bg-primary-tint text-primary ${
               editingTop ? "cursor-pointer" : ""
             }`}
           >
@@ -387,7 +392,7 @@ export default function ProfilePage() {
               // eslint-disable-next-line @next/next/no-img-element
               <img src={user.photo} alt={user.name || "Profile photo"} className="h-full w-full object-cover" />
             ) : (
-              <IconUser size={30} />
+              <IconUser size={32} />
             )}
           </div>
           <input
@@ -412,78 +417,120 @@ export default function ProfilePage() {
           )}
         </div>
 
-        <div className="flex flex-col items-center gap-1">
-          {editingTop && editField === "name" ? (
-            <div className="flex flex-col items-center">
-              <input
-                autoFocus
-                value={nameDraft}
-                onChange={(e) => {
-                  setNameDraft(e.target.value);
-                  if (nameErr) setNameErr(null);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !nameError(nameDraft)) setEditField(null);
-                }}
-                maxLength={40}
-                aria-label="Name"
-                placeholder="Your name"
-                aria-invalid={nameErr ? true : undefined}
-                /* 16px so a phone doesn't zoom in on focus. Red only when
-                   something is actually wrong. */
-                className={`w-56 border-b bg-transparent text-center text-base font-medium text-text focus:outline-none ${
-                  nameErr ? "border-danger" : "border-border"
-                }`}
-              />
-              {/* The name everyone else sees — it has to be one (lib/onboarding). */}
-              {nameErr && <span className="mt-1 text-[11px] text-danger">{nameErr}</span>}
-            </div>
-          ) : editingTop ? (
-            <button
-              type="button"
-              onClick={() => setEditField("name")}
-              aria-label="Edit name"
-              className="flex items-center gap-1.5 text-center text-base font-medium text-text"
-            >
-              {nameDraft || "Your name"}
-              <IconPencil size={12} className="text-muted" />
-            </button>
-          ) : (
-            <div className="text-center text-base font-medium text-text">{user.name || "Your name"}</div>
-          )}
-
-          {/* On your OWN profile the varsity badge comes from live membership:
-              profiles.data has no record of it (the squad lives in its own
-              table), so unlike a profile you're viewing, it can't come through
-              profileFromOnboarding. */}
-          {(isMember || user.badges.mentor) && (
-            <div className="flex items-center justify-center gap-1.5">
-              {isMember && (
-                <span className="rounded bg-accent px-1.5 py-0.5 text-[8px] font-medium tracking-wide text-background">
-                  VARSITY
-                </span>
-              )}
-              {user.badges.mentor && (
-                <span className="rounded border border-success bg-success-tint px-1.5 py-0.5 text-[8px] font-medium tracking-wide text-success">
-                  MENTOR
-                </span>
-              )}
-            </div>
-          )}
-
-          <div className="text-[11px] text-muted">
-            {user.residence ? `${residenceLabel(user.residence)} · ` : ""}
-            {classOfLabel(user.classYear)}
-          </div>
+        {/* THE THREE COUNTS, beside the photo. Three EQUAL columns so the two
+            hairlines land at exactly a third and two thirds. They show a dash
+            until the numbers have landed, so the row never jumps. The labels
+            drop to 10px here because a third of the space next to a photo is
+            narrower than a third of the screen was. */}
+        <div className="grid min-w-0 flex-1 grid-cols-3">
+          {stats.map((s, i) => {
+            const body = (
+              <>
+                <div className="text-[17px] font-medium tabular-nums text-text">
+                  {statsReady ? s.value : "—"}
+                </div>
+                <div
+                  className={`mt-0.5 truncate text-[10px] uppercase tracking-[0.04em] ${
+                    s.onClick ? "text-primary" : "text-muted"
+                  }`}
+                >
+                  {s.label}
+                </div>
+              </>
+            );
+            return (
+              <div
+                key={s.label}
+                className={`flex min-w-0 items-stretch ${i > 0 ? "border-l border-border" : ""}`}
+              >
+                {s.onClick ? (
+                  <button
+                    type="button"
+                    onClick={s.onClick}
+                    className="w-full min-w-0 rounded-md px-0.5 text-center transition-colors active:bg-surface-2"
+                  >
+                    {body}
+                  </button>
+                ) : (
+                  <div className="w-full min-w-0 px-0.5 text-center">{body}</div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
 
-      {/* Bio — its own rounded grey card under the identity, down the same
-          centre line (the owner picked option 1 of three previews). No hairline
-          above it: the card itself does the separating. No "Bio" heading on
-          the card (cut 2026-09-13 at the owner's ask): everyone knows it is. */}
-      <div className="px-3.5 pb-3">
-        <div className="rounded-xl border border-border bg-surface px-4 py-3 text-center">
+      {/* NAME, BADGES, CLASS — left-aligned now that the photo is not above
+          them. A centred name under a left-hand photo has nothing to centre on. */}
+      <div className="flex flex-col gap-1 px-3.5">
+        {editingTop && editField === "name" ? (
+          <div>
+            <input
+              autoFocus
+              value={nameDraft}
+              onChange={(e) => {
+                setNameDraft(e.target.value);
+                if (nameErr) setNameErr(null);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !nameError(nameDraft)) setEditField(null);
+              }}
+              maxLength={40}
+              aria-label="Name"
+              placeholder="Your name"
+              aria-invalid={nameErr ? true : undefined}
+              /* 16px so a phone doesn't zoom in on focus. Red only when
+                 something is actually wrong. */
+              className={`w-full border-b bg-transparent text-base font-medium text-text focus:outline-none ${
+                nameErr ? "border-danger" : "border-border"
+              }`}
+            />
+            {/* The name everyone else sees — it has to be one (lib/onboarding). */}
+            {nameErr && <span className="mt-1 block text-[11px] text-danger">{nameErr}</span>}
+          </div>
+        ) : editingTop ? (
+          <button
+            type="button"
+            onClick={() => setEditField("name")}
+            aria-label="Edit name"
+            className="flex items-center gap-1.5 text-left text-base font-medium text-text"
+          >
+            {nameDraft || "Your name"}
+            <IconPencil size={12} className="text-muted" />
+          </button>
+        ) : (
+          <div className="text-base font-medium text-text">{user.name || "Your name"}</div>
+        )}
+
+        {/* On your OWN profile the varsity badge comes from live membership:
+            profiles.data has no record of it (the squad lives in its own
+            table), so unlike a profile you're viewing, it can't come through
+            profileFromOnboarding. */}
+        {(isMember || user.badges.mentor) && (
+          <div className="flex items-center gap-1.5">
+            {isMember && (
+              <span className="rounded bg-accent px-1.5 py-0.5 text-[8px] font-medium tracking-wide text-background">
+                VARSITY
+              </span>
+            )}
+            {user.badges.mentor && (
+              <span className="rounded border border-success bg-success-tint px-1.5 py-0.5 text-[8px] font-medium tracking-wide text-success">
+                MENTOR
+              </span>
+            )}
+          </div>
+        )}
+
+        <div className="text-[11px] text-muted">
+          {user.residence ? `${residenceLabel(user.residence)} · ` : ""}
+          {classOfLabel(user.classYear)}
+        </div>
+      </div>
+
+      {/* BIO — plain text, no card. The grey panel it used to sit in was the
+          last box in this block, and the whole point of the lines-only look is
+          that there are none. The rule underneath is what closes the block. */}
+      <div className="border-b border-border px-3.5 pb-3.5 pt-2">
         {editingTop && editField === "bio" ? (
           <div>
             <textarea
@@ -493,7 +540,7 @@ export default function ProfilePage() {
               maxLength={160}
               aria-label="Bio"
               placeholder="Add a short bio"
-              className="min-h-[96px] w-full resize-none rounded-lg border border-border bg-surface px-3 py-2 text-center text-base text-text focus:outline-none"
+              className="min-h-[96px] w-full resize-none rounded-lg border border-border bg-surface px-3 py-2 text-base text-text focus:outline-none"
             />
             <div className="mt-1 text-right text-[11px] text-muted">{bioDraft.length} / 160</div>
           </div>
@@ -502,56 +549,16 @@ export default function ProfilePage() {
             type="button"
             onClick={() => setEditField("bio")}
             aria-label="Edit bio"
-            className="w-full text-[13px] leading-relaxed text-muted"
+            className="w-full text-left text-[13px] leading-relaxed text-text-2"
           >
             {bioDraft || "Add a short bio"}
             <IconPencil size={11} className="ml-1.5 inline-block align-[-1px]" />
           </button>
         ) : (
-          <p className="text-[13px] leading-relaxed text-muted">
+          <p className="text-[13px] leading-relaxed text-text-2">
             {user.bio || "Add a short bio with the pencil above."}
           </p>
         )}
-        </div>
-      </div>
-
-      {/* The three counts, full width under the bio, divided. Three EQUAL
-          columns, so the two dividers sit at exactly a third and two thirds and
-          Partners is the same distance from both — with space-around the gaps
-          followed the width of each word. They show a dash until the numbers
-          have actually landed, so the row never jumps. */}
-      <div className="mx-3.5 mb-1 grid grid-cols-3 overflow-hidden rounded-2xl border border-border bg-surface py-2.5">
-        {stats.map((s, i) => {
-          const body = (
-            <>
-              <div className="text-[17px] font-medium tabular-nums text-text">
-                {statsReady ? s.value : "—"}
-              </div>
-              <div
-                className={`mt-0.5 text-[11px] uppercase tracking-[0.06em] ${
-                  s.onClick ? "text-primary" : "text-muted"
-                }`}
-              >
-                {s.label}
-              </div>
-            </>
-          );
-          return (
-            <div key={s.label} className={`flex items-stretch ${i > 0 ? "border-l border-border" : ""}`}>
-              {s.onClick ? (
-                <button
-                  type="button"
-                  onClick={s.onClick}
-                  className="w-full text-center transition-colors active:bg-surface-2"
-                >
-                  {body}
-                </button>
-              ) : (
-                <div className="w-full text-center">{body}</div>
-              )}
-            </div>
-          );
-        })}
       </div>
 
       {/* "Did you train with Sam today?" — a partner tag waiting for your yes.
