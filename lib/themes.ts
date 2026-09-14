@@ -167,8 +167,11 @@ export const darkNeutrals = {
   danger: "#ef4444",
   overlayShadow: "0 -10px 30px rgba(0, 0, 0, 0.55)",
   cardShadow: "0 1px 2px rgba(0, 0, 0, 0.35)",
-  // A step BELOW the page (#090b0e), so the strip reads as recessed.
-  ink: "#1c1e21",
+  // Darker than the card it sits under (#171a1d) and a hair above the page
+  // (#090b0e), so the foot reads as recessed rather than as more card. The
+  // owner asked for the dark side specifically to go darker (2026-09-14)
+  // after keeping the light one where it was.
+  ink: "#0e1013",
   inkContrast: "#edeef0",
   inkLift: "40%",
 };
