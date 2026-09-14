@@ -29,7 +29,6 @@ import { outMeta, type OutReason } from "@/lib/varsity/coachLineup";
 import { periods, sessionKey, toISO } from "@/lib/varsity/coachPlan";
 import {
   buildDay,
-  practiceForOut,
   todayAndTomorrow,
   type TodayDay,
   type TodaySlot,
@@ -174,12 +173,8 @@ function OutRow({ day }: { day: TodayDay }) {
           </div>
         )}
       </div>
-      <Link
-        href={lineupPracticeHref(practiceForOut(day))}
-        className="tap44 flex-shrink-0 rounded-lg border border-border px-2.5 py-1.5 text-[12px] font-semibold text-muted active:bg-surface-2"
-      >
-        Mark out
-      </Link>
+      {/* The "Mark out" button that sat here was cut (owner, 2026-09-14);
+          who is out is still changed from the pool on the Lineup tab. */}
     </div>
   );
 }
