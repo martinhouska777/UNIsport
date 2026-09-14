@@ -58,7 +58,7 @@ import { fetchTrainingConfig } from "@/lib/varsity/configStore";
 import { fetchOutings } from "@/lib/varsity/telemetryStore";
 import { demoOutings } from "@/lib/varsity/demoTelemetry";
 import { outingTotals, type TelemetryOuting as Outing } from "@/lib/varsity/telemetry";
-import { IconChevronRight } from "@/components/icons";
+import { IconChevronRight, IconSearch } from "@/components/icons";
 
 /** "Fri 15 May · AM" for an outing's session key. */
 function outingDateLabel(dayKey: string): string {
@@ -67,6 +67,22 @@ function outingDateLabel(dayKey: string): string {
 }
 
 type Row ={ key: string; date: Date; erg?: TeamWorkout; water?: Outing };
+
+/*
+  SEARCH BY NAME OR DATE (Coach Console only, owner 2026-09-14). A row matches
+  when every word typed is found in its name or in any of the ways its date is
+  written: "Tue 22 Jun", "Tuesday", "June", "22/6", "6/22", "2026-06-22".
+*/
+const WEEKDAYS = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+const MONTHS = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"];
+function searchText(name: string, dateLabel: string, d: Date): string {
+  const day = d.getDate();
+  const month = d.getMonth() + 1;
+  const iso = `${d.getFullYear()}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+  return [name, dateLabel, WEEKDAYS[d.getDay()], MONTHS[d.getMonth()], `${day}/${month}`, `${month}/${day}`, `${day}.${month}.`, iso]
+    .join(" ")
+    .toLowerCase();
+}
 
 export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolean } = {}) {
   const { userId } = useAppState();
@@ -82,6 +98,7 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
   // the water side
   const [outings, setOutings] = useState<Outing[]>([]);
   const [openOuting, setOpenOuting] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -164,6 +181,16 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
     return [...ergRows, ...waterRows].sort((a, b) => b.date.getTime() - a.date.getTime());
   }, [workouts, outings]);
 
+  const words = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  const shownRows = words.length
+    ? rows.filter((row) => {
+        const text = row.erg
+          ? searchText(row.erg.session.description.trim() || sessionLabel(row.erg.session), row.erg.dateLabel, row.date)
+          : searchText(`${row.water!.crew} ${row.water!.pieces.length} pieces`, outingDateLabel(row.water!.dayKey), row.date);
+        return words.every((w) => text.includes(w));
+      })
+    : rows;
+
   const opened = workouts.find((w) => w.dayKey === open) ?? null;
   const openedOuting = outings.find((o) => o.id === openOuting) ?? null;
   const openedResults = useMemo(
@@ -183,13 +210,33 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
 
   return (
     <div className="mt-4">
+      {inConsole && rows.length > 0 && (
+        // The same search box the Team roster uses.
+        <div className="mb-3 flex items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2.5">
+          <span className="text-muted">
+            <IconSearch size={16} />
+          </span>
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search by name or date"
+            aria-label="Search workouts by name or date"
+            className="w-full bg-transparent text-base text-text outline-none placeholder:text-muted"
+          />
+        </div>
+      )}
       <div className="flex flex-col gap-1.5">
         {rows.length === 0 && (
           <div className="rounded-2xl border border-dashed border-border bg-surface-2 px-4 py-8 text-center text-[12px] text-muted">
             Nothing here yet.
           </div>
         )}
-        {rows.map((row) => {
+        {rows.length > 0 && shownRows.length === 0 && (
+          <div className="rounded-2xl border border-dashed border-border bg-surface-2 px-4 py-8 text-center text-[12px] text-muted">
+            No workouts match.
+          </div>
+        )}
+        {shownRows.map((row) => {
           if (row.erg) {
             const w = row.erg;
             const n = counts.get(w.dayKey) ?? 0;
