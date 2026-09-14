@@ -127,6 +127,33 @@ export const LAB_PRESETS: LabPreset[] = [
   },
 ];
 
+/*
+  BACKGROUNDS (owner, 2026-09-14: "i care most about background styles … i
+  want to explore some white options as well … like normal apps use"). Each
+  one sets ONLY the ground dials and the two accents — the type, effects and
+  shape the owner has dialled in stay. The accents ride along because a light
+  page needs darker ink than a black one; they are a fitting pair, not a rule.
+  Roughly the grounds real products sit on today: from pure white through the
+  warm off-whites and the soft greys to slate, navy and OLED black.
+*/
+export const LAB_GROUNDS: LabPreset[] = [
+  { id: "white", name: "White", note: "pure white, the Apple / Linear light look", state: { light: 100, hue: 0, tint: 0, step: 40, textc: 50, accent: "#2563eb", varsity: "#b45309" } },
+  { id: "cloud", name: "Cloud", note: "cool off-white, the Notion / Stripe grey-white", state: { light: 97, hue: 250, tint: 8, step: 45, textc: 50, accent: "#3b5bdb", varsity: "#b7791f" } },
+  { id: "paper-g", name: "Paper", note: "warm off-white, like a page", state: { light: 97, hue: 75, tint: 12, step: 45, textc: 48, accent: "#1d4ed8", varsity: "#92400e" } },
+  { id: "linen", name: "Linen", note: "warmer, a touch of cream", state: { light: 94, hue: 70, tint: 22, step: 45, textc: 48, accent: "#1e3a8a", varsity: "#8a5a1b" } },
+  { id: "fog", name: "Fog", note: "light grey, the Figma / GitHub canvas", state: { light: 93, hue: 250, tint: 6, step: 55, textc: 50, accent: "#2f4fd6", varsity: "#a16207" } },
+  { id: "mist", name: "Mist", note: "pale blue-grey, airy", state: { light: 94, hue: 240, tint: 20, step: 50, textc: 50, accent: "#1e40af", varsity: "#9a6b1e" } },
+  { id: "sand", name: "Sand", note: "warm beige, editorial", state: { light: 90, hue: 75, tint: 28, step: 45, textc: 50, accent: "#1f3f8f", varsity: "#7c4a12" } },
+  { id: "stone-g", name: "Stone", note: "grey-beige, the app's Stone direction", state: { light: 87, hue: 70, tint: 15, step: 50, textc: 50, accent: "#233f7a", varsity: "#6b4a12" } },
+  { id: "slate", name: "Slate", note: "dark blue-grey, not black", state: { light: 22, hue: 255, tint: 25, step: 55, textc: 50, accent: "#7dd3fc", varsity: "#fcd34d" } },
+  { id: "graphite-g", name: "Graphite", note: "neutral dark grey, the zinc look", state: { light: 12, hue: 260, tint: 6, step: 55, textc: 50, accent: "#8ab8ff", varsity: "#e6c98a" } },
+  { id: "charcoal", name: "Charcoal", note: "warm dark grey, Spotify-ish", state: { light: 18, hue: 60, tint: 5, step: 50, textc: 50, accent: "#6ea8ff", varsity: "#e0c896" } },
+  { id: "navy", name: "Navy", note: "deep blue-black", state: { light: 10, hue: 258, tint: 45, step: 65, textc: 50, accent: "#93c5fd", varsity: "#fbbf24" } },
+  { id: "espresso", name: "Espresso", note: "warm brown-black", state: { light: 9, hue: 45, tint: 25, step: 60, textc: 50, accent: "#f0b98a", varsity: "#e8d5a3" } },
+  { id: "forest", name: "Forest", note: "deep green-black", state: { light: 9, hue: 155, tint: 20, step: 60, textc: 50, accent: "#9ae6b4", varsity: "#f6d365" } },
+  { id: "black", name: "Black", note: "true OLED black, below today's", state: { light: 0, hue: 0, tint: 0, step: 60, textc: 50, accent: "#4a9eff", varsity: "#e0c896" } },
+];
+
 // ——— the URL-hash / settings-box codec ———
 
 const KEYS = Object.keys(LAB_TODAY) as (keyof LabState)[];

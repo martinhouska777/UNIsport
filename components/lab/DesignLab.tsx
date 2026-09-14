@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { LAB_FONTS, LAB_FONT_GROUPS } from "@/lib/lab/fonts";
-import { decodeLab, encodeLab, LAB_PRESETS, LAB_TODAY, type LabRadius, type LabState, type LabWidth } from "@/lib/lab/state";
-import { deriveCss, deriveFontLinks, deriveHandover } from "@/lib/lab/derive";
+import { decodeLab, encodeLab, LAB_GROUNDS, LAB_PRESETS, LAB_TODAY, type LabRadius, type LabState, type LabWidth } from "@/lib/lab/state";
+import { deriveCss, deriveFontLinks, deriveHandover, deriveTokens } from "@/lib/lab/derive";
 
 /*
   THE DESIGN LAB — the landing page's version of the app's Colour Lab.
@@ -158,7 +158,28 @@ export default function DesignLab() {
               </button>
             ))}
           </div>
-          <p className="mt-2 text-[11px] leading-relaxed text-l-text-2">Hover a name for what it tries. Every preset is only a starting point for the dials below.</p>
+          <p className="mt-2 text-[11px] leading-relaxed text-l-text-2">Whole looks — ground, accents, type, shape. Hover a name for what it tries.</p>
+
+          <div className="mt-4 mb-1.5 text-[11px] font-medium">Backgrounds</div>
+          <div className="flex flex-wrap gap-1.5">
+            {LAB_GROUNDS.map((p) => {
+              const t = deriveTokens({ ...LAB_TODAY, ...p.state }).tokens;
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  title={p.note}
+                  onClick={() => setState((s) => ({ ...s, ...p.state }))}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-l-line bg-l-surface py-1.5 pr-2.5 pl-2 text-[12px] transition-colors hover:border-l-line-hover"
+                >
+                  {/* the swatch is the preset's own ground colour — data, not a component colour */}
+                  <span className="h-3 w-3 rounded-sm border border-l-line-hover" style={{ background: t["--color-l-bg"] }} />
+                  {p.name}
+                </button>
+              );
+            })}
+          </div>
+          <p className="mt-2 text-[11px] leading-relaxed text-l-text-2">Ground and the two accents only — your fonts, effects and shape stay. Light first, then dark.</p>
         </Section>
 
         <Section title="Ground">
