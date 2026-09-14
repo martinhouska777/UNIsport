@@ -38,11 +38,29 @@ const ordinal = (n: number): string => {
   return `${n}${["th", "st", "nd", "rd"][n % 10] ?? "th"}`;
 };
 
-function Cell({ value, label, left = false }: { value: string; label: string; left?: boolean }) {
+function Cell({ value, label }: { value: string; label: string }) {
   return (
-    <div className={`min-w-0 flex-1 ${left ? "text-left" : "text-center"}`}>
+    <div className="min-w-0 flex-1 text-center">
       <div className="truncate text-[15px] font-semibold leading-none text-text">{value}</div>
       <div className="mt-1 truncate text-[9px] uppercase tracking-[0.08em] text-muted">{label}</div>
+    </div>
+  );
+}
+
+/*
+  The compact cell (Profile tab). Rearranged on 2026-09-13 when the Log button
+  got short: the title became a proper name on its own line (like "Memories"),
+  and each rank is a bigger number over its word, left-aligned, side by side.
+  The word is in normal case, not small capitals, so "Pforzheimer" fits a
+  phone at a readable size. (Number and word on one line was tried and cut
+  both words off.)
+*/
+function StackCell({ value, label, fixed = false }: { value: string; label: string; fixed?: boolean }) {
+  return (
+    // `fixed`: "Campus" never gives up its room — only a long house name does.
+    <div className={fixed ? "flex-shrink-0" : "min-w-0"}>
+      <div className="text-[18px] font-semibold leading-none tabular-nums text-text">{value}</div>
+      <div className="mt-1 truncate text-[12px] leading-none text-muted">{label}</div>
     </div>
   );
 }
@@ -110,65 +128,52 @@ export default function LeaderboardStrip({
           else in this app (the podium colours, the varsity mark) — it is the
           school's accent token, so a school whose accent isn't gold still gets
           its own colour rather than a hardcoded one (rule 1). */}
-      <span
-        className={`flex flex-shrink-0 items-center justify-center rounded-lg bg-accent-tint text-accent ${
-          compact ? "h-8 w-8" : "h-9 w-9"
-        }`}
-      >
-        <IconTrophy size={compact ? 17 : 19} />
+      <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-accent-tint text-accent">
+        <IconTrophy size={19} />
       </span>
 
-      {ranked && standing ? (
+      {ranked && standing && compact ? (
         <div className="min-w-0 flex-1">
-          {/* The word, so the two numbers say what they are ranks ON. */}
-          {compact && (
-            <div className="mb-1 truncate text-left text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">
-              Leaderboards
-            </div>
-          )}
+          <div className="truncate text-[15px] font-semibold leading-tight text-text">Leaderboards</div>
+          <div className="mt-1.5 flex min-w-0 items-center gap-3">
+            {/* Compact drops the "in": on a 320px phone "in Pforzheimer" is
+                what pushes the word into an ellipsis. */}
+            <StackCell
+              value={standing.houseRankIn ? ordinal(standing.houseRankIn) : `#${standing.campusRank}`}
+              label={house ?? team?.label ?? "campus"}
+            />
+            <div className="h-7 w-px flex-shrink-0 bg-border" />
+            <StackCell fixed value={`#${standing.campusRank}`} label="Campus" />
+          </div>
+        </div>
+      ) : ranked && standing ? (
+        <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-center">
             {/* Never a dash: with every group on the boards (lib/leaderboards.ts)
                 a rank exists the moment you've logged, and a group with a name
                 says the name. */}
             <Cell
-              left={compact}
               value={standing.houseRankIn ? ordinal(standing.houseRankIn) : `#${standing.campusRank}`}
-              /* Compact drops the "in": on a 320px phone "IN MATHER" is what
-                 pushes the labels into an ellipsis. */
-              label={
-                house
-                  ? compact
-                    ? house
-                    : `in ${house}`
-                  : team
-                    ? compact
-                      ? team.label
-                      : `in ${team.label}`
-                    : "on campus"
-              }
+              label={house ? `in ${house}` : team ? `in ${team.label}` : "on campus"}
             />
             {/* Your HOUSE's own rank — only on the full-width strip. */}
-            {!compact && (
-              <>
-                <div className="h-6 w-px bg-border" />
-                <Cell
-                  value={standing.houseRank ? `#${standing.houseRank}` : team ? team.label : "—"}
-                  label={house ? residenceLabel(house) : team ? "your team" : "your house"}
-                />
-              </>
-            )}
             <div className="h-6 w-px bg-border" />
-            <Cell value={`#${standing.campusRank}`} label={compact ? "campus" : "on campus"} />
+            <Cell
+              value={standing.houseRank ? `#${standing.houseRank}` : team ? team.label : "—"}
+              label={house ? residenceLabel(house) : team ? "your team" : "your house"}
+            />
+            <div className="h-6 w-px bg-border" />
+            <Cell value={`#${standing.campusRank}`} label="on campus" />
           </div>
         </div>
       ) : (
         <div className="min-w-0 flex-1">
           <div
-            className={`font-semibold leading-tight text-text ${compact ? "text-[13px]" : "text-[14px]"}`}
+            className={`font-semibold leading-tight text-text ${compact ? "text-[15px]" : "text-[14px]"}`}
           >
             Leaderboards
           </div>
-          <div className={`mt-0.5 truncate text-muted ${compact ? "text-[10px]" : "text-[11px]"}`}>
+          <div className={`mt-0.5 truncate text-muted ${compact ? "text-[12px]" : "text-[11px]"}`}>
             {compact
               ? "Log to take your place"
               : `Log a session to take your place${team ? ` for ${team.label}` : ""}.`}

@@ -478,10 +478,10 @@ export default function ProfilePage() {
 
       {/* Bio — its own rounded grey card under the identity, down the same
           centre line (the owner picked option 1 of three previews). No hairline
-          above it: the card itself does the separating. */}
+          above it: the card itself does the separating. No "Bio" heading on
+          the card (cut 2026-09-13 at the owner's ask): everyone knows it is. */}
       <div className="px-3.5 pb-3">
         <div className="rounded-xl bg-surface-2 px-4 py-3 text-center">
-        <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">Bio</div>
         {editingTop && editField === "bio" ? (
           <div>
             <textarea

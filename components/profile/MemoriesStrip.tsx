@@ -67,8 +67,9 @@ export default function MemoriesStrip() {
       <div className="min-w-0 flex-1">
         {/* Its name only. The grey line under it (the latest day and what
             was trained) was cut on 2026-09-13 at the owner's ask; the day,
-            the gym and the partner are inside. */}
-        <div className="text-[13px] font-semibold text-text">Memories</div>
+            the gym and the partner are inside. The name went up from 13px to
+            15px the same day, to use the room the grey line left. */}
+        <div className="text-[15px] font-semibold text-text">Memories</div>
       </div>
 
       <div className="flex flex-shrink-0 items-center gap-1">
