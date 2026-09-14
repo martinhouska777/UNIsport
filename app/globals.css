@@ -81,6 +81,17 @@
   --color-background: var(--background);
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);
+  /*
+    SUNKEN — one step BELOW the card, the opposite of surface-2.
+    The palette could say "raised" (surface-2) but had no way to say "recessed
+    inside a card", so anything that needed to read as a well — the head of a
+    match card, the track a segmented control's pill slides in — was drawn as a
+    gradient or left the same colour as the card and vanished on the dark
+    theme. Derived, not a per-theme hex, so it is a proportional step on every
+    school's neutrals: mostly the page tone, pulled a little toward the card so
+    it never reads as a hole cut through it.
+  */
+  --color-sunken: color-mix(in oklab, var(--background) 88%, var(--surface));
   --color-border: var(--border);
   --color-text: var(--text);
   --color-text-2: var(--text-2);

@@ -134,8 +134,11 @@ export default function MessagesList({
           Direct / Community toggle is the top of the screen. */}
       <h1 className="sr-only">Messages</h1>
       <div className="bg-surface px-3 pb-2 pt-3">
-        {/* Same capsule as the Match tabs: the chosen one is a pill inside it. */}
-        <div className="flex rounded-full border border-border bg-surface p-1">
+        {/* Same capsule as the Match tabs: the chosen one is a pill inside it.
+            The TRACK is sunken — on the dark theme it used to be the card's own
+            colour on a card-coloured header, so the only thing you could see
+            was the white pill floating on nothing (owner, 2026-09-14). */}
+        <div className="flex rounded-full border border-border bg-sunken p-1">
           {(["direct", "community"] as Tab[]).map((t) => (
             <button
               key={t}
@@ -154,7 +157,9 @@ export default function MessagesList({
       {/* Search — with a small + beside it on Community to start a channel
           (owner, 2026-09-14: "just a small plus", like WhatsApp). */}
       <div className="flex items-center gap-2 bg-surface px-3 pb-2">
-        <div className="flex min-w-0 flex-1 items-center gap-2 rounded-full bg-surface-2 px-3 py-2 text-muted">
+        {/* A raised field with its own edge, so it reads as somewhere you can
+            type rather than a grey smear under the tabs. */}
+        <div className="flex min-w-0 flex-1 items-center gap-2 rounded-full border border-border bg-surface-2 px-3 py-2 text-muted">
           <IconSearch size={14} />
           <input
             value={query}

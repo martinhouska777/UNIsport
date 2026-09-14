@@ -175,8 +175,10 @@ function MatchScreen() {
       {/* Sub-tab switch — the top of the screen. The "Match" title above it
           went: the tab bar already says where you are. */}
       <div className="px-3 pb-2 pt-3">
-        {/* A capsule with the chosen tab as a pill inside it (Instagram-style). */}
-        <div className="flex rounded-full border border-border bg-surface p-1">
+        {/* A capsule with the chosen tab as a pill inside it (Instagram-style).
+            The track is sunken, like the one on Messages — same control, same
+            well for the pill to sit in. */}
+        <div className="flex rounded-full border border-border bg-sunken p-1">
           {subTabs.map((s) => (
             <button
               key={s.key}

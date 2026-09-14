@@ -62,8 +62,15 @@ export default function MatchCard({
 
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-surface">
-      {/* Avatar block + compatibility badge */}
-      <div className="relative flex h-24 items-center justify-center bg-gradient-to-br from-surface-2 to-background">
+      {/*
+        Avatar block + compatibility badge. The head is a SUNKEN panel with a
+        hairline under it, so the card reads as two parts — the person, then
+        the facts. It used to be a diagonal gradient that started lighter than
+        the card and ended darker, which averaged out to the card's own tone
+        and left the top of the card looking like a smudge on the dark theme
+        (owner, 2026-09-14).
+      */}
+      <div className="relative flex h-24 items-center justify-center border-b border-border bg-sunken">
         <InitialsAvatar name={match.name} size={48} colors={houseColors} />
         {tier && (
           <span className="absolute right-2 top-2 rounded-lg border border-border bg-surface px-2 py-0.5 text-[11px] font-semibold text-text">
