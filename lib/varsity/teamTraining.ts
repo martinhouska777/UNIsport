@@ -12,6 +12,7 @@
   logCategoryColor/Label so dots, legend and breakdowns stay consistent.
 */
 import { rngFor } from "./teamProfiles";
+import type { LogEntry } from "./logStore";
 
 export type TrainSession = {
   cat: string;
@@ -151,6 +152,37 @@ export function teamTrainingMonth(athleteId: string, y: number, m: number): Team
   };
   cache[key] = month;
   return month;
+}
+
+/*
+  THE SAME MONTH, AS LOG ROWS — so a teammate's calendar can be drawn by the
+  athlete's own calendar screen (components/varsity/calendar/CalendarScreen)
+  rather than by a second, smaller one. Two sessions on a day are morning and
+  afternoon; none of them belong to the plan, so none carry an intensity.
+*/
+export function teamMonthLogs(athleteId: string, y: number, m: number): LogEntry[] {
+  const month = teamTrainingMonth(athleteId, y, m);
+  const out: LogEntry[] = [];
+  for (const d of month.days) {
+    const iso = `${y}-${String(m + 1).padStart(2, "0")}-${String(d.day).padStart(2, "0")}`;
+    d.sessions.forEach((s, i) => {
+      out.push({
+        id: `${athleteId}:${iso}:${i}`,
+        logDate: iso,
+        period: d.sessions.length > 1 ? (i === 0 ? "AM" : "PM") : null,
+        dayKey: null,
+        source: "extra",
+        title: "",
+        category: s.cat,
+        minutes: s.minutes,
+        metres: s.metres,
+        split: s.split,
+        effort: null,
+        note: "",
+      });
+    });
+  }
+  return out;
 }
 
 // minutes → "14h 30m" / "45m"

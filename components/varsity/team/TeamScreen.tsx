@@ -6,7 +6,7 @@
   A top sub-navigation switches between:
     • Roster   — the whole squad (grouped like the lineup pool), searchable; tap
                  a rower to open their profile (team year, height/weight, status,
-                 their training calendar if they share it, erg PRs).
+                 a Calendar button if they share it, erg PRs).
     • Workouts — every session the coach flagged as a TEAM WORKOUT, with the
                  board of everyone's results (components/varsity/team/…).
 
@@ -19,27 +19,19 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import Sheet from "@/components/varsity/Sheet";
 import TeamWorkouts from "@/components/varsity/team/TeamWorkouts";
+import TeammateCalendarWindow from "@/components/varsity/team/TeammateCalendarWindow";
 import { useUnits } from "@/components/useUnits";
 import { formatWeight } from "@/lib/varsity/units";
 import { roster, rosterById, sideMeta, COX_COLOR, COX_INK, type Athlete } from "@/lib/varsity/coachLineup";
 import { teamProfile } from "@/lib/varsity/teamProfiles";
-import { teamTrainingMonth, formatDuration, type CatTotal } from "@/lib/varsity/teamTraining";
-import { formatMetrics } from "@/lib/varsity/logParse";
-import {
-  statusOptions,
-  prPieces,
-  logCategoryColor,
-  logCategoryLabel,
-  legendCategories,
-  type StatusTone,
-} from "@/lib/varsity/athleteProfile";
+import { statusOptions, prPieces, type StatusTone } from "@/lib/varsity/athleteProfile";
 import {
   IconSearch,
   IconChevronRight,
-  IconChevronDown,
   IconUser,
   IconActivity,
   IconEyeOff,
+  IconCalendar,
 } from "@/components/icons";
 
 // The status pill — the same one the athlete sees on their own profile.
@@ -71,251 +63,23 @@ const sideLabel = (a: Athlete) => (a.cox ? "Cox" : sideMeta[a.side].label);
   people who train best actually train — and the missing piece was the say:
   every athlete now has a "Teammates see my calendar" switch on their own
   profile (VarsityAthleteProfile.showCalendar). Off, and this card says so in
-  one line instead of drawing the month. The coach sees it either way.
+  one line instead of the button. The coach sees it either way.
+
+  A BUTTON, NOT A MONTH (owner, 2026-09-14). The card no longer draws a small
+  calendar of its own: it has one "Calendar" row, and tapping it opens the
+  month full-screen, drawn by the same screen as your own Calendar tab
+  (TeammateCalendarWindow → CalendarScreen, read-only).
 
   Until accounts are linked to roster seats the month is demo data
   (lib/varsity/teamTraining), as is who has the switch off (teamProfiles).
 */
-const DAY_NAMES = ["M", "T", "W", "T", "F", "S", "S"];
-
-function CatBreakdown({ rows, empty }: { rows: CatTotal[]; empty: string }) {
-  if (rows.length === 0) {
-    return <div className="px-3.5 py-3 text-[11px] text-muted">{empty}</div>;
-  }
-  return (
-    <div className="flex flex-col divide-y divide-border">
-      {rows.map((row) => (
-        <div key={row.cat} className="flex items-center gap-2.5 px-3.5 py-2">
-          <span
-            className="h-2.5 w-2.5 flex-shrink-0 rounded-full"
-            style={{ background: logCategoryColor[row.cat] ?? "var(--muted)" }}
-          />
-          <span className="flex-1 text-[12px] font-medium text-text">
-            {logCategoryLabel[row.cat] ?? row.cat}
-          </span>
-          <span className="text-[11px] text-muted">{row.sessions}×</span>
-          <span className="w-16 text-right text-[12px] font-semibold text-text">
-            {formatDuration(row.minutes)}
-          </span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-/* Their month: switcher, three numbers, the calendar, the day you tap, a key. */
-function TeammateCalendar({ athleteId }: { athleteId: string }) {
-  const now = useMemo(() => new Date(), []);
-  const [view, setView] = useState({ y: now.getFullYear(), m: now.getMonth() });
-  const [selDay, setSelDay] = useState<number | null>(null);
-  const [openBreak, setOpenBreak] = useState<"trained" | "extra" | null>(null);
-
-  const month = teamTrainingMonth(athleteId, view.y, view.m);
-  const atCurrent = view.y === now.getFullYear() && view.m === now.getMonth();
-  const goMonth = (delta: number) => {
-    setView((v) => {
-      const d = new Date(v.y, v.m + delta, 1);
-      return { y: d.getFullYear(), m: d.getMonth() };
-    });
-    setSelDay(null);
-  };
-  const selected = selDay != null ? month.days.find((d) => d.day === selDay) ?? null : null;
-
-  const dotsFor = (sessions: { cat: string }[]) => {
-    const seen = new Set<string>();
-    const out: string[] = [];
-    for (const x of sessions) {
-      if (!seen.has(x.cat) && out.length < 3) {
-        seen.add(x.cat);
-        out.push(x.cat);
-      }
-    }
-    return out;
-  };
-
-  const tileCls = (active: boolean) =>
-    `rounded-2xl border px-2 py-3 text-center ${
-      active ? "border-primary bg-primary-tint" : "border-border bg-surface-2"
-    }`;
-
-  return (
-    <>
-      {/* month switcher — the numbers and the calendar follow it */}
-      <div className="mt-4 flex items-center justify-between">
-        <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">Training</span>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            aria-label="Previous month"
-            onClick={() => goMonth(-1)}
-            className="tap44 press-icon flex h-6 w-6 items-center justify-center rounded-md border border-border bg-surface-2 text-muted"
-          >
-            <IconChevronDown size={13} className="rotate-90" />
-          </button>
-          <span className="min-w-[5.5rem] text-center text-[12px] font-semibold text-text">
-            {month.monthLabel} {month.y}
-          </span>
-          <button
-            type="button"
-            aria-label="Next month"
-            onClick={() => goMonth(1)}
-            disabled={atCurrent}
-            className="tap44 press-icon flex h-6 w-6 items-center justify-center rounded-md border border-border bg-surface-2 text-muted disabled:opacity-30"
-          >
-            <IconChevronDown size={13} className="-rotate-90" />
-          </button>
-        </div>
-      </div>
-
-      {/* the month in three numbers — Trained and Extra open a breakdown */}
-      <div className="mt-2 grid grid-cols-3 gap-1.5">
-        <div className={tileCls(false)}>
-          <div className="text-lg font-semibold leading-none text-text">{month.consistency}%</div>
-          <div className="mt-1.5 text-[9px] font-semibold uppercase tracking-[0.1em] text-muted">
-            Consistency
-          </div>
-        </div>
-        <button
-          type="button"
-          onClick={() => setOpenBreak((o) => (o === "trained" ? null : "trained"))}
-          className={tileCls(openBreak === "trained")}
-        >
-          <div className="text-lg font-semibold leading-none text-text">{formatDuration(month.minutes)}</div>
-          <div className="mt-1.5 text-[9px] font-semibold uppercase tracking-[0.1em] text-muted">Trained</div>
-        </button>
-        <button
-          type="button"
-          onClick={() => setOpenBreak((o) => (o === "extra" ? null : "extra"))}
-          className={tileCls(openBreak === "extra")}
-        >
-          <div className="text-lg font-semibold leading-none text-text">{month.extraCount}</div>
-          <div className="mt-1.5 text-[9px] font-semibold uppercase tracking-[0.1em] text-muted">Extra</div>
-        </button>
-      </div>
-
-      {openBreak && (
-        <div className="mt-1.5 overflow-hidden rounded-2xl border border-border bg-surface-2">
-          <div className="border-b border-border px-3.5 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-            {openBreak === "trained" ? "By activity" : "Extra by activity"}
-          </div>
-          <CatBreakdown
-            rows={openBreak === "trained" ? month.byCategory : month.extraByCategory}
-            empty={openBreak === "trained" ? "Nothing logged this month." : "No extra sessions this month."}
-          />
-        </div>
-      )}
-
-      {/* the calendar */}
-      <div className="mt-3 overflow-hidden rounded-2xl border border-border bg-surface-2">
-        <div className="grid grid-cols-7 border-b border-border px-2 pb-1 pt-2">
-          {DAY_NAMES.map((d, i) => (
-            <div key={i} className="py-0.5 text-center text-[9px] font-semibold tracking-[0.12em] text-muted">
-              {d}
-            </div>
-          ))}
-        </div>
-        <div className="grid grid-cols-7 gap-[3px] px-2 pb-2.5 pt-1.5">
-          {Array.from({ length: month.leadingEmpty }).map((_, i) => (
-            <div key={`e${i}`} className="aspect-square" />
-          ))}
-          {month.days.map((d) => {
-            const dots = dotsFor(d.sessions);
-            const isSel = selDay === d.day;
-            const isToday = d.day === month.todayDay;
-            return (
-              <button
-                key={d.day}
-                type="button"
-                onClick={() => setSelDay(d.day)}
-                className={`flex aspect-square flex-col items-center justify-center rounded-[9px] pt-0.5 ${
-                  isSel
-                    ? "border border-primary bg-primary-tint"
-                    : isToday
-                      ? "border border-primary-line bg-primary-tint"
-                      : dots.length
-                        ? "active:bg-surface"
-                        : ""
-                }`}
-              >
-                <span
-                  className={`text-[11px] font-medium leading-none ${
-                    isSel || isToday ? "text-primary" : d.future ? "text-text-3" : "text-text"
-                  }`}
-                >
-                  {d.day}
-                </span>
-                <span className="mt-[3px] flex h-1 items-center gap-0.5">
-                  {dots.map((c, i) => (
-                    <span
-                      key={i}
-                      className="h-1 w-1 rounded-full"
-                      style={{ background: logCategoryColor[c] ?? "var(--muted)" }}
-                    />
-                  ))}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* the day you tapped — what they did, with minutes · metres · split */}
-        <div className="border-t border-border px-3.5 py-2.5">
-          {selected == null ? (
-            <div className="text-[11px] text-muted">Tap a day to see what they did.</div>
-          ) : selected.sessions.length === 0 ? (
-            <div className="text-[11px] text-muted">
-              {month.monthLabel} {selected.day} · {selected.future ? "Upcoming" : "Rest day"}
-            </div>
-          ) : (
-            <div className="flex flex-col gap-2">
-              {selected.sessions.map((x, i) => {
-                const metrics = formatMetrics(x.minutes, x.metres, x.split);
-                return (
-                  <div key={i} className="flex items-start gap-2">
-                    <span
-                      className="mt-1 h-2.5 w-2.5 flex-shrink-0 rounded-full"
-                      style={{ background: logCategoryColor[x.cat] ?? "var(--muted)" }}
-                    />
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[12px] font-semibold text-text">
-                          {logCategoryLabel[x.cat] ?? x.cat}
-                        </span>
-                        {x.extra && (
-                          <span className="rounded border border-border px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide text-muted">
-                            Extra
-                          </span>
-                        )}
-                      </div>
-                      {metrics && <div className="mt-0.5 text-[11px] text-text-2">{metrics}</div>}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* key */}
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 border-t border-border px-3.5 py-2.5">
-          {legendCategories.map((c) => (
-            <div key={c} className="flex items-center gap-1.5 text-[11px] text-muted">
-              <span className="h-1.5 w-1.5 rounded-full" style={{ background: logCategoryColor[c] ?? "var(--muted)" }} />
-              {logCategoryLabel[c]}
-            </div>
-          ))}
-        </div>
-      </div>
-    </>
-  );
-}
-
 function AthleteSheet({ athleteId, onClose }: { athleteId: string; onClose: () => void }) {
   const a = rosterById[athleteId];
   const p = teamProfile(athleteId);
   const { units } = useUnits();
   const classLine = [p.classYear, p.teamYear].filter(Boolean).join(" · ");
   const status = statusOptions.find((s) => s.title === p.status);
+  const [calendarOpen, setCalendarOpen] = useState(false);
 
   return (
     <Sheet title="Athlete" onClose={onClose}>
@@ -354,7 +118,17 @@ function AthleteSheet({ athleteId, onClose }: { athleteId: string; onClose: () =
       </div>
 
       {p.showCalendar ? (
-        <TeammateCalendar athleteId={athleteId} />
+        <button
+          type="button"
+          onClick={() => setCalendarOpen(true)}
+          className="mt-4 flex w-full items-center gap-3 rounded-xl border border-border bg-surface-2 px-3.5 py-3 text-left active:bg-surface"
+        >
+          <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-primary-tint text-primary">
+            <IconCalendar size={16} />
+          </span>
+          <span className="flex-1 text-[13px] font-semibold text-text">Calendar</span>
+          <IconChevronRight size={15} className="flex-shrink-0 text-muted" />
+        </button>
       ) : (
         <div className="mt-4 flex items-center gap-2.5 rounded-xl border border-border bg-surface-2 px-3.5 py-3 text-[12px] text-muted">
           <IconEyeOff size={15} />
@@ -381,6 +155,14 @@ function AthleteSheet({ athleteId, onClose }: { athleteId: string; onClose: () =
             ))}
           </div>
         </>
+      )}
+
+      {calendarOpen && (
+        <TeammateCalendarWindow
+          athleteId={athleteId}
+          name={a?.name ?? "Athlete"}
+          onClose={() => setCalendarOpen(false)}
+        />
       )}
     </Sheet>
   );

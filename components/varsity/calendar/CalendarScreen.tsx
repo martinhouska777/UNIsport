@@ -37,6 +37,12 @@
        hold that row; they were the same numbers the per-kind buttons under
        the grid already give you, one kind at a time and tappable.
 
+  A TEAMMATE'S CALENDAR is this same screen (`teammate` prop, owner
+  2026-09-14): opened from their card on the Team tab, in a window of its own.
+  It is read-only — no Missed, no "Open the log", no opening a session — and
+  its month comes from lib/varsity/teamTraining (demo data until accounts link
+  to roster seats) instead of your own logs.
+
   The session blocks borrow the plan's own palette (`kindColor` in
   lib/varsity/home) rather than declaring one of their own, so a practice is the
   same colour here as on the coach's month view.
@@ -49,6 +55,7 @@ import CategoryStatsSheet from "@/components/varsity/calendar/CategoryStatsSheet
 import { useAppState } from "@/components/AppState";
 import { useUnits } from "@/components/useUnits";
 import { fetchLogsInRange, type LogEntry } from "@/lib/varsity/logStore";
+import { teamMonthLogs } from "@/lib/varsity/teamTraining";
 import { fetchPlan } from "@/lib/varsity/planStore";
 import { kindOf } from "@/lib/varsity/athleteHome";
 import { kindBar, kindBlock, kindColor, kindLegend } from "@/lib/varsity/home";
@@ -257,6 +264,7 @@ function DaySheet({
   onDayOut,
   onClose,
   onOpen,
+  readOnly = false,
 }: {
   label: string;
   logs: LogEntry[];
@@ -267,7 +275,10 @@ function DaySheet({
   onDayOut: (v: DayOut | null) => void;
   onClose: () => void;
   onOpen: (log: LogEntry) => void;
+  /** A teammate's day: what they did, and nothing to press. */
+  readOnly?: boolean;
 }) {
+  const Row = readOnly ? "div" : "button";
   return (
     <Sheet title={label} onClose={onClose}>
       {logs.length === 0 ? (
@@ -289,11 +300,10 @@ function DaySheet({
             const name = logLabel(l, planned);
             const said = l.title.trim() && l.title.trim() !== name ? l.title.trim() : "";
             return (
-              <button
+              <Row
                 key={l.id}
-                type="button"
-                onClick={() => onOpen(l)}
-                className="flex items-start gap-3 rounded-2xl border border-border bg-surface-2 px-3.5 py-3 text-left active:bg-surface"
+                {...(readOnly ? {} : { type: "button" as const, onClick: () => onOpen(l) })}
+                className={`flex items-start gap-3 rounded-2xl border border-border bg-surface-2 px-3.5 py-3 text-left ${readOnly ? "" : "active:bg-surface"}`}
               >
                 <span
                   className="mt-1 h-2.5 w-2.5 flex-shrink-0 rounded-full"
@@ -310,26 +320,36 @@ function DaySheet({
                     Plan
                   </span>
                 )}
-                <IconChevronRight size={15} className="mt-0.5 flex-shrink-0 text-muted" />
-              </button>
+                {!readOnly && <IconChevronRight size={15} className="mt-0.5 flex-shrink-0 text-muted" />}
+              </Row>
             );
           })}
         </div>
       )}
-      <DayOutSection value={dayOut} canMiss={canMiss} onSave={onDayOut} />
-      <Link
-        href="/varsity/log"
-        className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-surface px-4 py-3 text-[12px] font-medium text-text"
-      >
-        Open the log
-        <IconChevronRight size={14} />
-      </Link>
+      {!readOnly && (
+        <>
+          <DayOutSection value={dayOut} canMiss={canMiss} onSave={onDayOut} />
+          <Link
+            href="/varsity/log"
+            className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-surface px-4 py-3 text-[12px] font-medium text-text"
+          >
+            Open the log
+            <IconChevronRight size={14} />
+          </Link>
+        </>
+      )}
     </Sheet>
   );
 }
 
-export default function CalendarScreen() {
+export default function CalendarScreen({
+  teammate,
+}: {
+  /** Someone else's calendar (the Team tab), read-only. Omit for your own. */
+  teammate?: { id: string };
+} = {}) {
   const { userId } = useAppState();
+  const teammateId = teammate?.id ?? null;
   const now = useMemo(() => new Date(), []);
   const todayIso = toISO(now);
 
@@ -346,12 +366,14 @@ export default function CalendarScreen() {
   const [daysOut, setDaysOut] = useState<DaysOut>({});
 
   useEffect(() => {
+    // A teammate's days out are theirs; this screen only shows what they trained.
+    if (teammateId) return;
     let active = true;
     fetchDaysOut(userId).then((d) => active && setDaysOut(d));
     return () => {
       active = false;
     };
-  }, [userId]);
+  }, [userId, teammateId]);
 
   // Shown at once, saved behind it; the saved map (merged fresh) wins when it lands.
   const markDay = (iso: string, v: DayOut | null) => {
@@ -377,6 +399,10 @@ export default function CalendarScreen() {
   useEffect(() => {
     let active = true;
     (async () => {
+      if (teammateId) {
+        setLogs(teamMonthLogs(teammateId, view.y, view.m));
+        return;
+      }
       if (!userId) {
         setLogs([]);
         return;
@@ -389,7 +415,7 @@ export default function CalendarScreen() {
     return () => {
       active = false;
     };
-  }, [userId, view]);
+  }, [userId, view, teammateId]);
 
   const logsByDay = useMemo(() => {
     const map: Record<number, LogEntry[]> = {};
@@ -740,6 +766,7 @@ export default function CalendarScreen() {
           onDayOut={(v) => markDay(picked.iso, v)}
           onClose={() => setPicked(null)}
           onOpen={(log) => setOpenLog(log)}
+          readOnly={!!teammateId}
         />
       )}
 
