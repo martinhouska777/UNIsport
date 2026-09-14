@@ -37,11 +37,20 @@ export type Memory = {
   count: number; // how many photos that session has
 };
 
-/** A day's worth of memories, with the header line the screen shows. */
+/** One session inside a day, as its header describes it. */
+export type MemorySession = {
+  logId: string;
+  trained: string; // what you did
+  gym: string; // "" when the session didn't say
+  partner: string; // "" when solo
+};
+
+/** A day's worth of memories, with the header lines the screen shows. */
 export type MemoryDay = {
   date: string; // ISO yyyy-mm-dd
   label: string; // "Today" · "Yesterday" · "Friday 14 August"
   trained: string; // everything trained that day, joined
+  sessions: MemorySession[]; // each session that day, newest first
   memories: Memory[];
 };
 
@@ -132,11 +141,13 @@ export function groupByDay(memories: Memory[], now: Date = new Date()): MemoryDa
   for (const m of memories) {
     let day = byDate.get(m.date);
     if (!day) {
-      day = { date: m.date, label: dayLabel(m.date, now), trained: "", memories: [] };
+      day = { date: m.date, label: dayLabel(m.date, now), trained: "", sessions: [], memories: [] };
       byDate.set(m.date, day);
       days.push(day);
     }
     day.memories.push(m);
+    if (!day.sessions.some((s) => s.logId === m.logId))
+      day.sessions.push({ logId: m.logId, trained: m.trained, gym: m.gym, partner: m.partner });
   }
 
   // A day can hold more than one session, so its header lists each distinct

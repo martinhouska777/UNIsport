@@ -7,7 +7,8 @@ import VisibilityToggle from "@/components/profile/VisibilityToggle";
 
 /*
   Personal records block: a read-only list that flips into an editor when the
-  "+" is tapped. In edit mode each record is two inputs (lift + value) with a
+  grey "+ Add personal records" box under it is tapped (the "+" used to be a
+  small circle beside the heading; the owner wanted it IN the grey box). In edit mode each record is two inputs (lift + value) with a
   trash button, plus an "Add record" row. Changes are pushed up via onChange and
   persisted by the page. Colors come from theme variables; inputs use 16px text
   (text-base) so phones don't auto-zoom.
@@ -45,21 +46,18 @@ export default function PersonalRecords({
         </div>
         <div className="flex items-center gap-2">
           <VisibilityToggle visible={visible} onChange={onVisibleChange} />
-          {/* A "+" rather than a pencil: on an empty list the pencil opened an
-              editor that looked just like the empty state, so it seemed to do
-              nothing. "+" adds a row and opens every record for editing. */}
-          <button
-            type="button"
-            onClick={() => {
-              if (editing) return done();
-              addRecord();
-              setEditing(true);
-            }}
-            aria-label={editing ? "Done editing personal records" : "Add a personal record"}
-            className="tap44 flex h-7 w-7 items-center justify-center rounded-full border border-border bg-surface-2 text-muted transition-colors"
-          >
-            {editing ? <IconCheck size={14} /> : <IconPlus size={14} />}
-          </button>
+          {/* Only while editing: the tick that closes the editor. Adding
+              lives in the grey box below. */}
+          {editing && (
+            <button
+              type="button"
+              onClick={done}
+              aria-label="Done editing personal records"
+              className="tap44 flex h-7 w-7 items-center justify-center rounded-full border border-border bg-surface-2 text-muted transition-colors"
+            >
+              <IconCheck size={14} />
+            </button>
+          )}
         </div>
       </div>
 
@@ -102,26 +100,30 @@ export default function PersonalRecords({
             Add record
           </button>
         </div>
-      ) : records.length > 0 ? (
-        <div className="flex flex-col divide-y divide-border">
-          {records.map((pr, i) => (
-            <div key={i} className="flex items-center justify-between py-2">
-              <span className="text-xs text-muted">{pr.lift}</span>
-              <span className="text-xs font-medium text-text">{pr.value}</span>
-            </div>
-          ))}
-        </div>
       ) : (
-        <button
-          type="button"
-          onClick={() => {
-            addRecord();
-            setEditing(true);
-          }}
-          className="w-full rounded-lg border border-dashed border-border bg-surface-2 px-3 py-4 text-center text-[12px] text-muted"
-        >
-          Add your personal records
-        </button>
+        <>
+          {records.length > 0 && (
+            <div className="mb-2 flex flex-col divide-y divide-border">
+              {records.map((pr, i) => (
+                <div key={i} className="flex items-center justify-between py-2">
+                  <span className="text-xs text-muted">{pr.lift}</span>
+                  <span className="text-xs font-medium text-text">{pr.value}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={() => {
+              addRecord();
+              setEditing(true);
+            }}
+            className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-border bg-surface-2 px-3 py-4 text-[12px] font-medium text-muted"
+          >
+            <IconPlus size={14} />
+            Add personal records
+          </button>
+        </>
       )}
     </div>
   );

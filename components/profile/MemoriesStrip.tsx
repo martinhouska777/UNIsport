@@ -22,7 +22,7 @@ import Link from "next/link";
 import { useAppState } from "@/components/AppState";
 import { IconCamera, IconChevronRight } from "@/components/icons";
 import { listPhotoLogs, type WorkoutLog } from "@/lib/supabase/workouts";
-import { dayLabel, toMemories } from "@/lib/memories";
+import { toMemories } from "@/lib/memories";
 
 // Enough to fill the row on the widest phone, and no more — every extra one is
 // a full-size photo over the wire (see listPhotoLogs).
@@ -54,7 +54,6 @@ export default function MemoriesStrip() {
   if (memories.length === 0) return null;
 
   const tiles = memories.slice(0, PREVIEW_TILES);
-  const latest = memories[0];
 
   return (
     <Link
@@ -66,10 +65,10 @@ export default function MemoriesStrip() {
       </span>
 
       <div className="min-w-0 flex-1">
+        {/* Its name only. The grey line under it (the latest day and what
+            was trained) was cut on 2026-09-13 at the owner's ask; the day,
+            the gym and the partner are inside. */}
         <div className="text-[13px] font-semibold text-text">Memories</div>
-        <div className="truncate text-[11px] text-muted">
-          {[dayLabel(latest.date), latest.trained].filter(Boolean).join(" · ")}
-        </div>
       </div>
 
       <div className="flex flex-shrink-0 items-center gap-1">

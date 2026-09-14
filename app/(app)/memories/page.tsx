@@ -19,7 +19,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAppState } from "@/components/AppState";
 import Button from "@/components/ui/Button";
-import { IconArrowLeft, IconCamera } from "@/components/icons";
+import { IconArrowLeft, IconCamera, IconMapPin, IconUser } from "@/components/icons";
 import MemoryViewer from "@/components/profile/MemoryViewer";
 import { listPhotoLogs, PHOTO_PAGE, type WorkoutLog } from "@/lib/supabase/workouts";
 import { groupByDay, toMemories } from "@/lib/memories";
@@ -102,16 +102,32 @@ export default function MemoriesPage() {
       {loaded &&
         days.map((day) => (
           <section key={day.date} className="px-3.5 pt-4">
-            <div className="mb-2 flex items-baseline justify-between gap-3">
-              <div className="min-w-0">
-                <div className="text-[13px] font-semibold text-text">{day.label}</div>
-                {day.trained && (
-                  <div className="truncate text-[11px] text-muted">{day.trained}</div>
-                )}
-              </div>
-              <span className="shrink-0 text-[11px] text-muted">
-                {day.memories.length} {day.memories.length === 1 ? "photo" : "photos"}
-              </span>
+            {/* The day, then each session in it: what you did, where, and
+                who with (owner, 2026-09-13). The photo count that sat on the
+                right is gone; the grid below already shows it. */}
+            <div className="mb-2">
+              <div className="text-[13px] font-semibold text-text">{day.label}</div>
+              {day.sessions.map((s) => (
+                <div key={s.logId} className="mt-1">
+                  {s.trained && <div className="text-[12px] font-medium text-text-2">{s.trained}</div>}
+                  {(s.gym || s.partner) && (
+                    <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-muted">
+                      {s.gym && (
+                        <span className="flex items-center gap-1">
+                          <IconMapPin size={12} />
+                          {s.gym}
+                        </span>
+                      )}
+                      {s.partner && (
+                        <span className="flex items-center gap-1">
+                          <IconUser size={12} />
+                          with {s.partner}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
 
             <div className="grid grid-cols-3 gap-1">
