@@ -28,6 +28,7 @@ import Link from "next/link";
 import Sheet from "@/components/varsity/Sheet";
 import { useRouter } from "next/navigation";
 import { useAppState } from "@/components/AppState";
+import { classOfLabel } from "@/lib/currentUser";
 import { useMembership } from "@/components/varsity/useMembership";
 import { useUnits } from "@/components/useUnits";
 import { can, canOpenConsole, roleLabel } from "@/lib/varsity/membership";
@@ -747,6 +748,7 @@ export default function ProfileScreen() {
 
   const [name, setName] = useState("");
   const [classYear, setClassYear] = useState("");
+  const [photo, setPhoto] = useState<string | null>(null);
   const [profile, setProfile] = useState<VarsityAthleteProfile | null>(null);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   // The chosen window. Kept in the screen, not on the record: it's a question
@@ -809,6 +811,7 @@ export default function ProfileScreen() {
       if (!active) return;
       setName(b.name);
       setClassYear(b.classYear);
+      setPhoto(b.photo);
       setProfile(b.profile);
     })();
     return () => {
@@ -1028,7 +1031,7 @@ export default function ProfileScreen() {
     (The word is still on the athlete's record and still shown to the coach and
     on the Team screen — it just isn't a line on your own page.)
   */
-  const classLine = classYear || "Add your details";
+  const classLine = classYear ? classOfLabel(classYear) : "Add your details";
 
   /*
     One measure and one window for the whole block: the graph plots the measure
@@ -1046,77 +1049,74 @@ export default function ProfileScreen() {
 
   return (
     <div className="mx-auto w-full max-w-screen-sm pb-10">
-      {/* ── Identity ── */}
-      <div className="border-b border-border bg-[radial-gradient(circle_at_0%_0%,color-mix(in_srgb,var(--primary)_9%,transparent),transparent_60%)] px-4 pb-3 pt-3">
-        <div className="flex items-start gap-3">
-          {/* 56px, not 64: the block is a header, not a portrait. */}
-          <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl border border-primary-line bg-gradient-to-br from-primary/15 to-primary/5">
-            <span className="text-lg font-semibold text-primary">{initialsOf(name)}</span>
-          </div>
-          <div className="min-w-0 flex-1 pt-0.5">
-            <div className="truncate text-lg font-semibold leading-tight text-text">
-              {name || "Your name"}
-            </div>
-            {/*
-              ONE LINE UNDER THE NAME, not three rows of boxes. The year, the
-              side you row and your measurements used to be a text line plus a
-              wrapping row of four bordered chips, which made the header the
-              tallest thing on the screen before a single number of training.
+      {/* ── Identity ──
+          THE IDENTITY CARD (owner, 2026-09-14, picked from four drawings). It
+          used to be a 56px square of initials pressed against the top bar over
+          a faint crimson glow, with the year, side, height and weight all on
+          one line. Now it is a white card with room above it, your actual
+          photo (the one from the normal Profile tab) in a 64px circle, and the
+          facts in the order the owner asked for:
 
-              The side keeps its chip and its COLOUR — port red, starboard
-              green, both blue, a cox gold, the same colours the lineup screens
-              and the coach's pool paint the same fact with
-              (lib/varsity/coachLineup → sideMeta). A per-entity colour out of a
-              data file is the one exception to "colours come from tokens"
-              (rule 1), and this is it. Height and weight lose their boxes and
-              become what they are: two more facts on the line.
-            */}
-            <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted">
-              <span>{classLine}</span>
-              <span
-                className="rounded-md border px-1.5 py-px text-[11px] font-medium"
-                style={sideChip(profile)}
-              >
-                {profile.boatRole === "Coxswain"
-                  ? "Coxswain"
-                  : (sideLabel(profile.boatRole, profile.side) ?? "Both")}
-              </span>
-              {profile.heightCm != null && <span>{profile.heightCm} cm</span>}
-              {profile.weightKg != null && (
-                <span>{formatWeight(profile.weightKg, units.weight)}</span>
-              )}
-            </div>
-            {/* The prompt to PICK a name stays while there is nothing picked —
-                a published boat cannot mark your seat without it — but on its
-                own line, because it is an ACTION and the line above is facts. */}
-            {!profile.rosterId && (
-              <button
-                type="button"
-                onClick={() => setModal("seat")}
-                className="mt-1.5 rounded-md border border-primary-line bg-primary-tint px-2 py-1 text-[11px] font-medium text-primary"
-              >
-                Pick your name on the squad list
-              </button>
-            )}
-          </div>
-          {/*
-            YOUR STATUS, beside your name — where the edit pencil used to be.
-            The pencil moved up to the top bar, next to the cog (the profile
-            screen is the only one that shows it), and the status took the
-            corner it left: it is the one thing on this page that changes week
-            to week, and it used to need a whole card of its own underneath to
-            say one word. Tap it to change it, exactly as that card did.
-          */}
-          <button
-            type="button"
-            onClick={() => setModal("status")}
-            aria-label={`Current status: ${status.title}. Change it`}
-            className={`press-icon flex flex-shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1.5 ${toneRing[status.tone]}`}
-          >
-            <IconActivity size={13} />
-            <span className={`text-[11px] font-medium ${toneText[status.tone]}`}>{status.title}</span>
-          </button>
+              Name
+              Class of 2029
+              86 kg  [Port]                                  ( Active )
+
+          Height was cut — "just do the kg or pounds". The status keeps the
+          right-hand end of the card; tap it to change it, as before. */}
+      <div className="mx-3.5 mt-3.5 flex items-center gap-3 rounded-2xl border border-border bg-surface px-3.5 py-3.5">
+        <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-primary bg-primary-tint text-primary">
+          {photo ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={photo} alt={name || "Profile photo"} className="h-full w-full object-cover" />
+          ) : (
+            <span className="text-lg font-semibold">{initialsOf(name)}</span>
+          )}
         </div>
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-[17px] font-semibold leading-tight text-text">
+            {name || "Your name"}
+          </div>
+          <div className="mt-0.5 text-[11px] text-muted">{classLine}</div>
+          <div className="mt-1 flex items-center gap-2 text-[11px] text-muted">
+            {profile.weightKg != null && <span>{formatWeight(profile.weightKg, units.weight)}</span>}
+            {/* The side keeps its COLOUR — port red, starboard green, both
+                blue, a cox gold — the same colours the lineup screens and the
+                coach's pool paint the same fact with (lib/varsity/coachLineup
+                → sideMeta). A per-entity colour out of a data file is the one
+                exception to "colours come from tokens" (rule 1). */}
+            <span
+              className="rounded-md border px-1.5 py-px text-[11px] font-medium"
+              style={sideChip(profile)}
+            >
+              {profile.boatRole === "Coxswain"
+                ? "Coxswain"
+                : (sideLabel(profile.boatRole, profile.side) ?? "Both")}
+            </span>
+          </div>
+          {/* The prompt to PICK a name stays while there is nothing picked —
+              a published boat cannot mark your seat without it — but on its
+              own line, because it is an ACTION and the lines above are facts. */}
+          {!profile.rosterId && (
+            <button
+              type="button"
+              onClick={() => setModal("seat")}
+              className="mt-1.5 rounded-md border border-primary-line bg-primary-tint px-2 py-1 text-[11px] font-medium text-primary"
+            >
+              Pick your name on the squad list
+            </button>
+          )}
+        </div>
+        {/* YOUR STATUS, at the right-hand end of the card. It is the one thing
+            on this page that changes week to week. Tap it to change it. */}
+        <button
+          type="button"
+          onClick={() => setModal("status")}
+          aria-label={`Current status: ${status.title}. Change it`}
+          className={`press-icon flex flex-shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1.5 ${toneRing[status.tone]}`}
+        >
+          <IconActivity size={13} />
+          <span className={`text-[11px] font-medium ${toneText[status.tone]}`}>{status.title}</span>
+        </button>
       </div>
 
       {/* ── Statistics ── */}

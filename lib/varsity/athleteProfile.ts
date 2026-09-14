@@ -308,6 +308,8 @@ function saveLocal(userId: string, p: VarsityAthleteProfile) {
 export type AthleteProfileBundle = {
   name: string;
   classYear: string;
+  /** The profile photo set on the normal Profile tab — one photo, both modes. */
+  photo: string | null;
   profile: VarsityAthleteProfile;
 };
 
@@ -316,17 +318,18 @@ export async function fetchAthleteProfile(userId: string | null): Promise<Athlet
   if (!userId || !hasSupabaseEnv()) {
     // Dev / no-Supabase: name + class year aren't stored locally, only the
     // varsity record is. Default the rest.
-    return { name: "", classYear: "", profile: withDefaults(loadLocal(userId ?? ""), "") };
+    return { name: "", classYear: "", photo: null, profile: withDefaults(loadLocal(userId ?? ""), "") };
   }
   const supabase = createClient();
   const { data } = await supabase.from("profiles").select("data").eq("id", userId).maybeSingle();
   const d = (data?.data as
-    | { name?: string; classYear?: string; varsity?: Partial<VarsityAthleteProfile> }
+    | { name?: string; classYear?: string; photo?: string | null; varsity?: Partial<VarsityAthleteProfile> }
     | undefined) ?? {};
   const classYear = d.classYear ?? "";
   return {
     name: (d.name ?? "").trim(),
     classYear,
+    photo: d.photo ?? null,
     profile: withDefaults(d.varsity, classYear),
   };
 }
