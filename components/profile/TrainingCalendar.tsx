@@ -235,7 +235,7 @@ export default function TrainingCalendar({
                 onClick={() => onModeChange(m)}
                 aria-pressed={mode === m}
                 className={`px-3 py-0.5 text-[11px] font-medium capitalize ${
-                  mode === m ? "bg-primary text-primary-contrast" : "bg-surface-2 text-muted"
+                  mode === m ? "bg-primary text-primary-contrast" : "bg-surface text-muted"
                 }`}
               >
                 {m}
@@ -275,8 +275,8 @@ export default function TrainingCalendar({
                     has
                       ? "border border-primary-line bg-primary-tint"
                       : isToday
-                        ? "border border-primary bg-surface-2"
-                        : "bg-surface-2"
+                        ? "border border-primary bg-surface"
+                        : "border border-border bg-surface"
                   } ${isToday ? "ring-1 ring-primary" : ""} disabled:cursor-default`}
                 >
                   <span
@@ -341,7 +341,7 @@ export default function TrainingCalendar({
                               ? "border border-primary-line bg-primary-tint"
                               : isToday
                                 ? "border border-primary bg-primary-tint"
-                                : "bg-surface-2"
+                                : "border border-border bg-surface"
                           } ${isToday ? "ring-1 ring-primary" : ""} disabled:cursor-default`}
                         >
                           <span

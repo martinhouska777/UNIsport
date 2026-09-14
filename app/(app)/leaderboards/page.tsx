@@ -208,7 +208,7 @@ function MetricSwitch({
   onPick: (m: GroupMetric) => void;
 }) {
   return (
-    <div className="flex gap-1 rounded-full border border-border bg-surface-2 p-0.5">
+    <div className="flex gap-1 rounded-full border border-border bg-surface p-0.5">
       {GROUP_METRICS.map((m) => (
         <button
           key={m.key}
@@ -239,7 +239,7 @@ const TABS: { key: TabKey; label: string }[] = [
    inside it. It sits in the header between Back and ⓘ, where the title was. */
 function TabBar({ value, onPick }: { value: TabKey; onPick: (t: TabKey) => void }) {
   return (
-    <div role="tablist" aria-label="Leaderboards" className="flex min-w-0 flex-1 rounded-full border border-border bg-surface-2 p-1">
+    <div role="tablist" aria-label="Leaderboards" className="flex min-w-0 flex-1 rounded-full border border-border bg-surface p-1">
       {TABS.map((t) => (
         <button
           key={t.key}

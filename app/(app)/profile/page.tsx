@@ -481,7 +481,7 @@ export default function ProfilePage() {
           above it: the card itself does the separating. No "Bio" heading on
           the card (cut 2026-09-13 at the owner's ask): everyone knows it is. */}
       <div className="px-3.5 pb-3">
-        <div className="rounded-xl bg-surface-2 px-4 py-3 text-center">
+        <div className="rounded-xl border border-border bg-surface px-4 py-3 text-center">
         {editingTop && editField === "bio" ? (
           <div>
             <textarea
@@ -596,7 +596,7 @@ export default function ProfilePage() {
             type="button"
             onClick={() => setLogging(true)}
             data-tour="profile-log"
-            className="w-full rounded-xl border border-border bg-surface-2 px-3.5 py-3 text-left active:bg-surface"
+            className="w-full rounded-xl border border-border bg-surface px-3.5 py-3 text-left active:bg-surface-2"
           >
             <div className="text-[13px] font-semibold text-text">Log your first session</div>
             <p className="mt-0.5 text-[11px] leading-relaxed text-muted">
@@ -610,7 +610,7 @@ export default function ProfilePage() {
              siblings in a grey box rather than a button inside the link, so
              tapping Log never also opens the boards.
              data-tour: the Profile tour opens on this button (lib/tour.ts). */
-          <div className="flex items-center gap-2.5 rounded-2xl bg-surface-2 py-2.5 pl-3 pr-2.5">
+          <div className="flex items-center gap-2.5 rounded-2xl border border-border bg-surface py-2.5 pl-3 pr-2.5">
             <LeaderboardStrip compact />
             <Button data-tour="profile-log" size="md" className="h-11! shrink-0" onClick={() => setLogging(true)}>
               <IconPlus size={15} /> Log
@@ -688,7 +688,7 @@ export default function ProfilePage() {
                 {user.languages.map((l) => (
                   <span
                     key={l}
-                    className="rounded-full border border-border bg-surface-2 px-2.5 py-1 text-[11px] text-text"
+                    className="rounded-full border border-border bg-surface px-2.5 py-1 text-[11px] text-text"
                   >
                     {l}
                   </span>
@@ -703,7 +703,7 @@ export default function ProfilePage() {
             <div className="mt-2.5">
               <div className="mb-1.5 text-[11px] text-muted">Concentration</div>
               <div className="flex flex-wrap gap-1.5">
-                <span className="rounded-full border border-border bg-surface-2 px-2.5 py-1 text-[11px] text-text">
+                <span className="rounded-full border border-border bg-surface px-2.5 py-1 text-[11px] text-text">
                   {user.concentration}
                 </span>
               </div>
@@ -762,7 +762,7 @@ export default function ProfilePage() {
       */}
       <div className="px-3.5 pb-4 pt-6">
         {replayArmed ? (
-          <div className="rounded-xl border border-border bg-surface-2 p-3.5">
+          <div className="rounded-xl border border-border bg-surface p-3.5">
             <div className="text-[13px] font-medium text-text">Start onboarding again?</div>
             <p className="mt-0.5 text-[11px] leading-relaxed text-muted">
               You&apos;ll answer all nine screens from scratch. Whatever you finish with
@@ -793,7 +793,7 @@ export default function ProfilePage() {
           <button
             type="button"
             onClick={() => setReplayArmed(true)}
-            className="w-full rounded-full border border-border bg-surface-2 px-5 py-2.5 text-sm font-medium text-text"
+            className="w-full rounded-full border border-border bg-surface px-5 py-2.5 text-sm font-medium text-text"
           >
             Replay onboarding
           </button>

@@ -174,7 +174,7 @@ function DayOutSection({
   if (value) {
     const meta = reasonMeta(value.reason);
     return (
-      <div className="mt-3 flex items-start gap-3 rounded-2xl border border-border bg-surface-2 px-3.5 py-3">
+      <div className="mt-3 flex items-start gap-3 rounded-2xl border border-border bg-surface px-3.5 py-3">
         <span className="mt-1 h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ background: meta.color }} />
         <div className="min-w-0 flex-1">
           <div className="text-[13px] font-semibold text-text">{dayOutName(value.reason)}</div>
@@ -194,7 +194,7 @@ function DayOutSection({
 
   if (missing) {
     return (
-      <div className="mt-3 rounded-2xl border border-border bg-surface-2 px-3.5 py-3">
+      <div className="mt-3 rounded-2xl border border-border bg-surface px-3.5 py-3">
         <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">Missed — why?</div>
         <div className="mt-2 flex flex-wrap gap-1.5">
           {dayOutReasons.map((r) => (
@@ -248,7 +248,7 @@ function DayOutSection({
     <button
       type="button"
       onClick={() => setMissing(true)}
-      className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl border border-border bg-surface-2 py-2.5 text-[12px] font-medium text-text active:bg-surface"
+      className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl border border-border bg-surface py-2.5 text-[12px] font-medium text-text active:bg-surface-2"
     >
       Missed
     </button>
@@ -283,7 +283,7 @@ function DaySheet({
     <Sheet title={label} onClose={onClose}>
       {logs.length === 0 ? (
         dayOut ? null : (
-          <div className="rounded-2xl border border-dashed border-border bg-surface-2 px-4 py-6 text-center text-[12px] text-muted">
+          <div className="rounded-2xl border border-dashed border-border bg-surface px-4 py-6 text-center text-[12px] text-muted">
             Nothing logged this day.
           </div>
         )
@@ -303,7 +303,7 @@ function DaySheet({
               <Row
                 key={l.id}
                 {...(readOnly ? {} : { type: "button" as const, onClick: () => onOpen(l) })}
-                className={`flex items-start gap-3 rounded-2xl border border-border bg-surface-2 px-3.5 py-3 text-left ${readOnly ? "" : "active:bg-surface"}`}
+                className={`flex items-start gap-3 rounded-2xl border border-border bg-surface px-3.5 py-3 text-left ${readOnly ? "" : "active:bg-surface-2"}`}
               >
                 <span
                   className="mt-1 h-2.5 w-2.5 flex-shrink-0 rounded-full"
@@ -618,11 +618,12 @@ export default function CalendarScreen({
               </span>
 
               {/*
-                HALF A DAY EACH. Two rows, so one session fills the top half and
-                leaves the bottom empty instead of stretching over the whole
-                box — a morning outing should not look like a day that was
-                trained twice. A third session (it happens) makes its own row
-                and the three share.
+                THE SESSIONS FILL THE CELL. One session takes the whole body of
+                the day, two share it half and half, three share it in thirds.
+                Until 2026-09-14 the body was split into a fixed morning half
+                and afternoon half, so an AM-only day left its bottom empty;
+                the owner asked for the block to fill the bar instead — the
+                cell is about WHAT was trained, not when in the day.
               */}
               {/*
                 A DAY OUT, with nothing logged: its colour fills the day (sick
@@ -643,7 +644,7 @@ export default function CalendarScreen({
                   <span className="truncate text-[9px] font-semibold text-text">{dayOutName(out!.reason)}</span>
                 </span>
               )}
-              <span className={`mt-0.5 min-h-0 flex-1 auto-rows-fr grid-rows-2 gap-px ${outFill ? "hidden" : "grid"}`}>
+              <span className={`mt-0.5 min-h-0 flex-1 flex-col gap-px ${outFill ? "hidden" : "flex"}`}>
                 {has && (
                   <>
                   {d.logs.map((l) => {
@@ -667,23 +668,18 @@ export default function CalendarScreen({
                        INTENSITY under it (lib/varsity/coachPlan →
                        logLabelParts). */
                     const { kind, intensity } = logLabelParts(l, planned);
-                    /* An afternoon session belongs in the afternoon half, not
-                       wherever it happened to be saved first. A log with no
-                       period on it just takes the next free half. */
-                    const half = l.period === "PM" ? 2 : l.period === "AM" ? 1 : undefined;
                     return (
                       <span
                         key={l.id}
                         /* px-0.5, not px-1: those four pixels are what let
                            "Water" and "22.5k" share the first line without
                            either one truncating (measured at 390px). */
-                        className="overflow-hidden px-0.5 py-0.5"
-                        style={{ ...blockStyle(l, planned), gridRowStart: half }}
+                        className="min-h-0 flex-1 overflow-hidden px-0.5 py-0.5"
+                        style={blockStyle(l, planned)}
                       >
-                        {/* No AM / PM tag. Which half of the day this was is
-                            already said by WHICH HALF OF THE CELL it sits in
-                            (the two rows above), and the two letters were
-                            eating the line the title needed to fit. */}
+                        {/* No AM / PM tag — the two letters were eating the
+                            line the title needed to fit (owner, 2026-09-14:
+                            "cut that text"). */}
                         {/* 9px. It ran at 8px to match the plan's month view;
                             the owner asked for the calendar a size up. 10px
                             was tried and cut "UT2" to "U…" beside a figure
@@ -743,7 +739,7 @@ export default function CalendarScreen({
               type="button"
               onClick={() => setStatsFor(c)}
               aria-label={`${logCategoryLabel[c]} statistics for ${MONTHS[view.m]}`}
-              className="flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-[11px] text-muted active:bg-surface"
+              className="flex items-center gap-1.5 rounded-full border border-border bg-surface px-2.5 py-1 text-[11px] text-muted active:bg-surface-2"
             >
               {logCategoryLabel[c]}
               <span className={count > 0 ? "font-semibold text-text" : "text-muted"}>{count}</span>

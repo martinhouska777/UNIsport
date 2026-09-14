@@ -255,7 +255,7 @@ export default function BuddyBoard({
           </div>
         )
       ) : (
-        <div className="flex flex-col gap-3 rounded-xl border border-border bg-surface-2 p-3.5">
+        <div className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-3.5">
           <div className="flex items-center justify-between">
             <div className="text-sm font-medium text-text">Post your session to the board</div>
             <button
@@ -365,7 +365,7 @@ export default function BuddyBoard({
             {mine.map((m) => (
               <div
                 key={m.id}
-                className="flex items-center gap-2 rounded-xl border border-border bg-surface-2 px-3 py-2.5"
+                className="flex items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2.5"
               >
                 <div className="min-w-0 flex-1">
                   <div className="text-sm text-text">{summary(m.focus, m.date, m.day, m.hour, m.timeOfDay)}</div>
@@ -406,7 +406,7 @@ export default function BuddyBoard({
           {board.map((p) => (
             <div
               key={p.id}
-              className="flex items-center gap-3 rounded-xl border border-border bg-surface-2 p-3"
+              className="flex items-center gap-3 rounded-xl border border-border bg-surface p-3"
             >
               <Avatar size={44} src={p.authorPhoto} alt={p.authorName} />
               <div className="min-w-0 flex-1">

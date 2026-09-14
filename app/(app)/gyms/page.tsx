@@ -259,7 +259,7 @@ export default function GymsPage() {
       <div className="px-3 pt-3">
         {/* A search field stretched across a whole laptop screen looks broken,
             so it keeps a sane width once there's room. */}
-        <div className="flex items-center gap-2 rounded-full border border-border bg-surface-2 px-3 py-2 text-muted focus-within:border-primary lg:max-w-md">
+        <div className="flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-2 text-muted focus-within:border-primary lg:max-w-md">
           <IconSearch size={15} />
           <input
             type="text"
@@ -288,7 +288,7 @@ export default function GymsPage() {
                 className={`tap44 rounded-full px-3.5 py-1.5 text-[11px] font-medium transition-colors ${
                   active
                     ? "bg-text text-background"
-                    : "border border-border bg-surface-2 text-muted"
+                    : "border border-border bg-surface text-muted"
                 }`}
               >
                 {label}

@@ -176,7 +176,7 @@ function MatchScreen() {
           went: the tab bar already says where you are. */}
       <div className="px-3 pb-2 pt-3">
         {/* A capsule with the chosen tab as a pill inside it (Instagram-style). */}
-        <div className="flex rounded-full border border-border bg-surface-2 p-1">
+        <div className="flex rounded-full border border-border bg-surface p-1">
           {subTabs.map((s) => (
             <button
               key={s.key}
@@ -271,7 +271,7 @@ function MatchScreen() {
             <button
               type="button"
               onClick={() => setSearchOpen(true)}
-              className="tap44 flex h-12 flex-shrink-0 items-center gap-1.5 rounded-full border border-border bg-surface-2 px-4 text-[13px] font-semibold text-primary"
+              className="tap44 flex h-12 flex-shrink-0 items-center gap-1.5 rounded-full border border-border bg-surface px-4 text-[13px] font-semibold text-primary"
             >
               <IconSearch size={14} />
               Search by time

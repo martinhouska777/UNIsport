@@ -125,11 +125,15 @@ function RaceBar({ r }: { r: RaceData }) {
    after the team's training Excel. MONTH = a full wall calendar, one month at a
    time. Tap any cell/day to see the full workout. */
 
-const PERIOD_ROWS = ["AM", "PM"] as const;
-
 // WEEK view: the whole week at a glance — 7 day columns, no sideways scrolling.
 // Each session is a color-coded block (the colour is the intensity: UT2, hard,
 // …) showing the coach's workout text; cells grow so the full text fits.
+//
+// THE BLOCKS FILL THE CELL (owner, 2026-09-14). One session takes the whole
+// cell, two share it. It used to be split into a fixed AM half and PM half
+// with the period printed in each block; the owner asked for the block to
+// fill the bar and for the "AM" / "PM" text to go — the strip is about WHAT
+// is rowed, and the day's card underneath still says when.
 function WeekFit({
   week,
   selected,
@@ -164,34 +168,20 @@ function WeekFit({
               </div>
             </div>
             <div className="flex flex-1 flex-col gap-0.5 p-0.5">
-              {PERIOD_ROWS.map((row) => {
-                const s = d.sessions.find((x) => x.time === row);
+              {d.sessions.map((s, j) => (
                 /*
-                  A MISSING PERIOD KEEPS ITS HALF, empty. Skipping it entirely
-                  let the one session that IS there stretch over the whole cell
-                  (it's flex-1), so an AM-only day looked exactly as full as a
-                  day with both — and the AM block sat where the PM one does on
-                  the day beside it. Now AM is always the top half and PM the
-                  bottom, whether or not the other one exists, and an empty half
-                  simply shows the cell underneath.
+                  9px ON 2px SIDES, so one word stays one word. At 10px inside
+                  4px sides a block had ~31px of text on a 360px phone, and
+                  "Weights" (37px) broke into "Weight / s", "8×500m" into
+                  "8×500 / m". At 9px they are 33px and 34px, and the
+                  narrower sides leave 35px — the whole word on one line.
                 */
-                if (!s) return <div key={row} className="flex-1" />;
-                return (
-                  /*
-                    9px ON 2px SIDES, so one word stays one word. At 10px inside
-                    4px sides a block had ~31px of text on a 360px phone, and
-                    "Weights" (37px) broke into "Weight / s", "8×500m" into
-                    "8×500 / m". At 9px they are 33px and 34px, and the
-                    narrower sides leave 35px — the whole word on one line.
-                  */
-                  <div key={row} className="flex-1 rounded px-0.5 py-1" style={kindBlock(s.kind)}>
-                    <span className="block text-[10px] font-bold leading-none text-text-3">{row}</span>
-                    <span className="mt-0.5 block break-words text-[9px] font-medium leading-tight text-text">
-                      {s.label}
-                    </span>
-                  </div>
-                );
-              })}
+                <div key={j} className="flex flex-1 items-center rounded px-0.5 py-1" style={kindBlock(s.kind)}>
+                  <span className="block break-words text-[9px] font-medium leading-tight text-text">
+                    {s.label}
+                  </span>
+                </div>
+              ))}
             </div>
           </button>
         );
@@ -358,26 +348,19 @@ function MonthOverlay({
                   {num}
                 </span>
                 {/*
-                  The coach's actual workout text, one tinted block per session,
-                  in a box split into a MORNING half and an AFTERNOON half. A
-                  day with only an AM outing fills the top half and leaves the
-                  bottom empty — it used to stretch over the whole day, which
-                  made a single session look like a double.
+                  The coach's actual workout text, one tinted block per session.
+                  The blocks share the day: one fills it, two split it. (Same
+                  owner's call as the week strip above, 2026-09-14 — no fixed
+                  AM / PM halves, no period letters.)
                 */}
-                <span className="mt-0.5 grid min-h-0 flex-1 auto-rows-fr grid-rows-2 gap-px overflow-hidden">
+                <span className="mt-0.5 flex min-h-0 flex-1 flex-col gap-px overflow-hidden">
                   {(day?.sessions ?? []).map((s, j) => (
                     <span
                       key={j}
-                      className="overflow-hidden rounded px-1 py-0.5"
-                      /* The morning half is the top one. A PM-only day is put
-                         in the second row on purpose, so an afternoon session
-                         never sits where the morning goes. */
-                      style={{ ...kindBlock(s.kind), gridRowStart: s.time === "PM" ? 2 : 1 }}
+                      className="flex min-h-0 flex-1 items-center overflow-hidden rounded px-1 py-0.5"
+                      style={kindBlock(s.kind)}
                     >
-                      <span className="block text-[6px] font-bold leading-none text-text-3">
-                        {s.time}
-                      </span>
-                      <span className="mt-px block break-words text-[8px] font-medium leading-[1.15] text-text">
+                      <span className="block break-words text-[8px] font-medium leading-[1.15] text-text">
                         {s.label}
                       </span>
                     </span>
