@@ -231,6 +231,11 @@
   /* The interlude's ground: one step warmer than the page, the "background
      steps one surface level darker behind the Varsity Mode opening". */
   --color-l-bg-warm: #0d0c0a;
+  /* The two faint grid overlays (the page's and the title cards'). Tokens so
+     the design lab (app/lab, dev only) can fade them or flip them for a light
+     page; the values are what the hardcoded rgba() used to be. */
+  --color-l-grid: rgba(255, 255, 255, 0.015);
+  --color-l-grid-2: rgba(255, 255, 255, 0.02);
 }
 /* DARK PHONE SCREENS (components/landing/PhoneMode.tsx). The visitor can flip
    every phone on the page to the app's dark look; the captures swap to their
@@ -595,8 +600,8 @@
   position: fixed;
   inset: 0;
   background-image:
-    linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+    linear-gradient(var(--color-l-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-l-grid) 1px, transparent 1px);
   background-size: 48px 48px;
   pointer-events: none;
   z-index: 0;
@@ -612,6 +617,7 @@
   height: 700px;
   background: radial-gradient(circle, var(--color-l-accent-dim) 0%, transparent 60%);
   filter: blur(80px);
+  opacity: var(--l-glow, 1); /* the design lab's glow dial; 1 = as designed */
   z-index: -1;
   pointer-events: none;
 }
@@ -625,6 +631,7 @@
   height: 700px;
   background: radial-gradient(circle, var(--color-l-varsity-dim) 0%, transparent 60%);
   filter: blur(80px);
+  opacity: var(--l-glow, 1); /* the design lab's glow dial; 1 = as designed */
   z-index: -1;
   pointer-events: none;
 }
@@ -737,8 +744,8 @@
   z-index: -1;
   pointer-events: none;
   background-image:
-    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+    linear-gradient(var(--color-l-grid-2) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-l-grid-2) 1px, transparent 1px);
   background-size: 48px 48px;
   -webkit-mask-image: radial-gradient(115% 85% at 50% 45%, #000 30%, transparent 76%);
   mask-image: radial-gradient(115% 85% at 50% 45%, #000 30%, transparent 76%);
@@ -755,6 +762,7 @@
   pointer-events: none;
   background: radial-gradient(closest-side, var(--tg, transparent) 0%, transparent 70%);
   filter: blur(46px);
+  opacity: var(--l-glow, 1); /* the design lab's glow dial; 1 = as designed */
   /* The student card cycles the eight schools; the colour follows at the
      cycle's own pace instead of cutting. */
   transition: background 700ms ease-in-out;
