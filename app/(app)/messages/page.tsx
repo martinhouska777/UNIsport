@@ -15,11 +15,13 @@ import { useAppState } from "@/components/AppState";
 import MessagesList from "@/components/messages/MessagesList";
 import DmThread from "@/components/messages/DmThread";
 import ChannelThread from "@/components/messages/ChannelThread";
+import NewChannel from "@/components/messages/NewChannel";
 import type { Channel, DmConversation } from "@/lib/supabase/messages";
 
 type Open =
   | { type: "dm"; id: string; name: string; otherId: string | null }
   | { type: "channel"; id: string; name: string; icon: string; joined: boolean }
+  | { type: "newChannel" }
   | null;
 
 export default function MessagesPage() {
@@ -64,6 +66,14 @@ function Messages() {
           currentUserId={userId}
           onBack={back}
         />
+      ) : open?.type === "newChannel" ? (
+        <NewChannel
+          onBack={back}
+          // Straight into the channel you just started — you're its first member.
+          onCreated={(c) =>
+            setOpen({ type: "channel", id: c.channelId, name: c.name, icon: "message", joined: true })
+          }
+        />
       ) : open?.type === "channel" ? (
         <ChannelThread
           channelId={open.id}
@@ -77,6 +87,7 @@ function Messages() {
           onOpenDm={(c: DmConversation) =>
             setOpen({ type: "dm", id: c.conversationId, name: c.otherName, otherId: c.otherId })
           }
+          onNewChannel={() => setOpen({ type: "newChannel" })}
           onOpenChannel={(c: Channel) =>
             setOpen({
               type: "channel",

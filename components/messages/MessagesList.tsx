@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Button from "@/components/ui/Button";
 import { SkeletonRows } from "@/components/ui/Skeleton";
+import { useAppState } from "@/components/AppState";
 import {
   listDirectConversations,
   listChannels,
@@ -19,6 +20,7 @@ import {
   IconStar,
   IconRun,
   IconMessage,
+  IconPlus,
 } from "@/components/icons";
 import Avatar from "./Avatar";
 
@@ -40,10 +42,14 @@ type Tab = "direct" | "community";
 export default function MessagesList({
   onOpenDm,
   onOpenChannel,
+  onNewChannel,
 }: {
   onOpenDm: (c: DmConversation) => void;
   onOpenChannel: (c: Channel) => void;
+  /** Opens the "New channel" screen — anybody can start one. */
+  onNewChannel: () => void;
 }) {
+  const { universityKey } = useAppState();
   const [tab, setTab] = useState<Tab>("direct");
   const [conversations, setConversations] = useState<DmConversation[] | null>(null);
   const [channels, setChannels] = useState<Channel[] | null>(null);
@@ -52,7 +58,7 @@ export default function MessagesList({
 
   useEffect(() => {
     let active = true;
-    Promise.all([listDirectConversations(), listChannels()])
+    Promise.all([listDirectConversations(), listChannels(universityKey)])
       .then(([dms, chs]) => {
         if (!active) return;
         setConversations(dms);
@@ -62,7 +68,7 @@ export default function MessagesList({
     return () => {
       active = false;
     };
-  }, []);
+  }, [universityKey]);
 
   const filteredDms = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -127,8 +133,8 @@ export default function MessagesList({
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search messages..."
-            aria-label="Search messages"
+            placeholder={tab === "community" ? "Search channels" : "Search messages..."}
+            aria-label={tab === "community" ? "Search channels" : "Search messages"}
             className="w-full bg-transparent text-[13px] text-text placeholder:text-muted focus:outline-none"
           />
         </div>
@@ -147,12 +153,26 @@ export default function MessagesList({
         )}
 
         {!error && tab === "community" && (
-          <CommunityList
-            list={filteredChannels}
-            loading={channels === null}
-            onOpen={onOpenChannel}
-            onJoin={handleJoin}
-          />
+          <>
+            {/* Anybody can start a channel (owner, 2026-09-14). */}
+            <button
+              type="button"
+              onClick={onNewChannel}
+              className="flex w-full items-center gap-3 border-b border-border px-3.5 py-2.5 text-left active:bg-surface-2"
+            >
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-dashed border-border text-muted">
+                <IconPlus size={20} />
+              </div>
+              <span className="text-[13px] font-medium text-text">New channel</span>
+            </button>
+            <CommunityList
+              list={filteredChannels}
+              loading={channels === null}
+              searching={query.trim().length > 0}
+              onOpen={onOpenChannel}
+              onJoin={handleJoin}
+            />
+          </>
         )}
       </div>
     </div>
@@ -211,11 +231,13 @@ function DirectList({
 function CommunityList({
   list,
   loading,
+  searching,
   onOpen,
   onJoin,
 }: {
   list: Channel[];
   loading: boolean;
+  searching: boolean;
   onOpen: (c: Channel) => void;
   onJoin: (channelId: string) => void;
 }) {
@@ -227,6 +249,9 @@ function CommunityList({
 
   // With no channels at all this used to render an empty box under an
   // unexplained tab. Say what the tab is for instead.
+  if (list.length === 0 && searching) {
+    return <div className="px-6 py-16 text-center text-sm text-muted">No channels match.</div>;
+  }
   if (list.length === 0) {
     return (
       <div className="px-6 py-16 text-center text-sm text-muted">
@@ -271,11 +296,11 @@ function CommunityList({
         </>
       )}
 
-      {/* Channels available to join. Tapping the row opens it to browse; the
-          Join button (right) joins so you can post. */}
+      {/* Every other channel, to browse (or search, above). Tapping the row
+          opens it to read; the Join button (right) joins so you can post. */}
       {discover.length > 0 && (
         <>
-          <SectionHeader>Discover — join to post</SectionHeader>
+          <SectionHeader>Browse channels</SectionHeader>
           {discover.map((c) => (
             <div
               key={c.channelId}

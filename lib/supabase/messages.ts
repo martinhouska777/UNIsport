@@ -132,6 +132,8 @@ export type Channel = {
   lastAt: string | null;
   unread: number;
   joined: boolean;
+  /** You started this channel. */
+  mine: boolean;
 };
 
 export type ChannelMessage = {
@@ -144,8 +146,12 @@ export type ChannelMessage = {
   createdAt: string;
 };
 
-export async function listChannels(): Promise<Channel[]> {
-  const { data, error } = await createClient().rpc("channel_list");
+/**
+ * Every channel you can see: the every-school ones, your school's (`uni` is the
+ * app's university key — db/channels_community.sql), and any you started.
+ */
+export async function listChannels(uni: string | null): Promise<Channel[]> {
+  const { data, error } = await createClient().rpc("channel_list", { uni: uni || null });
   if (error) throw new Error(`listChannels failed: ${error.message}`);
   return (data as Record<string, unknown>[]).map((r) => ({
     channelId: r.channel_id as string,
@@ -157,7 +163,22 @@ export async function listChannels(): Promise<Channel[]> {
     lastAt: (r.last_at as string) ?? null,
     unread: Number(r.unread ?? 0),
     joined: !!r.joined,
+    mine: !!r.mine,
   }));
+}
+
+/**
+ * Start a channel at your school; you are joined to it straight away. Returns
+ * its id. A refused name throws the database's own sentence ("There is already
+ * a channel called that."), which is written to be shown as it is.
+ */
+export async function createChannel(name: string, uni: string | null): Promise<string> {
+  const { data, error } = await createClient().rpc("channel_create", {
+    channel_name: name,
+    uni: uni || null,
+  });
+  if (error) throw new Error(error.message);
+  return data as string;
 }
 
 /** Join a channel (opt-in). Required before posting. */
