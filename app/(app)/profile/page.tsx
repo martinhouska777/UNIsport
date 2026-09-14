@@ -272,11 +272,11 @@ export default function ProfilePage() {
 
       1. WHO YOU ARE — photo, name, badges, house and class down the middle,
          then the bio, then the three counts.
-      2. MEMORIES — what your training looked like.
+      2. WHERE YOU STAND, beside LOG A SESSION — your rank and the one button
+         that changes it, sharing a row.
       3. YOUR TRAINING — one calendar: this week, or the month, with arrows and
          a swipe (components/profile/TrainingCalendar.tsx).
-      4. WHERE YOU STAND, beside LOG A SESSION — your rank and the one button
-         that changes it, sharing a row.
+      4. MEMORIES — what your training looked like, at the foot of the page.
       5. MORE ABOUT YOU — a fold holding the middle of the page: interests,
          languages, what you study, where you're from, and your records.
       6. YOUR PHOTOS, always on screen, and the replay button under them.
@@ -571,26 +571,10 @@ export default function ProfilePage() {
           belongs above the fold. Hides itself when there is none. */}
       <UpcomingSessions />
 
-      {/* 2 · MEMORIES — above the calendar now: the pictures are the part of
-          your training you actually want to look at, and the calendar is the
-          part you read. It hides itself entirely until there's a photo. */}
-      <MemoriesStrip />
-
-      {/* 3 · YOUR TRAINING — this week, or the whole month, with arrows or a
-          swipe to move through either. */}
-      <TrainingCalendar
-        logs={logs}
-        anchor={calAnchor}
-        mode={calMode}
-        onAnchorChange={setCalAnchor}
-        onModeChange={setCalMode}
-        onPickDate={(d) => setOpenDate(d)}
-      />
-
-      {/* 4 · WHERE YOU STAND, AND THE BUTTON THAT MOVES YOU — one row under
-          the calendar. The boards used to be a full-width band of their own up
-          near the top; here they share the line with "Log a session", which
-          puts the rank and the one action that changes it side by side.
+      {/* 2 · WHERE YOU STAND, AND THE BUTTON THAT MOVES YOU — straight under
+          the bio, where it swapped places with Memories (owner, 2026-09-14).
+          It shares its line with "Log a session", which puts the rank and the
+          one action that changes it side by side.
 
           The compact card drops the middle number (your HOUSE's own rank) so
           two numbers and the button fit a phone: what's left is where you sit
@@ -627,6 +611,24 @@ export default function ProfilePage() {
           </div>
         )}
       </div>
+
+      {/* 3 · YOUR TRAINING — this week, or the whole month, with arrows or a
+          swipe to move through either. */}
+      <TrainingCalendar
+        logs={logs}
+        anchor={calAnchor}
+        mode={calMode}
+        onAnchorChange={setCalAnchor}
+        onModeChange={setCalMode}
+        onPickDate={(d) => setOpenDate(d)}
+      />
+
+      {/* 4 · MEMORIES — the foot of the page, where it swapped places with
+          the leaderboard row (owner, 2026-09-14). The calendar is the part of
+          your training you read; this is the part you look at, so it ends the
+          page rather than interrupting it. Hides itself entirely until there's
+          a photo. */}
+      <MemoriesStrip />
 
       {/* 5 · THE MIDDLE OF THE PAGE, in a <details> that starts OPEN — the
           owner wants it read, not hunted for — but can still be folded away.
