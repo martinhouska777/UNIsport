@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { LAB_FONTS, LAB_FONT_GROUPS } from "@/lib/lab/fonts";
-import { decodeLab, encodeLab, LAB_GROUNDS, LAB_PRESETS, LAB_TODAY, type LabRadius, type LabState, type LabWidth } from "@/lib/lab/state";
+import { decodeLab, encodeLab, LAB_COMBOS, LAB_GROUNDS, LAB_PRESETS, LAB_TODAY, type LabRadius, type LabState, type LabWidth } from "@/lib/lab/state";
 import { deriveCss, deriveFontLinks, deriveHandover, deriveTokens } from "@/lib/lab/derive";
 
 /*
@@ -180,6 +180,30 @@ export default function DesignLab() {
             })}
           </div>
           <p className="mt-2 text-[11px] leading-relaxed text-l-text-2">Ground and the two accents only — your fonts, effects and shape stay. Light first, then dark.</p>
+
+          <div className="mt-4 mb-1.5 text-[11px] font-medium">Pairs — page · blocks</div>
+          <div className="flex flex-wrap gap-1.5">
+            {LAB_COMBOS.map((p) => {
+              const t = deriveTokens({ ...LAB_TODAY, ...p.state }).tokens;
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  title={p.note}
+                  onClick={() => setState((s) => ({ ...s, ...p.state }))}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-l-line bg-l-surface py-1.5 pr-2.5 pl-2 text-[12px] transition-colors hover:border-l-line-hover"
+                >
+                  {/* two swatches: the page, then the blocks on it — both from the preset's data */}
+                  <span className="flex overflow-hidden rounded-sm border border-l-line-hover">
+                    <span className="h-3 w-3" style={{ background: t["--color-l-bg"] }} />
+                    <span className="h-3 w-3" style={{ background: t["--color-l-surface"] }} />
+                  </span>
+                  {p.name}
+                </button>
+              );
+            })}
+          </div>
+          <p className="mt-2 text-[11px] leading-relaxed text-l-text-2">The page colour and the colour of the blocks on it: the two title cards, Contact, and — half-way — the pills and feature rows. Set the blocks yourself under Ground.</p>
         </Section>
 
         <Section title="Ground">
@@ -188,6 +212,17 @@ export default function DesignLab() {
           <Range label="Tint strength" min={0} max={100} value={state.tint} onChange={(v) => set("tint", v)} />
           <Range label="Surface & line steps" min={0} max={100} value={state.step} onChange={(v) => set("step", v)} />
           <Range label="Grey text contrast" min={0} max={100} value={state.textc} onChange={(v) => set("textc", v)} />
+          <div className="mb-1 flex items-center justify-between gap-3">
+            <span className="text-[12px]">Blocks (title cards, Contact)</span>
+            {state.surface ? (
+              <button type="button" onClick={() => set("surface", "")} className="rounded-md border border-l-line px-2 py-1 text-[11px] text-l-text-2 hover:border-l-line-hover hover:text-l-text">
+                Back to auto
+              </button>
+            ) : (
+              <span className="font-mono text-[11px] text-l-text-2">auto, by steps</span>
+            )}
+          </div>
+          <ColorField label="" value={state.surface || deriveTokens(state).tokens["--color-l-surface"]} onChange={(v) => set("surface", v)} />
         </Section>
 
         <Section title="Accents">

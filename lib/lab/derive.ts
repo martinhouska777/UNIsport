@@ -52,6 +52,13 @@ function hexToRgb(h: string): [number, number, number] {
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 }
 
+/** Part-way between two hexes in sRGB — for the elevated step when the surface is its own colour. */
+function mixHex(a: string, b: string, t: number): string {
+  const A = hexToRgb(a);
+  const B = hexToRgb(b);
+  return hex(A.map((x, i) => Math.round(x + (B[i] - x) * t)) as [number, number, number]);
+}
+
 function rgba(h: string, a: number): string {
   const [r, g, b] = hexToRgb(h);
   return `rgba(${r}, ${g}, ${b}, ${+a.toFixed(3)})`;
@@ -82,10 +89,16 @@ export function deriveTokens(s: LabState): { tokens: LabTokens; isLight: boolean
   const textRgb = hexToRgb(text);
   const gridBase = isLight ? 0.06 : 0.015;
 
+  // The blocks' colour: derived by `step`, or the pair's own hex — then the
+  // pills and feature rows sit half-way between the page and the blocks.
+  const ownSurface = /^#[0-9a-f]{6}$/i.test(s.surface) ? s.surface : null;
+  const surface = ownSurface ?? oklchHex(Lbg + dir * unit * 1.5, C, H);
+  const elevated = ownSurface ? mixHex(bg, ownSurface, 0.5) : oklchHex(Lbg + dir * unit, C, H);
+
   const tokens: LabTokens = {
     "--color-l-bg": bg,
-    "--color-l-bg-elevated": oklchHex(Lbg + dir * unit, C, H),
-    "--color-l-surface": oklchHex(Lbg + dir * unit * 1.5, C, H),
+    "--color-l-bg-elevated": elevated,
+    "--color-l-surface": surface,
     "--color-l-line": oklchHex(Lbg + dir * unit * 3, C, H),
     "--color-l-line-hover": oklchHex(Lbg + dir * unit * 4.7, C, H),
     "--color-l-text": text,

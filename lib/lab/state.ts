@@ -26,6 +26,12 @@ export type LabState = {
   step: number;
   /** How far the secondary greys sit from the main text, 0..100. */
   textc: number;
+  /**
+   * The SECOND background — the title cards, Contact, and (half-way toward
+   * it) the pills and feature rows. "" = derived from the page by `step`;
+   * a hex = its own colour, which is how the page/block PAIRS below work.
+   */
+  surface: string;
   // ——— the two brand accents ———
   accent: string; // student blue today
   varsity: string; // varsity gold today
@@ -58,6 +64,7 @@ export const LAB_TODAY: LabState = {
   tint: 0,
   step: 48,
   textc: 50,
+  surface: "",
   accent: "#4a9eff",
   varsity: "#e0c896",
   display: "instrument-serif",
@@ -154,6 +161,34 @@ export const LAB_GROUNDS: LabPreset[] = [
   { id: "black", name: "Black", note: "true OLED black, below today's", state: { light: 0, hue: 0, tint: 0, step: 60, textc: 50, accent: "#4a9eff", varsity: "#e0c896" } },
 ];
 
+/*
+  PAIRS (owner, 2026-09-14, after the single backgrounds: "combos … the page
+  will have different background color combinations … now we have like black
+  and grey that's all"). A pair is the PAGE colour and the colour of the blocks
+  that sit on it (title cards, Contact; pills and feature rows land half-way
+  between). Same polarity within a pair — the text colour is one for the whole
+  page, so a dark block on a light page would carry dark text; that would need
+  per-block text tokens and is not built. Ground + surface + accents only.
+*/
+export const LAB_COMBOS: LabPreset[] = [
+  { id: "white-fog", name: "White · Fog", note: "white page, light-grey blocks — the classic SaaS pair", state: { light: 100, hue: 0, tint: 0, step: 40, textc: 50, surface: "#f2f3f5", accent: "#2563eb", varsity: "#b45309" } },
+  { id: "fog-white", name: "Fog · White", note: "grey page, white blocks — what the app does", state: { light: 94, hue: 250, tint: 6, step: 45, textc: 50, surface: "#ffffff", accent: "#2f4fd6", varsity: "#a16207" } },
+  { id: "cream-white", name: "Cream · White", note: "warm cream page, white blocks", state: { light: 95, hue: 75, tint: 20, step: 45, textc: 48, surface: "#ffffff", accent: "#1d4ed8", varsity: "#92400e" } },
+  { id: "paper-sand", name: "Paper · Sand", note: "off-white page, sand blocks", state: { light: 97, hue: 75, tint: 12, step: 45, textc: 48, surface: "#efe8db", accent: "#1e3a8a", varsity: "#8a5a1b" } },
+  { id: "mist-white", name: "Mist · White", note: "pale blue page, white blocks", state: { light: 94, hue: 240, tint: 20, step: 50, textc: 50, surface: "#ffffff", accent: "#1e40af", varsity: "#9a6b1e" } },
+  { id: "blush-white", name: "Blush · White", note: "faint pink-grey page, white blocks", state: { light: 95, hue: 20, tint: 14, step: 45, textc: 50, surface: "#ffffff", accent: "#9f1239", varsity: "#8a5a1b" } },
+  { id: "sage-cream", name: "Sage · Cream", note: "greenish-grey page, cream blocks", state: { light: 92, hue: 150, tint: 12, step: 45, textc: 50, surface: "#f9f7f0", accent: "#166534", varsity: "#92400e" } },
+  { id: "stone-ivory", name: "Stone · Ivory", note: "grey-beige page, ivory blocks", state: { light: 87, hue: 70, tint: 15, step: 50, textc: 50, surface: "#f8f6f1", accent: "#233f7a", varsity: "#6b4a12" } },
+  { id: "black-charcoal", name: "Black · Charcoal", note: "today's black with clearly lighter blocks", state: { light: 2, hue: 0, tint: 0, step: 48, textc: 50, surface: "#1c1c1e", accent: "#4a9eff", varsity: "#e0c896" } },
+  { id: "charcoal-graphite", name: "Charcoal · Graphite", note: "Apple dark mode's two greys", state: { light: 15, hue: 260, tint: 4, step: 50, textc: 50, surface: "#2c2c2e", accent: "#6ea8ff", varsity: "#e0c896" } },
+  { id: "graphite-black", name: "Graphite · Black", note: "grey page, blocks DARKER than the page", state: { light: 14, hue: 260, tint: 4, step: 50, textc: 50, surface: "#0a0a0a", accent: "#8ab8ff", varsity: "#e6c98a" } },
+  { id: "navy-slate", name: "Navy · Slate", note: "blue-black page, slate blocks", state: { light: 9, hue: 258, tint: 45, step: 60, textc: 50, surface: "#172033", accent: "#93c5fd", varsity: "#fbbf24" } },
+  { id: "slate-steel", name: "Slate · Steel", note: "lighter dark: blue-grey page, steel blocks", state: { light: 24, hue: 255, tint: 25, step: 55, textc: 50, surface: "#2c3748", accent: "#7dd3fc", varsity: "#fcd34d" } },
+  { id: "espresso-mocha", name: "Espresso · Mocha", note: "brown-black page, mocha blocks", state: { light: 8, hue: 45, tint: 25, step: 60, textc: 50, surface: "#26201a", accent: "#f0b98a", varsity: "#e8d5a3" } },
+  { id: "forest-moss", name: "Forest · Moss", note: "green-black page, moss blocks", state: { light: 8, hue: 155, tint: 20, step: 60, textc: 50, surface: "#182419", accent: "#9ae6b4", varsity: "#f6d365" } },
+  { id: "ink-plum", name: "Ink · Plum", note: "violet-black page, plum blocks", state: { light: 8, hue: 300, tint: 25, step: 60, textc: 50, surface: "#201a2c", accent: "#c4b5fd", varsity: "#fcd34d" } },
+];
+
 // ——— the URL-hash / settings-box codec ———
 
 const KEYS = Object.keys(LAB_TODAY) as (keyof LabState)[];
@@ -186,6 +221,8 @@ export function decodeLab(hash: string, base: LabState = LAB_TODAY): LabState {
       (out as Record<string, unknown>)[k] = v === "1" || v === "true";
     } else if (k === "accent" || k === "varsity") {
       if (/^[0-9a-f]{6}$/i.test(v)) (out as Record<string, unknown>)[k] = `#${v.toLowerCase()}`;
+    } else if (k === "surface") {
+      out.surface = /^[0-9a-f]{6}$/i.test(v) ? `#${v.toLowerCase()}` : "";
     } else {
       (out as Record<string, unknown>)[k] = v;
     }
