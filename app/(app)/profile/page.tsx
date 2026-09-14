@@ -277,7 +277,9 @@ export default function ProfilePage() {
          a swipe (components/profile/TrainingCalendar.tsx).
       4. WHERE YOU STAND, beside LOG A SESSION — your rank and the one button
          that changes it, sharing a row.
-      5. Everything else folded behind "More about you".
+      5. MORE ABOUT YOU — a fold holding the middle of the page: interests,
+         languages, what you study, where you're from, and your records.
+      6. YOUR PHOTOS, always on screen, and the replay button under them.
 
     Training, the schedule, the gyms and who you'll train with live in Settings
     (components/settings/TrainingSettings.tsx): they are answers the app runs
@@ -619,8 +621,9 @@ export default function ProfilePage() {
         )}
       </div>
 
-      {/* 6 · EVERYTHING ELSE, in a <details> that starts OPEN — the owner wants
-          it read, not hunted for — but can still be folded away. */}
+      {/* 5 · THE MIDDLE OF THE PAGE, in a <details> that starts OPEN — the
+          owner wants it read, not hunted for — but can still be folded away.
+          It stops at the records: the photo grid below is never folded. */}
       <details open className="group border-b border-border">
         <summary className="tap44 flex cursor-pointer list-none items-center justify-between px-3.5 pb-1 pt-3 [&::-webkit-details-marker]:hidden">
           <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
@@ -734,10 +737,13 @@ export default function ProfilePage() {
         visible={user.showPersonalRecords}
         onVisibleChange={(v) => update({ showPersonalRecords: v })}
       />
+      </details>
 
-      {/* YOUR PHOTOS — inside "More about you", straight after the records and
-          above Replay onboarding (which is going away later), as the owner
-          asked. They used to sit below the fold as the very last thing. */}
+      {/* YOUR PHOTOS — OUTSIDE the fold, on purpose (owner, 2026-09-14): "it's
+          there every time, like on Instagram". Your grid is the part of a
+          profile people come to look at, so folding the section above it must
+          never take it off the screen. Only the middle — interests and the
+          records — is foldable. */}
       <PhotoGrid
         photos={user.photos}
         onChange={(photos) => update({ photos })}
@@ -799,7 +805,6 @@ export default function ProfilePage() {
           </button>
         )}
       </div>
-      </details>
 
       {switchingMode && (
         <ModeSwitcherSheet
