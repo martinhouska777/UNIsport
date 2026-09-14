@@ -98,9 +98,13 @@ export default function ProfilePage() {
     EDITING THE TOP OF THE PROFILE — photo, name and bio — is one pencil in the
     top bar, left of the cog. The name and bio used to carry a pencil each,
     which pushed the name off the centre line. Tap the pencil: the photo gets
-    its camera, the name and bio become fields; tap the tick to save them.
+    its camera and the name and bio each get a small pencil, but they still
+    read as the page does. Tap the one you want and only THAT becomes a field
+    (editField); tap the tick to save. The owner didn't want every field lit up
+    with a red outline the moment the pencil was pressed.
   */
   const [editingTop, setEditingTop] = useState(false);
+  const [editField, setEditField] = useState<"name" | "bio" | null>(null);
   const [nameDraft, setNameDraft] = useState("");
   const [bioDraft, setBioDraft] = useState("");
   const [nameErr, setNameErr] = useState<string | null>(null);
@@ -322,15 +326,20 @@ export default function ProfilePage() {
                 setNameDraft(user.name);
                 setBioDraft(user.bio);
                 setNameErr(null);
+                setEditField(null);
                 setEditingTop(true);
                 return;
               }
               const why = nameError(nameDraft);
-              if (why) return setNameErr(why);
+              if (why) {
+                setEditField("name");
+                return setNameErr(why);
+              }
               const patch: { name?: string; bio?: string } = {};
               if (nameDraft !== user.name) patch.name = nameDraft;
               if (bioDraft !== user.bio) patch.bio = bioDraft;
               if (Object.keys(patch).length) update(patch);
+              setEditField(null);
               setEditingTop(false);
             }}
             aria-label={editingTop ? "Save profile" : "Edit profile"}
@@ -364,7 +373,14 @@ export default function ProfilePage() {
       */}
       <div className="flex flex-col items-center gap-2 border-b border-border px-3.5 pb-3 pt-4">
         <div className="relative">
-          <div className="flex h-[72px] w-[72px] items-center justify-center overflow-hidden rounded-full border-2 border-primary bg-primary-tint text-primary">
+          {/* While editing, the photo itself is a tap target too, not just
+              the little camera on its edge. */}
+          <div
+            onClick={editingTop ? () => avatarInputRef.current?.click() : undefined}
+            className={`flex h-[72px] w-[72px] items-center justify-center overflow-hidden rounded-full border-2 border-primary bg-primary-tint text-primary ${
+              editingTop ? "cursor-pointer" : ""
+            }`}
+          >
             {user.photo ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={user.photo} alt={user.name || "Profile photo"} className="h-full w-full object-cover" />
@@ -395,26 +411,41 @@ export default function ProfilePage() {
         </div>
 
         <div className="flex flex-col items-center gap-1">
-          {editingTop ? (
+          {editingTop && editField === "name" ? (
             <div className="flex flex-col items-center">
               <input
+                autoFocus
                 value={nameDraft}
                 onChange={(e) => {
                   setNameDraft(e.target.value);
                   if (nameErr) setNameErr(null);
                 }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !nameError(nameDraft)) setEditField(null);
+                }}
                 maxLength={40}
                 aria-label="Name"
                 placeholder="Your name"
                 aria-invalid={nameErr ? true : undefined}
-                /* 16px so a phone doesn't zoom in on focus. */
+                /* 16px so a phone doesn't zoom in on focus. Red only when
+                   something is actually wrong. */
                 className={`w-56 border-b bg-transparent text-center text-base font-medium text-text focus:outline-none ${
-                  nameErr ? "border-danger" : "border-primary"
+                  nameErr ? "border-danger" : "border-border"
                 }`}
               />
               {/* The name everyone else sees — it has to be one (lib/onboarding). */}
               {nameErr && <span className="mt-1 text-[11px] text-danger">{nameErr}</span>}
             </div>
+          ) : editingTop ? (
+            <button
+              type="button"
+              onClick={() => setEditField("name")}
+              aria-label="Edit name"
+              className="flex items-center gap-1.5 text-center text-base font-medium text-text"
+            >
+              {nameDraft || "Your name"}
+              <IconPencil size={12} className="text-muted" />
+            </button>
           ) : (
             <div className="text-center text-base font-medium text-text">{user.name || "Your name"}</div>
           )}
@@ -448,18 +479,29 @@ export default function ProfilePage() {
       {/* Bio — its own block under the identity, down the same centre line. */}
       <div className="border-b border-border px-3.5 py-3 text-center">
         <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">Bio</div>
-        {editingTop ? (
+        {editingTop && editField === "bio" ? (
           <div>
             <textarea
+              autoFocus
               value={bioDraft}
               onChange={(e) => setBioDraft(e.target.value)}
               maxLength={160}
               aria-label="Bio"
               placeholder="Add a short bio"
-              className="min-h-[96px] w-full resize-none rounded-lg border border-primary bg-surface-2 px-3 py-2 text-center text-base text-text focus:outline-none"
+              className="min-h-[96px] w-full resize-none rounded-lg border border-border bg-surface-2 px-3 py-2 text-center text-base text-text focus:outline-none"
             />
             <div className="mt-1 text-right text-[11px] text-muted">{bioDraft.length} / 160</div>
           </div>
+        ) : editingTop ? (
+          <button
+            type="button"
+            onClick={() => setEditField("bio")}
+            aria-label="Edit bio"
+            className="w-full text-[13px] leading-relaxed text-muted"
+          >
+            {bioDraft || "Add a short bio"}
+            <IconPencil size={11} className="ml-1.5 inline-block align-[-1px]" />
+          </button>
         ) : (
           <p className="text-[13px] leading-relaxed text-muted">
             {user.bio || "Add a short bio with the pencil above."}
