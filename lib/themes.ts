@@ -47,22 +47,24 @@ export type ThemeTokens = {
   */
   cardShadow: string;
   /*
-    INK — the near-black used for the one strip on a card that you PRESS (the
-    foot of a gym card, with the chevron). It is a token and not a hex because
-    "almost black" is not the same colour in both modes: on a white page it is
-    true ink, on a near-black page it is a shade DARKER than the page, so the
-    strip still reads as a separate, recessed thing rather than disappearing.
-    Text on it uses `inkContrast`; everything else inside re-derives from the
-    school's own colours (see `.on-ink` in app/globals.css).
+    INK — the surface of the one strip on a card that you PRESS (the foot of a
+    gym card, with the chevron). It is `surface2` taken about 20% darker, so
+    the strip reads as the pressable part without becoming a black bar: the
+    owner tried true black on 2026-09-14 and called it too much.
+
+    It is a token rather than a hex because "a step darker" is a different
+    colour in each mode, and because a school with its own neutrals should get
+    its own strip for free. `inkContrast` is whatever reads ON it — dark ink on
+    the light strip, near-white on the dark one.
   */
   ink: string;
   inkContrast: string;
   /*
-    How far the school's colours are lifted toward `inkContrast` when they sit
-    on the ink strip. On a white page the whole palette was picked to read on
-    white, so crimson and the status greens have to be pulled a long way up to
-    survive on black. On a near-black page they already work, so the lift is
-    almost nothing and the school keeps its exact colour.
+    How far the school's own colours are pulled TOWARD `inkContrast` when they
+    sit on the strip. The direction takes care of itself: on the light strip
+    that darkens crimson and the status greens, on the dark strip it lightens
+    them. Only the amount differs, because the dark strip is the further of the
+    two from the colours the palette was drawn for.
   */
   inkLift: string;
 };
@@ -87,9 +89,9 @@ export const neutralTheme: ThemeTokens = {
   danger: "#dc2626",
   overlayShadow: "0 -10px 30px rgba(15, 15, 25, 0.12)",
   cardShadow: "0 1px 2px rgba(20, 22, 24, 0.05), 0 4px 14px rgba(20, 22, 24, 0.04)",
-  ink: "#16181b",
-  inkContrast: "#ffffff",
-  inkLift: "42%",
+  ink: "#b2b6ba",
+  inkContrast: "#141618",
+  inkLift: "48%",
 };
 
 export type University = {
@@ -166,9 +168,9 @@ export const darkNeutrals = {
   overlayShadow: "0 -10px 30px rgba(0, 0, 0, 0.55)",
   cardShadow: "0 1px 2px rgba(0, 0, 0, 0.35)",
   // A step BELOW the page (#090b0e), so the strip reads as recessed.
-  ink: "#040507",
+  ink: "#1c1e21",
   inkContrast: "#edeef0",
-  inkLift: "30%",
+  inkLift: "40%",
 };
 
 export const lightNeutrals = {
@@ -187,9 +189,9 @@ export const lightNeutrals = {
   danger: "#dc2626",
   overlayShadow: "0 -10px 30px rgba(15, 15, 25, 0.12)",
   cardShadow: "0 1px 2px rgba(20, 22, 24, 0.05), 0 4px 14px rgba(20, 22, 24, 0.04)",
-  ink: "#16181b",
-  inkContrast: "#ffffff",
-  inkLift: "42%",
+  ink: "#b2b6ba",
+  inkContrast: "#141618",
+  inkLift: "48%",
 };
 
 type Brand = { primary: string; primaryLive: string; primaryContrast: string; accent: string };

@@ -74,8 +74,8 @@ function StatsRow({
   going: GoingSummary | null;
 }) {
   return (
-    /* The part you PRESS: near-black, so the card's foot reads as a control
-       rather than as more card. `on-ink` re-points the text tokens for
+    /* The part you PRESS: a step darker than the card, so the foot reads as a
+       control rather than as more card. `on-ink` re-points the text tokens for
        everything inside (see app/globals.css). */
     <div className="flex flex-col gap-1.5 bg-ink on-ink px-3 py-2.5">
       {/* The Buddy Board, one line: who has already said they're going here.
