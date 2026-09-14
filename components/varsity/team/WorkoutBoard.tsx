@@ -91,6 +91,7 @@ export default function WorkoutBoard({
   workouts,
   allResults,
   example = false,
+  inConsole = false,
   myId,
   onClose,
   onOpenWorkout,
@@ -102,6 +103,11 @@ export default function WorkoutBoard({
   /* A worked example, not the squad's own results. Nobody real is on it, so
      the block at the top stands in for you rather than being you — see `top`. */
   example?: boolean;
+  /* Opened from the Coach Console. A coach never pulled the piece, so there
+     is no "you" to put on top, and the stand-in rower ("Sam Gallaudet · 21 of
+     40") read as if the coach had picked someone out. The owner wants the
+     whole list and nothing above it (2026-09-13). */
+  inConsole?: boolean;
   myId: string | null;
   onClose: () => void;
   /* Open another team workout in this board's place — how a previous edition
@@ -151,7 +157,9 @@ export default function WorkoutBoard({
     putting the viewer's name on a 2k they never pulled. (It wore an EXAMPLE
     tag too; the owner had it taken off on 2026-09-13.)
   */
-  const top = mine ?? (example ? board.rows[Math.floor(board.rows.length / 2)] : undefined);
+  const top = inConsole
+    ? undefined
+    : (mine ?? (example ? board.rows[Math.floor(board.rows.length / 2)] : undefined));
 
   return (
     /*

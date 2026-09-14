@@ -68,7 +68,7 @@ function outingDateLabel(dayKey: string): string {
 
 type Row ={ key: string; date: Date; erg?: TeamWorkout; water?: Outing };
 
-export default function TeamWorkouts() {
+export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolean } = {}) {
   const { userId } = useAppState();
   const { membership } = useMembership();
   const teamId = membership?.teamId ?? null;
@@ -282,6 +282,7 @@ export default function TeamWorkouts() {
           workouts={workouts}
           allResults={results}
           example={example}
+          inConsole={inConsole}
           myId={userId}
           onClose={() => setOpen(null)}
           onOpenWorkout={(dayKey) => setOpen(dayKey)}

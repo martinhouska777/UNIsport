@@ -8,5 +8,5 @@
 import TeamScreen from "@/components/varsity/team/TeamScreen";
 
 export default function CoachWorkoutsPage() {
-  return <TeamScreen only="workouts" />;
+  return <TeamScreen only="workouts" inConsole />;
 }

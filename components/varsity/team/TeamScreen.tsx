@@ -400,14 +400,48 @@ function RosterRow({
   onOpen,
   href,
   tour,
+  action,
 }: {
   a: Athlete;
   onOpen: () => void;
   href?: string;
   tour?: string;
+  /* The coach's note button, between the name and the side (see rowAction). */
+  action?: React.ReactNode;
 }) {
   const cls =
     "relative flex w-full items-center gap-3 rounded-xl border border-border bg-surface px-3 py-2.5 text-left active:bg-surface-2";
+  if (action) {
+    /*
+      WITH A BUTTON IN THE ROW. A button can't sit inside the link, so the
+      link is stretched invisibly across the whole row underneath, and the
+      note button sits above it: tap the button, you write a note; tap
+      anywhere else, the rower opens — the same as a row without one.
+    */
+    return (
+      <div className="relative flex w-full items-center gap-3 rounded-xl border border-border bg-surface px-3 py-2.5">
+        {href ? (
+          <Link href={href} data-tour={tour} aria-label={a.name} className="absolute inset-0 rounded-xl active:bg-surface-2" />
+        ) : (
+          <button type="button" onClick={onOpen} data-tour={tour} aria-label={a.name} className="absolute inset-0 rounded-xl active:bg-surface-2" />
+        )}
+        <span className="pointer-events-none relative flex h-9 w-9 flex-shrink-0 items-center justify-center overflow-hidden rounded-lg bg-primary-tint text-primary">
+          <IconUser size={18} />
+        </span>
+        <span className="pointer-events-none relative min-w-0 flex-1 truncate text-[13px] font-medium text-text">{a.name}</span>
+        <span className="relative z-10 flex-shrink-0">{action}</span>
+        {/* A fixed width, so the note buttons line up down the list
+            whatever the side says — "Port" is half as wide as "Starboard". */}
+        <span className="pointer-events-none relative flex w-[4.25rem] flex-shrink-0 items-center gap-1 text-[11px] text-muted">
+          <span className="h-2 w-2 flex-shrink-0 rounded-full" style={sideDot(a)} />
+          {sideLabel(a)}
+        </span>
+        <span className="pointer-events-none relative text-muted">
+          <IconChevronRight size={15} />
+        </span>
+      </div>
+    );
+  }
   const inner = (
     <>
       {/*
@@ -454,21 +488,27 @@ type Tab = "roster" | "workouts";
   tab renders this exact component. The only difference a coach gets is
   `athleteHref`: for a rower who is also a real account on this squad it returns
   the link to their full training screen, which is a permission an athlete does
-  not have. Everything else — roster, workouts, the erg boards, the water
+  not have. And `rowAction`, the technical-note button on each roster row, and
+  `inConsole`, which keeps the stand-in rower off the top of a board. Everything else — roster, workouts, the erg boards, the water
   telemetry — is identical, on purpose: a coach and a rower should be looking
   at the same numbers.
 */
 export default function TeamScreen({
   athleteHref,
   only,
-  topAction,
+  rowAction,
+  inConsole = false,
 }: {
   athleteHref?: (a: Athlete) => string | null;
   /* The Coach Console shows the two halves as two bottom tabs (Team = roster,
      Workouts = the boards), so it asks for one half and gets no switch. */
   only?: Tab;
-  /* Something to put above the roster — the coach's "Write a technical note". */
-  topAction?: React.ReactNode;
+  /* A button in each roster row, between the name and the side — the coach's
+     technical note (owner, 2026-09-13: it used to be one big "Write a
+     technical note" button on top of the list). Athletes get no button. */
+  rowAction?: (a: Athlete) => React.ReactNode;
+  /* The Coach Console — see WorkoutBoard's `inConsole`. */
+  inConsole?: boolean;
 } = {}) {
   const [picked, setTab] = useState<Tab>("roster");
   const tab = only ?? picked;
@@ -518,7 +558,6 @@ export default function TeamScreen({
 
       {tab === "roster" ? (
         <>
-          {topAction && <div className={only ? "mb-3" : "mt-3"}>{topAction}</div>}
           {/* search */}
           <div className={`${only ? "" : "mt-3 "}flex items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2.5`}>
             <span className="text-muted">
@@ -540,6 +579,7 @@ export default function TeamScreen({
                 tour={i === 0 ? "coach-team-first-rower" : undefined}
                 onOpen={() => setOpen(a.id)}
                 href={athleteHref?.(a) ?? undefined}
+                action={rowAction?.(a)}
               />
             ))}
             {/* Coxswains, under their own heading — only when there are any to show. */}
@@ -554,6 +594,7 @@ export default function TeamScreen({
                 a={a}
                 onOpen={() => setOpen(a.id)}
                 href={athleteHref?.(a) ?? undefined}
+                action={rowAction?.(a)}
               />
             ))}
             {shownCount === 0 && (
@@ -564,7 +605,7 @@ export default function TeamScreen({
           </div>
         </>
       ) : (
-        <TeamWorkouts />
+        <TeamWorkouts inConsole={inConsole} />
       )}
 
       {open && <AthleteSheet athleteId={open} onClose={() => setOpen(null)} />}
