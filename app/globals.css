@@ -94,6 +94,10 @@
   */
   --color-primary-tint: color-mix(in oklab, var(--primary) 14%, transparent);
   --color-primary-line: color-mix(in oklab, var(--primary) 38%, transparent);
+  /* Chat: your own bubble is a pale, OPAQUE wash of the school colour on the
+     card surface (WhatsApp's mint), so text stays dark and the card shadow
+     reads; the other side's bubble is the plain card. */
+  --color-bubble-mine: color-mix(in oklab, var(--primary) 18%, var(--surface));
   --color-accent-tint: color-mix(in oklab, var(--accent) 13%, transparent);
   --color-accent-line: color-mix(in oklab, var(--accent) 36%, transparent);
   --color-success-tint: color-mix(in oklab, var(--success) 13%, transparent);

@@ -190,7 +190,7 @@ export default function ChannelThread({
             <div key={m.id} className="flex flex-col gap-3">
               {showDay && (
                 <div className="flex justify-center py-1">
-                  <span className="rounded-lg bg-surface-2 px-3 py-1 text-[11px] text-muted">
+                  <span className="rounded-lg bg-surface px-3 py-1 text-[11px] text-muted shadow-card">
                     {dayLabel(m.createdAt)}
                   </span>
                 </div>
@@ -206,7 +206,7 @@ export default function ChannelThread({
                       {clockTime(m.createdAt)}
                     </span>
                   </div>
-                  <div className="inline-block rounded-[4px_16px_16px_16px] bg-surface-2 px-3 py-2 text-[12px] leading-relaxed text-text">
+                  <div className="inline-block max-w-full whitespace-pre-wrap break-words rounded-[2px_10px_10px_10px] bg-surface px-2.5 py-1.5 text-[13px] leading-snug text-text shadow-card">
                     {m.body}
                   </div>
                 </div>

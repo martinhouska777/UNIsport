@@ -112,11 +112,6 @@ export default function DmThread({
     setMessages((prev) => [...(prev ?? []), msg]);
   };
 
-  // The receipt (Delivered/Read) is shown only under my most recent message.
-  const lastMineIndex = messages
-    ? messages.map((m) => m.senderId === currentUserId).lastIndexOf(true)
-    : -1;
-
   return (
     <div className="flex h-full min-h-0 flex-col">
       {/* Header — tapping the avatar/name opens the person's profile. */}
@@ -174,7 +169,7 @@ export default function DmThread({
             <div key={m.id} className="flex flex-col gap-2">
               {showDay && (
                 <div className="flex justify-center py-1">
-                  <span className="rounded-lg bg-surface-2 px-3 py-1 text-[11px] text-muted">
+                  <span className="rounded-lg bg-surface px-3 py-1 text-[11px] text-muted shadow-card">
                     {dayLabel(m.createdAt)}
                   </span>
                 </div>
@@ -190,30 +185,37 @@ export default function DmThread({
                 />
               ) : (
               <div className={`flex ${mine ? "justify-end" : "justify-start"}`}>
-                <div className="max-w-[78%]">
-                  <div
-                    className={`px-3 py-2 text-[12px] leading-relaxed ${
-                      mine
-                        ? "rounded-[16px_16px_4px_16px] bg-primary-live text-primary-contrast"
-                        : "rounded-[16px_16px_16px_4px] bg-surface-2 text-text"
-                    }`}
-                  >
-                    {m.body}
-                  </div>
-                  <div
-                    className={`mt-1 text-[11px] text-muted ${mine ? "text-right" : "text-left"}`}
-                  >
+                <div
+                  className={`max-w-[78%] px-2.5 pb-1.5 pt-1.5 text-[13px] leading-snug text-text shadow-card ${
+                    mine
+                      ? "rounded-[10px_10px_2px_10px] bg-bubble-mine"
+                      : "rounded-[10px_10px_10px_2px] bg-surface"
+                  }`}
+                >
+                  <span className="whitespace-pre-wrap break-words">{m.body}</span>
+                  {/* WhatsApp-style: the time sits inside the bubble, tucked to the
+                      right of the last line (or under it when the line is full). */}
+                  <span className="float-right ml-2 mt-[5px] flex items-center gap-1 whitespace-nowrap text-[10px] leading-none text-muted">
                     {clockTime(m.createdAt)}
-                    {mine && i === lastMineIndex && (
-                      <span>
-                        {" · "}
-                        {peerReadAt &&
-                        new Date(peerReadAt).getTime() >= new Date(m.createdAt).getTime()
-                          ? "Read"
-                          : "Delivered"}
+                    {mine && (
+                      <span
+                        className={`text-[11px] tracking-[-0.2em] ${
+                          peerReadAt &&
+                          new Date(peerReadAt).getTime() >= new Date(m.createdAt).getTime()
+                            ? "text-success"
+                            : "text-muted"
+                        }`}
+                        aria-label={
+                          peerReadAt &&
+                          new Date(peerReadAt).getTime() >= new Date(m.createdAt).getTime()
+                            ? "Read"
+                            : "Delivered"
+                        }
+                      >
+                        ✓✓
                       </span>
                     )}
-                  </div>
+                  </span>
                 </div>
               </div>
               )}
