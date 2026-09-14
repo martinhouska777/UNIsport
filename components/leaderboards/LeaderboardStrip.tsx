@@ -175,16 +175,16 @@ export default function LeaderboardStrip({
               <IconRank
                 icon={
                   team ? (
-                    <HouseShield primary={team.colors.primary} secondary={team.colors.secondary} size={22} />
+                    <HouseShield primary={team.colors.primary} secondary={team.colors.secondary} size={28} />
                   ) : (
-                    <UniversityCrest size={22} />
+                    <UniversityCrest size={28} />
                   )
                 }
                 value={ordinal(standing.houseRankIn)}
                 label={house ?? team?.label ?? "Your house"}
               />
             )}
-            <IconRank fixed icon={<UniversityCrest size={22} />} value={`#${standing.campusRank}`} label="Campus" />
+            <IconRank fixed icon={<UniversityCrest size={28} />} value={`#${standing.campusRank}`} label="Campus" />
           </div>
         </div>
       ) : ranked && standing ? (
