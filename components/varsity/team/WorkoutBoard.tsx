@@ -25,9 +25,9 @@
   All colours are theme tokens; the session's category dot is a content colour
   from data applied via inline style (the rule-1 exception the plan screens use).
 */
+import Medal from "@/components/leaderboards/Medal";
 import { useMemo, useState } from "react";
 import Sheet from "@/components/varsity/Sheet";
-import { ExampleTag } from "@/components/varsity/ExampleTag";
 import ResultDetail from "@/components/varsity/team/ResultDetail";
 import BoardTable from "@/components/varsity/team/BoardTable";
 import Delta from "@/components/varsity/team/Delta";
@@ -147,8 +147,9 @@ export default function WorkoutBoard({
     Normally it is YOU. On the WORKED EXAMPLE nobody real is on the board, so
     there was no top row at all and the screen could not be seen before the
     squad had logged anything. It now stands in with the median rower, under
-    their own (invented) name and an EXAMPLE tag — so the block can be read and
-    pressed, without putting the viewer's name on a 2k they never pulled.
+    their own (invented) name — so the block can be read and pressed, without
+    putting the viewer's name on a 2k they never pulled. (It wore an EXAMPLE
+    tag too; the owner had it taken off on 2026-09-13.)
   */
   const top = mine ?? (example ? board.rows[Math.floor(board.rows.length / 2)] : undefined);
 
@@ -205,12 +206,9 @@ export default function WorkoutBoard({
                   You
                 </span>
               ) : (
-                <>
-                  <ExampleTag />
-                  <span className="min-w-0 truncate text-[13px] font-semibold text-text">
-                    {top.result.athleteName || "Unnamed"}
-                  </span>
-                </>
+                <span className="min-w-0 truncate text-[13px] font-semibold text-text">
+                  {top.result.athleteName || "Unnamed"}
+                </span>
               )}
               {ranked && top.rank != null && (
                 <span className="flex-shrink-0 text-[12px] text-muted">
@@ -335,13 +333,18 @@ export default function WorkoutBoard({
               } ${row.mine ? "bg-primary-tint" : "active:bg-surface-2"}`}
             >
               {ranked && (
-                <span
-                  className={`w-5 flex-shrink-0 text-center text-[12px] font-semibold ${
-                    row.rank != null && row.rank <= 3 ? "text-primary" : "text-muted"
-                  }`}
-                >
-                  {row.rank ?? "—"}
-                </span>
+                /* The top three wear a medal (owner, 2026-09-13) — the same
+                   one the app's leaderboards use. Everyone else keeps the
+                   number. */
+                row.rank != null && row.rank <= 3 ? (
+                  <span className="flex w-5 flex-shrink-0 justify-center">
+                    <Medal place={row.rank as 1 | 2 | 3} rank={row.rank} size={20} />
+                  </span>
+                ) : (
+                  <span className="w-5 flex-shrink-0 text-center text-[12px] font-semibold text-muted">
+                    {row.rank ?? "—"}
+                  </span>
+                )
               )}
               {/* No initials tile. On a board of forty names it was forty
                   identical squares repeating the first letters of the name

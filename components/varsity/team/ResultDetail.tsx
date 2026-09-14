@@ -18,7 +18,7 @@
   And the question a single result can never answer on its own: AM I GETTING
   FASTER. Under the piece, with no heading over it, is this ONE person's run of
   it: every go newest first — the result big (time on a 2K, metres on a 30'),
-  the split / rate / watts / W/kg under it, the change on the go before as a
+  the split / rate / watts under it, the change on the go before as a
   chip, and a bar where the best go is the longest. Each earlier edition is a
   button: tapping it opens THAT day's board in place of this one
   (onOpenWorkout), so a run of results can be walked back through. "Same piece"
@@ -28,7 +28,7 @@
   EVERY BAR IS THE SAME COLOUR, on the reps and on the run. Length is the whole
   message: a bar picked out in green or crimson makes the eye read the colour
   first and then need a sentence underneath explaining what the colour meant.
-  The words that matter — "this one", "Best" — are words.
+  The word that matters — "Best" — is a word.
 
   All colours are theme tokens.
 */
@@ -282,12 +282,11 @@ export default function ResultDetail({
               const canOpen = !current && !!onOpenWorkout;
               const eSplit = e.mine.splitSec;
               const eWatts = deriveWatts(e.mine.watts, eSplit);
-              const eWkg = wattsPerKg(eWatts, e.mine.weightKg);
               const secondary = [
                 eSplit != null ? `${secToSplit(eSplit, true)} /500m` : null,
                 e.mine.strokeRate != null ? `r${e.mine.strokeRate}` : null,
                 eWatts != null ? `${Math.round(eWatts)} W` : null,
-                eWkg != null ? `${eWkg.toFixed(2)} W/kg` : null,
+                /* No W/kg on these lines (owner, 2026-09-13). */
               ]
                 .filter(Boolean)
                 .join(" · ");
@@ -306,11 +305,8 @@ export default function ResultDetail({
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5 text-[12px] text-text">
                         <span className="truncate font-medium">{e.workout.dateLabel}</span>
-                        {current && (
-                          <span className="flex-shrink-0 text-[10px] font-semibold uppercase tracking-wide text-primary">
-                            this one
-                          </span>
-                        )}
+                        {/* No "this one" (owner, 2026-09-13): the row you
+                            opened is already tinted. Only "Best" is said. */}
                         {e.best && (
                           <span className="flex flex-shrink-0 items-center gap-0.5 text-[10px] font-bold uppercase tracking-wide text-accent">
                             <IconStar size={10} /> Best
@@ -337,8 +333,8 @@ export default function ResultDetail({
                   </div>
                   <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-surface-2">
                     <div
-                      /* One colour here too — "Best" and "this one" are
-                         already said in words on the row above. */
+                      /* One colour here too — "Best" is already said in
+                         words on the row above. */
                       className="h-full rounded-full bg-muted"
                       style={{ width: `${Math.round(e.frac * 100)}%` }}
                     />

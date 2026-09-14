@@ -19,6 +19,7 @@
 
   All colours are theme tokens.
 */
+import Medal from "@/components/leaderboards/Medal";
 import { useUnits } from "@/components/useUnits";
 import { formatWeight } from "@/lib/varsity/units";
 import { secToSplit, secToClock, deriveWatts, wattsPerKg } from "@/lib/varsity/ergMath";
@@ -114,15 +115,17 @@ export default function BoardTable({
                   {/* Rank in its own fixed column, so every name starts at the
                       same place whether it is 1 or 24. */}
                   <span className="flex items-center gap-2">
-                    {ranked && (
-                      <span
-                        className={`w-5 flex-shrink-0 text-right text-[12px] font-semibold ${
-                          row.rank != null && row.rank <= 3 ? "text-primary" : "text-muted"
-                        }`}
-                      >
-                        {row.rank ?? "—"}
-                      </span>
-                    )}
+                    {ranked &&
+                      (row.rank != null && row.rank <= 3 ? (
+                        /* Medals for the top three, as on the list. */
+                        <span className="flex w-5 flex-shrink-0 justify-end">
+                          <Medal place={row.rank as 1 | 2 | 3} rank={row.rank} size={18} />
+                        </span>
+                      ) : (
+                        <span className="w-5 flex-shrink-0 text-right text-[12px] font-semibold text-muted">
+                          {row.rank ?? "—"}
+                        </span>
+                      ))}
                     <span className="max-w-[8.5rem] truncate">{r.athleteName || "Unnamed"}</span>
                   </span>
                 </th>

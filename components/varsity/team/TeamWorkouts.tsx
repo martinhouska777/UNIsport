@@ -38,12 +38,9 @@
   RANKED and the telemetry source (PEACH / SPEEDCOACH); all three came off on
   the owner's call — four pills down one line is a row you have to decode.
 
-  THE EXAMPLE STILL SAYS SO, where it cannot be missed instead of where it was
-  merely present: on the result row at the top of the board it opens
-  (components/varsity/ExampleTag → WorkoutBoard), and on the water side as a
-  line across the top of the outing. It has to say it somewhere, because a
-  rower on their first day cannot otherwise tell a made-up 2k board from the
-  squad's. What it must never do is write the VIEWER'S name onto a made-up
+  THE EXAMPLE NO LONGER SAYS SO anywhere (owner, 2026-09-13): the tag on the
+  board's top row and the line across the top of the water outing both came
+  off. What it must still never do is write the VIEWER'S name onto a made-up
   result: seeing yourself ranked 22nd at a split you never pulled is not a
   lesson about the board, it is a lie about you.
 */
@@ -84,7 +81,6 @@ export default function TeamWorkouts() {
   const [open, setOpen] = useState<string | null>(null);
   // the water side
   const [outings, setOutings] = useState<Outing[]>([]);
-  const [exampleWater, setExampleWater] = useState(false); // the outing is the worked example
   const [openOuting, setOpenOuting] = useState<string | null>(null);
 
   useEffect(() => {
@@ -135,9 +131,8 @@ export default function TeamWorkouts() {
         setOutings(list);
       } else {
         // No import yet → the one transcribed outing, so the water side can
-        // be looked at (see demoTelemetry.ts) — tagged as the example it is.
+        // be looked at (see demoTelemetry.ts).
         setOutings(demoOutings);
-        setExampleWater(true);
       }
     });
     return () => {
@@ -220,8 +215,7 @@ export default function TeamWorkouts() {
                         what you are about to read: erg or water. RANKED went
                         — it is the shape of the board, which the board itself
                         shows the moment it opens — and so did EXAMPLE, on the
-                        owner's call; the example still says so where it can't
-                        be missed, on the row that opens inside the board. */}
+                        owner's call. */}
                     <span className="flex-shrink-0 rounded border border-border px-1.5 py-px text-[8px] font-bold uppercase tracking-[0.08em] text-muted">
                       Erg
                     </span>
@@ -276,7 +270,6 @@ export default function TeamWorkouts() {
           outing={openedOuting}
           dateLabel={outingDateLabel(openedOuting.dayKey)}
           allOutings={outings}
-          example={exampleWater}
           onClose={() => setOpenOuting(null)}
         />
       )}
