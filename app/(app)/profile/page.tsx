@@ -356,13 +356,13 @@ export default function ProfilePage() {
       </div>
 
       {/*
-        1 · WHO YOU ARE — your name first, then the photo with the three
-        counts beside it, then the rest of you (owner, 2026-09-14, picking the
-        "lines only" preview and then asking for the Instagram order):
+        1 · WHO YOU ARE — the photo on the left, and beside it your name with
+        the three counts under it, then the rest of you (owner, 2026-09-14,
+        picking the "lines only" preview and then Instagram's own arrangement,
+        where the name sits above the followers rather than above the photo):
 
-          Martin Houska
-
-          ( photo )   48 | 12 | 96
+          ( photo )   Martin Houska
+                      48 | 12 | 96
                       workouts partners followers
 
           Mather House · Class of 2029
@@ -379,51 +379,7 @@ export default function ProfilePage() {
         Photo, name and bio are still edited from the pencil in the top bar
         (see editingTop); only the arrangement changed.
       */}
-      {/* YOUR NAME leads the page, above the photo and the counts (owner,
-          2026-09-14: "same as Instagram" — there the handle sits at the top
-          and everything else hangs off it). */}
-      <div className="px-3.5 pt-4">
-        {editingTop && editField === "name" ? (
-          <div>
-            <input
-              autoFocus
-              value={nameDraft}
-              onChange={(e) => {
-                setNameDraft(e.target.value);
-                if (nameErr) setNameErr(null);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !nameError(nameDraft)) setEditField(null);
-              }}
-              maxLength={40}
-              aria-label="Name"
-              placeholder="Your name"
-              aria-invalid={nameErr ? true : undefined}
-              /* 16px so a phone doesn't zoom in on focus. Red only when
-                 something is actually wrong. */
-              className={`w-full border-b bg-transparent text-base font-medium text-text focus:outline-none ${
-                nameErr ? "border-danger" : "border-border"
-              }`}
-            />
-            {/* The name everyone else sees — it has to be one (lib/onboarding). */}
-            {nameErr && <span className="mt-1 block text-[11px] text-danger">{nameErr}</span>}
-          </div>
-        ) : editingTop ? (
-          <button
-            type="button"
-            onClick={() => setEditField("name")}
-            aria-label="Edit name"
-            className="flex items-center gap-1.5 text-left text-base font-medium text-text"
-          >
-            {nameDraft || "Your name"}
-            <IconPencil size={12} className="text-muted" />
-          </button>
-        ) : (
-          <div className="text-base font-medium text-text">{user.name || "Your name"}</div>
-        )}
-      </div>
-
-      <div className="flex items-center gap-4 px-3.5 pb-3 pt-2.5">
+      <div className="flex items-center gap-4 px-3.5 pb-3 pt-4">
         <div className="relative shrink-0">
           {/* While editing, the photo itself is a tap target too, not just
               the little camera on its edge. */}
@@ -462,46 +418,92 @@ export default function ProfilePage() {
           )}
         </div>
 
-        {/* THE THREE COUNTS, beside the photo. Three EQUAL columns so the two
-            hairlines land at exactly a third and two thirds. They show a dash
-            until the numbers have landed, so the row never jumps. The labels
-            drop to 10px here because a third of the space next to a photo is
-            narrower than a third of the screen was. */}
-        <div className="grid min-w-0 flex-1 grid-cols-3">
-          {stats.map((s, i) => {
-            const body = (
-              <>
-                <div className="text-[17px] font-medium tabular-nums text-text">
-                  {statsReady ? s.value : "—"}
-                </div>
-                <div
-                  className={`mt-0.5 truncate text-[10px] uppercase tracking-[0.04em] ${
-                    s.onClick ? "text-primary" : "text-muted"
-                  }`}
-                >
-                  {s.label}
-                </div>
-              </>
-            );
-            return (
-              <div
-                key={s.label}
-                className={`flex min-w-0 items-stretch ${i > 0 ? "border-l border-border" : ""}`}
-              >
-                {s.onClick ? (
-                  <button
-                    type="button"
-                    onClick={s.onClick}
-                    className="w-full min-w-0 rounded-md px-0.5 text-center transition-colors active:bg-surface-2"
+        {/* THE RIGHT-HAND COLUMN — your name, and the three counts under it
+            (owner, 2026-09-14: on Instagram the name sits above the followers,
+            not above the picture). The photo is centred against the pair, so a
+            name long enough to wrap makes the row taller rather than pushing
+            anything sideways. */}
+        <div className="flex min-w-0 flex-1 flex-col gap-2.5">
+          {editingTop && editField === "name" ? (
+            <div>
+              <input
+                autoFocus
+                value={nameDraft}
+                onChange={(e) => {
+                  setNameDraft(e.target.value);
+                  if (nameErr) setNameErr(null);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !nameError(nameDraft)) setEditField(null);
+                }}
+                maxLength={40}
+                aria-label="Name"
+                placeholder="Your name"
+                aria-invalid={nameErr ? true : undefined}
+                /* 16px so a phone doesn't zoom in on focus. Red only when
+                   something is actually wrong. */
+                className={`w-full border-b bg-transparent text-base font-medium text-text focus:outline-none ${
+                  nameErr ? "border-danger" : "border-border"
+                }`}
+              />
+              {/* The name everyone else sees — it has to be one (lib/onboarding). */}
+              {nameErr && <span className="mt-1 block text-[11px] text-danger">{nameErr}</span>}
+            </div>
+          ) : editingTop ? (
+            <button
+              type="button"
+              onClick={() => setEditField("name")}
+              aria-label="Edit name"
+              className="flex items-center gap-1.5 text-left text-base font-medium text-text"
+            >
+              {nameDraft || "Your name"}
+              <IconPencil size={12} className="text-muted" />
+            </button>
+          ) : (
+            <div className="text-base font-medium text-text">{user.name || "Your name"}</div>
+          )}
+
+          {/* Three EQUAL columns, so the two hairlines land at exactly a third
+              and two thirds. They show a dash until the numbers have landed, so
+              the row never jumps. The labels are 10px here because a third of
+              the space next to a photo is narrower than a third of the screen
+              was. */}
+          <div className="grid grid-cols-3">
+            {stats.map((s, i) => {
+              const body = (
+                <>
+                  <div className="text-[17px] font-medium tabular-nums text-text">
+                    {statsReady ? s.value : "—"}
+                  </div>
+                  <div
+                    className={`mt-0.5 truncate text-[10px] uppercase tracking-[0.04em] ${
+                      s.onClick ? "text-primary" : "text-muted"
+                    }`}
                   >
-                    {body}
-                  </button>
-                ) : (
-                  <div className="w-full min-w-0 px-0.5 text-center">{body}</div>
-                )}
-              </div>
-            );
-          })}
+                    {s.label}
+                  </div>
+                </>
+              );
+              return (
+                <div
+                  key={s.label}
+                  className={`flex min-w-0 items-stretch ${i > 0 ? "border-l border-border" : ""}`}
+                >
+                  {s.onClick ? (
+                    <button
+                      type="button"
+                      onClick={s.onClick}
+                      className="w-full min-w-0 rounded-md px-0.5 text-center transition-colors active:bg-surface-2"
+                    >
+                      {body}
+                    </button>
+                  ) : (
+                    <div className="w-full min-w-0 px-0.5 text-center">{body}</div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
 
