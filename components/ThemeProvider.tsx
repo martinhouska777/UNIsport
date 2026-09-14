@@ -33,6 +33,18 @@ function tokensToCssVars(t: ThemeTokens): CSSProperties {
     "--danger": t.danger,
     "--overlay-shadow": t.overlayShadow,
     "--card-shadow": t.cardShadow,
+    "--ink": t.ink,
+    "--ink-contrast": t.inkContrast,
+    "--ink-lift": t.inkLift,
+    /*
+      The same four colours again, under -src names. A custom property may not
+      be defined in terms of itself, so `.on-ink` (app/globals.css) cannot write
+      `--primary: <something using --primary>`. It reads these instead.
+    */
+    "--primary-src": t.primary,
+    "--success-src": t.success,
+    "--warn-src": t.warn,
+    "--danger-src": t.danger,
   } as CSSProperties;
 }
 

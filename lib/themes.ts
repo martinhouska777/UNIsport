@@ -46,6 +46,25 @@ export type ThemeTokens = {
     globals.css, to the app's card idiom (`rounded-xl border bg-surface`).
   */
   cardShadow: string;
+  /*
+    INK — the near-black used for the one strip on a card that you PRESS (the
+    foot of a gym card, with the chevron). It is a token and not a hex because
+    "almost black" is not the same colour in both modes: on a white page it is
+    true ink, on a near-black page it is a shade DARKER than the page, so the
+    strip still reads as a separate, recessed thing rather than disappearing.
+    Text on it uses `inkContrast`; everything else inside re-derives from the
+    school's own colours (see `.on-ink` in app/globals.css).
+  */
+  ink: string;
+  inkContrast: string;
+  /*
+    How far the school's colours are lifted toward `inkContrast` when they sit
+    on the ink strip. On a white page the whole palette was picked to read on
+    white, so crimson and the status greens have to be pulled a long way up to
+    survive on black. On a near-black page they already work, so the lift is
+    almost nothing and the school keeps its exact colour.
+  */
+  inkLift: string;
 };
 
 // Zone 1 (pre-login) neutral brand. Mirrors the :root defaults in globals.css.
@@ -68,6 +87,9 @@ export const neutralTheme: ThemeTokens = {
   danger: "#dc2626",
   overlayShadow: "0 -10px 30px rgba(15, 15, 25, 0.12)",
   cardShadow: "0 1px 2px rgba(20, 22, 24, 0.05), 0 4px 14px rgba(20, 22, 24, 0.04)",
+  ink: "#16181b",
+  inkContrast: "#ffffff",
+  inkLift: "42%",
 };
 
 export type University = {
@@ -143,6 +165,10 @@ export const darkNeutrals = {
   danger: "#ef4444",
   overlayShadow: "0 -10px 30px rgba(0, 0, 0, 0.55)",
   cardShadow: "0 1px 2px rgba(0, 0, 0, 0.35)",
+  // A step BELOW the page (#090b0e), so the strip reads as recessed.
+  ink: "#040507",
+  inkContrast: "#edeef0",
+  inkLift: "30%",
 };
 
 export const lightNeutrals = {
@@ -161,6 +187,9 @@ export const lightNeutrals = {
   danger: "#dc2626",
   overlayShadow: "0 -10px 30px rgba(15, 15, 25, 0.12)",
   cardShadow: "0 1px 2px rgba(20, 22, 24, 0.05), 0 4px 14px rgba(20, 22, 24, 0.04)",
+  ink: "#16181b",
+  inkContrast: "#ffffff",
+  inkLift: "42%",
 };
 
 type Brand = { primary: string; primaryLive: string; primaryContrast: string; accent: string };
