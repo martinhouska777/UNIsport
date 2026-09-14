@@ -7,9 +7,10 @@
   profile: three numbers — where you sit among your housemates, where your house
   sits, and where you sit on campus — and a chevron into the full boards.
 
-  `compact` is the half-width card that shares a row with "Log a session" under
-  the calendar (that is what the Profile tab uses); it drops the house's own
-  rank so two numbers and the button fit a phone.
+  `compact` is the left part of the grey bar it shares with the "Log" button
+  under the calendar (that is what the Profile tab uses); it drops the house's
+  own rank so two numbers and the button fit a phone. The grey bar itself is
+  drawn by the Profile page, around both.
 
   It never shows a row of dashes. Before you've logged anything for the period
   there is no rank to report, so it becomes a single invitation instead; and it
@@ -37,9 +38,9 @@ const ordinal = (n: number): string => {
   return `${n}${["th", "st", "nd", "rd"][n % 10] ?? "th"}`;
 };
 
-function Cell({ value, label }: { value: string; label: string }) {
+function Cell({ value, label, left = false }: { value: string; label: string; left?: boolean }) {
   return (
-    <div className="min-w-0 flex-1 text-center">
+    <div className={`min-w-0 flex-1 ${left ? "text-left" : "text-center"}`}>
       <div className="truncate text-[15px] font-semibold leading-none text-text">{value}</div>
       <div className="mt-1 truncate text-[9px] uppercase tracking-[0.08em] text-muted">{label}</div>
     </div>
@@ -55,8 +56,8 @@ export default function LeaderboardStrip({
     COMPACT — the half-width version that shares a row with the "Log a session"
     button on the Profile tab. It drops the house's own rank (the one number of
     the three that isn't about YOU; the house race has the boards to itself) and
-    becomes a bordered card rather than a full-width band, so it balances the
-    filled button beside it. The full-width version is unchanged.
+    has no box of its own: it sits inside the Profile page's grey bar, left of
+    the button. The full-width version is unchanged.
   */
   compact?: boolean;
 }) {
@@ -81,7 +82,7 @@ export default function LeaderboardStrip({
   // Same height either way, so nothing below moves when the numbers land.
   if (!loaded)
     return compact ? (
-      <div className="min-h-[64px] min-w-0 flex-1 rounded-xl border border-border" />
+      <div className="min-h-[44px] min-w-0 flex-1" />
     ) : (
       <div className="h-[66px] border-b border-border" />
     );
@@ -101,7 +102,7 @@ export default function LeaderboardStrip({
       data-tour="profile-leaderboards"
       className={
         compact
-          ? "flex min-h-[64px] min-w-0 flex-1 items-center gap-2 rounded-xl border border-border bg-surface-2 px-2.5 py-2 active:bg-surface"
+          ? "flex min-h-[44px] min-w-0 flex-1 items-center gap-2.5 rounded-lg active:opacity-70"
           : "flex items-center gap-2.5 border-b border-border px-3.5 py-3.5 active:bg-surface-2"
       }
     >
@@ -121,7 +122,7 @@ export default function LeaderboardStrip({
         <div className="min-w-0 flex-1">
           {/* The word, so the two numbers say what they are ranks ON. */}
           {compact && (
-            <div className="mb-1 truncate text-center text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">
+            <div className="mb-1 truncate text-left text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">
               Leaderboards
             </div>
           )}
@@ -130,6 +131,7 @@ export default function LeaderboardStrip({
                 a rank exists the moment you've logged, and a group with a name
                 says the name. */}
             <Cell
+              left={compact}
               value={standing.houseRankIn ? ordinal(standing.houseRankIn) : `#${standing.campusRank}`}
               /* Compact drops the "in": on a 320px phone "IN MATHER" is what
                  pushes the labels into an ellipsis. */
@@ -174,8 +176,7 @@ export default function LeaderboardStrip({
         </div>
       )}
 
-      {/* No chevron on the compact card: the border already says it's a card
-          you can press, and every pixel goes to the numbers. */}
+      {/* No chevron on the compact version: every pixel goes to the numbers. */}
       {!compact && (
         <span className="flex-shrink-0 text-muted">
           <IconChevronRight size={16} />

@@ -371,7 +371,7 @@ export default function ProfilePage() {
         is the "Edit profile" button that came with it. Photo, name and bio are
         edited from the pencil in the top bar (see editingTop).
       */}
-      <div className="flex flex-col items-center gap-2 border-b border-border px-3.5 pb-3 pt-4">
+      <div className="flex flex-col items-center gap-2 px-3.5 pb-3 pt-4">
         <div className="relative">
           {/* While editing, the photo itself is a tap target too, not just
               the little camera on its edge. */}
@@ -476,8 +476,11 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* Bio — its own block under the identity, down the same centre line. */}
-      <div className="border-b border-border px-3.5 py-3 text-center">
+      {/* Bio — its own rounded grey card under the identity, down the same
+          centre line (the owner picked option 1 of three previews). No hairline
+          above it: the card itself does the separating. */}
+      <div className="px-3.5 pb-3">
+        <div className="rounded-xl bg-surface-2 px-4 py-3 text-center">
         <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">Bio</div>
         {editingTop && editField === "bio" ? (
           <div>
@@ -488,7 +491,7 @@ export default function ProfilePage() {
               maxLength={160}
               aria-label="Bio"
               placeholder="Add a short bio"
-              className="min-h-[96px] w-full resize-none rounded-lg border border-border bg-surface-2 px-3 py-2 text-center text-base text-text focus:outline-none"
+              className="min-h-[96px] w-full resize-none rounded-lg border border-border bg-surface px-3 py-2 text-center text-base text-text focus:outline-none"
             />
             <div className="mt-1 text-right text-[11px] text-muted">{bioDraft.length} / 160</div>
           </div>
@@ -507,6 +510,7 @@ export default function ProfilePage() {
             {user.bio || "Add a short bio with the pencil above."}
           </p>
         )}
+        </div>
       </div>
 
       {/* The three counts, full width under the bio, divided. Three EQUAL
@@ -514,7 +518,7 @@ export default function ProfilePage() {
           Partners is the same distance from both — with space-around the gaps
           followed the width of each word. They show a dash until the numbers
           have actually landed, so the row never jumps. */}
-      <div className="grid grid-cols-3 border-b border-border py-2.5">
+      <div className="grid grid-cols-3 border-y border-border py-2.5">
         {stats.map((s, i) => {
           const body = (
             <>
@@ -601,13 +605,15 @@ export default function ProfilePage() {
             </p>
           </button>
         ) : (
-          /* data-tour: the Profile tour opens on this button (lib/tour.ts). */
-          /* items-stretch + h-auto: the button is exactly as tall as the
-             leaderboard card beside it, not a shorter pill next to a box. */
-          <div className="flex items-stretch gap-2.5">
+          /* ONE GREY BAR (option 3 of the owner's previews): the ranks on the
+             left, a short "Log" button docked inside on the right. Two
+             siblings in a grey box rather than a button inside the link, so
+             tapping Log never also opens the boards.
+             data-tour: the Profile tour opens on this button (lib/tour.ts). */
+          <div className="flex items-center gap-2.5 rounded-2xl bg-surface-2 py-2.5 pl-3 pr-2.5">
             <LeaderboardStrip compact />
-            <Button data-tour="profile-log" size="md" className="h-auto!" onClick={() => setLogging(true)}>
-              <IconPlus size={15} /> Log a session
+            <Button data-tour="profile-log" size="md" className="h-11! shrink-0" onClick={() => setLogging(true)}>
+              <IconPlus size={15} /> Log
             </Button>
           </div>
         )}
