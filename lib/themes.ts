@@ -34,23 +34,31 @@ export type ThemeTokens = {
   danger: string;
   /*
     Elevation, for things floating ABOVE the page — bottom sheets, overlays.
-    Cards never get a shadow; they use a lighter surface instead. Per-theme,
-    because a shadow over near-black needs far more weight than one over white.
+    Per-theme, because a shadow over near-black needs far more weight than one
+    over white.
   */
   overlayShadow: string;
+  /*
+    The card lift (2026-09-14). Cards used to be flat — a lighter surface and
+    a solid 1px border. The owner picked a look where a card sits a hair above
+    the page instead: a very soft shadow plus a border at ~55% opacity, so the
+    edge reads as a tone rather than a drawn line. Applied once, in
+    globals.css, to the app's card idiom (`rounded-xl border bg-surface`).
+  */
+  cardShadow: string;
 };
 
 // Zone 1 (pre-login) neutral brand. Mirrors the :root defaults in globals.css.
 // No university colors are allowed here.
 export const neutralTheme: ThemeTokens = {
-  background: "#f6f6f7",
-  surface: "#ffffff",
-  surface2: "#eeeef0",
-  border: "#e4e4e7",
-  text: "#1c1c1f",
-  text2: "#2c313c",
-  text3: "#676d7a",
-  muted: "#4f5563",
+  background: "#ebf0f6",
+  surface: "#fafcfe",
+  surface2: "#dee3e9",
+  border: "rgba(203, 207, 213, 0.55)",
+  text: "#141618",
+  text2: "#3b3f47",
+  text3: "#676d76",
+  muted: "#4a4f58",
   primary: "#2f3b52",
   primaryLive: "#2f3b52", // already clears 3:1 on a light ground
   primaryContrast: "#ffffff",
@@ -59,6 +67,7 @@ export const neutralTheme: ThemeTokens = {
   warn: "#d97706",
   danger: "#dc2626",
   overlayShadow: "0 -10px 30px rgba(15, 15, 25, 0.12)",
+  cardShadow: "0 1px 2px rgba(20, 22, 24, 0.05), 0 4px 14px rgba(20, 22, 24, 0.04)",
 };
 
 export type University = {
@@ -106,40 +115,52 @@ export function universityTimezone(key: string | null | undefined): string {
 
 /*
   THE NEUTRALS are the app's own and do not change per school — a theme is a
-  school's HUES on the shared near-black (or near-white) chassis. Shared here
-  so adding a school stays a four-colour decision, not a twenty-colour one.
+  school's HUES on the shared chassis. Shared here so adding a school stays a
+  four-colour decision, not a twenty-colour one. Varsity Mode wears the same
+  chassis (lib/varsity/theme.ts), so the two halves of the app match.
+
+  THE CHASSIS ITSELF (2026-09-14). The owner chose these in the Colour Lab
+  after five drawn directions: not the old white-and-grey, but a cool
+  blue-cast set — oklch hue 256°, a light tint (25/100), page-to-card
+  contrast 50/100. The page is a pale blue-grey and the cards are almost
+  white, so a card reads as lifted without a hard edge; the border is the
+  same grey at 55% opacity (see ThemeTokens.cardShadow). The text ladder was
+  re-derived on the same hue so every step still clears its contrast floor
+  (muted >= 7:1 on the page, text3 >= 4.5:1 on a card) — the Lab's own muted
+  was too light for 9–11px labels and was darkened here.
 */
-const darkNeutrals = {
-  background: "#0b0b0c",
-  surface: "#161616",
-  surface2: "#1f1f1f",
-  border: "#272727",
-  text: "#f5f5f5",
-  text2: "#cdcdcd",
-  text3: "#828282", // the faintest grey that still clears 4.5:1 on a card
-  muted: "#8d8d8d",
+export const darkNeutrals = {
+  background: "#090b0e",
+  surface: "#171a1d",
+  surface2: "#232529",
+  border: "rgba(47, 50, 53, 0.55)",
+  text: "#edeef0",
+  text2: "#c3c4c6",
+  text3: "#808489", // the faintest grey that still clears 4.5:1 on a card
+  muted: "#8a8d92",
   success: "#22c55e",
   warn: "#f59e0b",
   danger: "#ef4444",
   overlayShadow: "0 -10px 30px rgba(0, 0, 0, 0.55)",
+  cardShadow: "0 1px 2px rgba(0, 0, 0, 0.35)",
 };
 
-const lightNeutrals = {
-  background: "#f6f6f7",
-  surface: "#ffffff",
-  surface2: "#edeef0",
-  border: "#e0e1e5",
-  text: "#15151a",
-  // Darkened from #606673: secondary text is used at 9–11px all over the
-  // app, and the old value only just cleared 4.5:1 on white — it failed
-  // outright on any tinted surface. This clears 7:1 on the background.
-  muted: "#4e5462",
-  text2: "#2c313c",
-  text3: "#676d7a",
+export const lightNeutrals = {
+  background: "#ebf0f6",
+  surface: "#fafcfe",
+  surface2: "#dee3e9",
+  border: "rgba(203, 207, 213, 0.55)",
+  text: "#141618",
+  // Secondary text is used at 9–11px all over the app, so `muted` clears 7:1
+  // on the page background, not just 4.5:1.
+  muted: "#4a4f58",
+  text2: "#3b3f47",
+  text3: "#676d76",
   success: "#15803d",
   warn: "#b45309",
   danger: "#dc2626",
   overlayShadow: "0 -10px 30px rgba(15, 15, 25, 0.12)",
+  cardShadow: "0 1px 2px rgba(20, 22, 24, 0.05), 0 4px 14px rgba(20, 22, 24, 0.04)",
 };
 
 type Brand = { primary: string; primaryLive: string; primaryContrast: string; accent: string };

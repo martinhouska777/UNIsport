@@ -8,11 +8,11 @@
   reference these tokens, never raw hex colors.
 */
 :root {
-  --background: #f6f6f7;
-  --surface: #ffffff;
-  --surface-2: #eeeef0;
-  --border: #e4e4e7;
-  --text: #1c1c1f;
+  --background: #ebf0f6;
+  --surface: #fafcfe;
+  --surface-2: #dee3e9;
+  --border: rgba(203, 207, 213, 0.55);
+  --text: #141618;
   /*
     THE TEXT LADDER. Four steps, not two. There used to be only `text` and
     `muted`, so anything in between got invented on the spot with an opacity
@@ -21,9 +21,9 @@
     Now: text (primary) > text-2 (secondary) > muted (labels) > text-3 (faint).
     Every step is a real colour that clears 4.5:1 on its own theme.
   */
-  --text-2: #2c313c;
-  --text-3: #676d7a;
-  --muted: #4f5563;
+  --text-2: #3b3f47;
+  --text-3: #676d76;
+  --muted: #4a4f58;
   --primary: #2f3b52;
   /*
     The fill for things you can TAP. Kept separate from --primary because a
@@ -59,11 +59,12 @@
   --medal-ribbon: #e5384c;
   --medal-ribbon-shade: #b3283c;
   --medal-shine: #ffffff;
-  /* Elevation. One shadow, for things that float ABOVE the page (sheets,
-     overlays, popovers) — a card never gets one, it just uses a lighter
-     surface. Per-theme because a shadow on near-black needs more weight than
-     one on white. */
+  /* Elevation. One shadow for things that float ABOVE the page (sheets,
+     overlays, popovers), and a much softer one that lifts a card a hair off
+     the page (see THE CARD LIFT below). Per-theme because a shadow on
+     near-black needs more weight than one on white. */
   --overlay-shadow: 0 -10px 30px rgba(15, 15, 25, 0.12);
+  --card-shadow: 0 1px 2px rgba(20, 22, 24, 0.05), 0 4px 14px rgba(20, 22, 24, 0.04);
 }
 
 /* Map tokens -> Tailwind color utilities (bg-primary, text-text, border-border, ...) */
@@ -114,11 +115,34 @@
   --color-podium-2-line: color-mix(in oklab, var(--podium-2) 45%, transparent);
   --color-podium-3-line: color-mix(in oklab, var(--podium-3) 45%, transparent);
   --shadow-overlay: var(--overlay-shadow);
-  /* The phone's own face, the way Instagram does it: SF Pro on an iPhone,
-     Roboto on Android, Segoe UI on Windows. Geist (the framework default)
-     is what made the app read as generated. */
+  --shadow-card: var(--card-shadow);
+  /* Zone 1's face is the phone's own, the way Instagram does it: SF Pro on an
+     iPhone, Roboto on Android, Segoe UI on Windows. (Geist, the framework
+     default, is what made the app read as generated.) */
   --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  /* THE APP'S FACE (2026-09-14): Plus Jakarta Sans, chosen by the owner in the
+     Colour Lab for every screen after login. Loaded by next/font in
+     app/layout.tsx (self-hosted at build, no request to Google at runtime) and
+     worn by every <ThemeProvider> wrapper via `.app-face` below, which is
+     exactly the set of post-login surfaces — sheets included. */
+  --font-app: var(--font-jakarta), -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: var(--font-geist-mono);
+}
+
+.app-face {
+  font-family: var(--font-app);
+}
+
+/*
+  THE CARD LIFT (2026-09-14).
+  The app's card is written the same way in ~170 places: `rounded-xl border
+  border-border bg-surface` (or -2xl / -3xl). Rather than touch every one, the
+  lift is applied here to that idiom: a soft per-theme shadow, with the border
+  already at ~55% opacity from the theme. Anything that carries its own shadow
+  utility (sheets: `shadow-overlay`) is left alone.
+*/
+.border.bg-surface:where(.rounded-xl, .rounded-2xl, .rounded-3xl):not([class*="shadow-"]) {
+  box-shadow: var(--card-shadow);
 }
 
 /*
@@ -207,12 +231,12 @@
 /* DARK PHONE SCREENS (components/landing/PhoneMode.tsx). The visitor can flip
    every phone on the page to the app's dark look; the captures swap to their
    /landing/dark twins and the drawn chrome follows here: the screen ground
-   the dark app actually paints (#0b0b0c, the root layout's dark theme-color),
+   the dark app actually paints (#090b0e, the root layout's dark theme-color),
    light status-bar ink, a brighter shell edge so the phone still reads
    against the page. Only the phone tokens change — the page around it is the
    same page. */
 [data-phone-mode="dark"] {
-  --color-l-phone-screen: #0b0b0c;
+  --color-l-phone-screen: #090b0e;
   --color-l-phone-ink: #f5f5f5;
   --color-l-phone-ink-2: #8a8a8a;
   --color-l-phone-island: #000000;
@@ -228,7 +252,7 @@
    never disagree for a frame. THE SAME EIGHT VALUES AS ABOVE — change both. */
 @media (prefers-color-scheme: dark) {
   [data-phone-mode="system"] {
-    --color-l-phone-screen: #0b0b0c;
+    --color-l-phone-screen: #090b0e;
     --color-l-phone-ink: #f5f5f5;
     --color-l-phone-ink-2: #8a8a8a;
     --color-l-phone-island: #000000;

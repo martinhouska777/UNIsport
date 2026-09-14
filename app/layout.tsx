@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist_Mono } from "next/font/google";
+import { Geist_Mono, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 // The crest letter's face (Playfair 900) — the crest is worn everywhere now
 // (landing button, app top bars, mode switcher), so its variable lives here.
@@ -12,6 +12,14 @@ import { SITE_URL } from "@/lib/siteUrl";
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+});
+
+// The app's own face after login (see --font-app in globals.css). Latin-ext
+// covers the Czech, Spanish and Portuguese names on the demo roll.
+const jakarta = Plus_Jakarta_Sans({
+  variable: "--font-jakarta",
+  subsets: ["latin", "latin-ext"],
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -38,8 +46,8 @@ export const viewport: Viewport = {
   // landing and the dark app theme share. (It used to be a single navy that
   // appears nowhere in the UI.)
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f6f6f7" },
-    { media: "(prefers-color-scheme: dark)", color: "#0b0b0c" },
+    { media: "(prefers-color-scheme: light)", color: "#ebf0f6" },
+    { media: "(prefers-color-scheme: dark)", color: "#090b0e" },
   ],
   // Pin the zoom level so the app can't be pinched or double-tapped larger,
   // like WhatsApp. A stray pinch on a tab bar reads as the app breaking.
@@ -60,7 +68,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistMono.variable} ${playfair.variable} h-full antialiased`}
+      className={`${geistMono.variable} ${jakarta.variable} ${playfair.variable} h-full antialiased`}
     >
       <body className="min-h-full">
         <ThemeModeProvider>

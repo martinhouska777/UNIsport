@@ -32,6 +32,7 @@ function tokensToCssVars(t: ThemeTokens): CSSProperties {
     "--warn": t.warn,
     "--danger": t.danger,
     "--overlay-shadow": t.overlayShadow,
+    "--card-shadow": t.cardShadow,
   } as CSSProperties;
 }
 
@@ -77,8 +78,15 @@ export default function ThemeProvider({
     };
   }, [paintRoot, active.background, usingLight]);
 
+  /*
+    `app-face` sets the app's typeface (Plus Jakarta Sans, see globals.css).
+    It rides on the provider because every themed surface — routes AND the
+    portalled sheets that re-wrap themselves in a provider — is exactly the set
+    of screens that should wear it. Zone 1 (landing, login, join) has no
+    provider and keeps its own faces.
+  */
   return (
-    <div style={tokensToCssVars(active)} className={className}>
+    <div style={tokensToCssVars(active)} className={className ? `app-face ${className}` : "app-face"}>
       {children}
     </div>
   );
