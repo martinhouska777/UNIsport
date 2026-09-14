@@ -16,14 +16,15 @@
   there is no rank to report, so it becomes a single invitation instead; and it
   holds its own height while loading so the calendar underneath doesn't jump.
 
-  All color comes from theme tokens (rule 1). The one exception is the tint on
-  the house cell, which is that house's identity color from lib/gyms.ts — DATA,
-  applied via inline style, exactly as the gym and lineup screens do it.
+  All color comes from theme tokens (rule 1). The one exception is the house
+  shield beside your house rank, drawn in that house's identity colors from
+  lib/gyms.ts — DATA, applied via inline style, exactly as the boards do it.
 */
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAppState } from "@/components/AppState";
-import { IconTrophy, IconChevronRight } from "@/components/icons";
+import UniversityCrest from "@/components/UniversityCrest";
+import { IconTrophy, IconChevronRight, HouseShield } from "@/components/icons";
 import {
   fetchStanding,
   type Period,
@@ -48,19 +49,31 @@ function Cell({ value, label }: { value: string; label: string }) {
 }
 
 /*
-  The compact cell (Profile tab). Rearranged on 2026-09-13 when the Log button
-  got short: the title became a proper name on its own line (like "Memories"),
-  and each rank is a bigger number over its word, left-aligned, side by side.
-  The word is in normal case, not small capitals, so "Pforzheimer" fits a
-  phone at a readable size. (Number and word on one line was tried and cut
-  both words off.)
+  One rank on the compact card (Profile tab). Redesigned on 2026-09-14 from
+  the owner's pick of previews ("E"): a big trophy, a small gold LEADERBOARDS
+  line, and the two ranks side by side, each with its own icon — the house's
+  shield for the house rank, the school's crest for campus — and the number
+  over its word. The two sit close together instead of spread across the bar.
 */
-function StackCell({ value, label, fixed = false }: { value: string; label: string; fixed?: boolean }) {
+function IconRank({
+  icon,
+  value,
+  label,
+  fixed = false,
+}: {
+  icon: React.ReactNode;
+  value: string;
+  label: string;
+  fixed?: boolean;
+}) {
   return (
     // `fixed`: "Campus" never gives up its room — only a long house name does.
-    <div className={fixed ? "flex-shrink-0" : "min-w-0"}>
-      <div className="text-[18px] font-semibold leading-none tabular-nums text-text">{value}</div>
-      <div className="mt-1 truncate text-[12px] leading-none text-muted">{label}</div>
+    <div className={`flex items-center gap-1.5 ${fixed ? "flex-shrink-0" : "min-w-0"}`}>
+      <span className="flex flex-shrink-0">{icon}</span>
+      <div className="min-w-0">
+        <div className="text-[17px] font-semibold leading-none tabular-nums text-text">{value}</div>
+        <div className="mt-1 truncate text-[11px] leading-none text-muted">{label}</div>
+      </div>
     </div>
   );
 }
@@ -100,7 +113,7 @@ export default function LeaderboardStrip({
   // Same height either way, so nothing below moves when the numbers land.
   if (!loaded)
     return compact ? (
-      <div className="min-h-[44px] min-w-0 flex-1" />
+      <div className="min-h-[48px] min-w-0 flex-1" />
     ) : (
       <div className="h-[66px] border-b border-border" />
     );
@@ -120,30 +133,58 @@ export default function LeaderboardStrip({
       data-tour="profile-leaderboards"
       className={
         compact
-          ? "flex min-h-[44px] min-w-0 flex-1 items-center gap-2.5 rounded-lg active:opacity-70"
+          ? "flex min-h-[48px] min-w-0 flex-1 items-center gap-3 rounded-lg active:opacity-70"
           : "flex items-center gap-2.5 border-b border-border px-3.5 py-3.5 active:bg-surface-2"
       }
     >
       {/* GOLD. A trophy is gold everywhere else in the world and everywhere
           else in this app (the podium colours, the varsity mark) — it is the
           school's accent token, so a school whose accent isn't gold still gets
-          its own colour rather than a hardcoded one (rule 1). */}
-      <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-accent-tint text-accent">
-        <IconTrophy size={19} />
+          its own colour rather than a hardcoded one (rule 1).
+          The compact card's trophy is the BIG one; on the narrowest phones
+          (under 360px) it steps aside so a long house name still fits, and a
+          small trophy moves into the gold LEADERBOARDS line instead. */}
+      <span
+        className={
+          compact
+            ? "flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-accent-tint text-accent max-[359px]:hidden"
+            : "flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-accent-tint text-accent"
+        }
+      >
+        <IconTrophy size={compact ? 26 : 19} />
       </span>
 
       {ranked && standing && compact ? (
         <div className="min-w-0 flex-1">
-          <div className="truncate text-[15px] font-semibold leading-tight text-text">Leaderboards</div>
-          <div className="mt-1.5 flex min-w-0 items-center gap-3">
-            {/* Compact drops the "in": on a 320px phone "in Pforzheimer" is
-                what pushes the word into an ellipsis. */}
-            <StackCell
-              value={standing.houseRankIn ? ordinal(standing.houseRankIn) : `#${standing.campusRank}`}
-              label={house ?? team?.label ?? "campus"}
-            />
-            <div className="h-7 w-px flex-shrink-0 bg-border" />
-            <StackCell fixed value={`#${standing.campusRank}`} label="Campus" />
+          <div className="flex items-center gap-1 text-accent">
+            <span className="min-[360px]:hidden">
+              <IconTrophy size={12} />
+            </span>
+            <span className="text-[11px] font-semibold uppercase leading-none tracking-[0.1em]">
+              Leaderboards
+            </span>
+            <span className="text-muted">
+              <IconChevronRight size={12} />
+            </span>
+          </div>
+          <div className="mt-2 flex min-w-0 items-center gap-3.5">
+            {/* Your rank among your housemates, beside the house's own shield.
+                Someone with no house rank yet (no residence on file) gets the
+                campus rank alone rather than the same number twice. */}
+            {standing.houseRankIn && (
+              <IconRank
+                icon={
+                  team ? (
+                    <HouseShield primary={team.colors.primary} secondary={team.colors.secondary} size={22} />
+                  ) : (
+                    <UniversityCrest size={22} />
+                  )
+                }
+                value={ordinal(standing.houseRankIn)}
+                label={house ?? team?.label ?? "Your house"}
+              />
+            )}
+            <IconRank fixed icon={<UniversityCrest size={22} />} value={`#${standing.campusRank}`} label="Campus" />
           </div>
         </div>
       ) : ranked && standing ? (
