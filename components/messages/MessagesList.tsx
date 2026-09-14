@@ -38,20 +38,26 @@ function ChannelGlyph({ icon, size }: { icon: string; size: number }) {
   return <C size={size} />;
 }
 
-type Tab = "direct" | "community";
+export type MessagesTab = "direct" | "community";
+type Tab = MessagesTab;
 
 export default function MessagesList({
   onOpenDm,
   onOpenChannel,
   onNewChannel,
+  tab,
+  onTabChange: setTab,
 }: {
   onOpenDm: (c: DmConversation) => void;
   onOpenChannel: (c: Channel) => void;
   /** Opens the "New channel" screen — anybody can start one. */
   onNewChannel: () => void;
+  /** Which list shows. Kept by the page, so coming back from a chat lands on
+      the list you left — out of a channel, that is Community. */
+  tab: Tab;
+  onTabChange: (tab: Tab) => void;
 }) {
   const { universityKey } = useAppState();
-  const [tab, setTab] = useState<Tab>("direct");
   const [conversations, setConversations] = useState<DmConversation[] | null>(null);
   const [channels, setChannels] = useState<Channel[] | null>(null);
   const [error, setError] = useState<string | null>(null);

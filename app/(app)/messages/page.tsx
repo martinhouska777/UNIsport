@@ -12,7 +12,7 @@
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAppState } from "@/components/AppState";
-import MessagesList from "@/components/messages/MessagesList";
+import MessagesList, { type MessagesTab } from "@/components/messages/MessagesList";
 import DmThread from "@/components/messages/DmThread";
 import ChannelThread from "@/components/messages/ChannelThread";
 import NewChannel from "@/components/messages/NewChannel";
@@ -50,6 +50,11 @@ function Messages() {
       : null;
   });
 
+  // Which list you were on. It lives here, not in the list (which is rebuilt
+  // every time a chat closes), so leaving a channel — or just coming back out
+  // of one — lands on Community rather than Direct (owner, 2026-09-14).
+  const [tab, setTab] = useState<MessagesTab>("direct");
+
   const back = () => {
     setOpen(null);
     // Clear any deep-link params so a refresh doesn't reopen the thread.
@@ -61,6 +66,7 @@ function Messages() {
     try {
       const conversationId = await startDirectConversation(person.id);
       setOpen({ type: "dm", id: conversationId, name: person.name, otherId: person.id });
+      setTab("direct"); // that chat lives under Direct, so back from it lands there
     } catch {
       // The chat couldn't be started — stay on Channel info.
     }
@@ -103,6 +109,8 @@ function Messages() {
         />
       ) : (
         <MessagesList
+          tab={tab}
+          onTabChange={setTab}
           onOpenDm={(c: DmConversation) =>
             setOpen({ type: "dm", id: c.conversationId, name: c.otherName, otherId: c.otherId })
           }
