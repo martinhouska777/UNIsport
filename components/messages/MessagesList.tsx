@@ -8,6 +8,8 @@ import {
   listDirectConversations,
   listChannels,
   joinChannel,
+  requestToJoin,
+  cancelJoinRequest,
   relativeTime,
   type DmConversation,
   type Channel,
@@ -110,6 +112,22 @@ export default function MessagesList({
     }
   };
 
+  // Ask to join a private channel, or take the request back. Optimistic too.
+  const handleAsk = async (channelId: string, ask: boolean) => {
+    const flip = (requested: boolean) =>
+      setChannels((prev) =>
+        (prev ?? []).map((c) => (c.channelId === channelId ? { ...c, requested } : c)),
+      );
+    flip(ask);
+    try {
+      if (ask) await requestToJoin(channelId);
+      else await cancelJoinRequest(channelId);
+    } catch (e) {
+      flip(!ask);
+      setError((e as Error).message);
+    }
+  };
+
   return (
     <div className="flex h-full min-h-0 flex-col">
       {/* No "Messages" title: the tab bar already says where you are, so the
@@ -177,6 +195,7 @@ export default function MessagesList({
             searching={query.trim().length > 0}
             onOpen={onOpenChannel}
             onJoin={handleJoin}
+            onAsk={handleAsk}
           />
         )}
       </div>
@@ -239,12 +258,14 @@ function CommunityList({
   searching,
   onOpen,
   onJoin,
+  onAsk,
 }: {
   list: Channel[];
   loading: boolean;
   searching: boolean;
   onOpen: (c: Channel) => void;
   onJoin: (channelId: string) => void;
+  onAsk: (channelId: string, ask: boolean) => void;
 }) {
   if (loading) {
     return <SkeletonRows count={7} />;
@@ -292,11 +313,18 @@ function CommunityList({
                   </span>
                   <span className="shrink-0 text-[11px] text-muted">{relativeTime(c.lastAt)}</span>
                 </div>
-                <div className="truncate text-[11px] text-muted">
-                  {c.lastBody
-                    ? `${c.lastSenderName ?? "Someone"}: ${c.lastBody}`
-                    : "No messages yet"}
-                </div>
+                {/* The admin of a private channel sees who is waiting first. */}
+                {c.requests > 0 ? (
+                  <div className="truncate text-[11px] font-medium text-primary-live">
+                    {c.requests} asking to join
+                  </div>
+                ) : (
+                  <div className="truncate text-[11px] text-muted">
+                    {c.lastBody
+                      ? `${c.lastSenderName ?? "Someone"}: ${c.lastBody}`
+                      : "No messages yet"}
+                  </div>
+                )}
               </div>
               {c.unread > 0 && (
                 <span className="flex h-[18px] min-w-[18px] shrink-0 items-center justify-center rounded-full bg-primary-live px-1 text-[11px] font-semibold text-primary-contrast">
@@ -318,26 +346,51 @@ function CommunityList({
               key={c.channelId}
               className="flex w-full items-center gap-3 border-b border-border px-3.5 py-2.5"
             >
+              {/* A private channel can't be opened from outside: its row says
+                  so, and the button asks to join (owner, 2026-09-14). */}
               <button
                 type="button"
-                onClick={() => onOpen(c)}
+                onClick={() => !c.private && onOpen(c)}
                 className="flex min-w-0 flex-1 items-center gap-3 text-left"
               >
                 <ChannelTile icon={c.icon} />
                 <div className="min-w-0 flex-1">
-                  <span className="block truncate text-[13px] font-medium text-text">
-                    #&nbsp;{c.name}
+                  <span className="flex min-w-0 items-center gap-1">
+                    <span className="truncate text-[13px] font-medium text-text">#&nbsp;{c.name}</span>
+                    {c.private && (
+                      <span className="shrink-0 text-muted" aria-label="Private">
+                        <IconLock size={11} />
+                      </span>
+                    )}
                   </span>
                   <span className="block truncate text-[11px] text-muted">
-                    {c.lastBody
-                      ? `${c.lastSenderName ?? "Someone"}: ${c.lastBody}`
-                      : "No messages yet"}
+                    {c.private
+                      ? "Private channel"
+                      : c.lastBody
+                        ? `${c.lastSenderName ?? "Someone"}: ${c.lastBody}`
+                        : "No messages yet"}
                   </span>
                 </div>
               </button>
-              <Button size="sm" onClick={() => onJoin(c.channelId)} className="shrink-0">
-                Join
-              </Button>
+              {!c.private ? (
+                <Button size="sm" onClick={() => onJoin(c.channelId)} className="shrink-0">
+                  Join
+                </Button>
+              ) : c.requested ? (
+                // Tap again to take the request back.
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => onAsk(c.channelId, false)}
+                  className="shrink-0"
+                >
+                  Requested
+                </Button>
+              ) : (
+                <Button size="sm" onClick={() => onAsk(c.channelId, true)} className="shrink-0">
+                  Ask to join
+                </Button>
+              )}
             </div>
           ))}
         </>

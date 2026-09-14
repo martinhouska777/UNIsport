@@ -134,8 +134,12 @@ export type Channel = {
   joined: boolean;
   /** You started this channel. */
   mine: boolean;
-  /** Only the people added can see it (db/channels_private.sql). */
+  /** Only its members can read it; everyone else sees it and can ask to join. */
   private: boolean;
+  /** You have asked to join (a private channel). */
+  requested: boolean;
+  /** People asking to join — counted only for the channel's admin. */
+  requests: number;
 };
 
 /** Someone you could add to a private channel. */
@@ -176,6 +180,8 @@ export async function listChannels(uni: string | null): Promise<Channel[]> {
     joined: !!r.joined,
     mine: !!r.mine,
     private: !!r.private,
+    requested: !!r.requested,
+    requests: Number(r.requests ?? 0),
   }));
 }
 
@@ -267,6 +273,8 @@ export type ChannelDetails = {
   amMember: boolean;
   /** You started it — you can rename it, remove people and delete it. */
   amAdmin: boolean;
+  /** People asking to join — only ever counted for the admin. */
+  requestCount: number;
 };
 
 export type ChannelMember = ChannelPerson & { isAdmin: boolean; isMe: boolean };
@@ -282,6 +290,7 @@ export async function getChannelDetails(channelId: string): Promise<ChannelDetai
     memberCount: Number(r.member_count ?? 0),
     amMember: !!r.am_member,
     amAdmin: !!r.am_admin,
+    requestCount: Number(r.request_count ?? 0),
   };
 }
 
@@ -332,6 +341,50 @@ export async function renameChannel(channelId: string, name: string): Promise<st
 /** Delete the channel and its messages — the admin only. */
 export async function deleteChannel(channelId: string): Promise<void> {
   const { error } = await createClient().rpc("channel_delete", { chan_id: channelId });
+  if (error) throw new Error(error.message);
+}
+
+// --- Ask to join a private channel (db/channels_requests.sql) -------------
+
+/** Ask to join a private channel. */
+export async function requestToJoin(channelId: string): Promise<void> {
+  const { error } = await createClient().rpc("channel_request_join", { chan_id: channelId });
+  if (error) throw new Error(error.message);
+}
+
+/** Take back your request to join. */
+export async function cancelJoinRequest(channelId: string): Promise<void> {
+  const { error } = await createClient().rpc("channel_cancel_request", { chan_id: channelId });
+  if (error) throw new Error(error.message);
+}
+
+export type JoinRequest = ChannelPerson & { requestedAt: string };
+
+/** Who is asking to join — the admin only, oldest first. */
+export async function listJoinRequests(channelId: string): Promise<JoinRequest[]> {
+  const { data, error } = await createClient().rpc("channel_requests_list", { chan_id: channelId });
+  if (error) throw new Error(error.message);
+  return (data as Record<string, unknown>[]).map((r) => ({
+    id: r.id as string,
+    name: (r.name as string) || "Member",
+    residence: (r.residence as string) ?? null,
+    classYear: (r.class_year as string) ?? null,
+    photo: (r.photo as string) ?? null,
+    requestedAt: r.requested_at as string,
+  }));
+}
+
+/** The admin lets someone in (approve) or says no. */
+export async function answerJoinRequest(
+  channelId: string,
+  requesterId: string,
+  approve: boolean,
+): Promise<void> {
+  const { error } = await createClient().rpc("channel_answer_request", {
+    chan_id: channelId,
+    requester_id: requesterId,
+    approve,
+  });
   if (error) throw new Error(error.message);
 }
 

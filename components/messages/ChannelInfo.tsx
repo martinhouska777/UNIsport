@@ -6,6 +6,8 @@
 
     • The channel: a big icon, its name (the admin has a pencil to rename it),
       and "Private channel · 4 members".
+    • JOIN REQUESTS (a private channel's admin only): who asked, oldest first,
+      with ✕ to decline and ✓ to let them in.
     • MEMBERS: "Add members" first (any member can), then everyone in it — you
       first, the person who started it marked Admin. Tap someone for Message,
       View profile, and (the admin only) Remove from channel.
@@ -25,15 +27,18 @@ import Avatar from "./Avatar";
 import { AddMembers } from "./NewChannel";
 import {
   addChannelMembers,
+  answerJoinRequest,
   deleteChannel,
   getChannelDetails,
   leaveChannel,
   listChannelMembers,
+  listJoinRequests,
   removeChannelMember,
   renameChannel,
   type ChannelDetails,
   type ChannelMember,
   type ChannelPerson,
+  type JoinRequest,
 } from "@/lib/supabase/messages";
 import { residenceLabel } from "@/lib/onboarding";
 import {
@@ -41,11 +46,13 @@ import {
   IconArrowLeft,
   IconBarbell,
   IconBulb,
+  IconCheck,
   IconMessage,
   IconPencil,
   IconPlus,
   IconRun,
   IconStar,
+  IconX,
 } from "@/components/icons";
 
 const CHANNEL_ICONS: Record<string, (p: { size?: number }) => React.ReactElement> = {
@@ -75,6 +82,7 @@ export default function ChannelInfo({
 }) {
   const [details, setDetails] = useState<ChannelDetails | null>(null);
   const [members, setMembers] = useState<ChannelMember[] | null>(null);
+  const [requests, setRequests] = useState<JoinRequest[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const [picked, setPicked] = useState<ChannelPerson[]>([]);
@@ -87,9 +95,11 @@ export default function ChannelInfo({
   const load = useCallback(
     () =>
       Promise.all([getChannelDetails(channelId), listChannelMembers(channelId)])
-        .then(([d, m]) => {
+        .then(async ([d, m]) => {
           setDetails(d);
           setMembers(m);
+          // Only the admin sees who is asking — and only when anyone is.
+          setRequests(d.amAdmin && d.requestCount > 0 ? await listJoinRequests(channelId) : []);
         })
         .catch((e) => setError((e as Error).message)),
     [channelId],
@@ -218,6 +228,55 @@ export default function ChannelInfo({
         </div>
 
         {error && <p className="bg-surface px-4 pb-3 text-center text-[12px] text-danger">{error}</p>}
+
+        {/* JOIN REQUESTS */}
+        {requests.length > 0 && (
+          <div className="mt-2 bg-surface">
+            <div className="px-4 pb-1 pt-3 text-[13px] text-muted">{requests.length} asking to join</div>
+            {requests.map((r) => {
+              const sub = [r.residence ? residenceLabel(r.residence) : null, r.classYear]
+                .filter(Boolean)
+                .join(" · ");
+              return (
+                <div key={r.id} className="flex items-center gap-3 px-4 py-2.5">
+                  <Avatar size={44} src={r.photo} name={r.name} />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[14px] font-medium text-text">{r.name}</span>
+                    {sub && <span className="block truncate text-[12px] text-muted">{sub}</span>}
+                  </span>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    aria-label={`Decline ${r.name}`}
+                    onClick={() =>
+                      void act(async () => {
+                        await answerJoinRequest(channelId, r.id, false);
+                        await load();
+                      })
+                    }
+                    className="tap44 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border text-muted active:bg-surface-2 disabled:opacity-40"
+                  >
+                    <IconX size={16} />
+                  </button>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    aria-label={`Approve ${r.name}`}
+                    onClick={() =>
+                      void act(async () => {
+                        await answerJoinRequest(channelId, r.id, true);
+                        await load();
+                      })
+                    }
+                    className="tap44 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-live text-primary-contrast active:opacity-80 disabled:opacity-40"
+                  >
+                    <IconCheck size={16} />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
 
         {/* MEMBERS */}
         <div className="mt-2 bg-surface">

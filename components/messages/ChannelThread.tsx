@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Button from "@/components/ui/Button";
 import {
   getChannelThread,
+  getChannelDetails,
   sendChannelMessage,
   joinChannel,
   signalUnreadChanged,
@@ -60,6 +61,19 @@ export default function ChannelThread({
   // The name can change under you: the admin renames it in Channel info.
   const [name, setName] = useState(title);
   const [info, setInfo] = useState(false);
+  // The admin of a private channel is told above the chat when people are
+  // asking to join — read again each time Channel info closes.
+  const [asking, setAsking] = useState(0);
+  useEffect(() => {
+    if (!isPrivate || info) return;
+    let active = true;
+    getChannelDetails(channelId)
+      .then((d) => active && setAsking(d.amAdmin ? d.requestCount : 0))
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [channelId, isPrivate, info]);
   const [messages, setMessages] = useState<ChannelMessage[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [joined, setJoined] = useState(joinedInitial);
@@ -148,6 +162,19 @@ export default function ChannelThread({
           )}
         </button>
       </div>
+
+      {asking > 0 && (
+        <button
+          type="button"
+          onClick={() => setInfo(true)}
+          className="flex w-full items-center justify-between gap-3 border-b border-border bg-primary-tint px-3.5 py-2.5 text-left active:opacity-80"
+        >
+          <span className="text-[13px] font-medium text-text">
+            {asking} {asking === 1 ? "person is" : "people are"} asking to join
+          </span>
+          <span className="text-[13px] font-semibold text-primary-live">Review</span>
+        </button>
+      )}
 
       {/* Messages */}
       <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-3.5 py-3">
