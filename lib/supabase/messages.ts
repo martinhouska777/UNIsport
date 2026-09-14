@@ -134,6 +134,17 @@ export type Channel = {
   joined: boolean;
   /** You started this channel. */
   mine: boolean;
+  /** Only the people added can see it (db/channels_private.sql). */
+  private: boolean;
+};
+
+/** Someone you could add to a private channel. */
+export type ChannelPerson = {
+  id: string;
+  name: string;
+  residence: string | null;
+  classYear: string | null;
+  photo: string | null;
 };
 
 export type ChannelMessage = {
@@ -164,6 +175,23 @@ export async function listChannels(uni: string | null): Promise<Channel[]> {
     unread: Number(r.unread ?? 0),
     joined: !!r.joined,
     mine: !!r.mine,
+    private: !!r.private,
+  }));
+}
+
+/**
+ * People to add to a channel. Nothing typed → the people you know (you have a
+ * chat with them or follow them); a name typed → anyone whose name matches.
+ */
+export async function findChannelPeople(query: string): Promise<ChannelPerson[]> {
+  const { data, error } = await createClient().rpc("channel_people", { q: query.trim() || null });
+  if (error) throw new Error(`findChannelPeople failed: ${error.message}`);
+  return (data as Record<string, unknown>[]).map((r) => ({
+    id: r.id as string,
+    name: (r.name as string) || "Member",
+    residence: (r.residence as string) ?? null,
+    classYear: (r.class_year as string) ?? null,
+    photo: (r.photo as string) ?? null,
   }));
 }
 
@@ -172,10 +200,16 @@ export async function listChannels(uni: string | null): Promise<Channel[]> {
  * its id. A refused name throws the database's own sentence ("There is already
  * a channel called that."), which is written to be shown as it is.
  */
-export async function createChannel(name: string, uni: string | null): Promise<string> {
+export async function createChannel(
+  name: string,
+  uni: string | null,
+  opts: { private?: boolean; memberIds?: string[] } = {},
+): Promise<string> {
   const { data, error } = await createClient().rpc("channel_create", {
     channel_name: name,
     uni: uni || null,
+    is_private: !!opts.private,
+    member_ids: opts.memberIds ?? [],
   });
   if (error) throw new Error(error.message);
   return data as string;

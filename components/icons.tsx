@@ -371,6 +371,14 @@ export const IconShield = (p: IconProps) => (
   </Base>
 );
 
+// A padlock: a private channel (Messages → Community).
+export const IconLock = (p: IconProps) => (
+  <Base {...p}>
+    <rect x="5" y="11" width="14" height="10" rx="2" />
+    <path d="M8 11V7.5a4 4 0 0 1 8 0V11" />
+  </Base>
+);
+
 // A camcorder: the mark for footage of a crew, on the boat card and the video list.
 export const IconVideo = (p: IconProps) => (
   <Base {...p}>

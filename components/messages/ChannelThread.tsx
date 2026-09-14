@@ -18,6 +18,7 @@ import {
   IconStar,
   IconRun,
   IconMessage,
+  IconLock,
 } from "@/components/icons";
 import Avatar from "./Avatar";
 import Composer from "./Composer";
@@ -42,12 +43,14 @@ export default function ChannelThread({
   title,
   icon,
   joined: joinedInitial,
+  isPrivate = false,
   onBack,
 }: {
   channelId: string;
   title: string;
   icon: string;
   joined: boolean;
+  isPrivate?: boolean;
   onBack: () => void;
 }) {
   const [messages, setMessages] = useState<ChannelMessage[] | null>(null);
@@ -112,6 +115,11 @@ export default function ChannelThread({
           <Glyph size={16} />
         </div>
         <span className="text-[13px] font-medium text-text">#&nbsp;{title}</span>
+        {isPrivate && (
+          <span className="text-muted" aria-label="Private">
+            <IconLock size={12} />
+          </span>
+        )}
       </div>
 
       {/* Messages */}

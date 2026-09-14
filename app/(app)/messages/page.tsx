@@ -20,7 +20,7 @@ import type { Channel, DmConversation } from "@/lib/supabase/messages";
 
 type Open =
   | { type: "dm"; id: string; name: string; otherId: string | null }
-  | { type: "channel"; id: string; name: string; icon: string; joined: boolean }
+  | { type: "channel"; id: string; name: string; icon: string; joined: boolean; isPrivate: boolean }
   | { type: "newChannel" }
   | null;
 
@@ -71,7 +71,14 @@ function Messages() {
           onBack={back}
           // Straight into the channel you just started — you're its first member.
           onCreated={(c) =>
-            setOpen({ type: "channel", id: c.channelId, name: c.name, icon: "message", joined: true })
+            setOpen({
+              type: "channel",
+              id: c.channelId,
+              name: c.name,
+              icon: "message",
+              joined: true,
+              isPrivate: c.isPrivate,
+            })
           }
         />
       ) : open?.type === "channel" ? (
@@ -80,6 +87,7 @@ function Messages() {
           title={open.name}
           icon={open.icon}
           joined={open.joined}
+          isPrivate={open.isPrivate}
           onBack={back}
         />
       ) : (
@@ -95,6 +103,7 @@ function Messages() {
               name: c.name,
               icon: c.icon,
               joined: c.joined,
+              isPrivate: c.private,
             })
           }
         />

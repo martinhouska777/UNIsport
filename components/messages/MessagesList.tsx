@@ -21,6 +21,7 @@ import {
   IconRun,
   IconMessage,
   IconPlus,
+  IconLock,
 } from "@/components/icons";
 import Avatar from "./Avatar";
 
@@ -126,9 +127,10 @@ export default function MessagesList({
         </div>
       </div>
 
-      {/* Search */}
-      <div className="bg-surface px-3 pb-2">
-        <div className="flex items-center gap-2 rounded-full border border-border bg-surface-2 px-3 py-2 text-muted">
+      {/* Search — with a small + beside it on Community to start a channel
+          (owner, 2026-09-14: "just a small plus", like WhatsApp). */}
+      <div className="flex items-center gap-2 bg-surface px-3 pb-2">
+        <div className="flex min-w-0 flex-1 items-center gap-2 rounded-full border border-border bg-surface-2 px-3 py-2 text-muted">
           <IconSearch size={14} />
           <input
             value={query}
@@ -138,6 +140,16 @@ export default function MessagesList({
             className="w-full bg-transparent text-[13px] text-text placeholder:text-muted focus:outline-none"
           />
         </div>
+        {tab === "community" && (
+          <button
+            type="button"
+            onClick={onNewChannel}
+            aria-label="New channel"
+            className="tap44 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-live text-primary-contrast active:opacity-80"
+          >
+            <IconPlus size={18} />
+          </button>
+        )}
       </div>
 
       {/* List */}
@@ -153,26 +165,13 @@ export default function MessagesList({
         )}
 
         {!error && tab === "community" && (
-          <>
-            {/* Anybody can start a channel (owner, 2026-09-14). */}
-            <button
-              type="button"
-              onClick={onNewChannel}
-              className="flex w-full items-center gap-3 border-b border-border px-3.5 py-2.5 text-left active:bg-surface-2"
-            >
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-dashed border-border text-muted">
-                <IconPlus size={20} />
-              </div>
-              <span className="text-[13px] font-medium text-text">New channel</span>
-            </button>
-            <CommunityList
-              list={filteredChannels}
-              loading={channels === null}
-              searching={query.trim().length > 0}
-              onOpen={onOpenChannel}
-              onJoin={handleJoin}
-            />
-          </>
+          <CommunityList
+            list={filteredChannels}
+            loading={channels === null}
+            searching={query.trim().length > 0}
+            onOpen={onOpenChannel}
+            onJoin={handleJoin}
+          />
         )}
       </div>
     </div>
@@ -277,7 +276,14 @@ function CommunityList({
               <ChannelTile icon={c.icon} />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="truncate text-[13px] font-medium text-text">#&nbsp;{c.name}</span>
+                  <span className="flex min-w-0 items-center gap-1">
+                    <span className="truncate text-[13px] font-medium text-text">#&nbsp;{c.name}</span>
+                    {c.private && (
+                      <span className="shrink-0 text-muted" aria-label="Private">
+                        <IconLock size={11} />
+                      </span>
+                    )}
+                  </span>
                   <span className="shrink-0 text-[11px] text-muted">{relativeTime(c.lastAt)}</span>
                 </div>
                 <div className="truncate text-[11px] text-muted">
