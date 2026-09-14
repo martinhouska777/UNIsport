@@ -185,6 +185,14 @@ export type VarsityAthleteProfile = {
   /* The day the status last turned Sick / Injured / Away — so switching back
      knows which days to offer to log. Null while Active. */
   statusSince: string | null;
+  /*
+    WHETHER TEAMMATES SEE YOUR CALENDAR (owner, 2026-09-13). Opening a rower on
+    the Team tab shows their training month — so the squad can see how the
+    people who train best actually train — but each athlete decides. On by
+    default; the switch sits under "Training calendar" on your profile. The
+    coach sees it either way (can.readTraining).
+  */
+  showCalendar: boolean;
 };
 
 // Best guess at class standing from the academic class year (e.g. '30 = Freshman
@@ -213,6 +221,7 @@ export function defaultProfile(classYear: string): VarsityAthleteProfile {
     rosterId: null,
     daysOut: {},
     statusSince: null,
+    showCalendar: true,
   };
 }
 
@@ -249,6 +258,9 @@ export function withDefaults(
       typeof saved?.statusSince === "string" && /^\d{4}-\d{2}-\d{2}$/.test(saved.statusSince)
         ? saved.statusSince
         : null,
+    // Only an explicit "no" hides it: older accounts have nothing (or null)
+    // here, and they keep the default.
+    showCalendar: saved?.showCalendar !== false,
   };
 }
 

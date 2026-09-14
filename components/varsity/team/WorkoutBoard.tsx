@@ -310,13 +310,8 @@ export default function WorkoutBoard({
             rows={board.rows}
             kind={kind}
             session={workout.session}
-            metric={metric}
             ranked={ranked}
-            hasPrevious={!!previous}
           />
-          <p className="mt-1.5 px-0.5 text-[11px] leading-relaxed text-muted">
-            Swipe the table sideways for the rest. The name stays put.
-          </p>
         </div>
       ) : (
         <div className="mt-2 overflow-hidden rounded-2xl border border-border bg-surface">

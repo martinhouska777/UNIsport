@@ -20,6 +20,11 @@ export type TeamProfile = {
   weightKg: number;
   status: string; // a statusOptions title
   prs: Record<string, string>; // "2K" -> "6:08.4", etc.
+  /* Whether they let teammates see their training calendar — the switch on
+     their own profile (VarsityAthleteProfile.showCalendar). Most do; about
+     one in five of the demo squad keeps it private, so the private card is
+     something you actually meet. */
+  showCalendar: boolean;
 };
 
 /* tiny seeded RNG so derived values are stable per athlete id */
@@ -96,6 +101,8 @@ export function teamProfile(athleteId: string): TeamProfile {
     weightKg,
     status: a ? statusFor(r) : "Active",
     prs,
+    // Its own salted stream, so adding it didn't move anyone's PRs or status.
+    showCalendar: rngFor(athleteId, "calendar")() > 0.2,
   };
   cache[athleteId] = profile;
   return profile;

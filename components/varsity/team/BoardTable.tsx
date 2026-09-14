@@ -3,9 +3,9 @@
 /*
   BOARD TABLE — the squad's results as the spreadsheet has always shown them.
   ---------------------------------------------------------------------------
-  Every column at once: weight, W/kg, the result, split, watts, rate, the change
-  since last time, and every interval. On a phone that cannot fit, so the rank
-  and name column is PINNED and the stats scroll under your thumb — you never
+  Every column at once: weight, W/kg, the result, split, watts, rate, and every
+  interval. (The "vs last" column was cut on 2026-09-13 at the owner's ask.)
+  On a phone that cannot fit, so the rank and name column is PINNED and the stats scroll under your thumb — you never
   lose track of whose row you are reading. Rows are banded for the same reason:
   when the numbers slide sideways, the band is what your eye holds on to.
 
@@ -24,11 +24,9 @@ import { useUnits } from "@/components/useUnits";
 import { formatWeight } from "@/lib/varsity/units";
 import { secToSplit, secToClock, deriveWatts, wattsPerKg } from "@/lib/varsity/ergMath";
 import {
-  improvementLabel,
   intervalHeadings,
   rowedAsReps,
   type BoardRow,
-  type MetricKey,
   type PieceKind,
 } from "@/lib/varsity/teamBoard";
 import type { Session } from "@/lib/varsity/coachPlan";
@@ -40,9 +38,7 @@ export default function BoardTable({
   rows,
   kind,
   session,
-  metric,
   ranked,
-  hasPrevious,
 }: {
   rows: BoardRow[];
   /* The piece's own result column — TIME on a 2K, METRES on a 30' piece. It
@@ -54,9 +50,7 @@ export default function BoardTable({
      columns are separate REPS (R1…R8) or the marks of one piece rowed straight
      through (500, 1000, 1500, 2000). See rowedAsReps() in teamBoard.ts. */
   session: Session;
-  metric: MetricKey; // only the "vs last" column follows this
   ranked: boolean;
-  hasPrevious: boolean;
 }) {
   const { units } = useUnits();
 
@@ -80,7 +74,6 @@ export default function BoardTable({
             <th className={TH}>Split</th>
             <th className={TH}>Watts</th>
             <th className={TH}>Rate</th>
-            {hasPrevious && <th className={TH}>vs last</th>}
             {/* Each interval column says WHAT it is: R1…R8 for reps, or the
                 mark the split was taken at (500, 1000, 1500, 2000) for a piece
                 rowed straight through. A bare "1 2 3 4" made a coach count. */}
@@ -100,8 +93,6 @@ export default function BoardTable({
             const r = row.result;
             const watts = deriveWatts(r.watts, r.splitSec);
             const wkg = wattsPerKg(watts, r.weightKg);
-            const better = row.improvement != null && row.improvement > 0.05;
-            const worse = row.improvement != null && row.improvement < -0.05;
               /* Alternating rows. The table scrolls sideways under a thumb and
                  the numbers are all the same shape, so a banded row is what
                  keeps your eye on the person you started reading. */
@@ -117,12 +108,15 @@ export default function BoardTable({
                   <span className="flex items-center gap-2">
                     {ranked &&
                       (row.rank != null && row.rank <= 3 ? (
-                        /* Medals for the top three, as on the list. */
-                        <span className="flex w-5 flex-shrink-0 justify-end">
+                        /* Medals for the top three, as on the list. The
+                           medal and the numbers under it share one CENTRE
+                           line (owner, 2026-09-13): right-aligned, 4…9 sat to
+                           the right of the medals above them. */
+                        <span className="flex w-5 flex-shrink-0 justify-center">
                           <Medal place={row.rank as 1 | 2 | 3} rank={row.rank} size={18} />
                         </span>
                       ) : (
-                        <span className="w-5 flex-shrink-0 text-right text-[12px] font-semibold text-muted">
+                        <span className="w-5 flex-shrink-0 text-center text-[12px] font-semibold text-muted">
                           {row.rank ?? "—"}
                         </span>
                       ))}
@@ -143,15 +137,6 @@ export default function BoardTable({
                 <td className={TD}>{r.splitSec != null ? secToSplit(r.splitSec, true) : "—"}</td>
                 <td className={TD}>{watts != null ? Math.round(watts) : "—"}</td>
                 <td className={TD}>{r.strokeRate ?? "—"}</td>
-                {hasPrevious && (
-                  <td
-                    className={`${TD} font-semibold ${
-                      better ? "text-success" : worse ? "text-danger" : "text-muted"
-                    }`}
-                  >
-                    {row.improvement != null ? improvementLabel(row.improvement, metric) : "—"}
-                  </td>
-                )}
                 {Array.from({ length: splitCount }, (_, k) => {
                   const iv = r.intervals?.[k];
                   return (

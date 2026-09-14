@@ -72,6 +72,7 @@ import Plot from "@/components/varsity/profile/Plot";
 import Dropdown from "@/components/varsity/profile/Dropdown";
 import StatsFullScreen from "@/components/varsity/profile/StatsFullScreen";
 import TrainingMixSheet from "@/components/varsity/profile/TrainingMixSheet";
+import { Toggle } from "@/components/onboarding/controls";
 import ClaimSeatSheet from "@/components/varsity/ClaimSeatSheet";
 import { sideMeta, COX_COLOR, type Side } from "@/lib/varsity/coachLineup";
 import { fetchPlan } from "@/lib/varsity/planStore";
@@ -1124,6 +1125,18 @@ export default function ProfileScreen() {
           <IconChevronRight size={17} />
         </span>
       </Link>
+      {/* WHO SEES IT (owner, 2026-09-13): teammates who open you on the Team
+          tab see your training month unless you switch it off here. Its own
+          row, not inside the link above, so flipping it never opens the
+          calendar. The coach sees it either way. */}
+      <div className="mx-3.5 mt-1.5 flex items-center justify-between gap-3 px-3.5 py-1.5">
+        <span className="text-[12px] text-muted">Teammates see my calendar</span>
+        <Toggle
+          on={profile.showCalendar}
+          onChange={() => patchProfile({ showCalendar: !profile.showCalendar })}
+          ariaLabel="Teammates see my calendar"
+        />
+      </div>
 
       {/* ── Personal bests (editable) ── */}
       <div className="flex items-center justify-between px-4 pb-2 pt-5">
