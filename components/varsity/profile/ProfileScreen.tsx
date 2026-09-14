@@ -7,10 +7,11 @@
     year on the team (Freshman/Sophomore/…), and height/weight — all editable.
   • Current status: tap to change (Active / Sick / Injured / Away).
   • Statistics: pick a WINDOW (week / 2 weeks / month / 3 months, or two dates
-    of your own) and a MEASURE (metres / hours / consistency); three numbers and
-    a graph — columns or a line — follow both, the graph opens full size, and
-    tapping through opens the Training mix. All from the athlete OWN logs
-    (lib/varsity/logStore), with the coach plan read only to name intensities.
+    of your own) and a MEASURE (metres / hours / consistency); a graph — columns
+    or a line — follows both, the expand icon opens it full size with the whole
+    reading of the window under it, and tapping through opens the Training mix.
+    All from the athlete OWN logs (lib/varsity/logStore), with the coach plan
+    read only to name intensities.
   • A button into the Calendar tab — the day-by-day training history lives there.
   • Personal bests: 2K / 5K / 6K / 30′ r20 — editable.
   (A "send to coaches abroad" card used to sit at the bottom: a shareable
@@ -53,7 +54,6 @@ import {
 import {
   metricByKey,
   statMetrics,
-  summarise,
   statRanges,
   rangeByKey,
   customRange,
@@ -964,7 +964,6 @@ export default function ProfileScreen() {
     value: metric.value(b.logs, b.span),
     latest: b.latest,
   }));
-  const tiles = summarise(buckets, metric, units, range);
   const chart = chartTypeOf(profile.statChart);
 
   return (
@@ -1047,28 +1046,10 @@ export default function ProfileScreen() {
         Statistics
       </div>
 
-      {/* The window is chosen on the graph card below, where the measure is
-          chosen — but it governs these three numbers too, which is why each of
-          them names the range underneath itself. */}
-      <div className="mx-3.5 mb-2.5 grid grid-cols-3 gap-2">
-        {tiles.map((t) => (
-          <div
-            key={t.label}
-            className="rounded-xl border border-border bg-surface px-2 py-2.5 text-center"
-          >
-            {/* "8h 30m" and "12.4 km" need more room than "14" — the number
-                steps down a size rather than spilling out of the tile. */}
-            <div
-              className={`${t.value.length > 6 ? "text-[13px]" : "text-[15px]"} font-semibold leading-none text-text`}
-            >
-              {t.value}
-            </div>
-            <div className="mt-1.5 text-[8px] font-semibold uppercase tracking-[0.08em] text-muted">
-              {t.label}
-            </div>
-          </div>
-        ))}
-      </div>
+      {/* Three tiles — Total / Avg week / Best week — used to sit here above
+          the graph. CUT (owner, 2026-09-13): the expand icon opens the whole
+          reading, so the card no longer has to try to be a summary as well as
+          a glance. The heading now sits straight on the graph. */}
       <div className="mx-3.5">
         <WeeklyGraph
           buckets={buckets}
@@ -1138,9 +1119,11 @@ export default function ProfileScreen() {
         <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[10px] border border-primary-line bg-primary-tint text-primary">
           <IconCalendar size={18} />
         </span>
+        {/* The name alone. "See what you did, day by day" explained a row that
+            says "Training calendar" next to a calendar icon (owner,
+            2026-09-13). */}
         <div className="min-w-0 flex-1">
           <div className="text-[13px] font-medium text-text">Training calendar</div>
-          <div className="text-[11px] text-muted">See what you did, day by day</div>
         </div>
         <span className="text-muted">
           <IconChevronRight size={17} />

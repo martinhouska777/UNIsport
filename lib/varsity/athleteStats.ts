@@ -7,9 +7,11 @@
     the RANGE   — a week, two weeks, a month, three months, or two dates the
                   athlete chose (the button on the graph's top right)
 
-  The three numbers above the graph are that same measure read three ways over
-  that same range: the whole range, the average bucket, and the best bucket. So
-  no two numbers on the screen can disagree about what they are counting.
+  There used to be THREE NUMBERS above the graph — the range's total, its
+  average bucket and its best one — on the card and again on the full screen.
+  Both were cut on 2026-09-13: the expand icon opens a full reading of the
+  window (lib/varsity/rowingStats), and three tiles saying the graph's own
+  measure a second time were in the way of getting there.
 
   Both lists below are DATA (rule 7): adding an entry adds it to the screen with
   no change to the screen's code. Distances honour the athlete's km/mi setting,
@@ -54,9 +56,6 @@ export const defaultStatRange = statRanges[1].key;
 
 export const rangeByKey = (key: string): StatRange =>
   statRanges.find((r) => r.key === key) ?? statRanges[1];
-
-/** "day" / "week", for tile captions like "Best week". */
-export const bucketWord = (r: StatRange) => (r.bucket === "day" ? "day" : "week");
 
 /* ── A window the athlete picked themselves ─────────────────────────────── */
 
@@ -153,23 +152,13 @@ export type StatMetric = {
   */
   value: (logs: LogEntry[], span: Span) => number;
   format: (value: number, units: Units) => string;
-  /** Caption on the first tile. "Total" doesn't fit a percentage. */
-  totalLabel?: string;
   /*
     A fixed top for the graph's Y axis. Only a percentage has one: scaled to its
     own best bucket, a steady 40% week would fill the card and read like a good
     week. Everything else is scaled to what was actually done.
   */
   axisMax?: number;
-  /*
-    A measure that the default three numbers don't suit may write its own. Only
-    consistency does: averaging it over daily buckets is nonsense, because a
-    single day is either 0% or 100% and "best day: 100%" says nothing at all.
-  */
-  tiles?: (buckets: Bucket[], range: StatRange) => Tile[];
 };
-
-export type Tile = { label: string; sub: string; value: string };
 
 const sum = (ns: number[]) => ns.reduce((a, b) => a + b, 0);
 
@@ -207,26 +196,7 @@ export const statMetrics: StatMetric[] = [
       return Math.min(100, Math.round((trainedDays(logs) / expected) * 100));
     },
     format: (v) => `${Math.round(v)}%`,
-    totalLabel: "Overall",
     axisMax: 100,
-    /*
-      The share, then the two counts it is made of — so the percentage always
-      has its working shown, and a bad week reads as "3 missed" rather than an
-      abstract 74%.
-    */
-    tiles: (buckets, range) => {
-      const whole = wholeSpan(buckets);
-      const all = buckets.flatMap((b) => b.logs);
-      const expected = expectedDays(whole);
-      const trained = Math.min(trainedDays(all), expected);
-      const pct = expected ? Math.min(100, Math.round((trained / expected) * 100)) : 0;
-      const sub = rangeCaption(range);
-      return [
-        { label: "Overall", sub, value: `${pct}%` },
-        { label: "Trained", sub: expected ? `of ${expected} days` : "no days yet", value: `${trained}` },
-        { label: "Missed", sub, value: `${Math.max(0, expected - trained)}` },
-      ];
-    },
   },
 ];
 
@@ -242,59 +212,7 @@ export function nextMetric(key: string, dir: 1 | -1): string {
   return statMetrics[(((from + dir) % n) + n) % n].key;
 }
 
-/* ── The three numbers above the graph ──────────────────────────────────── */
+/* ── A bucket of the graph ──────────────────────────────────────────────── */
 
 export type Bucket = { label: string; span: Span; logs: LogEntry[]; latest: boolean };
 
-/** The whole range as one span — first bucket's start to the last one's end. */
-const wholeSpan = (buckets: Bucket[]): Span => ({
-  startIso: buckets[0]?.span.startIso ?? "",
-  endIso: buckets[buckets.length - 1]?.span.endIso ?? "",
-});
-
-/*
-  All three come from the same buckets the graph plots, over the same range.
-
-  The average deliberately starts at the first bucket with anything in it:
-  padding it with the empty weeks before someone joined the squad would just
-  tell them they train half as much as they do.
-*/
-export function summarise(
-  buckets: Bucket[],
-  metric: StatMetric,
-  units: Units,
-  range: StatRange,
-): Tile[] {
-  if (metric.tiles) return metric.tiles(buckets, range);
-
-  const values = buckets.map((b) => metric.value(b.logs, b.span));
-  const word = bucketWord(range);
-
-  const firstActive = values.findIndex((v) => v > 0);
-  const counted = firstActive < 0 ? [] : values.slice(firstActive);
-  const average = counted.length ? sum(counted) / counted.length : 0;
-
-  // The range read as ONE span, so a percentage is recomputed rather than
-  // averaged and a distance is the honest total.
-  const total = buckets.length
-    ? metric.value(buckets.flatMap((b) => b.logs), wholeSpan(buckets))
-    : 0;
-
-  return [
-    {
-      label: metric.totalLabel ?? "Total",
-      sub: rangeCaption(range),
-      value: metric.format(total, units),
-    },
-    {
-      label: `Avg ${word}`,
-      sub: counted.length ? `over ${counted.length} ${word === "day" ? "d" : "wk"}` : "no data yet",
-      value: metric.format(average, units),
-    },
-    {
-      label: `Best ${word}`,
-      sub: rangeCaption(range),
-      value: metric.format(Math.max(0, ...values), units),
-    },
-  ];
-}
