@@ -8,11 +8,19 @@ import VisibilityToggle from "@/components/profile/VisibilityToggle";
 /*
   Personal records block.
 
-  A record is a small brag, not a settings row — so it's shown as a TILE with
-  the number big and the lift's name small above it, two to a line (a lone one
-  takes the whole line rather than leaving a gap). It used to be a list of two
-  faint 12px lines with a dashed grey box permanently parked underneath, which
-  read as an empty form no matter how much you'd filled in.
+  A record is a small brag, not a settings row — so it's shown as a PILL: the
+  lift's name and the number side by side on one line, the same chip shape as
+  Interests and Languages higher up the page. They pack left to right and wrap,
+  so four or five fit on a line instead of two.
+
+  They were half-width tiles before (name stacked over a big number, two to a
+  line). The number was bigger, but "Bench press / 100 kg" is a short thing in
+  a wide box: each record used a tenth of the row and left the rest of its tile
+  empty, so the block read as mostly blank space. Sizing each one to its own
+  content fixes that without truncating a long value like "100 kg × 1".
+  And before THAT it was a list of two faint 12px lines with a dashed grey box
+  permanently parked underneath, which read as an empty form no matter how much
+  you'd filled in.
 
   The dashed box now only appears when there is nothing yet. Once there is,
   changing things is the pencil in the heading — the same pencil, in the same
@@ -124,23 +132,19 @@ export default function PersonalRecords({
           </button>
         </div>
       ) : filled.length > 0 ? (
-        <div className="grid grid-cols-2 gap-2">
+        <div className="flex flex-wrap gap-1.5">
           {filled.map((pr, i) => (
-            <div
+            <span
               key={i}
-              /* An odd one out takes the full width rather than leaving half
-                 the line blank. */
-              className={`rounded-xl border border-border bg-surface-2 px-3 py-2.5 ${
-                filled.length % 2 === 1 && i === filled.length - 1 ? "col-span-2" : ""
-              }`}
+              className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-border bg-surface-2 py-1.5 pl-3 pr-2.5"
             >
-              <div className="truncate text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
+              <span className="truncate text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">
                 {pr.lift || "Record"}
-              </div>
-              <div className="mt-0.5 truncate text-[16px] font-semibold tabular-nums leading-tight text-text">
+              </span>
+              <span className="shrink-0 text-[13px] font-semibold tabular-nums leading-none text-text">
                 {pr.value || "—"}
-              </div>
-            </div>
+              </span>
+            </span>
           ))}
         </div>
       ) : (
