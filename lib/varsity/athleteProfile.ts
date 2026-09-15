@@ -118,7 +118,8 @@ const trimNum = (v: number) => (Number.isInteger(v) ? String(v) : v.toFixed(1));
   cell spent two of its three lines saying "erg" twice and never said the one
   thing that wasn't written anywhere else: the size of the session.
 
-  Rowing is measured in metres and spoken in k ("6k", "7.5k"). Everything else
+  Rowing is measured in metres and written in kilometres ("6 km", "7.5 km" —
+  the owner, 2026-09-14; it was "6k"). Everything else
   is measured in minutes. A run logged with a distance instead gets kilometres,
   because that is how a run is talked about. A rest day, a lifting session and
   anything logged with no figures get NO second line at all — see below.
@@ -142,7 +143,7 @@ export function logVolumeLabel(
     beside it printed the metres that actually say how big the session was.
   */
   if (key === "off" || key === "weights") return "";
-  if (rowingCategories.has(key) && metres) return `${trimNum(metres / 1000)}k`;
+  if (rowingCategories.has(key) && metres) return `${trimNum(metres / 1000)} km`;
   if (minutes) return `${minutes} min`;
   if (metres) return `${trimNum(metres / 1000)} km`;
   /*

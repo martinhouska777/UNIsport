@@ -595,7 +595,12 @@ export default function CalendarScreen({
                 a floor the grid simply scrolls — the cells stay readable and
                 a six-row month looks like the five-row one above it.
               */
-              className={`flex min-h-[64px] flex-col overflow-hidden rounded-lg border text-left ${
+              /* overflow-CLIP, not hidden: it still rounds the blocks into the
+                 corners, but it is not a scroll container, so the day keeps its
+                 automatic minimum size — a cell can never be squeezed shorter
+                 than the words inside it (owner, 2026-09-14: "Weights" and
+                 "Hard 11.3k" had their bottoms cut off). */
+              className={`flex min-h-[64px] flex-col overflow-clip rounded-lg border text-left ${
                 d.today
                   ? "border-primary bg-primary-tint"
                   : "border-border bg-surface active:bg-surface-2"
@@ -618,12 +623,12 @@ export default function CalendarScreen({
               </span>
 
               {/*
-                THE SESSIONS FILL THE CELL. One session takes the whole body of
-                the day, two share it half and half, three share it in thirds.
-                Until 2026-09-14 the body was split into a fixed morning half
-                and afternoon half, so an AM-only day left its bottom empty;
-                the owner asked for the block to fill the bar instead — the
-                cell is about WHAT was trained, not when in the day.
+                ONE SESSION TAKES HALF THE DAY, two share it half and half,
+                three in thirds. For a few hours on 2026-09-14 one session
+                filled the whole body; the owner then asked for a single session
+                to take only half again (same day, later), so a day with one
+                outing does not look like a day with two. An empty spacer takes
+                the other half.
               */}
               {/*
                 A DAY OUT, with nothing logged: its colour fills the day (sick
@@ -644,7 +649,7 @@ export default function CalendarScreen({
                   <span className="truncate text-[9px] font-semibold text-text">{dayOutName(out!.reason)}</span>
                 </span>
               )}
-              <span className={`mt-0.5 min-h-0 flex-1 flex-col gap-px ${outFill ? "hidden" : "flex"}`}>
+              <span className={`mt-0.5 flex-1 flex-col gap-px ${outFill ? "hidden" : "flex"}`}>
                 {has && (
                   <>
                   {d.logs.map((l) => {
@@ -674,7 +679,10 @@ export default function CalendarScreen({
                         /* px-0.5, not px-1: those four pixels are what let
                            "Water" and "22.5k" share the first line without
                            either one truncating (measured at 390px). */
-                        className="min-h-0 flex-1 overflow-hidden px-0.5 py-0.5"
+                        /* flex-[1_0_0%]: an equal share of the day, and NEVER
+                           less than its own words (no min-h-0, no overflow) —
+                           the day grows instead, and the month scrolls. */
+                        className="flex-[1_0_0%] px-0.5 py-0.5"
                         style={blockStyle(l, planned)}
                       >
                         {/* No AM / PM tag — the two letters were eating the
@@ -693,7 +701,7 @@ export default function CalendarScreen({
                             kilometres bottom-right "so you can see the whole
                             thing". So the name runs the full width of the
                             block, and the figure drops to the line below. */}
-                        <span className="block truncate text-[9px] font-medium leading-[1.15]">
+                        <span className="block text-[9px] font-medium leading-[1.15] [overflow-wrap:anywhere]">
                           {kind}
                         </span>
                         {/* THE BOTTOM LINE: what it was (UT2 / Hard) on the
@@ -705,12 +713,16 @@ export default function CalendarScreen({
                             bottom-right corner, where it is always in the same
                             place from day to day. */}
                         {(intensity || sub) && (
-                          <span className="mt-px flex items-baseline gap-px">
-                            <span className="min-w-0 flex-1 truncate text-[9px] leading-[1.15] opacity-80">
+                          /* WRAPS rather than cutting anything: the intensity on
+                             the left, the figure on the right when both fit, and
+                             the figure on its own line, still at the right, when
+                             they don't ("Hard" + "11.3 km" in a 40px column). */
+                          <span className="mt-px flex flex-wrap items-baseline justify-between gap-x-0.5">
+                            <span className="min-w-0 text-[9px] leading-[1.15] opacity-80 [overflow-wrap:anywhere]">
                               {intensity}
                             </span>
                             {sub && (
-                              <span className="flex-shrink-0 text-[9px] font-medium leading-[1.15] opacity-80">
+                              <span className="ml-auto whitespace-nowrap text-[9px] font-medium leading-[1.15] opacity-80">
                                 {sub}
                               </span>
                             )}
@@ -719,6 +731,7 @@ export default function CalendarScreen({
                       </span>
                     );
                   })}
+                  {d.logs.length === 1 && <span aria-hidden className="min-h-0 flex-[1_1_0%]" />}
                   </>
                 )}
               </span>
