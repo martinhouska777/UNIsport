@@ -343,6 +343,19 @@
   --color-l-grid-2: rgba(20, 22, 24, 0.0199);
   /* The dim laid over the page while the phone menu is open (LandingMenu). */
   --color-l-scrim: rgba(16, 22, 44, 0.32);
+  /* The student title card's ground. It was the lavender --color-l-surface
+     (#ebeaf6), which read reddish (owner, 2026-09-15: "only the blue tint, keep
+     the same intensity") — the same oklch lightness and chroma, turned blue. */
+  --color-l-surface-student: #e5ecf7;
+  /* The Coach door's red (owner, 2026-09-15): the three doors under the intro
+     wear a tint each — student blue, varsity gold, coach red. */
+  --color-l-coach: #b83a2e;
+  --color-l-coach-dim: rgba(184, 58, 46, 0.08);
+  --color-l-coach-soft: rgba(184, 58, 46, 0.22);
+  /* The Coach door's ground — opaque, like the student's (--color-l-bg-student)
+     and the varsity athlete's (--color-l-surface-varsity): a see-through tint
+     over the page's faint cyan turned the gold olive and the red grey. */
+  --color-l-surface-coach: #fdeeeb;
 }
 /* The glows' strength (the three `opacity: var(--l-glow, 1)` rules below).
    Version 2 runs them at half; the Lab's dial writes the same variable. */
@@ -391,28 +404,38 @@
 /* While the page's own phone is flying in, this one must not be there — two
    phones in the same place is the whole thing we are avoiding. */
 .lc-phone.lc-hide { visibility: hidden; }
-/* THE SCHOOL'S GLOW behind a closer's phone (owner, 2026-09-14 — the closers
-   went back to white and the phone needed something to stand on, "same as on
-   the first page on top behind the phones"). The hero's glow (.l-hero-glow),
-   copied: a soft rounded column a little wider than the phone, blurred, at the
-   same faint strength, in the colour of the school on show (--lg, set inline
-   from lib/landingSchools.ts). On the phone's outer box, which paints nothing
-   itself, so it sits behind the metal rim and hides/moves with the phone. */
+/* THE SCHOOL'S LIGHT behind a closer's phone, in the colour of the school on
+   show (--lg, set inline from lib/landingSchools.ts).
+
+   It was a blurred rounded column copied from the hero (2026-09-14), which
+   read as "a colour square" round the phone, and while the phone slid and
+   scaled in the blur could show as a hard rectangle first (owner, 2026-09-15:
+   "I just want there to be the light cloud"). So it is now a CLOUD: four soft
+   pools of the colour, uneven, spilling out past the phone's edges in
+   different places — and no filter at all, the gradients are soft by
+   themselves, so there is no rectangle to be seen at any frame.
+
+   --lg is registered (@property) so the pools FADE from one school's colour to
+   the next instead of cutting. On the phone's outer box, which paints nothing
+   itself, so it sits behind the metal rim and moves with the phone. */
+@property --lg {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
 .lc-glow::before {
   content: "";
   position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 106%;
-  height: 94%;
-  transform: translate(-50%, -50%);
+  inset: -24% -62%;
   z-index: -1;
-  border-radius: 9999px;
-  background-color: var(--lg);
-  filter: blur(26px);
-  opacity: 0.36;
   pointer-events: none;
-  transition: background-color 700ms ease-in-out;
+  background:
+    radial-gradient(34% 26% at 30% 30%, color-mix(in srgb, var(--lg) 42%, transparent), transparent 72%),
+    radial-gradient(30% 24% at 71% 52%, color-mix(in srgb, var(--lg) 34%, transparent), transparent 72%),
+    radial-gradient(36% 26% at 36% 74%, color-mix(in srgb, var(--lg) 30%, transparent), transparent 72%),
+    radial-gradient(24% 18% at 64% 20%, color-mix(in srgb, var(--lg) 22%, transparent), transparent 72%);
+  opacity: var(--l-glow, 1);
+  transition: --lg 700ms ease-in-out;
 }
 @media (prefers-reduced-motion: reduce) {
   .lc-glow::before { transition: none; }

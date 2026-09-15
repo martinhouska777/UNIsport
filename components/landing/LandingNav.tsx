@@ -69,7 +69,7 @@ export default function LandingNav({ view = "all", heroMark = false }: { view?: 
           <div className="flex items-center gap-2 sm:gap-2.5">
             <Link
               href="/login"
-              className="tap44 rounded-full px-3.5 py-2 text-[13px] font-medium tracking-tight text-l-text-2 transition-colors hover:text-l-text sm:px-[18px] sm:text-sm"
+              className="tap44 inline-flex h-10 items-center rounded-full border border-l-line bg-l-bg px-3.5 text-[13px] font-medium tracking-tight text-l-text transition-colors hover:border-l-line-hover hover:bg-l-bg-elevated focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-l-text sm:px-[18px] sm:text-sm"
             >
               {nav.login}
             </Link>
@@ -80,7 +80,7 @@ export default function LandingNav({ view = "all", heroMark = false }: { view?: 
                 only); a laptop keeps both, where the bar is a thin line. */}
             <Link
               href={hero.primaryHref}
-              className={`whitespace-nowrap rounded-full bg-l-text px-4 py-2.5 text-sm font-medium tracking-tight text-l-bg transition-colors hover:bg-l-accent sm:px-[18px] ${heroMark ? "l-nav-cta" : ""}`}
+              className={`inline-flex h-10 items-center whitespace-nowrap rounded-full border border-l-text bg-l-text px-4 text-sm font-medium tracking-tight text-l-bg transition-colors hover:border-(--color-l-accent) hover:bg-l-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-l-text sm:px-[18px] ${heroMark ? "l-nav-cta" : ""}`}
             >
               <span className="sm:hidden">{nav.ctaShort}</span>
               <span className="hidden sm:inline">{nav.cta}</span>

@@ -8,7 +8,7 @@ import CloserSplit from "@/components/landing/CloserSplit";
 import { useCloserGate } from "@/components/landing/useCloserGate";
 import type { CloserHandle } from "@/components/landing/closer";
 import { closers } from "@/lib/landingCopy";
-import { BLADE_PATH, OAR_ART, lift, schools } from "@/lib/landingSchools";
+import { BLADE_PATH, OAR_ART, lift, schools, readable } from "@/lib/landingSchools";
 
 /*
   BLADE LOCK — the closer of the varsity story.
@@ -462,11 +462,10 @@ export default function BladeLock({
   }));
 
   const s = schools[active];
-  // The school's colour as TEXT on the page: its OWN colour, no lift and no
-  // glow (owner, 2026-09-13: "I don't want your colored glow … just do it in
-  // normal colors, and for Harvard make it crimson red"). Same colour as the
-  // oars and the tab bar now.
-  const inkText = s.ink;
+  // The school's colour as TEXT on the page, kept readable on white: readable()
+  // in lib/landingSchools.ts (owner, 2026-09-15). The oars and the tab bar keep
+  // the raw colour.
+  const inkText = readable(s.ink);
   const copy = closers.blades;
   const ct = "transition-colors duration-[600ms] ease-in-out motion-reduce:transition-none";
 

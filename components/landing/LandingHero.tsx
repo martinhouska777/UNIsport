@@ -73,6 +73,15 @@ function Arrow({ className = "" }: { className?: string }) {
   );
 }
 
+/* The three doors' tints, in `doors` order: Student · Varsity athlete · Coach.
+   Opaque grounds (see-through ones went olive and grey over the page's cyan);
+   hovering draws the border in the door's full colour. */
+const DOOR_TONE = [
+  { card: "border-l-accent-soft bg-l-bg-student hover:border-(--color-l-accent)", label: "text-l-text" },
+  { card: "border-l-varsity-soft bg-l-surface-varsity hover:border-l-varsity", label: "text-l-varsity" },
+  { card: "border-l-coach-soft bg-l-surface-coach hover:border-l-coach", label: "text-l-coach" },
+];
+
 /* The intro belongs to "/" alone (2026-08-30): it introduces the whole
    product and hands the visitor three doors, and a view reached THROUGH one of
    those doors opens on its own statement instead — see LandingPage. */
@@ -141,26 +150,21 @@ export default function LandingHero() {
           <p className="mt-[clamp(6px,1.2vh,12px)] max-w-[46ch] text-[14px] leading-relaxed text-l-text-2">{availability}</p>
         </div>
 
-        {/* 4 · The three doors — blue for the student, gold for the varsity
-            athlete, a gold outline for the coach (their section wears the same
-            gold). Each opens that audience's own view — the same page as its
-            tab. */}
+        {/* 4 · The three doors, each with its own tint (owner, 2026-09-15) —
+            blue for the student, gold for the varsity athlete, red for the
+            coach, whose title is written in that red the way Varsity athlete
+            is written in gold. Each opens that audience's own view — the same
+            page as its tab. */}
         <div className="l-in-4 flex w-full flex-col items-center">
             <div className="mt-[clamp(12px,2.4vh,24px)] grid w-full max-w-[860px] grid-cols-1 gap-3 sm:grid-cols-3">
               {doors.map((d, i) => (
                 <Link
                   key={d.label}
                   href={d.href}
-                  className={`group flex flex-col items-start gap-[clamp(2px,0.6vh,6px)] rounded-2xl border px-5 py-[clamp(9px,1.6vh,16px)] text-left transition-colors ${
-                    i === 0
-                      ? "border-l-accent-soft hover:border-(--color-l-accent) hover:bg-l-accent-dim"
-                      : "border-l-varsity-soft hover:border-l-varsity hover:bg-l-varsity-dim"
-                  }`}
+                  className={`group flex flex-col items-start gap-[clamp(2px,0.6vh,6px)] rounded-2xl border px-5 py-[clamp(9px,1.6vh,16px)] text-left transition-colors ${DOOR_TONE[i].card}`}
                 >
                   <span
-                    className={`flex w-full items-center justify-between font-display text-[clamp(17px,2.4vh,22px)] tracking-tight ${
-                      i === 1 ? "text-l-varsity" : "text-l-text"
-                    }`}
+                    className={`flex w-full items-center justify-between font-display text-[clamp(17px,2.4vh,22px)] tracking-tight ${DOOR_TONE[i].label}`}
                   >
                     {d.label}
                     <Arrow className="text-l-text-3 transition-transform group-hover:translate-x-1" />

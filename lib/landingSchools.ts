@@ -255,52 +255,85 @@ function luminance(hex: string): number {
 }
 const contrast = (a: number, b: number) => (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
 /* The page's two inks, the only two colours a label here is ever set in. */
-const INK = { "l-bg": 0.0056, "l-text": 0.9067 } as const; // luminance of #0a0a0a / #f5f5f5
+/* Luminance of --color-l-bg #f6feff / --color-l-text #141618. These were still
+   the dark page's (#0a0a0a / #f5f5f5) after the page went light, which flipped
+   the button's label: dark words on Harvard's crimson (found 2026-09-15). */
+const INK = { "l-bg": 0.977, "l-text": 0.0079 } as const;
 
 /*
   THE SCHOOL'S COLOUR AS AN ACCENT — what the intro paints the wordmark's
   second half, "Your people" and the button with while that school is showing.
 
-  It used to LIFT the colour until type cleared 3:1 and the button's label
-  4.5:1, which turned Harvard's crimson pink. The owner chose the real colours
-  over that (2026-09-13), so the colour is the school's own and only the
-  button's ink is still chosen. The navies read dark on the page — accepted.
+  The colour is readable() — the school's own where it already reads on the
+  white page (Harvard, Cornell, Dartmouth), nudged where it did not (owner,
+  2026-09-15: the orange, Penn and Brown were "not visible … really dark").
+  The button's label picks whichever of the page's two inks reads better on it.
 
   `ink` is a TOKEN name, never a colour, so nothing is written into a
   component (rule 1).
 */
 export function accent(hex: string): { color: string; ink: "l-bg" | "l-text" } {
-  /* THE SCHOOL'S OWN COLOUR, NOT LIFTED (owner, 2026-09-13: "make the top
-     crimson too" — the same call that set the closers' words in raw colour, so
-     the whole page shows one crimson). Only the button's label still picks
-     whichever of the page's two inks reads better on it. */
-  const lum = luminance(hex);
+  const color = readable(hex);
+  const lum = luminance(color);
   const ink = contrast(lum, INK["l-bg"]) >= contrast(lum, INK["l-text"]) ? "l-bg" : "l-text";
-  return { color: hex, ink };
+  return { color, ink };
+}
+
+/* sRGB hex ⇄ OKLCH (lightness, chroma, hue) — the space where changing only
+   the lightness keeps a colour looking like the same colour. */
+const toLinear = (c: number) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+const fromLinear = (c: number) => (c <= 0.0031308 ? 12.92 * c : 1.055 * c ** (1 / 2.4) - 0.055);
+function toOklch(hex: string): [number, number, number] {
+  const n = parseInt(hex.slice(1), 16);
+  const [r, g, b] = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => toLinear(v / 255));
+  const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b);
+  const m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b);
+  const s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b);
+  const L = 0.2104542553 * l + 0.793617785 * m - 0.0040720468 * s;
+  const A = 1.9779984951 * l - 2.428592205 * m + 0.4505937099 * s;
+  const B = 0.0259040371 * l + 0.7827717662 * m - 0.808675766 * s;
+  return [L, Math.hypot(A, B), (Math.atan2(B, A) * 180) / Math.PI];
+}
+function fromOklch(L: number, C: number, H: number): string {
+  const A = C * Math.cos((H * Math.PI) / 180);
+  const B = C * Math.sin((H * Math.PI) / 180);
+  const l = (L + 0.3963377774 * A + 0.2158037573 * B) ** 3;
+  const m = (L - 0.1055613458 * A - 0.0638541728 * B) ** 3;
+  const s = (L - 0.0894841775 * A - 1.291485548 * B) ** 3;
+  const rgb = [
+    4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s,
+    -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
+    -0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s,
+  ];
+  return `#${rgb.map((v) => Math.round(Math.min(1, Math.max(0, fromLinear(v))) * 255).toString(16).padStart(2, "0")).join("")}`;
 }
 
 /*
-  THE SCHOOL'S COLOUR AS TEXT ON THE PAGE — the closers' "your colours.",
-  "Bring it to yours next.", "HARVARD", "HARVARD ROWING".
+  THE SCHOOL'S COLOUR AS TYPE ON THE WHITE PAGE — the intro's wordmark half,
+  its "Your people" and button, the student card's, and the closers' "your
+  colours.", the big letter, "HARVARD ROWING".
 
-  `ink` was described as the legible version of the school's colour, but for
-  most schools it is the colour itself, and on the near-black ground Harvard's
-  crimson measures 2.65:1, Yale's navy 1.6:1, Penn's 1.3:1 — under the 4.5:1
-  that text needs (website review, 2026-09-10). Blade Lock brightened its two
-  lines with a CSS filter, which got Harvard to 4:1 and the navies nowhere.
-
-  So: the same lift() the intro's button uses, but only as far as this colour
-  needs — start at its own lightness and step up until it clears the ratio.
-  Princeton's orange passes untouched; the crimsons turn a shade brighter; the
-  navies come up to a readable blue, as they already do on the hero button.
-  The colour still says which school; it just clears the line.
+  The raw colours (owner's call, 2026-09-13) failed both ways on white (owner,
+  2026-09-15): Princeton's orange and Columbia's light blue were too light to
+  see, and Penn's and Yale's navy and Brown's brown were so dark they read as
+  black. So each colour keeps its hue and chroma and only its OKLCH lightness
+  moves, into a band:
+    • up to at least `floor` — the navies become a visible blue, Brown a brown;
+    • then down, only until it clears `min` against the page — the orange and
+      the light blue deepen just enough to be read.
+  Harvard, Cornell and Dartmouth are already inside the band and come back
+  exactly as they are.
 */
-export function onGround(hex: string, min = 4.5): string {
-  for (let floor = 0.3; floor <= 0.9; floor += 0.02) {
-    const color = lift(hex, floor); // unchanged while the colour is already lighter than `floor`
-    if (contrast(luminance(color), INK["l-bg"]) >= min) return color;
+export function readable(hex: string, min = 4.5, floor = 0.44): string {
+  const [L0, C, H] = toOklch(hex);
+  if (L0 >= floor && contrast(luminance(hex), INK["l-bg"]) >= min) return hex;
+  let L = Math.max(L0, floor);
+  let out = fromOklch(L, C, H);
+  while (contrast(luminance(out), INK["l-bg"]) < min && L > 0.2) {
+    L -= 0.005;
+    out = fromOklch(L, C, H);
   }
-  return lift(hex, 0.9);
+  return out;
 }
 
 export function rgba(hex: string, a: number): string {

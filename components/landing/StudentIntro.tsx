@@ -52,7 +52,7 @@ import { availability, cues, hero, studentIntro } from "@/lib/landingCopy";
       it does the job the intro does on "/": "alone again." — this card's
       "Your people" — and the .edu button take the showing school's colour,
       the button carrying that school's crest and its contrast-checked ink.
-      The glow behind the words follows the same colour.
+      The glow behind the words stays blue (2026-09-15).
 
   The cycle hook is called either way (it must be), but `cycle` only points at
   the element in solo, so on "/" it finds nothing, returns early and starts no
@@ -171,14 +171,13 @@ export default function StudentIntro({ solo = false }: { solo?: boolean }) {
       style={
         {
           ...(solo ? { "--sc": color, "--sc-ink": `var(--color-${ink})` } : null),
-          // The glow behind the words: the school's own colour where the card
-          // is the front door, the page's blue where it is not.
-          "--tg": solo
-            ? "color-mix(in srgb, var(--sc) 26%, transparent)"
-            : "color-mix(in srgb, var(--color-l-accent) 20%, transparent)",
+          // The glow behind the words: the page's blue, always. It used to take
+          // the school's colour on /for/students, and crimson over the card's
+          // ground read reddish (owner, 2026-09-15: "only the blue tint").
+          "--tg": "color-mix(in srgb, var(--color-l-accent) 20%, transparent)",
         } as CSSProperties
       }
-      className={`l-titlecard relative z-[1] flex min-h-svh flex-col items-center justify-center gap-[clamp(12px,2.4svh,26px)] border-t border-l-line bg-l-surface px-6 pt-14 pb-8 text-center ${anim ? "l-anim" : ""} ${shown ? "is-in" : ""}`}
+      className={`l-titlecard relative z-[1] flex min-h-svh flex-col items-center justify-center gap-[clamp(12px,2.4svh,26px)] border-t border-l-line bg-l-surface-student px-6 pt-14 pb-8 text-center ${anim ? "l-anim" : ""} ${shown ? "is-in" : ""}`}
     >
       <Heading className="max-w-[13ch] font-display text-[clamp(54px,min(9vw,13svh),100px)] font-normal leading-[0.98] tracking-[-0.02em] text-balance text-l-text">
         <Typed
