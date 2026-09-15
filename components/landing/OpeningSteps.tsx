@@ -30,6 +30,20 @@ import type { OpeningStep } from "@/lib/landingCopy";
   They arrive one after another when the card comes on screen: `delay` is when
   the first one lands, and each following one is 55ms behind the last (the
   card's entrance is .l-titlecard in app/globals.css).
+
+  HOVER ON THE VARSITY CARD IS CHARCOAL, NOT GOLD (owner, 2026-09-15: the pills
+  "are yellow when I hover over them", pick a colour that "will be there"). The
+  gold hover was a gold border and an 8% gold wash laid on a card whose ground
+  is ALREADY golden cream (--color-l-surface-varsity) — the hover state and the
+  background were the same colour. Blue and red were the two the owner looked
+  at first; both read as another section (blue is the student story, red is the
+  Coach door), so the pill fills with the page's ink instead, the word turns the
+  card's own cream, and the icon and number lift to the light gold. Same pairing
+  the "See every feature" button under it hovers to, and gold on charcoal is
+  what the mode is named after.
+
+  The student card keeps its blue edge: its ground is pale blue, so an ink-blue
+  border does show, and blue is that story's colour.
 */
 export default function OpeningSteps({
   steps,
@@ -44,8 +58,15 @@ export default function OpeningSteps({
   /** When the first chip lands, in ms, once the card is on screen. */
   delay?: number;
 }) {
-  const tint = accent === "accent" ? "text-l-accent" : "text-l-varsity";
-  const edge = accent === "accent" ? "hover:border-l-accent hover:bg-l-accent-dim" : "hover:border-l-varsity hover:bg-l-varsity-dim";
+  const gold = accent === "varsity";
+  const tint = gold ? "text-l-varsity" : "text-l-accent";
+  // `border-l-<x>` is also read as "left border" — see the naming trap in
+  // app/globals.css — so the border colour goes through the variable itself.
+  const edge = gold
+    ? "hover:border-(--color-l-text) hover:bg-l-text"
+    : "hover:border-(--color-l-accent) hover:bg-l-accent-dim";
+  const mark = gold ? "transition-colors group-hover:text-l-varsity-glow" : "";
+  const word = gold ? "transition-colors group-hover:text-(--color-l-surface-varsity)" : "";
 
   return (
     <ol className="mt-1 flex max-w-[860px] flex-wrap items-center justify-center gap-2 sm:gap-x-2.5 sm:gap-y-[5px]">
@@ -56,11 +77,11 @@ export default function OpeningSteps({
         <li key={s.n} className="l-tc" style={{ "--d": `${delay + i * 55}ms` } as CSSProperties}>
           <a
             href={`#${storyId}-b${i}`}
-            className={`flex items-center gap-2 rounded-full border border-l-line-hover bg-l-bg-elevated px-3.5 py-2 transition-colors sm:px-4 ${edge}`}
+            className={`group flex items-center gap-2 rounded-full border border-l-line-hover bg-l-bg-elevated px-3.5 py-2 transition-colors sm:px-4 ${edge}`}
           >
-            <FeatureIcon name={s.icon} className={`h-[18px] w-[18px] ${tint}`} />
-            <span className="font-mono text-[12px] tracking-[0.12em] text-l-text-2">{s.n}</span>
-            <span className="text-[14px] tracking-tight text-l-text sm:text-[15px]">{s.word}</span>
+            <FeatureIcon name={s.icon} className={`h-[18px] w-[18px] ${tint} ${mark}`} />
+            <span className={`font-mono text-[12px] tracking-[0.12em] text-l-text-2 ${mark}`}>{s.n}</span>
+            <span className={`text-[14px] tracking-tight text-l-text sm:text-[15px] ${word}`}>{s.word}</span>
           </a>
         </li>,
       ])}

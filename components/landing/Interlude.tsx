@@ -90,9 +90,12 @@ export default function Interlude({ solo = false }: { solo?: boolean }) {
         </div>
       )}
 
+      {/* Hovering it deepened the gold wash on a card that is already golden
+          cream — the same complaint as the steps above (owner, 2026-09-15). It
+          now goes the way they do: the page's ink with the card's cream on it. */}
       <a
         href={interlude.overview.href}
-        className="l-tc mt-2 inline-flex items-center gap-2 rounded-full border border-l-varsity bg-l-varsity-dim px-9 py-4 text-[clamp(16px,1.5vw,18px)] font-semibold tracking-tight text-l-text transition-[color,background-color,border-color,translate] hover:-translate-y-0.5 hover:bg-l-varsity-soft"
+        className="l-tc mt-2 inline-flex items-center gap-2 rounded-full border border-l-varsity bg-l-varsity-dim px-9 py-4 text-[clamp(16px,1.5vw,18px)] font-semibold tracking-tight text-l-text transition-[color,background-color,border-color,translate] hover:-translate-y-0.5 hover:border-(--color-l-text) hover:bg-l-text hover:text-(--color-l-surface-varsity)"
         style={{ "--d": "890ms" } as CSSProperties}
       >
         {interlude.overview.label} →
