@@ -421,7 +421,7 @@
    flashed a rectangle mid-flight): a pill tucked just inside the phone —
    narrower by 3% a side, shorter by 6% top and bottom — whose soft shadow is
    the light. Sized in cqw (the phone is a @container) so the light keeps its
-   proportion on every size of phone; at 340px it is the intro's blur(26px). */
+   proportion on every size of phone; at 340px it is the intro's blur(26px).
 
    --lg is registered (@property) so the glow FADES from one school's colour to
    the next instead of cutting. On the phone's outer box, which paints nothing
