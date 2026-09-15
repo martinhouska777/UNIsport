@@ -175,10 +175,11 @@ function MatchScreen() {
       {/* Sub-tab switch — the top of the screen. The "Match" title above it
           went: the tab bar already says where you are. */}
       <div className="px-3 pb-2 pt-3">
-        {/* A capsule with the chosen tab as a pill inside it (Instagram-style).
-            The track is sunken, like the one on Messages — same control, same
-            well for the pill to sit in. */}
-        <div className="flex rounded-full border border-border bg-sunken p-1">
+        {/* Same capsule as Messages: the track is white, not a sunken grey, and
+            has NO inner padding, so the chosen tab fills right out to the
+            capsule's edges (owner, 2026-09-15). `overflow-hidden` keeps the
+            filled tab inside the rounded corners. */}
+        <div className="flex overflow-hidden rounded-full border border-border bg-surface">
           {subTabs.map((s) => (
             <button
               key={s.key}
