@@ -16,7 +16,6 @@ import {
   IconX,
   IconCamera,
   IconBell,
-  IconTrash,
   IconShield,
   IconMapPin,
   HouseSigil,
@@ -46,8 +45,6 @@ import {
   verifiedGyms,
   MAX_TOP_GYMS,
   weekDays,
-  trainingTimePresets,
-  DEFAULT_TRAINING_SLOT,
   concentrations,
   countries,
   languageOptions,
@@ -73,16 +70,8 @@ import {
   type OnboardingProfile,
 } from "@/lib/onboarding";
 import { houseColorsFor } from "@/lib/gyms";
-import {
-  daySlots,
-  minutesOf,
-  slotLabel,
-  slotToText,
-  timeChoices,
-  usualSlot,
-  parseSlot,
-  type Slot,
-} from "@/lib/schedule";
+import { hoursOfDay, hoursToSlots } from "@/lib/schedule";
+import WeekHourGrid from "@/components/onboarding/WeekHourGrid";
 import { subscribeToPush, sendTestNotification } from "@/lib/push/client";
 
 const activityIcons: Record<string, (p: { size?: number; className?: string }) => React.ReactNode> = {
@@ -158,7 +147,7 @@ const STEPS: StepMeta[] = [
     skippable: true,
   },
   { key: "topgyms", title: "Your top gyms.", subtitle: "Where do you actually train? The match looks for people at your gym — pick and rank your top 3." },
-  { key: "schedule", title: "When do you usually train?", subtitle: "Pick your days, then the time — this is how we find people who are there when you are." },
+  { key: "schedule", title: "When do you usually train?", subtitle: "Tap every hour you're usually free — this is how we find people who are there when you are." },
   /*
     No longer skippable. A concentration and three interests are required; the
     hometown and languages stay optional. This chapter is the reason two
@@ -202,16 +191,6 @@ export default function OnboardingFlow() {
 
   const [step, setStep] = useState(0); // 0-based index into STEPS
   const [profile, setProfile] = useState<OnboardingProfile>(emptyProfile);
-  /*
-    Screen 5 UI. pickedTime holds the time button last pressed, and it
-    outranks what the week currently says — so picking a time BEFORE any day
-    works just as well as the other way round, and the next day tapped gets
-    that time. It is deliberately not saved with the answers: come back to a
-    half-finished flow and the week itself says what the usual time is.
-  */
-  const [pickedTime, setPickedTime] = useState<string | null>(null);
-  const [customTime, setCustomTime] = useState(false); // "Custom…" is open
-  const [showPerDay, setShowPerDay] = useState(false); // the per-day panel is open
   const [newInterest, setNewInterest] = useState<string | null>(null); // Screen 6 UI
   /*
     Nothing is written back to the draft until the draft has been READ. Without
@@ -789,266 +768,43 @@ export default function OnboardingFlow() {
       }
       case "schedule": {
         /*
-          Two questions instead of fourteen. Days across the top, then ONE time
-          that applies to all of them — because that is how people actually
-          train ("after class, around five"). Anyone whose week is messier
-          opens the panel at the bottom and gives a day its own hours.
+          The week as a grid of hours (WeekHourGrid): tap every hour you're
+          usually free. It replaced "pick days, then one usual time, then
+          maybe a per-day panel" — three questions the grid answers at once.
 
-          The answer is stored as real hour ranges ("17:00-19:00"), which is
-          what matching compares. It used to store five named blocks, so two
-          people three hours apart both counted as "PM" and scored a full hit.
+          The answer is still stored as real hour ranges ("17:00-19:00"),
+          which is what matching compares; the grid just joins lit hours up.
+          Each tap is applied to the schedule as it is AT THAT MOMENT, so
+          several quick taps in a row all land.
         */
         const schedule = profile.trainingSchedule;
-        const chosenDays = weekDays.filter((d) => (schedule[d.key] ?? []).length > 0);
-        // What the time buttons show as chosen: whatever the week mostly says,
-        // unless a button has been pressed since (that choice wins even with no
-        // days picked yet, so time-then-days works as well as days-then-time).
-        const usual = pickedTime ?? usualSlot(schedule) ?? DEFAULT_TRAINING_SLOT;
-
-        /*
-          Every change is computed from the schedule as it is AT THE MOMENT of
-          the change, not as it was when this screen was drawn. Three days
-          tapped in quick succession all land — reading the drawn-at value
-          instead meant the second and third taps overwrote the first.
-        */
-        const updateSchedule = (
-          change: (current: Record<string, string[]>, usualNow: string) => void,
-        ) =>
+        const toggleHour = (day: string, hour: number) =>
           setProfile((prev) => {
-            const next: Record<string, string[]> = {};
-            for (const [day, slots] of Object.entries(prev.trainingSchedule)) next[day] = [...slots];
-            change(next, pickedTime ?? usualSlot(next) ?? DEFAULT_TRAINING_SLOT);
-            for (const day of Object.keys(next)) if (next[day].length === 0) delete next[day];
+            const hours = hoursOfDay(prev.trainingSchedule[day]);
+            if (hours.has(hour)) hours.delete(hour);
+            else hours.add(hour);
+            const next = { ...prev.trainingSchedule };
+            const slots = hoursToSlots(hours);
+            if (slots.length > 0) next[day] = slots;
+            else delete next[day];
             return { ...prev, trainingSchedule: next };
           });
 
-        const toggleDay = (day: string) =>
-          updateSchedule((next, usualNow) => {
-            if ((next[day] ?? []).length > 0) delete next[day];
-            else next[day] = [usualNow];
-          });
-
-        // A new usual time moves every day that was ON the old usual time.
-        // Days carrying their own hours are left exactly where they are.
-        const chooseTime = (slot: string) => {
-          updateSchedule((next, usualNow) => {
-            for (const day of Object.keys(next)) {
-              if (next[day].length === 1 && next[day][0] === usualNow) next[day] = [slot];
-            }
-          });
-          setPickedTime(slot);
-        };
-
-        /*
-          A slot whose end lands on or before its start is not a near-miss, it's
-          a hole: block_range() in the database returns null for it and null
-          overlaps nothing, so that day would quietly stop matching anybody.
-          So a change that would invert a slot nudges the OTHER end instead of
-          being refused — the person still gets the time they just asked for.
-        */
-        const coherent = (slot: Slot, patch: Partial<Slot>): Slot => {
-          const next = { ...slot, ...patch };
-          if (minutesOf(next.end) > minutesOf(next.start)) return next;
-          const choices = timeChoices();
-          if (patch.start !== undefined) {
-            next.end = choices.find((t) => minutesOf(t) > minutesOf(next.start)) ?? next.start;
-          } else {
-            next.start =
-              [...choices].reverse().find((t) => minutesOf(t) < minutesOf(next.end)) ?? next.end;
-          }
-          return next;
-        };
-
-        const editSlot = (day: string, index: number, patch: Partial<Slot>) =>
-          updateSchedule((next) => {
-            const slots = daySlots(next[day]);
-            next[day] = slots.map((sl, i) => slotToText(i === index ? coherent(sl, patch) : sl));
-          });
-
-        // A second time on a day has to be a DIFFERENT time — adding the usual
-        // one twice reads as a bug and tells matching nothing new.
-        const addSlot = (day: string) =>
-          updateSchedule((next, usualNow) => {
-            const already = next[day] ?? [];
-            const free = already.includes(usualNow)
-              ? (trainingTimePresets.map((t) => t.slot).find((sl) => !already.includes(sl)) ??
-                usualNow)
-              : usualNow;
-            next[day] = [...already, free];
-          });
-
-        const removeSlot = (day: string, index: number) =>
-          updateSchedule((next) => {
-            next[day] = (next[day] ?? []).filter((_, i) => i !== index);
-          });
-
-        const usualParsed = parseSlot(usual);
-        const timeSelect = (
-          dayKey: string,
-          dayLabel: string,
-          i: number,
-          slot: Slot,
-          which: "start" | "end",
-        ) => (
-          <select
-            value={slot[which]}
-            onChange={(e) => editSlot(dayKey, i, { [which]: e.target.value })}
-            aria-label={`${dayLabel} ${which} time`}
-            className="min-w-0 flex-1 rounded-[10px] border border-border bg-surface-2 px-2.5 py-2 text-base text-text"
-          >
-            {timeChoices().map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
-        );
+        const chosenDays = weekDays.filter((d) => hoursOfDay(schedule[d.key]).size > 0);
+        const totalHours = chosenDays.reduce((n, d) => n + hoursOfDay(schedule[d.key]).size, 0);
 
         return (
-          <div className="flex flex-col gap-5">
-            <div>
-              <FieldLabel>Which days?</FieldLabel>
-              <div className="grid grid-cols-7 gap-1.5">
-                {weekDays.map((d) => {
-                  const on = (schedule[d.key] ?? []).length > 0;
-                  return (
-                    <button
-                      key={d.key}
-                      type="button"
-                      onClick={() => toggleDay(d.key)}
-                      aria-pressed={on}
-                      aria-label={d.label}
-                      className={`flex aspect-square items-center justify-center rounded-lg border text-[13px] transition-colors ${
-                        on
-                          ? "border-primary bg-primary-tint text-primary"
-                          : "border-border bg-surface-2 text-text"
-                      }`}
-                    >
-                      {d.letter}
-                    </button>
-                  );
-                })}
-              </div>
+          <div className="flex flex-col gap-2.5">
+            <div className="rounded-2xl border border-border bg-surface p-3">
+              <WeekHourGrid schedule={schedule} onToggle={toggleHour} />
             </div>
-
-            <div>
-              <FieldLabel>What time, usually?</FieldLabel>
-              <div className="flex flex-wrap gap-1.5">
-                {trainingTimePresets.map((t) => (
-                  <Pill
-                    key={t.slot}
-                    label={t.label}
-                    selected={!customTime && usual === t.slot}
-                    onClick={() => {
-                      setCustomTime(false);
-                      chooseTime(t.slot);
-                    }}
-                  />
-                ))}
-                <Pill
-                  label="Custom…"
-                  selected={customTime || !trainingTimePresets.some((t) => t.slot === usual)}
-                  onClick={() => setCustomTime(true)}
-                />
-              </div>
-
-              {(customTime || !trainingTimePresets.some((t) => t.slot === usual)) && usualParsed && (
-                <div className="mt-2.5 flex items-center gap-2">
-                  <select
-                    value={usualParsed.start}
-                    onChange={(e) => chooseTime(slotToText(coherent(usualParsed, { start: e.target.value })))}
-                    aria-label="Usual start time"
-                    className="min-w-0 flex-1 rounded-[10px] border border-border bg-surface-2 px-3 py-2 text-base text-text"
-                  >
-                    {timeChoices().map((t) => (
-                      <option key={t} value={t}>
-                        {t}
-                      </option>
-                    ))}
-                  </select>
-                  <span className="text-xs text-muted">to</span>
-                  <select
-                    value={usualParsed.end}
-                    onChange={(e) => chooseTime(slotToText(coherent(usualParsed, { end: e.target.value })))}
-                    aria-label="Usual end time"
-                    className="min-w-0 flex-1 rounded-[10px] border border-border bg-surface-2 px-3 py-2 text-base text-text"
-                  >
-                    {timeChoices().map((t) => (
-                      <option key={t} value={t}>
-                        {t}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-            </div>
-
-            {/* What the answer adds up to, in one line, before anyone commits
-                to it — and the way in for the minority whose week varies. */}
-            <div className="rounded-xl border border-border bg-surface-2 p-4">
-              {chosenDays.length === 0 ? (
-                <p className="text-[13px] text-muted">Pick the days you train.</p>
-              ) : (
-                <p className="text-[13px] text-text">
-                  {chosenDays.map((d) => d.label.slice(0, 3)).join(", ")}
-                  <span className="text-muted"> · </span>
-                  {daySlots(schedule[chosenDays[0].key]).map(slotLabel).join(", ")}
-                  {chosenDays.some(
-                    (d) => (schedule[d.key] ?? []).join() !== (schedule[chosenDays[0].key] ?? []).join(),
-                  ) && <span className="text-muted"> and other times</span>}
-                </p>
-              )}
-
-              {chosenDays.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => setShowPerDay((v) => !v)}
-                  aria-expanded={showPerDay}
-                  className="tap44 mt-1 flex items-center gap-1 text-[12px] font-medium text-primary"
-                >
-                  Different time on some days?
-                  {showPerDay ? <IconChevronUp size={14} /> : <IconChevronDown size={14} />}
-                </button>
-              )}
-
-              {showPerDay && chosenDays.length > 0 && (
-                <div className="mt-2 flex flex-col divide-y divide-border border-t border-border">
-                  {chosenDays.map((d) => (
-                    <div key={d.key} className="py-3">
-                      <div className="mb-2 flex items-center justify-between">
-                        <span className="text-[13px] font-medium text-text">{d.label}</span>
-                        <button
-                          type="button"
-                          onClick={() => addSlot(d.key)}
-                          aria-label={`Add a time on ${d.label}`}
-                          className="tap44 flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-medium text-primary"
-                        >
-                          <IconPlus size={12} />
-                          Add time
-                        </button>
-                      </div>
-                      <div className="flex flex-col gap-2">
-                        {daySlots(schedule[d.key]).map((slot, i) => (
-                          <div key={i} className="flex items-center gap-2">
-                            {timeSelect(d.key, d.label, i, slot, "start")}
-                            <span className="text-xs text-muted">to</span>
-                            {timeSelect(d.key, d.label, i, slot, "end")}
-                            <button
-                              type="button"
-                              onClick={() => removeSlot(d.key, i)}
-                              aria-label={`Remove ${slotLabel(slot)} on ${d.label}`}
-                              className="tap44 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-surface-2 text-muted"
-                            >
-                              <IconTrash size={14} />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            <p className="px-1 text-[12px] text-muted">
+              {chosenDays.length === 0
+                ? "Tap the hours you're usually free to train."
+                : `${chosenDays.map((d) => d.label.slice(0, 3)).join(", ")} · ${totalHours} ${
+                    totalHours === 1 ? "hour" : "hours"
+                  } a week`}
+            </p>
           </div>
         );
       }

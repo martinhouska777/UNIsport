@@ -69,30 +69,51 @@ export function timeChoices(fromHour = 5, toHour = 23): string[] {
   return out;
 }
 
-/*
-  The one time that runs through someone's week — the slot sitting on the most
-  days. It is what the "what time, usually?" buttons show as chosen, and the
-  thing a new choice replaces, so days that were given their OWN time are left
-  where they are. Ties go to the earliest slot, so the answer never flickers
-  between two equally common times.
-*/
-export function usualSlot(schedule: Record<string, string[]>): string | null {
-  const days = new Map<string, number>();
-  for (const slots of Object.values(schedule ?? {})) {
-    // Once per day: two days at 17:00 beats one day that lists 17:00 twice.
-    for (const text of new Set(slots ?? [])) {
-      days.set(text, (days.get(text) ?? 0) + 1);
+/* ---- THE HOUR GRID ---------------------------------------------------------
+  Onboarding asks "when do you train" as a week of one-hour cells: days across,
+  hours down, tap the ones you are free. The grid is only a way of DRAWING the
+  answer — what gets saved is still hour ranges, runs of lit cells joined up
+  ("17:00-19:00"), because that is what matching overlaps.
+
+  Reading goes the other way: a cell is lit when any saved slot touches that
+  hour, so a half-hour or legacy "AM" answer still shows up. Hours outside the
+  grid (before 6 am, after 10 pm) are dropped only if that day is edited.
+--------------------------------------------------------------------------- */
+
+export const GRID_FIRST_HOUR = 6; // the 6 am cell
+export const GRID_LAST_HOUR = 21; // the 9 pm cell, which runs to 22:00
+
+/** "6 am", "12 pm" — the row labels. */
+export const hourName = (h: number) => `${h % 12 || 12} ${h < 12 ? "am" : "pm"}`;
+
+/** The grid hours a day's saved slots cover. */
+export function hoursOfDay(raw: string[] | undefined): Set<number> {
+  const hours = new Set<number>();
+  for (const s of daySlots(raw)) {
+    const from = minutesOf(s.start);
+    const to = minutesOf(s.end);
+    for (let h = GRID_FIRST_HOUR; h <= GRID_LAST_HOUR; h++) {
+      if (from < (h + 1) * 60 && to > h * 60) hours.add(h);
     }
   }
-  let best: string | null = null;
-  let bestCount = 0;
-  for (const [text, count] of [...days].sort((a, b) => a[0].localeCompare(b[0]))) {
-    if (count > bestCount) {
-      best = text;
-      bestCount = count;
+  return hours;
+}
+
+/** Lit hours back to saved slots: each unbroken run becomes one range. */
+export function hoursToSlots(hours: Iterable<number>): string[] {
+  const out: string[] = [];
+  let start = -1;
+  let prev = -1;
+  for (const h of [...new Set(hours)].sort((a, b) => a - b)) {
+    if (start >= 0 && h === prev + 1) {
+      prev = h;
+      continue;
     }
+    if (start >= 0) out.push(`${hourLabel(start)}-${hourLabel(prev + 1)}`);
+    start = prev = h;
   }
-  return best;
+  if (start >= 0) out.push(`${hourLabel(start)}-${hourLabel(prev + 1)}`);
+  return out;
 }
 
 /* "Mon 07:00–09:00" style, for one slot. */
