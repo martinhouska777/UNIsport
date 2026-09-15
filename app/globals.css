@@ -328,11 +328,15 @@
   /* The two stories' grounds (owner, 2026-09-14): the white takes a blue
      tint under the student story and a golden one under the varsity story. */
   --color-l-bg-student: #eef2ff;
-  --color-l-bg-varsity: #f8f2e3;
+  --color-l-bg-varsity: #fdf8dd;
   /* The Varsity title card's own ground (owner, same day): more golden than
      its story, one step darker: the SAME step the student card (#ebeaf6,
-     oklch L .941) takes above its story (#eef2ff, L .962). */
-  --color-l-surface-varsity: #f6ead3;
+     oklch L .941) takes above its story (#eef2ff, L .962). Sun yellow, not
+     beige (owner: "more yellowish like sun color"). */
+  --color-l-surface-varsity: #fbf1c5;
+  /* The sun the Varsity glows are mixed from — the bronze text colour made
+     them brown. */
+  --color-l-varsity-glow: #fece34;
   /* The two faint grid overlays (the page's and the title cards'): the text
      colour at a whisper. Tokens so the design lab (app/lab, dev only) can
      fade them or flip them between light and dark pages. */
@@ -534,7 +538,7 @@
   inset: -14% -40%;
   z-index: -1;
   pointer-events: none;
-  background: radial-gradient(closest-side, color-mix(in srgb, var(--sa) 48%, transparent), transparent 82%);
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--sg, var(--sa)) 48%, transparent), transparent 82%);
   filter: blur(36px);
   transition: opacity 0.4s ease;
 }

@@ -445,7 +445,12 @@ export default function ScrollStory({ id, beats, accent, ref }: Props) {
     }
   };
 
-  const accentVar = { "--sa": `var(--color-l-${accent})` } as CSSProperties;
+  // --sg: the colour of the glow behind the phone — the sun on the Varsity story,
+  // where the bronze accent would glow brown.
+  const accentVar = {
+    "--sa": `var(--color-l-${accent})`,
+    "--sg": accent === "varsity" ? "var(--color-l-varsity-glow)" : `var(--color-l-${accent})`,
+  } as CSSProperties;
 
   return (
     <div ref={root} className="ls-story" id={id} data-story={id} data-phone-screens style={accentVar}>
