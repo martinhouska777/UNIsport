@@ -96,7 +96,7 @@ import MonthChallenges from "@/components/leaderboards/MonthChallenges";
 import Podium, { type PodiumEntry } from "@/components/leaderboards/Podium";
 import Medal from "@/components/leaderboards/Medal";
 import ScoringSheet from "@/components/leaderboards/ScoringSheet";
-import YouSheet from "@/components/leaderboards/YouSheet";
+import YouScreen from "@/components/leaderboards/YouScreen";
 import OptionPickerSheet from "@/components/profile/OptionPickerSheet";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { useProfileData } from "@/components/profile/useProfileData";
@@ -665,7 +665,7 @@ export default function LeaderboardsPage() {
             is the only part nobody can look up somewhere else — your points,
             and where that puts you — and everything that was cut, plus your
             ranks, what the points were made of and the small board of the
-            people you follow, is behind a tap (YouSheet). One line at rest,
+            people you follow, is behind a tap (YouScreen). One line at rest,
             the whole of your standing when you want it.
           */}
           <button
@@ -830,11 +830,12 @@ export default function LeaderboardsPage() {
       )}
 
       {openingSelf && (
-        <YouSheet
+        <YouScreen
           standing={standing}
           period={period}
           periodLabel={PERIODS.find((p) => p.key === period)?.label ?? ""}
-          onClose={() => setOpeningSelf(false)}
+          photo={myPhoto}
+          onBack={() => setOpeningSelf(false)}
         />
       )}
 
