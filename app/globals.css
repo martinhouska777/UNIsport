@@ -328,7 +328,11 @@
   /* The two stories' grounds (owner, 2026-09-14): the white takes a blue
      tint under the student story and a golden one under the varsity story. */
   --color-l-bg-student: #eef2ff;
-  --color-l-bg-varsity: #fbf5e4;
+  --color-l-bg-varsity: #f8f2e3;
+  /* The Varsity title card's own ground (owner, same day): more golden than
+     its story, one step darker: the SAME step the student card (#ebeaf6,
+     oklch L .941) takes above its story (#eef2ff, L .962). */
+  --color-l-surface-varsity: #f6ead3;
   /* The two faint grid overlays (the page's and the title cards'): the text
      colour at a whisper. Tokens so the design lab (app/lab, dev only) can
      fade them or flip them between light and dark pages. */
