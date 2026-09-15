@@ -189,6 +189,23 @@ export const LAB_COMBOS: LabPreset[] = [
   { id: "ink-plum", name: "Ink · Plum", note: "violet-black page, plum blocks", state: { light: 8, hue: 300, tint: 25, step: 60, textc: 50, surface: "#201a2c", accent: "#c4b5fd", varsity: "#fcd34d" } },
 ];
 
+/*
+  TYPE PAIRINGS (owner, 2026-09-14: asked for good headline + body fonts, then
+  "in the webpage" — as clicks, not advice). Type dials only: the ground,
+  accents, effects and shape stay. Each pairing sets weight, tracking, italic
+  and case too, because a face only works at its own settings — a sans with
+  the serif's italic emphasis is the very thing that reads as generic.
+*/
+export const LAB_TYPE_PAIRS: LabPreset[] = [
+  { id: "fraunces-inter", name: "Fraunces + Inter", note: "warm, editorial — try it first, on Paper / Cream / Bone", state: { display: "fraunces", body: "inter", kicker: "jetbrains", dweight: 500, dtrack: -25, ditalic: true, dupper: false, kupper: true } },
+  { id: "bricolage-instrument", name: "Bricolage + Instrument Sans", note: "modern, a bit sporty — the other one to try first", state: { display: "bricolage", body: "instrument-sans", kicker: "body", dweight: 700, dtrack: -30, ditalic: false, dupper: false, kupper: false } },
+  { id: "newsreader-instrument", name: "Newsreader + Instrument Sans", note: "quiet newspaper — Fog · White, Stone · Ivory", state: { display: "newsreader", body: "instrument-sans", kicker: "ibm-plex-mono", dweight: 500, dtrack: -15, ditalic: true, dupper: false, kupper: true } },
+  { id: "playfair-manrope", name: "Playfair + Manrope", note: "classic, rhymes with the crests — Ink, Navy · Slate", state: { display: "playfair", body: "manrope", kicker: "dm-mono", dweight: 500, dtrack: -10, ditalic: true, dupper: false, kupper: true } },
+  { id: "barlow-inter", name: "Barlow Condensed + Inter", note: "athletic poster caps — turn the glow off", state: { display: "barlow-condensed", body: "inter", kicker: "body", dweight: 600, dtrack: 10, ditalic: false, dupper: true, kupper: true } },
+  { id: "jakarta-jakarta", name: "Jakarta for both", note: "one family, the app's face — site and app become one thing", state: { display: "jakarta", body: "jakarta", kicker: "body", dweight: 700, dtrack: -30, ditalic: false, dupper: false, kupper: false } },
+  { id: "today-type", name: "Today's type", note: "Instrument Serif, system body, Geist Mono kickers", state: { display: "instrument-serif", body: "system", kicker: "geist-mono", dweight: 400, dtrack: -20, ditalic: true, dupper: false, kupper: true } },
+];
+
 // ——— the URL-hash / settings-box codec ———
 
 const KEYS = Object.keys(LAB_TODAY) as (keyof LabState)[];

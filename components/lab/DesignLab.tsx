@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { LAB_FONTS, LAB_FONT_GROUPS } from "@/lib/lab/fonts";
-import { decodeLab, encodeLab, LAB_COMBOS, LAB_GROUNDS, LAB_PRESETS, LAB_TODAY, type LabRadius, type LabState, type LabWidth } from "@/lib/lab/state";
+import { decodeLab, encodeLab, LAB_COMBOS, LAB_GROUNDS, LAB_PRESETS, LAB_TODAY, LAB_TYPE_PAIRS, type LabRadius, type LabState, type LabWidth } from "@/lib/lab/state";
 import { deriveCss, deriveFontLinks, deriveHandover, deriveTokens } from "@/lib/lab/derive";
 
 /*
@@ -232,6 +232,21 @@ export default function DesignLab() {
         </Section>
 
         <Section title="Type">
+          <div className="mb-1.5 text-[11px] font-medium">Pairings to try</div>
+          <div className="mb-1.5 flex flex-wrap gap-1.5">
+            {LAB_TYPE_PAIRS.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                title={p.note}
+                onClick={() => setState((s) => ({ ...s, ...p.state }))}
+                className="rounded-md border border-l-line bg-l-surface px-2.5 py-1.5 text-[12px] transition-colors hover:border-l-line-hover"
+              >
+                {p.name}
+              </button>
+            ))}
+          </div>
+          <p className="mb-4 text-[11px] leading-relaxed text-l-text-2">Headline, body and kicker fonts with their weight, tracking and case — colours stay. Hover for the mood and the grounds it suits.</p>
           <FontSelect label="Headlines" value={state.display} onChange={(v) => set("display", v)} />
           <div className="grid grid-cols-2 gap-x-3">
             <Range label="Weight" min={300} max={900} step={100} value={state.dweight} onChange={(v) => set("dweight", v)} />
