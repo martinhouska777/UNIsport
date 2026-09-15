@@ -185,7 +185,15 @@ export type DaySession = {
   time: string; // period: "AM" | "PM" | "ALL"
   clock?: string; // start time, e.g. "7:00 AM"
   location?: string; // where to be, when the coach said
-  label: string; // workout description ("3×25' UT2") or category name — shown in cells
+  label: string; // workout description ("3×25' UT2") or category name
+  /*
+    WHAT A CELL PRINTS (owner, 2026-09-14): the kind of workout first — "Flex",
+    "Erg", "Weights" — and the coach's own words under it when there are any.
+    A cell used to print only the description, so a flex day the coach wrote
+    "60 mins" on said "60 mins" and nothing said it was Flex.
+  */
+  name: string; // the category's own name, "Water" / "Erg" / "Weights" / "Off" / "Flex"
+  detail?: string; // the coach's description, when they typed one
   type?: string; // category · intensity, e.g. "Water · UT2" — shown in the day detail
   kind: SessionKind;
   note?: string; // coach note for this session

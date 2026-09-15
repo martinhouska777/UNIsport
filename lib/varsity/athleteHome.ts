@@ -16,11 +16,13 @@
 */
 import {
   buildWeeks,
+  categoryMeta,
   parseDate,
   sessionKey,
   sessionLabel,
   toISO,
   periods,
+  type Category,
   type Period,
   type Session,
   type Block,
@@ -270,6 +272,9 @@ export function buildAthleteHome(
               clock: s.time,
               location: s.location,
               label: cellLabel(s),
+              // A sport's own type ("Pool") has no entry and is its own name.
+              name: categoryMeta[s.category as Category]?.label ?? s.category,
+              detail: s.description.trim() || undefined,
               type: sessionLabel(s),
               kind: kindOf(s),
               note: s.note || undefined,

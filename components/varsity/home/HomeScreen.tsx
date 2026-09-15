@@ -193,17 +193,29 @@ function WeekFit({
                   colour here — a block brings its own ink with its colour
                   (kindBlock), near-black on every kind but a rest day.
                 */
+                /*
+                  THE WORKOUT'S NAME, THEN THE COACH'S WORDS, IN THE MIDDLE
+                  (owner, 2026-09-14): "Flex" / "Erg" / "Weights" on top, the
+                  description under it, both centred across and down the block.
+                */
                 <div
                   key={j}
-                  className={`flex flex-1 basis-1/2 items-center px-0.5 py-1 ${
+                  className={`flex flex-1 basis-1/2 flex-col items-center justify-center px-0.5 py-1 text-center ${
                     j === 1 && d.sessions.length > 1 ? "border-t border-border" : ""
                   }`}
                   style={s ? kindBlock(s.kind) : undefined}
                 >
                   {s && (
-                    <span className="block break-words text-[9px] font-medium leading-tight">
-                      {s.label}
-                    </span>
+                    <>
+                      <span className="block max-w-full break-words text-[9px] font-semibold leading-tight">
+                        {s.name}
+                      </span>
+                      {s.detail && s.detail !== s.name && (
+                        <span className="mt-px block max-w-full break-words text-[9px] leading-tight opacity-80">
+                          {s.detail}
+                        </span>
+                      )}
+                    </>
                   )}
                 </div>
               ))}
@@ -384,13 +396,20 @@ function MonthOverlay({
                   {(day ? halves(day) : [undefined, undefined]).map((s, j) => (
                     <span
                       key={j}
-                      className="flex min-h-0 flex-1 basis-1/2 items-center overflow-hidden rounded px-1 py-0.5"
+                      className="flex min-h-0 flex-1 basis-1/2 flex-col items-center justify-center overflow-hidden rounded px-1 py-0.5 text-center"
                       style={s ? kindBlock(s.kind) : undefined}
                     >
                       {s && (
-                        <span className="block break-words text-[8px] font-medium leading-[1.15]">
-                          {s.label}
-                        </span>
+                        <>
+                          <span className="block max-w-full break-words text-[8px] font-semibold leading-[1.15]">
+                            {s.name}
+                          </span>
+                          {s.detail && s.detail !== s.name && (
+                            <span className="block max-w-full break-words text-[8px] leading-[1.15] opacity-80">
+                              {s.detail}
+                            </span>
+                          )}
+                        </>
                       )}
                     </span>
                   ))}
