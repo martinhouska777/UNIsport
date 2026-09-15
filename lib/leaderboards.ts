@@ -129,7 +129,10 @@ export const GROUP_METRICS: {
   /** The unit written under the score on a row. */
   unit: string;
 }[] = [
-  { key: "perMember", label: "Points per member", short: "Per member", unit: "per member" },
+  /* Both read "pts" under the number (owner, 2026-09-15: "don't write per
+     member there, just have the PTS") — the switch above the board already
+     says which of the two is on screen. */
+  { key: "perMember", label: "Points per member", short: "Per member", unit: "pts" },
   { key: "total", label: "Total points", short: "Total", unit: "pts" },
 ];
 

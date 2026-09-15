@@ -63,9 +63,11 @@
   numbers. That is honest, not a bug.)
 
   SCORED IN POINTS. A session alone is 10, with a partner 15, with somebody new
-  25 — the rates live in lib/points.ts as data. Every row still says how many
-  sessions it took, because a score nobody can check is a score nobody trusts.
-  The full rules sit behind the ⓘ in the header.
+  25 — the rates live in lib/points.ts as data. The rows are kept bare (owner,
+  2026-09-15): a house says how many of its people are training, a person their
+  house and class, a partners row and a class year only the name — the session
+  counts live inside a house and on the person's profile. The full rules sit
+  behind the ⓘ in the header.
 
   Everything is real: db/leaderboards.sql counts actual logged sessions. There
   are no placeholder numbers anywhere on this screen — a board with nothing in
@@ -99,7 +101,7 @@ import OptionPickerSheet from "@/components/profile/OptionPickerSheet";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { useProfileData } from "@/components/profile/useProfileData";
 import { houses, residenceLabel, yardDorms } from "@/lib/onboarding";
-import { pointsLabel, sessionsOf } from "@/lib/points";
+import { pointsLabel } from "@/lib/points";
 import {
   fetchGroupBoard,
   fetchPeopleBoard,
@@ -298,6 +300,25 @@ function Picker({
   );
 }
 
+/* The small line under a person's name — the same on the podium and the list. */
+function personDetail(row: LeaderRow, competition: CompetitionKey): string | undefined {
+  if (competition === "partners") return undefined;
+  return (
+    [row.residence ? residenceLabel(row.residence) : "", row.classYear ?? ""]
+      .filter(Boolean)
+      .join(" · ") || undefined
+  );
+}
+
+/* The small line under a house or dorm: just how many of its people are
+   training. The other number ("400 pts" / "7.8 per member") was cut, and a
+   class year has nothing under it at all (owner, 2026-09-15). */
+function groupDetail(row: GroupRow, kind: "house" | "year"): string | undefined {
+  if (kind === "year") return undefined;
+  if (nobodyYet(row)) return "Nobody yet";
+  return `${row.actives} of ${row.members} training`;
+}
+
 function PersonRow({
   row,
   competition,
@@ -308,18 +329,10 @@ function PersonRow({
   /** Opens this person's profile — their bio, interests and training. */
   onOpen: () => void;
 }) {
-  const sessions = sessionsOf(row.kinds);
   const tint = houseColor(row.residence);
-  // House, year and what the score was made of, in one line that survives a
-  // narrow phone by simply dropping the parts that are missing.
-  const detail =
-    [
-      row.residence ? residenceLabel(row.residence) : "",
-      row.classYear ?? "",
-      sessions > 0 ? plural(sessions, "session") : "",
-    ]
-      .filter(Boolean)
-      .join(" · ") || "—";
+  /* Everyone: just their house and class, no session count. Most partners:
+     only the name, nothing under it (owner, 2026-09-15). */
+  const detail = personDetail(row, competition);
 
   return (
     /* A NAME ON A BOARD IS A PERSON — tapping one opens their profile, which is
@@ -349,7 +362,7 @@ function PersonRow({
           {row.name}
           {row.isMe && <span className="ml-1.5 text-[11px] text-primary">You</span>}
         </div>
-        <div className="truncate text-[11px] text-muted">{detail}</div>
+        {detail && <div className="truncate text-[11px] text-muted">{detail}</div>}
       </div>
       {competition === "partners" ? (
         <Score value={String(row.score)} unit="people" />
@@ -374,6 +387,7 @@ function GroupRowItem({
 }) {
   const crest = kind === "house" ? houseCrest(row.key) : null;
   const unit = GROUP_METRICS.find((m) => m.key === metric)?.unit ?? "pts";
+  const detail = groupDetail(row, kind);
   // A row that opens is a button; a row that does not stays a div, so nothing
   // on screen invites a tap that does nothing.
   const Tag = onOpen ? "button" : "div";
@@ -424,19 +438,13 @@ function GroupRowItem({
           {groupLabel(kind, row.key)}
           {row.isMine && <span className="ml-1.5 text-[11px] text-primary">Yours</span>}
         </div>
-        <div className="truncate text-[11px] text-muted">
-          {/* A house nobody has joined says so, instead of "0 of 0 training". */}
-          {nobodyYet(row)
-            ? "0 pts · nobody yet"
-            : row.points === 0
-              ? `${row.members} signed up · nobody has trained yet`
-              : `${row.actives} of ${row.members} training · ${
-                  /* Always the OTHER number, so the view you're not in is still there. */
-                  metric === "total" ? `${row.avgPoints.toFixed(1)} per member` : pointsLabel(row.points)
-                }`}
-        </div>
+        {detail && <div className="truncate text-[11px] text-muted">{detail}</div>}
       </div>
-      {!nobodyYet(row) && <Score value={groupScoreLabel(row, metric)} unit={unit} />}
+      {/* A class year always shows its number — with no line under the name,
+          a blank row would otherwise say nothing at all. */}
+      {(kind === "year" || !nobodyYet(row)) && (
+        <Score value={groupScoreLabel(row, metric)} unit={unit} />
+      )}
       {onOpen && (
         <span className="flex-shrink-0 text-muted">
           <IconChevronRight size={15} />
@@ -584,12 +592,7 @@ export default function LeaderboardsPage() {
         // The board's own rank, which is not the place when two are level.
         rank: g.rank,
         title: groupLabel(groupKind, g.key),
-        // Always the number the board is NOT ranked on — the other half of
-        // the argument, without having to flip the switch to see it.
-        subtitle:
-          metric === "total"
-            ? `${g.avgPoints.toFixed(1)} per member`
-            : pointsLabel(g.points),
+        subtitle: groupDetail(g, groupKind),
         kind: "group" as const,
         value: groupScoreLabel(g, metric),
         unit: metricUnit,
@@ -603,7 +606,7 @@ export default function LeaderboardsPage() {
         place: (i + 1) as 1 | 2 | 3,
         rank: p.rank,
         title: p.name,
-        subtitle: p.residence ? residenceLabel(p.residence) : (p.classYear ?? undefined),
+        subtitle: personDetail(p, competition),
         kind: "person" as const,
         value: competition === "partners" ? String(p.score) : p.score.toLocaleString("en-US"),
         unit: competition === "partners" ? "people" : "pts",
