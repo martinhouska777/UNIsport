@@ -34,26 +34,21 @@ export type SessionKind = "ut2" | "ut1" | "hard" | "weights" | "flex" | "race" |
   day the training was for.
 */
 export const kindColor: Record<SessionKind, string> = {
-  // The two greens are a PAIR and are meant to be read as one: UT2 is the
-  // steady mileage the season is built on, and OFF is the rest that pays for
-  // it. Light green for the work, dark green for the rest — so a month of
-  // sensible training reads as one colour family at two weights, and the
-  // loud colours (amber, red) are only ever the hard days.
-  ut2: "#86efac",
-  ut1: "#eab308",
-  // FIXED HUES, not var(--danger) / var(--muted) (2026-09-14). A block is now
-  // painted in the colour almost solid and carries its own ink (kindInk), and
-  // ink can only be chosen once for a colour that IS one thing: the theme's
-  // danger red and muted grey each change between light and dark mode, so a
-  // block wearing them could not be given readable text in both.
-  hard: "#ef4444",
-  weights: "#c084fc",
-  // Grey: "flex" is the coach saying train how you like. It is the one kind
-  // that prescribes nothing, so it shouldn't wear a colour that competes with
-  // the kinds that do.
-  flex: "#94a3b8",
-  race: "#3b82f6",
-  off: "#15803d",
+  // THE COACH'S OWN SPREADSHEET COLOURS (2026-09-15). The squad already reads
+  // the season off a sheet where steady work is bright green, rate work is
+  // yellow, flat-out pieces and tests are red, weights are magenta, recovery /
+  // flex is grey and an OFF day is dark green. The app paints the same session
+  // in the same colour, so nobody has to learn a second key. Race takes the
+  // sheet's orange (its racing-type outings). Fixed hues on purpose: a block
+  // is the colour almost solid and carries its own ink (kindInk), which can
+  // only be chosen once for a colour that IS one thing.
+  ut2: "#00ff00",
+  ut1: "#ffff00",
+  hard: "#ff0000",
+  weights: "#ff00ff",
+  flex: "#bfbfbf",
+  race: "#ffa500",
+  off: "#548235",
 };
 
 /*

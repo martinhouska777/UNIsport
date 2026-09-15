@@ -16,9 +16,9 @@
   either question any more — the rowing answers (water / erg) live in the
   rowing preset, where a coach can change them.
 
-  Workout colors are CONTENT colors (rule-1 exception): mapped to theme tokens
-  where one exists (UT2→success, Hard→danger, Flex→muted), otherwise a hex value,
-  always applied via inline style — never a hardcoded class.
+  Workout colors are CONTENT colors (rule-1 exception): the coach's own
+  spreadsheet hues as hex values, always applied via inline style — never a
+  hardcoded class.
 */
 
 export type Period = "AM" | "PM";
@@ -37,9 +37,11 @@ export const categoryMeta: Record<
 > = {
   water: { label: "Water", color: "#4a90a4", hasIntensity: true },
   erg: { label: "Erg", color: "var(--muted)", hasIntensity: true },
-  weights: { label: "Weights", color: "#c084fc", hasIntensity: false },
-  off: { label: "Off", color: "#166534", hasIntensity: false },
-  flex: { label: "Flex", color: "var(--muted)", hasIntensity: false },
+  // The coach's spreadsheet colours — the same hues as kindColor in home.ts,
+  // so a session is one colour on every screen and on the sheet itself.
+  weights: { label: "Weights", color: "#ff00ff", hasIntensity: false },
+  off: { label: "Off", color: "#548235", hasIntensity: false },
+  flex: { label: "Flex", color: "#bfbfbf", hasIntensity: false },
 };
 
 /*
@@ -55,7 +57,7 @@ export const logCategoryMeta: Record<LogCategory, { label: string; color: string
   water: { label: "Water", color: categoryMeta.water.color },
   erg: { label: "Erg", color: "#60a5fa" },
   weights: { label: "Weights", color: categoryMeta.weights.color },
-  flex: { label: "Flex", color: "var(--accent)" },
+  flex: { label: "Flex", color: categoryMeta.flex.color },
   off: { label: "Off", color: categoryMeta.off.color },
   run: { label: "Run", color: "#c084fc" },
   bike: { label: "Bike", color: "#f59e0b" },
@@ -66,9 +68,11 @@ export const logCategoryMeta: Record<LogCategory, { label: string; color: string
 export type Intensity = "UT2" | "UT1" | "hard";
 export const intensities: Intensity[] = ["UT2", "UT1", "hard"];
 export const intensityMeta: Record<Intensity, { label: string; color: string }> = {
-  UT2: { label: "UT2", color: "var(--success)" },
-  UT1: { label: "UT1", color: "#eab308" },
-  hard: { label: "Hard", color: "var(--danger)" },
+  // Spreadsheet hues (see kindColor in home.ts): green steady, yellow rate
+  // work, red flat out.
+  UT2: { label: "UT2", color: "#00ff00" },
+  UT1: { label: "UT1", color: "#ffff00" },
+  hard: { label: "Hard", color: "#ff0000" },
 };
 
 /* ── The 5 most-used workouts to suggest (tap to fill the description) ──────
