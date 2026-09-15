@@ -375,7 +375,12 @@ function MonthOverlay({
                 /* Every day of the month is the same box, prescribed or not —
                    a rest day is empty space inside its rectangle, not a gap in
                    the grid. Only the days OUTSIDE the block stay blank. */
-                className={`flex min-h-[64px] flex-col overflow-hidden rounded-lg border p-[3px] text-left ${
+                /* THE SAME BOX AS THE LOG CALENDAR (owner, 2026-09-14): no
+                   inner padding, so the sessions run edge to edge and the date
+                   sits in its own strip on top. overflow-CLIP rounds the blocks
+                   into the corners without making the day a scroll container,
+                   so a day can never be squeezed shorter than its words. */
+                className={`flex min-h-[64px] flex-col overflow-clip rounded-lg border text-left ${
                   sel
                     ? "border-primary bg-primary-tint ring-1 ring-primary"
                     : day?.today
@@ -386,7 +391,7 @@ function MonthOverlay({
                 }`}
               >
                 <span
-                  className={`px-px text-[11px] font-semibold leading-none ${
+                  className={`px-1 pt-1 text-[11px] font-semibold leading-none ${
                     day?.today ? "text-primary" : day ? "text-text" : "text-muted/40"
                   }`}
                 >
@@ -397,21 +402,30 @@ function MonthOverlay({
                   same two halves as the week strip above: morning on top,
                   afternoon underneath, and the empty half of a one-session day
                   left empty (owner, 2026-09-14).
+
+                  FILLED LIKE THE LOG CALENDAR, TEXT IN THE MIDDLE (owner, same
+                  day, later): each half is a flat block the full width of the
+                  day, and its words are centred in it. The rows are
+                  [1fr_1fr] — not grid-rows-2, whose minmax(0,1fr) let a half
+                  shrink below its text and cut the bottom line off.
                 */}
-                <span className="mt-0.5 grid min-h-0 flex-1 grid-rows-2 gap-px overflow-hidden">
+                <span className="mt-0.5 grid flex-1 grid-rows-[1fr_1fr] gap-px">
                   {(day ? halves(day) : [undefined, undefined]).map((s, j) => (
                     <span
                       key={j}
-                      className="flex min-h-0 flex-col items-center justify-center overflow-hidden rounded px-1 py-0.5 text-center"
+                      className="flex flex-col items-center justify-center px-0.5 py-0.5 text-center"
                       style={s ? kindBlock(s.kind) : undefined}
                     >
                       {s && (
                         <>
-                          <span className="block max-w-full truncate text-[8px] font-semibold leading-[1.15]">
+                          <span className="block max-w-full text-[9px] font-semibold leading-[1.15] [overflow-wrap:anywhere]">
                             {s.name}
                           </span>
                           {s.detail && s.detail !== s.name && (
-                            <span className="line-clamp-1 max-w-full break-words text-[8px] leading-[1.15] opacity-80">
+                            /* The coach's words: whole lines, up to two, then
+                               an ellipsis — a long description would otherwise
+                               stretch the whole month. Never cut mid-line. */
+                            <span className="line-clamp-2 max-w-full text-[9px] leading-[1.15] opacity-80 [overflow-wrap:anywhere]">
                               {s.detail}
                             </span>
                           )}
