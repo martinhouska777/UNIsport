@@ -17,7 +17,7 @@ import { can, type VarsityRole } from "@/lib/varsity/membership";
   Today is the console's own root, so it is the one tab matched EXACTLY — a
   prefix match on /varsity/coach would light it on every other tab too.
 */
-type Tab = {
+export type CoachTab = {
   href: string;
   label: string;
   icon: ReactNode;
@@ -25,7 +25,8 @@ type Tab = {
   exact?: boolean;
 };
 
-const tabs: Tab[] = [
+/* The laptop sidebar (CoachSideNav) reads this same list. */
+export const coachTabs: CoachTab[] = [
   { href: "/varsity/coach", label: "Today", icon: <IconSun size={22} />, allowed: can.buildPlan, exact: true },
   { href: "/varsity/coach/plan", label: "Plan", icon: <IconCalendar size={22} />, allowed: can.buildPlan },
   { href: "/varsity/coach/lineup", label: "Lineup", icon: <IconAnchor size={22} />, allowed: can.buildLineup },
@@ -33,14 +34,17 @@ const tabs: Tab[] = [
   { href: "/varsity/coach/team", label: "Team", icon: <IconUser size={22} />, allowed: can.invite },
 ];
 
+export const coachTabActive = (tab: CoachTab, pathname: string) =>
+  pathname === tab.href || (!tab.exact && pathname.startsWith(tab.href + "/"));
+
 export default function CoachNav({ role }: { role: VarsityRole }) {
   const pathname = usePathname();
-  const isActive = (tab: Tab) =>
-    pathname === tab.href || (!tab.exact && pathname.startsWith(tab.href + "/"));
-  const visible = tabs.filter((t) => t.allowed(role));
+  const isActive = (tab: CoachTab) => coachTabActive(tab, pathname);
+  const visible = coachTabs.filter((t) => t.allowed(role));
 
   return (
-    <nav className="relative z-10 flex-shrink-0 border-t border-border bg-surface">
+    /* Phone and tablet only — from `lg` up CoachSideNav takes over. */
+    <nav className="relative z-10 flex-shrink-0 border-t border-border bg-surface lg:hidden">
       <ul className="mx-auto flex max-w-screen-sm items-stretch px-2 pb-5 pt-2">
         {visible.map((tab) => (
           <li key={tab.href} className="flex-1">

@@ -28,6 +28,7 @@ import LoadingGate from "@/components/LoadingGate";
 import VarsityIntro from "@/components/varsity/VarsityIntro";
 import VarsityTopBar from "@/components/varsity/VarsityTopBar";
 import VarsityNav from "@/components/varsity/VarsityNav";
+import VarsitySideNav from "@/components/varsity/VarsitySideNav";
 import { useVarsityTheme } from "@/components/varsity/useVarsityTheme";
 
 export default function VarsityLayout({ children }: { children: React.ReactNode }) {
@@ -70,9 +71,11 @@ export default function VarsityLayout({ children }: { children: React.ReactNode 
       tokens={vTheme.dark}
       light={vTheme.light}
       paintRoot
-      className="relative flex h-dvh flex-col overflow-hidden bg-background"
+      className="relative flex h-dvh flex-col overflow-hidden bg-background lg:flex-row"
     >
       <VarsityIntro />
+      {/* Laptop: the shared sidebar, like the student app. Phone: top bar + tabs. */}
+      <VarsitySideNav />
       <VarsityTopBar />
       <main className="relative z-10 flex flex-1 flex-col overflow-y-auto">
         {children}

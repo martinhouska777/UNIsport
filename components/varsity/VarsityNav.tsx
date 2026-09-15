@@ -49,6 +49,10 @@ const rightTabs: Tab[] = [
   { href: "/varsity/profile", label: "Profile", icon: <IconUser size={22} /> },
 ];
 
+/* Every tab in order — the laptop sidebar (VarsitySideNav) reads this, so a new
+   tab appears in both navigations at once. */
+export const varsityTabs: Tab[] = [...leftTabs, ...rightTabs];
+
 function NavItem({ tab, active }: { tab: Tab; active: boolean }) {
   return (
     <Link
@@ -69,7 +73,8 @@ export default function VarsityNav() {
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + "/");
 
   return (
-    <nav className="relative z-10 flex-shrink-0 border-t border-border bg-surface">
+    /* Phone and tablet only — from `lg` up VarsitySideNav takes over. */
+    <nav className="relative z-10 flex-shrink-0 border-t border-border bg-surface lg:hidden">
       <ul className="mx-auto flex max-w-screen-sm items-end px-2 pb-5 pt-2">
         {leftTabs.map((tab) => (
           <li key={tab.href} className="flex flex-1">

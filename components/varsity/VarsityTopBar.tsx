@@ -30,37 +30,19 @@ import { IconArrowLeft, IconChevronDown, IconPencil, IconSettings } from "@/comp
   padding came down a notch to pay for most of the extra height.
 */
 export default function VarsityTopBar() {
-  const router = useRouter();
   const pathname = usePathname();
   const { studentReady, universityKey } = useAppState();
-  const [switchingMode, setSwitchingMode] = useState(false);
+  const { handleModeTap, switchingMode, closeSwitcher } = useVarsityModeTap();
   // The school's everyday name is DATA (lib/themes.ts), never typed here.
   const school = getUniversity(universityKey)?.shortName ?? "";
-
-  /*
-    The mark is the mode switcher, mirroring the name on the normal profile:
-    one tap opens the sheet, two taps drop you back into the normal app.
-
-    "Back into the normal app" only exists if they HAVE one. A rower who joined
-    through a team link has never set up the student side, and sending them to
-    /profile would bounce them straight into the nine-step onboarding they were
-    spared. For them both taps open the sheet, which offers the student side
-    properly, as a choice.
-  */
-  const handleModeTap = useTapOrDoubleTap(
-    useCallback(() => setSwitchingMode(true), []),
-    useCallback(() => {
-      if (studentReady) router.push("/profile");
-      else setSwitchingMode(true);
-    }, [studentReady, router]),
-  );
 
   return (
     /* The sheet is a SIBLING of the bar, not a child: the bar sits in its own
        z-10 stacking context alongside the page and the tab nav, so a sheet
        nested inside it would be painted underneath them. */
     <>
-    <div className="relative z-10 flex flex-shrink-0 items-center justify-between border-b border-border bg-background px-4 py-2">
+    {/* Phone and tablet only — from `lg` up VarsitySideNav holds all of this. */}
+    <div className="relative z-10 flex flex-shrink-0 items-center justify-between border-b border-border bg-background px-4 py-2 lg:hidden">
       <button
         type="button"
         onClick={handleModeTap}
@@ -126,8 +108,34 @@ export default function VarsityTopBar() {
     </div>
 
     {switchingMode && (
-      <ModeSwitcherSheet current="varsity" onClose={() => setSwitchingMode(false)} />
+      <ModeSwitcherSheet current="varsity" onClose={closeSwitcher} />
     )}
     </>
   );
+}
+
+/*
+  The mark is the mode switcher, mirroring the name on the normal profile:
+  one tap opens the sheet, two taps drop you back into the normal app. Shared by
+  this bar and the laptop sidebar (VarsitySideNav).
+
+  "Back into the normal app" only exists if they HAVE one. A rower who joined
+  through a team link has never set up the student side, and sending them to
+  /profile would bounce them straight into the nine-step onboarding they were
+  spared. For them both taps open the sheet, which offers the student side
+  properly, as a choice.
+*/
+export function useVarsityModeTap() {
+  const router = useRouter();
+  const { studentReady } = useAppState();
+  const [switchingMode, setSwitchingMode] = useState(false);
+  const handleModeTap = useTapOrDoubleTap(
+    useCallback(() => setSwitchingMode(true), []),
+    useCallback(() => {
+      if (studentReady) router.push("/profile");
+      else setSwitchingMode(true);
+    }, [studentReady, router]),
+  );
+  const closeSwitcher = useCallback(() => setSwitchingMode(false), []);
+  return { handleModeTap, switchingMode, closeSwitcher };
 }

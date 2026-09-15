@@ -16,6 +16,7 @@ import ThemeProvider from "@/components/ThemeProvider";
 import LoadingGate from "@/components/LoadingGate";
 import CoachTopBar from "@/components/varsity/coach/CoachTopBar";
 import CoachNav from "@/components/varsity/coach/CoachNav";
+import CoachSideNav from "@/components/varsity/coach/CoachSideNav";
 import TourGate from "@/components/tour/TourGate";
 import { coachTour } from "@/lib/varsity/coachTour";
 import { useMembership } from "@/components/varsity/useMembership";
@@ -82,8 +83,10 @@ export default function CoachLayout({ children }: { children: React.ReactNode })
       tokens={vTheme.dark}
       light={vTheme.light}
       paintRoot
-      className="relative flex h-dvh flex-col overflow-hidden bg-background"
+      className="relative flex h-dvh flex-col overflow-hidden bg-background lg:flex-row"
     >
+      {/* Laptop: the shared sidebar, like the student app. Phone: top bar + tabs. */}
+      <CoachSideNav role={role} teamName={membership!.teamName} />
       <CoachTopBar role={role} teamName={membership!.teamName} />
       <main className="relative z-10 flex flex-1 flex-col overflow-y-auto">{children}</main>
       <CoachNav role={role} />

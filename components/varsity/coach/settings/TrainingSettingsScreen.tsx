@@ -414,7 +414,7 @@ export default function TrainingSettingsScreen({ membership }: { membership: Mem
           something to say. Retry is the exception: a save that failed is the
           one moment the coach can do something about it. */}
       {(dirty || saving || saved || error) && (
-        <div className="fixed inset-x-0 bottom-[76px] z-20 px-3.5">
+        <div className="fixed inset-x-0 bottom-[76px] z-20 px-3.5 lg:bottom-5 lg:left-56">
           <div className="mx-auto flex max-w-screen-sm items-center gap-2.5 rounded-2xl border border-border bg-surface p-3 shadow-lg">
             <span className="flex-1 px-1 text-[12px] text-muted">
               {error ? (
