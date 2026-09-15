@@ -1,14 +1,14 @@
 "use client";
 
 import Shot from "@/components/landing/Shot";
-import { useCallback, useEffect, useImperativeHandle, useRef, useState, type ReactNode, type Ref } from "react";
+import { useCallback, useEffect, useImperativeHandle, useRef, useState, type CSSProperties, type ReactNode, type Ref } from "react";
 import Phone from "@/components/landing/Phone";
 import VarsityTabBar from "@/components/landing/VarsityTabBar";
 import CloserSplit from "@/components/landing/CloserSplit";
 import { useCloserGate } from "@/components/landing/useCloserGate";
 import type { CloserHandle } from "@/components/landing/closer";
 import { closers } from "@/lib/landingCopy";
-import { BLADE_PATH, OAR_ART, schools } from "@/lib/landingSchools";
+import { BLADE_PATH, OAR_ART, lift, schools } from "@/lib/landingSchools";
 
 /*
   BLADE LOCK — the closer of the varsity story.
@@ -533,8 +533,9 @@ export default function BladeLock({
 
           <Phone
             ref={phoneEl}
-            style={{ width: 272 * zoom }}
-            className={`lc-phone absolute bottom-0 left-1/2 z-[100] -translate-x-1/2 ${
+            // The crew's school glows behind its phone (.lc-glow).
+            style={{ width: 272 * zoom, "--lg": lift(s.color) } as CSSProperties}
+            className={`lc-phone lc-glow absolute bottom-0 left-1/2 z-[100] -translate-x-1/2 ${
               phone === "hide" ? "lc-hide" : phone === "pre" ? "lc-pre" : ""
             }`}
             data-closer-phone="blades"

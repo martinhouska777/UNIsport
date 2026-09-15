@@ -8,6 +8,7 @@ import {
   useImperativeHandle,
   useRef,
   useState,
+  type CSSProperties,
   type ReactNode,
   type Ref,
   type TouchEvent as ReactTouchEvent,
@@ -17,7 +18,7 @@ import CloserSplit from "@/components/landing/CloserSplit";
 import { useCloserGate } from "@/components/landing/useCloserGate";
 import type { CloserHandle } from "@/components/landing/closer";
 import { closers } from "@/lib/landingCopy";
-import { schools, rgba, SCHOOL_CYCLE_MS } from "@/lib/landingSchools";
+import { schools, rgba, lift, SCHOOL_CYCLE_MS } from "@/lib/landingSchools";
 
 /*
   CAMPUS COLOURS — the closer of the student story.
@@ -329,9 +330,11 @@ export default function CampusColours({
         <div className="flex w-full flex-col items-center justify-center gap-5 lg:flex-row lg:gap-[60px]">
           <Phone
             ref={phoneEl}
-            className={`lc-phone relative z-[3] order-2 w-[min(270px,52vw)] flex-none lg:order-1 lg:w-[300px] xl:w-[min(340px,calc((100svh_-_330px)*0.608))] ${
+            className={`lc-phone lc-glow relative z-[3] order-2 w-[min(270px,52vw)] flex-none lg:order-1 lg:w-[300px] xl:w-[min(340px,calc((100svh_-_330px)*0.608))] ${
               phone === "hide" ? "lc-hide" : phone === "pre" ? "lc-pre" : ""
             }`}
+            // The school on show glows behind its phone (.lc-glow).
+            style={{ "--lg": lift(s.color) } as CSSProperties}
             data-closer-phone="campus"
           >
             <div className="relative aspect-[900/1480] overflow-hidden bg-l-phone-screen">
