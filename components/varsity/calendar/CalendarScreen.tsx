@@ -783,6 +783,9 @@ export default function CalendarScreen({
         <CategoryStatsSheet
           category={statsFor}
           monthLabel={`${MONTHS[view.m]} ${view.y}`}
+          /* The weeks the month has actually had: all of it in the past, up to
+             today in this one — a per-week average must not count days to come. */
+          weeks={(atCurrentMonth ? now.getDate() : new Date(view.y, view.m + 1, 0).getDate()) / 7}
           logs={logs}
           units={units}
           onClose={() => setStatsFor(null)}
