@@ -35,7 +35,8 @@
 */
 import { useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { IconArrowLeft, IconTrophy, IconUser, HouseShield } from "@/components/icons";
+import { IconArrowLeft, IconUser, HouseShield } from "@/components/icons";
+import UniversityCrest from "@/components/UniversityCrest";
 import Medal from "@/components/leaderboards/Medal";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { pointsLabel, sessionPoints } from "@/lib/points";
@@ -238,11 +239,9 @@ export default function YouScreen({
           <div className="flex gap-2">
             <RankTile
               label="On campus"
-              icon={
-                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-contrast">
-                  <IconTrophy size={14} />
-                </span>
-              }
+              /* The school's own shield, not a trophy in a red circle — the
+                 same crest the Profile strip uses (owner, 2026-09-15). */
+              icon={<UniversityCrest size={28} />}
               rank={standing?.campusRank ?? null}
               total={standing?.campusTotal ?? 0}
             />

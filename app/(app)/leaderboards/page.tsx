@@ -100,7 +100,6 @@ import OptionPickerSheet from "@/components/profile/OptionPickerSheet";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { useProfileData } from "@/components/profile/useProfileData";
 import { houses, residenceLabel, yardDorms } from "@/lib/onboarding";
-import { pointsLabel } from "@/lib/points";
 import {
   fetchGroupBoard,
   fetchPeopleBoard,
@@ -174,12 +173,6 @@ const PERIODS: { key: Period; label: string; note: string }[] = [
 ];
 
 const GROUP_BOARDS: CompetitionKey[] = ["houses", "dorms", "years"];
-
-const ordinal = (n: number): string => {
-  const rem100 = n % 100;
-  if (rem100 >= 11 && rem100 <= 13) return `${n}th`;
-  return `${n}${["th", "st", "nd", "rd"][n % 10] ?? "th"}`;
-};
 
 const plural = (n: number, noun: string) => `${n} ${noun}${n === 1 ? "" : "s"}`;
 
@@ -688,25 +681,11 @@ export default function LeaderboardsPage() {
                 <IconTrophy size={10} />
               </span>
             </span>
-            <div className="min-w-0 flex-1">
-              <div className="text-[13px] font-semibold text-text">
-                {standing && standing.points > 0
-                  ? `You · ${pointsLabel(standing.points)}`
-                  : "Not on the board yet"}
-              </div>
-              <div className="mt-0.5 truncate text-[11px] text-muted">
-                {standing && standing.points > 0
-                  ? [
-                      standing.campusRank
-                        ? `${ordinal(standing.campusRank)} of ${standing.campusTotal} on campus`
-                        : "",
-                      plural(standing.sessions, "session"),
-                    ]
-                      .filter(Boolean)
-                      .join(" · ")
-                  : "Log a session and you're on it."}
-              </div>
-            </div>
+            {/* Just "You" and your points — the small line under it ("72nd of
+                88 on campus · 3 sessions") was cut (owner, 2026-09-15). The
+                ranks are one tap away on the You screen. */}
+            <div className="min-w-0 flex-1 text-[15px] font-semibold text-text">You</div>
+            <Score value={(standing?.points ?? 0).toLocaleString("en-US")} unit="pts" />
             {/* The line looked like a label, so nobody would have tried
                 tapping it. The chevron is the whole difference. */}
             <span className="flex-shrink-0 text-muted">
