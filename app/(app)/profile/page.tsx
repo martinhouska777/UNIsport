@@ -29,7 +29,6 @@ import PreferencesSheet from "@/components/profile/PreferencesSheet";
 import { useProfileData } from "@/components/profile/useProfileData";
 import {
   profileFromOnboarding,
-  classOfLabel,
   type PersonalRecord,
 } from "@/lib/currentUser";
 import {
@@ -43,11 +42,7 @@ import {
 import { fileToDataUrl } from "@/lib/image";
 import { getMyFollowCounts } from "@/lib/supabase/follows";
 import { readLogLink } from "@/lib/reminders";
-import {
-  residenceLabel,
-  hometownLabel,
-  nameError,
-} from "@/lib/onboarding";
+import { hometownLabel, nameError } from "@/lib/onboarding";
 import {
   IconSettings,
   IconUser,
@@ -365,7 +360,6 @@ export default function ProfilePage() {
                       48 | 12 | 96
                       workouts partners followers
 
-          Mather House · Class of 2029
           [VARSITY] [MENTOR]
           a line of bio
           ──────────────────────────
@@ -507,16 +501,14 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* WHERE YOU LIVE, THEN WHAT YOU ARE — the house and class year read as
-          part of your name, so they come first; VARSITY and MENTOR sit under
-          them (owner, 2026-09-14) rather than splitting the two apart. All
-          left-aligned, since the photo is no longer above them. */}
-      <div className="flex flex-col gap-1.5 px-3.5">
-        <div className="text-[11px] text-muted">
-          {user.residence ? `${residenceLabel(user.residence)} · ` : ""}
-          {classOfLabel(user.classYear)}
-        </div>
+      {/* WHAT YOU ARE — VARSITY and MENTOR, left-aligned under your name.
 
+          The "House · Class of ____" line that used to sit here is GONE from
+          your own profile (owner, 2026-09-14): you know where you live, and the
+          Leaderboards card a little further down already names your team. It
+          still shows on SOMEBODY ELSE's profile, where it tells you something
+          you didn't know — see app/(app)/people/[id]/page.tsx. */}
+      <div className="flex flex-col gap-1.5 px-3.5">
         {/* On your OWN profile the varsity badge comes from live membership:
             profiles.data has no record of it (the squad lives in its own
             table), so unlike a profile you're viewing, it can't come through
