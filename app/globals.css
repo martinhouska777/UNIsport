@@ -1628,3 +1628,15 @@ body {
 .sheet-ceiling {
   padding-top: env(safe-area-inset-top, 0px);
 }
+
+/* THE LEAGUE'S COMPETITION SWITCH (components/leaderboards/CompetitionSwitcher.tsx):
+   the new competition's name slides in from the side it came from — next from
+   the right, previous from the left (owner, 2026-09-15). */
+@keyframes lb-in-from-right {
+  from { opacity: 0; transform: translateX(45%); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes lb-in-from-left {
+  from { opacity: 0; transform: translateX(-45%); }
+  to   { opacity: 1; transform: none; }
+}

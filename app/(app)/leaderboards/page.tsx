@@ -18,10 +18,12 @@
 
   TWO CONTROLS, NOT EIGHT. This screen used to carry three period buttons and
   five board pills in two stacked rows — eleven tap targets before a single
-  name. Now there are two dropdowns that SAY what they are showing
-  ("Competition: Houses", "Period: This month"), which is how every app people
-  already use handles the same job. The list of competitions can grow without
-  the screen growing.
+  name. Now there are two controls that SAY what they are showing. Competition
+  is ‹ Houses › with small arrows and a sideways swipe, the name sliding in
+  from the side it came from (owner, 2026-09-15 — it was a dropdown opening a
+  sheet from the bottom; components/leaderboards/CompetitionSwitcher.tsx).
+  Period is still a dropdown. The list of competitions can grow without the
+  screen growing.
 
   THE PODIUM. Every board opens with its top three standing on gold, silver and
   bronze pedestals (components/leaderboards/Podium.tsx) and the list carries on
@@ -63,9 +65,10 @@
 
   SCORED IN POINTS. A session alone is 10, with a partner 15, with somebody new
   25 — the rates live in lib/points.ts as data. The rows are kept bare (owner,
-  2026-09-15): a house says how many of its people are training, a person their
-  house and class, a partners row and a class year only the name — the session
-  counts live inside a house and on the person's profile. The full rules sit
+  2026-09-15): a house, a dorm, a partners row and a class year show only the
+  name and the score — the "5 of 6 training" line under a house was cut the same
+  day — and a person their house and class. The session counts live inside a
+  house and on the person's profile. The full rules sit
   behind the ⓘ in the header.
 
   Everything is real: db/leaderboards.sql counts actual logged sessions. There
@@ -96,6 +99,7 @@ import Podium, { type PodiumEntry } from "@/components/leaderboards/Podium";
 import Medal from "@/components/leaderboards/Medal";
 import ScoringSheet from "@/components/leaderboards/ScoringSheet";
 import YouScreen from "@/components/leaderboards/YouScreen";
+import CompetitionSwitcher from "@/components/leaderboards/CompetitionSwitcher";
 import OptionPickerSheet from "@/components/profile/OptionPickerSheet";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { useProfileData } from "@/components/profile/useProfileData";
@@ -302,15 +306,6 @@ function personDetail(row: LeaderRow, competition: CompetitionKey): string | und
   );
 }
 
-/* The small line under a house or dorm: just how many of its people are
-   training. The other number ("400 pts" / "7.8 per member") was cut, and a
-   class year has nothing under it at all (owner, 2026-09-15). */
-function groupDetail(row: GroupRow, kind: "house" | "year"): string | undefined {
-  if (kind === "year") return undefined;
-  if (nobodyYet(row)) return "Nobody yet";
-  return `${row.actives} of ${row.members} training`;
-}
-
 function PersonRow({
   row,
   competition,
@@ -379,7 +374,6 @@ function GroupRowItem({
 }) {
   const crest = kind === "house" ? houseCrest(row.key) : null;
   const unit = GROUP_METRICS.find((m) => m.key === metric)?.unit ?? "pts";
-  const detail = groupDetail(row, kind);
   // A row that opens is a button; a row that does not stays a div, so nothing
   // on screen invites a tap that does nothing.
   const Tag = onOpen ? "button" : "div";
@@ -425,18 +419,14 @@ function GroupRowItem({
       {crest && (
         <HouseShield primary={crest.primary} secondary={crest.secondary} size={32} />
       )}
-      <div className="min-w-0 flex-1">
-        <div className="truncate text-[13px] font-medium text-text">
-          {groupLabel(kind, row.key)}
-          {row.isMine && <span className="ml-1.5 text-[11px] text-primary">Yours</span>}
-        </div>
-        {detail && <div className="truncate text-[11px] text-muted">{detail}</div>}
+      {/* Just the name — no "5 of 6 training" line under it (owner,
+          2026-09-15) — and the score on every row, a house nobody has trained
+          in yet included, so no row is left blank. */}
+      <div className="min-w-0 flex-1 truncate text-[13px] font-medium text-text">
+        {groupLabel(kind, row.key)}
+        {row.isMine && <span className="ml-1.5 text-[11px] text-primary">Yours</span>}
       </div>
-      {/* A class year always shows its number — with no line under the name,
-          a blank row would otherwise say nothing at all. */}
-      {(kind === "year" || !nobodyYet(row)) && (
-        <Score value={groupScoreLabel(row, metric)} unit={unit} />
-      )}
+      <Score value={groupScoreLabel(row, metric)} unit={unit} />
       {onOpen && (
         <span className="flex-shrink-0 text-muted">
           <IconChevronRight size={15} />
@@ -466,9 +456,8 @@ export default function LeaderboardsPage() {
     whole college" is a real claim a big house has every right to make.
   */
   const [metric, setMetric] = useState<GroupMetric>("perMember");
-  // Only one of these is ever open, but they are separate so neither has to
-  // know the other exists.
-  const [picking, setPicking] = useState<"competition" | "period" | null>(null);
+  // The period's sheet. (Competition switches in place — no sheet.)
+  const [pickingPeriod, setPickingPeriod] = useState(false);
   const [explaining, setExplaining] = useState(false);
   // Your own line, opened up: the ranks, the breakdown and your friends.
   const [openingSelf, setOpeningSelf] = useState(false);
@@ -501,17 +490,6 @@ export default function LeaderboardsPage() {
   const def = useMemo(
     () => COMPETITIONS.find((c) => c.key === competition) ?? COMPETITIONS[0],
     [competition],
-  );
-
-  /*
-    One label for everybody. It used to read "My dorm" for a first-year, on the
-    grounds that a dorm is not a house — but the owner's call is that a
-    changing label is worse than a slightly loose one: two people comparing
-    screens should be looking at the same words.
-  */
-  const competitionOptions = useMemo(
-    () => COMPETITIONS.map((c) => ({ value: c.key, label: c.label, note: c.note })),
-    [],
   );
 
   // The standing line reloads with the period, not with the board — changing
@@ -584,7 +562,6 @@ export default function LeaderboardsPage() {
         // The board's own rank, which is not the place when two are level.
         rank: g.rank,
         title: groupLabel(groupKind, g.key),
-        subtitle: groupDetail(g, groupKind),
         kind: "group" as const,
         value: groupScoreLabel(g, metric),
         unit: metricUnit,
@@ -696,15 +673,16 @@ export default function LeaderboardsPage() {
           {/* The two controls. */}
           <div className="border-b border-border px-3.5 py-2.5">
             <div className="flex gap-2">
-              <Picker
+              <CompetitionSwitcher
                 caption="Competition"
-                value={def.label}
-                onOpen={() => setPicking("competition")}
+                options={COMPETITIONS}
+                value={competition}
+                onChange={setCompetition}
               />
               <Picker
                 caption="Period"
                 value={PERIODS.find((p) => p.key === period)?.label ?? ""}
-                onOpen={() => setPicking("period")}
+                onOpen={() => setPickingPeriod(true)}
               />
             </div>
           </div>
@@ -781,25 +759,14 @@ export default function LeaderboardsPage() {
         </>
       )}
 
-      {picking === "competition" && (
-        <OptionPickerSheet
-          title="Competition"
-          hint="What the board is measuring."
-          options={competitionOptions}
-          selected={[competition]}
-          onSave={(values) => setCompetition(values[0] as CompetitionKey)}
-          onClose={() => setPicking(null)}
-        />
-      )}
-
-      {picking === "period" && (
+      {pickingPeriod && (
         <OptionPickerSheet
           title="Period"
           hint="How far back the board counts."
           options={PERIODS.map((p) => ({ value: p.key, label: p.label, note: p.note }))}
           selected={[period]}
           onSave={(values) => setPeriod(values[0] as Period)}
-          onClose={() => setPicking(null)}
+          onClose={() => setPickingPeriod(false)}
         />
       )}
 
