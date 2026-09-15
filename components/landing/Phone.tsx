@@ -26,7 +26,13 @@ export default function Phone({
 }: { children: ReactNode; className?: string; ref?: Ref<HTMLDivElement> } & HTMLAttributes<HTMLDivElement>) {
   return (
     <div ref={ref} className={`@container ${className}`} {...rest}>
-      <div className="rounded-[12.2cqw] border border-l-phone-frame bg-l-bg-elevated p-[2.78cqw] shadow-2xl">
+      {/* A REAL PHONE'S BODY (owner, 2026-09-14 — "make the phone edges so it
+          looks more realistic"): a thin metal rim with side buttons
+          (.l-phone-rim in globals.css), then a black bezel, then the screen.
+          Rim 0.83 + bezel 1.95 = the old 2.78cqw of shell, so the screen sits
+          on exactly the same pixels and the flying phone still lands on it. */}
+      <div className="l-phone-rim rounded-[12.2cqw] p-[0.83cqw]">
+        <div className="rounded-[11.37cqw] bg-l-phone-bezel p-[1.95cqw]">
         <div className="overflow-hidden rounded-[9.44cqw] bg-l-phone-screen">
           <div className="flex items-center justify-between bg-l-phone-screen px-[6.11cqw] pt-[3.33cqw] pb-[2.22cqw] font-mono text-[3.33cqw] leading-none text-l-phone-ink">
             <span>9:41</span>
@@ -37,6 +43,7 @@ export default function Phone({
           <div className="flex h-[6.67cqw] items-center justify-center bg-l-phone-screen">
             <i className="h-[1.1cqw] w-[38%] rounded-full bg-l-phone-bar" />
           </div>
+        </div>
         </div>
       </div>
     </div>

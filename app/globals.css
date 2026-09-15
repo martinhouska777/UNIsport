@@ -311,6 +311,17 @@
   --color-l-phone-bar: #cfccc6;
   --color-l-phone-line: #e7e4df;
   --color-l-phone-frame: #2a2a2a;
+  /* The phone's BODY — the same in light and dark screen mode, because the
+     metal does not change when the screen does: a silver rim (highlight,
+     mid, shade), its darker outer edge, the black bezel round the glass, and
+     the two layers of shadow it casts on the page. */
+  --color-l-phone-metal-hi: #f5f6f8;
+  --color-l-phone-metal: #c8ccd3;
+  --color-l-phone-metal-lo: #8f949c;
+  --color-l-phone-edge: #767b83;
+  --color-l-phone-bezel: #050506;
+  --color-l-phone-shadow: rgba(16, 22, 44, 0.3);
+  --color-l-phone-shadow-soft: rgba(16, 22, 44, 0.2);
   /* The interlude's ground: one step warmer than the page, the "background
      steps one surface level darker behind the Varsity Mode opening". */
   --color-l-bg-warm: #fef8f0;
@@ -510,6 +521,20 @@
 .ls-stage.ls-enter .ls-rail      { opacity: 0; }
 
 .ls-phone-wrap { position: relative; will-change: transform; }
+/* A soft pool of the story's colour behind its phone (owner, 2026-09-14 —
+   "some background colour so the phone looks better"): blue in the student
+   story, gold in Varsity. It steps aside with the words while the phone flies. */
+.ls-phone-wrap::before {
+  content: "";
+  position: absolute;
+  inset: -14% -40%;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--sa) 48%, transparent), transparent 82%);
+  filter: blur(36px);
+  transition: opacity 0.4s ease;
+}
+.ls-stage.ls-gone .ls-phone-wrap::before { opacity: 0; }
 @keyframes ls-float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
 .ls-phone { animation: ls-float 7s ease-in-out infinite; }
 
@@ -683,6 +708,48 @@
    restarts on its own.) */
 @keyframes l-letter-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes l-letter-out { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-12px); } }
+
+/* THE PHONE'S RIM (components/landing/Phone.tsx). Brushed metal lit from the
+   top left, a bright line just inside the outer edge, and a shadow in two
+   layers — a close one under the phone and a wide soft one — instead of one
+   flat blur. Everything is in cqw, so a 140px coach phone and a 360px story
+   phone are the same object. The side buttons stand just OUTSIDE the box, so
+   the phone's measured rect (the flight's landing target) does not change:
+   ::before is the volume-up key, with the action button and volume-down as
+   copies of it; ::after is the power key. */
+.l-phone-rim {
+  position: relative;
+  border: 1px solid var(--color-l-phone-edge);
+  background: linear-gradient(135deg,
+    var(--color-l-phone-metal-hi) 0%, var(--color-l-phone-metal) 18%,
+    var(--color-l-phone-metal-lo) 50%, var(--color-l-phone-metal) 82%,
+    var(--color-l-phone-metal-hi) 100%);
+  box-shadow:
+    inset 0 0 0 0.28cqw color-mix(in srgb, var(--color-l-phone-metal-hi) 70%, transparent),
+    0 1.6cqw 3.2cqw -1cqw var(--color-l-phone-shadow),
+    0 9cqw 18cqw -5cqw var(--color-l-phone-shadow-soft);
+}
+.l-phone-rim::before,
+.l-phone-rim::after {
+  content: "";
+  position: absolute;
+  width: 0.95cqw;
+  pointer-events: none;
+  background: var(--color-l-phone-metal-lo);
+}
+.l-phone-rim::before {
+  left: calc(-0.95cqw - 1px);
+  top: 47cqw;
+  height: 11cqw;
+  border-radius: 0.5cqw 0 0 0.5cqw;
+  box-shadow: 0 -14cqw 0 var(--color-l-phone-metal-lo), 0 14cqw 0 var(--color-l-phone-metal-lo);
+}
+.l-phone-rim::after {
+  right: calc(-0.95cqw - 1px);
+  top: 50cqw;
+  height: 18cqw;
+  border-radius: 0 0.5cqw 0.5cqw 0;
+}
 
 /* Faint technical grid overlay used behind the landing.
    It SCROLLS WITH THE PAGE (owner, 2026-09-14: "the squares move with the
