@@ -54,7 +54,7 @@ still meets everything in order.
 | The Match screen per school | `public/landing/closers/match-*.webp` (+ `dark/`) | Recoloured 2026-08-23 for the intro's right phone |
 | **The tabs / views** | `views` in `lib/landingCopy.ts` → `LandingNav.tsx`; `LandingPage view=…`; routes `app/for/[audience]`, `app/about`, `app/contact`; shared head in `components/landing/routeMeta.ts` | Built (2026-08-18) — see "One page, six views" below |
 | Contact + socials | `components/landing/Contact.tsx`, `contact.socials` in `lib/landingCopy.ts` | Built — Instagram / TikTok / X are "coming soon" until the owner fills in `href` + `handle` |
-| Light / dark phone screens | `components/landing/PhoneMode.tsx`, `public/landing/dark/**` | Built — the switch bottom-right, shown only over the sections with phones (`data-phone-screens`); dark frames are real captures (see below) |
+| Light / dark phone screens | `components/landing/PhoneMode.tsx`, `public/landing/dark/**` | CUT 2026-09-15 — the page is light only, no switch; the dark captures and tokens are kept so it can come back (see below) |
 | The link card | `app/page.tsx` metadata, `public/og.png` ← `scripts/landing/make-og.mjs` | Built |
 | Scroll animations | `scripts/landing/build-story.mjs` → `story.html` | Built, published as an artifact |
 | Animation runtime | `scripts/landing/story-script.js` | Vanilla DOM; not yet React |
@@ -298,8 +298,10 @@ coach facts, `mailto:` buttons with subject + first line; V6 label no longer
 clips at 1280; story screens have alt text; title / description / OG / X
 card + `og.png`; `theme-color #0a0a0a` and no zoom lock on `/` only.
 
-**Light / dark phone screens.** `PhoneMode.tsx` — a context, `shotSrc()`,
-the pill bottom-right. Every capture at `/landing/<x>.webp` has a twin at
+**Light / dark phone screens — switch CUT 2026-09-15** (owner: "just stay
+with light on the webpage"). Every phone is light; `PhoneMode.tsx` is now a
+fixed-light context plus `shotSrc()`, and the switch lives in git history.
+What follows is how dark worked, kept because the files still exist. Every capture at `/landing/<x>.webp` has a twin at
 `/landing/dark/<x>.webp` (closers: `/landing/dark/closers/`); the phone
 chrome flips via the `l-phone-*` tokens under `[data-phone-mode="dark"]`.
 Default = the visitor's `prefers-color-scheme`, then their last choice.

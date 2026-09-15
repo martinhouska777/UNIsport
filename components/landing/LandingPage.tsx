@@ -10,7 +10,7 @@ import Faq from "@/components/landing/Faq";
 import About from "@/components/landing/About";
 import Contact from "@/components/landing/Contact";
 import LandingFooter from "@/components/landing/LandingFooter";
-import { PhoneModeProvider, PhoneModeToggle } from "@/components/landing/PhoneMode";
+import { PhoneModeProvider } from "@/components/landing/PhoneMode";
 import Link from "next/link";
 import { seeAll, studentFeatures, studentStory, varsityFeatures, varsityStory, type LandingView } from "@/lib/landingCopy";
 
@@ -59,12 +59,10 @@ import { seeAll, studentFeatures, studentStory, varsityFeatures, varsityStory, t
      FAQ · About · Contact
      The close · footer
 
-  Every phone on the page shows the real app in light OR dark (PhoneMode):
-  the switch is the small pill pinned bottom-right, shown only while a
-  section holding phone screens is in view (data-phone-screens: the two
-  stories, both closers, the coach's console); the provider wraps the
-  whole page so the closers' phones, the flying phone and the coach's five
-  all flip together.
+  Every phone on the page shows the real app in its LIGHT look. The Light /
+  Dark switch that stood bottom-right was cut (owner, 2026-09-15); the
+  provider still wraps the whole page so bringing dark back is PhoneMode.tsx
+  alone.
 */
 export default function LandingPage({ view = "all" }: { view?: LandingView }) {
   const all = view === "all";
@@ -127,7 +125,6 @@ export default function LandingPage({ view = "all" }: { view?: LandingView }) {
         )}
       </main>
       <LandingFooter />
-      <PhoneModeToggle />
       </PhoneModeProvider>
     </div>
   );

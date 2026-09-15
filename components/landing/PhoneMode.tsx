@@ -1,85 +1,27 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
+import { createContext, useContext, type ReactNode } from "react";
 
 /*
-  LIGHT / DARK PHONE SCREENS.
+  PHONE SCREENS: LIGHT ONLY.
 
   Every phone on the landing — the two scroll stories, both closers, the
-  coach's five — shows a capture of the real app. The app has two looks (it
-  keys them off localStorage.uniThemeMode), so the landing shows either: the
-  screens inside every phone flip together, and the drawn phone chrome (the
-  status bar, the gesture bar) flips with them via the l-phone-* tokens,
-  which [data-phone-mode="dark"] redefines in globals.css.
+  coach's five — shows a capture of the real app. There was a Light / Dark
+  switch pinned bottom-right that flipped them all to the app's dark look; the
+  owner cut it (2026-09-15: "cut the dark version, just stay with light on the
+  webpage"). A visitor who pressed Dark before sees light too — the old
+  localStorage choice (uniLandingPhoneMode) is simply never read.
 
-  Files: a light capture at /landing/<x>.webp has its dark twin at
-  /landing/dark/<x>.webp — same name, one folder down (closers included:
-  /landing/dark/closers/<x>.webp). shotSrc() is the only place that rule
-  lives, and Shot.tsx is the only place a capture is drawn.
-
-  Default: LIGHT, whatever the machine's colour scheme (owner, 2026-09-14:
-  "the light mode is the main one and always start with it"), then whatever
-  the visitor last chose here (localStorage) — a visitor who pressed Dark
-  keeps dark. A tiny external store read through useSyncExternalStore: the
-  server snapshot is "light" / not chosen, the client snapshot is the resolved
-  mode, and React reconciles the two on hydration without a setState-in-effect.
-
-  The light default is also what the server renders, so the first paint is
-  already right for everyone who has not chosen dark. (From 2026-09-10 until
-  this change the MACHINE decided until a choice was made — a <picture> with
-  the dark twin behind prefers-color-scheme, and a "system" attribute read in
-  CSS. Both are gone: there is nothing left for the machine to decide.)
-
-  `chosen` says whether that mode is the visitor's OWN choice or merely the
-  default we picked for them. Only the intro's backdrop phones care: the owner
-  wants the page to OPEN on the white screens whatever the machine's colour
-  scheme says (2026-08-23) — a white phone reads as an app against the dark
-  page, a dark one reads as a smudge — but the moment a visitor presses the
-  switch, the intro follows them like everything else. Nothing below the intro
-  uses it; the rest of the page still opens in the visitor's own scheme.
+  The mode stays a context rather than vanishing from Shot.tsx and
+  HeroPhones.tsx, so bringing dark back is this file alone: the dark twins
+  still sit at /landing/dark/<x>.webp (shotSrc() is the rule) and the chrome
+  tokens still live under [data-phone-mode="dark"] in globals.css. The switch
+  itself is in git history (commit before this one).
 */
 
 export type PhoneMode = "light" | "dark";
-const KEY = "uniLandingPhoneMode";
 
-let resolved: PhoneMode | null = null;
-/** True once the mode is the visitor's own doing, not our default. */
-let chosen = false;
-const listeners = new Set<() => void>();
-function readMode(): PhoneMode {
-  if (resolved) return resolved;
-  let stored: string | null = null;
-  try {
-    stored = window.localStorage.getItem(KEY);
-  } catch {}
-  chosen = stored === "dark" || stored === "light";
-  resolved = chosen ? (stored as PhoneMode) : "light";
-  return resolved;
-}
-function readChosen() {
-  readMode(); // resolves both, once
-  return chosen;
-}
-function writeMode(m: PhoneMode) {
-  resolved = m;
-  chosen = true;
-  try {
-    window.localStorage.setItem(KEY, m);
-  } catch {}
-  listeners.forEach((l) => l());
-}
-function subscribe(l: () => void) {
-  listeners.add(l);
-  return () => {
-    listeners.delete(l);
-  };
-}
-
-const Ctx = createContext<{ mode: PhoneMode; chosen: boolean; setMode: (m: PhoneMode) => void }>({
-  mode: "light",
-  chosen: false,
-  setMode: () => {},
-});
+const Ctx = createContext<{ mode: PhoneMode; chosen: boolean }>({ mode: "light", chosen: false });
 
 export function usePhoneMode() {
   return useContext(Ctx);
@@ -91,101 +33,11 @@ export function shotSrc(path: string, mode: PhoneMode) {
 }
 
 export function PhoneModeProvider({ children }: { children: ReactNode }) {
-  const mode = useSyncExternalStore(subscribe, readMode, () => "light" as PhoneMode);
-  const chosenNow = useSyncExternalStore(subscribe, readChosen, () => false);
   return (
-    <Ctx.Provider value={{ mode, chosen: chosenNow, setMode: writeMode }}>
-      <div data-phone-mode={mode} className="contents">
+    <Ctx.Provider value={{ mode: "light", chosen: false }}>
+      <div data-phone-mode="light" className="contents">
         {children}
       </div>
     </Ctx.Provider>
-  );
-}
-
-function Sun() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
-      <circle cx="12" cy="12" r="4" />
-      <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
-    </svg>
-  );
-}
-function Moon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" />
-    </svg>
-  );
-}
-
-/* The switch: a small pill pinned bottom-right — but only while something it
-   can flip is on screen. The sections that hold phone screens (both scroll
-   stories, both closers, the coach's console) carry `data-phone-screens`; an
-   IntersectionObserver over them shows the pill while any one of them is in
-   view and fades it out over the hero, the interlude, the FAQ, the close.
-   Server-rendered hidden; the first phone is a screen below the fold, so the
-   client has resolved it before it could matter. Two buttons, the current
-   one filled. */
-export const PHONE_SCREENS_ATTR = "data-phone-screens";
-
-function usePhoneScreensOnScreen() {
-  const [on, setOn] = useState(false);
-  useEffect(() => {
-    const els = Array.from(document.querySelectorAll(`[${PHONE_SCREENS_ATTR}]`));
-    if (!els.length) return;
-    const seen = new Set<Element>();
-    // A section counts once it reaches the middle half of the screen — a
-    // sliver at the very edge does not (the interlude is one screen tall,
-    // and the next story's top would otherwise keep the pill up through it).
-    const io = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((e) => (e.isIntersecting ? seen.add(e.target) : seen.delete(e.target)));
-        setOn(seen.size > 0);
-      },
-      { rootMargin: "-25% 0px -25% 0px" },
-    );
-    els.forEach((el) => io.observe(el));
-    return () => io.disconnect();
-  }, []);
-  return on;
-}
-
-export function PhoneModeToggle() {
-  const { mode, setMode } = usePhoneMode();
-  const shown = usePhoneScreensOnScreen();
-  const btn = (m: PhoneMode, label: string, icon: ReactNode) => {
-    const on = mode === m;
-    return (
-      <button
-        type="button"
-        aria-pressed={on}
-        aria-label={`${label} phone screens`}
-        title={`${label} phone screens`}
-        onClick={() => setMode(m)}
-        tabIndex={shown ? 0 : -1}
-        className={`flex h-8 items-center gap-1.5 rounded-full px-3 font-mono text-[11px] tracking-wider uppercase transition-colors ${
-          on ? "bg-l-text text-l-bg" : "text-l-text-2 hover:text-l-text"
-        }`}
-      >
-        {icon}
-        <span className="max-sm:sr-only">{label}</span>
-      </button>
-    );
-  };
-  return (
-    <div
-      role="group"
-      aria-label="Phone screens"
-      aria-hidden={!shown}
-      /* bottom: 16px (24 from sm), or the phone's home-indicator inset if that
-         is more — it used to sit on the indicator. The story stages leave a
-         strip for it on phones (.ls-stage in globals.css). */
-      className={`fixed right-4 bottom-[max(1rem,env(safe-area-inset-bottom))] z-[60] flex items-center gap-0.5 rounded-full border border-l-line bg-l-surface/90 p-1 shadow-2xl backdrop-blur transition-[opacity,transform] duration-300 ease-out print:hidden motion-reduce:transition-none sm:right-6 sm:bottom-[max(1.5rem,env(safe-area-inset-bottom))] ${
-        shown ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-2 opacity-0"
-      }`}
-    >
-      {btn("light", "Light", <Sun />)}
-      {btn("dark", "Dark", <Moon />)}
-    </div>
   );
 }
