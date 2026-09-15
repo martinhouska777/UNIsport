@@ -4,22 +4,19 @@
   MODE SWITCHER — the "switch accounts" sheet, but for this app's two modes:
   the normal student app and Varsity Mode.
 
-  IT DROPS FROM THE TOP, and it is TWO ICONS AND NOTHING ELSE (owner,
-  2026-09-14). It used to rise from the floor with a title, a hint line, a
-  close button and a named, described row per mode — a whole page of words for
-  a choice between two things you already recognise by their mark. Now it falls
-  out of the top bar you just tapped and shows the crest (the normal app) and
-  the oars (Varsity). Left is where you are now or where you'd go back to;
-  right is the team side.
+  IT DROPS FROM THE TOP, and it is TWO BOXES stacked — Student mode on top,
+  Varsity mode underneath — each one the mode's mark with its name beside it
+  (owner, 2026-09-14). Between these two there was a version that was only the
+  two icons side by side; the owner wanted the names back, without the old
+  sheet's title, hint line, close button and description lines.
 
-  WHAT THE ICONS STILL SAY WITHOUT WORDS:
+  WHAT THE BOXES SAY BESIDES THE NAME:
     • the mode you're IN wears a ring in the theme's primary colour
-    • a varsity mark you can't use yet (no squad, or not approved) is dimmed
+    • a varsity box you can't use yet (no squad, or not approved) is dimmed
 
-  Tapping still does exactly what it always did, so nothing is lost by the
-  words going: the student side sends someone who never set it up to
-  onboarding, and the varsity side sends a non-member to the invite or waiting
-  screen rather than into a section that isn't theirs.
+  Tapping does exactly what it always did: the student side sends someone who
+  never set it up to onboarding, and the varsity side sends a non-member to the
+  invite or waiting screen rather than into a section that isn't theirs.
 
   Opened from the name in the Profile top bar (student side) and from the
   varsity mark in the Varsity top bar. Colors are theme tokens (rule 1) so the
@@ -52,12 +49,12 @@ export default function ModeSwitcherSheet({
 
   const go = (mode: "student" | "varsity") => {
     // Nothing to act on yet — the squad lookup hasn't answered, so the varsity
-    // mark is inert and the sheet stays open rather than quietly closing on a
+    // box is inert and the sheet stays open rather than quietly closing on a
     // tap that would send a real member to the wrong place.
     if (mode === "varsity" && squadLoading) return;
     onClose();
     if (mode === "student") {
-      // Never set up? This icon is the offer to do it.
+      // Never set up? This box is the offer to do it.
       if (!studentReady) router.push("/onboarding");
       else if (current !== "student") router.push("/profile");
       return;
@@ -72,8 +69,10 @@ export default function ModeSwitcherSheet({
   };
 
   // The ring that says "this is the mode you're in".
-  const ring = (on: boolean) =>
-    on ? "border-primary bg-primary-tint" : "border-border bg-surface-2";
+  const box = (on: boolean) =>
+    `press-icon flex w-full items-center gap-3 rounded-2xl border-2 px-3 py-3 text-left active:opacity-70 ${
+      on ? "border-primary bg-primary-tint" : "border-border bg-surface-2"
+    }`;
 
   return (
     <div className="fixed inset-x-0 top-0 z-50 flex h-dvh flex-col justify-start">
@@ -85,29 +84,31 @@ export default function ModeSwitcherSheet({
       />
 
       <div className="sheet-ceiling relative rounded-b-3xl border-b border-border bg-surface [animation:sheet-down_0.28s_cubic-bezier(0.2,0.8,0.2,1)]">
-        <div className="flex items-center justify-center gap-10 px-4 pb-4 pt-5">
-          {/* Normal mode — the plain crest. */}
+        <div className="flex flex-col gap-2.5 px-4 pb-4 pt-5">
+          {/* Student mode — the plain crest. */}
           <button
             type="button"
             onClick={() => go("student")}
-            aria-label="Normal mode"
-            className={`tap44 press-icon flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border-2 active:opacity-70 ${ring(
-              current === "student" && studentReady,
-            )}`}
+            aria-pressed={current === "student" && studentReady}
+            className={box(current === "student" && studentReady)}
           >
-            <UniversityCrest size={30} />
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border bg-surface">
+              <UniversityCrest size={22} />
+            </span>
+            <span className="text-[15px] font-medium text-text">Student mode</span>
           </button>
 
           {/* Varsity mode — the oars. Dimmed until it's actually yours. */}
           <button
             type="button"
             onClick={() => go("varsity")}
-            aria-label="Varsity mode"
-            className={`tap44 press-icon flex h-16 w-16 items-center justify-center rounded-full border-2 active:opacity-70 ${ring(
-              current === "varsity" && isMember,
-            )} ${isMember ? "" : "opacity-60"}`}
+            aria-pressed={current === "varsity" && isMember}
+            className={`${box(current === "varsity" && isMember)} ${isMember ? "" : "opacity-60"}`}
           >
-            <VarsityCrest size={44} />
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-border bg-surface">
+              <VarsityCrest size={32} />
+            </span>
+            <span className="text-[15px] font-medium text-text">Varsity mode</span>
           </button>
         </div>
 
