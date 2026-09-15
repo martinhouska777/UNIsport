@@ -688,7 +688,13 @@ export default function StoryCloser({ storyId, beats, accent, closer, closerId, 
 
   return (
     <>
-      <ScrollStory ref={story} id={storyId} beats={beats} accent={accent} />
+      {/* The story's tinted ground — blue for the student story, gold for
+          Varsity — and ONLY the story: the closer after it stays on the page's
+          white, like the top of the page (owner, 2026-09-14). A plain,
+          unpositioned wrapper, so the page's grid still draws over it. */}
+      <div className={accent === "varsity" ? "bg-l-bg-varsity" : "bg-l-bg-student"}>
+        <ScrollStory ref={story} id={storyId} beats={beats} accent={accent} />
+      </div>
       {children}
       {closer === "campus" ? (
         <CampusColours ref={clo} id={closerId} managed pinned={pinned} aside={aside} />

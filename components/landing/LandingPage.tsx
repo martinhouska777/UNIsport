@@ -88,10 +88,7 @@ export default function LandingPage({ view = "all" }: { view?: LandingView }) {
       <main className="relative flex-1">
         {all && <LandingHero />}
         {students && <StudentIntro solo={!all} />}
-        {/* The stories' tinted grounds: plain (unpositioned) wrappers, so the
-            page's grid still draws over them. */}
         {students && (
-          <div className="bg-l-bg-student">
           <StoryCloser
             storyId="story1"
             beats={studentStory}
@@ -102,11 +99,9 @@ export default function LandingPage({ view = "all" }: { view?: LandingView }) {
             toBeat={0}
             aside={<FeatureList kicker={studentFeatures.kicker} rows={studentFeatures.rows} cta={studentFeatures.cta} />}
           />
-          </div>
         )}
         {varsity && <Interlude solo={!all} />}
         {varsity && (
-          <div className="bg-l-bg-varsity">
           <StoryCloser
             storyId="story2"
             beats={varsityStory}
@@ -117,7 +112,6 @@ export default function LandingPage({ view = "all" }: { view?: LandingView }) {
             toBeat={0}
             aside={<FeatureList kicker={varsityFeatures.kicker} rows={varsityFeatures.rows} cta={varsityFeatures.cta} />}
           />
-          </div>
         )}
         {coaches && <CoachSection solo={!all} teaser={all} />}
         {audience && <Faq view={view} />}
