@@ -554,20 +554,10 @@
 .ls-stage.ls-enter .ls-rail      { opacity: 0; }
 
 .ls-phone-wrap { position: relative; will-change: transform; }
-/* A soft pool of the story's colour behind its phone (owner, 2026-09-14 —
-   "some background colour so the phone looks better"): blue in the student
-   story, gold in Varsity. It steps aside with the words while the phone flies. */
-.ls-phone-wrap::before {
-  content: "";
-  position: absolute;
-  inset: -14% -40%;
-  z-index: -1;
-  pointer-events: none;
-  background: radial-gradient(closest-side, color-mix(in srgb, var(--sg, var(--sa)) 48%, transparent), transparent 82%);
-  filter: blur(36px);
-  transition: opacity 0.4s ease;
-}
-.ls-stage.ls-gone .ls-phone-wrap::before { opacity: 0; }
+/* NO GLOW behind the scroll stories' phone (owner, 2026-09-14, later — "don't
+   make it glow during the scrolling animation"). A pool of the story's colour
+   stood here for an afternoon; the glow now belongs only to the still closers
+   (.lc-glow), in the school's colour. */
 @keyframes ls-float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
 .ls-phone { animation: ls-float 7s ease-in-out infinite; }
 
