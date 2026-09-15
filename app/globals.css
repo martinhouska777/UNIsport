@@ -314,6 +314,10 @@
   /* The interlude's ground: one step warmer than the page, the "background
      steps one surface level darker behind the Varsity Mode opening". */
   --color-l-bg-warm: #fef8f0;
+  /* The two stories' grounds (owner, 2026-09-14): the white takes a blue
+     tint under the student story and a golden one under the varsity story. */
+  --color-l-bg-student: #eef2ff;
+  --color-l-bg-varsity: #fbf5e4;
   /* The two faint grid overlays (the page's and the title cards'): the text
      colour at a whisper. Tokens so the design lab (app/lab, dev only) can
      fade them or flip them between light and dark pages. */
@@ -680,17 +684,21 @@
 @keyframes l-letter-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes l-letter-out { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-12px); } }
 
-/* Faint technical grid overlay used behind the landing. */
+/* Faint technical grid overlay used behind the landing.
+   It SCROLLS WITH THE PAGE (owner, 2026-09-14: "the squares move with the
+   app") — absolute over the whole page, not fixed to the screen. z-index 1
+   puts it over the student / varsity tints (plain backgrounds inside <main>)
+   while every section — z-[1] and later in the page — still sits above it. */
 .l-grid::before {
   content: "";
-  position: fixed;
+  position: absolute;
   inset: 0;
   background-image:
     linear-gradient(var(--color-l-grid) 1px, transparent 1px),
     linear-gradient(90deg, var(--color-l-grid) 1px, transparent 1px);
   background-size: 48px 48px;
   pointer-events: none;
-  z-index: 0;
+  z-index: 1;
 }
 
 /* Soft brand glow blobs (accent / varsity), applied to a positioned parent. */
