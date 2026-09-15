@@ -2,16 +2,26 @@
 
 import { useState } from "react";
 import type { PersonalRecord } from "@/lib/currentUser";
-import { IconCheck, IconTrash, IconPlus } from "@/components/icons";
+import { IconCheck, IconTrash, IconPlus, IconPencil } from "@/components/icons";
 import VisibilityToggle from "@/components/profile/VisibilityToggle";
 
 /*
-  Personal records block: a read-only list that flips into an editor when the
-  grey "+ Add personal records" box under it is tapped (the "+" used to be a
-  small circle beside the heading; the owner wanted it IN the grey box). In edit mode each record is two inputs (lift + value) with a
-  trash button, plus an "Add record" row. Changes are pushed up via onChange and
-  persisted by the page. Colors come from theme variables; inputs use 16px text
-  (text-base) so phones don't auto-zoom.
+  Personal records block.
+
+  A record is a small brag, not a settings row — so it's shown as a TILE with
+  the number big and the lift's name small above it, two to a line (a lone one
+  takes the whole line rather than leaving a gap). It used to be a list of two
+  faint 12px lines with a dashed grey box permanently parked underneath, which
+  read as an empty form no matter how much you'd filled in.
+
+  The dashed box now only appears when there is nothing yet. Once there is,
+  changing things is the pencil in the heading — the same pencil, in the same
+  place, as the block above it. The editor is unchanged in substance: each
+  record is two inputs (lift + value) with a trash button, plus "Add record".
+
+  Changes are pushed up via onChange and persisted by the page. Colors come
+  from theme variables; inputs use 16px text (text-base) so phones don't
+  auto-zoom.
 */
 export default function PersonalRecords({
   records,
@@ -38,6 +48,9 @@ export default function PersonalRecords({
     setEditing(false);
   };
 
+  // Only rows with something in them are worth a tile.
+  const filled = records.filter((r) => r.lift.trim() || r.value.trim());
+
   return (
     <div className="border-b border-border px-3.5 py-3">
       <div className="mb-2 flex items-center justify-between">
@@ -46,9 +59,8 @@ export default function PersonalRecords({
         </div>
         <div className="flex items-center gap-2">
           <VisibilityToggle visible={visible} onChange={onVisibleChange} />
-          {/* Only while editing: the tick that closes the editor. Adding
-              lives in the grey box below. */}
-          {editing && (
+          {editing ? (
+            /* The tick that closes the editor. */
             <button
               type="button"
               onClick={done}
@@ -57,6 +69,17 @@ export default function PersonalRecords({
             >
               <IconCheck size={14} />
             </button>
+          ) : (
+            filled.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setEditing(true)}
+                className="tap44 flex items-center gap-1 rounded-full px-1.5 py-1 text-[11px] font-medium text-primary transition-colors hover:bg-primary-tint"
+              >
+                <IconPencil size={11} />
+                Edit
+              </button>
+            )
           )}
         </div>
       </div>
@@ -100,30 +123,38 @@ export default function PersonalRecords({
             Add record
           </button>
         </div>
-      ) : (
-        <>
-          {records.length > 0 && (
-            <div className="mb-2 flex flex-col divide-y divide-border">
-              {records.map((pr, i) => (
-                <div key={i} className="flex items-center justify-between py-2">
-                  <span className="text-xs text-muted">{pr.lift}</span>
-                  <span className="text-xs font-medium text-text">{pr.value}</span>
-                </div>
-              ))}
+      ) : filled.length > 0 ? (
+        <div className="grid grid-cols-2 gap-2">
+          {filled.map((pr, i) => (
+            <div
+              key={i}
+              /* An odd one out takes the full width rather than leaving half
+                 the line blank. */
+              className={`rounded-xl border border-border bg-surface-2 px-3 py-2.5 ${
+                filled.length % 2 === 1 && i === filled.length - 1 ? "col-span-2" : ""
+              }`}
+            >
+              <div className="truncate text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
+                {pr.lift || "Record"}
+              </div>
+              <div className="mt-0.5 truncate text-[16px] font-semibold tabular-nums leading-tight text-text">
+                {pr.value || "—"}
+              </div>
             </div>
-          )}
-          <button
-            type="button"
-            onClick={() => {
-              addRecord();
-              setEditing(true);
-            }}
-            className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-border bg-surface-2 px-3 py-4 text-[12px] font-medium text-muted"
-          >
-            <IconPlus size={14} />
-            Add personal records
-          </button>
-        </>
+          ))}
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => {
+            addRecord();
+            setEditing(true);
+          }}
+          className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-border bg-surface-2 px-3 py-4 text-[12px] font-medium text-muted"
+        >
+          <IconPlus size={14} />
+          Add personal records
+        </button>
       )}
     </div>
   );

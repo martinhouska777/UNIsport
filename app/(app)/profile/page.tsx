@@ -25,7 +25,7 @@ import LeaderboardStrip from "@/components/leaderboards/LeaderboardStrip";
 import MemoriesStrip from "@/components/profile/MemoriesStrip";
 import PersonalRecords from "@/components/profile/PersonalRecords";
 import PhotoGrid from "@/components/profile/PhotoGrid";
-import PreferencesSheet from "@/components/profile/PreferencesSheet";
+import AboutYouSheet from "@/components/profile/AboutYouSheet";
 import { useProfileData } from "@/components/profile/useProfileData";
 import {
   profileFromOnboarding,
@@ -863,8 +863,11 @@ export default function ProfilePage() {
         />
       )}
 
+      {/* The pencil beside the chips edits ONLY the chips: interests,
+          languages, concentration and where you're from. The full "Edit your
+          answers" sheet (activity, gyms, mentorship) is in Settings. */}
       {editingPrefs && (
-        <PreferencesSheet
+        <AboutYouSheet
           profile={user}
           onSave={savePreferences}
           onClose={() => setEditingPrefs(false)}

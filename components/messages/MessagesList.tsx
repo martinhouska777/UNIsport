@@ -134,11 +134,12 @@ export default function MessagesList({
           Direct / Community toggle is the top of the screen. */}
       <h1 className="sr-only">Messages</h1>
       <div className="bg-surface px-3 pb-2 pt-3">
-        {/* Same capsule as the Match tabs: the chosen one is a pill inside it.
-            The TRACK is sunken — on the dark theme it used to be the card's own
-            colour on a card-coloured header, so the only thing you could see
-            was the white pill floating on nothing (owner, 2026-09-14). */}
-        <div className="flex rounded-full border border-border bg-sunken p-1">
+        {/* The track is the page's own white, not a sunken grey, and it has NO
+            inner padding: the chosen half is filled right out to the capsule's
+            edges rather than floating as a smaller pill inside a grey gutter
+            (owner, 2026-09-15). `overflow-hidden` keeps the filled half inside
+            the rounded corners now that it touches them. */}
+        <div className="flex overflow-hidden rounded-full border border-border bg-surface">
           {(["direct", "community"] as Tab[]).map((t) => (
             <button
               key={t}
