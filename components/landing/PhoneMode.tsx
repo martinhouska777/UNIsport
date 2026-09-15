@@ -17,20 +17,18 @@ import { createContext, useContext, useEffect, useState, useSyncExternalStore, t
   /landing/dark/closers/<x>.webp). shotSrc() is the only place that rule
   lives, and Shot.tsx is the only place a capture is drawn.
 
-  Default: the visitor's own preference (prefers-color-scheme), then whatever
-  they last chose here (localStorage). A tiny external store read through
-  useSyncExternalStore: the server snapshot is "light" / not chosen, the
-  client snapshot is the resolved mode, and React reconciles the two on
-  hydration without a setState-in-effect.
+  Default: LIGHT, whatever the machine's colour scheme (owner, 2026-09-14:
+  "the light mode is the main one and always start with it"), then whatever
+  the visitor last chose here (localStorage) — a visitor who pressed Dark
+  keeps dark. A tiny external store read through useSyncExternalStore: the
+  server snapshot is "light" / not chosen, the client snapshot is the resolved
+  mode, and React reconciles the two on hydration without a setState-in-effect.
 
-  THE PICTURES DO NOT WAIT FOR THAT (2026-09-10). The server cannot know the
-  visitor's scheme, so it used to write the light capture into every <img>;
-  a dark machine then fetched the light set, hydrated, and fetched the dark
-  set — every screen twice. Now every capture goes through Shot.tsx, which
-  hands the browser BOTH twins in a <picture> until the visitor has actually
-  pressed the switch, and the browser picks one at parse time. The attribute
-  on the wrapper follows the same split: "system" until a choice is made
-  (the machine decides, in CSS), then "light" or "dark".
+  The light default is also what the server renders, so the first paint is
+  already right for everyone who has not chosen dark. (From 2026-09-10 until
+  this change the MACHINE decided until a choice was made — a <picture> with
+  the dark twin behind prefers-color-scheme, and a "system" attribute read in
+  CSS. Both are gone: there is nothing left for the machine to decide.)
 
   `chosen` says whether that mode is the visitor's OWN choice or merely the
   default we picked for them. Only the intro's backdrop phones care: the owner
@@ -55,11 +53,7 @@ function readMode(): PhoneMode {
     stored = window.localStorage.getItem(KEY);
   } catch {}
   chosen = stored === "dark" || stored === "light";
-  resolved = chosen
-    ? (stored as PhoneMode)
-    : window.matchMedia("(prefers-color-scheme: dark)").matches
-      ? "dark"
-      : "light";
+  resolved = chosen ? (stored as PhoneMode) : "light";
   return resolved;
 }
 function readChosen() {
@@ -101,7 +95,7 @@ export function PhoneModeProvider({ children }: { children: ReactNode }) {
   const chosenNow = useSyncExternalStore(subscribe, readChosen, () => false);
   return (
     <Ctx.Provider value={{ mode, chosen: chosenNow, setMode: writeMode }}>
-      <div data-phone-mode={chosenNow ? mode : "system"} className="contents">
+      <div data-phone-mode={mode} className="contents">
         {children}
       </div>
     </Ctx.Provider>

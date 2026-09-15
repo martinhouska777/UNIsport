@@ -3,12 +3,16 @@
 /*
   LIGHT / DARK MODE (app-wide).
   ------------------------------------------------------------------
-  A single global preference — "dark" (the default look) or "light" — kept in
+  A single global preference — "light" (the default look) or "dark" — kept in
   React context + localStorage. It does NOT hold any colors: each ThemeProvider
   is given a dark token set and an optional light variant, and picks one based
   on this mode. So flipping the mode re-skins every themed zone at once.
 
-  useThemeMode() is tolerant: outside a provider it just reports "dark" and the
+  LIGHT IS THE MAIN LOOK (owner, 2026-09-14): everyone starts in light — a new
+  account, and anyone who has never pressed the switch. A person who picks dark
+  keeps dark: their choice is saved and wins on the next visit.
+
+  useThemeMode() is tolerant: outside a provider it just reports "light" and the
   toggles no-op, so ThemeProvider can read it safely anywhere.
 */
 import {
@@ -26,7 +30,7 @@ export type ThemeMode = "light" | "dark";
 type Ctx = { mode: ThemeMode; toggle: () => void; setMode: (m: ThemeMode) => void };
 
 const ThemeModeContext = createContext<Ctx>({
-  mode: "dark",
+  mode: "light",
   toggle: () => {},
   setMode: () => {},
 });
@@ -34,9 +38,9 @@ const ThemeModeContext = createContext<Ctx>({
 const STORAGE_KEY = "uniThemeMode";
 
 export function ThemeModeProvider({ children }: { children: ReactNode }) {
-  const [mode, setModeState] = useState<ThemeMode>("dark");
+  const [mode, setModeState] = useState<ThemeMode>("light");
 
-  // Load the saved preference once on the client (default stays "dark").
+  // Load the saved preference once on the client (default stays "light").
   useEffect(() => {
     try {
       const saved = window.localStorage.getItem(STORAGE_KEY);

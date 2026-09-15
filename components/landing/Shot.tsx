@@ -17,21 +17,14 @@ import { shotSrc, usePhoneMode, type PhoneMode } from "@/components/landing/Phon
   in dark mode that was 30 images and ~2 MB before the first scroll, half of
   it thrown away (website review).
 
-  The browser can make that choice itself, at parse time, if it is given both:
-  a <picture> with the dark twin behind `(prefers-color-scheme: dark)` and the
-  light capture as the <img>. Both sets of candidates come from next/image's
-  own getImageProps, so the sizes, widths and quality are exactly what <Image>
-  would have produced. The page then downloads ONE set, the right one, from
-  the first byte — and the chrome around it follows the same rule in CSS
-  (`[data-phone-mode="system"]`, globals.css).
-
-  Three cases:
-    • no choice made (the default, and what the server renders) — the
-      <picture>; the machine decides;
-    • the visitor pressed the switch — a plain <img> in the chosen look, the
-      same markup on every render after;
-    • `mode` given — a plain <img> in that look whatever the machine or the
-      visitor says. The intro's backdrop phones open white (HeroPhones).
+  LIGHT IS THE MAIN LOOK NOW (owner, 2026-09-14), so the machine no longer
+  decides: until the visitor presses Dark, every screen is the light capture,
+  which is also exactly what the server writes into the HTML — one set,
+  downloaded once. (The <picture> that let a dark machine pick the dark twin
+  at parse time went with that rule.) Two cases:
+    • `mode` given — that look, whatever the visitor chose (the intro's
+      backdrop phones, HeroPhones);
+    • otherwise — the visitor's look: light, or dark once they chose it.
 
   The <img> is what callers get a ref to and what the flight clones; the
   <picture> is `display: contents`, so it adds no box of its own — the image
@@ -40,25 +33,14 @@ import { shotSrc, usePhoneMode, type PhoneMode } from "@/components/landing/Phon
 type Props = Omit<ImageProps, "src" | "ref" | "placeholder" | "preload"> & {
   /** The LIGHT capture — `/landing/<x>.webp`. The dark twin is derived (shotSrc). */
   shot: string;
-  /** Force one look, ignoring the visitor's scheme and their choice. */
+  /** Force one look, ignoring the visitor's choice. */
   mode?: PhoneMode;
   ref?: Ref<HTMLImageElement>;
 };
 
 export default function Shot({ shot, mode: forced, ref, ...rest }: Props) {
-  const { mode, chosen } = usePhoneMode();
-  const explicit = forced ?? (chosen ? mode : null);
-  if (explicit) {
-    const { props } = getImageProps({ ...rest, src: shotSrc(shot, explicit) });
-    // eslint-disable-next-line @next/next/no-img-element -- these ARE next/image's own props
-    return <img ref={ref} {...props} alt={props.alt} />;
-  }
-  const light = getImageProps({ ...rest, src: shot }).props;
-  const dark = getImageProps({ ...rest, src: shotSrc(shot, "dark") }).props;
-  return (
-    <picture className="contents">
-      <source media="(prefers-color-scheme: dark)" srcSet={dark.srcSet} sizes={dark.sizes} />
-      <img ref={ref} {...light} alt={light.alt} />
-    </picture>
-  );
+  const { mode } = usePhoneMode();
+  const { props } = getImageProps({ ...rest, src: shotSrc(shot, forced ?? mode) });
+  // eslint-disable-next-line @next/next/no-img-element -- these ARE next/image's own props
+  return <img ref={ref} {...props} alt={props.alt} />;
 }
