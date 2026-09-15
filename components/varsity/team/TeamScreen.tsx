@@ -348,10 +348,10 @@ export default function TeamScreen({
         <>
           {/* SEARCH — a dark bubble (owner, 2026-09-14): fully round, and sunk
               into the page rather than raised off it, so it reads as a hole you
-              type into instead of another card. `bg-sunken` is the app's own
-              recessed token, so it goes dark on the dark theme and pale grey on
-              the light one without either being hardcoded (rule 1). */}
-          <div className={`${only ? "" : "mt-3 "}flex items-center gap-2 rounded-full border border-border bg-sunken px-4 py-2.5`}>
+              type into instead of another card. `bg-well` is the app's own token for it
+              (app/globals.css), so the step is a proportional one on every
+              school's neutrals rather than a hardcoded grey (rule 1). */}
+          <div className={`${only ? "" : "mt-3 "}flex items-center gap-2 rounded-full border border-border bg-well px-4 py-2.5`}>
             <span className="text-muted">
               <IconSearch size={16} />
             </span>

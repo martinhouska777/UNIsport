@@ -92,6 +92,16 @@
     it never reads as a hole cut through it.
   */
   --color-sunken: color-mix(in oklab, var(--background) 88%, var(--surface));
+  /*
+    WELL — one step DARKER than the page: what a search field is cut into.
+    `sunken` is the page tone pulled a little toward the card, which is right
+    for a track a pill slides in but left the search bubble the same tone as
+    everything around it. The owner asked for "a little bit darker grey"
+    (2026-09-14), so this one goes the other way — toward black — which reads
+    as a proper grey well on the light theme and keeps the bubble at its
+    darkest on the dark one, where the page is already nearly black.
+  */
+  --color-well: color-mix(in oklab, var(--background) 90%, #000);
   --color-border: var(--border);
   --color-text: var(--text);
   --color-text-2: var(--text-2);
