@@ -7,22 +7,29 @@
   calendar answers "what did I do this month"; this screen answers "what did it
   look like" — the same sessions, as pictures.
 
-  Days run newest first, each headed by its name and what you trained that day.
-  Tapping any tile opens the viewer, which then browses the whole gallery rather
-  than just that session.
+  ONE CARD PER DAY, EACH SESSION INSIDE IT (owner, 2026-09-15). A session is
+  its photos on top — swiped sideways, one at a time, dots underneath — then
+  what it was ("Gym"), then what was trained ("Chest"), then where and who
+  with. A second session that day sits under the first in the same card, so a
+  photo is never separated from the session it came from. Tapping a photo
+  opens the viewer, which browses the whole gallery.
+
+  At the top, a FLASHBACK: a session from this date in an earlier year, or an
+  earlier month (components/profile/Flashback.tsx).
 
   Nothing here is new data. These are the photos already attached to logged
-  sessions (db/workout_logs.sql), which until now could only be seen one session
-  at a time. Colours are theme tokens (rule 1).
+  sessions (db/workout_logs.sql). Colours are theme tokens (rule 1).
 */
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAppState } from "@/components/AppState";
 import Button from "@/components/ui/Button";
 import { IconArrowLeft, IconCamera, IconMapPin, IconUser } from "@/components/icons";
+import Flashback from "@/components/profile/Flashback";
 import MemoryViewer from "@/components/profile/MemoryViewer";
+import PhotoSwipe from "@/components/profile/PhotoSwipe";
 import { listPhotoLogs, PHOTO_PAGE, type WorkoutLog } from "@/lib/supabase/workouts";
-import { groupByDay, toMemories } from "@/lib/memories";
+import { groupByDay, toMemories, type Memory } from "@/lib/memories";
 
 export default function MemoriesPage() {
   const router = useRouter();
@@ -31,7 +38,9 @@ export default function MemoriesPage() {
   const [loaded, setLoaded] = useState(false);
   const [more, setMore] = useState(false); // another page might exist
   const [loadingMore, setLoadingMore] = useState(false);
-  const [open, setOpen] = useState<number | null>(null);
+  // Which photos the viewer walks through — the gallery, or a Flashback — and
+  // where in them it is.
+  const [open, setOpen] = useState<{ list: Memory[]; index: number } | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -59,8 +68,7 @@ export default function MemoriesPage() {
   };
 
   // One flat, newest-first list drives the viewer; the same list grouped by day
-  // draws the screen. Building both from one array keeps a tile's position in
-  // the gallery and its position in the viewer identical.
+  // and session draws the screen.
   const memories = useMemo(() => toMemories(logs), [logs]);
   const days = useMemo(() => groupByDay(memories), [memories]);
 
@@ -75,14 +83,12 @@ export default function MemoriesPage() {
         <span className="w-[18px]" aria-hidden="true" />
       </div>
 
+      <Flashback userId={userId} onOpen={(list, index) => setOpen({ list, index })} />
+
       {!loaded && (
-        <div className="px-3.5 py-4">
+        <div className="mx-3.5 mt-3 rounded-2xl border border-border bg-surface p-3">
           <div className="mb-2 h-3 w-28 rounded bg-surface-2" />
-          <div className="grid grid-cols-3 gap-1">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="aspect-square rounded-md bg-surface-2" />
-            ))}
-          </div>
+          <div className="aspect-square w-full rounded-xl bg-surface-2" />
         </div>
       )}
 
@@ -102,62 +108,35 @@ export default function MemoriesPage() {
       {loaded &&
         days.map((day) => (
           <section key={day.date} className="mx-3.5 mt-3 rounded-2xl border border-border bg-surface p-3">
-            {/* The day, then each session in it: what you did, where, and
-                who with (owner, 2026-09-13). The photo count that sat on the
-                right is gone; the grid below already shows it. */}
-            <div className="mb-2">
-              <div className="text-[13px] font-semibold text-text">{day.label}</div>
-              {day.sessions.map((s) => (
-                <div key={s.logId} className="mt-1">
-                  {s.trained && <div className="text-[12px] font-medium text-text-2">{s.trained}</div>}
-                  {(s.gym || s.partner) && (
-                    <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-muted">
-                      {s.gym && (
-                        <span className="flex items-center gap-1">
-                          <IconMapPin size={12} />
-                          {s.gym}
-                        </span>
-                      )}
-                      {s.partner && (
-                        <span className="flex items-center gap-1">
-                          <IconUser size={12} />
-                          with {s.partner}
-                        </span>
-                      )}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
+            <div className="mb-2 text-[13px] font-semibold text-text">{day.label}</div>
 
-            <div className="grid grid-cols-3 gap-1">
-              {day.memories.map((m) => {
-                const flatIndex = memories.indexOf(m);
-                return (
-                  <button
-                    key={m.id}
-                    type="button"
-                    onClick={() => setOpen(flatIndex)}
-                    aria-label={`${m.trained || "Session"} on ${day.label}`}
-                    className="press relative aspect-square overflow-hidden rounded-md border border-border bg-surface-2"
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={m.src} alt="" className="h-full w-full object-cover" />
-                    {/* Who you were with — the one thing worth seeing before you
-                        open it. Initials, so the tile stays a photo. */}
-                    {m.partner && (
-                      <span className="absolute bottom-1 left-1 rounded-full bg-background/80 px-1.5 py-0.5 text-[9px] font-semibold text-text">
-                        {m.partner
-                          .split(/\s+/)
-                          .slice(0, 2)
-                          .map((w) => w[0]?.toUpperCase() ?? "")
-                          .join("")}
+            {day.sessions.map((s, i) => (
+              <div key={s.logId} className={i > 0 ? "mt-3 border-t border-border pt-3" : ""}>
+                <PhotoSwipe
+                  photos={s.memories}
+                  label={`${s.activity} on ${day.label}`}
+                  onOpen={(k) => setOpen({ list: memories, index: memories.indexOf(s.memories[k]) })}
+                />
+                <div className="mt-2 text-[14px] font-semibold text-text">{s.activity}</div>
+                {s.detail && <div className="text-[12px] text-text-2">{s.detail}</div>}
+                {(s.gym || s.partner) && (
+                  <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[12px] text-muted">
+                    {s.gym && (
+                      <span className="flex items-center gap-1">
+                        <IconMapPin size={12} />
+                        {s.gym}
                       </span>
                     )}
-                  </button>
-                );
-              })}
-            </div>
+                    {s.partner && (
+                      <span className="flex items-center gap-1">
+                        <IconUser size={12} />
+                        with {s.partner}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
           </section>
         ))}
 
@@ -171,9 +150,9 @@ export default function MemoriesPage() {
 
       {open !== null && (
         <MemoryViewer
-          memories={memories}
-          index={open}
-          onIndex={setOpen}
+          memories={open.list}
+          index={open.index}
+          onIndex={(index) => setOpen((o) => (o ? { ...o, index } : o))}
           onClose={() => setOpen(null)}
         />
       )}

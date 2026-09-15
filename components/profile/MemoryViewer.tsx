@@ -130,9 +130,9 @@ export default function MemoryViewer({
           {fullDateLabel(memory.date)}
         </div>
 
-        {memory.trained && (
-          <div className="mt-1.5 text-[15px] font-semibold text-text">{memory.trained}</div>
-        )}
+        {/* "Gym", then "Chest" — the same two lines as the card it came from. */}
+        <div className="mt-1.5 text-[15px] font-semibold text-text">{memory.activity}</div>
+        {memory.detail && <div className="text-[13px] text-text-2">{memory.detail}</div>}
 
         <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5">
           {memory.gym && (

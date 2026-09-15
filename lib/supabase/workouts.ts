@@ -270,6 +270,33 @@ export async function listPhotoLogs(
   return (data as Row[]).map(rowToLog).filter((l) => l.photos.length > 0);
 }
 
+/* ── Sessions with a photo on any of the given days (the Flashback) ──
+   Only the few dates asked for cross the wire, newest first, capped at
+   `limit` — a Flashback needs one session, not the whole history. */
+export async function listPhotoLogsOn(
+  userId: string,
+  dates: string[],
+  limit = 1,
+): Promise<WorkoutLog[]> {
+  if (!userId || dates.length === 0) return [];
+  if (!hasSupabaseEnv()) {
+    return loadLocal(userId)
+      .filter((l) => l.photos?.length && dates.includes(l.date))
+      .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0))
+      .slice(0, limit);
+  }
+  const { data, error } = await createClient()
+    .from("workout_logs")
+    .select(LOG_COLUMNS)
+    .eq("user_id", userId)
+    .in("log_date", dates)
+    .neq("photos", "[]")
+    .order("log_date", { ascending: false })
+    .limit(limit);
+  if (error || !data) return [];
+  return (data as Row[]).map(rowToLog).filter((l) => l.photos.length > 0);
+}
+
 /* ── Total number of logged sessions (for the profile "Sessions" stat) ── */
 export async function countWorkouts(userId: string): Promise<number> {
   if (!userId) return 0;
