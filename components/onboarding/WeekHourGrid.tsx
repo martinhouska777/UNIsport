@@ -4,9 +4,9 @@
   The week as a grid of hours — Monday to Sunday across, 6 am to 9 pm down.
   Tap an hour to say you're free then; tap it again to take it back.
 
-  Hours sit in a column on the left rather than being printed in every cell,
-  and back-to-back hours on the same day join into one block, so "5 pm to
-  8 pm" reads as a single stretch of time instead of three separate boxes.
+  Every cell says its own hour (the owner wanted it that way — no label column
+  to read across to), and back-to-back hours on the same day join into one
+  block, so "5 pm to 8 pm" reads as a single stretch of time.
 
   The grid holds no state of its own: it draws the saved schedule and reports
   each tap, and the parent applies the tap to the schedule as it is at that
@@ -30,8 +30,7 @@ export default function WeekHourGrid({
   const lit = Object.fromEntries(weekDays.map((d) => [d.key, hoursOfDay(schedule[d.key])]));
 
   return (
-    <div className="grid grid-cols-[2.5rem_repeat(7,minmax(0,1fr))] gap-x-1">
-      <div />
+    <div className="grid grid-cols-7 gap-x-1">
       {weekDays.map((d) => (
         <div key={d.key} className="pb-1.5 text-center text-[11px] font-semibold text-text">
           {d.label.slice(0, 3)}
@@ -40,9 +39,6 @@ export default function WeekHourGrid({
 
       {HOURS.map((h) => (
         <div key={h} className="contents">
-          <div className="flex h-8 items-center justify-end pr-1.5 text-[10px] tabular-nums text-muted">
-            {hourName(h)}
-          </div>
           {weekDays.map((d) => {
             const on = lit[d.key].has(h);
             const joinUp = on && lit[d.key].has(h - 1);
@@ -57,12 +53,14 @@ export default function WeekHourGrid({
                 className="relative h-8"
               >
                 <span
-                  className={`absolute inset-x-0 transition-colors ${
-                    on ? "bg-primary" : "bg-surface-2"
+                  className={`absolute inset-x-0 flex items-center justify-center whitespace-nowrap text-[10px] tabular-nums transition-colors ${
+                    on ? "bg-primary font-medium text-primary-contrast" : "bg-surface-2 text-muted"
                   } ${joinUp ? "top-0" : "top-[2px] rounded-t-md"} ${
                     joinDown ? "bottom-0" : "bottom-[2px] rounded-b-md"
                   }`}
-                />
+                >
+                  {hourName(h)}
+                </span>
               </button>
             );
           })}
