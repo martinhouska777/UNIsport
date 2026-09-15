@@ -411,12 +411,17 @@
    read as "a colour square" round the phone, and while the phone slid and
    scaled in the blur could show as a hard rectangle first (owner, 2026-09-15:
    "I just want there to be the light cloud"). Then four uneven pools, which
-   read as glowing from random points (owner, 2026-09-15, later: "glow in
-   eliptical shape matching the phone"). So it is ONE ellipse centred on the
-   phone: the box grows by the same share on every side (left/right % are of
-   the width, top/bottom % of the height), so the ellipse has the phone's own
-   proportions, and it holds its colour past the phone's edge before fading.
-   No filter — the gradient is soft by itself, no rectangle at any frame.
+   read as glowing from random points; then one ellipse the phone's shape,
+   which was "too much eliptical" (owner, 2026-09-15). What the owner likes is
+   the INTRO's phones (.l-hero-glow): light that you cannot see the shape of,
+   mostly out of the SIDES, "not so much on top and bottom" — which also keeps
+   it off the words above the phone and Blade Lock's oars.
+
+   So it is the intro's look rebuilt without a filter (the filter is what
+   flashed a rectangle mid-flight): a pill tucked just inside the phone —
+   narrower by 3% a side, shorter by 6% top and bottom — whose soft shadow is
+   the light. Sized in cqw (the phone is a @container) so the light keeps its
+   proportion on every size of phone; at 340px it is the intro's blur(26px). */
 
    --lg is registered (@property) so the glow FADES from one school's colour to
    the next instead of cutting. On the phone's outer box, which paints nothing
@@ -429,15 +434,14 @@
 .lc-glow::before {
   content: "";
   position: absolute;
-  inset: -30%;
+  inset: 6% 3%;
+  border-radius: 9999px;
   z-index: -1;
   pointer-events: none;
-  background: radial-gradient(
-    closest-side,
-    color-mix(in srgb, var(--lg) 44%, transparent) 55%,
-    color-mix(in srgb, var(--lg) 18%, transparent) 78%,
-    transparent 100%
-  );
+  /* 15cqw of blur = the intro's 26px at 340px; 6cqw of spread carries the
+     pill back out past the phone's sides. 72% x the dial's 0.5 = the
+     intro's 0.36. */
+  box-shadow: 0 0 15cqw 6cqw color-mix(in srgb, var(--lg) 72%, transparent);
   opacity: var(--l-glow, 1);
   transition: --lg 700ms ease-in-out;
 }
