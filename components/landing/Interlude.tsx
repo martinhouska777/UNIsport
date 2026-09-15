@@ -92,7 +92,7 @@ export default function Interlude({ solo = false }: { solo?: boolean }) {
 
       <a
         href={interlude.overview.href}
-        className="l-tc mt-2 inline-flex items-center gap-2 rounded-full border border-l-varsity bg-l-varsity-dim px-9 py-4 text-[clamp(16px,1.5vw,18px)] font-semibold tracking-tight text-l-text transition-colors hover:bg-l-varsity-soft"
+        className="l-tc mt-2 inline-flex items-center gap-2 rounded-full border border-l-varsity bg-l-varsity-dim px-9 py-4 text-[clamp(16px,1.5vw,18px)] font-semibold tracking-tight text-l-text transition-[color,background-color,border-color,translate] hover:-translate-y-0.5 hover:bg-l-varsity-soft"
         style={{ "--d": "890ms" } as CSSProperties}
       >
         {interlude.overview.label} →

@@ -96,7 +96,7 @@ export default function CoachSection({ solo = false, teaser = false }: { solo?: 
                not down. */
             <Link
               href={coach.overview.teaserHref}
-              className="mt-3 inline-flex items-center gap-2 rounded-full border border-l-varsity-soft bg-l-varsity-dim px-6 py-3.5 text-[15px] font-semibold tracking-tight text-l-varsity transition-colors hover:border-l-varsity focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-l-text"
+              className="mt-3 inline-flex items-center gap-2 rounded-full border border-l-varsity-soft bg-l-varsity-dim px-6 py-3.5 text-[15px] font-semibold tracking-tight text-l-varsity transition-[color,background-color,border-color,translate] hover:-translate-y-0.5 hover:border-l-varsity focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-l-text"
             >
               {coach.overview.label} →
             </Link>

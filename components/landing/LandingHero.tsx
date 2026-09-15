@@ -161,7 +161,7 @@ export default function LandingHero() {
                 <Link
                   key={d.label}
                   href={d.href}
-                  className={`group flex flex-col items-start gap-[clamp(2px,0.6vh,6px)] rounded-2xl border px-5 py-[clamp(9px,1.6vh,16px)] text-left transition-colors ${DOOR_TONE[i].card}`}
+                  className={`group flex flex-col items-start gap-[clamp(2px,0.6vh,6px)] rounded-2xl border px-5 py-[clamp(9px,1.6vh,16px)] text-left transition-[color,background-color,border-color,translate] hover:-translate-y-0.5 ${DOOR_TONE[i].card}`}
                 >
                   <span
                     className={`flex w-full items-center justify-between font-display text-[clamp(17px,2.4vh,22px)] tracking-tight ${DOOR_TONE[i].label}`}

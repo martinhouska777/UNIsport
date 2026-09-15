@@ -410,12 +410,15 @@
    It was a blurred rounded column copied from the hero (2026-09-14), which
    read as "a colour square" round the phone, and while the phone slid and
    scaled in the blur could show as a hard rectangle first (owner, 2026-09-15:
-   "I just want there to be the light cloud"). So it is now a CLOUD: four soft
-   pools of the colour, uneven, spilling out past the phone's edges in
-   different places — and no filter at all, the gradients are soft by
-   themselves, so there is no rectangle to be seen at any frame.
+   "I just want there to be the light cloud"). Then four uneven pools, which
+   read as glowing from random points (owner, 2026-09-15, later: "glow in
+   eliptical shape matching the phone"). So it is ONE ellipse centred on the
+   phone: the box grows by the same share on every side (left/right % are of
+   the width, top/bottom % of the height), so the ellipse has the phone's own
+   proportions, and it holds its colour past the phone's edge before fading.
+   No filter — the gradient is soft by itself, no rectangle at any frame.
 
-   --lg is registered (@property) so the pools FADE from one school's colour to
+   --lg is registered (@property) so the glow FADES from one school's colour to
    the next instead of cutting. On the phone's outer box, which paints nothing
    itself, so it sits behind the metal rim and moves with the phone. */
 @property --lg {
@@ -426,14 +429,15 @@
 .lc-glow::before {
   content: "";
   position: absolute;
-  inset: -24% -62%;
+  inset: -30%;
   z-index: -1;
   pointer-events: none;
-  background:
-    radial-gradient(34% 26% at 30% 30%, color-mix(in srgb, var(--lg) 42%, transparent), transparent 72%),
-    radial-gradient(30% 24% at 71% 52%, color-mix(in srgb, var(--lg) 34%, transparent), transparent 72%),
-    radial-gradient(36% 26% at 36% 74%, color-mix(in srgb, var(--lg) 30%, transparent), transparent 72%),
-    radial-gradient(24% 18% at 64% 20%, color-mix(in srgb, var(--lg) 22%, transparent), transparent 72%);
+  background: radial-gradient(
+    closest-side,
+    color-mix(in srgb, var(--lg) 44%, transparent) 55%,
+    color-mix(in srgb, var(--lg) 18%, transparent) 78%,
+    transparent 100%
+  );
   opacity: var(--l-glow, 1);
   transition: --lg 700ms ease-in-out;
 }
