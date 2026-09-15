@@ -60,7 +60,6 @@ import {
   IconCheckCircle,
   IconArrowLeft,
   IconClock,
-  IconChevronRight,
 } from "@/components/icons";
 
 /* category → label + content color for the dot. Lives in the data layer
@@ -748,7 +747,7 @@ function DayChip({
     <button
       type="button"
       onClick={onPick}
-      className={`flex w-[3.1rem] flex-shrink-0 flex-col items-center gap-1 rounded-xl border py-2 ${
+      className={`flex min-w-0 flex-1 flex-col items-center gap-1 rounded-xl border px-0 py-2 ${
         selected
           ? "border-primary bg-primary-tint"
           : isToday
@@ -756,7 +755,7 @@ function DayChip({
             : "border-border bg-surface"
       }`}
     >
-      <span className="text-[11px] font-semibold uppercase tracking-wide text-muted">
+      <span className="text-[10px] font-semibold uppercase tracking-wide text-muted">
         {isToday ? "Today" : date.toLocaleDateString("en-US", { weekday: "short" })}
       </span>
       <span className={`text-[15px] font-semibold leading-none ${selected ? "text-primary" : "text-text"}`}>
@@ -954,11 +953,10 @@ function LogScreenInner() {
     <>
       <div className="mx-auto w-full max-w-screen-sm px-4 pb-10 pt-4">
         <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-accent">Log a session</div>
-        <h1 className="mt-0.5 text-2xl font-semibold text-text">{isToday ? "Today" : dateLabel.split(",")[0]}</h1>
-        <p className="mt-0.5 text-[12px] text-muted">{dateLabel}</p>
 
-        {/* day picker — pick today or a recent day to log */}
-        <div className="mt-3 chip-row flex gap-1.5 overflow-x-auto pb-1">
+        {/* day picker — pick today or a recent day to log. All seven days
+            share the width, so the strip never scrolls or clips a day. */}
+        <div className="mt-3 flex gap-1.5">
           {days.map((d) => {
             const iso = toISO(d);
             return (
@@ -991,36 +989,19 @@ function LogScreenInner() {
             else if (ergTargets.length > 1) setErgChooser(true);
             else startScan({ mode: "extra" });
           }}
-          className="mt-4 flex w-full items-center gap-3 rounded-2xl border border-dashed border-primary-line bg-primary-tint px-4 py-3.5 text-left active:bg-primary-tint disabled:opacity-60"
+          className="mt-4 flex w-full items-center justify-center gap-2.5 rounded-2xl bg-primary-live py-3.5 text-[14px] font-semibold text-primary-contrast shadow-md transition-transform duration-150 active:scale-[0.98] disabled:opacity-60"
         >
-          <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-primary-tint text-primary">
-            <IconCamera size={20} />
-          </span>
-          <div className="min-w-0 flex-1">
-            <div className="text-[14px] font-semibold text-text">Scan C2 / RP3 monitor</div>
-            {/* Says what the tap is about to do, so the photo never lands
-                somewhere the athlete didn't expect. */}
-            <div className="truncate text-[11px] text-muted">
-              {loading
-                ? "Loading the plan…"
-                : ergTargets.length === 1
-                  ? `Logs ${isToday ? "today's" : "the day's"} ${ergTargets[0].label}`
-                  : ergTargets.length > 1
-                    ? `Pick which of ${ergTargets.length} erg sessions, then snap the screen`
-                    : "No erg in the plan this day — logs it as extra training"}
-            </div>
-          </div>
-          <IconChevronRight size={16} />
+          <IconCamera size={20} /> Scan C2 / RP3 monitor
         </button>
 
         {/* prescribed plan for the selected day */}
         <div className="mt-6">
-          <SectionLabel hint="from your coach">{isToday ? "Today's plan" : "Plan this day"}</SectionLabel>
+          <SectionLabel>{isToday ? "Today" : dateLabel.split(",")[0]}</SectionLabel>
           {loading ? (
             <div className="py-6 text-center text-[12px] text-muted">Loading…</div>
           ) : prescribed.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-border bg-surface px-4 py-6 text-center text-[12px] text-muted">
-              Nothing prescribed this day. Add any training below.
+              Nothing in the plan this day.
             </div>
           ) : (
             <div className="flex flex-col gap-2">
@@ -1051,24 +1032,19 @@ function LogScreenInner() {
           )}
         </div>
 
-        {/* Extra training */}
-        <div className="mt-6">
-          <SectionLabel>Extra training</SectionLabel>
-          {extraLogs.length > 0 && (
-            <div className="mb-2 flex flex-col gap-2">
-              {extraLogs.map((l) => (
-                <ExtraRow key={l.id} log={l} onEdit={() => setEditor({ mode: "extra", existing: l })} />
-              ))}
-            </div>
-          )}
-          <button
-            type="button"
-            onClick={() => setEditor({ mode: "extra" })}
-            className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-border bg-surface py-3.5 text-[13px] font-medium text-muted active:border-primary-line active:text-primary"
-          >
-            <IconPlus size={16} /> Add extra session
-          </button>
+        {/* Extra sessions already logged this day, then the button to add one. */}
+        <div className="mt-2 flex flex-col gap-2">
+          {extraLogs.map((l) => (
+            <ExtraRow key={l.id} log={l} onEdit={() => setEditor({ mode: "extra", existing: l })} />
+          ))}
         </div>
+        <button
+          type="button"
+          onClick={() => setEditor({ mode: "extra" })}
+          className="mt-4 flex w-full items-center justify-center gap-2.5 rounded-2xl border border-border bg-surface py-3.5 text-[14px] font-semibold text-text shadow-card transition-transform duration-150 active:scale-[0.98]"
+        >
+          <IconPlus size={18} /> Add extra session
+        </button>
       </div>
 
       {/* Two erg sessions prescribed on one day: which one is the photo of? */}
