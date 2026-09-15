@@ -11,6 +11,8 @@
   intensities the coach actually plans in each get their own colour.
 */
 
+import type { CSSProperties } from "react";
+
 import { defaultBoatName, type Boat, type Side } from "./coachLineup";
 
 export type SessionKind = "ut2" | "ut1" | "hard" | "weights" | "flex" | "race" | "off";
@@ -39,14 +41,38 @@ export const kindColor: Record<SessionKind, string> = {
   // loud colours (amber, red) are only ever the hard days.
   ut2: "#86efac",
   ut1: "#eab308",
-  hard: "var(--danger)",
+  // FIXED HUES, not var(--danger) / var(--muted) (2026-09-14). A block is now
+  // painted in the colour almost solid and carries its own ink (kindInk), and
+  // ink can only be chosen once for a colour that IS one thing: the theme's
+  // danger red and muted grey each change between light and dark mode, so a
+  // block wearing them could not be given readable text in both.
+  hard: "#ef4444",
   weights: "#c084fc",
   // Grey: "flex" is the coach saying train how you like. It is the one kind
   // that prescribes nothing, so it shouldn't wear a colour that competes with
   // the kinds that do.
-  flex: "var(--muted)",
+  flex: "#94a3b8",
   race: "#3b82f6",
   off: "#15803d",
+};
+
+/*
+  THE INK ON A BLOCK — the text colour that sits ON the colour above.
+
+  Every kind but one is a light hue, so its block takes near-black text. OFF is
+  the dark green of a rest day and takes near-white. These are fixed values on
+  purpose: the block is the colour at nearly full strength, so the text on it
+  must answer to the COLOUR, not to whether the app is in light or dark mode.
+*/
+const INK_DARK = "#0b0e11";
+export const kindInk: Record<SessionKind, string> = {
+  ut2: INK_DARK,
+  ut1: INK_DARK,
+  hard: INK_DARK,
+  weights: INK_DARK,
+  flex: INK_DARK,
+  race: INK_DARK,
+  off: "#eef1f3",
 };
 
 /** Solid edge — the 3px bar down the side of a session row. */
@@ -64,13 +90,49 @@ export const kindBar = (k: SessionKind) => ({ background: kindColor[k] });
   to transparent would otherwise fade to the page behind the card.
 */
 export const kindWash = (k: SessionKind) => ({
-  backgroundImage: `linear-gradient(to right, color-mix(in oklab, ${kindColor[k]} 20%, transparent), transparent 72%)`,
+  backgroundImage: `linear-gradient(to right, color-mix(in oklab, ${kindColor[k]} 32%, transparent), transparent 78%)`,
 });
 
-/** Tinted fill — the block a calendar cell is painted with. */
-export const kindBlock = (k: SessionKind) => ({
-  background: `color-mix(in oklab, ${kindColor[k]} 28%, transparent)`,
-});
+/*
+  THE BLOCK A CALENDAR CELL IS PAINTED WITH — the colour ITSELF, near solid.
+
+  It used to be a 28% tint, which on the near-black chassis turned every colour
+  into a muddy version of the page: a UT2 green and a weights purple both came
+  out as dark grey-ish rectangles you had to hunt for. The owner's note
+  (2026-09-14): "make all the colours more intensive, now they are kinda off, I
+  want to see them clearly." So a block is now the kind's own colour at 92% —
+  a hair of the surface left in it so the grid still reads as a calendar rather
+  than a sheet of stickers — with the ink that belongs to that colour.
+
+  A RACE WEARS A BORDER OF EVERY COLOUR. It is the one day in the month that is
+  not an intensity — it is the day the training was for — so on top of its blue
+  it gets a 2px rainbow edge (blue → green → gold → red → violet) and is
+  impossible to mistake for a Tuesday. The two-layer background is the standard
+  gradient-border trick: the fill is clipped to the padding box, the rainbow to
+  the border box, and the border itself is transparent so the rainbow shows
+  through it — which is also what keeps the corners rounded.
+*/
+const BLOCK_STRENGTH = 92;
+const RACE_EDGE = "linear-gradient(120deg, #3b82f6, #22c55e, #eab308, #ef4444, #a855f7)";
+
+export const kindBlock = (k: SessionKind): CSSProperties => {
+  if (k === "race") {
+    // The race's own fill is FULLY opaque, unlike every other block: it is the
+    // layer that hides the rainbow everywhere except the 2px edge. At 92% the
+    // 8% left over let the gradient show through the middle and the block came
+    // out tie-dyed instead of blue-with-a-coloured-frame.
+    const solid = kindColor.race;
+    return {
+      background: `linear-gradient(${solid}, ${solid}) padding-box, ${RACE_EDGE} border-box`,
+      border: "2px solid transparent",
+      color: kindInk.race,
+    };
+  }
+  return {
+    background: `color-mix(in oklab, ${kindColor[k]} ${BLOCK_STRENGTH}%, transparent)`,
+    color: kindInk[k],
+  };
+};
 
 /*
   PLANNED, NOT YET DONE — the same colour, but a fainter fill with the colour

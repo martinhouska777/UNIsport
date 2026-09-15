@@ -123,7 +123,7 @@ const logColor = (l: LogEntry, planned: Session | undefined) =>
   land on the right colour from their category alone, and anything else stays
   neutral rather than being coloured with a guess.
 */
-const NEUTRAL_BLOCK = { background: "color-mix(in oklab, var(--muted) 20%, transparent)" };
+const NEUTRAL_BLOCK = { background: "#94a3b8", color: "#0b0e11" };
 
 function blockStyle(l: LogEntry, planned: Session | undefined) {
   if (planned) return kindBlock(kindOf(planned));
@@ -693,7 +693,7 @@ export default function CalendarScreen({
                             kilometres bottom-right "so you can see the whole
                             thing". So the name runs the full width of the
                             block, and the figure drops to the line below. */}
-                        <span className="block truncate text-[9px] font-medium leading-[1.15] text-text">
+                        <span className="block truncate text-[9px] font-medium leading-[1.15]">
                           {kind}
                         </span>
                         {/* THE BOTTOM LINE: what it was (UT2 / Hard) on the
@@ -706,11 +706,11 @@ export default function CalendarScreen({
                             place from day to day. */}
                         {(intensity || sub) && (
                           <span className="mt-px flex items-baseline gap-px">
-                            <span className="min-w-0 flex-1 truncate text-[9px] leading-[1.15] text-text-2">
+                            <span className="min-w-0 flex-1 truncate text-[9px] leading-[1.15] opacity-80">
                               {intensity}
                             </span>
                             {sub && (
-                              <span className="flex-shrink-0 text-[9px] font-medium leading-[1.15] text-text-2">
+                              <span className="flex-shrink-0 text-[9px] font-medium leading-[1.15] opacity-80">
                                 {sub}
                               </span>
                             )}

@@ -37,6 +37,7 @@ import {
   type HomeData,
   type Greeting as GreetingData,
   type Race as RaceData,
+  type DaySession,
   type WeekDay,
   type WeekView,
   type TodaySession,
@@ -127,11 +128,19 @@ function RaceLine({ r }: { r: RaceData }) {
 // Each session is a color-coded block (the colour is the intensity: UT2, hard,
 // …) showing the coach's workout text; cells grow so the full text fits.
 //
-// THE BLOCKS FILL THE CELL (owner, 2026-09-14). One session takes the whole
-// cell, two share it. It used to be split into a fixed AM half and PM half
-// with the period printed in each block; the owner asked for the block to
-// fill the bar and for the "AM" / "PM" text to go — the strip is about WHAT
-// is rowed, and the day's card underneath still says when.
+// A SESSION TAKES HALF A DAY (owner, 2026-09-14, second pass). The cell is
+// split into a morning half and an afternoon half: a single AM session fills
+// the top and leaves the bottom empty, a single PM session sits in the bottom.
+// Two sessions take a half each. (For half a day the blocks filled the whole
+// cell whatever the time was — so one session looked like a day of training.)
+// The "AM"/"PM" text stays gone: WHERE the block sits is what says when.
+const halves = (d: WeekDay): [DaySession | undefined, DaySession | undefined] => [
+  // Anything not explicitly PM belongs to the morning half — the same rule
+  // daySessionToCard uses for a whole-day entry.
+  d.sessions.find((s) => s.time !== "PM"),
+  d.sessions.find((s) => s.time === "PM"),
+];
+
 function WeekFit({
   week,
   selected,
@@ -170,19 +179,32 @@ function WeekFit({
                 page around it is lighter, and the blocks run to the cell's
                 edges — no padding, no rounding — with only a hairline
                 between two sessions on the same day. */}
-            <div className="flex min-h-[96px] flex-1 flex-col divide-y divide-border">
-              {d.sessions.map((s, j) => (
+            <div className="flex min-h-[96px] flex-1 flex-col">
+              {halves(d).map((s, j) => (
                 /*
                   9px ON 2px SIDES, so one word stays one word. At 10px inside
                   4px sides a block had ~31px of text on a 360px phone, and
                   "Weights" (37px) broke into "Weight / s", "8×500m" into
                   "8×500 / m". At 9px they are 33px and 34px, and the
                   narrower sides leave 35px — the whole word on one line.
+
+                  An empty half is an empty box: it holds the other one to half
+                  the day instead of letting it grow into the whole. No text
+                  colour here — a block brings its own ink with its colour
+                  (kindBlock), near-black on every kind but a rest day.
                 */
-                <div key={j} className="flex flex-1 items-center px-0.5 py-1" style={kindBlock(s.kind)}>
-                  <span className="block break-words text-[9px] font-medium leading-tight text-text">
-                    {s.label}
-                  </span>
+                <div
+                  key={j}
+                  className={`flex flex-1 basis-1/2 items-center px-0.5 py-1 ${
+                    j === 1 && d.sessions.length > 1 ? "border-t border-border" : ""
+                  }`}
+                  style={s ? kindBlock(s.kind) : undefined}
+                >
+                  {s && (
+                    <span className="block break-words text-[9px] font-medium leading-tight">
+                      {s.label}
+                    </span>
+                  )}
                 </div>
               ))}
             </div>
@@ -265,27 +287,21 @@ function MonthOverlay({
   return createPortal(
     <ThemeProvider tokens={vTheme.dark} light={vTheme.light}>
       <div className="fixed inset-0 z-[60] flex flex-col bg-background [animation:backdrop-in_0.18s_ease-out]">
-        {/* Header: month + arrows + close */}
-        <div className="flex flex-shrink-0 items-center justify-between border-b border-border px-3 py-3">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => goMonth(-1)}
-              disabled={atStart}
-              aria-label="Previous month"
-              className="tap44 press-icon flex h-7 w-7 items-center justify-center rounded-lg border border-border bg-surface text-muted disabled:opacity-30"
-            >
-              <IconArrowLeft size={14} />
-            </button>
-            <button
-              onClick={() => goMonth(1)}
-              disabled={atEnd}
-              aria-label="Next month"
-              className="tap44 press-icon flex h-7 w-7 items-center justify-center rounded-lg border border-border bg-surface text-muted disabled:opacity-30"
-            >
-              <IconArrowRight size={14} />
-            </button>
-          </div>
-          <div className="text-center">
+        {/* Header: an arrow at each END with the month between them — the shape
+            the student app's own calendar uses, and the owner's call
+            (2026-09-14). Both arrows used to sit together on the left, so
+            stepping back a month and stepping forward were the same gesture in
+            the same corner. The close X keeps the right-hand end. */}
+        <div className="flex flex-shrink-0 items-center gap-2 border-b border-border px-3 py-3">
+          <button
+            onClick={() => goMonth(-1)}
+            disabled={atStart}
+            aria-label="Previous month"
+            className="tap44 press-icon flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg border border-border bg-surface text-muted disabled:opacity-30"
+          >
+            <IconArrowLeft size={17} />
+          </button>
+          <div className="min-w-0 flex-1 text-center">
             <div className="text-[8px] font-semibold uppercase tracking-[0.16em] text-accent">
               Training plan
             </div>
@@ -297,9 +313,17 @@ function MonthOverlay({
             </div>
           </div>
           <button
+            onClick={() => goMonth(1)}
+            disabled={atEnd}
+            aria-label="Next month"
+            className="tap44 press-icon flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg border border-border bg-surface text-muted disabled:opacity-30"
+          >
+            <IconArrowRight size={17} />
+          </button>
+          <button
             onClick={onClose}
             aria-label="Close month view"
-            className="tap44 press-icon flex h-7 w-7 items-center justify-center rounded-full bg-surface-2 text-muted"
+            className="tap44 press-icon flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-surface-2 text-muted"
           >
             <IconX size={15} />
           </button>
@@ -351,21 +375,23 @@ function MonthOverlay({
                   {num}
                 </span>
                 {/*
-                  The coach's actual workout text, one tinted block per session.
-                  The blocks share the day: one fills it, two split it. (Same
-                  owner's call as the week strip above, 2026-09-14 — no fixed
-                  AM / PM halves, no period letters.)
+                  The coach's actual workout text, one block per session, in the
+                  same two halves as the week strip above: morning on top,
+                  afternoon underneath, and the empty half of a one-session day
+                  left empty (owner, 2026-09-14).
                 */}
                 <span className="mt-0.5 flex min-h-0 flex-1 flex-col gap-px overflow-hidden">
-                  {(day?.sessions ?? []).map((s, j) => (
+                  {(day ? halves(day) : [undefined, undefined]).map((s, j) => (
                     <span
                       key={j}
-                      className="flex min-h-0 flex-1 items-center overflow-hidden rounded px-1 py-0.5"
-                      style={kindBlock(s.kind)}
+                      className="flex min-h-0 flex-1 basis-1/2 items-center overflow-hidden rounded px-1 py-0.5"
+                      style={s ? kindBlock(s.kind) : undefined}
                     >
-                      <span className="block break-words text-[8px] font-medium leading-[1.15] text-text">
-                        {s.label}
-                      </span>
+                      {s && (
+                        <span className="block break-words text-[8px] font-medium leading-[1.15]">
+                          {s.label}
+                        </span>
+                      )}
                     </span>
                   ))}
                 </span>
@@ -771,10 +797,17 @@ function DriveBar({ onUpload }: { onUpload: () => void }) {
   THE DAY HEADER — the one control for the middle of the page. What sits under
   it (the sessions, and the lineup under those) is whatever day this says.
 
+  THE DAY IS IN THE MIDDLE, WITH AN ARROW ON EACH SIDE (owner, 2026-09-14),
+  the size they are in the student app's own weekly calendar. "Today" used to
+  sit on the left with both arrows crowded into the right-hand corner, so
+  going back a day and going forward a day were the same gesture in the same
+  place, and the word they were moving was nowhere near them.
+
   The arrows step a day at a time across the whole published block, so looking
-  at Thursday's outing is two taps and no calendar. The × only exists once you
-  have left today, because that is the only time there is somewhere to go back
-  to — and leaving it on today would be a button that does nothing.
+  at Thursday's outing is two taps and no calendar. "Back to today" only exists
+  once you have left today, because that is the only time there is somewhere to
+  go back to — and on today it would be a button that does nothing. It sits
+  under the day, beside All boats, so the two ends of the row stay the arrows.
 */
 function DayHeader({
   title,
@@ -796,28 +829,31 @@ function DayHeader({
       onClick={() => onStep(dir)}
       disabled={!live}
       aria-label={dir === -1 ? "Previous day" : "Next day"}
-      className="tap44 press-icon flex h-6 w-6 items-center justify-center rounded-md border border-border bg-surface text-muted disabled:opacity-30"
+      className="tap44 press-icon flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg border border-border bg-surface text-muted disabled:opacity-30"
     >
-      {dir === -1 ? <IconArrowLeft size={13} /> : <IconArrowRight size={13} />}
+      {dir === -1 ? <IconArrowLeft size={15} /> : <IconArrowRight size={15} />}
     </button>
   );
   return (
-    <div className="flex items-center justify-between gap-2 px-4 pb-2 pt-4">
-      <SectionLabel>{title}</SectionLabel>
-      <div className="flex items-center gap-1.5">
-        {right && <span className="mr-1">{right}</span>}
-        {arrow(-1, canPrev)}
-        {arrow(1, canNext)}
-        {onToday && (
-          <button
-            onClick={onToday}
-            aria-label="Back to today"
-            className="tap44 press-icon flex h-6 w-6 items-center justify-center rounded-md border border-border bg-surface text-muted"
-          >
-            <IconX size={13} />
-          </button>
+    <div className="flex items-center gap-2 px-4 pb-2 pt-4">
+      {arrow(-1, canPrev)}
+      <div className="flex min-w-0 flex-1 flex-col items-center gap-1">
+        <SectionLabel className="truncate">{title}</SectionLabel>
+        {(right || onToday) && (
+          <div className="flex items-center gap-3">
+            {right}
+            {onToday && (
+              <button
+                onClick={onToday}
+                className="flex items-center gap-1 text-[11px] font-semibold text-muted"
+              >
+                <IconX size={11} /> Back to today
+              </button>
+            )}
+          </div>
         )}
       </div>
+      {arrow(1, canNext)}
     </div>
   );
 }
