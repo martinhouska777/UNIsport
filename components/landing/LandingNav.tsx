@@ -1,7 +1,7 @@
 import Link from "next/link";
 import StickyBar from "@/components/landing/StickyBar";
 import Wordmark from "@/components/landing/Wordmark";
-import TabRow from "@/components/landing/TabRow";
+import LandingMenu from "@/components/landing/LandingMenu";
 import { hero, nav, views, type LandingView } from "@/lib/landingCopy";
 
 /*
@@ -24,9 +24,9 @@ import { hero, nav, views, type LandingView } from "@/lib/landingCopy";
   without an intro keep their mark from the start. Nobody loses their way back
   to the whole page either way: that is the Home tab.
 
-  On a phone the tabs take a second row of their own (six labels plus two
-  buttons plus the wordmark do not fit one 375px row); it scrolls sideways
-  without a scrollbar, with a fade on the right while there is more (TabRow).
+  On a phone the tabs do not fit the bar, so they live behind a menu button at
+  its left that slides them in from the left edge (LandingMenu), and the door
+  shortens to "Sign up" — the bar stays one row.
 */
 function Tabs({ view, className = "" }: { view: LandingView; className?: string }) {
   return (
@@ -59,9 +59,12 @@ export default function LandingNav({ view = "all", heroMark = false }: { view?: 
             line (owner, 2026-08-23 — "it has terrible space, make it thinner"),
             and every pixel it gives back is a pixel the intro can be. */}
         <div className="flex items-center justify-between py-[11px]">
-          <Link href="/" aria-label="UNIsport" className={heroMark ? "l-nav-mark" : undefined}>
-            <Wordmark className="text-2xl" />
-          </Link>
+          <div className="flex items-center gap-1">
+            <LandingMenu view={view} />
+            <Link href="/" aria-label="UNIsport" className={heroMark ? "l-nav-mark" : undefined}>
+              <Wordmark className="text-2xl" />
+            </Link>
+          </div>
           <Tabs view={view} className="hidden md:flex" />
           <div className="flex items-center gap-2 sm:gap-2.5">
             <Link
@@ -77,16 +80,13 @@ export default function LandingNav({ view = "all", heroMark = false }: { view?: 
                 only); a laptop keeps both, where the bar is a thin line. */}
             <Link
               href={hero.primaryHref}
-              className={`rounded-full bg-l-text px-[18px] py-2.5 text-sm font-medium tracking-tight text-l-bg transition-colors hover:bg-l-accent ${heroMark ? "l-nav-cta" : ""}`}
+              className={`whitespace-nowrap rounded-full bg-l-text px-4 py-2.5 text-sm font-medium tracking-tight text-l-bg transition-colors hover:bg-l-accent sm:px-[18px] ${heroMark ? "l-nav-cta" : ""}`}
             >
-              {nav.cta}
+              <span className="sm:hidden">{nav.ctaShort}</span>
+              <span className="hidden sm:inline">{nav.cta}</span>
             </Link>
           </div>
         </div>
-        {/* The phone row: scrolls sideways, fade on the right while there is more. */}
-        <TabRow className="md:hidden">
-          <Tabs view={view} className="w-max" />
-        </TabRow>
       </div>
     </nav>
     </StickyBar>

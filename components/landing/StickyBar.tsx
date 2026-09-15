@@ -10,9 +10,8 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
   while a stage is under it, and slides back on the ordinary sections
   (features beside a closer are inside the closer, so it stays away there).
 
-  On a phone the bar is two rows (≈120px of an 844px screen), so there it
-  also hides while scrolling down and returns on the first scroll up — the
-  usual phone pattern; on desktop it is simply there.
+  On a phone it also hides while scrolling down and returns on the first
+  scroll up — the usual phone pattern; on desktop it is simply there.
 
   Measured on scroll through one rAF; the stages are found once by class
   (`.ls-story`, `.lc-closer`) — the same page structure the suites lock in.
