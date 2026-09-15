@@ -16,7 +16,11 @@
     Train with 3 partners not necessarily new ones — just don't train alone
     Hybrid athlete        both kinds of training in the same window
 
-  ONE WEEKLY AND TWO MONTHLY RUN AT ONCE.
+  EVERY ONE OF THEM RUNS AT ONCE (owner, 2026-09-15). The Events tab previews
+  the two in each window you are closest to finishing, and tapping Weekly or
+  Monthly opens the whole list. (`weeklyEventNow` / `monthlyEventsNow` below
+  are what the old one-at-a-time rotation used; nothing on the Events tab
+  depends on them any more.)
 
   WHY EVENTS HAVE ROUTES. "Hybrid athlete" is finished by three lifts and two
   cardio sessions, OR by two lifts and three cardio — a runner who lifts twice
@@ -26,14 +30,12 @@
   events are one route of one condition, so nothing downstream needs a special
   case.
 
-  THE INTERHOUSE RACE is one a month, run by every eligible house at once and
-  ranked, and it pays into the HOUSE's points. It is GATED: a house needs
-  `HOUSE_RACE_MIN_ACTIVE` people who have actually trained this month before
-  it is in the race. That turns "we need more people using this" from a wish
-  into a door with a number on it, and the screen says the number out loud —
-  "Adams needs 2 more active people to enter" — with a way to invite them.
-  This is the ONE place a minimum still gates anything; the plain boards show
-  every house, always (lib/leaderboards.ts).
+  THE INTERHOUSE COMPETITION — house against house, each month (see
+  `INTERHOUSE` below). It is GATED: a house is in once enough of its people have
+  earned enough points this month, and the score is the points of a FIXED
+  number of its best people, so a house of forty and a house of twelve race on
+  the same number of names. This is the ONE place a minimum still gates
+  anything; the plain boards show every house, always (lib/leaderboards.ts).
 
   NO ADMIN, EVER. Which event runs is decided by the WEEK or MONTH NUMBER, so
   the whole campus sees the same one, it changes on its own, and nobody has to
@@ -42,15 +44,98 @@
   but not the targets.
 */
 
-/* ─────────────────────────────  the gate  ───────────────────────────── */
+/* ─────────────────────  the interhouse competition  ───────────────────── */
+
+/*
+  THE RULES, as data (owner, 2026-09-15: "10 members to qualify from the house
+  and be kind of active … the 10 that get the most points are counted").
+
+    qualifyPoints   — what one person needs this month to count as active.
+                      30 is three sessions on your own, or two with a partner.
+    minMembers      — how many active people a house needs to be IN.
+    countedMembers  — how many of a house's best people make its score. The
+                      same for everyone, so a big house can't win on size: a
+                      house of 20 and a house of 15 are both judged on their
+                      top 10.
+
+  The month is the same month the boards count (lib/leaderboards.ts).
+*/
+export const INTERHOUSE = {
+  qualifyPoints: 30,
+  minMembers: 10,
+  countedMembers: 10,
+} as const;
+
+export type InterhouseStanding = {
+  key: string;
+  /** People in the house with at least `qualifyPoints` this month. */
+  qualified: number;
+  /** In the competition: `qualified` reached `minMembers`. */
+  inRace: boolean;
+  /** The points of its top `countedMembers` people. 0 while not in. */
+  score: number;
+  /** Place among the houses that are in; null for the rest. Ties share. */
+  rank: number | null;
+  isMine: boolean;
+};
 
 /**
- * How many ACTIVE members (people who logged anything this month) a house
- * needs before it is in the interhouse race. Below it the house is still on
- * every board — it just isn't racing yet, and the screen says how many more
- * it needs. Three: two people is a pair of friends, three is a house.
+ * Every house, placed. Houses that are in come first, by score; the rest follow,
+ * your own house first, then whoever is closest to getting in.
+ *
+ * `people` is the month's campus board — each person's points and where they
+ * live. Nothing else is needed, so this is a sum, not a new database query.
  */
-export const HOUSE_RACE_MIN_ACTIVE = 3;
+export function interhouseStandings(
+  people: { residence: string | null; score: number }[],
+  houseKeys: string[],
+  myHouse: string | null,
+): InterhouseStanding[] {
+  const byHouse = new Map<string, number[]>();
+  for (const p of people) {
+    if (!p.residence || p.score < INTERHOUSE.qualifyPoints) continue;
+    const list = byHouse.get(p.residence) ?? [];
+    list.push(p.score);
+    byHouse.set(p.residence, list);
+  }
+
+  const all = houseKeys.map((key) => {
+    const scores = (byHouse.get(key) ?? []).sort((a, b) => b - a);
+    const inRace = scores.length >= INTERHOUSE.minMembers;
+    return {
+      key,
+      qualified: scores.length,
+      inRace,
+      score: inRace
+        ? scores.slice(0, INTERHOUSE.countedMembers).reduce((sum, s) => sum + s, 0)
+        : 0,
+      rank: null as number | null,
+      isMine: key === myHouse,
+    };
+  });
+
+  const racing = all
+    .filter((h) => h.inRace)
+    .sort((a, b) => b.score - a.score || a.key.localeCompare(b.key));
+  let rank = 0;
+  let previous: number | null = null;
+  racing.forEach((h, i) => {
+    if (previous === null || h.score !== previous) rank = i + 1;
+    previous = h.score;
+    h.rank = rank;
+  });
+
+  const waiting = all
+    .filter((h) => !h.inRace)
+    .sort(
+      (a, b) =>
+        Number(b.isMine) - Number(a.isMine) ||
+        b.qualified - a.qualified ||
+        a.key.localeCompare(b.key),
+    );
+
+  return [...racing, ...waiting];
+}
 
 /* ══════════════════════  distance, and what it's worth  ══════════════════════ */
 
@@ -288,26 +373,6 @@ export const monthlyEvents: SportEvent[] = [
   },
 ];
 
-/* ═══════════════════════  the interhouse race  ═══════════════════════ */
-
-/*
-  NOT SETTLED YET — the owner is deciding these, and this list is a placeholder
-  so the gate has something to gate. What IS settled is the shape: one a month,
-  every house past the gate running the same one, targets PER MEMBER so a race
-  is about how much of a house turns out rather than how big it is.
-*/
-export const houseEvents: SportEvent[] = [
-  {
-    key: "h-everyone-in",
-    title: "Everyone in",
-    blurb: "Get every single member to log at least one session this month.",
-    routes: one("actives", 1, "members"),
-    perMember: true,
-    points: 1200,
-    window: "month",
-  },
-];
-
 /* ─────────────────  which ones are running right now  ───────────────── */
 
 /**
@@ -342,11 +407,6 @@ export function monthlyEventsNow(now = new Date()): SportEvent[] {
   // than showing the same event twice.
   if (second.key !== first.key) return [first, second];
   return [first, monthlyEvents[(n + 1) % monthlyEvents.length]];
-}
-
-/** The interhouse race for this month. */
-export function houseEventNow(now = new Date()): SportEvent {
-  return houseEvents[monthNumber(now) % houseEvents.length];
 }
 
 /* ─────────────────────────────  progress  ───────────────────────────── */
@@ -417,22 +477,17 @@ export function bestRoute(
   return best;
 }
 
-/* ─────────────────────────────  the gate  ───────────────────────────── */
-
-/** Whether a house is in this month's race: enough people have trained. */
-export function houseCanEnter(actives: number): boolean {
-  return actives >= HOUSE_RACE_MIN_ACTIVE;
-}
-
-/** How many more active people a house needs before it is racing. */
-export function activesToEntry(actives: number): number {
-  return Math.max(HOUSE_RACE_MIN_ACTIVE - Math.max(actives, 0), 0);
-}
-
-/** "Adams needs 2 more active people to enter" / "…needs 1 more active person…". */
-export function entryLine(houseLabel: string, actives: number): string {
-  const n = activesToEntry(actives);
-  return `${houseLabel} needs ${n} more active ${n === 1 ? "person" : "people"} to enter`;
+/**
+ * The challenges in the order the Events tab shows them: the unfinished ones
+ * you are closest to completing first, the finished ones last. Ties keep the
+ * list's own order.
+ */
+export function byCloseness(events: SportEvent[], counts: EventCounts): SportEvent[] {
+  return [...events].sort(
+    (a, b) =>
+      Number(eventDone(a, counts)) - Number(eventDone(b, counts)) ||
+      eventProgress(b, counts) - eventProgress(a, counts),
+  );
 }
 
 /* ─────────────────────────────  the calendar  ───────────────────────────── */

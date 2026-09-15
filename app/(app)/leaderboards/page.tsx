@@ -5,10 +5,9 @@
   ---------------------------------------------------------------------------
   TWO TABS, in the header where the title was — the same pill-in-a-capsule
   switch as Match and Messages (owner, 2026-09-13: no "Leaderboards" title, and
-  "proper tabs"). EVENTS is the challenges, this week's and this month's; the
-  interhouse race was cut from it the same day, to be rethought later
-  (components/leaderboards/HouseRace.tsx is kept, unused, for that). RANKINGS is
-  your one line plus the board.
+  "proper tabs"). EVENTS is the challenges — a Weekly and a Monthly card that
+  each open the full list — and under them house vs house, the interhouse
+  competition (2026-09-15). RANKINGS is your one line plus the board.
 
   THE BOARD IS THE SCREEN. It had drifted under four things that were all, in
   the end, explanation: a nudge line, two house tiles, a paragraph saying what
@@ -91,8 +90,8 @@ import {
 } from "@/components/icons";
 import HonorCode, { useHonorCode } from "@/components/leaderboards/HonorCode";
 import GroupSheet from "@/components/leaderboards/GroupSheet";
-import WeekEventLine from "@/components/leaderboards/WeekEventLine";
-import MonthChallenges from "@/components/leaderboards/MonthChallenges";
+import Challenges from "@/components/leaderboards/Challenges";
+import InterhouseCompetition from "@/components/leaderboards/InterhouseCompetition";
 import Podium, { type PodiumEntry } from "@/components/leaderboards/Podium";
 import Medal from "@/components/leaderboards/Medal";
 import ScoringSheet from "@/components/leaderboards/ScoringSheet";
@@ -644,16 +643,16 @@ export default function LeaderboardsPage() {
 
       {tab === "events" ? (
         <div className="flex flex-col gap-5 px-3.5 py-4">
-          {/* THE CHALLENGES, WEEKLY AND MONTHLY — the week's one, then the
-              month's two, each under its own heading (owner, 2026-09-13). The
-              interhouse race that sat below them is cut for now. */}
+          {/* CHALLENGES on top — a Weekly and a Monthly card, each previewing
+              the ones you're closest to finishing and opening the full list —
+              then HOUSE VS HOUSE underneath (owner, 2026-09-15). */}
           <div>
-            <SectionLabel className="mb-2">This week</SectionLabel>
-            <WeekEventLine />
+            <SectionLabel className="mb-2">Challenges</SectionLabel>
+            <Challenges />
           </div>
           <div>
-            <SectionLabel className="mb-2">This month</SectionLabel>
-            <MonthChallenges />
+            <SectionLabel className="mb-2">House vs house</SectionLabel>
+            <InterhouseCompetition />
           </div>
         </div>
       ) : (

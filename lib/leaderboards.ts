@@ -93,11 +93,11 @@ export type Standing = {
 /*
   NO MINIMUM ON THE PLAIN BOARDS. Every house, every first-year dorm and every
   class year is on its board, always — including the ones with nobody signed
-  up, which come last and read "0 pts · nobody yet". With a handful of test
+  up, which come last and read "Nobody yet". With a handful of test
   accounts a board of two houses looks broken; a board of twelve, most at
   zero, looks like a race that has just started, which is the truth. The one
-  place a minimum still gates anything is the interhouse race (lib/events.ts,
-  HOUSE_RACE_MIN_ACTIVE).
+  place a minimum still gates anything is the interhouse competition
+  (lib/events.ts, INTERHOUSE).
 */
 
 /* ────────────────────  the two ways to read a team board  ──────────────────── */
