@@ -254,24 +254,41 @@
   also what lets an ancestor override the phone chrome (dark screens) or the
   whole palette (a scratch route) without touching a component.
 */
+/*
+  LANDING LOOK — VERSION 2 (owner, 2026-09-14, chosen in the Design Lab at
+  /lab and pasted back as its token block): a near-white page with a faint
+  blue tint, lavender-grey blocks, ink-blue and bronze accents, the grid at a
+  quarter and the glows at half. The fonts were NOT changed with it — the
+  owner asked for "the text as version 1".
+
+  Version 1 (the black page that shipped until now) is the previous state of
+  this block in git; the Lab's "Today" preset still reproduces it:
+    bg #0a0a0a · elevated #111111 · surface #141414 · line #1f1f1f ·
+    line-hover #2a2a2a · text #f5f5f5 / #888888 / #555555 ·
+    accent #4a9eff · varsity #e0c896 · bg-warm #0d0c0a ·
+    grid rgba(255,255,255,0.015) / 0.02 · glow 1
+  Lab settings line for version 2:
+    light=100&hue=239&tint=30&step=50&textc=90&surface=ebeaf6&accent=1f32c1
+    &varsity=9e741a&grid=0.25&glow=0.5&radius=pill
+*/
 @theme static {
-  --color-l-bg: #0a0a0a;
-  --color-l-bg-elevated: #111111;
-  --color-l-surface: #141414;
-  --color-l-line: #1f1f1f;
-  --color-l-line-hover: #2a2a2a;
-  --color-l-text: #f5f5f5;
-  --color-l-text-2: #888888;
-  --color-l-text-3: #555555;
-  --color-l-accent: #4a9eff;
-  --color-l-accent-dim: rgba(74, 158, 255, 0.1);
-  --color-l-accent-soft: rgba(74, 158, 255, 0.2);
+  --color-l-bg: #f6feff;
+  --color-l-bg-elevated: #f1f4fb;
+  --color-l-surface: #ebeaf6;
+  --color-l-line: #d7dfe5;
+  --color-l-line-hover: #c6ced4;
+  --color-l-text: #141618;
+  --color-l-text-2: #4b4f53;
+  --color-l-text-3: #7e8488;
+  --color-l-accent: #1f32c1;
+  --color-l-accent-dim: rgba(31, 50, 193, 0.1);
+  --color-l-accent-soft: rgba(31, 50, 193, 0.2);
   --color-l-success: #34d399;
   --color-l-warn: #fbbf24;
   --color-l-danger: #ef4444;
-  --color-l-varsity: #e0c896;
-  --color-l-varsity-dim: rgba(224, 200, 150, 0.08);
-  --color-l-varsity-soft: rgba(224, 200, 150, 0.2);
+  --color-l-varsity: #9e741a;
+  --color-l-varsity-dim: rgba(158, 116, 26, 0.08);
+  --color-l-varsity-soft: rgba(158, 116, 26, 0.2);
   /* The drawn phone's chrome — the light screen, its status-bar ink, the
      dynamic island and the gesture bar. One phone frame is shared by every
      landing section (coach, both closers, later the stories), so its colours
@@ -286,13 +303,16 @@
   --color-l-phone-frame: #2a2a2a;
   /* The interlude's ground: one step warmer than the page, the "background
      steps one surface level darker behind the Varsity Mode opening". */
-  --color-l-bg-warm: #0d0c0a;
-  /* The two faint grid overlays (the page's and the title cards'). Tokens so
-     the design lab (app/lab, dev only) can fade them or flip them for a light
-     page; the values are what the hardcoded rgba() used to be. */
-  --color-l-grid: rgba(255, 255, 255, 0.015);
-  --color-l-grid-2: rgba(255, 255, 255, 0.02);
+  --color-l-bg-warm: #fef8f0;
+  /* The two faint grid overlays (the page's and the title cards'): the text
+     colour at a whisper. Tokens so the design lab (app/lab, dev only) can
+     fade them or flip them between light and dark pages. */
+  --color-l-grid: rgba(20, 22, 24, 0.015);
+  --color-l-grid-2: rgba(20, 22, 24, 0.0199);
 }
+/* The glows' strength (the three `opacity: var(--l-glow, 1)` rules below).
+   Version 2 runs them at half; the Lab's dial writes the same variable. */
+:root { --l-glow: 0.5; }
 /* DARK PHONE SCREENS (components/landing/PhoneMode.tsx). The visitor can flip
    every phone on the page to the app's dark look; the captures swap to their
    /landing/dark twins and the drawn chrome follows here: the screen ground

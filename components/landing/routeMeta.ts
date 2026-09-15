@@ -40,15 +40,15 @@ export function landingMetadata(view: LandingView = "all"): Metadata {
   };
 }
 
-/* The landing is #0a0a0a in both colour schemes, so the browser chrome on a
-   phone matches it (the root layout's light #f6f6f7 is the APP's ground —
-   over this page it sat as a pale bar on black). And no zoom lock here: the
+/* The landing is #f6feff (version 2, 2026-09-14; it was #0a0a0a) in both
+   colour schemes, so the browser chrome on a phone matches it (the root
+   layout's #f6f6f7 is the APP's ground, a different white). And no zoom lock here: the
    app pins zoom so a stray pinch on a tab bar can't break it; a marketing
    page has no such control to protect and should stay pinch-zoomable.
    (A meta tag cannot read a CSS variable, so — like the root layout — this
    is the literal; it must equal --color-l-bg in globals.css.) */
 export const landingViewport: Viewport = {
-  themeColor: "#0a0a0a",
+  themeColor: "#f6feff",
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
