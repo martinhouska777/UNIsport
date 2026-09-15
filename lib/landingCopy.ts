@@ -8,8 +8,8 @@
 
   ── Beat numbering ────────────────────────────────────────────────────────
   The two scroll animations are numbered the way we talk about them:
-    S1…S7  the student story  (gyms → people → reasons → plan → log → record → proof)
-    V1…V6  the varsity story  (plan → boat → race → week → calendar → season)
+    S1…S4  the student story  (people → plan → profile → gyms)
+    V1…V5  the varsity story  (home → log → calendar → workouts → statistics)
 
   ── One sync obligation, until the port lands ─────────────────────────────
   The built prototype (webpage/Scroll Animations.html) still carries its own
@@ -29,7 +29,7 @@
 export type Annotation = { side: "left" | "right"; top: number; text: string };
 
 export type Beat = {
-  /** S1…S7 / V1…V6 — how we refer to this beat in conversation. */
+  /** S1…S4 / V1…V5 — how we refer to this beat in conversation. */
   id: string;
   /** The small label above the headline. */
   kicker: string;
@@ -257,7 +257,7 @@ export const brandLine = "Never train alone.";
   ONE STEP ON A TITLE CARD — the number the reader will see on the beat, one
   word for it, and one of the line icons in components/landing/FeatureIcon.tsx.
 
-  These MIRROR the beats below (S1…S7 / V1…V6) and have to be changed with
+  These MIRROR the beats below (S1…S4 / V1…V5) and have to be changed with
   them — the chip and its beat's kicker are now the SAME words, which is what
   mirroring was always meant to mean (2026-09-01: the kickers dropped their
   definite article, because "The why you match" cannot be written and a set
@@ -277,13 +277,10 @@ export const studentIntro = {
      each step jumps to its own beat. It also fills a card that is two lines
      tall on a full-height section. */
   steps: [
-    { n: "01", icon: "gym", word: "Gyms" },
-    { n: "02", icon: "partners", word: "People" },
-    { n: "03", icon: "verified", word: "Why you match" },
-    { n: "04", icon: "chat", word: "Plan" },
-    { n: "05", icon: "log", word: "Log" },
-    { n: "06", icon: "calendar", word: "Calendar" },
-    { n: "07", icon: "leaderboard", word: "Rankings" },
+    { n: "01", icon: "partners", word: "People" },
+    { n: "02", icon: "chat", word: "Plan" },
+    { n: "03", icon: "leaderboard", word: "Profile" },
+    { n: "04", icon: "gym", word: "Gyms" },
   ] as OpeningStep[],
   /* The way past the story for someone who wants the list rather than the
      walk. It points AT the feature block beside Campus Colours rather than
@@ -291,54 +288,40 @@ export const studentIntro = {
   overview: { label: "See every feature", href: "#campus-colours" },
 };
 
-/* ───────────────────── S1–S7 · THE STUDENT STORY ───────────────────── */
+/* ───────────────────── S1–S4 · THE STUDENT STORY ───────────────────── */
 
 export const studentStory: Beat[] = [
+  /*
+    FOUR CHAPTERS, ONE APP SCREEN EACH (owner, 2026-09-15). The owner sent the
+    phone screenshots of the screens they want on the page and asked for them
+    to be put in order, with the TEXT TAKEN ONLY FROM WHAT WAS ALREADY HERE.
+    So every head and sub below is a line (or lines) carried over verbatim from
+    the seven-beat story this replaces; nothing was written new. Where two old
+    beats rode one screen, their lines sit together under that screen.
+
+    Order: People (the match list) → Plan (the chat with the plan card) →
+    Profile (counts, leaderboards, the session calendar, memories, all on one
+    sheet) → Gyms, last, because the Campus Colours closer under it IS the gyms
+    screen in eight schools' colours.
+
+    Dropped from the picture, kept in the feature list: the "Why you match"
+    profile and the log sheet — the owner did not send either screen.
+  */
   {
     id: "S1",
-    kicker: "01 · Gyms",
-    head: "See every gym on your campus in one place.",
-    sub: "Explore what equipment each gym has, its rating and how busy it is.",
-    shot: "01-gyms.webp",
-    ann: [],
-  },
-  {
-    id: "S2",
-    kicker: "02 · People",
-    head: "Find training partners. Make friends.",
+    kicker: "01 · People",
     /* The owner, 2026-09-02: "people find training partners mae friends …
        just make explaining sentences from them with verbs and stuff … and no
-       dashes its so fkn generic". The line that stood here was the shape they
-       mean: a noun list, a dash, an appositive ("Ranked by how well you
-       actually fit — same gym, same hours, same level, same interests.").
-
-       AND A ROUND TRIP NOT TO REPEAT. "Revertni to k tomu co bylo" was read as
-       "undo the sweep on this story", so 02, 03, 06 and 07 were put back to
-       their dashed originals — and the owner's answer was "nemenili jsme tohle
-       uz, proc je to tak spatne". They were pointing at the ANIMATION, not at
-       these words. The swept lines are the ones they want and they stand.
-       When an instruction says a section changed, find out WHAT changed before
-       reverting text that was approved. */
+       dashes its so fkn generic". The swept lines are the ones they want and
+       they stand. */
+    head: "Find training partners. Make friends.",
     sub: "Browse sorts everyone by how well you fit with them, based on interests, concentration, experience and hours. In Session you pick a time to train and plan directly with people who go at that time, or you post your time on the Buddy Board and see who is interested.",
     shot: "02-match.webp",
     ann: [],
   },
   {
-    id: "S3",
-    /* Named after the app's own words: /people/[id] calls this section "Why
-       you match", and the capture is even filed as 03-why-you-match.webp. The
-       label was "The reasons", which named nothing the reader could picture. */
-    kicker: "03 · Why you match",
-    /* "Life goals" was in the owner's line and is not in the product — the
-       profile stores concentration, hometown, languages, interests and a bio. */
-    head: "View their profile before you plan a session.",
-    sub: "Their profile shows their house, their year and a short bio. Under it, Why you match lists what you have in common: the gym you both use, your shared interests, when your free time overlaps, the languages you speak and whether one of you wants a mentor.",
-    shot: "03-why-you-match.webp",
-    ann: [],
-  },
-  {
-    id: "S4",
-    kicker: "04 · Plan",
+    id: "S2",
+    kicker: "02 · Plan",
     /* The owner's own sentence, 2026-09-02: "plan sessions easily in the chat,
        once the other one accepts it goes to both calendars". */
     head: "Plan sessions easily in the chat.",
@@ -347,59 +330,23 @@ export const studentStory: Beat[] = [
     ann: [],
   },
   {
-    /* ONE BEAT FOR THE WHOLE LOG SHEET (2026-09-01, the owner: "dal bych to
-       log with photos v jedno"). S5 and S6 used to be two beats panning the
-       SAME capture — the top for the sets, the bottom for the photo and the
-       note — which spent two of seven screens on one sheet and left the app's
-       calendar unshown. Now one beat pans the sheet end to end, and the freed
-       slot goes to the calendar below. */
-    id: "S5",
-    kicker: "05 · Log",
-    /* The owner's own sentence, 2026-09-02: "record each sets and reps easily
-       and attach a photo with your partner that will be stored in memories".
-       Memories is a real screen (app/(app)/memories), reached from the Profile
-       tab under the calendar, so the line names something that exists. */
-    head: "Log it as soon as you finish.",
-    sub: "Record your sets and reps easily and attach a photo with your partner that will be stored in your memories.",
-    shot: "tall-logsheet.webp",
-    ann: [],
-  },
-  {
-    /* THE CALENDAR, at last (the owner: "pak calendar s memories"). No new
-       capture was needed and none could be taken: the live demo account has
-       moved on — different user, different house, an empty September calendar
-       and an empty leaderboard — so a re-shoot today would be a worse picture
-       than the one on disk, exactly as the 02-match re-shoot was. But it did
-       not need one. tall-profile.webp already carries the session calendar
-       under the stats and the leaderboard strip; this beat simply pans down
-       to it and S7 pans the top of the same sheet. */
-    id: "S6",
-    kicker: "06 · Calendar",
-    head: "Check your month in the session calendar.",
-    sub: "Every session you log marks its day and shows what you trained, so you can track your workouts week by week. Tap a day to open it again, and every photo you took is stored in Memories.",
-    shot: "tall-profile.webp",
-    ann: [],
-  },
-  {
-    id: "S7",
-    /* "The proof" told the reader nothing. The screen really does carry the
-       leaderboards, so the label names them — and the sub now lists the four
-       that exist (lib/leaderboards.ts: campus, house, partners, year) rather
-       than mentioning one in passing. The two lines above it are untouched:
-       the story still ends on its payoff, and the rankings are what it hands
-       you on the way out. */
-    kicker: "07 · Rankings",
-    /* The story used to close on "Never train alone again." — which now
-       opens the walk, on the card above (see `studentIntro`). Saying it twice
-       made the ending a repeated promise; "Nobody trained alone." is the same
-       thought as a RESULT, after seven screens of watching it happen. The
-       reader joins the two without being told to. */
+    /* ONE SHEET, three of the old beats' worth of words: the rankings head
+       and sub (old S7) and the calendar / memories lines (old S6). The capture
+       carries all of it — the counts and the leaderboard strip at the top, the
+       session calendar under them, Memories under that. */
+    id: "S3",
+    kicker: "03 · Profile",
     head: "Track your statistics. See how you do in the leaderboards.",
-    sub: "Your profile counts the sessions you logged and the partners you trained with. Take part in the college leaderboards and see how you rank on campus, how your house and your year are doing, and who has trained with the most partners.",
+    sub: "Your profile counts the sessions you logged and the partners you trained with. Take part in the college leaderboards and see how you rank on campus, how your house and your year are doing, and who has trained with the most partners. Every session you log marks its day in the session calendar, and every photo you took is stored in Memories.",
     shot: "tall-profile.webp",
-    /* "Every day you trained" moved up to S6, which is now the beat that
-       actually shows the calendar. This one opens on the name and the counts
-       the headline reads off, and pans down to the leaderboard strip. */
+    ann: [],
+  },
+  {
+    id: "S4",
+    kicker: "04 · Gyms",
+    head: "See every gym on your campus in one place.",
+    sub: "Explore what equipment each gym has, its rating and how busy it is.",
+    shot: "01-gyms.webp",
     ann: [],
   },
 ];
@@ -456,12 +403,10 @@ export const interlude = {
      Calendar" was pointing at the board. Re-order a beat, re-order this. */
   steps: [
     { n: "01", icon: "plan", word: "Training plan" },
-    { n: "02", icon: "boat", word: "Lineups" },
-    { n: "03", icon: "race", word: "Coach's notes" },
-    { n: "04", icon: "logplan", word: "Log" },
-    { n: "05", icon: "calendar", word: "Calendar" },
-    { n: "06", icon: "leaderboard", word: "Workouts" },
-    { n: "07", icon: "squad", word: "Statistics" },
+    { n: "02", icon: "logplan", word: "Log" },
+    { n: "03", icon: "calendar", word: "Calendar" },
+    { n: "04", icon: "leaderboard", word: "Workouts" },
+    { n: "05", icon: "squad", word: "Statistics" },
   ] as OpeningStep[],
   /* Same door as the student card's: the varsity feature block beside Blade
      Lock, which is where the overview lives — once. */
@@ -512,158 +457,58 @@ export const cues = {
   (scripts/landing/capture-teammate.mjs) is written and waiting.
 */
 export const varsityStory: Beat[] = [
+  /*
+    FIVE CHAPTERS, ONE APP SCREEN EACH (owner, 2026-09-15) — see the note on
+    studentStory. The Home screen is deliberately one crowded chapter: the
+    training plan, the lineup, the race countdown and the coach's note all sit
+    on it, so the three old beats that panned it (V1, V2, V3) are now three
+    sentences under one headline. Every line is carried over verbatim.
+
+    Order: Home → Log → Calendar → Workouts → Statistics. Ends on the squad and
+    the numbers, which is the door to "Join with your invite".
+
+    Captures still to re-shoot for this structure: Home (to show the video
+    strip), Log (its top is lighter now), Calendar (the coach's spreadsheet
+    colours), and Statistics — the owner's screenshot is the full-screen
+    "Metres rowed" graph, not the profile card the current capture shows.
+  */
   {
     id: "V1",
-    kicker: "V1 · Training plan",
-    /* "Always actual" was the owner's word — aktuální, a Czech false friend.
-       "Current" is the meaning; English "actual" means real-not-fake.
-
-       HEAD AND SUB ARE BOTH DICTATED, 2026-09-02: "pojdme na training plan
-       always at hand. have your training plan always at eyes and updated in
-       real time. tap any day to see the full workout description". The head
-       dropped ", always current." because the sub now carries that thought as
-       "updated in real time".
-
-       "ALWAYS ON YOUR EYES" CAME BACK OUT of this sub the same day ("nech
-       jen u V3 to always at your eyes"): V1 and V3 sit two beats apart over
-       the SAME capture and both ended on the phrase. V3 keeps it — the coach's
-       note is the thing you are meant to have in front of you — and the head
-       here already says "always at hand".
-
-       THE FIRST SENTENCE IS DICTATED DOWN TO THE RELATIVE PRONOUN, asked
-       twice and answered twice ("for v1 add(that) updates" → "your training
-       plan that updates at real time"). Written with "in real time", the
-       preposition they used the first time round; "at real time" is not the
-       English idiom. It has no main verb, and "training plan" lands twice in
-       two lines with the head above it — both flagged, both theirs.
-
-       ONE CLAIM FLAGGED AND SHIPPED ANYWAY: there is no live subscription —
-       HomeScreen fetchPlan()s when the screen opens, so the plan is never
-       stale but it is not pushed. "Updated the moment your coach publishes it"
-       was offered as the accurate line; the owner's words stand.
-
-       "Lineups" came OUT of this sub on purpose: V2 is the lineup beat, two
-       screens down the same capture. What the head replaced said the coach
-       builds the week and it is not a screenshot of a spreadsheet — nothing is
-       lost, the varsity feature row beside Blade Lock still says exactly that. */
+    kicker: "01 · Training plan",
+    /* Head and first two sentences dictated 2026-09-02 (see git history for
+       the full account of "always at hand" / "in real time"). The lineup and
+       the coach's-note sentences are the old V2 and V3 subs, word for word —
+       "always on your eyes" is the owner's, put back on 2026-09-02. */
     head: "Training plan always at hand.",
-    sub: "Your training plan that updates in real time. Tap any day to see the full workout description.",
+    sub: "Your training plan that updates in real time. Tap any day to see the full workout description. Never look through 40 names in an Excel sheet again. Your name pops right in a boat. Have the countdown to the next race and a note from your coach on what to improve always on your eyes.",
     shot: "tall-vhome.webp",
     ann: [],
   },
   {
     id: "V2",
-    kicker: "V2 · Lineups",
-    head: "Find your lineup in a second.",
-    sub: "Never look through 40 names in an Excel sheet again. Your name pops right in a boat.",
-    shot: "tall-vhome.webp",
-    ann: [],
-  },
-  {
-    id: "V3",
-    kicker: "V3 · Coach's notes",
-    /* "Always on your eyes" is před očima taken literally, and it was changed
-       to "in front of you" on that reasoning. The owner put it back on
-       2026-09-02 ("always on your eyes instead of always in front of you"), so
-       it stands as theirs. Flagged once: a native reader reads "on your eyes"
-       as wrong rather than as style.
-
-       THE SUB IS DICTATED, 2026-09-02: "have the countdown to the next race
-       and a note from a coach what to improve always at your eyes" — written
-       with "on your eyes", the form they settled on above, and with "your
-       coach", who is a specific person to the reader. It used to be the
-       generic shape (a noun list, a comma, an appositive); now the reader is
-       doing something. Both halves are on the frame: RaceBar under "Next Race"
-       counts the days down, CoachNoteCard prints the coach's note for you.
-
-       Head untouched — they dictated the sentence, not the headline. */
-    head: "Keep your focus up.",
-    sub: "Have the countdown to the next race and a note from your coach on what to improve always on your eyes.",
-    shot: "tall-vhome.webp",
-    ann: [],
-  },
-  {
-    id: "V4",
-    kicker: "V4 · Log",
-    /* "Logging IN workouts" was the owner's phrase — logging in is signing
-       in, a different thing. All three routes named here are on the capture:
-       a Log button per prescribed session, the "Scan C2 / RP3 monitor" card,
-       and "Add extra session" at the bottom.
-
-       THE SECOND SENTENCE IS DICTATED, 2026-09-02: "v4 druha veta, take a
-       picture of your erg screen to extract your numbers instantly or add
-       extra workouts". Two sentences now, the shape V1 took the same day.
-       "Take a picture" is what the card actually does — LogScreen reads the
-       photo ("Reading photo…", "Filled from your photo — check it and save."),
-       it is not a live monitor connection. Head untouched, they did not
-       rewrite it. And the head IS rewritten after all, on their word
-       ("a jo log a session in a few taps"): "has never been easier" was the
-       last piece of ad copy in the story and showed the reader nothing, where
-       "a few taps" says how much work it is. */
+    kicker: "02 · Log",
+    /* Second sentence dictated 2026-09-02; head on their word ("log a session
+       in a few taps"). All three routes are on the capture: a Log button per
+       prescribed session, the Scan C2 / RP3 monitor button, Add extra session. */
     head: "Log a session in a few taps.",
     sub: "Log your workout straight from your training plan. Take a picture of your erg screen to extract your numbers instantly, or add extra workouts.",
     shot: "13-varsity-log-list.webp",
     ann: [],
   },
   {
-    id: "V5",
-    kicker: "V5 · Calendar",
-    /* THE SUB IS DICTATED, 2026-09-02: "each workout lands in the calendar
-       directly from the log. tap a day to see what u did and track your
-       consistency to a plan along with extra workouts". Every clause is on the
-       screen: CalendarScreen builds the month out of the athlete's own logs,
-       the day sheet lists what was trained with its metrics, and it badges a
-       session "PLAN" when source === "plan" — which is exactly what makes the
-       plan and the extra workouts tellable apart.
-
-       The head replaces "Keep track of every session.", flagged as the most
-       generic line on the page since the first review, and it deliberately
-       avoids "track" now that the sub uses it. */
+    id: "V3",
+    kicker: "03 · Calendar",
+    /* Sub dictated 2026-09-02. */
     head: "Look back on your whole season.",
     sub: "Each workout lands in the calendar directly from the log. Tap a day to see what you did and track your consistency to the plan along with your extra workouts.",
     shot: "14-varsity-calendar.webp",
     ann: [],
   },
   {
-    /* THE WORKOUTS BEAT (the squad board, until the owner renamed it on
-       2026-09-06) — the beat they asked for ("a note about team and rankings,
-       its a nice part of it"), and it took four goes to get right.
-       First it was a clause on the statistics beat, which promised a board the
-       frame did not show. Then the database said varsity_results did not exist
-       at all, so the clause came off the page entirely. db/varsity_results.sql
-       is applied now, and the app's own worked example
-       (lib/varsity/demoWorkouts.ts) fills the board until a coach flags a real
-       session, so it has both a table behind it and a picture in front of it.
-
-       WHERE IT SITS has moved twice in two days, both the owner's call: last
-       of the seven, then straight after Log, and now (2026-09-02, "do calendar
-       after log and before v5") between the calendar and the statistics. The
-       words are theirs too: "all of your team pieces recorded, see how you
-       improved from last time and where you stand in the rankings, with many
-       filters at hand". The filters are named off the capture rather than
-       promised vaguely — Split, Time, Watts and W/kg are the four tabs on it. */
-    id: "V6",
-    kicker: "V6 · Workouts",
-    /* BOTH LINES ARE THE OWNER'S, dictated 2026-09-06: "v6 u varsity bude
-       workouts — look at statistics for every team workout — compare to
-       previous workouts and see how u improved from last time". Their first
-       clause is the headline, their second opens the sub, and the rankings and
-       the four filters — their words from 2026-09-02 — stay on the end of it,
-       because both are on the frame and nothing asked for them to go.
-
-       Every clause is on the capture: the Workouts list is every session the
-       coach flagged, the board reads it four ways (split, time, watts, W/kg),
-       and Delta.tsx prints your change against the same piece last time
-       (samePieceHistory in lib/varsity/teamBoard.ts) — which is exactly what
-       "how you improved from last time" is.
-
-       What the head replaced, and why it is not written back: "Every team
-       piece goes on the board" named the board, and the step above it now
-       says Workouts. The word "statistics" lands here two beats before V7's
-       headline says it again — FLAGGED FOR THE OWNER, not fixed, because both
-       words are theirs.
-
-       The capture is DRIVEN, not a URL: Team → Workouts → tap the 2k test.
+    id: "V4",
+    kicker: "04 · Workouts",
+    /* Both lines the owner's, 2026-09-06 and 2026-09-02. The capture is
+       DRIVEN, not a URL: Team → Workouts → tap the 2k test.
        scripts/landing/capture-light.mjs --only=15-varsity-board re-shoots it. */
     head: "Look at statistics for every team workout.",
     sub: "Compare to previous workouts and see how you improved from last time, and where you stand in the rankings, with filters for split, time, watts and watts per kilo.",
@@ -671,32 +516,11 @@ export const varsityStory: Beat[] = [
     ann: [],
   },
   {
-    id: "V7",
-    /* "Check how your teammates are doing" is a real feature but NOT on this
-       frame: tall-vprofile is your own season. The teammate screen exists
-       (11-varsity-teammate.webp) and is a dark-mode capture, so until it is
-       re-shot that clause has no picture behind it and stays off the page.
-       (varsity_telemetry and varsity_coach_reads are unapplied migrations too:
-       check the TABLE, not the .sql file, before writing copy about a varsity
-       feature.) */
-    kicker: "V7 · Statistics",
-    /* THE SUB IS THE OWNER'S EDIT, 2026-09-06: "v7 statistics — pridej tam
-       metres rowed, a rekni ze tam mame grafy a cutni ten personal best atd".
-       So metres rowed leads it, the graph is named, and the personal bests are
-       gone.
-
-       All three measures named here are the screen's own dropdown — "Metres
-       rowed", "Time trained", "Consistency" (statMetrics in
-       lib/varsity/athleteStats.ts) — and each one draws the graph under it,
-       which is why it reads "a graph for each" rather than one graph of three
-       things. The personal bests coming out also fixes a smaller problem: on
-       the capture that card is four dashes, because nothing has been entered.
-
-       "OVER EIGHT WEEKS" IS TRUE OF THE PICTURE, not of today's screen: the
-       capture (Aug 19) has a fixed "last 8 weeks" graph, while the shipped
-       screen now lets you pick the window (week / 2 weeks / month / 3 months /
-       your own dates, default 2 weeks). Re-shoot tall-vprofile.webp and this
-       phrase has to go with it. */
+    id: "V5",
+    kicker: "05 · Statistics",
+    /* Sub is the owner's edit, 2026-09-06. "Over eight weeks" is true of the
+       CAPTURE on disk, not of the screen, which now lets you pick the window —
+       re-shoot tall-vprofile.webp and this phrase goes with it. */
     head: "See your statistics.",
     sub: "One screen counts your metres rowed, your hours and your consistency over eight weeks, with a graph for each.",
     shot: "tall-vprofile.webp",

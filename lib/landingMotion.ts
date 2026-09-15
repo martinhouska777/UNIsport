@@ -1,6 +1,6 @@
 /*
   HOW EACH BEAT MOVES — the mechanics of the two scroll stories, keyed by the
-  beat ids in lib/landingCopy.ts (S1…S7, V1…V7).
+  beat ids in lib/landingCopy.ts (S1…S4, V1…V5).
 
   This is deliberately NOT in landingCopy.ts, which stays readable by someone
   who does not read code. It mirrors, exactly, the per-beat motion fields in
@@ -46,46 +46,32 @@ export type BeatMotion = {
 };
 
 export const motion: Record<string, BeatMotion> = {
-  /* ── the student story ── */
+  /* ── the student story (4 chapters, one screen each — 2026-09-15) ── */
   S1: {},
-  S2: { enter: "tab", tap: [37.5, 95.5] },
-  S3: { enter: "zoom", tap: [26, 54] },
-  S4: { enter: "push", tap: [68, 86.5], pointer: true },
-  // hold 0.25: the sheet is at its very top the moment the beat appears, then
-  // the whole scroll happens on screen instead of starting mid-page.
-  S5: { pan: [0, 1], hold: 0.2, side: "left", enter: "push" },
-  // The same sheet as S5 was; now a different capture — tall-profile, panned
-  // to its lower half, where the session calendar is.
-  S6: { pan: [0.65, 1], hold: 0.15, side: "left", enter: "push", tap: [50, 95] },
-  // The profile scrolls from the name down to the leaderboard ranks and comes
-  // to rest on the session calendar — the month is the closing image.
-  // S6 left this sheet at its bottom; S7 re-enters it at the TOP and pans
-  // down to the leaderboard strip, so the last beat opens on the name and the
-  // counts its headline reads off.
-  S7: { pan: [0, 0.38], hold: 0.2, side: "left", enter: "dismiss", tap: [50, 95] },
+  // The chat is reached from a person's profile in the app, and that screen is
+  // not in the walk any more, so the arrival is a plain drill-in with no ring.
+  S2: { enter: "push" },
+  // Over to the Profile tab (4th of 4 in the capsule), then the whole sheet
+  // scrolls: name and counts, the leaderboard strip, the session calendar,
+  // Memories. hold 0.2: the top is read before the pan starts.
+  S3: { pan: [0, 1], hold: 0.2, side: "left", enter: "tab", tap: [87.5, 95.5] },
+  // ...and back to the Gyms tab (1st of 4), which the Campus Colours closer
+  // then carries on in eight schools' colours.
+  S4: { side: "left", enter: "tab", tap: [12.5, 95.5] },
 
-  /* ── the varsity story ── */
-  // V1 carries the scroll all the way down to the lineup, so V2's headline
-  // arrives with the boat almost centred rather than announcing it early.
-  V1: { pan: [0, 0.5], hold: 0.45 },
-  V2: { pan: [0.5, 0.8], enter: "none" },
-  // The race and the note share one window on a home screen this short.
-  // `to` past 1: the pan hits the very bottom mid-beat and rests there.
-  V3: { pan: [0.74, 1.2], enter: "none" },
-  V4: { side: "left", enter: "sheet", tap: [50, 92.7] },
+  /* ── the varsity story (5 chapters, one screen each — 2026-09-15) ── */
+  // ONE chapter pans the whole Home screen: plan, lineup, race bar, coach's
+  // note. `to` past 1: it reaches the bottom before the chapter ends and rests.
+  V1: { pan: [0, 1.2], hold: 0.3 },
+  V2: { side: "left", enter: "sheet", tap: [50, 92.7] },
   // Logged a workout, so over to the Calendar tab, where it just landed.
-  V5: { side: "left", enter: "tab", tap: [30.8, 94] },
-  // THE SQUAD BOARD sits between the calendar and the statistics (owner,
-  // 2026-09-02). It arrives off the calendar screen, which has a tab bar on
-  // it, so the gesture can be shown: the ring presses "Team", then the board
-  // rises. It really is a sheet you pull up (Team → Workouts → tap a row), so
-  // "sheet" is not decoration here.
-  V6: { side: "left", enter: "sheet", tap: [69.1, 93.2] },
+  V3: { side: "left", enter: "tab", tap: [30.8, 94] },
+  // The Workouts board really is a sheet you pull up (Team → Workouts → tap a
+  // row): the ring presses "Team" on the calendar's tab bar, then it rises.
+  V4: { side: "left", enter: "sheet", tap: [69.1, 93.2] },
   // ...and the statistics arrive the way a sheet leaves: the ring presses the
   // board's own close X (top right of that capture) and the sheet drops away.
-  // The tab bar is behind the sheet on this frame, so the Profile tab it used
-  // to be tapped from would have had nothing to land on.
-  V7: { pan: [0.06, 0.42], side: "left", enter: "dismiss", tap: [92.4, 20.3] },
+  V5: { pan: [0.06, 0.42], side: "left", enter: "dismiss", tap: [92.4, 20.3] },
 };
 
 /* The natural size of every capture the stories ride, so <Image> can reserve
