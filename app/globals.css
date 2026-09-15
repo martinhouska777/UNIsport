@@ -299,6 +299,14 @@
   --color-l-varsity: #9e741a;
   --color-l-varsity-dim: rgba(158, 116, 26, 0.08);
   --color-l-varsity-soft: rgba(158, 116, 26, 0.2);
+  /* THE LABEL THAT GOES ON EACH SECTION COLOUR. A filled button takes its
+     ground from the section (--sa) and its text from this (--sa-ink), because
+     the two grounds want opposite labels: the ink-blue is dark enough for the
+     page's own near-white (13.9:1), the bronze is not — pale text on bronze is
+     4.2:1, which is both under AA and, as the owner put it, "the same colour
+     as the background". Ink on bronze is 5.1:1 and reads as a label. */
+  --color-l-accent-ink: var(--color-l-bg);
+  --color-l-varsity-ink: var(--color-l-text);
   /* The drawn phone's chrome — the light screen, its status-bar ink, the
      dynamic island and the gesture bar. One phone frame is shared by every
      landing section (coach, both closers, later the stories), so its colours

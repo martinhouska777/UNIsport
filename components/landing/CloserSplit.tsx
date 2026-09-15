@@ -33,7 +33,12 @@ export default function CloserSplit({
     <div className="grid w-full max-w-[1280px] items-center gap-12 xl:grid-cols-[minmax(0,1fr)_minmax(0,720px)]">
       <div
         className="order-2 flex justify-center xl:order-1 xl:justify-start"
-        style={{ "--sa": `var(--color-l-${accent})` } as CSSProperties}
+        style={
+          {
+            "--sa": `var(--color-l-${accent})`,
+            "--sa-ink": `var(--color-l-${accent}-ink)`,
+          } as CSSProperties
+        }
       >
         {aside}
       </div>

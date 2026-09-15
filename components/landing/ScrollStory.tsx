@@ -448,6 +448,7 @@ export default function ScrollStory({ id, beats, accent, ref }: Props) {
   // No glow behind this phone any more (see .ls-phone-wrap in globals.css).
   const accentVar = {
     "--sa": `var(--color-l-${accent})`,
+    "--sa-ink": `var(--color-l-${accent}-ink)`,
   } as CSSProperties;
 
   return (
