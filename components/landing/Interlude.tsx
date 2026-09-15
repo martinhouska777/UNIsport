@@ -42,7 +42,7 @@ export default function Interlude({ solo = false }: { solo?: boolean }) {
       ref={card}
       // Its own golden ground and a gold glow from the middle, the way the
       // student card glows blue (owner, 2026-09-14).
-      style={{ "--tg": "color-mix(in srgb, var(--color-l-varsity-glow) 55%, transparent)" } as CSSProperties}
+      style={{ "--tg": "color-mix(in srgb, var(--color-l-varsity-glow) 38%, transparent)" } as CSSProperties}
       className={`l-titlecard relative z-[1] flex min-h-svh flex-col items-center justify-center gap-[clamp(10px,1.8svh,22px)] border-t border-l-line bg-l-surface-varsity px-6 pt-14 pb-8 text-center ${anim ? "l-anim" : ""} ${shown ? "is-in" : ""}`}
     >
       <p className="l-tc font-display text-[clamp(20px,min(3.4vw,4.6svh),34px)] tracking-[-0.01em] text-l-text-2">
