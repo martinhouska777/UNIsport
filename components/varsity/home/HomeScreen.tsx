@@ -103,9 +103,11 @@ function loggable(iso: string): boolean {
    to be the whole screen"). It used to be a full-width "Next Race" banner of
    its own at the bottom of the page, with the number set at 24px; now it reads
    "Head of the Charles · 12 days" at 11px, the flag in the school colour. */
+// IN A PILL (owner, 2026-09-14): a rounded border round the line, so the race
+// reads as its own thing rather than a second caption under the plan's name.
 function RaceLine({ r }: { r: RaceData }) {
   return (
-    <div className="mt-0.5 flex min-w-0 items-center gap-1 text-[11px] text-muted">
+    <div className="mt-1.5 flex w-fit max-w-full min-w-0 items-center gap-1 rounded-full border border-border bg-surface px-2 py-0.5 text-[11px] text-muted">
       <span className="flex-shrink-0 text-primary">
         <IconFlag size={11} />
       </span>
@@ -179,7 +181,11 @@ function WeekFit({
                 page around it is lighter, and the blocks run to the cell's
                 edges — no padding, no rounding — with only a hairline
                 between two sessions on the same day. */}
-            <div className="flex min-h-[96px] flex-1 flex-col">
+            {/* EXACTLY HALF EACH (owner, 2026-09-14): a fixed 96px body in two
+                equal rows, so a long description can no longer push its half
+                taller than the other. What doesn't fit is cut short — the full
+                workout is in Today and in the day detail. */}
+            <div className="grid h-[96px] grid-rows-2">
               {halves(d).map((s, j) => (
                 /*
                   9px ON 2px SIDES, so one word stays one word. At 10px inside
@@ -200,18 +206,18 @@ function WeekFit({
                 */
                 <div
                   key={j}
-                  className={`flex flex-1 basis-1/2 flex-col items-center justify-center px-0.5 py-1 text-center ${
+                  className={`flex min-h-0 flex-col items-center justify-center overflow-hidden px-0.5 py-1 text-center ${
                     j === 1 && d.sessions.length > 1 ? "border-t border-border" : ""
                   }`}
                   style={s ? kindBlock(s.kind) : undefined}
                 >
                   {s && (
                     <>
-                      <span className="block max-w-full break-words text-[9px] font-semibold leading-tight">
+                      <span className="block max-w-full truncate text-[9px] font-semibold leading-tight">
                         {s.name}
                       </span>
                       {s.detail && s.detail !== s.name && (
-                        <span className="mt-px block max-w-full break-words text-[9px] leading-tight opacity-80">
+                        <span className="mt-px line-clamp-2 max-w-full break-words text-[9px] leading-tight opacity-80">
                           {s.detail}
                         </span>
                       )}
@@ -392,20 +398,20 @@ function MonthOverlay({
                   afternoon underneath, and the empty half of a one-session day
                   left empty (owner, 2026-09-14).
                 */}
-                <span className="mt-0.5 flex min-h-0 flex-1 flex-col gap-px overflow-hidden">
+                <span className="mt-0.5 grid min-h-0 flex-1 grid-rows-2 gap-px overflow-hidden">
                   {(day ? halves(day) : [undefined, undefined]).map((s, j) => (
                     <span
                       key={j}
-                      className="flex min-h-0 flex-1 basis-1/2 flex-col items-center justify-center overflow-hidden rounded px-1 py-0.5 text-center"
+                      className="flex min-h-0 flex-col items-center justify-center overflow-hidden rounded px-1 py-0.5 text-center"
                       style={s ? kindBlock(s.kind) : undefined}
                     >
                       {s && (
                         <>
-                          <span className="block max-w-full break-words text-[8px] font-semibold leading-[1.15]">
+                          <span className="block max-w-full truncate text-[8px] font-semibold leading-[1.15]">
                             {s.name}
                           </span>
                           {s.detail && s.detail !== s.name && (
-                            <span className="block max-w-full break-words text-[8px] leading-[1.15] opacity-80">
+                            <span className="line-clamp-1 max-w-full break-words text-[8px] leading-[1.15] opacity-80">
                               {s.detail}
                             </span>
                           )}
