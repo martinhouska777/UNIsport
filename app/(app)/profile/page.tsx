@@ -818,11 +818,7 @@ export default function ProfilePage() {
       </div>
 
       {switchingMode && (
-        <ModeSwitcherSheet
-          current="student"
-          name={user.name}
-          onClose={() => setSwitchingMode(false)}
-        />
+        <ModeSwitcherSheet current="student" onClose={() => setSwitchingMode(false)} />
       )}
 
       {partnersOpen && (

@@ -1360,6 +1360,12 @@ body {
   from { transform: translateY(100%); }
   to { transform: translateY(0); }
 }
+/* Top-sheet entrance — the same move, from the ceiling (the mode switcher,
+   which drops from the top bar you tapped rather than rising from the floor). */
+@keyframes sheet-down {
+  from { transform: translateY(-100%); }
+  to { transform: translateY(0); }
+}
 @keyframes backdrop-in {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -1463,4 +1469,10 @@ body {
 */
 .sheet-floor {
   padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* .sheet-ceiling — the same idea at the other end: a sheet that hangs from the
+   top of the screen clears the notch / status bar instead of sitting under it. */
+.sheet-ceiling {
+  padding-top: env(safe-area-inset-top, 0px);
 }

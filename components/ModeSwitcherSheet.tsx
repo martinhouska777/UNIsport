@@ -4,21 +4,26 @@
   MODE SWITCHER — the "switch accounts" sheet, but for this app's two modes:
   the normal student app and Varsity Mode.
 
+  IT DROPS FROM THE TOP, and it is TWO ICONS AND NOTHING ELSE (owner,
+  2026-09-14). It used to rise from the floor with a title, a hint line, a
+  close button and a named, described row per mode — a whole page of words for
+  a choice between two things you already recognise by their mark. Now it falls
+  out of the top bar you just tapped and shows the crest (the normal app) and
+  the oars (Varsity). Left is where you are now or where you'd go back to;
+  right is the team side.
+
+  WHAT THE ICONS STILL SAY WITHOUT WORDS:
+    • the mode you're IN wears a ring in the theme's primary colour
+    • a varsity mark you can't use yet (no squad, or not approved) is dimmed
+
+  Tapping still does exactly what it always did, so nothing is lost by the
+  words going: the student side sends someone who never set it up to
+  onboarding, and the varsity side sends a non-member to the invite or waiting
+  screen rather than into a section that isn't theirs.
+
   Opened from the name in the Profile top bar (student side) and from the
-  varsity mark in the Varsity top bar. The mode you're already in is ticked and
-  just closes the sheet; the other one navigates. Colors are theme tokens
-  (rule 1) so the same sheet reads correctly in both modes' themes.
-
-  The varsity row has three faces, because not everyone is on a team:
-    • on a squad   → the team's name and your role; tapping switches mode
-    • waiting      → "waiting for your captain", tapping goes to the waiting screen
-    • on no team   → "Join a varsity team", tapping goes to the invite screen
-
-  The student row has two, because the student side is now OPTIONAL: someone who
-  joined through a team link may never have set it up. It is shown openly rather
-  than hidden — there's nothing exclusive about the student app, and offering it
-  here is how a rower finds it. (The reverse isn't true: a student who isn't on
-  a squad sees no varsity mark at all, because that one IS gated.)
+  varsity mark in the Varsity top bar. Colors are theme tokens (rule 1) so the
+  same sheet reads correctly in both modes' themes.
 */
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -26,22 +31,18 @@ import UniversityCrest from "@/components/UniversityCrest";
 import VarsityCrest from "@/components/varsity/VarsityCrest";
 import { useAppState } from "@/components/AppState";
 import { useMembership } from "@/components/varsity/useMembership";
-import { roleLabel } from "@/lib/varsity/membership";
 import { VARSITY_HOME } from "@/lib/varsity/theme";
-import { IconCheck, IconChevronRight, IconX } from "@/components/icons";
 
 export default function ModeSwitcherSheet({
   current,
-  name,
   onClose,
 }: {
   current: "student" | "varsity";
-  name?: string;
   onClose: () => void;
 }) {
   const router = useRouter();
   const { studentReady } = useAppState();
-  const { membership, isMember, isPending, loading: squadLoading } = useMembership();
+  const { isMember, isPending, loading: squadLoading } = useMembership();
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -50,22 +51,19 @@ export default function ModeSwitcherSheet({
   }, [onClose]);
 
   const go = (mode: "student" | "varsity") => {
-    // Nothing to act on yet — leave the sheet OPEN, showing "Checking your
-    // squad…", so the tap visibly did nothing instead of quietly closing.
+    // Nothing to act on yet — the squad lookup hasn't answered, so the varsity
+    // mark is inert and the sheet stays open rather than quietly closing on a
+    // tap that would send a real member to the wrong place.
     if (mode === "varsity" && squadLoading) return;
     onClose();
     if (mode === "student") {
-      // Never set up? This row is the offer to do it.
+      // Never set up? This icon is the offer to do it.
       if (!studentReady) router.push("/onboarding");
       else if (current !== "student") router.push("/profile");
       return;
     }
     // Varsity only opens for an approved member; everyone else is pointed at
-    // the step that would actually get them in. While we do not YET know which
-    // of those they are, we send them NOWHERE: "no answer yet" used to look
-    // like "on no team", so tapping this before the lookup landed threw a
-    // member out to /join. The row is inert until the answer is in (guarded
-    // above, before the sheet closes).
+    // the step that would actually get them in.
     if (isMember) {
       if (current !== "varsity") router.push(VARSITY_HOME);
     } else {
@@ -73,19 +71,12 @@ export default function ModeSwitcherSheet({
     }
   };
 
-  // What the varsity row says, given where this person stands. Until the squad
-  // lookup answers we say so, rather than showing the "go find an invite" line
-  // to someone who may well be on a squad.
-  const varsityLine = squadLoading
-    ? "Checking your squad…"
-    : isMember
-      ? `${membership!.teamName} · ${roleLabel[membership!.role]}`
-      : isPending
-        ? "Waiting for your captain to let you in"
-        : "Join with an invite link from your team";
+  // The ring that says "this is the mode you're in".
+  const ring = (on: boolean) =>
+    on ? "border-primary bg-primary-tint" : "border-border bg-surface-2";
 
   return (
-    <div className="fixed inset-x-0 top-0 z-50 flex h-dvh flex-col justify-end">
+    <div className="fixed inset-x-0 top-0 z-50 flex h-dvh flex-col justify-start">
       <button
         type="button"
         aria-label="Close"
@@ -93,87 +84,37 @@ export default function ModeSwitcherSheet({
         className="absolute inset-0 bg-background/70 [animation:backdrop-in_0.2s_ease-out]"
       />
 
-      <div className="sheet-floor relative rounded-t-3xl border-t border-border bg-surface [animation:sheet-up_0.28s_cubic-bezier(0.2,0.8,0.2,1)]">
-        <div className="flex justify-center pb-1.5 pt-2.5">
-          <div className="h-1 w-9 rounded-full bg-border" />
-        </div>
-
-        <div className="flex items-center justify-between border-b border-border px-4 pb-3">
-          <div>
-            <div className="text-[15px] font-medium text-text">Switch mode</div>
-            <div className="mt-0.5 text-[11px] text-muted">
-              Double-tap your name to switch straight over
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close"
-            className="tap44 press-icon flex h-7 w-7 items-center justify-center rounded-full bg-surface-2 text-muted"
-          >
-            <IconX size={14} />
-          </button>
-        </div>
-
-        <div className="flex flex-col divide-y divide-border pb-8">
-          {/* Student — the normal app */}
+      <div className="sheet-ceiling relative rounded-b-3xl border-b border-border bg-surface [animation:sheet-down_0.28s_cubic-bezier(0.2,0.8,0.2,1)]">
+        <div className="flex items-center justify-center gap-10 px-4 pb-4 pt-5">
+          {/* Normal mode — the plain crest. */}
           <button
             type="button"
             onClick={() => go("student")}
-            className="flex w-full items-center gap-3 px-4 py-3.5 text-left active:bg-surface-2"
+            aria-label="Normal mode"
+            className={`tap44 press-icon flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border-2 active:opacity-70 ${ring(
+              current === "student" && studentReady,
+            )}`}
           >
-            {/* The plain crest is the student mark; the oars are varsity's. */}
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border bg-surface-2">
-              <UniversityCrest size={22} />
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="block truncate text-[14px] font-medium text-text">
-                {name || "Student"}
-              </span>
-              <span
-                className={`mt-0.5 block truncate text-[11px] ${
-                  studentReady ? "text-muted" : "text-accent"
-                }`}
-              >
-                {studentReady ? "Gyms, matches & sessions" : "Set up — gyms, matches & sessions"}
-              </span>
-            </span>
-            {current === "student" && studentReady ? (
-              <IconCheck size={16} className="shrink-0 text-primary" />
-            ) : (
-              <IconChevronRight size={16} className="shrink-0 text-muted" />
-            )}
+            <UniversityCrest size={30} />
           </button>
 
-          {/* Varsity — the gated team section */}
+          {/* Varsity mode — the oars. Dimmed until it's actually yours. */}
           <button
             type="button"
             onClick={() => go("varsity")}
-            className="flex w-full items-center gap-3 px-4 py-3.5 text-left active:bg-surface-2"
+            aria-label="Varsity mode"
+            className={`tap44 press-icon flex h-16 w-16 items-center justify-center rounded-full border-2 active:opacity-70 ${ring(
+              current === "varsity" && isMember,
+            )} ${isMember ? "" : "opacity-60"}`}
           >
-            <span
-              className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border ${
-                isMember ? "border-primary-line bg-primary-tint" : "border-border bg-surface-2 opacity-60"
-              }`}
-            >
-              <VarsityCrest size={32} />
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="block truncate text-[14px] font-medium text-text">Varsity</span>
-              <span
-                className={`mt-0.5 block truncate text-[11px] ${
-                  isPending ? "text-warn" : "text-muted"
-                }`}
-              >
-                {varsityLine}
-              </span>
-            </span>
-            {current === "varsity" && isMember ? (
-              <IconCheck size={16} className="shrink-0 text-primary" />
-            ) : (
-              <IconChevronRight size={16} className="shrink-0 text-muted" />
-            )}
+            <VarsityCrest size={44} />
           </button>
+        </div>
+
+        {/* The grab bar, on the sheet's own edge — the one thing left that says
+            "this is a sheet and it came from up there". */}
+        <div className="flex justify-center pb-2">
+          <div className="h-1 w-9 rounded-full bg-border" />
         </div>
       </div>
     </div>
