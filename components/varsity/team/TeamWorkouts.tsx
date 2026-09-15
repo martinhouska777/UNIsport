@@ -212,16 +212,20 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
   return (
     <div className="mt-4">
       {rows.length > 0 && (
-        // The same search box the Team roster uses.
-        <div className="mb-3 flex items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2.5">
+        // The same dark search bubble the Team roster uses.
+        <div className="mb-3 flex items-center gap-2 rounded-full border border-border bg-sunken px-4 py-2.5">
           <span className="text-muted">
             <IconSearch size={16} />
           </span>
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search by name or date"
-            aria-label="Search workouts by name or date"
+            /* Just "Search" (owner, 2026-09-14). What you can type into it is
+               something you find out by typing; the label was spending the
+               width of the field explaining itself. The spoken label still
+               says which search this is, for a screen reader. */
+            placeholder="Search"
+            aria-label="Search workouts"
             className="w-full bg-transparent text-base text-text outline-none placeholder:text-muted"
           />
         </div>

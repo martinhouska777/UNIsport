@@ -292,14 +292,15 @@ export default function WorkoutBoard({
           </div>
         ))}
 
-      {/* list or full table */}
-      <div className="mt-3 flex gap-1 rounded-xl border border-border bg-surface p-1">
+      {/* list or full table — the selected half fills its side, edge to edge,
+          the same as the Roster / Workouts switch above it (owner, 2026-09-14). */}
+      <div className="mt-3 flex overflow-hidden rounded-xl border border-border bg-surface">
         {(["list", "table"] as View[]).map((v) => (
           <button
             key={v}
             type="button"
             onClick={() => setView(v)}
-            className={`flex-1 rounded-lg py-1.5 text-[12px] font-semibold capitalize transition-colors ${
+            className={`flex-1 py-2 text-[12px] font-semibold capitalize transition-colors ${
               view === v ? "bg-text text-background" : "text-muted"
             }`}
           >

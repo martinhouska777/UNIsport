@@ -320,15 +320,21 @@ export default function TeamScreen({
           switch is the top of the screen. */}
       <h1 className="sr-only">{only === "workouts" ? "Workouts" : "Team"}</h1>
 
-      {/* sub-navigation */}
+      {/* sub-navigation
+
+          THE SELECTED HALF FILLS ITS SIDE, EDGE TO EDGE (owner, 2026-09-14).
+          The dark fill used to be a smaller pill floating inside a 4px inset,
+          so the switch read as a box with a button loose in it. Now the two
+          halves ARE the box: no padding, no gap, and `overflow-hidden` is what
+          lets the fill take the container's own rounded corners with it. */}
       {!only && (
-        <div className="flex gap-1 rounded-xl border border-border bg-surface p-1">
+        <div className="flex overflow-hidden rounded-xl border border-border bg-surface">
           {(["roster", "workouts"] as Tab[]).map((t) => (
             <button
               key={t}
               type="button"
               onClick={() => setTab(t)}
-              className={`flex-1 rounded-lg py-2 text-[12px] font-semibold capitalize transition-colors ${
+              className={`flex-1 py-2.5 text-[12px] font-semibold capitalize transition-colors ${
                 tab === t ? "bg-text text-background" : "text-muted"
               }`}
             >
@@ -340,8 +346,12 @@ export default function TeamScreen({
 
       {tab === "roster" ? (
         <>
-          {/* search */}
-          <div className={`${only ? "" : "mt-3 "}flex items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2.5`}>
+          {/* SEARCH — a dark bubble (owner, 2026-09-14): fully round, and sunk
+              into the page rather than raised off it, so it reads as a hole you
+              type into instead of another card. `bg-sunken` is the app's own
+              recessed token, so it goes dark on the dark theme and pale grey on
+              the light one without either being hardcoded (rule 1). */}
+          <div className={`${only ? "" : "mt-3 "}flex items-center gap-2 rounded-full border border-border bg-sunken px-4 py-2.5`}>
             <span className="text-muted">
               <IconSearch size={16} />
             </span>
