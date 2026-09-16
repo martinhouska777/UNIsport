@@ -83,7 +83,9 @@ export default function Interlude({ solo = false }: { solo?: boolean }) {
           <p className="text-[14px] text-l-text-2">{hero.inviteNote}</p>
           <Link
             href="/join"
-            className="inline-flex items-center gap-2 rounded-full bg-l-varsity px-7 py-4 text-[15px] font-semibold tracking-tight text-l-bg transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-l-text"
+            /* Same dress as "See every feature" below, hover included (owner,
+               2026-09-15: "I really like the colour when you hover on it"). */
+            className="inline-flex items-center gap-2 rounded-full border border-l-varsity bg-l-varsity-dim px-9 py-4 text-[clamp(16px,1.5vw,18px)] font-semibold tracking-tight text-l-text transition-[color,background-color,border-color,translate] hover:-translate-y-0.5 hover:border-(--color-l-text) hover:bg-l-text hover:text-(--color-l-surface-varsity) focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-l-text"
           >
             {hero.inviteCta} →
           </Link>
