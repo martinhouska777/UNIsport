@@ -49,6 +49,11 @@ begin
   where id = me
   returning data into my;
 
+  -- Arjun's profile has to agree with the chat ("same split"), 2026-09-16.
+  update public.profiles
+  set data = data || jsonb_build_object('gymSplit', 'Push-Pull-Legs')
+  where id = mh;
+
   -- 2. The chat ----------------------------------------------------------------
   -- The chat used to be with Martin Houska; the owner wants a made-up name in
   -- the picture (2026-09-16), so that thread goes and Arjun's is written.

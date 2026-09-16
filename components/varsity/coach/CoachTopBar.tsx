@@ -33,7 +33,7 @@ export default function CoachTopBar({
           <span className="truncate text-sm font-semibold text-text">
             {roleLabel[role]} Console
           </span>
-          <span className="mt-0.5 truncate text-[11px] tracking-[0.1em] text-muted">{teamName}</span>
+          <span className="mt-0.5 truncate pb-px text-[11px] leading-tight tracking-[0.1em] text-muted">{teamName}</span>
         </div>
       </div>
       <div className="flex flex-shrink-0 items-center gap-2">

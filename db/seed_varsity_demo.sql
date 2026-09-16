@@ -134,7 +134,7 @@ begin
   v_to   := least(v_race, (current_date + interval '28 days')::date);
 
   insert into public.varsity_plan_blocks (id, name, start_date, end_date, status, race_name, race_date, updated_at)
-  values ('de11-blk-hocr', 'Summer base → Head of the Charles', v_from, v_race, 'published',
+  values ('de11-blk-hocr', 'Road to the Charles', v_from, v_race, 'published',
           'Head of the Charles', v_race, now())
   on conflict (id) do update
     set name = excluded.name, start_date = excluded.start_date, end_date = excluded.end_date,

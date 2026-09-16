@@ -30,12 +30,11 @@ export const tabs: Tab[] = [
     label: "Gyms",
     icon: (
       <svg {...iconProps}>
-        <path d="M6.5 6.5l11 11" />
-        <path d="M21 21l-1-1" />
-        <path d="M3 3l1 1" />
-        <rect x="2" y="9" width="4" height="6" rx="1" />
-        <rect x="18" y="9" width="4" height="6" rx="1" />
-        <path d="M6 12h12" />
+        <rect x="2" y="9.5" width="3" height="5" rx="1" />
+        <rect x="5" y="6.5" width="3.5" height="11" rx="1" />
+        <rect x="15.5" y="6.5" width="3.5" height="11" rx="1" />
+        <rect x="19" y="9.5" width="3" height="5" rx="1" />
+        <path d="M8.5 12h7" />
       </svg>
     ),
   },

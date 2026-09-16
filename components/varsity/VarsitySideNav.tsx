@@ -51,7 +51,7 @@ export default function VarsitySideNav() {
               <span className="truncate text-[8px] font-semibold tracking-[0.18em] text-accent">
                 VARSITY MODE
               </span>
-              <span className="mt-0.5 truncate text-[11px] tracking-[0.08em] text-muted">
+              <span className="mt-0.5 truncate pb-px text-[11px] leading-tight tracking-[0.08em] text-muted">
                 {school} Rowing
               </span>
             </div>

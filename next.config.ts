@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  /* The dev-only "N" badge sat on top of the Gyms tab in phone screenshots. */
+  devIndicators: false,
   images: {
     /* The landing's phone screenshots (900px captures of small UI text) are
        shown at 250–360 CSS px on 1–2× screens. Two things keep them crisp:
