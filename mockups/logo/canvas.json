@@ -1,0 +1,48 @@
+{
+  "artboards": [
+    {
+      "file": "DirectionA.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 760,
+      "h": 620,
+      "title": "A - Wordmark"
+    },
+    {
+      "file": "DirectionB.dc.html",
+      "x": 860,
+      "y": 0,
+      "w": 760,
+      "h": 620,
+      "title": "B - Gate"
+    },
+    {
+      "file": "DirectionC.dc.html",
+      "x": 0,
+      "y": 760,
+      "w": 760,
+      "h": 620,
+      "title": "C - Pennant"
+    },
+    {
+      "file": "DirectionD.dc.html",
+      "x": 860,
+      "y": 760,
+      "w": 760,
+      "h": 620,
+      "title": "D - Partners"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "brief",
+      "x": 0,
+      "y": -170,
+      "w": 760,
+      "text": "UNIsport logo, round one. Four directions, each pushed on a different axis. Colours are the neutral brand only (landing blue, ink, app navy): a school's own colours never enter the logo, because every university shares it. Pick a direction, or a mix, and the next round refines that one."
+    }
+  ],
+  "launch": {
+    "view": "canvas"
+  }
+}
