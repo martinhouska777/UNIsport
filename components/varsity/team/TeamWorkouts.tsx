@@ -212,8 +212,8 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
   return (
     <div className="mt-4">
       {rows.length > 0 && (
-        // The same dark search bubble the Team roster uses.
-        <div className="mb-3 flex items-center gap-2 rounded-full border border-border bg-well px-4 py-2.5">
+        // The same search bubble the Team roster uses — white since 2026-09-16 (owner: "it's gray, it should be white").
+        <div className="mb-3 flex items-center gap-2 rounded-full border border-border bg-surface px-4 py-2.5">
           <span className="text-muted">
             <IconSearch size={16} />
           </span>

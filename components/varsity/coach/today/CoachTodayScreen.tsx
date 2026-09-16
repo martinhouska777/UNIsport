@@ -183,7 +183,7 @@ function DaySection({ day }: { day: TodayDay }) {
   return (
     <section>
       <div className="flex items-baseline justify-between">
-        <h2 className="text-2xl font-semibold text-text">{day.title}</h2>
+        <h2 className="text-[19px] font-semibold text-text">{day.title}</h2>
         <span className="text-[12px] font-medium text-muted">{day.label}</span>
       </div>
       {day.block ? (
