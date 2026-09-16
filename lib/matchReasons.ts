@@ -406,48 +406,6 @@ export function whereWhenLine(m: Match): string | null {
   return parts.length > 0 ? parts.join(" · ") : null;
 }
 
-/*
-  THE FIRST LINE OF A NEW CONVERSATION — "You both do CS · both into coffee."
-  Two human facts at most, strongest first, joined the way a person would say
-  them. Null when there is nothing to say; the thread then opens as it did.
-*/
-export function dmContextLine(m: Match): string | null {
-  const f = m.facts;
-  const parts: string[] = [];
-  for (const r of matchReasons(m)) {
-    if (parts.length >= 2) break;
-    switch (r.key) {
-      case "concentration":
-        if (f.concentration) parts.push(`you both do ${f.concentration}`);
-        break;
-      case "interests":
-        if (f.interests[0]) parts.push(`both into ${f.interests[0].toLowerCase()}`);
-        break;
-      case "origin":
-        parts.push(`both from ${f.city ?? f.country ?? f.region}`);
-        break;
-      case "languages": {
-        const lang = f.languages.find((l) => l !== campusLanguage);
-        if (lang) parts.push(`both speak ${lang}`);
-        break;
-      }
-      case "activity-also": {
-        const w = activityWording[f.activity ?? "other"] ?? activityWording.other;
-        parts.push(w.they.toLowerCase());
-        break;
-      }
-      case "gym":
-        if (f.gym) parts.push(`both train at ${f.gym}`);
-        break;
-      default:
-        break;
-    }
-  }
-  if (parts.length === 0) return null;
-  const line = parts.join(" · ");
-  return line[0].toUpperCase() + line.slice(1) + ".";
-}
-
 /* ══════════════════════  what a RESULT CARD shows  ══════════════════════ */
 
 /*

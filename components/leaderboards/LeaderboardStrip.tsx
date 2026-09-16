@@ -72,7 +72,9 @@ function IconRank({
       <span className="flex flex-shrink-0">{icon}</span>
       <div className="min-w-0">
         <div className="text-[17px] font-semibold leading-none tabular-nums text-text">{value}</div>
-        <div className="mt-1 truncate text-[11px] leading-none text-muted">{label}</div>
+        {/* Line height 14px, not leading-none: `truncate` clips to the line box,
+            and a 1em box cut the tail off the "p" in "Campus". */}
+        <div className="mt-0.5 truncate text-[11px] leading-[14px] text-muted">{label}</div>
       </div>
     </div>
   );
