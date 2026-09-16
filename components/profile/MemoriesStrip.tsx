@@ -19,7 +19,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAppState } from "@/components/AppState";
-import { IconCamera, IconChevronRight } from "@/components/icons";
+import { IconChevronRight } from "@/components/icons";
 import { listPhotoLogs, type WorkoutLog } from "@/lib/supabase/workouts";
 import { toMemories } from "@/lib/memories";
 
@@ -61,8 +61,12 @@ export default function MemoriesStrip() {
       href="/memories"
       className="mx-3.5 my-2 flex items-center gap-3 rounded-2xl border border-border bg-surface px-3.5 py-3 active:bg-surface-2"
     >
-      <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-primary-tint text-primary">
-        <IconCamera size={16} />
+      {/* The camera sticker (public/camera.webp — the owner's download, made
+          black) on a square of the school colour, the pair of the trophy on
+          the Leaderboards bar (owner, 2026-09-16). */}
+      <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-primary">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/camera.webp" alt="" className="w-[30px]" draggable={false} />
       </span>
 
       <div className="min-w-0 flex-1">
