@@ -675,10 +675,13 @@ export default function ProfilePage() {
             <button
               type="button"
               onClick={() => setEditingPrefs(true)}
-              className="tap44 flex items-center gap-1 rounded-full px-1.5 py-1 text-[11px] font-medium text-primary transition-colors hover:bg-primary-tint"
+              aria-label="Edit interests, languages and concentration"
+              /* Just the pencil, in a circle — the classic edit button — a
+                 size up from the old "✎ Edit" text, and it presses in when
+                 tapped (owner, 2026-09-16). */
+              className="tap44 flex h-8 w-8 items-center justify-center rounded-full border border-primary-line bg-primary-tint text-primary transition-transform duration-100 active:scale-90 motion-reduce:transition-none"
             >
-              <IconPencil size={11} />
-              Edit
+              <IconPencil size={15} />
             </button>
           </div>
 
@@ -702,7 +705,7 @@ export default function ProfilePage() {
                 {user.languages.map((l) => (
                   <span
                     key={l}
-                    className="rounded-full border border-border bg-surface px-2.5 py-1 text-[11px] text-text"
+                    className="rounded-full border border-primary-line bg-primary-tint px-2.5 py-1 text-[11px] text-primary"
                   >
                     {l}
                   </span>
@@ -712,12 +715,14 @@ export default function ProfilePage() {
           )}
 
           {/* WHAT YOU STUDY — a chip, the same pill as Interests and Languages
-              above it, rather than the label-and-value row it used to be. */}
+              above it, rather than the label-and-value row it used to be.
+              Languages and Concentration share the school colour; Interests
+              keep the gold (owner, 2026-09-16: colour over plain white). */}
           {user.concentration && (
             <div className="mt-2.5">
               <div className="mb-1.5 text-[11px] text-muted">Concentration</div>
               <div className="flex flex-wrap gap-1.5">
-                <span className="rounded-full border border-border bg-surface px-2.5 py-1 text-[11px] text-text">
+                <span className="rounded-full border border-primary-line bg-primary-tint px-2.5 py-1 text-[11px] text-primary">
                   {user.concentration}
                 </span>
               </div>
