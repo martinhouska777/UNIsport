@@ -53,7 +53,7 @@ import { fetchPlan } from "@/lib/varsity/planStore";
 import { demoTeamPlan, demoSquadSize } from "@/lib/varsity/demoWorkouts";
 import { fetchResults, fetchSquadSize, type TeamResult } from "@/lib/varsity/resultsStore";
 import { teamWorkouts, type TeamWorkout } from "@/lib/varsity/teamBoard";
-import { sessionLabel, sessionColor, dayKeyLabel, parseSessionKey } from "@/lib/varsity/coachPlan";
+import { sessionLabel, workoutColor, dayKeyLabel, parseSessionKey } from "@/lib/varsity/coachPlan";
 import { fetchTrainingConfig } from "@/lib/varsity/configStore";
 import { fetchOutings } from "@/lib/varsity/telemetryStore";
 import { demoOutings } from "@/lib/varsity/demoTelemetry";
@@ -256,7 +256,7 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
               >
                 <span
                   className="h-2.5 w-2.5 flex-shrink-0 rounded-full"
-                  style={{ background: sessionColor(w.session) }}
+                  style={{ background: workoutColor(w.session) }}
                 />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">

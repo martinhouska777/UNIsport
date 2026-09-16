@@ -167,7 +167,7 @@ export default function ResultDetail({
   );
 
   return (
-    <Sheet title={result.athleteName || "Result"} onClose={onClose}>
+    <Sheet title={result.athleteName || "Result"} onClose={onClose} full>
       <div className="flex items-center gap-3">
         <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-primary-tint text-[13px] font-semibold text-primary">
           {initialsOf(result.athleteName)}

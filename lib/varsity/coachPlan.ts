@@ -215,6 +215,24 @@ export function sessionPieces(s: Session): string {
   return s.description.split(",")[0].trim();
 }
 
+/*
+  THE 2K TEST gets its own name and colour on the team Workouts screens (owner,
+  2026-09-16): "Erg · 2K" in blue, instead of "Erg · Hard" in the same red as
+  every set of 500s. A test is the one piece everybody looks for.
+*/
+export const twoKTestMeta = { label: "2K", color: "#2563eb" };
+export function isTwoKTest(s: Session): boolean {
+  return s.category === "erg" && /^\s*2\s*(k|000\s*m)\b/i.test(s.description);
+}
+/** sessionLabel, except a 2K test reads "Erg · 2K". */
+export function workoutLabel(s: Session): string {
+  return isTwoKTest(s) ? `${categoryMeta.erg.label} · ${twoKTestMeta.label}` : sessionLabel(s);
+}
+/** sessionColor, except a 2K test is blue. */
+export function workoutColor(s: Session): string {
+  return isTwoKTest(s) ? twoKTestMeta.color : sessionColor(s);
+}
+
 export function sessionLabel(s: Session): string {
   const cat = categoryMeta[s.category as Category]?.label ?? s.category;
   if (!s.intensity) return cat;

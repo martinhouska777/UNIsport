@@ -31,7 +31,7 @@ import Sheet from "@/components/varsity/Sheet";
 import ResultDetail from "@/components/varsity/team/ResultDetail";
 import BoardTable from "@/components/varsity/team/BoardTable";
 import Delta from "@/components/varsity/team/Delta";
-import { sessionLabel, sessionColor } from "@/lib/varsity/coachPlan";
+import { workoutLabel, workoutColor } from "@/lib/varsity/coachPlan";
 import {
   buildBoard,
   metricsFor,
@@ -168,7 +168,7 @@ export default function WorkoutBoard({
       the session, the workout and the day it was pulled. The bar keeps the
       handle and the X.
     */
-    <Sheet title="" onClose={onClose}>
+    <Sheet title="" onClose={onClose} full>
       {/*
         THE WORKOUT AND YOUR OWN RESULT, IN ONE CARD.
 
@@ -191,10 +191,10 @@ export default function WorkoutBoard({
           <div className="flex items-center gap-2">
             <span
               className="h-2.5 w-2.5 flex-shrink-0 rounded-full"
-              style={{ background: sessionColor(workout.session) }}
+              style={{ background: workoutColor(workout.session) }}
             />
             <span className="text-[13px] font-semibold text-text">
-              {sessionLabel(workout.session)}
+              {workoutLabel(workout.session)}
             </span>
             <span className="ml-auto text-[11px] text-muted">
               {workout.dateLabel} · {workout.period}

@@ -16,10 +16,15 @@ export default function Sheet({
   title,
   onClose,
   children,
+  full = false,
 }: {
   title: string;
   onClose: () => void;
   children: ReactNode;
+  /* FULL — the sheet fills the whole screen instead of stopping at 85%
+     (owner, 2026-09-16: a team workout "goes all the way", not three
+     quarters). It still slides up and closes the same way. */
+  full?: boolean;
 }) {
   const vTheme = useVarsityTheme();
   useEffect(() => {
@@ -37,7 +42,11 @@ export default function Sheet({
           onClick={onClose}
           className="absolute inset-0 bg-background/70 [animation:backdrop-in_0.2s_ease-out]"
         />
-        <div className="relative max-h-[85%] overflow-y-auto rounded-t-3xl border-t border-border bg-surface [animation:sheet-up_0.28s_cubic-bezier(0.2,0.8,0.2,1)]">
+        <div
+          className={`relative overflow-y-auto bg-surface [animation:sheet-up_0.28s_cubic-bezier(0.2,0.8,0.2,1)] ${
+            full ? "h-full pt-[env(safe-area-inset-top)]" : "max-h-[85%] rounded-t-3xl border-t border-border"
+          }`}
+        >
           <div className="flex justify-center pb-1.5 pt-2.5">
             <div className="h-1 w-9 rounded-full bg-border" />
           </div>
