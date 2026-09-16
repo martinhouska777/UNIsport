@@ -20,7 +20,9 @@
 //
 // Frames written:
 //   stills  01-gyms, 02-match, 03-why-you-match (Ryan), 04-plan-a-session,
-//           13-varsity-log-list, 15-varsity-board (driven: Team → Workouts → tap)
+//           13-varsity-log-list, 14-varsity-calendar (July, two months back),
+//           15-varsity-board (driven: Team → Workouts → tap),
+//           16-varsity-stats (driven: Profile → the graph's full-screen button)
 //   strips  tall-logsheet, tall-profile, tall-vhome, tall-vprofile
 import puppeteer from "puppeteer-core";
 import fs from "fs";
@@ -43,8 +45,10 @@ fs.mkdirSync(OUT, { recursive: true });
   03-why-you-match, and re-shot a frame nobody had asked about.
 */
 const ONLY = (process.argv.find((a) => a.startsWith("--only=")) || "").slice(7);
+const ONLY_LIST = ONLY ? ONLY.split(",").map((x) => x.trim()).filter(Boolean) : [];
 const bare = (name) => name.replace(/^\d+-/, "");
-const wants = (name) => !ONLY || name === ONLY || bare(name) === ONLY;
+// --only=a,b,c shoots exactly those frames (with or without their numbers).
+const wants = (name) => !ONLY_LIST.length || ONLY_LIST.includes(name) || ONLY_LIST.includes(bare(name));
 if (ONLY) console.log(`only: ${ONLY}`);
 
 const browser = await puppeteer.launch({
@@ -182,15 +186,17 @@ await wait(3200);
 await tall(2400);
 await wait(1800);
 pm = await page.evaluate(() => {
+  // The sheet is cut just under the Memories row (2026-09-15): the profile
+  // carries the counts, the leaderboard strip, the week strip and Memories,
+  // and that is the whole picture the story wants. "More about you" below it
+  // is not part of the chapter.
   const all = [...document.querySelectorAll("body *")];
-  const cal = all.find((el) => el.children.length === 0 &&
-    el.textContent.trim().toLowerCase().startsWith(
-      new Date().toLocaleString("en-US", { month: "long", year: "numeric" }).toLowerCase()));
-  let box = cal;
-  while (box && !box.className?.toString?.().includes("border-b")) box = box.parentElement;
+  const mem = all.find((el) => el.children.length === 0 && el.textContent.trim() === "Memories");
+  let box = mem;
+  while (box && !/rounded|border/.test(box.className?.toString?.() || "")) box = box.parentElement;
   return { calendarBottom: box ? Math.round(box.getBoundingClientRect().bottom + window.scrollY) : null };
 });
-console.log("calendar bottom:", pm.calendarBottom);
+console.log("cut under Memories at:", pm.calendarBottom);
 await page.screenshot({ path: "cap-profile-tall.png" });
 }
 
@@ -210,6 +216,25 @@ if (wants("13-varsity-log-list")) {
   await page.goto(BASE + "/varsity/log", { waitUntil: "networkidle2", timeout: 45000 });
   await wait(3200);
   await still("13-varsity-log-list");
+}
+
+/*
+  THE CALENDAR, on July. The current month is mostly ahead of today, so it is
+  mostly empty; two taps on "Previous month" land on the month the demo account
+  actually trained through — the one the owner screenshotted (2026-09-15).
+*/
+if (wants("14-varsity-calendar")) {
+  await phone();
+  await page.goto(BASE + "/varsity/calendar", { waitUntil: "networkidle2", timeout: 45000 });
+  await wait(3500);
+  for (let i = 0; i < 2; i++) {
+    await page.evaluate(() => document.querySelector('button[aria-label="Previous month"]')?.click());
+    await wait(900);
+  }
+  const month = await page.evaluate(() => document.body.innerText.match(/(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\w*\s+20\d\d/)?.[0]);
+  console.log("calendar on:", month);
+  await wait(800);
+  await still("14-varsity-calendar");
 }
 
 /*
@@ -250,9 +275,78 @@ if (wants("15-varsity-board")) {
   await wait(700);
   await page.touchscreen.tap(at.x, at.y);
   await wait(3500);
-  const open = await page.evaluate(() => /ranked/i.test(document.body.innerText.slice(0, 4000)));
+  // The open sheet is the one place that says "Squad avg" / "All stats".
+  const open = await page.evaluate(() => /squad avg|all stats/i.test(document.body.innerText.slice(0, 6000)));
   if (!open) throw new Error("the board sheet did not open");
   await still("15-varsity-board");
+}
+
+/*
+  THE STATISTICS, FULL SCREEN — the owner's screenshot is the big graph, not the
+  card on the profile. The card's footer has a button that opens it; React wants
+  a real tap here too.
+*/
+if (wants("16-varsity-stats")) {
+  await phone();
+  await page.goto(BASE + "/varsity/profile", { waitUntil: "networkidle2", timeout: 45000 });
+  await wait(3500);
+  const at = await page.evaluate(() => {
+    const btn = document.querySelector('button[aria-label="See the graph full screen"]');
+    if (!btn) return null;
+    btn.scrollIntoView({ block: "center" });
+    const r = btn.getBoundingClientRect();
+    return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
+  });
+  if (!at) throw new Error("no full-screen button on the stats card");
+  await wait(700);
+  await page.touchscreen.tap(at.x, at.y);
+  await wait(2500);
+  const open = await page.evaluate(() => !!document.querySelector('button[aria-label="Close statistics"]'));
+  if (!open) throw new Error("the statistics screen did not open");
+  /*
+    The default window is the last two weeks, and the demo account trained in
+    JULY, so that graph is one spike on a flat line. The owner's screenshot
+    (2026-09-15) is "20 Jul – 28 Jul · day by day": the 3-month window, then a
+    drag across the late-July weeks, which the screen zooms into. Same moves
+    here: the range menu → "3 months", then a drag on the plot.
+  */
+  // Plain onClick handlers (components/varsity/profile/Dropdown.tsx), so an
+  // element click is enough here — a touch tap toggled the menu twice.
+  const opened = await page.evaluate(() => {
+    const btn = [...document.querySelectorAll('button[aria-expanded]')].find((b) => /weeks?|month/i.test(b.textContent));
+    if (!btn) return null;
+    btn.click();
+    return btn.textContent.trim();
+  });
+  if (!opened) throw new Error("no range menu on the statistics screen");
+  await wait(900);
+  const picked = await page.evaluate(() => {
+    const b = [...document.querySelectorAll("button")].find((x) => /^3 months$/i.test(x.textContent.trim()));
+    if (!b) return false;
+    b.click();
+    return true;
+  });
+  if (!picked) throw new Error(`no '3 months' option (menu was "${opened}")`);
+  await wait(1800);
+  // The plot is the tallest svg on screen. 84 days back from today: Jul 20 and
+  // Jul 28 sit at roughly a third and 45% of the way across it.
+  const plot = await page.evaluate(() => {
+    const svgs = [...document.querySelectorAll("svg")].map((el) => el.getBoundingClientRect()).filter((r) => r.width > 200);
+    svgs.sort((a, b) => b.height - a.height);
+    const r = svgs[0];
+    return r ? { x: r.x, y: r.y, w: r.width, h: r.height } : null;
+  });
+  if (!plot) throw new Error("no plot svg");
+  const y = plot.y + plot.h * 0.45;
+  const x1 = plot.x + plot.w * 0.36, x2 = plot.x + plot.w * 0.47;
+  await page.mouse.move(x1, y);
+  await page.mouse.down();
+  for (let i = 1; i <= 8; i++) { await page.mouse.move(x1 + ((x2 - x1) * i) / 8, y); await wait(60); }
+  await page.mouse.up();
+  await wait(2000);
+  const sub = await page.evaluate(() => document.body.innerText.match(/\d+ \w{3} – \d+ \w{3} · .*/)?.[0]);
+  console.log("stats window:", sub);
+  await still("16-varsity-stats");
 }
 
 if (wants("tall-vprofile")) {
@@ -280,7 +374,9 @@ if (wants("tall-vprofile"))
 if (wants("tall-profile")) {
   const resized = await sharp("cap-profile-tall.png").resize({ width: 900 }).png().toBuffer();
   const meta = await sharp(resized).metadata();
-  const cutAt = Math.min(meta.height, Math.round((pm.calendarBottom + 10) * (900 / W)));
+  const cutAt = pm.calendarBottom
+    ? Math.min(meta.height, Math.round((pm.calendarBottom + 10) * (900 / W)))
+    : meta.height;
   await sharp(resized).extract({ left: 0, top: 0, width: 900, height: cutAt })
     .webp({ quality: 86 }).toFile(OUT + "tall-profile.webp");
   console.log(`tall-profile.webp  900x${cutAt}`);

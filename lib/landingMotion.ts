@@ -71,7 +71,7 @@ export const motion: Record<string, BeatMotion> = {
   V4: { side: "left", enter: "sheet", tap: [69.1, 93.2] },
   // ...and the statistics arrive the way a sheet leaves: the ring presses the
   // board's own close X (top right of that capture) and the sheet drops away.
-  V5: { pan: [0.06, 0.42], side: "left", enter: "dismiss", tap: [92.4, 20.3] },
+  V5: { side: "left", enter: "dismiss", tap: [92.4, 20.3] },
 };
 
 /* The natural size of every capture the stories ride, so <Image> can reserve
@@ -84,6 +84,8 @@ export const shotSize: Record<string, { w: number; h: number }> = {
   "04-plan-a-session.webp": { w: 900, h: 1480 },
   "13-varsity-log-list.webp": { w: 900, h: 1480 },
   "14-varsity-calendar.webp": { w: 900, h: 1480 },
+  "15-varsity-board.webp": { w: 900, h: 1480 },
+  "16-varsity-stats.webp": { w: 900, h: 1480 },
   "tall-logsheet.webp": { w: 900, h: 4417 },
   "tall-profile.webp": { w: 900, h: 2176 },
   "tall-vhome.webp": { w: 900, h: 3098 },

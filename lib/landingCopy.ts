@@ -518,12 +518,12 @@ export const varsityStory: Beat[] = [
   {
     id: "V5",
     kicker: "05 · Statistics",
-    /* Sub is the owner's edit, 2026-09-06. "Over eight weeks" is true of the
-       CAPTURE on disk, not of the screen, which now lets you pick the window —
-       re-shoot tall-vprofile.webp and this phrase goes with it. */
+    /* Sub is the owner's edit, 2026-09-06. The capture is the full-screen
+       graph (Profile → the expand button on the stats card), which is the
+       screen the owner sent on 2026-09-15 — not the profile card. */
     head: "See your statistics.",
     sub: "One screen counts your metres rowed, your hours and your consistency over eight weeks, with a graph for each.",
-    shot: "tall-vprofile.webp",
+    shot: "16-varsity-stats.webp",
     ann: [],
   },
 ];
