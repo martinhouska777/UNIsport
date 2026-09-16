@@ -38,10 +38,10 @@ function Tabs({ view, className = "" }: { view: LandingView; className?: string 
             key={v.view}
             href={v.href}
             aria-current={on ? "page" : undefined}
-            /* Bigger, and blue when the pointer is on one (owner, 2026-09-15) —
-               the landing's own accent, not a hex. */
+            /* Bigger; blue when the pointer is on one AND for the tab you are on
+               (owner, 2026-09-15) — the landing's own accent, not a hex. */
             className={`tap44 shrink-0 rounded-full px-3 py-2 text-[14px] font-medium tracking-tight transition-colors sm:px-4 sm:text-[15.5px] ${
-              on ? "bg-l-line-hover text-l-text" : "text-l-text-2 hover:bg-l-accent-dim hover:text-l-accent"
+              on ? "bg-l-accent-dim text-l-accent" : "text-l-text-2 hover:bg-l-accent-dim hover:text-l-accent"
             }`}
           >
             {v.label}
