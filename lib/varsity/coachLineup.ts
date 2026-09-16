@@ -87,11 +87,19 @@ export type Athlete = {
 };
 
 /*
-  The real squad, in ONE flat list. The paper list it came from was arranged by
-  erg/fitness training group (Columns A–D, Bike, UT2, OYO, Rx) — those groups
-  are gone from here on the owner's call: they are an erg-test artefact, they go
-  stale the week after they are drawn up, and they say nothing about who can sit
-  in which boat. The only thing that sorts an athlete now is their SIDE.
+  AN INVENTED SQUAD, in ONE flat list (owner, 2026-09-15: "make made-up
+  names"). Every name here is fictional — the list used to carry names that
+  could be read as a real team's roster, which no screenshot should. The IDS
+  ARE STABLE KEYS and did not change with the names: the seeds in db/ and the
+  boat lineups already saved in the database refer to seats by these ids, so a
+  rename is a change to `name` and `initials` only. John Brown stays as he is —
+  that is the demo account, matched to its seat by NAME (lineupStore.ts).
+
+  The list was once arranged by erg/fitness training group (Columns A–D, Bike,
+  UT2, OYO, Rx) — those groups are gone on the owner's call: they are an
+  erg-test artefact, they go stale the week after they are drawn up, and they
+  say nothing about who can sit in which boat. The only thing that sorts an
+  athlete now is their SIDE.
 
   The sides below are a WORKING SPLIT while the roster is still demo data:
   roughly half port, half starboard, a few who row either way. A coach's own
@@ -103,63 +111,63 @@ export type Athlete = {
 */
 export const roster: Athlete[] = [
   // ── Coxswains ──
-  { id: "cate-frerichs", initials: "CF", name: "Cate Frerichs", side: "B", cox: true },
-  { id: "micah-john", initials: "MJ", name: "Micah John", side: "B", cox: true },
-  { id: "iris-hennin", initials: "IH", name: "Iris Hennin", side: "B", cox: true },
-  { id: "nick-yoo", initials: "NY", name: "Nick Yoo", side: "B", cox: true },
-  { id: "nat-toms", initials: "NT", name: "Nat Toms", side: "B", cox: true },
-  { id: "abbi-park", initials: "AP", name: "Abbi Park", side: "B", cox: true },
-  { id: "helena-inzerillo", initials: "HI", name: "Helena Inzerillo", side: "B", cox: true },
+  { id: "cate-frerichs", initials: "ML", name: "Maya Lindqvist", side: "B", cox: true },
+  { id: "micah-john", initials: "TO", name: "Tessa Okonjo", side: "B", cox: true },
+  { id: "iris-hennin", initials: "NH", name: "Noor Haddad", side: "B", cox: true },
+  { id: "nick-yoo", initials: "EB", name: "Eli Brandt", side: "B", cox: true },
+  { id: "nat-toms", initials: "RC", name: "Ruby Castellano", side: "B", cox: true },
+  { id: "abbi-park", initials: "WT", name: "Wren Takahashi", side: "B", cox: true },
+  { id: "helena-inzerillo", initials: "IF", name: "Ines Ferreira", side: "B", cox: true },
 
-  { id: "asante-kiio", initials: "AK", name: "Asante Kiio", side: "P" },
-  { id: "luca-vicino", initials: "LV", name: "Luca Vicino", side: "S" },
-  { id: "marcus-chung", initials: "MC", name: "Marcus Chung", side: "P" },
-  { id: "mason-cruz-abrams", initials: "MCr", name: "Mason Cruz-Abrams", side: "S" },
-  { id: "jack-dorney", initials: "JD", name: "Jack Dorney", side: "B" },
-  { id: "alexander-grundy", initials: "AG", name: "Alexander Grundy", side: "P" },
-  { id: "george-farkas", initials: "GF", name: "George Farkas", side: "S" },
-  { id: "sam-gallaudet", initials: "SG", name: "Sam Gallaudet", side: "P" },
+  { id: "asante-kiio", initials: "TM", name: "Theo Marchetti", side: "P" },
+  { id: "luca-vicino", initials: "FA", name: "Felix Andersen", side: "S" },
+  { id: "marcus-chung", initials: "KB", name: "Kwame Boateng", side: "P" },
+  { id: "mason-cruz-abrams", initials: "RO", name: "Rafael Ortega-Lane", side: "S" },
+  { id: "jack-dorney", initials: "HW", name: "Henry Whitlock", side: "B" },
+  { id: "alexander-grundy", initials: "OL", name: "Oskar Lindgren", side: "P" },
+  { id: "george-farkas", initials: "CR", name: "Callum Reid", side: "S" },
+  { id: "sam-gallaudet", initials: "JM", name: "Julien Moreau", side: "P" },
   // The demo account itself, so a seat can light up as "You" on Home.
   { id: "john-brown", initials: "JBn", name: "John Brown", side: "S" },
-  { id: "marco-gandola", initials: "MG", name: "Marco Gandola", side: "B" },
-  { id: "apostolos-lykomitros", initials: "AL", name: "Apostolos Lykomitros", side: "P" },
-  { id: "tyler-horler", initials: "TH", name: "Tyler Horler", side: "S" },
-  { id: "teddy-plimpton", initials: "TP", name: "Teddy Plimpton", side: "P" },
-  { id: "sam-davidson", initials: "SD", name: "Sam Davidson", side: "S" },
-  { id: "jordan-dykema", initials: "JDy", name: "Jordan Dykema", side: "B" },
+  { id: "marco-gandola", initials: "MR", name: "Matteo Rossi", side: "B" },
+  { id: "apostolos-lykomitros", initials: "NP", name: "Nikos Petrakis", side: "P" },
+  { id: "tyler-horler", initials: "DH", name: "Declan Hayes", side: "S" },
+  { id: "teddy-plimpton", initials: "APe", name: "Arthur Pennington", side: "P" },
+  { id: "sam-davidson", initials: "MO", name: "Miles Okafor", side: "S" },
+  { id: "jordan-dykema", initials: "LV", name: "Lars Van Dijk", side: "B" },
 
-  { id: "jack-hansen-knarhoi", initials: "JH", name: "Jack Hansen-Knarhoi", side: "P" },
-  { id: "owen-finnerty", initials: "OF", name: "Owen Finnerty", side: "S" },
-  { id: "marco-vicino", initials: "MV", name: "Marco Vicino", side: "P" },
-  { id: "pierce-lapham", initials: "PL", name: "Pierce Lapham", side: "S" },
-  { id: "julian-paul", initials: "JP", name: "Julian Paul", side: "B" },
-  { id: "ben-scott", initials: "BS", name: "Ben Scott", side: "P" },
-  { id: "sam-woodgate", initials: "SW", name: "Sam Woodgate", side: "S" },
-  { id: "mike-thomas", initials: "MT", name: "Mike Thomas", side: "P" },
-  { id: "joseph-baker", initials: "JB", name: "Joseph Baker", side: "S" },
-  { id: "adam-cech", initials: "AC", name: "Adam Cech", side: "B" },
-  { id: "alex-sanchez-fretz", initials: "AS", name: "Alex Sanchez Fretz", side: "P" },
-  { id: "leo-bessler", initials: "LB", name: "Leo Bessler", side: "S" },
-  { id: "joshua-brangan", initials: "JBr", name: "Joshua Brangan", side: "P" },
-  { id: "bob-rawlinson", initials: "BR", name: "Bob Rawlinson", side: "S" },
-  { id: "ben-schnalke", initials: "BSc", name: "Ben Schnalke", side: "B" },
-  { id: "jack-sulger", initials: "JS", name: "Jack Sulger", side: "P" },
-  { id: "elam-hughes", initials: "EH", name: "Elam Hughes", side: "S" },
-  { id: "owen-marcovitz", initials: "OM", name: "Owen Marcovitz", side: "P" },
+  { id: "jack-hansen-knarhoi", initials: "SH", name: "Soren Halvorsen", side: "P" },
+  { id: "owen-finnerty", initials: "TK", name: "Tomas Kral", side: "S" },
+  { id: "marco-vicino", initials: "EN", name: "Emil Novotny", side: "P" },
+  { id: "pierce-lapham", initials: "HC", name: "Hugo Castellan", side: "S" },
+  { id: "julian-paul", initials: "IM", name: "Isaac Mbeki", side: "B" },
+  { id: "ben-scott", initials: "CT", name: "Caleb Thornton", side: "P" },
+  { id: "sam-woodgate", initials: "JW", name: "Jonas Weber", side: "S" },
+  { id: "mike-thomas", initials: "AGa", name: "Aiden Gallagher", side: "P" },
+  { id: "joseph-baker", initials: "DR", name: "Daniel Reyes", side: "S" },
+  { id: "adam-cech", initials: "VH", name: "Viktor Hajek", side: "B" },
+  { id: "alex-sanchez-fretz", initials: "MA", name: "Mateo Alvarez", side: "P" },
+  { id: "leo-bessler", initials: "FO", name: "Finn O'Sullivan", side: "S" },
+  { id: "joshua-brangan", initials: "SA", name: "Samuel Adeyemi", side: "P" },
+  { id: "bob-rawlinson", initials: "PD", name: "Patrick Doyle", side: "S" },
+  { id: "ben-schnalke", initials: "AF", name: "Anton Fischer", side: "B" },
+  { id: "jack-sulger", initials: "RM", name: "Rohan Mehta", side: "P" },
+  { id: "elam-hughes", initials: "GS", name: "Gabriel Santos", side: "S" },
+  { id: "owen-marcovitz", initials: "LR", name: "Levi Rosenberg", side: "P" },
 
-  { id: "will-fowler", initials: "WF", name: "Will Fowler", side: "S" },
-  { id: "kevin-weldon", initials: "KW", name: "Kevin Weldon", side: "B" },
+  { id: "will-fowler", initials: "EC", name: "Ethan Caldwell", side: "S" },
+  { id: "kevin-weldon", initials: "TR", name: "Tariq Rahman", side: "B" },
 
-  { id: "leyth-sousou", initials: "LS", name: "Leyth Sousou", side: "P" },
+  { id: "leyth-sousou", initials: "YD", name: "Yusuf Demir", side: "P" },
 
-  { id: "cameron-beyki", initials: "CB", name: "Cameron Beyki", side: "S" },
-  { id: "max-morehead", initials: "MM", name: "Max Morehead", side: "P" },
+  { id: "cameron-beyki", initials: "SV", name: "Sebastian Voss", side: "S" },
+  { id: "max-morehead", initials: "NB", name: "Nathan Brooks", side: "P" },
 
-  { id: "george-burney", initials: "GB", name: "George Burney", side: "S" },
-  { id: "alp-karadogan", initials: "AK2", name: "Alp Karadogan", side: "B" },
-  { id: "kynan-tallec-botos", initials: "KT", name: "Kynan Tallec-Botos", side: "P" },
-  { id: "ryan-cornelius", initials: "RC", name: "Ryan Cornelius", side: "S" },
-  { id: "charles-richards", initials: "CR", name: "Charles Richards", side: "P" },
+  { id: "george-burney", initials: "KW", name: "Kieran Walsh", side: "S" },
+  { id: "alp-karadogan", initials: "AF2", name: "Amir Farahani", side: "B" },
+  { id: "kynan-tallec-botos", initials: "LP", name: "Luka Petrovic", side: "P" },
+  { id: "ryan-cornelius", initials: "BSo", name: "Ben Sorensen", side: "S" },
+  { id: "charles-richards", initials: "CN", name: "Charlie Nakamura", side: "P" },
 ];
 
 export const rosterById: Record<string, Athlete> = Object.fromEntries(

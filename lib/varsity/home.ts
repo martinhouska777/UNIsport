@@ -296,7 +296,7 @@ export function shellName(l: Lineup): string | null {
   return named;
 }
 
-/** "Cate Frerichs" → "Frerichs". A crew is known by a surname, not a full name. */
+/** "Maya Lindqvist" → "Lindqvist". A crew is known by a surname, not a full name. */
 const surname = (full: string) => full.trim().split(/\s+/).pop() || full;
 
 /*

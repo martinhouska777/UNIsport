@@ -2,7 +2,7 @@
 -- UNIsport — VARSITY DEMO DATA for screenshots (squad, plan, lineups, logs)
 -- ----------------------------------------------------------------------------
 -- WHAT THIS IS
---   Fills Varsity Mode so it can be photographed: the owner is put on a squad,
+--   Fills Varsity Mode so it can be photographed: the demo account is put on a squad,
 --   a PUBLISHED training block runs from five weeks ago to the Head of the
 --   Charles, every day in that window has AM/PM sessions, the water practices
 --   have published boat lineups, and the owner has five weeks of their own
@@ -52,19 +52,24 @@ create table public.demo_seed_week (
 alter table public.demo_seed_week enable row level security;  -- no policies: server-side only
 
 insert into public.demo_seed_week values
-  (1,'AM','erg',    'UT2', '3×25'' UT2'),
-  (1,'PM','weights', null, 'Main strength — squat, pull, press'),
-  (2,'AM','water',  'UT2', '70'' steady state'),
-  (2,'PM','erg',    'UT1', '3×15'' UT1, RP3s'),
-  (3,'AM','water',  'UT1', '4×12'' UT1'),
-  (3,'PM','flex',    null, '60 mins'),
-  (4,'AM','erg',   'hard', '8×500m, 1:30 rest'),
-  (4,'PM','weights', null, 'Power — cleans, jumps, core'),
-  (5,'AM','water',  'UT2', '4×20'' UT2'),
-  (5,'PM','off',     null, ''),
-  (6,'AM','water', 'hard', '3×5'' (1:50 at 72, 2k+2)'),
-  (0,'AM','water',  'UT2', '90'' UT2 row'),   -- Sunday long steady
-  (0,'PM','off',     null, '');
+  -- A REALISTIC WEEK (owner, 2026-09-15): "water 14k and erg 3×20, something
+  -- like that, and weights 3× a week". Four water days (Tue / Wed / Fri / Sat
+  -- mornings — the days the boat lineups below are published for), two ergs,
+  -- three lifts, one flex afternoon, Sunday off.
+  (1,'AM','erg',    'UT2',  '3×20'' UT2, r18–20'),
+  (1,'PM','weights', null,  'Main strength — squat, pull, press'),
+  (2,'AM','water',  'UT2',  '14k steady state'),
+  (2,'PM','off',     null,  ''),
+  (3,'AM','water',  'UT1',  '4×12'' UT1 at r24'),
+  (3,'PM','weights', null,  'Power — cleans, jumps, core'),
+  (4,'AM','erg',   'hard',  '8×500m, 1:30 rest'),
+  (4,'PM','flex',    null,  '45 mins'),
+  (5,'AM','water',  'UT2',  '14k steady state'),
+  (5,'PM','weights', null,  'Main strength — squat, pull, press'),
+  (6,'AM','water', 'hard',  '3×5'' at r30, 2k+2'),
+  (6,'PM','off',     null,  ''),
+  (0,'AM','off',     null,  ''),
+  (0,'PM','off',     null,  '');
 
 -- ---------------------------------------------------------------------------
 -- Everything else runs in one block so it can share the owner's id + dates.
@@ -223,7 +228,7 @@ begin
     from days
   ),
   sess as (
-    select s.d, s.doy, w.period, w.category, w.intensity, s.base || '-' || w.period as day_key
+    select s.d, s.doy, w.period, w.category, w.intensity, w.description, s.base || '-' || w.period as day_key
     from slots s
     join public.demo_seed_week w on w.dow = s.dow
     where w.category <> 'off'
@@ -233,27 +238,35 @@ begin
   select
     ('de11e000-0000-4000-8000-' || lpad(to_hex((row_number() over (order by d, period))::int), 12, '0'))::uuid,
     me, d, period, day_key, 'plan',
-    initcap(category) || coalesce(' · ' || intensity, ''),
+    -- The coach's own words, the way a real log carries them ("14k steady
+    -- state"), not "Water · UT2".
+    coalesce(nullif(description, ''), initcap(category)),
     category,
-    case category
-      when 'water'   then 70 + mod(doy, 4) * 5
-      when 'erg'     then 55 + mod(doy, 3) * 5
-      when 'weights' then 55
+    case
+      when category = 'water' and intensity = 'UT2'  then 68 + mod(doy, 4) * 3   -- 14k at ~2:25
+      when category = 'water' and intensity = 'UT1'  then 62 + mod(doy, 3) * 2
+      when category = 'water' and intensity = 'hard' then 55 + mod(doy, 3) * 2
+      when category = 'erg'   and intensity = 'UT2'  then 60                     -- 3×20'
+      when category = 'erg'   and intensity = 'hard' then 42 + mod(doy, 3) * 2   -- 8×500 with warm-up
+      when category = 'erg'                          then 55 + mod(doy, 3) * 5
+      when category = 'weights' then 55 + mod(doy, 2) * 5
       else 45
     end,
     case
-      when category = 'water' and intensity = 'UT2'  then 17500 + mod(doy, 7) * 250
-      when category = 'water' and intensity = 'UT1'  then 16200 + mod(doy, 6) * 200
-      when category = 'water' and intensity = 'hard' then 14000 + mod(doy, 5) * 300
-      when category = 'erg'   and intensity = 'UT2'  then 15000 + mod(doy, 6) * 200
+      when category = 'water' and intensity = 'UT2'  then 14000 + mod(doy, 5) * 250   -- the 14k, give or take
+      when category = 'water' and intensity = 'UT1'  then 12000 + mod(doy, 4) * 250
+      when category = 'water' and intensity = 'hard' then 11000 + mod(doy, 4) * 250
+      when category = 'erg'   and intensity = 'UT2'  then 15600 + mod(doy, 6) * 100   -- 3×20' at ~1:55
       when category = 'erg'   and intensity = 'UT1'  then 13600 + mod(doy, 5) * 200
-      when category = 'erg'   and intensity = 'hard' then 11000 + mod(doy, 4) * 250
+      when category = 'erg'   and intensity = 'hard' then 7000 + mod(doy, 3) * 200    -- 8×500 plus the warm-up
       else null
     end,
     case
-      when category in ('water','erg') and intensity = 'UT2'  then '2:0' || mod(doy, 5)
-      when category in ('water','erg') and intensity = 'UT1'  then '1:5' || (4 + mod(doy, 4))
-      when category in ('water','erg') and intensity = 'hard' then '1:4' || (2 + mod(doy, 3))
+      when category = 'erg'   and intensity = 'UT2'  then '1:5' || (4 + mod(doy, 4))
+      when category = 'erg'   and intensity = 'hard' then '1:3' || (6 + mod(doy, 4))
+      when category = 'water' and intensity = 'UT2'  then '2:2' || (2 + mod(doy, 5))
+      when category = 'water' and intensity = 'UT1'  then '2:0' || (6 + mod(doy, 4))
+      when category = 'water' and intensity = 'hard' then '1:5' || (0 + mod(doy, 4))
       else null
     end,
     ''
