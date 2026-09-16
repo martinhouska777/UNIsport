@@ -1,0 +1,77 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>UNIsport — 10 logo concepts</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap">
+<style>
+  :root { --n: #2f3b52; --b: #1f32c1; --page: #eef1f5; --mute: #7e8488; --hair: #dfe4ea; }
+  html, body { margin: 0; background: var(--page); font-family: "Plus Jakarta Sans", "Segoe UI", system-ui, sans-serif; }
+  #board { width: 1160px; box-sizing: border-box; padding: 48px 48px 40px; display: flex; flex-direction: column; gap: 28px; }
+  .grid { display: grid; grid-template-columns: repeat(5, 200px); gap: 16px; }
+  .tile { position: relative; width: 200px; height: 200px; background: #fff; border-radius: 6px; display: flex; align-items: center; justify-content: center; }
+  .tile .num { position: absolute; top: 12px; left: 14px; font-size: 13px; font-weight: 600; color: var(--mute); letter-spacing: 0.02em; }
+  .tile svg { width: 132px; height: 132px; display: block; }
+  svg { fill: none; stroke: none; stroke-width: 14; stroke-linecap: round; stroke-linejoin: round; }
+  svg .sa { stroke: var(--n); } svg .sb { stroke: var(--b); }
+  svg .fa { fill: var(--n); }   svg .fb { fill: var(--b); }
+  svg .fw { fill: #fff; }
+  /* single colour */
+  .mono svg .sb { stroke: var(--n); } .mono svg .fb { fill: var(--n); }
+  /* on navy */
+  .onnavy svg .sa, .onnavy svg .sb { stroke: #fff; } .onnavy svg .fa, .onnavy svg .fb { fill: #fff; } .onnavy svg .fw { fill: var(--n); }
+  .strip { display: grid; grid-template-columns: repeat(5, 200px); gap: 16px; }
+  .cell { height: 72px; background: #fff; border-radius: 6px; display: flex; align-items: center; justify-content: center; gap: 22px; }
+  .cell .num { font-size: 12px; font-weight: 600; color: var(--mute); width: 14px; }
+  .cell .mono svg { width: 40px; height: 40px; display: block; }
+  .cell .icon { width: 26px; height: 26px; border-radius: 7px; background: var(--n); display: flex; align-items: center; justify-content: center; }
+  .cell .icon svg { width: 20px; height: 20px; display: block; }
+  .cell .icon.sm { width: 16px; height: 16px; border-radius: 4px; }
+  .cell .icon.sm svg { width: 12px; height: 12px; }
+  .foot { display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--hair); padding-top: 22px; }
+  .lock { display: flex; align-items: center; gap: 12px; }
+  .lock svg { width: 40px; height: 40px; display: block; }
+  .word { font-family: "Instrument Serif", Georgia, serif; font-style: italic; font-size: 38px; line-height: 1; letter-spacing: -0.02em; color: #141618; }
+  .word b { font-weight: 400; color: var(--b); }
+  .cap { font-size: 12px; color: var(--mute); }
+</style>
+</head>
+<body>
+<div id="board">
+  <div class="grid" id="grid"></div>
+  <div class="strip" id="strip"></div>
+  <div class="foot">
+    <div class="lock" id="lock"></div>
+    <div class="cap">Bottom row: each mark in one colour, and as an app icon at 26 px and 16 px.</div>
+  </div>
+</div>
+<script>
+const M = [
+  // 1 Two meet, one letter
+  `<path class="sa" d="M27 16 V54 Q27 82 50 84"/><path class="sb" d="M73 16 V54 Q73 82 50 84"/>`,
+  // 2 Two heads, one U
+  `<path class="sa" d="M20 36 V50 Q20 68 40 68 H60 Q80 68 80 50 V36"/><circle class="fb" cx="39" cy="43" r="9.5"/><circle class="fb" cx="61" cy="43" r="9.5"/>`,
+  // 3 The plan
+  `<path class="fa" d="M24 14 H34 Q44 14 44 24 V58 C44 70 46 76 50 76 L50 92 L32 68 H24 Q12 68 12 56 V26 Q12 14 24 14 Z"/><path class="fb" d="M76 14 H66 Q56 14 56 24 V58 C56 70 54 76 50 76 L50 92 L68 68 H76 Q88 68 88 56 V26 Q88 14 76 14 Z"/>`,
+  // 4 High five
+  `<path class="fa" d="M26 50 H36 Q44 50 44 58 V70 C44 78 46 82 50 82 V88 H26 Q14 88 14 76 V62 Q14 50 26 50 Z"/><path class="sa" style="stroke-width:7" d="M19 56 V24 M29 56 V18 M39 56 L37 26"/><path class="fb" d="M74 50 H64 Q56 50 56 58 V70 C56 78 54 82 50 82 V88 H74 Q86 88 86 76 V62 Q86 50 74 50 Z"/><path class="sb" style="stroke-width:7" d="M81 56 V24 M71 56 V18 M61 56 L63 26"/>`,
+  // 5 Matched (two U links)
+  `<path class="sb" d="M46 76 V50 Q46 30 60 30 Q74 30 74 50 V76"/><path class="sa" d="M26 24 V50 Q26 70 40 70 Q54 70 54 50 V24"/><path class="sb" d="M46 58 V70"/>`,
+  // 6 Same place, same time
+  `<g transform="translate(36.5 44) rotate(18)"><path class="fa" d="M0 30 C-4 20 -14 12 -14 0 A14 14 0 1 1 14 0 C14 12 4 20 0 30 Z"/><circle class="fw" r="5.5"/></g><g transform="translate(63.5 44) rotate(-18)"><path class="fb" d="M0 30 C-4 20 -14 12 -14 0 A14 14 0 1 1 14 0 C14 12 4 20 0 30 Z"/><circle class="fw" r="5.5"/></g>`,
+  // 7 Two on one bench
+  `<path class="sa" d="M14 66 H86 M24 66 V82 M76 66 V82"/><rect class="fa" x="26" y="26" width="20" height="34" rx="10"/><rect class="fb" x="54" y="26" width="20" height="34" rx="10"/>`,
+  // 8 The gate
+  `<path class="sa" d="M18 88 V46 Q18 14 50 14 Q82 14 82 46 V88"/><circle class="fb" cx="40" cy="52" r="6.5"/><circle class="fb" cx="60" cy="52" r="6.5"/><path class="sb" style="stroke-width:12" d="M40 68 V78 M60 68 V78"/>`,
+  // 9 Half and half
+  `<path class="sa" d="M50 82 A32 32 0 0 1 40 19.6"/><path class="sb" d="M50 82 A32 32 0 0 0 60 19.6"/>`,
+  // 10 Fist bump
+  `<path class="fa" d="M22 21 H29 Q43 21 43 35 V55 C43 64 45 71 50 71 V79 H22 Q8 79 8 65 V35 Q8 21 22 21 Z"/><path class="fb" d="M78 21 H71 Q57 21 57 35 V55 C57 64 55 71 50 71 V79 H78 Q92 79 92 65 V35 Q92 21 78 21 Z"/>`,
+];
+const svg = (i) => `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">${M[i]}</svg>`;
+document.getElementById('grid').innerHTML = M.map((_, i) => `<div class="tile"><span class="num">${i+1}</span>${svg(i)}</div>`).join('');
+document.getElementById('strip').innerHTML = M.map((_, i) => `<div class="cell"><span class="num">${i+1}</span><span class="mono">${svg(i)}</span><span class="icon onnavy">${svg(i)}</span><span class="icon sm onnavy">${svg(i)}</span></div>`).join('');
+document.getElementById('lock').innerHTML = `${svg(0)}<span class="word">UNI<b>sport</b></span>`;
+</script>
+</body>
+</html>
