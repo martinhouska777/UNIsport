@@ -28,6 +28,7 @@ import { getFollowStatus, followUser, unfollowUser } from "@/lib/supabase/follow
 import { weekSchedule, slotLabel } from "@/lib/schedule";
 import { IconArrowLeft, IconUser, IconCheck, IconChevronDown } from "@/components/icons";
 import PhotoGallery from "@/components/profile/PhotoGallery";
+import ProfileBadge from "@/components/ProfileBadge";
 
 // useSearchParams() requires a Suspense boundary or the production build fails
 // ("Missing Suspense boundary with useSearchParams"), so the page wraps the
@@ -225,11 +226,7 @@ function PersonProfile() {
                 <span className="text-[17px] font-medium text-text">
                   {user.name || "Member"}
                 </span>
-                {user.badges.varsity && (
-                  <span className="rounded bg-accent px-1.5 py-0.5 text-[8px] font-medium tracking-wide text-background">
-                    VARSITY
-                  </span>
-                )}
+                {user.badges.varsity && <ProfileBadge kind="varsity" />}
               </div>
 
               {(user.residence || user.classYear) && (

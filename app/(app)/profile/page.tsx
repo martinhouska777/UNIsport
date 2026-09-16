@@ -23,6 +23,8 @@ import UpcomingSessions from "@/components/profile/UpcomingSessions";
 import PartnerRequests from "@/components/profile/PartnerRequests";
 import LeaderboardStrip from "@/components/leaderboards/LeaderboardStrip";
 import MemoriesStrip from "@/components/profile/MemoriesStrip";
+import ProfileBadge from "@/components/ProfileBadge";
+import PencilSticker from "@/components/PencilSticker";
 import PersonalRecords from "@/components/profile/PersonalRecords";
 import PhotoGrid from "@/components/profile/PhotoGrid";
 import AboutYouSheet from "@/components/profile/AboutYouSheet";
@@ -515,16 +517,10 @@ export default function ProfilePage() {
             profileFromOnboarding. */}
         {(isMember || user.badges.mentor) && (
           <div className="flex items-center gap-1.5">
-            {isMember && (
-              <span className="rounded bg-accent px-1.5 py-0.5 text-[8px] font-medium tracking-wide text-background">
-                VARSITY
-              </span>
-            )}
-            {user.badges.mentor && (
-              <span className="rounded border border-success bg-success-tint px-1.5 py-0.5 text-[8px] font-medium tracking-wide text-success">
-                MENTOR
-              </span>
-            )}
+            {/* Yellow and green with black letters, a size up (owner,
+                2026-09-16) — colours in lib/badges.ts. */}
+            {isMember && <ProfileBadge kind="varsity" />}
+            {user.badges.mentor && <ProfileBadge kind="mentor" />}
           </div>
         )}
       </div>
@@ -679,9 +675,10 @@ export default function ProfilePage() {
               /* Just the pencil, in a circle — the classic edit button — a
                  size up from the old "✎ Edit" text, and it presses in when
                  tapped (owner, 2026-09-16). */
-              className="tap44 flex h-8 w-8 items-center justify-center rounded-full border border-primary-line bg-primary-tint text-primary transition-transform duration-100 active:scale-90 motion-reduce:transition-none"
+              className="tap44 press-icon flex h-9 w-9 items-center justify-center rounded-full border border-border bg-surface-2"
             >
-              <IconPencil size={15} />
+              {/* A real pencil sticker in the school colour (owner, 2026-09-16). */}
+              <PencilSticker size={24} />
             </button>
           </div>
 
@@ -690,7 +687,7 @@ export default function ProfilePage() {
               {user.interests.map((i) => (
                 <span
                   key={i}
-                  className="rounded-full border border-accent bg-accent-tint px-2.5 py-1 text-[11px] text-accent"
+                  className="rounded-full border border-primary-line bg-primary-tint px-2.5 py-1 text-[11px] text-text"
                 >
                   {i}
                 </span>
@@ -705,7 +702,7 @@ export default function ProfilePage() {
                 {user.languages.map((l) => (
                   <span
                     key={l}
-                    className="rounded-full border border-primary-line bg-primary-tint px-2.5 py-1 text-[11px] text-primary"
+                    className="rounded-full border border-primary-line bg-primary-tint px-2.5 py-1 text-[11px] text-text"
                   >
                     {l}
                   </span>
@@ -716,13 +713,13 @@ export default function ProfilePage() {
 
           {/* WHAT YOU STUDY — a chip, the same pill as Interests and Languages
               above it, rather than the label-and-value row it used to be.
-              Languages and Concentration share the school colour; Interests
-              keep the gold (owner, 2026-09-16: colour over plain white). */}
+              Interests, Languages and Concentration all share the school-colour
+              tint with dark text (owner, 2026-09-16). */}
           {user.concentration && (
             <div className="mt-2.5">
               <div className="mb-1.5 text-[11px] text-muted">Concentration</div>
               <div className="flex flex-wrap gap-1.5">
-                <span className="rounded-full border border-primary-line bg-primary-tint px-2.5 py-1 text-[11px] text-primary">
+                <span className="rounded-full border border-primary-line bg-primary-tint px-2.5 py-1 text-[11px] text-text">
                   {user.concentration}
                 </span>
               </div>
