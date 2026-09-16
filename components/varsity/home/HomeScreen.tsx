@@ -42,7 +42,6 @@ import {
   type WeekView,
   type TodaySession,
   type SessionStatus,
-  type SessionKind,
   type Lineup,
 } from "@/lib/varsity/home";
 import {
@@ -137,32 +136,6 @@ function RaceLine({ r }: { r: RaceData }) {
 // Two sessions take a half each. (For half a day the blocks filled the whole
 // cell whatever the time was — so one session looked like a day of training.)
 // The "AM"/"PM" text stays gone: WHERE the block sits is what says when.
-/*
-  LOGGED OR NOT, ON EVERY CALENDAR BLOCK (owner, 2026-09-15): "make like 2 red
-  dots for each workout not logged and log workout like green". The dot sits on
-  the SESSION, not on the day, so a morning that was logged and an evening that
-  wasn't read as one of each instead of averaging into a single colour.
-    green  — logged
-    red    — the day has gone and it never was
-    nothing — still ahead of you (today's evening session is not a failure), and
-             nothing on a rest day either: "off" is a slot in the plan, not a
-             session anyone owes.
-  The dot sits inside a 2px surface-coloured ring, because it lands on top of
-  seven different workout colours — a red dot on a red "Hard" block or a green
-  one on a green UT2 block is invisible without it.
-*/
-function StatusDot({ status, kind }: { status: SessionStatus; kind: SessionKind }) {
-  if (kind === "off" || (status !== "done" && status !== "missed")) return null;
-  return (
-    <span
-      aria-hidden
-      className={`absolute right-[4px] top-[4px] h-1.5 w-1.5 rounded-full ring-2 ring-surface ${
-        status === "done" ? "bg-success" : "bg-danger"
-      }`}
-    />
-  );
-}
-
 const halves = (d: WeekDay): [DaySession | undefined, DaySession | undefined] => [
   // Anything not explicitly PM belongs to the morning half — the same rule
   // daySessionToCard uses for a whole-day entry.
@@ -233,14 +206,13 @@ function WeekFit({
                 */
                 <div
                   key={j}
-                  className={`relative flex min-h-0 flex-col items-center justify-center overflow-hidden px-0.5 py-1 text-center ${
+                  className={`flex min-h-0 flex-col items-center justify-center overflow-hidden px-0.5 py-1 text-center ${
                     j === 1 && d.sessions.length > 1 ? "border-t border-border" : ""
                   }`}
                   style={s ? kindBlock(s.kind) : undefined}
                 >
                   {s && (
                     <>
-                      <StatusDot status={s.status} kind={s.kind} />
                       <span className="block max-w-full truncate text-[9px] font-semibold leading-tight">
                         {s.name}
                       </span>
@@ -441,12 +413,11 @@ function MonthOverlay({
                   {(day ? halves(day) : [undefined, undefined]).map((s, j) => (
                     <span
                       key={j}
-                      className="relative flex flex-col items-center justify-center px-0.5 py-0.5 text-center"
+                      className="flex flex-col items-center justify-center px-0.5 py-0.5 text-center"
                       style={s ? kindBlock(s.kind) : undefined}
                     >
                       {s && (
                         <>
-                          <StatusDot status={s.status} kind={s.kind} />
                           <span className="block max-w-full text-[9px] font-semibold leading-[1.15] [overflow-wrap:anywhere]">
                             {s.name}
                           </span>
