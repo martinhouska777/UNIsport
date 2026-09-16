@@ -53,7 +53,7 @@ export default function CoachSection({ solo = false, teaser = false }: { solo?: 
     <section
       id="coaches"
       {...(teaser ? {} : { "data-phone-screens": true })}
-      className={`relative z-[1] scroll-mt-20 px-6 sm:px-8 ${teaser ? "pb-24" : "pb-28"} ${solo ? "l-glow-coach bg-l-surface-coach pt-10 sm:pt-14" : "border-t border-l-line pt-24"}`}
+      className={`relative z-[1] scroll-mt-20 px-6 sm:px-8 ${teaser ? "pb-24" : "pb-28"} ${solo ? "pt-10 sm:pt-14" : "border-t border-l-line pt-24"}`}
     >
       <div className="mx-auto max-w-[1160px]">
         {/* ── The opener ── */}
