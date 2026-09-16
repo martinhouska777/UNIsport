@@ -189,6 +189,10 @@ export type DaySession = {
   */
   name: string; // the category's own name, "Water" / "Erg" / "Weights" / "Off" / "Flex"
   detail?: string; // the coach's description, when they typed one
+  /* THE WEEK STRIP'S SECOND LINE (owner, 2026-09-16): not the coach's sentence,
+     which never fit a 35px cell, but the short of it — "14k UT2", "UT1",
+     "45 min", or nothing at all for Weights. Built by shortTag() in athleteHome. */
+  short?: string;
   type?: string; // category · intensity, e.g. "Water · UT2" — shown in the day detail
   kind: SessionKind;
   note?: string; // coach note for this session

@@ -17,12 +17,14 @@
 import {
   buildWeeks,
   categoryMeta,
+  intensityMeta,
   parseDate,
   sessionKey,
   sessionLabel,
   toISO,
   periods,
   type Category,
+  type Intensity,
   type Period,
   type Session,
   type Block,
@@ -71,9 +73,29 @@ function categoryLabel(s: Session): string {
   return s.intensity ? `${s.intensity} ${cat}` : cat;
 }
 
+/*
+  THE SHORT OF A SESSION, for a week-strip cell under its name: the distance
+  when the coach wrote one ("14k", "12.5k") and the intensity ("UT2"), or for a
+  session with no intensity the minutes ("45 min"). Weights, Off and anything
+  else with neither prints nothing — "Weights" alone is the whole story.
+*/
+export function shortTag(s: Session): string {
+  const d = s.description;
+  // Only a distance that LEADS ("14k steady"): "3×5' at r30, 2k+2" is a piece, not the outing.
+  const km = d.match(/^\s*(\d+(?:[.,]\d+)?)\s*km?\b/i);
+  const intensity = s.intensity
+    ? (intensityMeta[s.intensity as Intensity]?.label ?? s.intensity)
+    : "";
+  if (intensity) return [km ? `${km[1]}k` : "", intensity].filter(Boolean).join(" ");
+  if (s.category === "weights" || s.category === "off") return "";
+  const min = d.match(/(\d+)\s*(?:'|min)/i);
+  if (km) return `${km[1]}k`;
+  return min ? `${min[1]} min` : "";
+}
+
 // What shows in a calendar cell: the coach's actual workout ("3×25' UT2") when
 // there is one, otherwise the category name. Exported so the Calendar tab
-// prints a planned day with exactly the words Home's week strip uses.
+// prints a planned day the way the coach wrote it.
 export function cellLabel(s: Session): string {
   return s.description.trim() || categoryLabel(s);
 }
@@ -275,6 +297,7 @@ export function buildAthleteHome(
               // A sport's own type ("Pool") has no entry and is its own name.
               name: categoryMeta[s.category as Category]?.label ?? s.category,
               detail: s.description.trim() || undefined,
+              short: shortTag(s),
               type: sessionLabel(s),
               kind: kindOf(s),
               note: s.note || undefined,

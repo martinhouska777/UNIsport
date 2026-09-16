@@ -216,9 +216,9 @@ function WeekFit({
                       <span className="block max-w-full truncate text-[9px] font-semibold leading-tight">
                         {s.name}
                       </span>
-                      {s.detail && s.detail !== s.name && (
+                      {s.short && (
                         <span className="mt-px line-clamp-2 max-w-full break-words text-[9px] leading-tight opacity-80">
-                          {s.detail}
+                          {s.short}
                         </span>
                       )}
                     </>
@@ -877,10 +877,14 @@ function DayHeader({
     <div className="flex items-center gap-2 px-4 pb-2 pt-4">
       {arrow(-1, canPrev)}
       <div className="flex min-w-0 flex-1 flex-col items-center gap-1">
-        <SectionLabel className="truncate">{title}</SectionLabel>
-        {(right || onToday) && (
+        {/* ALL BOATS BESIDE THE DAY (owner, 2026-09-16): "today, and on the
+            right of it all boats for the day" — one line, not stacked. */}
+        <div className="flex min-w-0 items-center gap-2.5">
+          <SectionLabel className="truncate">{title}</SectionLabel>
+          {right}
+        </div>
+        {onToday && (
           <div className="flex items-center gap-3">
-            {right}
             {onToday && (
               <button
                 onClick={onToday}
@@ -1276,7 +1280,9 @@ function HomeScreenInner() {
               href={allBoatsHref}
               className="flex items-center gap-0.5 text-[11px] font-semibold text-primary"
             >
-              All boats · {lineups.length} <IconChevronRight size={12} />
+              All boats ·{" "}
+              {(["AM", "PM"] as const).filter((p) => lineups.some((l) => l.periodKey === p)).join(" / ")}{" "}
+              <IconChevronRight size={12} />
             </Link>
           ) : undefined
         }
