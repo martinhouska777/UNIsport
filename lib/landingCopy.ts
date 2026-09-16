@@ -338,7 +338,9 @@ export const studentStory: Beat[] = [
     kicker: "03 · Profile",
     head: "Track your statistics. See how you do in the leaderboards.",
     sub: "Your profile counts the sessions you logged and the partners you trained with. Take part in the college leaderboards and see how you rank on campus, how your house and your year are doing, and who has trained with the most partners. Every session you log marks its day in the session calendar, and every photo you took is stored in Memories.",
-    shot: "tall-profile.webp",
+    /* A plain phone screen, not a tall strip cut under Memories — "just how
+       it is normally on phone screen so it looks realistic" (owner, 2026-09-16). */
+    shot: "05-profile.webp",
     ann: [],
   },
   {
@@ -404,9 +406,8 @@ export const interlude = {
   steps: [
     { n: "01", icon: "plan", word: "Training plan" },
     { n: "02", icon: "logplan", word: "Log" },
-    { n: "03", icon: "calendar", word: "Calendar" },
-    { n: "04", icon: "leaderboard", word: "Workouts" },
-    { n: "05", icon: "squad", word: "Statistics" },
+    { n: "03", icon: "leaderboard", word: "Workouts" },
+    { n: "04", icon: "squad", word: "Statistics" },
   ] as OpeningStep[],
   /* Same door as the student card's: the varsity feature block beside Blade
      Lock, which is where the overview lives — once. */
@@ -491,22 +492,18 @@ export const varsityStory: Beat[] = [
        in a few taps"). All three routes are on the capture: a Log button per
        prescribed session, the Scan C2 / RP3 monitor button, Add extra session. */
     head: "Log a session in a few taps.",
-    sub: "Log your workout straight from your training plan. Take a picture of your erg screen to extract your numbers instantly, or add extra workouts.",
-    shot: "13-varsity-log-list.webp",
-    ann: [],
-  },
-  {
-    id: "V3",
-    kicker: "03 · Calendar",
-    /* Sub dictated 2026-09-02. */
-    head: "Look back on your whole season.",
-    sub: "Each workout lands in the calendar directly from the log. Tap a day to see what you did and track your consistency to the plan along with your extra workouts.",
-    shot: "14-varsity-calendar.webp",
+    /* LOG + CALENDAR ARE ONE CHAPTER (owner, 2026-09-16: "the log tab has 3/4
+       of screen so I want to cut it with the calendar in background, this will
+       be one, two in one"). The capture is the (+) log sheet risen over the
+       Calendar tab; the old V3 sub (dictated 2026-09-02) follows the log lines
+       word for word. */
+    sub: "Log your workout straight from your training plan. Take a picture of your erg screen to extract your numbers instantly, or add extra workouts. Each workout lands in the calendar directly from the log. Tap a day to see what you did and track your consistency to the plan along with your extra workouts.",
+    shot: "13-varsity-log-sheet.webp",
     ann: [],
   },
   {
     id: "V4",
-    kicker: "04 · Workouts",
+    kicker: "03 · Workouts",
     /* Both lines the owner's, 2026-09-06 and 2026-09-02. The capture is
        DRIVEN, not a URL: Team → Workouts → tap the 2k test.
        scripts/landing/capture-light.mjs --only=15-varsity-board re-shoots it. */
@@ -517,7 +514,7 @@ export const varsityStory: Beat[] = [
   },
   {
     id: "V5",
-    kicker: "05 · Statistics",
+    kicker: "04 · Statistics",
     /* Sub is the owner's edit, 2026-09-06. The capture is the full-screen
        graph (Profile → the expand button on the stats card), which is the
        screen the owner sent on 2026-09-15 — not the profile card. */

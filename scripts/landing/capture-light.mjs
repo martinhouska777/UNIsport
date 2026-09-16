@@ -19,11 +19,17 @@
 // dark mode that folder holds stand-ins from dark-placeholders.mjs.
 //
 // Frames written:
-//   stills  01-gyms, 02-match, 03-why-you-match (Ryan), 04-plan-a-session,
-//           13-varsity-log-list, 14-varsity-calendar (July, two months back),
-//           15-varsity-board (driven: Team → Workouts → tap),
+//   stills  01-gyms, 02-match, 03-why-you-match (Ryan), 04-plan-a-session (Arjun),
+//           05-profile (the Profile tab as a plain phone screen — owner 2026-09-16,
+//           "don't cut under Memories"), 13-varsity-log-list,
+//           13-varsity-log-sheet (the (+) log sheet risen over the Calendar tab —
+//           Log + Calendar in ONE picture), 14-varsity-calendar (July, two months back),
+//           15-varsity-board (driven: Team → Workouts → tap the 2k test → All stats),
 //           16-varsity-stats (driven: Profile → the graph's full-screen button)
 //   strips  tall-logsheet, tall-profile, tall-vhome, tall-vprofile
+//
+// The nine the landing page rides today (2026-09-16):
+//   --only=01-gyms,02-match,04-plan-a-session,05-profile,tall-vhome,13-varsity-log-sheet,15-varsity-board,16-varsity-stats
 import puppeteer from "puppeteer-core";
 import fs from "fs";
 import sharp from "sharp";
@@ -136,12 +142,14 @@ if (wants("04-plan-a-session")) {
 await page.goto(BASE + "/messages", { waitUntil: "networkidle2", timeout: 45000 });
 await wait(3000);
 const thread = await page.evaluate(() => {
+  // The demo chat partner is Arjun Mehta since f861585 (2026-09-16); the
+  // thread carries 14 messages and an open plan card.
   const el = [...document.querySelectorAll("a,button,[role=button]")].find((e) =>
-    /ryan o'neill/i.test(e.textContent));
+    /arjun mehta/i.test(e.textContent));
   if (el) { el.click(); return true; }
   return false;
 });
-if (!thread) throw new Error("no Ryan thread on the Messages list");
+if (!thread) throw new Error("no Arjun Mehta thread on the Messages list");
 await wait(2500);
 await still("04-plan-a-session");
 }
@@ -175,6 +183,17 @@ if (!edited) throw new Error("could not open the log sheet");
 await tall(2000);
 await wait(1600);
 await page.screenshot({ path: "cap-logsheet-tall.png" });
+}
+
+/* ── the profile, as a plain phone screen ───────────────────────────────── */
+// Owner, 2026-09-16: "don't cut under Memories, just how it is normally on a
+// phone screen so it looks realistic". The tall strip below is kept for the
+// day a pan is wanted again; the page rides this still.
+if (wants("05-profile")) {
+  await phone();
+  await page.goto(BASE + "/profile", { waitUntil: "networkidle2", timeout: 45000 });
+  await wait(3500);
+  await still("05-profile");
 }
 
 /* ── the profile strip, cut under the calendar ──────────────────────────── */
@@ -216,6 +235,31 @@ if (wants("13-varsity-log-list")) {
   await page.goto(BASE + "/varsity/log", { waitUntil: "networkidle2", timeout: 45000 });
   await wait(3200);
   await still("13-varsity-log-list");
+}
+
+/*
+  LOG + CALENDAR IN ONE PICTURE (owner, 2026-09-16). The (+) in the middle of
+  the varsity bar opens the log as a sheet that stops at three quarters of the
+  screen (components/varsity/log/LogSheet.tsx), so shot on the Calendar tab the
+  top quarter still shows the calendar behind it. The button is a plain
+  onClick, so element.click() is enough; the sheet is verified by the "Log a
+  session" header LogScreen prints.
+*/
+if (wants("13-varsity-log-sheet")) {
+  await phone();
+  await page.goto(BASE + "/varsity/calendar", { waitUntil: "networkidle2", timeout: 45000 });
+  await wait(3500);
+  const pressed = await page.evaluate(() => {
+    const btn = document.querySelector('button[aria-label="Log a session"]');
+    if (!btn) return false;
+    btn.click();
+    return true;
+  });
+  if (!pressed) throw new Error("no (+) Log a session button on the varsity bar");
+  await wait(2500);
+  const open = await page.evaluate(() => /log a session/i.test(document.body.innerText));
+  if (!open) throw new Error("the log sheet did not open over the calendar");
+  await still("13-varsity-log-sheet");
 }
 
 /*
@@ -278,6 +322,19 @@ if (wants("15-varsity-board")) {
   // The open sheet is the one place that says "Squad avg" / "All stats".
   const open = await page.evaluate(() => /squad avg|all stats/i.test(document.body.innerText.slice(0, 6000)));
   if (!open) throw new Error("the board sheet did not open");
+  // Owner, 2026-09-16: the board "with All stats opened on a 2k" — the full
+  // table (Time, Split, Watts, Rate, W/kg, Weight), not the list. The
+  // List / All stats switch is a plain onClick (WorkoutBoard.tsx).
+  const table = await page.evaluate(() => {
+    const b = [...document.querySelectorAll("button")].find((x) => /^all stats$/i.test(x.textContent.trim()));
+    if (!b) return false;
+    b.click();
+    return true;
+  });
+  if (!table) throw new Error("no 'All stats' switch on the board");
+  await wait(1800);
+  const hasTable = await page.evaluate(() => /watts/i.test(document.body.innerText) && /w\/kg/i.test(document.body.innerText));
+  if (!hasTable) throw new Error("the All stats table did not appear");
   await still("15-varsity-board");
 }
 
@@ -304,12 +361,18 @@ if (wants("16-varsity-stats")) {
   const open = await page.evaluate(() => !!document.querySelector('button[aria-label="Close statistics"]'));
   if (!open) throw new Error("the statistics screen did not open");
   /*
-    The default window is the last two weeks, and the demo account trained in
-    JULY, so that graph is one spike on a flat line. The owner's screenshot
-    (2026-09-15) is "20 Jul – 28 Jul · day by day": the 3-month window, then a
-    drag across the late-July weeks, which the screen zooms into. Same moves
-    here: the range menu → "3 months", then a drag on the plot.
+    The default window is the last two weeks. Until 2026-09-16 the demo account
+    had trained only in JULY, so that graph was one spike on a flat line and the
+    script went to the 3-month window and dragged across late July. The seed
+    now runs daily from August up to today, so the default two weeks IS the
+    picture; the July moves are kept behind --july for the record.
   */
+  if (!process.argv.includes("--july")) {
+    await wait(1200);
+    const sub = await page.evaluate(() => document.body.innerText.match(/\d+ \w{3} – \d+ \w{3}.*/)?.[0]);
+    console.log("stats window:", sub);
+    await still("16-varsity-stats");
+  } else {
   // Plain onClick handlers (components/varsity/profile/Dropdown.tsx), so an
   // element click is enough here — a touch tap toggled the menu twice.
   const opened = await page.evaluate(() => {
@@ -347,6 +410,7 @@ if (wants("16-varsity-stats")) {
   const sub = await page.evaluate(() => document.body.innerText.match(/\d+ \w{3} – \d+ \w{3} · .*/)?.[0]);
   console.log("stats window:", sub);
   await still("16-varsity-stats");
+  }
 }
 
 if (wants("tall-vprofile")) {

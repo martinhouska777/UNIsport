@@ -54,7 +54,8 @@ export const motion: Record<string, BeatMotion> = {
   // Over to the Profile tab (4th of 4 in the capsule), then the whole sheet
   // scrolls: name and counts, the leaderboard strip, the session calendar,
   // Memories. hold 0.2: the top is read before the pan starts.
-  S3: { pan: [0, 1], hold: 0.2, side: "left", enter: "tab", tap: [87.5, 95.5] },
+  // A plain phone screen since 2026-09-16 (no tall strip, so no pan).
+  S3: { side: "left", enter: "tab", tap: [87.5, 95.5] },
   // ...and back to the Gyms tab (1st of 4), which the Campus Colours closer
   // then carries on in eight schools' colours.
   S4: { side: "left", enter: "tab", tap: [12.5, 95.5] },
@@ -63,12 +64,12 @@ export const motion: Record<string, BeatMotion> = {
   // ONE chapter pans the whole Home screen: plan, lineup, race bar, coach's
   // note. `to` past 1: it reaches the bottom before the chapter ends and rests.
   V1: { pan: [0, 1.2], hold: 0.3 },
+  // The (+) in the middle of the bar; the log sheet rises to three quarters
+  // over the Calendar tab, which is exactly what the capture shows.
   V2: { side: "left", enter: "sheet", tap: [50, 92.7] },
-  // Logged a workout, so over to the Calendar tab, where it just landed.
-  V3: { side: "left", enter: "tab", tap: [30.8, 94] },
-  // The Workouts board really is a sheet you pull up (Team → Workouts → tap a
-  // row): the ring presses "Team" on the calendar's tab bar, then it rises.
-  V4: { side: "left", enter: "sheet", tap: [69.1, 93.2] },
+  // The Workouts board (Team → Workouts → 2k test → All stats). The sheet
+  // before it covers the tab bar, so no ring to press: a plain drill-in.
+  V4: { side: "left", enter: "push" },
   // ...and the statistics arrive the way a sheet leaves: the ring presses the
   // board's own close X (top right of that capture) and the sheet drops away.
   V5: { side: "left", enter: "dismiss", tap: [92.4, 20.3] },
@@ -82,12 +83,14 @@ export const shotSize: Record<string, { w: number; h: number }> = {
   "02-match.webp": { w: 900, h: 1480 },
   "03-why-you-match.webp": { w: 900, h: 1480 },
   "04-plan-a-session.webp": { w: 900, h: 1480 },
+  "05-profile.webp": { w: 900, h: 1480 },
   "13-varsity-log-list.webp": { w: 900, h: 1480 },
+  "13-varsity-log-sheet.webp": { w: 900, h: 1480 },
   "14-varsity-calendar.webp": { w: 900, h: 1480 },
   "15-varsity-board.webp": { w: 900, h: 1480 },
   "16-varsity-stats.webp": { w: 900, h: 1480 },
   "tall-logsheet.webp": { w: 900, h: 4417 },
   "tall-profile.webp": { w: 900, h: 2176 },
-  "tall-vhome.webp": { w: 900, h: 3098 },
+  "tall-vhome.webp": { w: 900, h: 1938 },
   "tall-vprofile.webp": { w: 900, h: 2502 },
 };
