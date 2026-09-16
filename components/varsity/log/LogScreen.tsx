@@ -724,7 +724,25 @@ function ExtraRow({ log, onEdit }: { log: LogEntry; onEdit: () => void }) {
 }
 
 /* ─────────────────────────  day picker  ───────────────────────── */
-type DayStat = { prescribed: number; loggedPlan: number; extra: number };
+/*
+  WHAT A DAY CHIP SAYS (owner, 2026-09-15): one dot PER SESSION, not one dot per
+  day. A day with a morning and an evening session carries two dots, so a day
+  that is half done reads as half done instead of collapsing into a single
+  amber "something is missing".
+    green  — a session the coach prescribed, logged
+    red    — a session the coach prescribed, not logged yet
+    gold   — extra training the athlete added themselves (never "owed", so it
+             can only ever add a dot, never make the day look incomplete)
+  Rest days keep one transparent dot so every chip stays the same height.
+*/
+type DayMark = "done" | "todo" | "extra";
+type DayStat = { marks: DayMark[] };
+
+const markFill: Record<DayMark, string> = {
+  done: "bg-success",
+  todo: "bg-danger",
+  extra: "bg-accent",
+};
 
 function DayChip({
   date,
@@ -739,10 +757,6 @@ function DayChip({
   stat: DayStat;
   onPick: () => void;
 }) {
-  // amber = prescribed but not all logged · green = all logged · accent = only extra
-  let dot = "bg-transparent";
-  if (stat.prescribed > 0) dot = stat.loggedPlan >= stat.prescribed ? "bg-success" : "bg-warn";
-  else if (stat.extra > 0) dot = "bg-accent";
   return (
     <button
       type="button"
@@ -761,7 +775,15 @@ function DayChip({
       <span className={`text-[15px] font-semibold leading-none ${selected ? "text-primary" : "text-text"}`}>
         {date.getDate()}
       </span>
-      <span className={`h-1.5 w-1.5 rounded-full ${dot}`} />
+      <span className="flex h-1.5 items-center gap-[2px]">
+        {stat.marks.length === 0 ? (
+          <span className="h-1.5 w-1.5 rounded-full bg-transparent" />
+        ) : (
+          stat.marks.map((m, i) => (
+            <span key={i} className={`h-1.5 w-1.5 flex-none rounded-full ${markFill[m]}`} />
+          ))
+        )}
+      </span>
     </button>
   );
 }
@@ -928,17 +950,30 @@ function LogScreenInner() {
     [prescribed, planLogByKey],
   );
 
-  // Per-day status for the strip dots.
+  /*
+    Per-day dots for the strip: ONE PER SESSION, in the order they happen, so
+    the chip says which of the day's sessions are done. A prescribed session is
+    matched to its log by the plan slot key (not by counting), because logging
+    the evening and skipping the morning must not read as "the morning is done".
+    Capped at four — nobody trains five times in a day, and a chip has to fit
+    on a phone.
+  */
   const dayStat = useMemo(() => {
     const out: Record<string, DayStat> = {};
     for (const d of days) {
       const iso = toISO(d);
       const dl = logs.filter((l) => l.logDate === iso);
-      out[iso] = {
-        prescribed: plan ? prescribedForDay(plan, d).length : 0,
-        loggedPlan: dl.filter((l) => l.source === "plan").length,
-        extra: dl.filter((l) => l.source === "extra").length,
-      };
+      const loggedKeys = new Set(
+        dl.filter((l) => l.source === "plan" && l.dayKey).map((l) => l.dayKey as string),
+      );
+      const marks: DayMark[] = (plan ? prescribedForDay(plan, d) : [])
+        // A REST DAY IS NOT A MISSED SESSION. The coach's "off" is a slot like
+        // any other in the plan, so without this an off day would sit there
+        // with a red dot asking to be logged.
+        .filter((p) => p.session.category !== "off")
+        .map((p) => (loggedKeys.has(p.dayKey) ? "done" : "todo"));
+      for (const l of dl) if (l.source === "extra") marks.push("extra");
+      out[iso] = { marks: marks.slice(0, 4) };
     }
     return out;
   }, [days, plan, logs]);
@@ -965,7 +1000,7 @@ function LogScreenInner() {
                 date={d}
                 selected={iso === selectedIso}
                 isToday={iso === rangeTo}
-                stat={dayStat[iso] ?? { prescribed: 0, loggedPlan: 0, extra: 0 }}
+                stat={dayStat[iso] ?? { marks: [] }}
                 onPick={() => setSelected(d)}
               />
             );
