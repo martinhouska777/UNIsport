@@ -102,6 +102,7 @@ Then:
 | Script | Captures |
 |---|---|
 | `capture-light.mjs` | **the whole story set, in the app's light mode** — run this one to refresh everything (shot-day seed first, in the owner's timezone) |
+| `capture-schools.mjs` | **the per-school closer / intro screens** (`public/landing/closers/{gyms,match,vhome}-*.webp`) shot from the REAL app with the school switcher planted (`localStorage unisport.university`) — supersedes `recolor-shots.mjs` + `patch-gyms.mjs` + `patch-match.mjs` + `patch-vhead.mjs` (2026-09-16) |
 | `capture-ryan.mjs` | just the three frames carrying the partner's name |
 | `capture-profile-tall.mjs` | just the student profile strip |
 | `capture-shotday.mjs` | varsity home strip + the log sheet (dark-era script) |

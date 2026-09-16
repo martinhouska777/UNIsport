@@ -47,7 +47,7 @@ still meets everything in order.
 | Coach design piece | `mockups/coaches/` | The original hand-over |
 | **Campus Colours (site)** | `components/landing/CampusColours.tsx` | **Built, native** — the student closer |
 | **Blade Lock (site)** | `components/landing/BladeLock.tsx` | **Built, native** — the varsity closer |
-| Per-school screens for the closers' phones | `public/landing/closers/{gyms,vhome}-*.webp` | 16 files, 900×1480, from `recolor-shots.mjs` |
+| Per-school screens for the closers' and intro's phones | `public/landing/closers/{gyms,match,vhome}-*.webp` | 24 files, 900×1480, shot from the REAL app per school by `scripts/landing/capture-schools.mjs` (2026-09-16; the recolour + pixel-patch scripts are superseded) |
 | **The live landing** | `app/page.tsx` → `components/landing/LandingPage.tsx` | **The new page** — stories, closers, coach, FAQ, about, contact |
 | **The intro** | `components/landing/LandingHero.tsx`; `HeroFade` (the hand-over), `HeroPhones` (the backdrop), `Wordmark` | Rebuilt 2026-08-23 — see "The intro" below |
 | The varsity tab bar the vhome captures stop above | `components/landing/VarsityTabBar.tsx` | Drawn, not captured; Blade Lock's, lifted out so it is written once |
