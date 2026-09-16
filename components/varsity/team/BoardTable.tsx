@@ -3,7 +3,8 @@
 /*
   BOARD TABLE — the squad's results as the spreadsheet has always shown them.
   ---------------------------------------------------------------------------
-  Every column at once: weight, W/kg, the result, split, watts, rate, and every
+  Every column at once: the result (time on a 2K), split, watts, rate, W/kg,
+  weight — weight last, W/kg just before it (owner, 2026-09-16) — and every
   interval. (The "vs last" column was cut on 2026-09-13 at the owner's ask.)
   On a phone that cannot fit, so the rank and name column is PINNED and the stats scroll under your thumb — you never
   lose track of whose row you are reading. Rows are banded for the same reason:
@@ -62,18 +63,22 @@ export default function BoardTable({
 
   return (
     <div className="overflow-x-auto overscroll-x-contain rounded-2xl border border-border bg-surface">
-      <table className="w-full border-collapse text-left">
+      {/* border-SEPARATE with zero spacing, and the lines drawn on the CELLS
+          rather than the rows: with collapsed borders a sticky cell loses its
+          lines, so the dividers between names vanished the moment the table
+          was scrolled sideways (owner, 2026-09-16). */}
+      <table className="w-full border-separate border-spacing-0 text-left">
         <thead>
-          <tr className="border-b border-border">
-            <th className={`${TH} sticky left-0 z-10 border-r-2 border-border bg-surface`}>
+          <tr>
+            <th className={`${TH} sticky left-0 z-10 border-b border-r-2 border-border bg-surface`}>
               {ranked ? "# Name" : "Name"}
             </th>
-            <th className={TH}>Weight</th>
-            <th className={TH}>W/kg</th>
-            <th className={TH}>{resultLabel}</th>
-            <th className={TH}>Split</th>
-            <th className={TH}>Watts</th>
-            <th className={TH}>Rate</th>
+            <th className={`${TH} border-b border-border`}>{resultLabel}</th>
+            <th className={`${TH} border-b border-border`}>Split</th>
+            <th className={`${TH} border-b border-border`}>Watts</th>
+            <th className={`${TH} border-b border-border`}>Rate</th>
+            <th className={`${TH} border-b border-border`}>W/kg</th>
+            <th className={`${TH} border-b border-border`}>Weight</th>
             {/* Each interval column says WHAT it is: R1…R8 for reps, or the
                 mark the split was taken at (500, 1000, 1500, 2000) for a piece
                 rowed straight through. A bare "1 2 3 4" made a coach count. */}
@@ -81,7 +86,7 @@ export default function BoardTable({
               <th
                 key={i}
                 title={groupTitle}
-                className={`${TH} ${i === 0 ? "border-l border-border" : ""}`}
+                className={`${TH} border-b border-border ${i === 0 ? "border-l" : ""}`}
               >
                 {h}
               </th>
@@ -97,11 +102,13 @@ export default function BoardTable({
                  the numbers are all the same shape, so a banded row is what
                  keeps your eye on the person you started reading. */
               const band = row.mine ? "bg-primary-tint" : i % 2 ? "bg-surface-2" : "bg-surface";
+              // The line above every row but the first, on each cell.
+              const line = i > 0 ? "border-t border-border" : "";
               return (
-              <tr key={r.id} className={`${i > 0 ? "border-t border-border" : ""} ${band}`}>
+              <tr key={r.id} className={band}>
                 <th
                   scope="row"
-                  className={`${TD} sticky left-0 z-10 border-r-2 border-border text-left font-semibold ${band}`}
+                  className={`${TD} ${line} sticky left-0 z-10 border-r-2 border-border text-left font-semibold ${band}`}
                 >
                   {/* Rank in its own fixed column, so every name starts at the
                       same place whether it is 1 or 24. */}
@@ -123,9 +130,7 @@ export default function BoardTable({
                     <span className="max-w-[8.5rem] truncate">{r.athleteName || "Unnamed"}</span>
                   </span>
                 </th>
-                <td className={TD}>{formatWeight(r.weightKg, units.weight)}</td>
-                <td className={TD}>{wkg != null ? wkg.toFixed(2) : "—"}</td>
-                <td className={`${TD} font-semibold`}>
+                <td className={`${TD} ${line} font-semibold`}>
                   {kind === "time"
                     ? r.metres != null
                       ? Math.round(r.metres).toLocaleString("en-US")
@@ -134,15 +139,17 @@ export default function BoardTable({
                       ? secToClock(r.minutes * 60)
                       : "—"}
                 </td>
-                <td className={TD}>{r.splitSec != null ? secToSplit(r.splitSec, true) : "—"}</td>
-                <td className={TD}>{watts != null ? Math.round(watts) : "—"}</td>
-                <td className={TD}>{r.strokeRate ?? "—"}</td>
+                <td className={`${TD} ${line}`}>{r.splitSec != null ? secToSplit(r.splitSec, true) : "—"}</td>
+                <td className={`${TD} ${line}`}>{watts != null ? Math.round(watts) : "—"}</td>
+                <td className={`${TD} ${line}`}>{r.strokeRate ?? "—"}</td>
+                <td className={`${TD} ${line}`}>{wkg != null ? wkg.toFixed(2) : "—"}</td>
+                <td className={`${TD} ${line}`}>{formatWeight(r.weightKg, units.weight)}</td>
                 {Array.from({ length: splitCount }, (_, k) => {
                   const iv = r.intervals?.[k];
                   return (
                     <td
                       key={k}
-                      className={`${TD} text-muted ${k === 0 ? "border-l border-border" : ""}`}
+                      className={`${TD} ${line} text-muted ${k === 0 ? "border-l border-border" : ""}`}
                     >
                       {iv?.splitSec != null ? secToSplit(iv.splitSec, true) : "—"}
                     </td>

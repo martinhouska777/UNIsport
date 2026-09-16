@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
+import LogSheet from "@/components/varsity/log/LogSheet";
 import { IconUser, IconCalendar, IconPlus } from "@/components/icons";
 
 /*
@@ -71,6 +72,7 @@ function NavItem({ tab, active }: { tab: Tab; active: boolean }) {
 export default function VarsityNav() {
   const pathname = usePathname();
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + "/");
+  const [logOpen, setLogOpen] = useState(false);
 
   return (
     /*
@@ -90,13 +92,16 @@ export default function VarsityNav() {
 
         {/* Center: the Log (+) button, a filled circle inside the capsule */}
         <li className="flex flex-1 items-center justify-center">
-          <Link
-            href="/varsity/log"
+          {/* Opens the log as a three-quarter sheet over this page (LogSheet),
+              not a page of its own (owner, 2026-09-16). */}
+          <button
+            type="button"
+            onClick={() => setLogOpen(true)}
             aria-label="Log a session"
             className="flex h-12 w-12 items-center justify-center rounded-full bg-primary-live text-primary-contrast shadow-md transition-transform duration-150 active:scale-90"
           >
             <IconPlus size={26} />
-          </Link>
+          </button>
         </li>
 
         {rightTabs.map((tab) => (
@@ -105,6 +110,7 @@ export default function VarsityNav() {
           </li>
         ))}
       </ul>
+      {logOpen && <LogSheet onClose={() => setLogOpen(false)} />}
     </nav>
   );
 }
