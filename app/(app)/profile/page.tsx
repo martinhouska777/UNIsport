@@ -24,7 +24,6 @@ import PartnerRequests from "@/components/profile/PartnerRequests";
 import LeaderboardStrip from "@/components/leaderboards/LeaderboardStrip";
 import MemoriesStrip from "@/components/profile/MemoriesStrip";
 import ProfileBadge from "@/components/ProfileBadge";
-import PencilSticker from "@/components/PencilSticker";
 import PersonalRecords from "@/components/profile/PersonalRecords";
 import PhotoGrid from "@/components/profile/PhotoGrid";
 import AboutYouSheet from "@/components/profile/AboutYouSheet";
@@ -517,7 +516,7 @@ export default function ProfilePage() {
             profileFromOnboarding. */}
         {(isMember || user.badges.mentor) && (
           <div className="flex items-center gap-1.5">
-            {/* Yellow and green with black letters, a size up (owner,
+            {/* Like a small Log button: school colour for Varsity, dark green for Mentor (owner,
                 2026-09-16) — colours in lib/badges.ts. */}
             {isMember && <ProfileBadge kind="varsity" />}
             {user.badges.mentor && <ProfileBadge kind="mentor" />}
@@ -672,13 +671,13 @@ export default function ProfilePage() {
               type="button"
               onClick={() => setEditingPrefs(true)}
               aria-label="Edit interests, languages and concentration"
-              /* Just the pencil, in a circle — the classic edit button — a
-                 size up from the old "✎ Edit" text, and it presses in when
-                 tapped (owner, 2026-09-16). */
-              className="tap44 press-icon flex h-9 w-9 items-center justify-center rounded-full border border-border bg-surface-2"
+              /* The same small "✎ Edit" as Personal records, and no tinted
+                 background when it's tapped (owner, 2026-09-16 — the round
+                 pencil sticker was too big). */
+              className="tap44 flex items-center gap-1 rounded-full px-1.5 py-1 text-[11px] font-medium text-primary active:opacity-60"
             >
-              {/* A real pencil sticker in the school colour (owner, 2026-09-16). */}
-              <PencilSticker size={24} />
+              <IconPencil size={11} />
+              Edit
             </button>
           </div>
 

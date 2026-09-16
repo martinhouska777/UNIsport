@@ -70,21 +70,8 @@ begin
     ) t
   );
 
-  -- His five, then up to three of the account's, no repeats.
-  ints := (
-    select coalesce(jsonb_agg(i order by ord), '[]'::jsonb)
-    from (
-      select i, min(ord) as ord
-      from (
-        select v.i, v.ord::bigint
-        from (values ('Business',1),('Startups',2),('Tech',3),('Social media',4),('AI',5)) v(i, ord)
-        union all
-        select s.value, 10 + s.ordinality
-        from (select * from jsonb_array_elements_text(my_ints) with ordinality limit 3) s
-      ) x
-      group by i
-    ) t
-  );
+  -- His own four and nothing copied from the account (owner, 2026-09-16).
+  ints := '["Economics","Business","Startups","AI"]'::jsonb;
 
   -- Start clean: the same cascade seed_demo.sql relies on (auth.users → profiles).
   delete from public.follows where follower_id = mh or followee_id = mh;

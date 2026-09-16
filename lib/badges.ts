@@ -1,15 +1,19 @@
 /*
-  PROFILE BADGES — VARSITY and MENTOR, as DATA (rule 1's content-colour
-  exception, like a house's colours in lib/gyms.ts).
+  PROFILE BADGES — VARSITY and MENTOR.
 
-  These are the badges' OWN identity colours, the same at every school and in
-  both modes: a bright yellow VARSITY and a bright green MENTOR, each with black
-  letters for contrast (owner, 2026-09-16: the old gold-on-grey and
-  green-outline pair were too faint). Rendered by components/ProfileBadge.tsx.
+  Both are drawn like a small version of the Profile's "Log" button (owner,
+  2026-09-16): a filled rounded block with light, bold letters.
+
+    VARSITY — the school colour, exactly the Log button's own (theme tokens).
+    MENTOR  — dark green with light letters. That green is the badge's own
+              identity colour, the same at every school, so it lives here as
+              DATA (rule 1's content-colour exception).
+
+  Rendered by components/ProfileBadge.tsx.
 */
 export type BadgeKind = "varsity" | "mentor";
 
-export const badges: Record<BadgeKind, { label: string; background: string; text: string }> = {
-  varsity: { label: "VARSITY", background: "#facc15", text: "#111111" },
-  mentor: { label: "MENTOR", background: "#4ade80", text: "#111111" },
+export const badges: Record<BadgeKind, { label: string; background?: string; text?: string }> = {
+  varsity: { label: "VARSITY" }, // theme: bg-primary-live / text-primary-contrast
+  mentor: { label: "MENTOR", background: "#166534", text: "#f0fdf4" },
 };

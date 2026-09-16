@@ -10,7 +10,7 @@ import { useEffect, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import ThemeProvider from "@/components/ThemeProvider";
 import { useVarsityTheme } from "@/components/varsity/useVarsityTheme";
-import { IconX } from "@/components/icons";
+import { IconArrowLeft, IconX } from "@/components/icons";
 
 export default function Sheet({
   title,
@@ -33,6 +33,27 @@ export default function Sheet({
     return () => document.removeEventListener("keydown", onKey);
   }, [onClose]);
 
+  /* FULL: not a sheet at all but a page of its own, the same as "Log session"
+     — no handle, no backdrop showing behind it, a Back button top-left
+     (owner, 2026-09-16). */
+  if (full)
+    return createPortal(
+      <ThemeProvider tokens={vTheme.dark} light={vTheme.light}>
+        <div className="fixed inset-0 z-[60] flex h-dvh flex-col bg-background pt-[env(safe-area-inset-top)] [animation:backdrop-in_0.18s_ease-out]">
+          <div className="flex flex-shrink-0 items-center gap-2 border-b border-border px-4 py-3">
+            <button type="button" onClick={onClose} className="tap44 flex items-center gap-1 text-[13px] text-muted">
+              <IconArrowLeft size={18} /> Back
+            </button>
+            {title && <div className="ml-1 truncate text-[15px] font-semibold text-text">{title}</div>}
+          </div>
+          <div className="flex-1 overflow-y-auto px-4 pb-8 pt-4">
+            <div className="mx-auto w-full max-w-screen-sm">{children}</div>
+          </div>
+        </div>
+      </ThemeProvider>,
+      document.body,
+    );
+
   return createPortal(
     <ThemeProvider tokens={vTheme.dark} light={vTheme.light}>
       <div className="fixed inset-0 z-[60] flex flex-col justify-end">
@@ -42,11 +63,7 @@ export default function Sheet({
           onClick={onClose}
           className="absolute inset-0 bg-background/70 [animation:backdrop-in_0.2s_ease-out]"
         />
-        <div
-          className={`relative overflow-y-auto bg-surface [animation:sheet-up_0.28s_cubic-bezier(0.2,0.8,0.2,1)] ${
-            full ? "h-full pt-[env(safe-area-inset-top)]" : "max-h-[85%] rounded-t-3xl border-t border-border"
-          }`}
-        >
+        <div className="relative max-h-[85%] overflow-y-auto rounded-t-3xl border-t border-border bg-surface [animation:sheet-up_0.28s_cubic-bezier(0.2,0.8,0.2,1)]">
           <div className="flex justify-center pb-1.5 pt-2.5">
             <div className="h-1 w-9 rounded-full bg-border" />
           </div>

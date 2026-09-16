@@ -31,7 +31,7 @@ import Sheet from "@/components/varsity/Sheet";
 import ResultDetail from "@/components/varsity/team/ResultDetail";
 import BoardTable from "@/components/varsity/team/BoardTable";
 import Delta from "@/components/varsity/team/Delta";
-import { workoutLabel, workoutColor } from "@/lib/varsity/coachPlan";
+import { isTwoKTest, sessionColor, workoutLabel } from "@/lib/varsity/coachPlan";
 import {
   buildBoard,
   metricsFor,
@@ -77,7 +77,7 @@ function Face({
 }) {
   const cls = "w-full px-3.5 py-3 text-left";
   return top && onOpen ? (
-    <button type="button" onClick={onOpen} className={`${cls} active:bg-surface`}>
+    <button type="button" onClick={onOpen} className={`${cls} active:bg-surface-2`}>
       {children}
     </button>
   ) : (
@@ -186,12 +186,14 @@ export default function WorkoutBoard({
         Under the piece: YOU, your place in the squad, your result and the ±
         on your last go. Nothing else — that is the whole card.
       */}
-      <div className="overflow-hidden rounded-2xl border border-border bg-surface-2">
+      {/* White, not grey (owner, 2026-09-16): the card at the top stands out
+          from the grey list of names under it. */}
+      <div className="overflow-hidden rounded-2xl border border-border bg-surface shadow-card">
         <Face top={top} onOpen={top ? () => setOpenRow(top.result.id) : undefined}>
           <div className="flex items-center gap-2">
             <span
               className="h-2.5 w-2.5 flex-shrink-0 rounded-full"
-              style={{ background: workoutColor(workout.session) }}
+              style={{ background: sessionColor(workout.session) }}
             />
             <span className="text-[13px] font-semibold text-text">
               {workoutLabel(workout.session)}
@@ -200,7 +202,8 @@ export default function WorkoutBoard({
               {workout.dateLabel} · {workout.period}
             </span>
           </div>
-          {workout.session.description.trim() && (
+          {/* A 2K test is already named "Erg · 2K" — no "2k test" under it. */}
+          {workout.session.description.trim() && !isTwoKTest(workout.session) && (
             <p className="mt-1 text-[12px] leading-relaxed text-muted">
               {workout.session.description}
             </p>

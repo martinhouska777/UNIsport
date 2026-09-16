@@ -337,8 +337,11 @@ export function buildAthleteHome(
             location: s.location ?? "",
             ...statusOf(dayKey, todayIso, todayIso, logsByKey),
             kind: kindOf(s),
+            // Just the workout when the coach wrote one — no "Water · UT1" line
+            // under it; the card's colour already says the kind (owner,
+            // 2026-09-16).
             title: desc || label,
-            detail: desc ? label : "",
+            detail: "",
             coachNote: s.note ? { coach: "COACH", text: s.note } : undefined,
           },
         ];

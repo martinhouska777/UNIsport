@@ -1,4 +1,6 @@
 -- ============================================================================
+-- 2026-09-16 (owner): each shares only ONE interest with the demo account now, so
+-- the Match card has room for their own grey chips; 5-6 interests each.
 -- UNIsport — MATCH TAB SHOWCASE (landing screenshots)
 -- ----------------------------------------------------------------------------
 -- WHAT THIS IS
@@ -61,7 +63,7 @@ begin
        'Computer Science', 'Tel Aviv', 'Israel',
        'gym', 'advanced', '', '',
        '["Eliot","Hemenway Gymnasium","Malkin Athletic Center"]'::jsonb,
-       '["Startups","Finance","Climbing","Coffee","Podcasts"]'::jsonb,
+       '["Startups","Climbing","Coffee","Podcasts","Tech","Hiking"]'::jsonb,
        '["English","Hebrew","German"]'::jsonb,
        '[{"key":"running","perWeek":"2×","days":[],"note":""}]'::jsonb,
        '{"sat":["10:00-12:00"]}'::jsonb,
@@ -71,7 +73,7 @@ begin
        'Applied Mathematics', 'Accra', 'Ghana',
        'running', '', '', '3+ years',
        '["Malkin Athletic Center","Currier"]'::jsonb,
-       '["Investing","Finance","Startups","Chess","Music"]'::jsonb,
+       '["Finance","Chess","Music","Running","Reading","Travel"]'::jsonb,
        '["English","French"]'::jsonb,
        '[{"key":"gym","perWeek":"3×","days":[],"note":"Legs + core"}]'::jsonb,
        '{"sun":["07:00-09:00"]}'::jsonb,
@@ -81,7 +83,7 @@ begin
        'Government', 'Madrid', 'Spain',
        'gym', 'intermediate', '', '',
        '["Dunster","Murr Center","Malkin Athletic Center"]'::jsonb,
-       '["Politics","Travel","Dance","Business","Finance"]'::jsonb,
+       '["Business","Politics","Travel","Dance","Languages","Film"]'::jsonb,
        '["English","Spanish","German"]'::jsonb,
        '[{"key":"cardio","perWeek":"2×","days":[],"note":"Swimming"}]'::jsonb,
        '{"thu":["17:00-19:00"]}'::jsonb,
@@ -91,7 +93,7 @@ begin
        'Mechanical Engineering', 'Osaka', 'Japan',
        'gym', 'beginner', '', '',
        '["Murr Center","Malkin Athletic Center","Hemenway Gymnasium"]'::jsonb,
-       '["Martial Arts","Gaming","Cooking","Startups","Business"]'::jsonb,
+       '["Startups","Martial Arts","Gaming","Cooking","Photography"]'::jsonb,
        '["English","Japanese"]'::jsonb,
        '[{"key":"other","perWeek":"2×","days":[],"note":"Judo"}]'::jsonb,
        '{"sat":["14:00-16:00"]}'::jsonb,
@@ -101,7 +103,7 @@ begin
        'Neuroscience', 'Lagos', 'Nigeria',
        'gym', 'intermediate', '', '',
        '["Winthrop","Malkin Athletic Center"]'::jsonb,
-       '["Yoga","Science","Reading","Startups","Finance"]'::jsonb,
+       '["Finance","Yoga","Science","Reading","Volunteering"]'::jsonb,
        '["English","French"]'::jsonb,
        '[{"key":"other","perWeek":"2×","days":[],"note":"Yoga"}]'::jsonb,
        '{"tue":["18:00-20:00"]}'::jsonb,
@@ -111,7 +113,7 @@ begin
        'History of Art & Architecture', 'Lyon', 'France',
        'gym', 'advanced', '', '',
        '["Lowell","Malkin Athletic Center"]'::jsonb,
-       '["Art","Photography","Fashion","Finance","Business"]'::jsonb,
+       '["Business","Art","Photography","Fashion","Cycling"]'::jsonb,
        '["English","French","German"]'::jsonb,
        '[{"key":"cardio","perWeek":"3×","days":[],"note":"Cycling"}]'::jsonb,
        '{"sun":["10:00-12:00"]}'::jsonb,
@@ -121,7 +123,7 @@ begin
        'Public Policy', 'Mumbai', 'India',
        'gym', 'intermediate', '', '',
        '["Mather","Malkin Athletic Center","Hemenway Gymnasium"]'::jsonb,
-       '["Sustainability","Volunteering","Foodie","Business","Startups"]'::jsonb,
+       '["Startups","Sustainability","Volunteering","Foodie","Politics"]'::jsonb,
        '["English","Hindi"]'::jsonb,
        '[{"key":"running","perWeek":"1×","days":[],"note":""}]'::jsonb,
        '{"wed":["19:00-21:00"]}'::jsonb,
@@ -131,7 +133,7 @@ begin
        'History & Literature', 'Denver', 'United States',
        'running', '', '', 'Under a year',
        '["Malkin Athletic Center","Murr Center"]'::jsonb,
-       '["Writing","Film","Hiking","Startups","Finance"]'::jsonb,
+       '["Finance","Writing","Film","Hiking","Outdoors"]'::jsonb,
        '["English","Spanish","German"]'::jsonb,
        '[{"key":"gym","perWeek":"2×","days":[],"note":""}]'::jsonb,
        '{"sat":["08:00-10:00"]}'::jsonb,
