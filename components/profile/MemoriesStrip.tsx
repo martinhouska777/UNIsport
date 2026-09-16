@@ -10,10 +10,9 @@
   It shows the pictures themselves rather than an icon and a number, because a
   row of your own training photos is the thing that makes you tap it.
 
-  Like the leaderboard strip above it, it never renders an empty shell: with no
-  photos yet there is nothing to preview and nothing to open, so the whole row
-  stays away until there is. It also holds its height while loading so the rest
-  of the profile doesn't jump.
+  With no photos yet it still shows (name and chevron only), so people know the
+  gallery exists. It holds its height while loading so the rest of the profile
+  doesn't jump.
 
   All colour is theme tokens (rule 1).
 */
@@ -50,8 +49,10 @@ export default function MemoriesStrip() {
   // Holds the row's height while the photos are on their way.
   if (!loaded) return <div className="mx-3.5 my-2 h-[66px] rounded-2xl border border-border bg-surface" aria-hidden="true" />;
 
+  // The row is ALWAYS there now, photos or not (owner, 2026-09-16: the tab
+  // vanishing looked like a missing feature). With none yet it is just the
+  // name and the chevron, and /memories says how to add the first.
   const memories = toMemories(logs);
-  if (memories.length === 0) return null;
 
   const tiles = memories.slice(0, PREVIEW_TILES);
 

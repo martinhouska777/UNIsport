@@ -628,8 +628,8 @@ export default function ProfilePage() {
       {/* 4 · MEMORIES — the foot of the page, where it swapped places with
           the leaderboard row (owner, 2026-09-14). The calendar is the part of
           your training you read; this is the part you look at, so it ends the
-          page rather than interrupting it. Hides itself entirely until there's
-          a photo. */}
+          page rather than interrupting it. Always shown, even before the first
+          photo (owner, 2026-09-16). */}
       <MemoriesStrip />
 
       {/* 5 · THE MIDDLE OF THE PAGE, in a <details> that starts OPEN — the
