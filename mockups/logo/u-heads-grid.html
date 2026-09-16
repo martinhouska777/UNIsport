@@ -1,0 +1,77 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>UNIsport — U with two heads, what else</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap">
+<style>
+  :root { --n: #2f3b52; --b: #1f32c1; --page: #eef1f5; --mute: #7e8488; --hair: #dfe4ea; }
+  html, body { margin: 0; background: var(--page); font-family: "Plus Jakarta Sans", "Segoe UI", system-ui, sans-serif; }
+  #board { width: 1160px; box-sizing: border-box; padding: 48px 48px 40px; display: flex; flex-direction: column; gap: 28px; }
+  .grid { display: grid; grid-template-columns: repeat(5, 200px); gap: 16px; }
+  .tile { position: relative; width: 200px; height: 200px; background: #fff; border-radius: 6px; display: flex; align-items: center; justify-content: center; }
+  .tile .num { position: absolute; top: 12px; left: 14px; font-size: 13px; font-weight: 600; color: var(--mute); letter-spacing: 0.02em; }
+  .tile svg { width: 132px; height: 132px; display: block; }
+  svg { fill: none; stroke: none; stroke-width: 14; stroke-linecap: round; stroke-linejoin: round; }
+  svg .sa { stroke: var(--n); } svg .sb { stroke: var(--b); }
+  svg .fa { fill: var(--n); }   svg .fb { fill: var(--b); }
+  svg .fw { fill: #fff; }
+  /* single colour */
+  .mono svg .sb { stroke: var(--n); } .mono svg .fb { fill: var(--n); }
+  /* on navy */
+  .onnavy svg .sa, .onnavy svg .sb { stroke: #fff; } .onnavy svg .fa, .onnavy svg .fb { fill: #fff; } .onnavy svg .fw { fill: var(--n); }
+  .strip { display: grid; grid-template-columns: repeat(5, 200px); gap: 16px; }
+  .cell { height: 72px; background: #fff; border-radius: 6px; display: flex; align-items: center; justify-content: center; gap: 22px; }
+  .cell .num { font-size: 12px; font-weight: 600; color: var(--mute); width: 14px; }
+  .cell .mono svg { width: 40px; height: 40px; display: block; }
+  .cell .icon { width: 26px; height: 26px; border-radius: 7px; background: var(--n); display: flex; align-items: center; justify-content: center; }
+  .cell .icon svg { width: 20px; height: 20px; display: block; }
+  .cell .icon.sm { width: 16px; height: 16px; border-radius: 4px; }
+  .cell .icon.sm svg { width: 12px; height: 12px; }
+  .foot { display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--hair); padding-top: 22px; }
+  .lock { display: flex; align-items: center; gap: 12px; }
+  .lock svg { width: 40px; height: 40px; display: block; }
+  .word { font-family: "Instrument Serif", Georgia, serif; font-style: italic; font-size: 38px; line-height: 1; letter-spacing: -0.02em; color: #141618; }
+  .word b { font-weight: 400; color: var(--b); }
+  .cap { font-size: 12px; color: var(--mute); }
+</style>
+</head>
+<body>
+<div id="board">
+  <div class="grid" id="grid"></div>
+  <div class="strip" id="strip"></div>
+  <div class="foot">
+    <div class="lock" id="lock"></div>
+    <div class="cap">1 is the base. 2 to 10 each add one thing. Bottom row: one colour, and as an app icon at 26 px and 16 px.</div>
+  </div>
+</div>
+<script>
+const M = [
+  // 1 Base: U + two heads
+  `<path class="sa" d="M18 40 V54 Q18 76 40 76 H60 Q82 76 82 54 V40"/><circle class="fb" cx="38" cy="36" r="10"/><circle class="fb" cx="62" cy="36" r="10"/>`,
+  // 2 Two colours: each person owns half the U
+  `<path class="sa" d="M18 40 V54 Q18 76 40 76 H50"/><path class="sb" d="M82 40 V54 Q82 76 60 76 H50"/><circle class="fa" cx="38" cy="36" r="10"/><circle class="fb" cx="62" cy="36" r="10"/>`,
+  // 3 Under one bar
+  `<path class="sa" d="M18 16 H82"/><path class="sa" d="M18 44 V58 Q18 80 40 80 H60 Q82 80 82 58 V44"/><circle class="fb" cx="38" cy="40" r="10"/><circle class="fb" cx="62" cy="40" r="10"/>`,
+  // 4 The gate: an arch over the two
+  `<path class="sa" d="M18 32 Q18 14 50 14 Q82 14 82 32"/><path class="sa" d="M18 52 V62 Q18 84 40 84 H60 Q82 84 82 62 V52"/><circle class="fb" cx="38" cy="46" r="10"/><circle class="fb" cx="62" cy="46" r="10"/>`,
+  // 5 The boat: two seats, two oars
+  `<path class="sa" d="M10 46 V52 Q10 72 30 72 H70 Q90 72 90 52 V46"/><path class="sb" style="stroke-width:8" d="M15 44 L6 32 M85 44 L94 32"/><circle class="fb" cx="38" cy="38" r="9"/><circle class="fb" cx="62" cy="38" r="9"/>`,
+  // 6 Meet here: the U becomes a pin
+  `<path class="sa" d="M20 36 V54 C20 72 38 74 50 90 C62 74 80 72 80 54 V36"/><circle class="fb" cx="38" cy="32" r="10"/><circle class="fb" cx="62" cy="32" r="10"/>`,
+  // 7 The plan: a shared speech bubble
+  `<path class="fb" d="M40 6 H60 Q68 6 68 13 V18 Q68 25 60 25 H53 L48 31 V25 H40 Q32 25 32 18 V13 Q32 6 40 6 Z"/><path class="sa" d="M18 52 V62 Q18 84 40 84 H60 Q82 84 82 62 V52"/><circle class="fa" cx="38" cy="46" r="10"/><circle class="fa" cx="62" cy="46" r="10"/>`,
+  // 8 Arms up: the U's arms rise and nearly meet
+  `<path class="sa" d="M36 14 Q18 18 18 38 V60 Q18 82 40 82 H50"/><path class="sb" d="M64 14 Q82 18 82 38 V60 Q82 82 60 82 H50"/><circle class="fa" cx="38" cy="46" r="10"/><circle class="fb" cx="62" cy="46" r="10"/>`,
+  // 9 Verified: a small check on the shoulder
+  `<path class="sa" d="M18 40 V54 Q18 76 40 76 H60 Q82 76 82 54 V40"/><circle class="fa" cx="38" cy="36" r="10"/><circle class="fa" cx="62" cy="36" r="10"/><circle class="fb" cx="82" cy="26" r="12"/><path d="M75.5 26 L80.5 31 L88.5 21" fill="none" stroke="#fff" stroke-width="4.5"/>`,
+  // 10 Heads and shoulders: short bodies inside
+  `<path class="sa" d="M18 42 V58 Q18 80 40 80 H60 Q82 80 82 58 V42"/><circle class="fb" cx="38" cy="30" r="8"/><circle class="fb" cx="62" cy="30" r="8"/><path class="sb" style="stroke-width:12" d="M38 46 V58 M62 46 V58"/>`,
+];
+const svg = (i) => `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">${M[i]}</svg>`;
+document.getElementById('grid').innerHTML = M.map((_, i) => `<div class="tile"><span class="num">${i+1}</span>${svg(i)}</div>`).join('');
+document.getElementById('strip').innerHTML = M.map((_, i) => `<div class="cell"><span class="num">${i+1}</span><span class="mono">${svg(i)}</span><span class="icon onnavy">${svg(i)}</span><span class="icon sm onnavy">${svg(i)}</span></div>`).join('');
+document.getElementById('lock').innerHTML = `${svg(0)}<span class="word">UNI<b>sport</b></span>`;
+</script>
+</body>
+</html>
