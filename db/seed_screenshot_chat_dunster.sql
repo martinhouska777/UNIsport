@@ -61,11 +61,22 @@ begin
   insert into public.dm_conversations (id, user_lo, user_hi, created_at)
   values (conv, least(me, mh), greatest(me, mh), now() - interval '2 hours');
 
+  -- Owner, 2026-09-16: "add more messages … so it's all over the screen" —
+  -- long enough to fill a phone screen above the plan card.
   insert into public.dm_messages (conv_id, sender_id, sender_name, body, created_at) values
-    (conv, mh, 'Arjun Mehta', 'Hey John! Saw we matched. You lift at the MAC in the mornings too?', now() - interval '95 minutes'),
-    (conv, me, my->>'name',     'Yeah, most days around 8. Just started push-pull-legs.',            now() - interval '80 minutes'),
-    (conv, mh, 'Arjun Mehta', 'Nice. Same, push-pull-legs. Legs tomorrow?',                    now() - interval '62 minutes'),
-    (conv, me, my->>'name',     'I''m in. Could use someone to check my squat form.',                  now() - interval '50 minutes'),
+    (conv, mh, 'Arjun Mehta', 'Hey John! Saw we matched 👋',                                          now() - interval '118 minutes'),
+    (conv, mh, 'Arjun Mehta', 'You lift at the MAC in the mornings too?',                             now() - interval '117 minutes'),
+    (conv, me, my->>'name',   'Yeah, most days around 8. Just started push-pull-legs.',               now() - interval '104 minutes'),
+    (conv, mh, 'Arjun Mehta', 'Nice, same split. How long have you been running it?',                 now() - interval '98 minutes'),
+    (conv, me, my->>'name',   'Two weeks. Push Monday, pull Tuesday, legs today at Malkin.',          now() - interval '91 minutes'),
+    (conv, me, my->>'name',   'Hit 140 on squat, pretty happy with that',                             now() - interval '90 minutes'),
+    (conv, mh, 'Arjun Mehta', 'That''s solid 💪 I''m stuck around 120',                               now() - interval '84 minutes'),
+    (conv, mh, 'Arjun Mehta', 'Think my depth is off, knees cave on the way up',                       now() - interval '83 minutes'),
+    (conv, me, my->>'name',   'Happens to everyone. Slow the eccentric and push your knees out.',     now() - interval '72 minutes'),
+    (conv, mh, 'Arjun Mehta', 'Could you watch a set sometime?',                                      now() - interval '64 minutes'),
+    (conv, me, my->>'name',   'Sure. I''m in Dunster, the MAC is 5 min away.',                         now() - interval '58 minutes'),
+    (conv, mh, 'Arjun Mehta', 'Perfect, I''m in Mather. Legs again tomorrow morning?',                now() - interval '52 minutes'),
+    (conv, me, my->>'name',   'Works for me. 8am before class?',                                      now() - interval '47 minutes'),
     (conv, mh, 'Arjun Mehta', 'Easy. Sending you a plan 👇',                                          now() - interval '41 minutes');
 
   insert into public.session_plans (id, conv_id, proposer_id, activity, place, scheduled_at, status, created_at)
