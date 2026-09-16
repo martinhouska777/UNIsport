@@ -38,7 +38,7 @@ function Glyph({ icon }: { icon: SocialLink["icon"] }) {
 }
 
 function Social({ s }: { s: SocialLink }) {
-  const base = "inline-flex items-center gap-2 rounded-full border px-4 py-2 text-[14px] font-medium tracking-tight transition-colors";
+  const base = "inline-flex items-center gap-2 rounded-full border px-4 py-2 text-[14px] font-medium tracking-tight transition-[color,background-color,border-color,translate] hover:-translate-y-0.5";
   if (s.href) {
     return (
       <a
