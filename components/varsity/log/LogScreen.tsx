@@ -935,8 +935,14 @@ function LogScreenInner() {
   }, [selectedLogs]);
   const extraLogs = useMemo(() => selectedLogs.filter((l) => l.source === "extra"), [selectedLogs]);
 
+  /*
+    A REST DAY IS NOT A SESSION TO LOG. The coach's "Off" is a slot in the plan
+    like any other, and until 2026-09-15 it came through here as a card with a
+    Log button on it. It is left out — the day chips leave it out for the same
+    reason — so an afternoon off is simply not on the list.
+  */
   const prescribed: { period: Period; dayKey: string; session: Session }[] = useMemo(
-    () => (plan ? prescribedForDay(plan, selected) : []),
+    () => (plan ? prescribedForDay(plan, selected).filter((p) => p.session.category !== "off") : []),
     [plan, selected],
   );
 
