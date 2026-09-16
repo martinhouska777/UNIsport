@@ -192,12 +192,6 @@ export default function TrainingCalendar({
     ...Array(lead).fill(null),
     ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
   ];
-  /*
-    WHERE THE WEEK IS. Switching to Month is an expansion, not a jump to
-    somewhere else: the week you were looking at is marked in the grid so you
-    can see it sitting inside the month. That's this row.
-  */
-  const weekIsos = new Set(days.map((d) => d.iso));
   // The month, chunked into its calendar weeks — the rows the grid draws.
   const rows: (number | null)[][] = [];
   for (let i = 0; i < cells.length; i += 7) rows.push(cells.slice(i, i + 7));
@@ -307,22 +301,15 @@ export default function TrainingCalendar({
                 </div>
               ))}
             </div>
-            {/* One block per calendar week, so THE WEEK YOU CAME FROM can be
-                marked: it keeps a ring around it inside the month, which is
-                how you see where it sits. The whole thing unfolds (the
-                cal-month-expand keyframe) rather than appearing whole. */}
+            {/* One block per calendar week. The week you came from is NOT
+                marked any more — the ringed, tinted row read as a selection
+                (owner, 2026-09-16); today's own ring is enough. The whole
+                thing unfolds (the cal-month-expand keyframe) rather than
+                appearing whole. */}
             <div className="cal-month-expand origin-center space-y-1">
               {rows.map((row, r) => {
-                const isThisWeek = row.some(
-                  (n) => n !== null && weekIsos.has(isoFor(year, month, n)),
-                );
                 return (
-                  <div
-                    key={r}
-                    className={`grid grid-cols-7 gap-1 rounded-lg ${
-                      isThisWeek ? "bg-primary-tint/40 p-0.5 ring-1 ring-primary-line" : ""
-                    }`}
-                  >
+                  <div key={r} className="grid grid-cols-7 gap-1">
                     {row.map((n, idx) => {
                       if (n === null) return <div key={idx} />;
                       const iso = isoFor(year, month, n);

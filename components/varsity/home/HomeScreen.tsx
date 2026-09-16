@@ -105,16 +105,19 @@ function loggable(iso: string): boolean {
    "Head of the Charles · 12 days" at 11px, the flag in the school colour. */
 // IN A PILL (owner, 2026-09-14): a rounded border round the line, so the race
 // reads as its own thing rather than a second caption under the plan's name.
+// A SIZE UP AND IN COLOUR (owner, 2026-09-16): "a little bit bigger, like the
+// race countdown, and more colour" — the school-colour tint and line, 13px,
+// the days in bold school colour.
 function RaceLine({ r }: { r: RaceData }) {
   return (
-    <div className="mt-1.5 flex w-fit max-w-full min-w-0 items-center gap-1 rounded-full border border-border bg-surface px-2 py-0.5 text-[11px] text-muted">
+    <div className="mt-2 flex w-fit max-w-full min-w-0 items-center gap-1.5 rounded-full border border-primary-line bg-primary-tint px-3 py-1 text-[13px] text-text-2">
       <span className="flex-shrink-0 text-primary">
-        <IconFlag size={11} />
+        <IconFlag size={14} />
       </span>
       <span className="truncate">
-        <span className="font-medium text-text">{r.name}</span>
+        <span className="font-semibold text-text">{r.name}</span>
         {" · "}
-        <span className="font-semibold text-accent">{r.big}</span>
+        <span className="font-bold text-primary">{r.big}</span>
         {r.small && ` ${r.small.toLowerCase()}`}
       </span>
     </div>
@@ -877,11 +880,13 @@ function DayHeader({
     <div className="flex items-center gap-2 px-4 pb-2 pt-4">
       {arrow(-1, canPrev)}
       <div className="flex min-w-0 flex-1 flex-col items-center gap-1">
-        {/* ALL BOATS BESIDE THE DAY (owner, 2026-09-16): "today, and on the
-            right of it all boats for the day" — one line, not stacked. */}
-        <div className="flex min-w-0 items-center gap-2.5">
+        {/* ALL BOATS BESIDE THE DAY (owner, 2026-09-16): the day sits in the
+            exact MIDDLE and "All boats" hangs off its right — three columns,
+            the outer two equal, so the link never pushes the day off centre. */}
+        <div className="grid w-full min-w-0 grid-cols-[1fr_auto_1fr] items-center gap-2.5">
+          <span />
           <SectionLabel className="truncate">{title}</SectionLabel>
-          {right}
+          <div className="flex min-w-0 justify-start">{right}</div>
         </div>
         {onToday && (
           <div className="flex items-center gap-3">
