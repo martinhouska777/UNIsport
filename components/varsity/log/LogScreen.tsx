@@ -60,6 +60,7 @@ import {
   IconCheckCircle,
   IconArrowLeft,
   IconClock,
+  IconMapPin,
 } from "@/components/icons";
 
 /* category → label + content color for the dot. Lives in the data layer
@@ -647,55 +648,97 @@ function LogEditor({
 }
 
 /* ─────────────────────────  list rows  ───────────────────────── */
+/*
+  A PRESCRIBED SESSION, AS A PREVIEW OF WHAT YOU ARE ABOUT TO LOG (owner,
+  2026-09-15: "before you log it, the preview what to log — that's the idea").
+  The row used to be one line — the category, a clock, a Log button — and the
+  tab ran out half way down the phone. Now the card says everything the plan
+  knows about the session before the editor opens: the coach's own words as
+  the title, the kind and intensity, when and where, roughly how far and how
+  long it will be (estimateForSession, the same figures the editor pre-fills),
+  the coach's note, and whether the results go on a squad board. Tap anywhere
+  → the full-screen editor, exactly as before.
+*/
 function PrescribedRow({
-  label,
-  detail,
+  session,
   period,
-  time,
   color,
   log,
   onLog,
 }: {
-  label: string;
-  detail: string;
+  session: Session;
   period: string;
-  time: string;
   color: string;
   log?: LogEntry;
   onLog: () => void;
 }) {
+  const kind = sessionLabel(session); // "Water · UT2"
+  const words = session.description.trim();
+  const est = estimateForSession(session);
+  const expected = formatMetrics(est.minutes, est.metres, null);
+  const location = session.location?.trim();
+  const note = session.note?.trim();
   return (
     <button
       type="button"
       onClick={onLog}
-      className={`flex w-full items-start gap-3 rounded-2xl border px-3.5 py-3 text-left ${
+      className={`flex w-full flex-col gap-2.5 rounded-2xl border px-4 py-3.5 text-left ${
         log ? "border-success-line bg-success-tint" : "border-border bg-surface active:bg-surface-2"
       }`}
     >
-      <span className="mt-1">
+      {/* When, and what kind — the small line on top, like the Workouts tab's rows. */}
+      <div className="flex w-full items-center gap-2">
         <Dot color={color} />
-      </span>
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <span className="text-[14px] font-semibold text-text">{label}</span>
-          <span className="flex items-center gap-1 text-[11px] text-muted">
-            <IconClock size={11} /> {period} · {time}
+        <span className="flex items-center gap-1 text-[11px] font-medium text-muted">
+          <IconClock size={11} /> {period} · {session.time}
+        </span>
+        <span className="rounded border border-border px-1.5 py-px text-[8px] font-bold uppercase tracking-[0.08em] text-muted">
+          {kind}
+        </span>
+        {session.teamWorkout && (
+          <span className="flex items-center gap-1 text-[10px] font-semibold text-accent">
+            <IconTrophy size={11} /> Team board
           </span>
-        </div>
-        {detail && <div className="mt-0.5 truncate text-[11px] text-muted">{detail}</div>}
-        {log && summaryOf(log) && (
-          <div className="mt-1 text-[12px] font-medium text-text-2">{summaryOf(log)}</div>
         )}
       </div>
-      {log ? (
-        <span className="flex flex-shrink-0 items-center gap-1 text-[11px] font-semibold text-success">
-          <IconCheckCircle size={14} /> Logged
-        </span>
-      ) : (
-        <span className="flex-shrink-0 rounded-lg bg-primary-live px-3 py-1.5 text-[12px] font-semibold text-primary-contrast">
-          Log
-        </span>
-      )}
+
+      {/* The workout itself, in the coach's words. */}
+      <div className="w-full">
+        <div className="text-[17px] font-semibold leading-snug text-text">{words || kind}</div>
+        {location && (
+          <div className="mt-1 flex items-center gap-1 text-[12px] text-muted">
+            <IconMapPin size={11} /> {location}
+          </div>
+        )}
+        {note && (
+          <div className="mt-1.5 text-[12px] leading-relaxed text-text-2">
+            <span className="font-semibold text-muted">Coach: </span>
+            {note}
+          </div>
+        )}
+      </div>
+
+      {/* The bottom line: the estimate before, your result after. */}
+      <div className="flex w-full items-center justify-between gap-3">
+        {log ? (
+          <span className="text-[13px] font-medium text-text-2">{summaryOf(log) || "Logged"}</span>
+        ) : expected ? (
+          <span className="text-[12px] text-muted">
+            About <span className="font-semibold text-text">{expected}</span>
+          </span>
+        ) : (
+          <span />
+        )}
+        {log ? (
+          <span className="flex flex-shrink-0 items-center gap-1 text-[12px] font-semibold text-success">
+            <IconCheckCircle size={15} /> Logged
+          </span>
+        ) : (
+          <span className="flex-shrink-0 rounded-xl bg-primary-live px-4 py-2 text-[13px] font-semibold text-primary-contrast">
+            Log
+          </span>
+        )}
+      </div>
     </button>
   );
 }
@@ -1045,10 +1088,8 @@ function LogScreenInner() {
                 return (
                   <PrescribedRow
                     key={p.dayKey}
-                    label={sessionLabel(p.session)}
-                    detail={p.session.description.trim()}
+                    session={p.session}
                     period={p.period}
-                    time={p.session.time}
                     color={meta.color}
                     log={planLogByKey[p.dayKey]}
                     onLog={() =>
