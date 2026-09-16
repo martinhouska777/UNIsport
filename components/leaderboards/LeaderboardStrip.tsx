@@ -145,17 +145,17 @@ export default function LeaderboardStrip({
           square. The compact card's trophy is the BIG one; on the narrowest
           phones (under 360px) it steps aside so a long house name still fits,
           and a small trophy moves into the gold LEADERBOARDS line instead.
-          It sits on a square of the school colour — a sticker, the pair of the
-          Memories camera; gold on crimson is Harvard's own pair, and grey
-          washed it out (owner, 2026-09-16). */}
+          It sits on a light grey tile with an outline so the tile still shows
+          on the white card — the pair of the Memories camera. The crimson
+          square was too loud (owner, 2026-09-16). */}
       <span
         className={
           compact
-            ? "flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-primary max-[359px]:hidden"
-            : "flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-primary"
+            ? "flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl border border-border bg-surface-2 max-[359px]:hidden"
+            : "flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg border border-border bg-surface-2"
         }
       >
-        <CrestTrophy size={compact ? 38 : 28} />
+        <CrestTrophy size={compact ? 40 : 30} />
       </span>
 
       {ranked && standing && compact ? (

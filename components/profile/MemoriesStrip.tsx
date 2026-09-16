@@ -61,12 +61,12 @@ export default function MemoriesStrip() {
       href="/memories"
       className="mx-3.5 my-2 flex items-center gap-3 rounded-2xl border border-border bg-surface px-3.5 py-3 active:bg-surface-2"
     >
-      {/* The camera sticker (public/camera.webp — the owner's download, made
-          black) on a square of the school colour, the pair of the trophy on
-          the Leaderboards bar (owner, 2026-09-16). */}
-      <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-primary">
+      {/* An iPhone-style camera sticker (public/camera.svg) on a light grey
+          tile with an outline, the pair of the trophy on the Leaderboards bar
+          (owner, 2026-09-16). */}
+      <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border border-border bg-surface-2">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/camera.webp" alt="" className="w-[30px]" draggable={false} />
+        <img src="/camera.svg" alt="" className="w-[30px]" draggable={false} />
       </span>
 
       <div className="min-w-0 flex-1">
