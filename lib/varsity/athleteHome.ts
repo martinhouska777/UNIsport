@@ -74,21 +74,28 @@ function categoryLabel(s: Session): string {
 }
 
 /*
-  THE SHORT OF A SESSION, for a week-strip cell under its name: the distance
-  when the coach wrote one ("14k", "12.5k") and the intensity ("UT2"), or for a
-  session with no intensity the minutes ("45 min"). Weights, Off and anything
-  else with neither prints nothing — "Weights" alone is the whole story.
+  THE SHORT OF A SESSION, for a week-strip cell under its name (owner,
+  2026-09-16). The colour already says the intensity, so the words say the
+  work:
+    UT2      → just the kilometres ("14k"); with none written, "UT2".
+    UT1/Hard → the pieces, as the coach wrote them ("8×500m", "30' r20") — up
+               to the first comma, so "8×500m, 1:30 rest" prints "8×500m".
+  With nothing written, the intensity word stands in. A session with no
+  intensity prints its minutes ("45 min"); Weights and Off print nothing —
+  "Weights" alone is the whole story.
 */
 export function shortTag(s: Session): string {
   const d = s.description;
   // Only a distance that LEADS ("14k steady"): "3×5' at r30, 2k+2" is a piece, not the outing.
   const km = d.match(/^\s*(\d+(?:[.,]\d+)?)\s*km?\b/i);
-  const intensity = s.intensity
-    ? (intensityMeta[s.intensity as Intensity]?.label ?? s.intensity)
-    : "";
-  if (intensity) return [km ? `${km[1]}k` : "", intensity].filter(Boolean).join(" ");
-  if (s.category === "weights" || s.category === "off") return "";
   const min = d.match(/(\d+)\s*(?:'|min)/i);
+  if (s.intensity) {
+    const word = intensityMeta[s.intensity as Intensity]?.label ?? s.intensity;
+    // "3×25'" is not 25 minutes, so a UT2 with no distance just says UT2.
+    if (s.intensity === "UT2") return km ? `${km[1]}k` : word;
+    return d.split(",")[0].trim() || word;
+  }
+  if (s.category === "weights" || s.category === "off") return "";
   if (km) return `${km[1]}k`;
   return min ? `${min[1]} min` : "";
 }
