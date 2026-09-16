@@ -713,16 +713,17 @@ export default function CalendarScreen({
                             bottom-right corner, where it is always in the same
                             place from day to day. */}
                         {(intensity || sub) && (
-                          /* WRAPS rather than cutting anything: the intensity on
-                             the left, the figure on the right when both fit, and
-                             the figure on its own line, still at the right, when
-                             they don't ("Hard" + "11.3 km" in a 40px column). */
-                          <span className="mt-px flex flex-wrap items-baseline justify-between gap-x-0.5">
+                          /* ALWAYS TWO LINES (owner, 2026-09-16: "make sure all
+                             the text fits"): the intensity, then the figure on
+                             its own line at the right. It used to share a line
+                             when both happened to fit, so "UT2 15 km" sat on
+                             one line in one cell and on two in the next. */
+                          <span className="mt-px flex flex-col">
                             <span className="min-w-0 text-[9px] leading-[1.15] opacity-80 [overflow-wrap:anywhere]">
                               {intensity}
                             </span>
                             {sub && (
-                              <span className="ml-auto whitespace-nowrap text-[9px] font-medium leading-[1.15] opacity-80">
+                              <span className="self-end whitespace-nowrap text-[9px] font-medium leading-[1.15] opacity-80">
                                 {sub}
                               </span>
                             )}
