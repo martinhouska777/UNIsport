@@ -544,5 +544,8 @@ export function cardChips(m: Match, count: number, rarity?: ReasonRarity): CardC
     });
   }
 
-  return chips;
+  // The card SHOWS everything you share first and their own things after, so
+  // a grey "what they study" never sits in front of a coloured match. The pick
+  // above decides WHICH chips make the card; this only decides the order.
+  return [...chips.filter((c) => c.shared), ...chips.filter((c) => !c.shared)];
 }
