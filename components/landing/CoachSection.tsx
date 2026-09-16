@@ -53,16 +53,16 @@ export default function CoachSection({ solo = false, teaser = false }: { solo?: 
     <section
       id="coaches"
       {...(teaser ? {} : { "data-phone-screens": true })}
-      className={`relative z-[1] scroll-mt-20 px-6 sm:px-8 ${teaser ? "pb-24" : "pb-28"} ${solo ? "l-glow-varsity pt-10 sm:pt-14" : "border-t border-l-line pt-24"}`}
+      className={`relative z-[1] scroll-mt-20 px-6 sm:px-8 ${teaser ? "pb-24" : "pb-28"} ${solo ? "l-glow-coach bg-l-surface-coach pt-10 sm:pt-14" : "border-t border-l-line pt-24"}`}
     >
       <div className="mx-auto max-w-[1160px]">
         {/* ── The opener ── */}
         <div className={`flex flex-col items-center gap-[clamp(11px,1.8vh,18px)] pb-7 text-center ${solo ? "l-fade-up" : ""}`}>
-          <div className="inline-flex items-center gap-2 rounded-full border border-l-varsity-soft bg-l-varsity-dim px-3.5 py-1.5 font-mono text-[11px] uppercase tracking-wider text-l-varsity">
+          <div className="inline-flex items-center gap-2 rounded-full border border-l-coach-soft bg-l-coach-dim px-3.5 py-1.5 font-mono text-[11px] uppercase tracking-wider text-l-coach">
             {coach.badge}
           </div>
           <Heading className="max-w-[14ch] font-display text-[clamp(40px,min(7vw,8.6vh),68px)] font-normal leading-[1.02] tracking-tight text-balance text-l-text">
-            {coach.headline} <em className="italic text-l-varsity">{coach.headlineEm}</em>
+            {coach.headline} <em className="italic text-l-coach">{coach.headlineEm}</em>
           </Heading>
           <Body
             parts={solo ? coach.subSolo : coach.sub}
@@ -71,7 +71,7 @@ export default function CoachSection({ solo = false, teaser = false }: { solo?: 
           {solo && (
             <a
               href={mailtoHref(coach.cta.mailSubject, coach.cta.mailBody)}
-              className="mt-3 inline-flex items-center gap-2 rounded-full bg-l-varsity px-7 py-4 text-[15px] font-semibold tracking-tight text-l-bg transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-l-text"
+              className="mt-3 inline-flex items-center gap-2 rounded-full bg-l-coach px-7 py-4 text-[15px] font-semibold tracking-tight text-l-bg transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-l-text"
             >
               {coach.cta.label} →
             </a>
@@ -96,7 +96,7 @@ export default function CoachSection({ solo = false, teaser = false }: { solo?: 
                not down. */
             <Link
               href={coach.overview.teaserHref}
-              className="mt-3 inline-flex items-center gap-2 rounded-full border border-l-varsity-soft bg-l-varsity-dim px-6 py-3.5 text-[15px] font-semibold tracking-tight text-l-varsity transition-[color,background-color,border-color,translate] hover:-translate-y-0.5 hover:border-l-varsity focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-l-text"
+              className="mt-3 inline-flex items-center gap-2 rounded-full border border-l-coach-soft bg-l-coach-dim px-6 py-3.5 text-[15px] font-semibold tracking-tight text-l-coach transition-[color,background-color,border-color,translate] hover:-translate-y-0.5 hover:border-l-coach focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-l-text"
             >
               {coach.overview.label} →
             </Link>
@@ -112,7 +112,7 @@ export default function CoachSection({ solo = false, teaser = false }: { solo?: 
                 viewBox="0 0 24 24"
                 fill="none"
                 aria-hidden
-                className="text-l-varsity"
+                className="text-l-coach"
               >
                 <path
                   d="M12 5.5v13m0 0-5.6-5.6M12 18.5l5.6-5.6"
@@ -163,7 +163,7 @@ export default function CoachSection({ solo = false, teaser = false }: { solo?: 
                     gold pill are the page's own numbering idiom — the section
                     badge and the story chips (OpeningSteps.tsx) wear it too. */}
                 <h3 className="font-display text-[clamp(24px,2.7vw,31px)] font-normal leading-[1.1] tracking-tight text-balance text-l-text">
-                  <span className="mr-[0.34em] inline-flex h-[1.72em] w-[1.72em] items-center justify-center rounded-full border border-l-varsity-soft bg-l-varsity-dim align-[0.42em] font-mono text-[0.42em] leading-none text-l-varsity">
+                  <span className="mr-[0.34em] inline-flex h-[1.72em] w-[1.72em] items-center justify-center rounded-full border border-l-coach-soft bg-l-coach-dim align-[0.42em] font-mono text-[0.42em] leading-none text-l-coach">
                     {s.n}
                   </span>
                   {s.head}
@@ -191,7 +191,7 @@ export default function CoachSection({ solo = false, teaser = false }: { solo?: 
           </p>
           <a
             href={mailtoHref(coach.cta.mailSubject, coach.cta.mailBody)}
-            className="mt-3 inline-flex items-center gap-2 rounded-full bg-l-varsity px-7 py-4 text-[15px] font-semibold tracking-tight text-l-bg transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-l-text"
+            className="mt-3 inline-flex items-center gap-2 rounded-full bg-l-coach px-7 py-4 text-[15px] font-semibold tracking-tight text-l-bg transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-l-text"
           >
             {coach.cta.label} →
           </a>

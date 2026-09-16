@@ -846,6 +846,21 @@
   z-index: -1;
   pointer-events: none;
 }
+/* The Coaches page's twin of the glow above, in the coach's red (owner,
+   2026-09-15: the page was white; it wears the Coach door's tint now). */
+.l-glow-coach::after {
+  content: "";
+  position: absolute;
+  top: 5%;
+  right: 5%;
+  width: 700px;
+  height: 700px;
+  background: radial-gradient(circle, var(--color-l-coach-dim) 0%, transparent 60%);
+  filter: blur(80px);
+  opacity: var(--l-glow, 1); /* the design lab's glow dial; 1 = as designed */
+  z-index: -1;
+  pointer-events: none;
+}
 
 @keyframes l-pulse {
   0%, 100% { opacity: 1; }
