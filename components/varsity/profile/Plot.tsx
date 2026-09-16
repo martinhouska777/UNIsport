@@ -25,7 +25,10 @@ import type { ChartType } from "@/lib/varsity/athleteStats";
 export type PlotPoint = { label: string; value: number; latest: boolean };
 
 /** How much the columns are allowed to say about themselves. */
-export type PlotValues = "none" | "peak" | "auto";
+/* "fit": every point's number when they ALL fit (a week or less on the card),
+   otherwise none — no lone peak chip. The profile card uses it (owner,
+   2026-09-16: "write the kilometres on the dots when it fits"). */
+export type PlotValues = "none" | "peak" | "auto" | "fit";
 
 /*
   A TOP FOR THE Y AXIS a person would say out loud — 20 km, not 17.4.
@@ -196,6 +199,13 @@ export default function Plot({
   const dragHi = drag?.moved ? Math.max(drag.from, drag.to) : null;
 
   const line = points.map((p, i) => `${cx(i)},${yOf(p.value)}`).join(" ");
+  /* A point lower than the neighbours it has — the bottom of a dip. */
+  const isValley = (i: number) => {
+    const v = points[i].value;
+    const prev = points[i - 1]?.value;
+    const next = points[i + 1]?.value;
+    return (prev == null || v < prev) && (next == null || v < next) && (prev != null || next != null);
+  };
   const area = `M ${cx(0)},${baseline} L ${line.replaceAll(" ", " L ")} L ${cx(n - 1)},${baseline} Z`;
 
   /*
@@ -217,7 +227,7 @@ export default function Plot({
     ...points.filter((p) => p.value > 0).map((p) => textW(metric.format(p.value, units), fs)),
     0,
   );
-  const allValues = values === "auto" && widest > 0 && widest + 4 <= slot;
+  const allValues = (values === "auto" || values === "fit") && widest > 0 && widest + 4 <= slot;
   /*
     The chip needs room ABOVE the column it names. A best bucket that already
     reaches the ceiling — every consistency chart with one perfect day in it —
@@ -226,7 +236,7 @@ export default function Plot({
     a column at the top of the scale is its own message.
   */
   const peakRoom = hasPeak && points[peakIndex].value < max * 0.9;
-  const peakOnly = values !== "none" && !allValues && peakRoom;
+  const peakOnly = values !== "none" && values !== "fit" && !allValues && peakRoom;
 
   return (
     <svg
@@ -388,9 +398,18 @@ export default function Plot({
             {allValues && p.value > 0 && (
               <text
                 x={cx(i)}
-                y={yOf(p.value) - 5}
+                /* On a LINE, a dip's number goes UNDER its dot — above it, the
+                   two lines climbing out of the valley run straight through the
+                   words. Everything else sits above. */
+                y={chart === "line" && isValley(i) ? yOf(p.value) + fs + 6 : yOf(p.value) - 6}
                 textAnchor="middle"
                 fill="var(--text)"
+                /* A thin halo in the card's own colour, so a number stays
+                   readable where the line or the average crosses it. */
+                stroke="var(--surface)"
+                strokeWidth={3}
+                strokeLinejoin="round"
+                paintOrder="stroke"
                 fontSize={fs}
                 fontWeight={600}
               >

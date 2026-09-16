@@ -108,7 +108,9 @@ begin
       -- lib/onboarding.ts — key, how often, days, note).
       'otherActivities',   '[{"key":"cardio","perWeek":"5+","days":[],"note":"Rowing"}]'::jsonb,
       'topGyms',           gyms,
-      'trainingSchedule',  my_sched,
+      -- His OWN afternoons, not a copy of the account's mornings: the owner
+      -- didn't want "Similar times" on his card (2026-09-16).
+      'trainingSchedule',  '{"mon":["14:00-16:00"],"wed":["14:00-16:00"],"fri":["14:00-16:00"],"sat":["11:00-13:00"]}'::jsonb,
       'concentration',     'Economics',
       'hometownCity',      'Prague',
       'hometownCountry',   'Czechia',

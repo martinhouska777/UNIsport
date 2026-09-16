@@ -134,7 +134,12 @@ begin
   select coalesce(p.data->>'name', 'Member') into nm
     from public.profiles p where p.id = me;
 
-  preview := '📅 Session plan: ' || btrim(p_activity)
+  -- What the Messages list shows for it: the plan itself, the way the card
+  -- reads — "📅 Gym · Thu, Sep 17 · 8:00 AM · Malkin Athletic Center" — not the
+  -- words "Session plan" (owner, 2026-09-16). Campus time: every school on the
+  -- list is on Eastern time.
+  preview := '📅 ' || initcap(btrim(p_activity))
+             || ' · ' || to_char(p_scheduled_at at time zone 'America/New_York', 'Dy, Mon FMDD · FMHH12:MI AM')
              || coalesce(' · ' || nullif(btrim(coalesce(p_place, '')), ''), '');
 
   insert into public.dm_messages (conv_id, sender_id, sender_name, body, kind, plan_id)

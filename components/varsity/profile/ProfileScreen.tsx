@@ -669,7 +669,7 @@ function WeeklyGraph({
           aria-label={`See ${metric.label.toLowerCase()} full size`}
           className="mt-4 block w-full active:opacity-80"
         >
-          <Plot points={points} metric={metric} units={units} chart={chart} height={188} />
+          <Plot points={points} metric={metric} units={units} chart={chart} height={188} values="fit" />
         </button>
       ) : (
         <p className="mt-4 rounded-xl border border-dashed border-border bg-surface-2 px-4 py-8 text-center text-[12px] leading-relaxed text-muted">

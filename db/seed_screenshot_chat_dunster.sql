@@ -72,7 +72,7 @@ begin
   values (plan, conv, mh, 'gym', 'Malkin Athletic Center', at, 'proposed', now() - interval '40 minutes');
 
   insert into public.dm_messages (conv_id, sender_id, sender_name, body, kind, plan_id, created_at)
-  values (conv, mh, 'Arjun Mehta', '📅 Session plan: gym · Malkin Athletic Center', 'plan', plan, now() - interval '40 minutes');
+  values (conv, mh, 'Arjun Mehta', '📅 Gym · ' || to_char(at at time zone 'America/New_York', 'Dy, Mon FMDD · FMHH12:MI AM') || ' · Malkin Athletic Center', 'plan', plan, now() - interval '40 minutes');
 
   -- Both have read everything, so the thread shows "Read" and no unread badge.
   insert into public.dm_reads (conv_id, user_id, last_read_at) values
