@@ -21,6 +21,7 @@ import {
   parseDate,
   sessionKey,
   sessionLabel,
+  sessionPieces,
   toISO,
   periods,
   type Category,
@@ -93,7 +94,7 @@ export function shortTag(s: Session): string {
     const word = intensityMeta[s.intensity as Intensity]?.label ?? s.intensity;
     // "3×25'" is not 25 minutes, so a UT2 with no distance just says UT2.
     if (s.intensity === "UT2") return km ? `${km[1]}k` : word;
-    return d.split(",")[0].trim() || word;
+    return sessionPieces(s) || word;
   }
   if (s.category === "weights" || s.category === "off") return "";
   if (km) return `${km[1]}k`;

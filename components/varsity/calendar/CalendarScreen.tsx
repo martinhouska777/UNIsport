@@ -63,6 +63,7 @@ import { formatMetrics } from "@/lib/varsity/logParse";
 import {
   logLabel,
   logLabelParts,
+  sessionPieces,
   toISO,
   type Session,
   type SessionMap,
@@ -672,7 +673,27 @@ export default function CalendarScreen({
                        KIND on the first line with the figure to its right, the
                        INTENSITY under it (lib/varsity/coachPlan →
                        logLabelParts). */
-                    const { kind, intensity } = logLabelParts(l, planned);
+                    const { kind, intensity: word } = logLabelParts(l, planned);
+                    /*
+                      THE WORK, NOT THE WORD (owner, 2026-09-16) — the same as
+                      Home's week strip. The colour already says the intensity:
+                      a UT1 or Hard session prints its pieces ("8×500m", "30'
+                      r20"), a UT2 just its kilometres (the figure below, so no
+                      word at all). A break is allowed after "×" so "4×2000m"
+                      goes onto two lines whole instead of being cut mid-number.
+                      A piece longer than three short lines doesn't fit a 33px
+                      column, so that one keeps the word.
+                    */
+                    const pieces =
+                      word && (planned?.intensity === "UT1" || planned?.intensity === "hard")
+                        ? sessionPieces(planned)
+                        : "";
+                    const intensity =
+                      word && planned?.intensity === "UT2" && sub
+                        ? null
+                        : pieces && pieces.length <= 14
+                          ? pieces.replace(/×/g, "×​")
+                          : word;
                     return (
                       <span
                         key={l.id}

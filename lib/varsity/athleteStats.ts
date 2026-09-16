@@ -92,6 +92,16 @@ export function customRange(startIso: string, endIso: string): StatRange {
   };
 }
 
+/*
+  THE WINDOW STATISTICS OPENS ON, for the app-store photos (owner, 2026-09-16):
+  Mon 7 – Sat 12 September 2026. TEMPORARY — set it back to null once the
+  photos are shot, and the screen opens on `defaultStatRange` again.
+*/
+export const photoStatWindow: { start: string; end: string } | null = {
+  start: "2026-09-07",
+  end: "2026-09-12",
+};
+
 /** How a range names itself under a number. Dates keep their capitals. */
 export const rangeCaption = (r: StatRange) => (r.start ? r.label : r.label.toLowerCase());
 

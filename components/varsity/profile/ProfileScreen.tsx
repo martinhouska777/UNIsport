@@ -62,6 +62,7 @@ import {
   chartTypes,
   chartTypeOf,
   defaultStatRange,
+  photoStatWindow,
   CUSTOM_RANGE,
   type ChartType,
   type StatMetric,
@@ -755,7 +756,7 @@ export default function ProfileScreen() {
   // you ask ("how was last week?"), not a setting you configure once. `custom`
   // is a pair of dates the athlete picked; while it is set it IS the window.
   const [rangeKey, setRangeKey] = useState(defaultStatRange);
-  const [custom, setCustom] = useState<{ start: string; end: string } | null>(null);
+  const [custom, setCustom] = useState<{ start: string; end: string } | null>(photoStatWindow);
   const range: StatRange = custom ? customRange(custom.start, custom.end) : rangeByKey(rangeKey);
   /*
     ZOOM (the full-screen graph's drag). A zoom is a window of dates like any

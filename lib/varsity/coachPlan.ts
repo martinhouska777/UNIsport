@@ -206,6 +206,15 @@ export function sessionColor(s: Session): string {
   if (s.intensity) return intensityMeta[s.intensity as Intensity]?.color ?? "var(--muted)";
   return categoryMeta[s.category as Category]?.color ?? "var(--muted)";
 }
+/*
+  THE PIECES of a session, as the coach wrote them, up to the first comma:
+  "8×500m, 1:30 rest" → "8×500m". What Home's week strip and the calendar print
+  for a UT1 or Hard session (owner, 2026-09-16). Empty when nothing was written.
+*/
+export function sessionPieces(s: Session): string {
+  return s.description.split(",")[0].trim();
+}
+
 export function sessionLabel(s: Session): string {
   const cat = categoryMeta[s.category as Category]?.label ?? s.category;
   if (!s.intensity) return cat;
