@@ -83,12 +83,14 @@ declare
   v_to        date;
   v_race      date;
   v_oct       date;
+  v_tue       date;   -- the last Tuesday before today
   boats_a     jsonb;
   boats_b     jsonb;
   n           int;
 begin
   -- --- 0. The owner --------------------------------------------------------
   select u.id into me from auth.users u where lower(u.email) = lower(owner_email);
+  v_tue := current_date - (((extract(dow from current_date)::int - 2 + 6) % 7) + 1);
   if me is null then
     raise exception 'No account for % — sign up in the app first.', owner_email;
   end if;
@@ -125,7 +127,10 @@ begin
     v_race := v_oct + ((7 - extract(dow from v_oct)::int) % 7) + 14;
   end if;
 
-  v_from := date_trunc('week', current_date - interval '35 days')::date;  -- a Monday
+  -- The Monday on or before the 1st of LAST month, so the calendar has one
+  -- whole month filled in (owner, 2026-09-16: "fill the whole training
+  -- calendar — like August"), not just the last five weeks.
+  v_from := date_trunc('week', date_trunc('month', current_date) - interval '1 month')::date;
   v_to   := least(v_race, (current_date + interval '28 days')::date);
 
   insert into public.varsity_plan_blocks (id, name, start_date, end_date, status, race_name, race_date, updated_at)
@@ -232,7 +237,7 @@ begin
     from slots s
     join public.demo_seed_week w on w.dow = s.dow
     where w.category <> 'off'
-      and mod(s.doy + case w.period when 'AM' then 0 else 4 end, 11) <> 0  -- miss one now and then
+    -- Nothing missed (owner, 2026-09-16: the statistics went "up and down").
   )
   insert into public.varsity_logs (id, athlete_id, log_date, period, day_key, source, title, category, minutes, metres, split, note)
   select
@@ -242,20 +247,25 @@ begin
     -- state"), not "Water · UT2".
     coalesce(nullif(description, ''), initcap(category)),
     category,
+    -- MINUTES ARE EVEN DAY TO DAY (owner, 2026-09-16: "make the statistics
+    -- more consistent"). Every training day lands between ~95 and ~125
+    -- minutes: a morning on its own (Tue, Sat) is the long outing, a morning
+    -- with a lift after it is the shorter one. Sunday is the only zero.
     case
-      when category = 'water' and intensity = 'UT2'  then 68 + mod(doy, 4) * 3   -- 14k at ~2:25
-      when category = 'water' and intensity = 'UT1'  then 62 + mod(doy, 3) * 2
-      when category = 'water' and intensity = 'hard' then 55 + mod(doy, 3) * 2
-      when category = 'erg'   and intensity = 'UT2'  then 60                     -- 3×20'
-      when category = 'erg'   and intensity = 'hard' then 42 + mod(doy, 3) * 2   -- 8×500 with warm-up
-      when category = 'erg'                          then 55 + mod(doy, 3) * 5
-      when category = 'weights' then 55 + mod(doy, 2) * 5
+      when category = 'water' and intensity = 'UT2' and extract(dow from d) = 2 then 95 + mod(doy, 3) * 2
+      when category = 'water' and intensity = 'UT2'  then 70 + mod(doy, 3) * 2
+      when category = 'water' and intensity = 'UT1'  then 68 + mod(doy, 3) * 2
+      when category = 'water' and intensity = 'hard' then 96 + mod(doy, 3) * 2
+      when category = 'erg'   and intensity = 'UT2'  then 70
+      when category = 'erg'   and intensity = 'hard' then 55 + mod(doy, 3) * 2
+      when category = 'erg'                          then 60
+      when category = 'weights' then 46 + mod(doy, 2) * 2
       else 45
     end,
     case
       when category = 'water' and intensity = 'UT2'  then 14000 + mod(doy, 5) * 250   -- the 14k, give or take
       when category = 'water' and intensity = 'UT1'  then 12000 + mod(doy, 4) * 250
-      when category = 'water' and intensity = 'hard' then 11000 + mod(doy, 4) * 250
+      when category = 'water' and intensity = 'hard' then 13000 + mod(doy, 4) * 250
       when category = 'erg'   and intensity = 'UT2'  then 15600 + mod(doy, 6) * 100   -- 3×20' at ~1:55
       when category = 'erg'   and intensity = 'UT1'  then 13600 + mod(doy, 5) * 200
       when category = 'erg'   and intensity = 'hard' then 7000 + mod(doy, 3) * 200    -- 8×500 plus the warm-up
@@ -276,12 +286,31 @@ begin
 
   -- A few sessions nobody prescribed — the "extra" training the plan never asks
   -- for, which is half the point of the log.
+  -- Always on a TUESDAY afternoon — the one training day with nothing after
+  -- the outing — so an extra evens the week out instead of spiking it.
   insert into public.varsity_logs (id, athlete_id, log_date, period, day_key, source, title, category, minutes, metres, split, note)
   values
-    ('de11e000-0000-4000-8000-00000000f001', me, current_date - 4,  'PM', null, 'extra', 'Easy shakeout run', 'run',  32, 6000,  null, 'Legs felt heavy after Thursday.'),
-    ('de11e000-0000-4000-8000-00000000f002', me, current_date - 9,  'PM', null, 'extra', 'Bike — recovery spin', 'bike', 45, 20000, null, ''),
-    ('de11e000-0000-4000-8000-00000000f003', me, current_date - 16, 'AM', null, 'extra', 'Core + mobility', 'flex',  25, null,  null, ''),
-    ('de11e000-0000-4000-8000-00000000f004', me, current_date - 23, 'PM', null, 'extra', 'Easy run', 'run', 40, 7500, null, '');
+    ('de11e000-0000-4000-8000-00000000f001', me, v_tue - 7,  'PM', null, 'extra', 'Easy shakeout run', 'run',  28, 5500,  null, 'Legs felt heavy after the 8×500.'),
+    ('de11e000-0000-4000-8000-00000000f002', me, v_tue - 14, 'PM', null, 'extra', 'Bike — recovery spin', 'bike', 30, 14000, null, ''),
+    ('de11e000-0000-4000-8000-00000000f003', me, v_tue - 28, 'PM', null, 'extra', 'Core + mobility', 'flex',  25, null,  null, ''),
+    ('de11e000-0000-4000-8000-00000000f004', me, v_tue - 35, 'PM', null, 'extra', 'Easy run', 'run', 30, 6000, null, '');
+
+  -- --- 5b. The owner on the roster, and one day out --------------------------
+  -- rosterId is which seat in the lineups is "You". It had been claimed as
+  -- somebody else's (cameron-beyki), so no boat ever lit up for John Brown.
+  -- The days out: ONE injured Sunday (a rest day, so nothing logged clashes
+  -- with it) instead of three "Sick" days that sat on top of training
+  -- (owner, 2026-09-16).
+  update public.profiles
+  set data = jsonb_set(
+        jsonb_set(data, '{varsity,rosterId}', '"john-brown"', true),
+        '{varsity,daysOut}',
+        jsonb_build_object(
+          to_char(current_date - case when extract(dow from current_date)::int = 0 then 7 else extract(dow from current_date)::int end, 'YYYY-MM-DD'),
+          jsonb_build_object('reason', 'injured', 'note', 'Tweaked my lower back on the erg — resting it.')
+        ),
+        true)
+  where id = me and data ? 'varsity';
 
   -- --- 6. One note from the coach ------------------------------------------
   -- Only written if the owner has none, and remembered so the undo can tell
