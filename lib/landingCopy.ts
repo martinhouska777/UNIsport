@@ -1095,8 +1095,14 @@ export const coach = {
            it ("Never shout it across the dock again."). */
         { text: "Publish it and the lineup is on every athlete's phone.", bold: true },
       ],
+      /* RE-SHOT 2026-09-17 (owner: "i dont like how the lineups are portrayed
+         there"). The frame that shipped with the last coach shoot was not a
+         lineup at all — the console's Lineup tab bounces to Plan while the
+         console tour is walking, so the script photographed the training-block
+         list under a step titled "Build lineups". The tour is skipped first
+         now, and this is the boat itself: the Hosea eight, seat by seat. */
       shot: "coach-4-lineup.webp",
-      alt: "The Lineup screen: the 1V eight seated cox to bow, port seats in red and starboard seats in green, with the athlete pool beside it",
+      alt: "The Lineup screen: the Hosea eight seated from bow, every seat tagged port, starboard or both, with the lineup live to the squad",
     },
     {
       n: "4",
@@ -1117,14 +1123,18 @@ export const coach = {
         { text: ", so your athletes know right away which piece they are watching." },
       ],
       /* ITS OWN FRAME since 2026-09-11 (website review: this step wore step
-         3's picture, so a coach reading six numbered screens saw five). The
-         same Lineup screen, scrolled to the 1V's foot: the boat's name, oars
-         and note, then the video strip open on its "Connect Drive" button and
-         the line about the squad's Drive folder, with the crew count under it.
-         Shot from the dev server with the capture bypass (scripts/landing/
-         README.md), light and dark, on the fake roster the other frames use. */
+         3's picture, so a coach reading six numbered screens saw five).
+
+         THE VIDEO STRIP IS SHUT IN IT, on the owner's instruction 2026-09-17.
+         It used to be photographed open on "Connect Drive", which filled the
+         frame with an empty label field and a sign-in line and left one seat
+         of the boat showing — a step about footage that showed no crew. Shut,
+         the strip is the one row it is in the app ("Video" and a chevron), so
+         the same frame carries the end of the lineup, the boat and the oars,
+         and the tab the footage lives behind. Shot from production as the demo
+         coach, light and dark. */
       shot: "coach-4-video.webp",
-      alt: "The 1V's card on the Lineup screen: boat, oars and note, then the video strip open with its Connect Drive button and the line about the squad's Drive folder, and the crew count under it",
+      alt: "The foot of the boat's card on the Lineup screen: the last seats and the cox, the boat's name, its oars and the crew note, and under them the shut Video tab",
     },
     {
       n: "5",
