@@ -22,6 +22,7 @@ import ThemeProvider from "@/components/ThemeProvider";
 import { useVarsityTheme } from "@/components/varsity/useVarsityTheme";
 import { useAppState } from "@/components/AppState";
 import { fetchPlan, type Plan } from "@/lib/varsity/planStore";
+import { sessionColor } from "@/lib/varsity/coachPlan";
 import { prescribedForDay } from "@/lib/varsity/athleteHome";
 import {
   sessionLabel,
@@ -672,32 +673,28 @@ function PrescribedRow({
   log?: LogEntry;
   onLog: () => void;
 }) {
-  const kind = sessionLabel(session); // "Water · UT2"
+  const kind = sessionLabel(session); // "Erg · Hard"
   const words = session.description.trim();
-  const est = estimateForSession(session);
-  const expected = formatMetrics(est.minutes, est.metres, null);
   const location = session.location?.trim();
   const note = session.note?.trim();
   return (
     /* SHORTER (owner, 2026-09-17: "the Today tabs in the log are very tall …
-       make them shorter so we can see the extra section"). One block of
-       words on the left — when, the workout, the estimate — and the Log
-       button beside it, instead of three stacked rows with the button on its
-       own line. */
+       make them shorter so we can see the extra section"), then PLAINER the
+       same day: the session's colour is a STRIPE down the left edge like the
+       calendar's (Erg · Hard = red), the top line is just "AM" and the kind,
+       and the "About 15 min · 4,000 m" estimate is gone. The Log button sits
+       beside the words. After logging, your result still shows. */
     <button
       type="button"
       onClick={onLog}
-      className={`flex w-full items-center gap-3 rounded-2xl border px-3.5 py-2.5 text-left ${
+      className={`relative flex w-full items-center gap-3 overflow-hidden rounded-2xl border py-2.5 pr-3.5 pl-5 text-left ${
         log ? "border-success-line bg-success-tint" : "border-border bg-surface active:bg-surface-2"
       }`}
     >
+      <span aria-hidden className="absolute inset-y-0 left-0 w-1.5" style={{ background: color }} />
       <div className="min-w-0 flex-1">
-        {/* When, and what kind — the small line on top, like the Workouts tab's rows. */}
         <div className="flex w-full flex-wrap items-center gap-x-2 gap-y-0.5">
-          <Dot color={color} />
-          <span className="flex items-center gap-1 text-[11px] font-medium text-muted">
-            <IconClock size={11} /> {period} · {session.time}
-          </span>
+          <span className="text-[11px] font-semibold text-muted">{period}</span>
           <span className="rounded border border-border px-1.5 py-px text-[8px] font-bold uppercase tracking-[0.08em] text-muted">
             {kind}
           </span>
@@ -721,15 +718,7 @@ function PrescribedRow({
             {note}
           </div>
         )}
-
-        {/* The estimate before, your result after. */}
-        {log ? (
-          <div className="mt-0.5 text-[12px] font-medium text-text-2">{summaryOf(log) || "Logged"}</div>
-        ) : expected ? (
-          <div className="mt-0.5 text-[12px] text-muted">
-            About <span className="font-semibold text-text">{expected}</span>
-          </div>
-        ) : null}
+        {log && <div className="mt-0.5 text-[12px] font-medium text-text-2">{summaryOf(log) || "Logged"}</div>}
       </div>
 
       {log ? (
@@ -1092,13 +1081,12 @@ function LogScreenInner() {
           ) : (
             <div className="flex flex-col gap-2">
               {prescribed.map((p) => {
-                const meta = catMeta[p.session.category] ?? catMeta.other;
                 return (
                   <PrescribedRow
                     key={p.dayKey}
                     session={p.session}
                     period={p.period}
-                    color={meta.color}
+                    color={sessionColor(p.session)}
                     log={planLogByKey[p.dayKey]}
                     onLog={() =>
                       setEditor({
