@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState, type CSSProperties, type Ref } from "react";
 import Phone from "@/components/landing/Phone";
 import Shot from "@/components/landing/Shot";
+import FeatureIcon from "@/components/landing/FeatureIcon";
 import type { Beat } from "@/lib/landingCopy";
 import { motion as motionByBeat, shotSize } from "@/lib/landingMotion";
 
@@ -491,6 +492,24 @@ export default function ScrollStory({ id, beats, accent, ref }: Props) {
                 <p className="max-w-[40ch] text-[17px] leading-[1.6] tracking-[-0.01em] text-l-text-2 max-lg:max-w-[34ch] max-lg:text-[14px] max-lg:leading-[1.5]">
                   {b.sub}
                 </p>
+              )}
+              {/* The features in this part of the app: icon, name, one line.
+                  On a phone only the icon and name show, as small chips, so
+                  the phone screen under them keeps its room. */}
+              {b.points && (
+                <ul className="ls-points mt-2 flex flex-col gap-3.5 max-lg:mt-0 max-lg:flex-row max-lg:flex-wrap max-lg:justify-center max-lg:gap-1.5">
+                  {b.points.map((pt) => (
+                    <li key={pt.title} className="flex items-start gap-3.5 max-lg:items-center max-lg:gap-1.5 max-lg:rounded-full max-lg:border max-lg:border-l-line-hover max-lg:px-2.5 max-lg:py-1">
+                      <span className="grid h-9 w-9 flex-none place-items-center rounded-full bg-l-accent-dim text-(--sa) max-lg:h-auto max-lg:w-auto max-lg:bg-transparent">
+                        <FeatureIcon name={pt.icon} className="h-[18px] w-[18px] max-lg:h-[14px] max-lg:w-[14px]" />
+                      </span>
+                      <span className="max-w-[38ch]">
+                        <span className="block text-[17px] font-medium tracking-[-0.01em] text-l-text max-lg:text-[13px]">{pt.title}</span>
+                        <span className="block text-[15px] leading-[1.45] text-l-text-2 max-lg:hidden">{pt.text}</span>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
               )}
             </div>
           ))}

@@ -43,7 +43,13 @@ export type Beat = {
   shot: string;
   /** Labels pointing at what's on that screen. */
   ann: Annotation[];
+  /** What this part of the app does, one row each: an icon (FeatureIcon), the
+      feature's name and one short line explaining it. */
+  points?: BeatPoint[];
 };
+
+/** One feature under a beat's sub-line. */
+export type BeatPoint = { icon: string; title: string; text: string };
 
 /* ─────────────────────────── THE HERO ─────────────────────────── */
 
@@ -277,7 +283,7 @@ export const studentIntro = {
      each step jumps to its own beat. It also fills a card that is two lines
      tall on a full-height section. */
   steps: [
-    { n: "01", icon: "partners", word: "People" },
+    { n: "01", icon: "partners", word: "Match" },
     { n: "02", icon: "chat", word: "Plan" },
     { n: "03", icon: "leaderboard", word: "Profile" },
     { n: "04", icon: "gym", word: "Gyms" },
@@ -292,64 +298,71 @@ export const studentIntro = {
 
 export const studentStory: Beat[] = [
   /*
-    FOUR CHAPTERS, ONE APP SCREEN EACH (owner, 2026-09-15). The owner sent the
-    phone screenshots of the screens they want on the page and asked for them
-    to be put in order, with the TEXT TAKEN ONLY FROM WHAT WAS ALREADY HERE.
-    So every head and sub below is a line (or lines) carried over verbatim from
-    the seven-beat story this replaces; nothing was written new. Where two old
-    beats rode one screen, their lines sit together under that screen.
+    FOUR CHAPTERS, ONE APP SCREEN EACH (owner, 2026-09-15), same screens.
 
-    Order: People (the match list) → Plan (the chat with the plan card) →
-    Profile (counts, leaderboards, the session calendar, memories, all on one
-    sheet) → Gyms, last, because the Campus Colours closer under it IS the gyms
-    screen in eight schools' colours.
-
-    Dropped from the picture, kept in the feature list: the "Why you match"
-    profile and the log sheet — the owner did not send either screen.
+    RESTRUCTURED 2026-09-17 (owner, after a Hevy "Log workouts" example): the
+    long paragraphs are gone. Each chapter is a short heading, one short line,
+    then the FEATURES in it — an icon, the feature's name, one line on what it
+    does — so a reader sees "Leaderboards", "Memories", "Calendar" instead of
+    just "Profile". Four chapters stay four (owner: "the idea is to have four").
+    Mentoring is the 4th point in Match. "Connect your calendar" is listed
+    under Plan on the owner's word — it is NOT built yet, "we will build it
+    immediately later".
   */
   {
     id: "S1",
-    kicker: "01 · People",
-    /* The owner, 2026-09-02: "people find training partners mae friends …
-       just make explaining sentences from them with verbs and stuff … and no
-       dashes its so fkn generic". The swept lines are the ones they want and
-       they stand. */
-    head: "Find training partners. Make friends.",
-    sub: "Browse sorts everyone by how well you fit with them, based on interests, concentration, experience and hours. In Session you pick a time to train and plan directly with people who go at that time, or you post your time on the Buddy Board and see who is interested.",
+    kicker: "01 · Match",
+    head: "Find training partners.",
+    sub: "Meet students who train like you.",
     shot: "02-match.webp",
     ann: [],
+    points: [
+      { icon: "partners", title: "Browse", text: "Everyone sorted by how well you fit: interests, concentration, level and hours." },
+      { icon: "clock", title: "Find by time", text: "Pick when you want to train and see who goes then." },
+      { icon: "board", title: "Buddy Board", text: "Post your session and see who wants to join." },
+      { icon: "mentor", title: "Mentors", text: "Get help from an experienced student or an upperclassman in your concentration." },
+    ],
   },
   {
     id: "S2",
     kicker: "02 · Plan",
-    /* The owner's own sentence, 2026-09-02: "plan sessions easily in the chat,
-       once the other one accepts it goes to both calendars". */
-    head: "Plan sessions easily in the chat.",
-    sub: "You send a card with the gym, the day and the time, and once the other one accepts it goes to both calendars.",
+    head: "Plan sessions easily.",
+    sub: "Set it all up in the chat.",
     shot: "04-plan-a-session.webp",
     ann: [],
+    points: [
+      { icon: "chat", title: "Plan card", text: "Send the gym, the day and the time." },
+      { icon: "calendar", title: "Both calendars", text: "Once they accept, it goes into both of your calendars." },
+      { icon: "link", title: "Your calendar", text: "Connect it to Google or Apple Calendar." },
+    ],
   },
   {
-    /* ONE SHEET, three of the old beats' worth of words: the rankings head
-       and sub (old S7) and the calendar / memories lines (old S6). The capture
-       carries all of it — the counts and the leaderboard strip at the top, the
-       session calendar under them, Memories under that. */
     id: "S3",
     kicker: "03 · Profile",
-    head: "Track your statistics. See how you do in the leaderboards.",
-    sub: "Your profile counts the sessions you logged and the partners you trained with. Take part in the college leaderboards and see how you rank on campus, how your house and your year are doing, and who has trained with the most partners. Every session you log marks its day in the session calendar, and every photo you took is stored in Memories.",
+    head: "Track your progress.",
+    sub: "Everything you trained, in one place.",
     /* A plain phone screen, not a tall strip cut under Memories — "just how
        it is normally on phone screen so it looks realistic" (owner, 2026-09-16). */
     shot: "05-profile.webp",
     ann: [],
+    points: [
+      { icon: "leaderboard", title: "Leaderboards", text: "See how you, your house and your year rank on campus." },
+      { icon: "calendar", title: "Calendar", text: "Every session you log marks its day." },
+      { icon: "memories", title: "Memories", text: "Photos from your sessions, saved to come back to." },
+    ],
   },
   {
     id: "S4",
     kicker: "04 · Gyms",
-    head: "See every gym on your campus in one place.",
-    sub: "Explore what equipment each gym has, its rating and how busy it is.",
+    head: "Every gym on campus.",
+    sub: "All in one place.",
     shot: "01-gyms.webp",
     ann: [],
+    points: [
+      { icon: "list", title: "Equipment", text: "See what each gym has." },
+      { icon: "star", title: "Ratings", text: "Know which gyms students rate best." },
+      { icon: "crowd", title: "How busy", text: "Check how full it is right now." },
+    ],
   },
 ];
 
