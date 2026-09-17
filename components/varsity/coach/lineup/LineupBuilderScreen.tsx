@@ -69,7 +69,7 @@
   see the published boats but not a personalised "your seat" highlight — that
   needs real team membership (a later slice).
 */
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import {
   practiceStatusMeta,
   roster,
@@ -944,6 +944,42 @@ function Builder({
   const [dropKey, setDropKey] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [poolFilter, setPoolFilter] = useState<PoolFilter>("all");
+
+  /*
+    DRAGGING THE ADD-BOAT SHEET DOWN. `drag` is how far below its resting place
+    the sheet is being held, in pixels; it only ever goes down. Let go past a
+    third of the sheet's own height and it closes, short of that it slides back
+    — the distance is measured against the sheet rather than a fixed number of
+    pixels, so it behaves the same on any phone.
+
+    Pointer events, not touch: the same three handlers cover a thumb and a
+    mouse. A drag that starts on one of the four buttons is ignored, so a
+    pressed button stays a press.
+  */
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const dragFrom = useRef<number | null>(null);
+  const [drag, setDrag] = useState(0);
+  const [dragging, setDragging] = useState(false);
+
+  const onSheetDown = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if ((e.target as HTMLElement).closest("button")) return;
+    dragFrom.current = e.clientY;
+    setDragging(true);
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+  const onSheetMove = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (dragFrom.current === null) return;
+    setDrag(Math.max(0, e.clientY - dragFrom.current));
+  };
+  const onSheetUp = () => {
+    if (dragFrom.current === null) return;
+    const height = sheetRef.current?.offsetHeight ?? 260;
+    const gone = drag > height / 3;
+    dragFrom.current = null;
+    setDragging(false);
+    setDrag(0);
+    if (gone) setSheetOpen(false);
+  };
 
   /*
     WHO IS OUT ON THIS DAY, and why. A fact about the day, read from the
@@ -1889,26 +1925,43 @@ function Builder({
         </Sheet>
       )}
 
+      {/*
+        ADD BOAT. Four riggings, written the way a crew writes them — 8+, 4+,
+        4−, 2− — and nothing else. It used to spell each one out underneath
+        ("Eight", "Coxed Four", "8 rowers + cox") in a card twice the size, and
+        a heading in big type over a line explaining what riggings are. A coach
+        knows what 4− is (owner, 2026-09-17). Two words and four buttons.
+
+        THE GREY LINE DOES WHAT IT LOOKS LIKE. Drag the sheet down and it goes;
+        past a third of its own height it closes, short of that it springs back.
+        The handle was there from the first day and had never been draggable.
+      */}
       {sheetOpen && (
         <div className="absolute inset-0 z-50 flex items-end bg-black/60" onClick={() => setSheetOpen(false)}>
           <div
-            className="w-full rounded-t-3xl border-t border-border bg-background px-5 pb-8 pt-3"
+            ref={sheetRef}
+            className="w-full touch-none rounded-t-3xl border-t border-border bg-background px-5 pb-8 pt-3"
+            style={{
+              transform: drag ? `translateY(${drag}px)` : undefined,
+              transition: dragging ? "none" : "transform 0.22s cubic-bezier(0.2,0.8,0.2,1)",
+            }}
             onClick={(e) => e.stopPropagation()}
+            onPointerDown={onSheetDown}
+            onPointerMove={onSheetMove}
+            onPointerUp={onSheetUp}
+            onPointerCancel={onSheetUp}
           >
-            <div className="mx-auto mb-4 h-1 w-9 rounded-full bg-border" />
-            <h2 className="text-lg font-semibold text-text">Add Boat</h2>
-            <p className="mb-4 text-[12px] text-muted">Pick a rigging type.</p>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="mx-auto mb-3 h-1 w-9 rounded-full bg-border" />
+            <h2 className="text-[15px] font-semibold text-text">Add Boat</h2>
+            <div className="mt-3 grid grid-cols-4 gap-2">
               {boatTypes.map((b) => (
                 <button
                   key={b.type}
                   type="button"
                   onClick={() => addBoat(b.type)}
-                  className="flex flex-col items-center gap-1 rounded-2xl border border-border bg-surface px-3 py-3.5 active:border-primary active:bg-primary-tint"
+                  className="tap44 rounded-2xl border border-border bg-surface py-3.5 text-xl font-semibold text-text active:border-primary active:bg-primary-tint"
                 >
-                  <span className="text-xl font-semibold text-text">{b.symbol}</span>
-                  <span className="text-[12px] font-semibold text-text">{b.name}</span>
-                  <span className="text-[11px] text-muted">{b.desc}</span>
+                  {b.symbol}
                 </button>
               ))}
             </div>
