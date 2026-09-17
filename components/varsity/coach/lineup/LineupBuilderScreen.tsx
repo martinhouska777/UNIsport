@@ -815,13 +815,26 @@ function SeatPool({
                 key={m.a.id}
                 type="button"
                 onClick={() => onAssign(m.a.id)}
-                className="flex h-[36px] w-full items-center justify-between gap-2 rounded-[10px] border border-border bg-surface px-2.5 text-left active:border-primary-line active:bg-primary-tint"
+                className="flex h-[36px] w-full items-center gap-2 rounded-[10px] border border-border bg-surface px-2.5 text-left active:border-primary-line active:bg-primary-tint"
               >
-                <span className="truncate text-[14px] font-medium text-text">{m.a.name}</span>
+                <span className="min-w-0 flex-1 truncate text-[14px] font-medium text-text">
+                  {m.a.name}
+                </span>
                 {/* Already in a boat: say where, because picking them is a swap
                     and the coach should know what it costs. */}
                 {m.where && (
                   <span className="flex-shrink-0 text-[11px] text-muted">{m.where}</span>
+                )}
+                {/* The side, back on the row (owner, 2026-09-17: "show the port
+                    and starboard when you search the names"). The filter above
+                    says which side is being LOOKED for; this says what the
+                    person in front of you actually rows — which is not the same
+                    thing under All, and not the same thing for anyone who takes
+                    both sides. Not on the cox list: they are all coxes. */}
+                {!cox && (
+                  <span className="flex-shrink-0">
+                    <SideTag side={m.a.side} />
+                  </span>
                 )}
               </button>
             ))}
