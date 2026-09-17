@@ -312,8 +312,8 @@ export const studentStory: Beat[] = [
   {
     id: "S1",
     kicker: "01 · Match",
-    head: "Find training partners.",
-    sub: "Meet students who train like you and share your interests. Browse who fits you best, find someone for the time you want to go, or ask a mentor for help.",
+    head: "Find training partners. Make friends.",
+    sub: "Browse sorts everyone by how well you fit with them, based on interests, concentration, experience and hours. In Session you pick a time to train and plan directly with people who go at that time, or you post your time on the Buddy Board and see who is interested.",
     shot: "02-match.webp",
     ann: [],
     points: [
@@ -326,8 +326,8 @@ export const studentStory: Beat[] = [
   {
     id: "S2",
     kicker: "02 · Plan",
-    head: "Plan sessions easily.",
-    sub: "No more back and forth about when and where. Send a plan in the chat, and once it's accepted it's in both of your calendars.",
+    head: "Plan sessions easily in the chat.",
+    sub: "You send a card with the gym, the day and the time, and once the other one accepts it goes to both calendars.",
     shot: "04-plan-a-session.webp",
     ann: [],
     points: [
@@ -339,8 +339,8 @@ export const studentStory: Beat[] = [
   {
     id: "S3",
     kicker: "03 · Profile",
-    head: "Track your progress.",
-    sub: "Everything you trained is in one place. See how you rank, look back at every session and keep the photos from the days you trained together.",
+    head: "Track your statistics. See how you do in the leaderboards.",
+    sub: "Your profile counts the sessions you logged and the partners you trained with. Take part in the college leaderboards and see how you rank on campus, how your house and your year are doing, and who has trained with the most partners.",
     /* A plain phone screen, not a tall strip cut under Memories — "just how
        it is normally on phone screen so it looks realistic" (owner, 2026-09-16). */
     shot: "05-profile.webp",
@@ -354,8 +354,8 @@ export const studentStory: Beat[] = [
   {
     id: "S4",
     kicker: "04 · Gyms",
-    head: "Every gym on campus.",
-    sub: "Every gym on campus, including the house gyms, in one place. Know what's there and how busy it is before you walk over.",
+    head: "See every gym on your campus in one place.",
+    sub: "Explore what equipment each gym has, its rating and how busy it is.",
     shot: "01-gyms.webp",
     ann: [],
     points: [
@@ -489,11 +489,11 @@ export const varsityStory: Beat[] = [
   {
     id: "V1",
     kicker: "01 · Training plan",
-    /* SHORTENED 2026-09-17 like the student story (owner): short heading, a
-       two-sentence summary ("about 2 sentences"), then the features. The old
-       paragraphs are in git history. */
+    /* 2026-09-17: the owner's OWN heading and first sentences as the summary
+       ("use words that I used before, I don't want slop there"), then the
+       features. The full old paragraph is in git history. */
     head: "Training plan always at hand.",
-    sub: "Everything your coach sets up lands on your phone the moment it changes. Today's sessions, your boat, the coach's notes and the next race, all on one screen.",
+    sub: "Your training plan that updates in real time. Tap any day to see the full workout description.",
     shot: "tall-vhome.webp",
     ann: [],
     points: [
@@ -508,11 +508,11 @@ export const varsityStory: Beat[] = [
     id: "V2",
     kicker: "02 · Log",
     /* The capture is the (+) log sheet risen over the Calendar tab. */
-    /* SHORTENED 2026-09-17 like the student story (owner): short heading, a
-       two-sentence summary ("about 2 sentences"), then the features. The old
-       paragraphs are in git history. */
+    /* 2026-09-17: the owner's OWN heading and first sentences as the summary
+       ("use words that I used before, I don't want slop there"), then the
+       features. The full old paragraph is in git history. */
     head: "Log a session in a few taps.",
-    sub: "Log a workout right after you finish it, without typing numbers in. Every session lands in your calendar, so you can see how you kept to the plan.",
+    sub: "Log your workout straight from your training plan. Take a picture of your erg screen to extract your numbers instantly, or add extra workouts.",
     shot: "13-varsity-log-sheet.webp",
     ann: [],
     points: [
@@ -526,11 +526,11 @@ export const varsityStory: Beat[] = [
     kicker: "03 · Workouts",
     /* The capture is DRIVEN, not a URL: Team → Workouts → tap the 2k test.
        scripts/landing/capture-light.mjs --only=15-varsity-board re-shoots it. */
-    /* SHORTENED 2026-09-17 like the student story (owner): short heading, a
-       two-sentence summary ("about 2 sentences"), then the features. The old
-       paragraphs are in git history. */
-    head: "See every team workout.",
-    sub: "Every logged workout builds the team's results. See where you stand, and how you improved since last time.",
+    /* 2026-09-17: the owner's OWN heading and first sentences as the summary
+       ("use words that I used before, I don't want slop there"), then the
+       features. The full old paragraph is in git history. */
+    head: "Look at statistics for every team workout.",
+    sub: "Compare to previous workouts and see how you improved from last time, and where you stand in the rankings, with filters for split, time, watts and watts per kilo.",
     shot: "15-varsity-board.webp",
     ann: [],
     points: [
@@ -542,11 +542,11 @@ export const varsityStory: Beat[] = [
   {
     id: "V5",
     kicker: "04 · Statistics",
-    /* SHORTENED 2026-09-17 like the student story (owner): short heading, a
-       two-sentence summary ("about 2 sentences"), then the features. The old
-       paragraphs are in git history. */
+    /* 2026-09-17: the owner's OWN heading and first sentences as the summary
+       ("use words that I used before, I don't want slop there"), then the
+       features. The full old paragraph is in git history. */
     head: "See your statistics.",
-    sub: "Your whole season, in numbers and graphs. See how much you rowed, how long you trained and how consistent you were.",
+    sub: "One screen counts your metres rowed, your hours and your consistency over eight weeks, with a graph for each.",
     shot: "16-varsity-stats.webp",
     ann: [],
     points: [

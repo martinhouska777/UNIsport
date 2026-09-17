@@ -484,7 +484,7 @@ export default function ScrollStory({ id, beats, accent, ref }: Props) {
               <div className="font-mono text-[12px] tracking-[0.14em] uppercase text-(--sa)">
                 {b.kicker}
               </div>
-              <h2 className="font-display text-[clamp(34px,4.6vw,56px)] font-normal leading-[1.04] tracking-[-0.015em] text-balance text-l-text max-lg:text-[clamp(27px,7.4vw,36px)]">
+              <h2 className="font-display text-[clamp(28px,3.3vw,42px)] font-normal leading-[1.06] tracking-[-0.015em] text-balance text-l-text max-lg:text-[clamp(22px,6vw,28px)]">
                 {b.head}
                 {b.headEm && <em className="mt-1.5 block italic text-(--sa)">{b.headEm}</em>}
               </h2>
