@@ -1385,10 +1385,37 @@ function Builder({
 
   return (
     <div className="relative flex h-full flex-col">
-      <div className="mx-auto w-full max-w-screen-sm flex-1 overflow-y-auto px-4 pb-28 pt-4">
-        <button type="button" onClick={onBack} className="flex items-center gap-1 text-[13px] text-muted">
-          <IconArrowLeft size={16} /> Days
-        </button>
+      <div className="mx-auto w-full max-w-screen-sm flex-1 overflow-y-auto px-4 pb-8">
+        {/*
+          THE TOP ROW, AND IT STAYS. Back on the left, and on the right the two
+          things that say what is happening to this lineup: whether it is saved,
+          and the one button that publishes it. It used to live in a bar across
+          the BOTTOM, over a fade that washed out the boats behind it (owner,
+          2026-09-17) — there is no fade now, and nothing floats over the work.
+          Sticky, so "finished — press publish" never means scrolling back up.
+        */}
+        <div className="sticky top-0 z-20 -mx-4 flex items-center gap-2 bg-background px-4 pb-2 pt-4">
+          <button type="button" onClick={onBack} className="flex items-center gap-1 text-[13px] text-muted">
+            <IconArrowLeft size={16} /> Days
+          </button>
+          <div className="ml-auto flex min-w-0 items-center justify-end gap-2">
+            <SaveState
+              status={failed ? "error" : writing || dirty ? "saving" : "saved"}
+              onRetry={() => void persist()}
+            />
+            <PublishBar
+              bare
+              tourId="coach-lineup-publish"
+              what="lineup"
+              live={status === "published"}
+              changed={announced !== null && announced !== text}
+              busy={writing}
+              onPublish={publish}
+              onNotify={tellSquad}
+              onUnpublish={unpublish}
+            />
+          </div>
+        </div>
         {/*
           ‹ day › — the next and previous WATER session in the plan, because
           that is the run of practices a coach seats one after another. Which
@@ -1748,33 +1775,6 @@ function Builder({
             </div>
           </>
         )}
-      </div>
-
-      {/*
-        The publish bar — the BUTTON only. No card, no "Draft" panel: the boats
-        are what this screen is, and a white block floating over the bottom of
-        them was the biggest thing on it. The save line still sits above it.
-      */}
-      <div className="absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-background via-background to-transparent px-4 pb-5 pt-7">
-        <div className="mx-auto max-w-screen-sm">
-          <div className="mb-1.5 flex justify-end">
-            <SaveState
-              status={failed ? "error" : writing || dirty ? "saving" : "saved"}
-              onRetry={() => void persist()}
-            />
-          </div>
-          <PublishBar
-            bare
-            tourId="coach-lineup-publish"
-            what="lineup"
-            live={status === "published"}
-            changed={announced !== null && announced !== text}
-            busy={writing}
-            onPublish={publish}
-            onNotify={tellSquad}
-            onUnpublish={unpublish}
-          />
-        </div>
       </div>
 
       {/*

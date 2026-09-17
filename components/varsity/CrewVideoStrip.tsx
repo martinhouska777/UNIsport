@@ -226,6 +226,12 @@ export default function CrewVideoStrip({ dayKey, boat }: { dayKey: string; boat:
   const fileRef = useRef<HTMLInputElement>(null);
   const [videos, setVideos] = useState<CrewVideo[]>([]);
   const [playing, setPlaying] = useState<CrewVideo | null>(null);
+  /*
+    What this clip IS — "start", "20 stroke", "third piece". Optional, and kept
+    apart from the file name agreed on the next step: the file name is what the
+    thing is called in Drive, this is what the squad reads under it.
+  */
+  const [label, setLabel] = useState("");
   /* Picked and waiting for its name to be agreed, and that name. */
   const [picked, setPicked] = useState<File[] | null>(null);
   const [name, setName] = useState("");
@@ -321,7 +327,7 @@ export default function CrewVideoStrip({ dayKey, boat }: { dayKey: string; boat:
         dayKey,
         boat,
         picked[i],
-        "",
+        label,
         (f) => setBusyText(`Uploading${of} ${Math.round(f * 100)}%`),
         name.trim(),
       );
@@ -332,6 +338,7 @@ export default function CrewVideoStrip({ dayKey, boat }: { dayKey: string; boat:
       if (video) setVideos((prev) => [...prev, video]);
     }
     setBusyText(null);
+    setLabel("");
     setPicked(null);
     setName("");
     if (fileRef.current) fileRef.current.value = "";
@@ -342,11 +349,11 @@ export default function CrewVideoStrip({ dayKey, boat }: { dayKey: string; boat:
 
   return (
     /*
-      SHUT UNTIL ASKED FOR. Filed under a boat, this strip is the clips and an
-      upload button, and it sat open under every single crew, which on a phone
-      is most of a screen spent on the one thing nobody is reading on the way to
-      the boathouse. Now the header says whether there is any footage at all,
-      and the rest opens on a tap.
+      SHUT UNTIL ASKED FOR. Filed under a boat, this strip is three rows — the
+      clips, a label field and an upload button — and it sat open under every
+      single crew, which on a phone is most of a screen spent on the one thing
+      nobody is reading on the way to the boathouse. Now the header says whether
+      there is any footage at all, and the rest opens on a tap.
     */
     <div className="border-t border-border px-3.5 py-2.5">
       <button
@@ -392,7 +399,17 @@ export default function CrewVideoStrip({ dayKey, boat }: { dayKey: string; boat:
         onChange={(e) => void pick(e.target.files)}
       />
 
+      {/* The label field takes the row, and the one button sits to the RIGHT of
+          it (owner, 2026-09-17) — the thing you type comes before the thing you
+          press. */}
       <div className={`mt-2 flex items-center gap-2 ${open && !picked ? "" : "hidden"}`}>
+        <input
+          value={label}
+          onChange={(e) => setLabel(e.target.value)}
+          aria-label="Video label"
+          placeholder="Label — start, 20 stroke… (optional)"
+          className="min-w-0 flex-1 rounded-lg border border-border bg-surface-2 px-2.5 py-1.5 text-base text-[12px] text-text outline-none placeholder:italic placeholder:text-text-3"
+        />
         {/* One button, two jobs. Before Drive is connected it signs you in —
             which has to be a real tap, because a browser only lets a popup
             open from one. After that it is simply "Add video". */}
@@ -400,7 +417,7 @@ export default function CrewVideoStrip({ dayKey, boat }: { dayKey: string; boat:
           type="button"
           disabled={!!busyText || !seated}
           onClick={() => void openPicker()}
-          className="tap44 flex items-center gap-1.5 rounded-lg border border-dashed border-border px-2.5 py-1.5 text-[12px] font-medium text-muted active:border-primary-line active:text-primary disabled:opacity-50"
+          className="tap44 flex flex-shrink-0 items-center gap-1.5 rounded-lg border border-dashed border-border px-2.5 py-1.5 text-[12px] font-medium text-muted active:border-primary-line active:text-primary disabled:opacity-50"
         >
           <IconPlus size={13} /> {busyText ?? (needsConnect ? "Connect Drive" : "Add video")}
         </button>
