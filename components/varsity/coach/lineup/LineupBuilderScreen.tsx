@@ -87,7 +87,6 @@ import {
   outMeta,
   makeSeats,
   defaultBoatName,
-  outOptions,
   type OutReason,
   type Practice,
   type PracticeStatus,
@@ -112,8 +111,7 @@ import {
 } from "@/lib/varsity/trainingConfig";
 import { fetchTrainingConfig } from "@/lib/varsity/configStore";
 import { useMembership } from "@/components/varsity/useMembership";
-import { fetchOutOn, markBackIn, markOut } from "@/lib/varsity/availabilityStore";
-import Sheet from "@/components/varsity/Sheet";
+import { fetchOutOn, markBackIn } from "@/lib/varsity/availabilityStore";
 import { fetchPlan, type Plan } from "@/lib/varsity/planStore";
 import { notifySquad } from "@/lib/push/client";
 import SaveState from "@/components/varsity/coach/SaveState";
@@ -128,7 +126,6 @@ import {
 import CrewVideoStrip from "@/components/varsity/CrewVideoStrip";
 import {
   IconArrowLeft,
-  IconCheck,
   IconChevronDown,
   IconChevronLeft,
   IconChevronRight,
@@ -795,20 +792,29 @@ function SeatPool({
 
 /* ─────────────────────────  pool chip  ───────────────────────── */
 /*
-  TAP A CHIP TO SAY WHO IS OUT. The chip is where the coach is already
-  looking when someone texts "not coming" at 5:30, so it is also where they
-  are marked out — and where they are brought back. `out` is the reason they
-  are out on THIS practice's day (from availabilityStore), never a fact about
-  the person. Dragging still works on a desktop: a drag never fires the tap.
+  TAP A NAME TO PICK IT UP. The chip is where the coach is already looking, so
+  it is where a rower is chosen: tap the name, then tap the seat they go in
+  (owner, 2026-09-17). Tapping it again puts them down.
+
+  It used to open the mark-out sheet instead. It no longer does: an athlete says
+  on their own profile that they are sick or hurt, and the coach's tap is needed
+  for the thing the coach is actually doing here. `out` is still the reason
+  somebody is out on THIS practice's day (from availabilityStore) — never a fact
+  about the person — and tapping an out chip brings them back in.
+
+  Dragging still works on a desktop: a drag never fires the tap.
 */
 function PoolChip({
   a,
   out,
+  picked,
   onTap,
   onDragStart,
 }: {
   a: Athlete;
   out?: OutReason;
+  /** Chosen, waiting for a seat. */
+  picked?: boolean;
   onTap: () => void;
   onDragStart: () => void;
 }) {
@@ -823,7 +829,7 @@ function PoolChip({
       <button
         type="button"
         onClick={onTap}
-        aria-label={`${a.name}, out — ${outMeta[out]}. Tap to bring back in.`}
+        aria-label={`${a.name}, out — ${outMeta[out]}. Tap to bring them back into the pool.`}
         className="flex h-[38px] select-none items-center gap-2 rounded-[10px] border border-danger-line bg-danger-tint px-2.5 opacity-60 active:opacity-90"
       >
         <span className="text-[15px] font-medium text-muted">{a.name}</span>
@@ -856,8 +862,15 @@ function PoolChip({
         e.dataTransfer.setData("text/plain", a.id);
         onDragStart();
       }}
-      aria-label={`${a.name}. Tap to mark out.`}
-      className="flex h-[38px] cursor-grab select-none items-center gap-2 rounded-[10px] border border-border bg-surface px-2.5 active:cursor-grabbing active:border-primary-line active:bg-primary-tint"
+      aria-label={
+        picked ? `${a.name}, picked. Tap a seat to put them in.` : `${a.name}. Tap to pick.`
+      }
+      aria-pressed={!!picked}
+      /* Picked looks the way a picked-up SEAT looks — the same primary ring —
+         because it is the same idea: this is the one in play. */
+      className={`flex h-[38px] cursor-grab select-none items-center gap-2 rounded-[10px] border px-2.5 active:cursor-grabbing ${
+        picked ? "border-primary bg-primary-tint" : "border-border bg-surface active:border-primary-line active:bg-primary-tint"
+      }`}
     >
       <span className="text-[15px] font-medium text-text">{a.name}</span>
       {a.cox ? (
@@ -1035,15 +1048,27 @@ function Builder({
     WHO IS OUT ON THIS DAY, and why. A fact about the day, read from the
     availability store for the date this practice falls on — so the AM and PM
     of one day agree, and a rower marked injured on Tuesday is still out when
-    Friday's boats are seated. `outSheet` is the person the coach has tapped.
+    Friday's boats are seated.
+
+    THE COACH NO LONGER MARKS ANYONE OUT here. An athlete says they are sick or
+    hurt on their own profile, and this screen reads it (owner, 2026-09-17).
+    What a tap on a name in the pool does now is PICK them for a seat, which is
+    the thing a coach is doing on this screen. The one thing left that writes to
+    the availability store is putting somebody back in the pool: tapping a name
+    in Unavailable brings them back, so nobody can be stranded out.
   */
   const dayIso = useMemo(() => {
     const parsed = parseSessionKey(dayKey);
     return parsed ? toISO(parsed.date) : toISO(new Date());
   }, [dayKey]);
   const [outById, setOutById] = useState<Record<string, OutReason>>({});
-  const [outSheet, setOutSheet] = useState<Athlete | null>(null);
   const [outBusy, setOutBusy] = useState(false);
+  /*
+    PICKED FROM THE POOL, waiting for a seat. The other half of the same idea as
+    picking a seat up: tap a name, tap where they go (owner, 2026-09-17). Either
+    end can be chosen first, and whichever is chosen second completes the move.
+  */
+  const [picked, setPicked] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -1269,6 +1294,12 @@ function Builder({
   */
   const tapSeat = (slot: Slot) => {
     const here = athleteAt(slot);
+    // Somebody is already in hand from the pool: this seat is where they go.
+    if (picked) {
+      const who = picked;
+      setPicked(null);
+      if (assign(slot, who)) return;
+    }
     if (typing && slotKey(typing) === slotKey(slot)) {
       if (!keyboard) setKeyboard(true);
       return;
@@ -1305,16 +1336,12 @@ function Builder({
     seat empties in this practice only: a Friday lineup already seated is not
     rewritten because Tuesday's rower is ill, since Friday may be different.
   */
-  const setOut = async (a: Athlete, reason: OutReason | null) => {
+  /* Back in the pool. One tap on the name, no sheet: the coach is not deciding
+     anything about the athlete, only undoing an absence that is over. */
+  const bringBackIn = async (a: Athlete) => {
+    if (outBusy) return;
     setOutBusy(true);
-    const { error } = reason
-      ? await markOut(
-          a.id,
-          reason,
-          dayIso,
-          outOptions.find((o) => o.reason === reason)?.span === "day" ? dayIso : null,
-        )
-      : await markBackIn(a.id, dayIso);
+    const { error } = await markBackIn(a.id, dayIso);
     setOutBusy(false);
     if (error) {
       console.error("availability:", error);
@@ -1322,20 +1349,9 @@ function Builder({
     }
     setOutById((prev) => {
       const next = { ...prev };
-      if (reason) next[a.id] = reason;
-      else delete next[a.id];
+      delete next[a.id];
       return next;
     });
-    if (reason) {
-      setBoats((prev) =>
-        prev.map((b) => ({
-          ...b,
-          seats: b.seats.map((s) => (s.athleteId === a.id ? { ...s, athleteId: null } : s)),
-          coxId: b.coxId === a.id ? null : b.coxId,
-        })),
-      );
-    }
-    setOutSheet(null);
   };
 
   const setNote = (boatId: string, note: string) =>
@@ -1870,9 +1886,15 @@ function Builder({
                 <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
                   Athlete Pool
                 </span>
-                <span className="rounded-full border border-border bg-surface px-2 py-0.5 text-[11px] text-muted">
-                  {available.length} available · {unavailable.length} out
-                </span>
+                {picked ? (
+                  <span className="rounded-full border border-primary-line bg-primary-tint px-2 py-0.5 text-[11px] font-semibold text-primary">
+                    Tap a seat for {rosterById[picked]?.name.split(/\s+/)[0] ?? "them"}
+                  </span>
+                ) : (
+                  <span className="rounded-full border border-border bg-surface px-2 py-0.5 text-[11px] text-muted">
+                    {available.length} available · {unavailable.length} out
+                  </span>
+                )}
               </div>
 
               {/*
@@ -1932,7 +1954,14 @@ function Builder({
                         <PoolChip
                           key={a.id}
                           a={a}
-                          onTap={() => setOutSheet(a)}
+                          picked={picked === a.id}
+                          onTap={() => {
+                            // A seat is already open and waiting: this name
+                            // belongs in it. Otherwise pick them up and wait
+                            // for the seat.
+                            if (typing) void assign(typing, a.id);
+                            else setPicked((p) => (p === a.id ? null : a.id));
+                          }}
                           onDragStart={() => setDropKey(null)}
                         />
                       ))}
@@ -1960,7 +1989,7 @@ function Builder({
                           key={a.id}
                           a={a}
                           out={outById[a.id]}
-                          onTap={() => setOutSheet(a)}
+                          onTap={() => void bringBackIn(a)}
                           onDragStart={() => setDropKey(null)}
                         />
                       ))}
@@ -1972,61 +2001,6 @@ function Builder({
           </>
         )}
       </div>
-
-      {/*
-        MARK OUT / BRING BACK. Opened by tapping a name in the pool. The two
-        ways of being out are data (outOptions): sick is today, injured is
-        until the coach says otherwise. Someone already out gets the way back
-        in first, then the other reason — a "sick" who turns out to be hurt is
-        one tap, not two.
-      */}
-      {outSheet && (
-        <Sheet
-          title={outById[outSheet.id] ? `${outSheet.name} is out` : `Mark ${outSheet.name} out`}
-          onClose={() => setOutSheet(null)}
-        >
-          <div className="flex flex-col gap-2">
-            {outById[outSheet.id] && (
-              <button
-                type="button"
-                disabled={outBusy}
-                onClick={() => void setOut(outSheet, null)}
-                className="flex w-full items-center gap-3 rounded-xl border border-success-line bg-success-tint px-3.5 py-3 text-left disabled:opacity-50"
-              >
-                <span className="min-w-0 flex-1">
-                  <span className="block text-[13px] font-semibold text-text">Back in</span>
-                  <span className="mt-0.5 block text-[11px] leading-relaxed text-muted">
-                    Available from {dayKeyLabel(dayKey)}. The days missed stay on record.
-                  </span>
-                </span>
-                <IconCheck size={16} className="flex-shrink-0 text-success" />
-              </button>
-            )}
-            {outOptions
-              .filter((o) => o.reason !== outById[outSheet.id])
-              .map((o) => (
-                <button
-                  key={o.reason}
-                  type="button"
-                  disabled={outBusy}
-                  onClick={() => void setOut(outSheet, o.reason)}
-                  className="flex w-full items-center gap-3 rounded-xl border border-border bg-surface-2 px-3.5 py-3 text-left disabled:opacity-50"
-                >
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-[13px] font-semibold text-text">{o.label}</span>
-                    <span className="mt-0.5 block text-[11px] leading-relaxed text-muted">{o.sub}</span>
-                  </span>
-                  <IconChevronRight size={14} className="flex-shrink-0 text-muted" />
-                </button>
-              ))}
-            {seatedIds.has(outSheet.id) && !outById[outSheet.id] && (
-              <p className="px-1 pt-1 text-[11px] leading-relaxed text-muted">
-                {outSheet.name.split(/\s+/)[0]} is in a boat — marking them out empties that seat.
-              </p>
-            )}
-          </div>
-        </Sheet>
-      )}
 
       {/*
         ADD BOAT. Four riggings, written the way a crew writes them — 8+, 4+,
