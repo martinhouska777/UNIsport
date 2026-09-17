@@ -313,7 +313,7 @@ export const studentStory: Beat[] = [
     id: "S1",
     kicker: "01 · Match",
     head: "Find training partners. Make friends.",
-    sub: "Browse sorts everyone by how well you fit with them, based on interests, concentration, experience and hours. In Session you pick a time to train and plan directly with people who go at that time, or you post your time on the Buddy Board and see who is interested.",
+    sub: "Browse sorts everyone by how well you fit with them, based on interests, concentration, experience and hours.",
     shot: "02-match.webp",
     ann: [],
     points: [
@@ -340,7 +340,7 @@ export const studentStory: Beat[] = [
     id: "S3",
     kicker: "03 · Profile",
     head: "Track your statistics. See how you do in the leaderboards.",
-    sub: "Your profile counts the sessions you logged and the partners you trained with. Take part in the college leaderboards and see how you rank on campus, how your house and your year are doing, and who has trained with the most partners.",
+    sub: "Your profile counts the sessions you logged and the partners you trained with.",
     /* A plain phone screen, not a tall strip cut under Memories — "just how
        it is normally on phone screen so it looks realistic" (owner, 2026-09-16). */
     shot: "05-profile.webp",
