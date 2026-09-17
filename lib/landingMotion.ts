@@ -91,6 +91,6 @@ export const shotSize: Record<string, { w: number; h: number }> = {
   "16-varsity-stats.webp": { w: 900, h: 1480 },
   "tall-logsheet.webp": { w: 900, h: 4417 },
   "tall-profile.webp": { w: 900, h: 2176 },
-  "tall-vhome.webp": { w: 900, h: 1938 },
+  "tall-vhome.webp": { w: 900, h: 1776 },
   "tall-vprofile.webp": { w: 900, h: 2502 },
 };
