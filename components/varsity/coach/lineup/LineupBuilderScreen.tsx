@@ -1049,6 +1049,10 @@ function Builder({
       return next;
     });
   };
+  /* How many boats are folded away right now — counted off the boats that
+     actually exist, so a deleted one left behind in the set never props the
+     "Show all boats" button open over nothing. */
+  const shutCount = boats.filter((b) => shut.has(b.id)).length;
 
   /*
     DRAGGING THE ADD-BOAT SHEET DOWN. `drag` is how far below its resting place
@@ -1407,8 +1411,17 @@ function Builder({
 
   /* Everything about the new boat comes off the rigging the coach picked —
      how many seats, whether there is a cox, what it is called. Nothing here
-     knows what an "8+" is any more; the squad's settings do. */
+     knows what an "8+" is any more; the squad's settings do.
+
+     ADDING A BOAT SHUTS THE ONES ALREADY BUILT. The owner's call (2026-09-17):
+     "when you add a new boat make the last one disappear and be saved" — one
+     boat at a time, the finished crews folded up to a line each, and the new
+     empty hull at the top of the screen instead of nine rows down. Nothing is
+     lost by it: the draft has already autosaved, and "Show all boats" under
+     the list opens every one of them again. */
   const addBoat = (kind: BoatKind) => {
+    putDown(); // a seat left open in a boat about to be shut would strand the keyboard
+    setShut(new Set(boats.map((b) => b.id)));
     setBoats((bs) => [
       ...bs,
       {
@@ -1912,6 +1925,24 @@ function Builder({
                 );
               })}
             </div>
+
+            {/*
+              EVERY BOAT BACK ON SCREEN, in one tap. Adding a boat folds the
+              finished ones away so the coach works on one crew at a time
+              (owner, 2026-09-17) — this is the way back to all of them, and it
+              only exists while something is actually hidden. Shutting them
+              again is per boat: tap a name row.
+            */}
+            {shutCount > 0 && (
+              <button
+                type="button"
+                onClick={() => setShut(new Set())}
+                className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-border bg-surface py-3 text-[13px] font-medium text-text active:border-primary-line active:bg-primary-tint"
+              >
+                <IconChevronDown size={16} /> Show all boats
+                <span className="text-muted">({shutCount} hidden)</span>
+              </button>
+            )}
 
             <button
               type="button"
