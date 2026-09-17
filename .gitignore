@@ -54,3 +54,6 @@ scripts/landing/raw/
 
 # Env files pulled down by the Vercel CLI (feed.env, dev.env, ...) hold DB passwords.
 *.env
+
+# Business research / strategy — NOT for the public repo
+unisportforboathouses/
