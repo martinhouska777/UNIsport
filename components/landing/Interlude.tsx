@@ -85,20 +85,21 @@ export default function Interlude({ solo = false }: { solo?: boolean }) {
             href="/join"
             /* Same dress as "See every feature" below, hover included (owner,
                2026-09-15: "I really like the colour when you hover on it"). */
-            className="inline-flex items-center gap-2 rounded-full border border-(--color-l-text) bg-l-text px-9 py-4 text-[clamp(16px,1.5vw,18px)] font-semibold tracking-tight text-(--color-l-surface-varsity) transition-[color,background-color,border-color,translate] hover:-translate-y-0.5 hover:border-(--color-l-varsity) hover:bg-l-varsity hover:text-white focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-l-text"
+            className="inline-flex items-center gap-2 rounded-full border px-9 py-4 text-[clamp(16px,1.5vw,18px)] font-semibold tracking-tight border-(--color-l-varsity-glow) bg-l-varsity-glow text-l-text transition-[color,background-color,border-color,translate] hover:-translate-y-0.5 hover:border-(--color-l-text) hover:bg-l-text hover:text-l-varsity-glow focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-l-text"
           >
             {hero.inviteCta} →
           </Link>
         </div>
       )}
 
-      {/* SOLID INK from the start (owner, 2026-09-17: "still yellow on the
-          yellow … I want it to be more visible"). The gold-tint fill vanished
-          into the golden card; now it is the page's ink with the card's cream
-          on it, and the hover turns it gold. The pill above matches. */}
+      {/* GOLD WITH BLACK LETTERS, the step buttons' hover turned inside out
+          (owner, 2026-09-17: the important buttons "golden and black in the
+          middle, just switch the colors that we have when you hover the
+          features"). The step buttons are grey, so this one stands apart, the
+          way the student card's button does. Hover swaps back to black + gold. */}
       <a
         href={interlude.overview.href}
-        className="l-tc mt-2 inline-flex items-center gap-2 rounded-full border border-(--color-l-text) bg-l-text px-9 py-4 text-[clamp(16px,1.5vw,18px)] font-semibold tracking-tight text-(--color-l-surface-varsity) transition-[color,background-color,border-color,translate] hover:-translate-y-0.5 hover:border-(--color-l-varsity) hover:bg-l-varsity hover:text-white"
+        className="l-tc mt-2 inline-flex items-center gap-2 rounded-full border px-9 py-4 text-[clamp(16px,1.5vw,18px)] font-semibold tracking-tight border-(--color-l-varsity-glow) bg-l-varsity-glow text-l-text transition-[color,background-color,border-color,translate] hover:-translate-y-0.5 hover:border-(--color-l-text) hover:bg-l-text hover:text-l-varsity-glow"
         style={{ "--d": "890ms" } as CSSProperties}
       >
         {interlude.overview.label} →

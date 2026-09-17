@@ -500,7 +500,10 @@ export default function ScrollStory({ id, beats, accent, ref }: Props) {
                 <ul className="ls-points mt-2 flex flex-col gap-3.5 max-lg:mt-0 max-lg:flex-row max-lg:flex-wrap max-lg:justify-center max-lg:gap-1.5">
                   {b.points.map((pt) => (
                     <li key={pt.title} className="flex items-start gap-3.5 max-lg:items-center max-lg:gap-1.5 max-lg:rounded-full max-lg:border max-lg:border-l-line-hover max-lg:px-2.5 max-lg:py-1">
-                      <span className="grid h-9 w-9 flex-none place-items-center rounded-full bg-[color-mix(in_srgb,var(--sa)_12%,transparent)] text-(--sa) max-lg:h-auto max-lg:w-auto max-lg:bg-transparent">
+                      <span className={`grid h-9 w-9 flex-none place-items-center rounded-full max-lg:h-auto max-lg:w-auto max-lg:bg-transparent ${
+                          /* Varsity: gold with a black icon (owner, 2026-09-17). */
+                          accent === "varsity" ? "bg-l-varsity-glow text-l-text max-lg:text-l-varsity" : "bg-[color-mix(in_srgb,var(--sa)_12%,transparent)] text-(--sa)"
+                        }`}>
                         <FeatureIcon name={pt.icon} className="h-[18px] w-[18px] max-lg:h-[14px] max-lg:w-[14px]" />
                       </span>
                       <span className="max-w-[38ch]">

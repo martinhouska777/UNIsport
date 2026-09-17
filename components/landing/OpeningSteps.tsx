@@ -77,7 +77,7 @@ export default function OpeningSteps({
         <li key={s.n} className="l-tc" style={{ "--d": `${delay + i * 55}ms` } as CSSProperties}>
           <a
             href={`#${storyId}-b${i}`}
-            className={`group flex items-center gap-2 rounded-full border border-l-line-hover bg-l-bg-elevated px-3.5 py-2 transition-[color,background-color,border-color,translate] hover:-translate-y-0.5 sm:px-4 ${edge}`}
+            className={`group flex items-center gap-2 rounded-full border px-3.5 py-2 ${gold ? "border-(--color-l-chip-grey) bg-l-chip-grey" : "border-l-line-hover bg-l-bg-elevated"} transition-[color,background-color,border-color,translate] hover:-translate-y-0.5 sm:px-4 ${edge}`}
           >
             <FeatureIcon name={s.icon} className={`h-[18px] w-[18px] ${tint} ${mark}`} />
             <span className={`font-mono text-[12px] tracking-[0.12em] text-l-text-2 ${mark}`}>{s.n}</span>

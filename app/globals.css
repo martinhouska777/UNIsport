@@ -344,6 +344,9 @@
   /* The gold the Varsity glows are mixed from (the card's, and the one behind
      the Varsity story's phone) — the bronze text colour made them brown. */
   --color-l-varsity-glow: #f1bf5b;
+  /* The varsity card's step buttons: a plain neutral grey, so they read as
+     buttons on the golden card instead of more cream (owner, 2026-09-17). */
+  --color-l-chip-grey: #e7e8ea;
   /* The two faint grid overlays (the page's and the title cards'): the text
      colour at a whisper. Tokens so the design lab (app/lab, dev only) can
      fade them or flip them between light and dark pages. */

@@ -24,9 +24,8 @@ import type { FeatureCta, FeatureRow } from "@/lib/landingCopy";
   "+" darkens to ink. Deliberately NOT a gold wash: a tint that faint is the
   background again.
 */
-/* `ink`: the button is the page's black with the section's gold as its label
-   (owner, 2026-09-17, for "Join with your invite" beside Blade Lock); on hover
-   the two swap. */
+/* `ink`: the varsity way in — bright gold with black letters, black with gold
+   on hover (owner, 2026-09-17). */
 export default function FeatureList({ kicker, rows, cta, ink = false }: { kicker: string; rows: FeatureRow[]; cta?: FeatureCta; ink?: boolean }) {
   return (
     <div className="w-full max-w-[520px]">
@@ -59,7 +58,7 @@ export default function FeatureList({ kicker, rows, cta, ink = false }: { kicker
         <Link
           href={cta.href}
           className={`mt-5 inline-flex items-center gap-2 rounded-full px-6 py-3 text-[14px] font-semibold tracking-tight transition-[transform,background-color,color] duration-200 hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-l-text motion-reduce:transition-none ${
-            ink ? "bg-l-text text-(--sa) hover:bg-(--sa) hover:text-l-text" : "bg-(--sa) text-(--sa-ink) hover:bg-l-text hover:text-l-bg"
+            ink ? "bg-l-varsity-glow text-l-text hover:bg-l-text hover:text-l-varsity-glow" : "bg-(--sa) text-(--sa-ink) hover:bg-l-text hover:text-l-bg"
           }`}
         >
           {cta.label} →
