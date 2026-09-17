@@ -52,6 +52,30 @@ const sideDot = (a: Athlete): React.CSSProperties => {
 };
 const sideLabel = (a: Athlete) => (a.cox ? "Cox" : sideMeta[a.side].label);
 
+/*
+  THE SIDE AS ONE LETTER, at the right-hand end of a roster row (owner,
+  2026-09-17). The row used to end in a dot and the word, and because
+  "Starboard" is twice the width of "Port" the column had to be padded out to
+  4.25rem to keep the note buttons in a line down the list. Every letter is the
+  same width, so the column is narrow and the rows line themselves up.
+
+  P / S / B are the same marks the boat builder paints on a seat, in the same
+  blade colours, so a coach reads one thing in both places. The word is still
+  written out in the athlete's own profile sheet, where there is room for it.
+*/
+function SideMark({ a }: { a: Athlete }) {
+  const m = sideMeta[a.side];
+  return (
+    <span
+      className="flex h-[21px] items-center justify-center rounded-md px-1.5 font-mono text-[10px] font-semibold tracking-[0.06em]"
+      style={{ background: a.cox ? COX_COLOR : m.color, color: a.cox ? COX_INK : m.ink }}
+      title={sideLabel(a)}
+    >
+      {a.cox ? "COX" : m.tag}
+    </span>
+  );
+}
+
 /* ─────────────────────────  athlete profile sheet  ───────────────────────── */
 /*
   A TEAMMATE'S CARD — who they are, how they row, their status, their training
@@ -212,11 +236,10 @@ function RosterRow({
         </span>
         <span className="pointer-events-none relative min-w-0 flex-1 truncate text-[13px] font-medium text-text">{a.name}</span>
         <span className="relative z-10 flex-shrink-0">{action}</span>
-        {/* A fixed width, so the note buttons line up down the list
-            whatever the side says — "Port" is half as wide as "Starboard". */}
-        <span className="pointer-events-none relative flex w-[4.25rem] flex-shrink-0 items-center gap-1 text-[11px] text-muted">
-          <span className="h-2 w-2 flex-shrink-0 rounded-full" style={sideDot(a)} />
-          {sideLabel(a)}
+        {/* A fixed width still, so the note buttons line up down the list —
+            "COX" is a little wider than "P". */}
+        <span className="pointer-events-none relative flex w-10 flex-shrink-0 justify-end">
+          <SideMark a={a} />
         </span>
         <span className="pointer-events-none relative text-muted">
           <IconChevronRight size={15} />
@@ -242,9 +265,8 @@ function RosterRow({
         <IconUser size={18} />
       </span>
       <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-text">{a.name}</span>
-      <span className="flex items-center gap-1 text-[11px] text-muted">
-        <span className="h-2 w-2 rounded-full" style={sideDot(a)} />
-        {sideLabel(a)}
+      <span className="flex w-10 flex-shrink-0 justify-end">
+        <SideMark a={a} />
       </span>
       <span className="text-muted">
         <IconChevronRight size={15} />

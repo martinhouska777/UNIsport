@@ -108,10 +108,15 @@ export default function CoachTeamPage() {
                     type="button"
                     onClick={() => (member ? setWriting(member) : setNotJoined(a.name))}
                     aria-label={`${hasNote ? "Edit the" : "Write a"} technical note for ${a.name}`}
-                    className={`tap44 press-icon flex h-8 w-8 items-center justify-center rounded-lg border ${
-                      hasNote
-                        ? "border-danger-line bg-danger-tint text-danger"
-                        : "border-border bg-surface-2 text-muted"
+                    /* THE PENCIL IS THE SCHOOL'S COLOUR — crimson at Harvard,
+                       navy at Yale — and never a fixed red (owner, 2026-09-17:
+                       "I want it in red, so it's working… the colour would be
+                       according to the school"). It used to be grey until a
+                       note existed, which read as switched off. It is live in
+                       every row now, and a row that already HAS a note is the
+                       filled one. */
+                    className={`tap44 press-icon flex h-8 w-8 items-center justify-center rounded-lg border text-primary ${
+                      hasNote ? "border-primary-line bg-primary-tint" : "border-border bg-surface-2"
                     }`}
                   >
                     <IconPencil size={14} />
