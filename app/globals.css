@@ -1654,3 +1654,23 @@ body {
   from { opacity: 0; transform: translateX(-45%); }
   to   { opacity: 1; transform: none; }
 }
+
+/*
+  THE BIG BUTTONS RISE ON HOVER (owner, 2026-09-17: "when I hover See every
+  feature etc, the bigger buttons, I want the up movement animation"). They
+  already moved 2px, which nobody could see. Now 4px with a soft shadow under
+  them, eased, on every large pill button of the landing. Written here rather
+  than as utilities so the lift wins over each button's own -translate-y-0.5
+  and so the reveal animation on the title cards (which owns `transform`)
+  never fights it — the lift is on `translate`.
+*/
+.l-lift {
+  transition-property: color, background-color, border-color, translate, box-shadow;
+  transition-duration: 220ms;
+  transition-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.l-lift:hover { translate: 0 -4px; box-shadow: 0 10px 22px -10px rgba(20, 22, 24, 0.35); }
+.l-lift:active { translate: 0 -1px; box-shadow: 0 4px 10px -6px rgba(20, 22, 24, 0.3); }
+@media (prefers-reduced-motion: reduce) {
+  .l-lift:hover, .l-lift:active { translate: none; }
+}

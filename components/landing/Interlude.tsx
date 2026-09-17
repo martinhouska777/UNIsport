@@ -85,7 +85,7 @@ export default function Interlude({ solo = false }: { solo?: boolean }) {
             href="/join"
             /* Same dress as "See every feature" below, hover included (owner,
                2026-09-15: "I really like the colour when you hover on it"). */
-            className="inline-flex items-center gap-2 rounded-full border px-9 py-4 text-[clamp(16px,1.5vw,18px)] font-semibold tracking-tight border-(--color-l-varsity-glow) bg-l-varsity-glow text-l-text transition-[color,background-color,border-color,translate] hover:-translate-y-0.5 hover:border-(--color-l-text) hover:bg-l-text hover:text-l-varsity-glow focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-l-text"
+            className="inline-flex items-center gap-2 rounded-full border px-9 py-4 l-lift text-[clamp(16px,1.5vw,18px)] font-semibold tracking-tight border-(--color-l-varsity-glow) bg-l-varsity-glow text-l-text transition-[color,background-color,border-color,translate] hover:-translate-y-0.5 hover:border-(--color-l-text) hover:bg-l-text hover:text-l-varsity-glow focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-l-text"
           >
             {hero.inviteCta} →
           </Link>
@@ -99,7 +99,7 @@ export default function Interlude({ solo = false }: { solo?: boolean }) {
           way the student card's button does. Hover swaps back to black + gold. */}
       <a
         href={interlude.overview.href}
-        className="l-tc mt-2 inline-flex items-center gap-2 rounded-full border px-9 py-4 text-[clamp(16px,1.5vw,18px)] font-semibold tracking-tight border-(--color-l-varsity-glow) bg-l-varsity-glow text-l-text transition-[color,background-color,border-color,translate] hover:-translate-y-0.5 hover:border-(--color-l-text) hover:bg-l-text hover:text-l-varsity-glow"
+        className="l-tc mt-2 inline-flex items-center gap-2 rounded-full border px-9 py-4 l-lift text-[clamp(16px,1.5vw,18px)] font-semibold tracking-tight border-(--color-l-varsity-glow) bg-l-varsity-glow text-l-text transition-[color,background-color,border-color,translate] hover:-translate-y-0.5 hover:border-(--color-l-text) hover:bg-l-text hover:text-l-varsity-glow"
         style={{ "--d": "890ms" } as CSSProperties}
       >
         {interlude.overview.label} →

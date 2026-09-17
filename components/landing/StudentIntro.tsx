@@ -213,7 +213,7 @@ export default function StudentIntro({ solo = false }: { solo?: boolean }) {
 
       <a
         href={studentIntro.overview.href}
-        className="l-tc mt-2 inline-flex items-center gap-2 rounded-full border border-l-accent bg-l-accent-dim px-9 py-4 text-[clamp(16px,1.5vw,18px)] font-semibold tracking-tight text-l-text transition-[color,background-color,border-color,translate] hover:-translate-y-0.5 hover:bg-l-accent-soft"
+        className="l-tc mt-2 inline-flex items-center gap-2 rounded-full border border-l-accent bg-l-accent-dim px-9 py-4 l-lift text-[clamp(16px,1.5vw,18px)] font-semibold tracking-tight text-l-text transition-[color,background-color,border-color,translate] hover:-translate-y-0.5 hover:bg-l-accent-soft"
         style={at(670)}
       >
         {studentIntro.overview.label} →
