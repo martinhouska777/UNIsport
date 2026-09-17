@@ -282,31 +282,9 @@ function SidePill({ side }: { side: Side }) {
   );
 }
 
-function Avatar({
-  initials,
-  side,
-  cox,
-  className = "",
-}: {
-  initials: string;
-  side?: Side;
-  cox?: boolean;
-  className?: string;
-}) {
-  const paint = cox
-    ? blade(COX_COLOR, COX_INK)
-    : side
-      ? blade(sideMeta[side].color, sideMeta[side].ink)
-      : undefined;
-  return (
-    <span
-      className={`flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border text-[11px] font-bold ${className}`}
-      style={paint}
-    >
-      {initials}
-    </span>
-  );
-}
+/* The initials roundel that used to sit on the left of every suggested name is
+   gone: it repeated the name beside it, and the owner does not want it
+   (2026-09-17). A name and a side is the whole row, in the pool and in a seat. */
 
 /*
   Tag shown for an athlete in the pool and in the pick-a-name list: their side,
@@ -610,32 +588,6 @@ function Seat({
             className="w-full min-w-0 flex-1 bg-transparent text-[16px] font-medium text-text outline-none placeholder:text-text-3"
           />
         </div>
-        {matches.length > 0 && (
-          <div className="absolute left-0 right-0 top-[calc(100%+4px)] z-30 select-none overflow-hidden rounded-xl border border-border bg-surface-2 shadow-xl">
-            {matches.slice(0, 5).map((m) => (
-              <button
-                key={m.a.id}
-                type="button"
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  onAssign(m.a.id);
-                }}
-                className="flex w-full items-center gap-2.5 border-b border-border px-3 py-2.5 text-left last:border-b-0 active:bg-primary-tint"
-              >
-                <Avatar initials={m.a.initials} side={m.a.side} cox={m.a.cox} />
-                <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-text">
-                  {m.a.name}
-                  {/* Already in a boat: say where, because picking them is a
-                      swap and the coach should know what it costs. */}
-                  {m.where && (
-                    <span className="ml-1.5 font-normal text-muted">· {m.where}</span>
-                  )}
-                </span>
-                <AthleteTag a={m.a} />
-              </button>
-            ))}
-          </div>
-        )}
       </div>
     );
   }
@@ -773,6 +725,74 @@ function Seat({
   selectable. The one exception is the seat's own search field, which is a real
   input and stays fully editable.
 */
+/* ─────────────────────  the pool, under the seat  ───────────────────── */
+/*
+  WHO CAN SIT HERE, OPENED UNDER THE SEAT ITSELF. Tapping a seat used to drop a
+  five-name list over the boat — "it just pops down like a random text" (owner,
+  2026-09-17) — and the real pool stayed at the bottom of the screen, out of
+  sight behind a seated eight. This is that pool, inside the hull, immediately
+  below the seat being filled:
+
+  - it opens FULL, before a letter is typed, because the suggestion a coach
+    wants is usually one of the names already in front of them;
+  - typing in the seat filters it, rather than replacing it with something else;
+  - it scrolls, so a squad of forty is all reachable without the boat growing;
+  - a name already in another boat says where, because taking them is a swap.
+
+  No initials roundel. A name and the side they row, which is what the pool at
+  the bottom of the screen shows and what the seat itself will show once they
+  are in it (owner: "just put the name and these to starboard or port, or both").
+*/
+function SeatPool({
+  matches,
+  cox,
+  query,
+  onAssign,
+}: {
+  matches: Match[];
+  /** The cox seat offers coxswains only, so it says so instead of "pool". */
+  cox?: boolean;
+  query: string;
+  onAssign: (id: string) => void;
+}) {
+  return (
+    <div className="select-none rounded-[14px] border border-primary-line bg-background p-2">
+      <div className="mb-1.5 flex items-center justify-between px-0.5">
+        <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
+          {cox ? "Coxswains" : "Athlete pool"}
+        </span>
+        <span className="text-[10px] font-medium text-muted">{matches.length}</span>
+      </div>
+      {matches.length === 0 ? (
+        <p className="px-0.5 pb-1 text-[12px] italic text-muted">
+          {query.trim() ? `Nobody called “${query.trim()}”.` : "Nobody left to pick."}
+        </p>
+      ) : (
+        /* A fixed window on a long list: about four rows of names, then scroll.
+           Any taller and the seat being filled is pushed off the screen. */
+        <div className="max-h-[164px] overflow-y-auto">
+          <div className="flex flex-wrap gap-1.5">
+            {matches.map((m) => (
+              <button
+                key={m.a.id}
+                type="button"
+                onClick={() => onAssign(m.a.id)}
+                className="flex h-[34px] items-center gap-2 rounded-[10px] border border-border bg-surface px-2.5 active:border-primary-line active:bg-primary-tint"
+              >
+                <span className="text-[14px] font-medium text-text">{m.a.name}</span>
+                {/* Already in a boat: say where, because picking them is a swap
+                    and the coach should know what it costs. */}
+                {m.where && <span className="text-[11px] text-muted">· {m.where}</span>}
+                <AthleteTag a={m.a} />
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ─────────────────────────  pool chip  ───────────────────────── */
 /*
   TAP A CHIP TO SAY WHO IS OUT. The chip is where the coach is already
@@ -1459,30 +1479,37 @@ function Builder({
 
   const renderSeat = (slot: Slot, label: string, athleteId: string | null, cox = false) => {
     const key = slotKey(slot);
+    const active = !!typing && slotKey(typing) === key;
     return (
-      <Seat
-        key={key}
-        label={label}
-        cox={cox}
-        athlete={athleteId ? rosterById[athleteId] : undefined}
-        typing={!!typing && slotKey(typing) === key && keyboard}
-        selected={!!typing && slotKey(typing) === key && !keyboard}
-        query={query}
-        matches={matches}
-        dropActive={dropKey === key}
-        onStartType={() => tapSeat(slot)}
-        onQuery={setQuery}
-        onAssign={(id) => void assign(slot, id)}
-        onClear={() => {
-          if (athleteId) clear(slot);
-          putDown();
-        }}
-        onCancelType={putDown}
-        onDragStartSeat={() => setDropKey(null)}
-        onDropSlot={(id) => assign(slot, id)}
-        onDragOverSlot={() => setDropKey(key)}
-        onDragLeaveSlot={() => setDropKey((k) => (k === key ? null : k))}
-      />
+      /* The seat and, when it is the one in play, the pool under it. Wrapped so
+         the two travel together inside the hull's column of seats. */
+      <div key={key} className="flex flex-col gap-1">
+        <Seat
+          label={label}
+          cox={cox}
+          athlete={athleteId ? rosterById[athleteId] : undefined}
+          typing={!!typing && slotKey(typing) === key && keyboard}
+          selected={!!typing && slotKey(typing) === key && !keyboard}
+          query={query}
+          matches={matches}
+          dropActive={dropKey === key}
+          onStartType={() => tapSeat(slot)}
+          onQuery={setQuery}
+          onAssign={(id) => void assign(slot, id)}
+          onClear={() => {
+            if (athleteId) clear(slot);
+            putDown();
+          }}
+          onCancelType={putDown}
+          onDragStartSeat={() => setDropKey(null)}
+          onDropSlot={(id) => assign(slot, id)}
+          onDragOverSlot={() => setDropKey(key)}
+          onDragLeaveSlot={() => setDropKey((k) => (k === key ? null : k))}
+        />
+        {active && (
+          <SeatPool matches={matches} cox={cox} query={query} onAssign={(id) => void assign(slot, id)} />
+        )}
+      </div>
     );
   };
 
