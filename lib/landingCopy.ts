@@ -313,7 +313,7 @@ export const studentStory: Beat[] = [
     id: "S1",
     kicker: "01 · Match",
     head: "Find training partners.",
-    sub: "Meet students who train like you.",
+    sub: "Meet students who train like you and share your interests. Browse who fits you best, find someone for the time you want to go, or ask a mentor for help.",
     shot: "02-match.webp",
     ann: [],
     points: [
@@ -327,7 +327,7 @@ export const studentStory: Beat[] = [
     id: "S2",
     kicker: "02 · Plan",
     head: "Plan sessions easily.",
-    sub: "Set it all up in the chat.",
+    sub: "No more back and forth about when and where. Send a plan in the chat, and once it's accepted it's in both of your calendars.",
     shot: "04-plan-a-session.webp",
     ann: [],
     points: [
@@ -340,7 +340,7 @@ export const studentStory: Beat[] = [
     id: "S3",
     kicker: "03 · Profile",
     head: "Track your progress.",
-    sub: "Everything you trained, in one place.",
+    sub: "Everything you trained is in one place. See how you rank, look back at every session and keep the photos from the days you trained together.",
     /* A plain phone screen, not a tall strip cut under Memories — "just how
        it is normally on phone screen so it looks realistic" (owner, 2026-09-16). */
     shot: "05-profile.webp",
@@ -355,7 +355,7 @@ export const studentStory: Beat[] = [
     id: "S4",
     kicker: "04 · Gyms",
     head: "Every gym on campus.",
-    sub: "All in one place.",
+    sub: "Every gym on campus, including the house gyms, in one place. Know what's there and how busy it is before you walk over.",
     shot: "01-gyms.webp",
     ann: [],
     points: [
@@ -489,10 +489,11 @@ export const varsityStory: Beat[] = [
   {
     id: "V1",
     kicker: "01 · Training plan",
-    /* SHORTENED 2026-09-17 like the student story (owner): short heading, one
-       line, then the features. The old paragraphs are in git history. */
+    /* SHORTENED 2026-09-17 like the student story (owner): short heading, a
+       two-sentence summary ("about 2 sentences"), then the features. The old
+       paragraphs are in git history. */
     head: "Training plan always at hand.",
-    sub: "Everything for today, in one place.",
+    sub: "Everything your coach sets up lands on your phone the moment it changes. Today's sessions, your boat, the coach's notes and the next race, all on one screen.",
     shot: "tall-vhome.webp",
     ann: [],
     points: [
@@ -507,10 +508,11 @@ export const varsityStory: Beat[] = [
     id: "V2",
     kicker: "02 · Log",
     /* The capture is the (+) log sheet risen over the Calendar tab. */
-    /* SHORTENED 2026-09-17 like the student story (owner): short heading, one
-       line, then the features. The old paragraphs are in git history. */
+    /* SHORTENED 2026-09-17 like the student story (owner): short heading, a
+       two-sentence summary ("about 2 sentences"), then the features. The old
+       paragraphs are in git history. */
     head: "Log a session in a few taps.",
-    sub: "Every workout lands in your calendar.",
+    sub: "Log a workout right after you finish it, without typing numbers in. Every session lands in your calendar, so you can see how you kept to the plan.",
     shot: "13-varsity-log-sheet.webp",
     ann: [],
     points: [
@@ -524,10 +526,11 @@ export const varsityStory: Beat[] = [
     kicker: "03 · Workouts",
     /* The capture is DRIVEN, not a URL: Team → Workouts → tap the 2k test.
        scripts/landing/capture-light.mjs --only=15-varsity-board re-shoots it. */
-    /* SHORTENED 2026-09-17 like the student story (owner): short heading, one
-       line, then the features. The old paragraphs are in git history. */
+    /* SHORTENED 2026-09-17 like the student story (owner): short heading, a
+       two-sentence summary ("about 2 sentences"), then the features. The old
+       paragraphs are in git history. */
     head: "See every team workout.",
-    sub: "Built from everyone's logs.",
+    sub: "Every logged workout builds the team's results. See where you stand, and how you improved since last time.",
     shot: "15-varsity-board.webp",
     ann: [],
     points: [
@@ -539,10 +542,11 @@ export const varsityStory: Beat[] = [
   {
     id: "V5",
     kicker: "04 · Statistics",
-    /* SHORTENED 2026-09-17 like the student story (owner): short heading, one
-       line, then the features. The old paragraphs are in git history. */
+    /* SHORTENED 2026-09-17 like the student story (owner): short heading, a
+       two-sentence summary ("about 2 sentences"), then the features. The old
+       paragraphs are in git history. */
     head: "See your statistics.",
-    sub: "Your season, graphed.",
+    sub: "Your whole season, in numbers and graphs. See how much you rowed, how long you trained and how consistent you were.",
     shot: "16-varsity-stats.webp",
     ann: [],
     points: [
