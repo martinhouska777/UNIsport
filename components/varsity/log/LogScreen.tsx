@@ -677,16 +677,16 @@ function PrescribedRow({
        make them shorter so we can see the extra section"), then PLAINER the
        same day: the session's colour is a STRIPE down the left edge like the
        calendar's (Erg · Hard = red) and the "About 15 min · 4,000 m" estimate
-       is gone. Later that day the row was stripped to its bones (owner,
-       2026-09-17): the left column is the kind ("ERG · HARD") and the coach's
-       words and NOTHING else — no place, no coach note — "AM" is a small mono
-       mark in the TOP-RIGHT CORNER, deliberately a different face and size so
-       it never competes with the Log button, and the button alone is the
-       dominant thing on the right. After logging, your result still shows. */
+       is gone. Later that day the row was stripped to its bones and laid out
+       by its CORNERS (owner, 2026-09-17): the kind ("ERG · HARD") top left,
+       "AM" top right as a small mono mark in a different face so it never
+       competes, the coach's words low on the left, and the Log button in the
+       bottom-right corner. Nothing else — no place, no coach note. After
+       logging, your result still shows. */
     <button
       type="button"
       onClick={onLog}
-      className={`relative flex w-full items-center gap-3 overflow-hidden rounded-2xl border pt-5 pr-3.5 pb-3 pl-5 text-left ${
+      className={`relative flex w-full items-end gap-3 overflow-hidden rounded-2xl border pt-5 pr-3.5 pb-3 pl-5 text-left ${
         log ? "border-success-line bg-success-tint" : "border-border bg-surface active:bg-surface-2"
       }`}
     >
@@ -715,8 +715,10 @@ function PrescribedRow({
           )}
         </div>
 
-        {/* The workout itself, in the coach's words — and nothing under it. */}
-        <div className="mt-1 text-[15px] font-semibold leading-snug text-text">{words || kind}</div>
+        {/* The workout itself, in the coach's words — and nothing under it.
+            It sits LOW in the card, under a gap, so the label above it reads
+            as the corner mark it is (owner, 2026-09-17). */}
+        <div className="mt-2.5 text-[15px] font-semibold leading-snug text-text">{words || kind}</div>
         {log && <div className="mt-0.5 text-[12px] font-medium text-text-2">{summaryOf(log) || "Logged"}</div>}
       </div>
 
