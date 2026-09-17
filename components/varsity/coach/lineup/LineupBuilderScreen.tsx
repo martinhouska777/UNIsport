@@ -129,8 +129,10 @@ import CrewVideoStrip from "@/components/varsity/CrewVideoStrip";
 import {
   IconArrowLeft,
   IconCheck,
+  IconChevronDown,
   IconChevronLeft,
   IconChevronRight,
+  IconChevronUp,
   IconClock,
   IconPlus,
   IconRepeat,
@@ -948,6 +950,32 @@ function Builder({
   const [poolFilter, setPoolFilter] = useState<PoolFilter>("all");
 
   /*
+    BOATS THE COACH HAS FINISHED WITH, shut by their own id. A seated eight is
+    nine rows, a hull, three fields and a video strip; three of them is a very
+    long screen to scroll past to reach the fourth (owner, 2026-09-17). Closing
+    one leaves its header — rigging, name, how full it is — and nothing else.
+
+    Held in this screen, not on the boat: it is where the coach has got to in
+    this sitting, not a fact about the crew, and nothing about it is worth
+    saving to the database or showing the squad.
+  */
+  const [shut, setShut] = useState<Set<string>>(new Set());
+  const toggleShut = (id: string) => {
+    // Shutting the boat whose seat is being typed into would leave the keyboard
+    // open on something nobody can see. Put that seat down first.
+    if (typing?.boatId === id) {
+      setTyping(null);
+      setKeyboard(false);
+      setQuery("");
+    }
+    setShut((prev) => {
+      const next = new Set(prev);
+      if (!next.delete(id)) next.add(id);
+      return next;
+    });
+  };
+
+  /*
     DRAGGING THE ADD-BOAT SHEET DOWN. `drag` is how far below its resting place
     the sheet is being held, in pixels; it only ever goes down. Let go past a
     third of the sheet's own height and it closes, short of that it slides back
@@ -1618,6 +1646,15 @@ function Builder({
                 </div>
               )}
               {boats.map((boat) => {
+                const isShut = shut.has(boat.id);
+                /* How full the boat is — shown ONLY while it is shut. Open, the
+                   hull says it seat by seat, and the owner cut the footer that
+                   repeated it. Closed, this is the one thing left that says
+                   whether the crew is finished. */
+                const total = boat.seats.length + (boat.hasCox ? 1 : 0);
+                const filled =
+                  boat.seats.filter((s) => s.athleteId).length +
+                  (boat.hasCox && boat.coxId ? 1 : 0);
                 return (
                   <div key={boat.id} className="overflow-hidden rounded-2xl border border-border bg-surface">
                     {/* header — the rigging, the boat's name and the push-off
@@ -1625,15 +1662,37 @@ function Builder({
                         where the coach's own lineup sheet puts it; it is echoed
                         up here so a boat stays identifiable while you scroll
                         past its nine seats. */}
-                    <div className="flex items-center justify-between gap-2 border-b border-border px-3.5 py-3">
-                      <div className="flex min-w-0 flex-1 items-center gap-2">
+                    <div
+                      className={`flex items-center justify-between gap-2 px-3.5 py-3 ${
+                        isShut ? "" : "border-b border-border"
+                      }`}
+                    >
+                      {/* The whole title is the way to open and shut it, so a
+                          thumb has the width of the card to aim at. */}
+                      <button
+                        type="button"
+                        onClick={() => toggleShut(boat.id)}
+                        aria-expanded={!isShut}
+                        className="flex min-w-0 flex-1 items-center gap-2 text-left"
+                      >
                         <span className="flex-shrink-0 rounded-md border border-primary-line bg-primary-tint px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-primary">
                           {boat.badge}
                         </span>
                         <span className="min-w-0 flex-1 truncate text-[14px] font-semibold text-text">
                           {boat.name}
                         </span>
-                      </div>
+                        {isShut && (
+                          <span
+                            className={`flex-shrink-0 rounded-md border px-1.5 py-0.5 text-[11px] font-semibold ${
+                              filled === total
+                                ? "border-success-line bg-success-tint text-success"
+                                : "border-border text-muted"
+                            }`}
+                          >
+                            {filled}/{total}
+                          </span>
+                        )}
+                      </button>
                       {/*
                         Push-off time — a plain dropdown of every five minutes,
                         which is the native scroll wheel on a phone. A boat the
@@ -1663,95 +1722,107 @@ function Builder({
                             ),
                           )}
                         </select>
+                        <button
+                          type="button"
+                          onClick={() => toggleShut(boat.id)}
+                          aria-label={isShut ? `Show ${boat.name}` : `Hide ${boat.name}`}
+                          className="tap44 -mr-1.5 flex h-8 w-8 items-center justify-center text-muted"
+                        >
+                          {isShut ? <IconChevronDown size={16} /> : <IconChevronUp size={16} />}
+                        </button>
                       </div>
                     </div>
 
-                    {/*
-                      THE CREW, IN THE ORDER THE COACH ALREADY WRITES IT: bow at
-                      the top, down through the stroke, cox last — then the boat,
-                      then the oars. That is the column order of the squad's own
-                      lineup sheet, and a coach copying a crew across from it
-                      should never have to read one list bottom-up against the
-                      other.
-                    */}
-                    <div className="px-3 py-4">
-                      <div className="rounded-[44px] border-2 border-primary-line bg-surface-2 px-4 pb-3 pt-2.5">
-                        <HullCap arrow="▲" word="BOW" />
-                        {/* The number comes from the seat's POSITION, not from
-                            what an older saved lineup happens to have stored in
-                            `label` — so a lineup built before the numbering
-                            changed still reads 1…8 today. */}
-                        <div className="flex flex-col gap-1">
-                          {boat.seats.map((s, i) =>
-                            renderSeat(
-                              { boatId: boat.id, kind: "seat", idx: i },
-                              seatLabel(i),
-                              s.athleteId,
-                            ),
+                    {/* Shut: the header is all that is left of this boat. */}
+                    {!isShut && (
+                      <>
+                      {/*
+                        THE CREW, IN THE ORDER THE COACH ALREADY WRITES IT: bow at
+                        the top, down through the stroke, cox last — then the boat,
+                        then the oars. That is the column order of the squad's own
+                        lineup sheet, and a coach copying a crew across from it
+                        should never have to read one list bottom-up against the
+                        other.
+                      */}
+                      <div className="px-3 py-4">
+                        <div className="rounded-[44px] border-2 border-primary-line bg-surface-2 px-4 pb-3 pt-2.5">
+                          <HullCap arrow="▲" word="BOW" />
+                          {/* The number comes from the seat's POSITION, not from
+                              what an older saved lineup happens to have stored in
+                              `label` — so a lineup built before the numbering
+                              changed still reads 1…8 today. */}
+                          <div className="flex flex-col gap-1">
+                            {boat.seats.map((s, i) =>
+                              renderSeat(
+                                { boatId: boat.id, kind: "seat", idx: i },
+                                seatLabel(i),
+                                s.athleteId,
+                              ),
+                            )}
+                          </div>
+                          {/* THE COX SITS INSIDE THE BOAT, at the stern, below the
+                              stroke divider — which is where a cox sits. They used
+                              to be stranded under the hull entirely. */}
+                          {boat.hasCox && (
+                            <>
+                              <div className="px-1.5 pb-[3px] pt-1">
+                                <div className="h-[1.5px] rounded-[1px] bg-muted" />
+                              </div>
+                              {renderSeat({ boatId: boat.id, kind: "cox" }, COX_TAG, boat.coxId, true)}
+                            </>
                           )}
+                          <HullCap arrow="▼" word="STROKE" />
                         </div>
-                        {/* THE COX SITS INSIDE THE BOAT, at the stern, below the
-                            stroke divider — which is where a cox sits. They used
-                            to be stranded under the hull entirely. */}
-                        {boat.hasCox && (
-                          <>
-                            <div className="px-1.5 pb-[3px] pt-1">
-                              <div className="h-[1.5px] rounded-[1px] bg-muted" />
-                            </div>
-                            {renderSeat({ boatId: boat.id, kind: "cox" }, COX_TAG, boat.coxId, true)}
-                          </>
-                        )}
-                        <HullCap arrow="▼" word="STROKE" />
                       </div>
-                    </div>
 
-                    {/*
-                      THE THREE LINES UNDER THE HULL, in the new design's order:
-                      which shell, which oars, and anything else the crew needs.
-                      One label column so the three answers line up, and each on
-                      its own card rather than as full-width rules — the boat
-                      above them is now a shape, and a stack of edge-to-edge
-                      rules under it read as the hull leaking into the page.
+                      {/*
+                        THE THREE LINES UNDER THE HULL, in the new design's order:
+                        which shell, which oars, and anything else the crew needs.
+                        One label column so the three answers line up, and each on
+                        its own card rather than as full-width rules — the boat
+                        above them is now a shape, and a stack of edge-to-edge
+                        rules under it read as the hull leaking into the page.
 
-                      The NOTE used to sit ABOVE the crew. It moved down here
-                      with the design: the coach is filling seats first, and the
-                      note is the last thing written before the boat goes out.
+                        The NOTE used to sit ABOVE the crew. It moved down here
+                        with the design: the coach is filling seats first, and the
+                        note is the last thing written before the boat goes out.
 
-                      OARS is free text for now — the sets are named on the
-                      boathouse rack and the owner is fetching those names. When
-                      they land they become a data list and this becomes a
-                      picker: no new component, the same field.
-                    */}
-                    <div className="flex flex-col gap-[7px] px-3 pb-3">
-                      <InfoField
-                        label="BOAT"
-                        value={boat.name}
-                        placeholder="Which shell…"
-                        strong
-                        onChange={(v) => setName(boat.id, v)}
-                      />
-                      <InfoField
-                        label="OARS"
-                        value={boat.oars ?? ""}
-                        placeholder="Which set to take…"
-                        onChange={(v) => setOars(boat.id, v)}
-                      />
-                      <InfoField
-                        label="NOTE"
-                        value={boat.note}
-                        placeholder="Add a crew note…"
-                        dashedWhenEmpty
-                        onChange={(v) => setNote(boat.id, v)}
-                      />
-                    </div>
+                        OARS is free text for now — the sets are named on the
+                        boathouse rack and the owner is fetching those names. When
+                        they land they become a data list and this becomes a
+                        picker: no new component, the same field.
+                      */}
+                      <div className="flex flex-col gap-[7px] px-3 pb-3">
+                        <InfoField
+                          label="BOAT"
+                          value={boat.name}
+                          placeholder="Which shell…"
+                          strong
+                          onChange={(v) => setName(boat.id, v)}
+                        />
+                        <InfoField
+                          label="OARS"
+                          value={boat.oars ?? ""}
+                          placeholder="Which set to take…"
+                          onChange={(v) => setOars(boat.id, v)}
+                        />
+                        <InfoField
+                          label="NOTE"
+                          value={boat.note}
+                          placeholder="Add a crew note…"
+                          dashedWhenEmpty
+                          onChange={(v) => setNote(boat.id, v)}
+                        />
+                      </div>
 
-                    {/*
-                      VIDEO — last, because it is the only line filled in AFTER
-                      the outing. Everything above it is written before the boat
-                      pushes off; this is what comes back with it.
-                    */}
-                    <CrewVideoStrip dayKey={dayKey} boat={boat} />
-
+                      {/*
+                        VIDEO — last, because it is the only line filled in AFTER
+                        the outing. Everything above it is written before the boat
+                        pushes off; this is what comes back with it.
+                      */}
+                      <CrewVideoStrip dayKey={dayKey} boat={boat} />
+                      </>
+                    )}
                   </div>
                 );
               })}
