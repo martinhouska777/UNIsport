@@ -1141,11 +1141,13 @@ export const coach = {
         { text: "it shows itself as a list with rankings and filters", bold: true },
         { text: ", ranked by split, time, watts or watts per kilo. Also look at the squad average and compare to previous workouts." },
       ],
-      /* The Workouts board, captured from the athlete side — the coach's Team
-         tab IS this screen. Right screen, athlete's frame; re-shoot from the
-         console in the same pass as the video strip. */
-      shot: "15-varsity-board.webp",
-      alt: "The team workout board: a 2k test with every athlete's result, filtered by split, time, watts and watts per kilo",
+      /* ITS OWN COACH FRAME since 2026-09-17 (owner: reshoot the coach
+         screenshots). It used to borrow 15-varsity-board.webp — the right
+         screen, but the ATHLETE's frame, shared with the varsity story. This
+         is the console's own Workouts tab: every session the squad has been
+         set, each with how many have logged it. */
+      shot: "coach-6-workouts.webp",
+      alt: "The console's Workouts tab: every team workout with the date, the session and how many of the squad have logged it",
     },
     {
       n: "6",
@@ -1155,8 +1157,11 @@ export const coach = {
         { text: "always have it in front of their eyes", bold: true },
         { text: " and stay focused at all times. Everyone else sees a green “Good job”." },
       ],
+      /* The notes screen stopped being a screen of its own: a note is the
+         pencil in each row of the TEAM tab (2026-09-17), so the picture is
+         the squad list the coach writes them from. */
       shot: "coach-5-notes.webp",
-      alt: "The Athlete Notes screen: the roster with a short technical note per athlete, and a green Good job for everyone without one",
+      alt: "The Team tab: the whole squad with each rower's side, where the coach taps a row to write that athlete's technical note",
     },
   ] as CoachStep[],
 
