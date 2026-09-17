@@ -65,6 +65,28 @@ await browser.setCookie({
 });
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
+/*
+  THE SHOT CLOCK. `SHOT_HOUR=16 node capture-schools.mjs` makes the page
+  believe it is 4 PM today (real date, chosen hour), so a Gyms screen shot at
+  night does not read "Closed · opens 7am" on every card. Nothing but the
+  page's own clock changes — the same screen a student sees at 4 PM.
+*/
+async function setShotClock(page) {
+  const hour = Number(process.env.SHOT_HOUR);
+  if (!Number.isFinite(hour)) return;
+  await page.evaluateOnNewDocument((h) => {
+    const Real = Date;
+    const now = new Real();
+    const offset = new Real(now.getFullYear(), now.getMonth(), now.getDate(), h, 0, 0).getTime() - now.getTime();
+    const Shot = function (...a) { return a.length ? new Real(...a) : new Real(Real.now() + offset); };
+    Shot.prototype = Real.prototype;
+    Shot.now = () => Real.now() + offset;
+    Shot.parse = Real.parse;
+    Shot.UTC = Real.UTC;
+    window.Date = Shot;
+  }, hour);
+}
+
 async function newPage(school) {
   const page = await browser.newPage();
   await page.setUserAgent(
@@ -76,6 +98,7 @@ async function newPage(school) {
       window.localStorage.setItem("unisport.university", key);
     } catch {}
   }, school);
+  await setShotClock(page);
   await page.setViewport({ width: W, height: PHONE_H, deviceScaleFactor: DSF, isMobile: true, hasTouch: true });
   return page;
 }

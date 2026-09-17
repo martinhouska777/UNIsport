@@ -74,6 +74,21 @@ await browser.setCookie({
 await page.evaluateOnNewDocument((mode) => {
   try { window.localStorage.setItem("uniThemeMode", mode); } catch {}
 }, MODE);
+/* SHOT_HOUR=16: the page believes it is 4 PM today, so gyms read "Open now"
+   in a shot taken at night (same override as capture-schools.mjs). */
+if (Number.isFinite(Number(process.env.SHOT_HOUR))) {
+  await page.evaluateOnNewDocument((h) => {
+    const Real = Date;
+    const now = new Real();
+    const offset = new Real(now.getFullYear(), now.getMonth(), now.getDate(), h, 0, 0).getTime() - now.getTime();
+    const Shot = function (...a) { return a.length ? new Real(...a) : new Real(Real.now() + offset); };
+    Shot.prototype = Real.prototype;
+    Shot.now = () => Real.now() + offset;
+    Shot.parse = Real.parse;
+    Shot.UTC = Real.UTC;
+    window.Date = Shot;
+  }, Number(process.env.SHOT_HOUR));
+}
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
 /*
