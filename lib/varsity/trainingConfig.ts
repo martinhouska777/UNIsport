@@ -11,6 +11,8 @@
     zones    — the intensity words (UT2 / UT1 / Hard, or Easy / Tempo / Race).
     library  — the "Most used · tap to fill" workouts, per type (and per zone
                for types that have zones). This is the coach's OWN list.
+    boats    — the riggings the Lineup tab offers (8+, 4+, 4−, 2−). A preset,
+               like everything else here: a squad with a quad adds a quad.
     times    — the usual start time for each period.
 
   Same idea as lib/themes.ts is for colour: adding another sport later = adding
@@ -38,6 +40,7 @@ import {
   type Intensity,
   type Period,
 } from "./coachPlan";
+import { defaultBoatTypes, type BoatKind } from "./coachLineup";
 
 /* ── The shape of a config ─────────────────────────────────────────────── */
 
@@ -63,6 +66,13 @@ export type TrainingConfig = {
   types: SessionType[];
   zones: Zone[];
   library: Library;
+  /*
+    The riggings the Lineup tab's "Add Boat" offers. Every preset ships the
+    four sweep boats the app has always had; a squad edits them like anything
+    else here. An EMPTY list is a real answer — a team that never seats a boat —
+    and the builder says so rather than offering nothing.
+  */
+  boats: BoatKind[];
   times: Record<Period, string>;
 };
 
@@ -101,7 +111,14 @@ function rowingPreset(): TrainingConfig {
       if (own.length) library[c] = [...own];
     }
   }
-  return { preset: "rowing", types, zones, library, times: { ...presetTime } };
+  return {
+    preset: "rowing",
+    types,
+    zones,
+    library,
+    boats: defaultBoatTypes.map((b) => ({ ...b })),
+    times: { ...presetTime },
+  };
 }
 
 /* The other sports are ordinary data entries. Each is a STARTING POINT a coach
@@ -127,6 +144,7 @@ const swimming: TrainingConfig = {
     dryland: ["Core circuit", "Bands + shoulders", "Med-ball circuit"],
     recovery: ["30 mins easy", "45 mins easy"],
   },
+  boats: defaultBoatTypes.map((b) => ({ ...b })),
   times: { AM: "6:00 AM", PM: "3:30 PM" },
 };
 
@@ -153,6 +171,7 @@ const running: TrainingConfig = {
     "track:intervals": ["12×400m", "3000m time trial", "8×200m"],
     cross: ["45 mins bike", "30 mins pool run"],
   },
+  boats: defaultBoatTypes.map((b) => ({ ...b })),
   times: { AM: "6:30 AM", PM: "4:00 PM" },
 };
 
@@ -182,6 +201,7 @@ const teamSport: TrainingConfig = {
     lift: ["Upper body", "Lower body", "Full body circuit"],
     recovery: ["Stretch + mobility", "Pool recovery"],
   },
+  boats: defaultBoatTypes.map((b) => ({ ...b })),
   times: { AM: "7:00 AM", PM: "4:00 PM" },
 };
 
@@ -194,6 +214,7 @@ const blank: TrainingConfig = {
   ],
   zones: [],
   library: {},
+  boats: defaultBoatTypes.map((b) => ({ ...b })),
   times: { AM: "7:00 AM", PM: "4:30 PM" },
 };
 

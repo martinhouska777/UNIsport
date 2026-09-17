@@ -29,6 +29,8 @@ function normalise(raw: unknown): TrainingConfig {
     types: Array.isArray(v.types) && v.types.length ? v.types : base.types,
     zones: Array.isArray(v.zones) ? v.zones : base.zones,
     library: v.library && typeof v.library === "object" ? v.library : {},
+    // Written before boats were a setting: the four the app shipped with.
+    boats: Array.isArray(v.boats) ? v.boats : base.boats,
     times: { ...base.times, ...(v.times ?? {}) },
   };
 }

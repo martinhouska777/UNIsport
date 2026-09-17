@@ -85,7 +85,6 @@ import {
   dockTimes,
   DEFAULT_DOCK,
   outMeta,
-  boatTypes,
   makeSeats,
   defaultBoatName,
   outOptions,
@@ -94,7 +93,7 @@ import {
   type PracticeStatus,
   type Boat,
   type Athlete,
-  type BoatType,
+  type BoatKind,
   type PoolFilter,
 } from "@/lib/varsity/coachLineup";
 import {
@@ -916,12 +915,15 @@ function Builder({
   dayKey,
   context,
   planContext,
+  boatKinds,
   nav,
   onBack,
 }: {
   dayKey: string;
   context: { weekday: string; period: string; sub: string };
   planContext: PlanContext;
+  /** The riggings this squad rows, from their own settings. */
+  boatKinds: BoatKind[];
   nav: Nav;
   onBack: () => void;
 }) {
@@ -1297,19 +1299,22 @@ function Builder({
   const setOars = (boatId: string, oars: string) =>
     setBoats((prev) => prev.map((b) => (b.id === boatId ? { ...b, oars } : b)));
 
-  const addBoat = (type: BoatType) => {
+  /* Everything about the new boat comes off the rigging the coach picked —
+     how many seats, whether there is a cox, what it is called. Nothing here
+     knows what an "8+" is any more; the squad's settings do. */
+  const addBoat = (kind: BoatKind) => {
     setBoats((bs) => [
       ...bs,
       {
         id: `boat-${Date.now()}`,
-        badge: type,
-        name: defaultBoatName(type),
+        badge: kind.key,
+        name: defaultBoatName(kind.symbol),
         dock: DEFAULT_DOCK,
         oars: "",
         note: "",
-        hasCox: type === "8+" || type === "4+",
+        hasCox: kind.cox,
         coxId: null,
-        seats: makeSeats(type),
+        seats: makeSeats(kind.rowers),
       },
     ]);
     setSheetOpen(false);
@@ -1953,18 +1958,27 @@ function Builder({
           >
             <div className="mx-auto mb-3 h-1 w-9 rounded-full bg-border" />
             <h2 className="text-[15px] font-semibold text-text">Add Boat</h2>
-            <div className="mt-3 grid grid-cols-4 gap-2">
-              {boatTypes.map((b) => (
-                <button
-                  key={b.type}
-                  type="button"
-                  onClick={() => addBoat(b.type)}
-                  className="tap44 rounded-2xl border border-border bg-surface py-3.5 text-xl font-semibold text-text active:border-primary active:bg-primary-tint"
-                >
-                  {b.symbol}
-                </button>
-              ))}
-            </div>
+            {boatKinds.length === 0 ? (
+              /* A squad that deleted every rigging. Said plainly, with the one
+                 place that fixes it named. */
+              <p className="mt-3 text-[12px] leading-relaxed text-muted">
+                No boats set up. Add the ones your squad rows in Settings → Boats.
+              </p>
+            ) : (
+              <div className="mt-3 grid grid-cols-4 gap-2">
+                {boatKinds.map((b) => (
+                  <button
+                    key={b.key}
+                    type="button"
+                    onClick={() => addBoat(b)}
+                    title={b.name}
+                    className="tap44 rounded-2xl border border-border bg-surface py-3.5 text-xl font-semibold text-text active:border-primary active:bg-primary-tint"
+                  >
+                    {b.symbol}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -2151,6 +2165,7 @@ export default function LineupBuilderScreen({
       dayKey={practice.dayKey}
       context={practice.context}
       planContext={practice.planContext}
+      boatKinds={cfg.boats}
       nav={{
         prev: nav.prev,
         next: nav.next,

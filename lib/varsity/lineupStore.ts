@@ -161,7 +161,10 @@ export async function saveLineup(
 }
 
 /* ── Athlete Home: today's published boats as Lineup[] ── */
-const boatTypeName = (badge: string) => boatTypes.find((b) => b.type === badge)?.name ?? badge;
+/* The word for a rigging, for the athlete's own lineup card. Only the four the
+   app ships with have one here — a rigging a squad added in Settings is read by
+   its badge ("1x"), which is what it is called anyway. */
+const boatTypeName = (badge: string) => boatTypes.find((b) => b.key === badge)?.name ?? badge;
 const norm = (s: string) => s.trim().toLowerCase();
 
 /*

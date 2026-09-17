@@ -54,6 +54,7 @@ import {
   type TrainingConfig,
   type Zone,
 } from "@/lib/varsity/trainingConfig";
+import type { BoatKind } from "@/lib/varsity/coachLineup";
 
 /* ── small shared pieces ─────────────────────────────────────────────────── */
 
@@ -179,6 +180,7 @@ type Editing =
   | { kind: "preset" }
   | { kind: "type"; index: number | "new" }
   | { kind: "zone"; index: number | "new" }
+  | { kind: "boat"; index: number | "new" }
   | { kind: "library"; typeKey: string; zoneKey?: string };
 
 export default function TrainingSettingsScreen({ membership }: { membership: Membership }) {
@@ -361,6 +363,46 @@ export default function TrainingSettingsScreen({ membership }: { membership: Mem
         </Button>
       </Section>
 
+      {/*
+        BOATS. The four sweep riggings were hardcoded until the owner said the
+        obvious thing about them: "this is just a preset" (2026-09-17). A squad
+        with a quad, a single or a coxed pair adds it here and it appears on the
+        Lineup tab's Add Boat row, on the same footing as the four.
+      */}
+      <Section
+        title="Boats"
+        hint="What “Add Boat” offers on the Lineup tab. The four sweep boats are a starting point — add whatever your squad actually rows."
+      >
+        {cfg.boats.length > 0 && (
+          <div className="rounded-xl border border-border bg-surface px-3.5">
+            {cfg.boats.map((b, i) => (
+              <OrderRow
+                key={b.key}
+                onOpen={() => setEditing({ kind: "boat", index: i })}
+                onUp={i > 0 ? () => update((c) => ({ ...c, boats: move(c.boats, i, -1) })) : undefined}
+                onDown={
+                  i < cfg.boats.length - 1
+                    ? () => update((c) => ({ ...c, boats: move(c.boats, i, 1) }))
+                    : undefined
+                }
+              >
+                <span className="w-8 flex-shrink-0 text-[14px] font-semibold text-text">{b.symbol}</span>
+                <span className="flex-1 text-[14px] text-text">{b.name}</span>
+                <span className="text-[11px] text-muted">{crewSize(b)}</span>
+              </OrderRow>
+            ))}
+          </div>
+        )}
+        <Button
+          variant="secondary"
+          size="md"
+          className="mt-2.5 w-full"
+          onClick={() => setEditing({ kind: "boat", index: "new" })}
+        >
+          <IconPlus size={15} /> Add a boat
+        </Button>
+      </Section>
+
       <Section
         title="Workout library"
         hint="Your own most-used workouts. They appear as the tap-to-fill chips in the session editor, in this order."
@@ -493,6 +535,24 @@ export default function TrainingSettingsScreen({ membership }: { membership: Mem
               }
               return { ...c, zones: c.zones.filter((_, i) => i !== index), library };
             });
+            setEditing(null);
+          }}
+        />
+      )}
+      {editing?.kind === "boat" && (
+        <BoatSheet
+          cfg={cfg}
+          index={editing.index}
+          onClose={() => setEditing(null)}
+          onSave={(b, index) => {
+            update((c) => ({
+              ...c,
+              boats: index === "new" ? [...c.boats, b] : c.boats.map((x, i) => (i === index ? b : x)),
+            }));
+            setEditing(null);
+          }}
+          onDelete={(index) => {
+            update((c) => ({ ...c, boats: c.boats.filter((_, i) => i !== index) }));
             setEditing(null);
           }}
         />
@@ -745,6 +805,122 @@ function ZoneSheet({
         >
           <IconTrash size={15} /> Delete this zone
         </Button>
+      )}
+    </Sheet>
+  );
+}
+
+/* ── One rigging ─────────────────────────────────────────────────────────── */
+/* "8 rowers + cox", "1 rower" — the crew a rigging carries, in words. */
+function crewSize(b: BoatKind) {
+  return `${b.rowers} ${b.rowers === 1 ? "rower" : "rowers"}${b.cox ? " + cox" : ""}`;
+}
+
+function BoatSheet({
+  cfg,
+  index,
+  onClose,
+  onSave,
+  onDelete,
+}: {
+  cfg: TrainingConfig;
+  index: number | "new";
+  onClose: () => void;
+  onSave: (b: BoatKind, index: number | "new") => void;
+  onDelete: (index: number) => void;
+}) {
+  const existing = index === "new" ? undefined : cfg.boats[index];
+  const [symbol, setSymbol] = useState(existing?.symbol ?? "");
+  const [name, setName] = useState(existing?.name ?? "");
+  const [rowers, setRowers] = useState(existing?.rowers ?? 4);
+  const [cox, setCox] = useState(existing?.cox ?? false);
+
+  const commit = () => {
+    const sym = symbol.trim();
+    if (!sym || rowers < 1) return;
+    onSave(
+      {
+        // The key is what every saved boat carries as its badge, so an existing
+        // rigging keeps its own for ever — only a new one gets one made.
+        key: existing?.key ?? keyFromLabel(sym, cfg.boats.map((b) => b.key)),
+        symbol: sym,
+        name: name.trim() || sym,
+        rowers,
+        cox,
+      },
+      index,
+    );
+  };
+
+  return (
+    <Sheet title={existing ? `Edit ${existing.symbol}` : "New boat"} onClose={onClose}>
+      <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
+        Written on the boat
+      </div>
+      <input
+        value={symbol}
+        onChange={(e) => setSymbol(e.target.value)}
+        placeholder="8+, 4−, 2x, 1x…"
+        className={inputCls}
+      />
+
+      <div className={labelCls}>Name</div>
+      <input
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        placeholder="Eight, Quad, Single…"
+        className={inputCls}
+      />
+
+      <div className={labelCls}>Seats</div>
+      <div className="flex items-center gap-2">
+        {[1, 2, 4, 8].map((n) => (
+          <button
+            key={n}
+            type="button"
+            onClick={() => setRowers(n)}
+            className={`h-11 flex-1 rounded-xl border text-[14px] font-semibold ${
+              rowers === n ? "border-primary bg-primary-tint text-text" : "border-border bg-surface text-muted"
+            }`}
+          >
+            {n}
+          </button>
+        ))}
+        {/* Anything else — a six, or whatever a squad has — typed in. */}
+        <input
+          value={[1, 2, 4, 8].includes(rowers) ? "" : String(rowers)}
+          onChange={(e) => setRowers(Math.max(0, Math.min(12, Number(e.target.value.replace(/\D/g, "")) || 0)))}
+          inputMode="numeric"
+          aria-label="Other number of seats"
+          placeholder="…"
+          className="h-11 w-14 rounded-xl border border-border bg-surface-2 text-center text-base text-[14px] text-text outline-none focus:border-primary placeholder:text-muted"
+        />
+      </div>
+
+      <Toggle
+        label="Has a cox"
+        hint="Adds the cox's seat to the boat, and lets a coxswain be put in it."
+        on={cox}
+        onChange={setCox}
+      />
+
+      <Button size="lg" className="mt-5 w-full" onClick={commit} disabled={!symbol.trim() || rowers < 1}>
+        {existing ? "Done" : "Add boat"}
+      </Button>
+      {existing && (
+        <>
+          <Button
+            variant="dangerSoft"
+            size="md"
+            className="mt-2.5 w-full"
+            onClick={() => index !== "new" && onDelete(index)}
+          >
+            <IconTrash size={15} /> Delete this boat
+          </Button>
+          <p className="mt-2 text-[11px] leading-relaxed text-muted">
+            Deleting it only takes it off the Add Boat row. Crews already seated in one keep it.
+          </p>
+        </>
       )}
     </Sheet>
   );

@@ -216,27 +216,43 @@ export const practiceStatusMeta: Record<PracticeStatus, { label: string; dot: st
 
 export type Practice = { period: "AM" | "PM"; status: PracticeStatus };
 
-/* ── Boat rigging types ── */
-export type BoatType = "8+" | "4+" | "4-" | "2-";
-export const boatTypes: { type: BoatType; symbol: string; name: string; desc: string }[] = [
-  { type: "8+", symbol: "8+", name: "Eight", desc: "8 rowers + cox" },
-  { type: "4+", symbol: "4+", name: "Coxed Four", desc: "4 rowers + cox" },
-  { type: "4-", symbol: "4−", name: "Straight Four", desc: "4 rowers, no cox" },
-  { type: "2-", symbol: "2−", name: "Pair", desc: "2 rowers, no cox" },
+/* ── Boat rigging types ─────────────────────────────────────────────────────
+   THE FOUR BELOW ARE A PRESET, NOT THE LAW (owner, 2026-09-17). They are what
+   a sweep squad rows and what the app has always shipped, so they remain the
+   default — but the list a coach sees when adding a boat comes from their own
+   team config (lib/varsity/trainingConfig → `boats`), where a squad can add a
+   single, a quad, a coxed pair, or whatever else sits on their racks.
+
+   `key` is what gets written into every saved boat as its badge, so it must
+   never be re-keyed in place — an existing lineup's "8+" has to keep meaning
+   the eight. That is why a boat's badge is plain text: the set of riggings is
+   now data, and the code cannot know them all in advance. */
+export type BoatKind = {
+  key: string;
+  /** What is written on the button and on the boat: "8+", "4−", "1x". */
+  symbol: string;
+  /** The word for it, which the athlete's own lineup card reads: "Eight". */
+  name: string;
+  rowers: number;
+  cox: boolean;
+};
+
+export const defaultBoatTypes: BoatKind[] = [
+  { key: "8+", symbol: "8+", name: "Eight", rowers: 8, cox: true },
+  { key: "4+", symbol: "4+", name: "Coxed Four", rowers: 4, cox: true },
+  { key: "4-", symbol: "4−", name: "Straight Four", rowers: 4, cox: false },
+  { key: "2-", symbol: "2−", name: "Pair", rowers: 2, cox: false },
 ];
 
-// How many rowing seats + whether there's a cox, per rigging.
-export const boatShape: Record<BoatType, { rowers: number; cox: boolean }> = {
-  "8+": { rowers: 8, cox: true },
-  "4+": { rowers: 4, cox: true },
-  "4-": { rowers: 4, cox: false },
-  "2-": { rowers: 2, cox: false },
-};
+/* The old name, kept for the screens that only ever wanted the default four —
+   the athlete's lineup card turning a badge back into a word, for one. */
+export const boatTypes = defaultBoatTypes;
 
 export type SeatSlot = { label: string; athleteId: string | null }; // "1" (bow) … "8" (stroke)
 export type Boat = {
   id: string;
-  badge: BoatType;
+  /** The rigging's key, e.g. "8+". Plain text: the riggings are team data. */
+  badge: string;
   name: string;
   dock: string;
   /** Which set of oars this crew takes out. Free text until the sets are named. */
@@ -279,8 +295,7 @@ export const COX_LABEL = "COX";
 export const defaultBoatName = (badge: string) => `New ${badge}`;
 
 // Build the empty seat list for a rigging — bow (1) first, stroke last.
-export function makeSeats(type: BoatType): SeatSlot[] {
-  const { rowers } = boatShape[type];
+export function makeSeats(rowers: number): SeatSlot[] {
   return Array.from({ length: rowers }, (_, i) => ({ label: seatLabel(i), athleteId: null }));
 }
 
