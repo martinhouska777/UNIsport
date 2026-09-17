@@ -108,7 +108,7 @@ export default function LandingPage({ view = "all" }: { view?: LandingView }) {
             closerId="blade-lock"
             fromBeat={5}
             toBeat={0}
-            aside={<FeatureList kicker={varsityFeatures.kicker} rows={varsityFeatures.rows} cta={varsityFeatures.cta} />}
+            aside={<FeatureList kicker={varsityFeatures.kicker} rows={varsityFeatures.rows} cta={varsityFeatures.cta} ink />}
           />
         )}
         {coaches && <CoachSection solo={!all} teaser={all} />}
