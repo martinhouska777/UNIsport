@@ -688,17 +688,22 @@ function PrescribedRow({
       type="button"
       onClick={onLog}
       className={`relative flex w-full items-center gap-3 overflow-hidden rounded-2xl border py-2.5 pr-3.5 pl-5 text-left ${
-        log ? "border-success-line bg-success-tint" : "border-border active:brightness-95"
+        log ? "border-success-line bg-success-tint" : "border-border bg-surface active:bg-surface-2"
       }`}
-      /* A faint wash of the session's colour over the card, so it isn't plain
-         white (owner, 2026-09-17: "jen nádech té barvy"). */
-      style={log ? undefined : { background: `color-mix(in srgb, ${color} 9%, var(--surface))` }}
     >
       <span aria-hidden className="absolute inset-y-0 left-0 w-1.5" style={{ background: color }} />
       <div className="min-w-0 flex-1">
         <div className="flex w-full flex-wrap items-center gap-x-2 gap-y-0.5">
           <span className="text-[11px] font-semibold text-muted">{period}</span>
-          <span className="rounded border border-border px-1.5 py-px text-[8px] font-bold uppercase tracking-[0.08em] text-muted">
+          {/* Only the little "ERG · HARD" label wears a wash of the session's
+              colour; the card stays white (owner, 2026-09-17). */}
+          <span
+            className="rounded border px-1.5 py-px text-[8px] font-bold uppercase tracking-[0.08em] text-text-2"
+            style={{
+              background: `color-mix(in srgb, ${color} 18%, var(--surface))`,
+              borderColor: `color-mix(in srgb, ${color} 40%, var(--surface))`,
+            }}
+          >
             {kind}
           </span>
           {session.teamWorkout && (
