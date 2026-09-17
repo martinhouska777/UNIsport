@@ -126,10 +126,8 @@ import {
 import CrewVideoStrip from "@/components/varsity/CrewVideoStrip";
 import {
   IconArrowLeft,
-  IconChevronDown,
   IconChevronLeft,
   IconChevronRight,
-  IconChevronUp,
   IconClock,
   IconPlus,
   IconRepeat,
@@ -1062,10 +1060,6 @@ function Builder({
       return next;
     });
   };
-  /* How many boats are folded away right now — counted off the boats that
-     actually exist, so a deleted one left behind in the set never props the
-     "Show all boats" button open over nothing. */
-  const shutCount = boats.filter((b) => shut.has(b.id)).length;
 
   /*
     DRAGGING THE ADD-BOAT SHEET DOWN. `drag` is how far below its resting place
@@ -1430,8 +1424,8 @@ function Builder({
      "when you add a new boat make the last one disappear and be saved" — one
      boat at a time, the finished crews folded up to a line each, and the new
      empty hull at the top of the screen instead of nine rows down. Nothing is
-     lost by it: the draft has already autosaved, and "Show all boats" under
-     the list opens every one of them again. */
+     lost by it: the draft has already autosaved, and a folded boat opens again
+     on a tap of its name. */
   const addBoat = (kind: BoatKind) => {
     putDown(); // a seat left open in a boat about to be shut would strand the keyboard
     setShut(new Set(boats.map((b) => b.id)));
@@ -1769,10 +1763,18 @@ function Builder({
                 return (
                   <div key={boat.id} className="overflow-hidden rounded-2xl border border-border bg-surface">
                     {/* header — the rigging, the boat's name and the push-off
-                        time, read-only. The name is EDITED under the crew,
-                        where the coach's own lineup sheet puts it; it is echoed
-                        up here so a boat stays identifiable while you scroll
-                        past its nine seats. */}
+                        time. The name is EDITED under the crew, where the
+                        coach's own lineup sheet puts it; it is echoed up here
+                        so a boat stays identifiable while you scroll past its
+                        nine seats.
+
+                        TWO CONTROLS, AND THEY LOOK DIFFERENT. The name row
+                        opens and shuts the boat — tap anywhere along it. The
+                        time is its own bordered button on the right. There used
+                        to be a chevron between them that also opened the boat,
+                        sitting right beside the time's own little arrow: "the 2
+                        <> it is confusing with the hide button" (owner,
+                        2026-09-17). It is gone; tapping the boat is the way. */}
                     <div
                       className={`flex items-center justify-between gap-2 px-3.5 py-3 ${
                         isShut ? "" : "border-b border-border"
@@ -1812,7 +1814,7 @@ function Builder({
                         a time an older lineup was saved with, so that one is
                         added to the list rather than silently swapped out.
                       */}
-                      <div className="flex flex-shrink-0 items-center gap-1 text-muted">
+                      <div className="flex flex-shrink-0 items-center gap-1 rounded-lg border border-border bg-surface-2 px-2 py-1 text-muted">
                         <IconClock size={13} />
                         <select
                           value={boat.dock}
@@ -1833,14 +1835,6 @@ function Builder({
                             ),
                           )}
                         </select>
-                        <button
-                          type="button"
-                          onClick={() => toggleShut(boat.id)}
-                          aria-label={isShut ? `Show ${boat.name}` : `Hide ${boat.name}`}
-                          className="tap44 -mr-1.5 flex h-8 w-8 items-center justify-center text-muted"
-                        >
-                          {isShut ? <IconChevronDown size={16} /> : <IconChevronUp size={16} />}
-                        </button>
                       </div>
                     </div>
 
@@ -1938,24 +1932,6 @@ function Builder({
                 );
               })}
             </div>
-
-            {/*
-              EVERY BOAT BACK ON SCREEN, in one tap. Adding a boat folds the
-              finished ones away so the coach works on one crew at a time
-              (owner, 2026-09-17) — this is the way back to all of them, and it
-              only exists while something is actually hidden. Shutting them
-              again is per boat: tap a name row.
-            */}
-            {shutCount > 0 && (
-              <button
-                type="button"
-                onClick={() => setShut(new Set())}
-                className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-border bg-surface py-3 text-[13px] font-medium text-text active:border-primary-line active:bg-primary-tint"
-              >
-                <IconChevronDown size={16} /> Show all boats
-                <span className="text-muted">({shutCount} hidden)</span>
-              </button>
-            )}
 
             <button
               type="button"
