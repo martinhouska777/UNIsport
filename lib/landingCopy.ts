@@ -290,18 +290,24 @@ export const studentIntro = {
   headlineEm: "alone again.",
   /* "Scroll down to explore the app." used to be the sub here; it is the
      card's scroll cue now (`cues.student`, owner 2026-09-13). */
-  /* The walk, laid out under the quote — seven features, each jumping to the
+  /* The walk, laid out under the quote — the features, each jumping to the
      chapter it belongs to. It also fills a card that is two lines tall on a
-     full-height section, and reads 4 + 3 from sm up.
-       01–03 → Match (b0) · 04 → Plan (b1) · 05–06 → Profile (b2) · 07 → Gyms (b3) */
+     full-height section, and reads 4 + 4 from sm up.
+
+     EIGHT, NOT SEVEN (owner, 2026-09-17: "instead of buddy board do log and
+     calendar"). The Buddy Board came out and the two halves of keeping your
+     own training went in, both on the Profile chapter, where the calendar and
+     the logged sessions are. The varsity card's seven stand as they are.
+       01–02 → Match (b0) · 03 → Plan (b1) · 04–07 → Profile (b2) · 08 → Gyms (b3) */
   steps: [
     { n: "01", icon: "partners", word: "Match", to: 0 },
-    { n: "02", icon: "board", word: "Buddy Board", to: 0 },
-    { n: "03", icon: "mentor", word: "Mentors", to: 0 },
-    { n: "04", icon: "chat", word: "Plan", to: 1 },
-    { n: "05", icon: "leaderboard", word: "Leaderboards", to: 2 },
-    { n: "06", icon: "memories", word: "Memories", to: 2 },
-    { n: "07", icon: "gym", word: "Gyms", to: 3 },
+    { n: "02", icon: "mentor", word: "Mentors", to: 0 },
+    { n: "03", icon: "chat", word: "Plan", to: 1 },
+    { n: "04", icon: "log", word: "Log", to: 2 },
+    { n: "05", icon: "calendar", word: "Calendar", to: 2 },
+    { n: "06", icon: "leaderboard", word: "Leaderboards", to: 2 },
+    { n: "07", icon: "memories", word: "Memories", to: 2 },
+    { n: "08", icon: "gym", word: "Gyms", to: 3 },
   ] as OpeningStep[],
   /* The way past the story for someone who wants the list rather than the
      walk. It points AT the feature block beside Campus Colours rather than
