@@ -61,7 +61,6 @@ import {
   IconCheckCircle,
   IconArrowLeft,
   IconClock,
-  IconMapPin,
 } from "@/components/icons";
 
 /* category → label + content color for the dot. Lives in the data layer
@@ -652,13 +651,11 @@ function LogEditor({
 /*
   A PRESCRIBED SESSION, AS A PREVIEW OF WHAT YOU ARE ABOUT TO LOG (owner,
   2026-09-15: "before you log it, the preview what to log — that's the idea").
-  The row used to be one line — the category, a clock, a Log button — and the
-  tab ran out half way down the phone. Now the card says everything the plan
-  knows about the session before the editor opens: the coach's own words as
-  the title, the kind and intensity, when and where, roughly how far and how
-  long it will be (estimateForSession, the same figures the editor pre-fills),
-  the coach's note, and whether the results go on a squad board. Tap anywhere
-  → the full-screen editor, exactly as before.
+  It grew from one line into a card that said everything the plan knew — place,
+  estimate, coach's note — and on 2026-09-17 the owner cut it back to four
+  marks: the colour stripe, the kind, the coach's words, the Log button (plus
+  AM/PM in the corner and the team-board flag). The place and the note live in
+  the editor, one tap away: tap anywhere → the full-screen editor, as before.
 */
 function PrescribedRow({
   session,
@@ -675,26 +672,29 @@ function PrescribedRow({
 }) {
   const kind = sessionLabel(session); // "Erg · Hard"
   const words = session.description.trim();
-  const location = session.location?.trim();
-  const note = session.note?.trim();
   return (
     /* SHORTER (owner, 2026-09-17: "the Today tabs in the log are very tall …
        make them shorter so we can see the extra section"), then PLAINER the
        same day: the session's colour is a STRIPE down the left edge like the
        calendar's (Erg · Hard = red) and the "About 15 min · 4,000 m" estimate
-       is gone. Later that day the two little labels were split up: "AM" sits
-       ON TOP OF THE LOG BUTTON on the right, and the left column now opens
-       with the kind ("ERG · HARD") above the coach's words. The row carries a
-       touch more height so the AM-over-button stack breathes. After logging,
-       your result still shows. */
+       is gone. Later that day the row was stripped to its bones (owner,
+       2026-09-17): the left column is the kind ("ERG · HARD") and the coach's
+       words and NOTHING else — no place, no coach note — "AM" is a small mono
+       mark in the TOP-RIGHT CORNER, deliberately a different face and size so
+       it never competes with the Log button, and the button alone is the
+       dominant thing on the right. After logging, your result still shows. */
     <button
       type="button"
       onClick={onLog}
-      className={`relative flex w-full items-center gap-3 overflow-hidden rounded-2xl border py-3 pr-3.5 pl-5 text-left ${
+      className={`relative flex w-full items-center gap-3 overflow-hidden rounded-2xl border pt-5 pr-3.5 pb-3 pl-5 text-left ${
         log ? "border-success-line bg-success-tint" : "border-border bg-surface active:bg-surface-2"
       }`}
     >
       <span aria-hidden className="absolute inset-y-0 left-0 w-1.5" style={{ background: color }} />
+      {/* AM / PM: the corner mark, small and mono (owner, 2026-09-17). */}
+      <span className="absolute top-1.5 right-4 font-mono text-[9px] font-medium tracking-[0.14em] text-muted">
+        {period}
+      </span>
       <div className="min-w-0 flex-1">
         <div className="flex w-full flex-wrap items-center gap-x-2 gap-y-0.5">
           {/* Only the little "ERG · HARD" label wears a wash of the session's
@@ -715,36 +715,20 @@ function PrescribedRow({
           )}
         </div>
 
-        {/* The workout itself, in the coach's words. */}
+        {/* The workout itself, in the coach's words — and nothing under it. */}
         <div className="mt-1 text-[15px] font-semibold leading-snug text-text">{words || kind}</div>
-        {location && (
-          <div className="mt-0.5 flex items-center gap-1 text-[12px] text-muted">
-            <IconMapPin size={11} /> {location}
-          </div>
-        )}
-        {note && (
-          <div className="mt-0.5 text-[12px] leading-snug text-text-2">
-            <span className="font-semibold text-muted">Coach: </span>
-            {note}
-          </div>
-        )}
         {log && <div className="mt-0.5 text-[12px] font-medium text-text-2">{summaryOf(log) || "Logged"}</div>}
       </div>
 
-      {/* AM / PM rides on top of the button, not next to the kind (owner,
-          2026-09-17). */}
-      <span className="flex flex-shrink-0 flex-col items-center gap-1.5">
-        <span className="text-[11px] font-semibold tracking-[0.04em] text-muted">{period}</span>
-        {log ? (
-          <span className="flex items-center gap-1 text-[12px] font-semibold text-success">
-            <IconCheckCircle size={15} /> Logged
-          </span>
-        ) : (
-          <span className="rounded-xl bg-primary-live px-4 py-2 text-[13px] font-semibold text-primary-contrast">
-            Log
-          </span>
-        )}
-      </span>
+      {log ? (
+        <span className="flex flex-shrink-0 items-center gap-1 text-[12px] font-semibold text-success">
+          <IconCheckCircle size={15} /> Logged
+        </span>
+      ) : (
+        <span className="flex-shrink-0 rounded-xl bg-primary-live px-4 py-2 text-[13px] font-semibold text-primary-contrast">
+          Log
+        </span>
+      )}
     </button>
   );
 }
