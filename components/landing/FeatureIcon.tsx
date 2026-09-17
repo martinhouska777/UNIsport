@@ -25,6 +25,10 @@ const PATHS: Record<string, string> = {
   list: "M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01",
   star: "M12 3l2.8 5.8 6.2.9-4.5 4.4 1 6.2L12 17.3 6.5 20.3l1-6.2L3 9.7l6.2-.9z",
   crowd: "M3 20h18M6 20v-6M11 20V9M16 20v-9M21 20V5",
+  video: "M3 6h12v12H3zM15 10l6-3v10l-6-3",
+  scan: "M4 8V4h4M16 4h4v4M20 16v4h-4M8 20H4v-4M8 12h8",
+  filter: "M3 5h18l-7 8v6l-4 2v-8z",
+  trend: "M3 17l6-6 4 4 8-8M15 7h6v6",
   memories: "M4 8h3l2-3h6l2 3h3v10H4zM12 11a3 3 0 1 0 0 6 3 3 0 0 0 0-6z",
 };
 

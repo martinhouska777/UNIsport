@@ -489,52 +489,67 @@ export const varsityStory: Beat[] = [
   {
     id: "V1",
     kicker: "01 · Training plan",
-    /* Head and first two sentences dictated 2026-09-02 (see git history for
-       the full account of "always at hand" / "in real time"). The lineup and
-       the coach's-note sentences are the old V2 and V3 subs, word for word —
-       "always on your eyes" is the owner's, put back on 2026-09-02. */
+    /* SHORTENED 2026-09-17 like the student story (owner): short heading, one
+       line, then the features. The old paragraphs are in git history. */
     head: "Training plan always at hand.",
-    sub: "Your training plan that updates in real time. Tap any day to see the full workout description. Never look through 40 names in an Excel sheet again. Your name pops right in a boat. Have the countdown to the next race and a note from your coach on what to improve always on your eyes.",
+    sub: "Everything for today, in one place.",
     shot: "tall-vhome.webp",
     ann: [],
+    points: [
+      { icon: "calendar", title: "Training calendar", text: "Today's sessions, updated in real time. Tap a day for the full workout." },
+      { icon: "boat", title: "Lineups", text: "No more Excel sheet. Your name pops right in your boat." },
+      { icon: "chat", title: "Coach's notes", text: "What to improve, straight from your coach." },
+      { icon: "race", title: "Race countdown", text: "Always see how long until the next race." },
+      { icon: "video", title: "Video storage", text: "Your crew videos, saved to Google Drive." },
+    ],
   },
   {
     id: "V2",
     kicker: "02 · Log",
-    /* Second sentence dictated 2026-09-02; head on their word ("log a session
-       in a few taps"). All three routes are on the capture: a Log button per
-       prescribed session, the Scan C2 / RP3 monitor button, Add extra session. */
+    /* The capture is the (+) log sheet risen over the Calendar tab. */
+    /* SHORTENED 2026-09-17 like the student story (owner): short heading, one
+       line, then the features. The old paragraphs are in git history. */
     head: "Log a session in a few taps.",
-    /* LOG + CALENDAR ARE ONE CHAPTER (owner, 2026-09-16: "the log tab has 3/4
-       of screen so I want to cut it with the calendar in background, this will
-       be one, two in one"). The capture is the (+) log sheet risen over the
-       Calendar tab; the old V3 sub (dictated 2026-09-02) follows the log lines
-       word for word. */
-    sub: "Log your workout straight from your training plan. Take a picture of your erg screen to extract your numbers instantly, or add extra workouts. Each workout lands in the calendar directly from the log. Tap a day to see what you did and track your consistency to the plan along with your extra workouts.",
+    sub: "Every workout lands in your calendar.",
     shot: "13-varsity-log-sheet.webp",
     ann: [],
+    points: [
+      { icon: "plan", title: "From the plan", text: "Log straight from your training plan." },
+      { icon: "scan", title: "Scan the monitor", text: "Snap your C2 or RP3 screen and get the numbers instantly." },
+      { icon: "logplan", title: "Extra sessions", text: "Add the workouts you did on your own." },
+    ],
   },
   {
     id: "V4",
     kicker: "03 · Workouts",
-    /* Both lines the owner's, 2026-09-06 and 2026-09-02. The capture is
-       DRIVEN, not a URL: Team → Workouts → tap the 2k test.
+    /* The capture is DRIVEN, not a URL: Team → Workouts → tap the 2k test.
        scripts/landing/capture-light.mjs --only=15-varsity-board re-shoots it. */
-    head: "Look at statistics for every team workout.",
-    sub: "Compare to previous workouts and see how you improved from last time, and where you stand in the rankings, with filters for split, time, watts and watts per kilo.",
+    /* SHORTENED 2026-09-17 like the student story (owner): short heading, one
+       line, then the features. The old paragraphs are in git history. */
+    head: "See every team workout.",
+    sub: "Built from everyone's logs.",
     shot: "15-varsity-board.webp",
     ann: [],
+    points: [
+      { icon: "leaderboard", title: "Team rankings", text: "See where you stand on every workout." },
+      { icon: "filter", title: "Smart filters", text: "Sort by split, time, watts or watts per kilo." },
+      { icon: "trend", title: "Your progress", text: "Compare to last time and see how you improved." },
+    ],
   },
   {
     id: "V5",
     kicker: "04 · Statistics",
-    /* Sub is the owner's edit, 2026-09-06. The capture is the full-screen
-       graph (Profile → the expand button on the stats card), which is the
-       screen the owner sent on 2026-09-15 — not the profile card. */
+    /* SHORTENED 2026-09-17 like the student story (owner): short heading, one
+       line, then the features. The old paragraphs are in git history. */
     head: "See your statistics.",
-    sub: "One screen counts your metres rowed, your hours and your consistency over eight weeks, with a graph for each.",
+    sub: "Your season, graphed.",
     shot: "16-varsity-stats.webp",
     ann: [],
+    points: [
+      { icon: "boat", title: "Distance", text: "Every metre you rowed." },
+      { icon: "clock", title: "Time", text: "The hours you trained." },
+      { icon: "log", title: "Consistency", text: "How closely you followed the plan." },
+    ],
   },
 ];
 

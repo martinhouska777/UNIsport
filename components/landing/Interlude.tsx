@@ -69,10 +69,10 @@ export default function Interlude({ solo = false }: { solo?: boolean }) {
       {/* The sport, UNDER the sentence and above the steps (the owner's
           arrangement). The hero's pill, in gold — how this page marks a fact. */}
       <div
-        className="l-tc inline-flex items-center gap-2 rounded-full border border-l-varsity-soft bg-l-varsity-dim px-3 py-1.5 font-mono text-[11px] font-medium tracking-wider uppercase text-l-varsity"
+        className="l-tc inline-flex items-center gap-2 rounded-full border border-(--color-l-text) bg-l-text px-3.5 py-1.5 font-mono text-[11px] font-medium tracking-wider uppercase text-(--color-l-surface-varsity)"
         style={{ "--d": "350ms" } as CSSProperties}
       >
-        <span className="l-pulse h-1.5 w-1.5 rounded-full bg-l-varsity shadow-[0_0_8px_var(--color-l-varsity)]" />
+        <span className="l-pulse h-1.5 w-1.5 rounded-full bg-l-varsity-glow shadow-[0_0_8px_var(--color-l-varsity-glow)]" />
         {interlude.availability}
       </div>
 
@@ -85,19 +85,20 @@ export default function Interlude({ solo = false }: { solo?: boolean }) {
             href="/join"
             /* Same dress as "See every feature" below, hover included (owner,
                2026-09-15: "I really like the colour when you hover on it"). */
-            className="inline-flex items-center gap-2 rounded-full border border-l-varsity bg-l-varsity-dim px-9 py-4 text-[clamp(16px,1.5vw,18px)] font-semibold tracking-tight text-l-text transition-[color,background-color,border-color,translate] hover:-translate-y-0.5 hover:border-(--color-l-text) hover:bg-l-text hover:text-(--color-l-surface-varsity) focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-l-text"
+            className="inline-flex items-center gap-2 rounded-full border border-(--color-l-text) bg-l-text px-9 py-4 text-[clamp(16px,1.5vw,18px)] font-semibold tracking-tight text-(--color-l-surface-varsity) transition-[color,background-color,border-color,translate] hover:-translate-y-0.5 hover:border-(--color-l-varsity) hover:bg-l-varsity hover:text-white focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-l-text"
           >
             {hero.inviteCta} →
           </Link>
         </div>
       )}
 
-      {/* Hovering it deepened the gold wash on a card that is already golden
-          cream — the same complaint as the steps above (owner, 2026-09-15). It
-          now goes the way they do: the page's ink with the card's cream on it. */}
+      {/* SOLID INK from the start (owner, 2026-09-17: "still yellow on the
+          yellow … I want it to be more visible"). The gold-tint fill vanished
+          into the golden card; now it is the page's ink with the card's cream
+          on it, and the hover turns it gold. The pill above matches. */}
       <a
         href={interlude.overview.href}
-        className="l-tc mt-2 inline-flex items-center gap-2 rounded-full border border-l-varsity bg-l-varsity-dim px-9 py-4 text-[clamp(16px,1.5vw,18px)] font-semibold tracking-tight text-l-text transition-[color,background-color,border-color,translate] hover:-translate-y-0.5 hover:border-(--color-l-text) hover:bg-l-text hover:text-(--color-l-surface-varsity)"
+        className="l-tc mt-2 inline-flex items-center gap-2 rounded-full border border-(--color-l-text) bg-l-text px-9 py-4 text-[clamp(16px,1.5vw,18px)] font-semibold tracking-tight text-(--color-l-surface-varsity) transition-[color,background-color,border-color,translate] hover:-translate-y-0.5 hover:border-(--color-l-varsity) hover:bg-l-varsity hover:text-white"
         style={{ "--d": "890ms" } as CSSProperties}
       >
         {interlude.overview.label} →
