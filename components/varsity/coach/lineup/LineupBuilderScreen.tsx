@@ -1493,7 +1493,6 @@ function Builder({
                 </div>
               )}
               {boats.map((boat) => {
-                const filled = boat.seats.filter((s) => s.athleteId).length;
                 return (
                   <div key={boat.id} className="overflow-hidden rounded-2xl border border-border bg-surface">
                     {/* header — the rigging, the boat's name and the push-off
@@ -1628,36 +1627,6 @@ function Builder({
                     */}
                     <CrewVideoStrip dayKey={dayKey} boat={boat} />
 
-                    {/*
-                      Footer — how full the boat is, and WHO is in it: how many
-                      port, how many starboard, how many row either way. It no
-                      longer says what the boat "needs", because the seats no
-                      longer claim a side. It is a count of the crew, which the
-                      coach reads against the rig they have in mind.
-                    */}
-                    <div className="flex items-center justify-between gap-2 border-t border-border px-3.5 py-2 text-[11px] text-muted">
-                      <span>
-                        {filled} / {boat.seats.length} filled
-                      </span>
-                      <span className="flex items-center gap-2">
-                        {(["P", "S", "B"] as const).map((sd) => {
-                          const have = boat.seats.filter(
-                            (st) => st.athleteId && rosterById[st.athleteId]?.side === sd,
-                          ).length;
-                          return (
-                            <span key={sd} className="flex items-center gap-1">
-                              <span
-                                className="h-2.5 w-2.5 rounded-sm border"
-                                style={blade(sideMeta[sd].color, sideMeta[sd].ink)}
-                              />
-                              <span className={have ? "text-text" : undefined}>
-                                {have} {sideMeta[sd].label.toLowerCase()}
-                              </span>
-                            </span>
-                          );
-                        })}
-                      </span>
-                    </div>
                   </div>
                 );
               })}
@@ -1782,11 +1751,11 @@ function Builder({
       </div>
 
       {/*
-        The publish bar. No Save button any more — the crew saves itself, and
-        the quiet line above says so. What is left is the one decision worth a
-        button, in the same three states and the same words as the Plan tab.
+        The publish bar — the BUTTON only. No card, no "Draft" panel: the boats
+        are what this screen is, and a white block floating over the bottom of
+        them was the biggest thing on it. The save line still sits above it.
       */}
-      <div className="absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-background via-background to-transparent px-4 pb-6 pt-8">
+      <div className="absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-background via-background to-transparent px-4 pb-5 pt-7">
         <div className="mx-auto max-w-screen-sm">
           <div className="mb-1.5 flex justify-end">
             <SaveState
@@ -1795,6 +1764,7 @@ function Builder({
             />
           </div>
           <PublishBar
+            bare
             tourId="coach-lineup-publish"
             what="lineup"
             live={status === "published"}

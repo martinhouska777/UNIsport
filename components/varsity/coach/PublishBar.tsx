@@ -45,6 +45,7 @@ export default function PublishBar({
   onNotify,
   onUnpublish,
   tourId,
+  bare = false,
 }: {
   live: boolean;
   /** Edited since it was published (this sitting). Only meaningful when live. */
@@ -56,6 +57,14 @@ export default function PublishBar({
   onNotify: () => void;
   onUnpublish: () => void;
   tourId?: string;
+  /**
+   * Buttons only — no card, no "Draft" heading, no sentence under it. The
+   * Lineup tab uses this: the boats already fill the screen and a white panel
+   * floating over the bottom of them was the biggest thing on it (owner,
+   * 2026-09-17). The one line that still has to be read — the unpublish
+   * question — is kept even here.
+   */
+  bare?: boolean;
 }) {
   const edited = live && changed;
   const [confirming, setConfirming] = useState(false);
@@ -71,17 +80,27 @@ export default function PublishBar({
   return (
     <div
       data-tour={tourId}
-      className="rounded-xl border border-border bg-surface px-3.5 py-3"
+      className={bare ? "" : "rounded-xl border border-border bg-surface px-3.5 py-3"}
     >
-      <div className="flex items-center gap-2 text-[12px] font-semibold text-text">
-        <span className={`h-2 w-2 rounded-full ${live ? "bg-success" : "bg-warn"}`} />
-        {title}
-      </div>
-      <div className="mt-0.5 text-[11px] leading-relaxed text-muted">{sub}</div>
+      {!bare && (
+        <>
+          <div className="flex items-center gap-2 text-[12px] font-semibold text-text">
+            <span className={`h-2 w-2 rounded-full ${live ? "bg-success" : "bg-warn"}`} />
+            {title}
+          </div>
+          <div className="mt-0.5 text-[11px] leading-relaxed text-muted">{sub}</div>
+        </>
+      )}
+      {/* Bare or not, the unpublish question is asked in words before the red
+          button is pressed — it is the one that takes the boats off forty
+          phones. */}
+      {bare && live && confirming && (
+        <div className="mb-1.5 text-right text-[11px] leading-relaxed text-muted">{sub}</div>
+      )}
 
       {/* One row, right-aligned. Stacked under the words rather than beside
           them so a narrow phone never squeezes the sentence into four lines. */}
-      <div className="mt-2.5 flex items-center justify-end gap-2">
+      <div className={`${bare ? "" : "mt-2.5 "}flex items-center justify-end gap-2`}>
         {live && confirming && (
           <>
             <button
