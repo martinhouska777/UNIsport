@@ -986,10 +986,22 @@ function Builder({
   */
   const [announced, setAnnounced] = useState<string | null>(null);
   /*
-    Which practice this crew was CARRIED from, when it was. Null for a practice
-    that already had a lineup of its own (even an empty one the coach cleared
-    — that was a decision, and it stands) and for a squad never given one.
+    The last crew the squad was given, and whether the coach has ASKED for it.
+
+    `carried` is the offer — which practice it comes from and its boats, held
+    ready but not on screen. `carriedFrom` is set only once the coach presses
+    the button, and is what the "started from" line reads.
+
+    It used to seat them the moment the practice opened, which read as though
+    Friday had a lineup already; the coach could not tell a decision from a
+    suggestion (owner, 2026-09-17). An empty practice now opens empty, and
+    repeating a crew is one button. Nothing is written to the database until
+    that button is pressed, so a day merely looked at stays "Not started".
+
+    Null for a practice that already has a lineup of its own — even an empty
+    one the coach cleared: that was a decision, and it stands.
   */
+  const [carried, setCarried] = useState<{ from: string; boats: Boat[] } | null>(null);
   const [carriedFrom, setCarriedFrom] = useState<string | null>(null);
 
   // Load this practice's lineup — or, when it has none, the last one published.
@@ -1012,17 +1024,18 @@ function Builder({
         return;
       }
       /*
-        Nothing here yet. Start from the last crew the squad was given, as a
-        draft. `saved` stays "[]" — the database really does hold nothing — so
-        the carried crew is dirty from the first frame and the autosave writes
-        it as this practice's draft, exactly as if the coach had seated it.
+        Nothing here yet: open EMPTY, and hold the last crew the squad was given
+        as an offer. `saved` stays "[]" — the database really does hold nothing,
+        and nothing is dirty, so no draft is written for a practice that was
+        only looked at.
       */
-      const carried = await fetchCarriedLineup(dayKey);
+      const found = await fetchCarriedLineup(dayKey);
       if (!active) return;
       setSaved("[]");
       setAnnounced(null);
-      setBoats(carried?.boats ?? []);
-      setCarriedFrom(carried?.from ?? null);
+      setBoats([]);
+      setCarried(found);
+      setCarriedFrom(null);
       setStatus("draft");
       setLoading(false);
     })();
@@ -1031,7 +1044,15 @@ function Builder({
     };
   }, [dayKey]);
 
-  /* The coach would rather build this one from scratch. */
+  /* Yes — repeat that crew here. */
+  const useCarried = () => {
+    if (!carried) return;
+    setBoats(carried.boats);
+    setCarriedFrom(carried.from);
+  };
+
+  /* The coach would rather build this one from scratch. The offer comes back:
+     an empty practice is exactly where it belongs. */
   const startEmpty = () => {
     setBoats([]);
     setCarriedFrom(null);
@@ -1354,6 +1375,19 @@ function Builder({
     nav.go(key);
   };
 
+  /*
+    What the plan's card says, and whether it would say it twice. `sub` is the
+    session's category ("Off", "Erg · UT2"), `title` the coach's description or
+    — when there is none — that same category again.
+  */
+  const planLabel = planContext
+    ? planContext.water
+      ? planContext.sub
+      : `${planContext.sub} (no water session)`
+    : "";
+  const planSaysTwice =
+    !!planContext && planContext.title.trim().toLowerCase() === planContext.sub.trim().toLowerCase();
+
   const renderSeat = (slot: Slot, label: string, athleteId: string | null, cox = false) => {
     const key = slotKey(slot);
     return (
@@ -1460,24 +1494,24 @@ function Builder({
             />
             {/* Read-only: what the plan says for this practice. No chevron —
                 it used to wear one and led nowhere, which is a promise a card
-                should not make. */}
-            <div className="flex-1">
-              <div className="text-[13px] font-semibold text-text">{planContext.title}</div>
-              <div className="mt-0.5 text-[11px] text-muted">{planContext.sub}</div>
-            </div>
-          </div>
-        )}
+                should not make.
 
-        {/*
-          A lineup seats a boat, so an erg or a lift is an odd thing to build one
-          for. Odd is not wrong — the coach may be seating a tank session, an erg
-          in boat order, or a day the plan has not caught up with — so this SAYS
-          so and gets out of the way. It never blocks (the owner's rule).
-        */}
-        {planContext && !planContext.water && (
-          <div className="mt-2.5 rounded-xl border border-warn-line bg-warn-tint px-3 py-2.5 text-[11px] leading-relaxed text-text">
-            The plan has <span className="font-semibold">{planContext.sub}</span> here, not a
-            water session. You can still build a lineup.
+                TWO LINES ONLY WHEN THERE ARE TWO THINGS TO SAY. An Off day has
+                no description, so the card's own fallback made both lines read
+                "Off" — the plan said the same word to itself twice (owner,
+                2026-09-17). One line now, unless the coach wrote a description.
+
+                And a session a lineup is an odd fit for — an erg, a lift, an
+                Off day — simply says so in brackets: "Off (no water session)".
+                It used to be a yellow panel underneath explaining that you may
+                build one anyway. You may; that was never in doubt, and it does
+                not need a paragraph. Nothing blocks (the owner's rule). */}
+            <div className="flex-1">
+              <div className="text-[13px] font-semibold text-text">
+                {planSaysTwice ? planLabel : planContext.title}
+              </div>
+              {!planSaysTwice && <div className="mt-0.5 text-[11px] text-muted">{planLabel}</div>}
+            </div>
           </div>
         )}
 
@@ -1486,12 +1520,35 @@ function Builder({
         ) : (
           <>
             {/*
-              WHERE THESE BOATS CAME FROM. Said plainly, because a coach opening
-              a blank Friday and finding Tuesday's crews already seated has to
-              be able to tell that nothing was decided for Friday yet — these
-              are a starting point, and the one button undoes the whole thing.
-              It stays until the coach leaves or starts empty: a crew you have
-              already changed three seats of still began as somebody else's.
+              THE OFFER. Nothing has been done to this practice: the last crew
+              the squad was given is simply available, and the button takes it.
+              Shown only while this practice is still empty and untouched, so
+              it never sits over work the coach has started.
+            */}
+            {carried && !carriedFrom && boats.length === 0 && (
+              <div className="mt-4 flex items-center gap-2.5 rounded-xl border border-dashed border-border bg-surface px-3 py-2.5">
+                <span className="flex-shrink-0 text-muted">
+                  <IconRepeat size={14} />
+                </span>
+                <span className="min-w-0 flex-1 text-[12px] leading-snug text-text">
+                  Repeat <span className="font-semibold">{nav.label(carried.from)}</span>&rsquo;s
+                  boats? That is the last crew the squad was given.
+                </span>
+                <button
+                  type="button"
+                  onClick={useCarried}
+                  className="flex-shrink-0 rounded-lg border border-border px-2.5 py-1.5 text-[12px] font-semibold text-text active:bg-surface-2"
+                >
+                  Use them
+                </button>
+              </div>
+            )}
+
+            {/*
+              AND ONCE IT IS TAKEN — where these boats came from, said plainly,
+              because a crew you have already changed three seats of still began
+              as somebody else's. The one button undoes the whole thing and puts
+              the offer back.
             */}
             {carriedFrom && (
               <div className="mt-4 flex items-center gap-2.5 rounded-xl border border-border bg-surface px-3 py-2.5">
