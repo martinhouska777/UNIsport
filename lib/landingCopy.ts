@@ -1131,16 +1131,18 @@ export const coach = {
       /* ITS OWN FRAME since 2026-09-11 (website review: this step wore step
          3's picture, so a coach reading six numbered screens saw five).
 
-         THE VIDEO STRIP IS SHUT IN IT, on the owner's instruction 2026-09-17.
-         It used to be photographed open on "Connect Drive", which filled the
-         frame with an empty label field and a sign-in line and left one seat
-         of the boat showing — a step about footage that showed no crew. Shut,
-         the strip is the one row it is in the app ("Video" and a chevron), so
-         the same frame carries the end of the lineup, the boat and the oars,
-         and the tab the footage lives behind. Shot from production as the demo
-         coach, light and dark, with the publish bar hidden (see step 3). */
+         IT STOPS AT THE OARS, on the owner's instruction 2026-09-17 ("chci aby
+         to tam bylo videt jen po oars … ze oars budou uplne dole"). The frame
+         walked back in three steps that day: it was shot with the video strip
+         OPEN on "Connect Drive" — an empty label field and a sign-in line
+         where the crew should be — then shut to its one "Video" row, and now
+         cut above that row entirely. What is left is the boat: seven seats and
+         the cox, the hull's stroke cap, the boat's name and its oars, resting
+         on the bottom edge. The step's words carry the upload; the picture
+         carries what a video gets attached TO. Shot from production as the
+         demo coach, light and dark, publish bar hidden (see step 3). */
       shot: "coach-4-video.webp",
-      alt: "The foot of the boat's card on the Lineup screen: the last seats and the cox, the boat's name, its oars and the crew note, and under them the shut Video tab",
+      alt: "The foot of the boat's card on the Lineup screen: the crew from 2 seat down to the cox, then the boat's name and the oars it is rigged with",
     },
     {
       n: "5",
