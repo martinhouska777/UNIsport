@@ -9,7 +9,9 @@ import type { OpeningStep } from "@/lib/landingCopy";
   link points at the one real overview beside the closer.
 
   EVERY STEP IS A DOOR (owner, 2026-08-30: "chci aby i ty male nekam sly").
-  Each links at its own beat's scroll marker in ScrollStory — `#story1-b3` —
+  Each links at its beat's scroll marker in ScrollStory — `#story1-b3` — named
+  by the step's own `to` (several feature chips share one chapter, so position
+  stopped being the answer on 2026-09-17), falling back to its position —
   which is that beat's address on the page. Landing on a marker's top leaves
   the middle of the screen inside it, and a marker is at least a screen tall,
   so the beat you asked for is the one that lights up. Plain anchors, so they
@@ -76,7 +78,7 @@ export default function OpeningSteps({
         ),
         <li key={s.n} className="l-tc" style={{ "--d": `${delay + i * 55}ms` } as CSSProperties}>
           <a
-            href={`#${storyId}-b${i}`}
+            href={`#${storyId}-b${s.to ?? i}`}
             className={`group flex items-center gap-2 rounded-full border px-3.5 py-2 ${gold ? "border-(--color-l-chip-grey) bg-l-chip-grey" : "border-l-line-hover bg-l-bg-elevated"} transition-[color,background-color,border-color,translate] hover:-translate-y-0.5 sm:px-4 ${edge}`}
           >
             <FeatureIcon name={s.icon} className={`h-[18px] w-[18px] ${tint} ${mark}`} />

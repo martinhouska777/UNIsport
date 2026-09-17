@@ -269,8 +269,19 @@ export const brandLine = "Never train alone.";
   definite article, because "The why you match" cannot be written and a set
   where one label refuses the article should not carry it anywhere). They are written out rather than parsed off the beats' kickers so the
   card's words stay reviewable here, in one place, like the rest of the page.
+
+  SEVEN CHIPS OVER FOUR CHAPTERS (owner, 2026-09-17: "now there are only four
+  and it doesn't look good — I want there to be seven, just the single
+  features"). A chip is no longer one chapter: it is one FEATURE, named with
+  the same word the chapter's own point list uses, so the card reads as what
+  the app does rather than as a table of contents. Several chips therefore
+  open the same beat, which is what `to` is for — the BEAT INDEX this chip
+  scrolls to, counted from nought in the story below. Without it a chip still
+  links at its own position, which is only right while chips and beats match
+  one for one. Wrong `to` = a chip that opens the wrong chapter, so re-order a
+  beat and re-check every `to` here.
 */
-export type OpeningStep = { n: string; icon: string; word: string };
+export type OpeningStep = { n: string; icon: string; word: string; to?: number };
 
 export const studentIntro = {
   /* Two lines and nothing else. The quote is the headline — it is the best
@@ -279,14 +290,18 @@ export const studentIntro = {
   headlineEm: "alone again.",
   /* "Scroll down to explore the app." used to be the sub here; it is the
      card's scroll cue now (`cues.student`, owner 2026-09-13). */
-  /* The walk, laid out under the quote — it says how long the scroll is, and
-     each step jumps to its own beat. It also fills a card that is two lines
-     tall on a full-height section. */
+  /* The walk, laid out under the quote — seven features, each jumping to the
+     chapter it belongs to. It also fills a card that is two lines tall on a
+     full-height section, and reads 4 + 3 from sm up.
+       01–03 → Match (b0) · 04 → Plan (b1) · 05–06 → Profile (b2) · 07 → Gyms (b3) */
   steps: [
-    { n: "01", icon: "partners", word: "Match" },
-    { n: "02", icon: "chat", word: "Plan" },
-    { n: "03", icon: "leaderboard", word: "Profile" },
-    { n: "04", icon: "gym", word: "Gyms" },
+    { n: "01", icon: "partners", word: "Match", to: 0 },
+    { n: "02", icon: "board", word: "Buddy Board", to: 0 },
+    { n: "03", icon: "mentor", word: "Mentors", to: 0 },
+    { n: "04", icon: "chat", word: "Plan", to: 1 },
+    { n: "05", icon: "leaderboard", word: "Leaderboards", to: 2 },
+    { n: "06", icon: "memories", word: "Memories", to: 2 },
+    { n: "07", icon: "gym", word: "Gyms", to: 3 },
   ] as OpeningStep[],
   /* The way past the story for someone who wants the list rather than the
      walk. It points AT the feature block beside Campus Colours rather than
@@ -416,11 +431,16 @@ export const interlude = {
      prints the wrong number and opens the wrong beat. Moving the squad board
      ahead of the calendar (b54b2f5) left this list behind for a day — "05
      Calendar" was pointing at the board. Re-order a beat, re-order this. */
+  /*  01–04 → Training plan (b0) · 05 → Log (b1) · 06 → Workouts (b2) ·
+      07 → Statistics (b3) */
   steps: [
-    { n: "01", icon: "plan", word: "Training plan" },
-    { n: "02", icon: "logplan", word: "Log" },
-    { n: "03", icon: "leaderboard", word: "Workouts" },
-    { n: "04", icon: "squad", word: "Statistics" },
+    { n: "01", icon: "plan", word: "Training plan", to: 0 },
+    { n: "02", icon: "boat", word: "Lineups", to: 0 },
+    { n: "03", icon: "chat", word: "Coach's notes", to: 0 },
+    { n: "04", icon: "video", word: "Crew videos", to: 0 },
+    { n: "05", icon: "logplan", word: "Log", to: 1 },
+    { n: "06", icon: "leaderboard", word: "Workouts", to: 2 },
+    { n: "07", icon: "trend", word: "Statistics", to: 3 },
   ] as OpeningStep[],
   /* Same door as the student card's: the varsity feature block beside Blade
      Lock, which is where the overview lives — once. */
