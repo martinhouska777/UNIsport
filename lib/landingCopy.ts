@@ -1100,9 +1100,15 @@ export const coach = {
          lineup at all — the console's Lineup tab bounces to Plan while the
          console tour is walking, so the script photographed the training-block
          list under a step titled "Build lineups". The tour is skipped first
-         now, and this is the boat itself: the Hosea eight, seat by seat. */
+         now, and this is the boat itself: the Hosea eight, seat by seat.
+
+         NO PUBLISH BAR IN EITHER FRAME (owner 2026-09-17: "smaz to live to je
+         strasne velke"). The screen's own "Live · Your squad can see this
+         lineup · Unpublish" panel floats over the bottom third and, with the
+         fixed "Saved" line above it, left barely half a boat in shot. It is
+         hidden for the shoot, so the whole eight fits — bow to cox. */
       shot: "coach-4-lineup.webp",
-      alt: "The Lineup screen: the Hosea eight seated from bow, every seat tagged port, starboard or both, with the lineup live to the squad",
+      alt: "The Lineup screen: the Hosea eight seated bow to stroke with the cox at the end, every seat tagged port, starboard or both",
     },
     {
       n: "4",
@@ -1132,7 +1138,7 @@ export const coach = {
          the strip is the one row it is in the app ("Video" and a chevron), so
          the same frame carries the end of the lineup, the boat and the oars,
          and the tab the footage lives behind. Shot from production as the demo
-         coach, light and dark. */
+         coach, light and dark, with the publish bar hidden (see step 3). */
       shot: "coach-4-video.webp",
       alt: "The foot of the boat's card on the Lineup screen: the last seats and the cox, the boat's name, its oars and the crew note, and under them the shut Video tab",
     },
