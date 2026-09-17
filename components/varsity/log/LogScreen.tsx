@@ -679,66 +679,68 @@ function PrescribedRow({
   const location = session.location?.trim();
   const note = session.note?.trim();
   return (
+    /* SHORTER (owner, 2026-09-17: "the Today tabs in the log are very tall …
+       make them shorter so we can see the extra section"). One block of
+       words on the left — when, the workout, the estimate — and the Log
+       button beside it, instead of three stacked rows with the button on its
+       own line. */
     <button
       type="button"
       onClick={onLog}
-      className={`flex w-full flex-col gap-2.5 rounded-2xl border px-4 py-3.5 text-left ${
+      className={`flex w-full items-center gap-3 rounded-2xl border px-3.5 py-2.5 text-left ${
         log ? "border-success-line bg-success-tint" : "border-border bg-surface active:bg-surface-2"
       }`}
     >
-      {/* When, and what kind — the small line on top, like the Workouts tab's rows. */}
-      <div className="flex w-full items-center gap-2">
-        <Dot color={color} />
-        <span className="flex items-center gap-1 text-[11px] font-medium text-muted">
-          <IconClock size={11} /> {period} · {session.time}
-        </span>
-        <span className="rounded border border-border px-1.5 py-px text-[8px] font-bold uppercase tracking-[0.08em] text-muted">
-          {kind}
-        </span>
-        {session.teamWorkout && (
-          <span className="flex items-center gap-1 text-[10px] font-semibold text-accent">
-            <IconTrophy size={11} /> Team board
+      <div className="min-w-0 flex-1">
+        {/* When, and what kind — the small line on top, like the Workouts tab's rows. */}
+        <div className="flex w-full flex-wrap items-center gap-x-2 gap-y-0.5">
+          <Dot color={color} />
+          <span className="flex items-center gap-1 text-[11px] font-medium text-muted">
+            <IconClock size={11} /> {period} · {session.time}
           </span>
-        )}
-      </div>
+          <span className="rounded border border-border px-1.5 py-px text-[8px] font-bold uppercase tracking-[0.08em] text-muted">
+            {kind}
+          </span>
+          {session.teamWorkout && (
+            <span className="flex items-center gap-1 text-[10px] font-semibold text-accent">
+              <IconTrophy size={11} /> Team board
+            </span>
+          )}
+        </div>
 
-      {/* The workout itself, in the coach's words. */}
-      <div className="w-full">
-        <div className="text-[17px] font-semibold leading-snug text-text">{words || kind}</div>
+        {/* The workout itself, in the coach's words. */}
+        <div className="mt-1 text-[15px] font-semibold leading-snug text-text">{words || kind}</div>
         {location && (
-          <div className="mt-1 flex items-center gap-1 text-[12px] text-muted">
+          <div className="mt-0.5 flex items-center gap-1 text-[12px] text-muted">
             <IconMapPin size={11} /> {location}
           </div>
         )}
         {note && (
-          <div className="mt-1.5 text-[12px] leading-relaxed text-text-2">
+          <div className="mt-0.5 text-[12px] leading-snug text-text-2">
             <span className="font-semibold text-muted">Coach: </span>
             {note}
           </div>
         )}
+
+        {/* The estimate before, your result after. */}
+        {log ? (
+          <div className="mt-0.5 text-[12px] font-medium text-text-2">{summaryOf(log) || "Logged"}</div>
+        ) : expected ? (
+          <div className="mt-0.5 text-[12px] text-muted">
+            About <span className="font-semibold text-text">{expected}</span>
+          </div>
+        ) : null}
       </div>
 
-      {/* The bottom line: the estimate before, your result after. */}
-      <div className="flex w-full items-center justify-between gap-3">
-        {log ? (
-          <span className="text-[13px] font-medium text-text-2">{summaryOf(log) || "Logged"}</span>
-        ) : expected ? (
-          <span className="text-[12px] text-muted">
-            About <span className="font-semibold text-text">{expected}</span>
-          </span>
-        ) : (
-          <span />
-        )}
-        {log ? (
-          <span className="flex flex-shrink-0 items-center gap-1 text-[12px] font-semibold text-success">
-            <IconCheckCircle size={15} /> Logged
-          </span>
-        ) : (
-          <span className="flex-shrink-0 rounded-xl bg-primary-live px-4 py-2 text-[13px] font-semibold text-primary-contrast">
-            Log
-          </span>
-        )}
-      </div>
+      {log ? (
+        <span className="flex flex-shrink-0 items-center gap-1 text-[12px] font-semibold text-success">
+          <IconCheckCircle size={15} /> Logged
+        </span>
+      ) : (
+        <span className="flex-shrink-0 rounded-xl bg-primary-live px-4 py-2 text-[13px] font-semibold text-primary-contrast">
+          Log
+        </span>
+      )}
     </button>
   );
 }
