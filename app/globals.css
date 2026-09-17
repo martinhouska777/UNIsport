@@ -1055,9 +1055,12 @@
    on a short laptop the intro has to be one screen (owner, 2026-08-23), which
    means the phone and the row of letters under it have to finish above the row
    of doors rather than sitting behind it. */
-.l-hero-phone { position: absolute; top: clamp(16px, 3.2vh, 40px); left: 50%; width: clamp(210px, 29vh, 340px); }
+/* Bigger, and BOTH AT THE SAME HEIGHT (owner, 2026-09-16: "make the phones a
+   little bit bigger so you can comfortably read it, and make them the same
+   height"). The right phone used to hang a little lower than the left. */
+.l-hero-phone { position: absolute; top: clamp(16px, 3.2vh, 40px); left: 50%; width: clamp(236px, 33vh, 390px); }
 .l-hero-phone[data-side="left"] { transform: translateX(calc(-100% - 330px)); }
-.l-hero-phone[data-side="right"] { top: clamp(38px, 7vh, 68px); transform: translateX(330px); }
+.l-hero-phone[data-side="right"] { transform: translateX(330px); }
 /* The phone leans; the row of letters under it does not, so the lean lives on
    an inner box. A transform changes nothing about layout, so the letters still
    sit directly under the phone's upright box — the margin below pays for the

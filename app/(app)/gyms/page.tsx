@@ -146,15 +146,17 @@ function MainCard({ gym, fav, onToggleFav, crowd, now, going, tour }: CardProps)
     >
       <FavHeart fav={fav} onToggle={onToggleFav} />
       {/*
-        This block is where the gym's photo goes. Until there is one it used to
-        be filled with a crimson wash, which put a big brand-coloured field
-        directly above the crimson button — so crimson stopped meaning "tap me".
-        It's now a neutral surface with the gym's own activity icon watermarked
-        into it, the same treatment the photo gallery on the gym page uses, so
-        an empty slot reads as "photo coming" rather than as a void.
+        This block is where the gym's photo goes. Until there is one it wears a
+        WASH OF THE SCHOOL'S COLOUR, fading down the card (owner, 2026-09-16:
+        "for the gyms the colors I liked it before more, that you do them in
+        the color of the school until we will have pictures of the gyms"). It
+        is `--primary` mixed into the card surface — a token, so Yale's card is
+        blue and Princeton's orange without a line of code (rules 1, 2). The
+        neutral version with the watermarked activity icon (2026-09-14) is what
+        this replaced; the icon stays underneath for the day the wash goes.
       */}
       {/* The name sits in the TOP-left corner (owner's call), clear of the heart. */}
-      <div className="relative flex h-24 items-start overflow-hidden bg-surface pr-11">
+      <div className="relative flex h-24 items-start overflow-hidden bg-[linear-gradient(180deg,color-mix(in_oklab,var(--primary)_42%,var(--surface)),color-mix(in_oklab,var(--primary)_14%,var(--surface)))] pr-11">
         <Watermark gym={gym} />
         <div className="relative p-3">
           <div className="text-[15px] font-medium text-text">{gym.name}</div>
