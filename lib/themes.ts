@@ -122,6 +122,13 @@ export type University = {
   houseNoun: string; // one gym's own label on its card ("House gym")
   housePill: string; // the filter pill's one word ("House")
   /*
+    The school's identity palette for the Gyms tab: the main gym cards take
+    turns through it, top to bottom (Princeton orange, black, orange). The
+    same two colours as the school's rowing blade on the landing. Optional:
+    without it every card is washed in `primary`.
+  */
+  gymCardColors?: string[];
+  /*
     Where the campus's clock is. The log reminder fires "at your usual training
     time", and a server has no idea what 5 pm means without this. Optional:
     every school so far is on the US east coast (DEFAULT_TIMEZONE); a campus
@@ -235,6 +242,7 @@ export const universities: Record<string, University> = {
     houseSection: "House gyms",
     houseNoun: "House gym",
     housePill: "House",
+    gymCardColors: ["#a51c30", "#ffffff"],
     dark: { primary: "#a51c30", primaryLive: "#c8203a", primaryContrast: "#ffffff", accent: "#d4a843" },
     light: { primary: "#a51c30", primaryLive: "#a51c30", primaryContrast: "#ffffff", accent: "#9a751c" },
   }),
@@ -246,6 +254,7 @@ export const universities: Record<string, University> = {
     houseSection: "College gyms",
     houseNoun: "College gym",
     housePill: "College",
+    gymCardColors: ["#00356b", "#ffffff"],
     dark: { primary: "#00356b", primaryLive: "#1e63b0", primaryContrast: "#ffffff", accent: "#93b7e4" },
     light: { primary: "#00356b", primaryLive: "#00356b", primaryContrast: "#ffffff", accent: "#17518f" },
   }),
@@ -257,6 +266,7 @@ export const universities: Record<string, University> = {
     houseSection: "College gyms",
     houseNoun: "College gym",
     housePill: "College",
+    gymCardColors: ["#e77500", "#1a1a1a"],
     dark: { primary: "#e77500", primaryLive: "#e77500", primaryContrast: "#221d17", accent: "#f5cf8f" },
     light: { primary: "#e77500", primaryLive: "#b35a00", primaryContrast: "#ffffff", accent: "#8a6a1c" },
   }),
@@ -268,6 +278,7 @@ export const universities: Record<string, University> = {
     houseSection: "College house gyms",
     houseNoun: "College house gym",
     housePill: "House",
+    gymCardColors: ["#011f5b", "#d0101f"],
     dark: { primary: "#011f5b", primaryLive: "#3061b8", primaryContrast: "#ffffff", accent: "#d0454f" },
     light: { primary: "#011f5b", primaryLive: "#011f5b", primaryContrast: "#ffffff", accent: "#9d1c28" },
   }),
@@ -279,6 +290,7 @@ export const universities: Record<string, University> = {
     houseSection: "Dorm gyms",
     houseNoun: "Dorm gym",
     housePill: "Dorm",
+    gymCardColors: ["#4e3629", "#ffffff"],
     dark: { primary: "#6b4423", primaryLive: "#8a5a2f", primaryContrast: "#ffffff", accent: "#d1a54f" },
     light: { primary: "#4e3629", primaryLive: "#6b4423", primaryContrast: "#ffffff", accent: "#8a651c" },
   }),
@@ -290,6 +302,7 @@ export const universities: Record<string, University> = {
     houseSection: "Residence gyms",
     houseNoun: "Residence gym",
     housePill: "Residence",
+    gymCardColors: ["#6cace4", "#ffffff"],
     dark: { primary: "#6cace4", primaryLive: "#6cace4", primaryContrast: "#0e2036", accent: "#e9eef5" },
     light: { primary: "#1d64ab", primaryLive: "#1d64ab", primaryContrast: "#ffffff", accent: "#35699f" },
   }),
@@ -301,6 +314,7 @@ export const universities: Record<string, University> = {
     houseSection: "House gyms",
     houseNoun: "House gym",
     housePill: "House",
+    gymCardColors: ["#b31b1b", "#ffffff"],
     dark: { primary: "#b31b1b", primaryLive: "#d32f2f", primaryContrast: "#ffffff", accent: "#e6d9bd" },
     light: { primary: "#b31b1b", primaryLive: "#b31b1b", primaryContrast: "#ffffff", accent: "#77653f" },
   }),
@@ -312,6 +326,7 @@ export const universities: Record<string, University> = {
     houseSection: "House gyms",
     houseNoun: "House gym",
     housePill: "House",
+    gymCardColors: ["#00693e", "#ffffff"],
     dark: { primary: "#00693e", primaryLive: "#0b8050", primaryContrast: "#ffffff", accent: "#a8d5bd" },
     light: { primary: "#00693e", primaryLive: "#00693e", primaryContrast: "#ffffff", accent: "#2f6b4e" },
   }),

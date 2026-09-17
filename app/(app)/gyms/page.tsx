@@ -110,6 +110,10 @@ type CardProps = {
   /* The tour presses the first card to open a gym in front of you, rather than
      arriving there behind your back (lib/tour.ts). Only that card gets one. */
   tour?: string;
+  /* The school colour this card is washed in — one entry of the university's
+     `gymCardColors`, which the list cycles down the main gyms. Data, applied
+     inline as a CSS variable (rule 1's content exception). */
+  wash?: string;
 };
 
 /*
@@ -137,7 +141,7 @@ function Watermark({ gym }: { gym: Gym }) {
   );
 }
 
-function MainCard({ gym, fav, onToggleFav, crowd, now, going, tour }: CardProps) {
+function MainCard({ gym, fav, onToggleFav, crowd, now, going, tour, wash }: CardProps) {
   return (
     <Link
       href={`/gyms/${gym.slug}`}
@@ -154,9 +158,19 @@ function MainCard({ gym, fav, onToggleFav, crowd, now, going, tour }: CardProps)
         blue and Princeton's orange without a line of code (rules 1, 2). The
         neutral version with the watermarked activity icon (2026-09-14) is what
         this replaced; the icon stays underneath for the day the wash goes.
+
+        THE SCHOOL'S PALETTE, CARD BY CARD (owner, 2026-09-17: "Princeton was
+        orange, black, orange … Penn blue, red, blue … Columbia light blue,
+        white, light blue"). The cards take turns through the school's colours
+        from `gymCardColors` in lib/themes.ts, the way the early landing phones
+        did, and the wash is stronger than before so Penn's red reads as red,
+        not pink. A school with no palette falls back to `--primary`.
       */}
       {/* The name sits in the TOP-left corner (owner's call), clear of the heart. */}
-      <div className="relative flex h-24 items-start overflow-hidden bg-[linear-gradient(180deg,color-mix(in_oklab,var(--primary)_42%,var(--surface)),color-mix(in_oklab,var(--primary)_14%,var(--surface)))] pr-11">
+      <div
+        className="relative flex h-24 items-start overflow-hidden bg-[linear-gradient(180deg,color-mix(in_oklab,var(--card-wash,var(--primary))_58%,var(--surface)),color-mix(in_oklab,var(--card-wash,var(--primary))_22%,var(--surface)))] pr-11"
+        style={wash ? ({ "--card-wash": wash } as React.CSSProperties) : undefined}
+      >
         <Watermark gym={gym} />
         <div className="relative p-3">
           <div className="text-[15px] font-medium text-text">{gym.name}</div>
@@ -323,6 +337,7 @@ export default function GymsPage() {
             now={now}
             going={goingFor(g.name)}
             tour={idx === 0 ? "gyms-first-card" : undefined}
+            wash={uni?.gymCardColors?.[idx % uni.gymCardColors.length]}
           />
         ))}
 
