@@ -681,20 +681,22 @@ function PrescribedRow({
     /* SHORTER (owner, 2026-09-17: "the Today tabs in the log are very tall …
        make them shorter so we can see the extra section"), then PLAINER the
        same day: the session's colour is a STRIPE down the left edge like the
-       calendar's (Erg · Hard = red), the top line is just "AM" and the kind,
-       and the "About 15 min · 4,000 m" estimate is gone. The Log button sits
-       beside the words. After logging, your result still shows. */
+       calendar's (Erg · Hard = red) and the "About 15 min · 4,000 m" estimate
+       is gone. Later that day the two little labels were split up: "AM" sits
+       ON TOP OF THE LOG BUTTON on the right, and the left column now opens
+       with the kind ("ERG · HARD") above the coach's words. The row carries a
+       touch more height so the AM-over-button stack breathes. After logging,
+       your result still shows. */
     <button
       type="button"
       onClick={onLog}
-      className={`relative flex w-full items-center gap-3 overflow-hidden rounded-2xl border py-2.5 pr-3.5 pl-5 text-left ${
+      className={`relative flex w-full items-center gap-3 overflow-hidden rounded-2xl border py-3 pr-3.5 pl-5 text-left ${
         log ? "border-success-line bg-success-tint" : "border-border bg-surface active:bg-surface-2"
       }`}
     >
       <span aria-hidden className="absolute inset-y-0 left-0 w-1.5" style={{ background: color }} />
       <div className="min-w-0 flex-1">
         <div className="flex w-full flex-wrap items-center gap-x-2 gap-y-0.5">
-          <span className="text-[11px] font-semibold text-muted">{period}</span>
           {/* Only the little "ERG · HARD" label wears a wash of the session's
               colour; the card stays white (owner, 2026-09-17). */}
           <span
@@ -729,15 +731,20 @@ function PrescribedRow({
         {log && <div className="mt-0.5 text-[12px] font-medium text-text-2">{summaryOf(log) || "Logged"}</div>}
       </div>
 
-      {log ? (
-        <span className="flex flex-shrink-0 items-center gap-1 text-[12px] font-semibold text-success">
-          <IconCheckCircle size={15} /> Logged
-        </span>
-      ) : (
-        <span className="flex-shrink-0 rounded-xl bg-primary-live px-4 py-2 text-[13px] font-semibold text-primary-contrast">
-          Log
-        </span>
-      )}
+      {/* AM / PM rides on top of the button, not next to the kind (owner,
+          2026-09-17). */}
+      <span className="flex flex-shrink-0 flex-col items-center gap-1.5">
+        <span className="text-[11px] font-semibold tracking-[0.04em] text-muted">{period}</span>
+        {log ? (
+          <span className="flex items-center gap-1 text-[12px] font-semibold text-success">
+            <IconCheckCircle size={15} /> Logged
+          </span>
+        ) : (
+          <span className="rounded-xl bg-primary-live px-4 py-2 text-[13px] font-semibold text-primary-contrast">
+            Log
+          </span>
+        )}
+      </span>
     </button>
   );
 }
