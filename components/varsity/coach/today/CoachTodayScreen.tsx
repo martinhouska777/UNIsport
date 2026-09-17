@@ -49,7 +49,8 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 
 /*
   Where the lineup has got to, in one pill. The same three words and the same
-  dots as the Lineup picker and the publish bar, so "Live" here is "Live" there.
+  dots as the Lineup picker and the builder's own chip, so "Published" here is
+  "Published" there.
 */
 function LineupPill({ slot }: { slot: TodaySlot }) {
   const l = slot.lineup;
@@ -70,7 +71,7 @@ function LineupPill({ slot }: { slot: TodaySlot }) {
       }`}
     >
       <span className={`h-1.5 w-1.5 rounded-full ${live ? "bg-success" : "bg-warn"}`} />
-      {live ? "Live" : "Draft"} · {l.boats} {l.boats === 1 ? "boat" : "boats"}
+      {live ? "Published" : "Draft"} · {l.boats} {l.boats === 1 ? "boat" : "boats"}
       {l.seats > 0 && (
         <span className="font-normal opacity-80">
           · {l.filled}/{l.seats}

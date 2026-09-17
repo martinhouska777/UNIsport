@@ -1413,7 +1413,7 @@ function Builder({
                 <span
                   className={`h-1.5 w-1.5 rounded-full ${status === "published" ? "bg-success" : "bg-warn"}`}
                 />
-                {status === "published" ? "Live" : "Draft"}
+                {status === "published" ? "Published" : "Draft"}
               </span>
             </div>
             <div className="mt-0.5 text-[11px] text-muted">{context.sub}</div>
