@@ -728,17 +728,25 @@ function Seat({
   five-name list over the boat — "it just pops down like a random text" (owner,
   2026-09-17) — and the real pool stayed at the bottom of the screen, out of
   sight behind a seated eight. This is that pool, inside the hull, immediately
-  below the seat being filled:
+  below the seat being filled.
 
-  - it opens FULL, before a letter is typed, because the suggestion a coach
-    wants is usually one of the names already in front of them;
-  - typing in the seat filters it, rather than replacing it with something else;
-  - it scrolls, so a squad of forty is all reachable without the boat growing;
+  A LIST OF NAMES, FILTERED BY SIDE (owner, 2026-09-17: "just do the names and
+  you can scroll down and filter them on top by port or starboard — don't show
+  the whole pool"). So:
+
+  - Port / Starboard / All sit across the top, and they are how a side is read
+    here. The names themselves carry no blade marker any more: the coach has
+    just said which side they are filling, so repeating it on forty rows is
+    noise. Anyone who rows BOTH shows up under Port AND Starboard.
+  - one name per row, so the eye runs straight down a column instead of
+    hunting across a wrapped block of chips;
+  - a short window — about five names — and then it scrolls. The whole squad is
+    reachable without the boat being pushed off the screen;
+  - typing in the seat still narrows it, on top of the side filter;
   - a name already in another boat says where, because taking them is a swap.
 
-  No initials roundel. A name and the side they row, which is what the pool at
-  the bottom of the screen shows and what the seat itself will show once they
-  are in it (owner: "just put the name and these to starboard or port, or both").
+  The cox seat has no side row: coxswains do not have one, and it is the only
+  seat that offers them.
 */
 function SeatPool({
   matches,
@@ -752,35 +760,69 @@ function SeatPool({
   query: string;
   onAssign: (id: string) => void;
 }) {
+  /* Which side this seat is being filled from. It resets to All every time a
+     different seat is opened, because the component is mounted with it. */
+  const [side, setSide] = useState<PoolFilter>("all");
+  const sides = poolFilters.filter((f) => f.key !== "cox"); // All · Port · Starboard
+  const shown = cox ? matches : matches.filter((m) => inPool(m.a, side));
+
   return (
     <div className="select-none rounded-[14px] border border-primary-line bg-background p-2">
       <div className="mb-1.5 flex items-center justify-between px-0.5">
         <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
           {cox ? "Coxswains" : "Athlete pool"}
         </span>
-        <span className="text-[10px] font-medium text-muted">{matches.length}</span>
+        <span className="text-[10px] font-medium text-muted">{shown.length}</span>
       </div>
-      {matches.length === 0 ? (
+
+      {!cox && (
+        <div className="mb-1.5 flex gap-1.5">
+          {sides.map((f) => (
+            <button
+              key={f.key}
+              type="button"
+              onClick={() => setSide(f.key)}
+              aria-pressed={side === f.key}
+              className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[11px] font-medium ${
+                side === f.key
+                  ? "border-primary bg-primary-tint text-text"
+                  : "border-border bg-surface text-muted"
+              }`}
+            >
+              {f.color && (
+                <span
+                  className="h-2.5 w-2.5 rounded-sm border"
+                  style={blade(f.color, f.ink ?? "#ffffff")}
+                />
+              )}
+              {f.label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {shown.length === 0 ? (
         <p className="px-0.5 pb-1 text-[12px] italic text-muted">
           {query.trim() ? `Nobody called “${query.trim()}”.` : "Nobody left to pick."}
         </p>
       ) : (
-        /* A fixed window on a long list: about four rows of names, then scroll.
-           Any taller and the seat being filled is pushed off the screen. */
-        <div className="max-h-[164px] overflow-y-auto">
-          <div className="flex flex-wrap gap-1.5">
-            {matches.map((m) => (
+        /* A fixed window on a long list: about five names, then scroll. Any
+           taller and the seat being filled is pushed off the screen. */
+        <div className="max-h-[196px] overflow-y-auto">
+          <div className="flex flex-col gap-1">
+            {shown.map((m) => (
               <button
                 key={m.a.id}
                 type="button"
                 onClick={() => onAssign(m.a.id)}
-                className="flex h-[34px] items-center gap-2 rounded-[10px] border border-border bg-surface px-2.5 active:border-primary-line active:bg-primary-tint"
+                className="flex h-[36px] w-full items-center justify-between gap-2 rounded-[10px] border border-border bg-surface px-2.5 text-left active:border-primary-line active:bg-primary-tint"
               >
-                <span className="text-[14px] font-medium text-text">{m.a.name}</span>
+                <span className="truncate text-[14px] font-medium text-text">{m.a.name}</span>
                 {/* Already in a boat: say where, because picking them is a swap
                     and the coach should know what it costs. */}
-                {m.where && <span className="text-[11px] text-muted">· {m.where}</span>}
-                <AthleteTag a={m.a} />
+                {m.where && (
+                  <span className="flex-shrink-0 text-[11px] text-muted">{m.where}</span>
+                )}
               </button>
             ))}
           </div>
