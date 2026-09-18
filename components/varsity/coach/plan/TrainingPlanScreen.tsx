@@ -743,7 +743,64 @@ export default function TrainingPlanScreen({
             />
           </div>
         </div>
-        <div className="mt-3 flex items-center gap-2">
+        {/*
+          THE BLOCK, AT THE TOP (owner, 2026-09-18). It was a section at the
+          bottom of the page for a day; the owner wanted to "start with the
+          training block open": the block you are in first — its name, its
+          dates, the race it runs to — then the other blocks there are (one or
+          two at most, tap one to open it) and New training block, and only
+          THEN the week. Delete block alone stays at the very bottom.
+        */}
+        <div className="mt-3 rounded-xl border border-border bg-surface px-4 py-3">
+          <div className="text-[15px] font-semibold text-text">{block.name}</div>
+          <div className="mt-0.5 text-[11px] text-muted">{blockRangeLabel(block)}</div>
+          {block.raceName && (
+            <div className="mt-2.5 flex items-center gap-2 border-t border-border pt-2.5">
+              <span className="text-primary">
+                <IconFlag size={14} />
+              </span>
+              <span className="flex-1 text-[12px] font-medium text-text">{block.raceName}</span>
+              {race !== null && (
+                <span className="text-[12px] text-muted">
+                  <span className="font-semibold text-accent">{race}</span> days
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+
+        {others.length > 0 && (
+          <div className="mt-2 flex flex-col gap-2">
+            {others.map((b) => (
+              <button
+                key={b.id}
+                type="button"
+                onClick={() => setView({ name: "week", blockId: b.id, weekIdx: homeWeekIdx(b) })}
+                className="flex items-center gap-3 rounded-xl border border-border bg-surface px-4 py-3 text-left"
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="truncate text-[13px] font-medium text-text">{b.name}</span>
+                    <StatusChip live={b.status === "published"} />
+                  </div>
+                  <div className="mt-0.5 text-[11px] text-muted">{blockRangeLabel(b)}</div>
+                </div>
+                <IconChevronRight size={16} className="flex-shrink-0 text-muted" />
+              </button>
+            ))}
+          </div>
+        )}
+
+        <button
+          type="button"
+          onClick={() => setView({ name: "create" })}
+          data-tour="coach-plan-new-block"
+          className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-surface py-3 text-[13px] font-medium text-muted active:border-primary-line active:text-primary"
+        >
+          <IconPlus size={16} /> New training block
+        </button>
+
+        <div className="mt-5 flex items-center gap-2">
           <h1 className="text-2xl font-semibold text-text">Week {week.index}</h1>
           <StatusChip live={live} />
         </div>
@@ -868,68 +925,10 @@ export default function TrainingPlanScreen({
           <IconTrash size={15} /> Clear this week
         </button>
 
-        {/*
-          THE BLOCK, AT THE BOTTOM. Everything that used to be its own screen
-          in front of the weeks lives under them now: what this block is (its
-          dates and the race it runs to), the other blocks if there are any,
-          a new one, and — last of all, as the owner asked — delete. A coach
-          opens this tab for the week; the block is the thing they set up
-          once, so it waits at the end of the page.
-        */}
-        <div className="mt-8 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">Block</div>
-        <div className="mt-2.5 rounded-xl border border-border bg-surface px-4 py-3">
-          <div className="text-[15px] font-semibold text-text">{block.name}</div>
-          <div className="mt-0.5 text-[11px] text-muted">{blockRangeLabel(block)}</div>
-          {block.raceName && (
-            <div className="mt-2.5 flex items-center gap-2 border-t border-border pt-2.5">
-              <span className="text-primary">
-                <IconFlag size={14} />
-              </span>
-              <span className="flex-1 text-[12px] font-medium text-text">{block.raceName}</span>
-              {race !== null && (
-                <span className="text-[12px] text-muted">
-                  <span className="font-semibold text-accent">{race}</span> days
-                </span>
-              )}
-            </div>
-          )}
-        </div>
-
-        {others.length > 0 && (
-          <div className="mt-2 flex flex-col gap-2">
-            {others.map((b) => (
-              <button
-                key={b.id}
-                type="button"
-                onClick={() => setView({ name: "week", blockId: b.id, weekIdx: homeWeekIdx(b) })}
-                className="flex items-center gap-3 rounded-xl border border-border bg-surface px-4 py-3 text-left"
-              >
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="truncate text-[13px] font-medium text-text">{b.name}</span>
-                    <StatusChip live={b.status === "published"} />
-                  </div>
-                  <div className="mt-0.5 text-[11px] text-muted">{blockRangeLabel(b)}</div>
-                </div>
-                <IconChevronRight size={16} className="flex-shrink-0 text-muted" />
-              </button>
-            ))}
-          </div>
-        )}
-
-        <button
-          type="button"
-          onClick={() => setView({ name: "create" })}
-          data-tour="coach-plan-new-block"
-          className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-surface py-3 text-[13px] font-medium text-muted active:border-primary-line active:text-primary"
-        >
-          <IconPlus size={16} /> New training block
-        </button>
-
         <button
           type="button"
           onClick={() => setConfirm({ kind: "block", blockId: block.id })}
-          className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl border border-danger-line bg-danger-tint py-3 text-[13px] font-semibold text-danger"
+          className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-danger-line bg-danger-tint py-3 text-[13px] font-semibold text-danger"
         >
           <IconTrash size={15} /> Delete block
         </button>
