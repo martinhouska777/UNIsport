@@ -103,6 +103,26 @@ export function lead(r: SeatRace, k: number, i: number, j: number): number | nul
   return ti != null && tj != null ? Math.round((tj - ti) * 10) / 10 : null;
 }
 
+/*
+  WHO WON THE PIECE, on time. Boats only race boats of their own rigging (the
+  fours against the fours, the eights against the eights), so each rigging is
+  ranked on its own. Per boat: its place (1 = won) and seconds behind the
+  winner; null for a boat with no time yet.
+*/
+export function placesAt(r: SeatRace, k: number): ({ place: number; behind: number } | null)[] {
+  const times = r.pieces[k]?.times ?? [];
+  return r.boats.map((b, i) => {
+    const t = times[i];
+    if (t == null) return null;
+    const field = r.boats
+      .map((o, j) => (o.badge === b.badge ? times[j] : null))
+      .filter((x): x is number => x != null);
+    if (field.length < 2) return null;
+    const best = Math.min(...field);
+    return { place: field.filter((x) => x < t).length + 1, behind: Math.round((t - best) * 10) / 10 };
+  });
+}
+
 /* ── Results ── */
 
 export type SwapResult = {
