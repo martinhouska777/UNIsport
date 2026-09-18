@@ -629,14 +629,9 @@ function WeekStrip({
 function SessionCard({
   s,
   lineups = [],
-  allBoatsHref,
-  allBoatsCount = 0,
 }: {
   s: TodaySession;
   lineups?: Lineup[];
-  /** Where "All boats" goes when the crew is open — the day's full lineup page. */
-  allBoatsHref?: string;
-  allBoatsCount?: number;
 }) {
   const st = statusStyle[s.status];
   const [open, setOpen] = useState(false);
@@ -783,24 +778,9 @@ function SessionCard({
   return (
     <div className="flex flex-col gap-2">
       {card}
-      {open && (
-        <>
-          {boats.map((l, i) => (
-            <LineupBoatCard key={i} l={l} defaultOpen />
-          ))}
-          {/* And the door to everyone else's boat, right where you are already
-              looking at your own — the same page the day's header links to. */}
-          {allBoatsHref && (
-            <Link
-              href={allBoatsHref}
-              className="tap44 flex items-center justify-center gap-1 rounded-xl border border-border bg-surface py-2.5 text-[12px] font-semibold text-primary active:border-primary-line"
-            >
-              All boats{allBoatsCount > 0 ? ` · ${allBoatsCount}` : ""}
-              <IconChevronRight size={13} />
-            </Link>
-          )}
-        </>
-      )}
+      {/* No "All boats" button under the crew any more (owner, 2026-09-18):
+          the door to everyone else's boat is the link beside the day. */}
+      {open && boats.map((l, i) => <LineupBoatCard key={i} l={l} defaultOpen />)}
     </div>
   );
 }
@@ -1305,8 +1285,6 @@ function HomeScreenInner() {
                 key={i}
                 s={sess}
                 lineups={myLineups}
-                allBoatsHref={lineups.length > 0 ? allBoatsHref : undefined}
-                allBoatsCount={lineups.length}
               />
             ))}
           </div>
