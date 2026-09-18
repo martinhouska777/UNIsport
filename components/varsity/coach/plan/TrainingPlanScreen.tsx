@@ -957,30 +957,33 @@ export default function TrainingPlanScreen({
           ))}
         </div>
 
-        {/* New training block lives at the foot of the page (owner, 2026-09-18). */}
-        <button
-          type="button"
-          onClick={openCreate}
-          data-tour="coach-plan-new-block"
-          className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-surface py-3 text-[13px] font-medium text-muted active:border-primary-line active:text-primary"
-        >
-          <IconPlus size={16} /> New training block
-        </button>
-        <button
-          type="button"
-          onClick={() => setConfirm({ kind: "week", blockId: block.id, weekIdx: weeks.indexOf(week) })}
-          className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-danger-line bg-danger-tint py-3 text-[13px] font-semibold text-danger"
-        >
-          <IconTrash size={15} /> Clear this week
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setConfirm({ kind: "block", blockId: block.id })}
-          className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-danger-line bg-danger-tint py-3 text-[13px] font-semibold text-danger"
-        >
-          <IconTrash size={15} /> Delete block
-        </button>
+        {/* THE THREE ACTIONS, ONE ROW OF SMALL BUTTONS at the foot of the page
+            (owner, 2026-09-18: "doesn't need to be three big tabs"), in the
+            owner's order left to right. */}
+        <div className="mt-5 flex gap-1">
+          <button
+            type="button"
+            onClick={() => setConfirm({ kind: "block", blockId: block.id })}
+            className="flex flex-auto items-center justify-center gap-0.5 whitespace-nowrap rounded-lg border border-danger-line bg-danger-tint px-1 py-2 text-center text-[11px] font-semibold leading-tight text-danger"
+          >
+            <IconTrash size={12} className="flex-shrink-0" /> Delete block
+          </button>
+          <button
+            type="button"
+            onClick={() => setConfirm({ kind: "week", blockId: block.id, weekIdx: weeks.indexOf(week) })}
+            className="flex flex-auto items-center justify-center gap-0.5 whitespace-nowrap rounded-lg border border-danger-line bg-danger-tint px-1 py-2 text-center text-[11px] font-semibold leading-tight text-danger"
+          >
+            <IconTrash size={12} className="flex-shrink-0" /> Clear this week
+          </button>
+          <button
+            type="button"
+            onClick={openCreate}
+            data-tour="coach-plan-new-block"
+            className="flex flex-auto items-center justify-center gap-0.5 whitespace-nowrap rounded-lg border border-dashed border-border bg-surface px-1 py-2 text-center text-[11px] font-semibold leading-tight text-muted active:border-primary-line active:text-primary"
+          >
+            <IconPlus size={12} className="flex-shrink-0" /> New training block
+          </button>
+        </div>
 
         {editor && renderEditor()}
         {confirmModal}
