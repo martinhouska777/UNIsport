@@ -21,6 +21,8 @@ import {
 import {
   COX_COLOR,
   defaultBoatName,
+  rosterById,
+  sideMeta,
   type Boat,
 } from "@/lib/varsity/coachLineup";
 import { sessionKey } from "@/lib/varsity/coachPlan";
@@ -75,6 +77,24 @@ const blankPiece = (boats: number) => ({
   times: Array<number | null>(boats).fill(null),
   swaps: [] as SwapPair[],
 });
+
+/* The rower's side — the same red P / green S / blue B as the Lineup and Team screens. */
+function SideTag({ id, small = false }: { id: string; small?: boolean }) {
+  const side = rosterById[id]?.side;
+  if (!side) return null;
+  const m = sideMeta[side];
+  return (
+    <span
+      title={m.label}
+      className={`flex flex-shrink-0 items-center justify-center rounded font-mono font-semibold ${
+        small ? "h-4 px-1 text-[9px]" : "h-[19px] px-1.5 text-[10px]"
+      }`}
+      style={{ background: m.color, color: m.ink }}
+    >
+      {m.tag}
+    </span>
+  );
+}
 
 function Label({ children }: { children: React.ReactNode }) {
   return (
@@ -464,7 +484,7 @@ function SeatRaceEditor({
                               type="button"
                               onClick={() => tapRower(k, id)}
                               disabled={switching !== k}
-                              className={`flex items-baseline gap-1 rounded-md px-0.5 text-[13px] disabled:cursor-default ${
+                              className={`flex items-center gap-1 rounded-md px-0.5 text-[13px] disabled:cursor-default ${
                                 first === id && switching === k
                                   ? "bg-danger text-primary-contrast"
                                   : red.has(id)
@@ -476,6 +496,7 @@ function SeatRaceEditor({
                                 {si + 1}
                               </span>
                               {surname(id)}
+                              <SideTag id={id} small />
                             </button>
                           ) : null,
                         )}
@@ -533,6 +554,7 @@ function SeatRaceEditor({
                               >
                                 {id ? surname(id) : "—"}
                               </span>
+                              {id && <SideTag id={id} />}
                             </button>
                           ))}
                         </div>
