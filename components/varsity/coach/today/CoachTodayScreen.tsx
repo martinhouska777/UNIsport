@@ -150,29 +150,29 @@ function SlotCard({ slot }: { slot: TodaySlot }) {
   );
 }
 
-/* Who is out on this day — and the one door to changing that, which is the pool. */
+/* Who is out on this day — and the one door to changing that, which is the pool.
+   ONLY WHEN SOMEONE IS. The card used to sit there every day saying "Out —
+   Everyone available.", and the owner crossed it out (2026-09-18): a card
+   with nothing in it is not news. Nobody out, no card. */
 function OutRow({ day }: { day: TodayDay }) {
+  if (day.out.length === 0) return null;
   return (
     <div className="flex items-start justify-between gap-3 rounded-2xl border border-border bg-surface px-3.5 py-3">
       <div className="min-w-0 flex-1">
-        <SectionLabel>{day.out.length ? `Out · ${day.out.length}` : "Out"}</SectionLabel>
-        {day.out.length === 0 ? (
-          <div className="mt-1 text-[13px] text-text">Everyone available.</div>
-        ) : (
-          <div className="mt-1.5 flex flex-wrap gap-1.5">
-            {day.out.map((o) => (
-              <span
-                key={o.id}
-                className="flex items-center gap-1.5 rounded-lg border border-danger-line bg-danger-tint px-2 py-1 text-[12px] text-text"
-              >
-                {o.name}
-                <span className="font-mono text-[9px] font-semibold uppercase tracking-[0.06em] text-danger">
-                  {outMeta[o.reason]}
-                </span>
+        <SectionLabel>Out · {day.out.length}</SectionLabel>
+        <div className="mt-1.5 flex flex-wrap gap-1.5">
+          {day.out.map((o) => (
+            <span
+              key={o.id}
+              className="flex items-center gap-1.5 rounded-lg border border-danger-line bg-danger-tint px-2 py-1 text-[12px] text-text"
+            >
+              {o.name}
+              <span className="font-mono text-[9px] font-semibold uppercase tracking-[0.06em] text-danger">
+                {outMeta[o.reason]}
               </span>
-            ))}
-          </div>
-        )}
+            </span>
+          ))}
+        </div>
       </div>
       {/* The "Mark out" button that sat here was cut (owner, 2026-09-14);
           who is out is still changed from the pool on the Lineup tab. */}
