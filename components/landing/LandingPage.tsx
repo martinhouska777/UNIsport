@@ -93,8 +93,13 @@ export default function LandingPage({ view = "all" }: { view?: LandingView }) {
             accent="accent"
             closer="campus"
             closerId="campus-colours"
-            fromBeat={6}
-            toBeat={0}
+            /* The phone leaves on the story's LAST chapter. These were fixed
+               numbers (6 and 5) from when each story had seven beats; the
+               stories became four chapters on 2026-09-15, beat 6 no longer
+               existed, and the flight quietly fell back to the closer just
+               appearing. Gyms is the last chapter AND what the closer shows. */
+            fromBeat={studentStory.length - 1}
+            toBeat={studentStory.length - 1}
             aside={<FeatureList kicker={studentFeatures.kicker} rows={studentFeatures.rows} cta={studentFeatures.cta} />}
           />
         )}
@@ -106,7 +111,7 @@ export default function LandingPage({ view = "all" }: { view?: LandingView }) {
             accent="varsity"
             closer="blades"
             closerId="blade-lock"
-            fromBeat={5}
+            fromBeat={varsityStory.length - 1}
             toBeat={0}
             aside={<FeatureList kicker={varsityFeatures.kicker} rows={varsityFeatures.rows} cta={varsityFeatures.cta} ink />}
           />

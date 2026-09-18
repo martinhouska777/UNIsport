@@ -306,7 +306,9 @@ export default function StoryCloser({ storyId, beats, accent, closer, closerId, 
       const A = { x: start.left + start.width / 2, y: start.top + start.height / 2, w: start.width };
       const B = target;
       const t0 = performance.now();
-      let swapped = false;
+      // Story and closer on the same screen (the student story ends on Gyms,
+      // which is what Campus Colours shows): nothing to swap.
+      let swapped = fromBeat === toBeat;
       let jumped = false;
 
       /* The move and the page arrive together: the same easing that flies the
@@ -419,7 +421,9 @@ export default function StoryCloser({ storyId, beats, accent, closer, closerId, 
       const secDocTop = scrollFrom + sec!.getBoundingClientRect().top;
       const scrollTo = Math.max(0, secDocTop - window.innerHeight - 2);
       const t0 = performance.now();
-      let swapped = false;
+      // Story and closer on the same screen (the student story ends on Gyms,
+      // which is what Campus Colours shows): nothing to swap.
+      let swapped = fromBeat === toBeat;
       let jumped = false;
       // Back UP the page this time, so it is the upward wheel that is
       // swallowed and a downward one that hands the page back. A pointer down
