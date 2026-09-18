@@ -203,6 +203,13 @@ export const IconBasketball = (p: IconProps) => (
   </Base>
 );
 
+// Two arrows passing each other — a seat race swap.
+export const IconSwap = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M7 4 3 8l4 4M3 8h14M17 12l4 4-4 4M21 16H7" />
+  </Base>
+);
+
 export const IconPlus = (p: IconProps) => (
   <Base {...p}>
     <path d="M12 5v14M5 12h14" />
