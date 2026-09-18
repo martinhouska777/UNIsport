@@ -1,52 +1,62 @@
 /*
-  SEAT RACES — boats race a piece, pairs of rowers swap boats, they race it
-  again, and the change in the margin between each pair's two boats is who won.
+  SEAT RACES — modelled on how a coach keeps them in a spreadsheet, but for
+  any school and any squad: one practice's LINEUP races a piece, the coach switches a rower
+  between two boats, they race again, switch again … for as many pieces as
+  the session has.
 
-  A race is stored whole: its boats as they pushed off (any number, often
-  imported from that day's lineup), the swap pairs, and every boat's time in
-  both pieces. Results are never stored — they are worked out from the times
-  every time they are shown, so a corrected time corrects the result.
+  A race is stored as: that practice's boats as they pushed off (taken from
+  the lineup, never made up here), then one entry per piece — every boat's
+  time, and the switches made AFTER that piece. Who sits where in piece N is
+  worked out by replaying the switches, so fixing a switch fixes every piece
+  after it. Results are never stored either: a switch between boats X and Y
+  is won by whoever made their new boat gain on the other one.
 
-  COACH ONLY (owner, 2026-09-18): athletes do not see seat races yet.
-  Kept in this browser's localStorage for now — no database table yet.
+  COACH ONLY (owner, 2026-09-18). Kept in this browser's localStorage for now.
 */
 import { rosterById } from "./coachLineup";
 
 export type RaceBoat = {
-  name: string; // "Resolute", or "" for an unnamed boat
+  name: string; // what the sheet calls the boat: coach's name, else the cox / stroke
   badge: string; // the rigging's key, "4+"
   seats: (string | null)[]; // bow → stroke
   coxId: string | null;
-  hasCox: boolean;
 };
 
-/* One swap: `[0]` starts in one boat, `[1]` in another; they trade for piece 2. */
+/* A switch: the two rowers trade boats (and seats) before the next piece. */
 export type SwapPair = [string, string];
+
+export type Piece = {
+  times: (number | null)[]; // seconds, per boat
+  swaps: SwapPair[]; // made after this piece
+};
 
 export type SeatRace = {
   id: string;
   date: string; // "2026-09-18"
-  piece: string; // what was raced, "1500 m" — free text
+  period: "AM" | "PM";
+  piece: string; // "1500 m"
   boats: RaceBoat[];
-  swaps: SwapPair[];
-  /* Seconds: times[piece][boat]. Piece 0 as they started, piece 1 after the swaps. */
-  times: (number | null)[][];
+  pieces: Piece[];
 };
 
 /* ── Times ── */
 
-/** "5:12.4" → 312.4, "72.5" → 72.5. Anything else is null. */
+/** "4:23.6" → 263.6, "72.5" → 72.5, "0:04:23.6" → 263.6. Anything else is null. */
 export function parseTime(s: string): number | null {
-  const t = s.trim();
-  if (!t) return null;
-  const m = /^(?:(\d+):)?(\d+(?:[.,]\d+)?)$/.exec(t);
-  if (!m) return null;
-  const sec = Number(m[2].replace(",", "."));
-  if (m[1] && sec >= 60) return null;
-  return (m[1] ? Number(m[1]) * 60 : 0) + sec;
+  const parts = s.trim().replace(",", ".").split(":");
+  if (!parts[0] || parts.length > 3) return null;
+  let total = 0;
+  for (let i = 0; i < parts.length; i++) {
+    if (!/^\d+(\.\d+)?$/.test(parts[i])) return null;
+    const n = Number(parts[i]);
+    if (i > 0 && n >= 60) return null;
+    if (i < parts.length - 1 && parts[i].includes(".")) return null;
+    total = total * 60 + n;
+  }
+  return total;
 }
 
-/** 312.4 → "5:12.4" */
+/** 263.6 → "4:23.6" */
 export function formatTime(sec: number): string {
   const m = Math.floor(sec / 60);
   const s = sec - m * 60;
@@ -54,52 +64,87 @@ export function formatTime(sec: number): string {
   return m ? `${m}:${ss}` : ss;
 }
 
-/** The boat's letter: A, B, C … */
-export const boatLetter = (i: number) => String.fromCharCode(65 + i);
+export const nameOf = (id: string | null) => (id && rosterById[id]?.name) || "—";
+/** The sheet writes surnames: "Dykema", "Tallec-Botos", "Van Dijk" — everything after the first name. */
+export const surname = (id: string | null) => {
+  const parts = nameOf(id).split(" ");
+  return parts.length > 1 ? parts.slice(1).join(" ") : parts[0];
+};
 
-/** Which boat someone started in, or -1. */
-export function boatOf(r: SeatRace, id: string): number {
-  return r.boats.findIndex((b) => b.seats.includes(id) || b.coxId === id);
+/* ── Crews, piece by piece ── */
+
+/** Every boat's seats in piece `k`: the lineup with the switches of pieces 0…k-1 played in. */
+export function crewsAt(r: SeatRace, k: number): (string | null)[][] {
+  const crews = r.boats.map((b) => [...b.seats]);
+  for (let p = 0; p < k && p < r.pieces.length; p++)
+    for (const [a, b] of r.pieces[p].swaps) {
+      const ia = crews.findIndex((c) => c.includes(a));
+      const ib = crews.findIndex((c) => c.includes(b));
+      if (ia < 0 || ib < 0) continue;
+      const sa = crews[ia].indexOf(a);
+      const sb = crews[ib].indexOf(b);
+      crews[ia][sa] = b;
+      crews[ib][sb] = a;
+    }
+  return crews;
 }
 
-/* ── The result ── */
+/** Which boat `id` rows in during piece `k`, or -1. */
+export const boatAt = (r: SeatRace, k: number, id: string) => crewsAt(r, k).findIndex((c) => c.includes(id));
 
-export type PairResult = {
+/** The rowers who switched boats just before piece `k` — the red ones. */
+export const swappedInto = (r: SeatRace, k: number): Set<string> =>
+  new Set(k > 0 ? (r.pieces[k - 1]?.swaps ?? []).flat() : []);
+
+/** Boat i's lead over boat j in piece k, seconds (negative = j was ahead). */
+export function lead(r: SeatRace, k: number, i: number, j: number): number | null {
+  const ti = r.pieces[k]?.times[i];
+  const tj = r.pieces[k]?.times[j];
+  return ti != null && tj != null ? Math.round((tj - ti) * 10) / 10 : null;
+}
+
+/* ── Results ── */
+
+export type SwapResult = {
+  piece: number; // the switch was made after this piece (0-based)
   pair: SwapPair;
-  winner: string | null; // null = dead heat
+  winner: string | null; // null = dead heat, or not raced yet
   loser: string | null;
-  by: number; // seconds, ≥ 0
+  by: number | null; // seconds; null until both pieces have times
 };
 
 /*
-  The swing. In piece 1 pair[0] sits in boat i and pair[1] in boat j; in
-  piece 2 they have traded. Whatever boat i lost of its lead over boat j
-  between the pieces went with pair[0] — so a positive swing means pair[0]
-  beat pair[1] by that much. Null until all four times are in.
+  pair[0] rows piece k in boat i and piece k+1 in boat j; pair[1] the other
+  way round. If boat i's lead over j SHRANK once pair[0] left it, pair[0] was
+  the faster of the two — by exactly how much it shrank.
 */
-export function pairResult(r: SeatRace, pair: SwapPair): PairResult | null {
-  const i = boatOf(r, pair[0]);
-  const j = boatOf(r, pair[1]);
-  if (i < 0 || j < 0) return null;
-  const t = (p: number, b: number) => r.times[p]?.[b] ?? null;
-  const [a1, b1, a2, b2] = [t(0, i), t(0, j), t(1, i), t(1, j)];
-  if (a1 == null || b1 == null || a2 == null || b2 == null) return null;
-  const swing = Math.round((b1 - a1 - (b2 - a2)) * 10) / 10;
-  if (swing === 0) return { pair, winner: null, loser: null, by: 0 };
-  return swing > 0
-    ? { pair, winner: pair[0], loser: pair[1], by: swing }
-    : { pair, winner: pair[1], loser: pair[0], by: -swing };
+export function swapResults(r: SeatRace): SwapResult[] {
+  const out: SwapResult[] = [];
+  r.pieces.forEach((pc, k) =>
+    pc.swaps.forEach((pair) => {
+      const i = boatAt(r, k, pair[0]);
+      const j = boatAt(r, k, pair[1]);
+      const before = lead(r, k, i, j);
+      const after = k + 1 < r.pieces.length ? lead(r, k + 1, i, j) : null;
+      if (before == null || after == null) return out.push({ piece: k, pair, winner: null, loser: null, by: null });
+      const swing = Math.round((before - after) * 10) / 10;
+      if (swing === 0) return out.push({ piece: k, pair, winner: null, loser: null, by: 0 });
+      out.push(
+        swing > 0
+          ? { piece: k, pair, winner: pair[0], loser: pair[1], by: swing }
+          : { piece: k, pair, winner: pair[1], loser: pair[0], by: -swing },
+      );
+    }),
+  );
+  return out;
 }
-
-export const nameOf = (id: string | null) => (id && rosterById[id]?.name) || "—";
 
 /* Won / lost per rower, most wins first. */
 export function standings(races: SeatRace[]): { id: string; won: number; lost: number }[] {
   const t: Record<string, { won: number; lost: number }> = {};
   for (const r of races)
-    for (const p of r.swaps) {
-      const res = pairResult(r, p);
-      if (!res?.winner || !res.loser) continue;
+    for (const res of swapResults(r)) {
+      if (!res.winner || !res.loser) continue;
       (t[res.winner] ??= { won: 0, lost: 0 }).won++;
       (t[res.loser] ??= { won: 0, lost: 0 }).lost++;
     }
@@ -111,33 +156,13 @@ export function standings(races: SeatRace[]): { id: string; won: number; lost: n
 /* ── Store (localStorage) ── */
 const KEY = "varsitySeatRaces";
 
-/* The first version held exactly two boats (`badge` + `swap`); read it as the new shape. */
-type OldRace = {
-  id: string;
-  date: string;
-  badge: string;
-  piece: string;
-  boats: { seats: (string | null)[]; coxId: string | null }[];
-  swap: SwapPair;
-  times: (number | null)[][];
-};
-function normalise(x: SeatRace | OldRace): SeatRace {
-  if (!("swap" in x)) return x;
-  return {
-    id: x.id,
-    date: x.date,
-    piece: x.piece,
-    boats: x.boats.map((b) => ({ name: "", badge: x.badge, seats: b.seats, coxId: b.coxId, hasCox: b.coxId != null })),
-    swaps: x.swap[0] && x.swap[1] ? [x.swap] : [],
-    times: x.times,
-  };
-}
-
+/* Races saved by the first two versions (two fixed pieces, made-up boats) have
+   no `pieces`; they are dropped rather than guessed at. */
 export function loadSeatRaces(): SeatRace[] {
   if (typeof window === "undefined") return [];
   try {
     const raw = window.localStorage.getItem(KEY);
-    const list = raw ? (JSON.parse(raw) as (SeatRace | OldRace)[]).map(normalise) : [];
+    const list = raw ? (JSON.parse(raw) as SeatRace[]).filter((r) => Array.isArray(r.pieces)) : [];
     return list.sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id));
   } catch {
     return [];

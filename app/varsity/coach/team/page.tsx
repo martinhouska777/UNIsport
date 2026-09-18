@@ -133,7 +133,7 @@ export default function CoachTeamPage() {
       )}
 
       {view === "races" ? (
-        <SeatRacesScreen teamId={teamId} />
+        <SeatRacesScreen />
       ) : (
         <TeamScreen
           /* Just the roster — Workouts is its own tab in the console. */
