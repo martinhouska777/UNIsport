@@ -68,6 +68,7 @@ import {
 
   IconTrash,
   IconTrophy,
+  IconPencil,
 } from "@/components/icons";
 
 /*
@@ -85,6 +86,10 @@ import {
 type View =
   | { name: "empty" }
   | { name: "create" }
+  /* The same form as "create", filled with a block's own name, dates and race
+     (owner, 2026-09-18: "I want to edit the current training block — name,
+     race etc."). */
+  | { name: "edit"; blockId: string }
   | { name: "week"; blockId: string; weekIdx: number };
 
 /*
@@ -441,6 +446,31 @@ export default function TrainingPlanScreen({
   const weeks: WeekRow[] = useMemo(() => (block ? buildWeeks(block) : []), [block]);
 
   /* ── create a block ── */
+  const freshDraft = () => ({ name: "", start: todayISO, end: addDays(todayISO, 48), raceName: "", raceDate: "" });
+  const openCreate = () => {
+    setDraft(freshDraft());
+    setView({ name: "create" });
+  };
+  /* ── edit a block: the create form, filled from the block ── */
+  const openEditBlock = (b: Block) => {
+    setDraft({ name: b.name, start: b.start, end: b.end, raceName: b.raceName ?? "", raceDate: b.raceDate ?? "" });
+    setView({ name: "edit", blockId: b.id });
+  };
+  const saveBlockEdit = (id: string) => {
+    if (!draft.name.trim() || !draft.start || !draft.end || draft.end < draft.start) return;
+    const patch = {
+      name: draft.name.trim(),
+      start: draft.start,
+      end: draft.end,
+      raceName: draft.raceName.trim() || undefined,
+      raceDate: draft.raceDate || undefined,
+    };
+    setBlocks((bs) => bs.map((b) => (b.id === id ? { ...b, ...patch } : b)));
+    // Sessions keep their dates; a block that moved or shrank simply shows the
+    // weeks it now covers. Land on the week that holds today, as the tab does.
+    const cur = blocks.find((b) => b.id === id);
+    setView({ name: "week", blockId: id, weekIdx: cur ? homeWeekIdx({ ...cur, ...patch }) : 0 });
+  };
   const createBlock = () => {
     if (!draft.name.trim() || !draft.start || !draft.end || draft.end < draft.start) return;
     const b: Block = {
@@ -639,7 +669,7 @@ export default function TrainingPlanScreen({
           </p>
           {/* data-tour: whichever "new block" button is on screen is the one
               the tour lights — see visibleAnchor(). */}
-          <Button size="md" onClick={() => setView({ name: "create" })} className="mt-5" data-tour="coach-plan-new-block">
+          <Button size="md" onClick={openCreate} className="mt-5" data-tour="coach-plan-new-block">
             <IconPlus size={16} /> New training block
           </Button>
         </div>
@@ -649,7 +679,8 @@ export default function TrainingPlanScreen({
   }
 
   /* ─────────────  view: create block  ───────────── */
-  if (view.name === "create") {
+  if (view.name === "create" || view.name === "edit") {
+    const editing = view.name === "edit" ? blocks.find((b) => b.id === view.blockId) : undefined;
     const valid = draft.name.trim() && draft.start && draft.end && draft.end >= draft.start;
     const inputCls =
       "w-full rounded-xl border border-border bg-surface-2 px-3.5 py-3 text-base text-text outline-none focus:border-primary placeholder:text-muted";
@@ -659,7 +690,7 @@ export default function TrainingPlanScreen({
         <button onClick={() => setView(null)} className="flex items-center gap-1 text-[13px] text-muted">
           <IconArrowLeft size={16} /> Training plan
         </button>
-        <h1 className="mt-1 text-2xl font-semibold text-text">New training block</h1>
+        <h1 className="mt-1 text-2xl font-semibold text-text">{editing ? "Edit block" : "New training block"}</h1>
 
         <div className="mt-5 flex flex-col gap-4">
           <div>
@@ -700,8 +731,14 @@ export default function TrainingPlanScreen({
             </div>
           </div>
 
-          <Button size="lg" full disabled={!valid} onClick={createBlock} className="mt-1">
-            Create block
+          <Button
+            size="lg"
+            full
+            disabled={!valid}
+            onClick={() => (editing ? saveBlockEdit(editing.id) : createBlock())}
+            className="mt-1"
+          >
+            {editing ? "Save" : "Create block"}
           </Button>
         </div>
       </div>
@@ -751,8 +788,18 @@ export default function TrainingPlanScreen({
           two at most, tap one to open it) and New training block, and only
           THEN the week. Delete block alone stays at the very bottom.
         */}
-        <div className="mt-3 rounded-xl border border-border bg-surface px-4 py-3">
-          <div className="text-[15px] font-semibold text-text">{block.name}</div>
+        <button
+          type="button"
+          onClick={() => openEditBlock(block)}
+          aria-label={`Edit ${block.name}`}
+          className="mt-3 w-full rounded-xl border border-border bg-surface px-4 py-3 text-left active:bg-surface-2"
+        >
+          <div className="flex items-center gap-2">
+            <div className="min-w-0 flex-1 truncate text-[15px] font-semibold text-text">{block.name}</div>
+            <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg border border-border bg-surface-2 text-primary">
+              <IconPencil size={13} />
+            </span>
+          </div>
           <div className="mt-0.5 text-[11px] text-muted">{blockRangeLabel(block)}</div>
           {block.raceName && (
             <div className="mt-2.5 flex items-center gap-2 border-t border-border pt-2.5">
@@ -767,7 +814,7 @@ export default function TrainingPlanScreen({
               )}
             </div>
           )}
-        </div>
+        </button>
 
         {others.length > 0 && (
           <div className="mt-2 flex flex-col gap-2">
@@ -793,7 +840,7 @@ export default function TrainingPlanScreen({
 
         <button
           type="button"
-          onClick={() => setView({ name: "create" })}
+          onClick={openCreate}
           data-tour="coach-plan-new-block"
           className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-surface py-3 text-[13px] font-medium text-muted active:border-primary-line active:text-primary"
         >
