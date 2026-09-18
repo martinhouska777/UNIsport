@@ -113,10 +113,9 @@ export default function SeatRacesScreen() {
   const [who, setWho] = useState<string | null>(null);
 
   const table = useMemo(() => standings(races), [races]);
-  // One line per switch, newest race first.
-  const rows = races
-    .flatMap((r) => swapResults(r).map((res) => ({ r, res })))
-    .filter((x) => !who || x.res.pair.includes(who));
+  // One card per seat race, newest first; a rower filter keeps the ones they switched in.
+  const shown = races.filter((r) => !who || swapResults(r).some((x) => x.pair.includes(who)));
+  const [viewing, setViewing] = useState<SeatRace | null>(null);
 
   const newRace = (): SeatRace => ({
     id: `sr-${Date.now()}`,
@@ -163,56 +162,36 @@ export default function SeatRacesScreen() {
         </div>
       )}
 
-      {rows.length > 0 && (
+      {shown.length > 0 && (
         <div className="mt-6">
-          <Label>{who ? nameOf(who) : "Races"}</Label>
-          <div className="flex flex-col gap-1.5">
-            {rows.map(({ r, res }, n) => {
-              const mine =
-                who && res.winner ? (res.winner === who ? "W" : "L") : null;
-              const badge = r.boats[boatAt(r, res.piece, res.pair[0])]?.badge;
-              return (
-                <button
-                  key={`${r.id}-${n}`}
-                  type="button"
-                  onClick={() => setEditing(r)}
-                  className="flex items-center gap-3 rounded-xl border border-border bg-surface px-3.5 py-2.5 text-left"
-                >
-                  {mine && (
-                    <span
-                      className={`flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${
-                        mine === "W"
-                          ? "bg-success-tint text-success"
-                          : "bg-danger-tint text-danger"
-                      }`}
-                    >
-                      {mine}
-                    </span>
-                  )}
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[13px] font-medium text-text">
-                      {res.winner
-                        ? `${nameOf(res.winner)} beat ${nameOf(res.loser)}`
-                        : `${nameOf(res.pair[0])} vs ${nameOf(res.pair[1])}`}
-                    </span>
-                    <span className="mt-0.5 block truncate text-[11px] text-muted">
-                      {[dayLabel(r.date), r.period, badge, r.piece]
-                        .filter(Boolean)
-                        .join(" · ")}
-                    </span>
+          <Label>{who ? nameOf(who) : "Seat races"}</Label>
+          <div className="flex flex-col gap-2">
+            {shown.map((r) => (
+              <button
+                key={r.id}
+                type="button"
+                onClick={() => setViewing(r)}
+                className="rounded-2xl border border-border bg-surface px-3.5 py-3 text-left"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="min-w-0 flex-1 truncate text-[14px] font-semibold text-text">
+                    {dayLabel(r.date)} · {r.period}
                   </span>
-                  <span className="flex-shrink-0 text-[13px] tabular-nums text-muted">
-                    {res.by == null
-                      ? "—"
-                      : res.winner
-                        ? `+${secs(res.by)}`
-                        : "Level"}
+                  <span className="flex-shrink-0 text-[12px] text-muted">
+                    {[r.piece, `${r.pieces.length} ${r.pieces.length === 1 ? "piece" : "pieces"}`]
+                      .filter(Boolean)
+                      .join(" · ")}
                   </span>
-                </button>
-              );
-            })}
+                </div>
+                <ResultLines r={r} who={who} />
+              </button>
+            ))}
           </div>
         </div>
+      )}
+
+      {viewing && !editing && (
+        <SeatRaceView r={viewing} onClose={() => setViewing(null)} onEdit={() => setEditing(viewing)} />
       )}
 
       {editing && (
@@ -223,10 +202,12 @@ export default function SeatRacesScreen() {
           onSave={(r) => {
             setRaces(saveSeatRace(r));
             setEditing(null);
+            setViewing(r);
           }}
           onDelete={(id) => {
             setRaces(deleteSeatRace(id));
             setEditing(null);
+            setViewing(null);
           }}
         />
       )}
@@ -513,7 +494,7 @@ function SeatRaceEditor({
                         value={texts[k]?.[bi] ?? ""}
                         onChange={(e) => setTime(k, bi, e.target.value)}
                         inputMode="decimal"
-                        placeholder="4:23.6"
+                        placeholder="Time"
                         aria-label={`Piece ${k + 1}, ${b.name} time`}
                         className={`w-24 flex-shrink-0 rounded-xl border bg-surface px-2 py-2 text-center font-mono text-base text-text placeholder:text-muted ${
                           texts[k]?.[bi] && pc.times[bi] == null
@@ -579,7 +560,7 @@ function SeatRaceEditor({
                         value={texts[k]?.[bi] ?? ""}
                         onChange={(e) => setTime(k, bi, e.target.value)}
                         inputMode="decimal"
-                        placeholder="4:23.6"
+                        placeholder="Time"
                         aria-label={`Piece ${k + 1}, ${b.name} time`}
                         className={`mt-1.5 w-full rounded-xl border bg-surface px-3 py-2 text-center font-mono text-base text-text placeholder:text-muted ${
                           texts[k]?.[bi] && pc.times[bi] == null
@@ -727,6 +708,240 @@ function SeatRaceEditor({
               Delete
             </Button>
           ))}
+      </div>
+    </Sheet>
+  );
+}
+
+/* ─────────────────────────  history  ───────────────────────── */
+
+/* "Halvorsen beat Van Dijk · 1.2 s" — one line per switch. */
+function ResultLines({ r, who = null }: { r: SeatRace; who?: string | null }) {
+  const res = swapResults(r);
+  if (res.length === 0) return null;
+  return (
+    <div className="mt-2 flex flex-col gap-1">
+      {res.map((x, n) => {
+        const mine = who && x.winner && x.pair.includes(who) ? (x.winner === who ? "W" : "L") : null;
+        return (
+          <div key={n} className="flex items-center gap-2 text-[13px]">
+            {mine && (
+              <span
+                className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full text-[10px] font-semibold ${
+                  mine === "W" ? "bg-success-tint text-success" : "bg-danger-tint text-danger"
+                }`}
+              >
+                {mine}
+              </span>
+            )}
+            <span className="min-w-0 flex-1 truncate text-text">
+              {x.winner ? (
+                <>
+                  <span className="font-semibold">{surname(x.winner)}</span>
+                  <span className="text-muted"> beat </span>
+                  {surname(x.loser)}
+                </>
+              ) : (
+                `${surname(x.pair[0])} / ${surname(x.pair[1])}`
+              )}
+            </span>
+            <span className="flex-shrink-0 font-semibold tabular-nums text-text">
+              {x.by == null ? "—" : x.winner ? secs(x.by) : "Level"}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* One boat in one piece, read-only: the hull, sides, the rowers who just switched in (red), the time. */
+function BoatHull({ r, k, bi }: { r: SeatRace; k: number; bi: number }) {
+  const b = r.boats[bi];
+  const crew = crewsAt(r, k)[bi];
+  const red = swappedInto(r, k);
+  const place = placesAt(r, k)[bi];
+  const t = r.pieces[k]?.times[bi];
+  return (
+    <div className="min-w-0">
+      <div className="mb-1.5 flex items-center gap-1.5 pl-1">
+        <span className="min-w-0 flex-1 truncate text-[14px] font-semibold text-text">
+          {b.name} <span className="text-[12px] font-medium text-muted">{b.badge}</span>
+        </span>
+        {place &&
+          (place.place === 1 ? (
+            <span className="flex-shrink-0 rounded-full bg-success-tint px-2 py-0.5 text-[11px] font-semibold text-success">
+              1st
+            </span>
+          ) : (
+            <span className="flex-shrink-0 pr-1 text-[12px] font-medium tabular-nums text-muted">
+              +{place.behind.toFixed(1)} s
+            </span>
+          ))}
+      </div>
+      <div className="rounded-[28px] border-2 border-primary-line bg-surface-2 px-2 py-3">
+        <div className="flex flex-col gap-1">
+          {crew.map((id, si) => (
+            <div
+              key={si}
+              className={`flex h-9 items-center gap-1.5 rounded-[10px] border pl-1.5 pr-2 ${
+                id && red.has(id) ? "border-danger-line bg-danger-tint text-danger" : "border-border bg-surface text-text"
+              }`}
+            >
+              <span className="w-4 flex-shrink-0 text-center font-mono text-[11px] opacity-70">{si + 1}</span>
+              <span
+                className={`min-w-0 flex-1 truncate text-[13px] ${id && red.has(id) ? "font-semibold" : "font-medium"} ${
+                  id ? "" : "text-muted"
+                }`}
+              >
+                {id ? surname(id) : "—"}
+              </span>
+              {id && <SideTag id={id} />}
+            </div>
+          ))}
+        </div>
+        {b.coxId && (
+          <>
+            <div className="mx-1.5 my-1.5 h-[1.5px] rounded-[1px] bg-muted" />
+            <div
+              className="flex h-9 items-center gap-1.5 rounded-[10px] border bg-surface pl-1.5 pr-2"
+              style={{ borderColor: COX_COLOR }}
+            >
+              <span className="w-4 flex-shrink-0 text-center font-mono text-[11px] text-muted">C</span>
+              <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-text">{surname(b.coxId)}</span>
+            </div>
+          </>
+        )}
+      </div>
+      <div className="mt-1.5 text-center font-mono text-[15px] text-text">{t == null ? "—" : formatTime(t)}</div>
+    </div>
+  );
+}
+
+/*
+  A SEAT RACE IN THE HISTORY (owner, 2026-09-18). On top, who beat whom and by
+  how much — tap one to see the two boats it was decided in, before and after
+  the switch. Under it Piece 1, 2, 3 …, each opening to the whole lineup.
+*/
+function SeatRaceView({ r, onClose, onEdit }: { r: SeatRace; onClose: () => void; onEdit: () => void }) {
+  const [openRes, setOpenRes] = useState<number | null>(null);
+  const [openPiece, setOpenPiece] = useState<Set<number>>(() => new Set());
+  const results = swapResults(r);
+  const togglePiece = (k: number) =>
+    setOpenPiece((prev) => {
+      const next = new Set(prev);
+      if (next.has(k)) next.delete(k);
+      else next.add(k);
+      return next;
+    });
+
+  return (
+    <Sheet full title={`${dayLabel(r.date)} · ${r.period}${r.piece ? ` · ${r.piece}` : ""}`} onClose={onClose}>
+      {results.length > 0 && (
+        <div className="flex flex-col gap-1.5">
+          {results.map((x, n) => {
+            const open = openRes === n;
+            const i = boatAt(r, x.piece, x.pair[0]);
+            const j = boatAt(r, x.piece, x.pair[1]);
+            return (
+              <div key={n} className="rounded-2xl border border-border bg-surface">
+                <button
+                  type="button"
+                  onClick={() => setOpenRes(open ? null : n)}
+                  aria-expanded={open}
+                  className="flex w-full items-center gap-3 px-3.5 py-3 text-left"
+                >
+                  <span className="min-w-0 flex-1 truncate text-[14px] text-text">
+                    {x.winner ? (
+                      <>
+                        <span className="font-semibold">{nameOf(x.winner)}</span>
+                        <span className="text-muted"> beat </span>
+                        {nameOf(x.loser)}
+                      </>
+                    ) : (
+                      `${nameOf(x.pair[0])} / ${nameOf(x.pair[1])}`
+                    )}
+                  </span>
+                  <span className="flex-shrink-0 font-semibold tabular-nums text-text">
+                    {x.by == null ? "—" : x.winner ? secs(x.by) : "Level"}
+                  </span>
+                  <span className="flex-shrink-0 text-muted">
+                    {open ? <IconChevronUp size={15} /> : <IconChevronDown size={15} />}
+                  </span>
+                </button>
+                {open && i >= 0 && j >= 0 && (
+                  <div className="border-t border-border px-3 pb-3 pt-3">
+                    {[x.piece, x.piece + 1]
+                      .filter((k) => k < r.pieces.length)
+                      .map((k) => (
+                        <div key={k} className={k > x.piece ? "mt-4" : ""}>
+                          <Label>Piece {k + 1}</Label>
+                          <div className="grid grid-cols-2 gap-x-2">
+                            <BoatHull r={r} k={k} bi={i} />
+                            <BoatHull r={r} k={k} bi={j} />
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      <div className="mt-5 flex flex-col gap-1.5">
+        {r.pieces.map((pc, k) => {
+          const open = openPiece.has(k);
+          const places = placesAt(r, k);
+          const winners = r.boats.filter((_, bi) => places[bi]?.place === 1).map((b) => b.name);
+          return (
+            <div key={k} className="rounded-2xl border border-border bg-surface">
+              <button
+                type="button"
+                onClick={() => togglePiece(k)}
+                aria-expanded={open}
+                className="flex w-full items-center gap-3 px-3.5 py-3 text-left"
+              >
+                <span className="flex-1 text-[14px] font-semibold text-text">Piece {k + 1}</span>
+                {winners.length > 0 && (
+                  <span className="min-w-0 truncate text-[12px] text-muted">{winners.join(", ")} 1st</span>
+                )}
+                <span className="flex-shrink-0 text-muted">
+                  {open ? <IconChevronUp size={15} /> : <IconChevronDown size={15} />}
+                </span>
+              </button>
+              {open && (
+                <div className="border-t border-border px-3 pb-3 pt-3">
+                  <div className="grid grid-cols-2 gap-x-2 gap-y-3">
+                    {r.boats.map((_, bi) => (
+                      <BoatHull key={bi} r={r} k={k} bi={bi} />
+                    ))}
+                  </div>
+                  {pc.swaps.length > 0 && (
+                    <div className="mt-3 flex flex-wrap gap-1.5">
+                      {pc.swaps.map((sw, n) => (
+                        <span
+                          key={n}
+                          className="flex items-center gap-1.5 rounded-full bg-danger-tint px-3 py-1 text-[12px] font-semibold text-danger"
+                        >
+                          <IconSwap size={13} />
+                          {surname(sw[0])} / {surname(sw[1])}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="mt-6">
+        <Button full variant="secondary" onClick={onEdit}>
+          Edit
+        </Button>
       </div>
     </Sheet>
   );
