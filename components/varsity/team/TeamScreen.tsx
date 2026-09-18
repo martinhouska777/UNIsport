@@ -235,11 +235,19 @@ function RosterRow({
           <IconUser size={18} />
         </span>
         <span className="pointer-events-none relative min-w-0 flex-1 truncate text-[13px] font-medium text-text">{a.name}</span>
-        <span className="relative z-10 flex-shrink-0">{action}</span>
-        {/* A fixed width still, so the note buttons line up down the list —
-            "COX" is a little wider than "P". */}
-        <span className="pointer-events-none relative flex w-10 flex-shrink-0 justify-end">
-          <SideMark a={a} />
+        {/* THE PENCIL AND THE SIDE, TOGETHER (owner, 2026-09-17: "put the
+            note closer to the P or S — it's really far from it now"). They
+            used to be two separate columns with the row's full gap between
+            them and the side letter pushed to the far end of a 2.5rem box, so
+            the pencil floated in the middle of the row belonging to neither
+            side. One group now, a small gap apart. The side keeps a fixed
+            width — "COX" is a little wider than "P" — so the pencils still
+            line up down the list. */}
+        <span className="relative flex flex-shrink-0 items-center gap-1.5">
+          <span className="relative z-10">{action}</span>
+          <span className="pointer-events-none relative flex w-8 justify-center">
+            <SideMark a={a} />
+          </span>
         </span>
         <span className="pointer-events-none relative text-muted">
           <IconChevronRight size={15} />
