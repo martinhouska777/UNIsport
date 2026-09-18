@@ -70,6 +70,13 @@ type Props = {
 };
 
 const DUR = 1500;
+/* A READER ARRIVING AT SPEED gets the same flight at twice the pace (owner,
+   2026-09-18: "accelerate it when I scroll fast, only when I scroll fast").
+   Fast = the page was moving faster than FAST_PX_S over the last ~150ms before
+   the closer came into view. An ordinary wheel or a slow trackpad drag stays
+   well under it (roughly 500–1500px/s); a flick is 3000 and up. */
+const DUR_FAST = 750;
+const FAST_PX_S = 2200;
 const JUMP = 0.32;
 /* THE WAY BACK IS NOT THE WAY IN PLAYED SLOWLY. Going down, the reader is
    being carried somewhere and the length of it is the point. Going up they
@@ -274,17 +281,17 @@ export default function StoryCloser({ storyId, beats, accent, closer, closerId, 
       reader's as always.
     */
     let unsettle: (() => void) | null = null;
-    function settle() {
+    function settle(cap = 1200) {
       unsettle?.();
       const t0 = performance.now();
       let last = t0;
       const onWheel = (ev: WheelEvent) => {
         const now = performance.now();
-        if (ev.ctrlKey || ev.deltaY <= 0 || now - last > 200 || now - t0 > 1200) return off();
+        if (ev.ctrlKey || ev.deltaY <= 0 || now - last > 200 || now - t0 > cap) return off();
         last = now;
         ev.preventDefault();
       };
-      const timer = setTimeout(() => off(), 1200);
+      const timer = setTimeout(() => off(), cap);
       const off = () => {
         clearTimeout(timer);
         window.removeEventListener("wheel", onWheel);
@@ -301,7 +308,8 @@ export default function StoryCloser({ storyId, beats, accent, closer, closerId, 
     }
 
     /* ── the flight ─────────────────────────────────────────────────── */
-    function runFlight(done: () => void) {
+    function runFlight(done: () => void, fast = false) {
+      const D = fast ? DUR_FAST : DUR;
       const fl = flight.current, fp = flightPhone.current, fs = flightShots.current;
       const start = storyPhoneRect();
       const target = c!.phoneTarget();
@@ -337,7 +345,7 @@ export default function StoryCloser({ storyId, beats, accent, closer, closerId, 
       b.style.transform = "translateY(0px)"; // the new screen starts at its top
       a.style.opacity = "1";
       b.style.opacity = "1";
-      a.style.transition = b.style.transition = "translate .5s cubic-bezier(.4,0,.2,1)";
+      a.style.transition = b.style.transition = `translate ${fast ? ".28s" : ".5s"} cubic-bezier(.4,0,.2,1)`;
       b.style.translate = "-110% 0";
       fs.appendChild(a);
       fs.appendChild(b);
@@ -395,7 +403,7 @@ export default function StoryCloser({ storyId, beats, accent, closer, closerId, 
 
       const step = (now: number) => {
         if (dead) return;
-        const t = Math.min(1, (now - t0) / DUR);
+        const t = Math.min(1, (now - t0) / D);
         if (!jumped && t >= JUMP) jumped = true;
         if (drive.driving()) window.scrollTo(0, jumped ? scrollTo : scrollFrom);
         const g = t < JUMP ? 0 : (t - JUMP) / (1 - JUMP);
@@ -419,7 +427,7 @@ export default function StoryCloser({ storyId, beats, accent, closer, closerId, 
         fl.style.transform = "";
         story.current?.setPhoneHidden(false);
         unlisten();
-        if (drive.driving()) settle();
+        if (drive.driving()) settle(fast ? 600 : 1200);
         flying = false;
         abort = null;
         flown = true; // the way back starts from here
@@ -636,12 +644,29 @@ export default function StoryCloser({ storyId, beats, accent, closer, closerId, 
       });
     }
 
+    /* How fast the page is moving, px/s over the last ~150ms of scroll
+       events: the one number that decides a fast arrival. */
+    const trail: { t: number; y: number }[] = [];
+    const onScrollTrack = () => {
+      const t = performance.now();
+      trail.push({ t, y: window.scrollY });
+      while (trail.length && t - trail[0].t > 150) trail.shift();
+    };
+    window.addEventListener("scroll", onScrollTrack, { passive: true });
+    const scrollSpeed = () => {
+      const now = performance.now();
+      const pts = trail.filter((p) => now - p.t <= 150);
+      if (pts.length < 2) return 0;
+      const a = pts[0], b = pts[pts.length - 1];
+      return b.t > a.t ? (Math.abs(b.y - a.y) / (b.t - a.t)) * 1000 : 0;
+    };
+
     /* ── arriving, and leaving ──────────────────────────────────────── */
     const arrive = () => {
       reversing = false;
       const st = storyPhoneRect();
       const near = !!st && st.width > 10 && st.bottom > 120 && st.top < window.innerHeight - 120;
-      if (flies() && near) runFlight(() => {});
+      if (flies() && near) runFlight(() => {}, scrollSpeed() > FAST_PX_S);
       else c.arriveInPlace();
     };
     const onIntersect = (entries: IntersectionObserverEntry[]) => {
@@ -735,6 +760,7 @@ export default function StoryCloser({ storyId, beats, accent, closer, closerId, 
       dead = true;
       abort?.(false);
       unsettle?.();
+      window.removeEventListener("scroll", onScrollTrack);
       io.disconnect();
       unwatch();
       window.removeEventListener("wheel", onWheelUp);
