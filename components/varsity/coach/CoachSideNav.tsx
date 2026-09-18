@@ -6,7 +6,7 @@
   Varsity Mode:
     header  the squad initial + "Coach Console" and the squad name
     tabs    the role's tabs (from CoachNav — one list, one rule)
-    footer  squad settings, light/dark, Athlete view
+    footer  squad settings, Athlete view (light/dark lives in Settings)
 
   The tab and settings links carry the same `data-tour` anchors as the phone
   chrome, so the console tour works at either size.
@@ -14,7 +14,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import SideRail, { railIconCls, railPillCls } from "@/components/SideRail";
-import { ThemeModeToggle } from "@/components/ThemeMode";
 import { coachTabs, coachTabActive } from "@/components/varsity/coach/CoachNav";
 import { roleLabel, type VarsityRole } from "@/lib/varsity/membership";
 import { IconArrowLeft, IconSettings } from "@/components/icons";
@@ -56,7 +55,6 @@ export default function CoachSideNav({ role, teamName }: { role: VarsityRole; te
             >
               <IconSettings size={16} />
             </Link>
-            <ThemeModeToggle />
           </div>
           <Link href="/varsity/home" aria-label="Back to athlete view" className={railPillCls}>
             <IconArrowLeft size={14} />

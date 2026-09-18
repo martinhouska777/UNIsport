@@ -52,10 +52,13 @@ import {
   IconSettings,
   IconTrash,
   IconX,
+  IconSun,
+  IconMoon,
 } from "@/components/icons";
 import { requestTour, resetTour } from "@/lib/tour";
 import { coachTour } from "@/lib/varsity/coachTour";
 import { useAppState } from "@/components/AppState";
+import { useThemeMode } from "@/components/ThemeMode";
 
 /* A titled block, matching the section labels used across Varsity Mode. */
 function Section({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
@@ -89,6 +92,7 @@ export default function TeamAdminScreen({ membership }: { membership: Membership
   const { teamId, role } = membership;
   const { userId } = useAppState();
   const router = useRouter();
+  const { mode, toggle: toggleMode } = useThemeMode();
 
   const [squad, setSquad] = useState<SquadMember[]>([]);
   const [invites, setInvites] = useState<Invite[]>([]);
@@ -470,6 +474,39 @@ export default function TeamAdminScreen({ membership }: { membership: Membership
           </p>
         </Section>
       )}
+
+      {/* ── Appearance ──
+          Light or dark for the console. The round sun/moon button used to
+          sit in the top bar beside the gear (and in the laptop rail); the
+          owner moved it here (2026-09-18: "light and dark theme should be in
+          the settings"). Everyone who can open Settings gets it, captains
+          included — it is their screen, not the squad's. */}
+      <Section title="Appearance">
+        <button
+          type="button"
+          onClick={toggleMode}
+          aria-label={mode === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+          className="flex w-full items-center gap-3 rounded-xl border border-border bg-surface px-3.5 py-3 text-left"
+        >
+          <span className="text-muted">{mode === "dark" ? <IconMoon size={18} /> : <IconSun size={18} />}</span>
+          <span className="flex-1 text-[13px] font-medium text-text">
+            {mode === "dark" ? "Dark mode" : "Light mode"}
+          </span>
+          {/* The switch: a pill whose knob sits at the far end when dark is on. */}
+          <span
+            aria-hidden
+            className={`relative h-6 w-11 flex-shrink-0 rounded-full border transition-colors ${
+              mode === "dark" ? "border-primary bg-primary" : "border-border bg-surface-2"
+            }`}
+          >
+            <span
+              className={`absolute top-0.5 h-[18px] w-[18px] rounded-full bg-background shadow-sm transition-[left] ${
+                mode === "dark" ? "left-[22px]" : "left-0.5"
+              }`}
+            />
+          </span>
+        </button>
+      </Section>
 
       {/* ── 5. Help ──
           The console's walk again, on demand. Unlike the app's Settings this

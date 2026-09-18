@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { ThemeModeToggle } from "@/components/ThemeMode";
 import { IconArrowLeft, IconSettings } from "@/components/icons";
 import { roleLabel, type VarsityRole } from "@/lib/varsity/membership";
 
@@ -47,7 +46,8 @@ export default function CoachTopBar({
         >
           <IconSettings size={16} />
         </Link>
-        <ThemeModeToggle />
+        {/* The light/dark button that sat here moved into Settings
+            (owner, 2026-09-18: "should be in the settings"). */}
         <Link
           href="/varsity/home"
           aria-label="Back to athlete view"
