@@ -36,7 +36,9 @@ export const categoryMeta: Record<
   { label: string; color: string; hasIntensity: boolean }
 > = {
   water: { label: "Water", color: "#4a90a4", hasIntensity: true },
-  erg: { label: "Erg", color: "var(--muted)", hasIntensity: true },
+  // Blue, the same blue the Log gives an erg — grey (var(--muted)) made the Erg
+  // stripe on the coach's plan look like nothing was there (2026-09-18).
+  erg: { label: "Erg", color: "#60a5fa", hasIntensity: true },
   // The coach's spreadsheet colours — the same hues as kindColor in home.ts,
   // so a session is one colour on every screen and on the sheet itself.
   weights: { label: "Weights", color: "#ff00ff", hasIntensity: false },

@@ -118,15 +118,6 @@ function Dot({ color }: { color: string }) {
   return <span className="h-2.5 w-2.5 rounded-full" style={{ background: color }} />;
 }
 
-/*
-  A faint wash of a session's own colour, for the little label chip.
-  It used to be `${color}22` — string-appending hex alpha — which silently
-  produced nothing whenever the colour was a theme token rather than a hex, and
-  now that a coach picks these colours in Settings half of them are tokens.
-  color-mix() works for both.
-*/
-const tint = (color: string) => `color-mix(in srgb, ${color} 13%, transparent)`;
-
 /* One string standing for the whole plan — this is how a real edit is told
    apart from a re-render, and what the autosave compares against. */
 const snapshot = (blocks: Block[], sessions: SessionMap) =>
@@ -790,8 +781,10 @@ export default function TrainingPlanScreen({
               className={`overflow-hidden rounded-xl border bg-surface ${d.today ? "border-primary/50" : "border-border"}`}
             >
               <div className={`flex items-center justify-between px-3 py-2 ${d.today ? "bg-primary-tint" : "bg-surface-2"}`}>
+                {/* Just the day, written out — the owner crossed out the month
+                    (2026-09-18): the week range above already says it. */}
                 <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-                  {d.weekday} {d.month}
+                  {d.date.toLocaleDateString("en-US", { weekday: "long" })}
                 </span>
                 <span className={`text-sm font-semibold ${d.today ? "text-primary" : "text-text"}`}>{d.dayNum}</span>
               </div>
@@ -823,30 +816,42 @@ export default function TrainingPlanScreen({
                       type="button"
                       data-tour={tour}
                       onClick={() => openEditor(d.date, p)}
-                      className="w-full rounded-lg border border-border bg-surface-2 py-2 pl-2.5 pr-2.5 text-left"
+                      className="w-full rounded-lg border border-border bg-surface py-2 pl-2.5 pr-2.5 text-left"
                       style={{ borderLeft: `3px solid ${sColor(s)}` }}
                     >
-                      <div className="mb-0.5 flex items-center justify-between">
-                        <span className="text-[8px] font-bold tracking-[0.12em] text-muted">{p}</span>
-                        <span
-                          className="rounded px-1.5 py-px text-[8px] font-bold tracking-[0.05em]"
-                          style={{ background: `${tint(sColor(s))}`, color: sColor(s) }}
-                        >
-                          {sLabel(s)}
+                      {/*
+                        THE OWNER’S CARD (2026-09-18). White, not grey. The top
+                        row is the session’s name on the left where "AM" was, and
+                        the time on the right where the name was — the time says
+                        AM or PM itself, so the period label is gone from a filled
+                        slot. The name is written in ordinary dark text with a dot
+                        of the workout’s colour beside it: painting the word in the
+                        colour made a grey Erg, and a lime UT2, unreadable.
+                      */}
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="flex min-w-0 items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-text">
+                          <span
+                            aria-hidden
+                            className="h-2 w-2 flex-shrink-0 rounded-full"
+                            style={{ background: sColor(s) }}
+                          />
+                          <span className="truncate">{sLabel(s)}</span>
                         </span>
+                        <span className="flex-shrink-0 text-[11px] font-semibold tabular-nums text-text">{s.time}</span>
                       </div>
-                      <div className="text-[11px] font-medium leading-snug text-text">
-                        {s.description || sLabel(s)}
-                      </div>
-                      <div className="mt-0.5 flex items-center gap-2 text-[11px] text-muted">
-                        <span>{s.time}</span>
-                        {s.location && <span className="truncate">· {s.location}</span>}
-                        {s.note && (
-                          <span className="flex items-center gap-1">
-                            <IconClipboard size={9} /> note
-                          </span>
-                        )}
-                      </div>
+                      {s.description && (
+                        <div className="mt-1 text-[11px] font-medium leading-snug text-text">{s.description}</div>
+                      )}
+                      {(s.location || s.note) && (
+                        <div className="mt-0.5 flex items-center gap-2 text-[11px] text-muted">
+                          {s.location && <span className="truncate">{s.location}</span>}
+                          {s.note && (
+                            <span className="flex items-center gap-1">
+                              <IconClipboard size={9} /> note
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </button>
                   );
                 })}
