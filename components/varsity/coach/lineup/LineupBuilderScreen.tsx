@@ -128,7 +128,6 @@ import {
   IconArrowLeft,
   IconChevronLeft,
   IconChevronRight,
-  IconClock,
   IconPlus,
   IconRepeat,
   IconX,
@@ -1807,35 +1806,40 @@ function Builder({
                         )}
                       </button>
                       {/*
-                        Push-off time — a plain dropdown of every five minutes,
-                        which is the native scroll wheel on a phone. A boat the
-                        coach has never touched already says 7:15am, so the
-                        common case is no work at all. `dockTimes` may not carry
-                        a time an older lineup was saved with, so that one is
-                        added to the list rather than silently swapped out.
+                        Push-off time — JUST THE TIME, IN A SQUARE (owner,
+                        2026-09-17: "do only the time and do it in some
+                        square behind it so you can change it"). It used to
+                        be a clock icon, the time, and the select's own little
+                        arrow, three marks in a row for one number. The clock
+                        is gone and the arrow is gone (appearance-none); what
+                        is left is the time on a bordered chip, and tapping
+                        the chip opens the picker — a plain dropdown of every
+                        five minutes, the native scroll wheel on a phone. A
+                        boat the coach has never touched already says 7:15am,
+                        so the common case is no work at all. `dockTimes` may
+                        not carry a time an older lineup was saved with, so
+                        that one is added to the list rather than silently
+                        swapped out.
                       */}
-                      <div className="flex flex-shrink-0 items-center gap-1 rounded-lg border border-border bg-surface-2 px-2 py-1 text-muted">
-                        <IconClock size={13} />
-                        <select
-                          value={boat.dock}
-                          onChange={(e) => setDock(boat.id, e.target.value)}
-                          aria-label="Push-off time"
-                          /* No `outline-none` here, unlike the text fields
-                             around it: a select shows no caret, so the gold
-                             keyboard ring is its only focus mark — and a select
-                             (unlike a text field) only matches :focus-visible
-                             when a keyboard put it there, so a tap stays clean. */
-                          className="bg-transparent text-right text-[12px] font-medium text-text"
-                        >
-                          {(dockTimes.includes(boat.dock) ? dockTimes : [boat.dock, ...dockTimes]).map(
-                            (t) => (
-                              <option key={t} value={t} className="bg-surface text-text">
-                                {t}
-                              </option>
-                            ),
-                          )}
-                        </select>
-                      </div>
+                      <select
+                        value={boat.dock}
+                        onChange={(e) => setDock(boat.id, e.target.value)}
+                        aria-label="Push-off time"
+                        /* No `outline-none` here, unlike the text fields
+                           around it: a select shows no caret, so the gold
+                           keyboard ring is its only focus mark — and a select
+                           (unlike a text field) only matches :focus-visible
+                           when a keyboard put it there, so a tap stays clean. */
+                        className="h-8 flex-shrink-0 appearance-none rounded-lg border border-border bg-surface-2 px-2.5 text-center text-[12px] font-semibold text-text"
+                      >
+                        {(dockTimes.includes(boat.dock) ? dockTimes : [boat.dock, ...dockTimes]).map(
+                          (t) => (
+                            <option key={t} value={t} className="bg-surface text-text">
+                              {t}
+                            </option>
+                          ),
+                        )}
+                      </select>
                     </div>
 
                     {/* Shut: the header is all that is left of this boat. */}
