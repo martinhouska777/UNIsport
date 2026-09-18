@@ -45,6 +45,9 @@ export type ScrollStoryHandle = {
   setGone: (gone: boolean) => void;
   /** Which beat the scroll is on. */
   current: () => number;
+  /** Which beat's screen the phone is SHOWING (differs from `current` while a
+      change plays out, and lags it when the reader scrolls fast). */
+  shown: () => number;
 };
 
 type Props = {
@@ -139,6 +142,7 @@ export default function ScrollStory({ id, beats, accent, ref }: Props) {
     },
     setGone: (g) => stage.current?.classList.toggle("ls-gone", g),
     current: () => current.current,
+    shown: () => shown.current,
   }));
 
   /* ── the runtime ── */

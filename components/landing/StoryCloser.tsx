@@ -258,12 +258,62 @@ export default function StoryCloser({ storyId, beats, accent, closer, closerId, 
       };
     }
 
+    /*
+      LANDING ON A FAST SCROLL. The flight swallows the reader's downward wheel
+      while it plays, but a fast flick is a STREAM of wheel events (a trackpad
+      keeps sending them as momentum for a second or more), and the moment the
+      flight let go the rest of the stream carried the page straight past the
+      closer while it was still building itself — measured 2026-09-18: the
+      landed section was 1400px off the top half a second after landing
+      (owner: "when you scroll fast it bugs … it's moving every time").
+
+      So after landing, the SAME stream keeps being swallowed: a downward wheel
+      that follows the previous one within 200ms is momentum, not a new push.
+      The first pause ends it, as does any push up, a touch, a key or a click,
+      and it never outlasts 1.2s. A fresh scroll after the landing is the
+      reader's as always.
+    */
+    let unsettle: (() => void) | null = null;
+    function settle() {
+      unsettle?.();
+      const t0 = performance.now();
+      let last = t0;
+      const onWheel = (ev: WheelEvent) => {
+        const now = performance.now();
+        if (ev.ctrlKey || ev.deltaY <= 0 || now - last > 200 || now - t0 > 1200) return off();
+        last = now;
+        ev.preventDefault();
+      };
+      const timer = setTimeout(() => off(), 1200);
+      const off = () => {
+        clearTimeout(timer);
+        window.removeEventListener("wheel", onWheel);
+        window.removeEventListener("touchmove", off);
+        window.removeEventListener("keydown", off);
+        window.removeEventListener("pointerdown", off);
+        if (unsettle === off) unsettle = null;
+      };
+      window.addEventListener("wheel", onWheel, { passive: false });
+      window.addEventListener("touchmove", off, { passive: true });
+      window.addEventListener("keydown", off);
+      window.addEventListener("pointerdown", off);
+      unsettle = off;
+    }
+
     /* ── the flight ─────────────────────────────────────────────────── */
     function runFlight(done: () => void) {
       const fl = flight.current, fp = flightPhone.current, fs = flightShots.current;
       const start = storyPhoneRect();
       const target = c!.phoneTarget();
-      const fromShot = story.current?.shotEl(fromBeat);
+      /* TAKE OFF WITH THE SCREEN THAT IS ON THE PHONE. A reader who scrolls
+         fast reaches the closer while the story is still showing an earlier
+         chapter; cloning the last chapter's screen instead made the phone
+         change its picture the instant it took off (owner, 2026-09-18: "when
+         you scroll fast it bugs"). So it leaves on what is showing, and the
+         screen swap mid-flight carries it to the closer's own. */
+      const showing = story.current?.shown() ?? -1;
+      const leaveOn = showing >= 0 ? showing : fromBeat;
+      const fromShot = story.current?.shotEl(leaveOn);
       const toShot = story.current?.shotEl(toBeat);
       if (!fl || !fp || !fs || !start || !target || start.width < 10 || !fromShot || !toShot) {
         // Whatever is missing, the closer still has to appear. This used to
@@ -308,7 +358,7 @@ export default function StoryCloser({ storyId, beats, accent, closer, closerId, 
       const t0 = performance.now();
       // Story and closer on the same screen (the student story ends on Gyms,
       // which is what Campus Colours shows): nothing to swap.
-      let swapped = fromBeat === toBeat;
+      let swapped = leaveOn === toBeat;
       let jumped = false;
 
       /* The move and the page arrive together: the same easing that flies the
@@ -369,6 +419,7 @@ export default function StoryCloser({ storyId, beats, accent, closer, closerId, 
         fl.style.transform = "";
         story.current?.setPhoneHidden(false);
         unlisten();
+        if (drive.driving()) settle();
         flying = false;
         abort = null;
         flown = true; // the way back starts from here
@@ -683,6 +734,7 @@ export default function StoryCloser({ storyId, beats, accent, closer, closerId, 
       // opened scrolled itself to where the old page's closer had been.
       dead = true;
       abort?.(false);
+      unsettle?.();
       io.disconnect();
       unwatch();
       window.removeEventListener("wheel", onWheelUp);
