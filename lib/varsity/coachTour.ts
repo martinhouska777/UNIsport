@@ -81,28 +81,28 @@ const steps: TourStep[] = [
   {
     anchor: "coach-plan-new-block",
     title: "Everything starts with a block",
-    body: "A block is a stretch of training, usually up to a race. Give it a start, an end and the race at the end of it, and it cuts itself into weeks — you never lay out a calendar by hand.",
+    body: "A block is a stretch of training, usually up to a race. Give it a start, an end and the race at the end of it, and it cuts itself into weeks — you never lay out a calendar by hand. The block and its dates wait at the bottom of the page; the tab itself opens on the week you are in.",
   },
 
-  /* ── The plan dive. Needs a block to exist; see `group` at the top. ── */
+  /* ── The plan dive. Needs a block to exist; see `group` at the top. The tab
+        already lands on the current block's current week (owner, 2026-09-17:
+        no list of blocks, no list of weeks), so there is nothing to press
+        first — the walk lights the controls where they are. ── */
   {
     group: PLAN_DIVE,
-    press: "coach-plan-first-block",
     route: PLAN,
     anchor: "coach-plan-status",
     title: "Draft is the whole point",
-    body: "A block is a DRAFT until you say otherwise, and not one word of a draft is visible to the squad. So you can rough six weeks in, sleep on it, tear half of it up on Tuesday — and nobody watched you do it. Publish flips the whole block onto every athlete's Home at once; Unpublish takes it straight back.",
+    body: "A block is a DRAFT until you say otherwise, and not one word of a draft is visible to the squad. So you can rough six weeks in, sleep on it, tear half of it up on Tuesday — and nobody watched you do it. Publish, up here, flips the whole block onto every athlete's Home at once; Unpublish takes it straight back.",
   },
   {
     group: PLAN_DIVE,
-    anchor: "coach-plan-first-week",
+    anchor: "coach-plan-weeks",
     title: "The weeks are already there",
-    body: "One row per week, each saying how many sessions are set. Empty weeks say so, which is how you spot the hole in week four without opening week four.",
+    body: "One chip per week, the week you are standing in filled. The tab always opens on this week; tap any other to jump to it — week four is one tap away, not a screen.",
   },
   {
     group: PLAN_DIVE,
-    press: "coach-plan-first-week",
-    route: PLAN,
     anchor: "coach-plan-first-day",
     title: "A day is an AM and a PM",
     body: "Two slots per day, and that is the whole grid. An empty one says “add session”; a filled one shows the workout, its type, the time and whether it carries a note. Let's build one.",

@@ -70,11 +70,37 @@ import {
   IconTrophy,
 } from "@/components/icons";
 
+/*
+  THE TAB OPENS ON THE WEEK (owner, 2026-09-17: "I don't want to see the
+  training box… open the training block with the week tab, so the current week
+  will be shown, and then there will be the other weeks you can click. There's
+  no point in having more blocks at once"). There used to be two screens in
+  front of the weeks — a list of blocks, then the block with its weeks listed
+  as rows — and a coach walked through both every time to reach the one week
+  they were in. Both are gone. The tab lands on the current block's current
+  week; the other weeks are the chips over the days; and the block itself —
+  its dates, its race, the other blocks, a new one, and delete — is a section
+  at the BOTTOM of the same page. "empty" is the console with no block yet.
+*/
 type View =
-  | { name: "blocks" }
+  | { name: "empty" }
   | { name: "create" }
-  | { name: "block"; blockId: string }
   | { name: "week"; blockId: string; weekIdx: number };
+
+/*
+  WHERE THE TAB LANDS. The block that covers today; failing that the next one
+  to start; failing that the last one that ran. Inside it, the week that holds
+  today, or the first week of a block that has not started.
+*/
+const homeBlock = (bs: Block[], iso: string): Block | null =>
+  bs.find((b) => b.start <= iso && iso <= b.end) ??
+  [...bs].filter((b) => b.start > iso).sort((a, b) => a.start.localeCompare(b.start))[0] ??
+  [...bs].sort((a, b) => b.end.localeCompare(a.end))[0] ??
+  null;
+const homeWeekIdx = (b: Block): number => {
+  const i = buildWeeks(b).findIndex((w) => w.days.some((d) => d.today));
+  return i >= 0 ? i : 0;
+};
 
 type Form = {
   category?: string;
@@ -107,18 +133,20 @@ const snapshot = (blocks: Block[], sessions: SessionMap) =>
   JSON.stringify({ blocks, sessions });
 
 
-function DraftBadge() {
+/* Published / Draft, beside the title — THE SAME CHIP THE LINEUP BUILDER
+   WEARS beside its day, so the two tabs say the same thing the same way
+   (owner, 2026-09-17: "just like Published, like you have in lineups now"). */
+function StatusChip({ live }: { live: boolean }) {
   return (
-    <span className="rounded border border-warn-line bg-warn-tint px-1.5 py-px text-[8px] font-bold uppercase tracking-[0.08em] text-warn">
-      Draft
-    </span>
-  );
-}
-
-function PublishedBadge() {
-  return (
-    <span className="rounded border border-success-line bg-success-tint px-1.5 py-px text-[8px] font-bold uppercase tracking-[0.08em] text-success">
-      Live
+    <span
+      className={`flex flex-shrink-0 items-center gap-1 rounded px-1.5 py-px text-[11px] font-semibold uppercase tracking-[0.12em] ${
+        live
+          ? "border border-success-line bg-success-tint text-success"
+          : "border border-warn-line bg-warn-tint text-warn"
+      }`}
+    >
+      <span className={`h-1.5 w-1.5 rounded-full ${live ? "bg-success" : "bg-warn"}`} />
+      {live ? "Published" : "Draft"}
     </span>
   );
 }
@@ -140,7 +168,8 @@ export default function TrainingPlanScreen({
   const [cfg, setCfg] = useState<TrainingConfig>(defaultConfig);
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [sessions, setSessions] = useState<SessionMap>({});
-  const [view, setView] = useState<View>({ name: "blocks" });
+  // null = wherever the tab lands (see homeBlock); set once the coach moves.
+  const [picked, setView] = useState<View | null>(null);
   const [loading, setLoading] = useState(true);
   /*
     AUTOSAVE — there is no Save button on this screen any more.
@@ -372,7 +401,7 @@ export default function TrainingPlanScreen({
     setBlocks(nextBlocks);
     setSessions(nextSessions);
     setConfirm(null);
-    setView({ name: "blocks" });
+    setView(null); // land on whatever block is left — or the empty console
     await persist({ blocks: nextBlocks, sessions: nextSessions });
   };
 
@@ -411,11 +440,14 @@ export default function TrainingPlanScreen({
     raceDate: "",
   });
 
+  /* Nothing picked yet: the current block's current week, or the empty console. */
+  const view: View = useMemo<View>(() => {
+    if (picked) return picked;
+    const home = homeBlock(blocks, todayISO);
+    return home ? { name: "week", blockId: home.id, weekIdx: homeWeekIdx(home) } : { name: "empty" };
+  }, [picked, blocks, todayISO]);
   const block = "blockId" in view ? blocks.find((b) => b.id === view.blockId) : undefined;
   const weeks: WeekRow[] = useMemo(() => (block ? buildWeeks(block) : []), [block]);
-
-  const weekSessionCount = (w: WeekRow) =>
-    w.days.reduce((n, d) => n + periods.filter((p) => sessions[sessionKey(d.date, p)]).length, 0);
 
   /* ── create a block ── */
   const createBlock = () => {
@@ -430,7 +462,7 @@ export default function TrainingPlanScreen({
       raceDate: draft.raceDate || undefined,
     };
     setBlocks((bs) => [b, ...bs]);
-    setView({ name: "block", blockId: b.id });
+    setView({ name: "week", blockId: b.id, weekIdx: homeWeekIdx(b) });
   };
 
   /* ── session editor ── */
@@ -453,8 +485,8 @@ export default function TrainingPlanScreen({
   /*
     ARRIVING FROM TODAY. In the first render that has the plan, land on the
     week that holds the slot and open its editor — once per link. A slot no
-    block covers falls back to the blocks list, where "New training block" is
-    the right answer. This is React's adjust-state-during-render pattern (the
+    block covers falls back to wherever the tab lands, where "New training
+    block" is at the bottom of the page. This is React's adjust-state-during-render pattern (the
     one useMembership uses): the state is set in the render that first sees
     the loaded plan, and React re-renders before anything is painted. Not an
     effect, because the repo's lint forbids setState inside one. Sits after
@@ -601,78 +633,25 @@ export default function TrainingPlanScreen({
     );
   }
 
-  /* ─────────────  view: blocks list  ───────────── */
-  if (view.name === "blocks") {
+  /* ─────────────  view: the empty console (no block yet)  ───────────── */
+  if (view.name === "empty") {
     return (
       <div className="mx-auto w-full max-w-screen-sm px-4 pb-8 pt-4">
-        {/* No "Training plan" title — the tab bar already says it, and the
-            list of blocks is the top of the screen. */}
         <h1 className="sr-only">Training plan</h1>
-
-        {blocks.length === 0 ? (
-          <div className="mt-2 rounded-2xl border border-dashed border-border bg-surface px-5 py-10 text-center">
-            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary-tint text-primary">
-              <IconCalendar size={22} />
-            </div>
-            <div className="text-[14px] font-semibold text-text">No training blocks yet</div>
-            <p className="mx-auto mt-1 max-w-[16rem] text-[12px] text-muted">
-              Create your first block to start planning the weeks ahead.
-            </p>
-            {/* data-tour: whichever of the two "new block" buttons is on
-                screen is the one the tour lights — see visibleAnchor(). */}
-            <Button size="md" onClick={() => setView({ name: "create" })} className="mt-5" data-tour="coach-plan-new-block">
-              <IconPlus size={16} /> New training block
-            </Button>
+        <div className="mt-2 rounded-2xl border border-dashed border-border bg-surface px-5 py-10 text-center">
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary-tint text-primary">
+            <IconCalendar size={22} />
           </div>
-        ) : (
-          <div className="flex flex-col gap-2.5">
-            {blocks.map((b, bi) => (
-              <div
-                key={b.id}
-                className="flex items-stretch overflow-hidden rounded-2xl border border-border bg-surface"
-              >
-                {/* data-tour: the console tour opens the FIRST block to walk the
-                    draft → week → workout path (lib/varsity/coachTour.ts). */}
-                <button
-                  type="button"
-                  data-tour={bi === 0 ? "coach-plan-first-block" : undefined}
-                  onClick={() => setView({ name: "block", blockId: b.id })}
-                  className="flex flex-1 items-center gap-3 px-4 py-3.5 text-left"
-                >
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[15px] font-semibold text-text">{b.name}</span>
-                      {b.status === "draft" ? <DraftBadge /> : <PublishedBadge />}
-                    </div>
-                    <div className="mt-0.5 text-[11px] text-muted">{blockRangeLabel(b)}</div>
-                    {b.raceName && (
-                      <div className="mt-1 flex items-center gap-1 text-[11px] text-accent">
-                        <IconFlag size={11} /> {b.raceName}
-                      </div>
-                    )}
-                  </div>
-                  <IconChevronRight size={16} />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setConfirm({ kind: "block", blockId: b.id })}
-                  aria-label={`Delete ${b.name}`}
-                  className="flex items-center border-l border-border px-3.5 text-muted active:bg-danger-tint active:text-danger"
-                >
-                  <IconTrash size={16} />
-                </button>
-              </div>
-            ))}
-            <button
-              type="button"
-              onClick={() => setView({ name: "create" })}
-              data-tour="coach-plan-new-block"
-              className="mt-1 flex items-center justify-center gap-2 rounded-2xl border border-dashed border-border bg-surface py-3.5 text-[13px] font-medium text-muted active:border-primary-line active:text-primary"
-            >
-              <IconPlus size={16} /> New training block
-            </button>
-          </div>
-        )}
+          <div className="text-[14px] font-semibold text-text">No training blocks yet</div>
+          <p className="mx-auto mt-1 max-w-[16rem] text-[12px] text-muted">
+            Create your first block to start planning the weeks ahead.
+          </p>
+          {/* data-tour: whichever "new block" button is on screen is the one
+              the tour lights — see visibleAnchor(). */}
+          <Button size="md" onClick={() => setView({ name: "create" })} className="mt-5" data-tour="coach-plan-new-block">
+            <IconPlus size={16} /> New training block
+          </Button>
+        </div>
         {confirmModal}
       </div>
     );
@@ -686,7 +665,7 @@ export default function TrainingPlanScreen({
     const labelCls = "mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.12em] text-muted";
     return (
       <div className="mx-auto w-full max-w-screen-sm px-4 pb-8 pt-4">
-        <button onClick={() => setView({ name: "blocks" })} className="flex items-center gap-1 text-[13px] text-muted">
+        <button onClick={() => setView(null)} className="flex items-center gap-1 text-[13px] text-muted">
           <IconArrowLeft size={16} /> Training plan
         </button>
         <h1 className="mt-1 text-2xl font-semibold text-text">New training block</h1>
@@ -738,119 +717,61 @@ export default function TrainingPlanScreen({
     );
   }
 
-  /* ─────────────  view: block overview (weeks)  ───────────── */
-  if (view.name === "block" && block) {
+  /* ─────────────  view: week (days)  ───────────── */
+  if (view.name === "week" && block) {
+    // A block that shrank under a picked index still shows its last week.
+    const week = weeks[Math.min(view.weekIdx, weeks.length - 1)];
+    const live = block.status === "published";
+    const others = blocks.filter((b) => b.id !== block.id);
     const race = daysToRace(block);
     return (
       <div className="mx-auto w-full max-w-screen-sm px-4 pb-8 pt-4">
-        <div className="sticky top-0 z-20 -mx-4 flex items-center justify-between border-b border-border bg-background/95 px-4 py-2.5 backdrop-blur">
-          <button onClick={() => setView({ name: "blocks" })} className="flex items-center gap-1 text-[13px] text-muted">
-            <IconArrowLeft size={16} /> Training plan
-          </button>
-          {saveState}
+        {/*
+          THE TOP ROW, the lineup builder's shape: the block's name on the
+          left, and on the right whether it is saved and the one button that
+          publishes it. The publish control used to be a white card of its
+          own under the title — a heading, a sentence, then the button —
+          "the big white thing, which is useless" (owner, 2026-09-17). Just
+          the button now, top right, like the lineup. Sticky, so publishing
+          never means scrolling back up past seven days.
+        */}
+        <div className="sticky top-0 z-20 -mx-4 flex items-center gap-2 border-b border-border bg-background/95 px-4 py-2.5 backdrop-blur">
+          <span className="min-w-0 flex-1 truncate text-[13px] text-muted">{block.name}</span>
+          <div className="flex min-w-0 flex-shrink-0 items-center justify-end gap-2">
+            {saveState}
+            <PublishBar
+              bare
+              tourId="coach-plan-status"
+              what="block"
+              live={live}
+              changed={blockChanged(block)}
+              busy={writing}
+              onPublish={() => publishBlock(block.id)}
+              onNotify={() => tellSquad(block.id)}
+              onUnpublish={() => unpublishBlock(block.id)}
+            />
+          </div>
         </div>
         <div className="mt-3 flex items-center gap-2">
-          <h1 className="text-2xl font-semibold text-text">{block.name}</h1>
-          {block.status === "draft" && <DraftBadge />}
+          <h1 className="text-2xl font-semibold text-text">Week {week.index}</h1>
+          <StatusChip live={live} />
         </div>
-        <div className="mt-1 text-[11px] text-muted">{blockRangeLabel(block)}</div>
-
-        {block.raceName && (
-          <div className="mt-3 flex items-center gap-3 rounded-xl border border-primary-line bg-gradient-to-r from-primary/20 to-accent/10 px-3.5 py-2.5">
-            <span className="text-primary">
-              <IconFlag size={18} />
-            </span>
-            <div className="flex-1 text-[12px] font-medium text-text">{block.raceName}</div>
-            {race !== null && (
-              <div className="text-right">
-                <div className="text-xl font-semibold leading-none text-accent">{race}</div>
-                <div className="text-[8px] font-semibold uppercase tracking-[0.12em] text-muted">days</div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* The one publish control — same component, same words, same three
-            states as the Lineup tab (components/varsity/coach/PublishBar). */}
-        <div className="mt-4">
-          <PublishBar
-            tourId="coach-plan-status"
-            what="block"
-            live={block.status === "published"}
-            changed={blockChanged(block)}
-            busy={writing}
-            onPublish={() => publishBlock(block.id)}
-            onNotify={() => tellSquad(block.id)}
-            onUnpublish={() => unpublishBlock(block.id)}
-          />
-        </div>
-
-        <div className="mt-5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">Weeks</div>
-        <div className="mt-2.5 flex flex-col gap-2">
-          {weeks.map((w, i) => {
-            const count = weekSessionCount(w);
-            return (
-              <button
-                key={w.index}
-                type="button"
-                data-tour={i === 0 ? "coach-plan-first-week" : undefined}
-                onClick={() => setView({ name: "week", blockId: block.id, weekIdx: i })}
-                className="flex items-center gap-3 rounded-xl border border-border bg-surface px-4 py-3 text-left"
-              >
-                <div className="flex h-9 w-9 flex-shrink-0 flex-col items-center justify-center rounded-lg bg-surface-2">
-                  <span className="text-[7px] font-semibold uppercase tracking-[0.1em] text-muted">Wk</span>
-                  <span className="text-[13px] font-semibold leading-none text-text">{w.index}</span>
-                </div>
-                <div className="flex-1">
-                  <div className="text-[13px] font-medium text-text">{w.rangeLabel}</div>
-                  <div className="mt-0.5 text-[11px] text-muted">
-                    {count > 0 ? `${count} session${count > 1 ? "s" : ""} set` : "Empty"}
-                  </div>
-                </div>
-                <IconChevronRight size={16} />
-              </button>
-            );
-          })}
-        </div>
-
-        <button
-          type="button"
-          onClick={() => setConfirm({ kind: "block", blockId: block.id })}
-          className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl border border-danger-line bg-danger-tint py-3 text-[13px] font-semibold text-danger"
-        >
-          <IconTrash size={15} /> Delete block
-        </button>
-        {confirmModal}
-      </div>
-    );
-  }
-
-  /* ─────────────  view: week (days)  ───────────── */
-  if (view.name === "week" && block) {
-    const week = weeks[view.weekIdx];
-    return (
-      <div className="mx-auto w-full max-w-screen-sm px-4 pb-8 pt-4">
-        <div className="sticky top-0 z-20 -mx-4 flex items-center justify-between border-b border-border bg-background/95 px-4 py-2.5 backdrop-blur">
-          <button
-            onClick={() => setView({ name: "block", blockId: block.id })}
-            className="flex items-center gap-1 text-[13px] text-muted"
-          >
-            <IconArrowLeft size={16} /> {block.name}
-          </button>
-          {saveState}
-        </div>
-        <h1 className="mt-3 text-2xl font-semibold text-text">Week {week.index}</h1>
         <div className="mt-0.5 text-[11px] text-muted">{week.rangeLabel}</div>
 
-        {/* week jump chips */}
-        <div className="-mx-4 mt-3 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none]">
+        {/* THE OTHER WEEKS — one chip each, the week you are in filled. This
+            row is the whole way between weeks now that the list of week rows
+            is gone. data-tour: the console tour points here. */}
+        <div
+          data-tour="coach-plan-weeks"
+          className="-mx-4 mt-3 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none]"
+        >
           {weeks.map((w, i) => (
             <button
               key={w.index}
               type="button"
               onClick={() => setView({ name: "week", blockId: block.id, weekIdx: i })}
               className={`flex-shrink-0 rounded-lg border px-3 py-1.5 text-[11px] font-medium ${
-                i === view.weekIdx ? "border-text bg-text text-background" : "border-border bg-surface text-muted"
+                w.index === week.index ? "border-text bg-text text-background" : "border-border bg-surface text-muted"
               }`}
             >
               Week {w.index}
@@ -936,10 +857,76 @@ export default function TrainingPlanScreen({
 
         <button
           type="button"
-          onClick={() => setConfirm({ kind: "week", blockId: block.id, weekIdx: view.weekIdx })}
+          onClick={() => setConfirm({ kind: "week", blockId: block.id, weekIdx: weeks.indexOf(week) })}
           className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl border border-danger-line bg-danger-tint py-3 text-[13px] font-semibold text-danger"
         >
           <IconTrash size={15} /> Clear this week
+        </button>
+
+        {/*
+          THE BLOCK, AT THE BOTTOM. Everything that used to be its own screen
+          in front of the weeks lives under them now: what this block is (its
+          dates and the race it runs to), the other blocks if there are any,
+          a new one, and — last of all, as the owner asked — delete. A coach
+          opens this tab for the week; the block is the thing they set up
+          once, so it waits at the end of the page.
+        */}
+        <div className="mt-8 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">Block</div>
+        <div className="mt-2.5 rounded-xl border border-border bg-surface px-4 py-3">
+          <div className="text-[15px] font-semibold text-text">{block.name}</div>
+          <div className="mt-0.5 text-[11px] text-muted">{blockRangeLabel(block)}</div>
+          {block.raceName && (
+            <div className="mt-2.5 flex items-center gap-2 border-t border-border pt-2.5">
+              <span className="text-primary">
+                <IconFlag size={14} />
+              </span>
+              <span className="flex-1 text-[12px] font-medium text-text">{block.raceName}</span>
+              {race !== null && (
+                <span className="text-[12px] text-muted">
+                  <span className="font-semibold text-accent">{race}</span> days
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+
+        {others.length > 0 && (
+          <div className="mt-2 flex flex-col gap-2">
+            {others.map((b) => (
+              <button
+                key={b.id}
+                type="button"
+                onClick={() => setView({ name: "week", blockId: b.id, weekIdx: homeWeekIdx(b) })}
+                className="flex items-center gap-3 rounded-xl border border-border bg-surface px-4 py-3 text-left"
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="truncate text-[13px] font-medium text-text">{b.name}</span>
+                    <StatusChip live={b.status === "published"} />
+                  </div>
+                  <div className="mt-0.5 text-[11px] text-muted">{blockRangeLabel(b)}</div>
+                </div>
+                <IconChevronRight size={16} className="flex-shrink-0 text-muted" />
+              </button>
+            ))}
+          </div>
+        )}
+
+        <button
+          type="button"
+          onClick={() => setView({ name: "create" })}
+          data-tour="coach-plan-new-block"
+          className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-surface py-3 text-[13px] font-medium text-muted active:border-primary-line active:text-primary"
+        >
+          <IconPlus size={16} /> New training block
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setConfirm({ kind: "block", blockId: block.id })}
+          className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl border border-danger-line bg-danger-tint py-3 text-[13px] font-semibold text-danger"
+        >
+          <IconTrash size={15} /> Delete block
         </button>
 
         {editor && renderEditor()}
