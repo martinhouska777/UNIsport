@@ -81,7 +81,7 @@ const steps: TourStep[] = [
   {
     anchor: "coach-plan-new-block",
     title: "Everything starts with a block",
-    body: "A block is a stretch of training, usually up to a race. Give it a start, an end and the race at the end of it, and it cuts itself into weeks — you never lay out a calendar by hand. The block and its dates wait at the bottom of the page; the tab itself opens on the week you are in.",
+    body: "A block is a stretch of training, usually up to a race. Give it a start, an end and the race at the end of it, and it cuts itself into weeks — you never lay out a calendar by hand. The tab opens on the block you are in, on this week; a new block starts from the button at the foot of the page.",
   },
 
   /* ── The plan dive. Needs a block to exist; see `group` at the top. The tab

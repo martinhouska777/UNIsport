@@ -764,7 +764,9 @@ export default function TrainingPlanScreen({
           never means scrolling back up past seven days.
         */}
         <div className="sticky top-0 z-20 -mx-4 flex items-center gap-2 border-b border-border bg-background/95 px-4 py-2.5 backdrop-blur">
-          <span className="min-w-0 flex-1 truncate text-[13px] text-muted">{block.name}</span>
+          {/* No name here any more: the block card right under this bar is
+              the title, and the name was on screen twice (owner, 2026-09-18). */}
+          <span className="flex-1" />
           <div className="flex min-w-0 flex-shrink-0 items-center justify-end gap-2">
             {saveState}
             <PublishBar
@@ -788,32 +790,38 @@ export default function TrainingPlanScreen({
           two at most, tap one to open it) and New training block, and only
           THEN the week. Delete block alone stays at the very bottom.
         */}
+        <h1 className="sr-only">{block.name}</h1>
         <button
           type="button"
           onClick={() => openEditBlock(block)}
           aria-label={`Edit ${block.name}`}
           className="mt-3 w-full rounded-xl border border-border bg-surface px-4 py-3 text-left active:bg-surface-2"
         >
+          {/* THE BLOCK IS THE TITLE (owner, 2026-09-18): the name, the next
+              race top right, and under the name the week you are looking at
+              in small text. "Week 6 · Published" as a heading of its own is
+              gone — the filled week chip already says which week it is, and
+              the bar above says whether it is published. */}
           <div className="flex items-center gap-2">
-            <div className="min-w-0 flex-1 truncate text-[15px] font-semibold text-text">{block.name}</div>
+            <div className="min-w-0 flex-1 truncate text-[17px] font-semibold text-text">{block.name}</div>
+            {block.raceName && (
+              <span className="flex min-w-0 max-w-[45%] items-center gap-1 text-[11px] text-muted">
+                <span className="flex-shrink-0 text-primary">
+                  <IconFlag size={12} />
+                </span>
+                <span className="truncate font-medium text-text">{block.raceName}</span>
+                {race !== null && (
+                  <span className="flex-shrink-0">
+                    · <span className="font-semibold text-accent">{race}</span> days
+                  </span>
+                )}
+              </span>
+            )}
             <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg border border-border bg-surface-2 text-primary">
               <IconPencil size={13} />
             </span>
           </div>
-          <div className="mt-0.5 text-[11px] text-muted">{blockRangeLabel(block)}</div>
-          {block.raceName && (
-            <div className="mt-2.5 flex items-center gap-2 border-t border-border pt-2.5">
-              <span className="text-primary">
-                <IconFlag size={14} />
-              </span>
-              <span className="flex-1 text-[12px] font-medium text-text">{block.raceName}</span>
-              {race !== null && (
-                <span className="text-[12px] text-muted">
-                  <span className="font-semibold text-accent">{race}</span> days
-                </span>
-              )}
-            </div>
-          )}
+          <div className="mt-0.5 text-[11px] text-muted">{week.rangeLabel}</div>
         </button>
 
         {others.length > 0 && (
@@ -837,21 +845,6 @@ export default function TrainingPlanScreen({
             ))}
           </div>
         )}
-
-        <button
-          type="button"
-          onClick={openCreate}
-          data-tour="coach-plan-new-block"
-          className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-surface py-3 text-[13px] font-medium text-muted active:border-primary-line active:text-primary"
-        >
-          <IconPlus size={16} /> New training block
-        </button>
-
-        <div className="mt-5 flex items-center gap-2">
-          <h1 className="text-2xl font-semibold text-text">Week {week.index}</h1>
-          <StatusChip live={live} />
-        </div>
-        <div className="mt-0.5 text-[11px] text-muted">{week.rangeLabel}</div>
 
         {/* THE OTHER WEEKS — one chip each, the week you are in filled. This
             row is the whole way between weeks now that the list of week rows
@@ -964,10 +957,19 @@ export default function TrainingPlanScreen({
           ))}
         </div>
 
+        {/* New training block lives at the foot of the page (owner, 2026-09-18). */}
+        <button
+          type="button"
+          onClick={openCreate}
+          data-tour="coach-plan-new-block"
+          className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-surface py-3 text-[13px] font-medium text-muted active:border-primary-line active:text-primary"
+        >
+          <IconPlus size={16} /> New training block
+        </button>
         <button
           type="button"
           onClick={() => setConfirm({ kind: "week", blockId: block.id, weekIdx: weeks.indexOf(week) })}
-          className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl border border-danger-line bg-danger-tint py-3 text-[13px] font-semibold text-danger"
+          className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-danger-line bg-danger-tint py-3 text-[13px] font-semibold text-danger"
         >
           <IconTrash size={15} /> Clear this week
         </button>
