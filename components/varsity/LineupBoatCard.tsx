@@ -24,6 +24,7 @@
   which shell, and which oars.
 */
 import { useState } from "react";
+import BoatWorkStrip from "@/components/varsity/BoatWorkStrip";
 import CrewVideoStrip from "@/components/varsity/CrewVideoStrip";
 import { IconChevronDown, IconChevronUp } from "@/components/icons";
 import { sideMeta, COX_COLOR, COX_INK, COX_TAG, COX_LABEL } from "@/lib/varsity/coachLineup";
@@ -330,7 +331,18 @@ export default function LineupBoatCard({
             named and already carrying its seats. Only a boat read from the
             database has one (the demo day has no real crew to file against).
           */}
-          {l.dayKey && l.boat && <CrewVideoStrip dayKey={l.dayKey} boat={l.boat} />}
+          {l.dayKey && l.boat && (
+            <>
+              <CrewVideoStrip dayKey={l.dayKey} boat={l.boat} />
+              {/*
+                AND WHAT THE BOAT DID — under the video, in the same shape of
+                row, because the two are the same kind of thing: the only lines
+                on this card filled in AFTER the outing. Anybody who was in the
+                crew may write the distance; everyone else reads it.
+              */}
+              <BoatWorkStrip dayKey={l.dayKey} boat={l.boat} canEdit={isMyBoat(l)} />
+            </>
+          )}
         </>
       )}
     </div>

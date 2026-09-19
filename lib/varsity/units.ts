@@ -56,6 +56,16 @@ export function formatWeight(kg: number | null, unit: WeightUnit): string {
     : `${Number.isInteger(kg) ? kg : kg.toFixed(1)} kg`;
 }
 
+/* For editing a DISTANCE: what someone typed in their own unit, in metres, and
+   back again for the field. A crew says "16", meaning sixteen kilometres — or
+   sixteen miles, if that is the unit they set. Storage stays metric either way. */
+export function distanceToMetres(value: number, unit: DistanceUnit): number {
+  return unit === "mi" ? value * METRES_PER_MILE : value * 1000;
+}
+export function metresToUnit(metres: number, unit: DistanceUnit): number {
+  return unit === "mi" ? metres / METRES_PER_MILE : metres / 1000;
+}
+
 // For editing: turn what someone typed in their unit back into kilograms.
 export function weightToKg(value: number, unit: WeightUnit): number {
   return unit === "lb" ? value / POUNDS_PER_KG : value;

@@ -261,6 +261,24 @@ export type Boat = {
   seats: SeatSlot[];
   hasCox: boolean;
   coxId: string | null;
+  /*
+    WHAT THIS CREW ACTUALLY DID, written after the outing rather than before it.
+    The plan says 16k for the morning; this eight turned round early and did 14
+    while the four went on and did 17 — so the number belongs to the BOAT, not
+    to the practice, and it counts for every person sitting in it. A season's
+    mileage is the sum of these, which is why one rower ends the term on 100k
+    and their team-mate on 110.
+
+    Metres and minutes: the same two units a workout log is kept in
+    (lib/varsity/logStore), so a log can be filled from a boat later with
+    nothing to convert. `minutes` is the WORKING time, not dock to dock
+    (owner, 2026-09-19: "pure workout").
+
+    Both are optional and are absent on every boat built before they existed —
+    never read one without checking it is there.
+  */
+  metres?: number | null;
+  minutes?: number | null;
 };
 
 /*
@@ -308,8 +326,11 @@ export function makeSeats(rowers: number): SeatSlot[] {
   outing: the rigging, which shell, which oars, when it pushes off, and who
   sits where. The crew NOTE does not — "watch the bridge crew" is about one
   morning, and a note carried into a day it was never written for would be
-  read as if it had been. Every boat gets a new id, because this is a new
-  record for a new day, not the old one edited.
+  read as if it had been. Neither do the KILOMETRES and the working time: they
+  are the record of one outing, and carried forward they would count a second
+  time in everyone's mileage without anybody having rowed a stroke.
+  Every boat gets a new id, because this is a new record for a new day, not the
+  old one edited.
 */
 export function carryBoats(boats: Boat[]): Boat[] {
   const stamp = Date.now();
@@ -317,6 +338,8 @@ export function carryBoats(boats: Boat[]): Boat[] {
     ...b,
     id: `boat-${stamp}-${i}`,
     note: "",
+    metres: null,
+    minutes: null,
     seats: b.seats.map((s) => ({ ...s })),
   }));
 }

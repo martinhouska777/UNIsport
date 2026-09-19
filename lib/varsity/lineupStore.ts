@@ -160,6 +160,40 @@ export async function saveLineup(
   return error ? { error: error.message } : {};
 }
 
+/*
+  ── WHAT ONE BOAT DID, written by whoever got back to the dock first ──
+  The kilometres and the working time are not the coach's alone: anybody in the
+  crew can fill them in from their own Home screen (owner, 2026-09-19). So this
+  writes ONE boat's two numbers and touches nothing else — it re-reads the
+  practice first and patches the boat inside it, because the seats may have been
+  edited since this screen loaded and a whole-blob save would put them back.
+
+  The status is written back exactly as it was found: filling in a distance is
+  not publishing a lineup, and an announced snapshot is left alone entirely.
+
+  The one race it cannot win: a coach with the Lineup Builder open on this same
+  practice is holding the boats in memory and autosaves the lot. If they save
+  after this, their copy — which has no distance in it — wins. Rare, and the
+  number is two taps to type again; the fix, if it ever bites, is a column of
+  its own rather than a field inside the boats blob.
+*/
+export async function saveBoatWork(
+  dayKey: string,
+  boatId: string,
+  work: { metres: number | null; minutes: number | null },
+): Promise<{ error?: string }> {
+  const stored = await fetchLineup(dayKey);
+  if (!stored) return { error: "That practice isn't there any more." };
+  let found = false;
+  const boats = stored.boats.map((b) => {
+    if (b.id !== boatId) return b;
+    found = true;
+    return { ...b, metres: work.metres, minutes: work.minutes };
+  });
+  if (!found) return { error: "That boat isn't in this practice any more." };
+  return saveLineup(dayKey, boats, stored.status);
+}
+
 /* ── Athlete Home: today's published boats as Lineup[] ── */
 /* The word for a rigging, for the athlete's own lineup card. Only the four the
    app ships with have one here — a rigging a squad added in Settings is read by

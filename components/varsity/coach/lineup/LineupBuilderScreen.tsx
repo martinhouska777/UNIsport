@@ -123,6 +123,7 @@ import {
   saveLineup,
   type LineupStatus,
 } from "@/lib/varsity/lineupStore";
+import BoatWorkStrip, { type BoatWork } from "@/components/varsity/BoatWorkStrip";
 import CrewVideoStrip from "@/components/varsity/CrewVideoStrip";
 import {
   IconArrowLeft,
@@ -1414,6 +1415,11 @@ function Builder({
     setBoats((prev) => prev.map((b) => (b.id === boatId ? { ...b, dock } : b)));
   const setOars = (boatId: string, oars: string) =>
     setBoats((prev) => prev.map((b) => (b.id === boatId ? { ...b, oars } : b)));
+  /* How far this crew went and how long they worked. Held in the boats like
+     everything else on this screen, so the autosave below carries it — the
+     strip never writes to the database from inside the builder. */
+  const setWork = (boatId: string, work: BoatWork) =>
+    setBoats((prev) => prev.map((b) => (b.id === boatId ? { ...b, ...work } : b)));
 
   /* Everything about the new boat comes off the rigging the coach picked —
      how many seats, whether there is a cox, what it is called. Nothing here
@@ -1930,6 +1936,15 @@ function Builder({
                         pushes off; this is what comes back with it.
                       */}
                       <CrewVideoStrip dayKey={dayKey} boat={boat} />
+                      {/* …and, in the same shape of row, what the boat did:
+                          the kilometres and the working time, which count for
+                          every athlete seated above. */}
+                      <BoatWorkStrip
+                        dayKey={dayKey}
+                        boat={boat}
+                        canEdit
+                        onChange={(work) => setWork(boat.id, work)}
+                      />
                       </>
                     )}
                   </div>
