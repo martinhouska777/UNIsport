@@ -1,0 +1,122 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>UNIsport — the icons as built</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Archivo:wght@800&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap">
+<style>
+  :root { --n: #2f3b52; --b: #1f32c1; --ink: #141618; --page: #eef1f5; --mute: #7e8488; --hair: #dfe4ea; }
+  html, body { margin: 0; background: var(--page); font-family: "Plus Jakarta Sans", system-ui, sans-serif; }
+  #board { width: 1160px; box-sizing: border-box; padding: 48px; display: flex; flex-direction: column; gap: 14px; }
+  .band { font-size: 12px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--b); margin-top: 24px; }
+  .band span { font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--mute); margin-left: 10px; }
+  .card { background: #fff; border-radius: 6px; padding: 26px 30px; margin-bottom: 12px; }
+  .files { display: flex; align-items: flex-end; gap: 42px; }
+  .slot { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .slot img { display: block; image-rendering: -webkit-optimize-contrast; }
+  .slot .n { font-size: 10px; color: var(--mute); text-align: center; line-height: 1.4; }
+  .home { background: #0a0a0a; border-radius: 6px; padding: 30px 34px; display: flex; align-items: flex-start; gap: 34px; margin-bottom: 12px; }
+  .app { display: flex; flex-direction: column; align-items: center; gap: 9px; }
+  .app img { border-radius: 22%; display: block; }
+  .app span { font-size: 11px; color: #e7e9ec; font-weight: 500; }
+  .tabbar { display: flex; align-items: center; gap: 8px; background: #fff; border: 1px solid var(--hair); border-radius: 8px 8px 0 0; padding: 8px 14px 8px 12px; width: 260px; box-sizing: border-box; }
+  .tabbar img { width: 16px; height: 16px; display: block; }
+  .tabbar span { font-size: 12px; color: #3c4043; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .word { font-family: Archivo, sans-serif; font-weight: 800; color: var(--ink); line-height: 1; }
+  .ser { font-family: "Instrument Serif", Georgia, serif; font-style: italic; color: var(--b); line-height: 1; letter-spacing: -0.02em; }
+  .lock { display: flex; align-items: baseline; }
+  .note { font-size: 11px; color: var(--mute); line-height: 1.5; margin-top: 14px; }
+  .bar { display: flex; align-items: center; gap: 12px; border: 1px solid var(--hair); border-radius: 12px; padding: 0 18px; height: 60px; background: #fff; }
+  .bar .r { margin-left: auto; display: flex; gap: 16px; font-size: 12px; color: #4b4f53; font-weight: 500; }
+</style>
+</head>
+<body>
+<div id="board">
+
+  <div class="band">The four files, as they now sit in the repo <span>real PNGs, shown at their own pixel size</span></div>
+  <div class="card">
+    <div class="files">
+      <div class="slot"><img src="../../public/icons/icon-512.png" width="128" height="128"><span class="n">icon-512.png<br>shown at 128</span></div>
+      <div class="slot"><img src="../../public/icons/icon-192.png" width="96" height="96"><span class="n">icon-192.png<br>shown at 96</span></div>
+      <div class="slot"><img src="../../public/icons/apple-touch-icon.png" width="60" height="60"><span class="n">apple-touch-icon<br>shown at 60</span></div>
+      <div class="slot"><img src="../../app/favicon.ico" width="48" height="48"><span class="n">favicon 48</span></div>
+      <div class="slot"><img src="../../app/favicon.ico" width="32" height="32"><span class="n">32</span></div>
+      <div class="slot"><img src="../../app/favicon.ico" width="16" height="16"><span class="n">16</span></div>
+    </div>
+    <p class="note">icon-512 is also the maskable icon, so its mark is held inside the circle Android may crop to. The favicon and the Apple icon are never cropped that hard, so their mark runs larger.</p>
+  </div>
+
+  <div class="band">On a phone home screen, and in a browser tab</div>
+  <div class="home">
+    <div class="app"><img src="../../public/icons/icon-192.png" width="60" height="60"><span>UNIsport</span></div>
+    <div class="app"><img src="../../public/icons/apple-touch-icon.png" width="60" height="60"><span>UNIsport</span></div>
+    <div style="margin-left:14px">
+      <div class="tabbar"><img src="../../app/favicon.ico"><span>UNIsport — Your campus. Your gym…</span></div>
+    </div>
+  </div>
+
+  <div class="band">The name, set in the type that won <span>Archivo 800 capitals, the I a barbell at exactly cap height</span></div>
+  <div class="card">
+    <div class="lock" id="big"></div>
+    <div style="height:26px"></div>
+    <div class="bar" id="topbar"></div>
+    <p class="note">The wordmark is a drawing, not a font the app has to load — but it is NOT wired into the app yet. Nothing on the landing or in the top bar has changed; only the four icon files have.</p>
+  </div>
+
+</div>
+
+<script>
+/* The same barbell letter as round 6, at Archivo's own measured cap height
+   and stem weight, so it sets on the line like a letter rather than an object. */
+function barI({ cap, stem, colorStem = "#141618", colorPlate = "#1f32c1", gap = 0 }) {
+  const S = 100, plateW = stem * 3.0, collarW = stem * 1.85, plateH = 21, collarH = 8, cx = 50;
+  const r = (w, y, h, rx, fill) =>
+    `<rect x="${(cx - w / 2).toFixed(2)}" y="${y}" width="${w.toFixed(2)}" height="${h}" rx="${rx}" fill="${fill}"/>`;
+  const parts =
+    r(stem, 0, 140, stem * 0.10, colorStem) +
+    r(collarW, plateH + 2, collarH, 2, colorStem) +
+    r(collarW, 140 - plateH - 2 - collarH, collarH, 2, colorStem) +
+    r(plateW, 0, plateH, 2.5, colorPlate) +
+    r(plateW, 140 - plateH, plateH, 2.5, colorPlate);
+  return `<svg width="${(cap * S / 140).toFixed(1)}" height="${cap.toFixed(1)}" viewBox="0 0 ${S} 140"
+    xmlns="http://www.w3.org/2000/svg" style="display:inline-block; vertical-align:baseline; margin:0 ${gap}px;">${parts}</svg>`;
+}
+const MARK = (a, b) => `
+  <path d="M28 34 V56 Q28 82 50 82" fill="none" stroke="${a}" stroke-width="14" stroke-linecap="round"/>
+  <path d="M72 34 V56 Q72 82 50 82" fill="none" stroke="${b}" stroke-width="14" stroke-linecap="round"/>
+  <circle cx="28" cy="16" r="8.5" fill="${a}"/><circle cx="72" cy="16" r="8.5" fill="${b}"/>`;
+const mk = (px, a = "#2f3b52", b = "#1f32c1") =>
+  `<svg width="${px}" height="${px}" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">${MARK(a, b)}</svg>`;
+
+(async () => {
+  await document.fonts.load("800 200px Archivo", "UNISPORT");
+  await document.fonts.ready;
+  const c = document.createElement("canvas"); c.width = 600; c.height = 600;
+  const x = c.getContext("2d");
+  x.font = "800 200px Archivo"; x.textBaseline = "alphabetic";
+  const capPx = x.measureText("H").actualBoundingBoxAscent;
+  x.fillStyle = "#000"; x.fillText("I", 100, 400);
+  const d = x.getImageData(0, 0, 600, 600).data;
+  const row = Math.round(400 - capPx / 2);
+  let run = 0, best = 0;
+  for (let px = 0; px < 600; px++) {
+    if (d[(row * 600 + px) * 4 + 3] > 128) { run++; if (run > best) best = run; } else run = 0;
+  }
+  const capEm = capPx / 200, stemEm = best / 200;
+  const lock = (size, sportItalic) => {
+    const cap = size * capEm, stem = (stemEm / capEm) * 140;
+    const bar = barI({ cap, stem, gap: Math.round(size * 0.035) });
+    const tail = sportItalic
+      ? `<span class="ser" style="font-size:${size}px">sport</span>`
+      : `<span class="word" style="font-size:${size}px; color:var(--b)">SPORT</span>`;
+    return `<span class="word" style="font-size:${size}px">UN</span>${bar}${tail}`;
+  };
+  document.getElementById("big").innerHTML = lock(58, false)
+    + `<span style="width:56px"></span>` + lock(58, true);
+  document.getElementById("topbar").innerHTML =
+    `${mk(26)}<span class="lock">${lock(19, false)}</span>
+     <span class="r"><span>Gyms</span><span>Match</span><span>Feed</span><span>Profile</span></span>`;
+})();
+</script>
+</body>
+</html>

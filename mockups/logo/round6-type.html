@@ -1,0 +1,141 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>UNIsport — round 6: which capitals, and the barbell as a letter</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@700;800&family=Archivo:wght@700;800&family=Inter+Tight:wght@700;800&family=Space+Grotesk:wght@700&family=Oswald:wght@600&family=Anton&display=swap">
+<style>
+  :root { --n: #2f3b52; --b: #1f32c1; --ink: #141618; --page: #eef1f5; --mute: #7e8488; --hair: #dfe4ea; }
+  html, body { margin: 0; background: var(--page); font-family: "Plus Jakarta Sans", system-ui, sans-serif; }
+  #board { width: 1160px; box-sizing: border-box; padding: 48px; display: flex; flex-direction: column; gap: 14px; }
+  .band { font-size: 12px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--b); margin-top: 22px; }
+  .band span { font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--mute); margin-left: 10px; }
+  .card { background: #fff; border-radius: 6px; padding: 22px 30px; display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-bottom: 12px; }
+  .name { font-size: 11px; font-weight: 600; color: var(--mute); width: 128px; flex-shrink: 0; }
+  .note { font-size: 11px; color: var(--mute); text-align: right; max-width: 210px; line-height: 1.5; }
+  .lockup { display: flex; align-items: baseline; flex: 1; }
+  .ser { font-family: "Instrument Serif", Georgia, serif; font-style: italic; color: var(--b); line-height: 1; letter-spacing: -0.02em; }
+  .blue { color: var(--b); }
+</style>
+</head>
+<body>
+<div id="board">
+  <div class="band">The barbell redrawn as a letter <span>stem the same weight as the caps, plates acting as slab serifs</span></div>
+  <div id="study"></div>
+
+  <div class="band">Which capitals <span>every line: UN · barbell I · SPORT, then the same name with the italic "sport" it has to live beside</span></div>
+  <div id="faces"></div>
+</div>
+
+<script>
+/* The barbell as a LETTER, not an object: one stem at the caps' own weight,
+   one plate each end doing the job of a slab serif, and a collar just inside
+   it — the only detail that says barbell rather than I. Height is exactly the
+   cap height of the type it sits in, so it sets on the line like a letter. */
+function barI({ cap, stem, colorStem = "#141618", colorPlate = "#1f32c1", gap = 0, collar = true }) {
+  const S = 100;                       // box units across
+  const plateW = stem * 3.0;
+  const collarW = stem * 1.85;
+  const plateH = 21, collarH = 8;
+  const cx = 50;
+  const r = (w, y, h, rx, fill) =>
+    `<rect x="${(cx - w / 2).toFixed(2)}" y="${y}" width="${w.toFixed(2)}" height="${h}" rx="${rx}" fill="${fill}"/>`;
+  const parts =
+    r(stem, 0, 140, stem * 0.10, colorStem) +
+    (collar ? r(collarW, plateH + 2, collarH, 2, colorStem) + r(collarW, 140 - plateH - 2 - collarH, collarH, 2, colorStem) : "") +
+    r(plateW, 0, plateH, 2.5, colorPlate) +
+    r(plateW, 140 - plateH, plateH, 2.5, colorPlate);
+  const h = cap, w = h * S / 140;
+  return `<svg width="${w.toFixed(1)}" height="${h.toFixed(1)}" viewBox="0 0 ${S} 140"
+    xmlns="http://www.w3.org/2000/svg" style="display:inline-block; vertical-align:baseline; margin:0 ${gap}px;">${parts}</svg>`;
+}
+
+/* Cap height and stem width as a fraction of the em, measured per face so the
+   barbell can borrow the exact numbers instead of guessing. */
+
+/* Guessing cap height and stem weight was the reason the bar sat short. Measure
+   the real face instead: canvas gives the true ink ascent of a capital, and a
+   pixel scan across a rendered "I" gives the stem. Both come back in em. */
+function metrics(family, weight) {
+  const S = 200, c = document.createElement("canvas");
+  c.width = 600; c.height = 600;
+  const x = c.getContext("2d");
+  x.font = `${weight} ${S}px ${family}`;
+  x.textBaseline = "alphabetic";
+  const capPx = x.measureText("H").actualBoundingBoxAscent;
+  x.clearRect(0, 0, 600, 600);
+  x.fillStyle = "#000";
+  x.font = `${weight} ${S}px ${family}`;
+  x.fillText("I", 100, 400);
+  const d = x.getImageData(0, 0, 600, 600).data;
+  const row = Math.round(400 - capPx / 2);
+  let run = 0, best = 0;
+  for (let px = 0; px < 600; px++) {
+    if (d[(row * 600 + px) * 4 + 3] > 128) { run++; if (run > best) best = run; }
+    else run = 0;
+  }
+  return { capEm: capPx / S, stemEm: best / S };
+}
+
+const FACES = [
+  { css: "'Plus Jakarta Sans'", w: 800, name: "Plus Jakarta 800", capEm: 0.73, stemEm: 0.155, tr: 0.01,
+    note: "The app's own font. Round, friendly, a little soft for a gym." },
+  { css: "Archivo",            w: 800, name: "Archivo 800",      capEm: 0.72, stemEm: 0.165, tr: 0.005,
+    note: "Neo-grotesque with flat sides — the plates and the stems agree." },
+  { css: "'Inter Tight'",      w: 800, name: "Inter Tight 800",  capEm: 0.727, stemEm: 0.160, tr: 0.0,
+    note: "Tighter and more neutral; disappears behind the barbell." },
+  { css: "'Space Grotesk'",    w: 700, name: "Space Grotesk 700",capEm: 0.70, stemEm: 0.135, tr: 0.01,
+    note: "Quirky corners. Distinct, but fights the serif." },
+  { css: "Oswald",             w: 600, name: "Oswald 600",       capEm: 0.72, stemEm: 0.125, tr: 0.02,
+    note: "Condensed, collegiate — the varsity-jersey option." },
+  { css: "Anton",              w: 400, name: "Anton",            capEm: 0.73, stemEm: 0.175, tr: 0.0,
+    note: "Heaviest. Reads as a poster, not as an app." },
+];
+
+const SIZE = 52;
+
+(async () => {
+/* A webfont is only fetched once something on the page uses it, so measuring
+   before rendering would measure the fallback. Ask for each one by name first. */
+await Promise.all(FACES.map(f => document.fonts.load(`${f.w} 200px ${f.css}`, "UNISPORTH")));
+await document.fonts.ready;
+FACES.forEach(f => { const m = metrics(f.css, f.w); f.capEm = m.capEm; f.stemEm = m.stemEm; });
+
+document.getElementById("study").innerHTML = `
+  <div class="card">
+    <span class="name">as a letter</span>
+    <div class="lockup" style="gap:34px; align-items:flex-end;">
+      ${barI({ cap: 110, stem: 16 })}
+      ${barI({ cap: 110, stem: 16, collar: false })}
+      ${barI({ cap: 110, stem: 16, colorPlate: "#141618" })}
+      ${barI({ cap: 52, stem: 16 })}
+      ${barI({ cap: 30, stem: 16 })}
+      ${barI({ cap: 18, stem: 16 })}
+    </div>
+    <span class="note">With collar, without, one ink — then 52, 30 and 18 px.</span>
+  </div>`;
+
+document.getElementById("faces").innerHTML = FACES.map(f => {
+  const cap = SIZE * f.capEm;
+  const stem = (f.stemEm / f.capEm) * 140;     // stem in box units, so it matches the face
+  const bar = barI({ cap, stem, gap: Math.round(SIZE * 0.035) });
+  const style = `font-family:${f.css}; font-weight:${f.w}; font-size:${SIZE}px; letter-spacing:${f.tr}em; line-height:1; color:var(--ink);`;
+  return `<div class="card">
+    <span class="name">${f.name}</span>
+    <div class="lockup" style="gap:52px;">
+      <span style="display:flex; align-items:baseline;">
+        <span style="${style}">UN</span>${bar}<span style="${style} color:var(--b);">SPORT</span>
+      </span>
+      <span style="display:flex; align-items:baseline;">
+        <span style="${style}">UN</span>${barI({ cap, stem, gap: Math.round(SIZE * 0.035) })}<span class="ser" style="font-size:${SIZE}px">sport</span>
+      </span>
+    </div>
+    <span class="note">${f.note}</span>
+  </div>`;
+}).join("");
+
+document.title = FACES.map(f => `${f.name} cap ${f.capEm.toFixed(3)} stem ${f.stemEm.toFixed(3)}`).join(" | ");
+})();
+</script>
+</body>
+</html>
