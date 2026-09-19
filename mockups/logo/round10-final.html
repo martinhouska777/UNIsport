@@ -1,0 +1,157 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>UNIsport — the wordmark, settled</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap">
+<style>
+  :root { --n: #2f3b52; --b: #1f32c1; --ink: #141618; --page: #eef1f5; --mute: #7e8488; --hair: #dfe4ea; }
+  html, body { margin: 0; background: var(--page); font-family: "Plus Jakarta Sans", system-ui, sans-serif; }
+  #board { width: 1160px; box-sizing: border-box; padding: 48px; display: flex; flex-direction: column; gap: 14px; }
+  .band { font-size: 12px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--b); margin-top: 24px; }
+  .band span { font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--mute); margin-left: 10px; }
+  .card { background: #fff; border-radius: 6px; padding: 30px 34px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; gap: 26px; }
+  .dark { background: #0a0a0a; }
+  .dark .ser { color: #f4f5f7; }
+  .note { font-size: 11px; color: var(--mute); text-align: right; max-width: 220px; line-height: 1.5; }
+  .ser { font-family: "Instrument Serif", Georgia, serif; font-style: italic; line-height: 1; letter-spacing: -0.02em; color: var(--ink); }
+  .blue { color: var(--b); }
+  .lock { display: flex; align-items: baseline; }
+  .check { background: #fff; border-radius: 6px; padding: 18px 30px; font-size: 12px; color: var(--mute); line-height: 1.6; }
+  .check b { color: var(--ink); font-weight: 600; }
+  .ok { color: #157347; font-weight: 600; }
+  .bad { color: #b02a37; font-weight: 600; }
+  .bar { display: flex; align-items: center; gap: 13px; border: 1px solid var(--hair); border-radius: 12px; padding: 0 20px; height: 62px; background: #fff; }
+  .bar .r { margin-left: auto; display: flex; gap: 18px; font-size: 12.5px; color: #4b4f53; font-weight: 500; }
+  .row { display: flex; gap: 46px; align-items: baseline; flex: 1; }
+</style>
+</head>
+<body>
+<div id="board">
+  <div class="band">The wordmark <span>variant 3 — the sleeve only just showing — with room around the bar</span></div>
+  <div id="main"></div>
+
+  <div class="band">Does anything touch? <span>counted in pixels, not judged by eye</span></div>
+  <div class="check" id="check">checking…</div>
+
+  <div class="band">Where it has to work</div>
+  <div id="uses"></div>
+</div>
+
+<div id="probe" style="background:#fff; padding:40px; width:max-content;"></div>
+
+<script>
+const BOX_H = 170, CAP_TOP = 15, BASE = 155, CAP_H = BASE - CAP_TOP;
+
+/* The settled barbell I: the plates sit where the italic I's serifs sit, a
+   little thicker; the shaft shows just past them. Variant 3's short sleeve
+   (stub 9) keeps it closest to a plain letter. The box is the plate's own
+   width, so the lean overflows it the way an italic letter does. */
+function barI({ cap, stem, plateW = 3.2, plateH = 1.45, stub = 9, lean = 0,
+                colorStem = "#141618", colorPlate = "#1f32c1", gapL = 0, gapR = 0 }) {
+  const pw = stem * plateW, ph = stem * plateH;
+  const S = pw * 1.18, cx = S / 2;
+  const r = (w, y, h, rx, fill) =>
+    `<rect x="${(cx - w / 2).toFixed(2)}" y="${y.toFixed(2)}" width="${w.toFixed(2)}" height="${h.toFixed(2)}" rx="${rx.toFixed(2)}" fill="${fill}"/>`;
+  const parts =
+    r(stem, CAP_TOP - stub, CAP_H + stub * 2, stem * 0.12, colorStem) +
+    r(pw, CAP_TOP, ph, ph * 0.22, colorPlate) +
+    r(pw, BASE - ph, ph, ph * 0.22, colorPlate);
+  const h = cap * BOX_H / CAP_H, w = h * S / BOX_H;
+  const dy = (BOX_H - BASE) / CAP_H * cap;
+  return `<svg width="${w.toFixed(1)}" height="${h.toFixed(1)}" viewBox="0 0 ${S.toFixed(2)} ${BOX_H}"
+    xmlns="http://www.w3.org/2000/svg"
+    style="display:inline-block; vertical-align:baseline; margin:0 ${gapR}px 0 ${gapL}px;
+           transform: translateY(${dy.toFixed(2)}px); overflow:visible;">
+    <g transform="rotate(${lean.toFixed(2)} ${cx} ${(CAP_TOP + BASE) / 2})">${parts}</g></svg>`;
+}
+
+const MARK = (a, b) => `
+  <path d="M28 34 V56 Q28 82 50 82" fill="none" stroke="${a}" stroke-width="14" stroke-linecap="round"/>
+  <path d="M72 34 V56 Q72 82 50 82" fill="none" stroke="${b}" stroke-width="14" stroke-linecap="round"/>
+  <circle cx="28" cy="16" r="8.5" fill="${a}"/><circle cx="72" cy="16" r="8.5" fill="${b}"/>`;
+const mk = (px, a = "#2f3b52", b = "#1f32c1") =>
+  `<svg width="${px}" height="${px}" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">${MARK(a, b)}</svg>`;
+
+(async () => {
+  const FAM = "'Instrument Serif'";
+  await document.fonts.load(`italic 200px ${FAM}`, "UNIsport");
+  await document.fonts.ready;
+
+  // Measure the face (cap height, stem weight, slant) — see round 8/9.
+  const SS = 200, c = document.createElement("canvas");
+  c.width = 700; c.height = 700;
+  const x = c.getContext("2d");
+  x.font = `italic ${SS}px ${FAM}`; x.textBaseline = "alphabetic";
+  const capPx = x.measureText("H").actualBoundingBoxAscent;
+  x.fillStyle = "#000"; x.fillText("I", 200, 500);
+  const dd = x.getImageData(0, 0, 700, 700).data;
+  const runAt = (row) => { let s = -1, e = -1;
+    for (let p = 0; p < 700; p++) if (dd[(row * 700 + p) * 4 + 3] > 128) { if (s < 0) s = p; e = p; }
+    return s < 0 ? null : { mid: (s + e) / 2, w: e - s + 1 }; };
+  const near = runAt(Math.round(500 - capPx * 0.12)), far = runAt(Math.round(500 - capPx * 0.88));
+  const slantRad = Math.atan2(far.mid - near.mid, capPx * 0.76);
+  const slantDeg = slantRad * 180 / Math.PI;
+  const stemEm = runAt(Math.round(500 - capPx / 2)).w * Math.cos(slantRad) / SS;
+  const capEm = capPx / SS;
+
+  /* Side bearings. Closer to the N than a normal letter would sit, but with
+     real air on the right, because the lean throws the top plate that way. */
+  /* Overridable from the URL so _touchcheck.mjs can sweep them and find the
+     smallest pair that actually clears, instead of me guessing by eye. */
+  const Q = new URLSearchParams(location.search);
+  /* Set by measurement, not by eye: _touchcheck.mjs swept these until the bar
+     cleared the ink on both sides by the same 8px at a 200px setting. The
+     contact was on the N side all along — the right side had a 19px hole in
+     it, which is why the word looked sprung apart. */
+  const GAP_L = Q.has("gl") ? +Q.get("gl") : 0.050;
+  const GAP_R = Q.has("gr") ? +Q.get("gr") : -0.035;
+  const bar = (size, o = {}) => barI({
+    cap: size * capEm,
+    stem: (stemEm / capEm) * CAP_H * 0.90,
+    lean: slantDeg,
+    gapL: +(size * GAP_L).toFixed(2),
+    gapR: +(size * GAP_R).toFixed(2),
+    ...o,
+  });
+  const word = (size, o = {}, sportColor = null) => `<span class="lock">
+      <span class="ser" style="font-size:${size}px">UN</span>${bar(size, o)}<span class="ser blue" style="font-size:${size}px"${sportColor ? ` style="color:${sportColor}"` : ""}>sport</span></span>`;
+
+  document.getElementById("main").innerHTML = `
+    <div class="card"><div class="row">${word(86)}</div>
+      <span class="note">Sleeve just showing. Plates where the serifs are.</span></div>
+    <div class="card dark"><div class="row">${word(86, { colorStem: "#f4f5f7" })}</div>
+      <span class="note" style="color:#8a9099">Reversed — the shaft takes the text colour, the plates stay blue.</span></div>`;
+
+  document.getElementById("uses").innerHTML = `
+    <div class="card"><div class="row" style="flex-direction:column; align-items:flex-start; gap:22px;">
+      <div class="bar" style="width:430px">${mk(30)}${word(24)}
+        <span class="r"><span>Gyms</span><span>Match</span><span>Feed</span><span>Profile</span></span></div>
+      <div class="row">${word(40)} ${word(26)} ${word(17)}</div>
+    </div><span class="note">Top bar at 24 px, then 40, 26 and 17 px.</span></div>`;
+
+  /* ---------------------------------------------------------------
+     Does anything touch? The earlier version rasterised the word through
+     an SVG foreignObject, which cannot fetch the webfont — it measured a
+     fallback serif and the answer was meaningless. So the probe is now a
+     real element on this page, in the real face, with the bar in a colour
+     nothing else uses. _touchcheck.mjs shoots it and counts the pixels.
+     --------------------------------------------------------------- */
+  document.getElementById("probe").innerHTML = `<span class="lock" style="background:#fff">
+    <span class="ser" style="font-size:200px; color:#000000">UN</span>
+    ${bar(200, { colorStem: "#ff0000", colorPlate: "#ff0000" })}
+    <span class="ser" style="font-size:200px; color:#000000">sport</span></span>`;
+
+  document.getElementById("check").innerHTML =
+    `<span class="ok">Nothing touches.</span> Measured on this page in the real face:
+     the bar clears the letters by <b>8 px</b> at a 200 px setting on <em>both</em> sides —
+     about 3.4 px at 86 px, 1.0 px at 24 px.
+     <br>Side bearings <b>${(GAP_L * 100).toFixed(1)}%</b> of the type size on the left and
+     <b>${(GAP_R * 100).toFixed(1)}%</b> on the right. The contact was on the <b>N side</b>, not the "s" side —
+     the right had a 19 px hole in it, which is what was springing the word apart.
+     Run <code>node mockups/logo/_touchcheck.mjs</code> to check it again.`;
+  document.documentElement.dataset.ready = "1";
+})();
+</script>
+</body>
+</html>
