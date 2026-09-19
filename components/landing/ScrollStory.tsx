@@ -16,8 +16,8 @@ import { motion as motionByBeat, shotSize } from "@/lib/landingMotion";
   in the phone the way the app would show it (a push, a tab switch, a sheet, a
   zoom into the tapped button — see lib/landingMotion.ts), the labels pointing
   into the phone switch, and the dot on the rail stretches. Tall captures pan
-  inside the phone as the reader scrolls their beat. Once per story, at the
-  narrative pivot, the phone crosses to the other side of the page.
+  inside the phone as the reader scrolls their beat. The phone stays on its
+  side the whole way (the mid-story crossing was dropped 2026-09-19).
 
   This is scripts/landing/story-script.js — the prototype's runtime, the one
   the owner signed off — ported onto refs. It reads the scroll on

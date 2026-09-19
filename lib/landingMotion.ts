@@ -31,7 +31,9 @@
              Measured off the live app, not guessed.
     pointer  an arrow walks in and presses the tap (S4's "one tap to accept").
     side     which side of the page the phone sits on for this beat; "left"
-             flips it across (once per story, at the narrative pivot).
+             flips it across. UNUSED since 2026-09-19 (owner: "don't change
+             the sides when you are scrolling") — words stay left, phone
+             stays right for the whole story. The mechanism is kept.
 */
 
 export type Enter = "push" | "tab" | "sheet" | "dismiss" | "zoom" | "none" | "fade";
@@ -55,10 +57,10 @@ export const motion: Record<string, BeatMotion> = {
   // scrolls: name and counts, the leaderboard strip, the session calendar,
   // Memories. hold 0.2: the top is read before the pan starts.
   // A plain phone screen since 2026-09-16 (no tall strip, so no pan).
-  S3: { side: "left", enter: "tab", tap: [87.5, 95.5] },
+  S3: { enter: "tab", tap: [87.5, 95.5] },
   // ...and back to the Gyms tab (1st of 4), which the Campus Colours closer
   // then carries on in eight schools' colours.
-  S4: { side: "left", enter: "tab", tap: [12.5, 95.5] },
+  S4: { enter: "tab", tap: [12.5, 95.5] },
 
   /* ── the varsity story (5 chapters, one screen each — 2026-09-15) ── */
   // ONE chapter pans the whole Home screen: plan, lineup, race bar, coach's
@@ -66,13 +68,13 @@ export const motion: Record<string, BeatMotion> = {
   V1: { pan: [0, 1.2], hold: 0.3 },
   // The (+) in the middle of the bar; the log sheet rises to three quarters
   // over the Calendar tab, which is exactly what the capture shows.
-  V2: { side: "left", enter: "sheet", tap: [50, 92.7] },
+  V2: { enter: "sheet", tap: [50, 92.7] },
   // The Workouts board (Team → Workouts → 2k test → All stats). The sheet
   // before it covers the tab bar, so no ring to press: a plain drill-in.
-  V4: { side: "left", enter: "push" },
+  V4: { enter: "push" },
   // ...and the statistics arrive the way a sheet leaves: the ring presses the
   // board's own close X (top right of that capture) and the sheet drops away.
-  V5: { side: "left", enter: "dismiss", tap: [92.4, 20.3] },
+  V5: { enter: "dismiss", tap: [92.4, 20.3] },
 };
 
 /* The natural size of every capture the stories ride, so <Image> can reserve
