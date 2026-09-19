@@ -583,6 +583,16 @@
 .ls-stage.ls-enter .ls-copy      { transform: translateX(-46px); opacity: 0; }
 .ls-stage.ls-enter .ls-rail      { opacity: 0; }
 
+/* The feature rows beside a closer slide in from the left, one after another
+   (components/landing/SlideInRows.tsx — armed by JS only when still below the
+   fold, never under reduced motion). */
+.l-slide-armed > li { opacity: 0; transform: translateX(-56px); }
+.l-slide-armed.l-slide-in > li {
+  opacity: 1; transform: none;
+  transition: opacity 0.5s ease, transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition-delay: calc(var(--i, 0) * 90ms);
+}
+
 .ls-phone-wrap { position: relative; will-change: transform; }
 /* NO GLOW behind the scroll stories' phone (owner, 2026-09-14, later — "don't
    make it glow during the scrolling animation"). A pool of the story's colour

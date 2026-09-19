@@ -1,5 +1,7 @@
+import type { CSSProperties } from "react";
 import Link from "next/link";
 import FeatureIcon from "@/components/landing/FeatureIcon";
+import SlideInRows from "@/components/landing/SlideInRows";
 import type { FeatureCta, FeatureRow } from "@/lib/landingCopy";
 
 /*
@@ -30,9 +32,10 @@ export default function FeatureList({ kicker, rows, cta, ink = false }: { kicker
   return (
     <div className="w-full max-w-[520px]">
       <div className="mb-3 font-mono text-[11px] tracking-[0.14em] uppercase text-(--sa)">{kicker}</div>
-      <ul className="divide-y divide-l-line border-y border-l-line">
-        {rows.map((r) => (
-          <li key={r.title}>
+      {/* The rows slide in from the left, one after another (SlideInRows). */}
+      <SlideInRows className="divide-y divide-l-line border-y border-l-line">
+        {rows.map((r, i) => (
+          <li key={r.title} style={{ "--i": i } as CSSProperties}>
             <details className="group">
               <summary className="-mx-2 flex cursor-pointer list-none items-center gap-4 rounded-lg px-2 py-3.5 text-left transition-colors hover:bg-l-surface [&::-webkit-details-marker]:hidden">
                 <span className="flex h-9 w-9 flex-none items-center justify-center rounded-xl border border-l-line bg-l-bg-elevated text-(--sa)">
@@ -53,7 +56,7 @@ export default function FeatureList({ kicker, rows, cta, ink = false }: { kicker
             </details>
           </li>
         ))}
-      </ul>
+      </SlideInRows>
       {cta && (
         <Link
           href={cta.href}
