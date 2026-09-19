@@ -16,17 +16,19 @@ import { hero, nav, views, type LandingView } from "@/lib/landingCopy";
   sticky stages, and a bar pinned over them sat on top of every one. On a
   phone it also hides on scroll-down and returns on scroll-up.
 
-  ONE WORDMARK AT A TIME. The intro now opens on the mark at full size, and
-  the bar's 24px copy sits 40px above it — two of the same thing, reading as a
-  stutter. So on the views that HAVE the intro (`heroMark`), the bar's mark is
-  not drawn until the intro has scrolled away; HeroFade writes the switch onto
+  ONE WORDMARK AT A TIME — ON A LAPTOP. The intro opens on the mark at full
+  size, and the bar's 24px copy sits 40px above it — two of the same thing,
+  reading as a stutter. So on a laptop, on the views that HAVE the intro
+  (`heroMark`), the bar's mark is not drawn until the intro has scrolled away; HeroFade writes the switch onto
   <html> and the .l-nav-mark rules in app/globals.css spend it. The views
   without an intro keep their mark from the start. Nobody loses their way back
   to the whole page either way: that is the Home tab.
 
   On a phone the tabs do not fit the bar, so they live behind a menu button at
   its left that slides them in from the left edge (LandingMenu), and the door
-  shortens to "Sign up" — the bar stays one row.
+  shortens to "Sign up" — the bar stays one row. A phone also keeps BOTH the
+  wordmark and the door from the first pixel (see .l-nav-mark in globals.css);
+  the hide-while-the-intro-is-up rule is a laptop rule now.
 */
 function Tabs({ view, className = "" }: { view: LandingView; className?: string }) {
   return (
@@ -75,14 +77,13 @@ export default function LandingNav({ view = "all", heroMark = false }: { view?: 
             >
               {nav.login}
             </Link>
-            {/* On a phone the intro's own button stands directly under this one,
-                so the pair read as two different doors (website review,
-                2026-09-10). This copy follows the wordmark's rule there —
-                not drawn while the intro is on screen (.l-nav-cta, phones
-                only); a laptop keeps both, where the bar is a thin line. */}
+            {/* The door, always in the bar. It used to hide on a phone while
+                the intro was on screen (the intro's own button stands under
+                it) — but that left the bar with nothing but Log in, which read
+                as a site you can only sign IN to (owner, 2026-09-19). */}
             <Link
               href={hero.primaryHref}
-              className={`inline-flex h-10 items-center whitespace-nowrap rounded-full border border-l-text bg-l-text px-4 text-sm font-medium tracking-tight text-l-bg transition-[color,background-color,border-color,translate] hover:-translate-y-0.5 hover:border-(--color-l-accent) hover:bg-l-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-l-text sm:px-[18px] ${heroMark ? "l-nav-cta" : ""}`}
+              className="inline-flex h-10 items-center whitespace-nowrap rounded-full border border-l-text bg-l-text px-4 text-sm font-medium tracking-tight text-l-bg transition-[color,background-color,border-color,translate] hover:-translate-y-0.5 hover:border-(--color-l-accent) hover:bg-l-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-l-text sm:px-[18px]"
             >
               <span className="sm:hidden">{nav.ctaShort}</span>
               <span className="hidden sm:inline">{nav.cta}</span>
