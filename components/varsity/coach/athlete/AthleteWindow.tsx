@@ -26,6 +26,7 @@ import { IconX } from "@/components/icons";
 export default function AthleteWindow({
   name,
   title,
+  fill = false,
   onClose,
   children,
 }: {
@@ -33,6 +34,13 @@ export default function AthleteWindow({
   name: string;
   /** Which of their screens: "Statistics", "Past workouts", "Calendar". */
   title: string;
+  /*
+    A screen that wants the HEIGHT rather than a column of its own. The month
+    calendar is a wall calendar — its rows share whatever is left below the
+    header — so it must be handed the space, not a padded scrolling box. The
+    other two are ordinary pages and scroll.
+  */
+  fill?: boolean;
   onClose: () => void;
   children: React.ReactNode;
 }) {
@@ -56,9 +64,13 @@ export default function AthleteWindow({
           </div>
         </div>
         {/* The screen itself scrolls; the bar above it does not. */}
-        <div className="min-h-0 flex-1 overflow-y-auto pb-[max(1.5rem,env(safe-area-inset-bottom))]">
-          <div className="mx-auto w-full max-w-screen-sm px-4 pt-4">{children}</div>
-        </div>
+        {fill ? (
+          <div className="min-h-0 flex-1 pb-[env(safe-area-inset-bottom)]">{children}</div>
+        ) : (
+          <div className="min-h-0 flex-1 overflow-y-auto pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+            <div className="mx-auto w-full max-w-screen-sm px-4 pt-4">{children}</div>
+          </div>
+        )}
       </div>
     </ThemeProvider>,
     document.body,

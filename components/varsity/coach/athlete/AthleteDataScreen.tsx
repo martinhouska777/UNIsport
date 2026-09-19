@@ -31,7 +31,6 @@
 */
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import Sheet from "@/components/varsity/Sheet";
 import { useUnits } from "@/components/useUnits";
 import { formatDistance } from "@/lib/varsity/units";
 import { fetchLogsInRange, type LogEntry } from "@/lib/varsity/logStore";
@@ -42,26 +41,17 @@ import { secToSplit, deriveWatts } from "@/lib/varsity/ergMath";
 import { dayKeyLabel, toISO } from "@/lib/varsity/coachPlan";
 import { sideMeta } from "@/lib/varsity/coachLineup";
 import {
-  logCategoryColor,
-  logCategoryLabel,
-  legendCategories,
-  rowingCategories,
   prPieces,
   statusOptions,
   type StatusTone,
 } from "@/lib/varsity/athleteProfile";
-import { IconActivity, IconArrowLeft, IconCalendar, IconChevronDown, IconClipboard } from "@/components/icons";
+import { IconActivity, IconArrowLeft, IconCalendar, IconClipboard } from "@/components/icons";
 import AthleteNote from "@/components/varsity/coach/athlete/AthleteNote";
-import LogRow from "@/components/varsity/coach/athlete/LogRow";
 import AthleteStats from "@/components/varsity/coach/athlete/AthleteStats";
 import AthleteWorkouts from "@/components/varsity/coach/athlete/AthleteWorkouts";
 import AthleteWindow from "@/components/varsity/coach/athlete/AthleteWindow";
+import CalendarScreen from "@/components/varsity/calendar/CalendarScreen";
 
-const MONTHS = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
-];
-const DAY_NAMES = ["M", "T", "W", "T", "F", "S", "S"];
 
 const toneDot: Record<StatusTone, string> = {
   success: "bg-success",
@@ -89,49 +79,20 @@ function ExampleTag() {
   );
 }
 
-function Stat({ value, label }: { value: string; label: string }) {
-  return (
-    <div className="flex-1">
-      <div className="text-base font-semibold leading-none text-text">{value}</div>
-      <div className="mt-1 text-[8px] font-semibold uppercase tracking-[0.14em] text-muted">
-        {label}
-      </div>
-    </div>
-  );
-}
-
-/* One day's sessions, exactly as logged — no edit, no delete. */
-function DaySheet({ label, logs, onClose }: { label: string; logs: LogEntry[]; onClose: () => void }) {
-  return (
-    <Sheet title={label} onClose={onClose}>
-      {logs.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border bg-surface-2 px-4 py-6 text-center text-[12px] text-muted">
-          Nothing logged this day.
-        </div>
-      ) : (
-        <div className="flex flex-col gap-2">
-          {/* The same row the Past workouts screen draws — one component, so a
-              session cannot look like two different things to one coach. */}
-          {logs.map((l) => (
-            <LogRow key={l.id} log={l} />
-          ))}
-        </div>
-      )}
-    </Sheet>
-  );
-}
 
 export default function AthleteDataScreen({ athleteId }: { athleteId: string }) {
   const { units } = useUnits();
   const now = useMemo(() => new Date(), []);
-  const todayIso = toISO(now);
 
   const [card, setCard] = useState<AthleteCard | null>(null);
   const [loading, setLoading] = useState(true);
   const [results, setResults] = useState<TeamResult[]>([]);
-  const [view, setView] = useState({ y: now.getFullYear(), m: now.getMonth() });
+  /* THIS MONTH, and only this month. The page no longer draws a calendar — it
+     reads one month of logs for a single purpose: to know whether this rower
+     has ever logged anything, and so whether the three screens should fall
+     back to the worked example. */
+  const view = useMemo(() => ({ y: now.getFullYear(), m: now.getMonth() }), [now]);
   const [logs, setLogs] = useState<LogEntry[]>([]);
-  const [picked, setPicked] = useState<{ iso: string; label: string } | null>(null);
   // Which of the two bottom blocks is showing the worked example rather than
   // the athlete's own rows. They fall back separately — a rower can have ergs
   // posted and an empty month, or the other way round.
@@ -192,54 +153,9 @@ export default function AthleteDataScreen({ athleteId }: { athleteId: string }) 
     };
   }, [athleteId, view, demoId, loading]);
 
-  const logsByDay = useMemo(() => {
-    const map: Record<number, LogEntry[]> = {};
-    for (const l of logs) {
-      const day = Number(l.logDate.split("-")[2]);
-      (map[day] ??= []).push(l);
-    }
-    return map;
-  }, [logs]);
-
-  const days = useMemo(() => {
-    const count = new Date(view.y, view.m + 1, 0).getDate();
-    return Array.from({ length: count }, (_, i) => {
-      const num = i + 1;
-      const iso = toISO(new Date(view.y, view.m, num));
-      const seen = new Set<string>();
-      const dots: string[] = [];
-      for (const l of logsByDay[num] ?? []) {
-        const c = l.category ?? "other";
-        if (!seen.has(c) && dots.length < 4) {
-          seen.add(c);
-          dots.push(c);
-        }
-      }
-      return { num, iso, dots, today: iso === todayIso, future: iso > todayIso };
-    });
-  }, [view, logsByDay, todayIso]);
-
-  const monthCounts = useMemo(() => {
-    const counts: Record<string, number> = {};
-    for (const l of logs) {
-      const c = l.category ?? "other";
-      counts[c] = (counts[c] ?? 0) + 1;
-    }
-    return counts;
-  }, [logs]);
-
-  const leadingEmpty = (new Date(view.y, view.m, 1).getDay() + 6) % 7; // Monday-first
-  const monthMetres = logs.reduce(
-    (sum, l) => sum + (rowingCategories.has(l.category ?? "") ? l.metres ?? 0 : 0),
-    0,
-  );
-  const monthDays = new Set(logs.map((l) => l.logDate)).size;
-  const atCurrentMonth = view.y === now.getFullYear() && view.m === now.getMonth();
-  const goMonth = (delta: number) =>
-    setView((v) => {
-      const d = new Date(v.y, v.m + delta, 1);
-      return { y: d.getFullYear(), m: d.getMonth() };
-    });
+  /* The month grid, its dots, its totals and its month arrows all lived here.
+     They are gone: the Calendar card opens the athlete's REAL calendar screen
+     now, and this page's job is who they are plus the three doors. */
 
   if (loading) {
     return <p className="px-4 py-16 text-center text-sm text-muted">Loading…</p>;
@@ -435,123 +351,19 @@ export default function AthleteDataScreen({ athleteId }: { athleteId: string }) 
         </AthleteWindow>
       )}
       {openScreen === "calendar" && (
-        <AthleteWindow name={who} title="Calendar" onClose={() => setOpenScreen(null)}>
-      {/* ── 2. When — the calendar this permission exists for ── */}
-      <SectionLabel>
-        Training
-        {exampleLogs && <ExampleTag />}
-      </SectionLabel>
-      <div className="overflow-hidden rounded-2xl border border-border bg-surface">
-        <div className="flex items-center justify-between border-b border-border px-4 py-3.5">
-          <div className="flex items-baseline gap-2">
-            <span className="text-lg font-semibold text-text">{MONTHS[view.m]}</span>
-            <span className="text-[11px] font-medium tracking-wide text-muted">{view.y}</span>
-          </div>
-          <div className="flex gap-1.5">
-            <button
-              type="button"
-              aria-label="Previous month"
-              onClick={() => goMonth(-1)}
-              className="tap44 press-icon flex h-7 w-7 items-center justify-center rounded-lg border border-border bg-surface-2 text-muted"
-            >
-              <IconChevronDown size={15} className="rotate-90" />
-            </button>
-            <button
-              type="button"
-              aria-label="Next month"
-              onClick={() => goMonth(1)}
-              disabled={atCurrentMonth}
-              className="tap44 press-icon flex h-7 w-7 items-center justify-center rounded-lg border border-border bg-surface-2 text-muted disabled:opacity-30"
-            >
-              <IconChevronDown size={15} className="-rotate-90" />
-            </button>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-7 border-b border-border px-2 pb-1 pt-2">
-          {DAY_NAMES.map((d, i) => (
-            <div
-              key={i}
-              className="py-0.5 text-center text-[11px] font-semibold tracking-[0.12em] text-muted"
-            >
-              {d}
-            </div>
-          ))}
-        </div>
-
-        <div className="grid grid-cols-7 gap-1 px-2 pb-3 pt-2">
-          {Array.from({ length: leadingEmpty }).map((_, i) => (
-            <div key={`e${i}`} className="aspect-square" />
-          ))}
-          {days.map((d) => (
-            <button
-              key={d.num}
-              type="button"
-              onClick={() =>
-                setPicked({ iso: d.iso, label: `${MONTHS[view.m]} ${d.num}, ${view.y}` })
-              }
-              className={`flex aspect-square flex-col items-center justify-center gap-1 rounded-xl pt-1 ${
-                d.today
-                  ? "border border-primary-line bg-primary-tint"
-                  : d.dots.length > 0
-                    ? "border border-border bg-surface-2 active:bg-surface"
-                    : "active:bg-surface-2"
-              }`}
-            >
-              <span
-                className={`text-[13px] font-medium leading-none ${
-                  d.today ? "font-bold text-primary" : d.future ? "text-muted" : "text-text"
-                }`}
-              >
-                {d.num}
-              </span>
-              <span className="flex h-1.5 items-center gap-0.5">
-                {d.dots.map((c, i) => (
-                  <span
-                    key={i}
-                    className="h-1.5 w-1.5 rounded-full"
-                    style={{ background: logCategoryColor[c] ?? "var(--muted)" }}
-                  />
-                ))}
-              </span>
-            </button>
-          ))}
-        </div>
-
-        <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1 border-t border-border bg-surface-2 px-3 py-2">
-          {legendCategories.map((c) => (
-            <span key={c} className="flex items-center gap-1.5 px-1.5 py-1 text-[11px] text-muted">
-              <span
-                className="h-1.5 w-1.5 rounded-full"
-                style={{ background: logCategoryColor[c] ?? "var(--muted)" }}
-              />
-              {logCategoryLabel[c]}
-              {(monthCounts[c] ?? 0) > 0 && (
-                <span className="font-semibold text-text">{monthCounts[c]}</span>
-              )}
-            </span>
-          ))}
-        </div>
-
-        <div className="flex items-center gap-4 border-t border-border px-4 py-3">
-          <Stat value={String(logs.length)} label="Sessions" />
-          <div className="h-6 w-px bg-border" />
-          <Stat value={formatDistance(monthMetres, units.distance)} label="Rowed" />
-          <div className="h-6 w-px bg-border" />
-          <Stat value={String(monthDays)} label="Days" />
-          <span className="ml-auto text-[11px] text-muted">in {MONTHS[view.m]}</span>
-        </div>
-      </div>
+        /* THE REAL CALENDAR, full size (owner, 2026-09-19: "when it's over the
+           whole page… make it the same as it was there in the normal"). It IS
+           the screen a rower has under their own Calendar tab — the wall
+           calendar with the workout written inside each day — read-only, and
+           `real` so the month comes from this athlete's actual logs rather than
+           the invented team-mate data the Team tab shows. The coach's own small
+           month grid that used to be on this page is gone with it: two
+           calendars of the same month is one too many. */
+        <AthleteWindow name={who} title="Calendar" fill onClose={() => setOpenScreen(null)}>
+          <CalendarScreen teammate={{ id: athleteId, real: true }} />
         </AthleteWindow>
       )}
 
-      {picked && (
-        <DaySheet
-          label={picked.label}
-          logs={logsByDay[Number(picked.iso.split("-")[2])] ?? []}
-          onClose={() => setPicked(null)}
-        />
-      )}
     </div>
   );
 }

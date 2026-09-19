@@ -346,11 +346,22 @@ function DaySheet({
 export default function CalendarScreen({
   teammate,
 }: {
-  /** Someone else's calendar (the Team tab), read-only. Omit for your own. */
-  teammate?: { id: string };
+  /*
+    Someone else's calendar, read-only. Omit for your own.
+
+    `real` decides WHERE their month comes from, and the two callers want
+    different things. A rower opening a team-mate's calendar from the Team tab
+    gets lib/varsity/teamTraining — invented, because accounts are not linked to
+    roster seats yet and a squad-mate's real log is not theirs to read. A COACH
+    opening one of their own athletes (the Calendar card on that rower's page in
+    the console) gets the real thing out of the database, which is the whole
+    point of the coach read policy (db/varsity_coach_reads.sql).
+  */
+  teammate?: { id: string; real?: boolean };
 } = {}) {
   const { userId } = useAppState();
   const teammateId = teammate?.id ?? null;
+  const teammateReal = !!teammate?.real;
   const now = useMemo(() => new Date(), []);
   const todayIso = toISO(now);
 
@@ -400,23 +411,24 @@ export default function CalendarScreen({
   useEffect(() => {
     let active = true;
     (async () => {
-      if (teammateId) {
+      if (teammateId && !teammateReal) {
         setLogs(teamMonthLogs(teammateId, view.y, view.m));
         return;
       }
-      if (!userId) {
+      const whose = teammateId ?? userId;
+      if (!whose) {
         setLogs([]);
         return;
       }
       const from = toISO(new Date(view.y, view.m, 1));
       const to = toISO(new Date(view.y, view.m + 1, 0));
-      const rows = await fetchLogsInRange(userId, from, to);
+      const rows = await fetchLogsInRange(whose, from, to);
       if (active) setLogs(rows);
     })();
     return () => {
       active = false;
     };
-  }, [userId, view, teammateId]);
+  }, [userId, view, teammateId, teammateReal]);
 
   const logsByDay = useMemo(() => {
     const map: Record<number, LogEntry[]> = {};
