@@ -32,6 +32,7 @@
   is the one place on this screen worth a beat of movement, and it turns itself
   off for anyone who asks for reduced motion.
 */
+import type { ReactNode } from "react";
 import { IconUser, HouseShield } from "@/components/icons";
 import Medal from "@/components/leaderboards/Medal";
 
@@ -182,7 +183,16 @@ function Place({ entry }: { entry: PodiumEntry }) {
   );
 }
 
-export default function Podium({ entries }: { entries: PodiumEntry[] }) {
+export default function Podium({
+  entries,
+  corner,
+}: {
+  entries: PodiumEntry[];
+  /** Something small pinned to the card's top-right corner — the board's
+      Per member / Total switch (owner, 2026-09-19). Third place stands lowest,
+      so that corner is always empty. */
+  corner?: ReactNode;
+}) {
   if (entries.length === 0) return null;
   // Second, first, third — left to right, as a podium stands. A board with
   // only one or two rows on it simply shows the places it has.
@@ -191,7 +201,8 @@ export default function Podium({ entries }: { entries: PodiumEntry[] }) {
     .filter((e): e is PodiumEntry => !!e);
 
   return (
-    <div className="mt-3 overflow-hidden rounded-2xl border border-border bg-surface-2 px-2.5 pt-3.5">
+    <div className="relative mt-3 overflow-hidden rounded-2xl border border-border bg-surface-2 px-2.5 pt-3.5">
+      {corner && <div className="absolute right-2 top-2 z-[1]">{corner}</div>}
       <div className="flex items-end justify-center gap-2">
         {order.map((e) => (
           <Place key={e.id} entry={e} />

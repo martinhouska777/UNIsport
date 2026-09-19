@@ -216,9 +216,9 @@ function MetricSwitch({
       type="button"
       onClick={() => onPick(other.key)}
       aria-label={`${current.label} — switch to ${other.label.toLowerCase()}`}
-      className="tap44 inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-2.5 py-1 text-[11px] font-medium text-muted active:bg-surface-2"
+      className="tap44 inline-flex items-center gap-1 rounded-full border border-border bg-surface px-2 py-0.5 text-[10px] font-medium text-muted active:bg-surface-2"
     >
-      <IconSwap size={12} />
+      <IconSwap size={11} />
       {current.short}
     </button>
   );
@@ -606,38 +606,42 @@ export default function LeaderboardsPage() {
             people you follow, is behind a tap (YouScreen). One line at rest,
             the whole of your standing when you want it.
           */}
-          <button
-            type="button"
-            onClick={() => setOpeningSelf(true)}
-            className="tap44 flex w-full items-center gap-2.5 border-b border-border px-3.5 py-2.5 text-left active:bg-surface-2"
-          >
-            {/* YOU, as you: your own photo in a ring of the school colour, with
-                a small gold trophy on its corner — it was a trophy in a little
-                square, which said "leaderboard" but not "you". */}
-            <span className="relative flex-shrink-0">
-              <span className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border-2 border-primary bg-primary-tint text-primary">
-                {myPhoto ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={myPhoto} alt="" className="h-full w-full object-cover" />
-                ) : (
-                  <IconUser size={18} />
-                )}
+          {/* On a raised card of its own, like the controls under it
+              (owner, 2026-09-19: "I want it to be a tab"). */}
+          <div className="px-3.5 pt-3">
+            <button
+              type="button"
+              onClick={() => setOpeningSelf(true)}
+              className="tap44 flex w-full items-center gap-2.5 rounded-2xl border border-border bg-surface px-3 py-2.5 text-left shadow-card active:bg-surface-2"
+            >
+              {/* YOU, as you: your own photo in a ring of the school colour, with
+                  a small gold trophy on its corner — it was a trophy in a little
+                  square, which said "leaderboard" but not "you". */}
+              <span className="relative flex-shrink-0">
+                <span className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border-2 border-primary bg-primary-tint text-primary">
+                  {myPhoto ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={myPhoto} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    <IconUser size={18} />
+                  )}
+                </span>
+                <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-surface bg-accent text-background">
+                  <IconTrophy size={10} />
+                </span>
               </span>
-              <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-surface bg-accent text-background">
-                <IconTrophy size={10} />
+              {/* Just "You" and your points — the small line under it ("72nd of
+                  88 on campus · 3 sessions") was cut (owner, 2026-09-15). The
+                  ranks are one tap away on the You screen. */}
+              <div className="min-w-0 flex-1 text-[15px] font-semibold text-text">You</div>
+              <Score value={(standing?.points ?? 0).toLocaleString("en-US")} unit="pts" />
+              {/* The line looked like a label, so nobody would have tried
+                  tapping it. The chevron is the whole difference. */}
+              <span className="flex-shrink-0 text-muted">
+                <IconChevronRight size={15} />
               </span>
-            </span>
-            {/* Just "You" and your points — the small line under it ("72nd of
-                88 on campus · 3 sessions") was cut (owner, 2026-09-15). The
-                ranks are one tap away on the You screen. */}
-            <div className="min-w-0 flex-1 text-[15px] font-semibold text-text">You</div>
-            <Score value={(standing?.points ?? 0).toLocaleString("en-US")} unit="pts" />
-            {/* The line looked like a label, so nobody would have tried
-                tapping it. The chevron is the whole difference. */}
-            <span className="flex-shrink-0 text-muted">
-              <IconChevronRight size={15} />
-            </span>
-          </button>
+            </button>
+          </div>
 
           {/* The two controls, on a raised card of their own (owner,
               2026-09-19: "I want it in the foreground") — the same white card
@@ -664,13 +668,7 @@ export default function LeaderboardsPage() {
           {/* The board. No paragraph explaining it: the two pickers above
               already say what is being ranked and over what, the switch says
               how, and everything longer than that is in the ⓘ. */}
-          <div className="px-3.5 pt-2.5">
-            {isGroupBoard && (
-              <div className="mb-1.5 flex justify-end">
-                <MetricSwitch value={metric} onPick={setMetric} />
-              </div>
-            )}
-
+          <div className="px-3.5">
             {loading ? (
               <div className="px-4 py-16 text-center text-[12px] text-muted">Counting…</div>
             ) : isGroupBoard ? (
@@ -680,13 +678,24 @@ export default function LeaderboardsPage() {
                 </div>
               ) : (
                 <>
+                  {/* The Per member / Total switch rides in the podium's
+                      top-right corner (owner, 2026-09-19); with nobody on the
+                      podium it sits above the empty note instead. */}
                   {podium.length > 0 ? (
-                    <Podium entries={podium} />
+                    <Podium
+                      entries={podium}
+                      corner={<MetricSwitch value={metric} onPick={setMetric} />}
+                    />
                   ) : (
-                    <div className="mt-3 rounded-xl border border-dashed border-border bg-surface px-4 py-6 text-center text-[12px] text-muted">
-                      Nobody has logged a session this period. The first one puts a{" "}
-                      {groupKind === "year" ? "year" : "house"} on the podium.
-                    </div>
+                    <>
+                      <div className="mt-3 flex justify-end">
+                        <MetricSwitch value={metric} onPick={setMetric} />
+                      </div>
+                      <div className="mt-2 rounded-xl border border-dashed border-border bg-surface px-4 py-6 text-center text-[12px] text-muted">
+                        Nobody has logged a session this period. The first one puts a{" "}
+                        {groupKind === "year" ? "year" : "house"} on the podium.
+                      </div>
+                    </>
                   )}
                   {listGroups.length > 0 && (
                     <div className="mt-2.5 flex flex-col gap-1.5">
