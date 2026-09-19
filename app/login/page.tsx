@@ -143,7 +143,18 @@ export default function LoginPage() {
         setError(UNIVERSITY_EMAIL_MESSAGE);
         return;
       }
-      const { data, error } = await supabase.auth.signUp({ email, password });
+      /*
+        emailRedirectTo: where the "verify your email" link lands. Today every
+        account is auto-confirmed (db/auth_autoconfirm.sql) so no mail goes
+        out; the day verification is switched on, the link comes back through
+        /auth/callback (which already handles it) instead of Supabase's
+        default page.
+      */
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+      });
       setLoading(false);
       if (error) {
         if (/already registered|already exists|user already/i.test(error.message)) {
@@ -245,23 +256,21 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         <Link
           href="/"
-          className="mb-8 inline-block font-display text-2xl italic tracking-tight text-l-text"
+          className="mb-8 inline-block font-display text-5xl italic tracking-tight text-l-text"
         >
           UNI<span className="text-l-accent">sport</span>
         </Link>
 
-        {/* The heading says which door this is. Sign up leads with the one
-            thing a new student has to know — why it must be the university
-            address; log in is just the way back in. The small hint line that
-            used to sit above the form said the same thing a second time and
-            is gone. */}
+        {/* The heading says which door this is. BOTH doors now say why it is
+            the university address (owner, 2026-09-18) — logging in is where
+            the app finds your campus too. */}
         <h1 className="font-display text-3xl text-l-text">
           {isSignup ? "Create your account" : "Welcome back"}
         </h1>
         <p className="mt-2 text-sm text-l-text-2">
           {isSignup
             ? "Use your university email — that’s how we know which campus is yours."
-            : "Log in to your account."}
+            : "Log in with your university email — that’s how we know which campus is yours."}
         </p>
 
         {!hasSupabaseEnv() ? (
@@ -313,7 +322,7 @@ export default function LoginPage() {
                 autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder={isSignup ? "you@university.edu" : "you@example.com"}
+                placeholder="you@university.edu"
                 aria-label="Email"
                 className="w-full rounded-full border border-l-line bg-l-surface px-5 py-3 text-base text-l-text placeholder:text-l-text-3 focus:border-(--color-l-accent) focus:outline-none"
               />
