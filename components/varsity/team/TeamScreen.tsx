@@ -19,9 +19,10 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import Sheet from "@/components/varsity/Sheet";
 import TeamWorkouts from "@/components/varsity/team/TeamWorkouts";
+import TeamWeekStats, { useTeamWeek } from "@/components/varsity/team/TeamWeekStats";
 import TeammateCalendarWindow from "@/components/varsity/team/TeammateCalendarWindow";
 import { useUnits } from "@/components/useUnits";
-import { formatWeight } from "@/lib/varsity/units";
+import { formatDistance, formatWeight } from "@/lib/varsity/units";
 import { roster, rosterById, sideMeta, COX_COLOR, COX_INK, type Athlete } from "@/lib/varsity/coachLineup";
 import { teamProfile } from "@/lib/varsity/teamProfiles";
 import { statusOptions, prPieces, type StatusTone } from "@/lib/varsity/athleteProfile";
@@ -207,6 +208,7 @@ function RosterRow({
   href,
   tour,
   action,
+  week,
 }: {
   a: Athlete;
   onOpen: () => void;
@@ -214,6 +216,12 @@ function RosterRow({
   tour?: string;
   /* The coach's note button, beside the side letter on the right (see rowAction). */
   action?: React.ReactNode;
+  /* THIS PERSON'S WEEK, under their name: "16.0 km · 2 outings". The squad's
+     total is at the top of the screen and this is each person's share of it —
+     the same numbers, so a row can never disagree with the card above it. A
+     rower who was in no boat gets no line rather than a zero: they may have
+     been on the erg, and this counts boats. */
+  week?: string | null;
 }) {
   const cls =
     "relative flex w-full items-center gap-3 rounded-xl border border-border bg-surface px-3 py-2.5 text-left active:bg-surface-2";
@@ -234,7 +242,10 @@ function RosterRow({
         <span className="pointer-events-none relative flex h-9 w-9 flex-shrink-0 items-center justify-center overflow-hidden rounded-lg bg-primary-tint text-primary">
           <IconUser size={18} />
         </span>
-        <span className="pointer-events-none relative min-w-0 flex-1 truncate text-[13px] font-medium text-text">{a.name}</span>
+        <span className="pointer-events-none relative min-w-0 flex-1">
+          <span className="block truncate text-[13px] font-medium text-text">{a.name}</span>
+          {week && <span className="block truncate text-[11px] text-muted">{week}</span>}
+        </span>
         {/* THE PENCIL, THE SIDE AND THE ARROW, ONE CLUSTER ON THE RIGHT
             (owner, 2026-09-17 "put the note closer to the P or S", then
             2026-09-18 "put the letters next to the arrows on the right, and
@@ -272,7 +283,10 @@ function RosterRow({
       <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center overflow-hidden rounded-lg bg-primary-tint text-primary">
         <IconUser size={18} />
       </span>
-      <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-text">{a.name}</span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-[13px] font-medium text-text">{a.name}</span>
+        {week && <span className="block truncate text-[11px] text-muted">{week}</span>}
+      </span>
       {/* The side letter right beside the arrow, the same cluster as the coach's
           row above — no padded column between them (owner, 2026-09-18). */}
       <span className="flex flex-shrink-0 items-center gap-1.5 text-muted">
@@ -324,6 +338,21 @@ export default function TeamScreen({
 } = {}) {
   const [picked, setTab] = useState<Tab>("roster");
   const tab = only ?? picked;
+  /*
+    THE SQUAD'S WEEK, above the roster. A coach had no statistics of their own
+    before this (owner, 2026-09-19) — and the team's numbers and the people who
+    made them are one screen, not two: the card totals the week, every roster
+    row carries that person's share of it, and tapping a row is the way into
+    them individually.
+  */
+  const week = useTeamWeek();
+  const { units } = useUnits();
+  /* "16.0 km · 2 outings" — or nothing at all for somebody who was in no boat. */
+  const weekLine = (a: Athlete): string | null => {
+    const p = week.byId[a.id];
+    if (!p) return null;
+    return `${formatDistance(p.metres, units.distance)} · ${p.outings} ${p.outings === 1 ? "outing" : "outings"}`;
+  };
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState<string | null>(null);
 
@@ -340,8 +369,22 @@ export default function TeamScreen({
 
   const q = query.trim().toLowerCase();
   const matches = (a: Athlete) => !q || a.name.toLowerCase().includes(q);
-  const shownRowers = rowers.filter(matches);
-  const shownCoxes = coxes.filter(matches);
+  /*
+    WHO WAS OUT THIS WEEK COMES FIRST, furthest first; everybody else keeps the
+    roster's name order underneath. The screen is asking "who trained" — on a
+    squad of fifty, the fourteen who did should not be scattered through the
+    alphabet for the reader to hunt out. The groups (rowers, then coxswains) and
+    the search are untouched, so finding one person is still one word.
+  */
+  const byWeek = (a: Athlete, b: Athlete) => {
+    const pa = week.byId[a.id];
+    const pb = week.byId[b.id];
+    if (!pa !== !pb) return pa ? -1 : 1;
+    if (pa && pb && pb.metres !== pa.metres) return pb.metres - pa.metres;
+    return a.name.localeCompare(b.name);
+  };
+  const shownRowers = rowers.filter(matches).sort(byWeek);
+  const shownCoxes = coxes.filter(matches).sort(byWeek);
   const shownCount = shownRowers.length + shownCoxes.length;
 
   return (
@@ -376,10 +419,14 @@ export default function TeamScreen({
 
       {tab === "roster" ? (
         <>
+          <div className={only ? "" : "mt-3"}>
+            <TeamWeekStats week={week} />
+          </div>
+
           {/* SEARCH — a fully round bubble. It was a dark `bg-well` hole
               (2026-09-14); the owner turned it WHITE on 2026-09-16 ("it's
               gray, I think it should be white"), same as the Workouts search. */}
-          <div className={`${only ? "" : "mt-3 "}flex items-center gap-2 rounded-full border border-border bg-surface px-4 py-2.5`}>
+          <div className="mt-3 flex items-center gap-2 rounded-full border border-border bg-surface px-4 py-2.5">
             <span className="text-muted">
               <IconSearch size={16} />
             </span>
@@ -400,6 +447,7 @@ export default function TeamScreen({
                 onOpen={() => setOpen(a.id)}
                 href={athleteHref?.(a) ?? undefined}
                 action={rowAction?.(a)}
+                week={weekLine(a)}
               />
             ))}
             {/* Coxswains, under their own heading — only when there are any to show. */}
@@ -415,6 +463,7 @@ export default function TeamScreen({
                 onOpen={() => setOpen(a.id)}
                 href={athleteHref?.(a) ?? undefined}
                 action={rowAction?.(a)}
+                week={weekLine(a)}
               />
             ))}
             {shownCount === 0 && (
