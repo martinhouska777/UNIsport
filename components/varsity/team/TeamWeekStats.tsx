@@ -15,10 +15,16 @@
   the boat, coxswain included (lib/varsity/boatMileage.ts). Which is why two
   rowers who trained identically end the week on different numbers.
 
-  FOUR NUMBERS: what the squad did in total, and what that is per person. The
-  average is over THE PEOPLE WHO WERE IN A BOAT, not over the roster — a squad
-  of fifty with fourteen on the water does not average a fifth of an outing
-  each, and dividing by the roster would say precisely that.
+  TWO NUMBERS, AND THEY ARE AVERAGES: what one person covered this week, and how
+  long they trained for. The squad's raw totals were here and the owner cut them
+  (2026-09-19) — a total is a number that grows with the size of the squad and
+  says nothing about how the week went; what a coach is actually asking is what
+  a rower's week looked like.
+
+  The average is over THE PEOPLE WHO WERE IN A BOAT, not over the roster — a
+  squad of fifty with fourteen on the water does not average a fifth of an
+  outing each, and dividing by the roster would say precisely that. How many
+  people that was is written underneath, so the average is never read alone.
 
   All colours are theme tokens.
 */
@@ -93,16 +99,11 @@ export function useTeamWeek(on = true): TeamWeek {
   };
 }
 
-/* One figure. The squad's two totals are the big ones; what that comes to per
-   person is the same number said the other way, and sits under them smaller. */
-function Total({ value, label, small }: { value: string; label: string; small?: boolean }) {
+/* One figure. */
+function Total({ value, label }: { value: string; label: string }) {
   return (
     <div className="min-w-0 flex-1">
-      <div
-        className={`truncate font-semibold leading-tight text-text ${small ? "text-[18px]" : "text-[26px]"}`}
-      >
-        {value}
-      </div>
+      <div className="truncate text-[26px] font-semibold leading-tight text-text">{value}</div>
       <div className="mt-0.5 font-mono text-[10px] font-medium tracking-[0.12em] text-muted">
         {label}
       </div>
@@ -144,21 +145,14 @@ export default function TeamWeekStats({ week }: { week: TeamWeek }) {
         </button>
       </div>
 
-      {/* THE SQUAD'S WEEK. The distance is every person's kilometres added
-          together, and the time is person-hours — eight rowers out for an hour
-          is eight hours of training, which is what the week cost the squad. */}
+      {/* THE WEEK ONE ROWER HAD, on average. */}
       <div className="mt-2 rounded-xl border border-border bg-surface p-3.5">
         <div className="flex items-start gap-3">
-          <Total value={formatDistance(data.metres, units.distance)} label="TEAM TOTAL" />
-          <Total value={formatDuration(data.minutes)} label="TIME IN TOTAL" />
-        </div>
-        <div className="mt-3 flex items-start gap-3">
           <Total
-            small
             value={formatDistance(averageMetres(data), units.distance)}
             label="EACH ON AVERAGE"
           />
-          <Total small value={formatDuration(averageMinutes(data))} label="TIME EACH" />
+          <Total value={formatDuration(averageMinutes(data))} label="TIME EACH" />
         </div>
         <div className="mt-2.5 border-t border-border pt-2.5 text-[12px] text-muted">
           {loading

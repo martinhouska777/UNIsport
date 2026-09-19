@@ -154,11 +154,14 @@ export default function AthleteDataScreen({ athleteId }: { athleteId: string }) 
   // Which of the two bottom blocks is showing the worked example rather than
   // the athlete's own rows. They fall back separately — a rower can have ergs
   // posted and an empty month, or the other way round.
-  /* CALENDAR or STATISTICS (owner, 2026-09-19). Who they are stays above the
-     switch — their side, their status, the coach's note and their bests are
-     true whichever question is being asked; what CHANGES is whether you want
-     to see the days they trained or the sum of them. */
-  const [tab, setTab] = useState<"calendar" | "stats">("calendar");
+  /* STATISTICS or CALENDAR (owner, 2026-09-19, then "above calendar put
+     statistics"). Who they are stays above the switch — their side, their
+     status, the coach's note and their bests are true whichever question is
+     being asked; what CHANGES is whether you want the sum of their training or
+     the days that made it. The page OPENS ON THE STATISTICS: a coach coming to
+     a rower's page is asking how much they have trained, and the calendar is
+     where you go when the answer needs explaining. */
+  const [tab, setTab] = useState<"stats" | "calendar">("stats");
   const [exampleLogs, setExampleLogs] = useState(false);
   const [exampleResults, setExampleResults] = useState(false);
 
@@ -365,8 +368,8 @@ export default function AthleteDataScreen({ athleteId }: { athleteId: string }) 
       <div className="mt-6 flex overflow-hidden rounded-xl border border-border bg-surface">
         {(
           [
-            ["calendar", "Calendar"],
             ["stats", "Statistics"],
+            ["calendar", "Calendar"],
           ] as const
         ).map(([k, label]) => (
           <button
