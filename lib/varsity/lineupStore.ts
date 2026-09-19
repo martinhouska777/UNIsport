@@ -70,6 +70,40 @@ export async function fetchLineup(dayKey: string): Promise<StoredLineup | null> 
   };
 }
 
+/*
+  ── SEVERAL PRACTICES AT ONCE (the coach's weekly kilometres) ──
+  One round trip for a whole week rather than fourteen. Asked for by key, not
+  by date range: the key holds a zero-based, unpadded month, so the database
+  cannot compare it as text and the caller is the only thing that knows which
+  days it means (lib/varsity/boatMileage.ts builds them).
+
+  DRAFTS COUNT. A distance is written after the outing, and a coach who never
+  pressed publish still rowed the kilometres — leaving them out would make a
+  rower's total quietly wrong with nothing on screen to explain it.
+*/
+export async function fetchLineupsFor(dayKeys: string[]): Promise<Record<string, Boat[]>> {
+  if (!dayKeys.length) return {};
+  if (!hasSupabaseEnv()) {
+    const out: Record<string, Boat[]> = {};
+    for (const key of dayKeys) {
+      const local = loadLocal(key);
+      if (local) out[key] = local.boats;
+    }
+    return out;
+  }
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("varsity_lineups")
+    .select("day_key,boats")
+    .in("day_key", dayKeys);
+  if (error || !data) return {};
+  const out: Record<string, Boat[]> = {};
+  for (const r of data as { day_key: string; boats: Boat[] | null }[]) {
+    out[r.day_key] = r.boats ?? [];
+  }
+  return out;
+}
+
 /* ── Status of every practice that has a lineup (powers the day-picker dots) ── */
 export async function fetchLineupStatuses(): Promise<Record<string, LineupStatus>> {
   if (!hasSupabaseEnv()) return loadLocalAll();
