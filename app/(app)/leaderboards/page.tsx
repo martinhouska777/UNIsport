@@ -22,9 +22,9 @@
   is ‹ Houses › with small arrows and a sideways swipe, the name sliding in
   from the side it came from (owner, 2026-09-15 — it was a dropdown opening a
   sheet from the bottom; components/leaderboards/CompetitionSwitcher.tsx).
-  Period moves the same way since 2026-09-19 (it was a dropdown). Both
-  controls are the theme's text colour — white on the dark theme — so they
-  stand out from the grey cards under them. The list of competitions can grow
+  Period moves the same way since 2026-09-19 (it was a dropdown). The two sit
+  together on one raised card, and Per member / Total is a single small
+  switch button above the board, not a full-width bar. The list of competitions can grow
   without the screen growing.
 
   THE PODIUM. Every board opens with its top three standing on gold, silver and
@@ -88,6 +88,7 @@ import {
   IconArrowLeft,
   IconChevronRight,
   IconInfo,
+  IconSwap,
   IconTrophy,
   IconUser,
   HouseShield,
@@ -196,8 +197,11 @@ function RankBadge({ rank }: { rank: number }) {
   );
 }
 
-/* The one control that changes what a team board MEANS, so it sits above the
-   board itself rather than inside a sheet: two words, both always visible. */
+/* The one control that changes what a team board MEANS — but it is not the
+   most important thing on the screen, so it is ONE small button that flips
+   between the two, not a two-segment bar the width of the phone (owner,
+   2026-09-19: "it's really big, and there are a lot of tabs… just a button to
+   switch it"). It says which one is on; a tap swaps to the other. */
 function MetricSwitch({
   value,
   onPick,
@@ -205,23 +209,18 @@ function MetricSwitch({
   value: GroupMetric;
   onPick: (m: GroupMetric) => void;
 }) {
+  const current = GROUP_METRICS.find((m) => m.key === value) ?? GROUP_METRICS[0];
+  const other = GROUP_METRICS.find((m) => m.key !== value) ?? GROUP_METRICS[0];
   return (
-    <div className="flex gap-1 rounded-full border border-border bg-surface p-0.5">
-      {GROUP_METRICS.map((m) => (
-        <button
-          key={m.key}
-          type="button"
-          onClick={() => onPick(m.key)}
-          aria-pressed={value === m.key}
-          aria-label={m.label}
-          className={`tap44 flex-1 rounded-full px-3 py-1.5 text-[12px] font-medium transition-colors ${
-            value === m.key ? "bg-text text-background" : "text-muted"
-          }`}
-        >
-          {m.short}
-        </button>
-      ))}
-    </div>
+    <button
+      type="button"
+      onClick={() => onPick(other.key)}
+      aria-label={`${current.label} — switch to ${other.label.toLowerCase()}`}
+      className="tap44 inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-2.5 py-1 text-[11px] font-medium text-muted active:bg-surface-2"
+    >
+      <IconSwap size={12} />
+      {current.short}
+    </button>
   );
 }
 
@@ -640,9 +639,11 @@ export default function LeaderboardsPage() {
             </span>
           </button>
 
-          {/* The two controls. */}
-          <div className="border-b border-border px-3.5 py-2.5">
-            <div className="flex gap-2">
+          {/* The two controls, on a raised card of their own (owner,
+              2026-09-19: "I want it in the foreground") — the same white card
+              as everywhere else in the app, with a hairline between the two. */}
+          <div className="px-3.5 pt-3">
+            <div className="flex divide-x divide-border rounded-2xl border border-border bg-surface shadow-card">
               <CompetitionSwitcher
                 caption="Competition"
                 options={COMPETITIONS}
@@ -665,7 +666,7 @@ export default function LeaderboardsPage() {
               how, and everything longer than that is in the ⓘ. */}
           <div className="px-3.5 pt-2.5">
             {isGroupBoard && (
-              <div className="mb-2.5">
+              <div className="mb-1.5 flex justify-end">
                 <MetricSwitch value={metric} onPick={setMetric} />
               </div>
             )}

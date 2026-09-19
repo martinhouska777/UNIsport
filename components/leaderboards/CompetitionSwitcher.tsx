@@ -15,9 +15,8 @@
   touch-pan-y leaves vertical scrolling to the page; only a mostly-sideways
   swipe of 30px or more counts.
 
-  Used for BOTH leaderboard controls, Competition and Period. Filled with the
-  theme's text colour (white on the dark theme) so they stand out (owner,
-  2026-09-19: "make it a different colour so it stands out, maybe white").
+  Used for BOTH leaderboard controls, Competition and Period. It has no box
+  of its own: the page puts the two side by side on one raised card.
 */
 import { useRef, useState } from "react";
 import { IconChevronLeft, IconChevronRight } from "@/components/icons";
@@ -54,7 +53,7 @@ export default function CompetitionSwitcher<K extends string>({
 
   return (
     <div
-      className="flex min-w-0 flex-1 touch-pan-y select-none items-stretch rounded-xl bg-text text-background"
+      className="flex min-w-0 flex-1 touch-pan-y select-none items-stretch"
       onTouchStart={(e) => {
         const t = e.touches[0];
         touch.current = { x: t.clientX, y: t.clientY };
@@ -75,15 +74,15 @@ export default function CompetitionSwitcher<K extends string>({
         type="button"
         aria-label={`Previous ${caption.toLowerCase()}`}
         onClick={() => step(-1)}
-        className="tap44 flex w-8 flex-shrink-0 items-center justify-center rounded-l-xl text-background/60 active:text-background"
+        className="tap44 flex w-8 flex-shrink-0 items-center justify-center rounded-l-2xl text-muted active:text-text"
       >
         <IconChevronLeft size={15} />
       </button>
       <div className="min-w-0 flex-1 overflow-hidden py-2 text-center" aria-live="polite">
-        <span className="block text-[9px] uppercase tracking-[0.1em] text-background/60">{caption}</span>
+        <span className="block text-[9px] uppercase tracking-[0.1em] text-muted">{caption}</span>
         <span
           key={value}
-          className={`mt-0.5 block truncate text-[13px] font-semibold text-background motion-reduce:animate-none ${slide}`}
+          className={`mt-0.5 block truncate text-[13px] font-semibold text-text motion-reduce:animate-none ${slide}`}
         >
           {options[index]?.label}
         </span>
@@ -92,7 +91,7 @@ export default function CompetitionSwitcher<K extends string>({
         type="button"
         aria-label={`Next ${caption.toLowerCase()}`}
         onClick={() => step(1)}
-        className="tap44 flex w-8 flex-shrink-0 items-center justify-center rounded-r-xl text-background/60 active:text-background"
+        className="tap44 flex w-8 flex-shrink-0 items-center justify-center rounded-r-2xl text-muted active:text-text"
       >
         <IconChevronRight size={15} />
       </button>
