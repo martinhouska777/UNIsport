@@ -33,7 +33,12 @@ const SETTINGS = "/varsity/coach/settings";
   settings, where the invite links are. Everything else bounces to settings —
   the database refuses them there too, this just doesn't show the door.
 */
-const captainMay = (path: string) => path === TEAM_TAB || path === SETTINGS;
+// Settings is a menu now: its administration pages (waiting, invites, squad)
+// are the captain's too — only Training settings stays coach-only.
+const captainMay = (path: string) =>
+  path === TEAM_TAB ||
+  path === SETTINGS ||
+  (path.startsWith(`${SETTINGS}/`) && !path.startsWith(`${SETTINGS}/training`));
 
 export default function CoachLayout({ children }: { children: React.ReactNode }) {
   const { ready, loggedIn, varsityReady, userId } = useAppState();
