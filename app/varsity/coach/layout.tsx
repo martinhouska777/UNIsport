@@ -13,6 +13,7 @@ import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAppState } from "@/components/AppState";
 import ThemeProvider from "@/components/ThemeProvider";
+import TeamColors from "@/components/varsity/TeamColors";
 import LoadingGate from "@/components/LoadingGate";
 import CoachTopBar from "@/components/varsity/coach/CoachTopBar";
 import CoachNav from "@/components/varsity/coach/CoachNav";
@@ -88,7 +89,9 @@ export default function CoachLayout({ children }: { children: React.ReactNode })
       {/* Laptop: the shared sidebar, like the student app. Phone: top bar + tabs. */}
       <CoachSideNav role={role} teamName={membership!.teamName} />
       <CoachTopBar role={role} teamName={membership!.teamName} />
-      <main className="relative z-10 flex flex-1 flex-col overflow-y-auto">{children}</main>
+      <main className="relative z-10 flex flex-1 flex-col overflow-y-auto">
+        <TeamColors teamId={membership!.teamId}>{children}</TeamColors>
+      </main>
       <CoachNav role={role} />
       {/*
         The console's own walk, the first time a coach is in. Mounted here

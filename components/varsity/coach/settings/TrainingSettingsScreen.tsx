@@ -40,6 +40,7 @@ import {
 } from "@/components/icons";
 import type { Membership } from "@/lib/varsity/membership";
 import { fetchTrainingConfig, saveTrainingConfig } from "@/lib/varsity/configStore";
+import { applyTeamColors, cacheTeamColors, teamColorMap } from "@/lib/varsity/teamColors";
 import { fetchPlan } from "@/lib/varsity/planStore";
 import {
   defaultConfig,
@@ -229,6 +230,10 @@ export default function TrainingSettingsScreen({ membership }: { membership: Mem
     }
     setDirty(false);
     setSaved(true);
+    // The squad sees the new colours too (lib/varsity/teamColors.ts).
+    const map = teamColorMap(cfg);
+    applyTeamColors(map);
+    if (teamId) cacheTeamColors(teamId, map);
   }, [teamId, cfg]);
 
   /*

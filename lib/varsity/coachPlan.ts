@@ -20,6 +20,7 @@
   spreadsheet hues as hex values, always applied via inline style — never a
   hardcoded class.
 */
+import { teamTypeColor, teamZoneColor } from "./teamColors";
 
 export type Period = "AM" | "PM";
 export const periods: Period[] = ["AM", "PM"];
@@ -204,9 +205,11 @@ export function dayKeyLabel(key: string): string {
   configSessionLabel() / configSessionColor() in trainingConfig.ts; here an
   unknown key falls back to showing itself, so a renamed type is never a blank.
 */
+// The squad's own colours first (lib/varsity/teamColors.ts), then the shipped ones.
 export function sessionColor(s: Session): string {
-  if (s.intensity) return intensityMeta[s.intensity as Intensity]?.color ?? "var(--muted)";
-  return categoryMeta[s.category as Category]?.color ?? "var(--muted)";
+  if (s.intensity)
+    return teamZoneColor(s.intensity) ?? intensityMeta[s.intensity as Intensity]?.color ?? "var(--muted)";
+  return teamTypeColor(s.category) ?? categoryMeta[s.category as Category]?.color ?? "var(--muted)";
 }
 /*
   THE PIECES of a session, as the coach wrote them, up to the first comma:

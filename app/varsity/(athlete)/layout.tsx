@@ -29,6 +29,7 @@ import VarsityIntro from "@/components/varsity/VarsityIntro";
 import VarsityTopBar from "@/components/varsity/VarsityTopBar";
 import VarsityNav from "@/components/varsity/VarsityNav";
 import VarsitySideNav from "@/components/varsity/VarsitySideNav";
+import TeamColors from "@/components/varsity/TeamColors";
 import { useVarsityTheme } from "@/components/varsity/useVarsityTheme";
 
 export default function VarsityLayout({ children }: { children: React.ReactNode }) {
@@ -78,7 +79,7 @@ export default function VarsityLayout({ children }: { children: React.ReactNode 
       <VarsitySideNav />
       <VarsityTopBar />
       <main className="relative z-10 flex flex-1 flex-col overflow-y-auto">
-        {children}
+        <TeamColors teamId={membership!.teamId}>{children}</TeamColors>
       </main>
       <VarsityNav />
     </ThemeProvider>
