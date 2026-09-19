@@ -15,9 +15,10 @@
   the boat, coxswain included (lib/varsity/boatMileage.ts). Which is why two
   rowers who trained identically end the week on different numbers.
 
-  NO TEAM AVERAGE. It was here for a day and the owner cut it: an average over a
-  squad where half the boats went out and half did not is a number that is never
-  anybody's, and it invites exactly the wrong comparison.
+  FOUR NUMBERS: what the squad did in total, and what that is per person. The
+  average is over THE PEOPLE WHO WERE IN A BOAT, not over the roster — a squad
+  of fifty with fourteen on the water does not average a fifth of an outing
+  each, and dividing by the roster would say precisely that.
 
   All colours are theme tokens.
 */
@@ -25,6 +26,8 @@ import { useEffect, useState } from "react";
 import { useUnits } from "@/components/useUnits";
 import { IconChevronLeft, IconChevronRight } from "@/components/icons";
 import {
+  averageMetres,
+  averageMinutes,
   mileageFrom,
   weekDayKeys,
   weekRangeLabel,
@@ -87,11 +90,16 @@ export function useTeamWeek(): TeamWeek {
   };
 }
 
-/* One of the two big figures. */
-function Total({ value, label }: { value: string; label: string }) {
+/* One figure. The squad's two totals are the big ones; what that comes to per
+   person is the same number said the other way, and sits under them smaller. */
+function Total({ value, label, small }: { value: string; label: string; small?: boolean }) {
   return (
     <div className="min-w-0 flex-1">
-      <div className="truncate text-[26px] font-semibold leading-tight text-text">{value}</div>
+      <div
+        className={`truncate font-semibold leading-tight text-text ${small ? "text-[18px]" : "text-[26px]"}`}
+      >
+        {value}
+      </div>
       <div className="mt-0.5 font-mono text-[10px] font-medium tracking-[0.12em] text-muted">
         {label}
       </div>
@@ -140,6 +148,14 @@ export default function TeamWeekStats({ week }: { week: TeamWeek }) {
         <div className="flex items-start gap-3">
           <Total value={formatDistance(data.metres, units.distance)} label="TEAM TOTAL" />
           <Total value={formatDuration(data.minutes)} label="TIME IN TOTAL" />
+        </div>
+        <div className="mt-3 flex items-start gap-3">
+          <Total
+            small
+            value={formatDistance(averageMetres(data), units.distance)}
+            label="EACH ON AVERAGE"
+          />
+          <Total small value={formatDuration(averageMinutes(data))} label="TIME EACH" />
         </div>
         <div className="mt-2.5 border-t border-border pt-2.5 text-[12px] text-muted">
           {loading

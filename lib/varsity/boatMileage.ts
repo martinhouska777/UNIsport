@@ -145,6 +145,13 @@ export function mileageFrom(lineups: Record<string, Boat[]>): Mileage {
   return { people, metres, minutes, boats, unfilled };
 }
 
-/** The squad's average person, for the line under the total. */
+/*
+  THE AVERAGE PERSON'S WEEK — how far, and how long. Over the people who were
+  actually in a boat, never over the whole roster: a squad of fifty with
+  fourteen on the water is not a squad averaging a fifth of an outing each, and
+  dividing by the roster would say exactly that.
+*/
 export const averageMetres = (m: Mileage): number =>
   m.people.length ? m.metres / m.people.length : 0;
+export const averageMinutes = (m: Mileage): number =>
+  m.people.length ? m.minutes / m.people.length : 0;
