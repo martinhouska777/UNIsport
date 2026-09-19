@@ -131,8 +131,12 @@ are unchanged.
 blue up there cycles with the phones — the wordmark's second half, "Your
 people", the button — published by the intro as `--sc` / `--sc-ink`. Two things
 deliberately do not follow: the "Live now at Harvard" pill, which states a fact
-about Harvard and is the one place a colour could mislead, and everything
-outside the intro. `accent()` in `lib/landingSchools.ts` guarantees the
+about Harvard and is the one place a colour could mislead, and the rest of the
+page below the intro. The TOP BAR's "Get started with .edu" does follow it
+(owner, 2026-09-19): the bar lives in StickyBar, outside the section, so the
+intro publishes `--sc`/`--sc-ink` on `<html>` as well and the bar reads them
+with the page's own ink as the fallback — which is what the views with no
+intro still show. `accent()` in `lib/landingSchools.ts` guarantees the
 button's label clears 4.5:1 against all eight (Yale and Brown need the walk it
 does); `lift()` desaturates as it lightens, or Dartmouth's forest green comes
 back neon mint and Brown's brown comes back tan.

@@ -89,7 +89,18 @@ export default function LandingNav({ view = "all", heroMark = false }: { view?: 
                 as a site you can only sign IN to (owner, 2026-09-19). */}
             <Link
               href={hero.primaryHref}
-              className="inline-flex h-10 items-center whitespace-nowrap rounded-full border border-l-text bg-l-text px-3.5 text-[13px] font-medium tracking-tight text-l-bg transition-[color,background-color,border-color,translate] hover:-translate-y-0.5 hover:border-(--color-l-accent) hover:bg-l-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-l-text sm:px-[18px] sm:text-sm"
+              /* It wears the school the intro is showing, and changes with it
+                 (owner, 2026-09-19): --sc / --sc-ink are published on <html>
+                 by LandingHero. A view with no intro never sets them, so the
+                 fallback is the page's own ink — what the bar looked like
+                 before. Same 700ms fade as the intro's own button, so the two
+                 turn together. */
+              style={{
+                backgroundColor: "var(--sc, var(--color-l-text))",
+                borderColor: "var(--sc, var(--color-l-text))",
+                color: "var(--sc-ink, var(--color-l-bg))",
+              }}
+              className="inline-flex h-10 items-center whitespace-nowrap rounded-full border px-3.5 text-[13px] font-medium tracking-tight transition-[background-color,border-color,color,translate] duration-700 ease-in-out hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-l-text motion-reduce:transition-none sm:px-[18px] sm:text-sm"
             >
               {nav.cta}
             </Link>

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, type CSSProperties } from "react";
+import { useEffect, useRef, type CSSProperties } from "react";
 import HeroFade from "@/components/landing/HeroFade";
 import HeroPhones from "@/components/landing/HeroPhones";
 import SchoolCrest from "@/components/SchoolCrest";
@@ -89,6 +89,22 @@ export default function LandingHero() {
   const section = useRef<HTMLElement>(null);
   const { i, count, school } = useSchoolCycle(section, HERO_CYCLE_MS);
   const { color, ink } = accent(school.color);
+
+  /* The cycle also runs OUTSIDE this section: the top bar's "Get started with
+     .edu" takes the school's colour too (owner, 2026-09-19 — "to měnící se má
+     se měnit i tam nahoře"), and the bar lives in StickyBar, not in here. So
+     the pair is published on <html> as well, where anything on the page can
+     read it; the views with no intro never set it and their bar falls back to
+     the page's own ink. */
+  useEffect(() => {
+    const root = document.documentElement;
+    root.style.setProperty("--sc", color);
+    root.style.setProperty("--sc-ink", `var(--color-${ink})`);
+    return () => {
+      root.style.removeProperty("--sc");
+      root.style.removeProperty("--sc-ink");
+    };
+  }, [color, ink]);
 
   return (
     <section
