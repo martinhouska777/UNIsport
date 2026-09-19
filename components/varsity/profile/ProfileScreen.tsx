@@ -790,8 +790,8 @@ export default function ProfileScreen() {
 
   /*
     ARRIVING FROM SETTINGS → "Edit varsity profile" (/varsity/profile?edit=1 —
-    it was a pencil in the top bar until 2026-09-19). Settings
-    lives in the layout and this editor lives here, so the link is the message.
+    it was a pencil in the top bar until 2026-09-19). Settings is another
+    page and this editor lives here, so the link is the message.
     Read off the URL after mount — useSearchParams would force a Suspense
     boundary around the whole screen — then cleared, so a refresh doesn't
     reopen it. Same shape as the log reminder's deep link on Home.
