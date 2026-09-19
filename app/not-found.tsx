@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { instrumentSerif } from "@/components/landing/fonts";
+import Wordmark from "@/components/landing/Wordmark";
 import { notFound } from "@/lib/landingCopy";
 
 /*
@@ -22,8 +23,8 @@ export default function NotFound() {
       className={`${instrumentSerif.variable} flex min-h-dvh flex-col items-center justify-center bg-l-bg px-6 text-center font-sans text-l-text`}
     >
       <div className="w-full max-w-sm">
-        <Link href="/" className="mb-8 inline-block font-display text-2xl italic tracking-tight text-l-text">
-          UNI<span className="text-l-accent">sport</span>
+        <Link href="/" className="mb-8 inline-block">
+          <Wordmark className="text-2xl" />
         </Link>
         <div className="font-mono text-[12px] tracking-[0.14em] uppercase text-l-text-2">{notFound.kicker}</div>
         <h1 className="mt-2 font-display text-4xl tracking-tight text-balance text-l-text">{notFound.headline}</h1>

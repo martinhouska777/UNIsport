@@ -20,6 +20,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { instrumentSerif } from "@/components/landing/fonts";
+import Wordmark from "@/components/landing/Wordmark";
 import { useAppState } from "@/components/AppState";
 import { IconArrowLeft } from "@/components/icons";
 
@@ -51,15 +52,15 @@ export default function JoinShell({ badge, children }: { badge: string; children
         {/* Only a link for someone who isn't signed in — for everyone else the
             marketing landing page isn't a place they want to end up. */}
         {loggedIn ? (
-          <span className="mb-8 inline-block font-display text-2xl italic tracking-tight text-l-text">
-            UNI<span className="text-l-varsity">sport</span>
+          <span className="mb-8 inline-block">
+            <Wordmark className="text-2xl" accentClassName="text-l-varsity" />
           </span>
         ) : (
           <Link
             href="/"
-            className="mb-8 inline-block font-display text-2xl italic tracking-tight text-l-text"
+            className="mb-8 inline-block"
           >
-            UNI<span className="text-l-varsity">sport</span>
+            <Wordmark className="text-2xl" accentClassName="text-l-varsity" />
           </Link>
         )}
 

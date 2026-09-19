@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { instrumentSerif } from "@/components/landing/fonts";
+import Wordmark from "@/components/landing/Wordmark";
 import { useAppState } from "@/components/AppState";
 import { createClient, hasSupabaseEnv } from "@/lib/supabase/client";
 import { VARSITY_HOME } from "@/lib/varsity/theme";
@@ -256,9 +257,9 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         <Link
           href="/"
-          className="mb-8 inline-block font-display text-5xl italic tracking-tight text-l-text"
+          className="mb-8 inline-block"
         >
-          UNI<span className="text-l-accent">sport</span>
+          <Wordmark className="text-5xl" />
         </Link>
 
         {/* The heading says which door this is — and nothing under it (owner,

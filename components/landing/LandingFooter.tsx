@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { footer } from "@/lib/landingCopy";
+import Wordmark from "@/components/landing/Wordmark";
 
 /* The footer. Everything here is meant to be READ — the tagline, the two
    legal links, the unaffiliated line — so nothing is in text-3 (2.7:1 on this
@@ -9,8 +10,8 @@ export default function LandingFooter() {
     <footer className="relative z-[1] border-t border-l-line px-6 py-10 sm:px-8">
       <div className="mx-auto flex max-w-[1280px] flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
         <div className="flex items-center gap-4 font-mono text-xs tracking-wide text-l-text-2">
-          <Link href="/" className="tap44 inline-block font-display text-lg italic tracking-tight text-l-text">
-            UNI<span className="text-l-accent">sport</span>
+          <Link href="/" className="tap44 inline-block">
+            <Wordmark className="text-lg" />
           </Link>
           <span className="h-3.5 w-px bg-l-line" />
           <span>{footer.tagline}</span>
