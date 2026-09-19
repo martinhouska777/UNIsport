@@ -1,0 +1,108 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>UNIsport — a barbell straight through the U</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&display=swap">
+<style>
+  :root { --n: #2f3b52; --b: #1f32c1; --tint: #c3c9ec; --page: #eef1f5; --mute: #7e8488; --hair: #dfe4ea; }
+  html, body { margin: 0; background: var(--page); font-family: "Plus Jakarta Sans", system-ui, sans-serif; }
+  #board { width: 1160px; box-sizing: border-box; padding: 48px; display: flex; flex-direction: column; gap: 14px; }
+  .band { font-size: 12px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--b); margin-top: 24px; }
+  .band span { font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--mute); margin-left: 10px; }
+  .grid { display: grid; grid-template-columns: repeat(5, 200px); gap: 16px; }
+  .tile { position: relative; width: 200px; height: 200px; background: #fff; border-radius: 6px; display: flex; align-items: center; justify-content: center; }
+  .tile .num { position: absolute; top: 12px; left: 14px; font-size: 13px; font-weight: 700; color: var(--b); }
+  .tile .tag { position: absolute; bottom: 11px; left: 0; right: 0; text-align: center; font-size: 11px; font-weight: 500; color: var(--mute); }
+  .tile svg { width: 132px; height: 132px; display: block; }
+  .strip { display: grid; grid-template-columns: repeat(5, 200px); gap: 16px; }
+  .cell { height: 66px; background: #fff; border-radius: 6px; display: flex; align-items: center; justify-content: center; gap: 18px; }
+  .cell .num { font-size: 12px; font-weight: 600; color: var(--mute); width: 14px; }
+  .cell .chip { border: 1px solid var(--hair); border-radius: 24%; display: flex; align-items: center; justify-content: center; background: #fff; }
+  .cell .chip svg { display: block; }
+  .note { font-size: 12px; color: var(--mute); background: #fff; border-radius: 6px; padding: 16px 30px; line-height: 1.6; }
+  .note b { color: #141618; font-weight: 600; }
+</style>
+</head>
+<body>
+<div id="board">
+  <div class="band">The bar goes through <span>a full barbell crossing the U, plates outside it — not a small one parked in the bowl</span></div>
+  <div class="grid" id="g1"></div>
+  <div class="strip" id="s1"></div>
+  <div class="grid" id="g2"></div>
+  <div class="strip" id="s2"></div>
+  <p class="note" id="note"></p>
+</div>
+
+<script>
+/* The mark, untouched: a U split down the middle, each half one person. */
+const U = `
+  <path d="M28 34 V56 Q28 82 50 82" fill="none" stroke="var(--n)" stroke-width="14" stroke-linecap="round"/>
+  <path d="M72 34 V56 Q72 82 50 82" fill="none" stroke="var(--b)" stroke-width="14" stroke-linecap="round"/>`;
+const HEADS = `
+  <circle cx="28" cy="16" r="8.5" fill="var(--n)"/>
+  <circle cx="72" cy="16" r="8.5" fill="var(--b)"/>`;
+
+/*
+  A whole barbell laid across the mark: shaft all the way through, a plate each
+  side sitting OUTSIDE the U's legs, and the sleeve showing past the plate —
+  the same anatomy as the I in the wordmark, turned on its side.
+
+  y      how high the bar crosses
+  shaft  thickness of the bar
+  plate  half-height of the plate
+  colour which ink it takes
+  span   how far out the sleeve runs
+*/
+function bar({ y, shaft = 7, plate = 13, colour = "var(--b)", span = 95, plateW = 7 }) {
+  const x0 = 100 - span, x1 = span;
+  const px0 = x0 + 8, px1 = x1 - 8;   // the plates, just inside the sleeve ends
+  return `<g stroke="${colour}" stroke-linecap="round" fill="none">
+    <path d="M${x0} ${y} H${x1}" stroke-width="${shaft}"/>
+    <path d="M${px0} ${y - plate} V${y + plate}" stroke-width="${plateW}"/>
+    <path d="M${px1} ${y - plate} V${y + plate}" stroke-width="${plateW}"/>
+  </g>`;
+}
+
+const ITEMS = [
+  { tag: "through the bowl, behind",   behind: bar({ y: 58 }) },
+  { tag: "higher, through the legs",   behind: bar({ y: 46 }) },
+  { tag: "low, near the curve",        behind: bar({ y: 68 }) },
+  { tag: "through the bowl, in front", over:   bar({ y: 58 }) },
+  { tag: "behind, in the pale ink",    behind: bar({ y: 58, colour: "var(--tint)" }) },
+
+  { tag: "heavier bar",                behind: bar({ y: 58, shaft: 10, plate: 16, plateW: 9 }) },
+  { tag: "thin bar, big plates",       behind: bar({ y: 58, shaft: 5, plate: 18, plateW: 8 }) },
+  { tag: "short — plates tuck in",     behind: bar({ y: 58, span: 88 }) },
+  { tag: "long — it reaches out",      behind: bar({ y: 58, span: 99, plate: 12 }) },
+  { tag: "navy bar, behind",           behind: bar({ y: 58, colour: "var(--n)" }) },
+];
+
+const svg = (it, size) => `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"
+  ${size ? `width="${size}" height="${size}"` : ""}>
+  ${it.behind ?? ""}${U}${HEADS}${it.over ?? ""}</svg>`;
+
+const tiles = (from) => ITEMS.slice(from, from + 5).map((it, k) => {
+  const i = from + k;
+  return `<div class="tile"><span class="num">${i + 1}</span>${svg(it)}<span class="tag">${it.tag}</span></div>`;
+}).join("");
+const cells = (from) => ITEMS.slice(from, from + 5).map((it, k) => {
+  const i = from + k;
+  return `<div class="cell"><span class="num">${i + 1}</span>
+    <span class="chip" style="width:46px;height:46px">${svg(it, 36)}</span>
+    <span class="chip" style="width:26px;height:26px">${svg(it, 21)}</span>
+    <span class="chip" style="width:16px;height:16px;border-radius:4px">${svg(it, 14)}</span></div>`;
+}).join("");
+
+document.getElementById("g1").innerHTML = tiles(0);
+document.getElementById("s1").innerHTML = cells(0);
+document.getElementById("g2").innerHTML = tiles(5);
+document.getElementById("s2").innerHTML = cells(5);
+
+document.getElementById("note").innerHTML =
+  `Under each row: <b>46, 26 and 16 px</b>. A bar that goes all the way through survives shrinking far better than ` +
+  `anything parked in the bowl, because its length is the whole mark rather than a third of it — but it also makes ` +
+  `the mark <b>wider than it is tall</b>, which changes how it sits in a square app icon. Worth deciding with that in mind.`;
+</script>
+</body>
+</html>
