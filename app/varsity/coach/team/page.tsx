@@ -138,6 +138,10 @@ export default function CoachTeamPage() {
         <TeamScreen
           /* Just the roster — Workouts is its own tab in the console. */
           only="roster"
+          /* THE CONSOLE. It is what puts the squad's week above the roster
+             (components/varsity/team/TeamWeekStats) — a rower's own Team tab
+             does not get it, on the owner's call. */
+          inConsole
           /* A coach (not a captain) gets the note button in each row. */
           rowAction={
             writesNotes

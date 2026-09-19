@@ -55,7 +55,7 @@ export type TeamWeek = {
   roster rows below can show each person's share of the very same numbers — a
   screen that fetched twice could show a total that its own rows disagree with.
 */
-export function useTeamWeek(): TeamWeek {
+export function useTeamWeek(on = true): TeamWeek {
   const [start, setStart] = useState(() => weekStart(new Date()));
   /* The week that has been added up, and WHICH week it was. Holding the two
      together is what says "still loading" — a flag set from inside the effect
@@ -63,7 +63,10 @@ export function useTeamWeek(): TeamWeek {
      also show last week's totals under this week's heading for a frame. */
   const [result, setResult] = useState<{ at: number; data: Mileage } | null>(null);
 
+  /* `on` is false on a rower's Team tab, where this is not shown: a screen that
+     is not asking the question must not ask the database either. */
   useEffect(() => {
+    if (!on) return;
     let active = true;
     const at = start.getTime();
     fetchLineupsFor(weekDayKeys(start)).then((lineups) => {
@@ -72,9 +75,9 @@ export function useTeamWeek(): TeamWeek {
     return () => {
       active = false;
     };
-  }, [start]);
+  }, [start, on]);
 
-  const loading = result?.at !== start.getTime();
+  const loading = on && result?.at !== start.getTime();
   const data = loading ? EMPTY : (result?.data ?? EMPTY);
   const byId: Record<string, PersonMileage> = {};
   for (const p of data.people) byId[p.id] = p;

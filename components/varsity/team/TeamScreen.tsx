@@ -339,13 +339,18 @@ export default function TeamScreen({
   const [picked, setTab] = useState<Tab>("roster");
   const tab = only ?? picked;
   /*
-    THE SQUAD'S WEEK, above the roster. A coach had no statistics of their own
-    before this (owner, 2026-09-19) — and the team's numbers and the people who
-    made them are one screen, not two: the card totals the week, every roster
-    row carries that person's share of it, and tapping a row is the way into
-    them individually.
+    THE SQUAD'S WEEK, above the roster — THE COACH CONSOLE ONLY (owner,
+    2026-09-19: "only in coaches console there will be that"). A coach had no
+    statistics of their own; the team's numbers and the people who made them are
+    one screen, not two: the card totals the week, every roster row carries that
+    person's share of it, and tapping a row is the way into them individually.
+
+    A rower opening the same Team tab sees the roster exactly as before. This is
+    the one place this screen is deliberately NOT the same for both — everywhere
+    else a coach and a rower read the same numbers, and this is the exception
+    the owner asked for: what the whole squad covered is the coach's business.
   */
-  const week = useTeamWeek();
+  const week = useTeamWeek(inConsole);
   const { units } = useUnits();
   /* "16.0 km · 2 outings" — or nothing at all for somebody who was in no boat. */
   const weekLine = (a: Athlete): string | null => {
@@ -419,14 +424,16 @@ export default function TeamScreen({
 
       {tab === "roster" ? (
         <>
-          <div className={only ? "" : "mt-3"}>
-            <TeamWeekStats week={week} />
-          </div>
+          {inConsole && (
+            <div className={only ? "" : "mt-3"}>
+              <TeamWeekStats week={week} />
+            </div>
+          )}
 
           {/* SEARCH — a fully round bubble. It was a dark `bg-well` hole
               (2026-09-14); the owner turned it WHITE on 2026-09-16 ("it's
               gray, I think it should be white"), same as the Workouts search. */}
-          <div className="mt-3 flex items-center gap-2 rounded-full border border-border bg-surface px-4 py-2.5">
+          <div className={`${inConsole || !only ? "mt-3 " : ""}flex items-center gap-2 rounded-full border border-border bg-surface px-4 py-2.5`}>
             <span className="text-muted">
               <IconSearch size={16} />
             </span>
