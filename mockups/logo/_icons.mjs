@@ -5,12 +5,13 @@
   own head. Neutral brand colours only (rule: a school's colours never enter
   the logo, because every university shares it).
 
-  Why a blue ground and a white mark, when the mark itself is two-colour:
-  the two-colour split only separates on a LIGHT background. On a dark one
-  the brand blue sits at about 2:1 against near-black, which is unreadable.
-  On the blue ground white reads at about 10:1 and survives 16 px. The
-  two-colour version stays the mark for light surfaces — the top bar, the
-  landing, print.
+  A white ground and the mark in its two colours (owner, 2026-09-19). That is
+  what lets the split read: one person navy, one blue, which is the whole idea
+  of the mark. Both sit above 9:1 on white, so it survives 16 px.
+
+  The cost of a white icon is that it can vanish into a pale home-screen
+  wallpaper, where a coloured ground would hold its edge. That is the trade
+  the owner chose.
 
   icon-512 is declared "maskable" in app/manifest.ts, so Android may crop it
   to a circle: its mark is held inside the safe zone. The favicon and the
@@ -19,6 +20,7 @@
   Run: node mockups/logo/_icons.mjs
 */
 import puppeteer from "puppeteer-core";
+import sharp from "sharp";
 import { writeFileSync, mkdirSync } from "node:fs";
 import path from "node:path";
 
@@ -50,17 +52,23 @@ function square(px, { ground, a, b, scale }) {
   </svg>`;
 }
 
-const WHITE_ON_BLUE = { ground: BLUE, a: "#ffffff", b: "#ffffff" };
+const ON_WHITE = { ground: "#ffffff", a: NAVY, b: BLUE };
 
 const JOBS = [
-  { file: "public/icons/icon-192.png", px: 192, scale: 0.56, ...WHITE_ON_BLUE },
-  { file: "public/icons/icon-512.png", px: 512, scale: 0.56, ...WHITE_ON_BLUE },
-  { file: "public/icons/apple-touch-icon.png", px: 180, scale: 0.68, ...WHITE_ON_BLUE },
+  { file: "public/icons/icon-192.png", px: 192, scale: 0.56, ...ON_WHITE },
+  { file: "public/icons/icon-512.png", px: 512, scale: 0.56, ...ON_WHITE },
+  { file: "public/icons/apple-touch-icon.png", px: 180, scale: 0.68, ...ON_WHITE },
   // favicon slices — never masked, so the mark can run larger
-  { file: null, key: "ico16", px: 16, scale: 0.78, ...WHITE_ON_BLUE },
-  { file: null, key: "ico32", px: 32, scale: 0.78, ...WHITE_ON_BLUE },
-  { file: null, key: "ico48", px: 48, scale: 0.78, ...WHITE_ON_BLUE },
+  { file: null, px: 16, scale: 0.78, ...ON_WHITE },
+  { file: null, px: 32, scale: 0.78, ...ON_WHITE },
+  { file: null, px: 48, scale: 0.78, ...ON_WHITE },
 ];
+
+/* Chrome writes an opaque screenshot as a 3-channel PNG. Next's ICO decoder
+   only accepts RGBA inside an .ico and fails the whole build otherwise —
+   which is exactly how the first version of this file broke production. Force
+   the alpha channel on every slice so the format is never in question. */
+const toRGBA = (buf) => sharp(buf).ensureAlpha().png({ compressionLevel: 9 }).toBuffer();
 
 /* ICO is a tiny container: a header, one 16-byte directory entry per image,
    then the images themselves. Every browser in use reads PNG inside ICO, so
@@ -104,7 +112,8 @@ for (const job of JOBS) {
     { waitUntil: "load" }
   );
   const el = await page.$("svg");
-  const buf = await el.screenshot({ omitBackground: true, type: "png" });
+  const shot = await el.screenshot({ omitBackground: true, type: "png" });
+  const buf = await toRGBA(shot);
   if (job.file) {
     const out = path.join(ROOT, job.file);
     mkdirSync(path.dirname(out), { recursive: true });
