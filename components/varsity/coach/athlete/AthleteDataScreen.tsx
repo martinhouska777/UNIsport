@@ -53,6 +53,7 @@ import {
 } from "@/lib/varsity/athleteProfile";
 import { IconArrowLeft, IconChevronDown } from "@/components/icons";
 import AthleteNote from "@/components/varsity/coach/athlete/AthleteNote";
+import AthleteStats from "@/components/varsity/coach/athlete/AthleteStats";
 
 const MONTHS = [
   "January", "February", "March", "April", "May", "June",
@@ -153,6 +154,11 @@ export default function AthleteDataScreen({ athleteId }: { athleteId: string }) 
   // Which of the two bottom blocks is showing the worked example rather than
   // the athlete's own rows. They fall back separately — a rower can have ergs
   // posted and an empty month, or the other way round.
+  /* CALENDAR or STATISTICS (owner, 2026-09-19). Who they are stays above the
+     switch — their side, their status, the coach's note and their bests are
+     true whichever question is being asked; what CHANGES is whether you want
+     to see the days they trained or the sum of them. */
+  const [tab, setTab] = useState<"calendar" | "stats">("calendar");
   const [exampleLogs, setExampleLogs] = useState(false);
   const [exampleResults, setExampleResults] = useState(false);
 
@@ -355,6 +361,33 @@ export default function AthleteDataScreen({ athleteId }: { athleteId: string }) 
         </>
       )}
 
+      {/* ── 2 and 3, behind one switch ── */}
+      <div className="mt-6 flex overflow-hidden rounded-xl border border-border bg-surface">
+        {(
+          [
+            ["calendar", "Calendar"],
+            ["stats", "Statistics"],
+          ] as const
+        ).map(([k, label]) => (
+          <button
+            key={k}
+            type="button"
+            onClick={() => setTab(k)}
+            className={`flex-1 py-2.5 text-[12px] font-semibold transition-colors ${
+              tab === k ? "bg-text text-background" : "text-muted"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {tab === "stats" ? (
+        <div className="mt-4">
+          <AthleteStats athleteId={athleteId} demo={exampleLogs ? logs : undefined} />
+        </div>
+      ) : (
+        <>
       {/* ── 2. When — the calendar this permission exists for ── */}
       <SectionLabel>
         Training
@@ -502,6 +535,9 @@ export default function AthleteDataScreen({ athleteId }: { athleteId: string }) 
             );
           })}
         </div>
+      )}
+
+        </>
       )}
 
       <p className="mt-4 text-[11px] leading-relaxed text-muted">

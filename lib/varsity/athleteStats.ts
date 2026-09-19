@@ -226,3 +226,91 @@ export function nextMetric(key: string, dir: 1 | -1): string {
 
 export type Bucket = { label: string; span: Span; logs: LogEntry[]; latest: boolean };
 
+
+/*
+  THE BUCKETS A GRAPH PLOTS, for one window of logs.
+  ---------------------------------------------------------------------------
+  A short range is read day by day, a long one week by week (the range's own
+  data says which). Weekly buckets start on MONDAYS, so a "week" means the same
+  thing here as it does on the coach's plan; the last one is short whenever
+  today is mid-week, and NO bucket ever reaches past today — an unfinished week
+  judged on days that haven't happened reports everyone as slacking.
+
+  Bucketing the LOGS rather than a running total is what lets the chosen
+  measure do its own sum: switching to hours, or to another range, never
+  returns to the database.
+
+  This was written inside the athlete's own profile screen. It lives here now
+  because the COACH reads the same graph about one of their rowers (the
+  Statistics tab on an athlete's page), and two copies of this arithmetic would
+  be two screens quietly disagreeing about what a week is.
+*/
+function bucketMonday(d: Date): Date {
+  const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  x.setDate(x.getDate() - ((x.getDay() + 6) % 7));
+  return x;
+}
+/* A yyyy-mm-dd back as a local midnight — never `new Date(iso)`, which reads it
+   as UTC and lands on the day before for anyone west of Greenwich. */
+function bucketDay(iso: string): Date {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+const bucketIso = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+export function buildBuckets(logs: LogEntry[], range: StatRange, now: Date): Bucket[] {
+  const todayIso = bucketIso(now);
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  /*
+    A ready-made window is measured back from today. A window somebody chose has
+    its own two ends and need not touch today at all, so it stops where they
+    said — capped at today, because there is nothing after it.
+  */
+  const last = range.end
+    ? new Date(Math.min(bucketDay(range.end).getTime(), today.getTime()))
+    : today;
+  const first = range.start ? bucketDay(range.start) : null;
+  const shift = (d: Date, n: number) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+
+  const starts: Date[] = [];
+  if (range.bucket === "day") {
+    for (
+      const d = first ? new Date(first) : shift(last, -(range.days - 1));
+      d <= last;
+      d.setDate(d.getDate() + 1)
+    ) {
+      starts.push(new Date(d));
+    }
+  } else {
+    // Whole Mon–Sun weeks, ending with the one containing the last day.
+    const lastMonday = bucketMonday(last);
+    const firstMonday = first
+      ? bucketMonday(first)
+      : shift(lastMonday, -(Math.ceil(range.days / 7) - 1) * 7);
+    for (const d = new Date(firstMonday); d <= lastMonday; d.setDate(d.getDate() + 7)) {
+      starts.push(new Date(d));
+    }
+  }
+
+  const made: Bucket[] = starts.map((start, i) => {
+    const end = new Date(start);
+    if (range.bucket === "week") end.setDate(start.getDate() + 6);
+    return {
+      label:
+        range.bucket === "day"
+          ? `${start.getDate()}`
+          : `${start.getMonth() + 1}/${start.getDate()}`,
+      span: { startIso: bucketIso(start), endIso: bucketIso(end > last ? last : end) },
+      logs: [],
+      latest: i === starts.length - 1,
+    };
+  });
+
+  for (const l of logs) {
+    if (l.logDate > todayIso) continue;
+    const b = made.find((bk) => l.logDate >= bk.span.startIso && l.logDate <= bk.span.endIso);
+    if (b) b.logs.push(l);
+  }
+  return made;
+}

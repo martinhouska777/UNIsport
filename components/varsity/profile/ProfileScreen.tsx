@@ -53,6 +53,7 @@ import {
   type StatusTone,
 } from "@/lib/varsity/athleteProfile";
 import {
+  buildBuckets,
   metricByKey,
   statMetrics,
   statRanges,
@@ -141,22 +142,6 @@ function initialsOf(name: string): string {
   if (parts.length === 0) return "—";
   return (parts[0][0] + (parts[1]?.[0] ?? "")).toUpperCase();
 }
-function mondayOf(d: Date): Date {
-  const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-  x.setDate(x.getDate() - ((x.getDay() + 6) % 7));
-  return x;
-}
-
-/* A yyyy-mm-dd back as a local midnight — never `new Date(iso)`, which reads it
-   as UTC and lands on the day before for anyone west of Greenwich. */
-function asDay(iso: string): Date {
-  const [y, m, d] = iso.split("-").map(Number);
-  return new Date(y, m - 1, d);
-}
-
-const addDays = (d: Date, n: number) =>
-  new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
-
 const inputCls =
   "w-full rounded-xl border border-border bg-surface-2 px-3.5 py-3 text-base text-text outline-none focus:border-primary placeholder:text-muted";
 /*
@@ -961,53 +946,9 @@ export default function ProfileScreen() {
     measure do its own sum: switching to hours, or to a different range, never
     returns to the database.
   */
-  const buckets = useMemo<Bucket[]>(() => {
-    const todayIso = toISO(now);
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    /*
-      A ready-made window is measured back from today. A window the athlete
-      chose has its own two ends and need not touch today at all, so it stops
-      where they said — capped at today, because there is nothing after it.
-    */
-    const last = range.end ? new Date(Math.min(asDay(range.end).getTime(), today.getTime())) : today;
-    const first = range.start ? asDay(range.start) : null;
-
-    const starts: Date[] = [];
-    if (range.bucket === "day") {
-      for (const d = first ? new Date(first) : addDays(last, -(range.days - 1)); d <= last; d.setDate(d.getDate() + 1)) {
-        starts.push(new Date(d));
-      }
-    } else {
-      // Whole Mon–Sun weeks, ending with the one containing the last day.
-      const lastMonday = mondayOf(last);
-      const firstMonday = first ? mondayOf(first) : addDays(lastMonday, -(Math.ceil(range.days / 7) - 1) * 7);
-      for (const d = new Date(firstMonday); d <= lastMonday; d.setDate(d.getDate() + 7)) {
-        starts.push(new Date(d));
-      }
-    }
-
-    const made: Bucket[] = starts.map((start, i) => {
-      const end = new Date(start);
-      if (range.bucket === "week") end.setDate(start.getDate() + 6);
-      const endIso = toISO(end > last ? last : end);
-      return {
-        label:
-          range.bucket === "day"
-            ? `${start.getDate()}`
-            : `${start.getMonth() + 1}/${start.getDate()}`,
-        span: { startIso: toISO(start), endIso },
-        logs: [],
-        latest: i === starts.length - 1,
-      };
-    });
-
-    for (const l of logs) {
-      if (l.logDate > todayIso) continue;
-      const b = made.find((bk) => l.logDate >= bk.span.startIso && l.logDate <= bk.span.endIso);
-      if (b) b.logs.push(l);
-    }
-    return made;
-  }, [logs, now, range]);
+  /* The graph's columns. The arithmetic is in lib/varsity/athleteStats so the
+     coach's Statistics tab on a rower's page plots exactly the same weeks. */
+  const buckets = useMemo<Bucket[]>(() => buildBuckets(logs, range, now), [logs, range, now]);
 
   /* What the range actually contained, kind by kind — the window behind the
      numbers. Computed here so the sheet and the graph can never disagree. */
