@@ -408,7 +408,11 @@ export default function AthleteDataScreen({ athleteId }: { athleteId: string }) 
                 <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-muted">
                   {r.metres != null && <span>{formatDistance(r.metres, units.distance)}</span>}
                   {r.strokeRate != null && <span>r{r.strokeRate}</span>}
-                  {watts != null && <span>{watts} W</span>}
+                  {/* ROUNDED, like the board and the result detail. Watts that
+                      came from the athlete's monitor are whole; watts we work
+                      out from a split are not, and this line was printing
+                      "283.31454972708934 W". */}
+                  {watts != null && <span>{Math.round(watts)} W</span>}
                   {r.weightKg != null && <span>{r.weightKg} kg</span>}
                   {r.monitor && <span>{r.monitor}</span>}
                 </div>
