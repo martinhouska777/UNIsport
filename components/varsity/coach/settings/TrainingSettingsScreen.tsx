@@ -5,16 +5,22 @@
   ---------------------------------------------------------------------------
   Everything the builder used to have hardcoded is edited here:
 
-    1. SPORT PRESET   — start from rowing / swimming / running / team sport /
-                        blank, then change anything.
-    2. SESSION TYPES  — the words on the five buttons at the top of the session
-                        editor. Name, colour, and three rules: does it ask for
-                        an intensity, can its results go to a squad board, does
-                        it need a lineup.
-    3. INTENSITY ZONES— UT2 / UT1 / Hard, or Easy / Tempo / Race, or nothing.
+    1. SESSION TYPES  — the words on the buttons at the top of the session
+                        editor. Name, colour, and two rules: does it ask for an
+                        intensity, can it be a ranked team workout (never
+                        Weights). Only Water needs a lineup — a fact of rowing,
+                        not a setting (owner, 2026-09-18).
+    2. INTENSITY ZONES— UT2 / UT1 / Hard, and any the coach adds.
+    3. BOATS          — what Add Boat offers on the Lineup tab.
     4. WORKOUT LIBRARY— the "Most used · tap to fill" chips. This is the coach's
                         own list of favourite workouts, per type and zone.
     5. SESSION TIMES  — when the morning and afternoon sessions usually start.
+
+  ROWING ONLY, AND NO EXPLAINING (owner, 2026-09-18): the sport picker, every
+  grey hint line, the per-row rule summaries, the crew sizes ("every coach
+  knows what a 4+ is") and all the up/down arrows are gone. The presets for
+  other sports still live in trainingConfig.ts; nothing on screen offers them.
+  A list keeps the order its items were added in.
 
   RENAMING IS SAFE, DELETING IS NOT. A session stores its type by KEY, and a
   rename never changes the key, so every session already planned simply follows
@@ -32,9 +38,7 @@ import Button from "@/components/ui/Button";
 import Sheet from "@/components/varsity/Sheet";
 import {
   IconCheck,
-  IconChevronDown,
   IconChevronRight,
-  IconChevronUp,
   IconPlus,
   IconTrash,
 } from "@/components/icons";
@@ -48,8 +52,6 @@ import {
   keyFromLabel,
   libraryKey,
   paletteColors,
-  presetLabel,
-  presets,
   periods,
   type SessionType,
   type TrainingConfig,
@@ -59,11 +61,10 @@ import type { BoatKind } from "@/lib/varsity/coachLineup";
 
 /* ── small shared pieces ─────────────────────────────────────────────────── */
 
-function Section({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="border-b border-border px-3.5 py-4">
       <h2 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">{title}</h2>
-      {hint && <p className="mt-1 text-[11px] leading-relaxed text-muted">{hint}</p>}
       <div className="mt-2.5">{children}</div>
     </section>
   );
@@ -77,47 +78,17 @@ const inputCls =
   "w-full rounded-xl border border-border bg-surface-2 px-3.5 py-3 text-base text-text outline-none focus:border-primary placeholder:text-muted";
 const labelCls = "mb-1.5 mt-4 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted";
 
-/* A row that can be moved up and down. Arrows rather than drag: this is a
-   phone, the lists are short, and a dropped drag on a list of five is worse
-   than two taps. */
-function OrderRow({
-  children,
-  onUp,
-  onDown,
-  onOpen,
-}: {
-  children: React.ReactNode;
-  onUp?: () => void;
-  onDown?: () => void;
-  onOpen: () => void;
-}) {
+/* One tappable row of a list. */
+function ListRow({ children, onOpen }: { children: React.ReactNode; onOpen: () => void }) {
   return (
-    <div className="flex items-stretch gap-1 border-b border-border last:border-0">
-      <button type="button" onClick={onOpen} className="flex flex-1 items-center gap-2.5 py-3 text-left">
-        {children}
-        <IconChevronRight size={16} />
-      </button>
-      <div className="flex flex-col justify-center">
-        <button
-          type="button"
-          onClick={onUp}
-          disabled={!onUp}
-          aria-label="Move up"
-          className="tap44 flex h-6 w-8 items-center justify-center text-muted disabled:opacity-25"
-        >
-          <IconChevronUp size={14} />
-        </button>
-        <button
-          type="button"
-          onClick={onDown}
-          disabled={!onDown}
-          aria-label="Move down"
-          className="tap44 flex h-6 w-8 items-center justify-center text-muted disabled:opacity-25"
-        >
-          <IconChevronDown size={14} />
-        </button>
-      </div>
-    </div>
+    <button
+      type="button"
+      onClick={onOpen}
+      className="flex w-full items-center gap-2.5 border-b border-border py-3 text-left last:border-0"
+    >
+      {children}
+      <IconChevronRight size={16} />
+    </button>
   );
 }
 
@@ -143,12 +114,10 @@ function ColorPicker({ value, onChange }: { value: string; onChange: (c: string)
 
 function Toggle({
   label,
-  hint,
   on,
   onChange,
 }: {
   label: string;
-  hint: string;
   on: boolean;
   onChange: (v: boolean) => void;
 }) {
@@ -156,21 +125,18 @@ function Toggle({
     <button
       type="button"
       onClick={() => onChange(!on)}
-      className={`mt-2 flex w-full items-start gap-3 rounded-xl border px-3.5 py-3 text-left ${
+      className={`mt-2 flex w-full items-center gap-3 rounded-xl border px-3.5 py-3 text-left ${
         on ? "border-primary bg-primary-tint" : "border-border bg-surface"
       }`}
     >
       <span
-        className={`mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-md border ${
+        className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-md border ${
           on ? "border-primary bg-primary-live text-primary-contrast" : "border-border"
         }`}
       >
         {on && <IconCheck size={12} />}
       </span>
-      <span>
-        <span className="block text-[13px] font-semibold text-text">{label}</span>
-        <span className="mt-0.5 block text-[11px] leading-relaxed text-muted">{hint}</span>
-      </span>
+      <span className="text-[13px] font-semibold text-text">{label}</span>
     </button>
   );
 }
@@ -178,7 +144,6 @@ function Toggle({
 /* ── which editor is open ────────────────────────────────────────────────── */
 type Editing =
   | null
-  | { kind: "preset" }
   | { kind: "type"; index: number | "new" }
   | { kind: "zone"; index: number | "new" }
   | { kind: "boat"; index: number | "new" }
@@ -256,15 +221,6 @@ export default function TrainingSettingsScreen({ membership }: { membership: Mem
     return () => window.clearTimeout(t);
   }, [saved]);
 
-  /* ── list moves ── */
-  const move = <T,>(list: T[], i: number, dir: -1 | 1): T[] => {
-    const next = [...list];
-    const j = i + dir;
-    if (j < 0 || j >= next.length) return next;
-    [next[i], next[j]] = [next[j], next[i]];
-    return next;
-  };
-
   /* Every list the workout library holds, in the order the coach reads them:
      a zoned type contributes one row per zone, everything else a single row. */
   const libraryRows = useMemo(
@@ -283,46 +239,13 @@ export default function TrainingSettingsScreen({ membership }: { membership: Mem
 
   return (
     <div className="mx-auto w-full max-w-screen-sm pb-28">
-      <Section
-        title="Sport"
-        hint="A starting point for everything below. You can change any part of it afterwards."
-      >
-        <button
-          type="button"
-          onClick={() => setEditing({ kind: "preset" })}
-          className="flex w-full items-center justify-between rounded-xl border border-border bg-surface px-3.5 py-3"
-        >
-          <span className="text-[14px] font-semibold text-text">{presetLabel(cfg.preset)}</span>
-          <span className="flex items-center gap-1 text-[12px] text-muted">
-            Change <IconChevronRight size={15} />
-          </span>
-        </button>
-      </Section>
-
-      <Section
-        title="Session types"
-        hint="The buttons across the top of the session editor. Renaming one is safe — sessions you have already planned follow the new name."
-      >
+      <Section title="Session types">
         <div className="rounded-xl border border-border bg-surface px-3.5">
           {cfg.types.map((t, i) => (
-            <OrderRow
-              key={t.key}
-              onOpen={() => setEditing({ kind: "type", index: i })}
-              onUp={i > 0 ? () => update((c) => ({ ...c, types: move(c.types, i, -1) })) : undefined}
-              onDown={
-                i < cfg.types.length - 1
-                  ? () => update((c) => ({ ...c, types: move(c.types, i, 1) }))
-                  : undefined
-              }
-            >
+            <ListRow key={t.key} onOpen={() => setEditing({ kind: "type", index: i })}>
               <Dot color={t.color} />
               <span className="flex-1 text-[14px] font-semibold text-text">{t.label}</span>
-              <span className="text-[11px] text-muted">
-                {[t.hasZones && "intensity", t.canBoard && "board", t.needsLineup && "lineup"]
-                  .filter(Boolean)
-                  .join(" · ") || "plain"}
-              </span>
-            </OrderRow>
+            </ListRow>
           ))}
         </div>
         <Button
@@ -335,26 +258,14 @@ export default function TrainingSettingsScreen({ membership }: { membership: Mem
         </Button>
       </Section>
 
-      <Section
-        title="Intensity zones"
-        hint="Only types with intensity switched on ask for these. Leave the list empty if your sport does not plan that way."
-      >
+      <Section title="Intensity zones">
         {cfg.zones.length > 0 && (
           <div className="rounded-xl border border-border bg-surface px-3.5">
             {cfg.zones.map((z, i) => (
-              <OrderRow
-                key={z.key}
-                onOpen={() => setEditing({ kind: "zone", index: i })}
-                onUp={i > 0 ? () => update((c) => ({ ...c, zones: move(c.zones, i, -1) })) : undefined}
-                onDown={
-                  i < cfg.zones.length - 1
-                    ? () => update((c) => ({ ...c, zones: move(c.zones, i, 1) }))
-                    : undefined
-                }
-              >
+              <ListRow key={z.key} onOpen={() => setEditing({ kind: "zone", index: i })}>
                 <Dot color={z.color} />
                 <span className="flex-1 text-[14px] font-semibold text-text">{z.label}</span>
-              </OrderRow>
+              </ListRow>
             ))}
           </div>
         )}
@@ -374,27 +285,14 @@ export default function TrainingSettingsScreen({ membership }: { membership: Mem
         with a quad, a single or a coxed pair adds it here and it appears on the
         Lineup tab's Add Boat row, on the same footing as the four.
       */}
-      <Section
-        title="Boats"
-        hint="What “Add Boat” offers on the Lineup tab. The four sweep boats are a starting point — add whatever your squad actually rows."
-      >
+      <Section title="Boats">
         {cfg.boats.length > 0 && (
           <div className="rounded-xl border border-border bg-surface px-3.5">
             {cfg.boats.map((b, i) => (
-              <OrderRow
-                key={b.key}
-                onOpen={() => setEditing({ kind: "boat", index: i })}
-                onUp={i > 0 ? () => update((c) => ({ ...c, boats: move(c.boats, i, -1) })) : undefined}
-                onDown={
-                  i < cfg.boats.length - 1
-                    ? () => update((c) => ({ ...c, boats: move(c.boats, i, 1) }))
-                    : undefined
-                }
-              >
+              <ListRow key={b.key} onOpen={() => setEditing({ kind: "boat", index: i })}>
                 <span className="w-8 flex-shrink-0 text-[14px] font-semibold text-text">{b.symbol}</span>
                 <span className="flex-1 text-[14px] text-text">{b.name}</span>
-                <span className="text-[11px] text-muted">{crewSize(b)}</span>
-              </OrderRow>
+              </ListRow>
             ))}
           </div>
         )}
@@ -408,36 +306,24 @@ export default function TrainingSettingsScreen({ membership }: { membership: Mem
         </Button>
       </Section>
 
-      <Section
-        title="Workout library"
-        hint="Your own most-used workouts. They appear as the tap-to-fill chips in the session editor, in this order."
-      >
+      <Section title="Workout library">
         <div className="rounded-xl border border-border bg-surface px-3.5">
-          {libraryRows.map(({ type, zone }) => {
-            const list = cfg.library[libraryKey(type.key, zone?.key)] ?? [];
-            return (
-              <button
-                key={`${type.key}:${zone?.key ?? ""}`}
-                type="button"
-                onClick={() => setEditing({ kind: "library", typeKey: type.key, zoneKey: zone?.key })}
-                className="flex w-full items-center gap-2.5 border-b border-border py-3 text-left last:border-0"
-              >
-                <Dot color={zone?.color ?? type.color} />
-                <span className="flex-1 text-[14px] text-text">
-                  {type.label}
-                  {zone && <span className="text-muted"> · {zone.label}</span>}
-                </span>
-                <span className="text-[11px] text-muted">
-                  {list.length === 0 ? "none" : `${list.length} saved`}
-                </span>
-                <IconChevronRight size={16} />
-              </button>
-            );
-          })}
+          {libraryRows.map(({ type, zone }) => (
+            <ListRow
+              key={`${type.key}:${zone?.key ?? ""}`}
+              onOpen={() => setEditing({ kind: "library", typeKey: type.key, zoneKey: zone?.key })}
+            >
+              <Dot color={zone?.color ?? type.color} />
+              <span className="flex-1 text-[14px] text-text">
+                {type.label}
+                {zone && <span className="text-muted"> · {zone.label}</span>}
+              </span>
+            </ListRow>
+          ))}
         </div>
       </Section>
 
-      <Section title="Session times" hint="The time a slot is filled in with. Every session can still be changed one by one.">
+      <Section title="Session times">
         <div className="grid grid-cols-2 gap-2.5">
           {periods.map((p) => (
             <label key={p} className="block">
@@ -481,16 +367,6 @@ export default function TrainingSettingsScreen({ membership }: { membership: Mem
         </div>
       )}
 
-      {editing?.kind === "preset" && (
-        <PresetSheet
-          current={cfg.preset}
-          onClose={() => setEditing(null)}
-          onPick={(built) => {
-            update(() => built);
-            setEditing(null);
-          }}
-        />
-      )}
       {editing?.kind === "type" && (
         <TypeSheet
           cfg={cfg}
@@ -580,62 +456,6 @@ export default function TrainingSettingsScreen({ membership }: { membership: Mem
   );
 }
 
-/* ── Sport preset ────────────────────────────────────────────────────────── */
-function PresetSheet({
-  current,
-  onClose,
-  onPick,
-}: {
-  current: string;
-  onClose: () => void;
-  onPick: (cfg: TrainingConfig) => void;
-}) {
-  const [confirmKey, setConfirmKey] = useState<string | null>(null);
-  const pending = presets.find((p) => p.key === confirmKey);
-
-  return (
-    <Sheet title="Start from a sport" onClose={onClose}>
-      {pending ? (
-        <>
-          <p className="text-[13px] leading-relaxed text-text">
-            Switching to <strong>{pending.label}</strong> replaces your session types, zones,
-            workout library and times.
-          </p>
-          <p className="mt-2 text-[12px] leading-relaxed text-muted">
-            Sessions you have already planned are not deleted, but any that used a type this
-            preset does not have will show that type by its raw name until you add it back.
-          </p>
-          <div className="mt-4 flex gap-2.5">
-            <Button variant="secondary" size="md" className="flex-1" onClick={() => setConfirmKey(null)}>
-              Cancel
-            </Button>
-            <Button size="md" className="flex-1" onClick={() => onPick(pending.build())}>
-              Use {pending.label}
-            </Button>
-          </div>
-        </>
-      ) : (
-        <div className="rounded-xl border border-border bg-surface px-3.5">
-          {presets.map((p) => (
-            <button
-              key={p.key}
-              type="button"
-              onClick={() => setConfirmKey(p.key)}
-              className="flex w-full items-center gap-2.5 border-b border-border py-3 text-left last:border-0"
-            >
-              <span className="flex-1">
-                <span className="block text-[14px] font-semibold text-text">{p.label}</span>
-                <span className="mt-0.5 block text-[11px] text-muted">{p.sub}</span>
-              </span>
-              {p.key === current && <IconCheck size={16} />}
-            </button>
-          ))}
-        </div>
-      )}
-    </Sheet>
-  );
-}
-
 /* ── One session type ────────────────────────────────────────────────────── */
 function TypeSheet({
   cfg,
@@ -657,10 +477,11 @@ function TypeSheet({
   const [color, setColor] = useState(existing?.color ?? paletteColors[4]);
   const [hasZones, setHasZones] = useState(existing?.hasZones ?? false);
   const [canBoard, setCanBoard] = useState(existing?.canBoard ?? false);
-  const [needsLineup, setNeedsLineup] = useState(existing?.needsLineup ?? false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const inUse = existing ? (usage[existing.key] ?? 0) : 0;
+  // Weights is never a ranked team workout (owner, 2026-09-18).
+  const isWeights = existing?.key === "weights";
 
   const commit = () => {
     const trimmed = label.trim();
@@ -673,8 +494,9 @@ function TypeSheet({
         label: trimmed,
         color,
         hasZones,
-        canBoard,
-        needsLineup,
+        canBoard: isWeights ? false : canBoard,
+        // Only Water is crewed — not a setting, so not on screen.
+        needsLineup: existing?.key === "water",
       },
       index,
     );
@@ -712,7 +534,7 @@ function TypeSheet({
           <input
             value={label}
             onChange={(e) => setLabel(e.target.value)}
-            placeholder="Water, Pool, Practice…"
+            placeholder="Bike, Triathlon…"
             className={inputCls}
           />
 
@@ -720,24 +542,8 @@ function TypeSheet({
           <ColorPicker value={color} onChange={setColor} />
 
           <div className={labelCls}>Rules</div>
-          <Toggle
-            label="Asks for an intensity"
-            hint="The editor offers your zones after this type is picked."
-            on={hasZones}
-            onChange={setHasZones}
-          />
-          <Toggle
-            label="Can be a team workout"
-            hint="Everyone's result lands on one shared squad board."
-            on={canBoard}
-            onChange={setCanBoard}
-          />
-          <Toggle
-            label="Needs a lineup"
-            hint="Shows up in the Lineup builder to be crewed."
-            on={needsLineup}
-            onChange={setNeedsLineup}
-          />
+          <Toggle label="Asks for an intensity" on={hasZones} onChange={setHasZones} />
+          {!isWeights && <Toggle label="Can be a team workout" on={canBoard} onChange={setCanBoard} />}
 
           <Button size="lg" className="mt-5 w-full" onClick={commit} disabled={!label.trim()}>
             {existing ? "Done" : "Add type"}
@@ -816,11 +622,6 @@ function ZoneSheet({
 }
 
 /* ── One rigging ─────────────────────────────────────────────────────────── */
-/* "8 rowers + cox", "1 rower" — the crew a rigging carries, in words. */
-function crewSize(b: BoatKind) {
-  return `${b.rowers} ${b.rowers === 1 ? "rower" : "rowers"}${b.cox ? " + cox" : ""}`;
-}
-
 function BoatSheet({
   cfg,
   index,
@@ -902,30 +703,20 @@ function BoatSheet({
         />
       </div>
 
-      <Toggle
-        label="Has a cox"
-        hint="Adds the cox's seat to the boat, and lets a coxswain be put in it."
-        on={cox}
-        onChange={setCox}
-      />
+      <Toggle label="Has a cox" on={cox} onChange={setCox} />
 
       <Button size="lg" className="mt-5 w-full" onClick={commit} disabled={!symbol.trim() || rowers < 1}>
         {existing ? "Done" : "Add boat"}
       </Button>
       {existing && (
-        <>
-          <Button
-            variant="dangerSoft"
-            size="md"
-            className="mt-2.5 w-full"
-            onClick={() => index !== "new" && onDelete(index)}
-          >
-            <IconTrash size={15} /> Delete this boat
-          </Button>
-          <p className="mt-2 text-[11px] leading-relaxed text-muted">
-            Deleting it only takes it off the Add Boat row. Crews already seated in one keep it.
-          </p>
-        </>
+        <Button
+          variant="dangerSoft"
+          size="md"
+          className="mt-2.5 w-full"
+          onClick={() => index !== "new" && onDelete(index)}
+        >
+          <IconTrash size={15} /> Delete this boat
+        </Button>
       )}
     </Sheet>
   );
@@ -961,22 +752,10 @@ function LibrarySheet({
   };
   const edit = (i: number, text: string) => onChange(list.map((w, n) => (n === i ? text : w)));
   const remove = (i: number) => onChange(list.filter((_, n) => n !== i));
-  const shift = (i: number, dir: -1 | 1) => {
-    const j = i + dir;
-    if (j < 0 || j >= list.length) return;
-    const next = [...list];
-    [next[i], next[j]] = [next[j], next[i]];
-    onChange(next);
-  };
 
   return (
     <Sheet title={zone ? `${type.label} · ${zone.label}` : type.label} onClose={onClose}>
-      <p className="text-[12px] leading-relaxed text-muted">
-        These appear as tap-to-fill chips when you write a {zone ? `${zone.label.toLowerCase()} ` : ""}
-        {type.label.toLowerCase()} session, in this order.
-      </p>
-
-      <div className="mt-3 space-y-2">
+      <div className="space-y-2">
         {list.map((w, i) => (
           <div key={`${i}-${w}`} className="flex items-center gap-1.5">
             <input
@@ -984,24 +763,6 @@ function LibrarySheet({
               onChange={(e) => edit(i, e.target.value)}
               className={`${inputCls} py-2.5`}
             />
-            <button
-              type="button"
-              onClick={() => shift(i, -1)}
-              disabled={i === 0}
-              aria-label="Move up"
-              className="tap44 flex h-9 w-7 items-center justify-center text-muted disabled:opacity-25"
-            >
-              <IconChevronUp size={14} />
-            </button>
-            <button
-              type="button"
-              onClick={() => shift(i, 1)}
-              disabled={i === list.length - 1}
-              aria-label="Move down"
-              className="tap44 flex h-9 w-7 items-center justify-center text-muted disabled:opacity-25"
-            >
-              <IconChevronDown size={14} />
-            </button>
             <button
               type="button"
               onClick={() => remove(i)}
@@ -1012,11 +773,6 @@ function LibrarySheet({
             </button>
           </div>
         ))}
-        {list.length === 0 && (
-          <p className="rounded-xl border border-dashed border-border px-3.5 py-4 text-center text-[12px] text-muted">
-            Nothing saved yet. Add the sessions you write most often.
-          </p>
-        )}
       </div>
 
       <div className="mt-3 flex gap-1.5">
