@@ -39,7 +39,6 @@ import { fetchAthleteCard, type AthleteCard } from "@/lib/varsity/coachAthlete";
 import { fetchAthleteResults, type TeamResult } from "@/lib/varsity/resultsStore";
 import { rosterIdForName, demoAthleteLogs, demoAthleteResults } from "@/lib/varsity/demoAthlete";
 import { secToSplit, deriveWatts } from "@/lib/varsity/ergMath";
-import { formatMetrics } from "@/lib/varsity/logParse";
 import { dayKeyLabel, toISO } from "@/lib/varsity/coachPlan";
 import { sideMeta } from "@/lib/varsity/coachLineup";
 import {
@@ -51,9 +50,12 @@ import {
   statusOptions,
   type StatusTone,
 } from "@/lib/varsity/athleteProfile";
-import { IconArrowLeft, IconChevronDown } from "@/components/icons";
+import { IconActivity, IconArrowLeft, IconCalendar, IconChevronDown, IconClipboard } from "@/components/icons";
 import AthleteNote from "@/components/varsity/coach/athlete/AthleteNote";
+import LogRow from "@/components/varsity/coach/athlete/LogRow";
 import AthleteStats from "@/components/varsity/coach/athlete/AthleteStats";
+import AthleteWorkouts from "@/components/varsity/coach/athlete/AthleteWorkouts";
+import AthleteWindow from "@/components/varsity/coach/athlete/AthleteWindow";
 
 const MONTHS = [
   "January", "February", "March", "April", "May", "June",
@@ -108,32 +110,11 @@ function DaySheet({ label, logs, onClose }: { label: string; logs: LogEntry[]; o
         </div>
       ) : (
         <div className="flex flex-col gap-2">
-          {logs.map((l) => {
-            const metrics = formatMetrics(l.minutes, l.metres, l.split);
-            return (
-              <div
-                key={l.id}
-                className="flex items-start gap-3 rounded-2xl border border-border bg-surface-2 px-3.5 py-3"
-              >
-                <span
-                  className="mt-1 h-2.5 w-2.5 flex-shrink-0 rounded-full"
-                  style={{ background: logCategoryColor[l.category ?? "other"] ?? "var(--muted)" }}
-                />
-                <div className="min-w-0 flex-1">
-                  <div className="text-[13px] font-semibold text-text">{l.title}</div>
-                  {metrics && <div className="mt-0.5 text-[12px] text-text-2">{metrics}</div>}
-                  {l.note && (
-                    <div className="mt-0.5 text-[11px] leading-relaxed text-muted">{l.note}</div>
-                  )}
-                </div>
-                {l.source === "plan" && (
-                  <span className="flex-shrink-0 rounded-md border border-border px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-muted">
-                    Plan
-                  </span>
-                )}
-              </div>
-            );
-          })}
+          {/* The same row the Past workouts screen draws — one component, so a
+              session cannot look like two different things to one coach. */}
+          {logs.map((l) => (
+            <LogRow key={l.id} log={l} />
+          ))}
         </div>
       )}
     </Sheet>
@@ -161,7 +142,7 @@ export default function AthleteDataScreen({ athleteId }: { athleteId: string }) 
      the days that made it. The page OPENS ON THE STATISTICS: a coach coming to
      a rower's page is asking how much they have trained, and the calendar is
      where you go when the answer needs explaining. */
-  const [tab, setTab] = useState<"stats" | "calendar">("stats");
+  const [openScreen, setOpenScreen] = useState<"stats" | "workouts" | "calendar" | null>(null);
   const [exampleLogs, setExampleLogs] = useState(false);
   const [exampleResults, setExampleResults] = useState(false);
 
@@ -289,6 +270,10 @@ export default function AthleteDataScreen({ athleteId }: { athleteId: string }) 
   const side = sideMeta[p.side];
   const pinned = prPieces.filter((piece) => (p.prs[piece] ?? "").trim());
 
+  /* Their name, or the honest absence of one — the page's title, and the name
+     each of the three screens is opened under. */
+  const who = card.name || "Unnamed athlete";
+
   return (
     <div className="mx-auto w-full max-w-screen-sm px-4 pb-10 pt-4">
       <Link href="/varsity/coach/team" className="flex items-center gap-1.5 text-[12px] text-muted">
@@ -297,7 +282,7 @@ export default function AthleteDataScreen({ athleteId }: { athleteId: string }) 
       </Link>
 
       {/* ── 1. Who ── */}
-      <h1 className="mt-2 text-2xl font-semibold text-text">{card.name || "Unnamed athlete"}</h1>
+      <h1 className="mt-2 text-2xl font-semibold text-text">{who}</h1>
       <div className="mt-2 flex flex-wrap items-center gap-1.5">
         {cox ? (
           <span className="rounded-md border border-border bg-surface px-2 py-1 text-[11px] text-text">
@@ -364,33 +349,89 @@ export default function AthleteDataScreen({ athleteId }: { athleteId: string }) 
         </>
       )}
 
-      {/* ── 2 and 3, behind one switch ── */}
-      <div className="mt-6 flex overflow-hidden rounded-xl border border-border bg-surface">
+      {/* ── THREE DOORS (owner, 2026-09-19) ──────────────────────────────────
+          Not a switch that swaps the middle of this page: each one opens a
+          whole screen of its own with a cross to come back. This page holds
+          more than two halves — the erg is below, and more after it — and
+          three long things taking turns in one panel is a page you get lost
+          in. */}
+      <div className="mt-6 grid grid-cols-3 gap-2">
         {(
           [
-            ["stats", "Statistics"],
-            ["calendar", "Calendar"],
+            ["stats", "Statistics", <IconActivity key="i" size={18} />],
+            ["workouts", "Past workouts", <IconClipboard key="i" size={18} />],
+            ["calendar", "Calendar", <IconCalendar key="i" size={18} />],
           ] as const
-        ).map(([k, label]) => (
+        ).map(([k, label, icon]) => (
           <button
             key={k}
             type="button"
-            onClick={() => setTab(k)}
-            className={`flex-1 py-2.5 text-[12px] font-semibold transition-colors ${
-              tab === k ? "bg-text text-background" : "text-muted"
-            }`}
+            onClick={() => setOpenScreen(k)}
+            className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-border bg-surface px-2 py-4 text-center active:bg-surface-2"
           >
-            {label}
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary-tint text-primary">
+              {icon}
+            </span>
+            <span className="text-[12px] font-semibold leading-tight text-text">{label}</span>
           </button>
         ))}
       </div>
 
-      {tab === "stats" ? (
-        <div className="mt-4">
-          <AthleteStats athleteId={athleteId} demo={exampleLogs ? logs : undefined} />
+      {/* ── 3. How fast ── */}
+      <SectionLabel>
+        Erg results · {results.length}
+        {exampleResults && <ExampleTag />}
+      </SectionLabel>
+      {results.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-border bg-surface px-4 py-6 text-center text-[12px] text-muted">
+          Nothing posted to the team board yet.
         </div>
       ) : (
-        <>
+        <div className="flex flex-col gap-2">
+          {results.map((r) => {
+            /* A hand-typed result carries the split as the monitor showed it; a
+               scanned or derived one only carries the seconds. Show whichever
+               exists, and let the split imply the watts when none were typed —
+               the same arithmetic the team board does. */
+            const split = r.split ?? (r.splitSec != null ? secToSplit(r.splitSec) : null);
+            const watts = deriveWatts(r.watts, r.splitSec);
+            return (
+              <div key={r.id} className="rounded-xl border border-border bg-surface px-3.5 py-3">
+                <div className="flex items-baseline justify-between gap-2">
+                  <span className="truncate text-[13px] font-semibold text-text">
+                    {dayKeyLabel(r.dayKey)}
+                  </span>
+                  {split && (
+                    <span className="flex-shrink-0 text-[13px] font-semibold text-text">{split}</span>
+                  )}
+                </div>
+                <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-muted">
+                  {r.metres != null && <span>{formatDistance(r.metres, units.distance)}</span>}
+                  {r.strokeRate != null && <span>r{r.strokeRate}</span>}
+                  {watts != null && <span>{watts} W</span>}
+                  {r.weightKg != null && <span>{r.weightKg} kg</span>}
+                  {r.monitor && <span>{r.monitor}</span>}
+                </div>
+                {r.note && <div className="mt-1 text-[11px] leading-relaxed text-muted">{r.note}</div>}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ── the three screens ── */}
+      {openScreen === "stats" && (
+        <AthleteWindow name={who} title="Statistics" onClose={() => setOpenScreen(null)}>
+          <AthleteStats athleteId={athleteId} demo={exampleLogs ? logs : undefined} />
+        </AthleteWindow>
+      )}
+      {openScreen === "workouts" && (
+        <AthleteWindow name={who} title="Past workouts" onClose={() => setOpenScreen(null)}>
+          <AthleteWorkouts athleteId={athleteId} demo={exampleLogs ? logs : undefined} />
+        </AthleteWindow>
+      )}
+      {openScreen === "calendar" && (
+        <AthleteWindow name={who} title="Calendar" onClose={() => setOpenScreen(null)}>
       {/* ── 2. When — the calendar this permission exists for ── */}
       <SectionLabel>
         Training
@@ -497,62 +538,7 @@ export default function AthleteDataScreen({ athleteId }: { athleteId: string }) 
           <span className="ml-auto text-[11px] text-muted">in {MONTHS[view.m]}</span>
         </div>
       </div>
-
-      {/* ── 3. How fast ── */}
-      <SectionLabel>
-        Erg results · {results.length}
-        {exampleResults && <ExampleTag />}
-      </SectionLabel>
-      {results.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border bg-surface px-4 py-6 text-center text-[12px] text-muted">
-          Nothing posted to the team board yet.
-        </div>
-      ) : (
-        <div className="flex flex-col gap-2">
-          {results.map((r) => {
-            /* A hand-typed result carries the split as the monitor showed it; a
-               scanned or derived one only carries the seconds. Show whichever
-               exists, and let the split imply the watts when none were typed —
-               the same arithmetic the team board does. */
-            const split = r.split ?? (r.splitSec != null ? secToSplit(r.splitSec) : null);
-            const watts = deriveWatts(r.watts, r.splitSec);
-            return (
-              <div key={r.id} className="rounded-xl border border-border bg-surface px-3.5 py-3">
-                <div className="flex items-baseline justify-between gap-2">
-                  <span className="truncate text-[13px] font-semibold text-text">
-                    {dayKeyLabel(r.dayKey)}
-                  </span>
-                  {split && (
-                    <span className="flex-shrink-0 text-[13px] font-semibold text-text">{split}</span>
-                  )}
-                </div>
-                <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-muted">
-                  {r.metres != null && <span>{formatDistance(r.metres, units.distance)}</span>}
-                  {r.strokeRate != null && <span>r{r.strokeRate}</span>}
-                  {watts != null && <span>{watts} W</span>}
-                  {r.weightKg != null && <span>{r.weightKg} kg</span>}
-                  {r.monitor && <span>{r.monitor}</span>}
-                </div>
-                {r.note && <div className="mt-1 text-[11px] leading-relaxed text-muted">{r.note}</div>}
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-        </>
-      )}
-
-      <p className="mt-4 text-[11px] leading-relaxed text-muted">
-        Read only — a session belongs to the athlete who logged it. Crew telemetry sits under
-        Team → Workouts, because an outing belongs to a boat rather than to one person.
-      </p>
-      {(exampleLogs || exampleResults) && (
-        <p className="mt-2 text-[11px] leading-relaxed text-warn">
-          Anything marked <span className="font-semibold">Example</span> is made up, so the screen
-          can be looked at before this rower has trained. It disappears the moment they log
-          something real.
-        </p>
+        </AthleteWindow>
       )}
 
       {picked && (
