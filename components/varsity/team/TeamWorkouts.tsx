@@ -119,7 +119,7 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
       } else {
         // Nothing flagged yet → the worked example. Nobody real is in it: the
         // viewer's own name never goes on a result they didn't pull. The board
-        // still obeys the coach's own canBoard switch, so the example shows the
+        // leaves out Weights and Off like a real week does, so the example shows the
         // same session types a real week would.
         const demo = demoTeamPlan(new Date());
         setWorkouts(teamWorkouts(demo.sessions, cfg));

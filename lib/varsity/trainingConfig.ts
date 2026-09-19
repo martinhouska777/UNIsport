@@ -295,11 +295,18 @@ export function workoutsFor(cfg: TrainingConfig, typeKey?: string, zoneKey?: str
   toggles in Settings were decoration, and a swimming squad's Lineup tab
   dimmed every slot and warned about "water" on each. Every screen that asks
   either question asks it here. An unknown type answers no to both.
+
+  THE BOARD IS NO LONGER A TYPE SETTING (owner, 2026-09-18): "tie the rankings
+  to the session". Whether a session goes on a squad board — and Ranked or
+  Everyone — is decided on the SESSION in the plan editor, for every type
+  except Weights (never ranked) and Off (a rest day). `canBoard` is still in
+  stored configs but nothing reads it.
 */
 export const configNeedsLineup = (cfg: TrainingConfig, typeKey: string | undefined): boolean =>
   !!typeKey && findType(cfg, typeKey).needsLineup;
-export const configCanBoard = (cfg: TrainingConfig, typeKey: string | undefined): boolean =>
-  !!typeKey && findType(cfg, typeKey).canBoard;
+const neverBoarded = ["weights", "off"];
+export const configCanBoard = (_cfg: TrainingConfig, typeKey: string | undefined): boolean =>
+  !!typeKey && !neverBoarded.includes(typeKey);
 
 /* The colour + label a planned session shows: the zone wins when there is one,
    because that is the thing a coach reads off the page first. */

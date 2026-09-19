@@ -63,10 +63,9 @@ export type TeamWorkout = {
 /*
   Every team workout in the plan, newest first. Two things are left out:
   sessions in the FUTURE (a board nobody could have rowed yet is just an empty
-  screen), and anything whose type the squad's own settings say cannot carry a
-  board — so a flag left behind on such a session by an older build, or by a
-  type the coach later switched off, can never raise one. The rule is the
-  coach's (`canBoard` in Training settings), not a fixed "erg only".
+  screen), and Weights / Off (configCanBoard) — so a flag left behind on one
+  by an older build can never raise a board. Every other session is on a
+  board or not, Ranked or Everyone, by the coach, one session at a time.
 */
 export function teamWorkouts(
   sessions: SessionMap,

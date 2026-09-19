@@ -6,9 +6,8 @@
   Everything the builder used to have hardcoded is edited here:
 
     1. SESSION TYPES  — the words on the buttons at the top of the session
-                        editor. Name, colour, and two rules: does it ask for an
-                        intensity, can it be a ranked team workout (never
-                        Weights). Only Water needs a lineup — a fact of rowing,
+                        editor. Name, colour, and one rule: does it ask for an
+                        intensity. Only Water needs a lineup — a fact of rowing,
                         not a setting (owner, 2026-09-18).
     2. INTENSITY ZONES— UT2 / UT1 / Hard, and any the coach adds.
     3. BOATS          — what Add Boat offers on the Lineup tab.
@@ -476,12 +475,9 @@ function TypeSheet({
   const [label, setLabel] = useState(existing?.label ?? "");
   const [color, setColor] = useState(existing?.color ?? paletteColors[4]);
   const [hasZones, setHasZones] = useState(existing?.hasZones ?? false);
-  const [canBoard, setCanBoard] = useState(existing?.canBoard ?? false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const inUse = existing ? (usage[existing.key] ?? 0) : 0;
-  // Weights is never a ranked team workout (owner, 2026-09-18).
-  const isWeights = existing?.key === "weights";
 
   const commit = () => {
     const trimmed = label.trim();
@@ -494,7 +490,8 @@ function TypeSheet({
         label: trimmed,
         color,
         hasZones,
-        canBoard: isWeights ? false : canBoard,
+        // Unused — a board is chosen per session in the plan (configCanBoard).
+        canBoard: existing?.canBoard ?? false,
         // Only Water is crewed — not a setting, so not on screen.
         needsLineup: existing?.key === "water",
       },
@@ -543,7 +540,6 @@ function TypeSheet({
 
           <div className={labelCls}>Rules</div>
           <Toggle label="Asks for an intensity" on={hasZones} onChange={setHasZones} />
-          {!isWeights && <Toggle label="Can be a team workout" on={canBoard} onChange={setCanBoard} />}
 
           <Button size="lg" className="mt-5 w-full" onClick={commit} disabled={!label.trim()}>
             {existing ? "Done" : "Add type"}

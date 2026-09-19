@@ -46,6 +46,7 @@ import {
   configSessionColor,
   configSessionLabel,
   defaultConfig,
+  configCanBoard,
   findType,
   workoutsFor,
   type TrainingConfig,
@@ -567,9 +568,8 @@ export default function TrainingPlanScreen({
       time: form.time.trim() || cfg.times[editor.period],
       location: form.location.trim() || undefined,
       note: form.note.trim() || undefined,
-      // Only a type the coach marked as boardable can carry one, so a session
-      // that isn't one never keeps a stale flag.
-      teamWorkout: findType(cfg, form.category).canBoard ? form.teamWorkout : false,
+      // Weights / Off never carry a board, so they never keep a stale flag.
+      teamWorkout: configCanBoard(cfg, form.category) ? form.teamWorkout : false,
       board: form.board,
     };
     if (form.repeat === "weekly") {
@@ -1177,7 +1177,7 @@ export default function TrainingPlanScreen({
           />
 
           {/* team workout — the switch that gives this session a shared board */}
-          {findType(cfg, cat).canBoard && (
+          {configCanBoard(cfg, cat) && (
             <>
               <div className={labelCls}>Team workout</div>
               <button
