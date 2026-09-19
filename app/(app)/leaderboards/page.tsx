@@ -22,8 +22,10 @@
   is ‹ Houses › with small arrows and a sideways swipe, the name sliding in
   from the side it came from (owner, 2026-09-15 — it was a dropdown opening a
   sheet from the bottom; components/leaderboards/CompetitionSwitcher.tsx).
-  Period is still a dropdown. The list of competitions can grow without the
-  screen growing.
+  Period moves the same way since 2026-09-19 (it was a dropdown). Both
+  controls are the theme's text colour — white on the dark theme — so they
+  stand out from the grey cards under them. The list of competitions can grow
+  without the screen growing.
 
   THE PODIUM. Every board opens with its top three standing on gold, silver and
   bronze pedestals (components/leaderboards/Podium.tsx) and the list carries on
@@ -84,7 +86,6 @@ import { useRouter } from "next/navigation";
 import { useAppState } from "@/components/AppState";
 import {
   IconArrowLeft,
-  IconChevronDown,
   IconChevronRight,
   IconInfo,
   IconTrophy,
@@ -100,7 +101,6 @@ import Medal from "@/components/leaderboards/Medal";
 import ScoringSheet from "@/components/leaderboards/ScoringSheet";
 import YouScreen from "@/components/leaderboards/YouScreen";
 import CompetitionSwitcher from "@/components/leaderboards/CompetitionSwitcher";
-import OptionPickerSheet from "@/components/profile/OptionPickerSheet";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { useProfileData } from "@/components/profile/useProfileData";
 import { houses, residenceLabel, yardDorms } from "@/lib/onboarding";
@@ -268,34 +268,6 @@ function Score({ value, unit }: { value: string; unit?: string }) {
   );
 }
 
-/* One of the two dropdowns. It names the choice above the value, so the bar
-   explains itself instead of being two mystery words with chevrons. */
-function Picker({
-  caption,
-  value,
-  onOpen,
-}: {
-  caption: string;
-  value: string;
-  onOpen: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onOpen}
-      className="tap44 flex min-w-0 flex-1 items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2 text-left"
-    >
-      <span className="min-w-0 flex-1">
-        <span className="block text-[9px] uppercase tracking-[0.1em] text-muted">{caption}</span>
-        <span className="mt-0.5 block truncate text-[13px] font-medium text-text">{value}</span>
-      </span>
-      <span className="flex-shrink-0 text-muted">
-        <IconChevronDown size={15} />
-      </span>
-    </button>
-  );
-}
-
 /* The small line under a person's name — the same on the podium and the list. */
 function personDetail(row: LeaderRow, competition: CompetitionKey): string | undefined {
   if (competition === "partners") return undefined;
@@ -456,8 +428,6 @@ export default function LeaderboardsPage() {
     whole college" is a real claim a big house has every right to make.
   */
   const [metric, setMetric] = useState<GroupMetric>("perMember");
-  // The period's sheet. (Competition switches in place — no sheet.)
-  const [pickingPeriod, setPickingPeriod] = useState(false);
   const [explaining, setExplaining] = useState(false);
   // Your own line, opened up: the ranks, the breakdown and your friends.
   const [openingSelf, setOpeningSelf] = useState(false);
@@ -679,10 +649,13 @@ export default function LeaderboardsPage() {
                 value={competition}
                 onChange={setCompetition}
               />
-              <Picker
+              {/* The period steps with arrows too (owner, 2026-09-19) — the
+                  dropdown and its sheet are gone. */}
+              <CompetitionSwitcher
                 caption="Period"
-                value={PERIODS.find((p) => p.key === period)?.label ?? ""}
-                onOpen={() => setPickingPeriod(true)}
+                options={PERIODS}
+                value={period}
+                onChange={setPeriod}
               />
             </div>
           </div>
@@ -757,17 +730,6 @@ export default function LeaderboardsPage() {
             )}
           </div>
         </>
-      )}
-
-      {pickingPeriod && (
-        <OptionPickerSheet
-          title="Period"
-          hint="How far back the board counts."
-          options={PERIODS.map((p) => ({ value: p.key, label: p.label, note: p.note }))}
-          selected={[period]}
-          onSave={(values) => setPeriod(values[0] as Period)}
-          onClose={() => setPickingPeriod(false)}
-        />
       )}
 
       {explaining && (

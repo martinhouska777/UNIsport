@@ -14,6 +14,10 @@
   The slide is two keyframes in app/globals.css (lb-in-from-right / -left).
   touch-pan-y leaves vertical scrolling to the page; only a mostly-sideways
   swipe of 30px or more counts.
+
+  Used for BOTH leaderboard controls, Competition and Period. Filled with the
+  theme's text colour (white on the dark theme) so they stand out (owner,
+  2026-09-19: "make it a different colour so it stands out, maybe white").
 */
 import { useRef, useState } from "react";
 import { IconChevronLeft, IconChevronRight } from "@/components/icons";
@@ -50,7 +54,7 @@ export default function CompetitionSwitcher<K extends string>({
 
   return (
     <div
-      className="flex min-w-0 flex-1 touch-pan-y select-none items-stretch rounded-xl border border-border bg-surface"
+      className="flex min-w-0 flex-1 touch-pan-y select-none items-stretch rounded-xl bg-text text-background"
       onTouchStart={(e) => {
         const t = e.touches[0];
         touch.current = { x: t.clientX, y: t.clientY };
@@ -71,15 +75,15 @@ export default function CompetitionSwitcher<K extends string>({
         type="button"
         aria-label={`Previous ${caption.toLowerCase()}`}
         onClick={() => step(-1)}
-        className="tap44 flex w-8 flex-shrink-0 items-center justify-center rounded-l-xl text-muted active:text-text"
+        className="tap44 flex w-8 flex-shrink-0 items-center justify-center rounded-l-xl text-background/60 active:text-background"
       >
         <IconChevronLeft size={15} />
       </button>
       <div className="min-w-0 flex-1 overflow-hidden py-2 text-center" aria-live="polite">
-        <span className="block text-[9px] uppercase tracking-[0.1em] text-muted">{caption}</span>
+        <span className="block text-[9px] uppercase tracking-[0.1em] text-background/60">{caption}</span>
         <span
           key={value}
-          className={`mt-0.5 block truncate text-[13px] font-medium text-text motion-reduce:animate-none ${slide}`}
+          className={`mt-0.5 block truncate text-[13px] font-semibold text-background motion-reduce:animate-none ${slide}`}
         >
           {options[index]?.label}
         </span>
@@ -88,7 +92,7 @@ export default function CompetitionSwitcher<K extends string>({
         type="button"
         aria-label={`Next ${caption.toLowerCase()}`}
         onClick={() => step(1)}
-        className="tap44 flex w-8 flex-shrink-0 items-center justify-center rounded-r-xl text-muted active:text-text"
+        className="tap44 flex w-8 flex-shrink-0 items-center justify-center rounded-r-xl text-background/60 active:text-background"
       >
         <IconChevronRight size={15} />
       </button>
