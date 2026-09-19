@@ -25,8 +25,11 @@ import { hero, nav, views, type LandingView } from "@/lib/landingCopy";
   to the whole page either way: that is the Home tab.
 
   On a phone the tabs do not fit the bar, so they live behind a menu button at
-  its left that slides them in from the left edge (LandingMenu), and the door
-  shortens to "Sign up" — the bar stays one row. A phone also keeps BOTH the
+  its left that slides them in from the left edge (LandingMenu). The door says
+  "Get started with .edu" in full there too (owner, 2026-09-19 — the short
+  "Sign up" didn't name the one thing that makes this door different), so on a
+  phone it carries the row on its own and Log in drops to a plain text link.
+  The bar stays one row. A phone also keeps BOTH the
   wordmark and the door from the first pixel (see .l-nav-mark in globals.css);
   the hide-while-the-intro-is-up rule is a laptop rule now.
 */
@@ -66,14 +69,17 @@ export default function LandingNav({ view = "all", heroMark = false }: { view?: 
           <div className="flex items-center gap-1">
             <LandingMenu view={view} />
             <Link href="/" aria-label="UNIsport" className={heroMark ? "l-nav-mark" : undefined}>
-              <Wordmark className="text-2xl" />
+              <Wordmark className="text-xl sm:text-2xl" />
             </Link>
           </div>
           <Tabs view={view} className="hidden md:flex" />
           <div className="flex items-center gap-2 sm:gap-2.5">
             <Link
               href="/login"
-              className="tap44 inline-flex h-10 items-center rounded-full border border-l-line bg-l-bg px-3.5 text-[13px] font-medium tracking-tight text-l-text transition-[color,background-color,border-color,translate] hover:-translate-y-0.5 hover:border-l-line-hover hover:bg-l-bg-elevated focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-l-text sm:px-[18px] sm:text-sm"
+              /* A phone gives the row to the door (which now says "Get started
+                 with .edu" in full), so Log in drops its pill there and is a
+                 plain text link — still 44px tall to tap. */
+              className="tap44 inline-flex h-10 shrink-0 items-center whitespace-nowrap rounded-full px-1.5 text-[13px] font-medium tracking-tight text-l-text-2 transition-[color,background-color,border-color,translate] hover:text-l-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-l-text sm:border sm:border-l-line sm:bg-l-bg sm:px-[18px] sm:text-sm sm:text-l-text sm:hover:-translate-y-0.5 sm:hover:border-l-line-hover sm:hover:bg-l-bg-elevated"
             >
               {nav.login}
             </Link>
@@ -83,10 +89,9 @@ export default function LandingNav({ view = "all", heroMark = false }: { view?: 
                 as a site you can only sign IN to (owner, 2026-09-19). */}
             <Link
               href={hero.primaryHref}
-              className="inline-flex h-10 items-center whitespace-nowrap rounded-full border border-l-text bg-l-text px-4 text-sm font-medium tracking-tight text-l-bg transition-[color,background-color,border-color,translate] hover:-translate-y-0.5 hover:border-(--color-l-accent) hover:bg-l-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-l-text sm:px-[18px]"
+              className="inline-flex h-10 items-center whitespace-nowrap rounded-full border border-l-text bg-l-text px-3.5 text-[13px] font-medium tracking-tight text-l-bg transition-[color,background-color,border-color,translate] hover:-translate-y-0.5 hover:border-(--color-l-accent) hover:bg-l-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-l-text sm:px-[18px] sm:text-sm"
             >
-              <span className="sm:hidden">{nav.ctaShort}</span>
-              <span className="hidden sm:inline">{nav.cta}</span>
+              {nav.cta}
             </Link>
           </div>
         </div>

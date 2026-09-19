@@ -119,9 +119,6 @@ export const nav = {
   login: "Log in",
   /* Also the hero's primary button — the same door, twice. */
   cta: hero.primaryCta,
-  /* The same door on a phone, where the full label does not fit beside the
-     menu button, the wordmark and Log in. */
-  ctaShort: "Sign up",
   /* The phone menu button (opens the tabs from the left) and its close. */
   menu: "Menu",
   closeMenu: "Close menu",
