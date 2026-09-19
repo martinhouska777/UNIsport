@@ -1,0 +1,148 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>UNIsport — round 3: the U with heads, the gym door, the barbell</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap">
+<style>
+  :root { --n: #2f3b52; --b: #1f32c1; --page: #eef1f5; --mute: #7e8488; --hair: #dfe4ea; }
+  html, body { margin: 0; background: var(--page); font-family: "Plus Jakarta Sans", "Segoe UI", system-ui, sans-serif; }
+  #board { width: 1160px; box-sizing: border-box; padding: 48px 48px 40px; display: flex; flex-direction: column; gap: 14px; }
+  .band { font-size: 12px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--b); margin-top: 22px; }
+  .band span { font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--mute); margin-left: 10px; }
+  .grid { display: grid; grid-template-columns: repeat(5, 200px); gap: 16px; }
+  .tile { position: relative; width: 200px; height: 200px; background: #fff; border-radius: 6px; display: flex; align-items: center; justify-content: center; }
+  .tile .num { position: absolute; top: 12px; left: 14px; font-size: 13px; font-weight: 600; color: var(--mute); letter-spacing: 0.02em; }
+  .tile .tag { position: absolute; bottom: 12px; left: 0; right: 0; text-align: center; font-size: 11px; font-weight: 500; color: var(--mute); }
+  .tile svg { width: 126px; height: 126px; display: block; }
+  svg { fill: none; stroke: none; stroke-width: 14; stroke-linecap: round; stroke-linejoin: round; }
+  svg .sa { stroke: var(--n); } svg .sb { stroke: var(--b); }
+  svg .fa { fill: var(--n); }   svg .fb { fill: var(--b); }
+  svg .fw { fill: #fff; }
+  .mono svg .sb { stroke: var(--n); } .mono svg .fb { fill: var(--n); }
+  .onnavy svg .sa, .onnavy svg .sb { stroke: #fff; } .onnavy svg .fa, .onnavy svg .fb { fill: #fff; } .onnavy svg .fw { fill: var(--n); }
+  .strip { display: grid; grid-template-columns: repeat(5, 200px); gap: 16px; }
+  .cell { height: 66px; background: #fff; border-radius: 6px; display: flex; align-items: center; justify-content: center; gap: 20px; }
+  .cell .num { font-size: 12px; font-weight: 600; color: var(--mute); width: 14px; }
+  .cell .mono svg { width: 38px; height: 38px; display: block; }
+  .cell .icon { width: 26px; height: 26px; border-radius: 7px; background: var(--n); display: flex; align-items: center; justify-content: center; }
+  .cell .icon svg { width: 20px; height: 20px; display: block; }
+  .cell .icon.sm { width: 16px; height: 16px; border-radius: 4px; }
+  .cell .icon.sm svg { width: 12px; height: 12px; }
+  .words { display: flex; gap: 16px; }
+  .wcard { flex: 1; height: 104px; background: #fff; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; }
+  .wcard .tag { font-size: 11px; font-weight: 500; color: var(--mute); }
+  .lockup { display: flex; align-items: center; }
+  .ser { font-family: "Instrument Serif", Georgia, serif; font-style: italic; font-size: 40px; line-height: 1; letter-spacing: -0.02em; color: #141618; }
+  .ser b { font-weight: 400; color: var(--b); }
+  .sans { font-family: "Plus Jakarta Sans", sans-serif; font-weight: 800; font-size: 34px; line-height: 1; letter-spacing: -0.03em; color: #141618; }
+  .bar-i { display: block; margin: 0 2px; }
+  .foot { display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--hair); padding-top: 20px; margin-top: 24px; }
+  .lock { display: flex; align-items: center; gap: 12px; }
+  .lock svg { width: 40px; height: 40px; display: block; }
+  .cap { font-size: 12px; color: var(--mute); }
+</style>
+</head>
+<body>
+<div id="board">
+
+  <div class="band">A — the U, a head over each leg <span>your idea: 1.1 with a dot on each leg</span></div>
+  <div class="grid" id="gridA"></div>
+  <div class="strip" id="stripA"></div>
+
+  <div class="band">B — two people walking into the gym door <span>your idea: 1.8, read as a doorway</span></div>
+  <div class="grid" id="gridB"></div>
+  <div class="strip" id="stripB"></div>
+
+  <div class="band">C — the barbell, worked into the letters <span>bar, plates, and the I of UNI</span></div>
+  <div class="grid" id="gridC"></div>
+  <div class="strip" id="stripC"></div>
+
+  <div class="band">The barbell in the name <span>the I of UNI, standing on its end</span></div>
+  <div class="words" id="words"></div>
+
+  <div class="foot">
+    <div class="lock" id="lock"></div>
+    <div class="cap">Under each row: the mark in one colour, and as an app icon at 26 px and 16 px — real size in a browser tab.</div>
+  </div>
+</div>
+<script>
+const M = [
+  /* ---- A: the U with a head over each leg ---- */
+  // 1 base
+  { tag: "base", d: `<path class="sa" d="M28 44 V58 Q28 82 50 82 Q72 82 72 58 V44"/><circle class="fb" cx="28" cy="25" r="9"/><circle class="fb" cx="72" cy="25" r="9"/>` },
+  // 2 the U split in two — two people, each their own colour
+  { tag: "two colours", d: `<path class="sa" d="M28 44 V58 Q28 82 50 82"/><path class="sb" d="M72 44 V58 Q72 82 50 82"/><circle class="fa" cx="28" cy="25" r="9"/><circle class="fb" cx="72" cy="25" r="9"/>` },
+  // 3 heads sit ON the legs, no gap
+  { tag: "heads touching", d: `<path class="sa" d="M28 46 V58 Q28 82 50 82 Q72 82 72 58 V46"/><circle class="fb" cx="28" cy="37" r="9"/><circle class="fb" cx="72" cy="37" r="9"/>` },
+  // 4 smaller heads, wider stance
+  { tag: "smaller heads", d: `<path class="sa" d="M24 44 V58 Q24 84 50 84 Q76 84 76 58 V44"/><circle class="fb" cx="24" cy="28" r="7.5"/><circle class="fb" cx="76" cy="28" r="7.5"/>` },
+  // 5 taller legs — reads as the letter U first
+  { tag: "taller legs", d: `<path class="sa" d="M28 34 V56 Q28 82 50 82 Q72 82 72 56 V34"/><circle class="fb" cx="28" cy="16" r="8.5"/><circle class="fb" cx="72" cy="16" r="8.5"/>` },
+
+  /* ---- B: two people into the gym door ---- */
+  // 6 base — the arch, two figures inside
+  { tag: "base", d: `<path class="sa" d="M16 88 V48 Q16 14 50 14 Q84 14 84 48 V88"/><circle class="fb" cx="38" cy="48" r="6.5"/><path class="sb" style="stroke-width:11" d="M38 60 V78"/><circle class="fb" cx="62" cy="48" r="6.5"/><path class="sb" style="stroke-width:11" d="M62 60 V78"/>` },
+  // 7 mid-stride — the bodies lean, so they are walking
+  { tag: "mid-stride", d: `<path class="sa" d="M16 88 V48 Q16 14 50 14 Q84 14 84 48 V88"/><circle class="fb" cx="38" cy="48" r="6.5"/><path class="sb" style="stroke-width:11" d="M38 60 L33 78"/><circle class="fb" cx="62" cy="48" r="6.5"/><path class="sb" style="stroke-width:11" d="M62 60 L67 78"/>` },
+  // 8 a real door, not an arch
+  { tag: "square door", d: `<path class="sa" d="M16 88 V26 Q16 16 26 16 H74 Q84 16 84 26 V88"/><circle class="fb" cx="38" cy="50" r="6.5"/><path class="sb" style="stroke-width:11" d="M38 62 V80"/><circle class="fb" cx="62" cy="50" r="6.5"/><path class="sb" style="stroke-width:11" d="M62 62 V80"/>` },
+  // 9 one a step ahead of the other
+  { tag: "one ahead", d: `<path class="sa" d="M16 88 V48 Q16 14 50 14 Q84 14 84 48 V88"/><circle class="fa" cx="40" cy="46" r="7.5"/><path class="sa" style="stroke-width:12" d="M40 59 V80"/><circle class="fb" cx="63" cy="52" r="6"/><path class="sb" style="stroke-width:9.5" d="M63 62 V78"/>` },
+  // 10 a threshold to step over
+  { tag: "threshold", d: `<path class="sa" d="M18 78 V46 Q18 14 50 14 Q82 14 82 46 V78"/><path class="sb" d="M12 88 H88"/><circle class="fb" cx="38" cy="44" r="6.5"/><path class="sa" style="stroke-width:11" d="M38 56 V74"/><circle class="fb" cx="62" cy="44" r="6.5"/><path class="sa" style="stroke-width:11" d="M62 56 V74"/>` },
+
+  /* ---- C: the barbell in the letters ---- */
+  // 11 the U is the bar — a plate on the end of each leg
+  { tag: "plates for heads", d: `<path class="sa" d="M28 40 V58 Q28 82 50 82 Q72 82 72 58 V40"/><rect class="fb" x="19" y="22" width="18" height="12" rx="6"/><rect class="fb" x="63" y="22" width="18" height="12" rx="6"/>` },
+  // 12 a bar resting across the U
+  { tag: "bar across the U", d: `<path class="sa" d="M28 48 V60 Q28 82 50 82 Q72 82 72 60 V48"/><path class="sb" style="stroke-width:9" d="M18 34 H82"/><rect class="fa" x="24" y="23" width="11" height="22" rx="5.5"/><rect class="fa" x="65" y="23" width="11" height="22" rx="5.5"/>` },
+  // 13 the I of UNI, standing on its end
+  { tag: "I is a barbell", d: `<path class="sa" style="stroke-width:13" d="M50 26 V74"/><rect class="fb" x="32" y="16" width="36" height="12" rx="6"/><rect class="fb" x="32" y="72" width="36" height="12" rx="6"/>` },
+  // 14 the bar carried through the U
+  { tag: "carrying the bar", d: `<path class="sa" d="M26 38 V58 Q26 82 50 82 Q74 82 74 58 V38"/><path class="sb" style="stroke-width:9" d="M12 50 H88"/><rect class="fa" x="7" y="40" width="11" height="20" rx="5.5"/><rect class="fa" x="82" y="40" width="11" height="20" rx="5.5"/>` },
+  // 15 the rack: two uprights and a loaded bar — a doorway too
+  { tag: "the rack", d: `<path class="sa" d="M26 86 V34 M74 86 V34"/><path class="sb" style="stroke-width:10" d="M16 42 H84"/><rect class="fa" x="11" y="32" width="11" height="20" rx="5.5"/><rect class="fa" x="78" y="32" width="11" height="20" rx="5.5"/>` },
+];
+
+const svg = (i) => `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">${M[i].d}</svg>`;
+const tiles = (from) => M.slice(from, from + 5).map((m, k) => {
+  const i = from + k;
+  return `<div class="tile"><span class="num">${i+1}</span>${svg(i)}<span class="tag">${m.tag}</span></div>`;
+}).join('');
+const cells = (from) => M.slice(from, from + 5).map((_, k) => {
+  const i = from + k;
+  return `<div class="cell"><span class="num">${i+1}</span><span class="mono">${svg(i)}</span><span class="icon onnavy">${svg(i)}</span><span class="icon sm onnavy">${svg(i)}</span></div>`;
+}).join('');
+
+// The I of UNI drawn as a barbell standing on its end, sized to sit on the text baseline.
+const barI = (h, barColor, plateColor) => {
+  const w = Math.round(h * 0.46);
+  return `<svg class="bar-i" width="${w}" height="${h}" viewBox="0 0 46 100" xmlns="http://www.w3.org/2000/svg">
+    <rect fill="${barColor}" x="17" y="14" width="12" height="72" rx="3"></rect>
+    <rect fill="${plateColor}" x="4" y="8" width="38" height="12" rx="6"></rect>
+    <rect fill="${plateColor}" x="4" y="80" width="38" height="12" rx="6"></rect>
+  </svg>`;
+};
+
+const W = [
+  { tag: "serif — the spelling the landing uses today",
+    html: `<span class="ser">UN</span>${barI(38, "#141618", "#1f32c1")}<span class="ser"><b>sport</b></span>` },
+  { tag: "heavy sans UNI, serif sport",
+    html: `<span class="sans">UN</span>${barI(32, "#141618", "#1f32c1")}<span class="ser"><b>sport</b></span>` },
+  { tag: "all one ink — how it prints on a shirt",
+    html: `<span class="ser">UN</span>${barI(38, "#141618", "#141618")}<span class="ser" style="color:#141618">sport</span>` },
+];
+
+document.getElementById('gridA').innerHTML = tiles(0);
+document.getElementById('gridB').innerHTML = tiles(5);
+document.getElementById('gridC').innerHTML = tiles(10);
+document.getElementById('stripA').innerHTML = cells(0);
+document.getElementById('stripB').innerHTML = cells(5);
+document.getElementById('stripC').innerHTML = cells(10);
+document.getElementById('words').innerHTML = W.map(w =>
+  `<div class="wcard"><div class="lockup">${w.html}</div><span class="tag">${w.tag}</span></div>`).join('');
+document.getElementById('lock').innerHTML = `${svg(0)}<span class="ser">UNI<b>sport</b></span>`;
+</script>
+</body>
+</html>
