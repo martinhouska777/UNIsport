@@ -98,13 +98,17 @@ function BarbellI({ accentClassName }: { accentClassName: string }) {
 
 export default function Wordmark({
   className = "",
+  toneClassName = "text-l-text",
   accentClassName = "text-l-accent",
 }: {
   className?: string;
+  /* The first half's colour. Zone 1 tokens by default; the app's side rail
+     hands it Zone 2's own, because two colour systems never share a token. */
+  toneClassName?: string;
   accentClassName?: string;
 }) {
   return (
-    <span className={`font-display italic tracking-tight text-l-text ${className}`}>
+    <span className={`font-display italic tracking-tight ${toneClassName} ${className}`}>
       {/* The name is spelled out for anything that reads the page aloud or
           indexes it; the drawn I is marked decorative above. */}
       <span className="sr-only">UNIsport</span>

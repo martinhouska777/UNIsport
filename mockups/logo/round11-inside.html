@@ -1,0 +1,123 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>UNIsport — what goes inside the U</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap">
+<style>
+  :root { --n: #2f3b52; --b: #1f32c1; --tint: #c3c9ec; --page: #eef1f5; --mute: #7e8488; --hair: #dfe4ea; }
+  html, body { margin: 0; background: var(--page); font-family: "Plus Jakarta Sans", system-ui, sans-serif; }
+  #board { width: 1160px; box-sizing: border-box; padding: 48px; display: flex; flex-direction: column; gap: 14px; }
+  .band { font-size: 12px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--b); margin-top: 24px; }
+  .band span { font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--mute); margin-left: 10px; }
+  .grid { display: grid; grid-template-columns: repeat(5, 200px); gap: 16px; }
+  .tile { position: relative; width: 200px; height: 200px; background: #fff; border-radius: 6px; display: flex; align-items: center; justify-content: center; }
+  .tile .num { position: absolute; top: 12px; left: 14px; font-size: 13px; font-weight: 700; color: var(--b); }
+  .tile .tag { position: absolute; bottom: 11px; left: 0; right: 0; text-align: center; font-size: 11px; font-weight: 500; color: var(--mute); }
+  .tile svg { width: 124px; height: 124px; display: block; }
+  .strip { display: grid; grid-template-columns: repeat(5, 200px); gap: 16px; }
+  .cell { height: 66px; background: #fff; border-radius: 6px; display: flex; align-items: center; justify-content: center; gap: 20px; }
+  .cell .num { font-size: 12px; font-weight: 600; color: var(--mute); width: 14px; }
+  .cell .chip { border-radius: 24%; background: #fff; border: 1px solid var(--hair); display: flex; align-items: center; justify-content: center; }
+  .cell .chip svg { display: block; }
+  .note { font-size: 12px; color: var(--mute); background: #fff; border-radius: 6px; padding: 16px 30px; line-height: 1.6; }
+  .note b { color: #141618; font-weight: 600; }
+</style>
+</head>
+<body>
+<div id="board">
+  <div class="band">Ten things that could fill the bowl <span>the mark is unchanged in every one — only what sits inside or behind it differs</span></div>
+  <div class="grid" id="grid"></div>
+  <div class="strip" id="s1"></div>
+  <div class="strip" id="s2"></div>
+  <p class="note" id="note"></p>
+</div>
+
+<script>
+/* The mark as it stands: a U split down the middle, each half one person with
+   its own leg and head. Everything below only ADDS to the bowl — the U, the
+   heads, their weights and colours are untouched. */
+const U = `
+  <path d="M28 34 V56 Q28 82 50 82" fill="none" stroke="var(--n)" stroke-width="14" stroke-linecap="round"/>
+  <path d="M72 34 V56 Q72 82 50 82" fill="none" stroke="var(--b)" stroke-width="14" stroke-linecap="round"/>`;
+const HEADS = `
+  <circle cx="28" cy="16" r="8.5" fill="var(--n)"/>
+  <circle cx="72" cy="16" r="8.5" fill="var(--b)"/>`;
+
+/* Each entry: what goes BEHIND the U, and what goes INSIDE it (drawn on top
+   of the backdrop but under nothing — the U is drawn last so the addition can
+   never break the letter). */
+const ITEMS = [
+  { tag: "barbell across the bowl",
+    inside: `<g stroke="var(--b)" stroke-linecap="round">
+        <path d="M38 60 H62" stroke-width="5"/>
+        <path d="M38 53 V67 M62 53 V67" stroke-width="7"/>
+      </g>` },
+
+  { tag: "bar across the shoulders",
+    over: `<g stroke="var(--n)" stroke-linecap="round">
+        <path d="M12 16 H88" stroke-width="5"/>
+        <path d="M16 9 V23 M84 9 V23" stroke-width="7"/>
+      </g>` },
+
+  { tag: "a weight plate behind",
+    behind: `<circle cx="50" cy="52" r="30" fill="none" stroke="var(--tint)" stroke-width="9"/>` },
+
+  { tag: "a shield behind",
+    behind: `<path d="M50 4 L88 16 V48 C88 70 70 84 50 92 C30 84 12 70 12 48 V16 Z"
+              fill="none" stroke="var(--tint)" stroke-width="7" stroke-linejoin="round"/>` },
+
+  { tag: "a star in the bowl",
+    inside: `<path d="M50 46 L54.5 57 L66 57.8 L57.2 65.3 L60 76.5 L50 70.2 L40 76.5 L42.8 65.3 L34 57.8 L45.5 57 Z"
+              fill="var(--b)"/>` },
+
+  { tag: "varsity stripes",
+    inside: `<g stroke="var(--tint)" stroke-width="6" stroke-linecap="round">
+        <path d="M38 50 H62" /><path d="M38 61 H62" /><path d="M40 72 H60" />
+      </g>` },
+
+  { tag: "a dumbbell in the bowl",
+    inside: `<g stroke="var(--b)" stroke-linecap="round">
+        <path d="M41 61 H59" stroke-width="5"/>
+        <path d="M39 54 V68 M61 54 V68" stroke-width="8"/>
+      </g>` },
+
+  { tag: "a chevron in the bowl",
+    inside: `<path d="M37 52 L50 63 L63 52" fill="none" stroke="var(--tint)" stroke-width="7"
+              stroke-linecap="round" stroke-linejoin="round"/>` },
+
+  { tag: "laurel behind",
+    behind: `<g fill="none" stroke="var(--tint)" stroke-width="6" stroke-linecap="round">
+        <path d="M14 34 C6 52 10 74 26 88"/><path d="M86 34 C94 52 90 74 74 88"/>
+      </g>` },
+
+  { tag: "the bowl filled",
+    behind: `<path d="M28 34 V56 Q28 82 50 82 Q72 82 72 56 V34 Z" fill="var(--tint)" opacity="0.55"/>` },
+];
+
+const svg = (it, size) => `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"
+  ${size ? `width="${size}" height="${size}"` : ""}>
+  ${it.behind ?? ""}${it.inside ?? ""}${U}${HEADS}${it.over ?? ""}</svg>`;
+
+document.getElementById("grid").innerHTML = ITEMS.map((it, i) =>
+  `<div class="tile"><span class="num">${i + 1}</span>${svg(it)}<span class="tag">${it.tag}</span></div>`).join("");
+
+const cells = (from) => ITEMS.slice(from, from + 5).map((it, k) => {
+  const i = from + k;
+  return `<div class="cell"><span class="num">${i + 1}</span>
+    <span class="chip" style="width:44px;height:44px">${svg(it, 34)}</span>
+    <span class="chip" style="width:26px;height:26px">${svg(it, 20)}</span>
+    <span class="chip" style="width:16px;height:16px;border-radius:4px">${svg(it, 13)}</span>
+  </div>`;
+}).join("");
+document.getElementById("s1").innerHTML = cells(0);
+document.getElementById("s2").innerHTML = cells(5);
+
+document.getElementById("note").innerHTML =
+  `Under each row the same mark at <b>44, 26 and 16 px</b> — the app icon, a menu row, a browser tab. ` +
+  `That is where this decision is really made: the bowl is only about a third of the mark, so anything put in it ` +
+  `is drawn at a third of the size you see above. Number 2 is the exception — it sits across the top, outside the bowl, ` +
+  `so it keeps its length when everything shrinks.`;
+</script>
+</body>
+</html>

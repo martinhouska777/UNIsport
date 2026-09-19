@@ -14,6 +14,7 @@ import { usePathname } from "next/navigation";
 import { tabs, useUnreadCount } from "@/components/BottomNav";
 import { ThemeModeToggle } from "@/components/ThemeMode";
 import SideRail from "@/components/SideRail";
+import Wordmark from "@/components/landing/Wordmark";
 import { useAppState } from "@/components/AppState";
 import { getUniversity } from "@/lib/themes";
 
@@ -27,9 +28,10 @@ export default function SideNav() {
   return (
     <SideRail
       header={
-        /* Wordmark — the app has no header on desktop, so this anchors the page. */
-        <div className="text-[15px] font-semibold tracking-tight text-text">
-          UNI<span className="text-primary">sport</span>
+        /* Wordmark — the app has no header on desktop, so this anchors the page.
+           The same drawn mark the landing wears, in Zone 2's own tokens. */
+        <div>
+          <Wordmark className="text-[19px]" toneClassName="text-text" accentClassName="text-primary" />
         </div>
       }
       items={tabs.map((tab) => ({
