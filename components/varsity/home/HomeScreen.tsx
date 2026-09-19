@@ -828,8 +828,9 @@ function DriveBar({ onUpload }: { onUpload: () => void }) {
   The arrows step a day at a time across the whole published block, so looking
   at Thursday's outing is two taps and no calendar. "Back to today" only exists
   once you have left today, because that is the only time there is somewhere to
-  go back to — and on today it would be a button that does nothing. It sits
-  under the day, beside All boats, so the two ends of the row stay the arrows.
+  go back to — and on today it would be a button that does nothing. It sits on
+  the LEFT of the day and All boats on the RIGHT of it (owner, 2026-09-19), all
+  three on ONE line, with the arrows still the two ends of the row.
 */
 function DayHeader({
   title,
@@ -859,27 +860,23 @@ function DayHeader({
   return (
     <div className="flex items-center gap-2 px-4 pb-2 pt-4">
       {arrow(-1, canPrev)}
-      <div className="flex min-w-0 flex-1 flex-col items-center gap-1">
-        {/* ALL BOATS BESIDE THE DAY (owner, 2026-09-16): the day sits in the
-            exact MIDDLE and "All boats" hangs off its right — three columns,
-            the outer two equal, so the link never pushes the day off centre. */}
-        <div className="grid w-full min-w-0 grid-cols-[1fr_auto_1fr] items-center gap-2.5">
-          <span />
-          <SectionLabel className="truncate">{title}</SectionLabel>
-          <div className="flex min-w-0 justify-start">{right}</div>
+      {/* BACK TO TODAY LEFT, ALL BOATS RIGHT (owner, 2026-09-19): the day sits
+          in the exact MIDDLE, with "Back to today" hanging off its left and
+          "All boats" off its right — three columns, the outer two equal, so
+          neither side can push the day off centre. */}
+      <div className="grid min-w-0 flex-1 grid-cols-[1fr_auto_1fr] items-center gap-2.5">
+        <div className="flex min-w-0 justify-end">
+          {onToday && (
+            <button
+              onClick={onToday}
+              className="flex flex-shrink-0 items-center gap-1 text-[11px] font-semibold text-muted"
+            >
+              <IconX size={11} /> Back to today
+            </button>
+          )}
         </div>
-        {onToday && (
-          <div className="flex items-center gap-3">
-            {onToday && (
-              <button
-                onClick={onToday}
-                className="flex items-center gap-1 text-[11px] font-semibold text-muted"
-              >
-                <IconX size={11} /> Back to today
-              </button>
-            )}
-          </div>
-        )}
+        <SectionLabel className="truncate">{title}</SectionLabel>
+        <div className="flex min-w-0 justify-start">{right}</div>
       </div>
       {arrow(1, canNext)}
     </div>
