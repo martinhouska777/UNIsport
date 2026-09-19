@@ -8,18 +8,22 @@ export default function manifest(): MetadataRoute.Manifest {
 
       "UNIsport" alone is not claimable as a listing name: UniSport Digital
       (Croatia), UniSport Köln and Uni Bern are already in the app stores, and
-      store names must be unique. So every surface that needs a UNIQUE id — the
-      listing name, the domain, the social handles — carries the same qualifier,
-      "campus", and the surfaces that only DISPLAY the brand stay "UNIsport":
+      store names must be unique. So a surface that needs a UNIQUE id carries a
+      qualifier, and the surfaces that only DISPLAY the brand stay "UNIsport":
 
         listing / manifest name   UNIsport: Campus Fitness   <- here
         home-screen label         UNIsport                   <- short_name below
         iOS home-screen label     UNIsport                   <- appleWebApp.title
-        domain                    unisportcampus.com
-        socials                   @unisportcampus
+        domain                    getunisport.com            <- live, owner 2026-09-19
+        socials                   not decided yet
 
-      One qualifier everywhere, so a person who hears "UNIsport" and finds
-      "unisportcampus" reads it as obviously us. Do not vary it per surface.
+      The 2026-08-18 plan was one qualifier everywhere ("campus"), and the
+      domain was going to be unisportcampus.com. The owner bought
+      getunisport.com instead and has confirmed it stays, so the qualifier is
+      no longer uniform across surfaces. The store name keeps it because the
+      store genuinely requires a unique listing name; the domain no longer
+      matches it. Socials are still open — worth deciding which of the two the
+      handle should follow.
     */
     name: "UNIsport: Campus Fitness",
     // What sits under the icon on the home screen — the brand, unqualified.
