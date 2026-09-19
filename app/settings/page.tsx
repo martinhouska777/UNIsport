@@ -292,6 +292,14 @@ export default function SettingsPage() {
                 detail={roleLabel[membership.role]}
                 href={VARSITY_HOME}
               />
+              {/* EDIT YOUR VARSITY PROFILE — it was a pencil in Varsity Mode's
+                  top bar (owner, 2026-09-19: "put it in Settings"). The profile
+                  screen opens its editor from ?edit=1 and tidies the URL. */}
+              <Row
+                icon={<IconPencil size={18} />}
+                label="Edit varsity profile"
+                href="/varsity/profile?edit=1"
+              />
               {/* The Coach Console used to be reachable ONLY from inside Varsity
                   Mode (its home screen and varsity profile), which meant a coach
                   sitting in the student app had to switch modes first and find

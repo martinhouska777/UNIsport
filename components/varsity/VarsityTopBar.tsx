@@ -2,13 +2,13 @@
 
 import { useCallback, useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import VarsityCrest from "@/components/varsity/VarsityCrest";
 import ModeSwitcherSheet from "@/components/ModeSwitcherSheet";
 import { useAppState } from "@/components/AppState";
 import { getUniversity } from "@/lib/themes";
 import useTapOrDoubleTap from "@/components/useTapOrDoubleTap";
-import { IconArrowLeft, IconChevronDown, IconPencil, IconSettings } from "@/components/icons";
+import { IconArrowLeft, IconChevronDown, IconSettings } from "@/components/icons";
 
 /*
   Top bar for every Varsity Mode screen: the varsity mark on the left, and on
@@ -30,7 +30,6 @@ import { IconArrowLeft, IconChevronDown, IconPencil, IconSettings } from "@/comp
   padding came down a notch to pay for most of the extra height.
 */
 export default function VarsityTopBar() {
-  const pathname = usePathname();
   const { studentReady, universityKey } = useAppState();
   const { handleModeTap, switchingMode, closeSwitcher } = useVarsityModeTap();
   // The school's everyday name is DATA (lib/themes.ts), never typed here.
@@ -65,24 +64,9 @@ export default function VarsityTopBar() {
       </button>
 
       <div className="flex flex-shrink-0 items-center gap-2">
-        {/*
-          EDIT YOUR PROFILE — only while you are looking at it. The pencil used
-          to sit beside your own name on the profile screen; the owner moved it
-          up here, to the left of the cog, and gave the corner it left to your
-          status. It is a LINK rather than a callback because the bar lives in
-          the layout and the sheet lives in the page: `?edit=1` is the whole
-          message, and the profile screen opens the editor and tidies the URL
-          away (the same trick the log reminder's deep link uses on Home).
-        */}
-        {pathname === "/varsity/profile" && (
-          <Link
-            href="/varsity/profile?edit=1"
-            aria-label="Edit profile"
-            className="tap44 press-icon flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border border-border bg-surface text-muted"
-          >
-            <IconPencil size={15} />
-          </Link>
-        )}
+        {/* EDIT YOUR PROFILE moved to Settings → Varsity → "Edit varsity
+            profile" (owner, 2026-09-19). The pencil that stood here only on
+            your profile opened the same editor through ?edit=1. */}
         {/* Settings has to be reachable from here: a rower who joined through a
             team link has no student profile to find the cog on, so without this
             they could never change units, notifications — or log out. */}

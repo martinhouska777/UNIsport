@@ -23,7 +23,6 @@ import { useVarsityModeTap } from "@/components/varsity/VarsityTopBar";
 import {
   IconArrowLeft,
   IconChevronDown,
-  IconPencil,
   IconPlus,
   IconSettings,
 } from "@/components/icons";
@@ -76,12 +75,7 @@ export default function VarsitySideNav() {
         footer={
           <>
             <div className="flex items-center gap-2">
-              {/* Same as the phone bar: the pencil only while on your profile. */}
-              {pathname === "/varsity/profile" && (
-                <Link href="/varsity/profile?edit=1" aria-label="Edit profile" className={railIconCls}>
-                  <IconPencil size={15} />
-                </Link>
-              )}
+              {/* Edit profile lives in Settings now (owner, 2026-09-19). */}
               <Link href="/settings" aria-label="Settings" className={railIconCls}>
                 <IconSettings size={16} />
               </Link>
