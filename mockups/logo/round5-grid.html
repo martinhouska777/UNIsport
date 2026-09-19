@@ -1,0 +1,207 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>UNIsport — round 5: the chosen mark, and the barbell I two ways</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap">
+<style>
+  :root { --n: #2f3b52; --b: #1f32c1; --ink: #141618; --page: #eef1f5; --mute: #7e8488; --hair: #dfe4ea; }
+  html, body { margin: 0; background: var(--page); font-family: "Plus Jakarta Sans", "Segoe UI", system-ui, sans-serif; }
+  #board { width: 1160px; box-sizing: border-box; padding: 48px 48px 40px; display: flex; flex-direction: column; gap: 14px; }
+  .band { font-size: 12px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--b); margin-top: 26px; }
+  .band span { font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--mute); margin-left: 10px; }
+
+  .row { display: flex; gap: 16px; }
+  .card { background: #fff; border-radius: 6px; display: flex; align-items: center; justify-content: center; position: relative; }
+  .card .tag { position: absolute; bottom: 11px; left: 0; right: 0; text-align: center; font-size: 11px; font-weight: 500; color: var(--mute); }
+
+  svg.mark { fill: none; stroke: none; stroke-width: 14; stroke-linecap: round; stroke-linejoin: round; }
+  svg .sa { stroke: var(--n); } svg .sb { stroke: var(--b); }
+  svg .fa { fill: var(--n); }   svg .fb { fill: var(--b); }
+  .mono svg .sb { stroke: var(--n); } .mono svg .fb { fill: var(--n); }
+  .onink svg .sa, .onink svg .sb { stroke: #fff; } .onink svg .fa, .onink svg .fb { fill: #fff; }
+
+  .big   { width: 300px; height: 240px; }
+  .big svg.mark { width: 150px; height: 150px; }
+  .sizes { flex: 1; gap: 30px; }
+  .sizes .slot { display: flex; flex-direction: column; align-items: center; gap: 9px; }
+  .sizes .slot span { font-size: 10px; color: var(--mute); }
+  .chip { border-radius: 22%; background: var(--n); display: flex; align-items: center; justify-content: center; }
+
+  .wcard { background: #fff; border-radius: 6px; padding: 30px 34px; display: flex; align-items: center; justify-content: space-between; gap: 26px; }
+  .wcard .tag { font-size: 11px; font-weight: 500; color: var(--mute); text-align: right; max-width: 250px; line-height: 1.5; }
+  .lockup { display: flex; align-items: baseline; }
+  .ser  { font-family: "Instrument Serif", Georgia, serif; font-style: italic; letter-spacing: -0.02em; color: var(--ink); line-height: 1; }
+  .caps { font-family: "Plus Jakarta Sans", sans-serif; font-weight: 800; letter-spacing: 0.01em; color: var(--ink); line-height: 1; }
+  .blue { color: var(--b); }
+
+  .weights { display: flex; gap: 16px; }
+  .wt { flex: 1; background: #fff; border-radius: 6px; padding: 26px 20px 16px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .wt .tag { font-size: 11px; font-weight: 500; color: var(--mute); text-align: center; line-height: 1.5; }
+
+  .foot { border-top: 1px solid var(--hair); padding-top: 20px; margin-top: 28px; font-size: 12px; color: var(--mute); }
+</style>
+</head>
+<body>
+<div id="board">
+
+  <div class="band">The mark you leaned to <span>round 4, A1 — the U split down the middle, one colour each person</span></div>
+  <div class="row" id="markRow"></div>
+
+  <div class="band">The barbell, rebuilt <span>rotated as a rigid object, not skewed — and three shaft weights</span></div>
+  <div class="weights" id="weights"></div>
+
+  <div class="band">Route 1 — italic, the bar leans with the type</div>
+  <div id="italicRow"></div>
+
+  <div class="band">Route 2 — all capitals, upright, the bar stands straight</div>
+  <div id="capsRow"></div>
+
+  <div class="band">The two routes as a finished lockup <span>mark plus name, the way it sits in a top bar</span></div>
+  <div class="row" id="lockRow"></div>
+
+  <div class="foot" id="footnote"></div>
+</div>
+
+<script>
+/* ---------------------------------------------------------------
+   THE MARK — round 4, A1. The U split down the middle so each
+   half is one person: own leg, own head, own colour.
+   --------------------------------------------------------------- */
+const MARK = `
+  <path class="sa" d="M28 34 V56 Q28 82 50 82"/>
+  <path class="sb" d="M72 34 V56 Q72 82 50 82"/>
+  <circle class="fa" cx="28" cy="16" r="8.5"/>
+  <circle class="fb" cx="72" cy="16" r="8.5"/>`;
+const mk = (extra = "") =>
+  `<svg class="mark" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" ${extra}>${MARK}</svg>`;
+
+/* ---------------------------------------------------------------
+   THE BARBELL — shaft, a collar each side, a big plate and a small
+   plate each end. Drawn once on a 100 x 150 box, content centred on
+   (50, 75) so it can be ROTATED about its own middle: a barbell is
+   a rigid object, so leaning it must turn it, never skew it.
+
+   contentH  how tall the barbell is, in px
+   cap       cap height of the type beside it, so we can centre it
+             on the letters instead of sitting it on the baseline
+   lean      degrees clockwise; 12 matches Instrument Serif italic
+   --------------------------------------------------------------- */
+function barbell({ contentH, cap = contentH, lean = 0, shaft = "#141618", plate = "#1f32c1", weight = 15, gap = 0 }) {
+  const H = contentH * 150 / 140;
+  const W = H * 100 / 150;
+  const cx = 50;
+  const r = (ww, y, hh, rx, fill) =>
+    `<rect x="${cx - ww / 2}" y="${y}" width="${ww}" height="${hh}" rx="${rx}" fill="${fill}"></rect>`;
+  const parts =
+    r(weight, 25, 100, weight * 0.17, shaft) +   // the shaft
+    r(24, 38, 8, 2, shaft) + r(24, 104, 8, 2, shaft) +          // collars
+    r(60, 17, 18, 2.5, plate) + r(60, 115, 18, 2.5, plate) +    // big plates
+    r(40, 5, 11, 2, plate) + r(40, 134, 11, 2, plate);          // small plates
+  // Centre the barbell on the letters' middle, not on the baseline.
+  const dy = (contentH - cap) / 2;
+  return `<svg width="${W.toFixed(1)}" height="${H.toFixed(1)}" viewBox="0 0 100 150"
+    xmlns="http://www.w3.org/2000/svg"
+    style="display:inline-block; vertical-align:baseline; margin:0 ${gap}px; transform: translateY(${dy.toFixed(1)}px);">
+    <g transform="rotate(${lean} 50 75)">${parts}</g></svg>`;
+}
+// How thick the shaft comes out, in px, for a given barbell height.
+const shaftPx = (contentH, weight) => (contentH * 150 / 140) * weight / 150;
+
+/* ---------------------------------------------------------------
+   Render — the mark
+   --------------------------------------------------------------- */
+const chip = (px) => `<span class="chip" style="width:${px}px;height:${px}px">
+  <span class="onink" style="display:flex">${mk(`width="${Math.round(px * 0.74)}" height="${Math.round(px * 0.74)}"`)}</span></span>`;
+
+document.getElementById("markRow").innerHTML = `
+  <div class="card big">${mk()}<span class="tag">in colour</span></div>
+  <div class="card big"><span class="mono" style="display:flex">${mk()}</span><span class="tag">one ink</span></div>
+  <div class="card big" style="background:#141618"><span class="onink" style="display:flex">${mk()}</span><span class="tag" style="color:#8a9099">reversed</span></div>
+  <div class="card sizes">
+    <div class="slot">${chip(64)}<span>64</span></div>
+    <div class="slot">${chip(40)}<span>40</span></div>
+    <div class="slot">${chip(26)}<span>26</span></div>
+    <div class="slot">${chip(16)}<span>16 px</span></div>
+    <span class="tag">as an app icon, down to a browser tab</span>
+  </div>`;
+
+/* ---------------------------------------------------------------
+   Render — three shaft weights, so the bar can be matched to the
+   stems of whichever type we end on.
+   --------------------------------------------------------------- */
+const WT = [
+  { weight: 11, tag: "light shaft" },
+  { weight: 15, tag: "medium shaft" },
+  { weight: 20, tag: "heavy shaft" },
+];
+document.getElementById("weights").innerHTML = WT.map(w => `
+  <div class="wt">
+    <div style="display:flex; align-items:flex-end; gap:16px;">
+      ${barbell({ contentH: 112, weight: w.weight })}
+      ${barbell({ contentH: 112, weight: w.weight, lean: 12 })}
+      ${barbell({ contentH: 48, weight: w.weight })}
+      ${barbell({ contentH: 26, weight: w.weight })}
+    </div>
+    <span class="tag">${w.tag} — ${shaftPx(112, w.weight).toFixed(1)} px at this size<br>upright, leaning 12°, and small</span>
+  </div>`).join("");
+
+/* ---------------------------------------------------------------
+   Render — the two routes
+   --------------------------------------------------------------- */
+// Instrument Serif italic: cap height ≈ 0.70 em, stems ≈ 0.10 em.
+// Plus Jakarta 800: cap height ≈ 0.73 em, stems ≈ 0.16 em.
+const italic = [
+  { size: 76, weight: 15, over: 1.30, plate: "#1f32c1", shaft: "#141618",
+    tag: "Bar taller than the caps, so it reads as an object standing in the word." },
+  { size: 76, weight: 15, over: 1.00, plate: "#1f32c1", shaft: "#141618",
+    tag: "Bar exactly cap height — politer, sits inside the line of type." },
+  { size: 76, weight: 15, over: 1.30, plate: "#141618", shaft: "#141618",
+    tag: "All one ink, for a shirt, a stamp, or a black-and-white print." },
+];
+document.getElementById("italicRow").innerHTML = italic.map(w => {
+  const cap = w.size * 0.70;
+  const bar = barbell({ contentH: cap * w.over, cap, lean: 12, weight: w.weight, shaft: w.shaft, plate: w.plate, gap: 5 });
+  return `<div class="wcard" style="margin-bottom:16px"><div class="lockup">
+      <span class="ser" style="font-size:${w.size}px">UN</span>${bar}<span class="ser blue" style="font-size:${w.size}px">sport</span>
+    </div><span class="tag">${w.tag}</span></div>`;
+}).join("");
+
+const caps = [
+  { size: 58, weight: 20, over: 1.26, sport: "#1f32c1",
+    tag: "Block capitals, upright. Heavy shaft to match the sans stems." },
+  { size: 58, weight: 20, over: 1.00, sport: "#1f32c1",
+    tag: "The same, bar kept to cap height — reads more like a letter, less like a barbell." },
+  { size: 58, weight: 20, over: 1.26, sport: "#141618",
+    tag: "All one ink." },
+];
+document.getElementById("capsRow").innerHTML = caps.map(w => {
+  const cap = w.size * 0.73;
+  const bar = barbell({ contentH: cap * w.over, cap, lean: 0, weight: w.weight, shaft: "#141618", plate: w.sport === "#141618" ? "#141618" : "#1f32c1", gap: 4 });
+  return `<div class="wcard" style="margin-bottom:16px"><div class="lockup">
+      <span class="caps" style="font-size:${w.size}px">UN</span>${bar}<span class="caps" style="font-size:${w.size}px; color:${w.sport}">SPORT</span>
+    </div><span class="tag">${w.tag}</span></div>`;
+}).join("");
+
+/* ---------------------------------------------------------------
+   Render — mark + name together
+   --------------------------------------------------------------- */
+const lock = (inner) => `<div class="card" style="flex:1; height:132px; gap:16px;">${inner}</div>`;
+const capI = 34 * 0.70, capC = 30 * 0.73;
+document.getElementById("lockRow").innerHTML =
+  lock(`${mk('width="46" height="46"')}<div class="lockup">
+      <span class="ser" style="font-size:34px">UN</span>
+      ${barbell({ contentH: capI * 1.3, cap: capI, lean: 12, weight: 15, gap: 3 })}
+      <span class="ser blue" style="font-size:34px">sport</span></div>
+    <span class="tag">route 1 — italic</span>`) +
+  lock(`${mk('width="46" height="46"')}<div class="lockup">
+      <span class="caps" style="font-size:30px">UN</span>
+      ${barbell({ contentH: capC * 1.26, cap: capC, lean: 0, weight: 20, gap: 2 })}
+      <span class="caps blue" style="font-size:30px">SPORT</span></div>
+    <span class="tag">route 2 — capitals</span>`);
+
+document.getElementById("footnote").textContent =
+  "The barbell is one function, so its weight, lean and height are three numbers we can tune once the type is settled — it is not redrawn per size.";
+</script>
+</body>
+</html>

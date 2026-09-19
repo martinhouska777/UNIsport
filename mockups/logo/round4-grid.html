@@ -1,0 +1,193 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>UNIsport — round 4: A5 in two colours, the gate, and a real barbell for the I</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap">
+<style>
+  :root { --n: #2f3b52; --b: #1f32c1; --ink: #141618; --page: #eef1f5; --mute: #7e8488; --hair: #dfe4ea; }
+  html, body { margin: 0; background: var(--page); font-family: "Plus Jakarta Sans", "Segoe UI", system-ui, sans-serif; }
+  #board { width: 1160px; box-sizing: border-box; padding: 48px 48px 40px; display: flex; flex-direction: column; gap: 14px; }
+  .band { font-size: 12px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--b); margin-top: 24px; }
+  .band span { font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--mute); margin-left: 10px; }
+
+  .grid4 { display: grid; grid-template-columns: repeat(4, 254px); gap: 16px; }
+  .tile { position: relative; height: 218px; background: #fff; border-radius: 6px; display: flex; align-items: center; justify-content: center; }
+  .tile .num { position: absolute; top: 12px; left: 14px; font-size: 13px; font-weight: 600; color: var(--mute); }
+  .tile .tag { position: absolute; bottom: 12px; left: 0; right: 0; text-align: center; font-size: 11px; font-weight: 500; color: var(--mute); }
+  .tile svg.mark { width: 128px; height: 128px; display: block; }
+
+  svg.mark { fill: none; stroke: none; stroke-width: 14; stroke-linecap: round; stroke-linejoin: round; }
+  svg .sa { stroke: var(--n); } svg .sb { stroke: var(--b); }
+  svg .fa { fill: var(--n); }   svg .fb { fill: var(--b); }
+  .mono svg .sb { stroke: var(--n); } .mono svg .fb { fill: var(--n); }
+  .onnavy svg .sa, .onnavy svg .sb { stroke: #fff; } .onnavy svg .fa, .onnavy svg .fb { fill: #fff; }
+
+  .strip4 { display: grid; grid-template-columns: repeat(4, 254px); gap: 16px; }
+  .cell { height: 66px; background: #fff; border-radius: 6px; display: flex; align-items: center; justify-content: center; gap: 22px; }
+  .cell .lab { font-size: 11px; font-weight: 600; color: var(--mute); }
+  .cell .mono svg { width: 38px; height: 38px; display: block; }
+  .cell .icon { width: 26px; height: 26px; border-radius: 7px; background: var(--n); display: flex; align-items: center; justify-content: center; }
+  .cell .icon svg { width: 20px; height: 20px; display: block; }
+  .cell .icon.sm { width: 16px; height: 16px; border-radius: 4px; }
+  .cell .icon.sm svg { width: 12px; height: 12px; }
+
+  /* the barbell studied on its own */
+  .study { display: flex; gap: 16px; }
+  .scard { background: #fff; border-radius: 6px; padding: 22px 26px; display: flex; align-items: flex-end; gap: 30px; }
+  .scard .cap { font-size: 11px; color: var(--mute); }
+
+  .words { display: flex; flex-direction: column; gap: 16px; }
+  .wcard { background: #fff; border-radius: 6px; padding: 24px 30px; display: flex; align-items: center; justify-content: space-between; gap: 30px; }
+  .wcard .tag { font-size: 11px; font-weight: 500; color: var(--mute); text-align: right; max-width: 260px; line-height: 1.45; }
+  .ser { font-family: "Instrument Serif", Georgia, serif; font-style: italic; letter-spacing: -0.02em; color: var(--ink); line-height: 1; }
+  .sans { font-family: "Plus Jakarta Sans", sans-serif; font-weight: 800; letter-spacing: -0.03em; color: var(--ink); line-height: 1; }
+  .blue { color: var(--b); }
+  .lockup { display: flex; align-items: baseline; }
+
+  .foot { display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--hair); padding-top: 20px; margin-top: 26px; }
+  .cap { font-size: 12px; color: var(--mute); }
+</style>
+</head>
+<body>
+<div id="board">
+
+  <div class="band">A — 1.5 (taller legs) in two colours <span>four ways to split it between two people</span></div>
+  <div class="grid4" id="gridA"></div>
+  <div class="strip4" id="stripA"></div>
+
+  <div class="band">B — 2.1, the gate <span>the base you picked, and the same thing tuned for small sizes</span></div>
+  <div class="grid4" id="gridB"></div>
+  <div class="strip4" id="stripB"></div>
+
+  <div class="band">The barbell, built properly <span>shaft, collar, two plates a side, end cap</span></div>
+  <div class="study" id="study"></div>
+
+  <div class="band">The barbell standing in for the I <span>same stem weight, same lean, same cap height as the letters beside it</span></div>
+  <div class="words" id="words"></div>
+
+  <div class="foot">
+    <div class="cap" id="footnote"></div>
+  </div>
+</div>
+
+<script>
+/* ---------------------------------------------------------------
+   A — 1.5: taller legs, a head over each leg. Four colour splits.
+   --------------------------------------------------------------- */
+const U_TALL   = `d="M28 34 V56 Q28 82 50 82 Q72 82 72 56 V34"`;
+const U_LEFT   = `d="M28 34 V56 Q28 82 50 82"`;
+const U_RIGHT  = `d="M72 34 V56 Q72 82 50 82"`;
+const HEAD_L   = `cx="28" cy="16" r="8.5"`;
+const HEAD_R   = `cx="72" cy="16" r="8.5"`;
+
+const A = [
+  { tag: "split down the middle",
+    d: `<path class="sa" ${U_LEFT}/><path class="sb" ${U_RIGHT}/><circle class="fa" ${HEAD_L}/><circle class="fb" ${HEAD_R}/>` },
+  { tag: "one navy person, one blue",
+    d: `<path class="sb" ${U_RIGHT}/><path class="sa" ${U_LEFT}/><circle class="fb" ${HEAD_R}/><circle class="fa" ${HEAD_L}/>` },
+  { tag: "navy body, blue heads",
+    d: `<path class="sa" ${U_TALL}/><circle class="fb" ${HEAD_L}/><circle class="fb" ${HEAD_R}/>` },
+  { tag: "blue U, navy heads",
+    d: `<path class="sb" ${U_TALL}/><circle class="fa" ${HEAD_L}/><circle class="fa" ${HEAD_R}/>` },
+];
+// 2 is 1 with the draw order flipped, which changes which leg sits on top at the join.
+A[1].d = `<path class="sa" ${U_LEFT}/><path class="sb" d="M72 34 V56 Q72 82 50 82" stroke-linecap="butt"/><circle class="fa" ${HEAD_L}/><circle class="fb" ${HEAD_R}/>`;
+
+/* ---------------------------------------------------------------
+   B — 2.1: the gate. Base, then the same mark opened up so it
+   survives being shrunk to a browser tab.
+   --------------------------------------------------------------- */
+const B = [
+  { tag: "2.1 as it was",
+    d: `<path class="sa" d="M16 88 V48 Q16 14 50 14 Q84 14 84 48 V88"/><circle class="fb" cx="38" cy="48" r="6.5"/><path class="sb" style="stroke-width:11" d="M38 60 V78"/><circle class="fb" cx="62" cy="48" r="6.5"/><path class="sb" style="stroke-width:11" d="M62 60 V78"/>` },
+  { tag: "wider gate, more air",
+    d: `<path class="sa" style="stroke-width:13" d="M13 90 V48 Q13 13 50 13 Q87 13 87 48 V90"/><circle class="fb" cx="37" cy="50" r="7"/><path class="sb" style="stroke-width:12" d="M37 63 V80"/><circle class="fb" cx="63" cy="50" r="7"/><path class="sb" style="stroke-width:12" d="M63 63 V80"/>` },
+  { tag: "people bigger than the gate",
+    d: `<path class="sa" style="stroke-width:11" d="M14 90 V48 Q14 16 50 16 Q86 16 86 48 V90"/><circle class="fb" cx="36" cy="46" r="8"/><path class="sb" style="stroke-width:14" d="M36 60 V80"/><circle class="fb" cx="64" cy="46" r="8"/><path class="sb" style="stroke-width:14" d="M64 60 V80"/>` },
+  { tag: "one gate leg is a person",
+    d: `<path class="sa" style="stroke-width:13" d="M14 90 V48 Q14 14 50 14 Q86 14 86 48 V90"/><circle class="fb" cx="50" cy="48" r="8"/><path class="sb" style="stroke-width:14" d="M50 62 V82"/>` },
+];
+
+/* ---------------------------------------------------------------
+   The barbell. A real one: shaft, knurl-free centre, an inner
+   collar, a big plate and a small plate each end, and an end cap.
+   Drawn on a 50 x 140 box, centred on x = 25, so it can be dropped
+   into a line of type at any size.
+   --------------------------------------------------------------- */
+function barbell({ shaft, plate, h, lean = 0, gap = 0 }) {
+  const s = 9, w = 50, cx = 25;                       // shaft width in box units
+  const r = (x, y, ww, hh, rx, fill) =>
+    `<rect x="${x}" y="${y}" width="${ww}" height="${hh}" rx="${rx}" fill="${fill}"></rect>`;
+  const cen = (ww, y, hh, rx, fill) => r(cx - ww / 2, y, ww, hh, rx, fill);
+  const parts = [
+    cen(s, 20, 100, 2.5, shaft),          // the shaft, running the whole height
+    cen(14, 34, 7, 2, shaft),             // top collar
+    cen(42, 15, 17, 2.5, plate),          // top plate, big
+    cen(27, 3, 10, 2, plate),             // top plate, small
+    cen(14, 99, 7, 2, shaft),             // bottom collar
+    cen(42, 108, 17, 2.5, plate),         // bottom plate, big
+    cen(27, 127, 10, 2, plate),           // bottom plate, small
+  ].join("");
+  const lw = Math.round((h / 140) * w);
+  return `<svg width="${lw}" height="${Math.round(h)}" viewBox="0 0 ${w} 140" xmlns="http://www.w3.org/2000/svg"
+    style="display:inline-block; vertical-align:baseline; transform: skewX(${-lean}deg); margin: 0 ${gap}px;">${parts}</svg>`;
+}
+
+/* ---------------------------------------------------------------
+   Render
+   --------------------------------------------------------------- */
+const mk = (d) => `<svg class="mark" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">${d}</svg>`;
+const tiles = (arr, off) => arr.map((m, i) =>
+  `<div class="tile"><span class="num">${off + i}</span>${mk(m.d)}<span class="tag">${m.tag}</span></div>`).join("");
+const cells = (arr, off) => arr.map((m, i) =>
+  `<div class="cell"><span class="lab">${off + i}</span><span class="mono">${mk(m.d)}</span><span class="icon onnavy">${mk(m.d)}</span><span class="icon sm onnavy">${mk(m.d)}</span></div>`).join("");
+
+document.getElementById("gridA").innerHTML = tiles(A, 1);
+document.getElementById("stripA").innerHTML = cells(A, 1);
+document.getElementById("gridB").innerHTML = tiles(B, 1);
+document.getElementById("stripB").innerHTML = cells(B, 1);
+
+document.getElementById("study").innerHTML = `
+  <div class="scard">
+    ${barbell({ shaft: "#141618", plate: "#1f32c1", h: 150 })}
+    ${barbell({ shaft: "#141618", plate: "#1f32c1", h: 96 })}
+    ${barbell({ shaft: "#141618", plate: "#1f32c1", h: 52 })}
+    ${barbell({ shaft: "#141618", plate: "#1f32c1", h: 30 })}
+    ${barbell({ shaft: "#141618", plate: "#1f32c1", h: 18 })}
+    <span class="cap">upright — 150, 96, 52, 30, 18 px</span>
+  </div>
+  <div class="scard">
+    ${barbell({ shaft: "#141618", plate: "#1f32c1", h: 150, lean: 12 })}
+    ${barbell({ shaft: "#141618", plate: "#141618", h: 150, lean: 12 })}
+    ${barbell({ shaft: "#2f3b52", plate: "#1f32c1", h: 150, lean: 12 })}
+    <span class="cap">leaning 12° to sit in italic type —<br>two colours, one ink, navy shaft</span>
+  </div>`;
+
+/* The lockups. cap height of Instrument Serif is ~0.70em, of Jakarta ~0.73em;
+   the barbell is set a touch taller so its plates overshoot like a serif's
+   ball terminal does, which is what stops it reading as a separate object. */
+const W = [
+  { size: 72, cls: "ser", lean: 12, h: 0.80, gap: 1,
+    pre: "UN", post: "sport", shaft: "#141618", plate: "#1f32c1",
+    tag: "Instrument Serif italic — the spelling the landing uses today. The bar leans with the type." },
+  { size: 72, cls: "ser", lean: 12, h: 0.80, gap: 1,
+    pre: "UN", post: "sport", shaft: "#141618", plate: "#141618",
+    tag: "The same, all one ink — how it prints on a shirt or comes out of a fax." },
+  { size: 60, cls: "sans", lean: 0, h: 0.76, gap: 2,
+    pre: "UN", post: "sport", shaft: "#141618", plate: "#1f32c1",
+    tag: "Heavy sans UNI with the serif italic sport. Upright type, so the bar stands upright." },
+];
+document.getElementById("words").innerHTML = W.map(w => {
+  const bar = barbell({ shaft: w.shaft, plate: w.plate, h: w.size * w.h, lean: w.lean, gap: w.gap });
+  const post = w.cls === "sans"
+    ? `<span class="ser blue" style="font-size:${w.size}px">${w.post}</span>`
+    : `<span class="ser blue" style="font-size:${w.size}px">${w.post}</span>`;
+  return `<div class="wcard"><div class="lockup"><span class="${w.cls}" style="font-size:${w.size}px">${w.pre}</span>${bar}${post}</div><span class="tag">${w.tag}</span></div>`;
+}).join("");
+
+document.getElementById("footnote").textContent =
+  "Under each row: the mark in one colour, and as an app icon at 26 px and 16 px — real size in a browser tab.";
+</script>
+</body>
+</html>
