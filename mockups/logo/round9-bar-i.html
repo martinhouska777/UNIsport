@@ -1,0 +1,179 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>UNIsport — round 9: an I with one plate and the sleeve showing</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap">
+<style>
+  :root { --b: #1f32c1; --ink: #141618; --page: #eef1f5; --mute: #7e8488; --hair: #dfe4ea; }
+  html, body { margin: 0; background: var(--page); font-family: "Plus Jakarta Sans", system-ui, sans-serif; }
+  #board { width: 1160px; box-sizing: border-box; padding: 48px; display: flex; flex-direction: column; gap: 14px; }
+  .band { font-size: 12px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--b); margin-top: 24px; }
+  .band span { font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--mute); margin-left: 10px; }
+  .card { background: #fff; border-radius: 6px; padding: 26px 30px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; gap: 26px; }
+  .num { font-size: 13px; font-weight: 700; color: var(--b); width: 22px; flex-shrink: 0; }
+  .note { font-size: 11px; color: var(--mute); text-align: right; max-width: 220px; line-height: 1.5; }
+  .ser { font-family: "Instrument Serif", Georgia, serif; font-style: italic; line-height: 1; letter-spacing: -0.02em; color: var(--ink); }
+  .blue { color: var(--b); }
+  .lock { display: flex; align-items: baseline; }
+  .measured { background: #fff; border-radius: 6px; padding: 18px 30px; font-size: 12px; color: var(--mute); }
+  .measured b { color: var(--ink); font-weight: 600; }
+  .pair { display: flex; align-items: baseline; gap: 54px; flex: 1; }
+  .lbl { font-size: 10px; color: var(--mute); letter-spacing: .08em; text-transform: uppercase; }
+</style>
+</head>
+<body>
+<div id="board">
+  <div class="band">Measured off the italic <span>the bar borrows the letter's own numbers</span></div>
+  <div class="measured" id="measured">measuring…</div>
+
+  <div class="band">Side by side with the real letter <span>left: the barbell I · right: the I the font already draws</span></div>
+  <div id="compare"></div>
+
+  <div class="band">Fine tuning <span>1 is the spec as described; the rest move one thing each</span></div>
+  <div id="rows"></div>
+
+  <div class="band">Small <span>top bar, menu, and a line of body text</span></div>
+  <div id="small"></div>
+</div>
+
+<script>
+/*
+  An Olympic bar standing as a capital I.
+
+  It is the letter first: the plates sit exactly where the serifs of the
+  italic I sit — on the cap line and on the baseline — and they are only a
+  little heavier than those serifs. What makes it a barbell is that the shaft
+  carries on past each plate, the way a real sleeve does. One plate a side.
+
+  The box is 170 tall: the cap line is at 15 and the baseline at 155, so the
+  140 between them is the letter, and the 15 above and below is the sleeve
+  sticking out. Everything else is expressed in stems, so changing the weight
+  keeps the proportions.
+*/
+const BOX_H = 170, CAP_TOP = 15, BASE = 155, CAP_H = BASE - CAP_TOP;
+
+function barI({ cap, stem, plateW = 3.2, plateH = 1.45, stub = 15, lean = 0,
+                colorStem = "#141618", colorPlate = "#1f32c1", gapL = 0, gapR = 0 }) {
+  const pw = stem * plateW, ph = stem * plateH;
+  /* The box is only as wide as the plate, plus a hair of side bearing. It used
+     to be a fixed 100 units while the plate was about 42, and that empty margin
+     was what held the bar away from the N — no gap setting could close it.
+     The lean overflows the box on purpose (overflow is visible), exactly as an
+     italic letter leans past its own advance width. */
+  const S = pw * 1.18, cx = S / 2;
+  const top = CAP_TOP - (stub - 15) , bot = BASE + (stub - 15);
+  const r = (w, y, h, rx, fill) =>
+    `<rect x="${(cx - w / 2).toFixed(2)}" y="${y.toFixed(2)}" width="${w.toFixed(2)}" height="${h.toFixed(2)}" rx="${rx.toFixed(2)}" fill="${fill}"/>`;
+  const parts =
+    // the shaft, running from the end of one sleeve to the other
+    r(stem, CAP_TOP - stub, CAP_H + stub * 2, stem * 0.12, colorStem) +
+    // one plate a side, hung on the cap line and the baseline like serifs
+    r(pw, CAP_TOP, ph, ph * 0.22, colorPlate) +
+    r(pw, BASE - ph, ph, ph * 0.22, colorPlate);
+  const h = cap * BOX_H / CAP_H;
+  const w = h * S / BOX_H;
+  // Sit the letter's baseline on the text baseline, not the box's bottom edge.
+  const dy = (BOX_H - BASE) / CAP_H * cap;
+  return `<svg width="${w.toFixed(1)}" height="${h.toFixed(1)}" viewBox="0 0 ${S.toFixed(2)} ${BOX_H}"
+    xmlns="http://www.w3.org/2000/svg"
+    style="display:inline-block; vertical-align:baseline; margin:0 ${gapR}px 0 ${gapL}px;
+           transform: translateY(${dy.toFixed(2)}px); overflow:visible;">
+    <g transform="rotate(${lean.toFixed(2)} ${cx} ${(CAP_TOP + BASE) / 2})">${parts}</g></svg>`;
+}
+
+(async () => {
+  const FAM = "'Instrument Serif'";
+  await document.fonts.load(`italic 200px ${FAM}`, "UNIsport");
+  await document.fonts.ready;
+
+  const S = 200, c = document.createElement("canvas");
+  c.width = 700; c.height = 700;
+  const x = c.getContext("2d");
+  x.font = `italic ${S}px ${FAM}`;
+  x.textBaseline = "alphabetic";
+  const capPx = x.measureText("H").actualBoundingBoxAscent;
+  x.fillStyle = "#000";
+  x.fillText("I", 200, 500);
+  const d = x.getImageData(0, 0, 700, 700).data;
+  const runAt = (row) => {
+    let s = -1, e = -1;
+    for (let px = 0; px < 700; px++) if (d[(row * 700 + px) * 4 + 3] > 128) { if (s < 0) s = px; e = px; }
+    return s < 0 ? null : { mid: (s + e) / 2, w: e - s + 1 };
+  };
+  const near = runAt(Math.round(500 - capPx * 0.12));
+  const far = runAt(Math.round(500 - capPx * 0.88));
+  const slantRad = Math.atan2(far.mid - near.mid, capPx * 0.76);
+  const slantDeg = slantRad * 180 / Math.PI;
+  const mid = runAt(Math.round(500 - capPx / 2));
+  const stemPx = mid.w * Math.cos(slantRad);
+  // How wide the font's own serif is, so the plate can be judged against it.
+  const serif = runAt(Math.round(500 - capPx * 0.97));
+  const capEm = capPx / S, stemEm = stemPx / S, serifEm = serif.w / S;
+
+  document.getElementById("measured").innerHTML =
+    `Instrument Serif italic — cap <b>${capEm.toFixed(3)} em</b>, stem <b>${stemEm.toFixed(3)} em</b>,
+     slant <b>${slantDeg.toFixed(1)}°</b>, and the serif of its own I is <b>${(serifEm / stemEm).toFixed(1)}×</b> the stem wide.
+     The plate is set just above that, so it reads as a serif that has been thickened — not as a picture dropped into the word.`;
+
+  const SIZE = 74;
+  const cap = SIZE * capEm;
+  const stem4 = (stemEm / capEm) * CAP_H * 0.90;   // weight 4 from round 8
+  const serifRatio = serifEm / stemEm;
+
+  const word = (size, barSvg, tail = true) => {
+    const cp = size * capEm;
+    return `<span class="lock">
+      <span class="ser" style="font-size:${size}px">UN</span>${barSvg}<span class="ser blue" style="font-size:${size}px">sport</span></span>`;
+  };
+  const bar = (size, o = {}) => barI({
+    cap: size * capEm,
+    stem: (stemEm / capEm) * CAP_H * 0.90,
+    lean: slantDeg,
+    // Tight into the N on the left; a little air on the right, because the
+    // lean throws the TOP plate rightwards into the "s".
+    gapL: Math.round(size * -0.018),
+    gapR: Math.round(size * 0.024),
+    ...o,
+  });
+
+  /* ---- the real letter, for comparison ---- */
+  document.getElementById("compare").innerHTML = `
+    <div class="card">
+      <div class="pair">
+        <span style="display:flex;flex-direction:column;gap:8px">
+          <span class="lbl">barbell I</span>${word(SIZE, bar(SIZE))}</span>
+        <span style="display:flex;flex-direction:column;gap:8px">
+          <span class="lbl">the font's I</span>
+          <span class="lock"><span class="ser" style="font-size:${SIZE}px">UN</span><span class="ser" style="font-size:${SIZE}px">I</span><span class="ser blue" style="font-size:${SIZE}px">sport</span></span></span>
+      </div>
+      <span class="note">Same height, same slant, same stem. The only difference is that the serifs are thicker and the shaft runs past them.</span>
+    </div>`;
+
+  /* ---- fine tuning ---- */
+  const STEPS = [
+    { o: {}, note: "As described: one plate a side, the sleeve showing past it." },
+    { o: { stub: 22 }, note: "Sleeve sticking out further." },
+    { o: { stub: 9 }, note: "Sleeve barely showing — closest to a plain I." },
+    { o: { plateW: 3.9 }, note: "Wider plate." },
+    { o: { plateH: 2.0 }, note: "Thicker plate — reads as a barbell soonest, as a letter least." },
+  ];
+  document.getElementById("rows").innerHTML = STEPS.map((s, i) => `
+    <div class="card">
+      <span class="num">${i + 1}</span>
+      <div class="pair">${word(SIZE, bar(SIZE, s.o))}</div>
+      <span class="note">${s.note}</span>
+    </div>`).join("");
+
+  /* ---- small ---- */
+  document.getElementById("small").innerHTML = `
+    <div class="card">
+      <div class="pair" style="gap:44px; align-items:baseline;">
+        ${word(34, bar(34))} ${word(22, bar(22))} ${word(15, bar(15))}
+      </div>
+      <span class="note">34, 22 and 15 px — the top bar, a menu row, and body text</span>
+    </div>`;
+})();
+</script>
+</body>
+</html>
