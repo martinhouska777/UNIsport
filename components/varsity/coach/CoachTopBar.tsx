@@ -40,7 +40,7 @@ export default function CoachTopBar({
             rather than on the nav because it is a once-a-term job. */}
         <Link
           href="/varsity/coach/settings"
-          aria-label="Squad settings"
+          aria-label="Settings"
           data-tour="coach-settings"
           className="tap44 press-icon flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border border-border bg-surface text-muted"
         >

@@ -243,7 +243,7 @@ const steps: TourStep[] = [
   {
     anchor: null,
     title: "That is the console",
-    body: "Today, Plan, Lineup, Workouts, Team — and the gear for anything to do with people. Walk through it again any time from Squad settings.",
+    body: "Today, Plan, Lineup, Workouts, Team — and the gear for anything to do with people. Walk through it again any time from Settings.",
   },
 ];
 

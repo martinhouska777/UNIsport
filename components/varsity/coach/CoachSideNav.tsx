@@ -49,7 +49,7 @@ export default function CoachSideNav({ role, teamName }: { role: VarsityRole; te
           <div className="flex items-center gap-2">
             <Link
               href="/varsity/coach/settings"
-              aria-label="Squad settings"
+              aria-label="Settings"
               data-tour="coach-settings"
               className={railIconCls}
             >

@@ -6,7 +6,14 @@
   deliberately NOT one of the four nav tabs: those are the daily screens, and
   handing out an invite link is a once-a-term job.
 
-  Three things, in the order they matter:
+  A MENU, LIKE THE APP'S OWN SETTINGS (owner, 2026-09-18). `page="menu"` is
+  the list — Administration (waiting, invite links, squad), Training,
+  Appearance, Help — and each administration row opens its own page
+  (`page="waiting" | "invites" | "squad"`, routes under settings/) with a back
+  arrow top-left (SettingsHeader). One component so the squad + invites are
+  read in one place and the menu can show the counts.
+
+  Three administration pages, in the order they matter:
     1. WAITING ROOM — people who used a link and need letting in. This is the
        actual gate; a forwarded link only ever lands someone here.
     2. INVITE LINKS — generate one to paste into WhatsApp, watch how many people
@@ -49,7 +56,9 @@ import {
   IconChevronRight,
   IconCopy,
   IconSend,
-  IconSettings,
+  IconSliders,
+  IconClock,
+  IconUser,
   IconTrash,
   IconX,
   IconSun,
@@ -59,17 +68,65 @@ import { requestTour, resetTour } from "@/lib/tour";
 import { coachTour } from "@/lib/varsity/coachTour";
 import { useAppState } from "@/components/AppState";
 import { useThemeMode } from "@/components/ThemeMode";
+import SettingsHeader from "@/components/varsity/coach/settings/SettingsHeader";
 
-/* A titled block, matching the section labels used across Varsity Mode. */
-function Section({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
+export type AdminPage = "menu" | "waiting" | "invites" | "squad";
+
+/* A titled block, matching the section labels used across Varsity Mode. The
+   pages behind the menu have their name in the header, so they pass none. */
+function Section({ title, hint, children }: { title?: string; hint?: string; children: React.ReactNode }) {
   return (
     <section className="border-b border-border px-3.5 py-4">
-      <h2 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">{title}</h2>
-      {hint && <p className="mt-1 text-[11px] leading-relaxed text-muted">{hint}</p>}
-      <div className="mt-2.5">{children}</div>
+      {title && <h2 className="mb-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">{title}</h2>}
+      {hint && <p className="mb-2.5 text-[11px] leading-relaxed text-muted">{hint}</p>}
+      {children}
     </section>
   );
 }
+
+/* One row of the menu: icon, name, an optional count, chevron. */
+function MenuRow({
+  icon,
+  label,
+  detail,
+  href,
+  onClick,
+  alert,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  detail?: string;
+  href?: string;
+  onClick?: () => void;
+  alert?: boolean;
+}) {
+  const inner = (
+    <>
+      <span className="text-muted">{icon}</span>
+      <span className="flex-1 text-[13px] font-medium text-text">{label}</span>
+      {detail && (
+        <span className={`text-[12px] ${alert ? "font-semibold text-warn" : "text-muted"}`}>{detail}</span>
+      )}
+      <IconChevronRight size={14} className="flex-shrink-0 text-muted" />
+    </>
+  );
+  const cls = "flex w-full items-center gap-3 border-b border-border px-3.5 py-3 text-left last:border-0";
+  return href ? (
+    <Link href={href} className={cls}>
+      {inner}
+    </Link>
+  ) : (
+    <button type="button" onClick={onClick} className={cls}>
+      {inner}
+    </button>
+  );
+}
+
+const pageTitle: Record<Exclude<AdminPage, "menu">, string> = {
+  waiting: "Waiting to join",
+  invites: "Invite links",
+  squad: "Squad",
+};
 
 /* How long a link has left, in words a person would actually say. */
 function expiryLabel(iso: string): string {
@@ -88,7 +145,13 @@ const stateLabel: Record<ReturnType<typeof inviteState>, { text: string; tone: s
   used_up: { text: "Full", tone: "text-warn" },
 };
 
-export default function TeamAdminScreen({ membership }: { membership: Membership }) {
+export default function TeamAdminScreen({
+  membership,
+  page = "menu",
+}: {
+  membership: Membership;
+  page?: AdminPage;
+}) {
   const { teamId, role } = membership;
   const { userId } = useAppState();
   const router = useRouter();
@@ -205,27 +268,75 @@ export default function TeamAdminScreen({ membership }: { membership: Membership
     else reload();
   };
 
+  const header = page === "menu" ? null : <SettingsHeader title={pageTitle[page]} />;
+  const liveLinks = invites.filter((i) => inviteState(i) === "live").length;
+
   if (loading) {
-    return <p className="px-4 py-16 text-center text-sm text-muted">Loading the squad…</p>;
+    return (
+      <>
+        {header}
+        <p className="px-4 py-16 text-center text-sm text-muted">Loading the squad…</p>
+      </>
+    );
   }
 
   return (
-    <div className="mx-auto w-full max-w-screen-sm pb-10">
+    <div className="w-full pb-10">
+      {header}
+      <div className="mx-auto w-full max-w-screen-sm">
       {error && (
         <p className="mx-3.5 mt-3 rounded-xl border border-danger-line bg-danger-tint px-3.5 py-2.5 text-[12px] text-danger">
           {error}
         </p>
       )}
 
+      {/* ── THE MENU ── no explaining lines under the rows (owner: settings
+          carry no small text). */}
+      {page === "menu" && (
+        <>
+          <Section title="Administration">
+            <div className="rounded-xl border border-border bg-surface">
+              <MenuRow
+                icon={<IconClock size={18} />}
+                label="Waiting to join"
+                detail={pending.length ? String(pending.length) : undefined}
+                alert
+                href="/varsity/coach/settings/waiting"
+              />
+              <MenuRow
+                icon={<IconSend size={18} />}
+                label="Invite links"
+                detail={liveLinks ? `${liveLinks} live` : undefined}
+                href="/varsity/coach/settings/invites"
+              />
+              <MenuRow
+                icon={<IconUser size={18} />}
+                label="Squad"
+                detail={String(approved.length)}
+                href="/varsity/coach/settings/squad"
+              />
+            </div>
+          </Section>
+
+          {/* Coach only — a captain never builds training, and the database
+              refuses them anyway. */}
+          {can.buildPlan(role) && (
+            <Section title="Training">
+              <div className="rounded-xl border border-border bg-surface">
+                <MenuRow
+                  icon={<IconSliders size={18} />}
+                  label="Training settings"
+                  href="/varsity/coach/settings/training"
+                />
+              </div>
+            </Section>
+          )}
+        </>
+      )}
+
       {/* ── 1. The waiting room ── */}
-      <Section
-        title={`Waiting to join${pending.length ? ` · ${pending.length}` : ""}`}
-        hint={
-          pending.length
-            ? "These people used an invite link. Nobody sees the team's training until you let them in."
-            : undefined
-        }
-      >
+      {page === "waiting" && (
+      <Section>
         {pending.length === 0 ? (
           <p className="rounded-xl border border-border bg-surface px-3.5 py-3 text-[12px] text-muted">
             Nobody waiting. Requests from your invite links land here.
@@ -262,12 +373,11 @@ export default function TeamAdminScreen({ membership }: { membership: Membership
           </ul>
         )}
       </Section>
+      )}
 
       {/* ── 2. Invite links ── */}
-      <Section
-        title="Invite links"
-        hint="A link can only ever add someone as an athlete, and only on a university email. If one leaks, cancel it — anyone already let in keeps their place."
-      >
+      {page === "invites" && (
+      <Section>
         {/* The link just generated */}
         {fresh && (
           <div className="mb-3 rounded-xl border border-accent-line bg-accent/5 px-3.5 py-3">
@@ -391,16 +501,11 @@ export default function TeamAdminScreen({ membership }: { membership: Membership
           </ul>
         )}
       </Section>
+      )}
 
       {/* ── 3. The squad ── */}
-      <Section
-        title={`Squad · ${approved.length}`}
-        hint={
-          can.readTraining(role)
-            ? "Tap anyone to see their training — calendar, sessions and erg results."
-            : undefined
-        }
-      >
+      {page === "squad" && (
+      <Section>
         <ul className="flex flex-col gap-2">
           {approved.map((m) => (
             <li
@@ -449,32 +554,10 @@ export default function TeamAdminScreen({ membership }: { membership: Membership
           ))}
         </ul>
       </Section>
-
-      {/* ── 4. Training settings ──
-          How the plan builder is worded: the session types, the intensity
-          zones, the coach's own most-used workouts and the session times. Its
-          own screen, because it is a once-a-season setup rather than something
-          you touch while running the squad. Coach only — a captain never
-          builds training, and the database refuses them anyway. */}
-      {can.buildPlan(role) && (
-        <Section title="Training">
-          <Link
-            href="/varsity/coach/settings/training"
-            className="flex w-full items-center gap-3 rounded-xl border border-border bg-surface px-3.5 py-3 text-left"
-          >
-            <span className="text-muted">
-              <IconSettings size={18} />
-            </span>
-            <span className="flex-1 text-[13px] font-medium text-text">Training settings</span>
-            <IconChevronRight size={14} className="flex-shrink-0 text-muted" />
-          </Link>
-          <p className="mt-2 px-1 text-[11px] leading-relaxed text-muted">
-            Your session types, intensity zones, favourite workouts and session times — the words
-            the whole squad’s plan is written in.
-          </p>
-        </Section>
       )}
 
+      {page === "menu" && (
+      <>
       {/* ── Appearance ──
           Light or dark for the console. The round sun/moon button used to
           sit in the top bar beside the gear (and in the laptop rail); the
@@ -515,27 +598,22 @@ export default function TeamAdminScreen({ membership }: { membership: Membership
           navigates to Plan, because that is where the walk opens. */}
       {can.buildPlan(role) && (
         <Section title="Help">
-          <button
-            type="button"
-            onClick={() => {
-              if (userId) resetTour(coachTour, userId);
-              router.push("/varsity/coach/plan");
-              requestTour(coachTour);
-            }}
-            className="flex w-full items-center gap-3 rounded-xl border border-border bg-surface px-3.5 py-3 text-left"
-          >
-            <span className="text-muted">
-              <IconBulb size={18} />
-            </span>
-            <span className="flex-1 text-[13px] font-medium text-text">Take the console tour</span>
-            <IconChevronRight size={14} className="flex-shrink-0 text-muted" />
-          </button>
-          <p className="mt-2 px-1 text-[11px] leading-relaxed text-muted">
-            Walks the four tabs and shows what each one saves you — a minute, and
-            you can stop any time.
-          </p>
+          <div className="rounded-xl border border-border bg-surface">
+            <MenuRow
+              icon={<IconBulb size={18} />}
+              label="Take the console tour"
+              onClick={() => {
+                if (userId) resetTour(coachTour, userId);
+                router.push("/varsity/coach/plan");
+                requestTour(coachTour);
+              }}
+            />
+          </div>
         </Section>
       )}
+      </>
+      )}
+      </div>
     </div>
   );
 }

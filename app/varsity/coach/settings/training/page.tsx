@@ -1,5 +1,6 @@
 "use client";
 
+import SettingsHeader from "@/components/varsity/coach/settings/SettingsHeader";
 import TrainingSettingsScreen from "@/components/varsity/coach/settings/TrainingSettingsScreen";
 import { useMembership } from "@/components/varsity/useMembership";
 import { can } from "@/lib/varsity/membership";
@@ -18,8 +19,15 @@ import { can } from "@/lib/varsity/membership";
 export default function CoachTrainingSettingsPage() {
   const { membership, loading } = useMembership();
 
-  if (loading || !membership || !can.buildPlan(membership.role)) {
-    return <p className="px-4 py-16 text-center text-sm text-muted">Loading your settings…</p>;
-  }
-  return <TrainingSettingsScreen membership={membership} />;
+  // The back arrow the owner asked for (2026-09-18) — to the Settings menu.
+  return (
+    <>
+      <SettingsHeader title="Training settings" />
+      {loading || !membership || !can.buildPlan(membership.role) ? (
+        <p className="px-4 py-16 text-center text-sm text-muted">Loading your settings…</p>
+      ) : (
+        <TrainingSettingsScreen membership={membership} />
+      )}
+    </>
+  );
 }
