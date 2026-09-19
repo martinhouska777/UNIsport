@@ -261,17 +261,11 @@ export default function LoginPage() {
           UNI<span className="text-l-accent">sport</span>
         </Link>
 
-        {/* The heading says which door this is. BOTH doors now say why it is
-            the university address (owner, 2026-09-18) — logging in is where
-            the app finds your campus too. */}
+        {/* The heading says which door this is — and nothing under it (owner,
+            2026-09-19: the "university email… which campus" line is cut). */}
         <h1 className="font-display text-3xl text-l-text">
           {isSignup ? "Create your account" : "Welcome back"}
         </h1>
-        <p className="mt-2 text-sm text-l-text-2">
-          {isSignup
-            ? "Use your university email — that’s how we know which campus is yours."
-            : "Log in with your university email — that’s how we know which campus is yours."}
-        </p>
 
         {!hasSupabaseEnv() ? (
           <p className="mt-8 rounded-xl border border-l-line bg-l-surface px-4 py-3 text-sm text-l-text-2">
