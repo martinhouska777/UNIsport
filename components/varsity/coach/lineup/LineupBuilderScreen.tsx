@@ -123,8 +123,7 @@ import {
   saveLineup,
   type LineupStatus,
 } from "@/lib/varsity/lineupStore";
-import BoatWorkStrip, { type BoatWork } from "@/components/varsity/BoatWorkStrip";
-import CrewVideoStrip from "@/components/varsity/CrewVideoStrip";
+import BoatSessionStrip, { type BoatWork } from "@/components/varsity/BoatSessionStrip";
 import {
   IconArrowLeft,
   IconChevronLeft,
@@ -1931,15 +1930,13 @@ function Builder({
                       </div>
 
                       {/*
-                        VIDEO — last, because it is the only line filled in AFTER
-                        the outing. Everything above it is written before the boat
-                        pushes off; this is what comes back with it.
+                        SESSION — last, because it is the only part of the card
+                        filled in AFTER the outing: the kilometres, the working
+                        time and the footage, all under one lid. Everything above
+                        it is written before the boat pushes off; this is what
+                        comes back with it.
                       */}
-                      <CrewVideoStrip dayKey={dayKey} boat={boat} />
-                      {/* …and, in the same shape of row, what the boat did:
-                          the kilometres and the working time, which count for
-                          every athlete seated above. */}
-                      <BoatWorkStrip
+                      <BoatSessionStrip
                         dayKey={dayKey}
                         boat={boat}
                         canEdit

@@ -1,29 +1,32 @@
 "use client";
 
 /*
-  WHAT THIS BOAT DID — the strip under the video, on the same card.
+  SESSION — one tab under a boat, holding everything that comes BACK from the
+  water: how far the crew went, how long they worked, and the footage.
   ---------------------------------------------------------------------------
-  Two numbers, filled in after the outing: how far this crew went and how long
-  they worked. They belong to the BOAT, because the plan is written for the
-  squad and the water is not — the eight turns at the bridge and does 14k while
-  the four carries on and does 17 — and they count for every person seated in
-  it (lib/varsity/boatWork.ts).
+  Everything above it on the card is written before the boat pushes off — the
+  crew, the shell, the oars, the coach's note. This is the other half, and it
+  is ONE drawer rather than two (owner, 2026-09-19): the figures and the film
+  are the same thing said two ways, and they were a tap apart.
 
-  It is built like the video strip directly above it, on purpose: a header row
-  that says what is inside and opens on a tap. Shut, it still reads "16 km ·
-  1h 30m", because a number you have to open a drawer to see is a number nobody
-  checks.
+  THE KILOMETRES BELONG TO THE BOAT, not to the practice. The plan says 16k for
+  the morning; this eight turns at the bridge and does 14 while the four carries
+  on and does 17 — and each number counts for every person seated in that boat.
+  That is the whole answer to "why did he finish the term on 110k and I finished
+  on 100" (lib/varsity/boatWork.ts).
 
   WHO MAY WRITE IN IT: the coach, from the Lineup Builder, and anybody sitting
-  in that boat, from their own Home screen (owner, 2026-09-19). Everyone else
-  reads it. The two callers save differently and that is the only fork in here:
-  the builder holds the boats in memory and autosaves them itself, so it passes
-  `onChange` and this never touches the database; the athlete's card passes no
-  `onChange`, and Save writes the one boat through lineupStore → saveBoatWork.
+  in that boat, from their own Home screen. Everyone else reads it — an outing
+  has one distance, not one per reader. The two callers save differently, and
+  that is the only fork in here: the builder holds the boats in memory and
+  autosaves them itself, so it passes `onChange` and this never touches the
+  database; the athlete's card passes none, and Save writes the one boat through
+  lineupStore → saveBoatWork.
 
   Colors: theme tokens only.
 */
 import { useState } from "react";
+import CrewVideoStrip from "@/components/varsity/CrewVideoStrip";
 import { useUnits } from "@/components/useUnits";
 import { IconActivity, IconChevronDown, IconChevronUp } from "@/components/icons";
 import {
@@ -71,7 +74,7 @@ function WorkField({
   );
 }
 
-export default function BoatWorkStrip({
+export default function BoatSessionStrip({
   dayKey,
   boat,
   canEdit = false,
@@ -80,7 +83,8 @@ export default function BoatWorkStrip({
   dayKey: string;
   boat: Boat;
   /* The coach, or somebody in this crew. Everybody else sees the numbers and
-     no fields at all — an outing has one distance, not one per reader. */
+     no fields at all. The VIDEO half is open to the whole squad either way —
+     the owner's rule since the day it was built. */
   canEdit?: boolean;
   /* Passed by the Lineup Builder, which owns the boats and saves them itself.
      Absent on the athlete's card, where this strip saves the boat on its own. */
@@ -90,9 +94,7 @@ export default function BoatWorkStrip({
   const unitLabel = distanceOptions.find((o) => o.key === units.distance)?.short ?? "km";
 
   const [open, setOpen] = useState(false);
-  /* What is in the two fields, as typed. Seeded from the boat and re-seeded
-     whenever the saved figures change underneath — a coach editing the same
-     practice, or this card's own save coming back. */
+  /* What is in the two fields, as typed. */
   const [dist, setDist] = useState(() => distanceFieldValue(boat.metres, units.distance));
   const [time, setTime] = useState(() => minutesFieldValue(boat.minutes));
   const [saving, setSaving] = useState(false);
@@ -172,10 +174,7 @@ export default function BoatWorkStrip({
     setStored(typed);
   };
 
-  const summary = boatWorkSummary(
-    { ...boat, metres: typed.metres, minutes: typed.minutes },
-    units,
-  );
+  const summary = boatWorkSummary({ ...boat, metres: typed.metres, minutes: typed.minutes }, units);
 
   return (
     <div className="border-t border-border px-3.5 py-2.5">
@@ -187,10 +186,10 @@ export default function BoatWorkStrip({
       >
         <IconActivity size={14} />
         <span className="flex-1 text-left text-[11px] font-semibold uppercase tracking-[0.12em]">
-          Distance
+          Session
         </span>
-        {/* SHUT, IT STILL SAYS THE NUMBER. The header is where this is read
-            from nine times out of ten; the fields below are for the one person
+        {/* SHUT, IT STILL SAYS THE NUMBERS. The header is where this is read
+            from nine times out of ten; what is inside is for the one person
             who is writing it. */}
         {summary && (
           <span className="flex-shrink-0 font-mono text-[12px] font-medium text-text-2">
@@ -201,9 +200,9 @@ export default function BoatWorkStrip({
       </button>
 
       {open && (
-        <div className="mt-2">
+        <div className="mt-2 flex flex-col gap-3.5">
           {canEdit ? (
-            <>
+            <div>
               <div className="flex items-end gap-2">
                 <WorkField
                   label={unitLabel.toUpperCase()}
@@ -235,17 +234,17 @@ export default function BoatWorkStrip({
                   {saving ? "Saving…" : "Save"}
                 </button>
               )}
-              <div className="mt-1.5 text-[11px] italic text-muted">
-                What this boat actually did — it counts for everyone in it.
-              </div>
-            </>
+              {error && <div className="mt-1.5 text-[11px] text-danger">{error}</div>}
+            </div>
           ) : (
             /* Not your boat: the numbers, or the honest absence of them. */
             <div className="text-[12px] text-muted">
               {summary ?? "Nobody has said how far this boat went yet."}
             </div>
           )}
-          {error && <div className="mt-1.5 text-[11px] text-danger">{error}</div>}
+
+          {/* …and the footage, under the same lid. */}
+          <CrewVideoStrip dayKey={dayKey} boat={boat} />
         </div>
       )}
     </div>
