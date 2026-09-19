@@ -1,0 +1,146 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>UNIsport — round 8: italic, and how thin the barbell wants to be</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap">
+<style>
+  :root { --n: #2f3b52; --b: #1f32c1; --ink: #141618; --page: #eef1f5; --mute: #7e8488; --hair: #dfe4ea; }
+  html, body { margin: 0; background: var(--page); font-family: "Plus Jakarta Sans", system-ui, sans-serif; }
+  #board { width: 1160px; box-sizing: border-box; padding: 48px; display: flex; flex-direction: column; gap: 14px; }
+  .band { font-size: 12px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--b); margin-top: 24px; }
+  .band span { font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--mute); margin-left: 10px; }
+  .card { background: #fff; border-radius: 6px; padding: 24px 30px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; gap: 26px; }
+  .num { font-size: 13px; font-weight: 700; color: var(--b); width: 22px; flex-shrink: 0; }
+  .note { font-size: 11px; color: var(--mute); text-align: right; max-width: 230px; line-height: 1.5; }
+  .lock { display: flex; align-items: baseline; flex: 1; gap: 46px; }
+  .ser { font-family: "Instrument Serif", Georgia, serif; font-style: italic; line-height: 1; letter-spacing: -0.02em; color: var(--ink); }
+  .blue { color: var(--b); }
+  .measured { background: #fff; border-radius: 6px; padding: 18px 30px; font-size: 12px; color: var(--mute); }
+  .measured b { color: var(--ink); font-weight: 600; }
+</style>
+</head>
+<body>
+<div id="board">
+  <div class="band">Measured off the face itself <span>not guessed — cap height, stem weight and the real slant of the italic</span></div>
+  <div class="measured" id="measured">measuring…</div>
+
+  <div class="band">How thin <span>1 is the thinnest, 5 is what you already saw. Same barbell, same lean, only the weight changes.</span></div>
+  <div id="rows"></div>
+
+  <div class="band">The one that looks right, small <span>top bar, then a line of body text for scale</span></div>
+  <div id="small"></div>
+</div>
+
+<script>
+/* The barbell as a letter. `stem` is in the same units as the 140-tall box,
+   so it can be handed the face's own measured stem weight. `slim` pulls the
+   plates in with the shaft, so thinning it stays proportionate instead of
+   leaving fat plates on a thin bar. */
+function barI({ cap, stem, slim = 1, lean = 0, colorStem = "#141618", colorPlate = "#1f32c1", gap = 0 }) {
+  const S = 100;
+  const plateW = stem * 3.0 * (0.55 + 0.45 * slim);
+  const collarW = stem * 1.85 * (0.6 + 0.4 * slim);
+  const plateH = 21 * (0.62 + 0.38 * slim);
+  const collarH = 8 * (0.6 + 0.4 * slim);
+  const cx = 50;
+  const r = (w, y, h, rx, fill) =>
+    `<rect x="${(cx - w / 2).toFixed(2)}" y="${y.toFixed(2)}" width="${w.toFixed(2)}" height="${h.toFixed(2)}" rx="${rx}" fill="${fill}"/>`;
+  const parts =
+    r(stem, 0, 140, stem * 0.12, colorStem) +
+    r(collarW, plateH + 2, collarH, 1.6, colorStem) +
+    r(collarW, 140 - plateH - 2 - collarH, collarH, 1.6, colorStem) +
+    r(plateW, 0, plateH, 2, colorPlate) +
+    r(plateW, 140 - plateH, plateH, 2, colorPlate);
+  // A barbell is rigid: to sit in italic type it turns, it does not shear.
+  return `<svg width="${(cap * S / 140).toFixed(1)}" height="${cap.toFixed(1)}" viewBox="0 0 ${S} 140"
+    xmlns="http://www.w3.org/2000/svg"
+    style="display:inline-block; vertical-align:baseline; margin:0 ${gap}px; overflow:visible;">
+    <g transform="rotate(${lean.toFixed(2)} 50 70)">${parts}</g></svg>`;
+}
+
+(async () => {
+  const FAM = "'Instrument Serif'";
+  await document.fonts.load(`italic 200px ${FAM}`, "UNIsport");
+  await document.fonts.ready;
+
+  /* Measure the italic: cap height from the ink ascent of a capital, the
+     slant from how far the stem of "I" drifts between the baseline and the
+     cap line, and the stem weight from the horizontal run across it —
+     corrected by cos(slant), because a leaning stem cuts a wider swathe
+     through a horizontal row than its true thickness. */
+  const S = 200, c = document.createElement("canvas");
+  c.width = 700; c.height = 700;
+  const x = c.getContext("2d");
+  x.font = `italic ${S}px ${FAM}`;
+  x.textBaseline = "alphabetic";
+  const capPx = x.measureText("H").actualBoundingBoxAscent;
+  x.fillStyle = "#000";
+  x.fillText("I", 200, 500);
+  const d = x.getImageData(0, 0, 700, 700).data;
+  const runAt = (row) => {
+    let start = -1, end = -1;
+    for (let px = 0; px < 700; px++) {
+      if (d[(row * 700 + px) * 4 + 3] > 128) { if (start < 0) start = px; end = px; }
+    }
+    return start < 0 ? null : { start, end, mid: (start + end) / 2, w: end - start + 1 };
+  };
+  const near = runAt(Math.round(500 - capPx * 0.12));
+  const far = runAt(Math.round(500 - capPx * 0.88));
+  // far is the row near the cap line, near is the row just above the baseline.
+  // An italic leans right, so far.mid sits to the RIGHT of near.mid, and the
+  // angle off vertical is simply that drift over the height between the rows.
+  // Both arguments must be positive or atan2 lands in the wrong quadrant —
+  // which is what produced a -167 degree slant and a negative stem width.
+  const slantRad = Math.atan2(far.mid - near.mid, capPx * 0.76);
+  const slantDeg = slantRad * 180 / Math.PI;
+  const mid = runAt(Math.round(500 - capPx / 2));
+  const stemPx = mid.w * Math.cos(slantRad);
+  const capEm = capPx / S, stemEm = stemPx / S;
+
+  document.getElementById("measured").innerHTML =
+    `Instrument Serif italic — cap height <b>${capEm.toFixed(3)} em</b>, stem <b>${stemEm.toFixed(3)} em</b>, slant <b>${slantDeg.toFixed(1)}°</b>.
+     The barbell borrows all three, so it sets on the line as a letter rather than sitting beside the word as a picture.`;
+
+  const SIZE = 74;
+  const cap = SIZE * capEm;
+  const fullStem = (stemEm / capEm) * 140;      // the face's own stem, in box units
+
+  const STEPS = [
+    { k: 0.45, note: "Thinnest. Matches the serif's hairline, almost a rule with caps." },
+    { k: 0.60, note: "Still light, but the shaft holds at small sizes." },
+    { k: 0.75, note: "Three quarters of the letter's stem." },
+    { k: 0.90, note: "Just under the stem weight of the letters." },
+    { k: 1.20, note: "What you saw before — heavier than the type around it." },
+  ];
+
+  document.getElementById("rows").innerHTML = STEPS.map((s, i) => {
+    const bar = barI({ cap, stem: fullStem * s.k, slim: s.k / 1.2, lean: slantDeg, gap: Math.round(SIZE * 0.03) });
+    return `<div class="card">
+      <span class="num">${i + 1}</span>
+      <div class="lock">
+        <span style="display:flex; align-items:baseline;">
+          <span class="ser" style="font-size:${SIZE}px">UN</span>${bar}<span class="ser blue" style="font-size:${SIZE}px">sport</span>
+        </span>
+      </div>
+      <span class="note">${s.note}</span>
+    </div>`;
+  }).join("");
+
+  const smallAt = (size, k) => {
+    const cp = size * capEm;
+    const b = barI({ cap: cp, stem: fullStem * k, slim: k / 1.2, lean: slantDeg, gap: Math.round(size * 0.03) });
+    return `<span style="display:flex; align-items:baseline;">
+      <span class="ser" style="font-size:${size}px">UN</span>${b}<span class="ser blue" style="font-size:${size}px">sport</span></span>`;
+  };
+  document.getElementById("small").innerHTML = [0.60, 0.75, 0.90].map(k => `
+    <div class="card">
+      <div class="lock" style="align-items:baseline;">
+        ${smallAt(34, k)} ${smallAt(22, k)} ${smallAt(15, k)}
+      </div>
+      <span class="note">weight ${k.toFixed(2)} of the stem — at 34, 22 and 15 px</span>
+    </div>`).join("");
+})();
+</script>
+</body>
+</html>
