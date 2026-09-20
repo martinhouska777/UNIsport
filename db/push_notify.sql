@@ -71,9 +71,16 @@ as $$
   where p.id = auth.uid();
 $$;
 
--- Forget dead subscriptions (the push service answered 404/410). `endpoint` is
--- globally unique, so deleting by endpoint only ever removes the one real owner's
--- stale row — safe to call after a failed send.
+-- Forget dead subscriptions (the push service answered 404/410).
+--
+-- SERVER KEY ONLY — see the grants below. The rows this deletes belong to the
+-- RECIPIENT of a notification, not to whoever sent it, and this takes a bare
+-- list of endpoints with no ownership check. While `authenticated` could call
+-- it, any signed-in user could silently unsubscribe the people they were
+-- messaging (audit, 2026-09-19). The one caller that needs it across users is
+-- app/api/push/notify, which now does the delete with the service-role key and
+-- does not go through this function at all; a user removing their OWN device
+-- goes through row-level security on the table, as it always did.
 create or replace function public.push_forget(endpoints text[])
 returns void
 language sql
@@ -86,7 +93,9 @@ $$;
 
 grant execute on function public.dm_push_targets(uuid, text) to authenticated;
 grant execute on function public.my_display_name()       to authenticated;
-grant execute on function public.push_forget(text[])     to authenticated;
+-- NOT to `authenticated` — see above. Live databases need the revoke as well:
+-- db/patch_push_forget_service_only_2026-09-20.sql.
+revoke execute on function public.push_forget(text[])  from authenticated;
 
 -- ----------------------------------------------------------------------------
 -- FOLLOWS. Someone tapping Follow on your profile is the same size of event as

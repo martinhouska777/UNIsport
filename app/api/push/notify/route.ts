@@ -19,6 +19,7 @@
   thing it was announcing.
 */
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { sendToSubscriptions, hasVapidConfig, type StoredSubscription } from "@/lib/push/server";
 import { parseSessionKey, toISO } from "@/lib/varsity/coachPlan";
 
@@ -194,8 +195,30 @@ export async function POST(request: Request) {
 
   const { sent, deadEndpoints } = await sendToSubscriptions(subs, payload);
 
+  /*
+    TIDY UP THE PHONES THAT HAVE GONE (uninstalled, cleared, expired).
+
+    These rows belong to the RECIPIENT, not to the caller, so this cannot be a
+    thing the caller's own key is allowed to do. It used to go through
+    `push_forget`, a function any signed-in user could call with any list of
+    endpoints — so anyone could have silently switched off the notifications of
+    the people they were messaging, with no warning to them and no way to tell
+    why they had stopped (audit, 2026-09-19).
+
+    It is now the SERVER's own key doing it, on endpoints the push service
+    itself just reported as dead (404/410), and the function is no longer
+    callable from a browser at all (db/push_notify.sql).
+
+    No service-role key configured? Skip it. A stale row costs one wasted send
+    next time; it is never worth failing the notification over.
+  */
   if (deadEndpoints.length) {
-    await supabase.rpc("push_forget", { endpoints: deadEndpoints });
+    const admin = createAdminClient();
+    if (admin) {
+      await admin.from("push_subscriptions").delete().in("endpoint", deadEndpoints);
+    } else {
+      console.warn("push/notify: no service role key, leaving", deadEndpoints.length, "dead endpoints");
+    }
   }
 
   return Response.json({ ok: true, sent });
