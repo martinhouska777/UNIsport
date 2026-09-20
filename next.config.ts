@@ -15,6 +15,23 @@ const nextConfig: NextConfig = {
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 320, 384, 450, 512, 576],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
   },
+  /* www → the bare address. `www.getunisport.com` resolved to Vercel but was
+     never attached to the project, so it had no certificate: anyone who typed
+     www (plenty still do out of habit) got a browser security warning instead
+     of the site, which reads as "this site is unsafe", not "wrong address".
+     The domain is attached now; this sends it on to the one real address, so
+     Google sees a single site rather than two identical ones. Permanent (308)
+     — the bare address is the canonical one, and app/layout.tsx says so too. */
+  async redirects() {
+    return [
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "www.getunisport.com" }],
+        destination: "https://getunisport.com/:path*",
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;
