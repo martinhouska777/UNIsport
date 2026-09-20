@@ -6,8 +6,14 @@
   ANTHROPIC_API_KEY); fails soft with 503 when the key isn't configured.
 */
 import { anthropic, hasAnthropicKey } from "@/lib/anthropic/server";
+import { createClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
+
+// The client shrinks photos to a ~1200px JPEG before sending (lib/varsity/ergScan.ts),
+// which lands well under 1 MB of base64. Anything far above that is not a phone
+// photo of a monitor — refuse it before it reaches the (paid) vision call.
+const MAX_BASE64_CHARS = 2_500_000;
 
 const SYSTEM = `You read photos of indoor rowing-machine monitors (Concept2 PM5, RP3) and extract the workout summary.
 
@@ -76,6 +82,14 @@ export async function POST(request: Request) {
     return Response.json({ error: "unconfigured" }, { status: 503 });
   }
 
+  // Signed-in users only: every call here costs money, and the route used to
+  // answer anyone on the internet who POSTed an image.
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return Response.json({ error: "unauthorized" }, { status: 401 });
+
   let body: { image?: unknown };
   try {
     body = await request.json();
@@ -88,9 +102,13 @@ export async function POST(request: Request) {
   if (!m) return Response.json({ error: "bad_image" }, { status: 400 });
   const media = (m[1].toLowerCase() === "image/jpg" ? "image/jpeg" : m[1].toLowerCase()) as MediaType;
   const data = m[2];
+  if (data.length > MAX_BASE64_CHARS) {
+    return Response.json({ error: "too_large" }, { status: 413 });
+  }
 
   try {
-    const resp = await anthropic().messages.create({
+    const resp = await anthropic().messages.create(
+      {
       model: "claude-opus-5",
       max_tokens: 4096, // an interval screen can be a dozen rows
       // Reading numbers off a screen is not hard work, so keep the effort low —
@@ -112,7 +130,11 @@ export async function POST(request: Request) {
         },
       ],
       output_config: { effort: "low", format: { type: "json_schema", schema } },
-    });
+      },
+      // One photo, one answer: a hung upstream call should fail the scan, not
+      // hold a serverless function open, and a retry would only double the bill.
+      { timeout: 45_000, maxRetries: 1 },
+    );
 
     const text = resp.content.find((b) => b.type === "text");
     if (!text || text.type !== "text") {

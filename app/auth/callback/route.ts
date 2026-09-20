@@ -95,7 +95,12 @@ export async function GET(request: NextRequest) {
     forwards to /onboarding when it isn't. Guessing /onboarding instead would
     push a returning user back through the whole flow.
   */
-  let destination = next;
+  // Same-site paths only, the same rule the sign-in page applies to its own
+  // `?next=`: "/join/abc" is honoured, "//evil.com" or "@evil.com" is not — a
+  // link could otherwise drop a freshly signed-in student on another website.
+  const safeNext =
+    next && next.startsWith("/") && !next.startsWith("//") && !/[@\\]/.test(next) ? next : null;
+  let destination = safeNext;
   if (!destination) {
     destination = profileUnknown || profile?.onboarding_completed ? "/gyms" : "/onboarding";
   }
