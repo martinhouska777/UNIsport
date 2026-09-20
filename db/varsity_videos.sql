@@ -43,13 +43,14 @@ create index if not exists varsity_videos_day_idx on public.varsity_videos (day_
 
 alter table public.varsity_videos enable row level security;
 
-create policy "Crew videos readable by signed-in users"
+-- The SQUAD, not every account on the app (2026-09-20).
+create policy "Crew videos readable by the squad"
   on public.varsity_videos for select
-  using (auth.role() = 'authenticated');
+  using (public.varsity_is_member());
 
-create policy "Crew videos insertable by signed-in users"
+create policy "Crew videos addable by the squad"
   on public.varsity_videos for insert
-  with check (auth.role() = 'authenticated');
+  with check (public.varsity_is_member());
 
 -- Editing the note / title stays with whoever put the video up.
 create policy "Own crew video updatable"

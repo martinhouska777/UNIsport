@@ -81,9 +81,12 @@ alter table public.varsity_results enable row level security;
 -- everything"). Scoped to signed-in users, matching db/varsity_plan.sql — when
 -- the plan itself becomes per-team, this policy tightens with it.
 drop policy if exists "Varsity results readable by signed-in users" on public.varsity_results;
-create policy "Varsity results readable by signed-in users"
+-- The SQUAD, not every account on the app (2026-09-20): an ordinary student
+-- who has never touched Varsity could read the crew's erg scores. Writes are
+-- unchanged — your own row has always been yours alone.
+create policy "Results readable by the squad"
   on public.varsity_results for select
-  using (auth.role() = 'authenticated');
+  using (public.varsity_is_member());
 
 -- WRITE: only ever your own result. Nobody can post, edit or delete a time
 -- under someone else's name — not a teammate, not a captain.

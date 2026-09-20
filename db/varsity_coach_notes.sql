@@ -17,14 +17,20 @@ create table if not exists public.varsity_coach_notes (
 
 alter table public.varsity_coach_notes enable row level security;
 
-create policy "Coach notes readable by signed-in users"
+-- YOUR OWN NOTE, OR THE COACH'S VIEW OF EVERYONE (2026-09-20). This was
+-- readable and writable by anybody with an account: every athlete could read
+-- what the coach had written about every teammate, and could write a note that
+-- looked like it came from the coach.
+create policy "Your own note, or the coach's view of everyone"
   on public.varsity_coach_notes for select
-  using (auth.role() = 'authenticated');
-
-create policy "Coach notes writable by signed-in users"
-  on public.varsity_coach_notes for all
-  using (auth.role() = 'authenticated')
-  with check (auth.role() = 'authenticated');
+  using (athlete_id = auth.uid() or public.varsity_is_coach());
+create policy "Notes written by the coach"
+  on public.varsity_coach_notes for insert with check (public.varsity_is_coach());
+create policy "Notes updated by the coach"
+  on public.varsity_coach_notes for update using (public.varsity_is_coach())
+  with check (public.varsity_is_coach());
+create policy "Notes deleted by the coach"
+  on public.varsity_coach_notes for delete using (public.varsity_is_coach());
 
 -- ---------------------------------------------------------------------------
 -- get_team_roster(): the coach's Notes screen needs to LIST athletes by name,

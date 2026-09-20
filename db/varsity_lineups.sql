@@ -18,11 +18,13 @@ create table if not exists public.varsity_lineups (
 
 alter table public.varsity_lineups enable row level security;
 
-create policy "Varsity lineups readable by signed-in users"
-  on public.varsity_lineups for select
-  using (auth.role() = 'authenticated');
-
-create policy "Varsity lineups writable by signed-in users"
-  on public.varsity_lineups for all
-  using (auth.role() = 'authenticated')
-  with check (auth.role() = 'authenticated');
+-- The squad reads, the coach writes (2026-09-20) — see db/varsity_plan.sql.
+create policy "Lineups readable by the squad"
+  on public.varsity_lineups for select using (public.varsity_is_member());
+create policy "Lineups written by the coach"
+  on public.varsity_lineups for insert with check (public.varsity_is_coach());
+create policy "Lineups updated by the coach"
+  on public.varsity_lineups for update using (public.varsity_is_coach())
+  with check (public.varsity_is_coach());
+create policy "Lineups deleted by the coach"
+  on public.varsity_lineups for delete using (public.varsity_is_coach());

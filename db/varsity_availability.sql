@@ -31,11 +31,14 @@ create index if not exists varsity_availability_athlete_idx
 
 alter table public.varsity_availability enable row level security;
 
-create policy "Varsity availability readable by signed-in users"
-  on public.varsity_availability for select
-  using (auth.role() = 'authenticated');
-
-create policy "Varsity availability writable by signed-in users"
-  on public.varsity_availability for all
-  using (auth.role() = 'authenticated')
-  with check (auth.role() = 'authenticated');
+-- The squad reads, the coach writes (2026-09-20) — see db/varsity_plan.sql.
+-- Only the coach marks people out, from the Lineup pool.
+create policy "Availability readable by the squad"
+  on public.varsity_availability for select using (public.varsity_is_member());
+create policy "Availability written by the coach"
+  on public.varsity_availability for insert with check (public.varsity_is_coach());
+create policy "Availability updated by the coach"
+  on public.varsity_availability for update using (public.varsity_is_coach())
+  with check (public.varsity_is_coach());
+create policy "Availability deleted by the coach"
+  on public.varsity_availability for delete using (public.varsity_is_coach());

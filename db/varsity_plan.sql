@@ -39,25 +39,30 @@ create table if not exists public.varsity_plan_sessions (
 alter table public.varsity_plan_blocks   enable row level security;
 alter table public.varsity_plan_sessions enable row level security;
 
--- Single shared team for now: any signed-in user can read + write the plan.
--- (Tighten to a coach role + team scoping in a later slice.)
-create policy "Varsity blocks readable by signed-in users"
-  on public.varsity_plan_blocks for select
-  using (auth.role() = 'authenticated');
+-- THE SQUAD READS, THE COACH WRITES (2026-09-20). This used to be "any signed
+-- in user can read and write", which meant an athlete could rewrite tomorrow's
+-- session straight against the database, and every ordinary student with an
+-- account could read the squad's training. Helpers in db/varsity_teams.sql.
+-- Live databases: db/patch_varsity_coach_only_2026-09-20.sql.
+create policy "Plan blocks readable by the squad"
+  on public.varsity_plan_blocks for select using (public.varsity_is_member());
+create policy "Plan blocks written by the coach"
+  on public.varsity_plan_blocks for insert with check (public.varsity_is_coach());
+create policy "Plan blocks updated by the coach"
+  on public.varsity_plan_blocks for update using (public.varsity_is_coach())
+  with check (public.varsity_is_coach());
+create policy "Plan blocks deleted by the coach"
+  on public.varsity_plan_blocks for delete using (public.varsity_is_coach());
 
-create policy "Varsity blocks writable by signed-in users"
-  on public.varsity_plan_blocks for all
-  using (auth.role() = 'authenticated')
-  with check (auth.role() = 'authenticated');
-
-create policy "Varsity sessions readable by signed-in users"
-  on public.varsity_plan_sessions for select
-  using (auth.role() = 'authenticated');
-
-create policy "Varsity sessions writable by signed-in users"
-  on public.varsity_plan_sessions for all
-  using (auth.role() = 'authenticated')
-  with check (auth.role() = 'authenticated');
+create policy "Plan sessions readable by the squad"
+  on public.varsity_plan_sessions for select using (public.varsity_is_member());
+create policy "Plan sessions written by the coach"
+  on public.varsity_plan_sessions for insert with check (public.varsity_is_coach());
+create policy "Plan sessions updated by the coach"
+  on public.varsity_plan_sessions for update using (public.varsity_is_coach())
+  with check (public.varsity_is_coach());
+create policy "Plan sessions deleted by the coach"
+  on public.varsity_plan_sessions for delete using (public.varsity_is_coach());
 
 -- WHERE TO BE (added later): an optional place on a session — "Weld", "Newell
 -- erg room", "meet at the vans". Free text; the session's time says when.

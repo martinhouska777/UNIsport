@@ -98,6 +98,35 @@ $$;
 
 grant execute on function public.varsity_my_role(uuid)  to authenticated;
 grant execute on function public.varsity_can_admin(uuid) to authenticated;
+-- ── "Is this caller on the squad / is this caller the coach?" ──────────────
+-- No team argument, because the plan, the lineups, the notes and availability
+-- have no team_id to compare one against: there is ONE shared plan and every
+-- squad reads it. So these answer "on a squad" and "is a coach" — not "on THIS
+-- squad". When those tables gain team_id, these gain an argument. Used by the
+-- policies in
+-- db/varsity_plan.sql, varsity_lineups.sql, varsity_coach_notes.sql,
+-- varsity_availability.sql, varsity_results.sql and varsity_videos.sql.
+--
+-- Coach only, NOT captain: a captain invites and approves people and has never
+-- been allowed to build plans (see the roles at the top of this file).
+create or replace function public.varsity_is_member()
+returns boolean language sql stable security definer set search_path = public as $$
+  select exists (
+    select 1 from public.varsity_members m
+    where m.user_id = auth.uid() and m.status = 'approved'
+  );
+$$;
+
+create or replace function public.varsity_is_coach()
+returns boolean language sql stable security definer set search_path = public as $$
+  select exists (
+    select 1 from public.varsity_members m
+    where m.user_id = auth.uid() and m.status = 'approved' and m.role = 'coach'
+  );
+$$;
+
+grant execute on function public.varsity_is_member() to authenticated;
+grant execute on function public.varsity_is_coach()  to authenticated;
 
 -- ── Policies: READ ONLY. All writes go through the functions below. ─────────
 drop policy if exists "Varsity teams readable by their members" on public.varsity_teams;
