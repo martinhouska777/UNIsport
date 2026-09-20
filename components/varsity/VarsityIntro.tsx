@@ -18,10 +18,13 @@
       a trip out to Settings and back is not an entrance, and neither is a
       reload — that is what makes this a switch rather than a mount.
 
-  The oars are the landing page's oars (the Blade Lock closer's drawing): a
-  dark handle, shaft and collar, and the school's own blade — Harvard's
-  crimson with the two white wedges — from lib/landingSchools.ts, drawn by
-  OarMark (shared with the Varsity Mode mark, VarsityCrest). 250px tall here.
+  The oars are the landing page's oars (the Blade Lock closer's drawing) with
+  the school's own blade — Harvard's crimson with the two white wedges — from
+  lib/landingSchools.ts, drawn by OarMark (shared with the Varsity Mode mark,
+  VarsityCrest). 250px tall here, and drawn `bold`: crimson loom, black line
+  round it (owner, 2026-09-19). The real oar's near-black loom vanished into
+  this screen's dark ground, so the two oars crossing read as two floating
+  blades rather than as an X.
   The beat timings live with the keyframes in app/globals.css; the two timers
   below have to agree with them.
 */
@@ -102,7 +105,7 @@ export default function VarsityIntro() {
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="v-oar-in-left">
             <div className="origin-center rotate-[-32deg]">
-              <OarMark schoolKey={universityKey} width={41} height={250} />
+              <OarMark schoolKey={universityKey} bold width={41} height={250} />
             </div>
           </div>
         </div>
@@ -111,7 +114,7 @@ export default function VarsityIntro() {
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="v-oar-in-right">
             <div className="origin-center rotate-[32deg]">
-              <OarMark schoolKey={universityKey} width={41} height={250} />
+              <OarMark schoolKey={universityKey} bold width={41} height={250} />
             </div>
           </div>
         </div>

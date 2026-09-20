@@ -64,6 +64,30 @@ export const OAR_ART = {
   shade: "#060607",
 };
 
+/*
+  THE SAME OAR, MADE TO BE SEEN (owner, 2026-09-19: the crossed oars in the
+  Varsity intro should be "crimson red with small black borders").
+
+  The drawing above is a real oar — a black loom against a white page. Blown up
+  to 250px and crossed on the Varsity intro's DARK ground, a near-black shaft
+  is a shaft nobody can see: all that showed was the blade, and the X wasn't an
+  X. This pair paints the loom in the school's own colour instead and draws a
+  black line around every piece of it, which is what keeps it legible on a dark
+  ground and on a light one.
+
+  `ink` is the border. The colour itself is NOT written here: `var(--primary)`
+  is the running school's crimson (rule 1 / 2), so this stays white-label —
+  another school's oar comes out in that school's colour with no new code.
+*/
+export const OAR_ART_BOLD = {
+  handle: "var(--primary)",
+  shaft: "var(--primary)",
+  collar: "var(--primary)",
+  line: "#000000",
+  outline: "#000000",
+  shade: "#060607",
+};
+
 /* HOW FAST THE SCHOOLS CHANGE. Two paces, on purpose.
 
    Campus Colours keeps the design piece's own 2.6s: down there the cycle IS
