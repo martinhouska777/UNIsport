@@ -1,6 +1,7 @@
 import Link from "next/link";
 import StickyBar from "@/components/landing/StickyBar";
 import Wordmark from "@/components/landing/Wordmark";
+import LogoMark from "@/components/landing/LogoMark";
 import LandingMenu from "@/components/landing/LandingMenu";
 import NavDoors from "@/components/landing/NavDoors";
 import { views, type LandingView } from "@/lib/landingCopy";
@@ -70,8 +71,19 @@ export default function LandingNav({ view = "all", heroMark = false }: { view?: 
         <div className="flex items-center justify-between py-[11px]">
           <div className="flex items-center gap-1">
             <LandingMenu view={view} />
-            <Link href="/" aria-label="UNIsport" className={heroMark ? "l-nav-mark" : undefined}>
-              <Wordmark className="text-xl sm:text-2xl" />
+            {/* The LOCKUP: the mark, then the name (owner, 2026-09-20 — "put the
+                logo top left"). The bar carried the name only; the drawn mark
+                lived on the home screen and the browser tab and nowhere a
+                visitor would meet it. Both sit inside the one Link, at one
+                font-size, so the mark scales with the name and the
+                hide-while-the-intro-is-up rule below still governs the pair. */}
+            <Link
+              href="/"
+              aria-label="UNIsport"
+              className={`text-xl sm:text-2xl ${heroMark ? "l-nav-mark" : ""}`}
+            >
+              <LogoMark className="mr-[0.24em]" />
+              <Wordmark />
             </Link>
           </div>
           <Tabs view={view} className="hidden md:flex" />
