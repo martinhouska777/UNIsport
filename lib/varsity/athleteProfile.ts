@@ -17,6 +17,7 @@ import { createClient, hasSupabaseEnv } from "@/lib/supabase/client";
 import { classYears, freshmanClassYear } from "@/lib/onboarding";
 import { sideMeta, type Side } from "@/lib/varsity/coachLineup";
 import { cleanDaysOut, type DayOut, type DaysOut } from "@/lib/varsity/daysOut";
+import { cleanCheckIns, emptyCheckIn, type CheckIn, type CheckIns } from "@/lib/varsity/checkIn";
 
 /* ── Editable option lists ── */
 
@@ -187,6 +188,13 @@ export type VarsityAthleteProfile = {
      knows which days to offer to log. Null while Active. */
   statusSince: string | null;
   /*
+    THE DAILY CHECK-IN (lib/varsity/checkIn.ts), keyed by ISO date: how you
+    slept, how you feel, where you are sore. Written from the bottom of the Log
+    tab, for today only, and read back by the Recovery group in your own
+    Statistics. Private to the athlete — the coach's card does not carry it.
+  */
+  checkIns: CheckIns;
+  /*
     WHETHER TEAMMATES SEE YOUR CALENDAR (owner, 2026-09-13). Opening a rower on
     the Team tab shows their training month — so the squad can see how the
     people who train best actually train — but each athlete decides. On by
@@ -222,6 +230,7 @@ export function defaultProfile(classYear: string): VarsityAthleteProfile {
     rosterId: null,
     daysOut: {},
     statusSince: null,
+    checkIns: {},
     showCalendar: true,
   };
 }
@@ -259,6 +268,9 @@ export function withDefaults(
       typeof saved?.statusSince === "string" && /^\d{4}-\d{2}-\d{2}$/.test(saved.statusSince)
         ? saved.statusSince
         : null,
+    // Same story as the days out: nothing there on an older account, and every
+    // answer checked against the real option lists on the way in.
+    checkIns: cleanCheckIns(saved?.checkIns),
     // Only an explicit "no" hides it: older accounts have nothing (or null)
     // here, and they keep the default.
     showCalendar: saved?.showCalendar !== false,
@@ -381,4 +393,30 @@ export async function saveDaysOut(
   }
   await saveAthleteProfile(userId, { ...profile, daysOut: next });
   return next;
+}
+
+/* ── The daily check-in (lib/varsity/checkIn.ts), on the same record ── */
+
+/** Every check-in this athlete has written. */
+export async function fetchCheckIns(userId: string | null): Promise<CheckIns> {
+  const { profile } = await fetchAthleteProfile(userId);
+  return profile.checkIns;
+}
+
+/**
+ * Answer one question of one day. Read fresh and merged, like the days out, so
+ * a tap here can never wipe a profile edit made on another screen — the card
+ * writes on every tap, and three taps in a row must all survive.
+ * Returns the day as saved.
+ */
+export async function saveCheckIn(
+  userId: string | null,
+  iso: string,
+  patch: Partial<CheckIn>,
+): Promise<CheckIn> {
+  const { profile } = await fetchAthleteProfile(userId);
+  const day: CheckIn = { ...emptyCheckIn(), ...(profile.checkIns[iso] ?? {}), ...patch };
+  const checkIns: CheckIns = { ...profile.checkIns, [iso]: day };
+  await saveAthleteProfile(userId, { ...profile, checkIns });
+  return day;
 }

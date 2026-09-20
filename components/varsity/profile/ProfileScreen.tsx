@@ -89,6 +89,7 @@ import {
   type DayOutReason,
   type DaysOut,
 } from "@/lib/varsity/daysOut";
+import { type CheckIns } from "@/lib/varsity/checkIn";
 import {
   IconPencil,
   IconExpand,
@@ -635,6 +636,7 @@ function WeeklyGraph({
   onZoomOut,
   zoomed,
   daysOut,
+  checkIns,
 }: {
   /** The same buckets the points came from — the full screen reads them. */
   buckets: Bucket[];
@@ -656,6 +658,8 @@ function WeeklyGraph({
   onZoomOut: () => void;
   zoomed: boolean;
   daysOut: DaysOut;
+  /** The daily check-ins — the Recovery group in the full statistics. */
+  checkIns: CheckIns;
 }) {
   const [openMenu, setOpenMenu] = useState<"metric" | "range" | "chart" | null>(null);
   const [picking, setPicking] = useState(false); // the custom-dates sheet
@@ -763,6 +767,7 @@ function WeeklyGraph({
           onZoomOut={onZoomOut}
           zoomed={zoomed}
           daysOut={daysOut}
+          checkIns={checkIns}
           onClose={() => setFull(false)}
         />
       )}
@@ -1171,6 +1176,7 @@ export default function ProfileScreen() {
           onZoomOut={zoomOut}
           zoomed={beforeZoom !== null}
           daysOut={profile.daysOut}
+          checkIns={profile.checkIns}
         />
 
         {/* The way into the detail. A row of its own rather than making the

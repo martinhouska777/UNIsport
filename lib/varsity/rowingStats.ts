@@ -6,7 +6,8 @@
   This answers the rest of them, over the very same window, from the very same
   logs — so nothing on the screen can disagree with anything else on it.
 
-  Three groups, IN THIS ORDER — how far, how long, and only then how steady:
+  Four groups, IN THIS ORDER — how far, how long, how steady, and how you
+  arrived at all of it:
 
     Distance    — the total, then the water and the erg it is made of, then
                   the average row
@@ -19,6 +20,13 @@
                   made thirty sessions with two missed read like a charge sheet.
                   The days OUT (sick, injured, away) end this group: they are
                   the reason a thin window was thin, so they belong beside it.
+    Recovery    — the daily check-in read back over the window (owner,
+                  2026-09-19): how much you slept, how many nights were short,
+                  how you felt, and what was sore most often. It goes LAST
+                  because it is the only group that isn't made of training —
+                  and it is absent entirely until there is a check-in in the
+                  window, rather than printing four dashes at someone who has
+                  never used it. NO single "readiness score": see checkIn.ts.
 
   CUT as useless to a rower, and not to be brought back: the longest streak,
   the average split, the best split (statistics about how FAST, when the
@@ -37,6 +45,7 @@ import { formatDistance, formatDuration, type Units } from "@/lib/varsity/units"
 import { rowingCategories, logCategoryColor, logCategoryLabel } from "@/lib/varsity/athleteProfile";
 import { expectedDays, trainedDays, type Span } from "@/lib/varsity/athleteStats";
 import { dayOutReasons, dayOutName, countDaysOut, type DaysOut } from "@/lib/varsity/daysOut";
+import { feelNearest, recoverySummary, type CheckIns } from "@/lib/varsity/checkIn";
 
 /* A number on the screen. `tone` is the only styling this file decides, and it
    decides it as a word — the screen maps it to a theme token (rule 1). */
@@ -135,6 +144,8 @@ export function rowingReport(
   units: Units,
   /** The days marked out, so a missed session can say why. */
   daysOut: DaysOut = {},
+  /** The daily check-ins, which become the Recovery group. Empty = no group. */
+  checkIns: CheckIns = {},
 ): StatGroup[] {
   const training = logs.filter(isTraining);
   const rowed = training.filter(isRowed);
@@ -237,6 +248,56 @@ export function rowingReport(
     "total rowed | on the water" over "on the erg | avg row", so the two that
     add up to the total sit next to each other.
   */
+  /*
+    RECOVERY — the check-ins in this window, counted plainly.
+
+    "Avg sleep" is over the days that answered it, not over the window: eight
+    hours on the three nights you answered is not seven hours a night across
+    the month, and saying so would be a lie the graph can't see. "Answered"
+    says how many days are behind the numbers, so a window with two check-ins
+    in it cannot read like a habit.
+  */
+  const rec = recoverySummary(checkIns, span.startIso, span.endIso);
+  const recoveryGroup: StatGroup[] = rec.days
+    ? [
+        {
+          key: "recovery",
+          title: "Recovery",
+          cells: [
+            {
+              key: "sleep",
+              label: "Avg sleep",
+              value: rec.avgSleep === null ? dash : `${rec.avgSleep.toFixed(1)}h`,
+            },
+            {
+              key: "short",
+              label: "Nights under 7h",
+              value: `${rec.shortNights}`,
+              tone: rec.shortNights ? "warn" : "muted",
+            },
+            {
+              key: "feel",
+              label: "How you felt",
+              value: rec.avgFeel === null ? dash : feelNearest(rec.avgFeel),
+              tone: rec.avgFeel !== null && rec.avgFeel <= 2 ? "warn" : "text",
+            },
+            {
+              key: "sore",
+              label: "Most sore",
+              value: rec.sorest ? `${rec.sorest.part} · ${rec.sorest.days}d` : "Nothing",
+              tone: rec.sorest ? "text" : "muted",
+            },
+            {
+              key: "days",
+              label: "Days answered",
+              value: `${rec.days}`,
+              tone: "muted",
+            },
+          ],
+        },
+      ]
+    : [];
+
   return [
     {
       key: "distance",
@@ -302,6 +363,7 @@ export function rowingReport(
         ...outCells,
       ],
     },
+    ...recoveryGroup,
   ];
 }
 

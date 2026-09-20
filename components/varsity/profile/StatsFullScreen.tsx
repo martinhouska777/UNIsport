@@ -67,6 +67,7 @@ import {
 import { rowingReport, bucketDetail, type StatTone } from "@/lib/varsity/rowingStats";
 import { trainingMix, mixLine } from "@/lib/varsity/trainingMix";
 import { type DaysOut } from "@/lib/varsity/daysOut";
+import { type CheckIns } from "@/lib/varsity/checkIn";
 
 /* A word from the data → a theme token. The data never names a colour. */
 const toneClass: Record<StatTone, string> = {
@@ -99,6 +100,7 @@ export default function StatsFullScreen({
   onZoomOut,
   zoomed,
   daysOut,
+  checkIns,
   onClose,
 }: {
   buckets: Bucket[];
@@ -121,6 +123,8 @@ export default function StatsFullScreen({
   zoomed: boolean;
   /** The days marked sick / injured / away — shaded on the graph, counted below. */
   daysOut: DaysOut;
+  /** The daily check-ins — the Recovery group under the graph. */
+  checkIns: CheckIns;
   onClose: () => void;
 }) {
   const vTheme = useVarsityTheme();
@@ -170,7 +174,7 @@ export default function StatsFullScreen({
     endIso: buckets[buckets.length - 1]?.span.endIso ?? today,
   };
   const allLogs = buckets.flatMap((b) => b.logs);
-  const groups = rowingReport(allLogs, plan, whole, units, daysOut);
+  const groups = rowingReport(allLogs, plan, whole, units, daysOut, checkIns);
   const shaded = buckets.map((b) =>
     Object.keys(daysOut).some((iso) => iso >= b.span.startIso && iso <= b.span.endIso),
   );

@@ -34,7 +34,18 @@ import {
 import { estimateForSession, formatMetrics } from "@/lib/varsity/logParse";
 import { scanErgPhoto, minutesToClock } from "@/lib/varsity/ergScan";
 import { deriveSplitSec, deriveTotalSec } from "@/lib/varsity/ergMath";
-import { fetchAthleteProfile } from "@/lib/varsity/athleteProfile";
+import { fetchAthleteProfile, fetchCheckIns, saveCheckIn } from "@/lib/varsity/athleteProfile";
+import {
+  checkInIsDone,
+  checkInSummary,
+  emptyCheckIn,
+  feelOptions,
+  sleepLabel,
+  sleepOptions,
+  soreOptions,
+  toggleSore,
+  type CheckIn,
+} from "@/lib/varsity/checkIn";
 import { shareResult, unshareResult, intervalsFromScan } from "@/lib/varsity/resultsStore";
 import { uploadErgPhoto } from "@/lib/varsity/ergPhotos";
 import type { ErgScanInterval, ScanResult } from "@/lib/varsity/ergScan";
@@ -758,6 +769,124 @@ function ExtraRow({ log, onEdit }: { log: LogEntry; onEdit: () => void }) {
   );
 }
 
+/* ─────────────────────  the daily check-in  ───────────────────── */
+/*
+  THE BOTTOM OF THE DAY (owner, 2026-09-19: "under the extra section we want to
+  put the daily check-in"). Above it the tab is about what you DID; this is the
+  one thing the log never asks — what you were like when you did it.
+
+  THREE TAPS AND IT IS DONE: hours slept, how you feel, where you are sore.
+  Nothing to type, no Save button — each tap writes on its own, so a check-in
+  interrupted halfway is still half a check-in. Tapping a different answer
+  changes it; tapping the one you picked leaves it (only soreness untoggles,
+  because that is the one question with more than one true answer).
+
+  TODAY ONLY. On any other day the card simply is not here — see checkIn.ts for
+  why a back-filled check-in is a made-up one.
+
+  Nothing here is stored as a score and nothing is sent to the coach; it reads
+  back in ONE place, the Recovery group in your own Statistics.
+*/
+function CheckInCard({ userId, iso }: { userId: string; iso: string }) {
+  // null while it loads, so an empty card never flashes over a saved one.
+  const [day, setDay] = useState<CheckIn | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      const all = await fetchCheckIns(userId);
+      if (active) setDay(all[iso] ?? emptyCheckIn());
+    })();
+    return () => {
+      active = false;
+    };
+  }, [userId, iso]);
+
+  // On screen at once, saved underneath (read-merge-write, so three fast taps
+  // can't overwrite each other).
+  const answer = (patch: Partial<CheckIn>) => {
+    setDay((prev) => ({ ...(prev ?? emptyCheckIn()), ...patch }));
+    void saveCheckIn(userId, iso, patch);
+  };
+
+  const done = checkInIsDone(day ?? undefined);
+  const chip = (on: boolean) =>
+    `rounded-xl border px-2 py-2 text-[12px] font-semibold transition-colors ${
+      on
+        ? "border-primary bg-primary-tint text-text"
+        : "border-border bg-surface-2 text-text-2 active:bg-surface"
+    }`;
+
+  return (
+    <div className="mt-3 rounded-2xl border border-border bg-surface p-3.5 shadow-card">
+      <div className="flex items-center gap-2">
+        <div className="min-w-0 flex-1">
+          <div className="text-[14px] font-semibold text-text">Daily check-in</div>
+          <div className="mt-0.5 truncate text-[11px] text-muted">
+            {day && checkInSummary(day) ? checkInSummary(day) : "Three taps — only you see this"}
+          </div>
+        </div>
+        {done && (
+          <span className="flex flex-shrink-0 items-center gap-1 text-[12px] font-semibold text-success">
+            <IconCheckCircle size={15} /> Done
+          </span>
+        )}
+      </div>
+
+      <div className="mt-3 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">
+        Hours slept
+      </div>
+      <div className="mt-1.5 grid grid-cols-5 gap-1.5">
+        {sleepOptions.map((h) => (
+          <button
+            key={h}
+            type="button"
+            onClick={() => answer({ sleep: h })}
+            className={chip(day?.sleep === h)}
+          >
+            {sleepLabel(h)}
+          </button>
+        ))}
+      </div>
+
+      <div className="mt-3 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">
+        How you feel
+      </div>
+      {/* WRAPPED, not five equal columns: "Wrecked" is twice the width of
+          "OK", and a five-column grid can only fit it by running off the edge
+          of the card (seen at 375px). Wrapping keeps every word whole. */}
+      <div className="mt-1.5 flex flex-wrap gap-1.5">
+        {feelOptions.map((o) => (
+          <button
+            key={o.value}
+            type="button"
+            onClick={() => answer({ feel: o.value })}
+            className={`${chip(day?.feel === o.value)} px-3`}
+          >
+            {o.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="mt-3 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">
+        Sore
+      </div>
+      <div className="mt-1.5 flex flex-wrap gap-1.5">
+        {soreOptions.map((part) => (
+          <button
+            key={part}
+            type="button"
+            onClick={() => answer({ sore: toggleSore(day?.sore ?? [], part) })}
+            className={`${chip(!!day?.sore.includes(part))} px-3`}
+          >
+            {part}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /* ─────────────────────────  day picker  ───────────────────────── */
 /*
   WHAT A DAY CHIP SAYS (owner, 2026-09-15): one dot PER SESSION, not one dot per
@@ -1118,6 +1247,9 @@ function LogScreenInner() {
         >
           <IconPlus size={18} /> Add extra session
         </button>
+
+        {/* …and under the plus, how the day actually felt. Today only. */}
+        {isToday && userId && <CheckInCard userId={userId} iso={selectedIso} />}
       </div>
 
       {/* Two erg sessions prescribed on one day: which one is the photo of? */}
