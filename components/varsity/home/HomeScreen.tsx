@@ -1079,6 +1079,14 @@ function HomeScreenInner() {
 
   // Every day of the block, in order — the track the day arrows run on.
   const allDays = useMemo(() => (data ? data.weeks.flatMap((w) => w.days) : []), [data]);
+  /*
+    IS TODAY EVEN IN THIS BLOCK? Between two blocks — the last one finished,
+    the next one not started — it is not. The page still opens on the block's
+    first day (below), but nothing may call that day "Today": the header said
+    Today over next month's first session, and the day after it "Tomorrow"
+    (audit, 2026-09-19).
+  */
+  const hasToday = useMemo(() => allDays.some((d) => d.today), [allDays]);
   const todayIdx = useMemo(() => {
     const i = allDays.findIndex((d) => d.today);
     return i >= 0 ? i : 0; // a block that hasn't started yet opens on its first day
@@ -1090,7 +1098,7 @@ function HomeScreenInner() {
   );
   const viewIdx = dayIdx ?? (linkIdx >= 0 ? linkIdx : todayIdx);
   const viewDay: WeekDay | null = allDays[viewIdx] ?? null;
-  const onToday = viewIdx === todayIdx;
+  const onToday = hasToday && viewIdx === todayIdx;
 
   // Fetch the boats for a day that isn't today. Today's came with the page.
   useEffect(() => {
@@ -1244,11 +1252,13 @@ function HomeScreenInner() {
            Today is "Today", the day after is "Tomorrow", and past that there
            is no word for it so it is simply the date. */
         title={
-          viewIdx === todayIdx
-            ? "Today"
-            : viewIdx === todayIdx + 1
-              ? "Tomorrow"
-              : (viewDay?.dateLabel ?? "")
+          !hasToday
+            ? (viewDay?.dateLabel ?? "")
+            : viewIdx === todayIdx
+              ? "Today"
+              : viewIdx === todayIdx + 1
+                ? "Tomorrow"
+                : (viewDay?.dateLabel ?? "")
         }
         /* "All boats" used to be the corner of the Your Lineup section. That
            section is gone — your own crew opens inside its session now — so
@@ -1271,7 +1281,7 @@ function HomeScreenInner() {
         canPrev={viewIdx > 0}
         canNext={viewIdx < allDays.length - 1}
         onStep={stepDay}
-        onToday={onToday ? undefined : () => pickDay(null)}
+        onToday={!hasToday || onToday ? undefined : () => pickDay(null)}
       />
 
       <div onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
