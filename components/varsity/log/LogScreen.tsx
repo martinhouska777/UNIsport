@@ -36,14 +36,13 @@ import { scanErgPhoto, minutesToClock } from "@/lib/varsity/ergScan";
 import { deriveSplitSec, deriveTotalSec } from "@/lib/varsity/ergMath";
 import { fetchAthleteProfile, fetchCheckIns, saveCheckIn } from "@/lib/varsity/athleteProfile";
 import {
+  SCALE,
   checkInIsDone,
   checkInSummary,
   emptyCheckIn,
-  feelOptions,
+  scoreQuestions,
   sleepLabel,
   sleepOptions,
-  soreOptions,
-  toggleSore,
   type CheckIn,
 } from "@/lib/varsity/checkIn";
 import { shareResult, unshareResult, intervalsFromScan } from "@/lib/varsity/resultsStore";
@@ -770,6 +769,8 @@ function ExtraRow({ log, onEdit }: { log: LogEntry; onEdit: () => void }) {
 }
 
 /* ─────────────────────  the daily check-in  ───────────────────── */
+/* (the card that used to sit open at the bottom of the day is now the row
+   below plus the sheet under it — owner, 2026-09-19) */
 /*
   THE BOTTOM OF THE DAY (owner, 2026-09-19: "under the extra section we want to
   put the daily check-in"). Above it the tab is about what you DID; this is the
@@ -787,9 +788,10 @@ function ExtraRow({ log, onEdit }: { log: LogEntry; onEdit: () => void }) {
   Nothing here is stored as a score and nothing is sent to the coach; it reads
   back in ONE place, the Recovery group in your own Statistics.
 */
-function CheckInCard({ userId, iso }: { userId: string; iso: string }) {
-  // null while it loads, so an empty card never flashes over a saved one.
+function CheckInRow({ userId, iso }: { userId: string; iso: string }) {
+  // null while it loads, so an empty answer never flashes over a saved one.
   const [day, setDay] = useState<CheckIn | null>(null);
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -803,87 +805,91 @@ function CheckInCard({ userId, iso }: { userId: string; iso: string }) {
   }, [userId, iso]);
 
   // On screen at once, saved underneath (read-merge-write, so three fast taps
-  // can't overwrite each other).
+  // can't overwrite each other). No Save button: an answer IS the save, and a
+  // check-in abandoned halfway is still half a check-in.
   const answer = (patch: Partial<CheckIn>) => {
     setDay((prev) => ({ ...(prev ?? emptyCheckIn()), ...patch }));
     void saveCheckIn(userId, iso, patch);
   };
 
   const done = checkInIsDone(day ?? undefined);
+  const summary = checkInSummary(day ?? undefined);
   const chip = (on: boolean) =>
-    `rounded-xl border px-2 py-2 text-[12px] font-semibold transition-colors ${
+    `rounded-xl border py-2.5 text-[12px] font-semibold transition-colors ${
       on
         ? "border-primary bg-primary-tint text-text"
         : "border-border bg-surface-2 text-text-2 active:bg-surface"
     }`;
 
   return (
-    <div className="mt-3 rounded-2xl border border-border bg-surface p-3.5 shadow-card">
-      <div className="flex items-center gap-2">
-        <div className="min-w-0 flex-1">
-          <div className="text-[14px] font-semibold text-text">Daily check-in</div>
-          <div className="mt-0.5 truncate text-[11px] text-muted">
-            {day && checkInSummary(day) ? checkInSummary(day) : "Three taps — only you see this"}
-          </div>
-        </div>
-        {done && (
-          <span className="flex flex-shrink-0 items-center gap-1 text-[12px] font-semibold text-success">
-            <IconCheckCircle size={15} /> Done
+    <>
+      {/* The same shape as "Add extra session" directly above it (owner,
+          2026-09-19: "formatted like a tab"), and it says what it is and what
+          you answered — nothing about how to answer it. */}
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="mt-2 flex w-full items-center justify-center gap-2.5 rounded-2xl border border-border bg-surface py-3.5 text-[14px] font-semibold text-text shadow-card transition-transform duration-150 active:scale-[0.98]"
+      >
+        {done ? (
+          <span className="text-success">
+            <IconCheckCircle size={18} />
           </span>
+        ) : (
+          <IconPlus size={18} />
         )}
-      </div>
+        Daily check-in
+        {summary && <span className="text-[12px] font-medium text-muted">{summary}</span>}
+      </button>
 
-      <div className="mt-3 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">
-        Hours slept
-      </div>
-      <div className="mt-1.5 grid grid-cols-5 gap-1.5">
-        {sleepOptions.map((h) => (
-          <button
-            key={h}
-            type="button"
-            onClick={() => answer({ sleep: h })}
-            className={chip(day?.sleep === h)}
-          >
-            {sleepLabel(h)}
-          </button>
-        ))}
-      </div>
+      {open && (
+        <Sheet title="Daily check-in" onClose={() => setOpen(false)}>
+          <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">
+            Hours slept
+          </div>
+          <div className="mt-1.5 grid grid-cols-5 gap-1.5">
+            {sleepOptions.map((h) => (
+              <button
+                key={h}
+                type="button"
+                onClick={() => answer({ sleep: h })}
+                className={chip(day?.sleep === h)}
+              >
+                {sleepLabel(h)}
+              </button>
+            ))}
+          </div>
 
-      <div className="mt-3 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">
-        How you feel
-      </div>
-      {/* WRAPPED, not five equal columns: "Wrecked" is twice the width of
-          "OK", and a five-column grid can only fit it by running off the edge
-          of the card (seen at 375px). Wrapping keeps every word whole. */}
-      <div className="mt-1.5 flex flex-wrap gap-1.5">
-        {feelOptions.map((o) => (
-          <button
-            key={o.value}
-            type="button"
-            onClick={() => answer({ feel: o.value })}
-            className={`${chip(day?.feel === o.value)} px-3`}
-          >
-            {o.label}
-          </button>
-        ))}
-      </div>
-
-      <div className="mt-3 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">
-        Sore
-      </div>
-      <div className="mt-1.5 flex flex-wrap gap-1.5">
-        {soreOptions.map((part) => (
-          <button
-            key={part}
-            type="button"
-            onClick={() => answer({ sore: toggleSore(day?.sore ?? [], part) })}
-            className={`${chip(!!day?.sore.includes(part))} px-3`}
-          >
-            {part}
-          </button>
-        ))}
-      </div>
-    </div>
+          {/* THE TWO SCORES, OUT OF TEN (owner, 2026-09-19). Ten cells across
+              the sheet, with the word for 1 and the word for 10 under the ends
+              — which is the only thing that makes the number mean anything a
+              week later. The scales themselves live in lib/varsity/checkIn. */}
+          {scoreQuestions.map((q) => (
+            <div key={q.key} className="mt-4">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">
+                {q.label}
+              </div>
+              <div className="mt-1.5 grid grid-cols-10 gap-1">
+                {SCALE.map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => answer({ [q.key]: n })}
+                    className={`${chip(day?.[q.key] === n)} min-w-0 px-0 text-[11px]`}
+                  >
+                    {n}
+                  </button>
+                ))}
+              </div>
+              <div className="mt-1 flex justify-between text-[10px] text-muted">
+                <span>{q.low}</span>
+                <span>{q.high}</span>
+              </div>
+            </div>
+          ))}
+        </Sheet>
+      )}
+    </>
   );
 }
 
@@ -1249,7 +1255,7 @@ function LogScreenInner() {
         </button>
 
         {/* …and under the plus, how the day actually felt. Today only. */}
-        {isToday && userId && <CheckInCard userId={userId} iso={selectedIso} />}
+        {isToday && userId && <CheckInRow userId={userId} iso={selectedIso} />}
       </div>
 
       {/* Two erg sessions prescribed on one day: which one is the photo of? */}

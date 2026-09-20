@@ -45,7 +45,7 @@ import { formatDistance, formatDuration, type Units } from "@/lib/varsity/units"
 import { rowingCategories, logCategoryColor, logCategoryLabel } from "@/lib/varsity/athleteProfile";
 import { expectedDays, trainedDays, type Span } from "@/lib/varsity/athleteStats";
 import { dayOutReasons, dayOutName, countDaysOut, type DaysOut } from "@/lib/varsity/daysOut";
-import { feelNearest, recoverySummary, type CheckIns } from "@/lib/varsity/checkIn";
+import { recoverySummary, scoreQuestions, type CheckIns } from "@/lib/varsity/checkIn";
 
 /* A number on the screen. `tone` is the only styling this file decides, and it
    decides it as a word — the screen maps it to a theme token (rule 1). */
@@ -275,18 +275,21 @@ export function rowingReport(
               value: `${rec.shortNights}`,
               tone: rec.shortNights ? "warn" : "muted",
             },
-            {
-              key: "feel",
-              label: "How you felt",
-              value: rec.avgFeel === null ? dash : feelNearest(rec.avgFeel),
-              tone: rec.avgFeel !== null && rec.avgFeel <= 2 ? "warn" : "text",
-            },
-            {
-              key: "sore",
-              label: "Most sore",
-              value: rec.sorest ? `${rec.sorest.part} · ${rec.sorest.days}d` : "Nothing",
-              tone: rec.sorest ? "text" : "muted",
-            },
+            /*
+              OUT OF TEN, AND SAID SO. "6.2" on its own is a number with no
+              scale attached; "6.2 / 10" is the answer the athlete gave, in the
+              units they gave it in. Seven and over is the end of the scale
+              worth noticing, so it is the one that changes colour.
+            */
+            ...scoreQuestions.map((q) => {
+              const v = q.key === "tired" ? rec.avgTired : rec.avgSore;
+              return {
+                key: q.key,
+                label: `Avg ${q.label.toLowerCase()}`,
+                value: v === null ? dash : `${v.toFixed(1)} / 10`,
+                tone: (v !== null && v >= 7 ? "warn" : "text") as StatTone,
+              };
+            }),
             {
               key: "days",
               label: "Days answered",
