@@ -3,19 +3,29 @@
 /*
   TEAM WORKOUTS — the Workouts half of the Team tab.
   ---------------------------------------------------------------------------
-  Everything the squad measured, in ONE list, newest first:
+  Everything the squad measured, newest first, behind TWO TABS:
 
     ERG    — a session the coach flagged as a TEAM WORKOUT, with how many of
              the squad have logged it. Tap → its board (WorkoutBoard.tsx).
     WATER  — an outing with telemetry attached (Peach PowerLine / SpeedCoach),
              with its crew and how many pieces. Tap → its pieces
-             (TelemetryOuting.tsx), then a piece → the crew's numbers.
-
-  One list rather than two tabs because that is how a week is read — this
-  week's numbers — and because a rower's profile already puts their erg and
-  water side by side. Each row wears an Erg or Water tag, so no toggle is
-  needed to tell them apart (there used to be one; it hid half the week).
+             (TelemetryOuting.tsx), then a piece → the crew's numbers. This is
+             where the water work goes, races most of all.
   Water rows are never ranked; a piece is a CREW result.
+
+  THE SWITCH IS BACK (owner, 2026-09-20). These two were merged into one list
+  in date order, on the argument that a week is read as one week and a row's
+  Erg/Water tag was enough to tell them apart. It isn't: the two are not the
+  same question — an erg board is every individual ranked, a water row is one
+  crew's piece — and with races going on the water side, looking down the
+  season's races meant scrolling past every erg test in between. So: two tabs,
+  each its own list, and no tag on the rows (the tab overhead already says
+  which you are reading). The search belongs to the tab you are on.
+
+  Which tab opens is DERIVED, not remembered: Erg unless there is nothing on
+  it, so a squad whose coach has flagged no boards yet doesn't land on a blank
+  screen while its outings sit one tap away. The moment anyone taps, their
+  choice wins.
 
   "N of M logged" is shown only on a RANKED board, where who turned up is part
   of the result. On an averages board it read as a compliance score over a
@@ -68,6 +78,9 @@ function outingDateLabel(dayKey: string): string {
 
 type Row ={ key: string; date: Date; erg?: TeamWorkout; water?: Outing };
 
+/** The two halves of this screen. */
+type Side = "erg" | "water";
+
 /*
   SEARCH BY NAME OR DATE (owner 2026-09-14; first Coach Console only, then the
   Team tab too the same day). A row matches
@@ -100,6 +113,9 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
   const [outings, setOutings] = useState<Outing[]>([]);
   const [openOuting, setOpenOuting] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  /* null until someone taps: the tab is derived from what is here (see the
+     note up top), and pinned to their choice from the first tap on. */
+  const [picked, setPicked] = useState<Side | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -171,16 +187,27 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
     return map;
   }, [results]);
 
-  /* The one list: erg boards and water outings, merged by date. */
-  const rows = useMemo<Row[]>(() => {
-    const ergRows: Row[] = workouts.map((w) => ({ key: `erg:${w.dayKey}`, date: w.date, erg: w }));
-    const waterRows: Row[] = outings.map((o) => ({
-      key: `water:${o.id}`,
-      date: parseSessionKey(o.dayKey)?.date ?? new Date(0),
-      water: o,
-    }));
-    return [...ergRows, ...waterRows].sort((a, b) => b.date.getTime() - a.date.getTime());
-  }, [workouts, outings]);
+  /* A list per side, each newest first. */
+  const byDate = (a: Row, b: Row) => b.date.getTime() - a.date.getTime();
+  const ergRows = useMemo<Row[]>(
+    () => workouts.map((w) => ({ key: `erg:${w.dayKey}`, date: w.date, erg: w })).sort(byDate),
+    [workouts],
+  );
+  const waterRows = useMemo<Row[]>(
+    () =>
+      outings
+        .map((o) => ({
+          key: `water:${o.id}`,
+          date: parseSessionKey(o.dayKey)?.date ?? new Date(0),
+          water: o,
+        }))
+        .sort(byDate),
+    [outings],
+  );
+
+  /* Erg, unless there is nothing on it and there IS something on the water. */
+  const side: Side = picked ?? (ergRows.length === 0 && waterRows.length > 0 ? "water" : "erg");
+  const rows = side === "erg" ? ergRows : waterRows;
 
   const words = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
   const shownRows = words.length
@@ -211,6 +238,26 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
 
   return (
     <div className="mt-4">
+      {/* ERG | WATER — the same full-width switch the Team tab uses above the
+          roster: the two halves ARE the box, no inset pill, and overflow-hidden
+          is what lets the selected fill take the rounded corners with it. */}
+      <div className="mb-3 flex overflow-hidden rounded-xl border border-border bg-surface">
+        {(["erg", "water"] as Side[]).map((t) => (
+          <button
+            key={t}
+            type="button"
+            onClick={() => {
+              setPicked(t);
+              setQuery(""); // a search belongs to the list it was typed into
+            }}
+            className={`flex-1 py-2.5 text-[12px] font-semibold capitalize transition-colors ${
+              side === t ? "bg-text text-background" : "text-muted"
+            }`}
+          >
+            {t}
+          </button>
+        ))}
+      </div>
       {rows.length > 0 && (
         // The same search bubble the Team roster uses — white since 2026-09-16 (owner: "it's gray, it should be white").
         <div className="mb-3 flex items-center gap-2 rounded-full border border-border bg-surface px-4 py-2.5">
@@ -233,7 +280,7 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
       <div className="flex flex-col gap-1.5">
         {rows.length === 0 && (
           <div className="rounded-2xl border border-dashed border-border bg-surface-2 px-4 py-8 text-center text-[12px] text-muted">
-            Nothing here yet.
+            {side === "erg" ? "No erg workouts yet." : "No water outings yet."}
           </div>
         )}
         {rows.length > 0 && shownRows.length === 0 && (
@@ -263,14 +310,9 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
                     <span className="truncate text-[13px] font-semibold text-text">
                       {w.session.description.trim() || sessionLabel(w.session)}
                     </span>
-                    {/* ONE TAG ON A ROW, and it is the only one that changes
-                        what you are about to read: erg or water. RANKED went
-                        — it is the shape of the board, which the board itself
-                        shows the moment it opens — and so did EXAMPLE, on the
-                        owner's call. */}
-                    <span className="flex-shrink-0 rounded border border-border px-1.5 py-px text-[8px] font-bold uppercase tracking-[0.08em] text-muted">
-                      Erg
-                    </span>
+                    {/* NO TAG. A row used to wear ERG or WATER — the one thing
+                        that changed what you were about to read — back when
+                        both were in one list. The tab above says it now. */}
                   </div>
                   <div className="mt-1 text-[11px] text-muted">
                     {w.dateLabel} · {w.period} ·{" "}
@@ -299,9 +341,6 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
                 <div className="flex items-center gap-2">
                   <span className="truncate text-[13px] font-semibold text-text">
                     {o.crew} · {o.pieces.length} pieces
-                  </span>
-                  <span className="flex-shrink-0 rounded border border-border px-1.5 py-px text-[8px] font-bold uppercase tracking-[0.08em] text-muted">
-                    Water
                   </span>
                 </div>
                 <div className="mt-1 text-[11px] tabular-nums text-muted">
