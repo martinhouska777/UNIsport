@@ -449,10 +449,13 @@ export default function ProfilePage() {
               type="button"
               onClick={() => setEditField("name")}
               aria-label="Edit name"
-              className="flex items-center gap-1.5 text-left text-base font-medium text-text"
+              className="w-full text-left text-base font-medium text-text"
             >
+              {/* No pencil on the name itself (owner, 2026-09-20). You already
+                  pressed Edit in the top bar to get here; a second pencil on
+                  every line is the same offer made twice. The name is the
+                  tap target. */}
               {nameDraft || "Your name"}
-              <IconPencil size={12} className="text-muted" />
             </button>
           ) : (
             <div className="text-base font-medium text-text">{user.name || "Your name"}</div>
@@ -548,8 +551,8 @@ export default function ProfilePage() {
             aria-label="Edit bio"
             className="w-full text-left text-[13px] leading-relaxed text-text-2"
           >
+            {/* Tap the bio, not a pencil beside it — same as the name. */}
             {bioDraft || "Add a short bio"}
-            <IconPencil size={11} className="ml-1.5 inline-block align-[-1px]" />
           </button>
         ) : (
           <p className="text-[13px] leading-relaxed text-text-2">
