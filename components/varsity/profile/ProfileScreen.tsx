@@ -359,6 +359,70 @@ function CalendarNote({ value, onChange }: { value: string; onChange: (v: string
   );
 }
 
+/* ──────────────────  you already trained today  ────────────────── */
+/*
+  WHEN THE DAY ALREADY HAS A SESSION ON IT (owner, 2026-09-19: "maybe it's
+  because I already signed up for a workout that day… it should tell you").
+  A day you trained on is not a day out, so picking Sick used to mark nothing
+  and say nothing — it looked broken. Now it says what is in the way and lets
+  you answer it, because only you know which it was:
+
+    • you trained this morning and went down in the afternoon — today was a
+      training day, and being out starts tomorrow; or
+    • you are calling the whole day out anyway — it counts, and the session
+      stays in your log exactly as you wrote it (nothing is deleted).
+
+  Every day after this one is judged the same way when the spell ends: empty
+  days count on their own, a day you trained on only counts if you said so.
+*/
+function TrainedTodaySheet({
+  reason,
+  logs,
+  onOut,
+  onClose,
+}: {
+  reason: DayOutReason;
+  logs: LogEntry[];
+  onOut: () => void;
+  onClose: () => void;
+}) {
+  const word = reasonMeta(reason).label.toLowerCase();
+  return (
+    <Sheet title="You already have a session today" onClose={onClose}>
+      <div className="flex flex-col gap-1.5">
+        {logs.map((l) => (
+          <div
+            key={l.id}
+            className="flex items-center gap-2 rounded-xl border border-border bg-surface-2 px-3 py-2.5"
+          >
+            <div className="min-w-0 flex-1 truncate text-[13px] font-semibold text-text">
+              {l.title || "Session"}
+            </div>
+            {l.period && (
+              <span className="flex-shrink-0 text-[11px] font-semibold text-muted">{l.period}</span>
+            )}
+          </div>
+        ))}
+      </div>
+      <p className="mt-3 text-[13px] leading-relaxed text-text-2">
+        You are marked {word === "other" ? "out" : word} from now either way. Did today still
+        count as a training day?
+      </p>
+      <div className="mt-4 flex flex-col gap-2.5">
+        <Button variant="secondary" size="lg" full onClick={onClose}>
+          It was a training day
+        </Button>
+        <Button size="lg" full onClick={onOut}>
+          Count today as {word === "other" ? "out" : word}
+        </Button>
+      </div>
+      <p className="mt-2.5 text-center text-[11px] text-muted">
+        Your session stays in the log whichever you pick.
+      </p>
+    </Sheet>
+  );
+}
+
 /* ─────────────────────────  status picker sheet  ───────────────────────── */
 /*
   Just the four names — the grey line under each came off on 2026-09-14
@@ -847,6 +911,11 @@ export default function ProfileScreen() {
     are just not logged.
   */
   const [spell, setSpell] = useState<Spell | null>(null);
+  // Set when the day you go out on already has a session logged on it.
+  const [trainedToday, setTrainedToday] = useState<{
+    reason: DayOutReason;
+    logs: LogEntry[];
+  } | null>(null);
   // Days written onto the calendar record, merged onto the LATEST profile (the
   // status change just before may not be in this closure yet). `keep`: a day
   // already marked keeps what it says.
@@ -881,11 +950,15 @@ export default function ProfileScreen() {
           it) is still offered — it is part of the count and nobody has said
           anything about it yet. A day you wrote about, or marked some other
           way, keeps what it says and is not asked about again.
+
+          A MARK BEATS A SESSION (owner, 2026-09-19): if the day is marked it
+          counts, even if you trained on it, because marking it is something
+          you did on purpose. An unmarked day only counts if it was empty.
         */
         const days = isoDays(from, to).filter((d) => {
-          if (trained.has(d)) return false;
           const m = marked[d];
-          return !m || (m.reason === was && !m.note);
+          if (m) return m.reason === was && !m.note;
+          return !trained.has(d);
         });
         const firstNote = marked[profile.statusSince ?? ""]?.note ?? "";
         if (days.length > 0) setSpell({ reason: was, from, to, days, note: firstNote });
@@ -896,14 +969,21 @@ export default function ProfileScreen() {
       PICKING Sick / Injured / Away LOGS TODAY, SILENTLY (owner, 2026-09-14:
       "when I log injured or away, it doesn't log", so the day still goes in at
       once; owner, 2026-09-19: with nothing to type and nothing to answer).
-      Today goes in the calendar with the reason and no words, unless today
-      already has training, which no day out can have. The words come at the
-      end, from the sheet above, which offers this day again.
+      Today goes in the calendar with the reason and no words. The words come
+      at the end, from the spell sheet, which offers this day again.
+
+      Unless today already has a session on it — then it asks, instead of
+      quietly doing nothing (TrainedTodaySheet). The status itself is already
+      set; the only open question is whether the day counts.
     */
     if (becomes) {
       void fetchLogsInRange(userId ?? "", today, today).then((rows) => {
-        if (rows.some((l) => l.category !== "off")) return;
-        markDays([today], { reason: becomes }, false);
+        const done = rows.filter((l) => l.category !== "off");
+        if (done.length === 0) {
+          markDays([today], { reason: becomes }, false);
+          return;
+        }
+        setTrainedToday({ reason: becomes, logs: done });
       });
     }
   };
@@ -1216,6 +1296,17 @@ export default function ProfileScreen() {
       )}
       {modal === "status" && (
         <StatusSheet current={profile.status} onSave={changeStatus} onClose={() => setModal(null)} />
+      )}
+      {trainedToday && (
+        <TrainedTodaySheet
+          reason={trainedToday.reason}
+          logs={trainedToday.logs}
+          onOut={() => {
+            markDays([toISO(now)], { reason: trainedToday.reason }, false);
+            setTrainedToday(null);
+          }}
+          onClose={() => setTrainedToday(null)}
+        />
       )}
       {spell && (
         <LogSpellSheet
