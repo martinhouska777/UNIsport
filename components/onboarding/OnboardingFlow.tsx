@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAppState } from "@/components/AppState";
 import OnboardingShell from "@/components/onboarding/OnboardingShell";
@@ -73,6 +73,7 @@ import { houseColorsFor } from "@/lib/gyms";
 import { hoursOfDay, hoursToSlots } from "@/lib/schedule";
 import WeekHourGrid from "@/components/onboarding/WeekHourGrid";
 import { subscribeToPush, sendTestNotification } from "@/lib/push/client";
+import { fileToDataUrl } from "@/lib/image";
 
 const activityIcons: Record<string, (p: { size?: number; className?: string }) => React.ReactNode> = {
   barbell: IconBarbell,
@@ -200,6 +201,22 @@ export default function OnboardingFlow() {
     over the answers we were about to restore.
   */
   const [restored, setRestored] = useState(false);
+  const photoInputRef = useRef<HTMLInputElement | null>(null);
+
+  /*
+    THE PHOTO. Downscaled harder than the one on the Profile tab (640px, not
+    1280): every answer is mirrored into a localStorage draft after each change,
+    and a full-size data URL there can blow the storage quota — which fails
+    silently and would stop the REST of the answers from being saved.
+  */
+  const pickPhoto = async (file: File | undefined) => {
+    if (!file || !file.type.startsWith("image/")) return;
+    try {
+      set("photo", await fileToDataUrl(file, 640, 0.8));
+    } catch {
+      // An image the browser can't decode just leaves the photo as it was.
+    }
+  };
 
   // Coming back in: pick the flow up exactly where it was left. localStorage
   // can only be touched after mount, so this can't be the initial state.
@@ -1072,17 +1089,51 @@ export default function OnboardingFlow() {
 
             <div>
               <FieldLabel>Profile photo</FieldLabel>
+              <input
+                ref={photoInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  pickPhoto(e.target.files?.[0]);
+                  e.target.value = "";
+                }}
+              />
               <button
                 type="button"
-                aria-label="Add a photo"
+                onClick={() => photoInputRef.current?.click()}
+                aria-label={profile.photo ? "Change your photo" : "Add a photo"}
                 className="flex w-full flex-col items-center gap-2 rounded-xl border border-dashed border-border bg-surface-2 px-4 py-7 text-center"
               >
-                <span className="text-muted">
-                  <IconCamera size={28} />
-                </span>
-                <span className="text-[13px] text-text">Add a photo</span>
-                <span className="text-[11px] text-muted">Tap to upload</span>
+                {profile.photo ? (
+                  <>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={profile.photo}
+                      alt="Your profile photo"
+                      className="h-[84px] w-[84px] rounded-full border-2 border-primary object-cover"
+                    />
+                    <span className="text-[13px] text-text">Change photo</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-muted">
+                      <IconCamera size={28} />
+                    </span>
+                    <span className="text-[13px] text-text">Add a photo</span>
+                    <span className="text-[11px] text-muted">Tap to upload</span>
+                  </>
+                )}
               </button>
+              {profile.photo && (
+                <button
+                  type="button"
+                  onClick={() => set("photo", null)}
+                  className="tap44 mt-2 w-full text-center text-[12px] text-muted"
+                >
+                  Remove photo
+                </button>
+              )}
             </div>
           </div>
         );

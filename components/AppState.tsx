@@ -270,6 +270,14 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         .eq("id", session.user.id)
         .maybeSingle();
       const current = (row?.data as Record<string, unknown>) ?? {};
+      /*
+        Replaying onboarding starts from a blank draft, so `photo` arrives as
+        null even for someone who has one. Leaving a photo alone is never wrong
+        — it is removed on the Profile tab, not by skipping a screen — so an
+        empty answer here keeps whatever is already on the profile.
+      */
+      const answers = { ...profile } as Record<string, unknown>;
+      if (profile.photo == null && current.photo) delete answers.photo;
       // Finishing the student flow also satisfies the varsity side: it asks for
       // the same name and class year, so nobody is sent through both.
       const { error } = await supabase.from("profiles").upsert({
@@ -277,7 +285,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         // The school rides along with the profile so the DATABASE knows it too
         // — matching only ever offers you partners at your own university, and
         // it reads this field (db/matching.sql).
-        data: { ...current, ...profile, university: universityKey },
+        data: { ...current, ...answers, university: universityKey },
         onboarding_completed: true,
         varsity_setup_completed: true,
         updated_at: new Date().toISOString(),
