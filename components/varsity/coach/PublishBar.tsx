@@ -8,21 +8,19 @@
   "Update live lineup"), so the same decision looked different depending on
   which tab you were standing in. This is that decision, once.
 
-  It has exactly three states, and only ever ONE thing to press:
+  TWO WORDS, AND ONLY TWO (owner, 2026-09-20). "Publish to team" and "Tell the
+  squad" were three different labels for two things, and the coach has to read
+  each one before pressing it. It is Publish and Unpublish now, everywhere:
 
-    draft            → "Publish to team"     (nobody can see it yet)
-    live, untouched  → "Unpublish"           (nothing to announce)
-    live, edited     → "Tell the squad"      (they can SEE it already — the
-                                              work autosaves and a live thing
-                                              is live — so the only question
-                                              left is whether their phone
-                                              should buzz about it)
+    draft            → [Publish]
+    live, untouched  → [Unpublish]
+    live, edited     → [Unpublish] [Publish]
 
-  That last state is the honest one. The database holds one copy of a lineup or
-  a plan, not a published copy and a draft copy, so editing something live
-  changes what the squad sees the moment it saves. Pretending otherwise with an
-  "Update live lineup" button was the confusing part: it offered to send
-  something that had already gone.
+  The database holds one copy of a lineup or a plan, not a published copy and a
+  draft copy, so editing something live changes what the squad sees the moment
+  it saves — which is why the third state still offers Publish. Nothing new goes
+  out; pressing it is what makes their phones buzz about the change. The line of
+  words above the buttons is where that is said, not on the button.
 */
 import { useState } from "react";
 import Button from "@/components/ui/Button";
@@ -134,14 +132,12 @@ export default function PublishBar({
             Unpublish
           </button>
         )}
-        {!live && (
-          <Button size="sm" onClick={onPublish} disabled={busy}>
-            <IconSend size={13} /> Publish to team
-          </Button>
-        )}
-        {edited && !confirming && (
-          <Button size="sm" onClick={onNotify} disabled={busy}>
-            <IconSend size={13} /> Tell the squad
+        {/* The same word for both: a draft goes out, and a change to something
+            already live goes out. Which of the two it is is the state of the
+            thing, not a different button. */}
+        {(!live || (edited && !confirming)) && (
+          <Button size="sm" onClick={live ? onNotify : onPublish} disabled={busy}>
+            <IconSend size={13} /> Publish
           </Button>
         )}
       </div>

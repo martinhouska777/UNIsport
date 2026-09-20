@@ -93,7 +93,7 @@ const steps: TourStep[] = [
     route: PLAN,
     anchor: "coach-plan-status",
     title: "Draft is the whole point",
-    body: "A block is a DRAFT until you say otherwise, and not one word of a draft is visible to the squad. So you can rough six weeks in, sleep on it, tear half of it up on Tuesday — and nobody watched you do it. Publish, up here, flips the whole block onto every athlete's Home at once; Unpublish takes it straight back.",
+    body: "A block is a DRAFT until you say otherwise, and not one word of a draft is visible to the squad. So you can rough six weeks in, sleep on it, tear half of it up on Tuesday — and nobody watched you do it. Publish, on the foot of the block itself, flips the whole block onto every athlete's Home at once; Unpublish takes it straight back.",
   },
   {
     group: PLAN_DIVE,

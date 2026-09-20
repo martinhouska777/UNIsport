@@ -803,32 +803,19 @@ export default function TrainingPlanScreen({
     return (
       <div className="mx-auto w-full max-w-screen-sm px-4 pb-8 pt-4">
         {/*
-          THE TOP ROW, the lineup builder's shape: the block's name on the
-          left, and on the right whether it is saved and the one button that
-          publishes it. The publish control used to be a white card of its
-          own under the title — a heading, a sentence, then the button —
-          "the big white thing, which is useless" (owner, 2026-09-17). Just
-          the button now, top right, like the lineup. Sticky, so publishing
-          never means scrolling back up past seven days.
+          THE TOP ROW, the lineup builder's shape. It held the save state and
+          the publish button; publishing has gone DOWN into the block card
+          itself (owner, 2026-09-20 — "put it maybe in the block tab so it
+          fits somewhere there"), because the block is the thing being
+          published and the bar was two controls with nothing between them.
+          What is left is the one word this row was always for: whether the
+          work is saved. Sticky, so that word never scrolls away.
         */}
         <div className="sticky top-0 z-20 -mx-4 flex items-center gap-2 border-b border-border bg-background/95 px-4 py-2.5 backdrop-blur">
           {/* No name here any more: the block card right under this bar is
               the title, and the name was on screen twice (owner, 2026-09-18). */}
           <span className="flex-1" />
-          <div className="flex min-w-0 flex-shrink-0 items-center justify-end gap-2">
-            {saveState}
-            <PublishBar
-              bare
-              tourId="coach-plan-status"
-              what="block"
-              live={live}
-              changed={blockChanged(block)}
-              busy={writing}
-              onPublish={() => publishBlock(block.id)}
-              onNotify={() => tellSquad(block.id)}
-              onUnpublish={() => unpublishBlock(block.id)}
-            />
-          </div>
+          <div className="flex min-w-0 flex-shrink-0 items-center justify-end gap-2">{saveState}</div>
         </div>
         {/*
           THE BLOCK, AT THE TOP (owner, 2026-09-18). It was a section at the
@@ -839,38 +826,65 @@ export default function TrainingPlanScreen({
           THEN the week. Delete block alone stays at the very bottom.
         */}
         <h1 className="sr-only">{block.name}</h1>
-        <button
-          type="button"
-          onClick={() => openEditBlock(block)}
-          aria-label={`Edit ${block.name}`}
-          className="mt-3 w-full rounded-xl border border-border bg-surface px-4 py-3 text-left active:bg-surface-2"
+        {/* The card is a frame now, not one button: the top of it opens the
+            block for editing, and the foot of it publishes the block. Two
+            different presses cannot be one button, so the tappable part is
+            the inner one. */}
+        <div
+          data-tour="coach-plan-status"
+          className="mt-3 w-full overflow-hidden rounded-xl border border-border bg-surface"
         >
-          {/* THE BLOCK IS THE TITLE (owner, 2026-09-18): the name, the next
-              race top right, and under the name the week you are looking at
-              in small text. "Week 6 · Published" as a heading of its own is
-              gone — the filled week chip already says which week it is, and
-              the bar above says whether it is published. */}
-          <div className="flex items-center gap-2">
-            <div className="min-w-0 flex-1 truncate text-[17px] font-semibold text-text">{block.name}</div>
-            {block.raceName && (
-              <span className="flex min-w-0 max-w-[45%] items-center gap-1 text-[11px] text-muted">
-                <span className="flex-shrink-0 text-primary">
-                  <IconFlag size={12} />
-                </span>
-                <span className="truncate font-medium text-text">{block.raceName}</span>
-                {race !== null && (
-                  <span className="flex-shrink-0">
-                    · <span className="font-semibold text-accent">{race}</span> days
+          <button
+            type="button"
+            onClick={() => openEditBlock(block)}
+            aria-label={`Edit ${block.name}`}
+            className="w-full px-4 py-3 text-left active:bg-surface-2"
+          >
+            {/* THE BLOCK IS THE TITLE (owner, 2026-09-18): the name, the next
+                race top right, and under the name the week you are looking at
+                in small text. "Week 6 · Published" as a heading of its own is
+                gone — the filled week chip already says which week it is, and
+                the row under this one says whether it is published. */}
+            <div className="flex items-center gap-2">
+              <div className="min-w-0 flex-1 truncate text-[17px] font-semibold text-text">{block.name}</div>
+              {block.raceName && (
+                <span className="flex min-w-0 max-w-[45%] items-center gap-1 text-[11px] text-muted">
+                  <span className="flex-shrink-0 text-primary">
+                    <IconFlag size={12} />
                   </span>
-                )}
+                  <span className="truncate font-medium text-text">{block.raceName}</span>
+                  {race !== null && (
+                    <span className="flex-shrink-0">
+                      · <span className="font-semibold text-accent">{race}</span> days
+                    </span>
+                  )}
+                </span>
+              )}
+              <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg border border-border bg-surface-2 text-primary">
+                <IconPencil size={13} />
               </span>
-            )}
-            <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg border border-border bg-surface-2 text-primary">
-              <IconPencil size={13} />
-            </span>
+            </div>
+            <div className="mt-0.5 text-[11px] text-muted">{week.rangeLabel}</div>
+          </button>
+          {/* THE FOOT OF THE BLOCK: what the squad can see of it, and the one
+              press that changes that. Draft / Published on the left so the
+              state is a word and not just the label of the button beside it. */}
+          <div className="flex items-center gap-2 border-t border-border px-4 py-2.5">
+            <StatusChip live={live} />
+            <div className="ml-auto flex min-w-0 items-center justify-end gap-2">
+              <PublishBar
+                bare
+                what="block"
+                live={live}
+                changed={blockChanged(block)}
+                busy={writing}
+                onPublish={() => publishBlock(block.id)}
+                onNotify={() => tellSquad(block.id)}
+                onUnpublish={() => unpublishBlock(block.id)}
+              />
+            </div>
           </div>
-          <div className="mt-0.5 text-[11px] text-muted">{week.rangeLabel}</div>
-        </button>
+        </div>
 
         {others.length > 0 && (
           <div className="mt-2 flex flex-col gap-2">
