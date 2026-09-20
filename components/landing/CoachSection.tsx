@@ -101,9 +101,11 @@ export default function CoachSection({ solo = false, teaser = false }: { solo?: 
               {coach.overview.label} →
             </Link>
           ) : (
+            /* Hovering lands on the section's own red — the colour the arrow
+               below it is already wearing (owner, 2026-09-20). */
             <a
               href={coach.overview.href}
-              className="tap44 mt-1 inline-flex flex-col items-center gap-1.5 px-3 py-2 text-[14px] font-medium tracking-tight text-l-text-2 transition-colors hover:text-l-text"
+              className="tap44 mt-1 inline-flex flex-col items-center gap-1.5 px-3 py-2 text-[14px] font-medium tracking-tight text-l-text-2 transition-colors hover:text-l-coach"
             >
               {coach.overview.label}
               <svg
