@@ -54,9 +54,21 @@ function saveLocal(cfg: TrainingConfig) {
   }
 }
 
-/* ── Read ── */
-export async function fetchTrainingConfig(teamId: string | null): Promise<TrainingConfig> {
-  if (!teamId || !hasSupabaseEnv()) return loadLocal();
+/* ── Read ──
+  Two doors on the same read. Everything that only DISPLAYS the vocabulary uses
+  fetchTrainingConfig and is happy with the default when the read fails — a
+  screen naming a session "UT2" is no worse off.
+
+  The Settings screen, which WRITES, must use fetchTrainingConfigResult: the
+  default coming back from a failed read is indistinguishable from a squad that
+  never customised anything, and saving it would replace a team's real
+  vocabulary with the shipped one. Same trap as the plan (see planStore.ts),
+  smaller blast radius.
+*/
+export async function fetchTrainingConfigResult(
+  teamId: string | null,
+): Promise<{ config: TrainingConfig; failed: boolean }> {
+  if (!teamId || !hasSupabaseEnv()) return { config: loadLocal(), failed: false };
   const supabase = createClient();
   const { data, error } = await supabase
     .from("varsity_team_config")
@@ -64,11 +76,18 @@ export async function fetchTrainingConfig(teamId: string | null): Promise<Traini
     .eq("team_id", teamId)
     .maybeSingle();
   if (error) {
-    // Table missing or RLS blocked — the default is a good answer, not a crash.
     console.error("fetchTrainingConfig:", error.message);
-    return defaultConfig();
+    return { config: defaultConfig(), failed: true };
   }
-  return data ? normalise((data as { config: unknown }).config) : defaultConfig();
+  // No row is NOT a failure: it means the team never changed the defaults.
+  return {
+    config: data ? normalise((data as { config: unknown }).config) : defaultConfig(),
+    failed: false,
+  };
+}
+
+export async function fetchTrainingConfig(teamId: string | null): Promise<TrainingConfig> {
+  return (await fetchTrainingConfigResult(teamId)).config;
 }
 
 /* ── Write (coach only; the database re-checks) ── */

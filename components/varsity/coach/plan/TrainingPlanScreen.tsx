@@ -179,13 +179,27 @@ export default function TrainingPlanScreen({
   const [writing, setWriting] = useState(false);
   const [failed, setFailed] = useState(false);
   const [lastSaved, setLastSaved] = useState<string | null>(null);
+  /*
+    THE PLAN NEVER ARRIVED. Not "this squad has no plan" — the read itself
+    failed, and an empty grid is a lie. Saving prunes, so one edit on a lying
+    grid would delete the real season. While this is set the screen shows what
+    happened and refuses to write anything at all.
+  */
+  const [loadFailed, setLoadFailed] = useState(false);
 
-  // Load the shared plan from the database (or localStorage fallback) on mount.
+  /*
+    Load the shared plan from the database (or localStorage fallback). Its own
+    callback rather than only an effect, so the "couldn't load" screen has
+    something to put behind Try again.
+  */
+  const [reloads, setReloads] = useState(0);
   useEffect(() => {
     let active = true;
     (async () => {
+      setLoading(true);
       const plan = await fetchPlan();
       if (!active) return;
+      setLoadFailed(!!plan.failed);
       setBlocks(plan.blocks);
       setSessions(plan.sessions);
       // What the database holds right now — the baseline every later edit is
@@ -197,7 +211,7 @@ export default function TrainingPlanScreen({
     return () => {
       active = false;
     };
-  }, []);
+  }, [reloads]);
 
   /* The team's training vocabulary, once we know which team this is. Kept
      separate from the plan load so the grid is never held up by it. */
@@ -216,12 +230,17 @@ export default function TrainingPlanScreen({
   // Write the whole plan. Returns false if it failed, so callers that must be
   // sure (Publish) can hold their notification back.
   const persist = useCallback(
-    async (next?: { blocks?: Block[]; sessions?: SessionMap }) => {
+    async (
+      next?: { blocks?: Block[]; sessions?: SessionMap },
+      opts?: { allowEmpty?: boolean },
+    ) => {
+      // Never write on top of a plan we failed to read — see loadFailed above.
+      if (loadFailed) return false;
       const b = next?.blocks ?? blocks;
       const s = next?.sessions ?? sessions;
       const snap = snapshot(b, s);
       setWriting(true);
-      const { error } = await savePlan({ blocks: b, sessions: s });
+      const { error } = await savePlan({ blocks: b, sessions: s }, opts);
       setWriting(false);
       if (error) {
         console.error("savePlan:", error);
@@ -232,7 +251,7 @@ export default function TrainingPlanScreen({
       setFailed(false);
       return true;
     },
-    [blocks, sessions],
+    [blocks, sessions, loadFailed],
   );
 
   /* Is there anything the database hasn't got yet? */
@@ -261,12 +280,16 @@ export default function TrainingPlanScreen({
     dirty: false,
     plan: { blocks: [], sessions: {} },
   });
+  const pendingBlocked = useRef(false);
   useEffect(() => {
     pending.current = { dirty, plan: { blocks, sessions } };
   }, [dirty, blocks, sessions]);
+  useEffect(() => {
+    pendingBlocked.current = loadFailed;
+  }, [loadFailed]);
   useEffect(
     () => () => {
-      if (pending.current.dirty) void savePlan(pending.current.plan);
+      if (pending.current.dirty && !pendingBlocked.current) void savePlan(pending.current.plan);
     },
     [],
   );
@@ -399,7 +422,8 @@ export default function TrainingPlanScreen({
     setSessions(nextSessions);
     setConfirm(null);
     setView(null); // land on whatever block is left — or the empty console
-    await persist({ blocks: nextBlocks, sessions: nextSessions });
+    // The one place that may legitimately leave the database with no plan.
+    await persist({ blocks: nextBlocks, sessions: nextSessions }, { allowEmpty: true });
   };
 
   // Clear every session in one week (block + other weeks stay intact).
@@ -650,6 +674,30 @@ export default function TrainingPlanScreen({
     return (
       <div className="mx-auto w-full max-w-screen-sm px-4 pt-10 text-center text-[13px] text-muted">
         Loading plan…
+      </div>
+    );
+  }
+
+  /*
+    THE PLAN DIDN'T LOAD. Deliberately NOT the empty console: an empty grid
+    here would say "you have no plan", which may be untrue, and one edit on it
+    would delete the real one (savePlan prunes). So the screen says what
+    actually happened and gives the one useful button.
+  */
+  if (loadFailed) {
+    return (
+      <div className="mx-auto w-full max-w-screen-sm px-4 pb-8 pt-4">
+        <h1 className="sr-only">Training plan</h1>
+        <div className="mt-2 rounded-2xl border border-danger-line bg-danger-tint px-5 py-10 text-center">
+          <div className="text-[14px] font-semibold text-text">Couldn&apos;t load the plan</div>
+          <p className="mx-auto mt-1 max-w-[18rem] text-[12px] text-muted">
+            Your training is safe — this screen just couldn&apos;t reach it, so it
+            won&apos;t let anything be changed until it can.
+          </p>
+          <Button size="md" onClick={() => setReloads((n) => n + 1)} className="mt-5">
+            Try again
+          </Button>
+        </div>
       </div>
     );
   }

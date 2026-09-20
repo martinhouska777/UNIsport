@@ -12,7 +12,19 @@
 import { createClient, hasSupabaseEnv } from "@/lib/supabase/client";
 import type { Block, Session, SessionMap, Category, Intensity, BoardKind } from "./coachPlan";
 
-export type Plan = { blocks: Block[]; sessions: SessionMap };
+export type Plan = {
+  blocks: Block[];
+  sessions: SessionMap;
+  /*
+    TRUE WHEN THE READ FAILED — as opposed to a squad that genuinely has no
+    plan yet. The two used to be indistinguishable: a dropped connection came
+    back as an empty plan, the builder believed it, and the next save pruned
+    every block and session the database actually held. A season, gone, from
+    one bad moment of wifi. Nothing may be written from a plan wearing this
+    flag, and the builder refuses to be edited while it is set.
+  */
+  failed?: boolean;
+};
 
 /* ── localStorage fallback (no Supabase env) ── */
 const BLOCKS_KEY = "varsityPlanBlocks";
@@ -126,9 +138,13 @@ export async function fetchPlan(): Promise<Plan> {
     supabase.from("varsity_plan_sessions").select("*"),
   ]);
   if (blocksRes.error || sessionsRes.error) {
-    // Table missing or RLS blocked — fail soft to an empty plan.
+    /*
+      Table missing, RLS blocked, or the network dropped. Still empty, so the
+      read-only screens carry on showing "no plan up" — but MARKED, so the
+      builder knows this is silence rather than an answer.
+    */
     console.error("fetchPlan:", blocksRes.error?.message ?? sessionsRes.error?.message);
-    return { blocks: [], sessions: {} };
+    return { blocks: [], sessions: {}, failed: true };
   }
   const blocks = (blocksRes.data as BlockRow[]).map(rowToBlock);
   const sessions: SessionMap = {};
@@ -137,7 +153,32 @@ export async function fetchPlan(): Promise<Plan> {
 }
 
 /* ── Save the whole shared plan (upsert what's there, delete what's gone) ── */
-export async function savePlan(plan: Plan): Promise<{ error?: string }> {
+export async function savePlan(
+  plan: Plan,
+  /*
+    `allowEmpty` — yes, I really do mean to leave the database with no plan at
+    all. Only the coach deleting their last block says this. Without it a plan
+    that is empty for any reason writes nothing and deletes nothing, because
+    "wipe the season" is never a thing an autosave should do on its own.
+  */
+  { allowEmpty = false }: { allowEmpty?: boolean } = {},
+): Promise<{ error?: string }> {
+  /*
+    NEVER WRITE BACK A PLAN THAT WAS NEVER READ. Saving prunes — anything the
+    database holds that this plan does not is deleted, which is how deleting a
+    block works. So a plan that came back empty because the READ failed would
+    delete the entire season on the next autosave. The builder already refuses
+    to be edited in that state; this is the second lock on the same door.
+  */
+  if (plan.failed) return { error: "The plan was never loaded, so nothing was saved." };
+  /*
+    An empty plan nobody asked to be empty. A read that returns no rows is not
+    always an error — row-level security answering "nothing here" looks exactly
+    like a squad with no plan — so this is the case the `failed` flag cannot
+    catch, and it is the one that costs the most. Do nothing at all.
+  */
+  const isEmpty = plan.blocks.length === 0 && Object.keys(plan.sessions).length === 0;
+  if (isEmpty && !allowEmpty) return {};
   if (!hasSupabaseEnv()) {
     saveLocal(plan);
     return {};

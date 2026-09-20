@@ -42,7 +42,7 @@ import {
   IconTrash,
 } from "@/components/icons";
 import type { Membership } from "@/lib/varsity/membership";
-import { fetchTrainingConfig, saveTrainingConfig } from "@/lib/varsity/configStore";
+import { fetchTrainingConfigResult, saveTrainingConfig } from "@/lib/varsity/configStore";
 import { applyTeamColors, cacheTeamColors, teamColorMap } from "@/lib/varsity/teamColors";
 import { fetchPlan } from "@/lib/varsity/planStore";
 import {
@@ -153,6 +153,8 @@ export default function TrainingSettingsScreen({ membership }: { membership: Mem
   const [cfg, setCfg] = useState<TrainingConfig>(defaultConfig);
   const [loading, setLoading] = useState(true);
   const [dirty, setDirty] = useState(false);
+  // The settings never arrived — see the load below.
+  const [loadFailed, setLoadFailed] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
@@ -164,9 +166,16 @@ export default function TrainingSettingsScreen({ membership }: { membership: Mem
   useEffect(() => {
     let active = true;
     (async () => {
-      const [loaded, plan] = await Promise.all([fetchTrainingConfig(teamId), fetchPlan()]);
+      const [loaded, plan] = await Promise.all([fetchTrainingConfigResult(teamId), fetchPlan()]);
       if (!active) return;
-      setCfg(loaded);
+      /*
+        A FAILED READ IS NOT "this squad uses the defaults". The two look
+        identical from here, and saving the defaults back would replace the
+        team's real vocabulary with the shipped one — so when the read failed
+        the screen says so and refuses to write (same trap as the plan).
+      */
+      setLoadFailed(loaded.failed);
+      setCfg(loaded.config);
       const counts: Record<string, number> = {};
       for (const s of Object.values(plan.sessions)) counts[s.category] = (counts[s.category] ?? 0) + 1;
       setUsage(counts);
@@ -184,6 +193,8 @@ export default function TrainingSettingsScreen({ membership }: { membership: Mem
   }, []);
 
   const save = useCallback(async () => {
+    // Never write settings on top of settings we failed to read.
+    if (loadFailed) return;
     setSaving(true);
     setError("");
     const { error: err } = await saveTrainingConfig(teamId, cfg);
@@ -198,7 +209,7 @@ export default function TrainingSettingsScreen({ membership }: { membership: Mem
     const map = teamColorMap(cfg);
     applyTeamColors(map);
     if (teamId) cacheTeamColors(teamId, map);
-  }, [teamId, cfg]);
+  }, [teamId, cfg, loadFailed]);
 
   /*
     AUTOSAVE — the same rule as the Plan and Lineup tabs: the coach's work
@@ -234,6 +245,28 @@ export default function TrainingSettingsScreen({ membership }: { membership: Mem
 
   if (loading) {
     return <p className="px-4 py-16 text-center text-sm text-muted">Loading your settings…</p>;
+  }
+
+  /*
+    Showing the shipped defaults here would be a lie that overwrites the truth:
+    this screen autosaves, so one tap would replace the squad's own vocabulary
+    with the factory one. Say what happened instead.
+  */
+  if (loadFailed) {
+    return (
+      <div className="mx-auto w-full max-w-screen-sm px-4 pb-8 pt-4">
+        <div className="mt-2 rounded-2xl border border-danger-line bg-danger-tint px-5 py-10 text-center">
+          <div className="text-[14px] font-semibold text-text">Couldn&apos;t load your settings</div>
+          <p className="mx-auto mt-1 max-w-[18rem] text-[12px] text-muted">
+            Your squad&apos;s session types and boats are safe — this screen
+            couldn&apos;t reach them, so it won&apos;t change anything until it can.
+          </p>
+          <Button size="md" onClick={() => window.location.reload()} className="mt-5">
+            Try again
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   return (
