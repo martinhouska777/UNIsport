@@ -22,7 +22,7 @@ import TeamWorkouts from "@/components/varsity/team/TeamWorkouts";
 import TeamWeekStats, { useTeamWeek } from "@/components/varsity/team/TeamWeekStats";
 import TeammateCalendarWindow from "@/components/varsity/team/TeammateCalendarWindow";
 import { useUnits } from "@/components/useUnits";
-import { formatDistance, formatWeight } from "@/lib/varsity/units";
+import { formatWeight } from "@/lib/varsity/units";
 import { roster, rosterById, sideMeta, COX_COLOR, COX_INK, type Athlete } from "@/lib/varsity/coachLineup";
 import { teamProfile } from "@/lib/varsity/teamProfiles";
 import { statusOptions, prPieces, type StatusTone } from "@/lib/varsity/athleteProfile";
@@ -208,7 +208,6 @@ function RosterRow({
   href,
   tour,
   action,
-  week,
 }: {
   a: Athlete;
   onOpen: () => void;
@@ -216,12 +215,6 @@ function RosterRow({
   tour?: string;
   /* The coach's note button, beside the side letter on the right (see rowAction). */
   action?: React.ReactNode;
-  /* THIS PERSON'S WEEK, under their name: "16.0 km · 2 outings". The squad's
-     total is at the top of the screen and this is each person's share of it —
-     the same numbers, so a row can never disagree with the card above it. A
-     rower who was in no boat gets no line rather than a zero: they may have
-     been on the erg, and this counts boats. */
-  week?: string | null;
 }) {
   const cls =
     "relative flex w-full items-center gap-3 rounded-xl border border-border bg-surface px-3 py-2.5 text-left active:bg-surface-2";
@@ -244,7 +237,6 @@ function RosterRow({
         </span>
         <span className="pointer-events-none relative min-w-0 flex-1">
           <span className="block truncate text-[13px] font-medium text-text">{a.name}</span>
-          {week && <span className="block truncate text-[11px] text-muted">{week}</span>}
         </span>
         {/* THE PENCIL, THE SIDE AND THE ARROW, ONE CLUSTER ON THE RIGHT
             (owner, 2026-09-17 "put the note closer to the P or S", then
@@ -285,7 +277,6 @@ function RosterRow({
       </span>
       <span className="min-w-0 flex-1">
         <span className="block truncate text-[13px] font-medium text-text">{a.name}</span>
-        {week && <span className="block truncate text-[11px] text-muted">{week}</span>}
       </span>
       {/* The side letter right beside the arrow, the same cluster as the coach's
           row above — no padded column between them (owner, 2026-09-18). */}
@@ -350,14 +341,11 @@ export default function TeamScreen({
     else a coach and a rower read the same numbers, and this is the exception
     the owner asked for: what the whole squad covered is the coach's business.
   */
+  /* ONE NUMBER FOR THE SQUAD, NOT ONE PER NAME (owner, 2026-09-19). Every
+     roster row used to carry that person's own "16.0 km · 2 outings" under
+     their name. What a coach asked for is the average, once, at the top —
+     the individual's week is a tap away on their own screen. */
   const week = useTeamWeek(inConsole);
-  const { units } = useUnits();
-  /* "16.0 km · 2 outings" — or nothing at all for somebody who was in no boat. */
-  const weekLine = (a: Athlete): string | null => {
-    const p = week.byId[a.id];
-    if (!p) return null;
-    return `${formatDistance(p.metres, units.distance)} · ${p.outings} ${p.outings === 1 ? "outing" : "outings"}`;
-  };
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState<string | null>(null);
 
@@ -430,10 +418,21 @@ export default function TeamScreen({
             </div>
           )}
 
+          {/* THE LIST SAYS WHAT IT IS (owner, 2026-09-19: "above the search
+              please add a roster or something similar"). In the console the
+              screen opens on the week's card, and the search bubble that
+              followed it gave no clue that what came next was the squad. */}
+          <div className="mt-4 mb-2 flex items-baseline justify-between px-0.5">
+            <h2 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">Roster</h2>
+            <span className="font-mono text-[10px] text-muted">
+              {rowers.length + coxes.length}
+            </span>
+          </div>
+
           {/* SEARCH — a fully round bubble. It was a dark `bg-well` hole
               (2026-09-14); the owner turned it WHITE on 2026-09-16 ("it's
               gray, I think it should be white"), same as the Workouts search. */}
-          <div className={`${inConsole || !only ? "mt-3 " : ""}flex items-center gap-2 rounded-full border border-border bg-surface px-4 py-2.5`}>
+          <div className="flex items-center gap-2 rounded-full border border-border bg-surface px-4 py-2.5">
             <span className="text-muted">
               <IconSearch size={16} />
             </span>
@@ -454,7 +453,6 @@ export default function TeamScreen({
                 onOpen={() => setOpen(a.id)}
                 href={athleteHref?.(a) ?? undefined}
                 action={rowAction?.(a)}
-                week={weekLine(a)}
               />
             ))}
             {/* Coxswains, under their own heading — only when there are any to show. */}
@@ -470,7 +468,6 @@ export default function TeamScreen({
                 onOpen={() => setOpen(a.id)}
                 href={athleteHref?.(a) ?? undefined}
                 action={rowAction?.(a)}
-                week={weekLine(a)}
               />
             ))}
             {shownCount === 0 && (

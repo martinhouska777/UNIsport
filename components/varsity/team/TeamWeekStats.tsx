@@ -154,19 +154,16 @@ export default function TeamWeekStats({ week }: { week: TeamWeek }) {
           />
           <Total value={formatDuration(averageMinutes(data))} label="TIME EACH" />
         </div>
-        <div className="mt-2.5 border-t border-border pt-2.5 text-[12px] text-muted">
-          {loading
-            ? "Adding up the boats…"
-            : data.people.length
-              ? `${data.people.length} ${data.people.length === 1 ? "person" : "people"} out in ${data.boats} ${data.boats === 1 ? "boat" : "boats"}`
-              : "No kilometres written down for this week yet — they come from each crew's SESSION tab."}
-        </div>
-        {/* Said plainly, because the total is only as true as the boats it came
-            from — a coach reading a thin week deserves to know why. */}
-        {!loading && data.unfilled > 0 && (
-          <div className="mt-1 text-[12px] text-warn">
-            {data.unfilled} {data.unfilled === 1 ? "boat has" : "boats have"} no kilometres written
-            on {data.unfilled === 1 ? "it" : "them"} yet.
+        {/* How many people the average is over — never the average alone.
+            The empty-week explanation and the "N boats have no kilometres
+            written on them yet" warning were both cut (owner, 2026-09-19):
+            a coach reading their own squad knows where the numbers come
+            from, and the screen was explaining itself twice. */}
+        {(loading || data.people.length > 0) && (
+          <div className="mt-2.5 border-t border-border pt-2.5 text-[12px] text-muted">
+            {loading
+              ? "Adding up the boats…"
+              : `${data.people.length} ${data.people.length === 1 ? "person" : "people"} out in ${data.boats} ${data.boats === 1 ? "boat" : "boats"}`}
           </div>
         )}
       </div>
