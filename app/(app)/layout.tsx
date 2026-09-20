@@ -51,7 +51,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   // Never `null` while deciding — see components/LoadingGate.tsx.
   if (!ready || !loggedIn || !studentReady) {
     return (
-      <ThemeProvider tokens={theme} paintRoot className="bg-background">
+      /*
+        The SAME light variant the real shell gets, two lines down. Without it
+        the waiting screen was always the dark set, so everyone in light mode —
+        which is most people — opened the app on a dark screen that turned
+        light the moment the session came back (audit, 2026-09-19).
+      */
+      <ThemeProvider tokens={theme} light={uni?.themeLight} paintRoot className="bg-background">
         <LoadingGate />
       </ThemeProvider>
     );
