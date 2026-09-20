@@ -39,6 +39,11 @@ const STORAGE_KEY = "uniThemeMode";
 
 export function ThemeModeProvider({ children }: { children: ReactNode }) {
   const [mode, setModeState] = useState<ThemeMode>("light");
+  /*
+    Has the saved choice been read yet? Only used to know when the themed
+    content on screen is finally the RIGHT one — see the reveal below.
+  */
+  const [settled, setSettled] = useState(false);
 
   // Load the saved preference once on the client (default stays "light").
   useEffect(() => {
@@ -51,10 +56,26 @@ export function ThemeModeProvider({ children }: { children: ReactNode }) {
     } catch {
       /* ignore */
     }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSettled(true);
   }, []);
+
+  /*
+    LET THE PAGE SHOW. The script at the top of <body> (app/layout.tsx) marked
+    the document while a dark-mode visitor was still looking at the light HTML
+    the server had to guess at. By the time this runs the real theme has been
+    rendered, so the mark comes off and what appears is already dark. Depends
+    on `mode` as well as `settled`, so it runs AFTER the dark render commits.
+  */
+  useEffect(() => {
+    if (!settled) return;
+    delete document.documentElement.dataset.themePending;
+  }, [settled, mode]);
 
   const setMode = useCallback((m: ThemeMode) => {
     setModeState(m);
+    // Never leave the hold-the-paint mark behind on a manual switch.
+    delete document.documentElement.dataset.themePending;
     try {
       window.localStorage.setItem(STORAGE_KEY, m);
     } catch {

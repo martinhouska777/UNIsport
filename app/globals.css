@@ -1198,6 +1198,40 @@ html:has(.l-grid) {
 }
 
 /*
+  THE DARK-MODE FLASH.
+
+  Light is the main look: everyone starts light, and dark is something you
+  switch ON. That choice lives in the browser, so the SERVER cannot know it —
+  it builds the light page, the browser paints it, and only then does the app
+  read the preference and repaint. Someone on dark opened the app to a full
+  screen of light every single time.
+
+  Reading the choice during the first render does NOT work: React compares what
+  it rendered against the HTML it was given, says "this won't be patched up"
+  and leaves the page light for good. (Tried, reverted, 2026-09-20.)
+
+  So the page is not repainted — it is held. A tiny script at the top of
+  <body> (app/layout.tsx) writes data-theme-pending="dark" when dark is the
+  saved choice, and these two rules put the dark ground down immediately and
+  hold the themed content back for the one frame it takes the app to say the
+  same thing. components/ThemeMode.tsx clears the attribute the moment the
+  real theme is on screen, and the script clears it itself after a moment
+  whatever happens, so nothing can stay hidden.
+
+  It costs a dark-mode visitor a few milliseconds and costs a light-mode one
+  nothing at all: `.app-face` is the themed wrapper, and Zone 1 — the landing,
+  the legal pages, login — has no provider and therefore never has one, so the
+  whole thing is invisible there.
+*/
+html[data-theme-pending="dark"]:has(.app-face) {
+  background: #090b0e; /* the near-black shared with viewport themeColor */
+  color-scheme: dark;
+}
+html[data-theme-pending="dark"] .app-face {
+  visibility: hidden;
+}
+
+/*
   <body> deliberately paints NOTHING. The themed color goes on <html> (set by
   ThemeProvider's paintRoot), and body would otherwise cover it with the LIGHT
   :root default — body sits outside the themed wrapper, so it never receives the

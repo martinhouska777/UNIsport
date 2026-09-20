@@ -75,6 +75,25 @@ export default function RootLayout({
       className={`${geistMono.variable} ${jakarta.variable} ${playfair.variable} ${instrumentSerif.variable} h-full antialiased`}
     >
       <body className="min-h-full">
+        {/*
+          HOLD THE PAINT FOR A DARK-MODE VISITOR. Runs before anything below it
+          is drawn. The saved choice lives in the browser, so the HTML we just
+          sent is the light one; rather than let it flash and correct itself,
+          this puts the dark ground down at once and marks the themed content
+          as not-ready. components/ThemeMode.tsx clears the mark as soon as the
+          real theme is on screen, and the timeout clears it regardless, so a
+          failure here can never leave anyone looking at a blank page. The
+          rules it drives are in app/globals.css; the landing has no themed
+          wrapper, so none of this touches it.
+        */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              'try{if(localStorage.getItem("uniThemeMode")==="dark"){' +
+              'var e=document.documentElement;e.dataset.themePending="dark";' +
+              'setTimeout(function(){delete e.dataset.themePending},1500)}}catch(e){}',
+          }}
+        />
         <ThemeModeProvider>
           <AppStateProvider>{children}</AppStateProvider>
         </ThemeModeProvider>
