@@ -287,10 +287,13 @@ function EditIdentitySheet({
   Asked when the status stops being Sick / Injured / Away: "You were sick
   10–14 Sep, 5 days. Log it in your calendar?" One tap logs every one of those
   days with that reason; Not now leaves the calendar as it is. Days you trained
-  on during the spell are left out — only the empty days are offered — and so
-  is a day already in the calendar (the first one, marked when the status was
-  picked). The grey explainer line went on 2026-09-14 (owner): a box to write
-  what goes in the calendar took its place, filled with the first day's note.
+  on during the spell are left out — only the empty days are offered.
+
+  THE ONE PLACE ANYTHING IS ASKED (owner, 2026-09-19). Picking the status says
+  nothing and asks nothing; at the END this sheet asks what it was and counts
+  the days. So the days the spell marked on its own on the way through are
+  offered here too — they are the count, and this is where they get their
+  words — while a day you had already written about keeps what it says.
 */
 type Spell = {
   reason: DayOutReason;
@@ -298,7 +301,7 @@ type Spell = {
   to: string;
   /** The days in from…to with no training logged — the only ones to mark. */
   days: string[];
-  /** What was written when the status was picked — the box starts with it. */
+  /** Anything already written about those days — the box starts with it. */
   note: string;
 };
 
@@ -348,7 +351,7 @@ function CalendarNote({ value, onChange }: { value: string; onChange: (v: string
       onChange={(e) => onChange(e.target.value)}
       maxLength={200}
       rows={3}
-      placeholder="Write what to put in your calendar (optional)"
+      placeholder="What was it? (optional)"
       aria-label="Note for your calendar"
       // 16px so a phone doesn't zoom in on focus.
       className="mt-3 w-full resize-none rounded-xl border border-border bg-surface-2 px-3 py-2.5 text-base leading-snug text-text outline-none placeholder:text-muted focus:border-primary"
@@ -359,9 +362,12 @@ function CalendarNote({ value, onChange }: { value: string; onChange: (v: string
 /* ─────────────────────────  status picker sheet  ───────────────────────── */
 /*
   Just the four names — the grey line under each came off on 2026-09-14
-  (owner). Active saves at once. Sick, Injured or Away opens a box to write
-  what happened, and Save puts TODAY in the calendar with that reason and the
-  note (unless today already has training on it — only an empty day is out).
+  (owner). EVERY status saves on the tap, with nothing to type (owner,
+  2026-09-19: "I don't want to type it yet"). Picking Sick / Injured / Away
+  sets the status, starts the count and quietly puts TODAY in the calendar with
+  that reason; the questions — what it was, what goes in the calendar — are
+  asked at the END, when the status goes back to Active, which is the only
+  moment you know the answer. See the "log the spell?" sheet above.
 */
 function StatusSheet({
   current,
@@ -369,12 +375,10 @@ function StatusSheet({
   onClose,
 }: {
   current: string;
-  onSave: (patch: Partial<VarsityAthleteProfile>, note: string) => void;
+  onSave: (patch: Partial<VarsityAthleteProfile>) => void;
   onClose: () => void;
 }) {
-  const [picked, setPicked] = useState<string | null>(null);
-  const [note, setNote] = useState("");
-  const shown = picked ?? current;
+  const shown = current;
   return (
     <Sheet title="Current status" onClose={onClose}>
       <div className="flex flex-col gap-2">
@@ -385,11 +389,7 @@ function StatusSheet({
               key={s.title}
               type="button"
               onClick={() => {
-                if (statusReason(s.title) && s.title !== current) {
-                  setPicked(s.title);
-                  return;
-                }
-                onSave({ status: s.title }, "");
+                onSave({ status: s.title });
                 onClose();
               }}
               className={`flex items-center gap-3 rounded-2xl border px-3.5 py-3 text-left ${
@@ -407,22 +407,6 @@ function StatusSheet({
           );
         })}
       </div>
-      {picked && (
-        <>
-          <CalendarNote value={note} onChange={setNote} />
-          <Button
-            size="lg"
-            full
-            className="mt-3"
-            onClick={() => {
-              onSave({ status: picked }, note);
-              onClose();
-            }}
-          >
-            <IconCheck size={16} /> Save
-          </Button>
-        </>
-      )}
     </Sheet>
   );
 }
@@ -855,10 +839,12 @@ export default function ProfileScreen() {
 
   /*
     THE STATUS, WITH DATES (lib/varsity/daysOut.ts). Switching to Sick, Injured
-    or Away notes the day it started. Switching away from one of them — back to
-    Active, or on to another — asks whether to put the days since into the
-    calendar, so a week in bed is on record as a week in bed. Saying no still
-    changes the status; the days are just not logged.
+    or Away notes the day it started and asks NOTHING. Switching away from one
+    of them — back to Active, or on to another — is the END of the spell, and
+    that is where the question belongs (owner, 2026-09-19): how many days it
+    was, what it was, and whether to put them in the calendar, so a week in bed
+    is on record as a week in bed. Saying no still changes the status; the days
+    are just not logged.
   */
   const [spell, setSpell] = useState<Spell | null>(null);
   // Days written onto the calendar record, merged onto the LATEST profile (the
@@ -874,7 +860,7 @@ export default function ProfileScreen() {
       return next;
     });
   };
-  const changeStatus = (patch: Partial<VarsityAthleteProfile>, note = "") => {
+  const changeStatus = (patch: Partial<VarsityAthleteProfile>) => {
     if (!profile || patch.status === undefined || patch.status === profile.status) return;
     const today = toISO(now);
     const was = statusReason(profile.status);
@@ -890,30 +876,42 @@ export default function ProfileScreen() {
       const { from, to } = spellDays(profile.statusSince, today);
       void fetchLogsInRange(userId ?? "", from, to).then((rows) => {
         const trained = new Set(rows.filter((l) => l.category !== "off").map((l) => l.logDate));
-        // A day already in the calendar isn't asked about again.
-        const days = isoDays(from, to).filter((d) => !trained.has(d) && !marked[d]);
+        /*
+          A day this spell marked by itself (same reason, nothing written on
+          it) is still offered — it is part of the count and nobody has said
+          anything about it yet. A day you wrote about, or marked some other
+          way, keeps what it says and is not asked about again.
+        */
+        const days = isoDays(from, to).filter((d) => {
+          if (trained.has(d)) return false;
+          const m = marked[d];
+          return !m || (m.reason === was && !m.note);
+        });
         const firstNote = marked[profile.statusSince ?? ""]?.note ?? "";
         if (days.length > 0) setSpell({ reason: was, from, to, days, note: firstNote });
       });
     }
     patchProfile({ status: patch.status, statusSince: becomes ? today : null });
     /*
-      PICKING Sick / Injured / Away LOGS TODAY (owner, 2026-09-14: "when I log
-      injured or away, it doesn't log"). Today goes in the calendar with the
-      reason and the note, unless today already has training, which no day out
-      can have.
+      PICKING Sick / Injured / Away LOGS TODAY, SILENTLY (owner, 2026-09-14:
+      "when I log injured or away, it doesn't log", so the day still goes in at
+      once; owner, 2026-09-19: with nothing to type and nothing to answer).
+      Today goes in the calendar with the reason and no words, unless today
+      already has training, which no day out can have. The words come at the
+      end, from the sheet above, which offers this day again.
     */
     if (becomes) {
-      const text = note.trim();
       void fetchLogsInRange(userId ?? "", today, today).then((rows) => {
         if (rows.some((l) => l.category !== "off")) return;
-        markDays([today], { reason: becomes, ...(text ? { note: text } : {}) }, false);
+        markDays([today], { reason: becomes }, false);
       });
     }
   };
+  // The offered days are either empty or this spell's own wordless marks, so
+  // what the sheet says is written straight over them (keep = false).
   const logSpell = (s: Spell, note: string) => {
     const text = note.trim();
-    markDays(s.days, { reason: s.reason, ...(text ? { note: text } : {}) }, true);
+    markDays(s.days, { reason: s.reason, ...(text ? { note: text } : {}) }, false);
   };
 
   /*
