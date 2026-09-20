@@ -17,6 +17,20 @@ const localDate = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pa
 const localTime = (d: Date) => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
 const todayIso = () => localDate(new Date());
 
+/*
+  The time the sheet opens on. 17:00 while that is still ahead — most sessions
+  are after lectures — and otherwise the next half hour, so the form never opens
+  on a time that has already gone and then refuses to send it.
+*/
+const defaultStart = (): Date => {
+  const next = new Date();
+  next.setSeconds(0, 0);
+  next.setMinutes(Math.ceil((next.getMinutes() + 1) / 30) * 30);
+  const five = new Date(next);
+  five.setHours(17, 0, 0, 0);
+  return next < five ? five : next;
+};
+
 // When `existing` is given, the sheet reschedules that plan instead of creating one.
 export type PlanEdit = {
   planId: string;
@@ -39,10 +53,11 @@ export default function PlanSessionSheet({
   onCreated: () => void;
 }) {
   const existingDate = existing ? new Date(existing.scheduledAt) : null;
+  const opensAt = existingDate ?? defaultStart();
   const [activity, setActivity] = useState(existing?.activity ?? "gym");
   const [place, setPlace] = useState(existing?.place ?? "");
-  const [date, setDate] = useState(existingDate ? localDate(existingDate) : todayIso());
-  const [time, setTime] = useState(existingDate ? localTime(existingDate) : "17:00");
+  const [date, setDate] = useState(localDate(opensAt));
+  const [time, setTime] = useState(localTime(opensAt));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -54,10 +69,25 @@ export default function PlanSessionSheet({
 
   const propose = async () => {
     if (!date || !time || busy) return;
+    /*
+      Nothing may be proposed for a moment that has already passed. The date box
+      has a `min`, but it only covers whole DAYS: at six in the evening, nine
+      this morning was still accepted, and the other person got an invitation to
+      a session that was over before it arrived.
+    */
+    const when = new Date(`${date}T${time}`);
+    if (Number.isNaN(when.getTime())) {
+      setError("That date and time didn't make sense — try again.");
+      return;
+    }
+    if (when.getTime() <= Date.now()) {
+      setError("That time has already gone. Pick a later one.");
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
-      const scheduledAt = new Date(`${date}T${time}`).toISOString();
+      const scheduledAt = when.toISOString();
       if (existing) {
         await reschedulePlan(existing.planId, { activity, place, scheduledAt }, conversationId);
       } else {
