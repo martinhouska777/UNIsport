@@ -19,6 +19,7 @@ import {
   categoryMeta,
   intensityMeta,
   parseDate,
+  parseSessionKey,
   sessionKey,
   sessionLabel,
   sessionPieces,
@@ -28,6 +29,7 @@ import {
   type Intensity,
   type Period,
   type Session,
+  type SessionMap,
   type Block,
 } from "./coachPlan";
 import type {
@@ -143,6 +145,29 @@ export function prescribedForMonth(plan: Plan, year: number, month: number): Rec
         if (sessions.length) out[iso] = sessions;
       }
     }
+  }
+  return out;
+}
+
+/*
+  ONLY THE SESSIONS THE SQUAD HAS ACTUALLY BEEN TOLD ABOUT — every session that
+  falls inside a PUBLISHED block, keyed exactly as plan.sessions is.
+
+  A draft block is the coach thinking out loud: nobody can see it on Home, the
+  Log tab or the calendar. Statistics counted it anyway, so a fortnight the
+  coach was still sketching turned up on the athlete's own screen as sessions
+  they had "missed" (audit, 2026-09-19).
+*/
+export function publishedSessions(plan: Plan): SessionMap {
+  const out: SessionMap = {};
+  for (const [key, session] of Object.entries(plan.sessions)) {
+    const parsed = parseSessionKey(key);
+    if (!parsed) continue;
+    const iso = toISO(parsed.date);
+    const told = plan.blocks.some(
+      (b) => b.status === "published" && iso >= b.start && iso <= b.end,
+    );
+    if (told) out[key] = session;
   }
   return out;
 }

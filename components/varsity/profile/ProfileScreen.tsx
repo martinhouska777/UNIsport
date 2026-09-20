@@ -79,6 +79,7 @@ import { Toggle } from "@/components/onboarding/controls";
 import ClaimSeatSheet from "@/components/varsity/ClaimSeatSheet";
 import { sideMeta, COX_COLOR, type Side } from "@/lib/varsity/coachLineup";
 import { fetchPlan } from "@/lib/varsity/planStore";
+import { publishedSessions } from "@/lib/varsity/athleteHome";
 import {
   isoDays,
   reasonMeta,
@@ -891,7 +892,9 @@ export default function ProfileScreen() {
   */
   useEffect(() => {
     let active = true;
-    fetchPlan().then((p) => active && setPlanSessions(p.sessions));
+    // PUBLISHED blocks only — a draft is the coach thinking out loud and the
+    // athlete cannot see it anywhere else either (lib/varsity/athleteHome.ts).
+    fetchPlan().then((p) => active && setPlanSessions(publishedSessions(p)));
     return () => {
       active = false;
     };

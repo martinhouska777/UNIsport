@@ -42,6 +42,7 @@ import {
 import { rowingReport, reportIsEmpty, type StatTone } from "@/lib/varsity/rowingStats";
 import { fetchLogsInRange, type LogEntry } from "@/lib/varsity/logStore";
 import { fetchPlan } from "@/lib/varsity/planStore";
+import { publishedSessions } from "@/lib/varsity/athleteHome";
 import type { SessionMap } from "@/lib/varsity/coachPlan";
 
 const toneClass: Record<StatTone, string> = {
@@ -106,7 +107,9 @@ export default function AthleteStats({
   useEffect(() => {
     let active = true;
     fetchPlan().then((p) => {
-      if (active) setPlan(p.sessions ?? {});
+      // The same published-only gate the athlete's own screen uses, so the two
+      // screens never disagree about what was missed.
+      if (active) setPlan(publishedSessions(p));
     });
     return () => {
       active = false;

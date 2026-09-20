@@ -74,10 +74,21 @@ const isRowed = (l: LogEntry) => rowingCategories.has(l.category ?? "");
  * done when the athlete logged against that slot — which is exactly what the
  * calendar's tick means, so the two screens can never disagree. Rest slots are
  * not sessions and are left out of all four numbers.
+ *
+ * NOTHING THAT HASN'T HAPPENED YET IS COUNTED. A window nearly always runs to
+ * the end of the current fortnight, so the sessions still to come sat in
+ * "planned" and, not being logged, in "missed" — an athlete on a perfect
+ * fortnight opened Statistics on Monday and was told they had missed nine
+ * (audit, 2026-09-19). A slot only counts once it is behind us: any day before
+ * today, plus today's own slots the moment they are logged, so training this
+ * morning still shows up immediately.
  */
 function planCounts(logs: LogEntry[], plan: SessionMap, span: Span) {
   const start = asDate(span.startIso);
   const end = asDate(span.endIso);
+  const todayIso = toIso(new Date());
+
+  const loggedKeys = new Set(logs.filter((l) => l.dayKey && isTraining(l)).map((l) => l.dayKey!));
 
   const planned: string[] = [];
   for (const [key, session] of Object.entries(plan)) {
@@ -85,10 +96,12 @@ function planCounts(logs: LogEntry[], plan: SessionMap, span: Span) {
     const parsed = parseSessionKey(key);
     if (!parsed) continue;
     if (parsed.date < start || parsed.date > end) continue;
+    const iso = toIso(parsed.date);
+    if (iso > todayIso) continue; // still ahead — neither done nor missed
+    if (iso === todayIso && !loggedKeys.has(key)) continue; // the day isn't over
     planned.push(key);
   }
 
-  const loggedKeys = new Set(logs.filter((l) => l.dayKey && isTraining(l)).map((l) => l.dayKey!));
   const done = planned.filter((k) => loggedKeys.has(k)).length;
   const extra = logs.filter((l) => isTraining(l) && !l.dayKey).length;
 
