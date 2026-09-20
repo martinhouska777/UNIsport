@@ -695,7 +695,7 @@ function BoatSheet({
           inputMode="numeric"
           aria-label="Other number of seats"
           placeholder="…"
-          className="h-11 w-14 rounded-xl border border-border bg-surface-2 text-center text-base text-[14px] text-text outline-none focus:border-primary placeholder:text-muted"
+          className="h-11 w-14 rounded-xl border border-border bg-surface-2 text-center text-base text-text outline-none focus:border-primary placeholder:text-muted"
         />
       </div>
 
@@ -753,7 +753,7 @@ function LibrarySheet({
     <Sheet title={zone ? `${type.label} · ${zone.label}` : type.label} onClose={onClose}>
       <div className="space-y-2">
         {list.map((w, i) => (
-          <div key={`${i}-${w}`} className="flex items-center gap-1.5">
+          <div key={i} className="flex items-center gap-1.5">
             <input
               value={w}
               onChange={(e) => edit(i, e.target.value)}

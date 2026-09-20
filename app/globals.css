@@ -1194,7 +1194,7 @@ html {
    document itself is dark wherever the landing is. */
 html:has(.l-grid) {
   background: var(--color-l-bg);
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 /*

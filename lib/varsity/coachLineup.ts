@@ -312,6 +312,16 @@ export const COX_LABEL = "COX";
 */
 export const defaultBoatName = (badge: string) => `New ${badge}`;
 
+/*
+  Is this name still the one a new boat is born with? Compared loosely on the
+  minus: the builder names a boat from the kind's SYMBOL ("New 4−", a real minus
+  sign) but everything else asks with its KEY ("4-", a hyphen), so a coxless
+  four or a pair that was never renamed used to count as named — and the seat
+  race sheet printed "New 4−" where the stroke's surname belonged.
+*/
+export const isDefaultBoatName = (name: string | null | undefined, badge: string) =>
+  !name || name.replace(/−/g, "-") === defaultBoatName(badge.replace(/−/g, "-"));
+
 // Build the empty seat list for a rigging — bow (1) first, stroke last.
 export function makeSeats(rowers: number): SeatSlot[] {
   return Array.from({ length: rowers }, (_, i) => ({ label: seatLabel(i), athleteId: null }));

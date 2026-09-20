@@ -77,8 +77,10 @@ export function kgToUnit(kg: number, unit: WeightUnit): number {
 /* ── Time, which has no preference to respect — 195 → "3h 15m" ── */
 export function formatDuration(minutes: number): string {
   if (!minutes) return "0m";
-  const h = Math.floor(minutes / 60);
-  const m = Math.round(minutes % 60);
+  // Round the TOTAL first: rounding the remainder alone turned 119.7 into "1h 60m".
+  const total = Math.round(minutes);
+  const h = Math.floor(total / 60);
+  const m = total % 60;
   if (!h) return `${m}m`;
   return m ? `${h}h ${m}m` : `${h}h`;
 }

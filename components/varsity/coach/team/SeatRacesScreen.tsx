@@ -20,7 +20,7 @@ import {
 } from "@/components/icons";
 import {
   COX_COLOR,
-  defaultBoatName,
+  isDefaultBoatName,
   rosterById,
   sideMeta,
   type Boat,
@@ -62,7 +62,7 @@ const secs = (n: number) => `${n.toFixed(1)} s`;
 const fromLineup = (b: Boat): RaceBoat => {
   const seats = b.seats.map((s) => s.athleteId);
   const coxId = b.hasCox ? b.coxId : null;
-  const named = b.name && b.name !== defaultBoatName(b.badge) ? b.name : "";
+  const named = !isDefaultBoatName(b.name, b.badge) ? b.name : "";
   const stroke = [...seats].reverse().find(Boolean) ?? null;
   return {
     name:

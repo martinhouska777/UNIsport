@@ -13,7 +13,7 @@
 
 import type { CSSProperties } from "react";
 
-import { defaultBoatName, type Boat, type Side } from "./coachLineup";
+import { isDefaultBoatName, type Boat, type Side } from "./coachLineup";
 
 export type SessionKind = "ut2" | "ut1" | "hard" | "weights" | "flex" | "race" | "off";
 
@@ -296,8 +296,8 @@ export const dockTime = (l: Lineup): string | null =>
 */
 export function shellName(l: Lineup): string | null {
   const named = l.name?.trim();
-  if (!named || named === defaultBoatName(l.badge ?? "")) return null;
-  return named;
+  if (isDefaultBoatName(named, l.badge ?? "")) return null;
+  return named ?? null;
 }
 
 /** "Maya Lindqvist" → "Lindqvist". A crew is known by a surname, not a full name. */

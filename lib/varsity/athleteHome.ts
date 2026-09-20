@@ -218,7 +218,11 @@ function statusOf(
   iso: string,
   todayIso: string,
   logsByKey: Record<string, LogEntry>,
+  category?: string,
 ): { status: SessionStatus; log?: LoggedSummary } {
+  // A rest day is nothing to miss and nothing to log: it used to turn red
+  // ("MISSED") the day after, and grow a Log button on the day.
+  if (category === "off") return { status: "upcoming" };
   const entry = logsByKey[dayKey];
   if (entry) {
     // The figures, then how it felt: "75 min · 18,000 m · Hard".
@@ -310,7 +314,7 @@ export function buildAthleteHome(
               kind: kindOf(s),
               note: s.note || undefined,
               dayKey,
-              ...statusOf(dayKey, iso, todayIso, logsByKey),
+              ...statusOf(dayKey, iso, todayIso, logsByKey, s.category),
             },
           ];
         }),
@@ -335,7 +339,7 @@ export function buildAthleteHome(
             dayKey,
             iso: todayIso,
             location: s.location ?? "",
-            ...statusOf(dayKey, todayIso, todayIso, logsByKey),
+            ...statusOf(dayKey, todayIso, todayIso, logsByKey, s.category),
             kind: kindOf(s),
             // Just the workout when the coach wrote one — no "Water · UT1" line
             // under it; the card's colour already says the kind (owner,

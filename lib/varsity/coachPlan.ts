@@ -398,13 +398,17 @@ export function buildWeeks(block: Block, today = new Date()): WeekRow[] {
 export function blockRangeLabel(block: Block): string {
   const s = parseDate(block.start);
   const e = parseDate(block.end);
-  const weeks = Math.ceil((e.getTime() - s.getTime()) / (7 * 864e5)) || 1;
-  return `${MO[s.getMonth()]} ${s.getDate()} – ${MO[e.getMonth()]} ${e.getDate()}, ${e.getFullYear()} · ${weeks} weeks`;
+  // The same Mon–Sun weeks the chips draw: a Wed→Tue block is two of them, not
+  // one, so counting elapsed days here used to disagree with the row above it.
+  const weeks = buildWeeks(block).length || 1;
+  return `${MO[s.getMonth()]} ${s.getDate()} – ${MO[e.getMonth()]} ${e.getDate()}, ${e.getFullYear()} · ${weeks} ${weeks === 1 ? "week" : "weeks"}`;
 }
 
-// Days until the race (or null) — for the block's countdown.
+// Days until the race — for the block's countdown. Null with no race date, and
+// null once the race is over: "0 days" for ever was a countdown to nothing.
 export function daysToRace(block: Block, today = new Date()): number | null {
   if (!block.raceDate) return null;
   const ms = parseDate(block.raceDate).getTime() - new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
-  return Math.max(0, Math.round(ms / 864e5));
+  const days = Math.round(ms / 864e5);
+  return days < 0 ? null : days;
 }

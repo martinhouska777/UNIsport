@@ -12,7 +12,7 @@
 // So the cache now holds only Next's HASHED build assets and the icons. A
 // hashed file is safe to keep forever (change the file, change the name), and
 // nothing else is worth a blank app. Pages always come from the network.
-const CACHE = "unisport-v2";
+const CACHE = "unisport-v3"; // bumped 2026-09-19: the icons under /icons/ changed and were cached forever
 
 /* Same-origin, and only the two kinds of file that are safe to keep. */
 function cacheable(url) {

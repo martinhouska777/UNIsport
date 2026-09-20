@@ -402,7 +402,7 @@ export default function CrewVideoStrip({ dayKey, boat }: { dayKey: string; boat:
           onChange={(e) => setLabel(e.target.value)}
           aria-label="Video label"
           placeholder="Label — start, 20 stroke… (optional)"
-          className="min-w-0 flex-1 rounded-lg border border-border bg-surface-2 px-2.5 py-1.5 text-base text-[12px] text-text outline-none placeholder:italic placeholder:text-text-3"
+          className="min-w-0 flex-1 rounded-lg border border-border bg-surface-2 px-2.5 py-1.5 text-base text-text outline-none placeholder:italic placeholder:text-text-3"
         />
         {/* One button, two jobs. Before Drive is connected it signs you in —
             which has to be a real tap, because a browser only lets a popup
@@ -433,7 +433,7 @@ export default function CrewVideoStrip({ dayKey, boat }: { dayKey: string; boat:
               aria-label="File name"
               /* text-base: anything smaller and a phone zooms the page in when
                  the field takes focus. */
-              className="min-w-0 flex-1 bg-transparent text-base text-[12px] text-text outline-none"
+              className="min-w-0 flex-1 bg-transparent text-base text-text outline-none"
             />
             <span className="flex-shrink-0 text-[11px] text-muted">.{ext}</span>
           </div>

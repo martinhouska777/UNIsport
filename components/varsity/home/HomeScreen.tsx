@@ -741,7 +741,7 @@ function SessionCard({
         same editor to change them — EXACTLY this session's
         (/varsity/log?day=…&open=…), not the tab's front page.
       */}
-      {(s.status === "done" || loggable(s.iso)) && (
+      {s.kind !== "off" && (s.status === "done" || loggable(s.iso)) && (
         <Link
           href={`/varsity/log?day=${s.iso}&open=${s.dayKey}`}
           aria-label={s.status === "done" ? `Edit ${s.title}` : `Log ${s.title}`}

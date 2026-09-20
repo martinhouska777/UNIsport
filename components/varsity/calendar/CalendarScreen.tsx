@@ -124,7 +124,7 @@ const logColor = (l: LogEntry, planned: Session | undefined) =>
   land on the right colour from their category alone, and anything else stays
   neutral rather than being coloured with a guess.
 */
-const NEUTRAL_BLOCK = { background: "#94a3b8", color: "#0b0e11" };
+const NEUTRAL_BLOCK = { background: "var(--muted)", color: "var(--background)" };
 
 function blockStyle(l: LogEntry, planned: Session | undefined) {
   if (planned) return kindBlock(kindOf(planned));

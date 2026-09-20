@@ -167,7 +167,7 @@ export default function MessagesList({
             onChange={(e) => setQuery(e.target.value)}
             placeholder={tab === "community" ? "Search channels" : "Search messages..."}
             aria-label={tab === "community" ? "Search channels" : "Search messages"}
-            className="w-full bg-transparent text-[13px] text-text placeholder:text-muted focus:outline-none"
+            className="w-full bg-transparent text-base text-text placeholder:text-muted focus:outline-none"
           />
         </div>
         {tab === "community" && (

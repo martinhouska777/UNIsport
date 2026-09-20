@@ -110,10 +110,10 @@ function sessionToRow(dayKey: string, s: Session) {
     team_workout: s.teamWorkout ?? false,
     board: (s.board ?? "average") satisfies BoardKind,
     updated_at: new Date().toISOString(),
-    // Only sent when a session has one: a table that predates the column
-    // (db/varsity_plan.sql, bottom) would otherwise refuse EVERY save, not
-    // just the one with a location on it.
-    ...(s.location ? { location: s.location } : {}),
+    // Always sent, null included: leaving the key out when a session has no
+    // location meant a CLEARED location was never written, and the old one came
+    // back on reload. (The column exists on the live table — checked 2026-09-19.)
+    location: s.location ?? null,
   };
 }
 

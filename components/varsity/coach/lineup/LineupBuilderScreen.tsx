@@ -1835,7 +1835,7 @@ function Builder({
                            keyboard ring is its only focus mark — and a select
                            (unlike a text field) only matches :focus-visible
                            when a keyboard put it there, so a tap stays clean. */
-                        className="h-8 flex-shrink-0 appearance-none rounded-lg border border-border bg-surface-2 px-2.5 text-center text-[12px] font-semibold text-text"
+                        className="h-8 flex-shrink-0 appearance-none rounded-lg border border-border bg-surface-2 px-2.5 text-center text-base font-semibold text-text"
                       >
                         {(dockTimes.includes(boat.dock) ? dockTimes : [boat.dock, ...dockTimes]).map(
                           (t) => (
