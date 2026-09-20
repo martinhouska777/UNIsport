@@ -10,7 +10,9 @@
   opens as a sheet with its form at the top and its results underneath, one
   list per screen.
 
-  What it asks: an activity ("Other" means every activity) and a day; the hour
+  What it asks: an activity (the last pill, "Any", is every activity — it is
+  the onboarding "Other" key reused, relabelled, because here it filters
+  nothing rather than meaning "a sport not on the list") and a day; the hour
   is optional (no hour = anyone training that day) and how far either side of
   it still counts is a preset you can move (lib/onboarding.ts). Filters are
   the same sheet the People tab uses and appear WITH the results.
@@ -150,7 +152,12 @@ export default function SessionSearchSheet({
               <FieldLabel>Activity</FieldLabel>
               <div className="flex flex-wrap gap-1.5">
                 {primaryActivities.map((a) => (
-                  <Pill key={a.key} label={a.label} selected={activity === a.key} onClick={() => setActivity(a.key)} />
+                  <Pill
+                    key={a.key}
+                    label={a.key === "other" ? "Any" : a.label}
+                    selected={activity === a.key}
+                    onClick={() => setActivity(a.key)}
+                  />
                 ))}
               </div>
             </div>
