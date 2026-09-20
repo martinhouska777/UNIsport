@@ -58,6 +58,17 @@ export function useProfileData() {
     OUTSIDE the state updater so it runs once rather than twice under StrictMode.
   */
   const update = (patch: Partial<CurrentUser>) => {
+    /*
+      Nothing to merge INTO yet: the whole `data` column is written back below,
+      so a tap that lands before the profile has loaded would save the patch as
+      the entire profile — name, house, interests and all gone. Settings renders
+      its switches while still loading, so this is reachable. Drop the edit;
+      the control snaps back to the saved value once the load finishes.
+    */
+    if (!noDatabase && fetched === null) {
+      console.warn("Profile edit ignored: the profile has not loaded yet.");
+      return;
+    }
     const next = { ...(data ?? {}), ...patch };
     setFetched(next);
     if (!supabase || !userId) return; // no DB in this environment → in-memory only

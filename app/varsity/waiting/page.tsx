@@ -29,7 +29,7 @@ import { IconCheck, IconClock } from "@/components/icons";
 export default function VarsityWaitingPage() {
   const router = useRouter();
   const { ready, loggedIn, email, studentReady, logout } = useAppState();
-  const { membership, loading, isMember, isPending, reload } = useMembership();
+  const { membership, loading, isMember, isPending, failed, reload } = useMembership();
   const vTheme = useVarsityTheme();
 
   useEffect(() => {
@@ -38,11 +38,11 @@ export default function VarsityWaitingPage() {
       router.replace("/");
       return;
     }
-    if (loading) return;
+    if (loading || failed) return; // a lookup that failed is not "no team"
     // Approved while this was open → straight in. On no team → the invite screen.
     if (isMember) router.replace(VARSITY_HOME);
     else if (!membership) router.replace("/join");
-  }, [ready, loggedIn, loading, isMember, membership, router]);
+  }, [ready, loggedIn, loading, failed, isMember, membership, router]);
 
   if (!ready || !loggedIn || loading || !isPending) return null;
 

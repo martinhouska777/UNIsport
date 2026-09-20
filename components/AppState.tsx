@@ -70,7 +70,7 @@ type AppState = {
   */
   rollUniversity: () => void;
   logout: () => Promise<void>;
-  saveOnboarding: (profile: OnboardingProfile) => Promise<void>;
+  saveOnboarding: (profile: OnboardingProfile) => Promise<string | null>;
   /*
     The short varsity setup: writes name/class year onto the SAME profile row
     and marks only the varsity flag, leaving the student side untouched.
@@ -160,8 +160,14 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       .select("onboarding_completed, varsity_setup_completed")
       .eq("id", userId)
       .maybeSingle();
-    setStudentReady(!error && !!data?.onboarding_completed);
-    setVarsityReady(!error && !!data?.varsity_setup_completed);
+    // A read that FAILED says nothing about the account. Treating it as "never
+    // onboarded" used to send a returning student back through the whole flow
+    // on a network blip — and finishing it again overwrote their profile. Keep
+    // whatever we knew before; a missing row (no error, no data) still counts
+    // as a brand-new account.
+    if (error) return;
+    setStudentReady(!!data?.onboarding_completed);
+    setVarsityReady(!!data?.varsity_setup_completed);
   };
 
   useEffect(() => {
@@ -242,8 +248,28 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     clearMembershipCache();
   };
 
-  const saveOnboarding = async (profile: OnboardingProfile) => {
+  /*
+    Returns null on success, or the error message. The caller decides what to
+    do with a failure (the onboarding flow keeps its draft and says so) — this
+    used to log it and mark the account onboarded anyway, so ten screens of
+    answers vanished the next time the app checked the database.
+  */
+  const saveOnboarding = async (profile: OnboardingProfile): Promise<string | null> => {
     if (supabase && session) {
+      /*
+        MERGE onto whatever `data` already holds, exactly as saveVarsitySetup
+        does below. The onboarding answers are only part of the blob: the varsity
+        record (PRs, sick days, check-ins), units, photos, personal records and
+        the notification switches all live beside them, and replacing the whole
+        column — which this did until 2026-09-19 — wiped every one of them for
+        anyone who replayed onboarding or set up the student side second.
+      */
+      const { data: row } = await supabase
+        .from("profiles")
+        .select("data")
+        .eq("id", session.user.id)
+        .maybeSingle();
+      const current = (row?.data as Record<string, unknown>) ?? {};
       // Finishing the student flow also satisfies the varsity side: it asks for
       // the same name and class year, so nobody is sent through both.
       const { error } = await supabase.from("profiles").upsert({
@@ -251,16 +277,20 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         // The school rides along with the profile so the DATABASE knows it too
         // — matching only ever offers you partners at your own university, and
         // it reads this field (db/matching.sql).
-        data: { ...profile, university: universityKey },
+        data: { ...current, ...profile, university: universityKey },
         onboarding_completed: true,
         varsity_setup_completed: true,
         updated_at: new Date().toISOString(),
       });
-      // eslint-disable-next-line no-console
-      if (error) console.error("Saving profile failed:", error.message);
+      if (error) {
+        // eslint-disable-next-line no-console
+        console.error("Saving profile failed:", error.message);
+        return error.message;
+      }
     }
     setStudentReady(true);
     setVarsityReady(true);
+    return null;
   };
 
   /*

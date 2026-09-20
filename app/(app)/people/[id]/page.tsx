@@ -79,6 +79,12 @@ function PersonProfile() {
   // every interest the same regardless of whether the two of you share it.
   const [match, setMatch] = useState<Match | null>(null);
 
+  // Your own id in a shared link: this page is other people. Follow and Message
+  // on yourself only ever produced a raw database error, so go to My Profile.
+  useEffect(() => {
+    if (meId && id && meId === id) router.replace("/profile");
+  }, [meId, id, router]);
+
   useEffect(() => {
     if (!meId || !id || meId === id) return;
     let active = true;

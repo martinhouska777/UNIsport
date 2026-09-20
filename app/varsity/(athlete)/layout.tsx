@@ -34,7 +34,7 @@ import { useVarsityTheme } from "@/components/varsity/useVarsityTheme";
 
 export default function VarsityLayout({ children }: { children: React.ReactNode }) {
   const { ready, loggedIn, varsityReady } = useAppState();
-  const { membership, loading, isMember } = useMembership();
+  const { membership, loading, isMember, failed } = useMembership();
   const vTheme = useVarsityTheme();
   const router = useRouter();
 
@@ -48,10 +48,13 @@ export default function VarsityLayout({ children }: { children: React.ReactNode 
       router.replace("/varsity/setup");
       return;
     }
-    if (loading) return;
+    // A lookup that FAILED is not an answer: an approved rower must not be
+    // bounced to the invite screen over a network blip. LoadingGate offers a
+    // reload after a moment.
+    if (loading || failed) return;
     // Pending → the waiting screen. On no team at all → the invite screen.
     if (!isMember) router.replace(membership ? "/varsity/waiting" : "/join");
-  }, [ready, loggedIn, varsityReady, loading, isMember, membership, router]);
+  }, [ready, loggedIn, varsityReady, loading, failed, isMember, membership, router]);
 
   /*
     Still deciding, or on the way somewhere else. NEVER `null` — that is a black

@@ -190,6 +190,8 @@ export default function OnboardingFlow() {
   const { saveOnboarding, userId, universityKey } = useAppState();
 
   const [step, setStep] = useState(0); // 0-based index into STEPS
+  // Why the last save failed, shown on the screen instead of swallowed.
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [profile, setProfile] = useState<OnboardingProfile>(emptyProfile);
   const [newInterest, setNewInterest] = useState<string | null>(null); // Screen 6 UI
   /*
@@ -302,9 +304,14 @@ export default function OnboardingFlow() {
   const goBack = () => setStep((s) => Math.max(s - 1, 0));
 
   const finish = async () => {
-    // eslint-disable-next-line no-console
-    console.log("UNIsport onboarding profile:", profile);
-    await saveOnboarding(profile); // saves to the DB + marks this account onboarded
+    setSaveError(null);
+    const failure = await saveOnboarding(profile); // saves to the DB + marks this account onboarded
+    if (failure) {
+      // The draft stays on this device, so nothing is lost — say so instead of
+      // quietly walking into an app that will bounce them straight back here.
+      setSaveError(failure);
+      return;
+    }
     clearOnboardingDraft(); // the answers live in the database now
     router.replace("/gyms");
   };
@@ -1152,6 +1159,15 @@ export default function OnboardingFlow() {
       headerSlot={headerSlot}
       {...ctaProps}
     >
+      {saveError && (
+        <p
+          role="alert"
+          className="mb-4 rounded-xl border border-border bg-surface px-3.5 py-2.5 text-[13px] leading-relaxed text-danger"
+        >
+          Your answers couldn&apos;t be saved ({saveError}). They are kept on this
+          device — check your connection and tap the button again.
+        </p>
+      )}
       {renderBody()}
     </OnboardingShell>
   );

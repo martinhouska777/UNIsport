@@ -17,21 +17,33 @@ export default function Composer({
 }) {
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
+  // A send that failed used to fail in silence: the button came back, the text
+  // stayed, and nothing said why. Now the reason sits above the field.
+  const [error, setError] = useState<string | null>(null);
 
   const submit = async () => {
     const t = text.trim();
     if (!t || sending) return;
     setSending(true);
+    setError(null);
     try {
       await onSend(t);
       setText("");
+    } catch (e) {
+      setError((e as Error).message || "Couldn't send. Check your connection and try again.");
     } finally {
       setSending(false);
     }
   };
 
   return (
-    <div className="flex items-center gap-2 border-t border-border bg-surface px-3.5 py-2.5">
+    <div className="border-t border-border bg-surface px-3.5 py-2.5">
+      {error && (
+        <p role="alert" className="mb-2 px-1 text-[12px] leading-snug text-danger">
+          Couldn&apos;t send: {error}
+        </p>
+      )}
+      <div className="flex items-center gap-2">
       <input
         value={text}
         onChange={(e) => setText(e.target.value)}
@@ -54,6 +66,7 @@ export default function Composer({
       >
         <IconSend size={18} />
       </button>
+      </div>
     </div>
   );
 }
