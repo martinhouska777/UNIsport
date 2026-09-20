@@ -826,63 +826,63 @@ export default function TrainingPlanScreen({
           THEN the week. Delete block alone stays at the very bottom.
         */}
         <h1 className="sr-only">{block.name}</h1>
-        {/* The card is a frame now, not one button: the top of it opens the
-            block for editing, and the foot of it publishes the block. Two
-            different presses cannot be one button, so the tappable part is
-            the inner one. */}
+        {/*
+          ONE RECTANGLE, NO LINES INSIDE IT (owner, 2026-09-20). What the block
+          IS reads down the left — its name with Draft / Published pushed up
+          against it, the week under that, and the race it runs to sitting at
+          the bottom. What you can DO to it is a column of matching buttons on
+          the right: Edit, then Publish (or Unpublish, or both once a live
+          block has been edited). The two sides are the same height, which is
+          what stopped the card looking lopsided.
+        */}
         <div
           data-tour="coach-plan-status"
-          className="mt-3 w-full overflow-hidden rounded-xl border border-border bg-surface"
+          className="mt-3 flex w-full items-stretch gap-4 rounded-xl border border-border bg-surface px-4 py-3.5"
         >
-          <button
-            type="button"
-            onClick={() => openEditBlock(block)}
-            aria-label={`Edit ${block.name}`}
-            className="w-full px-4 py-3 text-left active:bg-surface-2"
-          >
-            {/* THE BLOCK IS THE TITLE (owner, 2026-09-18): the name, the next
-                race top right, and under the name the week you are looking at
-                in small text. "Week 6 · Published" as a heading of its own is
-                gone — the filled week chip already says which week it is, and
-                the row under this one says whether it is published. */}
-            <div className="flex items-center gap-2">
-              <div className="min-w-0 flex-1 truncate text-[17px] font-semibold text-text">{block.name}</div>
-              {block.raceName && (
-                <span className="flex min-w-0 max-w-[45%] items-center gap-1 text-[11px] text-muted">
-                  <span className="flex-shrink-0 text-primary">
-                    <IconFlag size={12} />
-                  </span>
-                  <span className="truncate font-medium text-text">{block.raceName}</span>
-                  {race !== null && (
-                    <span className="flex-shrink-0">
-                      · <span className="font-semibold text-accent">{race}</span> days
-                    </span>
-                  )}
+          <div className="flex min-w-0 flex-1 flex-col justify-between gap-3">
+            <div className="min-w-0">
+              <div className="flex min-w-0 items-center gap-2">
+                <span className="min-w-0 truncate text-[17px] font-semibold text-text">{block.name}</span>
+                <StatusChip live={live} />
+              </div>
+              <div className="mt-1 text-[11px] text-muted">{week.rangeLabel}</div>
+            </div>
+            {/* The race in a pill of its own, down at the foot of the left
+                column so it answers the buttons across from it. */}
+            {block.raceName && (
+              <span className="inline-flex min-w-0 max-w-full items-center gap-1.5 self-start rounded-full border border-border px-3 py-1.5 text-[11px] text-muted">
+                <span className="flex-shrink-0 text-primary">
+                  <IconFlag size={12} />
                 </span>
-              )}
-              <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg border border-border bg-surface-2 text-primary">
-                <IconPencil size={13} />
+                <span className="truncate font-medium text-text">{block.raceName}</span>
+                {race !== null && (
+                  <span className="flex-shrink-0">
+                    · <span className="font-semibold text-accent">{race}</span> days
+                  </span>
+                )}
               </span>
-            </div>
-            <div className="mt-0.5 text-[11px] text-muted">{week.rangeLabel}</div>
-          </button>
-          {/* THE FOOT OF THE BLOCK: what the squad can see of it, and the one
-              press that changes that. Draft / Published on the left so the
-              state is a word and not just the label of the button beside it. */}
-          <div className="flex items-center gap-2 border-t border-border px-4 py-2.5">
-            <StatusChip live={live} />
-            <div className="ml-auto flex min-w-0 items-center justify-end gap-2">
-              <PublishBar
-                bare
-                what="block"
-                live={live}
-                changed={blockChanged(block)}
-                busy={writing}
-                onPublish={() => publishBlock(block.id)}
-                onNotify={() => tellSquad(block.id)}
-                onUnpublish={() => unpublishBlock(block.id)}
-              />
-            </div>
+            )}
+          </div>
+          <div className="flex w-[120px] flex-shrink-0 flex-col gap-2">
+            <Button
+              variant="secondary"
+              size="md"
+              full
+              onClick={() => openEditBlock(block)}
+              aria-label={`Edit ${block.name}`}
+            >
+              <IconPencil size={13} /> Edit
+            </Button>
+            <PublishBar
+              stack
+              what="block"
+              live={live}
+              changed={blockChanged(block)}
+              busy={writing}
+              onPublish={() => publishBlock(block.id)}
+              onNotify={() => tellSquad(block.id)}
+              onUnpublish={() => unpublishBlock(block.id)}
+            />
           </div>
         </div>
 

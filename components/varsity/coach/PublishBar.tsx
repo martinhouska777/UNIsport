@@ -44,6 +44,7 @@ export default function PublishBar({
   onUnpublish,
   tourId,
   bare = false,
+  stack = false,
 }: {
   live: boolean;
   /** Edited since it was published (this sitting). Only meaningful when live. */
@@ -63,6 +64,14 @@ export default function PublishBar({
    * question — is kept even here.
    */
   bare?: boolean;
+  /**
+   * A COLUMN, not a row: full-width buttons stacked one under another, sized
+   * to match the Edit button beside them. The Plan tab's block card uses this
+   * — the whole right-hand side of the card is that column (owner,
+   * 2026-09-20). The unpublish question is asked in the column's own width,
+   * so it is short there.
+   */
+  stack?: boolean;
 }) {
   const edited = live && changed;
   const [confirming, setConfirming] = useState(false);
@@ -74,6 +83,43 @@ export default function PublishBar({
       : edited
         ? "Your squad can see the change already."
         : `Your squad can see this ${what}.`;
+
+  if (stack) {
+    return (
+      <div data-tour={tourId} className="flex w-full flex-col gap-2">
+        {live && confirming && (
+          <>
+            <p className="text-[11px] leading-snug text-muted">Take it off the squad&apos;s phones?</p>
+            <Button variant="secondary" size="md" full onClick={() => setConfirming(false)} disabled={busy}>
+              Keep live
+            </Button>
+            <Button
+              variant="dangerSoft"
+              size="md"
+              full
+              onClick={() => {
+                setConfirming(false);
+                onUnpublish();
+              }}
+              disabled={busy}
+            >
+              Unpublish
+            </Button>
+          </>
+        )}
+        {live && !confirming && (
+          <Button variant="secondary" size="md" full onClick={() => setConfirming(true)} disabled={busy}>
+            Unpublish
+          </Button>
+        )}
+        {(!live || (edited && !confirming)) && (
+          <Button size="md" full onClick={live ? onNotify : onPublish} disabled={busy}>
+            <IconSend size={13} /> Publish
+          </Button>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div
