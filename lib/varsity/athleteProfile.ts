@@ -376,6 +376,26 @@ export async function fetchDaysOut(userId: string | null): Promise<DaysOut> {
   return profile.daysOut;
 }
 
+/*
+  ONE READ-MODIFY-WRITE AT A TIME.
+
+  The days out and the check-in both read the whole profile, change one field
+  and write it all back — and they share the record, so two of them in flight
+  at once means the second one read BEFORE the first one wrote, and its write
+  puts the older copy back. The check-in card saves on every tap, so answering
+  three questions quickly lost the first two (audit, 2026-09-19).
+
+  Everything that rewrites the record goes through here and waits its turn. A
+  failed write does not stop the queue: the next one starts from a fresh read
+  either way.
+*/
+let profileWrites: Promise<unknown> = Promise.resolve();
+function inTurn<T>(work: () => Promise<T>): Promise<T> {
+  const run = profileWrites.then(work, work);
+  profileWrites = run.catch(() => undefined);
+  return run;
+}
+
 /**
  * Write some days (a value) or clear them (null), merged onto what is saved
  * NOW — read fresh, so a day marked here never wipes a profile edit made
@@ -385,14 +405,16 @@ export async function saveDaysOut(
   userId: string | null,
   patch: Record<string, DayOut | null>,
 ): Promise<DaysOut> {
-  const { profile } = await fetchAthleteProfile(userId);
-  const next: DaysOut = { ...profile.daysOut };
-  for (const [iso, v] of Object.entries(patch)) {
-    if (v) next[iso] = v;
-    else delete next[iso];
-  }
-  await saveAthleteProfile(userId, { ...profile, daysOut: next });
-  return next;
+  return inTurn(async () => {
+    const { profile } = await fetchAthleteProfile(userId);
+    const next: DaysOut = { ...profile.daysOut };
+    for (const [iso, v] of Object.entries(patch)) {
+      if (v) next[iso] = v;
+      else delete next[iso];
+    }
+    await saveAthleteProfile(userId, { ...profile, daysOut: next });
+    return next;
+  });
 }
 
 /* ── The daily check-in (lib/varsity/checkIn.ts), on the same record ── */
@@ -414,9 +436,11 @@ export async function saveCheckIn(
   iso: string,
   patch: Partial<CheckIn>,
 ): Promise<CheckIn> {
-  const { profile } = await fetchAthleteProfile(userId);
-  const day: CheckIn = { ...emptyCheckIn(), ...(profile.checkIns[iso] ?? {}), ...patch };
-  const checkIns: CheckIns = { ...profile.checkIns, [iso]: day };
-  await saveAthleteProfile(userId, { ...profile, checkIns });
-  return day;
+  return inTurn(async () => {
+    const { profile } = await fetchAthleteProfile(userId);
+    const day: CheckIn = { ...emptyCheckIn(), ...(profile.checkIns[iso] ?? {}), ...patch };
+    const checkIns: CheckIns = { ...profile.checkIns, [iso]: day };
+    await saveAthleteProfile(userId, { ...profile, checkIns });
+    return day;
+  });
 }
