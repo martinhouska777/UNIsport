@@ -119,6 +119,14 @@ export const nav = {
   login: "Log in",
   /* Also the hero's primary button — the same door, twice. */
   cta: hero.primaryCta,
+  /*
+    WHAT THE BAR SAYS TO SOMEONE WHO IS ALREADY IN. Both doors are for people
+    who are not: a signed-in visitor was being offered "Log in" and "Get
+    started with .edu" on a page they had already come through (audit,
+    2026-09-19). They get one button instead, and it goes to the app.
+  */
+  openApp: "Open the app",
+  openAppHref: "/gyms",
   /* The phone menu button (opens the tabs from the left) and its close. */
   menu: "Menu",
   closeMenu: "Close menu",

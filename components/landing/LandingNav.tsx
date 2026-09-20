@@ -2,12 +2,14 @@ import Link from "next/link";
 import StickyBar from "@/components/landing/StickyBar";
 import Wordmark from "@/components/landing/Wordmark";
 import LandingMenu from "@/components/landing/LandingMenu";
-import { hero, nav, views, type LandingView } from "@/lib/landingCopy";
+import NavDoors from "@/components/landing/NavDoors";
+import { views, type LandingView } from "@/lib/landingCopy";
 
 /*
   The top bar: the wordmark, the TABS (Students · Varsity · Coaches · About ·
   Contact — one address each, see `views` in lib/landingCopy.ts), Log in, and
-  the same door as the hero's button. The wordmark is the way back to the
+  the same door as the hero's button (or, once the browser has said the
+  visitor is signed in, one "Open the app" — see NavDoors). The wordmark is the way back to the
   whole page. (The team-invite way in lives under the hero, next to the
   doors, where a rower holding a link will read it.)
 
@@ -73,37 +75,11 @@ export default function LandingNav({ view = "all", heroMark = false }: { view?: 
             </Link>
           </div>
           <Tabs view={view} className="hidden md:flex" />
+          {/* Log in + the door — or one "Open the app" for somebody already
+              signed in. Its own client component because only the browser
+              knows which (components/landing/NavDoors.tsx). */}
           <div className="flex items-center gap-2 sm:gap-2.5">
-            <Link
-              href="/login"
-              /* A phone gives the row to the door (which now says "Get started
-                 with .edu" in full), so Log in drops its pill there and is a
-                 plain text link — still 44px tall to tap. */
-              className="tap44 inline-flex h-10 shrink-0 items-center whitespace-nowrap rounded-full px-1.5 text-[13px] font-medium tracking-tight text-l-text-2 transition-[color,background-color,border-color,translate] hover:text-l-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-l-text sm:border sm:border-l-line sm:bg-l-bg sm:px-[18px] sm:text-sm sm:text-l-text sm:hover:-translate-y-0.5 sm:hover:border-l-line-hover sm:hover:bg-l-bg-elevated"
-            >
-              {nav.login}
-            </Link>
-            {/* The door, always in the bar. It used to hide on a phone while
-                the intro was on screen (the intro's own button stands under
-                it) — but that left the bar with nothing but Log in, which read
-                as a site you can only sign IN to (owner, 2026-09-19). */}
-            <Link
-              href={hero.primaryHref}
-              /* It wears the school the intro is showing, and changes with it
-                 (owner, 2026-09-19): --sc / --sc-ink are published on <html>
-                 by LandingHero. A view with no intro never sets them, so the
-                 fallback is the page's own ink — what the bar looked like
-                 before. Same 700ms fade as the intro's own button, so the two
-                 turn together. */
-              style={{
-                backgroundColor: "var(--sc, var(--color-l-text))",
-                borderColor: "var(--sc, var(--color-l-text))",
-                color: "var(--sc-ink, var(--color-l-bg))",
-              }}
-              className="inline-flex h-10 items-center whitespace-nowrap rounded-full border px-3.5 text-[13px] font-medium tracking-tight transition-[background-color,border-color,color,translate] duration-700 ease-in-out hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-l-text motion-reduce:transition-none sm:px-[18px] sm:text-sm"
-            >
-              {nav.cta}
-            </Link>
+            <NavDoors />
           </div>
         </div>
       </div>
