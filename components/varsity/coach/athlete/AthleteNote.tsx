@@ -1,7 +1,7 @@
 "use client";
 
 /*
-  TECHNICAL NOTE, on one athlete's screen in the Coach Console.
+  THE COACH'S NOTE, on one athlete's screen in the Coach Console.
 
   What the Notes tab used to be for, where a coach already is when they are
   thinking about one rower: their name, their training, and the one thing
@@ -23,7 +23,7 @@ export default function AthleteNote({ athleteId, name }: { athleteId: string; na
 
   useEffect(() => {
     let active = true;
-    fetchNote(athleteId).then((n) => active && setNote(n));
+    fetchNote(athleteId).then((n) => active && setNote(n.note));
     return () => {
       active = false;
     };

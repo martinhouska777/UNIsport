@@ -23,7 +23,7 @@ import UploadVideoSheet from "@/components/varsity/UploadVideoSheet";
 import ClaimSeatSheet from "@/components/varsity/ClaimSeatSheet";
 import StillOutCard from "@/components/varsity/home/StillOutCard";
 import { driveConfigured, driveFolderLink } from "@/lib/varsity/drive";
-import { fetchNote } from "@/lib/varsity/notesStore";
+import { fetchNote, type CoachNote } from "@/lib/varsity/notesStore";
 import { sessionKey, parseDate, toISO } from "@/lib/varsity/coachPlan";
 import { buildAthleteHome, daySessionToCard, logSpanFor } from "@/lib/varsity/athleteHome";
 import { fetchLogsInRange, LOG_DAYS_BACK } from "@/lib/varsity/logStore";
@@ -883,21 +883,28 @@ function DayHeader({
   );
 }
 
-/* ─── The TECHNICAL NOTE for you (red = work on this · green = all clear) ───
-   It is the coach writing, but what he writes is a technical point — catch
-   timing, a body angle, where the pressure went. The owner's word, and the
-   better one: 'Coach's note' said who sent it, 'Technical note' says what it
-   is, and the card it sits on is already unmistakably from the coach. */
-function CoachNoteCard({ note }: { note: string }) {
+/* ─── The COACH'S NOTE for you (red = something to work on · green = all clear) ───
+   It is the coach writing, and what he writes is a technical point — catch
+   timing, a body angle, where the pressure went. The heading has been both
+   words: 'Technical note · work on this' until 2026-09-20, when the owner cut
+   the second half ("the second part is useless") and picked the name that says
+   WHO it came from — the same words the Log screen and the landing page use.
+
+   AND THEN WHICH COACH (owner, same day: "name it, which coach said it"). The
+   name is whoever wrote it, stored on the note itself (notesStore.ts) — on a
+   squad with a head coach and two assistants, who said it is half the
+   instruction. A note saved before this was built carries no name, and then
+   the heading is simply 'Coach's note' again. */
+function CoachNoteCard({ note, coach }: { note: string; coach: string }) {
   if (note.trim()) {
     return (
       <div className="overflow-hidden rounded-xl border border-danger-line bg-danger-tint">
         <div className="flex items-center gap-2 border-b border-danger-line px-3.5 py-2.5">
-          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-danger text-[12px] font-black leading-none text-background">
+          <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-danger text-[12px] font-black leading-none text-background">
             !
           </span>
-          <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-danger">
-            Technical note · work on this
+          <span className="truncate text-[11px] font-semibold uppercase tracking-[0.12em] text-danger">
+            Coach&apos;s note{coach ? ` · ${coach}` : ""}
           </span>
         </div>
         <p className="px-3.5 py-3 text-[13px] leading-relaxed text-text-2">{note}</p>
@@ -1020,7 +1027,8 @@ function HomeScreenInner() {
     isMember && canOpenConsole(membership!.role) ? membership!.role : null;
   const [data, setData] = useState<HomeData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [note, setNote] = useState<string | null>(null); // null = still loading
+  // null = still loading. Otherwise the note and who signed it (see notesStore).
+  const [note, setNote] = useState<CoachNote | null>(null);
   // Who I am to a boat: my name, and the roster seat I claimed (null until I
   // pick one). Both decide "your seat"; the id wins whenever it is set.
   const [me, setMe] = useState<SeatIdentity | null>(null);
@@ -1134,7 +1142,7 @@ function HomeScreenInner() {
   const noteCard =
     note !== null ? (
       <div className="px-3 pt-3">
-        <CoachNoteCard note={note} />
+        <CoachNoteCard note={note.note} coach={note.coach} />
       </div>
     ) : null;
 

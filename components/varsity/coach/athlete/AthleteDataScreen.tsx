@@ -242,8 +242,8 @@ export default function AthleteDataScreen({ athleteId }: { athleteId: string }) 
         </span>
       </div>
 
-      {/* The technical note — it used to have a Notes tab of its own. */}
-      <SectionLabel>Technical note</SectionLabel>
+      {/* The coach's note — it used to have a Notes tab of its own. */}
+      <SectionLabel>Coach&apos;s note</SectionLabel>
       <AthleteNote athleteId={athleteId} name={card.name || "this athlete"} />
 
       {pinned.length > 0 && (

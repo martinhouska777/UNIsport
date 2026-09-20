@@ -1,23 +1,26 @@
 "use client";
 
 /*
-  ONE ATHLETE'S TECHNICAL NOTE — the full-screen editor.
+  ONE ATHLETE'S NOTE FROM THE COACH — the full-screen editor.
 
   It used to be reached from a Notes tab of its own in the Coach Console: a
   list of every athlete, each opening this. The owner cut that tab — a second
   list of the same squad was extra — so the note now lives on the athlete's
-  own screen (Team → a rower → Technical note), and this editor opens from
-  there. Saving writes the note (lib/varsity/notesStore.ts); the athlete then
-  sees it on their Home each time they open the app.
+  own screen (Team → a rower → Coach's note), and this editor opens from
+  there. Saving writes the note (lib/varsity/notesStore.ts) SIGNED with the
+  name of whoever is writing it; the athlete then sees it on their Home each
+  time they open the app, with that name on it.
 
   Colors are theme tokens.
 */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Button, { buttonClass } from "@/components/ui/Button";
 import { createPortal } from "react-dom";
 import ThemeProvider from "@/components/ThemeProvider";
 import { useVarsityTheme } from "@/components/varsity/useVarsityTheme";
+import { useAppState } from "@/components/AppState";
 import { saveNote, type TeamMember } from "@/lib/varsity/notesStore";
+import { fetchProfileFullName } from "@/lib/varsity/planStore";
 import { notifySquad } from "@/lib/push/client";
 import { IconArrowLeft, IconCheck } from "@/components/icons";
 
@@ -41,13 +44,26 @@ export default function NoteEditor({
   onSaved: (note: string) => void;
 }) {
   const vTheme = useVarsityTheme();
+  const { userId } = useAppState();
   const [text, setText] = useState(initialNote);
   const [busy, setBusy] = useState(false);
   const dirty = text.trim() !== initialNote.trim();
 
+  /* WHO IS SIGNING IT. Read while the coach types rather than at the moment
+     they hit Send, so a slow profile lookup can never be the reason a note
+     goes out unsigned. */
+  const [myName, setMyName] = useState("");
+  useEffect(() => {
+    let active = true;
+    fetchProfileFullName(userId).then((n) => active && setMyName(n));
+    return () => {
+      active = false;
+    };
+  }, [userId]);
+
   const save = async () => {
     setBusy(true);
-    const { error } = await saveNote(member.id, text);
+    const { error } = await saveNote(member.id, text, { id: userId, name: myName });
     setBusy(false);
     if (error) {
       console.error("saveNote:", error);
@@ -83,7 +99,7 @@ export default function NoteEditor({
             </span>
             <div>
               <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-accent">
-                Technical note
+                Coach&apos;s note
               </div>
               <h1 className="text-xl font-semibold text-text">{member.name}</h1>
             </div>
