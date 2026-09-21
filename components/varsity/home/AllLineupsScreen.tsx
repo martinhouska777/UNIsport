@@ -27,6 +27,8 @@ import { parseDate, sessionKey, toISO } from "@/lib/varsity/coachPlan";
 import { fetchTodayLineups } from "@/lib/varsity/lineupStore";
 import { fetchSeatIdentity } from "@/lib/varsity/athleteProfile";
 import { crewNames, type Lineup } from "@/lib/varsity/home";
+import { fetchOutOn } from "@/lib/varsity/availabilityStore";
+import OutOfBoatsCard, { outPeople, type OutPerson } from "@/components/varsity/OutOfBoatsCard";
 
 /* "Fri · 4 Sep" — the same shape the day detail on Home uses. */
 function dateLabel(iso: string): string {
@@ -48,12 +50,17 @@ function dateLabel(iso: string): string {
   The search reads every name aboard, cox included (lib/varsity/home →
   crewNames), and matches anywhere in the name, so a surname finds them.
 */
-function BoatSearchList({ lineups }: { lineups: Lineup[] }) {
+function BoatSearchList({ lineups, out }: { lineups: Lineup[]; out: OutPerson[] }) {
   const [q, setQ] = useState("");
   const needle = q.trim().toLowerCase();
   const shown = needle
     ? lineups.filter((l) => crewNames(l).some((n) => n.includes(needle)))
     : lineups;
+  /* The search covers the out list too: somebody who is not in a boat is
+     still an answer to "where is Richards this morning", and the most
+     useful one. */
+  const shownOut = needle ? out.filter((p) => p.name.toLowerCase().includes(needle)) : out;
+  const hit = needle ? shown.length + shownOut.length : 1;
 
   return (
     <>
@@ -85,9 +92,9 @@ function BoatSearchList({ lineups }: { lineups: Lineup[] }) {
       {/* No count and no "Tap one to open it" above the list. The boats are
           right there to be counted, and a card that looks like a card does not
           need a caption telling you it can be pressed. */}
-      {shown.length === 0 ? (
+      {hit === 0 ? (
         <div className="rounded-xl border border-dashed border-border bg-surface px-4 py-6 text-center text-[12px] text-muted">
-          Nobody by that name is in a boat this day.
+          Nobody by that name is on this day&rsquo;s sheet.
         </div>
       ) : (
         <div className="flex flex-col gap-3">
@@ -96,6 +103,10 @@ function BoatSearchList({ lineups }: { lineups: Lineup[] }) {
                re-opens instead of keeping the shut state it was mounted with. */
             <LineupBoatCard key={`${i}-${needle}`} l={l} defaultOpen={!!needle} />
           ))}
+          {/* Last, because it is the answer to a different question than
+              "which boat am I in" — and open straight away when a search
+              is what put it there. */}
+          <OutOfBoatsCard key={`out-${needle}`} people={shownOut} defaultOpen={!!needle} />
         </div>
       )}
     </>
@@ -108,13 +119,19 @@ function AllLineups() {
   // No day on the link means the day everybody means by default.
   const iso = params.get("d") || toISO(new Date());
   const [lineups, setLineups] = useState<Lineup[] | null>(null);
+  const [out, setOut] = useState<OutPerson[]>([]);
 
   useEffect(() => {
     let active = true;
     void (async () => {
       const me = await fetchSeatIdentity(userId);
-      const found = await fetchTodayLineups((p) => sessionKey(parseDate(iso), p), me);
-      if (active) setLineups(found);
+      const [found, whoIsOut] = await Promise.all([
+        fetchTodayLineups((p) => sessionKey(parseDate(iso), p), me),
+        fetchOutOn(iso),
+      ]);
+      if (!active) return;
+      setLineups(found);
+      setOut(outPeople(whoIsOut));
     })();
     return () => {
       active = false;
@@ -144,12 +161,12 @@ function AllLineups() {
       <div className="px-3 pt-4">
         {ordered === null ? (
           <SkeletonCards count={3} />
-        ) : ordered.length === 0 ? (
+        ) : ordered.length === 0 && out.length === 0 ? (
           <div className="rounded-xl border border-dashed border-border bg-surface px-4 py-6 text-center text-[12px] text-muted">
             No boats published for this day.
           </div>
         ) : (
-          <BoatSearchList lineups={ordered} />
+          <BoatSearchList lineups={ordered} out={out} />
         )}
       </div>
     </div>

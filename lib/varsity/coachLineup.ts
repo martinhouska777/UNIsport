@@ -85,6 +85,21 @@ export const outMeta: Record<OutReason, string> = {
   LAUNCH: "Launch",
 };
 
+/*
+  HOW LOUDLY TO SAY IT. Sick, injured and Rx are a reason a coach may need to
+  do something about, so they carry the warning colour; the ergs, OYO and the
+  launch are simply where somebody is this morning, and a screen that shouts
+  those in amber is crying wolf. Tokens, never hex (rule 1).
+*/
+export const outTone: Record<OutReason, "warn" | "muted"> = {
+  INJ: "warn",
+  SICK: "warn",
+  RX: "warn",
+  ERG: "muted",
+  OYO: "muted",
+  LAUNCH: "muted",
+};
+
 export type OutSpan = "day" | "open";
 export const outOptions: { reason: OutReason; label: string; sub: string; span: OutSpan }[] = [
   { reason: "SICK", label: "Sick", sub: "Out today. Back in the pool tomorrow.", span: "day" },
