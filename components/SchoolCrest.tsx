@@ -20,12 +20,6 @@ import { CREST_SHIELD_PATH, type CrestSpec } from "@/lib/crests";
   it over the crossed oars); standalone callers size it with className or
   width/height.
 
-  `edged` draws a line round the OUTSIDE of the shield in var(--crest-edge),
-  set by the caller like the other two. It exists for the one place the crest
-  has to read at arm's length against a ground close to its own colour: the
-  Varsity intro, where the owner asked for the emblem "red with black edges"
-  (2026-09-21) — the same treatment the crossed oars got two days earlier.
-
   Decorative wherever it appears — the caller says what the school is in
   words — so it is aria-hidden.
 */
@@ -37,11 +31,9 @@ export default function SchoolCrest({
   y,
   width,
   height,
-  edged = false,
 }: {
   crest: CrestSpec;
   className?: string;
-  edged?: boolean;
   style?: CSSProperties;
   x?: number;
   y?: number;
@@ -69,12 +61,6 @@ export default function SchoolCrest({
         </defs>
       )}
       <path className="l-crest-part" d={CREST_SHIELD_PATH} fill="var(--crest-field)" />
-      {/* The outer edge: a thin line on the shield's own outline, half of it
-          outside the field. 3 units ≈ 2.8px at the intro's 92px — the weight
-          of the oars' line, so the two read as one drawing. */}
-      {edged && (
-        <path d={CREST_SHIELD_PATH} fill="none" stroke="var(--crest-edge)" strokeWidth={3} strokeLinejoin="round" />
-      )}
       <path
         className="l-crest-part"
         d={CREST_SHIELD_PATH}

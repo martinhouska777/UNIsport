@@ -21,15 +21,17 @@
   The oars are the landing page's oars (the Blade Lock closer's drawing) with
   the school's own blade — Harvard's crimson with the two white wedges — from
   lib/landingSchools.ts, drawn by OarMark (shared with the Varsity Mode mark,
-  VarsityCrest). 250px tall here, and drawn `bold`: crimson loom, black line
-  round it (owner, 2026-09-19). The real oar's near-black loom vanished into
-  this screen's dark ground, so the two oars crossing read as two floating
-  blades rather than as an X.
+  VarsityCrest). 250px tall here, and the REAL oar — dark loom and all. For two
+  days (2026-09-19 → 21) it was drawn `bold`, crimson loom with a black line,
+  so the X would read on the dark ground; the owner put the oars back to black
+  on 2026-09-21 ("change the oars back to black") and moved the emphasis to the
+  MOTTO instead — see the motto below.
   The beat timings live with the keyframes in app/globals.css; the two timers
   below have to agree with them.
 */
 import { useEffect, useState } from "react";
 import UniversityCrest from "@/components/UniversityCrest";
+import { OAR_ART_BOLD } from "@/lib/landingSchools";
 import { useAppState } from "@/components/AppState";
 import { getUniversity } from "@/lib/themes";
 import OarMark from "@/components/varsity/OarMark";
@@ -105,7 +107,7 @@ export default function VarsityIntro() {
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="v-oar-in-left">
             <div className="origin-center rotate-[-32deg]">
-              <OarMark schoolKey={universityKey} bold width={41} height={250} />
+              <OarMark schoolKey={universityKey} width={41} height={250} />
             </div>
           </div>
         </div>
@@ -114,7 +116,7 @@ export default function VarsityIntro() {
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="v-oar-in-right">
             <div className="origin-center rotate-[32deg]">
-              <OarMark schoolKey={universityKey} bold width={41} height={250} />
+              <OarMark schoolKey={universityKey} width={41} height={250} />
             </div>
           </div>
         </div>
@@ -122,29 +124,33 @@ export default function VarsityIntro() {
         {/* Crest drops from the top onto the crossing point. The DRAWN crest
             (lib/crests.ts) wearing the theme pair — the same one the whole app
             wears, and at the same 92px/86px the frozen mark (VarsityCrest) uses,
-            so the film ends on exactly the icon you keep seeing afterwards.
-            `bold` = the black line round it, like the oars': the owner wanted
-            the emblem "red with black edges" so it stands out (2026-09-21). */}
+            so the film ends on exactly the icon you keep seeing afterwards. */}
         <div className="absolute inset-x-0 top-[86px] flex justify-center">
           <div className="v-crest-drop">
-            <UniversityCrest size={92} bold />
+            <UniversityCrest size={92} />
           </div>
         </div>
 
-        {/* The motto, sliding in under the crest — bold, 17px, so it reads on
-            the light ground too (the owner found 15px semibold too faint there).
-            `text` is the token that
-            flips with the background — off-white on the dark theme, near-black
-            on the light one — so the words read either way without either
-            colour being written here. The words themselves come from the
-            university's data; a school with no motto has no line at all. */}
+        {/* The motto, sliding in under the crest — bold, 17px, in the SCHOOL'S
+            COLOUR with a thin black line round each letter (owner, 2026-09-21:
+            "make the motto red text with black borders so it's better
+            readable"). Crimson is --primary, so another school's motto comes
+            out in that school's colour; the black is the one the bold oar
+            uses, from the data file, so no colour is written here. The line
+            is drawn UNDER the fill (paint-order), so the letters keep their
+            weight and the black only shows at the edge. The words come from
+            the university's data; a school with no motto has no line at all. */}
         {motto && (
           <div className="absolute inset-x-0 top-[196px] flex justify-center">
             <div
-              className="v-motto-in whitespace-nowrap text-[17px] font-bold uppercase text-text"
+              className="v-motto-in whitespace-nowrap text-[17px] font-bold uppercase text-primary"
               // The trailing letter's spacing would push the word off-centre;
               // this pays it back. Matches the tracking the animation ends on.
-              style={{ textIndent: "0.38em" }}
+              style={{
+                textIndent: "0.38em",
+                WebkitTextStroke: `1.5px ${OAR_ART_BOLD.line}`,
+                paintOrder: "stroke fill",
+              }}
             >
               {motto}
             </div>
