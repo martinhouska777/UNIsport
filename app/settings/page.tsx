@@ -30,7 +30,7 @@ import { Toggle } from "@/components/onboarding/controls";
 import { useUnits } from "@/components/useUnits";
 import { distanceOptions, weightOptions } from "@/lib/varsity/units";
 import { profileFromOnboarding } from "@/lib/currentUser";
-import { getUniversity, neutralTheme, universities } from "@/lib/themes";
+import { getUniversity, LIVE_UNIVERSITY, neutralTheme, universities } from "@/lib/themes";
 import SchoolCrest from "@/components/SchoolCrest";
 import { crestFor } from "@/lib/crests";
 import { can, canOpenConsole, roleLabel } from "@/lib/varsity/membership";
@@ -225,6 +225,7 @@ export default function SettingsPage() {
           signed in with (components/AppState.tsx); this OVERRIDES it for as
           long as it is set, and is forgotten on logout.
         */}
+        {!LIVE_UNIVERSITY && (
         <Section title="University">
           <div className="grid grid-cols-2 gap-2">
             {Object.values(universities).map((u) => {
@@ -262,6 +263,7 @@ export default function SettingsPage() {
             switch until accounts carry a university.
           </p>
         </Section>
+        )}
 
         {/* Varsity — a team you belong to sits alongside the student account.
             Three states: not on a team, waiting for a captain, or in. */}

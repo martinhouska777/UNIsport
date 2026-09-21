@@ -14,6 +14,7 @@ import Wordmark from "@/components/landing/Wordmark";
 import { useAppState } from "@/components/AppState";
 import { createClient, hasSupabaseEnv } from "@/lib/supabase/client";
 import { VARSITY_HOME } from "@/lib/varsity/theme";
+import { LIVE_UNIVERSITY } from "@/lib/themes";
 import { markSignIn, clearSignIn } from "@/lib/loginIntro";
 import {
   isUniversityEmail,
@@ -247,8 +248,15 @@ export default function LoginPage() {
     line of TEXT and nothing more: this screen is still Zone 1, where no
     university colour is allowed (rule 2). The colours arrive on the other side
     of the sign-in, where they belong.
+
+    While the app is pinned to one school (LIVE_UNIVERSITY in lib/themes.ts)
+    this only confirms THAT school. A yale.edu address would otherwise be told
+    "✓ Yale University" and then land in a Harvard app — a promise the sign-in
+    cannot keep.
   */
-  const school = universityForEmail(email);
+  const typedSchool = universityForEmail(email);
+  const school =
+    LIVE_UNIVERSITY && typedSchool?.key !== LIVE_UNIVERSITY ? undefined : typedSchool;
 
   return (
     <div

@@ -16,7 +16,7 @@ import {
 import type { Session } from "@supabase/supabase-js";
 import { createClient, hasSupabaseEnv } from "@/lib/supabase/client";
 import { clearOnboardingDraft, type OnboardingProfile } from "@/lib/onboarding";
-import { getUniversity } from "@/lib/themes";
+import { getUniversity, LIVE_UNIVERSITY } from "@/lib/themes";
 import { universityForEmail } from "@/lib/universityEmail";
 import { readDemoSchool, rollDemoSchool } from "@/lib/demoSchool";
 import type { VarsityAthleteProfile } from "@/lib/varsity/athleteProfile";
@@ -122,13 +122,19 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  // Both of these are dead while the app is pinned to one school
+  // (LIVE_UNIVERSITY in lib/themes.ts). They stay because unpinning must bring
+  // the old behaviour back untouched — and because a stale switcher choice
+  // left in localStorage must not be able to write a new one.
   const setUniversity = (key: string) => {
+    if (LIVE_UNIVERSITY) return;
     if (!getUniversity(key)) return;
     setRemembered((current) => ({ ...current, chosen: key }));
     localStorage.setItem(UNIVERSITY_STORAGE_KEY, key);
   };
 
   const rollUniversity = () => {
+    if (LIVE_UNIVERSITY) return;
     const next = rollDemoSchool();
     setRemembered((current) => ({ ...current, demo: next }));
   };
@@ -140,12 +146,19 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     on the account, so it follows you to any phone or browser you sign in on,
     and it can never drift out of date.
 
-    The order matters. The Settings switcher wins, because it is someone asking
+    The order matters. The PIN wins over everything: while the app is live at
+    one school only (LIVE_UNIVERSITY in lib/themes.ts) that is the answer, and
+    it is deliberately read before the switcher so a school already saved in
+    someone's browser from the old switcher cannot outlive the pin.
+
+    Everything below it is the per-account behaviour, kept whole for the day
+    the pin comes off. The Settings switcher wins, because it is someone asking
     out loud. The ADDRESS comes next, and beats the dice — a real Harvard
     student is never shown Yale. Only an address we don't recognise reaches the
     demo roll, and only if that has never run do we fall back to the default.
   */
   const universityKey =
+    LIVE_UNIVERSITY ??
     remembered.chosen ??
     universityForEmail(session?.user.email)?.key ??
     remembered.demo ??

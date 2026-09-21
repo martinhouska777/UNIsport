@@ -332,6 +332,25 @@ export const universities: Record<string, University> = {
   }),
 };
 
+/*
+  THE ONE SCHOOL THE APP RUNS AS — the whole white-label system, pinned.
+
+  Every other Ivy above stays exactly where it is: its colours, crest, gyms and
+  words for the residential gyms are all still here, and the landing page still
+  shows them off. They are simply not reachable from inside the app any more.
+
+  Until now three different things could put you at another school: the demo
+  roll for an unrecognised address (lib/demoSchool.ts), the University switcher
+  in Settings, and the address you signed in with. With this set, all three
+  answer "harvard" and nothing in the app can change it — the app is Harvard
+  every time, for everyone.
+
+  Going live at a second campus later is a ONE-LINE edit here: set this back to
+  `null` and the per-account behaviour returns exactly as it was, switcher and
+  all. That is the point of keeping the data rather than deleting it.
+*/
+export const LIVE_UNIVERSITY: string | null = "harvard";
+
 export function getUniversity(key: string): University | undefined {
   return universities[key];
 }
