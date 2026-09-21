@@ -68,7 +68,14 @@ import { fetchTrainingConfig } from "@/lib/varsity/configStore";
 import { fetchOutings } from "@/lib/varsity/telemetryStore";
 import { demoOutings } from "@/lib/varsity/demoTelemetry";
 import { outingTotals, type TelemetryOuting as Outing } from "@/lib/varsity/telemetry";
-import { IconChevronRight, IconSearch } from "@/components/icons";
+import RaceBoard from "@/components/varsity/team/RaceBoard";
+import Sheet from "@/components/varsity/Sheet";
+import { fetchRaceDays, saveRaceDay } from "@/lib/varsity/raceStore";
+import { newPiece, raceSummary, type RaceDay } from "@/lib/varsity/racePieces";
+import { fetchLineupsFor } from "@/lib/varsity/lineupStore";
+import type { Boat } from "@/lib/varsity/coachLineup";
+import type { SessionMap } from "@/lib/varsity/coachPlan";
+import { IconChevronRight, IconPlus, IconSearch } from "@/components/icons";
 
 /** "Fri 15 May · AM" for an outing's session key. */
 function outingDateLabel(dayKey: string): string {
@@ -76,7 +83,7 @@ function outingDateLabel(dayKey: string): string {
   return `${dayKeyLabel(dayKey)}${parsed ? ` · ${parsed.period}` : ""}`;
 }
 
-type Row ={ key: string; date: Date; erg?: TeamWorkout; water?: Outing };
+type Row = { key: string; date: Date; erg?: TeamWorkout; water?: Outing; race?: RaceDay };
 
 /** The two halves of this screen. */
 type Side = "erg" | "water";
@@ -114,6 +121,17 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
   // the water side
   const [outings, setOutings] = useState<Outing[]>([]);
   const [openOuting, setOpenOuting] = useState<string | null>(null);
+  /*
+    RACE PIECES (racePieces.ts) — the coach's timing sheet as a board, one
+    per session, listed on the water side beside the telemetry outings. The
+    plan is kept so a race row can say what the session was ("2x2k open in
+    small boats") and so the coach's picker can offer the water sessions.
+  */
+  const [races, setRaces] = useState<RaceDay[]>([]);
+  const [raceBoats, setRaceBoats] = useState<Record<string, Boat[]>>({});
+  const [planSessions, setPlanSessions] = useState<SessionMap>({});
+  const [openRace, setOpenRace] = useState<string | null>(null);
+  const [pickingRace, setPickingRace] = useState(false);
   const [query, setQuery] = useState("");
   /* null until someone taps: the tab is derived from what is here (see the
      note up top), and pinned to their choice from the first tap on. */
@@ -128,6 +146,7 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
       const [plan, cfg] = await Promise.all([fetchPlan(), fetchTrainingConfig(teamId)]);
       const list = teamWorkouts(plan.sessions, cfg);
       if (!active) return;
+      setPlanSessions(plan.sessions);
 
       const rows = list.length ? await fetchResults(list.map((w) => w.dayKey)) : [];
       if (!active) return;
@@ -187,6 +206,50 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
     };
   }, []);
 
+  useEffect(() => {
+    let active = true;
+    fetchRaceDays().then(async (days) => {
+      if (!active) return;
+      setRaces(days);
+      // The crews' boats, so the coach can add one to a piece later.
+      const boats = await fetchLineupsFor(days.map((d) => d.dayKey));
+      if (active) setRaceBoats(boats);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  /*
+    THE COACH STARTS A RACE DAY from a water session that has boats: Piece 1
+    is made with every crew of that session's lineup, and the board opens on
+    it so the times can be typed straight away.
+  */
+  const startRace = async (dayKey: string) => {
+    const lineups = await fetchLineupsFor([dayKey]);
+    const boats = lineups[dayKey] ?? [];
+    const day: RaceDay = { dayKey, pieces: [newPiece(1, boats)] };
+    setRaceBoats((b) => ({ ...b, [dayKey]: boats }));
+    setRaces((r) => [day, ...r.filter((d) => d.dayKey !== dayKey)]);
+    setPickingRace(false);
+    setOpenRace(dayKey);
+    await saveRaceDay(day);
+  };
+
+  /* Water sessions of the last three weeks, today included, that have no
+     race pieces yet — what the picker offers. Newest first. */
+  const raceCandidates = useMemo(() => {
+    const today = new Date();
+    const endOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
+    const from = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 21);
+    const taken = new Set(races.map((r) => r.dayKey));
+    return Object.entries(planSessions)
+      .filter(([k, sess]) => sess.category === "water" && !taken.has(k))
+      .map(([k, sess]) => ({ dayKey: k, session: sess, date: parseSessionKey(k)?.date ?? new Date(0) }))
+      .filter((c) => c.date >= from && c.date <= endOfToday)
+      .sort((a, b) => b.date.getTime() - a.date.getTime());
+  }, [planSessions, races]);
+
   /* The turnout count on a LIST ROW here — the board itself stopped printing
      one. An example board counts against the EXAMPLE roster, never the real
      squad: "37 of 3 logged" is nonsense on a squad that hasn't signed up yet. */
@@ -208,15 +271,26 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
   );
   const waterRows = useMemo<Row[]>(
     () =>
-      outings
-        .map((o) => ({
+      [
+        ...races.map((r) => ({
+          key: `race:${r.dayKey}`,
+          date: parseSessionKey(r.dayKey)?.date ?? new Date(0),
+          race: r,
+        })),
+        ...outings.map((o) => ({
           key: `water:${o.id}`,
           date: parseSessionKey(o.dayKey)?.date ?? new Date(0),
           water: o,
-        }))
-        .sort(byDate),
-    [outings],
+        })),
+      ].sort(byDate),
+    [outings, races],
   );
+
+  /** The plan's words for a session, for a race row and its board. */
+  const raceTitle = (dayKey: string) => {
+    const sess = planSessions[dayKey];
+    return sess ? sess.description.trim() || sessionLabel(sess) : "Race pieces";
+  };
 
   /* Erg, unless there is nothing on it and there IS something on the water. */
   const side: Side = picked ?? (ergRows.length === 0 && waterRows.length > 0 ? "water" : "erg");
@@ -227,7 +301,9 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
     ? rows.filter((row) => {
         const text = row.erg
           ? searchText(row.erg.session.description.trim() || sessionLabel(row.erg.session), row.erg.dateLabel, row.date)
-          : searchText(`${row.water!.crew} ${row.water!.pieces.length} pieces`, outingDateLabel(row.water!.dayKey), row.date);
+          : row.race
+            ? searchText(`${raceTitle(row.race.dayKey)} race pieces`, outingDateLabel(row.race.dayKey), row.date)
+            : searchText(`${row.water!.crew} ${row.water!.pieces.length} pieces`, outingDateLabel(row.water!.dayKey), row.date);
         return words.every((w) => text.includes(w));
       })
     : rows;
@@ -271,6 +347,17 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
           </button>
         ))}
       </div>
+      {/* THE COACH'S NEW RACE DAY — water side only: pick the session, and
+          Piece 1 is made from its lineup. */}
+      {inConsole && side === "water" && (
+        <button
+          type="button"
+          onClick={() => setPickingRace(true)}
+          className="mb-3 flex w-full items-center justify-center gap-1.5 rounded-2xl border border-dashed border-border bg-surface-2 px-4 py-3 text-[13px] font-medium text-text active:bg-surface"
+        >
+          <IconPlus size={14} /> Time race pieces
+        </button>
+      )}
       {rows.length > 0 && (
         // The same search bubble the Team roster uses — white since 2026-09-16 (owner: "it's gray, it should be white").
         <div className="mb-3 flex items-center gap-2 rounded-full border border-border bg-surface px-4 py-2.5">
@@ -339,6 +426,30 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
               </button>
             );
           }
+          if (row.race) {
+            const r = row.race;
+            const sum = raceSummary(r);
+            return (
+              <button
+                key={row.key}
+                type="button"
+                onClick={() => setOpenRace(r.dayKey)}
+                className="flex w-full items-center gap-3 rounded-2xl border border-border bg-surface px-3.5 py-3 text-left active:bg-surface-2"
+              >
+                <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full bg-accent" />
+                <div className="min-w-0 flex-1">
+                  <span className="block truncate text-[13px] font-semibold text-text">{raceTitle(r.dayKey)}</span>
+                  <div className="mt-1 text-[11px] tabular-nums text-muted">
+                    {outingDateLabel(r.dayKey)} · {sum.pieces} {sum.pieces === 1 ? "piece" : "pieces"} · {sum.crews}{" "}
+                    {sum.crews === 1 ? "crew" : "crews"}
+                  </div>
+                </div>
+                <span className="text-muted">
+                  <IconChevronRight size={15} />
+                </span>
+              </button>
+            );
+          }
           const o = row.water!;
           const totals = outingTotals(o);
           const withSeats = o.pieces.filter((p) => p.seats?.length).length;
@@ -369,6 +480,59 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
           );
         })}
       </div>
+
+      {openRace && (() => {
+        const day = races.find((r) => r.dayKey === openRace);
+        if (!day) return null;
+        return (
+          <RaceBoard
+            key={openRace}
+            day={day}
+            dateLabel={outingDateLabel(openRace)}
+            title={raceTitle(openRace)}
+            boats={raceBoats[openRace] ?? []}
+            inConsole={inConsole}
+            onChange={(next) => setRaces((rs) => rs.map((r) => (r.dayKey === next.dayKey ? next : r)))}
+            onDeleted={() => {
+              setRaces((rs) => rs.filter((r) => r.dayKey !== openRace));
+              setOpenRace(null);
+            }}
+            onClose={() => setOpenRace(null)}
+          />
+        );
+      })()}
+
+      {pickingRace && (
+        <Sheet title="Which session?" onClose={() => setPickingRace(false)}>
+          {raceCandidates.length === 0 ? (
+            <p className="py-6 text-center text-[13px] text-muted">
+              No water session in the last three weeks is without race pieces.
+            </p>
+          ) : (
+            <div className="flex flex-col gap-1.5">
+              {raceCandidates.map((c) => (
+                <button
+                  key={c.dayKey}
+                  type="button"
+                  onClick={() => startRace(c.dayKey)}
+                  className="flex w-full items-center gap-3 rounded-2xl border border-border bg-surface px-3.5 py-3 text-left active:bg-surface-2"
+                >
+                  <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ background: sessionColor(c.session) }} />
+                  <div className="min-w-0 flex-1">
+                    <span className="block truncate text-[13px] font-semibold text-text">
+                      {c.session.description.trim() || sessionLabel(c.session)}
+                    </span>
+                    <span className="mt-0.5 block text-[11px] text-muted">{outingDateLabel(c.dayKey)}</span>
+                  </div>
+                  <span className="text-muted">
+                    <IconChevronRight size={15} />
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+        </Sheet>
+      )}
 
       {openedOuting && (
         <TelemetryOuting
