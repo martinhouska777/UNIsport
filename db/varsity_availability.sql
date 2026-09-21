@@ -20,7 +20,7 @@
 create table if not exists public.varsity_availability (
   id          uuid primary key default gen_random_uuid(),
   athlete_id  text not null,
-  reason      text not null check (reason in ('INJ', 'SICK')),
+  reason      text not null check (reason in ('INJ', 'SICK', 'RX', 'ERG', 'OYO', 'LAUNCH')),
   from_date   date not null,
   until_date  date,                        -- null = until brought back in
   updated_at  timestamptz not null default now()
@@ -42,3 +42,12 @@ create policy "Availability updated by the coach"
   with check (public.varsity_is_coach());
 create policy "Availability deleted by the coach"
   on public.varsity_availability for delete using (public.varsity_is_coach());
+
+-- WHY SOMEBODY IS NOT IN A BOAT WIDENED (2026-09-21). A squad lineup sheet has
+-- boats down one side and, down the other, the people training somewhere else:
+-- Rx (a rehab block), the ergs, OYO, and whoever is in the launch. They belong
+-- in the same list as sick and injured, because the question the coach is
+-- asking is the same one. Reasons and how long each lasts are data in
+-- lib/varsity/coachLineup.ts (outMeta / outOptions). On a live database:
+--   alter table public.varsity_availability drop constraint varsity_availability_reason_check;
+--   alter table public.varsity_availability add constraint varsity_availability_reason_check check (reason in ('INJ','SICK','RX','ERG','OYO','LAUNCH'));
