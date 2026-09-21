@@ -122,10 +122,12 @@ export default function VarsityIntro() {
         {/* Crest drops from the top onto the crossing point. The DRAWN crest
             (lib/crests.ts) wearing the theme pair — the same one the whole app
             wears, and at the same 92px/86px the frozen mark (VarsityCrest) uses,
-            so the film ends on exactly the icon you keep seeing afterwards. */}
+            so the film ends on exactly the icon you keep seeing afterwards.
+            `bold` = the black line round it, like the oars': the owner wanted
+            the emblem "red with black edges" so it stands out (2026-09-21). */}
         <div className="absolute inset-x-0 top-[86px] flex justify-center">
           <div className="v-crest-drop">
-            <UniversityCrest size={92} />
+            <UniversityCrest size={92} bold />
           </div>
         </div>
 
