@@ -49,7 +49,15 @@ function niceCeil(v: number): number {
 }
 
 /* Zero is just "0" — "0.0 km" is three characters of nothing. */
-const axisLabel = (v: number, metric: StatMetric, units: Units) =>
+/*
+  What the drawing needs to know about its measure: what it is called, how a
+  number is written, and whether the axis has a fixed top. The athlete's
+  StatMetric has all three; the squad's measure (lib/varsity/teamStats.ts)
+  has the same three and nothing else this drawing would use.
+*/
+export type PlotMetric = Pick<StatMetric, "label" | "format" | "axisMax">;
+
+const axisLabel = (v: number, metric: PlotMetric, units: Units) =>
   v <= 0 ? "0" : metric.format(v, units);
 
 /* SVG has no idea how wide a string is, so we estimate. The system UI font at
@@ -123,7 +131,7 @@ export default function Plot({
   shaded,
 }: {
   points: PlotPoint[];
-  metric: StatMetric;
+  metric: PlotMetric;
   units: Units;
   chart: ChartType;
   height: number;
