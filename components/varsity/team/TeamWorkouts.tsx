@@ -107,7 +107,9 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
   const [results, setResults] = useState<TeamResult[]>([]);
   const [squadSize, setSquadSize] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
-  const [example, setExample] = useState(false);
+  /* Which listed workouts are the worked example, by day key — the rest are
+     the squad's own. Empty once a real result exists. */
+  const [exampleKeys, setExampleKeys] = useState<Set<string>>(() => new Set());
   const [open, setOpen] = useState<string | null>(null);
   // the water side
   const [outings, setOutings] = useState<Outing[]>([]);
@@ -127,20 +129,31 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
       const list = teamWorkouts(plan.sessions, cfg);
       if (!active) return;
 
-      if (list.length > 0) {
+      const rows = list.length ? await fetchResults(list.map((w) => w.dayKey)) : [];
+      if (!active) return;
+
+      if (rows.length > 0) {
+        // Somebody real has logged a board: the squad's own results, nothing else.
         setWorkouts(list);
-        const rows = await fetchResults(list.map((w) => w.dayKey));
-        if (!active) return;
         setResults(rows);
       } else {
-        // Nothing flagged yet → the worked example. Nobody real is in it: the
-        // viewer's own name never goes on a result they didn't pull. The board
-        // leaves out Weights and Off like a real week does, so the example shows the
-        // same session types a real week would.
+        /*
+          NOBODY HAS LOGGED A RESULT YET → the worked example (demoWorkouts.ts),
+          next to whatever the coach has flagged. The rule used to be "no
+          flagged session at all": the day the squad's real plan went in
+          (2026-09-21) it carried one flagged session, the example vanished,
+          and the Erg tab was a blank list — "before, I liked it" (owner, same
+          day). So the example now stays until the first REAL result exists,
+          and the real flagged sessions are listed with it (each saying
+          nobody has logged it yet), never hidden by it. An example piece
+          that falls on a session the coach flagged gives way to the real one.
+        */
         const demo = demoTeamPlan(new Date());
-        setWorkouts(teamWorkouts(demo.sessions, cfg));
-        setResults(demo.results);
-        setExample(true);
+        const real = new Set(list.map((w) => w.dayKey));
+        const examples = teamWorkouts(demo.sessions, cfg).filter((w) => !real.has(w.dayKey));
+        setWorkouts([...list, ...examples]);
+        setResults(demo.results.filter((r) => !real.has(r.dayKey)));
+        setExampleKeys(new Set(examples.map((w) => w.dayKey)));
       }
       setLoading(false);
     })();
@@ -177,7 +190,7 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
   /* The turnout count on a LIST ROW here — the board itself stopped printing
      one. An example board counts against the EXAMPLE roster, never the real
      squad: "37 of 3 logged" is nonsense on a squad that hasn't signed up yet. */
-  const shownSquadSize = example ? demoSquadSize : squadSize;
+  const squadSizeFor = (dayKey: string) => (exampleKeys.has(dayKey) ? demoSquadSize : squadSize);
 
   // How many results each workout has, so the list can show it without
   // re-filtering inside the render loop.
@@ -293,7 +306,8 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
             const w = row.erg;
             const n = counts.get(w.dayKey) ?? 0;
             // The "of M" only where turning up is part of the result (ranked).
-            const ofSquad = w.board === "ranked" && shownSquadSize ? ` of ${shownSquadSize}` : "";
+            const squad = squadSizeFor(w.dayKey);
+            const ofSquad = w.board === "ranked" && squad ? ` of ${squad}` : "";
             return (
               <button
                 key={row.key}
@@ -372,7 +386,7 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
           results={openedResults}
           workouts={workouts}
           allResults={results}
-          example={example}
+          example={exampleKeys.has(opened.dayKey)}
           inConsole={inConsole}
           myId={userId}
           onClose={() => setOpen(null)}
