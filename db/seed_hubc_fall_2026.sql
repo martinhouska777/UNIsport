@@ -3,14 +3,20 @@
 -- ----------------------------------------------------------------------------
 -- WHAT THIS IS
 --   The coach's own two sheets, typed into the app instead of a spreadsheet:
---     1. "HUBC Fall 2026" — six Monday–Sunday weeks from Mon 7 Sep to the Head
---        of the Charles on Sat 17 Oct, every day's AM and PM slot filled with
---        the words the sheet uses, in the zone the sheet's colour gives it
---        (green UT2, orange/yellow UT1, red hard, magenta weights, grey flex,
---        olive off).
---     2. The lineup sheet for the 16k UT2 — three eights (Engstrom, Hamlin,
---        92), a pair and a coxed four, published, plus the ten people who were
---        not in a boat that morning: Rx, the ergs, OYO and the launch.
+--     1. "HUBC Fall 2026" — the six Monday–Sunday weeks the sheet is headed
+--        with, Mon 7 Sep to the Head of the Charles on Sat 17 Oct, every day's
+--        AM and PM slot in the words the sheet uses and the zone its colour
+--        gives it (green UT2, yellow/orange UT1, red hard, magenta weights,
+--        grey flex, olive off).
+--     2. The lineup sheet headed "16k UT2" — three eights (Engstrom, Hamlin,
+--        92), a pair and a coxed four, plus the ten people who were not in a
+--        boat: Rx, the ergs, OYO and the launch.
+--
+--   WHICH SLOT THE LINEUP SHEET BELONGS TO: the sheet is headed 16k UT2, and on
+--   this plan that is the AFTERNOON — the mornings are small boats or the erg,
+--   and "Mixed Eights" only ever appears against a PM or a Saturday. So the
+--   boats go on the PM, and the small-boat mornings are left with no lineup
+--   published, which is the truth: the coach has not drawn them up here.
 --
 --   Seats reference roster ids in lib/varsity/coachLineup.ts, which carries the
 --   squad's real names.
@@ -46,110 +52,121 @@ on conflict (id) do update set
 
 -- ---------------------------------------------------------------------------
 -- 3. Every slot in the six weeks, cell by cell off the sheet.
+--
+--    TIMES come from the sheet's own Time Block column: the morning is "7am in
+--    house, on the dock by 915am", and the afternoon "Monday + Wednesday will
+--    be scheduled according to class times", so the PM keeps the app's 4:30
+--    until the squad's real afternoon times are known.
+--
 --    `mins`, `metres` and `split` are not part of the plan — they are what a
 --    session of that size comes out as, and step 7 uses them to fill in the
 --    training the squad has already done.
+--
+--    `eights` says whether this is a session the lineup sheet's crews belong
+--    to. False for the small-boat mornings, the ergs, weights, flex and off.
 -- ---------------------------------------------------------------------------
 drop table if exists public.hubc_fall_slots;
 create table public.hubc_fall_slots (
   d date, period text, category text, intensity text, description text,
   location text, team_workout boolean default false, board text,
-  mins int, metres int, split text
+  mins int, metres int, split text, eights boolean default false
 );
 alter table public.hubc_fall_slots enable row level security;  -- server-side only
 
 insert into public.hubc_fall_slots
-  (d, period, category, intensity, description, location, team_workout, board, mins, metres, split) values
+  (d, period, category, intensity, description, location, team_workout, board, mins, metres, split, eights) values
 -- == Week 1 · 7-13 Sep ======================================================
-('2026-09-07','AM','water','UT2','UT2 Mixed Eights','Newell Boathouse',false,null,70,16000,'2:11'),
-('2026-09-07','PM','water','UT1','RP3/Water :50/:10 off Mixed Eights — one on RP3, one on water','Newell Boathouse',false,null,60,13000,'2:18'),
-('2026-09-08','AM','water','UT2','UT2 Small Boats','Newell Boathouse',false,null,65,14500,'2:14'),
-('2026-09-08','PM','weights',null,'Weights at Palmer Dixon OR Flex training','Palmer Dixon',false,null,50,null,null),
-('2026-09-09','AM','off',null,'',null,false,null,null,null,null),
-('2026-09-09','PM','water','UT2','Skill and Drill Mixed Eight','Newell Boathouse',false,null,60,12000,'2:30'),
-('2026-09-10','AM','water','hard','HOCR Prep Mixed Eights','Newell Boathouse',false,null,70,15000,'2:20'),
-('2026-09-10','PM','weights',null,'Weights at Palmer Dixon OR Flex training','Palmer Dixon',false,null,50,null,null),
-('2026-09-11','AM','water','UT2','UT2 Small Boats','Newell Boathouse',false,null,65,14500,'2:14'),
-('2026-09-11','PM','water','UT2','UT2 Mixed Eights','Newell Boathouse',false,null,70,16000,'2:11'),
-('2026-09-12','AM','water','UT1','Basin Shots Mixed Eights','Newell Boathouse',false,null,55,11000,'2:30'),
-('2026-09-12','PM','flex',null,'Recovery/Flex: 45'' volume OR Full roll out + core circuit',null,false,null,45,null,null),
-('2026-09-13','AM','off',null,'',null,false,null,null,null,null),
-('2026-09-13','PM','off',null,'',null,false,null,null,null,null),
+-- Monday is one merged olive cell across both rows: Labor Day, nothing on.
+('2026-09-07','AM','off',null,'Labor Day',null,false,null,null,null,null,false),
+('2026-09-07','PM','off',null,'Labor Day',null,false,null,null,null,null,false),
+('2026-09-08','AM','erg','UT2','3x25'' UT2 erg','Newell erg room',false,null,75,19500,'1:55',false),
+('2026-09-08','PM','weights',null,'Weights at Palmer Dixon','Palmer Dixon',false,null,50,null,null,false),
+('2026-09-09','AM','off',null,'',null,false,null,null,null,null,false),
+('2026-09-09','PM','water','UT2','14k UT2 Mixed Eights','Newell Boathouse',false,null,61,14000,'2:11',true),
+('2026-09-10','AM','water','UT1','2x3mi — Piece 1: DPS, Piece 2: @24','Newell Boathouse',false,null,62,14000,'2:13',true),
+('2026-09-10','PM','weights',null,'Weights at Palmer Dixon','Palmer Dixon',false,null,50,null,null,false),
+('2026-09-11','AM','water','UT2','12k UT2 Small Boats','Newell Boathouse',false,null,54,12000,'2:15',false),
+('2026-09-11','PM','water','UT2','16k UT2 Mixed Eights','Newell Boathouse',false,null,70,16000,'2:11',true),
+('2026-09-12','AM','water','UT1','3x5'' @ 26 Mixed Eights','Newell Boathouse',false,null,55,12000,'2:16',true),
+('2026-09-12','PM','flex',null,'Recovery/Flex: 45'' volume OR Full roll out + core circuit',null,false,null,45,null,null,false),
+('2026-09-13','AM','off',null,'',null,false,null,null,null,null,false),
+('2026-09-13','PM','off',null,'',null,false,null,null,null,null,false),
 -- == Week 2 · 14-20 Sep =====================================================
-('2026-09-14','AM','water','UT2','12-14k UT2 small boats','Newell Boathouse',false,null,60,13000,'2:18'),
-('2026-09-14','PM','water','UT2','16k UT2','Newell Boathouse',false,null,70,16000,'2:11'),
-('2026-09-15','AM','water','hard','3x10''@26','Newell Boathouse',false,null,60,13500,'2:13'),
-('2026-09-15','PM','weights',null,'Weights at Palmer Dixon OR Flex training','Palmer Dixon',false,null,50,null,null),
-('2026-09-16','AM','off',null,'',null,false,null,null,null,null),
-('2026-09-16','PM','water','UT2','14-16k','Newell Boathouse',false,null,66,15000,'2:12'),
-('2026-09-17','AM','water','UT2','16k','Newell Boathouse',false,null,70,16000,'2:11'),
-('2026-09-17','PM','weights',null,'Weights at Palmer Dixon OR Flex training','Palmer Dixon',false,null,50,null,null),
-('2026-09-18','AM','water','UT2','14-16k UT2 small boats','Newell Boathouse',false,null,66,15000,'2:12'),
-('2026-09-18','PM','water','UT2','12k UT2','Newell Boathouse',false,null,53,12000,'2:12'),
-('2026-09-19','AM','water','UT1','3x5'' @ 28','Newell Boathouse',false,null,55,12000,'2:16'),
-('2026-09-19','PM','flex',null,'Recovery/Flex: 45'' volume OR Full roll out + core circuit',null,false,null,45,null,null),
-('2026-09-20','AM','off',null,'',null,false,null,null,null,null),
-('2026-09-20','PM','off',null,'',null,false,null,null,null,null),
+('2026-09-14','AM','water','UT2','12-14k UT2 small boats','Newell Boathouse',false,null,58,13000,'2:14',false),
+('2026-09-14','PM','water','UT2','16k UT2','Newell Boathouse',false,null,70,16000,'2:11',true),
+('2026-09-15','AM','water','hard','2x2k open in small boats','Newell Boathouse',false,null,55,12000,'2:12',false),
+('2026-09-15','PM','weights',null,'Weights at Palmer Dixon','Palmer Dixon',false,null,50,null,null,false),
+('2026-09-16','AM','off',null,'',null,false,null,null,null,null,false),
+('2026-09-16','PM','water','UT2','16k UT2','Newell Boathouse',false,null,70,16000,'2:11',true),
+('2026-09-17','AM','water','UT1','2x3mi — Piece 1: DPS, Piece 2: @26','Newell Boathouse',false,null,62,14000,'2:13',true),
+('2026-09-17','PM','weights',null,'Weights at Palmer Dixon','Palmer Dixon',false,null,50,null,null,false),
+('2026-09-18','AM','water','UT2','12-14k UT2 small boats','Newell Boathouse',false,null,58,13000,'2:14',false),
+('2026-09-18','PM','water','UT2','16k UT2','Newell Boathouse',false,null,70,16000,'2:11',true),
+('2026-09-19','AM','water','UT1','3x5'' @ 28','Newell Boathouse',false,null,55,12000,'2:16',true),
+('2026-09-19','PM','flex',null,'Recovery/Flex: 45'' volume OR Full roll out + core circuit',null,false,null,45,null,null,false),
+('2026-09-20','AM','off',null,'',null,false,null,null,null,null,false),
+('2026-09-20','PM','off',null,'',null,false,null,null,null,null,false),
 -- == Week 3 · 21-27 Sep · the week the lineup sheet is from ==================
-('2026-09-21','AM','water','UT2','16k UT2','Newell Boathouse',true,'average',70,16000,'2:11'),
-('2026-09-21','PM','erg','hard','5k TEST','Newell erg room',true,'ranked',17,5000,'1:42'),
-('2026-09-22','AM','water','UT2','14-16k UT2 small boats','Newell Boathouse',false,null,66,15000,'2:12'),
-('2026-09-22','PM','weights',null,'Weights at Palmer Dixon OR Flex training','Palmer Dixon',false,null,50,null,null),
-('2026-09-23','AM','off',null,'',null,false,null,null,null,null),
-('2026-09-23','PM','water','UT2','14k Skill and Drill','Newell Boathouse',false,null,65,14000,'2:19'),
-('2026-09-24','AM','water','hard','3x12''@28','Newell Boathouse',false,null,65,14500,'2:14'),
-('2026-09-24','PM','weights',null,'Weights at Palmer Dixon OR Flex training','Palmer Dixon',false,null,50,null,null),
-('2026-09-25','AM','water','UT2','14-16k UT2 small boats','Newell Boathouse',false,null,66,15000,'2:12'),
-('2026-09-25','PM','water','UT2','12k UT2','Newell Boathouse',false,null,53,12000,'2:12'),
-('2026-09-26','AM','water','UT1','3x5'' @ 30','Newell Boathouse',false,null,55,12000,'2:16'),
-('2026-09-26','PM','flex',null,'Recovery/Flex: 45'' volume OR Full roll out + core circuit',null,false,null,45,null,null),
-('2026-09-27','AM','off',null,'',null,false,null,null,null,null),
-('2026-09-27','PM','off',null,'',null,false,null,null,null,null),
+('2026-09-21','AM','water','UT2','12-14k UT2 small boats','Newell Boathouse',false,null,58,13000,'2:14',false),
+('2026-09-21','PM','water','UT2','16k UT2','Newell Boathouse',true,'average',70,16000,'2:11',true),
+('2026-09-22','AM','water','hard','2x2k open in small boats','Newell Boathouse',false,null,55,12000,'2:12',false),
+('2026-09-22','PM','weights',null,'Weights at Palmer Dixon','Palmer Dixon',false,null,50,null,null,false),
+('2026-09-23','AM','off',null,'',null,false,null,null,null,null,false),
+('2026-09-23','PM','water','UT2','16k UT2','Newell Boathouse',false,null,70,16000,'2:11',true),
+('2026-09-24','AM','water','UT1','2x3mi — Piece 1: DPS, Piece 2: @28','Newell Boathouse',false,null,62,14000,'2:13',true),
+('2026-09-24','PM','weights',null,'Weights at Palmer Dixon','Palmer Dixon',false,null,50,null,null,false),
+('2026-09-25','AM','water','UT2','12-14k UT2 small boats','Newell Boathouse',false,null,58,13000,'2:14',false),
+('2026-09-25','PM','water','UT2','16k UT2','Newell Boathouse',false,null,70,16000,'2:11',true),
+('2026-09-26','AM','water','UT1','3x5'' @ 30','Newell Boathouse',false,null,55,12000,'2:16',true),
+('2026-09-26','PM','flex',null,'Recovery/Flex: 45'' volume OR Full roll out + core circuit',null,false,null,45,null,null,false),
+('2026-09-27','AM','off',null,'',null,false,null,null,null,null,false),
+('2026-09-27','PM','off',null,'',null,false,null,null,null,null,false),
 -- == Week 4 · 28 Sep - 4 Oct ================================================
-('2026-09-28','AM','water','UT2','14-16k UT2 small boats','Newell Boathouse',false,null,66,15000,'2:12'),
-('2026-09-28','PM','water','UT2','16k UT2','Newell Boathouse',false,null,70,16000,'2:11'),
-('2026-09-29','AM','water','hard','3x2.5k @ 30','Newell Boathouse',false,null,60,13000,'2:18'),
-('2026-09-29','PM','weights',null,'Weights at Palmer Dixon OR Flex training','Palmer Dixon',false,null,50,null,null),
-('2026-09-30','AM','off',null,'',null,false,null,null,null,null),
-('2026-09-30','PM','water','UT2','16k UT2','Newell Boathouse',false,null,70,16000,'2:11'),
-('2026-10-01','AM','water','UT2','18k UT2','Newell Boathouse',false,null,79,18000,'2:12'),
-('2026-10-01','PM','weights',null,'Weights at Palmer Dixon OR Flex training','Palmer Dixon',false,null,50,null,null),
-('2026-10-02','AM','water','UT2','2xHOC course UT2','Newell Boathouse',false,null,68,15000,'2:16'),
-('2026-10-02','PM','water','UT2','12k UT2','Newell Boathouse',false,null,53,12000,'2:12'),
-('2026-10-03','AM','water','hard','2 miles at 32, 1 mile at 34, .5 mile at 34','Newell Boathouse',true,'ranked',65,14000,'2:19'),
-('2026-10-03','PM','flex',null,'Recovery/Flex: 45'' volume OR Full roll out + core circuit',null,false,null,45,null,null),
-('2026-10-04','AM','off',null,'',null,false,null,null,null,null),
-('2026-10-04','PM','off',null,'',null,false,null,null,null,null),
+('2026-09-28','AM','water','UT2','14-16k UT2 small boats','Newell Boathouse',false,null,66,15000,'2:12',false),
+('2026-09-28','PM','erg','hard','5k erg test','Newell erg room',true,'ranked',17,5000,'1:42',false),
+('2026-09-29','AM','water','UT2','16k UT2','Newell Boathouse',false,null,70,16000,'2:11',true),
+('2026-09-29','PM','weights',null,'Weights at Palmer Dixon','Palmer Dixon',false,null,50,null,null,false),
+('2026-09-30','AM','off',null,'',null,false,null,null,null,null,false),
+('2026-09-30','PM','water','UT2','16k UT2','Newell Boathouse',false,null,70,16000,'2:11',true),
+('2026-10-01','AM','water','hard','2x2k open in small boats OR 3x2500m @ 30 in 8s w/switches','Newell Boathouse',false,null,60,13000,'2:14',false),
+('2026-10-01','PM','weights',null,'Weights at Palmer Dixon','Palmer Dixon',false,null,50,null,null,false),
+('2026-10-02','AM','water','UT2','16k UT2','Newell Boathouse',false,null,70,16000,'2:11',true),
+('2026-10-02','PM','water','UT2','12k UT2','Newell Boathouse',false,null,53,12000,'2:12',true),
+('2026-10-03','AM','water','hard','2 miles at 32, 1 mile at 34, .5 mile at 34','Newell Boathouse',true,'ranked',65,14000,'2:19',true),
+('2026-10-03','PM','flex',null,'Recovery/Flex: 45'' volume OR Full roll out + core circuit',null,false,null,45,null,null,false),
+('2026-10-04','AM','off',null,'',null,false,null,null,null,null,false),
+('2026-10-04','PM','off',null,'',null,false,null,null,null,null,false),
 -- == Week 5 · 5-11 Oct ======================================================
-('2026-10-05','AM','water','hard','2x2 miles at race pace','Newell Boathouse',true,'ranked',65,14000,'2:19'),
-('2026-10-05','PM','water','UT2','16k UT2','Newell Boathouse',false,null,70,16000,'2:11'),
-('2026-10-06','AM','water','UT2','16k UT2','Newell Boathouse',false,null,70,16000,'2:11'),
-('2026-10-06','PM','weights',null,'Weights at Palmer Dixon OR Flex training','Palmer Dixon',false,null,50,null,null),
-('2026-10-07','AM','off',null,'',null,false,null,null,null,null),
-('2026-10-07','PM','water','UT1','18k UT2, some race pace work by boat','Newell Boathouse',false,null,80,18000,'2:13'),
-('2026-10-08','AM','water','UT2','18k','Newell Boathouse',false,null,79,18000,'2:12'),
-('2026-10-08','PM','weights',null,'Weights at Palmer Dixon OR Flex training','Palmer Dixon',false,null,50,null,null),
-('2026-10-09','AM','water','UT2','2xHOC course UT2','Newell Boathouse',false,null,68,15000,'2:16'),
-('2026-10-09','PM','water','UT2','12k UT2','Newell Boathouse',false,null,53,12000,'2:12'),
-('2026-10-10','AM','water','hard','3x 1 mile at pace','Newell Boathouse',true,'ranked',60,13000,'2:18'),
-('2026-10-10','PM','flex',null,'Recovery/Flex: 45'' volume OR Full roll out + core circuit',null,false,null,45,null,null),
-('2026-10-11','AM','off',null,'',null,false,null,null,null,null),
-('2026-10-11','PM','off',null,'',null,false,null,null,null,null),
+('2026-10-05','AM','water','UT2','16k UT2','Newell Boathouse',false,null,70,16000,'2:11',true),
+('2026-10-05','PM','water','UT2','16k UT2','Newell Boathouse',false,null,70,16000,'2:11',true),
+('2026-10-06','AM','water','hard','4x4'' on/90" off at pace','Newell Boathouse',false,null,55,12000,'2:14',true),
+('2026-10-06','PM','weights',null,'Weights at Palmer Dixon','Palmer Dixon',false,null,50,null,null,false),
+('2026-10-07','AM','off',null,'',null,false,null,null,null,null,false),
+('2026-10-07','PM','water','UT2','18k UT2','Newell Boathouse',false,null,79,18000,'2:12',true),
+('2026-10-08','AM','water','UT2','18k UT2/race skills work','Newell Boathouse',false,null,82,18000,'2:14',true),
+('2026-10-08','PM','weights',null,'Weights at Palmer Dixon','Palmer Dixon',false,null,50,null,null,false),
+('2026-10-09','AM','water','UT2','16k UT2','Newell Boathouse',false,null,70,16000,'2:11',true),
+('2026-10-09','PM','water','UT2','12k UT2','Newell Boathouse',false,null,53,12000,'2:12',true),
+('2026-10-10','AM','water','hard','2x2 miles at race pace','Newell Boathouse',true,'ranked',65,14000,'2:19',true),
+('2026-10-10','PM','flex',null,'Recovery/Flex: 45'' volume OR Full roll out + core circuit',null,false,null,45,null,null,false),
+('2026-10-11','AM','off',null,'',null,false,null,null,null,null,false),
+('2026-10-11','PM','off',null,'',null,false,null,null,null,null,false),
 -- == Week 6 · 12-18 Oct · race week =========================================
-('2026-10-12','AM','water','hard','Full Pull','Newell Boathouse',true,'ranked',70,16000,'2:15'),
-('2026-10-12','PM','water','UT2','12k','Newell Boathouse',false,null,53,12000,'2:12'),
-('2026-10-13','AM','water','UT2','16k','Newell Boathouse',false,null,70,16000,'2:11'),
-('2026-10-13','PM','weights',null,'Weights at Palmer Dixon OR Flex training','Palmer Dixon',false,null,50,null,null),
-('2026-10-14','AM','off',null,'',null,false,null,null,null,null),
-('2026-10-14','PM','water','UT2','14k Skill and Drill','Newell Boathouse',false,null,65,14000,'2:19'),
-('2026-10-15','AM','water','hard','2x1 mile at pace','Newell Boathouse',false,null,55,12000,'2:18'),
-('2026-10-15','PM','weights',null,'Weights at Palmer Dixon OR Flex training','Palmer Dixon',false,null,50,null,null),
-('2026-10-16','AM','water','UT2','Row over the course, some bursts','Newell Boathouse',false,null,55,12500,'2:12'),
-('2026-10-16','PM','off',null,'HClub Event',null,false,null,null,null,null),
-('2026-10-17','AM','water','hard','HEAD OF THE CHARLES — racing for Club 8s','Charles River',false,null,60,12000,'2:05'),
-('2026-10-17','PM','off',null,'',null,false,null,null,null,null),
-('2026-10-18','AM','water','hard','HEAD OF THE CHARLES — racing for Champ 8s','Charles River',false,null,60,12000,'2:05'),
-('2026-10-18','PM','off',null,'',null,false,null,null,null,null);
+('2026-10-12','AM','water','hard','Full Pull (University holiday — likely 8am)','Newell Boathouse',true,'ranked',70,16000,'2:15',true),
+('2026-10-12','PM','flex',null,'60'' flex',null,false,null,60,null,null,false),
+('2026-10-13','AM','water','UT2','16k','Newell Boathouse',false,null,70,16000,'2:11',true),
+('2026-10-13','PM','weights',null,'Weights at Palmer Dixon','Palmer Dixon',false,null,50,null,null,false),
+('2026-10-14','AM','off',null,'',null,false,null,null,null,null,false),
+('2026-10-14','PM','water','UT2','14k Skill and Drill','Newell Boathouse',false,null,65,14000,'2:19',true),
+('2026-10-15','AM','water','hard','2x1 mile at pace','Newell Boathouse',false,null,55,12000,'2:18',true),
+('2026-10-15','PM','weights',null,'Weights at Palmer Dixon','Palmer Dixon',false,null,50,null,null,false),
+('2026-10-16','AM','water','UT2','Row over the course, some bursts','Newell Boathouse',false,null,55,12500,'2:12',true),
+('2026-10-16','PM','off',null,'HClub Event',null,false,null,null,null,null,false),
+-- The race weekend is one merged red cell over both days and both rows.
+('2026-10-17','AM','water','hard','HEAD OF THE CHARLES — racing for Club 8s','Charles River',false,null,60,12000,'2:05',true),
+('2026-10-17','PM','off',null,'',null,false,null,null,null,null,false),
+('2026-10-18','AM','water','hard','HEAD OF THE CHARLES — racing for Champ 8s','Charles River',false,null,60,12000,'2:05',true),
+('2026-10-18','PM','off',null,'',null,false,null,null,null,null,false);
 
 -- day_key is '<year>-<ZERO-BASED month>-<day>-<AM|PM>' — the same string
 -- sessionKey() builds in lib/varsity/coachPlan.ts. September is 8, October 9.
@@ -193,7 +210,8 @@ insert into public.hubc_fall_boats (variant, boats) values
    "seats":[{"label":"1","athleteId":"asante-kiio"},{"label":"2","athleteId":"julian-paul"},{"label":"3","athleteId":"hazen"},{"label":"4","athleteId":"kevin-weldon"}]}
 ]'::jsonb),
 -- The same five crews with the two eights' bow seats swapped, so a coach
--- stepping back through last week does not find fifteen identical mornings.
+-- stepping back through last week does not find a fortnight of identical
+-- outings.
 ('B', '[
   {"id":"boat-1v","badge":"8+","name":"Engstrom","dock":"7:15am","oars":"Yellow","note":"","hasCox":true,"coxId":"miller",
    "seats":[{"label":"1","athleteId":"bob-rawlinson"},{"label":"2","athleteId":"elam-hughes"},{"label":"3","athleteId":"jack-sulger"},{"label":"4","athleteId":"pierce-lapham"},{"label":"5","athleteId":"sam-woodgate"},{"label":"6","athleteId":"jack-hansen-knarhoi"},{"label":"7","athleteId":"marco-gandola"},{"label":"8","athleteId":"sam-gallaudet"}]},
@@ -218,11 +236,11 @@ delete from public.varsity_lineups l
     where l.day_key = extract(year from s.d)::int || '-' || (extract(month from s.d)::int - 1) || '-' || extract(day from s.d)::int || '-' || s.period
  );
 
--- Every water practice from the start of the block up to today gets its boats.
--- A practice that has already happened also carries what the crew actually did
--- (metres + working minutes on each boat — lib/varsity/boatWork.ts), which is
--- what the season's mileage is added up from. Today's morning has not happened
--- yet, so it carries neither.
+-- Every EIGHTS practice from the start of the block up to today gets its
+-- boats. A practice that has already happened also carries what the crew
+-- actually did (metres + working minutes on each boat —
+-- lib/varsity/boatWork.ts), which is what the season's mileage is added up
+-- from. Today's has not happened yet, so it carries neither.
 insert into public.varsity_lineups (day_key, boats, status, updated_at)
 select
   extract(year from s.d)::int || '-' || (extract(month from s.d)::int - 1) || '-' || extract(day from s.d)::int || '-' || s.period,
@@ -236,7 +254,7 @@ select
 from public.hubc_fall_slots s
 join public.hubc_fall_boats v
   on v.variant = case when extract(dow from s.d)::int in (1, 3, 5) then 'A' else 'B' end
-where s.category = 'water'
+where s.eights
   and s.d <= current_date
 on conflict (day_key) do update set
   boats = excluded.boats, status = excluded.status, updated_at = now();
@@ -244,13 +262,14 @@ on conflict (day_key) do update set
 -- ---------------------------------------------------------------------------
 -- 5. THE TEN WHO WERE NOT IN A BOAT, down the right-hand side of the sheet.
 --    Rx is a rehab block and runs until the coach brings them back; the ergs,
---    OYO and the launch are just this morning.
+--    OYO and the launch are just today.
 -- ---------------------------------------------------------------------------
 -- The reasons a live database will accept. It shipped with only INJ and SICK;
 -- the squad sheet also has Rx, the ergs, OYO and the launch (db/varsity_availability.sql).
 alter table public.varsity_availability drop constraint if exists varsity_availability_reason_check;
 alter table public.varsity_availability add constraint varsity_availability_reason_check
   check (reason in ('INJ', 'SICK', 'RX', 'ERG', 'OYO', 'LAUNCH'));
+
 delete from public.varsity_availability
  where athlete_id in ('alp-karadogan','charles-richards','luca-vicino',
                       'george-burney','saeed','schinnerl',
