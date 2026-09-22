@@ -58,9 +58,11 @@ const NAVY = "#2f3b52";
 const INK = "#141618";
 
 const PREFIX = "Never train";
-const SUF_A = "alone again.";
-const MATCH = "Match.";
-const LIVE = "Live now at Harvard";
+const SUF_A = "alone again";          // no full stop (owner)
+const MATCH = "Match";                // no full stop (owner)
+const FIND = "Find training partners";
+const LIVE_A = "Live now at ", LIVE_B = "Harvard";   // Harvard in its crimson (owner)
+const CRIMSON = "#A51C30";            // lib/themes.ts, Harvard primary — the one school colour in brand material, by the owner's call
 const ACTS = ["Gym", "Running", "Cardio"];
 const WORD = ["U", "N", "I", "s", "p", "o", "r", "t"];   // the I is drawn, not typed
 
@@ -68,14 +70,15 @@ const WORD = ["U", "N", "I", "s", "p", "o", "r", "t"];   // the I is drawn, not 
 /* No edit of the line any more (owner, 2026-09-22 night): the headline types,
    holds, lifts, and "Choose your activity." follows straight away. */
 const T = {
-  cursor: 0.40,
-  typeA: 0.70, ms: 0.038,
-  lift: 2.90,
-  act: 3.30, tiles: 3.55, hand: 3.85, tap1: 4.45, tap2: 5.15, actOut: 5.65,
-  find: 5.90, slide: 6.00, apart: 7.05,
-  matchType: 7.75, join: 8.05, met: 9.45,
-  matchOut: 9.95, word: 10.25, msWord: 0.065, live: 11.00,
-  out: 12.15, end: 12.65,
+  cursor: 0.15,
+  typeA: 0.35, ms: 0.038,
+  lift: 2.00,                                   // and the lift itself is quick now (0.3 s)
+  act: 2.30, tiles: 2.55, hand: 2.85, tap1: 3.45, tap2: 4.15, actOut: 4.65,
+  find: 4.90, slide: 5.00, apart: 6.05,
+  matchType: 6.75, join: 7.05, met: 8.45,
+  matchOut: 8.95, word: 9.25, msWord: 0.07,     // msWord = the stagger between falling letters
+  live: 10.05,
+  out: 11.20, end: 11.70,
 };
 
 const seq = (n, start, step) => Array.from({ length: n }, (_, i) => +(start + i * step).toFixed(4));
@@ -137,10 +140,11 @@ const html = `<!doctype html><html><head><meta charset="utf-8">
   #find, #match { position:absolute; left:74px; right:74px; top:560px; text-align:center; font-weight:700; font-size:54px; letter-spacing:-.02em; color:${BLUE}; opacity:0; will-change:opacity,filter,transform; }
   #mark { position:absolute; left:50%; top:700px; width:520px; height:520px; margin-left:-260px; overflow:visible; opacity:0; will-change:opacity,transform; }
   /* the wordmark, typed, above the mark */
-  #word { position:absolute; left:0; right:0; top:470px; text-align:center; font-family:"Instrument Serif", serif; font-style:italic; font-size:140px; letter-spacing:-.02em; line-height:1; color:${INK}; opacity:0; will-change:opacity; }
+  /* the wordmark: its letters FALL IN from above, one after another (owner) */
+  #word { position:absolute; left:0; right:0; top:470px; text-align:center; font-family:"Instrument Serif", serif; font-style:italic; font-size:140px; letter-spacing:-.02em; line-height:1; color:${INK}; }
+  #word .c { visibility:visible; opacity:0; will-change:transform,opacity; }
   #word .s { color:${BLUE}; }
   #word .bi { display:inline-block; vertical-align:baseline; overflow:visible; }
-  #wcur { position:absolute; width:8px; height:104px; background:${INK}; opacity:0; will-change:transform,opacity; }
   #live { position:absolute; left:0; right:0; top:1262px; text-align:center; font-weight:600; font-size:44px; letter-spacing:-.01em; color:${BLUE}; opacity:0; will-change:transform,opacity; }
   #fade { position:absolute; inset:0; background:#fff; opacity:0; }
 </style></head><body><div id="stage"><div id="cam">
@@ -153,7 +157,7 @@ const html = `<!doctype html><html><head><meta charset="utf-8">
   <div id="hand"><svg viewBox="0 0 24 24" width="120" height="120"><path fill="${INK}" stroke="#fff" stroke-width=".5" stroke-linejoin="round"
     d="M9 2.2c-.9 0-1.6.7-1.6 1.6v8.9l-1.8-1.6c-.7-.6-1.8-.6-2.4.1-.6.7-.6 1.7 0 2.3l4.6 5.2c.9 1 2.2 1.6 3.6 1.6h3.7c2.4 0 4.3-1.9 4.3-4.3v-4.6c0-.9-.7-1.6-1.6-1.6s-1.6.7-1.6 1.6v-.7c0-.9-.7-1.6-1.6-1.6s-1.6.7-1.6 1.6v-.5c0-.9-.7-1.6-1.6-1.6s-1.6.7-1.6 1.6V3.8c0-.9-.7-1.6-1.6-1.6z"/></svg></div>
 
-  <div id="find">Find training partners.</div>
+  <div id="find">${FIND}</div>
   <div id="match">${chars(MATCH, "m")}</div>
   <svg id="mark" viewBox="0 0 100 100">
     <g id="ga">
@@ -166,11 +170,9 @@ const html = `<!doctype html><html><head><meta charset="utf-8">
       <circle cx="72" cy="34" r="7" fill="${BLUE}"/>
       <path id="pb" d="M72 34 V56 Q72 82 50 82" fill="none" stroke="${BLUE}" stroke-width="14" stroke-linecap="butt"/>
     </g>
-    <circle id="ring" cx="50" cy="82" r="10" fill="none" stroke="${BLUE}" stroke-width="3" opacity="0"/>
   </svg>
   <div id="word">${wordHtml}</div>
-  <div id="wcur"></div>
-  <div id="live">${LIVE}</div>
+  <div id="live">${LIVE_A}<span style="color:${CRIMSON}">${LIVE_B}</span></div>
 </div><div id="fade"></div></div>
 <script>
   var T = ${JSON.stringify(T)}, TM = ${JSON.stringify(TIMES)};
@@ -208,14 +210,14 @@ const html = `<!doctype html><html><head><meta charset="utf-8">
                     arrive, keeps leaning in while they wait and close
          connect:   a punch, then it eases back out so the name above and
                     the line below sit comfortably in frame */
+    /* still while the headline types (owner: no zoom in / out there); a gentle
+       push through the activities; the zoom in after them; NO punch on the
+       connect (owner); ease back out for the name */
     var cam = 1;
-    cam += 0.06 * cl((t - T.typeA) / (T.lift - T.typeA));
-    cam -= 0.06 * outExpo((t - T.lift) / 0.6);
     cam += 0.04 * cl((t - T.act) / (T.actOut - T.act));
-    cam += 0.14 * inOut((t - T.actOut) / (T.apart - T.actOut + 0.3));           // the zoom in
-    cam += 0.04 * cl((t - T.apart) / (T.met - T.apart));                       // still leaning in
-    cam += 0.05 * Math.sin(Math.PI * cl((t - T.met) / 0.5));                    // the punch
-    cam -= 0.22 * inOut((t - T.matchOut) / (T.live - T.matchOut + 0.4));       // ease back out for the name
+    cam += 0.14 * inOut((t - T.actOut) / (T.apart - T.actOut + 0.3));
+    cam += 0.04 * cl((t - T.apart) / (T.met - T.apart));
+    cam -= 0.22 * inOut((t - T.matchOut) / (T.live - T.matchOut + 0.4));
     $("cam").style.transform = "scale(" + cam.toFixed(4) + ")";
 
     /* ---- 1. the typed, edited line ---- */
@@ -230,11 +232,11 @@ const html = `<!doctype html><html><head><meta charset="utf-8">
     if (t < TM.sufA[0]) caretAt(cur, P, P[0], 14);
     else caretAt(cur, A, A[0], 14);
 
-    var b = cl((t - T.lift) / 0.5);
+    var b = cl((t - T.lift) / 0.3);                     // quick (owner: "make it disappear faster")
     var lineEl = $("line");
     lineEl.style.opacity = String(1 - inCubic(b * 1.15));
-    lineEl.style.filter = "blur(" + (22 * b).toFixed(1) + "px)";
-    lineEl.style.transform = "translate3d(0," + (-70 * outCubic(b)).toFixed(1) + "px,0) scale(" + (1 + 0.05 * b).toFixed(3) + ")";
+    lineEl.style.filter = "blur(" + (18 * b).toFixed(1) + "px)";
+    lineEl.style.transform = "translate3d(0," + (-50 * outCubic(b)).toFixed(1) + "px,0)";
 
     /* ---- 2. choose your activity ---- */
     var aOut = 1 - cl((t - T.actOut) / 0.35);
@@ -296,23 +298,16 @@ const html = `<!doctype html><html><head><meta charset="utf-8">
     var draw = legOnly + (1 - legOnly) * closeIn;
     pa.style.strokeDashoffset = (LA * (1 - draw)).toFixed(2);
     pb.style.strokeDashoffset = (LB * (1 - draw)).toFixed(2);
-    var fl = t >= T.met ? (1 - cl((t - T.met) / 0.7)) : 0;
-    var rg = $("ring");
-    rg.setAttribute("opacity", String(0.8 * fl));
-    rg.setAttribute("r", String(10 + 44 * (1 - fl)));
-    rg.setAttribute("stroke-width", String(3 * fl + 0.5));
-    var lift = Math.sin(Math.PI * cl((t - T.met) / 0.55));
-    mark.style.transform = "translate3d(0," + (-14 * lift).toFixed(1) + "px,0) scale(" + (1 + 0.04 * lift).toFixed(3) + ")";
+    /* no ring, no lift, no punch on the connect (owner): the curves simply meet */
     mark.style.filter = "blur(" + (3 * (1 - sl) * (t > T.slide && t < T.apart ? 1 : 0)).toFixed(1) + "px)";
 
-    /* ---- 5. UNIsport types itself above; Live now at Harvard below ---- */
-    var word = $("word"), Wd = [];
-    word.style.opacity = String(cl((t - T.word) / 0.05) * fOut);
-    for (i = 0; i < NW; i++) { Wd.push($("w" + i)); show(Wd[i], t >= TM.word[i]); }
-    var wcur = $("wcur");
-    var wTyping = t >= T.word && t <= TM.word[NW - 1] + T.msWord;
-    wcur.style.opacity = String(cl((t - (T.word - 0.5)) / 0.05) * (1 - cl((t - T.live) / 0.2)) * (wTyping ? 1 : blink(t)) * fOut);
-    caretAt(wcur, Wd, Wd[0], 20);
+    /* ---- 5. UNIsport falls in from above, letter by letter; Live now at Harvard below ---- */
+    for (i = 0; i < NW; i++) {
+      var w = $("w" + i);
+      var fp = outCubic((t - TM.word[i]) / 0.55);
+      w.style.opacity = String(cl((t - TM.word[i]) / 0.2) * fOut);
+      w.style.transform = "translate3d(0," + (-150 * (1 - fp)).toFixed(1) + "px,0)";
+    }
     var lP = outExpo((t - T.live) / 0.6);
     var live = $("live");
     live.style.opacity = String(cl((t - T.live) / 0.4) * fOut);

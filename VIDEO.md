@@ -198,3 +198,15 @@ the reel's music with a high-pass, which thins it to a hiss) and "cut the with t
 part, go straight to choose your activity". So: the headline types, holds a beat, lifts, and the
 activities follow. The keys are the ChatCut library's real keyboard recording again; the
 reference lift stays in the repo as an opt-in (`USE_REF_KEYS=1`). 12.65 s.
+
+---
+
+## Cut 6 — light v2, quieter (2026-09-22, last of the night). CURRENT.
+
+Owner's "one last thing": no zoom while the headline types; typing starts earlier (0.35 s);
+no full stops on "Never train alone again", "Find training partners", "Match"; the line
+disappears faster (0.3 s lift); NO effect and NO zoom on the connect — the curves just meet, a
+soft low note under it; "UNIsport" is no longer typed — its letters FALL IN from above one after
+another (70 ms stagger), each landing with a soft click; "Live now at **Harvard**" with Harvard in
+its crimson (#a51c30 from lib/themes.ts — the one school colour in brand material, the owner's
+call). 11.7 s. The zoom-in after the activities stays.

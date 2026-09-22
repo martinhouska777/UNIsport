@@ -115,14 +115,14 @@ airy(T.actOut + 0.1, 0.55);
 
 deep(T.slide + 0.4, 0.75);
 for (const t of TIMES.match) key(t, 0.8);
-drone(T.join, T.met - T.join, 0.55);
-riser(T.met, 0.65);
-deep(T.met, 0.6);
-boom(T.met, 0.3);
-thump(T.met, 0.55);
-airy(T.matchOut, 0.4);
-for (const t of TIMES.word) key(t, 0.8);
-simple(T.live, 0.4);
+/* the connect is quiet now (owner: no effect there): the air under the fill,
+   one soft low note as they meet, nothing sharp */
+drone(T.join, T.met - T.join, 0.5);
+thump(T.met, 0.4);
+airy(T.matchOut, 0.35);
+/* the letters fall in; each lands with a soft click as it settles */
+for (const t of TIMES.word) click(t + 0.42, 0.22);
+simple(T.live, 0.35);
 
 /* write a 16-bit WAV */
 let peak = 0; for (const v of mix) peak = Math.max(peak, Math.abs(v));
