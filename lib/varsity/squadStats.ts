@@ -33,7 +33,8 @@
 import type { LogEntry } from "./logStore";
 import type { SessionMap } from "./coachPlan";
 import { parseSessionKey } from "./coachPlan";
-import { formatDistance, formatDuration, type Units } from "./units";
+import { formatDistance, formatDuration, metresToUnit, type Units } from "./units";
+import { plannedMetres } from "./plannedDistance";
 import { rowingCategories } from "./athleteProfile";
 import type { Span } from "./athleteStats";
 import type { StatCell, StatGroup } from "./rowingStats";
@@ -86,6 +87,11 @@ export type SquadPerson = {
   done: number;
   missed: number;
   extra: number;
+  /* How far the plan asked for over the window, and how far was rowed
+     against those same slots. Only slots that named a distance are in
+     either — see planCounts. */
+  plannedMetres: number;
+  doneMetres: number;
 };
 
 /**
@@ -105,6 +111,10 @@ function planCounts(logs: LogEntry[], plan: SessionMap, span: Span) {
 
   let planned = 0;
   let done = 0;
+  /* Only the slots that ASKED FOR A DISTANCE, and how far each asked for:
+     the same rule as the athlete's own screen, so the squad's kilometres
+     and a rower's own kilometres can never disagree. */
+  const asked: Record<string, number> = {};
   for (const [key, session] of Object.entries(plan)) {
     if (session.category === "off") continue;
     const parsed = parseSessionKey(key);
@@ -115,9 +125,25 @@ function planCounts(logs: LogEntry[], plan: SessionMap, span: Span) {
     if (iso === todayIso && !loggedKeys.has(key)) continue;
     planned += 1;
     if (loggedKeys.has(key)) done += 1;
+    const want = plannedMetres(session);
+    if (want) asked[key] = want;
   }
   const extra = logs.filter((l) => isTraining(l) && !l.dayKey).length;
-  return { planned, done, missed: Math.max(0, planned - done), extra };
+
+  const rowedBy: Record<string, number> = {};
+  for (const l of logs) {
+    if (!l.dayKey || !isTraining(l) || !isRowed(l)) continue;
+    rowedBy[l.dayKey] = (rowedBy[l.dayKey] ?? 0) + (l.metres ?? 0);
+  }
+  const askedKeys = Object.keys(asked);
+  return {
+    planned,
+    done,
+    missed: Math.max(0, planned - done),
+    extra,
+    plannedMetres: sum(askedKeys.map((k) => asked[k])),
+    doneMetres: sum(askedKeys.map((k) => rowedBy[k] ?? 0)),
+  };
 }
 
 /**
@@ -267,6 +293,24 @@ export function squadReport(people: SquadPerson[], span: Span, units: Units): St
       { key: "extra", label: "On top", value: extra.toFixed(1) },
     );
   }
+  /*
+    AND THE SAME THING IN KILOMETRES, per person (owner, 2026-09-22: "we
+    will have how many kilometres he planned and how many he actually
+    did"). Only when the plan named a distance somewhere in the window.
+  */
+  const wanted = per(people, (p) => p.plannedMetres) ?? 0;
+  if (wanted > 0) {
+    const rowed = per(people, (p) => p.doneMetres) ?? 0;
+    consistency.push(
+      { key: "plannedDistance", label: "Distance planned", value: km(wanted) },
+      {
+        key: "doneDistance",
+        label: "Distance done",
+        value: km(rowed),
+        tone: rowed >= wanted ? "success" : "warn",
+      },
+    );
+  }
   groups.push({ key: "consistency", title: "Consistency per person", cells: consistency });
 
   return groups;
@@ -280,11 +324,29 @@ export type SquadRow = {
   time: string;
   /** "12/14", or a dash when nothing was planned for them in the window. */
   plan: string;
+  /* HOW FAR OFF THE ASKED-FOR KILOMETRES THEY LANDED: "+1.5", "-1.0", or
+     empty when the plan asked them for no distance at all. The unit is the
+     column's, so the number carries none of its own. */
+  delta: string;
+  deltaTone: "success" | "warn" | "muted";
   /** How they stand against the plan, as a word the screen turns into a colour. */
   tone: "success" | "warn" | "muted";
   /** What the rows are ordered by. */
   sort: number;
 };
+
+/* The kilometres they came out ahead or behind by, as the column reads it. */
+function deltaOf(p: SquadPerson, units: Units) {
+  if (p.plannedMetres <= 0) return { delta: "", deltaTone: "muted" as const };
+  const d = metresToUnit(p.doneMetres - p.plannedMetres, units.distance);
+  const size = Math.abs(d);
+  if (size < 0.05) return { delta: "\u00b10", deltaTone: "success" as const };
+  const shown = size >= 100 ? size.toFixed(0) : size.toFixed(1);
+  return {
+    delta: `${d > 0 ? "+" : "\u2212"}${shown}`,
+    deltaTone: (d > 0 ? "success" : "warn") as "success" | "warn",
+  };
+}
 
 /*
   THE PEOPLE, ONE ROW EACH (owner, 2026-09-22: "they want to see how each
@@ -293,6 +355,12 @@ export type SquadRow = {
   Ordered by distance, most first, because that is the column a coach runs
   their eye down. Somebody who did everything the plan asked is green;
   somebody short of it is warned; a person with nothing planned is neither.
+
+  THE PLUS-OR-MINUS COLUMN is the owner's own example (2026-09-22): "you're at
+  14 km today, somebody actually is at 13, so he's minus 1 km - the crew could
+  have done 15.5". It is the kilometres the plan asked for, taken off the
+  kilometres rowed against those same sessions, and it is the one column that
+  says whether a big week was the week that was asked for.
 */
 export function squadRows(people: SquadPerson[], units: Units): SquadRow[] {
   return people
@@ -302,6 +370,7 @@ export function squadRows(people: SquadPerson[], units: Units): SquadRow[] {
       distance: p.metres > 0 ? formatDistance(p.metres, units.distance) : dash,
       time: p.minutes > 0 ? formatDuration(Math.round(p.minutes)) : dash,
       plan: p.planned > 0 ? `${p.done}/${p.planned}` : dash,
+      ...deltaOf(p, units),
       tone: (p.planned === 0
         ? "muted"
         : p.done >= p.planned

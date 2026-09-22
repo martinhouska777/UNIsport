@@ -41,6 +41,7 @@
 import type { LogEntry } from "@/lib/varsity/logStore";
 import type { SessionMap } from "@/lib/varsity/coachPlan";
 import { parseSessionKey } from "@/lib/varsity/coachPlan";
+import { plannedMetres } from "@/lib/varsity/plannedDistance";
 import { formatDistance, formatDuration, type Units } from "@/lib/varsity/units";
 import { rowingCategories, logCategoryColor, logCategoryLabel } from "@/lib/varsity/athleteProfile";
 import { expectedDays, trainedDays, type Span } from "@/lib/varsity/athleteStats";
@@ -91,6 +92,8 @@ function planCounts(logs: LogEntry[], plan: SessionMap, span: Span) {
   const loggedKeys = new Set(logs.filter((l) => l.dayKey && isTraining(l)).map((l) => l.dayKey!));
 
   const planned: string[] = [];
+  /* Only the slots that ASKED FOR A DISTANCE, and how far each asked for. */
+  const asked: Record<string, number> = {};
   for (const [key, session] of Object.entries(plan)) {
     if (session.category === "off") continue;
     const parsed = parseSessionKey(key);
@@ -100,16 +103,37 @@ function planCounts(logs: LogEntry[], plan: SessionMap, span: Span) {
     if (iso > todayIso) continue; // still ahead — neither done nor missed
     if (iso === todayIso && !loggedKeys.has(key)) continue; // the day isn't over
     planned.push(key);
+    const want = plannedMetres(session);
+    if (want) asked[key] = want;
   }
 
   const done = planned.filter((k) => loggedKeys.has(k)).length;
   const extra = logs.filter((l) => isTraining(l) && !l.dayKey).length;
+
+  /*
+    HOW FAR WAS ASKED FOR, AND HOW FAR WAS ROWED AGAINST IT (owner,
+    2026-09-22: "you prescribed 100 km and some person actually rode 110").
+    ONLY the slots that named a distance are in either number, on both
+    sides of the comparison: an erg session written in minutes asks for no
+    kilometres, so the kilometres logged against it would inflate what was
+    done over a total that never included it. A session missed altogether
+    still counts everything it asked for, against nothing — which is what
+    makes the difference read true.
+  */
+  const rowedBy: Record<string, number> = {};
+  for (const l of logs) {
+    if (!l.dayKey || !isTraining(l) || !isRowed(l)) continue;
+    rowedBy[l.dayKey] = (rowedBy[l.dayKey] ?? 0) + (l.metres ?? 0);
+  }
+  const askedKeys = Object.keys(asked);
 
   return {
     planned: planned.length,
     done,
     missed: Math.max(0, planned.length - done),
     extra,
+    plannedMetres: sum(askedKeys.map((k) => asked[k])),
+    doneMetres: sum(askedKeys.map((k) => rowedBy[k] ?? 0)),
   };
 }
 
@@ -250,6 +274,28 @@ export function rowingReport(
         { key: "extra", label: "Extra", value: `${counts.extra}`, tone: counts.extra ? "success" : "muted" },
       ]
     : [];
+
+  /*
+    AND THE SAME THING IN KILOMETRES: what the plan asked for over this
+    window, and what was actually rowed against it. Only when the plan
+    named a distance at all — a fortnight of erg minutes says nothing about
+    kilometres, and two zeroes would read as a failing.
+  */
+  if (counts.plannedMetres > 0) {
+    planCells.push(
+      {
+        key: "plannedDistance",
+        label: "Distance planned",
+        value: formatDistance(counts.plannedMetres, units.distance),
+      },
+      {
+        key: "doneDistance",
+        label: "Distance done",
+        value: formatDistance(counts.doneMetres, units.distance),
+        tone: counts.doneMetres >= counts.plannedMetres ? "success" : "warn",
+      },
+    );
+  }
 
   /*
     DISTANCE FIRST, then TIME, then CONSISTENCY (owner, 2026-09-13). The big

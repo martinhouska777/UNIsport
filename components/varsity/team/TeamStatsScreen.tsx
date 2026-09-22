@@ -599,8 +599,8 @@ function ReadOut({ bucket, each, units }: { bucket: TeamBucket; each: "day" | "w
 */
 function PeopleTable({ rows, units }: { rows: SquadRow[]; units: Units }) {
   if (rows.length === 0) return null;
-  const cols = "grid-cols-[minmax(0,1.6fr)_3.6rem_3.4rem_3.4rem]";
-  const cell = "px-2 py-2 text-right tabular-nums";
+  const cols = "grid-cols-[minmax(0,1.3fr)_3.3rem_3rem_3.1rem_3.1rem]";
+  const cell = "px-1.5 py-2 text-right tabular-nums";
   return (
     <div className="mt-5">
       <div className="pb-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
@@ -612,6 +612,7 @@ function PeopleTable({ rows, units }: { rows: SquadRow[]; units: Units }) {
         >
           <span className="px-2.5 py-2 text-left">Name</span>
           <span className={cell}>{units.distance === "mi" ? "Mi" : "Km"}</span>
+          <span className={cell}>±</span>
           <span className={cell}>Time</span>
           <span className={cell}>Plan</span>
         </div>
@@ -625,6 +626,7 @@ function PeopleTable({ rows, units }: { rows: SquadRow[]; units: Units }) {
           >
             <span className="truncate px-2.5 py-2 font-medium text-text">{r.name}</span>
             <span className={`${cell} font-semibold text-text`}>{r.distance}</span>
+            <span className={`${cell} font-semibold ${toneClass[r.deltaTone]}`}>{r.delta}</span>
             <span className={`${cell} text-text`}>{r.time}</span>
             <span className={`${cell} font-semibold ${toneClass[r.tone]}`}>{r.plan}</span>
           </Link>
