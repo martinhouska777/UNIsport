@@ -38,11 +38,15 @@ const decode = (file) => {
 const NAMES = ["key-1", "key-2", "key-3", "key-4", "key-5", "key-6", "key-enter",
   "click-ui", "tap-1", "tap-2", "whoosh-low", "whoosh-mid", "whoosh-air",
   "riser", "note-warm", "bed-air"];
+/* click-soft is newer than the synthesised kit, so fall back to click-ui if absent */
+const OPTIONAL = ["click-soft"];
 const SFX = {};
 for (const n of NAMES) {
   if (!existsSync(S(n + ".wav"))) { console.error(`missing ${KIT}/${n}.wav — run: node scripts/video/make-sfx-kit${KIT === "sfx" ? "" : "-real"}.mjs`); process.exit(1); }
   SFX[n] = decode(S(n + ".wav"));
 }
+for (const n of OPTIONAL) if (existsSync(S(n + ".wav"))) SFX[n] = decode(S(n + ".wav"));
+const SOFT_CLICK = SFX["click-soft"] ? "click-soft" : "click-ui";
 /* where each sound's transient sits; without a table, assume a swell peaking halfway */
 const ANCHORS = existsSync(S("anchors.json")) ? JSON.parse(readFileSync(S("anchors.json"), "utf8")) : {};
 const anchorOf = (name, rate) => (ANCHORS[name] !== undefined ? ANCHORS[name] / rate : (SFX[name].length / rate / SR) / 2);
@@ -53,14 +57,18 @@ function build(version) {
   const rnd = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
 
   /* place a sound so that `t` is where it STARTS */
-  function at(name, t, gain = 1, rate = 1) {
+  function at(name, t, gain = 1, rate = 1, fadeFrom = null) {
     const src = SFX[name], s0 = Math.round(t * SR);
     const n = Math.round(src.length / rate);
+    /* fadeFrom: seconds into the sound where it should start dying away, so a long
+       tail can be kept out of the next moment */
+    const f0 = fadeFrom === null ? n : Math.round(fadeFrom * SR);
     for (let i = 0; i < n; i++) {
       const o = s0 + i; if (o < 0 || o >= N) continue;
       const p = i * rate, k = Math.floor(p), fr = p - k;
       if (k + 1 >= src.length) break;
-      mix[o] += (src[k] * (1 - fr) + src[k + 1] * fr) * gain;
+      const g = i <= f0 ? 1 : Math.max(0, 1 - (i - f0) / (n - f0));
+      mix[o] += (src[k] * (1 - fr) + src[k + 1] * fr) * gain * g * g;
     }
   }
   /* place a sound so that its TRANSIENT lands on `t`, not its first sample */
@@ -112,48 +120,57 @@ function build(version) {
     return mix;
   }
 
-  if (version === "layered") bed(0.30);
+  /* The owner picked this one, with three notes: no background (that ambience bed
+     was audible as a separate sound interfering under the film), softer letters at
+     the end, and less aggressive throughout. So: no bed, the rounded click-soft on
+     the letters, and every level pulled back. */
+  const G = version === "layered" ? 0.72 : 1;
 
-  at("click-ui", T.cursor, 0.45);
-  typeRun(TIMES.prefix, 0.55, false);
-  typeRun(TIMES.sufA, 0.55, true);
+  at("click-ui", T.cursor, 0.45 * G);
+  typeRun(TIMES.prefix, 0.55 * (version === "layered" ? 0.95 : 1), false);
+  typeRun(TIMES.sufA, 0.55 * (version === "layered" ? 0.95 : 1), true);
 
   /* the activities lift in */
   if (version === "quiet") {
     peakAt("whoosh-air", T.lift, 0.30);
   } else {
-    peakAt("whoosh-mid", T.lift, version === "layered" ? 0.34 : 0.40, 1.15);
-    peakAt("whoosh-air", T.lift + 0.06, 0.22);
+    peakAt("whoosh-mid", T.lift, (version === "layered" ? 0.34 : 0.40) * G, 1.15);
+    peakAt("whoosh-air", T.lift + 0.06, 0.22 * G);
   }
-  if (version !== "quiet") for (let i = 0; i < 3; i++) at("click-ui", T.tiles + 0.18 + i * 0.12, 0.26 - i * 0.04);
+  if (version !== "quiet") for (let i = 0; i < 3; i++) at("click-ui", T.tiles + 0.18 + i * 0.12, (0.26 - i * 0.04) * G);
 
   /* the two taps */
-  at("tap-1", T.tap1, 0.85);
-  at("tap-2", T.tap2, 0.78);
+  at("tap-1", T.tap1, 0.85 * G);
+  at("tap-2", T.tap2, 0.78 * G);
   if (version === "layered") { peakAt("whoosh-air", T.tap1, 0.10); peakAt("whoosh-air", T.tap2, 0.09); }
 
   /* the activities leave */
-  peakAt("whoosh-air", T.actOut + 0.1, version === "quiet" ? 0.20 : 0.28);
+  peakAt("whoosh-air", T.actOut + 0.1, (version === "quiet" ? 0.20 : 0.28) * G);
 
   /* the two i's slide apart — the biggest move in the film */
-  peakAt("whoosh-low", T.slide + 0.45, version === "quiet" ? 0.55 : 0.70);
-  if (version !== "quiet") peakAt("whoosh-mid", T.slide + 0.45, 0.22, 1.4);
+  peakAt("whoosh-low", T.slide + 0.45, (version === "quiet" ? 0.55 : 0.70) * G);
+  if (version !== "quiet") peakAt("whoosh-mid", T.slide + 0.45, 0.22 * G, 1.4);
 
   /* "Match." types */
-  typeRun(TIMES.match, 0.50, true);
+  typeRun(TIMES.match, 0.50 * (version === "layered" ? 0.95 : 1), true);
 
   /* the slow fill, then they meet */
-  if (version === "layered") at("riser", T.met - 0.9, 0.16);
-  at("note-warm", T.met, version === "quiet" ? 0.60 : 0.70);
-  if (version !== "quiet") peakAt("whoosh-low", T.met + 0.1, 0.18, 1.8);
+  if (version === "layered") at("riser", T.met - 0.9, 0.16 * G);
+  /* This is a bass rumble, and left alone its 2.2 s tail drones underneath the
+     UNIsport letters — that is the sound the owner heard interfering. Fade it out
+     from 0.5 s in so it is gone before the letters land. */
+  at("note-warm", T.met, (version === "quiet" ? 0.60 : 0.70) * G, 1,
+     version === "layered" ? 0.5 : null);
+  if (version !== "quiet") peakAt("whoosh-low", T.met + 0.1, 0.18 * G, 1.8);
 
-  peakAt("whoosh-air", T.matchOut, 0.22);
+  peakAt("whoosh-air", T.matchOut, 0.22 * G);
 
   /* the letters of UNIsport fall in and settle */
-  TIMES.word.forEach((t, i) => at("click-ui", t + 0.42, 0.20 + (i % 2) * 0.04));
+  TIMES.word.forEach((t, i) => at(version === "layered" ? SOFT_CLICK : "click-ui",
+    t + 0.42, (version === "layered" ? 0.13 : 0.20 + (i % 2) * 0.04) * (version === "layered" ? 1 : 1)));
 
   /* "Live now at Harvard" */
-  peakAt(version === "crisp" ? "whoosh-mid" : "whoosh-air", T.live, 0.26, 1.2);
+  peakAt(version === "crisp" ? "whoosh-mid" : "whoosh-air", T.live, 0.26 * G, 1.2);
 
   return mix;
 }

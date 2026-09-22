@@ -22,7 +22,11 @@ const SOFT = process.argv.includes("--soft");
 const OUT = path.join(ROOT, SOFT ? "mockups/video/sfx-soft" : "mockups/video/sfx-real");
 mkdirSync(OUT, { recursive: true });
 
-/* name → [source file, start, length, gain, pitch]  (pitch 1 = unchanged) */
+/* name → [source file, start, length, gain, pitch, extraFilter?]
+   pitch 1 = unchanged. extraFilter rounds off a source that is too bright:
+   the owner's note was "less hard", and brightness is measurable — the old
+   letter click ran at 7.6 kHz and the air whoosh at 9.9 kHz, the two harshest
+   sounds in the library. */
 const KIT = {
   "key-1":      ["keyboard__single-key-press-in-a-laptop__2541", 0.10, 0.13, 1.0, 1.00],
   "key-2":      ["keyboard__hard-single-key-press-in-a-laptop__2542", 0.10, 0.13, 0.9, 1.00],
@@ -31,10 +35,11 @@ const KIT = {
   "key-5":      ["keyboard__hard-single-key-press-in-a-laptop__2542", 0.10, 0.13, 0.9, 0.93],
   "key-6":      ["keyboard__single-key-type__2533", 0.00, 0.20, 1.0, 1.13],
   "key-enter":  ["keyboard__hard-single-key-press-in-a-laptop__2542", 0.09, 0.18, 1.0, 0.85],
-  "click-ui":   ["technology__interface-device-click__2577", 0.00, 0.14, 1.0, 1.00],
+  "click-ui":   ["interface__select-click__1109", 0.00, 0.22, 1.0, 1.00, "lowpass=f=5000"],
+  "click-soft": ["technology__modern-technology-select__3124", 0.00, 0.09, 1.0, 1.00, "lowpass=f=3200"],
   "tap-1":      ["click__on-or-off-light-switch-tap__2585", 0.00, 0.16, 1.0, 1.00],
   "tap-2":      ["click__plastic-bubble-click__1124", 0.07, 0.15, 1.0, 0.95],
-  "whoosh-air": ["transition__short-transition-sweep__175", 0.15, 0.45, 1.0, 1.00],
+  "whoosh-air": ["transition__short-transition-sweep__175", 0.15, 0.45, 1.0, 1.00, "lowpass=f=4200"],
   "whoosh-mid": ["transition__fast-small-sweep-transition__166", 0.05, 0.68, 1.0, 1.00],
   "whoosh-low": ["whoosh__cinematic-tunnel-reverb-woosh__1486", 0.15, 2.10, 1.0, 1.00],
   "riser":      ["whoosh__cinematic-whoosh-fast-transition__1492", 0.10, 1.15, 1.0, 1.00],
@@ -56,6 +61,7 @@ const SOFT_KIT = {
   "key-6":      ["keyboard__single-key-type__2533", 0.00, 0.18, 0.75, 1.10],
   "key-enter":  ["keyboard__single-key-press-in-a-laptop__2541", 0.10, 0.16, 0.85, 0.88],
   "click-ui":   ["interface__cool-interface-click-tone__2568", 0.00, 0.18, 0.8, 1.00],
+  "click-soft": ["technology__modern-technology-select__3124", 0.00, 0.09, 0.8, 1.00, "lowpass=f=3200"],
   "tap-1":      ["click__plastic-bubble-click__1124", 0.07, 0.15, 0.9, 0.92],
   "tap-2":      ["click__plastic-bubble-click__1124", 0.07, 0.15, 0.85, 0.84],
   "whoosh-air": ["swoosh__short-wind-swoosh__1461", 0.00, 0.50, 0.9, 1.00],
@@ -69,7 +75,7 @@ const SOFT_KIT = {
 const SR = 48000;
 const anchors = {};
 
-for (const [name, [src, ss, dur, gain, pitch]] of Object.entries(SOFT ? SOFT_KIT : KIT)) {
+for (const [name, [src, ss, dur, gain, pitch, extra]] of Object.entries(SOFT ? SOFT_KIT : KIT)) {
   /* "@synth" means take the synthesised version of this sound instead */
   const inFile = src === "@synth"
     ? path.join(ROOT, "mockups/video/sfx", name + ".wav")
@@ -89,6 +95,7 @@ for (const [name, [src, ss, dur, gain, pitch]] of Object.entries(SOFT ? SOFT_KIT
   const filters = [
     `atrim=${ss}:${ss + dur}`, "asetpts=PTS-STARTPTS",
     pitch !== 1 ? `asetrate=${Math.round(SR * pitch)},aresample=${SR}` : null,
+    extra || null,
     "afade=t=in:st=0:d=0.004",
     `afade=t=out:st=${Math.max(0, dur / pitch - 0.02)}:d=0.02`,
     `volume=${gain}`,
