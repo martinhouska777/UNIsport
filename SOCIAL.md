@@ -76,6 +76,25 @@ or `unisport.team@gmail.com`. Free, two minutes.
 That address is the **login** for Instagram, and later for TikTok and YouTube. It is
 never shown to anyone.
 
+**One Gmail covers all three.** Instagram, TikTok and YouTube can all sign in with the
+same new address, and because a Google account *is* a YouTube channel, making the Gmail
+makes the channel for free.
+
+**And it is not permanent.** The email on an Instagram or TikTok account can be changed
+in settings at any time. If you want `martin@getunisport.com` on it once Zoho is
+finished, you swap it then. Nothing picked today locks anything in — which is exactly
+why there is no reason to wait for the domain.
+
+Two practical notes:
+
+- Google will probably want a **phone number** to verify the new Gmail. One number
+  normally covers a few Google accounts, but Google does sometimes refuse a number it
+  has seen too often. That block is usually temporary — try the next day rather than
+  falling back to the personal address.
+- **Do not use the `martinhouska777+unisport@gmail.com` trick.** It looks like a
+  separate address but it is the same account and the same inbox, so it gives none of
+  the separation above, and some platforms reject the `+` outright.
+
 ### Why not `martinhouska777@gmail.com`
 
 It works, but it tangles a business asset up with everything else you own. Anything you
