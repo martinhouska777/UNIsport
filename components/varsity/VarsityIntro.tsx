@@ -25,13 +25,14 @@
   days (2026-09-19 → 21) it was drawn `bold`, crimson loom with a black line,
   so the X would read on the dark ground; the owner put the oars back to black
   on 2026-09-21 ("change the oars back to black") and moved the emphasis to the
-  MOTTO instead — see the motto below.
+  MOTTO instead — see the motto below. On 2026-09-22 the oars were sent to the
+  BACKGROUND as well: they sweep in as they always did and then sit back to
+  40%, so the crest and the motto are in front of them.
   The beat timings live with the keyframes in app/globals.css; the two timers
   below have to agree with them.
 */
 import { useEffect, useState } from "react";
 import UniversityCrest from "@/components/UniversityCrest";
-import { OAR_ART_BOLD } from "@/lib/landingSchools";
 import { useAppState } from "@/components/AppState";
 import { getUniversity } from "@/lib/themes";
 import OarMark from "@/components/varsity/OarMark";
@@ -103,20 +104,27 @@ export default function VarsityIntro() {
       }`}
     >
       <div className="relative h-[320px] w-[320px]">
-        {/* Left oar: slides in from the left, held at a fixed cross angle. */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="v-oar-in-left">
-            <div className="origin-center rotate-[-32deg]">
-              <OarMark schoolKey={universityKey} width={41} height={250} />
+        {/* The two oars, as ONE group: they sweep in at full strength and then
+            sit back to 40% as the crest lands (v-oar-settle, globals.css), so
+            the crest and the motto stand in front of them rather than on top
+            of them. On the light app the dark looms used to run straight
+            through the red letters. */}
+        <div className="v-oar-settle absolute inset-0">
+          {/* Left oar: slides in from the left, held at a fixed cross angle. */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="v-oar-in-left">
+              <div className="origin-center rotate-[-32deg]">
+                <OarMark schoolKey={universityKey} width={41} height={250} />
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Right oar: slides in from the right, mirrored angle → forms the X. */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="v-oar-in-right">
-            <div className="origin-center rotate-[32deg]">
-              <OarMark schoolKey={universityKey} width={41} height={250} />
+          {/* Right oar: slides in from the right, mirrored angle → forms the X. */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="v-oar-in-right">
+              <div className="origin-center rotate-[32deg]">
+                <OarMark schoolKey={universityKey} width={41} height={250} />
+              </div>
             </div>
           </div>
         </div>
@@ -132,14 +140,19 @@ export default function VarsityIntro() {
         </div>
 
         {/* The motto, sliding in under the crest — bold, 17px, in the SCHOOL'S
-            COLOUR with a thin black line round each letter (owner, 2026-09-21:
-            "make the motto red text with black borders so it's better
-            readable"). Crimson is --primary, so another school's motto comes
-            out in that school's colour; the black is the one the bold oar
-            uses, from the data file, so no colour is written here. The line
+            COLOUR with a thin line round each letter (owner, 2026-09-21: "make
+            the motto red text with black borders so it's better readable").
+
+            THE LINE IS THE PAGE'S OWN COLOUR, not black (owner, 2026-09-22: on
+            the light app "the red is not visible enough"). --background is
+            near-black on the dark app, so that side is unchanged; on the light
+            app it is the pale grey the intro stands on, which cuts the letters
+            out of whatever is behind them instead of muddying red with black.
+            Crimson is --primary, so another school's motto comes out in that
+            school's colour, and no colour is written here either way. The line
             is drawn UNDER the fill (paint-order), so the letters keep their
-            weight and the black only shows at the edge. The words come from
-            the university's data; a school with no motto has no line at all. */}
+            weight and it only shows at the edge. The words come from the
+            university's data; a school with no motto has no line at all. */}
         {motto && (
           <div className="absolute inset-x-0 top-[196px] flex justify-center">
             <div
@@ -148,7 +161,7 @@ export default function VarsityIntro() {
               // this pays it back. Matches the tracking the animation ends on.
               style={{
                 textIndent: "0.38em",
-                WebkitTextStroke: `1.5px ${OAR_ART_BOLD.line}`,
+                WebkitTextStroke: "1.5px var(--background)",
                 paintOrder: "stroke fill",
               }}
             >

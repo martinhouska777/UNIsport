@@ -14,6 +14,12 @@
   middle of the mark. Nothing is redrawn or re-angled; the film's last frame is
   simply framed like a badge.
 
+  ONE DIFFERENCE, since 2026-09-22: the intro sits its oars back to 40% once
+  they have landed, so the motto can be read over them. This mark keeps them
+  solid — it is 28px on a chip, where a faded oar is just a smudge, and there
+  is no motto here to read. The POSE is still identical; only the intro's last
+  beat dims.
+
   The crest on its own (UniversityCrest) is the university's mark and stands for
   the normal student app; this one, with the oars, stands for Varsity Mode.
 
