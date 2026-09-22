@@ -3,15 +3,9 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useAppState } from "@/components/AppState";
-import {
-  useFavorites,
-  useGymRatings,
-  useGymCrowd,
-  useGymPhotos,
-  timeAgo,
-  CROWD_FRESH_LABEL,
-} from "@/lib/gymSocial";
-import { StarRater, CrowdPicker, CrowdSentence, BusyBars } from "@/components/gyms/RateCrowd";
+import { getUniversity } from "@/lib/themes";
+import { useFavorites, useGymRatings, useGymPhotos } from "@/lib/gymSocial";
+import { StarRater } from "@/components/gyms/RateCrowd";
 import OpenNow from "@/components/gyms/OpenNow";
 import GymPhotos from "@/components/gyms/GymPhotos";
 import GoingLine, { boardHref } from "@/components/gyms/GoingLine";
@@ -19,7 +13,7 @@ import PostGoingSheet from "@/components/gyms/PostGoingSheet";
 import Avatar from "@/components/messages/Avatar";
 import { useClock } from "@/lib/gymHours";
 import Button, { ButtonLink } from "@/components/ui/Button";
-import { type Gym } from "@/lib/gyms";
+import { type Gym, gymMapsUrl } from "@/lib/gyms";
 import { useBoardByGym } from "@/lib/gymGoing";
 import { focusLabel, postWhenLabel } from "@/lib/buddyBoard";
 import { useProfileData } from "@/components/profile/useProfileData";
@@ -29,11 +23,10 @@ import HookChip from "@/components/match/HookChip";
 import { IconArrowLeft, IconHeart, IconMapPin } from "@/components/icons";
 
 export default function GymProfile({ gym }: { gym: Gym }) {
-  const { userId } = useAppState();
+  const { userId, universityKey } = useAppState();
   const { data: myProfile } = useProfileData();
   const { isFavorite, toggle } = useFavorites(userId);
   const { getRating, setRating } = useGymRatings(userId);
-  const { getCrowd, reportCrowd } = useGymCrowd(userId);
   // The school's own pictures of this gym (db/gym_photos.sql).
   const { photosFor, addPhoto, removePhoto } = useGymPhotos(userId);
   // Who has already said they're coming here (the Buddy Board, by gym).
@@ -45,11 +38,12 @@ export default function GymProfile({ gym }: { gym: Gym }) {
   const [posted, setPosted] = useState(false);
   const favorite = isFavorite(gym.slug);
   const rating = getRating(gym.slug);
-  const crowd = getCrowd(gym.slug);
   const now = useClock();
   // See FavHeart in the gyms list: counts taps so the pop plays on the tap and
   // not on every render of a gym that's already a favourite.
   const [favTaps, setFavTaps] = useState(0);
+  // The address is a way of GETTING there, so it opens a map (see gymMapsUrl).
+  const mapsHref = gymMapsUrl(gym, getUniversity(universityKey)?.name ?? "");
 
   return (
     <div className="mx-auto flex w-full max-w-screen-sm flex-col">
@@ -83,23 +77,33 @@ export default function GymProfile({ gym }: { gym: Gym }) {
         </button>
       </div>
 
-      {/* Header block: the overview — name, open right now, where. */}
-      <div className="border-b border-border px-3.5 py-3">
-        <h1 className="mb-1.5 text-[15px] font-medium text-text">{gym.name}</h1>
-        <div className="flex flex-wrap gap-x-3.5 gap-y-1 text-[11px] text-muted">
-          <OpenNow hours={gym.hours} now={now} />
-          {/* No star average: the numbers in lib/gyms.ts are placeholders
-              (see the gyms list). Back when real ratings exist. */}
-          <span className="flex items-center gap-1.5">
-            <IconMapPin size={13} /> {gym.address}
-          </span>
+      {/*
+        THE OVERVIEW (owner, 2026-09-22). Three things and nothing else — can I
+        go in now, where is it, what do I think of it — each one a line of its
+        own at reading size rather than a row of small grey type. The "how busy
+        is it" half of this page went with the same instruction.
+      */}
+      <div className="border-b border-border px-3.5 py-4">
+        <h1 className="text-[19px] font-semibold text-text">{gym.name}</h1>
+        <div className="mt-3 flex flex-col gap-2.5 text-[14px] text-text">
+          <OpenNow hours={gym.hours} now={now} size={16} />
+          {/* The address is a way of GETTING there, so it opens a map. */}
+          <a
+            href={mapsHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="press-icon flex w-fit items-center gap-1.5 underline decoration-border underline-offset-4"
+          >
+            <IconMapPin size={16} /> {gym.address}
+          </a>
+          {/* Yours alone (lib/gymSocial), averaged with nobody's — which is why
+              the stars are labelled rather than left to look like a score.
+              data-tour: the gym tour lights this (lib/tour.ts). */}
+          <div data-tour="gym-rate" className="flex items-center gap-2.5">
+            <StarRater value={rating?.value ?? 0} onRate={(n) => setRating(gym.slug, n)} />
+            <span className="text-[12px] text-muted">Your rating</span>
+          </div>
         </div>
-        {/*
-          The equipment chips ("6 racks · pool · …") that sat here are GONE, with
-          the folded equipment lists below (owner, 2026-09-22: no time to count
-          kit in every gym at every school). The counts stay in lib/gyms.ts for
-          the day someone wants them back; nothing on this page reads them.
-        */}
       </div>
 
       {/*
@@ -144,54 +148,6 @@ export default function GymProfile({ gym }: { gym: Gym }) {
           </ul>
         </div>
       )}
-
-      {/* Your rating + live crowd — what you fill in after / during a workout */}
-      {/* data-tour: the gym tour lights this pair (lib/tour.ts). */}
-      <div data-tour="gym-rate" className="border-b border-border px-3.5 py-3.5">
-        {/* Plainly YOURS. It is stored for you alone (lib/gymSocial.ts) and
-            averaged with nobody's, so the heading says so instead of implying
-            the stars feed a score somewhere. */}
-        <div className="flex items-center justify-between">
-          <h2 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-            Your rating
-          </h2>
-          <span className="text-[11px] text-muted">
-            {rating ? `You rated · ${timeAgo(rating.at)}` : "Tap a star · just for you"}
-          </span>
-        </div>
-        <div className="mt-2">
-          <StarRater value={rating?.value ?? 0} onRate={(n) => setRating(gym.slug, n)} />
-        </div>
-
-        <div className="mt-4 flex items-center justify-between">
-          <h2 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-            How busy right now?
-          </h2>
-          {/* Fresh reports if anybody filed one — with the honest headcount,
-              "2 people said Busy in the last hour"; otherwise the app says what
-              it actually knows — the typical week — and says that it is typical. */}
-          <span className="text-right text-[11px] text-muted">
-            {crowd ? <CrowdSentence crowd={crowd} /> : "Typical for this time"}
-          </span>
-        </div>
-        {/* The next six hours, so "come back at nine" is an answer the page can
-            give. Hidden once a live report is in — that is the better answer. */}
-        {!crowd && (
-          <div className="mt-2.5">
-            <BusyBars kind={gym.kind} now={now} />
-          </div>
-        )}
-        {/* The highlighted button is YOUR answer. Tapping another replaces it —
-            one person is always one voice in the count, never two. */}
-        <div className="mt-3">
-          <CrowdPicker value={crowd?.myLevel ?? null} onReport={(l) => reportCrowd(gym.slug, l)} />
-        </div>
-        <div className="mt-2 text-[11px] text-muted">
-          {crowd?.myLevel
-            ? `Your report is in — everyone at your school sees it for the next ${CROWD_FRESH_LABEL}. Tap another to change it.`
-            : `Tap one — everyone at your school sees it for the next ${CROWD_FRESH_LABEL}.`}
-        </div>
-      </div>
 
       {/*
         WHERE "RATINGS BREAKDOWN" USED TO BE — three gold bars (Equipment,

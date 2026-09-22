@@ -659,3 +659,22 @@ export function gymHighlights(gym: Gym, max = 4): string[] {
   }
   return out;
 }
+
+/*
+  MAPS. The address line on a gym page is a link out to a map.
+
+  The addresses here are street lines only ("26 Plympton Street"), and a few
+  aren't streets at all ("PWG · 4th floor", "West Campus") — so the search is
+  the gym NAME plus the address plus the university, which lands on the right
+  building on any campus. Anything after a "·" is a floor or a wing, which only
+  confuses a map search, so it is dropped.
+
+  Google Maps rather than Apple Maps: this one URL works on a phone (it hands
+  off to the Maps app if it's installed), on a tablet and on a laptop, Apple or
+  not. Apple's own link only works on Apple devices.
+*/
+export function gymMapsUrl(gym: Gym, universityName: string): string {
+  const place = gym.address.split("·")[0].trim();
+  const query = [gym.name, place, universityName].filter(Boolean).join(", ");
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+}

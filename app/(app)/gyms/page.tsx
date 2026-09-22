@@ -5,10 +5,9 @@ import Link from "next/link";
 import { gymsFor, type Gym, type GalleryIcon } from "@/lib/gyms";
 import { useAppState } from "@/components/AppState";
 import { getUniversity } from "@/lib/themes";
-import { useFavorites, useGymCrowd, useGymPhotos, type GymCrowd } from "@/lib/gymSocial";
+import { useFavorites, useGymPhotos } from "@/lib/gymSocial";
 import { gymOpenState, useClock, type Clock } from "@/lib/gymHours";
 import OpenNow from "@/components/gyms/OpenNow";
-import { CrowdChip } from "@/components/gyms/RateCrowd";
 import GoingLine from "@/components/gyms/GoingLine";
 import { useBoardByGym } from "@/lib/gymGoing";
 import type { GoingSummary } from "@/lib/buddyBoard";
@@ -64,12 +63,10 @@ function FavHeart({ fav, onToggle }: { fav: boolean; onToggle: () => void }) {
 
 function StatsRow({
   gym,
-  crowd,
   now,
   going,
 }: {
   gym: Gym;
-  crowd: GymCrowd | null;
   now: Clock | null;
   going: GoingSummary | null;
 }) {
@@ -88,9 +85,9 @@ function StatsRow({
         {/* No star average here. gym.rating / gym.ratingCount in lib/gyms.ts are
             placeholder numbers, and "4.8 · 142 ratings" on a real named gym is
             a claim nobody made. They come back when real ratings exist. */}
-        {/* How busy it is — only when people have actually reported it. No
-            "Usually …" guess and no floor count: the owner cut both as noise. */}
-        {crowd && <CrowdChip crowd={crowd} />}
+        {/* No "how busy" either (owner, 2026-09-22): a card says when the gym
+            is open and where it is, and that is the whole of it. The crowd
+            reporting it came from went off the gym page the same day. */}
       </div>
       <span className="flex-shrink-0 text-muted">
         <IconChevronRight size={16} />
@@ -104,7 +101,6 @@ type CardProps = {
   gym: Gym;
   fav: boolean;
   onToggleFav: () => void;
-  crowd: GymCrowd | null;
   now: Clock | null;
   going: GoingSummary | null;
   /* The tour presses the first card to open a gym in front of you, rather than
@@ -144,7 +140,7 @@ function Watermark({ gym }: { gym: Gym }) {
   );
 }
 
-function MainCard({ gym, fav, onToggleFav, crowd, now, going, tour, wash, cover }: CardProps) {
+function MainCard({ gym, fav, onToggleFav, now, going, tour, wash, cover }: CardProps) {
   return (
     <Link
       href={`/gyms/${gym.slug}`}
@@ -198,12 +194,12 @@ function MainCard({ gym, fav, onToggleFav, crowd, now, going, tour, wash, cover 
           </div>
         </div>
       )}
-      <StatsRow gym={gym} crowd={crowd} now={now} going={going} />
+      <StatsRow gym={gym} now={now} going={going} />
     </Link>
   );
 }
 
-function HouseCard({ gym, fav, onToggleFav, crowd, now, going }: CardProps) {
+function HouseCard({ gym, fav, onToggleFav, now, going }: CardProps) {
   const colors = gym.houseColors;
   return (
     <Link
@@ -227,7 +223,7 @@ function HouseCard({ gym, fav, onToggleFav, crowd, now, going }: CardProps) {
             heading above the cards already says what they are. */}
         <div className="text-sm font-medium text-text">{gym.name}</div>
       </div>
-      <StatsRow gym={gym} crowd={crowd} now={now} going={going} />
+      <StatsRow gym={gym} now={now} going={going} />
     </Link>
   );
 }
@@ -235,9 +231,6 @@ function HouseCard({ gym, fav, onToggleFav, crowd, now, going }: CardProps) {
 export default function GymsPage() {
   const { userId, universityKey } = useAppState();
   const { isFavorite, toggle } = useFavorites(userId);
-  // Shared campus reports (db/gym_crowd.sql) — what OTHER people tapped, not
-  // just this phone's own answer. One read covers every card.
-  const { getCrowd } = useGymCrowd(userId);
   // The school's photos of its gyms (db/gym_photos.sql) — the newest one
   // becomes the card's picture in place of the colour wash.
   const { coverFor } = useGymPhotos(userId);
@@ -357,7 +350,6 @@ export default function GymsPage() {
             gym={g}
             fav={isFavorite(g.slug)}
             onToggleFav={() => toggle(g.slug)}
-            crowd={getCrowd(g.slug)}
             now={now}
             going={goingFor(g.name)}
             tour={idx === 0 ? "gyms-first-card" : undefined}
@@ -381,7 +373,6 @@ export default function GymsPage() {
             gym={g}
             fav={isFavorite(g.slug)}
             onToggleFav={() => toggle(g.slug)}
-            crowd={getCrowd(g.slug)}
             now={now}
             going={goingFor(g.name)}
           />
