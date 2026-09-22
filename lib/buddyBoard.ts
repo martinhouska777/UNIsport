@@ -31,6 +31,30 @@ export const buddyFocuses: BuddyFocus[] = [
 ];
 
 /*
+  WHAT, THEN WHICH (owner, 2026-09-22: "first you choose not the focus from
+  everything, but gym or running or stuff like that").
+
+  The post form used to open with all ten focuses at once, which asked a runner
+  to read eight gym answers before finding theirs. It now asks the ACTIVITY
+  first — the same three words the rest of the app uses — and only a gym
+  session is then asked which muscles. Running and cardio each have exactly one
+  focus, so choosing the activity has already answered it.
+
+  NOTHING CHANGED IN THE DATABASE: a post still stores one `focus` key. This is
+  the same list, asked in two steps.
+*/
+export const boardActivities: { key: string; label: string }[] = [
+  { key: "gym", label: "Gym" },
+  { key: "running", label: "Running" },
+  { key: "cardio", label: "Cardio" },
+];
+
+/** The focuses one activity offers — eight for the gym, one each for the rest. */
+export function focusesFor(activity: string): BuddyFocus[] {
+  return buddyFocuses.filter((f) => focusActivity(f.key) === activity);
+}
+
+/*
   Which of the app's ACTIVITIES a focus belongs to. The board speaks in workouts
   (legs, push, run); the session search speaks in activities (gym, running,
   cardio). This is the one place the two languages meet — db/buddy_board.sql has

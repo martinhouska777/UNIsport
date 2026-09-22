@@ -25,7 +25,7 @@ import {
 } from "@/lib/supabase/buddyBoard";
 import { startDirectConversation } from "@/lib/supabase/messages";
 import { createPlan } from "@/lib/supabase/sessionPlans";
-import { buddyFocuses, focusLabel, focusActivity, postWhenLabel } from "@/lib/buddyBoard";
+import { boardActivities, focusesFor, focusLabel, focusActivity, postWhenLabel } from "@/lib/buddyBoard";
 import { weekDays, verifiedGyms, sessionTimeSlots } from "@/lib/onboarding";
 import { dateLabel } from "@/lib/schedule";
 import { Pill, FieldLabel, SelectField } from "@/components/onboarding/controls";
@@ -100,7 +100,17 @@ export default function BuddyBoard({
   const { hookFor } = useSharedHooks(userId);
 
   // --- Post form state ---
+  /* What, then which: the activity is asked first and the focus only narrows
+     it. Picking running or cardio answers both at once (lib/buddyBoard.ts). */
+  const [activity, setActivity] = useState<string | null>(null);
   const [focus, setFocus] = useState<string | null>(null);
+
+  const pickActivity = (key: string) => {
+    setActivity(key);
+    const only = focusesFor(key);
+    // One focus means the question is already answered; the gym's eight are asked.
+    setFocus(only.length === 1 ? only[0].key : null);
+  };
   // A real date — you can put your hand up for Monday a week ahead.
   const [date, setDate] = useState<string | null>(null);
   // The hour they actually mean to go. The board used to ask for a third of a
@@ -163,6 +173,7 @@ export default function BuddyBoard({
     try {
       await createBuddyPost({ focus: focus!, date: date!, hour: hour!, gym, note });
       // reset the form, keep filters; refresh both lists
+      setActivity(null);
       setFocus(null);
       setDate(null);
       setHour(null);
@@ -268,50 +279,75 @@ export default function BuddyBoard({
           </div>
 
           <div>
-            <FieldLabel>Focus</FieldLabel>
+            <FieldLabel required>What</FieldLabel>
             <div className="flex flex-wrap gap-1.5">
-              {buddyFocuses.map((f) => (
-                <Pill key={f.key} label={f.label} selected={focus === f.key} onClick={() => setFocus(f.key)} />
+              {boardActivities.map((a) => (
+                <Pill
+                  key={a.key}
+                  label={a.label}
+                  selected={activity === a.key}
+                  onClick={() => pickActivity(a.key)}
+                />
               ))}
             </div>
           </div>
 
+          {/* Only the gym has more than one answer to give. */}
+          {activity === "gym" && (
+            <div>
+              <FieldLabel required>Focus</FieldLabel>
+              <div className="flex flex-wrap gap-1.5">
+                {focusesFor("gym").map((f) => (
+                  <Pill
+                    key={f.key}
+                    label={f.label}
+                    selected={focus === f.key}
+                    onClick={() => setFocus(f.key)}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
           <div>
-            <FieldLabel>Day</FieldLabel>
+            <FieldLabel required>Day</FieldLabel>
             <WeekPicker value={date} onChange={setDate} />
           </div>
 
-          <div>
-            <FieldLabel>Time</FieldLabel>
-            {/* The SAME hours the session search offers, so the two can be
-                compared — see sessionTimeSlots in lib/onboarding.ts. */}
-            <SelectField
-              value={hour === null ? "" : String(hour)}
-              onChange={(v) => setHour(v === "" ? null : Number(v))}
-              options={sessionTimeSlots.map((t) => ({
-                value: String(t.value),
-                label: t.label,
-              }))}
-              placeholder="Pick a time"
-              ariaLabel="Time"
-            />
+          {/* TIME AND GYM SHARE A LINE (owner, 2026-09-22) — two half-width
+              selects instead of two full rows, the same shape the session
+              search already uses. The hours are the SAME ones that search
+              offers (sessionTimeSlots), so the two can be compared. */}
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <FieldLabel required>Time</FieldLabel>
+              <SelectField
+                value={hour === null ? "" : String(hour)}
+                onChange={(v) => setHour(v === "" ? null : Number(v))}
+                options={sessionTimeSlots.map((t) => ({
+                  value: String(t.value),
+                  label: t.label,
+                }))}
+                placeholder="Pick a time"
+                ariaLabel="Time"
+              />
+            </div>
+            <div>
+              <FieldLabel>Gym</FieldLabel>
+              {/* Fifteen gyms is a list, not a row of buttons — the last few were
+                  only reachable by dragging sideways past all the others. */}
+              <SelectField
+                value={gym ?? ""}
+                onChange={(v) => setGym(v || null)}
+                options={verifiedGyms.map((g) => ({ value: g, label: g }))}
+                placeholder="Any gym"
+                ariaLabel="Gym"
+              />
+            </div>
           </div>
 
           <div>
-            <FieldLabel>Gym (optional)</FieldLabel>
-            {/* Fifteen gyms is a list, not a row of buttons — the last few were
-                only reachable by dragging sideways past all the others. */}
-            <SelectField
-              value={gym ?? ""}
-              onChange={(v) => setGym(v || null)}
-              options={verifiedGyms.map((g) => ({ value: g, label: g }))}
-              placeholder="Any gym"
-              ariaLabel="Gym"
-            />
-          </div>
-
-          <div>
-            <FieldLabel>Note (optional)</FieldLabel>
+            <FieldLabel>Note</FieldLabel>
             <input
               type="text"
               value={note}
@@ -325,9 +361,6 @@ export default function BuddyBoard({
           <Button size="lg" full onClick={submit} disabled={!canPost}>
             {posting ? "Posting…" : "Post to board"}
           </Button>
-          {!focus || !date || hour === null ? (
-            <p className="text-center text-[11px] text-muted">Pick a focus, day, and time.</p>
-          ) : null}
           {formErr && <p className="text-center text-[11px] text-danger">Couldn’t post: {formErr}</p>}
         </div>
       )}
