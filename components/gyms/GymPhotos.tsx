@@ -13,6 +13,7 @@
 import { useRef, useState } from "react";
 import type { GymPhoto } from "@/lib/gymSocial";
 import { IconCamera, IconX } from "@/components/icons";
+import SectionLabel from "@/components/ui/SectionLabel";
 
 type Props = {
   photos: GymPhoto[];
@@ -40,10 +41,8 @@ export default function GymPhotos({ photos, onAdd, onRemove }: Props) {
   };
 
   return (
-    <div className="border-b border-border py-3.5">
-      <h2 className="px-3.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-        Photos
-      </h2>
+    <div className="rounded-2xl border border-border bg-surface py-3.5">
+      <SectionLabel className="px-3.5">Photos</SectionLabel>
       {/* One row, scrolling sideways; the gutter is inside the scroller so the
           first and last tiles line up with the rest of the page. */}
       <ul className="mt-2 flex gap-2 overflow-x-auto px-3.5 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">

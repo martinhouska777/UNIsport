@@ -201,15 +201,21 @@ const html = `<!doctype html><html><head><meta charset="utf-8">
 
   window.frame = function (t) {
     /* ---- camera ---- */
+    /* the camera (owner, 2026-09-22 night: "zoom in after choose your activity")
+         typing:    a slow push, then a pull back as the line lifts
+         activity:  a gentle push
+         after it:  ZOOM IN — the camera drives into the two figures as they
+                    arrive, keeps leaning in while they wait and close
+         connect:   a punch, then it eases back out so the name above and
+                    the line below sit comfortably in frame */
     var cam = 1;
     cam += 0.06 * cl((t - T.typeA) / (T.lift - T.typeA));
     cam -= 0.06 * outExpo((t - T.lift) / 0.6);
-    cam += 0.05 * cl((t - T.act) / (T.actOut - T.act));
-    cam -= 0.05 * outExpo((t - T.actOut) / 0.6);
-    cam += 0.10 * (1 - outExpo((t - T.slide) / 1.4)) * cl((t - T.slide) / 0.05);
-    cam += 0.05 * cl((t - T.apart) / (T.met - T.apart));                       // the slow lean-in while they wait and close
+    cam += 0.04 * cl((t - T.act) / (T.actOut - T.act));
+    cam += 0.14 * inOut((t - T.actOut) / (T.apart - T.actOut + 0.3));           // the zoom in
+    cam += 0.04 * cl((t - T.apart) / (T.met - T.apart));                       // still leaning in
     cam += 0.05 * Math.sin(Math.PI * cl((t - T.met) / 0.5));                    // the punch
-    cam -= 0.05 * outExpo((t - T.met - 0.3) / 1.0);
+    cam -= 0.22 * inOut((t - T.matchOut) / (T.live - T.matchOut + 0.4));       // ease back out for the name
     $("cam").style.transform = "scale(" + cam.toFixed(4) + ")";
 
     /* ---- 1. the typed, edited line ---- */

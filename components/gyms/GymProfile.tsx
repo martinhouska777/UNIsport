@@ -1,15 +1,31 @@
 "use client";
 
+/*
+  ONE GYM'S PAGE.
+
+  Restyled 2026-09-22 to match the person profile (app/(app)/people/[id]):
+  white lifted cards on the page instead of full-width grey bands divided by
+  hairlines — the owner picked that look there and asked for it here. The
+  chassis is the same three classes: `rounded-2xl border border-border
+  bg-surface p-3.5`, with SectionLabel on top of each card.
+
+  What the page is, top to bottom: can I walk in right now and where is it —
+  what the campus thinks of it (the rating, its breakdown and the comments) —
+  the week's hours — photos — who has said they're going. "How busy is it" was
+  cut on the owner's instruction the same day; so was the strip of your own
+  sessions here.
+
+  All colour is theme tokens (rule 1).
+*/
 import { useState } from "react";
 import Link from "next/link";
 import { useAppState } from "@/components/AppState";
 import { getUniversity } from "@/lib/themes";
-import { useFavorites, useGymRatings, useGymPhotos } from "@/lib/gymSocial";
-import { StarRater } from "@/components/gyms/RateCrowd";
+import { useFavorites, useGymPhotos } from "@/lib/gymSocial";
 import OpenNow from "@/components/gyms/OpenNow";
 import GymPhotos from "@/components/gyms/GymPhotos";
+import GymReviews from "@/components/gyms/GymReviews";
 import WeekHours from "@/components/gyms/WeekHours";
-import YourHistoryHere from "@/components/gyms/YourHistoryHere";
 import GoingLine, { boardHref } from "@/components/gyms/GoingLine";
 import PostGoingSheet from "@/components/gyms/PostGoingSheet";
 import Avatar from "@/components/messages/Avatar";
@@ -28,7 +44,6 @@ export default function GymProfile({ gym }: { gym: Gym }) {
   const { userId, universityKey } = useAppState();
   const { data: myProfile } = useProfileData();
   const { isFavorite, toggle } = useFavorites(userId);
-  const { getRating, setRating } = useGymRatings(userId);
   // The school's own pictures of this gym (db/gym_photos.sql).
   const { photosFor, addPhoto, removePhoto } = useGymPhotos(userId);
   // Who has already said they're coming here (the Buddy Board, by gym).
@@ -39,7 +54,6 @@ export default function GymProfile({ gym }: { gym: Gym }) {
   const [posting, setPosting] = useState(false);
   const [posted, setPosted] = useState(false);
   const favorite = isFavorite(gym.slug);
-  const rating = getRating(gym.slug);
   const now = useClock();
   // See FavHeart in the gyms list: counts taps so the pop plays on the tap and
   // not on every render of a gym that's already a favourite.
@@ -48,7 +62,7 @@ export default function GymProfile({ gym }: { gym: Gym }) {
   const mapsHref = gymMapsUrl(gym, getUniversity(universityKey)?.name ?? "");
 
   return (
-    <div className="mx-auto flex w-full max-w-screen-sm flex-col">
+    <div className="mx-auto flex w-full max-w-screen-sm flex-1 flex-col">
       {/* Top bar */}
       <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-surface px-3.5 py-2.5">
         <Link
@@ -79,98 +93,86 @@ export default function GymProfile({ gym }: { gym: Gym }) {
         </button>
       </div>
 
-      {/*
-        THE OVERVIEW (owner, 2026-09-22). Three things and nothing else — can I
-        go in now, where is it, what do I think of it — each one a line of its
-        own at reading size rather than a row of small grey type. The "how busy
-        is it" half of this page went with the same instruction.
-      */}
-      <div className="border-b border-border px-3.5 py-4">
-        <h1 className="text-[19px] font-semibold text-text">{gym.name}</h1>
-        <div className="mt-3 flex flex-col gap-2.5 text-[14px] text-text">
-          <OpenNow hours={gym.hours} now={now} size={16} />
-          {/* The address is a way of GETTING there, so it opens a map. */}
-          <a
-            href={mapsHref}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="press-icon flex w-fit items-center gap-1.5 underline decoration-border underline-offset-4"
-          >
-            <IconMapPin size={16} /> {gym.address}
-          </a>
-          {/* Yours alone (lib/gymSocial), averaged with nobody's — which is why
-              the stars are labelled rather than left to look like a score.
-              data-tour: the gym tour lights this (lib/tour.ts). */}
-          <div data-tour="gym-rate" className="flex items-center gap-2.5">
-            <StarRater value={rating?.value ?? 0} onRate={(n) => setRating(gym.slug, n)} />
-            <span className="text-[12px] text-muted">Your rating</span>
+      <div className="flex flex-col gap-2.5 px-3.5 pb-3 pt-3">
+        {/*
+          THE OVERVIEW — two things and nothing else: can I go in now, and
+          where is it. The address is a way of GETTING there, so it opens a map.
+        */}
+        <div className="rounded-2xl border border-border bg-surface p-3.5">
+          <h1 className="text-[19px] font-semibold tracking-[-0.01em] text-text">{gym.name}</h1>
+          <div className="mt-2.5 flex flex-col gap-2 text-[14px] text-text">
+            <OpenNow hours={gym.hours} now={now} size={16} />
+            <a
+              href={mapsHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="press-icon flex w-fit items-center gap-1.5 underline decoration-border underline-offset-4"
+            >
+              <IconMapPin size={16} /> {gym.address}
+            </a>
           </div>
         </div>
-      </div>
 
-      {/*
-        THE WHOLE WEEK, under the one line at the top that answers "can I go in
-        right now". Same hours every day while the data holds one line per gym
-        (owner, 2026-09-22) — see weekHours() for the day that changes.
-      */}
-      <WeekHours hours={gym.hours} now={now} />
-
-      {/*
-        PHOTOS, where the empty four-panel carousel once was. Taken by the
-        people who train here rather than by anyone walking the campus with a
-        camera — the newest one also becomes the gym's picture on the list.
-      */}
-      <GymPhotos
-        photos={photosFor(gym.slug)}
-        onAdd={(file) => addPhoto(gym.slug, file)}
-        onRemove={removePhoto}
-      />
-
-      {/*
-        WHO'S GOING. The Buddy Board already holds people who volunteered for
-        a session here; this is where somebody deciding whether to go finds
-        them. One row per post, nearest first; the header line opens the board
-        narrowed to this gym. Hidden entirely when nobody has posted.
-      */}
-      {going && (
-        <div className="border-b border-border px-3.5 py-3.5">
-          <GoingLine going={going} gymName={gym.name} />
-          <ul className="mt-2 flex flex-col divide-y divide-border">
-            {going.posts.slice(0, 6).map((p) => (
-              <li key={p.id} className="flex items-center gap-2.5 py-2">
-                <Avatar size={30} src={p.authorPhoto} alt={p.authorName} />
-                <div className="min-w-0 flex-1">
-                  <div className="flex min-w-0 items-center gap-1.5 text-[13px] text-text">
-                    <span className="truncate">
-                      {p.authorName}
-                      {p.mine && <span className="text-muted"> · your post</span>}
-                    </span>
-                    {!p.mine && <HookChip hook={hookFor(p.authorId)} />}
-                  </div>
-                  <div className="text-[11px] text-muted">
-                    {focusLabel(p.focus)}
-                    {p.date ? ` · ${dateLabel(p.date)}` : ""} · {postWhenLabel(p.hour, p.timeOfDay)}
-                  </div>
-                </div>
-              </li>
-            ))}
-          </ul>
+        {/*
+          THE RATING — the score, what it is made of, your own stars and the
+          comments. Real rows (db/gym_reviews.sql), never the placeholder
+          numbers in lib/gyms.ts.
+          data-tour: the gym tour lights this (lib/tour.ts).
+        */}
+        <div data-tour="gym-rate">
+          <GymReviews userId={userId} gymSlug={gym.slug} />
         </div>
-      )}
 
-      {/*
-        WHAT THIS GYM IS TO YOU — the sessions you have logged here, when you
-        were last in, and who you went with. Read out of your own log.
-      */}
-      <YourHistoryHere userId={userId} gymName={gym.name} />
+        {/*
+          THE WHOLE WEEK, under the one line at the top that answers "can I go
+          in right now". Same hours every day while the data holds one line per
+          gym (owner, 2026-09-22) — see weekHours() for the day that changes.
+        */}
+        <WeekHours hours={gym.hours} now={now} />
 
-      {/*
-        WHERE "RATINGS BREAKDOWN" USED TO BE — three gold bars (Equipment,
-        Cleanliness, Atmosphere) and "142 ratings". Every one of those numbers
-        was invented in lib/gyms.ts and shown on a real, named campus gym; a
-        student rating the gym changed none of them. Gone until real ratings
-        exist. The fields stay in the data for that day.
-      */}
+        {/*
+          PHOTOS, where the empty four-panel carousel once was. Taken by the
+          people who train here rather than by anyone walking the campus with a
+          camera — the newest one also becomes the gym's picture on the list.
+        */}
+        <GymPhotos
+          photos={photosFor(gym.slug)}
+          onAdd={(file) => addPhoto(gym.slug, file)}
+          onRemove={removePhoto}
+        />
+
+        {/*
+          WHO'S GOING. The Buddy Board already holds people who volunteered for
+          a session here; this is where somebody deciding whether to go finds
+          them. One row per post, nearest first; the header line opens the board
+          narrowed to this gym. Hidden entirely when nobody has posted.
+        */}
+        {going && (
+          <div className="rounded-2xl border border-border bg-surface p-3.5">
+            <GoingLine going={going} gymName={gym.name} />
+            <ul className="mt-2 flex flex-col divide-y divide-border">
+              {going.posts.slice(0, 6).map((p) => (
+                <li key={p.id} className="flex items-center gap-2.5 py-2">
+                  <Avatar size={30} src={p.authorPhoto} alt={p.authorName} />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex min-w-0 items-center gap-1.5 text-[13px] text-text">
+                      <span className="truncate">
+                        {p.authorName}
+                        {p.mine && <span className="text-muted"> · your post</span>}
+                      </span>
+                      {!p.mine && <HookChip hook={hookFor(p.authorId)} />}
+                    </div>
+                    <div className="text-[11px] text-muted">
+                      {focusLabel(p.focus)}
+                      {p.date ? ` · ${dateLabel(p.date)}` : ""} · {postWhenLabel(p.hour, p.timeOfDay)}
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
 
       {/*
         The page's one conversion action, stuck to the bottom of the viewport
@@ -181,7 +183,7 @@ export default function GymProfile({ gym }: { gym: Gym }) {
       */}
       <div
         data-tour="gym-partner"
-        className="sticky bottom-0 z-10 flex flex-col gap-2 border-t border-border bg-surface px-3.5 pb-4 pt-3"
+        className="sticky bottom-0 z-10 mt-auto flex flex-col gap-2 border-t border-border bg-surface px-3.5 pb-4 pt-3"
       >
         <Button size="lg" full onClick={() => setPosting(true)}>
           {posted ? "Posted · post another time" : "Post that you’re going"}

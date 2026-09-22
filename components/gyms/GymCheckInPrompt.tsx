@@ -2,12 +2,29 @@
 
 /*
   Shown right after you save a workout logged at a known gym: an optional
-  one-tap "rate the gym + how busy was it" card. Taps save immediately (your
-  rating to this browser, the crowd report to the shared campus table), so
-  "Done" and "Skip" both just dismiss. All color = theme tokens.
+  "rate the gym" card, because the moment you have just walked out of it is the
+  one moment you actually know what it was like.
+
+  It writes the SAME row the gym page writes — db/gym_reviews.sql, one review
+  per person per gym — so a rating given here lands in the gym's public score
+  instead of in a private corner of this browser. Done saves; Skip doesn't.
+
+  The "how busy was it" half went when the owner cut busyness from the app
+  (2026-09-22): nothing displays a crowd report any more, so asking for one
+  promised something the app no longer does. The picker itself still exists in
+  RateCrowd for the day it comes back.
+
+  All colour = theme tokens.
 */
-import { useGymRatings, useGymCrowd } from "@/lib/gymSocial";
-import { StarRater, CrowdPicker } from "@/components/gyms/RateCrowd";
+import { useState } from "react";
+import {
+  REVIEW_CATEGORIES,
+  EMPTY_SCORES,
+  saveGymReview,
+  overallOf,
+  type ReviewScores,
+} from "@/lib/supabase/gymReviews";
+import { StarRater } from "@/components/gyms/RateCrowd";
 import Button from "@/components/ui/Button";
 
 export default function GymCheckInPrompt({
@@ -21,41 +38,43 @@ export default function GymCheckInPrompt({
   gymName: string;
   onDone: () => void;
 }) {
-  const { getRating, setRating } = useGymRatings(userId);
-  const { getCrowd, reportCrowd } = useGymCrowd(userId);
-  const rating = getRating(gymSlug);
-  const crowd = getCrowd(gymSlug);
+  const [scores, setScores] = useState<ReviewScores>(EMPTY_SCORES);
+  const [busy, setBusy] = useState(false);
+
+  const done = async () => {
+    if (overallOf(scores) === null) return onDone();
+    setBusy(true);
+    try {
+      await saveGymReview(userId, gymSlug, scores, "");
+    } catch {
+      // Rating a gym is the smallest thing on this screen; a failed write is
+      // not worth trapping somebody in a dialog over.
+    } finally {
+      setBusy(false);
+      onDone();
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-[60] flex items-end justify-center bg-background/70 p-4 backdrop-blur-sm sm:items-center">
       <div className="w-full max-w-sm rounded-3xl border border-border bg-surface p-5">
         <div className="text-[15px] font-semibold text-text">Nice work at {gymName}</div>
-        <div className="mt-1 text-[12px] text-muted">
-          Optional — rate it and tell others how busy it was.
+
+        <div className="mt-4 flex flex-col gap-3">
+          {REVIEW_CATEGORIES.map((c) => (
+            <div key={c.key} className="flex items-center justify-between gap-2">
+              <span className="text-[13px] text-text">{c.label}</span>
+              <StarRater
+                value={scores[c.key] ?? 0}
+                size={20}
+                onRate={(n) => setScores((s) => ({ ...s, [c.key]: n }))}
+              />
+            </div>
+          ))}
         </div>
 
-        <div className="mt-4 flex items-center justify-between">
-          <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-            Your rating
-          </span>
-          <span className="text-[11px] text-muted">
-            {rating ? `${rating.value.toFixed(1)} / 5 · just for you` : "Just for you"}
-          </span>
-        </div>
-        <div className="mt-2">
-          <StarRater value={rating?.value ?? 0} onRate={(n) => setRating(gymSlug, n)} />
-        </div>
-
-        <div className="mt-4 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-          How busy was it?
-        </div>
-        {/* Highlights YOUR answer; the report goes to everyone at the school. */}
-        <div className="mt-2">
-          <CrowdPicker value={crowd?.myLevel ?? null} onReport={(l) => reportCrowd(gymSlug, l)} />
-        </div>
-
-        <Button size="lg" full onClick={onDone} className="mt-5">
-          Done
+        <Button size="lg" full onClick={done} disabled={busy} className="mt-5">
+          {busy ? "Saving…" : "Done"}
         </Button>
         <Button variant="muted" size="sm" full onClick={onDone} className="mt-1.5">
           Skip

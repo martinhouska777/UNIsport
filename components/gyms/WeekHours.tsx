@@ -7,6 +7,7 @@
   a gym gets real per-day hours this component needs no change at all.
 */
 import { weekHours, isAlwaysOpen, type Clock } from "@/lib/gymHours";
+import SectionLabel from "@/components/ui/SectionLabel";
 
 export default function WeekHours({ hours, now }: { hours: string; now: Clock | null }) {
   /* A gym that never shuts has no week to print, and the line at the top of
@@ -15,10 +16,8 @@ export default function WeekHours({ hours, now }: { hours: string; now: Clock | 
   if (isAlwaysOpen(hours)) return null;
   const days = weekHours(hours, now?.weekday ?? null);
   return (
-    <div className="border-b border-border px-3.5 py-3.5">
-      <h2 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-        Opening hours
-      </h2>
+    <div className="rounded-2xl border border-border bg-surface p-3.5">
+      <SectionLabel>Opening hours</SectionLabel>
       <ul className="mt-2 flex flex-col">
         {days.map((d) => (
           <li
