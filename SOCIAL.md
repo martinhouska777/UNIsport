@@ -95,6 +95,25 @@ Two practical notes:
   separate address but it is the same account and the same inbox, so it gives none of
   the separation above, and some platforms reject the `+` outright.
 
+### If Gmail will not let you make another one
+
+Noted 2026-09-22 — the owner has hit the limit on both Gmail and Yahoo. That cap is
+**per phone number**, not per person, and it usually frees up later. Not worth
+fighting; use another provider.
+
+| Provider | Free? | Reclaims a dormant account after | Notes |
+|---|---|---|---|
+| **Outlook.com / Hotmail** | yes | **2 years** — the most forgiving | **Recommended.** Trusted everywhere, good phone app, authenticator 2FA |
+| Proton Mail | yes | 1 year | Good second choice. Free plan has no IMAP, same as Zoho |
+| Yahoo | yes | not clearly documented | Works, but weakest security reputation after its breaches. Skip it |
+| iCloud | yes | — | You may already have one via your Apple ID; nothing to create |
+| `mail.com`, GMX, temp-mail | — | — | **Avoid.** Instagram and TikTok flag these at signup — verification loops or an instant ban |
+
+**And this problem disappears once `EMAIL.md` is finished.** `social@getunisport.com`
+is then a **free alias** on your own domain, as are as many more as you want, and no
+provider limit ever applies again. Outlook is the bridge to that — and is also fine to
+keep permanently.
+
 ### Why not `martinhouska777@gmail.com`
 
 It works, but it tangles a business asset up with everything else you own. Anything you
