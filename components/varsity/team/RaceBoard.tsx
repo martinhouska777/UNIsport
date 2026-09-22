@@ -539,6 +539,14 @@ function PieceEditor({
   const [name, setName] = useState(piece.name);
   const [crews, setCrews] = useState<Draft[]>(() => piece.crews.map(toDraft));
   const [adding, setAdding] = useState(false);
+  /*
+    DELETING A PIECE ASKS FIRST (owner, 2026-09-22: "accidentally deleted the
+    piece"). It used to go on one tap, and it takes every time typed into it
+    with it: the day is one JSON blob with no history, so there is nothing to
+    undo it from. Deleting the whole SESSION already armed like this — the one
+    that destroys less was the one that did not.
+  */
+  const [armed, setArmed] = useState(false);
 
   const notIn = boats.filter((b) => !crews.some((c) => c.boatId === b.id));
 
@@ -680,10 +688,39 @@ function PieceEditor({
         </p>
       )}
 
-      <div className="mt-6 flex items-center justify-between">
-        <button type="button" onClick={onDelete} className="tap44 flex items-center gap-1.5 text-[12px] text-muted">
-          <IconTrash size={13} /> Delete this piece
-        </button>
+      <div className="mt-6 flex items-center justify-between gap-3">
+        {armed ? (
+          <div className="flex min-w-0 items-center gap-2 text-[12px]">
+            {/* It names the piece, and says what goes with it: the times are
+                the work, and they are what a coach would not expect a tap on
+                a grey word to throw away. */}
+            <span className="min-w-0 text-muted">
+              Delete {piece.name} and its times?
+            </span>
+            <button
+              type="button"
+              onClick={onDelete}
+              className="tap44 flex-shrink-0 rounded-full border border-border bg-surface-2 px-3 py-1.5 font-medium text-danger"
+            >
+              Delete
+            </button>
+            <button
+              type="button"
+              onClick={() => setArmed(false)}
+              className="tap44 flex-shrink-0 px-2 py-1.5 text-muted"
+            >
+              Keep
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setArmed(true)}
+            className="tap44 flex items-center gap-1.5 text-[12px] text-muted"
+          >
+            <IconTrash size={13} /> Delete this piece
+          </button>
+        )}
         <button
           type="button"
           onClick={save}
