@@ -935,12 +935,14 @@ export const contact = {
   emailLabel: "Email",
   socialsLabel: "Find us",
   comingSoon: "coming soon",
-  /* EMPTY until an account exists (website review, 2026-09-10): three chips
-     reading COMING SOON on a marketing page said "not finished", three times.
-     The rows are data — add one back the day the account is real, e.g.
-       { name: "Instagram", handle: "@unisportcampus", href: "https://instagram.com/unisportcampus", icon: "instagram" }
-     and the "Find us" row draws itself again. */
-  socials: [] as SocialLink[],
+  /* A row appears here the day its account is real, and not before (website
+     review, 2026-09-10: three chips reading COMING SOON on a marketing page
+     said "not finished", three times). Instagram went live 2026-09-22 — see
+     SOCIAL.md. TikTok and X have no accounts yet, so they have no rows.
+     This list is also what puts the follow link on the waitlist screen. */
+  socials: [
+    { name: "Instagram", handle: "@unisportapp", href: "https://instagram.com/unisportapp", icon: "instagram" },
+  ] as SocialLink[],
 };
 
 /* ───────────────────────── PAGE NOT FOUND ───────────────────────── */

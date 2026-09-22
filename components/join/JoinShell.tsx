@@ -1,7 +1,8 @@
 "use client";
 
 /*
-  Shared chrome for the two invite screens (/join and /join/<code>).
+  Shared chrome for the single-screen Zone 1 pages: the two invite screens
+  (/join and /join/<code>) and the waitlist (/waitlist).
 
   The important bit is BACK, and it has to GO BACK rather than navigate to a
   fixed page. A signed-in person reaches these screens from Settings, and
@@ -24,7 +25,24 @@ import Wordmark from "@/components/landing/Wordmark";
 import { useAppState } from "@/components/AppState";
 import { IconArrowLeft } from "@/components/icons";
 
-export default function JoinShell({ badge, children }: { badge: string; children: ReactNode }) {
+/* The invite screens are a varsity door, so they wear the gold; the waitlist
+   is the product's own front door and wears the brand blue, like the landing
+   page it was linked from. Tokens either way (rule 1) — never a hex. */
+const ACCENTS = {
+  varsity: { mark: "text-l-varsity", chip: "border-l-varsity-soft bg-l-varsity-dim text-l-varsity" },
+  brand: { mark: "text-l-accent", chip: "border-l-accent-soft bg-l-accent-dim text-l-accent" },
+} as const;
+
+export default function JoinShell({
+  badge,
+  accent = "varsity",
+  children,
+}: {
+  badge: string;
+  accent?: keyof typeof ACCENTS;
+  children: ReactNode;
+}) {
+  const tone = ACCENTS[accent];
   const { loggedIn } = useAppState();
   const router = useRouter();
 
@@ -53,21 +71,21 @@ export default function JoinShell({ badge, children }: { badge: string; children
             marketing landing page isn't a place they want to end up. */}
         {loggedIn ? (
           <span className="mb-8 inline-block">
-            <Wordmark className="text-2xl" accentClassName="text-l-varsity" />
+            <Wordmark className="text-2xl" accentClassName={tone.mark} />
           </span>
         ) : (
           <Link
             href="/"
             className="mb-8 inline-block"
           >
-            <Wordmark className="text-2xl" accentClassName="text-l-varsity" />
+            <Wordmark className="text-2xl" accentClassName={tone.mark} />
           </Link>
         )}
 
         {/* On its own line under the wordmark: a short badge used to slide up
             beside the logo, which read as one strange word. */}
         <div className="mb-5 flex justify-center">
-          <span className="inline-flex items-center gap-2 rounded-full border border-l-varsity-soft bg-l-varsity-dim px-3 py-1.5 font-mono text-[11px] font-medium uppercase tracking-wider text-l-varsity">
+          <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 font-mono text-[11px] font-medium uppercase tracking-wider ${tone.chip}`}>
             {badge}
           </span>
         </div>

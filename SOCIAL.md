@@ -45,7 +45,13 @@ a free handle answers "Profile isn't available" / "Couldn't find this account".
 the `unisport.com` domain in `EMAIL.md` §2 — a real business with half a million
 followers.
 
-### Recommended: `@unisportapp`
+### Taken: `@unisportapp` ✅
+
+The account exists as of **2026-09-22**. The handle is live on the site too: it is in
+`lib/landingCopy.ts` (`contact.socials`), which draws the "Find us" row on /contact and
+the follow button at the end of the waitlist.
+
+Why it was the right one of the two:
 
 Free on both platforms, so the name is the same everywhere.
 
@@ -242,7 +248,7 @@ None of this is secret, and all of it is annoying to reconstruct later.
 |---|---|
 | Login email | TO FILL IN |
 | Email provider | Outlook.com / Microsoft |
-| Instagram handle | TO FILL IN |
+| Instagram handle | `@unisportapp` |
 | Instagram account type | Creator |
 | TikTok handle | TO FILL IN |
 | YouTube channel | a brand channel on the existing Google account — see §3. TO FILL IN |
@@ -299,7 +305,8 @@ You only need Business for paid ads or a shop. Neither applies yet.
 - **Profile picture**: the logo — see §2, it is not decided. Wordmark on brand colour for now.
 - **Name field**: as above. This is what gets searched.
 - **Bio**: three short lines. What the app is, who it is for, what the link does.
-- **Link**: `getunisport.com`.
+- **Link**: `getunisport.com/waitlist` — see §5b. NOT the bare domain: the landing page
+  sends people to a sign-up they cannot finish yet.
 - **Contact button**: `hello@getunisport.com` once `EMAIL.md` is done.
 
 ### Step 5 — Lock it down (you, 5 min)
@@ -314,6 +321,60 @@ You only need Business for paid ads or a shop. Neither applies yet.
 
 Same vertical video posts to all three with no extra editing, and handles are
 first-come. Even if you never post there, take the name now.
+
+---
+
+## 5b. The link in the bio — the waitlist
+
+**`getunisport.com/waitlist`**. Built 2026-09-22.
+
+### Why the bio link is not the landing page
+
+The landing page's main button says **"Get started with .edu"** and leads to a real
+sign-up. Somebody who finishes it today is alone in an empty app — no partners to match
+with, no one on the leaderboard, nothing in the feed. They look once and never come back,
+and you cannot un-spend a first impression.
+
+So the Instagram link goes to a list instead: everybody who joins is let in **on the same
+day**, so the first morning has people in it. That is what the page says, in those words.
+
+### What it is
+
+One screen. First name, email, one button. It asks for a Harvard address because Harvard
+opens first, but it **accepts anything** — the Instagram account will reach students at
+schools the app has not got to yet, and turning them away loses them for good. The school
+is worked out from the email domain by itself, so the list sorts into "ready" and "not
+yet" with no extra question on the screen.
+
+When they are done, the last thing on the screen is **Follow @unisportapp**. Instagram
+feeds the list; the list feeds Instagram back.
+
+### Where the names go
+
+Your own database — the `waitlist` table (`db/waitlist.sql`, already applied). Nobody can
+read that list through the website, not even a signed-in user: it can only be added to.
+**To see it: Supabase → Table editor → `waitlist`.** Columns: email, first name, school,
+source, and when they joined.
+
+### Two versions of the link
+
+| Where | Link |
+|---|---|
+| **The bio** | `getunisport.com/waitlist` |
+| **A story sticker, a comment, a DM** | `getunisport.com/waitlist?from=ig-story` |
+
+The bare link is for the bio, because a profile link with a `?` on the end looks like
+tracking and people are right to distrust it. The tagged one is for places the address is
+never shown anyway — the sticker just says "link" — and it fills the `source` column, so
+you can tell which posts actually bring people in. `?from=` accepts `ig`, `ig-story`,
+`tiktok` and `site`; anything else is ignored rather than stored.
+
+### One thing still open
+
+The landing page has not changed. Its main button is still "Get started with .edu", so
+anyone who goes to `getunisport.com` (rather than the bio link) can still sign up into the
+empty app. Two doors that say different things. **Owner's call:** leave it, or point the
+landing page's main button at the waitlist as well until launch day.
 
 ---
 
@@ -407,19 +468,23 @@ Build in public:
 
 ## 9. Checklist — the live state
 
-- [ ] Handle confirmed on TikTok as well as Instagram (§2)
+- [x] Handle taken on Instagram — `@unisportapp` (§2)
+- [ ] Same handle reserved on TikTok (§2)
 - [ ] New Outlook address created, 2-step verification on it
 - [ ] Bitwarden installed, password saved there
-- [ ] Instagram account created in the phone app
+- [x] Instagram account created — `@unisportapp`, 2026-09-22
 - [ ] Switched to **Creator** (not Business)
 - [ ] Profile picture — three rendered, pick a ground (§2)
 - [ ] Name field and bio written
 - [ ] 2FA via authenticator app, backup codes saved
 - [ ] TikTok handle reserved, YouTube brand channel made
 - [ ] Contact button set to `hello@getunisport.com` — blocked on `EMAIL.md` step 5
+- [x] Waitlist built, and the bio link decided — `getunisport.com/waitlist` (§5b)
+- [ ] Bio link actually pasted into the profile
 - [ ] First video posted
 
-**Status 2026-09-22:** nothing created yet. Strategy corrected to a UNIsport product
-account (the earlier admissions plan is gone). Handles checked live — `@unisportapp` is
-free on Instagram AND TikTok. Profile pictures rendered and waiting on a choice of ground.
-Blocked on nothing.
+**Status 2026-09-22 (evening):** the Instagram account EXISTS — `@unisportapp`. The
+handle is live on the website's Contact row, and the waitlist it should link to is built
+and working: `getunisport.com/waitlist` (§5b). Profile pictures are still waiting on a
+choice of ground, TikTok is still unreserved, and the one open question is whether the
+landing page's own button should point at the waitlist too.
