@@ -1,0 +1,33 @@
+/* THROWAWAY (photo shoot only, never committed): rewrites what comes back from
+   Supabase so the screens carry an invented team instead of the real squad. */
+import map from "./shootMap.json";
+
+const GENERAL: [RegExp, string][] = [
+  [/Harvard Rowing/g, "Westbrook Rowing"],
+  [/HUBC Fall 2026/g, "Fall 2026"],
+  [/HUBC/g, "Westbrook"],
+  [/Weights at Palmer Dixon/g, "Weights at the boathouse"],
+  [/Palmer Dixon/g, "the boathouse gym"],
+  [/HClub Event/g, "Club event"],
+  // the real squad's shells -> invented boat names
+  [/"name":\s*"Engstrom"/g, '"name":"Aurora"'],
+  [/"name":\s*"Hamlin"/g, '"name":"Osprey"'],
+  [/"name":\s*"Hosea"/g, '"name":"Meridian"'],
+  [/"name":\s*"Mississippi"/g, '"name":"Tempest"'],
+  [/"name":\s*"92"/g, '"name":"Heron"'],
+];
+const RACE: [RegExp, string][] = Object.entries(map.race as Record<string, string>)
+  .sort((a, b) => b[0].length - a[0].length)
+  .map(([from, to]) => [new RegExp(`(?<![A-Za-z'])${from.replace(/[-/\^$*+?.()|[\]{}]/g, "\$&")}(?![A-Za-z'])`, "g"), to]);
+
+export const shootFetch: typeof fetch = async (input, init) => {
+  const res = await fetch(input, init);
+  const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+  if (!/\/rest\/v1\//.test(url)) return res;
+  let text = await res.text();
+  for (const [re, to] of GENERAL) text = text.replace(re, to);
+  if (/varsity_race_results|race_results/.test(url)) for (const [re, to] of RACE) text = text.replace(re, to);
+  const headers = new Headers(res.headers);
+  headers.delete("content-length"); headers.delete("content-encoding");
+  return new Response(text, { status: res.status, statusText: res.statusText, headers });
+};

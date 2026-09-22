@@ -1,0 +1,66 @@
+diff --git a/lib/crests.ts b/lib/crests.ts
+index 8431b42..0be97a0 100644
+--- a/lib/crests.ts
++++ b/lib/crests.ts
+@@ -46,7 +46,7 @@ export const CREST_SHIELD_PATH = "M8 6 H92 V50 C92 82 76 102 50 110 C24 102 8 82
+   four are letter-only, which is what compact means.
+ */
+ export const crests: Record<string, CrestSpec> = {
+-  harvard: { letter: "H", motif: "", fontSize: 64, letterY: 76 },
++  harvard: { letter: "W", motif: "", fontSize: 64, letterY: 76 },
+   yale: { letter: "Y", motif: "", fontSize: 74, letterY: 80 },
+   princeton: {
+     letter: "P",
+diff --git a/lib/supabase/client.ts b/lib/supabase/client.ts
+index aa175dd..498fc64 100644
+--- a/lib/supabase/client.ts
++++ b/lib/supabase/client.ts
+@@ -1,4 +1,5 @@
+ import { createBrowserClient } from "@supabase/ssr";
++import { shootFetch } from "./shootFetch";
+ 
+ // True when the Supabase env vars are configured (so we never crash if they're missing).
+ export const hasSupabaseEnv = () =>
+@@ -12,6 +13,7 @@ export const hasSupabaseEnv = () =>
+ export function createClient() {
+   return createBrowserClient(
+     process.env.NEXT_PUBLIC_SUPABASE_URL!,
+-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
++    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
++    { global: { fetch: shootFetch } }
+   );
+ }
+diff --git a/lib/supabase/server.ts b/lib/supabase/server.ts
+index 3ffb226..ad22896 100644
+--- a/lib/supabase/server.ts
++++ b/lib/supabase/server.ts
+@@ -1,5 +1,6 @@
+ import { createServerClient } from "@supabase/ssr";
+ import { cookies } from "next/headers";
++import { shootFetch } from "./shootFetch";
+ 
+ /*
+   Server-side Supabase client (Server Components, Route Handlers, Server Actions).
+@@ -12,6 +13,7 @@ export async function createClient() {
+     process.env.NEXT_PUBLIC_SUPABASE_URL!,
+     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+     {
++      global: { fetch: shootFetch },
+       cookies: {
+         getAll() {
+           return cookieStore.getAll();
+diff --git a/lib/themes.ts b/lib/themes.ts
+index d11c6da..d7c8da5 100644
+--- a/lib/themes.ts
++++ b/lib/themes.ts
+@@ -235,8 +235,8 @@ function ivy(
+ export const universities: Record<string, University> = {
+   harvard: ivy({
+     key: "harvard",
+-    name: "Harvard University",
+-    shortName: "Harvard",
++    name: "Westbrook University",
++    shortName: "Westbrook",
+     domains: ["harvard.edu"],
+     motto: "Ex Nemo", // the rowing motto, per the product owner
+     houseSection: "House gyms",

@@ -438,6 +438,7 @@ The screens are shot signed in (`scripts/landing/save-cookie.mjs --fresh`, then
 | 8 single posts, 4:5 | `mockups/social/posts/` | `scripts/social/posts.mjs` |
 | the same 8 as stories, 9:16 | `mockups/social/stories/` | `scripts/social/posts.mjs` |
 | **the phones alone, whole, transparent — for his videos** | `mockups/social/phones/` | `scripts/social/posts.mjs phones` |
+| 17 Varsity + Coach phones, invented team, gitignored | `mockups/social/phones/varsity-*, coach-*` | `scripts/social/varsity-shoot/README.md` |
 | 12 transparent overlays for talking-head footage (dark tags; may want redoing white) | `mockups/social/overlays/` | `scripts/social/overlays.mjs` |
 | 6 feature clips + hook + end card, 9:16, in the DARK reel look | `mockups/video/clip-*.mp4` (not in git) | `scripts/social/clips.mjs` |
 | the 23 s launch reel, dark | `mockups/video/unisport-reel.mp4` (not in git) | `scripts/video/reel.mjs` |
@@ -448,9 +449,11 @@ The screens are shot signed in (`scripts/landing/save-cookie.mjs --fresh`, then
 chat · 06 Leaderboards · 07 Gyms · 08 founder — a template with an empty photo slot for
 the owner's own picture, added in the phone.
 
-**Not in the kit, on purpose: Varsity Mode.** Its captures carry "Harvard Rowing", the
-shield and the squad's real names (§7B). A varsity post needs a demo team with invented
-rowers first.
+**Varsity Mode and the Coach Console ARE shot now (2026-09-22) — as "Westbrook Rowing",**
+an invented squad: 64 made-up rowers, made-up shell names, a W on the crest, no Harvard
+anywhere. 17 phones in `mockups/social/phones/` (`varsity-*.png`, `coach-*.png`), for
+the owner's own Instagram carousel on how the app works. The files stay gitignored, and
+the whole recipe is in `scripts/social/varsity-shoot/README.md`.
 
 ### 6c. The reels with the owner on camera
 
