@@ -355,20 +355,31 @@ function PracticeBody({ practice }: { practice: Practice & { plan: PlanCell } })
       )}
 
       {/*
-        PUBLISHED SHINES (owner, 2026-09-21: "make it visible when you publish
-        it so that it shines and it's done"). It was a 1.5px green dot and the
-        word — the same weight as "Not started", on a card you are scanning to
-        find what is left to do. Done is now a filled green tick you can see
-        without reading; a draft keeps the amber dot, and a slot nobody has
-        touched says so quietly.
+        THE STATE IS A SHAPE (owner, 2026-09-22: "it's not clear from it").
+        PUBLISHED SHINES (owner, 2026-09-21) got its own badge, but draft and
+        not-started stayed a 1.5px dot and a word, so two of the three states
+        still read as the same grey texture across a week of cards. All three
+        now occupy the same slot in the same corner, and the SHAPE answers
+        before the colour or the word does:
+
+          · not started — a DASHED SQUARE, empty, nothing in it yet
+          · draft       — a SOLID amber SQUARE, on the workbench
+          · published   — a GREEN PILL with a tick, sealed and out
+
+        Both filled badges sit on bg-surface so they lift off the session's
+        colour wash instead of tinting with it.
       */}
       {done ? (
-        <span className="mt-auto flex items-center gap-1 self-start rounded-md border border-success-line bg-surface px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-success shadow-sm">
-          <IconCheck size={11} /> Published
+        <span className="mt-auto flex items-center gap-1 self-start rounded-full border border-success-line bg-surface px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-success shadow-sm">
+          <IconCheck size={11} /> {s.label}
+        </span>
+      ) : practice.status === "draft" ? (
+        <span className="mt-auto flex items-center gap-1.5 self-start rounded-[3px] border border-warn-line bg-surface px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-warn shadow-sm">
+          <span className="h-1.5 w-1.5 rounded-[1px] bg-warn" />
+          {s.label}
         </span>
       ) : (
-        <span className={`mt-auto flex items-center gap-1.5 text-[11px] ${water ? "text-text/85" : "text-muted"}`}>
-          <span className={`h-1.5 w-1.5 rounded-full ${s.dot}`} />
+        <span className="mt-auto self-start rounded-[3px] border border-dashed border-border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">
           {s.label}
         </span>
       )}
@@ -1736,14 +1747,18 @@ function Builder({
                 {context.weekday} {context.period}
               </h1>
               <span
-                className={`flex flex-shrink-0 items-center gap-1 rounded px-1.5 py-px text-[11px] font-semibold uppercase tracking-[0.12em] ${
+                /* Same two shapes as the day picker, so the badge a coach
+                   just tapped is the badge at the top of the builder: a green
+                   PILL when it is live, a square amber one while it is a
+                   draft. */
+                className={`flex flex-shrink-0 items-center gap-1 px-1.5 py-px text-[11px] font-semibold uppercase tracking-[0.12em] ${
                   status === "published"
-                    ? "border border-success-line bg-success-tint text-success"
-                    : "border border-warn-line bg-warn-tint text-warn"
+                    ? "rounded-full border border-success-line bg-success-tint px-2 text-success"
+                    : "rounded-[3px] border border-warn-line bg-warn-tint text-warn"
                 }`}
               >
                 <span
-                  className={`h-1.5 w-1.5 rounded-full ${status === "published" ? "bg-success" : "bg-warn"}`}
+                  className={`h-1.5 w-1.5 ${status === "published" ? "rounded-full bg-success" : "rounded-[1px] bg-warn"}`}
                 />
                 {status === "published" ? "Published" : "Draft"}
               </span>
