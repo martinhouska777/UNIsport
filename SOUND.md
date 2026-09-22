@@ -127,3 +127,54 @@ the stretched whoosh the script fakes today.
   Sonniss + Pixabay. Free first; the owner hasn't heard either yet.
 - **Open:** the script still places one sound per character. Changing to per-word
   bursts means changing how `intro-sound.mjs` reads `intro-times.json`.
+
+
+---
+
+## 2026-09-22, later — real sounds downloaded, six versions built
+
+The general knowledge (every library, its licence, the technique) moved **out of this
+repo** to `C:\VideoEditing\` — see its README. Only the reel-specific part stays here.
+
+**What we actually got, free and legal:**
+
+- **196 Mixkit sounds** — whoosh, transition, click, keyboard, technology, interface,
+  pop, bleep, swoosh. Full-quality WAV. Mixkit's licence is free for commercial use
+  with no attribution. This is the library we edit from.
+- **345 Kenney sounds** — four CC0 packs. Game-flavoured; useful for small ticks.
+- The 16 synthesised sounds from `make-sfx-kit.mjs` are kept as an alternative.
+
+**What we couldn't get:** ZapSplat returns 403 to anything but a logged-in browser and
+Freesound's API needs a key — both need an account, which has to be made by hand.
+
+**The BBC archive turned out to be a dead end twice over.** Beyond the non-commercial
+licence, it simply doesn't contain this kind of sound: searching it returns 0 results
+for "transition", 0 for "interface", 0 for "riser", and 6 for "whoosh" — 1960s radio
+comedy foley. It's a superb archive of real-world recordings and useless for motion
+graphics.
+
+**Two kits, three versions each, six files to compare:**
+
+| | quiet | crisp | layered |
+|---|---|---|---|
+| **real sounds** (Mixkit) | `unisport-intro-quiet.mp4` | `unisport-intro-crisp.mp4` | `unisport-intro-layered.mp4` |
+| **synthesised** | `unisport-intro-synth-quiet.mp4` | `unisport-intro-synth-crisp.mp4` | `unisport-intro-synth-layered.mp4` |
+
+- **quiet** — only what the picture needs: keys, two taps, one whoosh, the note.
+- **crisp** — adds the tile clicks and a second whoosh layer. Brighter, drier.
+- **layered** — the reference method: an air bed all the way through, three sounds per
+  beat, a riser into the moment the two halves meet.
+
+Built by `scripts/video/intro-sound-kit.mjs` (add `--synth` for the synthesised kit,
+or name one version to build just that one). The kits themselves are built by
+`make-sfx-kit.mjs` (synthesised) and `make-sfx-kit-real.mjs` (trims the Mixkit
+sources and writes `anchors.json`).
+
+**The anchor idea, which the old script got wrong:** every sound records where its
+transient sits, so a whoosh is placed by its *peak* landing on the cut rather than its
+first sample. Checked on the finished file: taps at 3.43 s and 4.17 s against cues of
+3.45 and 4.15, the big whoosh at 5.42 against 5.45, typing at 4–7 kHz with whooshes at
+0–0.1 kHz — the same separation measured on the reference.
+
+**Open:** which of the six. The synthesised keys are the weakest part of the
+synthesised kit; the real keys are genuine laptop key recordings.
