@@ -760,11 +760,7 @@ export default function LeaderboardsPage() {
         <GroupSheet
           row={openGroup}
           kind="house"
-          // So the sheet's header says the same rank and the same number the
-          // row that opened it did.
-          metric={metric}
           period={period}
-          periodLabel={PERIODS.find((p) => p.key === period)?.label ?? ""}
           onClose={() => setOpenGroup(null)}
         />
       )}

@@ -24,14 +24,11 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { IconUser, IconX, HouseShield } from "@/components/icons";
-import { pointsLabel, sessionsOf } from "@/lib/points";
+import { sessionsOf } from "@/lib/points";
 import {
   fetchPeopleBoard,
   groupLabel,
-  groupScoreLabel,
   houseCrest,
-  GROUP_METRICS,
-  type GroupMetric,
   type GroupRow,
   type LeaderRow,
   type Period,
@@ -48,18 +45,12 @@ const MEDAL: Record<number, string> = {
 export default function GroupSheet({
   row,
   kind,
-  metric,
   period,
-  periodLabel,
   onClose,
 }: {
   row: GroupRow;
   kind: "house" | "year";
-  /** Which number the board that opened this was ranked on. */
-  metric: GroupMetric;
   period: Period;
-  /** "This month" — so the sheet can say what window it is counting. */
-  periodLabel: string;
   onClose: () => void;
 }) {
   const router = useRouter();
@@ -105,11 +96,6 @@ export default function GroupSheet({
                 <div className="truncate text-[15px] font-medium text-text">
                   {groupLabel(kind, row.key)}
                 </div>
-                <div className="mt-0.5 text-[11px] text-muted">
-                  #{row.rank} · {groupScoreLabel(row, metric)}{" "}
-                  {GROUP_METRICS.find((m) => m.key === metric)?.unit ?? "pts"} ·{" "}
-                  {periodLabel.toLowerCase()}
-                </div>
               </div>
             </div>
             <button
@@ -124,22 +110,6 @@ export default function GroupSheet({
         </div>
 
         <div className="overflow-y-auto px-4 py-3">
-          {/* Where the number on the board came from, in one line. */}
-          <div className="mb-3 rounded-2xl border border-border bg-surface-2 px-3.5 py-2.5 text-[12px] leading-relaxed text-muted">
-            <span className="text-text">{pointsLabel(row.points)}</span> from{" "}
-            <span className="text-text">
-              {row.actives} of {row.members}
-            </span>{" "}
-            {row.members === 1 ? "member" : "members"} training
-            {row.actives < row.members && (
-              <>
-                {" "}
-                — the score is divided by all {row.members}, so the fastest way up the
-                board is more of them logging.
-              </>
-            )}
-          </div>
-
           {people === null ? (
             <div className="px-4 py-12 text-center text-[12px] text-muted">Counting…</div>
           ) : people.length === 0 ? (
