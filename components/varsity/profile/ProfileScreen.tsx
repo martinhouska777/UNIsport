@@ -604,10 +604,8 @@ function CustomRangeSheet({
           />
         </label>
       </div>
-      <p className="mt-2.5 text-[11px] leading-relaxed text-muted">
-        Up to a month is charted day by day; anything longer is charted week by
-        week, so the columns stay readable.
-      </p>
+      {/* Same rule as the stats screen itself (owner, 2026-09-22): the dates
+          are the answer; whether the columns are days or weeks you can see. */}
       <Button
         size="lg"
         disabled={!valid}

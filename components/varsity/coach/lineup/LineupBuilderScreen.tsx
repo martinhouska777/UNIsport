@@ -1716,10 +1716,15 @@ function Builder({
             <IconArrowLeft size={16} /> Days
           </button>
           <div className="ml-auto flex min-w-0 items-center justify-end gap-2">
-            <SaveState
-              status={failed ? "error" : writing || dirty ? "saving" : "saved"}
-              onRetry={() => void persist()}
-            />
+            {/*
+              ONLY WHEN IT GOES WRONG (owner, 2026-09-22). This used to sit
+              here permanently — "✓ Saved", beside the Publish button, on a
+              screen that saves itself and has never had a Save button. A tick
+              that is always on is not news; it is a caption on a control. The
+              line now appears for the one moment the coach can act on it: a
+              write that FAILED, with its Retry.
+            */}
+            {failed && <SaveState status="error" onRetry={() => void persist()} />}
             <PublishBar
               bare
               tourId="coach-lineup-publish"

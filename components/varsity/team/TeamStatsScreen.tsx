@@ -513,7 +513,8 @@ function DatesSheet({
           <input type="date" value={b} max={today} onChange={(e) => setB(e.target.value)} className={`${field} mt-1`} />
         </label>
       </div>
-      <p className="mt-3 text-[12px] text-muted">Up to a month is read day by day; longer is read week by week.</p>
+      {/* No "day by day / week by week" note (owner, 2026-09-22): the columns
+          on the graph say which one it is, and the dates are the answer. */}
       <button
         type="button"
         disabled={!ok}
