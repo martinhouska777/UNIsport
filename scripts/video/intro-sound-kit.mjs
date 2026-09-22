@@ -168,13 +168,17 @@ function build(version) {
   /* the slow fill, then they meet */
   /* Owner: a push again as they come closer together, but a different one from
      the slide. This swells across the whole join and peaks as they meet. */
-  if (version === "layered") peakAt(pick("push-join", "riser"), T.met - 0.05, 0.40 * G * WH);
+  if (version === "layered") peakAt(pick("push-join", "riser"), T.met - 0.12, 0.40 * G * WH);
   /* This is a bass rumble, and left alone its 2.2 s tail drones underneath the
      UNIsport letters — that is the sound the owner heard interfering. Fade it out
      from 0.5 s in so it is gone before the letters land. */
   at("note-warm", T.met, (version === "quiet" ? 0.60 : 0.70) * G, 1,
      version === "layered" ? 0.5 : null);
-  if (version !== "quiet") peakAt("whoosh-low", T.met + 0.1, 0.18 * G * WH, 1.8);
+  /* Owner: this one was late. It was peaking 0.1 s AFTER the two halves touch;
+     it now peaks just before, which is what reads as "on time" — a sound landing
+     fractionally early is heard as simultaneous, a sound landing late is heard
+     as late. Net shift: 160 ms earlier. */
+  if (version !== "quiet") peakAt("whoosh-low", T.met - 0.06, 0.18 * G * WH, 1.8);
 
   peakAt("whoosh-air", T.matchOut, 0.22 * G * WH);
 
