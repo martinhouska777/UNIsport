@@ -422,6 +422,53 @@ Two things that are not obvious:
 - **The first 1.5 seconds decide everything.** Not an intro, not "hi guys" — the thing
   itself, immediately.
 
+### 6b. The post kit — what is already made (2026-09-22)
+
+Everything below is drawn from the app's REAL screens, shot signed in, in dark mode,
+in the look the owner picked from the reference reels. Every line of text is the
+website's own wording. Rebuild any of it with the script named; the screens need a
+signed-in session (`scripts/landing/save-cookie.mjs --fresh`, then
+`scripts/social/capture.mjs`).
+
+| What | Where | Script |
+|---|---|---|
+| 7-slide feed carousel | `mockups/social/carousel/` | `scripts/social/carousel.mjs` |
+| 8 single posts, 4:5 | `mockups/social/posts/` | `scripts/social/posts.mjs` |
+| the same 8 as stories, 9:16 | `mockups/social/stories/` | `scripts/social/posts.mjs` |
+| 12 transparent overlays for talking-head footage | `mockups/social/overlays/` | `scripts/social/overlays.mjs` |
+| 6 feature clips + hook + end card, 9:16 | `mockups/video/clip-*.mp4` (not in git) | `scripts/social/clips.mjs` |
+| the 23 s launch reel | `mockups/video/unisport-reel.mp4` (not in git) | `scripts/video/reel.mjs` |
+
+**The posts:** 01 waitlist ("Get in on day one." + the link) · 02 the headline
+("Your campus. Your gym. Your people.") · 03 Match · 04 Why you match · 05 Plan in the
+chat · 06 Leaderboards · 07 Gyms · 08 founder — a template with an empty photo slot for
+the owner's own picture, added in the phone.
+
+**Not in the kit, on purpose: Varsity Mode.** Its captures carry "Harvard Rowing", the
+shield and the squad's real names (§7B). A varsity post needs a demo team with invented
+rowers first.
+
+### 6c. The reels with the owner on camera
+
+The pattern is **face → clip → face**: he says one sentence to camera, the matching
+`clip-*.mp4` shows the screen for 3–5 s, back to him. Overlays go on the face shots:
+`tag-founder` on his first appearance, `phone-<screen>` while he talks about a feature,
+`split-<screen>` when the screen should stay up while he keeps talking. Captions burned
+in, in CapCut.
+
+Three to start with, each 20–30 s:
+
+1. **Why I built it** — `clip-hook` (2.6 s) → him: the first sentence of the About
+   page, in his words ("I often found myself…") → `clip-match` → him: what the match
+   is scored on → `clip-plan` → him: "the link is in the bio" → `clip-end`.
+2. **How the match works** — him: "It is not who is free, it is who fits" → `clip-why`
+   with the person screen → him, with `split-person` up: interests, concentration,
+   level, language, hometown → `clip-end`.
+3. **The waitlist** — `clip-waitlist` → him, `phone-match` beside him: everyone on the
+   list gets in on the same day, so the first morning is not an empty gym → `clip-end`.
+
+He does not read a script; the beats above are the order, the words are his.
+
 ---
 
 ## 7. Two things to get right
@@ -508,7 +555,7 @@ Build in public:
 - [ ] Contact button set to `hello@getunisport.com` — blocked on `EMAIL.md` step 5
 - [x] Waitlist built, and the bio link decided — `getunisport.com/waitlist` (§5b)
 - [ ] Bio link actually pasted into the profile
-- [ ] First video posted
+- [ ] First video posted — the kit is ready (§6b), the face footage is his to shoot
 
 **Status 2026-09-22 (evening):** the Instagram account EXISTS — `@unisportapp`. The
 handle is live on the website's Contact row, and the waitlist it should link to is built

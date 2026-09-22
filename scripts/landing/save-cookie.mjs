@@ -23,6 +23,12 @@ const browser = await puppeteer.launch({
   args: ["--no-first-run", "--window-size=520,900"],
 });
 const page = (await browser.pages())[0] ?? (await browser.newPage());
+/* --fresh: the profile may still hold an EXPIRED session, which this script
+   would happily save again (2026-09-22: it did, and every capture came back
+   as the landing page). Throw the old cookie away first and wait for a new one. */
+const FRESH = process.argv.includes("--fresh");
+const stale = FRESH ? (await browser.cookies()).filter((c) => c.name === COOKIE || c.name.startsWith(COOKIE + ".")) : [];
+if (stale.length) { await browser.deleteCookie(...stale); console.log("  (old session cleared)"); }
 await page.goto(BASE + "/login", { waitUntil: "domcontentloaded", timeout: 45000 });
 
 console.log("\n  A Chrome window is open on the UNIsport login page.");
