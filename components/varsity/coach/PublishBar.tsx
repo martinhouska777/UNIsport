@@ -15,6 +15,7 @@
     draft            → [Publish]
     live, untouched  → [Unpublish]
     live, edited     → [Unpublish] [Publish]
+    just unpublished → [Publish again], under the line that says why
 
   The database holds one copy of a lineup or a plan, not a published copy and a
   draft copy, so editing something live changes what the squad sees the moment
@@ -27,11 +28,15 @@ import Button from "@/components/ui/Button";
 import { IconSend } from "@/components/icons";
 
 /*
-  UNPUBLISH ASKS FIRST. On a live, untouched lineup it is the ONLY button on
-  this bar, and it is the one that takes the boats off forty phones — a thumb
-  aiming for the bar on a dock should not be able to do that in one press.
-  The question is asked in place, on the same row, so it is still two taps and
-  never a modal over the boat.
+  UNPUBLISH DOES IT, THEN ASKS (owner, 2026-09-21: "make it unpublished right
+  away and ask you a question").
+
+  It used to stop and ask first — Unpublish, then "Take it off the squad's
+  phones?", then Unpublish again — two taps to undo something the coach had
+  already decided, with the buttons moving under the thumb in between. Now one
+  press takes it down and the QUESTION comes after: the bar says what just
+  happened and offers to put it back. Undoing is the cheap direction, so that
+  is the one that goes second.
 */
 
 export default function PublishBar({
@@ -74,47 +79,52 @@ export default function PublishBar({
   stack?: boolean;
 }) {
   const edited = live && changed;
-  const [confirming, setConfirming] = useState(false);
-  const title = !live ? "Draft" : edited ? "Live · edited" : "Live";
+  /*
+    JUST TAKEN DOWN, this sitting. It is what turns the ordinary draft bar into
+    an answer to "what did I just do" — and it clears itself the moment the
+    thing is live again, so it can never outlive what it describes.
+  */
+  const [tookDown, setTookDown] = useState(false);
+  /* Derived, never stored: the message belongs to a thing that is DOWN. The
+     moment it is live again there is nothing to undo, whatever was pressed. */
+  const undoing = tookDown && !live;
+
+  const takeDown = () => {
+    setTookDown(true);
+    onUnpublish();
+  };
+  const putBack = () => {
+    setTookDown(false);
+    if (live) onNotify();
+    else onPublish();
+  };
+
+  const title = !live ? (undoing ? "Taken down" : "Draft") : edited ? "Live · edited" : "Live";
   const sub = !live
-    ? `Only you can see this ${what}.`
-    : confirming
-      ? `Take this ${what} off the squad's phones? It goes back to a draft only you can see.`
-      : edited
-        ? "Your squad can see the change already."
-        : `Your squad can see this ${what}.`;
+    ? undoing
+      ? `Off the squad's phones. Publish puts this ${what} back.`
+      : `Only you can see this ${what}.`
+    : edited
+      ? "Your squad can see the change already."
+      : `Your squad can see this ${what}.`;
 
   if (stack) {
     return (
       <div data-tour={tourId} className="flex w-full flex-col gap-2">
-        {live && confirming && (
-          <>
-            <p className="text-[11px] leading-snug text-muted">Take it off the squad&apos;s phones?</p>
-            <Button variant="secondary" size="md" full onClick={() => setConfirming(false)} disabled={busy}>
-              Keep live
-            </Button>
-            <Button
-              variant="dangerSoft"
-              size="md"
-              full
-              onClick={() => {
-                setConfirming(false);
-                onUnpublish();
-              }}
-              disabled={busy}
-            >
-              Unpublish
-            </Button>
-          </>
+        {/* The question, AFTER the fact: it is already down, and the button
+            under this line is the way back. The column is narrow, so it is
+            short here. */}
+        {!live && undoing && (
+          <p className="text-[11px] leading-snug text-muted">Off the squad&apos;s phones.</p>
         )}
-        {live && !confirming && (
-          <Button variant="secondary" size="md" full onClick={() => setConfirming(true)} disabled={busy}>
+        {live && (
+          <Button variant="secondary" size="md" full onClick={takeDown} disabled={busy}>
             Unpublish
           </Button>
         )}
-        {(!live || (edited && !confirming)) && (
-          <Button size="md" full onClick={live ? onNotify : onPublish} disabled={busy}>
-            <IconSend size={13} /> Publish
+        {(!live || edited) && (
+          <Button size="md" full onClick={putBack} disabled={busy}>
+            <IconSend size={13} /> {undoing ? "Publish again" : "Publish"}
           </Button>
         )}
       </div>
@@ -135,43 +145,20 @@ export default function PublishBar({
           <div className="mt-0.5 text-[11px] leading-relaxed text-muted">{sub}</div>
         </>
       )}
-      {/* Bare or not, the unpublish question is asked in words before the red
-          button is pressed — it is the one that takes the boats off forty
-          phones. */}
-      {bare && live && confirming && (
+      {/* Bare or not, the moment something comes OFF the squad's phones is
+          said in words — after the press, beside the button that puts it
+          back. */}
+      {bare && !live && undoing && (
         <div className="mb-1.5 text-right text-[11px] leading-relaxed text-muted">{sub}</div>
       )}
 
       {/* One row, right-aligned. Stacked under the words rather than beside
           them so a narrow phone never squeezes the sentence into four lines. */}
       <div className={`${bare ? "" : "mt-2.5 "}flex items-center justify-end gap-2`}>
-        {live && confirming && (
-          <>
-            <button
-              type="button"
-              onClick={() => setConfirming(false)}
-              disabled={busy}
-              className="rounded-lg border border-border px-3 py-2 text-[12px] font-semibold text-text disabled:opacity-50"
-            >
-              Keep live
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setConfirming(false);
-                onUnpublish();
-              }}
-              disabled={busy}
-              className="rounded-lg border border-danger-line bg-danger-tint px-3 py-2 text-[12px] font-semibold text-danger disabled:opacity-50"
-            >
-              Unpublish
-            </button>
-          </>
-        )}
-        {live && !confirming && (
+        {live && (
           <button
             type="button"
-            onClick={() => setConfirming(true)}
+            onClick={takeDown}
             disabled={busy}
             className="rounded-lg border border-border px-3 py-2 text-[12px] font-semibold text-muted disabled:opacity-50"
           >
@@ -181,9 +168,9 @@ export default function PublishBar({
         {/* The same word for both: a draft goes out, and a change to something
             already live goes out. Which of the two it is is the state of the
             thing, not a different button. */}
-        {(!live || (edited && !confirming)) && (
-          <Button size="sm" onClick={live ? onNotify : onPublish} disabled={busy}>
-            <IconSend size={13} /> Publish
+        {(!live || edited) && (
+          <Button size="sm" onClick={putBack} disabled={busy}>
+            <IconSend size={13} /> {undoing ? "Publish again" : "Publish"}
           </Button>
         )}
       </div>

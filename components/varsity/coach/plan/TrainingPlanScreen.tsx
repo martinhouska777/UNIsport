@@ -294,12 +294,20 @@ export default function TrainingPlanScreen({
     [],
   );
 
-  const saveState = (
-    <SaveState
-      status={failed ? "error" : writing || dirty ? "saving" : "saved"}
-      onRetry={() => void persist()}
-    />
-  );
+  /*
+    THE SAVE LINE ONLY WHEN IT FAILED (owner, 2026-09-21: "we know that it
+    saves automatically when we change, so just cut the top").
+
+    A sticky bar across the top of every week saying "Saved" is a bar that
+    says nothing: the console has no Save button anywhere, so saving is not a
+    thing the coach is waiting on. The one moment it IS worth a line is the one
+    the coach can do something about — a save that did not go through, with its
+    Retry. Then, and only then, the bar appears.
+  */
+  const saveFailed = failed;
+  const saveState = saveFailed ? (
+    <SaveState status="error" onRetry={() => void persist()} />
+  ) : null;
 
   // Publish a draft block: flip it to published, then persist so athletes see it.
   // Publishing is the one moment worth a notification — the squad's week has just
@@ -803,20 +811,19 @@ export default function TrainingPlanScreen({
     return (
       <div className="mx-auto w-full max-w-screen-sm px-4 pb-8 pt-4">
         {/*
-          THE TOP ROW, the lineup builder's shape. It held the save state and
-          the publish button; publishing has gone DOWN into the block card
-          itself (owner, 2026-09-20 — "put it maybe in the block tab so it
-          fits somewhere there"), because the block is the thing being
-          published and the bar was two controls with nothing between them.
-          What is left is the one word this row was always for: whether the
-          work is saved. Sticky, so that word never scrolls away.
+          THE TOP ROW IS GONE (owner, 2026-09-21). It held the save state and
+          the publish button; publishing went DOWN into the block card on
+          2026-09-20, which left a sticky bar whose whole job was to say
+          "Saved" — about a screen that has no Save button and never had one.
+          The block card is now the first thing under the tabs. What is left of
+          the bar is the one line that is worth interrupting for: a save that
+          DIDN'T go through, and its Retry.
         */}
-        <div className="sticky top-0 z-20 -mx-4 flex items-center gap-2 border-b border-border bg-background/95 px-4 py-2.5 backdrop-blur">
-          {/* No name here any more: the block card right under this bar is
-              the title, and the name was on screen twice (owner, 2026-09-18). */}
-          <span className="flex-1" />
-          <div className="flex min-w-0 flex-shrink-0 items-center justify-end gap-2">{saveState}</div>
-        </div>
+        {saveState && (
+          <div className="sticky top-0 z-20 -mx-4 flex items-center justify-end gap-2 border-b border-danger-line bg-background/95 px-4 py-2.5 backdrop-blur">
+            {saveState}
+          </div>
+        )}
         {/*
           THE BLOCK, AT THE TOP (owner, 2026-09-18). It was a section at the
           bottom of the page for a day; the owner wanted to "start with the
