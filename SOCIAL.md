@@ -369,12 +369,23 @@ never shown anyway — the sticker just says "link" — and it fills the `source
 you can tell which posts actually bring people in. `?from=` accepts `ig`, `ig-story`,
 `tiktok` and `site`; anything else is ignored rather than stored.
 
-### One thing still open
+### The landing page says the same thing now
 
-The landing page has not changed. Its main button is still "Get started with .edu", so
-anyone who goes to `getunisport.com` (rather than the bio link) can still sign up into the
-empty app. Two doors that say different things. **Owner's call:** leave it, or point the
-landing page's main button at the waitlist as well until launch day.
+Decided the same day. **Every button on the public site is the waitlist** — the one in the
+top bar, the big one in the middle, the one at the end of the student view and the one
+under the feature list. They are all a single line of copy (`hero.primaryCta` in
+`lib/landingCopy.ts`), so launch day is that one line changing back, and nothing else.
+
+**How you get in while this is up:** "Log in", still in the top right. That screen has a
+Sign up of its own, so you can still make accounts — for yourself, and for anyone you want
+to let in early. The `.edu` rule never changed. The quiet door is open; it is just not the
+one being pointed at.
+
+### Still open
+
+The FAQ further down the page still explains signing up ("students sign up with their
+university email") without mentioning that there is a list first. Not wrong, but somebody
+reading carefully will wonder which it is. A one-line FAQ answer would close it.
 
 ---
 

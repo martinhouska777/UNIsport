@@ -5,11 +5,11 @@
   or, for someone who is already signed in, one "Open the app".
 
   THE LOUD BUTTON IS THE WAITLIST (owner, 2026-09-22), not the sign-up it used
-  to be. Why is in lib/landingCopy.ts `nav.waitlist`, and the short version is
-  that the sign-up works but lands you in an empty campus. "Log in" is
-  deliberately still here and still leads to a screen with a Sign up on it: the
-  app is still being built and has to stay reachable. The quiet door is open,
-  it is just not the one being pointed at.
+  to be — here, in the hero and everywhere else, because they all read the one
+  value in lib/landingCopy.ts (`hero.primaryCta`), where the reason is written
+  down. "Log in" is deliberately untouched and still leads to a screen with a
+  Sign up on it: the app is still being built and has to stay reachable. The
+  quiet door is open, it is just not the one being pointed at.
 
   WHY IT IS ITS OWN CLIENT COMPONENT. The landing is a static page: it is built
   once and handed to everybody, so the server cannot know who is reading it.
@@ -29,7 +29,7 @@
 */
 import Link from "next/link";
 import { useAppState } from "@/components/AppState";
-import { nav } from "@/lib/landingCopy";
+import { hero, nav } from "@/lib/landingCopy";
 
 /* The pair's shared shape, so the one button is the same size as the two. */
 const DOOR_CLS =
@@ -59,9 +59,8 @@ export default function NavDoors() {
     <>
       <Link
         href="/login"
-        /* A phone gives the row to the door (which now says "Get started with
-           .edu" in full), so Log in drops its pill there and is a plain text
-           link — still 44px tall to tap. */
+        /* A phone gives the row to the door, so Log in drops its pill there
+           and is a plain text link — still 44px tall to tap. */
         className="tap44 inline-flex h-10 shrink-0 items-center whitespace-nowrap rounded-full px-1.5 text-[13px] font-medium tracking-tight text-l-text-2 transition-[color,background-color,border-color,translate] hover:text-l-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-l-text sm:border sm:border-l-line sm:bg-l-bg sm:px-[18px] sm:text-sm sm:text-l-text sm:hover:-translate-y-0.5 sm:hover:border-l-line-hover sm:hover:bg-l-bg-elevated"
       >
         {nav.login}
@@ -70,8 +69,8 @@ export default function NavDoors() {
           intro was on screen (the intro's own button stands under it) — but
           that left the bar with nothing but Log in, which read as a site you
           can only sign IN to (owner, 2026-09-19). */}
-      <Link href={nav.waitlistHref} style={DOOR_STYLE} className={DOOR_CLS}>
-        {nav.waitlist}
+      <Link href={hero.primaryHref} style={DOOR_STYLE} className={DOOR_CLS}>
+        {nav.cta}
       </Link>
     </>
   );

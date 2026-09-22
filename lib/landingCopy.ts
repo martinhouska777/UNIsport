@@ -85,13 +85,29 @@ export const hero = {
      The pill above it now carries "free for students", which is what that pass
      was really for. */
   body: "Find every gym on campus. Match with students verified by their .edu email. Plan the session in the chat. Log it together.",
-  primaryCta: "Get started with .edu",
-  /* Where "Get started" goes. The sign-in page opens on LOG IN by default,
-     which greeted every new student with "Welcome back" (website review,
-     2026-09-10). "Get started" is a new-account promise, so every button that
-     carries those words opens the page in its sign-up state; the bar's
-     "Log in" link keeps the plain address. One value, used everywhere. */
-  primaryHref: "/login?mode=signup",
+  /*
+    THE ONE PUBLIC DOOR — the waitlist since 2026-09-22, and before that
+    "Get started with .edu" pointing at /login?mode=signup.
+
+    WHY IT CHANGED. The sign-up works. The problem is what is on the other
+    side of it: 3 people have ever signed in, so a student who finishes it
+    today lands alone in an empty campus — no partner to match with, nobody on
+    the leaderboard — and a first impression cannot be spent twice. The list
+    holds people instead, and everybody on it is let in on the SAME DAY, so the
+    first morning has a crowd in it. That is the whole plan (SOCIAL.md §5b),
+    and this line is what makes the bar, the hero, the student view and the
+    feature list all say it at once — one value, used everywhere.
+
+    THE .EDU DOOR IS NOT GONE, it is just not advertised: "Log in" is still in
+    the bar, /login still has a Sign up on it, and the .edu rule in
+    lib/universityEmail.ts is untouched. That is how the owner gets into an app
+    he is still building, how the three real accounts get back in, and how
+    anybody he wants to let in early gets in.
+
+    PUTTING IT BACK on launch day is this one line and its href — nothing else.
+  */
+  primaryCta: "Join the waitlist",
+  primaryHref: "/waitlist",
   inviteNote: "Got a link from your team?",
   inviteCta: "Join with your invite",
   /* The way to the story behind the app, on the FIRST screen (owner,
@@ -117,23 +133,10 @@ export const social = {
 
 export const nav = {
   login: "Log in",
-  /* Also the hero's primary button — the same door, twice. Not in the bar any
-     more: see `waitlist` below. Kept because the bar is not the only caller. */
+  /* Also the hero's primary button — the same door, twice, on purpose. It
+     briefly had a second name here while the waitlist was only in the bar;
+     the page says one thing now, so there is one value again. */
   cta: hero.primaryCta,
-  /*
-    THE BAR'S OWN DOOR, since 2026-09-22 — the waitlist, not the sign-up.
-
-    The app works, but finishing the sign-up today lands you alone in an empty
-    campus, and a first impression cannot be spent twice. So the loud button on
-    the public page collects the person instead, and everybody on the list is
-    let in on the same day (app/waitlist, SOCIAL.md §5b).
-
-    "Log in" stays beside it, and the login screen has a Sign up of its own —
-    so the owner, the three real accounts, and anybody he wants to let in early
-    still have a door. It is simply not the one being advertised.
-  */
-  waitlist: "Join the waitlist",
-  waitlistHref: "/waitlist",
   /*
     WHAT THE BAR SAYS TO SOMEONE WHO IS ALREADY IN. Both doors are for people
     who are not: a signed-in visitor was being offered "Log in" and "Get
