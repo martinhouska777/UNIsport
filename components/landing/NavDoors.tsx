@@ -1,8 +1,15 @@
 "use client";
 
 /*
-  THE RIGHT-HAND END OF THE TOP BAR — "Log in" and "Get started with .edu",
+  THE RIGHT-HAND END OF THE TOP BAR — "Log in" and "Join the waitlist",
   or, for someone who is already signed in, one "Open the app".
+
+  THE LOUD BUTTON IS THE WAITLIST (owner, 2026-09-22), not the sign-up it used
+  to be. Why is in lib/landingCopy.ts `nav.waitlist`, and the short version is
+  that the sign-up works but lands you in an empty campus. "Log in" is
+  deliberately still here and still leads to a screen with a Sign up on it: the
+  app is still being built and has to stay reachable. The quiet door is open,
+  it is just not the one being pointed at.
 
   WHY IT IS ITS OWN CLIENT COMPONENT. The landing is a static page: it is built
   once and handed to everybody, so the server cannot know who is reading it.
@@ -22,7 +29,7 @@
 */
 import Link from "next/link";
 import { useAppState } from "@/components/AppState";
-import { hero, nav } from "@/lib/landingCopy";
+import { nav } from "@/lib/landingCopy";
 
 /* The pair's shared shape, so the one button is the same size as the two. */
 const DOOR_CLS =
@@ -63,8 +70,8 @@ export default function NavDoors() {
           intro was on screen (the intro's own button stands under it) — but
           that left the bar with nothing but Log in, which read as a site you
           can only sign IN to (owner, 2026-09-19). */}
-      <Link href={hero.primaryHref} style={DOOR_STYLE} className={DOOR_CLS}>
-        {nav.cta}
+      <Link href={nav.waitlistHref} style={DOOR_STYLE} className={DOOR_CLS}>
+        {nav.waitlist}
       </Link>
     </>
   );
