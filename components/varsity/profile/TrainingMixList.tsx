@@ -6,13 +6,15 @@
   The graph says how much you trained. This says what OF: a bar per kind of
   training, biggest first.
 
-  IT HAS ITS OWN WINDOW (owner, 2026-09-21). It used to follow whatever window
-  the graph was on, which meant that on the statistics screen it looked like it
-  was ignoring you — nothing on the mix itself said what stretch of days it was
-  reading, so changing the graph to a month and seeing the same bars read as
-  broken. Now the mix carries its own period pill: it opens on 2 WEEKS, and a
-  month or three months is one tap away. The graph and the mix are two
-  questions and each one keeps its own answer.
+  THE WINDOW BELONGS TO WHATEVER IS ABOVE IT.
+  On the STATISTICS FULL SCREEN there is a graph right above this block, with
+  its dates and its range on it — so the mix simply reads the same window, and
+  carries no pill of its own (owner, 2026-09-22: picking three months up top
+  has to land on these bars too; a second window here was one window too many).
+  In the SHEET off the profile card there is no graph, so nothing else says
+  what stretch of days is being read — there the pill stays, and the block
+  keeps its own window. Pass rangeKey/onRange to get the pill; leave them out
+  and the block is simply whatever rows it was handed.
 
   NO FIGURES UNDER THE BARS (same day). "42.0 km · 3h 30m · 4 sessions" in grey
   under every bar was more small text than the block could carry; the line
@@ -36,9 +38,13 @@ export default function TrainingMixList({
   heading,
 }: {
   rows: MixRow[];
-  /** Which of the ready-made windows the mix is reading — its own, not the graph's. */
-  rangeKey: string;
-  onRange: (key: string) => void;
+  /*
+    Which of the ready-made windows the mix is reading, and the pill to change
+    it. BOTH OPTIONAL: left out, there is no pill, because something above the
+    block (the graph) already says what window this is.
+  */
+  rangeKey?: string;
+  onRange?: (key: string) => void;
   /** The small uppercase label above it. The sheet has a title already. */
   heading?: string;
 }) {
@@ -46,24 +52,26 @@ export default function TrainingMixList({
   const sessions = rows.reduce((s, r) => s + r.sessions, 0);
   const minutes = rows.reduce((s, r) => s + r.minutes, 0);
   const label = statRanges.find((r) => r.key === rangeKey)?.label ?? "2 weeks";
+  const ownWindow = rangeKey !== undefined && onRange !== undefined;
 
   return (
     <div>
-      {/* WHAT IT IS, and OVER WHAT. The window sits on the same line as the
-          name, the way it does on the graph above it. */}
+      {/* WHAT IT IS, and — only where nothing else says it — OVER WHAT. */}
       <div className="flex items-center justify-between gap-2 pb-2">
         <span className="min-w-0 truncate text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
           {heading ?? "Over"}
         </span>
-        <Dropdown
-          label={label}
-          align="right"
-          options={statRanges.map((r) => ({ key: r.key, label: r.label }))}
-          value={rangeKey}
-          open={open}
-          onOpen={setOpen}
-          onPick={onRange}
-        />
+        {ownWindow && (
+          <Dropdown
+            label={label}
+            align="right"
+            options={statRanges.map((r) => ({ key: r.key, label: r.label }))}
+            value={rangeKey}
+            open={open}
+            onOpen={setOpen}
+            onPick={onRange}
+          />
+        )}
       </div>
 
       {rows.length === 0 ? (

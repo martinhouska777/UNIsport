@@ -22,15 +22,16 @@
       plan"), ending in the days out — sick, injured, away — counted in days.
       How far, how long, how steady: the judgement goes last.
     • the training mix — what all that time actually was, named by what was
-      logged (a bike on a flex day is Bike). It keeps a window OF ITS OWN
-      (a pill on its heading, 2 weeks to start): "how much" and "of what" are
-      two questions and each keeps its own answer.
+      logged (a bike on a flex day is Bike). It reads THE SAME WINDOW as the
+      graph (owner, 2026-09-22): picking three months up top lands on these
+      bars too, and a stretch you dragged across is the mix of that stretch.
+      The pill it briefly carried is gone — the dates are already on the graph.
 
   DRAG TO ZOOM (owner, 2026-09-13). Drag a thumb or the mouse sideways across
   the graph and it zooms into that stretch — three weeks out of three months
   become those three weeks, day by day. It is simply a window of those dates,
-  so the numbers and the groups under the graph follow it. The mix does not —
-  it has its own window.
+  so EVERYTHING under the graph follows it: the numbers, the groups, and the
+  training mix.
   "Zoom out" puts back the window you were on before the first zoom.
 
   NO CAPTIONS under the numbers (same day: "just do the data"). Every number
@@ -68,7 +69,7 @@ import {
   type StatRange,
 } from "@/lib/varsity/athleteStats";
 import { rowingReport, bucketDetail, type StatTone } from "@/lib/varsity/rowingStats";
-import type { MixRow } from "@/lib/varsity/trainingMix";
+import { trainingMix } from "@/lib/varsity/trainingMix";
 import TrainingMixList from "@/components/varsity/profile/TrainingMixList";
 import { type DaysOut } from "@/lib/varsity/daysOut";
 import { type CheckIns } from "@/lib/varsity/checkIn";
@@ -103,9 +104,6 @@ export default function StatsFullScreen({
   onZoom,
   onZoomOut,
   zoomed,
-  mix,
-  mixRangeKey,
-  onMixRange,
   daysOut,
   checkIns,
   onClose,
@@ -128,16 +126,6 @@ export default function StatsFullScreen({
   /** Back to the window from before the first zoom. */
   onZoomOut: () => void;
   zoomed: boolean;
-  /*
-    THE TRAINING MIX, with a window OF ITS OWN (owner, 2026-09-21). It used to
-    be computed here out of whatever the graph was showing, which is why it
-    looked frozen: nothing on it said what days it was reading. It is now the
-    same block, and the same window, as the one behind the profile card's
-    Training mix row — the profile owns both.
-  */
-  mix: MixRow[];
-  mixRangeKey: string;
-  onMixRange: (key: string) => void;
   /** The days marked sick / injured / away — shaded on the graph, counted below. */
   daysOut: DaysOut;
   /** The daily check-ins — the Recovery group under the graph. */
@@ -203,6 +191,12 @@ export default function StatsFullScreen({
         ? { ...buckets[0], span: whole, logs: allLogs }
         : null;
   const detail = current ? bucketDetail(current.logs, units) : null;
+  /*
+    THE MIX OF THIS WINDOW. Same logs the graph just plotted, so the bars can
+    never disagree with the columns above them, and a drag-to-zoom changes them
+    with everything else. The plan is passed in only to name the intensities.
+  */
+  const mix = trainingMix(allLogs, plan);
   // More than one day in it → totals by kind; one day → the sessions themselves.
   const manyDays = current ? current.span.startIso !== current.span.endIso : false;
 
@@ -245,10 +239,10 @@ export default function StatsFullScreen({
           </div>
           <div className="flex items-center gap-1.5 truncate text-[13px] font-medium text-text">
             <IconCalendar size={12} />
+            {/* The dates only. "· week by week" used to close this line and
+                it was a caption on a picture (owner, 2026-09-22): the columns
+                are right there, you can see whether they are days or weeks. */}
             {longSpan(whole.startIso, whole.endIso)}
-            <span className="font-normal text-muted">
-              · {range.bucket === "day" ? "day by day" : "week by week"}
-            </span>
           </div>
         </div>
 
@@ -418,19 +412,13 @@ export default function StatsFullScreen({
               </div>
             ))}
 
-            {/* ── What all that training actually was. Its own window, its
-                own pill: this answers "of what", which is not the same
-                question as the graph's "how much", so tying it to the graph's
-                window only made it look stuck (owner, 2026-09-21). The days
-                that weren't training at all (sick, injured, away) sit up in
-                Consistency, beside the missed sessions they explain. ── */}
+            {/* ── What all that training actually was — over the window the
+                graph is on, and no pill of its own, because the dates are
+                already up there (owner, 2026-09-22). The days that weren't
+                training at all (sick, injured, away) sit up in Consistency,
+                beside the missed sessions they explain. ── */}
             <div className="mt-5">
-              <TrainingMixList
-                rows={mix}
-                rangeKey={mixRangeKey}
-                onRange={onMixRange}
-                heading="Training mix"
-              />
+              <TrainingMixList rows={mix} heading="Training mix" />
             </div>
 
           </div>

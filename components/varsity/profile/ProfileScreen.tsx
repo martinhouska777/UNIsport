@@ -635,9 +635,6 @@ function WeeklyGraph({
   onZoom,
   onZoomOut,
   zoomed,
-  mix,
-  mixRangeKey,
-  onMixRange,
   daysOut,
   checkIns,
 }: {
@@ -660,10 +657,6 @@ function WeeklyGraph({
   onZoom: (start: string, end: string) => void;
   onZoomOut: () => void;
   zoomed: boolean;
-  /** The training mix and ITS OWN window — passed straight to the full screen. */
-  mix: MixRow[];
-  mixRangeKey: string;
-  onMixRange: (key: string) => void;
   daysOut: DaysOut;
   /** The daily check-ins — the Recovery group in the full statistics. */
   checkIns: CheckIns;
@@ -773,9 +766,6 @@ function WeeklyGraph({
           onZoom={onZoom}
           onZoomOut={onZoomOut}
           zoomed={zoomed}
-          mix={mix}
-          mixRangeKey={mixRangeKey}
-          onMixRange={onMixRange}
           daysOut={daysOut}
           checkIns={checkIns}
           onClose={() => setFull(false)}
@@ -832,14 +822,13 @@ export default function ProfileScreen() {
   const [planSessions, setPlanSessions] = useState<SessionMap>({});
   const [mixOpen, setMixOpen] = useState(false);
   /*
-    THE TRAINING MIX HAS A WINDOW OF ITS OWN (owner, 2026-09-21).
+    THE WINDOW THE TRAINING MIX *SHEET* READS.
 
-    It used to be whatever the graph was showing, and that read as broken: the
-    mix carries no dates of its own, so moving the graph to a month and seeing
-    much the same bars looks like a control that does nothing. "How much did I
-    train" and "what was it" are two questions, and each one now keeps its own
-    answer. It opens on 2 WEEKS and goes up to three months, out of the same
-    ready-made windows the graph offers — one list, one idea of a month.
+    The sheet off the Training mix row has no graph above it, so nothing else
+    there says what stretch of days the bars cover — it keeps this pill, opening
+    on 2 weeks and going up to three months. On the STATISTICS FULL SCREEN the
+    mix has no pill at all: the graph is right above it and the mix reads the
+    graph's window, zoom included (owner, 2026-09-22).
   */
   const [mixRangeKey, setMixRangeKey] = useState(defaultStatRange);
 
@@ -1059,10 +1048,8 @@ export default function ProfileScreen() {
   const buckets = useMemo<Bucket[]>(() => buildBuckets(logs, range, now), [logs, range, now]);
 
   /*
-    What the MIX'S OWN window contained, kind by kind. Computed here, once, so
-    the sheet behind the Training mix row and the block at the bottom of the
-    statistics screen are the same numbers with the same window — change it in
-    one and the other has already changed.
+    What the SHEET'S window contained, kind by kind. The block at the bottom of
+    the statistics screen computes its own, off the graph's window.
   */
   const mix = useMemo<MixRow[]>(() => {
     const days = rangeByKey(mixRangeKey).days;
@@ -1209,9 +1196,6 @@ export default function ProfileScreen() {
           onZoom={zoomTo}
           onZoomOut={zoomOut}
           zoomed={beforeZoom !== null}
-          mix={mix}
-          mixRangeKey={mixRangeKey}
-          onMixRange={setMixRangeKey}
           daysOut={profile.daysOut}
           checkIns={profile.checkIns}
         />
