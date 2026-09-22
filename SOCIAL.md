@@ -101,6 +101,38 @@ Two practical notes:
   separate address but it is the same account and the same inbox, so it gives none of
   the separation above, and some platforms reject the `+` outright.
 
+### "Can I just use my existing Instagram account?"
+
+Asked 2026-09-22. Two separate questions hide in this one.
+
+**Do the followers come with it? No.** Adding a second account in the app is only a
+login convenience — you tap your picture and switch. Publicly the two accounts are
+strangers. Sharing an email, or being on the same phone, changes nothing about who
+follows what. A new account starts at zero.
+
+**The only way to keep the followers is to rename the existing account** — change the
+handle and bio and the 151 followers stay. **Do not do this**, for a reason that is not
+obvious:
+
+> Instagram shows each new post to a slice of your **existing** followers first, and
+> how they react decides whether strangers ever see it. The current followers are Czech
+> friends who followed a person. They will scroll past an English admissions video, and
+> that low watch-through is the signal Instagram uses to stop showing the post.
+> **A mismatched audience is worse than no audience** — at zero followers Instagram has
+> to test the video on strangers immediately, which is exactly what is wanted here.
+
+So: a fresh account, whichever email it sits on.
+
+**Using the personal email is survivable.** Instagram allows a few accounts per address
+now (extra verification checks tend to appear after about 3–5, which is not in play
+here), and the email can be changed later in settings. The Outlook address is still the
+better answer for the ownership reasons above — but if the choice is between the
+personal email tonight and nothing for a week, use the personal email and swap it later.
+
+**One caution:** add the new account to the app for switching, but do not go out of the
+way to link them in **Accounts Centre**. Accounts linked there are associated, and if
+Instagram ever actions one, the other can be caught in it.
+
 ### If Gmail will not let you make another one
 
 Noted 2026-09-22 — the owner has hit the limit on both Gmail and Yahoo. That cap is
