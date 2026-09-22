@@ -18,15 +18,19 @@
   the gap to the boat just ahead is still worked out (racePieces.ts) but the
   owner had it taken off the board. A crew is drawn as its BOAT: the cox as
   the name (that is how the sheet calls a coxed four), then every rower in a
-  bordered chip, STACKED in a narrow column like the seats of the lineup
-  card, so no name is ever cut off and the row stays narrow. On Combined the
+  bordered chip, laid ACROSS the row and wrapping onto a second line when
+  they run out of width (owner, 2026-09-21: "you can write it horizontally…
+  it would be so much better because there is so much empty space. Maybe in
+  height there won't be enough space, so then two lines"). On Combined the
   margins are COLUMNS — Piece 1, Piece 2, Total — smallest total on top; a
   piece the crew did not race is a dash, and nothing is written about it.
-  ATHLETES reads the same day by person: crews are reshuffled between pieces,
-  so each rower (and cox) is listed with the margin their boat carried in
-  every piece, who they sat with, and the AVERAGE — the owner's pick for
-  "how each person finished". Nothing is excluded; this is the workout, not
-  selection. Seat racing proper is another screen.
+  ATHLETES reads the same day by person, and is SPLIT BY CLASS like the rest
+  — the fours' people, then the pairs' — because a gap in a four and a gap
+  in a pair are gaps to different winners. Crews are reshuffled between
+  pieces, so each rower (and cox) is listed with the margin their boat
+  carried in every piece, who they sat with, and the AVERAGE — the owner's
+  pick for "how each person finished". Nothing is excluded; this is the
+  workout, not selection. Seat racing proper is another screen.
 
   IN THE COACH CONSOLE the board is also where the sheet is typed: Enter
   times opens the piece's crews with a Start and a Finish field each (the
@@ -46,7 +50,7 @@ import Sheet from "@/components/varsity/Sheet";
 import { IconPencil, IconPlus, IconTrash, IconX } from "@/components/icons";
 import { COX_COLOR, COX_INK, COX_LABEL, type Boat } from "@/lib/varsity/coachLineup";
 import {
-  athleteBoard,
+  athleteBoards,
   classTitle,
   combinedBoards,
   crewFromBoat,
@@ -80,24 +84,23 @@ function Rank({ rank, faint = false }: { rank: number; faint?: boolean }) {
 }
 
 /*
-  THE CREW, DRAWN AS ITS BOAT. The names are STACKED, one on top of the
-  other in a narrow column, the way the lineup card seats a crew — not spread
-  across the row, which the owner found "super wide". A coxed boat is named
-  by its cox, the sheet's way, with the cox's yellow tag; under it every
-  rower in a bordered chip, stroke first, each on its own line so no name is
-  ever cut off ("Now I can't even see the whole names"). A pair has no cox
-  and no title: it IS its two chips. The note ("Bridge") is the last chip,
-  dashed, so a remark never looks like a rower.
+  THE CREW, DRAWN AS ITS BOAT. The names run ACROSS the row and wrap onto a
+  second line when they run out of width — the stacked column they used to
+  sit in left most of the row empty (owner, 2026-09-21). A coxed boat is
+  named by its cox, the sheet's way, with the cox's yellow tag; after it
+  every rower in a bordered chip, stroke first. A pair has no cox and no
+  title: it IS its two chips. The note ("Bridge") is the last chip, dashed,
+  so a remark never looks like a rower.
 */
 function CrewBoat({ crew, dim = false }: { crew: RaceCrew; dim?: boolean }) {
   const { cox, rowers } = crewMembers(crew);
-  const chip = `flex h-[22px] max-w-full items-center self-start rounded-[6px] border px-[7px] text-[12px] ${
+  const chip = `flex h-[22px] min-w-0 max-w-full items-center rounded-[6px] border px-[7px] text-[12px] ${
     dim ? "border-border text-muted" : "border-border bg-surface-2 font-medium text-text"
   }`;
   return (
-    <div className="flex min-w-0 flex-col gap-1">
+    <div className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1">
       {cox && (
-        <div className="flex items-center gap-1.5">
+        <span className="flex min-w-0 items-center gap-1.5">
           <span className={`truncate text-[13px] font-semibold ${dim ? "text-muted" : "text-text"}`}>{cox}</span>
           <span
             className="flex h-[16px] flex-shrink-0 items-center rounded-[4px] px-[5px] font-mono text-[9px] font-semibold tracking-[0.06em]"
@@ -105,7 +108,7 @@ function CrewBoat({ crew, dim = false }: { crew: RaceCrew; dim?: boolean }) {
           >
             {COX_LABEL}
           </span>
-        </div>
+        </span>
       )}
       {rowers.map((n, i) => (
         <span key={i} className={chip}>
@@ -113,7 +116,7 @@ function CrewBoat({ crew, dim = false }: { crew: RaceCrew; dim?: boolean }) {
         </span>
       ))}
       {crew.note && (
-        <span className="flex h-[22px] max-w-full items-center self-start rounded-[6px] border border-dashed border-border px-[7px] text-[11px] text-muted">
+        <span className="flex h-[22px] min-w-0 max-w-full items-center rounded-[6px] border border-dashed border-border px-[7px] text-[11px] text-muted">
           <span className="truncate">{crew.note}</span>
         </span>
       )}
@@ -173,17 +176,17 @@ export default function RaceBoard({
 
   const piece = day.pieces.find((p) => p.id === tab) ?? null;
   const combined = useMemo(() => combinedBoards(day.pieces), [day.pieces]);
-  const athletes = useMemo(() => athleteBoard(day.pieces), [day.pieces]);
+  const athletes = useMemo(() => athleteBoards(day.pieces), [day.pieces]);
 
   /*
-    Combined's columns: the crew (its names stacked), one column per piece,
-    and Total — one line per crew, as on a piece. With the names in a column
-    the crew needs little width; past two pieces the list scrolls sideways
-    under the thumb rather than squeezing the names to nothing.
+    Combined's columns: the crew, one column per piece, and Total — one line
+    per crew, as on a piece. The crew is given room for a couple of names
+    side by side before the list starts scrolling sideways under the thumb;
+    past that the names wrap, rather than being squeezed to nothing.
   */
   const n = day.pieces.length;
   const combinedCols = `1.25rem minmax(0,1fr) repeat(${n}, 3.6rem) 3.9rem`;
-  const combinedMin = `${1.25 + 5.5 + n * 3.6 + 3.9 + (n + 2) * 0.375 + 1.25}rem`;
+  const combinedMin = `${1.25 + 9 + n * 3.6 + 3.9 + (n + 2) * 0.375 + 1.25}rem`;
 
   return (
     <Sheet title="" onClose={onClose} full>
@@ -353,68 +356,79 @@ export default function RaceBoard({
         </div>
       )}
 
-      {/* ATHLETES: the same day read by person — the margin of the boat each
+      {/* ATHLETES: the same day read by person, a board per class — the
+          fours' people, then the pairs' — with the margin of the boat each
           one sat in, piece by piece, who they sat with, and the average. */}
       {tab === ATHLETES && day.pieces.length > 0 && (
-        <div className="mt-3 mb-4 overflow-x-auto overscroll-x-contain rounded-2xl border border-border bg-surface">
-          <div style={{ minWidth: combinedMin }}>
-            <div
-              className={`grid gap-1.5 border-b border-border px-2.5 py-2 ${TH}`}
-              style={{ gridTemplateColumns: combinedCols }}
-            >
-              <span />
-              <span>Athlete</span>
-              {day.pieces.map((p) => (
-                <span key={p.id} className="truncate text-right">
-                  {p.name}
-                </span>
-              ))}
-              <span className="text-right">Avg</span>
+        <div className="mt-3">
+          {athletes.length === 0 && (
+            <div className="rounded-2xl border border-dashed border-border bg-surface-2 px-4 py-8 text-center text-[12px] text-muted">
+              No times yet.
             </div>
-            {athletes.length === 0 && (
-              <div className="px-3 py-4 text-center text-[12px] text-muted">No times yet.</div>
-            )}
-            {athletes.map((a, i) => {
-              const whole = a.raced === day.pieces.length;
-              return (
-                <div
-                  key={a.name}
-                  className={`grid items-center gap-1.5 px-2.5 py-2.5 ${i > 0 ? "border-t border-border" : ""}`}
-                  style={{ gridTemplateColumns: combinedCols }}
-                >
-                  <Rank rank={a.rank} faint={!whole} />
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <span className="truncate text-[13px] font-semibold text-text">{a.name}</span>
-                      {a.cox && (
-                        <span
-                          className="flex h-[16px] flex-shrink-0 items-center rounded-[4px] px-[5px] font-mono text-[9px] font-semibold tracking-[0.06em]"
-                          style={{ background: COX_COLOR, color: COX_INK }}
-                        >
-                          {COX_LABEL}
-                        </span>
-                      )}
-                    </div>
-                    {/* Who they sat with, one name per piece, in the pieces'
-                        order — a coach reading down the pairs sees the swaps. */}
-                    <div className="mt-0.5 truncate text-[11px] text-muted">
-                      {a.with.map((w) => w ?? "—").join(" · ")}
-                    </div>
-                  </div>
-                  {a.perPiece.map((m, k) => (
-                    <span key={k} className="text-right text-[12px] tabular-nums text-muted">
-                      {m == null ? "—" : formatMargin(m)}
-                    </span>
-                  ))}
-                  <span
-                    className={`text-right text-[13px] font-semibold tabular-nums ${whole ? "text-text" : "text-muted"}`}
+          )}
+          {athletes.map((ab) => (
+            <div key={ab.badge} className="mb-4">
+              <div className="mb-1.5 px-0.5 font-mono text-[13px] font-semibold text-text">{ab.title}</div>
+              <div className="overflow-x-auto overscroll-x-contain rounded-2xl border border-border bg-surface">
+                <div style={{ minWidth: combinedMin }}>
+                  <div
+                    className={`grid gap-1.5 border-b border-border px-2.5 py-2 ${TH}`}
+                    style={{ gridTemplateColumns: combinedCols }}
                   >
-                    {a.raced ? formatMargin(a.average) : "—"}
-                  </span>
+                    <span />
+                    <span>Athlete</span>
+                    {day.pieces.map((p) => (
+                      <span key={p.id} className="truncate text-right">
+                        {p.name}
+                      </span>
+                    ))}
+                    <span className="text-right">Avg</span>
+                  </div>
+                  {ab.rows.map((a, i) => {
+                    const whole = a.raced === day.pieces.length;
+                    return (
+                      <div
+                        key={a.name}
+                        className={`grid items-center gap-1.5 px-2.5 py-2.5 ${i > 0 ? "border-t border-border" : ""}`}
+                        style={{ gridTemplateColumns: combinedCols }}
+                      >
+                        <Rank rank={a.rank} faint={!whole} />
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <span className="truncate text-[13px] font-semibold text-text">{a.name}</span>
+                            {a.cox && (
+                              <span
+                                className="flex h-[16px] flex-shrink-0 items-center rounded-[4px] px-[5px] font-mono text-[9px] font-semibold tracking-[0.06em]"
+                                style={{ background: COX_COLOR, color: COX_INK }}
+                              >
+                                {COX_LABEL}
+                              </span>
+                            )}
+                          </div>
+                          {/* Who they sat with, one name per piece, in the
+                              pieces' order — a coach reading down the pairs
+                              sees the swaps. */}
+                          <div className="mt-0.5 truncate text-[11px] text-muted">
+                            {a.with.map((w) => w ?? "—").join(" · ")}
+                          </div>
+                        </div>
+                        {a.perPiece.map((m, k) => (
+                          <span key={k} className="text-right text-[12px] tabular-nums text-muted">
+                            {m == null ? "—" : formatMargin(m)}
+                          </span>
+                        ))}
+                        <span
+                          className={`text-right text-[13px] font-semibold tabular-nums ${whole ? "text-text" : "text-muted"}`}
+                        >
+                          {a.raced ? formatMargin(a.average) : "—"}
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
-              );
-            })}
-          </div>
+              </div>
+            </div>
+          ))}
         </div>
       )}
 

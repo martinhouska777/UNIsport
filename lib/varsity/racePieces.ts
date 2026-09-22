@@ -342,22 +342,32 @@ export type AthleteRow = {
 };
 
 /*
-  THE SAME DAY, READ BY PERSON. Crews are reshuffled between pieces — the
-  pairs on the sheet most of all — so a crew's board cannot say how a ROWER
-  did. This one can: for every person who sat in any boat, the margin their
-  boat carried to its class winner in each piece, who they sat with, and the
-  AVERAGE of those margins (owner's choice, 2026-09-21: "how each person
-  finished"). Smallest average on top; a person who missed a piece is listed
-  after those who rowed them all, with what they have. Nothing is excluded
-  and nothing is judged — a "Bridge" still counts; the coach knows what it
-  means. Selection proper (seat racing) is a different screen.
+  THE SAME DAY, READ BY PERSON — and, like every other board here, SPLIT BY
+  CLASS (owner, 2026-09-21: "you want to sort them out, which athletes were
+  in a pair and which athletes were in a four"). Crews are reshuffled between
+  pieces — the pairs on the sheet most of all — so a crew's board cannot say
+  how a ROWER did. This one can: for every person who sat in a boat of a
+  class, the margin that boat carried to its class winner in each piece, who
+  they sat with, and the AVERAGE of those margins (owner's choice,
+  2026-09-21: "how each person finished"). A margin in a pair and a margin in
+  a four are gaps to different winners, so they are never averaged together:
+  someone who rowed both appears on BOTH boards, with a dash on the pieces
+  they spent in the other boat. Smallest average on top; a person who missed
+  a piece of their class is listed after those who rowed them all, with what
+  they have. Nothing is excluded and nothing is judged — a "Bridge" still
+  counts; the coach knows what it means. Selection proper (seat racing) is a
+  different screen.
   People are matched by the surname the sheet wrote; two rowers who share
   one would merge here.
 */
-export function athleteBoard(pieces: RacePiece[]): AthleteRow[] {
+export type AthleteBoard = { badge: string; title: string; rows: AthleteRow[] };
+
+export function athleteBoards(pieces: RacePiece[]): AthleteBoard[] {
   const boards = pieces.map(pieceBoards);
-  const people = new Map<string, AthleteRow>();
-  const rowFor = (name: string, cox: boolean) => {
+  const classes = new Map<string, Map<string, AthleteRow>>();
+  const rowFor = (badge: string, name: string, cox: boolean) => {
+    if (!classes.has(badge)) classes.set(badge, new Map());
+    const people = classes.get(badge)!;
     let r = people.get(name);
     if (!r) {
       r = { name, cox, perPiece: Array(pieces.length).fill(null), with: Array(pieces.length).fill(null), average: 0, raced: 0, rank: 0 };
@@ -371,12 +381,12 @@ export function athleteBoard(pieces: RacePiece[]): AthleteRow[] {
       for (const { crew, toWinner } of cb.rows) {
         const { cox, rowers } = crewMembers(crew);
         for (const n of rowers) {
-          const r = rowFor(n, false);
+          const r = rowFor(cb.badge, n, false);
           r.perPiece[pi] = toWinner;
           r.with[pi] = cox ?? rowers.filter((x) => x !== n).join("/") ?? null;
         }
         if (cox) {
-          const r = rowFor(cox, true);
+          const r = rowFor(cb.badge, cox, true);
           r.perPiece[pi] = toWinner;
           r.with[pi] = rowers[0] ?? null;
         }
@@ -384,13 +394,17 @@ export function athleteBoard(pieces: RacePiece[]): AthleteRow[] {
     }
   });
 
-  const list = [...people.values()];
-  for (const r of list) {
-    const have = r.perPiece.filter((m): m is number => m != null);
-    r.raced = have.length;
-    r.average = have.length ? Math.round((have.reduce((a, b) => a + b, 0) / have.length) * 100) / 100 : 0;
-  }
-  list.sort((a, b) => b.raced - a.raced || a.average - b.average || a.name.localeCompare(b.name));
-  list.forEach((r, i) => (r.rank = i + 1));
-  return list;
+  return [...classes.entries()]
+    .sort(([a], [b]) => classOrder(a) - classOrder(b))
+    .map(([badge, people]) => {
+      const list = [...people.values()];
+      for (const r of list) {
+        const have = r.perPiece.filter((m): m is number => m != null);
+        r.raced = have.length;
+        r.average = have.length ? Math.round((have.reduce((a, b) => a + b, 0) / have.length) * 100) / 100 : 0;
+      }
+      list.sort((a, b) => b.raced - a.raced || a.average - b.average || a.name.localeCompare(b.name));
+      list.forEach((r, i) => (r.rank = i + 1));
+      return { badge, title: classTitle(badge), rows: list };
+    });
 }
