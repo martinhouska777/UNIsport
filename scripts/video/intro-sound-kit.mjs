@@ -168,17 +168,23 @@ function build(version) {
   /* the slow fill, then they meet */
   /* Owner: a push again as they come closer together, but a different one from
      the slide. This swells across the whole join and peaks as they meet. */
-  if (version === "layered") peakAt(pick("push-join", "riser"), T.met - 0.12, 0.40 * G * WH);
+  if (version === "layered") {
+    const close = T.met - T.join, nm = pick("push-join", "riser");
+    at(nm, T.join, 0.40 * G * WH, (SFX[nm].length / SR) / close);
+  }
   /* This is a bass rumble, and left alone its 2.2 s tail drones underneath the
      UNIsport letters — that is the sound the owner heard interfering. Fade it out
      from 0.5 s in so it is gone before the letters land. */
   at("note-warm", T.met, (version === "quiet" ? 0.60 : 0.70) * G, 1,
      version === "layered" ? 0.5 : null);
-  /* Owner: this one was late. It was peaking 0.1 s AFTER the two halves touch;
-     it now peaks just before, which is what reads as "on time" — a sound landing
-     fractionally early is heard as simultaneous, a sound landing late is heard
-     as late. Net shift: 160 ms earlier. */
-  if (version !== "quiet") peakAt("whoosh-low", T.met - 0.06, 0.18 * G * WH, 1.8);
+  /* Owner: "start the sound when it starts combining". Not anchored on the
+     connect at all any more — it BEGINS the moment the two halves start closing
+     (T.join) and is stretched so it runs out exactly as they touch (T.met). It
+     scores the whole movement instead of punctuating its end. */
+  if (version !== "quiet") {
+    const close = T.met - T.join;
+    at("whoosh-low", T.join, 0.20 * G * WH, (SFX["whoosh-low"].length / SR) / close);
+  }
 
   peakAt("whoosh-air", T.matchOut, 0.22 * G * WH);
 
