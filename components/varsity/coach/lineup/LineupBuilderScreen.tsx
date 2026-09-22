@@ -31,10 +31,10 @@
   bow up to 8 at the stroke, and the COX SEATED INSIDE at the stern below the
   stroke divider. The cox used to be stranded under the hull entirely.
 
-  A SEAT IS A NUMBER: seat, name, and the SIDE THAT PERSON rows. Under the hull,
-  three lines — boat, oars, crew note — which is the column order of the squad's
-  own lineup sheet, so a crew can be copied across without reading it backwards.
-  (The note used to sit above the crew; it moved down with the redesign.)
+  A SEAT IS A NUMBER: seat, name, and the SIDE THAT PERSON rows. Which SHELL
+  and which OARS sit ABOVE the hull — the coach writes those before anybody is
+  seated (owner, 2026-09-21) — and the crew NOTE stays under it, because it is
+  the last thing written before the boat goes out.
 
   Seats carry no side and no colour of their own, and nothing is ever flagged
   "off side" — how the boat is rigged is the coach's business, not the app's.
@@ -1916,14 +1916,36 @@ function Builder({
                     {!isShut && (
                       <>
                       {/*
-                        THE CREW, IN THE ORDER THE COACH ALREADY WRITES IT: bow at
-                        the top, down through the stroke, cox last — then the boat,
-                        then the oars. That is the column order of the squad's own
-                        lineup sheet, and a coach copying a crew across from it
-                        should never have to read one list bottom-up against the
-                        other.
+                        WHICH SHELL AND WHICH OARS COME FIRST, above the hull —
+                        they are what a coach writes before anybody is seated
+                        (owner, 2026-09-21: "boat and then oars on top, because
+                        I'll write that first anyway"). They used to sit under
+                        the crew with the note.
                       */}
-                      <div className="px-3 py-4">
+                      <div className="flex flex-col gap-[7px] px-3 pt-3">
+                        <InfoField
+                          label="BOAT"
+                          value={boat.name}
+                          placeholder="Which shell…"
+                          strong
+                          onChange={(v) => setName(boat.id, v)}
+                        />
+                        <InfoField
+                          label="OARS"
+                          value={boat.oars ?? ""}
+                          placeholder="Which set to take…"
+                          onChange={(v) => setOars(boat.id, v)}
+                        />
+                      </div>
+
+                      {/*
+                        THE CREW, IN THE ORDER THE COACH ALREADY WRITES IT: bow at
+                        the top, down through the stroke, cox last. That is the
+                        column order of the squad's own lineup sheet, and a coach
+                        copying a crew across from it should never have to read
+                        one list bottom-up against the other.
+                      */}
+                      <div className="px-3 pb-4 pt-3">
                         <div className="rounded-[44px] border-2 border-primary-line bg-surface-2 px-4 pb-3 pt-2.5">
                           <HullCap arrow="▲" word="BOW" />
                           {/* The number comes from the seat's POSITION, not from
@@ -1955,36 +1977,17 @@ function Builder({
                       </div>
 
                       {/*
-                        THE THREE LINES UNDER THE HULL, in the new design's order:
-                        which shell, which oars, and anything else the crew needs.
-                        One label column so the three answers line up, and each on
-                        its own card rather than as full-width rules — the boat
-                        above them is now a shape, and a stack of edge-to-edge
-                        rules under it read as the hull leaking into the page.
-
-                        The NOTE used to sit ABOVE the crew. It moved down here
-                        with the design: the coach is filling seats first, and the
-                        note is the last thing written before the boat goes out.
+                        THE NOTE IS THE LAST LINE, under the hull. It is the last
+                        thing written before the boat goes out — the shell and
+                        the oars are settled above, the crew is seated, and this
+                        is what the coach wants said about this one outing.
 
                         OARS is free text for now — the sets are named on the
                         boathouse rack and the owner is fetching those names. When
-                        they land they become a data list and this becomes a
+                        they land they become a data list and that becomes a
                         picker: no new component, the same field.
                       */}
                       <div className="flex flex-col gap-[7px] px-3 pb-3">
-                        <InfoField
-                          label="BOAT"
-                          value={boat.name}
-                          placeholder="Which shell…"
-                          strong
-                          onChange={(v) => setName(boat.id, v)}
-                        />
-                        <InfoField
-                          label="OARS"
-                          value={boat.oars ?? ""}
-                          placeholder="Which set to take…"
-                          onChange={(v) => setOars(boat.id, v)}
-                        />
                         <InfoField
                           label="NOTE"
                           value={boat.note}
