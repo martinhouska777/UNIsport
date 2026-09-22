@@ -108,7 +108,7 @@ export default function PersonalRecords({
                 value={pr.value}
                 onChange={(e) => setRecord(i, { value: e.target.value })}
                 aria-label={`Record ${i + 1} value`}
-                placeholder="e.g. 100 kg × 1"
+                placeholder="Weight × reps"
                 maxLength={28}
                 className="min-w-0 flex-1 rounded-lg border border-border bg-surface-2 px-2.5 py-2 text-base text-text focus:border-primary focus:outline-none"
               />

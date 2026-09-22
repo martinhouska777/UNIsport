@@ -116,7 +116,6 @@ export default function NoteEditor({
             value={text}
             onChange={(e) => setText(e.target.value)}
             rows={5}
-            placeholder="e.g. Finish the stroke — you're rushing the catch. Drive through to the hips before extracting."
             className="mt-3 w-full resize-none rounded-2xl border border-border bg-surface px-3.5 py-3 text-base leading-relaxed text-text outline-none placeholder:text-text-3 focus:border-primary"
           />
         </div>

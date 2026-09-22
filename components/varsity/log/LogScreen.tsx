@@ -508,7 +508,6 @@ function LogEditor({
               <input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g. Easy shakeout run"
                 className={inputCls}
               />
               <div className={labelCls}>Type</div>
@@ -577,7 +576,6 @@ function LogEditor({
             <input
               value={split}
               onChange={(e) => setSplit(e.target.value)}
-              placeholder="e.g. 1:52"
               className={inputCls}
             />
           </div>
@@ -618,7 +616,6 @@ function LogEditor({
           <input
             value={note}
             onChange={(e) => setNote(e.target.value)}
-            placeholder="Anything to remember…"
             className={inputCls}
           />
         </div>

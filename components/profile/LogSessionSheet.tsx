@@ -274,7 +274,6 @@ export default function LogSessionSheet({
             list="gym-options"
             value={gym}
             onChange={(e) => setGym(e.target.value)}
-            placeholder={isRunning ? "Route or area" : "Where did you train?"}
             className={inputCls}
           />
           <datalist id="gym-options">
@@ -518,7 +517,6 @@ export default function LogSessionSheet({
                   value={distance}
                   onChange={(e) => setDistance(e.target.value.replace(/[^\d.]/g, ""))}
                   inputMode="decimal"
-                  placeholder="e.g. 5.2"
                   className={`${inputCls} flex-1`}
                 />
                 <div className="flex overflow-hidden rounded-xl border border-border">
@@ -541,7 +539,6 @@ export default function LogSessionSheet({
               <input
                 value={duration}
                 onChange={(e) => setDuration(e.target.value)}
-                placeholder="e.g. 45 min or 1:05:00"
                 className={inputCls}
               />
             </>
@@ -597,7 +594,6 @@ export default function LogSessionSheet({
           <input
             value={note}
             onChange={(e) => setNote(e.target.value)}
-            placeholder="How did it go?"
             className={inputCls}
           />
 

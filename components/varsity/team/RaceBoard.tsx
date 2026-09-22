@@ -643,7 +643,7 @@ function PieceEditor({
                 </label>
               </div>
               <input
-                placeholder="Note — Bridge, crab…"
+                placeholder="Note"
                 value={c.note}
                 onChange={(e) => update(i, { note: e.target.value })}
                 className={`${field} mt-2`}

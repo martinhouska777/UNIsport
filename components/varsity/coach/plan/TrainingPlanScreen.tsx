@@ -755,7 +755,6 @@ export default function TrainingPlanScreen({
             <label className={labelCls}>Block name</label>
             <input
               className={inputCls}
-              placeholder="e.g. Spring 2026 — to Sprints"
               value={draft.name}
               onChange={(e) => setDraft({ ...draft, name: e.target.value })}
             />
@@ -778,7 +777,7 @@ export default function TrainingPlanScreen({
             <div className="flex flex-col gap-3">
               <input
                 className={inputCls}
-                placeholder="Race name — e.g. Eastern Sprints"
+                placeholder="Race name"
                 value={draft.raceName}
                 onChange={(e) => setDraft({ ...draft, raceName: e.target.value })}
               />
@@ -1230,7 +1229,6 @@ export default function TrainingPlanScreen({
                 value={form.description}
                 onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
                 rows={2}
-                placeholder="Type the workout…"
                 className={`${inputCls} resize-none`}
               />
             </>
@@ -1247,7 +1245,6 @@ export default function TrainingPlanScreen({
               <input
                 value={form.location}
                 onChange={(e) => setForm((f) => ({ ...f, location: e.target.value }))}
-                placeholder="Only if it's not the usual place"
                 className={inputCls}
               />
             </>
@@ -1258,7 +1255,6 @@ export default function TrainingPlanScreen({
           <input
             value={form.note}
             onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))}
-            placeholder="A note for the athletes…"
             className={inputCls}
           />
 

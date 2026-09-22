@@ -34,7 +34,6 @@ import {
   otherActivityLabels,
   type OtherActivity,
   runningUnits,
-  runningHints,
   runningExperiences,
   verifiedGyms,
   MAX_TOP_GYMS,
@@ -320,7 +319,6 @@ export default function OnboardingFlow() {
               <TextField
                 value={profile.name}
                 onChange={(v) => set("name", v)}
-                placeholder="e.g. Martin Novák"
                 ariaLabel="Your name"
               />
               {/* Only complains once something has been typed — an empty field
@@ -465,7 +463,6 @@ export default function OnboardingFlow() {
                     <TextField
                       value={profile.runningDistance}
                       onChange={(v) => set("runningDistance", v)}
-                      placeholder={runningHints[profile.runningUnit].distance}
                       ariaLabel="Usual distance"
                     />
                   </div>
@@ -474,7 +471,6 @@ export default function OnboardingFlow() {
                     <TextField
                       value={profile.runningPace}
                       onChange={(v) => set("runningPace", v)}
-                      placeholder={runningHints[profile.runningUnit].pace}
                       ariaLabel="Usual pace"
                     />
                   </div>
@@ -515,7 +511,6 @@ export default function OnboardingFlow() {
                 <TextField
                   value={profile.activityOther}
                   onChange={(v) => set("activityOther", v)}
-                  placeholder="e.g. Climbing, martial arts…"
                   ariaLabel="Your activity"
                 />
               </>
@@ -595,7 +590,6 @@ export default function OnboardingFlow() {
                           <TextField
                             value={chosen.note}
                             onChange={(v) => patch(a.key, { note: v })}
-                            placeholder="e.g. Climbing, martial arts…"
                             ariaLabel="What the activity is"
                           />
                         </div>
@@ -993,7 +987,6 @@ export default function OnboardingFlow() {
                 value={profile.bio}
                 maxLength={160}
                 onChange={(e) => set("bio", e.target.value)}
-                placeholder="A line about you — your sport, goals, what you're training for."
                 aria-label="Bio"
                 className="min-h-[90px] w-full resize-none rounded-[10px] border border-border bg-surface px-3.5 py-3 text-base text-text placeholder:text-muted focus:border-primary focus:outline-none"
               />

@@ -347,7 +347,7 @@ function SeatRaceEditor({
         <input
           value={r.piece}
           onChange={(e) => setR({ ...r, piece: e.target.value })}
-          placeholder="1500 m"
+          placeholder="Piece"
           aria-label="Piece"
           className="min-w-0 rounded-xl border border-border bg-surface px-3 py-2 text-base text-text placeholder:text-muted"
         />

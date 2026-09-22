@@ -192,7 +192,6 @@ export default function GymReviews({
             value={comment}
             maxLength={600}
             onChange={(e) => setComment(e.target.value)}
-            placeholder="Anything worth knowing before someone walks over?"
             aria-label="Your comment"
             className="min-h-[76px] w-full resize-none rounded-xl border border-border bg-surface-2 px-3 py-2 text-base text-text placeholder:text-text-3 focus:border-primary focus:outline-none"
           />

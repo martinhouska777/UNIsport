@@ -521,7 +521,6 @@ function PrSheet({
             save();
           }
         }}
-        placeholder={piece === "30′ r20" ? "e.g. 8,420 m" : "e.g. 6:08.4"}
         className={inputCls}
       />
       <Button size="lg" full onClick={save} className="mt-5">

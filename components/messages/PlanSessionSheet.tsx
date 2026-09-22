@@ -156,7 +156,6 @@ export default function PlanSessionSheet({
             list="plan-gym-options"
             value={place}
             onChange={(e) => setPlace(e.target.value)}
-            placeholder="Gym, route or area"
             className={inputCls}
           />
           <datalist id="plan-gym-options">

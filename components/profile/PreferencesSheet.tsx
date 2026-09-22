@@ -211,13 +211,13 @@ export default function PreferencesSheet({
               <TextField
                 value={draft.runningDistance}
                 onChange={(v) => set("runningDistance", v)}
-                placeholder="Typical distance (e.g. 5–10 km)"
+                placeholder="Typical distance"
                 ariaLabel="Running distance"
               />
               <TextField
                 value={draft.runningPace}
                 onChange={(v) => set("runningPace", v)}
-                placeholder="Typical pace (e.g. 5:00 / km)"
+                placeholder="Typical pace"
                 ariaLabel="Running pace"
               />
             </div>

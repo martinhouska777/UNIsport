@@ -209,14 +209,12 @@ function SideTag({ side }: { side: Side }) {
 function InfoField({
   label,
   value,
-  placeholder,
   strong,
   dashedWhenEmpty,
   onChange,
 }: {
   label: string;
   value: string;
-  placeholder: string;
   /** The boat's name is the card's identity, so it is written heavier. */
   strong?: boolean;
   dashedWhenEmpty?: boolean;
@@ -236,9 +234,8 @@ function InfoField({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         aria-label={label}
-        placeholder={placeholder}
         className={`min-w-0 flex-1 bg-transparent text-[16px] text-text outline-none placeholder:text-muted ${
-          strong ? "font-semibold placeholder:font-normal" : "font-medium"
+          strong ? "font-semibold" : "font-medium"
         }`}
       />
     </div>
@@ -602,7 +599,7 @@ function Seat({
             }}
             /* A filled seat says what a tap elsewhere will do; an empty one
                just asks for a name. */
-            placeholder={athlete ? "Swap in a name, or tap another seat" : "Type a name…"}
+            placeholder="Type a name…"
             /* 16px, so a phone does not zoom the whole boat when it focuses. */
             className="w-full min-w-0 flex-1 bg-transparent text-[16px] font-medium text-text outline-none placeholder:text-text-3"
           />
@@ -1925,14 +1922,12 @@ function Builder({
                         <InfoField
                           label="BOAT"
                           value={boat.name}
-                          placeholder="Which shell…"
                           strong
                           onChange={(v) => setName(boat.id, v)}
                         />
                         <InfoField
                           label="OARS"
                           value={boat.oars ?? ""}
-                          placeholder="Which set to take…"
                           onChange={(v) => setOars(boat.id, v)}
                         />
                       </div>
@@ -1990,7 +1985,6 @@ function Builder({
                         <InfoField
                           label="NOTE"
                           value={boat.note}
-                          placeholder="Add a crew note…"
                           dashedWhenEmpty
                           onChange={(v) => setNote(boat.id, v)}
                         />

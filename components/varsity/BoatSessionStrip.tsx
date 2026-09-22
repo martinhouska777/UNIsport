@@ -53,13 +53,11 @@ export type BoatWork = { metres: number | null; minutes: number | null };
    not zoom the page in when it takes focus (rule 7). */
 function WorkField({
   label,
-  hint,
   value,
   disabled,
   onChange,
 }: {
   label: string;
-  hint: string;
   value: string;
   disabled?: boolean;
   onChange: (v: string) => void;
@@ -74,7 +72,6 @@ function WorkField({
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
         inputMode="decimal"
-        placeholder={hint}
         className="w-full rounded-lg border border-border bg-surface-2 px-2.5 py-2 text-base font-medium text-text outline-none placeholder:font-normal placeholder:italic placeholder:text-text-3 focus:border-primary-line disabled:opacity-60"
       />
     </label>
@@ -213,14 +210,12 @@ export default function BoatSessionStrip({
               <div className="flex items-end gap-2">
                 <WorkField
                   label={unitLabel.toUpperCase()}
-                  hint="16"
                   value={dist}
                   disabled={saving}
                   onChange={(v) => edit({ dist: v })}
                 />
                 <WorkField
                   label="TIME"
-                  hint="1:30"
                   value={time}
                   disabled={saving}
                   onChange={(v) => edit({ time: v })}

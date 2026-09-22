@@ -367,7 +367,6 @@ export default function TrainingSettingsScreen({ membership }: { membership: Mem
                 onChange={(e) =>
                   update((c) => ({ ...c, times: { ...c.times, [p]: e.target.value } }))
                 }
-                placeholder="7:00 AM"
                 className={inputCls}
               />
             </label>
@@ -564,7 +563,6 @@ function TypeSheet({
           <input
             value={label}
             onChange={(e) => setLabel(e.target.value)}
-            placeholder="Bike, Triathlon…"
             className={inputCls}
           />
 
@@ -626,7 +624,6 @@ function ZoneSheet({
       <input
         value={label}
         onChange={(e) => setLabel(e.target.value)}
-        placeholder="UT2, Easy, Race…"
         className={inputCls}
       />
 
@@ -695,7 +692,6 @@ function BoatSheet({
       <input
         value={symbol}
         onChange={(e) => setSymbol(e.target.value)}
-        placeholder="8+, 4−, 2x, 1x…"
         className={inputCls}
       />
 
@@ -703,7 +699,6 @@ function BoatSheet({
       <input
         value={name}
         onChange={(e) => setName(e.target.value)}
-        placeholder="Eight, Quad, Single…"
         className={inputCls}
       />
 
