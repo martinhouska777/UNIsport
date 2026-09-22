@@ -47,8 +47,9 @@ const KIT = {
   /* Two genuinely different mouse buttons rather than one sample pitched twice —
      the owner heard the repeat. Each keeps its press and its release ~125 ms
      apart, and each is anchored on its press. */
-  "tap-1":      ["click__mouse-hard-clicking__1111", 0.00, 0.26, 1.0, 1.00, null, 0.025],
-  "tap-2":      ["click__mouse-click-close__1113", 0.00, 0.24, 0.94, 1.00, null, 0.011],
+  /* Owner picked the first of the two buttons and asked for it on both presses. */
+  "tap-1":      ["click__mouse-hard-clicking__1111", 0.00, 0.26, 1.00, 1.00, null, 0.025],
+  "tap-2":      ["click__mouse-hard-clicking__1111", 0.00, 0.26, 0.94, 1.00, null, 0.025],
   /* the text turning into "Choose your activity" */
   "whoosh-text":["swoosh__short-wind-swoosh__1461", 0.00, 0.50, 1.0, 1.00],
   /* the three activity tiles arriving (audition A) */

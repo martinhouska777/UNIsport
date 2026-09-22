@@ -127,8 +127,9 @@ write("tap-2.wav", tap(2350, 88, 0.026), 0.8);
 {
   const LIB = process.env.SFX_LIBRARY || "C:/VideoEditing/kits/mixkit-cc";
   /* two different buttons, not one sample used twice */
+  /* the owner picked the first button and asked for it on both presses */
   const PAIR = [["tap-1", "click__mouse-hard-clicking__1111", 0.26, 1.0],
-                ["tap-2", "click__mouse-click-close__1113", 0.24, 0.94]];
+                ["tap-2", "click__mouse-hard-clicking__1111", 0.26, 0.94]];
   if (existsSync(path.join(LIB, PAIR[0][1] + ".wav"))) {
     for (const [name, file, dur, gain] of PAIR) {
       const af = [`atrim=0:${dur}`, "asetpts=PTS-STARTPTS",
@@ -219,7 +220,7 @@ console.log("riser, note, bed");
     anchors[f.slice(0, -4)] = +(pi / SR).toFixed(4);
   }
   /* the imported mouse click: anchor on the press, which its release can out-peak */
-  if (anchors["tap-1"] !== undefined) { anchors["tap-1"] = 0.025; anchors["tap-2"] = 0.011; }
+  if (anchors["tap-1"] !== undefined) { anchors["tap-1"] = 0.025; anchors["tap-2"] = 0.025; }
   writeFileSync(path.join(OUT, "anchors.json"), JSON.stringify(anchors, null, 1));
   console.log("  anchors.json      " + Object.keys(anchors).length + " sounds");
 }

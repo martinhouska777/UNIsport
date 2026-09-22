@@ -130,8 +130,7 @@ function build(version) {
      the letters, and every level pulled back. */
   const G = version === "layered" ? 0.72 : 1;
 
-  /* Owner: cut the first sound. The film now opens on the typing. */
-  if (version !== "layered") at("click-ui", T.cursor, 0.45 * G);
+  /* Owner: cut the first sound — every version now opens on the typing. */
   typeRun(TIMES.prefix, 0.55 * (version === "layered" ? 0.95 : 1), false);
   typeRun(TIMES.sufA, 0.55 * (version === "layered" ? 0.95 : 1), true);
 

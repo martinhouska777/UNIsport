@@ -74,11 +74,15 @@ const T = {
   typeA: 0.35, ms: 0.038,
   lift: 2.00,                                   // and the lift itself is quick now (0.3 s)
   act: 2.30, tiles: 2.55, hand: 2.85, tap1: 3.45, tap2: 4.15, actOut: 4.65,
-  find: 4.90, slide: 5.00, apart: 6.05,
-  matchType: 6.75, join: 7.05, met: 8.45,
-  matchOut: 8.95, word: 9.25, msWord: 0.07,     // msWord = the stagger between falling letters
-  live: 10.05,
-  out: 11.20, end: 11.70,
+  /* 2026-09-22, owner's last pass: cut the dead air in the second half.
+     The slide apart is quicker, "Match." types sooner, the closing animation
+     starts as soon as the word is finished, and UNIsport arrives right after
+     the two halves connect instead of waiting half a second. ~1.05 s shorter. */
+  find: 4.90, slide: 5.00, apart: 5.75,
+  matchType: 6.25, join: 6.45, met: 7.75,
+  matchOut: 7.90, word: 8.20, msWord: 0.07,     // msWord = the stagger between falling letters
+  live: 9.00,
+  out: 10.15, end: 10.65,
 };
 
 const seq = (n, start, step) => Array.from({ length: n }, (_, i) => +(start + i * step).toFixed(4));
