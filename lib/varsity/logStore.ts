@@ -194,6 +194,46 @@ export async function fetchLogsInRange(
   return (data as Row[]).map(rowToEntry);
 }
 
+/**
+ * EVERY SQUAD MEMBER'S LOGS OVER A WINDOW, in ONE read — what the coach's team
+ * statistics are made of. Keyed by athlete id, and an athlete who logged
+ * nothing simply has no key, which is exactly what the averages need: somebody
+ * with no training in the window is an unknown, not a zero.
+ *
+ * Coaches are allowed this by "Squad logs readable by their coach"
+ * (db/varsity_coach_reads.sql) — a rower asking for it gets their own logs
+ * back and nothing else, which is why the squad statistics are console-only.
+ */
+export async function fetchSquadLogsInRange(
+  athleteIds: string[],
+  fromIso: string,
+  toIso: string,
+): Promise<Record<string, LogEntry[]>> {
+  const out: Record<string, LogEntry[]> = {};
+  const ids = athleteIds.filter(Boolean);
+  if (ids.length === 0) return out;
+  if (!hasSupabaseEnv()) {
+    for (const id of ids) {
+      const mine = loadLocal(id).filter((l) => l.logDate >= fromIso && l.logDate <= toIso);
+      if (mine.length) out[id] = mine;
+    }
+    return out;
+  }
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("varsity_logs")
+    .select("*")
+    .in("athlete_id", ids)
+    .gte("log_date", fromIso)
+    .lte("log_date", toIso)
+    .order("created_at", { ascending: true });
+  if (error || !data) return out;
+  for (const r of data as (Row & { athlete_id: string })[]) {
+    (out[r.athlete_id] ??= []).push(rowToEntry(r));
+  }
+  return out;
+}
+
 /* ── Read all logs of one category, newest first (powers "Compare") ── */
 export async function fetchLogsByCategory(
   athleteId: string,

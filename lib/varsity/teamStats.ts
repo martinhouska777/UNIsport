@@ -3,35 +3,43 @@
   statistics (lib/varsity/athleteStats.ts), for the coach.
   ---------------------------------------------------------------------------
   An athlete's statistics are their own logs added up over a window, read day
-  by day for a short window and week by week for a long one, with a column
-  you can tap to have that day read out. A squad's are the BOATS added up
-  (lib/varsity/boatMileage.ts) the same way, and then read PER PERSON: the
-  coach's question is not "how far did fifty people row" but "what did one
-  rower's week look like, and how does it compare with the weeks before"
-  (owner, 2026-09-21: "just copy what we have in the statistics for the
-  person… but customize it for the team statistics, the average").
+  by day for a short window and week by week for a long one, with a column you
+  can tap to have that day read out. A squad's are THE SAME LOGS, everybody's
+  together, and then read PER PERSON: the coach's question is not "how far did
+  fifty people row" but "what did one rower's week look like, and how does it
+  compare with the weeks before".
 
-  So every measure here is an average over the people who were in a boat in
-  that bucket — the same arithmetic the card on top of the Team tab uses for
-  this week (averageMetres / averageMinutes), so the card and the full screen
-  can never disagree about a week.
+  IT USED TO BE THE BOATS (owner, 2026-09-22). Every figure came out of the
+  lineups the coach drew and the kilometres a crew wrote on them, which is why
+  the screen could only ever say four things and all four said "outing" —
+  boats know nothing about the erg, the weights, or whether anybody actually
+  did what was prescribed. Now it is the athletes' own logs, so the squad's
+  statistics are made of exactly what each rower sees about themselves
+  (lib/varsity/squadStats.ts).
+
+  Every measure is an average over THE PEOPLE WHO TRAINED in that bucket —
+  never over the roster. Somebody who logged nothing is an unknown, not a zero.
+
+  The BOATS are still read, and still what a tapped day lists: the crews that
+  went out are a fact about the day, and no average replaces them.
 
   THE WINDOWS are the owner's three: a week (day by day), a month (week by
   week) and the semester — three months (week by week). Both lists below are
   DATA (rule 7): a new measure or a new window is a new entry, not new code.
 */
 import {
-  averageMetres,
-  averageMinutes,
   mileageFrom,
   weekRangeLabel,
   weekStart,
   type Mileage,
 } from "./boatMileage";
 import type { Boat } from "./coachLineup";
-import { sessionKey, type Period } from "./coachPlan";
+import { sessionKey, type SessionMap, type Period } from "./coachPlan";
 import { fetchLineupsFor } from "./lineupStore";
+import type { LogEntry } from "./logStore";
+import { squadPeople, squadReport, type SquadPerson } from "./squadStats";
 import { formatDistance, formatDuration, type Units } from "./units";
+import type { StatGroup } from "./rowingStats";
 
 const MO = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const DOW = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -113,6 +121,10 @@ export type TeamBucket = {
   latest: boolean;
   /** The boats themselves, so a tapped day can list its crews. */
   boats: Boat[];
+  /** Everything anybody LOGGED inside it — what every figure is made of. */
+  logs: LogEntry[];
+  /** Who trained in it: the ids the averages are divided by. */
+  trained: string[];
 };
 
 const day0 = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
@@ -126,7 +138,7 @@ function keysBetween(start: Date, end: Date): string[] {
   return out;
 }
 
-type BareBucket = Omit<TeamBucket, "mileage" | "boats">;
+type BareBucket = Omit<TeamBucket, "mileage" | "boats" | "logs" | "trained">;
 
 /*
   The empty buckets of a window, oldest first. A built-in window ends with
@@ -187,11 +199,16 @@ export async function fetchTeamLineups(now: Date): Promise<Record<string, Boat[]
   return fetchLineupsFor(allKeys(now));
 }
 
-/** The window's buckets filled from the boats already read. */
+/**
+ * The window's buckets filled from what has already been read: the boats for
+ * the crews a tapped day lists, and the squad's logs for every figure on the
+ * screen.
+ */
 export function fillBuckets(
   range: TeamRange,
   now: Date,
   lineups: Record<string, Boat[]>,
+  logsByAthlete: Record<string, LogEntry[]> = {},
 ): TeamBucket[] {
   return teamBuckets(range, now).map((b) => {
     const mine: Record<string, Boat[]> = {};
@@ -202,9 +219,36 @@ export function fillBuckets(
         boats.push(...lineups[k]);
       }
     }
-    return { ...b, mileage: mileageFrom(mine), boats };
+    const from = toIso(b.start);
+    const to = toIso(b.end);
+    const logs: LogEntry[] = [];
+    const who = new Set<string>();
+    for (const [id, all] of Object.entries(logsByAthlete)) {
+      for (const l of all) {
+        if (l.logDate < from || l.logDate > to) continue;
+        logs.push(l);
+        // A rest day is a note that nothing happened, so it never counts
+        // somebody as having trained.
+        if (l.category !== "off") who.add(id);
+      }
+    }
+    return { ...b, mileage: mileageFrom(mine), boats, logs, trained: [...who] };
   });
 }
+
+/* ── One bucket, in numbers ──────────────────────────────────── */
+
+const trainingIn = (b: TeamBucket) => b.logs.filter((l) => l.category !== "off");
+const sumOf = (b: TeamBucket, of: (l: LogEntry) => number) =>
+  trainingIn(b).reduce((a, l) => a + of(l), 0);
+
+/** The squad's rowed metres in a bucket, divided by the people who trained. */
+export const bucketMetres = (b: TeamBucket): number =>
+  b.trained.length ? sumOf(b, (l) => l.metres ?? 0) / b.trained.length : 0;
+
+/** The squad's minutes in a bucket, divided by the people who trained. */
+export const bucketMinutes = (b: TeamBucket): number =>
+  b.trained.length ? sumOf(b, (l) => l.minutes ?? 0) / b.trained.length : 0;
 
 /* ── The measure ────────────────────────────────────────────────────────── */
 
@@ -213,7 +257,7 @@ export type TeamMetric = {
   /** The graph's title. */
   label: (units: Units) => string;
   /** One bucket's figure. */
-  of: (m: Mileage) => number;
+  of: (b: TeamBucket) => number;
   format: (value: number, units: Units) => string;
   /** What is said when no bucket in the window has a boat with figures. */
   empty: string;
@@ -223,23 +267,23 @@ export const teamMetrics: TeamMetric[] = [
   {
     key: "distance",
     label: (u) => (u.distance === "mi" ? "Average miles rowed" : "Average km rowed"),
-    of: averageMetres,
+    of: bucketMetres,
     format: (v, u) => formatDistance(v, u.distance),
-    empty: "When a crew writes its distance on a boat, the squad's average will chart here.",
+    empty: "When the squad logs its training, the average distance will chart here.",
   },
   {
     key: "time",
     label: () => "Average hours trained",
-    of: averageMinutes,
+    of: bucketMinutes,
     format: (v) => formatDuration(Math.round(v)),
-    empty: "When a crew writes how long it was out on a boat, the squad's hours will chart here.",
+    empty: "When the squad logs its training, the average hours will chart here.",
   },
   {
     key: "people",
-    label: () => "People on the water",
-    of: (m) => m.people.length,
+    label: () => "People training",
+    of: (b) => b.trained.length,
     format: (v) => `${Math.round(v)}`,
-    empty: "When a lineup is published with its figures, how many were out will chart here.",
+    empty: "When the squad logs its training, how many trained will chart here.",
   },
 ];
 export const teamMetricByKey = (key: string): TeamMetric =>
@@ -255,63 +299,55 @@ export function windowLabel(buckets: TeamBucket[]): string {
   return `${a.getDate()} ${MO[a.getMonth()]} – ${z.getDate()} ${MO[z.getMonth()]}`;
 }
 
-/** Buckets that had at least one boat with figures on it. */
-export const trainedBuckets = (buckets: TeamBucket[]) => buckets.filter((b) => b.mileage.boats > 0);
+/** Buckets somebody trained in. An empty one is not a zero week, it is a gap. */
+export const trainedBuckets = (buckets: TeamBucket[]) =>
+  buckets.filter((b) => b.trained.length > 0);
 
 /** The measure's mean over the buckets that had training — the dashed line. */
 export function windowAverage(buckets: TeamBucket[], metric: TeamMetric): number | null {
   const had = trainedBuckets(buckets);
   if (!had.length) return null;
-  return had.reduce((a, b) => a + metric.of(b.mileage), 0) / had.length;
+  return had.reduce((a, b) => a + metric.of(b), 0) / had.length;
 }
 
-export type TeamCell = { key: string; label: string; value: string };
-export type TeamGroup = { key: string; title: string; cells: TeamCell[] };
-
-/** One person's outings in a bucket, on average — how often the average person went out. */
-export const outingsPerPerson = (m: Mileage): number =>
-  m.people.length ? m.people.reduce((a, p) => a + p.outings, 0) / m.people.length : 0;
+/*
+  THE PEOPLE OF THE WHOLE WINDOW, one entry each, computed once — the groups
+  under the graph and the table of names at the foot are the same numbers read
+  two ways, so they can never disagree.
+*/
+export function windowPeople(
+  buckets: TeamBucket[],
+  logsByAthlete: Record<string, LogEntry[]>,
+  names: Record<string, string>,
+  plan: SessionMap,
+): SquadPerson[] {
+  if (!buckets.length) return [];
+  return squadPeople(logsByAthlete, names, plan, {
+    startIso: toIso(buckets[0].start),
+    endIso: toIso(buckets[buckets.length - 1].end),
+  });
+}
 
 /*
-  WHAT THE WINDOW COMES TO — the averages, and only the averages (owner,
-  2026-09-21): what an outing was, how long it was, and how often the average
-  person went out. "Per person per week" and "biggest week" are gone, and so
-  is the whole "who" group — a coach reading their own squad knows how many
-  people and boats it has, and the table under this is where a week is
-  compared with another.
+  WHAT THE WINDOW COMES TO — handed straight to lib/varsity/squadStats, which
+  is the athlete's own reading applied to everybody at once. This file's job is
+  the window and the graph; what the numbers MEAN is one file, used here and by
+  the table of names at the foot of the screen.
 
-  "An outing" is what one person did when they went out — person-metres over
-  person-outings, so an eight and a pair each count as one outing for each of
-  the people in them.
+  The four "outing" cells that used to be the whole of it are gone (owner,
+  2026-09-22): "I don't know why you're saying outing — I don't want that."
 */
-export function teamReport(buckets: TeamBucket[], range: TeamRange, units: Units): TeamGroup[] {
-  const had = trainedBuckets(buckets);
-  if (!had.length) return [];
-  const each = range.bucket === "day" ? "day" : "week";
-  const people = new Set<string>();
-  let metres = 0;
-  let minutes = 0;
-  let seatOutings = 0;
-  for (const b of had) {
-    for (const p of b.mileage.people) {
-      people.add(p.id);
-      seatOutings += p.outings;
-    }
-    metres += b.mileage.metres;
-    minutes += b.mileage.minutes;
-  }
-  const perBucket = had.reduce((a, b) => a + outingsPerPerson(b.mileage), 0) / had.length;
-
-  return [
-    {
-      key: "averages",
-      title: "Averages",
-      cells: [
-        { key: "outingKm", label: "Average outing", value: formatDistance(seatOutings ? metres / seatOutings : 0, units.distance) },
-        { key: "outingTime", label: "Average outing time", value: formatDuration(seatOutings ? Math.round(minutes / seatOutings) : 0) },
-        { key: "perPerson", label: `Outings per person per ${each}`, value: perBucket.toFixed(1) },
-        { key: "perPersonWindow", label: "Outings per person, whole window", value: people.size ? (seatOutings / people.size).toFixed(1) : "0" },
-      ],
-    },
-  ];
+export function teamReport(
+  people: SquadPerson[],
+  buckets: TeamBucket[],
+  units: Units,
+  squadSize: number,
+): StatGroup[] {
+  if (!buckets.length) return [];
+  return squadReport(
+    people,
+    { startIso: toIso(buckets[0].start), endIso: toIso(buckets[buckets.length - 1].end) },
+    units,
+    squadSize,
+  );
 }

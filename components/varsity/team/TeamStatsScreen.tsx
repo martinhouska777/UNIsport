@@ -20,17 +20,32 @@
       "Zoom out" puts back the window you were on before the first zoom.
     • an empty day reads out NOTHING — "5 boats, nothing written on them" and
       "27 people · 14 boats" were text nobody asked for
-    • the averages — what an outing was, how long, how often the average
-      person went out — and nothing else
+    • THE SAME GROUPS THE ATHLETE GETS (owner, 2026-09-22): how many of us,
+      distance per person, time per person — on the water, on the erg, on the
+      WEIGHTS — and consistency per person, which is what the coach put up
+      against what got done, missed and done on top. The four cells that used
+      to be the whole of it all said "outing", and the owner cut the word:
+      "I don't know why you're saying outing, I don't want that."
+    • the squad's TRAINING MIX, over the same window
+    • EVERY PERSON, one row each: what they rowed, how long, and done out of
+      planned — "let's say there was something prescribed and then they did
+      more or less, so they want to see how each person trained"
     • at the foot, a TABLE the way a coach would lay it out in a spreadsheet:
       one row a day or a week, kilometres, the change on the row before,
       hours — so a week is compared against the weeks before it by reading
-      down a column. A row with no boats is dashes; tapping a row picks it.
+      down a column. A row nobody trained in is dashes; tapping a row picks it.
 
-  Every figure is the average person's — the squad's boats added up and
-  divided by the people who were in them (lib/varsity/teamStats.ts), which is
-  exactly what the card says about this week. Nothing is compared in colour:
-  a taper week is supposed to fall.
+  IT IS ALL MADE OF THE ATHLETES' OWN LOGS (owner, 2026-09-22). It used to be
+  the BOATS — the lineups the coach drew, with the kilometres a crew wrote on
+  them — which is why it could only ever talk about outings: a boat knows
+  nothing about the erg, the weights, or whether anybody did what was
+  prescribed. Every figure is now the average of the people who LOGGED
+  something in the window (lib/varsity/squadStats.ts), so the squad's
+  statistics are made of exactly what each rower sees about themselves.
+  Somebody who logged nothing is left out rather than averaged in as a zero.
+  The boats are still what a tapped DAY lists — the crews that went out are a
+  fact about the day, and no average replaces them. Nothing is compared in
+  colour: a taper week is supposed to fall.
 
   Boats are read ONCE for the longest built-in window; a custom window or a
   zoom that reaches outside it fetches only the days it is missing. Portalled
@@ -46,10 +61,19 @@ import Plot from "@/components/varsity/profile/Plot";
 import Dropdown from "@/components/varsity/profile/Dropdown";
 import Sheet from "@/components/varsity/Sheet";
 import { IconX, IconCalendar, IconArrowLeft } from "@/components/icons";
-import { averageMetres, averageMinutes } from "@/lib/varsity/boatMileage";
 import type { Boat } from "@/lib/varsity/coachLineup";
 import { chartTypes, type ChartType } from "@/lib/varsity/athleteStats";
 import { fetchLineupsFor } from "@/lib/varsity/lineupStore";
+import { fetchSquadLogsInRange, type LogEntry } from "@/lib/varsity/logStore";
+import { fetchPlan } from "@/lib/varsity/planStore";
+import { publishedSessions } from "@/lib/varsity/athleteHome";
+import type { SessionMap } from "@/lib/varsity/coachPlan";
+import { useMembership } from "@/components/varsity/useMembership";
+import { can, fetchSquad } from "@/lib/varsity/membership";
+import { trainingMix, type MixRow } from "@/lib/varsity/trainingMix";
+import TrainingMixList from "@/components/varsity/profile/TrainingMixList";
+import { squadRows, type SquadRow } from "@/lib/varsity/squadStats";
+import type { StatTone } from "@/lib/varsity/rowingStats";
 import { crewLabel } from "@/lib/varsity/racePieces";
 import { formatDistance, formatDuration, metresToUnit, type Units } from "@/lib/varsity/units";
 import {
@@ -68,11 +92,26 @@ import {
   trainedBuckets,
   windowAverage,
   windowLabel,
+  windowPeople,
+  bucketMetres,
+  bucketMinutes,
   type TeamBucket,
   type TeamRange,
 } from "@/lib/varsity/teamStats";
 
 type Dates = { start: string; end: string };
+
+/* ONE frozen empty map, shared. A fresh `{}` per render would be a new
+   dependency every render, and the whole window would be rebuilt each time. */
+const NO_LOGS: Record<string, LogEntry[]> = {};
+
+/* A word from the data, into a theme token. The data never names a colour. */
+const toneClass: Record<StatTone, string> = {
+  text: "text-text",
+  success: "text-success",
+  warn: "text-warn",
+  muted: "text-muted",
+};
 
 export default function TeamStatsScreen({ onClose }: { onClose: () => void }) {
   const vTheme = useVarsityTheme();
@@ -94,6 +133,20 @@ export default function TeamStatsScreen({ onClose }: { onClose: () => void }) {
      was asked for is stored as [] so it is never asked for again). Null until
      the first read lands. */
   const [lineups, setLineups] = useState<Record<string, Boat[]> | null>(null);
+  /*
+    THE SQUAD'S LOGS, athlete id to everything they logged, read ONCE for the
+    longest window the screen offers, the same way the boats are. Null until
+    the read lands. Every figure on the screen is made of these.
+  */
+  const [logs, setLogs] = useState<Record<string, LogEntry[]> | null>(null);
+  /** Account id to the name printed in the table of people. */
+  const [names, setNames] = useState<Record<string, string>>({});
+  /** How many are on the squad at all, so "16 of 24" can be said. */
+  const [squadSize, setSquadSize] = useState(0);
+  /* The published plan, so planned / done / missed / on top can be counted:
+     the same published-only gate the athlete's own screen uses, so the two
+     screens never disagree about what was missed. */
+  const [plan, setPlan] = useState<SessionMap>({});
   /* The tapped column — the latest bucket until someone taps. Held with the
      window's label: an index means nothing once the window changes. */
   const [picked, setPicked] = useState<{ window: string; index: number } | null>(null);
@@ -121,6 +174,55 @@ export default function TeamStatsScreen({ onClose }: { onClose: () => void }) {
     setCustom(beforeZoom.custom);
     setBeforeZoom(null);
   };
+
+  /*
+    THE SQUAD, THEN ITS LOGS. The roster of accounts comes first because the
+    logs are asked for by id; a coach who cannot read training gets neither,
+    which is the same answer the database would give.
+  */
+  const { membership } = useMembership();
+  const teamId = membership?.teamId ?? null;
+  const role = membership?.role ?? null;
+  /* Only a coach may read the squad. Anyone else is not "still loading" and
+     must not be parked on a spinner, so this is DERIVED rather than written
+     into state from inside the effect. */
+  const canRead = !!teamId && !!role && can.readTraining(role);
+  useEffect(() => {
+    if (!canRead || !teamId) return;
+    let active = true;
+    const most = Math.max(...teamRanges.map((r) => r.days));
+    const from = toIso(new Date(now.getFullYear(), now.getMonth(), now.getDate() - (most - 1)));
+    const to = toIso(now);
+    fetchSquad(teamId)
+      .then(async (squad) => {
+        const approved = squad.filter((m) => m.status === "approved");
+        if (!active) return;
+        const byId: Record<string, string> = {};
+        for (const m of approved) byId[m.userId] = m.name;
+        setNames(byId);
+        setSquadSize(approved.length);
+        const read = await fetchSquadLogsInRange(
+          approved.map((m) => m.userId),
+          from,
+          to,
+        );
+        if (active) setLogs(read);
+      })
+      .catch(() => active && setLogs({}));
+    return () => {
+      active = false;
+    };
+  }, [canRead, teamId, now]);
+
+  useEffect(() => {
+    let active = true;
+    fetchPlan()
+      .then((pl) => active && setPlan(publishedSessions(pl)))
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
 
   /* The first read: everything the longest built-in window can show. */
   useEffect(() => {
@@ -166,14 +268,29 @@ export default function TeamStatsScreen({ onClose }: { onClose: () => void }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  const loading = lineups === null || missing.length > 0;
+  /* What the screen actually reads: nothing at all unless this is a coach. */
+  const squadLogs = canRead ? logs : NO_LOGS;
+  const loading = lineups === null || squadLogs === null || missing.length > 0;
   const buckets: TeamBucket[] = useMemo(
-    () => (lineups ? fillBuckets(range, now, lineups) : []),
-    [lineups, range, now],
+    () => (lineups ? fillBuckets(range, now, lineups, squadLogs ?? {}) : []),
+    [lineups, squadLogs, range, now],
   );
-  const points = buckets.map((b) => ({ label: b.short, value: metric.of(b.mileage), latest: b.latest }));
+  const points = buckets.map((b) => ({ label: b.short, value: metric.of(b), latest: b.latest }));
   const empty = !loading && trainedBuckets(buckets).length === 0;
-  const groups = teamReport(buckets, range, units);
+  /* THE PEOPLE OF THE WINDOW, once: the groups and the table of names below
+     are the same numbers read two ways, so they cannot disagree. */
+  const people = useMemo(
+    () => windowPeople(buckets, squadLogs ?? {}, names, plan),
+    [buckets, squadLogs, names, plan],
+  );
+  const groups = teamReport(people, buckets, units, squadSize);
+  const rows: SquadRow[] = useMemo(() => squadRows(people, units), [people, units]);
+  /* The squad's mix over the same window: everybody's logs pooled, which is
+     the one figure here that is a share rather than an average. */
+  const mix: MixRow[] = useMemo(
+    () => trainingMix(buckets.flatMap((b) => b.logs), plan),
+    [buckets, plan],
+  );
   const plotMetric = { label: metric.label(units), format: metric.format };
   const selected =
     picked && picked.window === windowId ? Math.min(picked.index, buckets.length - 1) : buckets.length - 1;
@@ -258,7 +375,7 @@ export default function TeamStatsScreen({ onClose }: { onClose: () => void }) {
             </div>
 
             {loading ? (
-              <p className="py-12 text-center text-[13px] text-muted">Adding up the boats…</p>
+              <p className="py-12 text-center text-[13px] text-muted">Adding up the squad…</p>
             ) : empty ? (
               <p className="px-6 py-12 text-center text-[13px] leading-relaxed text-muted">{metric.empty}</p>
             ) : (
@@ -292,12 +409,14 @@ export default function TeamStatsScreen({ onClose }: { onClose: () => void }) {
 
                 {/* THE TAPPED COLUMN, read out — only when there is something
                     in it. An empty day says nothing at all. */}
-                {readOut && readOut.mileage.boats > 0 && (
+                {readOut && (readOut.trained.length > 0 || readOut.mileage.boats > 0) && (
                   <ReadOut bucket={readOut} each={each} units={units} />
                 )}
 
-                {/* THE AVERAGES — teamStats decides what is said and in what
-                    order; this only draws it (rule 7). */}
+                {/* THE NUMBERS — lib/varsity/squadStats decides what is said and
+                    in what order; this only draws it (rule 7). Drawn exactly
+                    like the athlete's own groups, tone and all, because they
+                    are the same groups. */}
                 {groups.map((g) => (
                   <div key={g.key} className="mt-5">
                     <div className="pb-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">{g.title}</div>
@@ -305,12 +424,27 @@ export default function TeamStatsScreen({ onClose }: { onClose: () => void }) {
                       {g.cells.map((c) => (
                         <div key={c.key} className="rounded-xl border border-border bg-surface px-3 py-2.5">
                           <div className="text-[9px] font-semibold uppercase tracking-[0.1em] text-muted">{c.label}</div>
-                          <div className="mt-1 text-[17px] font-semibold leading-none text-text">{c.value}</div>
+                          <div
+                            className={`mt-1 text-[17px] font-semibold leading-none ${toneClass[c.tone ?? "text"]}`}
+                          >
+                            {c.value}
+                          </div>
                         </div>
                       ))}
                     </div>
                   </div>
                 ))}
+
+                {/* WHAT ALL THAT TIME WAS, for the squad — the same block the
+                    athlete gets, over the same window as the graph, so it
+                    carries no window of its own. */}
+                {mix.length > 0 && (
+                  <div className="mt-5">
+                    <TrainingMixList rows={mix} heading="Training mix" />
+                  </div>
+                )}
+
+                <PeopleTable rows={rows} units={units} />
 
                 <CompareTable
                   buckets={buckets}
@@ -397,7 +531,6 @@ function DatesSheet({
   boats, not by an average. No counts of people or boats (owner).
 */
 function ReadOut({ bucket, each, units }: { bucket: TeamBucket; each: "day" | "week"; units: Units }) {
-  const m = bucket.mileage;
   const withFigures = bucket.boats.filter((b) => (b.metres ?? 0) > 0 || (b.minutes ?? 0) > 0);
   return (
     <div className="mt-3 rounded-2xl border border-border bg-surface px-3.5 py-3">
@@ -408,13 +541,13 @@ function ReadOut({ bucket, each, units }: { bucket: TeamBucket; each: "day" | "w
         <div className="rounded-xl border border-border bg-surface-2 px-3 py-2">
           <div className="text-[9px] font-semibold uppercase tracking-[0.1em] text-muted">Per person</div>
           <div className="mt-0.5 text-[16px] font-semibold leading-none text-text">
-            {formatDistance(averageMetres(m), units.distance)}
+            {formatDistance(bucketMetres(bucket), units.distance)}
           </div>
         </div>
         <div className="rounded-xl border border-border bg-surface-2 px-3 py-2">
           <div className="text-[9px] font-semibold uppercase tracking-[0.1em] text-muted">Per person</div>
           <div className="mt-0.5 text-[16px] font-semibold leading-none text-text">
-            {formatDuration(Math.round(averageMinutes(m)))}
+            {formatDuration(Math.round(bucketMinutes(bucket)))}
           </div>
         </div>
       </div>
@@ -440,12 +573,67 @@ function ReadOut({ bucket, each, units }: { bucket: TeamBucket; each: "day" | "w
 }
 
 /*
-  THE TABLE — a spreadsheet, on purpose (owner: "just like an Excel table").
+  EVERY PERSON, ONE ROW (owner, 2026-09-22: "they want to see how each person
+  trained, each boat — like what actually happened compared to the plan").
+
+  The same spreadsheet shape as the table of weeks below it: the name, what
+  they rowed, how long they trained, and DONE OUT OF PLANNED — the one column
+  that answers "there was something prescribed and then they did more or
+  less". Most kilometres on top, because that is the column an eye runs down.
+
+  Only the plan column is coloured, and only when there IS a plan for that
+  person: green when they did everything asked, warned when they are short.
+  The distance and the hours are never coloured — a light week in a taper is
+  not a failing, which is the same rule the weeks table keeps.
+
+  Anybody who logged nothing in the window is not here at all. They are an
+  unknown, not a zero, and a row of dashes per person would be the screen
+  telling a coach something it does not know.
+*/
+function PeopleTable({ rows, units }: { rows: SquadRow[]; units: Units }) {
+  if (rows.length === 0) return null;
+  const cols = "grid-cols-[minmax(0,1.6fr)_3.6rem_3.4rem_3.4rem]";
+  const cell = "px-2 py-2 text-right tabular-nums";
+  return (
+    <div className="mt-5">
+      <div className="pb-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
+        Person by person
+      </div>
+      <div className="overflow-hidden rounded-xl border border-border bg-surface text-[12px]">
+        <div
+          className={`grid ${cols} border-b border-border bg-surface-2 text-[9px] font-semibold uppercase tracking-[0.1em] text-muted`}
+        >
+          <span className="px-2.5 py-2 text-left">Name</span>
+          <span className={cell}>{units.distance === "mi" ? "Mi" : "Km"}</span>
+          <span className={cell}>Time</span>
+          <span className={cell}>Plan</span>
+        </div>
+        {rows.map((r, i) => (
+          <div
+            key={r.id}
+            className={`grid ${cols} items-center border-b border-border last:border-b-0 ${
+              i % 2 === 1 ? "bg-surface-2/60" : ""
+            }`}
+          >
+            <span className="truncate px-2.5 py-2 font-medium text-text">{r.name}</span>
+            <span className={`${cell} font-semibold text-text`}>{r.distance}</span>
+            <span className={`${cell} text-text`}>{r.time}</span>
+            <span className={`${cell} font-semibold ${toneClass[r.tone]}`}>{r.plan}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/*
+  THE TABLE OF WEEKS — a spreadsheet, on purpose (owner: "just like an Excel table").
   Newest row on top. Each row is one day or one week: the average person's
   kilometres, the change on the row before it (the previous day or week that
   had training — never coloured), and the hours. A row with no boats is
   dashes. The row being read out above is marked, and tapping a row reads it
-  out. The outings column came off (owner, 2026-09-21).
+  out. The outings column came off (owner, 2026-09-21), and since 2026-09-22
+  every figure in it is made of what people LOGGED, not of the boats.
 */
 function CompareTable({
   buckets,
@@ -469,14 +657,14 @@ function CompareTable({
 
   /* The previous row that had training, for the ± column. */
   const prevTrained = (i: number): TeamBucket | null => {
-    for (let k = i - 1; k >= 0; k--) if (buckets[k].mileage.boats > 0) return buckets[k];
+    for (let k = i - 1; k >= 0; k--) if (buckets[k].trained.length > 0) return buckets[k];
     return null;
   };
   const delta = (i: number): string => {
     const b = buckets[i];
     const p = prevTrained(i);
-    if (!p || b.mileage.boats === 0) return "";
-    const d = metresToUnit(averageMetres(b.mileage) - averageMetres(p.mileage), unit);
+    if (!p || b.trained.length === 0) return "";
+    const d = metresToUnit(bucketMetres(b) - bucketMetres(p), unit);
     if (Math.abs(d) < 0.05) return "±0";
     return `${d > 0 ? "+" : "−"}${Math.abs(d) >= 100 ? Math.abs(d).toFixed(0) : Math.abs(d).toFixed(1)}`;
   };
@@ -500,7 +688,7 @@ function CompareTable({
           .map((b, i) => ({ b, i }))
           .reverse()
           .map(({ b, i }, row) => {
-            const had = b.mileage.boats > 0;
+            const had = b.trained.length > 0;
             return (
               <button
                 key={b.start.getTime()}
@@ -516,9 +704,9 @@ function CompareTable({
                 </span>
                 {had ? (
                   <>
-                    <span className={`${cell} font-semibold text-text`}>{km(averageMetres(b.mileage))}</span>
+                    <span className={`${cell} font-semibold text-text`}>{km(bucketMetres(b))}</span>
                     <span className={`${cell} text-muted`}>{delta(i)}</span>
-                    <span className={`${cell} text-text`}>{hrs(averageMinutes(b.mileage))}</span>
+                    <span className={`${cell} text-text`}>{hrs(bucketMinutes(b))}</span>
                   </>
                 ) : (
                   <>
