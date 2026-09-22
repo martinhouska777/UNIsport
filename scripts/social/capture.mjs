@@ -1,5 +1,6 @@
 /*
-  Shoots the app's screens for social posts — DARK mode, a real phone size,
+  Shoots the app's screens for social posts — LIGHT mode (the app's default;
+  --dark for the other), a real phone size,
   straight PNGs with nothing composited on top.
 
   Why a separate script from scripts/landing/capture-light.mjs: the landing
@@ -12,9 +13,10 @@
   owner logs in to a Chrome window; the session lands in a gitignored file and
   is never read by an assistant).
 
-  Run: node scripts/social/capture.mjs            # every screen
-       node scripts/social/capture.mjs match feed # just those
-  Out: mockups/social/screens/dark/<name>.png     (1206 x 2622)
+  Run: node scripts/social/capture.mjs            # every screen, light
+       node scripts/social/capture.mjs --dark     # the dark ones
+       node scripts/social/capture.mjs match chat # just those
+  Out: mockups/social/screens/<light|dark>/<name>.png   (1206 x 2622)
 */
 import puppeteer from "puppeteer-core";
 import { readFileSync, mkdirSync } from "node:fs";
@@ -23,11 +25,12 @@ import path from "node:path";
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname).replace(/^\//, ""), "../..");
 const COOKIE = readFileSync(path.join(ROOT, "scripts/landing/session-cookie.txt"), "utf8").trim();
 const BASE = "https://un-isport.vercel.app";
-const OUT = path.join(ROOT, "mockups/social/screens/dark");
+const MODE = process.argv.includes("--dark") ? "dark" : "light";
+const OUT = path.join(ROOT, "mockups/social/screens", MODE);
 mkdirSync(OUT, { recursive: true });
 
 const W = 402, H = 874, DSF = 3;
-const ONLY = process.argv.slice(2);
+const ONLY = process.argv.slice(2).filter((a) => !a.startsWith("--"));
 const wants = (n) => ONLY.length ? ONLY.includes(n) : !n.startsWith("varsity-");
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -46,9 +49,9 @@ await browser.setCookie({
   value: COOKIE, domain: "un-isport.vercel.app", path: "/",
   secure: true, sameSite: "Lax", expires: Math.floor(Date.now() / 1000) + 3600,
 });
-await page.evaluateOnNewDocument(() => {
-  try { window.localStorage.setItem("uniThemeMode", "dark"); } catch {}
-});
+await page.evaluateOnNewDocument((mode) => {
+  try { window.localStorage.setItem("uniThemeMode", mode); } catch {}
+}, MODE);
 /* No clock override here. capture-schools.mjs pins the page to 4 PM so gyms
    read "Open now"; run in the early afternoon that puts the clock AHEAD of the
    session's expiry, the client refreshes a token that is not stale, and every

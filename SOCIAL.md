@@ -424,20 +424,24 @@ Two things that are not obvious:
 
 ### 6b. The post kit — what is already made (2026-09-22)
 
-Everything below is drawn from the app's REAL screens, shot signed in, in dark mode,
-in the look the owner picked from the reference reels. Every line of text is the
-website's own wording. Rebuild any of it with the script named; the screens need a
-signed-in session (`scripts/landing/save-cookie.mjs --fresh`, then
-`scripts/social/capture.mjs`).
+**The look is white, a real phone, no logo.** The owner's words on the first version
+(black ground, glow, the mark in the corner): "why is it black? make it look like a
+phone and make it white. Don't put the logo there." So a post is the app's LIGHT
+screen inside a drawn phone — bezel, island, clock and battery — on white, with the
+website's own headline above it in the website's own serif. Nothing else.
+
+The screens are shot signed in (`scripts/landing/save-cookie.mjs --fresh`, then
+`scripts/social/capture.mjs`); rebuild any file with the script named.
 
 | What | Where | Script |
 |---|---|---|
-| 7-slide feed carousel | `mockups/social/carousel/` | `scripts/social/carousel.mjs` |
 | 8 single posts, 4:5 | `mockups/social/posts/` | `scripts/social/posts.mjs` |
 | the same 8 as stories, 9:16 | `mockups/social/stories/` | `scripts/social/posts.mjs` |
-| 12 transparent overlays for talking-head footage | `mockups/social/overlays/` | `scripts/social/overlays.mjs` |
-| 6 feature clips + hook + end card, 9:16 | `mockups/video/clip-*.mp4` (not in git) | `scripts/social/clips.mjs` |
-| the 23 s launch reel | `mockups/video/unisport-reel.mp4` (not in git) | `scripts/video/reel.mjs` |
+| **the phones alone, whole, transparent — for his videos** | `mockups/social/phones/` | `scripts/social/posts.mjs phones` |
+| 12 transparent overlays for talking-head footage (dark tags; may want redoing white) | `mockups/social/overlays/` | `scripts/social/overlays.mjs` |
+| 6 feature clips + hook + end card, 9:16, in the DARK reel look | `mockups/video/clip-*.mp4` (not in git) | `scripts/social/clips.mjs` |
+| the 23 s launch reel, dark | `mockups/video/unisport-reel.mp4` (not in git) | `scripts/video/reel.mjs` |
+| 7-slide feed carousel, dark, from the other session | `mockups/social/carousel/` | `scripts/social/carousel.mjs` |
 
 **The posts:** 01 waitlist ("Get in on day one." + the link) · 02 the headline
 ("Your campus. Your gym. Your people.") · 03 Match · 04 Why you match · 05 Plan in the
