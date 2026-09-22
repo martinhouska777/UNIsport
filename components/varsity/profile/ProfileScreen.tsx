@@ -95,7 +95,7 @@ import {
   IconExpand,
   IconActivity,
   IconChevronRight,
-  IconCalendar,
+  IconSquad,
   IconCheck,
 } from "@/components/icons";
 
@@ -1246,19 +1246,22 @@ export default function ProfileScreen() {
         />
       )}
 
-      {/* ── Training calendar → its own tab ── */}
+      {/* ── The squad → the roster ──
+          This row was "Training calendar", and the calendar is a tab at the
+          bottom of every screen — the row was a second door to a room you are
+          already standing outside (owner, 2026-09-21). The roster took its
+          place: it came off the top of the Team tab, where it was costing the
+          boards a switch, and looking somebody up is a thing you do from a
+          profile. ── */}
       <Link
-        href="/varsity/calendar"
+        href="/varsity/team/roster"
         className="mx-3.5 mt-2.5 flex w-[calc(100%-1.75rem)] items-center gap-3 rounded-2xl border border-border bg-surface px-3.5 py-3"
       >
         <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[10px] border border-primary-line bg-primary-tint text-primary">
-          <IconCalendar size={18} />
+          <IconSquad size={18} />
         </span>
-        {/* The name alone. "See what you did, day by day" explained a row that
-            says "Training calendar" next to a calendar icon (owner,
-            2026-09-13). */}
         <div className="min-w-0 flex-1">
-          <div className="text-[13px] font-medium text-text">Training calendar</div>
+          <div className="text-[13px] font-medium text-text">The squad</div>
         </div>
         <span className="text-muted">
           <IconChevronRight size={17} />

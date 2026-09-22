@@ -382,8 +382,11 @@ export default function TeamScreen({
 
   return (
     <div className="mx-auto w-full max-w-screen-sm px-4 pb-10 pt-4">
-      {/* No "Team" title — the tab bar already says it; the Roster / Workouts
-          switch is the top of the screen. */}
+      {/* No "Team" title — the tab bar already says it. The Roster/Workouts
+          switch that used to sit here is gone for athletes too (owner,
+          2026-09-21): the tab opens on the workouts, and the roster is a row
+          on the Profile. The switch survives only where something still asks
+          for both halves at once. */}
       <h1 className="sr-only">{only === "workouts" ? "Workouts" : "Team"}</h1>
 
       {/* sub-navigation

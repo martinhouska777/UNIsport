@@ -230,6 +230,16 @@ export const IconUser = (p: IconProps) => (
   </Base>
 );
 
+/* THE SQUAD — two people, the same drawing the Varsity tab bar uses for Team,
+   so the roster wears one mark wherever it is reached from. */
+export const IconSquad = (p: IconProps) => (
+  <Base {...p}>
+    <circle cx="9" cy="8" r="3" />
+    <path d="M3 19a6 6 0 0 1 12 0" />
+    <path d="M16 6a3 3 0 0 1 0 6M21 19a6 6 0 0 0-5-5.9" />
+  </Base>
+);
+
 export const IconPencil = (p: IconProps) => (
   <Base {...p}>
     <path d="M4 20h4L18 10l-4-4L4 16z" />
