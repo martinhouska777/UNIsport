@@ -4,11 +4,12 @@
   Coach TODAY — the console's first screen.
   ---------------------------------------------------------------------------
   Today and tomorrow, each as its AM and PM. Every slot says three things at a
-  glance — what the plan prescribes (in the squad's own words and colour),
-  where its lineup has got to (none / draft / live, and how full), and who is
-  out — and offers exactly two taps: EDIT SESSION opens the Plan tab on that
-  slot's editor, BOATS opens the Lineup tab on that practice. Nothing here is
-  edited in place; this screen is the door, the tabs are the rooms.
+  glance — what the plan prescribes (in the squad's own words and colour) and
+  where its lineup has got to (none / draft / live, and how full) — and offers
+  exactly two taps: EDIT SESSION opens the Plan tab on that slot's editor,
+  BOATS opens the Lineup tab on that practice. Nothing here is edited in place;
+  this screen is the door, the tabs are the rooms. Who is OUT is not here: that
+  is a fact about filling the boats, and it lives with the boats.
 
   It exists because the other four tabs each open on a list, and a coach on a
   dock at dawn wants the morning, not an index. All decisions about what to
@@ -22,11 +23,9 @@ import Button from "@/components/ui/Button";
 import { useMembership } from "@/components/varsity/useMembership";
 import { fetchPlan, type Plan } from "@/lib/varsity/planStore";
 import { fetchLineup, type StoredLineup } from "@/lib/varsity/lineupStore";
-import { fetchOutOn } from "@/lib/varsity/availabilityStore";
 import { fetchTrainingConfig } from "@/lib/varsity/configStore";
 import { defaultConfig, type TrainingConfig } from "@/lib/varsity/trainingConfig";
-import { outMeta, type OutReason } from "@/lib/varsity/coachLineup";
-import { periods, sessionKey, toISO } from "@/lib/varsity/coachPlan";
+import { periods, sessionKey } from "@/lib/varsity/coachPlan";
 import {
   buildDay,
   todayAndTomorrow,
@@ -40,12 +39,6 @@ const LINEUP = "/varsity/coach/lineup";
 /** The two deep links the console's screens accept (see their page.tsx). */
 export const planSlotHref = (key: string) => `${PLAN}?slot=${encodeURIComponent(key)}`;
 export const lineupPracticeHref = (key: string) => `${LINEUP}?practice=${encodeURIComponent(key)}`;
-
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">{children}</div>
-  );
-}
 
 /*
   Where the lineup has got to, in one pill. The same three words and the same
@@ -150,35 +143,14 @@ function SlotCard({ slot }: { slot: TodaySlot }) {
   );
 }
 
-/* Who is out on this day — and the one door to changing that, which is the pool.
-   ONLY WHEN SOMEONE IS. The card used to sit there every day saying "Out —
-   Everyone available.", and the owner crossed it out (2026-09-18): a card
-   with nothing in it is not news. Nobody out, no card. */
-function OutRow({ day }: { day: TodayDay }) {
-  if (day.out.length === 0) return null;
-  return (
-    <div className="flex items-start justify-between gap-3 rounded-2xl border border-border bg-surface px-3.5 py-3">
-      <div className="min-w-0 flex-1">
-        <SectionLabel>Out · {day.out.length}</SectionLabel>
-        <div className="mt-1.5 flex flex-wrap gap-1.5">
-          {day.out.map((o) => (
-            <span
-              key={o.id}
-              className="flex items-center gap-1.5 rounded-lg border border-danger-line bg-danger-tint px-2 py-1 text-[12px] text-text"
-            >
-              {o.name}
-              <span className="font-mono text-[9px] font-semibold uppercase tracking-[0.06em] text-danger">
-                {outMeta[o.reason]}
-              </span>
-            </span>
-          ))}
-        </div>
-      </div>
-      {/* The "Mark out" button that sat here was cut (owner, 2026-09-14);
-          who is out is still changed from the pool on the Lineup tab. */}
-    </div>
-  );
-}
+/*
+  WHO IS OUT IS NOT ON THIS SCREEN (owner, 2026-09-21). There was a card here
+  listing today's sick, injured and away — and the coach's answer to it is
+  always the same thing: build the boats without them. That happens on the
+  Lineup tab, where the pool already shows every one of them greyed out with
+  their reason, so this card was a list the coach reads twice and acts on once.
+  Today is what is ON; who can't row is part of filling the boats.
+*/
 
 function DaySection({ day }: { day: TodayDay }) {
   return (
@@ -213,7 +185,6 @@ function DaySection({ day }: { day: TodayDay }) {
         {day.slots.map((slot) => (
           <SlotCard key={slot.key} slot={slot} />
         ))}
-        {day.title === "Today" && <OutRow day={day} />}
       </div>
     </section>
   );
@@ -224,7 +195,6 @@ export default function CoachTodayScreen() {
   const [cfg, setCfg] = useState<TrainingConfig>(defaultConfig);
   const [plan, setPlan] = useState<Plan | null>(null);
   const [lineups, setLineups] = useState<Record<string, StoredLineup | null>>({});
-  const [out, setOut] = useState<Record<string, Record<string, OutReason>>>({});
   const [loading, setLoading] = useState(true);
 
   const { today, tomorrow } = useMemo(() => todayAndTomorrow(), []);
@@ -243,13 +213,9 @@ export default function CoachTodayScreen() {
     let active = true;
     (async () => {
       const days = [today, tomorrow];
-      const isos = days.map(toISO);
-      const [p, outs] = await Promise.all([fetchPlan(), Promise.all(isos.map(fetchOutOn))]);
+      const p = await fetchPlan();
       if (!active) return;
       setPlan(p);
-      const outMap: Record<string, Record<string, OutReason>> = {};
-      isos.forEach((iso, i) => (outMap[iso] = outs[i]));
-      setOut(outMap);
       // The four practices' lineups, for boat and seat counts.
       const practiceKeys = days.flatMap((d) => periods.map((p) => sessionKey(d, p)));
       const stored = await Promise.all(practiceKeys.map((k) => fetchLineup(k)));
@@ -277,10 +243,9 @@ export default function CoachTodayScreen() {
         sessions: plan.sessions,
         cfg,
         lineups,
-        out: out[toISO(date)] ?? {},
       }),
     );
-  }, [plan, cfg, lineups, out, today, tomorrow]);
+  }, [plan, cfg, lineups, today, tomorrow]);
 
   return (
     <div className="mx-auto w-full max-w-screen-sm px-4 pb-8 pt-4">

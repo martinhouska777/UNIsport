@@ -5,10 +5,12 @@
   and until this screen every tab in the console answered it with a list to
   open. This puts the answer on one screen: today and tomorrow, each as its
   AM and PM, each saying what the plan prescribes, where the lineup for it has
-  got to, and who is out — with one tap into the editor or the builder.
+  got to — with one tap into the editor or the builder. Who is OUT is not part
+  of this screen any more (owner, 2026-09-21): it is a fact about filling the
+  boats, and the Lineup tab's pool already shows it.
 
   Everything here is PURE: given the plan, the squad's config, the lineup
-  statuses, the lineups themselves and who is out, it returns what the screen
+  statuses and the lineups themselves, it returns what the screen
   draws. The screen fetches and renders; it decides nothing (rule 7).
 */
 import {
@@ -28,7 +30,6 @@ import {
   type TrainingConfig,
 } from "./trainingConfig";
 import type { LineupStatus, StoredLineup } from "./lineupStore";
-import { rosterById, type OutReason } from "./coachLineup";
 
 export type TodayLineup = {
   status: LineupStatus;
@@ -49,7 +50,6 @@ export type TodaySlot = {
   lineup: TodayLineup | null;
 };
 
-export type TodayOut = { id: string; name: string; reason: OutReason };
 
 export type TodayDay = {
   iso: string;
@@ -61,7 +61,6 @@ export type TodayDay = {
   /** The block this day falls in, or null — then the plan has nothing for it yet. */
   block: Block | null;
   slots: TodaySlot[];
-  out: TodayOut[];
 };
 
 const WD = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -109,9 +108,8 @@ export function buildDay(args: {
   sessions: SessionMap;
   cfg: TrainingConfig;
   lineups: Record<string, StoredLineup | null>;
-  out: Record<string, OutReason>;
 }): TodayDay {
-  const { date, title, blocks, sessions, cfg, lineups, out } = args;
+  const { date, title, blocks, sessions, cfg, lineups } = args;
   const iso = toISO(date);
   const slots: TodaySlot[] = periods.map((period) => {
     const key = sessionKey(date, period);
@@ -132,10 +130,7 @@ export function buildDay(args: {
       lineup: lineupSummary(lineups[key]),
     };
   });
-  const outList: TodayOut[] = Object.entries(out)
-    .map(([id, reason]) => ({ id, name: rosterById[id]?.name ?? id, reason }))
-    .sort((a, b) => a.name.localeCompare(b.name));
-  return { iso, date, title, label: dayLabel(date), block: blockCovering(blocks, iso), slots, out: outList };
+  return { iso, date, title, label: dayLabel(date), block: blockCovering(blocks, iso), slots };
 }
 
 /** Today and tomorrow as calendar days (midnight local). */
