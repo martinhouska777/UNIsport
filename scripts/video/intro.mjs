@@ -6,9 +6,9 @@
     headline types the way the landing page's own headline does: centred, a
     steady 38 ms a letter, a thin blinking caret (components/landing/
     StudentIntro.tsx, TYPE_MS and .l-caret). The camera is never still.
-      1. "Never train alone again." types itself, centred. The caret walks
-         back over "alone again." and types "with the right people." The line
-         lifts and blurs away.
+      1. "Never train alone again." types itself, centred, holds a beat, and
+         lifts and blurs away. (An edit to "with the right people." was in
+         cuts 3–4 and was cut by the owner.)
       2. "Choose your activity." Three activities — Gym · Running · Cardio —
          as plain labels with a BORDERED ICON TILE under each. A hand taps Gym,
          then Cardio; the tiles fill blue.
@@ -59,32 +59,29 @@ const INK = "#141618";
 
 const PREFIX = "Never train";
 const SUF_A = "alone again.";
-const SUF_B = "with the right people.";
 const MATCH = "Match.";
 const LIVE = "Live now at Harvard";
 const ACTS = ["Gym", "Running", "Cardio"];
 const WORD = ["U", "N", "I", "s", "p", "o", "r", "t"];   // the I is drawn, not typed
 
 /* the schedule, in seconds. ms = the landing page's TYPE_MS. */
+/* No edit of the line any more (owner, 2026-09-22 night): the headline types,
+   holds, lifts, and "Choose your activity." follows straight away. */
 const T = {
   cursor: 0.40,
   typeA: 0.70, ms: 0.038,
-  del: 2.20, msDel: 0.030,
-  typeB: 2.70,
-  lift: 4.45,
-  act: 4.85, tiles: 5.10, hand: 5.40, tap1: 6.00, tap2: 6.70, actOut: 7.20,
-  find: 7.45, slide: 7.55, apart: 8.60,
-  matchType: 9.30, join: 9.60, met: 11.00,
-  matchOut: 11.50, word: 11.80, msWord: 0.065, live: 12.55,
-  out: 13.70, end: 14.20,
+  lift: 2.90,
+  act: 3.30, tiles: 3.55, hand: 3.85, tap1: 4.45, tap2: 5.15, actOut: 5.65,
+  find: 5.90, slide: 6.00, apart: 7.05,
+  matchType: 7.75, join: 8.05, met: 9.45,
+  matchOut: 9.95, word: 10.25, msWord: 0.065, live: 11.00,
+  out: 12.15, end: 12.65,
 };
 
 const seq = (n, start, step) => Array.from({ length: n }, (_, i) => +(start + i * step).toFixed(4));
 const TIMES = {
   prefix: seq(PREFIX.length, T.typeA, T.ms),
   sufA: seq(SUF_A.length, T.typeA + (PREFIX.length + 1) * T.ms, T.ms),
-  del: seq(SUF_A.length, T.del, T.msDel),
-  sufB: seq(SUF_B.length, T.typeB, T.ms),
   match: seq(MATCH.length, T.matchType, T.ms),
   word: seq(WORD.length, T.word, T.msWord),
 };
@@ -125,7 +122,6 @@ const html = `<!doctype html><html><head><meta charset="utf-8">
           will-change:transform,opacity,filter; }
   #line .row { display:block; }
   .c { display:inline-block; visibility:hidden; }
-  #sufB { display:none; }
   /* the landing's .l-caret: 0.055em wide, 0.74em tall, 1 s step blink */
   #cur { position:absolute; width:6px; height:83px; background:${BLUE}; opacity:0; will-change:transform,opacity; }
 
@@ -149,7 +145,7 @@ const html = `<!doctype html><html><head><meta charset="utf-8">
   #fade { position:absolute; inset:0; background:#fff; opacity:0; }
 </style></head><body><div id="stage"><div id="cam">
 
-  <div id="line"><span class="row" id="row1">${chars(PREFIX, "p")}</span><span class="row" id="row2"><span id="sufA">${chars(SUF_A, "a")}</span><span id="sufB">${chars(SUF_B, "b")}</span></span></div>
+  <div id="line"><span class="row" id="row1">${chars(PREFIX, "p")}</span><span class="row" id="row2"><span id="sufA">${chars(SUF_A, "a")}</span></span></div>
   <div id="cur"></div>
 
   <div id="act">Choose your activity.</div>
@@ -178,7 +174,7 @@ const html = `<!doctype html><html><head><meta charset="utf-8">
 </div><div id="fade"></div></div>
 <script>
   var T = ${JSON.stringify(T)}, TM = ${JSON.stringify(TIMES)};
-  var NP = ${PREFIX.length}, NA = ${SUF_A.length}, NB = ${SUF_B.length}, NM = ${MATCH.length}, NW = ${WORD.length};
+  var NP = ${PREFIX.length}, NA = ${SUF_A.length}, NM = ${MATCH.length}, NW = ${WORD.length};
   var cl = function (x) { return x < 0 ? 0 : x > 1 ? 1 : x; };
   var outExpo = function (x) { x = cl(x); return x >= 1 ? 1 : 1 - Math.pow(2, -9 * x); };
   var outCubic = function (x) { return 1 - Math.pow(1 - cl(x), 3); };
@@ -217,22 +213,16 @@ const html = `<!doctype html><html><head><meta charset="utf-8">
     $("cam").style.transform = "scale(" + cam.toFixed(4) + ")";
 
     /* ---- 1. the typed, edited line ---- */
-    var i, phaseB = t >= T.typeB;
-    var P = [], A = [], B = [];
+    var i;
+    var P = [], A = [];
     for (i = 0; i < NP; i++) { P.push($("p" + i)); show(P[i], t >= TM.prefix[i]); }
-    $("sufA").style.display = phaseB ? "none" : "inline";
-    $("sufB").style.display = phaseB ? "inline" : "none";
-    for (i = 0; i < NA; i++) { A.push($("a" + i)); show(A[i], t >= TM.sufA[i] && !(t >= TM.del[NA - 1 - i])); }
-    for (i = 0; i < NB; i++) { B.push($("b" + i)); show(B[i], phaseB && t >= TM.sufB[i]); }
+    for (i = 0; i < NA; i++) { A.push($("a" + i)); show(A[i], t >= TM.sufA[i]); }
 
     var cur = $("cur");
-    var typing = (t >= T.typeA && t <= TM.sufA[NA - 1] + T.ms) || (t >= T.del && t <= TM.del[NA - 1] + T.msDel) || (t >= T.typeB && t <= TM.sufB[NB - 1] + T.ms);
+    var typing = t >= T.typeA && t <= TM.sufA[NA - 1] + T.ms;
     cur.style.opacity = String(cl((t - T.cursor) / 0.05) * (1 - cl((t - T.lift) / 0.2)) * (typing ? 1 : blink(t)));
-    var onLine2 = t >= TM.sufA[0] && !(t >= TM.del[NA - 1] && !phaseB && t < T.typeB) ;
-    if (t >= TM.del[NA - 1] && !phaseB) onLine2 = true;          // line 2 emptied, caret waits at its start
-    if (!onLine2 && t < TM.sufA[0]) caretAt(cur, P, P[0], 14);
-    else if (!phaseB) caretAt(cur, A, A[0], 14);
-    else caretAt(cur, B, B[0], 14);
+    if (t < TM.sufA[0]) caretAt(cur, P, P[0], 14);
+    else caretAt(cur, A, A[0], 14);
 
     var b = cl((t - T.lift) / 0.5);
     var lineEl = $("line");

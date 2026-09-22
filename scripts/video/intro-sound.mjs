@@ -64,8 +64,12 @@ function put(src, t, from, dur, gain, fadeIn = 0.004, fadeOut = 0.03) {
 }
 
 /* one key */
+/* The keys are the library's real keyboard recording. The reference reel's
+   own keys were tried (ref-keys.wav) and rejected by the owner: under its
+   music they can only be lifted with a high-pass filter, and that thins them
+   into a hiss. `keys` is kept only as an opt-in via USE_REF_KEYS=1. */
 function key(t, gain) {
-  if (keys) put(keys, t, 0.02 + rnd() * (keys.length / SR - 0.1), 0.055, gain * 3.2, 0.002, 0.03);
+  if (keys && process.env.USE_REF_KEYS) put(keys, t, 0.02 + rnd() * (keys.length / SR - 0.1), 0.055, gain * 3.2, 0.002, 0.03);
   else put(bank, t, 0.3 + rnd() * 13.5, 0.07, gain, 0.002, 0.035);
 }
 /* the tap: the reference's own, or the library click */
@@ -102,8 +106,6 @@ function drone(t, dur, gain) {
 click(T.cursor, 0.2);
 for (const t of TIMES.prefix) key(t, 0.85);
 for (const t of TIMES.sufA) key(t, 0.85);
-for (const t of TIMES.del) key(t, 0.5);
-for (const t of TIMES.sufB) key(t, 0.85);
 
 airy(T.lift, 0.8);
 simple(T.act, 0.5);

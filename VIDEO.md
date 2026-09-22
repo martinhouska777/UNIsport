@@ -188,3 +188,13 @@ bank as before, plus a slowed-down deep whoosh as a "drone" under the fill.
 
 Zone-1 note: "Live now at Harvard" is the owner's line (SOCIAL.md §7B said never imply Harvard
 uses UNIsport; the owner chose it anyway on 2026-09-22, same as the waitlist copy).
+
+---
+
+## Cut 5 — light v2, no edit, library keys (2026-09-22, later that night). CURRENT.
+
+Owner on cut 4: the reference-reel typing sound "is horrible" (it can only be lifted from under
+the reel's music with a high-pass, which thins it to a hiss) and "cut the with the right people
+part, go straight to choose your activity". So: the headline types, holds a beat, lifts, and the
+activities follow. The keys are the ChatCut library's real keyboard recording again; the
+reference lift stays in the repo as an opt-in (`USE_REF_KEYS=1`). 12.65 s.
