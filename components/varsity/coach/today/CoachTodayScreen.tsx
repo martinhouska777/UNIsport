@@ -163,7 +163,10 @@ function DaySection({ day }: { day: TodayDay }) {
         <div className="mt-0.5 text-[11px] text-muted">
           {day.block.name}
           {day.block.status === "draft" && (
-            <span className="text-warn"> · draft — the squad can&apos;t see it</span>
+            /* The word alone (owner, 2026-09-21). "the squad can't see it" is
+               what draft MEANS, and the Plan tab's chip has said it in one
+               word all along. */
+            <span className="text-warn"> · draft</span>
           )}
         </div>
       ) : (

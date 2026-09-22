@@ -405,7 +405,6 @@ function PracticeButton({
   const wash = plan
     ? { background: `color-mix(in oklab, ${plan.color} ${plan.water ? 30 : 12}%, transparent)` }
     : undefined;
-  const done = practice.status === "published";
   return (
     <button
       type="button"
@@ -413,16 +412,14 @@ function PracticeButton({
       data-tour={tour}
       style={wash}
       /*
-        TWO TILES, NOT TWO HALVES (owner, 2026-09-21: "separate the two
-        sessions"). They were divided by a hairline inside one block, so a
-        morning and an afternoon read as one wide thing with a crease down it.
-        Each is its own bordered tile now, with a gap between them, and a
-        published one is ringed in green so the day says at a glance which
-        half is done.
+        THE TWO HALVES FILL THE CARD, edge to edge, with a LINE you can see
+        between them (owner, 2026-09-21). They were briefly two inset tiles
+        with a gap, which separated them all right but left a margin of blank
+        card all the way round. The morning and the afternoon own the whole
+        width again; what divides them is a 2px seam in the page's own colour,
+        not the hairline it used to be.
       */
-      className={`flex min-w-0 flex-1 flex-col items-start gap-1.5 rounded-xl border px-2.5 py-2.5 text-left active:brightness-95 ${
-        done ? "border-success-line" : "border-border"
-      }`}
+      className="flex min-w-0 flex-1 flex-col items-start gap-1.5 border-r-2 border-background px-3 py-2.5 text-left last:border-r-0 active:brightness-95"
     >
       <PracticeBody practice={practice} />
     </button>
@@ -460,7 +457,7 @@ function DayCard({
           </span>
         )}
       </div>
-      <div className="flex items-stretch gap-2 border-t border-border p-2">
+      <div className="flex items-stretch border-t-2 border-background">
         <PracticeButton
           practice={day.am}
           tour={first ? "coach-lineup-first-practice" : undefined}
