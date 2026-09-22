@@ -120,7 +120,7 @@ function build(version) {
     at("note-warm", T.met, 0.44);
     peakAt("whoosh-air", T.matchOut, 0.12 * WH);
     TIMES.word.forEach((t) => at("click-ui", t + 0.42, 0.10));
-    peakAt("whoosh-air", T.live, 0.14 * WH);
+    /* no whoosh on T.live (owner) */
     return mix;
   }
 
@@ -193,7 +193,8 @@ function build(version) {
     t + 0.42, (version === "layered" ? 0.13 : 0.20 + (i % 2) * 0.04) * (version === "layered" ? 1 : 1)));
 
   /* "Live now at Harvard" */
-  peakAt(version === "crisp" ? "whoosh-mid" : "whoosh-air", T.live, 0.26 * G * WH, 1.2);
+  /* Owner: deleted. "Live now at Harvard" arrives with no sound of its own —
+     the last whoosh in the film was here, on T.live. */
 
   return mix;
 }
