@@ -97,7 +97,13 @@ const SCREENS = {
     await wait(2800);
   },
   messages: async () => { await go("/messages"); },
-  profile: async () => { await go("/profile"); },
+  /* one week back: the demo account's logged sessions are in the week before
+     this one, and an empty grid says nothing (owner, 2026-09-22) */
+  profile: async () => {
+    await go("/profile");
+    await page.evaluate(() => document.querySelector('button[aria-label="Previous week"]')?.click());
+    await wait(2000);
+  },
   /* /leaderboards opens on the Honor Code the first time an account visits.
      The demo account signs it here (name + "I agree") — once, on the owner's
      word (2026-09-22), so the board itself can be shot. */

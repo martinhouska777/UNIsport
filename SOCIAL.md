@@ -443,6 +443,7 @@ The screens are shot signed in (`scripts/landing/save-cookie.mjs --fresh`, then
 | 6 feature clips + hook + end card, 9:16, in the DARK reel look | `mockups/video/clip-*.mp4` (not in git) | `scripts/social/clips.mjs` |
 | the 23 s launch reel, dark | `mockups/video/unisport-reel.mp4` (not in git) | `scripts/video/reel.mjs` |
 | 7-slide feed carousel, dark, from the other session | `mockups/social/carousel/` | `scripts/social/carousel.mjs` |
+| **8-slide "how it works" carousel, WHITE, student side** (demo account renamed Jonas Keller 2026-09-22) | `mockups/social/carousel-white/` | `scripts/social/carousel-white.mjs` |
 
 **The posts:** 01 waitlist ("Get in on day one." + the link) · 02 the headline
 ("Your campus. Your gym. Your people.") · 03 Match · 04 Why you match · 05 Plan in the
