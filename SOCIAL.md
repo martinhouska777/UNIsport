@@ -72,15 +72,31 @@ alone tells a stranger nothing, and the search only sees this field.
 
 Small trap: the Name field can only be changed **twice in 14 days**. Do not fiddle.
 
-### The profile picture is a real blocker
+### The profile picture — done, pick a ground
 
-A brand account needs a logo, and **the logo is not decided.** Four directions were
-drawn up (Wordmark / Gate / Pennant / Partners, in `mockups/logo`) and none was picked;
-the app icon is still a blank navy square.
+**The logo IS decided** (an earlier note in this file wrongly said otherwise): the mark
+is a **U split down the middle, each half a person** — own leg, own head — one navy
+`#2f3b52`, one blue `#1f32c1`, on white. Chosen 2026-09-19 and already shipping as the
+app icon, the Apple touch icon and the favicon. `mockups/logo/_icons.mjs` draws it.
 
-Do not let this stop the account being created — a plain wordmark on the brand colour is
-fine for now and can be swapped any time. But it is the one asset that is genuinely
-missing.
+`mockups/logo/_profile.mjs` renders it for social, in three grounds, at 1080x1080 —
+`mockups/logo/profile/`. Run `node mockups/logo/_profile.mjs` to rebuild.
+
+A profile picture is not an app icon, for two reasons:
+
+1. **It is shown as a circle.** The icon centres the mark at 0.56 of the width, which is
+   right when the corners are usable. In a circle they are not, so the mark runs at 0.62.
+2. **It sits on a white feed.** The white ground was chosen for the app icon knowing it
+   can vanish into a pale wallpaper. On Instagram that is not a risk, it is a certainty —
+   a white disc on a white feed has no edge at all.
+
+| | Ground | The trade |
+|---|---|---|
+| **A** | white `#ffffff` | Identical to the app icon. No visible edge in the feed |
+| **B** | page blue-grey `#ebf0f6` | Holds an edge, keeps both mark colours. The Zone 1 page colour |
+| **C** | navy `#2f3b52` | Strongest at 40px. But the split becomes white + lifted blue, so it tells a different colour story from the app icon |
+
+All three survive 40px, which was the thing worth checking. **Owner picks.**
 
 ### Personal handles, if a separate personal account is ever wanted
 
@@ -363,7 +379,7 @@ Build in public:
 - [ ] Bitwarden installed, password saved there
 - [ ] Instagram account created in the phone app
 - [ ] Switched to **Creator** (not Business)
-- [ ] Profile picture — blocked on the logo decision (§2)
+- [ ] Profile picture — three rendered, pick a ground (§2)
 - [ ] Name field and bio written
 - [ ] 2FA via authenticator app, backup codes saved
 - [ ] TikTok handle reserved, YouTube brand channel made
@@ -372,5 +388,5 @@ Build in public:
 
 **Status 2026-09-22:** nothing created yet. Strategy corrected to a UNIsport product
 account (the earlier admissions plan is gone). Handles checked live — `@unisportapp` is
-free on Instagram AND TikTok. Blocked on nothing except the logo, which should not hold up creating
-the account.
+free on Instagram AND TikTok. Profile pictures rendered and waiting on a choice of ground.
+Blocked on nothing.
