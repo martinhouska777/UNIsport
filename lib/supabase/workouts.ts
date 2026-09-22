@@ -592,3 +592,12 @@ export function metricsSummary(log: WorkoutLog): string {
   if (log.activity === "cardio") return [m.cardioType, dist, m.duration].filter(Boolean).join(" · ");
   return "";
 }
+
+/** How many different people `userId` has trained with — the number alone
+    (db/partner_count.sql), for somebody else's profile. */
+export async function getPartnerCount(userId: string): Promise<number> {
+  if (!userId || !hasSupabaseEnv()) return 0;
+  const { data, error } = await createClient().rpc("partner_count", { target: userId });
+  if (error) throw new Error(`getPartnerCount failed: ${error.message}`);
+  return Number(data ?? 0);
+}

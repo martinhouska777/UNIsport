@@ -34,6 +34,7 @@ import ProfileBadge from "@/components/ProfileBadge";
 import ScheduleOverlap from "@/components/people/ScheduleOverlap";
 import FollowListSheet from "@/components/people/FollowListSheet";
 import { getFollowCounts, type FollowKind } from "@/lib/supabase/follows";
+import { getPartnerCount } from "@/lib/supabase/workouts";
 import SectionLabel from "@/components/ui/SectionLabel";
 
 // useSearchParams() requires a Suspense boundary or the production build fails
@@ -70,6 +71,8 @@ function PersonProfile() {
   // Their two follow totals, and which list (if any) is open in the sheet.
   const [counts, setCounts] = useState<{ followers: number; following: number } | null>(null);
   const [listOpen, setListOpen] = useState<FollowKind | null>(null);
+  // How many different people they have trained with (the number alone).
+  const [partnerCount, setPartnerCount] = useState<number | null>(null);
   // YOUR week, for the comparison grid — null until it has loaded.
   const [mySchedule, setMySchedule] = useState<Record<string, string[]> | null>(null);
 
@@ -118,6 +121,9 @@ function PersonProfile() {
     getFollowCounts(id)
       .then((c) => active && setCounts(c))
       .catch(() => active && setCounts({ followers: 0, following: 0 }));
+    getPartnerCount(id)
+      .then((n) => active && setPartnerCount(n))
+      .catch(() => active && setPartnerCount(0));
     return () => {
       active = false;
     };
@@ -254,11 +260,12 @@ function PersonProfile() {
       {status === "ready" && user && (
         <>
           <div className="flex flex-col gap-2.5 px-3.5 pb-3 pt-3">
-            {/* WHO THEY ARE — photo beside the name, house · class, fit and
-                Mentor pills, the bio, then the two follow totals, each a
-                button that opens the list. */}
+            {/* WHO THEY ARE — laid out like your own Profile tab: photo on the
+                left; name, house · class and the three counts on the right.
+                Followers and Following open the lists; Partners is the number
+                alone. Fit / Mentor pills and the bio run underneath. */}
             <div className="rounded-2xl border border-border bg-surface p-3.5">
-              <div className="flex items-center gap-3.5">
+              <div className="flex items-center gap-4">
                 <div className="flex h-[72px] w-[72px] shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-primary bg-primary-tint text-primary">
                   {user.photo ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -267,60 +274,90 @@ function PersonProfile() {
                     <IconUser size={30} />
                   )}
                 </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="truncate text-[18px] font-semibold tracking-[-0.01em] text-text">
-                      {user.name || "Member"}
-                    </span>
-                    {user.badges.varsity && <ProfileBadge kind="varsity" />}
+                <div className="flex min-w-0 flex-1 flex-col gap-2">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="truncate text-[18px] font-semibold tracking-[-0.01em] text-text">
+                        {user.name || "Member"}
+                      </span>
+                      {user.badges.varsity && <ProfileBadge kind="varsity" />}
+                    </div>
+                    {(user.residence || user.classYear) && (
+                      <div className="mt-0.5 truncate text-[12.5px] text-muted">
+                        {residenceLabel(user.residence ?? "")}
+                        {user.residence && user.classYear ? " · " : ""}
+                        {user.classYear ? classOfLabel(user.classYear) : ""}
+                      </div>
+                    )}
                   </div>
-                  {(user.residence || user.classYear) && (
-                    <div className="mt-0.5 text-[12.5px] text-muted">
-                      {residenceLabel(user.residence ?? "")}
-                      {user.residence && user.classYear ? " · " : ""}
-                      {user.classYear ? classOfLabel(user.classYear) : ""}
-                    </div>
-                  )}
-                  {(fit !== null || user.badges.mentor) && (
-                    <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                      {fit !== null && (
-                        <span className="rounded-full border border-primary-line bg-primary-tint px-2.5 py-0.5 text-[11.5px] font-semibold text-primary">
-                          {fit}
-                        </span>
-                      )}
-                      {user.badges.mentor && (
-                        <span className="rounded-full border border-success-line bg-success-tint px-2.5 py-0.5 text-[11.5px] font-semibold text-success">
-                          Mentor
-                        </span>
-                      )}
-                    </div>
-                  )}
+
+                  {/* Three equal columns, hairlines at a third and two thirds —
+                      the same row your own profile has. A dash until the
+                      numbers have landed, so the row never jumps. */}
+                  <div className="grid grid-cols-3">
+                    {(
+                      [
+                        { key: "followers", label: "Followers", n: counts?.followers, open: true },
+                        { key: "following", label: "Following", n: counts?.following, open: true },
+                        { key: "partners", label: "Partners", n: partnerCount ?? undefined, open: false },
+                      ] as { key: string; label: string; n: number | undefined; open: boolean }[]
+                    ).map((c, i) => {
+                      const body = (
+                        <>
+                          <div className="text-[17px] font-medium tabular-nums text-text">
+                            {c.n ?? "—"}
+                          </div>
+                          <div
+                            className={`mt-0.5 truncate text-[10px] uppercase tracking-[0.04em] ${
+                              c.open ? "text-primary" : "text-muted"
+                            }`}
+                          >
+                            {c.label}
+                          </div>
+                        </>
+                      );
+                      return (
+                        <div
+                          key={c.key}
+                          className={`flex min-w-0 items-stretch ${i > 0 ? "border-l border-border" : ""}`}
+                        >
+                          {c.open ? (
+                            <button
+                              type="button"
+                              disabled={counts === null}
+                              onClick={() => setListOpen(c.key as FollowKind)}
+                              className="w-full min-w-0 rounded-md px-0.5 text-center transition-colors active:bg-surface-2"
+                            >
+                              {body}
+                            </button>
+                          ) : (
+                            <div className="w-full min-w-0 px-0.5 text-center">{body}</div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
+
+              {(fit !== null || user.badges.mentor) && (
+                <div className="mt-3 flex flex-wrap items-center gap-1.5">
+                  {fit !== null && (
+                    <span className="rounded-full border border-primary-line bg-primary-tint px-2.5 py-0.5 text-[11.5px] font-semibold text-primary">
+                      {fit}
+                    </span>
+                  )}
+                  {user.badges.mentor && (
+                    <span className="rounded-full border border-success-line bg-success-tint px-2.5 py-0.5 text-[11.5px] font-semibold text-success">
+                      Mentor
+                    </span>
+                  )}
+                </div>
+              )}
 
               {user.bio && (
                 <p className="mt-3 text-[13.5px] leading-relaxed text-text-2">{user.bio}</p>
               )}
-
-              <div className="mt-3 flex items-center gap-4 border-t border-border pt-3">
-                {(
-                  [
-                    { key: "followers", word: counts?.followers === 1 ? "follower" : "followers", n: counts?.followers },
-                    { key: "following", word: "following", n: counts?.following },
-                  ] as { key: FollowKind; word: string; n: number | undefined }[]
-                ).map((c) => (
-                  <button
-                    key={c.key}
-                    type="button"
-                    disabled={counts === null}
-                    onClick={() => setListOpen(c.key)}
-                    className="flex items-baseline gap-1 rounded-md text-[13px] active:opacity-60"
-                  >
-                    <span className="font-semibold tabular-nums text-text">{c.n ?? "—"}</span>
-                    <span className="text-muted">{c.word}</span>
-                  </button>
-                ))}
-              </div>
             </div>
 
             {/* WHY YOU MATCH — the one tinted card on the page, because it is
