@@ -1283,10 +1283,11 @@ export default function ProfileScreen() {
           <IconSquad size={18} />
         </span>
         <div className="min-w-0 flex-1">
-          {/* ROSTER — what the page it opens is already called (owner,
-              2026-09-22: "just the roster, I never call it that"). "The
-              squad" was a second word for one list. */}
-          <div className="text-[13px] font-medium text-text">Roster</div>
+          {/* TEAM (owner, 2026-09-22, later the same day). It read "The
+              squad", then "Roster", and is now "Team" — the word came free
+              when the tab that used to carry it became Workouts, and this
+              row is the one place in the app that opens the team itself. */}
+          <div className="text-[13px] font-medium text-text">Team</div>
         </div>
         <span className="text-muted">
           <IconChevronRight size={17} />

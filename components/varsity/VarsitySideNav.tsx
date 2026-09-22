@@ -7,7 +7,7 @@
   swaps one layout for a completely different one:
     header  the crest + "Varsity Mode", which opens the mode switcher
     action  Log session (the phone's round + button)
-    tabs    Home · Calendar · Team · Profile (from VarsityNav — one list)
+    tabs    Home · Calendar · Workouts · Profile (from VarsityNav — one list)
     footer  edit profile (on Profile only), settings, light/dark, Exit
 */
 import Link from "next/link";

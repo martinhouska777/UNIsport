@@ -74,7 +74,12 @@ import {
   type StatMetric,
   type StatRange,
 } from "@/lib/varsity/athleteStats";
-import { rowingReport, bucketDetail, type StatTone } from "@/lib/varsity/rowingStats";
+import {
+  groupsForMeasure,
+  rowingReport,
+  bucketDetail,
+  type StatTone,
+} from "@/lib/varsity/rowingStats";
 import { trainingMix } from "@/lib/varsity/trainingMix";
 import TrainingMixList from "@/components/varsity/profile/TrainingMixList";
 import { type DaysOut } from "@/lib/varsity/daysOut";
@@ -196,7 +201,12 @@ export default function StatsFullScreen({
     endIso: buckets[buckets.length - 1]?.span.endIso ?? today,
   };
   const allLogs = buckets.flatMap((b) => b.logs);
-  const groups = rowingReport(allLogs, plan, whole, units, daysOut, checkIns);
+  /* The measure's own group first: on Recovery you want the recovery
+     averages under the curves, not four cells of kilometres. */
+  const groups = groupsForMeasure(
+    rowingReport(allLogs, plan, whole, units, daysOut, checkIns),
+    metric.key,
+  );
   const shaded = buckets.map((b) =>
     Object.keys(daysOut).some((iso) => iso >= b.span.startIso && iso <= b.span.endIso),
   );

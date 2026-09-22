@@ -46,7 +46,10 @@ const leftTabs: Tab[] = [
 ];
 
 const rightTabs: Tab[] = [
-  { href: "/varsity/team", label: "Team", icon: IconTeam },
+  /* WORKOUTS, not "Team" (owner, 2026-09-22): the tab has held nothing but
+     the squad's workout boards since the roster moved onto the Profile, and
+     the word Team now belongs to that roster row. */
+  { href: "/varsity/team", label: "Workouts", icon: IconTeam },
   { href: "/varsity/profile", label: "Profile", icon: <IconUser size={24} /> },
 ];
 

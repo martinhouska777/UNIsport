@@ -429,6 +429,32 @@ export function rowingReport(
   ];
 }
 
+/*
+  THE GROUP THE GRAPH IS ABOUT COMES FIRST (owner, 2026-09-22).
+
+    "When I click Recovery, it didn't show me - the Recovery showed me what I
+     did that day, like training. When there is Recovery on top, I want the
+     Recovery part to be on top, so the screen changes based on what you are
+     on, like metres, time, trained."
+
+  The groups below the graph were in one fixed order - Distance, Time,
+  Consistency, then Recovery last - whatever the graph was drawing. So picking
+  Recovery drew three curves and then, underneath them, four cells of
+  kilometres: you had to scroll past everything you had NOT asked about to
+  reach the averages for the thing you had. Now the chosen measure's own group
+  is lifted to the top and the rest keep their order behind it, so the answer
+  is always the first thing under the picture of it.
+
+  IT WORKS BECAUSE THE KEYS MATCH: every measure in `statMetrics` is named for
+  the group it belongs to (distance, time, consistency, recovery). Keep it that
+  way - a new measure whose key is a new group's key needs no code here.
+*/
+export function groupsForMeasure(groups: StatGroup[], measure: string): StatGroup[] {
+  const i = groups.findIndex((g) => g.key === measure);
+  if (i <= 0) return groups;
+  return [groups[i], ...groups.slice(0, i), ...groups.slice(i + 1)];
+}
+
 /** Whether a window has anything in it at all — the screen's empty state. */
 export const reportIsEmpty = (logs: LogEntry[]) => logs.filter(isTraining).length === 0;
 

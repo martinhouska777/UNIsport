@@ -39,7 +39,12 @@ import {
   defaultStatRange,
   type Bucket,
 } from "@/lib/varsity/athleteStats";
-import { rowingReport, reportIsEmpty, type StatTone } from "@/lib/varsity/rowingStats";
+import {
+  groupsForMeasure,
+  rowingReport,
+  reportIsEmpty,
+  type StatTone,
+} from "@/lib/varsity/rowingStats";
 import { fetchLogsInRange, type LogEntry } from "@/lib/varsity/logStore";
 import { fetchPlan } from "@/lib/varsity/planStore";
 import { publishedSessions } from "@/lib/varsity/athleteHome";
@@ -130,7 +135,9 @@ export default function AthleteStats({
     ? { startIso: buckets[0].span.startIso, endIso: buckets[buckets.length - 1].span.endIso }
     : { startIso: toIso(now), endIso: toIso(now) };
   const all = buckets.flatMap((b) => b.logs);
-  const groups = rowingReport(all, plan, span, units);
+  /* The measure's own group first — the same rule as the athlete's own
+     screen, so a coach and a rower read them in the same order. */
+  const groups = groupsForMeasure(rowingReport(all, plan, span, units), metric.key);
   const empty = reportIsEmpty(all);
 
   return (
