@@ -31,7 +31,7 @@ mkdirSync(OUT, { recursive: true });
 
 const W = 402, H = 874, DSF = 3;
 const ONLY = process.argv.slice(2).filter((a) => !a.startsWith("--"));
-const wants = (n) => ONLY.length ? ONLY.includes(n) : !n.startsWith("varsity-");
+const wants = (n) => ONLY.length ? ONLY.includes(n) : !/^(varsity|coach)-/.test(n);
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const browser = await puppeteer.launch({
@@ -98,15 +98,51 @@ const SCREENS = {
   },
   messages: async () => { await go("/messages"); },
   profile: async () => { await go("/profile"); },
-  /* /leaderboards opens on the Honor Code the first time an account visits;
-     the board itself needs "I agree" pressed once on the real account */
-  leaderboards: async () => { await go("/leaderboards"); },
+  /* /leaderboards opens on the Honor Code the first time an account visits.
+     The demo account signs it here (name + "I agree") — once, on the owner's
+     word (2026-09-22), so the board itself can be shot. */
+  leaderboards: async () => {
+    await go("/leaderboards");
+    const signed = await page.evaluate(() => {
+      const inp = document.querySelector("input");
+      if (!inp || !/honor code/i.test(document.body.innerText)) return "already";
+      const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set;
+      setter.call(inp, "Martin Houska");
+      inp.dispatchEvent(new Event("input", { bubbles: true }));
+      return "typed";
+    });
+    if (signed === "typed") {
+      await wait(600);
+      const ok = await clickText(/^i agree$/);
+      if (!ok) throw new Error("no I agree button");
+      await wait(3500);
+    }
+  },
   memories: async () => { await go("/memories"); },
   /* VARSITY SCREENS ARE OPT-IN (name them on the command line). They carry
      "Harvard Rowing", the shield and the squad's REAL names and splits — none
      of it can go on a public account or into this PUBLIC repo (SOCIAL.md §7B).
      They exist here for the day a demo team with invented rowers is seeded. */
   "varsity-home": async () => { await go("/varsity/home", 4500); },
+  "varsity-lineups": async () => { await go("/varsity/lineups", 4500); },
+  "varsity-roster": async () => { await go("/varsity/team/roster", 4500); },
+  "varsity-log-sheet": async () => {
+    await go("/varsity/calendar");
+    const ok = await page.evaluate(() => { const b = document.querySelector('button[aria-label="Log a session"]'); if (!b) return false; b.click(); return true; });
+    if (!ok) throw new Error("no (+) Log a session");
+    await wait(2500);
+  },
+  "varsity-workouts": async () => {
+    await go("/varsity/team", 4500);
+    await clickText(/^workouts$/);
+    await wait(2500);
+  },
+  "coach-today": async () => { await go("/varsity/coach", 5000); await clickText(/^(skip|close)$/); await wait(1500); },
+  "coach-plan": async () => { await go("/varsity/coach/plan", 4500); },
+  "coach-lineup": async () => { await go("/varsity/coach/lineup", 4500); },
+  "coach-workouts": async () => { await go("/varsity/coach/workouts", 4500); },
+  "coach-team": async () => { await go("/varsity/coach/team", 4500); },
+  "coach-notes": async () => { await go("/varsity/coach/notes", 4500); },
   "varsity-log": async () => { await go("/varsity/log"); },
   "varsity-calendar": async () => { await go("/varsity/calendar"); },
   "varsity-team": async () => { await go("/varsity/team", 4500); },

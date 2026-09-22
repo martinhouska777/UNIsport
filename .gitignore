@@ -60,3 +60,10 @@ unisportforboathouses/
 
 # rendered video (regenerate with scripts/video/*.mjs)
 mockups/video/*.mp4
+
+# varsity/coach captures carry the squad's REAL names — never into the public repo (SOCIAL.md 7B)
+mockups/social/screens/*/varsity-*.png
+mockups/social/screens/*/coach-*.png
+mockups/social/phones/varsity-*.png
+mockups/social/phones/coach-*.png
+mockups/social/phones-sheet.png

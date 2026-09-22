@@ -25,7 +25,7 @@
        mockups/social/phones/<screen>.png (1080 x 2300, transparent)
 */
 import puppeteer from "puppeteer-core";
-import { readFileSync, mkdirSync } from "node:fs";
+import { readFileSync, readdirSync, mkdirSync } from "node:fs";
 import path from "node:path";
 import sharp from "sharp";
 
@@ -85,7 +85,7 @@ const MESSAGES = [
 ];
 
 const BAND = {};
-for (const m of MESSAGES) if (m.img && !BAND[m.img]) BAND[m.img] = await topColour(m.img);
+for (const f of readdirSync(path.join(ROOT, "mockups/social/screens/light"))) if (f.endsWith(".png")) BAND[f.slice(0, -4)] = await topColour(f.slice(0, -4));
 
 /* the capture is 1206 px wide; at `w` px the skipped part is shift * height */
 const shiftCss = (m, w) => m.shift ? `transform:translateY(-${Math.round(m.shift * 2622 * (w / 1206))}px)` : "";
@@ -203,7 +203,8 @@ const story = (m) => {
 
 /* the phone alone, whole, transparent. No shift: in a video the whole screen
    is wanted, and he scrolls nothing. */
-const PHONES = ["gyms", "match", "person", "chat", "messages", "profile"].map((img) => ({ id: img, img }));
+const PHONES = readdirSync(path.join(ROOT, "mockups/social/screens/light")).filter((f) => f.endsWith(".png"))
+  .map((f) => f.slice(0, -4)).map((img) => ({ id: img, img }));
 const alone = (m) => `<div class="slide" style="background:transparent">${phone(m, 960, "top:60px;margin-left:-480px")}</div>`;
 
 const which = process.argv[2] || "all";
