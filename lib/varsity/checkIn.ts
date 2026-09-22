@@ -111,6 +111,22 @@ export type RecoveryCurve = {
   points: (number | null)[];
 };
 
+/*
+  THE THREE, IN ORDER, EACH WITH THE SERIES IT IS DRAWN AS. One list, so the
+  curves on the graph, the legend under it and the day read out below it can
+  never put the same answer in two different colours. A tone word, never a
+  colour (rule 1).
+*/
+const RECOVERY_SHAPE: {
+  key: RecoveryCurve["key"];
+  label: string;
+  tone: RecoveryCurve["tone"];
+}[] = [
+  { key: "sleep", label: "Slept", tone: "series-1" },
+  { key: "tired", label: "Tiredness", tone: "series-2" },
+  { key: "sore", label: "Soreness", tone: "series-3" },
+];
+
 /**
  * The three curves over a run of windows — one point per bucket of the graph.
  *
@@ -124,13 +140,8 @@ export function recoveryCurves(
   checkIns: CheckIns,
   spans: { startIso: string; endIso: string }[],
 ): RecoveryCurve[] {
-  const shape: { key: RecoveryCurve["key"]; label: string; tone: RecoveryCurve["tone"] }[] = [
-    { key: "sleep", label: "Slept", tone: "series-1" },
-    { key: "tired", label: "Tiredness", tone: "series-2" },
-    { key: "sore", label: "Soreness", tone: "series-3" },
-  ];
   const days = Object.entries(checkIns);
-  return shape.map((c) => ({
+  return RECOVERY_SHAPE.map((c) => ({
     ...c,
     points: spans.map((span) => {
       const answered: number[] = [];
@@ -244,4 +255,62 @@ export function recoverySummary(
     avgTired: avg(pick((c) => c.tired)),
     avgSore: avg(pick((c) => c.sore)),
   };
+}
+
+/*
+  ONE DAY OF RECOVERY, READ OUT LOUD (owner, 2026-09-22).
+
+    "When I click a day in Recovery, I still see right under it the workouts
+     for that day. I want to see the recovery stuff for that day."
+
+  The card under the graph always read out TRAINING - the sessions of the day
+  you tapped, how long, how far - whatever the graph above it was drawing. On
+  Recovery that is the wrong answer to the question you just asked: you tapped
+  the 15th on a sleep curve and were told you rowed 16k.
+
+  So on Recovery the same card reads the CHECK-IN instead: how you slept, how
+  tired, how sore. Over a week column it is the mean of the days that answered
+  inside it, exactly as the curve is drawn - so the card and the point you
+  tapped are the same number.
+
+  A question nobody answered is LEFT OUT, not printed as a dash, and a stretch
+  with no check-in at all comes back with no rows: an empty day reads out
+  nothing, which is the rule the training version of this card already keeps.
+*/
+export type RecoveryRead = {
+  /** Days inside the stretch with a check-in of any kind. */
+  days: number;
+  rows: {
+    key: RecoveryCurve["key"];
+    label: string;
+    value: string;
+    tone: RecoveryCurve["tone"];
+  }[];
+};
+
+export function recoveryReadOut(
+  checkIns: CheckIns,
+  fromIso: string,
+  toIso: string,
+): RecoveryRead {
+  const entries = Object.entries(checkIns).filter(
+    ([iso]) => iso >= fromIso && iso <= toIso,
+  );
+  /* A whole number stays whole: one day's "7" is not "7.0". */
+  const said = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(1));
+  const rows: RecoveryRead["rows"] = [];
+  for (const c of RECOVERY_SHAPE) {
+    const answered = entries
+      .map(([, entry]) => entry[c.key])
+      .filter((v): v is number => v !== null && v !== undefined);
+    if (answered.length === 0) continue;
+    const mean = answered.reduce((a, b) => a + b, 0) / answered.length;
+    rows.push({
+      key: c.key,
+      label: c.label,
+      tone: c.tone,
+      value: c.key === "sleep" ? `${said(mean)}h` : `${said(mean)} / 10`,
+    });
+  }
+  return { days: entries.length, rows };
 }

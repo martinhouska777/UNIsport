@@ -57,7 +57,7 @@ import { createPortal } from "react-dom";
 import ThemeProvider from "@/components/ThemeProvider";
 import { useVarsityTheme } from "@/components/varsity/useVarsityTheme";
 import Plot, { type PlotCurve } from "@/components/varsity/profile/Plot";
-import { CurveLegend } from "@/components/varsity/profile/CurveLegend";
+import { CurveLegend, curveDot } from "@/components/varsity/profile/CurveLegend";
 import Dropdown from "@/components/varsity/profile/Dropdown";
 import { IconX, IconCalendar, IconArrowLeft } from "@/components/icons";
 import { formatDistance, formatDuration, type Units } from "@/lib/varsity/units";
@@ -83,7 +83,12 @@ import {
 import { trainingMix } from "@/lib/varsity/trainingMix";
 import TrainingMixList from "@/components/varsity/profile/TrainingMixList";
 import { type DaysOut } from "@/lib/varsity/daysOut";
-import { type CheckIns, recoveryCurves, hasRecovery } from "@/lib/varsity/checkIn";
+import {
+  type CheckIns,
+  recoveryCurves,
+  recoveryReadOut,
+  hasRecovery,
+} from "@/lib/varsity/checkIn";
 
 /* A word from the data → a theme token. The data never names a colour. */
 const toneClass: Record<StatTone, string> = {
@@ -218,6 +223,15 @@ export default function StatsFullScreen({
         ? { ...buckets[0], span: whole, logs: allLogs }
         : null;
   const detail = current ? bucketDetail(current.logs, units) : null;
+  /*
+    ON RECOVERY THE CARD READS THE CHECK-IN, not the training (owner,
+    2026-09-22). Tapping the 15th on a sleep curve and being told you rowed
+    16k is an answer to a question you did not ask.
+  */
+  const recoveryRead =
+    metric.curves && current
+      ? recoveryReadOut(checkIns, current.span.startIso, current.span.endIso)
+      : null;
   /*
     THE MIX OF THIS WINDOW. Same logs the graph just plotted, so the bars can
     never disagree with the columns above them, and a drag-to-zoom changes them
@@ -358,19 +372,40 @@ export default function StatsFullScreen({
                       counting what you can already see — the day says only
                       its total time. */}
                   <span className="flex-shrink-0 text-[11px] text-muted">
-                    {detail && detail.sessions > 0
-                      ? [
-                          manyDays
-                            ? `${detail.sessions} session${detail.sessions === 1 ? "" : "s"}`
-                            : null,
-                          detail.minutes > 0 ? formatDuration(Math.round(detail.minutes)) : null,
-                        ]
-                          .filter(Boolean)
-                          .join(" · ")
-                      : "nothing logged"}
+                    {recoveryRead
+                      ? recoveryRead.days === 0
+                        ? "no check-in"
+                        : manyDays
+                          ? `${recoveryRead.days} day${recoveryRead.days === 1 ? "" : "s"} answered`
+                          : ""
+                      : detail && detail.sessions > 0
+                        ? [
+                            manyDays
+                              ? `${detail.sessions} session${detail.sessions === 1 ? "" : "s"}`
+                              : null,
+                            detail.minutes > 0 ? formatDuration(Math.round(detail.minutes)) : null,
+                          ]
+                            .filter(Boolean)
+                            .join(" · ")
+                        : "nothing logged"}
                   </span>
                 </div>
-                {detail && !manyDays && detail.rows.length > 0 && (
+                {/* THE CHECK-IN, when that is what the graph is about: each
+                    answer beside the dot its own curve is drawn in. */}
+                {recoveryRead && recoveryRead.rows.length > 0 && (
+                  <div className="mt-2 flex flex-col gap-1.5 border-t border-border pt-2">
+                    {recoveryRead.rows.map((r) => (
+                      <div key={r.key} className="flex items-baseline justify-between gap-3">
+                        <span className="flex min-w-0 items-center gap-2">
+                          <span className={`h-2 w-2 flex-shrink-0 rounded-full ${curveDot[r.tone]}`} />
+                          <span className="truncate text-[12px] font-medium text-text">{r.label}</span>
+                        </span>
+                        <span className="flex-shrink-0 text-[11px] text-muted">{r.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {!recoveryRead && detail && !manyDays && detail.rows.length > 0 && (
                   <div className="mt-2 flex flex-col gap-1.5 border-t border-border pt-2">
                     {/* Each session in its workout's colour — the same dot
                         the calendar and the week totals below use. */}
@@ -388,7 +423,7 @@ export default function StatsFullScreen({
                     ))}
                   </div>
                 )}
-                {detail && manyDays && detail.byCategory.length > 0 && (
+                {!recoveryRead && detail && manyDays && detail.byCategory.length > 0 && (
                   <div className="mt-2 flex flex-col gap-1.5 border-t border-border pt-2">
                     {detail.byCategory.map((c) => (
                       <div key={c.key} className="flex items-baseline justify-between gap-3">

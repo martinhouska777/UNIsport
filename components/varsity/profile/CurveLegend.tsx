@@ -20,7 +20,9 @@
 */
 import type { PlotCurve } from "@/components/varsity/profile/Plot";
 
-const curveDot: Record<PlotCurve["tone"], string> = {
+/* Exported so the day read out under the graph can put each answer beside
+   the very dot its curve is drawn in. */
+export const curveDot: Record<PlotCurve["tone"], string> = {
   "series-1": "bg-series-1",
   "series-2": "bg-series-2",
   "series-3": "bg-series-3",
