@@ -36,7 +36,11 @@
   (scanning the monitor photo if they like) and the board assembles itself.
 
   Data: the plan comes from planStore (which is where the coach's switch lives),
-  the results from resultsStore, the outings from telemetryStore. Until a real
+  the results from resultsStore, the outings from telemetryStore. EVERY ROW
+  WEARS ITS INTENSITY (owner, 2026-09-21): green UT2, yellow UT1, red hard —
+  the squad's own spreadsheet colours, on the water side as well as the erg
+  side — and those words are searchable even when the coach never typed them.
+  Until a real
   export has been imported the water side shows ONE example outing transcribed
   from the owner's own PowerLine screen (lib/varsity/demoTelemetry.ts) — real
   numbers, gone the moment a real one exists. Colors are theme tokens; the
@@ -63,7 +67,9 @@ import { fetchPlan } from "@/lib/varsity/planStore";
 import { demoTeamPlan, demoSquadSize } from "@/lib/varsity/demoWorkouts";
 import { fetchResults, fetchSquadSize, type TeamResult } from "@/lib/varsity/resultsStore";
 import { teamWorkouts, type TeamWorkout } from "@/lib/varsity/teamBoard";
-import { sessionLabel, sessionColor, dayKeyLabel, parseSessionKey } from "@/lib/varsity/coachPlan";
+import { sessionLabel, dayKeyLabel, parseSessionKey, type Session } from "@/lib/varsity/coachPlan";
+import { kindOf } from "@/lib/varsity/athleteHome";
+import { kindColor, kindLegend } from "@/lib/varsity/home";
 import { fetchTrainingConfig } from "@/lib/varsity/configStore";
 import { fetchOutings } from "@/lib/varsity/telemetryStore";
 import { demoOutings } from "@/lib/varsity/demoTelemetry";
@@ -76,6 +82,27 @@ import { fetchLineupsFor } from "@/lib/varsity/lineupStore";
 import type { Boat } from "@/lib/varsity/coachLineup";
 import type { SessionMap } from "@/lib/varsity/coachPlan";
 import { IconChevronRight, IconPlus, IconSearch } from "@/components/icons";
+
+/*
+  WHAT A ROW WAS, AS A COLOUR AND A WORD (owner, 2026-09-21).
+  ---------------------------------------------------------------------------
+  Every row on this screen is a session the coach planned, so every row can
+  wear the intensity the calendar already paints it: UT2 green, UT1 yellow,
+  hard red — the squad's own spreadsheet colours (lib/varsity/home → kindColor).
+  It was the plain varsity accent on the water side and a config colour on the
+  erg side, which meant the one screen where you scan a season for the hard
+  pieces was the one screen that didn't show them.
+
+  The WORD goes into what you can search, so typing "hard" finds the 2×2k even
+  though the coach wrote "2x2k open in small boats" and never typed "hard".
+*/
+function intensityOf(session: Session | undefined): { color: string; word: string } | null {
+  if (!session || session.category === "off") return null;
+  const kind = kindOf(session);
+  const legend = kindLegend.find((k) => k.kind === kind);
+  if (!legend) return null;
+  return { color: kindColor[kind], word: legend.label };
+}
 
 /** "Fri 15 May · AM" for an outing's session key. */
 function outingDateLabel(dayKey: string): string {
@@ -291,6 +318,10 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
     const sess = planSessions[dayKey];
     return sess ? sess.description.trim() || sessionLabel(sess) : "Race pieces";
   };
+  /* The coach's session behind a row, whichever of the three kinds it is —
+     an erg board carries its own, the water ones are found by day key. */
+  const rowSession = (row: Row): Session | undefined =>
+    row.erg?.session ?? planSessions[row.race?.dayKey ?? row.water?.dayKey ?? ""];
 
   /* Erg, unless there is nothing on it and there IS something on the water. */
   const side: Side = picked ?? (ergRows.length === 0 && waterRows.length > 0 ? "water" : "erg");
@@ -299,11 +330,18 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
   const words = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
   const shownRows = words.length
     ? rows.filter((row) => {
+        /* Whatever the coach typed, PLUS what the session is — "Water · UT1",
+           and the one word "UT1" — so an intensity is searchable even on a
+           row whose description never mentions it. */
+        const session = rowSession(row);
+        const kindWords = session
+          ? `${sessionLabel(session)} ${intensityOf(session)?.word ?? ""}`
+          : "";
         const text = row.erg
-          ? searchText(row.erg.session.description.trim() || sessionLabel(row.erg.session), row.erg.dateLabel, row.date)
+          ? searchText(`${row.erg.session.description.trim()} ${kindWords}`, row.erg.dateLabel, row.date)
           : row.race
-            ? searchText(`${raceTitle(row.race.dayKey)} race pieces`, outingDateLabel(row.race.dayKey), row.date)
-            : searchText(`${row.water!.crew} ${row.water!.pieces.length} pieces`, outingDateLabel(row.water!.dayKey), row.date);
+            ? searchText(`${raceTitle(row.race.dayKey)} race pieces ${kindWords}`, outingDateLabel(row.race.dayKey), row.date)
+            : searchText(`${row.water!.crew} ${row.water!.pieces.length} pieces ${kindWords}`, outingDateLabel(row.water!.dayKey), row.date);
         return words.every((w) => text.includes(w));
       })
     : rows;
@@ -347,34 +385,40 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
           </button>
         ))}
       </div>
-      {/* THE COACH'S NEW RACE DAY — water side only: pick the session, and
-          Piece 1 is made from its lineup. */}
-      {inConsole && side === "water" && (
-        <button
-          type="button"
-          onClick={() => setPickingRace(true)}
-          className="mb-3 flex w-full items-center justify-center gap-1.5 rounded-2xl border border-dashed border-border bg-surface-2 px-4 py-3 text-[13px] font-medium text-text active:bg-surface"
-        >
-          <IconPlus size={14} /> Time race pieces
-        </button>
-      )}
-      {rows.length > 0 && (
+      {(rows.length > 0 || (inConsole && side === "water")) && (
         // The same search bubble the Team roster uses — white since 2026-09-16 (owner: "it's gray, it should be white").
-        <div className="mb-3 flex items-center gap-2 rounded-full border border-border bg-surface px-4 py-2.5">
-          <span className="text-muted">
-            <IconSearch size={16} />
-          </span>
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            /* Just "Search" (owner, 2026-09-14). What you can type into it is
-               something you find out by typing; the label was spending the
-               width of the field explaining itself. The spoken label still
-               says which search this is, for a screen reader. */
-            placeholder="Search"
-            aria-label="Search workouts"
-            className="w-full bg-transparent text-base text-text outline-none placeholder:text-muted"
-          />
+        <div className="mb-3 flex items-center gap-2">
+          <div className="flex min-w-0 flex-1 items-center gap-2 rounded-full border border-border bg-surface px-4 py-2.5">
+            <span className="text-muted">
+              <IconSearch size={16} />
+            </span>
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              /* Just "Search" (owner, 2026-09-14). What you can type into it is
+                 something you find out by typing; the label was spending the
+                 width of the field explaining itself. The spoken label still
+                 says which search this is, for a screen reader. */
+              placeholder="Search"
+              aria-label="Search workouts"
+              className="w-full bg-transparent text-base text-text outline-none placeholder:text-muted"
+            />
+          </div>
+          {/* THE COACH'S NEW RACE DAY — water side only. It was a dashed bar
+              the full width of the screen above the search; the owner cut it
+              (2026-09-21: "leave it just the search button"). It is the only
+              way in to timing a race, so it is still here — as a plus on the
+              end of the search row, out of the way of the list. */}
+          {inConsole && side === "water" && (
+            <button
+              type="button"
+              onClick={() => setPickingRace(true)}
+              aria-label="Time race pieces"
+              className="tap44 press-icon flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border border-border bg-surface text-muted active:bg-surface-2"
+            >
+              <IconPlus size={16} />
+            </button>
+          )}
         </div>
       )}
       <div className="flex flex-col gap-1.5">
@@ -404,7 +448,7 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
               >
                 <span
                   className="h-2.5 w-2.5 flex-shrink-0 rounded-full"
-                  style={{ background: sessionColor(w.session) }}
+                  style={{ background: intensityOf(w.session)?.color ?? "var(--muted)" }}
                 />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
@@ -436,7 +480,10 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
                 onClick={() => setOpenRace(r.dayKey)}
                 className="flex w-full items-center gap-3 rounded-2xl border border-border bg-surface px-3.5 py-3 text-left active:bg-surface-2"
               >
-                <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full bg-accent" />
+                <span
+                  className="h-2.5 w-2.5 flex-shrink-0 rounded-full"
+                  style={{ background: intensityOf(planSessions[r.dayKey])?.color ?? "var(--accent)" }}
+                />
                 <div className="min-w-0 flex-1">
                   <span className="block truncate text-[13px] font-semibold text-text">{raceTitle(r.dayKey)}</span>
                   <div className="mt-1 text-[11px] tabular-nums text-muted">
@@ -460,8 +507,13 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
               onClick={() => setOpenOuting(o.id)}
               className="flex w-full items-center gap-3 rounded-2xl border border-border bg-surface px-3.5 py-3 text-left active:bg-surface-2"
             >
-              {/* water: the varsity accent, the same dot the plan draws for water */}
-              <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full bg-accent" />
+              {/* The outing's own intensity, the colour the calendar paints
+                  that morning — green UT2, yellow UT1, red hard. The varsity
+                  accent for an outing with no session behind it. */}
+              <span
+                className="h-2.5 w-2.5 flex-shrink-0 rounded-full"
+                style={{ background: intensityOf(planSessions[o.dayKey])?.color ?? "var(--accent)" }}
+              />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
                   <span className="truncate text-[13px] font-semibold text-text">
@@ -517,7 +569,7 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
                   onClick={() => startRace(c.dayKey)}
                   className="flex w-full items-center gap-3 rounded-2xl border border-border bg-surface px-3.5 py-3 text-left active:bg-surface-2"
                 >
-                  <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ background: sessionColor(c.session) }} />
+                  <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ background: intensityOf(c.session)?.color ?? "var(--muted)" }} />
                   <div className="min-w-0 flex-1">
                     <span className="block truncate text-[13px] font-semibold text-text">
                       {c.session.description.trim() || sessionLabel(c.session)}
