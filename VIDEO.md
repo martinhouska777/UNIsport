@@ -111,3 +111,34 @@ coaches and athletic directors. Not started.
 3. **The on-screen lines** need the owner's eye — see Cut 1.
 4. **Sound.** The owner is doing music and effects himself, so the export is
    silent on purpose.
+
+---
+
+## Cut 2 — the intro, 12 s vertical, WITH sound (2026-09-22)
+
+**Built.** `scripts/video/intro.mjs` → `mockups/video/unisport-intro.mp4` (silent), then
+`scripts/video/intro-sound.mjs` → `mockups/video/unisport-intro-sound.mp4`. Both .mp4 are
+gitignored; re-run the two scripts to get them back (≈4 min).
+
+The owner cut the reel down to its first half: no feature screens. What is in it:
+
+| Time | Beat |
+|---|---|
+| 0.0–0.75 | a streak of light collapses into a cursor |
+| 0.75–2.9 | "Never train alone again." types in. No word burns (owner). |
+| 2.95–5.0 | the cursor walks back over "alone again." and types "with the right people." |
+| 5.15 | the line burns off |
+| 5.55–7.95 | "Choose your activity." — Gym · Running · Cardio; a hand taps Gym, then Cardio |
+| 8.35–9.95 | two i-figures slide in, stop a hand apart, connect on the straight seam → the mark |
+| 10.35 | the wordmark, then getunisport.com; fade at 11.75 |
+
+Sound: the bed is a ChatCut-generated instrumental (mureka-9, project "UNIsport logo
+explorations", asset "Intro bed"; music generation did NOT need Pro, image generation did).
+It came back as sparse swells, so it is spliced: bed 0–9.95 s, then bed 14.3 s onward, so a
+swell sits under the seam flash. Clicks, whooshes, taps and the impact are synthesised PCM in
+`intro-sound.mjs`, timed off the same T table as the picture. Getting the mp3 out of ChatCut:
+the asset download URL is session-authenticated (401 from curl); placing the asset on the
+timeline and exporting `format: audio` gives a plain S3 URL that curl can fetch.
+
+Keep: every headline character exists from frame one and is only hidden; the second line is
+left-aligned under the first. Nothing re-lays out, so tmix never ghosts it.
