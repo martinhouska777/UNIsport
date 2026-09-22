@@ -125,3 +125,33 @@ export function useClock(): Clock | null {
   }, []);
   return now;
 }
+
+/*
+  THE WEEK, as seven rows — "Mon  6am–11pm", today marked.
+
+  Every day reads the same, because the data holds ONE line of hours per gym
+  (owner, 2026-09-22: that is fine for now). The day it really matters — a gym
+  that shuts early on a Sunday — is the day a `hoursByDay` field goes on the
+  gym in lib/gyms.ts and this function reads it instead. Nothing else would
+  have to change.
+
+  `weekday` is 0=Sunday, the way JS counts, and may be null before the browser
+  has said what day it is — then no row is marked and the list still draws.
+*/
+export type DayHours = { day: string; hours: string; today: boolean };
+
+/** The house gyms, which never shut — one line beats seven identical rows. */
+export const isAlwaysOpen = (hours: string) => hours.trim() === "24/7";
+
+const DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+export function weekHours(hours: string, weekday: number | null): DayHours[] {
+  const open24 = isAlwaysOpen(hours);
+  // JS counts from Sunday; the list reads Monday first, as a week does.
+  const todayIndex = weekday === null ? -1 : (weekday + 6) % 7;
+  return DAY_NAMES.map((day, i) => ({
+    day,
+    hours: open24 ? "Open 24 hours" : hours,
+    today: i === todayIndex,
+  }));
+}

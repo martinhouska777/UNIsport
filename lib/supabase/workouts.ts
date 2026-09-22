@@ -601,3 +601,56 @@ export async function getPartnerCount(userId: string): Promise<number> {
   if (error) throw new Error(`getPartnerCount failed: ${error.message}`);
   return Number(data ?? 0);
 }
+
+/* ── YOUR history at ONE gym — what the gym page says back to you ──
+   How many sessions you have logged there, the last one, and who you went
+   with. Every number is your own log; nothing here is invented or shared. The
+   gym is matched by NAME because that is what a log stores (see `gym` above),
+   and case-insensitively so "adams" and "Adams" are one place. */
+export type GymHistory = {
+  count: number;
+  /** ISO date of the most recent session there, or null. */
+  last: string | null;
+  /** Who you trained with there, most sessions first. */
+  partners: { name: string; count: number }[];
+};
+
+const EMPTY_GYM_HISTORY: GymHistory = { count: 0, last: null, partners: [] };
+
+function summarizeGymLogs(logs: { date: string; partner: string }[]): GymHistory {
+  if (logs.length === 0) return EMPTY_GYM_HISTORY;
+  const byPartner = new Map<string, number>();
+  for (const l of logs) {
+    const name = l.partner.trim();
+    if (name) byPartner.set(name, (byPartner.get(name) ?? 0) + 1);
+  }
+  return {
+    count: logs.length,
+    last: logs.reduce((a, b) => (a.date > b.date ? a : b)).date,
+    partners: [...byPartner.entries()]
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count),
+  };
+}
+
+export async function gymHistory(userId: string, gymName: string): Promise<GymHistory> {
+  const name = gymName.trim();
+  if (!userId || !name) return EMPTY_GYM_HISTORY;
+  if (!hasSupabaseEnv()) {
+    return summarizeGymLogs(
+      loadLocal(userId).filter((l) => l.gym.trim().toLowerCase() === name.toLowerCase()),
+    );
+  }
+  const { data, error } = await createClient()
+    .from("workout_logs")
+    .select("log_date, gym, partner")
+    .eq("user_id", userId)
+    .ilike("gym", name);
+  if (error || !data) return EMPTY_GYM_HISTORY;
+  return summarizeGymLogs(
+    (data as { log_date: string; partner: string | null }[]).map((r) => ({
+      date: r.log_date,
+      partner: r.partner ?? "",
+    })),
+  );
+}

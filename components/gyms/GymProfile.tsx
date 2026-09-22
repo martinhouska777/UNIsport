@@ -8,6 +8,8 @@ import { useFavorites, useGymRatings, useGymPhotos } from "@/lib/gymSocial";
 import { StarRater } from "@/components/gyms/RateCrowd";
 import OpenNow from "@/components/gyms/OpenNow";
 import GymPhotos from "@/components/gyms/GymPhotos";
+import WeekHours from "@/components/gyms/WeekHours";
+import YourHistoryHere from "@/components/gyms/YourHistoryHere";
 import GoingLine, { boardHref } from "@/components/gyms/GoingLine";
 import PostGoingSheet from "@/components/gyms/PostGoingSheet";
 import Avatar from "@/components/messages/Avatar";
@@ -107,6 +109,13 @@ export default function GymProfile({ gym }: { gym: Gym }) {
       </div>
 
       {/*
+        THE WHOLE WEEK, under the one line at the top that answers "can I go in
+        right now". Same hours every day while the data holds one line per gym
+        (owner, 2026-09-22) — see weekHours() for the day that changes.
+      */}
+      <WeekHours hours={gym.hours} now={now} />
+
+      {/*
         PHOTOS, where the empty four-panel carousel once was. Taken by the
         people who train here rather than by anyone walking the campus with a
         camera — the newest one also becomes the gym's picture on the list.
@@ -148,6 +157,12 @@ export default function GymProfile({ gym }: { gym: Gym }) {
           </ul>
         </div>
       )}
+
+      {/*
+        WHAT THIS GYM IS TO YOU — the sessions you have logged here, when you
+        were last in, and who you went with. Read out of your own log.
+      */}
+      <YourHistoryHere userId={userId} gymName={gym.name} />
 
       {/*
         WHERE "RATINGS BREAKDOWN" USED TO BE — three gold bars (Equipment,
