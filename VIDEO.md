@@ -142,3 +142,30 @@ timeline and exporting `format: audio` gives a plain S3 URL that curl can fetch.
 
 Keep: every headline character exists from frame one and is only hidden; the second line is
 left-aligned under the first. Nothing re-lays out, so tmix never ghosts it.
+
+---
+
+## Cut 3 — the intro, LIGHT, for Instagram Reels (2026-09-22, evening)
+
+**Built.** Supersedes cut 2. `scripts/video/intro.mjs` (picture, ~4 min) then
+`scripts/video/intro-sound.mjs` (sound, seconds). Outputs (gitignored):
+`mockups/video/unisport-intro-reel.mp4` — SFX only, THE FILE FOR INSTAGRAM (add the
+trending track there); `unisport-intro-bed.mp4` — SFX + the generated bed, for anywhere else.
+
+The owner's revised brief is at the top of intro.mjs. What changed from cut 2: white ground,
+brand blue ink (mark keeps its navy); headline in Instrument Serif italic with a typewriter
+rhythm (seeded jitter, written to `intro-times.json` so sound and picture share it); the
+activities are plain labels with a BORDERED ICON TILE under each (Gym · Running · Cardio),
+tapped tiles fill blue; "Find training partners." → the two i's stop a hand apart → the label
+types "Match." as they close the gap → the mark → the real wordmark (UN in ink, barbell I,
+sport in blue). Camera: slow push while typing, pull back on each change, punch on the connect.
+
+Sound: real ChatCut LIBRARY sound-effects (free, unlike image generation). They cannot be
+downloaded singly, so they were parked one per 10 s slot on the ChatCut timeline and exported
+as one audio file: `mockups/video/sfx-bank.mp3` (slots listed in intro-sound.mjs). Every typed
+character plays a random 70 ms slice of the keyboard loop. No music is baked into the reel
+file on purpose — Instagram's own licensed audio goes on top. The "Montagem" track the owner
+mentioned is not in the repo and was not ripped from the reference reels: add it in Instagram.
+
+Gotcha: element ids. The headline's characters own ids a0…, b0…, p0…, m0…; anything else
+must not use those prefixes (the activity tiles did, and silently hid three letters).

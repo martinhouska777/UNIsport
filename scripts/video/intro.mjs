@@ -1,33 +1,48 @@
 /*
-  The intro (1080x1920, 30fps, ~12 s): the first half of the reel the owner
-  storyboarded on 2026-09-22, and nothing after it. No feature screens.
+  THE INTRO — an Instagram Reel, 1080x1920, 30 fps, ~12.5 s. Light version.
 
-    1. a streak of light collapses into a cursor
-    2. "Never train alone again." types itself, big, centred. No word burns.
-    3. the cursor walks back over "alone again." and types "with the right
-       people." — then the whole line burns off
-    4. "Choose your activity." and three chips: Gym · Running · Cardio.
-       A hand taps Gym, then Cardio.
-    5. two figures, each an i (a dot and a stroke), slide in from the sides,
-       stop a hand apart, then connect at the bottom and become the mark
-    6. the wordmark under it, then the address
+  THE BRIEF (owner, 2026-09-22, revised the same afternoon):
+    White ground, brand blue ink, nothing else but the mark's navy. Typewriter
+    rhythm, not machine-even. Headline in the brand's cursive italic serif.
+    The camera is never still: a slow push in while typing, a pull back on
+    each change, a punch on the connect.
+      1. a cursor blinks; "Never train alone again." types itself. The cursor
+         walks back over "alone again." and types "with the right people."
+         The line lifts and blurs away.
+      2. "Choose your activity." Three activities — Gym · Running · Cardio —
+         as plain labels with a BORDERED ICON TILE under each (the label has
+         no border). A hand taps Gym, then Cardio; the tiles fill blue.
+      3. "Find training partners." Two i-figures, navy and blue, slide in and
+         stop a hand apart.
+      4. The label becomes "Match." as they close the gap and connect on the
+         straight seam into the mark.
+      5. The UNIsport wordmark, then the address.
+    Sound is a separate step (intro-sound.mjs): library sound-effects on the
+    exact frames, NO baked music, so a trending track can be laid on in
+    Instagram.
 
-  Same pipeline as reel.mjs: Chrome stepped frame by frame through
-  window.frame(t) at 60fps, tmix'd to 30 for motion blur, bloom in ffmpeg.
+  How it is made: Chrome stepped frame by frame through window.frame(t) at
+  60 fps, tmix'd to 30 for motion blur. No bloom on white.
 
   Two things that look like bugs if changed back:
     - every character of the headline exists in the DOM from frame one and is
       only hidden; the second line is left-aligned under the first. Nothing is
       ever re-laid out, so tmix never averages two positions into a ghost.
     - the mark is the SHIPPED geometry (straight seam, butt caps, round leg
-      tops) from components/landing/LogoMark.tsx. Change both or the film shows
-      a logo the app does not.
+      tops) from components/landing/LogoMark.tsx. Change both or the film
+      shows a logo the app does not.
 
-  Run: node scripts/video/intro.mjs
-  Out: mockups/video/unisport-intro.mp4  (silent; sound is added afterwards)
+  Typing times are irregular on purpose (seeded jitter) and are written to
+  mockups/video/intro-times.json so the sound lands on the same frames.
+
+  Colours: brand neutrals only (Zone 1). No school colour ever enters brand
+  material; every university shares the mark.
+
+  Run: node scripts/video/intro.mjs            -> mockups/video/unisport-intro.mp4 (silent)
+       node scripts/video/intro.mjs --still 7.2 -> one PNG, to check a moment
 */
 import puppeteer from "puppeteer-core";
-import { mkdirSync, rmSync } from "node:fs";
+import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import path from "node:path";
 import os from "node:os";
@@ -39,289 +54,274 @@ const W = 1080, H = 1920;
 const RENDER_FPS = 60;
 const OUT_FPS = 30;
 
-const LIFT = "#8ea4ff";
-
-/* the schedule, in seconds */
-const T = {
-  spark: 0.0,        // streak -> point
-  cursor: 0.55,      // the point is now a cursor
-  typeA: 0.75,       // "Never train alone again." starts
-  rateA: 15,         // chars per second
-  del: 2.95,         // backspacing starts
-  rateDel: 22,
-  typeB: 3.55,       // "with the right people." starts
-  rateB: 17,
-  burn: 5.15,        // the line burns off
-  act: 5.55,         // "Choose your activity."
-  chips: 5.85,       // chips arrive, staggered
-  hand: 6.15,        // hand drifts in
-  tap1: 6.75,        // Gym
-  tap2: 7.45,        // Cardio
-  actOut: 7.95,      // everything fades
-  find: 8.25,        // "Find training partners"
-  slide: 8.35,       // the two i's slide in
-  apart: 9.15,       // ... and stop a hand apart
-  join: 9.45,        // the curves draw and meet
-  met: 9.95,         // flash on the seam
-  word: 10.35,       // UNIsport
-  url: 10.85,        // getunisport.com
-  out: 11.75,        // fade
-  end: 12.25,
-};
+/* brand — app/globals.css and mockups/logo/_icons.mjs */
+const BLUE = "#1f32c1";
+const NAVY = "#2f3b52";
+const INK = "#141618";
 
 const PREFIX = "Never train";
 const SUF_A = "alone again.";
 const SUF_B = "with the right people.";
-const CHIPS = ["Gym", "Running", "Cardio"];
+const MATCH = "Match.";
+const ACTS = ["Gym", "Running", "Cardio"];
+
+/* the schedule, in seconds */
+const T = {
+  cursor: 0.40,
+  typeA: 0.70, rateA: 13,
+  del: 3.00, rateDel: 20,
+  typeB: 3.70, rateB: 14,
+  lift: 5.55,
+  act: 5.95, tiles: 6.20, hand: 6.50, tap1: 7.10, tap2: 7.80, actOut: 8.30,
+  find: 8.55, slide: 8.65, apart: 9.45,
+  join: 9.75, matchType: 9.80, met: 10.25,
+  word: 10.65, url: 11.10,
+  out: 12.00, end: 12.50,
+};
+
+/* typewriter timing: an average rate with human jitter, a breath after a space */
+let seed = 11;
+const rnd = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
+function typeTimes(text, start, rate) {
+  const out = []; let t = start;
+  for (let i = 0; i < text.length; i++) {
+    out.push(+t.toFixed(4));
+    t += (1 / rate) * (0.62 + 0.76 * rnd()) + (text[i] === " " ? 0.06 : 0);
+  }
+  return out;
+}
+const TIMES = {
+  prefix: typeTimes(PREFIX, T.typeA, T.rateA),
+};
+TIMES.sufA = typeTimes(SUF_A, TIMES.prefix[TIMES.prefix.length - 1] + 1 / T.rateA + 0.10, T.rateA);
+TIMES.del = SUF_A.split("").map((_, i) => +(T.del + i / T.rateDel).toFixed(4));   // steady, a held key
+TIMES.sufB = typeTimes(SUF_B, T.typeB, T.rateB);
+TIMES.match = typeTimes(MATCH, T.matchType, 16);
+writeFileSync(path.join(ROOT, "mockups/video/intro-times.json"), JSON.stringify({ T, TIMES }, null, 1));
 
 const chars = (s, id) => s.split("").map((c, i) =>
   `<span class="c" id="${id}${i}">${c === " " ? "&nbsp;" : c}</span>`).join("");
 
-/* The barbell I from components/landing/Wordmark.tsx, in the same box. */
+/* line icons, 64-box, stroke 5.5 */
+const ICONS = {
+  Gym: `<path d="M9 25v14M16 20v24M48 20v24M55 25v14M16 32h32"/>`,
+  Running: `<circle cx="39" cy="13" r="5.5"/><path d="M35 22l-9 12 5 11-8 11M26 34l13 2 8 10M35 22l10 4 8-6M26 34l-11 6"/>`,
+  Cardio: `<path d="M32 54C12 41 7 28 14 20c6-7 14-4 18 2 4-6 12-9 18-2 7 8 2 21-18 34z"/><path d="M17 34h8l4-7 6 15 4-8h7"/>`,
+};
+const icon = (name) => `<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round">${ICONS[name]}</svg>`;
+
+/* the barbell I from components/landing/Wordmark.tsx, same box */
 const barbellI = `<svg class="bi" viewBox="0 0 44.9 170" style="width:.2318em;height:.8743em;transform:translateY(.0771em);margin-left:.05em;margin-right:-.035em">
   <g transform="rotate(13.1 22.45 85)">
-    <rect x="16.5" y="6" width="11.9" height="158" rx="1.4" fill="#fff"/>
-    <g fill="${LIFT}"><rect x="3.4" y="15" width="38.1" height="17.3" rx="3.8"/><rect x="3.4" y="137.7" width="38.1" height="17.3" rx="3.8"/></g>
+    <rect x="16.5" y="6" width="11.9" height="158" rx="1.4" fill="${INK}"/>
+    <g fill="${BLUE}"><rect x="3.4" y="15" width="38.1" height="17.3" rx="3.8"/><rect x="3.4" y="137.7" width="38.1" height="17.3" rx="3.8"/></g>
   </g></svg>`;
 
 const html = `<!doctype html><html><head><meta charset="utf-8">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,500;0,600;0,700;0,800;1,700;1,800&family=Instrument+Serif:ital@1&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
-  html,body { width:${W}px; height:${H}px; overflow:hidden; background:#000; }
-  body { font-family:"Plus Jakarta Sans", system-ui, sans-serif; -webkit-font-smoothing:antialiased; }
-  #stage { position:relative; width:${W}px; height:${H}px; overflow:hidden; background:#000; }
-  #amb { position:absolute; inset:0; will-change:opacity;
-         background:radial-gradient(46% 30% at 50% 47%, rgba(40,58,150,.22) 0%, rgba(12,17,50,.08) 46%, rgba(0,0,0,0) 72%); }
+  html,body { width:${W}px; height:${H}px; overflow:hidden; background:#fff; }
+  body { font-family:"Plus Jakarta Sans", system-ui, sans-serif; -webkit-font-smoothing:antialiased; color:${BLUE}; }
+  #stage { position:relative; width:${W}px; height:${H}px; overflow:hidden; background:#fff; }
+  /* the camera: everything inside scales around the centre */
+  #cam { position:absolute; inset:0; transform-origin:50% 50%; will-change:transform; }
+  /* no ambient glow: on white it read as a smudge. The page is plain paper. */
+  #amb { position:absolute; inset:0; }
 
-  /* the cold open */
-  #streak { position:absolute; left:50%; top:50%; width:900px; height:10px; margin:-5px 0 0 -450px; border-radius:6px;
-            background:linear-gradient(90deg, rgba(142,164,255,0), #fff 50%, rgba(142,164,255,0));
-            box-shadow:0 0 40px 10px rgba(142,164,255,.7); transform-origin:50% 50%; will-change:transform,opacity; }
-  #spark { position:absolute; left:50%; top:50%; width:10px; height:10px; margin:-5px 0 0 -5px; border-radius:50%;
-           background:#fff; box-shadow:0 0 70px 24px rgba(142,164,255,.9); will-change:transform,opacity; }
-
-  /* the headline: a fixed box, lines left-aligned inside it, box centred */
-  #line { position:absolute; left:92px; top:772px; width:900px; text-align:left;
-          font-style:italic; font-weight:800; font-size:86px; line-height:1.14; letter-spacing:-.03em; color:#fff;
+  /* the headline: a fixed box, lines left-aligned inside it, box centred on its widest line */
+  #line { position:absolute; left:0; top:790px; width:1000px; text-align:left;
+          font-family:"Instrument Serif", serif; font-style:italic; font-size:112px; line-height:1.08; letter-spacing:-.012em; color:${BLUE};
           will-change:transform,opacity,filter; }
-  .c { display:inline-block; visibility:hidden; will-change:filter,text-shadow; }
+  .c { display:inline-block; visibility:hidden; }
   #sufB { display:none; }
-  #cur { position:absolute; width:6px; height:84px; border-radius:3px; background:${LIFT};
-         box-shadow:0 0 22px ${LIFT}, 0 0 60px rgba(142,164,255,.6); will-change:transform,opacity; opacity:0; }
+  #cur { position:absolute; width:11px; height:78px; border-radius:2px; background:${BLUE}; opacity:0; will-change:transform,opacity; }
 
   /* activity */
-  #act { position:absolute; left:74px; right:74px; top:690px; text-align:center; font-weight:700; font-size:52px;
-         letter-spacing:-.02em; color:#fff; text-shadow:0 0 40px rgba(130,160,255,.45); opacity:0; will-change:opacity,filter,transform; }
-  #chips { position:absolute; left:0; right:0; top:830px; display:flex; justify-content:center; gap:26px; }
-  .chip { padding:26px 52px; border-radius:999px; font-weight:700; font-size:44px; letter-spacing:-.01em; color:#fff;
-          border:3px solid rgba(160,180,255,.45); background:rgba(20,28,70,.35);
-          box-shadow:0 0 0 0 rgba(142,164,255,0); opacity:0; will-change:opacity,filter,transform,background,color,box-shadow; }
-  #hand { position:absolute; left:0; top:0; width:120px; height:120px; opacity:0; will-change:transform,opacity;
-          filter:drop-shadow(0 8px 20px rgba(0,0,0,.8)); }
+  #act { position:absolute; left:74px; right:74px; top:640px; text-align:center; font-weight:700; font-size:54px; letter-spacing:-.02em; color:${BLUE}; opacity:0; will-change:opacity,filter,transform; }
+  #acts { position:absolute; left:0; right:0; top:790px; display:flex; justify-content:center; gap:70px; }
+  .a { display:flex; flex-direction:column; align-items:center; gap:22px; opacity:0; will-change:opacity,filter,transform; }
+  .a .lb { font-weight:700; font-size:42px; letter-spacing:-.01em; color:${BLUE}; }
+  .a .tile { width:168px; height:168px; border-radius:36px; border:4px solid ${BLUE}; display:flex; align-items:center; justify-content:center; color:${BLUE};
+             background:#fff; will-change:transform,background,color,box-shadow; }
+  .a .tile svg { width:96px; height:96px; }
+  #hand { position:absolute; left:0; top:0; width:120px; height:120px; opacity:0; will-change:transform,opacity; filter:drop-shadow(0 10px 18px rgba(20,24,40,.25)); }
 
   /* the two i's and the mark */
-  #find { position:absolute; left:74px; right:74px; top:560px; text-align:center; font-weight:700; font-size:52px;
-          letter-spacing:-.02em; color:#fff; text-shadow:0 0 40px rgba(130,160,255,.45); opacity:0; will-change:opacity,filter,transform; }
-  #mark { position:absolute; left:50%; top:700px; width:520px; height:520px; margin-left:-260px; overflow:visible; opacity:0;
-          will-change:opacity,filter; }
-  #word { position:absolute; left:0; right:0; top:1240px; text-align:center; font-family:"Instrument Serif", serif; font-style:italic;
-          font-size:150px; letter-spacing:-.02em; line-height:1; color:#fff; text-shadow:0 0 50px rgba(130,160,255,.5);
-          opacity:0; will-change:transform,opacity; }
-  #word .a { color:${LIFT}; }
+  #find, #match { position:absolute; left:74px; right:74px; top:560px; text-align:center; font-weight:700; font-size:54px; letter-spacing:-.02em; color:${BLUE}; opacity:0; will-change:opacity,filter,transform; }
+  #match .c { visibility:hidden; }
+  #mark { position:absolute; left:50%; top:700px; width:520px; height:520px; margin-left:-260px; overflow:visible; opacity:0; will-change:opacity,transform; }
+  #word { position:absolute; left:0; right:0; top:1250px; text-align:center; font-family:"Instrument Serif", serif; font-style:italic; font-size:150px; letter-spacing:-.02em; line-height:1; color:${INK}; opacity:0; will-change:transform,opacity; }
+  #word .s { color:${BLUE}; }
   #word .bi { display:inline-block; vertical-align:baseline; overflow:visible; }
-  #url { position:absolute; left:0; right:0; top:1420px; text-align:center; font-weight:600; font-size:38px; letter-spacing:.02em;
-         color:rgba(200,212,255,.72); opacity:0; will-change:transform,opacity; }
-  #fade { position:absolute; inset:0; background:#000; opacity:0; }
-</style></head><body><div id="stage">
+  #url { position:absolute; left:0; right:0; top:1425px; text-align:center; font-weight:600; font-size:38px; letter-spacing:.02em; color:rgba(20,24,40,.55); opacity:0; will-change:transform,opacity; }
+  #fade { position:absolute; inset:0; background:#fff; opacity:0; }
+</style></head><body><div id="stage"><div id="cam">
   <div id="amb"></div>
-  <div id="streak"></div>
-  <div id="spark"></div>
 
   <div id="line"><span id="pre">${chars(PREFIX, "p")}</span><br><span id="sufA">${chars(SUF_A, "a")}</span><span id="sufB">${chars(SUF_B, "b")}</span></div>
   <div id="cur"></div>
 
   <div id="act">Choose your activity.</div>
-  <div id="chips">${CHIPS.map((c, i) => `<div class="chip" id="ch${i}">${c}</div>`).join("")}</div>
-  <div id="hand"><svg viewBox="0 0 24 24" width="120" height="120"><path fill="#fff" stroke="#000" stroke-width=".6" stroke-linejoin="round"
+  <div id="acts">${ACTS.map((a, i) => `<div class="a" id="act${i}"><div class="lb">${a}</div><div class="tile" id="t${i}">${icon(a)}</div></div>`).join("")}</div>
+  <div id="hand"><svg viewBox="0 0 24 24" width="120" height="120"><path fill="${INK}" stroke="#fff" stroke-width=".5" stroke-linejoin="round"
     d="M9 2.2c-.9 0-1.6.7-1.6 1.6v8.9l-1.8-1.6c-.7-.6-1.8-.6-2.4.1-.6.7-.6 1.7 0 2.3l4.6 5.2c.9 1 2.2 1.6 3.6 1.6h3.7c2.4 0 4.3-1.9 4.3-4.3v-4.6c0-.9-.7-1.6-1.6-1.6s-1.6.7-1.6 1.6v-.7c0-.9-.7-1.6-1.6-1.6s-1.6.7-1.6 1.6v-.5c0-.9-.7-1.6-1.6-1.6s-1.6.7-1.6 1.6V3.8c0-.9-.7-1.6-1.6-1.6z"/></svg></div>
 
   <div id="find">Find training partners.</div>
+  <div id="match">${chars(MATCH, "m")}</div>
   <svg id="mark" viewBox="0 0 100 100">
     <g id="ga">
-      <circle cx="28" cy="16" r="8.5" fill="#fff"/>
-      <circle cx="28" cy="34" r="7" fill="#fff"/>
-      <path id="pa" d="M28 34 V56 Q28 82 50 82 H51" fill="none" stroke="#fff" stroke-width="14" stroke-linecap="butt"/>
+      <circle cx="28" cy="16" r="8.5" fill="${NAVY}"/>
+      <circle cx="28" cy="34" r="7" fill="${NAVY}"/>
+      <path id="pa" d="M28 34 V56 Q28 82 50 82 H51" fill="none" stroke="${NAVY}" stroke-width="14" stroke-linecap="butt"/>
     </g>
     <g id="gb">
-      <circle cx="72" cy="16" r="8.5" fill="${LIFT}"/>
-      <circle cx="72" cy="34" r="7" fill="${LIFT}"/>
-      <path id="pb" d="M72 34 V56 Q72 82 50 82" fill="none" stroke="${LIFT}" stroke-width="14" stroke-linecap="butt"/>
+      <circle cx="72" cy="16" r="8.5" fill="${BLUE}"/>
+      <circle cx="72" cy="34" r="7" fill="${BLUE}"/>
+      <path id="pb" d="M72 34 V56 Q72 82 50 82" fill="none" stroke="${BLUE}" stroke-width="14" stroke-linecap="butt"/>
     </g>
-    <circle id="flash" cx="50" cy="82" r="10" fill="#fff" opacity="0"/>
+    <circle id="ring" cx="50" cy="82" r="10" fill="none" stroke="${BLUE}" stroke-width="3" opacity="0"/>
   </svg>
-  <div id="word">UN${barbellI}<span class="a">sport</span></div>
+  <div id="word">UN${barbellI}<span class="s">sport</span></div>
   <div id="url">getunisport.com</div>
-  <div id="fade"></div>
-</div>
+</div><div id="fade"></div></div>
 <script>
-  var T = ${JSON.stringify(T)};
-  var NP = ${PREFIX.length}, NA = ${SUF_A.length}, NB = ${SUF_B.length};
+  var T = ${JSON.stringify(T)}, TM = ${JSON.stringify(TIMES)};
+  var NP = ${PREFIX.length}, NA = ${SUF_A.length}, NB = ${SUF_B.length}, NM = ${MATCH.length};
   var cl = function (x) { return x < 0 ? 0 : x > 1 ? 1 : x; };
   var outExpo = function (x) { x = cl(x); return x >= 1 ? 1 : 1 - Math.pow(2, -9 * x); };
   var outCubic = function (x) { return 1 - Math.pow(1 - cl(x), 3); };
   var inCubic = function (x) { return Math.pow(cl(x), 3); };
-  var outBack = function (x) { x = cl(x); var c = 1.4; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); };
+  var inOut = function (x) { x = cl(x); return x < .5 ? 4*x*x*x : 1 - Math.pow(-2*x+2,3)/2; };
+  var outBack = function (x) { x = cl(x); var c = 1.5; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); };
   var $ = function (id) { return document.getElementById(id); };
 
   var pa = $("pa"), pb = $("pb");
   var LA = pa.getTotalLength(), LB = pb.getTotalLength();
   pa.style.strokeDasharray = LA; pb.style.strokeDasharray = LB;
 
+  /* centre the headline box on its widest line, measured once */
+  var sb = $("sufB"); sb.style.display = "inline";
+  var wB = sb.getBoundingClientRect().width; sb.style.display = "none";
+  $("line").style.left = Math.round((${W} - wB) / 2) + "px";
   var stage = $("stage").getBoundingClientRect();
 
-  /* centre the headline box on its widest line, measured once; the lines stay
-     left-aligned inside it so typing never moves what is already there */
-  (function () {
-    var sb = $("sufB"); sb.style.display = "inline";
-    var wB = sb.getBoundingClientRect().width;
-    sb.style.display = "none";
-    $("line").style.left = Math.round((${W} - wB) / 2) + "px";
-    stage = $("stage").getBoundingClientRect();
-  })();
-
-  /* a character that has just appeared is white-hot and cools to plain white */
-  function heat(el, shown, t) {
-    if (shown === null) { el.style.visibility = "hidden"; return; }
-    el.style.visibility = "visible";
-    var h = 1 - cl((t - shown) / 0.55);
-    el.style.textShadow = "0 0 " + (14 + 46 * h).toFixed(1) + "px rgba(142,164,255," + (0.35 + 0.65 * h).toFixed(3) + ")";
-    el.style.filter = "brightness(" + (1 + 0.9 * h).toFixed(3) + ")";
-  }
+  var show = function (el, on) { el.style.visibility = on ? "visible" : "hidden"; };
 
   window.frame = function (t) {
-    /* ---- 1. streak -> point ---- */
-    var sp = outExpo(t / 0.5);
-    var st = $("streak");
-    st.style.opacity = String(cl(t / 0.08) * (1 - cl((t - 0.3) / 0.25)));
-    st.style.transform = "translate3d(" + (-420 * (1 - sp)).toFixed(1) + "px," + (560 * (1 - sp)).toFixed(1) + "px,0) rotate(-38deg) scaleX(" + (0.2 + 1.2 * (1 - sp)).toFixed(3) + ")";
-    var pt = $("spark");
-    pt.style.opacity = String(cl((t - 0.2) / 0.15) * (1 - cl((t - T.cursor) / 0.2)));
-    pt.style.transform = "scale(" + (0.6 + 2.4 * outExpo((t - 0.2) / 0.4) * (1 - cl((t - T.cursor) / 0.2))).toFixed(3) + ")";
+    /* ---- camera ---- */
+    var cam = 1;
+    cam += 0.07 * cl((t - T.typeA) / (T.lift - T.typeA));                       // slow push while typing
+    cam -= 0.07 * outExpo((t - T.lift) / 0.6);                                   // pull back on the lift
+    cam += 0.05 * cl((t - T.act) / (T.actOut - T.act));                          // push while choosing
+    cam -= 0.05 * outExpo((t - T.actOut) / 0.6);
+    cam += 0.10 * (1 - outExpo((t - T.slide) / 1.1)) * cl((t - T.slide) / 0.05); // arrives wide, settles
+    cam += 0.06 * Math.sin(Math.PI * cl((t - T.met) / 0.5));                     // the punch
+    cam += 0.03 * cl((t - T.word) / (T.out - T.word));                           // settle in on the name
+    $("cam").style.transform = "scale(" + cam.toFixed(4) + ")";
 
-    /* ---- 2 + 3. the typed, edited line ---- */
-    var nP = 0, nA = 0, nB = 0, shownP = [], shownA = [], shownB = [];
-    var i;
-    // typing A: prefix then suffix A, one schedule
-    for (i = 0; i < NP; i++) { var ta = T.typeA + i / T.rateA; shownP.push(t >= ta ? ta : null); }
-    for (i = 0; i < NA; i++) { var tb = T.typeA + (NP + 1 + i) / T.rateA; shownA.push(t >= tb ? tb : null); }
-    // deleting A from the end
-    for (i = NA - 1; i >= 0; i--) { var td = T.del + (NA - 1 - i) / T.rateDel; if (t >= td) shownA[i] = null; }
-    // typing B
-    var phaseB = t >= T.typeB;
-    for (i = 0; i < NB; i++) { var te = T.typeB + i / T.rateB; shownB.push(phaseB && t >= te ? te : null); }
+    /* ---- 1. the typed, edited line ---- */
+    var i, phaseB = t >= T.typeB;
+    var lastEl = null, anyLine1 = false;
+    for (i = 0; i < NP; i++) { var on = t >= TM.prefix[i]; show($("p" + i), on); if (on) { lastEl = $("p" + i); anyLine1 = true; } }
     $("sufA").style.display = phaseB ? "none" : "inline";
     $("sufB").style.display = phaseB ? "inline" : "none";
-    for (i = 0; i < NP; i++) heat($("p" + i), shownP[i], t);
-    for (i = 0; i < NA; i++) heat($("a" + i), shownA[i], t);
-    for (i = 0; i < NB; i++) heat($("b" + i), shownB[i], t);
+    var lastA = null;
+    for (i = 0; i < NA; i++) { var onA = t >= TM.sufA[i] && !(t >= TM.del[NA - 1 - i]); show($("a" + i), onA); if (onA) lastA = $("a" + i); }
+    var lastB = null;
+    for (i = 0; i < NB; i++) { var onB = phaseB && t >= TM.sufB[i]; show($("b" + i), onB); if (onB) lastB = $("b" + i); }
+    var last = lastB || (!phaseB ? lastA : null) || lastEl;
 
-    // the cursor sits after the last visible character
-    var last = null, anyLine2 = false;
-    for (i = NB - 1; i >= 0; i--) if (shownB[i] !== null) { last = $("b" + i); anyLine2 = true; break; }
-    if (!last) for (i = NA - 1; i >= 0; i--) if (shownA[i] !== null && !phaseB) { last = $("a" + i); anyLine2 = true; break; }
-    if (!last) for (i = NP - 1; i >= 0; i--) if (shownP[i] !== null) { last = $("p" + i); break; }
+    /* cursor: after the last visible character; on line 2's start when line 2 is empty but begun */
     var cur = $("cur");
-    var typingDone = t > T.typeA + (NP + 1 + NA) / T.rateA && t < T.del;
-    var typingDoneB = t > T.typeB + NB / T.rateB;
-    var blink = (typingDone || typingDoneB) ? (Math.floor(t * 2.6) % 2 === 0 ? 1 : 0.15) : 1;
-    var curVis = cl((t - T.cursor) / 0.2) * (1 - cl((t - T.burn) / 0.25)) * blink;
-    cur.style.opacity = String(curVis);
-    if (t >= T.cursor) {
-      var r = last ? last.getBoundingClientRect() : null;
-      var line = $("line").getBoundingClientRect();
-      var cx, cy;
-      if (r) { cx = r.right - stage.left + 8; cy = r.top - stage.top + 8; }
-      else if (t >= T.del && phaseB === false && !last) { cx = line.left - stage.left; cy = line.top - stage.top + 98 + 8; }
-      else { cx = line.left - stage.left; cy = line.top - stage.top + 8; }
-      // the point of light lands where the cursor will be
-      var land = outExpo((t - T.cursor) / 0.25);
-      cur.style.transform = "translate3d(" + cx.toFixed(1) + "px," + cy.toFixed(1) + "px,0) scaleY(" + (0.3 + 0.7 * land).toFixed(3) + ")";
-    }
+    var line2Begun = (t >= TM.sufA[0] && !phaseB) || phaseB;
+    var idle = (t > TM.sufA[NA - 1] + 0.25 && t < T.del) || (t > TM.sufB[NB - 1] + 0.25 && t < T.lift) || t < T.typeA;
+    var blink = idle ? (Math.floor((t - 0.1) * 2.2) % 2 === 0 ? 1 : 0) : 1;
+    cur.style.opacity = String(cl((t - T.cursor) / 0.05) * (1 - cl((t - T.lift) / 0.2)) * blink);
+    var r, cx, cy, ln = $("line").getBoundingClientRect(), lh = 112 * 1.08;
+    if (last && !(line2Begun && !lastA && !lastB)) { r = last.getBoundingClientRect(); cx = r.right - stage.left + 6; cy = r.top - stage.top + 18; }
+    else if (line2Begun) { cx = ln.left - stage.left + 4; cy = ln.top - stage.top + lh + 18; }
+    else { cx = ln.left - stage.left + 4; cy = ln.top - stage.top + 18; }
+    cur.style.transform = "translate3d(" + cx.toFixed(1) + "px," + cy.toFixed(1) + "px,0)";
 
-    // the burn
-    var b = cl((t - T.burn) / 0.42);
-    var ln = $("line");
-    ln.style.opacity = String(1 - inCubic(b));
-    ln.style.filter = "blur(" + (26 * b).toFixed(1) + "px) brightness(" + (1 + 1.8 * b).toFixed(2) + ")";
-    ln.style.transform = "translate3d(" + (140 * b * b).toFixed(1) + "px,0,0) scaleX(" + (1 + 0.5 * b).toFixed(3) + ")";
+    /* the lift: the line rises, blurs and goes */
+    var b = cl((t - T.lift) / 0.5);
+    var lineEl = $("line");
+    lineEl.style.opacity = String(1 - inCubic(b * 1.15));
+    lineEl.style.filter = "blur(" + (22 * b).toFixed(1) + "px)";
+    lineEl.style.transform = "translate3d(0," + (-70 * outCubic(b)).toFixed(1) + "px,0) scale(" + (1 + 0.05 * b).toFixed(3) + ")";
 
-    /* ---- 4. choose your activity ---- */
-    var aOut = 1 - cl((t - T.actOut) / 0.32);
-    var ai = outExpo((t - T.act) / 0.5);
+    /* ---- 2. choose your activity ---- */
+    var aOut = 1 - cl((t - T.actOut) / 0.35);
+    var ai = outExpo((t - T.act) / 0.55);
     var act = $("act");
     act.style.opacity = String(cl((t - T.act) / 0.3) * aOut);
-    act.style.filter = "blur(" + (16 * (1 - ai)).toFixed(1) + "px)";
-    act.style.transform = "translate3d(0," + (30 * (1 - ai)).toFixed(1) + "px,0)";
+    act.style.filter = "blur(" + (12 * (1 - ai)).toFixed(1) + "px)";
+    act.style.transform = "translate3d(0," + (26 * (1 - ai)).toFixed(1) + "px,0)";
     var picked = [t >= T.tap1, false, t >= T.tap2];
     for (i = 0; i < 3; i++) {
-      var ch = $("ch" + i);
-      var ci = outBack((t - T.chips - i * 0.1) / 0.5);
+      var a = $("act" + i), tile = $("t" + i);   // NOT "a"+i: the headline's characters own those ids
+      var d0 = T.tiles + i * 0.12;
+      var ci = outBack((t - d0) / 0.55);
+      a.style.opacity = String(cl((t - d0) / 0.25) * aOut * ((t >= T.tap1 && !picked[i]) ? 0.45 : 1));
+      a.style.filter = "blur(" + (10 * (1 - cl((t - d0) / 0.4))).toFixed(1) + "px)";
+      a.style.transform = "translate3d(0," + (50 * (1 - ci)).toFixed(1) + "px,0)";
       var tapT = i === 0 ? T.tap1 : i === 2 ? T.tap2 : -99;
       var dip = tapT > 0 ? Math.sin(Math.PI * cl((t - tapT) / 0.22)) : 0;
-      var sel = picked[i] ? outExpo((t - tapT) / 0.35) : 0;
-      var dim = (t >= T.tap1 && !picked[i]) ? 0.45 : 1;
-      ch.style.opacity = String(cl((t - T.chips - i * 0.1) / 0.25) * aOut * dim);
-      ch.style.filter = "blur(" + (14 * (1 - cl((t - T.chips - i * 0.1) / 0.4))).toFixed(1) + "px)";
-      ch.style.transform = "translate3d(0," + (60 * (1 - ci)).toFixed(1) + "px,0) scale(" + (1 - 0.1 * dip).toFixed(3) + ")";
-      ch.style.background = "rgba(" + Math.round(20 + (142 - 20) * sel) + "," + Math.round(28 + (164 - 28) * sel) + "," + Math.round(70 + (255 - 70) * sel) + "," + (0.35 + 0.65 * sel).toFixed(3) + ")";
-      ch.style.color = sel > 0.5 ? "#050818" : "#fff";
+      var sel = picked[i] ? outExpo((t - tapT) / 0.3) : 0;
+      tile.style.transform = "scale(" + (1 - 0.1 * dip + 0.06 * Math.sin(Math.PI * cl((t - tapT - 0.1) / 0.45))).toFixed(3) + ")";
+      tile.style.background = "rgba(31,50,193," + sel.toFixed(3) + ")";
+      tile.style.color = sel > 0.5 ? "#fff" : "${BLUE}";
       var ring = tapT > 0 ? (1 - cl((t - tapT) / 0.5)) * cl((t - tapT) / 0.05) : 0;
-      ch.style.boxShadow = "0 0 " + (60 * ring).toFixed(0) + "px " + (18 * ring).toFixed(0) + "px rgba(142,164,255," + (0.8 * ring).toFixed(2) + "), 0 0 " + (40 * sel).toFixed(0) + "px rgba(142,164,255," + (0.6 * sel).toFixed(2) + ")";
+      tile.style.boxShadow = "0 0 0 " + (22 * (1 - ring) * (ring > 0 ? 1 : 0)).toFixed(0) + "px rgba(31,50,193," + (0.35 * ring).toFixed(2) + ")";
     }
-    // the hand: drifts to Gym, taps, drifts to Cardio, taps, leaves
     var hand = $("hand");
-    var c0 = $("ch0").getBoundingClientRect(), c2 = $("ch2").getBoundingClientRect();
-    var g = { x: c0.left + c0.width * 0.55 - stage.left, y: c0.top + c0.height * 0.6 - stage.top };
-    var k = { x: c2.left + c2.width * 0.55 - stage.left, y: c2.top + c2.height * 0.6 - stage.top };
+    var r0 = $("t0").getBoundingClientRect(), r2 = $("t2").getBoundingClientRect();
+    var g = { x: r0.left + r0.width * 0.55 - stage.left, y: r0.top + r0.height * 0.55 - stage.top };
+    var k = { x: r2.left + r2.width * 0.55 - stage.left, y: r2.top + r2.height * 0.55 - stage.top };
     var hx, hy;
-    if (t < T.tap1) { var m1 = outExpo((t - T.hand) / 0.6); hx = g.x + 260 * (1 - m1); hy = g.y + 420 * (1 - m1); }
-    else if (t < T.tap2) { var m2 = outExpo((t - T.tap1 - 0.15) / 0.5); hx = g.x + (k.x - g.x) * m2; hy = g.y + (k.y - g.y) * m2 - 40 * Math.sin(Math.PI * m2); }
-    else { var m3 = outExpo((t - T.tap2 - 0.15) / 0.5); hx = k.x + 200 * m3; hy = k.y + 300 * m3; }
+    if (t < T.tap1) { var m1 = outExpo((t - T.hand) / 0.6); hx = g.x + 280 * (1 - m1); hy = g.y + 480 * (1 - m1); }
+    else if (t < T.tap2) { var m2 = inOut((t - T.tap1 - 0.15) / 0.5); hx = g.x + (k.x - g.x) * m2; hy = g.y - 60 * Math.sin(Math.PI * m2); }
+    else { var m3 = outExpo((t - T.tap2 - 0.15) / 0.5); hx = k.x + 220 * m3; hy = k.y + 340 * m3; }
     var press = Math.max(t >= T.tap1 ? Math.sin(Math.PI * cl((t - T.tap1) / 0.22)) : 0, t >= T.tap2 ? Math.sin(Math.PI * cl((t - T.tap2) / 0.22)) : 0);
     hand.style.opacity = String(cl((t - T.hand) / 0.25) * aOut);
     hand.style.transform = "translate3d(" + (hx - 30).toFixed(1) + "px," + (hy - 10).toFixed(1) + "px,0) scale(" + (1 - 0.12 * press).toFixed(3) + ")";
 
-    /* ---- 5. two i's meet ---- */
+    /* ---- 3 + 4. two i's, then Match ---- */
     var fOut = 1 - cl((t - T.out) / 0.4);
     var fi = outExpo((t - T.find) / 0.5);
     var find = $("find");
-    find.style.opacity = String(cl((t - T.find) / 0.3) * fOut * (1 - cl((t - T.word) / 0.35)));
-    find.style.filter = "blur(" + (16 * (1 - fi)).toFixed(1) + "px)";
-    find.style.transform = "translate3d(0," + (30 * (1 - fi)).toFixed(1) + "px,0)";
+    find.style.opacity = String(cl((t - T.find) / 0.3) * (1 - cl((t - T.join) / 0.3)));
+    find.style.filter = "blur(" + (12 * (1 - fi)).toFixed(1) + "px)";
+    find.style.transform = "translate3d(0," + (26 * (1 - fi)).toFixed(1) + "px,0)";
+    var match = $("match");
+    match.style.opacity = String(cl((t - T.matchType) / 0.1) * (1 - cl((t - T.word) / 0.35)) * fOut);
+    for (i = 0; i < NM; i++) show($("m" + i), t >= TM.match[i]);
 
     var mark = $("mark");
     mark.style.opacity = String(cl((t - T.slide) / 0.2) * fOut);
     var sl = outExpo((t - T.slide) / (T.apart - T.slide + 0.15));
-    var dx = 110 * (1 - sl);                       // svg units off screen
-    $("ga").setAttribute("transform", "translate(" + (-dx).toFixed(2) + " 0)");
-    $("gb").setAttribute("transform", "translate(" + dx.toFixed(2) + " 0)");
-    // legs: the straight part is there on arrival; the curve draws to the seam
-    var legOnly = 22 / LA;                          // 34..56 of the path
-    var draw = legOnly + (1 - legOnly) * outCubic((t - T.join) / (T.met - T.join));
+    var dx = 120 * (1 - sl);
+    // they stop a hand apart, then close the last of the gap as the curves meet
+    var closeIn = outCubic((t - T.join) / (T.met - T.join));
+    var gap = 10 * (1 - closeIn);
+    $("ga").setAttribute("transform", "translate(" + (-(dx + gap)).toFixed(2) + " 0)");
+    $("gb").setAttribute("transform", "translate(" + (dx + gap).toFixed(2) + " 0)");
+    var legOnly = 22 / LA;
+    var draw = legOnly + (1 - legOnly) * closeIn;
     pa.style.strokeDashoffset = (LA * (1 - draw)).toFixed(2);
-    pb.style.strokeDashoffset = (LB * (1 - draw * (LB / LA) / (LB / LA))).toFixed(2);
-    var fl = t >= T.met ? (1 - cl((t - T.met) / 0.55)) : 0;
-    $("flash").setAttribute("opacity", String(0.95 * fl));
-    $("flash").setAttribute("r", String(10 + 30 * (1 - fl) * (fl > 0 ? 1 : 0)));
-    var glow = 26 + 60 * fl + 10 * Math.sin(t * 3);
-    mark.style.filter = "drop-shadow(0 0 " + glow.toFixed(0) + "px rgba(142,164,255," + (0.5 + 0.5 * fl).toFixed(2) + ")) brightness(" + (1 + 0.8 * fl).toFixed(2) + ")";
-    // motion blur on the slide is what tmix gives us; a little extra blur while fast
-    var speed = Math.abs(1 - sl) * (t > T.slide && t < T.apart ? 1 : 0);
-    mark.style.filter += " blur(" + (3 * speed).toFixed(1) + "px)";
+    pb.style.strokeDashoffset = (LB * (1 - draw)).toFixed(2);
+    var fl = t >= T.met ? (1 - cl((t - T.met) / 0.6)) : 0;
+    var rg = $("ring");
+    rg.setAttribute("opacity", String(0.8 * fl));
+    rg.setAttribute("r", String(10 + 40 * (1 - fl)));
+    rg.setAttribute("stroke-width", String(3 * fl + 0.5));
+    var lift = Math.sin(Math.PI * cl((t - T.met) / 0.5));
+    mark.style.transform = "translate3d(0," + (-14 * lift).toFixed(1) + "px,0) scale(" + (1 + 0.04 * lift).toFixed(3) + ")";
+    mark.style.filter = "blur(" + (3 * (1 - sl) * (t > T.slide && t < T.apart ? 1 : 0)).toFixed(1) + "px)";
 
-    /* ---- 6. the wordmark ---- */
+    /* ---- 5. the wordmark ---- */
     var wP = outExpo((t - T.word) / 0.6);
     var word = $("word");
     word.style.opacity = String(cl((t - T.word) / 0.4) * fOut);
@@ -331,7 +331,6 @@ const html = `<!doctype html><html><head><meta charset="utf-8">
     url.style.opacity = String(cl((t - T.url) / 0.4) * fOut);
     url.style.transform = "translate3d(0," + (26 * (1 - uP)).toFixed(1) + "px,0)";
 
-    $("amb").style.opacity = String(0.35 + 0.35 * cl((t - T.slide) / 1) + 0.4 * fl);
     $("fade").style.opacity = String(cl((t - T.out) / 0.45));
   };
   window.frame(0);
@@ -352,7 +351,6 @@ await page.setContent(html, { waitUntil: "networkidle0" });
 await page.evaluateHandle("document.fonts.ready");
 
 const only = process.argv[2] === "--still" ? Number(process.argv[3]) : null;
-const frames = Math.round(T.end * RENDER_FPS);
 if (only !== null) {
   await page.evaluate((tt) => window.frame(tt), only);
   const still = path.join(ROOT, "mockups/video/intro-still-" + only.toFixed(2) + ".png");
@@ -361,6 +359,7 @@ if (only !== null) {
   console.log("wrote " + still);
   process.exit(0);
 }
+const frames = Math.round(T.end * RENDER_FPS);
 for (let f = 0; f < frames; f++) {
   await page.evaluate((tt) => window.frame(tt), f / RENDER_FPS);
   await page.screenshot({ path: path.join(work, String(f).padStart(5, "0") + ".png"), type: "png" });
@@ -371,23 +370,20 @@ await browser.close();
 const out = path.join(ROOT, "mockups/video/unisport-intro.mp4");
 mkdirSync(path.dirname(out), { recursive: true });
 
+/* motion blur from tmix; a touch of contrast; the faintest grain so white is paper, not void */
 const VF = [
   "tmix=frames=2:weights=1 1",
   "fps=" + OUT_FPS,
-  "split=2[a][b]",
-  "[b]curves=all='0/0 0.88/0 1/1',gblur=sigma=14:steps=2[bl]",
-  "[a][bl]blend=all_mode=screen:all_opacity=0.22",
-  "eq=saturation=0.98:contrast=1.09",
-  "noise=alls=3:allf=t",
-  "vignette=PI/4.6",
+  "eq=contrast=1.03",
+  "noise=alls=2:allf=t",
 ].join(",");
 
 execFileSync("ffmpeg", [
   "-y", "-framerate", String(RENDER_FPS), "-i", path.join(work, "%05d.png"),
-  "-filter_complex", VF,
-  "-c:v", "libx264", "-preset", "slow", "-crf", "20", "-maxrate", "12M", "-bufsize", "24M",
+  "-vf", VF,
+  "-c:v", "libx264", "-preset", "slow", "-crf", "18", "-maxrate", "14M", "-bufsize", "28M",
   "-pix_fmt", "yuv420p", "-movflags", "+faststart", out,
-], { stdio: "inherit" });
+], { stdio: ["ignore", "ignore", "inherit"] });
 
 rmSync(work, { recursive: true, force: true });
 console.log("\nwrote " + out + "  (" + T.end.toFixed(2) + "s)");

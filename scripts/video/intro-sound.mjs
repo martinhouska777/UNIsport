@@ -1,147 +1,148 @@
 /*
-  Sound for the intro (scripts/video/intro.mjs).
+  Sound for the intro (scripts/video/intro.mjs), light version.
 
-  Two layers:
-    - the bed: a generated track (ChatCut, mureka-9, "Intro bed") that came
-      back as sparse cinematic swells with long tails. It is spliced so one
-      swell sits under the spark at 0.0 and the next under the moment the two
-      figures connect (T.met). The tail between them is near-silent, so the
-      splice is inaudible.
-    - the small sounds, synthesised here as PCM so they land on the exact
-      frame the picture does: a rising whoosh into the cursor, a click per
-      typed character (and a softer one per deleted one), a downward whoosh
-      for the burn, three ticks as the chips arrive, two UI taps, a whoosh for
-      the slide, one low impact on the seam, a tick for the wordmark.
+  Real sound-effects from the ChatCut library, placed on the exact frames the
+  picture uses. No baked music: the owner lays a trending track over it in
+  Instagram, so the mix has to leave room and end clean.
 
-  Times are copied from intro.mjs's T. Change one, change both.
+  THE BANK. mockups/video/sfx-bank.mp3 is one 70 s audio export from the
+  ChatCut project "UNIsport logo explorations", where each library sound was
+  parked in its own 10 s slot (edit_item adds with fromFrame = slot * 300):
+      0 s   Keyboard Typing Loop      (15.5 s of real keys)
+     20 s   Deep Short Whoosh         (anchor at 20.0)
+     30 s   Airy Short Whoosh         (anchor at 30.0)
+     40 s   Simple Whoosh             (anchor at 40.0)
+     50 s   Mouse Click               (anchor at 50.0)
+     60 s   Vine Boom Impact          (anchor at 60.0)
+     70 s   Sharp Bass Riser          (anchor at 70.0; the export clipped its tail)
+  Why a bank: a library sound cannot be downloaded on its own, but an audio
+  EXPORT of the timeline comes back as a plain S3 file. One export, seven sounds.
+
+  Typing: every character gets its own 70 ms slice of the keyboard loop,
+  cut from a seeded random spot, so the keys sound real and never repeat in a
+  pattern. Times come from mockups/video/intro-times.json, written by
+  intro.mjs — the same jitter the picture has.
 
   Run: node scripts/video/intro-sound.mjs
-  In:  mockups/video/unisport-intro.mp4, mockups/video/intro-bed-30s.mp3
-  Out: mockups/video/unisport-intro-sound.mp4
+  In:  mockups/video/unisport-intro.mp4, sfx-bank.mp3, intro-times.json
+       (optional) intro-bed-30s.mp3 for the second output
+  Out: mockups/video/unisport-intro-reel.mp4  (SFX only — for Instagram)
+       mockups/video/unisport-intro-bed.mp4   (SFX + the generated bed)
 */
-import { writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import path from "node:path";
 import os from "node:os";
 
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname).replace(/^\//, ""), "../..");
-const VID = path.join(ROOT, "mockups/video/unisport-intro.mp4");
-const BED = path.join(ROOT, "mockups/video/intro-bed-30s.mp3");
-const OUT = path.join(ROOT, "mockups/video/unisport-intro-sound.mp4");
-
-const T = {
-  cursor: 0.55, typeA: 0.75, rateA: 15, del: 2.95, rateDel: 22, typeB: 3.55, rateB: 17,
-  burn: 5.15, chips: 5.85, tap1: 6.75, tap2: 7.45, slide: 8.35, apart: 9.15, met: 9.95,
-  word: 10.35, url: 10.85, out: 11.75, end: 12.25,
-};
-const NP = "Never train".length, NA = "alone again.".length, NB = "with the right people.".length;
-
-/* where the bed's swells are (measured off its waveform) */
-const SWELL_1 = 0.0, SWELL_2 = 14.3;
+const V = (f) => path.join(ROOT, "mockups/video", f);
+const { T, TIMES } = JSON.parse(readFileSync(V("intro-times.json"), "utf8"));
 
 const SR = 48000;
 const N = Math.round(T.end * SR);
-const buf = new Float32Array(N);
+const mix = new Float32Array(N);
 
-let seed = 7;
-const rnd = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296 - 0.5; };
+/* decode the bank to mono float PCM once */
+const raw = execFileSync("ffmpeg", ["-v", "error", "-i", V("sfx-bank.mp3"), "-ac", "1", "-ar", String(SR), "-f", "f32le", "-"], { maxBuffer: 1 << 28 });
+const bank = new Float32Array(raw.buffer, raw.byteOffset, raw.byteLength / 4);
 
-/* add a sound at time t; gen(i, n) returns a sample for index i of n */
-function place(t, dur, gain, gen) {
-  const s0 = Math.round(t * SR), n = Math.round(dur * SR);
-  for (let i = 0; i < n && s0 + i < N; i++) buf[s0 + i] += gain * gen(i, n);
+let seed = 5;
+const rnd = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
+
+/* copy bank[from, from+dur) to mix at time t, with short fades and a gain */
+function put(t, from, dur, gain, fadeIn = 0.004, fadeOut = 0.03) {
+  const s0 = Math.round(t * SR), b0 = Math.round(from * SR), n = Math.round(dur * SR);
+  const fi = Math.round(fadeIn * SR), fo = Math.round(fadeOut * SR);
+  for (let i = 0; i < n; i++) {
+    const o = s0 + i, b = b0 + i;
+    if (o < 0 || o >= N || b < 0 || b >= bank.length) continue;
+    let g = gain;
+    if (i < fi) g *= i / fi;
+    if (i > n - fo) g *= (n - i) / fo;
+    mix[o] += bank[b] * g;
+  }
 }
 
-/* one-pole lowpass over white noise, cutoff sweeping from f0 to f1 */
-function whoosh(t, dur, gain, f0, f1, shape = (x) => Math.sin(Math.PI * x)) {
-  let y = 0;
-  place(t, dur, gain, (i, n) => {
-    const x = i / n;
-    const f = f0 * Math.pow(f1 / f0, x);
-    const a = 1 - Math.exp(-2 * Math.PI * f / SR);
-    y += a * (rnd() * 2 - y);
-    return y * shape(x) * 3;
-  });
-}
+/* one key: a slice of the loop, from a random spot in its first 14 s */
+function key(t, gain) { put(t, 0.3 + rnd() * 13.5, 0.07, gain, 0.002, 0.035); }
 
-/* a typing click: a 4 ms burst of filtered noise with a tiny pitched body */
-function click(t, gain) {
-  const p = 1 + rnd() * 0.3;
-  let y = 0;
-  place(t, 0.035, gain, (i, n) => {
-    const x = i / n;
-    const a = 1 - Math.exp(-2 * Math.PI * 3200 * p / SR);
-    y += a * (rnd() * 2 - y);
-    const env = Math.exp(-x * 14);
-    return (y * 2.2 + 0.4 * Math.sin(2 * Math.PI * 1900 * p * i / SR)) * env;
-  });
-}
+/* the library one-shots, by anchor. `pre` is how much before the anchor to include. */
+const deep   = (t, g) => put(t - 0.5, 19.5, 1.3, g, 0.01, 0.2);
+const airy   = (t, g) => put(t - 0.35, 29.65, 0.8, g, 0.01, 0.15);
+const simple = (t, g) => put(t - 0.45, 39.55, 1.0, g, 0.01, 0.15);
+const click  = (t, g) => put(t - 0.005, 49.995, 0.2, g, 0.001, 0.05);
+const boom   = (t, g) => put(t - 0.05, 59.95, 2.4, g, 0.002, 0.6);
+const riser  = (t, g) => put(t - 0.8, 69.3, 0.85, g, 0.05, 0.02);
 
-/* a UI tap: short sine blip with a click on top */
-function tap(t, gain, f = 1250) {
-  place(t, 0.09, gain, (i, n) => {
-    const x = i / n;
-    return (Math.sin(2 * Math.PI * f * i / SR) * 0.7 + rnd() * 0.6 * Math.exp(-x * 40)) * Math.exp(-x * 9);
-  });
-}
-
-/* a tick: like a tap but tiny and high */
-const tick = (t, gain) => tap(t, gain, 2400);
-
-/* the impact: a low sine with a fast pitch drop, plus a bright transient */
-function impact(t, gain) {
-  place(t, 1.4, gain, (i, n) => {
-    const x = i / n, s = i / SR;
-    const f = 42 + 90 * Math.exp(-s * 18);
-    const low = Math.sin(2 * Math.PI * f * s) * Math.exp(-x * 4.5);
-    const hit = rnd() * 2 * Math.exp(-s * 60);
-    return low * 0.9 + hit * 0.5;
-  });
+/* a synthesised sub thump under the boom, so the connect has weight without the meme */
+function thump(t, gain) {
+  const s0 = Math.round(t * SR);
+  for (let i = 0; i < SR * 0.9; i++) {
+    const s = i / SR, f = 40 + 70 * Math.exp(-s * 20);
+    const v = Math.sin(2 * Math.PI * f * s) * Math.exp(-s * 5.5);
+    if (s0 + i < N) mix[s0 + i] += v * gain;
+  }
 }
 
 /* ---- the schedule ---- */
-whoosh(0.0, 0.62, 0.55, 250, 7000, (x) => Math.pow(Math.sin(Math.PI * x), 1.4));
-tick(T.cursor, 0.35);
+click(T.cursor, 0.25);
+for (const t of TIMES.prefix) key(t, 0.9);
+for (const t of TIMES.sufA) key(t, 0.9);
+for (const t of TIMES.del) key(t, 0.55);
+for (const t of TIMES.sufB) key(t, 0.9);
 
-for (let i = 0; i < NP; i++) click(T.typeA + i / T.rateA, 0.5);
-for (let i = 0; i < NA; i++) click(T.typeA + (NP + 1 + i) / T.rateA, 0.5);
-for (let i = 0; i < NA; i++) click(T.del + i / T.rateDel, 0.32);
-for (let i = 0; i < NB; i++) click(T.typeB + i / T.rateB, 0.5);
+airy(T.lift, 0.8);
+simple(T.act, 0.55);
+for (let i = 0; i < 3; i++) click(T.tiles + i * 0.12 + 0.18, 0.18);
+click(T.tap1, 1.8); click(T.tap2, 1.8);
+airy(T.actOut + 0.1, 0.6);
 
-whoosh(T.burn, 0.5, 0.5, 6000, 180, (x) => Math.pow(Math.sin(Math.PI * x), 1.2));
-
-tick(T.chips, 0.3); tick(T.chips + 0.1, 0.3); tick(T.chips + 0.2, 0.3);
-tap(T.tap1, 0.75); tap(T.tap2, 0.75);
-
-whoosh(T.slide, T.apart - T.slide + 0.1, 0.45, 300, 4500, (x) => Math.pow(Math.sin(Math.PI * x), 1.6));
-impact(T.met, 0.95);
-tick(T.word, 0.3);
+deep(T.slide + 0.35, 0.8);
+for (const t of TIMES.match) key(t, 0.8);
+riser(T.met, 0.7);
+deep(T.met, 0.7);
+boom(T.met, 0.35);
+thump(T.met, 0.6);
+simple(T.word, 0.45);
 
 /* write a 16-bit WAV */
-let peak = 0; for (const v of buf) peak = Math.max(peak, Math.abs(v));
-const norm = peak > 0 ? 0.9 / peak : 1;
+let peak = 0; for (const v of mix) peak = Math.max(peak, Math.abs(v));
+const norm = peak > 0 ? 0.89 / peak : 1;
 const pcm = Buffer.alloc(44 + N * 2);
 pcm.write("RIFF", 0); pcm.writeUInt32LE(36 + N * 2, 4); pcm.write("WAVE", 8);
 pcm.write("fmt ", 12); pcm.writeUInt32LE(16, 16); pcm.writeUInt16LE(1, 20); pcm.writeUInt16LE(1, 22);
 pcm.writeUInt32LE(SR, 24); pcm.writeUInt32LE(SR * 2, 28); pcm.writeUInt16LE(2, 32); pcm.writeUInt16LE(16, 34);
 pcm.write("data", 36); pcm.writeUInt32LE(N * 2, 40);
-for (let i = 0; i < N; i++) pcm.writeInt16LE(Math.max(-32768, Math.min(32767, Math.round(buf[i] * norm * 32767))), 44 + i * 2);
+for (let i = 0; i < N; i++) pcm.writeInt16LE(Math.max(-32768, Math.min(32767, Math.round(mix[i] * norm * 32767))), 44 + i * 2);
 const sfx = path.join(os.tmpdir(), "intro-sfx.wav");
 writeFileSync(sfx, pcm);
 
-/* the bed: swell 1 under the spark, swell 2 under the seam; fade out with the picture */
-const cut = T.met;                       // splice where the tail is near-silent
-const filter = [
-  `[1:a]atrim=${SWELL_1}:${SWELL_1 + cut},asetpts=PTS-STARTPTS[m1]`,
-  `[1:a]atrim=${SWELL_2}:${SWELL_2 + (T.end - cut)},asetpts=PTS-STARTPTS[m2]`,
-  `[m1][m2]concat=n=2:v=0:a=1,afade=t=out:st=${T.out - 0.2}:d=${T.end - T.out + 0.2},volume=0.55[bed]`,
-  `[2:a]aformat=channel_layouts=stereo,volume=0.9[fx]`,
-  `[bed][fx]amix=inputs=2:duration=first:normalize=0,loudnorm=I=-16:TP=-1.5:LRA=9[a]`,
-].join(";");
+const VID = V("unisport-intro.mp4");
 
+/* 1. SFX only — the Instagram file. Loud enough to sit under a music track added there. */
 execFileSync("ffmpeg", [
-  "-y", "-i", VID, "-i", BED, "-i", sfx,
-  "-filter_complex", filter, "-map", "0:v", "-map", "[a]",
-  "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-shortest", "-movflags", "+faststart", OUT,
+  "-y", "-i", VID, "-i", sfx,
+  "-filter_complex", "[1:a]aformat=channel_layouts=stereo,loudnorm=I=-18:TP=-1.5:LRA=9[a]",
+  "-map", "0:v", "-map", "[a]", "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-shortest", "-movflags", "+faststart",
+  V("unisport-intro-reel.mp4"),
 ], { stdio: ["ignore", "ignore", "inherit"] });
-console.log("wrote " + OUT);
+console.log("wrote " + V("unisport-intro-reel.mp4"));
+
+/* 2. SFX + the generated bed, for anywhere that is not Instagram */
+if (existsSync(V("intro-bed-30s.mp3"))) {
+  const SWELL_2 = 14.3, cut = T.met;
+  const filter = [
+    `[2:a]atrim=0:${cut},asetpts=PTS-STARTPTS[m1]`,
+    `[2:a]atrim=${SWELL_2}:${SWELL_2 + (T.end - cut)},asetpts=PTS-STARTPTS[m2]`,
+    `[m1][m2]concat=n=2:v=0:a=1,afade=t=out:st=${T.out - 0.2}:d=${T.end - T.out + 0.2},volume=0.5[bed]`,
+    `[1:a]aformat=channel_layouts=stereo[fx]`,
+    `[bed][fx]amix=inputs=2:duration=first:normalize=0,loudnorm=I=-16:TP=-1.5:LRA=9[a]`,
+  ].join(";");
+  execFileSync("ffmpeg", [
+    "-y", "-i", VID, "-i", sfx, "-i", V("intro-bed-30s.mp3"),
+    "-filter_complex", filter, "-map", "0:v", "-map", "[a]",
+    "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-shortest", "-movflags", "+faststart",
+    V("unisport-intro-bed.mp4"),
+  ], { stdio: ["ignore", "ignore", "inherit"] });
+  console.log("wrote " + V("unisport-intro-bed.mp4"));
+}
