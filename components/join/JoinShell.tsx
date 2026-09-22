@@ -36,10 +36,13 @@ const ACCENTS = {
 export default function JoinShell({
   badge,
   accent = "varsity",
+  markClassName = "text-2xl",
   children,
 }: {
   badge: string;
   accent?: keyof typeof ACCENTS;
+  /** Size of the wordmark — the waitlist is the product's own door and wears it large. */
+  markClassName?: string;
   children: ReactNode;
 }) {
   const tone = ACCENTS[accent];
@@ -71,14 +74,14 @@ export default function JoinShell({
             marketing landing page isn't a place they want to end up. */}
         {loggedIn ? (
           <span className="mb-8 inline-block">
-            <Wordmark className="text-2xl" accentClassName={tone.mark} />
+            <Wordmark className={markClassName} accentClassName={tone.mark} />
           </span>
         ) : (
           <Link
             href="/"
             className="mb-8 inline-block"
           >
-            <Wordmark className="text-2xl" accentClassName={tone.mark} />
+            <Wordmark className={markClassName} accentClassName={tone.mark} />
           </Link>
         )}
 

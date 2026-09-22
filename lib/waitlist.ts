@@ -24,10 +24,8 @@ import { universityForEmail } from "@/lib/universityEmail";
 export const waitlist = {
   badge: "Harvard first",
   headline: "Get in on day one.",
-  /* The honest version of the pitch. It does not say the app is unfinished and
-     it does not say it is launched — it says why there is a list at all, which
-     is the part that makes waiting make sense. */
-  body: "UNIsport opens at Harvard first, to everyone on this list at once — so the first morning isn't an empty gym. Leave your email and you're in that group.",
+  /* The owner's own words (2026-09-22): the two facts, nothing generic. */
+  body: "UNIsport opens at Harvard first. Get an email when the app launches.",
 
   firstNameLabel: "First name",
   emailLabel: "Harvard email",
