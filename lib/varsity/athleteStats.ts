@@ -190,6 +190,14 @@ export type StatMetric = {
     week. Everything else is scaled to what was actually done.
   */
   axisMax?: number;
+  /*
+    THIS MEASURE IS NOT MADE OF LOGS. Recovery comes from the daily check-in,
+    and it is THREE curves rather than one height, so the screens build it from
+    lib/varsity/checkIn (recoveryCurves) and hand the drawing those instead of
+    the usual columns. `value` still exists because the type needs one; nothing
+    reads it for a measure marked this way.
+  */
+  curves?: true;
 };
 
 const sum = (ns: number[]) => ns.reduce((a, b) => a + b, 0);
@@ -229,6 +237,21 @@ export const statMetrics: StatMetric[] = [
     },
     format: (v) => `${Math.round(v)}%`,
     axisMax: 100,
+  },
+  {
+    /*
+      RECOVERY — the fourth measure, and the only one that is not a height
+      (owner, 2026-09-22). How much you slept, how tired you were and how sore,
+      as three lines over the same window, on the one 0–10 axis they all
+      honestly share. See recoveryCurves in lib/varsity/checkIn.
+    */
+    key: "recovery",
+    label: "Recovery",
+    empty: "Fill in a daily check-in and how you slept, how tired and how sore will chart here.",
+    value: () => 0,
+    format: (v) => `${Math.round(v * 10) / 10}`,
+    axisMax: 10,
+    curves: true,
   },
 ];
 

@@ -86,6 +86,74 @@ export const scoreQuestions: {
   { key: "sore", label: "Soreness", low: "None", high: "Bad", short: "Sore" },
 ];
 
+/* ── The three of them, as curves on the graph ───────────────────── */
+
+/*
+  RECOVERY IS THREE LINES, NOT ONE NUMBER (owner, 2026-09-22: "I want the graph
+  to be for recovery as well — slept, soreness and the third thing, three
+  curves, different colour").
+
+  All three share one axis, 0–10, and that works honestly: the two scores ARE
+  1–10, and hours slept only ever lands between 5 and 9, so nothing is
+  stretched or squashed to fit beside anything else. It is also why there is
+  still NO readiness score — averaging "slept 5h" with "sore 8" into one
+  number is the thing this file has always refused to do. Three lines let a
+  rower see the one that moved.
+
+  A curve names a TONE, never a colour: the drawing maps the word to a theme
+  token (rule 1).
+*/
+export type RecoveryCurve = {
+  key: "sleep" | "tired" | "sore";
+  label: string;
+  tone: "primary" | "accent" | "warn";
+  /** One entry per bucket, in order. Null = nobody answered — a gap, not a 0. */
+  points: (number | null)[];
+};
+
+/**
+ * The three curves over a run of windows — one point per bucket of the graph.
+ *
+ * A DAY bucket is that day's answer. A WEEK bucket is the MEAN of the days in
+ * it that were answered, so a week with two check-ins is those two rather than
+ * two-sevenths of them. A bucket nobody answered is null and the line simply
+ * breaks across it: drawing a zero there would say "slept nothing, no pain",
+ * which is a sentence about a day that was never recorded.
+ */
+export function recoveryCurves(
+  checkIns: CheckIns,
+  spans: { startIso: string; endIso: string }[],
+): RecoveryCurve[] {
+  const shape: { key: RecoveryCurve["key"]; label: string; tone: RecoveryCurve["tone"] }[] = [
+    { key: "sleep", label: "Slept", tone: "primary" },
+    { key: "tired", label: "Tiredness", tone: "accent" },
+    { key: "sore", label: "Soreness", tone: "warn" },
+  ];
+  const days = Object.entries(checkIns);
+  return shape.map((c) => ({
+    ...c,
+    points: spans.map((span) => {
+      const answered: number[] = [];
+      for (const [iso, entry] of days) {
+        if (iso < span.startIso || iso > span.endIso) continue;
+        const v = entry[c.key];
+        if (v !== null && v !== undefined) answered.push(v);
+      }
+      if (answered.length === 0) return null;
+      return answered.reduce((a, b) => a + b, 0) / answered.length;
+    }),
+  }));
+}
+
+/**
+ * Is there anything at all to draw? Three empty curves are not a graph.
+ *
+ * Deliberately loose about WHAT it is handed: the screens pass the drawing's
+ * own PlotCurve, which is the same shape wearing a wider `key`.
+ */
+export const hasRecovery = (curves: { points: (number | null)[] }[]): boolean =>
+  curves.some((c) => c.points.some((p) => p !== null));
+
 /** An empty day's record — what the card starts from. */
 export const emptyCheckIn = (): CheckIn => ({ sleep: null, tired: null, sore: null });
 

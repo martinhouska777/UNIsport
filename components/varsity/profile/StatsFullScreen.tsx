@@ -10,6 +10,11 @@
   What is here that isn't on the card:
     • the graph at full size, with the best bucket's number printed on it and a
       dashed average across it, so every column is visibly above or below par
+    • RECOVERY as a fourth measure (owner, 2026-09-22): how much you slept, how
+      tired you were and how sore, as three curves in three colours on the one
+      0-10 axis they honestly share, each named beside its colour. The columns,
+      the average and the shape dropdown stand down for it — none of them mean
+      anything when three things are being read at once.
     • a column you can TAP: a DAY is then read out underneath — every session
       in it, in its colour, with how long and how far (no split). A WEEK column, or a
       stretch you dragged across, is read out as totals instead: how much water,
@@ -51,7 +56,8 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import ThemeProvider from "@/components/ThemeProvider";
 import { useVarsityTheme } from "@/components/varsity/useVarsityTheme";
-import Plot from "@/components/varsity/profile/Plot";
+import Plot, { type PlotCurve } from "@/components/varsity/profile/Plot";
+import { CurveLegend } from "@/components/varsity/profile/CurveLegend";
 import Dropdown from "@/components/varsity/profile/Dropdown";
 import { IconX, IconCalendar, IconArrowLeft } from "@/components/icons";
 import { formatDistance, formatDuration, type Units } from "@/lib/varsity/units";
@@ -72,7 +78,7 @@ import { rowingReport, bucketDetail, type StatTone } from "@/lib/varsity/rowingS
 import { trainingMix } from "@/lib/varsity/trainingMix";
 import TrainingMixList from "@/components/varsity/profile/TrainingMixList";
 import { type DaysOut } from "@/lib/varsity/daysOut";
-import { type CheckIns } from "@/lib/varsity/checkIn";
+import { type CheckIns, recoveryCurves, hasRecovery } from "@/lib/varsity/checkIn";
 
 /* A word from the data → a theme token. The data never names a colour. */
 const toneClass: Record<StatTone, string> = {
@@ -164,7 +170,18 @@ export default function StatsFullScreen({
   // selection pointing past the end of the new one.
   const at = selected === null ? null : Math.min(selected, buckets.length - 1);
 
-  const anyData = points.some((p) => p.value > 0);
+  /*
+    RECOVERY — three curves off the daily check-in rather than one height off
+    the logs (owner, 2026-09-22). Built here from the very same buckets, so a
+    drag-to-zoom moves the curves with everything else.
+  */
+  const curves: PlotCurve[] | undefined = metric.curves
+    ? recoveryCurves(
+        checkIns,
+        buckets.map((b) => b.span),
+      )
+    : undefined;
+  const anyData = curves ? hasRecovery(curves) : points.some((p) => p.value > 0);
 
   /*
     THE DASHED AVERAGE is the average of the buckets that HAVE something in
@@ -266,14 +283,18 @@ export default function StatsFullScreen({
                 onOpen={(v) => setOpenMenu(v ? "range" : null)}
                 onPick={(key) => (key === CUSTOM_RANGE ? onCustomRange() : onRange(key))}
               />
-              <Dropdown
-                label={chartTypes.find((c) => c.key === chart)?.label ?? "Columns"}
-                options={chartTypes.map((c) => ({ key: c.key, label: c.label }))}
-                value={chart}
-                open={openMenu === "chart"}
-                onOpen={(v) => setOpenMenu(v ? "chart" : null)}
-                onPick={onChart}
-              />
+              {/* Columns or a line is a choice about ONE series; three curves
+                  are three curves. It stands down for Recovery. */}
+              {!metric.curves && (
+                <Dropdown
+                  label={chartTypes.find((c) => c.key === chart)?.label ?? "Columns"}
+                  options={chartTypes.map((c) => ({ key: c.key, label: c.label }))}
+                  value={chart}
+                  open={openMenu === "chart"}
+                  onOpen={(v) => setOpenMenu(v ? "chart" : null)}
+                  onPick={onChart}
+                />
+              )}
             </div>
 
             {/* ── The graph, the whole width of the phone. ── */}
@@ -288,6 +309,7 @@ export default function StatsFullScreen({
                   width={360}
                   values="auto"
                   average={metric.axisMax ? null : average}
+                  curves={curves}
                   selected={at}
                   onSelect={setSelected}
                   shaded={shaded}
@@ -302,6 +324,7 @@ export default function StatsFullScreen({
                     setSelected(null);
                   }}
                 />
+                {curves && <CurveLegend curves={curves} />}
               </div>
             ) : (
               <p className="rounded-2xl border border-dashed border-border bg-surface-2 px-4 py-10 text-center text-[12px] leading-relaxed text-muted">

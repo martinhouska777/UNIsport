@@ -7,6 +7,13 @@
   window they picked, as columns or as a line. One point per bucket: a day each
   for the short windows, a week each for the long ones.
 
+  OR THREE CURVES AT ONCE (owner, 2026-09-22). Recovery is not one height: it
+  is how much you slept, how tired you were and how sore, which share an axis
+  but not a story. Given `curves`, this draws each of them in its own theme
+  colour and stands down everything that only makes sense for a single series
+  — the columns, the numbers on the buckets, the dashed average, the peak
+  chip. The window, the dates, the tap and the drag-to-zoom are untouched.
+
   Two sizes, one drawing:
     • on the profile card — small, quiet, no numbers on the columns
     • full screen        — big type, every column named that has room for it,
@@ -23,6 +30,31 @@ import type { Units } from "@/lib/varsity/units";
 import type { ChartType } from "@/lib/varsity/athleteStats";
 
 export type PlotPoint = { label: string; value: number; latest: boolean };
+
+/*
+  A CURVE, for a measure that is more than one number per bucket. Recovery is
+  the only one so far: how much you slept, how tired you were and how sore, on
+  the one 0-10 axis they honestly share (lib/varsity/checkIn, recoveryCurves).
+
+  A curve names a TONE, never a colour — the mapping to a theme token lives
+  down in this file, so the data still says nothing about how it looks (rule 1).
+
+  A null point is a bucket NOBODY ANSWERED. The line breaks across it rather
+  than dropping to the floor: a zero there would claim a day was recorded as
+  "no sleep, no pain", which is not what an empty day means.
+*/
+export type PlotCurve = {
+  key: string;
+  label: string;
+  tone: "primary" | "accent" | "warn";
+  points: (number | null)[];
+};
+
+const CURVE_STROKE: Record<PlotCurve["tone"], string> = {
+  primary: "var(--primary)",
+  accent: "var(--accent)",
+  warn: "var(--warn)",
+};
 
 /** How much the columns are allowed to say about themselves. */
 /* "fit": every point's number when they ALL fit (a week or less on the card),
@@ -129,6 +161,7 @@ export default function Plot({
   onSelect,
   onRangeSelect,
   shaded,
+  curves,
 }: {
   points: PlotPoint[];
   metric: PlotMetric;
@@ -151,6 +184,13 @@ export default function Plot({
   onRangeSelect?: (from: number, to: number) => void;
   /** Per bucket: does it hold a day marked out (sick, injured, away)? Shaded. */
   shaded?: boolean[];
+  /*
+    GIVEN, THIS IS A MULTI-CURVE GRAPH and `points` is only used for the dates,
+    the tap targets and the selection band — no columns, no single line, no
+    numbers on the buckets, no dashed average and no peak chip, because none of
+    those mean anything when three things are being read at once.
+  */
+  curves?: PlotCurve[];
 }) {
   /*
     THE DRAG. Where the finger (or mouse) went down and where it is now, as
@@ -165,6 +205,7 @@ export default function Plot({
     else scales to its own best bucket, rounded UP to something a person would
     say out loud, so the top gridline is a number and not 15.7.
   */
+  const multi = !!curves && curves.length > 0;
   const peak = Math.max(1, ...points.map((p) => p.value));
   const max = metric.axisMax ?? niceCeil(peak);
   const peakIndex = points.reduce((best, p, i) => (p.value > points[best].value ? i : best), 0);
@@ -175,7 +216,7 @@ export default function Plot({
   const H = height;
   const padX = 10;
   // Room over the tallest column for its own number, when numbers are shown.
-  const padT = values === "none" ? 12 : 24;
+  const padT = values === "none" || curves ? 12 : 24;
   const padB = 22; // the row of dates under the floor
   // Type scales with the card, so the big one is genuinely bigger and not just
   // taller.
@@ -256,7 +297,11 @@ export default function Plot({
          highlight the dates as text. */
       className={`block text-primary ${onRangeSelect ? "touch-pan-y select-none" : ""}`}
       role="img"
-      aria-label={`${metric.label} by ${n} buckets`}
+      aria-label={
+        multi
+          ? `${metric.label}: ${curves!.map((c) => c.label).join(", ")}, over ${n} buckets`
+          : `${metric.label} by ${n} buckets`
+      }
       {...(onRangeSelect
         ? {
             onPointerDown: (e: React.PointerEvent<SVGSVGElement>) => {
@@ -354,9 +399,60 @@ export default function Plot({
         />
       )}
 
+      {/*
+        THE CURVES. One polyline per run of buckets that were answered, so a
+        gap in the check-ins is a gap in the line and not a plunge to zero, and
+        a single answered bucket with nothing either side still shows as its own
+        dot. Each curve is its own theme colour; the dots are what make two
+        curves readable where they cross.
+      */}
+      {multi &&
+        curves!.map((c) => {
+          const runs: number[][] = [];
+          let run: number[] = [];
+          c.points.forEach((v, i) => {
+            if (v == null || i >= n) {
+              if (run.length) runs.push(run);
+              run = [];
+            } else {
+              run.push(i);
+            }
+          });
+          if (run.length) runs.push(run);
+          const stroke = CURVE_STROKE[c.tone];
+          return (
+            <g key={c.key}>
+              {runs.map((idx, r) => (
+                <polyline
+                  key={r}
+                  points={idx.map((i) => `${cx(i)},${yOf(c.points[i] as number)}`).join(" ")}
+                  fill="none"
+                  stroke={stroke}
+                  strokeWidth={2}
+                  strokeLinejoin="round"
+                  strokeLinecap="round"
+                />
+              ))}
+              {c.points.map((v, i) =>
+                v == null || i >= n ? null : (
+                  <circle
+                    key={i}
+                    cx={cx(i)}
+                    cy={yOf(v)}
+                    r={i === selected ? 3.5 : 2.25}
+                    fill={stroke}
+                    stroke="var(--surface)"
+                    strokeWidth={1}
+                  />
+                ),
+              )}
+            </g>
+          );
+        })}
+
       {/* THE LINE — one soft fill under one stroke, drawn before the labels so
           nothing it crosses is lost underneath it. */}
-      {chart === "line" && (
+      {!multi && chart === "line" && (
         <>
           <path d={area} fill="var(--primary)" fillOpacity={0.12} />
           <polyline
@@ -380,7 +476,7 @@ export default function Plot({
             {/* THE COLUMNS. An empty bucket draws nothing — the floor already
                 says nothing happened, and a stub would read as a little bit of
                 something. */}
-            {chart === "bars" && p.value > 0 && (
+            {!multi && chart === "bars" && p.value > 0 && (
               <rect
                 x={cx(i) - barW / 2}
                 y={yOf(p.value)}
@@ -393,7 +489,7 @@ export default function Plot({
                 fillOpacity={p.latest || isSelected ? 1 : 0.45}
               />
             )}
-            {chart === "line" && (
+            {!multi && chart === "line" && (
               <circle
                 cx={cx(i)}
                 cy={yOf(p.value)}
@@ -403,7 +499,7 @@ export default function Plot({
                 strokeWidth={1.5}
               />
             )}
-            {allValues && p.value > 0 && (
+            {!multi && allValues && p.value > 0 && (
               <text
                 x={cx(i)}
                 /* On a LINE, a dip's number goes UNDER its dot — above it, the
@@ -442,7 +538,7 @@ export default function Plot({
 
       {/* THE AVERAGE — one dashed line the whole width of the plot. Every column
           is then either above it or below it, which is the whole point. */}
-      {average != null && average > 0 && (
+      {!multi && average != null && average > 0 && (
         <>
           <line
             x1={padL}
@@ -468,7 +564,7 @@ export default function Plot({
 
       {/* THE PEAK, named. When every column already carries its number this
           would be a second copy, so it only speaks when they don't. */}
-      {peakOnly && (
+      {!multi && peakOnly && (
         <ValueChip
           x={cx(peakIndex)}
           y={yOf(points[peakIndex].value) - 4}

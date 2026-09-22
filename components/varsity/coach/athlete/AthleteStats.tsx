@@ -141,7 +141,17 @@ export default function AthleteStats({
         <Dropdown
           label={metric.label}
           title
-          options={statMetrics.map((m) => ({ key: m.key, label: m.label }))}
+          /*
+            NO RECOVERY HERE YET (2026-09-22). The athlete's own statistics
+            gained a fourth measure — slept / tiredness / soreness, as three
+            curves — but it is drawn from their daily check-in, which this
+            screen does not read. Offering a measure that would draw an empty
+            graph is worse than not offering it, so any curve-based measure is
+            filtered out until the coach side reads check-ins too.
+          */
+          options={statMetrics
+            .filter((m) => !m.curves)
+            .map((m) => ({ key: m.key, label: m.label }))}
           value={metricKey}
           open={openMenu === "metric"}
           onOpen={(v) => setOpenMenu(v ? "metric" : null)}

@@ -70,7 +70,8 @@ import {
   type Bucket,
 } from "@/lib/varsity/athleteStats";
 import { trainingMix, type MixRow } from "@/lib/varsity/trainingMix";
-import Plot from "@/components/varsity/profile/Plot";
+import Plot, { type PlotCurve } from "@/components/varsity/profile/Plot";
+import { CurveLegend } from "@/components/varsity/profile/CurveLegend";
 import Dropdown from "@/components/varsity/profile/Dropdown";
 import StatsFullScreen from "@/components/varsity/profile/StatsFullScreen";
 import TrainingMixSheet from "@/components/varsity/profile/TrainingMixSheet";
@@ -89,7 +90,7 @@ import {
   type DayOutReason,
   type DaysOut,
 } from "@/lib/varsity/daysOut";
-import { type CheckIns } from "@/lib/varsity/checkIn";
+import { type CheckIns, recoveryCurves, hasRecovery } from "@/lib/varsity/checkIn";
 import {
   IconExpand,
   IconActivity,
@@ -668,7 +669,20 @@ function WeeklyGraph({
   const [openMenu, setOpenMenu] = useState<"metric" | "range" | "chart" | null>(null);
   const [picking, setPicking] = useState(false); // the custom-dates sheet
   const [full, setFull] = useState(false); // the full-screen graph
-  const anyData = points.some((p) => p.value > 0);
+  /*
+    RECOVERY IS THREE CURVES, not a height, so the card asks the check-ins for
+    them rather than reading the buckets' logs. Every other measure gets null
+    here and the graph is drawn exactly as it always was.
+  */
+  const curves: PlotCurve[] | undefined = metric.curves
+    ? recoveryCurves(
+        checkIns,
+        buckets.map((b) => b.span),
+      )
+    : undefined;
+  /* "Is there anything to draw" is a different question for a measure whose
+     buckets carry no value at all — ask the curves instead. */
+  const anyData = curves ? hasRecovery(curves) : points.some((p) => p.value > 0);
 
   const rangeOptions = [
     ...statRanges.map((r) => ({ key: r.key, label: r.label })),
@@ -710,7 +724,16 @@ function WeeklyGraph({
           aria-label={`See ${metric.label.toLowerCase()} full size`}
           className="mt-4 block w-full active:opacity-80"
         >
-          <Plot points={points} metric={metric} units={units} chart={chart} height={188} values="fit" />
+          <Plot
+            points={points}
+            metric={metric}
+            units={units}
+            chart={chart}
+            height={188}
+            values="fit"
+            curves={curves}
+          />
+          {curves && <CurveLegend curves={curves} />}
         </button>
       ) : (
         <p className="mt-4 rounded-xl border border-dashed border-border bg-surface-2 px-4 py-8 text-center text-[12px] leading-relaxed text-muted">
@@ -724,14 +747,21 @@ function WeeklyGraph({
           out is the icon alone: a button that opens a whole screen doesn't need
           a word as well, and the word was taking the room. */}
       <div className="mt-3.5 flex items-center justify-between gap-2 border-t border-border pt-3">
-        <Dropdown
-          label={chartTypes.find((c) => c.key === chart)?.label ?? "Columns"}
-          options={chartTypes.map((c) => ({ key: c.key, label: c.label }))}
-          value={chart}
-          open={openMenu === "chart"}
-          onOpen={(v) => setOpenMenu(v ? "chart" : null)}
-          onPick={onChart}
-        />
+        {/* Columns or a line is a choice about ONE series. Three curves are
+            three curves, so the dropdown stands down rather than offering a
+            shape it cannot draw. */}
+        {metric.curves ? (
+          <span />
+        ) : (
+          <Dropdown
+            label={chartTypes.find((c) => c.key === chart)?.label ?? "Columns"}
+            options={chartTypes.map((c) => ({ key: c.key, label: c.label }))}
+            value={chart}
+            open={openMenu === "chart"}
+            onOpen={(v) => setOpenMenu(v ? "chart" : null)}
+            onPick={onChart}
+          />
+        )}
         <button
           type="button"
           onClick={() => setFull(true)}
