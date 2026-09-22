@@ -41,7 +41,6 @@ import {
   type WeekDay,
   type WeekView,
   type TodaySession,
-  type SessionStatus,
   type Lineup,
 } from "@/lib/varsity/home";
 import {
@@ -62,21 +61,16 @@ import {
   IconUser,
 } from "@/components/icons";
 
-// Three states, all read off the athlete's own log (lib/varsity/athleteHome).
-const statusStyle: Record<
-  SessionStatus,
-  { cls: string; label: string; Icon: (p: { size?: number }) => React.ReactElement } | null
-> = {
-  /*
-    UPCOMING is deliberately blank. Everything on today's screen is upcoming
-    until it isn't, so the badge told nobody anything — the owner's words were
-    "it's there and it's to nothing". LOGGED and MISSED stay: those are states
-    you can act on.
-  */
-  upcoming: null,
-  done: { cls: "text-success", label: "LOGGED", Icon: IconCheckCircle },
-  missed: { cls: "text-danger", label: "MISSED", Icon: IconX },
-};
+/*
+  NO STATE BADGE ON A SESSION CARD AT ALL (owner, 2026-09-22).
+
+  UPCOMING went first ("it's there and it's to nothing"). LOGGED and MISSED are
+  now gone too, because the card already IS its state, in the corner where you
+  act on it: a session with nothing in it carries a + to log it, and a logged
+  one carries a pencil and the line of what you logged. "MISSED" in red was
+  telling you off for a day you can still go and log — the owner's words were
+  "you need to log it, like log, and not miss".
+*/
 
 /*
   CAN THIS SESSION STILL BE LOGGED? The Log tab reaches back LOG_DAYS_BACK days
@@ -541,15 +535,40 @@ function WeekStrip({
   const [idx, setIdx] = useState(startIndex);
 
   const last = weeks.length - 1;
-  const go = (delta: number) =>
-    setIdx(() => {
-      const from = weekOf >= 0 ? weekOf : idx;
-      return Math.max(0, Math.min(last, from + delta));
-    });
-  const pick = (d: WeekDay) => (d === selected ? onClearDay() : onSelect(d));
-
+  /*
+    WHICH WEEK IS ON THE STRIP. A picked day WINS: the strip must show the week
+    the day you tapped is in. `idx` is only what the arrows have walked to.
+  */
   const weekOf = selected ? weeks.findIndex((w) => w.days.includes(selected)) : -1;
-  const current = weeks[weekOf >= 0 ? weekOf : idx];
+  const shown = weekOf >= 0 ? weekOf : idx;
+  const current = weeks[shown];
+
+  /*
+    THE ARROWS CARRY THE PICKED DAY WITH THEM (bug, owner 2026-09-22: "the week
+    arrow doesn't work, the day arrow does").
+
+    They used to only move `idx` — and `idx` is ignored whenever a day is
+    picked, because the day decides the week. So the moment you tapped a day,
+    or stepped one with the day arrows, the week arrows went dead: they moved a
+    number nothing was reading. (It looked like a PC problem only because a
+    phone can swipe the day list instead.)
+
+    Now a week step moves the SAME WEEKDAY into the week you are going to — the
+    strip, the date above it and the sessions below it stay in step — and with
+    no day picked it simply walks `idx` as before.
+  */
+  const go = (delta: number) => {
+    const to = Math.max(0, Math.min(last, shown + delta));
+    if (to === shown) return;
+    setIdx(to);
+    if (weekOf >= 0 && selected) {
+      const col = weeks[weekOf].days.indexOf(selected);
+      const days = weeks[to].days;
+      const day = days[col] ?? days[days.length - 1];
+      if (day) onSelect(day);
+    }
+  };
+  const pick = (d: WeekDay) => (d === selected ? onClearDay() : onSelect(d));
 
   return (
     <div className="px-3 pt-4">
@@ -581,7 +600,7 @@ function WeekStrip({
       <div className="mb-2 flex items-center justify-between">
         <button
           onClick={() => go(-1)}
-          disabled={(weekOf >= 0 ? weekOf : idx) === 0}
+          disabled={shown === 0}
           aria-label="Previous week"
           className="tap44 press-icon flex h-6 w-6 items-center justify-center rounded-md border border-border bg-surface text-muted disabled:opacity-30"
         >
@@ -593,7 +612,7 @@ function WeekStrip({
         <span className="text-[11px] font-medium text-text">{current.label}</span>
         <button
           onClick={() => go(1)}
-          disabled={(weekOf >= 0 ? weekOf : idx) === last}
+          disabled={shown === last}
           aria-label="Next week"
           className="tap44 press-icon flex h-6 w-6 items-center justify-center rounded-md border border-border bg-surface text-muted disabled:opacity-30"
         >
@@ -633,7 +652,6 @@ function SessionCard({
   s: TodaySession;
   lineups?: Lineup[];
 }) {
-  const st = statusStyle[s.status];
   const [open, setOpen] = useState(false);
   const boats = lineups.filter((l) => l.periodKey === s.periodKey);
   const openable = boats.length > 0;
@@ -677,14 +695,6 @@ function SessionCard({
                   2026-09-21). An empty span still cost the row a gap. */}
               {s.location && <span className="text-[11px] text-muted">{s.location}</span>}
             </div>
-            {/* Whatever this session's state is, said in the header line. The
-                corner itself belongs to the log button (below). */}
-            {st && (
-              <span className={`mr-9 flex items-center gap-1 text-[10px] font-semibold tracking-[0.06em] ${st.cls}`}>
-                <st.Icon size={12} />
-                {st.label}
-              </span>
-            )}
           </div>
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 flex-1">
