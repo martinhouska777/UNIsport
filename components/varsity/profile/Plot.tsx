@@ -36,8 +36,10 @@ export type PlotPoint = { label: string; value: number; latest: boolean };
   the only one so far: how much you slept, how tired you were and how sore, on
   the one 0-10 axis they honestly share (lib/varsity/checkIn, recoveryCurves).
 
-  A curve names a TONE, never a colour — the mapping to a theme token lives
-  down in this file, so the data still says nothing about how it looks (rule 1).
+  A curve says WHICH SERIES it is — first, second, third — and never a colour.
+  The three are blue, yellow and green, defined once in app/globals.css and
+  deliberately outside the school themes: three lines a rower has to tell apart
+  cannot be three shades of whatever the crest is (rule 1).
 
   A null point is a bucket NOBODY ANSWERED. The line breaks across it rather
   than dropping to the floor: a zero there would claim a day was recorded as
@@ -46,14 +48,14 @@ export type PlotPoint = { label: string; value: number; latest: boolean };
 export type PlotCurve = {
   key: string;
   label: string;
-  tone: "primary" | "accent" | "warn";
+  tone: "series-1" | "series-2" | "series-3";
   points: (number | null)[];
 };
 
 const CURVE_STROKE: Record<PlotCurve["tone"], string> = {
-  primary: "var(--primary)",
-  accent: "var(--accent)",
-  warn: "var(--warn)",
+  "series-1": "var(--series-1)",
+  "series-2": "var(--series-2)",
+  "series-3": "var(--series-3)",
 };
 
 /** How much the columns are allowed to say about themselves. */

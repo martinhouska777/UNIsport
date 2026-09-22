@@ -1283,7 +1283,10 @@ export default function ProfileScreen() {
           <IconSquad size={18} />
         </span>
         <div className="min-w-0 flex-1">
-          <div className="text-[13px] font-medium text-text">The squad</div>
+          {/* ROSTER — what the page it opens is already called (owner,
+              2026-09-22: "just the roster, I never call it that"). "The
+              squad" was a second word for one list. */}
+          <div className="text-[13px] font-medium text-text">Roster</div>
         </div>
         <span className="text-muted">
           <IconChevronRight size={17} />

@@ -40,6 +40,25 @@
   --warn: #d97706;
   --danger: #dc2626;
   /*
+    THE THREE CURVES — blue, yellow, green (owner, 2026-09-22: "make a
+    different colour so it's visible, like blue, yellow and green").
+
+    A graph that draws three lines at once needs three colours that cannot be
+    mistaken for each other, and NOT the school's: crimson beside gold beside
+    amber was two golds and a red. So, like the podium metals below, these are
+    deliberately OUTSIDE the theme — a school with a navy primary would
+    otherwise collide with its own first curve, and a rower has to be able to
+    tell soreness from sleep before they care whose blue it is.
+
+    They are numbered, not named, everywhere else in the app: the data says
+    "the second series" and this file decides that is yellow (rule 1). Picked
+    as saturated mid-tones so a 2px line holds up on the near-black varsity
+    surface and on white alike.
+  */
+  --series-1: #3b82f6;
+  --series-2: #eab308;
+  --series-3: #22c55e;
+  /*
     THE PODIUM — gold, silver, bronze.
     The only colours in the app that are NOT the school's, and deliberately not
     part of a theme: first, second and third have meant the same three metals
@@ -114,6 +133,10 @@
   --color-success: var(--success);
   --color-warn: var(--warn);
   --color-danger: var(--danger);
+  /* The three curves. Never themed — see the note where they are defined. */
+  --color-series-1: var(--series-1);
+  --color-series-2: var(--series-2);
+  --color-series-3: var(--series-3);
   /*
     TINTS. A washed fill and a soft border, derived from each colour rather than
     written out. These replace ~200 hand-picked opacity suffixes where the same

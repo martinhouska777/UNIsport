@@ -12,15 +12,18 @@
   Used by the profile's graph card and by the statistics full screen, so the
   small one and the big one can never label the same curve differently.
 
-  The curve's data says a TONE — a word — and this maps it to a theme token
-  (rule 1). The data never names a colour.
+  The curve's data says WHICH SERIES it is — first, second, third — and this
+  maps that to the token. The three colours themselves (blue, yellow, green)
+  live in app/globals.css and are deliberately not part of any school's theme,
+  because three lines a rower has to tell apart cannot be three shades of
+  whatever the crest is (rule 1). The data never names a colour.
 */
 import type { PlotCurve } from "@/components/varsity/profile/Plot";
 
 const curveDot: Record<PlotCurve["tone"], string> = {
-  primary: "bg-primary",
-  accent: "bg-accent",
-  warn: "bg-warn",
+  "series-1": "bg-series-1",
+  "series-2": "bg-series-2",
+  "series-3": "bg-series-3",
 };
 
 export function CurveLegend({ curves }: { curves: PlotCurve[] }) {

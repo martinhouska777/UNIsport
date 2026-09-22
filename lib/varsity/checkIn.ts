@@ -100,13 +100,13 @@ export const scoreQuestions: {
   number is the thing this file has always refused to do. Three lines let a
   rower see the one that moved.
 
-  A curve names a TONE, never a colour: the drawing maps the word to a theme
-  token (rule 1).
+  A curve names WHICH SERIES it is — first, second, third — and never a
+  colour. app/globals.css decides that the first one is blue (rule 1).
 */
 export type RecoveryCurve = {
   key: "sleep" | "tired" | "sore";
   label: string;
-  tone: "primary" | "accent" | "warn";
+  tone: "series-1" | "series-2" | "series-3";
   /** One entry per bucket, in order. Null = nobody answered — a gap, not a 0. */
   points: (number | null)[];
 };
@@ -125,9 +125,9 @@ export function recoveryCurves(
   spans: { startIso: string; endIso: string }[],
 ): RecoveryCurve[] {
   const shape: { key: RecoveryCurve["key"]; label: string; tone: RecoveryCurve["tone"] }[] = [
-    { key: "sleep", label: "Slept", tone: "primary" },
-    { key: "tired", label: "Tiredness", tone: "accent" },
-    { key: "sore", label: "Soreness", tone: "warn" },
+    { key: "sleep", label: "Slept", tone: "series-1" },
+    { key: "tired", label: "Tiredness", tone: "series-2" },
+    { key: "sore", label: "Soreness", tone: "series-3" },
   ];
   const days = Object.entries(checkIns);
   return shape.map((c) => ({
