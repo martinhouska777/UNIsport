@@ -39,7 +39,8 @@ export default function JoinShell({
   markClassName = "text-2xl",
   children,
 }: {
-  badge: string;
+  /** Optional: the invite screens wear one, the waitlist does not. */
+  badge?: string;
   accent?: keyof typeof ACCENTS;
   /** Size of the wordmark — the waitlist is the product's own door and wears it large. */
   markClassName?: string;
@@ -87,11 +88,13 @@ export default function JoinShell({
 
         {/* On its own line under the wordmark: a short badge used to slide up
             beside the logo, which read as one strange word. */}
-        <div className="mb-5 flex justify-center">
-          <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 font-mono text-[11px] font-medium uppercase tracking-wider ${tone.chip}`}>
-            {badge}
-          </span>
-        </div>
+        {badge && (
+          <div className="mb-5 flex justify-center">
+            <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 font-mono text-[11px] font-medium uppercase tracking-wider ${tone.chip}`}>
+              {badge}
+            </span>
+          </div>
+        )}
 
         {children}
       </div>

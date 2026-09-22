@@ -22,7 +22,6 @@
 import { universityForEmail } from "@/lib/universityEmail";
 
 export const waitlist = {
-  badge: "Harvard first",
   headline: "Get in on day one.",
   /* The owner's own words (2026-09-22): the two facts, nothing generic. */
   body: "UNIsport opens at Harvard first. Get an email when the app launches.",

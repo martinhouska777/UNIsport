@@ -64,7 +64,7 @@ export default function WaitlistPage() {
 
   if (state === "done") {
     return (
-      <JoinShell badge={waitlist.badge} accent="brand" markClassName="text-5xl">
+      <JoinShell accent="brand" markClassName="text-5xl">
         <h1 className="font-display text-3xl text-l-text">{waitlist.doneHeadline}</h1>
         <p className="mt-3 text-sm leading-relaxed text-l-text-2">{waitlist.doneBody}</p>
         {instagram && (
@@ -82,7 +82,7 @@ export default function WaitlistPage() {
   }
 
   return (
-    <JoinShell badge={waitlist.badge} accent="brand" markClassName="text-5xl">
+    <JoinShell accent="brand" markClassName="text-5xl">
       <h1 className="font-display text-3xl text-l-text">{waitlist.headline}</h1>
       <p className="mt-3 text-sm leading-relaxed text-balance text-l-text-2">{waitlist.body}</p>
 
