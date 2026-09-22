@@ -169,3 +169,22 @@ mentioned is not in the repo and was not ripped from the reference reels: add it
 
 Gotcha: element ids. The headline's characters own ids a0…, b0…, p0…, m0…; anything else
 must not use those prefixes (the activity tiles did, and silently hid three letters).
+
+---
+
+## Cut 4 — the intro, light v2 (2026-09-22, night). CURRENT.
+
+Owner changes over cut 3: headline CENTRED and typed exactly like the landing page (38 ms a
+letter, steady, thin caret — `StudentIntro.tsx` TYPE_MS / `.l-caret`); the reference reel's
+own tap and typing sounds; more time at the end — the two i's wait a hand apart, "Match."
+types, then a SLOW 1.4 s fill until they connect; "Match." goes, "UNIsport" types itself ABOVE
+the mark in the real wordmark; NO domain — "Live now at Harvard" under the mark. 14.2 s.
+
+The reference's sounds sit under its music, so they were lifted with a high-pass filter:
+`mockups/video/ref-keys.wav` (5.35–6.05 s of the reel, >1.4 kHz) and `ref-tap.wav` (7.995 s,
+>500 Hz). Both gitignored with the other media; the cut points are in intro-sound.mjs. Every
+typed character plays a random 55 ms slice of ref-keys. Whooshes/riser/hit from the ChatCut
+bank as before, plus a slowed-down deep whoosh as a "drone" under the fill.
+
+Zone-1 note: "Live now at Harvard" is the owner's line (SOCIAL.md §7B said never imply Harvard
+uses UNIsport; the owner chose it anyway on 2026-09-22, same as the waitlist copy).

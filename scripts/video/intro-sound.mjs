@@ -1,33 +1,30 @@
 /*
-  Sound for the intro (scripts/video/intro.mjs), light version.
+  Sound for the intro (scripts/video/intro.mjs), light v2.
 
-  Real sound-effects from the ChatCut library, placed on the exact frames the
-  picture uses. No baked music: the owner lays a trending track over it in
-  Instagram, so the mix has to leave room and end clean.
+  Placed on the exact frames the picture uses; no baked music, so the owner
+  can lay a trending track over it in Instagram.
 
-  THE BANK. mockups/video/sfx-bank.mp3 is one 70 s audio export from the
-  ChatCut project "UNIsport logo explorations", where each library sound was
-  parked in its own 10 s slot (edit_item adds with fromFrame = slot * 300):
-      0 s   Keyboard Typing Loop      (15.5 s of real keys)
-     20 s   Deep Short Whoosh         (anchor at 20.0)
-     30 s   Airy Short Whoosh         (anchor at 30.0)
-     40 s   Simple Whoosh             (anchor at 40.0)
-     50 s   Mouse Click               (anchor at 50.0)
-     60 s   Vine Boom Impact          (anchor at 60.0)
-     70 s   Sharp Bass Riser          (anchor at 70.0; the export clipped its tail)
-  Why a bank: a library sound cannot be downloaded on its own, but an audio
-  EXPORT of the timeline comes back as a plain S3 file. One export, seven sounds.
+  WHERE THE SOUNDS COME FROM
+    - ref-keys.wav / ref-tap.wav: the owner asked for the reference reel's own
+      typing and tap. In that reel they sit under a music bed, so they were
+      lifted with a high-pass filter (1.4 kHz for the keys, 500 Hz for the
+      tap) from mockups of the reference (Downloads/WhatsApp Video ... 2.09.07
+      PM.mp4, 5.35–6.05 s and 7.995–8.115 s). Every typed character plays a
+      random 55 ms slice of the keys file, so no pattern repeats.
+    - sfx-bank.mp3: seven ChatCut LIBRARY sounds parked one per 10 s slot and
+      exported as one file (see the slot table below). Used for the whooshes,
+      the riser and the low hit.
+  If ref-keys.wav is missing, the keyboard loop from the bank is used instead.
 
-  Typing: every character gets its own 70 ms slice of the keyboard loop,
-  cut from a seeded random spot, so the keys sound real and never repeat in a
-  pattern. Times come from mockups/video/intro-times.json, written by
-  intro.mjs — the same jitter the picture has.
+  THE BANK slots (anchor = the sound's transient):
+      0 s  Keyboard Typing Loop (15.5 s)   20 s Deep Short Whoosh
+     30 s  Airy Short Whoosh               40 s Simple Whoosh
+     50 s  Mouse Click                     60 s Vine Boom Impact
+     70 s  Sharp Bass Riser (tail clipped by the export)
 
   Run: node scripts/video/intro-sound.mjs
-  In:  mockups/video/unisport-intro.mp4, sfx-bank.mp3, intro-times.json
-       (optional) intro-bed-30s.mp3 for the second output
-  Out: mockups/video/unisport-intro-reel.mp4  (SFX only — for Instagram)
-       mockups/video/unisport-intro-bed.mp4   (SFX + the generated bed)
+  Out: mockups/video/unisport-intro-reel.mp4 (SFX only — for Instagram)
+       mockups/video/unisport-intro-bed.mp4  (SFX + the generated bed)
 */
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { execFileSync } from "node:child_process";
@@ -42,68 +39,88 @@ const SR = 48000;
 const N = Math.round(T.end * SR);
 const mix = new Float32Array(N);
 
-/* decode the bank to mono float PCM once */
-const raw = execFileSync("ffmpeg", ["-v", "error", "-i", V("sfx-bank.mp3"), "-ac", "1", "-ar", String(SR), "-f", "f32le", "-"], { maxBuffer: 1 << 28 });
-const bank = new Float32Array(raw.buffer, raw.byteOffset, raw.byteLength / 4);
+const decode = (file) => {
+  const raw = execFileSync("ffmpeg", ["-v", "error", "-i", file, "-ac", "1", "-ar", String(SR), "-f", "f32le", "-"], { maxBuffer: 1 << 28 });
+  return new Float32Array(raw.buffer, raw.byteOffset, raw.byteLength / 4);
+};
+const bank = decode(V("sfx-bank.mp3"));
+const keys = existsSync(V("ref-keys.wav")) ? decode(V("ref-keys.wav")) : null;
+const tapS = existsSync(V("ref-tap.wav")) ? decode(V("ref-tap.wav")) : null;
 
 let seed = 5;
 const rnd = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
 
-/* copy bank[from, from+dur) to mix at time t, with short fades and a gain */
-function put(t, from, dur, gain, fadeIn = 0.004, fadeOut = 0.03) {
+function put(src, t, from, dur, gain, fadeIn = 0.004, fadeOut = 0.03) {
   const s0 = Math.round(t * SR), b0 = Math.round(from * SR), n = Math.round(dur * SR);
   const fi = Math.round(fadeIn * SR), fo = Math.round(fadeOut * SR);
   for (let i = 0; i < n; i++) {
     const o = s0 + i, b = b0 + i;
-    if (o < 0 || o >= N || b < 0 || b >= bank.length) continue;
+    if (o < 0 || o >= N || b < 0 || b >= src.length) continue;
     let g = gain;
     if (i < fi) g *= i / fi;
     if (i > n - fo) g *= (n - i) / fo;
-    mix[o] += bank[b] * g;
+    mix[o] += src[b] * g;
   }
 }
 
-/* one key: a slice of the loop, from a random spot in its first 14 s */
-function key(t, gain) { put(t, 0.3 + rnd() * 13.5, 0.07, gain, 0.002, 0.035); }
-
-/* the library one-shots, by anchor. `pre` is how much before the anchor to include. */
-const deep   = (t, g) => put(t - 0.5, 19.5, 1.3, g, 0.01, 0.2);
-const airy   = (t, g) => put(t - 0.35, 29.65, 0.8, g, 0.01, 0.15);
-const simple = (t, g) => put(t - 0.45, 39.55, 1.0, g, 0.01, 0.15);
-const click  = (t, g) => put(t - 0.005, 49.995, 0.2, g, 0.001, 0.05);
-const boom   = (t, g) => put(t - 0.05, 59.95, 2.4, g, 0.002, 0.6);
-const riser  = (t, g) => put(t - 0.8, 69.3, 0.85, g, 0.05, 0.02);
-
-/* a synthesised sub thump under the boom, so the connect has weight without the meme */
+/* one key */
+function key(t, gain) {
+  if (keys) put(keys, t, 0.02 + rnd() * (keys.length / SR - 0.1), 0.055, gain * 3.2, 0.002, 0.03);
+  else put(bank, t, 0.3 + rnd() * 13.5, 0.07, gain, 0.002, 0.035);
+}
+/* the tap: the reference's own, or the library click */
+function tap(t, gain) {
+  if (tapS) put(tapS, t, 0, tapS.length / SR, gain * 2.6, 0.001, 0.04);
+  else put(bank, t - 0.005, 49.995, 0.2, gain, 0.001, 0.05);
+}
+const deep   = (t, g) => put(bank, t - 0.5, 19.5, 1.3, g, 0.01, 0.2);
+const airy   = (t, g) => put(bank, t - 0.35, 29.65, 0.8, g, 0.01, 0.15);
+const simple = (t, g) => put(bank, t - 0.45, 39.55, 1.0, g, 0.01, 0.15);
+const click  = (t, g) => put(bank, t - 0.005, 49.995, 0.2, g, 0.001, 0.05);
+const boom   = (t, g) => put(bank, t - 0.05, 59.95, 2.4, g, 0.002, 0.6);
+const riser  = (t, g) => put(bank, t - 0.8, 69.3, 0.85, g, 0.05, 0.02);
 function thump(t, gain) {
   const s0 = Math.round(t * SR);
   for (let i = 0; i < SR * 0.9; i++) {
     const s = i / SR, f = 40 + 70 * Math.exp(-s * 20);
-    const v = Math.sin(2 * Math.PI * f * s) * Math.exp(-s * 5.5);
-    if (s0 + i < N) mix[s0 + i] += v * gain;
+    if (s0 + i < N) mix[s0 + i] += Math.sin(2 * Math.PI * f * s) * Math.exp(-s * 5.5) * gain;
+  }
+}
+/* a long, quiet air under the slow fill: the deep whoosh stretched by playing it slower */
+function drone(t, dur, gain) {
+  const s0 = Math.round(t * SR), n = Math.round(dur * SR), b0 = Math.round(19.55 * SR), len = Math.round(1.1 * SR);
+  for (let i = 0; i < n; i++) {
+    const o = s0 + i; if (o >= N) break;
+    const p = (i / n) * len; const k = Math.floor(p), fr = p - k;
+    const v = bank[b0 + k] * (1 - fr) + bank[b0 + k + 1] * fr;
+    const env = Math.sin(Math.PI * (i / n));
+    mix[o] += v * gain * env;
   }
 }
 
 /* ---- the schedule ---- */
-click(T.cursor, 0.25);
-for (const t of TIMES.prefix) key(t, 0.9);
-for (const t of TIMES.sufA) key(t, 0.9);
-for (const t of TIMES.del) key(t, 0.55);
-for (const t of TIMES.sufB) key(t, 0.9);
+click(T.cursor, 0.2);
+for (const t of TIMES.prefix) key(t, 0.85);
+for (const t of TIMES.sufA) key(t, 0.85);
+for (const t of TIMES.del) key(t, 0.5);
+for (const t of TIMES.sufB) key(t, 0.85);
 
 airy(T.lift, 0.8);
-simple(T.act, 0.55);
-for (let i = 0; i < 3; i++) click(T.tiles + i * 0.12 + 0.18, 0.18);
-click(T.tap1, 1.8); click(T.tap2, 1.8);
-airy(T.actOut + 0.1, 0.6);
+simple(T.act, 0.5);
+for (let i = 0; i < 3; i++) click(T.tiles + i * 0.12 + 0.18, 0.16);
+tap(T.tap1, 1.0); tap(T.tap2, 1.0);
+airy(T.actOut + 0.1, 0.55);
 
-deep(T.slide + 0.35, 0.8);
+deep(T.slide + 0.4, 0.75);
 for (const t of TIMES.match) key(t, 0.8);
-riser(T.met, 0.7);
-deep(T.met, 0.7);
-boom(T.met, 0.35);
-thump(T.met, 0.6);
-simple(T.word, 0.45);
+drone(T.join, T.met - T.join, 0.55);
+riser(T.met, 0.65);
+deep(T.met, 0.6);
+boom(T.met, 0.3);
+thump(T.met, 0.55);
+airy(T.matchOut, 0.4);
+for (const t of TIMES.word) key(t, 0.8);
+simple(T.live, 0.4);
 
 /* write a 16-bit WAV */
 let peak = 0; for (const v of mix) peak = Math.max(peak, Math.abs(v));
@@ -118,8 +135,6 @@ const sfx = path.join(os.tmpdir(), "intro-sfx.wav");
 writeFileSync(sfx, pcm);
 
 const VID = V("unisport-intro.mp4");
-
-/* 1. SFX only — the Instagram file. Loud enough to sit under a music track added there. */
 execFileSync("ffmpeg", [
   "-y", "-i", VID, "-i", sfx,
   "-filter_complex", "[1:a]aformat=channel_layouts=stereo,loudnorm=I=-18:TP=-1.5:LRA=9[a]",
@@ -128,7 +143,6 @@ execFileSync("ffmpeg", [
 ], { stdio: ["ignore", "ignore", "inherit"] });
 console.log("wrote " + V("unisport-intro-reel.mp4"));
 
-/* 2. SFX + the generated bed, for anywhere that is not Instagram */
 if (existsSync(V("intro-bed-30s.mp3"))) {
   const SWELL_2 = 14.3, cut = T.met;
   const filter = [

@@ -1,42 +1,41 @@
 /*
-  THE INTRO — an Instagram Reel, 1080x1920, 30 fps, ~12.5 s. Light version.
+  THE INTRO — an Instagram Reel, 1080x1920, 30 fps, ~14 s. Light version, v2.
 
-  THE BRIEF (owner, 2026-09-22, revised the same afternoon):
-    White ground, brand blue ink, nothing else but the mark's navy. Typewriter
-    rhythm, not machine-even. Headline in the brand's cursive italic serif.
-    The camera is never still: a slow push in while typing, a pull back on
-    each change, a punch on the connect.
-      1. a cursor blinks; "Never train alone again." types itself. The cursor
-         walks back over "alone again." and types "with the right people."
-         The line lifts and blurs away.
+  THE BRIEF (owner, 2026-09-22, revised twice the same day):
+    White ground, brand blue ink, nothing else but the mark's navy. The
+    headline types the way the landing page's own headline does: centred, a
+    steady 38 ms a letter, a thin blinking caret (components/landing/
+    StudentIntro.tsx, TYPE_MS and .l-caret). The camera is never still.
+      1. "Never train alone again." types itself, centred. The caret walks
+         back over "alone again." and types "with the right people." The line
+         lifts and blurs away.
       2. "Choose your activity." Three activities — Gym · Running · Cardio —
-         as plain labels with a BORDERED ICON TILE under each (the label has
-         no border). A hand taps Gym, then Cardio; the tiles fill blue.
+         as plain labels with a BORDERED ICON TILE under each. A hand taps Gym,
+         then Cardio; the tiles fill blue.
       3. "Find training partners." Two i-figures, navy and blue, slide in and
-         stop a hand apart.
-      4. The label becomes "Match." as they close the gap and connect on the
-         straight seam into the mark.
-      5. The UNIsport wordmark, then the address.
-    Sound is a separate step (intro-sound.mjs): library sound-effects on the
-    exact frames, NO baked music, so a trending track can be laid on in
-    Instagram.
+         stop a hand apart — and stay there a while.
+      4. The label types "Match." Then, slowly, they close the gap and the
+         curves fill in until they connect on the straight seam into the mark.
+      5. "Match." goes. "UNIsport" types itself ABOVE the mark, in the real
+         wordmark. Under the mark: "Live now at Harvard". No domain.
+    Sound is a separate step (intro-sound.mjs): the reference reel's own tap
+    and typing (high-passed out from under its music), library whooshes, no
+    baked music, so a trending track can be laid on in Instagram.
 
   How it is made: Chrome stepped frame by frame through window.frame(t) at
   60 fps, tmix'd to 30 for motion blur. No bloom on white.
 
-  Two things that look like bugs if changed back:
-    - every character of the headline exists in the DOM from frame one and is
-      only hidden; the second line is left-aligned under the first. Nothing is
-      ever re-laid out, so tmix never averages two positions into a ghost.
+  Things that look like bugs if changed back:
+    - every character exists in the DOM from frame one and is only hidden, the
+      way the landing page does it, so a centred line never re-centres while
+      typing and tmix never ghosts it.
     - the mark is the SHIPPED geometry (straight seam, butt caps, round leg
-      tops) from components/landing/LogoMark.tsx. Change both or the film
-      shows a logo the app does not.
+      tops) from components/landing/LogoMark.tsx.
+    - element ids: the typed characters own the prefixes p/a/b/m/w. Nothing
+      else may use them (the activity tiles once did and hid three letters).
 
-  Typing times are irregular on purpose (seeded jitter) and are written to
-  mockups/video/intro-times.json so the sound lands on the same frames.
-
-  Colours: brand neutrals only (Zone 1). No school colour ever enters brand
-  material; every university shares the mark.
+  Typing times are written to mockups/video/intro-times.json so the sound
+  lands on the same frames.
 
   Run: node scripts/video/intro.mjs            -> mockups/video/unisport-intro.mp4 (silent)
        node scripts/video/intro.mjs --still 7.2 -> one PNG, to check a moment
@@ -54,7 +53,6 @@ const W = 1080, H = 1920;
 const RENDER_FPS = 60;
 const OUT_FPS = 30;
 
-/* brand — app/globals.css and mockups/logo/_icons.mjs */
 const BLUE = "#1f32c1";
 const NAVY = "#2f3b52";
 const INK = "#141618";
@@ -63,46 +61,38 @@ const PREFIX = "Never train";
 const SUF_A = "alone again.";
 const SUF_B = "with the right people.";
 const MATCH = "Match.";
+const LIVE = "Live now at Harvard";
 const ACTS = ["Gym", "Running", "Cardio"];
+const WORD = ["U", "N", "I", "s", "p", "o", "r", "t"];   // the I is drawn, not typed
 
-/* the schedule, in seconds */
+/* the schedule, in seconds. ms = the landing page's TYPE_MS. */
 const T = {
   cursor: 0.40,
-  typeA: 0.70, rateA: 13,
-  del: 3.00, rateDel: 20,
-  typeB: 3.70, rateB: 14,
-  lift: 5.55,
-  act: 5.95, tiles: 6.20, hand: 6.50, tap1: 7.10, tap2: 7.80, actOut: 8.30,
-  find: 8.55, slide: 8.65, apart: 9.45,
-  join: 9.75, matchType: 9.80, met: 10.25,
-  word: 10.65, url: 11.10,
-  out: 12.00, end: 12.50,
+  typeA: 0.70, ms: 0.038,
+  del: 2.20, msDel: 0.030,
+  typeB: 2.70,
+  lift: 4.45,
+  act: 4.85, tiles: 5.10, hand: 5.40, tap1: 6.00, tap2: 6.70, actOut: 7.20,
+  find: 7.45, slide: 7.55, apart: 8.60,
+  matchType: 9.30, join: 9.60, met: 11.00,
+  matchOut: 11.50, word: 11.80, msWord: 0.065, live: 12.55,
+  out: 13.70, end: 14.20,
 };
 
-/* typewriter timing: an average rate with human jitter, a breath after a space */
-let seed = 11;
-const rnd = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
-function typeTimes(text, start, rate) {
-  const out = []; let t = start;
-  for (let i = 0; i < text.length; i++) {
-    out.push(+t.toFixed(4));
-    t += (1 / rate) * (0.62 + 0.76 * rnd()) + (text[i] === " " ? 0.06 : 0);
-  }
-  return out;
-}
+const seq = (n, start, step) => Array.from({ length: n }, (_, i) => +(start + i * step).toFixed(4));
 const TIMES = {
-  prefix: typeTimes(PREFIX, T.typeA, T.rateA),
+  prefix: seq(PREFIX.length, T.typeA, T.ms),
+  sufA: seq(SUF_A.length, T.typeA + (PREFIX.length + 1) * T.ms, T.ms),
+  del: seq(SUF_A.length, T.del, T.msDel),
+  sufB: seq(SUF_B.length, T.typeB, T.ms),
+  match: seq(MATCH.length, T.matchType, T.ms),
+  word: seq(WORD.length, T.word, T.msWord),
 };
-TIMES.sufA = typeTimes(SUF_A, TIMES.prefix[TIMES.prefix.length - 1] + 1 / T.rateA + 0.10, T.rateA);
-TIMES.del = SUF_A.split("").map((_, i) => +(T.del + i / T.rateDel).toFixed(4));   // steady, a held key
-TIMES.sufB = typeTimes(SUF_B, T.typeB, T.rateB);
-TIMES.match = typeTimes(MATCH, T.matchType, 16);
 writeFileSync(path.join(ROOT, "mockups/video/intro-times.json"), JSON.stringify({ T, TIMES }, null, 1));
 
 const chars = (s, id) => s.split("").map((c, i) =>
   `<span class="c" id="${id}${i}">${c === " " ? "&nbsp;" : c}</span>`).join("");
 
-/* line icons, 64-box, stroke 5.5 */
 const ICONS = {
   Gym: `<path d="M9 25v14M16 20v24M48 20v24M55 25v14M16 32h32"/>`,
   Running: `<circle cx="39" cy="13" r="5.5"/><path d="M35 22l-9 12 5 11-8 11M26 34l13 2 8 10M35 22l10 4 8-6M26 34l-11 6"/>`,
@@ -116,6 +106,8 @@ const barbellI = `<svg class="bi" viewBox="0 0 44.9 170" style="width:.2318em;he
     <rect x="16.5" y="6" width="11.9" height="158" rx="1.4" fill="${INK}"/>
     <g fill="${BLUE}"><rect x="3.4" y="15" width="38.1" height="17.3" rx="3.8"/><rect x="3.4" y="137.7" width="38.1" height="17.3" rx="3.8"/></g>
   </g></svg>`;
+const wordHtml = WORD.map((ch, i) =>
+  `<span class="c${i >= 3 ? " s" : ""}" id="w${i}">${ch === "I" ? barbellI : ch}</span>`).join("");
 
 const html = `<!doctype html><html><head><meta charset="utf-8">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -125,20 +117,18 @@ const html = `<!doctype html><html><head><meta charset="utf-8">
   html,body { width:${W}px; height:${H}px; overflow:hidden; background:#fff; }
   body { font-family:"Plus Jakarta Sans", system-ui, sans-serif; -webkit-font-smoothing:antialiased; color:${BLUE}; }
   #stage { position:relative; width:${W}px; height:${H}px; overflow:hidden; background:#fff; }
-  /* the camera: everything inside scales around the centre */
   #cam { position:absolute; inset:0; transform-origin:50% 50%; will-change:transform; }
-  /* no ambient glow: on white it read as a smudge. The page is plain paper. */
-  #amb { position:absolute; inset:0; }
 
-  /* the headline: a fixed box, lines left-aligned inside it, box centred on its widest line */
-  #line { position:absolute; left:0; top:790px; width:1000px; text-align:left;
+  /* the headline: centred like the landing page, untyped letters invisible but present */
+  #line { position:absolute; left:40px; right:40px; top:790px; text-align:center;
           font-family:"Instrument Serif", serif; font-style:italic; font-size:112px; line-height:1.08; letter-spacing:-.012em; color:${BLUE};
           will-change:transform,opacity,filter; }
+  #line .row { display:block; }
   .c { display:inline-block; visibility:hidden; }
   #sufB { display:none; }
-  #cur { position:absolute; width:11px; height:78px; border-radius:2px; background:${BLUE}; opacity:0; will-change:transform,opacity; }
+  /* the landing's .l-caret: 0.055em wide, 0.74em tall, 1 s step blink */
+  #cur { position:absolute; width:6px; height:83px; background:${BLUE}; opacity:0; will-change:transform,opacity; }
 
-  /* activity */
   #act { position:absolute; left:74px; right:74px; top:640px; text-align:center; font-weight:700; font-size:54px; letter-spacing:-.02em; color:${BLUE}; opacity:0; will-change:opacity,filter,transform; }
   #acts { position:absolute; left:0; right:0; top:790px; display:flex; justify-content:center; gap:70px; }
   .a { display:flex; flex-direction:column; align-items:center; gap:22px; opacity:0; will-change:opacity,filter,transform; }
@@ -148,19 +138,18 @@ const html = `<!doctype html><html><head><meta charset="utf-8">
   .a .tile svg { width:96px; height:96px; }
   #hand { position:absolute; left:0; top:0; width:120px; height:120px; opacity:0; will-change:transform,opacity; filter:drop-shadow(0 10px 18px rgba(20,24,40,.25)); }
 
-  /* the two i's and the mark */
   #find, #match { position:absolute; left:74px; right:74px; top:560px; text-align:center; font-weight:700; font-size:54px; letter-spacing:-.02em; color:${BLUE}; opacity:0; will-change:opacity,filter,transform; }
-  #match .c { visibility:hidden; }
   #mark { position:absolute; left:50%; top:700px; width:520px; height:520px; margin-left:-260px; overflow:visible; opacity:0; will-change:opacity,transform; }
-  #word { position:absolute; left:0; right:0; top:1250px; text-align:center; font-family:"Instrument Serif", serif; font-style:italic; font-size:150px; letter-spacing:-.02em; line-height:1; color:${INK}; opacity:0; will-change:transform,opacity; }
+  /* the wordmark, typed, above the mark */
+  #word { position:absolute; left:0; right:0; top:470px; text-align:center; font-family:"Instrument Serif", serif; font-style:italic; font-size:140px; letter-spacing:-.02em; line-height:1; color:${INK}; opacity:0; will-change:opacity; }
   #word .s { color:${BLUE}; }
   #word .bi { display:inline-block; vertical-align:baseline; overflow:visible; }
-  #url { position:absolute; left:0; right:0; top:1425px; text-align:center; font-weight:600; font-size:38px; letter-spacing:.02em; color:rgba(20,24,40,.55); opacity:0; will-change:transform,opacity; }
+  #wcur { position:absolute; width:8px; height:104px; background:${INK}; opacity:0; will-change:transform,opacity; }
+  #live { position:absolute; left:0; right:0; top:1262px; text-align:center; font-weight:600; font-size:44px; letter-spacing:-.01em; color:${BLUE}; opacity:0; will-change:transform,opacity; }
   #fade { position:absolute; inset:0; background:#fff; opacity:0; }
 </style></head><body><div id="stage"><div id="cam">
-  <div id="amb"></div>
 
-  <div id="line"><span id="pre">${chars(PREFIX, "p")}</span><br><span id="sufA">${chars(SUF_A, "a")}</span><span id="sufB">${chars(SUF_B, "b")}</span></div>
+  <div id="line"><span class="row" id="row1">${chars(PREFIX, "p")}</span><span class="row" id="row2"><span id="sufA">${chars(SUF_A, "a")}</span><span id="sufB">${chars(SUF_B, "b")}</span></span></div>
   <div id="cur"></div>
 
   <div id="act">Choose your activity.</div>
@@ -183,12 +172,13 @@ const html = `<!doctype html><html><head><meta charset="utf-8">
     </g>
     <circle id="ring" cx="50" cy="82" r="10" fill="none" stroke="${BLUE}" stroke-width="3" opacity="0"/>
   </svg>
-  <div id="word">UN${barbellI}<span class="s">sport</span></div>
-  <div id="url">getunisport.com</div>
+  <div id="word">${wordHtml}</div>
+  <div id="wcur"></div>
+  <div id="live">${LIVE}</div>
 </div><div id="fade"></div></div>
 <script>
   var T = ${JSON.stringify(T)}, TM = ${JSON.stringify(TIMES)};
-  var NP = ${PREFIX.length}, NA = ${SUF_A.length}, NB = ${SUF_B.length}, NM = ${MATCH.length};
+  var NP = ${PREFIX.length}, NA = ${SUF_A.length}, NB = ${SUF_B.length}, NM = ${MATCH.length}, NW = ${WORD.length};
   var cl = function (x) { return x < 0 ? 0 : x > 1 ? 1 : x; };
   var outExpo = function (x) { x = cl(x); return x >= 1 ? 1 : 1 - Math.pow(2, -9 * x); };
   var outCubic = function (x) { return 1 - Math.pow(1 - cl(x), 3); };
@@ -196,56 +186,54 @@ const html = `<!doctype html><html><head><meta charset="utf-8">
   var inOut = function (x) { x = cl(x); return x < .5 ? 4*x*x*x : 1 - Math.pow(-2*x+2,3)/2; };
   var outBack = function (x) { x = cl(x); var c = 1.5; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); };
   var $ = function (id) { return document.getElementById(id); };
+  var show = function (el, on) { el.style.visibility = on ? "visible" : "hidden"; };
 
   var pa = $("pa"), pb = $("pb");
   var LA = pa.getTotalLength(), LB = pb.getTotalLength();
   pa.style.strokeDasharray = LA; pb.style.strokeDasharray = LB;
-
-  /* centre the headline box on its widest line, measured once */
-  var sb = $("sufB"); sb.style.display = "inline";
-  var wB = sb.getBoundingClientRect().width; sb.style.display = "none";
-  $("line").style.left = Math.round((${W} - wB) / 2) + "px";
   var stage = $("stage").getBoundingClientRect();
 
-  var show = function (el, on) { el.style.visibility = on ? "visible" : "hidden"; };
+  /* a landing-style caret after the last visible char of a run; at the run's start when empty */
+  function caretAt(cur, els, firstEl, yOff) {
+    var last = null;
+    for (var i = els.length - 1; i >= 0; i--) if (els[i].style.visibility === "visible") { last = els[i]; break; }
+    var r = (last || firstEl).getBoundingClientRect();
+    var x = last ? r.right - stage.left + 3 : r.left - stage.left - 2;
+    cur.style.transform = "translate3d(" + x.toFixed(1) + "px," + (r.top - stage.top + yOff).toFixed(1) + "px,0)";
+  }
+  var blink = function (t) { return Math.floor(t * 2) % 2 === 0 ? 1 : 0; };   // 1 s, steps(1)
 
   window.frame = function (t) {
     /* ---- camera ---- */
     var cam = 1;
-    cam += 0.07 * cl((t - T.typeA) / (T.lift - T.typeA));                       // slow push while typing
-    cam -= 0.07 * outExpo((t - T.lift) / 0.6);                                   // pull back on the lift
-    cam += 0.05 * cl((t - T.act) / (T.actOut - T.act));                          // push while choosing
+    cam += 0.06 * cl((t - T.typeA) / (T.lift - T.typeA));
+    cam -= 0.06 * outExpo((t - T.lift) / 0.6);
+    cam += 0.05 * cl((t - T.act) / (T.actOut - T.act));
     cam -= 0.05 * outExpo((t - T.actOut) / 0.6);
-    cam += 0.10 * (1 - outExpo((t - T.slide) / 1.1)) * cl((t - T.slide) / 0.05); // arrives wide, settles
-    cam += 0.06 * Math.sin(Math.PI * cl((t - T.met) / 0.5));                     // the punch
-    cam += 0.03 * cl((t - T.word) / (T.out - T.word));                           // settle in on the name
+    cam += 0.10 * (1 - outExpo((t - T.slide) / 1.4)) * cl((t - T.slide) / 0.05);
+    cam += 0.05 * cl((t - T.apart) / (T.met - T.apart));                       // the slow lean-in while they wait and close
+    cam += 0.05 * Math.sin(Math.PI * cl((t - T.met) / 0.5));                    // the punch
+    cam -= 0.05 * outExpo((t - T.met - 0.3) / 1.0);
     $("cam").style.transform = "scale(" + cam.toFixed(4) + ")";
 
     /* ---- 1. the typed, edited line ---- */
     var i, phaseB = t >= T.typeB;
-    var lastEl = null, anyLine1 = false;
-    for (i = 0; i < NP; i++) { var on = t >= TM.prefix[i]; show($("p" + i), on); if (on) { lastEl = $("p" + i); anyLine1 = true; } }
+    var P = [], A = [], B = [];
+    for (i = 0; i < NP; i++) { P.push($("p" + i)); show(P[i], t >= TM.prefix[i]); }
     $("sufA").style.display = phaseB ? "none" : "inline";
     $("sufB").style.display = phaseB ? "inline" : "none";
-    var lastA = null;
-    for (i = 0; i < NA; i++) { var onA = t >= TM.sufA[i] && !(t >= TM.del[NA - 1 - i]); show($("a" + i), onA); if (onA) lastA = $("a" + i); }
-    var lastB = null;
-    for (i = 0; i < NB; i++) { var onB = phaseB && t >= TM.sufB[i]; show($("b" + i), onB); if (onB) lastB = $("b" + i); }
-    var last = lastB || (!phaseB ? lastA : null) || lastEl;
+    for (i = 0; i < NA; i++) { A.push($("a" + i)); show(A[i], t >= TM.sufA[i] && !(t >= TM.del[NA - 1 - i])); }
+    for (i = 0; i < NB; i++) { B.push($("b" + i)); show(B[i], phaseB && t >= TM.sufB[i]); }
 
-    /* cursor: after the last visible character; on line 2's start when line 2 is empty but begun */
     var cur = $("cur");
-    var line2Begun = (t >= TM.sufA[0] && !phaseB) || phaseB;
-    var idle = (t > TM.sufA[NA - 1] + 0.25 && t < T.del) || (t > TM.sufB[NB - 1] + 0.25 && t < T.lift) || t < T.typeA;
-    var blink = idle ? (Math.floor((t - 0.1) * 2.2) % 2 === 0 ? 1 : 0) : 1;
-    cur.style.opacity = String(cl((t - T.cursor) / 0.05) * (1 - cl((t - T.lift) / 0.2)) * blink);
-    var r, cx, cy, ln = $("line").getBoundingClientRect(), lh = 112 * 1.08;
-    if (last && !(line2Begun && !lastA && !lastB)) { r = last.getBoundingClientRect(); cx = r.right - stage.left + 6; cy = r.top - stage.top + 18; }
-    else if (line2Begun) { cx = ln.left - stage.left + 4; cy = ln.top - stage.top + lh + 18; }
-    else { cx = ln.left - stage.left + 4; cy = ln.top - stage.top + 18; }
-    cur.style.transform = "translate3d(" + cx.toFixed(1) + "px," + cy.toFixed(1) + "px,0)";
+    var typing = (t >= T.typeA && t <= TM.sufA[NA - 1] + T.ms) || (t >= T.del && t <= TM.del[NA - 1] + T.msDel) || (t >= T.typeB && t <= TM.sufB[NB - 1] + T.ms);
+    cur.style.opacity = String(cl((t - T.cursor) / 0.05) * (1 - cl((t - T.lift) / 0.2)) * (typing ? 1 : blink(t)));
+    var onLine2 = t >= TM.sufA[0] && !(t >= TM.del[NA - 1] && !phaseB && t < T.typeB) ;
+    if (t >= TM.del[NA - 1] && !phaseB) onLine2 = true;          // line 2 emptied, caret waits at its start
+    if (!onLine2 && t < TM.sufA[0]) caretAt(cur, P, P[0], 14);
+    else if (!phaseB) caretAt(cur, A, A[0], 14);
+    else caretAt(cur, B, B[0], 14);
 
-    /* the lift: the line rises, blurs and goes */
     var b = cl((t - T.lift) / 0.5);
     var lineEl = $("line");
     lineEl.style.opacity = String(1 - inCubic(b * 1.15));
@@ -261,7 +249,7 @@ const html = `<!doctype html><html><head><meta charset="utf-8">
     act.style.transform = "translate3d(0," + (26 * (1 - ai)).toFixed(1) + "px,0)";
     var picked = [t >= T.tap1, false, t >= T.tap2];
     for (i = 0; i < 3; i++) {
-      var a = $("act" + i), tile = $("t" + i);   // NOT "a"+i: the headline's characters own those ids
+      var a = $("act" + i), tile = $("t" + i);
       var d0 = T.tiles + i * 0.12;
       var ci = outBack((t - d0) / 0.55);
       a.style.opacity = String(cl((t - d0) / 0.25) * aOut * ((t >= T.tap1 && !picked[i]) ? 0.45 : 1));
@@ -288,23 +276,23 @@ const html = `<!doctype html><html><head><meta charset="utf-8">
     hand.style.opacity = String(cl((t - T.hand) / 0.25) * aOut);
     hand.style.transform = "translate3d(" + (hx - 30).toFixed(1) + "px," + (hy - 10).toFixed(1) + "px,0) scale(" + (1 - 0.12 * press).toFixed(3) + ")";
 
-    /* ---- 3 + 4. two i's, then Match ---- */
+    /* ---- 3 + 4. two i's wait, then Match, then they connect ---- */
     var fOut = 1 - cl((t - T.out) / 0.4);
     var fi = outExpo((t - T.find) / 0.5);
     var find = $("find");
-    find.style.opacity = String(cl((t - T.find) / 0.3) * (1 - cl((t - T.join) / 0.3)));
+    find.style.opacity = String(cl((t - T.find) / 0.3) * (1 - cl((t - (T.matchType - 0.25)) / 0.25)));
     find.style.filter = "blur(" + (12 * (1 - fi)).toFixed(1) + "px)";
     find.style.transform = "translate3d(0," + (26 * (1 - fi)).toFixed(1) + "px,0)";
-    var match = $("match");
-    match.style.opacity = String(cl((t - T.matchType) / 0.1) * (1 - cl((t - T.word) / 0.35)) * fOut);
-    for (i = 0; i < NM; i++) show($("m" + i), t >= TM.match[i]);
+    var match = $("match"), M = [];
+    match.style.opacity = String(cl((t - T.matchType) / 0.05) * (1 - cl((t - T.matchOut) / 0.3)));
+    for (i = 0; i < NM; i++) { M.push($("m" + i)); show(M[i], t >= TM.match[i]); }
+    match.style.filter = "blur(" + (14 * cl((t - T.matchOut) / 0.3)).toFixed(1) + "px)";
 
     var mark = $("mark");
     mark.style.opacity = String(cl((t - T.slide) / 0.2) * fOut);
-    var sl = outExpo((t - T.slide) / (T.apart - T.slide + 0.15));
+    var sl = outExpo((t - T.slide) / (T.apart - T.slide + 0.2));
     var dx = 120 * (1 - sl);
-    // they stop a hand apart, then close the last of the gap as the curves meet
-    var closeIn = outCubic((t - T.join) / (T.met - T.join));
+    var closeIn = inOut((t - T.join) / (T.met - T.join));               // the slow fill
     var gap = 10 * (1 - closeIn);
     $("ga").setAttribute("transform", "translate(" + (-(dx + gap)).toFixed(2) + " 0)");
     $("gb").setAttribute("transform", "translate(" + (dx + gap).toFixed(2) + " 0)");
@@ -312,24 +300,27 @@ const html = `<!doctype html><html><head><meta charset="utf-8">
     var draw = legOnly + (1 - legOnly) * closeIn;
     pa.style.strokeDashoffset = (LA * (1 - draw)).toFixed(2);
     pb.style.strokeDashoffset = (LB * (1 - draw)).toFixed(2);
-    var fl = t >= T.met ? (1 - cl((t - T.met) / 0.6)) : 0;
+    var fl = t >= T.met ? (1 - cl((t - T.met) / 0.7)) : 0;
     var rg = $("ring");
     rg.setAttribute("opacity", String(0.8 * fl));
-    rg.setAttribute("r", String(10 + 40 * (1 - fl)));
+    rg.setAttribute("r", String(10 + 44 * (1 - fl)));
     rg.setAttribute("stroke-width", String(3 * fl + 0.5));
-    var lift = Math.sin(Math.PI * cl((t - T.met) / 0.5));
+    var lift = Math.sin(Math.PI * cl((t - T.met) / 0.55));
     mark.style.transform = "translate3d(0," + (-14 * lift).toFixed(1) + "px,0) scale(" + (1 + 0.04 * lift).toFixed(3) + ")";
     mark.style.filter = "blur(" + (3 * (1 - sl) * (t > T.slide && t < T.apart ? 1 : 0)).toFixed(1) + "px)";
 
-    /* ---- 5. the wordmark ---- */
-    var wP = outExpo((t - T.word) / 0.6);
-    var word = $("word");
-    word.style.opacity = String(cl((t - T.word) / 0.4) * fOut);
-    word.style.transform = "translate3d(0," + (40 * (1 - wP)).toFixed(1) + "px,0)";
-    var uP = outExpo((t - T.url) / 0.6);
-    var url = $("url");
-    url.style.opacity = String(cl((t - T.url) / 0.4) * fOut);
-    url.style.transform = "translate3d(0," + (26 * (1 - uP)).toFixed(1) + "px,0)";
+    /* ---- 5. UNIsport types itself above; Live now at Harvard below ---- */
+    var word = $("word"), Wd = [];
+    word.style.opacity = String(cl((t - T.word) / 0.05) * fOut);
+    for (i = 0; i < NW; i++) { Wd.push($("w" + i)); show(Wd[i], t >= TM.word[i]); }
+    var wcur = $("wcur");
+    var wTyping = t >= T.word && t <= TM.word[NW - 1] + T.msWord;
+    wcur.style.opacity = String(cl((t - (T.word - 0.5)) / 0.05) * (1 - cl((t - T.live) / 0.2)) * (wTyping ? 1 : blink(t)) * fOut);
+    caretAt(wcur, Wd, Wd[0], 20);
+    var lP = outExpo((t - T.live) / 0.6);
+    var live = $("live");
+    live.style.opacity = String(cl((t - T.live) / 0.4) * fOut);
+    live.style.transform = "translate3d(0," + (22 * (1 - lP)).toFixed(1) + "px,0)";
 
     $("fade").style.opacity = String(cl((t - T.out) / 0.45));
   };
@@ -369,21 +360,12 @@ await browser.close();
 
 const out = path.join(ROOT, "mockups/video/unisport-intro.mp4");
 mkdirSync(path.dirname(out), { recursive: true });
-
-/* motion blur from tmix; a touch of contrast; the faintest grain so white is paper, not void */
-const VF = [
-  "tmix=frames=2:weights=1 1",
-  "fps=" + OUT_FPS,
-  "eq=contrast=1.03",
-  "noise=alls=2:allf=t",
-].join(",");
-
+const VF = ["tmix=frames=2:weights=1 1", "fps=" + OUT_FPS, "eq=contrast=1.03", "noise=alls=2:allf=t"].join(",");
 execFileSync("ffmpeg", [
   "-y", "-framerate", String(RENDER_FPS), "-i", path.join(work, "%05d.png"),
   "-vf", VF,
   "-c:v", "libx264", "-preset", "slow", "-crf", "18", "-maxrate", "14M", "-bufsize", "28M",
   "-pix_fmt", "yuv420p", "-movflags", "+faststart", out,
 ], { stdio: ["ignore", "ignore", "inherit"] });
-
 rmSync(work, { recursive: true, force: true });
 console.log("\nwrote " + out + "  (" + T.end.toFixed(2) + "s)");
