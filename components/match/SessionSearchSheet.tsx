@@ -17,6 +17,13 @@
   it still counts is a preset you can move (lib/onboarding.ts). Filters are
   the same sheet the People tab uses and appear WITH the results.
 
+  IT DROPS FROM THE TOP (owner, 2026-09-22: "there is no reason to be from
+  bottom"). You tap "Search by time" on the board's top row, and the search
+  comes down from the ceiling over it — out of the thing you tapped, the way
+  the mode switcher drops out of the top bar (components/ModeSwitcherSheet).
+  Rising from the floor put the answer at the far end of the screen from the
+  question.
+
   Data via lib/supabase/matching.ts; colours are theme tokens.
 */
 import { useEffect, useState } from "react";
@@ -122,7 +129,7 @@ export default function SessionSearchSheet({
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex flex-col justify-end">
+    <div className="fixed inset-0 z-[60] flex flex-col justify-start">
       <button
         type="button"
         aria-label="Close"
@@ -130,11 +137,8 @@ export default function SessionSearchSheet({
         className="absolute inset-0 bg-background/70 [animation:backdrop-in_0.2s_ease-out]"
       />
 
-      <div className="sheet-floor relative flex max-h-[92%] flex-col rounded-t-3xl border-t border-border bg-surface [animation:sheet-up_0.28s_cubic-bezier(0.2,0.8,0.2,1)]">
-        <div className="flex justify-center pb-1.5 pt-2.5">
-          <div className="h-1 w-9 rounded-full bg-border" />
-        </div>
-        <div className="flex items-center justify-between border-b border-border px-4 pb-3">
+      <div className="sheet-ceiling relative flex max-h-[92%] flex-col rounded-b-3xl border-b border-border bg-surface [animation:sheet-down_0.28s_cubic-bezier(0.2,0.8,0.2,1)]">
+        <div className="flex items-center justify-between border-b border-border px-4 pb-3 pt-4">
           <div className="text-[15px] font-medium text-text">Search by time</div>
           <button
             type="button"
@@ -241,6 +245,12 @@ export default function SessionSearchSheet({
               )}
             </div>
           )}
+        </div>
+
+        {/* The grab edge, at the bottom now: it marks the edge the sheet ends
+            at, which for a sheet hanging from the ceiling is this one. */}
+        <div className="flex flex-shrink-0 justify-center pb-2.5 pt-1.5">
+          <div className="h-1 w-9 rounded-full bg-border" />
         </div>
       </div>
     </div>
