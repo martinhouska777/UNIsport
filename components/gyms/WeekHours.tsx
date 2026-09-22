@@ -10,14 +10,17 @@ import { weekHours, isAlwaysOpen, type Clock } from "@/lib/gymHours";
 import SectionLabel from "@/components/ui/SectionLabel";
 
 export default function WeekHours({ hours, now }: { hours: string; now: Clock | null }) {
-  /* A gym that never shuts has no week to print, and the line at the top of
-     the page already says "Open 24/7" — a second block repeating it is the
-     same fact twice. The house gyms therefore have no hours section. */
-  if (isAlwaysOpen(hours)) return null;
   const days = weekHours(hours, now?.weekday ?? null);
   return (
     <div className="rounded-2xl border border-border bg-surface p-3.5">
       <SectionLabel>Opening hours</SectionLabel>
+      {/* A gym that never shuts has no week to print — seven identical rows
+          saying "Open 24 hours" is a table pretending to be information. Since
+          the "Open now" line came off the top of the page, this one line is
+          the only place a house gym says it at all. */}
+      {isAlwaysOpen(hours) ? (
+        <div className="mt-1.5 text-[13px] text-text">Open 24 hours, every day</div>
+      ) : (
       <ul className="mt-2 flex flex-col">
         {days.map((d) => (
           <li
@@ -31,6 +34,7 @@ export default function WeekHours({ hours, now }: { hours: string; now: Clock | 
           </li>
         ))}
       </ul>
+      )}
     </div>
   );
 }

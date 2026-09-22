@@ -9,11 +9,11 @@
   chassis is the same three classes: `rounded-2xl border border-border
   bg-surface p-3.5`, with SectionLabel on top of each card.
 
-  What the page is, top to bottom: can I walk in right now and where is it —
-  what the campus thinks of it (the rating, its breakdown and the comments) —
-  the week's hours — photos — who has said they're going. "How busy is it" was
-  cut on the owner's instruction the same day; so was the strip of your own
-  sessions here.
+  What the page is, top to bottom: which gym and where — what the campus
+  thinks of it (the rating, its breakdown and the comments) — the week's hours
+  — photos — who has said they're going. "How busy is it" was cut on the
+  owner's instruction the same day; so was the strip of your own sessions here,
+  and so was the "Open now" line (the hours card answers it).
 
   All colour is theme tokens (rule 1).
 */
@@ -22,7 +22,6 @@ import Link from "next/link";
 import { useAppState } from "@/components/AppState";
 import { getUniversity } from "@/lib/themes";
 import { useFavorites, useGymPhotos } from "@/lib/gymSocial";
-import OpenNow from "@/components/gyms/OpenNow";
 import GymPhotos from "@/components/gyms/GymPhotos";
 import GymReviews from "@/components/gyms/GymReviews";
 import WeekHours from "@/components/gyms/WeekHours";
@@ -95,13 +94,15 @@ export default function GymProfile({ gym }: { gym: Gym }) {
 
       <div className="flex flex-col gap-2.5 px-3.5 pb-3 pt-3">
         {/*
-          THE OVERVIEW — two things and nothing else: can I go in now, and
-          where is it. The address is a way of GETTING there, so it opens a map.
+          THE OVERVIEW — the name and where it is. NO "Open now" (owner,
+          2026-09-22): that line belongs on the Gyms list, where you are
+          choosing between fifteen of them; on the gym's own page the opening
+          hours are right there and saying it twice is saying it twice. The
+          address is a way of GETTING there, so it opens a map.
         */}
         <div className="rounded-2xl border border-border bg-surface p-3.5">
           <h1 className="text-[19px] font-semibold tracking-[-0.01em] text-text">{gym.name}</h1>
           <div className="mt-2.5 flex flex-col gap-2 text-[14px] text-text">
-            <OpenNow hours={gym.hours} now={now} size={16} />
             <a
               href={mapsHref}
               target="_blank"
@@ -124,9 +125,9 @@ export default function GymProfile({ gym }: { gym: Gym }) {
         </div>
 
         {/*
-          THE WHOLE WEEK, under the one line at the top that answers "can I go
-          in right now". Same hours every day while the data holds one line per
-          gym (owner, 2026-09-22) — see weekHours() for the day that changes.
+          THE HOURS — the only place on this page that answers "can I go in".
+          Same hours every day while the data holds one line per gym (owner,
+          2026-09-22) — see weekHours() for the day that changes.
         */}
         <WeekHours hours={gym.hours} now={now} />
 
