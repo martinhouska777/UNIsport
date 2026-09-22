@@ -48,6 +48,9 @@ for (const n of NAMES) {
 for (const n of OPTIONAL) if (existsSync(S(n + ".wav"))) SFX[n] = decode(S(n + ".wav"));
 const SOFT_CLICK = SFX["click-soft"] ? "click-soft" : "click-ui";
 const pick = (name, fallback) => (SFX[name] ? name : fallback);
+/* Owner: "make the whoosh less loud". Every whoosh, sweep and push in every
+   version is scaled by this one number, so it can be dialled in one place. */
+const WH = 0.6;
 /* where each sound's transient sits; without a table, assume a swell peaking halfway */
 const ANCHORS = existsSync(S("anchors.json")) ? JSON.parse(readFileSync(S("anchors.json"), "utf8")) : {};
 const anchorOf = (name, rate) => (ANCHORS[name] !== undefined ? ANCHORS[name] / rate : (SFX[name].length / rate / SR) / 2);
@@ -108,16 +111,16 @@ function build(version) {
     at("click-ui", T.cursor, 0.22);
     typeRun(TIMES.prefix, 0.30, false);
     typeRun(TIMES.sufA, 0.30, true);
-    peakAt("whoosh-air", T.lift, 0.20);
+    peakAt("whoosh-air", T.lift, 0.20 * WH);
     at("tap-1", T.tap1, 0.42);
     at("tap-2", T.tap2, 0.38);
-    peakAt("whoosh-air", T.actOut + 0.1, 0.14);
-    peakAt("whoosh-low", T.slide + 0.45, 0.40);
+    peakAt("whoosh-air", T.actOut + 0.1, 0.14 * WH);
+    peakAt("whoosh-low", T.slide + 0.45, 0.40 * WH);
     typeRun(TIMES.match, 0.28, true);
     at("note-warm", T.met, 0.44);
-    peakAt("whoosh-air", T.matchOut, 0.12);
+    peakAt("whoosh-air", T.matchOut, 0.12 * WH);
     TIMES.word.forEach((t) => at("click-ui", t + 0.42, 0.10));
-    peakAt("whoosh-air", T.live, 0.14);
+    peakAt("whoosh-air", T.live, 0.14 * WH);
     return mix;
   }
 
@@ -133,14 +136,14 @@ function build(version) {
   typeRun(TIMES.sufA, 0.55 * (version === "layered" ? 0.95 : 1), true);
 
   /* Owner: a whoosh as the line becomes "Choose your activity" */
-  if (version === "layered") peakAt(pick("whoosh-text", "whoosh-air"), T.act, 0.34 * G);
+  if (version === "layered") peakAt(pick("whoosh-text", "whoosh-air"), T.act, 0.34 * G * WH);
 
   /* the activities lift in */
   if (version === "quiet") {
-    peakAt("whoosh-air", T.lift, 0.30);
+    peakAt("whoosh-air", T.lift, 0.30 * WH);
   } else {
-    peakAt("whoosh-mid", T.lift, (version === "layered" ? 0.34 : 0.40) * G, 1.15);
-    peakAt("whoosh-air", T.lift + 0.06, 0.22 * G);
+    peakAt("whoosh-mid", T.lift, (version === "layered" ? 0.34 : 0.40) * G * WH, 1.15);
+    peakAt("whoosh-air", T.lift + 0.06, 0.22 * G * WH);
   }
   if (version !== "quiet") for (let i = 0; i < 3; i++)
     at(version === "layered" ? pick("tile", "click-ui") : "click-ui",
@@ -151,14 +154,14 @@ function build(version) {
      placing it by its start would land it after the finger has already pressed */
   peakAt("tap-1", T.tap1, 0.85 * G);
   peakAt("tap-2", T.tap2, 0.78 * G);
-  if (version === "layered") { peakAt("whoosh-air", T.tap1, 0.10); peakAt("whoosh-air", T.tap2, 0.09); }
+  if (version === "layered") { peakAt("whoosh-air", T.tap1, 0.10 * WH); peakAt("whoosh-air", T.tap2, 0.09 * WH); }
 
   /* the activities leave */
-  peakAt("whoosh-air", T.actOut + 0.1, (version === "quiet" ? 0.20 : 0.28) * G);
+  peakAt("whoosh-air", T.actOut + 0.1, (version === "quiet" ? 0.20 : 0.28) * G * WH);
 
   /* the two i's slide apart — the biggest move in the film */
-  peakAt("whoosh-low", T.slide + 0.45, (version === "quiet" ? 0.55 : 0.70) * G);
-  if (version !== "quiet") peakAt("whoosh-mid", T.slide + 0.45, 0.22 * G, 1.4);
+  peakAt("whoosh-low", T.slide + 0.45, (version === "quiet" ? 0.55 : 0.70) * G * WH);
+  if (version !== "quiet") peakAt("whoosh-mid", T.slide + 0.45, 0.22 * G * WH, 1.4);
 
   /* "Match." types */
   typeRun(TIMES.match, 0.50 * (version === "layered" ? 0.95 : 1), true);
@@ -166,22 +169,22 @@ function build(version) {
   /* the slow fill, then they meet */
   /* Owner: a push again as they come closer together, but a different one from
      the slide. This swells across the whole join and peaks as they meet. */
-  if (version === "layered") peakAt(pick("push-join", "riser"), T.met - 0.05, 0.40 * G);
+  if (version === "layered") peakAt(pick("push-join", "riser"), T.met - 0.05, 0.40 * G * WH);
   /* This is a bass rumble, and left alone its 2.2 s tail drones underneath the
      UNIsport letters — that is the sound the owner heard interfering. Fade it out
      from 0.5 s in so it is gone before the letters land. */
   at("note-warm", T.met, (version === "quiet" ? 0.60 : 0.70) * G, 1,
      version === "layered" ? 0.5 : null);
-  if (version !== "quiet") peakAt("whoosh-low", T.met + 0.1, 0.18 * G, 1.8);
+  if (version !== "quiet") peakAt("whoosh-low", T.met + 0.1, 0.18 * G * WH, 1.8);
 
-  peakAt("whoosh-air", T.matchOut, 0.22 * G);
+  peakAt("whoosh-air", T.matchOut, 0.22 * G * WH);
 
   /* the letters of UNIsport fall in and settle */
   TIMES.word.forEach((t, i) => at(version === "layered" ? SOFT_CLICK : "click-ui",
     t + 0.42, (version === "layered" ? 0.13 : 0.20 + (i % 2) * 0.04) * (version === "layered" ? 1 : 1)));
 
   /* "Live now at Harvard" */
-  peakAt(version === "crisp" ? "whoosh-mid" : "whoosh-air", T.live, 0.26 * G, 1.2);
+  peakAt(version === "crisp" ? "whoosh-mid" : "whoosh-air", T.live, 0.26 * G * WH, 1.2);
 
   return mix;
 }

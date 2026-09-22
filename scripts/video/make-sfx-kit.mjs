@@ -126,16 +126,17 @@ write("tap-2.wav", tap(2350, 88, 0.026), 0.8);
    If the library isn't on this machine the synthesised taps above are kept. */
 {
   const LIB = process.env.SFX_LIBRARY || "C:/VideoEditing/kits/mixkit-cc";
-  const src = path.join(LIB, "click__mouse-click-close__1113.wav");
-  if (existsSync(src)) {
-    for (const [name, pitch, gain] of [["tap-1", 1.0, 1.0], ["tap-2", 0.97, 0.94]]) {
-      const af = [`atrim=0:0.24`, "asetpts=PTS-STARTPTS",
-        pitch !== 1 ? `asetrate=${Math.round(SR * pitch)},aresample=${SR}` : null,
-        "afade=t=in:st=0:d=0.002", "afade=t=out:st=0.21:d=0.03",
-        `volume=${gain}`, "loudnorm=I=-20:TP=-1.0:LRA=11"].filter(Boolean).join(",");
-      execFileSync("ffmpeg", ["-y", "-v", "error", "-i", src, "-af", af,
+  /* two different buttons, not one sample used twice */
+  const PAIR = [["tap-1", "click__mouse-hard-clicking__1111", 0.26, 1.0],
+                ["tap-2", "click__mouse-click-close__1113", 0.24, 0.94]];
+  if (existsSync(path.join(LIB, PAIR[0][1] + ".wav"))) {
+    for (const [name, file, dur, gain] of PAIR) {
+      const af = [`atrim=0:${dur}`, "asetpts=PTS-STARTPTS",
+        "afade=t=in:st=0:d=0.002", `afade=t=out:st=${(dur - 0.03).toFixed(3)}:d=0.03`,
+        `volume=${gain}`, "loudnorm=I=-20:TP=-1.0:LRA=11"].join(",");
+      execFileSync("ffmpeg", ["-y", "-v", "error", "-i", path.join(LIB, file + ".wav"), "-af", af,
         "-ac", "1", "-ar", String(SR), "-c:a", "pcm_s16le", path.join(OUT, name + ".wav")]);
-      console.log(`  ${name}.wav`.padEnd(20) + "real mouse click (imported)");
+      console.log(`  ${name}.wav`.padEnd(20) + "real mouse button (imported)");
     }
   } else {
     console.log("  (mouse click source not found; keeping the synthesised taps)");
@@ -218,7 +219,7 @@ console.log("riser, note, bed");
     anchors[f.slice(0, -4)] = +(pi / SR).toFixed(4);
   }
   /* the imported mouse click: anchor on the press, which its release can out-peak */
-  if (anchors["tap-1"] !== undefined) { anchors["tap-1"] = 0.011; anchors["tap-2"] = 0.011; }
+  if (anchors["tap-1"] !== undefined) { anchors["tap-1"] = 0.025; anchors["tap-2"] = 0.011; }
   writeFileSync(path.join(OUT, "anchors.json"), JSON.stringify(anchors, null, 1));
   console.log("  anchors.json      " + Object.keys(anchors).length + " sounds");
 }

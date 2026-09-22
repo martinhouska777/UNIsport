@@ -44,8 +44,11 @@ const KIT = {
      button: two transients 126 ms apart, the press and the release coming back
      up. Both are kept — that gap is what makes it read as a mouse and not a tick.
      The press is the louder of the two, so it anchors on the press by itself. */
-  "tap-1":      ["click__mouse-click-close__1113", 0.00, 0.24, 1.0, 1.00, null, 0.011],
-  "tap-2":      ["click__mouse-click-close__1113", 0.00, 0.24, 0.94, 0.97, null, 0.011],
+  /* Two genuinely different mouse buttons rather than one sample pitched twice —
+     the owner heard the repeat. Each keeps its press and its release ~125 ms
+     apart, and each is anchored on its press. */
+  "tap-1":      ["click__mouse-hard-clicking__1111", 0.00, 0.26, 1.0, 1.00, null, 0.025],
+  "tap-2":      ["click__mouse-click-close__1113", 0.00, 0.24, 0.94, 1.00, null, 0.011],
   /* the text turning into "Choose your activity" */
   "whoosh-text":["swoosh__short-wind-swoosh__1461", 0.00, 0.50, 1.0, 1.00],
   /* the three activity tiles arriving (audition A) */
