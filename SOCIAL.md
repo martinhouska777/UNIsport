@@ -11,174 +11,134 @@ Related files: `EMAIL.md` (the domain mailbox, not finished yet), `LANDING.md`
 
 ---
 
-## 1. What this account actually is
+## 1. What this account is
 
-Decided 2026-09-22, in the owner's words:
+**It is UNIsport's account.** The product, in English.
 
-- **One account, in English.** Czech stays on the personal account.
-- **The content is mostly admissions** — a student at Harvard talking about how you
-  get in. That is the thing people search for and follow.
-- **UNIsport rides along**: it is the link in the bio, it shows up in the videos
-  naturally, and it is what you are building while you talk.
-- **Both kinds of video**: faceless edits (screen, footage, text on screen) and you
-  talking to camera.
+Corrected 2026-09-22. An earlier version of this file built the whole thing around
+admissions content under a personal handle. That was wrong and has been removed.
 
-Why this ordering is right: nobody follows a company account that has no users yet.
-They follow a person who is somewhere they want to be. The admissions content is the
-reason to follow; UNIsport is what they find once they are already there.
+- **One account, named UNIsport, in English.**
+- **The content is the product**: the app, the gyms, the crews, training, the people
+  using it. Screen recordings, footage, before/after, build-in-public.
+- **You appear in it when it helps** — talking to camera about what you are building —
+  but as the founder of UNIsport, not as the subject.
+- **Czech stays on your personal account**, which is a separate thing entirely.
 
 ---
 
-## 2. The handle
+## 2. The handle and the name
 
-**Checked live on 2026-09-22.** Instagram was asked for each of these directly; a free
-name answers "Profile isn't available", a taken one shows the profile.
-
-| Handle | State |
-|---|---|
-| `@unisport` | **TAKEN** — Unisport.dk, the Danish football retailer, 453K followers. Same company as the `unisport.com` domain in `EMAIL.md`. Not gettable. |
-| `@getunisport` | **free** — matches the domain |
-| `@unisportapp` | **free** |
-| `@unisport.app` | **free** |
-| `@unisporthq` | **free** |
-| `@martinatharvard` | **free** |
-| `@martin.at.harvard` | **free** |
-| `@houskaatharvard` | **free** |
-| `@martinhouska` | **TAKEN** — "Martin Houška", 151 followers, 158 following. Quite possibly your own existing account. Worth checking. |
-
-### Second sweep, 2026-09-22 — personal-brand handles, Instagram AND TikTok
+**Checked live on 2026-09-22.** Instagram and TikTok were asked for each name directly;
+a free handle answers "Profile isn't available" / "Couldn't find this account".
 
 | Handle | Instagram | TikTok |
 |---|---|---|
-| **`@martinatharvard`** | **free** | **free** |
-| `@martinfromharvard` | **free** | **free** |
-| **`@czechatharvard`** | **free** | **free** |
-| `@martin.at.harvard` | free | not checked |
-| `@martin.harvard` | free | not checked |
-| `@houskaatharvard` | free | not checked |
-| `@internationalatharvard` | free | not checked |
-| `@europeanatharvard` | free | not checked |
-| `@harvardmartin` | **TAKEN** — private, 47 followers | — |
-| `@martin.houska` | **TAKEN** — Martin Houška, 86 followers | — |
+| **`@getunisport`** | **free** | not checked yet |
+| `@unisportapp` | **free** | not checked yet |
+| `@unisport.app` | **free** | not checked yet |
+| `@unisporthq` | **free** | not checked yet |
+| `@unisport` | **TAKEN** — Unisport.dk, Danish football retailer, 453K followers | — |
 
-**Recommended: `@martinatharvard` as the main account, `@czechatharvard` parked.**
+`@unisport` is not gettable. It is the same company as the `unisport.com` domain in
+`EMAIL.md` §2 — a real business with half a million followers.
 
-`@martinatharvard` because it is **name-forward, so it ages.** In two years the content
-may be UNIsport and building a company rather than admissions; a name handle still fits,
-a topic handle would have to be abandoned.
+### Recommended: `@getunisport`
 
-`@czechatharvard` is the stronger **hook**, and worth owning for that reason. The
-differentiator is not being at Harvard — there are thousands of those accounts. It is
-being a **Czech kid who got in from outside the US system**: no American counselor,
-different testing, financial-aid rules nobody explains for internationals. That audience
-is large, badly served and searches hard. The Czech detail does not narrow it; it is
-what makes the story credible to an Indian or Brazilian applicant.
+Because it is **the same word as everything else you own**: the site is
+`getunisport.com`, the email will be `hello@getunisport.com`, and the handle matches
+both. One name, spelled one way, everywhere. Nobody has to remember which variant.
 
-**Avoid anything built on "Houska."** English speakers cannot spell it or say it, and
-the háček makes it worse. A handle people cannot type is a handle they cannot find.
+`@unisportapp` is the reasonable alternative if "get" bothers you. Check both on TikTok
+before committing — the handle should be the same on both platforms.
 
 ### The Name field — not the same thing as the handle
 
-Instagram **searches the Name field**, which most people do not realise. It is where the
-keywords belong.
+Instagram **searches the Name field**, which most people do not realise. The handle is
+the address; the Name field is where the words people actually type go.
 
-> Recommended: **`Martin · Harvard admissions`**
+> Recommended: **`UNIsport · train with your team`**
 
-The name means friends still find you; the keywords mean strangers do. Small trap: the
-Name field can only be changed **twice in 14 days**, so do not fiddle with it.
+Or whatever one-line description of the app you prefer — the point is that "UNIsport"
+alone tells a stranger nothing, and the search only sees this field.
 
-### The one decision still open
+Small trap: the Name field can only be changed **twice in 14 days**. Do not fiddle.
 
-The content is admissions. The brand is UNIsport. Those two do not want the same name.
+### The profile picture is a real blocker
 
-**If the account is called `@getunisport`:** someone sees an admissions video, taps
-through, and lands on what looks like a company. The mismatch costs follows, because
-people follow people for this subject, not products.
+A brand account needs a logo, and **the logo is not decided.** Four directions were
+drawn up (Wordmark / Gate / Pennant / Partners, in `mockups/logo`) and none was picked;
+the app icon is still a blank navy square.
 
-**If the account is called `@martinatharvard`:** it is the shape the genre already
-uses, the content and the name agree, and UNIsport still gets every single click — it
-is the only link in the bio, and it is in the videos.
+Do not let this stop the account being created — a plain wordmark on the brand colour is
+fine for now and can be swapped any time. But it is the one asset that is genuinely
+missing.
 
-**Recommendation: take the personal-brand handle as the main account, and register
-`@getunisport` as well the same day and leave it empty.** Registering it is two
-minutes and free, it stops anyone else taking the name, and it becomes the real
-product account later when there is something worth posting daily. An empty reserved
-handle costs nothing.
+### Personal handles, if a separate personal account is ever wanted
 
-This is your call — every setup step below is identical either way.
+Checked at the same time and all free on Instagram: `@martinatharvard`,
+`@martinfromharvard`, `@czechatharvard`, `@martin.at.harvard`, `@martin.harvard`,
+`@internationalatharvard`, `@europeanatharvard`. The first three are free on TikTok too.
+Taken: `@martinhouska`, `@martin.houska`, `@harvardmartin`.
+
+Not part of this plan. Recorded only so the check does not have to be redone.
 
 ---
 
 ## 3. Which email
 
-Short answer: **make a new Gmail just for this**, something like `getunisport@gmail.com`
-or `unisport.team@gmail.com`. Free, two minutes.
+Short answer: **a new email just for this**, ideally on **Outlook.com** — free, five
+minutes. Gmail and Yahoo are both maxed out for you (see below).
 
-That address is the **login** for Instagram, and later for TikTok and YouTube. It is
-never shown to anyone.
+That address is the **login** for Instagram and TikTok. It is never shown to anyone.
 
-**One address covers Instagram and TikTok.** Both sign in happily with the same new
-email, whoever provides it.
+**One address covers Instagram and TikTok.** Both sign in happily with the same email,
+whoever provides it.
 
 **YouTube is the exception** — a YouTube channel *is* a Google account, so it cannot
 live on an Outlook address. Since making another Google account is the thing that is
 blocked, the answer there is a **brand channel on the Google account you already have**:
 YouTube lets one Google account own several channels, each with its own name and
-picture, so the UNIsport channel does not have to be called Martin Houška. Nothing to
-create and no new account needed. Do it when you actually want to post there.
+picture, so the channel can be called UNIsport. Nothing to create. Do it when you
+actually want to post there.
 
-**And it is not permanent.** The email on an Instagram or TikTok account can be changed
-in settings at any time. If you want `martin@getunisport.com` on it once Zoho is
-finished, you swap it then. Nothing picked today locks anything in — which is exactly
-why there is no reason to wait for the domain.
+**And none of it is permanent.** The email on an Instagram or TikTok account can be
+changed in settings at any time. If you want `social@getunisport.com` on it once Zoho is
+finished, you swap it then.
 
-Two practical notes:
+### Why not `martinhouska777@gmail.com`
 
-- Google will probably want a **phone number** to verify the new Gmail. One number
-  normally covers a few Google accounts, but Google does sometimes refuse a number it
-  has seen too often. That block is usually temporary — try the next day rather than
-  falling back to the personal address.
-- **Do not use the `martinhouska777+unisport@gmail.com` trick.** It looks like a
-  separate address but it is the same account and the same inbox, so it gives none of
-  the separation above, and some platforms reject the `+` outright.
+It works, but it tangles a business asset up with everything else you own. This account
+is company property — it should outlive any one person's personal inbox. That address is
+also already your Zoho, GitHub and Vercel. One address holding all of it is one thing to
+lose.
 
-### "Can I just use my existing Instagram account?"
+That said: **it is survivable.** Instagram allows a few accounts per address now, and the
+email can be swapped later. If the choice is between the personal email tonight and
+nothing for a week, use the personal email.
 
-Asked 2026-09-22. Two separate questions hide in this one.
+### Why not `martin@getunisport.com`
 
-**Do the followers come with it? No.** Adding a second account in the app is only a
-login convenience — you tap your picture and switch. Publicly the two accounts are
-strangers. Sharing an email, or being on the same phone, changes nothing about who
-follows what. A new account starts at zero.
+Because **it does not exist yet.** Every box on the `EMAIL.md` checklist is still
+unticked — the Zoho signup is stuck on their paid-only plan chooser. Do not wait for it.
 
-**The only way to keep the followers is to rename the existing account** — change the
-handle and bio and the 151 followers stay. **Do not do this**, for a reason that is not
-obvious:
+And even once it exists, it is the wrong thing to hang account recovery on: Zoho's free
+plan has **no IMAP**, so that mail only opens in Zoho's own app, and a password-reset
+code you cannot reach in a minute is how people lose accounts. It is also a brand-new
+domain — if its DNS ever breaks, you lose the recovery address for every social account
+at the same moment as everything else.
 
-> Instagram shows each new post to a slice of your **existing** followers first, and
-> how they react decides whether strangers ever see it. The current followers are Czech
-> friends who followed a person. They will scroll past an English admissions video, and
-> that low watch-through is the signal Instagram uses to stop showing the post.
-> **A mismatched audience is worse than no audience** — at zero followers Instagram has
-> to test the video on strangers immediately, which is exactly what is wanted here.
+### Where `getunisport.com` DOES belong
 
-So: a fresh account, whichever email it sits on.
+On the **profile itself**. An Instagram Creator account has a public "Email" contact
+button — that is where `hello@getunisport.com` goes, once `EMAIL.md` step 5 is done.
 
-**Using the personal email is survivable.** Instagram allows a few accounts per address
-now (extra verification checks tend to appear after about 3–5, which is not in play
-here), and the email can be changed later in settings. The Outlook address is still the
-better answer for the ownership reasons above — but if the choice is between the
-personal email tonight and nothing for a week, use the personal email and swap it later.
+**Login address is private, public contact address is the domain.** Two different jobs.
 
-**One caution:** add the new account to the app for switching, but do not go out of the
-way to link them in **Accounts Centre**. Accounts linked there are associated, and if
-Instagram ever actions one, the other can be caught in it.
+### Gmail and Yahoo are maxed out
 
-### If Gmail will not let you make another one
-
-Noted 2026-09-22 — the owner has hit the limit on both Gmail and Yahoo. That cap is
-**per phone number**, not per person, and it usually frees up later. Not worth
-fighting; use another provider.
+Noted 2026-09-22. That cap is **per phone number**, not per person, and it usually frees
+up later. Not worth fighting.
 
 | Provider | Free? | Reclaims a dormant account after | Notes |
 |---|---|---|---|
@@ -188,40 +148,8 @@ fighting; use another provider.
 | iCloud | yes | — | You may already have one via your Apple ID; nothing to create |
 | `mail.com`, GMX, temp-mail | — | — | **Avoid.** Instagram and TikTok flag these at signup — verification loops or an instant ban |
 
-**And this problem disappears once `EMAIL.md` is finished.** `social@getunisport.com`
-is then a **free alias** on your own domain, as are as many more as you want, and no
-provider limit ever applies again. Outlook is the bridge to that — and is also fine to
-keep permanently.
-
-### Why not `martinhouska777@gmail.com`
-
-It works, but it tangles a business asset up with everything else you own. Anything you
-might one day hand over, share with a co-founder, or recover after losing your phone
-belongs on its own address. That address is also already the Zoho account (`EMAIL.md`
-§4), your GitHub and your Vercel. One address holding all of it is one thing to lose.
-
-### Why not `martin@getunisport.com`
-
-Because **it does not exist yet.** Every box on the `EMAIL.md` checklist is still
-unticked — the Zoho signup is stuck on their paid-only plan chooser. Do not wait for
-it; Instagram can be set up today.
-
-And even once it does exist, it is the wrong thing to hang account recovery on:
-
-- On Zoho's free plan there is **no IMAP**, so that mail only opens in Zoho's own
-  webmail and Zoho's own app — never Gmail. A password-reset code you cannot get at
-  within a minute is how people lose accounts.
-- It is a brand-new domain with brand-new DNS. If the DNS ever breaks, you lose the
-  recovery address for every social account **at the same moment** as everything else.
-  Gmail does not have a bad day on the same day your domain does.
-
-### Where `getunisport.com` DOES belong
-
-On the **profile itself**. An Instagram Creator account has a public "Email" contact
-button — that is where `hello@getunisport.com` goes, once `EMAIL.md` step 5 is done.
-
-So: **login address is a private Gmail, public contact address is the domain.** Two
-different jobs, two different addresses. That is the normal arrangement.
+**This problem disappears once `EMAIL.md` is finished.** `social@getunisport.com` is then
+a free alias on your own domain, as are as many more as you want.
 
 ---
 
@@ -234,9 +162,8 @@ asking GitHub for it with no login at all: `"private": false`. Every file in it 
 readable by anyone on the internet.
 
 And git history is permanent. A password committed once stays recoverable from the
-history even after the line is deleted — undoing it means rewriting history and
-changing the password anyway. So the rule is simple: **no password, no backup code, no
-API key ever goes in a file here.**
+history even after the line is deleted. So: **no password, no backup code, no API key
+ever goes in a file here.**
 
 (Checked at the same time, and all fine: `.gitignore` already covers `.env*` and
 `*.env`, `feed.env` is untracked, and the only committed env file is the example
@@ -245,24 +172,21 @@ template. Nothing is leaking today.)
 ### The password goes in a password manager
 
 **Bitwarden** is the pick — free forever, works on Windows, iPhone and in the browser,
-and syncs between them. It also generates the passwords, so none of them are ones you
-invented and reused. The password saving built into Windows or Chrome works too and is
-far better than a document; the point is only that it is not a file.
+and syncs between them. The password saving built into Windows or Chrome works too. The
+point is only that it is not a file.
 
 The **2FA backup codes** go in there as well, or on paper. Not in this repo.
 
-### What CAN be tracked, safely — the account register
+### What CAN be tracked safely — the account register
 
-None of this is secret, and all of it is the stuff that is genuinely annoying to
-reconstruct later. Fill it in as accounts get made.
+None of this is secret, and all of it is annoying to reconstruct later.
 
 | | Value |
 |---|---|
-| Login email (the new one) | `…@outlook.com` — TO FILL IN |
+| Login email | TO FILL IN |
 | Email provider | Outlook.com / Microsoft |
 | Instagram handle | TO FILL IN |
 | Instagram account type | Creator |
-| Second IG handle (parked) | TO FILL IN |
 | TikTok handle | TO FILL IN |
 | YouTube channel | a brand channel on the existing Google account — see §3. TO FILL IN |
 | 2FA method | authenticator app |
@@ -276,7 +200,7 @@ reconstruct later. Fill it in as accounts get made.
 
 **Claude cannot do the first five minutes.** Creating an account, setting a password,
 entering a password and accepting the terms are things a person has to do — that is a
-hard rule here, not a missing feature. Same as with Zoho in `EMAIL.md`.
+hard limit here, not a missing feature. Same as with Zoho in `EMAIL.md`.
 
 Everything after it — writing the bio, drafting captions, planning the videos, editing
 footage, checking the profile reads well — is shared.
@@ -285,118 +209,107 @@ footage, checking the profile reads well — is shared.
 
 ## 5. Step by step
 
-### Step 1 — The Gmail (you, 2 min)
+### Step 1 — The email (you, 5 min)
 
-`gmail.com` → create account → pick the address from §3. Set a password you do not use
-anywhere else. Turn on 2-step verification on this Gmail **first**, before anything
-else — every account below recovers through it, so it is the master key.
+`signup.live.com` → create an Outlook address. A password you do not use anywhere else,
+saved straight into Bitwarden. Turn on 2-step verification on it **first** — every
+account below recovers through it.
 
 ### Step 2 — The Instagram account (you, 5 min)
 
 Sign up **in the phone app**, not the website. Instagram trusts phone signups more, and
-a brand-new account made in a desktop browser is likelier to get an instant
-verification challenge.
+a brand-new account made in a desktop browser is likelier to get an instant verification
+challenge.
 
-- Email: the new Gmail
-- Full name: your real name (this is the line that gets searched, not the handle)
-- Handle: whichever you picked in §2
+- Email: the new address
+- Full name → the Name field: `UNIsport · train with your team`
+- Handle: `@getunisport`
 - Skip the "find your contacts" step
-
-Then add the second account for the reserved handle, if you take it: profile → menu →
-Add account. The same Gmail can be reused.
 
 ### Step 3 — Make it a Creator account, NOT a Business account (you, 1 min)
 
-Settings → Account type and tools → Switch to professional account → **Creator** →
-category "Digital creator" or "Education".
+Settings → Account type and tools → Switch to professional account → **Creator**.
 
-**This matters more than it looks.** Business accounts are restricted to a
-royalty-free music catalogue — they **cannot use trending commercial songs** in reels.
-Creator accounts can. For an account built on reels that is a large, permanent
-handicap, and switching later does not un-mute videos you already posted.
+**This matters more than it looks.** Business accounts are restricted to a royalty-free
+music catalogue — they **cannot use trending commercial songs** in reels. Creator
+accounts can. For a reels-led account that is a large, permanent handicap, and switching
+later does not un-mute videos you already posted.
 
-You only need Business for paid ads or a shop. Neither applies.
+You only need Business for paid ads or a shop. Neither applies yet.
 
 ### Step 4 — The profile (together)
 
-- **Profile photo**: your face, if the handle is personal. Not a logo.
-- **Name field** (the bold line — and it IS searched): something like
-  `Martin · Harvard` or `Harvard admissions`. The words people search go here.
-- **Bio**: three short lines. Who you are, what you post, what the link is.
-- **Link**: `getunisport.com` — read §7A first, there is a problem with it.
-- **Contact button**: `hello@getunisport.com` once `EMAIL.md` is done; leave it off until then.
+- **Profile picture**: the logo — see §2, it is not decided. Wordmark on brand colour for now.
+- **Name field**: as above. This is what gets searched.
+- **Bio**: three short lines. What the app is, who it is for, what the link does.
+- **Link**: `getunisport.com`.
+- **Contact button**: `hello@getunisport.com` once `EMAIL.md` is done.
 
 ### Step 5 — Lock it down (you, 5 min)
 
-- **2FA with an authenticator app, not SMS.** Settings → Accounts Centre → Password
-  and security → Two-factor authentication → Authentication app.
-- **Not SMS specifically because of your situation**: a Czech number you may stop
-  using, or a US number you may switch, and you are locked out for good. SIM-swap
-  theft of social accounts is also routine.
+- **2FA with an authenticator app, not SMS.** Settings → Accounts Centre → Password and
+  security → Two-factor authentication → Authentication app.
+- **Not SMS specifically because of your situation**: a Czech number you may stop using,
+  or a US number you may switch, and the account is gone. SIM-swap theft is routine.
 - **Save the backup codes** somewhere that is not your phone.
 
-### Step 6 — Reserve the same handle on TikTok and YouTube (you, 5 min)
+### Step 6 — Reserve the handle on TikTok and YouTube (you, 5 min)
 
-Not scope creep — the same vertical video posts to all three with no extra editing,
-and handles are first-come. Even if you never post there, take the name now.
+Same vertical video posts to all three with no extra editing, and handles are
+first-come. Even if you never post there, take the name now.
 
 ---
 
 ## 6. The videos
 
-You said you want to do edits for fun. What is already on this machine:
+What is already on this machine:
 
 - **CapCut** (phone) — what nearly everyone uses for reels. Fastest by far for 9:16,
   captions and trending audio. Start here.
 - **DaVinci Resolve** — already installed, free version, and a Claude session can drive
-  it directly through the MCP bridge. Worth it for anything longer or more careful.
-  Never buy Studio.
+  it through the MCP bridge. Worth it for anything longer or more careful. Never buy
+  Studio.
 - **ChatCut** — also connected in this session.
 
 Two things that are not obvious:
 
-- **Burn the captions in.** Most of the audience watches with the sound off, and your
-  accent is a reason more of them will, not fewer. Captions are not optional.
-- **The first 1.5 seconds decide everything.** Not an intro, not "hi guys" — the claim
-  or the question, immediately.
+- **Burn the captions in.** Most of the audience watches with the sound off.
+- **The first 1.5 seconds decide everything.** Not an intro, not "hi guys" — the thing
+  itself, immediately.
 
 ---
 
-## 7. Two things that will bite you
+## 7. Two things to get right
 
-### ⚠️ A. The link in the bio leads to a door most of your audience cannot open
+### A. Who can actually sign up — better news than expected
 
-**This is the big one.** `lib/universityEmail.ts` turns away anyone whose email does
-not end in `.edu`. `EXTRA_DOMAINS` is empty, so there are no exceptions.
+Checked in the code 2026-09-22:
 
-An admissions audience is mostly **applicants** — high-school students, who by
-definition do not have a `.edu` address yet. They tap your link, try to sign up, and
-are told *"Please sign up with your university email."* They do not come back.
+- Signup accepts **any address ending in `.edu`** (`lib/universityEmail.ts`), so any US
+  university student can get in. `EXTRA_DOMAINS` is empty, so nothing outside `.edu` can.
+- **All eight Ivies are real in the app**, not just Harvard — Harvard, Yale, Princeton,
+  Penn, Brown, Columbia, Cornell, Dartmouth each have a full theme in `lib/themes.ts`
+  **and** their own gyms in `lib/gyms.ts`.
 
-This does not mean do not post. It means **decide what the link is for before you
-post**, and there are only a few honest options:
+So for a UNIsport account aimed at college students, the link in the bio works. That is
+the audience, and they all have `.edu` addresses.
 
-1. Link to the landing page as a look-at-what-I-am-building, and accept that signup is
-   for current students only. Fine — but then the call to action has to say so.
-2. Give someone with no `.edu` a way to leave an email and be told when it opens up.
-   Does not exist today; it would be a small slice.
-3. Change who may sign up. That is a data edit in `EXTRA_DOMAINS`, but it is a real
-   product decision, not a quick fix.
+**The real edge:** a student at a `.edu` that is *not* one of those eight can sign up,
+but `gymsFor()` falls back to Harvard's gyms, so they would see a campus that is not
+theirs. Market to the eight, not to "US students" in general, until that is handled.
 
-Not resolved. Decide before the first post that has a call to action in it.
+**Not for applicants.** High-school students have no `.edu` and cannot sign up at all.
 
-### ⚠️ B. Never say or imply that Harvard uses UNIsport
+### B. Never say or imply that Harvard uses UNIsport
 
-The standing rule from the Italy pitch work, and far more dangerous in public than in
-a PDF:
+The standing rule from the Italy pitch work, and far more dangerous on a public account
+than in a PDF:
 
-> "I'm a student at Harvard and I row" is fine. **"Harvard uses it" is a lie** that
-> would get out, because rowing is a small world.
+> "I'm a student at Harvard and I row" is fine. **"Harvard uses it" is a lie** that would
+> get out, because rowing is a small world.
 
-On a public account it is a trademark question too: universities restrict commercial
-use of their name and marks. Talking about your own experience as a student is normal
-and fine. Putting the shield on a product, or letting a video imply the university
-endorses it, is not.
+It is a trademark question too — universities restrict commercial use of their name and
+marks. Do not put a shield on the product or let a video imply endorsement.
 
 The real number today is 3 students who have ever signed in. Say what is true.
 
@@ -414,39 +327,42 @@ Owner's dump area — put ideas here in any form, no structure needed.
 
 ### Seed list (suggestions only — delete freely)
 
-Admissions, which is the audience magnet:
+The product:
 
-- What a Czech kid's application actually looked like — the real one
-- The essay mistake nearly everyone makes
-- Things I believed about Harvard that turned out to be wrong
-- What financial aid actually covers for an international student
-- Answering "can I get in with X" in 30 seconds
+- One feature, 15 seconds, screen recording, no voiceover, good music
+- The crew card being built — a boat filling up seat by seat
+- Logging a session, start to finish, in real time
+- The leaderboard after a week of a house challenge
 
-Where UNIsport joins naturally:
+The people:
 
-- "I got in, then I built the app my rowing team uses" — the honest version
-- A 15-second screen recording of one feature, no voiceover, good music
-- The boathouse at 5am — what training here is really like
-- Build in public: one thing that broke this week
+- The boathouse at 5am — what training here actually looks like
+- Two people matched as training partners, and what happened next
+- A coach seeing their squad's week in one screen
+
+Build in public:
+
+- One thing that broke this week
+- Why the app has no levels and only points
+- Designing the same app for eight different schools' colours
 
 ---
 
 ## 9. Checklist — the live state
 
-Tick these off so any session on any machine can pick up mid-way.
-
-- [ ] Handle decided (§2) — personal-brand vs `@getunisport`
-- [ ] New Gmail created, 2-step verification turned on for it
+- [ ] Handle confirmed on TikTok as well as Instagram (§2)
+- [ ] New Outlook address created, 2-step verification on it
+- [ ] Bitwarden installed, password saved there
 - [ ] Instagram account created in the phone app
-- [ ] Second handle registered and parked (if taking it)
 - [ ] Switched to **Creator** (not Business)
-- [ ] Profile photo, name field and bio written
-- [ ] 2FA on Instagram via authenticator app, backup codes saved
-- [ ] TikTok + YouTube handles reserved
-- [ ] **Decided what the bio link does about the `.edu` wall** (§7A)
+- [ ] Profile picture — blocked on the logo decision (§2)
+- [ ] Name field and bio written
+- [ ] 2FA via authenticator app, backup codes saved
+- [ ] TikTok handle reserved, YouTube brand channel made
 - [ ] Contact button set to `hello@getunisport.com` — blocked on `EMAIL.md` step 5
 - [ ] First video posted
 
-**Status 2026-09-22:** nothing created yet. Strategy decided (English, admissions-led,
-one account, both faceless and to-camera). Handle availability checked live — see §2.
-Blocked on nothing; step 1 is yours whenever you want it.
+**Status 2026-09-22:** nothing created yet. Strategy corrected to a UNIsport product
+account (the earlier admissions plan is gone). Handles checked live — `@getunisport` is
+free on Instagram. Blocked on nothing except the logo, which should not hold up creating
+the account.
