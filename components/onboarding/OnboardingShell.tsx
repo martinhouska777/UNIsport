@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { IconArrowLeft } from "@/components/icons";
+import Button from "@/components/ui/Button";
 
 /*
   Shared shell for all onboarding screens:
@@ -9,9 +10,18 @@ import { IconArrowLeft } from "@/components/icons";
     filling as you move through its screens, upcoming = border), with the
     chapter's name and place above it — "How you train · 2 of 3"
   - back arrow (hidden on the first screen) + optional Skip
-  - serif heading + subtext
+  - the heading
   - scrollable body
-  - bottom CTA (primary crimson by default, or gold) + optional secondary link
+  - the app's own Button, full width, at the bottom
+
+  IT LOOKS LIKE THE APP NOW (owner, 2026-09-22). Three things were only ever
+  true here and nowhere else in UNIsport: a serif heading, a line of grey text
+  under it explaining why we were asking, and a button drawn from scratch. The
+  serif is gone (the app's own heading size and weight instead), the subtitle
+  is gone with every other caption in the flow, and the button is
+  components/ui/Button — the same control as every other screen's main action.
+  The Varsity setup screen went through exactly this and reads better for it.
+
   All colors come from theme variables.
 */
 export default function OnboardingShell({
@@ -26,16 +36,12 @@ export default function OnboardingShell({
   skippable,
   onSkip,
   title,
-  subtitle,
   centered,
   headerSlot,
   children,
   primaryLabel,
-  primaryVariant = "primary",
   primaryDisabled,
   onPrimary,
-  secondaryLabel,
-  onSecondary,
 }: {
   /*
     Two ways to say where you are. The student flow passes CHAPTERS (the four
@@ -56,16 +62,12 @@ export default function OnboardingShell({
   skippable: boolean;
   onSkip: () => void;
   title: string;
-  subtitle?: string;
   centered?: boolean;
   headerSlot?: ReactNode;
   children: ReactNode;
   primaryLabel: string;
-  primaryVariant?: "primary" | "gold";
   primaryDisabled?: boolean;
   onPrimary: () => void;
-  secondaryLabel?: string;
-  onSecondary?: () => void;
 }) {
   return (
     <div className="flex h-dvh flex-col bg-background px-5 pb-6 pt-4 text-text">
@@ -129,36 +131,17 @@ export default function OnboardingShell({
       {/* Scrollable body */}
       <div className={`flex-1 overflow-y-auto ${centered ? "text-center" : ""}`}>
         {headerSlot}
-        <h1 className="mb-1 font-serif text-[18px] font-medium leading-tight text-text">
+        <h1 className="mb-5 text-[26px] font-semibold leading-tight tracking-[-0.01em] text-text">
           {title}
         </h1>
-        {subtitle && <p className="mb-3 text-[12px] leading-snug text-muted">{subtitle}</p>}
         {children}
       </div>
 
       {/* CTA */}
       <div className="pt-4">
-        <button
-          type="button"
-          onClick={onPrimary}
-          disabled={primaryDisabled}
-          className={`w-full rounded-xl py-3.5 text-sm font-medium transition-opacity disabled:cursor-not-allowed disabled:opacity-40 ${
-            primaryVariant === "gold"
-              ? "bg-accent text-background"
-              : "bg-primary-live text-primary-contrast"
-          }`}
-        >
+        <Button size="lg" className="w-full" onClick={onPrimary} disabled={primaryDisabled}>
           {primaryLabel}
-        </button>
-        {secondaryLabel && (
-          <button
-            type="button"
-            onClick={onSecondary}
-            className="mt-3.5 w-full text-center text-[13px] text-muted"
-          >
-            {secondaryLabel}
-          </button>
-        )}
+        </Button>
       </div>
     </div>
   );

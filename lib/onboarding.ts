@@ -9,21 +9,19 @@
 import { gyms } from "./gyms";
 
 /* ---- THE THREE CHAPTERS ------------------------------------------------------
-  Ten screens read as an unexplained form. Grouped, they are three questions a
+  Nine screens read as an unexplained form. Grouped, they are three questions a
   person can hold in their head — who are you, how do you train, what else are
-  you — and each chapter opens by saying WHY it asks. The progress bar counts
-  chapters, not screens. Nothing is removed or shortened; the screens are the
-  same ten, in the same order. The short tail (preferences, photo, notifications)
-  sits outside the chapters as "last details".
+  you. The progress bar counts chapters, not screens. The short tail
+  (preferences, photo) sits outside the chapters as "last details"; the
+  notifications screen that used to end the flow is gone (owner, 2026-09-22).
 
-  DATA (rule 7): which screens belong to which chapter, and what each chapter
-  says for itself, lives here — the flow only reads it.
+  DATA (rule 7): which screens belong to which chapter lives here — the flow
+  only reads it. A chapter no longer carries a line explaining why it asks:
+  nothing in the flow explains itself any more (owner, 2026-09-22).
 */
 export type OnboardingChapter = {
   key: string;
   title: string;
-  /** The one line under the chapter's first heading: why we ask. */
-  why: string;
   /** Screen keys (see STEPS in OnboardingFlow), in order. */
   steps: string[];
 };
@@ -32,19 +30,16 @@ export const onboardingChapters: OnboardingChapter[] = [
   {
     key: "you",
     title: "About you",
-    why: "Your house is your team on the leaderboard. Your year is how people know who you are.",
     steps: ["basics", "residence"],
   },
   {
     key: "train",
     title: "How you train",
-    why: "This is what the match runs on — we look for people at your gym, at your hour.",
     steps: ["activity", "alsodo", "topgyms", "schedule"],
   },
   {
     key: "outside",
     title: "Who you are outside the gym",
-    why: "Two people at the same gym at the same time still need a reason to say hi. This is that reason.",
     steps: ["background"],
   },
 ];

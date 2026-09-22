@@ -15,16 +15,10 @@ import {
   IconChevronDown,
   IconX,
   IconCamera,
-  IconBell,
   IconShield,
   IconMapPin,
   HouseSigil,
-  IconMessage,
-  IconCalendar,
-  IconClock,
-  IconHeart,
   IconCheck,
-  IconUser,
 } from "@/components/icons";
 import {
   classYears,
@@ -53,10 +47,8 @@ import {
   MAX_INTEREST_LENGTH,
   residenceKind,
   residenceGroup,
-  TRAIN_ALONE_NOTE,
   peerAdvising,
   gymMentorship,
-  notificationItems,
   emptyProfile,
   nameError,
   onboardingChapters,
@@ -71,7 +63,6 @@ import {
 import { houseColorsFor } from "@/lib/gyms";
 import { hoursOfDay, hoursToSlots } from "@/lib/schedule";
 import WeekHourGrid from "@/components/onboarding/WeekHourGrid";
-import { subscribeToPush, sendTestNotification } from "@/lib/push/client";
 import { fileToDataUrl } from "@/lib/image";
 
 const activityIcons: Record<string, (p: { size?: number; className?: string }) => React.ReactNode> = {
@@ -79,14 +70,6 @@ const activityIcons: Record<string, (p: { size?: number; className?: string }) =
   run: IconRun,
   activity: IconActivity,
   plus: IconPlus,
-};
-
-const notifIcons: Record<string, (p: { size?: number; className?: string }) => React.ReactNode> = {
-  heart: IconHeart,
-  message: IconMessage,
-  calendar: IconCalendar,
-  clock: IconClock,
-  user: IconUser,
 };
 
 /*
@@ -119,61 +102,55 @@ function ResidenceEmblem({
 type StepMeta = {
   key: string;
   title: string;
-  subtitle?: string;
   skippable?: boolean;
   centered?: boolean;
 };
 
 /*
-  The ten screens, in three chapters plus a short tail (lib/onboarding.ts,
-  onboardingChapters). Every question is still asked; what changed is that the
-  first screen of a chapter opens with WHY the chapter asks (the chapter's
-  `why` line replaces that screen's subtitle), and the progress bar counts
-  chapters rather than screens.
+  The screens, in three chapters plus a short tail (lib/onboarding.ts,
+  onboardingChapters). The progress bar counts chapters rather than screens.
+
+  NOTHING HERE EXPLAINS ITSELF (owner, 2026-09-22). Every screen was a heading,
+  a line saying why we were asking, and then the question — and under half the
+  controls, another line saying what the control did. All of it is gone. The
+  question IS the screen; the same rule the Varsity setup screen already
+  follows.
 */
 const STEPS: StepMeta[] = [
-  { key: "basics", title: "Let's get to know you.", subtitle: "A few quick basics so other members can find you." },
-  { key: "residence", title: "Where do you live on campus?", subtitle: "Your house is your team on the leaderboard — and how we find people who train near you." },
-  { key: "activity", title: "What do you train?", subtitle: "Pick your main thing — you can do everything else too." },
+  { key: "basics", title: "Let's get to know you." },
+  { key: "residence", title: "Where do you live on campus?" },
+  { key: "activity", title: "What do you train?" },
   /*
     The follow-up to the screen above. Skippable, because plenty of people
     genuinely do one thing — and because the moment this feels like homework
     people start ticking boxes at random, which is worse than no answer.
   */
-  {
-    key: "alsodo",
-    title: "Anything else you do?",
-    subtitle: "Your main thing is covered. Tell us what else you get up to and we can match you for that too.",
-    skippable: true,
-  },
-  { key: "topgyms", title: "Your top gyms.", subtitle: "Where do you actually train? The match looks for people at your gym — pick and rank your top 3." },
-  { key: "schedule", title: "When do you usually train?", subtitle: "Tap every hour you're usually free — this is how we find people who are there when you are." },
+  { key: "alsodo", title: "Anything else you do?", skippable: true },
+  { key: "topgyms", title: "Your top gyms." },
+  { key: "schedule", title: "When do you usually train?" },
   /*
     No longer skippable. A concentration and three interests are required; the
     hometown and languages stay optional. This chapter is the reason two
     strangers at the same rack say hello, so a profile without it is one the
     match has nothing to say about.
   */
-  { key: "background", title: "Who are you, outside the gym?", subtitle: "Shared backgrounds make better gym friends." },
-  { key: "preferences", title: "Your preferences.", subtitle: "Who you'd like to train with and how you want to help out." },
-  { key: "finish", title: "Finish your profile.", subtitle: "All optional — a face and a line make people far more likely to say yes.", skippable: true },
-  { key: "notifications", title: "Stay in the loop.", subtitle: "Only the things below — nothing else, ever.", centered: true },
+  { key: "background", title: "Who are you, outside the gym?" },
+  { key: "preferences", title: "Your preferences." },
+  { key: "finish", title: "Finish your profile.", skippable: true },
 ];
 
 /*
   What the progress bar says for a screen: the chapter and where it sits —
-  "How you train · 2 of 3" — or the tail's own label. Also hands back the
-  chapter's `why` for its FIRST screen, which the shell shows as the subtitle.
+  "How you train · 2 of 3" — or the tail's own label.
 */
 function chapterMeta(stepKey: string): {
   label: string;
   index: number; // 0-based chapter, or onboardingChapters.length for the tail
   progress: number; // 0..1 through the current chapter's screens
-  why: string | null;
 } {
   const i = chapterOf(stepKey);
   if (i < 0) {
-    return { label: ONBOARDING_TAIL_LABEL, index: onboardingChapters.length, progress: 1, why: null };
+    return { label: ONBOARDING_TAIL_LABEL, index: onboardingChapters.length, progress: 1 };
   }
   const chapter = onboardingChapters[i];
   const at = chapter.steps.indexOf(stepKey);
@@ -181,7 +158,6 @@ function chapterMeta(stepKey: string): {
     label: `${chapter.title} · ${i + 1} of ${onboardingChapters.length}`,
     index: i,
     progress: (at + 1) / chapter.steps.length,
-    why: at === 0 ? chapter.why : null,
   };
 }
 
@@ -334,21 +310,6 @@ export default function OnboardingFlow() {
     router.replace("/gyms");
   };
 
-  // Last screen's gold CTA: ask the OS for notification permission, register the
-  // push subscription, fire a welcome ping, then finish. Denied/unsupported still
-  // completes onboarding — notifications are a nicety, never a blocker.
-  const enableNotifications = async () => {
-    const status = await subscribeToPush();
-    if (status === "granted") {
-      void sendTestNotification({
-        title: "Welcome to UNIsport 🎉",
-        body: "Notifications are on — we'll ping you the moment something matters.",
-        url: "/gyms",
-      });
-    }
-    await finish();
-  };
-
   const renderBody = () => {
     switch (meta.key) {
       case "basics":
@@ -408,8 +369,8 @@ export default function OnboardingFlow() {
                     type="button"
                     onClick={() => set("primaryActivity", a.key)}
                     aria-pressed={on}
-                    className={`flex flex-col items-center gap-1.5 rounded-xl border p-4 transition-colors ${
-                      on ? "border-primary bg-primary-tint" : "border-border bg-surface-2"
+                    className={`flex flex-col items-center gap-1.5 rounded-2xl border p-4 shadow-card transition-colors ${
+                      on ? "border-primary bg-primary-tint" : "border-border bg-surface"
                     }`}
                   >
                     <span className="text-accent">
@@ -453,7 +414,7 @@ export default function OnboardingFlow() {
                           onClick={() => set("experienceLevel", lvl.key)}
                           aria-pressed={on}
                           className={`rounded-[10px] border p-3 text-left transition-colors ${
-                            on ? "border-primary bg-primary-tint" : "border-border bg-surface-2"
+                            on ? "border-primary bg-primary-tint" : "border-border bg-surface"
                           }`}
                         >
                           <div className="text-[13px] font-medium text-text">{lvl.name}</div>
@@ -600,7 +561,7 @@ export default function OnboardingFlow() {
                 <div
                   key={a.key}
                   className={`rounded-xl border transition-colors ${
-                    on ? "border-primary bg-primary-tint" : "border-border bg-surface-2"
+                    on ? "border-primary bg-primary-tint" : "border-border bg-surface"
                   }`}
                 >
                   <button
@@ -677,11 +638,6 @@ export default function OnboardingFlow() {
                             );
                           })}
                         </div>
-                        {/* Said out loud so an empty row doesn't read as a
-                            question they forgot to answer. */}
-                        <p className="pt-2 text-[11px] text-muted">
-                          Only if you have one. Most people don&apos;t — you can go whenever.
-                        </p>
                       </div>
                     </div>
                   )}
@@ -706,10 +662,6 @@ export default function OnboardingFlow() {
               groupOf={residenceGroup}
               icon={(o) => <ResidenceEmblem residence={o} universityKey={universityKey} />}
             />
-            <p className="mt-2 text-[11px] text-muted">
-              Not in {isFreshman ? "a dorm" : "a House"}? The co-op and off-campus are at the
-              bottom of the list.
-            </p>
           </div>
         );
       }
@@ -735,7 +687,7 @@ export default function OnboardingFlow() {
                 {top.map((g, i) => (
                   <div
                     key={g}
-                    className="flex items-center gap-2.5 rounded-[10px] border border-border bg-surface-2 px-3 py-2.5"
+                    className="flex items-center gap-2.5 rounded-[10px] border border-border bg-surface px-3 py-2.5"
                   >
                     <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary-tint text-xs font-semibold text-primary">
                       {i + 1}
@@ -781,13 +733,7 @@ export default function OnboardingFlow() {
                 searchPlaceholder="Search gyms…"
                 ariaLabel="Add a gym"
               />
-            ) : (
-              <p className="text-[12px] text-muted">That&apos;s your top 3 — remove one to swap.</p>
-            )}
-
-            <p className="mt-2 text-[11px] text-muted">
-              Pick up to 3, in order — your #1 is where you train most.
-            </p>
+            ) : null}
           </div>
         );
       }
@@ -823,13 +769,15 @@ export default function OnboardingFlow() {
             <div className="rounded-2xl border border-border bg-surface p-3">
               <WeekHourGrid schedule={schedule} onSet={setHour} />
             </div>
-            <p className="px-1 text-[12px] text-muted">
-              {chosenDays.length === 0
-                ? "Tap the hours you're usually free to train."
-                : `${chosenDays.map((d) => d.label.slice(0, 3)).join(", ")} · ${totalHours} ${
-                    totalHours === 1 ? "hour" : "hours"
-                  } a week`}
-            </p>
+            {/* What you have picked, added up — not an instruction. Nothing
+                at all until there is something to add up. */}
+            {chosenDays.length > 0 && (
+              <p className="px-1 text-[12px] text-muted">
+                {`${chosenDays.map((d) => d.label.slice(0, 3)).join(", ")} · ${totalHours} ${
+                  totalHours === 1 ? "hour" : "hours"
+                } a week`}
+              </p>
+            )}
           </div>
         );
       }
@@ -861,9 +809,6 @@ export default function OnboardingFlow() {
                 placeholder="Select your concentration"
                 ariaLabel="Concentration"
               />
-              <p className="mt-1.5 text-[11px] text-muted">
-                &ldquo;Undecided&rdquo; counts — it&apos;s at the bottom of the list.
-              </p>
             </div>
 
             <div>
@@ -879,7 +824,7 @@ export default function OnboardingFlow() {
                 onChange={(e) => set("hometownCity", e.target.value)}
                 placeholder="Your city or town"
                 aria-label="City or town"
-                className="mb-2 w-full rounded-[10px] border border-border bg-surface-2 px-3.5 py-3 text-base text-text placeholder:text-muted focus:border-primary focus:outline-none"
+                className="mb-2 w-full rounded-[10px] border border-border bg-surface px-3.5 py-3 text-base text-text placeholder:text-muted focus:border-primary focus:outline-none"
               />
               <SearchableDropdown
                 options={countries}
@@ -952,7 +897,7 @@ export default function OnboardingFlow() {
                   <button
                     type="button"
                     onClick={() => setNewInterest("")}
-                    className="tap44 flex items-center gap-1 rounded-full border border-dashed border-border bg-surface-2 px-3.5 py-2 text-[13px] text-muted"
+                    className="tap44 flex items-center gap-1 rounded-full border border-dashed border-border bg-surface px-3.5 py-2 text-[13px] text-muted"
                   >
                     <IconPlus size={13} />
                     Add
@@ -979,7 +924,7 @@ export default function OnboardingFlow() {
                     }}
                     placeholder="Your own interest"
                     aria-label="Your own interest"
-                    className="min-w-0 flex-1 rounded-[10px] border border-border bg-surface-2 px-3.5 py-3 text-base text-text placeholder:text-muted focus:border-primary focus:outline-none"
+                    className="min-w-0 flex-1 rounded-[10px] border border-border bg-surface px-3.5 py-3 text-base text-text placeholder:text-muted focus:border-primary focus:outline-none"
                   />
                   <button
                     type="button"
@@ -1018,36 +963,21 @@ export default function OnboardingFlow() {
             >
               <div className="flex-1">
                 <div className="text-[13px] font-medium text-text">{row.label}</div>
-                <div className="text-[11px] text-muted">{row.sub}</div>
               </div>
               <Toggle on={profile[row.key]} onChange={() => set(row.key, !profile[row.key])} ariaLabel={row.label} />
             </div>
           ));
-        const trainsAlone = profile.trainingType === "solo";
         return (
           <div className="flex flex-col gap-5">
-            {/* One switch instead of Solo / Partner / Either. Off is the normal,
-                matchable state; on takes you out of Match altogether. */}
-            <div className="rounded-xl border border-border bg-surface-2 p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1">
-                  <div className="text-[13px] font-medium text-text">I prefer to train alone</div>
-                  <div className="text-[11px] text-muted">{TRAIN_ALONE_NOTE}</div>
-                </div>
-                <Toggle
-                  on={trainsAlone}
-                  onChange={() => set("trainingType", trainsAlone ? "either" : "solo")}
-                  ariaLabel="I prefer to train alone"
-                />
-              </div>
-            </div>
-
-            <Section title="Peer advising" help="Harvard-life mentorship — optional.">
+            {/* "I prefer to train alone" is NOT asked here (owner, 2026-09-22).
+                It is a setting, not an introduction — and it already exists as
+                one, in app/settings/page.tsx. */}
+            <Section title="Peer advising">
               {renderToggleRows(peerRows)}
             </Section>
 
             {profile.experienceLevel !== "" && (
-              <Section title="Gym mentorship" help="Optional — based on your experience level.">
+              <Section title="Gym mentorship">
                 {renderToggleRows(gymRows)}
               </Section>
             )}
@@ -1065,7 +995,7 @@ export default function OnboardingFlow() {
                 onChange={(e) => set("bio", e.target.value)}
                 placeholder="A line about you — your sport, goals, what you're training for."
                 aria-label="Bio"
-                className="min-h-[90px] w-full resize-none rounded-[10px] border border-border bg-surface-2 px-3.5 py-3 text-base text-text placeholder:text-muted focus:border-primary focus:outline-none"
+                className="min-h-[90px] w-full resize-none rounded-[10px] border border-border bg-surface px-3.5 py-3 text-base text-text placeholder:text-muted focus:border-primary focus:outline-none"
               />
               <div className="mt-1 text-right text-[11px] text-muted">{profile.bio.length} / 160</div>
             </div>
@@ -1086,7 +1016,7 @@ export default function OnboardingFlow() {
                 type="button"
                 onClick={() => photoInputRef.current?.click()}
                 aria-label={profile.photo ? "Change your photo" : "Add a photo"}
-                className="flex w-full flex-col items-center gap-2 rounded-xl border border-dashed border-border bg-surface-2 px-4 py-7 text-center"
+                className="flex w-full flex-col items-center gap-2 rounded-2xl border border-dashed border-border bg-surface px-4 py-7 text-center"
               >
                 {profile.photo ? (
                   <>
@@ -1104,7 +1034,6 @@ export default function OnboardingFlow() {
                       <IconCamera size={28} />
                     </span>
                     <span className="text-[13px] text-text">Add a photo</span>
-                    <span className="text-[11px] text-muted">Tap to upload</span>
                   </>
                 )}
               </button>
@@ -1120,44 +1049,27 @@ export default function OnboardingFlow() {
             </div>
           </div>
         );
-      case "notifications":
-        return (
-          <div className="rounded-xl border border-border bg-surface-2 p-4 text-left">
-            {notificationItems.map((item, i) => {
-              const NotifIcon = notifIcons[item.icon];
-              return (
-                <div
-                  key={item.label}
-                  className={`flex items-center gap-2.5 py-2 ${
-                    i < notificationItems.length - 1 ? "border-b border-border" : ""
-                  }`}
-                >
-                  <span className="text-accent">
-                    <NotifIcon size={16} />
-                  </span>
-                  <span className="text-[13px] text-text">{item.label}</span>
-                </div>
-              );
-            })}
-          </div>
-        );
       default:
         return (
-          <div className="rounded-xl border border-border bg-surface-2 p-6 text-center text-[13px] text-muted">
+          <div className="rounded-2xl border border-border bg-surface p-6 text-center text-[13px] text-muted shadow-card">
             This screen is coming next.
           </div>
         );
     }
   };
 
-  // Screen 9 finishes with a gold CTA + "Maybe later"; all others use Continue.
+  /*
+    The last screen finishes the flow. It used to be a notifications ask with a
+    gold "Enable notifications" CTA; that screen is gone (owner, 2026-09-22 —
+    notifications don't work yet, and an ask nobody can honour is worse than no
+    ask). Permission is still asked for later, from Settings.
+  */
   const ctaProps = isLast
     ? {
-        primaryLabel: "Enable notifications",
-        primaryVariant: "gold" as const,
-        onPrimary: enableNotifications,
-        secondaryLabel: "Maybe later",
-        onSecondary: finish,
+        primaryLabel: "Finish",
+        primaryVariant: "primary" as const,
+        primaryDisabled: !canContinue(),
+        onPrimary: finish,
       }
     : {
         primaryLabel: "Continue",
@@ -1166,15 +1078,7 @@ export default function OnboardingFlow() {
         onPrimary: goNext,
       };
 
-  const headerSlot =
-    meta.key === "notifications" ? (
-      <div className="mx-auto mb-6 mt-6 flex h-16 w-16 items-center justify-center rounded-full border border-primary bg-primary-tint text-primary">
-        <IconBell size={28} />
-      </div>
-    ) : undefined;
-
-  // The chapter this screen sits in — what the progress bar counts — and, on
-  // a chapter's first screen, the line that says why the chapter asks.
+  // The chapter this screen sits in — what the progress bar counts.
   const chapter = chapterMeta(meta.key);
 
   return (
@@ -1188,9 +1092,7 @@ export default function OnboardingFlow() {
       skippable={!!meta.skippable}
       onSkip={goNext}
       title={meta.title}
-      subtitle={chapter.why ?? meta.subtitle}
       centered={meta.centered}
-      headerSlot={headerSlot}
       {...ctaProps}
     >
       {saveError && (

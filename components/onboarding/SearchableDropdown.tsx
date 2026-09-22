@@ -95,7 +95,7 @@ export default function SearchableDropdown(props: Props) {
                 key={s}
                 className={`flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs ${
                   fixed
-                    ? "border-border bg-surface-2 text-muted"
+                    ? "border-border bg-surface text-muted"
                     : "border-primary bg-primary-tint text-primary"
                 }`}
               >
@@ -117,7 +117,7 @@ export default function SearchableDropdown(props: Props) {
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-label={ariaLabel}
-        className="flex w-full items-center justify-between rounded-[10px] border border-border bg-surface-2 px-3.5 py-3 text-base"
+        className="flex w-full items-center justify-between rounded-[10px] border border-border bg-surface px-3.5 py-3 text-base"
       >
         <span className="flex min-w-0 items-center gap-2.5">
           {!multiple && props.value && icon && (

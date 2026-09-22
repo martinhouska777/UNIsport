@@ -3,10 +3,12 @@
 import type { ReactNode } from "react";
 
 /*
-  Shared onboarding controls. All colors come from theme variables:
+  Shared onboarding controls. All colors come from theme variables, and they
+  are the SAME ones the app behind the flow uses (owner, 2026-09-22: the boxes
+  should be white): a white `surface` card on the blue-grey `background`,
+  lifted by `shadow-card`, hairline `border`.
   - selected pill   = crimson tint (primary)
   - gold pill       = gold tint (accent)
-  - surfaces/border = surface-2 / border tokens
 */
 
 export function Pill({
@@ -34,7 +36,7 @@ export function Pill({
          for. The class grows only the invisible hit area (app/globals.css), so
          chips look exactly as before but survive a thumb at a squat rack. */
       className={`tap44 rounded-full border px-3.5 py-2 text-[13px] transition-colors ${
-        selected ? selectedClass : "border-border bg-surface-2 text-text"
+        selected ? selectedClass : "border-border bg-surface text-text"
       }`}
     >
       {label}
@@ -44,7 +46,7 @@ export function Pill({
 
 export function FieldLabel({ children }: { children: ReactNode }) {
   return (
-    <div className="mb-2 text-xs font-medium uppercase tracking-[0.04em] text-muted">
+    <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
       {children}
     </div>
   );
@@ -79,19 +81,12 @@ export function Toggle({
   );
 }
 
-export function Section({
-  title,
-  help,
-  children,
-}: {
-  title: string;
-  help?: string;
-  children: ReactNode;
-}) {
+export function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <div className="rounded-xl border border-border bg-surface-2 p-4">
-      <div className="text-xs font-medium uppercase tracking-[0.06em] text-accent">{title}</div>
-      {help && <div className="mb-1 mt-0.5 text-[11px] text-muted">{help}</div>}
+    <div className="rounded-2xl border border-border bg-surface p-4 shadow-card">
+      <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
+        {title}
+      </div>
       <div>{children}</div>
     </div>
   );
@@ -116,7 +111,7 @@ export function TextField({
       placeholder={placeholder}
       aria-label={ariaLabel}
       // 16px text avoids mobile auto-zoom on focus.
-      className="w-full rounded-[10px] border border-border bg-surface-2 px-3.5 py-3 text-base text-text placeholder:text-muted focus:border-primary focus:outline-none"
+      className="w-full rounded-[10px] border border-border bg-surface px-3.5 py-3 text-base text-text placeholder:text-muted focus:border-primary focus:outline-none"
     />
   );
 }
@@ -152,7 +147,7 @@ export function SelectField({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         aria-label={ariaLabel}
-        className={`w-full appearance-none rounded-[10px] border border-border bg-surface-2 px-3.5 py-3 pr-9 text-base focus:border-primary focus:outline-none ${
+        className={`w-full appearance-none rounded-[10px] border border-border bg-surface px-3.5 py-3 pr-9 text-base focus:border-primary focus:outline-none ${
           value ? "text-text" : "text-muted"
         }`}
       >
