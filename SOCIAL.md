@@ -46,6 +46,47 @@ name answers "Profile isn't available", a taken one shows the profile.
 | `@houskaatharvard` | **free** |
 | `@martinhouska` | **TAKEN** — "Martin Houška", 151 followers, 158 following. Quite possibly your own existing account. Worth checking. |
 
+### Second sweep, 2026-09-22 — personal-brand handles, Instagram AND TikTok
+
+| Handle | Instagram | TikTok |
+|---|---|---|
+| **`@martinatharvard`** | **free** | **free** |
+| `@martinfromharvard` | **free** | **free** |
+| **`@czechatharvard`** | **free** | **free** |
+| `@martin.at.harvard` | free | not checked |
+| `@martin.harvard` | free | not checked |
+| `@houskaatharvard` | free | not checked |
+| `@internationalatharvard` | free | not checked |
+| `@europeanatharvard` | free | not checked |
+| `@harvardmartin` | **TAKEN** — private, 47 followers | — |
+| `@martin.houska` | **TAKEN** — Martin Houška, 86 followers | — |
+
+**Recommended: `@martinatharvard` as the main account, `@czechatharvard` parked.**
+
+`@martinatharvard` because it is **name-forward, so it ages.** In two years the content
+may be UNIsport and building a company rather than admissions; a name handle still fits,
+a topic handle would have to be abandoned.
+
+`@czechatharvard` is the stronger **hook**, and worth owning for that reason. The
+differentiator is not being at Harvard — there are thousands of those accounts. It is
+being a **Czech kid who got in from outside the US system**: no American counselor,
+different testing, financial-aid rules nobody explains for internationals. That audience
+is large, badly served and searches hard. The Czech detail does not narrow it; it is
+what makes the story credible to an Indian or Brazilian applicant.
+
+**Avoid anything built on "Houska."** English speakers cannot spell it or say it, and
+the háček makes it worse. A handle people cannot type is a handle they cannot find.
+
+### The Name field — not the same thing as the handle
+
+Instagram **searches the Name field**, which most people do not realise. It is where the
+keywords belong.
+
+> Recommended: **`Martin · Harvard admissions`**
+
+The name means friends still find you; the keywords mean strangers do. Small trap: the
+Name field can only be changed **twice in 14 days**, so do not fiddle with it.
+
 ### The one decision still open
 
 The content is admissions. The brand is UNIsport. Those two do not want the same name.
