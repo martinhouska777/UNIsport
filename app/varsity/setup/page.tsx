@@ -18,14 +18,23 @@
   request, and marks only the varsity flag — so the student app stays available,
   unstarted, whenever they want it (offered from the mode switcher).
 
-  Chrome and controls are the onboarding ones, so this feels like part of the
-  same app rather than a second front door.
+  IT IS DRESSED AS THE APP, not as the student onboarding (owner, 2026-09-21:
+  "make it consistent with the app's UI"). It used to borrow OnboardingShell,
+  which put a one-of-one progress bar over a screen that has no second step and
+  a serif heading nothing else in Varsity Mode uses. Now it is what every other
+  screen is: a heading, labelled cards on the page background, and the app's own
+  Button pinned at the bottom — the questions themselves unchanged.
+
+  Nothing on it explains itself. The name field said who would see it, the
+  measurements said they were optional; both lines are gone, because a caption
+  that describes the control under it is the app's own rule. "Optional" is
+  written where it applies — inside the two boxes it applies to.
 */
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAppState } from "@/components/AppState";
 import ThemeProvider from "@/components/ThemeProvider";
-import OnboardingShell from "@/components/onboarding/OnboardingShell";
+import Button from "@/components/ui/Button";
 import { FieldLabel, Pill, TextField } from "@/components/onboarding/controls";
 import { classYears, sexOptions } from "@/lib/onboarding";
 import { VARSITY_HOME } from "@/lib/varsity/theme";
@@ -110,130 +119,155 @@ export default function VarsitySetupPage() {
       paintRoot
       className="h-dvh bg-background"
     >
-      <OnboardingShell
-        step={1}
-        total={1}
-        showBack={false}
-        onBack={() => {}}
-        skippable={false}
-        onSkip={() => {}}
-        title="Let's set you up."
-        subtitle="Who you are and how you row. One screen, and you're into your team's training — the rest of your profile can wait."
-        primaryLabel={saving ? "Saving…" : "Continue"}
-        primaryDisabled={!name.trim() || !classYear || saving}
-        onPrimary={finish}
-      >
-        <div>
-          <FieldLabel>What should we call you?</FieldLabel>
-          <div className="mb-4">
-            <TextField
-              value={name}
-              onChange={setName}
-              placeholder="e.g. Martin Novák"
-              ariaLabel="Your name"
-            />
-          </div>
-          <p className="mb-4 -mt-2 text-[11px] leading-relaxed text-muted">
-            Your captain sees this when they approve you, so use the name they know.
-          </p>
+      <div className="flex h-dvh flex-col bg-background text-text">
+        {/*
+          The page scrolls, the button does not. `overscroll-contain` stops a
+          flick at the end of the list from dragging the page behind it, which
+          is what made this feel loose on a phone.
+        */}
+        <div className="flex-1 overflow-y-auto overscroll-contain">
+          <div className="mx-auto w-full max-w-screen-sm px-3.5 pb-8 pt-9">
+            <h1 className="mb-5 text-[26px] font-semibold leading-tight tracking-[-0.01em] text-text">
+              Let&apos;s set you up.
+            </h1>
 
-          <FieldLabel>Class year</FieldLabel>
-          <div className="mb-4 flex flex-wrap gap-1.5">
-            {classYears.map((y) => (
-              <Pill
-                key={y}
-                label={y}
-                selected={classYear === y}
-                onClick={() => setClassYear(y)}
-              />
-            ))}
-          </div>
-
-          <FieldLabel>Sex</FieldLabel>
-          <div className="mb-6 flex flex-wrap gap-1.5">
-            {sexOptions.map((s) => (
-              <Pill key={s} label={s} selected={sex === s} onClick={() => setSex(s)} />
-            ))}
-          </div>
-
-          {/* ── How you row: what the lineup builder needs ── */}
-          <div className="mb-4 h-px bg-border" />
-
-          <FieldLabel>In the boat</FieldLabel>
-          <div className="mb-4 flex flex-wrap gap-1.5">
-            {boatRoleOptions.map((r) => (
-              <Pill
-                key={r}
-                label={r}
-                selected={boatRole === r}
-                onClick={() => setBoatRole(r)}
-              />
-            ))}
-          </div>
-
-          {/* A coxswain never takes a rowing seat, so the side question goes away
-              entirely rather than sitting there greyed out. */}
-          {boatRole === "Rower" && (
-            <>
-              <FieldLabel>Which side do you row?</FieldLabel>
-              <div className="mb-4 flex flex-wrap gap-1.5">
-                {sideOptions.map((o) => (
-                  <Pill
-                    key={o.key}
-                    selected={side === o.key}
-                    onClick={() => setSide(o.key)}
-                    label={o.label}
-                  />
-                ))}
-              </div>
-            </>
-          )}
-
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <FieldLabel>Height (cm)</FieldLabel>
-              <TextField
-                value={height}
-                onChange={(v) => setHeight(digits(v))}
-                placeholder="—"
-                ariaLabel="Your height in centimetres"
-              />
+            {/* -- Who you are -- */}
+            <div className="mb-2 px-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
+              Who you are
             </div>
-            <div>
-              <div className="mb-2 flex items-center justify-between gap-2">
-                <span className="text-xs font-medium uppercase tracking-[0.04em] text-muted">
-                  Weight
-                </span>
-                {/* Two words, so a segmented switch rather than another pill row. */}
-                <div className="flex overflow-hidden rounded-full border border-border">
-                  {weightOptions.map((u) => (
-                    <button
-                      key={u.key}
-                      type="button"
-                      aria-pressed={weightUnit === u.key}
-                      onClick={() => setWeightUnit(u.key)}
-                      className={`px-2 py-0.5 text-[11px] font-medium transition-colors ${
-                        weightUnit === u.key ? "bg-primary text-primary-contrast" : "text-muted"
-                      }`}
-                    >
-                      {u.short}
-                    </button>
+            <div className="rounded-2xl border border-border bg-surface p-3.5">
+              <FieldLabel>Your name</FieldLabel>
+              <TextField value={name} onChange={setName} ariaLabel="Your name" />
+
+              <div className="mt-4">
+                <FieldLabel>Class year</FieldLabel>
+                <div className="flex flex-wrap gap-1.5">
+                  {classYears.map((y) => (
+                    <Pill
+                      key={y}
+                      label={y}
+                      selected={classYear === y}
+                      onClick={() => setClassYear(y)}
+                    />
                   ))}
                 </div>
               </div>
-              <TextField
-                value={weight}
-                onChange={(v) => setWeight(decimal(v))}
-                placeholder="—"
-                ariaLabel={`Your weight in ${weightUnit === "lb" ? "pounds" : "kilograms"}`}
-              />
+
+              <div className="mt-4">
+                <FieldLabel>Sex</FieldLabel>
+                <div className="flex flex-wrap gap-1.5">
+                  {sexOptions.map((s) => (
+                    <Pill key={s} label={s} selected={sex === s} onClick={() => setSex(s)} />
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* -- How you row: what the lineup builder needs -- */}
+            <div className="mb-2 mt-5 px-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
+              How you row
+            </div>
+            <div className="rounded-2xl border border-border bg-surface p-3.5">
+              <FieldLabel>In the boat</FieldLabel>
+              <div className="flex flex-wrap gap-1.5">
+                {boatRoleOptions.map((r) => (
+                  <Pill
+                    key={r}
+                    label={r}
+                    selected={boatRole === r}
+                    onClick={() => setBoatRole(r)}
+                  />
+                ))}
+              </div>
+
+              {/* A coxswain never takes a rowing seat, so the side question goes
+                  away entirely rather than sitting there greyed out. */}
+              {boatRole === "Rower" && (
+                <div className="mt-4">
+                  <FieldLabel>Which side do you row?</FieldLabel>
+                  <div className="flex flex-wrap gap-1.5">
+                    {sideOptions.map((o) => (
+                      <Pill
+                        key={o.key}
+                        selected={side === o.key}
+                        onClick={() => setSide(o.key)}
+                        label={o.label}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/*
+                Two boxes side by side, and they sit on the SAME line (owner,
+                2026-09-21: "the weight is not aligned with the height"). The
+                unit switch lives in the weight's label row, so both label rows
+                are given the switch's height and the two inputs line up.
+              */}
+              <div className="mt-4 grid grid-cols-2 gap-2.5">
+                <div>
+                  <div className="mb-2 flex h-6 items-center">
+                    <span className="text-xs font-medium uppercase tracking-[0.04em] text-muted">
+                      Height (cm)
+                    </span>
+                  </div>
+                  <TextField
+                    value={height}
+                    onChange={(v) => setHeight(digits(v))}
+                    placeholder="Optional"
+                    ariaLabel="Your height in centimetres"
+                  />
+                </div>
+                <div>
+                  <div className="mb-2 flex h-6 items-center justify-between gap-2">
+                    <span className="text-xs font-medium uppercase tracking-[0.04em] text-muted">
+                      Weight
+                    </span>
+                    {/* Two words, so a segmented switch rather than another pill row. */}
+                    <div className="flex overflow-hidden rounded-full border border-border">
+                      {weightOptions.map((u) => (
+                        <button
+                          key={u.key}
+                          type="button"
+                          aria-pressed={weightUnit === u.key}
+                          onClick={() => setWeightUnit(u.key)}
+                          className={`px-2 py-0.5 text-[11px] font-medium transition-colors ${
+                            weightUnit === u.key
+                              ? "bg-primary text-primary-contrast"
+                              : "text-muted"
+                          }`}
+                        >
+                          {u.short}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <TextField
+                    value={weight}
+                    onChange={(v) => setWeight(decimal(v))}
+                    placeholder="Optional"
+                    ariaLabel={`Your weight in ${weightUnit === "lb" ? "pounds" : "kilograms"}`}
+                  />
+                </div>
+              </div>
             </div>
           </div>
-          <p className="mt-2 text-[11px] leading-relaxed text-muted">
-            Both optional — you can fill them in later from your profile.
-          </p>
         </div>
-      </OnboardingShell>
+
+        {/* The one action, always reachable - it never scrolls away. */}
+        <div className="border-t border-border bg-background px-3.5 pb-[max(0.875rem,env(safe-area-inset-bottom))] pt-3">
+          <div className="mx-auto w-full max-w-screen-sm">
+            <Button
+              size="lg"
+              full
+              disabled={!name.trim() || !classYear || saving}
+              onClick={finish}
+            >
+              {saving ? "Saving…" : "Continue"}
+            </Button>
+          </div>
+        </div>
+      </div>
     </ThemeProvider>
   );
 }
