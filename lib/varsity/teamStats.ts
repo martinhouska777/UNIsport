@@ -222,71 +222,49 @@ export function windowAverage(buckets: TeamBucket[], metric: TeamMetric): number
 export type TeamCell = { key: string; label: string; value: string };
 export type TeamGroup = { key: string; title: string; cells: TeamCell[] };
 
+/** One person's outings in a bucket, on average — how often the average person went out. */
+export const outingsPerPerson = (m: Mileage): number =>
+  m.people.length ? m.people.reduce((a, p) => a + p.outings, 0) / m.people.length : 0;
+
 /*
-  What the window came to, in the same order the athlete's own report reads:
-  how far, how long, then who. Every figure names itself; no captions. "Per
-  person per day/week" follows the window's own bucket.
+  WHAT THE WINDOW COMES TO — the averages, and only the averages (owner,
+  2026-09-21): what an outing was, how long it was, and how often the average
+  person went out. "Per person per week" and "biggest week" are gone, and so
+  is the whole "who" group — a coach reading their own squad knows how many
+  people and boats it has, and the table under this is where a week is
+  compared with another.
+
+  "An outing" is what one person did when they went out — person-metres over
+  person-outings, so an eight and a pair each count as one outing for each of
+  the people in them.
 */
 export function teamReport(buckets: TeamBucket[], range: TeamRange, units: Units): TeamGroup[] {
   const had = trainedBuckets(buckets);
   if (!had.length) return [];
-  const n = had.length;
   const each = range.bucket === "day" ? "day" : "week";
-  const per = (f: (m: Mileage) => number) => had.reduce((a, b) => a + f(b.mileage), 0) / n;
-
-  const biggest = [...had].sort((a, b) => averageMetres(b.mileage) - averageMetres(a.mileage))[0];
   const people = new Set<string>();
-  let boats = 0;
-  let metres = 0; // person-metres: a boat's distance counted once per seat
+  let metres = 0;
   let minutes = 0;
-  let seatOutings = 0; // one per person per boat they were in
+  let seatOutings = 0;
   for (const b of had) {
     for (const p of b.mileage.people) {
       people.add(p.id);
       seatOutings += p.outings;
     }
-    boats += b.mileage.boats;
     metres += b.mileage.metres;
     minutes += b.mileage.minutes;
   }
+  const perBucket = had.reduce((a, b) => a + outingsPerPerson(b.mileage), 0) / had.length;
 
-  /* "An outing" is what one person did when they went out — person-metres
-     over person-outings, so an eight and a pair each count as one outing for
-     each of the people in them. No squad total anywhere: a figure that grows
-     with the size of the squad says nothing about the training (the owner
-     cut the totals from the card on 2026-09-19). */
-  const dist = (m: number) => formatDistance(m, units.distance);
   return [
     {
-      key: "distance",
-      title: "Distance",
+      key: "averages",
+      title: "Averages",
       cells: [
-        { key: "avg", label: `Per person per ${each}`, value: dist(per(averageMetres)) },
-        { key: "best", label: `Biggest ${each} · ${biggest.label}`, value: dist(averageMetres(biggest.mileage)) },
-        { key: "perOuting", label: "Average outing", value: dist(seatOutings ? metres / seatOutings : 0) },
-        {
-          key: "outings",
-          label: `Outings per person per ${each}`,
-          value: per((m) => (m.people.length ? m.people.reduce((a, p) => a + p.outings, 0) / m.people.length : 0)).toFixed(1),
-        },
-      ],
-    },
-    {
-      key: "time",
-      title: "Time",
-      cells: [
-        { key: "avg", label: `Per person per ${each}`, value: formatDuration(Math.round(per(averageMinutes))) },
-        { key: "perOuting", label: "Average outing", value: formatDuration(seatOutings ? Math.round(minutes / seatOutings) : 0) },
-      ],
-    },
-    {
-      key: "who",
-      title: "Who",
-      cells: [
-        { key: "people", label: "People who went out", value: `${people.size}` },
-        { key: "perBucket", label: `Out per ${each}`, value: `${Math.round(per((m) => m.people.length))}` },
-        { key: "boats", label: "Boats", value: `${boats}` },
-        { key: "trained", label: `${each === "day" ? "Days" : "Weeks"} with training`, value: `${n} of ${buckets.length}` },
+        { key: "outingKm", label: "Average outing", value: formatDistance(seatOutings ? metres / seatOutings : 0, units.distance) },
+        { key: "outingTime", label: "Average outing time", value: formatDuration(seatOutings ? Math.round(minutes / seatOutings) : 0) },
+        { key: "perPerson", label: `Outings per person per ${each}`, value: perBucket.toFixed(1) },
+        { key: "perPersonWindow", label: "Outings per person, whole window", value: people.size ? (seatOutings / people.size).toFixed(1) : "0" },
       ],
     },
   ];
