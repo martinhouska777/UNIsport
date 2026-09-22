@@ -42,6 +42,19 @@ export function isMyBoat(l: Lineup): boolean {
   return l.seats.some((s) => s.mine) || !!l.cox?.mine;
 }
 
+/*
+  WHO WRITES THE BOAT'S FIGURES (owner, 2026-09-21): the COX — and the STROKE
+  when the boat has no cox. One person per boat, the one who steers it or sets
+  its rhythm, because the number they type is logged for everyone in the boat
+  (db/varsity_lineups_log_boats.sql), and eight people typing eight versions of
+  one outing is the spreadsheet this replaces. The coach writes from the
+  builder either way. The stroke is the LAST seat — seats run bow → stroke.
+*/
+export function writesBoatWork(l: Lineup): boolean {
+  if (l.cox) return !!l.cox.mine;
+  return !!l.seats[l.seats.length - 1]?.mine;
+}
+
 /** An empty seat reads as empty however the coach left it. */
 const isOpen = (name: string) => !name || name === "—";
 
@@ -331,7 +344,7 @@ export default function LineupBoatCard({
             database has one (the demo day has no real crew to file against).
           */}
           {l.dayKey && l.boat && (
-            <BoatSessionStrip dayKey={l.dayKey} boat={l.boat} canEdit={isMyBoat(l)} />
+            <BoatSessionStrip dayKey={l.dayKey} boat={l.boat} canEdit={writesBoatWork(l)} />
           )}
         </>
       )}

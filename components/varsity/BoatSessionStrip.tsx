@@ -15,13 +15,20 @@
   That is the whole answer to "why did he finish the term on 110k and I finished
   on 100" (lib/varsity/boatWork.ts).
 
-  WHO MAY WRITE IN IT: the coach, from the Lineup Builder, and anybody sitting
-  in that boat, from their own Home screen. Everyone else reads it — an outing
-  has one distance, not one per reader. The two callers save differently, and
-  that is the only fork in here: the builder holds the boats in memory and
-  autosaves them itself, so it passes `onChange` and this never touches the
-  database; the athlete's card passes none, and Save writes the one boat through
-  lineupStore → saveBoatWork.
+  WHO MAY WRITE IN IT: the coach, from the Lineup Builder, and the COX of that
+  boat — the stroke when there is no cox — from their own Home screen (owner,
+  2026-09-21; it used to be anybody in the boat). Everyone else reads it — an
+  outing has one distance, not one per reader. The two callers save
+  differently, and that is the only fork in here: the builder holds the boats
+  in memory and autosaves them itself, so it passes `onChange` and this never
+  touches the database; the athlete's card passes none, and Save writes the one
+  boat through lineupStore → saveBoatWork.
+
+  AND WHAT A SAVE DOES: the database logs the figures for EVERY seat in the
+  boat, cox included (db/varsity_lineups_log_boats.sql) — into each person's
+  own calendar and statistics, replacing whatever they had logged for that
+  session themselves. That is why the field says so under it: the cox is
+  writing eight people's training, not a note to the coach.
 
   Colors: theme tokens only.
 */
@@ -82,9 +89,9 @@ export default function BoatSessionStrip({
 }: {
   dayKey: string;
   boat: Boat;
-  /* The coach, or somebody in this crew. Everybody else sees the numbers and
-     no fields at all. The VIDEO half is open to the whole squad either way —
-     the owner's rule since the day it was built. */
+  /* The coach, or the cox of this crew (the stroke, coxless). Everybody else
+     sees the numbers and no fields at all. The VIDEO half is open to the whole
+     squad either way — the owner's rule since the day it was built. */
   canEdit?: boolean;
   /* Passed by the Lineup Builder, which owns the boats and saves them itself.
      Absent on the athlete's card, where this strip saves the boat on its own. */
@@ -235,11 +242,19 @@ export default function BoatSessionStrip({
                 </button>
               )}
               {error && <div className="mt-1.5 text-[11px] text-danger">{error}</div>}
+              {/* On the cox's card only — the builder has the coach, who knows. */}
+              {!onChange && (
+                <p className="mt-2 text-[11px] leading-snug text-muted">
+                  Saved once, logged for everyone in the boat — it goes into each person&apos;s calendar and statistics.
+                </p>
+              )}
             </div>
           ) : (
-            /* Not your boat: the numbers, or the honest absence of them. */
+            /* Not yours to write: the numbers, or the honest absence of them.
+               They still land in this reader's own log — the cox writes for the boat. */
             <div className="text-[12px] text-muted">
               {summary ?? "Nobody has said how far this boat went yet."}
+              {summary && " · logged for the whole boat"}
             </div>
           )}
 
