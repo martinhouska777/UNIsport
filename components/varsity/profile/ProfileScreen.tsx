@@ -59,7 +59,6 @@ import {
   statRanges,
   rangeByKey,
   customRange,
-  rangeCaption,
   chartTypes,
   chartTypeOf,
   defaultStatRange,
@@ -70,7 +69,7 @@ import {
   type StatRange,
   type Bucket,
 } from "@/lib/varsity/athleteStats";
-import { trainingMix } from "@/lib/varsity/trainingMix";
+import { trainingMix, type MixRow } from "@/lib/varsity/trainingMix";
 import Plot from "@/components/varsity/profile/Plot";
 import Dropdown from "@/components/varsity/profile/Dropdown";
 import StatsFullScreen from "@/components/varsity/profile/StatsFullScreen";
@@ -636,6 +635,9 @@ function WeeklyGraph({
   onZoom,
   onZoomOut,
   zoomed,
+  mix,
+  mixRangeKey,
+  onMixRange,
   daysOut,
   checkIns,
 }: {
@@ -658,6 +660,10 @@ function WeeklyGraph({
   onZoom: (start: string, end: string) => void;
   onZoomOut: () => void;
   zoomed: boolean;
+  /** The training mix and ITS OWN window — passed straight to the full screen. */
+  mix: MixRow[];
+  mixRangeKey: string;
+  onMixRange: (key: string) => void;
   daysOut: DaysOut;
   /** The daily check-ins — the Recovery group in the full statistics. */
   checkIns: CheckIns;
@@ -767,6 +773,9 @@ function WeeklyGraph({
           onZoom={onZoom}
           onZoomOut={onZoomOut}
           zoomed={zoomed}
+          mix={mix}
+          mixRangeKey={mixRangeKey}
+          onMixRange={onMixRange}
           daysOut={daysOut}
           checkIns={checkIns}
           onClose={() => setFull(false)}
@@ -822,6 +831,17 @@ export default function ProfileScreen() {
   // The coach's sessions, only so the Training mix can name intensities.
   const [planSessions, setPlanSessions] = useState<SessionMap>({});
   const [mixOpen, setMixOpen] = useState(false);
+  /*
+    THE TRAINING MIX HAS A WINDOW OF ITS OWN (owner, 2026-09-21).
+
+    It used to be whatever the graph was showing, and that read as broken: the
+    mix carries no dates of its own, so moving the graph to a month and seeing
+    much the same bars looks like a control that does nothing. "How much did I
+    train" and "what was it" are two questions, and each one now keeps its own
+    answer. It opens on 2 WEEKS and goes up to three months, out of the same
+    ready-made windows the graph offers — one list, one idea of a month.
+  */
+  const [mixRangeKey, setMixRangeKey] = useState(defaultStatRange);
 
   type Modal = "identity" | "status" | "prs" | "seat" | null;
   const [modal, setModal] = useState<Modal>(null);
@@ -1036,12 +1056,21 @@ export default function ProfileScreen() {
      coach's Statistics tab on a rower's page plots exactly the same weeks. */
   const buckets = useMemo<Bucket[]>(() => buildBuckets(logs, range, now), [logs, range, now]);
 
-  /* What the range actually contained, kind by kind — the window behind the
-     numbers. Computed here so the sheet and the graph can never disagree. */
-  const mix = useMemo(
-    () => trainingMix(buckets.flatMap((b) => b.logs), planSessions),
-    [buckets, planSessions],
-  );
+  /*
+    What the MIX'S OWN window contained, kind by kind. Computed here, once, so
+    the sheet behind the Training mix row and the block at the bottom of the
+    statistics screen are the same numbers with the same window — change it in
+    one and the other has already changed.
+  */
+  const mix = useMemo<MixRow[]>(() => {
+    const days = rangeByKey(mixRangeKey).days;
+    const from = toISO(new Date(now.getFullYear(), now.getMonth(), now.getDate() - (days - 1)));
+    const to = toISO(now);
+    return trainingMix(
+      logs.filter((l) => l.logDate >= from && l.logDate <= to),
+      planSessions,
+    );
+  }, [logs, mixRangeKey, now, planSessions]);
 
   if (!profile) {
     return (
@@ -1178,6 +1207,9 @@ export default function ProfileScreen() {
           onZoom={zoomTo}
           onZoomOut={zoomOut}
           zoomed={beforeZoom !== null}
+          mix={mix}
+          mixRangeKey={mixRangeKey}
+          onMixRange={setMixRangeKey}
           daysOut={profile.daysOut}
           checkIns={profile.checkIns}
         />
@@ -1208,8 +1240,8 @@ export default function ProfileScreen() {
       {mixOpen && (
         <TrainingMixSheet
           rows={mix}
-          rangeLabel={rangeCaption(range)}
-          units={units}
+          rangeKey={mixRangeKey}
+          onRange={setMixRangeKey}
           onClose={() => setMixOpen(false)}
         />
       )}

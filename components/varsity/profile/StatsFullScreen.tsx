@@ -22,13 +22,15 @@
       plan"), ending in the days out — sick, injured, away — counted in days.
       How far, how long, how steady: the judgement goes last.
     • the training mix — what all that time actually was, named by what was
-      logged (a bike on a flex day is Bike), distance first, with the figures
-      in small grey text under each bar
+      logged (a bike on a flex day is Bike). It keeps a window OF ITS OWN
+      (a pill on its heading, 2 weeks to start): "how much" and "of what" are
+      two questions and each keeps its own answer.
 
   DRAG TO ZOOM (owner, 2026-09-13). Drag a thumb or the mouse sideways across
   the graph and it zooms into that stretch — three weeks out of three months
   become those three weeks, day by day. It is simply a window of those dates,
-  so the three numbers, the groups and the mix under the graph all follow it.
+  so the numbers and the groups under the graph follow it. The mix does not —
+  it has its own window.
   "Zoom out" puts back the window you were on before the first zoom.
 
   NO CAPTIONS under the numbers (same day: "just do the data"). Every number
@@ -59,13 +61,15 @@ import {
   statRanges,
   shortDate,
   CUSTOM_RANGE,
+  longSpan,
   type Bucket,
   type ChartType,
   type StatMetric,
   type StatRange,
 } from "@/lib/varsity/athleteStats";
 import { rowingReport, bucketDetail, type StatTone } from "@/lib/varsity/rowingStats";
-import { trainingMix, mixLine } from "@/lib/varsity/trainingMix";
+import type { MixRow } from "@/lib/varsity/trainingMix";
+import TrainingMixList from "@/components/varsity/profile/TrainingMixList";
 import { type DaysOut } from "@/lib/varsity/daysOut";
 import { type CheckIns } from "@/lib/varsity/checkIn";
 
@@ -99,6 +103,9 @@ export default function StatsFullScreen({
   onZoom,
   onZoomOut,
   zoomed,
+  mix,
+  mixRangeKey,
+  onMixRange,
   daysOut,
   checkIns,
   onClose,
@@ -121,6 +128,16 @@ export default function StatsFullScreen({
   /** Back to the window from before the first zoom. */
   onZoomOut: () => void;
   zoomed: boolean;
+  /*
+    THE TRAINING MIX, with a window OF ITS OWN (owner, 2026-09-21). It used to
+    be computed here out of whatever the graph was showing, which is why it
+    looked frozen: nothing on it said what days it was reading. It is now the
+    same block, and the same window, as the one behind the profile card's
+    Training mix row — the profile owns both.
+  */
+  mix: MixRow[];
+  mixRangeKey: string;
+  onMixRange: (key: string) => void;
   /** The days marked sick / injured / away — shaded on the graph, counted below. */
   daysOut: DaysOut;
   /** The daily check-ins — the Recovery group under the graph. */
@@ -178,7 +195,6 @@ export default function StatsFullScreen({
   const shaded = buckets.map((b) =>
     Object.keys(daysOut).some((iso) => iso >= b.span.startIso && iso <= b.span.endIso),
   );
-  const mix = trainingMix(allLogs, plan);
   /* What the card under the graph reads: the tapped column, or the whole window. */
   const current: Bucket | null =
     at !== null
@@ -198,35 +214,42 @@ export default function StatsFullScreen({
   return createPortal(
     <ThemeProvider tokens={vTheme.dark} light={vTheme.light}>
       <div className="fixed inset-0 z-[60] flex flex-col bg-background [animation:backdrop-in_0.18s_ease-out]">
-        {/* ── The bar. What you are looking at, and the way out. ── */}
-        <div className="flex flex-shrink-0 items-center gap-3 border-b border-border px-3 pb-2.5 pt-[max(0.625rem,env(safe-area-inset-top))]">
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close statistics"
-            className="tap44 press-icon flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-surface-2 text-muted"
-          >
-            <IconX size={15} />
-          </button>
-          <div className="min-w-0 flex-1">
-            <div className="truncate text-[15px] font-semibold leading-tight text-text">
-              {metric.label}
-            </div>
-            <div className="mt-0.5 flex items-center gap-1.5 truncate text-[11px] text-muted">
-              <IconCalendar size={11} />
-              {shortDate(whole.startIso)} – {shortDate(whole.endIso)} ·{" "}
-              {range.bucket === "day" ? "day by day" : "week by week"}
-            </div>
-          </div>
-          {zoomed && (
+        {/*
+          ── The top of the screen: the way out, and the dates. ──
+          The measure's name used to be the title here ("Metres rowed"), with
+          the close button beside it. CUT (owner, 2026-09-21): the measure is
+          already a dropdown two lines further down, so the title was the same
+          word twice and it was taking the only line that mattered. The way out
+          goes top right on its own, and the line it frees says what you are
+          actually looking at — 8 – 21 September, day by day.
+        */}
+        <div className="flex-shrink-0 border-b border-border px-3.5 pb-2.5 pt-[max(0.5rem,env(safe-area-inset-top))]">
+          <div className="flex items-center justify-end gap-2">
+            {zoomed && (
+              <button
+                type="button"
+                onClick={onZoomOut}
+                className="tap44 mr-auto flex flex-shrink-0 items-center gap-1 rounded-full border border-border bg-surface-2 px-3 py-1.5 text-[12px] font-medium text-text"
+              >
+                <IconArrowLeft size={13} /> Zoom out
+              </button>
+            )}
             <button
               type="button"
-              onClick={onZoomOut}
-              className="tap44 flex flex-shrink-0 items-center gap-1 rounded-full border border-border bg-surface-2 px-3 py-1.5 text-[12px] font-medium text-text"
+              onClick={onClose}
+              aria-label="Close statistics"
+              className="tap44 press-icon flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-surface-2 text-muted"
             >
-              <IconArrowLeft size={13} /> Zoom out
+              <IconX size={15} />
             </button>
-          )}
+          </div>
+          <div className="flex items-center gap-1.5 truncate text-[13px] font-medium text-text">
+            <IconCalendar size={12} />
+            {longSpan(whole.startIso, whole.endIso)}
+            <span className="font-normal text-muted">
+              · {range.bucket === "day" ? "day by day" : "week by week"}
+            </span>
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto overscroll-contain pb-[max(2rem,env(safe-area-inset-bottom))]">
@@ -395,49 +418,20 @@ export default function StatsFullScreen({
               </div>
             ))}
 
-            {/* ── What all that training actually was. The days that weren't
-                training at all (sick, injured, away) used to hang off the
-                bottom of this; they sit up in Consistency now, beside the
-                missed sessions they explain. ── */}
-            {mix.length > 0 && (
-              <div className="mt-5">
-                <div className="pb-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
-                  Training mix
-                </div>
-                <div className="flex flex-col gap-2.5 rounded-2xl border border-border bg-surface px-3.5 py-3.5">
-                  {mix.map((r) => (
-                    <div key={r.key}>
-                      <div className="flex items-baseline justify-between gap-3">
-                        <span className="flex min-w-0 items-center gap-2">
-                          <span
-                            className="h-2.5 w-2.5 flex-shrink-0 rounded-full"
-                            style={{ background: r.color }}
-                          />
-                          <span className="truncate text-[13px] font-medium text-text">
-                            {r.label}
-                          </span>
-                        </span>
-                        <span className="flex-shrink-0 text-[12px] font-semibold text-text">
-                          {r.share}%
-                        </span>
-                      </div>
-                      <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-surface-2">
-                        <div
-                          className="h-full rounded-full"
-                          style={{ width: `${r.share}%`, background: r.color }}
-                        />
-                      </div>
-                      {/* The small grey line under each bar — "42.0 km · 3h
-                          30m · 4 sessions". Cut on 2026-09-13 and put back the
-                          same day: the owner wants to read the figures here. */}
-                      <div className="mt-1 text-[10px] text-muted">
-                        {mixLine(r, units.distance)}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            {/* ── What all that training actually was. Its own window, its
+                own pill: this answers "of what", which is not the same
+                question as the graph's "how much", so tying it to the graph's
+                window only made it look stuck (owner, 2026-09-21). The days
+                that weren't training at all (sick, injured, away) sit up in
+                Consistency, beside the missed sessions they explain. ── */}
+            <div className="mt-5">
+              <TrainingMixList
+                rows={mix}
+                rangeKey={mixRangeKey}
+                onRange={onMixRange}
+                heading="Training mix"
+              />
+            </div>
 
           </div>
         </div>

@@ -1,23 +1,29 @@
 /*
   WHAT THE TRAINING ACTUALLY WAS — the breakdown behind the Statistics block.
   ---------------------------------------------------------------------------
-  The graph answers "how much". This answers "of what": how much of the range
+  The graph answers "how much". This answers "of what": how much of the window
   was UT2, how much UT1, how much weights.
 
   It reads each logged session through the COACH'S PLAN, exactly the way the
   calendar colours it (components/varsity/calendar → blockStyle), so a session
   is the same kind and the same colour wherever you meet it. A log carries the
   plan slot it came from (`dayKey`); when it has one, its intensity is the
-  coach's. When it doesn't — a lift you added yourself, a run on a rest day, a
-  bike on a flex day — what you logged decides (Run, Bike, Erg…), and only a
-  session logged as "Other" lands in Other.
+  coach's — which is why a bike or a run done on a UT2 day counts as UT2. When
+  it doesn't — a lift you added yourself, a run on a rest day, a bike on a flex
+  day — what you logged decides (Run, Bike, Erg…).
+
+  THERE IS NO "OTHER" ROW (owner, 2026-09-21: "I don't know what the other
+  is"). A row nobody can name is not a reading. The only sessions that used to
+  land in it were ones logged as "Other" or "Flex" with no plan slot to say
+  what they were, and the calendar's own legend already leaves both out
+  (lib/varsity/athleteProfile → legendCategories). They are left out of the
+  shares as well, so the bars still add up to the whole.
 */
 import type { LogEntry } from "@/lib/varsity/logStore";
 import type { SessionMap } from "@/lib/varsity/coachPlan";
 import { logCategoryColor, logCategoryLabel } from "@/lib/varsity/athleteProfile";
 import { kindOf } from "@/lib/varsity/athleteHome";
 import { kindColor, kindLegend } from "@/lib/varsity/home";
-import { formatDistance, formatDuration, type DistanceUnit } from "@/lib/varsity/units";
 
 /** A row of the breakdown: one kind of training, and what it added up to. */
 export type MixRow = {
@@ -34,8 +40,6 @@ export type MixRow = {
 
 type Entry = { key: string; label: string; color: string };
 
-const OTHER: Entry = { key: "other", label: "Other", color: "var(--muted)" };
-
 /*
   WHICH ROW A SESSION BELONGS TO.
 
@@ -44,6 +48,8 @@ const OTHER: Entry = { key: "other", label: "Other", color: "var(--muted)" };
   a Run, a Bike, an Erg or Water row done on your own. There is no "Flex" row
   (owner, 2026-09-13): flex is the coach's permission to train how you like,
   not a kind of training, so a bike on a flex day is counted as Bike.
+
+  null = not part of the mix at all: a rest day, and anything with no name.
 */
 function entryOf(l: LogEntry, plan: SessionMap): Entry | null {
   if (l.category === "off") return null;
@@ -59,18 +65,7 @@ function entryOf(l: LogEntry, plan: SessionMap): Entry | null {
   if (logCategoryLabel[cat] && cat !== "flex" && cat !== "other") {
     return { key: `log-${cat}`, label: logCategoryLabel[cat], color: logCategoryColor[cat] };
   }
-  return OTHER;
-}
-
-/** "42.0 km · 3h 30m · 4 sessions" — distance first, because that is what a rower reads. */
-export function mixLine(r: MixRow, distance: DistanceUnit): string {
-  return [
-    r.metres > 0 ? formatDistance(r.metres, distance) : null,
-    r.minutes > 0 ? formatDuration(Math.round(r.minutes)) : null,
-    `${r.sessions} session${r.sessions === 1 ? "" : "s"}`,
-  ]
-    .filter(Boolean)
-    .join(" · ");
+  return null;
 }
 
 /*
@@ -115,13 +110,8 @@ export function trainingMix(logs: LogEntry[], plan: SessionMap): MixRow[] {
     r.share = denom ? Math.round((mine / denom) * 100) : 0;
   }
 
-  // Biggest first — the point of the screen is what you do most of. "Other" is
-  // held at the bottom whatever its size; it is a leftover, not a kind.
-  return rows.sort((a, b) => {
-    if (a.key === OTHER.key) return 1;
-    if (b.key === OTHER.key) return -1;
-    return b.share - a.share || b.sessions - a.sessions;
-  });
+  // Biggest first — the point of the screen is what you do most of.
+  return rows.sort((a, b) => b.share - a.share || b.sessions - a.sessions);
 }
 
 /** Whether the mix is worth opening at all. */

@@ -70,6 +70,25 @@ export const shortDate = (iso: string) => {
   return `${d.getDate()} ${MONTH3[d.getMonth()]}`;
 };
 
+const MONTH_FULL = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+
+/*
+  THE WINDOW, WRITTEN OUT — "8 – 21 September", or "25 August – 21 September"
+  when it crosses a month. The statistics screen says this under its close
+  button, where there is room for the month's real name; the little pill on the
+  graph card still uses `shortDate`, which has to fit on a button.
+*/
+export function longSpan(startIso: string, endIso: string): string {
+  const a = asDate(startIso);
+  const b = asDate(endIso);
+  const sameMonth = a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth();
+  if (sameMonth) return `${a.getDate()} – ${b.getDate()} ${MONTH_FULL[b.getMonth()]}`;
+  return `${a.getDate()} ${MONTH_FULL[a.getMonth()]} – ${b.getDate()} ${MONTH_FULL[b.getMonth()]}`;
+}
+
 /**
  * Two dates the athlete chose, as a range the rest of the block can use exactly
  * like a built-in one. The bucket size is not a choice: past about a month,
