@@ -921,7 +921,7 @@ function PoolChip({
       <button
         type="button"
         onClick={onTap}
-        aria-label={`${a.name}, out — ${outMeta[out]}. Tap to bring them back into the pool.`}
+        aria-label={`${a.name}, out — ${outMeta[out]}. Tap to be offered bringing them back into the pool.`}
         className="flex h-[38px] select-none items-center gap-2 rounded-[10px] border border-danger-line bg-danger-tint px-2.5 opacity-60 active:opacity-90"
       >
         <span className="text-[15px] font-medium text-muted">{a.name}</span>
@@ -1142,7 +1142,9 @@ function Builder({
     What a tap on a name in the pool does now is PICK them for a seat, which is
     the thing a coach is doing on this screen. The one thing left that writes to
     the availability store is putting somebody back in the pool: tapping a name
-    in Unavailable brings them back, so nobody can be stranded out.
+    in Unavailable OFFERS to bring them back — "Bring Jack back to available",
+    which has to be pressed — so nobody can be stranded out, and no coach undoes
+    an athlete's own word with one stray tap (owner, 2026-09-22).
   */
   const dayIso = useMemo(() => {
     const parsed = parseSessionKey(dayKey);
@@ -1156,6 +1158,17 @@ function Builder({
     end can be chosen first, and whichever is chosen second completes the move.
   */
   const [picked, setPicked] = useState<string | null>(null);
+  /*
+    WHICH UNAVAILABLE NAME HAS BEEN ASKED ABOUT (owner, 2026-09-22).
+
+    A tap on a name in Unavailable used to put them straight back in the pool.
+    That is the same gesture that picks an available rower for a seat, so the
+    coach's tap silently undid something the ATHLETE said about themselves —
+    "now I click them and it brings them back, so I don't want that". Now the
+    tap only ASKS: the chip becomes "Bring back to available", and nothing is
+    written until that is pressed.
+  */
+  const [askBack, setAskBack] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -1647,6 +1660,42 @@ function Builder({
     );
   };
 
+  /*
+    REPEATING THE LAST CREW, AS A CHIP (owner, 2026-09-22).
+
+    It used to be a full-width dashed panel carrying a sentence — "Repeat Tue
+    AM's boats? That is the last crew the squad was given." — and, once taken,
+    a second full-width panel saying "Started from Tue AM's boats. Change
+    what's different." Two paragraphs across the top of the screen for one
+    thing a coach does in one tap. The owner: "don't make it so it's over the
+    whole thing — it can be a small thing next to the workout."
+
+    So it is a chip, and it sits on the workout card: "↻ Repeat Tue AM" to
+    take them, and afterwards "↻ From Tue AM" with an × that starts empty.
+    The Add Boat button underneath is then the only full-width thing up there.
+  */
+  const repeatChip = loading ? null : carried && !carriedFrom && boats.length === 0 ? (
+    <button
+      type="button"
+      onClick={useCarried}
+      className="flex h-7 flex-shrink-0 items-center gap-1 rounded-full border border-border bg-surface-2 px-2.5 text-[11px] font-semibold text-text active:bg-surface"
+    >
+      <IconRepeat size={12} /> Repeat {nav.label(carried.from)}
+    </button>
+  ) : carriedFrom ? (
+    <span className="flex h-7 flex-shrink-0 items-center gap-1 rounded-full border border-border bg-surface-2 pl-2.5 pr-1 text-[11px] text-muted">
+      <IconRepeat size={12} /> From {nav.label(carriedFrom)}
+      <button
+        type="button"
+        onClick={startEmpty}
+        aria-label="Start empty instead"
+        className="flex h-5 w-5 items-center justify-center rounded-full text-muted active:bg-surface"
+      >
+        <IconX size={11} />
+      </button>
+    </span>
+  ) : null;
+
   return (
     <div className="relative flex h-full flex-col">
       <div ref={listRef} className="mx-auto w-full max-w-screen-sm flex-1 overflow-y-auto px-4 pb-8">
@@ -1735,76 +1784,27 @@ function Builder({
                 It used to be a yellow panel underneath explaining that you may
                 build one anyway. You may; that was never in doubt, and it does
                 not need a paragraph. Nothing blocks (the owner's rule). */}
-            <div className="flex-1">
+            <div className="min-w-0 flex-1">
               <div className="text-[13px] font-semibold text-text">
                 {planSaysTwice ? planLabel : planContext.title}
               </div>
               {!planSaysTwice && <div className="mt-0.5 text-[11px] text-muted">{planLabel}</div>}
             </div>
+            {/* Next to the workout — see repeatChip. */}
+            {repeatChip}
           </div>
         )}
+
+        {/* No plan for this practice, so no card to hang it on. */}
+        {!planContext && repeatChip && <div className="mt-4 flex justify-end">{repeatChip}</div>}
 
         {loading ? (
           <div className="mt-8 text-center text-[13px] text-muted">Loading lineup…</div>
         ) : (
           <>
-            {/*
-              THE OFFER. Nothing has been done to this practice: the last crew
-              the squad was given is simply available, and the button takes it.
-              Shown only while this practice is still empty and untouched, so
-              it never sits over work the coach has started.
-            */}
-            {carried && !carriedFrom && boats.length === 0 && (
-              <div className="mt-4 flex items-center gap-2.5 rounded-xl border border-dashed border-border bg-surface px-3 py-2.5">
-                <span className="flex-shrink-0 text-muted">
-                  <IconRepeat size={14} />
-                </span>
-                <span className="min-w-0 flex-1 text-[12px] leading-snug text-text">
-                  Repeat <span className="font-semibold">{nav.label(carried.from)}</span>&rsquo;s
-                  boats? That is the last crew the squad was given.
-                </span>
-                <button
-                  type="button"
-                  onClick={useCarried}
-                  className="flex-shrink-0 rounded-lg border border-border px-2.5 py-1.5 text-[12px] font-semibold text-text active:bg-surface-2"
-                >
-                  Use them
-                </button>
-              </div>
-            )}
-
-            {/*
-              AND ONCE IT IS TAKEN — where these boats came from, said plainly,
-              because a crew you have already changed three seats of still began
-              as somebody else's. The one button undoes the whole thing and puts
-              the offer back.
-            */}
-            {carriedFrom && (
-              <div className="mt-4 flex items-center gap-2.5 rounded-xl border border-border bg-surface px-3 py-2.5">
-                <span className="flex-shrink-0 text-muted">
-                  <IconRepeat size={14} />
-                </span>
-                <span className="min-w-0 flex-1 text-[12px] leading-snug text-text">
-                  Started from <span className="font-semibold">{nav.label(carriedFrom)}</span>
-                  &rsquo;s boats. Change what&rsquo;s different.
-                </span>
-                <button
-                  type="button"
-                  onClick={startEmpty}
-                  className="flex-shrink-0 rounded-lg border border-border px-2.5 py-1.5 text-[12px] font-semibold text-muted active:bg-surface-2"
-                >
-                  Start empty
-                </button>
-              </div>
-            )}
-
-            {/* boats */}
+            {/* boats. NO "No boats added yet" BOX (owner, 2026-09-22): the
+                Add Boat button right under it is the whole message. */}
             <div className="mt-4 flex flex-col gap-3">
-              {boats.length === 0 && (
-                <div className="rounded-2xl border border-dashed border-border bg-surface py-7 text-center text-[12px] italic text-muted">
-                  No boats added yet
-                </div>
-              )}
               {boats.map((boat) => {
                 const isShut = shut.has(boat.id);
                 /* How full the boat is — shown ONLY while it is shut. Open, the
@@ -2116,15 +2116,44 @@ function Builder({
                       <span className="h-px flex-1 bg-danger-line" />
                     </div>
                     <div className="flex flex-wrap gap-1.5">
-                      {unavailableHere.map((a) => (
-                        <PoolChip
-                          key={a.id}
-                          a={a}
-                          out={outById[a.id]}
-                          onTap={() => void bringBackIn(a)}
-                          carry={carry}
-                        />
-                      ))}
+                      {unavailableHere.map((a) =>
+                        askBack === a.id ? (
+                          /* Asked, not done. The name stays on it, because a
+                             coach with four people out needs to see which one
+                             they are about to overrule. */
+                          <span
+                            key={a.id}
+                            className="flex h-[38px] items-center gap-2 rounded-[10px] border border-border bg-surface pl-2.5 pr-1"
+                          >
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setAskBack(null);
+                                void bringBackIn(a);
+                              }}
+                              className="text-[13px] font-semibold text-primary"
+                            >
+                              Bring {a.name.split(/\s+/)[0]} back to available
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setAskBack(null)}
+                              aria-label="Leave them out"
+                              className="flex h-7 w-7 items-center justify-center rounded-full text-muted active:bg-surface-2"
+                            >
+                              <IconX size={13} />
+                            </button>
+                          </span>
+                        ) : (
+                          <PoolChip
+                            key={a.id}
+                            a={a}
+                            out={outById[a.id]}
+                            onTap={() => setAskBack(a.id)}
+                            carry={carry}
+                          />
+                        ),
+                      )}
                     </div>
                   </div>
                 )}
