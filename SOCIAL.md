@@ -60,53 +60,50 @@ handle does not have to.
 **Avoid `@unisport.app`.** It looks clean, but `unisport.app` is a real domain owned by
 somebody else (`EMAIL.md` §2). The handle would point people at a stranger's parked page.
 
-### The Name field — not the same thing as the handle (limit 30)
+### The Name field (limit 30) and the bio (limit 150)
 
-Instagram **searches the Name field**, which most people do not realise. The handle is
-the address; the Name field is where the words people actually type go. It also has to
-explain the product to a visitor, because "UNIsport" alone tells a stranger nothing.
+Shaped after **Hevy** (`@hevyapp`), which the owner pointed at 2026-09-22 as the model:
+handle with an `app` suffix, a name that is *product + what it does*, and a two-line bio.
 
-> Recommended: **`UNIsport · campus gym app`** — 25 characters
+**The match is the pitch.** `db/matching.sql` scores two halves — AFFINITY (interests 18,
+concentration 12, origin 12, languages 8) and LOGISTICS (activity 12, gym 12, level 12,
+schedule 8, training 6). The affinity half is the differentiator; no other gym app has it.
+The bio should name it, not the gyms.
 
-It carries "campus", "gym" and "app", and explains the thing in three words.
+#### Name — Hevy's is `Hevy - Gym Workout Tracker` (26)
+
+> Recommended: **`UNIsport - Training Partners`** — 28 characters
 
 | Alternative | Chars | |
 |---|---|---|
-| `UNIsport · train together` | 25 | Better positioning — the partner matching is the real differentiator — but weaker for search |
-| `UNIsport · your campus gym` | 26 | |
-| `UNIsport · college training` | 27 | |
-| ~~`UNIsport · train with your team`~~ | **31** | **Does not fit.** An earlier draft of this file recommended it |
+| `UNIsport - Find Gym Partners` | 28 | Puts "gym" in for search |
+| ~~`UNIsport - Find Training Partners`~~ | **33** | Does not fit |
+| ~~`UNIsport - College Gym Partners`~~ | **31** | Does not fit |
 
 Small trap: the Name field can only be changed **twice in 14 days**. Do not fiddle.
 
-### The bio (limit 150)
+#### Bio
 
-> **Find a gym. Find someone to train with.**
-> **Crowd levels, training partners, house leaderboards.**
-> **For students at the eight Ivies · .edu sign-up**
+> **The social app for training partners at college**
+> **Matched on your interests, concentration, gym and hours ⬇️**
 
-139 characters. Line one is the promise, line two is the proof, line three tells people
-whether it is for them before they tap and get turned away.
-
-Alternatives:
+106 characters. Shorter option, 65:
 
 ```
-Your campus gym, sorted.                            (102)
-Who's there now, who to train with, who's winning.
-Eight Ivies · .edu sign-up
+The social app for finding who to train with
+Built for college ⬇️
 ```
 
-```
-Built for university teams and the people who       (125)
-train alone.
-Gyms, partners, sessions, leaderboards.
-Eight Ivies · .edu sign-up
-```
+**⚠️ The one part of Hevy's structure that cannot be copied.** Their second line is
+social proof — *"Join +16 Million people training Hevy"* — and that is the line doing
+the persuading. UNIsport has **3 real sign-ins ever**. Do not fake a number: on a single
+campus where everyone knows everyone, an inflated figure is found out in a week, and it
+breaks the same trust as the Harvard rule in §7B. So line 2 explains **how the matching
+works** instead, which is the thing Hevy genuinely does not have. When the numbers are
+real, that is the line they go on.
 
-**Decide before using "eight Ivies."** All eight really can sign up — themes and gyms
-exist for each (§7A). But the **people** are Harvard-only: the seeded residents in
-`db/seed_campus.sql` are Harvard houses, so a Yale student who follows the bio arrives at
-a genuinely empty app and leaves. Saying "Harvard" is smaller and burns nobody. Open.
+**Also copy their category label.** The grey "App page" above Hevy's bio is free real
+estate that comes from setting a Creator category — pick one in Step 3.
 
 ### The profile picture — done, pick a ground
 
@@ -282,7 +279,7 @@ a brand-new account made in a desktop browser is likelier to get an instant veri
 challenge.
 
 - Email: the new address
-- Full name → the Name field: `UNIsport · campus gym app`
+- Full name → the Name field: `UNIsport - Training Partners`
 - Handle: `@unisportapp`
 - Skip the "find your contacts" step
 
