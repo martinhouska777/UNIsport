@@ -22,6 +22,11 @@
   card, so no name is ever cut off and the row stays narrow. On Combined the
   margins are COLUMNS — Piece 1, Piece 2, Total — smallest total on top; a
   piece the crew did not race is a dash, and nothing is written about it.
+  ATHLETES reads the same day by person: crews are reshuffled between pieces,
+  so each rower (and cox) is listed with the margin their boat carried in
+  every piece, who they sat with, and the AVERAGE — the owner's pick for
+  "how each person finished". Nothing is excluded; this is the workout, not
+  selection. Seat racing proper is another screen.
 
   IN THE COACH CONSOLE the board is also where the sheet is typed: Enter
   times opens the piece's crews with a Start and a Finish field each (the
@@ -41,6 +46,7 @@ import Sheet from "@/components/varsity/Sheet";
 import { IconPencil, IconPlus, IconTrash, IconX } from "@/components/icons";
 import { COX_COLOR, COX_INK, COX_LABEL, type Boat } from "@/lib/varsity/coachLineup";
 import {
+  athleteBoard,
   classTitle,
   combinedBoards,
   crewFromBoat,
@@ -58,6 +64,7 @@ import {
 import { deleteRaceDay, saveRaceDay } from "@/lib/varsity/raceStore";
 
 const COMBINED = "combined";
+const ATHLETES = "athletes";
 
 /* The header row of a list. */
 const TH = "text-[9px] font-semibold uppercase tracking-[0.1em] text-muted";
@@ -147,7 +154,9 @@ export default function RaceBoard({
 
   // A piece deleted from under the open tab: the first one left is shown.
   const tab =
-    picked === COMBINED || day.pieces.some((p) => p.id === picked) ? picked : (day.pieces[0]?.id ?? COMBINED);
+    picked === COMBINED || picked === ATHLETES || day.pieces.some((p) => p.id === picked)
+      ? picked
+      : (day.pieces[0]?.id ?? COMBINED);
 
   const write = async (next: RaceDay) => {
     onChange(next); // optimistic — the coach is typing at the dock
@@ -164,6 +173,7 @@ export default function RaceBoard({
 
   const piece = day.pieces.find((p) => p.id === tab) ?? null;
   const combined = useMemo(() => combinedBoards(day.pieces), [day.pieces]);
+  const athletes = useMemo(() => athleteBoard(day.pieces), [day.pieces]);
 
   /*
     Combined's columns: the crew (its names stacked), one column per piece,
@@ -198,9 +208,14 @@ export default function RaceBoard({
           </TabButton>
         ))}
         {day.pieces.length > 0 && (
-          <TabButton on={tab === COMBINED} onClick={() => setTab(COMBINED)}>
-            Combined
-          </TabButton>
+          <>
+            <TabButton on={tab === COMBINED} onClick={() => setTab(COMBINED)}>
+              Combined
+            </TabButton>
+            <TabButton on={tab === ATHLETES} onClick={() => setTab(ATHLETES)}>
+              Athletes
+            </TabButton>
+          </>
         )}
         {inConsole && (
           <button
@@ -335,6 +350,71 @@ export default function RaceBoard({
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* ATHLETES: the same day read by person — the margin of the boat each
+          one sat in, piece by piece, who they sat with, and the average. */}
+      {tab === ATHLETES && day.pieces.length > 0 && (
+        <div className="mt-3 mb-4 overflow-x-auto overscroll-x-contain rounded-2xl border border-border bg-surface">
+          <div style={{ minWidth: combinedMin }}>
+            <div
+              className={`grid gap-1.5 border-b border-border px-2.5 py-2 ${TH}`}
+              style={{ gridTemplateColumns: combinedCols }}
+            >
+              <span />
+              <span>Athlete</span>
+              {day.pieces.map((p) => (
+                <span key={p.id} className="truncate text-right">
+                  {p.name}
+                </span>
+              ))}
+              <span className="text-right">Avg</span>
+            </div>
+            {athletes.length === 0 && (
+              <div className="px-3 py-4 text-center text-[12px] text-muted">No times yet.</div>
+            )}
+            {athletes.map((a, i) => {
+              const whole = a.raced === day.pieces.length;
+              return (
+                <div
+                  key={a.name}
+                  className={`grid items-center gap-1.5 px-2.5 py-2.5 ${i > 0 ? "border-t border-border" : ""}`}
+                  style={{ gridTemplateColumns: combinedCols }}
+                >
+                  <Rank rank={a.rank} faint={!whole} />
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="truncate text-[13px] font-semibold text-text">{a.name}</span>
+                      {a.cox && (
+                        <span
+                          className="flex h-[16px] flex-shrink-0 items-center rounded-[4px] px-[5px] font-mono text-[9px] font-semibold tracking-[0.06em]"
+                          style={{ background: COX_COLOR, color: COX_INK }}
+                        >
+                          {COX_LABEL}
+                        </span>
+                      )}
+                    </div>
+                    {/* Who they sat with, one name per piece, in the pieces'
+                        order — a coach reading down the pairs sees the swaps. */}
+                    <div className="mt-0.5 truncate text-[11px] text-muted">
+                      {a.with.map((w) => w ?? "—").join(" · ")}
+                    </div>
+                  </div>
+                  {a.perPiece.map((m, k) => (
+                    <span key={k} className="text-right text-[12px] tabular-nums text-muted">
+                      {m == null ? "—" : formatMargin(m)}
+                    </span>
+                  ))}
+                  <span
+                    className={`text-right text-[13px] font-semibold tabular-nums ${whole ? "text-text" : "text-muted"}`}
+                  >
+                    {a.raced ? formatMargin(a.average) : "—"}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
 

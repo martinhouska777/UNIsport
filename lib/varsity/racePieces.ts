@@ -322,3 +322,75 @@ export function raceSummary(day: RaceDay): { pieces: number; crews: number } {
   for (const p of day.pieces) for (const c of p.crews) crews.add(c.boatId);
   return { pieces: day.pieces.length, crews: crews.size };
 }
+
+/* ── The athletes' board ────────────────────────────────────────────────── */
+
+export type AthleteRow = {
+  name: string;
+  /** Sat as the cox, not a rower. */
+  cox: boolean;
+  /** Per piece, in the day's order: the margin of the boat this person sat
+      in to its class winner; null where they did not row (or it has no time). */
+  perPiece: (number | null)[];
+  /** Per piece: who they sat with — the cox of a coxed boat (the stroke, on
+      the cox's own row), the other rower(s) of a coxless one. Null: no boat. */
+  with: (string | null)[];
+  /** The average of the margins over the pieces they have one for. */
+  average: number;
+  raced: number;
+  rank: number;
+};
+
+/*
+  THE SAME DAY, READ BY PERSON. Crews are reshuffled between pieces — the
+  pairs on the sheet most of all — so a crew's board cannot say how a ROWER
+  did. This one can: for every person who sat in any boat, the margin their
+  boat carried to its class winner in each piece, who they sat with, and the
+  AVERAGE of those margins (owner's choice, 2026-09-21: "how each person
+  finished"). Smallest average on top; a person who missed a piece is listed
+  after those who rowed them all, with what they have. Nothing is excluded
+  and nothing is judged — a "Bridge" still counts; the coach knows what it
+  means. Selection proper (seat racing) is a different screen.
+  People are matched by the surname the sheet wrote; two rowers who share
+  one would merge here.
+*/
+export function athleteBoard(pieces: RacePiece[]): AthleteRow[] {
+  const boards = pieces.map(pieceBoards);
+  const people = new Map<string, AthleteRow>();
+  const rowFor = (name: string, cox: boolean) => {
+    let r = people.get(name);
+    if (!r) {
+      r = { name, cox, perPiece: Array(pieces.length).fill(null), with: Array(pieces.length).fill(null), average: 0, raced: 0, rank: 0 };
+      people.set(name, r);
+    }
+    return r;
+  };
+
+  boards.forEach((classList, pi) => {
+    for (const cb of classList) {
+      for (const { crew, toWinner } of cb.rows) {
+        const { cox, rowers } = crewMembers(crew);
+        for (const n of rowers) {
+          const r = rowFor(n, false);
+          r.perPiece[pi] = toWinner;
+          r.with[pi] = cox ?? rowers.filter((x) => x !== n).join("/") ?? null;
+        }
+        if (cox) {
+          const r = rowFor(cox, true);
+          r.perPiece[pi] = toWinner;
+          r.with[pi] = rowers[0] ?? null;
+        }
+      }
+    }
+  });
+
+  const list = [...people.values()];
+  for (const r of list) {
+    const have = r.perPiece.filter((m): m is number => m != null);
+    r.raced = have.length;
+    r.average = have.length ? Math.round((have.reduce((a, b) => a + b, 0) / have.length) * 100) / 100 : 0;
+  }
+  list.sort((a, b) => b.raced - a.raced || a.average - b.average || a.name.localeCompare(b.name));
+  list.forEach((r, i) => (r.rank = i + 1));
+  return list;
+}
