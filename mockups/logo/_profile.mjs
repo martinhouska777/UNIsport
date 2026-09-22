@@ -35,6 +35,12 @@ const PAGE = "#ebf0f6"; // --background, the Zone 1 page colour
 // `primaryLive`: raised until it clears 3:1 on its own ground. #1f32c1 is far
 // too close to NAVY in value to read against it.
 const BLUE_LIFT = "#7d8df7";
+const BLACK = "#000000";
+// On pure black the brand blue is DIM — #1f32c1 clears only 2.3:1 against it,
+// so the two halves stop reading as two people at feed size. These two are the
+// same hue raised until they carry: "electric" keeps the brand's saturation
+// (4.9:1), "lifted" is the same value as the navy ground's blue (7.0:1).
+const BLUE_ELECTRIC = "#4d6bff";
 
 // The mark, on a 100 x 100 box. `a` is the left person, `b` the right.
 const mark = (a, b) => `
@@ -62,6 +68,9 @@ const OPTIONS = [
   { key: "a-white", label: "A — white", ground: "#ffffff", a: NAVY, b: BLUE },
   { key: "b-page",  label: "B — page blue-grey", ground: PAGE, a: NAVY, b: BLUE },
   { key: "c-navy",  label: "C — navy", ground: NAVY, a: "#ffffff", b: BLUE_LIFT },
+  { key: "d-black-brand",    label: "D — black, brand blue", ground: BLACK, a: "#ffffff", b: BLUE },
+  { key: "d-black-electric", label: "D — black, electric blue", ground: BLACK, a: "#ffffff", b: BLUE_ELECTRIC },
+  { key: "d-black-lifted",   label: "D — black, lifted blue", ground: BLACK, a: "#ffffff", b: BLUE_LIFT },
 ];
 
 const browser = await puppeteer.launch({
@@ -107,7 +116,7 @@ const cells = OPTIONS.map((opt) => {
 
 const sheet = `<html><body style="margin:0;background:#ffffff;font:14px/1.4 system-ui,sans-serif;color:#141618">
 <div style="padding:40px 44px">
-  <h1 style="font-size:19px;margin:0 0 6px">UNIsport profile picture — the three grounds</h1>
+  <h1 style="font-size:19px;margin:0 0 6px">UNIsport profile picture — the grounds</h1>
   <p style="margin:0 0 30px;color:#4a4f58">Each shown as Instagram shows it: a circle at 176px (profile) and 40px (feed, comments), on the feed's white.</p>
   ${cells}
 </div>
