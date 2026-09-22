@@ -6,26 +6,36 @@ Written so a fresh session can pick this up. Companion to `LANDING.md`.
 
 ## The decision that shapes everything
 
-The Higgsfield account is on the **free plan with 10 credits**, and holds **no
-unlim allowance** (`models_explore` → `unlim.available: false`, checked
-2026-09-05). One 5-second generative clip costs **32.5 credits**
-(`generate_video` `get_cost` on `seedance_2_5`, 5s, 9:16). A seven-shot cut of
-generated footage would therefore cost ~230 credits — none of which we have.
+**The reel is drawn in code, not generated and not edited in an app.**
+`scripts/video/reel.mjs` builds the whole thing — run `node scripts/video/reel.mjs`
+and an MP4 lands in `mockups/video/`. Rendered files are gitignored; the script
+is the artefact.
 
-**That is fine, because generative video is the wrong tool for this video.**
-AI video models do not preserve UI: hand one a screenshot of the app and the
-text melts and the buttons morph. The spine of a product video is real
-footage plus designed graphics.
+**Generative video is the wrong tool for a product video.** AI models do not
+preserve a UI: hand one a screenshot of the app and the text melts and the
+buttons morph. So the app screens are real captures and every bit of motion is
+drawn on top of them.
 
-So:
+### Higgsfield — checked again 2026-09-22, and not used
 
-| Layer | Tool | Costs generative credits? |
-|---|---|---|
-| **The whole video** — screens, motion, titles, captions, end card | `video-editing` (higgsedit) via Higgsfield MCP | No |
-| *Optional* atmosphere b-roll — gym, water, campus | `generate_video` | Yes, ~32.5 cr / 5s |
+The owner asked for Higgsfield specifically. Two facts closed it:
 
-The video works with the first row alone. The second row is garnish, and only
-if the owner tops the account up.
+1. **The free plan cannot produce postable footage** — no credit allowance, and
+   the pricing coverage is unanimous that free output is watermarked with no
+   commercial rights. The 10 credits `VIDEO.md` recorded on 2026-09-05 would not
+   cover one 5-second clip at 32.5 credits anyway.
+2. **Their own pricing page says the unlimited models are "accessible only via
+   higgsfield.ai and are not accessible on MCP/CLI"** — so even on a paid plan,
+   an assistant driving it through MCP burns credits while the website does not.
+   And no Higgsfield MCP is connected to this project.
+
+Plans, for the record: Starter $19/mo (300 cr), Plus $59/mo or $47 annual
+(5,000 cr), plus a $3 one-time for 40 credits. **None of it was bought.**
+
+The owner then chose a faceless opener, which removed the only part a
+generative model was wanted for. If atmosphere b-roll is ever wanted — a gym, a
+boathouse, a campus at dawn — that is the one job worth paying Higgsfield for,
+and it is generated on their website and dropped into `mockups/video/`.
 
 ---
 
@@ -45,24 +55,41 @@ shot can be re-taken the same way rather than screen-recorded by hand.
 
 ---
 
-## Cut 1 — 30 s vertical (9:16), for Reels and TikTok
+## Cut 1 — the launch reel, 23 s vertical (9:16), for Reels and TikTok
 
-The beats are `studentStory` S1–S7 in `lib/landingCopy.ts`. **The on-screen
-lines are the owner's own approved copy**, trimmed to caption length — not new
-writing. Change them there, not here.
+**Built and rendering.** `scripts/video/reel.mjs`, 1080x1920, 30 fps, ~5.8 MB.
 
-| Time | Shot | Caption |
+The look was set by three reference reels the owner sent on 2026-09-22
+(@motionbyjawad, @yorixedits, @yasin.vfx): near-black ground, one coloured glow
+as the only light, the UI floating in 3D and flying past camera, kinetic italic
+type with the key word underlined in the accent, a typed line, heavy bloom and
+motion blur. How each is made is documented at the top of the script.
+
+| Time | Shot | On screen |
 |---|---|---|
-| 0:00–0:03 | phone flies in | **Never train alone again.** |
-| 0:03–0:07 | `01-gyms.webp` | Every gym on your campus. |
-| 0:07–0:12 | `02-match.webp`, scrolling | Find training partners. Make friends. |
-| 0:12–0:16 | `03-why-you-match.webp`, push in on "Why you match" | Same gym. Same hours. Same interests. |
-| 0:16–0:20 | `04-plan-a-session.webp` | Plan it in the chat. |
-| 0:20–0:25 | `tall-logsheet.webp`, pan down to the photo | Log it. Keep the photo. |
-| 0:25–0:29 | `tall-profile.webp`, leaderboard | See how you rank on campus. |
-| 0:29–0:32 | end card | UNIsport · handle + domain |
+| 0.0–2.7 | a point of light, then type on black | *Never train **alone** again.* |
+| 2.5–6.7 | `dark/02-match.webp` | *Sorted by how well you **fit**.* + a typed line |
+| 6.4–10.3 | `dark/04-plan-a-session.webp` | *Plan it in the **chat**.* |
+| 10.0–14.3 | `dark/tall-profile.webp`, panned | *See where you **rank**.* |
+| 14.0–18.4 | `dark/closers/match-<school>` ×8 | ***Eight** campuses. Each its own.* |
+| 18.1–23.0 | end card | the mark draws itself · UNIsport · getunisport.com |
 
-No voiceover — music and captions only, because the feed is watched muted.
+Three things that are deliberate, and will look like bugs if changed back:
+
+- **The screens are the DARK captures.** The light ones vanish into this style.
+- **The schools beat exists partly for safety.** Cycling all eight Ivy themes is
+  the white-label story, and it stops the reel reading as one university's app —
+  see `SOCIAL.md` §7B, never imply Harvard uses UNIsport.
+- **The typed line is revealed by a clip, never by re-setting `textContent`.**
+  Retyping re-centres the line every frame, and the motion-blur pass then
+  averages two centrings into an unreadable double image. It shipped that way
+  once.
+
+**No sound.** The owner is adding music and sound effects himself.
+
+**The on-screen lines are trimmed, and are NOT yet the owner's approved copy.**
+`lib/landingCopy.ts` holds the approved wording; these were cut to caption
+length by Claude and need his eye.
 
 ## Cut 2 — 45-60 s landscape, later
 
@@ -73,10 +100,14 @@ coaches and athletic directors. Not started.
 
 ## Open, blocking on the owner
 
-1. **Domain** — the end card and the bio link need one; the site is still on
-   `un-isport.vercel.app`.
+1. ~~**Domain**~~ — done. `getunisport.com`, bought 2026-09-19, and it is on the
+   end card.
 2. **Handles** — Instagram and TikTok accounts have to be created by the owner
-   (an assistant cannot open accounts). Once they exist, the handles go into
-   `contact.socials` in `lib/landingCopy.ts`, whose rows already render as
-   "coming soon" until an `href` is filled in.
-3. **Top up Higgsfield?** Only needed for the optional b-roll.
+   (an assistant cannot open accounts). `@unisportapp` was free on both when
+   checked 2026-09-22 and is still not taken. Once they exist, the handles go
+   into `contact.socials` in `lib/landingCopy.ts`, whose rows already render as
+   "coming soon" until an `href` is filled in. **The reel has nowhere to be
+   posted until this is done.**
+3. **The on-screen lines** need the owner's eye — see Cut 1.
+4. **Sound.** The owner is doing music and effects himself, so the export is
+   silent on purpose.

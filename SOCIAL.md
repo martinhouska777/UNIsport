@@ -369,23 +369,39 @@ never shown anyway — the sticker just says "link" — and it fills the `source
 you can tell which posts actually bring people in. `?from=` accepts `ig`, `ig-story`,
 `tiktok` and `site`; anything else is ignored rather than stored.
 
-### The landing page says the same thing now
+### Two doors on purpose, while the owner compares them
 
-Decided the same day. **Every button on the public site is the waitlist** — the one in the
-top bar, the big one in the middle, the one at the end of the student view and the one
-under the feature list. They are all a single line of copy (`hero.primaryCta` in
-`lib/landingCopy.ts`), so launch day is that one line changing back, and nothing else.
+**This is a REVIEW state, not a final answer (2026-09-22).** The page was briefly all
+waitlist and everything is in place to make it so again; the owner asked for the two side
+by side first, so:
 
-**How you get in while this is up:** "Log in", still in the top right. That screen has a
-Sign up of its own, so you can still make accounts — for yourself, and for anyone you want
-to let in early. The `.edu` rule never changed. The quiet door is open; it is just not the
-one being pointed at.
+| Where | Says | Goes to |
+|---|---|---|
+| **Top right of the bar** | Join the waitlist | `/waitlist` |
+| **The big button in the middle** (and the student view's, and the one under the features) | Get started with .edu | `/login?mode=signup` |
 
-### Still open
+So the page does currently say two different things on one screen, knowingly. Whoever
+picks this up: ask before "fixing" it.
 
-The FAQ further down the page still explains signing up ("students sign up with their
-university email") without mentioning that there is a list first. Not wrong, but somebody
-reading carefully will wonder which it is. A one-line FAQ answer would close it.
+**Switching to all-waitlist is two lines** — `hero.primaryCta` and `hero.primaryHref` in
+`lib/landingCopy.ts` (commit efbb3ba did exactly that and was reverted for the comparison).
+Every public button reads them, so all four move together, and launch day is those same two
+lines going back to "Get started with .edu" / `/login?mode=signup`.
+
+### How the owner gets in while a waitlist is up
+
+**"Log in", top right — untouched, and that screen has its own Sign up.** Both doors in
+one: his existing account, or a new `.edu` one for anybody he wants to let in early. The
+`.edu` rule in `lib/universityEmail.ts` has never changed. Direct address:
+`getunisport.com/login`.
+
+### How he READS the list
+
+**Supabase → the `wavxyrgtaotrhnyepyor` project → Table editor → `waitlist`.** Not through
+the website: the table has no read policy at all, on purpose, so nobody can pull other
+people's email addresses out of the site. The dashboard is the only door, and it shows
+email, first name, school, source and when they joined. If that gets annoying, the thing to
+build is a private in-app view gated to his own account — not a loosening of the table.
 
 ---
 

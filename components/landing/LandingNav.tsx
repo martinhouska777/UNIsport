@@ -28,9 +28,10 @@ import { views, type LandingView } from "@/lib/landingCopy";
   to the whole page either way: that is the Home tab.
 
   On a phone the tabs do not fit the bar, so they live behind a menu button at
-  its left that slides them in from the left edge (LandingMenu). The door is
-  written out in full there too (owner, 2026-09-19), so on a phone it carries
-  the row on its own and Log in drops to a plain text link.
+  its left that slides them in from the left edge (LandingMenu). The door says
+  "Get started with .edu" in full there too (owner, 2026-09-19 — the short
+  "Sign up" didn't name the one thing that makes this door different), so on a
+  phone it carries the row on its own and Log in drops to a plain text link.
   The bar stays one row. A phone also keeps BOTH the
   wordmark and the door from the first pixel (see .l-nav-mark in globals.css);
   the hide-while-the-intro-is-up rule is a laptop rule now.
