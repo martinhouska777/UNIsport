@@ -25,9 +25,10 @@
   days (2026-09-19 → 21) it was drawn `bold`, crimson loom with a black line,
   so the X would read on the dark ground; the owner put the oars back to black
   on 2026-09-21 ("change the oars back to black") and moved the emphasis to the
-  MOTTO instead — see the motto below. On 2026-09-22 the oars were sent to the
-  BACKGROUND as well: they sweep in as they always did and then sit back to
-  40%, so the crest and the motto are in front of them.
+  MOTTO instead — see the motto below. Same again on 2026-09-22: the oars were
+  faded back to 40% behind the motto, the owner said "I want them fully
+  rendered", and the fade was taken out within the hour. The oars are the
+  drawing; when the motto needs to carry further, the MOTTO changes.
   The beat timings live with the keyframes in app/globals.css; the two timers
   below have to agree with them.
 */
@@ -104,27 +105,20 @@ export default function VarsityIntro() {
       }`}
     >
       <div className="relative h-[320px] w-[320px]">
-        {/* The two oars, as ONE group: they sweep in at full strength and then
-            sit back to 40% as the crest lands (v-oar-settle, globals.css), so
-            the crest and the motto stand in front of them rather than on top
-            of them. On the light app the dark looms used to run straight
-            through the red letters. */}
-        <div className="v-oar-settle absolute inset-0">
-          {/* Left oar: slides in from the left, held at a fixed cross angle. */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="v-oar-in-left">
-              <div className="origin-center rotate-[-32deg]">
-                <OarMark schoolKey={universityKey} width={41} height={250} />
-              </div>
+        {/* Left oar: slides in from the left, held at a fixed cross angle. */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="v-oar-in-left">
+            <div className="origin-center rotate-[-32deg]">
+              <OarMark schoolKey={universityKey} width={41} height={250} />
             </div>
           </div>
+        </div>
 
-          {/* Right oar: slides in from the right, mirrored angle → forms the X. */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="v-oar-in-right">
-              <div className="origin-center rotate-[32deg]">
-                <OarMark schoolKey={universityKey} width={41} height={250} />
-              </div>
+        {/* Right oar: slides in from the right, mirrored angle → forms the X. */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="v-oar-in-right">
+            <div className="origin-center rotate-[32deg]">
+              <OarMark schoolKey={universityKey} width={41} height={250} />
             </div>
           </div>
         </div>
@@ -148,6 +142,12 @@ export default function VarsityIntro() {
             near-black on the dark app, so that side is unchanged; on the light
             app it is the pale grey the intro stands on, which cuts the letters
             out of whatever is behind them instead of muddying red with black.
+
+            AND IT IS BIGGER: 22px at weight 800, up from 17 at 700. The word
+            was never hard to READ — crimson on the pale grey clears 6.5:1 — it
+            was simply small and quiet in a 320px frame with a 92px crest over
+            it. Size is what the owner was asking for; the first attempt faded
+            the oars back instead and was rejected on sight.
             Crimson is --primary, so another school's motto comes out in that
             school's colour, and no colour is written here either way. The line
             is drawn UNDER the fill (paint-order), so the letters keep their
@@ -156,7 +156,7 @@ export default function VarsityIntro() {
         {motto && (
           <div className="absolute inset-x-0 top-[196px] flex justify-center">
             <div
-              className="v-motto-in whitespace-nowrap text-[17px] font-bold uppercase text-primary"
+              className="v-motto-in whitespace-nowrap text-[22px] font-extrabold uppercase text-primary"
               // The trailing letter's spacing would push the word off-centre;
               // this pays it back. Matches the tracking the animation ends on.
               style={{
