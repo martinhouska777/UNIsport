@@ -50,7 +50,6 @@ import {
   IconUser,
   IconCamera,
   IconPencil,
-  IconCheck,
   IconChevronDown,
   IconPlus,
 } from "@/components/icons";
@@ -344,9 +343,17 @@ export default function ProfilePage() {
               setEditingTop(false);
             }}
             aria-label={editingTop ? "Save profile" : "Edit profile"}
-            className={`tap44 press-icon ${editingTop ? "text-primary" : "text-muted"}`}
+            /* While editing, the tick is a BUTTON THAT SAYS SAVE (owner,
+               2026-09-22: "now i cant save it or smth"). A small grey tick in
+               the corner of a screen full of taps is not obviously the way
+               out of edit mode — a filled Save is. */
+            className={
+              editingTop
+                ? "tap44 press-icon rounded-full bg-primary px-3.5 py-1.5 text-[13px] font-semibold text-primary-contrast"
+                : "tap44 press-icon text-muted"
+            }
           >
-            {editingTop ? <IconCheck size={18} /> : <IconPencil size={17} />}
+            {editingTop ? "Save" : <IconPencil size={17} />}
           </button>
           <Link href="/settings" aria-label="Settings" className="tap44 text-muted">
             <IconSettings size={18} />
