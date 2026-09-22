@@ -88,6 +88,12 @@ type AppState = {
     units?: Partial<Units>;
   }) => Promise<void>;
   resetOnboarding: () => Promise<void>; // temporary dev helper to replay onboarding
+  /*
+    Replay the SHORT ATHLETE SETUP. Clears only the varsity flag — the squad you
+    are on, your logs, your personal bests and the student side are all left
+    alone — so the next varsity screen sends you back through /varsity/setup.
+  */
+  resetVarsitySetup: () => Promise<void>;
 };
 
 // The school for an address we don't recognise — an older account on a personal
@@ -370,6 +376,21 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     setStudentReady(false);
   };
 
+  /*
+    The varsity twin of the above. It only unsets the flag: the answers stay on
+    the profile until the setup screen writes over them, so quitting halfway
+    leaves the record as it was.
+  */
+  const resetVarsitySetup = async () => {
+    if (supabase && session) {
+      await supabase
+        .from("profiles")
+        .update({ varsity_setup_completed: false })
+        .eq("id", session.user.id);
+    }
+    setVarsityReady(false);
+  };
+
   return (
     <AppStateContext.Provider
       value={{
@@ -387,6 +408,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         saveOnboarding,
         saveVarsitySetup,
         resetOnboarding,
+        resetVarsitySetup,
       }}
     >
       {children}
