@@ -8,9 +8,12 @@
     • THE NUMBERS in full — time, distance, split, rate, watts, watts/kg — so
       you don't have to switch the whole board's metric to read one person.
     • THE INTERVALS, when the monitor showed them. A 8×500m is not one number:
-      the shape of it is the point, and the FADE (last rep against first) is
-      what a coach reads first. Each rep gets a bar against the fastest one, so
-      the shape is visible without reading eight timestamps.
+      the shape of it is the point. Each rep gets a bar against the fastest one,
+      so the shape is visible without reading eight timestamps.
+      NOTHING WRITTEN OVER THEM (owner, 2026-09-22). "8 intervals" was counting
+      the eight rows directly under it, and "+0.7s last vs first" was doing the
+      arithmetic between the first row and the last one — both of which are on
+      the screen. The reps are simply there.
     • THE PHOTO of the monitor. Self-reported times are worth what people trust
       them with; the screen the numbers came off is the evidence. It is also
       what makes a misread scan fixable.
@@ -42,7 +45,6 @@ import {
   metricMeta,
   metricValue,
   metricDisplay,
-  rowedAsReps,
   type PastPiece,
   type PieceKind,
   type MetricKey,
@@ -142,20 +144,6 @@ export default function ResultDetail({
   const wkg = wattsPerKg(watts, result.weightKg);
   const rows = result.intervals ?? [];
 
-  /*
-    The fade: how much slower the last rep was than the first. Negative means
-    they finished faster than they started, which is the good kind of piece.
-
-    ONLY FOR REPS. On a piece rowed straight through, the monitor's 500s are
-    not efforts, they are slices of one — everybody goes out fast, so "last vs
-    first" would say the same thing about every 2k anyone has ever pulled.
-    rowedAsReps() reads the coach's own wording to tell them apart.
-  */
-  const reps = rowedAsReps(workout.session);
-  const first = rows[0]?.splitSec ?? null;
-  const last = rows[rows.length - 1]?.splitSec ?? null;
-  const fade = reps && first != null && last != null ? last - first : null;
-
   // Bars are drawn against the fastest rep, so the slowest is visibly longest.
   const best = rows.reduce<number | null>(
     (m, r) => (r.splitSec != null && (m == null || r.splitSec < m) ? r.splitSec : m),
@@ -202,26 +190,10 @@ export default function ResultDetail({
         </p>
       )}
 
-      {/* the reps */}
+      {/* the reps — the list and nothing over it */}
       {rows.length > 0 && (
         <>
-          <div className="mb-2 mt-4 flex items-baseline justify-between px-0.5">
-            <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-              {reps ? `${rows.length} intervals` : "Splits"}
-            </span>
-            {fade != null && (
-              <span
-                className={`text-[11px] font-semibold tabular-nums ${
-                  fade > 0.05 ? "text-danger" : fade < -0.05 ? "text-success" : "text-muted"
-                }`}
-              >
-                {fade > 0.05 ? "+" : fade < -0.05 ? "−" : "±"}
-                {Math.abs(fade).toFixed(1)}s last vs first
-              </span>
-            )}
-          </div>
-
-          <div className="overflow-hidden rounded-2xl border border-border bg-surface">
+          <div className="mt-4 overflow-hidden rounded-2xl border border-border bg-surface">
             {rows.map((r, i) => {
               // Widths run 40%–100% across the range, so a tight piece still
               // reads as tight rather than being stretched into a big spread.
