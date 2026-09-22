@@ -243,6 +243,42 @@ export const gymSplits: string[] = ["Push-Pull-Legs", "Upper-Lower", "Full body"
 export const cardioTypes: string[] = ["Cycling", "Rowing", "Swimming", "Elliptical", "Stair climber", "HIIT"];
 
 /*
+  OTHER — the sports people actually play at university, as a list instead of
+  an empty box (owner, 2026-09-22). Roughly in order of how many students do
+  them on an American campus. Anything not here is typed in and stored exactly
+  the same way, so the answer is still the one string `activityOther`.
+*/
+export const otherSports: string[] = [
+  "Basketball",
+  "Soccer",
+  "Tennis",
+  "Volleyball",
+  "Climbing",
+  "Martial arts",
+  "Boxing",
+  "Yoga",
+  "Pilates",
+  "Dance",
+  "Squash",
+  "Ultimate frisbee",
+  "Track & field",
+  "Ice hockey",
+  "Lacrosse",
+  "Baseball / softball",
+  "American football",
+  "Rugby",
+  "Golf",
+  "Skiing / snowboarding",
+  "Sailing",
+  "Fencing",
+  "Table tennis",
+  "Badminton",
+  "Wrestling",
+  "Gymnastics",
+  "Water polo",
+];
+
+/*
   RUNNING. Distance and pace are typed rather than picked, because "8 km at
   4:40" is a real answer and no list of buttons contains it. The unit switch
   only changes the EXAMPLES shown in the two fields — whatever is typed is

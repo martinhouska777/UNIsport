@@ -59,12 +59,7 @@ export default function PartnersSheet({
 
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border px-4 pb-3">
-          <div>
-            <div className="text-[15px] font-medium text-text">Training partners</div>
-            <div className="mt-0.5 text-[11px] text-muted">
-              {partners.length} different {partners.length === 1 ? "person" : "people"} so far
-            </div>
-          </div>
+          <div className="text-[15px] font-medium text-text">Training partners</div>
           <button
             type="button"
             onClick={onClose}

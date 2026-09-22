@@ -97,13 +97,18 @@ export function TextField({
   onChange,
   placeholder,
   ariaLabel,
+  suffix,
 }: {
   value: string;
   onChange: (v: string) => void;
   placeholder?: string;
   ariaLabel?: string;
+  /* A unit printed inside the right of the box — "km", "/km". It is the unit
+     itself, not a hint about what to type, so the field stays empty until the
+     person fills it in. */
+  suffix?: string;
 }) {
-  return (
+  const input = (
     <input
       type="text"
       value={value}
@@ -111,8 +116,19 @@ export function TextField({
       placeholder={placeholder}
       aria-label={ariaLabel}
       // 16px text avoids mobile auto-zoom on focus.
-      className="w-full rounded-[10px] border border-border bg-surface px-3.5 py-3 text-base text-text placeholder:text-muted focus:border-primary focus:outline-none"
+      className={`w-full rounded-[10px] border border-border bg-surface py-3 pl-3.5 text-base text-text placeholder:text-muted focus:border-primary focus:outline-none ${
+        suffix ? "pr-12" : "pr-3.5"
+      }`}
     />
+  );
+  if (!suffix) return input;
+  return (
+    <div className="relative">
+      {input}
+      <span className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-[13px] text-muted">
+        {suffix}
+      </span>
+    </div>
   );
 }
 

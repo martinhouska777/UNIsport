@@ -181,10 +181,14 @@ export const IconBarbell = (p: IconProps) => (
   </Base>
 );
 
+/* A runner: head, the arm swinging forward, the body over a driving front leg,
+   and the back leg trailing. The old one was a single zig-zag line. */
 export const IconRun = (p: IconProps) => (
   <Base {...p}>
-    <circle cx="14" cy="5" r="1.6" />
-    <path d="M5 20l3-5 3 1 1-4-4-2 4-2 3 3 3 1" />
+    <circle cx="16.4" cy="4.4" r="1.8" />
+    <path d="M8.4 12.6V9.4l4.9-1.3 2.8 3 2.9 1" />
+    <path d="M15.3 21v-4.2l-4-2.9 1-5.8" />
+    <path d="M4.6 17.3 9 18.1l1-1.7" />
   </Base>
 );
 
