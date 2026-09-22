@@ -145,7 +145,7 @@ const steps: TourStep[] = [
     group: PLAN_DIVE,
     anchor: "coach-plan-time",
     title: "The time is already filled in",
-    body: "AM sessions open at the usual morning time, PM at the usual afternoon one, and you only touch it on the days that are different. Under it there is a note field for the one sentence a session sometimes needs.",
+    body: "AM sessions open at the usual morning time, PM at the usual afternoon one, and you only touch it on the days that are different. Tap it and type over it. Down in the form there is a note field too, for the one sentence a session sometimes needs.",
   },
   {
     group: PLAN_DIVE,

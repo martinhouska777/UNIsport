@@ -9,7 +9,8 @@
   week to see its 7 days → tap a day's AM/PM to open the editor → pick a type, an
   intensity if that type asks for one, fill the description (free text, or tap one
   of the most-used chips), an optional place to be, and an optional note. No
-  duration; the time is a preset.
+  duration; the time is a preset, and it sits as a small card up in the
+  editor's header beside the day rather than as a field of its own.
 
   NOTHING IN THE EDITOR IS HARDCODED ANY MORE. The types, the zones, the chips and
   the preset times all come from the squad's own config, which the coach edits at
@@ -63,6 +64,7 @@ import {
   IconChevronRight,
   IconFlag,
   IconClipboard,
+  IconClock,
   IconCheck,
   IconCalendar,
   IconRepeat,
@@ -1091,12 +1093,38 @@ export default function TrainingPlanScreen({
           >
             <IconArrowLeft size={18} /> Back
           </button>
-          <div className="ml-1">
+          <div className="ml-1 min-w-0">
             <div className="text-[15px] font-semibold leading-none text-text">
               {weekday} {editor.period}
             </div>
             <div className="mt-1 text-[11px] text-muted">{longDate}</div>
           </div>
+          {/*
+            THE TIME, AS A SMALL CARD BESIDE THE DAY (owner, 2026-09-22).
+
+            It used to be a labelled field of its own down in the form — a
+            whole row, with "TIME" written over it, for a number that is 7:00
+            AM on almost every morning the squad has ever rowed. It belongs up
+            here with the day it is part of: it reads as a fact, and clicking
+            it changes it. The form below is then the workout and a note,
+            which is what the coach is actually there to write.
+          */}
+          {cat && cat !== "off" && (
+            <label
+              data-tour="coach-plan-time"
+              className="ml-auto flex flex-shrink-0 items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-muted focus-within:border-primary"
+            >
+              <IconClock size={13} />
+              <input
+                value={form.time}
+                onChange={(e) => setForm((f) => ({ ...f, time: e.target.value }))}
+                placeholder={cfg.times[editor.period]}
+                aria-label="Session time"
+                /* 16px so a phone doesn't zoom in when it takes focus. */
+                className="w-[74px] bg-transparent text-base font-semibold tabular-nums text-text outline-none placeholder:font-normal placeholder:text-muted"
+              />
+            </label>
+          )}
         </div>
 
         {/* scrollable content */}
@@ -1204,20 +1232,6 @@ export default function TrainingPlanScreen({
                 rows={2}
                 placeholder="Type the workout…"
                 className={`${inputCls} resize-none`}
-              />
-            </>
-          )}
-
-          {/* time — preset but editable (not for Off) */}
-          {cat && cat !== "off" && (
-            <>
-              <div className={labelCls}>Time</div>
-              <input
-                data-tour="coach-plan-time"
-                value={form.time}
-                onChange={(e) => setForm((f) => ({ ...f, time: e.target.value }))}
-                placeholder={cfg.times[editor.period]}
-                className={inputCls}
               />
             </>
           )}
