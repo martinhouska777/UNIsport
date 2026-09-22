@@ -60,17 +60,53 @@ handle does not have to.
 **Avoid `@unisport.app`.** It looks clean, but `unisport.app` is a real domain owned by
 somebody else (`EMAIL.md` §2). The handle would point people at a stranger's parked page.
 
-### The Name field — not the same thing as the handle
+### The Name field — not the same thing as the handle (limit 30)
 
 Instagram **searches the Name field**, which most people do not realise. The handle is
-the address; the Name field is where the words people actually type go.
+the address; the Name field is where the words people actually type go. It also has to
+explain the product to a visitor, because "UNIsport" alone tells a stranger nothing.
 
-> Recommended: **`UNIsport · train with your team`**
+> Recommended: **`UNIsport · campus gym app`** — 25 characters
 
-Or whatever one-line description of the app you prefer — the point is that "UNIsport"
-alone tells a stranger nothing, and the search only sees this field.
+It carries "campus", "gym" and "app", and explains the thing in three words.
+
+| Alternative | Chars | |
+|---|---|---|
+| `UNIsport · train together` | 25 | Better positioning — the partner matching is the real differentiator — but weaker for search |
+| `UNIsport · your campus gym` | 26 | |
+| `UNIsport · college training` | 27 | |
+| ~~`UNIsport · train with your team`~~ | **31** | **Does not fit.** An earlier draft of this file recommended it |
 
 Small trap: the Name field can only be changed **twice in 14 days**. Do not fiddle.
+
+### The bio (limit 150)
+
+> **Find a gym. Find someone to train with.**
+> **Crowd levels, training partners, house leaderboards.**
+> **For students at the eight Ivies · .edu sign-up**
+
+139 characters. Line one is the promise, line two is the proof, line three tells people
+whether it is for them before they tap and get turned away.
+
+Alternatives:
+
+```
+Your campus gym, sorted.                            (102)
+Who's there now, who to train with, who's winning.
+Eight Ivies · .edu sign-up
+```
+
+```
+Built for university teams and the people who       (125)
+train alone.
+Gyms, partners, sessions, leaderboards.
+Eight Ivies · .edu sign-up
+```
+
+**Decide before using "eight Ivies."** All eight really can sign up — themes and gyms
+exist for each (§7A). But the **people** are Harvard-only: the seeded residents in
+`db/seed_campus.sql` are Harvard houses, so a Yale student who follows the bio arrives at
+a genuinely empty app and leaves. Saying "Harvard" is smaller and burns nobody. Open.
 
 ### The profile picture — done, pick a ground
 
@@ -246,7 +282,7 @@ a brand-new account made in a desktop browser is likelier to get an instant veri
 challenge.
 
 - Email: the new address
-- Full name → the Name field: `UNIsport · train with your team`
+- Full name → the Name field: `UNIsport · campus gym app`
 - Handle: `@unisportapp`
 - Skip the "find your contacts" step
 
