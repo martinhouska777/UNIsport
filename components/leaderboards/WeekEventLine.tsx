@@ -61,7 +61,7 @@ export function EventLine({
 
   return (
     <div
-      className={`flex items-center gap-2.5 ${compact ? "border-b border-border px-3.5 py-2.5" : "rounded-2xl border border-border bg-surface-2 px-3.5 py-3"}`}
+      className={`flex items-center gap-2.5 ${compact ? "border-b border-border px-3.5 py-2.5" : "rounded-2xl border border-border bg-surface px-3.5 py-3"}`}
       title={event.blurb}
     >
       <span
