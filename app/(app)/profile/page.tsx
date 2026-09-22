@@ -19,6 +19,7 @@ import SessionSheet from "@/components/profile/SessionSheet";
 import WorkoutDetail from "@/components/profile/WorkoutDetail";
 import LogSessionSheet from "@/components/profile/LogSessionSheet";
 import PartnersSheet from "@/components/profile/PartnersSheet";
+import FollowListSheet from "@/components/people/FollowListSheet";
 import UpcomingSessions from "@/components/profile/UpcomingSessions";
 import PartnerRequests from "@/components/profile/PartnerRequests";
 import LeaderboardStrip from "@/components/leaderboards/LeaderboardStrip";
@@ -65,6 +66,7 @@ export default function ProfilePage() {
   const [sessionsCount, setSessionsCount] = useState(0);
   const [partners, setPartners] = useState<PartnerSummary[]>([]);
   const [partnersOpen, setPartnersOpen] = useState(false); // "Partners" stat → who list
+  const [followsOpen, setFollowsOpen] = useState(false); // "Followers" stat → the two lists
   const [openDate, setOpenDate] = useState<string | null>(null); // day sheet
   const [openLog, setOpenLog] = useState<WorkoutLog | null>(null); // full-screen workout detail
   const [logging, setLogging] = useState(false); // "Log session" (new) editor open
@@ -254,13 +256,14 @@ export default function ProfilePage() {
 
   /*
     THE THREE NUMBERS, in a row under the bio — sessions you've logged, people
-    you've trained with, people following you. Partners is the only one that
-    opens something.
+    you've trained with, people following you. Partners opens who they were;
+    Followers opens the Followers / Following lists (the same sheet somebody
+    else's profile uses).
   */
   const stats: { label: string; value: number; onClick?: () => void }[] = [
     { label: "Workouts", value: sessionsCount },
     { label: "Partners", value: partners.length, onClick: () => setPartnersOpen(true) },
-    { label: "Followers", value: followers },
+    { label: "Followers", value: followers, onClick: () => setFollowsOpen(true) },
   ];
 
   /*
@@ -827,6 +830,14 @@ export default function ProfilePage() {
 
       {partnersOpen && (
         <PartnersSheet partners={partners} onClose={() => setPartnersOpen(false)} />
+      )}
+      {followsOpen && userId && followCounts && (
+        <FollowListSheet
+          userId={userId}
+          initialTab="followers"
+          counts={followCounts}
+          onClose={() => setFollowsOpen(false)}
+        />
       )}
 
       {openDate && (

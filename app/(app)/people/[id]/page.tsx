@@ -3,9 +3,12 @@
 /*
   OTHER PERSON'S PROFILE (reached from the Match tab's "View Profile" button).
 
-  Mirrors the mockup (other people profile_screen_view.html): back bar, identity
-  block with name + badges + match% pill, bio, stats, a Training detail list,
-  interests, and a bottom Follow / Message action bar.
+  Restyled 2026-09-22 to the owner's pick, direction C of
+  mockups/people-profile/person-profile-mockups.html: white lifted cards on the
+  page, the photo beside the name, followers / following counts that open the
+  lists (Instagram-style), "Why you match" as the one crimson-tinted card,
+  Training as four tiles plus their week laid over YOURS so the shared hours
+  are visible without asking, and the Follow / Message bar kept at the bottom.
 
   Data is REAL: it loads the person's public profile via the get_public_profile
   RPC (RLS-safe) and runs it through profileFromOnboarding — the SAME mapping the
@@ -25,10 +28,13 @@ import { matchReasons, type MatchReason } from "@/lib/matchReasons";
 import { useAppState } from "@/components/AppState";
 import { startDirectConversation } from "@/lib/supabase/messages";
 import { getFollowStatus, followUser, unfollowUser } from "@/lib/supabase/follows";
-import { weekSchedule, slotLabel } from "@/lib/schedule";
-import { IconArrowLeft, IconUser, IconCheck, IconChevronDown } from "@/components/icons";
+import { IconArrowLeft, IconUser, IconCheck } from "@/components/icons";
 import PhotoGallery from "@/components/profile/PhotoGallery";
 import ProfileBadge from "@/components/ProfileBadge";
+import ScheduleOverlap from "@/components/people/ScheduleOverlap";
+import FollowListSheet from "@/components/people/FollowListSheet";
+import { getFollowCounts, type FollowKind } from "@/lib/supabase/follows";
+import SectionLabel from "@/components/ui/SectionLabel";
 
 // useSearchParams() requires a Suspense boundary or the production build fails
 // ("Missing Suspense boundary with useSearchParams"), so the page wraps the
@@ -61,9 +67,11 @@ function PersonProfile() {
   const [following, setFollowing] = useState<boolean | null>(null); // null until known
   const [followsBack, setFollowsBack] = useState(false);
   const [followBusy, setFollowBusy] = useState(false);
-  // The Schedule row expands into their whole week in place, rather than
-  // stopping at "Mon · Wed · Fri" with no times.
-  const [scheduleOpen, setScheduleOpen] = useState(false);
+  // Their two follow totals, and which list (if any) is open in the sheet.
+  const [counts, setCounts] = useState<{ followers: number; following: number } | null>(null);
+  const [listOpen, setListOpen] = useState<FollowKind | null>(null);
+  // YOUR week, for the comparison grid — null until it has loaded.
+  const [mySchedule, setMySchedule] = useState<Record<string, string[]> | null>(null);
 
   /*
     "Why you match" is re-asked of the database rather than carried over from the
@@ -104,17 +112,46 @@ function PersonProfile() {
 
   const sharedInterests = new Set(match?.facts.interests ?? []);
 
+  useEffect(() => {
+    if (!id) return;
+    let active = true;
+    getFollowCounts(id)
+      .then((c) => active && setCounts(c))
+      .catch(() => active && setCounts({ followers: 0, following: 0 }));
+    return () => {
+      active = false;
+    };
+  }, [id]);
+
+  // Your own week, read through the same public-profile RPC (RLS-safe).
+  useEffect(() => {
+    if (!meId) return;
+    let active = true;
+    getPublicProfile(meId)
+      .then((d) => {
+        if (!active) return;
+        const sched = (d?.trainingSchedule as Record<string, string[]> | undefined) ?? {};
+        setMySchedule(sched);
+      })
+      .catch(() => active && setMySchedule({}));
+    return () => {
+      active = false;
+    };
+  }, [meId]);
+
   // Toggle follow/unfollow, updating the button optimistically.
   const toggleFollow = async () => {
     if (!id || following === null || followBusy) return;
     const next = !following;
     setFollowBusy(true);
     setFollowing(next); // optimistic
+    setCounts((c) => (c ? { ...c, followers: Math.max(0, c.followers + (next ? 1 : -1)) } : c));
     try {
       if (next) await followUser(id);
       else await unfollowUser(id);
     } catch (e) {
       setFollowing(!next); // revert on failure
+      setCounts((c) => (c ? { ...c, followers: Math.max(0, c.followers + (next ? -1 : 1)) } : c));
       setErrMsg((e as Error).message);
     } finally {
       setFollowBusy(false);
@@ -176,11 +213,11 @@ function PersonProfile() {
     };
   }, [id]);
 
-  const trainingRows: { key: keyof CurrentUser["trainingDisplay"]; label: string }[] = [
+  // The four facts as tiles. Schedule is not one of them — it is the grid below.
+  const tiles: { key: keyof CurrentUser["trainingDisplay"]; label: string }[] = [
     { key: "level", label: "Level" },
     { key: "type", label: "Type" },
     { key: "split", label: "Split" },
-    { key: "schedule", label: "Schedule" },
     { key: "gym", label: "Gym" },
   ];
 
@@ -216,252 +253,213 @@ function PersonProfile() {
 
       {status === "ready" && user && (
         <>
-          {/* Identity */}
-          <div className="flex flex-col items-center gap-2.5 border-b border-border px-4 pb-4 pt-5">
-            <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-2 border-primary bg-primary-tint text-primary">
-              {user.photo ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={user.photo} alt={user.name || "Profile photo"} className="h-full w-full object-cover" />
-              ) : (
-                <IconUser size={34} />
-              )}
-            </div>
-
-            <div className="flex flex-col items-center gap-1.5">
-              <div className="flex items-center gap-2">
-                <span className="text-[17px] font-medium text-text">
-                  {user.name || "Member"}
-                </span>
-                {user.badges.varsity && <ProfileBadge kind="varsity" />}
+          <div className="flex flex-col gap-2.5 px-3.5 pb-3 pt-3">
+            {/* WHO THEY ARE — photo beside the name, house · class, fit and
+                Mentor pills, the bio, then the two follow totals, each a
+                button that opens the list. */}
+            <div className="rounded-2xl border border-border bg-surface p-3.5">
+              <div className="flex items-center gap-3.5">
+                <div className="flex h-[72px] w-[72px] shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-primary bg-primary-tint text-primary">
+                  {user.photo ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={user.photo} alt={user.name || "Profile photo"} className="h-full w-full object-cover" />
+                  ) : (
+                    <IconUser size={30} />
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="truncate text-[18px] font-semibold tracking-[-0.01em] text-text">
+                      {user.name || "Member"}
+                    </span>
+                    {user.badges.varsity && <ProfileBadge kind="varsity" />}
+                  </div>
+                  {(user.residence || user.classYear) && (
+                    <div className="mt-0.5 text-[12.5px] text-muted">
+                      {residenceLabel(user.residence ?? "")}
+                      {user.residence && user.classYear ? " · " : ""}
+                      {user.classYear ? classOfLabel(user.classYear) : ""}
+                    </div>
+                  )}
+                  {(fit !== null || user.badges.mentor) && (
+                    <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                      {fit !== null && (
+                        <span className="rounded-full border border-primary-line bg-primary-tint px-2.5 py-0.5 text-[11.5px] font-semibold text-primary">
+                          {fit}
+                        </span>
+                      )}
+                      {user.badges.mentor && (
+                        <span className="rounded-full border border-success-line bg-success-tint px-2.5 py-0.5 text-[11.5px] font-semibold text-success">
+                          Mentor
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
 
-              {(user.residence || user.classYear) && (
-                <div className="text-[11px] text-muted">
-                  {residenceLabel(user.residence ?? "")}
-                  {user.residence && user.classYear ? " · " : ""}
-                  {user.classYear ? classOfLabel(user.classYear) : ""}
-                </div>
+              {user.bio && (
+                <p className="mt-3 text-[13.5px] leading-relaxed text-text-2">{user.bio}</p>
               )}
 
-              {(fit !== null || user.badges.mentor) && (
-                <div className="mt-0.5 flex items-center gap-2">
-                  {fit !== null && (
-                    <span className="rounded-lg border border-primary bg-primary-tint px-2 py-0.5 text-[11px] font-medium text-primary">
-                      {fit}
-                    </span>
-                  )}
-                  {user.badges.mentor && (
-                    <span className="rounded-lg border border-success bg-success-tint px-2 py-0.5 text-[11px] font-medium text-success">
-                      Mentor
-                    </span>
-                  )}
-                </div>
-              )}
+              <div className="mt-3 flex items-center gap-4 border-t border-border pt-3">
+                {(
+                  [
+                    { key: "followers", word: counts?.followers === 1 ? "follower" : "followers", n: counts?.followers },
+                    { key: "following", word: "following", n: counts?.following },
+                  ] as { key: FollowKind; word: string; n: number | undefined }[]
+                ).map((c) => (
+                  <button
+                    key={c.key}
+                    type="button"
+                    disabled={counts === null}
+                    onClick={() => setListOpen(c.key)}
+                    className="flex items-baseline gap-1 rounded-md text-[13px] active:opacity-60"
+                  >
+                    <span className="font-semibold tabular-nums text-text">{c.n ?? "—"}</span>
+                    <span className="text-muted">{c.word}</span>
+                  </button>
+                ))}
+              </div>
             </div>
 
-            {user.bio && (
-              <div className="w-full rounded-xl border border-border bg-surface-2 px-3.5 py-2.5">
-                <p className="text-center text-[12px] leading-relaxed text-muted">{user.bio}</p>
+            {/* WHY YOU MATCH — the one tinted card on the page, because it is
+                what the tap was asking. EVERY reason, not the handful the card
+                had room for. */}
+            {reasons.length > 0 && (
+              <div className="rounded-2xl border border-primary-line bg-primary-tint p-3.5">
+                <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-primary">
+                  Why you match
+                </div>
+                <ul className="flex flex-col gap-2">
+                  {reasons.map((r) => (
+                    <li key={r.key} className="flex items-start gap-2.5">
+                      <span className="mt-px flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center rounded-full bg-surface text-primary">
+                        <IconCheck size={11} />
+                      </span>
+                      <span className="text-[13.5px] leading-snug text-text">{r.full}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* TRAINING — four tiles, then their week over yours. */}
+            <div className="rounded-2xl border border-border bg-surface p-3.5">
+              <SectionLabel>Training</SectionLabel>
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                {tiles.map((t) => (
+                  <div key={t.key} className="rounded-lg border border-border px-3 py-2.5">
+                    <div className="text-[10.5px] uppercase tracking-[0.06em] text-text-3">{t.label}</div>
+                    <div className="mt-0.5 text-[14px] font-semibold leading-tight text-text">
+                      {user.trainingDisplay[t.key] || "—"}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4">
+                <ScheduleOverlap theirs={user.trainingSchedule} mine={mySchedule} />
+              </div>
+            </div>
+
+            {/* INTERESTS — chips that fit their word. The school's colour only
+                on the ones you ACTUALLY share (m.facts.interests is that
+                overlap); the rest stay grey, same shape. */}
+            {user.interests.length > 0 && (
+              <div className="rounded-2xl border border-border bg-surface p-3.5">
+                <SectionLabel>Interests</SectionLabel>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {user.interests.map((tag) => {
+                    const shared = sharedInterests.has(tag);
+                    return (
+                      <span
+                        key={tag}
+                        title={shared ? "You both like this" : undefined}
+                        className={`flex items-center gap-1 rounded-md border px-2.5 py-1.5 text-[12px] font-medium ${
+                          shared
+                            ? "border-accent-line bg-accent-tint text-accent"
+                            : "border-border text-muted"
+                        }`}
+                      >
+                        {shared && <IconCheck size={11} />}
+                        {tag}
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* ABOUT — what they study, where they're from, what they speak. */}
+            {(user.concentration ||
+              user.hometownCity ||
+              user.hometownCountry ||
+              user.languages.length > 0) && (
+              <div className="rounded-2xl border border-border bg-surface p-3.5">
+                <SectionLabel>About</SectionLabel>
+                <div className="mt-1 flex flex-col divide-y divide-border">
+                  {user.concentration && (
+                    <div className="flex items-center justify-between gap-3 py-2.5">
+                      <span className="text-[13px] text-muted">Concentration</span>
+                      <span className="text-right text-[13px] font-medium text-text">{user.concentration}</span>
+                    </div>
+                  )}
+                  {(user.hometownCity || user.hometownCountry) && (
+                    <div className="flex items-center justify-between gap-3 py-2.5">
+                      <span className="text-[13px] text-muted">From</span>
+                      <span className="text-right text-[13px] font-medium text-text">
+                        {hometownLabel(user.hometownCity, user.hometownCountry)}
+                      </span>
+                    </div>
+                  )}
+                  {user.languages.length > 0 && (
+                    <div className="flex items-center justify-between gap-3 py-2.5">
+                      <span className="text-[13px] text-muted">Languages</span>
+                      <span className="text-right text-[13px] font-medium text-text">
+                        {user.languages.join(", ")}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* PHOTOS (only when they chose to show them) */}
+            {user.photos.length > 0 && (
+              <div className="rounded-2xl border border-border bg-surface p-3.5">
+                <SectionLabel>Photos</SectionLabel>
+                <div className="mt-2">
+                  <PhotoGallery photos={user.photos} />
+                </div>
+              </div>
+            )}
+
+            {/* PERSONAL RECORDS (only when they chose to show them) */}
+            {user.personalRecords.length > 0 && (
+              <div className="rounded-2xl border border-border bg-surface p-3.5">
+                <SectionLabel>Personal records</SectionLabel>
+                <div className="mt-1 flex flex-col divide-y divide-border">
+                  {user.personalRecords.map((pr, i) => (
+                    <div key={i} className="flex items-center justify-between py-2.5">
+                      <span className="text-[13px] text-muted">{pr.lift}</span>
+                      <span className="text-[13px] font-medium tabular-nums text-text">{pr.value}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>
 
-          {/* Why you match — EVERY reason, not the handful the card had room
-              for. The card drops whatever the whole list also shares, because a
-              fact twenty cards repeat tells you nothing; here there is no list to
-              stand out from and no shortage of room, so it all shows. Sits
-              directly under the identity block because it is what the tap was
-              asking about. */}
-          {reasons.length > 0 && (
-            <div className="border-b border-border px-4 py-3">
-              <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-                Why you match
-              </div>
-              <ul className="flex flex-col gap-1.5">
-                {reasons.map((r) => (
-                  <li key={r.key} className="flex items-start gap-2">
-                    <span className="mt-[3px] flex-shrink-0 text-accent">
-                      <IconCheck size={12} />
-                    </span>
-                    <span className="text-[12px] leading-snug text-text">{r.full}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+          {listOpen && counts && (
+            <FollowListSheet
+              userId={id}
+              initialTab={listOpen}
+              counts={counts}
+              onClose={() => setListOpen(null)}
+            />
           )}
 
-          {/* Training */}
-          <div className="border-b border-border px-4 py-3">
-            <div className="mb-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-              Training
-            </div>
-            <div className="flex flex-col divide-y divide-border">
-              {trainingRows.map((row) => {
-                /*
-                  Schedule used to be a plain row saying "Mon · Wed · Fri" — you
-                  couldn't tell what time without asking them. It's the one row
-                  that expands: tap it and their whole week opens below, in the
-                  same times they set for themselves (lib/schedule.ts).
-                */
-                if (row.key === "schedule") {
-                  return (
-                    <div key={row.key}>
-                      <button
-                        type="button"
-                        onClick={() => setScheduleOpen((v) => !v)}
-                        aria-expanded={scheduleOpen}
-                        className="tap44 flex w-full items-center justify-between gap-3 py-2 text-left"
-                      >
-                        <span className="text-xs text-muted">{row.label}</span>
-                        <span className="flex items-center gap-1 text-right text-xs font-medium text-text">
-                          {user.trainingDisplay.schedule || "—"}
-                          <span
-                            className={`text-muted transition-transform duration-150 motion-reduce:transition-none ${
-                              scheduleOpen ? "rotate-180" : ""
-                            }`}
-                          >
-                            <IconChevronDown size={13} />
-                          </span>
-                        </span>
-                      </button>
-                      {scheduleOpen && (
-                        <div className="flex flex-col gap-1 pb-2.5 pl-0.5 pt-0.5">
-                          {weekSchedule(user.trainingSchedule).map((d) => (
-                            <div key={d.key} className="flex items-center justify-between gap-3 py-0.5">
-                              <span className="text-[11px] text-muted">{d.name}</span>
-                              <span
-                                className={`text-right text-[11px] ${
-                                  d.slots.length > 0 ? "font-medium text-text" : "text-text-3"
-                                }`}
-                              >
-                                {d.slots.length > 0
-                                  ? d.slots.map(slotLabel).join(", ")
-                                  : "Rest"}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  );
-                }
-                return (
-                  <div key={row.key} className="flex items-center justify-between gap-3 py-2">
-                    <span className="text-xs text-muted">{row.label}</span>
-                    <span className="text-right text-xs font-medium text-text">
-                      {user.trainingDisplay[row.key] || "—"}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Interests — moved above Personal records (same order the owner's
-              own profile uses). Squares now only pick up the school's colour
-              when it's an interest you ACTUALLY SHARE with them — before, every
-              one of their interests was coloured the same, so there was no way
-              to tell an overlap from any other of their hobbies at a glance.
-              Unshared ones stay a plain grey square, same shape, same grid. */}
-          {user.interests.length > 0 && (
-            <div className="border-b border-border px-4 py-3">
-              <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-                Interests
-              </div>
-              <div className="grid grid-cols-3 gap-1.5">
-                {user.interests.map((tag) => {
-                  const shared = sharedInterests.has(tag);
-                  return (
-                    <span
-                      key={tag}
-                      title={shared ? "You both like this" : undefined}
-                      className={`truncate rounded-md border px-2 py-1.5 text-center text-[11px] font-medium ${
-                        shared
-                          ? "border-accent-line bg-accent-tint text-accent"
-                          : "border-border bg-surface-2 text-muted"
-                      }`}
-                    >
-                      {tag}
-                    </span>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* About — who they are off the gym floor: what they study, where
-              they're from, what they speak. Sits directly under Interests (it
-              used to be the last block on the page, below Photos and Personal
-              records) because this and Interests are the same question — what
-              you'd actually talk about — and they read as one stretch. */}
-          {(user.concentration ||
-            user.hometownCity ||
-            user.hometownCountry ||
-            user.languages.length > 0) && (
-            <div className="border-b border-border px-4 py-3">
-              <div className="mb-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-                About
-              </div>
-              <div className="flex flex-col divide-y divide-border">
-                {user.concentration && (
-                  <div className="flex items-center justify-between gap-3 py-2">
-                    <span className="text-xs text-muted">Concentration</span>
-                    <span className="text-right text-xs font-medium text-text">
-                      {user.concentration}
-                    </span>
-                  </div>
-                )}
-                {(user.hometownCity || user.hometownCountry) && (
-                  <div className="flex items-center justify-between gap-3 py-2">
-                    <span className="text-xs text-muted">From</span>
-                    <span className="text-right text-xs font-medium text-text">
-                      {hometownLabel(user.hometownCity, user.hometownCountry)}
-                    </span>
-                  </div>
-                )}
-                {user.languages.length > 0 && (
-                  <div className="flex items-center justify-between gap-3 py-2">
-                    <span className="text-xs text-muted">Languages</span>
-                    <span className="text-right text-xs font-medium text-text">
-                      {user.languages.join(", ")}
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Photos (only present when they chose to show them) */}
-          {user.photos.length > 0 && (
-            <div className="border-b border-border px-4 py-3">
-              <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-                Photos
-              </div>
-              <PhotoGallery photos={user.photos} />
-            </div>
-          )}
-
-          {/* Personal records — now the lower of the two, swapped with
-              Interests above (only present when they chose to show them). */}
-          {user.personalRecords.length > 0 && (
-            <div className="border-b border-border px-4 py-3">
-              <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-                Personal records
-              </div>
-              <div className="flex flex-col divide-y divide-border">
-                {user.personalRecords.map((pr, i) => (
-                  <div key={i} className="flex items-center justify-between py-2">
-                    <span className="text-xs text-muted">{pr.lift}</span>
-                    <span className="text-xs font-medium text-text">{pr.value}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Bottom action bar — not wired yet (Follow needs a follow system,
-              Message needs the Messages backend). Present so the layout is
-              reviewable; both are the next slices. */}
+          {/* Bottom action bar — Follow and Message, pinned. */}
           <div className="sticky bottom-0 z-20 mt-auto flex gap-2.5 border-t border-border bg-surface px-4 py-3">
             <button
               type="button"
@@ -471,7 +469,7 @@ function PersonProfile() {
               className={`flex flex-1 items-center justify-center gap-1.5 rounded-full border px-5 py-3 text-sm font-medium transition-colors disabled:opacity-50 ${
                 following
                   ? "border-primary bg-primary-tint text-primary"
-                  : "border-border bg-surface-2 text-text"
+                  : "border-border bg-surface text-text"
               }`}
             >
               {following && <IconCheck size={15} />}

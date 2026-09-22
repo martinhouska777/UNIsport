@@ -46,3 +46,43 @@ export async function getMyFollowCounts(): Promise<{ following: number; follower
   const row = (data as Record<string, unknown>[])[0] ?? {};
   return { following: Number(row.following ?? 0), followers: Number(row.followers ?? 0) };
 }
+
+/* ---- THE LISTS (db/follow_lists.sql) ---------------------------------------
+  Somebody's profile shows how many follow them and how many they follow, and
+  either number opens the people behind it, the way Instagram does it.
+--------------------------------------------------------------------------- */
+
+export type FollowKind = "followers" | "following";
+
+export type FollowPerson = {
+  id: string;
+  name: string;
+  photo: string | null;
+  residence: string | null;
+  classYear: string | null;
+  following: boolean; // do I (the caller) follow this person?
+};
+
+/** Both totals for any profile, mine included. */
+export async function getFollowCounts(
+  targetId: string,
+): Promise<{ followers: number; following: number }> {
+  const { data, error } = await createClient().rpc("follow_counts", { target: targetId });
+  if (error) throw new Error(`getFollowCounts failed: ${error.message}`);
+  const row = (data as Record<string, unknown>[])[0] ?? {};
+  return { followers: Number(row.followers ?? 0), following: Number(row.following ?? 0) };
+}
+
+/** Who follows `targetId`, or who they follow — newest first. */
+export async function listFollows(targetId: string, kind: FollowKind): Promise<FollowPerson[]> {
+  const { data, error } = await createClient().rpc("follow_list", { target: targetId, kind });
+  if (error) throw new Error(`listFollows failed: ${error.message}`);
+  return ((data as Record<string, unknown>[]) ?? []).map((r) => ({
+    id: String(r.id),
+    name: String(r.name ?? "Member"),
+    photo: (r.photo as string | null) ?? null,
+    residence: (r.residence as string | null) ?? null,
+    classYear: (r.class_year as string | null) ?? null,
+    following: !!r.following,
+  }));
+}
