@@ -21,6 +21,8 @@
 */
 import { useCallback, useEffect, useState } from "react";
 import { listCrowdReports, sendCrowdReport, type CrowdReport } from "@/lib/supabase/gymCrowd";
+import { listGymPhotos, addGymPhoto, removeGymPhoto, type GymPhoto } from "@/lib/supabase/gymPhotos";
+export type { GymPhoto } from "@/lib/supabase/gymPhotos";
 
 const favKey = (userId: string) => `gymFavorites:${userId}`;
 const ratingsKey = (userId: string) => `gymRatings:${userId}`;
@@ -322,4 +324,66 @@ export function useGymCrowd(userId: string | null) {
   );
 
   return { getCrowd, reportCrowd };
+}
+
+/**
+ * The school's photos of its gyms, live.
+ *  - photosFor(slug): that gym's photos, newest first.
+ *  - coverFor(slug): the newest one — what the card on the Gyms list wears.
+ *  - addPhoto(slug, file): shrink, upload and record a picture; it shows for
+ *    you at once and for everyone else on their next visit.
+ *  - removePhoto(photo): take one of YOUR photos down.
+ * Same shape as useGymCrowd: one read covers every card, and every mounted
+ * copy re-reads the moment any copy changes something.
+ */
+export function useGymPhotos(userId: string | null) {
+  const uid = userId ?? "";
+  const [photos, setPhotos] = useState<GymPhoto[]>([]);
+
+  useEffect(() => {
+    if (!uid) return;
+    let active = true;
+    const refresh = () =>
+      listGymPhotos(uid)
+        .then((rows) => active && setPhotos(rows))
+        .catch(() => {
+          /* offline or the table isn't there yet — keep what we have */
+        });
+    refresh();
+    window.addEventListener(CHANGE_EVENT, refresh);
+    return () => {
+      active = false;
+      window.removeEventListener(CHANGE_EVENT, refresh);
+    };
+  }, [uid]);
+
+  const photosFor = useCallback(
+    (slug: string): GymPhoto[] => photos.filter((p) => p.gymSlug === slug),
+    [photos],
+  );
+
+  const coverFor = useCallback(
+    (slug: string): GymPhoto | null => photos.find((p) => p.gymSlug === slug) ?? null,
+    [photos],
+  );
+
+  const addPhoto = useCallback(
+    async (slug: string, file: File) => {
+      const photo = await addGymPhoto(uid, slug, file);
+      setPhotos((cur) => [photo, ...cur]);
+      window.dispatchEvent(new CustomEvent(CHANGE_EVENT));
+    },
+    [uid],
+  );
+
+  const removePhoto = useCallback(
+    async (photo: GymPhoto) => {
+      setPhotos((cur) => cur.filter((p) => p.id !== photo.id));
+      await removeGymPhoto(uid, photo);
+      window.dispatchEvent(new CustomEvent(CHANGE_EVENT));
+    },
+    [uid],
+  );
+
+  return { photosFor, coverFor, addPhoto, removePhoto };
 }

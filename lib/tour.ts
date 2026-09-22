@@ -90,7 +90,7 @@ export const tourSteps: TourStep[] = [
   {
     anchor: "tab-/gyms",
     title: "Gyms",
-    body: "Every gym on campus — the opening hours, what kit is inside, and how busy it is right now.",
+    body: "Every gym on campus — the opening hours, how busy it is right now, and photos from the people who train there.",
   },
   {
     anchor: "gyms-filters",

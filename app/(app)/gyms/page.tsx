@@ -5,7 +5,7 @@ import Link from "next/link";
 import { gymsFor, type Gym, type GalleryIcon } from "@/lib/gyms";
 import { useAppState } from "@/components/AppState";
 import { getUniversity } from "@/lib/themes";
-import { useFavorites, useGymCrowd, type GymCrowd } from "@/lib/gymSocial";
+import { useFavorites, useGymCrowd, useGymPhotos, type GymCrowd } from "@/lib/gymSocial";
 import { gymOpenState, useClock, type Clock } from "@/lib/gymHours";
 import OpenNow from "@/components/gyms/OpenNow";
 import { CrowdChip } from "@/components/gyms/RateCrowd";
@@ -114,6 +114,9 @@ type CardProps = {
      `gymCardColors`, which the list cycles down the main gyms. Data, applied
      inline as a CSS variable (rule 1's content exception). */
   wash?: string;
+  /* The newest photo anyone at the school has added to this gym (lib/gymSocial
+     useGymPhotos). When there is one it replaces the colour wash. */
+  cover?: string | null;
 };
 
 /*
@@ -141,7 +144,7 @@ function Watermark({ gym }: { gym: Gym }) {
   );
 }
 
-function MainCard({ gym, fav, onToggleFav, crowd, now, going, tour, wash }: CardProps) {
+function MainCard({ gym, fav, onToggleFav, crowd, now, going, tour, wash, cover }: CardProps) {
   return (
     <Link
       href={`/gyms/${gym.slug}`}
@@ -167,16 +170,34 @@ function MainCard({ gym, fav, onToggleFav, crowd, now, going, tour, wash }: Card
         not pink. A school with no palette falls back to `--primary`.
       */}
       {/* The name sits in the TOP-left corner (owner's call), clear of the heart. */}
-      <div
-        className="relative flex h-24 items-start overflow-hidden bg-[linear-gradient(180deg,color-mix(in_oklab,var(--card-wash,var(--primary))_58%,var(--surface)),color-mix(in_oklab,var(--card-wash,var(--primary))_22%,var(--surface)))] pr-11"
-        style={wash ? ({ "--card-wash": wash } as React.CSSProperties) : undefined}
-      >
-        <Watermark gym={gym} />
-        <div className="relative p-3">
-          <div className="text-[15px] font-medium text-text">{gym.name}</div>
-          <div className="text-[11px] text-text-2">{gym.address}</div>
+      {cover ? (
+        /*
+          THE DAY THE WASH GOES (2026-09-22): a student has added a photo of
+          this gym, so the card wears it. The name still has to read on top of
+          whatever the picture is, so a veil of the card surface fades down
+          from the top — the text sits on the veil, not on the photo.
+        */
+        <div className="relative flex h-24 items-start overflow-hidden pr-11">
+          {/* eslint-disable-next-line @next/next/no-img-element -- user upload, sized here */}
+          <img src={cover} alt="" className="absolute inset-0 h-full w-full object-cover" />
+          <div className="absolute inset-0 bg-[linear-gradient(180deg,color-mix(in_oklab,var(--surface)_88%,transparent),color-mix(in_oklab,var(--surface)_35%,transparent))]" />
+          <div className="relative p-3">
+            <div className="text-[15px] font-medium text-text">{gym.name}</div>
+            <div className="text-[11px] text-text-2">{gym.address}</div>
+          </div>
         </div>
-      </div>
+      ) : (
+        <div
+          className="relative flex h-24 items-start overflow-hidden bg-[linear-gradient(180deg,color-mix(in_oklab,var(--card-wash,var(--primary))_58%,var(--surface)),color-mix(in_oklab,var(--card-wash,var(--primary))_22%,var(--surface)))] pr-11"
+          style={wash ? ({ "--card-wash": wash } as React.CSSProperties) : undefined}
+        >
+          <Watermark gym={gym} />
+          <div className="relative p-3">
+            <div className="text-[15px] font-medium text-text">{gym.name}</div>
+            <div className="text-[11px] text-text-2">{gym.address}</div>
+          </div>
+        </div>
+      )}
       <StatsRow gym={gym} crowd={crowd} now={now} going={going} />
     </Link>
   );
@@ -217,6 +238,9 @@ export default function GymsPage() {
   // Shared campus reports (db/gym_crowd.sql) — what OTHER people tapped, not
   // just this phone's own answer. One read covers every card.
   const { getCrowd } = useGymCrowd(userId);
+  // The school's photos of its gyms (db/gym_photos.sql) — the newest one
+  // becomes the card's picture in place of the colour wash.
+  const { coverFor } = useGymPhotos(userId);
   // The Buddy Board by gym — "3 going tonight" on the card people choose from.
   const { goingFor } = useBoardByGym(userId);
   // One clock for the whole list, so every card agrees on what time it is.
@@ -338,6 +362,7 @@ export default function GymsPage() {
             going={goingFor(g.name)}
             tour={idx === 0 ? "gyms-first-card" : undefined}
             wash={uni?.gymCardColors?.[idx % uni.gymCardColors.length]}
+            cover={coverFor(g.slug)?.url ?? null}
           />
         ))}
 

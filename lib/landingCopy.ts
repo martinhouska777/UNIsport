@@ -396,11 +396,14 @@ export const studentStory: Beat[] = [
     id: "S4",
     kicker: "04 · Gyms",
     head: "See every gym on your campus in one place.",
-    sub: "Explore what equipment each gym has, its rating and how busy it is.",
+    /* 2026-09-22: the equipment lists left the gym page (nobody was going to
+       count kit in every gym at every school), so the promise here follows —
+       the pictures now come from the people who train there. */
+    sub: "See when each gym is open, how busy it is right now, and photos from the people who train there.",
     shot: "01-gyms.webp",
     ann: [],
     points: [
-      { icon: "list", title: "Equipment", text: "See what each gym has." },
+      { icon: "memories", title: "Photos", text: "Added by the students who train there." },
       { icon: "star", title: "Ratings", text: "Know which gyms students rate best." },
       { icon: "crowd", title: "How busy", text: "Check how full it is right now." },
     ],

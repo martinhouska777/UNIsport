@@ -3,27 +3,30 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useAppState } from "@/components/AppState";
-import { useFavorites, useGymRatings, useGymCrowd, timeAgo, CROWD_FRESH_LABEL } from "@/lib/gymSocial";
+import {
+  useFavorites,
+  useGymRatings,
+  useGymCrowd,
+  useGymPhotos,
+  timeAgo,
+  CROWD_FRESH_LABEL,
+} from "@/lib/gymSocial";
 import { StarRater, CrowdPicker, CrowdSentence, BusyBars } from "@/components/gyms/RateCrowd";
 import OpenNow from "@/components/gyms/OpenNow";
+import GymPhotos from "@/components/gyms/GymPhotos";
 import GoingLine, { boardHref } from "@/components/gyms/GoingLine";
 import PostGoingSheet from "@/components/gyms/PostGoingSheet";
 import Avatar from "@/components/messages/Avatar";
 import { useClock } from "@/lib/gymHours";
 import Button, { ButtonLink } from "@/components/ui/Button";
-import { gymHighlights, type Gym } from "@/lib/gyms";
+import { type Gym } from "@/lib/gyms";
 import { useBoardByGym } from "@/lib/gymGoing";
 import { focusLabel, postWhenLabel } from "@/lib/buddyBoard";
 import { useProfileData } from "@/components/profile/useProfileData";
 import { dateLabel } from "@/lib/schedule";
 import { useSharedHooks } from "@/components/match/useSharedHooks";
 import HookChip from "@/components/match/HookChip";
-import {
-  IconArrowLeft,
-  IconHeart,
-  IconMapPin,
-  IconChevronDown,
-} from "@/components/icons";
+import { IconArrowLeft, IconHeart, IconMapPin } from "@/components/icons";
 
 export default function GymProfile({ gym }: { gym: Gym }) {
   const { userId } = useAppState();
@@ -31,6 +34,8 @@ export default function GymProfile({ gym }: { gym: Gym }) {
   const { isFavorite, toggle } = useFavorites(userId);
   const { getRating, setRating } = useGymRatings(userId);
   const { getCrowd, reportCrowd } = useGymCrowd(userId);
+  // The school's own pictures of this gym (db/gym_photos.sql).
+  const { photosFor, addPhoto, removePhoto } = useGymPhotos(userId);
   // Who has already said they're coming here (the Buddy Board, by gym).
   const { goingFor } = useBoardByGym(userId);
   const going = goingFor(gym.name);
@@ -40,7 +45,6 @@ export default function GymProfile({ gym }: { gym: Gym }) {
   const [posted, setPosted] = useState(false);
   const favorite = isFavorite(gym.slug);
   const rating = getRating(gym.slug);
-  const highlights = gymHighlights(gym);
   const crowd = getCrowd(gym.slug);
   const now = useClock();
   // See FavHeart in the gyms list: counts taps so the pop plays on the tap and
@@ -79,18 +83,7 @@ export default function GymProfile({ gym }: { gym: Gym }) {
         </button>
       </div>
 
-      {/*
-        WHERE THE PHOTO CAROUSEL USED TO BE. Four panels — Main Floor, Cardio,
-        Pool, Courts — each a 200px empty rectangle holding one grey icon and one
-        word, with page dots underneath. A photo slot with no photos, and it
-        pushed everything the page is actually for below the fold.
-
-        Gone rather than restyled: there is no photography to put in it, and the
-        gym's own icon still marks its card in the list. gym.gallery stays in the
-        data (lib/gyms.ts) — that is where the card reads its icon from, and
-        where real photos will land when there are some.
-      */}
-      {/* Header block */}
+      {/* Header block: the overview — name, open right now, where. */}
       <div className="border-b border-border px-3.5 py-3">
         <h1 className="mb-1.5 text-[15px] font-medium text-text">{gym.name}</h1>
         <div className="flex flex-wrap gap-x-3.5 gap-y-1 text-[11px] text-muted">
@@ -101,26 +94,24 @@ export default function GymProfile({ gym }: { gym: Gym }) {
             <IconMapPin size={13} /> {gym.address}
           </span>
         </div>
-
         {/*
-          The headline kit, up here rather than fifteen rows down. "Can I squat,
-          is there a bench, is there a pool" is the question a gym page is
-          actually asked, and it used to be answered somewhere in the middle of
-          four equal-looking lists. Which numbers count is DATA (lib/gyms.ts).
+          The equipment chips ("6 racks · pool · …") that sat here are GONE, with
+          the folded equipment lists below (owner, 2026-09-22: no time to count
+          kit in every gym at every school). The counts stay in lib/gyms.ts for
+          the day someone wants them back; nothing on this page reads them.
         */}
-        {highlights.length > 0 && (
-          <ul className="mt-2.5 flex flex-wrap gap-1.5">
-            {highlights.map((h) => (
-              <li
-                key={h}
-                className="rounded-full border border-border bg-surface-2 px-2.5 py-1 text-[11px] font-medium text-text-2"
-              >
-                {h}
-              </li>
-            ))}
-          </ul>
-        )}
       </div>
+
+      {/*
+        PHOTOS, where the empty four-panel carousel once was. Taken by the
+        people who train here rather than by anyone walking the campus with a
+        camera — the newest one also becomes the gym's picture on the list.
+      */}
+      <GymPhotos
+        photos={photosFor(gym.slug)}
+        onAdd={(file) => addPhoto(gym.slug, file)}
+        onRemove={removePhoto}
+      />
 
       {/*
         WHO'S GOING. The Buddy Board already holds people who volunteered for
@@ -201,45 +192,6 @@ export default function GymProfile({ gym }: { gym: Gym }) {
             : `Tap one — everyone at your school sees it for the next ${CROWD_FRESH_LABEL}.`}
         </div>
       </div>
-
-      {/*
-        Equipment, folded away. All four sections used to be open at once — ~25
-        rows of identical weight between the top of the page and the "find a
-        partner" button, which is why nobody ever reached it. Closed, the whole
-        gym fits on a screen and the sections become a table of contents; the
-        headline numbers are already up in the header for anyone who only wanted
-        those.
-
-        <details> rather than React state on purpose: it opens without
-        JavaScript, it is keyboard-operable and screen-reader-announced for
-        free, and the browser handles find-in-page opening the right section.
-      */}
-      {gym.equipment
-        .filter((section) => section.rows.length > 0)
-        .map((section) => (
-          <details key={section.title} className="group border-b border-border">
-            <summary className="tap44 flex cursor-pointer list-none items-center justify-between px-3.5 py-3 [&::-webkit-details-marker]:hidden">
-              <h2 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-                {section.title}
-              </h2>
-              {/* Chevron only. A bare row-count here read as a score. */}
-              <span className="text-muted transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none">
-                <IconChevronDown size={16} />
-              </span>
-            </summary>
-            <div className="flex flex-col divide-y divide-border px-3.5 pb-3">
-              {section.rows.map((row) => (
-                <div
-                  key={row.label}
-                  className="flex items-center justify-between py-2"
-                >
-                  <span className="text-xs text-muted">{row.label}</span>
-                  <span className="text-xs font-medium text-text">{row.value}</span>
-                </div>
-              ))}
-            </div>
-          </details>
-        ))}
 
       {/*
         WHERE "RATINGS BREAKDOWN" USED TO BE — three gold bars (Equipment,
