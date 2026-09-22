@@ -34,23 +34,31 @@ a free handle answers "Profile isn't available" / "Couldn't find this account".
 
 | Handle | Instagram | TikTok |
 |---|---|---|
-| **`@getunisport`** | **free** | not checked yet |
-| `@unisportapp` | **free** | not checked yet |
-| `@unisport.app` | **free** | not checked yet |
-| `@unisporthq` | **free** | not checked yet |
-| `@unisport` | **TAKEN** — Unisport.dk, Danish football retailer, 453K followers | — |
+| **`@unisportapp`** | **free** | **free** |
+| `@getunisport` | **free** | **free** |
+| `@unisport.team` | **free** | not checked |
+| `@unisporthq` | **free** | not checked |
+| `@unisport.app` | free — but see below | not checked |
+| `@unisport` | **TAKEN** — Unisport.dk, Danish football retailer, 453K followers | **TAKEN** — dead account, 6 followers |
 
-`@unisport` is not gettable. It is the same company as the `unisport.com` domain in
-`EMAIL.md` §2 — a real business with half a million followers.
+`@unisport` is not gettable on either platform. On Instagram it is the same company as
+the `unisport.com` domain in `EMAIL.md` §2 — a real business with half a million
+followers.
 
-### Recommended: `@getunisport`
+### Recommended: `@unisportapp`
 
-Because it is **the same word as everything else you own**: the site is
-`getunisport.com`, the email will be `hello@getunisport.com`, and the handle matches
-both. One name, spelled one way, everywhere. Nobody has to remember which variant.
+Free on both platforms, so the name is the same everywhere.
 
-`@unisportapp` is the reasonable alternative if "get" bothers you. Check both on TikTok
-before committing — the handle should be the same on both platforms.
+**Why not `@getunisport`**, which an earlier draft of this file recommended: the "get"
+prefix exists only to dodge the taken `.com`. It is a **URL artifact, not a name**. A
+handle is said out loud and tagged, not typed into a browser — "check out @getunisport"
+reads like an advert, "@unisportapp" reads like an identity. It is also what people
+actually guess: someone hears the name, tries `@unisport`, finds the football shop, and
+guesses `@unisportapp` next. Nobody guesses "get". The bio link carries the domain; the
+handle does not have to.
+
+**Avoid `@unisport.app`.** It looks clean, but `unisport.app` is a real domain owned by
+somebody else (`EMAIL.md` §2). The handle would point people at a stranger's parked page.
 
 ### The Name field — not the same thing as the handle
 
@@ -223,7 +231,7 @@ challenge.
 
 - Email: the new address
 - Full name → the Name field: `UNIsport · train with your team`
-- Handle: `@getunisport`
+- Handle: `@unisportapp`
 - Skip the "find your contacts" step
 
 ### Step 3 — Make it a Creator account, NOT a Business account (you, 1 min)
@@ -363,6 +371,6 @@ Build in public:
 - [ ] First video posted
 
 **Status 2026-09-22:** nothing created yet. Strategy corrected to a UNIsport product
-account (the earlier admissions plan is gone). Handles checked live — `@getunisport` is
-free on Instagram. Blocked on nothing except the logo, which should not hold up creating
+account (the earlier admissions plan is gone). Handles checked live — `@unisportapp` is
+free on Instagram AND TikTok. Blocked on nothing except the logo, which should not hold up creating
 the account.
