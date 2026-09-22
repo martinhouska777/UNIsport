@@ -122,8 +122,8 @@ const statusByTitle = (title: string) =>
   statusOptions.find((s) => s.title === title) ?? statusOptions[0];
 
 /*
-  THE SIDE CHIP, in the side's own colour — port red, starboard green, both
-  blue, a cox gold. It is the same content data the lineup pool and the coach's
+  THE SIDE CHIP, in the side's own colour — port red, starboard green, a cox
+  gold, and grey for a rower who has not answered yet. It is the same content data the lineup pool and the coach's
   seating screen paint with (lib/varsity/coachLineup → sideMeta / COX_COLOR),
   applied inline: a per-entity colour out of a data file is the one exception
   to "colours come from tokens" (rule 1), and this is it.
@@ -787,7 +787,7 @@ function WeeklyGraph({
 
 /* ─────────────────────────  screen  ───────────────────────── */
 export default function ProfileScreen() {
-  const { userId } = useAppState();
+  const { userId, resetVarsitySetup } = useAppState();
   const { units } = useUnits();
   // Coach or captain? Decides whether the console door appears at the bottom.
   const { membership, isMember } = useMembership();
@@ -845,6 +845,8 @@ export default function ProfileScreen() {
 
   type Modal = "identity" | "status" | "prs" | "seat" | null;
   const [modal, setModal] = useState<Modal>(null);
+  // Replaying the athlete setup arms first — see the button at the bottom.
+  const [replayArmed, setReplayArmed] = useState(false);
   const router = useRouter();
 
   /*
@@ -1137,8 +1139,8 @@ export default function ProfileScreen() {
           <div className="mt-0.5 text-[11px] text-muted">{classLine}</div>
           <div className="mt-1 flex items-center gap-2 text-[11px] text-muted">
             {profile.weightKg != null && <span>{formatWeight(profile.weightKg, units.weight)}</span>}
-            {/* The side keeps its COLOUR — port red, starboard green, both
-                blue, a cox gold — the same colours the lineup screens and the
+            {/* The side keeps its COLOUR — port red, starboard green, a cox
+                gold — the same colours the lineup screens and the
                 coach's pool paint the same fact with (lib/varsity/coachLineup
                 → sideMeta). A per-entity colour out of a data file is the one
                 exception to "colours come from tokens" (rule 1). */}
@@ -1148,7 +1150,7 @@ export default function ProfileScreen() {
             >
               {profile.boatRole === "Coxswain"
                 ? "Coxswain"
-                : (sideLabel(profile.boatRole, profile.side) ?? "Both")}
+                : (sideLabel(profile.boatRole, profile.side) ?? sideMeta.B.label)}
             </span>
           </div>
           {/* The prompt to PICK a name stays while there is nothing picked —
@@ -1328,6 +1330,57 @@ export default function ProfileScreen() {
           </Link>
         </div>
       )}
+
+      {/*
+        REPLAY THE ATHLETE SETUP — the last thing on the page, under everything
+        it would rewrite.
+
+        The student profile has the same button for the nine-screen flow. This
+        one re-runs the SHORT setup a rower answers on the way in: name, class
+        year, sex, rower or cox, side, height and weight. It arms first,
+        because it is not a preview — the questions start blank, and what you
+        finish with replaces the identity above. Nothing else moves: the squad,
+        the logs and the personal bests are untouched.
+      */}
+      <div className="px-3.5 pb-4 pt-6">
+        {replayArmed ? (
+          <div className="rounded-2xl border border-border bg-surface p-3.5">
+            <div className="text-[13px] font-medium text-text">Run the setup again?</div>
+            <p className="mt-0.5 text-[11px] leading-relaxed text-muted">
+              You&apos;ll answer the setup screen from scratch. Whatever you finish with
+              replaces the name, year and measurements above.
+            </p>
+            <div className="mt-3 flex gap-2">
+              <Button
+                variant="secondary"
+                size="lg"
+                className="flex-1"
+                onClick={() => setReplayArmed(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                size="lg"
+                className="flex-1"
+                onClick={async () => {
+                  await resetVarsitySetup();
+                  router.replace("/varsity/setup");
+                }}
+              >
+                Start over
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setReplayArmed(true)}
+            className="w-full rounded-full border border-border bg-surface px-5 py-2.5 text-sm font-medium text-text"
+          >
+            Replay athlete setup
+          </button>
+        )}
+      </div>
 
       {/* ── Sheets ── */}
       {modal === "identity" && (

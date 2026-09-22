@@ -12,7 +12,7 @@
     • WHO YOU ARE — name, class year, sex. What the varsity profile displays.
     • HOW YOU ROW — rower or coxswain, which side, height and weight. What the
       coach's lineup builder needs and currently has to guess: its roster
-      defaults every athlete to "Both" sides because nobody was ever asked.
+      splits the squad half port, half starboard because nobody was ever asked.
 
   Everything is written onto the SAME profile row the student side uses, in ONE
   request, and marks only the varsity flag — so the student app stays available,
@@ -47,10 +47,10 @@ export default function VarsitySetupPage() {
   const [name, setName] = useState("");
   const [classYear, setClassYear] = useState("");
   const [sex, setSex] = useState("");
-  // "Both" is the default because it is what the coach's roster already assumes
-  // — answering can only ever make the lineup builder more accurate, never less.
+  // Nothing is pre-picked: port and starboard are the only two answers now, and
+  // guessing one FOR somebody would seat them on the wrong side of the boat.
   const [boatRole, setBoatRole] = useState<BoatRole>("Rower");
-  const [side, setSide] = useState<Side>("B");
+  const [side, setSide] = useState<Side | null>(null);
   const [height, setHeight] = useState("");
   const [weight, setWeight] = useState("");
   // Which unit the number above is typed in. Stored weight is ALWAYS kilos
@@ -77,9 +77,9 @@ export default function VarsitySetupPage() {
       sex,
       varsity: {
         boatRole,
-        // A coxswain has no side. Storing "B" rather than the last pill they
-        // happened to tap keeps the record honest if they switch back later.
-        side: boatRole === "Coxswain" ? "B" : side,
+        // A coxswain has no side, and neither has a rower who skipped the
+        // question — "B" is the record for both, never a third kind of rower.
+        side: boatRole === "Coxswain" ? "B" : (side ?? "B"),
         heightCm: height.trim() ? Number(height) : null,
         weightKg:
           typedWeight == null
@@ -176,7 +176,7 @@ export default function VarsitySetupPage() {
           {boatRole === "Rower" && (
             <>
               <FieldLabel>Which side do you row?</FieldLabel>
-              <div className="mb-2 flex flex-wrap gap-1.5">
+              <div className="mb-4 flex flex-wrap gap-1.5">
                 {sideOptions.map((o) => (
                   <Pill
                     key={o.key}
@@ -186,10 +186,6 @@ export default function VarsitySetupPage() {
                   />
                 ))}
               </div>
-              <p className="mb-4 text-[11px] leading-relaxed text-muted">
-                Your coach sees this when they build lineups. Pick “Both” if you
-                genuinely swing both ways — it isn’t a wrong answer.
-              </p>
             </>
           )}
 

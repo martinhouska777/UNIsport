@@ -38,15 +38,19 @@ export type BoatRole = (typeof boatRoleOptions)[number];
   just gives the ATHLETE a way to answer it about themselves instead of leaving
   the coach to set thirty of them by hand.
 
-  ONE name per side, taken straight from sideMeta: Port, Starboard, Both. An
-  athlete answering this reads the same word here that the coach reads on the
-  roster and on the seat in the boat — and the same colour, since the roster
-  now draws the blade colours again rather than one blue for everybody.
+  ONE name per side, taken straight from sideMeta: Port, Starboard. An athlete
+  answering this reads the same word here that the coach reads on the roster
+  and on the seat in the boat — and the same colour, since the roster draws
+  the blade colours.
+
+  TWO OPTIONS, not three (owner, 2026-09-21): a rower is port or starboard,
+  and somebody who can do either picks the one they are being seated on. The
+  stored "B" is not offered here — it is what a coxswain's record carries and
+  what a rower carries until they answer.
 */
 export const sideOptions: { key: Side; label: string }[] = [
   { key: "P", label: sideMeta.P.label },
   { key: "S", label: sideMeta.S.label },
-  { key: "B", label: sideMeta.B.label },
 ];
 
 /** "Starboard" — for the chip on the profile. Null for a coxswain. */
@@ -217,8 +221,8 @@ export function defaultTeamYear(classYear: string): string {
 export function defaultProfile(classYear: string): VarsityAthleteProfile {
   return {
     teamYear: defaultTeamYear(classYear),
-    // "Both" is the honest default for anyone who never answered — it is what
-    // the coach's roster already assumes, so nothing changes for old accounts.
+    // NO SIDE is the honest default for anyone who never answered. It is not a
+    // third kind of rower — the chip reads "Not set" until they pick one.
     boatRole: "Rower",
     side: "B",
     heightCm: null,

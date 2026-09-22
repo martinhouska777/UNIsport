@@ -23,12 +23,23 @@
   ONE name across the profile, the roster and the boat builder. (A British crew
   says strokeside/bowside for the same two sides; that dialect is deliberately
   not shown any more, so nobody has to translate between them.)
+
+  A ROWER IS PORT OR STARBOARD. There is no third answer any more (owner,
+  2026-09-21: "make the people just port and starboard — just decide which of
+  the two"). The bisweptual rowers on the roster were each given a side, and
+  the side question no longer offers a "Both" pill.
+
+  `B` survives as a STORED value only, and it no longer means "both": it means
+  NO SIDE — a coxswain, who does not row one, and a rower who has not answered
+  the question yet. It cannot be deleted from the type because saved profiles
+  and seeded rows already hold it.
 */
-export type Side = "P" | "S" | "B"; // port · starboard · both (bisweptual)
+export type Side = "P" | "S" | "B"; // port · starboard · no side (a cox, or unanswered)
 
 /*
-  Painted blades. Port is red, starboard is GREEN, and someone who rows either
-  way is blue — the owner's scheme, and the one the squad's oars use.
+  Painted blades. Port is red and starboard is GREEN — the owner's scheme, and
+  the one the squad's oars use. The third entry is not a blade at all: it is
+  the grey of a side nobody has said yet, and a cox never shows it.
   `ink` is what stays readable ON that blade: the app has a light theme as well
   as a dark one, so no blade colour may assume the background behind it.
 */
@@ -40,21 +51,24 @@ export type Side = "P" | "S" | "B"; // port · starboard · both (bisweptual)
   The owner's call: P, S, B in the console.
 */
 /*
-  PORT / STARBOARD / BOTH. This wording has now been round the houses twice —
+  PORT / STARBOARD. This wording has now been round the houses twice —
   Port/Starboard, then Stroke/Bow, and back again on the owner's instruction.
   It stays here because it is the SIDE OF THE BOAT, which is what the blade
   colour, the seat marker and the athlete's own answer all mean; stroke side
   and bow side are the British dialect for the same two things.
 
   The colours are the painted blades and are used everywhere the side is
-  shown, the Team roster included — red port, green starboard, blue for a
-  rower who takes either. (The roster briefly drew all three blue; one colour
-  for "on a side" threw away the only thing the dot was there to say.)
+  shown, the Team roster included — red port, green starboard. (The roster
+  briefly drew both blue; one colour for "on a side" threw away the only thing
+  the dot was there to say.)
+
+  B is the leftover: grey, and never a blade. Nobody is offered it — it is
+  what a coxswain's record carries, and what a rower carries until they answer.
 */
 export const sideMeta: Record<Side, { label: string; tag: string; color: string; ink: string }> = {
   P: { label: "Port", tag: "P", color: "#d93025", ink: "#ffffff" },
   S: { label: "Starboard", tag: "S", color: "#1e8e3e", ink: "#ffffff" },
-  B: { label: "Both", tag: "B", color: "#2563eb", ink: "#ffffff" },
+  B: { label: "Not set", tag: "?", color: "#64748b", ink: "#ffffff" },
 };
 
 export const COX_COLOR = "#eab308"; // yellow — cox identity
@@ -139,7 +153,10 @@ export type Athlete = {
   athlete now is their SIDE.
 
   The sides are a WORKING SPLIT: the squad's sheet does not record who rows
-  which side, so they are set to read half port, half starboard down each boat.
+  which side, so they are set to read half port, half starboard down each boat
+  — twenty-seven of each. Nobody is down as "both" any more (owner,
+  2026-09-21): the eleven who were have each been given one of the two, chosen
+  to keep that split even.
   A rower's own answer (the side question in /varsity/setup) replaces them the
   moment these are real accounts. Nobody here is marked out: who is out is a
   fact about a day, written by the coach from the Lineup pool and kept in
@@ -164,44 +181,44 @@ export const roster: Athlete[] = [
   { id: "marcus-chung", initials: "MC", name: "Marcus Chung", side: "P" },
   { id: "mason-cruz-abrams", initials: "MCr", name: "Mason Cruz-Abrams", side: "S" },
   { id: "o-cruz-abrams", initials: "OC", name: "O Cruz-Abrams", side: "P" },
-  { id: "jack-dorney", initials: "JD", name: "Jack Dorney", side: "B" },
+  { id: "jack-dorney", initials: "JD", name: "Jack Dorney", side: "S" },
   { id: "alexander-grundy", initials: "AG", name: "Alexander Grundy", side: "P" },
   { id: "george-farkas", initials: "GF", name: "George Farkas", side: "S" },
   { id: "sam-gallaudet", initials: "SG", name: "Sam Gallaudet", side: "P" },
   { id: "martin-houska", initials: "MH", name: "Martin Houska", side: "S" },
-  { id: "marco-gandola", initials: "MG", name: "Marco Gandola", side: "B" },
+  { id: "marco-gandola", initials: "MG", name: "Marco Gandola", side: "S" },
   { id: "apostolos-lykomitros", initials: "AL", name: "Apostolos Lykomitros", side: "P" },
   { id: "tyler-horler", initials: "TH", name: "Tyler Horler", side: "S" },
   { id: "teddy-plimpton", initials: "TP", name: "Teddy Plimpton", side: "P" },
   { id: "sam-davidson", initials: "SD", name: "Sam Davidson", side: "S" },
-  { id: "jordan-dykema", initials: "JDy", name: "Jordan Dykema", side: "B" },
+  { id: "jordan-dykema", initials: "JDy", name: "Jordan Dykema", side: "P" },
 
   { id: "jack-hansen-knarhoi", initials: "JH", name: "Jack Hansen-Knarhoi", side: "P" },
   { id: "owen-finnerty", initials: "OF", name: "Owen Finnerty", side: "S" },
   { id: "marco-vicino", initials: "MV", name: "Marco Vicino", side: "P" },
   { id: "pierce-lapham", initials: "PL", name: "Pierce Lapham", side: "S" },
-  { id: "julian-paul", initials: "JP", name: "Julian Paul", side: "B" },
+  { id: "julian-paul", initials: "JP", name: "Julian Paul", side: "S" },
   { id: "ben-scott", initials: "BS", name: "Ben Scott", side: "P" },
   { id: "sam-woodgate", initials: "SW", name: "Sam Woodgate", side: "S" },
   { id: "mike-thomas", initials: "MT", name: "Mike Thomas", side: "P" },
   { id: "joseph-baker", initials: "JB", name: "Joseph Baker", side: "S" },
-  { id: "adam-cech", initials: "AC", name: "Adam Cech", side: "B" },
+  { id: "adam-cech", initials: "AC", name: "Adam Cech", side: "S" },
   { id: "alex-sanchez-fretz", initials: "AS", name: "Alex Sanchez-Fretz", side: "P" },
   { id: "leo-bessler", initials: "LB", name: "Leo Bessler", side: "S" },
   { id: "joshua-brangan", initials: "JBr", name: "Joshua Brangan", side: "P" },
   { id: "bob-rawlinson", initials: "BR", name: "Bob Rawlinson", side: "S" },
-  { id: "ben-schnalke", initials: "BSc", name: "Ben Schnalke", side: "B" },
+  { id: "ben-schnalke", initials: "BSc", name: "Ben Schnalke", side: "P" },
   { id: "jack-sulger", initials: "JS", name: "Jack Sulger", side: "P" },
   { id: "elam-hughes", initials: "EH", name: "Elam Hughes", side: "S" },
   { id: "owen-marcovitz", initials: "OM", name: "Owen Marcovitz", side: "P" },
 
   { id: "will-fowler", initials: "WF", name: "Will Fowler", side: "S" },
-  { id: "kevin-weldon", initials: "KW", name: "Kevin Weldon", side: "B" },
+  { id: "kevin-weldon", initials: "KW", name: "Kevin Weldon", side: "S" },
   { id: "leyth-sousou", initials: "LS", name: "Leyth Sousou", side: "P" },
   { id: "cameron-beyki", initials: "CB", name: "Cameron Beyki", side: "S" },
   { id: "max-morehead", initials: "MM", name: "Max Morehead", side: "P" },
   { id: "george-burney", initials: "GB", name: "George Burney", side: "S" },
-  { id: "alp-karadogan", initials: "AK2", name: "Alp Karadogan", side: "B" },
+  { id: "alp-karadogan", initials: "AK2", name: "Alp Karadogan", side: "S" },
   { id: "kynan-tallec-botos", initials: "KT", name: "Kynan Tallec-Botos", side: "P" },
   { id: "ryan-cornelius", initials: "RC", name: "Ryan Cornelius", side: "S" },
   { id: "charles-richards", initials: "CR", name: "Charles Richards", side: "P" },
@@ -217,9 +234,9 @@ export const roster: Athlete[] = [
   { id: "rabinovitz", initials: "Rb", name: "Rabinovitz", side: "P" },
   { id: "wolskel", initials: "Wo", name: "Wolskel", side: "P" },
   { id: "hazen", initials: "Hz", name: "Hazen", side: "S" },
-  { id: "saeed", initials: "Sa", name: "Saeed", side: "B" },
-  { id: "schinnerl", initials: "Sc", name: "Schinnerl", side: "B" },
-  { id: "yu", initials: "Yu", name: "Yu", side: "B" },
+  { id: "saeed", initials: "Sa", name: "Saeed", side: "S" },
+  { id: "schinnerl", initials: "Sc", name: "Schinnerl", side: "P" },
+  { id: "yu", initials: "Yu", name: "Yu", side: "S" },
 ];
 
 export const rosterById: Record<string, Athlete> = Object.fromEntries(
@@ -228,9 +245,9 @@ export const rosterById: Record<string, Athlete> = Object.fromEntries(
 
 /*
   HOW THE POOL IS FILTERED. Four buttons: All, Port, Starboard, Cox. All is
-  everyone. Port and Starboard are the rowers who can pull that side — which
-  includes everyone marked BOTH, so a bisweptual rower shows up under both and
-  never has to be hunted for. Cox is its own button because "who can steer" is
+  everyone. Port and Starboard are the rowers who pull that side, and since
+  every rower is now one or the other, the two lists together are the squad
+  and no name is in both. Cox is its own button because "who can steer" is
   a question a coach asks on its own, and coxswains have no side to be found
   under — before this they could only be picked out of All by eye.
 
@@ -249,11 +266,12 @@ export const poolFilters: { key: PoolFilter; label: string; color?: string; ink?
   { key: "cox", label: "Cox", color: COX_COLOR, ink: COX_INK },
 ];
 
-/** Does this athlete belong under that filter? "Both" belongs under P and S. */
+/** Does this athlete belong under that filter? Every rower is on one side, so
+    a name appears under Port or under Starboard, never under both. */
 export function inPool(a: Athlete, f: PoolFilter): boolean {
   if (f === "all") return true;
   if (f === "cox") return !!a.cox;
-  return !a.cox && (a.side === f || a.side === "B");
+  return !a.cox && a.side === f;
 }
 
 /* ── The practice picker (entry screen) ── */
