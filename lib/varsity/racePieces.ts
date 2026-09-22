@@ -400,6 +400,28 @@ export type AthleteRow = {
 */
 export type AthleteBoard = { badge: string; title: string; rows: AthleteRow[] };
 
+/**
+ * WHO THEY SAT WITH, SAID ONCE (owner, 2026-09-22: "Cate · Cate · Cate — we
+ * stop writing this ... make it smarter").
+ *
+ * The line under a name used to be one entry per piece, so a rower who never
+ * left their boat read as the same name three times over, and a dash for a
+ * piece they missed only repeated what that piece's own column already says.
+ *
+ * A name is now written when it CHANGES and not otherwise: one name for a crew
+ * that stayed together, "Nick · Cate" for someone who moved after the first
+ * piece, "Nick · Cate · Nick" for someone who moved and came back. Nobody to
+ * name at all gives an empty string, and the line is left off.
+ */
+export function withLine(entries: (string | null)[]): string {
+  const out: string[] = [];
+  for (const e of entries) {
+    if (!e) continue;
+    if (out[out.length - 1] !== e) out.push(e);
+  }
+  return out.join(" · ");
+}
+
 export function athleteBoards(pieces: RacePiece[]): AthleteBoard[] {
   const boards = pieces.map(pieceBoards);
   const classes = new Map<string, Map<string, AthleteRow>>();

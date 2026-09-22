@@ -66,6 +66,7 @@ import {
   newPiece,
   parseClock,
   pieceBoards,
+  withLine,
   type RaceCrew,
   type RaceDay,
   type RacePiece,
@@ -405,12 +406,12 @@ export default function RaceBoard({
                                 been an unreachable branch. */}
                             <span className="truncate text-[13px] font-semibold text-text">{a.name}</span>
                           </div>
-                          {/* Who they sat with, one name per piece, in the
-                              pieces' order — a coach reading down the pairs
-                              sees the swaps. */}
-                          <div className="mt-0.5 truncate text-[11px] text-muted">
-                            {a.with.map((w) => w ?? "—").join(" · ")}
-                          </div>
+                          {/* Who they sat with — written once for a crew
+                              that stayed together, and again only where it
+                              changed (withLine, racePieces.ts). */}
+                          {withLine(a.with) && (
+                            <div className="mt-0.5 truncate text-[11px] text-muted">{withLine(a.with)}</div>
+                          )}
                         </div>
                         {a.perPiece.map((m, k) => (
                           <span key={k} className="text-right text-[12px] tabular-nums text-muted">

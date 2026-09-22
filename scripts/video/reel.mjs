@@ -108,7 +108,7 @@ const words = (big, key) => big.split(" ").map((w) => {
 
 const capHtml = (s, i) => s.big
   ? `<div class="caps" id="p${i}"><div class="big">${words(s.big, s.key)}</div>${
-      s.sub ? `<div class="sub"><span id="t${i}">${s.sub}</span>${s.type ? '<b class="cur" id="cu' + i + '"></b>' : ""}</div>` : ""
+      s.sub ? `<div class="sub"><span class="tw"><span id="t${i}">${s.sub}</span>${s.type ? '<b class="cur" id="cu' + i + '"></b>' : ""}</span></div>` : ""
     }</div>`
   : "";
 
@@ -123,29 +123,33 @@ const html = `<!doctype html><html><head><meta charset="utf-8">
   #stage { position:relative; width:${W}px; height:${H}px; overflow:hidden; background:#000;
            perspective:1500px; perspective-origin:50% 44%; }
   #amb { position:absolute; inset:0; will-change:opacity;
-         background:radial-gradient(52% 34% at 50% 40%, rgba(60,86,220,.50) 0%, rgba(20,28,80,.18) 42%, rgba(0,0,0,0) 72%); }
+         background:radial-gradient(44% 28% at 50% 40%, rgba(40,58,150,.18) 0%, rgba(12,17,50,.07) 44%, rgba(0,0,0,0) 70%); }
 
   .beat { position:absolute; inset:0; transform-style:preserve-3d; will-change:opacity; }
 
   .card { position:absolute; left:50%; top:232px; width:700px; height:1151px; margin-left:-350px;
           border-radius:46px; overflow:hidden; background:#000;
-          box-shadow:0 0 0 2px rgba(150,170,255,.16), 0 60px 120px rgba(0,0,0,.8);
+          box-shadow:0 0 0 2px rgba(160,180,255,.22), 0 70px 150px rgba(0,0,0,.92);
           will-change:transform; }
-  .shot { position:absolute; left:0; top:0; width:100%; height:100%; object-fit:cover; object-position:50% 0; }
+  /* the app screen is the subject: it gets a small lift so the glow around it
+     never reads brighter than the product it is lighting */
+  .shot { position:absolute; left:0; top:0; width:100%; height:100%; object-fit:cover; object-position:50% 0;
+          filter:brightness(1.12) contrast(1.08) saturate(1.04); }
   .shot.tall { height:auto; will-change:transform; }
   .cyc { opacity:0; }
 
   /* the screen, blurred and brightened behind itself: the light source */
   .halo { position:absolute; left:50%; top:232px; width:700px; height:1151px; margin-left:-350px;
           object-fit:cover; object-position:50% 0;
-          filter:blur(66px) saturate(2.6) brightness(1.5); opacity:.62; z-index:-1;
+          filter:blur(90px) saturate(.9) brightness(1.02); opacity:.26; z-index:-1;
           will-change:transform,opacity; }
   .glowplate { position:absolute; left:50%; top:300px; width:900px; height:1000px; margin-left:-450px;
-               background:radial-gradient(50% 50% at 50% 50%, rgba(80,110,255,.42), rgba(0,0,0,0) 70%);
+               background:radial-gradient(50% 50% at 50% 50%, rgba(66,92,215,.20), rgba(0,0,0,0) 70%);
                filter:blur(40px); z-index:-2; will-change:opacity,transform; }
 
   .caps { position:absolute; left:74px; right:74px; top:1452px; text-align:center; will-change:opacity; }
-  .big  { font-style:italic; font-weight:800; font-size:76px; line-height:1.08; letter-spacing:-.028em;
+  .big  { font-style:italic; font-weight:800; font-size:67px; line-height:1.1; letter-spacing:-.028em;
+          text-wrap:balance;
           color:#fff; text-shadow:0 0 46px rgba(130,160,255,.5), 0 0 110px rgba(31,50,193,.4); }
   .big .w { display:inline-block; position:relative; will-change:transform,opacity,filter; }
   .big .k { color:${LIFT}; text-shadow:0 0 40px rgba(142,164,255,.85), 0 0 90px rgba(31,50,193,.6); }
@@ -153,8 +157,13 @@ const html = `<!doctype html><html><head><meta charset="utf-8">
              background:${LIFT}; box-shadow:0 0 26px ${LIFT}; transform-origin:0 50%;
              transform:scaleX(0); will-change:transform; }
   .sub  { margin-top:26px; font-weight:500; font-size:34px; line-height:1.36; letter-spacing:-.004em;
-          color:rgba(214,224,255,.74); }
-  .cur  { display:inline-block; width:3px; height:.98em; margin-left:6px; vertical-align:-.13em;
+          color:rgba(220,229,255,.88); }
+  /* the typed line is laid out ONCE and revealed by a clip, so no character
+     ever shifts. Retyping textContent re-centres the line every frame and the
+     motion-blur pass then averages two centrings into a double image. */
+  .tw   { position:relative; display:inline-block; }
+  .tw > span { display:inline-block; }
+  .cur  { position:absolute; top:.14em; width:3px; height:.96em; margin-left:7px;
           background:${LIFT}; box-shadow:0 0 16px ${LIFT}; }
 
   #end { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center;
@@ -243,7 +252,7 @@ const html = `<!doctype html><html><head><meta charset="utf-8">
         var halo = document.getElementById("h" + i);
         var plate = document.getElementById("g" + i);
         if (card) card.style.transform = xf;
-        if (halo) { halo.style.transform = xf; halo.style.opacity = String(0.62 * vis); }
+        if (halo) { halo.style.transform = xf; halo.style.opacity = String(0.34 * vis); }
         if (plate) plate.style.opacity = String(vis);
         ambLift = Math.max(ambLift, vis);
 
@@ -279,17 +288,23 @@ const html = `<!doctype html><html><head><meta charset="utf-8">
           ul.style.transform = "scaleX(" + d.toFixed(3) + ")";
         }
         if (s.type && s.sub) {
-          /* the second line types itself, the way the reference reels do */
+          /* the second line types itself, the way the reference reels do --
+             revealed by a clip so the layout never moves */
           var span2 = document.getElementById("t" + i);
-          var n = Math.round(cl((local - 0.85) / 1.5) * s.sub.length);
-          span2.textContent = s.sub.slice(0, n);
+          var pr = cl((local - 0.85) / 1.5);
+          var n = Math.round(pr * s.sub.length);
+          pr = n / s.sub.length;
+          span2.style.clipPath = "inset(-0.4em " + ((1 - pr) * 100).toFixed(3) + "% -0.4em 0)";
           var cu = document.getElementById("cu" + i);
-          if (cu) cu.style.opacity = (Math.floor(t * 2.4) % 2 === 0 || n < s.sub.length) ? "1" : "0";
+          if (cu) {
+            cu.style.left = (pr * 100).toFixed(3) + "%";
+            cu.style.opacity = (pr < 1 || Math.floor(t * 2.4) % 2 === 0) ? "1" : "0";
+          }
         }
       }
     }
 
-    document.getElementById("amb").style.opacity = String(0.35 + 0.65 * ambLift);
+    document.getElementById("amb").style.opacity = String(0.22 + 0.5 * ambLift);
 
     /* the cold open: one point of light before any words */
     var sp = document.getElementById("spark");
@@ -357,17 +372,17 @@ const VF = [
   "tmix=frames=2:weights=1 1",
   "fps=" + OUT_FPS,
   "split=2[a][b]",
-  "[b]curves=all='0/0 0.68/0 1/1',gblur=sigma=24:steps=2[bl]",
-  "[a][bl]blend=all_mode=screen:all_opacity=0.52",
-  "eq=saturation=1.1:contrast=1.05",
-  "noise=alls=5:allf=t",
+  "[b]curves=all='0/0 0.88/0 1/1',gblur=sigma=14:steps=2[bl]",
+  "[a][bl]blend=all_mode=screen:all_opacity=0.20",
+  "eq=saturation=0.98:contrast=1.09",
+  "noise=alls=3:allf=t",
   "vignette=PI/4.6",
 ].join(",");
 
 execFileSync("ffmpeg", [
   "-y", "-framerate", String(RENDER_FPS), "-i", path.join(work, "%05d.png"),
   "-filter_complex", VF,
-  "-c:v", "libx264", "-preset", "slow", "-crf", "17",
+  "-c:v", "libx264", "-preset", "slow", "-crf", "20", "-maxrate", "12M", "-bufsize", "24M",
   "-pix_fmt", "yuv420p", "-movflags", "+faststart", out,
 ], { stdio: "inherit" });
 
