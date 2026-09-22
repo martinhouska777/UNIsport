@@ -91,7 +91,6 @@ import {
 } from "@/lib/varsity/daysOut";
 import { type CheckIns } from "@/lib/varsity/checkIn";
 import {
-  IconPencil,
   IconExpand,
   IconActivity,
   IconChevronRight,
@@ -476,51 +475,56 @@ function StatusSheet({
   );
 }
 
-/* ─────────────────────────  personal-bests editor  ───────────────────────── */
+/* ─────────────────────────  personal-bests editor  ─────────────────────────
+   ONE PIECE AT A TIME (owner, 2026-09-22). Tapping the 2K used to open all
+   four in a column — four inputs to change one number, and the three you
+   weren't touching sat there waiting to be fat-fingered. Now the tile you
+   tapped IS the thing being edited: the sheet is named after it and holds its
+   one field. The other three are untouched, because only this key is patched.
+
+   Emptying the field and saving CLEARS that best — the same field is the way
+   in and the way out. */
 function PrSheet({
+  piece,
   prs,
   onSave,
   onClose,
 }: {
+  /** The one piece being edited — the tile that was tapped. */
+  piece: string;
   prs: Record<string, string>;
   onSave: (patch: Partial<VarsityAthleteProfile>) => void;
   onClose: () => void;
 }) {
-  const [draft, setDraft] = useState<Record<string, string>>(() => {
-    const d: Record<string, string> = {};
-    for (const p of prPieces) d[p] = prs[p] ?? "";
-    return d;
-  });
+  const [draft, setDraft] = useState(prs[piece] ?? "");
+
+  const save = () => {
+    const next: Record<string, string> = { ...prs };
+    if (draft.trim()) next[piece] = draft.trim();
+    else delete next[piece];
+    onSave({ prs: next });
+    onClose();
+  };
 
   return (
-    <Sheet title="Personal bests" onClose={onClose}>
-      <div className="flex flex-col gap-3">
-        {prPieces.map((piece) => (
-          <div key={piece} className="flex items-center gap-3">
-            <span className="w-16 flex-shrink-0 text-[12px] font-semibold uppercase tracking-[0.06em] text-muted">
-              {piece}
-            </span>
-            <input
-              value={draft[piece]}
-              onChange={(e) => setDraft((d) => ({ ...d, [piece]: e.target.value }))}
-              placeholder={piece === "30′ r20" ? "e.g. 8,420 m" : "e.g. 6:08.4"}
-              className={inputCls}
-            />
-          </div>
-        ))}
-      </div>
-      <Button
-        size="lg"
-        full
-        onClick={() => {
-          const cleaned: Record<string, string> = {};
-          for (const [k, v] of Object.entries(draft)) if (v.trim()) cleaned[k] = v.trim();
-          onSave({ prs: cleaned });
-          onClose();
+    <Sheet title={piece} onClose={onClose}>
+      {/* No label over the field: the sheet is called 2K and the field under
+          it is the 2K. */}
+      <input
+        value={draft}
+        autoFocus
+        onChange={(e) => setDraft(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            save();
+          }
         }}
-        className="mt-5"
-      >
-        <IconCheck size={16} /> Save bests
+        placeholder={piece === "30′ r20" ? "e.g. 8,420 m" : "e.g. 6:08.4"}
+        className={inputCls}
+      />
+      <Button size="lg" full onClick={save} className="mt-5">
+        <IconCheck size={16} /> Save
       </Button>
     </Sheet>
   );
@@ -832,8 +836,10 @@ export default function ProfileScreen() {
   */
   const [mixRangeKey, setMixRangeKey] = useState(defaultStatRange);
 
-  type Modal = "identity" | "status" | "prs" | "seat" | null;
+  type Modal = "identity" | "status" | "seat" | null;
   const [modal, setModal] = useState<Modal>(null);
+  /* WHICH personal best is open, if any — the tile that was tapped. */
+  const [prPiece, setPrPiece] = useState<string | null>(null);
   // Replaying the athlete setup arms first — see the button at the bottom.
   const [replayArmed, setReplayArmed] = useState(false);
   const router = useRouter();
@@ -1266,19 +1272,15 @@ export default function ProfileScreen() {
         />
       </div>
 
-      {/* ── Personal bests (editable) ── */}
-      <div className="flex items-center justify-between px-4 pb-2 pt-5">
+      {/* ── Personal bests ──
+          NO "EDIT" IN THE CORNER (owner, 2026-09-22). The word and the pencil
+          opened the same sheet the tiles already open, and it opened all four
+          at once. Each tile is its own button into its own number, so there is
+          nothing left for a pencil up here to mean. */}
+      <div className="px-4 pb-2 pt-5">
         <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
           Personal Bests
         </div>
-        <button
-          type="button"
-          onClick={() => setModal("prs")}
-          aria-label="Edit personal bests"
-          className="flex items-center gap-1 text-[11px] font-medium text-primary"
-        >
-          <IconPencil size={12} /> Edit
-        </button>
       </div>
       <div className="mx-3.5 grid grid-cols-2 gap-1.5">
         {prPieces.map((piece) => {
@@ -1287,8 +1289,9 @@ export default function ProfileScreen() {
             <button
               key={piece}
               type="button"
-              onClick={() => setModal("prs")}
-              className="flex items-baseline justify-between rounded-xl border border-border bg-surface px-3 py-2.5 text-left"
+              onClick={() => setPrPiece(piece)}
+              aria-label={`Edit ${piece} best`}
+              className="flex items-baseline justify-between rounded-xl border border-border bg-surface px-3 py-2.5 text-left active:bg-surface-2"
             >
               <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
                 {piece}
@@ -1399,8 +1402,13 @@ export default function ProfileScreen() {
           onClose={() => setSpell(null)}
         />
       )}
-      {modal === "prs" && (
-        <PrSheet prs={profile.prs} onSave={patchProfile} onClose={() => setModal(null)} />
+      {prPiece && (
+        <PrSheet
+          piece={prPiece}
+          prs={profile.prs}
+          onSave={patchProfile}
+          onClose={() => setPrPiece(null)}
+        />
       )}
       {modal === "seat" && (
         <ClaimSeatSheet
