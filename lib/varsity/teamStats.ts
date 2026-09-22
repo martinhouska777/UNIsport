@@ -341,13 +341,11 @@ export function teamReport(
   people: SquadPerson[],
   buckets: TeamBucket[],
   units: Units,
-  squadSize: number,
 ): StatGroup[] {
   if (!buckets.length) return [];
   return squadReport(
     people,
     { startIso: toIso(buckets[0].start), endIso: toIso(buckets[buckets.length - 1].end) },
     units,
-    squadSize,
   );
 }

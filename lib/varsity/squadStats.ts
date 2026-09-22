@@ -21,8 +21,10 @@
   twenty-four with sixteen who logged anything in the window did not train
   two-thirds of a session each; the eight who logged nothing are not a zero,
   they are an unknown, and an unknown must not be averaged in (owner: "the
-  don't-knows won't be counted in that thing"). How many people the average IS
-  over is the first number on the screen, so it is never read alone.
+  don't-knows won't be counted in that thing"). How many people that was is NOT
+  printed any more: the owner cut the whole "The squad" group on 2026-09-22
+  ("I don't want the squad people looking crossed out") - the count of who
+  logged, and the squad's two raw totals with it.
 
   Everything comes back as the same StatGroup / StatCell data the athlete's
   rowingReport returns, so the screen renders whatever this file decides to say
@@ -172,70 +174,58 @@ const weeksIn = (span: Span): number => {
 };
 
 /*
-  WHAT THE WINDOW COMES TO. Four groups, in the athlete's own order — how many
-  of us, how far, how long, how steady:
+  WHAT THE WINDOW COMES TO. Three groups, in the order the owner read them out
+  (2026-09-22) - how far, how long, how steady:
 
-    The squad    — how many people this is the average of, and the whole
-                   squad's distance and time, which is the one thing a coach
-                   wants as a TOTAL rather than an average.
-    Distance     — per person: the total, the water and the erg it is made of,
-                   and the average row.
-    Time         — per person: the total, an average week, and then how long
+    Distance     - per person, and the AVERAGE ROW COMES FIRST: "every session,
+                   we want to see first average session, then the other
+                   statistics". Then the water and the erg it is made of, the
+                   window's total, and what that comes to in a week.
+    Time         - per person: the total, an average week, and then how long
                    went on each thing. Weights is in here, which is the point.
-    Consistency  — per person: days trained, and with a plan up what was put
+    Consistency  - per person: days trained, and with a plan up what was put
                    up, what got done, what got missed and what was done on
                    top. Never "against the plan".
+
+  THERE IS NO "THE SQUAD" GROUP any more. It held three cells - how many people
+  logged out of the roster, and the squad's whole distance and time - and the
+  owner cut all three on 2026-09-22: "I don't want the squad people looking
+  crossed out. Distance everyone, time everyone, you can cross this out."
+  Printing "16 of 24" put eight names in a bracket nobody asked for, and a
+  total grows with the size of the squad rather than saying how a week went.
 
   A kind of training nobody did is left out rather than printing a dash at a
   coach, and the plan's four only appear when there is a plan over the window.
 */
-export function squadReport(
-  people: SquadPerson[],
-  span: Span,
-  units: Units,
-  /** How many are on the squad at all, so the average says what it is over. */
-  squadSize: number,
-): StatGroup[] {
+export function squadReport(people: SquadPerson[], span: Span, units: Units): StatGroup[] {
   if (people.length === 0) return [];
   const weeks = weeksIn(span);
   const km = (v: number | null) => (v == null ? dash : formatDistance(v, units.distance));
   const hrs = (v: number | null) => (v == null || v <= 0 ? dash : formatDuration(Math.round(v)));
 
-  const totalMetres = sum(people.map((p) => p.metres));
-  const totalMinutes = sum(people.map((p) => p.minutes));
   const measured = sum(people.map((p) => p.measured));
   const metresMeasured = sum(people.map((p) => p.metresMeasured));
 
   const groups: StatGroup[] = [
     {
-      key: "squad",
-      title: "The squad",
-      cells: [
-        {
-          key: "people",
-          label: "People logging",
-          value: squadSize > 0 ? `${people.length} of ${squadSize}` : `${people.length}`,
-        },
-        { key: "allDistance", label: "Distance, everyone", value: km(totalMetres) },
-        { key: "allTime", label: "Time, everyone", value: hrs(totalMinutes) },
-      ],
-    },
-    {
       key: "distance",
       title: "Distance per person",
       cells: [
-        { key: "total", label: "Total", value: km(per(people, (p) => p.metres)) },
-        { key: "water", label: "On the water", value: km(per(people, (p) => p.water)) },
-        { key: "erg", label: "On the erg", value: km(per(people, (p) => p.erg)) },
         /* THE AVERAGE ROW is over the sessions that wrote a distance, across
-           the whole squad — not the average of each person's average, which
+           the whole squad - not the average of each person's average, which
            would let somebody who rowed once weigh as much as somebody who
-           rowed thirty times. */
+           rowed thirty times. First cell on the screen, by the owner's order. */
         {
           key: "row",
           label: "Average row",
           value: measured > 0 ? formatDistance(metresMeasured / measured, units.distance) : dash,
         },
+        { key: "water", label: "On the water", value: km(per(people, (p) => p.water)) },
+        { key: "erg", label: "On the erg", value: km(per(people, (p) => p.erg)) },
+        { key: "total", label: "Total", value: km(per(people, (p) => p.metres)) },
+        /* What the window comes to in a WEEK, so a fortnight and a semester can
+           be read against each other without doing the division in your head. */
+        { key: "week", label: "In a week", value: km(per(people, (p) => p.metres / weeks)) },
       ],
     },
   ];

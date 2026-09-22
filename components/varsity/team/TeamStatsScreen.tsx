@@ -20,16 +20,20 @@
       "Zoom out" puts back the window you were on before the first zoom.
     • an empty day reads out NOTHING — "5 boats, nothing written on them" and
       "27 people · 14 boats" were text nobody asked for
-    • THE SAME GROUPS THE ATHLETE GETS (owner, 2026-09-22): how many of us,
-      distance per person, time per person — on the water, on the erg, on the
-      WEIGHTS — and consistency per person, which is what the coach put up
-      against what got done, missed and done on top. The four cells that used
-      to be the whole of it all said "outing", and the owner cut the word:
-      "I don't know why you're saying outing, I don't want that."
+    • THE SAME GROUPS THE ATHLETE GETS (owner, 2026-09-22): distance per
+      person — THE AVERAGE ROW FIRST, then the water, the erg, the total and
+      what that is in a week — time per person, and consistency per person,
+      which is what the coach put up against what got done, missed and done
+      on top. The owner cut two things from this list by name: the word
+      "outing" (2026-09-21) and the whole SQUAD group (2026-09-22) — who
+      logged out of the roster, and the squad's raw distance and time.
     • the squad's TRAINING MIX, over the same window
     • EVERY PERSON, one row each: what they rowed, how long, and done out of
       planned — "let's say there was something prescribed and then they did
-      more or less, so they want to see how each person trained"
+      more or less, so they want to see how each person trained". TAPPING A
+      ROW OPENS THAT PERSON (owner, 2026-09-22: "when you click a person, you
+      want to see his statistics") — their console page, which is their
+      statistics, their past workouts and their calendar.
     • at the foot, a TABLE the way a coach would lay it out in a spreadsheet:
       one row a day or a week, kilometres, the change on the row before,
       hours — so a week is compared against the weeks before it by reading
@@ -54,6 +58,7 @@
 */
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
+import Link from "next/link";
 import ThemeProvider from "@/components/ThemeProvider";
 import { useVarsityTheme } from "@/components/varsity/useVarsityTheme";
 import { useUnits } from "@/components/useUnits";
@@ -141,8 +146,6 @@ export default function TeamStatsScreen({ onClose }: { onClose: () => void }) {
   const [logs, setLogs] = useState<Record<string, LogEntry[]> | null>(null);
   /** Account id to the name printed in the table of people. */
   const [names, setNames] = useState<Record<string, string>>({});
-  /** How many are on the squad at all, so "16 of 24" can be said. */
-  const [squadSize, setSquadSize] = useState(0);
   /* The published plan, so planned / done / missed / on top can be counted:
      the same published-only gate the athlete's own screen uses, so the two
      screens never disagree about what was missed. */
@@ -200,7 +203,6 @@ export default function TeamStatsScreen({ onClose }: { onClose: () => void }) {
         const byId: Record<string, string> = {};
         for (const m of approved) byId[m.userId] = m.name;
         setNames(byId);
-        setSquadSize(approved.length);
         const read = await fetchSquadLogsInRange(
           approved.map((m) => m.userId),
           from,
@@ -283,7 +285,7 @@ export default function TeamStatsScreen({ onClose }: { onClose: () => void }) {
     () => windowPeople(buckets, squadLogs ?? {}, names, plan),
     [buckets, squadLogs, names, plan],
   );
-  const groups = teamReport(people, buckets, units, squadSize);
+  const groups = teamReport(people, buckets, units);
   const rows: SquadRow[] = useMemo(() => squadRows(people, units), [people, units]);
   /* The squad's mix over the same window: everybody's logs pooled, which is
      the one figure here that is a share rather than an average. */
@@ -581,6 +583,11 @@ function ReadOut({ bucket, each, units }: { bucket: TeamBucket; each: "day" | "w
   that answers "there was something prescribed and then they did more or
   less". Most kilometres on top, because that is the column an eye runs down.
 
+  A row is a LINK to that person's console page — their own statistics, their
+  past workouts and their calendar (owner, 2026-09-22). The roster rows on the
+  Team tab already went there; the table of names did not, so the one screen
+  that names everybody was the one place a coach could not tap a name.
+
   Only the plan column is coloured, and only when there IS a plan for that
   person: green when they did everything asked, warned when they are short.
   The distance and the hours are never coloured — a light week in a taper is
@@ -609,9 +616,10 @@ function PeopleTable({ rows, units }: { rows: SquadRow[]; units: Units }) {
           <span className={cell}>Plan</span>
         </div>
         {rows.map((r, i) => (
-          <div
+          <Link
             key={r.id}
-            className={`grid ${cols} items-center border-b border-border last:border-b-0 ${
+            href={`/varsity/coach/athlete/${r.id}`}
+            className={`grid ${cols} items-center border-b border-border last:border-b-0 active:bg-surface-2 ${
               i % 2 === 1 ? "bg-surface-2/60" : ""
             }`}
           >
@@ -619,7 +627,7 @@ function PeopleTable({ rows, units }: { rows: SquadRow[]; units: Units }) {
             <span className={`${cell} font-semibold text-text`}>{r.distance}</span>
             <span className={`${cell} text-text`}>{r.time}</span>
             <span className={`${cell} font-semibold ${toneClass[r.tone]}`}>{r.plan}</span>
-          </div>
+          </Link>
         ))}
       </div>
     </div>
