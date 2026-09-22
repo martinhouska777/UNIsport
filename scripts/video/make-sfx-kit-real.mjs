@@ -28,22 +28,33 @@ mkdirSync(OUT, { recursive: true });
    letter click ran at 7.6 kHz and the air whoosh at 9.9 kHz, the two harshest
    sounds in the library. */
 const KIT = {
-  "key-1":      ["keyboard__single-key-press-in-a-laptop__2541", 0.10, 0.13, 1.0, 1.00],
-  "key-2":      ["keyboard__hard-single-key-press-in-a-laptop__2542", 0.10, 0.13, 0.9, 1.00],
-  "key-3":      ["keyboard__single-key-type__2533", 0.00, 0.20, 1.0, 1.00],
-  "key-4":      ["keyboard__single-key-press-in-a-laptop__2541", 0.10, 0.13, 1.0, 1.09],
-  "key-5":      ["keyboard__hard-single-key-press-in-a-laptop__2542", 0.10, 0.13, 0.9, 0.93],
-  "key-6":      ["keyboard__single-key-type__2533", 0.00, 0.20, 1.0, 1.13],
-  "key-enter":  ["keyboard__hard-single-key-press-in-a-laptop__2542", 0.09, 0.18, 1.0, 0.85],
+  /* Owner: "less like laptop typing, less aggressive". The laptop-key recordings
+     are gone; these are a soft typewriter tick and a dull cash-machine key,
+     pitch-varied and rolled off at 4 kHz so they read as typing without clatter. */
+  "key-1":      ["click__typewriter-soft-click__1125", 0.00, 0.09, 0.80, 1.00, "lowpass=f=4000"],
+  "key-2":      ["click__typewriter-soft-click__1125", 0.00, 0.09, 0.72, 1.11, "lowpass=f=4000"],
+  "key-3":      ["keyboard__atm-cash-machine-key-press__2841", 0.00, 0.14, 0.85, 1.00, "lowpass=f=3400"],
+  "key-4":      ["click__typewriter-soft-click__1125", 0.00, 0.09, 0.80, 0.92, "lowpass=f=4000"],
+  "key-5":      ["keyboard__atm-cash-machine-key-press__2841", 0.00, 0.14, 0.78, 1.10, "lowpass=f=3400"],
+  "key-6":      ["click__typewriter-soft-click__1125", 0.00, 0.09, 0.75, 1.05, "lowpass=f=4000"],
+  "key-enter":  ["keyboard__atm-cash-machine-key-press__2841", 0.00, 0.18, 0.90, 0.88, "lowpass=f=3000"],
   "click-ui":   ["interface__select-click__1109", 0.00, 0.22, 1.0, 1.00, "lowpass=f=5000"],
   "click-soft": ["technology__modern-technology-select__3124", 0.00, 0.09, 1.0, 1.00, "lowpass=f=3200"],
-  "tap-1":      ["click__on-or-off-light-switch-tap__2585", 0.00, 0.16, 1.0, 1.00],
-  "tap-2":      ["click__plastic-bubble-click__1124", 0.07, 0.15, 1.0, 0.95],
+  /* Owner: "a click sound when you click the two things" */
+  "tap-1":      ["click__modern-click-box-check__1120", 0.00, 0.12, 1.0, 1.00, "lowpass=f=5500"],
+  "tap-2":      ["click__modern-click-box-check__1120", 0.00, 0.12, 0.92, 0.93, "lowpass=f=5500"],
+  /* the text turning into "Choose your activity" */
+  "whoosh-text":["swoosh__short-wind-swoosh__1461", 0.00, 0.50, 1.0, 1.00],
+  /* the three activity tiles arriving (audition A) */
+  "tile":       ["technology__modern-technology-select__3124", 0.00, 0.09, 1.0, 1.00, "lowpass=f=3200"],
+  /* the push as the two halves come together — a different push from the slide */
+  "push-join":  ["swoosh__speeding-swoosh__1484", 0.00, 1.70, 1.0, 1.00, "lowpass=f=6000"],
   "whoosh-air": ["transition__short-transition-sweep__175", 0.15, 0.45, 1.0, 1.00, "lowpass=f=4200"],
   "whoosh-mid": ["transition__fast-small-sweep-transition__166", 0.05, 0.68, 1.0, 1.00],
   "whoosh-low": ["whoosh__cinematic-tunnel-reverb-woosh__1486", 0.15, 2.10, 1.0, 1.00],
   "riser":      ["whoosh__cinematic-whoosh-fast-transition__1492", 0.10, 1.15, 1.0, 1.00],
-  "note-warm":  ["transition__bass-rumble-hum__2297", 0.00, 2.20, 1.0, 1.00],
+  /* Owner: "a different sound when they connect" (audition connect-1) */
+  "note-warm":  ["technology__retro-confirmation-tone__2860", 0.00, 1.30, 1.0, 1.00, "lowpass=f=4000"],
   "bed-air":    ["technology__futuristic-sci-fi-computer-ambience__2507", 0.30, 6.00, 1.0, 1.00],
 };
 

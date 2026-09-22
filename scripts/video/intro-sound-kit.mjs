@@ -39,7 +39,7 @@ const NAMES = ["key-1", "key-2", "key-3", "key-4", "key-5", "key-6", "key-enter"
   "click-ui", "tap-1", "tap-2", "whoosh-low", "whoosh-mid", "whoosh-air",
   "riser", "note-warm", "bed-air"];
 /* click-soft is newer than the synthesised kit, so fall back to click-ui if absent */
-const OPTIONAL = ["click-soft"];
+const OPTIONAL = ["click-soft", "whoosh-text", "tile", "push-join"];
 const SFX = {};
 for (const n of NAMES) {
   if (!existsSync(S(n + ".wav"))) { console.error(`missing ${KIT}/${n}.wav — run: node scripts/video/make-sfx-kit${KIT === "sfx" ? "" : "-real"}.mjs`); process.exit(1); }
@@ -47,6 +47,7 @@ for (const n of NAMES) {
 }
 for (const n of OPTIONAL) if (existsSync(S(n + ".wav"))) SFX[n] = decode(S(n + ".wav"));
 const SOFT_CLICK = SFX["click-soft"] ? "click-soft" : "click-ui";
+const pick = (name, fallback) => (SFX[name] ? name : fallback);
 /* where each sound's transient sits; without a table, assume a swell peaking halfway */
 const ANCHORS = existsSync(S("anchors.json")) ? JSON.parse(readFileSync(S("anchors.json"), "utf8")) : {};
 const anchorOf = (name, rate) => (ANCHORS[name] !== undefined ? ANCHORS[name] / rate : (SFX[name].length / rate / SR) / 2);
@@ -126,9 +127,13 @@ function build(version) {
      the letters, and every level pulled back. */
   const G = version === "layered" ? 0.72 : 1;
 
-  at("click-ui", T.cursor, 0.45 * G);
+  /* Owner: cut the first sound. The film now opens on the typing. */
+  if (version !== "layered") at("click-ui", T.cursor, 0.45 * G);
   typeRun(TIMES.prefix, 0.55 * (version === "layered" ? 0.95 : 1), false);
   typeRun(TIMES.sufA, 0.55 * (version === "layered" ? 0.95 : 1), true);
+
+  /* Owner: a whoosh as the line becomes "Choose your activity" */
+  if (version === "layered") peakAt(pick("whoosh-text", "whoosh-air"), T.act, 0.34 * G);
 
   /* the activities lift in */
   if (version === "quiet") {
@@ -137,11 +142,15 @@ function build(version) {
     peakAt("whoosh-mid", T.lift, (version === "layered" ? 0.34 : 0.40) * G, 1.15);
     peakAt("whoosh-air", T.lift + 0.06, 0.22 * G);
   }
-  if (version !== "quiet") for (let i = 0; i < 3; i++) at("click-ui", T.tiles + 0.18 + i * 0.12, (0.26 - i * 0.04) * G);
+  if (version !== "quiet") for (let i = 0; i < 3; i++)
+    at(version === "layered" ? pick("tile", "click-ui") : "click-ui",
+       T.tiles + 0.18 + i * 0.12, (0.30 - i * 0.05) * G);
 
   /* the two taps */
-  at("tap-1", T.tap1, 0.85 * G);
-  at("tap-2", T.tap2, 0.78 * G);
+  /* anchored on the transient: this click's peak sits 0.10 s into the file, so
+     placing it by its start would land it after the finger has already pressed */
+  peakAt("tap-1", T.tap1, 0.85 * G);
+  peakAt("tap-2", T.tap2, 0.78 * G);
   if (version === "layered") { peakAt("whoosh-air", T.tap1, 0.10); peakAt("whoosh-air", T.tap2, 0.09); }
 
   /* the activities leave */
@@ -155,7 +164,9 @@ function build(version) {
   typeRun(TIMES.match, 0.50 * (version === "layered" ? 0.95 : 1), true);
 
   /* the slow fill, then they meet */
-  if (version === "layered") at("riser", T.met - 0.9, 0.16 * G);
+  /* Owner: a push again as they come closer together, but a different one from
+     the slide. This swells across the whole join and peaks as they meet. */
+  if (version === "layered") peakAt(pick("push-join", "riser"), T.met - 0.05, 0.40 * G);
   /* This is a bass rumble, and left alone its 2.2 s tail drones underneath the
      UNIsport letters — that is the sound the owner heard interfering. Fade it out
      from 0.5 s in so it is gone before the letters land. */
