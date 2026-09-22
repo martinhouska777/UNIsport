@@ -401,26 +401,40 @@ export type AthleteRow = {
 export type AthleteBoard = { badge: string; title: string; rows: AthleteRow[] };
 
 /**
- * WHO THEY SAT WITH, SAID ONCE (owner, 2026-09-22: "Cate · Cate · Cate — we
- * stop writing this ... make it smarter").
+ * WHO THEY SAT WITH, COUNTED (owner, 2026-09-22).
  *
- * The line under a name used to be one entry per piece, so a rower who never
- * left their boat read as the same name three times over, and a dash for a
- * piece they missed only repeated what that piece's own column already says.
+ * It began as one entry per piece, so a rower who never left their boat read
+ * "Cate · Cate · Cate" and a piece they missed printed a dash the margin
+ * column had already accounted for. Then it wrote a name only where it
+ * changed. The owner's own notation is better than both, and it is how the
+ * sheet is written by hand: "3 pieces, then 3× one and 1× the other, if there
+ * were four pieces or different people."
  *
- * A name is now written when it CHANGES and not otherwise: one name for a crew
- * that stayed together, "Nick · Cate" for someone who moved after the first
- * piece, "Nick · Cate · Nick" for someone who moved and came back. Nobody to
- * name at all gives an empty string, and the line is left off.
+ * So: one boat all morning is just the name, because a count of the only
+ * thing there is is noise. Two or more, and every name carries how many
+ * pieces it was — "2× Abbi · 1× Iris" — in the order they first sat there.
+ * A count of 1 on EVERY name says nothing either (a coxless four is rowed
+ * with different people every piece, so it would be "1×" all the way down):
+ * there the names are simply listed. Nobody to name gives an empty string
+ * and the line is left off.
+ *
+ * What this drops is the ORDER of a swap: someone who went Iris, Abbi, Iris
+ * reads as "2× Iris · 1× Abbi", the same as Iris, Iris, Abbi. The piece
+ * columns beside it still say which piece was which.
  */
 export function withLine(entries: (string | null)[]): string {
-  const out: string[] = [];
+  const counts = new Map<string, number>();
   for (const e of entries) {
     if (!e) continue;
-    if (out[out.length - 1] !== e) out.push(e);
+    counts.set(e, (counts.get(e) ?? 0) + 1);
   }
-  return out.join(" · ");
+  if (counts.size === 0) return "";
+  const names = [...counts.keys()];
+  if (names.length === 1) return names[0];
+  const every = [...counts.values()].every((n) => n === 1);
+  return names.map((n) => (every ? n : `${counts.get(n)}× ${n}`)).join(" · ");
 }
+
 
 export function athleteBoards(pieces: RacePiece[]): AthleteBoard[] {
   const boards = pieces.map(pieceBoards);
