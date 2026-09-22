@@ -365,6 +365,9 @@ export type AthleteBoard = { badge: string; title: string; rows: AthleteRow[] };
 export function athleteBoards(pieces: RacePiece[]): AthleteBoard[] {
   const boards = pieces.map(pieceBoards);
   const classes = new Map<string, Map<string, AthleteRow>>();
+  /* `cox` stays on the row type: the piece boards still name a crew by its
+     cox, and nothing here should start pretending coxes do not exist. This
+     board simply never creates a row FOR one. */
   const rowFor = (badge: string, name: string, cox: boolean) => {
     if (!classes.has(badge)) classes.set(badge, new Map());
     const people = classes.get(badge)!;
@@ -385,11 +388,18 @@ export function athleteBoards(pieces: RacePiece[]): AthleteBoard[] {
           r.perPiece[pi] = toWinner;
           r.with[pi] = cox ?? rowers.filter((x) => x !== n).join("/") ?? null;
         }
-        if (cox) {
-          const r = rowFor(cb.badge, cox, true);
-          r.perPiece[pi] = toWinner;
-          r.with[pi] = rowers[0] ?? null;
-        }
+        /*
+          NO COXES ON THIS BOARD (owner, 2026-09-22: "the coxes are there as
+          well — I don't like them, put the coxes out of it. There is no
+          point.").
+
+          The board reads a margin as something a PERSON carried, and a cox
+          carries whichever boat they steer: ranking them beside the rowers
+          said a cox in the winning four was the fastest athlete of the day.
+          They are still the NAME of their crew everywhere else — on the piece
+          boards, on Combined, and in the "with" column beside every rower they
+          steered — which is how a timing sheet names a coxed four.
+        */
       }
     }
   });

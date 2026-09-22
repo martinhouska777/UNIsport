@@ -126,7 +126,6 @@ import {
   saveLineup,
   type LineupStatus,
 } from "@/lib/varsity/lineupStore";
-import BoatSessionStrip, { type BoatWork } from "@/components/varsity/BoatSessionStrip";
 import {
   IconArrowLeft,
   IconCheck,
@@ -1472,12 +1471,6 @@ function Builder({
     setBoats((prev) => prev.map((b) => (b.id === boatId ? { ...b, dock } : b)));
   const setOars = (boatId: string, oars: string) =>
     setBoats((prev) => prev.map((b) => (b.id === boatId ? { ...b, oars } : b)));
-  /* How far this crew went and how long they worked. Held in the boats like
-     everything else on this screen, so the autosave below carries it — the
-     strip never writes to the database from inside the builder. */
-  const setWork = (boatId: string, work: BoatWork) =>
-    setBoats((prev) => prev.map((b) => (b.id === boatId ? { ...b, ...work } : b)));
-
   /* Everything about the new boat comes off the rigging the coach picked —
      how many seats, whether there is a cox, what it is called. Nothing here
      knows what an "8+" is any more; the squad's settings do.
@@ -1984,18 +1977,23 @@ function Builder({
                       </div>
 
                       {/*
-                        SESSION — last, because it is the only part of the card
-                        filled in AFTER the outing: the kilometres, the working
-                        time and the footage, all under one lid. Everything above
-                        it is written before the boat pushes off; this is what
-                        comes back with it.
+                        NO SESSION DRAWER IN THE BUILDER (owner, 2026-09-22:
+                        "when he's creating the lineup, why would he write
+                        kilometres there?").
+
+                        The kilometres, the working time and the footage all
+                        come BACK from the water — they are filled in after the
+                        outing, by the cox, on the boat card on their own Home
+                        screen, which still carries the whole drawer. A coach
+                        seating a crew the night before has nothing to put in
+                        it, and an empty drawer asking for a distance reads as
+                        a thing he forgot to do.
+
+                        Anything already written stays written: the figures live
+                        on the boat and the autosave below carries them
+                        untouched, so editing a lineup after the outing does not
+                        wipe what the crew logged.
                       */}
-                      <BoatSessionStrip
-                        dayKey={dayKey}
-                        boat={boat}
-                        canEdit
-                        onChange={(work) => setWork(boat.id, work)}
-                      />
                       </>
                     )}
                   </div>

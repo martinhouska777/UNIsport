@@ -27,10 +27,15 @@
   ATHLETES reads the same day by person, and is SPLIT BY CLASS like the rest
   — the fours' people, then the pairs' — because a gap in a four and a gap
   in a pair are gaps to different winners. Crews are reshuffled between
-  pieces, so each rower (and cox) is listed with the margin their boat
-  carried in every piece, who they sat with, and the AVERAGE — the owner's
-  pick for "how each person finished". Nothing is excluded; this is the
-  workout, not selection. Seat racing proper is another screen.
+  pieces, so each ROWER is listed with the margin their boat carried in every
+  piece, who they sat with, and the AVERAGE — the owner's pick for "how each
+  person finished". NO COXES on it (owner, 2026-09-22): the board reads a
+  margin as something a person carried, and a cox carries whichever boat they
+  steer, so ranking them beside the rowers said the cox of the winning four
+  was the fastest athlete of the day. They are still the NAME of their crew on
+  the piece boards and on Combined, and they are in the "with" column beside
+  every rower they steered. Nothing else is excluded; this is the workout, not
+  selection. Seat racing proper is another screen.
 
   IN THE COACH CONSOLE the board is also where the sheet is typed: Enter
   times opens the piece's crews with a Start and a Finish field each (the
@@ -395,15 +400,10 @@ export default function RaceBoard({
                         <Rank rank={a.rank} faint={!whole} />
                         <div className="min-w-0">
                           <div className="flex items-center gap-1.5">
+                            {/* No cox chip: athleteBoards no longer makes a
+                                row for a cox, so this could only ever have
+                                been an unreachable branch. */}
                             <span className="truncate text-[13px] font-semibold text-text">{a.name}</span>
-                            {a.cox && (
-                              <span
-                                className="flex h-[16px] flex-shrink-0 items-center rounded-[4px] px-[5px] font-mono text-[9px] font-semibold tracking-[0.06em]"
-                                style={{ background: COX_COLOR, color: COX_INK }}
-                              >
-                                {COX_LABEL}
-                              </span>
-                            )}
                           </div>
                           {/* Who they sat with, one name per piece, in the
                               pieces' order — a coach reading down the pairs

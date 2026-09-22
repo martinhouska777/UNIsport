@@ -159,6 +159,21 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
   const [planSessions, setPlanSessions] = useState<SessionMap>({});
   const [openRace, setOpenRace] = useState<string | null>(null);
   const [pickingRace, setPickingRace] = useState(false);
+  /*
+    WHICH WATER SESSIONS HAVE BOATS — practice key -> how many, for the
+    sessions the race picker is about to offer. Null until the read lands.
+
+    THE BUG THIS FIXES (owner, 2026-09-22: "let's start figuring out how to
+    write the pieces there, because now it doesn't work — you can't really put
+    the pieces there").
+
+    A piece's crews ARE the session's published lineup boats, so a session
+    with no lineup makes a piece with no crews, and the times editor opens with
+    nothing in it and nothing to add. The editor says so, but by then the coach
+    has already made an empty race day and the only way out is to delete it.
+    The picker now simply does not offer a session it cannot time.
+  */
+  const [candidateBoats, setCandidateBoats] = useState<Record<string, number> | null>(null);
   const [query, setQuery] = useState("");
   /* null until someone taps: the tab is derived from what is here (see the
      note up top), and pinned to their choice from the first tap on. */
@@ -276,6 +291,45 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
       .filter((c) => c.date >= from && c.date <= endOfToday)
       .sort((a, b) => b.date.getTime() - a.date.getTime());
   }, [planSessions, races]);
+
+  /*
+    Read only while the picker is actually open, and only the days it is about
+    to show: this is a question nobody asks until they tap the plus.
+  */
+  const candidateKeys = useMemo(
+    () => raceCandidates.map((c) => c.dayKey).join(","),
+    [raceCandidates],
+  );
+  useEffect(() => {
+    if (!pickingRace) return;
+    let active = true;
+    const keys = candidateKeys ? candidateKeys.split(",") : [];
+    /* Always through a promise, even with nothing to ask for: a setState run
+       synchronously inside an effect is the cascading render the hook lint
+       rule exists to stop. */
+    Promise.resolve<Record<string, Boat[]>>(keys.length > 0 ? fetchLineupsFor(keys) : {})
+      .then((byKey) => {
+        if (!active) return;
+        const counts: Record<string, number> = {};
+        for (const k of keys) counts[k] = (byKey[k] ?? []).length;
+        setCandidateBoats(counts);
+      })
+      .catch(() => active && setCandidateBoats({}));
+    return () => {
+      active = false;
+    };
+  }, [pickingRace, candidateKeys]);
+
+  /*
+    WHAT THE PICKER OFFERS: the candidates that have a lineup to time. While
+    the lineups are still being read it offers nothing rather than offering
+    everything — a row that disappears from under a finger is worse than a
+    list that arrives a moment later.
+  */
+  const timeable = useMemo(
+    () => (candidateBoats ? raceCandidates.filter((c) => (candidateBoats[c.dayKey] ?? 0) > 0) : []),
+    [raceCandidates, candidateBoats],
+  );
 
   /* The turnout count on a LIST ROW here — the board itself stopped printing
      one. An example board counts against the EXAMPLE roster, never the real
@@ -556,13 +610,24 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
 
       {pickingRace && (
         <Sheet title="Which session?" onClose={() => setPickingRace(false)}>
-          {raceCandidates.length === 0 ? (
-            <p className="py-6 text-center text-[13px] text-muted">
-              No water session in the last three weeks is without race pieces.
+          {candidateBoats === null && raceCandidates.length > 0 ? (
+            <p className="py-6 text-center text-[13px] text-muted">Finding the sessions…</p>
+          ) : timeable.length === 0 ? (
+            /*
+              The reason is in the EMPTY state only, never as a caption over a
+              list that works: a piece is timed crew by crew, so a session
+              needs its boats up first. Without this the picker was a blank
+              sheet or, worse, a session that led to an editor with nothing in
+              it.
+            */
+            <p className="py-6 text-center text-[13px] leading-relaxed text-muted">
+              {raceCandidates.length === 0
+                ? "No water session in the last three weeks is without race pieces."
+                : "No water session in the last three weeks has a published lineup yet, and a piece is timed crew by crew."}
             </p>
           ) : (
             <div className="flex flex-col gap-1.5">
-              {raceCandidates.map((c) => (
+              {timeable.map((c) => (
                 <button
                   key={c.dayKey}
                   type="button"
