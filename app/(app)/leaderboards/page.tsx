@@ -6,8 +6,9 @@
   TWO TABS, in the header where the title was — the same pill-in-a-capsule
   switch as Match and Messages (owner, 2026-09-13: no "Leaderboards" title, and
   "proper tabs"). EVENTS is the challenges — a Weekly and a Monthly card that
-  each open the full list — and under them house vs house, the interhouse
-  competition (2026-09-15). RANKINGS is your one line plus the board.
+  each open the full list — and under them house vs house, now a DUEL: each
+  qualified house drawn against one other, first to the line wins (2026-09-22).
+  RANKINGS is your one line plus the board.
 
   THE BOARD IS THE SCREEN. It had drifted under four things that were all, in
   the end, explanation: a nudge line, two house tiles, a paragraph saying what
@@ -96,7 +97,7 @@ import {
 import HonorCode, { useHonorCode } from "@/components/leaderboards/HonorCode";
 import GroupSheet from "@/components/leaderboards/GroupSheet";
 import Challenges from "@/components/leaderboards/Challenges";
-import InterhouseCompetition from "@/components/leaderboards/InterhouseCompetition";
+import HouseDuels from "@/components/leaderboards/HouseDuels";
 import Podium, { type PodiumEntry } from "@/components/leaderboards/Podium";
 import Medal from "@/components/leaderboards/Medal";
 import ScoringSheet from "@/components/leaderboards/ScoringSheet";
@@ -584,14 +585,15 @@ export default function LeaderboardsPage() {
         <div className="flex flex-col gap-5 px-3.5 py-4">
           {/* CHALLENGES on top — a Weekly and a Monthly card, each previewing
               the ones you're closest to finishing and opening the full list —
-              then HOUSE VS HOUSE underneath (owner, 2026-09-15). */}
+              then HOUSE VS HOUSE underneath: one house against one house
+              (owner, 2026-09-22). */}
           <div>
             <SectionLabel className="mb-2">Challenges</SectionLabel>
             <Challenges />
           </div>
           <div>
             <SectionLabel className="mb-2">House vs house</SectionLabel>
-            <InterhouseCompetition />
+            <HouseDuels />
           </div>
         </div>
       ) : (
