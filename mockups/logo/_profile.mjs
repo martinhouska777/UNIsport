@@ -44,8 +44,10 @@ const BLUE_ELECTRIC = "#4d6bff";
 
 // The mark, on a 100 x 100 box. `a` is the left person, `b` the right.
 const mark = (a, b) => `
-  <path d="M28 34 V56 Q28 82 50 82" fill="none" stroke="${a}" stroke-width="14" stroke-linecap="round"/>
-  <path d="M72 34 V56 Q72 82 50 82" fill="none" stroke="${b}" stroke-width="14" stroke-linecap="round"/>
+  <path d="M28 34 V56 Q28 82 50 82 H51" fill="none" stroke="${a}" stroke-width="14" stroke-linecap="butt"/>
+  <path d="M72 34 V56 Q72 82 50 82" fill="none" stroke="${b}" stroke-width="14" stroke-linecap="butt"/>
+  <circle cx="28" cy="34" r="7" fill="${a}"/>
+  <circle cx="72" cy="34" r="7" fill="${b}"/>
   <circle cx="28" cy="16" r="8.5" fill="${a}"/>
   <circle cx="72" cy="16" r="8.5" fill="${b}"/>`;
 

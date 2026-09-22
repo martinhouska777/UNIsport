@@ -51,11 +51,11 @@ export default function LogoMark({
     >
       {/* the left person — the caller's own ink */}
       <path
-        d="M28 34 V56 Q28 82 50 82"
+        d="M28 34 V56 Q28 82 50 82 H51"
         fill="none"
         stroke="currentColor"
         strokeWidth={14}
-        strokeLinecap="round"
+        strokeLinecap="butt"
       />
       <circle cx={28} cy={16} r={8.5} fill="currentColor" />
       {/* the right person — the accent */}
@@ -65,7 +65,7 @@ export default function LogoMark({
           fill="none"
           stroke="currentColor"
           strokeWidth={14}
-          strokeLinecap="round"
+          strokeLinecap="butt"
         />
         <circle cx={72} cy={16} r={8.5} fill="currentColor" />
       </g>
