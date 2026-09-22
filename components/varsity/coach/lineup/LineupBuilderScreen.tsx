@@ -131,6 +131,7 @@ import {
   IconChevronRight,
   IconPlus,
   IconRepeat,
+  IconSearch,
   IconX,
 } from "@/components/icons";
 
@@ -769,7 +770,13 @@ function Seat({
     hunting across a wrapped block of chips;
   - a short window — about five names — and then it scrolls. The whole squad is
     reachable without the boat being pushed off the screen;
-  - typing in the seat still narrows it, on top of the side filter;
+  - a SEARCH of its own (owner, 2026-09-21). A filled seat opens on its first
+    tap picked up, with no keyboard — that is the dock-at-dawn version, and it
+    is what lets the next tap be a swap. But it also meant that swapping
+    somebody was the one moment you could not type a name. The pool searches
+    itself now, whichever way the seat was opened; when the seat's OWN field
+    is up, that field is the search and this one stands down rather than
+    putting two search boxes on the screen.
   - a name already in another boat says where, because taking them is a swap.
 
   The cox seat has no side row: coxswains do not have one, and it is the only
@@ -779,28 +786,49 @@ function SeatPool({
   matches,
   cox,
   query,
+  typing,
   onAssign,
 }: {
   matches: Match[];
   /** The cox seat offers coxswains only, so it says so instead of "pool". */
   cox?: boolean;
   query: string;
+  /** The seat's own text field is open — it is the search, so this one hides. */
+  typing?: boolean;
   onAssign: (id: string) => void;
 }) {
   /* Which side this seat is being filled from. It resets to All every time a
      different seat is opened, because the component is mounted with it. */
   const [side, setSide] = useState<PoolFilter>("all");
+  /* And what was typed into the pool's own box. Same story: a new seat is a
+     new pool, so it starts empty. */
+  const [find, setFind] = useState("");
+  const needle = find.trim().toLowerCase();
   const sides = poolFilters.filter((f) => f.key !== "cox"); // All · Port · Starboard
-  const shown = cox ? matches : matches.filter((m) => inPool(m.a, side));
+  const shown = (cox ? matches : matches.filter((m) => inPool(m.a, side))).filter(
+    (m) => !needle || m.a.name.toLowerCase().includes(needle),
+  );
 
   return (
     <div className="select-none rounded-[14px] border border-primary-line bg-background p-2">
-      <div className="mb-1.5 flex items-center justify-between px-0.5">
-        <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
-          {cox ? "Coxswains" : "Athlete pool"}
-        </span>
-        <span className="text-[10px] font-medium text-muted">{shown.length}</span>
-      </div>
+      {/* The pool's own search, where its heading and its head-count used to
+          be. A panel that opens under a seat is obviously the pool, and the
+          number was a figure nobody was reading (owner, 2026-09-21). */}
+      {!typing && (
+        <div className="mb-1.5 flex items-center gap-2 rounded-[10px] border border-border bg-surface px-2.5 py-1.5">
+          <span className="flex-shrink-0 text-muted">
+            <IconSearch size={14} />
+          </span>
+          <input
+            value={find}
+            onChange={(e) => setFind(e.target.value)}
+            placeholder={cox ? "Search coxswains" : "Search a name"}
+            aria-label={cox ? "Search coxswains" : "Search the athlete pool"}
+            /* 16px, so a phone does not zoom the whole boat when it focuses. */
+            className="w-full min-w-0 bg-transparent text-[16px] text-text outline-none placeholder:text-muted"
+          />
+        </div>
+      )}
 
       {!cox && (
         <div className="mb-1.5 flex gap-1.5">
@@ -830,7 +858,9 @@ function SeatPool({
 
       {shown.length === 0 ? (
         <p className="px-0.5 pb-1 text-[12px] italic text-muted">
-          {query.trim() ? `Nobody called “${query.trim()}”.` : "Nobody left to pick."}
+          {(query.trim() || find.trim())
+            ? `Nobody called “${(query.trim() || find.trim())}”.`
+            : "Nobody left to pick."}
         </p>
       ) : (
         /* A fixed window on a long list: about five names, then scroll. Any
@@ -1619,7 +1649,13 @@ function Builder({
           onDragLeaveSlot={() => setDropKey((k) => (k === key ? null : k))}
         />
         {active && (
-          <SeatPool matches={matches} cox={cox} query={query} onAssign={(id) => void assign(slot, id)} />
+          <SeatPool
+            matches={matches}
+            cox={cox}
+            query={query}
+            typing={keyboard}
+            onAssign={(id) => void assign(slot, id)}
+          />
         )}
       </div>
     );
