@@ -126,6 +126,7 @@ import {
 import BoatSessionStrip, { type BoatWork } from "@/components/varsity/BoatSessionStrip";
 import {
   IconArrowLeft,
+  IconCheck,
   IconChevronLeft,
   IconChevronRight,
   IconPlus,
@@ -317,39 +318,60 @@ function PracticeBody({ practice }: { practice: Practice & { plan: PlanCell } })
   const s = practiceStatusMeta[practice.status];
   const plan = practice.plan;
   const water = !!plan?.water;
+  const done = practice.status === "published";
   return (
     <>
-      <span
-        className={`text-[11px] font-semibold tracking-[0.08em] ${water ? "text-text" : "text-muted"}`}
-      >
-        {practice.period}
+      {/*
+        THE PERIOD SITS IN THE CORNER (owner, 2026-09-21): left is AM and right
+        is PM, which the two tiles say by standing where they stand, so the
+        word is a reminder rather than the heading it used to be. It shares the
+        top line with the workout instead of taking one of its own.
+      */}
+      <span className="flex w-full min-w-0 items-baseline justify-between gap-2">
+        <span
+          className={`min-w-0 truncate text-[11px] font-medium ${
+            plan ? (water ? "text-text" : "text-muted") : "text-muted/70"
+          }`}
+        >
+          {plan ? plan.label : "Nothing planned"}
+        </span>
+        <span
+          className={`flex-shrink-0 text-[10px] font-semibold tracking-[0.1em] ${
+            water ? "text-text/70" : "text-muted/80"
+          }`}
+        >
+          {practice.period}
+        </span>
       </span>
 
-      {plan ? (
-        <span className="flex w-full min-w-0 flex-col items-center gap-0.5">
-          <span
-            className={`max-w-full truncate text-[11px] font-medium ${water ? "text-text" : "text-muted"}`}
-          >
-            {plan.label}
-          </span>
-          {plan.description && (
-            /* Full-strength text on a painted cell: muted grey on the yellow of
-               a UT1 outing is the one pairing that goes hard to read. */
-            <span
-              className={`w-full truncate text-[10px] leading-snug ${water ? "text-text/85" : "text-muted"}`}
-            >
-              {plan.description}
-            </span>
-          )}
+      {plan?.description && (
+        /* Full-strength text on a painted cell: muted grey on the yellow of
+           a UT1 outing is the one pairing that goes hard to read. */
+        <span
+          className={`w-full truncate text-[10px] leading-snug ${water ? "text-text/85" : "text-muted"}`}
+        >
+          {plan.description}
         </span>
-      ) : (
-        <span className="text-[11px] text-muted/70">Nothing planned</span>
       )}
 
-      <span className={`flex items-center gap-1.5 text-[11px] ${water ? "text-text/85" : "text-muted"}`}>
-        <span className={`h-1.5 w-1.5 rounded-full ${s.dot}`} />
-        {s.label}
-      </span>
+      {/*
+        PUBLISHED SHINES (owner, 2026-09-21: "make it visible when you publish
+        it so that it shines and it's done"). It was a 1.5px green dot and the
+        word — the same weight as "Not started", on a card you are scanning to
+        find what is left to do. Done is now a filled green tick you can see
+        without reading; a draft keeps the amber dot, and a slot nobody has
+        touched says so quietly.
+      */}
+      {done ? (
+        <span className="mt-auto flex items-center gap-1 self-start rounded-md border border-success-line bg-surface px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-success shadow-sm">
+          <IconCheck size={11} /> Published
+        </span>
+      ) : (
+        <span className={`mt-auto flex items-center gap-1.5 text-[11px] ${water ? "text-text/85" : "text-muted"}`}>
+          <span className={`h-1.5 w-1.5 rounded-full ${s.dot}`} />
+          {s.label}
+        </span>
+      )}
     </>
   );
 }
@@ -383,13 +405,24 @@ function PracticeButton({
   const wash = plan
     ? { background: `color-mix(in oklab, ${plan.color} ${plan.water ? 30 : 12}%, transparent)` }
     : undefined;
+  const done = practice.status === "published";
   return (
     <button
       type="button"
       onClick={onPick}
       data-tour={tour}
       style={wash}
-      className="flex min-w-0 flex-1 flex-col items-center gap-1.5 border-r border-border px-2.5 py-3 last:border-r-0 active:brightness-95"
+      /*
+        TWO TILES, NOT TWO HALVES (owner, 2026-09-21: "separate the two
+        sessions"). They were divided by a hairline inside one block, so a
+        morning and an afternoon read as one wide thing with a crease down it.
+        Each is its own bordered tile now, with a gap between them, and a
+        published one is ringed in green so the day says at a glance which
+        half is done.
+      */
+      className={`flex min-w-0 flex-1 flex-col items-start gap-1.5 rounded-xl border px-2.5 py-2.5 text-left active:brightness-95 ${
+        done ? "border-success-line" : "border-border"
+      }`}
     >
       <PracticeBody practice={practice} />
     </button>
@@ -427,7 +460,7 @@ function DayCard({
           </span>
         )}
       </div>
-      <div className="flex border-t border-border">
+      <div className="flex items-stretch gap-2 border-t border-border p-2">
         <PracticeButton
           practice={day.am}
           tour={first ? "coach-lineup-first-practice" : undefined}
