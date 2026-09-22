@@ -53,7 +53,6 @@ import {
   MAX_INTEREST_LENGTH,
   residenceKind,
   residenceGroup,
-  partnerPreferences,
   TRAIN_ALONE_NOTE,
   peerAdvising,
   gymMentorship,
@@ -280,9 +279,11 @@ export default function OnboardingFlow() {
       case "schedule":
         return Object.values(profile.trainingSchedule).some((blocks) => blocks.length > 0);
       case "preferences":
-        // Someone training alone is never matched, so who they'd be matched
-        // WITH is a question that no longer applies — and isn't asked.
-        return profile.trainingType === "solo" || profile.partnerPreference !== "";
+        // Nothing here is required: the switch and the toggles all have a
+        // sensible off state. (Partner preference left this screen on
+        // 2026-09-21; it is still on the Profile tab, and an empty answer
+        // reads as "any" in matching.sql.)
+        return true;
       case "alsodo":
         /*
           The screen as a whole is optional, but a HALF-answer isn't allowed
@@ -1026,8 +1027,7 @@ export default function OnboardingFlow() {
         return (
           <div className="flex flex-col gap-5">
             {/* One switch instead of Solo / Partner / Either. Off is the normal,
-                matchable state; on takes you out of Match and stops the whole
-                partner conversation, including the question below. */}
+                matchable state; on takes you out of Match altogether. */}
             <div className="rounded-xl border border-border bg-surface-2 p-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1">
@@ -1041,23 +1041,6 @@ export default function OnboardingFlow() {
                 />
               </div>
             </div>
-
-            {!trainsAlone && (
-              <div>
-                <FieldLabel>Partner preference</FieldLabel>
-                <div className="flex flex-wrap gap-1.5">
-                  {partnerPreferences.map((p) => (
-                    <Pill
-                      key={p.key}
-                      label={p.label}
-                      selected={profile.partnerPreference === p.key}
-                      onClick={() => set("partnerPreference", p.key)}
-                    />
-                  ))}
-                </div>
-                <p className="mt-2 text-[11px] text-muted">Who you&apos;d like to be matched with.</p>
-              </div>
-            )}
 
             <Section title="Peer advising" help="Harvard-life mentorship — optional.">
               {renderToggleRows(peerRows)}
