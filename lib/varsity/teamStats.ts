@@ -44,6 +44,14 @@ export type TeamRange = {
   /** How far back it reaches, today included. */
   days: number;
   bucket: "day" | "week";
+  /*
+    A CUSTOM window says exactly where it starts and ends — two dates the
+    coach picked, or a stretch dragged across the graph — and need not touch
+    today. The three built-in windows leave these empty and are measured back
+    from today.
+  */
+  start?: string; // ISO yyyy-mm-dd
+  end?: string;
 };
 
 export const teamRanges: TeamRange[] = [
@@ -54,6 +62,38 @@ export const teamRanges: TeamRange[] = [
 export const defaultTeamRange = teamRanges[1].key;
 export const teamRangeByKey = (key: string): TeamRange =>
   teamRanges.find((r) => r.key === key) ?? teamRanges[1];
+
+/** The key the window dropdown uses for "dates I chose". */
+export const TEAM_CUSTOM_RANGE = "custom";
+
+export const toIso = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+const fromIso = (iso: string) => {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(y, m - 1, d);
+};
+
+/**
+ * Two dates, as a window the rest of the screen uses like a built-in one —
+ * the athlete's customRange, for the team. Past a month, columns per day stop
+ * being readable, so a long stretch is read week by week.
+ */
+export function customTeamRange(startIso: string, endIso: string): TeamRange {
+  const [a, b] = startIso <= endIso ? [startIso, endIso] : [endIso, startIso];
+  const A = fromIso(a);
+  const B = fromIso(b);
+  const days = Math.round((B.getTime() - A.getTime()) / 86_400_000) + 1;
+  const short = (d: Date) => `${d.getDate()} ${MO[d.getMonth()]}`;
+  const sameMonth = a.slice(0, 7) === b.slice(0, 7);
+  return {
+    key: TEAM_CUSTOM_RANGE,
+    label: sameMonth ? `${A.getDate()}–${short(B)}` : `${short(A)} – ${short(B)}`,
+    days,
+    bucket: days <= 31 ? "day" : "week",
+    start: a,
+    end: b,
+  };
+}
 
 /* ── A bucket of the graph ──────────────────────────────────────────────── */
 
@@ -88,27 +128,33 @@ function keysBetween(start: Date, end: Date): string[] {
 
 type BareBucket = Omit<TeamBucket, "mileage" | "boats">;
 
-/** The empty buckets of a window, oldest first, ending with today's. */
+/*
+  The empty buckets of a window, oldest first. A built-in window ends with
+  today's bucket; a custom one runs between its own two dates (a day in the
+  future has no boats, so the end is capped at today). `latest` marks the
+  bucket that holds today, wherever it falls.
+*/
 export function teamBuckets(range: TeamRange, now: Date): BareBucket[] {
   const today = day0(now);
   const out: BareBucket[] = [];
+  const last = range.end ? new Date(Math.min(fromIso(range.end).getTime(), today.getTime())) : today;
+  const first = range.start ? fromIso(range.start) : null;
   if (range.bucket === "day") {
-    for (let i = range.days - 1; i >= 0; i--) {
-      const d = shift(today, -i);
+    const from = first ?? shift(last, -(range.days - 1));
+    for (let d = new Date(from); d <= last; d = shift(d, 1)) {
       out.push({
         start: d,
         end: d,
         label: `${DOW[d.getDay()]} ${d.getDate()} ${MO[d.getMonth()]}`,
         short: `${d.getDate()}`,
         dayKeys: keysBetween(d, d),
-        latest: i === 0,
+        latest: d.getTime() === today.getTime(),
       });
     }
   } else {
-    const lastMonday = weekStart(today);
-    const weeks = Math.ceil(range.days / 7);
-    for (let i = weeks - 1; i >= 0; i--) {
-      const start = shift(lastMonday, -7 * i);
+    const lastMonday = weekStart(last);
+    const firstMonday = first ? weekStart(first) : shift(lastMonday, -(Math.ceil(range.days / 7) - 1) * 7);
+    for (let start = new Date(firstMonday); start <= lastMonday; start = shift(start, 7)) {
       const end = shift(start, 6);
       out.push({
         start,
@@ -116,7 +162,7 @@ export function teamBuckets(range: TeamRange, now: Date): BareBucket[] {
         label: weekRangeLabel(start),
         short: `${start.getMonth() + 1}/${start.getDate()}`,
         dayKeys: keysBetween(start, end),
-        latest: i === 0,
+        latest: start.getTime() === weekStart(today).getTime(),
       });
     }
   }
