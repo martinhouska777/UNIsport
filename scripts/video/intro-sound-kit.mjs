@@ -3,7 +3,8 @@
   mockups/video/sfx (see make-sfx-kit.mjs). Replaces the old sfx-bank.mp3 approach,
   where every sound was sliced out of one file by timestamp.
 
-  Three versions, so they can be compared side by side:
+  Four versions, so they can be compared side by side:
+    smooth   quiet and soft: nothing stacked, nothing sharp, half the level
     quiet    only what the picture needs — keys, two taps, one whoosh, the note
     layered  the reference method: a bed throughout, three sounds per beat,
              three different whooshes, a riser into the moment they meet
@@ -20,8 +21,9 @@ import os from "node:os";
 
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname).replace(/^\//, ""), "../..");
 const V = (f) => path.join(ROOT, "mockups/video", f);
-const KIT = process.argv.includes("--synth") ? "sfx" : "sfx-real";
-const TAG = KIT === "sfx" ? "synth-" : "";
+const KIT = process.argv.includes("--synth") ? "sfx"
+          : process.argv.includes("--soft") ? "sfx-soft" : "sfx-real";
+const TAG = KIT === "sfx" ? "synth-" : KIT === "sfx-soft" ? "soft-" : "";
 const S = (f) => path.join(ROOT, "mockups/video", KIT, f);
 const { T, TIMES } = JSON.parse(readFileSync(V("intro-times.json"), "utf8"));
 
@@ -89,6 +91,26 @@ function build(version) {
   }
 
   /* ---------------- the schedule ---------------- */
+
+  /* "smooth" is its own schedule: nothing sharp, nothing stacked, everything
+     under half the level of the others. The owner asked for quiet, not punchy. */
+  if (version === "smooth") {
+    bed(0.14);
+    at("click-ui", T.cursor, 0.22);
+    typeRun(TIMES.prefix, 0.30, false);
+    typeRun(TIMES.sufA, 0.30, true);
+    peakAt("whoosh-air", T.lift, 0.20);
+    at("tap-1", T.tap1, 0.42);
+    at("tap-2", T.tap2, 0.38);
+    peakAt("whoosh-air", T.actOut + 0.1, 0.14);
+    peakAt("whoosh-low", T.slide + 0.45, 0.40);
+    typeRun(TIMES.match, 0.28, true);
+    at("note-warm", T.met, 0.44);
+    peakAt("whoosh-air", T.matchOut, 0.12);
+    TIMES.word.forEach((t) => at("click-ui", t + 0.42, 0.10));
+    peakAt("whoosh-air", T.live, 0.14);
+    return mix;
+  }
 
   if (version === "layered") bed(0.30);
 
@@ -160,4 +182,4 @@ function render(version) {
 }
 
 const want = process.argv.slice(2).find((a) => !a.startsWith("--"));
-for (const v of ["quiet", "crisp", "layered"]) if (!want || want === v) render(v);
+for (const v of ["smooth", "quiet", "crisp", "layered"]) if (!want || want === v) render(v);

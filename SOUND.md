@@ -178,3 +178,25 @@ first sample. Checked on the finished file: taps at 3.43 s and 4.17 s against cu
 
 **Open:** which of the six. The synthesised keys are the weakest part of the
 synthesised kit; the real keys are genuine laptop key recordings.
+
+### Quiet and smooth, not aggressive (owner, same evening)
+
+The first six versions lean cinematic — the big slide used a tunnel-reverb whoosh and
+the moment they meet was a bass rumble. A third kit, `sfx-soft`, replaces those:
+
+- **wind instead of cinema** — `air-woosh`, `short-wind-swoosh`, `cinematic-wind-swoosh`
+- **a tone instead of a click** — `cool-interface-click-tone` for the caret and letters
+- **one soft tap** used for both taps, pitched apart, instead of a light switch
+- **the synthesised warm note kept** for the moment the two halves meet — no recording
+  in the library arrives without a transient, and that one does
+- **everything rolled off above 6.5 kHz** and normalised 3 dB quieter before placement
+
+Plus a fourth schedule, **smooth**: nothing stacked, nothing sharp, roughly half the
+level of the others, no riser, the bed very quiet.
+
+Measured: the soft kit puts **7%** of its energy above 4 kHz against **15–16%** for
+crisp and layered. That is the whole difference between spiky and calm.
+
+`unisport-intro-soft-smooth.mp4` is the quietest thing we have and the one to judge
+first. Build any combination with
+`node scripts/video/intro-sound-kit.mjs [smooth|quiet|crisp|layered] [--soft|--synth]`.
