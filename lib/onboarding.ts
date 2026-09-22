@@ -584,19 +584,33 @@ export const gymMentorship: { key: ToggleKey; label: string; sub: string }[] = [
   { key: "getHelp", label: "Get help from someone advanced", sub: "Learn from someone further along." },
 ];
 
-// ---- Screen 9: Notifications -------------------------------------------------
+// ---- Screen 10: Notifications ------------------------------------------------
 /*
   ONLY WHAT ACTUALLY SENDS. This list used to promise "Someone matches with
   you" and "Session reminders", and neither existed. Every line here has a
   real sender behind it (app/api/push/notify and app/api/push/remind); adding
   a promise means adding the code first. Icons map to the icon set.
+
+  EACH LINE IS A SWITCH (owner, 2026-09-22). The screen came back to the end of
+  the flow, and it is not a promise you read and accept any more — you decide
+  there and then which of these you want. `key` is the profile field the switch
+  writes, the SAME field the Settings screen edits later
+  (components/profile/NotificationSettings) and the same one the server checks
+  before it sends anything (db/push_notify.sql).
 */
-export const notificationItems: { icon: string; label: string }[] = [
-  { icon: "message", label: "New messages" },
-  { icon: "calendar", label: "Session plans — invites, answers and changes" },
-  { icon: "user", label: "Partner tags — “Did you train with Sam today?”" },
-  { icon: "heart", label: "New followers" },
-  { icon: "clock", label: "One reminder to log, at your usual training time" },
+export type NotifyKey =
+  | "notifyMessages"
+  | "notifyPlans"
+  | "notifyPartnerTags"
+  | "notifyFollows"
+  | "notifyLogReminders";
+
+export const notificationItems: { key: NotifyKey; icon: string; label: string }[] = [
+  { key: "notifyMessages", icon: "message", label: "New messages" },
+  { key: "notifyPlans", icon: "calendar", label: "Session plans — invites, answers and changes" },
+  { key: "notifyPartnerTags", icon: "user", label: "Partner tags — “Did you train with Sam today?”" },
+  { key: "notifyFollows", icon: "heart", label: "New followers" },
+  { key: "notifyLogReminders", icon: "clock", label: "One reminder to log, at your usual training time" },
 ];
 
 /*
@@ -738,6 +752,19 @@ export type OnboardingProfile = {
   // Screen 8 — Finish profile (all optional)
   bio: string;
   photo: string | null;
+
+  /*
+    Screen 10 — which notifications this person wants. They are saved into the
+    same profiles.data JSON as everything else here, which is exactly where
+    profileFromOnboarding and the Settings screen read them from, so the answer
+    given on the way in is the answer Settings shows afterwards. All on until
+    somebody says otherwise.
+  */
+  notifyMessages: boolean;
+  notifyPlans: boolean;
+  notifyPartnerTags: boolean;
+  notifyFollows: boolean;
+  notifyLogReminders: boolean;
 };
 
 export const emptyProfile: OnboardingProfile = {
@@ -771,6 +798,11 @@ export const emptyProfile: OnboardingProfile = {
   getHelp: false,
   bio: "",
   photo: null,
+  notifyMessages: true,
+  notifyPlans: true,
+  notifyPartnerTags: true,
+  notifyFollows: true,
+  notifyLogReminders: true,
 };
 
 /* ---- The half-finished answers ---------------------------------------------

@@ -44,10 +44,27 @@ export function Pill({
   );
 }
 
-export function FieldLabel({ children }: { children: ReactNode }) {
+/*
+  A field's name, and whether it HAS to be answered. The word "optional" is
+  gone from the flow (owner, 2026-09-22): the red star every form on earth uses
+  marks the ones you must fill in, and everything without one is yours to skip.
+  Red comes from the theme's `danger`, never a hex.
+*/
+export function FieldLabel({
+  children,
+  required,
+}: {
+  children: ReactNode;
+  required?: boolean;
+}) {
   return (
     <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
       {children}
+      {required && (
+        <span className="ml-1 text-danger" title="Required">
+          *
+        </span>
+      )}
     </div>
   );
 }

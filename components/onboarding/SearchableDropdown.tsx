@@ -1,13 +1,22 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { IconSearch, IconChevronDown, IconCheck } from "@/components/icons";
+import { IconChevronDown, IconCheck } from "@/components/icons";
 
 /*
   ONE reusable searchable dropdown, used on screens 2 (single), 4 and 6 (multi).
-  - Closed: a field showing the selection (single) or chips (multi).
-  - Open: a search box that filters the options, click to select.
-  All colors come from theme variables.
+
+  THE FIELD IS THE SEARCH BOX (owner, 2026-09-22). It used to be a button that,
+  when tapped, dropped a SECOND box underneath with a magnifying glass in it —
+  two typing boxes stacked, one of which you couldn't type in. Now there is one
+  box: tap it and type in the box you tapped, and only the list of matches
+  drops under it. "Add a language, click there, and write it out as well."
+
+  - Closed (single): the field shows the chosen answer, with its emblem.
+  - Closed (multi):  the chosen answers are chips ABOVE the field.
+  - Open:            you type in the field; what you have already chosen stays
+                     readable as the field's placeholder, so typing over it
+                     never looks like it threw the answer away.
 
   Four optional behaviours, each switched on by one prop:
   - `icon`        — an emblem in front of every row (and in front of the chosen
@@ -18,6 +27,8 @@ import { IconSearch, IconChevronDown, IconCheck } from "@/components/icons";
   - `hideSelected`— (multi) a chosen option leaves the list instead of sitting
                     there with a tick. You've said it; it's in the chips above.
   - `locked`      — (multi) chips that can't be removed, e.g. English at Harvard.
+
+  All colors come from theme variables.
 */
 type BaseProps = {
   options: string[];
@@ -48,16 +59,26 @@ export default function SearchableDropdown(props: Props) {
   } = props;
   const multiple = props.multiple === true;
   const selectedArr = multiple ? props.value : [];
+  const single = multiple ? "" : props.value;
   const locked = multiple ? (props.locked ?? []) : [];
   const hideSelected = multiple ? props.hideSelected === true : false;
 
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const ref = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const close = () => {
+    setOpen(false);
+    setQuery("");
+  };
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+        setQuery("");
+      }
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
@@ -68,7 +89,7 @@ export default function SearchableDropdown(props: Props) {
       o.toLowerCase().includes(query.toLowerCase()) &&
       !(hideSelected && selectedArr.includes(o)),
   );
-  const isSelected = (o: string) => (multiple ? selectedArr.includes(o) : props.value === o);
+  const isSelected = (o: string) => (multiple ? selectedArr.includes(o) : single === o);
 
   const choose = (o: string) => {
     if (multiple) {
@@ -77,12 +98,21 @@ export default function SearchableDropdown(props: Props) {
         ? selectedArr.filter((x) => x !== o)
         : [...selectedArr, o];
       props.onChange(next);
+      setQuery(""); // ready for the next one; the list stays open
     } else {
       props.onChange(o);
-      setQuery("");
-      setOpen(false);
+      close();
     }
   };
+
+  /*
+    What the one box shows. Closed, it is the answer (single) or nothing at all
+    (multi — the answers are chips above it). Open, it is what you are typing,
+    and the answer you already gave moves into the placeholder so it stays on
+    screen while you type over it.
+  */
+  const shownValue = open ? query : single;
+  const shownPlaceholder = open ? single || searchPlaceholder : placeholder;
 
   return (
     <div ref={ref} className="relative">
@@ -111,40 +141,64 @@ export default function SearchableDropdown(props: Props) {
         </div>
       )}
 
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        aria-label={ariaLabel}
-        className="flex w-full items-center justify-between rounded-[10px] border border-border bg-surface px-3.5 py-3 text-base"
+      <div
+        className={`flex w-full items-center gap-2.5 rounded-[10px] border bg-surface pl-3.5 pr-1 ${
+          open ? "border-primary" : "border-border"
+        }`}
       >
-        <span className="flex min-w-0 items-center gap-2.5">
-          {!multiple && props.value && icon && (
-            <span className="flex-shrink-0">{icon(props.value)}</span>
-          )}
-          <span className={!multiple && props.value ? "truncate text-text" : "truncate text-muted"}>
-            {!multiple && props.value ? props.value : placeholder}
-          </span>
-        </span>
-        <span className="text-muted">
+        {!multiple && single && icon && !open && (
+          <span className="flex-shrink-0">{icon(single)}</span>
+        )}
+        <input
+          ref={inputRef}
+          type="text"
+          value={shownValue}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setOpen(true);
+          }}
+          onFocus={() => setOpen(true)}
+          onKeyDown={(e) => {
+            // Enter takes the top match — the whole point of typing three
+            // letters. Escape puts the field back the way it was.
+            if (e.key === "Enter") {
+              e.preventDefault();
+              if (filtered.length > 0) choose(filtered[0]);
+            } else if (e.key === "Escape") {
+              close();
+              inputRef.current?.blur();
+            }
+          }}
+          aria-label={ariaLabel}
+          aria-expanded={open}
+          role="combobox"
+          aria-controls={undefined}
+          placeholder={shownPlaceholder}
+          /* 16px text so a phone doesn't zoom the page when it takes focus. */
+          className="min-w-0 flex-1 bg-transparent py-3 text-base text-text placeholder:text-muted focus:outline-none"
+        />
+        <button
+          type="button"
+          tabIndex={-1}
+          aria-label={open ? "Close the list" : "Open the list"}
+          onClick={() => {
+            if (open) {
+              close();
+              inputRef.current?.blur();
+            } else {
+              inputRef.current?.focus();
+            }
+          }}
+          className={`flex h-9 w-9 flex-shrink-0 items-center justify-center text-muted transition-transform ${
+            open ? "rotate-180" : ""
+          }`}
+        >
           <IconChevronDown size={16} />
-        </span>
-      </button>
+        </button>
+      </div>
 
       {open && (
         <div className="absolute z-20 mt-1 w-full overflow-hidden rounded-[10px] border border-border bg-surface shadow-lg">
-          <div className="flex items-center gap-2 border-b border-border px-3 py-2 text-muted">
-            <IconSearch size={15} />
-            <input
-              autoFocus
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder={searchPlaceholder}
-              aria-label="Search options"
-              className="w-full bg-transparent text-base text-text placeholder:text-muted focus:outline-none"
-            />
-          </div>
           <div className="max-h-56 overflow-y-auto py-1">
             {filtered.length === 0 ? (
               <div className="px-3.5 py-3 text-sm text-muted">No matches</div>
@@ -167,6 +221,9 @@ export default function SearchableDropdown(props: Props) {
                     )}
                     <button
                       type="button"
+                      /* mousedown, not click: the field is focused, and a click
+                         would land after the blur that closes the list. */
+                      onMouseDown={(e) => e.preventDefault()}
                       onClick={() => choose(o)}
                       className={`flex w-full items-center justify-between gap-2 px-3.5 py-2.5 text-left text-sm ${
                         isSelected(o) ? "bg-primary-tint text-primary" : "text-text"

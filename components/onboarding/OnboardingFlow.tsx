@@ -15,6 +15,11 @@ import {
   IconChevronDown,
   IconX,
   IconCamera,
+  IconMessage,
+  IconCalendar,
+  IconClock,
+  IconHeart,
+  IconUser,
   IconShield,
   IconMapPin,
   HouseSigil,
@@ -49,6 +54,7 @@ import {
   residenceGroup,
   peerAdvising,
   gymMentorship,
+  notificationItems,
   emptyProfile,
   nameError,
   onboardingChapters,
@@ -63,6 +69,7 @@ import {
 import { houseColorsFor } from "@/lib/gyms";
 import { hoursOfDay, hoursToSlots } from "@/lib/schedule";
 import WeekHourGrid from "@/components/onboarding/WeekHourGrid";
+import { subscribeToPush, sendTestNotification } from "@/lib/push/client";
 import { fileToDataUrl } from "@/lib/image";
 
 const activityIcons: Record<string, (p: { size?: number; className?: string }) => React.ReactNode> = {
@@ -70,6 +77,14 @@ const activityIcons: Record<string, (p: { size?: number; className?: string }) =
   run: IconRun,
   activity: IconActivity,
   plus: IconPlus,
+};
+
+const notifIcons: Record<string, (p: { size?: number; className?: string }) => React.ReactNode> = {
+  heart: IconHeart,
+  message: IconMessage,
+  calendar: IconCalendar,
+  clock: IconClock,
+  user: IconUser,
 };
 
 /*
@@ -235,6 +250,13 @@ const STEPS: StepMeta[] = [
   { key: "background", title: "Who are you, outside the gym?" },
   { key: "preferences", title: "Your preferences." },
   { key: "finish", title: "Finish your profile.", skippable: true },
+  {
+    key: "notifications",
+    title: "What should we tell you about?",
+    /* Skip = finish without ever asking the phone for permission. Nothing on
+       this screen blocks the flow; see the CTA below. */
+    skippable: true,
+  },
 ];
 
 /*
@@ -408,12 +430,30 @@ export default function OnboardingFlow() {
     router.replace("/gyms");
   };
 
+  /*
+    The last screen's button: ask the OS, register the subscription, say hello,
+    then finish. Every branch finishes, including a refusal — the switches
+    above are saved with the rest of the profile either way, so all that is
+    left afterwards is the phone's own permission (Settings).
+  */
+  const enableNotifications = async () => {
+    const status = await subscribeToPush();
+    if (status === "granted") {
+      void sendTestNotification({
+        title: "Welcome to UNIsport",
+        body: "Notifications are on — we'll ping you the moment something matters.",
+        url: "/gyms",
+      });
+    }
+    await finish();
+  };
+
   const renderBody = () => {
     switch (meta.key) {
       case "basics":
         return (
           <div>
-            <FieldLabel>What should we call you?</FieldLabel>
+            <FieldLabel required>What should we call you?</FieldLabel>
             <div className="mb-4">
               <TextField
                 value={profile.name}
@@ -427,7 +467,7 @@ export default function OnboardingFlow() {
               )}
             </div>
 
-            <FieldLabel>Class year</FieldLabel>
+            <FieldLabel required>Class year</FieldLabel>
             <div className="mb-4 flex flex-wrap gap-1.5">
               {classYears.map((y) => (
                 <Pill
@@ -444,7 +484,7 @@ export default function OnboardingFlow() {
               ))}
             </div>
 
-            <FieldLabel>Sex</FieldLabel>
+            <FieldLabel required>Sex</FieldLabel>
             <div className="flex flex-wrap gap-1.5">
               {sexOptions.map((s) => (
                 <Pill key={s} label={s} selected={profile.sex === s} onClick={() => set("sex", s)} />
@@ -486,7 +526,7 @@ export default function OnboardingFlow() {
             {profile.primaryActivity === "gym" && (
               <div className="flex flex-col gap-5">
                 <div>
-                  <FieldLabel>How do you train?</FieldLabel>
+                  <FieldLabel required>How do you train?</FieldLabel>
                   <div className="flex flex-wrap gap-1.5">
                     {gymStyles.map((g) => (
                       <Pill
@@ -500,7 +540,7 @@ export default function OnboardingFlow() {
                 </div>
 
                 <div>
-                  <FieldLabel>Experience level</FieldLabel>
+                  <FieldLabel required>Experience level</FieldLabel>
                   <div className="flex flex-col gap-2">
                     {experienceLevels.map((lvl) => {
                       const on = profile.experienceLevel === lvl.key;
@@ -523,7 +563,7 @@ export default function OnboardingFlow() {
                 </div>
 
                 <div>
-                  <FieldLabel>Your split — optional</FieldLabel>
+                  <FieldLabel>Your split</FieldLabel>
                   <div className="flex flex-wrap gap-1.5">
                     {/* Tapping the chosen split again clears it: it's optional,
                         so there has to be a way back to no answer. */}
@@ -558,7 +598,7 @@ export default function OnboardingFlow() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <FieldLabel>Usual distance</FieldLabel>
+                    <FieldLabel required>Usual distance</FieldLabel>
                     <TextField
                       value={profile.runningDistance}
                       onChange={(v) => set("runningDistance", v)}
@@ -567,7 +607,7 @@ export default function OnboardingFlow() {
                     />
                   </div>
                   <div>
-                    <FieldLabel>Usual pace</FieldLabel>
+                    <FieldLabel required>Usual pace</FieldLabel>
                     <TextField
                       value={profile.runningPace}
                       onChange={(v) => set("runningPace", v)}
@@ -578,7 +618,7 @@ export default function OnboardingFlow() {
                 </div>
 
                 <div>
-                  <FieldLabel>How long have you been running? — optional</FieldLabel>
+                  <FieldLabel>How long have you been running?</FieldLabel>
                   <div className="flex flex-wrap gap-1.5">
                     {runningExperiences.map((r) => (
                       <Pill
@@ -597,7 +637,7 @@ export default function OnboardingFlow() {
 
             {profile.primaryActivity === "cardio" && (
               <>
-                <FieldLabel>What do you do most often?</FieldLabel>
+                <FieldLabel required>What do you do most often?</FieldLabel>
                 <div className="flex flex-wrap gap-1.5">
                   {cardioTypes.map((c) => (
                     <Pill key={c} label={c} selected={profile.cardioType === c} onClick={() => set("cardioType", c)} />
@@ -608,7 +648,7 @@ export default function OnboardingFlow() {
 
             {profile.primaryActivity === "other" && (
               <>
-                <FieldLabel>Which sport?</FieldLabel>
+                <FieldLabel required>Which sport?</FieldLabel>
                 <SportPicker
                   value={profile.activityOther}
                   onChange={(v) => set("activityOther", v)}
@@ -681,7 +721,7 @@ export default function OnboardingFlow() {
                     <div className="flex flex-col gap-4 border-t border-border px-3.5 pb-4 pt-3.5">
                       {a.key === "other" && (
                         <div>
-                          <FieldLabel>Which sport?</FieldLabel>
+                          <FieldLabel required>Which sport?</FieldLabel>
                           <SportPicker
                             value={chosen.note}
                             onChange={(v) => patch(a.key, { note: v })}
@@ -691,7 +731,7 @@ export default function OnboardingFlow() {
                       )}
 
                       <div>
-                        <FieldLabel>How often?</FieldLabel>
+                        <FieldLabel required>How often?</FieldLabel>
                         <div className="flex flex-wrap gap-1.5">
                           {activityFrequencies.map((f) => (
                             <Pill
@@ -716,7 +756,7 @@ export default function OnboardingFlow() {
         const isFreshman = profile.classYear === freshmanClassYear;
         return (
           <div>
-            <FieldLabel>{isFreshman ? "Your Yard dorm" : "Your house"}</FieldLabel>
+            <FieldLabel required>{isFreshman ? "Your Yard dorm" : "Your house"}</FieldLabel>
             <SearchableDropdown
               options={residenceOptions(profile.classYear)}
               value={profile.residence}
@@ -874,7 +914,7 @@ export default function OnboardingFlow() {
         return (
           <div className="flex flex-col gap-5">
             <div>
-              <FieldLabel>What are you studying?</FieldLabel>
+              <FieldLabel required>What are you studying?</FieldLabel>
               <SearchableDropdown
                 options={concentrations}
                 value={profile.concentration}
@@ -885,7 +925,7 @@ export default function OnboardingFlow() {
             </div>
 
             <div>
-              <FieldLabel>Where are you from? — optional</FieldLabel>
+              <FieldLabel>Where are you from?</FieldLabel>
               {/* The CITY, above the country it sits in. On a campus where most
                   of the list answers "United States", the country alone says
                   almost nothing — "New York" is the half somebody recognises
@@ -910,7 +950,7 @@ export default function OnboardingFlow() {
             </div>
 
             <div>
-              <FieldLabel>Languages you speak — optional</FieldLabel>
+              <FieldLabel>Languages you speak</FieldLabel>
               {/* English is on and can't be taken off — you're at Harvard. Every
                   language you do add leaves the list, so what's left to scroll
                   is only what you haven't said yet. */}
@@ -929,7 +969,7 @@ export default function OnboardingFlow() {
 
             <div>
               <div className="mb-2 flex items-baseline justify-between gap-2">
-                <FieldLabel>Interests outside training</FieldLabel>
+                <FieldLabel required>Interests outside training</FieldLabel>
                 {/* The floor, and how far off it you are — said as a count, so
                     the disabled Continue button is never a mystery. */}
                 <span
@@ -1121,6 +1161,32 @@ export default function OnboardingFlow() {
             </div>
           </div>
         );
+      case "notifications":
+        return (
+          <div className="rounded-2xl border border-border bg-surface px-4 shadow-card">
+            {notificationItems.map((item, i) => {
+              const NotifIcon = notifIcons[item.icon];
+              return (
+                <div
+                  key={item.key}
+                  className={`flex items-center gap-2.5 py-3 ${
+                    i < notificationItems.length - 1 ? "border-b border-border" : ""
+                  }`}
+                >
+                  <span className="flex-shrink-0 text-accent">
+                    <NotifIcon size={16} />
+                  </span>
+                  <span className="flex-1 text-[13px] leading-snug text-text">{item.label}</span>
+                  <Toggle
+                    on={profile[item.key]}
+                    onChange={() => set(item.key, !profile[item.key])}
+                    ariaLabel={item.label}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        );
       default:
         return (
           <div className="rounded-2xl border border-border bg-surface p-6 text-center text-[13px] text-muted shadow-card">
@@ -1131,17 +1197,18 @@ export default function OnboardingFlow() {
   };
 
   /*
-    The last screen finishes the flow. It used to be a notifications ask with a
-    gold "Enable notifications" CTA; that screen is gone (owner, 2026-09-22 —
-    notifications don't work yet, and an ask nobody can honour is worse than no
-    ask). Permission is still asked for later, from Settings.
+    The last screen is the notifications one, and its button does two things at
+    once: it asks the phone for permission, registers the push subscription and
+    fires the welcome ping — then finishes the flow. Refused or unsupported
+    still finishes: notifications are a nicety, never a wall. Skip (top right)
+    finishes without asking at all.
   */
   const ctaProps = isLast
     ? {
-        primaryLabel: "Finish",
+        primaryLabel: "Turn notifications on",
         primaryVariant: "primary" as const,
         primaryDisabled: !canContinue(),
-        onPrimary: finish,
+        onPrimary: enableNotifications,
       }
     : {
         primaryLabel: "Continue",
