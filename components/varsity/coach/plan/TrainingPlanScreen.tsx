@@ -1216,14 +1216,18 @@ export default function TrainingPlanScreen({
             </>
           )}
 
-          {/* where to be — optional, free text (not for Off) */}
+          {/* WHERE TO BE — optional, free text, and EMPTY BY DEFAULT (not for
+              Off). It used to be filled in on every session, which meant every
+              card on every screen said the squad's own boathouse back at it.
+              Nobody reads that (owner, 2026-09-21). It is left blank unless the
+              coach types somewhere else, and only then does anyone see it. */}
           {cat && cat !== "off" && (
             <>
-              <div className={labelCls}>Location (optional)</div>
+              <div className={labelCls}>Somewhere else? (optional)</div>
               <input
                 value={form.location}
                 onChange={(e) => setForm((f) => ({ ...f, location: e.target.value }))}
-                placeholder="e.g. Weld Boathouse, or meet at the vans"
+                placeholder="Only if it's not the usual place"
                 className={inputCls}
               />
             </>

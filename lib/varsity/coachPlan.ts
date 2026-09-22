@@ -161,9 +161,12 @@ export type Session = {
   intensity?: string;
   description: string;
   time: string; // preset per period, but editable
-  /* Where to be — "Weld Boathouse", "Newell erg room", "meet at the vans".
-     Optional and free text: a squad's places are its own, and the time already
-     on the session is when to be there. */
+  /* Where to be — but ONLY when it isn't the usual place: "meet at the vans",
+     "Weld Boathouse". Optional, free text, and blank by default (owner,
+     2026-09-21). A squad rows out of the same boathouse every week, so a place
+     written on every session is a word every screen repeats and nobody reads.
+     Another school might need it on everything — which is why the field stays
+     and only the habit of filling it in has gone. */
   location?: string;
   note?: string;
   teamWorkout?: boolean; // results shared to a squad board

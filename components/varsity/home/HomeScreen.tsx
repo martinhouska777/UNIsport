@@ -671,7 +671,11 @@ function SessionCard({
               <span className="rounded border border-border bg-surface-2 px-1.5 py-0.5 text-[10px] font-semibold tracking-[0.06em] text-muted">
                 {s.period}
               </span>
-              <span className="text-[11px] text-muted">{s.location}</span>
+              {/* Only when there IS one. The squad trains at the same
+                  boathouse every week, so the place is for the exception —
+                  "meet at the vans" — and blank the rest of the time (owner,
+                  2026-09-21). An empty span still cost the row a gap. */}
+              {s.location && <span className="text-[11px] text-muted">{s.location}</span>}
             </div>
             {/* Whatever this session's state is, said in the header line. The
                 corner itself belongs to the log button (below). */}
