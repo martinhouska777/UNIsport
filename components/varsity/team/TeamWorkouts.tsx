@@ -7,11 +7,18 @@
 
     ERG    — a session the coach flagged as a TEAM WORKOUT, with how many of
              the squad have logged it. Tap → its board (WorkoutBoard.tsx).
-    WATER  — an outing with telemetry attached (Peach PowerLine / SpeedCoach),
-             with its crew and how many pieces. Tap → its pieces
-             (TelemetryOuting.tsx), then a piece → the crew's numbers. This is
-             where the water work goes, races most of all.
-  Water rows are never ranked; a piece is a CREW result.
+    WATER  — the coach's TIMING SHEET: a session split into pieces, with the
+             crews' times off the running watch. Tap → its board
+             (RaceBoard.tsx). This is where the water work goes, races most
+             of all.
+  Water rows are never ranked as individuals; a piece is a CREW result.
+
+  NO TELEMETRY HERE YET (owner, 2026-09-22: "we don't want the telemetry
+  there now — something else takes care of it"). The water side also listed
+  Peach PowerLine / SpeedCoach outings, and with nothing imported that meant
+  one transcribed example sitting among the real pieces. The importer, the
+  store and the outing screen are all still in the repo (telemetryStore.ts,
+  TelemetryOuting.tsx); nothing reads them on this screen.
 
   THE SWITCH IS BACK (owner, 2026-09-20). These two were merged into one list
   in date order, on the argument that a week is read as one week and a row's
@@ -62,7 +69,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useAppState } from "@/components/AppState";
 import { useMembership } from "@/components/varsity/useMembership";
 import WorkoutBoard from "@/components/varsity/team/WorkoutBoard";
-import TelemetryOuting from "@/components/varsity/team/TelemetryOuting";
 import { fetchPlan } from "@/lib/varsity/planStore";
 import { demoTeamPlan, demoSquadSize } from "@/lib/varsity/demoWorkouts";
 import { fetchResults, fetchSquadSize, type TeamResult } from "@/lib/varsity/resultsStore";
@@ -71,9 +77,6 @@ import { sessionLabel, dayKeyLabel, parseSessionKey, type Session } from "@/lib/
 import { kindOf } from "@/lib/varsity/athleteHome";
 import { kindColor, kindLegend } from "@/lib/varsity/home";
 import { fetchTrainingConfig } from "@/lib/varsity/configStore";
-import { fetchOutings } from "@/lib/varsity/telemetryStore";
-import { demoOutings } from "@/lib/varsity/demoTelemetry";
-import { outingTotals, type TelemetryOuting as Outing } from "@/lib/varsity/telemetry";
 import RaceBoard from "@/components/varsity/team/RaceBoard";
 import Sheet from "@/components/varsity/Sheet";
 import { fetchRaceDays, saveRaceDay } from "@/lib/varsity/raceStore";
@@ -110,7 +113,7 @@ function outingDateLabel(dayKey: string): string {
   return `${dayKeyLabel(dayKey)}${parsed ? ` · ${parsed.period}` : ""}`;
 }
 
-type Row = { key: string; date: Date; erg?: TeamWorkout; water?: Outing; race?: RaceDay };
+type Row = { key: string; date: Date; erg?: TeamWorkout; race?: RaceDay };
 
 /** The two halves of this screen. */
 type Side = "erg" | "water";
@@ -145,12 +148,9 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
      the squad's own. Empty once a real result exists. */
   const [exampleKeys, setExampleKeys] = useState<Set<string>>(() => new Set());
   const [open, setOpen] = useState<string | null>(null);
-  // the water side
-  const [outings, setOutings] = useState<Outing[]>([]);
-  const [openOuting, setOpenOuting] = useState<string | null>(null);
   /*
     RACE PIECES (racePieces.ts) — the coach's timing sheet as a board, one
-    per session, listed on the water side beside the telemetry outings. The
+    per session, and the whole of the water side. The
     plan is kept so a race row can say what the session was ("2x2k open in
     small boats") and so the coach's picker can offer the water sessions.
   */
@@ -230,23 +230,6 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
       active = false;
     };
   }, [teamId]);
-
-  useEffect(() => {
-    let active = true;
-    fetchOutings().then((list) => {
-      if (!active) return;
-      if (list.length > 0) {
-        setOutings(list);
-      } else {
-        // No import yet → the one transcribed outing, so the water side can
-        // be looked at (see demoTelemetry.ts).
-        setOutings(demoOutings);
-      }
-    });
-    return () => {
-      active = false;
-    };
-  }, []);
 
   useEffect(() => {
     let active = true;
@@ -361,19 +344,14 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
   );
   const waterRows = useMemo<Row[]>(
     () =>
-      [
-        ...races.map((r) => ({
+      races
+        .map((r) => ({
           key: `race:${r.dayKey}`,
           date: parseSessionKey(r.dayKey)?.date ?? new Date(0),
           race: r,
-        })),
-        ...outings.map((o) => ({
-          key: `water:${o.id}`,
-          date: parseSessionKey(o.dayKey)?.date ?? new Date(0),
-          water: o,
-        })),
-      ].sort(byDate),
-    [outings, races],
+        }))
+        .sort(byDate),
+    [races],
   );
 
   /** The plan's words for a session, for a race row and its board. */
@@ -381,10 +359,10 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
     const sess = planSessions[dayKey];
     return sess ? sess.description.trim() || sessionLabel(sess) : "Race pieces";
   };
-  /* The coach's session behind a row, whichever of the three kinds it is —
-     an erg board carries its own, the water ones are found by day key. */
+  /* The coach's session behind a row: an erg board carries its own, a water
+     one is found by day key. */
   const rowSession = (row: Row): Session | undefined =>
-    row.erg?.session ?? planSessions[row.race?.dayKey ?? row.water?.dayKey ?? ""];
+    row.erg?.session ?? planSessions[row.race?.dayKey ?? ""];
 
   /* Erg, unless there is nothing on it and there IS something on the water. */
   const side: Side = picked ?? (ergRows.length === 0 && waterRows.length > 0 ? "water" : "erg");
@@ -402,15 +380,16 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
           : "";
         const text = row.erg
           ? searchText(`${row.erg.session.description.trim()} ${kindWords}`, row.erg.dateLabel, row.date)
-          : row.race
-            ? searchText(`${raceTitle(row.race.dayKey)} race pieces ${kindWords}`, outingDateLabel(row.race.dayKey), row.date)
-            : searchText(`${row.water!.crew} ${row.water!.pieces.length} pieces ${kindWords}`, outingDateLabel(row.water!.dayKey), row.date);
+          : searchText(
+              `${raceTitle(row.race!.dayKey)} race pieces ${kindWords}`,
+              outingDateLabel(row.race!.dayKey),
+              row.date,
+            );
         return words.every((w) => text.includes(w));
       })
     : rows;
 
   const opened = workouts.find((w) => w.dayKey === open) ?? null;
-  const openedOuting = outings.find((o) => o.id === openOuting) ?? null;
   const openedResults = useMemo(
     () => (open ? results.filter((r) => r.dayKey === open) : []),
     [results, open],
@@ -487,7 +466,7 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
       <div className="flex flex-col gap-1.5">
         {rows.length === 0 && (
           <div className="rounded-2xl border border-dashed border-border bg-surface-2 px-4 py-8 text-center text-[12px] text-muted">
-            {side === "erg" ? "No erg workouts yet." : "No water outings yet."}
+            {side === "erg" ? "No erg workouts yet." : "No water pieces yet."}
           </div>
         )}
         {rows.length > 0 && shownRows.length === 0 && (
@@ -533,8 +512,9 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
               </button>
             );
           }
-          if (row.race) {
-            const r = row.race;
+          {
+            /* Every other row is a water one: a session's race pieces. */
+            const r = row.race!;
             const sum = raceSummary(r);
             return (
               <button
@@ -560,39 +540,6 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
               </button>
             );
           }
-          const o = row.water!;
-          const totals = outingTotals(o);
-          const withSeats = o.pieces.filter((p) => p.seats?.length).length;
-          return (
-            <button
-              key={row.key}
-              type="button"
-              onClick={() => setOpenOuting(o.id)}
-              className="flex w-full items-center gap-3 rounded-2xl border border-border bg-surface px-3.5 py-3 text-left active:bg-surface-2"
-            >
-              {/* The outing's own intensity, the colour the calendar paints
-                  that morning — green UT2, yellow UT1, red hard. The varsity
-                  accent for an outing with no session behind it. */}
-              <span
-                className="h-2.5 w-2.5 flex-shrink-0 rounded-full"
-                style={{ background: intensityOf(planSessions[o.dayKey])?.color ?? "var(--accent)" }}
-              />
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <span className="truncate text-[13px] font-semibold text-text">
-                    {o.crew} · {o.pieces.length} pieces
-                  </span>
-                </div>
-                <div className="mt-1 text-[11px] tabular-nums text-muted">
-                  {outingDateLabel(o.dayKey)} · {totals.metres.toLocaleString("en-US")} m
-                  {withSeats > 0 && ` · seats on ${withSeats}`}
-                </div>
-              </div>
-              <span className="text-muted">
-                <IconChevronRight size={15} />
-              </span>
-            </button>
-          );
         })}
       </div>
 
@@ -658,15 +605,6 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
             </div>
           )}
         </Sheet>
-      )}
-
-      {openedOuting && (
-        <TelemetryOuting
-          outing={openedOuting}
-          dateLabel={outingDateLabel(openedOuting.dayKey)}
-          allOutings={outings}
-          onClose={() => setOpenOuting(null)}
-        />
       )}
 
       {opened && (
