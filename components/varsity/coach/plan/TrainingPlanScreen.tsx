@@ -882,7 +882,6 @@ export default function TrainingPlanScreen({
             </Button>
             <PublishBar
               stack
-              what="block"
               live={live}
               changed={blockChanged(block)}
               busy={writing}

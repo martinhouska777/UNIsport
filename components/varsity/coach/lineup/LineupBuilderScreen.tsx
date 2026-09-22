@@ -1651,7 +1651,6 @@ function Builder({
             <PublishBar
               bare
               tourId="coach-lineup-publish"
-              what="lineup"
               live={status === "published"}
               changed={announced !== null && announced !== text}
               busy={writing}
