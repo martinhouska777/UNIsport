@@ -19,6 +19,8 @@
       crew that was nearest the front most often is on top even if it never
       won a piece outright
   A margin is never coloured and never judged: it is the gap, written down.
+  On the board the combined margins are COLUMNS — Piece 1, Piece 2, Total —
+  not small print under the name (owner, 2026-09-21).
 
   Storage is one JSON blob per session (lib/varsity/raceStore.ts), the way a
   lineup is; the crews are the boats of that session's lineup, so a result is
@@ -37,6 +39,11 @@ export type RaceCrew = {
   label: string;
   /** The boat's class key ("4+", "2-"), which is what it is ranked against. */
   badge: string;
+  /** The rowers' surnames, stroke first — so the board can draw the BOAT under
+      the crew's name (owner, 2026-09-21: "I want to see the boat there, like
+      the four names"). Kept with the result, like the label. Older rows have
+      none; see crewMembers(). */
+  rowers?: string[];
   /** Off the running watch, in seconds. Null: not written yet. */
   start: number | null;
   finish: number | null;
@@ -129,11 +136,20 @@ export function crewLabel(boat: Boat): string {
   return boat.name || boat.badge;
 }
 
+/** The rowers' surnames, stroke first, as the sheet lists a crew. */
+export function crewRowers(boat: Boat): string[] {
+  return [...boat.seats]
+    .reverse()
+    .map((s) => surname(s.athleteId))
+    .filter((n): n is string => !!n);
+}
+
 export function crewFromBoat(boat: Boat): RaceCrew {
   return {
     boatId: boat.id,
     label: crewLabel(boat),
     badge: boat.badge,
+    rowers: crewRowers(boat),
     start: null,
     finish: null,
     total: null,
@@ -156,14 +172,32 @@ export function newPiece(n: number, boats: Boat[]): RacePiece {
   };
 }
 
+/* ── Who is in the boat ─────────────────────────────────────────────────── */
+
+/** Does a boat of this class carry a cox? A badge no rigging knows: no. */
+export function classHasCox(badge: string): boolean {
+  return boatTypes.find((k) => k.key === badge)?.cox ?? false;
+}
+
+/**
+ * The people in a crew, for drawing it as a boat: the cox (the label of a
+ * coxed boat, the sheet's way) and the rowers, stroke first. A crew written
+ * before rowers were kept, with no cox, is named by its rowers' surnames —
+ * "Gallaudet/Gandola" — so they are read back out of the label.
+ */
+export function crewMembers(c: RaceCrew): { cox: string | null; rowers: string[] } {
+  const cox = classHasCox(c.badge) ? c.label : null;
+  const rowers = c.rowers ?? (cox ? [] : c.label.split("/").map((n) => n.trim()).filter(Boolean));
+  return { cox, rowers };
+}
+
 /* ── The class a crew is ranked in ──────────────────────────────────────── */
 
-/** "4+" → "Coxed fours". A badge no rigging knows is shown as itself. */
-export function className(badge: string): string {
-  const kind = boatTypes.find((k) => k.key === badge);
-  if (!kind) return badge;
-  const n = kind.name;
-  return n.endsWith("s") ? n : `${n}s`;
+/** "4+" → "4+", "2-" → "2−": the rigging's own symbol, the way a coach says
+    it (owner, 2026-09-21: "instead of Coxed Fours we want 4+"). A badge no
+    rigging knows is shown as itself. */
+export function classTitle(badge: string): string {
+  return boatTypes.find((k) => k.key === badge)?.symbol ?? badge;
 }
 
 /* The order classes are shown in: biggest boat first, as on a regatta card. */
@@ -214,7 +248,7 @@ export function pieceBoards(piece: RacePiece): ClassBoard[] {
       }));
       return {
         badge,
-        title: className(badge),
+        title: classTitle(badge),
         rows,
         pending: crews.filter((c) => crewTime(c) == null),
       };
@@ -278,7 +312,7 @@ export function combinedBoards(pieces: RacePiece[]): CombinedBoard[] {
         (a, b) => b.raced - a.raced || a.margins - b.margins || a.label.localeCompare(b.label),
       );
       list.forEach((r, i) => (r.rank = i + 1));
-      return { badge, title: className(badge), rows: list };
+      return { badge, title: classTitle(badge), rows: list };
     });
 }
 
