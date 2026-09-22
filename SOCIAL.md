@@ -76,9 +76,15 @@ or `unisport.team@gmail.com`. Free, two minutes.
 That address is the **login** for Instagram, and later for TikTok and YouTube. It is
 never shown to anyone.
 
-**One Gmail covers all three.** Instagram, TikTok and YouTube can all sign in with the
-same new address, and because a Google account *is* a YouTube channel, making the Gmail
-makes the channel for free.
+**One address covers Instagram and TikTok.** Both sign in happily with the same new
+email, whoever provides it.
+
+**YouTube is the exception** — a YouTube channel *is* a Google account, so it cannot
+live on an Outlook address. Since making another Google account is the thing that is
+blocked, the answer there is a **brand channel on the Google account you already have**:
+YouTube lets one Google account own several channels, each with its own name and
+picture, so the UNIsport channel does not have to be called Martin Houška. Nothing to
+create and no new account needed. Do it when you actually want to post there.
 
 **And it is not permanent.** The email on an Instagram or TikTok account can be changed
 in settings at any time. If you want `martin@getunisport.com` on it once Zoho is
@@ -143,6 +149,53 @@ button — that is where `hello@getunisport.com` goes, once `EMAIL.md` step 5 is
 
 So: **login address is a private Gmail, public contact address is the domain.** Two
 different jobs, two different addresses. That is the normal arrangement.
+
+---
+
+## 3b. Where the logins are kept
+
+### ⚠️ Never in this repo
+
+**`github.com/martinhouska777/UNIsport` is a PUBLIC repository.** Verified 2026-09-22 by
+asking GitHub for it with no login at all: `"private": false`. Every file in it is
+readable by anyone on the internet.
+
+And git history is permanent. A password committed once stays recoverable from the
+history even after the line is deleted — undoing it means rewriting history and
+changing the password anyway. So the rule is simple: **no password, no backup code, no
+API key ever goes in a file here.**
+
+(Checked at the same time, and all fine: `.gitignore` already covers `.env*` and
+`*.env`, `feed.env` is untracked, and the only committed env file is the example
+template. Nothing is leaking today.)
+
+### The password goes in a password manager
+
+**Bitwarden** is the pick — free forever, works on Windows, iPhone and in the browser,
+and syncs between them. It also generates the passwords, so none of them are ones you
+invented and reused. The password saving built into Windows or Chrome works too and is
+far better than a document; the point is only that it is not a file.
+
+The **2FA backup codes** go in there as well, or on paper. Not in this repo.
+
+### What CAN be tracked, safely — the account register
+
+None of this is secret, and all of it is the stuff that is genuinely annoying to
+reconstruct later. Fill it in as accounts get made.
+
+| | Value |
+|---|---|
+| Login email (the new one) | `…@outlook.com` — TO FILL IN |
+| Email provider | Outlook.com / Microsoft |
+| Instagram handle | TO FILL IN |
+| Instagram account type | Creator |
+| Second IG handle (parked) | TO FILL IN |
+| TikTok handle | TO FILL IN |
+| YouTube channel | a brand channel on the existing Google account — see §3. TO FILL IN |
+| 2FA method | authenticator app |
+| Where the password lives | Bitwarden (or: TO FILL IN) |
+| Where the backup codes live | TO FILL IN |
+| Public contact address on the profile | `hello@getunisport.com` — blocked on `EMAIL.md` |
 
 ---
 
