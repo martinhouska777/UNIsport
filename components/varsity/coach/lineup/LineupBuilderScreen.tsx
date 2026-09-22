@@ -10,7 +10,10 @@
                   Loads any existing lineup.
 
   Seats are live: tap an empty seat to TYPE a name (autocomplete from the pool),
-  or DRAG a name from the pool (or another seat) onto a seat. The X clears a seat
+  or HOLD a name — in the pool or in another seat — and carry it onto a seat.
+  The hold works on a phone as well as a mouse, and the list scrolls itself
+  while a name is held near its top or bottom edge, so the pool at the bottom
+  reaches the first boat at the top (useNameDrag, below). The X clears a seat
   back to the pool. There is ONE roster, so each athlete is in exactly one place.
 
   SWAPPING IS TWO TAPS, AND THE KEYBOARD STAYS DOWN. Tap a filled seat to
@@ -134,10 +137,7 @@ import {
   IconSearch,
   IconX,
 } from "@/components/icons";
-
-/* a target slot inside a boat: a numbered seat, or the cox seat */
-type Slot = { boatId: string; kind: "seat"; idx: number } | { boatId: string; kind: "cox" };
-const slotKey = (s: Slot) => (s.kind === "cox" ? `${s.boatId}:cox` : `${s.boatId}:${s.idx}`);
+import { slotKey, useNameDrag, type Slot } from "./useNameDrag";
 
 /*
   What the training plan prescribes for one AM or PM slot, reduced to the few
@@ -519,15 +519,12 @@ function Seat({
   matches,
   selected,
   dropActive,
+  carry,
   onStartType,
   onQuery,
   onAssign,
   onClear,
   onCancelType,
-  onDragStartSeat,
-  onDropSlot,
-  onDragOverSlot,
-  onDragLeaveSlot,
 }: {
   /** The seat's number — "1" up to "8" — or the cox's "C". */
   label: string;
@@ -540,30 +537,17 @@ function Seat({
   query: string;
   /** Who can come into this seat, and — for anyone already seated — where they are now. */
   matches: Match[];
+  /** A name is being carried over this seat right now. */
   dropActive: boolean;
+  /** Makes the rower in this seat something a finger can pick up and carry. */
+  carry: (id: string) => { onPointerDown: (e: ReactPointerEvent) => void };
   onStartType: () => void;
   onQuery: (v: string) => void;
   onAssign: (id: string) => void;
   onClear: () => void;
   /** Stop typing into this seat, leaving whoever is in it alone. */
   onCancelType: () => void;
-  onDragStartSeat: () => void;
-  onDropSlot: (id: string) => void;
-  onDragOverSlot: () => void;
-  onDragLeaveSlot: () => void;
 }) {
-  const dropHandlers = {
-    onDragOver: (e: React.DragEvent) => {
-      e.preventDefault();
-      onDragOverSlot();
-    },
-    onDragLeave: onDragLeaveSlot,
-    onDrop: (e: React.DragEvent) => {
-      e.preventDefault();
-      const id = e.dataTransfer.getData("text/plain");
-      if (id) onDropSlot(id);
-    },
-  };
 
   /*
     The seat's badge. A rowing seat carries its NUMBER and nothing else — no
@@ -621,7 +605,6 @@ function Seat({
     return (
       <>
         <div
-          draggable
           role="button"
           tabIndex={0}
           onClick={onStartType}
@@ -631,11 +614,7 @@ function Seat({
               onStartType();
             }
           }}
-          onDragStart={(e) => {
-            e.dataTransfer.setData("text/plain", athlete.id);
-            onDragStartSeat();
-          }}
-          {...dropHandlers}
+          {...carry(athlete.id)}
           aria-label={
             selected
               ? `${athlete.name} in seat ${label}, picked up. Tap another seat to move them there, or tap again to type a name.`
@@ -707,7 +686,6 @@ function Seat({
     <button
       type="button"
       onClick={onStartType}
-      {...dropHandlers}
       className={`flex h-10 w-full select-none items-center gap-2 rounded-[10px] border border-dashed pl-[7px] pr-[6px] text-left ${
         dropActive ? "border-primary bg-primary-tint" : "border-border"
       }`}
@@ -914,21 +892,23 @@ function SeatPool({
   somebody is out on THIS practice's day (from availabilityStore) — never a fact
   about the person — and tapping an out chip brings them back in.
 
-  Dragging still works on a desktop: a drag never fires the tap.
+  A name can also be HELD and carried straight into a seat, on a thumb as
+  well as a mouse (useNameDrag): the carry never fires the tap.
 */
 function PoolChip({
   a,
   out,
   picked,
   onTap,
-  onDragStart,
+  carry,
 }: {
   a: Athlete;
   out?: OutReason;
   /** Chosen, waiting for a seat. */
   picked?: boolean;
   onTap: () => void;
-  onDragStart: () => void;
+  /** Makes this name something a finger can pick up and carry to a seat. */
+  carry: (id: string) => { onPointerDown: (e: ReactPointerEvent) => void };
 }) {
   if (out) {
     /*
@@ -962,7 +942,6 @@ function PoolChip({
     <div
       role="button"
       tabIndex={0}
-      draggable
       onClick={onTap}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
@@ -970,10 +949,7 @@ function PoolChip({
           onTap();
         }
       }}
-      onDragStart={(e) => {
-        e.dataTransfer.setData("text/plain", a.id);
-        onDragStart();
-      }}
+      {...carry(a.id)}
       aria-label={
         picked ? `${a.name}, picked. Tap a seat to put them in.` : `${a.name}. Tap to pick.`
       }
@@ -1090,7 +1066,6 @@ function Builder({
   const [typing, setTyping] = useState<Slot | null>(null);
   const [keyboard, setKeyboard] = useState(false);
   const [query, setQuery] = useState("");
-  const [dropKey, setDropKey] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [poolFilter, setPoolFilter] = useState<PoolFilter>("all");
 
@@ -1367,7 +1342,6 @@ function Builder({
       setTyping(null);
       setKeyboard(false);
       setQuery("");
-      setDropKey(null);
       return true; // dropped back where they were
     }
     const put = (b: Boat, target: Slot, id: string | null): Boat => {
@@ -1390,9 +1364,20 @@ function Builder({
     setTyping(null);
     setKeyboard(false);
     setQuery("");
-    setDropKey(null);
     return true;
   };
+
+  /*
+    HOLDING A NAME. The other way to fill a seat: press and hold a name — in
+    the pool or already in a boat — and carry it to the seat it belongs in.
+    It ends in the same `assign` a tap does, so a name dropped on somebody
+    swaps with them exactly as a typed one would, and nobody is knocked out of
+    the boat. The list scrolls itself while a name is held near its edges, so
+    the pool at the bottom reaches the first boat at the top.
+  */
+  const listRef = useRef<HTMLDivElement>(null);
+  const { drag: held, carry } = useNameDrag(listRef, (slot, id) => void assign(slot, id));
+  const inHand = held ? rosterById[held.id] : undefined;
 
   /*
     A TAP ON A SEAT.
@@ -1624,8 +1609,11 @@ function Builder({
     const active = !!typing && slotKey(typing) === key;
     return (
       /* The seat and, when it is the one in play, the pool under it. Wrapped so
-         the two travel together inside the hull's column of seats. */
+         the two travel together inside the hull's column of seats. `data-slot`
+         is how a name being carried over the boat finds out which seat is
+         under the finger — only the seat carries it, never the pool below it. */
       <div key={key} className="flex flex-col gap-1">
+        <div data-slot={key}>
         <Seat
           label={label}
           cox={cox}
@@ -1634,7 +1622,8 @@ function Builder({
           selected={!!typing && slotKey(typing) === key && !keyboard}
           query={query}
           matches={matches}
-          dropActive={dropKey === key}
+          dropActive={held?.over === key}
+          carry={carry}
           onStartType={() => tapSeat(slot)}
           onQuery={setQuery}
           onAssign={(id) => void assign(slot, id)}
@@ -1643,11 +1632,8 @@ function Builder({
             putDown();
           }}
           onCancelType={putDown}
-          onDragStartSeat={() => setDropKey(null)}
-          onDropSlot={(id) => assign(slot, id)}
-          onDragOverSlot={() => setDropKey(key)}
-          onDragLeaveSlot={() => setDropKey((k) => (k === key ? null : k))}
         />
+        </div>
         {active && (
           <SeatPool
             matches={matches}
@@ -1663,7 +1649,7 @@ function Builder({
 
   return (
     <div className="relative flex h-full flex-col">
-      <div className="mx-auto w-full max-w-screen-sm flex-1 overflow-y-auto px-4 pb-8">
+      <div ref={listRef} className="mx-auto w-full max-w-screen-sm flex-1 overflow-y-auto px-4 pb-8">
         {/*
           THE TOP ROW, AND IT STAYS. Back on the left, and on the right the two
           things that say what is happening to this lineup: whether it is saved,
@@ -2108,7 +2094,7 @@ function Builder({
                             if (typing) void assign(typing, a.id);
                             else setPicked((p) => (p === a.id ? null : a.id));
                           }}
-                          onDragStart={() => setDropKey(null)}
+                          carry={carry}
                         />
                       ))}
                     </div>
@@ -2136,7 +2122,7 @@ function Builder({
                           a={a}
                           out={outById[a.id]}
                           onTap={() => void bringBackIn(a)}
-                          onDragStart={() => setDropKey(null)}
+                          carry={carry}
                         />
                       ))}
                     </div>
@@ -2198,6 +2184,37 @@ function Builder({
               </div>
             )}
           </div>
+        </div>
+      )}
+
+      {/*
+        THE NAME UNDER THE FINGER. A carried rower is drawn as the chip they
+        came from, lifted off the page and following the thumb — held just
+        above it, so the hand is not covering the seat it is about to land in.
+        It takes no pointer events of its own, or it would be the thing under
+        the finger instead of the seat.
+      */}
+      {held && inHand && (
+        <div
+          className="pointer-events-none fixed z-[60] flex h-[38px] -translate-x-1/2 -translate-y-[150%] items-center gap-2 rounded-[10px] border border-primary bg-surface px-2.5 shadow-lg"
+          style={{ left: held.x, top: held.y }}
+        >
+          <span className="text-[15px] font-medium text-text">{inHand.name}</span>
+          {inHand.cox ? (
+            <span
+              className="flex h-[19px] flex-shrink-0 items-center rounded px-1.5 font-mono text-[9px] font-semibold tracking-[0.06em]"
+              style={blade(COX_COLOR, COX_INK)}
+            >
+              {COX_LABEL}
+            </span>
+          ) : (
+            <span
+              className="flex h-[19px] flex-shrink-0 items-center rounded px-1.5 font-mono text-[9px] font-semibold tracking-[0.06em]"
+              style={blade(sideMeta[inHand.side].color, sideMeta[inHand.side].ink)}
+            >
+              {sideMeta[inHand.side].tag}
+            </span>
+          )}
         </div>
       )}
     </div>
