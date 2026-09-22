@@ -30,37 +30,40 @@ const INK = "#141618", INK2 = "#3b3f47", BLUE = "#1f32c1";
 const URL_WAITLIST = "getunisport.com/waitlist";
 
 const SLIDES = [
+  /* Every line below is the website's own wording (lib/landingCopy.ts) — the
+     owner's dictated copy, not new marketing text ("use words that I used
+     before, I don't want slop there"). */
   { kind: "cover",
-    big: "Fifteen gyms on campus, and you're in one of them alone.", key: "alone.",
-    sub: "This is how UNIsport fixes that, in six screens." },
+    big: "Never train alone again.", key: "alone",
+    sub: "Find the gym. Find someone to go with. Free for students." },
 
   { kicker: "01 · Gyms", img: "gyms",
-    big: "Know it's open before you walk over.", key: "open",
-    sub: "Malkin till 11, Murr and Hemenway till 10, Adams 24/7. Heart the ones you actually use." },
+    big: "See every gym on your campus in one place.", key: "every",
+    sub: "See when each gym is open, how busy it is right now, and photos from the people who train there." },
 
   { kicker: "02 · Match", img: "match",
-    big: "Matched on more than “free at six”.", key: "six”.",
-    sub: "Leah: Computer Science, similar times, offers to mentor. Hiroshi: similar times, gaming, photography. The pink ticks are what you share." },
+    big: "Find training partners. Make friends.", key: "friends.",
+    sub: "Browse sorts everyone by how well you fit with them, based on interests, concentration, experience and hours." },
 
-  { kicker: "03 · Why you match", img: "person", shift: 0.05,
-    big: "It tells you why, so the first message writes itself.", key: "why,",
-    sub: "You both lift. Both CS. Both at Malkin, at similar times of day. One of you wants a mentor, the other is one." },
+  { kicker: "03 · Mentors", img: "person",
+    big: "New to the gym or campus?", key: "New",
+    sub: "Start with someone beside you. Get paired with an experienced student who has offered to help in the gym, or with an upperclassman in your concentration who can show you the ropes." },
 
-  { kicker: "04 · Plan", img: "chat", shift: 0.385,
-    big: "Plan it in the chat. One tap, both calendars.", key: "both",
-    sub: "“Could you watch a set sometime?” Thu, Sep 17, 8:00 AM, Malkin Athletic Center. Accept." },
+  { kicker: "04 · Plan", img: "chat",
+    big: "Plan sessions easily in the chat.", key: "chat.",
+    sub: "You send a card with the gym, the day and the time, and once the other one accepts it goes to both calendars." },
 
-  { kicker: "05 · Log", img: "profile", shift: 0.285,
-    big: "Log it, and your week fills itself in.", key: "week",
-    sub: "40 workouts, 6 partners, 13 followers. 5th in Adams, 44th on campus." },
+  { kicker: "05 · Log", img: "profile",
+    big: "Log the session without leaving the app.", key: "app.",
+    sub: "Your profile counts every session you logged and the people you met. Every session you log marks its day." },
 
-  { kicker: "06 · Houses", img: "leaderboards",
-    big: "Your house is in a duel with the one next door.", key: "duel",
-    sub: "Kirkland 80.0, Adams 71.4, Pforzheimer 63.0 this month. Per member, so a small house can win." },
+  { kicker: "06 · Leaderboards", img: "leaderboards",
+    big: "See how you do in the leaderboards.", key: "leaderboards.",
+    sub: "See how you, your house and your year rank on campus, and who has made the most friends." },
 
   { kind: "closer",
-    big: "Your campus is one .edu away.", key: ".edu",
-    sub: "Free for students. Everyone on the waitlist gets in on the same day.", url: true },
+    big: "Your campus. Your gym. Your people.", key: "people.",
+    sub: "UNIsport opens at Harvard first. Get an email when the app launches. Free for students.", url: true },
 ];
 
 const shot = (name) =>
@@ -128,6 +131,8 @@ const css = `
   .isl { position:absolute; left:50%; transform:translateX(-50%); border-radius:999px; background:#000; }
   .key { position:absolute; width:4px; background:#2a2d33; border-radius:2px; }
   .kl1 { left:-4px; height:5%; } .kl2, .kl3 { left:-4px; height:9%; } .kr { right:-4px; height:14%; }
+  .col { position:absolute; left:84px; width:372px; top:50%; transform:translateY(-50%); }
+  .col .sub { margin-top:22px; line-height:1.38; }
   .swipe { position:absolute; left:84px; bottom:84px; font-weight:600; font-size:26px; letter-spacing:.06em; color:#9aa0a8; }
 `;
 
@@ -137,19 +142,21 @@ const render = (m, i) => {
     return `<div class="slide">
       <div class="count">${n}</div>
       <div class="head" style="top:50%;transform:translateY(-50%)">
-        <div class="big" style="font-size:${m.big.length > 40 ? 104 : 120}px">${words(m.big, m.key)}</div>
+        <div class="big" style="font-size:${m.big.length > 30 ? 108 : 124}px">${words(m.big, m.key)}</div>
         <div class="sub" style="font-size:34px">${m.sub}</div>
         ${m.url ? `<div class="url">${URL_WAITLIST}</div>` : ""}</div>
       ${m.kind === "cover" ? `<div class="swipe">SWIPE →</div>` : ""}</div>`;
   }
-  const bigSize = m.big.length > 44 ? 76 : 88;
-  const w = 640;
+  /* the WHOLE phone, nothing cut: 500 wide is 1054 tall, centred on the right;
+     the words take the column on the left */
+  const w = 500, ph = Math.round((w - 2 * Math.round(w * 0.028)) * 2622 / 1206) + 2 * Math.round(w * 0.028);
+  const bigSize = m.big.length > 36 ? 58 : 66;
   return `<div class="slide">
     <div class="kicker">${m.kicker}</div><div class="count">${n}</div>
-    <div class="head" style="top:150px">
+    <div class="col">
       <div class="big" style="font-size:${bigSize}px">${words(m.big, m.key)}</div>
-      <div class="sub" style="font-size:30px">${m.sub}</div></div>
-    ${phone(m, w, `top:640px;margin-left:-${w / 2}px`)}</div>`;
+      <div class="sub" style="font-size:25px">${m.sub}</div></div>
+    ${phone(m, w, `left:auto;right:84px;top:${Math.round((H - ph) / 2)}px`)}</div>`;
 };
 
 const browser = await puppeteer.launch({
