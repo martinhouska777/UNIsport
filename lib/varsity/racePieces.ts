@@ -157,6 +157,44 @@ export function crewFromBoat(boat: Boat): RaceCrew {
   };
 }
 
+/*
+  HOW MANY PIECES THE PLAN ASKS FOR (owner, 2026-09-22).
+
+  "Pieces will be in the plan, so I wanted to take data from the plan. When
+  it's 4 x 5 minutes, then it will be 4 pieces, or 2 x 2 miles."
+
+  So the coach's own wording decides it, exactly the way the erg boards already
+  read it to tell 8x500m from a straight 4k (rowedAsReps in teamBoard.ts): a
+  count in front of a number. "4 x 5 min" is four, "2 x 2 miles" is two,
+  "3x25'" is three. A session with no such wording is ONE piece rowed straight
+  through, which is the safe way round — a coach who wanted four gets a plus
+  to add them, while four tabs on a single head race would be three empty
+  boards to delete.
+
+  Clamped to 20. The regex already stops at two digits, and nothing a crew
+  times piece by piece runs past twenty; a typo should not put fifty tabs on
+  the screen.
+*/
+const PIECE_COUNT_RE = /(^|[\s(“"'\-–])(\d{1,2})\s*[x×]\s*\d/i;
+
+export function pieceCountFromText(description: string | undefined): number {
+  const m = PIECE_COUNT_RE.exec(description ?? "");
+  if (!m) return 1;
+  const n = Number(m[2]);
+  if (!Number.isFinite(n) || n < 1) return 1;
+  return Math.min(20, Math.round(n));
+}
+
+/**
+ * The pieces a session starts with: as many as the plan's wording asks for,
+ * each holding the session's lineup crews, so the times can be typed straight
+ * away. Where a crew differs on a later piece the coach swaps the names on it.
+ */
+export function piecesFromSession(description: string | undefined, boats: Boat[]): RacePiece[] {
+  const n = pieceCountFromText(description);
+  return Array.from({ length: n }, (_, i) => newPiece(i + 1, boats));
+}
+
 /** Every seated boat of the lineup, as blank crews for a new piece. */
 export function crewsFromBoats(boats: Boat[]): RaceCrew[] {
   return boats

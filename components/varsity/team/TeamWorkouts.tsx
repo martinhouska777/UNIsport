@@ -77,7 +77,7 @@ import { outingTotals, type TelemetryOuting as Outing } from "@/lib/varsity/tele
 import RaceBoard from "@/components/varsity/team/RaceBoard";
 import Sheet from "@/components/varsity/Sheet";
 import { fetchRaceDays, saveRaceDay } from "@/lib/varsity/raceStore";
-import { newPiece, raceSummary, type RaceDay } from "@/lib/varsity/racePieces";
+import { piecesFromSession, raceSummary, type RaceDay } from "@/lib/varsity/racePieces";
 import { fetchLineupsFor } from "@/lib/varsity/lineupStore";
 import type { Boat } from "@/lib/varsity/coachLineup";
 import type { SessionMap } from "@/lib/varsity/coachPlan";
@@ -263,14 +263,23 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
   }, []);
 
   /*
-    THE COACH STARTS A RACE DAY from a water session that has boats: Piece 1
-    is made with every crew of that session's lineup, and the board opens on
-    it so the times can be typed straight away.
+    THE COACH STARTS A RACE DAY from a water session that has boats.
+
+    HOW MANY PIECES COMES FROM THE PLAN (owner, 2026-09-22: "pieces will be in
+    the plan — when it's 4 x 5 minutes, then it will be 4 pieces, or 2 x 2
+    miles"). The session's own description is read for a count
+    (piecesFromSession), and each piece starts holding every crew of that
+    session's lineup, so the board opens with the sheet already laid out and
+    the times can be typed straight away. A session with no such wording is
+    one piece, and the plus adds more.
   */
   const startRace = async (dayKey: string) => {
     const lineups = await fetchLineupsFor([dayKey]);
     const boats = lineups[dayKey] ?? [];
-    const day: RaceDay = { dayKey, pieces: [newPiece(1, boats)] };
+    const day: RaceDay = {
+      dayKey,
+      pieces: piecesFromSession(planSessions[dayKey]?.description, boats),
+    };
     setRaceBoats((b) => ({ ...b, [dayKey]: boats }));
     setRaces((r) => [day, ...r.filter((d) => d.dayKey !== dayKey)]);
     setPickingRace(false);
