@@ -1,0 +1,514 @@
+<title>Person Profile Redesign</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap">
+<style>
+  /*
+    UNIsport — somebody else's profile (app/(app)/people/[id]).
+    Three ways to bring the screen onto the app's new look. Every colour below is
+    the REAL Harvard light theme from lib/themes.ts, named the way the app names
+    it, so a direction maps straight onto Tailwind tokens (bg-surface, text-muted…).
+    Layout only — a mockup, not code. The person is invented.
+  */
+  :root {
+    --page: #ebf0f6;          /* bg-background */
+    --card: #fafcfe;          /* bg-surface */
+    --card2: #dee3e9;         /* bg-surface-2 (only INSIDE a card) */
+    --sunken: #edf1f7;        /* bg-sunken — page tone pulled toward the card */
+    --line: rgba(203, 207, 213, 0.55);  /* border-border */
+    --text: #141618;          /* text-text */
+    --text2: #3b3f47;         /* text-text-2 */
+    --muted: #4a4f58;         /* text-muted */
+    --text3: #676d76;         /* text-text-3 */
+    --primary: #a51c30;       /* bg-primary / text-primary */
+    --primary-tint: rgba(165, 28, 48, 0.14);
+    --primary-line: rgba(165, 28, 48, 0.38);
+    --on-primary: #ffffff;
+    --accent: #9a751c;        /* text-accent (Harvard gold on white) */
+    --accent-tint: rgba(154, 117, 28, 0.13);
+    --accent-line: rgba(154, 117, 28, 0.4);
+    --success: #15803d;
+    --success-tint: rgba(21, 128, 61, 0.12);
+    --shadow: 0 1px 2px rgba(20, 22, 24, 0.05), 0 4px 14px rgba(20, 22, 24, 0.04);
+    --house-a: #b4232f;       /* Dunster red  — from lib/gyms.ts (data, not a component) */
+    --house-b: #e0b23c;       /* Dunster gold */
+
+    /* the canvas around the phones */
+    --canvas: #dfe5ee;
+    --canvas-ink: #141618;
+    --canvas-muted: #4a4f58;
+    --note: #fff8d6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --canvas: #1b1f26; --canvas-ink: #edeef0; --canvas-muted: #a9adb4; --note: #3a3520; }
+  }
+  :root[data-theme="dark"] { --canvas: #1b1f26; --canvas-ink: #edeef0; --canvas-muted: #a9adb4; --note: #3a3520; }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--canvas); color: var(--canvas-ink);
+    font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    padding-block: 36px 80px; padding-inline: 20px;
+  }
+  .wrap { max-width: 1280px; margin: 0 auto; }
+  h1 { font-size: 26px; font-weight: 700; margin: 0 0 6px; text-wrap: balance; }
+  .lede { max-width: 62ch; color: var(--canvas-muted); font-size: 15px; line-height: 1.5; margin: 0 0 40px; }
+  .lede b { color: var(--canvas-ink); font-weight: 600; }
+
+  .row { display: grid; grid-template-columns: 280px 1fr; gap: 28px; align-items: start; margin-bottom: 64px; }
+  .note {
+    position: sticky; top: 16px; background: var(--note); color: #2a2618; padding: 18px 20px 20px; border-radius: 4px;
+    box-shadow: 0 6px 18px rgba(20,22,24,0.12); transform: rotate(-0.6deg); font-size: 13.5px; line-height: 1.5;
+  }
+  .note .k { font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; opacity: .7; }
+  .note h2 { margin: 2px 0 8px; font-size: 20px; font-weight: 700; }
+  .note ul { margin: 8px 0 0; padding-left: 18px; }
+  .note li { margin: 4px 0; }
+  .note .verdict { margin-top: 12px; padding-top: 10px; border-top: 1px dashed rgba(42,38,24,.35); font-weight: 600; }
+  .boards { display: flex; gap: 28px; flex-wrap: wrap; }
+  .board { display: flex; flex-direction: column; gap: 10px; }
+  .board .cap { font-size: 12px; color: var(--canvas-muted); letter-spacing: .04em; }
+  @media (max-width: 760px) {
+    .row { grid-template-columns: 1fr; }
+    .note { position: static; transform: none; }
+  }
+
+  /* ---------- the phone ---------- */
+  .phone {
+    width: 390px; max-width: 100%; background: var(--page); color: var(--text); border-radius: 30px;
+    border: 8px solid #101215; box-shadow: 0 24px 50px -18px rgba(16,22,44,.45); overflow: hidden;
+    font-size: 13px; line-height: 1.35;
+  }
+  .phone.dim { filter: saturate(.85); }
+  .status { height: 30px; display: flex; align-items: center; justify-content: space-between; padding: 0 22px; font-size: 12px; font-weight: 600; }
+  .status .pill { width: 96px; height: 22px; border-radius: 999px; background: #101215; }
+
+  .topbar { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: var(--card); border-bottom: 1px solid var(--line); }
+  .topbar .t { font-size: 14px; font-weight: 500; }
+  .topbar svg { color: var(--muted); }
+
+  .stack { display: flex; flex-direction: column; gap: 10px; padding: 12px 14px 14px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); padding: 14px; }
+  .label { font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+
+  .avatar { width: 64px; height: 64px; border-radius: 999px; border: 2px solid var(--primary); background: var(--primary-tint); display: grid; place-items: center; color: var(--primary); font-weight: 700; font-size: 20px; flex: none; }
+  .ident { display: flex; gap: 14px; align-items: center; }
+  .name { font-size: 18px; font-weight: 600; letter-spacing: -0.01em; display: flex; align-items: center; gap: 8px; }
+  .sub { color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+  .badge { display: inline-flex; height: 20px; align-items: center; padding: 0 8px; border-radius: 8px; font-size: 10px; font-weight: 600; letter-spacing: .04em; background: var(--primary); color: var(--on-primary); }
+  .pills { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+  .pill-fit { border: 1px solid var(--primary-line); background: var(--primary-tint); color: var(--primary); border-radius: 999px; padding: 3px 10px; font-size: 11.5px; font-weight: 600; }
+  .pill-mentor { border: 1px solid rgba(21,128,61,.4); background: var(--success-tint); color: var(--success); border-radius: 999px; padding: 3px 10px; font-size: 11.5px; font-weight: 600; }
+  .bio { color: var(--text2); font-size: 13.5px; line-height: 1.5; }
+
+  .rows > div { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-top: 1px solid var(--line); }
+  .rows > div:first-child { border-top: 0; padding-top: 2px; }
+  .rows .k { color: var(--muted); font-size: 12.5px; }
+  .rows .v { font-weight: 500; text-align: right; font-size: 13px; }
+
+  .why { display: flex; flex-direction: column; gap: 8px; }
+  .why div { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; }
+  .why .tick { width: 18px; height: 18px; border-radius: 999px; background: var(--accent-tint); color: var(--accent); display: grid; place-items: center; flex: none; margin-top: 1px; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { border: 1px solid var(--line); background: var(--card); color: var(--muted); border-radius: 8px; padding: 5px 10px; font-size: 12px; font-weight: 500; }
+  .chip.on { border-color: var(--accent-line); background: var(--accent-tint); color: var(--accent); }
+  .chip.on::before { content: "✓ "; }
+
+  .photos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .ph { aspect-ratio: 1; border-radius: 8px; background: linear-gradient(135deg, #cfd6e0, #aab4c2); }
+  .ph:nth-child(2) { background: linear-gradient(135deg, #b9c6d6, #8b99ad); }
+  .ph:nth-child(3) { background: linear-gradient(135deg, #d9d2c6, #a89e8e); }
+
+  .actions { display: flex; gap: 10px; }
+  .btn { flex: 1; height: 44px; border-radius: 999px; display: grid; place-items: center; font-weight: 600; font-size: 14px; }
+  .btn.ghost { border: 1px solid var(--line); background: var(--card); color: var(--text); }
+  .btn.solid { background: var(--primary); color: var(--on-primary); flex: 2; }
+  .bottombar { display: flex; gap: 10px; padding: 12px 14px 22px; background: var(--card); border-top: 1px solid var(--line); }
+
+  /* ---- TODAY (the old style) ---- */
+  .old .sec { padding: 12px 16px; border-bottom: 1px solid var(--line); }
+  .old .label { margin-bottom: 6px; }
+  .old .rows .k, .old .rows .v { font-size: 12px; }
+  .old .rows > div { padding: 8px 0; }
+  .old .ident-old { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 18px 16px 14px; border-bottom: 1px solid var(--line); }
+  .old .avatar { width: 80px; height: 80px; }
+  .old .name { font-size: 17px; font-weight: 500; }
+  .old .sub { font-size: 11px; }
+  .old .biobox { width: 100%; border: 1px solid var(--line); background: var(--card2); border-radius: 12px; padding: 10px 14px; font-size: 12px; color: var(--muted); text-align: center; line-height: 1.55; }
+  .old .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .old .grid3 span { border: 1px solid var(--line); background: var(--card2); color: var(--muted); border-radius: 8px; padding: 6px 8px; font-size: 11px; text-align: center; }
+  .old .grid3 span.on { border-color: var(--accent-line); background: var(--accent-tint); color: var(--accent); }
+
+  /* ---- B: photo hero ---- */
+  .hero { position: relative; height: 320px; background:
+      radial-gradient(120% 80% at 30% 20%, #c9d3df 0%, #97a5b8 45%, #5b6779 100%); }
+  .hero .back { position: absolute; top: 12px; left: 12px; width: 34px; height: 34px; border-radius: 999px; background: rgba(250,252,254,.9); display: grid; place-items: center; color: var(--text); }
+  .hero .shade { position: absolute; inset: auto 0 0 0; height: 60%; background: linear-gradient(180deg, rgba(16,18,21,0) 0%, rgba(16,18,21,.72) 100%); }
+  .hero .who { position: absolute; left: 16px; right: 16px; bottom: 14px; color: #fff; }
+  .hero .who .name { font-size: 24px; font-weight: 700; color: #fff; letter-spacing: -0.015em; }
+  .hero .who .sub { color: rgba(255,255,255,.82); font-size: 13px; }
+  .hero .who .pill-fit { background: rgba(250,252,254,.92); border-color: transparent; }
+  .hero .dots { position: absolute; top: 14px; left: 0; right: 0; display: flex; justify-content: center; gap: 5px; }
+  .hero .dots i { width: 22px; height: 3px; border-radius: 2px; background: rgba(255,255,255,.45); }
+  .hero .dots i:first-child { background: #fff; }
+
+  /* ---- C: at a glance ---- */
+  .whycard { background: var(--primary-tint); border-color: var(--primary-line); }
+  .whycard .label { color: var(--primary); }
+  .whycard .big { font-size: 15px; font-weight: 600; line-height: 1.35; }
+  .whycard .why div { font-size: 13.5px; }
+  .whycard .tick { background: var(--card); color: var(--primary); }
+  .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .tile { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; background: var(--card); }
+  .tile .k { font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--text3); }
+  .tile .v { font-size: 14px; font-weight: 600; margin-top: 2px; }
+  .week { display: flex; gap: 6px; margin-top: 10px; }
+  .week span { flex: 1; height: 34px; border-radius: 8px; display: grid; place-items: center; font-size: 12px; font-weight: 600; background: var(--sunken); color: var(--text3); border: 1px solid var(--line); }
+  .week span.on { background: var(--primary); color: var(--on-primary); border-color: var(--primary); }
+  .weekline { display: flex; justify-content: space-between; margin-top: 8px; font-size: 12px; color: var(--muted); }
+  .weekline b { color: var(--text); font-weight: 600; }
+  .housebar { height: 4px; border-radius: 2px; background: linear-gradient(90deg, var(--house-a) 50%, var(--house-b) 50%); margin: 12px 0 0; }
+  .ident.c .avatar { width: 72px; height: 72px; font-size: 22px; }
+
+  .legend { margin-top: 8px; font-size: 12.5px; color: var(--canvas-muted); max-width: 70ch; line-height: 1.5; }
+</style>
+
+<div class="wrap">
+  <h1>Somebody else's profile, three ways</h1>
+  <p class="lede">The screen you reach from <b>View Profile</b> on the Match tab still uses the old flat list style: hairline dividers straight on the page, a grey bio box, 11px type. The rest of the app moved to <b>white lifted cards on the blue-grey page</b> on 14 September. Below: how it looks today, then three ways to redo it. All three use the app's real theme colours, so any of them, or a mix, is a straight rebuild.</p>
+
+  <!-- ================= TODAY ================= -->
+  <section class="row">
+    <aside class="note">
+      <div class="k">Today</div>
+      <h2>What's wrong</h2>
+      <ul>
+        <li>Sections sit directly on the page with hairline dividers, the pre-September look.</li>
+        <li>The bio is a <em>grey</em> box on the page. The rule since 14 Sep: anything that isn't the page is a white card.</li>
+        <li>Text is 11 to 12px everywhere, so the Training and About rows feel like fine print.</li>
+        <li>The centered avatar and name leave big empty margins on either side.</li>
+        <li>Interests are three uniform squares per row, so long words get cut.</li>
+      </ul>
+    </aside>
+    <div class="boards">
+      <div class="board">
+        <div class="cap">Current screen, redrawn from the code</div>
+        <div class="phone dim old">
+          <div class="status"><span>9:41</span><span class="pill"></span><span>●●●</span></div>
+          <div class="topbar">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            <span class="t">Profile</span><span style="width:18px"></span>
+          </div>
+          <div class="ident-old">
+            <div class="avatar">SM</div>
+            <div class="name">Sofia Marchetti <span class="badge">VARSITY</span></div>
+            <div class="sub">Dunster · Class of 2027</div>
+            <div class="pills" style="margin-top:2px"><span class="pill-fit" style="border-radius:8px">Strong fit</span></div>
+            <div class="biobox">Lightweight rower, mornings at Hemenway before class. Looking for someone to run the river loop with on rest days.</div>
+          </div>
+          <div class="sec">
+            <div class="label">Why you match</div>
+            <div class="why" style="gap:5px">
+              <div style="font-size:12px"><span class="tick" style="width:14px;height:14px;background:none">✓</span> You both train in the mornings</div>
+              <div style="font-size:12px"><span class="tick" style="width:14px;height:14px;background:none">✓</span> You both go to Hemenway</div>
+              <div style="font-size:12px"><span class="tick" style="width:14px;height:14px;background:none">✓</span> You're both in Dunster</div>
+            </div>
+          </div>
+          <div class="sec">
+            <div class="label">Training</div>
+            <div class="rows">
+              <div><span class="k">Level</span><span class="v">Intermediate</span></div>
+              <div><span class="k">Type</span><span class="v">Lift + Run</span></div>
+              <div><span class="k">Split</span><span class="v">Push / Pull / Legs</span></div>
+              <div><span class="k">Schedule</span><span class="v">Mon · Wed · Fri ⌄</span></div>
+              <div><span class="k">Gym</span><span class="v">Hemenway</span></div>
+            </div>
+          </div>
+          <div class="sec">
+            <div class="label">Interests</div>
+            <div class="grid3">
+              <span class="on">Rowing</span><span class="on">Coffee</span><span>Photography</span>
+              <span>Hiking</span><span>Cooking</span><span>Live music</span>
+            </div>
+          </div>
+          <div class="sec">
+            <div class="label">About</div>
+            <div class="rows">
+              <div><span class="k">Concentration</span><span class="v">Economics</span></div>
+              <div><span class="k">From</span><span class="v">Milan, Italy</span></div>
+              <div><span class="k">Languages</span><span class="v">Italian, English</span></div>
+            </div>
+          </div>
+          <div class="bottombar">
+            <div class="btn ghost" style="background:var(--card2)">Follow</div>
+            <div class="btn solid">Message</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= A ================= -->
+  <section class="row">
+    <aside class="note">
+      <div class="k">Direction A</div>
+      <h2>Cards</h2>
+      <p>The same content, the same order, moved onto the app's white cards. The least risky option and the one that matches your own Profile tab most closely.</p>
+      <ul>
+        <li>Photo on the left, name and house on the right, bio underneath, all in one identity card.</li>
+        <li>Each section is its own lifted card. No grey boxes anywhere.</li>
+        <li>Body text goes up to 13px, labels stay small caps.</li>
+        <li>Interests become chips that fit their word. Shared ones keep the gold tick.</li>
+        <li>Follow and Message stay pinned to the bottom.</li>
+      </ul>
+      <div class="verdict">Effort: small. Two hours of class changes.</div>
+    </aside>
+    <div class="boards">
+      <div class="board">
+        <div class="cap">A · light</div>
+        <div class="phone">
+          <div class="status"><span>9:41</span><span class="pill"></span><span>●●●</span></div>
+          <div class="topbar">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            <span class="t">Profile</span><span style="width:18px"></span>
+          </div>
+          <div class="stack">
+            <div class="card">
+              <div class="ident">
+                <div class="avatar">SM</div>
+                <div>
+                  <div class="name">Sofia Marchetti <span class="badge">VARSITY</span></div>
+                  <div class="sub">Dunster · Class of 2027</div>
+                  <div class="pills"><span class="pill-fit">Strong fit</span></div>
+                </div>
+              </div>
+              <p class="bio" style="margin:12px 0 0">Lightweight rower, mornings at Hemenway before class. Looking for someone to run the river loop with on rest days.</p>
+            </div>
+
+            <div class="card">
+              <div class="label">Why you match</div>
+              <div class="why">
+                <div><span class="tick"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></span><span>You both train in the mornings</span></div>
+                <div><span class="tick"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></span><span>You both go to Hemenway</span></div>
+                <div><span class="tick"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></span><span>You're both in Dunster</span></div>
+                <div><span class="tick"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></span><span>You share rowing and coffee</span></div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="label">Training</div>
+              <div class="rows">
+                <div><span class="k">Level</span><span class="v">Intermediate</span></div>
+                <div><span class="k">Type</span><span class="v">Lift + Run</span></div>
+                <div><span class="k">Split</span><span class="v">Push / Pull / Legs</span></div>
+                <div><span class="k">Schedule</span><span class="v">Mon · Wed · Fri &nbsp;⌄</span></div>
+                <div><span class="k">Gym</span><span class="v">Hemenway</span></div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="label">Interests</div>
+              <div class="chips">
+                <span class="chip on">Rowing</span><span class="chip on">Coffee</span><span class="chip">Photography</span>
+                <span class="chip">Hiking</span><span class="chip">Cooking</span><span class="chip">Live music</span>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="label">About</div>
+              <div class="rows">
+                <div><span class="k">Concentration</span><span class="v">Economics</span></div>
+                <div><span class="k">From</span><span class="v">Milan, Italy</span></div>
+                <div><span class="k">Languages</span><span class="v">Italian, English</span></div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="label">Photos</div>
+              <div class="photos"><div class="ph"></div><div class="ph"></div><div class="ph"></div></div>
+            </div>
+          </div>
+          <div class="bottombar">
+            <div class="btn ghost">Follow</div>
+            <div class="btn solid">Message</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= B ================= -->
+  <section class="row">
+    <aside class="note">
+      <div class="k">Direction B</div>
+      <h2>Photo first</h2>
+      <p>Their photo becomes the top of the screen, the way a dating or team app does it. The name sits on the photo, and you can swipe through their other photos right there.</p>
+      <ul>
+        <li>Back button floats on the photo. No separate title bar.</li>
+        <li>Follow and Message move up, right under the photo, so they are the first thing after the face. No bar pinned to the bottom.</li>
+        <li>Everything else is the same white cards as A.</li>
+        <li>Somebody with no photo gets a soft blue-grey block with their initials instead, like the Match card today.</li>
+      </ul>
+      <div class="verdict">Effort: medium. The most "app-like" of the three.</div>
+    </aside>
+    <div class="boards">
+      <div class="board">
+        <div class="cap">B · light</div>
+        <div class="phone">
+          <div class="status" style="position:absolute;width:374px;color:#fff;z-index:2"><span>9:41</span><span class="pill" style="background:#101215"></span><span>●●●</span></div>
+          <div class="hero">
+            <div class="dots"><i></i><i></i><i></i></div>
+            <div class="back" style="top:40px">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            </div>
+            <div class="shade"></div>
+            <div class="who">
+              <div class="name">Sofia Marchetti <span class="badge">VARSITY</span></div>
+              <div class="sub">Dunster · Class of 2027 · Economics</div>
+              <div class="pills"><span class="pill-fit">Strong fit</span></div>
+            </div>
+          </div>
+          <div class="stack">
+            <div class="card" style="padding:12px">
+              <div class="actions">
+                <div class="btn ghost">Follow</div>
+                <div class="btn solid">Message</div>
+              </div>
+              <p class="bio" style="margin:12px 2px 0">Lightweight rower, mornings at Hemenway before class. Looking for someone to run the river loop with on rest days.</p>
+            </div>
+
+            <div class="card">
+              <div class="label">Why you match</div>
+              <div class="why">
+                <div><span class="tick"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></span><span>You both train in the mornings</span></div>
+                <div><span class="tick"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></span><span>You both go to Hemenway</span></div>
+                <div><span class="tick"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></span><span>You're both in Dunster</span></div>
+                <div><span class="tick"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></span><span>You share rowing and coffee</span></div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="label">Training</div>
+              <div class="rows">
+                <div><span class="k">Level</span><span class="v">Intermediate</span></div>
+                <div><span class="k">Type</span><span class="v">Lift + Run</span></div>
+                <div><span class="k">Split</span><span class="v">Push / Pull / Legs</span></div>
+                <div><span class="k">Schedule</span><span class="v">Mon · Wed · Fri &nbsp;⌄</span></div>
+                <div><span class="k">Gym</span><span class="v">Hemenway</span></div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="label">Interests</div>
+              <div class="chips">
+                <span class="chip on">Rowing</span><span class="chip on">Coffee</span><span class="chip">Photography</span>
+                <span class="chip">Hiking</span><span class="chip">Cooking</span><span class="chip">Live music</span>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="label">About</div>
+              <div class="rows">
+                <div><span class="k">From</span><span class="v">Milan, Italy</span></div>
+                <div><span class="k">Languages</span><span class="v">Italian, English</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= C ================= -->
+  <section class="row">
+    <aside class="note">
+      <div class="k">Direction C</div>
+      <h2>At a glance</h2>
+      <p>Built around the question the tap was asking: <em>should I train with this person?</em> The answer is on the first screen, not in a list.</p>
+      <ul>
+        <li>Identity card with a thin Dunster red and gold bar, taken from the house data the Gyms tab already has.</li>
+        <li>Follow and Message live inside the identity card, so you can act without scrolling.</li>
+        <li>"Why you match" is a crimson-tinted card. It is the one loud thing on the page.</li>
+        <li>Training is four tiles plus a real week strip, so you see <em>which days</em> without tapping a chevron.</li>
+        <li>Interests, About, Photos as in A.</li>
+      </ul>
+      <div class="verdict">Effort: medium. The biggest change in how it reads.</div>
+    </aside>
+    <div class="boards">
+      <div class="board">
+        <div class="cap">C · light</div>
+        <div class="phone">
+          <div class="status"><span>9:41</span><span class="pill"></span><span>●●●</span></div>
+          <div class="topbar">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            <span class="t">Sofia Marchetti</span><span style="width:18px"></span>
+          </div>
+          <div class="stack">
+            <div class="card">
+              <div class="ident c">
+                <div class="avatar">SM</div>
+                <div style="min-width:0">
+                  <div class="name">Sofia Marchetti <span class="badge">VARSITY</span></div>
+                  <div class="sub">Dunster · Class of 2027</div>
+                  <div class="pills"><span class="pill-fit">Strong fit</span><span class="pill-mentor">Mentor</span></div>
+                </div>
+              </div>
+              <div class="housebar"></div>
+              <p class="bio" style="margin:12px 0 0">Lightweight rower, mornings at Hemenway before class. Looking for someone to run the river loop with on rest days.</p>
+              <div class="actions" style="margin-top:14px">
+                <div class="btn ghost">Follow</div>
+                <div class="btn solid">Message</div>
+              </div>
+            </div>
+
+            <div class="card whycard">
+              <div class="label">Why you match</div>
+              <div class="why">
+                <div><span class="tick"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></span><span class="big">Same mornings, same gym</span></div>
+                <div><span class="tick"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></span><span>You're both in Dunster</span></div>
+                <div><span class="tick"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></span><span>You share rowing and coffee</span></div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="label">Training</div>
+              <div class="tiles">
+                <div class="tile"><div class="k">Level</div><div class="v">Intermediate</div></div>
+                <div class="tile"><div class="k">Type</div><div class="v">Lift + Run</div></div>
+                <div class="tile"><div class="k">Split</div><div class="v">Push / Pull / Legs</div></div>
+                <div class="tile"><div class="k">Gym</div><div class="v">Hemenway</div></div>
+              </div>
+              <div class="week">
+                <span class="on">M</span><span>T</span><span class="on">W</span><span>T</span><span class="on">F</span><span>S</span><span>S</span>
+              </div>
+              <div class="weekline"><span>Usually</span><b>7 – 9 am</b></div>
+            </div>
+
+            <div class="card">
+              <div class="label">Interests</div>
+              <div class="chips">
+                <span class="chip on">Rowing</span><span class="chip on">Coffee</span><span class="chip">Photography</span>
+                <span class="chip">Hiking</span><span class="chip">Cooking</span><span class="chip">Live music</span>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="label">About</div>
+              <div class="rows">
+                <div><span class="k">Concentration</span><span class="v">Economics</span></div>
+                <div><span class="k">From</span><span class="v">Milan, Italy</span></div>
+                <div><span class="k">Languages</span><span class="v">Italian, English</span></div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="label">Photos</div>
+              <div class="photos"><div class="ph"></div><div class="ph"></div><div class="ph"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <p class="legend">Dark mode is the same layout with the dark neutrals swapped in, exactly as on every other screen, so it is not drawn separately. The bottom tab bar is left out of the boards to keep the focus on the profile itself. Sofia is invented.</p>
+</div>
