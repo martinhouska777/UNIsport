@@ -57,3 +57,6 @@ scripts/landing/raw/
 
 # Business research / strategy — NOT for the public repo
 unisportforboathouses/
+
+# rendered video (regenerate with scripts/video/*.mjs)
+mockups/video/*.mp4
