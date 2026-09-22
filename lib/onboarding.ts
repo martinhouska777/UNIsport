@@ -310,13 +310,10 @@ export const runningExperiences: string[] = [
   Your MAIN activity is asked about in full on screen 3. Everything ELSE you do
   is asked about as lightly as it possibly can be, on purpose.
 
-  A gym session is an appointment: you and a partner have to be in the same
-  building at the same hour, which is why screen 5 pins training to days and
-  times. A run is not. You can run at any hour, from anywhere, so demanding a
-  time for it would only put a fiction into the database. All matching actually
-  needs is that you do it, roughly how often, and — ONLY if you happen to have
-  one — a usual day. Leaving the days blank is the normal answer here, not a
-  skipped question.
+  It asks WHICH and HOW OFTEN, and nothing else. It used to ask for a usual
+  day as well; it doesn't any more (owner, 2026-09-22): the next screen already
+  asks when you are free, and saying when you usually do your second sport on
+  top of that is the same question twice.
 
   This is the screen that fixes the person who lifts AND runs: until now they
   had to pick one, and were invisible to everyone looking for the other.
@@ -324,7 +321,6 @@ export const runningExperiences: string[] = [
 export type OtherActivity = {
   key: PrimaryActivity;
   perWeek: string; // one of activityFrequencies; "" until they pick one
-  days: string[]; // weekDay keys — empty is normal and fine
   note: string; // only "other" uses this: what the activity actually is
 };
 

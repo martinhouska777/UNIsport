@@ -225,7 +225,7 @@ const STEPS: StepMeta[] = [
   */
   { key: "alsodo", title: "Anything else you do?", skippable: true },
   { key: "topgyms", title: "Your top gyms." },
-  { key: "schedule", title: "When do you usually train?" },
+  { key: "schedule", title: "When do you usually have time to train?" },
   /*
     No longer skippable. A concentration and three interests are required; the
     hometown and languages stay optional. This chapter is the reason two
@@ -621,9 +621,8 @@ export default function OnboardingFlow() {
       case "alsodo": {
         /*
           Everything you do that ISN'T your main thing. Deliberately shallow:
-          which ones, how often, and a usual day only if one actually exists.
-          See the note above OtherActivity in lib/onboarding.ts for why a run
-          is not asked to name an hour the way a gym session is.
+          which ones and how often, and nothing else. See the note above
+          OtherActivity in lib/onboarding.ts for why it stops there.
         */
         const others = primaryActivities.filter((a) => a.key !== profile.primaryActivity);
         const picked = (key: string) => profile.otherActivities.find((o) => o.key === key);
@@ -633,7 +632,7 @@ export default function OnboardingFlow() {
             "otherActivities",
             picked(key)
               ? profile.otherActivities.filter((o) => o.key !== key)
-              : [...profile.otherActivities, { key, perWeek: "", days: [], note: "" }],
+              : [...profile.otherActivities, { key, perWeek: "", note: "" }],
           );
 
         const patch = (key: string, changes: Partial<OtherActivity>) =>
@@ -641,11 +640,6 @@ export default function OnboardingFlow() {
             "otherActivities",
             profile.otherActivities.map((o) => (o.key === key ? { ...o, ...changes } : o)),
           );
-
-        const toggleDay = (key: string, day: string) => {
-          const days = picked(key)?.days ?? [];
-          patch(key, { days: days.includes(day) ? days.filter((d) => d !== day) : [...days, day] });
-        };
 
         return (
           <div className="flex flex-col gap-2.5">
@@ -710,30 +704,6 @@ export default function OnboardingFlow() {
                         </div>
                       </div>
 
-                      <div>
-                        <FieldLabel>A usual day? — optional</FieldLabel>
-                        <div className="flex gap-1.5">
-                          {weekDays.map((d) => {
-                            const dayOn = chosen.days.includes(d.key);
-                            return (
-                              <button
-                                key={d.key}
-                                type="button"
-                                onClick={() => toggleDay(a.key, d.key)}
-                                aria-pressed={dayOn}
-                                aria-label={d.label}
-                                className={`h-10 flex-1 rounded-[10px] border text-[13px] font-medium transition-colors ${
-                                  dayOn
-                                    ? "border-primary bg-primary text-primary-contrast"
-                                    : "border-border bg-surface text-muted"
-                                }`}
-                              >
-                                {d.letter}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
                     </div>
                   )}
                 </div>
@@ -861,6 +831,14 @@ export default function OnboardingFlow() {
 
         return (
           <div className="flex flex-col gap-2.5">
+            {/* The one line the owner asked to keep (2026-09-22). It is not an
+                explanation of the control — it changes the ANSWER: mark every
+                free hour, not only the ones you normally train, because a
+                partner free an hour earlier is a session. */}
+            <p className="px-1 text-[12px] leading-relaxed text-muted">
+              Mark every hour you are free, not only the hours you normally train.
+              Somebody free an hour earlier or later is somebody you can go with.
+            </p>
             <div className="rounded-2xl border border-border bg-surface p-3">
               <WeekHourGrid schedule={schedule} onSet={setHour} />
             </div>

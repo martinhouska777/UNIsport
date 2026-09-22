@@ -146,7 +146,7 @@ export default function TrainingSettings({
     onSave({
       otherActivities: extras.some((o) => o.key === key)
         ? extras.filter((o) => o.key !== key)
-        : [...extras, { key, perWeek: "2×", days: [], note: "" }],
+        : [...extras, { key, perWeek: "2×", note: "" }],
     });
 
   // ---- ranked gyms --------------------------------------------------------
