@@ -99,8 +99,8 @@ export default function MemoriesPage() {
           </span>
           <div className="mt-3 text-sm font-medium text-text">No memories yet</div>
           <p className="mx-auto mt-1.5 max-w-[16rem] text-[13px] leading-relaxed text-muted">
-            Add a photo when you log a session and it shows up here, with where you
-            were and what you trained.
+            Add a photo when you log a session and it shows up here, with who you
+            were with and what you did.
           </p>
         </div>
       )}
