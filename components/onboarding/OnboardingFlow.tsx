@@ -798,15 +798,15 @@ export default function OnboardingFlow() {
 
           The answer is still stored as real hour ranges ("17:00-19:00"),
           which is what matching compares; the grid just joins lit hours up.
-          Each tap is applied to the schedule as it is AT THAT MOMENT, so
-          several quick taps in a row all land.
+          Each hour — a tap, or one cell of a swipe — is applied to the
+          schedule as it is AT THAT MOMENT, so a fast stroke lands whole.
         */
         const schedule = profile.trainingSchedule;
-        const toggleHour = (day: string, hour: number) =>
+        const setHour = (day: string, hour: number, on: boolean) =>
           setProfile((prev) => {
             const hours = hoursOfDay(prev.trainingSchedule[day]);
-            if (hours.has(hour)) hours.delete(hour);
-            else hours.add(hour);
+            if (on) hours.add(hour);
+            else hours.delete(hour);
             const next = { ...prev.trainingSchedule };
             const slots = hoursToSlots(hours);
             if (slots.length > 0) next[day] = slots;
@@ -820,7 +820,7 @@ export default function OnboardingFlow() {
         return (
           <div className="flex flex-col gap-2.5">
             <div className="rounded-2xl border border-border bg-surface p-3">
-              <WeekHourGrid schedule={schedule} onToggle={toggleHour} />
+              <WeekHourGrid schedule={schedule} onSet={setHour} />
             </div>
             <p className="px-1 text-[12px] text-muted">
               {chosenDays.length === 0

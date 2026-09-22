@@ -91,7 +91,7 @@ export default function OnboardingShell({
           named steps read as a conversation with a shape. The current chapter's
           segment fills as its screens go by, so nothing feels stuck. */}
       {chapterLabel !== undefined && chapterIndex !== undefined && chapterTotal !== undefined ? (
-        <div className="mb-4 mt-4">
+        <div className="mb-3 mt-3">
           <div className="mb-1.5 text-[11px] font-medium uppercase tracking-[0.1em] text-primary">
             {chapterLabel}
           </div>
@@ -129,10 +129,10 @@ export default function OnboardingShell({
       {/* Scrollable body */}
       <div className={`flex-1 overflow-y-auto ${centered ? "text-center" : ""}`}>
         {headerSlot}
-        <h1 className="mb-2 font-serif text-[22px] font-medium leading-tight text-text">
+        <h1 className="mb-1 font-serif text-[18px] font-medium leading-tight text-text">
           {title}
         </h1>
-        {subtitle && <p className="mb-5 text-[13px] leading-relaxed text-muted">{subtitle}</p>}
+        {subtitle && <p className="mb-3 text-[12px] leading-snug text-muted">{subtitle}</p>}
         {children}
       </div>
 
