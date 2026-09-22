@@ -40,9 +40,12 @@ const KIT = {
   "key-enter":  ["keyboard__atm-cash-machine-key-press__2841", 0.00, 0.18, 0.90, 0.88, "lowpass=f=3000"],
   "click-ui":   ["interface__select-click__1109", 0.00, 0.22, 1.0, 1.00, "lowpass=f=5000"],
   "click-soft": ["technology__modern-technology-select__3124", 0.00, 0.09, 1.0, 1.00, "lowpass=f=3200"],
-  /* Owner: "a click sound when you click the two things" */
-  "tap-1":      ["click__modern-click-box-check__1120", 0.00, 0.12, 1.0, 1.00, "lowpass=f=5500"],
-  "tap-2":      ["click__modern-click-box-check__1120", 0.00, 0.12, 0.92, 0.93, "lowpass=f=5500"],
+  /* Owner: "exactly like a mouse click button". This recording is a real mouse
+     button: two transients 126 ms apart, the press and the release coming back
+     up. Both are kept — that gap is what makes it read as a mouse and not a tick.
+     The press is the louder of the two, so it anchors on the press by itself. */
+  "tap-1":      ["click__mouse-click-close__1113", 0.00, 0.24, 1.0, 1.00, null, 0.011],
+  "tap-2":      ["click__mouse-click-close__1113", 0.00, 0.24, 0.94, 0.97, null, 0.011],
   /* the text turning into "Choose your activity" */
   "whoosh-text":["swoosh__short-wind-swoosh__1461", 0.00, 0.50, 1.0, 1.00],
   /* the three activity tiles arriving (audition A) */
@@ -86,7 +89,10 @@ const SOFT_KIT = {
 const SR = 48000;
 const anchors = {};
 
-for (const [name, [src, ss, dur, gain, pitch, extra]] of Object.entries(SOFT ? SOFT_KIT : KIT)) {
+/* A 7th field forces the anchor. Needed where the loudest transient is not the one
+   that should land on the cut: a mouse button's release can out-peak its press, and
+   anchoring on the release would put the click 130 ms before the finger moves. */
+for (const [name, [src, ss, dur, gain, pitch, extra, anchor]] of Object.entries(SOFT ? SOFT_KIT : KIT)) {
   /* "@synth" means take the synthesised version of this sound instead */
   const inFile = src === "@synth"
     ? path.join(ROOT, "mockups/video/sfx", name + ".wav")
@@ -121,7 +127,7 @@ for (const [name, [src, ss, dur, gain, pitch, extra]] of Object.entries(SOFT ? S
   const x = new Float32Array(raw.buffer, raw.byteOffset, raw.byteLength / 4);
   let p = 0, pi = 0;
   for (let i = 0; i < x.length; i++) { const a = Math.abs(x[i]); if (a > p) { p = a; pi = i; } }
-  anchors[name] = +(pi / SR).toFixed(4);
+  anchors[name] = anchor !== undefined && anchor !== null ? anchor : +(pi / SR).toFixed(4);
   console.log(`  ${name.padEnd(12)} ${(x.length / SR).toFixed(2)}s  peak@${anchors[name].toFixed(2)}s   <- ${src}`);
 }
 

@@ -11,7 +11,8 @@
     - the keys are six different samples so no two neighbouring letters match
     - the whooshes come in three lengths/registers and are never reused
 */
-import { writeFileSync, mkdirSync } from "node:fs";
+import { writeFileSync, mkdirSync, existsSync, readdirSync } from "node:fs";
+import { execFileSync } from "node:child_process";
 import path from "node:path";
 
 const SR = 48000;
@@ -117,6 +118,30 @@ function tap(cut, thud, tau) {
 write("tap-1.wav", tap(2700, 96, 0.022), 0.85);
 write("tap-2.wav", tap(2350, 88, 0.026), 0.8);
 
+/* The two selection presses are the one place synthesis was rejected: the owner
+   wants "exactly like a mouse click button", and a real mouse button is a pair of
+   transients 126 ms apart (press down, release up) that is very hard to fake. So
+   for tap-1/tap-2 only, a recording is imported over the synthesised ones.
+   Source: Mixkit "mouse click close" — free for commercial use, no attribution.
+   If the library isn't on this machine the synthesised taps above are kept. */
+{
+  const LIB = process.env.SFX_LIBRARY || "C:/VideoEditing/kits/mixkit-cc";
+  const src = path.join(LIB, "click__mouse-click-close__1113.wav");
+  if (existsSync(src)) {
+    for (const [name, pitch, gain] of [["tap-1", 1.0, 1.0], ["tap-2", 0.97, 0.94]]) {
+      const af = [`atrim=0:0.24`, "asetpts=PTS-STARTPTS",
+        pitch !== 1 ? `asetrate=${Math.round(SR * pitch)},aresample=${SR}` : null,
+        "afade=t=in:st=0:d=0.002", "afade=t=out:st=0.21:d=0.03",
+        `volume=${gain}`, "loudnorm=I=-20:TP=-1.0:LRA=11"].filter(Boolean).join(",");
+      execFileSync("ffmpeg", ["-y", "-v", "error", "-i", src, "-af", af,
+        "-ac", "1", "-ar", String(SR), "-c:a", "pcm_s16le", path.join(OUT, name + ".wav")]);
+      console.log(`  ${name}.wav`.padEnd(20) + "real mouse click (imported)");
+    }
+  } else {
+    console.log("  (mouse click source not found; keeping the synthesised taps)");
+  }
+}
+
 /* A whoosh: noise through a band-pass whose centre sweeps up and back down, under a
    smooth swell. The PEAK is what lands on the cut, not the start of the file. */
 function whoosh(len, f0, f1, f2, Q, sub = 0) {
@@ -177,6 +202,25 @@ console.log("riser, note, bed");
            * Math.min(1, p * 8) * Math.min(1, (1 - p) * 8);
   }
   write("bed-air.wav", buf, 0.5);
+}
+
+/* Placement anchors each sound on its transient, so the kit has to say where that
+   is. Without this file the placement code assumes a swell peaking halfway, which
+   is right for the synthesised whooshes and wrong for anything with a hard attack. */
+{
+  const anchors = {};
+  for (const f of readdirSync(OUT)) {
+    if (!f.endsWith(".wav")) continue;
+    const raw = execFileSync("ffmpeg", ["-v", "error", "-i", path.join(OUT, f), "-ac", "1", "-ar", String(SR), "-f", "f32le", "-"], { maxBuffer: 1 << 28 });
+    const x = new Float32Array(raw.buffer, raw.byteOffset, raw.byteLength / 4);
+    let p = 0, pi = 0;
+    for (let i = 0; i < x.length; i++) { const a = Math.abs(x[i]); if (a > p) { p = a; pi = i; } }
+    anchors[f.slice(0, -4)] = +(pi / SR).toFixed(4);
+  }
+  /* the imported mouse click: anchor on the press, which its release can out-peak */
+  if (anchors["tap-1"] !== undefined) { anchors["tap-1"] = 0.011; anchors["tap-2"] = 0.011; }
+  writeFileSync(path.join(OUT, "anchors.json"), JSON.stringify(anchors, null, 1));
+  console.log("  anchors.json      " + Object.keys(anchors).length + " sounds");
 }
 
 console.log("\nkit written to mockups/video/sfx");
