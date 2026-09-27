@@ -93,6 +93,41 @@ load("push~soft", "push-join", "lowpass=f=3500");
 load("swell", "whoosh-low", "areverse,lowpass=f=4000,highpass=f=50");
 ANCHORS.swell = SFX.swell.length / SR - ANCHORS["whoosh-low"];
 
+/* The tile sound. Owner, 2026-09-27: "do a different sound effect for the showing of
+   the three things". Auditioned with --tile <name>; "select" is the v3-v5 sound.
+   `steps` are the semitones of the three tiles: a small climb for noises, a rising
+   chord for the pitched ones. Gains are matched by ear-level measurement so the
+   auditions compare the sound, not the volume. */
+const LIB = "C:/VideoEditing/kits";
+const TILES = {
+  select:  { gain: -20.5, steps: [0, 1, 2] },
+  pop:     { file: `${LIB}/mixkit-cc/pop__dry-pop-up-notification-alert__2356.wav`, filter: "lowpass=f=5000", gain: -26.3, steps: [0, 1, 2] },
+  light:   { file: `${LIB}/mixkit-cc/whoosh__explainer-video-pops-whoosh-light-pop__3005.wav`, filter: "lowpass=f=5500", gain: -25.7, steps: [0, 1, 2] },
+  bubble:  { file: `${LIB}/mixkit-cc/click__plastic-bubble-click__1124.wav`, filter: "lowpass=f=4500", gain: -20, steps: [0, 1, 2] },
+  glass:   { file: `${LIB}/kenney-cc0/kenney_interface-sounds/Audio/glass_001.ogg`, filter: "lowpass=f=6000", gain: -19, steps: [0, 2, 4] },
+  drop:    { file: `${LIB}/kenney-cc0/kenney_interface-sounds/Audio/drop_002.ogg`, filter: "lowpass=f=5000", gain: -18, steps: [0, 2, 4] },
+  marimba: { synth: true, gain: -31.5, steps: [0, 4, 7] },
+};
+const TILE = argAfter("--tile") || "select";
+if (!TILES[TILE]) { console.error(`--tile: one of ${Object.keys(TILES).join(", ")}`); process.exit(1); }
+{
+  const o = TILES[TILE];
+  if (o.file) SFX["tile~pick"] = decode(o.file, `${o.filter},afade=t=out:st=0.25:d=0.1,atrim=0:0.35`);
+  else if (o.synth) {
+    /* a soft marimba: a sine at A5 with a quieter 4th partial, 2 ms attack, 180 ms ring */
+    const len = Math.round(0.4 * SR), b = new Float32Array(len), f0 = 880;
+    for (let i = 0; i < len; i++) {
+      const t = i / SR, env = Math.min(1, t / 0.002) * Math.exp(-t / 0.18);
+      b[i] = (Math.sin(2 * Math.PI * f0 * t) + 0.18 * Math.sin(2 * Math.PI * f0 * 3.93 * t) * Math.exp(-t / 0.03)) * env * 0.5;
+    }
+    SFX["tile~pick"] = b;
+  } else SFX["tile~pick"] = SFX.tile;
+  let pk = 0, pi = 0; SFX["tile~pick"].forEach((v, i) => { if (Math.abs(v) > pk) { pk = Math.abs(v); pi = i; } });
+  /* bring every audition to the same peak before its gain, so the table compares like with like */
+  if (TILE !== "select") SFX["tile~pick"] = SFX["tile~pick"].map((v) => v / pk * dB(-1));
+  ANCHORS["tile~pick"] = pi / SR;
+}
+
 /* ---------- placing ---------- */
 const mix = new Float32Array(N);
 let seed = 7;
@@ -142,8 +177,8 @@ if (!V4) {
   peakAt("whoosh-text~soft", T.act, dB(-13), 0.88);
   peakAt("whoosh-text", T.act, dB(-27));
 
-  /* the three tiles land, climbing a semitone */
-  for (let i = 0; i < 3; i++) peakAt("tile", T.tiles + 0.18 + i * 0.12, dB(-20.5), semis(i));
+  /* the three tiles land */
+  for (let i = 0; i < 3; i++) peakAt("tile~pick", T.tiles + 0.18 + i * 0.12, dB(TILES[TILE].gain), semis(TILES[TILE].steps[i]));
 
   /* the two clicks: the first mouse button on both */
   peakAt("tap", T.tap1, dB(-15));
@@ -319,7 +354,7 @@ if (MUSIC) {
 /* 3. one fixed gain to the target, a safety limiter at -2 dBFS (AAC adds a little on top), onto the picture */
 const pre = loudness(mixWav);
 const gain = target - pre.I;
-const out = V(`unisport-intro-${V4 ? "v4" : "v5"}${tag}.mp4`);
+const out = V(`unisport-intro-${V4 ? "v4" : "v5"}${TILE !== "select" && !V4 ? "-tile-" + TILE : ""}${tag}.mp4`);
 execFileSync("ffmpeg", ["-y", "-v", "error", "-i", V("unisport-intro.mp4"), "-i", mixWav, "-filter_complex",
   `[1:a]volume=${gain.toFixed(2)}dB,alimiter=limit=${dB(-2).toFixed(4)}:level=false:attack=2:release=40[a]`,
   "-map", "0:v", "-map", "[a]", "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-ar", String(SR),
