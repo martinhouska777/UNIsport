@@ -10,7 +10,13 @@ import { nav, views, type LandingView } from "@/lib/landingCopy";
   The phone menu (owner, 2026-09-15). The six tabs used to take a second row
   of the top bar that scrolled sideways; now a menu button at the left of the
   bar slides them in as a panel from the left edge, and the bar is one row.
-  Laptops keep the tabs in the bar (this is md:hidden).
+  Laptops keep the tabs in the bar (this is lg:hidden).
+
+  lg, not md (2026-09-27): between 768 and ~1000px the six tabs, the lockup
+  and the two doors do not fit one row, and the lockup gave way — "UNIsport"
+  broke over three lines. It had been hidden on the home page while the
+  intro's big wordmark was up; once the intro lost that wordmark, the broken
+  bar was the first thing a tablet saw. So a tablet gets the phone's bar.
 
   The panel is portalled to <body>: the bar lives inside StickyBar, which
   slides with a transform, and a fixed element inside a transform is pinned
@@ -33,7 +39,7 @@ export default function LandingMenu({ view }: { view: LandingView }) {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setOpen(false);
     };
-    const wide = window.matchMedia("(min-width: 768px)");
+    const wide = window.matchMedia("(min-width: 1024px)");
     const onWide = () => {
       if (wide.matches) setOpen(false);
     };
@@ -56,7 +62,7 @@ export default function LandingMenu({ view }: { view: LandingView }) {
         aria-label={nav.menu}
         aria-expanded={open}
         onClick={() => setOpen(true)}
-        className="tap44 -ml-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-l-text transition-colors hover:bg-l-bg-elevated md:hidden"
+        className="tap44 -ml-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-l-text transition-colors hover:bg-l-bg-elevated lg:hidden"
       >
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
           <path d="M4 7h16M4 12h16M4 17h16" />
@@ -65,7 +71,7 @@ export default function LandingMenu({ view }: { view: LandingView }) {
 
       {open &&
         createPortal(
-          <div className="fixed inset-0 z-[60] md:hidden">
+          <div className="fixed inset-0 z-[60] lg:hidden">
             <div aria-hidden onClick={close} className="absolute inset-0 bg-l-scrim animate-[backdrop-in_200ms_ease-out] motion-reduce:animate-none" />
             <div
               role="dialog"

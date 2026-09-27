@@ -996,15 +996,15 @@
   did; what was missing is that the two phones and the colour behind them were
   simply THERE at the first frame, which is what made the rest read as a pop.
 
-    0.00  the mark
-    0.12  the pill and the headline
-    0.16  the left phone rises      ┐ they lift into their lean and settle,
-    0.30  the right phone rises     ┘ so the stage builds under the words
-    0.26  the button
+    0.00  the pill and the headline
+    0.12  the body
+    0.16  the back phone rises      ┐ they lift into place and settle,
+    0.30  the front phone rises     ┘ so the stage builds beside the words
+    0.26  the button and the line under it
     0.38  the doors and the invite line
-    0.55  the school's colour blooms behind the phones (slow, 1.4s)
-    0.85  the scroll cue, last — the invitation, once there is something to
-          leave
+    0.55  the glow blooms behind the phones (slow, 1.4s)
+    0.85  (l-in-5) a scroll cue, last — the intro no longer draws one; the
+          beat is kept for whatever comes next
 
   Nothing here moves after it has arrived; the cycling of the schools is a
   separate, much slower clock (HERO_CYCLE_MS).
@@ -1022,8 +1022,8 @@
   to { opacity: 1; transform: none; }
 }
 .l-hero-rise { animation: l-rise 1.1s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
-[data-side="left"] .l-hero-rise { animation-delay: 0.16s; }
-[data-side="right"] .l-hero-rise { animation-delay: 0.3s; }
+[data-side="back"] .l-hero-rise { animation-delay: 0.16s; }
+[data-side="front"] .l-hero-rise { animation-delay: 0.3s; }
 
 /* The colour comes up last and slowest, so the page warms rather than flashes. */
 @keyframes l-bloom {
@@ -1133,38 +1133,41 @@
   the owner read that as the page bleeding into itself — the top going dark
   while the next section arrived early (2026-09-05) — and asked for it to be
   static. The intro now simply scrolls off, at full strength, like any other
-  section; no rule here at all. The wrapper (components/landing/HeroFade.tsx)
-  stays because the same component still tells the top bar when the intro's
-  big wordmark has left the screen (data-hero-mark).
+  section; no rule here at all.
 */
 
 /*
-  THE INTRO'S TWO BACKDROP PHONES (components/landing/HeroPhones.tsx).
+  THE INTRO'S TWO PHONES (components/landing/HeroPhones.tsx) — the right half
+  of the split intro (owner, 2026-09-27, after Hevy's front page). Match stands
+  in front, upright; Gyms stands behind it, a size smaller, leaning out to the
+  left, so about half of it shows. They used to be a backdrop, one in each
+  margin at ±11°; now they are the product, so nothing sits on them.
 
-  Anchored to the TEXT, not to the window: each stands a fixed distance out
-  from the middle of the page, so on a wide monitor they travel outwards with
-  the column of words instead of stranding themselves in the corners. The
-  distance clears the widest line of the intro (the body, 46ch) with room to
-  spare, and the size is chosen so the WHOLE phone fits above the row of
-  doors — no crop, no mask. Only drawn from xl up (the component), where the
-  margins they fill exist at all.
+  ONE NUMBER SIZES THE PAIR: --hp, the front phone's width. The box they stand
+  in is cut from it (the back phone's visible half plus the front phone across,
+  and the front phone's height plus room for the lean), so the pair keeps its
+  shape at every size and centres in its half as one object.
+
+  --hp measures itself against the WINDOW's height as well as its width: the
+  intro has to be one screen on a short laptop (owner, 2026-08-23), so the
+  phones have to finish above the row of doors. Big enough to read, too (owner,
+  2026-09-16: "make the phones a little bit bigger so you can comfortably read
+  it") — 34vh is 306px on a 900px-tall window.
 */
-/* The phone measures itself against the WINDOW's height, not just its width:
-   on a short laptop the intro has to be one screen (owner, 2026-08-23), which
-   means the phone and the row of letters under it have to finish above the row
-   of doors rather than sitting behind it. */
-/* Bigger, and BOTH AT THE SAME HEIGHT (owner, 2026-09-16: "make the phones a
-   little bit bigger so you can comfortably read it, and make them the same
-   height"). The right phone used to hang a little lower than the left. */
-.l-hero-phone { position: absolute; top: clamp(16px, 3.2vh, 40px); left: 50%; width: clamp(236px, 33vh, 390px); }
-.l-hero-phone[data-side="left"] { transform: translateX(calc(-100% - 330px)); }
-.l-hero-phone[data-side="right"] { transform: translateX(330px); }
-/* The phone leans; the row of letters under it does not, so the lean lives on
-   an inner box. A transform changes nothing about layout, so the letters still
-   sit directly under the phone's upright box — the margin below pays for the
-   tilted corner that drops past it. */
-.l-hero-tilt { position: relative; transform: rotate(-11deg); }
-[data-side="right"] .l-hero-tilt { transform: rotate(11deg); }
+.l-hero-phones {
+  --hp: clamp(232px, 34vh, 330px);
+  position: relative;
+  width: calc(var(--hp) * 1.58);
+  height: calc(var(--hp) * 1.86);
+  margin-inline: auto;
+}
+.l-hero-phone { position: absolute; top: 50%; width: var(--hp); }
+.l-hero-phone[data-side="front"] { right: 0; z-index: 1; transform: translateY(-50%); }
+.l-hero-phone[data-side="back"] { left: 0; transform: translateY(-46%) scale(0.88); }
+/* The lean lives on an inner box, so it turns the phone and its glow together
+   without moving the box the phone is placed by. */
+.l-hero-tilt { position: relative; }
+[data-side="back"] .l-hero-tilt { transform: rotate(-7deg); }
 
 /*
   THE GLOW — a soft column of light behind the phone, leaning with it. A
@@ -1220,28 +1223,10 @@
 }
 
 @media (min-width: 1536px) {
-  .l-hero-phone[data-side="left"] { transform: translateX(calc(-100% - 340px)); }
-  .l-hero-phone[data-side="right"] { transform: translateX(340px); }
   .l-hero-glow { filter: blur(32px); }
 }
 @media (prefers-reduced-motion: reduce) {
   .l-hero-glow { transition: none; }
-}
-
-/*
-  ONE WORDMARK AT A TIME — ON A LAPTOP. The bar's small mark is not drawn while
-  the intro's big one is on screen; it fades in as the intro leaves. Only on the
-  views that HAVE the big one — LandingNav puts this class on then (heroMark).
-
-  PHONES KEEP IT (owner, 2026-09-19: "vlevo je tam nic"). On a phone the bar is
-  one short row and the two marks are never side by side on screen the way they
-  are on a wide laptop; an empty left half read as a broken bar instead of as
-  restraint. So below 768px the bar always carries the wordmark and the Sign up
-  door — the bar is a whole bar from the first pixel of the page.
-*/
-@media (min-width: 768px) {
-  .l-nav-mark { opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 0.3s ease-out, visibility 0.3s; }
-  [data-hero-mark="gone"] .l-nav-mark { opacity: 1; visibility: visible; pointer-events: auto; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1249,7 +1234,6 @@
   /* Straight to the end state: in place, and the glow at full strength. */
   .l-hero-rise { animation: none; }
   .l-hero-glow { animation: none; opacity: 0.36; }
-  .l-nav-mark { transition: none; }
 }
 
 /*

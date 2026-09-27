@@ -2,64 +2,68 @@
 
 import Link from "next/link";
 import { useRef, type CSSProperties } from "react";
-import HeroFade from "@/components/landing/HeroFade";
 import HeroPhones from "@/components/landing/HeroPhones";
-import LogoMark from "@/components/landing/LogoMark";
 import SchoolCrest from "@/components/SchoolCrest";
-import Wordmark from "@/components/landing/Wordmark";
 import { useSchoolCycle } from "@/components/landing/useSchoolCycle";
 import { crestFor } from "@/lib/crests";
 import { accent, HERO_CYCLE_MS } from "@/lib/landingSchools";
-import { about, availability, brandLine, doors, hero } from "@/lib/landingCopy";
+import { about, availability, doors, hero } from "@/lib/landingCopy";
 
 /*
   THE INTRO — one screen that introduces the app and then hands over to the
   story below it.
 
-  It opens on the MARK, the way the link card does: the wordmark and the brand
-  line, then the "live at" pill, the headline, one line of body, the primary
-  button with the availability line under it, the THREE DOORS (Student ·
-  Varsity athlete · Coach — each jumps to its own section), the invite note for
-  the rower holding a link, and the scroll cue pinned to the bottom of the
-  screen. No drawn phone: the real screenshots below replace it.
+  SPLIT, LIKE HEVY'S FRONT PAGE (owner, 2026-09-27: "ok udelej to tak jak
+  doporucujes a udelej to visually pleasing a ten text pod tim at se da dobre
+  cist jako u hevy"). The words on the left, the two phones on the right, the
+  three doors across the whole width underneath:
 
-  Three things were wrong with it before (owner, 2026-08-23 — "missing
-  something, some flow"):
+      FREE FOR STUDENTS                ┌───────┐
+      Your campus.               ┌─────┤       │
+      Your gym.                  │Gyms │ Match │
+      Your people.               │     │       │
+      Find every gym on campus…  └─────┤       │
+      ( Get started with .edu → )      └───────┘
+      Customized for each campus…
+      [ Student ]      [ Varsity athlete ]      [ Coach ]
+
+  • NO WORDMARK HERE. The name lives in the top bar, top left, the way Hevy's
+    does, so the bar draws its lockup from the first frame. (The intro opened
+    on the wordmark at full size from 2026-08-23 — "the page says its own name
+    first" — and the bar's copy stood down while it was up; both went.)
+  • The headline is the product's three lines, one per line. The promise,
+    "Never train alone again.", stays on the student card one screen down
+    (StudentIntro). Swapping the two was previewed the same day and dropped:
+    "Never train alone" is the category's stock line — Tribe carries it in its
+    app name, GymMate sits on nevertrainalone.co.uk — so as the FIRST sentence
+    a stranger reads, it filed the app with theirs. "Your campus" is the line
+    none of them can say.
+  • The body is set to be READ, not glanced at: ink rather than grey, left-
+    aligned, about sixty characters a line, 1.55 leading. Hevy's own: 17px,
+    1.5, near-black, a 490px column. Centred and balanced, ours read as a
+    ragged block of grey.
+  • Below lg there is no room beside the words: the phones are not drawn and
+    the column centres itself, as Hevy's does on a phone.
 
   IT IS ONE SCREEN, AND IT MEASURES ITSELF (owner, 2026-08-23: "ideally I
   wanted this to be one section; now I have to scroll to see it"). Every
-  vertical size here — the padding, the gaps, the headline, the mark, and the
-  phones beside it — is a clamp with a vh term, so the intro shrinks to fit the
-  window it is in instead of running past the fold on a short laptop. The
-  scroll cue is pinned to the bottom of the section rather than queued at the
-  end of the column, so it costs the column nothing.
+  vertical size here — the padding, the gaps, the headline, and the phones
+  beside it — is a clamp with a vh term, so the intro shrinks to fit the window
+  it is in instead of running past the fold on a short laptop. Verified at
+  1024x768, 1280x800, 1440x900, 1900x860 (the owner's window) and 1920x1080.
 
-  1. NO MARK. The page's own name was only in the 24px bar, so the intro never
-     introduced anything. It now opens on the mark at full size; the bar's copy
-     of it is not drawn while this one is on screen (HeroFade → .l-nav-mark),
-     so there are never two 40px apart.
-  2. IT WAS A WALL OF SMALL TEXT — nine blocks, no hierarchy, and the kicker
-     repeated the doors' two subtitles word for word on the same screen. The
-     kicker is gone, the rhythm is tighter, so more of the doors is in front of
-     a laptop visitor than before. (The cue is still under the fold on a
-     800px-tall window; the doors peeking above it are the honest scroll cue
-     there.) 2026-08-30 reset the ladder: the MARK is now the biggest thing on
-     the screen with the slogan under it, and the headline sits a size below
-     it — the page says its own name first.
-  3. IT ARRIVED ALL AT ONCE and left all at once. The blocks now come in on a
-     short stagger (l-in-1…4), and the whole thing fades and lags as you scroll
-     so the story rises over it instead of replacing it.
+  IT ARRIVES rather than pops: the blocks come in on a short stagger
+  (l-in-1…4) while the phones rise into place (app/globals.css).
 
-  IT TAKES THE SCHOOL'S COLOUR — IN TWO PLACES. The backdrop cycles the eight
+  IT TAKES THE SCHOOL'S COLOUR — IN TWO PLACES. The phones cycle the eight
   schools, and the intro owns the cycle (useSchoolCycle) and publishes the
   school's colour as --sc, with --sc-ink for whatever sits ON it. Only "Your
   people." and the "Get started with .edu" button wear it (launch audit
   2026-09-27, item 13): the school colour used to be on five things at once on
   this one screen — the top bar's button, "sport" in the name, those two, and
   the glow behind the phones — beside three brand blues, the gold and the
-  coach red. The name, the glow and the top bar are the page's own tokens
-  again. The "Live now at Harvard" pill never followed it: it states a fact
-  about Harvard and is the one place a colour could actually mislead.
+  coach red. The pill never followed it: it states a fact, and a fact in a
+  school's colour could read as that school's.
 
   Contrast: accent() in lib/landingSchools.ts guarantees the button's label
   clears 4.5:1 against whichever school is showing — the promise the blue
@@ -95,132 +99,121 @@ export default function LandingHero() {
   /* The pair stays on this section. It used to be published on <html> too, so
      the top bar's button could cycle with it (owner, 2026-09-19); the launch
      audit (2026-09-27, items 13 and 38) put that button back in the page's
-     plain ink, so this button is the one school-coloured way in on the screen. */
+     plain ink, so this button is the one school-coloured way in on the screen.
+
+     The same 1280px column as the top bar's, so the words start under the
+     logo and the phones end under the bar's last button. */
   return (
     <section
       id="top"
       ref={section}
       style={{ "--sc": color, "--sc-ink": `var(--color-${ink})` } as CSSProperties}
-      className="l-glow-accent relative z-[1] mx-auto flex min-h-[calc(100svh-var(--l-bar,0px))] max-w-[1160px] flex-col items-center justify-center px-6 pt-[clamp(14px,2.4vh,40px)] pb-[clamp(30px,4.4vh,60px)] text-center sm:px-8"
+      className="l-glow-accent relative z-[1] mx-auto flex min-h-[calc(100svh-var(--l-bar,0px))] w-full max-w-[1280px] flex-col justify-center px-6 pt-[clamp(18px,3.2vh,48px)] pb-[clamp(30px,4.4vh,60px)] sm:px-8"
     >
-      <HeroFade>
-        {/* 0 · The backdrop: two app screens in the margins of a wide screen,
-            which were empty. Behind everything, and only from xl up. */}
-        <HeroPhones i={i} count={count} />
-
-        {/* 1 · The mark. The page says who it is before it says anything else.
-            The LOCKUP, the same pair the top bar carries — drawn mark, then the
-            name (owner, 2026-09-27: the logo on the company site too). The
-            bar's copy is hidden while this one is up, so a visitor landing
-            here met the name but never the logo. The drawn mark keeps the
-            page's own blue — the logo never takes a school's colour — and the
-            name's second half keeps it too (launch audit 2026-09-27, item 13). */}
-        <div className="l-in-1 mb-[clamp(10px,2.2vh,24px)] flex flex-col items-center gap-[clamp(2px,0.6vh,8px)]">
-          <span className="text-[clamp(40px,min(7.2vw,7.4vh),82px)] text-l-text">
-            <LogoMark className="mr-[0.24em]" />
-            <Wordmark />
-          </span>
-          <span className="font-display text-[clamp(15px,2.6vh,24px)] tracking-tight text-l-text-2">
-            {brandLine}
-          </span>
-        </div>
-
-        {/* 2 · The one fact, and the headline. */}
-        <div className="l-in-2 flex flex-col items-center">
-          <div className="mb-[clamp(8px,1.6vh,16px)] inline-flex items-center gap-2 rounded-full border border-l-accent-soft bg-l-accent-dim px-3 py-1.5 font-mono text-[12.5px] font-medium tracking-wider uppercase text-l-accent">
+      <div className="grid items-center gap-x-10 lg:grid-cols-2">
+        <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
+          {/* 1 · The one fact, and the headline — one line of it per line. */}
+          <div className="l-in-1 mb-[clamp(12px,2.2vh,22px)] inline-flex items-center gap-2 rounded-full border border-l-accent-soft bg-l-accent-dim px-3 py-1.5 font-mono text-[12.5px] font-medium tracking-wider uppercase text-l-accent">
             <span className="l-pulse h-1.5 w-1.5 rounded-full bg-l-accent shadow-[0_0_8px_var(--color-l-accent)]" />
             {hero.badge}
           </div>
 
-          <h1 className="mb-[clamp(6px,1.4vh,16px)] max-w-[12ch] font-display text-[clamp(24px,min(4.2vw,4.4vh),42px)] font-normal leading-[1.02] tracking-[-0.02em] text-balance text-l-text">
-            {hero.headline[0]} {hero.headline[1]} <em className="italic text-(--sc) transition-colors duration-700 ease-in-out motion-reduce:transition-none">
+          <h1 className="l-in-1 font-display text-[clamp(46px,min(6.4vw,8.8vh),90px)] font-normal leading-[0.98] tracking-[-0.02em] text-l-text">
+            <span className="block">{hero.headline[0]}</span>{" "}
+            <span className="block">{hero.headline[1]}</span>{" "}
+            <em className="block italic text-(--sc) transition-colors duration-700 ease-in-out motion-reduce:transition-none">
               {hero.headline[2]}
             </em>
           </h1>
 
-          <p className="max-w-[54ch] text-[clamp(15px,1.9vw,17px)] leading-relaxed tracking-tight text-balance text-l-text-2">
+          {/* 2 · The body, set to be read (see the note at the top). */}
+          <p className="l-in-2 mt-[clamp(16px,2.8vh,28px)] max-w-[30em] text-[clamp(16px,1.25vw,18px)] leading-[1.55] tracking-[-0.005em] text-pretty text-l-text">
             {hero.body}
           </p>
-        </div>
 
-        {/* 3 · The way in. */}
-        <div className="l-in-3 mt-[clamp(12px,2.4vh,24px)] flex flex-col items-center">
-          <Link
-            href={hero.primaryHref}
-            className="group l-lift inline-flex items-center justify-center gap-2 rounded-full bg-(--sc) py-4 pr-7 pl-5 text-[15px] font-semibold tracking-tight text-(--sc-ink) transition-[transform,background-color,color] duration-700 ease-in-out hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-l-text motion-reduce:transition-none"
-          >
-            {/* The school showing, as its crest. The intro wears eight
-                universities' colours; this is where it says whose — the owner's
-                "you see your own university right there". Decorative: the
-                button's words are the button. */}
-            <SchoolCrest crest={crestFor(school.key)} className="l-cta-mark" />
-            {hero.primaryCta}
-            <Arrow className="transition-transform group-hover:translate-x-1" />
-          </Link>
-
-          {/* The availability line, where the eye lands after the button. */}
-          <p className="mt-[clamp(6px,1.2vh,12px)] max-w-[46ch] text-[14px] leading-relaxed text-l-text-2">{availability}</p>
-        </div>
-
-        {/* 4 · The three doors, each with its own tint (owner, 2026-09-15) —
-            blue for the student, gold for the varsity athlete, red for the
-            coach, whose title is written in that red the way Varsity athlete
-            is written in gold. Each opens that audience's own view — the same
-            page as its tab. */}
-        <div className="l-in-4 flex w-full flex-col items-center">
-            <div className="mt-[clamp(12px,2.4vh,24px)] grid w-full max-w-[860px] grid-cols-1 gap-3 sm:grid-cols-3">
-              {doors.map((d, i) => (
-                <Link
-                  key={d.label}
-                  href={d.href}
-                  className={`group flex flex-col items-start gap-[clamp(2px,0.6vh,6px)] rounded-2xl border px-5 py-[clamp(9px,1.6vh,16px)] text-left transition-[color,background-color,border-color,translate] hover:-translate-y-0.5 ${DOOR_TONE[i].card}`}
-                >
-                  <span
-                    className={`flex w-full items-center justify-between font-display text-[clamp(22px,3.2vh,30px)] tracking-tight ${DOOR_TONE[i].label}`}
-                  >
-                    {d.label}
-                    <Arrow className="text-l-text-3 transition-transform group-hover:translate-x-1" />
-                  </span>
-                  <span className="text-[13px] leading-snug text-l-text-2">{d.sub}</span>
-                </Link>
-              ))}
-            </div>
-
-          {/* Two small ways on, on one line so the screen keeps its height.
-
-              The WHY (owner, 2026-09-04) points down this same page, where the
-              first paragraph of it now stands: the story behind the app is the
-              piece a student is most likely to be moved by, and until now it
-              was two clicks away.
-
-              The INVITE is the rower's: they usually arrive holding a link from
-              their captain, and shouldn't have to scroll to find where it goes.
-              It keeps the varsity gold; the Why wears the page's link blue,
-              underlined — the same as on Contact, since it was ink here and
-              blue there (launch audit 2026-09-27, item 45). */}
-          <div className="mt-[clamp(10px,2vh,24px)] flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[14px] text-l-text-2">
+          {/* 3 · The way in, and the availability line where the eye lands
+              after the button. */}
+          <div className="l-in-3 mt-[clamp(20px,3.6vh,36px)] flex flex-col items-center lg:items-start">
             <Link
-              href={hero.whyHref}
-              className="tap44 inline-block font-medium text-l-accent underline underline-offset-4 transition-colors"
+              href={hero.primaryHref}
+              className="group l-lift inline-flex items-center justify-center gap-2 rounded-full bg-(--sc) py-4 pr-7 pl-5 text-[15px] font-semibold tracking-tight text-(--sc-ink) transition-[transform,background-color,color] duration-700 ease-in-out hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-l-text motion-reduce:transition-none"
             >
-              {about.readWhy} →
+              {/* The school showing, as its crest. The intro wears eight
+                  universities' colours; this is where it says whose — the owner's
+                  "you see your own university right there". Decorative: the
+                  button's words are the button. */}
+              <SchoolCrest crest={crestFor(school.key)} className="l-cta-mark" />
+              {hero.primaryCta}
+              <Arrow className="transition-transform group-hover:translate-x-1" />
             </Link>
-            <span aria-hidden="true" className="text-l-text-3 max-sm:hidden">
-              ·
-            </span>
-            <p>
-              {hero.inviteNote}{" "}
-              <Link
-                href="/join"
-                className="tap44 inline-block font-medium text-l-varsity underline-offset-4 transition-colors hover:underline"
-              >
-                {hero.inviteCta} →
-              </Link>
+
+            <p className="mt-[clamp(10px,1.6vh,16px)] max-w-[44ch] text-[14px] leading-relaxed text-pretty text-l-text-2">
+              {availability}
             </p>
           </div>
-
         </div>
-      </HeroFade>
+
+        {/* 0 · The two phones — the right half, from lg up. */}
+        <HeroPhones i={i} count={count} />
+      </div>
+
+      {/* 4 · The three doors, each with its own tint (owner, 2026-09-15) —
+          blue for the student, gold for the varsity athlete, red for the
+          coach, whose title is written in that red the way Varsity athlete
+          is written in gold. Each opens that audience's own view — the same
+          page as its tab. Across the whole column now, under both halves. */}
+      <div className="l-in-4 mt-[clamp(20px,4vh,44px)] flex w-full flex-col">
+        <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-3">
+          {doors.map((d, i) => (
+            <Link
+              key={d.label}
+              href={d.href}
+              className={`group flex flex-col items-start gap-[clamp(2px,0.6vh,6px)] rounded-2xl border px-5 py-[clamp(9px,1.6vh,16px)] text-left transition-[color,background-color,border-color,translate] hover:-translate-y-0.5 ${DOOR_TONE[i].card}`}
+            >
+              <span
+                className={`flex w-full items-center justify-between font-display text-[clamp(22px,3.2vh,30px)] tracking-tight ${DOOR_TONE[i].label}`}
+              >
+                {d.label}
+                <Arrow className="text-l-text-3 transition-transform group-hover:translate-x-1" />
+              </span>
+              <span className="text-[13px] leading-snug text-l-text-2">{d.sub}</span>
+            </Link>
+          ))}
+        </div>
+
+        {/* Two small ways on, on one line so the screen keeps its height.
+
+            The WHY (owner, 2026-09-04) points down this same page, where the
+            first paragraph of it now stands: the story behind the app is the
+            piece a student is most likely to be moved by, and until now it
+            was two clicks away.
+
+            The INVITE is the rower's: they usually arrive holding a link from
+            their captain, and shouldn't have to scroll to find where it goes.
+            It keeps the varsity gold; the Why wears the page's link blue,
+            underlined — the same as on Contact, since it was ink here and
+            blue there (launch audit 2026-09-27, item 45). */}
+        <div className="mt-[clamp(10px,2vh,24px)] flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[14px] text-l-text-2 lg:justify-start">
+          <Link
+            href={hero.whyHref}
+            className="tap44 inline-block font-medium text-l-accent underline underline-offset-4 transition-colors"
+          >
+            {about.readWhy} →
+          </Link>
+          <span aria-hidden="true" className="text-l-text-3 max-sm:hidden">
+            ·
+          </span>
+          <p>
+            {hero.inviteNote}{" "}
+            <Link
+              href="/join"
+              className="tap44 inline-block font-medium text-l-varsity underline-offset-4 transition-colors hover:underline"
+            >
+              {hero.inviteCta} →
+            </Link>
+          </p>
+        </div>
+      </div>
     </section>
   );
 }

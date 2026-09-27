@@ -7,8 +7,8 @@ import Shot from "@/components/landing/Shot";
 import { schools } from "@/lib/landingSchools";
 
 /*
-  THE INTRO'S BACKDROP — two app screens standing beside the words, cycling
-  through the eight schools' colours.
+  THE INTRO'S TWO PHONES — the right half of the intro, cycling through the
+  eight schools' colours.
 
   The owner's notes, 2026-08-23, in order:
     • the intro's sides are empty on a laptop — fill them with "some phone
@@ -17,16 +17,26 @@ import { schools } from "@/lib/landingSchools";
     • "I want colours, and I want the colours to change by school in the hero
       too, the same as we have with that static image."
 
-  So this is Campus Colours' idea, brought to the front door: gyms-*.webp on
-  the left and match-*.webp on the right, changing together. The light behind
-  them glowed in the school's colour until the launch audit (2026-09-27, item
-  13); it is the page's own blue now, and only the screens change school.
+  So this is Campus Colours' idea, brought to the front door: gyms-*.webp and
+  match-*.webp, changing together. The light behind them glowed in the
+  school's colour until the launch audit (2026-09-27, item 13); it is the
+  page's own blue now, and only the screens change school.
+
+  THEY STAND TOGETHER, ON THE RIGHT (owner, 2026-09-27, after Hevy's front
+  page). Until then they were a backdrop: one in each margin of a wide screen,
+  leaning away from the words at ±11°, at 82% so the words stayed in front.
+  Now the intro is split — words left, phones right — and the pair is the
+  product rather than a backdrop: Match in front, upright and at full
+  strength; Gyms behind it, leaning out to the left, the way Hevy stands its
+  second phone behind its first. Match is the one in front because the
+  headline lands on it: "Your people." Where each stands is .l-hero-phones in
+  app/globals.css — one width sizes both phones and the box they stand in.
 
   The eight schools' letters stood in a row under each phone for one cut. The
   owner took them off (2026-08-23) and moved a single one onto the "Get started
   with .edu" button — "you see your own university right there" — which is both
   a better place for it and the height these phones needed to grow into. They
-  are the point of the backdrop, and they have to be READABLE.
+  have to be READABLE.
 
   THE GLOW is a soft column of light, not a halo: a rounded shape the phone's
   own size, blurred. The first cut was a big radial gradient in a box, which
@@ -46,21 +56,11 @@ import { schools } from "@/lib/landingSchools";
   exception, the same one the closers stand on. Rule 2 still holds: the page's
   own chrome stays neutral; what changes colour is a picture of a themed app.
 
-  IT MUST NOT CLAIM EIGHT CAMPUSES. The app is live at one. So the pill above
-  the headline still reads "Live now at Harvard", the cycle STARTS on Harvard,
-  and no school is named here — the line under the button ("new campuses are
-  onboarded one at a time — colours, gyms and houses included") is what these
-  colours illustrate. Campus Colours spells it out further down, and drops the
-  design's "eight campuses" claim for the same reason.
-
-  WHERE THEY STAND. Anchored to the TEXT, not to the window — a fixed distance
-  out from the middle of the page (the .l-hero-phone rules in app/globals.css)
-  — so both are whole, clear of the screen edges, and travel outwards with the
-  column of words on a big monitor. Two earlier cuts, so they are not tried
-  again: hanging them half off the side edges showed a vertical strip of
-  somebody's screen and read as dirt on the page; melting them downwards into
-  the doors hid the whole shape of the phone, which is the only thing that
-  makes a phone read as one.
+  IT MUST NOT CLAIM EIGHT CAMPUSES. The app is live at one. So the cycle STARTS
+  on Harvard and no school is named here — the line under the button
+  ("Customized for each campus … Yours can be next.") is what these colours
+  illustrate. Campus Colours spells it out further down, and drops the design's
+  "eight campuses" claim for the same reason.
 
   THEY OPEN WHITE, whatever the machine's colour scheme says — a white phone
   reads as an app against the dark page, a dark one reads as a smudge. The
@@ -69,44 +69,37 @@ import { schools } from "@/lib/landingSchools";
   overrides the default; the rest of the page still opens in the visitor's own
   scheme.
 
-  Wide screens only (xl and up): below that the margins it fills do not exist.
-  It sits inside HeroFade, so it leaves with everything else. Which school is
-  showing is decided by the intro (useSchoolCycle) and handed down, because the
-  words up there take the same colour.
+  From lg up only: below that the intro is one column and there is no half to
+  stand in. Which school is showing is decided by the intro (useSchoolCycle)
+  and handed down, because the words up there take the same colour.
 */
 const PHONES = [
-  { side: "left" as const, shot: "gyms", what: "The Gyms screen" },
-  { side: "right" as const, shot: "match", what: "The Match screen" },
+  { side: "back" as const, shot: "gyms", what: "The Gyms screen" },
+  { side: "front" as const, shot: "match", what: "The Match screen" },
 ];
 
-/* Tailwind's xl — the `hidden xl:block` on the wrapper below. Hiding with
-   CSS alone still let a phone DOWNLOAD both screens (88 KB) for a backdrop
-   it can never show (website review, 2026-09-10); so below this width the
-   component renders nothing at all. The server renders nothing either and
-   the wide client fills it in on hydration — the phones arrive on their own
-   rise anyway. */
-const XL = "(min-width: 1280px)";
+/* Tailwind's lg — the `hidden lg:block` on the wrapper below. Hiding with
+   CSS alone still let a phone DOWNLOAD both screens (88 KB) for a pair it can
+   never show (website review, 2026-09-10); so below this width the component
+   renders nothing at all. The server renders nothing either and the wide
+   client fills it in on hydration — the phones arrive on their own rise
+   anyway. */
+const LG = "(min-width: 1024px)";
 function subscribeWide(cb: () => void) {
-  const mq = window.matchMedia(XL);
+  const mq = window.matchMedia(LG);
   mq.addEventListener("change", cb);
   return () => mq.removeEventListener("change", cb);
 }
 
 export default function HeroPhones({ i, count }: { i: number; count: number }) {
   const { mode, chosen } = usePhoneMode();
-  const wide = useSyncExternalStore(subscribeWide, () => window.matchMedia(XL).matches, () => false);
+  const wide = useSyncExternalStore(subscribeWide, () => window.matchMedia(LG).matches, () => false);
   // The visitor's choice if they made one; white if they have not.
   const shown = chosen ? mode : "light";
   if (!wide) return null;
 
   return (
-    /* w-screen and centred on the intro's own centre, which is the page's.
-       -z-10 keeps it behind the words — the section is its own stacking
-       context (z-[1]), so it cannot fall behind the page itself. */
-    <div
-      aria-hidden="true"
-      className="pointer-events-none absolute inset-y-0 left-1/2 -z-10 hidden w-screen -translate-x-1/2 overflow-hidden xl:block"
-    >
+    <div aria-hidden="true" className="l-hero-phones pointer-events-none hidden lg:block">
       {PHONES.map((p) => (
         <div key={p.shot} className="l-hero-phone" data-side={p.side}>
           <div className="l-hero-tilt">
@@ -115,7 +108,7 @@ export default function HeroPhones({ i, count }: { i: number; count: number }) {
                 screen. The screens themselves still change school. */}
             <div className="l-hero-glow bg-l-accent" />
             <div className="l-hero-rise">
-              <Phone className="relative opacity-[0.82]">
+              <Phone className="relative">
                 <div className="relative aspect-[900/1480] overflow-hidden bg-l-phone-screen">
                   {schools.slice(0, count).map((sc, n) => (
                     <Shot
@@ -124,7 +117,7 @@ export default function HeroPhones({ i, count }: { i: number; count: number }) {
                       mode={shown}
                       alt={`${p.what} in ${sc.name}'s colours`}
                       fill
-                      sizes="(min-width: 1536px) 290px, 230px"
+                      sizes="(min-width: 1536px) 320px, 290px"
                       quality={75}
                       loading={n === 0 ? "eager" : "lazy"}
                       className="object-fill transition-opacity duration-[600ms] ease-in-out motion-reduce:transition-none"

@@ -76,10 +76,7 @@ export default function LandingPage({ view = "all" }: { view?: LandingView }) {
       className={`${instrumentSerif.variable} l-grid relative flex min-h-screen flex-col overflow-x-clip bg-l-bg font-sans text-l-text`}
     >
       <PhoneModeProvider>
-      {/* The bar's small wordmark stands down while the intro's big one is on
-          screen — wherever the intro is drawn. The way back to the whole page
-          is the Home tab, so nothing is lost. */}
-      <LandingNav view={view} heroMark={all} />
+      <LandingNav view={view} />
       {/* flex-1 so the footer sits at the bottom of the two short views
           (About, Contact) instead of mid-screen; the long views overflow the
           viewport anyway and are unaffected. */}

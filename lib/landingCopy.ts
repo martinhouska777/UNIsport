@@ -252,7 +252,15 @@ export const availability = "Customized for each campus, with its own gyms, hous
    below this one — and the same sentence twice in two screens reads as a
    stutter, not a motif. So the slogan goes back to three words and the page
    escalates instead: the mark states the rule, the card promises it to you,
-   and the word that arrives in between is "again". */
+   and the word that arrives in between is "again".
+
+   OFF THE PAGE, 2026-09-27. The intro went split, like Hevy's, and lost the
+   big wordmark this stood under, so the page no longer draws it; the student
+   card still carries the promise in full. Kept for the splash and the store.
+   Before it goes into a store listing: "Never train alone" is the category's
+   stock line — Tribe's app is called "Tribe - Never Train Alone" and GymMate
+   sits on nevertrainalone.co.uk — so a listing would stand beside theirs.
+   Check the trademark register before relying on it. */
 export const brandLine = "Never train alone.";
 
 /* ─────────────── BEFORE THE STUDENT STORY — a title card ─────────────── */

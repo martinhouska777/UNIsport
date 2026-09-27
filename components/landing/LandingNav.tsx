@@ -19,22 +19,19 @@ import { views, type LandingView } from "@/lib/landingCopy";
   sticky stages, and a bar pinned over them sat on top of every one. On a
   phone it also hides on scroll-down and returns on scroll-up.
 
-  ONE WORDMARK AT A TIME — ON A LAPTOP. The intro opens on the mark at full
-  size, and the bar's 24px copy sits 40px above it — two of the same thing,
-  reading as a stutter. So on a laptop, on the views that HAVE the intro
-  (`heroMark`), the bar's mark is not drawn until the intro has scrolled away; HeroFade writes the switch onto
-  <html> and the .l-nav-mark rules in app/globals.css spend it. The views
-  without an intro keep their mark from the start. Nobody loses their way back
-  to the whole page either way: that is the Home tab.
+  THE WORDMARK IS ALWAYS THERE (2026-09-27). It used to stand down on a
+  laptop while the intro's big wordmark was on screen — one mark at a time.
+  The intro lost that wordmark when it went split, like Hevy's front page, so
+  the bar is where the name lives now: top left, from the first frame, on
+  every view and every size.
 
-  On a phone the tabs do not fit the bar, so they live behind a menu button at
-  its left that slides them in from the left edge (LandingMenu). The door says
+  On a phone — and on a tablet, below lg — the tabs do not fit the bar, so
+  they live behind a menu button at its left that slides them in from the left
+  edge (LandingMenu). The door says
   "Get started with .edu" in full there too (owner, 2026-09-19 — the short
   "Sign up" didn't name the one thing that makes this door different), so on a
   phone it carries the row on its own and Log in drops to a plain text link.
-  The bar stays one row. A phone also keeps BOTH the
-  wordmark and the door from the first pixel (see .l-nav-mark in globals.css);
-  the hide-while-the-intro-is-up rule is a laptop rule now.
+  The bar stays one row.
 */
 function Tabs({ view, className = "" }: { view: LandingView; className?: string }) {
   return (
@@ -60,7 +57,7 @@ function Tabs({ view, className = "" }: { view: LandingView; className?: string 
   );
 }
 
-export default function LandingNav({ view = "all", heroMark = false }: { view?: LandingView; heroMark?: boolean }) {
+export default function LandingNav({ view = "all" }: { view?: LandingView }) {
   return (
     <StickyBar>
     <nav className="relative border-b border-l-line bg-l-bg">
@@ -75,18 +72,13 @@ export default function LandingNav({ view = "all", heroMark = false }: { view?: 
                 logo top left"). The bar carried the name only; the drawn mark
                 lived on the home screen and the browser tab and nowhere a
                 visitor would meet it. Both sit inside the one Link, at one
-                font-size, so the mark scales with the name and the
-                hide-while-the-intro-is-up rule below still governs the pair. */}
-            <Link
-              href="/"
-              aria-label="UNIsport"
-              className={`text-xl sm:text-2xl ${heroMark ? "l-nav-mark" : ""}`}
-            >
+                font-size, so the mark scales with the name. */}
+            <Link href="/" aria-label="UNIsport" className="text-xl sm:text-2xl">
               <LogoMark className="mr-[0.24em]" />
               <Wordmark />
             </Link>
           </div>
-          <Tabs view={view} className="hidden md:flex" />
+          <Tabs view={view} className="hidden lg:flex" />
           {/* Log in + the door — or one "Open the app" for somebody already
               signed in. Its own client component because only the browser
               knows which (components/landing/NavDoors.tsx). */}

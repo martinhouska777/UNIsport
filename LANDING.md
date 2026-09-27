@@ -13,8 +13,9 @@ decided so it does not get re-argued.
 ## The target page
 
 ```
- 1  Intro          wordmark · Log in · headline · Get started with .edu
-                   three doors → Student · Varsity athlete · Coach
+ 1  Intro          split, like Hevy's: pill · headline · body · Get started with .edu
+                   on the left, the two phones on the right;
+                   three doors → Student · Varsity athlete · Coach underneath
  2  Availability   one line: live at Harvard, new campuses one at a time
  3  Story A        the student scroll animation, S1–S7
  4  Feature block  features left (each with a + to expand) · Campus Colours piece right
@@ -49,7 +50,7 @@ still meets everything in order.
 | **Blade Lock (site)** | `components/landing/BladeLock.tsx` | **Built, native** — the varsity closer |
 | Per-school screens for the closers' and intro's phones | `public/landing/closers/{gyms,match,vhome}-*.webp` | 24 files, 900×1480, shot from the REAL app per school by `scripts/landing/capture-schools.mjs` (2026-09-16; the recolour + pixel-patch scripts are superseded) |
 | **The live landing** | `app/page.tsx` → `components/landing/LandingPage.tsx` | **The new page** — stories, closers, coach, FAQ, about, contact |
-| **The intro** | `components/landing/LandingHero.tsx`; `HeroFade` (the hand-over), `HeroPhones` (the backdrop), `Wordmark` | Rebuilt 2026-08-23 — see "The intro" below |
+| **The intro** | `components/landing/LandingHero.tsx`; `HeroPhones` (the right half) | Split 2026-09-27 — see "The intro is split, like Hevy's" below |
 | The varsity tab bar the vhome captures stop above | `components/landing/VarsityTabBar.tsx` | Drawn, not captured; Blade Lock's, lifted out so it is written once |
 | The Match screen per school | `public/landing/closers/match-*.webp` (+ `dark/`) | Recoloured 2026-08-23 for the intro's right phone |
 | **The tabs / views** | `views` in `lib/landingCopy.ts` → `LandingNav.tsx`; `LandingPage view=…`; routes `app/for/[audience]`, `app/about`, `app/contact`; shared head in `components/landing/routeMeta.ts` | Built (2026-08-18) — see "One page, six views" below |
@@ -81,6 +82,31 @@ fixed: *always actual → always current*, *on your eyes → in front of you*,
 hero headline, this page only. *"Never train alone."* is the brand line — for a
 logo, a splash, a store listing. S7 closes the student story on the owner's
 longer *"Never train alone again."*
+
+Confirmed 2026-09-27, after a preview that swapped them (the promise as the
+hero headline, the three lines on the student card): kept as they are.
+*"Never train alone"* is the category's stock line — Tribe's app is named
+"Tribe - Never Train Alone", GymMate sits on nevertrainalone.co.uk, GymBuddy
+and Workout Buddies use "never train/workout alone again" — so as the first
+sentence a stranger reads it filed UNIsport with them. *"Your campus"* is the
+one line none of them can say. Check the trademark register before the brand
+line goes into a store listing.
+
+**The intro is split, like Hevy's** (owner, 2026-09-27: "udelej to vic heavy
+style … ten text pod tim at se da dobre cist jako u hevy"). Words on the left —
+the pill, the three-line headline, the body, the button, the availability line
+— the two phones on the right (Match in front and upright, Gyms behind it
+leaning out), the three doors across the full width underneath. The big
+wordmark is gone from the intro; the name lives in the top bar, top left, from
+the first frame (HeroFade and the `.l-nav-mark` watch are deleted). The body is
+ink, left-aligned, ~60 characters a line at 16–18px / 1.55 — Hevy's own is
+17px / 1.5 / near-black on a 490px column. The words start under the bar's logo
+(same 1280px column). Below lg it is one centred column without phones, as
+Hevy's is on a phone; the bar's tabs also moved behind the menu below lg,
+because between 768 and ~1000px they did not fit and the lockup broke over
+three lines. One screen at 1024x768, 1280x800, 1440x900, 1900x860 and
+1920x1080. This supersedes the next four notes where they differ: the mark,
+the backdrop phones in the margins, and "one wordmark at a time".
 
 **Three claims are cut** because the app cannot do them: *life goals* (no such
 profile field), *track your partner's calendar* (`/people/[id]` has no
