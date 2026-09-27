@@ -26,6 +26,15 @@ import {
 } from "@/lib/varsity/invites";
 import { VARSITY_HOME } from "@/lib/varsity/theme";
 
+/* Drop the code this device parked for the trip through sign-in. */
+function forgetParkedCode() {
+  try {
+    localStorage.removeItem(PENDING_INVITE_KEY);
+  } catch {
+    /* nothing to clean up */
+  }
+}
+
 export default function JoinWithCodePage() {
   const params = useParams<{ code: string }>();
   const code = (params?.code ?? "").toString().toUpperCase();
@@ -47,7 +56,12 @@ export default function JoinWithCodePage() {
     let active = true;
     (async () => {
       const p = await previewInvite(code);
-      if (active) setPreview(p);
+      if (!active) return;
+      // A code that doesn't work is not kept for later: /join offers the
+      // parked code back, so "Try another link" opened with the rejected one
+      // already typed in (launch audit 2026-09-27, item 42).
+      if (!p.valid) forgetParkedCode();
+      setPreview(p);
     })();
     return () => {
       active = false;
@@ -59,13 +73,7 @@ export default function JoinWithCodePage() {
     const r = await redeemInvite(code);
     setBusy(false);
     setResult(r.ok ? { status: r.status } : { reason: r.reason });
-    if (r.ok) {
-      try {
-        localStorage.removeItem(PENDING_INVITE_KEY);
-      } catch {
-        /* nothing to clean up */
-      }
-    }
+    if (r.ok) forgetParkedCode();
   }, [code]);
 
   const teamName = preview?.teamName ?? "your team";
@@ -210,6 +218,7 @@ export default function JoinWithCodePage() {
           </p>
           <Link
             href="/join"
+            onClick={forgetParkedCode}
             className="mt-7 inline-block w-full rounded-full border border-l-line px-5 py-3 text-sm font-medium text-l-text"
           >
             Try another link
