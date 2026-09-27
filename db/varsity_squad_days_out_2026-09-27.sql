@@ -1,7 +1,7 @@
 -- ---------------------------------------------------------------------------
 -- A ROWER'S OWN "SICK / INJURED / AWAY" REACHES THEIR COACH        2026-09-27
 -- ---------------------------------------------------------------------------
--- NOT APPLIED YET. Idempotent — safe to run more than once.
+-- APPLIED 2026-09-27 (verified: signed-in only, anon refused). Idempotent.
 --
 -- WHY. An athlete marks themselves out on their own profile: the status switch
 -- (Sick / Injured / Away) and the calendar's Missed button both write
