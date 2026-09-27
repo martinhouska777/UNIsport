@@ -22,18 +22,22 @@ export const varsityTheme: ThemeTokens = {
   ...darkNeutrals,
   primary: "#a51c30", // Harvard crimson (oar blade)
   primaryLive: "#c8203a", // the same crimson, lifted so button fills read as raised
+  primaryInk: "#e8646e", // the crimson as words on the dark ground (lib/themes.ts)
   primaryContrast: "#ffffff", // white (oar chevron)
   accent: "#d4a843", // Harvard gold
 };
 
 // Light-mode variant of Varsity Mode: same crimson + gold branding on the
-// shared light chassis; gold darkened so it reads on a light ground.
+// shared light chassis; gold darkened so it reads on a light ground, and once
+// more at the launch audit (#9a751c to #806118), so small gold labels ("Your
+// boat", "Goal race") clear 4.5:1 on the page as well as the card.
 export const varsityLightTheme: ThemeTokens = {
   ...lightNeutrals,
   primary: "#a51c30",
   primaryLive: "#a51c30",
+  primaryInk: "#a51c30",
   primaryContrast: "#ffffff",
-  accent: "#9a751c",
+  accent: "#806118",
 };
 
 /*
@@ -42,7 +46,7 @@ export const varsityLightTheme: ThemeTokens = {
   only the four brand hues change. Components keep using tokens, so nothing
   but this mapping knows.
 */
-const BRAND = ["primary", "primaryLive", "primaryContrast", "accent"] as const;
+const BRAND = ["primary", "primaryLive", "primaryInk", "primaryContrast", "accent"] as const;
 
 function wear(chassis: ThemeTokens, school: ThemeTokens | undefined): ThemeTokens {
   if (!school) return chassis;

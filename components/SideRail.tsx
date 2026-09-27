@@ -68,7 +68,7 @@ export default function SideRail({
                 {!!item.badge && item.badge > 0 && (
                   <span
                     aria-label={`${item.badge} unread messages`}
-                    className="absolute -right-2 -top-1.5 flex h-[15px] min-w-[15px] items-center justify-center rounded-full border border-surface bg-danger px-1 text-[11px] font-semibold leading-none text-primary-contrast"
+                    className="absolute -right-2 -top-1.5 flex h-[15px] min-w-[15px] items-center justify-center rounded-full border border-surface bg-primary-live px-1 text-[11px] font-semibold leading-none text-primary-contrast"
                   >
                     {item.badge > 9 ? "9+" : item.badge}
                   </span>

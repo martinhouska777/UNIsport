@@ -23,6 +23,8 @@ import {
 } from "@/components/icons";
 import Avatar from "./Avatar";
 import Composer from "./Composer";
+import { useAppState } from "@/components/AppState";
+import { teamFor } from "@/lib/cohorts";
 import ChannelInfo from "./ChannelInfo";
 import { dayLabel, sameDay } from "./dayLabel";
 
@@ -58,6 +60,7 @@ export default function ChannelThread({
   /** "Message" on a member in Channel info — opens a chat with them. */
   onMessagePerson?: (person: { id: string; name: string }) => void;
 }) {
+  const { universityKey } = useAppState();
   // The name can change under you: the admin renames it in Channel info.
   const [name, setName] = useState(title);
   const [info, setInfo] = useState(false);
@@ -196,7 +199,11 @@ export default function ChannelThread({
                 </div>
               )}
               <div className="flex items-start gap-2.5">
-                <Avatar size={32} name={m.senderName} />
+                <Avatar
+                  size={32}
+                  name={m.senderName}
+                  colors={teamFor(universityKey, m.senderResidence, m.senderClassYear)?.colors ?? null}
+                />
                 <div className="min-w-0 flex-1">
                   <div className="mb-1 flex items-baseline gap-1.5">
                     <span className="text-[12px] font-medium text-text">{m.senderName || "Member"}</span>

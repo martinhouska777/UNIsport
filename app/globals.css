@@ -34,6 +34,9 @@
     while --primary stays exact for crests, badges and hairlines.
   */
   --primary-live: #2f3b52;
+  /* The school colour as WORDS — see primaryInk in lib/themes.ts and WORDS IN
+     THE SCHOOL COLOUR below. */
+  --primary-ink: #2f3b52;
   --primary-contrast: #ffffff;
   --accent: #64748b;
   --success: #16a34a;
@@ -53,11 +56,14 @@
     They are numbered, not named, everywhere else in the app: the data says
     "the second series" and this file decides that is yellow (rule 1). Picked
     as saturated mid-tones so a 2px line holds up on the near-black varsity
-    surface and on white alike.
+    surface — and, since the launch audit, given per mode by the theme
+    (series1-3 in lib/themes.ts): on white the yellow and green were 1.9:1 and
+    2.3:1, so the light theme draws them a step darker. These are the light
+    values, for anything outside a themed route.
   */
-  --series-1: #3b82f6;
-  --series-2: #eab308;
-  --series-3: #22c55e;
+  --series-1: #2563eb;
+  --series-2: #a16207;
+  --series-3: #15803d;
   /*
     THE PODIUM — gold, silver, bronze.
     The only colours in the app that are NOT the school's, and deliberately not
@@ -121,6 +127,13 @@
     darkest on the dark one, where the page is already nearly black.
   */
   --color-well: color-mix(in oklab, var(--background) 90%, #000);
+  /*
+    SWITCH-OFF — the track of a switch that is off (components/onboarding/
+    controls.tsx Toggle). The faint grey (text-3) pulled 30% toward the card:
+    about 3:1 against the card in both themes, so an off switch is still a
+    switch, and the white knob still reads on it.
+  */
+  --color-switch-off: color-mix(in oklab, var(--text-3) 70%, var(--surface));
   --color-border: var(--border);
   --color-text: var(--text);
   --color-text-2: var(--text-2);
@@ -128,6 +141,7 @@
   --color-muted: var(--muted);
   --color-primary: var(--primary);
   --color-primary-live: var(--primary-live);
+  --color-primary-ink: var(--primary-ink);
   --color-primary-contrast: var(--primary-contrast);
   --color-accent: var(--accent);
   --color-success: var(--success);
@@ -220,10 +234,42 @@
   --muted: color-mix(in oklab, var(--ink-contrast) 80%, var(--ink));
   --border: color-mix(in oklab, var(--ink-contrast) 20%, transparent);
   --primary: color-mix(in oklab, var(--primary-src) calc(100% - var(--ink-lift)), var(--ink-contrast));
+  /* Words in the school colour on the strip: the strip's own primary above. */
+  --primary-ink: var(--primary);
   --success: color-mix(in oklab, var(--success-src) calc(100% - var(--ink-lift)), var(--ink-contrast));
   --warn: color-mix(in oklab, var(--warn-src) calc(100% - var(--ink-lift)), var(--ink-contrast));
   --danger: color-mix(in oklab, var(--danger-src) calc(100% - var(--ink-lift)), var(--ink-contrast));
   color: var(--ink-contrast);
+}
+
+/*
+  WORDS IN THE SCHOOL COLOUR (launch audit, 2026-09-27).
+  ------------------------------------------------------------------
+  `text-primary` and an UNFILLED `border-primary` draw in the school's ink —
+  its colour lifted until it reads (primaryInk in lib/themes.ts) — not in the
+  exact brand colour. On the dark theme Harvard crimson on a card was 2.3:1 and
+  Yale's navy 1.4:1, so the lit tab, the answer you picked, "Plan", today's
+  date and every outline in the school colour sank into the page. On the light
+  theme the ink IS the brand colour, so nothing there moves.
+
+  Done here, once, rather than as a new class in ~200 places: the fills
+  (`bg-primary`, `bg-primary-live`, the tints) keep the exact colour, and a
+  border on a solid school-colour fill keeps it too, so a filled pill does not
+  grow a lighter ring. Same specificity rules as the utilities they sit on,
+  later in the same layer, so these win. Write `text-primary-ink` /
+  `border-primary-ink` where you want to be explicit.
+*/
+@layer utilities {
+  .text-primary,
+  .active\:text-primary:active {
+    color: var(--primary-ink);
+  }
+  .border-primary:not(.bg-primary),
+  .focus\:border-primary:focus,
+  .focus-within\:border-primary:focus-within,
+  .active\:border-primary:active {
+    border-color: var(--primary-ink);
+  }
 }
 
 /*

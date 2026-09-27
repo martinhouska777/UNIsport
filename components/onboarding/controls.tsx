@@ -69,14 +69,23 @@ export function FieldLabel({
   );
 }
 
+/*
+  THE SWITCH â€” the one on/off control in the app (Settings, notifications,
+  onboarding, Varsity, the Coach's Console). Off is a mid-grey track that
+  clears 3:1 against the card, with a white knob that clears 3:1 against the
+  track; it used to be the pale border grey, and an off switch on a white card
+  all but disappeared (launch audit, 2026-09-27). On is the school colour.
+*/
 export function Toggle({
   on,
   onChange,
   ariaLabel,
+  disabled,
 }: {
   on: boolean;
   onChange: () => void;
   ariaLabel?: string;
+  disabled?: boolean;
 }) {
   return (
     <button
@@ -85,12 +94,13 @@ export function Toggle({
       aria-checked={on}
       aria-label={ariaLabel}
       onClick={onChange}
-      className={`relative h-[22px] w-[38px] flex-shrink-0 rounded-full transition-colors ${
-        on ? "bg-primary-live" : "bg-border"
+      disabled={disabled}
+      className={`tap44 relative h-[22px] w-[38px] flex-shrink-0 rounded-full transition-colors disabled:opacity-40 ${
+        on ? "bg-primary-live" : "bg-switch-off"
       }`}
     >
       <span
-        className={`absolute top-[3px] h-4 w-4 rounded-full bg-primary-contrast transition-all ${
+        className={`absolute top-[3px] h-4 w-4 rounded-full bg-primary-contrast shadow-card transition-all ${
           on ? "left-[19px]" : "left-[3px]"
         }`}
       />
@@ -120,7 +130,7 @@ export function TextField({
   onChange: (v: string) => void;
   placeholder?: string;
   ariaLabel?: string;
-  /* A unit printed inside the right of the box — "km", "/km". It is the unit
+  /* A unit printed inside the right of the box â€” "km", "/km". It is the unit
      itself, not a hint about what to type, so the field stays empty until the
      person fills it in. */
   suffix?: string;
@@ -152,7 +162,7 @@ export function TextField({
 /*
   A NATIVE <select>, on purpose.
 
-  The times used to be a row of pills you scrolled sideways through — thirty of
+  The times used to be a row of pills you scrolled sideways through â€” thirty of
   them, so finding 7:30 meant dragging past everything before it. A native
   select is a wheel on iOS and a proper dropdown everywhere else: the control
   people already know for "one of a long list of numbers", and the one their

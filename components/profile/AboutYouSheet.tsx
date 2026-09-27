@@ -156,7 +156,6 @@ export default function AboutYouSheet({
                 <Pill
                   key={i}
                   label={i}
-                  variant="gold"
                   selected={draft.interests.includes(i)}
                   onClick={() => toggleInterest(i)}
                 />
@@ -169,7 +168,7 @@ export default function AboutYouSheet({
                   type="button"
                   onClick={() => toggleInterest(i)}
                   aria-label={`Remove ${i}`}
-                  className="tap44 flex items-center gap-1.5 rounded-full border border-accent bg-accent-tint px-3.5 py-2 text-[13px] text-accent"
+                  className="tap44 flex items-center gap-1.5 rounded-full border border-primary bg-primary-tint px-3.5 py-2 text-[13px] text-primary"
                 >
                   {i}
                   <IconX size={13} />
@@ -213,7 +212,7 @@ export default function AboutYouSheet({
                   type="button"
                   onClick={addInterest}
                   disabled={newInterest.trim() === ""}
-                  className="tap44 flex-shrink-0 rounded-full border border-accent bg-accent-tint px-4 py-2 text-[13px] text-accent disabled:opacity-40"
+                  className="tap44 flex-shrink-0 rounded-full border border-primary bg-primary-tint px-4 py-2 text-[13px] text-primary disabled:opacity-40"
                 >
                   Add
                 </button>

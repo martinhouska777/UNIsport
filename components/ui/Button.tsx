@@ -45,13 +45,16 @@ const variants: Record<ButtonVariant, string> = {
   // `primary-live` rather than `primary`: see lib/themes.ts — the brand crimson
   // is too dark against a near-black page to read as a raised control.
   primary: "bg-primary-live text-primary-contrast",
-  secondary: "border border-border bg-surface-2 text-text",
+  // White with a hairline, like a card (owner, 2026-09-14: everything that
+  // is not the page is white). It was the grey second surface, which on the
+  // page read as a switched-off block — "Load older", "Invite a friend".
+  secondary: "border border-border bg-surface text-text",
   quiet: "text-primary-live",
   muted: "text-muted",
   danger: "bg-danger text-primary-contrast",
   // Destructive, but not yet confirmed — reads as dangerous without claiming the
   // screen's main action. The filled `danger` is what the confirmation gets.
-  dangerSoft: "border border-border bg-surface-2 text-danger",
+  dangerSoft: "border border-border bg-surface text-danger",
 };
 
 const sizes: Record<ButtonSize, string> = {

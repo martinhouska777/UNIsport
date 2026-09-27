@@ -27,11 +27,34 @@ export type ThemeTokens = {
     and `primary` stays exact for crests, badges and hairlines.
   */
   primaryLive: string;
+  /*
+    THE SCHOOL COLOUR AS WORDS (launch audit, 2026-09-27). `primary` is the
+    exact brand colour, right for fills, crests and hairlines, and wrong for
+    words on the dark theme, where Harvard crimson on a card measured 2.3:1 and
+    Yale's navy 1.4:1: the lit tab, the answer you picked, "Plan", "shared with
+    you", today's date all read fainter than their neighbours. `primaryInk` is
+    the same hue lifted until it reads (at least 4.5:1 on the card), used for
+    TEXT, icons and outlines drawn in the school colour (app/globals.css points
+    `text-primary` and the unfilled `border-primary` at it). In light mode it
+    is the brand colour itself wherever that already reads, so nothing changes
+    there.
+  */
+  primaryInk: string;
   primaryContrast: string;
   accent: string;
   success: string;
   warn: string;
   danger: string;
+  /*
+    THE THREE CURVES on a statistics graph — blue, yellow, green (owner,
+    2026-09-22), deliberately not the school's. Per mode since the launch
+    audit: the bright yellow and green that hold up on near-black nearly
+    vanished as a 2px line on white (1.9:1 and 2.3:1), so the light theme draws
+    the same three hues a step darker.
+  */
+  series1: string;
+  series2: string;
+  series3: string;
   /*
     Elevation, for things floating ABOVE the page — bottom sheets, overlays.
     Per-theme, because a shadow over near-black needs far more weight than one
@@ -82,11 +105,15 @@ export const neutralTheme: ThemeTokens = {
   muted: "#4a4f58",
   primary: "#2f3b52",
   primaryLive: "#2f3b52", // already clears 3:1 on a light ground
+  primaryInk: "#2f3b52",
   primaryContrast: "#ffffff",
   accent: "#64748b",
-  success: "#16a34a",
-  warn: "#d97706",
-  danger: "#dc2626",
+  success: "#166534",
+  warn: "#92400e",
+  danger: "#b91c1c",
+  series1: "#2563eb",
+  series2: "#a16207",
+  series3: "#15803d",
   overlayShadow: "0 -10px 30px rgba(15, 15, 25, 0.12)",
   cardShadow: "0 1px 2px rgba(20, 22, 24, 0.05), 0 4px 14px rgba(20, 22, 24, 0.04)",
   ink: "#b2b6ba",
@@ -172,6 +199,9 @@ export const darkNeutrals = {
   success: "#22c55e",
   warn: "#f59e0b",
   danger: "#ef4444",
+  series1: "#3b82f6",
+  series2: "#eab308",
+  series3: "#22c55e",
   overlayShadow: "0 -10px 30px rgba(0, 0, 0, 0.55)",
   cardShadow: "0 1px 2px rgba(0, 0, 0, 0.35)",
   // Darker than the card it sits under (#171a1d) and a hair above the page
@@ -194,9 +224,15 @@ export const lightNeutrals = {
   muted: "#4a4f58",
   text2: "#3b3f47",
   text3: "#676d76",
-  success: "#15803d",
-  warn: "#b45309",
-  danger: "#dc2626",
+  /* A step darker than they were (launch audit, 2026-09-27): red, amber and
+     green text on their own pale tints, and small status words on the page,
+     measured 4.2-4.4:1. These clear 6:1 on the card and the page. */
+  success: "#166534",
+  warn: "#92400e",
+  danger: "#b91c1c",
+  series1: "#2563eb",
+  series2: "#a16207",
+  series3: "#15803d",
   overlayShadow: "0 -10px 30px rgba(15, 15, 25, 0.12)",
   cardShadow: "0 1px 2px rgba(20, 22, 24, 0.05), 0 4px 14px rgba(20, 22, 24, 0.04)",
   ink: "#b2b6ba",
@@ -204,7 +240,15 @@ export const lightNeutrals = {
   inkLift: "48%",
 };
 
-type Brand = { primary: string; primaryLive: string; primaryContrast: string; accent: string };
+/* `primaryInk` may be left out where the brand colour already reads as words;
+   it then IS the brand colour (light themes, mostly). */
+type Brand = {
+  primary: string;
+  primaryLive: string;
+  primaryInk?: string;
+  primaryContrast: string;
+  accent: string;
+};
 
 /** A university = a name, its words for the house gyms, and two brand quads. */
 function ivy(
@@ -213,8 +257,8 @@ function ivy(
   const { dark, light, ...rest } = opts;
   return {
     ...rest,
-    theme: { ...darkNeutrals, ...dark },
-    themeLight: { ...lightNeutrals, ...light },
+    theme: { ...darkNeutrals, ...dark, primaryInk: dark.primaryInk ?? dark.primary },
+    themeLight: { ...lightNeutrals, ...light, primaryInk: light.primaryInk ?? light.primary },
   };
 }
 
@@ -224,8 +268,14 @@ function ivy(
     • `primaryLive` is the tappable fill: lifted until it clears 3:1 on the
       near-black ground (or on white in the light theme), while
       `primaryContrast` — the label ON that fill — still clears ~4.5:1.
+    • `primaryInk` is the school colour as WORDS: lifted on the dark theme
+      until it clears 4.5:1 on the card (Harvard ~5.4:1, Yale ~7.2:1); on the
+      light theme it is the brand colour, except Princeton's orange, which is
+      darkened (the orange itself is 2.9:1 on white).
     • `accent` is the school's second colour, adjusted per mode the same way
-      (Harvard's gold darkens on white, Yale's pale blue does too).
+      (Harvard's gold darkens on white, Yale's pale blue does too). Every
+      light-mode accent clears 4.5:1 on the page as well as the card, because
+      small gold labels live on both.
     • Princeton is the one school whose dark-mode labels are DARK: its orange
       is so light that white on it fails, which is also true of the real
       campus's own orange-and-black pairing.
@@ -243,8 +293,8 @@ export const universities: Record<string, University> = {
     houseNoun: "House gym",
     housePill: "House",
     gymCardColors: ["#a51c30", "#ffffff"],
-    dark: { primary: "#a51c30", primaryLive: "#c8203a", primaryContrast: "#ffffff", accent: "#d4a843" },
-    light: { primary: "#a51c30", primaryLive: "#a51c30", primaryContrast: "#ffffff", accent: "#9a751c" },
+    dark: { primary: "#a51c30", primaryLive: "#c8203a", primaryInk: "#e8646e", primaryContrast: "#ffffff", accent: "#d4a843" },
+    light: { primary: "#a51c30", primaryLive: "#a51c30", primaryContrast: "#ffffff", accent: "#806118" },
   }),
   yale: ivy({
     key: "yale",
@@ -255,7 +305,7 @@ export const universities: Record<string, University> = {
     houseNoun: "College gym",
     housePill: "College",
     gymCardColors: ["#00356b", "#ffffff"],
-    dark: { primary: "#00356b", primaryLive: "#1e63b0", primaryContrast: "#ffffff", accent: "#93b7e4" },
+    dark: { primary: "#00356b", primaryLive: "#1e63b0", primaryInk: "#8aa6e6", primaryContrast: "#ffffff", accent: "#93b7e4" },
     light: { primary: "#00356b", primaryLive: "#00356b", primaryContrast: "#ffffff", accent: "#17518f" },
   }),
   princeton: ivy({
@@ -268,7 +318,7 @@ export const universities: Record<string, University> = {
     housePill: "College",
     gymCardColors: ["#e77500", "#1a1a1a"],
     dark: { primary: "#e77500", primaryLive: "#e77500", primaryContrast: "#221d17", accent: "#f5cf8f" },
-    light: { primary: "#e77500", primaryLive: "#b35a00", primaryContrast: "#ffffff", accent: "#8a6a1c" },
+    light: { primary: "#e77500", primaryLive: "#b35a00", primaryInk: "#9a4d00", primaryContrast: "#ffffff", accent: "#7a5d18" },
   }),
   penn: ivy({
     key: "penn",
@@ -279,7 +329,7 @@ export const universities: Record<string, University> = {
     houseNoun: "College house gym",
     housePill: "House",
     gymCardColors: ["#011f5b", "#d0101f"],
-    dark: { primary: "#011f5b", primaryLive: "#3061b8", primaryContrast: "#ffffff", accent: "#d0454f" },
+    dark: { primary: "#011f5b", primaryLive: "#3061b8", primaryInk: "#93a9e8", primaryContrast: "#ffffff", accent: "#d0454f" },
     light: { primary: "#011f5b", primaryLive: "#011f5b", primaryContrast: "#ffffff", accent: "#9d1c28" },
   }),
   brown: ivy({
@@ -291,8 +341,8 @@ export const universities: Record<string, University> = {
     houseNoun: "Dorm gym",
     housePill: "Dorm",
     gymCardColors: ["#4e3629", "#ffffff"],
-    dark: { primary: "#6b4423", primaryLive: "#8a5a2f", primaryContrast: "#ffffff", accent: "#d1a54f" },
-    light: { primary: "#4e3629", primaryLive: "#6b4423", primaryContrast: "#ffffff", accent: "#8a651c" },
+    dark: { primary: "#6b4423", primaryLive: "#8a5a2f", primaryInk: "#c9966a", primaryContrast: "#ffffff", accent: "#d1a54f" },
+    light: { primary: "#4e3629", primaryLive: "#6b4423", primaryContrast: "#ffffff", accent: "#7d5b19" },
   }),
   columbia: ivy({
     key: "columbia",
@@ -315,7 +365,7 @@ export const universities: Record<string, University> = {
     houseNoun: "House gym",
     housePill: "House",
     gymCardColors: ["#b31b1b", "#ffffff"],
-    dark: { primary: "#b31b1b", primaryLive: "#d32f2f", primaryContrast: "#ffffff", accent: "#e6d9bd" },
+    dark: { primary: "#b31b1b", primaryLive: "#d32f2f", primaryInk: "#ec6b6b", primaryContrast: "#ffffff", accent: "#e6d9bd" },
     light: { primary: "#b31b1b", primaryLive: "#b31b1b", primaryContrast: "#ffffff", accent: "#77653f" },
   }),
   dartmouth: ivy({
@@ -327,7 +377,7 @@ export const universities: Record<string, University> = {
     houseNoun: "House gym",
     housePill: "House",
     gymCardColors: ["#00693e", "#ffffff"],
-    dark: { primary: "#00693e", primaryLive: "#0b8050", primaryContrast: "#ffffff", accent: "#a8d5bd" },
+    dark: { primary: "#00693e", primaryLive: "#0b8050", primaryInk: "#45b884", primaryContrast: "#ffffff", accent: "#a8d5bd" },
     light: { primary: "#00693e", primaryLive: "#00693e", primaryContrast: "#ffffff", accent: "#2f6b4e" },
   }),
 };

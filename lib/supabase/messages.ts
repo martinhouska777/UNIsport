@@ -97,6 +97,25 @@ export async function withTicks(list: DmConversation[]): Promise<DmConversation[
   return list.map((c, i) => ({ ...c, tick: tickFor(c.lastAt, peers[i]) }));
 }
 
+/**
+ * House and class year for a handful of people, keyed by id — what the chat
+ * list's avatars need to wear their house colours (db/people_houses_2026-09-27
+ * .sql). Empty on any failure: an avatar in the school tint is not an error.
+ */
+export async function peopleHouses(
+  ids: string[],
+): Promise<Record<string, { residence: string | null; classYear: string | null }>> {
+  if (ids.length === 0) return {};
+  const { data, error } = await createClient().rpc("people_houses", { p_ids: ids });
+  if (error || !data) return {};
+  return Object.fromEntries(
+    (data as { id: string; residence: string | null; class_year: string | null }[]).map((r) => [
+      r.id,
+      { residence: r.residence, classYear: r.class_year },
+    ]),
+  );
+}
+
 export async function getDirectThread(conversationId: string): Promise<DmMessage[]> {
   const { data, error } = await createClient().rpc("dm_thread", {
     conversation_id: conversationId,

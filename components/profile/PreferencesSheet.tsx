@@ -305,7 +305,6 @@ export default function PreferencesSheet({
                 <Pill
                   key={it}
                   label={it}
-                  variant="gold"
                   selected={draft.interests.includes(it)}
                   onClick={() => toggleInArray("interests", it)}
                 />

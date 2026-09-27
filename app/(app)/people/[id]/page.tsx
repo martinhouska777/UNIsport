@@ -347,11 +347,7 @@ function PersonProfile() {
                       {fit}
                     </span>
                   )}
-                  {user.badges.mentor && (
-                    <span className="rounded-full border border-success-line bg-success-tint px-2.5 py-0.5 text-[11.5px] font-semibold text-success">
-                      Mentor
-                    </span>
-                  )}
+                  {user.badges.mentor && <ProfileBadge kind="mentor" />}
                 </div>
               )}
 
@@ -414,7 +410,7 @@ function PersonProfile() {
                         title={shared ? "You both like this" : undefined}
                         className={`flex items-center gap-1 rounded-md border px-2.5 py-1.5 text-[12px] font-medium ${
                           shared
-                            ? "border-accent-line bg-accent-tint text-accent"
+                            ? "border-primary-line bg-primary-tint text-primary"
                             : "border-border text-muted"
                         }`}
                       >

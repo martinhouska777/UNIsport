@@ -11,6 +11,7 @@ import {
   requestToJoin,
   cancelJoinRequest,
   listTime,
+  peopleHouses,
   withTicks,
   type DmConversation,
   type Channel,
@@ -28,6 +29,8 @@ import {
 } from "@/components/icons";
 import Avatar from "./Avatar";
 import ReadTicks from "./ReadTicks";
+import { teamFor } from "@/lib/cohorts";
+import type { HouseColors } from "@/lib/gyms";
 
 // Channel icon keys (seeded in db/messages.sql) → icon components.
 const CHANNEL_ICONS: Record<string, (p: { size?: number }) => React.ReactElement> = {
@@ -66,6 +69,15 @@ export default function MessagesList({
   const [channels, setChannels] = useState<Channel[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  /* Each person's house, so their avatar wears the same colours it does on
+     Match. Arrives after the list; until then the avatars are the school tint. */
+  const [houses, setHouses] = useState<
+    Record<string, { residence: string | null; classYear: string | null }>
+  >({});
+  const coloursOf = (id: string) => {
+    const h = houses[id];
+    return h ? (teamFor(universityKey, h.residence, h.classYear)?.colors ?? null) : null;
+  };
 
   useEffect(() => {
     let active = true;
@@ -76,6 +88,9 @@ export default function MessagesList({
         if (!active) return;
         setConversations(dms);
         setChannels(chs);
+        peopleHouses(dms.map((c) => c.otherId))
+          .then((h) => active && setHouses(h))
+          .catch(() => {});
       })
       .catch((e) => active && setError((e as Error).message));
     return () => {
@@ -195,7 +210,12 @@ export default function MessagesList({
         )}
 
         {!error && tab === "direct" && (
-          <DirectList list={filteredDms} loading={conversations === null} onOpen={onOpenDm} />
+          <DirectList
+            list={filteredDms}
+            loading={conversations === null}
+            onOpen={onOpenDm}
+            coloursOf={coloursOf}
+          />
         )}
 
         {!error && tab === "community" && (
@@ -217,10 +237,13 @@ function DirectList({
   list,
   loading,
   onOpen,
+  coloursOf,
 }: {
   list: DmConversation[];
   loading: boolean;
   onOpen: (c: DmConversation) => void;
+  /** A person's house colours for their avatar, or null for the school tint. */
+  coloursOf: (id: string) => HouseColors | null;
 }) {
   if (loading) {
     return <SkeletonRows count={7} />;
@@ -242,7 +265,7 @@ function DirectList({
           className="flex w-full items-stretch gap-3 pl-3.5 text-left active:bg-surface-2"
         >
           <span className="flex items-center py-2.5">
-            <Avatar size={48} name={c.otherName} />
+            <Avatar size={48} name={c.otherName} colors={coloursOf(c.otherId)} />
           </span>
           {/* The hairline starts AFTER the avatar and the time sits above the
               unread badge — that inset divider is what makes a list read as
@@ -272,7 +295,7 @@ function DirectList({
             <span className="flex shrink-0 flex-col items-end gap-1">
               <span
                 className={`text-[11px] ${
-                  c.unread > 0 ? "font-semibold text-primary-live" : "text-text-3"
+                  c.unread > 0 ? "font-semibold text-primary" : "text-text-3"
                 }`}
               >
                 {listTime(c.lastAt)}
@@ -370,7 +393,7 @@ function CommunityList({
                 <span className="flex shrink-0 flex-col items-end gap-1">
                   <span
                     className={`text-[11px] ${
-                      c.unread > 0 ? "font-semibold text-primary-live" : "text-text-3"
+                      c.unread > 0 ? "font-semibold text-primary" : "text-text-3"
                     }`}
                   >
                     {listTime(c.lastAt)}
