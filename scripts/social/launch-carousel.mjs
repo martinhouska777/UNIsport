@@ -1,39 +1,43 @@
 /*
   THE LAUNCH CAROUSEL: the website's front door, retold for Instagram.
-  DRAFT v1 for the owner (2026-09-27): "same as we have on the web page, but it
-  should be represented on Instagram. The phone and the app, next to it the
-  features, and some text."
+  v2 (2026-09-27). The owner, on v1: "make it how you think it would look best,
+  and no AI slop". So v2 takes out everything that reads as a template: the
+  glow behind the phones, the pastel icon tiles and the four-bullet lists.
+  Each feature slide now says ONE thing and proves it with the app itself:
+  the piece of the screen the sentence is about is lifted out of the phone
+  and shown bigger beside it (the "Why you match" list, the plan in the chat,
+  your place on the leaderboard), because a phone at Instagram size is too
+  small to read, and a real sentence from the app is what makes it not slop.
 
-  So it walks the page in the page's own order, 8 slides, 1080x1350 (4:5), white:
+  8 slides, 1080x1350 (4:5), white:
     1    the intro: "Your campus. Your gym. Your people." with Gyms standing
          behind Match, the way the intro stands them
-    2-5  the four chapters of the student story (Match, Plan, Profile, Gyms):
-         the phone on the right, the chapter's features beside it, each an
-         icon, a name and one line, as the story lists them
-    6    Campus Colours: the same Gyms screen in three schools' colours
-    7    "The app": every feature in one list, with Upcoming under it
+    2-6  Gyms, Match, Why you match, Plan, Profile: a headline, one line, the
+         phone whole on the right and its card lifted out on the left
+    7    Campus Colours: the same Gyms screen in three schools' colours
     8    the waitlist, in the waitlist page's own words
 
-  EVERY WORD IS THE WEBSITE'S (lib/landingCopy.ts, lib/waitlist.ts). The rule
-  since 2026-09-22: "use the tone from my website so it's not generic AI slop".
-  Two things the site still promises are LEFT OUT because the app does not do
-  them today: "How busy" under Gyms (cut from the app 2026-09-22) and "Your
-  calendar: connect it to Google or Apple Calendar" under Plan (not built).
+  EVERY WORD IS THE WEBSITE'S (lib/landingCopy.ts, lib/waitlist.ts), the rule
+  since 2026-09-22 ("use the tone from my website so it's not generic AI
+  slop"). Left out on purpose, because the app does not do them today: "How
+  busy" (cut 2026-09-22), "Connect it to Google or Apple Calendar" (not built),
+  and the hero's "students verified by their .edu email" (sign-up asks for a
+  .edu address but does not check it yet: db/auth_autoconfirm.sql).
 
   The device is the website's phone (components/landing/Phone.tsx): metal rim,
-  black bezel, a status-bar row, the app's capture WHOLE, a gesture-bar row. So
-  nothing of the screen is cut, which the owner asked for ("want the whole phone
-  screen there"). No logo, no handle (the owner's rule for posts).
+  black bezel, a status-bar row, the app's capture WHOLE, a gesture-bar row.
+  No logo, no handle (the owner's rule for posts).
 
-  Screens: mockups/social/screens/light (scripts/social/capture.mjs, signed in as
-  the demo account). Slide 6 uses the site's own per-school frames
-  (public/landing/closers), the ones the intro and Campus Colours cycle through.
+  Screens: mockups/social/screens/launch/<name>.png + .json when they exist
+  (scripts/social/capture-launch.mjs, fresh, with every card's box), else
+  mockups/social/screens/light (capture.mjs) with the boxes measured below.
+  Slide 7 uses the site's own per-school frames (public/landing/closers).
 
   Run: node scripts/social/launch-carousel.mjs
   Out: mockups/social/launch/01.png … 08.png, and sheet.png with all eight
 */
 import puppeteer from "puppeteer-core";
-import { readFileSync, mkdirSync } from "node:fs";
+import { readFileSync, existsSync, mkdirSync } from "node:fs";
 import path from "node:path";
 import sharp from "sharp";
 
@@ -42,99 +46,45 @@ const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname).replac
 const OUT = path.join(ROOT, "mockups/social/launch");
 mkdirSync(OUT, { recursive: true });
 
-const W = 1080, H = 1350, M = 84;
+/* 3:4, Instagram's full-height post since May 2025: the profile grid shows
+   3:4 since January 2025, so a 3:4 cover is not cropped there, and the extra
+   90px is height for the phones. Posted from the Instagram app, not through a
+   scheduler: Meta's publishing API still takes 4:5 at most. */
+const W = 1080, H = 1440, M = 84;
 /* the landing page's own colours (app/globals.css, --color-l-*) */
-const INK = "#141618", INK2 = "#4b4f53", INK3 = "#7e8488", BLUE = "#1f32c1";
+const INK = "#141618", INK2 = "#4b4f53", BLUE = "#1f32c1";
 const BLUE_DIM = "rgba(31,50,193,.08)", BLUE_SOFT = "rgba(31,50,193,.2)";
-/* school colours (lib/landingSchools.ts); the intro's italic line and the glow
-   behind its phones take the school on screen, the rest is the page's blue */
-const SCHOOL = { harvard: "#a51c30", yale: "#00356b", dartmouth: "#00693e" };
-
-/* lift() from lib/landingSchools.ts: raises a near-black navy to a glow you can see */
-function lift(hex, floor = 0.44, desat = 0.9) {
-  const n = parseInt(hex.slice(1), 16);
-  const r = ((n >> 16) & 255) / 255, g = ((n >> 8) & 255) / 255, b = (n & 255) / 255;
-  const max = Math.max(r, g, b), min = Math.min(r, g, b), l = (max + min) / 2;
-  if (l >= floor) return hex;
-  const d = max - min;
-  let sat = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1)), h = 0;
-  if (d !== 0) {
-    if (max === r) h = ((g - b) / d) % 6; else if (max === g) h = (b - r) / d + 2; else h = (r - g) / d + 4;
-    h *= 60; if (h < 0) h += 360;
-  }
-  sat *= 1 - (floor - l) * desat;
-  const c = (1 - Math.abs(2 * floor - 1)) * sat, x = c * (1 - Math.abs(((h / 60) % 2) - 1)), m = floor - c / 2;
-  const [r1, g1, b1] = h < 60 ? [c, x, 0] : h < 120 ? [x, c, 0] : h < 180 ? [0, c, x] : h < 240 ? [0, x, c] : h < 300 ? [x, 0, c] : [c, 0, x];
-  const hx = (v) => Math.round((v + m) * 255).toString(16).padStart(2, "0");
-  return `#${hx(r1)}${hx(g1)}${hx(b1)}`;
-}
-
-/* the line icons beside the feature rows (components/landing/FeatureIcon.tsx) */
-const ICON = {
-  gym: "M6 7v10M18 7v10M2 10v4M22 10v4M6 12h12M4 9v6M20 9v6",
-  partners: "M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM2 21c0-4 3-6 7-6s7 2 7 6M17 11a3 3 0 1 0-1-5.8M22 21c0-3-2-5-5-5",
-  chat: "M4 5h16v11H9l-5 4z",
-  log: "M9 6h11M9 12h11M9 18h11M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2",
-  leaderboard: "M4 20V10M10 20V4M16 20v-7M22 20H2",
-  channels: "M10 3L8 21M16 3l-2 18M4 9h17M3 15h17",
-  calendar: "M4 6h16v14H4zM4 10h16M8 14h.01M12 14h.01M16 14h.01M8 3v4M16 3v4",
-  mentor: "M12 2l3 7 7 3-7 3-3 7-3-7-7-3 7-3z",
-  clock: "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 7v5l3 2",
-  board: "M4 4h16v12H8l-4 4zM8 8h8M8 12h5",
-  star: "M12 3l2.8 5.8 6.2.9-4.5 4.4 1 6.2L12 17.3 6.5 20.3l1-6.2L3 9.7l6.2-.9z",
-  memories: "M4 8h3l2-3h6l2 3h3v10H4zM12 11a3 3 0 1 0 0 6 3 3 0 0 0 0-6z",
-  feed: "M4 3h16v9H4zM4 16h16M4 20h11",
-};
-const icon = (name, size) =>
-  `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="${ICON[name]}"/></svg>`;
+/* the intro's italic line takes the school on its phones (lib/landingSchools.ts) */
+const CRIMSON = "#a51c30";
 
 const SLIDES = [
-  /* hero: badge, headline (lib/landingCopy.ts `hero`) */
+  /* hero: badge, headline (`hero`) */
   { kind: "hero", badge: "Free for students", lines: ["Your campus.", "Your gym."], em: "Your people." },
 
-  /* the student story's chapters (`storyBeats`): kicker, head, points. The
-     italic half of each head is this carousel's, the words are the site's. */
-  { kind: "chapter", kicker: "01 · Match", head: "Find training partners.", em: "Make friends.", img: "match",
-    points: [
-      { icon: "partners", title: "Browse", text: "Everyone sorted by how well you fit: interests, concentration, level and hours." },
-      { icon: "clock", title: "Find by time", text: "Pick when you want to train and see who goes then." },
-      { icon: "board", title: "Buddy Board", text: "Post your session and see who wants to join." },
-      { icon: "mentor", title: "Mentors", text: "Get help from an experienced student or an upperclassman in your concentration." },
-    ] },
-  { kind: "chapter", kicker: "02 · Plan", head: "Plan sessions easily", em: "in the chat.", img: "chat",
-    points: [
-      { icon: "chat", title: "Plan card", text: "Send the gym, the day and the time." },
-      { icon: "calendar", title: "Both calendars", text: "Once they accept, it goes into both of your calendars." },
-    ] },
-  { kind: "chapter", kicker: "03 · Profile", head: "Track your statistics. See how you do", em: "in the leaderboards.", img: "profile",
-    points: [
-      { icon: "leaderboard", title: "Leaderboards", text: "See how you, your house and your year rank on campus." },
-      { icon: "calendar", title: "Calendar", text: "Every session you log marks its day." },
-      { icon: "memories", title: "Memories", text: "Photos from your sessions, saved to come back to." },
-    ] },
-  { kind: "chapter", kicker: "04 · Gyms", head: "See every gym on your campus", em: "in one place.", img: "gyms",
-    points: [
-      { icon: "memories", title: "Photos", text: "Added by the students who train there." },
-      { icon: "star", title: "Ratings", text: "Know which gyms students rate best." },
-    ] },
+  /* `storyBeats`, `studentFeatures` and `hero.body`, word for word; the italic
+     half of each head is this carousel's, the words are the site's.
+     In the student story's order (Match, Plan, Profile, Gyms), which also
+     puts the strongest slide second: Instagram often shows a carousel a
+     second time starting at slide 2 to someone who scrolled past it
+     (Mosseri, 2024), so slide 2 has to hook on its own. */
+  { kind: "feature", kicker: "01 · Match", head: "Find training partners.", em: "Make friends.",
+    sub: "Everyone sorted by how well you fit: interests, concentration, level and hours.",
+    img: "match", pops: [{ card: /Leah Goldberg/, w: 480 }] },
+  { kind: "feature", kicker: "02 · Why you match", head: "Find your ideal", em: "training partner.",
+    sub: "Get matched with people based on your interests, hobbies, concentrations, level, language, hometown or much more.",
+    img: "person", pops: [{ card: /why you match/i, w: 700 }] },
+  { kind: "feature", kicker: "03 · Plan", head: "Plan the session", em: "in the chat.",
+    sub: "Once they accept, it goes into both of your calendars.",
+    img: "chat", pops: [{ card: /session plan/i, w: 720, at: "middle" }] },
+  { kind: "feature", kicker: "04 · Profile", head: "Track your statistics.", em: "See how you do in the leaderboards.",
+    sub: "Your profile counts the sessions you logged and the partners you trained with.",
+    img: "profile", pops: [{ card: /workouts/i, w: 640 }, { card: /leaderboards/i, w: 700 }] },
+  { kind: "feature", kicker: "05 · Gyms", head: "See every gym on your campus", em: "in one place.",
+    img: "gyms", pops: [{ card: /Malkin Athletic Center/, w: 700 }, { card: /Adams/, w: 700 }] },
 
   /* Campus Colours (`closers.campus`) */
   { kind: "colours", head: "Your campus,", em: "your colours.", sub: "The app is customized to your university, gyms and colours.",
     schools: ["yale", "harvard", "dartmouth"] },
-
-  /* the feature list beside Campus Colours (`studentFeatures`), titles only */
-  { kind: "list", kicker: "The app",
-    rows: [
-      { icon: "gym", title: "Overview of all gyms on campus." },
-      { icon: "partners", title: "Find your ideal training partner." },
-      { icon: "mentor", title: "New to the gym or campus?" },
-      { icon: "chat", title: "Plan a session easily in the chat." },
-      { icon: "log", title: "Log the session without leaving the app." },
-      { icon: "memories", title: "Build memories." },
-      { icon: "leaderboard", title: "Leaderboards." },
-      { icon: "channels", title: "Community channels." },
-    ],
-    coming: { kicker: "Upcoming", rows: [{ icon: "feed", title: "Feed." }] } },
 
   /* the waitlist page (lib/waitlist.ts): headline, body, and the bio link */
   { kind: "closer", head: "Get in on", em: "day one.", sub: "UNIsport opens at Harvard first. Get an email when the app launches.",
@@ -142,19 +92,45 @@ const SLIDES = [
 ];
 
 /* ── the screens ── */
+const FRESH = path.join(ROOT, "mockups/social/screens/launch");
+const OLD = path.join(ROOT, "mockups/social/screens/light");
+/* The cards on the older captures (1206 x 2622): x, y, w, h and the corner,
+   in capture pixels, read off each card's 3px border by scanning the PNG's
+   pixels. Only used when there is no fresh capture with its own .json. */
+const MEASURED = {
+  gyms: [
+    { text: "Malkin Athletic Center 39 Holyoke Street Open now · closes 11pm", x: 36, y: 399, w: 1134, h: 400, radius: 48 },
+    { text: "Adams Open 24/7", x: 36, y: 1798, w: 1134, h: 332, radius: 48 },
+  ],
+  match: [{ text: "Strong fit LG Leah Goldberg Sr · Eliot · Lifts View profile", x: 36, y: 318, w: 555, h: 789, radius: 48 }],
+  person: [{ text: "Why you match You both lift", x: 42, y: 858, w: 1122, h: 627, radius: 48 }],
+  chat: [{ text: "Session plan Gym Thu, Sep 17 · 8:00 AM Malkin Athletic Center Accept Decline", x: 108, y: 1581, w: 990, h: 525, radius: 48 }],
+  profile: [
+    /* the header is a band, not a card: cut round the photo, the name and the three counts */
+    { text: "Jonas Keller 40 Workouts 6 Partners 13 Followers", x: 0, y: 166, w: 1206, h: 296, radius: 48 },
+    { text: "Leaderboards 5th Adams #44 Campus Log", x: 42, y: 822, w: 1122, h: 225, radius: 48 },
+  ],
+};
 const b64 = (file) => "data:image/png;base64," + readFileSync(file).toString("base64");
-const CAP = {};   // name -> { src, aspect (h/w) }
-for (const s of SLIDES) if (s.img && !CAP[s.img]) {
-  const file = path.join(ROOT, "mockups/social/screens/light", s.img + ".png");
+const SCREEN = {};
+const load = async (name) => {
+  if (SCREEN[name]) return SCREEN[name];
+  const fresh = existsSync(path.join(FRESH, name + ".png"));
+  const file = path.join(fresh ? FRESH : OLD, name + ".png");
   const meta = await sharp(file).metadata();
-  CAP[s.img] = { src: b64(file), aspect: meta.height / meta.width };
-}
-for (const s of SLIDES) if (s.kind === "hero") for (const n of ["gyms", "match"]) if (!CAP[n]) {
-  const file = path.join(ROOT, "mockups/social/screens/light", n + ".png");
-  const meta = await sharp(file).metadata();
-  CAP[n] = { src: b64(file), aspect: meta.height / meta.width };
-}
-const FRAME = {}; // school -> the site's gyms frame (900x1480 webp), as png
+  const cards = fresh && existsSync(path.join(FRESH, name + ".json"))
+    ? JSON.parse(readFileSync(path.join(FRESH, name + ".json"), "utf8")) : MEASURED[name] || [];
+  return (SCREEN[name] = { src: b64(file), w: meta.width, aspect: meta.height / meta.width, cards, fresh });
+};
+/* the smallest card whose text matches: the piece itself, not the page around it */
+const cardOf = (scr, re) => {
+  const hits = scr.cards.filter((c) => re.test(c.text)).sort((a, b) => a.w * a.h - b.w * b.h);
+  if (!hits.length) throw new Error("no card matching " + re);
+  return hits[0];
+};
+for (const s of SLIDES) if (s.img) await load(s.img);
+await load("gyms"); await load("match");
+const FRAME = {}; // school -> the site's gyms frame (900x1480 webp)
 for (const s of SLIDES) if (s.schools) for (const k of s.schools) {
   const buf = await sharp(path.join(ROOT, "public/landing/closers", `gyms-${k}.webp`)).png().toBuffer();
   FRAME[k] = { src: "data:image/png;base64," + buf.toString("base64"), aspect: 1480 / 900 };
@@ -168,26 +144,29 @@ const shell = (w) => {
   const cq = w / 100, rim = 0.83 * cq, bez = 1.95 * cq;
   const sw = w - 2 * (rim + bez) - 2;
   const status = (3.33 + 2.22 + 6.1) * cq, gesture = 6.67 * cq;
-  return { cq, rim, bez, sw, status, gesture };
+  return { cq, rim, bez, sw, status, gesture, inset: rim + bez + 1 };
 };
 const phoneHeight = (w, aspect) => {
   const s = shell(w);
-  return Math.round(s.sw * aspect + s.status + s.gesture + 2 * (s.rim + s.bez) + 2);
+  return Math.round(s.sw * aspect + s.status + s.gesture + 2 * s.inset);
 };
-/* the width at which a phone of this capture is exactly `h` tall */
 const widthFor = (h, aspect) => {
   let w = 300;
   for (let i = 0; i < 30; i++) w *= h / phoneHeight(w, aspect);
   return Math.floor(w);
 };
-const phone = ({ src, aspect }, w, style = "", glow = null) => {
+/* where a capture pixel lands on the canvas, for a phone at (left, top) */
+const onPhone = (w, left, top, cx, cy, capW) => {
+  const s = shell(w), k = s.sw / capW;
+  return { x: left + s.inset + cx * k, y: top + s.inset + s.status + cy * k, k };
+};
+const phone = ({ src, aspect }, w, style = "") => {
   const s = shell(w), px = (v) => `${v.toFixed(2)}px`;
   return `<div class="ph" style="width:${w}px;${style}">
-    ${glow ? `<div class="glow" style="background:${glow}"></div>` : ""}
     <div class="rim" style="border-radius:${px(12.2 * s.cq)};padding:${px(s.rim)};--cq:${s.cq}px">
       <div class="bezel" style="border-radius:${px(11.37 * s.cq)};padding:${px(s.bez)}">
         <div class="screen" style="border-radius:${px(9.44 * s.cq)}">
-          <div class="status" style="padding:${px(3.33 * s.cq)} ${px(6.11 * s.cq)} ${px(2.22 * s.cq)};font-size:${px(3.33 * s.cq)}">
+          <div class="status" style="height:${px(s.status)};padding:${px(3.33 * s.cq)} ${px(6.11 * s.cq)} ${px(2.22 * s.cq)};font-size:${px(3.33 * s.cq)}">
             <span>9:41</span>
             <i class="island" style="height:${px(6.1 * s.cq)};width:${px(23.3 * s.cq)}"></i>
             <span class="net" style="font-size:${px(3.06 * s.cq)}">5G</span>
@@ -199,27 +178,31 @@ const phone = ({ src, aspect }, w, style = "", glow = null) => {
     </div>
   </div>`;
 };
-
-const head = (text, em, emColour = BLUE) =>
-  `${text ? text + " " : ""}<em style="color:${emColour}">${em}</em>`;
+/* a card lifted out of the screen: the same pixels, bigger, on its own shadow.
+   Cut 3 capture px inside its edge so no page colour shows at the corners. */
+const pop = (scr, c, width, left, top) => {
+  const inset = 3, cw = c.w - 2 * inset, ch = c.h - 2 * inset, k = width / cw;
+  return `<div class="pop" style="left:${left}px;top:${top}px;width:${width}px;height:${Math.round(ch * k)}px;border-radius:${Math.round((c.radius - inset) * k)}px">
+    <img src="${scr.src}" style="width:${Math.round(scr.w * k)}px;transform:translate(${-Math.round((c.x + inset) * k)}px,${-Math.round((c.y + inset) * k)}px)">
+  </div>`;
+};
 
 const css = `
   * { margin:0; padding:0; box-sizing:border-box; }
   html,body { width:${W}px; height:${H}px; overflow:hidden; background:#fff; }
   body { font-family:"Plus Jakarta Sans", system-ui, sans-serif; -webkit-font-smoothing:antialiased; color:${INK}; }
   .slide { position:relative; width:${W}px; height:${H}px; overflow:hidden; background:#fff; }
-  .serif { font-family:"Instrument Serif", Georgia, serif; font-weight:400; letter-spacing:-.012em; line-height:1.02; text-wrap:balance; }
+  .serif { font-family:"Instrument Serif", Georgia, serif; font-weight:400; letter-spacing:-.012em; line-height:1; text-wrap:balance; }
   .serif em { font-style:italic; }
   .mono { font-family:"Geist Mono", ui-monospace, monospace; font-weight:500; text-transform:uppercase; letter-spacing:.14em; }
   .kicker { position:absolute; left:${M}px; top:${M}px; font-size:24px; color:${BLUE}; }
   .badge { display:inline-flex; align-items:center; gap:14px; font-size:22px; color:${BLUE};
            padding:14px 26px; border-radius:999px; background:${BLUE_DIM}; border:1.5px solid ${BLUE_SOFT}; }
   .badge::before { content:""; width:10px; height:10px; border-radius:50%; background:${BLUE}; }
+  .sub { font-weight:500; line-height:1.4; color:${INK2}; text-wrap:pretty; }
 
   /* the phone (Phone.tsx + .l-phone-rim) */
   .ph { position:absolute; }
-  .ph .glow { position:absolute; left:50%; top:50%; width:106%; height:94%; transform:translate(-50%,-50%);
-              border-radius:9999px; filter:blur(34px); opacity:.36; }
   .rim { position:relative; border:1px solid #767b83;
          background:linear-gradient(135deg,#f5f6f8 0%,#c8ccd3 18%,#8f949c 50%,#c8ccd3 82%,#f5f6f8 100%);
          box-shadow: inset 0 0 0 calc(var(--cq) * .28) rgba(245,246,248,.7),
@@ -240,26 +223,17 @@ const css = `
   .gesture { display:flex; align-items:center; justify-content:center; background:#fff; }
   .gesture i { display:block; width:38%; border-radius:999px; background:#cfccc6; }
 
-  /* chapter slides */
-  .pts { position:absolute; left:${M}px; display:flex; flex-direction:column; gap:46px; }
-  .pt { display:flex; gap:24px; align-items:flex-start; }
-  .tile { flex:none; width:64px; height:64px; border-radius:18px; display:grid; place-items:center;
-          background:${BLUE_DIM}; color:${BLUE}; }
-  .pt b { display:block; font-weight:700; font-size:31px; letter-spacing:-.01em; color:${INK}; }
-  .pt span { display:block; margin-top:8px; font-weight:500; font-size:26px; line-height:1.36; color:${INK2}; }
+  /* the card lifted out of the screen */
+  .pop { position:absolute; overflow:hidden; background:#fff;
+         box-shadow: 0 0 0 1px rgba(16,22,44,.07), 0 3px 8px rgba(16,22,44,.08),
+                     0 24px 48px -12px rgba(16,22,44,.28), 0 60px 100px -40px rgba(16,22,44,.3); }
+  .pop img { position:absolute; left:0; top:0; display:block; }
 
-  /* the list */
-  .rows { position:absolute; left:${M}px; right:${M}px; }
-  .row { display:flex; align-items:center; gap:26px; padding:21px 0; border-bottom:1.5px solid #d7dfe5; }
-  .row .tile { width:58px; height:58px; border-radius:16px; }
-  .row .t { font-family:"Instrument Serif", Georgia, serif; font-size:46px; line-height:1.05; letter-spacing:-.01em; color:${INK}; }
-  .row.soon .tile { background:none; border:2px dashed ${BLUE_SOFT}; color:${INK3}; }
-  .sub-k { margin-top:42px; margin-bottom:4px; font-size:22px; color:${INK3}; }
-
-  .sub { font-weight:500; line-height:1.4; color:${INK2}; }
   .url { display:inline-block; font-weight:700; font-size:34px; letter-spacing:.005em; color:#fff;
          padding:22px 40px; border-radius:999px; background:${BLUE}; }
 `;
+
+const em = (text, colour = BLUE) => `<em style="color:${colour}">${text}</em>`;
 
 const render = (s) => {
   if (s.kind === "hero") {
@@ -267,32 +241,41 @@ const render = (s) => {
        The intro's three lines become two, so the pair can stand big and whole
        under them; three lines top left with the pair beside them ran the
        words into the phone. */
-    const glow = lift(SCHOOL.harvard);
-    const top = 440, h = H - top - 64;
-    const wf = widthFor(h, CAP.match.aspect), wb = Math.round(wf * 0.93);
+    const top = 424, h = H - top - 52;
+    const wf = widthFor(h, SCREEN.match.aspect), wb = Math.round(wf * 0.93);
     const pair = wf + wb * 0.62;
     const frontLeft = Math.round((W - pair) / 2 + wb * 0.62) + 10;
     return `<div class="slide">
       <div style="position:absolute;left:${M}px;top:${M}px"><span class="badge mono">${s.badge}</span></div>
       <div class="serif" style="position:absolute;left:${M}px;right:${M}px;top:${M + 90}px;font-size:104px;line-height:.98">
-        ${s.lines.join(" ")}<br><em style="color:${SCHOOL.harvard}">${s.em}</em></div>
-      ${phone(CAP.gyms, wb, `left:${frontLeft - Math.round(wb * 0.62)}px;top:${top + 40}px;transform:rotate(-9deg)`, glow)}
-      ${phone(CAP.match, wf, `left:${frontLeft}px;top:${top}px`, glow)}
+        ${s.lines.join(" ")}<br>${em(s.em, CRIMSON)}</div>
+      ${phone(SCREEN.gyms, wb, `left:${frontLeft - Math.round(wb * 0.62)}px;top:${top + 40}px;transform:rotate(-9deg)`)}
+      ${phone(SCREEN.match, wf, `left:${frontLeft}px;top:${top}px`)}
     </div>`;
   }
 
-  if (s.kind === "chapter") {
-    /* the head across the top; the phone whole on the right, the features beside it */
-    const top = 372, h = H - top - 64;
-    const w = widthFor(h, CAP[s.img].aspect);
-    const colW = W - 2 * M - w - 52;
-    return `<div class="slide">
+  if (s.kind === "feature") {
+    /* the head across the top; the phone whole on the right; each card lifted
+       out on the left, over the phone's edge, at the height it sits on the
+       phone (or in the middle of the free space, `at: "middle"`). The final
+       top is set in the page once the line above it has wrapped: see place(). */
+    const scr = SCREEN[s.img];
+    const ptop = 356, ph = H - ptop - 60;
+    const pw = widthFor(ph, scr.aspect), pleft = W - M - pw;
+    const subW = pleft - M - 56;
+    const pops = s.pops.map((p) => {
+      const c = cardOf(scr, p.card);
+      const src = onPhone(pw, pleft, ptop, c.x, c.y + c.h / 2, scr.w);
+      const h = Math.round((c.h - 6) * p.w / (c.w - 6));
+      return pop(scr, c, p.w, M, 0).replace('class="pop"',
+        `class="pop" data-aligned="${Math.round(src.y - h / 2)}" data-at="${p.at || "source"}"`);
+    });
+    return `<div class="slide" data-floor="${ptop + 24}">
       <div class="kicker mono">${s.kicker}</div>
-      <div class="serif" style="position:absolute;left:${M}px;right:${M}px;top:${M + 62}px;font-size:${s.head.length + s.em.length > 50 ? 68 : 80}px">${head(s.head, s.em)}</div>
-      <div class="pts" style="top:${top + 10}px;width:${colW}px;height:${h - 20}px;justify-content:center">
-        ${s.points.map((p) => `<div class="pt"><div class="tile">${icon(p.icon, 32)}</div><div><b>${p.title}</b><span>${p.text}</span></div></div>`).join("")}
-      </div>
-      ${phone(CAP[s.img], w, `left:${W - M - w}px;top:${top}px`)}
+      <div class="serif fit" style="position:absolute;left:${M}px;right:${M}px;top:${M + 58}px;font-size:92px">${s.head} ${em(s.em)}</div>
+      ${s.sub ? `<div class="sub" style="position:absolute;left:${M}px;top:${ptop}px;width:${subW}px;font-size:29px">${s.sub}</div>` : ""}
+      ${phone(scr, pw, `left:${pleft}px;top:${ptop}px`)}
+      ${pops.join("")}
     </div>`;
   }
 
@@ -304,30 +287,18 @@ const render = (s) => {
     const cx = W / 2;
     const [l, c, r] = s.schools;
     return `<div class="slide">
-      <div class="serif" style="position:absolute;left:${M}px;right:${M}px;top:${M + 10}px;font-size:118px">${s.head}<br>${head("", s.em)}</div>
+      <div class="serif" style="position:absolute;left:${M}px;right:${M}px;top:${M + 10}px;font-size:118px">${s.head}<br>${em(s.em)}</div>
       <div class="sub" style="position:absolute;left:${M}px;right:${M}px;top:${M + 290}px;font-size:32px">${s.sub}</div>
-      ${phone(FRAME[l], wb, `left:${cx - wf / 2 - wb * 0.74}px;top:${top + (hf - hb) / 2 + 30}px;transform:rotate(-8deg)`, lift(SCHOOL[l]))}
-      ${phone(FRAME[r], wb, `left:${cx + wf / 2 - wb * 0.26}px;top:${top + (hf - hb) / 2 + 30}px;transform:rotate(8deg)`, lift(SCHOOL[r]))}
-      ${phone(FRAME[c], wf, `left:${cx - wf / 2}px;top:${top}px`, lift(SCHOOL[c]))}
-    </div>`;
-  }
-
-  if (s.kind === "list") {
-    const row = (r, soon) => `<div class="row${soon ? " soon" : ""}"><div class="tile">${icon(r.icon, 30)}</div><div class="t">${r.title}</div></div>`;
-    return `<div class="slide">
-      <div class="kicker mono">${s.kicker}</div>
-      <div class="rows" style="top:${M + 70}px">
-        ${s.rows.map((r) => row(r)).join("")}
-        <div class="mono sub-k">${s.coming.kicker}</div>
-        ${s.coming.rows.map((r) => row(r, true)).join("")}
-      </div>
+      ${phone(FRAME[l], wb, `left:${cx - wf / 2 - wb * 0.74}px;top:${top + (hf - hb) / 2 + 30}px;transform:rotate(-8deg)`)}
+      ${phone(FRAME[r], wb, `left:${cx + wf / 2 - wb * 0.26}px;top:${top + (hf - hb) / 2 + 30}px;transform:rotate(8deg)`)}
+      ${phone(FRAME[c], wf, `left:${cx - wf / 2}px;top:${top}px`)}
     </div>`;
   }
 
   /* closer */
   return `<div class="slide">
     <div style="position:absolute;left:${M}px;right:${M}px;top:50%;transform:translateY(-54%)">
-      <div class="serif" style="font-size:150px">${s.head}<br>${head("", s.em)}</div>
+      <div class="serif" style="font-size:150px">${s.head}<br>${em(s.em)}</div>
       <div class="sub" style="margin-top:34px;font-size:36px;max-width:820px">${s.sub}</div>
       <div style="margin-top:52px"><span class="url">${s.url}</span></div>
     </div>
@@ -349,6 +320,30 @@ for (const [i, s] of SLIDES.entries()) {
   await page.evaluate(() => Promise.all(Array.from(document.images).filter((im) => !im.complete)
     .map((im) => new Promise((r) => { im.onload = im.onerror = r; }))));
   await page.evaluateHandle("document.fonts.ready");
+  /* a head never takes a third line: step the size down until it fits in two */
+  await page.evaluate(() => {
+    for (const el of document.querySelectorAll(".fit")) {
+      let size = parseFloat(el.style.fontSize);
+      while (size > 60 && el.getBoundingClientRect().height > size * 2.1) el.style.fontSize = (size -= 2) + "px";
+    }
+  });
+  /* place(): the lifted cards go below the line under the head, in order, never
+     on top of each other, never past the bottom margin */
+  await page.evaluate((H, M) => {
+    for (const slide of document.querySelectorAll(".slide[data-floor]")) {
+      const sub = slide.querySelector(".sub");
+      const floor = sub ? sub.getBoundingClientRect().bottom + 52 : +slide.dataset.floor;
+      const ceil = H - M;
+      let prev = floor - 32;
+      for (const p of slide.querySelectorAll(".pop")) {
+        const h = p.offsetHeight;
+        let top = p.dataset.at === "middle" ? (floor + ceil - h) / 2 : +p.dataset.aligned;
+        top = Math.min(Math.max(top, prev + 32, floor), ceil - h);
+        p.style.top = Math.round(top) + "px";
+        prev = top + h;
+      }
+    }
+  }, H, M);
   const file = path.join(OUT, String(i + 1).padStart(2, "0") + ".png");
   await page.screenshot({ path: file, type: "png" });
   files.push(file);

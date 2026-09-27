@@ -444,6 +444,7 @@ The screens are shot signed in (`scripts/landing/save-cookie.mjs --fresh`, then
 | the 23 s launch reel, dark | `mockups/video/unisport-reel.mp4` (not in git) | `scripts/video/reel.mjs` |
 | 7-slide feed carousel, dark, from the other session | `mockups/social/carousel/` | `scripts/social/carousel.mjs` |
 | **8-slide "how it works" carousel, WHITE, student side** (demo account renamed Jonas Keller 2026-09-22) | `mockups/social/carousel-white/` | `scripts/social/carousel-white.mjs` |
+| **8-slide LAUNCH carousel, 3:4 (1080×1440), white** — the website's front door: the intro's two phones, then Match, Why you match, Plan, Profile, Gyms (each with the real card lifted out of the phone), Campus Colours, the waitlist (2026-09-27) | `mockups/social/launch/` | `scripts/social/launch-carousel.mjs`; fresh screens + card boxes: `scripts/social/capture-launch.mjs` |
 
 **The posts:** 01 waitlist ("Get in on day one." + the link) · 02 the headline
 ("Your campus. Your gym. Your people.") · 03 Match · 04 Why you match · 05 Plan in the
