@@ -38,11 +38,19 @@ export function slotFromKey(key: string): Slot | null {
   A FINGER SCROLLS UNTIL IT DECIDES NOT TO. Touching a name starts a quarter
   of a second's HOLD, not a drag: move inside that quarter second and the
   screen scrolls as it always did, and the name is never picked up. Stay still
-  and the name lifts, and from then on the finger is carrying it — the page
-  stops scrolling under it, and the list scrolls ITSELF whenever the finger is
-  near the top or the bottom edge, so a rower can be carried from the pool at
-  the bottom up into the first boat without ever putting them down. A mouse
-  has no such problem and does not wait: it drags the moment it moves.
+  and the name is ready to lift — the page stops scrolling under the finger —
+  and the moment the finger then MOVES it is carrying the name, and the list
+  scrolls ITSELF whenever the finger is near the top or the bottom edge, so a
+  rower can be carried from the pool at the bottom up into the first boat
+  without ever putting them down. A mouse has no such problem and does not
+  wait: it drags the moment it moves.
+
+  A SLOW TAP IS STILL A TAP (audit, 2026-09-27). The name used to lift the
+  instant the quarter second was up, so a thumb that simply rested on a name
+  a little too long — cold hands, a dock at dawn — started a carry, and the
+  tap it was meant to be was swallowed. Now nothing is carried until the
+  finger (or the mouse) has really moved, a few pixels past where it came
+  down. Lifting it again without moving is the tap it always was.
 
   WHAT IS UNDER THE FINGER is asked of the document itself — every seat is
   marked `data-slot` with its key — rather than measured and cached, because
@@ -70,16 +78,20 @@ export function useNameDrag(
   });
 
   useEffect(() => {
-    /** How long a thumb has to stay still before the name lifts. */
+    /** How long a thumb has to stay still before the name is ready to lift. */
     const HOLD_MS = 240;
     /** How far a thumb may wander inside that hold and still be a scroll. */
     const SLOP = 10;
+    /** How far a ready name (or a pressed mouse) has to travel before it is a
+        carry rather than a tap. Anything shorter lets the tap through. */
+    const DRAG = 8;
     /** How close to an edge the finger has to be for the list to scroll. */
     const EDGE = 78;
-    /** A mouse never waits, so its hold timer is simply never allowed to fire. */
-    const NEVER = 1000000;
 
-    let hold: { id: string; x: number; y: number; touch: boolean; timer: number } | null = null;
+    /* `ready`: a thumb held still for the whole HOLD_MS — the page no longer
+       scrolls under it, and the next real move lifts the name. */
+    let hold: { id: string; x: number; y: number; touch: boolean; ready: boolean; timer: number | null } | null =
+      null;
     let live: NameDrag | null = null;
     let at = { x: 0, y: 0 };
     let frame: number | null = null;
@@ -112,9 +124,13 @@ export function useNameDrag(
       }
     };
 
-    const begin = (id: string, x: number, y: number) => {
-      if (hold) window.clearTimeout(hold.timer);
+    const dropHold = () => {
+      if (hold?.timer != null) window.clearTimeout(hold.timer);
       hold = null;
+    };
+
+    const begin = (id: string, x: number, y: number) => {
+      dropHold();
       at = { x, y };
       live = { id, x, y, over: slotAt(x, y) };
       swallow = true; // the click after this gesture is not a tap
@@ -124,8 +140,10 @@ export function useNameDrag(
     };
 
     const finish = (commit: boolean) => {
-      if (hold) window.clearTimeout(hold.timer);
-      hold = null;
+      // A hold that never became a carry ends here too — and because nothing
+      // was lifted, `swallow` was never armed: the click that follows is the
+      // tap it always was.
+      dropHold();
       if (live && commit) {
         const key = slotAt(at.x, at.y);
         const slot = key ? slotFromKey(key) : null;
@@ -151,13 +169,12 @@ export function useNameDrag(
       }
       if (!hold) return;
       const far = Math.hypot(e.clientX - hold.x, e.clientY - hold.y);
-      // A thumb that moves is scrolling; a mouse that moves is dragging.
-      if (hold.touch) {
-        if (far > SLOP) {
-          window.clearTimeout(hold.timer);
-          hold = null;
-        }
-      } else if (far > 6) {
+      // A thumb that moves before the hold is up is scrolling. A thumb that
+      // has held still, or a mouse, is carrying — once it has really moved.
+      if (hold.touch && !hold.ready) {
+        if (far > SLOP) dropHold();
+      } else if (far > DRAG) {
+        e.preventDefault();
         begin(hold.id, e.clientX, e.clientY);
       }
     };
@@ -165,9 +182,11 @@ export function useNameDrag(
     const onUp = () => finish(true);
     const onCancel = () => finish(false);
     /* A held name must not also scroll the page: pointermove's preventDefault
-       does not stop a touch scroll that has already begun, but this does. */
+       does not stop a touch scroll that has already begun, but this does. It
+       applies from the moment the hold is up, so the move that lifts the
+       name is never taken for a scroll first. */
     const onTouchMove = (e: TouchEvent) => {
-      if (live) e.preventDefault();
+      if (live || hold?.ready) e.preventDefault();
     };
     const onClick = (e: MouseEvent) => {
       if (!swallow) return;
@@ -192,16 +211,15 @@ export function useNameDrag(
       const x = e.clientX;
       const y = e.clientY;
       at = { x, y };
-      if (hold) window.clearTimeout(hold.timer);
-      hold = {
-        id,
-        x,
-        y,
-        touch,
-        timer: window.setTimeout(() => {
-          if (hold) begin(hold.id, hold.x, hold.y);
-        }, touch ? HOLD_MS : NEVER),
-      };
+      dropHold();
+      // A mouse is ready at once; a thumb after it has held still.
+      const next: NonNullable<typeof hold> = { id, x, y, touch, ready: !touch, timer: null };
+      if (touch) {
+        next.timer = window.setTimeout(() => {
+          if (hold === next) next.ready = true;
+        }, HOLD_MS);
+      }
+      hold = next;
     };
 
     window.addEventListener("pointerdown", onDown, true);
@@ -217,7 +235,7 @@ export function useNameDrag(
       window.removeEventListener("pointercancel", onCancel);
       window.removeEventListener("touchmove", onTouchMove);
       window.removeEventListener("click", onClick, true);
-      if (hold) window.clearTimeout(hold.timer);
+      dropHold();
       if (frame != null) cancelAnimationFrame(frame);
       document.body.style.userSelect = "";
     };
