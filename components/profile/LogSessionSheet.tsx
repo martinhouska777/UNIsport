@@ -19,6 +19,7 @@ import { useEffect, useRef, useState } from "react";
 import Button from "@/components/ui/Button";
 import { primaryActivities, cardioTypes, verifiedGyms } from "@/lib/onboarding";
 import {
+  partnerStatusLine,
   saveWorkout,
   updateWorkout,
   type DistanceUnit,
@@ -354,11 +355,14 @@ export default function LogSessionSheet({
           </button>
           {/* Said before the save, because it changes what the save does: the
               multiplier is not yours to take, it is theirs to confirm. Not on
-              a planned session — the plan is what asks them. */}
+              a planned session — the plan is what asks them. The same partner
+              kept on an edit already has an answer (or is still being asked),
+              and that answer is said in the detail screen's words — "has
+              confirmed" only when they actually did. */}
           {partnerId && !plan && (
             <p className="mt-1.5 text-[11px] leading-snug text-muted">
-              {existing?.partnerId === partnerId && existing?.partnerStatus !== "pending"
-                ? `${partner} has confirmed this session.`
+              {existing && existing.partnerId === partnerId
+                ? (partnerStatusLine(existing) ?? `${partner} has confirmed this session.`)
                 : `${partner} will be asked to confirm. Once they say yes it counts for both of you (${sessionPoints.partner}–${sessionPoints.newPartner} pts each) and lands on their calendar too. No answer in ${PARTNER_CONFIRM_HOURS}h and it counts as solo.`}
             </p>
           )}

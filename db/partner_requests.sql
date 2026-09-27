@@ -13,6 +13,9 @@
 --                                                the partner too — a mirror row)
 --     they decline                            → 'declined'   (logger scores solo)
 --     nobody answers within the window        → 'expired'    (logger scores solo)
+--                                                written by the partner's late
+--                                                answer, or by the sweep either
+--                                                person's Profile runs on load
 --
 --   Scoring (db/leaderboards.sql) counts a partner ONLY when the status is
 --   'confirmed'. Rows written before this existed have a NULL status and read
@@ -78,10 +81,15 @@ $$;
 
 -- ---------------------------------------------------------------------------
 -- Answer one. Only the named partner may, only while it is pending and inside
--- the window; past the window it is marked expired and refused.
+-- the window; past the window it is marked expired and nothing else happens.
 -- Accepting confirms the logger's row AND writes the session onto the
 -- partner's own calendar (once — idempotent on mirror_of), with the logger as
 -- THEIR partner, so both people score and both see it.
+--
+-- Too late RETURNS 'expired' — it does not raise. Until 2026-09-27 it marked
+-- the row expired and then raised, and the raise rolled the mark back, so an
+-- unanswered tag stayed 'pending' for ever and the logger's session said
+-- "waiting to confirm" long after the window had shut.
 -- ---------------------------------------------------------------------------
 create or replace function public.partner_request_respond(
   p_log_id uuid, p_accept boolean, p_hours integer default 24)
@@ -98,7 +106,9 @@ declare
 begin
   if me is null then raise exception 'not authenticated'; end if;
 
-  select * into w from public.workout_logs where id = p_log_id;
+  -- Locked, so a double tap (or the sweep below landing at the same moment)
+  -- waits for this answer instead of racing it into a second mirror row.
+  select * into w from public.workout_logs where id = p_log_id for update;
   if w.id is null then raise exception 'unknown session'; end if;
   if w.partner_id is distinct from me then raise exception 'not your request'; end if;
   if w.partner_status is distinct from 'pending' then raise exception 'already answered'; end if;
@@ -106,7 +116,7 @@ begin
 
   if w.created_at <= now() - make_interval(hours => greatest(1, p_hours)) then
     update public.workout_logs set partner_status = 'expired' where id = p_log_id;
-    raise exception 'expired';
+    return 'expired';
   end if;
 
   if not p_accept then
@@ -126,6 +136,38 @@ begin
   );
 
   return 'confirmed';
+end;
+$$;
+
+-- ---------------------------------------------------------------------------
+-- The sweep: every tag of MINE that nobody answered in time becomes 'expired'
+-- — the ones I made (so my session stops saying "waiting") and the ones made
+-- about me (so the row is honest even if I never open the request). Run by
+-- the Profile tab when it loads, with the same window it lists requests with.
+-- Returns how many it changed, so the Profile knows whether to re-read its
+-- calendar. A tag on a chat plan is never touched: the plan answers it.
+-- ---------------------------------------------------------------------------
+create or replace function public.partner_tags_expire(p_hours integer default 24)
+returns integer
+language plpgsql
+volatile
+security definer
+set search_path = public
+as $$
+declare
+  me uuid := auth.uid();
+  n  integer;
+begin
+  if me is null then return 0; end if;
+
+  update public.workout_logs
+    set partner_status = 'expired'
+    where partner_status = 'pending'
+      and plan_id is null
+      and (user_id = me or partner_id = me)
+      and created_at <= now() - make_interval(hours => greatest(1, p_hours));
+  get diagnostics n = row_count;
+  return n;
 end;
 $$;
 
@@ -166,4 +208,5 @@ $$;
 
 grant execute on function public.partner_requests_for_me(integer)                to authenticated;
 grant execute on function public.partner_request_respond(uuid, boolean, integer) to authenticated;
+grant execute on function public.partner_tags_expire(integer)                    to authenticated;
 grant execute on function public.partner_push_targets(uuid)                      to authenticated;

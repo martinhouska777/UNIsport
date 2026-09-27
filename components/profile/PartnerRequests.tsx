@@ -11,12 +11,18 @@
 
   Sits at the top of the Profile tab, where the push for it lands. Colours are
   theme tokens; the window (24h) is data in lib/points.ts.
+
+  It is also where an unanswered tag runs out: loading it expires every tag of
+  yours past the window (the ones you made and the ones about you), and when
+  that changed anything the Profile re-reads its calendar, so your own session
+  stops saying "waiting" the moment the window has shut.
 */
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Button from "@/components/ui/Button";
 import Avatar from "@/components/messages/Avatar";
 import {
   activityLabel,
+  expirePartnerTags,
   listPartnerRequests,
   respondPartnerRequest,
   type PartnerRequest,
@@ -39,13 +45,23 @@ export default function PartnerRequests({ onChanged }: { onChanged?: () => void 
   const [requests, setRequests] = useState<PartnerRequest[]>([]);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // The effect below runs once; the Profile's reload has to be the current
+  // one (it reads whichever week or month the calendar is on).
+  const onChangedRef = useRef(onChanged);
+  useEffect(() => {
+    onChangedRef.current = onChanged;
+  });
 
   useEffect(() => {
     let active = true;
-    const refresh = () =>
+    const refresh = () => {
+      expirePartnerTags()
+        .then((n) => active && n > 0 && onChangedRef.current?.())
+        .catch(() => {});
       listPartnerRequests()
         .then((r) => active && setRequests(r))
         .catch(() => {});
+    };
     refresh();
     // A request arrives from someone else's phone; picking it up when the app
     // comes back to the foreground is what makes the push's "Yes" one tap.
@@ -59,20 +75,26 @@ export default function PartnerRequests({ onChanged }: { onChanged?: () => void 
     };
   }, []);
 
-  if (requests.length === 0) return null;
+  // The message outlives the card it was about — "Too late" is usually said
+  // about the last card, which is gone by the time it is shown.
+  if (requests.length === 0 && !error) return null;
 
   const answer = async (r: PartnerRequest, accept: boolean) => {
     setBusyId(r.logId);
     setError(null);
     const res = await respondPartnerRequest(r.logId, accept);
     setBusyId(null);
+    setRequests((cur) => cur.filter((x) => x.logId !== r.logId));
     if (res.error) {
-      // "expired" is the one honest failure: the window closed while the card sat here.
-      setError(res.error.includes("expired") ? "Too late — that one has already counted as solo." : res.error);
-      setRequests((cur) => cur.filter((x) => x.logId !== r.logId));
+      setError(res.error);
       return;
     }
-    setRequests((cur) => cur.filter((x) => x.logId !== r.logId));
+    // The window closed while the card sat here: the tag is now marked
+    // expired, and that is an answer, not a failure.
+    if (res.status === "expired") {
+      setError("Too late — that one has already counted as solo.");
+      return;
+    }
     onChanged?.();
   };
 
@@ -116,7 +138,9 @@ export default function PartnerRequests({ onChanged }: { onChanged?: () => void 
           </div>
         ))}
       </div>
-      {error && <p className="mt-2 text-[11px] text-danger">{error}</p>}
+      {error && (
+        <p className={`${requests.length > 0 ? "mt-2 " : ""}text-[11px] text-danger`}>{error}</p>
+      )}
     </div>
   );
 }

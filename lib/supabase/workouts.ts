@@ -420,7 +420,8 @@ export async function listPartnerRequests(): Promise<PartnerRequest[]> {
   }));
 }
 
-/** Answer one request. Returns the resulting status. */
+/** Answer one request. Returns the resulting status — 'expired' when the
+    window shut while the card sat there (the row is marked, nothing else). */
 export async function respondPartnerRequest(
   logId: string,
   accept: boolean,
@@ -432,6 +433,38 @@ export async function respondPartnerRequest(
     p_hours: PARTNER_CONFIRM_HOURS,
   });
   return error ? { error: error.message } : { status: data as string };
+}
+
+/** Mark my unanswered tags past the window as expired — the ones I made and
+    the ones about me (db/partner_requests.sql, partner_tags_expire). Returns
+    how many changed, so a caller showing my sessions knows to re-read them. */
+export async function expirePartnerTags(): Promise<number> {
+  if (!hasSupabaseEnv()) return 0;
+  const { data, error } = await createClient().rpc("partner_tags_expire", {
+    p_hours: PARTNER_CONFIRM_HOURS,
+  });
+  return error ? 0 : Number(data ?? 0);
+}
+
+/*
+  Where the partner tag stands, in the logger's words. A pending tag scores as
+  solo, and the screen says so rather than letting the name imply the points
+  are in. Null for a confirmed tag (or a legacy one) — the name on its own is
+  the normal state. Shared by the workout detail and the edit sheet, so the
+  two never describe the same session differently.
+*/
+export function partnerStatusLine(log: WorkoutLog): string | null {
+  if (!log.partnerId) return null;
+  switch (log.partnerStatus) {
+    case "pending":
+      return `Waiting for ${log.partner} to confirm · counts as solo until then`;
+    case "declined":
+      return `${log.partner} said they weren’t there · counted as solo`;
+    case "expired":
+      return `${log.partner} didn’t confirm within ${PARTNER_CONFIRM_HOURS}h · counted as solo`;
+    default:
+      return null;
+  }
 }
 
 /* ── Streak & points (Slice D) ──
