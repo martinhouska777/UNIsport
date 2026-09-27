@@ -25,6 +25,7 @@ export default function TeammateCalendarWindow({
   name,
   onClose,
 }: {
+  /** Their account id — whose logs the month is read from. */
   athleteId: string;
   name: string;
   onClose: () => void;
@@ -49,7 +50,11 @@ export default function TeammateCalendarWindow({
           </div>
         </div>
         <div className="min-h-0 flex-1 pb-[env(safe-area-inset-bottom)]">
-          <CalendarScreen teammate={{ id: athleteId }} />
+          {/* THEIR REAL MONTH (audit, 2026-09-27) — it was a derived one under
+              their name. `athleteId` is their ACCOUNT now, and the read is
+              allowed only while they share their calendar with the squad
+              (db/varsity_team_cards_2026-09-27.sql). */}
+          <CalendarScreen teammate={{ id: athleteId, real: true }} />
         </div>
       </div>
     </ThemeProvider>,

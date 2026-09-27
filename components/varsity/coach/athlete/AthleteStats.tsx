@@ -29,6 +29,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Plot from "@/components/varsity/profile/Plot";
 import Dropdown from "@/components/varsity/profile/Dropdown";
+import ExampleTag from "@/components/varsity/ExampleTag";
 import { useUnits } from "@/components/useUnits";
 import {
   buildBuckets,
@@ -121,7 +122,11 @@ export default function AthleteStats({
     };
   }, []);
 
-  const shown = logs.length === 0 && demo?.length ? demo : logs;
+  /* The worked example stands in only while they have logged nothing — and
+     then it SAYS it is one (audit, 2026-09-27: an example month of "125 km,
+     13h 10m" read as the rower's own while their calendar was empty). */
+  const example = logs.length === 0 && !!demo?.length;
+  const shown = example ? demo! : logs;
   const buckets: Bucket[] = useMemo(
     () => buildBuckets(shown, range, now),
     [shown, range, now],
@@ -142,6 +147,11 @@ export default function AthleteStats({
 
   return (
     <div>
+      {loaded && example && (
+        <div className="mb-2">
+          <ExampleTag />
+        </div>
+      )}
       {/* WHAT IS BEING MEASURED, and OVER WHAT — the same two dropdowns, in the
           same order, as the athlete's own statistics. */}
       <div className="flex items-center gap-2">

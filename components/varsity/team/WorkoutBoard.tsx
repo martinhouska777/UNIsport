@@ -28,6 +28,7 @@
 import Medal from "@/components/leaderboards/Medal";
 import { useMemo, useState } from "react";
 import Sheet from "@/components/varsity/Sheet";
+import ExampleTag from "@/components/varsity/ExampleTag";
 import ResultDetail from "@/components/varsity/team/ResultDetail";
 import BoardTable from "@/components/varsity/team/BoardTable";
 import Delta from "@/components/varsity/team/Delta";
@@ -158,8 +159,9 @@ export default function WorkoutBoard({
     there was no top row at all and the screen could not be seen before the
     squad had logged anything. It now stands in with the median rower, under
     their own (invented) name — so the block can be read and pressed, without
-    putting the viewer's name on a 2k they never pulled. (It wore an EXAMPLE
-    tag too; the owner had it taken off on 2026-09-13.)
+    putting the viewer's name on a 2k they never pulled. (Its EXAMPLE tag came
+    off on 2026-09-13 and went back on 2026-09-27: the roster is real names
+    now, so a made-up result has to say it is one.)
   */
   const top = inConsole
     ? undefined
@@ -202,6 +204,8 @@ export default function WorkoutBoard({
             <span className="text-[13px] font-semibold text-text">
               {workoutLabel(workout.session)}
             </span>
+            {/* A worked example says it is one (audit, 2026-09-27). */}
+            {example && <ExampleTag />}
             <span className="ml-auto text-[11px] text-muted">
               {workout.dateLabel} · {workout.period}
             </span>

@@ -10,12 +10,14 @@
     • Workouts — every session the coach flagged as a TEAM WORKOUT, with the
                  board of everyone's results (components/varsity/team/…).
 
-  Roster comes from lib/varsity/coachLineup; each athlete's profile detail from
-  lib/varsity/teamProfiles (stable demo data until accounts link to the squad).
+  Roster comes from lib/varsity/coachLineup; a rower's card is THEIR OWN record
+  (lib/varsity/teamCards): yours from your profile, a linked account's from
+  the varsity_team_cards function, and "No profile yet" for everyone else. It
+  used to be invented numbers under real names (audit, 2026-09-27).
   All colors are theme tokens; the rowing-side dot is a CONTENT color from data
   applied via inline style (the rule-1 exception the lineup screens use).
 */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Sheet from "@/components/varsity/Sheet";
 import TeamWorkouts from "@/components/varsity/team/TeamWorkouts";
@@ -24,8 +26,17 @@ import TeammateCalendarWindow from "@/components/varsity/team/TeammateCalendarWi
 import { useUnits } from "@/components/useUnits";
 import { formatWeight } from "@/lib/varsity/units";
 import { roster, rosterById, sideMeta, COX_COLOR, COX_INK, type Athlete } from "@/lib/varsity/coachLineup";
-import { teamProfile } from "@/lib/varsity/teamProfiles";
-import { statusOptions, prPieces, type StatusTone } from "@/lib/varsity/athleteProfile";
+import {
+  fetchAthleteProfile,
+  statusOptions,
+  prPieces,
+  type AthleteProfileBundle,
+  type StatusTone,
+} from "@/lib/varsity/athleteProfile";
+import { fetchTeamCards, type TeamCard } from "@/lib/varsity/teamCards";
+import { rosterIdForName } from "@/lib/varsity/demoAthlete";
+import { useAppState } from "@/components/AppState";
+import { useMembership } from "@/components/varsity/useMembership";
 import {
   IconArrowLeft,
   IconSearch,
@@ -83,29 +94,44 @@ function SideMark({ a }: { a: Athlete }) {
   A TEAMMATE'S CARD — who they are, how they row, their status, their training
   month and their erg PRs.
 
-  THE CALENDAR IS THEIR CHOICE (owner, 2026-09-13). On 2026-09-11 the month was
-  taken off this card, because it was the athlete's own log handed to forty
-  peers with no say. The owner wants it back — so the squad can see how the
-  people who train best actually train — and the missing piece was the say:
-  every athlete now has a "Teammates see my calendar" switch on their own
-  profile (VarsityAthleteProfile.showCalendar). Off, and this card says so in
-  one line instead of the button. The coach sees it either way.
+  IT IS THEIR OWN RECORD OR NOTHING (audit, 2026-09-27). It used to be derived
+  from the roster id: an invented height, weight, class and set of bests under
+  a real name, and your own row said 82 kg and 6:08.0 while your profile said
+  88 kg and 6:08.4. Now:
+    • your own row is your own profile;
+    • a rower with a linked account is their profile, as they filled it in —
+      a figure they never gave is simply not there;
+    • anybody else is their name, the side the coach has them on, and "No
+      profile yet".
 
-  A BUTTON, NOT A MONTH (owner, 2026-09-14). The card no longer draws a small
-  calendar of its own: it has one "Calendar" row, and tapping it opens the
-  month full-screen, drawn by the same screen as your own Calendar tab
-  (TeammateCalendarWindow → CalendarScreen, read-only).
-
-  Until accounts are linked to roster seats the month is demo data
-  (lib/varsity/teamTraining), as is who has the switch off (teamProfiles).
+  THE CALENDAR IS THEIR CHOICE (owner, 2026-09-13): every athlete has a
+  "Teammates see my calendar" switch on their own profile. On, and the card has
+  a Calendar row that opens their REAL month full-screen, read-only (owner,
+  2026-09-14: a button, not a month); off, and it says so in one line. The
+  coach sees it either way, from the console.
 */
-function AthleteSheet({ athleteId, onClose }: { athleteId: string; onClose: () => void }) {
+type CardView =
+  | { kind: "loading" }
+  | { kind: "none" }
+  | { kind: "card"; own: boolean; userId: string; classYear: string; profile: AthleteProfileBundle["profile"] };
+
+function AthleteSheet({
+  athleteId,
+  view,
+  onClose,
+}: {
+  athleteId: string;
+  view: CardView;
+  onClose: () => void;
+}) {
   const a = rosterById[athleteId];
-  const p = teamProfile(athleteId);
   const { units } = useUnits();
-  const classLine = [p.classYear, p.teamYear].filter(Boolean).join(" · ");
-  const status = statusOptions.find((s) => s.title === p.status);
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const card = view.kind === "card" ? view : null;
+  const p = card?.profile ?? null;
+  const classLine = card ? [card.classYear, p!.teamYear].filter(Boolean).join(" · ") : "";
+  const status = p ? statusOptions.find((s) => s.title === p.status) : undefined;
+  const bests = p ? prPieces.filter((piece) => (p.prs[piece] ?? "").trim()) : [];
 
   return (
     <Sheet title="Athlete" onClose={onClose}>
@@ -122,17 +148,20 @@ function AthleteSheet({ athleteId, onClose }: { athleteId: string; onClose: () =
               <span className="h-2 w-2 rounded-full" style={sideDot(a)} />
               {sideLabel(a)}
             </span>
-            <span className="rounded-md border border-border bg-surface-2 px-2 py-1 text-[11px] text-text">
-              {p.heightCm} cm
-            </span>
-            <span className="rounded-md border border-border bg-surface-2 px-2 py-1 text-[11px] text-text">
-              {formatWeight(p.weightKg, units.weight)}
-            </span>
+            {p?.heightCm != null && (
+              <span className="rounded-md border border-border bg-surface-2 px-2 py-1 text-[11px] text-text">
+                {p.heightCm} cm
+              </span>
+            )}
+            {p?.weightKg != null && (
+              <span className="rounded-md border border-border bg-surface-2 px-2 py-1 text-[11px] text-text">
+                {formatWeight(p.weightKg, units.weight)}
+              </span>
+            )}
           </div>
         </div>
         {/* Status — top right, one word in a pill, exactly as on your own
-            profile (owner, 2026-09-13). The grey card that sat under the
-            header, and its "Available for training and selection" line, went. */}
+            profile (owner, 2026-09-13). */}
         {status && (
           <span
             className={`flex flex-shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1.5 ${toneRing[status.tone]}`}
@@ -143,49 +172,58 @@ function AthleteSheet({ athleteId, onClose }: { athleteId: string; onClose: () =
         )}
       </div>
 
-      {p.showCalendar ? (
-        <button
-          type="button"
-          onClick={() => setCalendarOpen(true)}
-          className="mt-4 flex w-full items-center gap-3 rounded-xl border border-border bg-surface-2 px-3.5 py-3 text-left active:bg-surface"
-        >
-          <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-primary-tint text-primary">
-            <IconCalendar size={16} />
-          </span>
-          <span className="flex-1 text-[13px] font-semibold text-text">Calendar</span>
-          <IconChevronRight size={15} className="flex-shrink-0 text-muted" />
-        </button>
-      ) : (
-        <div className="mt-4 flex items-center gap-2.5 rounded-xl border border-border bg-surface-2 px-3.5 py-3 text-[12px] text-muted">
-          <IconEyeOff size={15} />
-          {(a?.name ?? "").split(" ")[0] || "They"} keeps their calendar private.
+      {view.kind === "loading" && <div className="skeleton mt-4 h-12 w-full rounded-xl" aria-busy="true" />}
+
+      {view.kind === "none" && (
+        <div className="mt-4 rounded-xl border border-dashed border-border bg-surface px-3.5 py-5 text-center text-[12px] text-muted">
+          No profile yet
         </div>
       )}
 
-      {/* erg PRs — not for a coxswain: nobody compares a cox's 2k, and a card
-          that printed one would be asking to be. */}
-      {!a?.cox && (
+      {card &&
+        (card.own || p!.showCalendar ? (
+          <button
+            type="button"
+            onClick={() => setCalendarOpen(true)}
+            className="mt-4 flex w-full items-center gap-3 rounded-xl border border-border bg-surface-2 px-3.5 py-3 text-left active:bg-surface"
+          >
+            <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-primary-tint text-primary">
+              <IconCalendar size={16} />
+            </span>
+            <span className="flex-1 text-[13px] font-semibold text-text">Calendar</span>
+            <IconChevronRight size={15} className="flex-shrink-0 text-muted" />
+          </button>
+        ) : (
+          <div className="mt-4 flex items-center gap-2.5 rounded-xl border border-border bg-surface-2 px-3.5 py-3 text-[12px] text-muted">
+            <IconEyeOff size={15} />
+            {(a?.name ?? "").split(" ")[0] || "They"} keeps their calendar private.
+          </div>
+        ))}
+
+      {/* Erg PRs — the ones they have actually set, and not for a coxswain:
+          nobody compares a cox's 2k. */}
+      {card && !a?.cox && bests.length > 0 && (
         <>
           <div className="mb-2 mt-4 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
             Personal Bests
           </div>
           <div className="grid grid-cols-2 gap-1.5">
-            {prPieces.map((piece) => (
+            {bests.map((piece) => (
               <div
                 key={piece}
                 className="flex items-baseline justify-between rounded-xl border border-border bg-surface-2 px-3 py-2.5"
               >
                 <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">{piece}</span>
-                <span className="text-[14px] font-semibold text-text">{p.prs[piece] ?? "—"}</span>
+                <span className="text-[14px] font-semibold text-text">{p!.prs[piece]}</span>
               </div>
             ))}
           </div>
         </>
       )}
 
-      {calendarOpen && (
+      {calendarOpen && card && (
         <TeammateCalendarWindow
-          athleteId={athleteId}
+          athleteId={card.userId}
           name={a?.name ?? "Athlete"}
           onClose={() => setCalendarOpen(false)}
         />
@@ -355,6 +393,50 @@ export default function TeamScreen({
   const [open, setOpen] = useState<string | null>(null);
 
   /*
+    WHOSE CARD IS REAL (lib/varsity/teamCards). Your own profile, and the
+    linked teammates' cards, read once the roster is on screen. `cards` is
+    null until the read lands; a read that could not be answered (the SQL not
+    applied yet) lands as an empty map, and those rows say "No profile yet".
+  */
+  const { userId } = useAppState();
+  const { membership } = useMembership();
+  const teamId = membership?.teamId ?? null;
+  const [me, setMe] = useState<AthleteProfileBundle | null>(null);
+  const [cards, setCards] = useState<{ team: string | null; byRoster: Record<string, TeamCard> } | null>(null);
+  useEffect(() => {
+    if (tab !== "roster" || !userId) return;
+    let active = true;
+    fetchAthleteProfile(userId)
+      .then((b) => active && setMe(b))
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [tab, userId]);
+  useEffect(() => {
+    if (tab !== "roster") return;
+    let active = true;
+    fetchTeamCards(teamId)
+      .then((c) => active && setCards({ team: teamId, byRoster: c ?? {} }))
+      .catch(() => active && setCards({ team: teamId, byRoster: {} }));
+    return () => {
+      active = false;
+    };
+  }, [tab, teamId]);
+  const myRosterId = me ? (me.profile.rosterId ?? rosterIdForName(me.name)) : null;
+  const viewFor = (athleteId: string): CardView => {
+    if (userId && myRosterId === athleteId && me) {
+      return { kind: "card", own: true, userId, classYear: me.classYear, profile: me.profile };
+    }
+    if (!cards || cards.team !== teamId || (userId && !me)) return { kind: "loading" };
+    const c = cards.byRoster[athleteId];
+    if (c && c.userId !== userId) {
+      return { kind: "card", own: false, userId: c.userId, classYear: c.classYear, profile: c.profile };
+    }
+    return { kind: "none" };
+  };
+
+  /*
     THE WHOLE SQUAD, in two groups: rowers, then coxswains, each in name order.
     Coxswains used to be filtered out of this list altogether — on a roster for
     an app whose setup screen asks "Rower or Coxswain", a cox who joined could
@@ -504,7 +586,7 @@ export default function TeamScreen({
         <TeamWorkouts inConsole={inConsole} />
       )}
 
-      {open && <AthleteSheet athleteId={open} onClose={() => setOpen(null)} />}
+      {open && <AthleteSheet athleteId={open} view={viewFor(open)} onClose={() => setOpen(null)} />}
     </div>
   );
 }

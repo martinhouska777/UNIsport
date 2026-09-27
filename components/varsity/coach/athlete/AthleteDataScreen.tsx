@@ -51,6 +51,8 @@ import {
   type StatusTone,
 } from "@/lib/varsity/athleteProfile";
 import { IconActivity, IconArrowLeft, IconCalendar, IconClipboard } from "@/components/icons";
+/* Says, without room for doubt, that what is below is made up. */
+import ExampleTag from "@/components/varsity/ExampleTag";
 import AthleteNote from "@/components/varsity/coach/athlete/AthleteNote";
 import AthleteStats from "@/components/varsity/coach/athlete/AthleteStats";
 import AthleteWorkouts from "@/components/varsity/coach/athlete/AthleteWorkouts";
@@ -72,15 +74,6 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
     <div className="mb-2 mt-6 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
       {children}
     </div>
-  );
-}
-
-/* Says, without room for doubt, that what is below is made up. */
-function ExampleTag() {
-  return (
-    <span className="rounded-md border border-border bg-surface-2 px-1.5 py-0.5 text-[10px] font-semibold tracking-[0.08em] text-warn">
-      Example
-    </span>
   );
 }
 

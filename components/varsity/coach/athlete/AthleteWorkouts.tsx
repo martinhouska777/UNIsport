@@ -17,6 +17,7 @@
 */
 import { useEffect, useMemo, useState } from "react";
 import LogRow from "@/components/varsity/coach/athlete/LogRow";
+import ExampleTag from "@/components/varsity/ExampleTag";
 import { fetchLogsInRange, type LogEntry } from "@/lib/varsity/logStore";
 
 /* How far back the list reaches. A season, which is as long as anybody has
@@ -69,7 +70,9 @@ export default function AthleteWorkouts({
     };
   }, [athleteId, now]);
 
-  const shown = logs.length === 0 && demo?.length ? demo : logs;
+  /* The example only while they have logged nothing, and tagged as one. */
+  const example = logs.length === 0 && !!demo?.length;
+  const shown = example ? demo! : logs;
 
   /* Newest day first, and inside a day the order they were logged in — which is
      the order they were done in, morning before afternoon. */
@@ -95,6 +98,11 @@ export default function AthleteWorkouts({
 
   return (
     <div className="flex flex-col gap-4">
+      {example && (
+        <div>
+          <ExampleTag />
+        </div>
+      )}
       {days.map(([iso, entries]) => (
         <div key={iso}>
           <div className="pb-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">

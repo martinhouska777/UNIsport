@@ -62,11 +62,13 @@
   RANKED and the telemetry source (PEACH / SPEEDCOACH); all three came off on
   the owner's call — four pills down one line is a row you have to decode.
 
-  THE EXAMPLE NO LONGER SAYS SO anywhere (owner, 2026-09-13): the tag on the
-  board's top row and the line across the top of the water outing both came
-  off. What it must still never do is write the VIEWER'S name onto a made-up
-  result: seeing yourself ranked 22nd at a split you never pulled is not a
-  lesson about the board, it is a lie about you.
+  THE EXAMPLE SAYS SO AGAIN (audit, 2026-09-27). The owner took its tag off on
+  2026-09-13; since then the roster became the squad's REAL names, so an
+  example board was invented times under real people with nothing saying so.
+  It wears one small EXAMPLE tag — on its row here and on the board's top card —
+  and nothing more. What it must still never do is write the VIEWER'S name onto
+  a made-up result: seeing yourself ranked 22nd at a split you never pulled is
+  not a lesson about the board, it is a lie about you.
 */
 import { useEffect, useMemo, useState } from "react";
 import { useAppState } from "@/components/AppState";
@@ -82,6 +84,7 @@ import { kindColor, kindLegend } from "@/lib/varsity/home";
 import { fetchTrainingConfig } from "@/lib/varsity/configStore";
 import RaceBoard from "@/components/varsity/team/RaceBoard";
 import Sheet from "@/components/varsity/Sheet";
+import ExampleTag from "@/components/varsity/ExampleTag";
 import { fetchRaceDays, saveRaceDay } from "@/lib/varsity/raceStore";
 import { piecesFromSession, raceSummary, type RaceDay } from "@/lib/varsity/racePieces";
 import { fetchLineupsFor } from "@/lib/varsity/lineupStore";
@@ -513,9 +516,11 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
                     <span className="truncate text-[13px] font-semibold text-text">
                       {w.session.description.trim() || sessionLabel(w.session)}
                     </span>
-                    {/* NO TAG. A row used to wear ERG or WATER — the one thing
-                        that changed what you were about to read — back when
-                        both were in one list. The tab above says it now. */}
+                    {/* NO ERG / WATER TAG — the tab above says it. The one tag
+                        a row wears is EXAMPLE, on a worked example (audit,
+                        2026-09-27): its results sit under the squad's real
+                        names, so it must say nobody rowed it. */}
+                    {exampleKeys.has(w.dayKey) && <ExampleTag />}
                   </div>
                   <div className="mt-1 text-[11px] text-muted">
                     {w.dateLabel} · {w.period} ·{" "}
