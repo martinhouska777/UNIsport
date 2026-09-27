@@ -1,5 +1,8 @@
 -- UNIsport — a boat's figures become every seat's log (owner, 2026-09-21)
 -- ---------------------------------------------------------------------------
+-- SUPERSEDED by patch_boat_work_2026-09-27.sql (applied 2026-09-27): the
+-- function now takes the old boats too, takes figures back, and is no longer
+-- callable by signed-in accounts. Do not re-run this file except to undo that.
 -- "One person can write it there and log it to the lineup, and it logs it to
 -- their workouts automatically." When a boat on a lineup carries a distance
 -- or a time (Boat.metres / Boat.minutes, written by the cox — the stroke if

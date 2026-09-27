@@ -205,6 +205,11 @@ export async function saveLineup(
   The status is written back exactly as it was found: filling in a distance is
   not publishing a lineup, and an announced snapshot is left alone entirely.
 
+  It goes through varsity_save_boat_work (db/patch_boat_work_2026-09-27.sql),
+  not a write of the lineup row: only a coach may write varsity_lineups, and the
+  cox is not one. The function changes this one boat's two numbers and nothing
+  else, for a coach or somebody seated in that boat, under a lock.
+
   The one race it cannot win: a coach with the Lineup Builder open on this same
   practice is holding the boats in memory and autosaves the lot. If they save
   after this, their copy — which has no distance in it — wins. Rare, and the
@@ -216,16 +221,36 @@ export async function saveBoatWork(
   boatId: string,
   work: { metres: number | null; minutes: number | null },
 ): Promise<{ error?: string }> {
-  const stored = await fetchLineup(dayKey);
-  if (!stored) return { error: "That practice isn't there any more." };
-  let found = false;
-  const boats = stored.boats.map((b) => {
-    if (b.id !== boatId) return b;
-    found = true;
-    return { ...b, metres: work.metres, minutes: work.minutes };
-  });
-  if (!found) return { error: "That boat isn't in this practice any more." };
-  return saveLineup(dayKey, boats, stored.status);
+  if (!hasSupabaseEnv()) {
+    const stored = loadLocal(dayKey);
+    if (!stored) return { error: "That practice isn't there any more." };
+    if (!stored.boats.some((b) => b.id === boatId)) return { error: "That boat isn't in this practice any more." };
+    const boats = stored.boats.map((b) => (b.id === boatId ? { ...b, metres: work.metres, minutes: work.minutes } : b));
+    return saveLineup(dayKey, boats, stored.status);
+  }
+  const supabase = createClient();
+  try {
+    const { error } = await supabase.rpc("varsity_save_boat_work", {
+      p_day_key: dayKey,
+      p_boat_id: boatId,
+      p_metres: work.metres,
+      p_minutes: work.minutes,
+    });
+    if (!error) return {};
+    // Said for what actually happened, never guessed from the screen.
+    if (error.code === "42501") return { error: "Only the crew of this boat can save its figures." };
+    if (error.code === "P0002") {
+      return {
+        error: /boat/.test(error.message)
+          ? "That boat isn't in this practice any more."
+          : "That practice isn't there any more.",
+      };
+    }
+    if (/fetch|network|load failed/i.test(error.message)) return { error: "No connection. Not saved." };
+    return { error: "Not saved. Try again." };
+  } catch {
+    return { error: "No connection. Not saved." };
+  }
 }
 
 /* ── Athlete Home: today's published boats as Lineup[] ── */

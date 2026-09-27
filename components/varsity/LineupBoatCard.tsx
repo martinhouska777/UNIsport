@@ -49,14 +49,18 @@ export function isMyBoat(l: Lineup): boolean {
   (db/varsity_lineups_log_boats.sql), and eight people typing eight versions of
   one outing is the spreadsheet this replaces. The coach writes from the
   builder either way. The stroke is the LAST seat — seats run bow → stroke.
+  A boat that carries a cox seat nobody is in is steered by nobody on the
+  sheet, so it falls back to the stroke like a coxless one.
 */
 export function writesBoatWork(l: Lineup): boolean {
-  if (l.cox) return !!l.cox.mine;
+  if (l.cox && !isOpen(l.cox.name)) return !!l.cox.mine;
   return !!l.seats[l.seats.length - 1]?.mine;
 }
 
 /** An empty seat reads as empty however the coach left it. */
-const isOpen = (name: string) => !name || name === "—";
+function isOpen(name: string) {
+  return !name || name === "—";
+}
 
 /* ── The pieces of a row ─────────────────────────────────────────────────── */
 
