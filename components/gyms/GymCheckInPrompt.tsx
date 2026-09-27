@@ -14,18 +14,30 @@
   promised something the app no longer does. The picker itself still exists in
   RateCrowd for the day it comes back.
 
+  IT ADDS TO YOUR REVIEW, NEVER REPLACES IT. The row is one per person per gym
+  and a save writes all of it, so the card starts from the review you already
+  wrote and the save sends back everything it did not touch — your comment and
+  any score you did not tap. Before this, one star here wiped a written review.
+  The review is read again at the moment of saving, so a review edited on the
+  gym page while this card was open is not written over either; if that read
+  fails, nothing is saved rather than risk the wipe.
+
   All colour = theme tokens.
 */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   REVIEW_CATEGORIES,
   EMPTY_SCORES,
+  listGymReviews,
   saveGymReview,
-  overallOf,
+  type GymReview,
   type ReviewScores,
 } from "@/lib/supabase/gymReviews";
 import { StarRater } from "@/components/gyms/RateCrowd";
 import Button from "@/components/ui/Button";
+
+const myReview = async (userId: string, gymSlug: string): Promise<GymReview | null> =>
+  (await listGymReviews(userId, gymSlug)).find((r) => r.mine) ?? null;
 
 export default function GymCheckInPrompt({
   userId,
@@ -38,14 +50,36 @@ export default function GymCheckInPrompt({
   gymName: string;
   onDone: () => void;
 }) {
-  const [scores, setScores] = useState<ReviewScores>(EMPTY_SCORES);
+  /* Only the scores tapped on this card; everything else stays as it was. */
+  const [touched, setTouched] = useState<Partial<ReviewScores>>({});
+  const [existing, setExisting] = useState<GymReview | null>(null);
   const [busy, setBusy] = useState(false);
 
+  useEffect(() => {
+    let live = true;
+    myReview(userId, gymSlug)
+      .then((r) => {
+        if (live) setExisting(r);
+      })
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, [userId, gymSlug]);
+
+  const shown = (k: keyof ReviewScores) => touched[k] ?? existing?.scores[k] ?? 0;
+
   const done = async () => {
-    if (overallOf(scores) === null) return onDone();
+    if (Object.keys(touched).length === 0) return onDone();
     setBusy(true);
     try {
-      await saveGymReview(userId, gymSlug, scores, "");
+      const now = await myReview(userId, gymSlug);
+      await saveGymReview(
+        userId,
+        gymSlug,
+        { ...EMPTY_SCORES, ...(now?.scores ?? {}), ...touched },
+        now?.comment ?? "",
+      );
     } catch {
       // Rating a gym is the smallest thing on this screen; a failed write is
       // not worth trapping somebody in a dialog over.
@@ -65,9 +99,9 @@ export default function GymCheckInPrompt({
             <div key={c.key} className="flex items-center justify-between gap-2">
               <span className="text-[13px] text-text">{c.label}</span>
               <StarRater
-                value={scores[c.key] ?? 0}
+                value={shown(c.key)}
                 size={20}
-                onRate={(n) => setScores((s) => ({ ...s, [c.key]: n }))}
+                onRate={(n) => setTouched((s) => ({ ...s, [c.key]: n }))}
               />
             </div>
           ))}
