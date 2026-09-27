@@ -17,6 +17,7 @@ import Avatar from "./Avatar";
 import Composer from "./Composer";
 import PlanCard from "./PlanCard";
 import PlanSessionSheet from "./PlanSessionSheet";
+import ReadTicks from "./ReadTicks";
 import { dayLabel, sameDay } from "./dayLabel";
 
 /*
@@ -168,22 +169,13 @@ export default function DmThread({
                   <span className="float-right ml-2 mt-[5px] flex items-center gap-1 whitespace-nowrap text-[10px] leading-none text-muted">
                     {clockTime(m.createdAt)}
                     {mine && (
-                      <span
-                        className={`text-[11px] tracking-[-0.2em] ${
-                          peerReadAt &&
+                      <ReadTicks
+                        className="text-[11px]"
+                        seen={
+                          !!peerReadAt &&
                           new Date(peerReadAt).getTime() >= new Date(m.createdAt).getTime()
-                            ? "text-success"
-                            : "text-muted"
-                        }`}
-                        aria-label={
-                          peerReadAt &&
-                          new Date(peerReadAt).getTime() >= new Date(m.createdAt).getTime()
-                            ? "Read"
-                            : "Delivered"
                         }
-                      >
-                        ✓✓
-                      </span>
+                      />
                     )}
                   </span>
                 </div>

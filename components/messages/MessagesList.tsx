@@ -10,7 +10,8 @@ import {
   joinChannel,
   requestToJoin,
   cancelJoinRequest,
-  relativeTime,
+  listTime,
+  withSeen,
   type DmConversation,
   type Channel,
 } from "@/lib/supabase/messages";
@@ -26,6 +27,7 @@ import {
   IconLock,
 } from "@/components/icons";
 import Avatar from "./Avatar";
+import ReadTicks from "./ReadTicks";
 
 // Channel icon keys (seeded in db/messages.sql) → icon components.
 const CHANNEL_ICONS: Record<string, (p: { size?: number }) => React.ReactElement> = {
@@ -67,7 +69,9 @@ export default function MessagesList({
 
   useEffect(() => {
     let active = true;
-    Promise.all([listDirectConversations(), listChannels(universityKey)])
+    // withSeen before the list shows, so the ticks arrive with their rows
+    // instead of flicking from grey to green a moment later.
+    Promise.all([listDirectConversations().then(withSeen), listChannels(universityKey)])
       .then(([dms, chs]) => {
         if (!active) return;
         setConversations(dms);
@@ -248,10 +252,20 @@ function DirectList({
               <span className="block truncate text-[15px] font-semibold text-text">
                 {c.otherName}
               </span>
+              {/* Just the message, as WhatsApp has it (owner, 2026-09-27): a
+                  one-to-one chat never names who wrote the last line. It used
+                  to say "You: …"; now your own last message carries the two
+                  ticks in front of it instead — grey, then green once they've
+                  opened the chat — and theirs carries nothing. */}
               <span className="mt-0.5 block truncate text-[13px] text-muted">
-                {c.lastBody
-                  ? `${c.lastFromMe ? "You: " : ""}${c.lastBody}`
-                  : "No messages yet"}
+                {c.lastBody ? (
+                  <>
+                    {c.lastFromMe && <ReadTicks seen={c.seen} className="mr-1.5" />}
+                    {c.lastBody}
+                  </>
+                ) : (
+                  "No messages yet"
+                )}
               </span>
             </span>
             <span className="flex shrink-0 flex-col items-end gap-1">
@@ -260,7 +274,7 @@ function DirectList({
                   c.unread > 0 ? "font-semibold text-primary-live" : "text-text-3"
                 }`}
               >
-                {relativeTime(c.lastAt)}
+                {listTime(c.lastAt)}
               </span>
               {c.unread > 0 && (
                 <span
@@ -358,7 +372,7 @@ function CommunityList({
                       c.unread > 0 ? "font-semibold text-primary-live" : "text-text-3"
                     }`}
                   >
-                    {relativeTime(c.lastAt)}
+                    {listTime(c.lastAt)}
                   </span>
                   {c.unread > 0 && (
                     <span

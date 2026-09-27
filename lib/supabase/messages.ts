@@ -15,6 +15,9 @@ export type DmConversation = {
   lastBody: string | null;
   lastAt: string | null;
   lastFromMe: boolean;
+  /** The last message is yours AND the other person has opened the chat since
+      — the green ✓✓ on the row. Only filled in by withSeen(). */
+  seen: boolean;
   unread: number;
 };
 
@@ -56,8 +59,26 @@ export async function listDirectConversations(): Promise<DmConversation[]> {
     lastBody: (r.last_body as string) ?? null,
     lastAt: (r.last_at as string) ?? null,
     lastFromMe: !!r.last_from_me,
+    seen: false,
     unread: Number(r.unread ?? 0),
   }));
+}
+
+/**
+ * Fills in `seen` for the chat list: on every row whose last message is yours,
+ * has the other person opened the chat since? One dm_peer_read per such row,
+ * all at once — the list is short, and it needs no change to dm_list. Kept
+ * out of listDirectConversations so the partner picker doesn't pay for it.
+ */
+export async function withSeen(list: DmConversation[]): Promise<DmConversation[]> {
+  const reads = await Promise.all(
+    list.map((c) => (c.lastFromMe ? getPeerLastRead(c.conversationId).catch(() => null) : null)),
+  );
+  return list.map((c, i) => {
+    const readAt = reads[i];
+    const seen = !!(readAt && c.lastAt && new Date(readAt).getTime() >= new Date(c.lastAt).getTime());
+    return { ...c, seen };
+  });
 }
 
 export async function getDirectThread(conversationId: string): Promise<DmMessage[]> {
@@ -411,20 +432,28 @@ export function signalUnreadChanged() {
 
 // --- Shared formatting -----------------------------------------------------
 
-/** "2m ago" / "3h ago" / "Yesterday" / "Mon" / date — for conversation lists. */
-export function relativeTime(iso: string | null): string {
+/**
+ * The stamp in a chat-list row's top-right corner, the way WhatsApp writes it
+ * (owner, 2026-09-27): the clock time today, "Yesterday", the weekday within
+ * the week, then the date — the year only once it isn't this one. It used to
+ * count back ("3h ago"), which is a feed's clock, not a chat list's. Calendar
+ * days, not 24-hour windows: last night at 11 is "Yesterday" at 9 this morning.
+ */
+export function listTime(iso: string | null): string {
   if (!iso) return "";
-  const then = new Date(iso);
+  const d = new Date(iso);
   const now = new Date();
-  const mins = Math.floor((now.getTime() - then.getTime()) / 60000);
-  if (mins < 1) return "now";
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  const days = Math.floor(hrs / 24);
+  const midnight = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const days = Math.round((midnight(now) - midnight(d)) / 86400000);
+  if (days <= 0) return clockTime(iso);
   if (days === 1) return "Yesterday";
-  if (days < 7) return then.toLocaleDateString("en-US", { weekday: "short" });
-  return then.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  if (days < 7) return d.toLocaleDateString("en-US", { weekday: "long" });
+  return d.toLocaleDateString(
+    "en-US",
+    d.getFullYear() === now.getFullYear()
+      ? { month: "short", day: "numeric" }
+      : { month: "short", day: "numeric", year: "numeric" },
+  );
 }
 
 /** "9:14 AM" — for message bubbles. */
