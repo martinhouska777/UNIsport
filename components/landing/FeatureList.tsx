@@ -38,7 +38,20 @@ import type { FeatureCta, FeatureGroup, FeatureRow } from "@/lib/landingCopy";
    SHORT LAPTOPS. From 1280px wide the list shares a screen-high pinned stage
    with the phone, and the stage clips what does not fit. Nine rows plus the
    second kicker fill a 768px-high window, and a 720px one lost the top and the
-   button, so on a window under 800px high every row sits a little tighter. */
+   button, so on a window under 800px high every row sits a little tighter.
+
+   ONE ROW OPEN AT A TIME, AND THE LIST ONLY GROWS DOWN (launch audit
+   2026-09-27, item 37). The list used to sit centred beside the phone, so an
+   open row pushed the kicker off the top of that pinned stage and the button
+   off the bottom, and scrolling could not bring them back — two open rows did
+   it even on a 1440x900 screen. Now the rows share one `name`, which is the
+   browser's own "opening one closes the other", and CloserSplit hangs the
+   list from the top of the piece, so opening a row moves nothing above it.
+   The room that leaves is budgeted here: from xl up the rows' padding follows
+   the window's height (about 6px at 720 high, the full 14px from 900), and the open
+   detail runs the list's full width so the longest one (Leaderboards) is four
+   lines, not six. Checked with the longest row open at 1280x720, 1366x768,
+   1440x900 and 1536x864: the kicker and the button stay on screen. */
 export default function FeatureList({
   kicker,
   rows,
@@ -52,23 +65,26 @@ export default function FeatureList({
   cta?: FeatureCta;
   ink?: boolean;
 }) {
+  /* The group every row of this list belongs to — one per list, so opening a
+     varsity row never closes a student one. */
+  const group = `features-${kicker.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
   return (
     <div className="w-full max-w-[520px]">
       <div className="mb-3 font-mono text-[11px] tracking-[0.14em] uppercase text-(--sa)">{kicker}</div>
       {/* The rows slide in from the left, one after another (SlideInRows). */}
       <SlideInRows className="divide-y divide-l-line border-y border-l-line">
         {rows.map((r, i) => (
-          <Row key={r.title} r={r} i={i} />
+          <Row key={r.title} r={r} i={i} group={group} />
         ))}
       </SlideInRows>
       {coming && coming.rows.length > 0 && (
         <>
-          <div className="mt-6 mb-3 font-mono text-[11px] tracking-[0.14em] uppercase text-l-text-2 xl:[@media(max-height:800px)]:mt-4">{coming.kicker}</div>
+          <div className="mt-6 mb-3 font-mono text-[11px] tracking-[0.14em] uppercase text-l-text-2 xl:[@media(max-height:800px)]:mt-3">{coming.kicker}</div>
           {/* The stagger carries on from the rows above, so when both lists
               arrive together they come in as one run. */}
           <SlideInRows className="divide-y divide-l-line border-y border-l-line">
             {coming.rows.map((r, i) => (
-              <Row key={r.title} r={r} i={rows.length + i} upcoming />
+              <Row key={r.title} r={r} i={rows.length + i} group={group} upcoming />
             ))}
           </SlideInRows>
         </>
@@ -76,7 +92,7 @@ export default function FeatureList({
       {cta && (
         <Link
           href={cta.href}
-          className={`mt-5 inline-flex items-center gap-2 rounded-full px-6 py-3 l-lift text-[14px] font-semibold tracking-tight transition-[transform,background-color,color] duration-200 hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-l-text motion-reduce:transition-none ${
+          className={`mt-5 xl:[@media(max-height:800px)]:mt-3 inline-flex items-center gap-2 rounded-full px-6 py-3 l-lift text-[14px] font-semibold tracking-tight transition-[transform,background-color,color] duration-200 hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-l-text motion-reduce:transition-none ${
             ink ? "bg-l-varsity-glow text-l-text hover:bg-l-text hover:text-l-varsity-glow" : "bg-(--sa) text-(--sa-ink) hover:bg-l-text hover:text-l-bg"
           }`}
         >
@@ -88,11 +104,11 @@ export default function FeatureList({
 }
 
 /* One row: the icon, the title, the "+" that opens the detail. */
-function Row({ r, i, upcoming = false }: { r: FeatureRow; i: number; upcoming?: boolean }) {
+function Row({ r, i, group, upcoming = false }: { r: FeatureRow; i: number; group: string; upcoming?: boolean }) {
   return (
     <li style={{ "--i": i } as CSSProperties}>
-      <details className="group">
-        <summary className="-mx-2 flex cursor-pointer list-none items-center gap-4 rounded-lg px-2 py-3.5 text-left xl:[@media(max-height:800px)]:py-2.5 transition-colors hover:bg-l-surface [&::-webkit-details-marker]:hidden">
+      <details name={group} className="group">
+        <summary className="-mx-2 flex cursor-pointer list-none items-center gap-4 rounded-lg px-2 py-3.5 text-left xl:py-[clamp(5px,calc((100svh_-_600px)/21.4),14px)] transition-colors hover:bg-l-surface [&::-webkit-details-marker]:hidden">
           <span
             className={`flex h-9 w-9 flex-none items-center justify-center rounded-xl border bg-l-bg-elevated ${
               upcoming ? "border-dashed border-l-text-2/50 text-l-text-2" : "border-l-line text-(--sa)"
@@ -111,7 +127,7 @@ function Row({ r, i, upcoming = false }: { r: FeatureRow; i: number; upcoming?: 
             <span className="absolute top-0 left-1/2 h-full w-px -translate-x-1/2 bg-current" />
           </span>
         </summary>
-        <p className="max-w-[46ch] pb-4 pl-[52px] text-[14px] leading-[1.6] text-l-text-2">{r.detail}</p>
+        <p className="max-w-[46ch] pb-4 pl-[52px] text-[14px] leading-[1.6] text-l-text-2 xl:max-w-none xl:[@media(max-height:800px)]:pb-3 xl:[@media(max-height:800px)]:text-[13px] xl:[@media(max-height:800px)]:leading-[1.5]">{r.detail}</p>
       </details>
     </li>
   );

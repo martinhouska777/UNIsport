@@ -18,6 +18,14 @@ import type { CSSProperties, ReactNode } from "react";
   StoryCloser's FLIES_MQ must stay on this same 1280: it decides both the
   flight and the pinned screen-height stage, and a pinned stage wrapped around
   one tall column clips it.
+
+  THE ROWS HANG FROM THE TOP (launch audit 2026-09-27, item 37). Both columns
+  used to be centred, so a "+" that opened a row grew the list up AND down and
+  the pinned stage cut off its kicker and its button. Now both columns start
+  at the top, and inside a pinned stage (.lc-pinned) the list is laid over its
+  column instead of in it: the row's height is the piece's alone, so opening a
+  feature row can neither move the list's top nor re-centre the whole split.
+  Unpinned (reduced motion, or under 1280) the list is in the flow as before.
 */
 export default function CloserSplit({
   aside,
@@ -30,9 +38,9 @@ export default function CloserSplit({
 }) {
   if (!aside) return <>{children}</>;
   return (
-    <div className="grid w-full max-w-[1280px] items-center gap-12 xl:grid-cols-[minmax(0,1fr)_minmax(0,720px)]">
+    <div className="grid w-full max-w-[1280px] items-center gap-12 xl:grid-cols-[minmax(0,1fr)_minmax(0,720px)] xl:items-start">
       <div
-        className="order-2 flex justify-center xl:order-1 xl:justify-start"
+        className="order-2 flex justify-center xl:relative xl:order-1 xl:self-stretch xl:justify-start"
         style={
           {
             "--sa": `var(--color-l-${accent})`,
@@ -40,7 +48,9 @@ export default function CloserSplit({
           } as CSSProperties
         }
       >
-        {aside}
+        <div className="flex w-full justify-center xl:justify-start xl:[.lc-pinned_&]:absolute xl:[.lc-pinned_&]:inset-x-0 xl:[.lc-pinned_&]:top-0">
+          {aside}
+        </div>
       </div>
       <div className="order-1 flex flex-col items-center xl:order-2">{children}</div>
     </div>
