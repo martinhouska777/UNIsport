@@ -1767,7 +1767,18 @@ function Builder({
 
   return (
     <div className="relative flex h-full flex-col">
-      <div ref={listRef} className="mx-auto w-full max-w-screen-sm flex-1 overflow-y-auto px-4 pb-8">
+      {/*
+        ON A LAPTOP, TWO COLUMNS (audit, 2026-09-27). One phone-width column at
+        1440 wide put the athlete pool 3,500px down, under all five boats. From
+        lg up the boats run down the left and the pool sits on the right,
+        sticky under the top row with its own scroll, so any name is in reach
+        of any seat. Phones are unchanged: one column, pool at the bottom.
+        The width is the space beside the console's SideRail, capped.
+      */}
+      <div
+        ref={listRef}
+        className="mx-auto w-full max-w-screen-sm flex-1 overflow-y-auto px-4 pb-8 lg:max-w-[1120px] lg:px-6"
+      >
         {/*
           THE TOP ROW, AND IT STAYS. Back on the left, and on the right the two
           things that say what is happening to this lineup: whether it is saved,
@@ -1776,7 +1787,7 @@ function Builder({
           2026-09-17) — there is no fade now, and nothing floats over the work.
           Sticky, so "finished — press publish" never means scrolling back up.
         */}
-        <div className="sticky top-0 z-20 -mx-4 flex items-center gap-2 bg-background px-4 pb-2 pt-4">
+        <div className="sticky top-0 z-20 -mx-4 flex items-center gap-2 bg-background px-4 pb-2 pt-4 lg:-mx-6 lg:px-6">
           <button type="button" onClick={onBack} className="flex items-center gap-1 text-[13px] text-muted">
             <IconArrowLeft size={16} /> Days
           </button>
@@ -1900,10 +1911,11 @@ function Builder({
         {loading ? (
           <div className="mt-8 text-center text-[13px] text-muted">Loading lineup…</div>
         ) : (
-          <>
+          <div className="lg:mt-4 lg:grid lg:grid-cols-[minmax(0,1fr)_280px] lg:items-start lg:gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+            <div className="min-w-0">
             {/* boats. NO "No boats added yet" BOX (owner, 2026-09-22): the
                 Add Boat button right under it is the whole message. */}
-            <div className="mt-4 flex flex-col gap-3">
+            <div className="mt-4 flex flex-col gap-3 lg:mt-0">
               {boats.map((boat) => {
                 const isShut = shut.has(boat.id);
                 /* How full the boat is — shown ONLY while it is shut. Open, the
@@ -2112,9 +2124,11 @@ function Builder({
             >
               <IconPlus size={16} /> Add{boats.length ? " Another" : ""} Boat
             </button>
+            </div>
 
-            {/* pool */}
-            <div className="mt-6">
+            {/* pool — beside the boats on a laptop, staying in view */}
+            <div className="mt-6 lg:sticky lg:top-16 lg:mt-0 lg:max-h-[calc(100dvh-5rem)] lg:overflow-y-auto lg:overscroll-contain lg:pb-4">
+
               <div data-tour="coach-lineup-count" className="mb-2.5 flex items-center justify-between">
                 <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
                   Athlete Pool
@@ -2260,7 +2274,7 @@ function Builder({
                 )}
               </div>
             </div>
-          </>
+          </div>
         )}
       </div>
 
