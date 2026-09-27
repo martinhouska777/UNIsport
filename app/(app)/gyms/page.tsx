@@ -172,8 +172,10 @@ function MainCard({ gym, fav, onToggleFav, now, going, tour, cover }: CardProps)
   A house gym is one compact ROW (owner, 2026-09-27: "the list from 4 for the
   house teams"): the house's crest on a square tinted in its own colour, the
   name, when it is open, the heart, the chevron. Each house keeps its own card
-  with a gap between (the spacing of option 3), and the house's two colours
-  run along the top, half and half — the same split the logo makes.
+  with a gap between (the spacing of option 3), and ONE colour runs along the
+  top: the house's main colour, the one everybody knows (owner, 2026-09-27 —
+  "Adams just yellow, Cabot red, Quincy just red"). That is `primary`; the
+  crest keeps both.
   House colours are per-entity CONTENT from lib/gyms.ts, applied inline
   (rule 1's data exception).
 */
@@ -182,10 +184,7 @@ function HouseCard({ gym, fav, onToggleFav, now, going }: CardProps) {
   return (
     <Link href={`/gyms/${gym.slug}`} className={CARD}>
       {colors ? (
-        <div className="flex h-1.5">
-          <span className="flex-1" style={{ background: colors.primary }} />
-          <span className="flex-1" style={{ background: colors.secondary }} />
-        </div>
+        <div className="h-1.5" style={{ background: colors.primary }} />
       ) : (
         <div className="h-1.5 bg-accent" />
       )}

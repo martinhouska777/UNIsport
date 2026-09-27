@@ -376,7 +376,8 @@ const mainGyms: Gym[] = [
     Dunster      Gules, stags' heads within an orle or; "red and gold"
     Eliot        "Blue, Red, White"                → blue + red
     Kirkland     Gules, on a cross sable … three mullets argent → black + red
-    Leverett     "black and yellow"                → yellow + black
+    Leverett     "black and yellow"                → GREEN + black (owner's call,
+                 2026-09-27: green is what everybody knows it by)
     Lowell       "blue and white"                  → blue + white
     Mather       Ermine, on a fess wavy gules …    → white + red
     Pforzheimer  "Red, Black, White"               → red + black
@@ -402,7 +403,7 @@ const houseGyms: Gym[] = [
   houseGym({ slug: "dunster", name: "Dunster", address: "945 Memorial Drive", rating: 4.4, ratingCount: 31, colors: { primary: "#b4232f", secondary: "#e0b23c" } }), // Red & gold
   houseGym({ slug: "eliot", name: "Eliot", address: "101 Dunster Street", rating: 4.5, ratingCount: 41, colors: { primary: "#1f4e9c", secondary: "#c8102e" } }), // Blue, red & white
   houseGym({ slug: "kirkland", name: "Kirkland", address: "95 Dunster Street", rating: 4.2, ratingCount: 27, colors: { primary: "#b8112f", secondary: "#23262b" } }), // Red field, black cross
-  houseGym({ slug: "leverett", name: "Leverett", address: "28 DeWolfe Street", rating: 4.2, ratingCount: 34, colors: { primary: "#e4b429", secondary: "#23262b" } }), // Black & yellow
+  houseGym({ slug: "leverett", name: "Leverett", address: "28 DeWolfe Street", rating: 4.2, ratingCount: 34, colors: { primary: "#2a8c4a", secondary: "#23262b" } }), // Green — owner, 2026-09-27: "Leverett is green", the colour everybody knows (the heraldry above says black & yellow)
   houseGym({ slug: "lowell", name: "Lowell", address: "10 Holyoke Place", rating: 4.4, ratingCount: 36, colors: { primary: "#3e6fb7", secondary: "#edeff2" } }), // Blue & white
   houseGym({ slug: "mather", name: "Mather", address: "10 Cowperthwaite Street", rating: 4.3, ratingCount: 30, colors: { primary: "#cfd6de", secondary: "#c8102e" } }), // Ermine (silver) & red
   houseGym({ slug: "pforzheimer", name: "Pforzheimer", address: "56 Linnaean Street", rating: 4.0, ratingCount: 19, colors: { primary: "#363b44", secondary: "#c8102e" } }), // Per bend black & red
