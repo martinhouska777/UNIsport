@@ -291,13 +291,8 @@ export default function YouScreen({
               Nothing logged {periodLabel.toLowerCase()}. One session puts you on the board.
             </div>
           )}
-          {standing && standing.partners > 0 && (
-            <div className="mt-2 text-[11px] leading-relaxed text-muted">
-              Trained with {standing.partners}{" "}
-              {standing.partners === 1 ? "different person" : "different people"} — a
-              session with somebody new is worth {sessionPoints.newPartner}.
-            </div>
-          )}
+          {/* No "Trained with N different people — a session with somebody new
+              is worth …" line under the card (owner, 2026-09-27: cut). */}
 
           {/* ── YOUR FRIENDS ── */}
           <SectionLabel className="mb-2 mt-5">Your friends</SectionLabel>
