@@ -10,6 +10,7 @@ import {
   createContext,
   useContext,
   useEffect,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -22,6 +23,7 @@ import { readDemoSchool, rollDemoSchool } from "@/lib/demoSchool";
 import type { VarsityAthleteProfile } from "@/lib/varsity/athleteProfile";
 import { defaultUnits, type Units } from "@/lib/varsity/units";
 import { clearMembershipCache } from "@/lib/varsity/membership";
+import { saveFailureOf, type SaveFailure } from "@/lib/saveFailure";
 
 /*
   One account, two capabilities. `studentReady` and `varsityReady` are
@@ -86,12 +88,13 @@ type AppState = {
     sex: string;
     varsity?: Partial<VarsityAthleteProfile>;
     units?: Partial<Units>;
-  }) => Promise<void>;
+  }) => Promise<SaveFailure | null>; // null = saved; otherwise why it was not
   resetOnboarding: () => Promise<void>; // temporary dev helper to replay onboarding
   /*
-    Replay the SHORT ATHLETE SETUP. Clears only the varsity flag — the squad you
-    are on, your logs, your personal bests and the student side are all left
-    alone — so the next varsity screen sends you back through /varsity/setup.
+    Replay the SHORT ATHLETE SETUP. Sends you back through /varsity/setup —
+    in THIS session only: nothing is written until the setup screen saves, so
+    the squad you are on, your logs, your personal bests and your record all
+    stay exactly as they were if you leave halfway or the save fails.
   */
   resetVarsitySetup: () => Promise<void>;
 };
@@ -109,6 +112,13 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [studentReady, setStudentReady] = useState(false);
   const [varsityReady, setVarsityReady] = useState(false);
+  /*
+    Replaying the athlete setup, in this session. The database's flag is left
+    alone until the replay SAVES (resetVarsitySetup below), so a re-read of it
+    — every auth event runs one — must not wave the athlete past the setup
+    screen they asked to see.
+  */
+  const replayingSetup = useRef(false);
   /*
     The two remembered schools, read after mount (localStorage) so the server
     and the first client render agree: `chosen` is the Settings switcher's
@@ -186,7 +196,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     // as a brand-new account.
     if (error) return;
     setStudentReady(!!data?.onboarding_completed);
-    setVarsityReady(!!data?.varsity_setup_completed);
+    setVarsityReady(!replayingSetup.current && !!data?.varsity_setup_completed);
   };
 
   useEffect(() => {
@@ -262,6 +272,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     }
     setStudentReady(false);
     setVarsityReady(false);
+    replayingSetup.current = false;
     // The squad answer is remembered per account (lib/varsity/membership); drop
     // it so the next person to sign in on this browser is asked afresh.
     clearMembershipCache();
@@ -326,22 +337,34 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     deliberately leaves onboarding_completed alone — the student side stays
     optional until they choose it.
   */
+  /*
+    A FAILED SAVE STAYS ON THE SETUP SCREEN (audit, 2026-09-27). It used to
+    log the error and wave the athlete through anyway: the answers were gone,
+    and — after "Replay athlete setup" had cleared the flag — the next launch
+    sent them back to answer everything again. Now it says whether it worked
+    (null) or why not, the caller keeps the answers on screen with a Retry, and
+    nothing is marked done until the database has it.
+  */
   const saveVarsitySetup = async (basics: {
     name: string;
     classYear: string;
     sex: string;
     varsity?: Partial<VarsityAthleteProfile>;
     units?: Partial<Units>;
-  }) => {
+  }): Promise<SaveFailure | null> => {
     if (supabase && session) {
       const { name, classYear, sex, varsity, units } = basics;
-      const { data: row } = await supabase
+      const { data: row, error: readError, status: readStatus } = await supabase
         .from("profiles")
         .select("data")
         .eq("id", session.user.id)
         .maybeSingle();
+      // The write below MERGES onto what this read returned. A read that
+      // failed returned nothing, and merging onto nothing would replace the
+      // whole profile — PRs, days out, check-ins — with just these answers.
+      if (readError) return saveFailureOf(readError, readStatus);
       const current = (row?.data as Record<string, unknown>) ?? {};
-      const { error } = await supabase.from("profiles").upsert({
+      const { error, status } = await supabase.from("profiles").upsert({
         id: session.user.id,
         data: {
           ...current,
@@ -357,10 +380,15 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         varsity_setup_completed: true,
         updated_at: new Date().toISOString(),
       });
-      // eslint-disable-next-line no-console
-      if (error) console.error("Saving varsity setup failed:", error.message);
+      if (error) {
+        // eslint-disable-next-line no-console
+        console.error("Saving varsity setup failed:", error.message);
+        return saveFailureOf(error, status);
+      }
     }
+    replayingSetup.current = false;
     setVarsityReady(true);
+    return null;
   };
 
   const resetOnboarding = async () => {
@@ -377,17 +405,16 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   };
 
   /*
-    The varsity twin of the above. It only unsets the flag: the answers stay on
-    the profile until the setup screen writes over them, so quitting halfway
-    leaves the record as it was.
+    The varsity twin of the above — but it writes NOTHING (audit,
+    2026-09-27). It used to clear varsity_setup_completed in the database
+    first, so a setup save that then failed left the account marked as never
+    set up, and the next launch sent the athlete back through it. Now the
+    replay is this session's: the flag in the database stays true until the
+    setup screen saves (which sets it again), and quitting halfway — or
+    reloading — leaves the record exactly as it was.
   */
   const resetVarsitySetup = async () => {
-    if (supabase && session) {
-      await supabase
-        .from("profiles")
-        .update({ varsity_setup_completed: false })
-        .eq("id", session.user.id);
-    }
+    replayingSetup.current = true;
     setVarsityReady(false);
   };
 

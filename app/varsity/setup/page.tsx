@@ -43,6 +43,7 @@ import { PENDING_INVITE_KEY } from "@/lib/varsity/invites";
 import { boatRoleOptions, sideOptions, type BoatRole } from "@/lib/varsity/athleteProfile";
 import { weightOptions, weightToKg, type WeightUnit } from "@/lib/varsity/units";
 import type { Side } from "@/lib/varsity/coachLineup";
+import { saveFailureDetail, type SaveFailure } from "@/lib/saveFailure";
 
 // Digits only, so nobody can save "about 82" as a weight.
 const digits = (v: string) => v.replace(/[^\d]/g, "");
@@ -67,6 +68,8 @@ export default function VarsitySetupPage() {
   // it is saved, so the rest of the app keeps showing pounds to a pounds person.
   const [weightUnit, setWeightUnit] = useState<WeightUnit>("kg");
   const [saving, setSaving] = useState(false);
+  // Why the last save did not land — the answers stay, the button retries.
+  const [failure, setFailure] = useState<SaveFailure | null>(null);
 
   useEffect(() => {
     if (!ready) return;
@@ -80,7 +83,7 @@ export default function VarsitySetupPage() {
   const finish = async () => {
     setSaving(true);
     const typedWeight = weight.trim() ? Number(weight) : null;
-    await saveVarsitySetup({
+    const why = await saveVarsitySetup({
       name: name.trim(),
       classYear,
       sex,
@@ -97,6 +100,16 @@ export default function VarsitySetupPage() {
       },
       units: { weight: weightUnit },
     });
+    /*
+      NOT SAVED, SO NOT DONE (audit, 2026-09-27). Every answer stays on the
+      screen exactly as typed, the line above the button says why, and the
+      button is the retry. Nothing moves on until the database has it.
+    */
+    if (why) {
+      setFailure(why);
+      setSaving(false);
+      return;
+    }
     /*
       Back to the invite that started this, if there was one — the captain's
       queue should show a name, not "Unnamed", so the request is only made
@@ -257,13 +270,18 @@ export default function VarsitySetupPage() {
         {/* The one action, always reachable - it never scrolls away. */}
         <div className="border-t border-border bg-background px-3.5 pb-[max(0.875rem,env(safe-area-inset-bottom))] pt-3">
           <div className="mx-auto w-full max-w-screen-sm">
+            {failure && !saving && (
+              <p role="alert" className="mb-2 text-center text-[13px] font-semibold text-danger">
+                {saveFailureDetail(failure) ? `Not saved · ${saveFailureDetail(failure)}` : "Not saved"}
+              </p>
+            )}
             <Button
               size="lg"
               full
               disabled={!name.trim() || !classYear || saving}
               onClick={finish}
             >
-              {saving ? "Saving…" : "Continue"}
+              {saving ? "Saving…" : failure ? "Retry" : "Continue"}
             </Button>
           </div>
         </div>
