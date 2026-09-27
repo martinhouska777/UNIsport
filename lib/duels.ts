@@ -16,13 +16,16 @@
      on the list underneath with how many more people it needs, because a door
      with a number on it is a reason to drag a friend in.
 
-  2. WHO FIGHTS WHOM — a RANDOM draw among the houses that are in (owner,
-     2026-09-22). Random, but not arbitrary: the shuffle is seeded by the MONTH
-     NUMBER, so every phone on campus draws exactly the same fixtures, the draw
-     changes on its own when the month turns, and nobody has to set anything.
-     No admin, ever — the same principle the challenges run on. An odd number
-     of houses means one sits the round out; it is told so rather than being
-     quietly dropped.
+  2. WHO FIGHTS WHOM — houses are paired IN THE ORDER THEY GOT IN (launch
+     audit, 2026-09-27): the first two in fight each other, the next two, and so
+     on, and a pairing once made never changes. The database writes down when
+     each house was first seen in the race (house_duel_entries, db/
+     patch_house_duels_2026-09-27.sql); houses seen in at the same moment are
+     ordered by a shuffle seeded with the MONTH NUMBER, so every phone agrees
+     and the draw still looks random. It used to be a fresh seeded draw of
+     whoever was in right now — which re-dealt every fixture each time another
+     house got in. No admin, ever. An odd number means the last one in waits
+     for the next house to get in; it is told so rather than quietly dropped.
 
   3. WHAT THEY RACE OVER — one discipline per round, rotating, so the month a
      house full of runners cannot win is followed by the month it can. Adding
@@ -31,9 +34,15 @@
      typed here and nowhere else.
 
   FIRST TO THE TARGET WINS (owner, 2026-09-22). The instant a house crosses,
-  the duel is over and it says so. If the month ends with neither across —
-  which means the target was set too high and should be lowered here — whoever
-  is ahead takes it, because a duel with no result is worse than a close one.
+  the duel is over and it says so — and it stays over: the moment a house is
+  first seen across is written down (crossed_at), so a house that overtakes
+  after the line cannot flip a result already shown. If the month ends with
+  neither across — which means the target was set too high and should be
+  lowered here — whoever is ahead takes it, because a duel with no result is
+  worse than a close one.
+
+  The targets and their order are mirrored in house_duel_settle() in the
+  database, which is what decides "across": change one, change both.
 
   Nothing here reads the database. The numbers come from db/events.sql (km,
   sessions, new people) and the month's campus board (points); this file only
@@ -115,6 +124,48 @@ export function drawDuels(
   for (let i = 0; i + 1 < pool.length; i += 2)
     duels.push({ a: pool[i], b: pool[i + 1] });
   return { duels, bye: pool.length % 2 === 1 ? pool[pool.length - 1] : null };
+}
+
+/** What the database has seen of one house this month. */
+export type DuelEntry = { house: string; enteredAt: number; crossedAt: number | null };
+
+/**
+ * Pair the houses that are in, in the order they got in. Houses that got in at
+ * the same moment are ordered by the month's seeded shuffle. A pairing made
+ * early never changes when a later house arrives — the newcomer takes on
+ * whoever was left waiting.
+ */
+export function pairByEntry(
+  entries: DuelEntry[],
+  seed: number,
+): { duels: Duel[]; bye: string | null } {
+  const shuffled = drawDuels(
+    entries.map((e) => e.house),
+    seed,
+  );
+  const lot = new Map<string, number>();
+  shuffled.duels.forEach((d, i) => {
+    lot.set(d.a, i * 2);
+    lot.set(d.b, i * 2 + 1);
+  });
+  if (shuffled.bye) lot.set(shuffled.bye, entries.length);
+  const pool = [...entries]
+    .sort((x, y) => x.enteredAt - y.enteredAt || (lot.get(x.house) ?? 0) - (lot.get(y.house) ?? 0))
+    .map((e) => e.house);
+  const duels: Duel[] = [];
+  for (let i = 0; i + 1 < pool.length; i += 2) duels.push({ a: pool[i], b: pool[i + 1] });
+  return { duels, bye: pool.length % 2 === 1 ? pool[pool.length - 1] : null };
+}
+
+/** The recorded winner of a duel: whoever was seen across first, if anyone. */
+export function recordedWinner(a: DuelEntry | undefined, b: DuelEntry | undefined): string | null {
+  const at = (e?: DuelEntry) => (e?.crossedAt ?? null);
+  const ta = at(a);
+  const tb = at(b);
+  if (ta === null && tb === null) return null;
+  if (tb === null || (ta !== null && ta < tb)) return a!.house;
+  if (ta === null || tb < ta) return b!.house;
+  return null; // seen across at the very same moment: the numbers decide
 }
 
 /* ─────────────────────────────  the result  ───────────────────────────── */

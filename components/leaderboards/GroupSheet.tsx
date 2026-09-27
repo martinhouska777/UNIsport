@@ -138,10 +138,11 @@ export default function GroupSheet({
                       /* The same medals the boards use — tokens, never hexes
                          typed in here (rule 1). */
                       className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg text-[11px] font-semibold ${
-                        MEDAL[p.rank] ?? "bg-surface-2 text-muted"
+                        (p.score > 0 && MEDAL[p.rank]) || "bg-surface-2 text-muted"
                       }`}
                     >
-                      {p.rank}
+                      {/* Nothing scored, nothing placed: a dash, not a medal. */}
+                      {p.score > 0 ? p.rank : "–"}
                     </span>
                     {/* No initials (owner, same day) — a plain figure, and
                         the name beside it does the naming. */}

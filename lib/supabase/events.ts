@@ -79,3 +79,23 @@ export async function fetchHouseEventCounts(
     }),
   );
 }
+
+/*
+  THE DUELS' MEMORY (db/patch_house_duels_2026-09-27.sql): when each house got
+  into this month's race, and when it was first seen over the line. Calling it
+  is also what writes those moments down — the database works the numbers out
+  itself, so nothing sent from here can put a house across. Null when it can't
+  be read, and the tab falls back to drawing from today's numbers.
+*/
+export async function settleHouseDuels(
+  onlyKeys: string[],
+): Promise<{ house: string; enteredAt: number; crossedAt: number | null }[] | null> {
+  if (!hasSupabaseEnv()) return null;
+  const { data, error } = await createClient().rpc("house_duel_settle", { p_keys: onlyKeys });
+  if (error || !data) return null;
+  return (data as { house: string; entered_at: string; crossed_at: string | null }[]).map((r) => ({
+    house: r.house,
+    enteredAt: Date.parse(r.entered_at),
+    crossedAt: r.crossed_at ? Date.parse(r.crossed_at) : null,
+  }));
+}

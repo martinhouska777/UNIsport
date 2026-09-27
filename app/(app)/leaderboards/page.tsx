@@ -188,12 +188,15 @@ const plural = (n: number, noun: string) => `${n} ${noun}${n === 1 ? "" : "s"}`;
    than a number in a gold square. Everything below third gets a quiet tile, so
    a rank still reads as a rank without pretending to be a prize. This is what
    the member list inside a house uses; the three at the top of a board itself
-   are lifted out onto the podium. */
-function RankBadge({ rank }: { rank: number }) {
-  if (rank <= 3) return <Medal place={rank as 1 | 2 | 3} rank={rank} size={28} />;
+   are lifted out onto the podium.
+   NOTHING SCORED, NOTHING PLACED. On launch day every house is level at zero,
+   which ranks all twelve "1st"; a row that has not scored gets a quiet dash
+   instead of a gold medal it did nothing for. */
+function RankBadge({ rank, scored }: { rank: number; scored: boolean }) {
+  if (scored && rank <= 3) return <Medal place={rank as 1 | 2 | 3} rank={rank} size={28} />;
   return (
     <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-surface-2 text-[11px] font-semibold text-muted">
-      {rank}
+      {scored ? rank : "–"}
     </span>
   );
 }
@@ -305,7 +308,7 @@ function PersonRow({
         row.isMe ? "border-primary bg-primary-tint" : "border-border bg-surface"
       }`}
     >
-      <RankBadge rank={row.rank} />
+      <RankBadge rank={row.rank} scored={row.score > 0} />
       <span
         /* NO INITIALS (owner, same day). The tile stays, because it is what
            carries their house's colour down a list of fifty names — content
@@ -380,7 +383,7 @@ function GroupRowItem({
           : undefined
       }
     >
-      <RankBadge rank={row.rank} />
+      <RankBadge rank={row.rank} scored={row.points > 0} />
       {/* THE HOUSE'S CREST, in its own two colours and with no initial on it
           (owner, 2026-09-06: "ty hausy taky bez inicialu, jen ty jejich tabs at
           jsou v barvach"). It was a plain filled square — the colours ARE the

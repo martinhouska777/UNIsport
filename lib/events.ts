@@ -43,6 +43,7 @@
   not code (rule 7). Counting them is db/events.sql, which knows the metrics
   but not the targets.
 */
+import { DEFAULT_TIMEZONE } from "@/lib/themes";
 
 /* ─────────────────────  the interhouse competition  ───────────────────── */
 
@@ -375,19 +376,49 @@ export const monthlyEvents: SportEvent[] = [
 
 /* ─────────────────  which ones are running right now  ───────────────── */
 
+/*
+  THE CAMPUS CALENDAR. Every window here — this week, this month, which event
+  and which duel is running — is counted on the campus clock, the same one the
+  boards count on (db/patch_house_duels_2026-09-27.sql → campus_today()). It
+  was UTC, which in Boston turns the month over at 8 pm on its last evening:
+  the Events tab jumped to next month's duel with four hours still to row.
+  Every school so far is on US Eastern time (lib/themes.ts DEFAULT_TIMEZONE).
+*/
+const campusFormat = new Intl.DateTimeFormat("en-US", {
+  timeZone: DEFAULT_TIMEZONE,
+  year: "numeric",
+  month: "numeric",
+  day: "numeric",
+  weekday: "short",
+});
+const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+/** Today on campus: year, month (0-based), day, and weekday (0 = Sunday). */
+export function campusDate(now = new Date()): { y: number; m: number; d: number; dow: number } {
+  const parts = Object.fromEntries(campusFormat.formatToParts(now).map((p) => [p.type, p.value]));
+  return {
+    y: Number(parts.year),
+    m: Number(parts.month) - 1,
+    d: Number(parts.day),
+    dow: WEEKDAYS.indexOf(parts.weekday),
+  };
+}
+
 /**
  * Which week it is. Used only to pick an event, so it needs to agree with
  * itself week to week rather than match anybody's calendar exactly.
  */
 export function weekNumber(now = new Date()): number {
-  const start = Date.UTC(now.getUTCFullYear(), 0, 1);
-  const today = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  const { y, m, d } = campusDate(now);
+  const start = Date.UTC(y, 0, 1);
+  const today = Date.UTC(y, m, d);
   return Math.floor((today - start) / (7 * 24 * 60 * 60 * 1000));
 }
 
 /** Months since year zero, so the choice keeps moving across a year boundary. */
 export function monthNumber(now = new Date()): number {
-  return now.getUTCFullYear() * 12 + now.getUTCMonth();
+  const { y, m } = campusDate(now);
+  return y * 12 + m;
 }
 
 /** The one personal weekly event everybody on campus is running. */
@@ -493,31 +524,32 @@ export function byCloseness(events: SportEvent[], counts: EventCounts): SportEve
 /* ─────────────────────────────  the calendar  ───────────────────────────── */
 
 const pad2 = (n: number) => String(n).padStart(2, "0");
-const isoOf = (d: Date) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+/* A calendar date held as UTC midnight, so adding days never meets a clock change. */
+const isoOfUtc = (d: Date) => `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())}`;
 
-/** The Monday this week's event opened on, as yyyy-mm-dd (local). */
+/** The Monday this week's event opened on, as yyyy-mm-dd (campus). */
 export function weekStartIso(now = new Date()): string {
-  const d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const back = (d.getDay() + 6) % 7; // Monday = 0
-  d.setDate(d.getDate() - back);
-  return isoOf(d);
+  const { y, m, d, dow } = campusDate(now);
+  const back = (dow + 6) % 7; // Monday = 0
+  return isoOfUtc(new Date(Date.UTC(y, m, d - back)));
 }
 
-/** The 1st of this month, as yyyy-mm-dd (local). */
+/** The 1st of this month, as yyyy-mm-dd (campus). */
 export function monthStartIso(now = new Date()): string {
-  return isoOf(new Date(now.getFullYear(), now.getMonth(), 1));
+  const { y, m } = campusDate(now);
+  return `${y}-${pad2(m + 1)}-01`;
 }
 
 /** "ends Sunday" / "ends tonight" — when this week's event closes. */
 export function weekEndsLabel(now = new Date()): string {
-  const day = now.getDay(); // 0 = Sunday
-  if (day === 0) return "ends tonight";
+  if (campusDate(now).dow === 0) return "ends tonight";
   return "ends Sunday";
 }
 
 /** "ends 30 Sep" — when this month's race closes. */
 export function monthEndsLabel(now = new Date()): string {
-  const last = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  const { y, m } = campusDate(now);
+  const last = new Date(Date.UTC(y, m + 1, 0));
   const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  return `ends ${last.getDate()} ${months[last.getMonth()]}`;
+  return `ends ${last.getUTCDate()} ${months[last.getUTCMonth()]}`;
 }

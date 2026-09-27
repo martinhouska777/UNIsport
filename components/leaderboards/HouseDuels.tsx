@@ -16,7 +16,9 @@
 
   The numbers are real: kilometres, sessions and new people come from
   db/events.sql, points from the month's campus board — the same two reads the
-  rest of this tab already makes. Colours are theme tokens; a house's own
+  rest of this tab already makes. WHO fights WHOM and who has WON come from a
+  third read, house_duel_settle, which remembers when each house got in and
+  when it crossed the line, so neither moves under the students mid-month. Colours are theme tokens; a house's own
   colours are DATA from lib/gyms.ts, applied inline (rule 1's exception).
 */
 import { useEffect, useState } from "react";
@@ -31,8 +33,15 @@ import {
   monthNumber,
   monthStartIso,
 } from "@/lib/events";
-import { drawDuels, duelNow, duelResult } from "@/lib/duels";
-import { fetchHouseEventCounts, type HouseCounts } from "@/lib/supabase/events";
+import {
+  drawDuels,
+  duelNow,
+  duelResult,
+  pairByEntry,
+  recordedWinner,
+  type DuelEntry,
+} from "@/lib/duels";
+import { fetchHouseEventCounts, settleHouseDuels, type HouseCounts } from "@/lib/supabase/events";
 
 /** A number as it is written on a row: "128 km", "600 pts". */
 const amount = (n: number, unit: string) =>
@@ -103,16 +112,21 @@ export default function HouseDuels() {
   const myHouse = typeof profile?.residence === "string" ? profile.residence : null;
   const [people, setPeople] = useState<LeaderRow[] | null>(null);
   const [counts, setCounts] = useState<HouseCounts[] | null>(null);
+  /* What the database remembers of this month's race; null when it can't be
+     read, and then the draw falls back to today's numbers alone. */
+  const [entries, setEntries] = useState<DuelEntry[] | null>(null);
 
   useEffect(() => {
     let active = true;
     Promise.all([
       fetchPeopleBoard("campus", "month", 10000).catch(() => [] as LeaderRow[]),
       fetchHouseEventCounts(monthStartIso(), houses).catch(() => [] as HouseCounts[]),
-    ]).then(([p, c]) => {
+      settleHouseDuels(houses).catch(() => null),
+    ]).then(([p, c, e]) => {
       if (!active) return;
       setPeople(p);
       setCounts(c);
+      setEntries(e);
     });
     return () => {
       active = false;
@@ -121,8 +135,17 @@ export default function HouseDuels() {
 
   const discipline = duelNow();
   const standings = interhouseStandings(people ?? [], houses, myHouse);
-  const inKeys = standings.filter((h) => h.inRace).map((h) => h.key);
-  const { duels, bye } = drawDuels(inKeys, monthNumber());
+  const entryOf = new Map((entries ?? []).map((e) => [e.house, e]));
+  /* In the race = the database saw it in (a house cannot drop out of a month:
+     points only go up), or, with no record to read, today's numbers say so. */
+  const isIn = (key: string) =>
+    entries ? entryOf.has(key) : standings.some((h) => h.key === key && h.inRace);
+  const { duels, bye } = entries
+    ? pairByEntry(entries, monthNumber())
+    : drawDuels(
+        standings.filter((h) => h.inRace).map((h) => h.key),
+        monthNumber(),
+      );
 
   const byKey = new Map((counts ?? []).map((c) => [c.key, c]));
   const scoreOf = new Map(standings.map((h) => [h.key, h.score]));
@@ -147,7 +170,7 @@ export default function HouseDuels() {
     (x, y) =>
       Number(y.a === myHouse || y.b === myHouse) - Number(x.a === myHouse || x.b === myHouse),
   );
-  const waiting = standings.filter((h) => !h.inRace);
+  const waiting = standings.filter((h) => !isIn(h.key));
   const loading = people === null || counts === null;
 
   return (
@@ -166,7 +189,12 @@ export default function HouseDuels() {
               {ordered.map((d, i) => {
                 const a = { key: d.a, value: valueOf(d.a) };
                 const b = { key: d.b, value: valueOf(d.b) };
-                const { winner, leader, gap } = duelResult(a, b, discipline.target);
+                const judged = duelResult(a, b, discipline.target);
+                const { leader, gap } = judged;
+                // Once a crossing is written down it is the result, for good.
+                const winner = entries
+                  ? recordedWinner(entryOf.get(d.a), entryOf.get(d.b))
+                  : judged.winner;
                 const mine = d.a === myHouse || d.b === myHouse;
                 /*
                   The first card is opened out: yours when you have one, and
@@ -240,7 +268,7 @@ export default function HouseDuels() {
 
           {bye && (
             <div className="mt-2 rounded-xl border border-dashed border-border px-3 py-2.5 text-[12px] text-muted">
-              <span className="text-text">{groupLabel("house", bye)}</span> drew nobody this month.
+              <span className="text-text">{groupLabel("house", bye)}</span> meets the next house in.
             </div>
           )}
 
