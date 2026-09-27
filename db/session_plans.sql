@@ -251,6 +251,10 @@ begin
     if prop_ans = 'yes' and rec_ans = 'yes' then
       update public.session_plans set status = 'confirmed' where id = p_plan_id;
 
+      -- The CAMPUS day (2026-09-27). A bare ::date takes the database's UTC
+      -- day, so anything from 8 PM Eastern on was logged on the next day.
+      -- Campus time as in plan_create: every school on the list is Eastern.
+
       select coalesce(p.data->>'name', 'Member') into prop_name
         from public.profiles p where p.id = pl.proposer_id;
       select coalesce(p.data->>'name', 'Member') into rec_name
@@ -258,7 +262,7 @@ begin
 
       insert into public.workout_logs
         (user_id, log_date, activity, gym, partner, partner_id, plan_id, verified)
-        select pl.proposer_id, (pl.scheduled_at)::date, pl.activity, pl.place,
+        select pl.proposer_id, (pl.scheduled_at at time zone 'America/New_York')::date, pl.activity, pl.place,
                rec_name, recipient, pl.id, true
         where not exists (
           select 1 from public.workout_logs w
@@ -267,7 +271,7 @@ begin
 
       insert into public.workout_logs
         (user_id, log_date, activity, gym, partner, partner_id, plan_id, verified)
-        select recipient, (pl.scheduled_at)::date, pl.activity, pl.place,
+        select recipient, (pl.scheduled_at at time zone 'America/New_York')::date, pl.activity, pl.place,
                prop_name, pl.proposer_id, pl.id, true
         where not exists (
           select 1 from public.workout_logs w
