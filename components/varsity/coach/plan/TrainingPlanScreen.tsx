@@ -878,9 +878,16 @@ export default function TrainingPlanScreen({
           block has been edited). The two sides are the same height, which is
           what stopped the card looking lopsided.
         */}
+        {/*
+          ON A PHONE THE BUTTONS TAKE THEIR OWN ROW (audit, 2026-09-27). A
+          120px column of Edit / Unpublish beside the name left the name half
+          the card, and it read "HUBC F…" and "Head of the Ch…". Below sm the
+          name, dates and race get the full width and the buttons sit in one
+          row underneath; from sm up it is the two-sided card it was.
+        */}
         <div
           data-tour="coach-plan-status"
-          className="mt-3 flex w-full items-stretch gap-4 rounded-xl border border-border bg-surface px-4 py-3.5"
+          className="mt-3 flex w-full flex-col gap-3 rounded-xl border border-border bg-surface px-4 py-3.5 sm:flex-row sm:items-stretch sm:gap-4"
         >
           <div className="flex min-w-0 flex-1 flex-col justify-between gap-3">
             <div className="min-w-0">
@@ -906,7 +913,7 @@ export default function TrainingPlanScreen({
               </span>
             )}
           </div>
-          <div className="flex w-[120px] flex-shrink-0 flex-col gap-2">
+          <div className="flex w-full gap-2 sm:w-[120px] sm:flex-shrink-0 sm:flex-col">
             <Button
               variant="secondary"
               size="md"

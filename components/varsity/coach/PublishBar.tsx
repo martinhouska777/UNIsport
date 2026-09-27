@@ -73,7 +73,10 @@ export default function PublishBar({
 
   if (stack) {
     return (
-      <div data-tour={tourId} className="flex w-full flex-col gap-2">
+      /* Below sm the column dissolves (`contents`), so its buttons share the
+         row they are placed in with whatever sits beside them — the Plan
+         card's Edit — at equal widths. */
+      <div data-tour={tourId} className="flex w-full flex-col gap-2 max-sm:contents">
         {live && (
           <Button variant="secondary" size="md" full onClick={onUnpublish} disabled={busy}>
             Unpublish
