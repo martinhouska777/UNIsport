@@ -20,12 +20,12 @@
 --      p_athlete are approved on the same team and p_athlete has not switched
 --      "Teammates see my calendar" off (data.varsity.showCalendar; absent
 --      counts as on, as the app has always said).
---   3. A SELECT-only policy on varsity_logs using (2), so the Calendar button
---      on a teammate's card opens their REAL month, read-only, and only while
---      they share it. No insert / update / delete for anyone but the owner.
+--   3. (moved to db/varsity_teammate_logs_2026-09-27.sql, NOT applied — it
+--      needs the owner's yes) a SELECT-only policy on varsity_logs using (2),
+--      so the Calendar button on a teammate's card opens their REAL month.
 --
--- UNTIL THIS RUNS the app shows your own card from your own profile, "No
--- profile yet" for everyone else, and a teammate's calendar reads empty.
+-- APPLIED 2026-09-27 (parts 1 and 2). Without part 3 a teammate's calendar
+-- reads empty — nothing invented, nothing of theirs shown.
 --
 -- UNDO
 --   drop policy if exists "Teammate logs readable when shared" on public.varsity_logs;
@@ -90,10 +90,6 @@ revoke execute on function public.varsity_shares_calendar(uuid) from public, ano
 grant  execute on function public.varsity_team_cards(uuid)     to authenticated;
 grant  execute on function public.varsity_shares_calendar(uuid) to authenticated;
 
--- Additive: "Own logs readable" and "Squad logs readable by their coach" still
--- stand. SELECT only, on purpose.
-drop policy if exists "Teammate logs readable when shared" on public.varsity_logs;
-create policy "Teammate logs readable when shared"
-  on public.varsity_logs for select
-  to authenticated
-  using (public.varsity_shares_calendar(athlete_id));
+-- The third part — teammates reading each other's LOGS when the calendar is
+-- shared — is in db/varsity_teammate_logs_2026-09-27.sql, held back for the
+-- owner's yes: it widens who can read real training data.
