@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, type CSSProperties } from "react";
 import HeroFade from "@/components/landing/HeroFade";
 import HeroPhones from "@/components/landing/HeroPhones";
+import LogoMark from "@/components/landing/LogoMark";
 import SchoolCrest from "@/components/SchoolCrest";
 import Wordmark from "@/components/landing/Wordmark";
 import { useSchoolCycle } from "@/components/landing/useSchoolCycle";
@@ -118,12 +119,18 @@ export default function LandingHero() {
             which were empty. Behind everything, and only from xl up. */}
         <HeroPhones i={i} count={count} />
 
-        {/* 1 · The mark. The page says who it is before it says anything else. */}
+        {/* 1 · The mark. The page says who it is before it says anything else.
+            The LOCKUP, the same pair the top bar carries — drawn mark, then the
+            name (owner, 2026-09-27: the logo on the company site too). The
+            bar's copy is hidden while this one is up, so a visitor landing
+            here met the name but never the logo. The drawn mark keeps the
+            page's own blue: the logo never takes a school's colour, only the
+            name's second half cycles. */}
         <div className="l-in-1 mb-[clamp(10px,2.2vh,24px)] flex flex-col items-center gap-[clamp(2px,0.6vh,8px)]">
-          <Wordmark
-            className="text-[clamp(40px,min(7.2vw,7.4vh),82px)]"
-            accentClassName="text-(--sc) transition-colors duration-700 ease-in-out motion-reduce:transition-none"
-          />
+          <span className="text-[clamp(40px,min(7.2vw,7.4vh),82px)] text-l-text">
+            <LogoMark className="mr-[0.24em]" />
+            <Wordmark accentClassName="text-(--sc) transition-colors duration-700 ease-in-out motion-reduce:transition-none" />
+          </span>
           <span className="font-display text-[clamp(15px,2.6vh,24px)] tracking-tight text-l-text-2">
             {brandLine}
           </span>
