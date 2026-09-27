@@ -235,7 +235,7 @@ function PersonProfile() {
           type="button"
           aria-label="Back"
           onClick={() => router.back()}
-          className="text-muted"
+          className="tap44 press-icon text-muted"
         >
           <IconArrowLeft size={18} />
         </button>

@@ -82,11 +82,24 @@ export default function ThemeProvider({
     const previousScheme = root.style.colorScheme;
     root.style.backgroundColor = active.background;
     root.style.colorScheme = usingLight ? "light" : "dark";
+    /* THE PHONE'S TOP STRIP (clock, battery) is painted from <meta
+       name="theme-color">, which the layout gives one colour per PHONE setting
+       (app/layout.tsx viewport). The app has its own light/dark switch, so a
+       phone in dark mode drew a dark strip over the light app. Both tags take
+       the app's own ground while a themed route is on screen. */
+    const metas = Array.from(document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]'));
+    const previousMeta = metas.map((m) => m.content);
+    metas.forEach((m) => {
+      m.content = active.background;
+    });
     // Restore on unmount so leaving a themed route doesn't strand its color on
     // the document (e.g. Zone 2 -> the Zone 1 landing).
     return () => {
       root.style.backgroundColor = previousBackground;
       root.style.colorScheme = previousScheme;
+      metas.forEach((m, i) => {
+        m.content = previousMeta[i];
+      });
     };
   }, [paintRoot, active.background, usingLight]);
 

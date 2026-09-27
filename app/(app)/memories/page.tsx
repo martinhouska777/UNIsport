@@ -76,7 +76,7 @@ export default function MemoriesPage() {
     <div className="mx-auto w-full max-w-screen-sm pb-10">
       {/* Back bar */}
       <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-surface px-3 py-3">
-        <button type="button" aria-label="Back" onClick={() => router.back()} className="text-muted">
+        <button type="button" aria-label="Back" onClick={() => router.back()} className="tap44 press-icon text-muted">
           <IconArrowLeft size={18} />
         </button>
         <span className="text-sm font-medium text-text">Memories</span>

@@ -142,7 +142,7 @@ export default function ChannelThread({
     <div className="flex h-full min-h-0 flex-col">
       {/* Header — the icon and name open Channel info, as a WhatsApp group does. */}
       <div className="flex items-center gap-3 border-b border-border bg-surface px-3 py-2.5">
-        <button type="button" onClick={onBack} aria-label="Back" className="text-muted">
+        <button type="button" onClick={onBack} aria-label="Back" className="tap44 press-icon text-muted">
           <IconArrowLeft size={18} />
         </button>
         <button

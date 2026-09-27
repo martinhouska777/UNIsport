@@ -156,8 +156,8 @@ export default function GymProfile({ gym }: { gym: Gym }) {
                 <li key={p.id} className="flex items-center gap-2.5 py-2">
                   <Avatar size={30} src={p.authorPhoto} alt={p.authorName} />
                   <div className="min-w-0 flex-1">
-                    <div className="flex min-w-0 items-center gap-1.5 text-[13px] text-text">
-                      <span className="truncate">
+                    <div className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1 text-[13px] text-text">
+                      <span className="max-w-full truncate">
                         {p.authorName}
                         {p.mine && <span className="text-muted"> · your post</span>}
                       </span>

@@ -11,7 +11,7 @@
   truth, so a new tab appears in both navigations at once.
 */
 import { usePathname } from "next/navigation";
-import { tabs, useUnreadCount } from "@/components/BottomNav";
+import { tabs, tabActive, useUnreadCount } from "@/components/BottomNav";
 import { ThemeModeToggle } from "@/components/ThemeMode";
 import SideRail from "@/components/SideRail";
 import Wordmark from "@/components/landing/Wordmark";
@@ -38,7 +38,7 @@ export default function SideNav() {
         href: tab.href,
         label: tab.label,
         icon: tab.icon,
-        active: pathname === tab.href,
+        active: tabActive(tab, pathname),
         /* Same anchor name BottomNav uses — see lib/tour.ts. */
         tour: `tab-${tab.href}`,
         badge: tab.href === "/messages" ? unread : undefined,

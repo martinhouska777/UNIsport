@@ -33,9 +33,11 @@ const filters: { key: Filter; label: string }[] = [
   every render of an already-favourited gym: bumping it changes the inner span's
   key, which remounts it and restarts the animation from the top.
 
-  Two places, two looks: `band` floats in the corner of a main gym's colour
-  band, in the band's own contrast colour; `row` sits in line at the end of a
-  house row, before the chevron.
+  Three places, three looks: `band` floats in the corner of a main gym's colour
+  band, in the band's own contrast colour; `cover` floats on a main gym's
+  PHOTO, which fades to the card's surface at the top, so it takes the surface
+  and the theme's ink like the name beside it (a white heart there vanished);
+  `row` sits in line at the end of a house row, before the chevron.
 */
 function FavHeart({
   fav,
@@ -44,13 +46,15 @@ function FavHeart({
 }: {
   fav: boolean;
   onToggle: () => void;
-  place: "band" | "row";
+  place: "band" | "cover" | "row";
 }) {
   const [taps, setTaps] = useState(0);
   const look =
     place === "band"
       ? "absolute right-2 top-2 z-10 h-7 w-7 bg-primary-contrast/15 text-primary-contrast"
-      : `h-7 w-7 flex-shrink-0 ${fav ? "text-primary-live" : "text-text-3"}`;
+      : place === "cover"
+        ? `absolute right-2 top-2 z-10 h-7 w-7 bg-surface/85 ${fav ? "text-primary-live" : "text-text-2"}`
+        : `h-7 w-7 flex-shrink-0 ${fav ? "text-primary-live" : "text-text-3"}`;
   return (
     <button
       type="button"
@@ -128,7 +132,7 @@ const CARD =
 function MainCard({ gym, fav, onToggleFav, now, going, tour, cover }: CardProps) {
   return (
     <Link href={`/gyms/${gym.slug}`} data-tour={tour} className={CARD}>
-      <FavHeart fav={fav} onToggle={onToggleFav} place="band" />
+      <FavHeart fav={fav} onToggle={onToggleFav} place={cover ? "cover" : "band"} />
       {/*
         This block is where the gym's photo goes. Until there is one it is a
         SOLID BAND OF THE SCHOOL'S COLOUR with the name in white (owner,

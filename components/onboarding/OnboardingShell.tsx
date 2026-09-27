@@ -70,18 +70,20 @@ export default function OnboardingShell({
   onPrimary: () => void;
 }) {
   return (
-    <div className="flex h-dvh flex-col bg-background px-5 pb-6 pt-4 text-text">
+    /* One column, the width of a phone, however wide the screen: stretched
+       across a laptop the house dropdown and the Continue bar ran ~1,400px. */
+    <div className="mx-auto flex h-dvh w-full max-w-lg flex-col bg-background px-5 pb-6 pt-4 text-text">
       {/* Top row */}
       <div className="flex min-h-6 items-center justify-between">
         {showBack ? (
-          <button type="button" onClick={onBack} aria-label="Back" className="text-muted">
+          <button type="button" onClick={onBack} aria-label="Back" className="tap44 press-icon text-muted">
             <IconArrowLeft size={18} />
           </button>
         ) : (
           <span />
         )}
         {skippable ? (
-          <button type="button" onClick={onSkip} className="text-[13px] text-muted">
+          <button type="button" onClick={onSkip} className="tap44 text-[13px] text-muted">
             Skip
           </button>
         ) : (

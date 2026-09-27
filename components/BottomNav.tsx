@@ -9,6 +9,10 @@ type Tab = {
   href: string;
   label: string;
   icon: ReactNode;
+  /* The inner pages that belong to this tab, so it stays lit on them: a gym's
+     own page is still Gyms, a person's profile is reached from Match, and
+     Leaderboards and Memories open from the Profile tab. */
+  owns?: string[];
 };
 
 const iconProps = {
@@ -41,6 +45,7 @@ export const tabs: Tab[] = [
   {
     href: "/match",
     label: "Match",
+    owns: ["/people"],
     icon: (
       <svg {...iconProps}>
         <path d="M12 20s-7-4.4-7-9a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 4.6-7 9-7 9z" />
@@ -59,6 +64,7 @@ export const tabs: Tab[] = [
   {
     href: "/profile",
     label: "Profile",
+    owns: ["/leaderboards", "/memories"],
     icon: (
       <svg {...iconProps}>
         <circle cx="12" cy="8" r="3.5" />
@@ -67,6 +73,12 @@ export const tabs: Tab[] = [
     ),
   },
 ];
+
+/** Is this tab the one the page belongs to? Its own route, anything under it, or a page it owns. */
+export function tabActive(tab: Tab, pathname: string): boolean {
+  const under = (href: string) => pathname === href || pathname.startsWith(href + "/");
+  return under(tab.href) || (tab.owns ?? []).some(under);
+}
 
 /*
   Keeps the Messages badge live: polls, refetches when the route changes, and
@@ -108,7 +120,7 @@ export default function BottomNav() {
     <nav className="sticky bottom-0 z-10 bg-background px-4 pb-[max(env(safe-area-inset-bottom),10px)] pt-1.5 lg:hidden">
       <ul className="mx-auto flex max-w-sm items-stretch gap-1 rounded-full border border-border bg-surface p-1.5 shadow-overlay">
         {tabs.map((tab) => {
-          const active = pathname === tab.href;
+          const active = tabActive(tab, pathname);
           return (
             <li key={tab.href} className="flex-1">
               <Link

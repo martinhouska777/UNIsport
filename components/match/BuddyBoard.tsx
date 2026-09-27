@@ -442,8 +442,10 @@ export default function BuddyBoard({
             >
               <Avatar size={44} src={p.authorPhoto} alt={p.authorName} />
               <div className="min-w-0 flex-1">
-                <div className="flex min-w-0 items-center gap-1.5">
-                  <span className="truncate text-sm font-medium text-text">{p.authorName}</span>
+                {/* The name never gives way to the chip: when both don't fit on
+                    one line, the chip moves under the name. */}
+                <div className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1">
+                  <span className="max-w-full truncate text-sm font-medium text-text">{p.authorName}</span>
                   <HookChip hook={hookFor(p.author)} />
                 </div>
                 <div className="text-[13px] text-text">{summary(p.focus, p.date, p.day, p.hour, p.timeOfDay)}</div>

@@ -26,6 +26,17 @@ const HOURS = Array.from(
   (_, i) => GRID_FIRST_HOUR + i,
 );
 
+/*
+  THE WHOLE DAY ON ONE SCREEN. A swipe on the grid paints (it has to — "5 pm to
+  8 pm" is one stroke), so the grid cannot also scroll the page; on a small
+  phone that left the evening hours below the fold with nothing to scroll by.
+  So the rows shrink to fit the screen: 28px where there is room, down to 18px
+  on an iPhone SE, the rest of the onboarding screen (~380px of header, a
+  two-line title, the line above the grid and the Continue button) taken off
+  first.
+*/
+const ROW_HEIGHT = `clamp(18px, calc((100dvh - 380px) / ${HOURS.length}), 28px)`;
+
 /* The cell under a point on the screen, as "day hour", or null off the grid. */
 function cellAt(x: number, y: number): { day: string; hour: number } | null {
   const el = document.elementFromPoint(x, y)?.closest<HTMLElement>("[data-day]");
@@ -143,7 +154,8 @@ export default function WeekHourGrid({
                 }}
                 aria-pressed={on}
                 aria-label={`${d.label} ${hourName(h)}`}
-                className="relative h-7"
+                className="relative"
+                style={{ height: ROW_HEIGHT }}
               >
                 <span
                   className={`absolute inset-x-0 flex items-center justify-center whitespace-nowrap text-[10px] tabular-nums transition-colors ${
