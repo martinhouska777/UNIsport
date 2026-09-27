@@ -733,7 +733,7 @@ function WeeklyGraph({
           {curves && <CurveLegend curves={curves} />}
         </button>
       ) : (
-        <p className="mt-4 rounded-xl border border-dashed border-border bg-surface-2 px-4 py-8 text-center text-[12px] leading-relaxed text-muted">
+        <p className="mt-4 rounded-xl border border-dashed border-border bg-surface px-4 py-8 text-center text-[12px] leading-relaxed text-muted">
           {metric.empty}
         </p>
       )}

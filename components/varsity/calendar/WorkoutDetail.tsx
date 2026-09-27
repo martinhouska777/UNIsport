@@ -16,6 +16,7 @@ import { fetchLogsByCategory, type LogEntry } from "@/lib/varsity/logStore";
 import { formatMetrics } from "@/lib/varsity/logParse";
 import { logCategoryLabel } from "@/lib/varsity/athleteProfile";
 import { IconArrowLeft, IconClock, IconChevronDown, IconChevronRight } from "@/components/icons";
+import { markColor } from "@/lib/colorMarks";
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
@@ -165,7 +166,7 @@ export default function WorkoutDetail({
         <div className="mx-auto w-full max-w-screen-sm">
           {/* Title + category + plan/extra */}
           <div className="flex items-center gap-2">
-            <span className="h-3 w-3 flex-shrink-0 rounded-full" style={{ background: color }} />
+            <span className="h-3 w-3 flex-shrink-0 rounded-full" style={{ background: markColor(color) }} />
             <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">{catLabel}</span>
             <span className="ml-auto rounded-md border border-border px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-muted">
               {current.source === "plan" ? "Plan" : "Extra"}
@@ -221,7 +222,7 @@ export default function WorkoutDetail({
                 {loadingSimilar ? (
                   <div className="py-4 text-center text-[12px] text-muted">Loading…</div>
                 ) : others.length === 0 ? (
-                  <div className="rounded-2xl border border-dashed border-border bg-surface-2 px-4 py-6 text-center text-[12px] text-muted">
+                  <div className="rounded-2xl border border-dashed border-border bg-surface px-4 py-6 text-center text-[12px] text-muted">
                     No other {catLabel.toLowerCase()} sessions yet.
                   </div>
                 ) : (

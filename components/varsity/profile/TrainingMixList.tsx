@@ -30,6 +30,7 @@ import Dropdown from "@/components/varsity/profile/Dropdown";
 import { statRanges } from "@/lib/varsity/athleteStats";
 import { formatDuration } from "@/lib/varsity/units";
 import type { MixRow } from "@/lib/varsity/trainingMix";
+import { markColor } from "@/lib/colorMarks";
 
 export default function TrainingMixList({
   rows,
@@ -75,7 +76,7 @@ export default function TrainingMixList({
       </div>
 
       {rows.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border bg-surface-2 px-4 py-6 text-center text-[12px] text-muted">
+        <div className="rounded-2xl border border-dashed border-border bg-surface px-4 py-6 text-center text-[12px] text-muted">
           Nothing logged in this window yet.
         </div>
       ) : (
@@ -93,7 +94,7 @@ export default function TrainingMixList({
                 <span className="flex min-w-0 items-center gap-2">
                   <span
                     className="h-2.5 w-2.5 flex-shrink-0 rounded-full"
-                    style={{ background: r.color }}
+                    style={{ background: markColor(r.color) }}
                   />
                   <span className="truncate text-[13px] font-medium text-text">{r.label}</span>
                 </span>

@@ -45,6 +45,7 @@ import { boatRoleOptions, sideOptions, type BoatRole } from "@/lib/varsity/athle
 import { weightOptions, weightToKg, type WeightUnit } from "@/lib/varsity/units";
 import type { Side } from "@/lib/varsity/coachLineup";
 import { saveFailureDetail, type SaveFailure } from "@/lib/saveFailure";
+import Segmented from "@/components/ui/Segmented";
 
 // Digits only, so nobody can save "about 82" as a weight.
 const digits = (v: string) => v.replace(/[^\d]/g, "");
@@ -229,7 +230,7 @@ export default function VarsitySetupPage() {
               */}
               <div className="mt-4 grid grid-cols-2 gap-2.5">
                 <div>
-                  <div className="mb-2 flex h-6 items-center">
+                  <div className="mb-2 flex h-8 items-center">
                     <span className="text-xs font-medium uppercase tracking-[0.04em] text-muted">
                       Height (cm)
                     </span>
@@ -242,28 +243,17 @@ export default function VarsitySetupPage() {
                   />
                 </div>
                 <div>
-                  <div className="mb-2 flex h-6 items-center justify-between gap-2">
+                  <div className="mb-2 flex h-8 items-center justify-between gap-2">
                     <span className="text-xs font-medium uppercase tracking-[0.04em] text-muted">
                       Weight
                     </span>
                     {/* Two words, so a segmented switch rather than another pill row. */}
-                    <div className="flex overflow-hidden rounded-full border border-border">
-                      {weightOptions.map((u) => (
-                        <button
-                          key={u.key}
-                          type="button"
-                          aria-pressed={weightUnit === u.key}
-                          onClick={() => setWeightUnit(u.key)}
-                          className={`px-2 py-0.5 text-[11px] font-medium transition-colors ${
-                            weightUnit === u.key
-                              ? "bg-primary text-primary-contrast"
-                              : "text-muted"
-                          }`}
-                        >
-                          {u.short}
-                        </button>
-                      ))}
-                    </div>
+                    <Segmented
+                      ariaLabel="Weight unit"
+                      options={weightOptions.map((u) => ({ key: u.key, label: u.short, ariaLabel: u.label }))}
+                      value={weightUnit}
+                      onChange={(k) => setWeightUnit(k)}
+                    />
                   </div>
                   <TextField
                     value={weight}

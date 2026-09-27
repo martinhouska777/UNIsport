@@ -49,6 +49,7 @@ import {
 import { secToClock } from "@/lib/varsity/ergMath";
 import type { TeamResult } from "@/lib/varsity/resultsStore";
 import { IconFloors, IconChevronRight } from "@/components/icons";
+import { markColor } from "@/lib/colorMarks";
 
 function Tile({ value, label }: { value: string; label: string }) {
   return (
@@ -199,7 +200,7 @@ export default function WorkoutBoard({
           <div className="flex items-center gap-2">
             <span
               className="h-2.5 w-2.5 flex-shrink-0 rounded-full"
-              style={{ background: sessionColor(workout.session) }}
+              style={{ background: markColor(sessionColor(workout.session)) }}
             />
             <span className="text-[13px] font-semibold text-text">
               {workoutLabel(workout.session)}
@@ -321,7 +322,7 @@ export default function WorkoutBoard({
       </div>
 
       {board.logged === 0 ? (
-        <div className="mt-2 rounded-2xl border border-dashed border-border bg-surface-2 px-4 py-8 text-center text-[12px] text-muted">
+        <div className="mt-2 rounded-2xl border border-dashed border-border bg-surface px-4 py-8 text-center text-[12px] text-muted">
           Nobody has logged this one yet.
         </div>
       ) : view === "table" ? (

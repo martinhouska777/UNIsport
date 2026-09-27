@@ -74,6 +74,7 @@ import {
   IconTrophy,
   IconPencil,
 } from "@/components/icons";
+import { markColor } from "@/lib/colorMarks";
 
 /*
   THE TAB OPENS ON THE WEEK (owner, 2026-09-17: "I don't want to see the
@@ -124,7 +125,7 @@ type Form = {
 };
 
 function Dot({ color }: { color: string }) {
-  return <span className="h-2.5 w-2.5 rounded-full" style={{ background: color }} />;
+  return <span className="h-2.5 w-2.5 rounded-full" style={{ background: markColor(color) }} />;
 }
 
 /* One string standing for the whole plan — this is how a real edit is told
@@ -1041,7 +1042,7 @@ export default function TrainingPlanScreen({
                           <span
                             aria-hidden
                             className="h-2 w-2 flex-shrink-0 rounded-full"
-                            style={{ background: sColor(s) }}
+                            style={{ background: markColor(sColor(s)) }}
                           />
                           <span className="truncate">{sLabel(s)}</span>
                         </span>
@@ -1326,18 +1327,18 @@ export default function TrainingPlanScreen({
                   <span className="block text-[12px] font-semibold text-text">
                     Share results with the squad
                   </span>
-                  <span className="mt-0.5 block text-[11px] leading-relaxed text-muted">
-                    Everyone who logs this session lands on one board the whole team can see.
-                  </span>
                 </span>
+                {/* The app's one switch (onboarding/controls Toggle), drawn
+                    here because the whole row is the button. */}
                 <span
-                  className={`relative h-5 w-9 flex-shrink-0 rounded-full transition-colors ${
-                    form.teamWorkout ? "bg-primary" : "bg-surface-2 border border-border"
+                  aria-hidden
+                  className={`relative h-[22px] w-[38px] flex-shrink-0 rounded-full transition-colors ${
+                    form.teamWorkout ? "bg-primary-live" : "bg-switch-off"
                   }`}
                 >
                   <span
-                    className={`absolute top-0.5 h-4 w-4 rounded-full bg-background transition-all ${
-                      form.teamWorkout ? "left-[1.15rem]" : "left-0.5"
+                    className={`absolute top-[3px] h-4 w-4 rounded-full bg-primary-contrast shadow-card transition-all ${
+                      form.teamWorkout ? "left-[19px]" : "left-[3px]"
                     }`}
                   />
                 </span>

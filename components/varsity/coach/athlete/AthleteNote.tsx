@@ -10,12 +10,14 @@
   full-screen editor, which keeps its Send button — words landing on one
   rower's phone must never go half-written.
 
-  Colors are theme tokens (red = danger, green = success).
+  A note is the coach's feedback, not an error: a white card with the school
+  colour as its accent (it was a red wash and a red "!" until the launch audit,
+  2026-09-27). Green = no note. Colors are theme tokens.
 */
 import { useEffect, useState } from "react";
 import NoteEditor from "@/components/varsity/coach/notes/NoteEditor";
 import { fetchNote } from "@/lib/varsity/notesStore";
-import { IconCheckCircle, IconPencil } from "@/components/icons";
+import { IconCheckCircle, IconPencil, IconMessage } from "@/components/icons";
 
 export default function AthleteNote({ athleteId, name }: { athleteId: string; name: string }) {
   const [note, setNote] = useState<string | null>(null);
@@ -38,12 +40,12 @@ export default function AthleteNote({ athleteId, name }: { athleteId: string; na
         onClick={() => setEditing(true)}
         disabled={note === null}
         className={`flex w-full items-start gap-3 rounded-2xl border px-3.5 py-3 text-left transition-colors disabled:opacity-60 ${
-          hasNote ? "border-danger-line bg-danger-tint" : "border-border bg-surface active:bg-surface-2"
+          hasNote ? "border-primary-line bg-surface active:bg-surface-2" : "border-border bg-surface active:bg-surface-2"
         }`}
       >
         {hasNote ? (
-          <span className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-danger text-[12px] font-black leading-none text-background">
-            !
+          <span className="mt-0.5 flex-shrink-0 text-primary">
+            <IconMessage size={17} />
           </span>
         ) : (
           <span className="mt-0.5 flex-shrink-0 text-success">

@@ -77,11 +77,19 @@ export const prPieces = ["2K", "5K", "6K", "30′ r20"] as const;
 // Per-category dot color for the training calendar. These are CONTENT colors
 // (like a house's identity colors) so per rule 1's exception they live as data
 // and are applied via inline style — where a theme token fits we use it.
+/*
+  ONE COLOUR PER KIND OF SESSION, on every Varsity screen (launch audit,
+  2026-09-27). "Run" was grey in the calendar, purple in the log picker and
+  green in the statistics, and weights were purple here and magenta on the
+  plan. Now these match logCategoryMeta in coachPlan.ts: weights take the
+  coach's spreadsheet magenta, run the log picker's violet — green is the
+  plan's UT2, so a green dot never has to mean two things.
+*/
 export const logCategoryColor: Record<string, string> = {
   water: "#4a90a4", // teal — on the water
   erg: "#60a5fa", // blue — erg
-  weights: "#a78bfa", // purple — lifting
-  run: "#34d399", // green — running
+  weights: "#ff00ff", // magenta — lifting (the plan's weights)
+  run: "#c084fc", // violet — running
   bike: "#f59e0b", // amber — bike
   flex: "var(--accent)", // gold — mobility
   off: "var(--muted)",

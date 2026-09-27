@@ -46,6 +46,7 @@ import {
   IconEyeOff,
   IconCalendar,
 } from "@/components/icons";
+import Segmented from "@/components/ui/Segmented";
 
 // The status pill — the same one the athlete sees on their own profile.
 const toneRing: Record<StatusTone, string> = {
@@ -499,20 +500,17 @@ export default function TeamScreen({
           halves ARE the box: no padding, no gap, and `overflow-hidden` is what
           lets the fill take the container's own rounded corners with it. */}
       {!only && (
-        <div className="flex overflow-hidden rounded-xl border border-border bg-surface">
-          {(["roster", "workouts"] as Tab[]).map((t) => (
-            <button
-              key={t}
-              type="button"
-              onClick={() => setTab(t)}
-              className={`flex-1 py-2.5 text-[12px] font-semibold capitalize transition-colors ${
-                tab === t ? "bg-text text-background" : "text-muted"
-              }`}
-            >
-              {t}
-            </button>
-          ))}
-        </div>
+        <Segmented
+          size="md"
+          full
+          ariaLabel="Team"
+          options={[
+            { key: "roster", label: "Roster" },
+            { key: "workouts", label: "Workouts" },
+          ]}
+          value={tab}
+          onChange={(t) => setTab(t as Tab)}
+        />
       )}
 
       {tab === "roster" ? (

@@ -40,6 +40,7 @@ import { notifyPartnerTag } from "@/lib/push/client";
 import { confirmPlan } from "@/lib/supabase/sessionPlans";
 import { PARTNER_CONFIRM_HOURS, sessionPoints } from "@/lib/points";
 import { IconArrowLeft, IconCheck, IconPlus, IconTrash, IconX } from "@/components/icons";
+import Segmented from "@/components/ui/Segmented";
 
 const todayIso = () => {
   const d = new Date();
@@ -268,7 +269,7 @@ export default function LogSessionSheet({
   };
 
   const inputCls =
-    "w-full rounded-xl border border-border bg-surface-2 px-3 py-2.5 text-base text-text outline-none focus:border-primary placeholder:text-muted";
+    "w-full rounded-xl border border-border bg-surface px-3 py-2.5 text-base text-text outline-none focus:border-primary placeholder:text-muted";
   const labelCls = "mb-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted";
 
   return (
@@ -408,20 +409,12 @@ export default function LogSessionSheet({
               <div className="mt-5 flex items-center justify-between">
                 <span className={labelCls.replace("mb-1.5", "mb-0")}>Exercises (optional)</span>
                 {/* kg / lb toggle for this workout */}
-                <div className="flex overflow-hidden rounded-lg border border-border">
-                  {(["kg", "lb"] as WeightUnit[]).map((u) => (
-                    <button
-                      key={u}
-                      type="button"
-                      onClick={() => setWeightUnit(u)}
-                      className={`px-2.5 py-1 text-[11px] font-semibold ${
-                        weightUnit === u ? "bg-text text-background" : "bg-surface-2 text-muted"
-                      }`}
-                    >
-                      {u}
-                    </button>
-                  ))}
-                </div>
+                <Segmented
+                  ariaLabel="Weight unit"
+                  options={(["kg", "lb"] as WeightUnit[]).map((u) => ({ key: u, label: u }))}
+                  value={weightUnit}
+                  onChange={(u) => setWeightUnit(u)}
+                />
               </div>
 
               <div className="mt-2 flex flex-col gap-3">
@@ -578,20 +571,13 @@ export default function LogSessionSheet({
                   inputMode="decimal"
                   className={`${inputCls} flex-1`}
                 />
-                <div className="flex overflow-hidden rounded-xl border border-border">
-                  {unitOptions.map((u) => (
-                    <button
-                      key={u}
-                      type="button"
-                      onClick={() => setUnit(u)}
-                      className={`px-3 py-2.5 text-[12px] font-semibold ${
-                        unit === u ? "bg-text text-background" : "bg-surface-2 text-muted"
-                      }`}
-                    >
-                      {u}
-                    </button>
-                  ))}
-                </div>
+                <Segmented
+                  size="md"
+                  ariaLabel="Distance unit"
+                  options={unitOptions.map((u) => ({ key: u, label: u }))}
+                  value={unit}
+                  onChange={(u) => setUnit(u)}
+                />
               </div>
 
               <div className={`${labelCls} mt-4`}>Duration (optional)</div>

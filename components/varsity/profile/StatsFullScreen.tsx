@@ -89,6 +89,7 @@ import {
   recoveryReadOut,
   hasRecovery,
 } from "@/lib/varsity/checkIn";
+import { markColor } from "@/lib/colorMarks";
 
 /* A word from the data → a theme token. The data never names a colour. */
 const toneClass: Record<StatTone, string> = {
@@ -351,7 +352,7 @@ export default function StatsFullScreen({
                 {curves && <CurveLegend curves={curves} />}
               </div>
             ) : (
-              <p className="rounded-2xl border border-dashed border-border bg-surface-2 px-4 py-10 text-center text-[12px] leading-relaxed text-muted">
+              <p className="rounded-2xl border border-dashed border-border bg-surface px-4 py-10 text-center text-[12px] leading-relaxed text-muted">
                 {metric.empty}
               </p>
             )}
@@ -414,7 +415,7 @@ export default function StatsFullScreen({
                         <span className="flex min-w-0 items-center gap-2">
                           <span
                             className="h-2 w-2 flex-shrink-0 rounded-full"
-                            style={{ background: r.color }}
+                            style={{ background: markColor(r.color) }}
                           />
                           <span className="truncate text-[12px] font-medium text-text">{r.title}</span>
                         </span>
@@ -430,7 +431,7 @@ export default function StatsFullScreen({
                         <span className="flex min-w-0 items-center gap-2">
                           <span
                             className="h-2 w-2 flex-shrink-0 rounded-full"
-                            style={{ background: c.color }}
+                            style={{ background: markColor(c.color) }}
                           />
                           <span className="truncate text-[12px] font-medium text-text">{c.label}</span>
                         </span>

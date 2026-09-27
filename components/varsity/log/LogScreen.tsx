@@ -72,6 +72,7 @@ import {
   IconArrowLeft,
   IconClock,
 } from "@/components/icons";
+import { markColor } from "@/lib/colorMarks";
 
 /* category → label + content color for the dot. Lives in the data layer
    (lib/varsity/coachPlan.ts) so no color literal sits in this component. */
@@ -89,7 +90,7 @@ const summaryOf = (l: LogEntry): string =>
   [formatMetrics(l.minutes, l.metres, l.split), effortLabel(l.effort)].filter(Boolean).join(" · ");
 
 function Dot({ color }: { color: string }) {
-  return <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ background: color }} />;
+  return <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ background: markColor(color) }} />;
 }
 
 function SectionLabel({ children, hint }: { children: React.ReactNode; hint?: string }) {
@@ -697,7 +698,7 @@ function PrescribedRow({
         log ? "border-success-line bg-success-tint" : "border-border bg-surface active:bg-surface-2"
       }`}
     >
-      <span aria-hidden className="absolute inset-y-0 left-0 w-1.5" style={{ background: color }} />
+      <span aria-hidden className="absolute inset-y-0 left-0 w-1.5" style={{ background: markColor(color) }} />
       {/* AM / PM: the corner mark, small and mono (owner, 2026-09-17). */}
       <span className="absolute top-1.5 right-4 font-mono text-[9px] font-medium tracking-[0.14em] text-muted">
         {period}
@@ -751,7 +752,7 @@ function PrescribedRow({
 function OffRow({ session, period, color }: { session: Session; period: string; color: string }) {
   return (
     <div className="relative overflow-hidden rounded-2xl border border-border bg-surface py-3 pr-3.5 pl-5">
-      <span aria-hidden className="absolute inset-y-0 left-0 w-1.5" style={{ background: color }} />
+      <span aria-hidden className="absolute inset-y-0 left-0 w-1.5" style={{ background: markColor(color) }} />
       <span className="absolute top-1.5 right-4 font-mono text-[9px] font-medium tracking-[0.14em] text-muted">
         {period}
       </span>

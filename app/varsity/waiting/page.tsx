@@ -119,7 +119,7 @@ export default function VarsityWaitingPage() {
             </div>
             <Link
               href="/onboarding"
-              className="mt-3 block w-full rounded-lg bg-accent py-2.5 text-center text-[12px] font-semibold text-background"
+              className="mt-3 block w-full rounded-lg bg-primary-live py-2.5 text-center text-[12px] font-semibold text-primary-contrast"
             >
               Set it up
             </Link>

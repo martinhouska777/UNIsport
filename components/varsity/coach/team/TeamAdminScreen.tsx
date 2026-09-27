@@ -399,7 +399,7 @@ export default function TeamAdminScreen({
               <button
                 type="button"
                 onClick={() => share(fresh)}
-                className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-accent px-3 py-2 text-[11px] font-semibold text-background"
+                className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-primary-live px-3 py-2 text-[11px] font-semibold text-primary-contrast"
               >
                 <IconSend size={13} />
                 Send
@@ -578,13 +578,13 @@ export default function TeamAdminScreen({
           {/* The switch: a pill whose knob sits at the far end when dark is on. */}
           <span
             aria-hidden
-            className={`relative h-6 w-11 flex-shrink-0 rounded-full border transition-colors ${
-              mode === "dark" ? "border-primary bg-primary" : "border-border bg-surface-2"
+            className={`relative h-[22px] w-[38px] flex-shrink-0 rounded-full transition-colors ${
+              mode === "dark" ? "bg-primary-live" : "bg-switch-off"
             }`}
           >
             <span
-              className={`absolute top-0.5 h-[18px] w-[18px] rounded-full bg-background shadow-sm transition-[left] ${
-                mode === "dark" ? "left-[22px]" : "left-0.5"
+              className={`absolute top-[3px] h-4 w-4 rounded-full bg-primary-contrast shadow-card transition-all ${
+                mode === "dark" ? "left-[19px]" : "left-[3px]"
               }`}
             />
           </span>

@@ -125,7 +125,7 @@ export default function PersonalRecords({
           <button
             type="button"
             onClick={addRecord}
-            className="flex items-center justify-center gap-1.5 rounded-lg border border-dashed border-border bg-surface-2 px-3 py-2.5 text-[12px] font-medium text-muted"
+            className="flex items-center justify-center gap-1.5 rounded-lg border border-dashed border-border bg-surface px-3 py-2.5 text-[12px] font-medium text-muted"
           >
             <IconPlus size={14} />
             Add record
@@ -154,7 +154,7 @@ export default function PersonalRecords({
             addRecord();
             setEditing(true);
           }}
-          className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-border bg-surface-2 px-3 py-4 text-[12px] font-medium text-muted"
+          className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-border bg-surface px-3 py-4 text-[12px] font-medium text-muted"
         >
           <IconPlus size={14} />
           Add personal records

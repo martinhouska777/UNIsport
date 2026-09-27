@@ -77,7 +77,7 @@ export default function PhotoGrid({
           type="button"
           onClick={() => inputRef.current?.click()}
           disabled={busy}
-          className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-border bg-surface-2 px-3 py-4 text-[12px] text-muted disabled:opacity-50"
+          className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-border bg-surface px-3 py-4 text-[12px] text-muted disabled:opacity-50"
         >
           <IconPlus size={14} />
           {busy ? "Adding…" : "Add photos"}
@@ -114,7 +114,7 @@ export default function PhotoGrid({
           onClick={() => inputRef.current?.click()}
           disabled={busy}
           aria-label="Add photo"
-          className="flex aspect-square items-center justify-center rounded-md border border-dashed border-border bg-surface-2 text-muted disabled:opacity-50"
+          className="flex aspect-square items-center justify-center rounded-md border border-dashed border-border bg-surface text-muted disabled:opacity-50"
         >
           <IconPlus size={20} />
         </button>

@@ -15,6 +15,7 @@
 import { logCategoryColor } from "@/lib/varsity/athleteProfile";
 import { formatMetrics } from "@/lib/varsity/logParse";
 import type { LogEntry } from "@/lib/varsity/logStore";
+import { markColor } from "@/lib/colorMarks";
 
 export default function LogRow({ log }: { log: LogEntry }) {
   const metrics = formatMetrics(log.minutes, log.metres, log.split);
@@ -22,7 +23,7 @@ export default function LogRow({ log }: { log: LogEntry }) {
     <div className="flex items-start gap-3 rounded-2xl border border-border bg-surface-2 px-3.5 py-3">
       <span
         className="mt-1 h-2.5 w-2.5 flex-shrink-0 rounded-full"
-        style={{ background: logCategoryColor[log.category ?? "other"] ?? "var(--muted)" }}
+        style={{ background: markColor(logCategoryColor[log.category ?? "other"]) ?? "var(--muted)" }}
       />
       <div className="min-w-0 flex-1">
         <div className="text-[13px] font-semibold text-text">{log.title}</div>

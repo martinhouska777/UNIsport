@@ -33,6 +33,7 @@ import {
   type TodaySlot,
 } from "@/lib/varsity/coachToday";
 import { IconAnchor, IconCalendar, IconChevronRight, IconPencil, IconPlus } from "@/components/icons";
+import { markColor } from "@/lib/colorMarks";
 
 const PLAN = "/varsity/coach/plan";
 const LINEUP = "/varsity/coach/lineup";
@@ -110,7 +111,7 @@ function SlotCard({ slot }: { slot: TodaySlot }) {
             {s.description || s.label}
           </div>
           <div className="mt-0.5 flex items-center gap-1.5 text-[12px] text-muted">
-            <span className="h-2 w-2 rounded-full" style={{ background: s.color }} />
+            <span className="h-2 w-2 rounded-full" style={{ background: markColor(s.color) }} />
             {s.label}
           </div>
           {s.note && <div className="mt-1.5 text-[12px] leading-relaxed text-text/80">{s.note}</div>}

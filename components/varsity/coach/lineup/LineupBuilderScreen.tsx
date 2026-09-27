@@ -138,6 +138,7 @@ import {
   IconX,
 } from "@/components/icons";
 import { slotKey, useNameDrag, type Slot } from "./useNameDrag";
+import { markColor } from "@/lib/colorMarks";
 
 /*
   What the training plan prescribes for one AM or PM slot, reduced to the few
@@ -1878,7 +1879,7 @@ function Builder({
                 so in colour. */}
             <span
               className="h-2.5 w-2.5 flex-shrink-0 rounded-full"
-              style={{ background: planContext.color }}
+              style={{ background: markColor(planContext.color) }}
             />
             {/* Read-only: what the plan says for this practice. No chevron —
                 it used to wear one and led nowhere, which is a promise a card

@@ -123,6 +123,7 @@ import {
   type Period,
   type Standing,
 } from "@/lib/leaderboards";
+import Segmented from "@/components/ui/Segmented";
 
 /* ──────────────────  the competitions, as data  ────────────────── */
 
@@ -236,26 +237,20 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: "events", label: "Events" },
 ];
 
-/* The same capsule as the Match and Messages tabs: the chosen tab is a pill
-   inside it. It sits in the header between Back and ⓘ, where the title was. */
+/* The same capsule as the Match and Messages tabs (components/ui/Segmented):
+   white, no grey track, the chosen tab filled out to the edges. It sits in the
+   header between Back and ⓘ, where the title was. */
 function TabBar({ value, onPick }: { value: TabKey; onPick: (t: TabKey) => void }) {
   return (
-    <div role="tablist" aria-label="Leaderboards" className="flex min-w-0 flex-1 rounded-full border border-border bg-sunken p-1">
-      {TABS.map((t) => (
-        <button
-          key={t.key}
-          type="button"
-          role="tab"
-          aria-selected={value === t.key}
-          onClick={() => onPick(t.key)}
-          className={`min-h-9 flex-1 rounded-full py-1.5 text-center text-[13px] font-semibold transition-colors ${
-            value === t.key ? "bg-text text-background" : "text-muted"
-          }`}
-        >
-          {t.label}
-        </button>
-      ))}
-    </div>
+    <Segmented
+      size="md"
+      full
+      ariaLabel="Leaderboards"
+      className="min-w-0 flex-1"
+      options={TABS}
+      value={value}
+      onChange={onPick}
+    />
   );
 }
 

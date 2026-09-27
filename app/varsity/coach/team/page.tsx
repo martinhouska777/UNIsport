@@ -41,6 +41,7 @@ import {
   type TeamMember,
 } from "@/lib/varsity/notesStore";
 import { IconPencil } from "@/components/icons";
+import Segmented from "@/components/ui/Segmented";
 
 export default function CoachTeamPage() {
   const { membership, loading } = useMembership();
@@ -110,25 +111,17 @@ export default function CoachTeamPage() {
     <>
       {seatRaces && (
         <div className="mx-auto w-full max-w-screen-sm px-4 pt-4">
-          <div className="flex overflow-hidden rounded-xl border border-border bg-surface">
-            {(
-              [
-                ["team", "Team"],
-                ["races", "Seat races"],
-              ] as const
-            ).map(([k, label]) => (
-              <button
-                key={k}
-                type="button"
-                onClick={() => setView(k)}
-                className={`flex-1 py-2.5 text-[12px] font-semibold transition-colors ${
-                  view === k ? "bg-text text-background" : "text-muted"
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
+          <Segmented
+            size="md"
+            full
+            ariaLabel="Team or seat races"
+            options={[
+              { key: "team", label: "Team" },
+              { key: "races", label: "Seat races" },
+            ]}
+            value={view}
+            onChange={(k) => setView(k)}
+          />
         </div>
       )}
 

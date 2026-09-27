@@ -57,6 +57,7 @@ import {
   type Zone,
 } from "@/lib/varsity/trainingConfig";
 import type { BoatKind } from "@/lib/varsity/coachLineup";
+import { markColor } from "@/lib/colorMarks";
 
 /* ── small shared pieces ─────────────────────────────────────────────────── */
 
@@ -70,7 +71,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 function Dot({ color }: { color: string }) {
-  return <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ background: color }} />;
+  return <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ background: markColor(color) }} />;
 }
 
 const inputCls =

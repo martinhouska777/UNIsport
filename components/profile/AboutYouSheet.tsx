@@ -179,7 +179,7 @@ export default function AboutYouSheet({
                 <button
                   type="button"
                   onClick={() => setNewInterest("")}
-                  className="tap44 flex items-center gap-1 rounded-full border border-dashed border-border bg-surface-2 px-3.5 py-2 text-[13px] text-muted"
+                  className="tap44 flex items-center gap-1 rounded-full border border-dashed border-border bg-surface px-3.5 py-2 text-[13px] text-muted"
                 >
                   <IconPlus size={13} />
                   Add

@@ -282,7 +282,7 @@ export default function RaceBoard({
       )}
 
       {day.pieces.length === 0 && (
-        <div className="mt-3 rounded-2xl border border-dashed border-border bg-surface-2 px-4 py-8 text-center text-[12px] text-muted">
+        <div className="mt-3 rounded-2xl border border-dashed border-border bg-surface px-4 py-8 text-center text-[12px] text-muted">
           {inConsole ? "No pieces yet — tap + to add the first one." : "No pieces timed yet."}
         </div>
       )}
@@ -295,7 +295,7 @@ export default function RaceBoard({
               <button
                 type="button"
                 onClick={() => setEditing(piece.id)}
-                className="tap44 flex items-center gap-1.5 rounded-full border border-border bg-surface-2 px-3 py-1.5 text-[12px] font-medium text-text"
+                className="tap44 flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-[12px] font-medium text-text"
               >
                 <IconPencil size={13} /> Enter times
               </button>
@@ -343,7 +343,7 @@ export default function RaceBoard({
             </div>
           ))}
           {piece.crews.length === 0 && (
-            <div className="rounded-2xl border border-dashed border-border bg-surface-2 px-4 py-8 text-center text-[12px] text-muted">
+            <div className="rounded-2xl border border-dashed border-border bg-surface px-4 py-8 text-center text-[12px] text-muted">
               No crews in this piece{inConsole ? " — add them with Enter times." : "."}
             </div>
           )}
@@ -407,7 +407,7 @@ export default function RaceBoard({
       {tab === ATHLETES && day.pieces.length > 0 && (
         <div className="mt-3">
           {athletes.length === 0 && (
-            <div className="rounded-2xl border border-dashed border-border bg-surface-2 px-4 py-8 text-center text-[12px] text-muted">
+            <div className="rounded-2xl border border-dashed border-border bg-surface px-4 py-8 text-center text-[12px] text-muted">
               No times yet.
             </div>
           )}
@@ -645,7 +645,7 @@ function PieceEditor({
             total: parseClock(c.totalText),
           });
           return (
-            <div key={c.boatId} className="rounded-2xl border border-border bg-surface-2 p-3">
+            <div key={c.boatId} className="rounded-2xl border border-border bg-surface p-3">
               <div className="flex items-center justify-between gap-2">
                 <div className="min-w-0">
                   <div className="truncate text-[13px] font-semibold text-text">{c.label}</div>

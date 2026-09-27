@@ -910,7 +910,11 @@ function DayHeader({
   );
 }
 
-/* ─── The COACH'S NOTE for you (red = something to work on · green = all clear) ───
+/* ─── The COACH'S NOTE for you (a card in the school colour · green = all clear) ───
+   A NOTE IS NOT AN ALARM (launch audit, 2026-09-27). It was drawn as an error —
+   a red wash and a red "!" — which made ordinary feedback read like something
+   had gone wrong. It is now a white card with the school colour as its accent:
+   the coach's words, clearly from the coach, and calm.
    It is the coach writing, and what he writes is a technical point — catch
    timing, a body angle, where the pressure went. The heading has been both
    words: 'Technical note · work on this' until 2026-09-20, when the owner cut
@@ -925,12 +929,12 @@ function DayHeader({
 function CoachNoteCard({ note, coach }: { note: string; coach: string }) {
   if (note.trim()) {
     return (
-      <div className="overflow-hidden rounded-xl border border-danger-line bg-danger-tint">
-        <div className="flex items-center gap-2 border-b border-danger-line px-3.5 py-2.5">
-          <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-danger text-[12px] font-black leading-none text-background">
-            !
+      <div className="overflow-hidden rounded-xl border border-primary-line bg-surface">
+        <div className="flex items-center gap-2 border-b border-border bg-primary-tint px-3.5 py-2.5">
+          <span className="flex-shrink-0 text-primary">
+            <IconMessage size={15} />
           </span>
-          <span className="truncate text-[11px] font-semibold uppercase tracking-[0.12em] text-danger">
+          <span className="truncate text-[11px] font-semibold uppercase tracking-[0.12em] text-primary">
             Coach&apos;s note{coach ? ` · ${coach}` : ""}
           </span>
         </div>

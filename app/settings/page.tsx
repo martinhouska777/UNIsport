@@ -46,6 +46,7 @@ import {
   IconShield,
   IconSun,
 } from "@/components/icons";
+import Segmented from "@/components/ui/Segmented";
 
 // Dev-only affordances are compiled out of the production bundle.
 const isProduction = process.env.NODE_ENV === "production";
@@ -114,22 +115,12 @@ function UnitRow({
   return (
     <div className="flex items-center gap-3 rounded-2xl border border-border bg-surface px-4 py-2.5">
       <span className="flex-1 text-sm text-text">{label}</span>
-      <div className="flex gap-1 rounded-full border border-border bg-surface-2 p-0.5">
-        {options.map((o) => (
-          <button
-            key={o.key}
-            type="button"
-            onClick={() => onPick(o.key)}
-            aria-pressed={value === o.key}
-            aria-label={o.label}
-            className={`rounded-full px-3 py-1.5 text-[12px] font-medium transition-colors ${
-              value === o.key ? "bg-text text-background" : "text-muted"
-            }`}
-          >
-            {o.short}
-          </button>
-        ))}
-      </div>
+      <Segmented
+        ariaLabel={label}
+        options={options.map((o) => ({ key: o.key, label: o.short, ariaLabel: o.label }))}
+        value={value}
+        onChange={onPick}
+      />
     </div>
   );
 }

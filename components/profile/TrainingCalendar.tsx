@@ -21,6 +21,7 @@ import { useRef } from "react";
 import { activityLabel, logMuscles, type WorkoutLog } from "@/lib/supabase/workouts";
 import { nextDays } from "@/lib/schedule";
 import { IconArrowLeft, IconArrowRight } from "@/components/icons";
+import Segmented from "@/components/ui/Segmented";
 
 export type CalendarMode = "week" | "month";
 
@@ -221,21 +222,15 @@ export default function TrainingCalendar({
         <div className="flex min-w-0 flex-1 flex-col items-center gap-1">
           <div className="truncate text-[13px] font-semibold text-text">{label}</div>
           {/* Week / Month — the same block, zoomed. */}
-          <div className="flex overflow-hidden rounded-full border border-border">
-            {(["week", "month"] as CalendarMode[]).map((m) => (
-              <button
-                key={m}
-                type="button"
-                onClick={() => onModeChange(m)}
-                aria-pressed={mode === m}
-                className={`px-3 py-0.5 text-[11px] font-medium capitalize ${
-                  mode === m ? "bg-primary text-primary-contrast" : "bg-surface text-muted"
-                }`}
-              >
-                {m}
-              </button>
-            ))}
-          </div>
+          <Segmented
+            ariaLabel="Week or month"
+            options={[
+              { key: "week", label: "Week" },
+              { key: "month", label: "Month" },
+            ]}
+            value={mode}
+            onChange={(m) => onModeChange(m as CalendarMode)}
+          />
         </div>
 
         <button

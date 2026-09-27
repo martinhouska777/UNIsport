@@ -115,7 +115,7 @@ export default function ClaimSeatSheet({
           );
         })}
         {shown.length === 0 && (
-          <div className="rounded-xl border border-dashed border-border bg-surface-2 px-4 py-6 text-center text-[12px] text-muted">
+          <div className="rounded-xl border border-dashed border-border bg-surface px-4 py-6 text-center text-[12px] text-muted">
             Nobody on the list matches “{q.trim()}”.
           </div>
         )}

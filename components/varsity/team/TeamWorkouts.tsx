@@ -91,6 +91,7 @@ import { fetchLineupsFor } from "@/lib/varsity/lineupStore";
 import type { Boat } from "@/lib/varsity/coachLineup";
 import type { SessionMap } from "@/lib/varsity/coachPlan";
 import { IconChevronRight, IconPlus, IconSearch } from "@/components/icons";
+import { markColor } from "@/lib/colorMarks";
 
 /*
   WHAT A ROW WAS, AS A COLOUR AND A WORD (owner, 2026-09-21).
@@ -484,12 +485,12 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
       )}
       <div className="flex flex-col gap-1.5">
         {rows.length === 0 && (
-          <div className="rounded-2xl border border-dashed border-border bg-surface-2 px-4 py-8 text-center text-[12px] text-muted">
+          <div className="rounded-2xl border border-dashed border-border bg-surface px-4 py-8 text-center text-[12px] text-muted">
             {side === "erg" ? "No erg workouts yet." : "No water workouts yet."}
           </div>
         )}
         {rows.length > 0 && shownRows.length === 0 && (
-          <div className="rounded-2xl border border-dashed border-border bg-surface-2 px-4 py-8 text-center text-[12px] text-muted">
+          <div className="rounded-2xl border border-dashed border-border bg-surface px-4 py-8 text-center text-[12px] text-muted">
             No workouts match.
           </div>
         )}
@@ -509,7 +510,7 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
               >
                 <span
                   className="h-2.5 w-2.5 flex-shrink-0 rounded-full"
-                  style={{ background: intensityOf(w.session)?.color ?? "var(--muted)" }}
+                  style={{ background: markColor(intensityOf(w.session)?.color) ?? "var(--muted)" }}
                 />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
@@ -546,7 +547,7 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
               >
                 <span
                   className="h-2.5 w-2.5 flex-shrink-0 rounded-full"
-                  style={{ background: intensityOf(planSessions[r.dayKey])?.color ?? "var(--accent)" }}
+                  style={{ background: markColor(intensityOf(planSessions[r.dayKey])?.color) ?? "var(--accent)" }}
                 />
                 <div className="min-w-0 flex-1">
                   <span className="block truncate text-[13px] font-semibold text-text">{raceTitle(r.dayKey)}</span>
@@ -611,7 +612,7 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
                   onClick={() => startRace(c.dayKey)}
                   className="flex w-full items-center gap-3 rounded-2xl border border-border bg-surface px-3.5 py-3 text-left active:bg-surface-2"
                 >
-                  <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ background: intensityOf(c.session)?.color ?? "var(--muted)" }} />
+                  <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ background: markColor(intensityOf(c.session)?.color) ?? "var(--muted)" }} />
                   <div className="min-w-0 flex-1">
                     <span className="block truncate text-[13px] font-semibold text-text">
                       {c.session.description.trim() || sessionLabel(c.session)}

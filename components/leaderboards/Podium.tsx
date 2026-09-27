@@ -201,7 +201,7 @@ export default function Podium({
     .filter((e): e is PodiumEntry => !!e);
 
   return (
-    <div className="relative mt-3 overflow-hidden rounded-2xl border border-border bg-surface-2 px-2.5 pt-3.5">
+    <div className="relative mt-3 overflow-hidden rounded-2xl border border-border bg-surface px-2.5 pt-3.5">
       {corner && <div className="absolute right-2 top-2 z-[1]">{corner}</div>}
       <div className="flex items-end justify-center gap-2">
         {order.map((e) => (

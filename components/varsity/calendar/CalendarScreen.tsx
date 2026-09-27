@@ -85,6 +85,7 @@ import {
   type DayOutReason,
   type DaysOut,
 } from "@/lib/varsity/daysOut";
+import { markColor } from "@/lib/colorMarks";
 
 const MONTHS = [
   "January", "February", "March", "April", "May", "June",
@@ -176,7 +177,7 @@ function DayOutSection({
     const meta = reasonMeta(value.reason);
     return (
       <div className="mt-3 flex items-start gap-3 rounded-2xl border border-border bg-surface px-3.5 py-3">
-        <span className="mt-1 h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ background: meta.color }} />
+        <span className="mt-1 h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ background: markColor(meta.color) }} />
         <div className="min-w-0 flex-1">
           <div className="text-[13px] font-semibold text-text">{dayOutName(value.reason)}</div>
           {value.note && <div className="mt-0.5 text-[12px] leading-relaxed text-text-2">{value.note}</div>}
@@ -208,7 +209,7 @@ function DayOutSection({
                 reason === r.key ? "border-primary bg-primary-tint text-text" : "border-border bg-surface text-muted"
               }`}
             >
-              <span className="h-2 w-2 rounded-full" style={{ background: r.color }} />
+              <span className="h-2 w-2 rounded-full" style={{ background: markColor(r.color) }} />
               {r.label}
             </button>
           ))}
@@ -308,7 +309,7 @@ function DaySheet({
               >
                 <span
                   className="mt-1 h-2.5 w-2.5 flex-shrink-0 rounded-full"
-                  style={{ background: logColor(l, planned) }}
+                  style={{ background: markColor(logColor(l, planned)) }}
                 />
                 <div className="min-w-0 flex-1">
                   <div className="text-[13px] font-semibold text-text">{name}</div>
