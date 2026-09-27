@@ -6,8 +6,8 @@ import HeroPhones from "@/components/landing/HeroPhones";
 import SchoolCrest from "@/components/SchoolCrest";
 import { useSchoolCycle } from "@/components/landing/useSchoolCycle";
 import { crestFor } from "@/lib/crests";
-import { accent, HERO_CYCLE_MS } from "@/lib/landingSchools";
-import { about, doors, hero } from "@/lib/landingCopy";
+import { accent, HERO_CYCLE_MS, schools } from "@/lib/landingSchools";
+import { doors, hero } from "@/lib/landingCopy";
 
 /*
   THE INTRO — one screen that introduces the app and then hands over to the
@@ -15,16 +15,32 @@ import { about, doors, hero } from "@/lib/landingCopy";
 
   SPLIT, LIKE HEVY'S FRONT PAGE (owner, 2026-09-27: "ok udelej to tak jak
   doporucujes a udelej to visually pleasing a ten text pod tim at se da dobre
-  cist jako u hevy"). The words on the left, the two phones on the right, the
-  three doors across the whole width underneath:
+  cist jako u hevy"). The words and the three doors on the left, the two
+  phones and the eight shields on the right:
 
-      FREE FOR STUDENTS                ┌───────┐
-      Your campus.               ┌─────┤       │
-      Your gym.                  │Gyms │ Match │
-      Your people.               │     │       │
-      Find every gym on campus…  └─────┤       │
-      ( Get started with .edu → )      └───────┘
-      [ Student ]      [ Varsity athlete ]      [ Coach ]
+      FREE FOR STUDENTS                     ┌───────┐
+      Your campus.                    ┌─────┤       │
+      Your gym.                       │Gyms │ Match │
+      Your people.                    │     │       │
+      Find every gym on campus…       └─────┤       │
+      ( Get started with .edu → )           └───────┘
+      [Student] [Varsity athlete] [Coach]  ◆ ◇ ◇ ◇ ◇ ◇ ◇ ◇
+
+  THE DOORS MOVED UP INTO THE LEFT HALF (owner, same evening: "move the
+  student athletes boxes to left and make them bigger … then there will be
+  space under phones"). Across the whole width they held the phones to the
+  height left above them; three tall cards under the button hand the right
+  half its full height, so the phones grew (up to 360px from 330) and the
+  shields fit underneath. Picked from three previews (three across / stacked
+  rows; school name + dots / shields / all eight names): three across, and
+  the shields.
+
+  "Read why I built it" and "Got a link from your team? Join with your invite"
+  stood in a line under the doors and are CUT here, on the owner's call the
+  same evening, so the rest fits. Neither is lost: the Why is the bar's About
+  tab, the About section further down this page and the Contact section's
+  link; the invite is the Varsity feature list's button on this page, the
+  button on /for/varsity (Interlude) and the line under /login.
 
   • NO WORDMARK HERE. The name lives in the top bar, top left, the way Hevy's
     does, so the bar draws its lockup from the first frame. (The intro opened
@@ -38,20 +54,18 @@ import { about, doors, hero } from "@/lib/landingCopy";
     a stranger reads, it filed the app with theirs. "Your campus" is the line
     none of them can say.
   • The body is set to be READ, not glanced at: ink rather than grey, left-
-    aligned, about sixty characters a line, 1.55 leading. Hevy's own: 17px,
-    1.5, near-black, a 490px column. Centred and balanced, ours read as a
-    ragged block of grey.
-  • Below lg there is no room beside the words: the phones are not drawn and
-    the column centres itself, as Hevy's does on a phone.
+    aligned, 1.5 leading. Hevy's own: 17px, 1.5, near-black, a 490px column.
+    Centred and balanced, ours read as a ragged block of grey.
+  • Below lg there is no room beside the words: the phones and the shields
+    are not drawn and the column centres itself, as Hevy's does on a phone.
 
   IT IS ONE SCREEN, AND IT MEASURES ITSELF (owner, 2026-08-23: "ideally I
   wanted this to be one section; now I have to scroll to see it"). Every
   vertical size here — the padding, the gaps, the headline — is a clamp with a
   vh term, so the intro shrinks to fit the window it is in instead of running
-  past the fold on a short laptop. The phones go one further: they take the
-  height the words and the doors leave them (.l-hero-split, app/globals.css).
-  At 34vh alone they pushed the intro 5–40px past the bottom of every window
-  under 860px tall (owner, 2026-09-27: "it doesn't fit on bottom").
+  past the fold on a short laptop. The left half sets the height; the right
+  half stretches to it, and the phones take whatever the shields leave them
+  (.l-hero-stage is a size container, app/globals.css).
 
   The line that stood under the button — "Customized for each campus, with
   its own gyms, houses and colours. Yours can be next." — is CUT here, on the
@@ -71,7 +85,8 @@ import { about, doors, hero } from "@/lib/landingCopy";
   button, "sport" in the name, those two, and the glow — to two; the owner
   put the glow back the same evening ("make sure it changes the background
   color"). The pill never followed it: it states a fact, and a fact in a
-  school's colour could read as that school's.
+  school's colour could read as that school's. The shields each wear their
+  own school, always; the one showing stands up and at full strength.
 
   Contrast: accent() in lib/landingSchools.ts guarantees the button's label
   clears 4.5:1 against whichever school is showing — the promise the blue
@@ -101,7 +116,7 @@ const DOOR_TONE = [
    those doors opens on its own statement instead — see LandingPage. */
 export default function LandingHero() {
   const section = useRef<HTMLElement>(null);
-  const { i, count, school } = useSchoolCycle(section, HERO_CYCLE_MS);
+  const { i, count, school, pick } = useSchoolCycle(section, HERO_CYCLE_MS);
   const { color, ink } = accent(school.color);
 
   /* The pair stays on this section. It used to be published on <html> too, so
@@ -116,17 +131,17 @@ export default function LandingHero() {
       id="top"
       ref={section}
       style={{ "--sc": color, "--sc-ink": `var(--color-${ink})` } as CSSProperties}
-      className="l-glow-accent relative z-[1] mx-auto flex min-h-[calc(100svh-var(--l-bar,0px))] w-full max-w-[1280px] flex-col justify-center px-6 pt-[clamp(18px,3.2vh,48px)] pb-[clamp(30px,4.4vh,60px)] sm:px-8"
+      className="l-glow-accent relative z-[1] mx-auto flex min-h-[calc(100svh-var(--l-bar,0px))] w-full max-w-[1280px] flex-col justify-center px-6 pt-[clamp(16px,2.6vh,40px)] pb-[clamp(20px,3.4vh,48px)] sm:px-8"
     >
-      <div className="l-hero-split grid items-center gap-x-10 lg:grid-cols-2">
+      <div className="l-hero-split grid items-stretch gap-x-10 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] xl:gap-x-12 xl:grid-cols-[minmax(0,1.12fr)_minmax(0,1fr)]">
         <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
           {/* 1 · The one fact, and the headline — one line of it per line. */}
-          <div className="l-in-1 mb-[clamp(12px,2.2vh,22px)] inline-flex items-center gap-2 rounded-full border border-l-accent-soft bg-l-accent-dim px-3 py-1.5 font-mono text-[12.5px] font-medium tracking-wider uppercase text-l-accent">
+          <div className="l-in-1 mb-[clamp(10px,1.8vh,20px)] inline-flex items-center gap-2 rounded-full border border-l-accent-soft bg-l-accent-dim px-3 py-1.5 font-mono text-[12.5px] font-medium tracking-wider uppercase text-l-accent">
             <span className="l-pulse h-1.5 w-1.5 rounded-full bg-l-accent shadow-[0_0_8px_var(--color-l-accent)]" />
             {hero.badge}
           </div>
 
-          <h1 className="l-in-1 font-display text-[clamp(46px,min(6.4vw,8.8vh),90px)] font-normal leading-[0.98] tracking-[-0.02em] text-l-text">
+          <h1 className="l-in-1 font-display text-[clamp(46px,min(6.4vw,8.4vh),90px)] font-normal leading-[0.98] tracking-[-0.02em] text-l-text">
             <span className="block">{hero.headline[0]}</span>{" "}
             <span className="block">{hero.headline[1]}</span>{" "}
             <em className="block italic text-(--sc) transition-colors duration-700 ease-in-out motion-reduce:transition-none">
@@ -135,12 +150,13 @@ export default function LandingHero() {
           </h1>
 
           {/* 2 · The body, set to be read (see the note at the top). */}
-          <p className="l-in-2 mt-[clamp(16px,2.8vh,28px)] max-w-[30em] text-[clamp(16px,1.25vw,18px)] leading-[1.55] tracking-[-0.005em] text-pretty text-l-text">
+          <p className="l-in-2 mt-[clamp(12px,2vh,22px)] max-w-[34em] text-[clamp(16px,1.2vw,17px)] leading-[1.5] tracking-[-0.005em] text-pretty text-l-text">
             {hero.body}
           </p>
 
-          {/* 3 · The way in. */}
-          <div className="l-in-3 mt-[clamp(20px,3.6vh,36px)] flex flex-col items-center lg:items-start">
+          {/* 3 · The way in — closer under the words than it was (owner: "less
+              space around button"). */}
+          <div className="l-in-3 mt-[clamp(14px,2.4vh,24px)]">
             <Link
               href={hero.primaryHref}
               className="group l-lift inline-flex items-center justify-center gap-2 rounded-full bg-(--sc) py-4 pr-7 pl-5 text-[15px] font-semibold tracking-tight text-(--sc-ink) transition-[transform,background-color,color] duration-700 ease-in-out hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-l-text motion-reduce:transition-none"
@@ -154,67 +170,76 @@ export default function LandingHero() {
               <Arrow className="transition-transform group-hover:translate-x-1" />
             </Link>
           </div>
-        </div>
 
-        {/* 0 · The two phones — the right half, from lg up. */}
-        <HeroPhones i={i} count={count} />
-      </div>
-
-      {/* 4 · The three doors, each with its own tint (owner, 2026-09-15) —
-          blue for the student, gold for the varsity athlete, red for the
-          coach, whose title is written in that red the way Varsity athlete
-          is written in gold. Each opens that audience's own view — the same
-          page as its tab. Across the whole column now, under both halves. */}
-      <div className="l-in-4 mt-[clamp(20px,4vh,44px)] flex w-full flex-col">
-        <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-3">
-          {doors.map((d, i) => (
-            <Link
-              key={d.label}
-              href={d.href}
-              className={`group flex flex-col items-start gap-[clamp(2px,0.6vh,6px)] rounded-2xl border px-5 py-[clamp(9px,1.6vh,16px)] text-left transition-[color,background-color,border-color,translate] hover:-translate-y-0.5 ${DOOR_TONE[i].card}`}
-            >
-              <span
-                className={`flex w-full items-center justify-between font-display text-[clamp(22px,3.2vh,30px)] tracking-tight ${DOOR_TONE[i].label}`}
+          {/* 4 · The three doors, each with its own tint (owner, 2026-09-15) —
+              blue for the student, gold for the varsity athlete, red for the
+              coach, whose title is written in that red the way Varsity athlete
+              is written in gold. Each opens that audience's own view — the same
+              page as its tab. Three tall cards under the button now. */}
+          <div className="l-in-4 mt-[clamp(18px,3.4vh,36px)] grid w-full grid-cols-1 gap-3 sm:grid-cols-3">
+            {doors.map((d, n) => (
+              <Link
+                key={d.label}
+                href={d.href}
+                className={`group flex flex-col items-start gap-[clamp(6px,1.1vh,12px)] rounded-2xl border px-4 py-[clamp(12px,2.2vh,20px)] xl:px-[18px] text-left transition-[color,background-color,border-color,translate] hover:-translate-y-0.5 ${DOOR_TONE[n].card}`}
               >
-                {d.label}
-                <Arrow className="text-l-text-3 transition-transform group-hover:translate-x-1" />
-              </span>
-              <span className="text-[13px] leading-snug text-l-text-2">{d.sub}</span>
-            </Link>
-          ))}
+                <span
+                  className={`flex w-full items-start justify-between gap-2 font-display text-[clamp(24px,3.4vh,31px)] leading-[1.02] tracking-tight ${DOOR_TONE[n].label}`}
+                >
+                  {d.label}
+                  <Arrow className="mt-2 flex-none text-l-text-3 transition-transform group-hover:translate-x-1" />
+                </span>
+                <span className="text-[13px] leading-snug text-l-text-2 xl:text-[13.5px]">{d.sub}</span>
+              </Link>
+            ))}
+          </div>
         </div>
 
-        {/* Two small ways on, on one line so the screen keeps its height.
+        {/* 0 · The right half, from lg up: the two phones, as tall as the
+            left half lets them be, and the eight shields under them. */}
+        <div className="hidden min-h-0 flex-col lg:flex">
+          <HeroPhones i={i} count={count} className="min-h-0 flex-1" />
 
-            The WHY (owner, 2026-09-04) points down this same page, where the
-            first paragraph of it now stands: the story behind the app is the
-            piece a student is most likely to be moved by, and until now it
-            was two clicks away.
-
-            The INVITE is the rower's: they usually arrive holding a link from
-            their captain, and shouldn't have to scroll to find where it goes.
-            It keeps the varsity gold; the Why wears the page's link blue,
-            underlined — the same as on Contact, since it was ink here and
-            blue there (launch audit 2026-09-27, item 45). */}
-        <div className="mt-[clamp(10px,2vh,24px)] flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[14px] text-l-text-2 lg:justify-start">
-          <Link
-            href={hero.whyHref}
-            className="tap44 inline-block font-medium text-l-accent underline underline-offset-4 transition-colors"
+          {/* THE EIGHT SHIELDS (owner, 2026-09-27) — the room the doors left
+              under the phones, filled the way Campus Colours fills its own: one
+              mark per school, the one showing lit. Clickable: a shield puts its
+              school on the phones, the button and "Your people.", and holds it
+              there until the intro is scrolled away (useSchoolCycle). 44px to
+              the thumb, like the dots. They name no school in words (the
+              name is each button's label, for a screen reader). */}
+          <div
+            className="l-in-4 flex flex-none items-end justify-center gap-1 pt-[clamp(8px,1.6vh,18px)]"
+            role="group"
+            aria-label="Choose a university"
           >
-            {about.readWhy} →
-          </Link>
-          <span aria-hidden="true" className="text-l-text-3 max-sm:hidden">
-            ·
-          </span>
-          <p>
-            {hero.inviteNote}{" "}
-            <Link
-              href="/join"
-              className="tap44 inline-block font-medium text-l-varsity underline-offset-4 transition-colors hover:underline"
-            >
-              {hero.inviteCta} →
-            </Link>
-          </p>
+            {schools.map((sc, n) => {
+              const on = n === i;
+              const pair = accent(sc.color);
+              return (
+                <button
+                  key={sc.key}
+                  type="button"
+                  aria-label={sc.name}
+                  aria-pressed={on}
+                  onClick={() => pick(n)}
+                  className="group grid h-12 w-10 cursor-pointer place-items-end justify-center rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-l-text"
+                >
+                  <SchoolCrest
+                    crest={crestFor(sc.key)}
+                    className={`h-[34px] w-[29px] origin-bottom transition-[opacity,transform] duration-500 ease-in-out motion-reduce:transition-none ${
+                      on ? "scale-[1.28] opacity-100" : "opacity-40 group-hover:opacity-80"
+                    }`}
+                    style={
+                      {
+                        "--crest-field": pair.color,
+                        "--crest-mark": `var(--color-${pair.ink})`,
+                      } as CSSProperties
+                    }
+                  />
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
     </section>

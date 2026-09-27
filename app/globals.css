@@ -1154,28 +1154,23 @@
     • the pair's own size, --hp-max: 34vh, never over 330px. Big enough to
       read (owner, 2026-09-16: "make the phones a little bit bigger so you can
       comfortably read it") — 306px on a 900px-tall window;
-    • the height there is left. From lg up the split (.l-hero-split) grows
-      into whatever the screen has under the bar once the doors and the air
-      are placed — never past the pair's own box, so on a tall window the
-      spare room still goes above and below the whole intro as before — and
-      the phones' half of it (.l-hero-stage) is a size container, so 100cqh
-      there is exactly the room they have.
+    • the height there is left. The left half (words, button, doors) sets
+      the split's height; the right half stretches to it, the shields take
+      their row, and the phones' stage (.l-hero-stage) is a size container
+      holding the rest, so 100cqh there is exactly the room they have.
   At 34vh alone the intro ran 5–40px past the bottom of every window under
   860px tall (owner, 2026-09-27: "it doesn't fit on bottom"). The words never
   give way to the phones: the split's min-height is its content, which beats
   the cap (a flex item's own minimum would not).
 */
-.l-hero-split { --hp-max: min(34vh, 330px); }
-@media (min-width: 1024px) {
-  .l-hero-split {
-    flex: 1 1 auto;
-    min-height: min-content;
-    max-height: calc(var(--hp-max) * 1.86);
-  }
-}
+/* 2026-09-27 (evening): the doors moved into the left half, so the right half
+   is the full height of the left one and the phones are capped higher — 44vh,
+   never over 360px. The stage is also a WIDTH it must fit (100cqw): at lg the
+   half is ~430px wide, narrower than a 44vh pair. */
+.l-hero-split { --hp-max: min(44vh, 360px); }
 .l-hero-stage { container-type: size; align-self: stretch; }
 .l-hero-phones {
-  --hp: min(var(--hp-max), 100cqh / 1.86);
+  --hp: min(var(--hp-max), 100cqh / 1.86, 100cqw / 1.6);
   position: relative;
   width: calc(var(--hp) * 1.58);
   height: calc(var(--hp) * 1.86);

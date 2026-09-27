@@ -126,6 +126,23 @@ undoing that half of launch-audit item 13. /for/students still has the
 availability line under its button. Re-measure with a puppeteer script that
 reads `#top`'s bottom against the window height, not with the Browser pane.
 
+**Later that evening: the doors moved into the left half, and eight shields
+went under the phones** (owner: "move the student athletes boxes to left and
+make them bigger … then there will be space under phones and we can fill it
+with something … names of schools"). Picked from three real previews: three
+tall doors side by side under the button, and the row of eight crests under
+the phones — the one showing lit and standing up. The shields are CLICKABLE:
+one puts its school on the phones, the button and "Your people." and holds it
+until the intro is scrolled away (`pick` in useSchoolCycle, the Campus Colours
+dot rule). The "Read why I built it · Got a link from your team?" line is CUT
+from the intro; both live elsewhere (bar's About tab, About and Contact
+sections; the Varsity feature list's button, /for/varsity, /login). The left
+half now sets the split's height and the right half stretches to it, so the
+phones grow (`--hp-max` 44vh ≤ 360px, also capped by the stage's width). The
+left half is 1.3fr at lg and 1.12fr from xl, or the gold door ran 9 lines and
+spilled 10px at 1024x768. Measured one screen at 1024x768, 1280x800, 1536x800,
+1440x900 and 1920x1080; no sideways scroll at 768 or 390.
+
 **Three claims are cut** because the app cannot do them: *life goals* (no such
 profile field), *track your partner's calendar* (`/people/[id]` has no
 calendar), and *AI logging on a student beat* (`erg-scan` is under

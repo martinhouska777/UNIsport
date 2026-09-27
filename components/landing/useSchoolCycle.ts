@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type RefObject } from "react";
+import { useCallback, useEffect, useState, type RefObject } from "react";
 import { schools } from "@/lib/landingSchools";
 
 /*
@@ -22,10 +22,25 @@ import { schools } from "@/lib/landingSchools";
 */
 export function useSchoolCycle(ref: RefObject<HTMLElement | null>, periodMs: number) {
   const [{ i, count }, setCycle] = useState({ i: 0, count: 2 });
+  // A school the visitor picked (the shields under the intro's phones). It
+  // holds until the intro is scrolled off screen, as a dot does in Campus
+  // Colours — the cycle stops arguing with the click.
+  const [held, setHeld] = useState(false);
+  const pick = useCallback((n: number) => {
+    setHeld(true);
+    setCycle((s) => ({ i: n, count: Math.max(s.count, Math.min(n + 2, schools.length)) }));
+  }, []);
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
+    if (held) {
+      const release = new IntersectionObserver(([e]) => {
+        if (!e.isIntersecting) setHeld(false);
+      });
+      release.observe(el);
+      return () => release.disconnect();
+    }
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
     let timer: ReturnType<typeof setInterval> | null = null;
@@ -61,7 +76,7 @@ export function useSchoolCycle(ref: RefObject<HTMLElement | null>, periodMs: num
       io.disconnect();
       document.removeEventListener("visibilitychange", onVisible);
     };
-  }, [ref, periodMs]);
+  }, [ref, periodMs, held]);
 
-  return { i, count, school: schools[i] };
+  return { i, count, school: schools[i], pick };
 }

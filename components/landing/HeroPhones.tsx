@@ -95,7 +95,7 @@ function subscribeWide(cb: () => void) {
   return () => mq.removeEventListener("change", cb);
 }
 
-export default function HeroPhones({ i, count }: { i: number; count: number }) {
+export default function HeroPhones({ i, count, className = "" }: { i: number; count: number; className?: string }) {
   const { mode, chosen } = usePhoneMode();
   const wide = useSyncExternalStore(subscribeWide, () => window.matchMedia(LG).matches, () => false);
   // The visitor's choice if they made one; white if they have not.
@@ -105,7 +105,7 @@ export default function HeroPhones({ i, count }: { i: number; count: number }) {
   const school = schools[i];
 
   return (
-    <div aria-hidden="true" className="l-hero-stage pointer-events-none hidden lg:grid lg:place-items-center">
+    <div aria-hidden="true" className={`l-hero-stage pointer-events-none hidden lg:grid lg:place-items-center ${className}`}>
       <div className="l-hero-phones">
         {PHONES.map((p) => (
           <div key={p.shot} className="l-hero-phone" data-side={p.side}>
