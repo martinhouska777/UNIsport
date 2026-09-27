@@ -1,11 +1,10 @@
-import TeamScreen from "@/components/varsity/team/TeamScreen";
+import { redirect } from "next/navigation";
 
 /*
-  THE SQUAD, from the Profile. The same roster the Team tab used to hold
-  behind a switch and the same one the coach reads — one component, asked for
-  one of its halves (owner, 2026-09-21). It lives under /varsity/team so the
-  Team tab stays lit while you are in it.
+  THE ROSTER MOVED to /varsity/profile/team (audit, 2026-09-27), so the
+  Profile tab stays lit while you are in it. This address is kept only so an
+  old link or a page the app cached lands on the new one.
 */
-export default function VarsityRosterPage() {
-  return <TeamScreen only="roster" />;
+export default function OldRosterPage() {
+  redirect("/varsity/profile/team");
 }

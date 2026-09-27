@@ -1273,7 +1273,7 @@ export default function ProfileScreen() {
           boards a switch, and looking somebody up is a thing you do from a
           profile. ── */}
       <Link
-        href="/varsity/team/roster"
+        href="/varsity/profile/team"
         className="mx-3.5 mt-2.5 flex w-[calc(100%-1.75rem)] items-center gap-3 rounded-2xl border border-border bg-surface px-3.5 py-3"
       >
         <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[10px] border border-primary-line bg-primary-tint text-primary">

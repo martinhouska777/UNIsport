@@ -540,7 +540,18 @@ function WeekStrip({
     the day you tapped is in. `idx` is only what the arrows have walked to.
   */
   const weekOf = selected ? weeks.findIndex((w) => w.days.includes(selected)) : -1;
-  const shown = weekOf >= 0 ? weekOf : idx;
+  /*
+    NO DAY PICKED MEANS TODAY, and the strip shows today's week (audit,
+    2026-09-27). The week arrows used to walk `idx` on their own when nothing
+    was picked, so after "next week" the strip showed next week while the day
+    below still said Today — with no "Back to today" to press, since the page
+    believed it was on today. Now a week step carries today's weekday into
+    the new week (see `go`), and clearing the day brings the strip home.
+    `idx` is only walked in a block that doesn't hold today at all.
+  */
+  const todayWeek = weeks.findIndex((w) => w.days.some((d) => d.today));
+  const today = todayWeek >= 0 ? (weeks[todayWeek].days.find((d) => d.today) ?? null) : null;
+  const shown = weekOf >= 0 ? weekOf : todayWeek >= 0 ? todayWeek : idx;
   const current = weeks[shown];
 
   /*
@@ -561,8 +572,10 @@ function WeekStrip({
     const to = Math.max(0, Math.min(last, shown + delta));
     if (to === shown) return;
     setIdx(to);
-    if (weekOf >= 0 && selected) {
-      const col = weeks[weekOf].days.indexOf(selected);
+    // The day being looked at: the picked one, or today when none is.
+    const from = weekOf >= 0 && selected ? selected : today;
+    if (from) {
+      const col = weeks[shown].days.indexOf(from);
       const days = weeks[to].days;
       const day = days[col] ?? days[days.length - 1];
       if (day) onSelect(day);

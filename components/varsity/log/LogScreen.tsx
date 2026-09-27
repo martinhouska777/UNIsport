@@ -742,6 +742,26 @@ function PrescribedRow({
   );
 }
 
+/*
+  A REST SLOT, said the way Home says it: the coach's words if they wrote any
+  ("Labor Day"), otherwise "Off". The same card and stripe as a session above,
+  with the AM/PM corner mark — and nothing to press, because there is nothing
+  to log.
+*/
+function OffRow({ session, period, color }: { session: Session; period: string; color: string }) {
+  return (
+    <div className="relative overflow-hidden rounded-2xl border border-border bg-surface py-3 pr-3.5 pl-5">
+      <span aria-hidden className="absolute inset-y-0 left-0 w-1.5" style={{ background: color }} />
+      <span className="absolute top-1.5 right-4 font-mono text-[9px] font-medium tracking-[0.14em] text-muted">
+        {period}
+      </span>
+      <div className="text-[15px] font-semibold leading-snug text-text">
+        {session.description.trim() || sessionLabel(session)}
+      </div>
+    </div>
+  );
+}
+
 function ExtraRow({ log, onEdit }: { log: LogEntry; onEdit: () => void }) {
   const meta = catMeta[log.category ?? "other"] ?? catMeta.other;
   return (
@@ -1069,6 +1089,17 @@ function LogScreenInner() {
     () => (plan ? prescribedForDay(plan, selected).filter((p) => p.session.category !== "off") : []),
     [plan, selected],
   );
+  /*
+    …BUT IT IS STILL SAID (audit, 2026-09-27). Leaving the Off slots out made a
+    rest day read "Nothing in the plan this day." while Home showed the same day
+    as two "Off" cards. They are listed as what Home calls them — plain cards
+    with no Log button — and "Nothing in the plan" is kept for a day the plan
+    really has nothing on.
+  */
+  const offSlots: { period: Period; dayKey: string; session: Session }[] = useMemo(
+    () => (plan ? prescribedForDay(plan, selected).filter((p) => p.session.category === "off") : []),
+    [plan, selected],
+  );
 
   /*
     The linked session's editor, open the moment the plan and the logs are in.
@@ -1207,32 +1238,37 @@ function LogScreenInner() {
           <SectionLabel>{isToday ? "Today" : dateLabel.split(",")[0]}</SectionLabel>
           {loading ? (
             <div className="py-6 text-center text-[12px] text-muted">Loading…</div>
-          ) : prescribed.length === 0 ? (
+          ) : prescribed.length === 0 && offSlots.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-border bg-surface px-4 py-6 text-center text-[12px] text-muted">
               Nothing in the plan this day.
             </div>
           ) : (
             <div className="flex flex-col gap-2">
-              {prescribed.map((p) => {
-                return (
-                  <PrescribedRow
-                    key={p.dayKey}
-                    session={p.session}
-                    period={p.period}
-                    color={sessionColor(p.session)}
-                    log={planLogByKey[p.dayKey]}
-                    onLog={() =>
-                      setEditor({
-                        mode: "plan",
-                        period: p.period,
-                        dayKey: p.dayKey,
-                        session: p.session,
-                        existing: planLogByKey[p.dayKey],
-                      })
-                    }
-                  />
-                );
-              })}
+              {/* Morning before afternoon, the Off slots in their place. */}
+              {[...prescribed, ...offSlots]
+                .sort((a, b) => a.period.localeCompare(b.period))
+                .map((p) =>
+                  p.session.category === "off" ? (
+                    <OffRow key={p.dayKey} session={p.session} period={p.period} color={sessionColor(p.session)} />
+                  ) : (
+                    <PrescribedRow
+                      key={p.dayKey}
+                      session={p.session}
+                      period={p.period}
+                      color={sessionColor(p.session)}
+                      log={planLogByKey[p.dayKey]}
+                      onLog={() =>
+                        setEditor({
+                          mode: "plan",
+                          period: p.period,
+                          dayKey: p.dayKey,
+                          session: p.session,
+                          existing: planLogByKey[p.dayKey],
+                        })
+                      }
+                    />
+                  ),
+                )}
             </div>
           )}
         </div>

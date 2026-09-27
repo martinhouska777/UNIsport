@@ -27,6 +27,7 @@ import { roster, rosterById, sideMeta, COX_COLOR, COX_INK, type Athlete } from "
 import { teamProfile } from "@/lib/varsity/teamProfiles";
 import { statusOptions, prPieces, type StatusTone } from "@/lib/varsity/athleteProfile";
 import {
+  IconArrowLeft,
   IconSearch,
   IconChevronRight,
   IconUser,
@@ -315,6 +316,7 @@ export default function TeamScreen({
   only,
   rowAction,
   inConsole = false,
+  back,
 }: {
   athleteHref?: (a: Athlete) => string | null;
   /* The Coach Console shows the two halves as two bottom tabs (Team = roster,
@@ -326,6 +328,9 @@ export default function TeamScreen({
   rowAction?: (a: Athlete) => React.ReactNode;
   /* The Coach Console — see WorkoutBoard's `inConsole`. */
   inConsole?: boolean;
+  /* Where the back arrow goes, when this screen was opened from somewhere
+     rather than being a tab of its own — the roster from the Profile. */
+  back?: string;
 } = {}) {
   const [picked, setTab] = useState<Tab>("roster");
   const tab = only ?? picked;
@@ -387,7 +392,22 @@ export default function TeamScreen({
           2026-09-21): the tab opens on the workouts, and the roster is a row
           on the Profile. The switch survives only where something still asks
           for both halves at once. */}
-      <h1 className="sr-only">{only === "workouts" ? "Workouts" : "Team"}</h1>
+      {back ? (
+        /* OPENED FROM THE PROFILE: a way back to it, and the name of where
+           you are — the same round arrow and title All boats uses. */
+        <div className="mb-1 flex items-center gap-2">
+          <Link
+            href={back}
+            aria-label="Back to Profile"
+            className="tap44 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-surface-2 text-muted"
+          >
+            <IconArrowLeft size={14} />
+          </Link>
+          <h1 className="truncate text-[15px] font-semibold text-text">Team</h1>
+        </div>
+      ) : (
+        <h1 className="sr-only">{only === "workouts" ? "Workouts" : "Team"}</h1>
+      )}
 
       {/* sub-navigation
 
