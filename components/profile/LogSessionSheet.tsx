@@ -306,12 +306,12 @@ export default function LogSessionSheet({
         </h1>
       </div>
 
-      {/* Body. THE ORDER (owner, 2026-09-27: "make the log a session UI
-          better"): what you did first, because it decides the rest of the
-          form; then the quick log — the body parts — which on its own is the
-          whole session; then the when / where / who in one card; the extras
-          last. No "(optional)" on every label: only the date is needed, and
-          it is already filled in. */}
+      {/* Body. THE ORDER (owner, 2026-09-27): what you did first, because it
+          decides the rest of the form; then the quick log — the body parts —
+          which on its own is the whole session, and the exercises right under
+          it; then the when / where / who in one card; then "How did it go?"
+          and the photos. No "(optional)" on every label: only the date is
+          needed, and it is already filled in. */}
       <div className="flex-1 overflow-y-auto px-4 pb-8 pt-4">
         <div className="mx-auto w-full max-w-screen-sm">
           {/* data-tour: the tour lights the activity picker (lib/tour.ts). */}
@@ -361,6 +361,151 @@ export default function LogSessionSheet({
                   );
                 })}
               </div>
+            </>
+          )}
+
+          {/* Exercises — gym / other (Hevy-style per-set logging). Straight
+              under the body parts (owner, 2026-09-27: "put the exercises above
+              date"): both are the answer to "what did you do". */}
+          {usesExercises && (
+            <>
+              <div className="mb-2 mt-6 flex items-center justify-between">
+                <span className={labelCls.replace("mb-2", "mb-0")}>Exercises</span>
+                {/* kg / lb toggle for this workout */}
+                <Segmented
+                  ariaLabel="Weight unit"
+                  options={(["kg", "lb"] as WeightUnit[]).map((u) => ({ key: u, label: u }))}
+                  value={weightUnit}
+                  onChange={(u) => setWeightUnit(u)}
+                />
+              </div>
+
+              <div className="flex flex-col gap-3">
+                {exercises.map((ex, i) => {
+                  let normalNo = 0; // running number of "normal" sets within this exercise
+                  return (
+                    <div key={i} className="overflow-hidden rounded-2xl border border-border bg-surface">
+                      {/* Exercise header */}
+                      <div className="flex items-center gap-2 py-1 pl-3.5 pr-1.5">
+                        <div className="min-w-0 flex-1 py-2">
+                          <div className="truncate text-[15px] font-semibold text-text">{ex.name}</div>
+                          {ex.muscle && <div className="text-[12px] text-muted">{ex.muscle}</div>}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeExercise(i)}
+                          aria-label="Remove exercise"
+                          className="tap44 press-icon flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-muted hover:text-danger"
+                        >
+                          <IconTrash size={16} />
+                        </button>
+                      </div>
+
+                      {/* Column header — lined up with the set rows below */}
+                      <div className="flex items-center gap-2 px-3 pb-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
+                        <span className="w-9 text-center">Set</span>
+                        <span className="flex-1 text-center">{weightUnit}</span>
+                        <span className="flex-1 text-center">Reps</span>
+                        <span className="w-9" aria-hidden />
+                        <span className="w-6" aria-hidden />
+                      </div>
+
+                      {/* Set rows. A finished set turns green, the colour of its
+                          tick — not the school colour, which means "chosen". */}
+                      <div className="flex flex-col">
+                        {ex.sets.map((s, j) => {
+                          if (!s.type) normalNo += 1;
+                          const setLabel = s.type ? SET_TYPE_LABEL[s.type] : String(normalNo);
+                          const isWarm = s.type === "W";
+                          return (
+                            <div
+                              key={j}
+                              className={`flex items-center gap-2 px-3 py-1 transition-colors ${
+                                s.done ? "bg-success-tint" : ""
+                              }`}
+                            >
+                              <button
+                                type="button"
+                                onClick={() => cycleSetType(i, j, s.type)}
+                                aria-label="Set type"
+                                className={`h-9 w-9 flex-shrink-0 rounded-lg text-[13px] font-bold tabular-nums ${
+                                  s.type
+                                    ? isWarm
+                                      ? "bg-warn-tint text-warn"
+                                      : "bg-accent-tint text-accent"
+                                    : "bg-surface-2 text-text"
+                                }`}
+                              >
+                                {setLabel}
+                              </button>
+                              <input
+                                value={s.weight}
+                                onChange={(e) => patchSet(i, j, { weight: e.target.value.replace(/[^\d.]/g, "") })}
+                                inputMode="decimal"
+                                placeholder="0"
+                                aria-label={`Set ${j + 1} ${weightUnit}`}
+                                className="h-10 w-full min-w-0 flex-1 rounded-lg border border-transparent bg-surface-2 px-2 text-center text-base font-semibold tabular-nums text-text outline-none placeholder:font-normal placeholder:text-muted focus:border-primary"
+                              />
+                              <input
+                                value={s.reps}
+                                onChange={(e) => patchSet(i, j, { reps: e.target.value.replace(/[^\d]/g, "") })}
+                                inputMode="numeric"
+                                placeholder="0"
+                                aria-label={`Set ${j + 1} reps`}
+                                className="h-10 w-full min-w-0 flex-1 rounded-lg border border-transparent bg-surface-2 px-2 text-center text-base font-semibold tabular-nums text-text outline-none placeholder:font-normal placeholder:text-muted focus:border-primary"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => patchSet(i, j, { done: !s.done })}
+                                aria-label={s.done ? "Mark set not done" : "Mark set done"}
+                                aria-pressed={!!s.done}
+                                className={`tap44 press-icon flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg ${
+                                  s.done ? "bg-success text-background" : "bg-surface-2 text-muted"
+                                }`}
+                              >
+                                <IconCheck size={16} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => removeSet(i, j)}
+                                aria-label="Remove set"
+                                className="tap44 press-icon flex h-9 w-6 flex-shrink-0 items-center justify-center text-muted opacity-60 hover:text-danger hover:opacity-100"
+                              >
+                                <IconX size={13} />
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* Add set */}
+                      <div className="p-3 pt-2">
+                        <button
+                          type="button"
+                          onClick={() => addSet(i)}
+                          className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-surface-2 py-2.5 text-[13px] font-semibold text-text active:text-primary"
+                        >
+                          <IconPlus size={14} /> Add set
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* data-tour: on a fresh session the list above is empty, so this
+                  IS the exercise section as far as the tour is concerned. */}
+              <button
+                type="button"
+                data-tour="log-exercises"
+                onClick={() => setPickerOpen(true)}
+                className={`${exercises.length ? "mt-3" : ""} flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-surface py-3.5 text-[14px] font-semibold text-text active:border-primary-line`}
+              >
+                <span className="text-primary">
+                  <IconPlus size={16} />
+                </span>
+                Add exercise
+              </button>
             </>
           )}
 
@@ -480,139 +625,18 @@ export default function LogSessionSheet({
             </p>
           )}
 
-          {/* Exercises — gym / other (Hevy-style per-set logging) */}
-          {usesExercises && (
-            <>
-              <div className="mb-2 mt-6 flex items-center justify-between">
-                <span className={labelCls.replace("mb-2", "mb-0")}>Exercises</span>
-                {/* kg / lb toggle for this workout */}
-                <Segmented
-                  ariaLabel="Weight unit"
-                  options={(["kg", "lb"] as WeightUnit[]).map((u) => ({ key: u, label: u }))}
-                  value={weightUnit}
-                  onChange={(u) => setWeightUnit(u)}
-                />
-              </div>
-
-              <div className="flex flex-col gap-3">
-                {exercises.map((ex, i) => {
-                  let normalNo = 0; // running number of "normal" sets within this exercise
-                  return (
-                    <div key={i} className="overflow-hidden rounded-2xl border border-border bg-surface">
-                      {/* Exercise header */}
-                      <div className="flex items-center gap-2 border-b border-border px-3 py-2.5">
-                        <div className="min-w-0 flex-1">
-                          <div className="truncate text-[14px] font-semibold text-text">{ex.name}</div>
-                          {ex.muscle && <div className="text-[11px] text-muted">{ex.muscle}</div>}
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => removeExercise(i)}
-                          aria-label="Remove exercise"
-                          className="tap44 press-icon flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-surface-2 text-muted hover:text-danger"
-                        >
-                          <IconTrash size={14} />
-                        </button>
-                      </div>
-
-                      {/* Column header */}
-                      <div className="flex items-center gap-2 px-3 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-                        <span className="w-8 text-center">Set</span>
-                        <span className="flex-1 text-center">{weightUnit}</span>
-                        <span className="flex-1 text-center">Reps</span>
-                        <span className="w-8 text-center" aria-hidden />
-                        <span className="w-6" aria-hidden />
-                      </div>
-
-                      {/* Set rows */}
-                      <div className="flex flex-col">
-                        {ex.sets.map((s, j) => {
-                          if (!s.type) normalNo += 1;
-                          const setLabel = s.type ? SET_TYPE_LABEL[s.type] : String(normalNo);
-                          const isWarm = s.type === "W";
-                          return (
-                            <div
-                              key={j}
-                              className={`flex items-center gap-2 px-3 py-1.5 ${
-                                s.done ? "bg-primary-tint" : ""
-                              }`}
-                            >
-                              <button
-                                type="button"
-                                onClick={() => cycleSetType(i, j, s.type)}
-                                aria-label="Set type"
-                                className={`h-8 w-8 flex-shrink-0 rounded-lg text-[12px] font-semibold ${
-                                  s.type
-                                    ? isWarm
-                                      ? "bg-warn-tint text-warn"
-                                      : "bg-accent-tint text-accent"
-                                    : "bg-surface-2 text-text"
-                                }`}
-                              >
-                                {setLabel}
-                              </button>
-                              <input
-                                value={s.weight}
-                                onChange={(e) => patchSet(i, j, { weight: e.target.value.replace(/[^\d.]/g, "") })}
-                                inputMode="decimal"
-                                placeholder="0"
-                                className="w-full flex-1 rounded-lg border border-border bg-surface-2 px-2 py-2 text-center text-base text-text outline-none focus:border-primary"
-                              />
-                              <input
-                                value={s.reps}
-                                onChange={(e) => patchSet(i, j, { reps: e.target.value.replace(/[^\d]/g, "") })}
-                                inputMode="numeric"
-                                placeholder="0"
-                                className="w-full flex-1 rounded-lg border border-border bg-surface-2 px-2 py-2 text-center text-base text-text outline-none focus:border-primary"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => patchSet(i, j, { done: !s.done })}
-                                aria-label={s.done ? "Mark set not done" : "Mark set done"}
-                                className={`tap44 press-icon flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg ${
-                                  s.done ? "bg-success text-background" : "bg-surface-2 text-muted"
-                                }`}
-                              >
-                                <IconCheck size={15} />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => removeSet(i, j)}
-                                aria-label="Remove set"
-                                className="tap44 press-icon flex h-8 w-6 flex-shrink-0 items-center justify-center text-muted hover:text-danger"
-                              >
-                                <IconX size={13} />
-                              </button>
-                            </div>
-                          );
-                        })}
-                      </div>
-
-                      {/* Add set */}
-                      <button
-                        type="button"
-                        onClick={() => addSet(i)}
-                        className="flex w-full items-center justify-center gap-1.5 border-t border-border py-2.5 text-[12px] font-medium text-muted active:text-primary"
-                      >
-                        <IconPlus size={14} /> Add set
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* data-tour: on a fresh session the list above is empty, so this
-                  IS the exercise section as far as the tour is concerned. */}
-              <button
-                type="button"
-                data-tour="log-exercises"
-                onClick={() => setPickerOpen(true)}
-                className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-surface py-3 text-[13px] font-medium text-muted active:border-primary-line active:text-primary"
-              >
-                <IconPlus size={15} /> Add exercise
-              </button>
-            </>
-          )}
+          {/* THE NOTE, asked as a question (owner, 2026-09-27: "name it how did
+              it go"). A few lines, not one: it is the question you answer in
+              a sentence or two. */}
+          <label className="block">
+            <span className={`${labelCls} mt-6 block`}>How did it go?</span>
+            <textarea
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              rows={3}
+              className={`${inputCls} resize-none leading-snug`}
+            />
+          </label>
 
           {/* Photos — they become Memories on the profile */}
           <div className={`${labelCls} mt-6`}>Photos</div>
@@ -656,13 +680,6 @@ export default function LogSessionSheet({
               <IconPlus size={20} />
             </button>
           </div>
-
-          <div className={`${labelCls} mt-6`}>Note</div>
-          <input
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            className={inputCls}
-          />
 
           {error && <p className="mt-3 text-[12px] text-danger">Couldn’t save: {error}</p>}
         </div>
