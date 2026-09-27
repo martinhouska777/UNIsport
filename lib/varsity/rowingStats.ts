@@ -40,11 +40,10 @@
 */
 import type { LogEntry } from "@/lib/varsity/logStore";
 import type { SessionMap } from "@/lib/varsity/coachPlan";
-import { parseSessionKey } from "@/lib/varsity/coachPlan";
 import { plannedMetres } from "@/lib/varsity/plannedDistance";
 import { formatDistance, formatDuration, type Units } from "@/lib/varsity/units";
 import { rowingCategories, logCategoryColor, logCategoryLabel } from "@/lib/varsity/athleteProfile";
-import { expectedDays, trainedDays, type Span } from "@/lib/varsity/athleteStats";
+import { consistencyOf, expectedDays, planSlots, trainedDays, type Span } from "@/lib/varsity/athleteStats";
 import { dayOutReasons, dayOutName, countDaysOut, type DaysOut } from "@/lib/varsity/daysOut";
 import { recoverySummary, scoreQuestions, type CheckIns } from "@/lib/varsity/checkIn";
 
@@ -85,29 +84,19 @@ const isRowed = (l: LogEntry) => rowingCategories.has(l.category ?? "");
  * morning still shows up immediately.
  */
 function planCounts(logs: LogEntry[], plan: SessionMap, span: Span) {
-  const start = asDate(span.startIso);
-  const end = asDate(span.endIso);
-  const todayIso = toIso(new Date());
-
-  const loggedKeys = new Set(logs.filter((l) => l.dayKey && isTraining(l)).map((l) => l.dayKey!));
-
-  const planned: string[] = [];
+  /* The slots themselves come from planSlots (athleteStats.ts) — the same
+     count the Consistency percentage is made of, so "Missed 0" and anything
+     under 100% can never sit side by side again (audit, 2026-09-27). */
+  const slots = planSlots(logs, plan, span);
+  const planned = slots.keys;
   /* Only the slots that ASKED FOR A DISTANCE, and how far each asked for. */
   const asked: Record<string, number> = {};
-  for (const [key, session] of Object.entries(plan)) {
-    if (session.category === "off") continue;
-    const parsed = parseSessionKey(key);
-    if (!parsed) continue;
-    if (parsed.date < start || parsed.date > end) continue;
-    const iso = toIso(parsed.date);
-    if (iso > todayIso) continue; // still ahead — neither done nor missed
-    if (iso === todayIso && !loggedKeys.has(key)) continue; // the day isn't over
-    planned.push(key);
-    const want = plannedMetres(session);
+  for (const key of planned) {
+    const want = plannedMetres(plan[key]);
     if (want) asked[key] = want;
   }
 
-  const done = planned.filter((k) => loggedKeys.has(k)).length;
+  const done = slots.done;
   const extra = logs.filter((l) => isTraining(l) && !l.dayKey).length;
 
   /*
@@ -138,24 +127,30 @@ function planCounts(logs: LogEntry[], plan: SessionMap, span: Span) {
 }
 
 /**
- * THE WINDOW CUT INTO WEEKS, from its first day, as minutes trained in each.
+ * THE WINDOW CUT INTO WEEKS, from its first day, as minutes trained in each
+ * and how many days each one actually has.
  *
- * Every built-in window is a whole number of weeks (7, 14, 28, 84 days), so
- * these are real weeks; only a hand-picked window can end on a short one.
+ * The LAST chunk is short whenever the window ends mid-week — a week-by-week
+ * window ends TODAY, so on a Tuesday its last week is two days long. It is
+ * kept with its real length so an average can divide by the days that have
+ * happened, not by seven (audit, 2026-09-27: "per-week averages read about
+ * 20% low early in the week").
  */
-function weekMinutes(logs: LogEntry[], span: Span): number[] {
+function weekMinutes(logs: LogEntry[], span: Span): { minutes: number; days: number }[] {
   const end = asDate(span.endIso);
-  const totals: number[] = [];
+  const out: { minutes: number; days: number }[] = [];
   for (const d = asDate(span.startIso); d <= end; d.setDate(d.getDate() + 7)) {
     const from = toIso(d);
     const stop = new Date(d);
     stop.setDate(stop.getDate() + 6);
-    const to = toIso(stop > end ? end : stop);
-    totals.push(
-      sum(logs.filter((l) => l.logDate >= from && l.logDate <= to).map((l) => l.minutes ?? 0)),
-    );
+    const last = stop > end ? end : stop;
+    const to = toIso(last);
+    out.push({
+      minutes: sum(logs.filter((l) => l.logDate >= from && l.logDate <= to).map((l) => l.minutes ?? 0)),
+      days: Math.round((last.getTime() - d.getTime()) / 86_400_000) + 1,
+    });
   }
-  return totals;
+  return out;
 }
 
 /* The kinds of training that get their own "time on" cell, boat first. */
@@ -198,7 +193,9 @@ export function rowingReport(
   const expected = expectedDays(span);
   const trained = trainedDays(training);
   const days = Math.min(trained, expected);
-  const consistency = expected ? Math.min(100, Math.round((days / expected) * 100)) : 0;
+  /* The plan's own count when there is a plan over the window — the same one
+     Planned / Done / Missed below are made of (athleteStats → consistencyOf). */
+  const consistency = consistencyOf(training, span, plan);
 
   const counts = planCounts(logs, plan, span);
   const hasPlan = counts.planned > 0 || counts.extra > 0;
@@ -217,14 +214,20 @@ export function rowingReport(
   const spanDays =
     Math.round((asDate(span.endIso).getTime() - asDate(span.startIso).getTime()) / 86_400_000) + 1;
   const weeks = spanDays > 7 ? weekMinutes(training, span) : [];
-  const firstWeek = weeks.findIndex((v) => v > 0);
+  const firstWeek = weeks.findIndex((w) => w.minutes > 0);
   const countedWeeks = firstWeek < 0 ? [] : weeks.slice(firstWeek);
+  /* Divided by the WEEKS THAT HAVE HAPPENED — the days counted, over seven —
+     so an unfinished last week counts for the part of it that is behind us.
+     Never less than one week: two days are not stretched into a week. */
+  const countedDays = sum(countedWeeks.map((w) => w.days));
   const weekCells: StatCell[] = countedWeeks.length
     ? [
         {
           key: "avgWeek",
           label: "Avg week",
-          value: formatDuration(Math.round(sum(countedWeeks) / countedWeeks.length)),
+          value: formatDuration(
+            Math.round(sum(countedWeeks.map((w) => w.minutes)) / Math.max(1, countedDays / 7)),
+          ),
         },
       ]
     : [];
@@ -417,8 +420,15 @@ export function rowingReport(
         {
           key: "consistency",
           label: "Consistency",
-          value: `${consistency}%`,
-          tone: consistency >= 80 ? "success" : consistency >= 50 ? "text" : "warn",
+          value: consistency == null ? dash : `${consistency}%`,
+          tone:
+            consistency == null
+              ? "muted"
+              : consistency >= 80
+                ? "success"
+                : consistency >= 50
+                  ? "text"
+                  : "warn",
         },
         { key: "days", label: "Days trained", value: `${days}` },
         ...planCells,

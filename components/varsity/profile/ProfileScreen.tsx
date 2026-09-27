@@ -1122,7 +1122,8 @@ export default function ProfileScreen() {
   const metric = metricByKey(profile.statMetric);
   const points = buckets.map((b) => ({
     label: b.label,
-    value: metric.value(b.logs, b.span),
+    // The plan goes in for consistency, which is read against it.
+    value: metric.value(b.logs, b.span, planSessions),
     latest: b.latest,
   }));
   const chart = chartTypeOf(profile.statChart);

@@ -40,6 +40,7 @@ import type { LogEntry } from "./logStore";
 import { squadPeople, squadReport, type SquadPerson } from "./squadStats";
 import { formatDistance, formatDuration, type Units } from "./units";
 import type { StatGroup } from "./rowingStats";
+import { rowingCategories } from "./athleteProfile";
 
 const MO = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const DOW = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -167,7 +168,12 @@ export function teamBuckets(range: TeamRange, now: Date): BareBucket[] {
     const lastMonday = weekStart(last);
     const firstMonday = first ? weekStart(first) : shift(lastMonday, -(Math.ceil(range.days / 7) - 1) * 7);
     for (let start = new Date(firstMonday); start <= lastMonday; start = shift(start, 7)) {
-      const end = shift(start, 6);
+      /* NO BUCKET REACHES PAST THE WINDOW'S LAST DAY — today, for a built-in
+         window (audit, 2026-09-27) — so this week ends today, not on Sunday,
+         the same rule as the athlete's own buckets. Its label still names the
+         whole week. */
+      const sunday = shift(start, 6);
+      const end = sunday > last ? last : sunday;
       out.push({
         start,
         end,
@@ -186,10 +192,10 @@ export function allKeys(now: Date): string[] {
   const most = Math.max(...teamRanges.map((r) => r.days));
   const today = day0(now);
   // A week-bucketed window starts on the Monday of its first week, which can
-  // lie before "days back" — reach back to that Monday. And THIS week runs to
-  // its Sunday: the card on the Team tab adds up the whole week, boats the
-  // coach has already drawn up for Thursday included, and the screen must
-  // say the same number the card does.
+  // lie before "days back" — reach back to that Monday. (The read runs on to
+  // this week's Sunday; the buckets themselves stop at today, and since
+  // 2026-09-27 the card on the Team tab is made of the same LOGS as this
+  // screen, not of the boats.)
   const first = weekStart(shift(today, -(most - 1)));
   return keysBetween(first, shift(weekStart(today), 6));
 }
@@ -242,9 +248,16 @@ const trainingIn = (b: TeamBucket) => b.logs.filter((l) => l.category !== "off")
 const sumOf = (b: TeamBucket, of: (l: LogEntry) => number) =>
   trainingIn(b).reduce((a, l) => a + of(l), 0);
 
-/** The squad's rowed metres in a bucket, divided by the people who trained. */
+/*
+  The squad's ROWED metres in a bucket — the water and the erg, the same as
+  "Distance per person" under the graph and the athlete's own Metres rowed —
+  divided by the people who trained. A run's kilometres used to count here
+  too, so the column and the Total under it could disagree.
+*/
 export const bucketMetres = (b: TeamBucket): number =>
-  b.trained.length ? sumOf(b, (l) => l.metres ?? 0) / b.trained.length : 0;
+  b.trained.length
+    ? sumOf(b, (l) => (rowingCategories.has(l.category ?? "") ? (l.metres ?? 0) : 0)) / b.trained.length
+    : 0;
 
 /** The squad's minutes in a bucket, divided by the people who trained. */
 export const bucketMinutes = (b: TeamBucket): number =>

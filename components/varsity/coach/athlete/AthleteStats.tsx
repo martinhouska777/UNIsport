@@ -128,7 +128,7 @@ export default function AthleteStats({
   );
   const points = buckets.map((b) => ({
     label: b.label,
-    value: metric.value(b.logs, b.span),
+    value: metric.value(b.logs, b.span, plan),
     latest: b.latest,
   }));
   const span = buckets.length

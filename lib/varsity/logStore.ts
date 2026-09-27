@@ -219,16 +219,36 @@ export async function fetchSquadLogsInRange(
     }
     return out;
   }
+  /*
+    PAGED, NEWEST FIRST (audit, 2026-09-27). The database hands back at most a
+    thousand rows per request, and this read was one request, oldest first: a
+    squad of forty over a semester is several thousand sessions, so the cut
+    fell on the NEWEST ones — this week, the one a coach opens the screen for.
+    Now it asks page after page, newest first, until a page comes back short.
+    If the page limit below is ever reached, what is left out is the oldest.
+  */
   const supabase = createClient();
-  const { data, error } = await supabase
-    .from("varsity_logs")
-    .select("*")
-    .in("athlete_id", ids)
-    .gte("log_date", fromIso)
-    .lte("log_date", toIso)
-    .order("created_at", { ascending: true });
-  if (error || !data) return out;
-  for (const r of data as (Row & { athlete_id: string })[]) {
+  const PAGE = 1000;
+  const MAX_PAGES = 30;
+  const rows: (Row & { athlete_id: string })[] = [];
+  for (let page = 0; page < MAX_PAGES; page++) {
+    const { data, error } = await supabase
+      .from("varsity_logs")
+      .select("*")
+      .in("athlete_id", ids)
+      .gte("log_date", fromIso)
+      .lte("log_date", toIso)
+      .order("log_date", { ascending: false })
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false })
+      .range(page * PAGE, page * PAGE + PAGE - 1);
+    if (error || !data) break;
+    rows.push(...(data as (Row & { athlete_id: string })[]));
+    if (data.length < PAGE) break;
+  }
+  // Handed back oldest first per athlete, the order this read always had.
+  for (let i = rows.length - 1; i >= 0; i--) {
+    const r = rows[i];
     (out[r.athlete_id] ??= []).push(rowToEntry(r));
   }
   return out;

@@ -192,10 +192,17 @@ export function squadPeople(
 const per = (people: SquadPerson[], of: (p: SquadPerson) => number): number | null =>
   people.length ? sum(people.map(of)) / people.length : null;
 
-/** How many weeks the window is, so "in a week" means something. */
+/*
+  How many weeks the window is, so "in a week" means something — counted only
+  up to TODAY (audit, 2026-09-27). A window read week by week ends on this
+  week's Sunday, so on a Tuesday it used to divide by five days nobody could
+  have trained yet, and every "in a week" read about a fifth low.
+*/
 const weeksIn = (span: Span): number => {
+  const todayIso = toIso(new Date());
+  const endIso = span.endIso < todayIso ? span.endIso : todayIso;
   const days =
-    Math.round((asDate(span.endIso).getTime() - asDate(span.startIso).getTime()) / 86_400_000) + 1;
+    Math.round((asDate(endIso).getTime() - asDate(span.startIso).getTime()) / 86_400_000) + 1;
   return Math.max(1, days / 7);
 };
 

@@ -24,6 +24,7 @@
 import type { LogEntry } from "@/lib/varsity/logStore";
 import { formatDistance, formatDuration, type Units } from "@/lib/varsity/units";
 import { rowingCategories } from "@/lib/varsity/athleteProfile";
+import { parseSessionKey, type SessionMap } from "@/lib/varsity/coachPlan";
 
 /* ── The window being looked at ─────────────────────────────────────────── */
 
@@ -170,6 +171,72 @@ export function expectedDays(span: Span): number {
 export const trainedDays = (logs: LogEntry[]) =>
   new Set(logs.filter((l) => asDate(l.logDate).getDay() !== 0).map((l) => l.logDate)).size;
 
+const isoOf = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+/**
+ * THE PLAN'S SESSIONS INSIDE A SPAN, and how many of them were logged — the
+ * ONE count that "Planned", "Done", "Missed" and "Consistency" are all made of
+ * (audit, 2026-09-27: "Consistency 92%" sat next to "Missed 0", because the
+ * percentage counted every day but Sunday as a day you should have trained,
+ * rest days in the plan included, while "Missed" counted the plan).
+ *
+ * A planned session is one slot on the coach's plan (day + AM/PM), done when
+ * the athlete logged against that slot. Rest slots are not sessions. NOTHING
+ * STILL AHEAD IS COUNTED: a day after today is neither done nor missed, and
+ * today's own slots count only once they are logged.
+ *
+ * `covered` says the plan has anything at all on the days of the span that
+ * have happened — rest days included — so a week the coach gave off is read
+ * as "nothing asked", not as a week nobody trained.
+ */
+export function planSlots(
+  logs: LogEntry[],
+  plan: SessionMap | undefined,
+  span: Span,
+): { keys: string[]; done: number; covered: boolean } {
+  const keys: string[] = [];
+  let covered = false;
+  if (!plan) return { keys, done: 0, covered };
+  const todayIso = isoOf(new Date());
+  const loggedKeys = new Set(
+    logs.filter((l) => l.dayKey && l.category !== "off").map((l) => l.dayKey!),
+  );
+  for (const [key, session] of Object.entries(plan)) {
+    const parsed = parseSessionKey(key);
+    if (!parsed) continue;
+    const iso = isoOf(parsed.date);
+    if (iso < span.startIso || iso > span.endIso || iso > todayIso) continue;
+    covered = true;
+    if (session.category === "off") continue;
+    if (iso === todayIso && !loggedKeys.has(key)) continue; // the day isn't over
+    keys.push(key);
+  }
+  return { keys, done: keys.filter((k) => loggedKeys.has(k)).length, covered };
+}
+
+/**
+ * CONSISTENCY, as a share. WITH A PLAN over the span it is the plan's own
+ * count — the sessions done out of the sessions asked for — so it is 100%
+ * exactly when nothing was missed. With no plan it falls back to the days
+ * trained out of every day but Sunday. Null when the plan asked for nothing
+ * (a week off): there is no share of nothing.
+ */
+export function consistencyOf(
+  logs: LogEntry[],
+  span: Span,
+  plan?: SessionMap,
+): number | null {
+  const slots = planSlots(logs, plan, span);
+  if (slots.covered) {
+    return slots.keys.length ? Math.min(100, Math.round((slots.done / slots.keys.length) * 100)) : null;
+  }
+  const expected = expectedDays(span);
+  if (!expected) return null;
+  const training = logs.filter((l) => l.category !== "off");
+  return Math.min(100, Math.round((trainedDays(training) / expected) * 100));
+}
+
 /* ── The measures ───────────────────────────────────────────────────────── */
 
 export type StatMetric = {
@@ -180,9 +247,10 @@ export type StatMetric = {
     The measure over ONE span — used for a single bucket AND for the whole
     range. One function for both is what keeps the total honest: a percentage
     is recomputed over the range rather than summed, and a distance adds up the
-    same way whichever window you ask about.
+    same way whichever window you ask about. The coach's (published) plan is
+    handed in for the one measure that is read against it, consistency.
   */
-  value: (logs: LogEntry[], span: Span) => number;
+  value: (logs: LogEntry[], span: Span, plan?: SessionMap) => number;
   format: (value: number, units: Units) => string;
   /*
     A fixed top for the graph's Y axis. Only a percentage has one: scaled to its
@@ -230,11 +298,9 @@ export const statMetrics: StatMetric[] = [
     key: "consistency",
     label: "Consistency",
     empty: "Log a session and your consistency will chart here.",
-    value: (logs, span) => {
-      const expected = expectedDays(span);
-      if (!expected) return 0;
-      return Math.min(100, Math.round((trainedDays(logs) / expected) * 100));
-    },
+    /* The same count as the Consistency cell and "Missed" under the graph
+       (consistencyOf) — a week the plan gave off is an empty column. */
+    value: (logs, span, plan) => consistencyOf(logs, span, plan) ?? 0,
     format: (v) => `${Math.round(v)}%`,
     axisMax: 100,
   },

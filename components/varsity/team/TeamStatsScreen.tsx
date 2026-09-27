@@ -51,8 +51,10 @@
   fact about the day, and no average replaces them. Nothing is compared in
   colour: a taper week is supposed to fall.
 
-  Boats are read ONCE for the longest built-in window; a custom window or a
-  zoom that reaches outside it fetches only the days it is missing. Portalled
+  Boats and logs are read ONCE for the longest built-in window; a custom
+  window or a zoom that reaches outside it fetches only the days it is
+  missing (the logs as well since 2026-09-27 — before that a window older
+  than 91 days drew an empty graph). Portalled
   to <body> and re-wrapped in <ThemeProvider>, like the athlete's, so it
   covers the tab bar and keeps the Varsity theme. All colours are theme tokens.
 */
@@ -110,6 +112,12 @@ type Dates = { start: string; end: string };
    dependency every render, and the whole window would be rebuilt each time. */
 const NO_LOGS: Record<string, LogEntry[]> = {};
 
+/** "2026-06-29" → "2026-06-28". */
+const dayBefore = (iso: string): string => {
+  const [y, m, d] = iso.split("-").map(Number);
+  return toIso(new Date(y, m - 1, d - 1));
+};
+
 /* A word from the data, into a theme token. The data never names a colour. */
 const toneClass: Record<StatTone, string> = {
   text: "text-text",
@@ -144,6 +152,13 @@ export default function TeamStatsScreen({ onClose }: { onClose: () => void }) {
     the read lands. Every figure on the screen is made of these.
   */
   const [logs, setLogs] = useState<Record<string, LogEntry[]> | null>(null);
+  /* The first day those logs reach back to, and who they were asked for — so a
+     window that starts EARLIER (two dates chosen, or a zoom) fetches only the
+     days it is missing, like the boats do. It used to read those 91 days and
+     no more, and a custom window older than that drew an empty graph (audit,
+     2026-09-27). */
+  const [logsFrom, setLogsFrom] = useState<string | null>(null);
+  const [squadIds, setSquadIds] = useState<string[] | null>(null);
   /** Account id to the name printed in the table of people. */
   const [names, setNames] = useState<Record<string, string>>({});
   /* The published plan, so planned / done / missed / on top can be counted:
@@ -203,12 +218,12 @@ export default function TeamStatsScreen({ onClose }: { onClose: () => void }) {
         const byId: Record<string, string> = {};
         for (const m of approved) byId[m.userId] = m.name;
         setNames(byId);
-        const read = await fetchSquadLogsInRange(
-          approved.map((m) => m.userId),
-          from,
-          to,
-        );
-        if (active) setLogs(read);
+        const ids = approved.map((m) => m.userId);
+        const read = await fetchSquadLogsInRange(ids, from, to);
+        if (!active) return;
+        setSquadIds(ids);
+        setLogsFrom(from);
+        setLogs(read);
       })
       .catch(() => active && setLogs({}));
     return () => {
@@ -264,6 +279,31 @@ export default function TeamStatsScreen({ onClose }: { onClose: () => void }) {
     };
   }, [missing]);
 
+  /* …and the same for the LOGS: a window that starts before the first day
+     read fetches the days in between, once, and they join what is there. */
+  const windowFrom = bare.length ? toIso(bare[0].start) : null;
+  const gapFrom = canRead && logs && logsFrom && windowFrom && windowFrom < logsFrom ? windowFrom : null;
+  const gapTo = gapFrom && logsFrom ? dayBefore(logsFrom) : null;
+  useEffect(() => {
+    if (!gapFrom || !gapTo || !squadIds) return;
+    let active = true;
+    fetchSquadLogsInRange(squadIds, gapFrom, gapTo)
+      .then((older) => {
+        if (!active) return;
+        setLogs((cur) => {
+          const next: Record<string, LogEntry[]> = { ...(cur ?? {}) };
+          for (const [id, list] of Object.entries(older)) next[id] = [...list, ...(next[id] ?? [])];
+          return next;
+        });
+        setLogsFrom(gapFrom);
+      })
+      // A failed read must not leave the screen waiting on it for ever.
+      .catch(() => active && setLogsFrom(gapFrom));
+    return () => {
+      active = false;
+    };
+  }, [gapFrom, gapTo, squadIds]);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
@@ -272,7 +312,7 @@ export default function TeamStatsScreen({ onClose }: { onClose: () => void }) {
 
   /* What the screen actually reads: nothing at all unless this is a coach. */
   const squadLogs = canRead ? logs : NO_LOGS;
-  const loading = lineups === null || squadLogs === null || missing.length > 0;
+  const loading = lineups === null || squadLogs === null || missing.length > 0 || !!gapFrom;
   const buckets: TeamBucket[] = useMemo(
     () => (lineups ? fillBuckets(range, now, lineups, squadLogs ?? {}) : []),
     [lineups, squadLogs, range, now],
