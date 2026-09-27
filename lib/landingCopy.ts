@@ -83,8 +83,12 @@ export const hero = {
        "Every gym on campus, and the people in them. Somebody trains at your
         hour, at your level, in your building — you have never met them."
      The pill above it now carries "free for students", which is what that pass
-     was really for. */
-  body: "Find every gym on campus. Match with students verified by their .edu email. Plan the session in the chat. Log it together.",
+     was really for.
+
+     2026-09-27 — the leaderboards joined the last action, in the owner's own
+     words: "log it together and participate in your college leaderboards".
+     Transcribed as given. */
+  body: "Find every gym on campus. Match with students verified by their .edu email. Plan the session in the chat. Log it together and participate in your college leaderboards.",
   primaryCta: "Get started with .edu",
   /* Where "Get started" goes. The sign-in page opens on LOG IN by default,
      which greeted every new student with "Welcome back" (website review,
