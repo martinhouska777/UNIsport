@@ -19,6 +19,7 @@ import { fetchPlan } from "@/lib/varsity/planStore";
 import { fetchTodayLineups } from "@/lib/varsity/lineupStore";
 import { claimRosterSeat, fetchSeatIdentity, type SeatIdentity } from "@/lib/varsity/athleteProfile";
 import LineupBoatCard, { isMyBoat } from "@/components/varsity/LineupBoatCard";
+import KindTag from "@/components/varsity/KindTag";
 import UploadVideoSheet from "@/components/varsity/UploadVideoSheet";
 import ClaimSeatSheet from "@/components/varsity/ClaimSeatSheet";
 import StillOutCard from "@/components/varsity/home/StillOutCard";
@@ -29,9 +30,10 @@ import { buildAthleteHome, daySessionToCard, logSpanFor } from "@/lib/varsity/at
 import { fetchLogsInRange, LOG_DAYS_BACK } from "@/lib/varsity/logStore";
 import { SkeletonCards, SkeletonLines } from "@/components/ui/Skeleton";
 import SectionLabel from "@/components/ui/SectionLabel";
+import { markColor } from "@/lib/colorMarks";
 import {
   kindBar,
-  kindWash,
+  kindColor,
   kindBlock,
   kindLegend,
   type HomeData,
@@ -667,17 +669,24 @@ function SessionCard({
 }) {
   const [open, setOpen] = useState(false);
   const boats = lineups.filter((l) => l.periodKey === s.periodKey);
+  const mark = markColor(kindColor[s.kind]) ?? kindColor[s.kind];
   const openable = boats.length > 0;
 
   const card = (
     /*
-      THE CARD IS WASHED IN ITS OWN COLOUR. The 3px bar down the left is the
-      kind at full strength and the wash carries it across, fading out before
-      the right edge (kindWash, lib/varsity/home.ts) — so a card says what it
-      is without a word. Nothing else is painted on top of it: no foot bar, no
-      second border colour.
+      A WHITE CARD, A STRIPE AND A TAG (owner, 2026-09-27, picked from five
+      previews — "C"). The card used to be washed in its kind's colour, fading
+      from green to white across it; the owner did not like the fade. Now the
+      colour is a 4px stripe down the left and a tag beside the time naming
+      the session ("Water · UT1"), in the same colour — the SAME card as the
+      coach's Today (CoachTodayScreen SlotCard). The tag replaces the grey line
+      that used to say the same words under the title.
+
+      The colour goes through markColor (lib/colorMarks.ts): the coach's sheet
+      yellow is too pale to see as a thin line on white, so a stripe or a word
+      in it is taken darker until it reads. Content colour, applied inline.
     */
-    <div className="relative overflow-hidden rounded-xl border border-border bg-surface" style={kindWash(s.kind)}>
+    <div className="relative overflow-hidden rounded-xl border border-border bg-surface shadow-card">
       <div
         className="flex"
         onClick={openable ? () => setOpen((o) => !o) : undefined}
@@ -695,13 +704,14 @@ function SessionCard({
             : undefined
         }
       >
-        <div className="w-[3px] flex-shrink-0" style={kindBar(s.kind)} />
+        <div className="w-1 flex-shrink-0" style={{ background: mark }} />
         <div className="flex-1 p-3">
           <div className="mb-1 flex items-center justify-between">
-            <div className="flex items-center gap-2">
+            <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 pr-8">
               <span className="rounded border border-border bg-surface-2 px-1.5 py-0.5 text-[10px] font-semibold tracking-[0.06em] text-muted">
                 {s.period}
               </span>
+              {s.detail && <KindTag label={s.detail} color={mark} />}
               {/* Only when there IS one. The squad trains at the same
                   boathouse every week, so the place is for the exception —
                   "meet at the vans" — and blank the rest of the time (owner,
@@ -712,7 +722,6 @@ function SessionCard({
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 flex-1">
               <div className="text-[13px] font-medium text-text">{s.title}</div>
-              <div className="mt-0.5 text-[11px] leading-relaxed text-muted">{s.detail}</div>
               {/* What you logged, on its own line instead of in a bar across
                   the foot of the card. */}
               {s.status === "done" && (

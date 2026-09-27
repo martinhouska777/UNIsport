@@ -34,6 +34,7 @@ import {
 } from "@/lib/varsity/coachToday";
 import { IconAnchor, IconCalendar, IconChevronRight, IconPencil, IconPlus } from "@/components/icons";
 import { markColor } from "@/lib/colorMarks";
+import KindTag from "@/components/varsity/KindTag";
 
 const PLAN = "/varsity/coach/plan";
 const LINEUP = "/varsity/coach/lineup";
@@ -76,7 +77,12 @@ function LineupPill({ slot }: { slot: TodaySlot }) {
 }
 
 /*
-  ONE SLOT — a plain card, and the session's colour is the DOT.
+  ONE SLOT — a white card with the session's colour as a STRIPE down the left
+  and a TAG under the workout (owner, 2026-09-27: the same card as the
+  athlete's Home, picked from five previews — "C"). What follows is why the
+  colour left the card's background in the first place, which still holds.
+
+  (Until then: a plain card, and the session's colour was the DOT.)
 
   The whole card used to be washed in that colour. Two things were wrong with
   it. The wash is a `background`, so it REPLACED the card's own surface — which
@@ -93,10 +99,13 @@ function LineupPill({ slot }: { slot: TodaySlot }) {
 function SlotCard({ slot }: { slot: TodaySlot }) {
   const s = slot.session;
   const showBoats = slot.needsLineup || !!slot.lineup;
+  const mark = s ? (markColor(s.color) ?? s.color) : null;
   return (
     <div
-      className={`overflow-hidden rounded-2xl border bg-surface ${s ? "border-border" : "border-dashed border-border"}`}
+      className={`flex overflow-hidden rounded-2xl border bg-surface ${s ? "border-border shadow-card" : "border-dashed border-border"}`}
     >
+      {mark && <div className="w-1 flex-shrink-0" style={{ background: mark }} />}
+      <div className="min-w-0 flex-1">
       <div className="flex items-center justify-between gap-2 px-3.5 pt-3">
         <span className="flex items-baseline gap-2">
           <span className="text-[12px] font-bold tracking-[0.1em] text-text">{slot.period}</span>
@@ -110,9 +119,8 @@ function SlotCard({ slot }: { slot: TodaySlot }) {
           <div className="text-[16px] font-semibold leading-snug text-text">
             {s.description || s.label}
           </div>
-          <div className="mt-0.5 flex items-center gap-1.5 text-[12px] text-muted">
-            <span className="h-2 w-2 rounded-full" style={{ background: markColor(s.color) }} />
-            {s.label}
+          <div className="mt-1 flex">
+            <KindTag label={s.label} color={mark ?? s.color} />
           </div>
           {s.note && <div className="mt-1.5 text-[12px] leading-relaxed text-text/80">{s.note}</div>}
         </div>
@@ -139,6 +147,7 @@ function SlotCard({ slot }: { slot: TodaySlot }) {
             <IconChevronRight size={13} className="text-muted" />
           </Link>
         )}
+      </div>
       </div>
     </div>
   );

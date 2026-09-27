@@ -74,19 +74,11 @@ export const kindInk: Record<SessionKind, string> = {
 export const kindBar = (k: SessionKind) => ({ background: kindColor[k] });
 
 /*
-  THE WASH ACROSS A SESSION CARD. The 3px bar above is the kind at full
-  strength; this carries that same colour on across the card and lets it fade
-  out before the right-hand edge, so the card is tinted by what it IS. (It was
-  briefly a flat green on every card, which said nothing — the owner's note was
-  "not a green frame, the workout's colour, shining through left to right".)
-
-  It is `backgroundImage`, not `background`, so it LAYERS over whatever surface
-  colour the card already has instead of replacing it — a gradient that fades
-  to transparent would otherwise fade to the page behind the card.
+  (THE WASH ACROSS A SESSION CARD — the colour fading from the left edge to
+  white — lived here until 2026-09-27, when the owner turned it down: "I don't
+  like how it shades from green to white". A session card is now white with a
+  stripe and a tag, components/varsity/KindTag.tsx.)
 */
-export const kindWash = (k: SessionKind) => ({
-  backgroundImage: `linear-gradient(to right, color-mix(in oklab, ${kindColor[k]} 32%, transparent), transparent 78%)`,
-});
 
 /*
   THE BLOCK A CALENDAR CELL IS PAINTED WITH — the colour ITSELF, near solid.
