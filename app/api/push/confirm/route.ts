@@ -4,8 +4,9 @@
   A planned session is logged for both people, marked Verified, only once
   BOTH answer "yes, we trained" (plan_confirm in db/session_plans.sql). Left to
   the chat, nobody answered. So after the session the phone asks: every
-  accepted session that started 90 minutes to 24 hours ago and has not been
-  asked about yet gets one push to each person who has not answered. It opens
+  accepted session 2 to 24 hours past its planned start (owner: "2 hours after
+  start") that has not been asked about yet gets one push to each person who
+  has not answered. It opens
   the Profile tab, where the Yes / No-show buttons wait
   (components/profile/UpcomingSessions.tsx).
 
@@ -27,7 +28,7 @@ import { sendToSubscriptions, hasVapidConfig, type StoredSubscription } from "@/
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const AFTER_START_MIN = 90; // a session has had time to end
+const AFTER_START_MIN = 120; // two hours after the planned start (owner, 2026-09-27)
 const GIVE_UP_HOURS = 24; // older than this is never asked about by push
 
 const ACTIVITY: Record<string, string> = { gym: "Gym", running: "Running", cardio: "Cardio" };
