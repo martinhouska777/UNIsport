@@ -34,6 +34,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAppState } from "@/components/AppState";
 import ThemeProvider from "@/components/ThemeProvider";
+import LoadingGate from "@/components/LoadingGate";
 import Button from "@/components/ui/Button";
 import { FieldLabel, Pill, TextField } from "@/components/onboarding/controls";
 import { classYears, sexOptions } from "@/lib/onboarding";
@@ -78,7 +79,16 @@ export default function VarsitySetupPage() {
     else if (varsityReady) router.replace(VARSITY_HOME);
   }, [ready, loggedIn, varsityReady, router]);
 
-  if (!ready || !loggedIn || varsityReady) return null;
+  /* Still checking, or on the way out: the varsity theme's own wait rather
+     than `null`, which was a blank white page even in dark mode (audit,
+     2026-09-27; components/LoadingGate.tsx). */
+  if (!ready || !loggedIn || varsityReady) {
+    return (
+      <ThemeProvider tokens={vTheme.dark} light={vTheme.light} paintRoot className="bg-background">
+        <LoadingGate />
+      </ThemeProvider>
+    );
+  }
 
   const finish = async () => {
     setSaving(true);

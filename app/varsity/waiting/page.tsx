@@ -20,6 +20,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAppState } from "@/components/AppState";
 import ThemeProvider from "@/components/ThemeProvider";
+import LoadingGate from "@/components/LoadingGate";
 import VarsityCrest from "@/components/varsity/VarsityCrest";
 import { useMembership } from "@/components/varsity/useMembership";
 import { VARSITY_HOME } from "@/lib/varsity/theme";
@@ -44,7 +45,19 @@ export default function VarsityWaitingPage() {
     else if (!membership) router.replace("/join");
   }, [ready, loggedIn, loading, failed, isMember, membership, router]);
 
-  if (!ready || !loggedIn || loading || !isPending) return null;
+  /*
+    Still checking, or on the way somewhere else. NEVER `null`: that painted a
+    blank WHITE page — even in dark mode, since nothing had set the varsity
+    theme yet — until the check came back (audit, 2026-09-27). The same wait
+    the (athlete) layout shows, in the same theme (components/LoadingGate.tsx).
+  */
+  if (!ready || !loggedIn || loading || !isPending) {
+    return (
+      <ThemeProvider tokens={vTheme.dark} light={vTheme.light} paintRoot className="bg-background">
+        <LoadingGate />
+      </ThemeProvider>
+    );
+  }
 
   return (
     <ThemeProvider
