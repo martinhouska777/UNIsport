@@ -435,13 +435,27 @@ export function HouseShield({
   primary,
   secondary,
   size = 28,
+  outlined = false,
 }: {
   primary: string;
   secondary: string;
   size?: number;
+  /** A dark line round the outside (--crest-edge), for crests on coloured
+      rows — the leaderboards. */
+  outlined?: boolean;
 }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true" overflow="visible">
+      {outlined && (
+        <path
+          d="M12 2.2l8.4 2.4v6.6c0 5.6-4.2 9.1-8.4 11-4.2-1.9-8.4-5.4-8.4-11V4.6z"
+          /* style, not the stroke attribute: an SVG attribute cannot read a
+             CSS variable, and the outline silently never drew. */
+          style={{ stroke: "var(--crest-edge)" }}
+          strokeWidth={4}
+          strokeLinejoin="round"
+        />
+      )}
       <path
         d="M12 2.2l8.4 2.4v6.6c0 5.6-4.2 9.1-8.4 11-4.2-1.9-8.4-5.4-8.4-11V4.6z"
         fill={primary}

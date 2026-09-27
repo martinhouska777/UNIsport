@@ -382,32 +382,22 @@ function GroupRowItem({
         the row itself is the house. A wash rather than a fill, because the text
         on it is theme ink and has to stay readable in both themes; YOUR house
         keeps the theme's own border on top of the wash, so "mine" still reads.
-        STRONGER since 2026-09-27 (owner: "more in house colour, less white"):
-        about a quarter of the colour at the crest end, fading to a tenth.
+        FULLER since 2026-09-27 (owner: "more in house colour, less white",
+        then "a little bit more full, less see-through"): a little over half
+        the colour at the crest end, 40% at the other, the edge in the full
+        colour. The big shield that stood behind the row for one round is gone
+        (owner, same day: "don't put the big shields").
         Content colour from lib/gyms.ts, applied inline (rule 1's exception).
       */
       style={
         crest
           ? {
-              background: `linear-gradient(90deg, ${crest.primary}${row.isMine ? "55" : "42"}, ${crest.primary}${row.isMine ? "2e" : "1c"})`,
-              ...(row.isMine ? {} : { borderColor: `${crest.primary}8c` }),
+              background: `linear-gradient(90deg, ${crest.primary}${row.isMine ? "a6" : "8c"}, ${crest.primary}${row.isMine ? "80" : "66"})`,
+              ...(row.isMine ? {} : { borderColor: crest.primary }),
             }
           : undefined
       }
     >
-      {/* THE SHIELD BEHIND THE ROW — the house's crest again, big, tilted and
-          cut off by the right edge, under everything else (owner, 2026-09-27:
-          "the shield houses more visible in the background"). -z-10 inside
-          the row's own stacking context (`isolate`): above the wash, below the
-          words. */}
-      {crest && (
-        <span
-          aria-hidden="true"
-          className="pointer-events-none absolute right-[76px] top-1/2 -z-10 -translate-y-1/2 rotate-[-14deg] opacity-25"
-        >
-          <HouseShield primary={crest.primary} secondary={crest.secondary} size={104} />
-        </span>
-      )}
       <RankBadge rank={row.rank} scored={row.points > 0} onTint={!!crest} />
       {/* THE HOUSE'S CREST, in its own two colours and with no initial on it
           (owner, 2026-09-06: "ty hausy taky bez inicialu, jen ty jejich tabs at
@@ -417,7 +407,7 @@ function GroupRowItem({
           A class-year board has no colours, so it has no crest: an empty grey
           shield says less than the year already written beside it. */}
       {crest && (
-        <HouseShield primary={crest.primary} secondary={crest.secondary} size={32} />
+        <HouseShield primary={crest.primary} secondary={crest.secondary} size={32} outlined />
       )}
       {/* Just the name — no "5 of 6 training" line under it (owner,
           2026-09-15) — and the score on every row, a house nobody has trained

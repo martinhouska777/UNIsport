@@ -88,7 +88,7 @@ export default function GroupSheet({
               {/* The same crest the board row wore, so the sheet is clearly
                   that house opened up and not another screen about it. */}
               {crest ? (
-                <HouseShield primary={crest.primary} secondary={crest.secondary} size={32} />
+                <HouseShield primary={crest.primary} secondary={crest.secondary} size={32} outlined />
               ) : (
                 <span className="h-9 w-1.5 flex-shrink-0 rounded-full bg-primary" />
               )}

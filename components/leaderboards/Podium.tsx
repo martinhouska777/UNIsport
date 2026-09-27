@@ -126,7 +126,7 @@ function Place({ entry }: { entry: PodiumEntry }) {
       style={
         washed && entry.crest
           ? {
-              background: `linear-gradient(180deg, ${entry.crest.primary}14, ${entry.crest.primary}4d)`,
+              background: `linear-gradient(180deg, ${entry.crest.primary}26, ${entry.crest.primary}73)`,
             }
           : undefined
       }
@@ -144,6 +144,7 @@ function Place({ entry }: { entry: PodiumEntry }) {
               primary={entry.crest.primary}
               secondary={entry.crest.secondary}
               size={p.crest}
+              outlined
             />
           )
         ) : (
