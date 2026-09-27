@@ -144,7 +144,7 @@ function Place({ entry }: { entry: PodiumEntry }) {
               primary={entry.crest.primary}
               secondary={entry.crest.secondary}
               size={p.crest}
-              outlined
+              boldEdge
             />
           )
         ) : (

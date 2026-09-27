@@ -73,7 +73,7 @@ function Side({
     <div className="min-w-0 flex-1">
       <div className="flex items-center gap-2">
         {crest ? (
-          <HouseShield primary={crest.primary} secondary={crest.secondary} size={big ? 26 : 20} outlined />
+          <HouseShield primary={crest.primary} secondary={crest.secondary} size={big ? 26 : 20} boldEdge />
         ) : (
           <span className="h-5 w-1.5 flex-shrink-0 rounded-full bg-primary" />
         )}

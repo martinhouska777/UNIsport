@@ -118,12 +118,11 @@ export default function ExercisePicker({
                       key={e.name}
                       type="button"
                       onClick={() => pickCatalog(e)}
-                      className="flex w-full items-center gap-3 border-b border-border px-3.5 py-2.5 text-left last:border-b-0 active:bg-surface-2"
+                      className="flex min-h-[52px] w-full items-center gap-3 border-b border-border px-3.5 py-2 text-left last:border-b-0 active:bg-surface-2"
                     >
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate text-[15px] font-medium text-text">{e.name}</span>
-                        <span className="block text-[12px] text-muted">{e.equipment}</span>
-                      </span>
+                      {/* Just the name — no "Barbell" / "Machine" under it
+                          (owner, 2026-09-27). Search still finds by it. */}
+                      <span className="min-w-0 flex-1 truncate text-[15px] font-medium text-text">{e.name}</span>
                       <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary-tint text-primary">
                         <IconPlus size={16} />
                       </span>

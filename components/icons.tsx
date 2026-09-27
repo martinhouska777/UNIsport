@@ -435,32 +435,23 @@ export function HouseShield({
   primary,
   secondary,
   size = 28,
-  outlined = false,
+  boldEdge = false,
 }: {
   primary: string;
   secondary: string;
   size?: number;
-  /** A dark line round the outside (--crest-edge), for crests on coloured
-      rows — the leaderboards. */
-  outlined?: boolean;
+  /** The shield's own second-colour edge drawn thicker, for crests on
+      coloured rows — the leaderboards (owner, 2026-09-27: not a black line,
+      the edge it already had, stronger). */
+  boldEdge?: boolean;
 }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true" overflow="visible">
-      {outlined && (
-        <path
-          d="M12 2.2l8.4 2.4v6.6c0 5.6-4.2 9.1-8.4 11-4.2-1.9-8.4-5.4-8.4-11V4.6z"
-          /* style, not the stroke attribute: an SVG attribute cannot read a
-             CSS variable, and the outline silently never drew. */
-          style={{ stroke: "var(--crest-edge)" }}
-          strokeWidth={4}
-          strokeLinejoin="round"
-        />
-      )}
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path
         d="M12 2.2l8.4 2.4v6.6c0 5.6-4.2 9.1-8.4 11-4.2-1.9-8.4-5.4-8.4-11V4.6z"
         fill={primary}
         stroke={secondary}
-        strokeWidth={1.3}
+        strokeWidth={boldEdge ? 2.4 : 1.3}
         strokeLinejoin="round"
       />
       {/* The quartering — the second colour, so a house with a dark shield is
@@ -468,7 +459,7 @@ export function HouseShield({
       <path
         d="M12 3.6v18.2M4.4 11.6h15.2"
         stroke={secondary}
-        strokeWidth={1.1}
+        strokeWidth={boldEdge ? 1.5 : 1.1}
         strokeOpacity={0.9}
         strokeLinecap="round"
       />

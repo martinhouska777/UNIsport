@@ -407,7 +407,7 @@ function GroupRowItem({
           A class-year board has no colours, so it has no crest: an empty grey
           shield says less than the year already written beside it. */}
       {crest && (
-        <HouseShield primary={crest.primary} secondary={crest.secondary} size={32} outlined />
+        <HouseShield primary={crest.primary} secondary={crest.secondary} size={32} boldEdge />
       )}
       {/* Just the name — no "5 of 6 training" line under it (owner,
           2026-09-15) — and the score on every row, a house nobody has trained

@@ -249,7 +249,7 @@ export default function YouScreen({
               label={standing?.residence ? `In ${residenceLabel(standing.residence)}` : "In your house"}
               icon={
                 crest ? (
-                  <HouseShield primary={crest.primary} secondary={crest.secondary} size={28} outlined />
+                  <HouseShield primary={crest.primary} secondary={crest.secondary} size={28} boldEdge />
                 ) : (
                   <span className="flex h-7 w-7 items-center justify-center rounded-full bg-accent text-background">
                     <IconUser size={14} />
