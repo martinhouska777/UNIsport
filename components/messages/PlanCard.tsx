@@ -2,20 +2,32 @@
 
 /*
   PLAN CARD — a "Plan a session" proposal rendered inline in a DM thread (for
-  messages of kind 'plan'). Shows the activity, place and time, plus a status
-  footer that depends on who's looking:
+  messages of kind 'plan').
+
+  It is SMALL: one row, the same row the Profile tab's Upcoming sessions draws
+  (owner, 2026-09-27 — the old card was a big box in the middle of the chat,
+  "make it look like how it looks on my profile"). Icon, "Gym with Jonas",
+  "Tomorrow · 5:00 PM · Malkin", a chevron. Tapping the row opens the status
+  and the buttons underneath; nothing else is on screen until you do.
+
+  The icon circle carries the state at a glance, with no words: filled in the
+  school's colour when the plan is waiting on YOU (answer it, or say whether it
+  happened), a green tick once it is verified, greyed and struck through when
+  it was declined, cancelled or didn't happen.
+
+  The folded part depends on who's looking:
     • proposed, you're the recipient → Accept / Decline
     • proposed, you proposed it      → "Waiting for <name>…"
     • accepted                       → confirmed-to-meet state
     • declined                       → declined state
   Colors are theme tokens only (rule 1).
 */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Button from "@/components/ui/Button";
-import { respondToPlan, confirmPlan, cancelPlan, planWhenLabel } from "@/lib/supabase/sessionPlans";
+import { respondToPlan, confirmPlan, cancelPlan, planDayLabel } from "@/lib/supabase/sessionPlans";
 import { type DmPlan } from "@/lib/supabase/messages";
 import { activityLabel } from "@/lib/supabase/workouts";
-import { IconCalendar, IconCheck, IconX, IconMapPin } from "@/components/icons";
+import { IconCalendar, IconCheck, IconX, IconChevronDown } from "@/components/icons";
 
 export default function PlanCard({
   plan,
@@ -34,6 +46,7 @@ export default function PlanCard({
 }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
 
   const respond = async (accept: boolean) => {
     if (busy) return;
@@ -80,8 +93,17 @@ export default function PlanCard({
     }
   };
 
+  /* The clock, read once a minute rather than during render (react-hooks/purity)
+     — a session that starts while the chat is open still turns into "Did this
+     happen?" without anyone reopening the thread. */
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(id);
+  }, []);
+
   // For an accepted session: has its time passed, and how did each side answer?
-  const isPast = new Date(plan.scheduledAt).getTime() <= Date.now();
+  const isPast = new Date(plan.scheduledAt).getTime() <= now;
   const myAnswer = mine ? plan.proposerAnswer : plan.recipientAnswer;
   const theirAnswer = mine ? plan.recipientAnswer : plan.proposerAnswer;
 
@@ -90,37 +112,51 @@ export default function PlanCard({
   const canManage =
     (plan.status === "proposed" && mine) || (plan.status === "accepted" && !isPast);
 
+  // Waiting on me: an invite to answer, or a past session to confirm.
+  const needsMe =
+    (plan.status === "proposed" && !mine) ||
+    (plan.status === "accepted" && isPast && myAnswer === null);
+  const over = plan.status === "declined" || plan.status === "cancelled" || plan.status === "missed";
+  const verified = plan.status === "confirmed";
+  const dot = needsMe
+    ? "bg-primary text-primary-contrast"
+    : verified
+      ? "bg-success/15 text-success"
+      : over
+        ? "bg-surface-2 text-muted"
+        : "bg-primary-tint text-primary";
+
   return (
-    <div className="mx-auto w-full max-w-[88%] rounded-2xl border border-border bg-surface p-3.5">
-      <div className="flex items-center gap-2">
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-tint text-primary">
-          <IconCalendar size={16} />
+    <div className="mx-auto w-full max-w-[88%] overflow-hidden rounded-2xl border border-border bg-surface shadow-card">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        className="flex w-full items-center gap-3 px-3.5 py-3 text-left active:opacity-80"
+      >
+        <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${dot}`}>
+          {verified ? <IconCheck size={16} /> : <IconCalendar size={16} />}
         </span>
-        <div className="min-w-0">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-primary">
-            Session plan
-          </div>
-          <div className="truncate text-[14px] font-medium text-text">
-            {activityLabel(plan.activity)}
-          </div>
-        </div>
-      </div>
+        <span className="min-w-0 flex-1">
+          <span
+            className={`block truncate text-[13px] font-medium ${over ? "text-muted line-through" : "text-text"}`}
+          >
+            {activityLabel(plan.activity)} with {otherName}
+          </span>
+          <span className="mt-0.5 block truncate text-[11px] text-muted">
+            {planDayLabel(plan.scheduledAt)}
+            {plan.place ? ` · ${plan.place}` : ""}
+          </span>
+        </span>
+        <IconChevronDown
+          size={16}
+          className={`shrink-0 text-muted transition-transform ${open ? "rotate-180" : ""}`}
+        />
+      </button>
 
-      <div className="mt-2.5 flex flex-col gap-1.5 text-[12px] text-text">
-        <div className="flex items-center gap-2">
-          <IconCalendar size={13} className="text-muted" />
-          {planWhenLabel(plan.scheduledAt)}
-        </div>
-        {plan.place && (
-          <div className="flex items-center gap-2">
-            <IconMapPin size={13} className="text-muted" />
-            <span className="truncate">{plan.place}</span>
-          </div>
-        )}
-      </div>
-
+      {open && (
+      <div className="border-t border-border px-3.5 pb-3 pt-2.5">
       {/* Status / actions */}
-      <div className="mt-3 border-t border-border pt-2.5">
         {plan.status === "proposed" && !mine && (
           <div className="flex gap-2">
             <Button size="sm" disabled={busy} onClick={() => respond(true)} className="flex-1">
@@ -225,6 +261,7 @@ export default function PlanCard({
 
         {error && <div className="mt-1.5 text-[11px] text-danger">{error}</div>}
       </div>
+      )}
     </div>
   );
 }

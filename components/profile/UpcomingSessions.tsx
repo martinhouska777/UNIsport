@@ -9,25 +9,10 @@
 */
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { listUpcomingPlans, type UpcomingPlan } from "@/lib/supabase/sessionPlans";
+import { listUpcomingPlans, planDayLabel, type UpcomingPlan } from "@/lib/supabase/sessionPlans";
 import { startDirectConversation } from "@/lib/supabase/messages";
 import { activityLabel } from "@/lib/supabase/workouts";
 import { IconCalendar, IconChevronRight } from "@/components/icons";
-
-// "Today · 5:00 PM" / "Tomorrow · 7:30 AM" / "Fri, Jun 13 · 3:00 PM".
-function whenLabel(iso: string): string {
-  const d = new Date(iso);
-  const time = d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
-  const day0 = new Date();
-  day0.setHours(0, 0, 0, 0);
-  const target = new Date(d);
-  target.setHours(0, 0, 0, 0);
-  const diff = Math.round((target.getTime() - day0.getTime()) / 86400000);
-  if (diff === 0) return `Today · ${time}`;
-  if (diff === 1) return `Tomorrow · ${time}`;
-  const day = d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
-  return `${day} · ${time}`;
-}
 
 export default function UpcomingSessions() {
   const router = useRouter();
@@ -79,7 +64,7 @@ export default function UpcomingSessions() {
                 {activityLabel(p.activity)} with {p.otherName}
               </span>
               <span className="mt-0.5 block truncate text-[11px] text-muted">
-                {whenLabel(p.scheduledAt)}
+                {planDayLabel(p.scheduledAt)}
                 {p.place ? ` · ${p.place}` : ""}
               </span>
             </span>

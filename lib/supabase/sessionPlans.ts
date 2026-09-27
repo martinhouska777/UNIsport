@@ -38,6 +38,26 @@ export function planWhenLabel(iso: string): string {
 }
 
 /*
+  "Today · 5:00 PM" / "Tomorrow · 7:30 AM" / "Fri, Jun 13 · 3:00 PM" — how a
+  plan's time reads on its ROW, which is the same row in two places: the
+  Profile tab's Upcoming sessions and the plan inside a chat. One function, so
+  the two can never word it differently.
+*/
+export function planDayLabel(iso: string): string {
+  const d = new Date(iso);
+  const time = d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  const day0 = new Date();
+  day0.setHours(0, 0, 0, 0);
+  const target = new Date(d);
+  target.setHours(0, 0, 0, 0);
+  const diff = Math.round((target.getTime() - day0.getTime()) / 86400000);
+  if (diff === 0) return `Today · ${time}`;
+  if (diff === 1) return `Tomorrow · ${time}`;
+  const day = d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+  return `${day} · ${time}`;
+}
+
+/*
   Everything below can PING THE OTHER PERSON. A plan is a conversation between
   two people who are not looking at their phones at the same time: proposing one
   already notified, but accepting, declining, cancelling and moving it did not —
