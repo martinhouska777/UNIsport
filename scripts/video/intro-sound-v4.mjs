@@ -108,7 +108,8 @@ const TILES = {
   drop:    { file: `${LIB}/kenney-cc0/kenney_interface-sounds/Audio/drop_002.ogg`, filter: "lowpass=f=5000", gain: -18, steps: [0, 2, 4] },
   marimba: { synth: true, gain: -31.5, steps: [0, 4, 7] },
 };
-const TILE = argAfter("--tile") || "select";
+/* Owner picked "light" (audition 2) on 2026-09-27; it is the v5 default. */
+const TILE = argAfter("--tile") || "light";
 if (!TILES[TILE]) { console.error(`--tile: one of ${Object.keys(TILES).join(", ")}`); process.exit(1); }
 {
   const o = TILES[TILE];
@@ -354,7 +355,7 @@ if (MUSIC) {
 /* 3. one fixed gain to the target, a safety limiter at -2 dBFS (AAC adds a little on top), onto the picture */
 const pre = loudness(mixWav);
 const gain = target - pre.I;
-const out = V(`unisport-intro-${V4 ? "v4" : "v5"}${TILE !== "select" && !V4 ? "-tile-" + TILE : ""}${tag}.mp4`);
+const out = V(`unisport-intro-${V4 ? "v4" : "v5"}${argAfter("--tile") && !V4 ? "-tile-" + TILE : ""}${tag}.mp4`);
 execFileSync("ffmpeg", ["-y", "-v", "error", "-i", V("unisport-intro.mp4"), "-i", mixWav, "-filter_complex",
   `[1:a]volume=${gain.toFixed(2)}dB,alimiter=limit=${dB(-2).toFixed(4)}:level=false:attack=2:release=40[a]`,
   "-map", "0:v", "-map", "[a]", "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-ar", String(SR),

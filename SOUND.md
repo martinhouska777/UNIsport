@@ -271,3 +271,10 @@ the three songs, `unisport-intro-v5-music-{a,b,c}.mp4`. Version 5 is now the def
 **My reading of one garbled line, to confirm:** "then in the cut again, but don't make
 the other whoosh there" = the same whoosh on the second cut, and not the other
 (slide) whoosh.
+
+**2026-09-27 — the tile sound:** the owner asked for a different sound on the three
+activity tiles, auditioned six (`--tile pop|light|bubble|glass|drop|marimba`, clips in
+`mockups/video/auditions/`, gitignored) and picked **2, the light pop** — Mixkit
+"explainer video pops whoosh light pop" (#3005), low-passed at 5.5 kHz, climbing a
+semitone per tile. It is now the v5 default, in `unisport-intro-v5.mp4` and the three
+music versions.
