@@ -10,8 +10,11 @@
     WATER  — the coach's TIMING SHEET: a session split into pieces, with the
              crews' times off the running watch. Tap → its board
              (RaceBoard.tsx). This is where the water work goes, races most
-             of all.
-  Water rows are never ranked as individuals; a piece is a CREW result.
+             of all. A flagged team workout that was ON THE WATER ("16k UT2")
+             is listed here too, not under Erg (audit, 2026-09-27): it opens
+             the same everyone's-result board, read without watts
+             (teamBoard.ts → onTheWater).
+  A timing sheet is never ranked as individuals; a piece is a CREW result.
 
   NO TELEMETRY HERE YET (owner, 2026-09-22: "we don't want the telemetry
   there now — something else takes care of it"). The water side also listed
@@ -72,7 +75,7 @@ import WorkoutBoard from "@/components/varsity/team/WorkoutBoard";
 import { fetchPlan } from "@/lib/varsity/planStore";
 import { demoTeamPlan, demoSquadSize } from "@/lib/varsity/demoWorkouts";
 import { fetchResults, fetchSquadSize, type TeamResult } from "@/lib/varsity/resultsStore";
-import { teamWorkouts, type TeamWorkout } from "@/lib/varsity/teamBoard";
+import { onTheWater, teamWorkouts, type TeamWorkout } from "@/lib/varsity/teamBoard";
 import { sessionLabel, dayKeyLabel, parseSessionKey, type Session } from "@/lib/varsity/coachPlan";
 import { kindOf } from "@/lib/varsity/athleteHome";
 import { kindColor, kindLegend } from "@/lib/varsity/home";
@@ -113,7 +116,13 @@ function outingDateLabel(dayKey: string): string {
   return `${dayKeyLabel(dayKey)}${parsed ? ` · ${parsed.period}` : ""}`;
 }
 
-type Row = { key: string; date: Date; erg?: TeamWorkout; race?: RaceDay };
+/* A row is either a flagged team workout (everyone's own result, on either
+   side) or a timing sheet of race pieces (water only). */
+type Row = { key: string; date: Date; workout?: TeamWorkout; race?: RaceDay };
+
+/* Newest first, and a flagged workout as a row. */
+const byDate = (a: Row, b: Row) => b.date.getTime() - a.date.getTime();
+const workoutRow = (w: TeamWorkout): Row => ({ key: `workout:${w.dayKey}`, date: w.date, workout: w });
 
 /** The two halves of this screen. */
 type Side = "erg" | "water";
@@ -336,22 +345,23 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
     return map;
   }, [results]);
 
-  /* A list per side, each newest first. */
-  const byDate = (a: Row, b: Row) => b.date.getTime() - a.date.getTime();
+  /* A list per side, each newest first. A flagged workout goes to the side
+     its session was rowed on — the water ones sit with the timing sheets. */
   const ergRows = useMemo<Row[]>(
-    () => workouts.map((w) => ({ key: `erg:${w.dayKey}`, date: w.date, erg: w })).sort(byDate),
+    () => workouts.filter((w) => !onTheWater(w.session)).map(workoutRow).sort(byDate),
     [workouts],
   );
   const waterRows = useMemo<Row[]>(
     () =>
-      races
-        .map((r) => ({
+      [
+        ...workouts.filter((w) => onTheWater(w.session)).map(workoutRow),
+        ...races.map((r) => ({
           key: `race:${r.dayKey}`,
           date: parseSessionKey(r.dayKey)?.date ?? new Date(0),
           race: r,
-        }))
-        .sort(byDate),
-    [races],
+        })),
+      ].sort(byDate),
+    [workouts, races],
   );
 
   /** The plan's words for a session, for a race row and its board. */
@@ -359,10 +369,10 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
     const sess = planSessions[dayKey];
     return sess ? sess.description.trim() || sessionLabel(sess) : "Race pieces";
   };
-  /* The coach's session behind a row: an erg board carries its own, a water
-     one is found by day key. */
+  /* The coach's session behind a row: a flagged workout carries its own, a
+     timing sheet's is found by day key. */
   const rowSession = (row: Row): Session | undefined =>
-    row.erg?.session ?? planSessions[row.race?.dayKey ?? ""];
+    row.workout?.session ?? planSessions[row.race?.dayKey ?? ""];
 
   /* Erg, unless there is nothing on it and there IS something on the water. */
   const side: Side = picked ?? (ergRows.length === 0 && waterRows.length > 0 ? "water" : "erg");
@@ -378,8 +388,8 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
         const kindWords = session
           ? `${sessionLabel(session)} ${intensityOf(session)?.word ?? ""}`
           : "";
-        const text = row.erg
-          ? searchText(`${row.erg.session.description.trim()} ${kindWords}`, row.erg.dateLabel, row.date)
+        const text = row.workout
+          ? searchText(`${row.workout.session.description.trim()} ${kindWords}`, row.workout.dateLabel, row.date)
           : searchText(
               `${raceTitle(row.race!.dayKey)} race pieces ${kindWords}`,
               outingDateLabel(row.race!.dayKey),
@@ -390,6 +400,12 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
     : rows;
 
   const opened = workouts.find((w) => w.dayKey === open) ?? null;
+  /* Earlier goes at the same piece are looked for on the SAME side only: a
+     16k on the water and a 16k on the erg are not one piece. */
+  const sameSide = useMemo(
+    () => (opened ? workouts.filter((w) => onTheWater(w.session) === onTheWater(opened.session)) : workouts),
+    [workouts, opened],
+  );
   const openedResults = useMemo(
     () => (open ? results.filter((r) => r.dayKey === open) : []),
     [results, open],
@@ -466,7 +482,7 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
       <div className="flex flex-col gap-1.5">
         {rows.length === 0 && (
           <div className="rounded-2xl border border-dashed border-border bg-surface-2 px-4 py-8 text-center text-[12px] text-muted">
-            {side === "erg" ? "No erg workouts yet." : "No water pieces yet."}
+            {side === "erg" ? "No erg workouts yet." : "No water workouts yet."}
           </div>
         )}
         {rows.length > 0 && shownRows.length === 0 && (
@@ -475,8 +491,8 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
           </div>
         )}
         {shownRows.map((row) => {
-          if (row.erg) {
-            const w = row.erg;
+          if (row.workout) {
+            const w = row.workout;
             const n = counts.get(w.dayKey) ?? 0;
             // The "of M" only where turning up is part of the result (ranked).
             const squad = squadSizeFor(w.dayKey);
@@ -513,7 +529,7 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
             );
           }
           {
-            /* Every other row is a water one: a session's race pieces. */
+            /* Every other row is a timing sheet: a water session's race pieces. */
             const r = row.race!;
             const sum = raceSummary(r);
             return (
@@ -612,7 +628,7 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
           key={opened.dayKey} // a fresh board when another workout is opened from inside this one
           workout={opened}
           results={openedResults}
-          workouts={workouts}
+          workouts={sameSide}
           allResults={results}
           example={exampleKeys.has(opened.dayKey)}
           inConsole={inConsole}

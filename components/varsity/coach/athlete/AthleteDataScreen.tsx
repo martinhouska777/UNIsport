@@ -11,7 +11,10 @@
        colours the athlete sees on their own Calendar tab. Tap a day for the
        sessions. This is the part that needed a new database permission
        (db/varsity_coach_reads.sql); everything else was already readable.
-    3. HOW FAST — every erg result they have posted to the team board.
+    3. HOW FAST — every result they have posted to a team board, the erg
+       and the water apart: a water piece carries no watts, and filing it
+       under "Erg results" printed the erg formula's watts for a boat split
+       (audit, 2026-09-27). Which side is the plan session's own category.
 
   READ ONLY, deliberately and at the database level: there is no policy that
   would let a coach edit or delete a session. The log stays the athlete's own
@@ -32,10 +35,12 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useUnits } from "@/components/useUnits";
-import { formatDistance } from "@/lib/varsity/units";
+import { formatDistance, type DistanceUnit } from "@/lib/varsity/units";
 import { fetchLogsInRange, type LogEntry } from "@/lib/varsity/logStore";
 import { fetchAthleteCard, type AthleteCard } from "@/lib/varsity/coachAthlete";
 import { fetchAthleteResults, type TeamResult } from "@/lib/varsity/resultsStore";
+import { fetchPlan } from "@/lib/varsity/planStore";
+import { onTheWater } from "@/lib/varsity/teamBoard";
 import { rosterIdForName, demoAthleteLogs, demoAthleteResults } from "@/lib/varsity/demoAthlete";
 import { secToSplit, deriveWatts } from "@/lib/varsity/ergMath";
 import { dayKeyLabel, toISO } from "@/lib/varsity/coachPlan";
@@ -80,6 +85,38 @@ function ExampleTag() {
 }
 
 
+/*
+  ONE POSTED RESULT. A hand-typed result carries the split as the monitor
+  showed it; a scanned or derived one only carries the seconds. Show whichever
+  exists, and on the ERG let the split imply the watts when none were typed —
+  the same arithmetic the team board does. On the WATER there are no watts, no
+  monitor and no body weight to go with them: the day, the split, the distance
+  and the rate.
+*/
+function ResultRow({ r, water, units }: { r: TeamResult; water: boolean; units: DistanceUnit }) {
+  const split = r.split ?? (r.splitSec != null ? secToSplit(r.splitSec) : null);
+  const watts = water ? null : deriveWatts(r.watts, r.splitSec);
+  return (
+    <div className="rounded-xl border border-border bg-surface px-3.5 py-3">
+      <div className="flex items-baseline justify-between gap-2">
+        <span className="truncate text-[13px] font-semibold text-text">{dayKeyLabel(r.dayKey)}</span>
+        {split && <span className="flex-shrink-0 text-[13px] font-semibold text-text">{split}</span>}
+      </div>
+      <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-muted">
+        {r.metres != null && <span>{formatDistance(r.metres, units)}</span>}
+        {r.strokeRate != null && <span>r{r.strokeRate}</span>}
+        {/* ROUNDED, like the board and the result detail. Watts that came
+            from the athlete's monitor are whole; watts we work out from a
+            split are not, and this line was printing "283.31454972708934 W". */}
+        {watts != null && <span>{Math.round(watts)} W</span>}
+        {!water && r.weightKg != null && <span>{r.weightKg} kg</span>}
+        {!water && r.monitor && <span>{r.monitor}</span>}
+      </div>
+      {r.note && <div className="mt-1 text-[11px] leading-relaxed text-muted">{r.note}</div>}
+    </div>
+  );
+}
+
 export default function AthleteDataScreen({ athleteId }: { athleteId: string }) {
   const { units } = useUnits();
   const now = useMemo(() => new Date(), []);
@@ -87,6 +124,10 @@ export default function AthleteDataScreen({ athleteId }: { athleteId: string }) 
   const [card, setCard] = useState<AthleteCard | null>(null);
   const [loading, setLoading] = useState(true);
   const [results, setResults] = useState<TeamResult[]>([]);
+  /* The day keys of the plan's WATER sessions, so a result can be filed on
+     the side it was rowed on. Empty (everything reads as erg, as before) if
+     the plan could not be read. */
+  const [waterKeys, setWaterKeys] = useState<Set<string>>(() => new Set());
   /* THIS MONTH, and only this month. The page no longer draws a calendar — it
      reads one month of logs for a single purpose: to know whether this rower
      has ever logged anything, and so whether the three screens should fall
@@ -118,12 +159,16 @@ export default function AthleteDataScreen({ athleteId }: { athleteId: string }) 
   useEffect(() => {
     let active = true;
     (async () => {
-      const [c, r] = await Promise.all([
+      const [c, r, plan] = await Promise.all([
         fetchAthleteCard(athleteId),
         fetchAthleteResults(athleteId),
+        fetchPlan(),
       ]);
       if (!active) return;
       setCard(c);
+      setWaterKeys(
+        new Set(Object.entries(plan.sessions).filter(([, s]) => onTheWater(s)).map(([k]) => k)),
+      );
       const stand = rosterIdForName(c?.name);
       const example = r.length === 0 && !!stand;
       setResults(example ? demoAthleteResults(stand!) : r);
@@ -185,6 +230,11 @@ export default function AthleteDataScreen({ athleteId }: { athleteId: string }) 
   const cox = p.boatRole === "Coxswain";
   const side = sideMeta[p.side];
   const pinned = prPieces.filter((piece) => (p.prs[piece] ?? "").trim());
+
+  /* A result goes on the side its session was rowed on. The worked example
+     is erg pieces only, so it never lands on the water side. */
+  const waterResults = exampleResults ? [] : results.filter((r) => waterKeys.has(r.dayKey));
+  const ergResults = exampleResults ? results : results.filter((r) => !waterKeys.has(r.dayKey));
 
   /* Their name, or the honest absence of one — the page's title, and the name
      each of the three screens is opened under. */
@@ -293,50 +343,36 @@ export default function AthleteDataScreen({ athleteId }: { athleteId: string }) 
         ))}
       </div>
 
-      {/* ── 3. How fast ── */}
-      <SectionLabel>
-        Erg results · {results.length}
-        {exampleResults && <ExampleTag />}
-      </SectionLabel>
-      {results.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border bg-surface px-4 py-6 text-center text-[12px] text-muted">
-          Nothing posted to the team board yet.
-        </div>
-      ) : (
-        <div className="flex flex-col gap-2">
-          {results.map((r) => {
-            /* A hand-typed result carries the split as the monitor showed it; a
-               scanned or derived one only carries the seconds. Show whichever
-               exists, and let the split imply the watts when none were typed —
-               the same arithmetic the team board does. */
-            const split = r.split ?? (r.splitSec != null ? secToSplit(r.splitSec) : null);
-            const watts = deriveWatts(r.watts, r.splitSec);
-            return (
-              <div key={r.id} className="rounded-xl border border-border bg-surface px-3.5 py-3">
-                <div className="flex items-baseline justify-between gap-2">
-                  <span className="truncate text-[13px] font-semibold text-text">
-                    {dayKeyLabel(r.dayKey)}
-                  </span>
-                  {split && (
-                    <span className="flex-shrink-0 text-[13px] font-semibold text-text">{split}</span>
-                  )}
-                </div>
-                <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-muted">
-                  {r.metres != null && <span>{formatDistance(r.metres, units.distance)}</span>}
-                  {r.strokeRate != null && <span>r{r.strokeRate}</span>}
-                  {/* ROUNDED, like the board and the result detail. Watts that
-                      came from the athlete's monitor are whole; watts we work
-                      out from a split are not, and this line was printing
-                      "283.31454972708934 W". */}
-                  {watts != null && <span>{Math.round(watts)} W</span>}
-                  {r.weightKg != null && <span>{r.weightKg} kg</span>}
-                  {r.monitor && <span>{r.monitor}</span>}
-                </div>
-                {r.note && <div className="mt-1 text-[11px] leading-relaxed text-muted">{r.note}</div>}
-              </div>
-            );
-          })}
-        </div>
+      {/* ── 3. How fast ── the erg and the water apart. The example is
+          always erg results (lib/varsity/demoAthlete). */}
+      {(ergResults.length > 0 || waterResults.length === 0) && (
+        <>
+          <SectionLabel>
+            Erg results · {ergResults.length}
+            {exampleResults && <ExampleTag />}
+          </SectionLabel>
+          {ergResults.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-border bg-surface px-4 py-6 text-center text-[12px] text-muted">
+              Nothing posted to the team board yet.
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {ergResults.map((r) => (
+                <ResultRow key={r.id} r={r} water={false} units={units.distance} />
+              ))}
+            </div>
+          )}
+        </>
+      )}
+      {waterResults.length > 0 && (
+        <>
+          <SectionLabel>Water results · {waterResults.length}</SectionLabel>
+          <div className="flex flex-col gap-2">
+            {waterResults.map((r) => (
+              <ResultRow key={r.id} r={r} water units={units.distance} />
+            ))}
+          </div>
+        </>
       )}
 
       {/* ── the three screens ── */}

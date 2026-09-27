@@ -36,6 +36,7 @@ import {
   buildBoard,
   metricsFor,
   metricMeta,
+  onTheWater,
   pieceKindOf,
   pieceSignature,
   rowedAsReps,
@@ -122,9 +123,12 @@ export default function WorkoutBoard({
   const [view, setView] = useState<View>("list");
   const [openRow, setOpenRow] = useState<string | null>(null);
 
+  /* A water session reads split and time/distance only — a boat has no watts
+     (teamBoard.ts → onTheWater). */
+  const water = onTheWater(workout.session);
   // Which of time / distance this piece let vary decides the second metric.
   const kind = useMemo(() => pieceKindOf(results), [results]);
-  const metrics = useMemo(() => metricsFor(kind), [kind]);
+  const metrics = useMemo(() => metricsFor(kind, water), [kind, water]);
   const [metric, setMetric] = useState<MetricKey>("split");
 
   // The same piece, earlier. The most recent one is what each row is measured
@@ -244,7 +248,7 @@ export default function WorkoutBoard({
       </div>
 
       {/* metric filter */}
-      <div className="mt-3 grid grid-cols-4 gap-1">
+      <div className={`mt-3 grid gap-1 ${metrics.length === 2 ? "grid-cols-2" : "grid-cols-4"}`}>
         {metrics.map((m) => (
           <button
             key={m.key}
@@ -323,6 +327,7 @@ export default function WorkoutBoard({
             kind={kind}
             session={workout.session}
             ranked={ranked}
+            water={water}
           />
         </div>
       ) : (
@@ -428,6 +433,7 @@ export default function WorkoutBoard({
           workout={workout}
           history={[{ workout, results }, ...past]}
           kind={kind}
+          water={water}
           onClose={() => setOpenRow(null)}
           onOpenWorkout={onOpenWorkout}
         />

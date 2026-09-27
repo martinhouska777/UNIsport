@@ -70,6 +70,7 @@ export default function ResultDetail({
   workout,
   history,
   kind,
+  water = false,
   onClose,
   onOpenWorkout,
 }: {
@@ -83,6 +84,9 @@ export default function ResultDetail({
      which number IS the result in the comparison — time on the one, metres on
      the other. */
   kind: PieceKind;
+  /* A session on the water: no watts anywhere on it, and no line about a
+     monitor photo — a boat has neither (teamBoard.ts → onTheWater). */
+  water?: boolean;
   onClose: () => void;
   /* Open a previous edition's board in place of this one. */
   onOpenWorkout?: (dayKey: string) => void;
@@ -169,7 +173,7 @@ export default function ResultDetail({
       </div>
 
       {/* the full set of numbers */}
-      <div className="mt-3 grid grid-cols-3 gap-1.5">
+      <div className={`mt-3 grid gap-1.5 ${water ? "grid-cols-2" : "grid-cols-3"}`}>
         <Stat
           label="Time"
           value={result.minutes != null ? secToClock(result.minutes * 60) : "—"}
@@ -180,8 +184,8 @@ export default function ResultDetail({
         />
         <Stat label="Split" value={splitSec != null ? secToSplit(splitSec, true) : "—"} />
         <Stat label="Rate" value={result.strokeRate != null ? `r${result.strokeRate}` : "—"} />
-        <Stat label="Watts" value={watts != null ? String(Math.round(watts)) : "—"} />
-        <Stat label="W / kg" value={wkg != null ? wkg.toFixed(2) : "—"} />
+        {!water && <Stat label="Watts" value={watts != null ? String(Math.round(watts)) : "—"} />}
+        {!water && <Stat label="W / kg" value={wkg != null ? wkg.toFixed(2) : "—"} />}
       </div>
 
       {result.note.trim() && (
@@ -257,7 +261,7 @@ export default function ResultDetail({
               const secondary = [
                 eSplit != null ? `${secToSplit(eSplit, true)} /500m` : null,
                 e.mine.strokeRate != null ? `r${e.mine.strokeRate}` : null,
-                eWatts != null ? `${Math.round(eWatts)} W` : null,
+                !water && eWatts != null ? `${Math.round(eWatts)} W` : null,
                 /* No W/kg on these lines (owner, 2026-09-13). */
               ]
                 .filter(Boolean)
@@ -347,7 +351,7 @@ export default function ResultDetail({
         </>
       )}
 
-      {!result.photoPath && (
+      {!result.photoPath && !water && (
         <p className="mt-4 px-0.5 text-[11px] leading-relaxed text-muted">
           No monitor photo on this one — it was typed in by hand.
         </p>

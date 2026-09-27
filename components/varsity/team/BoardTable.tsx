@@ -40,6 +40,7 @@ export default function BoardTable({
   kind,
   session,
   ranked,
+  water = false,
 }: {
   rows: BoardRow[];
   /* The piece's own result column — TIME on a 2K, METRES on a 30' piece. It
@@ -52,6 +53,10 @@ export default function BoardTable({
      through (500, 1000, 1500, 2000). See rowedAsReps() in teamBoard.ts. */
   session: Session;
   ranked: boolean;
+  /* A session on the water: no Watts, W/kg or Weight columns. A boat has no
+     power reading, and the weight is only here to explain the W/kg beside it
+     (teamBoard.ts → onTheWater). */
+  water?: boolean;
 }) {
   const { units } = useUnits();
 
@@ -75,10 +80,10 @@ export default function BoardTable({
             </th>
             <th className={`${TH} border-b border-border`}>{resultLabel}</th>
             <th className={`${TH} border-b border-border`}>Split</th>
-            <th className={`${TH} border-b border-border`}>Watts</th>
+            {!water && <th className={`${TH} border-b border-border`}>Watts</th>}
             <th className={`${TH} border-b border-border`}>Rate</th>
-            <th className={`${TH} border-b border-border`}>W/kg</th>
-            <th className={`${TH} border-b border-border`}>Weight</th>
+            {!water && <th className={`${TH} border-b border-border`}>W/kg</th>}
+            {!water && <th className={`${TH} border-b border-border`}>Weight</th>}
             {/* Each interval column says WHAT it is: R1…R8 for reps, or the
                 mark the split was taken at (500, 1000, 1500, 2000) for a piece
                 rowed straight through. A bare "1 2 3 4" made a coach count. */}
@@ -140,10 +145,10 @@ export default function BoardTable({
                       : "—"}
                 </td>
                 <td className={`${TD} ${line}`}>{r.splitSec != null ? secToSplit(r.splitSec, true) : "—"}</td>
-                <td className={`${TD} ${line}`}>{watts != null ? Math.round(watts) : "—"}</td>
+                {!water && <td className={`${TD} ${line}`}>{watts != null ? Math.round(watts) : "—"}</td>}
                 <td className={`${TD} ${line}`}>{r.strokeRate ?? "—"}</td>
-                <td className={`${TD} ${line}`}>{wkg != null ? wkg.toFixed(2) : "—"}</td>
-                <td className={`${TD} ${line}`}>{formatWeight(r.weightKg, units.weight)}</td>
+                {!water && <td className={`${TD} ${line}`}>{wkg != null ? wkg.toFixed(2) : "—"}</td>}
+                {!water && <td className={`${TD} ${line}`}>{formatWeight(r.weightKg, units.weight)}</td>}
                 {Array.from({ length: splitCount }, (_, k) => {
                   const iv = r.intervals?.[k];
                   return (

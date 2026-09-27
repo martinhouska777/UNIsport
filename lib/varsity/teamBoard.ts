@@ -159,12 +159,25 @@ const METRICS: Record<MetricKey, MetricMeta> = {
 };
 
 /*
-  The four ways to read a board. The second one is whichever of time/distance
-  the piece did NOT fix — the fixed one is the same number for everybody and
+  ON THE WATER OR ON AN ERG (audit, 2026-09-27). A team workout is whatever
+  session the coach flagged, and four of the five in the squad's real plan
+  were on the water ("16k UT2") — which opened as an erg board with watts, and
+  sat on the coach's athlete page as "Erg results · 131 W". A boat has no
+  power reading: the watts were the erg formula run on a boat split, a number
+  nobody pulled. So a water session's board is filed on the water side and
+  reads split and time/distance only. The session's own category decides.
+*/
+export const onTheWater = (session: Session | undefined): boolean => session?.category === "water";
+
+/*
+  The ways to read a board — four on the erg, two on the water (no power
+  there, see onTheWater). The second one is whichever of time/distance the
+  piece did NOT fix — the fixed one is the same number for everybody and
   would rank the squad by rounding error.
 */
-export function metricsFor(kind: PieceKind): MetricMeta[] {
-  return [METRICS.split, kind === "time" ? METRICS.distance : METRICS.time, METRICS.watts, METRICS.wkg];
+export function metricsFor(kind: PieceKind, water = false): MetricMeta[] {
+  const second = kind === "time" ? METRICS.distance : METRICS.time;
+  return water ? [METRICS.split, second] : [METRICS.split, second, METRICS.watts, METRICS.wkg];
 }
 
 export const metricMeta = (key: MetricKey): MetricMeta => METRICS[key] ?? METRICS.split;
