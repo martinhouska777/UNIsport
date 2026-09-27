@@ -714,16 +714,19 @@ export const studentFeatures: { kicker: string; rows: FeatureRow[]; coming: Feat
   /* BUILT BUT NOT OUT: the feed lives on the `feed` branch (unisportdev) and
      `main` ships none of it, so on the public page it is "upcoming", not a
      feature. When the branch merges, the row moves up into `rows`.
-     The detail line is a DRAFT in the page's voice, checked against what the
-     branch does (a post points at a logged session; Following / Everyone;
-     kudos; it is the one place that crosses universities). Not dictated. */
+     The detail line is the OWNER'S, dictated 2026-09-27 by voice, grammar only
+     ("commands or cuddles" was the transcription of "comments or kudos"; "once
+     you log in" of "once you log it"). Checked against the branch: photos,
+     Following / Everyone and kudos are built; COMMENTS ARE NOT (db/posts.sql
+     calls them "a later slice") — they have to exist before this row moves up
+     into `rows`. "You can't match with them": Match stays one school. */
   coming: {
     kicker: "Upcoming",
     rows: [
       {
         icon: "feed",
         title: "Feed.",
-        detail: "Share a session once you log it and see what the people you follow have been training. Give kudos, and meet students from other universities.",
+        detail: "A new tab: share a session once you log it, with a picture as well, and see what people have been training, not just the ones you follow. Give comments or kudos and interact with students from other universities. You can chat with them as well, because this is where you will see them, but you can't match with them.",
       },
     ],
   },
