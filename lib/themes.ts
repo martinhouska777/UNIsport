@@ -122,10 +122,10 @@ export type University = {
   houseNoun: string; // one gym's own label on its card ("House gym")
   housePill: string; // the filter pill's one word ("House")
   /*
-    The school's identity palette for the Gyms tab: the main gym cards take
-    turns through it, top to bottom (Princeton orange, black, orange). The
-    same two colours as the school's rowing blade on the landing. Optional:
-    without it every card is washed in `primary`.
+    The school's identity palette — the same two colours as its rowing blade
+    on the landing. The Gyms tab's main cards used to take turns through it
+    (Princeton orange, black, orange); since 2026-09-27 every card is one
+    solid `primary` band and nothing reads this. Kept as data for now.
   */
   gymCardColors?: string[];
   /*
