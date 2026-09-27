@@ -820,6 +820,17 @@ export const varsityFeatures: { kicker: string; rows: FeatureRow[]; cta: Feature
       detail: "Keep your focus up: your next race and your coach's note on what to fix are always in front of you.",
     },
     {
+      /* The boat's video strip on Home + the coach's Drive upload (coach step 4):
+         a video is attached to a BOAT and named from its lineup. Owner-dictated
+         2026-09-27, grammar only ("it names itself" → "each one names itself",
+         "from lineups" → "in the lineups"). "Your drive", no vendor, the same
+         choice as coach step 4. Placed after the countdown, the order Home
+         shows them in (V1). */
+      icon: "video",
+      title: "Video storage.",
+      detail: "Your videos save to your drive, and each one names itself from the name of the boat in the lineups, so you don't need to search for videos again.",
+    },
+    {
       /* /varsity/log — one tap per prescribed session, "Add extra session", and
          the Scan C2 / RP3 button. Owner-dictated 2026-09-03: the owner chose to
          claim the photo read even though LogScreen's scan button is still a
