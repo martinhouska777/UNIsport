@@ -30,7 +30,7 @@ export type OutPerson = { id: string; name: string; reason: OutReason };
   and each group alphabetical. An id with nobody behind it is dropped rather
   than printed raw — a screen should never show a slug.
 */
-const ORDER: OutReason[] = ["INJ", "SICK", "RX", "ERG", "OYO", "LAUNCH"];
+const ORDER: OutReason[] = ["INJ", "SICK", "RX", "AWAY", "ERG", "OYO", "LAUNCH", "MISSED"];
 
 export function outPeople(out: Record<string, OutReason>): OutPerson[] {
   return Object.entries(out)

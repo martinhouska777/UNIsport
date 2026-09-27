@@ -88,8 +88,13 @@ export const COX_INK = "#18181b";
 
   Who is out on which day lives in lib/varsity/availabilityStore.ts — it is a
   fact about a DAY, so it is never written on the athlete below.
+
+  AWAY and MISSED are the two words only an ATHLETE uses about themselves
+  (lib/varsity/daysOut.ts: Away, and the calendar's Missed). The coach's
+  builder reads them through lib/varsity/squadDaysOut.ts; they are never
+  written to the availability table, whose own list of reasons is unchanged.
 */
-export type OutReason = "INJ" | "SICK" | "RX" | "ERG" | "OYO" | "LAUNCH";
+export type OutReason = "INJ" | "SICK" | "RX" | "ERG" | "OYO" | "LAUNCH" | "AWAY" | "MISSED";
 export const outMeta: Record<OutReason, string> = {
   INJ: "Injured",
   SICK: "Sick",
@@ -97,6 +102,8 @@ export const outMeta: Record<OutReason, string> = {
   ERG: "Erg",
   OYO: "OYO",
   LAUNCH: "Launch",
+  AWAY: "Away",
+  MISSED: "Missed",
 };
 
 /*
@@ -112,6 +119,8 @@ export const outTone: Record<OutReason, "warn" | "muted"> = {
   ERG: "muted",
   OYO: "muted",
   LAUNCH: "muted",
+  AWAY: "muted",
+  MISSED: "muted",
 };
 
 export type OutSpan = "day" | "open";

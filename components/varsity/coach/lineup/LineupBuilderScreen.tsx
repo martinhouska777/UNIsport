@@ -115,6 +115,7 @@ import {
 import { fetchTrainingConfig } from "@/lib/varsity/configStore";
 import { useMembership } from "@/components/varsity/useMembership";
 import { fetchOutOn, markBackIn } from "@/lib/varsity/availabilityStore";
+import { fetchSelfOutOn } from "@/lib/varsity/squadDaysOut";
 import { fetchPlan, type Plan } from "@/lib/varsity/planStore";
 import { notifySquad } from "@/lib/push/client";
 import SaveState from "@/components/varsity/coach/SaveState";
@@ -1180,7 +1181,30 @@ function Builder({
     const parsed = parseSessionKey(dayKey);
     return parsed ? toISO(parsed.date) : toISO(new Date());
   }, [dayKey]);
-  const [outById, setOutById] = useState<Record<string, OutReason>>({});
+  /*
+    TWO RECORDS OF WHO IS OUT, one list on screen (audit, 2026-09-27).
+    `coachOut` is the coach's own (availabilityStore: Rx, the ergs, the
+    launch…). `selfOut` is what the ATHLETES said about themselves — Sick,
+    Injured, Away on their own profile, or a Missed day in their calendar
+    (squadDaysOut) — which used to stop at their phone, so a rower who was in
+    bed could be seated. Where both speak about one person the coach's word is
+    the one shown; either way they are out.
+
+    `overruled`: athletes the coach has deliberately brought back in for this
+    sitting ("Bring … back to available"). Their own record is theirs and is
+    never rewritten from here, so this lasts until the builder is closed.
+  */
+  const [coachOut, setCoachOut] = useState<Record<string, OutReason>>({});
+  const [selfOut, setSelfOut] = useState<Record<string, OutReason>>({});
+  const [overruled, setOverruled] = useState<Set<string>>(() => new Set());
+  // Both reads are in: until then "Repeat" is not offered, so it can never
+  // seat somebody whose absence simply had not arrived yet.
+  const [outReady, setOutReady] = useState(false);
+  const outById = useMemo(() => {
+    const out: Record<string, OutReason> = { ...selfOut, ...coachOut };
+    for (const id of overruled) if (!coachOut[id]) delete out[id];
+    return out;
+  }, [selfOut, coachOut, overruled]);
   const [outBusy, setOutBusy] = useState(false);
   /*
     PICKED FROM THE POOL, waiting for a seat. The other half of the same idea as
@@ -1202,8 +1226,11 @@ function Builder({
 
   useEffect(() => {
     let active = true;
-    fetchOutOn(dayIso).then((o) => {
-      if (active) setOutById(o);
+    Promise.all([fetchOutOn(dayIso), fetchSelfOutOn(dayIso)]).then(([coach, self]) => {
+      if (!active) return;
+      setCoachOut(coach);
+      setSelfOut(self);
+      setOutReady(true);
     });
     return () => {
       active = false;
@@ -1287,10 +1314,18 @@ function Builder({
     };
   }, [dayKey]);
 
-  /* Yes — repeat that crew here. */
+  /* Yes — repeat that crew here. Except anybody who is out on THIS day: their
+     seat comes across empty, so the hole to fill is the first thing the coach
+     sees rather than a sick rower quietly carried back into the boat. */
   const useCarried = () => {
     if (!carried) return;
-    setBoats(carried.boats);
+    setBoats(
+      carried.boats.map((b) => ({
+        ...b,
+        coxId: b.coxId && outById[b.coxId] ? null : b.coxId,
+        seats: b.seats.map((s) => (s.athleteId && outById[s.athleteId] ? { ...s, athleteId: null } : s)),
+      })),
+    );
     setCarriedFrom(carried.from);
   };
 
@@ -1482,18 +1517,24 @@ function Builder({
      anything about the athlete, only undoing an absence that is over. */
   const bringBackIn = async (a: Athlete) => {
     if (outBusy) return;
-    setOutBusy(true);
-    const { error } = await markBackIn(a.id, dayIso);
-    setOutBusy(false);
-    if (error) {
-      console.error("availability:", error);
-      return;
+    // The coach's own record: closed in the database, as it always was.
+    if (coachOut[a.id]) {
+      setOutBusy(true);
+      const { error } = await markBackIn(a.id, dayIso);
+      setOutBusy(false);
+      if (error) {
+        console.error("availability:", error);
+        return;
+      }
+      setCoachOut((prev) => {
+        const next = { ...prev };
+        delete next[a.id];
+        return next;
+      });
     }
-    setOutById((prev) => {
-      const next = { ...prev };
-      delete next[a.id];
-      return next;
-    });
+    // The athlete's own word: overruled here, for this sitting, and left as
+    // they wrote it on their profile.
+    if (selfOut[a.id]) setOverruled((prev) => new Set(prev).add(a.id));
   };
 
   const setNote = (boatId: string, note: string) =>
@@ -1702,7 +1743,7 @@ function Builder({
     take them, and afterwards "↻ From Tue AM" with an × that starts empty.
     The Add Boat button underneath is then the only full-width thing up there.
   */
-  const repeatChip = loading ? null : carried && !carriedFrom && boats.length === 0 ? (
+  const repeatChip = loading || !outReady ? null : carried && !carriedFrom && boats.length === 0 ? (
     <button
       type="button"
       onClick={useCarried}
