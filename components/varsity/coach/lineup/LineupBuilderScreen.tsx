@@ -365,8 +365,15 @@ function PracticeBody({ practice }: { practice: Practice & { plan: PlanCell } })
 
         Both filled badges sit on bg-surface so they lift off the session's
         colour wash instead of tinting with it.
+
+        A STATE ONLY WHERE A LINEUP IS EXPECTED (audit, 2026-09-27). "Not
+        started" sat on every slot of the week, Off and Weights included, so
+        the one word that should pick out the outings still to seat was on
+        all fourteen. It is now on the sessions that take boats (the squad's
+        own "needs a lineup" rule) — and on any slot that already HAS a
+        lineup, whatever the plan says, because that one is real.
       */}
-      {done ? (
+      {!water && practice.status !== "draft" && !done ? null : done ? (
         <span className="mt-auto flex items-center gap-1 self-start rounded-full border border-success-line bg-surface px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-success shadow-sm">
           <IconCheck size={11} /> {s.label}
         </span>
@@ -1059,6 +1066,22 @@ function Builder({
 }) {
   const [boats, setBoats] = useState<Boat[]>([]);
   const [status, setStatus] = useState<LineupStatus>("draft");
+  /*
+    Whether the database holds a lineup for this practice at all. `status`
+    alone cannot say it: it starts as "draft" because that is what the first
+    write will be, and an untouched practice read as a draft (audit,
+    2026-09-27). Only a row that exists is a draft or live.
+  */
+  const [hasRow, setHasRow] = useState(false);
+  /*
+    THE STATUS THE LATEST WRITE ASKED FOR — set the moment the write STARTS,
+    not when it lands. Pressing Publish and then ‹ Days inside the round trip
+    used to flush the crew on the way out with the status it had BEFORE the
+    press, and whichever request reached the database last won: the squad
+    could be buzzed about a lineup that had just been put back to a draft.
+    The flush on the way out reads this instead, so both writes agree.
+  */
+  const intended = useRef<LineupStatus>("draft");
   const [loading, setLoading] = useState(true);
   const [writing, setWriting] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -1238,6 +1261,8 @@ function Builder({
         setAnnounced(stored.status === "published" ? (stored.announced ?? text) : null);
         setBoats(stored.boats);
         setStatus(stored.status);
+        intended.current = stored.status;
+        setHasRow(true);
         setLoading(false);
         return;
       }
@@ -1519,16 +1544,20 @@ function Builder({
     async (newStatus?: LineupStatus, announcedNow?: string | null) => {
       const s = newStatus ?? status;
       const snap = JSON.stringify(boats);
+      intended.current = s;
       setWriting(true);
       const { error } = await saveLineup(dayKey, boats, s, announcedNow);
       setWriting(false);
       if (error) {
         console.error("saveLineup:", error);
+        // Nothing changed in the database, so nothing changed here either.
+        intended.current = status;
         setFailed(true);
         return false;
       }
       setSaved(snap);
       setStatus(s);
+      setHasRow(true);
       setFailed(false);
       return true;
     },
@@ -1548,18 +1577,16 @@ function Builder({
 
   /* Leaving inside that pause — an arrow, the Days list, another tab — must not
      outrun it, so the last crew is flushed on the way out. */
-  const pending = useRef<{ dirty: boolean; boats: Boat[]; status: LineupStatus }>({
-    dirty: false,
-    boats: [],
-    status: "draft",
-  });
+  const pending = useRef<{ dirty: boolean; boats: Boat[] }>({ dirty: false, boats: [] });
   useEffect(() => {
-    pending.current = { dirty, boats, status };
-  }, [dirty, boats, status]);
+    pending.current = { dirty, boats };
+  }, [dirty, boats]);
   useEffect(
     () => () => {
       const p = pending.current;
-      if (p.dirty) void saveLineup(dayKey, p.boats, p.status);
+      // `intended`, not the rendered status: a Publish still in the air is
+      // what this practice is about to be, and the flush must agree with it.
+      if (p.dirty) void saveLineup(dayKey, p.boats, intended.current);
     },
     [dayKey],
   );
@@ -1722,16 +1749,20 @@ function Builder({
               write that FAILED, with its Retry.
             */}
             {failed && <SaveState status="error" onRetry={() => void persist()} />}
-            <PublishBar
-              bare
-              tourId="coach-lineup-publish"
-              live={status === "published"}
-              changed={announced !== null && announced !== text}
-              busy={writing}
-              onPublish={publish}
-              onNotify={tellSquad}
-              onUnpublish={unpublish}
-            />
+            {/* Nothing to publish on a practice with no lineup and no boats —
+                an Off morning nobody has touched is not waiting on a button. */}
+            {(hasRow || boats.length > 0) && (
+              <PublishBar
+                bare
+                tourId="coach-lineup-publish"
+                live={status === "published"}
+                changed={announced !== null && announced !== text}
+                busy={writing}
+                onPublish={publish}
+                onNotify={tellSquad}
+                onUnpublish={unpublish}
+              />
+            )}
           </div>
         </div>
         {/*
@@ -1748,22 +1779,39 @@ function Builder({
               <h1 className="truncate text-2xl font-semibold text-text">
                 {context.weekday} {context.period}
               </h1>
-              <span
-                /* Same two shapes as the day picker, so the badge a coach
-                   just tapped is the badge at the top of the builder: a green
-                   PILL when it is live, a square amber one while it is a
-                   draft. */
-                className={`flex flex-shrink-0 items-center gap-1 px-1.5 py-px text-[11px] font-semibold uppercase tracking-[0.12em] ${
-                  status === "published"
-                    ? "rounded-full border border-success-line bg-success-tint px-2 text-success"
-                    : "rounded-[3px] border border-warn-line bg-warn-tint text-warn"
-                }`}
-              >
+              {/*
+                Same shapes as the day picker, so the badge a coach just tapped
+                is the badge at the top of the builder: a green PILL when it is
+                live, a square amber one while it is a draft, and a dashed
+                empty square for an outing nobody has seated yet.
+
+                A PRACTICE THAT HAS NO LINEUP IS NOT A DRAFT (audit,
+                2026-09-27). Opening an untouched Off slot used to call it
+                "Draft" — nothing had been written, nothing was being built.
+                Draft now means a row really exists; an untouched slot that
+                takes boats says Not started, and any other says nothing.
+              */}
+              {hasRow ? (
                 <span
-                  className={`h-1.5 w-1.5 ${status === "published" ? "rounded-full bg-success" : "rounded-[1px] bg-warn"}`}
-                />
-                {status === "published" ? "Published" : "Draft"}
-              </span>
+                  className={`flex flex-shrink-0 items-center gap-1 px-1.5 py-px text-[11px] font-semibold uppercase tracking-[0.12em] ${
+                    status === "published"
+                      ? "rounded-full border border-success-line bg-success-tint px-2 text-success"
+                      : "rounded-[3px] border border-warn-line bg-warn-tint text-warn"
+                  }`}
+                >
+                  <span
+                    className={`h-1.5 w-1.5 ${status === "published" ? "rounded-full bg-success" : "rounded-[1px] bg-warn"}`}
+                  />
+                  {status === "published" ? "Published" : "Draft"}
+                </span>
+              ) : (
+                !loading &&
+                planContext?.water && (
+                  <span className="flex-shrink-0 rounded-[3px] border border-dashed border-border px-1.5 py-px text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
+                    {practiceStatusMeta.none.label}
+                  </span>
+                )
+              )}
             </div>
             <div className="mt-0.5 text-[11px] text-muted">{context.sub}</div>
           </div>
