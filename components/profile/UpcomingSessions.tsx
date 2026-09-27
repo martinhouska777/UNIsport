@@ -5,6 +5,7 @@
   sessions planned in chat (Slice C). Soonest first; "Today"/"Tomorrow" stand
   out. Tapping a row reopens that conversation (where the plan card lives, so you
   can confirm it afterwards). Hidden entirely when there's nothing upcoming.
+  The rows are WHITE cards (owner, 2026-09-27 — they were the grey surface-2).
   Colors are theme tokens (rule 1).
 */
 import { useEffect, useState } from "react";
@@ -54,7 +55,7 @@ export default function UpcomingSessions() {
             key={p.planId}
             type="button"
             onClick={() => open(p)}
-            className="flex items-center gap-3 rounded-2xl border border-border bg-surface-2 px-3.5 py-3 text-left active:opacity-80"
+            className="flex items-center gap-3 rounded-2xl border border-border bg-surface px-3.5 py-3 text-left shadow-card active:opacity-80"
           >
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-tint text-primary">
               <IconCalendar size={16} />

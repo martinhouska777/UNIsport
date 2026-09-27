@@ -39,9 +39,7 @@ export function planWhenLabel(iso: string): string {
 
 /*
   "Today · 5:00 PM" / "Tomorrow · 7:30 AM" / "Fri, Jun 13 · 3:00 PM" — how a
-  plan's time reads on its ROW, which is the same row in two places: the
-  Profile tab's Upcoming sessions and the plan inside a chat. One function, so
-  the two can never word it differently.
+  plan's time reads on the Profile tab's Upcoming sessions row.
 */
 export function planDayLabel(iso: string): string {
   const d = new Date(iso);

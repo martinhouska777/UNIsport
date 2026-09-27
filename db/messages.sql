@@ -152,6 +152,9 @@ $$;
 
 -- The caller's conversations, newest activity first, with the other person's
 -- name, the last message, and the caller's unread count.
+-- SUPERSEDED by db/dm_list_plan_preview.sql (2026-09-27): the same list, but a
+-- planned session's line reads "Scheduled a gym session with you" instead of
+-- the whole plan. Re-running THIS file puts the old line back — run that after.
 create or replace function public.dm_list()
 returns table (
   conversation_id uuid,
