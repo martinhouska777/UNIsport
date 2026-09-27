@@ -24,6 +24,7 @@ import {
   GRID_LAST_HOUR,
   hoursOfDay,
   hoursToSlots,
+  rangeLabel,
 } from "@/lib/schedule";
 
 const HOURS = Array.from(
@@ -79,7 +80,7 @@ export default function ScheduleOverlap({
           key={`${d.day} ${s}`}
           className="rounded-md bg-primary px-2 py-1 text-[11.5px] font-medium tabular-nums text-primary-contrast"
         >
-          {d.day} {s.replace("-", "–")}
+          {d.day} {rangeLabel(s)}
         </span>
       )),
     )

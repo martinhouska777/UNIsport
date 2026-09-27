@@ -4,6 +4,7 @@
   enforce conversation membership via auth.uid(). The plan card itself is read as
   part of the DM thread (see lib/supabase/messages.ts → DmMessage.plan).
 */
+import { clockOf, shortDate } from "@/lib/schedule";
 import { createClient } from "@/lib/supabase/client";
 import { notifyConversation } from "@/lib/push/client";
 
@@ -29,21 +30,19 @@ export async function createPlan(
   return data as string;
 }
 
-/** "Fri, Jun 13 · 3:00 PM" — how a planned session's time reads on its card. */
+/** "Fri 13 Jun · 3:00 PM" — how a planned session's time reads on its card. */
 export function planWhenLabel(iso: string): string {
   const d = new Date(iso);
-  const day = d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
-  const time = d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
-  return `${day} · ${time}`;
+  return `${shortDate(d)} · ${clockOf(d)}`;
 }
 
 /*
-  "Today · 5:00 PM" / "Tomorrow · 7:30 AM" / "Fri, Jun 13 · 3:00 PM" — how a
+  "Today · 5:00 PM" / "Tomorrow · 7:30 AM" / "Fri 13 Jun · 3:00 PM" — how a
   plan's time reads on the Profile tab's Upcoming sessions row.
 */
 export function planDayLabel(iso: string): string {
   const d = new Date(iso);
-  const time = d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  const time = clockOf(d);
   const day0 = new Date();
   day0.setHours(0, 0, 0, 0);
   const target = new Date(d);
@@ -51,8 +50,7 @@ export function planDayLabel(iso: string): string {
   const diff = Math.round((target.getTime() - day0.getTime()) / 86400000);
   if (diff === 0) return `Today · ${time}`;
   if (diff === 1) return `Tomorrow · ${time}`;
-  const day = d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
-  return `${day} · ${time}`;
+  return `${shortDate(d)} · ${time}`;
 }
 
 /*

@@ -1,4 +1,5 @@
 /* Small date helpers shared by the thread views. */
+import { shortDate } from "@/lib/schedule";
 
 export function sameDay(a: string, b: string): boolean {
   const da = new Date(a);
@@ -19,5 +20,5 @@ export function dayLabel(iso: string): string {
   const diffDays = Math.round((today.getTime() - that.getTime()) / 86400000);
   if (diffDays === 0) return "Today";
   if (diffDays === 1) return "Yesterday";
-  return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+  return shortDate(d);
 }

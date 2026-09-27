@@ -101,7 +101,8 @@ export function dayLabel(iso: string, now: Date = new Date()): string {
   if (iso === isoOf(yest)) return "Yesterday";
 
   const d = new Date(`${iso}T00:00:00`);
-  return d.toLocaleString("en-US", {
+  // "Monday 28 September" — the app's own order for a date (lib/schedule.ts).
+  return d.toLocaleString("en-GB", {
     weekday: "long",
     day: "numeric",
     month: "long",
@@ -111,7 +112,7 @@ export function dayLabel(iso: string, now: Date = new Date()): string {
 
 /** The full date, for the viewer, where there's room to spell it out. */
 export function fullDateLabel(iso: string): string {
-  return new Date(`${iso}T00:00:00`).toLocaleString("en-US", {
+  return new Date(`${iso}T00:00:00`).toLocaleString("en-GB", {
     weekday: "long",
     day: "numeric",
     month: "long",
@@ -213,10 +214,10 @@ export function flashbackDates(now: Date = new Date()): { years: string[]; month
   return { years, months };
 }
 
-/** "September 10" this year, "September 15, 2025" in an earlier one. */
+/** "10 September" this year, "15 September 2025" in an earlier one. */
 export function flashbackLabel(iso: string, now: Date = new Date()): string {
   const d = new Date(`${iso}T00:00:00`);
-  return d.toLocaleString("en-US", {
+  return d.toLocaleString("en-GB", {
     month: "long",
     day: "numeric",
     ...(d.getFullYear() === now.getFullYear() ? {} : { year: "numeric" }),

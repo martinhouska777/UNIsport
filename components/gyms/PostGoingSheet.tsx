@@ -6,8 +6,9 @@
   Tap 1: a time (the hours still ahead today; tomorrow's once today is spent).
   Tap 2: confirm. That writes an ordinary Buddy Board post pinned to THIS gym,
   so it shows on the board, on this gym's card ("2 going tonight") and to
-  anyone searching by time. The focus is pre-picked from what you mainly do
-  (lib/buddyBoard.ts) and can be changed without costing a tap.
+  anyone searching by time. What you are doing is yours to pick: it used to be
+  pre-picked from what you mainly do, which was the app guessing for you
+  (launch audit 2026-09-27; the owner's "suggestions are not decisions").
 
   Same chrome as the other bottom sheets; inputs are buttons, so nothing here
   can make a phone zoom. Colours are theme tokens.
@@ -17,25 +18,24 @@ import Button from "@/components/ui/Button";
 import { Pill, FieldLabel } from "@/components/onboarding/controls";
 import { createBuddyPost } from "@/lib/supabase/buddyBoard";
 import { announceBoardChange } from "@/lib/gymGoing";
-import { buddyFocuses, defaultFocusFor, upcomingSlots } from "@/lib/buddyBoard";
+import { buddyFocuses, upcomingSlots } from "@/lib/buddyBoard";
 import { dateLabel } from "@/lib/schedule";
 import { IconX } from "@/components/icons";
 
 export default function PostGoingSheet({
   gymName,
-  primaryActivity,
   onClose,
   onPosted,
 }: {
   gymName: string;
-  primaryActivity: string | null | undefined;
+  primaryActivity?: string | null;
   onClose: () => void;
   onPosted: () => void;
 }) {
   // Worked out once when the sheet opens — the list must not shift under a thumb.
   const [when] = useState(() => upcomingSlots());
   const [hour, setHour] = useState<number | null>(null);
-  const [focus, setFocus] = useState<string>(defaultFocusFor(primaryActivity));
+  const [focus, setFocus] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -46,7 +46,7 @@ export default function PostGoingSheet({
   }, [onClose]);
 
   const post = async () => {
-    if (hour === null || busy) return;
+    if (hour === null || focus === null || busy) return;
     setBusy(true);
     setError(null);
     try {
@@ -77,8 +77,7 @@ export default function PostGoingSheet({
           <div>
             <div className="text-[15px] font-medium text-text">Going to {gymName}</div>
             <div className="mt-0.5 text-[11px] text-muted">
-              {when.isToday ? "Today" : `Tomorrow · ${dateLabel(when.date)}`} · everyone at your
-              school can see it and join you
+              {when.isToday ? "Today" : `Tomorrow · ${dateLabel(when.date)}`}
             </div>
           </div>
           <button
@@ -110,8 +109,8 @@ export default function PostGoingSheet({
 
           {error && <div className="mt-3 text-[12px] text-danger">Couldn’t post: {error}</div>}
 
-          <Button size="lg" full onClick={post} disabled={hour === null || busy} className="mt-5">
-            {busy ? "Posting…" : hour === null ? "Pick a time" : "Post it"}
+          <Button size="lg" full onClick={post} disabled={hour === null || focus === null || busy} className="mt-5">
+            {busy ? "Posting…" : hour === null ? "Pick a time" : focus === null ? "Pick what you’re doing" : "Post it"}
           </Button>
         </div>
       </div>

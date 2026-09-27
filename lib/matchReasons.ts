@@ -60,6 +60,14 @@ const levelWording: Record<
  * Pass the whole Match — the points decide the order, the facts decide the
  * words. Returns an empty array when there is genuinely nothing in common.
  */
+
+/* "the United States", "the Netherlands" — the names English says with "the".
+   "You're both from United States" read as a translation. */
+const WITH_THE = /^(United |Netherlands$|Philippines$|Bahamas$|Gambia$|Maldives$|Czech Republic$|Dominican Republic$|Central African Republic$|Democratic Republic|Republic of |Solomon Islands$|Marshall Islands$|Comoros$|Seychelles$|Middle East$)/;
+function withThe(place: string): string {
+  return WITH_THE.test(place) ? `the ${place}` : place;
+}
+
 export function matchReasons(m: Match): MatchReason[] {
   const f = m.facts;
   const b = m.breakdown;
@@ -165,7 +173,7 @@ export function matchReasons(m: Match): MatchReason[] {
     candidates.push({
       key: "origin",
       short: f.country,
-      full: `You're both from ${f.country}`,
+      full: `You're both from ${withThe(f.country)}`,
       pts: b.origin,
       weight: 3,
     });
@@ -173,7 +181,7 @@ export function matchReasons(m: Match): MatchReason[] {
     candidates.push({
       key: "origin",
       short: f.region,
-      full: `You're both from ${f.region}`,
+      full: `You're both from ${withThe(f.region)}`,
       pts: b.origin,
       weight: 2,
     });

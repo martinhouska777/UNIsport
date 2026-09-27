@@ -35,7 +35,7 @@ import {
   type OtherActivity,
   type PrimaryActivity,
 } from "@/lib/onboarding";
-import { daySlots, slotToText, timeChoices, slotLabel, type Slot } from "@/lib/schedule";
+import { daySlots, slotToText, timeChoices, slotLabel, type Slot, clockLabel } from "@/lib/schedule";
 import { Pill } from "@/components/onboarding/controls";
 import {
   IconChevronDown,
@@ -302,10 +302,7 @@ export default function TrainingSettings({
         open={open === "gyms"}
         onToggle={() => toggle("gyms")}
       >
-        <p className="mb-2 text-[11px] text-muted">
-          Up to {MAX_TOP_GYMS}, in the order you&apos;d pick them. Where you both train is
-          worth real points.
-        </p>
+        <p className="mb-2 text-[11px] text-muted">Up to {MAX_TOP_GYMS}</p>
         <div className="flex flex-wrap gap-1.5">
           {verifiedGyms.map((g) => {
             const rank = topGyms.indexOf(g);
@@ -331,10 +328,6 @@ export default function TrainingSettings({
         open={open === "schedule"}
         onToggle={() => toggle("schedule")}
       >
-        <p className="mb-1 text-[11px] text-muted">
-          The times you&apos;re usually free. This is how we find people who are there
-          when you are.
-        </p>
         <div className="flex flex-col divide-y divide-border">
           {weekDays.map((day) => {
             const slots = daySlots(schedule[day.key]);
@@ -366,7 +359,7 @@ export default function TrainingSettings({
                         >
                           {choices.map((t) => (
                             <option key={t} value={t}>
-                              {t}
+                              {clockLabel(t)}
                             </option>
                           ))}
                         </select>
@@ -379,7 +372,7 @@ export default function TrainingSettings({
                         >
                           {choices.map((t) => (
                             <option key={t} value={t}>
-                              {t}
+                              {clockLabel(t)}
                             </option>
                           ))}
                         </select>

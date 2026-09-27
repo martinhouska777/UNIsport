@@ -23,6 +23,7 @@ import {
   slotToText,
   timeChoices,
   type Slot,
+  clockLabel,
 } from "@/lib/schedule";
 
 // A sensible first suggestion when adding a slot to an empty day.
@@ -159,7 +160,7 @@ export default function TrainingScheduleSheet({
                         >
                           {choices.map((t) => (
                             <option key={t} value={t}>
-                              {t}
+                              {clockLabel(t)}
                             </option>
                           ))}
                         </select>
@@ -172,7 +173,7 @@ export default function TrainingScheduleSheet({
                         >
                           {choices.map((t) => (
                             <option key={t} value={t}>
-                              {t}
+                              {clockLabel(t)}
                             </option>
                           ))}
                         </select>

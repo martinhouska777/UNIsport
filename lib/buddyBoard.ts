@@ -7,7 +7,7 @@
   board and the session search offer the same hours and can be compared.
 */
 import { sessionTimeLabel, sessionTimeSlots, type TimeSlot } from "@/lib/onboarding";
-import { nextDays } from "@/lib/schedule";
+import { clockLabel, dateLabel, nextDays } from "@/lib/schedule";
 
 // The simple workout-focus options the owner chose (legs / arms / chest…).
 export type BuddyFocus = {
@@ -99,16 +99,14 @@ export function postWhenLabel(hour: number | null, timeOfDay: string): string {
   ── WHERE PEOPLE ARE GOING ──────────────────────────────────────────────────
   The board is the one place someone has already put their hand up, and until
   now the Gyms tab didn't know it existed. These helpers turn a gym's open posts
-  into the line a gym card can carry: "3 going tonight · 5pm, 7pm, 8:30".
+  into the line a gym card can carry: "3 going tonight · 5:00 PM, 7:00 PM".
 */
 
-/** "5pm" / "8:30pm" / "7am" — the short clock a card has room for. */
+/** "5:00 PM" / "8:30 PM" / "7:00 AM" — the app's one way of writing a time. */
 export function compactHour(hour: number): string {
   const h = Math.floor(hour);
   const m = Math.round((hour - h) * 60);
-  const suffix = h < 12 ? "am" : "pm";
-  const h12 = h % 12 === 0 ? 12 : h % 12;
-  return m === 0 ? `${h12}${suffix}` : `${h12}:${String(m).padStart(2, "0")}${suffix}`;
+  return clockLabel(`${h}:${String(m).padStart(2, "0")}`);
 }
 
 /** The smallest thing a "going" line needs to know about one post. */
@@ -130,7 +128,7 @@ export const EVENING_FROM_HOUR = 17;
 export type GoingSummary = {
   /** "3 going tonight" / "2 going tomorrow" / "1 going Thu" */
   headline: string;
-  /** "5pm, 7pm, 8:30pm" — the hours on the nearest day, in order. */
+  /** "5:00 PM, 7:00 PM" — the hours on the nearest day, in order. */
   times: string;
   /** Posts on later days than the one the headline is about. */
   more: number;
@@ -141,7 +139,7 @@ export type GoingSummary = {
 /*
   Fold a gym's open posts into one line. The headline is about the NEAREST day
   with posts, because "3 going tonight" is a reason to go and "5 going this
-  week" is a statistic; anything later is folded into "+2 more this week".
+  week" is a statistic; anything later is folded into "+2 more".
 */
 export function goingSummary(posts: GoingPost[], today = new Date()): GoingSummary | null {
   if (posts.length === 0) return null;
@@ -161,8 +159,17 @@ export function goingSummary(posts: GoingPost[], today = new Date()): GoingSumma
   } else if (nearest === t1.iso) {
     when = "tomorrow";
   } else if (nearest) {
+    /* A bare weekday only inside the coming week. The board reaches a month
+       ahead, and "1 going Thu" for a Thursday four weeks off reads as this
+       Thursday — so anything further out carries its date: "Thu 22 Oct". */
     const [y, m, d] = nearest.split("-").map(Number);
-    when = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][new Date(y, m - 1, d).getDay()];
+    const at = new Date(y, m - 1, d);
+    const from = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const ahead = Math.round((at.getTime() - from.getTime()) / 86400000);
+    when =
+      ahead <= 6
+        ? ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][at.getDay()]
+        : dateLabel(nearest);
   } else {
     when = "this week";
   }

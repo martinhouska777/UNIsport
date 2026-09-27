@@ -1,5 +1,6 @@
 "use client";
 
+import { longDate } from "@/lib/schedule";
 import { useEffect, useState } from "react";
 import Button, { buttonClass } from "@/components/ui/Button";
 import {
@@ -47,11 +48,7 @@ export default function WorkoutDetail({
   const muscles = logMuscles(log);
   const metrics = metricsSummary(log);
   const solo = !log.partner || log.partner.toLowerCase() === "solo";
-  const dateLabel = new Date(`${log.date}T00:00:00`).toLocaleString("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-  });
+  const dateLabel = longDate(new Date(`${log.date}T00:00:00`));
 
   // Set label: normal sets are numbered; warmup/drop/failure show their letter.
   const setLabels = (sets: WorkoutSet[]) => {

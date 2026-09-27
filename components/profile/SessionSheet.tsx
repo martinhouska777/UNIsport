@@ -1,5 +1,6 @@
 "use client";
 
+import { longDate } from "@/lib/schedule";
 import { useEffect } from "react";
 import {
   activityLabel,
@@ -33,11 +34,7 @@ export default function SessionSheet({
     return () => document.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  const dateLabel = new Date(`${date}T00:00:00`).toLocaleString("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-  });
+  const dateLabel = longDate(new Date(`${date}T00:00:00`));
 
   return (
     <div className="fixed inset-x-0 top-0 z-50 flex h-dvh flex-col justify-end">

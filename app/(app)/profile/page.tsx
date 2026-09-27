@@ -580,11 +580,10 @@ export default function ProfilePage() {
             {/* Tap the bio, not a pencil beside it — same as the name. */}
             {bioDraft || "Add a short bio"}
           </button>
-        ) : (
-          <p className="text-[13px] leading-relaxed text-text-2">
-            {user.bio || "Add a short bio with the pencil above."}
-          </p>
-        )}
+        ) : user.bio ? (
+          <p className="text-[13px] leading-relaxed text-text-2">{user.bio}</p>
+        ) : null
+        /* No bio, no sentence about the pencil: Edit is where it always is. */}
       </div>
 
       {/* "Did you train with Sam today?" — a partner tag waiting for your yes.

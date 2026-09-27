@@ -156,12 +156,7 @@ export default function NotificationSettings({
     }
     return (
       <div className="flex items-center justify-between gap-3">
-        <div>
-          <div className="text-sm text-text">This device</div>
-          <div className="text-[11px] text-muted">
-            {subscribed ? "Notifications are on here" : "Get notified on this device"}
-          </div>
-        </div>
+        <div className="text-sm text-text">This device</div>
         {subscribed ? (
           <div className="flex flex-shrink-0 items-center gap-2">
             <button
@@ -207,10 +202,7 @@ export default function NotificationSettings({
       {/* What to be notified about — applies across all your devices. */}
       <div className="mt-2 flex flex-col gap-2">
         <div className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-surface px-4 py-3">
-          <div>
-            <div className="text-sm text-text">New messages</div>
-            <div className="text-[11px] text-muted">When someone sends you a message</div>
-          </div>
+          <div className="text-sm text-text">New messages</div>
           <Toggle
             on={messages}
             onChange={() => onChange({ notifyMessages: !messages })}
@@ -218,10 +210,7 @@ export default function NotificationSettings({
           />
         </div>
         <div className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-surface px-4 py-3">
-          <div>
-            <div className="text-sm text-text">Session invites</div>
-            <div className="text-[11px] text-muted">When someone proposes a session</div>
-          </div>
+          <div className="text-sm text-text">Session invites</div>
           <Toggle
             on={plans}
             onChange={() => onChange({ notifyPlans: !plans })}
@@ -229,12 +218,7 @@ export default function NotificationSettings({
           />
         </div>
         <div className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-surface px-4 py-3">
-          <div>
-            <div className="text-sm text-text">Partner tags</div>
-            <div className="text-[11px] text-muted">
-              When someone logs a session with you — “Did you train with Sam today?”
-            </div>
-          </div>
+          <div className="text-sm text-text">Partner tags</div>
           <Toggle
             on={partnerTags}
             onChange={() => onChange({ notifyPartnerTags: !partnerTags })}
@@ -242,13 +226,7 @@ export default function NotificationSettings({
           />
         </div>
         <div className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-surface px-4 py-3">
-          <div>
-            <div className="text-sm text-text">Log reminder</div>
-            <div className="text-[11px] text-muted">
-              One push at your usual training time — “Train today? Log it”. Never on a day
-              you’ve already logged.
-            </div>
-          </div>
+          <div className="text-sm text-text">Log reminder</div>
           <Toggle
             on={logReminders}
             onChange={() => onChange({ notifyLogReminders: !logReminders })}
@@ -256,10 +234,7 @@ export default function NotificationSettings({
           />
         </div>
         <div className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-surface px-4 py-3">
-          <div>
-            <div className="text-sm text-text">New followers</div>
-            <div className="text-[11px] text-muted">When someone follows you</div>
-          </div>
+          <div className="text-sm text-text">New followers</div>
           <Toggle
             on={follows}
             onChange={() => onChange({ notifyFollows: !follows })}
@@ -268,12 +243,7 @@ export default function NotificationSettings({
         </div>
         {showTeam && (
           <div className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-surface px-4 py-3">
-            <div>
-              <div className="text-sm text-text">From your coach</div>
-              <div className="text-[11px] text-muted">
-                Training published, lineups up, and notes written to you
-              </div>
-            </div>
+            <div className="text-sm text-text">From your coach</div>
             <Toggle
               on={team}
               onChange={() => onChange({ notifyTeam: !team })}

@@ -116,8 +116,8 @@ export function hoursToSlots(hours: Iterable<number>): string[] {
   return out;
 }
 
-/* "Mon 07:00–09:00" style, for one slot. */
-export const slotLabel = (s: Slot) => `${s.start}–${s.end}`;
+/* "5:00–7:00 PM" style, for one slot. */
+export const slotLabel = (s: Slot) => rangeLabel(s);
 
 const WEEK_DAY_NAMES: Record<string, string> = {
   mon: "Monday", tue: "Tuesday", wed: "Wednesday", thu: "Thursday",
@@ -221,4 +221,50 @@ export function dateLabel(iso: string): string {
   const names = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
   const dt = new Date(y, m - 1, d);
   return `${names[(dt.getDay() + 6) % 7]} ${d} ${MONTHS_SHORT[m - 1]}`;
+}
+
+/* ── ONE WAY TO WRITE A DATE AND A TIME (launch audit 2026-09-27) ──────────
+  The student app had four: "Mon 28 Sep · 5:00 PM", "Mon, Sep 28",
+  "tomorrow · 5pm" and "17:00–19:00". Now every screen says a day as
+  "Mon 28 Sep" (dateLabel above) and a time as "5:00 PM" — the words the time
+  pickers already used — and a stretch of hours as "5:00–7:00 PM". Long forms,
+  where there is room, read "Monday 28 September". Message timestamps
+  ("9:14 AM") were already this clock. */
+
+/** "Mon 28 Sep" for a Date (local day). */
+export function shortDate(d: Date): string {
+  return dateLabel(`${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`);
+}
+
+/** "Monday 28 September", with the year only when it is not this one. */
+export function longDate(d: Date, withWeekday = true): string {
+  const sameYear = d.getFullYear() === new Date().getFullYear();
+  return d.toLocaleDateString("en-GB", {
+    ...(withWeekday ? { weekday: "long" as const } : {}),
+    day: "numeric",
+    month: "long",
+    ...(sameYear ? {} : { year: "numeric" as const }),
+  });
+}
+
+/** "5:00 PM" for a Date. */
+export function clockOf(d: Date): string {
+  return d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+}
+
+/** "17:30" → "5:30 PM". */
+export function clockLabel(hhmm: string): string {
+  const [h, m] = hhmm.split(":").map(Number);
+  return `${h % 12 || 12}:${pad2(m)} ${h < 12 || h === 24 ? "AM" : "PM"}`;
+}
+
+/** "17:00-19:00" or a Slot → "5:00–7:00 PM" (one AM/PM when both ends share it). */
+export function rangeLabel(slot: Slot | string): string {
+  const s = typeof slot === "string" ? parseSlot(slot) : slot;
+  if (!s) return typeof slot === "string" ? slot : "";
+  const a = clockLabel(s.start);
+  const b = clockLabel(s.end);
+  const [aTime, aMer] = a.split(" ");
+  const [, bMer] = b.split(" ");
+  return aMer === bMer ? `${aTime}–${b}` : `${a}–${b}`;
 }

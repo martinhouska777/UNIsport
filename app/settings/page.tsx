@@ -172,7 +172,7 @@ export default function SettingsPage() {
           type="button"
           onClick={() => router.back()}
           aria-label="Back"
-          className="text-text"
+          className="tap44 press-icon text-text"
         >
           <IconArrowLeft size={20} />
         </button>
@@ -188,9 +188,6 @@ export default function SettingsPage() {
         <Section title="Account">
           <p className="rounded-2xl border border-border bg-surface px-4 py-3 text-sm text-text">
             {email ?? "Not signed in"}
-            <span className="mt-0.5 block text-[11px] text-muted">
-              The account you&apos;re signed in as
-            </span>
           </p>
         </Section>
 
@@ -258,10 +255,6 @@ export default function SettingsPage() {
               );
             })}
           </div>
-          <p className="mt-2 px-1 text-[11px] text-muted">
-            Flips the whole app to that school — colours, crest and gyms. A demo
-            switch until accounts carry a university.
-          </p>
         </Section>
         )}
 
@@ -273,12 +266,7 @@ export default function SettingsPage() {
               Checking…
             </p>
           ) : !membership ? (
-            <>
-              <Row icon={<IconShield size={18} />} label="Join a varsity team" href="/join" />
-              <p className="mt-2 px-1 text-[11px] text-muted">
-                Paste the invite link your coach or captain sent you.
-              </p>
-            </>
+            <Row icon={<IconShield size={18} />} label="Join a varsity team" href="/join" />
           ) : membership.status === "pending" ? (
             <Row
               icon={<IconShield size={18} />}
@@ -354,9 +342,6 @@ export default function SettingsPage() {
                 answers={(data ?? {}) as Partial<OnboardingProfile>}
                 onSave={savePreferences}
               />
-              <p className="mt-2 px-1 text-[11px] text-muted">
-                All of this decides who you&apos;re matched with.
-              </p>
             </Section>
 
             {/* Match — one standalone switch, not folded into a Training row,
@@ -364,12 +349,7 @@ export default function SettingsPage() {
                 rather than tuning who you're shown. Everyone starts included. */}
             <Section title="Match">
               <div className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-surface px-4 py-3">
-                <div className="min-w-0">
-                  <div className="text-sm text-text">Train alone</div>
-                  <div className="mt-0.5 text-[11px] text-muted">
-                    Hide me from Match — nobody can find or request to train with me.
-                  </div>
-                </div>
+                <div className="min-w-0 text-sm text-text">Train alone</div>
                 <Toggle
                   on={trainsAlone}
                   onChange={() => savePreferences({ trainingType: trainsAlone ? "either" : "solo" })}
@@ -385,19 +365,11 @@ export default function SettingsPage() {
                 detail={loading ? "Loading…" : undefined}
                 onClick={() => user && setEditingPrefs(true)}
               />
-              <p className="mt-2 px-1 text-[11px] text-muted">
-                Who you want to train with, mentorship, interests, languages and your
-                concentration.
-              </p>
             </Section>
           </>
         ) : (
           <Section title="Student mode">
             <Row icon={<IconPencil size={18} />} label="Set up the student side" href="/onboarding" />
-            <p className="mt-2 px-1 text-[11px] text-muted">
-              Campus gyms, finding people to train with, and messages. Separate from your team,
-              and entirely up to you.
-            </p>
           </Section>
         )}
 
@@ -432,10 +404,6 @@ export default function SettingsPage() {
               router.push("/gyms");
             }}
           />
-          <p className="mt-2 px-1 text-[11px] text-muted">
-            Walks you through the whole app — the four tabs, a gym, and how a
-            session gets logged. About a minute, and you can stop any time.
-          </p>
         </Section>
 
         <Section title="About">

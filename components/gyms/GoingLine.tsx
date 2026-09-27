@@ -31,7 +31,7 @@ export default function GoingLine({
     <>
       <span className="font-medium text-primary">{going.headline}</span>
       {going.times && <span className="text-text-2"> · {going.times}</span>}
-      {going.more > 0 && <span className="text-text-3"> · +{going.more} more this week</span>}
+      {going.more > 0 && <span className="text-text-3"> · +{going.more} more</span>}
     </>
   );
 

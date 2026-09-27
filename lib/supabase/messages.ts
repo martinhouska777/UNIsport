@@ -482,8 +482,9 @@ export function listTime(iso: string | null): string {
   if (days <= 0) return clockTime(iso);
   if (days === 1) return "Yesterday";
   if (days < 7) return d.toLocaleDateString("en-US", { weekday: "long" });
+  // "28 Sep", "28 Sep 2025" — the app's own order for a date.
   return d.toLocaleDateString(
-    "en-US",
+    "en-GB",
     d.getFullYear() === now.getFullYear()
       ? { month: "short", day: "numeric" }
       : { month: "short", day: "numeric", year: "numeric" },

@@ -17,6 +17,7 @@
   that changed anything the Profile re-reads its calendar, so your own session
   stops saying "waiting" the moment the window has shut.
 */
+import { shortDate } from "@/lib/schedule";
 import { useEffect, useRef, useState } from "react";
 import Button from "@/components/ui/Button";
 import Avatar from "@/components/messages/Avatar";
@@ -38,7 +39,7 @@ function dayWord(iso: string): string {
   const diff = Math.round((today.getTime() - t.getTime()) / 86400000);
   if (diff === 0) return "today";
   if (diff === 1) return "yesterday";
-  return t.toLocaleDateString("en-US", { weekday: "short", day: "numeric", month: "short" });
+  return shortDate(t);
 }
 
 export default function PartnerRequests({ onChanged }: { onChanged?: () => void }) {

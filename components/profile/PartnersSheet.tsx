@@ -17,7 +17,7 @@ import { IconX, IconChevronRight } from "@/components/icons";
 
 // "last trained 12 Jun" style date.
 function lastLabel(iso: string): string {
-  return new Date(`${iso}T00:00:00`).toLocaleDateString("en-US", {
+  return new Date(`${iso}T00:00:00`).toLocaleDateString("en-GB", {
     month: "short",
     day: "numeric",
   });
