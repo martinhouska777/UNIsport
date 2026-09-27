@@ -111,16 +111,28 @@ function Place({ entry }: { entry: PodiumEntry }) {
   // A place that opens something is a button; one that doesn't stays a div, so
   // nothing on screen invites a tap that does nothing.
   const Tag = entry.onOpen ? "button" : "div";
+  const washed = entry.kind === "group" && !!entry.crest;
 
   return (
     <Tag
       {...(entry.onOpen ? { type: "button" as const, onClick: entry.onOpen } : {})}
-      className={`flex min-w-0 flex-1 flex-col items-center ${
+      className={`flex min-w-0 flex-1 flex-col items-center rounded-t-xl ${
         entry.onOpen ? "tap44" : ""
       }`}
+      /* A HOUSE'S COLUMN IN ITS COLOUR (owner, 2026-09-27: "more in house
+         colour, less white"): a wash of the house that deepens down to its
+         pedestal, the same colour its row wears in the list below. Content
+         colour from lib/gyms.ts, applied inline (rule 1's exception). */
+      style={
+        washed && entry.crest
+          ? {
+              background: `linear-gradient(180deg, ${entry.crest.primary}14, ${entry.crest.primary}4d)`,
+            }
+          : undefined
+      }
     >
       <div
-        className="podium-card-in flex w-full min-w-0 flex-col items-center"
+        className={`podium-card-in flex w-full min-w-0 flex-col items-center ${washed ? "pt-2" : ""}`}
         style={{ animationDelay: p.delay }}
       >
         {/* A house shows its crest, a person a tinted circle. A group with no
@@ -164,8 +176,8 @@ function Place({ entry }: { entry: PodiumEntry }) {
           </div>
         )}
 
-        <div className="mt-1 text-[15px] font-semibold leading-none text-text">{entry.value}</div>
-        <div className="mt-0.5 text-[8px] uppercase tracking-[0.08em] text-muted">{entry.unit}</div>
+        <div className="mt-1 text-[18px] font-bold leading-none tabular-nums text-text">{entry.value}</div>
+        <div className="mt-0.5 text-[9px] font-semibold uppercase tracking-[0.08em] text-text/60">{entry.unit}</div>
       </div>
 
       {/* The pedestal, with its medal standing on it. A trophy once floated

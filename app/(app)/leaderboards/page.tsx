@@ -193,10 +193,25 @@ const plural = (n: number, noun: string) => `${n} ${noun}${n === 1 ? "" : "s"}`;
    NOTHING SCORED, NOTHING PLACED. On launch day every house is level at zero,
    which ranks all twelve "1st"; a row that has not scored gets a quiet dash
    instead of a gold medal it did nothing for. */
-function RankBadge({ rank, scored }: { rank: number; scored: boolean }) {
+function RankBadge({
+  rank,
+  scored,
+  onTint = false,
+}: {
+  rank: number;
+  scored: boolean;
+  /** On a house's coloured row the tile is see-through white, not grey. */
+  onTint?: boolean;
+}) {
   if (scored && rank <= 3) return <Medal place={rank as 1 | 2 | 3} rank={rank} size={28} />;
+  /* The place in INK, not grey (owner, 2026-09-27: "the number more visible"):
+     a pale 4 on a pale tile was the faintest thing on the row. */
   return (
-    <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-surface-2 text-[11px] font-semibold text-muted">
+    <span
+      className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg text-[13px] font-bold tabular-nums text-text ${
+        onTint ? "bg-surface/75" : "bg-surface-2"
+      }`}
+    >
       {scored ? rank : "–"}
     </span>
   );
@@ -258,9 +273,9 @@ function TabBar({ value, onPick }: { value: TabKey; onPick: (t: TabKey) => void 
 function Score({ value, unit }: { value: string; unit?: string }) {
   return (
     <div className="flex-shrink-0 text-right">
-      <div className="text-[15px] font-semibold leading-none text-text">{value}</div>
+      <div className="text-[17px] font-bold leading-none tabular-nums text-text">{value}</div>
       {unit && (
-        <div className="mt-1 text-[8px] uppercase tracking-[0.08em] text-muted">{unit}</div>
+        <div className="mt-1 text-[9px] font-semibold uppercase tracking-[0.08em] text-text/60">{unit}</div>
       )}
     </div>
   );
@@ -357,7 +372,7 @@ function GroupRowItem({
   return (
     <Tag
       {...(onOpen ? { type: "button" as const, onClick: onOpen } : {})}
-      className={`flex w-full items-center gap-2.5 rounded-xl border px-3 py-2.5 text-left ${
+      className={`relative isolate flex w-full items-center gap-2.5 overflow-hidden rounded-xl border px-3 py-2.5 text-left ${
         onOpen ? "tap44 active:bg-surface-2" : ""
       } ${row.isMine ? "border-primary bg-primary-tint" : "border-border bg-surface"}`}
       /*
@@ -367,18 +382,33 @@ function GroupRowItem({
         the row itself is the house. A wash rather than a fill, because the text
         on it is theme ink and has to stay readable in both themes; YOUR house
         keeps the theme's own border on top of the wash, so "mine" still reads.
+        STRONGER since 2026-09-27 (owner: "more in house colour, less white"):
+        about a quarter of the colour at the crest end, fading to a tenth.
         Content colour from lib/gyms.ts, applied inline (rule 1's exception).
       */
       style={
         crest
           ? {
-              background: `${crest.primary}${row.isMine ? "24" : "14"}`,
-              ...(row.isMine ? {} : { borderColor: `${crest.primary}66` }),
+              background: `linear-gradient(90deg, ${crest.primary}${row.isMine ? "55" : "42"}, ${crest.primary}${row.isMine ? "2e" : "1c"})`,
+              ...(row.isMine ? {} : { borderColor: `${crest.primary}8c` }),
             }
           : undefined
       }
     >
-      <RankBadge rank={row.rank} scored={row.points > 0} />
+      {/* THE SHIELD BEHIND THE ROW — the house's crest again, big, tilted and
+          cut off by the right edge, under everything else (owner, 2026-09-27:
+          "the shield houses more visible in the background"). -z-10 inside
+          the row's own stacking context (`isolate`): above the wash, below the
+          words. */}
+      {crest && (
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute right-[76px] top-1/2 -z-10 -translate-y-1/2 rotate-[-14deg] opacity-25"
+        >
+          <HouseShield primary={crest.primary} secondary={crest.secondary} size={104} />
+        </span>
+      )}
+      <RankBadge rank={row.rank} scored={row.points > 0} onTint={!!crest} />
       {/* THE HOUSE'S CREST, in its own two colours and with no initial on it
           (owner, 2026-09-06: "ty hausy taky bez inicialu, jen ty jejich tabs at
           jsou v barvach"). It was a plain filled square — the colours ARE the
