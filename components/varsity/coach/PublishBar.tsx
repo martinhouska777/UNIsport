@@ -10,15 +10,19 @@
 
   TWO WORDS, AND ONLY TWO (owner, 2026-09-20). "Publish to team" and "Tell the
   squad" were three different labels for two things, and the coach has to read
-  each one before pressing it. It is Publish and Unpublish now, everywhere:
+  each one before pressing it. It is Publish and Unpublish now, everywhere —
+  and NEVER BOTH AT ONCE (owner, 2026-09-27: "definitely don't make it so
+  there are Publish and Unpublish buttons"):
 
     draft            → [Publish]
     live, untouched  → [Unpublish]
-    live, edited     → [Unpublish] [Publish]
+    live, edited     → [Publish]
 
   The database holds one copy of a lineup or a plan, not a published copy and a
   draft copy, so editing something live changes what the squad sees the moment
-  it saves — which is why the third state still offers Publish.
+  it saves — which is why an edited live one offers Publish (it tells the
+  squad). Once that is pressed it is live and untouched again, and Unpublish
+  is back.
 
   UNPUBLISH DOES IT ON THE FIRST PRESS (owner, 2026-09-21). It used to stop and
   ask — Unpublish, then "Take it off the squad's phones?", then Unpublish again
@@ -70,6 +74,9 @@ export default function PublishBar({
 }) {
   const edited = live && changed;
   const title = !live ? "Draft" : edited ? "Live · edited" : "Live";
+  // The one button there is: Publish for a draft or an edited live one,
+  // Unpublish for a live one nobody has touched.
+  const publish = !live || edited;
 
   if (stack) {
     return (
@@ -77,14 +84,13 @@ export default function PublishBar({
          row they are placed in with whatever sits beside them — the Plan
          card's Edit — at equal widths. */
       <div data-tour={tourId} className="flex w-full flex-col gap-2 max-sm:contents">
-        {live && (
-          <Button variant="secondary" size="md" full onClick={onUnpublish} disabled={busy}>
-            Unpublish
-          </Button>
-        )}
-        {(!live || edited) && (
+        {publish ? (
           <Button size="md" full onClick={live ? onNotify : onPublish} disabled={busy}>
             <IconSend size={13} /> Publish
+          </Button>
+        ) : (
+          <Button variant="secondary" size="md" full onClick={onUnpublish} disabled={busy}>
+            Unpublish
           </Button>
         )}
       </div>
@@ -105,22 +111,16 @@ export default function PublishBar({
 
       {/* One row, right-aligned. */}
       <div className={`${bare ? "" : "mt-2.5 "}flex items-center justify-end gap-2`}>
-        {live && (
-          <button
-            type="button"
-            onClick={onUnpublish}
-            disabled={busy}
-            className="rounded-lg border border-border px-3 py-2 text-[12px] font-semibold text-muted disabled:opacity-50"
-          >
-            Unpublish
-          </button>
-        )}
         {/* The same word for both: a draft goes out, and a change to something
             already live goes out. Which of the two it is is the state of the
             thing, not a different button. */}
-        {(!live || edited) && (
+        {publish ? (
           <Button size="sm" onClick={live ? onNotify : onPublish} disabled={busy}>
             <IconSend size={13} /> Publish
+          </Button>
+        ) : (
+          <Button variant="secondary" size="sm" onClick={onUnpublish} disabled={busy}>
+            Unpublish
           </Button>
         )}
       </div>

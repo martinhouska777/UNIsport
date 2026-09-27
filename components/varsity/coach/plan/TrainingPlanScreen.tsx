@@ -880,28 +880,51 @@ export default function TrainingPlanScreen({
           what stopped the card looking lopsided.
         */}
         {/*
-          ON A PHONE THE BUTTONS TAKE THEIR OWN ROW (audit, 2026-09-27). A
-          120px column of Edit / Unpublish beside the name left the name half
-          the card, and it read "HUBC F…" and "Head of the Ch…". Below sm the
-          name, dates and race get the full width and the buttons sit in one
-          row underneath; from sm up it is the two-sided card it was.
+          TWO SMALL BUTTONS, TOP RIGHT (owner, 2026-09-27: "make it smaller so
+          you do the Publish and Edit on the right, so it fits better — there
+          is a lot of space on the right"). They were a column of full-size
+          buttons — and on a phone a whole row of three, Edit · Unpublish ·
+          Publish. Now it is Edit and ONE publish button (PublishBar never
+          shows both), small, in the corner; the name wraps rather than being
+          cut to "HUBC F…" (audit, 2026-09-27), and the chip goes under it
+          when there is no room beside it.
         */}
         <div
           data-tour="coach-plan-status"
-          className="mt-3 flex w-full flex-col gap-3 rounded-xl border border-border bg-surface px-4 py-3.5 sm:flex-row sm:items-stretch sm:gap-4"
+          className="mt-3 w-full rounded-xl border border-border bg-surface px-4 py-3.5 shadow-card"
         >
-          <div className="flex min-w-0 flex-1 flex-col justify-between gap-3">
-            <div className="min-w-0">
-              <div className="flex min-w-0 items-center gap-2">
-                <span className="min-w-0 truncate text-[17px] font-semibold text-text">{block.name}</span>
+          <div className="flex items-start gap-3">
+            <div className="min-w-0 flex-1">
+              <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                <span className="min-w-0 break-words text-[17px] font-semibold leading-snug text-text">{block.name}</span>
                 <StatusChip live={live} />
               </div>
               <div className="mt-1 text-[11px] text-muted">{week.rangeLabel}</div>
             </div>
+            <div className="flex flex-shrink-0 items-center gap-1.5">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => openEditBlock(block)}
+                aria-label={`Edit ${block.name}`}
+              >
+                <IconPencil size={12} /> Edit
+              </Button>
+              <PublishBar
+                bare
+                live={live}
+                changed={blockChanged(block)}
+                busy={writing}
+                onPublish={() => publishBlock(block.id)}
+                onNotify={() => tellSquad(block.id)}
+                onUnpublish={() => unpublishBlock(block.id)}
+              />
+            </div>
+          </div>
             {/* The race in a pill of its own, down at the foot of the left
                 column so it answers the buttons across from it. */}
             {block.raceName && (
-              <span className="inline-flex min-w-0 max-w-full items-center gap-1.5 self-start rounded-full border border-border px-3 py-1.5 text-[11px] text-muted">
+              <span className="mt-3 inline-flex min-w-0 max-w-full items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-[11px] text-muted">
                 <span className="flex-shrink-0 text-primary">
                   <IconFlag size={12} />
                 </span>
@@ -913,27 +936,6 @@ export default function TrainingPlanScreen({
                 )}
               </span>
             )}
-          </div>
-          <div className="flex w-full gap-2 sm:w-[120px] sm:flex-shrink-0 sm:flex-col">
-            <Button
-              variant="secondary"
-              size="md"
-              full
-              onClick={() => openEditBlock(block)}
-              aria-label={`Edit ${block.name}`}
-            >
-              <IconPencil size={13} /> Edit
-            </Button>
-            <PublishBar
-              stack
-              live={live}
-              changed={blockChanged(block)}
-              busy={writing}
-              onPublish={() => publishBlock(block.id)}
-              onNotify={() => tellSquad(block.id)}
-              onUnpublish={() => unpublishBlock(block.id)}
-            />
-          </div>
         </div>
 
         {others.length > 0 && (
@@ -987,15 +989,26 @@ export default function TrainingPlanScreen({
             <div
               key={d.date.toISOString()}
               data-tour={di === 0 ? "coach-plan-first-day" : undefined}
-              className={`overflow-hidden rounded-xl border bg-surface ${d.today ? "border-primary/50" : "border-border"}`}
+              /* A DAY STANDS OFF THE PAGE (owner, 2026-09-27: "make a better
+                 distinction from the background … so it pops more"). The card
+                 carries the app's card shadow, its heading is in ink rather
+                 than grey, and TODAY's heading is solid black — the Lineup
+                 tab's black TODAY badge, and not red, which on this screen
+                 already means a hard session — so the week is read from where
+                 you are in it. */
+              className={`overflow-hidden rounded-xl border bg-surface shadow-card ${d.today ? "border-text" : "border-border"}`}
             >
-              <div className={`flex items-center justify-between px-3 py-2 ${d.today ? "bg-primary-tint" : "bg-surface-2"}`}>
+              <div
+                className={`flex items-center justify-between px-3 py-2 ${
+                  d.today ? "bg-text text-background" : "border-b border-border bg-surface-2 text-text"
+                }`}
+              >
                 {/* Just the day, written out — the owner crossed out the month
                     (2026-09-18): the week range above already says it. */}
-                <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
+                <span className="text-[11px] font-bold uppercase tracking-[0.12em]">
                   {d.date.toLocaleDateString("en-US", { weekday: "long" })}
                 </span>
-                <span className={`text-sm font-semibold ${d.today ? "text-primary" : "text-text"}`}>{d.dayNum}</span>
+                <span className="text-sm font-bold">{d.dayNum}</span>
               </div>
               <div className="flex flex-col gap-1.5 p-2">
                 {periods.map((p, pi) => {

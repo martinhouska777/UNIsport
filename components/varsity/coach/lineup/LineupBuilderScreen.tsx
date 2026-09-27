@@ -139,6 +139,7 @@ import {
 } from "@/components/icons";
 import { slotKey, useNameDrag, type Slot } from "./useNameDrag";
 import { markColor } from "@/lib/colorMarks";
+import KindTag from "@/components/varsity/KindTag";
 
 /*
   What the training plan prescribes for one AM or PM slot, reduced to the few
@@ -327,18 +328,14 @@ function PracticeBody({ practice }: { practice: Practice & { plan: PlanCell } })
         top line with the workout instead of taking one of its own.
       */}
       <span className="flex w-full min-w-0 items-baseline justify-between gap-2">
-        <span
-          className={`min-w-0 truncate text-[11px] font-medium ${
-            plan ? (water ? "text-text" : "text-muted") : "text-muted/70"
-          }`}
-        >
-          {plan ? plan.label : "Nothing planned"}
-        </span>
-        <span
-          className={`flex-shrink-0 text-[10px] font-semibold tracking-[0.1em] ${
-            water ? "text-text/70" : "text-muted/80"
-          }`}
-        >
+        {plan ? (
+          <span className="min-w-0 truncate">
+            <KindTag label={plan.label} color={markColor(plan.color) ?? plan.color} />
+          </span>
+        ) : (
+          <span className="min-w-0 truncate text-[11px] font-medium text-muted/70">Nothing planned</span>
+        )}
+        <span className="flex-shrink-0 text-[10px] font-semibold tracking-[0.1em] text-muted">
           {practice.period}
         </span>
       </span>
@@ -346,11 +343,7 @@ function PracticeBody({ practice }: { practice: Practice & { plan: PlanCell } })
       {plan?.description && (
         /* Full-strength text on a painted cell: muted grey on the yellow of
            a UT1 outing is the one pairing that goes hard to read. */
-        <span
-          className={`w-full truncate text-[10px] leading-snug ${water ? "text-text/85" : "text-muted"}`}
-        >
-          {plan.description}
-        </span>
+        <span className="w-full truncate text-[11px] leading-snug text-text/85">{plan.description}</span>
       )}
 
       {/*
@@ -361,7 +354,10 @@ function PracticeBody({ practice }: { practice: Practice & { plan: PlanCell } })
         now occupy the same slot in the same corner, and the SHAPE answers
         before the colour or the word does:
 
-          · not started — a DASHED SQUARE, empty, nothing in it yet
+          · not started — a GREY CIRCLE and the word in ink (owner,
+                          2026-09-27: "Not Started is not visible much …
+                          like a black circle or gray circle"). It was an
+                          empty dashed square, which vanished into the wash.
           · draft       — a SOLID amber SQUARE, on the workbench
           · published   — a GREEN PILL with a tick, sealed and out
 
@@ -385,7 +381,8 @@ function PracticeBody({ practice }: { practice: Practice & { plan: PlanCell } })
           {s.label}
         </span>
       ) : (
-        <span className="mt-auto self-start rounded-[3px] border border-dashed border-border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">
+        <span className="mt-auto flex items-center gap-1.5 self-start rounded-[3px] border border-border bg-surface-2 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-text/75">
+          <span className="h-2 w-2 rounded-full bg-muted" />
           {s.label}
         </span>
       )}
@@ -394,9 +391,22 @@ function PracticeBody({ practice }: { practice: Practice & { plan: PlanCell } })
 }
 
 /*
-  THE WHOLE CELL IS THE SESSION'S COLOUR. It used to be a 1.5px dot beside the
-  label, which is nothing to glance at — and the coach's own spreadsheet paints
-  the entire square, so a week is read as a pattern before a word of it is.
+  A WHITE CELL, A STRIPE AND A TAG (owner, 2026-09-27: "just make it white
+  all the time, so it's visible if it's published or not published"). The
+  session's colour washed the whole cell, and on a green or red cell the
+  lineup's state — the one thing this screen is for — was the hardest thing to
+  read. The colour is now the 4px stripe down the cell's left and the tag
+  naming the session, the same card as the two Today screens (KindTag).
+
+  EVERY CELL THE SAME HEIGHT (same day: "make sure it always has the same
+  size, sometimes it's smaller"). An Off morning has no description and no
+  state, so its day card came out half the height of the rest; min-h keeps a
+  week of cards one size.
+
+  (Until then — THE WHOLE CELL IS THE SESSION'S COLOUR. It used to be a 1.5px
+  dot beside the label, which is nothing to glance at — and the coach's own
+  spreadsheet paints the entire square, so a week is read as a pattern before
+  a word of it is.
   Same colour source as the plan grid (intensity when there is one), so green /
   yellow / red mean here exactly what they mean there.
 
@@ -406,7 +416,7 @@ function PracticeBody({ practice }: { practice: Practice & { plan: PlanCell } })
 
   color-mix over `transparent` rather than a hex + "22" suffix: these colours
   are theme tokens as often as hex (var(--success)), and a suffix silently
-  produces nothing at all for those. Content colour, applied inline (rule 1).
+  produces nothing at all for those.) Content colour, applied inline (rule 1).
 */
 function PracticeButton({
   practice,
@@ -419,15 +429,11 @@ function PracticeButton({
   tour?: string;
 }) {
   const plan = practice.plan;
-  const wash = plan
-    ? { background: `color-mix(in oklab, ${plan.color} ${plan.water ? 30 : 12}%, transparent)` }
-    : undefined;
   return (
     <button
       type="button"
       onClick={onPick}
       data-tour={tour}
-      style={wash}
       /*
         THE TWO HALVES FILL THE CARD, edge to edge, with a LINE you can see
         between them (owner, 2026-09-21). They were briefly two inset tiles
@@ -436,8 +442,11 @@ function PracticeButton({
         width again; what divides them is a 2px seam in the page's own colour,
         not the hairline it used to be.
       */
-      className="flex min-w-0 flex-1 flex-col items-start gap-1.5 border-r-2 border-background px-3 py-2.5 text-left last:border-r-0 active:brightness-95"
+      className="relative flex min-h-[92px] min-w-0 flex-1 flex-col items-start gap-1.5 border-r-2 border-background bg-surface py-2.5 pl-4 pr-3 text-left last:border-r-0 active:bg-surface-2"
     >
+      {plan && (
+        <span className="absolute inset-y-0 left-0 w-1" style={{ background: markColor(plan.color) ?? plan.color }} />
+      )}
       <PracticeBody practice={practice} />
     </button>
   );
