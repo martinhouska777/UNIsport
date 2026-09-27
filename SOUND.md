@@ -250,8 +250,8 @@ section 0. ChatCut's commercial terms for generated music are still to be checke
 ## 2026-09-27, later — version 5: only the owner's six sounds
 
 Owner, after hearing version 4: "skip all sound effects because they're distracting…
-this is the exact video I want" (the picture is final; the WhatsApp copy he sent is
-frame-for-frame our render). He listed what stays, and **that is all**:
+this is the exact video I want" (the picture is final; the WhatsApp copy the owner sent is
+frame-for-frame our render). The owner listed what stays, and **that is all**:
 
 | When | Sound |
 |---|---|
