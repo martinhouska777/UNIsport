@@ -100,7 +100,7 @@ export default function LandingPage({ view = "all" }: { view?: LandingView }) {
                appearing. Gyms is the last chapter AND what the closer shows. */
             fromBeat={studentStory.length - 1}
             toBeat={studentStory.length - 1}
-            aside={<FeatureList kicker={studentFeatures.kicker} rows={studentFeatures.rows} cta={studentFeatures.cta} />}
+            aside={<FeatureList kicker={studentFeatures.kicker} rows={studentFeatures.rows} coming={studentFeatures.coming} cta={studentFeatures.cta} />}
           />
         )}
         {varsity && <Interlude solo={!all} />}

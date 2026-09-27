@@ -692,21 +692,41 @@ export const closers = {
   the reader, one factual sub-line. DRAFT for the owner — review in the
   browser, not here.
 
-  "What's coming" for students / varsity / coaches is NOT here on purpose:
-  it is a roadmap, and only the owner knows it. Add a `coming` array to each
-  block when the words exist and the page will show it.
+  "What's coming" is the owner's roadmap, so a block only gets a `coming`
+  group when they name what goes in it. The student block has one since
+  2026-09-27 — the feed (owner: "that will be like upcoming, and there will be
+  the feed there"). The varsity block has none yet.
 */
 
 /** `icon` names one of the line icons in components/landing/FeatureIcon.tsx. */
 export type FeatureRow = { icon: string; title: string; detail: string };
 
+/** A second, smaller list under the rows — its own kicker, the same rows. */
+export type FeatureGroup = { kicker: string; rows: FeatureRow[] };
+
 /** The button under a feature list — every door ends where it started, with
     its own way in (2026-08-18 review: the lists used to end in a hairline). */
 export type FeatureCta = { label: string; href: string };
 
-export const studentFeatures: { kicker: string; rows: FeatureRow[]; cta: FeatureCta } = {
+export const studentFeatures: { kicker: string; rows: FeatureRow[]; coming: FeatureGroup; cta: FeatureCta } = {
   kicker: "The app",
   cta: { label: hero.primaryCta, href: hero.primaryHref },
+  /* BUILT BUT NOT OUT: the feed lives on the `feed` branch (unisportdev) and
+     `main` ships none of it, so on the public page it is "upcoming", not a
+     feature. When the branch merges, the row moves up into `rows`.
+     The detail line is a DRAFT in the page's voice, checked against what the
+     branch does (a post points at a logged session; Following / Everyone;
+     kudos; it is the one place that crosses universities). Not dictated. */
+  coming: {
+    kicker: "Upcoming",
+    rows: [
+      {
+        icon: "feed",
+        title: "Feed.",
+        detail: "Share a session once you log it and see what the people you follow have been training. Give kudos, and meet students from other universities.",
+      },
+    ],
+  },
   rows: [
     {
       /* /gyms — hours, ratings, equipment lists, favourites, the crowd meter (lib/gymSocial.ts) */

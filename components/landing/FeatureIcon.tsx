@@ -30,6 +30,8 @@ const PATHS: Record<string, string> = {
   filter: "M3 5h18l-7 8v6l-4 2v-8z",
   trend: "M3 17l6-6 4 4 8-8M15 7h6v6",
   memories: "M4 8h3l2-3h6l2 3h3v10H4zM12 11a3 3 0 1 0 0 6 3 3 0 0 0 0-6z",
+  /* two posts stacked, the way a feed scrolls */
+  feed: "M4 3h16v9H4zM4 16h16M4 20h11",
 };
 
 export default function FeatureIcon({ name, className = "" }: { name: string; className?: string }) {
