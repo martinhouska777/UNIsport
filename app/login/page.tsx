@@ -301,7 +301,7 @@ export default function LoginPage() {
             <div className="mb-4 flex rounded-full border border-l-line bg-l-surface p-1 text-sm font-medium">
               <button
                 onClick={() => switchMode("login")}
-                className={`flex-1 rounded-full py-2 transition-colors ${
+                className={`tap44 flex-1 rounded-full py-2 transition-colors ${
                   !isSignup ? "bg-l-accent text-l-bg" : "text-l-text-2"
                 }`}
               >
@@ -309,7 +309,7 @@ export default function LoginPage() {
               </button>
               <button
                 onClick={() => switchMode("signup")}
-                className={`flex-1 rounded-full py-2 transition-colors ${
+                className={`tap44 flex-1 rounded-full py-2 transition-colors ${
                   isSignup ? "bg-l-accent text-l-bg" : "text-l-text-2"
                 }`}
               >
@@ -375,7 +375,7 @@ export default function LoginPage() {
 
         <p className="mt-4 text-xs text-l-text-2">
           Varsity athlete?{" "}
-          <Link href="/join" className="font-medium text-l-varsity">
+          <Link href="/join" className="tap44 inline-block font-medium text-l-varsity">
             Join your team →
           </Link>
         </p>

@@ -123,7 +123,7 @@ export default function LandingPage({ view = "all" }: { view?: LandingView }) {
         {!all && (
           <p className="relative z-[1] border-t border-l-line px-6 py-8 text-center text-[14px] text-l-text-2 sm:px-8">
             {seeAll.lead}{" "}
-            <Link href="/" className="font-medium text-l-text underline-offset-4 transition-colors hover:underline">
+            <Link href="/" className="tap44 inline-block font-medium text-l-text underline-offset-4 transition-colors hover:underline">
               {seeAll.cta} →
             </Link>
           </p>

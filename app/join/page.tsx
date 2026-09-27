@@ -111,7 +111,7 @@ export default function JoinPage() {
         <button
           type="button"
           onClick={() => setShowCode(true)}
-          className="mt-8 text-xs font-medium text-l-text-2 hover:text-l-text"
+          className="tap44 mt-8 text-xs font-medium text-l-text-2 hover:text-l-text"
         >
           I have a varsity team code
         </button>
@@ -159,7 +159,7 @@ export default function JoinPage() {
       {!loggedIn && (
         <Link
           href="/login"
-          className="mt-8 inline-block text-xs font-medium text-l-text-2 hover:text-l-text"
+          className="tap44 mt-8 inline-block text-xs font-medium text-l-text-2 hover:text-l-text"
         >
           ← I&apos;m a regular student
         </Link>
