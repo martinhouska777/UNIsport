@@ -49,7 +49,7 @@ import { seeAll, studentFeatures, studentStory, varsityFeatures, varsityStory, t
   the one before it (Interlude, CoachSection). Every word is in
   lib/landingCopy.ts.
 
-     Intro · doors · availability
+     Intro · doors
      The student app.
      Story A → Campus Colours (+ the student features beside it)
      Varsity Mode.

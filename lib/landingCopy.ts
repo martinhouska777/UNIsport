@@ -239,7 +239,12 @@ export const doors = [
    there are; "Yours can be next." is the half it has always ended on. The
    second "each" is dropped on their own instruction ("you can drop the middle
    each if its fine with english") — it is, and the line reads lighter without
-   two of them in nine words. */
+   two of them in nine words.
+
+   OFF THE HOME PAGE, 2026-09-27: the split intro ran past the bottom of the
+   screen and the owner cut it there ("cut this part so it fits better"); the
+   school colour glowing behind the phones carries the idea instead. It still
+   stands under the button on /for/students (StudentIntro). */
 export const availability = "Customized for each campus, with its own gyms, houses and colours. Yours can be next.";
 
 /* THE BRAND LINE — the slogan, set under the wordmark like "Škoda · Simply

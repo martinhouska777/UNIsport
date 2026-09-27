@@ -4,7 +4,7 @@ import { useSyncExternalStore } from "react";
 import Phone from "@/components/landing/Phone";
 import { usePhoneMode } from "@/components/landing/PhoneMode";
 import Shot from "@/components/landing/Shot";
-import { schools } from "@/lib/landingSchools";
+import { lift, schools } from "@/lib/landingSchools";
 
 /*
   THE INTRO'S TWO PHONES — the right half of the intro, cycling through the
@@ -18,9 +18,11 @@ import { schools } from "@/lib/landingSchools";
       too, the same as we have with that static image."
 
   So this is Campus Colours' idea, brought to the front door: gyms-*.webp and
-  match-*.webp, changing together. The light behind them glowed in the
-  school's colour until the launch audit (2026-09-27, item 13); it is the
-  page's own blue now, and only the screens change school.
+  match-*.webp, changing together, with the school's colour glowing behind
+  them. The launch audit (2026-09-27, item 13) turned that light to the page's
+  own blue; the owner turned it back the same evening ("make sure it changes
+  the background color") — a capture is mostly white, so without it the
+  colour hardly changes at all.
 
   THEY STAND TOGETHER, ON THE RIGHT (owner, 2026-09-27, after Hevy's front
   page). Until then they were a backdrop: one in each margin of a wide screen,
@@ -30,7 +32,9 @@ import { schools } from "@/lib/landingSchools";
   strength; Gyms behind it, leaning out to the left, the way Hevy stands its
   second phone behind its first. Match is the one in front because the
   headline lands on it: "Your people." Where each stands is .l-hero-phones in
-  app/globals.css — one width sizes both phones and the box they stand in.
+  app/globals.css — one width sizes both phones and the box they stand in —
+  and .l-hero-stage is the half of the intro they stand in, whose height is
+  the most that width may use.
 
   The eight schools' letters stood in a row under each phone for one cut. The
   owner took them off (2026-08-23) and moved a single one onto the "Get started
@@ -57,9 +61,9 @@ import { schools } from "@/lib/landingSchools";
   own chrome stays neutral; what changes colour is a picture of a themed app.
 
   IT MUST NOT CLAIM EIGHT CAMPUSES. The app is live at one. So the cycle STARTS
-  on Harvard and no school is named here — the line under the button
-  ("Customized for each campus … Yours can be next.") is what these colours
-  illustrate. Campus Colours spells it out further down, and drops the design's
+  on Harvard and no school is named here. The line that stood under the button
+  ("Customized for each campus … Yours can be next.") was cut on 2026-09-27;
+  Campus Colours spells the idea out further down, and drops the design's
   "eight campuses" claim for the same reason.
 
   THEY OPEN WHITE, whatever the machine's colour scheme says — a white phone
@@ -98,38 +102,42 @@ export default function HeroPhones({ i, count }: { i: number; count: number }) {
   const shown = chosen ? mode : "light";
   if (!wide) return null;
 
+  const school = schools[i];
+
   return (
-    <div aria-hidden="true" className="l-hero-phones pointer-events-none hidden lg:block">
-      {PHONES.map((p) => (
-        <div key={p.shot} className="l-hero-phone" data-side={p.side}>
-          <div className="l-hero-tilt">
-            {/* The page's own blue, not the school's (launch audit 2026-09-27,
-                item 13): the school colour was on five things at once on this
-                screen. The screens themselves still change school. */}
-            <div className="l-hero-glow bg-l-accent" />
-            <div className="l-hero-rise">
-              <Phone className="relative">
-                <div className="relative aspect-[900/1480] overflow-hidden bg-l-phone-screen">
-                  {schools.slice(0, count).map((sc, n) => (
-                    <Shot
-                      key={sc.key}
-                      shot={`/landing/closers/${p.shot}-${sc.key}.webp`}
-                      mode={shown}
-                      alt={`${p.what} in ${sc.name}'s colours`}
-                      fill
-                      sizes="(min-width: 1536px) 320px, 290px"
-                      quality={75}
-                      loading={n === 0 ? "eager" : "lazy"}
-                      className="object-fill transition-opacity duration-[600ms] ease-in-out motion-reduce:transition-none"
-                      style={{ opacity: n === i ? 1 : 0 }}
-                    />
-                  ))}
-                </div>
-              </Phone>
+    <div aria-hidden="true" className="l-hero-stage pointer-events-none hidden lg:grid lg:place-items-center">
+      <div className="l-hero-phones">
+        {PHONES.map((p) => (
+          <div key={p.shot} className="l-hero-phone" data-side={p.side}>
+            <div className="l-hero-tilt">
+              {/* The school's colour. This, not the screenshot, is what makes the
+                  page change colour — a capture is mostly white. lift() raises
+                  the near-black navies to the weight the others already have. */}
+              <div className="l-hero-glow" style={{ backgroundColor: lift(school.color) }} />
+              <div className="l-hero-rise">
+                <Phone className="relative">
+                  <div className="relative aspect-[900/1480] overflow-hidden bg-l-phone-screen">
+                    {schools.slice(0, count).map((sc, n) => (
+                      <Shot
+                        key={sc.key}
+                        shot={`/landing/closers/${p.shot}-${sc.key}.webp`}
+                        mode={shown}
+                        alt={`${p.what} in ${sc.name}'s colours`}
+                        fill
+                        sizes="(min-width: 1536px) 320px, 290px"
+                        quality={75}
+                        loading={n === 0 ? "eager" : "lazy"}
+                        className="object-fill transition-opacity duration-[600ms] ease-in-out motion-reduce:transition-none"
+                        style={{ opacity: n === i ? 1 : 0 }}
+                      />
+                    ))}
+                  </div>
+                </Phone>
+              </div>
             </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }

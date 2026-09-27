@@ -1148,14 +1148,34 @@
   and the front phone's height plus room for the lean), so the pair keeps its
   shape at every size and centres in its half as one object.
 
-  --hp measures itself against the WINDOW's height as well as its width: the
-  intro has to be one screen on a short laptop (owner, 2026-08-23), so the
-  phones have to finish above the row of doors. Big enough to read, too (owner,
-  2026-09-16: "make the phones a little bit bigger so you can comfortably read
-  it") — 34vh is 306px on a 900px-tall window.
+  --hp is the smaller of two sizes, because the intro has to be one screen on
+  a short laptop (owner, 2026-08-23) and the phones must finish above the row
+  of doors:
+    • the pair's own size, --hp-max: 34vh, never over 330px. Big enough to
+      read (owner, 2026-09-16: "make the phones a little bit bigger so you can
+      comfortably read it") — 306px on a 900px-tall window;
+    • the height there is left. From lg up the split (.l-hero-split) grows
+      into whatever the screen has under the bar once the doors and the air
+      are placed — never past the pair's own box, so on a tall window the
+      spare room still goes above and below the whole intro as before — and
+      the phones' half of it (.l-hero-stage) is a size container, so 100cqh
+      there is exactly the room they have.
+  At 34vh alone the intro ran 5–40px past the bottom of every window under
+  860px tall (owner, 2026-09-27: "it doesn't fit on bottom"). The words never
+  give way to the phones: the split's min-height is its content, which beats
+  the cap (a flex item's own minimum would not).
 */
+.l-hero-split { --hp-max: min(34vh, 330px); }
+@media (min-width: 1024px) {
+  .l-hero-split {
+    flex: 1 1 auto;
+    min-height: min-content;
+    max-height: calc(var(--hp-max) * 1.86);
+  }
+}
+.l-hero-stage { container-type: size; align-self: stretch; }
 .l-hero-phones {
-  --hp: clamp(232px, 34vh, 330px);
+  --hp: min(var(--hp-max), 100cqh / 1.86);
   position: relative;
   width: calc(var(--hp) * 1.58);
   height: calc(var(--hp) * 1.86);

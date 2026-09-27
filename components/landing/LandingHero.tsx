@@ -7,7 +7,7 @@ import SchoolCrest from "@/components/SchoolCrest";
 import { useSchoolCycle } from "@/components/landing/useSchoolCycle";
 import { crestFor } from "@/lib/crests";
 import { accent, HERO_CYCLE_MS } from "@/lib/landingSchools";
-import { about, availability, doors, hero } from "@/lib/landingCopy";
+import { about, doors, hero } from "@/lib/landingCopy";
 
 /*
   THE INTRO — one screen that introduces the app and then hands over to the
@@ -24,7 +24,6 @@ import { about, availability, doors, hero } from "@/lib/landingCopy";
       Your people.               │     │       │
       Find every gym on campus…  └─────┤       │
       ( Get started with .edu → )      └───────┘
-      Customized for each campus…
       [ Student ]      [ Varsity athlete ]      [ Coach ]
 
   • NO WORDMARK HERE. The name lives in the top bar, top left, the way Hevy's
@@ -47,22 +46,31 @@ import { about, availability, doors, hero } from "@/lib/landingCopy";
 
   IT IS ONE SCREEN, AND IT MEASURES ITSELF (owner, 2026-08-23: "ideally I
   wanted this to be one section; now I have to scroll to see it"). Every
-  vertical size here — the padding, the gaps, the headline, and the phones
-  beside it — is a clamp with a vh term, so the intro shrinks to fit the window
-  it is in instead of running past the fold on a short laptop. Verified at
-  1024x768, 1280x800, 1440x900, 1900x860 (the owner's window) and 1920x1080.
+  vertical size here — the padding, the gaps, the headline — is a clamp with a
+  vh term, so the intro shrinks to fit the window it is in instead of running
+  past the fold on a short laptop. The phones go one further: they take the
+  height the words and the doors leave them (.l-hero-split, app/globals.css).
+  At 34vh alone they pushed the intro 5–40px past the bottom of every window
+  under 860px tall (owner, 2026-09-27: "it doesn't fit on bottom").
+
+  The line that stood under the button — "Customized for each campus, with
+  its own gyms, houses and colours. Yours can be next." — is CUT here, on the
+  owner's call the same evening ("cut this part so it fits better"). The
+  colours changing behind the phones say it without words. /for/students
+  still carries it under its own button (StudentIntro).
 
   IT ARRIVES rather than pops: the blocks come in on a short stagger
   (l-in-1…4) while the phones rise into place (app/globals.css).
 
-  IT TAKES THE SCHOOL'S COLOUR — IN TWO PLACES. The phones cycle the eight
+  IT TAKES THE SCHOOL'S COLOUR — IN THREE PLACES. The phones cycle the eight
   schools, and the intro owns the cycle (useSchoolCycle) and publishes the
-  school's colour as --sc, with --sc-ink for whatever sits ON it. Only "Your
-  people." and the "Get started with .edu" button wear it (launch audit
-  2026-09-27, item 13): the school colour used to be on five things at once on
-  this one screen — the top bar's button, "sport" in the name, those two, and
-  the glow behind the phones — beside three brand blues, the gold and the
-  coach red. The pill never followed it: it states a fact, and a fact in a
+  school's colour as --sc, with --sc-ink for whatever sits ON it. "Your
+  people." and the "Get started with .edu" button wear it, and so does the
+  glow behind the phones (HeroPhones). The launch audit (2026-09-27, item 13)
+  had cut it down from five things at once on this one screen — the top bar's
+  button, "sport" in the name, those two, and the glow — to two; the owner
+  put the glow back the same evening ("make sure it changes the background
+  color"). The pill never followed it: it states a fact, and a fact in a
   school's colour could read as that school's.
 
   Contrast: accent() in lib/landingSchools.ts guarantees the button's label
@@ -110,7 +118,7 @@ export default function LandingHero() {
       style={{ "--sc": color, "--sc-ink": `var(--color-${ink})` } as CSSProperties}
       className="l-glow-accent relative z-[1] mx-auto flex min-h-[calc(100svh-var(--l-bar,0px))] w-full max-w-[1280px] flex-col justify-center px-6 pt-[clamp(18px,3.2vh,48px)] pb-[clamp(30px,4.4vh,60px)] sm:px-8"
     >
-      <div className="grid items-center gap-x-10 lg:grid-cols-2">
+      <div className="l-hero-split grid items-center gap-x-10 lg:grid-cols-2">
         <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
           {/* 1 · The one fact, and the headline — one line of it per line. */}
           <div className="l-in-1 mb-[clamp(12px,2.2vh,22px)] inline-flex items-center gap-2 rounded-full border border-l-accent-soft bg-l-accent-dim px-3 py-1.5 font-mono text-[12.5px] font-medium tracking-wider uppercase text-l-accent">
@@ -131,8 +139,7 @@ export default function LandingHero() {
             {hero.body}
           </p>
 
-          {/* 3 · The way in, and the availability line where the eye lands
-              after the button. */}
+          {/* 3 · The way in. */}
           <div className="l-in-3 mt-[clamp(20px,3.6vh,36px)] flex flex-col items-center lg:items-start">
             <Link
               href={hero.primaryHref}
@@ -146,10 +153,6 @@ export default function LandingHero() {
               {hero.primaryCta}
               <Arrow className="transition-transform group-hover:translate-x-1" />
             </Link>
-
-            <p className="mt-[clamp(10px,1.6vh,16px)] max-w-[44ch] text-[14px] leading-relaxed text-pretty text-l-text-2">
-              {availability}
-            </p>
           </div>
         </div>
 

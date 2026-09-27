@@ -104,9 +104,27 @@ ink, left-aligned, ~60 characters a line at 16–18px / 1.55 — Hevy's own is
 (same 1280px column). Below lg it is one centred column without phones, as
 Hevy's is on a phone; the bar's tabs also moved behind the menu below lg,
 because between 768 and ~1000px they did not fit and the lockup broke over
-three lines. One screen at 1024x768, 1280x800, 1440x900, 1900x860 and
-1920x1080. This supersedes the next four notes where they differ: the mark,
+three lines. This supersedes the next four notes where they differ: the mark,
 the backdrop phones in the margins, and "one wordmark at a time".
+
+**Same evening: no availability line, the phones take the height that is
+left, and the glow is the school's again** (owner: "cut this part so it fits
+better … it doesn't fit on bottom and make sure it changes the background
+color"). Measured, the split intro had NOT been one screen under 860px tall,
+whatever its first commit said: it ran 5–64px past the bottom of the window,
+and at 1526x662 the doors were cut and the "Read why" row hidden. (The owner's
+laptop, 1920x1200 at 125%, gives a browser window of about 1536x800.) Cutting
+"Customized for each campus … Yours can be next." only moved the limit: at
+34vh the PHONES then set the height. So from lg up the split
+(`.l-hero-split`) grows into the room the doors and the air leave, capped at
+the pair's own box, and the phones' half (`.l-hero-stage`) is a size
+container — `--hp` is min(34vh ≤ 330px, 100cqh / 1.86). From 860px tall the
+phones and the doors stand exactly where they did; from 720px up the intro is
+exactly one screen; at 662 all of it is still visible (8px of bottom padding
+runs under). The glow behind the phones is `lift(school.color)` again,
+undoing that half of launch-audit item 13. /for/students still has the
+availability line under its button. Re-measure with a puppeteer script that
+reads `#top`'s bottom against the window height, not with the Browser pane.
 
 **Three claims are cut** because the app cannot do them: *life goals* (no such
 profile field), *track your partner's calendar* (`/people/[id]` has no
