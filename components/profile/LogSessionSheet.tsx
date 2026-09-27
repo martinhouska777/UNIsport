@@ -39,7 +39,7 @@ import { fileToDataUrl } from "@/lib/image";
 import { notifyPartnerTag } from "@/lib/push/client";
 import { confirmPlan } from "@/lib/supabase/sessionPlans";
 import { PARTNER_CONFIRM_HOURS, sessionPoints } from "@/lib/points";
-import { IconArrowLeft, IconCheck, IconPlus, IconTrash, IconX } from "@/components/icons";
+import { IconArrowLeft, IconCheck, IconChevronRight, IconPlus, IconTrash, IconX } from "@/components/icons";
 import Segmented from "@/components/ui/Segmented";
 
 const todayIso = () => {
@@ -54,6 +54,17 @@ const emptySet = (): WorkoutSet => ({ weight: "", reps: "" });
 const SET_TYPE_CYCLE: (SetType | undefined)[] = [undefined, "W", "D", "F"];
 const SET_TYPE_LABEL: Record<SetType, string> = { W: "W", N: "N", D: "D", F: "F" };
 type SetType = NonNullable<WorkoutSet["type"]>;
+
+/* One line of a details card: the name on the left, the answer on the right.
+   A <label>, so a tap anywhere on the line lands in its field. */
+function DetailRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="flex min-h-[52px] items-center gap-3 border-b border-border px-3.5 last:border-b-0">
+      <span className="w-20 flex-shrink-0 text-[14px] font-medium text-text">{label}</span>
+      <span className="flex min-w-0 flex-1 items-center justify-end">{children}</span>
+    </label>
+  );
+}
 
 export default function LogSessionSheet({
   userId,
@@ -270,105 +281,52 @@ export default function LogSessionSheet({
 
   const inputCls =
     "w-full rounded-xl border border-border bg-surface px-3 py-2.5 text-base text-text outline-none focus:border-primary placeholder:text-muted";
-  const labelCls = "mb-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted";
+  const labelCls = "mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted";
+  // A field inside a DetailRow: no box of its own, the answer on the right.
+  const rowInput =
+    "w-full min-w-0 bg-transparent py-3 text-right text-base text-text outline-none";
 
   return (
     <div className="fixed inset-0 z-50 flex h-dvh flex-col bg-background">
-      {/* Header */}
-      <div className="flex flex-shrink-0 items-center gap-2 border-b border-border bg-surface px-4 py-3">
+      {/* Header — the round back button every full screen in the app has. */}
+      <div className="flex flex-shrink-0 items-center gap-2.5 border-b border-border bg-surface px-3.5 py-3">
         {/* data-tour: the tour presses this to close the editor again when it
             has finished explaining it (lib/tour.ts). */}
         <button
           type="button"
           data-tour="log-cancel"
           onClick={onClose}
-          className="flex items-center gap-1 text-[13px] text-muted"
+          aria-label="Cancel"
+          className="tap44 press-icon flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-surface-2 text-text"
         >
-          <IconArrowLeft size={18} /> Cancel
+          <IconArrowLeft size={16} />
         </button>
-        <span className="ml-1 text-[15px] font-semibold text-text">
+        <h1 className="text-base font-semibold text-text">
           {existing ? "Edit session" : "Log session"}
-        </span>
+        </h1>
       </div>
 
-      {/* Body */}
-      <div className="flex-1 overflow-y-auto px-4 pb-6 pt-4">
+      {/* Body. THE ORDER (owner, 2026-09-27: "make the log a session UI
+          better"): what you did first, because it decides the rest of the
+          form; then the quick log — the body parts — which on its own is the
+          whole session; then the when / where / who in one card; the extras
+          last. No "(optional)" on every label: only the date is needed, and
+          it is already filled in. */}
+      <div className="flex-1 overflow-y-auto px-4 pb-8 pt-4">
         <div className="mx-auto w-full max-w-screen-sm">
-          <div className={labelCls}>Date</div>
-          <input
-            type="date"
-            value={date}
-            max={todayIso()}
-            onChange={(e) => setDate(e.target.value)}
-            className={inputCls}
-          />
-
-          <div className={`${labelCls} mt-4`}>Activity</div>
           {/* data-tour: the tour lights the activity picker (lib/tour.ts). */}
-          <div data-tour="log-activity" className="grid grid-cols-4 gap-1.5">
-            {primaryActivities.map((a) => (
-              <button
-                key={a.key}
-                type="button"
-                onClick={() => setActivity(a.key)}
-                className={`rounded-xl border py-2.5 text-[12px] font-semibold ${
-                  activity === a.key
-                    ? "border-primary bg-primary-tint text-primary"
-                    : "border-border bg-surface text-text"
-                }`}
-              >
-                {a.label}
-              </button>
-            ))}
+          <div data-tour="log-activity">
+            <Segmented
+              size="md"
+              full
+              ariaLabel="Activity"
+              options={primaryActivities.map((a) => ({ key: a.key, label: a.label }))}
+              value={activity}
+              onChange={(a) => setActivity(a)}
+            />
           </div>
 
-          <div className={`${labelCls} mt-4`}>
-            {usesExercises ? "Gym (optional)" : "Where (optional)"}
-          </div>
-          <input
-            list="gym-options"
-            value={gym}
-            onChange={(e) => setGym(e.target.value)}
-            className={inputCls}
-          />
-          <datalist id="gym-options">
-            {verifiedGyms.map((g) => (
-              <option key={g} value={g} />
-            ))}
-          </datalist>
-
-          <div className={`${labelCls} mt-4`}>Training partner (optional)</div>
-          <button
-            type="button"
-            onClick={() => setPartnerPickerOpen(true)}
-            disabled={!!plan}
-            className={`${inputCls} flex items-center gap-2.5 text-left`}
-          >
-            {partnerId ? (
-              <>
-                <Avatar size={26} alt={partner} />
-                <span className="flex-1 truncate text-text">{partner}</span>
-                {!plan && <span className="text-[12px] text-muted">Change</span>}
-              </>
-            ) : (
-              <span className="flex-1 text-muted">Solo · tap to add a partner</span>
-            )}
-          </button>
-          {/* Said before the save, because it changes what the save does: the
-              multiplier is not yours to take, it is theirs to confirm. Not on
-              a planned session — the plan is what asks them. The same partner
-              kept on an edit already has an answer (or is still being asked),
-              and that answer is said in the detail screen's words — "has
-              confirmed" only when they actually did. */}
-          {partnerId && !plan && (
-            <p className="mt-1.5 text-[11px] leading-snug text-muted">
-              {existing && existing.partnerId === partnerId
-                ? (partnerStatusLine(existing) ?? `${partner} has confirmed this session.`)
-                : `${partner} will be asked to confirm. Once they say yes it counts for both of you (${sessionPoints.partner}–${sessionPoints.newPartner} pts each) and lands on their calendar too. No answer in ${PARTNER_CONFIRM_HOURS}h and it counts as solo.`}
-            </p>
-          )}
-
-          {/* Exercises — gym / other (Hevy-style per-set logging) */}
+          {/* Body parts — gym / other */}
           {usesExercises && (
             <>
               {/*
@@ -378,10 +336,11 @@ export default function LogSessionSheet({
                 everywhere sessions are counted. Everything below it — the sets,
                 the weights — is for the days you feel like writing them down.
                 Owner (2026-09-09): "I would just write that I did leg day. I
-                don't want to type it all out."
+                don't want to type it all out." The sentence that used to say
+                so under the chips is gone (owner, 2026-09-27).
               */}
-              <div className={`${labelCls} mt-5`}>What did you train?</div>
-              <div className="flex flex-wrap gap-1.5">
+              <div className={`${labelCls} mt-6`}>What did you train?</div>
+              <div className="flex flex-wrap gap-2 rounded-2xl border border-border bg-surface p-3">
                 {muscleGroups.map((m) => {
                   const on = muscles.includes(m);
                   return (
@@ -390,24 +349,142 @@ export default function LogSessionSheet({
                       type="button"
                       onClick={() => toggleMuscle(m)}
                       aria-pressed={on}
-                      className={`tap44 rounded-full border px-3 py-1.5 text-[12px] font-medium ${
+                      className={`tap44 flex items-center gap-1 rounded-full border px-3.5 py-2 text-[13px] font-medium ${
                         on
                           ? "border-primary bg-primary-tint text-primary"
-                          : "border-border bg-surface text-muted"
+                          : "border-transparent bg-surface-2 text-text"
                       }`}
                     >
+                      {on && <IconCheck size={13} />}
                       {m}
                     </button>
                   );
                 })}
               </div>
-              <p className="mt-2 text-[11px] leading-snug text-muted">
-                That&rsquo;s enough on its own — a body part is a logged session. Writing the
-                exercises out below is optional.
-              </p>
+            </>
+          )}
 
-              <div className="mt-5 flex items-center justify-between">
-                <span className={labelCls.replace("mb-1.5", "mb-0")}>Exercises (optional)</span>
+          {/* Cardio type — cardio only */}
+          {isCardio && (
+            <>
+              <div className={`${labelCls} mt-6`}>Cardio type</div>
+              <div className="flex flex-wrap gap-2 rounded-2xl border border-border bg-surface p-3">
+                {cardioTypes.map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setCardioType(c)}
+                    className={`tap44 flex items-center gap-1 rounded-full border px-3.5 py-2 text-[13px] font-medium ${
+                      cardioType === c
+                        ? "border-primary bg-primary-tint text-primary"
+                        : "border-transparent bg-surface-2 text-text"
+                    }`}
+                  >
+                    {cardioType === c && <IconCheck size={13} />}
+                    {c}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+
+          {/* Distance + duration — running / cardio, one card */}
+          {(isRunning || isCardio) && (
+            <div className="mt-6 overflow-hidden rounded-2xl border border-border bg-surface">
+              <DetailRow label="Distance">
+                <input
+                  value={distance}
+                  onChange={(e) => setDistance(e.target.value.replace(/[^\d.]/g, ""))}
+                  inputMode="decimal"
+                  className={rowInput}
+                />
+                <Segmented
+                  ariaLabel="Distance unit"
+                  className="ml-2"
+                  options={unitOptions.map((u) => ({ key: u, label: u }))}
+                  value={unit}
+                  onChange={(u) => setUnit(u)}
+                />
+              </DetailRow>
+              <DetailRow label="Duration">
+                <input
+                  value={duration}
+                  onChange={(e) => setDuration(e.target.value)}
+                  className={rowInput}
+                />
+              </DetailRow>
+            </div>
+          )}
+
+          {/* WHEN, WHERE, WHO — one card, a line each. */}
+          <div className="mt-6 overflow-hidden rounded-2xl border border-border bg-surface">
+            <DetailRow label="Date">
+              <input
+                type="date"
+                value={date}
+                max={todayIso()}
+                onChange={(e) => setDate(e.target.value)}
+                /* Its own width, not the row's: a date field ignores
+                   text-align, so a full-width one sat mid-row. */
+                className="min-w-0 bg-transparent py-3 text-right text-base text-text outline-none"
+              />
+            </DetailRow>
+            <DetailRow label={usesExercises ? "Gym" : "Where"}>
+              <input
+                list="gym-options"
+                value={gym}
+                onChange={(e) => setGym(e.target.value)}
+                className={rowInput}
+              />
+              <datalist id="gym-options">
+                {verifiedGyms.map((g) => (
+                  <option key={g} value={g} />
+                ))}
+              </datalist>
+            </DetailRow>
+            <button
+              type="button"
+              onClick={() => setPartnerPickerOpen(true)}
+              disabled={!!plan}
+              className="flex min-h-[52px] w-full items-center gap-3 px-3.5 text-left enabled:active:bg-surface-2"
+            >
+              <span className="w-20 flex-shrink-0 text-[14px] font-medium text-text">Partner</span>
+              <span className="flex min-w-0 flex-1 items-center justify-end gap-2">
+                {partnerId ? (
+                  <>
+                    <Avatar size={26} alt={partner} />
+                    <span className="truncate text-base text-text">{partner}</span>
+                  </>
+                ) : (
+                  <span className="text-base text-muted">Solo</span>
+                )}
+              </span>
+              {!plan && (
+                <span className="flex-shrink-0 text-muted">
+                  <IconChevronRight size={16} />
+                </span>
+              )}
+            </button>
+          </div>
+          {/* Said before the save, because it changes what the save does: the
+              multiplier is not yours to take, it is theirs to confirm. Not on
+              a planned session — the plan is what asks them. The same partner
+              kept on an edit already has an answer (or is still being asked),
+              and that answer is said in the detail screen's words — "has
+              confirmed" only when they actually did. */}
+          {partnerId && !plan && (
+            <p className="mt-1.5 px-1 text-[11px] leading-snug text-muted">
+              {existing && existing.partnerId === partnerId
+                ? (partnerStatusLine(existing) ?? `${partner} has confirmed this session.`)
+                : `${partner} will be asked to confirm. Once they say yes it counts for both of you (${sessionPoints.partner}–${sessionPoints.newPartner} pts each) and lands on their calendar too. No answer in ${PARTNER_CONFIRM_HOURS}h and it counts as solo.`}
+            </p>
+          )}
+
+          {/* Exercises — gym / other (Hevy-style per-set logging) */}
+          {usesExercises && (
+            <>
+              <div className="mb-2 mt-6 flex items-center justify-between">
+                <span className={labelCls.replace("mb-2", "mb-0")}>Exercises</span>
                 {/* kg / lb toggle for this workout */}
                 <Segmented
                   ariaLabel="Weight unit"
@@ -417,7 +494,7 @@ export default function LogSessionSheet({
                 />
               </div>
 
-              <div className="mt-2 flex flex-col gap-3">
+              <div className="flex flex-col gap-3">
                 {exercises.map((ex, i) => {
                   let normalNo = 0; // running number of "normal" sets within this exercise
                   return (
@@ -537,63 +614,8 @@ export default function LogSessionSheet({
             </>
           )}
 
-          {/* Cardio type — cardio only */}
-          {isCardio && (
-            <>
-              <div className={`${labelCls} mt-5`}>Cardio type</div>
-              <div className="flex flex-wrap gap-1.5">
-                {cardioTypes.map((c) => (
-                  <button
-                    key={c}
-                    type="button"
-                    onClick={() => setCardioType(c)}
-                    className={`rounded-full border px-3 py-1.5 text-[12px] font-medium ${
-                      cardioType === c
-                        ? "border-primary bg-primary-tint text-primary"
-                        : "border-border bg-surface text-text"
-                    }`}
-                  >
-                    {c}
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
-
-          {/* Distance + duration — running / cardio */}
-          {(isRunning || isCardio) && (
-            <>
-              <div className={`${labelCls} mt-5`}>Distance (optional)</div>
-              <div className="flex items-center gap-1.5">
-                <input
-                  value={distance}
-                  onChange={(e) => setDistance(e.target.value.replace(/[^\d.]/g, ""))}
-                  inputMode="decimal"
-                  className={`${inputCls} flex-1`}
-                />
-                <Segmented
-                  size="md"
-                  ariaLabel="Distance unit"
-                  options={unitOptions.map((u) => ({ key: u, label: u }))}
-                  value={unit}
-                  onChange={(u) => setUnit(u)}
-                />
-              </div>
-
-              <div className={`${labelCls} mt-4`}>Duration (optional)</div>
-              <input
-                value={duration}
-                onChange={(e) => setDuration(e.target.value)}
-                className={inputCls}
-              />
-            </>
-          )}
-
-          {/* Photos — "memories" from the session */}
-          <div className="mt-5 flex items-center justify-between">
-            <span className={labelCls.replace("mb-1.5", "mb-0")}>Photos (optional)</span>
-            <span className="text-[11px] text-muted">memories from the session</span>
-          </div>
+          {/* Photos — they become Memories on the profile */}
+          <div className={`${labelCls} mt-6`}>Photos</div>
           <input
             ref={photoInputRef}
             type="file"
@@ -606,11 +628,11 @@ export default function LogSessionSheet({
             }}
           />
           {/* data-tour: the tour explains that these become Memories. */}
-          <div data-tour="log-photos" className="mt-2 grid grid-cols-3 gap-1.5">
+          <div data-tour="log-photos" className="grid grid-cols-4 gap-2">
             {photos.map((src, i) => (
               <div
                 key={i}
-                className="relative aspect-square overflow-hidden rounded-md border border-border bg-surface-2"
+                className="relative aspect-square overflow-hidden rounded-xl border border-border bg-surface-2"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={src} alt={`Photo ${i + 1}`} className="h-full w-full object-cover" />
@@ -629,13 +651,13 @@ export default function LogSessionSheet({
               onClick={() => photoInputRef.current?.click()}
               disabled={photoBusy}
               aria-label="Add photo"
-              className="flex aspect-square items-center justify-center rounded-md border border-dashed border-border bg-surface text-muted disabled:opacity-50"
+              className="flex aspect-square items-center justify-center rounded-xl border border-dashed border-border bg-surface text-muted active:text-primary disabled:opacity-50"
             >
               <IconPlus size={20} />
             </button>
           </div>
 
-          <div className={`${labelCls} mt-5`}>Note (optional)</div>
+          <div className={`${labelCls} mt-6`}>Note</div>
           <input
             value={note}
             onChange={(e) => setNote(e.target.value)}
