@@ -69,6 +69,9 @@ as $$
   left join public.profiles p on p.id = w.user_id
   where w.partner_id = auth.uid()
     and w.partner_status = 'pending'
+    -- a session logged off a chat plan is answered on the plan (plan_confirm),
+    -- never here — or the partner would be asked twice (2026-09-27)
+    and w.plan_id is null
     and w.created_at > now() - make_interval(hours => greatest(1, p_hours))
   order by w.created_at desc;
 $$;
@@ -99,6 +102,7 @@ begin
   if w.id is null then raise exception 'unknown session'; end if;
   if w.partner_id is distinct from me then raise exception 'not your request'; end if;
   if w.partner_status is distinct from 'pending' then raise exception 'already answered'; end if;
+  if w.plan_id is not null then raise exception 'answered on the session plan'; end if;
 
   if w.created_at <= now() - make_interval(hours => greatest(1, p_hours)) then
     update public.workout_logs set partner_status = 'expired' where id = p_log_id;
@@ -147,6 +151,7 @@ begin
   select * into w from public.workout_logs where id = p_log_id;
   if w.id is null or w.user_id <> me or w.partner_id is null then return; end if;
   if w.partner_status is distinct from 'pending' then return; end if;
+  if w.plan_id is not null then return; end if; -- the plan asks, not the tag
 
   select coalesce((p.data->>'notifyPartnerTags')::boolean, true) into wants
     from public.profiles p where p.id = w.partner_id;

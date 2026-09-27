@@ -43,7 +43,7 @@ import {
 } from "@/lib/supabase/workouts";
 import { fileToDataUrl } from "@/lib/image";
 import { getMyFollowCounts } from "@/lib/supabase/follows";
-import { readLogLink } from "@/lib/reminders";
+import { readLogLink, planCampusDay } from "@/lib/reminders";
 import { hometownLabel, nameError } from "@/lib/onboarding";
 import {
   IconSettings,
@@ -69,8 +69,18 @@ export default function ProfilePage() {
   const [openDate, setOpenDate] = useState<string | null>(null); // day sheet
   const [openLog, setOpenLog] = useState<WorkoutLog | null>(null); // full-screen workout detail
   const [logging, setLogging] = useState(false); // "Log session" (new) editor open
-  // What the log reminder's deep link asked for: today's date and the usual gym.
-  const [logPrefill, setLogPrefill] = useState<{ date?: string; gym?: string } | null>(null);
+  // What opened the log sheet already filled in: the log reminder's link (today,
+  // the usual gym), or a planned session's "Yes, we trained" (its day, activity,
+  // place and partner, plus the plan the save answers).
+  const [logPrefill, setLogPrefill] = useState<{
+    date?: string;
+    gym?: string;
+    activity?: string;
+    partner?: { name: string; id: string };
+    plan?: { planId: string; conversationId: string; scheduledAt: string };
+  } | null>(null);
+  // Bumped when a session is saved, so the plan lists above re-read.
+  const [plansKey, setPlansKey] = useState(0);
   const [editLog, setEditLog] = useState<WorkoutLog | null>(null); // editing an existing log
   const [editingPrefs, setEditingPrefs] = useState(false);
   const [followCounts, setFollowCounts] = useState<{ following: number; followers: number } | null>(null);
@@ -144,7 +154,13 @@ export default function ProfilePage() {
     const id = requestAnimationFrame(() => {
       const link = readLogLink(window.location.search);
       if (!link) return;
-      setLogPrefill({ date: link.date ?? undefined, gym: link.gym ?? undefined });
+      setLogPrefill({
+        date: link.date ?? undefined,
+        gym: link.gym ?? undefined,
+        activity: link.activity,
+        partner: link.partner,
+        plan: link.plan,
+      });
       setLogging(true);
       router.replace("/profile");
     });
@@ -579,7 +595,20 @@ export default function ProfilePage() {
 
       {/* Upcoming accepted sessions (chat-planned) — a date in your diary
           belongs above the fold. Hides itself when there is none. */}
-      <UpcomingSessions onChanged={reloadLogs} />
+      <UpcomingSessions
+        key={plansKey}
+        onChanged={reloadLogs}
+        onLogPlan={(p) => {
+          setLogPrefill({
+            date: planCampusDay(p.scheduledAt),
+            gym: p.place ?? undefined,
+            activity: p.activity,
+            partner: { name: p.otherName, id: p.otherId },
+            plan: { planId: p.planId, conversationId: p.conversationId, scheduledAt: p.scheduledAt },
+          });
+          setLogging(true);
+        }}
+      />
 
       {/* 2 · WHERE YOU STAND, AND THE BUTTON THAT MOVES YOU — straight under
           the bio, where it swapped places with Memories (owner, 2026-09-14).
@@ -871,6 +900,9 @@ export default function ProfilePage() {
           existing={editLog ?? undefined}
           initialDate={logPrefill?.date}
           initialGym={logPrefill?.gym}
+          initialActivity={logPrefill?.activity}
+          initialPartner={logPrefill?.partner}
+          plan={logPrefill?.plan}
           onClose={() => {
             setLogging(false);
             setLogPrefill(null);
@@ -881,6 +913,7 @@ export default function ProfilePage() {
             setLogging(false);
             setLogPrefill(null);
             setEditLog(null);
+            setPlansKey((k) => k + 1);
           }}
         />
       )}

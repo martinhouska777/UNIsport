@@ -36,6 +36,7 @@ import GymCheckInPrompt from "@/components/gyms/GymCheckInPrompt";
 import { getGymByName } from "@/lib/gyms";
 import { fileToDataUrl } from "@/lib/image";
 import { notifyPartnerTag } from "@/lib/push/client";
+import { confirmPlan } from "@/lib/supabase/sessionPlans";
 import { PARTNER_CONFIRM_HOURS, sessionPoints } from "@/lib/points";
 import { IconArrowLeft, IconCheck, IconPlus, IconTrash, IconX } from "@/components/icons";
 
@@ -57,6 +58,9 @@ export default function LogSessionSheet({
   existing,
   initialDate,
   initialGym,
+  initialActivity,
+  initialPartner,
+  plan,
   onClose,
   onSaved,
 }: {
@@ -65,14 +69,29 @@ export default function LogSessionSheet({
   initialDate?: string;
   /** Prefilled by the log reminder's deep link — the person's usual gym. */
   initialGym?: string;
+  initialActivity?: string;
+  initialPartner?: { name: string; id: string };
+  /*
+    LOGGING A PLANNED SESSION (owner, 2026-09-27): "when you accept you can log
+    it, and once the partner accepts you will have the partner there — you need
+    to say what you did as well". "Yes, we trained" on the plan opens this sheet
+    with the plan's day, activity, place and partner filled in. Saving writes
+    YOUR session (plan_id set, partner pending) and then answers yes on the plan
+    — saving IS the yes; closing without saving answers nothing. The partner is
+    the plan's, so it can't be changed here; when they say yes too, plan_confirm
+    confirms both people's sessions.
+  */
+  plan?: { planId: string; conversationId: string; scheduledAt: string };
   onClose: () => void;
   onSaved: () => void;
 }) {
   const [date, setDate] = useState(existing?.date ?? initialDate ?? todayIso());
-  const [activity, setActivity] = useState(existing?.activity ?? "gym");
+  const [activity, setActivity] = useState(existing?.activity ?? initialActivity ?? "gym");
   const [gym, setGym] = useState(existing?.gym ?? initialGym ?? "");
-  const [partner, setPartner] = useState(existing?.partner ?? "");
-  const [partnerId, setPartnerId] = useState<string | undefined>(existing?.partnerId);
+  const [partner, setPartner] = useState(existing?.partner ?? initialPartner?.name ?? "");
+  const [partnerId, setPartnerId] = useState<string | undefined>(
+    existing?.partnerId ?? initialPartner?.id,
+  );
   const [exercises, setExercises] = useState<WorkoutExercise[]>(existing?.exercises ?? []);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [partnerPickerOpen, setPartnerPickerOpen] = useState(false);
@@ -92,6 +111,8 @@ export default function LogSessionSheet({
   const photoInputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // A planned session's row is written (see save): a retry only answers the plan.
+  const planSaved = useRef(false);
   // After saving a session at a known gym, offer an optional rating + crowd check-in.
   const [checkIn, setCheckIn] = useState<{ slug: string; name: string } | null>(null);
 
@@ -171,6 +192,23 @@ export default function LogSessionSheet({
     if (!date || busy) return;
     setBusy(true);
     setError(null);
+    // A planned session whose save went through but whose "yes" didn't (the
+    // network dropped): Save again only retries the yes — never a second row.
+    if (plan && planSaved.current) {
+      try {
+        await confirmPlan(plan.planId, true, {
+          conversationId: plan.conversationId,
+          scheduledAt: plan.scheduledAt,
+        });
+      } catch (e) {
+        setBusy(false);
+        setError((e as Error).message);
+        return;
+      }
+      setBusy(false);
+      onSaved();
+      return;
+    }
     /*
       The same partner kept on an edit keeps their answer (a confirmed session
       is not re-asked; a row from before tags had to be accepted stays counted).
@@ -184,6 +222,7 @@ export default function LogSessionSheet({
       partner,
       partnerId,
       ...(samePartner ? { partnerStatus: existing?.partnerStatus ?? "confirmed" } : {}),
+      ...(plan && !existing ? { planId: plan.planId } : {}),
       exercises,
       metrics: { cardioType, distance, unit, duration, weightUnit, muscles },
       photos,
@@ -197,9 +236,23 @@ export default function LogSessionSheet({
       setError(res.error);
       return;
     }
+    // A planned session: saving was the "yes, we trained". The plan asks the
+    // partner (and confirms both sessions on their yes), so no tag push here.
+    if (plan && !existing) {
+      planSaved.current = true;
+      try {
+        await confirmPlan(plan.planId, true, {
+          conversationId: plan.conversationId,
+          scheduledAt: plan.scheduledAt,
+        });
+      } catch (e) {
+        setError((e as Error).message);
+        return;
+      }
+    }
     // A fresh partner tag asks them — "Did you train with Sam today?" — and
     // counts for nobody until they say yes. Fire-and-forget, never blocks.
-    if (partnerId && !samePartner) {
+    else if (partnerId && !samePartner) {
       const newId = existing ? existing.id : (res as { id?: string }).id;
       if (newId && !newId.startsWith("local-")) notifyPartnerTag(newId, gym.trim() || undefined);
     }
@@ -286,21 +339,23 @@ export default function LogSessionSheet({
           <button
             type="button"
             onClick={() => setPartnerPickerOpen(true)}
+            disabled={!!plan}
             className={`${inputCls} flex items-center gap-2.5 text-left`}
           >
             {partnerId ? (
               <>
                 <Avatar size={26} alt={partner} />
                 <span className="flex-1 truncate text-text">{partner}</span>
-                <span className="text-[12px] text-muted">Change</span>
+                {!plan && <span className="text-[12px] text-muted">Change</span>}
               </>
             ) : (
               <span className="flex-1 text-muted">Solo · tap to add a partner</span>
             )}
           </button>
           {/* Said before the save, because it changes what the save does: the
-              multiplier is not yours to take, it is theirs to confirm. */}
-          {partnerId && (
+              multiplier is not yours to take, it is theirs to confirm. Not on
+              a planned session — the plan is what asks them. */}
+          {partnerId && !plan && (
             <p className="mt-1.5 text-[11px] leading-snug text-muted">
               {existing?.partnerId === partnerId && existing?.partnerStatus !== "pending"
                 ? `${partner} has confirmed this session.`

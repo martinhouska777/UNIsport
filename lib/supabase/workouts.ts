@@ -65,7 +65,7 @@ export type WorkoutLog = {
   metrics: WorkoutMetrics; // running / cardio distances, gym unit + quick-log body parts
   photos: string[]; // session photos (downscaled data URLs) — "memories"
   note: string;
-  verified?: boolean; // true when auto-logged from a confirmed chat session plan
+  verified?: boolean; // true once both people on the chat plan it was logged off have said yes
   planId?: string; // the session plan this came from, if any
 };
 
@@ -177,6 +177,13 @@ const draftToRow = (userId: string, d: WorkoutDraft) => ({
     session never asks them again; a new or changed partner is asked afresh.
   */
   partner_status: d.partnerId ? (d.partnerStatus ?? "pending") : null,
+  /*
+    Logged off a chat plan ("Yes, we trained" → this sheet): the plan it came
+    from. plan_confirm turns the partner real once BOTH have said yes, and only
+    for the two people on that plan. Never sent on an edit (the key is left
+    out), so an edit can't move a session onto another plan.
+  */
+  ...(d.planId ? { plan_id: d.planId } : {}),
   // Exercises only apply to gym/other; keep any named exercise, drop empty sets.
   exercises:
     d.activity === "running" || d.activity === "cardio"
@@ -428,8 +435,8 @@ export async function respondPartnerRequest(
 }
 
 /* ── Streak & points (Slice D) ──
-   Both rise ONLY from VERIFIED sessions (auto-logged when a chat-planned session
-   is confirmed by both people). One-per-day: a day counts once regardless of how
+   Both rise ONLY from VERIFIED sessions (logged off a chat plan and confirmed
+   by both people). No callers today — the leaderboards score by partner_status. One-per-day: a day counts once regardless of how
    many verified sessions it had. */
 
 // Local-date ISO (yyyy-mm-dd) for a Date, matching how log_date is stored.

@@ -8,14 +8,15 @@
   The rows are WHITE cards (owner, 2026-09-27 — they were the grey surface-2).
 
   DID THIS HAPPEN? (owner, 2026-09-27 — "both people need to accept it, so
-  it's trustworthy"). A planned session is logged for both people, marked
+  it's trustworthy"). A planned session counts as trained together, marked
   Verified, only once BOTH say they trained (plan_confirm). That question used
   to live only on the plan card inside the chat, and this list let go of a
   session 12 hours after it started, so nobody was asked again. Now a session
   that has started and is waiting on YOUR answer sits above the upcoming ones,
   with the chat card's own two buttons, for a week (db/plans_to_confirm.sql).
-  Answering refreshes the calendar through `onChanged`, because a second
-  "yes" is exactly the moment the session lands in it.
+  "Yes, we trained" opens YOUR log sheet for it (onLogPlan) — you write what
+  you did, and saving is the yes; the partner shows on it once they say yes
+  too. "No-show" answers straight from here and refreshes via `onChanged`.
 
   Colors are theme tokens (rule 1).
 */
@@ -74,7 +75,14 @@ function PlanRow({
   );
 }
 
-export default function UpcomingSessions({ onChanged }: { onChanged?: () => void }) {
+export default function UpcomingSessions({
+  onChanged,
+  onLogPlan,
+}: {
+  onChanged?: () => void;
+  /** "Yes, we trained" — open the log sheet for this plan (saving is the yes). */
+  onLogPlan: (p: PlanToConfirm) => void;
+}) {
   const router = useRouter();
   const [plans, setPlans] = useState<UpcomingPlan[] | null>(null);
   const [toConfirm, setToConfirm] = useState<PlanToConfirm[]>([]);
@@ -116,6 +124,7 @@ export default function UpcomingSessions({ onChanged }: { onChanged?: () => void
     }
   };
 
+  // Only "No-show" is answered from here; "Yes" goes through the log sheet.
   const answer = async (p: PlanToConfirm, attended: boolean) => {
     if (busy) return;
     setBusy(p.planId);
@@ -150,7 +159,7 @@ export default function UpcomingSessions({ onChanged }: { onChanged?: () => void
                   <Button
                     size="sm"
                     disabled={busy !== null}
-                    onClick={() => answer(p, true)}
+                    onClick={() => onLogPlan(p)}
                     className="flex-1"
                   >
                     <IconCheck size={14} /> Yes, we trained

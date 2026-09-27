@@ -1,8 +1,9 @@
 /*
   GET /api/push/confirm — "Did you train with Arjun?"
 
-  A planned session is logged for both people, marked Verified, only once
-  BOTH answer "yes, we trained" (plan_confirm in db/session_plans.sql). Left to
+  A planned session counts as trained together, marked Verified, only once
+  BOTH answer "yes, we trained" (each logging their own session — see
+  LogSessionSheet's `plan`, and plan_confirm in db/session_plans.sql). Left to
   the chat, nobody answered. So after the session the phone asks: every
   accepted session 2 to 24 hours past its planned start (owner: "2 hours after
   start") that has not been asked about yet gets one push to each person who

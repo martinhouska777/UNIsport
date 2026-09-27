@@ -198,8 +198,9 @@ $$;
 alter table public.session_plans add column if not exists proposer_answer  text;
 alter table public.session_plans add column if not exists recipient_answer text;
 
--- A confirmed plan auto-creates one workout_log per person. These columns mark
--- those rows so they show a "verified" badge and the insert stays idempotent.
+-- A session each person logs off the plan carries plan_id; when both have said
+-- yes, plan_confirm marks those rows verified (the "Verified" badge). Until
+-- 2026-09-27 plan_confirm CREATED bare rows here — it no longer does.
 alter table public.workout_logs add column if not exists plan_id  uuid references public.session_plans (id) on delete set null;
 alter table public.workout_logs add column if not exists verified boolean not null default false;
 
@@ -251,34 +252,30 @@ begin
     if prop_ans = 'yes' and rec_ans = 'yes' then
       update public.session_plans set status = 'confirmed' where id = p_plan_id;
 
-      -- The CAMPUS day (2026-09-27). A bare ::date takes the database's UTC
-      -- day, so anything from 8 PM Eastern on was logged on the next day.
-      -- Campus time as in plan_create: every school on the list is Eastern.
-
-      select coalesce(p.data->>'name', 'Member') into prop_name
-        from public.profiles p where p.id = pl.proposer_id;
-      select coalesce(p.data->>'name', 'Member') into rec_name
-        from public.profiles p where p.id = recipient;
-
-      insert into public.workout_logs
-        (user_id, log_date, activity, gym, partner, partner_id, plan_id, verified)
-        select pl.proposer_id, (pl.scheduled_at at time zone 'America/New_York')::date, pl.activity, pl.place,
-               rec_name, recipient, pl.id, true
-        where not exists (
-          select 1 from public.workout_logs w
-          where w.plan_id = pl.id and w.user_id = pl.proposer_id
-        );
-
-      insert into public.workout_logs
-        (user_id, log_date, activity, gym, partner, partner_id, plan_id, verified)
-        select recipient, (pl.scheduled_at at time zone 'America/New_York')::date, pl.activity, pl.place,
-               prop_name, pl.proposer_id, pl.id, true
-        where not exists (
-          select 1 from public.workout_logs w
-          where w.plan_id = pl.id and w.user_id = recipient
-        );
+      /*
+        NOTHING IS LOGGED FOR ANYONE HERE (owner, 2026-09-27: "when you accept
+        you can log it, and once the partner accepts you will have the partner
+        there — you need to say what you did as well"). Each person's "Yes, we
+        trained" opens their own Log session sheet, prefilled; saving it writes
+        THEIR session with plan_id set and the partner pending, then answers
+        yes here. The second yes is what makes the partner real: both of those
+        sessions become confirmed + verified. A yes given without a session
+        (an older copy of the app) logs nothing — no empty rows on anyone's
+        calendar. Only the two people on the plan can own a counted row.
+      */
+      update public.workout_logs
+        set partner_status = 'confirmed', verified = true
+        where plan_id = p_plan_id
+          and user_id in (pl.proposer_id, recipient);
     else
       update public.session_plans set status = 'missed' where id = p_plan_id;
+      -- Someone said it didn't happen: the session a "yes" logged counts as
+      -- solo, and says why ("{partner} said they weren't there").
+      update public.workout_logs
+        set partner_status = 'declined'
+        where plan_id = p_plan_id
+          and user_id in (pl.proposer_id, recipient)
+          and partner_status = 'pending';
     end if;
   end if;
 

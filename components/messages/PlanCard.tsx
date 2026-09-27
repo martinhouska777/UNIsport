@@ -11,9 +11,11 @@
   Colors are theme tokens only (rule 1).
 */
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Button from "@/components/ui/Button";
 import { respondToPlan, confirmPlan, cancelPlan, planWhenLabel } from "@/lib/supabase/sessionPlans";
 import { type DmPlan } from "@/lib/supabase/messages";
+import { planLogHref } from "@/lib/reminders";
 import { activityLabel } from "@/lib/supabase/workouts";
 import { IconCalendar, IconCheck, IconX, IconMapPin } from "@/components/icons";
 
@@ -22,6 +24,7 @@ export default function PlanCard({
   conversationId,
   mine,
   otherName,
+  otherId,
   onChanged,
   onReschedule,
 }: {
@@ -29,11 +32,35 @@ export default function PlanCard({
   conversationId: string; // so a response can ping the other person
   mine: boolean; // did I propose this?
   otherName: string;
+  otherId: string | null; // the partner the "Yes, we trained" log is filled in with
   onChanged: () => void; // refetch the thread after a response
   onReschedule: (plan: DmPlan) => void; // open the reschedule editor (proposer)
 }) {
+  const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  /*
+    "Yes, we trained" is not answered from here (owner, 2026-09-27: "when you
+    accept you can log it … you need to say what you did as well"). It opens
+    YOUR Log session sheet on the Profile tab with the plan's day, activity,
+    place and partner filled in; saving it is the yes. "No-show" still answers
+    straight away through confirm(false).
+  */
+  const logIt = () => {
+    if (!otherId) return confirm(true); // no partner id to fill in: answer as before
+    router.push(
+      planLogHref({
+        planId: plan.planId,
+        conversationId,
+        scheduledAt: plan.scheduledAt,
+        activity: plan.activity,
+        place: plan.place,
+        otherId,
+        otherName,
+      }),
+    );
+  };
 
   const respond = async (accept: boolean) => {
     if (busy) return;
@@ -162,7 +189,7 @@ export default function PlanCard({
           <div>
             <div className="mb-2 text-[12px] font-medium text-text">Did this happen?</div>
             <div className="flex gap-2">
-              <Button size="sm" disabled={busy} onClick={() => confirm(true)} className="flex-1">
+              <Button size="sm" disabled={busy} onClick={logIt} className="flex-1">
                 <IconCheck size={14} /> Yes, we trained
               </Button>
               <Button
@@ -190,7 +217,7 @@ export default function PlanCard({
 
         {plan.status === "confirmed" && (
           <div className="flex items-center gap-1.5 text-[12px] font-medium text-success">
-            <IconCheck size={14} /> Verified — logged for both of you
+            <IconCheck size={14} /> Verified
           </div>
         )}
 

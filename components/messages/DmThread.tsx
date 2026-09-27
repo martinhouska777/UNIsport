@@ -153,6 +153,7 @@ export default function DmThread({
                   conversationId={conversationId}
                   mine={mine}
                   otherName={title}
+                  otherId={otherId}
                   onChanged={load}
                   onReschedule={setEditPlan}
                 />

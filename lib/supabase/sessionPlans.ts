@@ -93,8 +93,10 @@ export async function respondToPlan(
 }
 
 /**
- * Answer "did this happen?" for an accepted session. When both people answer
- * yes, the session is confirmed and a verified workout is auto-logged for each.
+ * Answer "did this happen?" for an accepted session. A "yes" comes from the
+ * Log session sheet, right after it saved the person's own session (plan_id
+ * set); when both have said yes, the plan is confirmed and both of those
+ * sessions become confirmed + verified. Nothing is logged here.
  * Returns the plan's resulting status.
  */
 export async function confirmPlan(
