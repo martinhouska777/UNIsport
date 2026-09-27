@@ -32,8 +32,12 @@
   fades in under the typing and fades out under "Live now at Harvard". The
   effects are mixed SFX_UNDER_MUSIC dB under the music.
 
-  Run:  node scripts/video/intro-sound-v4.mjs              -> unisport-intro-v4.mp4 (effects only)
-        node scripts/video/intro-sound-v4.mjs --music a    -> unisport-intro-v4-music-a.mp4
+  Version 5 (the default since the owner's pass on 2026-09-27) keeps only six of
+  these sounds; see the schedule. `--v4` still builds version 4.
+
+  Run:  node scripts/video/intro-sound-v4.mjs              -> unisport-intro-v5.mp4 (effects only)
+        node scripts/video/intro-sound-v4.mjs --music a    -> unisport-intro-v5-music-a.mp4
+        add --v4 for version 4 (unisport-intro-v4*.mp4)
 */
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { execFileSync, spawnSync } from "node:child_process";
@@ -53,7 +57,8 @@ const dB = (x) => 10 ** (x / 20);
 const semis = (n) => 2 ** (n / 12);
 
 /* finished loudness (integrated LUFS) */
-const TARGET_SFX_ONLY = -21;
+const TARGET_SFX_ONLY = -21;       /* v4: sound all the way through */
+const TARGET_SFX_ONLY_V5 = -30;    /* v5: six sparse sounds; keeps each one at or under its v4 level */
 const TARGET_WITH_MUSIC = -16;
 const SFX_UNDER_MUSIC = 9;
 const REVERB_WET = 0.2; /* about -14 dB against the dry sound */
@@ -96,15 +101,16 @@ const rnd = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 42
 /* place `name` so that it STARTS at t. rate < 1 = slower and lower. `from`/`len`
    pick a stretch of the source (seconds of source); the edges get short fades so
    nothing clicks. */
-function at(name, t, gain, rate = 1, from = 0, len = null) {
+function at(name, t, gain, rate = 1, from = 0, len = null, fadeOut = 0) {
   const src = SFX[name];
   const s0 = Math.round(from * SR), s1 = len === null ? src.length : Math.min(src.length, s0 + Math.round(len * SR));
   const n = Math.floor((s1 - s0 - 1) / rate), o0 = Math.round(t * SR);
-  const edge = Math.round(0.006 * SR);
+  const edge = Math.round(0.006 * SR), fo = Math.round(fadeOut * SR);
   for (let i = 0; i < n; i++) {
     const o = o0 + i; if (o < 0 || o >= N) continue;
     const p = s0 + i * rate, k = Math.floor(p), fr = p - k;
-    const g = Math.min(1, (i + 1) / edge, (n - i) / edge);
+    let g = Math.min(1, (i + 1) / edge, (n - i) / edge);
+    if (fo && n - i < fo) g *= Math.sin((Math.PI / 2) * (n - i) / fo);
     mix[o] += (src[k] * (1 - fr) + src[k + 1] * fr) * gain * g;
   }
 }
@@ -124,53 +130,88 @@ function typeRun(times, gain, enter) {
 
 /* ---------- the schedule ---------- */
 
-/* 0.35-1.19  the headline types. Nothing before it (owner). */
-typeRun(TIMES.prefix, dB(-36), false);
-typeRun(TIMES.sufA, dB(-36), true);
+/* Version 5 (owner, 2026-09-27): "skip all sound effects, they're distracting".
+   What stays is exactly the owner's list, nothing else: the whoosh on the cut into
+   "Choose your activity", the three tiles, the two clicks, the same whoosh on the
+   next cut (and no second whoosh for the slide), nothing during "Match.", and one
+   sound WHILE the halves are connecting that is gone the moment they connect. No
+   typing, no connect tone, no letter clicks. `--v4` builds the fuller mix. */
+const V4 = process.argv.includes("--v4");
+if (!V4) {
+  /* 2.0-2.3  the cut into "Choose your activity": one soft whoosh, peak on the new line */
+  peakAt("whoosh-text~soft", T.act, dB(-13), 0.88);
+  peakAt("whoosh-text", T.act, dB(-27));
 
-/* 2.0-2.3  the line lifts away and "Choose your activity" arrives: one whoosh, soft,
-   slowed a little, its peak on the new line; a faint bright copy for air */
-peakAt("whoosh-text~soft", T.act, dB(-13), 0.88);
-peakAt("whoosh-text", T.act, dB(-27));
+  /* the three tiles land, climbing a semitone */
+  for (let i = 0; i < 3; i++) peakAt("tile", T.tiles + 0.18 + i * 0.12, dB(-20.5), semis(i));
 
-/* the three tiles land: one click each, climbing a semitone */
-for (let i = 0; i < 3; i++) peakAt("tile", T.tiles + 0.18 + i * 0.12, dB(-20.5), semis(i));
+  /* the two clicks: the first mouse button on both */
+  peakAt("tap", T.tap1, dB(-15));
+  peakAt("tap", T.tap2, dB(-15.5), semis(-0.5));
 
-/* the two presses: the first mouse button on both (owner), the second a touch lower */
-peakAt("tap", T.tap1, dB(-15));
-peakAt("tap", T.tap2, dB(-15.5), semis(-0.5));
+  /* 4.65-4.9  the next cut: the SAME whoosh again, peak as "Find training partners"
+     arrives. The slide that follows gets nothing. */
+  peakAt("whoosh-text~soft", T.find, dB(-13), 0.88);
+  peakAt("whoosh-text", T.find, dB(-27));
 
-/* 4.65  the activities leave */
-peakAt("whoosh-air~soft", T.actOut + 0.1, dB(-12), 0.9);
-
-/* 5.0-5.75  the two halves slide apart: the biggest move so far, but the low end
-   is held back for the connect */
-peakAt("whoosh-slide", T.slide + 0.45, dB(-6), 0.92);
-peakAt("whoosh-mid", T.slide + 0.45, dB(-19), 1.4);
-
-/* 6.25  "Match." types */
-typeRun(TIMES.match, dB(-36), true);
-
-/* 6.45-7.75  they close and connect. The swell starts exactly as they start closing
-   and is cut the instant they touch; the push sits under it; the connect tone is
-   the release. */
-{
-  const close = T.met - T.join, rate = 0.9;
-  const end = ANCHORS.swell;            /* the swell's peak, in source seconds */
-  const len = close * rate;             /* how much source fills the close */
-  at("swell", T.join, dB(-26), rate, Math.max(0, end - len), Math.min(len, end));
-  const pushLen = Math.min(SFX["push~soft"].length / SR, close);
-  at("push~soft", T.join, dB(-27), 1, 0, pushLen);
+  /* 6.45-7.75  while they connect: the owner's push, starting as they start closing
+     and dying away to nothing exactly as they touch. Nothing at the touch itself. */
+  {
+    const close = T.met - T.join;
+    at("push~soft", T.join, dB(-14), 1, 0, close, 0.45);
+  }
 }
-peakAt("note-warm", T.met, dB(-6));
 
-/* 7.9  "Match." leaves, barely there */
-peakAt("whoosh-air~soft", T.matchOut, dB(-24), 0.9);
-
-/* 8.62-9.11  the letters of UNIsport land, climbing half a semitone each */
-TIMES.word.forEach((t, i) => peakAt("click-soft", t + 0.42, dB(-22), semis(i * 0.5)));
-
-/* 9.0  "Live now at Harvard": no sound of its own (owner) */
+if (V4) {
+  
+  /* 0.35-1.19  the headline types. Nothing before it (owner). */
+  typeRun(TIMES.prefix, dB(-36), false);
+  typeRun(TIMES.sufA, dB(-36), true);
+  
+  /* 2.0-2.3  the line lifts away and "Choose your activity" arrives: one whoosh, soft,
+     slowed a little, its peak on the new line; a faint bright copy for air */
+  peakAt("whoosh-text~soft", T.act, dB(-13), 0.88);
+  peakAt("whoosh-text", T.act, dB(-27));
+  
+  /* the three tiles land: one click each, climbing a semitone */
+  for (let i = 0; i < 3; i++) peakAt("tile", T.tiles + 0.18 + i * 0.12, dB(-20.5), semis(i));
+  
+  /* the two presses: the first mouse button on both (owner), the second a touch lower */
+  peakAt("tap", T.tap1, dB(-15));
+  peakAt("tap", T.tap2, dB(-15.5), semis(-0.5));
+  
+  /* 4.65  the activities leave */
+  peakAt("whoosh-air~soft", T.actOut + 0.1, dB(-12), 0.9);
+  
+  /* 5.0-5.75  the two halves slide apart: the biggest move so far, but the low end
+     is held back for the connect */
+  peakAt("whoosh-slide", T.slide + 0.45, dB(-6), 0.92);
+  peakAt("whoosh-mid", T.slide + 0.45, dB(-19), 1.4);
+  
+  /* 6.25  "Match." types */
+  typeRun(TIMES.match, dB(-36), true);
+  
+  /* 6.45-7.75  they close and connect. The swell starts exactly as they start closing
+     and is cut the instant they touch; the push sits under it; the connect tone is
+     the release. */
+  {
+    const close = T.met - T.join, rate = 0.9;
+    const end = ANCHORS.swell;            /* the swell's peak, in source seconds */
+    const len = close * rate;             /* how much source fills the close */
+    at("swell", T.join, dB(-26), rate, Math.max(0, end - len), Math.min(len, end));
+    const pushLen = Math.min(SFX["push~soft"].length / SR, close);
+    at("push~soft", T.join, dB(-27), 1, 0, pushLen);
+  }
+  peakAt("note-warm", T.met, dB(-6));
+  
+  /* 7.9  "Match." leaves, barely there */
+  peakAt("whoosh-air~soft", T.matchOut, dB(-24), 0.9);
+  
+  /* 8.62-9.11  the letters of UNIsport land, climbing half a semitone each */
+  TIMES.word.forEach((t, i) => peakAt("click-soft", t + 0.42, dB(-22), semis(i * 0.5)));
+  
+  /* 9.0  "Live now at Harvard": no sound of its own (owner) */
+}
 
 /* ---------- rendering ---------- */
 
@@ -222,7 +263,7 @@ execFileSync("ffmpeg", ["-y", "-v", "error", "-i", dryWav, "-i", irWav, "-filter
   "-map", "[a]", "-c:a", "pcm_f32le", sfxWav]);
 
 /* 2. the music, if any: a downbeat on the connect, in under the typing, out under "Live now" */
-let mixWav = sfxWav, target = TARGET_SFX_ONLY, tag = "";
+let mixWav = sfxWav, target = V4 ? TARGET_SFX_ONLY : TARGET_SFX_ONLY_V5, tag = "";
 if (MUSIC) {
   const track = V(`music/${MUSIC}.mp3`), grid = JSON.parse(readFileSync(V(`music/${MUSIC}.grid.json`), "utf8"));
   /* Which downbeat goes on the connect. Best: the one where the track steps up into
@@ -278,7 +319,7 @@ if (MUSIC) {
 /* 3. one fixed gain to the target, a safety limiter at -2 dBFS (AAC adds a little on top), onto the picture */
 const pre = loudness(mixWav);
 const gain = target - pre.I;
-const out = V(`unisport-intro-v4${tag}.mp4`);
+const out = V(`unisport-intro-${V4 ? "v4" : "v5"}${tag}.mp4`);
 execFileSync("ffmpeg", ["-y", "-v", "error", "-i", V("unisport-intro.mp4"), "-i", mixWav, "-filter_complex",
   `[1:a]volume=${gain.toFixed(2)}dB,alimiter=limit=${dB(-2).toFixed(4)}:level=false:attack=2:release=40[a]`,
   "-map", "0:v", "-map", "[a]", "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-ar", String(SR),

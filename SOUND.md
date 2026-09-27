@@ -246,3 +246,28 @@ attacks around it — the whole-track grid drifted ~55 ms on song C. The songs l
 section 0. ChatCut's commercial terms for generated music are still to be checked.
 
 **Open:** which of the four the owner prefers.
+
+## 2026-09-27, later — version 5: only the owner's six sounds
+
+Owner, after hearing version 4: "skip all sound effects because they're distracting…
+this is the exact video I want" (the picture is final; the WhatsApp copy he sent is
+frame-for-frame our render). He listed what stays, and **that is all**:
+
+| When | Sound |
+|---|---|
+| 2.0–2.3 s, the cut into "Choose your activity" | one soft whoosh, peak on the new line |
+| 2.73 / 2.85 / 2.97 s, the three tiles | one click each, climbing a semitone |
+| 3.45 / 4.15 s, the two presses | the mouse button |
+| 4.65–4.9 s, the next cut into "Find training partners" | the SAME whoosh again — and no second whoosh for the slide |
+| 6.25 s, "Match." | nothing |
+| 6.45–7.75 s, while the halves connect | the push, starting as they start closing and faded to nothing exactly as they touch — nothing AT the touch |
+
+Gone: all typing, the slide whooshes, the connect tone, the "Match." exit whoosh, the
+UNIsport letter clicks. Effects-only is −30 LUFS integrated — six sparse sounds, each
+about 3 dB under its level in v4. Files: `unisport-intro-v5.mp4`, and the same with
+the three songs, `unisport-intro-v5-music-{a,b,c}.mp4`. Version 5 is now the default of
+`intro-sound-v4.mjs`; `--v4` rebuilds version 4.
+
+**My reading of one garbled line, to confirm:** "then in the cut again, but don't make
+the other whoosh there" = the same whoosh on the second cut, and not the other
+(slide) whoosh.
