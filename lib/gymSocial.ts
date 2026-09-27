@@ -376,10 +376,20 @@ export function useGymPhotos(userId: string | null) {
     [uid],
   );
 
+  /* Gone from the screen at once — and BACK if the removal failed, with the
+     error passed on so the strip can say so. It used to stay gone either way,
+     and came back on the next visit as the gym's cover. */
   const removePhoto = useCallback(
     async (photo: GymPhoto) => {
       setPhotos((cur) => cur.filter((p) => p.id !== photo.id));
-      await removeGymPhoto(uid, photo);
+      try {
+        await removeGymPhoto(uid, photo);
+      } catch (e) {
+        setPhotos((cur) =>
+          cur.some((p) => p.id === photo.id) ? cur : [...cur, photo].sort((a, b) => b.at - a.at),
+        );
+        throw e;
+      }
       window.dispatchEvent(new CustomEvent(CHANGE_EVENT));
     },
     [uid],

@@ -176,7 +176,8 @@ export async function gymScores(userId: string): Promise<Record<string, GymScore
         byCategory: { ...EMPTY_SCORES },
         comments: 0,
       });
-      s.reviews += 1;
+      // A comment with no scores is not a rating (same rule as the database).
+      if (overallOf(r.scores) !== null) s.reviews += 1;
       s.score = overallOf(r.scores);
       s.byCategory = r.scores;
       if (r.comment) s.comments += 1;

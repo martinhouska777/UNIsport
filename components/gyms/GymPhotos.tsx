@@ -25,6 +25,17 @@ export default function GymPhotos({ photos, onAdd, onRemove }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
+  /* The photo whose removal just failed: it is back on the strip, ringed. */
+  const [stuck, setStuck] = useState<string | null>(null);
+
+  const remove = async (p: GymPhoto) => {
+    setStuck(null);
+    try {
+      await onRemove(p);
+    } catch {
+      setStuck(p.id);
+    }
+  };
 
   const pick = async (file: File | undefined) => {
     if (!file) return;
@@ -73,13 +84,15 @@ export default function GymPhotos({ photos, onAdd, onRemove }: Props) {
               src={p.url}
               alt=""
               loading="lazy"
-              className="h-28 w-36 rounded-xl border border-border object-cover"
+              className={`h-28 w-36 rounded-xl border object-cover ${
+                stuck === p.id ? "border-2 border-danger" : "border-border"
+              }`}
             />
             {p.mine && (
               <button
                 type="button"
-                aria-label="Remove your photo"
-                onClick={() => onRemove(p)}
+                aria-label={stuck === p.id ? "Not removed · try again" : "Remove your photo"}
+                onClick={() => void remove(p)}
                 className="tap44 press-icon absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-background/70 text-text backdrop-blur"
               >
                 <IconX size={14} />
