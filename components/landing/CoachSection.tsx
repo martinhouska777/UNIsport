@@ -58,7 +58,11 @@ export default function CoachSection({ solo = false, teaser = false }: { solo?: 
       <div className="mx-auto max-w-[1160px]">
         {/* ── The opener ── */}
         <div className={`flex flex-col items-center gap-[clamp(11px,1.8vh,18px)] pb-7 text-center ${solo ? "l-fade-up" : ""}`}>
-          <div className="inline-flex items-center gap-2 rounded-full border border-l-coach-soft bg-l-coach-dim px-3.5 py-1.5 font-mono text-[11px] uppercase tracking-wider text-l-coach">
+          {/* The Coach door's opaque red-white, not the see-through red dim,
+              which came out grey over the page's cyan; balanced, so a phone
+              does not leave "DEPARTMENTS" on a line of its own (launch audit
+              2026-09-27, item 45). */}
+          <div className="inline-flex items-center gap-2 rounded-full border border-l-coach-soft bg-l-surface-coach px-3.5 py-1.5 font-mono text-[11px] uppercase tracking-wider text-balance text-l-coach">
             {coach.badge}
           </div>
           <Heading className="max-w-[14ch] font-display text-[clamp(40px,min(7vw,8.6vh),68px)] font-normal leading-[1.02] tracking-tight text-balance text-l-text">
@@ -96,7 +100,7 @@ export default function CoachSection({ solo = false, teaser = false }: { solo?: 
                not down. */
             <Link
               href={coach.overview.teaserHref}
-              className="mt-3 inline-flex items-center gap-2 rounded-full border border-l-coach-soft bg-l-coach-dim px-6 py-3.5 l-lift text-[15px] font-semibold tracking-tight text-l-coach transition-[color,background-color,border-color,translate] hover:-translate-y-0.5 hover:border-l-coach focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-l-text"
+              className="mt-3 inline-flex items-center gap-2 rounded-full border border-l-coach-soft bg-l-surface-coach px-6 py-3.5 l-lift text-[15px] font-semibold tracking-tight text-l-coach transition-[color,background-color,border-color,translate] hover:-translate-y-0.5 hover:border-l-coach focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-l-text"
             >
               {coach.overview.label} →
             </Link>
@@ -165,7 +169,7 @@ export default function CoachSection({ solo = false, teaser = false }: { solo?: 
                     gold pill are the page's own numbering idiom — the section
                     badge and the story chips (OpeningSteps.tsx) wear it too. */}
                 <h3 className="font-display text-[clamp(24px,2.7vw,31px)] font-normal leading-[1.1] tracking-tight text-balance text-l-text">
-                  <span className="mr-[0.34em] inline-flex h-[1.72em] w-[1.72em] items-center justify-center rounded-full border border-l-coach-soft bg-l-coach-dim align-[0.42em] font-mono text-[0.42em] leading-none text-l-coach">
+                  <span className="mr-[0.34em] inline-flex h-[1.72em] w-[1.72em] items-center justify-center rounded-full border border-l-coach-soft bg-l-surface-coach align-[0.42em] font-mono text-[0.42em] leading-none text-l-coach">
                     {s.n}
                   </span>
                   {s.head}

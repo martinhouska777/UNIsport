@@ -195,12 +195,13 @@ export default function LandingHero() {
 
               The INVITE is the rower's: they usually arrive holding a link from
               their captain, and shouldn't have to scroll to find where it goes.
-              It keeps the varsity gold; the Why is the page's own ink, so the
-              line reads as one student thing and one team thing. */}
+              It keeps the varsity gold; the Why wears the page's link blue,
+              underlined — the same as on Contact, since it was ink here and
+              blue there (launch audit 2026-09-27, item 45). */}
           <div className="mt-[clamp(10px,2vh,24px)] flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[14px] text-l-text-2">
             <Link
               href={hero.whyHref}
-              className="tap44 inline-block font-medium text-l-text underline-offset-4 transition-colors hover:underline"
+              className="tap44 inline-block font-medium text-l-accent underline underline-offset-4 transition-colors"
             >
               {about.readWhy} →
             </Link>

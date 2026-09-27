@@ -27,9 +27,12 @@ import { IconArrowLeft } from "@/components/icons";
 
 /* The invite screens are a varsity door, so they wear the gold; the waitlist
    is the product's own front door and wears the brand blue, like the landing
-   page it was linked from. Tokens either way (rule 1) — never a hex. */
+   page it was linked from. Tokens either way (rule 1) — never a hex.
+   The gold chip stands on the Varsity door's own OPAQUE ground: the see-through
+   gold dim came out olive over the page's faint cyan (launch audit
+   2026-09-27, item 45), the same thing that happened to the doors. */
 const ACCENTS = {
-  varsity: { mark: "text-l-varsity", chip: "border-l-varsity-soft bg-l-varsity-dim text-l-varsity" },
+  varsity: { mark: "text-l-varsity", chip: "border-l-varsity-soft bg-l-surface-varsity text-l-varsity" },
   brand: { mark: "text-l-accent", chip: "border-l-accent-soft bg-l-accent-dim text-l-accent" },
 } as const;
 
