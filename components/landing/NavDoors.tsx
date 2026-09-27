@@ -35,21 +35,23 @@ import { nav } from "@/lib/landingCopy";
 const DOOR_CLS =
   "inline-flex h-10 items-center whitespace-nowrap rounded-full border px-3.5 text-[13px] font-medium tracking-tight transition-[background-color,border-color,color,translate] duration-700 ease-in-out hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-l-text motion-reduce:transition-none sm:px-[18px] sm:text-sm";
 
-/* It wears the school the intro is showing, and changes with it (owner,
-   2026-09-19): --sc / --sc-ink are published on <html> by LandingHero. A view
-   with no intro never sets them, so the fallback is the page's own ink. */
-const DOOR_STYLE = {
-  backgroundColor: "var(--sc, var(--color-l-text))",
-  borderColor: "var(--sc, var(--color-l-text))",
-  color: "var(--sc-ink, var(--color-l-bg))",
-} as const;
+/* PLAIN INK, on every view (launch audit 2026-09-27, items 13 and 38). It used
+   to wear the school the intro was showing (owner, 2026-09-19), which put two
+   same-coloured buttons on one screen promising different things — "Join the
+   waitlist" up here, "Get started with .edu" in the intro. Of the three ways
+   out the owner was offered (waitlist only, sign-up only, or this one in plain
+   ink) this is the plain-ink one: both doors stay, and the intro's button is
+   the only one in the school's colour. The ink pill is what the views with no
+   intro always showed. `border-(--color-l-text)`, not `border-l-text`: see the
+   naming trap in app/globals.css. */
+const DOOR_TONE = "border-(--color-l-text) bg-l-text text-l-bg";
 
 export default function NavDoors() {
   const { ready, loggedIn } = useAppState();
 
   if (ready && loggedIn) {
     return (
-      <Link href={nav.openAppHref} style={DOOR_STYLE} className={DOOR_CLS}>
+      <Link href={nav.openAppHref} className={`${DOOR_CLS} ${DOOR_TONE}`}>
         {nav.openApp}
       </Link>
     );
@@ -70,7 +72,7 @@ export default function NavDoors() {
           intro was on screen (the intro's own button stands under it) — but
           that left the bar with nothing but Log in, which read as a site you
           can only sign IN to (owner, 2026-09-19). */}
-      <Link href={nav.waitlistHref} style={DOOR_STYLE} className={DOOR_CLS}>
+      <Link href={nav.waitlistHref} className={`${DOOR_CLS} ${DOOR_TONE}`}>
         {nav.waitlist}
       </Link>
     </>

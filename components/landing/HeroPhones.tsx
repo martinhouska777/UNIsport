@@ -4,7 +4,7 @@ import { useSyncExternalStore } from "react";
 import Phone from "@/components/landing/Phone";
 import { usePhoneMode } from "@/components/landing/PhoneMode";
 import Shot from "@/components/landing/Shot";
-import { lift, schools } from "@/lib/landingSchools";
+import { schools } from "@/lib/landingSchools";
 
 /*
   THE INTRO'S BACKDROP — two app screens standing beside the words, cycling
@@ -18,8 +18,9 @@ import { lift, schools } from "@/lib/landingSchools";
       too, the same as we have with that static image."
 
   So this is Campus Colours' idea, brought to the front door: gyms-*.webp on
-  the left and match-*.webp on the right, changing together, each with its
-  school's colour glowing behind it.
+  the left and match-*.webp on the right, changing together. The light behind
+  them glowed in the school's colour until the launch audit (2026-09-27, item
+  13); it is the page's own blue now, and only the screens change school.
 
   The eight schools' letters stood in a row under each phone for one cut. The
   owner took them off (2026-08-23) and moved a single one onto the "Get started
@@ -98,8 +99,6 @@ export default function HeroPhones({ i, count }: { i: number; count: number }) {
   const shown = chosen ? mode : "light";
   if (!wide) return null;
 
-  const school = schools[i];
-
   return (
     /* w-screen and centred on the intro's own centre, which is the page's.
        -z-10 keeps it behind the words — the section is its own stacking
@@ -111,10 +110,10 @@ export default function HeroPhones({ i, count }: { i: number; count: number }) {
       {PHONES.map((p) => (
         <div key={p.shot} className="l-hero-phone" data-side={p.side}>
           <div className="l-hero-tilt">
-            {/* The school's colour. This, not the screenshot, is what makes the
-                page change colour — a capture is mostly white. lift() raises
-                the near-black navies to the weight the others already have. */}
-            <div className="l-hero-glow" style={{ backgroundColor: lift(school.color) }} />
+            {/* The page's own blue, not the school's (launch audit 2026-09-27,
+                item 13): the school colour was on five things at once on this
+                screen. The screens themselves still change school. */}
+            <div className="l-hero-glow bg-l-accent" />
             <div className="l-hero-rise">
               <Phone className="relative opacity-[0.82]">
                 <div className="relative aspect-[900/1480] overflow-hidden bg-l-phone-screen">

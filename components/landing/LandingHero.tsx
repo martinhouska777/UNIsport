@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, type CSSProperties } from "react";
+import { useRef, type CSSProperties } from "react";
 import HeroFade from "@/components/landing/HeroFade";
 import HeroPhones from "@/components/landing/HeroPhones";
 import LogoMark from "@/components/landing/LogoMark";
@@ -50,15 +50,16 @@ import { about, availability, brandLine, doors, hero } from "@/lib/landingCopy";
      short stagger (l-in-1…4), and the whole thing fades and lags as you scroll
      so the story rises over it instead of replacing it.
 
-  IT TAKES THE SCHOOL'S COLOUR. The backdrop cycles the eight schools, and the
-  owner's note (2026-08-23) was that everything blue up here should cycle with
-  them: the wordmark's second half, "Your people", and the button. So the
-  intro owns the cycle (useSchoolCycle) and publishes the school's colour as
-  --sc, with --sc-ink for whatever sits ON it. Two things deliberately do not
-  follow it:
-    • the "Live now at Harvard" pill, which states a fact about Harvard and is
-      the one place a colour could actually mislead (the owner's call);
-    • everything outside the intro, which is still the page's own blue.
+  IT TAKES THE SCHOOL'S COLOUR — IN TWO PLACES. The backdrop cycles the eight
+  schools, and the intro owns the cycle (useSchoolCycle) and publishes the
+  school's colour as --sc, with --sc-ink for whatever sits ON it. Only "Your
+  people." and the "Get started with .edu" button wear it (launch audit
+  2026-09-27, item 13): the school colour used to be on five things at once on
+  this one screen — the top bar's button, "sport" in the name, those two, and
+  the glow behind the phones — beside three brand blues, the gold and the
+  coach red. The name, the glow and the top bar are the page's own tokens
+  again. The "Live now at Harvard" pill never followed it: it states a fact
+  about Harvard and is the one place a colour could actually mislead.
 
   Contrast: accent() in lib/landingSchools.ts guarantees the button's label
   clears 4.5:1 against whichever school is showing — the promise the blue
@@ -91,22 +92,10 @@ export default function LandingHero() {
   const { i, count, school } = useSchoolCycle(section, HERO_CYCLE_MS);
   const { color, ink } = accent(school.color);
 
-  /* The cycle also runs OUTSIDE this section: the top bar's "Get started with
-     .edu" takes the school's colour too (owner, 2026-09-19 — "to měnící se má
-     se měnit i tam nahoře"), and the bar lives in StickyBar, not in here. So
-     the pair is published on <html> as well, where anything on the page can
-     read it; the views with no intro never set it and their bar falls back to
-     the page's own ink. */
-  useEffect(() => {
-    const root = document.documentElement;
-    root.style.setProperty("--sc", color);
-    root.style.setProperty("--sc-ink", `var(--color-${ink})`);
-    return () => {
-      root.style.removeProperty("--sc");
-      root.style.removeProperty("--sc-ink");
-    };
-  }, [color, ink]);
-
+  /* The pair stays on this section. It used to be published on <html> too, so
+     the top bar's button could cycle with it (owner, 2026-09-19); the launch
+     audit (2026-09-27, items 13 and 38) put that button back in the page's
+     plain ink, so this button is the one school-coloured way in on the screen. */
   return (
     <section
       id="top"
@@ -124,12 +113,12 @@ export default function LandingHero() {
             name (owner, 2026-09-27: the logo on the company site too). The
             bar's copy is hidden while this one is up, so a visitor landing
             here met the name but never the logo. The drawn mark keeps the
-            page's own blue: the logo never takes a school's colour, only the
-            name's second half cycles. */}
+            page's own blue — the logo never takes a school's colour — and the
+            name's second half keeps it too (launch audit 2026-09-27, item 13). */}
         <div className="l-in-1 mb-[clamp(10px,2.2vh,24px)] flex flex-col items-center gap-[clamp(2px,0.6vh,8px)]">
           <span className="text-[clamp(40px,min(7.2vw,7.4vh),82px)] text-l-text">
             <LogoMark className="mr-[0.24em]" />
-            <Wordmark accentClassName="text-(--sc) transition-colors duration-700 ease-in-out motion-reduce:transition-none" />
+            <Wordmark />
           </span>
           <span className="font-display text-[clamp(15px,2.6vh,24px)] tracking-tight text-l-text-2">
             {brandLine}
