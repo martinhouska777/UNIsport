@@ -91,7 +91,6 @@ import {
   IconInfo,
   IconSwap,
   IconTrophy,
-  IconUser,
   HouseShield,
 } from "@/components/icons";
 import HonorCode, { useHonorCode } from "@/components/leaderboards/HonorCode";
@@ -102,6 +101,7 @@ import Podium, { type PodiumEntry } from "@/components/leaderboards/Podium";
 import Medal from "@/components/leaderboards/Medal";
 import ScoringSheet from "@/components/leaderboards/ScoringSheet";
 import YouScreen from "@/components/leaderboards/YouScreen";
+import PersonAvatar from "@/components/leaderboards/PersonAvatar";
 import CompetitionSwitcher from "@/components/leaderboards/CompetitionSwitcher";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { useProfileData } from "@/components/profile/useProfileData";
@@ -112,7 +112,6 @@ import {
   fetchStanding,
   groupLabel,
   groupScoreLabel,
-  houseColor,
   rankGroups,
   houseCrest,
   nobodyYet,
@@ -301,7 +300,6 @@ function PersonRow({
   /** Opens this person's profile — their bio, interests and training. */
   onOpen: () => void;
 }) {
-  const tint = houseColor(row.residence);
   /* Everyone: just their house and class, no session count. Most partners:
      only the name, nothing under it (owner, 2026-09-15). */
   const detail = personDetail(row, competition);
@@ -319,16 +317,9 @@ function PersonRow({
       }`}
     >
       <RankBadge rank={row.rank} scored={row.score > 0} />
-      <span
-        /* NO INITIALS (owner, same day). The tile stays, because it is what
-           carries their house's colour down a list of fifty names — content
-           data from lib/gyms.ts, applied inline — but what sits in it is a
-           plain figure, and the name beside it does the naming. */
-        className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-primary-tint text-primary"
-        style={tint ? { background: `${tint}26`, color: tint } : undefined}
-      >
-        <IconUser size={15} />
-      </span>
+      {/* Their face as Messages draws it (PersonAvatar) — round, their
+          initials in their house's colours. */}
+      <PersonAvatar name={row.name} residence={row.residence} classYear={row.classYear} size={34} />
       <div className="min-w-0 flex-1">
         <div className="truncate text-[13px] font-medium text-text">
           {row.name}
@@ -432,9 +423,16 @@ export default function LeaderboardsPage() {
   const router = useRouter();
   const { userId, universityKey } = useAppState();
   const { accepted, accept } = useHonorCode(userId);
-  // Your own photo, for the "You" line at the top of Rankings.
+  // You, for the "You" line at the top of Rankings and the You screen: your
+  // photo, or your initials in your house's colours (PersonAvatar).
   const { data: myProfile } = useProfileData();
-  const myPhoto = typeof myProfile?.photo === "string" ? myProfile.photo : "";
+  const str = (v: unknown) => (typeof v === "string" ? v : "");
+  const me = {
+    name: str(myProfile?.name),
+    residence: str(myProfile?.residence) || null,
+    classYear: str(myProfile?.classYear) || null,
+    photo: str(myProfile?.photo),
+  };
 
   const [tab, setTab] = useState<TabKey>("rankings");
   const [period, setPeriod] = useState<Period>("month");
@@ -553,7 +551,6 @@ export default function LeaderboardsPage() {
         kind: "group" as const,
         value: groupScoreLabel(g, metric),
         unit: metricUnit,
-        tint: groupKind === "house" ? houseColor(g.key) : null,
         crest: groupKind === "house" ? houseCrest(g.key) : null,
         mineLabel: g.isMine ? "Yours" : undefined,
         onOpen: groupKind === "year" ? undefined : () => setOpenGroup(g),
@@ -567,7 +564,8 @@ export default function LeaderboardsPage() {
         kind: "person" as const,
         value: competition === "partners" ? String(p.score) : p.score.toLocaleString("en-US"),
         unit: competition === "partners" ? "people" : "pts",
-        tint: houseColor(p.residence),
+        residence: p.residence,
+        classYear: p.classYear,
         mineLabel: p.isMe ? "You" : undefined,
         onOpen: () => openPerson(p),
       }));
@@ -638,14 +636,13 @@ export default function LeaderboardsPage() {
                   a small gold trophy on its corner — it was a trophy in a little
                   square, which said "leaderboard" but not "you". */}
               <span className="relative flex-shrink-0">
-                <span className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border-2 border-primary bg-primary-tint text-primary">
-                  {myPhoto ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={myPhoto} alt="" className="h-full w-full object-cover" />
-                  ) : (
-                    <IconUser size={18} />
-                  )}
-                </span>
+                <PersonAvatar
+                  name={me.name}
+                  residence={me.residence}
+                  classYear={me.classYear}
+                  photo={me.photo}
+                  size={40}
+                />
                 <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-surface bg-accent text-background">
                   <IconTrophy size={10} />
                 </span>
@@ -771,7 +768,7 @@ export default function LeaderboardsPage() {
           standing={standing}
           period={period}
           periodLabel={PERIODS.find((p) => p.key === period)?.label ?? ""}
-          photo={myPhoto}
+          me={me}
           onBack={() => setOpeningSelf(false)}
         />
       )}

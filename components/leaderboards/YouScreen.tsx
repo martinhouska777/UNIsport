@@ -38,12 +38,12 @@ import { useRouter } from "next/navigation";
 import { IconArrowLeft, IconUser, HouseShield } from "@/components/icons";
 import UniversityCrest from "@/components/UniversityCrest";
 import Medal from "@/components/leaderboards/Medal";
+import PersonAvatar from "@/components/leaderboards/PersonAvatar";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { pointsLabel, sessionPoints } from "@/lib/points";
 import { classYearLabel, residenceLabel } from "@/lib/onboarding";
 import {
   fetchPeopleBoard,
-  houseColor,
   houseCrest,
   type LeaderRow,
   type Period,
@@ -120,7 +120,6 @@ function KindLine({
    place: their profile, or your own tab for your own row. First to third wear
    a medal (owner, 2026-09-15), everyone below a plain number. */
 function FriendRow({ row, onOpen }: { row: LeaderRow; onOpen: () => void }) {
-  const tint = houseColor(row.residence);
   const detail =
     [
       row.residence ? residenceLabel(row.residence) : "",
@@ -144,12 +143,8 @@ function FriendRow({ row, onOpen }: { row: LeaderRow; onOpen: () => void }) {
           {row.rank}
         </span>
       )}
-      <span
-        className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-primary-tint text-primary"
-        style={tint ? { background: `${tint}26`, color: tint } : undefined}
-      >
-        <IconUser size={15} />
-      </span>
+      {/* Their face as Messages draws it (PersonAvatar). */}
+      <PersonAvatar name={row.name} residence={row.residence} classYear={row.classYear} size={34} />
       <div className="min-w-0 flex-1">
         <div className="truncate text-[13px] font-medium text-text">
           {row.name}
@@ -171,7 +166,7 @@ export default function YouScreen({
   standing,
   period,
   periodLabel,
-  photo,
+  me,
   onBack,
 }: {
   /** Null while the header's own read is still in flight, or with no database. */
@@ -179,8 +174,9 @@ export default function YouScreen({
   period: Period;
   /** "This month" — so the screen says what window every number on it counts. */
   periodLabel: string;
-  /** Your own profile photo, or "" for none. */
-  photo: string;
+  /** You — for your avatar: your photo ("" for none), or your initials in
+      your house's colours. */
+  me: { name: string; residence: string | null; classYear: string | null; photo: string };
   onBack: () => void;
 }) {
   const router = useRouter();
@@ -215,15 +211,14 @@ export default function YouScreen({
         >
           <IconArrowLeft size={16} />
         </button>
-        {/* YOU, as you: your own photo in a ring of the school colour. */}
-        <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-primary bg-primary-tint text-primary">
-          {photo ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={photo} alt="" className="h-full w-full object-cover" />
-          ) : (
-            <IconUser size={18} />
-          )}
-        </span>
+        {/* YOU, as you: your photo, or your initials in your house's colours. */}
+        <PersonAvatar
+          name={me.name}
+          residence={me.residence}
+          classYear={me.classYear}
+          photo={me.photo}
+          size={40}
+        />
         <div className="min-w-0">
           <h1 className="truncate text-base font-medium text-text">You</h1>
           <div className="truncate text-[11px] text-muted">

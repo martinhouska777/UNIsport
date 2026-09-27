@@ -24,16 +24,17 @@
   COLOURS. The pedestals are gold, silver and bronze — the only colours in the
   app that aren't the school's, which is why they are TOKENS (`--podium-1..3`
   in globals.css) rather than three hexes typed in here (rule 1). Everything
-  else on the card is theme tokens, and a house's own identity colour — DATA
-  from lib/gyms.ts — tints its avatar, the same exception the gym and lineup
-  screens use.
+  else on the card is theme tokens, and a person's avatar is the Messages one
+  (PersonAvatar): their initials in their house's colours — DATA from
+  lib/gyms.ts, the same exception the gym and lineup screens use.
 
   The blocks grow up out of the floor when a board lands, one after another. It
   is the one place on this screen worth a beat of movement, and it turns itself
   off for anyone who asks for reduced motion.
 */
 import type { ReactNode } from "react";
-import { IconUser, HouseShield } from "@/components/icons";
+import { HouseShield } from "@/components/icons";
+import PersonAvatar from "@/components/leaderboards/PersonAvatar";
 import Medal from "@/components/leaderboards/Medal";
 
 export type PodiumEntry = {
@@ -52,8 +53,9 @@ export type PodiumEntry = {
   /** One short line under the name: a house, a class year, a session count. */
   subtitle?: string;
   /*
-    WHAT THE AVATAR IS. A person's is a tinted circle with a plain figure on
-    it; a group's is its colour and nothing else — no letter, no number
+    WHAT THE AVATAR IS. A person's is the Messages avatar — round, their
+    initials in their house's colours (owner, 2026-09-27: "like on the
+    messages"); a group's is its colour and nothing else — no letter, no number
     (owner, 2026-09-06: "ty hausy taky bez inicialu, jen ty jejich tabs at
     jsou v barvach"). A group with no colour to show has no circle at all,
     because an empty grey ring says less than the name under it already does.
@@ -62,8 +64,9 @@ export type PodiumEntry = {
   /** The score, already formatted. */
   value: string;
   unit: string;
-  /** A house's identity colour, applied inline (rule 1's content exception). */
-  tint?: string | null;
+  /** A person's house and class — what colours their avatar. */
+  residence?: string | null;
+  classYear?: string | null;
   /** A house's TWO colours — its crest stands in for the avatar (data, again). */
   crest?: { primary: string; secondary: string } | null;
   /** "You" on a people board, "Yours" on a house board. */
@@ -77,30 +80,21 @@ const PLACE = {
   1: {
     block: "h-[76px]",
     bg: "bg-podium-1",
-    tintBg: "bg-podium-1-tint",
-    line: "border-podium-1-line",
     delay: "180ms",
-    avatar: "h-14 w-14 text-[15px]",
     crest: 56,
     medal: 42,
   },
   2: {
     block: "h-[60px]",
     bg: "bg-podium-2",
-    tintBg: "bg-podium-2-tint",
-    line: "border-podium-2-line",
     delay: "60ms",
-    avatar: "h-12 w-12 text-[13px]",
     crest: 46,
     medal: 34,
   },
   3: {
     block: "h-[48px]",
     bg: "bg-podium-3",
-    tintBg: "bg-podium-3-tint",
-    line: "border-podium-3-line",
     delay: "300ms",
-    avatar: "h-12 w-12 text-[13px]",
     crest: 46,
     medal: 28,
   },
@@ -135,7 +129,7 @@ function Place({ entry }: { entry: PodiumEntry }) {
         className={`podium-card-in flex w-full min-w-0 flex-col items-center ${washed ? "pt-2" : ""}`}
         style={{ animationDelay: p.delay }}
       >
-        {/* A house shows its crest, a person a tinted circle. A group with no
+        {/* A house shows its crest, a person their avatar. A group with no
             colours at all (a class year) shows neither — an empty grey ring
             says less than the name under it already does. */}
         {entry.kind === "group" ? (
@@ -148,16 +142,12 @@ function Place({ entry }: { entry: PodiumEntry }) {
             />
           )
         ) : (
-          <span
-            className={`flex flex-shrink-0 items-center justify-center rounded-full border-2 text-text ${p.avatar} ${p.tintBg} ${p.line}`}
-            style={
-              entry.tint
-                ? { background: `${entry.tint}2e`, borderColor: entry.tint }
-                : undefined
-            }
-          >
-            <IconUser size={entry.place === 1 ? 22 : 19} />
-          </span>
+          <PersonAvatar
+            name={entry.title}
+            residence={entry.residence}
+            classYear={entry.classYear}
+            size={entry.place === 1 ? 56 : 48}
+          />
         )}
 
         <div

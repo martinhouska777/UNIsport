@@ -23,7 +23,8 @@
 */
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { IconUser, IconX, HouseShield } from "@/components/icons";
+import { IconX, HouseShield } from "@/components/icons";
+import PersonAvatar from "@/components/leaderboards/PersonAvatar";
 import { sessionsOf } from "@/lib/points";
 import {
   fetchPeopleBoard,
@@ -144,11 +145,8 @@ export default function GroupSheet({
                       {/* Nothing scored, nothing placed: a dash, not a medal. */}
                       {p.score > 0 ? p.rank : "–"}
                     </span>
-                    {/* No initials (owner, same day) — a plain figure, and
-                        the name beside it does the naming. */}
-                    <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-primary-tint text-primary">
-                      <IconUser size={15} />
-                    </span>
+                    {/* Their face as Messages draws it (PersonAvatar). */}
+                    <PersonAvatar name={p.name} residence={p.residence} classYear={p.classYear} size={34} />
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-[13px] font-medium text-text">
                         {p.name}
