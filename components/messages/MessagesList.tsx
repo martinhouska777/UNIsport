@@ -11,7 +11,7 @@ import {
   requestToJoin,
   cancelJoinRequest,
   listTime,
-  withSeen,
+  withTicks,
   type DmConversation,
   type Channel,
 } from "@/lib/supabase/messages";
@@ -69,9 +69,9 @@ export default function MessagesList({
 
   useEffect(() => {
     let active = true;
-    // withSeen before the list shows, so the ticks arrive with their rows
+    // withTicks before the list shows, so the ticks arrive with their rows
     // instead of flicking from grey to green a moment later.
-    Promise.all([listDirectConversations().then(withSeen), listChannels(universityKey)])
+    Promise.all([listDirectConversations().then(withTicks), listChannels(universityKey)])
       .then(([dms, chs]) => {
         if (!active) return;
         setConversations(dms);
@@ -254,13 +254,14 @@ function DirectList({
               </span>
               {/* Just the message, as WhatsApp has it (owner, 2026-09-27): a
                   one-to-one chat never names who wrote the last line. It used
-                  to say "You: …"; now your own last message carries the two
-                  ticks in front of it instead — grey, then green once they've
-                  opened the chat — and theirs carries nothing. */}
+                  to say "You: …"; now your own last message carries the
+                  ticks in front of it instead — one grey (sent), two grey
+                  (delivered), two in the school's colour once they've opened
+                  the chat — and theirs carries nothing. */}
               <span className="mt-0.5 block truncate text-[13px] text-muted">
                 {c.lastBody ? (
                   <>
-                    {c.lastFromMe && <ReadTicks seen={c.seen} className="mr-1.5" />}
+                    {c.lastFromMe && <ReadTicks state={c.tick} size={12} className="mr-1.5" />}
                     {c.lastBody}
                   </>
                 ) : (

@@ -15,11 +15,31 @@ export type DmConversation = {
   lastBody: string | null;
   lastAt: string | null;
   lastFromMe: boolean;
-  /** The last message is yours AND the other person has opened the chat since
-      — the green ✓✓ on the row. Only filled in by withSeen(). */
-  seen: boolean;
+  /** The ticks in front of your own last message on the row (only meaningful
+      when lastFromMe). Only filled in by withTicks(); "sent" until then. */
+  tick: TickState;
   unread: number;
 };
+
+/*
+  WhatsApp's three ticks (owner, 2026-09-27: "copy what WhatsApp has").
+    sent       ✓   grey — it is on the server
+    delivered  ✓✓  grey — their app has checked in since (db/dm_delivered.sql)
+    read       ✓✓  in the school's colour — they have opened the chat since
+*/
+export type TickState = "sent" | "delivered" | "read";
+
+/** The other person's two times for a conversation (ISO strings or null). */
+export type PeerState = { readAt: string | null; seenAt: string | null };
+
+/** Which ticks a message you sent at `createdAt` wears, given the peer's times. */
+export function tickFor(createdAt: string | null, peer: PeerState | null): TickState {
+  if (!createdAt || !peer) return "sent";
+  const at = new Date(createdAt).getTime();
+  if (peer.readAt && new Date(peer.readAt).getTime() >= at) return "read";
+  if (peer.seenAt && new Date(peer.seenAt).getTime() >= at) return "delivered";
+  return "sent";
+}
 
 // A plan card carried inline in a thread (kind === 'plan').
 export type DmPlan = {
@@ -59,26 +79,22 @@ export async function listDirectConversations(): Promise<DmConversation[]> {
     lastBody: (r.last_body as string) ?? null,
     lastAt: (r.last_at as string) ?? null,
     lastFromMe: !!r.last_from_me,
-    seen: false,
+    tick: "sent" as TickState,
     unread: Number(r.unread ?? 0),
   }));
 }
 
 /**
- * Fills in `seen` for the chat list: on every row whose last message is yours,
- * has the other person opened the chat since? One dm_peer_read per such row,
+ * Fills in `tick` for the chat list: on every row whose last message is yours,
+ * how far has it got — sent, delivered, read? One dm_peer_state per such row,
  * all at once — the list is short, and it needs no change to dm_list. Kept
  * out of listDirectConversations so the partner picker doesn't pay for it.
  */
-export async function withSeen(list: DmConversation[]): Promise<DmConversation[]> {
-  const reads = await Promise.all(
-    list.map((c) => (c.lastFromMe ? getPeerLastRead(c.conversationId).catch(() => null) : null)),
+export async function withTicks(list: DmConversation[]): Promise<DmConversation[]> {
+  const peers = await Promise.all(
+    list.map((c) => (c.lastFromMe ? getPeerState(c.conversationId).catch(() => null) : null)),
   );
-  return list.map((c, i) => {
-    const readAt = reads[i];
-    const seen = !!(readAt && c.lastAt && new Date(readAt).getTime() >= new Date(c.lastAt).getTime());
-    return { ...c, seen };
-  });
+  return list.map((c, i) => ({ ...c, tick: tickFor(c.lastAt, peers[i]) }));
 }
 
 export async function getDirectThread(conversationId: string): Promise<DmMessage[]> {
@@ -106,7 +122,7 @@ export async function sendDirectMessage(
 
 /**
  * The other person's last-read time for a conversation (ISO string, or null if
- * they've never opened it). Used to show "Read" vs "Delivered" on your messages.
+ * they've never opened it). The fallback inside getPeerState.
  */
 export async function getPeerLastRead(conversationId: string): Promise<string | null> {
   const { data, error } = await createClient().rpc("dm_peer_read", {
@@ -114,6 +130,24 @@ export async function getPeerLastRead(conversationId: string): Promise<string | 
   });
   if (error) throw new Error(`getPeerLastRead failed: ${error.message}`);
   return (data as string | null) ?? null;
+}
+
+/**
+ * Both of the other person's times for a conversation — when they last opened
+ * it, and when their app last checked in at all (db/dm_delivered.sql). If that
+ * function is missing on the server it degrades to the read time alone, so the
+ * ticks go sent → read, never wrong.
+ */
+export async function getPeerState(conversationId: string): Promise<PeerState> {
+  const { data, error } = await createClient().rpc("dm_peer_state", {
+    conversation_id: conversationId,
+  });
+  if (error) return { readAt: await getPeerLastRead(conversationId), seenAt: null };
+  const row = ((data as Record<string, unknown>[] | null) ?? [])[0];
+  return {
+    readAt: (row?.read_at as string | null) ?? null,
+    seenAt: (row?.seen_at as string | null) ?? null,
+  };
 }
 
 function toDmMessage(r: Record<string, unknown>): DmMessage {

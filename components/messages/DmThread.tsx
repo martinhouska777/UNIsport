@@ -5,11 +5,13 @@ import Link from "next/link";
 import {
   getDirectThread,
   sendDirectMessage,
-  getPeerLastRead,
+  getPeerState,
+  tickFor,
   signalUnreadChanged,
   clockTime,
   type DmMessage,
   type DmPlan,
+  type PeerState,
 } from "@/lib/supabase/messages";
 import { getPublicProfile } from "@/lib/supabase/profiles";
 import { IconArrowLeft, IconCalendar } from "@/components/icons";
@@ -40,8 +42,8 @@ export default function DmThread({
   const [messages, setMessages] = useState<DmMessage[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [photo, setPhoto] = useState<string | null>(null);
-  // The other person's last-read time — drives the Delivered/Read receipt.
-  const [peerReadAt, setPeerReadAt] = useState<string | null>(null);
+  // The other person's read + check-in times — drive the three ticks.
+  const [peer, setPeer] = useState<PeerState | null>(null);
   const [planOpen, setPlanOpen] = useState(false); // "Plan a session" form
   const [editPlan, setEditPlan] = useState<DmPlan | null>(null); // reschedule editor
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -61,12 +63,12 @@ export default function DmThread({
   // as a callback so the plan card/form can refresh after a response.
   const load = useCallback(async () => {
     try {
-      const [m, peer] = await Promise.all([
+      const [m, p] = await Promise.all([
         getDirectThread(conversationId),
-        getPeerLastRead(conversationId).catch(() => null),
+        getPeerState(conversationId).catch(() => null),
       ]);
       setMessages(m);
-      setPeerReadAt(peer);
+      setPeer(p);
       signalUnreadChanged();
     } catch (e) {
       setError((e as Error).message);
@@ -168,15 +170,7 @@ export default function DmThread({
                       right of the last line (or under it when the line is full). */}
                   <span className="float-right ml-2 mt-[5px] flex items-center gap-1 whitespace-nowrap text-[10px] leading-none text-muted">
                     {clockTime(m.createdAt)}
-                    {mine && (
-                      <ReadTicks
-                        className="text-[11px]"
-                        seen={
-                          !!peerReadAt &&
-                          new Date(peerReadAt).getTime() >= new Date(m.createdAt).getTime()
-                        }
-                      />
-                    )}
+                    {mine && <ReadTicks size={11} state={tickFor(m.createdAt, peer)} />}
                   </span>
                 </div>
               </div>

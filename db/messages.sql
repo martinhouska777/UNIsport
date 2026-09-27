@@ -496,6 +496,10 @@ begin
 end;
 $$;
 
+-- SUPERSEDED by db/dm_delivered.sql (2026-09-27): the same count, but VOLATILE
+-- and it also records when the caller's app checked in (the "delivered" tick).
+-- Re-running THIS file puts the old version back — run dm_delivered.sql after.
+--
 -- Total unread messages for the caller across all DMs PLUS every channel they
 -- have joined — the single number behind the Messages tab badge in the nav.
 -- Counts only messages from other people that arrived after the caller's

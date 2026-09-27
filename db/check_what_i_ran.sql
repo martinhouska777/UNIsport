@@ -27,6 +27,8 @@ with expected (file, kind, name) as (
     ('buddy_board.sql','function','buddy_post_delete'),
     ('buddy_board.sql','column','buddy_posts.hour'),
     ('buddy_board.sql','column','buddy_posts.post_date'),
+    ('dm_delivered.sql','table','user_seen'),
+    ('dm_delivered.sql','function','dm_peer_state'),
     ('events.sql','function','event_km'),
     ('events.sql','function','event_counters'),
     ('events.sql','function','event_house_counters'),
