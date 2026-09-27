@@ -84,6 +84,8 @@ with expected (file, kind, name) as (
     ('patch_announced.sql','column','varsity_lineups.announced'),
     ('patch_announced.sql','column','varsity_plan_blocks.announced'),
     ('patch_session_search_any_activity.sql','function','match_session_search'),
+    ('plan_confirm_push.sql','table','cron_tokens'),
+    ('plan_confirm_push.sql','column','session_plans.confirm_reminded_at'),
     ('plans_to_confirm.sql','function','my_plans_to_confirm'),
     ('profiles.sql','table','profiles'),
     ('profiles.sql','policy','public.profiles::Profiles are viewable by their owner'),
