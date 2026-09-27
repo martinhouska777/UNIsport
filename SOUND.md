@@ -200,3 +200,49 @@ crisp and layered. That is the whole difference between spiky and calm.
 `unisport-intro-soft-smooth.mp4` is the quietest thing we have and the one to judge
 first. Build any combination with
 `node scripts/video/intro-sound-kit.mjs [smooth|quiet|crisp|layered] [--soft|--synth]`.
+
+---
+
+## 2026-09-27 — version 4: quieter, softer, and three songs to choose from
+
+Owner: "the sounds are just not that good in the 10-second video… less loud… I want
+them to feel like background", and "give me different songs which will suit the best".
+Rebuilt with what the tutorials taught (`C:\VideoEditing\TECHNIQUE.md`, 2026-09-27
+section) by `scripts/video/intro-sound-v4.mjs`. Every sound the owner picked in
+version 3 is kept.
+
+**What was actually wrong, measured:** the typing was 15–20 dB louder than everything
+else (−15 LUFS momentary against −31…−40), running near full scale, because the key
+recordings are hot and the old dynamic `loudnorm` levelled the whole mix up to them.
+The rest of the film was faint by comparison.
+
+**What changed:** typing ~20 dB down relative to the rest; no dynamic loudnorm (one
+fixed gain at the end); the soft chain on every whoosh (highs cut, pitched down, a
+faint bright copy); one whoosh instead of three into "Choose your activity"; no
+whoosh under the presses; tile clicks climb a semitone each; the close is a REVERSED
+whoosh that swells from the moment the halves start closing and is cut as they touch
+(the old version sped two whooshes up to fit, which pitched them up); the slide is
+high-passed so the first low end is the connect; the UNIsport letters climb half a
+semitone each; one small shared room reverb. Loudest moment is now the connect.
+
+**Music (all instrumental, generated in ChatCut, project "UNIsport logo explorations",
+assets "Intro music A/B/C"; export timeline "Intro music A B C (export)"):**
+
+| File | Song | Tempo | How it's placed |
+|---|---|---|---|
+| `unisport-intro-v4.mp4` | none — effects only, −21 LUFS | | |
+| `unisport-intro-v4-music-a.mp4` | A — calm piano | 95.7 BPM | the song's step up into its full section lands ON the connect |
+| `unisport-intro-v4-music-b.mp4` | B — light electronic | 114.8 BPM | same: its step up lands on the connect |
+| `unisport-intro-v4-music-c.mp4` | C — warm acoustic | 99.4 BPM | plays from its start; its step up lands as the tiles appear; the connect is on a downbeat |
+
+Music versions: −16 LUFS overall, the effects 9 dB under the music, music fades in
+over 0.6 s and out from "Live now at Harvard" to the end. Beats come from
+`scripts/video/music-grid.mjs` (no Python audio libraries here, so it's a JS onset
+envelope + autocorrelation), then the downbeat on the connect is snapped to the real
+attacks around it — the whole-track grid drifted ~55 ms on song C. The songs live in
+`mockups/video/music/` (gitignored); re-export them from the ChatCut timeline if lost.
+
+**Licence:** generated music, not a trending track — see `C:\VideoEditing\MUSIC.md`
+section 0. ChatCut's commercial terms for generated music are still to be checked.
+
+**Open:** which of the four the owner prefers.
