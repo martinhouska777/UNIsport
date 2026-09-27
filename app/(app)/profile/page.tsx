@@ -579,7 +579,7 @@ export default function ProfilePage() {
 
       {/* Upcoming accepted sessions (chat-planned) — a date in your diary
           belongs above the fold. Hides itself when there is none. */}
-      <UpcomingSessions />
+      <UpcomingSessions onChanged={reloadLogs} />
 
       {/* 2 · WHERE YOU STAND, AND THE BUTTON THAT MOVES YOU — straight under
           the bio, where it swapped places with Memories (owner, 2026-09-14).

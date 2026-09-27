@@ -159,6 +159,27 @@ export type UpcomingPlan = {
   scheduledAt: string;
 };
 
+/** A session that has happened and is waiting on the caller's "did it?". */
+export type PlanToConfirm = UpcomingPlan & { conversationId: string };
+
+/**
+ * The caller's accepted sessions that have already started and that they have
+ * not yet answered — newest first, a week back at most (db/plans_to_confirm.sql).
+ */
+export async function listPlansToConfirm(): Promise<PlanToConfirm[]> {
+  const { data, error } = await createClient().rpc("my_plans_to_confirm");
+  if (error) throw new Error(`listPlansToConfirm failed: ${error.message}`);
+  return (data as Record<string, unknown>[]).map((r) => ({
+    planId: r.plan_id as string,
+    conversationId: r.conversation_id as string,
+    otherId: r.other_id as string,
+    otherName: (r.other_name as string) ?? "Member",
+    activity: r.activity as string,
+    place: (r.place as string) ?? null,
+    scheduledAt: r.scheduled_at as string,
+  }));
+}
+
 /** The caller's accepted, upcoming sessions, soonest first. */
 export async function listUpcomingPlans(): Promise<UpcomingPlan[]> {
   const { data, error } = await createClient().rpc("my_upcoming_plans");
