@@ -111,7 +111,7 @@ function Row({ r, i, group, upcoming = false }: { r: FeatureRow; i: number; grou
         <summary className="-mx-2 flex cursor-pointer list-none items-center gap-4 rounded-lg px-2 py-3.5 text-left xl:py-[clamp(5px,calc((100svh_-_600px)/21.4),14px)] transition-colors hover:bg-l-surface [&::-webkit-details-marker]:hidden">
           <span
             className={`flex h-9 w-9 flex-none items-center justify-center rounded-xl border bg-l-bg-elevated ${
-              upcoming ? "border-dashed border-l-text-2/50 text-l-text-2" : "border-l-line text-(--sa)"
+              upcoming ? "border-dashed border-(--color-l-text-2)/50 text-l-text-2" : "border-l-line text-(--sa)"
             }`}
           >
             <FeatureIcon name={r.icon} />
