@@ -12,7 +12,13 @@
 // So the cache now holds only Next's HASHED build assets and the icons. A
 // hashed file is safe to keep forever (change the file, change the name), and
 // nothing else is worth a blank app. Pages always come from the network.
-const CACHE = "unisport-v3"; // bumped 2026-09-19: the icons under /icons/ changed and were cached forever
+//
+// THE ICONS ARE NOT HASHED, so they are NOT kept forever any more: they come
+// from the network, and the cache is only the offline fallback. Cache-first
+// served the round-cap logo for a week after the 50/50 one shipped (2026-09-22,
+// d1e2098) — v3 was bumped for the FIRST icon change and nobody bumped it for
+// the second (owner, 2026-09-27: "it still has the old look").
+const CACHE = "unisport-v4"; // bumped 2026-09-27: drops the round-cap icons v3 still held
 
 /* Same-origin, and only the two kinds of file that are safe to keep. */
 function cacheable(url) {
@@ -48,16 +54,30 @@ self.addEventListener("fetch", (event) => {
   // alone, which means it behaves exactly as it would with no worker at all.
   if (!cacheable(url)) return;
 
+  const keep = (response) => {
+    if (response.ok) {
+      const copy = response.clone();
+      void caches.open(CACHE).then((cache) => cache.put(request, copy));
+    }
+    return response;
+  };
+
+  // Icons: the network first, the cache only when there is no network.
+  if (url.pathname.startsWith("/icons/")) {
+    event.respondWith(
+      fetch(request)
+        .then(keep)
+        .catch(async () => (await caches.match(request)) || Response.error()),
+    );
+    return;
+  }
+
+  // Hashed build files: the cache first — a name never changes its contents.
   event.respondWith(
     (async () => {
       const hit = await caches.match(request);
       if (hit) return hit;
-      const response = await fetch(request);
-      if (response.ok) {
-        const copy = response.clone();
-        void caches.open(CACHE).then((cache) => cache.put(request, copy));
-      }
-      return response;
+      return keep(await fetch(request));
     })(),
   );
 });
