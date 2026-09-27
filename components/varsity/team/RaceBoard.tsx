@@ -82,13 +82,30 @@ const ATHLETES = "athletes";
 /* The header row of a list. */
 const TH = "text-[9px] font-semibold uppercase tracking-[0.1em] text-muted";
 
-/** The place, as a plain number. No medals here (owner, 2026-09-21: "there's
-    no point, just do 1, 2, 3") — a class of three would hand out three. */
-function Rank({ rank, faint = false }: { rank: number; faint?: boolean }) {
+/*
+  THE BOARD IN INK, NOT IN THE SCHOOL'S COLOUR (owner, 2026-09-27: it was
+  "just white"; then, of the two dressed-up looks, the table one — "all grey /
+  black", because "just the swaps will be red"). So the session header is a
+  black band, the class a black pill, the places round badges with the winner's
+  in black, and the winning row a light grey. The switches are the only red on
+  the screen, which is what makes them read.
+*/
+function RankBadge({ rank, faint = false }: { rank: number; faint?: boolean }) {
   return (
-    <span className={`w-5 flex-shrink-0 text-center text-[12px] font-semibold ${faint || rank > 3 ? "text-muted" : "text-text"}`}>
+    <span
+      className={`flex h-[22px] w-[22px] flex-shrink-0 items-center justify-center rounded-full text-[11px] font-bold tabular-nums ${
+        rank === 1 && !faint ? "bg-text text-background" : faint ? "bg-surface-2 text-muted" : "bg-surface-2 text-text"
+      }`}
+    >
       {rank}
     </span>
+  );
+}
+function ClassTitle({ title }: { title: string }) {
+  return (
+    <div className="mb-1.5">
+      <span className="inline-flex rounded-md bg-text px-2 py-0.5 font-mono text-[12px] font-semibold text-background">{title}</span>
+    </div>
   );
 }
 
@@ -264,17 +281,12 @@ export default function RaceBoard({
 
   return (
     <Sheet title="" onClose={close} full>
-      {/* THE SESSION — the same white card the erg board opens on: the day's
-          dot and the plan's words on the left, the date top right. The piece
-          count that used to sit under it is gone; the tabs already say it. */}
-      <div className="rounded-2xl border border-border bg-surface px-3.5 py-3 shadow-card">
-        <div className="flex items-start gap-2">
-          <span className="mt-[5px] h-2.5 w-2.5 flex-shrink-0 rounded-full bg-accent" />
-          <span className="min-w-0 flex-1 text-[13px] font-semibold leading-snug text-text">
-            {title || "Race pieces"}
-          </span>
-          <span className="flex-shrink-0 pt-px text-[11px] text-muted">{dateLabel}</span>
-        </div>
+      {/* THE SESSION — a black band: the date over the plan's words (see THE
+          BOARD IN INK). The piece count that used to sit under it is gone;
+          the tabs already say it. */}
+      <div className="rounded-2xl bg-text px-4 py-3.5 text-background shadow-card">
+        <div className="text-[11px] font-semibold uppercase tracking-[0.12em] opacity-70">{dateLabel}</div>
+        <div className="mt-0.5 text-[16px] font-semibold leading-snug">{title || "Race pieces"}</div>
       </div>
 
       {/* PIECE 1 | PIECE 2 | COMBINED — and, for the coach, a + for the next one. */}
@@ -341,8 +353,8 @@ export default function RaceBoard({
               /* The only boat in its class: the crew and its time, with no
                  place and no gap to a winner (see ONE BOAT above). */
               <div key={cb.badge} className="mb-4">
-                <div className="mb-1.5 px-0.5 font-mono text-[13px] font-semibold text-text">{cb.title}</div>
-                <div className="flex items-center gap-3 rounded-2xl border border-border bg-surface px-3 py-3">
+                <ClassTitle title={cb.title} />
+                <div className={`flex items-center gap-3 rounded-2xl border border-border bg-surface px-3 py-3 shadow-card`}>
                   <div className="min-w-0 flex-1">
                     <CrewBoat crew={cb.rows[0]?.crew ?? cb.pending[0]} dim={!cb.rows[0]} />
                   </div>
@@ -357,8 +369,8 @@ export default function RaceBoard({
               </div>
             ) : (
             <div key={cb.badge} className="mb-4">
-              <div className="mb-1.5 px-0.5 font-mono text-[13px] font-semibold text-text">{cb.title}</div>
-              <div className="overflow-hidden rounded-2xl border border-border bg-surface">
+              <ClassTitle title={cb.title} />
+              <div className={`overflow-hidden rounded-2xl border border-border bg-surface shadow-card`}>
                 <div className={`grid grid-cols-[1.25rem_minmax(0,1fr)_4.4rem_3.9rem] gap-1.5 border-b border-border px-2.5 py-2 ${TH}`}>
                   <span />
                   <span>Crew</span>
@@ -370,12 +382,12 @@ export default function RaceBoard({
                     key={r.crew.boatId}
                     className={`grid grid-cols-[1.25rem_minmax(0,1fr)_4.4rem_3.9rem] items-center gap-1.5 px-2.5 py-2.5 ${
                       i > 0 ? "border-t border-border" : ""
-                    }`}
+                    } ${r.rank === 1 ? "bg-surface-2" : ""}`}
                   >
-                    <Rank rank={r.rank} />
+                    <RankBadge rank={r.rank} />
                     <CrewBoat crew={r.crew} />
-                    <span className="text-right text-[13px] font-semibold tabular-nums text-text">{formatClock(r.time)}</span>
-                    <span className="text-right text-[12px] tabular-nums text-muted">{formatMargin(r.toWinner)}</span>
+                    <span className={`text-right text-[13px] font-semibold tabular-nums text-text`}>{formatClock(r.time)}</span>
+                    <span className="text-right text-[12px] tabular-nums text-muted">{r.rank === 1 ? "" : formatMargin(r.toWinner)}</span>
                   </div>
                 ))}
                 {cb.pending.map((c, i) => (
@@ -410,8 +422,8 @@ export default function RaceBoard({
         <div className="mt-3">
           {combined.map((cb) => (
             <div key={cb.badge} className="mb-4">
-              <div className="mb-1.5 px-0.5 font-mono text-[13px] font-semibold text-text">{cb.title}</div>
-              <div className="overflow-x-auto overscroll-x-contain rounded-2xl border border-border bg-surface">
+              <ClassTitle title={cb.title} />
+              <div className={`overflow-x-auto overscroll-x-contain rounded-2xl border border-border bg-surface shadow-card`}>
                 <div style={{ minWidth: combinedMin }}>
                   <div
                     className={`grid gap-1.5 border-b border-border px-2.5 py-2 ${TH}`}
@@ -431,10 +443,10 @@ export default function RaceBoard({
                     return (
                       <div
                         key={r.boatId}
-                        className={`grid items-center gap-1.5 px-2.5 py-2.5 ${i > 0 ? "border-t border-border" : ""}`}
+                        className={`grid items-center gap-1.5 px-2.5 py-2.5 ${i > 0 ? "border-t border-border" : ""} ${r.rank === 1 && whole ? "bg-surface-2" : ""}`}
                         style={{ gridTemplateColumns: combinedCols }}
                       >
-                        <Rank rank={r.rank} faint={!whole} />
+                        <RankBadge rank={r.rank} faint={!whole} />
                         <CrewBoat crew={crewOf(day, r.boatId)} dim={r.raced === 0} />
                         {r.perPiece.map((m, k) => (
                           <span key={k} className="text-right text-[12px] tabular-nums text-muted">
@@ -468,8 +480,8 @@ export default function RaceBoard({
           )}
           {athletes.map((ab) => (
             <div key={ab.badge} className="mb-4">
-              <div className="mb-1.5 px-0.5 font-mono text-[13px] font-semibold text-text">{ab.title}</div>
-              <div className="overflow-x-auto overscroll-x-contain rounded-2xl border border-border bg-surface">
+              <ClassTitle title={ab.title} />
+              <div className={`overflow-x-auto overscroll-x-contain rounded-2xl border border-border bg-surface shadow-card`}>
                 <div style={{ minWidth: combinedMin }}>
                   <div
                     className={`grid gap-1.5 border-b border-border px-2.5 py-2 ${TH}`}
@@ -489,10 +501,10 @@ export default function RaceBoard({
                     return (
                       <div
                         key={a.name}
-                        className={`grid items-center gap-1.5 px-2.5 py-2.5 ${i > 0 ? "border-t border-border" : ""}`}
+                        className={`grid items-center gap-1.5 px-2.5 py-2.5 ${i > 0 ? "border-t border-border" : ""} ${a.rank === 1 && whole ? "bg-surface-2" : ""}`}
                         style={{ gridTemplateColumns: combinedCols }}
                       >
-                        <Rank rank={a.rank} faint={!whole} />
+                        <RankBadge rank={a.rank} faint={!whole} />
                         <div className="min-w-0">
                           <div className="flex items-center gap-1.5">
                             {/* No cox chip: athleteBoards no longer makes a
