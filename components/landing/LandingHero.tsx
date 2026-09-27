@@ -175,16 +175,18 @@ export default function LandingHero() {
               blue for the student, gold for the varsity athlete, red for the
               coach, whose title is written in that red the way Varsity athlete
               is written in gold. Each opens that audience's own view — the same
-              page as its tab. Three tall cards under the button now. */}
-          <div className="l-in-4 mt-[clamp(18px,3.4vh,36px)] grid w-full grid-cols-1 gap-3 sm:grid-cols-3">
+              page as its tab. Three tall cards under the button now. On a
+              phone they stack, and are tighter (owner: "make boxes shorter")
+              so the Coach door is on the first screen of a 390x844 phone. */}
+          <div className="l-in-4 mt-[clamp(18px,3.4vh,36px)] grid w-full grid-cols-1 gap-2 sm:grid-cols-3 sm:gap-3">
             {doors.map((d, n) => (
               <Link
                 key={d.label}
                 href={d.href}
-                className={`group flex flex-col items-start gap-[clamp(6px,1.1vh,12px)] rounded-2xl border px-4 py-[clamp(12px,2.2vh,20px)] xl:px-[18px] text-left transition-[color,background-color,border-color,translate] hover:-translate-y-0.5 ${DOOR_TONE[n].card}`}
+                className={`group flex flex-col items-start gap-1 rounded-2xl border px-4 py-2.5 sm:gap-[clamp(6px,1.1vh,12px)] sm:py-[clamp(12px,2.2vh,20px)] xl:px-[18px] text-left transition-[color,background-color,border-color,translate] hover:-translate-y-0.5 ${DOOR_TONE[n].card}`}
               >
                 <span
-                  className={`flex w-full items-start justify-between gap-2 font-display text-[clamp(24px,3.4vh,31px)] leading-[1.02] tracking-tight ${DOOR_TONE[n].label}`}
+                  className={`flex w-full items-start justify-between gap-2 font-display text-[24px] sm:text-[clamp(24px,3.4vh,31px)] leading-[1.02] tracking-tight ${DOOR_TONE[n].label}`}
                 >
                   {d.label}
                   <Arrow className="mt-2 flex-none text-l-text-3 transition-transform group-hover:translate-x-1" />
