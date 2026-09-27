@@ -327,7 +327,7 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@university.edu"
                 aria-label="Email"
-                className="w-full rounded-full border border-l-line bg-l-surface px-5 py-3 text-base text-l-text placeholder:text-l-text-3 focus:border-(--color-l-accent) focus:outline-none"
+                className="w-full rounded-full border border-l-line bg-l-surface px-5 py-3 text-base text-l-text placeholder:text-l-placeholder focus:border-(--color-l-accent) focus:outline-none"
               />
               {/* Recognised the address → say so, so nobody wonders whether
                   the app knows where they study. */}
@@ -345,7 +345,7 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder={isSignup ? "Choose a password (6+ characters)" : "Password"}
                 aria-label="Password"
-                className="w-full rounded-full border border-l-line bg-l-surface px-5 py-3 text-base text-l-text placeholder:text-l-text-3 focus:border-(--color-l-accent) focus:outline-none"
+                className="w-full rounded-full border border-l-line bg-l-surface px-5 py-3 text-base text-l-text placeholder:text-l-placeholder focus:border-(--color-l-accent) focus:outline-none"
               />
               <button
                 type="submit"

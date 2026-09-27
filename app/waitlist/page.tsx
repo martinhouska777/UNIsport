@@ -97,7 +97,7 @@ export default function WaitlistPage() {
           aria-label={waitlist.firstNameLabel}
           autoComplete="given-name"
           /* text-base keeps phones from zooming the whole page on focus */
-          className="w-full rounded-xl border border-l-line bg-l-surface px-4 py-3 text-base text-l-text placeholder:text-l-text-3 focus:border-(--color-l-accent-soft) focus:outline-none"
+          className="w-full rounded-xl border border-l-line bg-l-surface px-4 py-3 text-base text-l-text placeholder:text-l-placeholder focus:border-(--color-l-accent-soft) focus:outline-none"
         />
         <input
           value={email}
@@ -110,7 +110,7 @@ export default function WaitlistPage() {
           autoCapitalize="off"
           autoCorrect="off"
           spellCheck={false}
-          className="mt-3 w-full rounded-xl border border-l-line bg-l-surface px-4 py-3 text-base text-l-text placeholder:text-l-text-3 focus:border-(--color-l-accent-soft) focus:outline-none"
+          className="mt-3 w-full rounded-xl border border-l-line bg-l-surface px-4 py-3 text-base text-l-text placeholder:text-l-placeholder focus:border-(--color-l-accent-soft) focus:outline-none"
         />
         <button
           type="submit"

@@ -143,12 +143,12 @@ export default function JoinPage() {
           spellCheck={false}
           aria-label="Invite link or code"
           /* text-base keeps phones from zooming the whole page on focus */
-          className="w-full rounded-xl border border-l-line bg-l-surface px-4 py-3 text-center font-mono text-base tracking-[0.15em] text-l-text placeholder:font-sans placeholder:tracking-normal placeholder:text-l-text-3 focus:border-l-varsity-soft focus:outline-none"
+          className="w-full rounded-xl border border-l-line bg-l-surface px-4 py-3 text-center font-mono text-base tracking-[0.15em] text-l-text placeholder:font-sans placeholder:tracking-normal placeholder:text-l-placeholder focus:border-l-varsity-soft focus:outline-none"
         />
         <button
           type="submit"
           disabled={!code}
-          className="mt-4 w-full rounded-full bg-l-varsity px-5 py-3 text-sm font-semibold text-l-bg disabled:opacity-40"
+          className="mt-4 w-full rounded-full bg-l-varsity-glow px-5 py-3 text-sm font-semibold text-l-text disabled:opacity-40"
         >
           Continue
         </button>

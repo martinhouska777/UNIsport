@@ -362,18 +362,34 @@
   --color-l-accent: #1f32c1;
   --color-l-accent-dim: rgba(31, 50, 193, 0.1);
   --color-l-accent-soft: rgba(31, 50, 193, 0.2);
-  --color-l-success: #34d399;
-  --color-l-warn: #fbbf24;
-  --color-l-danger: #ef4444;
-  --color-l-varsity: #9e741a;
-  --color-l-varsity-dim: rgba(158, 116, 26, 0.08);
-  --color-l-varsity-soft: rgba(158, 116, 26, 0.2);
+  /* THE STATUS COLOURS AND THE PLACEHOLDER (launch audit 2026-09-27, item 40).
+     success / warn / danger were still the black page's (mint #34d399 was
+     1.9:1 on this near-white, the red #ef4444 3.7:1). These are the light
+     page's, each at least 4.5:1 on the page (#f6feff) and on the surface the
+     fields sit on (#ebeaf6): success 5.4 / 4.6, warn 5.7 / 4.9, danger
+     6.3 / 5.4. The placeholder has its own colour because on the login,
+     waitlist and join forms the placeholder is the field's only name, and
+     text-3 (3.7 / 3.2) is kept for decoration: 5.6 on the page, 4.8 on the
+     field. */
+  --color-l-success: #047857;
+  --color-l-warn: #8a5b0b;
+  --color-l-danger: #b91c1c;
+  --color-l-placeholder: #62676c;
+  /* The bronze, one step darker (launch audit 2026-09-27, item 39): #9e741a
+     was 4.14:1 on the page, under AA for "Join with your invite", "Join your
+     team" and the Varsity Mode labels. #87621a is 5.4 on the page, 5.0 on the
+     Varsity door's gold-white card. Its tints follow it. */
+  --color-l-varsity: #87621a;
+  --color-l-varsity-dim: rgba(135, 98, 26, 0.08);
+  --color-l-varsity-soft: rgba(135, 98, 26, 0.2);
   /* THE LABEL THAT GOES ON EACH SECTION COLOUR. A filled button takes its
      ground from the section (--sa) and its text from this (--sa-ink), because
      the two grounds want opposite labels: the ink-blue is dark enough for the
      page's own near-white (13.9:1), the bronze is not — pale text on bronze is
      4.2:1, which is both under AA and, as the owner put it, "the same colour
-     as the background". Ink on bronze is 5.1:1 and reads as a label. */
+     as the background". Since the bronze went darker (item 39) no label sits
+     on it at all: every varsity button is the glow gold with ink on it
+     (10.7:1), /join's included. */
   --color-l-accent-ink: var(--color-l-bg);
   --color-l-varsity-ink: var(--color-l-text);
   /* The drawn phone's chrome — the light screen, its status-bar ink, the

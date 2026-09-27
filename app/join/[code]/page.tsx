@@ -116,7 +116,7 @@ export default function JoinWithCodePage() {
           <button
             type="button"
             onClick={() => router.push(`/login?next=/join/${code}`)}
-            className="mt-8 w-full rounded-full bg-l-varsity px-5 py-3 text-sm font-semibold text-l-bg"
+            className="mt-8 w-full rounded-full bg-l-varsity-glow px-5 py-3 text-sm font-semibold text-l-text"
           >
             Sign in to join
           </button>
@@ -137,7 +137,7 @@ export default function JoinWithCodePage() {
           </p>
           <Link
             href="/varsity/setup"
-            className="mt-8 inline-block w-full rounded-full bg-l-varsity px-5 py-3 text-sm font-semibold text-l-bg"
+            className="mt-8 inline-block w-full rounded-full bg-l-varsity-glow px-5 py-3 text-sm font-semibold text-l-text"
           >
             Set up my profile
           </Link>
@@ -160,7 +160,7 @@ export default function JoinWithCodePage() {
             type="button"
             onClick={join}
             disabled={busy}
-            className="mt-6 w-full rounded-full bg-l-varsity px-5 py-3 text-sm font-semibold text-l-bg disabled:opacity-60"
+            className="mt-6 w-full rounded-full bg-l-varsity-glow px-5 py-3 text-sm font-semibold text-l-text disabled:opacity-60"
           >
             {busy ? "Sending…" : preview.autoApprove ? "Join the team" : "Ask to join"}
           </button>
@@ -194,7 +194,7 @@ export default function JoinWithCodePage() {
           </p>
           <Link
             href={VARSITY_HOME}
-            className="mt-8 inline-block w-full rounded-full bg-l-varsity px-5 py-3 text-sm font-semibold text-l-bg"
+            className="mt-8 inline-block w-full rounded-full bg-l-varsity-glow px-5 py-3 text-sm font-semibold text-l-text"
           >
             Open Varsity Mode
           </Link>
