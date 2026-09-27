@@ -52,7 +52,7 @@
 */
 import { useMemo, useRef, useState } from "react";
 import Sheet from "@/components/varsity/Sheet";
-import { IconPencil, IconPlus, IconTrash, IconX } from "@/components/icons";
+import { IconPencil, IconPlus, IconSwap, IconTrash, IconX } from "@/components/icons";
 import { COX_COLOR, COX_INK, COX_LABEL, type Boat } from "@/lib/varsity/coachLineup";
 import {
   athleteBoards,
@@ -66,6 +66,7 @@ import {
   newPiece,
   parseClock,
   pieceBoards,
+  switchPairs,
   withLine,
   type RaceCrew,
   type RaceDay,
@@ -102,7 +103,8 @@ function Rank({ rank, faint = false }: { rank: number; faint?: boolean }) {
 */
 function CrewBoat({ crew, dim = false }: { crew: RaceCrew; dim?: boolean }) {
   const { cox, rowers } = crewMembers(crew);
-  const chip = `flex h-[22px] min-w-0 max-w-full items-center rounded-[6px] border px-[7px] text-[12px] ${
+  const switches = switchPairs(crew.note);
+  const chip =`flex h-[22px] min-w-0 max-w-full items-center rounded-[6px] border px-[7px] text-[12px] ${
     dim ? "border-border text-muted" : "border-border bg-surface-2 font-medium text-text"
   }`;
   return (
@@ -123,10 +125,31 @@ function CrewBoat({ crew, dim = false }: { crew: RaceCrew; dim?: boolean }) {
           <span className="truncate">{n}</span>
         </span>
       ))}
-      {crew.note && (
-        <span className="flex h-[22px] min-w-0 max-w-full items-center rounded-[6px] border border-dashed border-border px-[7px] text-[11px] text-muted">
-          <span className="truncate">{crew.note}</span>
+      {/* A SWITCH IS RED, WHOLE, AND AN ARROW (owner, 2026-09-27): each pair
+          on its own chip on a line of its own — "Richards ⇄ Weldon", the red
+          and the two arrows saying "switch" — never cut off, so the note reads as the change it is, not as a remark. Any
+          other note stays the quiet dashed chip. */}
+      {switches ? (
+        <span className="flex basis-full flex-wrap gap-1 pt-0.5">
+          {switches.map(([a, b], i) => (
+            <span
+              key={i}
+              className="inline-flex min-h-[24px] max-w-full flex-wrap items-center gap-x-1.5 rounded-[6px] border border-danger-line bg-danger-tint px-2 py-0.5 text-[12px] font-semibold text-danger"
+            >
+              <span className="sr-only">Switch:</span>
+              <span>{a}</span>
+              <IconSwap size={13} />
+              <span className="sr-only">switches with</span>
+              <span>{b}</span>
+            </span>
+          ))}
         </span>
+      ) : (
+        crew.note && (
+          <span className="flex h-[22px] min-w-0 max-w-full items-center rounded-[6px] border border-dashed border-border px-[7px] text-[11px] text-muted">
+            <span className="truncate">{crew.note}</span>
+          </span>
+        )
       )}
       {!cox && rowers.length === 0 && (
         <span className={`text-[13px] font-semibold ${dim ? "text-muted" : "text-text"}`}>{crew.label}</span>
@@ -178,12 +201,6 @@ export default function RaceBoard({
   const writes = useRef(0);
   const closed = useRef(false);
 
-  // A piece deleted from under the open tab: the first one left is shown.
-  const tab =
-    picked === COMBINED || picked === ATHLETES || day.pieces.some((p) => p.id === picked)
-      ? picked
-      : (day.pieces[0]?.id ?? COMBINED);
-
   const write = async (next: RaceDay) => {
     onChange(next); // on screen at once — the coach is typing at the dock
     const mine = ++writes.current;
@@ -213,9 +230,27 @@ export default function RaceBoard({
     setEditing(piece.id);
   };
 
+  /*
+    ONE BOAT IS NOT A RACE (owner, 2026-09-27: "if there is just one boat,
+    then you don't need to do a leaderboard there"). A class with a single
+    crew — the eight, most mornings — is left off Combined and Athletes, where
+    it could only ever be "1st, 0.00"; on a piece it is the crew and its time.
+    A day with no class of two or more has no Combined or Athletes at all.
+  */
+  const allCombined = useMemo(() => combinedBoards(day.pieces), [day.pieces]);
+  const allAthletes = useMemo(() => athleteBoards(day.pieces), [day.pieces]);
+  const raced = new Set(allCombined.filter((cb) => cb.rows.length > 1).map((cb) => cb.badge));
+  const combined = allCombined.filter((cb) => raced.has(cb.badge));
+  const athletes = allAthletes.filter((ab) => raced.has(ab.badge));
+  const ranked = raced.size > 0;
+
+  // A piece deleted from under the open tab — or Combined on a day that no
+  // longer has one: the first piece left is shown.
+  const tab =
+    ((picked === COMBINED || picked === ATHLETES) && ranked) || day.pieces.some((p) => p.id === picked)
+      ? picked
+      : (day.pieces[0]?.id ?? COMBINED);
   const piece = day.pieces.find((p) => p.id === tab) ?? null;
-  const combined = useMemo(() => combinedBoards(day.pieces), [day.pieces]);
-  const athletes = useMemo(() => athleteBoards(day.pieces), [day.pieces]);
 
   /*
     Combined's columns: the crew, one column per piece, and Total — one line
@@ -249,7 +284,7 @@ export default function RaceBoard({
             {p.name}
           </TabButton>
         ))}
-        {day.pieces.length > 0 && (
+        {day.pieces.length > 0 && ranked && (
           <>
             <TabButton on={tab === COMBINED} onClick={() => setTab(COMBINED)}>
               Combined
@@ -301,7 +336,26 @@ export default function RaceBoard({
               </button>
             </div>
           )}
-          {pieceBoards(piece).map((cb) => (
+          {pieceBoards(piece).map((cb) =>
+            cb.rows.length + cb.pending.length === 1 ? (
+              /* The only boat in its class: the crew and its time, with no
+                 place and no gap to a winner (see ONE BOAT above). */
+              <div key={cb.badge} className="mb-4">
+                <div className="mb-1.5 px-0.5 font-mono text-[13px] font-semibold text-text">{cb.title}</div>
+                <div className="flex items-center gap-3 rounded-2xl border border-border bg-surface px-3 py-3">
+                  <div className="min-w-0 flex-1">
+                    <CrewBoat crew={cb.rows[0]?.crew ?? cb.pending[0]} dim={!cb.rows[0]} />
+                  </div>
+                  {cb.rows[0] ? (
+                    <span className="flex-shrink-0 text-[13px] font-semibold tabular-nums text-text">
+                      {formatClock(cb.rows[0].time)}
+                    </span>
+                  ) : (
+                    <span className="flex-shrink-0 text-[11px] text-muted">no time yet</span>
+                  )}
+                </div>
+              </div>
+            ) : (
             <div key={cb.badge} className="mb-4">
               <div className="mb-1.5 px-0.5 font-mono text-[13px] font-semibold text-text">{cb.title}</div>
               <div className="overflow-hidden rounded-2xl border border-border bg-surface">
@@ -341,7 +395,8 @@ export default function RaceBoard({
                 )}
               </div>
             </div>
-          ))}
+            ),
+          )}
           {piece.crews.length === 0 && (
             <div className="rounded-2xl border border-dashed border-border bg-surface px-4 py-8 text-center text-[12px] text-muted">
               No crews in this piece{inConsole ? " — add them with Enter times." : "."}

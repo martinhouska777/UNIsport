@@ -13,8 +13,11 @@
   Everything is computed from the logs the calendar has ALREADY loaded for the
   month on screen, so opening this costs nothing and the numbers can never
   disagree with the grid above it. Distance respects the person's km/miles
-  setting (lib/varsity/units); the underlying logs stay in metres. A kind with
-  nothing to measure (weights has no distance) shows a dash rather than "0 km".
+  setting (lib/varsity/units); the underlying logs stay in metres.
+
+  A KIND THAT HAS NO DISTANCE HAS NO DISTANCE TILE (owner, 2026-09-27: "for
+  weights there obviously won't be a distance, so just do two tabs: sessions
+  and time"). It used to show a dash there. Flex is the same kind of session.
 */
 import Sheet from "@/components/varsity/Sheet";
 import { type LogEntry } from "@/lib/varsity/logStore";
@@ -32,6 +35,9 @@ function Tile({ value, label }: { value: string; label: string }) {
     </div>
   );
 }
+
+/* The kinds of training that are never measured in metres. */
+const NO_DISTANCE = new Set(["weights", "flex"]);
 
 // 2 -> "2", 2.25 -> "2.3". No trailing ".0".
 const oneDecimal = (v: number) => {
@@ -64,6 +70,7 @@ export default function CategoryStatsSheet({
   const metres = mine.reduce((sum, l) => sum + (l.metres ?? 0), 0);
 
   const label = logCategoryLabel[category] ?? category;
+  const hasDistance = !NO_DISTANCE.has(category);
   const perWeek = sessions / weeks;
 
   return (
@@ -71,7 +78,9 @@ export default function CategoryStatsSheet({
       <div className="flex gap-2">
         <Tile value={String(sessions)} label={sessions === 1 ? "Session" : "Sessions"} />
         <Tile value={minutes > 0 ? formatDuration(minutes) : "—"} label="Time" />
-        <Tile value={metres > 0 ? formatDistance(metres, units.distance) : "—"} label="Distance" />
+        {hasDistance && (
+          <Tile value={metres > 0 ? formatDistance(metres, units.distance) : "—"} label="Distance" />
+        )}
       </div>
 
       {sessions > 0 && (

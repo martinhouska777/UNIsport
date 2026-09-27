@@ -229,6 +229,24 @@ export function crewMembers(c: RaceCrew): { cox: string | null; rowers: string[]
   return { cox, rowers };
 }
 
+/*
+  A SWITCH, READ OUT OF THE CREW'S NOTE. The timing sheet writes the seat
+  switches beside a crew as "Switch Richards/Weldon and Cruz Abrams/Farkas";
+  the board draws each pair on its own, in full, so a name is never cut off
+  (owner, 2026-09-27: "make the switches red … write the whole switch … with
+  the arrows"). Pairs are split on "and", commas, semicolons and "&"; each
+  pair on its "/". Null for a note that is not a switch ("Bridge").
+*/
+export function switchPairs(note: string | null | undefined): [string, string][] | null {
+  const m = (note ?? "").trim().match(/^switch(?:es|ed)?\b[\s:]*(.*)$/i);
+  if (!m) return null;
+  const pairs = m[1]
+    .split(/\s*(?:,|;|&|\band\b)\s*/i)
+    .map((part) => part.split("/").map((n) => n.trim()).filter(Boolean))
+    .filter((p): p is [string, string] => p.length === 2);
+  return pairs.length ? pairs : null;
+}
+
 /* ── The class a crew is ranked in ──────────────────────────────────────── */
 
 /** "4+" → "4+", "2-" → "2−": the rigging's own symbol, the way a coach says
