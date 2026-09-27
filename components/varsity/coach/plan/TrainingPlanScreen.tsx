@@ -57,6 +57,7 @@ import { useMembership } from "@/components/varsity/useMembership";
 import { fetchPlan, savePlan } from "@/lib/varsity/planStore";
 import { notifySquad } from "@/lib/push/client";
 import SaveState from "@/components/varsity/coach/SaveState";
+import { saveFailureDetail, type SaveFailure } from "@/lib/saveFailure";
 import PublishBar from "@/components/varsity/coach/PublishBar";
 import {
   IconPlus,
@@ -180,6 +181,8 @@ export default function TrainingPlanScreen({
   */
   const [writing, setWriting] = useState(false);
   const [failed, setFailed] = useState(false);
+  // Why the last write failed, when the error says (lib/saveFailure.ts).
+  const [failKind, setFailKind] = useState<SaveFailure>("failed");
   const [lastSaved, setLastSaved] = useState<string | null>(null);
   /*
     THE PLAN NEVER ARRIVED. Not "this squad has no plan" — the read itself
@@ -242,10 +245,11 @@ export default function TrainingPlanScreen({
       const s = next?.sessions ?? sessions;
       const snap = snapshot(b, s);
       setWriting(true);
-      const { error } = await savePlan({ blocks: b, sessions: s }, opts);
+      const { error, failure } = await savePlan({ blocks: b, sessions: s }, opts);
       setWriting(false);
       if (error) {
         console.error("savePlan:", error);
+        setFailKind(failure ?? "failed");
         setFailed(true);
         return false;
       }
@@ -308,8 +312,26 @@ export default function TrainingPlanScreen({
   */
   const saveFailed = failed;
   const saveState = saveFailed ? (
-    <SaveState status="error" onRetry={() => void persist()} />
+    <SaveState
+      status="error"
+      detail={saveFailureDetail(failKind, "only a coach can change the plan")}
+      onRetry={() => void persist()}
+    />
   ) : null;
+
+  /*
+    A PUBLISH THAT DID NOT LAND IS NOT A PUBLISH (audit, 2026-09-27). The
+    block was flipped to Published on screen before the write, and a failed
+    write left it that way — while the squad was never told, and the autosave
+    could later push it live with nobody buzzed at all. So a failed Publish,
+    Unpublish or re-announce puts the block's state back exactly as the
+    database still has it: the same button is on screen again to press, and
+    the Not saved line above says why it did not go.
+  */
+  const restoreBlockState = (blockId: string, before: Block) =>
+    setBlocks((prev) =>
+      prev.map((b) => (b.id === blockId ? { ...b, status: before.status, announced: before.announced } : b)),
+    );
 
   // Publish a draft block: flip it to published, then persist so athletes see it.
   // Publishing is the one moment worth a notification — the squad's week has just
@@ -325,7 +347,10 @@ export default function TrainingPlanScreen({
       b.id === blockId ? { ...b, status: "published" as const, announced: snap } : b,
     );
     setBlocks(next);
-    if (!(await persist({ blocks: next }))) return;
+    if (!(await persist({ blocks: next }))) {
+      restoreBlockState(blockId, target);
+      return;
+    }
     setAnnounced((prev) => ({ ...prev, [blockId]: snap }));
     notifySquad({ kind: "team_plan", preview: target.name });
   };
@@ -342,13 +367,19 @@ export default function TrainingPlanScreen({
     const snap = blockSnapshot(target);
     const next = blocks.map((b) => (b.id === blockId ? { ...b, announced: snap } : b));
     setBlocks(next);
-    if (!(await persist({ blocks: next }))) return;
+    if (!(await persist({ blocks: next }))) {
+      restoreBlockState(blockId, target);
+      return;
+    }
     setAnnounced((prev) => ({ ...prev, [blockId]: snap }));
     notifySquad({ kind: "team_plan", preview: target.name });
   };
 
   // Move a published block back to draft (hides it from athletes again).
   const unpublishBlock = async (blockId: string) => {
+    const target = blocks.find((x) => x.id === blockId);
+    if (!target) return;
+    const wasAnnounced = announced[blockId];
     const next = blocks.map((b) =>
       b.id === blockId ? { ...b, status: "draft" as const, announced: null } : b,
     );
@@ -358,7 +389,11 @@ export default function TrainingPlanScreen({
       delete rest[blockId];
       return rest;
     });
-    await persist({ blocks: next });
+    if (!(await persist({ blocks: next }))) {
+      // Still live on the squad's phones, so still live here.
+      restoreBlockState(blockId, target);
+      if (wasAnnounced !== undefined) setAnnounced((prev) => ({ ...prev, [blockId]: wasAnnounced }));
+    }
   };
 
   // delete / reset confirmation

@@ -50,7 +50,7 @@
   the lineup card uses (COX_COLOR, from data — the documented rule-1
   exception).
 */
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import Sheet from "@/components/varsity/Sheet";
 import { IconPencil, IconPlus, IconTrash, IconX } from "@/components/icons";
 import { COX_COLOR, COX_INK, COX_LABEL, type Boat } from "@/lib/varsity/coachLineup";
@@ -71,7 +71,9 @@ import {
   type RaceDay,
   type RacePiece,
 } from "@/lib/varsity/racePieces";
-import { deleteRaceDay, saveRaceDay } from "@/lib/varsity/raceStore";
+import { removeRaceDay, writeRaceDay } from "@/lib/varsity/raceStore";
+import { saveFailureDetail, type SaveFailure } from "@/lib/saveFailure";
+import SaveState from "@/components/varsity/coach/SaveState";
 
 const COMBINED = "combined";
 const ATHLETES = "athletes";
@@ -159,7 +161,22 @@ export default function RaceBoard({
   const [picked, setTab] = useState<string>(day.pieces[0]?.id ?? COMBINED);
   const [editing, setEditing] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const [refused, setRefused] = useState(false);
+  /*
+    A WRITE THAT DID NOT LAND (audit, 2026-09-27). The times went on screen at
+    once and stayed there when the save failed, under a line blaming
+    permissions — even when it was one bar of signal at the dock. Now:
+      • the entry stays on screen, marked Not saved with the real reason
+        (lib/saveFailure.ts) and a Retry, so nothing typed is thrown away;
+      • closing the board while it is unsaved puts the list behind back to
+        what the database actually holds, so nothing looks saved that is not.
+    `savedDay` is that last confirmed copy; `writes` numbers the requests, so
+    an older one landing late never overrules a newer one.
+  */
+  const [failure, setFailure] = useState<{ kind: SaveFailure; day: RaceDay } | null>(null);
+  const [deleteFailed, setDeleteFailed] = useState<SaveFailure | null>(null);
+  const savedDay = useRef(day);
+  const writes = useRef(0);
+  const closed = useRef(false);
 
   // A piece deleted from under the open tab: the first one left is shown.
   const tab =
@@ -168,10 +185,26 @@ export default function RaceBoard({
       : (day.pieces[0]?.id ?? COMBINED);
 
   const write = async (next: RaceDay) => {
-    onChange(next); // optimistic — the coach is typing at the dock
-    const ok = await saveRaceDay(next);
-    setRefused(!ok);
+    onChange(next); // on screen at once — the coach is typing at the dock
+    const mine = ++writes.current;
+    const why = await writeRaceDay(next);
+    if (mine !== writes.current) return; // a newer write has the last word
+    if (!why) {
+      savedDay.current = next;
+      setFailure(null);
+      return;
+    }
+    // Already closed while this was in the air: put the list back.
+    if (closed.current) onChange(savedDay.current);
+    else setFailure({ kind: why, day: next });
   };
+
+  const close = () => {
+    closed.current = true;
+    if (failure) onChange(savedDay.current);
+    onClose();
+  };
+  const deleteWhy = deleteFailed ? saveFailureDetail(deleteFailed, "only a coach can delete") : null;
 
   const addPiece = () => {
     const piece = newPiece(day.pieces.length + 1, boats);
@@ -195,7 +228,7 @@ export default function RaceBoard({
   const combinedMin = `${1.25 + 9 + n * 3.6 + 3.9 + (n + 2) * 0.375 + 1.25}rem`;
 
   return (
-    <Sheet title="" onClose={onClose} full>
+    <Sheet title="" onClose={close} full>
       {/* THE SESSION — the same white card the erg board opens on: the day's
           dot and the plan's words on the left, the date top right. The piece
           count that used to sit under it is gone; the tabs already say it. */}
@@ -238,8 +271,14 @@ export default function RaceBoard({
         )}
       </div>
 
-      {refused && (
-        <p className="mt-2 text-[12px] text-danger">That did not save — only a coach can write times.</p>
+      {failure && (
+        <div className="mt-2">
+          <SaveState
+            status="error"
+            detail={saveFailureDetail(failure.kind, "only a coach can write times")}
+            onRetry={() => void write(failure.day)}
+          />
+        </div>
       )}
 
       {day.pieces.length === 0 && (
@@ -437,19 +476,33 @@ export default function RaceBoard({
       {inConsole && (
         <div className="mt-6 flex justify-center">
           {confirmDelete ? (
-            <div className="flex items-center gap-2 text-[12px]">
-              <span className="text-muted">Delete every piece of this session?</span>
+            <div className="flex flex-wrap items-center justify-center gap-2 text-[12px]">
+              {deleteFailed ? (
+                <span className="font-semibold text-danger" role="alert">
+                  {deleteWhy ? `Not deleted · ${deleteWhy}` : "Not deleted"}
+                </span>
+              ) : (
+                <span className="text-muted">Delete every piece of this session?</span>
+              )}
               <button
                 type="button"
                 onClick={async () => {
-                  if (await deleteRaceDay(day.dayKey)) onDeleted();
-                  else setRefused(true);
+                  const why = await removeRaceDay(day.dayKey);
+                  if (!why) onDeleted();
+                  else setDeleteFailed(why);
                 }}
                 className="tap44 rounded-full border border-border bg-surface-2 px-3 py-1.5 font-medium text-danger"
               >
                 Delete
               </button>
-              <button type="button" onClick={() => setConfirmDelete(false)} className="tap44 px-2 py-1.5 text-muted">
+              <button
+                type="button"
+                onClick={() => {
+                  setConfirmDelete(false);
+                  setDeleteFailed(null);
+                }}
+                className="tap44 px-2 py-1.5 text-muted"
+              >
                 Keep
               </button>
             </div>

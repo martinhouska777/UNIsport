@@ -10,6 +10,7 @@
   this module only maps it to and from the two DB tables.
 */
 import { createClient, hasSupabaseEnv } from "@/lib/supabase/client";
+import { saveFailureOf, type SaveFailure } from "@/lib/saveFailure";
 import type { Block, Session, SessionMap, Category, Intensity, BoardKind } from "./coachPlan";
 
 export type Plan = {
@@ -162,7 +163,7 @@ export async function savePlan(
     "wipe the season" is never a thing an autosave should do on its own.
   */
   { allowEmpty = false }: { allowEmpty?: boolean } = {},
-): Promise<{ error?: string }> {
+): Promise<{ error?: string; failure?: SaveFailure }> {
   /*
     NEVER WRITE BACK A PLAN THAT WAS NEVER READ. Saving prunes — anything the
     database holds that this plan does not is deleted, which is how deleting a
@@ -187,10 +188,10 @@ export async function savePlan(
 
   // Blocks: upsert current, then delete any rows no longer present.
   if (plan.blocks.length) {
-    const { error } = await supabase
+    const { error, status } = await supabase
       .from("varsity_plan_blocks")
       .upsert(plan.blocks.map(blockToRow));
-    if (error) return { error: error.message };
+    if (error) return { error: error.message, failure: saveFailureOf(error, status) };
   }
   const { data: existingBlocks } = await supabase.from("varsity_plan_blocks").select("id");
   const keepBlockIds = new Set(plan.blocks.map((b) => b.id));
@@ -202,8 +203,8 @@ export async function savePlan(
   // Sessions: same upsert-then-prune.
   const sessionRows = Object.entries(plan.sessions).map(([k, s]) => sessionToRow(k, s));
   if (sessionRows.length) {
-    const { error } = await supabase.from("varsity_plan_sessions").upsert(sessionRows);
-    if (error) return { error: error.message };
+    const { error, status } = await supabase.from("varsity_plan_sessions").upsert(sessionRows);
+    if (error) return { error: error.message, failure: saveFailureOf(error, status) };
   }
   const { data: existingSessions } = await supabase
     .from("varsity_plan_sessions")

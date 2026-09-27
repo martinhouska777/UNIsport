@@ -8,6 +8,7 @@
   the table's policies say the same thing in SQL.
 */
 import { createClient, hasSupabaseEnv } from "@/lib/supabase/client";
+import { saveFailureOf, type SaveFailure } from "@/lib/saveFailure";
 import type { RaceDay, RacePiece } from "./racePieces";
 
 const LOCAL = "varsityRaces";
@@ -46,26 +47,36 @@ export async function fetchRaceDays(): Promise<RaceDay[]> {
 }
 
 /** Write the whole day — its pieces are one blob, so a change to one crew's
-    time is the row rewritten. Returns false when the write was refused. */
-export async function saveRaceDay(day: RaceDay): Promise<boolean> {
+    time is the row rewritten. Null when it saved; otherwise WHY it did not
+    (lib/saveFailure.ts), so the screen can say what actually happened. */
+export async function writeRaceDay(day: RaceDay): Promise<SaveFailure | null> {
   if (!hasSupabaseEnv()) {
     const rest = loadLocal().filter((d) => d.dayKey !== day.dayKey);
     saveLocal([{ ...day, updatedAt: new Date().toISOString() }, ...rest]);
-    return true;
+    return null;
   }
   const supabase = createClient();
-  const { error } = await supabase
+  const { error, status } = await supabase
     .from("varsity_race_results")
     .upsert({ day_key: day.dayKey, pieces: day.pieces, updated_at: new Date().toISOString() }, { onConflict: "day_key" });
-  return !error;
+  return error ? saveFailureOf(error, status) : null;
+}
+
+/** The same write, as yes / no. */
+export async function saveRaceDay(day: RaceDay): Promise<boolean> {
+  return (await writeRaceDay(day)) === null;
+}
+
+export async function removeRaceDay(dayKey: string): Promise<SaveFailure | null> {
+  if (!hasSupabaseEnv()) {
+    saveLocal(loadLocal().filter((d) => d.dayKey !== dayKey));
+    return null;
+  }
+  const supabase = createClient();
+  const { error, status } = await supabase.from("varsity_race_results").delete().eq("day_key", dayKey);
+  return error ? saveFailureOf(error, status) : null;
 }
 
 export async function deleteRaceDay(dayKey: string): Promise<boolean> {
-  if (!hasSupabaseEnv()) {
-    saveLocal(loadLocal().filter((d) => d.dayKey !== dayKey));
-    return true;
-  }
-  const supabase = createClient();
-  const { error } = await supabase.from("varsity_race_results").delete().eq("day_key", dayKey);
-  return !error;
+  return (await removeRaceDay(dayKey)) === null;
 }

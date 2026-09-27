@@ -18,14 +18,17 @@ export type SaveStatus = "saved" | "saving" | "error";
 export default function SaveState({
   status,
   onRetry,
+  detail,
 }: {
   status: SaveStatus;
   onRetry?: () => void;
+  /** Why, when it is known — "no connection" (lib/saveFailure.ts). */
+  detail?: string | null;
 }) {
   if (status === "error") {
     return (
-      <span className="flex items-center gap-1.5 text-[12px] font-semibold text-danger">
-        Not saved
+      <span className="flex items-center gap-1.5 text-[12px] font-semibold text-danger" role="alert">
+        {detail ? `Not saved · ${detail}` : "Not saved"}
         {onRetry && (
           <button
             type="button"
