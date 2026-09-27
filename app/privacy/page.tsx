@@ -38,6 +38,15 @@ export const metadata: Metadata = {
   are (Supabase, AWS us-east-1 — the United States), and what a varsity coach
   can see.
 
+  2026-09-27 pass (launch audit, item 4): the waitlist (app/api/waitlist,
+  db/waitlist.sql — insert-only, nobody can read it through the API) and gym
+  reviews and photos (db/gym_reviews.sql — signed with the author's name and
+  photo; db/gym_photos.sql — no name shown, PUBLIC bucket) arrived on
+  2026-09-22 and were not here. Two sentences were also no longer true: gym
+  ratings are not kept on the device any more (they are the signed reviews),
+  and a team workout's erg photo IS stored, in the private erg-photos bucket
+  (components/varsity/log/LogScreen.tsx → lib/varsity/ergPhotos.ts).
+
   One typography trap, found by reading the rendered page rather than the file:
   the space after a bold lead-in `<span>` is SWALLOWED in any paragraph that
   also contains an entity like `&apos;` — "Notifications.If you turn on…" shipped
@@ -46,7 +55,7 @@ export const metadata: Metadata = {
 */
 export default function PrivacyPolicyPage() {
   return (
-    <LegalPage title="Privacy Policy" updated="11 September 2026">
+    <LegalPage title="Privacy Policy" updated="27 September 2026">
       <Section heading="The short version">
         <p>
           UNIsport is a fitness app for university students. To work, it needs to know who you
@@ -114,6 +123,25 @@ export default function PrivacyPolicyPage() {
           Busy&rdquo;), never your name, and it stops being shown after two hours.
         </p>
         <p>
+          <span className="text-l-text">Gym reviews and photos.</span>{" "}
+          If you review a gym, we store your scores and your comment with your account, and other
+          signed-in users see them on that gym&apos;s page with your name and profile photo. If you
+          add a photo of a gym, we store the picture and which gym it shows. Other signed-in users
+          see it on the gym&apos;s page without your name, and the newest one becomes that
+          gym&apos;s picture on the Gyms list. Gym photos are kept in public storage, so anyone who
+          has a photo&apos;s direct link can open it. You can take down your own review or photo
+          from the gym&apos;s page at any time, which deletes it.
+        </p>
+        <p>
+          <span className="text-l-text">The waitlist.</span>{" "}
+          If you join the waitlist, we store the email address you give, your first name if you
+          add it, the school we recognise from the address, which of our tagged links brought you
+          there if you used one (an Instagram story, for example), and when you joined. You do not
+          need an account for this.
+          Nobody else can read the list, and we use it only to email you when UNIsport opens at
+          your school. To be taken off it, email the address above.
+        </p>
+        <p>
           <span className="text-l-text">Notifications.</span>{" "}
           If you turn on push notifications, we store the subscription your browser issues and
           your browser&apos;s user-agent string, so we can deliver notifications to the right
@@ -128,13 +156,14 @@ export default function PrivacyPolicyPage() {
         <p>
           <span className="text-l-text">Photos of an erg monitor.</span>{" "}
           If you use the camera to read a workout off a rowing machine, that photo is sent to
-          Anthropic, who read the numbers off the screen and return them to the app. We do not
-          store the photo.
+          Anthropic, who read the numbers off the screen and return them to the app. If the workout
+          is a team workout, the photo is also kept with your result, so the picture behind the
+          numbers can be opened from your squad&apos;s results; otherwise we do not store it.
         </p>
         <p>
           <span className="text-l-text">Stored only on your device.</span>{" "}
-          Your gym favourites, gym ratings, and the email address of your last sign-in stay in
-          your browser&apos;s local storage and are not sent to our servers.
+          Your gym favourites and the email address of your last sign-in stay in your
+          browser&apos;s local storage and are not sent to our servers.
           Clearing your browser data removes them.
         </p>
       </Section>
@@ -146,7 +175,8 @@ export default function PrivacyPolicyPage() {
         </p>
         <List
           items={[
-            "Your account, profile, matches, messages and logs — because you asked us to give you the app, and it cannot work without them.",
+            "Your account, profile, matches, messages, logs, and the gym reviews and photos you post — because you asked us to give you the app, and it cannot work without them.",
+            "The waitlist — with your consent, given when you join it and withdrawn by asking us to take you off it.",
             "Your training details, personal records, session logs and the photos you attach — with your consent. Some of it says something about your body and your health, which the law treats as a special category, so we hold it only because you chose to enter it, and you can remove it, or your whole account, at any time.",
             "Push notifications — with your consent, given when your browser asks and withdrawn by turning them off.",
             "Keeping the app working, safe, and free of abuse — our legitimate interest in running a service people can trust.",
@@ -187,7 +217,7 @@ export default function PrivacyPolicyPage() {
         </p>
         <List
           items={[
-            "Supabase — database, accounts, and authentication",
+            "Supabase — database, photo storage, accounts, and authentication",
             "Vercel — hosting and delivery of the website",
             "Google — if you choose to sign in with Google, and for the varsity video upload described below",
             "Anthropic — only for reading a photo of an erg monitor, when you use that feature",
@@ -244,7 +274,8 @@ export default function PrivacyPolicyPage() {
 
       <Section heading="Where your data is stored">
         <p>
-          Our database and accounts are hosted by Supabase on servers in the United States (AWS,
+          Our database, the photos we store, and accounts are hosted by Supabase on servers in the
+          United States (AWS,
           Northern Virginia). The website itself is delivered by Vercel&apos;s global network.
           Videos are stored in your team&apos;s Google Drive, wherever Google holds it.
         </p>
