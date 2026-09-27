@@ -225,7 +225,9 @@ export default function LogSessionSheet({
     /*
       The same partner kept on an edit keeps their answer (a confirmed session
       is not re-asked; a row from before tags had to be accepted stays counted).
-      A new or changed partner is a new request — saveWorkout marks it pending.
+      Passing their status only marks them as KEPT: the store then leaves the
+      answer alone in the database. A new or changed partner is a new request
+      — saveWorkout marks it pending.
     */
     const samePartner = !!partnerId && partnerId === existing?.partnerId;
     const draft: WorkoutDraft = {

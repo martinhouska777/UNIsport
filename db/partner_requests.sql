@@ -27,6 +27,10 @@
 --   are SECURITY DEFINER, act for auth.uid(), and only ever let the NAMED
 --   partner see or answer a request about them. Same pattern as
 --   db/session_plans.sql, which this reuses the shape of.
+--   The status is the SERVER's, not the app's: RLS lets you write your own
+--   rows, so until 2026-09-27 the app could save its own tag as 'confirmed'
+--   and take the partner points with nobody asked. A trigger (the last
+--   section) now decides the status of every row the app writes.
 --
 -- RUN db/leaderboards.sql AFTER this file (it reads the new column).
 -- IDEMPOTENT: safe to paste into the Supabase SQL editor and re-run.
@@ -37,6 +41,11 @@ alter table public.workout_logs add column if not exists partner_status text;
 alter table public.workout_logs add column if not exists mirror_of uuid
   references public.workout_logs (id) on delete set null;
   -- the logger's row this one was created FROM, when a partner accepted
+alter table public.workout_logs add column if not exists partner_asked_at timestamptz;
+  -- when THIS partner was asked; the window runs from here. Null on rows from
+  -- before 2026-09-27, which fall back to created_at. Not the same thing: a
+  -- partner added on an edit two days later used to be asked with a window
+  -- that had already shut — the push went out and no card ever showed.
 
 create index if not exists workout_logs_partner_pending_idx
   on public.workout_logs (partner_id, created_at)
@@ -67,7 +76,8 @@ as $$
     w.id, w.user_id,
     coalesce(p.data->>'name', 'Member'),
     p.data->>'photo',
-    w.log_date, w.activity, w.gym, w.created_at
+    w.log_date, w.activity, w.gym,
+    coalesce(w.partner_asked_at, w.created_at)
   from public.workout_logs w
   left join public.profiles p on p.id = w.user_id
   where w.partner_id = auth.uid()
@@ -75,8 +85,9 @@ as $$
     -- a session logged off a chat plan is answered on the plan (plan_confirm),
     -- never here — or the partner would be asked twice (2026-09-27)
     and w.plan_id is null
-    and w.created_at > now() - make_interval(hours => greatest(1, p_hours))
-  order by w.created_at desc;
+    and coalesce(w.partner_asked_at, w.created_at)
+        > now() - make_interval(hours => greatest(1, p_hours))
+  order by coalesce(w.partner_asked_at, w.created_at) desc;
 $$;
 
 -- ---------------------------------------------------------------------------
@@ -111,10 +122,13 @@ begin
   select * into w from public.workout_logs where id = p_log_id for update;
   if w.id is null then raise exception 'unknown session'; end if;
   if w.partner_id is distinct from me then raise exception 'not your request'; end if;
+  -- your own tag on yourself: nobody else was there to say yes
+  if w.user_id = me then raise exception 'not your request'; end if;
   if w.partner_status is distinct from 'pending' then raise exception 'already answered'; end if;
   if w.plan_id is not null then raise exception 'answered on the session plan'; end if;
 
-  if w.created_at <= now() - make_interval(hours => greatest(1, p_hours)) then
+  if coalesce(w.partner_asked_at, w.created_at)
+     <= now() - make_interval(hours => greatest(1, p_hours)) then
     update public.workout_logs set partner_status = 'expired' where id = p_log_id;
     return 'expired';
   end if;
@@ -165,7 +179,8 @@ begin
     where partner_status = 'pending'
       and plan_id is null
       and (user_id = me or partner_id = me)
-      and created_at <= now() - make_interval(hours => greatest(1, p_hours));
+      and coalesce(partner_asked_at, created_at)
+          <= now() - make_interval(hours => greatest(1, p_hours));
   get diagnostics n = row_count;
   return n;
 end;
@@ -205,6 +220,81 @@ begin
     where s.user_id = w.partner_id;
 end;
 $$;
+
+-- ---------------------------------------------------------------------------
+-- THE GUARD: a tag's status is the server's, never the app's.      2026-09-27
+-- RLS lets you write your own rows, and the app used to write partner_status
+-- itself — so a doctored request could save 'confirmed' and take the partner
+-- points with nobody asked, tag itself, or pose as a partner's copy
+-- (mirror_of). It also meant a stale edit screen could undo an answer: open
+-- the editor while the tag is pending, the partner accepts, you press Save,
+-- and the row went back to 'pending'. On every row the app writes:
+--
+--   no partner                         → no status
+--   yourself as the partner            → refused
+--   the same partner kept on an edit   → the status it already has (a
+--                                         confirmed session is not re-asked;
+--                                         a legacy null stays null = counted)
+--   a new or changed partner           → 'pending', asked now (the window
+--                                         starts again, whatever the row's age)
+--   mirror_of                          → never the app's to set or change
+--
+-- Only the app's own roles are corrected. The functions above and
+-- plan_confirm are SECURITY DEFINER, so inside them current_user is their
+-- owner and they pass straight through — they set a status on purpose. For
+-- the same reason this function must NOT be security definer itself: it
+-- reads the caller's role.
+--
+-- NOT covered (a chat plan's business, left for its own change): the app can
+-- still write `verified` and `plan_id` on its own rows. Neither moves a score
+-- — the boards read partner_status only — but the "Verified" badge on your
+-- own calendar is not proof of anything.
+-- ---------------------------------------------------------------------------
+create or replace function public.workout_logs_partner_guard()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+declare
+  kept boolean := false; -- an edit that leaves the partner as it was
+begin
+  if current_user not in ('authenticated', 'anon') then
+    return new;
+  end if;
+
+  -- OLD is read only on an UPDATE; an INSERT has none.
+  if tg_op = 'UPDATE' then
+    new.mirror_of := old.mirror_of;
+    kept := new.partner_id is not distinct from old.partner_id;
+  else
+    new.mirror_of := null;
+  end if;
+
+  if new.partner_id is null then
+    new.partner_status   := null;
+    new.partner_asked_at := null;
+  elsif new.partner_id = new.user_id then
+    raise exception 'you cannot be your own training partner';
+  elsif kept then
+    new.partner_status   := old.partner_status;
+    new.partner_asked_at := old.partner_asked_at;
+  else
+    new.partner_status   := 'pending';
+    new.partner_asked_at := now();
+  end if;
+
+  return new;
+end;
+$$;
+
+-- A trigger function is never called directly (EXECUTE is not checked when a
+-- trigger fires), so nobody needs it.
+revoke execute on function public.workout_logs_partner_guard() from public, anon, authenticated;
+
+drop trigger if exists workout_logs_partner_guard on public.workout_logs;
+create trigger workout_logs_partner_guard
+  before insert or update on public.workout_logs
+  for each row execute function public.workout_logs_partner_guard();
 
 grant execute on function public.partner_requests_for_me(integer)                to authenticated;
 grant execute on function public.partner_request_respond(uuid, boolean, integer) to authenticated;

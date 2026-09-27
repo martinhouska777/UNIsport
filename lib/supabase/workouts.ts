@@ -172,11 +172,16 @@ const draftToRow = (userId: string, d: WorkoutDraft) => ({
   partner: d.partner.trim() || null,
   partner_id: d.partnerId ?? null,
   /*
-    A real partner starts as a REQUEST. The editor passes the existing status
-    through when the same partner is kept on an edit, so re-saving a confirmed
-    session never asks them again; a new or changed partner is asked afresh.
+    A real partner starts as a REQUEST. The status is the server's to keep
+    (db/partner_requests.sql, the guard trigger), so the app says only what it
+    means: a new or changed partner is asked, no partner is no tag. The same
+    partner kept on an edit (the editor marks it by passing their status)
+    sends nothing at all — the answer stays whatever it is by now, even if they
+    accepted while this edit screen was open.
   */
-  partner_status: d.partnerId ? (d.partnerStatus ?? "pending") : null,
+  ...(d.partnerId && d.partnerStatus
+    ? {}
+    : { partner_status: d.partnerId ? "pending" : null }),
   /*
     Logged off a chat plan ("Yes, we trained" → this sheet): the plan it came
     from. plan_confirm turns the partner real once BOTH have said yes, and only
