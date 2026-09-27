@@ -43,6 +43,14 @@ export const waitlist = {
 
   errorGeneric: "That didn't save. Try once more?",
   errorEmail: "That doesn't look like an email address.",
+  /* An empty box used to be told it "doesn't look like an email" (launch
+     audit 2026-09-27, item 43). */
+  errorEmpty: "Enter your email address.",
+
+  /* The small link under the button (launch audit 2026-09-27, item 4): the
+     page collects an address, so it links to what is done with it. */
+  privacy: "Privacy policy",
+  privacyHref: "/privacy",
 } as const;
 
 /* WHERE THEY CAME FROM. Read off `?from=` and matched against this list —

@@ -15,8 +15,9 @@
   so neutral brand only — no university colours.
 */
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import JoinShell from "@/components/join/JoinShell";
-import { waitlist } from "@/lib/waitlist";
+import { looksLikeEmail, waitlist } from "@/lib/waitlist";
 import { contact } from "@/lib/landingCopy";
 
 const instagram = contact.socials.find((s) => s.icon === "instagram" && s.href);
@@ -26,6 +27,8 @@ export default function WaitlistPage() {
   const [email, setEmail] = useState("");
   const [state, setState] = useState<"idle" | "sending" | "done">("idle");
   const [error, setError] = useState<string | null>(null);
+  // Whether the message is about the email box, which then shows it too.
+  const [emailBad, setEmailBad] = useState(false);
   // Which link they came through, read off ?from= after mount for the same
   // reason as /join: the URL only exists in the browser, and useSearchParams
   // would force a Suspense boundary around the whole screen.
@@ -41,8 +44,21 @@ export default function WaitlistPage() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (state === "sending") return;
+    /* The same two checks the server makes, answered here first, so an empty
+       or half-typed box gets its own message without a round trip. */
+    if (!email.trim()) {
+      setError(waitlist.errorEmpty);
+      setEmailBad(true);
+      return;
+    }
+    if (!looksLikeEmail(email)) {
+      setError(waitlist.errorEmail);
+      setEmailBad(true);
+      return;
+    }
     setState("sending");
     setError(null);
+    setEmailBad(false);
     try {
       const res = await fetch("/api/waitlist", {
         method: "POST",
@@ -54,7 +70,9 @@ export default function WaitlistPage() {
         return;
       }
       const body = await res.json().catch(() => ({}));
-      setError(body?.error === "bad_email" ? waitlist.errorEmail : waitlist.errorGeneric);
+      const bad = body?.error === "bad_email";
+      setError(bad ? waitlist.errorEmail : waitlist.errorGeneric);
+      setEmailBad(bad);
       setState("idle");
     } catch {
       setError(waitlist.errorGeneric);
@@ -101,16 +119,24 @@ export default function WaitlistPage() {
         />
         <input
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={(e) => {
+            setEmail(e.target.value);
+            // The red edge was about what was typed before; it goes as they fix it.
+            if (emailBad) setEmailBad(false);
+          }}
           placeholder={waitlist.emailPlaceholder}
           aria-label={waitlist.emailLabel}
+          aria-invalid={emailBad || undefined}
+          aria-describedby={error ? "waitlist-error" : undefined}
           type="email"
           inputMode="email"
           autoComplete="email"
           autoCapitalize="off"
           autoCorrect="off"
           spellCheck={false}
-          className="mt-3 w-full rounded-xl border border-l-line bg-l-surface px-4 py-3 text-base text-l-text placeholder:text-l-placeholder focus:border-(--color-l-accent-soft) focus:outline-none"
+          className={`mt-3 w-full rounded-xl border bg-l-surface px-4 py-3 text-base text-l-text placeholder:text-l-placeholder focus:outline-none ${
+            emailBad ? "border-(--color-l-danger)" : "border-l-line focus:border-(--color-l-accent-soft)"
+          }`}
         />
         <button
           type="submit"
@@ -121,11 +147,21 @@ export default function WaitlistPage() {
         >
           {state === "sending" ? waitlist.submitting : waitlist.submit}
         </button>
+        {/* The login screen's treatment (launch audit 2026-09-27, item 43):
+            the danger colour, and the box it is about in the same red. */}
         {error && (
-          <p role="alert" className="mt-3 text-center text-xs text-l-text-2">
+          <p id="waitlist-error" role="alert" className="mt-3 text-center text-xs text-l-danger">
             {error}
           </p>
         )}
+        <p className="mt-2 text-center">
+          <Link
+            href={waitlist.privacyHref}
+            className="tap44 inline-flex items-center text-xs text-l-text-2 underline-offset-4 hover:text-l-text hover:underline"
+          >
+            {waitlist.privacy}
+          </Link>
+        </p>
       </form>
     </JoinShell>
   );
