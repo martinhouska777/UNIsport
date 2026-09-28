@@ -33,7 +33,8 @@
 
   Erg is made of what the Workouts tab already read — the boards and their
   results — so it can never disagree with a board a coach opens; while the Erg
-  side is still the worked example, so is this, and it says so. Water reads
+  side is still the worked example, so is this (the owner took its Example
+  tag off this list, 2026-09-28). Water reads
   the timing sheets the same tab already has. Consistency reads the squad's
   own logs, the published plan and the days out — only when it is opened, and
   only for a coach (can.readTraining), the same reads the team statistics make.
@@ -49,7 +50,6 @@ import Link from "next/link";
 import Dropdown from "@/components/varsity/profile/Dropdown";
 import DatesSheet, { type Dates } from "@/components/varsity/team/DatesSheet";
 import RankBadge from "@/components/varsity/team/RankBadge";
-import ExampleTag from "@/components/varsity/ExampleTag";
 import Segmented from "@/components/ui/Segmented";
 import Avatar from "@/components/messages/Avatar";
 import { IconX } from "@/components/icons";
@@ -73,6 +73,7 @@ import {
   rankingSpan,
   sessionRuns,
   waterRanking,
+  withoutRest,
   type RankingList,
   type SessionRun,
 } from "@/lib/varsity/ranking";
@@ -84,6 +85,12 @@ import type { Boat } from "@/lib/varsity/coachLineup";
 
 /* The header row of a list — the race board's. */
 const TH = "text-[9px] font-semibold uppercase tracking-[0.1em] text-muted";
+/* The list's own headings — Athlete, Pts, Wins, Done — at the size of the
+   workouts beside them, not the size of a footnote under them (owner,
+   2026-09-28: "make Athlete and Pts bigger so they sit with the workouts"). */
+const HEAD = "text-[11px] font-semibold uppercase tracking-[0.1em] text-muted";
+/* One gap between every column, the header's and every row's, so they line up. */
+const GAP = "gap-x-1";
 const MO = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const CARD = "overflow-x-auto overscroll-x-contain rounded-2xl border border-border bg-surface shadow-card";
 const EMPTY = "rounded-2xl border border-dashed border-border bg-surface px-4 py-8 text-center text-[12px] text-muted";
@@ -127,17 +134,19 @@ function Who({ name }: { name: string }) {
 /* Where somebody finished one test or piece: a medal place sits on its
    metal's wash, every other place is plain, and one they did not row is a
    dash. `under` is a word beneath it — the class of the boat, on the water. */
+/* Centred under its workout's tag (owner, 2026-09-28: "centre it all") — it
+   sat against the right edge of the column, under a tag centred above it. */
 function PiecePlace({ place, under }: { place: number | null; under?: string }) {
-  if (place == null) return <span className="text-right text-[12px] text-muted">—</span>;
+  if (place == null) return <span className="text-center text-[12px] text-muted">—</span>;
   const tint = METAL_TINT[place];
   return (
-    <span className="flex flex-col items-end leading-tight">
+    <span className="flex flex-col items-center leading-tight">
       <span
         className={`rounded-md px-1.5 py-0.5 text-[12px] tabular-nums ${tint ? `${tint} font-semibold text-text` : "text-muted"}`}
       >
         {ordinal(place)}
       </span>
-      {under && <span className="mt-0.5 pr-1.5 font-mono text-[9px] text-muted">{under}</span>}
+      {under && <span className="mt-0.5 font-mono text-[9px] text-muted">{under}</span>}
     </span>
   );
 }
@@ -156,7 +165,7 @@ function Row({
   href?: string;
   children: React.ReactNode;
 }) {
-  const cls = `grid items-center gap-1.5 px-2.5 py-2 ${i > 0 ? "border-t border-border" : ""} ${first ? "bg-surface-2" : ""}`;
+  const cls = `grid items-center ${GAP} px-2.5 py-2 ${i > 0 ? "border-t border-border" : ""} ${first ? "bg-surface-2" : ""}`;
   return href ? (
     <Link href={href} className={`${cls} active:bg-surface-2`} style={{ gridTemplateColumns: cols }}>
       {children}
@@ -189,34 +198,42 @@ function Row({
   (sticky inside the tag): the list scrolls sideways, and a tag across three
   pieces would otherwise slide its words off the screen while two of those
   pieces are still on it.
+
+  THE WORKOUT IS THE BIG LINE (owner, 2026-09-28: "the workouts aren't
+  visible… so when I look at it I know straight away what workout it was").
+  The day had the dark letters and the workout was a grey footnote, cut to
+  "8×500 / m, 1:3…". Now the workout is the line you read — dark, the size of
+  the places under it, without its rest (withoutRest) so it fits — and the day
+  is the small grey line above it. Everything in the tag is centred both ways,
+  so a one-line workout next to a two-line one leaves no gap under it.
 */
-type Run = SessionRun & { day: string; half?: string; when: string; words: string };
+type Run = SessionRun & { col: number; day: string; half?: string; when: string; words: string; short: string };
 
 function SessionTag({ run, open, onToggle }: { run: Run; open: boolean; onToggle: () => void }) {
   return (
-    <span data-session-tag className="flex min-w-0" style={{ gridColumn: `span ${run.count}` }}>
+    <span data-session-tag className="flex min-w-0" style={{ gridColumn: `${run.col} / span ${run.count}`, gridRow: 1 }}>
       <button
         type="button"
         onClick={onToggle}
         aria-expanded={open}
         aria-label={`${run.when}: ${run.words}`}
-        className={`flex w-full min-w-0 items-start justify-center rounded-[6px] px-1.5 py-1 text-center transition-colors ${
+        className={`flex w-full min-w-0 items-center justify-center rounded-[6px] px-0.5 py-1 text-center transition-colors ${
           open ? "bg-text" : "bg-surface-2 active:bg-border"
         }`}
       >
         <span className="sticky left-3 right-3 min-w-0 max-w-full">
           <span
-            className={`block truncate text-[9px] font-semibold uppercase tracking-[0.08em] ${open ? "text-background" : "text-text"}`}
+            className={`block truncate text-[9px] font-semibold uppercase tracking-[0.08em] ${open ? "text-background/70" : "text-muted"}`}
           >
             {run.day}
             {run.half ? ` ${run.half}` : ""}
           </span>
           <span
-            className={`mt-0.5 line-clamp-2 break-words text-[10px] font-medium leading-[1.25] ${
-              open ? "text-background/75" : "text-muted"
+            className={`line-clamp-2 break-words text-[12px] font-semibold leading-[1.2] ${
+              open ? "text-background" : "text-text"
             }`}
           >
-            {run.words}
+            {run.short}
           </span>
         </span>
       </button>
@@ -246,10 +263,14 @@ function GrownWorkout({ run, top, onClose }: { run: Run; top: number; onClose: (
 }
 
 /*
-  THE HEADER OF A LIST WITH A COLUMN PER PIECE, on two lines: each session's
-  tag once across its columns (SessionTag), and under it the list's own
-  headings and every column's name — the piece ("Piece 2"); an erg test's
-  name is its session's words, already in the tag.
+  THE HEADER OF A LIST WITH A COLUMN PER PIECE: each session's tag once across
+  its columns (SessionTag), and — on the water only — every piece's name under
+  it ("Piece 2"); an erg test's name is its session's words, already in the
+  tag, so the erg header is the one line.
+
+  Athlete and the score sit IN THAT LINE, centred on its height (owner,
+  2026-09-28). They were a row of their own under the tags, which left an
+  empty block over the names and the headings small at its foot.
 */
 function ListHead({
   headRef,
@@ -271,12 +292,18 @@ function ListHead({
   open: string | null;
   onOpen: (dayKey: string | null) => void;
 }) {
+  const named = names.some((n) => n.name);
+  /* The headings span both lines when there are piece names under the tags. */
+  const rows = named ? "1 / span 2" : "1";
   return (
-    <div ref={headRef} className="border-b border-border px-2.5 py-2">
-      <div className="grid items-stretch gap-x-1.5" style={{ gridTemplateColumns: cols }}>
-        <span />
-        <span />
-        <span />
+    <div ref={headRef} className="border-b border-border px-2.5 py-1.5">
+      <div className={`grid items-stretch ${GAP} gap-y-1`} style={{ gridTemplateColumns: cols }}>
+        <span className={`self-center ${HEAD}`} style={{ gridColumn: 2, gridRow: rows }}>
+          Athlete
+        </span>
+        <span className={`self-center text-center ${HEAD}`} style={{ gridColumn: 3, gridRow: rows }}>
+          {score}
+        </span>
         {runs.map((r) => (
           <SessionTag
             key={r.dayKey}
@@ -285,16 +312,12 @@ function ListHead({
             onToggle={() => onOpen(open === r.dayKey ? null : r.dayKey)}
           />
         ))}
-      </div>
-      <div className={`mt-1.5 grid items-end gap-x-1.5 ${TH}`} style={{ gridTemplateColumns: cols }}>
-        <span />
-        <span>Athlete</span>
-        <span className="text-right">{score}</span>
-        {names.map((n) => (
-          <span key={n.key} className="min-w-0 truncate text-right">
-            {n.name}
-          </span>
-        ))}
+        {named &&
+          names.map((n, k) => (
+            <span key={n.key} className={`min-w-0 truncate text-center ${TH}`} style={{ gridColumn: 4 + k, gridRow: 2 }}>
+              {n.name}
+            </span>
+          ))}
       </div>
     </div>
   );
@@ -308,15 +331,22 @@ const testWords = (w: TeamWorkout) => w.session.description.trim() || sessionLab
    session in the list falls on the same day), the whole day for the grown
    card ("Sat 5 Sep · AM"), and what the plan called it. */
 function labelRuns(runs: SessionRun[], words: (dayKey: string) => string): Run[] {
+  /* The piece columns start at the fourth: place, person, score. */
+  let col = 4;
   return runs.map((r) => {
     const shared = runs.some((o) => o.dayKey !== r.dayKey && dayLabel(o.date) === dayLabel(r.date));
-    return {
+    const all = words(r.dayKey);
+    const run = {
       ...r,
+      col,
       day: dayLabel(r.date),
       half: shared ? r.period : undefined,
       when: `${dayKeyLabel(r.dayKey)} · ${r.period}`,
-      words: words(r.dayKey),
+      words: all,
+      short: withoutRest(all),
     };
+    col += r.count;
+    return run;
   });
 }
 
@@ -453,13 +483,16 @@ export default function TeamRanking({
     then the detail: a column per erg test or water piece, or the plan's
     counts. Whatever does not fit scrolls sideways; the ranking never does.
   */
-  const ergCols = `1.6rem minmax(0,1fr) 2.6rem repeat(${tests.length}, 3rem)`;
-  const ergMin = `${1.6 + 9.5 + 2.6 + tests.length * 3 + (tests.length + 2) * 0.375 + 1.25}rem`;
-  const waterCols = `1.6rem minmax(0,1fr) 2.6rem repeat(${water.pieces.length}, 3rem)`;
-  const waterMin = `${1.6 + 9.5 + 2.6 + water.pieces.length * 3 + (water.pieces.length + 2) * 0.375 + 1.25}rem`;
+  /* An erg test's column is as wide as its workout's words ("4×2000m" on one
+     line); a water piece shares its session's tag with the others, so its
+     column can be narrower. The gap is GAP's 0.25rem. */
+  const ergCols = `1.6rem minmax(0,1fr) 2.6rem repeat(${tests.length}, 4rem)`;
+  const ergMin = `${1.6 + 9.5 + 2.6 + tests.length * 4 + (tests.length + 2) * 0.25 + 1.25}rem`;
+  const waterCols = `1.6rem minmax(0,1fr) 2.6rem repeat(${water.pieces.length}, 3.25rem)`;
+  const waterMin = `${1.6 + 9.5 + 2.6 + water.pieces.length * 3.25 + (water.pieces.length + 2) * 0.25 + 1.25}rem`;
   /* Consistency's plan count rides UNDER its percentage rather than in a
      column of its own: four columns of numbers cut every full name short. */
-  const consCols = "1.6rem minmax(0,1fr) 2.9rem 2.4rem 2.1rem";
+  const consCols = "1.6rem minmax(0,1fr) 2.9rem 2.7rem 2.2rem";
 
   const rangeOptions = [
     ...rankingRanges.map((r) => ({ key: r.key, label: r.label })),
@@ -488,12 +521,6 @@ export default function TeamRanking({
           }}
         />
       </div>
-
-      {list === "erg" && example && erg.length > 0 && (
-        <div className="mt-2 flex justify-end">
-          <ExampleTag />
-        </div>
-      )}
 
       <div className="mt-3">
         {/* ── ERG ── points, then the place on every test. */}
@@ -524,7 +551,7 @@ export default function TeamRanking({
                     >
                       <Place rank={r.rank} scored={r.points > 0} />
                       <Who name={r.name || "Unnamed"} />
-                      <span className="text-right text-[14px] font-bold tabular-nums text-text">{r.points}</span>
+                      <span className="text-center text-[14px] font-bold tabular-nums text-text">{r.points}</span>
                       {r.places.map((p, k) => (
                         <PiecePlace key={k} place={p?.place ?? null} />
                       ))}
@@ -561,7 +588,7 @@ export default function TeamRanking({
                     <Row key={r.key} i={i} first={r.rank === 1 && r.wins > 0} cols={waterCols}>
                       <Place rank={r.rank} scored={r.wins > 0} />
                       <Who name={r.name} />
-                      <span className="text-right text-[14px] font-bold tabular-nums text-text">{r.wins}</span>
+                      <span className="text-center text-[14px] font-bold tabular-nums text-text">{r.wins}</span>
                       {r.places.map((p, k) => (
                         <PiecePlace key={k} place={p?.place ?? null} under={p ? classTitle(p.badge) : undefined} />
                       ))}
@@ -589,18 +616,18 @@ export default function TeamRanking({
             <div className={EMPTY}>Nobody on the squad yet.</div>
           ) : (
             <div className={CARD}>
-              <div className={`grid items-end gap-1.5 border-b border-border px-2.5 py-2 ${TH}`} style={{ gridTemplateColumns: consCols }}>
+              <div className={`grid items-center ${GAP} border-b border-border px-2.5 py-2.5 ${HEAD}`} style={{ gridTemplateColumns: consCols }}>
                 <span />
                 <span>Athlete</span>
-                <span className="text-right">Done</span>
-                <span className="text-right">Extra</span>
-                <span className="text-right">Out</span>
+                <span className="text-center">Done</span>
+                <span className="text-center">Extra</span>
+                <span className="text-center">Out</span>
               </div>
               {consistency.map((r, i) => (
                 <Row key={r.id} i={i} first={r.rank === 1 && (r.share ?? 0) > 0} cols={consCols} href={athleteHref(r.id)}>
                   <Place rank={r.rank} scored={(r.share ?? 0) > 0} />
                   <Who name={r.name} />
-                  <span className="text-right leading-tight">
+                  <span className="text-center leading-tight">
                     <span className="block text-[14px] font-bold tabular-nums text-text">
                       {r.share == null ? "—" : `${r.share}%`}
                     </span>
@@ -610,10 +637,10 @@ export default function TeamRanking({
                       </span>
                     )}
                   </span>
-                  <span className={`text-right text-[12px] tabular-nums ${r.extra > 0 ? "font-semibold text-text" : "text-muted"}`}>
+                  <span className={`text-center text-[12px] tabular-nums ${r.extra > 0 ? "font-semibold text-text" : "text-muted"}`}>
                     {r.extra}
                   </span>
-                  <span className={`text-right text-[12px] tabular-nums ${r.out > 0 ? "font-semibold text-text" : "text-muted"}`}>
+                  <span className={`text-center text-[12px] tabular-nums ${r.out > 0 ? "font-semibold text-text" : "text-muted"}`}>
                     {r.out}
                   </span>
                 </Row>

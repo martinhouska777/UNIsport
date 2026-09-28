@@ -285,6 +285,30 @@ export function sessionRuns(columns: SessionColumn[]): SessionRun[] {
   return runs;
 }
 
+/*
+  THE WORKOUT WITHOUT ITS REST, for a session's tag at the top of a list
+  (owner, 2026-09-28: "for erg don't put the rest time there, then it fits").
+  The tag is a column wide; "8×500m, 1:30 rest" broke into "8×500 / m, 1:3…",
+  and the rest is the one part a coach does not need to tell two tests apart.
+  So "8×500m, 1:30 rest" → "8×500m", "3×10' / 3' rest @ r24" → "3×10' @ r24",
+  "6×1k (2' rest)" → "6×1k". Only a TIME followed by rest (or "rest" and a
+  time) goes: "r20" is a rate and stays, "UT2 recovery paddle" stays. The
+  grown tag still says the whole workout, rest included.
+*/
+const REST_AMOUNT = String.raw`(?<![A-Za-z\d.:])\d+(?:[:.]\d+)?\s*(?:'|′|"|″|secs?|seconds?|mins?|minutes?|s|m)?`;
+const REST = new RegExp(
+  String.raw`\s*(?:[,;/+–—-]|\bw\/|\bwith\b)?\s*\(?\s*(?:${REST_AMOUNT}\s*(?:of\s+)?(?:rest|rec|recovery)\b|\brest\b\s*[:=]?\s*(?:${REST_AMOUNT})?|\b(?:rec|recovery)\s*[:=]?\s*${REST_AMOUNT})(?:\s+between(?:\s+\w+)?)?\s*\)?`,
+  "gi",
+);
+export function withoutRest(words: string): string {
+  const out = words
+    .replace(REST, " ")
+    .replace(/\s{2,}/g, " ")
+    .replace(/\s+([,;])/g, "$1")
+    .replace(/^[\s,;/+–—-]+|[\s,;/+–—-]+$/g, "");
+  return out || words;
+}
+
 /* ── The consistency ranking ────────────────────────────────────────────── */
 
 export type ConsistencyRow = {
