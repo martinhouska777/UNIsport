@@ -7,20 +7,18 @@
   - People: everyone at your school, best fit first, then "Also on campus".
   - Sessions: the Buddy Board — everyone who has said what they want to train
     and when — IS the tab. You land on people, not on controls. Posting your
-    own is a button on it, and the timed search ("who is free Thursday around
-    7?") sits BESIDE that button on the same row, opening as its own sheet
-    with its results inside it (components/match/SessionSearchSheet.tsx). It
-    used to be a fold at the top of the tab with the results rendered inside
-    the fold, so collapsing it hid the answer.
+    own is a button on it, and the timed search ("who is going Thursday around
+    7?") sits BESIDE that button on the same row. It drops down as its own
+    sheet (components/match/SessionSearchSheet.tsx), folds away on Search, and
+    its answer is the board narrowed to the posted sessions that fit — never
+    people cards (owner, 2026-09-28).
 
   Every result card carries the REASONS that person ranked where they did (see
   lib/matchReasons.ts) — the things you actually share. Tapping through to their
   profile shows the full list.
 
-  FILTERS are shared by People and the session search: one sheet, one piece of
-  state, so a concentration you picked on one still applies on the other. They
-  are a DRAFT until you press Apply in the sheet (components/match/
-  FiltersSheet.tsx) — the only moment either list re-runs.
+  FILTERS on People are a DRAFT until you press Apply in the sheet
+  (components/match/FiltersSheet.tsx) — the only moment the list re-runs.
 
   Data comes from the SQL RPC functions via lib/supabase/matching.ts. All colors
   are theme tokens; the choice lists reuse the onboarding data so they stay
@@ -32,6 +30,7 @@ import { useAppState } from "@/components/AppState";
 import { useProfileData } from "@/components/profile/useProfileData";
 import { getBrowseMatches, type Match, type MatchFilters } from "@/lib/supabase/matching";
 import { verifiedGyms } from "@/lib/onboarding";
+import type { TimeSearch } from "@/lib/buddyBoard";
 import { isNewFirstYear as newFirstYear } from "@/lib/cohorts";
 import { matchTier } from "@/lib/matchTier";
 import MatchGrid from "@/components/match/MatchGrid";
@@ -87,6 +86,8 @@ function MatchScreen() {
 
   const [tab, setTab] = useState<SubTab>(presetGym ? "sessions" : "people");
   const [searchOpen, setSearchOpen] = useState(false);
+  // The search on the board, kept here so it survives a trip to People and back.
+  const [timeSearch, setTimeSearch] = useState<TimeSearch | null>(null);
 
   // My own answers, for the sheet's "Same as mine" shortcuts.
   const myConcentration = (myProfile?.concentration as string) || null;
@@ -106,7 +107,7 @@ function MatchScreen() {
     );
   };
 
-  // --- Shared filters (People and the session search) ---
+  // --- People filters ---
   /*
     A FIRST-YEAR'S FIRST MONTH opens on their own class year: the people they
     will actually meet in September are other first-years, and a list of
@@ -259,8 +260,9 @@ function MatchScreen() {
 
       {/*
         SESSIONS — the board is the whole tab. One list per screen: "Search by
-        time" sits beside the post button on the board's own top row and opens
-        as its own sheet with its results inside; the row hides while it's open.
+        time" sits beside the post button on the board's own top row and drops
+        down as its own sheet; the row hides while it's open, and the answer
+        is the board itself.
       */}
       {tab === "sessions" && (
         <BuddyBoard
@@ -269,6 +271,9 @@ function MatchScreen() {
           sheetOpen={boardSheetOpen}
           onOpenSheet={() => setBoardSheetOpen(true)}
           onCloseSheet={() => setBoardSheetOpen(false)}
+          timeSearch={timeSearch}
+          onEditTimeSearch={() => setSearchOpen(true)}
+          onClearTimeSearch={() => setTimeSearch(null)}
           hideActions={searchOpen}
           searchAction={
             <button
@@ -283,14 +288,10 @@ function MatchScreen() {
         />
       )}
 
-      {searchOpen && userId && (
+      {searchOpen && (
         <SessionSearchSheet
-          userId={userId}
-          filters={filters}
-          onChangeFilters={setFilters}
-          myConcentration={myConcentration}
-          myInterests={myInterests}
-          onView={viewProfile}
+          value={timeSearch}
+          onSearch={setTimeSearch}
           onClose={() => setSearchOpen(false)}
         />
       )}

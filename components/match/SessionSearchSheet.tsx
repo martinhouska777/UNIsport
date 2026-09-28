@@ -1,87 +1,52 @@
 "use client";
 
 /*
-  SEARCH BY TIME — "who is free on Thursday around 7?", as its own sheet.
+  SEARCH BY TIME — "who is going on Thursday around 7?", as its own sheet.
 
-  This used to be a collapsible fold at the top of the Sessions tab, with its
-  results rendered INSIDE the fold — so collapsing it hid the answer, and the
-  tab opened on two controls and a fold instead of on people. The Buddy Board
-  is the whole Sessions tab now; this search lives behind a small link and
-  opens as a sheet with its form at the top and its results underneath, one
-  list per screen.
+  The QUESTION only. You pick what, when and where, press Search, and the
+  sheet folds back up into the ceiling: the answer is the Buddy Board itself,
+  narrowed to the posted sessions that fit (owner, 2026-09-28 — posted
+  sessions only, no people cards, and the search out of the way once asked).
+  The board says the search back in one line, which reopens this sheet with
+  the same answers still in it. Matching: postsForSearch in lib/buddyBoard.ts.
 
   What it asks: an activity (the last pill, "Any", is every activity — it is
   the onboarding "Other" key reused, relabelled, because here it filters
   nothing rather than meaning "a sport not on the list") and a day; the hour
-  is optional (no hour = anyone training that day) and how far either side of
-  it still counts is a preset you can move (lib/onboarding.ts). Filters are
-  the same sheet the People tab uses and appear WITH the results.
+  is optional (no hour = anything that day) and how far either side of it
+  still counts is SESSION_WINDOW_HOURS (lib/onboarding.ts).
 
   IT DROPS FROM THE TOP (owner, 2026-09-22: "there is no reason to be from
   bottom"). You tap "Search by time" on the board's top row, and the search
   comes down from the ceiling over it — out of the thing you tapped, the way
   the mode switcher drops out of the top bar (components/ModeSwitcherSheet).
-  Rising from the floor put the answer at the far end of the screen from the
-  question.
 
-  Data via lib/supabase/matching.ts; colours are theme tokens.
+  Colours are theme tokens.
 */
 import { useEffect, useState } from "react";
 import Button from "@/components/ui/Button";
-import { getSessionMatches, type Match, type MatchFilters } from "@/lib/supabase/matching";
-import {
-  primaryActivities,
-  sessionTimeSlots,
-  sessionTimeLabel,
-  verifiedGyms,
-  SESSION_WINDOW_HOURS,
-} from "@/lib/onboarding";
-import { dayKeyOf, dateLabel } from "@/lib/schedule";
+import { primaryActivities, sessionTimeSlots, verifiedGyms } from "@/lib/onboarding";
+import type { TimeSearch } from "@/lib/buddyBoard";
 import { Pill, FieldLabel, SelectField } from "@/components/onboarding/controls";
 import WeekPicker from "@/components/match/WeekPicker";
-import MatchGrid from "@/components/match/MatchGrid";
-import FilterBar from "@/components/match/FilterBar";
-import FiltersSheet, { activeFilterCount, activeFilterChips, NO_FILTERS } from "@/components/match/FiltersSheet";
 import { IconX } from "@/components/icons";
 
-/* The session search scores out of 92 (no schedule component — the slot is fixed). */
-const SESSION_MAX = 92;
-
-function Status({ children }: { children: React.ReactNode }) {
-  return <div className="px-3 py-10 text-center text-sm text-muted">{children}</div>;
-}
-
 export default function SessionSearchSheet({
-  userId,
-  filters,
-  onChangeFilters,
-  myConcentration,
-  myInterests,
-  onView,
+  value,
+  onSearch,
   onClose,
 }: {
-  userId: string;
-  /** The same filters the People tab uses — one piece of state, shared. */
-  filters: MatchFilters;
-  onChangeFilters: (next: MatchFilters) => void;
-  myConcentration: string | null;
-  myInterests: string[];
-  onView: (m: Match, max: number) => void;
+  /** The search on the board right now, if any — the form starts from it. */
+  value: TimeSearch | null;
+  onSearch: (next: TimeSearch) => void;
   onClose: () => void;
 }) {
   // --- REQUIRED: what and when ---
-  const [activity, setActivity] = useState<string | null>(null);
-  const [date, setDate] = useState<string | null>(null);
-  /* OPTIONAL. No time means "anyone training that day". */
-  const [hour, setHour] = useState<number | null>(null);
-  const windowHours = SESSION_WINDOW_HOURS;
-
-  const [results, setResults] = useState<Match[] | null>(null);
-  const [searching, setSearching] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  /* True when the exact hour found nobody and we widened to the whole day. */
-  const [widened, setWidened] = useState(false);
-  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [activity, setActivity] = useState<string | null>(value?.activity ?? null);
+  const [date, setDate] = useState<string | null>(value?.date ?? null);
+  /* OPTIONAL. No time means anything that day. */
+  const [hour, setHour] = useState<number | null>(value?.hour ?? null);
+  const [gym, setGym] = useState<string | null>(value?.gym ?? null);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -90,42 +55,11 @@ export default function SessionSearchSheet({
   }, [onClose]);
 
   const canSearch = !!activity && !!date;
-  const anyTime = hour === null;
 
-  const runSearch = async (withFilters: MatchFilters = filters) => {
-    if (!userId || !canSearch) return;
-    setSearching(true);
-    setError(null);
-    try {
-      /* Shared filters FIRST: the answers below are this screen's own and must
-         win over anything left in the sheet. No hour = the middle of the day,
-         opened wide enough to cover all of it. */
-      const ask = {
-        ...withFilters,
-        userId,
-        activity: activity === "other" ? null : activity,
-        day: dayKeyOf(date!),
-        hour: anyTime ? 12 : hour!,
-        windowHours: anyTime ? 12 : windowHours,
-      };
-      let rows = await getSessionMatches(ask);
-      /* Nobody at 9? Then say who IS training that day rather than an empty
-         screen — and say plainly that the time was widened. */
-      const wide = rows.length === 0 && !anyTime && windowHours < 12;
-      if (wide) rows = await getSessionMatches({ ...ask, hour: 12, windowHours: 12 });
-      setWidened(wide && rows.length > 0);
-      setResults(rows);
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setSearching(false);
-    }
-  };
-
-  // Once results are on screen the filters narrow them live.
-  const changeFilters = (next: MatchFilters) => {
-    onChangeFilters(next);
-    if (results !== null) void runSearch(next);
+  const search = () => {
+    if (!canSearch) return;
+    onSearch({ activity: activity!, date: date!, hour, gym });
+    onClose();
   };
 
   return (
@@ -175,8 +109,8 @@ export default function SessionSearchSheet({
               <div>
                 <FieldLabel>Gym</FieldLabel>
                 <SelectField
-                  value={filters.gym ?? ""}
-                  onChange={(v) => changeFilters({ ...filters, gym: v === "" ? null : v })}
+                  value={gym ?? ""}
+                  onChange={(v) => setGym(v === "" ? null : v)}
                   options={verifiedGyms.map((g) => ({ value: g, label: g }))}
                   placeholder="Any gym"
                   ariaLabel="Gym"
@@ -196,55 +130,10 @@ export default function SessionSearchSheet({
 
             {/* Only the four answers and the button — the explainer lines and
                 the ±hours pills were cut as noise (the default window applies). */}
-            <Button size="lg" full onClick={() => runSearch()} disabled={!canSearch || searching}>
-              {searching ? "Searching…" : "Search"}
+            <Button size="lg" full onClick={search} disabled={!canSearch}>
+              Search
             </Button>
           </div>
-
-          {/* RESULTS — inside the same sheet, under the form, so the answer is
-              never hidden behind the question. */}
-          {error && <Status>Search failed: {error}</Status>}
-          {!error && results && (
-            <div className="border-t border-border pt-3">
-              <div className="px-3.5 pb-3">
-                <FilterBar
-                  count={activeFilterCount(filters)}
-                  chips={activeFilterChips(filters)}
-                  onOpen={() => setFiltersOpen((v) => !v)}
-                  onClear={(key) => changeFilters({ ...filters, [key]: null })}
-                  onClearAll={() => changeFilters(NO_FILTERS)}
-                  total={results.length}
-                  noun="person"
-                  plural="people"
-                  open={filtersOpen}
-                />
-                {filtersOpen && (
-                  <FiltersSheet
-                    key={JSON.stringify(filters)}
-                    value={filters}
-                    onApply={changeFilters}
-                    onClose={() => setFiltersOpen(false)}
-                    myConcentration={myConcentration}
-                    myInterests={myInterests}
-                    showActivity={false}
-                  />
-                )}
-              </div>
-              {results.length === 0 ? (
-                <Status>No one is training that day yet. Try another day.</Status>
-              ) : (
-                <>
-                  {widened && hour !== null && (
-                    <p className="px-3.5 pb-2 text-[12px] text-muted">
-                      Nobody at {sessionTimeLabel(hour)} — here&apos;s who else is training
-                      {date ? ` ${dateLabel(date)}` : " that day"}.
-                    </p>
-                  )}
-                  <MatchGrid matches={results} max={SESSION_MAX} onView={onView} />
-                </>
-              )}
-            </div>
-          )}
         </div>
 
         {/* The grab edge, at the bottom now: it marks the edge the sheet ends

@@ -128,7 +128,7 @@ export const tourSteps: TourStep[] = [
     press: "match-tab-sessions",
     anchor: "match-tab-sessions",
     title: "Sessions — this coming week",
-    body: "Everyone who has said what they want to train and when. Put your own up with the button, tap “Accept” on a plan that suits you — or use “Search by time” to find people free at one exact hour.",
+    body: "Everyone who has said what they want to train and when. Put your own up with the button, tap “Accept” on a plan that suits you — or use “Search by time” to find the ones at one exact hour.",
   },
 
   /* ── Messages ─────────────────────────────────────────────────────────── */

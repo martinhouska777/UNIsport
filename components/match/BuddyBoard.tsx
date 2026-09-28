@@ -25,8 +25,17 @@ import {
 } from "@/lib/supabase/buddyBoard";
 import { startDirectConversation } from "@/lib/supabase/messages";
 import { createPlan } from "@/lib/supabase/sessionPlans";
-import { boardActivities, focusesFor, focusLabel, focusActivity, postWhenLabel } from "@/lib/buddyBoard";
-import { weekDays, verifiedGyms, sessionTimeSlots } from "@/lib/onboarding";
+import {
+  boardActivities,
+  focusesFor,
+  focusLabel,
+  focusActivity,
+  postWhenLabel,
+  postsForSearch,
+  timeSearchLabel,
+  type TimeSearch,
+} from "@/lib/buddyBoard";
+import { weekDays, verifiedGyms, sessionTimeSlots, sessionTimeLabel, SESSION_WINDOW_HOURS } from "@/lib/onboarding";
 import { dateLabel } from "@/lib/schedule";
 import { Pill, FieldLabel, SelectField } from "@/components/onboarding/controls";
 import WeekPicker from "@/components/match/WeekPicker";
@@ -39,7 +48,7 @@ import BoardFiltersSheet, {
 } from "@/components/match/BoardFiltersSheet";
 import Avatar from "@/components/messages/Avatar";
 import { announceBoardChange } from "@/lib/gymGoing";
-import { IconMapPin, IconChevronRight } from "@/components/icons";
+import { IconMapPin, IconChevronRight, IconSearch, IconX } from "@/components/icons";
 
 function dayShort(key: string): string {
   return weekDays.find((d) => d.key === key)?.label.slice(0, 3) ?? key;
@@ -135,6 +144,9 @@ export default function BuddyBoard({
   sheetOpen,
   onOpenSheet,
   onCloseSheet,
+  timeSearch = null,
+  onEditTimeSearch,
+  onClearTimeSearch,
   searchAction = null,
   hideActions = false,
 }: {
@@ -146,6 +158,12 @@ export default function BuddyBoard({
   sheetOpen: boolean;
   onOpenSheet: () => void;
   onCloseSheet: () => void;
+  /* The answer to "Search by time": while set, the board shows only the posted
+     sessions that fit it (lib/buddyBoard.ts), said back in one line on top
+     that reopens the search. */
+  timeSearch?: TimeSearch | null;
+  onEditTimeSearch?: () => void;
+  onClearTimeSearch?: () => void;
   /* "Search by time", handed down from the Match page so it can sit BESIDE the
      post button on one line instead of on a line of its own above the board. */
   searchAction?: React.ReactNode;
@@ -307,6 +325,11 @@ export default function BuddyBoard({
 
   const anyFilter = boardFilterCount(filters) > 0;
 
+  // The board as shown: everything, or only what answers the time search.
+  const found =
+    board && timeSearch ? postsForSearch(board, timeSearch, SESSION_WINDOW_HOURS) : null;
+  const shown = found ? found.posts : board;
+
   return (
     <div className="px-3 pb-4">
       {/* POST — a button until you want it, then the form in its place, with
@@ -421,6 +444,29 @@ export default function BuddyBoard({
         </div>
       )}
 
+      {/* THE SEARCH, SAID BACK — what the board is showing now. Tap it to
+          change the answers, × for the whole board again. */}
+      {timeSearch && !hideActions && (
+        <div className="mt-2 flex items-center rounded-full border border-primary bg-primary-tint pl-3.5 pr-1 text-primary">
+          <button
+            type="button"
+            onClick={onEditTimeSearch}
+            className="tap44 flex min-w-0 flex-1 items-center gap-1.5 py-2.5 text-left text-[13px] font-semibold"
+          >
+            <IconSearch size={14} className="flex-shrink-0" />
+            <span className="min-w-0 truncate">{timeSearchLabel(timeSearch)}</span>
+          </button>
+          <button
+            type="button"
+            onClick={onClearTimeSearch}
+            aria-label="Clear search"
+            className="tap44 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full"
+          >
+            <IconX size={14} />
+          </button>
+        </div>
+      )}
+
       {/* FILTERS — "[icon] Filters" on the left, under the post button; the
           post count, Clear and chips join it only while a filter is set. */}
       <div className="pt-3">
@@ -430,7 +476,7 @@ export default function BuddyBoard({
           onOpen={() => (sheetOpen ? onCloseSheet() : onOpenSheet())}
           onClear={(key) => setFilters({ ...filters, [key]: null })}
           onClearAll={() => setFilters(NO_BOARD_FILTERS)}
-          total={board?.length ?? null}
+          total={shown?.length ?? null}
           noun="post"
           open={sheetOpen}
         />
@@ -480,18 +526,27 @@ export default function BuddyBoard({
           themselves, and the count shows above only while a filter is set. */}
       {boardErr && <Status>Couldn’t load the board: {boardErr}</Status>}
       {!boardErr && board === null && <SkeletonRows count={4} />}
-      {!boardErr && board && board.length === 0 && (
+      {!boardErr && shown && shown.length === 0 && (
         <Status>
-          {filters.gym && boardFilterCount(filters) === 1
+          {timeSearch
+            ? "No sessions posted for then yet."
+            : filters.gym && boardFilterCount(filters) === 1
             ? `Nobody has posted for ${filters.gym} yet. Be the first — post above and it shows on that gym's card.`
             : anyFilter
               ? "No posts match those filters yet."
               : "No open posts yet."}
         </Status>
       )}
-      {!boardErr && board && board.length > 0 && (
+      {!boardErr && shown && shown.length > 0 && (
         <div className="flex flex-col gap-2 pt-3">
-          {board.map((p) => (
+          {/* Nothing at the hour asked, so the rest of that day instead. */}
+          {found?.widened && timeSearch?.hour != null && (
+            <p className="text-[12px] text-muted">
+              Nothing at {sessionTimeLabel(timeSearch.hour)} — here&apos;s the rest of{" "}
+              {dateLabel(timeSearch.date)}.
+            </p>
+          )}
+          {shown.map((p) => (
             <PostCard
               key={p.id}
               post={p}

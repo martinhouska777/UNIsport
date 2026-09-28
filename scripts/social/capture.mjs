@@ -93,9 +93,10 @@ const SCREENS = {
     if (!(await clickText(/^sessions$/))) throw new Error("no Sessions tab");
     await wait(3000);
   },
-  /* Search by time, answered: Gym, tomorrow, 7:00 AM (Leah's legs post on the
-     seeded board is tomorrow at 7). "search" is the sheet as it lands on the
-     results, "search-results" the same sheet scrolled down to the people. */
+  /* Search by time: Gym, tomorrow, 7:00 AM (Leah's legs post on the seeded
+     board is tomorrow at 7). "search" is the sheet filled in, "search-results"
+     the board after Search — the sheet folds away and the board shows only
+     the posted sessions that fit. */
   search: async () => {
     await SCREENS.board();
     if (!(await clickText(/search by time/))) throw new Error("no Search by time");
@@ -115,17 +116,11 @@ const SCREENS = {
       sel.dispatchEvent(new Event("change", { bubbles: true }));
     });
     await wait(500);
-    if (!(await clickText(/^search$/))) throw new Error("no Search button");
-    await wait(3500);
   },
   "search-results": async () => {
     await SCREENS.search();
-    await page.evaluate(() => {
-      const box = document.querySelector(".sheet-ceiling .overflow-y-auto");
-      const res = box && box.querySelector(".border-t");
-      if (box && res) box.scrollTop = res.offsetTop - 8;
-    });
-    await wait(1200);
+    if (!(await clickText(/^search$/))) throw new Error("no Search button");
+    await wait(1500);
   },
   person: async () => {
     await go("/match");

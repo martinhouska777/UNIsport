@@ -6,8 +6,8 @@
   optional gym picker reuses `verifiedGyms` — all from lib/onboarding.ts, so the
   board and the session search offer the same hours and can be compared.
 */
-import { sessionTimeLabel, sessionTimeSlots, type TimeSlot } from "@/lib/onboarding";
-import { clockLabel, dateLabel, nextDays } from "@/lib/schedule";
+import { primaryActivities, sessionTimeLabel, sessionTimeSlots, type TimeSlot } from "@/lib/onboarding";
+import { clockLabel, dateLabel, dayKeyOf, nextDays } from "@/lib/schedule";
 
 // The simple workout-focus options the owner chose (legs / arms / chest…).
 export type BuddyFocus = {
@@ -93,6 +93,71 @@ export function timeOfDayLabel(key: string): string {
 */
 export function postWhenLabel(hour: number | null, timeOfDay: string): string {
   return hour == null ? timeOfDayLabel(timeOfDay) : sessionTimeLabel(hour);
+}
+
+/*
+  ── SEARCH BY TIME, ANSWERED FROM THE BOARD ─────────────────────────────────
+  Owner, 2026-09-28: the search returns POSTED SESSIONS only — no people. It
+  used to answer from everyone's general schedule, which says somebody is
+  usually free; a post says they are going, then, and want company.
+
+  Matched here rather than in the database: the board is a few dozen rows and
+  already on the phone, and the answer is the same cards the board shows.
+*/
+export type TimeSearch = {
+  /** gym | running | cardio, or "other" — the search's "Any". */
+  activity: string;
+  date: string; // yyyy-mm-dd
+  /** null = any time that day. */
+  hour: number | null;
+  gym: string | null;
+};
+
+type SearchablePost = {
+  focus: string;
+  date: string | null;
+  day: string;
+  hour: number | null;
+  gym: string | null;
+};
+
+const byHour = <P extends SearchablePost>(a: P, b: P) => (a.hour ?? 99) - (b.hour ?? 99);
+
+/*
+  The posts that answer a search, and whether the hour had to be let go. With
+  an hour, posts within `windowHours` of it, closest first; if none are, the
+  rest of that day in time order (`widened`), so the answer is never an empty
+  screen while people are going that day.
+*/
+export function postsForSearch<P extends SearchablePost>(
+  posts: P[],
+  s: TimeSearch,
+  windowHours: number,
+): { posts: P[]; widened: boolean } {
+  const dayKey = dayKeyOf(s.date);
+  const onDay = posts.filter(
+    (p) =>
+      // Posts from before dates existed only know their weekday.
+      (p.date ? p.date === s.date : p.day === dayKey) &&
+      (s.activity === "other" || focusActivity(p.focus) === s.activity) &&
+      (!s.gym || p.gym === s.gym),
+  );
+  if (s.hour === null) return { posts: [...onDay].sort(byHour), widened: false };
+  const target = s.hour;
+  const near = onDay
+    .filter((p) => p.hour != null && Math.abs(p.hour - target) <= windowHours)
+    .sort((a, b) => Math.abs(a.hour! - target) - Math.abs(b.hour! - target));
+  if (near.length > 0 || onDay.length === 0) return { posts: near, widened: false };
+  return { posts: [...onDay].sort(byHour), widened: true };
+}
+
+/** "Gym · Tue 29 Sep · 7:00 AM · Malkin" — a search said back in one line. */
+export function timeSearchLabel(s: TimeSearch): string {
+  const activity =
+    s.activity === "other" ? null : primaryActivities.find((a) => a.key === s.activity)?.label;
+  return [activity, dateLabel(s.date), s.hour === null ? null : sessionTimeLabel(s.hour), s.gym]
+    .filter(Boolean)
+    .join(" · ");
 }
 
 /*
