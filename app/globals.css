@@ -1565,18 +1565,23 @@ body {
   middle; the crest then drops in from the top. The oar graphic is a swap point
   for a real oar image later — only the visual changes, not this motion.
 */
+/*
+  Every distance below is divided by --intro-s, the size the emblem is drawn
+  at (.intro-scale, further down), so on screen each move travels exactly as
+  far as it did before the emblem grew.
+*/
 @keyframes v-oar-in-left {
-  from { opacity: 0; transform: translateX(-120vw); }
+  from { opacity: 0; transform: translateX(calc(-120vw / var(--intro-s, 1))); }
   60%  { opacity: 1; }
   to   { opacity: 1; transform: translateX(0); }
 }
 @keyframes v-oar-in-right {
-  from { opacity: 0; transform: translateX(120vw); }
+  from { opacity: 0; transform: translateX(calc(120vw / var(--intro-s, 1))); }
   60%  { opacity: 1; }
   to   { opacity: 1; transform: translateX(0); }
 }
 @keyframes v-crest-drop {
-  from { opacity: 0; transform: translateY(-48vh) scale(0.82); }
+  from { opacity: 0; transform: translateY(calc(-48vh / var(--intro-s, 1))) scale(0.82); }
   to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 /*
@@ -1584,19 +1589,21 @@ body {
   its letters spreading apart as it settles — the way a motto sits on a crest.
 */
 @keyframes v-motto-in {
-  from { opacity: 0; transform: translateX(-34vw); letter-spacing: 0.02em; }
+  from { opacity: 0; transform: translateX(calc(-34vw / var(--intro-s, 1))); letter-spacing: 0.02em; }
   50%  { opacity: 1; }
   to   { opacity: 1; transform: translateX(0); letter-spacing: 0.38em; }
 }
 /*
-  TIMING. The whole film is ~2.1s including the fade (components/varsity/
+  TIMING. The whole film is ~2.5s including the fade (components/varsity/
   VarsityIntro.tsx holds the two timers that have to agree with these delays).
 
   It ran 2.8s, was cut to 1.7s to stop it being in the way every morning, and
   the owner asked for the longer one back — "shorter by a little bit", and
   playing on every switch rather than once a day. So: the original's unhurried
   beats, trimmed about a quarter. The oars land at 0.7s, the crest at 1.05s,
-  the motto at 1.6s, and the fade begins at 1.75s.
+  the motto at 1.6s, and the fade begins at 2.15s. Until 2026-09-27 it began
+  at 1.75s, which left the finished motto on screen for 0.15s — one reason the
+  owner found EX NEMO "not visible". The moves themselves are unchanged.
 */
 .v-oar-in-left  { animation: v-oar-in-left  0.7s  cubic-bezier(0.18, 0.7, 0.2, 1) both; }
 .v-oar-in-right { animation: v-oar-in-right 0.7s  cubic-bezier(0.18, 0.7, 0.2, 1) both; }
@@ -1610,6 +1617,45 @@ body {
 */
 @media (prefers-reduced-motion: reduce) {
   .v-oar-in-left, .v-oar-in-right, .v-crest-drop, .v-motto-in { animation: none; }
+}
+
+/*
+  HOW BIG, AND THE SHADE — both mode-switch intros (VarsityIntro, SchoolIntro).
+  Owner, 2026-09-27 night: "make the animation more visible overall so it looks
+  better on the background … put some shade behind it … make the movement the
+  same", then "the things that come there are not visible … especially the EX
+  NEMO". Each is drawn at one size and scaled to the screen: 1.4× on a phone,
+  up to 2.2× on a big laptop, where it used to be a stamp in the middle of an
+  empty screen. The Varsity frame also rides 16px up, because the motto now
+  hangs under the oars and the emblem is centred as a whole.
+*/
+.intro-scale { --intro-s: 1.2; transform: scale(var(--intro-s)); }
+@media (min-width: 360px) and (min-height: 600px) { .intro-scale { --intro-s: 1.4; } }
+@media (min-width: 600px) and (min-height: 740px) { .intro-scale { --intro-s: 1.75; } }
+@media (min-width: 1024px) and (min-height: 700px) { .intro-scale { --intro-s: 1.9; } }
+@media (min-width: 1280px) and (min-height: 900px) { .intro-scale { --intro-s: 2.2; } }
+.v-intro-frame { transform: scale(var(--intro-s)) translateY(-16px); }
+/*
+  The shade is made of the page's own TEXT colour, so it is a soft shadow on
+  the light app and a soft light edge on the dark one, where the black looms
+  of the oars otherwise vanish into the ground. It is never a dimming: the
+  oars stay fully drawn. light-dark() takes the dark app's glow down to about
+  half, where the same strength turned the crest into a lamp; a browser
+  without it keeps the first line, one strength for both.
+*/
+.v-oar-shade {
+  filter: drop-shadow(0 0 0.75px color-mix(in srgb, var(--text) 50%, transparent))
+    drop-shadow(0 8px 10px color-mix(in srgb, var(--text) 14%, transparent));
+  filter: drop-shadow(0 0 0.75px color-mix(in srgb, var(--text) 50%, transparent))
+    drop-shadow(0 8px 10px light-dark(color-mix(in srgb, var(--text) 16%, transparent), color-mix(in srgb, var(--text) 8%, transparent)));
+}
+.intro-shade {
+  filter: drop-shadow(0 10px 14px color-mix(in srgb, var(--text) 18%, transparent));
+  filter: drop-shadow(0 10px 14px light-dark(color-mix(in srgb, var(--text) 22%, transparent), color-mix(in srgb, var(--text) 11%, transparent)));
+}
+.v-motto-shade {
+  text-shadow: 0 3px 10px color-mix(in srgb, var(--text) 15%, transparent);
+  text-shadow: 0 3px 10px light-dark(color-mix(in srgb, var(--text) 18%, transparent), color-mix(in srgb, var(--text) 9%, transparent));
 }
 
 /*

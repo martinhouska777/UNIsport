@@ -111,71 +111,77 @@ export default function SchoolIntro({
     <div
       aria-hidden="true"
       onClick={() => setLeaving(true)}
-      className={`fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-background transition-opacity duration-500 ${
+      className={`fixed inset-0 z-50 flex items-center justify-center bg-background transition-opacity duration-500 ${
         leaving ? "opacity-0" : "opacity-100"
       }`}
     >
-      <svg
-        viewBox="0 0 100 116"
-        width={(CREST_HEIGHT * 100) / 116}
-        height={CREST_HEIGHT}
-        aria-hidden
-        focusable="false"
-      >
-        <defs>
-          {/* The letter is clipped to the shield so it can rise from BEHIND the
-              bottom edge rather than sliding in over the background. */}
-          <clipPath id={shieldClip}>
-            <path d={CREST_SHIELD_PATH} />
-          </clipPath>
-          {crest.motif && (
-            <clipPath id={innerClip}>
-              <path
-                d={CREST_SHIELD_PATH}
-                transform="translate(50,59) scale(0.88) translate(-50,-59)"
-              />
+      {/* Drawn at one size and scaled to the screen, with a soft shade under
+          the shield (.intro-scale / .intro-shade in globals.css; owner,
+          2026-09-27: "I want everything to be visible"). */}
+      <div className="intro-scale flex flex-col items-center gap-4">
+        <svg
+          viewBox="0 0 100 116"
+          width={(CREST_HEIGHT * 100) / 116}
+          height={CREST_HEIGHT}
+          aria-hidden
+          focusable="false"
+          className="intro-shade"
+        >
+          <defs>
+            {/* The letter is clipped to the shield so it can rise from BEHIND the
+                bottom edge rather than sliding in over the background. */}
+            <clipPath id={shieldClip}>
+              <path d={CREST_SHIELD_PATH} />
             </clipPath>
+            {crest.motif && (
+              <clipPath id={innerClip}>
+                <path
+                  d={CREST_SHIELD_PATH}
+                  transform="translate(50,59) scale(0.88) translate(-50,-59)"
+                />
+              </clipPath>
+            )}
+          </defs>
+
+          <path className="s-shield-in" d={CREST_SHIELD_PATH} fill="var(--primary-live)" />
+          <path
+            className="s-border-in"
+            d={CREST_SHIELD_PATH}
+            fill="none"
+            stroke="var(--primary-contrast)"
+            strokeWidth={4}
+            transform="translate(50,59) scale(0.88) translate(-50,-59)"
+          />
+          {crest.motif && (
+            <g clipPath={`url(#${innerClip})`}>
+              <path
+                className="s-border-in"
+                d={crest.motif}
+                fill="var(--primary-contrast)"
+                fillRule="evenodd"
+              />
+            </g>
           )}
-        </defs>
-
-        <path className="s-shield-in" d={CREST_SHIELD_PATH} fill="var(--primary-live)" />
-        <path
-          className="s-border-in"
-          d={CREST_SHIELD_PATH}
-          fill="none"
-          stroke="var(--primary-contrast)"
-          strokeWidth={4}
-          transform="translate(50,59) scale(0.88) translate(-50,-59)"
-        />
-        {crest.motif && (
-          <g clipPath={`url(#${innerClip})`}>
-            <path
-              className="s-border-in"
-              d={crest.motif}
+          <g clipPath={`url(#${shieldClip})`}>
+            <text
+              className="s-letter-rise"
+              x={50}
+              y={crest.letterY}
+              textAnchor="middle"
+              fontSize={crest.fontSize}
+              fontWeight={900}
+              fontFamily="var(--font-playfair), Georgia, serif"
               fill="var(--primary-contrast)"
-              fillRule="evenodd"
-            />
+            >
+              {crest.letter}
+            </text>
           </g>
-        )}
-        <g clipPath={`url(#${shieldClip})`}>
-          <text
-            className="s-letter-rise"
-            x={50}
-            y={crest.letterY}
-            textAnchor="middle"
-            fontSize={crest.fontSize}
-            fontWeight={900}
-            fontFamily="var(--font-playfair), Georgia, serif"
-            fill="var(--primary-contrast)"
-          >
-            {crest.letter}
-          </text>
-        </g>
-      </svg>
+        </svg>
 
-      {university && (
-        <div className="s-name-in text-[15px] font-medium text-text">{university.name}</div>
-      )}
+        {university && (
+          <div className="s-name-in text-[17px] font-semibold text-text">{university.name}</div>
+        )}
+      </div>
     </div>
   );
 }

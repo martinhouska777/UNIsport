@@ -3,9 +3,9 @@
 /*
   VARSITY MODE INTRO — a short title sequence played when you enter Varsity
   Mode. Two oars sweep in from the sides and cross in the middle; the crest then
-  drops from the top onto the crossing point; the motto slides in under it; the
-  whole overlay fades to reveal the Home screen. About 2.1 seconds, and a tap
-  anywhere ends it early.
+  drops from the top onto the crossing point; the motto slides in under the
+  oars; the whole overlay fades to reveal the Home screen. About 2.5 seconds,
+  and a tap anywhere ends it early.
 
   WHEN IT PLAYS — EVERY time you cross into Varsity Mode, and every time you
   sign in. The owner's call: every time you change from student to varsity you
@@ -40,8 +40,9 @@ import OarMark from "@/components/varsity/OarMark";
 import { inVarsityMode, markMode } from "@/lib/varsity/mode";
 import { consumeSignIn } from "@/lib/loginIntro";
 
-// The motto lands at ~1.6s (globals.css); hold it a beat, then fade.
-const FADE_AT_MS = 1750;
+// The motto lands at ~1.6s (globals.css); hold it long enough to read, then
+// fade. The hold was 0.15s until 2026-09-27 — the owner: EX NEMO "not visible".
+const FADE_AT_MS = 2150;
 const FADE_MS = 350;
 
 export default function VarsityIntro() {
@@ -104,10 +105,14 @@ export default function VarsityIntro() {
         leaving ? "opacity-0" : "opacity-100"
       }`}
     >
-      <div className="relative h-[320px] w-[320px]">
-        {/* Left oar: slides in from the left, held at a fixed cross angle. */}
+      {/* Drawn at this one size and scaled to the screen (.intro-scale in
+          globals.css): a stamp in the middle of a laptop before 2026-09-27. */}
+      <div className="intro-scale v-intro-frame relative h-[320px] w-[320px]">
+        {/* Left oar: slides in from the left, held at a fixed cross angle.
+            The shade sits on the sliding layer, not the turned one, so it
+            falls straight down whatever the oar's angle. */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="v-oar-in-left">
+          <div className="v-oar-in-left v-oar-shade">
             <div className="origin-center rotate-[-32deg]">
               <OarMark schoolKey={universityKey} width={41} height={250} />
             </div>
@@ -116,7 +121,7 @@ export default function VarsityIntro() {
 
         {/* Right oar: slides in from the right, mirrored angle → forms the X. */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="v-oar-in-right">
+          <div className="v-oar-in-right v-oar-shade">
             <div className="origin-center rotate-[32deg]">
               <OarMark schoolKey={universityKey} width={41} height={250} />
             </div>
@@ -128,42 +133,35 @@ export default function VarsityIntro() {
             wears, and at the same 92px/86px the frozen mark (VarsityCrest) uses,
             so the film ends on exactly the icon you keep seeing afterwards. */}
         <div className="absolute inset-x-0 top-[86px] flex justify-center">
-          <div className="v-crest-drop">
+          <div className="v-crest-drop intro-shade">
             <UniversityCrest size={92} />
           </div>
         </div>
 
-        {/* The motto, sliding in under the crest — bold, 17px, in the SCHOOL'S
-            COLOUR with a thin line round each letter (owner, 2026-09-21: "make
-            the motto red text with black borders so it's better readable").
+        {/* The motto, sliding in last, UNDER the crossed oars (owner,
+            2026-09-27 night: "I want everything to be visible, especially the
+            EX NEMO"). It used to sit right under the crest's point, between
+            the handles, and both looms ran through it: the X and the M each
+            had a black line across them, and the 1.5px edge in the page's
+            colour it wore then could not cut them free. Below the handles
+            there is nothing behind it, so the words are whole and the oars
+            stay fully drawn (the owner's rule since 2026-09-22).
 
-            THE LINE IS THE PAGE'S OWN COLOUR, not black (owner, 2026-09-22: on
-            the light app "the red is not visible enough"). --background is
-            near-black on the dark app, so that side is unchanged; on the light
-            app it is the pale grey the intro stands on, which cuts the letters
-            out of whatever is behind them instead of muddying red with black.
-
-            AND IT IS BIGGER: 22px at weight 800, up from 17 at 700. The word
-            was never hard to READ — crimson on the pale grey clears 6.5:1 — it
-            was simply small and quiet in a 320px frame with a 92px crest over
-            it. Size is what the owner was asking for; the first attempt faded
-            the oars back instead and was rejected on sight.
-            Crimson is --primary, so another school's motto comes out in that
-            school's colour, and no colour is written here either way. The line
-            is drawn UNDER the fill (paint-order), so the letters keep their
-            weight and it only shows at the edge. The words come from the
-            university's data; a school with no motto has no line at all. */}
+            What the owner asked for before, so it isn't undone: the SCHOOL'S
+            colour (2026-09-21), and bigger and heavier rather than the oars
+            dimmed (2026-09-22): 22px at 800 then, 26px now, before the frame's
+            scale. `text-primary` draws in the school's readable ink
+            (globals.css), so the dark app gets Harvard's lifted crimson, and
+            another school's motto comes out in that school's colour. The
+            words come from the university's data; a school with no motto has
+            no line at all. */}
         {motto && (
-          <div className="absolute inset-x-0 top-[196px] flex justify-center">
+          <div className="absolute inset-x-0 top-[282px] flex justify-center">
             <div
-              className="v-motto-in whitespace-nowrap text-[22px] font-extrabold uppercase text-primary"
+              className="v-motto-in v-motto-shade whitespace-nowrap text-[26px] font-extrabold uppercase leading-none text-primary"
               // The trailing letter's spacing would push the word off-centre;
               // this pays it back. Matches the tracking the animation ends on.
-              style={{
-                textIndent: "0.38em",
-                WebkitTextStroke: "1.5px var(--background)",
-                paintOrder: "stroke fill",
-              }}
+              style={{ textIndent: "0.38em" }}
             >
               {motto}
             </div>
