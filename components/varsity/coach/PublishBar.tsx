@@ -49,6 +49,7 @@ export default function PublishBar({
   tourId,
   bare = false,
   stack = false,
+  full = false,
 }: {
   live: boolean;
   /** Edited since it was published (this sitting). Only meaningful when live. */
@@ -71,6 +72,12 @@ export default function PublishBar({
    * 2026-09-20).
    */
   stack?: boolean;
+  /**
+   * The button fills the width it is given. The Plan tab's block card sets
+   * it so Publish / Unpublish and the Edit under it are the same width
+   * (owner, 2026-09-28).
+   */
+  full?: boolean;
 }) {
   const edited = live && changed;
   const title = !live ? "Draft" : edited ? "Live · edited" : "Live";
@@ -115,11 +122,11 @@ export default function PublishBar({
             already live goes out. Which of the two it is is the state of the
             thing, not a different button. */}
         {publish ? (
-          <Button size="sm" onClick={live ? onNotify : onPublish} disabled={busy}>
+          <Button size="sm" full={full} onClick={live ? onNotify : onPublish} disabled={busy}>
             <IconSend size={13} /> Publish
           </Button>
         ) : (
-          <Button variant="secondary" size="sm" onClick={onUnpublish} disabled={busy}>
+          <Button variant="secondary" size="sm" full={full} onClick={onUnpublish} disabled={busy}>
             Unpublish
           </Button>
         )}

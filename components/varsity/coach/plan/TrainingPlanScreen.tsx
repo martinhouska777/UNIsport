@@ -898,7 +898,8 @@ export default function TrainingPlanScreen({
             vpravo dole a publish nad nim vpravo nahore"). The two small
             buttons no longer sit side by side in the corner: Publish (or
             Unpublish) is in the top corner, level with the name, and Edit is
-            in the bottom corner, level with the race pill.
+            in the bottom corner, level with the race pill. Both the same
+            width — the wider of the two (owner, 2026-09-28).
           */}
           <div className="flex items-stretch gap-3">
             <div className="min-w-0 flex-1">
@@ -923,9 +924,10 @@ export default function TrainingPlanScreen({
                 </span>
               )}
             </div>
-            <div className="flex flex-shrink-0 flex-col items-end justify-between gap-2">
+            <div className="flex flex-shrink-0 flex-col items-stretch justify-between gap-2">
               <PublishBar
                 bare
+                full
                 live={live}
                 changed={blockChanged(block)}
                 busy={writing}
@@ -936,6 +938,7 @@ export default function TrainingPlanScreen({
               <Button
                 variant="secondary"
                 size="sm"
+                full
                 onClick={() => openEditBlock(block)}
                 aria-label={`Edit ${block.name}`}
               >
