@@ -86,6 +86,47 @@ await wait(1200);
 const SCREENS = {
   gyms: async () => { await go("/gyms"); },
   match: async () => { await go("/match"); },
+  /* Match → Sessions: the Buddy Board (db/seed_buddy_board_demo.sql fills it
+     for a shoot — posts expire in a week) */
+  board: async () => {
+    await go("/match");
+    if (!(await clickText(/^sessions$/))) throw new Error("no Sessions tab");
+    await wait(3000);
+  },
+  /* Search by time, answered: Gym, tomorrow, 7:00 AM (Leah's legs post on the
+     seeded board is tomorrow at 7). "search" is the sheet as it lands on the
+     results, "search-results" the same sheet scrolled down to the people. */
+  search: async () => {
+    await SCREENS.board();
+    if (!(await clickText(/search by time/))) throw new Error("no Search by time");
+    await wait(1200);
+    await clickText(/^gym$/);
+    const day = await page.evaluate(() => {
+      const b = [...document.querySelectorAll("button[aria-label]")].find((e) => /^\w+day /.test(e.getAttribute("aria-label")) && /tomorrow/i.test(e.textContent));
+      if (!b) return null;
+      b.click();
+      return b.getAttribute("aria-label");
+    });
+    if (!day) throw new Error("no Tomorrow in the day picker");
+    await page.evaluate(() => {
+      const sel = document.querySelector('select[aria-label="Time"]');
+      const set = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value").set;
+      set.call(sel, "7");
+      sel.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    await wait(500);
+    if (!(await clickText(/^search$/))) throw new Error("no Search button");
+    await wait(3500);
+  },
+  "search-results": async () => {
+    await SCREENS.search();
+    await page.evaluate(() => {
+      const box = document.querySelector(".sheet-ceiling .overflow-y-auto");
+      const res = box && box.querySelector(".border-t");
+      if (box && res) box.scrollTop = res.offsetTop - 8;
+    });
+    await wait(1200);
+  },
   person: async () => {
     await go("/match");
     if (!(await clickText(/^view profile$/))) throw new Error("no View profile");
