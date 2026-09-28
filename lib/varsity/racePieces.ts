@@ -26,7 +26,7 @@
   lineup is; the crews are the boats of that session's lineup, so a result is
   a crew's, and every seat in it can find it. Times are kept in SECONDS; the
   watch's "8:02:11.5" is only how they are typed and shown (since 2026-09-28
-  typed as digits, or spun on a wheel — watchFromDigits, TimeSheet.tsx).
+  typed as digits, or spun on a wheel — watchSlots, TimeSheet.tsx).
 */
 import { boatTypes, roster, rosterById, type Boat } from "./coachLineup";
 
@@ -112,37 +112,33 @@ export function formatMargin(sec: number): string {
 }
 
 /*
-  A TIME AS IT IS READ OFF THE WATCH, TYPED OR SPUN (owner, 2026-09-28: "I
-  type 802115 and I want to add the : automatically so it becomes 8:02:11.5").
-  In TENTHS, the way the squad's sheets are written: the last digit typed is
-  the tenth, the two before it the seconds, then the minutes, then the hours —
-  so the colon and the dot put themselves in, and a phone's number pad, which
-  has no colon key, can type any time there is. Up to seven digits (23:59:59.9).
-  Digits that overrun (a "75" in the seconds while typing) simply carry, as a
-  microwave's do.
+  A TIME AS IT IS TYPED OFF THE WATCH — LEFT TO RIGHT (owner, 2026-09-28: "I
+  type 802115 and I want to add the : automatically so it becomes 8:02:11.5",
+  then: "write it from left to right, like first hour, then minutes, then
+  seconds, and then last"). In TENTHS, the way the squad's sheets are written.
+
+  The digits OVERWRITE the time already on the wheels, one place at a time —
+  the hour, the minutes, the seconds, the tenth — so "802115" typed over
+  8:00:00.0 is 8:02:11.5, and the colon and the dot are never typed (a
+  phone's number pad has neither). The hour takes as many places as the time
+  being overwritten has — one for 8, two for 10 — and a place not typed yet
+  keeps what is showing in it.
 */
-const WATCH_DIGITS = 7;
 
-function watchParts(digits: string) {
-  const d = digits.replace(/\D/g, "").replace(/^0+/, "").slice(-WATCH_DIGITS);
-  const from = (end: number, len: number) => d.slice(Math.max(0, d.length - end - len), Math.max(0, d.length - end));
-  return { d, h: from(5, 2), m: from(3, 2), s: from(1, 2), t: d.slice(-1) };
+/** A time's places, hour first: 8:02:11.5 → { digits: "802115", hour: 1 }. */
+export function watchSlots(sec: number): { digits: string; hour: number } {
+  const tenths = Math.max(0, Math.round(sec * 10));
+  const h = String(Math.floor(tenths / 36000));
+  const mm = String(Math.floor(tenths / 600) % 60).padStart(2, "0");
+  const ss = String(Math.floor(tenths / 10) % 60).padStart(2, "0");
+  return { digits: `${h}${mm}${ss}${tenths % 10}`, hour: h.length };
 }
 
-/** "802115" → 28931.5, i.e. 8:02:11.5. Null when nothing has been typed. */
-export function watchFromDigits(digits: string): number | null {
-  const { d, h, m, s, t } = watchParts(digits);
-  if (!d) return null;
-  return Number(h || 0) * 3600 + Number(m || 0) * 60 + Number(s || 0) + Number(t) / 10;
-}
-
-/** The digits typed so far as they will read: "8" → "0.8", "8021" → "8:02.1", "802115" → "8:02:11.5". */
-export function watchDigitsLabel(digits: string): string {
-  const { d, h, m, s, t } = watchParts(digits);
-  if (!d) return "";
-  if (h) return `${Number(h)}:${m.padStart(2, "0")}:${s.padStart(2, "0")}.${t}`;
-  if (m) return `${Number(m)}:${s.padStart(2, "0")}.${t}`;
-  return `${Number(s || 0)}.${t}`;
+/** The places back into seconds: ("802115", 1) → 28931.5. A "75" in the
+    minutes simply carries into the hour, as a microwave's does. */
+export function watchFromSlots(digits: string, hour: number): number {
+  const n = (from: number, to: number) => Number(digits.slice(from, to) || 0);
+  return n(0, hour) * 3600 + n(hour, hour + 2) * 60 + n(hour + 2, hour + 4) + n(hour + 4, hour + 5) / 10;
 }
 
 /** 28931.5 → "8:02:11.5"; under an hour, "44:16.3". Tenths, as the sheets are written. */

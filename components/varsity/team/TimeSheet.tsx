@@ -11,8 +11,11 @@
     • THE WHEELS — hours, minutes, seconds and tenths, on the phone's own
       scroll-and-snap, so a flick turns them the way an alarm clock's do;
     • THE DIGITS above them, which can be typed: numbers only, the colon and
-      the dot put themselves in — "802115" is 8:02:11.5 (racePieces.ts,
-      watchFromDigits) — because a phone's number pad has no colon key.
+      the dot put themselves in, because a phone's number pad has no colon
+      key. LEFT TO RIGHT (owner, same day: "first hour, then minutes, then
+      seconds, and then last"): each digit overwrites the next place of the
+      time showing — greyed while it waits, black once typed — so "802115"
+      over 8:00:00.0 is 8:02:11.5 (racePieces.ts, watchSlots).
   A spin rewrites the digits; typing turns the wheels.
 
   NEXT keeps the sheet open and moves on — Start, Finish, the next boat's
@@ -33,7 +36,7 @@ import { createPortal } from "react-dom";
 import ThemeProvider from "@/components/ThemeProvider";
 import { useVarsityTheme } from "@/components/varsity/useVarsityTheme";
 import { IconArrowRight, IconX } from "@/components/icons";
-import { classTitle, formatWatch, watchDigitsLabel, watchFromDigits } from "@/lib/varsity/racePieces";
+import { classTitle, formatWatch, watchFromSlots, watchSlots } from "@/lib/varsity/racePieces";
 
 /* One row of a wheel, in px — five of them show, the middle one is the value. */
 const ROW = 36;
@@ -119,6 +122,31 @@ function Wheel({
   );
 }
 
+/*
+  THE DIGITS, a place at a time. While the coach types, the places typed so
+  far are black, the rest still show the time being overwritten, in grey, and
+  a line sits under the next place to go. The colon and the dot take the
+  colour of the digit after them.
+*/
+function Places({ digits, hour, typed }: { digits: string; hour: number; typed: string | null }) {
+  const out: ReactNode[] = [];
+  digits.split("").forEach((d, i) => {
+    const mine = typed == null || i < typed.length;
+    const tone = mine ? "text-text" : "text-muted/45";
+    if (i === hour || i === hour + 2) out.push(<span key={`c${i}`} className={tone}>:</span>);
+    if (i === hour + 4) out.push(<span key={`c${i}`} className={tone}>.</span>);
+    out.push(
+      <span
+        key={i}
+        className={`border-b-[3px] ${tone} ${typed != null && i === typed.length ? "border-text" : "border-transparent"}`}
+      >
+        {typed != null && i < typed.length ? typed[i] : d}
+      </span>,
+    );
+  });
+  return <>{out}</>;
+}
+
 const Colon = ({ children }: { children: ReactNode }) => (
   <span aria-hidden className="relative flex items-center font-mono text-[20px] font-semibold text-muted">
     {children}
@@ -158,13 +186,17 @@ export default function TimeSheet({
   const [focused, setFocused] = useState(false);
 
   /*
-    The time on the wheels, and — while the coach is typing — the digits
-    typed so far ("" = the digits are waiting for the first key). A new
-    time resets both, the documented adjust-state-on-a-prop way; if the
-    keyboard is already up, the next time starts waiting for its digits.
+    The time on the wheels, and — while the coach is typing — the time being
+    overwritten and the digits typed over it so far. A new time resets both,
+    the documented adjust-state-on-a-prop way; if the keyboard is already up,
+    the next time is ready for its first digit straight away.
   */
-  const [at, setAt] = useState({ key: fieldKey, sec: value ?? from, typed: null as string | null });
-  if (at.key !== fieldKey) setAt({ key: fieldKey, sec: value ?? from, typed: focused ? "" : null });
+  type Typing = { base: number; typed: string };
+  const [at, setAt] = useState({ key: fieldKey, sec: value ?? from, typing: null as Typing | null });
+  if (at.key !== fieldKey) {
+    const sec = value ?? from;
+    setAt({ key: fieldKey, sec, typing: focused ? { base: sec, typed: "" } : null });
+  }
 
   /* THE KEYBOARD: how far it has pushed up from the bottom of the screen. */
   const [lift, setLift] = useState(0);
@@ -208,20 +240,28 @@ export default function TimeSheet({
     setAt((a) => {
       const next = toParts(a.sec);
       next[i] = n;
-      return { ...a, sec: fromParts(next), typed: focused ? "" : null };
+      const sec = fromParts(next);
+      return { ...a, sec, typing: focused ? { base: sec, typed: "" } : null };
     });
-  const typeDigits = (text: string) => {
-    const digits = text.replace(/\D/g, "").replace(/^0+/, "").slice(-7);
-    setAt((a) => ({ ...a, typed: digits, sec: watchFromDigits(digits) ?? a.sec }));
-  };
+  /* A digit overwrites the next place; one past the last place is ignored. */
+  const typeDigits = (text: string) =>
+    setAt((a) => {
+      if (!a.typing) return a;
+      const slots = watchSlots(a.typing.base);
+      const typed = text.replace(/\D/g, "").slice(0, slots.digits.length);
+      return {
+        ...a,
+        typing: { ...a.typing, typed },
+        sec: watchFromSlots(typed + slots.digits.slice(typed.length), slots.hour),
+      };
+    });
   /* A time only looked at is written back exactly as it was (an older sheet
      may carry hundredths); one that was spun or typed is in tenths. */
   const commit = (then: "next" | "done") =>
     onSet(value != null && at.sec === value ? value : Math.round(at.sec * 10) / 10, then);
 
-  /* The digits: what has been typed, or the time on the wheels. While they
-     wait for a first key they are empty, the time greyed underneath. */
-  const shown = at.typed != null ? watchDigitsLabel(at.typed) : formatWatch(at.sec);
+  /* What the digits show: the time being typed over, or the time on the wheels. */
+  const slots = watchSlots(at.typing ? at.typing.base : at.sec);
   /* A button that must not take the focus off the digits, or the phone's
      keyboard would drop between one time and the next. */
   const keepFocus = (e: React.PointerEvent | React.MouseEvent) => e.preventDefault();
@@ -261,31 +301,40 @@ export default function TimeSheet({
               </button>
             </div>
 
-            <input
-              ref={input}
-              value={at.typed === "" ? "" : shown}
-              placeholder={formatWatch(at.sec)}
-              onChange={(e) => typeDigits(e.target.value)}
-              onFocus={() => {
-                setFocused(true);
-                setAt((a) => ({ ...a, typed: "" }));
-              }}
-              onBlur={() => {
-                setFocused(false);
-                setAt((a) => (a.typed === "" ? { ...a, typed: null } : a));
-              }}
-              onKeyDown={(e) => {
-                if (e.key !== "Enter") return;
-                e.preventDefault();
-                commit(last ? "done" : "next");
-              }}
-              inputMode="numeric"
-              pattern="[0-9]*"
-              enterKeyHint={last ? "done" : "next"}
-              autoComplete="off"
-              aria-label={`${what} time`}
-              className="mt-3 block w-full rounded-2xl bg-surface-2 py-2.5 text-center font-mono text-[34px] font-semibold tabular-nums text-text caret-transparent outline-none placeholder:text-muted focus:ring-2 focus:ring-text"
-            />
+            {/* THE DIGITS, with the number pad's input laid invisibly over them:
+                a tap anywhere on them brings the pad up. */}
+            <div className={`relative mt-3 rounded-2xl bg-surface-2 py-2.5 ${focused ? "ring-2 ring-text" : ""}`}>
+              <div
+                aria-hidden
+                className="flex justify-center font-mono text-[34px] font-semibold leading-tight tabular-nums"
+              >
+                <Places digits={slots.digits} hour={slots.hour} typed={at.typing ? at.typing.typed : null} />
+              </div>
+              <input
+                ref={input}
+                value={at.typing?.typed ?? ""}
+                onChange={(e) => typeDigits(e.target.value)}
+                onFocus={() => {
+                  setFocused(true);
+                  setAt((a) => ({ ...a, typing: { base: a.sec, typed: "" } }));
+                }}
+                onBlur={() => {
+                  setFocused(false);
+                  setAt((a) => ({ ...a, typing: null }));
+                }}
+                onKeyDown={(e) => {
+                  if (e.key !== "Enter") return;
+                  e.preventDefault();
+                  commit(last ? "done" : "next");
+                }}
+                inputMode="numeric"
+                pattern="[0-9]*"
+                enterKeyHint={last ? "done" : "next"}
+                autoComplete="off"
+                aria-label={`${what}: ${formatWatch(at.sec)}`}
+                className="absolute inset-0 h-full w-full cursor-text rounded-2xl bg-transparent text-base text-transparent caret-transparent opacity-0 outline-none"
+              />
+            </div>
 
             <div className="mt-2.5 flex items-center justify-between">
               <button
@@ -293,7 +342,7 @@ export default function TimeSheet({
                 onPointerDown={keepFocus}
                 onMouseDown={keepFocus}
                 onClick={() => {
-                  setAt((a) => ({ ...a, typed: focused ? "" : null }));
+                  setAt((a) => ({ ...a, typing: focused ? { base: a.sec, typed: "" } : null }));
                   onSet(null, "stay");
                 }}
                 className="tap44 px-1 py-2 text-[13px] font-medium text-muted"
