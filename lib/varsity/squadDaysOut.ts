@@ -80,3 +80,38 @@ export async function fetchSelfOutOn(iso: string): Promise<Record<string, OutRea
   }
   return { ...status, ...marked };
 }
+
+/**
+ * HOW MANY DAYS EACH ATHLETE SAID THEY WERE OUT between two dates — the
+ * coach's consistency ranking ("who was sick", lib/varsity/ranking.ts).
+ * Account id → days. Sick, injured and away only: "Other" is the calendar's
+ * Missed, a day that did not happen, not a day off with a reason.
+ *
+ * A status that is still on counts every day from the day it was picked (or
+ * from today, with no start day recorded) up to today, inside the window —
+ * never a day still ahead. A day both marked and under a status counts once.
+ */
+export async function fetchOutDaysBetween(fromIso: string, toIso: string): Promise<Record<string, number>> {
+  if (!hasSupabaseEnv() || !ISO.test(fromIso) || !ISO.test(toIso)) return {};
+  const supabase = createClient();
+  const { data, error } = await supabase.rpc("varsity_squad_days_out", { p_from: fromIso, p_to: toIso });
+  if (error || !Array.isArray(data)) return {};
+
+  const today = toISO(new Date());
+  const last = toIso < today ? toIso : today;
+  const days: Record<string, Set<string>> = {};
+  const add = (id: string, iso: string) => (days[id] ??= new Set()).add(iso);
+  for (const r of data as Row[]) {
+    if (r.reason !== "sick" && r.reason !== "injured" && r.reason !== "away") continue;
+    if (r.ongoing) {
+      const since = r.day && ISO.test(r.day) ? r.day : today;
+      const [y, m, d] = (since > fromIso ? since : fromIso).split("-").map(Number);
+      for (const day = new Date(y, m - 1, d); toISO(day) <= last; day.setDate(day.getDate() + 1)) {
+        add(r.user_id, toISO(day));
+      }
+    } else if (r.day && ISO.test(r.day)) {
+      add(r.user_id, r.day);
+    }
+  }
+  return Object.fromEntries(Object.entries(days).map(([id, set]) => [id, set.size]));
+}

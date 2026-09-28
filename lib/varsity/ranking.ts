@@ -15,6 +15,18 @@
       and a rower's points add up over the window. A test somebody did not row
       gives them nothing: the list is over a stretch of time "because people
       can improve", and turning up is part of it.
+    • WATER: the NUMBER OF WINS (the owner's pick over a win percentage) —
+      every piece on a timing sheet where a class had two or more crews timed,
+      a win for each rower in the crew that finished first. The classes are
+      kept apart, "pairs, then fours, then fours plus, and 8 is just eight,
+      which is different"; a better or worse boat is left for the coach to
+      read off the names — "look at the names, and you just know the pattern.
+      Later, we can specify."
+    • CONSISTENCY, "against the plan: how much he logged and extra sessions…
+      so coaches also know how consistent each one is" — the athlete's own
+      count of planned sessions done (athleteStats.planSlots, the one count
+      their Statistics use), the sessions logged on top, and the days they
+      said they were out ("who was sick").
     • THE WINDOW is the team statistics' own Month and Semester, or two dates
       ("1. a month 2. semester 3. pick dates"), so "a month" is the same four
       weeks on both screens.
@@ -24,10 +36,26 @@
   Pure: the screen hands in what the Workouts tab has already read, and a new
   list here is a new list on the screen (rule 7).
 */
-import type { Span } from "./athleteStats";
+import { planSlots, type Span } from "./athleteStats";
 import { teamRanges, toIso, type TeamRange } from "./teamStats";
 import { buildBoard, onTheWater, type TeamWorkout } from "./teamBoard";
 import type { TeamResult } from "./resultsStore";
+import { boatTypes, roster } from "./coachLineup";
+import { parseSessionKey, type SessionMap } from "./coachPlan";
+import { classTitle, crewMembers, pieceBoards, type RaceDay } from "./racePieces";
+import type { LogEntry } from "./logStore";
+
+/* ── The lists ──────────────────────────────────────────────────────────── */
+
+export type RankingList = "erg" | "water" | "consistency";
+
+/** The three lists, in the owner's order: "erg rankings and water rankings",
+    and consistency as "a third list". */
+export const rankingLists: { key: RankingList; label: string }[] = [
+  { key: "erg", label: "Erg" },
+  { key: "water", label: "Water" },
+  { key: "consistency", label: "Consistency" },
+];
 
 /* ── The window ─────────────────────────────────────────────────────────── */
 
@@ -121,9 +149,164 @@ export function ergRanking(workouts: TeamWorkout[], results: TeamResult[], span:
     }
   });
 
-  const list = [...people.values()].sort((a, b) => b.points - a.points || a.name.localeCompare(b.name));
-  list.forEach((r, i) => (r.rank = i > 0 && r.points === list[i - 1].points ? list[i - 1].rank : i + 1));
+  return numberPlaces(
+    [...people.values()].sort((a, b) => b.points - a.points || a.name.localeCompare(b.name)),
+    (a, b) => a.points === b.points,
+  );
+}
+
+/*
+  EQUAL SCORES SHARE A PLACE (1, 2, 2, 4) — `same` says when two neighbours in
+  the sorted list are level. Nothing here breaks a tie the coach did not ask
+  to have broken.
+*/
+function numberPlaces<T extends { rank: number }>(list: T[], same: (a: T, b: T) => boolean): T[] {
+  list.forEach((r, i) => (r.rank = i > 0 && same(r, list[i - 1]) ? list[i - 1].rank : i + 1));
   return list;
+}
+
+/* ── The water ranking ──────────────────────────────────────────────────── */
+
+export type WaterClass = { badge: string; title: string };
+
+export type WaterRankRow = {
+  /** As the timing sheet wrote them — their surname — which is how they are
+      matched from piece to piece, as on the race board's Athletes tab. */
+  key: string;
+  /** The roster's full name when exactly one rower has that surname. */
+  name: string;
+  wins: number;
+  raced: number;
+  /** Per class badge: the pieces won and raced in it. */
+  byClass: Record<string, { wins: number; raced: number }>;
+  rank: number;
+};
+
+/* Biggest boat first, as on a regatta card — the race board's order. */
+const classOrder = (badge: string) => {
+  const i = boatTypes.findIndex((k) => k.key === badge);
+  return i === -1 ? boatTypes.length : i;
+};
+
+const lastWord = (name: string) => {
+  const words = name.trim().split(/\s+/);
+  return words[words.length - 1] ?? "";
+};
+
+/** A surname off the sheet, as the full name of the one rower who has it. */
+function fullName(surname: string): string {
+  const s = surname.trim().toLowerCase();
+  const matches = roster.filter((a) => !a.cox && lastWord(a.name).toLowerCase() === s);
+  return matches.length === 1 ? matches[0].name : surname;
+}
+
+/**
+ * Every rower who raced a piece in the window, most wins first, and the
+ * classes those pieces were in (biggest boat first).
+ *
+ * A piece counts in a class only when two or more of its crews have a time —
+ * one boat is not a race (the race board's own rule). The crew with the
+ * fastest time wins it, and so does any crew level with it to the hundredth.
+ * No coxes, as on the race board's Athletes tab: a cox carries whichever boat
+ * they steer, so their wins would be the boat's, not theirs.
+ */
+export function waterRanking(races: RaceDay[], span: Span): { rows: WaterRankRow[]; classes: WaterClass[] } {
+  const people = new Map<string, WaterRankRow>();
+  const seen = new Set<string>();
+  for (const day of races) {
+    const date = parseSessionKey(day.dayKey)?.date;
+    if (!date || !within(date, span)) continue;
+    for (const piece of day.pieces) {
+      for (const board of pieceBoards(piece)) {
+        if (board.rows.length < 2) continue;
+        seen.add(board.badge);
+        const best = board.rows[0].time;
+        for (const row of board.rows) {
+          const won = row.time === best;
+          for (const raw of crewMembers(row.crew).rowers) {
+            const key = raw.trim();
+            if (!key) continue;
+            let person = people.get(key);
+            if (!person) {
+              person = { key, name: fullName(key), wins: 0, raced: 0, byClass: {}, rank: 0 };
+              people.set(key, person);
+            }
+            const cls = (person.byClass[board.badge] ??= { wins: 0, raced: 0 });
+            cls.raced += 1;
+            person.raced += 1;
+            if (won) {
+              cls.wins += 1;
+              person.wins += 1;
+            }
+          }
+        }
+      }
+    }
+  }
+  const rows = numberPlaces(
+    [...people.values()].sort((a, b) => b.wins - a.wins || a.name.localeCompare(b.name)),
+    (a, b) => a.wins === b.wins,
+  );
+  const classes = [...seen]
+    .sort((a, b) => classOrder(a) - classOrder(b))
+    .map((badge) => ({ badge, title: classTitle(badge) }));
+  return { rows, classes };
+}
+
+/* ── The consistency ranking ────────────────────────────────────────────── */
+
+export type ConsistencyRow = {
+  id: string;
+  name: string;
+  /** Sessions the plan put up in the window (up to today), and how many of them they logged. */
+  planned: number;
+  done: number;
+  /** Training logged against no session of the plan. */
+  extra: number;
+  /** Days they marked themselves sick, injured or away. */
+  out: number;
+  /** Done out of planned, as a whole percentage; null when nothing was planned. */
+  share: number | null;
+  rank: number;
+};
+
+/**
+ * EVERYBODY ON THE SQUAD, not only the people who logged something — the
+ * one place that is deliberately so. An average must leave out somebody who
+ * logged nothing (they are an unknown, not a zero), but a coach reading "how
+ * consistent is each one" is asking about exactly that person.
+ *
+ * Highest share of the plan first; level on that, more sessions on top first
+ * — the owner named the extra sessions as part of it. Days out are shown, not
+ * forgiven: whether a sick day should come off the plan is the owner's call.
+ */
+export function consistencyRanking(
+  people: { id: string; name: string }[],
+  logsByAthlete: Record<string, LogEntry[]>,
+  plan: SessionMap,
+  span: Span,
+  outDays: Record<string, number>,
+): ConsistencyRow[] {
+  const rows: ConsistencyRow[] = people.map((p) => {
+    const logs = (logsByAthlete[p.id] ?? []).filter((l) => l.logDate >= span.startIso && l.logDate <= span.endIso);
+    const slots = planSlots(logs, plan, span);
+    const planned = slots.keys.length;
+    return {
+      id: p.id,
+      name: p.name,
+      planned,
+      done: slots.done,
+      extra: logs.filter((l) => l.category !== "off" && !l.dayKey).length,
+      out: outDays[p.id] ?? 0,
+      share: planned ? Math.min(100, Math.round((slots.done / planned) * 100)) : null,
+      rank: 0,
+    };
+  });
+  const share = (r: ConsistencyRow) => r.share ?? -1;
+  return numberPlaces(
+    rows.sort((a, b) => share(b) - share(a) || b.extra - a.extra || a.name.localeCompare(b.name)),
+    (a, b) => share(a) === share(b) && a.extra === b.extra,
+  );
 }
 
 /** 1 → "1st", 2 → "2nd", 11 → "11th", 22 → "22nd". */

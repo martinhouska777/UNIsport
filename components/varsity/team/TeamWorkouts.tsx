@@ -490,7 +490,9 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
           )}
         </div>
       )}
-      {side === "ranking" && <TeamRanking workouts={workouts} results={results} exampleKeys={exampleKeys} />}
+      {side === "ranking" && (
+        <TeamRanking workouts={workouts} results={results} exampleKeys={exampleKeys} races={races} />
+      )}
       <div className="flex flex-col gap-1.5">
         {side !== "ranking" && rows.length === 0 && (
           <div className="rounded-2xl border border-dashed border-border bg-surface px-4 py-8 text-center text-[12px] text-muted">
