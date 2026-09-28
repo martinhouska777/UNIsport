@@ -60,22 +60,27 @@ import {
   combinedBoards,
   crewFromBoat,
   crewMembers,
+  crewsInClassOrder,
   crewTime,
   formatClock,
   formatMargin,
+  formatWatch,
   newPiece,
-  parseClock,
   pieceBoards,
+  piecesStartAround,
   switchPairs,
+  wheelStart,
   withLine,
   type RaceCrew,
   type RaceDay,
   type RacePiece,
+  type WatchField,
 } from "@/lib/varsity/racePieces";
 import { removeRaceDay, writeRaceDay } from "@/lib/varsity/raceStore";
 import { saveFailureDetail, type SaveFailure } from "@/lib/saveFailure";
 import SaveState from "@/components/varsity/coach/SaveState";
 import RankBadge from "@/components/varsity/team/RankBadge";
+import TimeSheet from "@/components/varsity/team/TimeSheet";
 
 const COMBINED = "combined";
 const ATHLETES = "athletes";
@@ -170,6 +175,7 @@ export default function RaceBoard({
   day,
   dateLabel,
   title,
+  sessionTime,
   boats,
   inConsole = false,
   onChange,
@@ -181,6 +187,9 @@ export default function RaceBoard({
   dateLabel: string;
   /** The plan's words for the session — "2×2k open rate, small boats". */
   title: string;
+  /** When the session starts ("7:00 AM"), so the first time on the wheel is
+      about when the pieces do. */
+  sessionTime?: string;
   /** The session's lineup boats, so a crew can be added to a piece. */
   boats: Boat[];
   inConsole?: boolean;
@@ -580,6 +589,8 @@ export default function RaceBoard({
       {editing && piece && editing === piece.id && (
         <PieceEditor
           piece={piece}
+          earlier={day.pieces[day.pieces.findIndex((p) => p.id === piece.id) - 1] ?? null}
+          around={piecesStartAround(sessionTime)}
           boats={boats}
           onSave={(next) => {
             write({ ...day, pieces: day.pieces.map((p) => (p.id === next.id ? next : p)) });
@@ -627,30 +638,94 @@ function TabButton({ on, onClick, children }: { on: boolean; onClick: () => void
 
 /* ── Typing the sheet ───────────────────────────────────────────────────── */
 
-type Draft = RaceCrew & { startText: string; finishText: string; totalText: string };
+/*
+  THE SHEET OF TIMES (owner, 2026-09-28: "make the note optional, the note
+  takes up so much space… cut that small part on the top, the text, and make
+  the UI a little better so it's not just white things").
 
-const toDraft = (c: RaceCrew): Draft => ({
-  ...c,
-  startText: c.start == null ? "" : formatClock(c.start),
-  finishText: c.finish == null ? "" : formatClock(c.finish),
-  totalText: c.total == null ? "" : formatClock(c.total),
-});
+  A crew is drawn as its BOAT under its class's black pill, the board's own
+  look, with three tiles: START and FINISH off the watch, and the TIME they
+  make, which fills itself in, in black, once both are there, so a glance down
+  the sheet says which boats are done. With no watch reading the Time tile is
+  tapped and the overall time goes straight in; it took the place of the
+  third box, "Overall". An empty tile is dashed. A tap on any of them opens
+  TimeSheet, the wheels and the digits, and its Next walks the sheet in the
+  order it is drawn: a boat's start, its finish, the next boat's start.
+
+  The note is a small "+ Note" until it is wanted; a note already written
+  stays open. The paragraph that sat on top ("Start and finish off the
+  running watch, as on the sheet…") is gone, and the piece's name is the
+  heading itself, typed into in place. Save rides at the bottom of the screen
+  all the way down, so a coach who has just typed a whole piece does not have
+  to go looking for it.
+*/
+type Picking = { boatId: string; field: WatchField };
+const FIELD_WORD: Record<WatchField, string> = { start: "Start", finish: "Finish", total: "Time" };
+
+/* One of a crew's three times: dashed while empty, grey once written, black
+   when it is the time the watch readings make; red when the finish is not
+   after the start. */
+function TimeTile({
+  word,
+  value,
+  on = false,
+  result = false,
+  wrong = false,
+  onTap,
+}: {
+  word: string;
+  value: number | null;
+  on?: boolean;
+  result?: boolean;
+  wrong?: boolean;
+  onTap?: () => void;
+}) {
+  const look = result
+    ? "bg-text text-background"
+    : wrong
+      ? "border border-dashed border-danger text-danger"
+      : value == null
+        ? "border border-dashed border-muted/50 text-muted"
+        : "bg-surface-2 text-text";
+  const cls = `mt-1 flex h-10 w-full items-center justify-center rounded-xl px-1 font-mono text-[14px] font-semibold tabular-nums ${look} ${
+    on ? "ring-2 ring-text ring-offset-2 ring-offset-surface" : ""
+  }`;
+  const shown = value == null ? "–:––.–" : formatWatch(value);
+  return (
+    <div className="min-w-0">
+      <div className={`pl-0.5 ${TH}`}>{word}</div>
+      {onTap ? (
+        <button type="button" onClick={onTap} aria-label={`${word}: ${value == null ? "empty" : shown}`} className={cls}>
+          {shown}
+        </button>
+      ) : (
+        <div className={cls}>{shown}</div>
+      )}
+    </div>
+  );
+}
 
 function PieceEditor({
   piece,
+  earlier,
+  around,
   boats,
   onSave,
   onDelete,
   onClose,
 }: {
   piece: RacePiece;
+  /** The piece before this one, where the next start is looked for. */
+  earlier: RacePiece | null;
+  /** The session's time plus the warm-up, where the first start is looked for. */
+  around: number | null;
   boats: Boat[];
   onSave: (piece: RacePiece) => void;
   onDelete: () => void;
   onClose: () => void;
 }) {
   const [name, setName] = useState(piece.name);
-  const [crews, setCrews] = useState<Draft[]>(() => piece.crews.map(toDraft));
+  const [crews, setCrews] = useState<RaceCrew[]>(piece.crews);
   const [adding, setAdding] = useState(false);
   /*
     DELETING A PIECE ASKS FIRST (owner, 2026-09-22: "accidentally deleted the
@@ -660,114 +735,138 @@ function PieceEditor({
     that destroys less was the one that did not.
   */
   const [armed, setArmed] = useState(false);
+  /* The crews whose note is open: every one that has a note, and one the
+     coach has just asked for (that one takes the keyboard straight away). */
+  const [noted, setNoted] = useState<Set<string>>(
+    () => new Set(piece.crews.filter((c) => c.note.trim()).map((c) => c.boatId)),
+  );
+  const [asked, setAsked] = useState<string | null>(null);
+  const [picking, setPicking] = useState<Picking | null>(null);
 
   const notIn = boats.filter((b) => !crews.some((c) => c.boatId === b.id));
+  const listed = crewsInClassOrder(crews);
 
-  const update = (i: number, patch: Partial<Draft>) =>
-    setCrews((cs) => cs.map((c, k) => (k === i ? { ...c, ...patch } : c)));
+  const update = (boatId: string, patch: Partial<RaceCrew>) =>
+    setCrews((cs) => cs.map((c) => (c.boatId === boatId ? { ...c, ...patch } : c)));
+
+  /* What Next goes to: a start's finish, then the next boat's start. */
+  const after = (p: Picking): Picking | null => {
+    if (p.field === "start") return { boatId: p.boatId, field: "finish" };
+    const next = listed[listed.findIndex((c) => c.boatId === p.boatId) + 1];
+    return next ? { boatId: next.boatId, field: "start" } : null;
+  };
 
   const save = () => {
     onSave({
       id: piece.id,
       name: name.trim() || piece.name,
-      crews: crews.map(({ startText, finishText, totalText, ...c }) => ({
-        ...c,
-        start: parseClock(startText),
-        finish: parseClock(finishText),
-        total: parseClock(totalText),
-        note: c.note.trim(),
-      })),
+      crews: crews.map((c) => ({ ...c, note: c.note.trim() })),
     });
   };
 
-  const field =
-    "w-full rounded-lg border border-border bg-surface px-2 py-1.5 text-base text-text outline-none placeholder:text-muted";
+  /* Class by class, as the board draws them. */
+  const groups: { badge: string; crews: RaceCrew[] }[] = [];
+  for (const c of listed) {
+    const g = groups[groups.length - 1];
+    if (g && g.badge === c.badge) g.crews.push(c);
+    else groups.push({ badge: c.badge, crews: [c] });
+  }
+
+  const picked = picking ? (crews.find((c) => c.boatId === picking.boatId) ?? null) : null;
+  const isOn = (c: RaceCrew, field: WatchField) => picking?.boatId === c.boatId && picking.field === field;
 
   return (
-    <Sheet title={piece.name} onClose={onClose} full>
-      <label className="block">
-        <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Piece</span>
-        <input value={name} onChange={(e) => setName(e.target.value)} className={`${field} mt-1`} />
+    <Sheet title="" onClose={onClose} full>
+      {/* The piece's name IS the heading, typed into where it stands. */}
+      <label className="flex items-center gap-2">
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          aria-label="Piece name"
+          className="min-w-0 flex-1 bg-transparent text-[20px] font-bold text-text outline-none"
+        />
+        <span className="flex-shrink-0 text-muted">
+          <IconPencil size={14} />
+        </span>
       </label>
 
-      <p className="mt-4 text-[12px] text-muted">
-        Start and finish off the running watch, as on the sheet — 25:14.48. The overall time works itself out. No
-        watch reading? Type the overall time instead.
-      </p>
-
-      <div className="mt-3 flex flex-col gap-2">
-        {crews.map((c, i) => {
-          const time = crewTime({
-            ...c,
-            start: parseClock(c.startText),
-            finish: parseClock(c.finishText),
-            total: parseClock(c.totalText),
-          });
-          return (
-            <div key={c.boatId} className="rounded-2xl border border-border bg-surface p-3">
-              <div className="flex items-center justify-between gap-2">
-                <div className="min-w-0">
-                  <div className="truncate text-[13px] font-semibold text-text">{c.label}</div>
-                  <div className="font-mono text-[11px] text-muted">{classTitle(c.badge)}</div>
+      {groups.map((g) => (
+        <div key={g.badge} className="mt-4">
+          <ClassTitle title={classTitle(g.badge)} />
+          <div className="flex flex-col gap-2">
+            {g.crews.map((c) => {
+              const watched = c.start != null && c.finish != null;
+              return (
+                <div key={c.boatId} className="rounded-2xl border border-border bg-surface p-3 shadow-card">
+                  <div className="flex items-start gap-2">
+                    <div className="min-w-0 flex-1">
+                      {/* The note is typed below, so it is not drawn here too. */}
+                      <CrewBoat crew={{ ...c, note: "" }} />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setCrews((cs) => cs.filter((x) => x.boatId !== c.boatId))}
+                      aria-label={`Take ${c.label} out of this piece`}
+                      className="tap44 press-icon -mr-1 -mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-muted"
+                    >
+                      <IconX size={13} />
+                    </button>
+                  </div>
+                  <div className="mt-2.5 grid grid-cols-3 gap-2">
+                    <TimeTile
+                      word="Start"
+                      value={c.start}
+                      on={isOn(c, "start")}
+                      onTap={() => setPicking({ boatId: c.boatId, field: "start" })}
+                    />
+                    <TimeTile
+                      word="Finish"
+                      value={c.finish}
+                      on={isOn(c, "finish")}
+                      onTap={() => setPicking({ boatId: c.boatId, field: "finish" })}
+                    />
+                    {watched && c.finish! > c.start! ? (
+                      <TimeTile word="Time" value={crewTime(c)} result />
+                    ) : (
+                      <TimeTile
+                        word="Time"
+                        value={c.total}
+                        wrong={watched}
+                        on={isOn(c, "total")}
+                        onTap={() => setPicking({ boatId: c.boatId, field: "total" })}
+                      />
+                    )}
+                  </div>
+                  {noted.has(c.boatId) ? (
+                    <input
+                      value={c.note}
+                      onChange={(e) => update(c.boatId, { note: e.target.value })}
+                      autoFocus={asked === c.boatId}
+                      placeholder="Note"
+                      className="mt-2.5 block w-full rounded-lg border border-border bg-surface px-2.5 py-1.5 text-base text-text outline-none placeholder:text-muted"
+                    />
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setNoted((s) => new Set(s).add(c.boatId));
+                        setAsked(c.boatId);
+                      }}
+                      className="tap44 mt-2.5 inline-flex h-7 items-center gap-1 rounded-lg border border-dashed border-muted/50 px-2.5 text-[12px] font-medium text-muted"
+                    >
+                      <IconPlus size={12} /> Note
+                    </button>
+                  )}
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="font-mono text-[13px] tabular-nums text-text">{formatClock(time)}</span>
-                  <button
-                    type="button"
-                    onClick={() => setCrews((cs) => cs.filter((_, k) => k !== i))}
-                    aria-label={`Take ${c.label} out of this piece`}
-                    className="tap44 press-icon flex h-7 w-7 items-center justify-center rounded-full text-muted"
-                  >
-                    <IconX size={13} />
-                  </button>
-                </div>
-              </div>
-              <div className="mt-2 grid grid-cols-3 gap-2">
-                <label className="block">
-                  <span className="text-[9px] font-semibold uppercase tracking-[0.1em] text-muted">Start</span>
-                  <input
-                    inputMode="decimal"
-                    placeholder="mm:ss.hh"
-                    value={c.startText}
-                    onChange={(e) => update(i, { startText: e.target.value })}
-                    className={`${field} mt-0.5 font-mono`}
-                  />
-                </label>
-                <label className="block">
-                  <span className="text-[9px] font-semibold uppercase tracking-[0.1em] text-muted">Finish</span>
-                  <input
-                    inputMode="decimal"
-                    placeholder="mm:ss.hh"
-                    value={c.finishText}
-                    onChange={(e) => update(i, { finishText: e.target.value })}
-                    className={`${field} mt-0.5 font-mono`}
-                  />
-                </label>
-                <label className="block">
-                  <span className="text-[9px] font-semibold uppercase tracking-[0.1em] text-muted">Overall</span>
-                  <input
-                    inputMode="decimal"
-                    placeholder="mm:ss.hh"
-                    value={c.totalText}
-                    onChange={(e) => update(i, { totalText: e.target.value })}
-                    className={`${field} mt-0.5 font-mono`}
-                  />
-                </label>
-              </div>
-              <input
-                placeholder="Note"
-                value={c.note}
-                onChange={(e) => update(i, { note: e.target.value })}
-                className={`${field} mt-2`}
-              />
-            </div>
-          );
-        })}
-      </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
 
       {/* A crew that is in the lineup but not (yet) in this piece. */}
       {notIn.length > 0 && (
-        <div className="mt-3">
+        <div className="mt-4">
           {adding ? (
             <div className="flex flex-wrap gap-1.5">
               {notIn.map((b) => (
@@ -775,7 +874,7 @@ function PieceEditor({
                   key={b.id}
                   type="button"
                   onClick={() => {
-                    setCrews((cs) => [...cs, toDraft(crewFromBoat(b))]);
+                    setCrews((cs) => [...cs, crewFromBoat(b)]);
                     setAdding(false);
                   }}
                   className="tap44 rounded-full border border-border bg-surface px-3 py-1.5 text-[12px] font-medium text-text"
@@ -801,15 +900,16 @@ function PieceEditor({
         </p>
       )}
 
-      <div className="mt-6 flex items-center justify-between gap-3">
+      {/* -bottom-8 is the full sheet's own bottom padding (pb-8): a sticky
+          bar stops that far short of the edge otherwise, with the list
+          showing through underneath it. */}
+      <div className="sticky -bottom-8 -mx-4 mt-6 flex items-center justify-between gap-3 border-t border-border bg-background px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3">
         {armed ? (
           <div className="flex min-w-0 items-center gap-2 text-[12px]">
             {/* It names the piece, and says what goes with it: the times are
                 the work, and they are what a coach would not expect a tap on
                 a grey word to throw away. */}
-            <span className="min-w-0 text-muted">
-              Delete {piece.name} and its times?
-            </span>
+            <span className="min-w-0 text-muted">Delete {piece.name} and its times?</span>
             <button
               type="button"
               onClick={onDelete}
@@ -837,11 +937,35 @@ function PieceEditor({
         <button
           type="button"
           onClick={save}
-          className="tap44 rounded-full bg-primary px-5 py-2.5 text-[13px] font-semibold text-primary-contrast"
+          className="tap44 flex-shrink-0 rounded-full bg-primary px-5 py-2.5 text-[13px] font-semibold text-primary-contrast"
         >
           Save times
         </button>
       </div>
+
+      {picking && picked && (
+        <TimeSheet
+          fieldKey={`${picking.boatId}:${picking.field}`}
+          who={picked.label}
+          badge={picked.badge}
+          what={FIELD_WORD[picking.field]}
+          value={picked[picking.field]}
+          from={wheelStart(
+            listed,
+            listed.findIndex((c) => c.boatId === picked.boatId),
+            picking.field,
+            earlier,
+            around,
+          )}
+          last={after(picking) === null}
+          onSet={(v, then) => {
+            update(picked.boatId, { [picking.field]: v });
+            if (then === "next") setPicking(after(picking));
+            else if (then === "done") setPicking(null);
+          }}
+          onClose={() => setPicking(null)}
+        />
+      )}
     </Sheet>
   );
 }

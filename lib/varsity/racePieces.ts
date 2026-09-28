@@ -24,8 +24,9 @@
 
   Storage is one JSON blob per session (lib/varsity/raceStore.ts), the way a
   lineup is; the crews are the boats of that session's lineup, so a result is
-  a crew's, and every seat in it can find it. Times are kept in SECONDS with
-  hundredths; the watch's "25:14.48" is only how they are typed and shown.
+  a crew's, and every seat in it can find it. Times are kept in SECONDS; the
+  watch's "8:02:11.5" is only how they are typed and shown (since 2026-09-28
+  typed as digits, or spun on a wheel — watchFromDigits, TimeSheet.tsx).
 */
 import { boatTypes, roster, rosterById, type Boat } from "./coachLineup";
 
@@ -108,6 +109,104 @@ export function formatMargin(sec: number): string {
   if (sec < 0.005) return "0.00";
   if (sec < 60) return `+${sec.toFixed(2)}`;
   return `+${formatClock(sec)}`;
+}
+
+/*
+  A TIME AS IT IS READ OFF THE WATCH, TYPED OR SPUN (owner, 2026-09-28: "I
+  type 802115 and I want to add the : automatically so it becomes 8:02:11.5").
+  In TENTHS, the way the squad's sheets are written: the last digit typed is
+  the tenth, the two before it the seconds, then the minutes, then the hours —
+  so the colon and the dot put themselves in, and a phone's number pad, which
+  has no colon key, can type any time there is. Up to seven digits (23:59:59.9).
+  Digits that overrun (a "75" in the seconds while typing) simply carry, as a
+  microwave's do.
+*/
+const WATCH_DIGITS = 7;
+
+function watchParts(digits: string) {
+  const d = digits.replace(/\D/g, "").replace(/^0+/, "").slice(-WATCH_DIGITS);
+  const from = (end: number, len: number) => d.slice(Math.max(0, d.length - end - len), Math.max(0, d.length - end));
+  return { d, h: from(5, 2), m: from(3, 2), s: from(1, 2), t: d.slice(-1) };
+}
+
+/** "802115" → 28931.5, i.e. 8:02:11.5. Null when nothing has been typed. */
+export function watchFromDigits(digits: string): number | null {
+  const { d, h, m, s, t } = watchParts(digits);
+  if (!d) return null;
+  return Number(h || 0) * 3600 + Number(m || 0) * 60 + Number(s || 0) + Number(t) / 10;
+}
+
+/** The digits typed so far as they will read: "8" → "0.8", "8021" → "8:02.1", "802115" → "8:02:11.5". */
+export function watchDigitsLabel(digits: string): string {
+  const { d, h, m, s, t } = watchParts(digits);
+  if (!d) return "";
+  if (h) return `${Number(h)}:${m.padStart(2, "0")}:${s.padStart(2, "0")}.${t}`;
+  if (m) return `${Number(m)}:${s.padStart(2, "0")}.${t}`;
+  return `${Number(s || 0)}.${t}`;
+}
+
+/** 28931.5 → "8:02:11.5"; under an hour, "44:16.3". Tenths, as the sheets are written. */
+export function formatWatch(sec: number | null): string {
+  if (sec == null) return "—";
+  const tenths = Math.max(0, Math.round(sec * 10));
+  const h = Math.floor(tenths / 36000);
+  const m = Math.floor(tenths / 600) % 60;
+  const s = String(Math.floor(tenths / 10) % 60).padStart(2, "0");
+  return h ? `${h}:${String(m).padStart(2, "0")}:${s}.${tenths % 10}` : `${m}:${s}.${tenths % 10}`;
+}
+
+/** Which of a crew's three times is being written. */
+export type WatchField = "start" | "finish" | "total";
+
+/*
+  WHERE THE WHEEL STARTS on a time nobody has written yet (owner, 2026-09-28:
+  "you know when the session started, so warm up is 45 mins, so around 8
+  pieces start, so like 1 hour after start — preset it like that").
+
+    • The first boat of the first piece: the session's own time plus an hour,
+      on a twelve-hour clock — a 7:00 AM outing puts the wheel at 8:00:00.0.
+    • Every boat after it: where the boat above it started — crews go off
+      together, or seconds apart — and a finish where the boat above finished.
+    • A boat's finish with nobody above it: its own start.
+    • The first boat of a later piece: where the piece before it ended.
+
+  Only where the wheel STARTS. Nothing is written until the coach presses
+  Next or Done on the time (feedback: a guess must never look like a decision).
+*/
+const WARM_UP = 3600;
+
+/** The session's time ("7:00 AM") plus the warm-up, on the watch's twelve-hour clock: 8:00:00.0. */
+export function piecesStartAround(sessionTime: string | undefined): number | null {
+  const m = /^\s*(\d{1,2}):(\d{2})/.exec(sessionTime ?? "");
+  if (!m) return null;
+  let sec = (Number(m[1]) % 12 || 12) * 3600 + Number(m[2]) * 60 + WARM_UP;
+  if (sec >= 13 * 3600) sec -= 12 * 3600;
+  return sec;
+}
+
+/**
+ * The wheel's first position for crew `i`'s `field`, given the crews in the
+ * order the sheet lists them, the piece before this one, and piecesStartAround.
+ */
+export function wheelStart(
+  crews: RaceCrew[],
+  i: number,
+  field: WatchField,
+  earlier: RacePiece | null,
+  around: number | null,
+): number {
+  const above = crews.slice(0, i).reverse();
+  if (field === "total") return above.map(crewTime).find((t) => t != null) ?? 0;
+  if (field === "finish") {
+    const finish = above.find((c) => c.finish != null)?.finish;
+    if (finish != null) return finish;
+    if (crews[i]?.start != null) return crews[i].start!;
+  }
+  const start = above.find((c) => c.start != null)?.start;
+  if (start != null) return start;
+  const ended = Math.max(-1, ...(earlier?.crews ?? []).map((c) => c.finish ?? -1));
+  if (ended >= 0) return ended;
+  return around ?? 0;
 }
 
 /** The crew's time for the piece, however it was written down. */
@@ -332,6 +431,16 @@ const classOrder = (badge: string) => {
   const i = boatTypes.findIndex((k) => k.key === badge);
   return i === -1 ? boatTypes.length : i;
 };
+
+/** The crews in the order the board lists them — class by class, biggest boat
+    first, each class in the sheet's own order — which is also the order the
+    coach types them in. */
+export function crewsInClassOrder(crews: RaceCrew[]): RaceCrew[] {
+  return crews
+    .map((crew, i) => ({ crew, i }))
+    .sort((a, b) => classOrder(a.crew.badge) - classOrder(b.crew.badge) || a.i - b.i)
+    .map((x) => x.crew);
+}
 
 /* ── One piece's board ──────────────────────────────────────────────────── */
 

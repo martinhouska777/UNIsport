@@ -1,0 +1,332 @@
+"use client";
+
+/*
+  ONE TIME OF ONE CREW, SPUN OR TYPED — the sheet that opens from a Start,
+  Finish or Time on the timing sheet (owner, 2026-09-28).
+  ---------------------------------------------------------------------------
+  "We can write it as well as get it from the thing where you can tap the
+  time… spin the wheel to pick the time." So both, on one small sheet, and
+  they are one value:
+
+    • THE WHEELS — hours, minutes, seconds and tenths, on the phone's own
+      scroll-and-snap, so a flick turns them the way an alarm clock's do;
+    • THE DIGITS above them, which can be typed: numbers only, the colon and
+      the dot put themselves in — "802115" is 8:02:11.5 (racePieces.ts,
+      watchFromDigits) — because a phone's number pad has no colon key.
+  A spin rewrites the digits; typing turns the wheels.
+
+  NEXT keeps the sheet open and moves on — Start, Finish, the next boat's
+  Start — so a whole piece goes in without closing anything. It never takes
+  the focus off the digits, so once the keyboard is up it stays up, and the
+  buttons sit right under the digits, where the keyboard cannot cover them.
+  Done on the last time. Clear empties this one. Nothing is written until one
+  of the three is pressed: the backdrop, the X and Escape leave it as it was.
+  Where the wheels start on an empty time is the caller's (wheelStart).
+
+  It rides above the phone's keyboard (visualViewport) rather than under it,
+  and it is a layer of its own rather than a second <Sheet>: a Sheet shuts on
+  Escape, and so does the sheet of times beneath it — one key would have
+  thrown away every time typed on it. All colours are theme tokens.
+*/
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
+import ThemeProvider from "@/components/ThemeProvider";
+import { useVarsityTheme } from "@/components/varsity/useVarsityTheme";
+import { IconArrowRight, IconX } from "@/components/icons";
+import { classTitle, formatWatch, watchDigitsLabel, watchFromDigits } from "@/lib/varsity/racePieces";
+
+/* One row of a wheel, in px — five of them show, the middle one is the value. */
+const ROW = 36;
+
+type Parts = [number, number, number, number]; // hours, minutes, seconds, tenths
+
+const toParts = (sec: number): Parts => {
+  const t = Math.max(0, Math.round(sec * 10));
+  return [Math.min(23, Math.floor(t / 36000)), Math.floor(t / 600) % 60, Math.floor(t / 10) % 60, t % 10];
+};
+const fromParts = ([h, m, s, d]: Parts) => h * 3600 + m * 60 + s + d / 10;
+
+/*
+  A WHEEL — a column that scrolls and snaps on the middle row. Its position
+  and its value are the same thing: a scroll picks the row that lands in the
+  middle; a value set from outside (the digits, a new time) scrolls it there.
+  `picked` remembers the last row the scroll itself chose, so the wheel does
+  not yank itself back to the middle of a row while a finger is still on it.
+*/
+function Wheel({
+  label,
+  count,
+  value,
+  pad,
+  onPick,
+}: {
+  label: string;
+  count: number;
+  value: number;
+  pad: boolean;
+  onPick: (n: number) => void;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const picked = useRef<number | null>(null);
+
+  useLayoutEffect(() => {
+    const el = ref.current;
+    const mine = picked.current === value;
+    picked.current = null;
+    if (el && !mine) el.scrollTop = value * ROW;
+  }, [value]);
+
+  const onScroll = () => {
+    const el = ref.current;
+    if (!el) return;
+    const n = Math.max(0, Math.min(count - 1, Math.round(el.scrollTop / ROW)));
+    if (n !== value) {
+      picked.current = n;
+      onPick(n);
+    }
+  };
+
+  return (
+    <div
+      ref={ref}
+      onScroll={onScroll}
+      role="listbox"
+      aria-label={label}
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
+        e.preventDefault();
+        picked.current = null; // a key is not a scroll: the wheel follows it
+        onPick(Math.max(0, Math.min(count - 1, value + (e.key === "ArrowDown" ? 1 : -1))));
+      }}
+      className="relative h-[180px] min-w-0 flex-1 snap-y snap-mandatory overflow-y-auto overscroll-contain outline-none [mask-image:linear-gradient(to_bottom,transparent,var(--text)_32%,var(--text)_68%,transparent)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      style={{ paddingTop: ROW * 2, paddingBottom: ROW * 2 }}
+    >
+      {Array.from({ length: count }, (_, n) => (
+        <div
+          key={n}
+          role="option"
+          aria-selected={n === value}
+          onClick={() => ref.current?.scrollTo({ top: n * ROW, behavior: "smooth" })}
+          className={`flex h-9 snap-center items-center justify-center font-mono text-[20px] tabular-nums ${
+            n === value ? "font-semibold text-text" : "text-muted"
+          }`}
+        >
+          {pad ? String(n).padStart(2, "0") : n}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+const Colon = ({ children }: { children: ReactNode }) => (
+  <span aria-hidden className="relative flex items-center font-mono text-[20px] font-semibold text-muted">
+    {children}
+  </span>
+);
+
+export default function TimeSheet({
+  fieldKey,
+  who,
+  badge,
+  what,
+  value,
+  from,
+  last,
+  onSet,
+  onClose,
+}: {
+  /** Which time this is (crew + field): a new one resets the sheet. */
+  fieldKey: string;
+  /** The crew as the sheet names it — the cox, or the surnames. */
+  who: string;
+  badge: string;
+  /** "Start", "Finish" or "Time". */
+  what: string;
+  /** What is written now, or null. */
+  value: number | null;
+  /** Where the wheels start when nothing is written. */
+  from: number;
+  /** No time after this one: the button says Done. */
+  last: boolean;
+  /** A time (null = cleared), and whether to move on, close, or stay. */
+  onSet: (value: number | null, then: "next" | "done" | "stay") => void;
+  onClose: () => void;
+}) {
+  const vTheme = useVarsityTheme();
+  const input = useRef<HTMLInputElement>(null);
+  const [focused, setFocused] = useState(false);
+
+  /*
+    The time on the wheels, and — while the coach is typing — the digits
+    typed so far ("" = the digits are waiting for the first key). A new
+    time resets both, the documented adjust-state-on-a-prop way; if the
+    keyboard is already up, the next time starts waiting for its digits.
+  */
+  const [at, setAt] = useState({ key: fieldKey, sec: value ?? from, typed: null as string | null });
+  if (at.key !== fieldKey) setAt({ key: fieldKey, sec: value ?? from, typed: focused ? "" : null });
+
+  /* THE KEYBOARD: how far it has pushed up from the bottom of the screen. */
+  const [lift, setLift] = useState(0);
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const measure = () => setLift(Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop)));
+    vv.addEventListener("resize", measure);
+    vv.addEventListener("scroll", measure);
+    return () => {
+      vv.removeEventListener("resize", measure);
+      vv.removeEventListener("scroll", measure);
+    };
+  }, []);
+
+  /* On a laptop the keys are right there, so the digits take them at once; a
+     phone opens on the wheels, and a tap on the digits brings up its pad. */
+  useEffect(() => {
+    if (window.matchMedia("(pointer: fine)").matches) input.current?.focus();
+  }, []);
+
+  /* Escape closes THIS, and only this (see the note up top). */
+  const close = useRef(onClose);
+  useEffect(() => {
+    close.current = onClose;
+  });
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      e.stopPropagation();
+      close.current();
+    };
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+  }, []);
+
+  const parts = toParts(at.sec);
+  /* From the time as it is NOW, not as this render saw it: two wheels still
+     turning at once must not undo each other. */
+  const spin = (i: number, n: number) =>
+    setAt((a) => {
+      const next = toParts(a.sec);
+      next[i] = n;
+      return { ...a, sec: fromParts(next), typed: focused ? "" : null };
+    });
+  const typeDigits = (text: string) => {
+    const digits = text.replace(/\D/g, "").replace(/^0+/, "").slice(-7);
+    setAt((a) => ({ ...a, typed: digits, sec: watchFromDigits(digits) ?? a.sec }));
+  };
+  /* A time only looked at is written back exactly as it was (an older sheet
+     may carry hundredths); one that was spun or typed is in tenths. */
+  const commit = (then: "next" | "done") =>
+    onSet(value != null && at.sec === value ? value : Math.round(at.sec * 10) / 10, then);
+
+  /* The digits: what has been typed, or the time on the wheels. While they
+     wait for a first key they are empty, the time greyed underneath. */
+  const shown = at.typed != null ? watchDigitsLabel(at.typed) : formatWatch(at.sec);
+  /* A button that must not take the focus off the digits, or the phone's
+     keyboard would drop between one time and the next. */
+  const keepFocus = (e: React.PointerEvent | React.MouseEvent) => e.preventDefault();
+
+  return createPortal(
+    <ThemeProvider tokens={vTheme.dark} light={vTheme.light}>
+      <div className="fixed inset-0 z-[70] flex flex-col justify-end" style={{ paddingBottom: lift }}>
+        <button
+          type="button"
+          aria-label="Close"
+          onClick={onClose}
+          className="absolute inset-0 bg-background/70 [animation:backdrop-in_0.2s_ease-out]"
+        />
+        <div
+          role="dialog"
+          aria-label={`${what}, ${who}`}
+          className="relative rounded-t-3xl border-t border-border bg-surface px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-2.5 [animation:sheet-up_0.28s_cubic-bezier(0.2,0.8,0.2,1)]"
+        >
+          <div className="mx-auto mb-2.5 h-1 w-9 rounded-full bg-border" />
+          <div className="mx-auto w-full max-w-sm">
+            {/* Whose time, and which of their three. */}
+            <div className="flex items-center gap-2">
+              <span className="min-w-0 truncate text-[15px] font-semibold text-text">{who}</span>
+              <span className="flex-shrink-0 rounded-md bg-text px-1.5 py-0.5 font-mono text-[11px] font-semibold text-background">
+                {classTitle(badge)}
+              </span>
+              <span className="ml-auto flex-shrink-0 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
+                {what}
+              </span>
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label="Close"
+                className="tap44 press-icon flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-surface-2 text-muted"
+              >
+                <IconX size={14} />
+              </button>
+            </div>
+
+            <input
+              ref={input}
+              value={at.typed === "" ? "" : shown}
+              placeholder={formatWatch(at.sec)}
+              onChange={(e) => typeDigits(e.target.value)}
+              onFocus={() => {
+                setFocused(true);
+                setAt((a) => ({ ...a, typed: "" }));
+              }}
+              onBlur={() => {
+                setFocused(false);
+                setAt((a) => (a.typed === "" ? { ...a, typed: null } : a));
+              }}
+              onKeyDown={(e) => {
+                if (e.key !== "Enter") return;
+                e.preventDefault();
+                commit(last ? "done" : "next");
+              }}
+              inputMode="numeric"
+              pattern="[0-9]*"
+              enterKeyHint={last ? "done" : "next"}
+              autoComplete="off"
+              aria-label={`${what} time`}
+              className="mt-3 block w-full rounded-2xl bg-surface-2 py-2.5 text-center font-mono text-[34px] font-semibold tabular-nums text-text caret-transparent outline-none placeholder:text-muted focus:ring-2 focus:ring-text"
+            />
+
+            <div className="mt-2.5 flex items-center justify-between">
+              <button
+                type="button"
+                onPointerDown={keepFocus}
+                onMouseDown={keepFocus}
+                onClick={() => {
+                  setAt((a) => ({ ...a, typed: focused ? "" : null }));
+                  onSet(null, "stay");
+                }}
+                className="tap44 px-1 py-2 text-[13px] font-medium text-muted"
+              >
+                Clear
+              </button>
+              <button
+                type="button"
+                onPointerDown={keepFocus}
+                onMouseDown={keepFocus}
+                onClick={() => commit(last ? "done" : "next")}
+                className="tap44 flex items-center gap-1.5 rounded-full bg-text px-5 py-2.5 text-[13px] font-semibold text-background"
+              >
+                {last ? "Done" : "Next"}
+                {!last && <IconArrowRight size={14} />}
+              </button>
+            </div>
+
+            {/* THE WHEELS, on one grey band across the middle row. */}
+            <div className="relative mt-2 flex items-stretch gap-0.5">
+              <div aria-hidden className="pointer-events-none absolute inset-x-0 top-[72px] h-9 rounded-xl bg-surface-2" />
+              <Wheel label="Hours" count={24} value={parts[0]} pad={false} onPick={(n) => spin(0, n)} />
+              <Colon>:</Colon>
+              <Wheel label="Minutes" count={60} value={parts[1]} pad onPick={(n) => spin(1, n)} />
+              <Colon>:</Colon>
+              <Wheel label="Seconds" count={60} value={parts[2]} pad onPick={(n) => spin(2, n)} />
+              <Colon>.</Colon>
+              <Wheel label="Tenths" count={10} value={parts[3]} pad={false} onPick={(n) => spin(3, n)} />
+            </div>
+          </div>
+        </div>
+      </div>
+    </ThemeProvider>,
+    document.body,
+  );
+}

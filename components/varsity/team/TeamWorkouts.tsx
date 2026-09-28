@@ -591,6 +591,7 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
             day={day}
             dateLabel={outingDateLabel(openRace)}
             title={raceTitle(openRace)}
+            sessionTime={planSessions[openRace]?.time}
             boats={raceBoats[openRace] ?? []}
             inConsole={inConsole}
             onChange={(next) => setRaces((rs) => rs.map((r) => (r.dayKey === next.dayKey ? next : r)))}
