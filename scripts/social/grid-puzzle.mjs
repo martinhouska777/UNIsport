@@ -25,8 +25,9 @@
   piece and post-9 the top-left one: upload post-1.png first and post-9.png
   last. After that, posts have to go up in threes or the picture shears.
 
-  Two grounds: light (navy + blue, the app icon's colours) and dark (white +
-  electric blue on black, the profile picture's).
+  Two grounds: light (navy + blue on pure white, the app icon's colours; the
+  owner's pick, 2026-09-27) and dark (white + electric blue on black, the
+  profile picture's).
 
   Run: node scripts/social/grid-puzzle.mjs [light|dark]
   Out: mockups/social/grid/<ground>/post-1..9.png, full.png, preview.png
@@ -44,7 +45,7 @@ const DEPTH = 10;                                            // units, front to 
 
 const GROUNDS = {
   light: {
-    bg: "radial-gradient(90% 70% at 42% 38%, #f8f9fb 0%, #eceef2 60%, #e2e5ea 100%)",
+    bg: "#ffffff",                                  /* pure white (owner, 2026-09-27): the gaps vanish into the page */
     a: 0x172240, b: 0x1426b8, ink: "#141618", em: "#1f32c1", shadow: 0.2, exposure: 0.9, env: 0.55,
   },
   dark: {
