@@ -481,6 +481,52 @@ Three to start with, each 20–30 s:
 
 He does not read a script; the beats above are the order, the words are his.
 
+### 6d. The first nine posts: a plan to pick from (2026-09-27)
+
+**The plan page (private, the owner's): https://claude.ai/artifact/L1HeUEc1A11hYE7Ei3NR7x**
+It holds three Instagram profile mock-ups you can tap into, every carousel slide by
+slide, the story frames, and the posting order. **Not picked yet** — nothing below is
+built beyond the two carousels marked made.
+
+**Nine carousels, three per door.** In each row the middle one is the whole door; the
+two either side are its top things.
+
+| Door | The whole door | Top things |
+|---|---|---|
+| Student | The app (made: `mockups/social/launch/`) | Match (made: `mockups/social/match/`) · Leaderboards and community |
+| Varsity athlete | Varsity Mode | Log · Workouts and statistics |
+| Coach | The Coach's Console | Lineups and video · Statistics and notes |
+
+**Three layouts. Same nine carousels, different covers** (a cover goes in front of slide 1):
+
+1. **The Big U** — the whole grid is the mark (the picture from 5b620a8); the middle
+   column becomes the three doors: "Your campus. Your gym. Your people." / "Varsity
+   Mode." / "The Coach's Console." Claude's pick for launch. After the nine, new posts
+   are dragged below them with Reorder grid.
+2. **A U in every row** — each row is its own long U (a head on the far-left post, a head
+   on the far-right post) holding three phones. The Student row is pinned.
+3. **Three doors** — one long U pinned on top holding Student · Varsity athlete · Coach;
+   each column below is one door, posted in threes (Coach first, Student last).
+
+The long U only stretches the mark's flat bottom: heads, strokes and curves keep the real
+proportions (14 px a unit on a 3240 × 1440 row). The rule across all three: **the logo
+crosses from one post into the next; the phones never do.**
+
+**Stories, each saved to a Highlight:** Launch (1/3 · 2/3 · 3/3, the U building up),
+Student, Varsity, Coach, Questions (the site's FAQ word for word, ending on "officially
+unaffiliated with Harvard University", which settles where that line goes), Waitlist.
+Sticker links: `/waitlist?from=ig-story`, `/join`, `/for/coaches`.
+
+**Upload order, any layout:** bottom row first, right to left, one row a day for three
+days. Layouts 2 and 3 then pin the top row, right post first, left post last.
+
+**Before any of it is posted:** the erg-screen photo is claimed but not built; the lineup
+sentence still says "port, starboard or both" though the app dropped Both on 21 Sep;
+the Student screens show Harvard's house shields (the Varsity and Coach ones were re-shot
+as Westbrook, these were not). Screens to shoot: Statistics on Metres rowed, Memories
+with photos, the Community tab, the athlete's own boat with their name lit, the coach's
+session editor, a boat's video strip, fresh Gyms and chat plan card.
+
 ---
 
 ## 7. Two things to get right
