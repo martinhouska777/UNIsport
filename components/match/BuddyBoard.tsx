@@ -39,9 +39,7 @@ import BoardFiltersSheet, {
 } from "@/components/match/BoardFiltersSheet";
 import Avatar from "@/components/messages/Avatar";
 import { announceBoardChange } from "@/lib/gymGoing";
-import { useAppState } from "@/components/AppState";
-import { useSharedHooks } from "@/components/match/useSharedHooks";
-import HookChip from "@/components/match/HookChip";
+import { IconMapPin, IconChevronRight } from "@/components/icons";
 
 function dayShort(key: string): string {
   return weekDays.find((d) => d.key === key)?.label.slice(0, 3) ?? key;
@@ -69,6 +67,68 @@ function Status({ children }: { children: React.ReactNode }) {
   return <div className="px-3 py-12 text-center text-sm text-muted">{children}</div>;
 }
 
+/*
+  A POST IS ABOUT THE SESSION, NOT THE PERSON (owner, 2026-09-28). A band in
+  the school colour says what and when — "Legs" on the left, "Sat 3 Oct ·
+  10:00 AM" on the right — then the place, then who, then their note in full.
+  What you share with them ("Both into Film") is gone from here: that is on
+  their profile, one tap away on the name row, the same profile People opens.
+*/
+export function PostCard({
+  post: p,
+  busy,
+  onAccept,
+  onMessage,
+  onOpenProfile,
+}: {
+  post: BuddyPost;
+  busy: boolean;
+  /* Accept sends a plan card with this post's time, gym and focus already on
+     it. Null for a post with no date or hour: Message is its only answer. */
+  onAccept: (() => void) | null;
+  onMessage: () => void;
+  onOpenProfile: () => void;
+}) {
+  return (
+    <div className="overflow-hidden rounded-xl border border-border bg-surface">
+      <div className="flex items-baseline justify-between gap-2 bg-primary px-3.5 py-2.5 text-primary-contrast">
+        <span className="min-w-0 truncate text-[16px] font-bold">{focusLabel(p.focus)}</span>
+        <span className="flex-shrink-0 text-[12px] font-semibold">
+          {p.date ? dateLabel(p.date) : dayShort(p.day)} · {postWhenLabel(p.hour, p.timeOfDay)}
+        </span>
+      </div>
+      <div className="px-3.5 pb-3.5 pt-2.5">
+        {p.gym && (
+          <div className="flex items-center gap-1 text-[12px] font-medium text-text-2">
+            <IconMapPin size={13} className="flex-shrink-0" />
+            <span className="min-w-0 truncate">{p.gym}</span>
+          </div>
+        )}
+        <button
+          type="button"
+          onClick={onOpenProfile}
+          className={`press flex w-full items-center gap-2 text-left ${p.gym ? "mt-2" : ""}`}
+        >
+          <Avatar size={28} src={p.authorPhoto} alt={p.authorName} />
+          <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-text">{p.authorName}</span>
+          <IconChevronRight size={16} className="flex-shrink-0 text-muted" />
+        </button>
+        {p.note && <p className="mt-2 text-[13px] leading-snug text-text-2">{p.note}</p>}
+        <div className="mt-3 flex gap-2">
+          {onAccept && (
+            <Button size="md" onClick={onAccept} disabled={busy} className="flex-1">
+              {busy ? "…" : "Accept"}
+            </Button>
+          )}
+          <Button size="md" variant="secondary" onClick={onMessage} disabled={busy} className="flex-1">
+            Message
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function BuddyBoard({
   filters,
   onChangeFilters: setFilters,
@@ -94,10 +154,6 @@ export default function BuddyBoard({
   hideActions?: boolean;
 }) {
   const router = useRouter();
-  const { userId } = useAppState();
-  // One shared fact per poster — "Both into Climbing" — the reason to pick
-  // this row over the one below it (lib/matchReasons.ts).
-  const { hookFor } = useSharedHooks(userId);
 
   // --- Post form state ---
   /* What, then which: the activity is asked first and the focus only narrows
@@ -218,7 +274,7 @@ export default function BuddyBoard({
   };
 
   /*
-    "I'M IN" — one tap, no typing. Typing the first message to a stranger is
+    "ACCEPT" (it said "I'm in" until 2026-09-28) — one tap, no typing. Typing the first message to a stranger is
     where the funnel dies, so the primary action on a post sends a PLAN CARD
     instead: the post's focus (as an activity), its gym and its hour, already
     filled in, into a fresh thread with the poster — who accepts it the way
@@ -436,47 +492,14 @@ export default function BuddyBoard({
       {!boardErr && board && board.length > 0 && (
         <div className="flex flex-col gap-2 pt-3">
           {board.map((p) => (
-            <div
+            <PostCard
               key={p.id}
-              className="flex items-center gap-3 rounded-xl border border-border bg-surface p-3"
-            >
-              <Avatar size={44} src={p.authorPhoto} alt={p.authorName} />
-              <div className="min-w-0 flex-1">
-                {/* The name never gives way to the chip: when both don't fit on
-                    one line, the chip moves under the name. */}
-                <div className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1">
-                  <span className="max-w-full truncate text-sm font-medium text-text">{p.authorName}</span>
-                  <HookChip hook={hookFor(p.author)} />
-                </div>
-                <div className="text-[13px] text-text">{summary(p.focus, p.date, p.day, p.hour, p.timeOfDay)}</div>
-                {(p.gym || p.note) && (
-                  <div className="truncate text-[11px] text-muted">
-                    {[p.gym, p.note].filter(Boolean).join(" · ")}
-                  </div>
-                )}
-              </div>
-              {/* Primary: "I'm in" — a plan card with this post's time, gym and
-                  focus already on it. Message is the small way round it. */}
-              <div className="flex flex-shrink-0 flex-col items-end gap-1">
-                <Button
-                  size="sm"
-                  onClick={() => (canJoin(p) ? imIn(p) : message(p))}
-                  disabled={messagingId === p.id}
-                >
-                  {messagingId === p.id ? "…" : canJoin(p) ? "I’m in" : "Message"}
-                </Button>
-                {canJoin(p) && (
-                  <button
-                    type="button"
-                    onClick={() => message(p)}
-                    disabled={messagingId === p.id}
-                    className="tap44 px-1 text-[11px] font-medium text-muted disabled:opacity-40"
-                  >
-                    Message
-                  </button>
-                )}
-              </div>
-            </div>
+              post={p}
+              busy={messagingId === p.id}
+              onAccept={canJoin(p) ? () => imIn(p) : null}
+              onMessage={() => message(p)}
+              onOpenProfile={() => router.push(`/people/${p.author}`)}
+            />
           ))}
         </div>
       )}
