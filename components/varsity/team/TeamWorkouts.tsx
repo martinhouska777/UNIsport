@@ -491,7 +491,13 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
         </div>
       )}
       {side === "ranking" && (
-        <TeamRanking workouts={workouts} results={results} exampleKeys={exampleKeys} races={races} />
+        <TeamRanking
+          workouts={workouts}
+          results={results}
+          exampleKeys={exampleKeys}
+          races={races}
+          raceBoats={raceBoats}
+        />
       )}
       <div className="flex flex-col gap-1.5">
         {side !== "ranking" && rows.length === 0 && (

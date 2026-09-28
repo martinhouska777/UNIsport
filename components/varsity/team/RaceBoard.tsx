@@ -246,7 +246,8 @@ export default function RaceBoard({
     A day with no class of two or more has no Combined or Athletes at all.
   */
   const allCombined = useMemo(() => combinedBoards(day.pieces), [day.pieces]);
-  const allAthletes = useMemo(() => athleteBoards(day.pieces), [day.pieces]);
+  /* The session's lineup tells two rowers with one surname apart (crewPeople). */
+  const allAthletes = useMemo(() => athleteBoards(day.pieces, boats), [day.pieces, boats]);
   const raced = new Set(allCombined.filter((cb) => cb.rows.length > 1).map((cb) => cb.badge));
   const combined = allCombined.filter((cb) => raced.has(cb.badge));
   const athletes = allAthletes.filter((ab) => raced.has(ab.badge));
@@ -491,7 +492,7 @@ export default function RaceBoard({
                     const whole = a.raced === day.pieces.length;
                     return (
                       <div
-                        key={a.name}
+                        key={a.key}
                         className={`grid items-center gap-1.5 px-2.5 py-2.5 ${i > 0 ? "border-t border-border" : ""} ${a.rank === 1 && whole ? "bg-surface-2" : ""}`}
                         style={{ gridTemplateColumns: combinedCols }}
                       >

@@ -27,7 +27,7 @@
   a crew's, and every seat in it can find it. Times are kept in SECONDS with
   hundredths; the watch's "25:14.48" is only how they are typed and shown.
 */
-import { boatTypes, rosterById, type Boat } from "./coachLineup";
+import { boatTypes, roster, rosterById, type Boat } from "./coachLineup";
 
 /* ── The data ───────────────────────────────────────────────────────────── */
 
@@ -44,6 +44,11 @@ export type RaceCrew = {
       the four names"). Kept with the result, like the label. Older rows have
       none; see crewMembers(). */
   rowers?: string[];
+  /** The same rowers as ROSTER IDS, in the same order — who they are, where a
+      surname is only what the sheet calls them (the squad has two
+      Cruz-Abrams). Written for every crew made from a lineup since
+      2026-09-27; older rows have none, and crewPeople() works them out. */
+  rowerIds?: string[];
   /** Off the running watch, in seconds. Null: not written yet. */
   start: number | null;
   finish: number | null;
@@ -136,12 +141,16 @@ export function crewLabel(boat: Boat): string {
   return boat.name || boat.badge;
 }
 
+/** The seated rowers' roster ids, stroke first, as the sheet lists a crew. */
+const strokeFirst = (boat: Boat): string[] =>
+  [...boat.seats]
+    .reverse()
+    .map((s) => s.athleteId)
+    .filter((id): id is string => !!id);
+
 /** The rowers' surnames, stroke first, as the sheet lists a crew. */
 export function crewRowers(boat: Boat): string[] {
-  return [...boat.seats]
-    .reverse()
-    .map((s) => surname(s.athleteId))
-    .filter((n): n is string => !!n);
+  return strokeFirst(boat).map((id) => surname(id)!);
 }
 
 export function crewFromBoat(boat: Boat): RaceCrew {
@@ -150,6 +159,7 @@ export function crewFromBoat(boat: Boat): RaceCrew {
     label: crewLabel(boat),
     badge: boat.badge,
     rowers: crewRowers(boat),
+    rowerIds: strokeFirst(boat),
     start: null,
     finish: null,
     total: null,
@@ -228,6 +238,67 @@ export function crewMembers(c: RaceCrew): { cox: string | null; rowers: string[]
   const rowers = c.rowers ?? (cox ? [] : c.label.split("/").map((n) => n.trim()).filter(Boolean));
   return { cox, rowers };
 }
+
+/* ── Who a rower on the sheet IS ────────────────────────────────────────── */
+
+/** A rower of a crew: their roster id when it can be told, and the name the
+    sheet wrote for them. */
+export type RacePerson = { id: string | null; name: string };
+
+const lastWordOf = (name: string) => {
+  const words = name.trim().toLowerCase().split(/\s+/);
+  return words[words.length - 1] ?? "";
+};
+
+/*
+  THE SHEET WRITES SURNAMES, AND TWO ROWERS CAN SHARE ONE — the squad has two
+  Cruz-Abrams, and every board that read a person by surname put the two of
+  them on one line (owner, 2026-09-27: "surely you'll figure out the name
+  issue"). So a name off the sheet is placed, in order, by:
+    1. the seat in that session's lineup boat with that surname — the boat the
+       crew was made from knows exactly who sat in it;
+    2. the roster's full name ("Mason Cruz-Abrams");
+    3. a first initial and the surname ("M Cruz-Abrams", "M. Cruz-Abrams");
+    4. the roster's only rower with that surname.
+  Only a name none of those can place stays a name — and a crew saved with its
+  rowers' ids (every crew made from a lineup since this change) needs none of
+  it.
+*/
+export function sheetPersonId(name: string, boat?: Boat): string | null {
+  const whole = name.trim().toLowerCase();
+  if (!whole) return null;
+  const last = lastWordOf(whole);
+  if (boat) {
+    const inBoat = strokeFirst(boat).filter((id) => lastWordOf(rosterById[id]?.name ?? id) === last);
+    if (inBoat.length === 1) return inBoat[0];
+  }
+  const rowers = roster.filter((a) => !a.cox);
+  const one = (hits: typeof rowers) => (hits.length === 1 ? hits[0].id : null);
+  const full = one(rowers.filter((a) => a.name.trim().toLowerCase() === whole));
+  if (full) return full;
+  const words = whole.split(/\s+/);
+  if (words.length > 1) {
+    const initial = words[0][0];
+    const byInitial = one(
+      rowers.filter((a) => lastWordOf(a.name) === last && a.name.trim().toLowerCase()[0] === initial),
+    );
+    if (byInitial) return byInitial;
+  }
+  return one(rowers.filter((a) => lastWordOf(a.name) === last));
+}
+
+/** The crew's rowers as people, stroke first (no cox — see crewMembers). */
+export function crewPeople(crew: RaceCrew, boat?: Boat): RacePerson[] {
+  const { rowers } = crewMembers(crew);
+  const saved = crew.rowerIds && crew.rowers && crew.rowerIds.length === crew.rowers.length ? crew.rowerIds : null;
+  return rowers.map((raw, i) => {
+    const name = raw.trim();
+    return { id: saved?.[i] ?? sheetPersonId(name, boat), name };
+  });
+}
+
+/** One key per person: their roster id, or the name when nobody could be told. */
+export const personKey = (p: RacePerson) => p.id ?? `name:${p.name}`;
 
 /*
   A SWITCH, READ OUT OF THE CREW'S NOTE. The timing sheet writes the seat
@@ -382,6 +453,9 @@ export function raceSummary(day: RaceDay): { pieces: number; crews: number } {
 /* ── The athletes' board ────────────────────────────────────────────────── */
 
 export type AthleteRow = {
+  /** Who this row is — the roster id, or the sheet's name (personKey). */
+  key: string;
+  /** Their surname, or their full name where another row shares it. */
   name: string;
   /** Sat as the cox, not a rower. */
   cox: boolean;
@@ -413,8 +487,9 @@ export type AthleteRow = {
   they have. Nothing is excluded and nothing is judged — a "Bridge" still
   counts; the coach knows what it means. Selection proper (seat racing) is a
   different screen.
-  People are matched by the surname the sheet wrote; two rowers who share
-  one would merge here.
+  People are told apart by WHO they are, not by the surname the sheet wrote
+  (crewPeople, 2026-09-27): two rowers who share one are two rows, each shown
+  by their full name; everybody else keeps the sheet's short surname.
 */
 export type AthleteBoard = { badge: string; title: string; rows: AthleteRow[] };
 
@@ -454,19 +529,20 @@ export function withLine(entries: (string | null)[]): string {
 }
 
 
-export function athleteBoards(pieces: RacePiece[]): AthleteBoard[] {
+export function athleteBoards(pieces: RacePiece[], boats: Boat[] = []): AthleteBoard[] {
   const boards = pieces.map(pieceBoards);
   const classes = new Map<string, Map<string, AthleteRow>>();
   /* `cox` stays on the row type: the piece boards still name a crew by its
      cox, and nothing here should start pretending coxes do not exist. This
      board simply never creates a row FOR one. */
-  const rowFor = (badge: string, name: string, cox: boolean) => {
+  const rowFor = (badge: string, person: RacePerson, cox: boolean) => {
     if (!classes.has(badge)) classes.set(badge, new Map());
     const people = classes.get(badge)!;
-    let r = people.get(name);
+    const key = personKey(person);
+    let r = people.get(key);
     if (!r) {
-      r = { name, cox, perPiece: Array(pieces.length).fill(null), with: Array(pieces.length).fill(null), average: 0, raced: 0, rank: 0 };
-      people.set(name, r);
+      r = { key, name: person.name, cox, perPiece: Array(pieces.length).fill(null), with: Array(pieces.length).fill(null), average: 0, raced: 0, rank: 0 };
+      people.set(key, r);
     }
     return r;
   };
@@ -475,11 +551,12 @@ export function athleteBoards(pieces: RacePiece[]): AthleteBoard[] {
     for (const cb of classList) {
       for (const { crew, toWinner } of cb.rows) {
         const { cox, rowers } = crewMembers(crew);
-        for (const n of rowers) {
-          const r = rowFor(cb.badge, n, false);
+        const people = crewPeople(crew, boats.find((b) => b.id === crew.boatId));
+        people.forEach((person, k) => {
+          const r = rowFor(cb.badge, person, false);
           r.perPiece[pi] = toWinner;
-          r.with[pi] = cox ?? rowers.filter((x) => x !== n).join("/") ?? null;
-        }
+          r.with[pi] = cox ?? rowers.filter((_, j) => j !== k).join("/") ?? null;
+        });
         /*
           NO COXES ON THIS BOARD (owner, 2026-09-22: "the coxes are there as
           well — I don't like them, put the coxes out of it. There is no
@@ -504,6 +581,15 @@ export function athleteBoards(pieces: RacePiece[]): AthleteBoard[] {
         const have = r.perPiece.filter((m): m is number => m != null);
         r.raced = have.length;
         r.average = have.length ? Math.round((have.reduce((a, b) => a + b, 0) / have.length) * 100) / 100 : 0;
+      }
+      /* Two people the sheet wrote the same way are told apart by their
+         full names; a name the roster cannot place stays as it was written. */
+      const surnames = new Map<string, number>();
+      for (const r of list) surnames.set(lastWordOf(r.name), (surnames.get(lastWordOf(r.name)) ?? 0) + 1);
+      for (const r of list) {
+        if ((surnames.get(lastWordOf(r.name)) ?? 0) > 1 && !r.key.startsWith("name:")) {
+          r.name = rosterById[r.key]?.name ?? r.name;
+        }
       }
       list.sort((a, b) => b.raced - a.raced || a.average - b.average || a.name.localeCompare(b.name));
       list.forEach((r, i) => (r.rank = i + 1));

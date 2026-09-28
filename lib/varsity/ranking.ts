@@ -42,9 +42,9 @@ import { planSlots, type Span } from "./athleteStats";
 import { teamRanges, toIso, type TeamRange } from "./teamStats";
 import { buildBoard, onTheWater, type TeamWorkout } from "./teamBoard";
 import type { TeamResult } from "./resultsStore";
-import { roster } from "./coachLineup";
+import { rosterById, type Boat } from "./coachLineup";
 import { parseSessionKey, type SessionMap } from "./coachPlan";
-import { crewMembers, pieceBoards, type RaceDay } from "./racePieces";
+import { crewPeople, personKey, pieceBoards, type RaceDay } from "./racePieces";
 import type { LogEntry } from "./logStore";
 
 /* ── The lists ──────────────────────────────────────────────────────────── */
@@ -176,28 +176,17 @@ export type WaterPiece = { id: string; name: string; dayKey: string; date: Date;
 export type WaterPlace = { place: number; of: number; badge: string };
 
 export type WaterRankRow = {
-  /** As the timing sheet wrote them — their surname — which is how they are
-      matched from piece to piece, as on the race board's Athletes tab. */
+  /** Who they are — their roster id, or the sheet's name when the roster
+      cannot say (racePieces.personKey). Two rowers who share a surname are
+      two rows. */
   key: string;
-  /** The roster's full name when exactly one rower has that surname. */
+  /** Their full name off the roster, or the name as the sheet wrote it. */
   name: string;
   wins: number;
   /** Per piece, in waterRanking's order: where their boat finished, or null. */
   places: (WaterPlace | null)[];
   rank: number;
 };
-
-const lastWord = (name: string) => {
-  const words = name.trim().split(/\s+/);
-  return words[words.length - 1] ?? "";
-};
-
-/** A surname off the sheet, as the full name of the one rower who has it. */
-function fullName(surname: string): string {
-  const s = surname.trim().toLowerCase();
-  const matches = roster.filter((a) => !a.cox && lastWord(a.name).toLowerCase() === s);
-  return matches.length === 1 ? matches[0].name : surname;
-}
 
 /**
  * Every rower who raced a piece in the window, most wins first, and the
@@ -212,8 +201,16 @@ function fullName(surname: string): string {
  * crew level with it to the hundredth. No coxes, as on the race board's
  * Athletes tab: a cox carries whichever boat they steer, so their wins would
  * be the boat's, not theirs.
+ *
+ * People are WHO they are, not the surname the sheet wrote (crewPeople): the
+ * crew's saved roster ids, or the seat in that session's lineup boat
+ * (`boats`, session key → its boats), or the roster.
  */
-export function waterRanking(races: RaceDay[], span: Span): { rows: WaterRankRow[]; pieces: WaterPiece[] } {
+export function waterRanking(
+  races: RaceDay[],
+  span: Span,
+  boats: Record<string, Boat[]> = {},
+): { rows: WaterRankRow[]; pieces: WaterPiece[] } {
   /* The races first, in the order they were rowed: every session in the
      window oldest first, its pieces in their own order. */
   const days = races
@@ -233,17 +230,19 @@ export function waterRanking(races: RaceDay[], span: Span): { rows: WaterRankRow
   }
 
   const people = new Map<string, WaterRankRow>();
-  raced.forEach(({ boards }, col) => {
+  raced.forEach(({ piece, boards }, col) => {
     for (const board of boards) {
       for (const row of board.rows) {
         // Level on time is level on place: 1 + the crews that were faster.
         const place = 1 + board.rows.filter((r) => r.time < row.time).length;
-        for (const raw of crewMembers(row.crew).rowers) {
-          const key = raw.trim();
-          if (!key) continue;
+        const boat = (boats[piece.dayKey] ?? []).find((b) => b.id === row.crew.boatId);
+        for (const who of crewPeople(row.crew, boat)) {
+          if (!who.name && !who.id) continue;
+          const key = personKey(who);
           let person = people.get(key);
           if (!person) {
-            person = { key, name: fullName(key), wins: 0, places: Array(raced.length).fill(null), rank: 0 };
+            const name = (who.id && rosterById[who.id]?.name) || who.name;
+            person = { key, name, wins: 0, places: Array(raced.length).fill(null), rank: 0 };
             people.set(key, person);
           }
           person.places[col] = { place, of: board.rows.length, badge: board.badge };

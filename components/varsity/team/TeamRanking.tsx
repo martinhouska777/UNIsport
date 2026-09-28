@@ -32,9 +32,10 @@
   only for a coach (can.readTraining), the same reads the team statistics make.
 
   A person who has an account opens their console page from their row. Water
-  matches people by the surname the sheet wrote, like the race board's
-  Athletes tab, so it has no page to open. Colours are theme tokens; the three
-  metals are the app's own tokens (--podium-1..3).
+  knows people by their SEAT on the roster (racePieces.crewPeople — so two
+  rowers who share a surname are two rows), not by their account, so it has
+  no page to open. Colours are theme tokens; the three metals are the app's
+  own tokens (--podium-1..3).
 */
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
@@ -68,6 +69,7 @@ import type { TeamWorkout } from "@/lib/varsity/teamBoard";
 import type { TeamResult } from "@/lib/varsity/resultsStore";
 import type { RaceDay } from "@/lib/varsity/racePieces";
 import type { SessionMap } from "@/lib/varsity/coachPlan";
+import type { Boat } from "@/lib/varsity/coachLineup";
 
 /* The header row of a list — the race board's. */
 const TH = "text-[9px] font-semibold uppercase tracking-[0.1em] text-muted";
@@ -171,6 +173,7 @@ export default function TeamRanking({
   results,
   exampleKeys,
   races,
+  raceBoats,
 }: {
   /** Every board on the Workouts tab, worked examples included. */
   workouts: TeamWorkout[];
@@ -179,6 +182,9 @@ export default function TeamRanking({
   exampleKeys: Set<string>;
   /** The timing sheets on the Water side. */
   races: RaceDay[];
+  /** Those sessions' lineup boats — who sat where, so two rowers who share a
+      surname are told apart. */
+  raceBoats: Record<string, Boat[]>;
 }) {
   const now = useMemo(() => new Date(), []);
   const [list, setList] = useState<RankingList>("erg");
@@ -200,7 +206,7 @@ export default function TeamRanking({
   const example = tests.some((t) => exampleKeys.has(t.dayKey));
 
   /* ── Water ── */
-  const water = useMemo(() => waterRanking(races, span), [races, span]);
+  const water = useMemo(() => waterRanking(races, span, raceBoats), [races, span, raceBoats]);
 
   /* ── Consistency: the squad's logs, the published plan, the days out ── */
   const { membership } = useMembership();
