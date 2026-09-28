@@ -3,13 +3,12 @@
   shot from the live app as the demo account, the same way capture.mjs does it
   (402 x 874 CSS px @3x, light), plus two things capture.mjs does not do:
 
-  1. THE CARDS. Every slide lifts one real piece of its screen out of the phone
-     and shows it bigger beside it (the "Why you match" list, the plan in the
-     chat, a gym, the leaderboard card). So each shot also writes
-     <name>.json: every card on the screen (an element with a rounded corner
-     and a surface of its own) with its box in PNG pixels and the start of its
-     text. The carousel picks its card from there by text, so a restyle moves
-     the crop with it instead of breaking a hand-measured rectangle.
+  1. THE CARDS. Every arrow in the carousel lands on a point of its capture
+     (the Plan button, Accept, + Log, the leaderboard card), so each shot also
+     writes <name>.json: every card on the screen (an element with a rounded
+     corner and a surface of its own) with its box in PNG pixels and the start
+     of its text. After a reshoot, read the new points off it rather than
+     off the PNG with a ruler.
 
   2. OTHER SCHOOLS. The app is white-label; the Settings switcher's choice
      (localStorage "unisport.university") wins over the signed-in address, so
