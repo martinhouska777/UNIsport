@@ -272,8 +272,8 @@ export type SessionRun = SessionColumn & { count: number };
  * THE SESSIONS A LIST IS MADE OF (owner, 2026-09-28: "make sure that we know
  * which pieces we were doing somewhere on top, so I'm going to see which piece
  * it was"). Columns arrive oldest first with a session's pieces next to each
- * other, so each run of one day key is one session: the header puts its day
- * once over all of its pieces, and the list above says what it was.
+ * other, so each run of one day key is one session: the header puts ONE tag
+ * over all of its pieces, with its day and what the plan called it.
  */
 export function sessionRuns(columns: SessionColumn[]): SessionRun[] {
   const runs: SessionRun[] = [];

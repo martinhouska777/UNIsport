@@ -24,13 +24,12 @@
   on the erg's tests and on every water piece, a medal place in its metal's
   colour.
 
-  WHICH SESSIONS, ON TOP (owner, 2026-09-28: "make sure that we know which
-  pieces we were doing somewhere on top, so I'm going to see which piece it
-  was"). A column only has the width for a day and a name cut short, and on
-  the water every session's pieces are just "Piece 1", "Piece 2"; so above the
-  list, one line per session — its day, and the plan's own words for it
-  ("3×5' at r30, 2k+2") — and in the list's header that same day in the same
-  grey tag, once, across all of that session's columns.
+  WHICH WORKOUT EACH COLUMN WAS (owner, 2026-09-28: "make sure that we know
+  which pieces we were doing somewhere on top"). Each session wears one grey
+  tag across its columns at the top of the list — its day and the start of
+  the plan's words — and a tap grows it to the whole workout (SessionTag). A
+  list of the sessions ABOVE the table was tried first and taken off the same
+  day: "by top of the sheet, not overview above".
 
   Erg is made of what the Workouts tab already read — the boards and their
   results — so it can never disagree with a board a coach opens; while the Erg
@@ -45,7 +44,7 @@
   no page to open. Colours are theme tokens; the three metals are the app's
   own tokens (--podium-1..3).
 */
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import Dropdown from "@/components/varsity/profile/Dropdown";
 import DatesSheet, { type Dates } from "@/components/varsity/team/DatesSheet";
@@ -53,6 +52,7 @@ import RankBadge from "@/components/varsity/team/RankBadge";
 import ExampleTag from "@/components/varsity/ExampleTag";
 import Segmented from "@/components/ui/Segmented";
 import Avatar from "@/components/messages/Avatar";
+import { IconX } from "@/components/icons";
 import { useMembership } from "@/components/varsity/useMembership";
 import { can, fetchSquad } from "@/lib/varsity/membership";
 import { fetchSquadLogsInRange, type LogEntry } from "@/lib/varsity/logStore";
@@ -168,96 +168,122 @@ function Row({
   );
 }
 
-/* A session's day in a grey tag — the SAME tag over its columns and beside
-   its words above the list, so the eye carries one to the other. `half` is
-   AM or PM, written only when two sessions share the day. Over the columns
-   the day STAYS IN SIGHT while any of its pieces are (`band`): the list
-   scrolls sideways, and a tag across three pieces would otherwise slide its
-   day out of the screen while two of them are still on it. */
-function DayTag({ day, half, big = false, band = false }: { day: string; half?: string; big?: boolean; band?: boolean }) {
+/*
+  WHICH WORKOUT A COLUMN WAS — in the list's header, not above it (owner,
+  2026-09-28, after a first round put a list of the sessions over the table:
+  "by showing the workouts I meant by top of the sheet, not overview above,
+  delete that, but make it wider or taller on top — I want to see at least an
+  indication of the workout, and then when you click it, it will grow bigger
+  so you can see it").
+
+  So each session wears ONE grey tag across all of its columns — three pieces
+  of one timing sheet are three columns under one tag — with its day, and
+  under the day as much of the plan's words as two lines of the tag hold
+  ("3×5' at r30, 2k+2"). A tap GROWS it: the tag turns black, and the whole
+  workout — weekday, half of the day, every word — drops down under the
+  header across the full width of the list (GrownWorkout), so it is never cut
+  off by the list's edge however far along the tag sits. A tap on it, on
+  another tag or anywhere else puts it back.
+
+  The day and the words STAY IN SIGHT while any of the session's columns are
+  (sticky inside the tag): the list scrolls sideways, and a tag across three
+  pieces would otherwise slide its words off the screen while two of those
+  pieces are still on it.
+*/
+type Run = SessionRun & { day: string; half?: string; when: string; words: string };
+
+function SessionTag({ run, open, onToggle }: { run: Run; open: boolean; onToggle: () => void }) {
   return (
-    <span
-      className={`flex w-full items-center justify-center rounded-[5px] bg-surface-2 px-1.5 py-[3px] text-center font-semibold uppercase leading-tight text-text ${
-        big ? "text-[10px] tracking-[0.06em]" : "text-[9px] tracking-[0.08em]"
-      }`}
-    >
-      <span className={`min-w-0 max-w-full truncate ${band ? "sticky left-3 right-3" : ""}`}>
-        {day}
-        {half && <span className="block">{half}</span>}
-      </span>
+    <span data-session-tag className="flex min-w-0" style={{ gridColumn: `span ${run.count}` }}>
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={open}
+        aria-label={`${run.when}: ${run.words}`}
+        className={`flex w-full min-w-0 items-start justify-center rounded-[6px] px-1.5 py-1 text-center transition-colors ${
+          open ? "bg-text" : "bg-surface-2 active:bg-border"
+        }`}
+      >
+        <span className="sticky left-3 right-3 min-w-0 max-w-full">
+          <span
+            className={`block truncate text-[9px] font-semibold uppercase tracking-[0.08em] ${open ? "text-background" : "text-text"}`}
+          >
+            {run.day}
+            {run.half ? ` ${run.half}` : ""}
+          </span>
+          <span
+            className={`mt-0.5 line-clamp-2 break-words text-[10px] font-medium leading-[1.25] ${
+              open ? "text-background/75" : "text-muted"
+            }`}
+          >
+            {run.words}
+          </span>
+        </span>
+      </button>
     </span>
   );
 }
 
-/* One session of a list: its day, and what the plan called it. */
-type KeyItem = { key: string; day: string; half?: string; words: string };
-
-/* The key folds past this many sessions — a semester of timing sheets would
-   otherwise push the list itself off the screen — to the first six. */
-const KEY_FOLD = 8;
-const KEY_FOLDED = 6;
-
-/*
-  WHAT WAS ROWED — the list's sessions above it, oldest first like its
-  columns: the day in its tag, and the plan's own words beside it, in full.
-*/
-function SessionKey({ items }: { items: KeyItem[] }) {
-  const [all, setAll] = useState(false);
-  const folds = items.length > KEY_FOLD;
-  const shown = folds && !all ? items.slice(0, KEY_FOLDED) : items;
+/* THE TAG, GROWN — the whole workout, under the header, the list's width. */
+function GrownWorkout({ run, top, onClose }: { run: Run; top: number; onClose: () => void }) {
   return (
-    <div className="mb-3 overflow-hidden rounded-2xl border border-border bg-surface shadow-card">
-      {shown.map((it, i) => (
-        <div key={it.key} className={`flex items-start gap-2.5 px-3 py-2 ${i > 0 ? "border-t border-border" : ""}`}>
-          <span className="w-[5.2rem] flex-shrink-0">
-            <DayTag day={it.day} half={it.half} big />
-          </span>
-          <span className="min-w-0 flex-1 text-[13px] font-semibold leading-snug text-text">{it.words}</span>
-        </div>
-      ))}
-      {folds && (
-        <button
-          type="button"
-          onClick={() => setAll((a) => !a)}
-          className="block w-full border-t border-border px-3 py-2.5 text-left text-[12px] font-semibold text-muted active:bg-surface-2"
-        >
-          {all ? "Show fewer" : `Show all ${items.length}`}
-        </button>
-      )}
-    </div>
+    <button
+      type="button"
+      data-session-tag
+      onClick={onClose}
+      style={{ top }}
+      className="absolute inset-x-1.5 z-20 origin-top rounded-xl border border-border bg-surface px-3.5 py-2.5 text-left shadow-card [animation:cal-month-expand_0.2s_ease-out]"
+    >
+      <span className="flex items-center justify-between gap-2">
+        <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">{run.when}</span>
+        <span className="text-muted">
+          <IconX size={12} />
+        </span>
+      </span>
+      <span className="mt-1 block text-[14px] font-semibold leading-snug text-text">{run.words}</span>
+    </button>
   );
 }
 
 /*
   THE HEADER OF A LIST WITH A COLUMN PER PIECE, on two lines: each session's
-  day once, in its tag, across all of that session's columns — three pieces
-  of one timing sheet are three columns under one "5 Sep" — and under it
-  every column's own name, the test ("5k TEST") or the piece ("Piece 2").
+  tag once across its columns (SessionTag), and under it the list's own
+  headings and every column's name — the piece ("Piece 2"); an erg test's
+  name is its session's words, already in the tag.
 */
 function ListHead({
+  headRef,
   cols,
   score,
   runs,
   names,
+  open,
+  onOpen,
 }: {
+  /** The header itself, so a grown tag can drop down just under it. */
+  headRef: React.Ref<HTMLDivElement>;
   cols: string;
   /** The heading of the number the list is ordered by: Pts, Wins. */
   score: string;
-  runs: (SessionRun & { day: string; half?: string })[];
-  names: { key: string; name: string; full?: string }[];
+  runs: Run[];
+  names: { key: string; name: string }[];
+  /** The session whose tag is grown, by day key. */
+  open: string | null;
+  onOpen: (dayKey: string | null) => void;
 }) {
   return (
-    <div className="border-b border-border px-2.5 py-2">
-      {/* Stretched, so a day that has to say AM or PM on a second line does
-          not leave its neighbours' tags shorter beside it. */}
+    <div ref={headRef} className="border-b border-border px-2.5 py-2">
       <div className="grid items-stretch gap-x-1.5" style={{ gridTemplateColumns: cols }}>
         <span />
         <span />
         <span />
         {runs.map((r) => (
-          <span key={r.dayKey} className="flex min-w-0" style={{ gridColumn: `span ${r.count}` }}>
-            <DayTag day={r.day} half={r.half} band />
-          </span>
+          <SessionTag
+            key={r.dayKey}
+            run={r}
+            open={open === r.dayKey}
+            onToggle={() => onOpen(open === r.dayKey ? null : r.dayKey)}
+          />
         ))}
       </div>
       <div className={`mt-1.5 grid items-end gap-x-1.5 ${TH}`} style={{ gridTemplateColumns: cols }}>
@@ -265,7 +291,7 @@ function ListHead({
         <span>Athlete</span>
         <span className="text-right">{score}</span>
         {names.map((n) => (
-          <span key={n.key} className="min-w-0 truncate text-right" title={n.full}>
+          <span key={n.key} className="min-w-0 truncate text-right">
             {n.name}
           </span>
         ))}
@@ -276,13 +302,21 @@ function ListHead({
 
 const athleteHref = (id: string) => `/varsity/coach/athlete/${id}`;
 const dayLabel = (d: Date) => `${d.getDate()} ${MO[d.getMonth()]}`;
+const testWords = (w: TeamWorkout) => w.session.description.trim() || sessionLabel(w.session);
 
-/* Each session's day as a header or the key writes it, with AM or PM only
-   where another session in the list falls on the same day. */
-function labelRuns(runs: SessionRun[]) {
+/* Each session's tag: its day ("5 Sep", with AM or PM only where another
+   session in the list falls on the same day), the whole day for the grown
+   card ("Sat 5 Sep · AM"), and what the plan called it. */
+function labelRuns(runs: SessionRun[], words: (dayKey: string) => string): Run[] {
   return runs.map((r) => {
     const shared = runs.some((o) => o.dayKey !== r.dayKey && dayLabel(o.date) === dayLabel(r.date));
-    return { ...r, day: dayLabel(r.date), half: shared ? r.period : undefined };
+    return {
+      ...r,
+      day: dayLabel(r.date),
+      half: shared ? r.period : undefined,
+      when: `${dayKeyLabel(r.dayKey)} · ${r.period}`,
+      words: words(r.dayKey),
+    };
   });
 }
 
@@ -382,23 +416,36 @@ export default function TeamRanking({
   );
   const consistencyLoading = canRead && !!teamId && consistency === null;
 
-  /* Which sessions each list is made of: a run of columns per session, for
-     the header, and the same sessions spelled out for the key above it. */
-  const ergRuns = useMemo(() => labelRuns(sessionRuns(tests)), [tests]);
-  const waterRuns = useMemo(() => labelRuns(sessionRuns(water.pieces)), [water.pieces]);
-  const testWords = (w: TeamWorkout) => w.session.description.trim() || sessionLabel(w.session);
-  const ergKey: KeyItem[] = ergRuns.map((r) => ({
-    key: r.dayKey,
-    day: dayKeyLabel(r.dayKey),
-    half: r.half,
-    words: testWords(tests.find((t) => t.dayKey === r.dayKey)!),
-  }));
-  const waterKey: KeyItem[] = waterRuns.map((r) => ({
-    key: r.dayKey,
-    day: dayKeyLabel(r.dayKey),
-    half: r.half,
-    words: raceTitle(r.dayKey),
-  }));
+  /* Which sessions each list is made of: a run of columns per session, each
+     with its tag at the top of the list. */
+  const ergRuns = labelRuns(sessionRuns(tests), (k) => testWords(tests.find((t) => t.dayKey === k)!));
+  const waterRuns = labelRuns(sessionRuns(water.pieces), raceTitle);
+  /* The one tag grown at a time, for the list it was grown on, and how far
+     down the list its workout drops: just under the header. */
+  const headRef = useRef<HTMLDivElement>(null);
+  const [grown, setGrown] = useState<{ list: RankingList; dayKey: string; top: number } | null>(null);
+  const grownHere = grown && grown.list === list ? grown.dayKey : null;
+  const grow = (dayKey: string | null) => {
+    const head = headRef.current;
+    setGrown(dayKey ? { list, dayKey, top: head ? head.offsetTop + head.offsetHeight : 0 } : null);
+  };
+  const grownRun = (runs: Run[]) => (grown && grownHere ? runs.find((r) => r.dayKey === grownHere) : undefined);
+  /* A tap anywhere but on a tag, or Escape, puts it back. */
+  useEffect(() => {
+    if (!grown) return;
+    const onDown = (e: PointerEvent) => {
+      if (!(e.target instanceof Element) || !e.target.closest("[data-session-tag]")) setGrown(null);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setGrown(null);
+    };
+    document.addEventListener("pointerdown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [grown]);
 
   /*
     THE COLUMNS. The place, the person, THE NUMBER THE LIST IS ORDERED BY
@@ -454,19 +501,17 @@ export default function TeamRanking({
           (erg.length === 0 ? (
             <div className={EMPTY}>No ranked erg tests in {noneIn(range.key, range.label)}.</div>
           ) : (
-            <>
-              <SessionKey items={ergKey} />
+            <div className="relative">
               <div className={CARD}>
                 <div style={{ minWidth: ergMin }}>
                   <ListHead
+                    headRef={headRef}
                     cols={ergCols}
                     score="Pts"
                     runs={ergRuns}
-                    names={tests.map((t) => ({
-                      key: t.dayKey,
-                      name: t.session.description.trim() || "Erg",
-                      full: t.session.description.trim() || undefined,
-                    }))}
+                    names={tests.map((t) => ({ key: t.dayKey, name: "" }))}
+                    open={grownHere}
+                    onOpen={grow}
                   />
                   {erg.map((r, i) => (
                     <Row
@@ -487,7 +532,11 @@ export default function TeamRanking({
                   ))}
                 </div>
               </div>
-            </>
+              {(() => {
+                const run = grownRun(ergRuns);
+                return run && grown ? <GrownWorkout run={run} top={grown.top} onClose={() => grow(null)} /> : null;
+              })()}
+            </div>
           ))}
 
         {/* ── WATER ── wins, then where their boat finished in every piece,
@@ -496,15 +545,17 @@ export default function TeamRanking({
           (water.rows.length === 0 ? (
             <div className={EMPTY}>No timed race pieces in {noneIn(range.key, range.label)}.</div>
           ) : (
-            <>
-              <SessionKey items={waterKey} />
+            <div className="relative">
               <div className={CARD}>
                 <div style={{ minWidth: waterMin }}>
                   <ListHead
+                    headRef={headRef}
                     cols={waterCols}
                     score="Wins"
                     runs={waterRuns}
                     names={water.pieces.map((p) => ({ key: p.id, name: p.name }))}
+                    open={grownHere}
+                    onOpen={grow}
                   />
                   {water.rows.map((r, i) => (
                     <Row key={r.key} i={i} first={r.rank === 1 && r.wins > 0} cols={waterCols}>
@@ -518,7 +569,11 @@ export default function TeamRanking({
                   ))}
                 </div>
               </div>
-            </>
+              {(() => {
+                const run = grownRun(waterRuns);
+                return run && grown ? <GrownWorkout run={run} top={grown.top} onClose={() => grow(null)} /> : null;
+              })()}
+            </div>
           ))}
 
         {/* ── CONSISTENCY ── the plan's share done (and what of), the
