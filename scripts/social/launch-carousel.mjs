@@ -19,7 +19,7 @@
   EVERY WORD IS THE WEBSITE'S (lib/landingCopy.ts, lib/waitlist.ts), the rule
   since 2026-09-22 ("use the tone from my website so it's not generic AI
   slop"), or the app's own label on the thing the arrow points at (Log,
-  Message, Main gyms, House gyms, Favourites). Left out on purpose, because
+  Main gyms, House gyms, Favourites). Left out on purpose, because
   the app does not do them today: "How busy" (cut 2026-09-22), "Connect it to
   Google or Apple Calendar" (not built), and "students verified by their .edu
   email" (sign-up asks for a .edu address but does not check it yet:
@@ -90,9 +90,11 @@ const SLIDES = [
       { side: "L", title: "Mentors", text: "Get help from an experienced student or an upperclassman in your concentration.", at: [66, 920] },
     ] },
   { kind: "feature", img: "person", kicker: "02 · Why you match", head: "Find your ideal", em: "training partner.",
+    /* no line to the Message button (owner, 2026-09-27: "don't say
+       'message', so you don't need to point there"): a button that says
+       what it does gets no label */
     labels: [
       { side: "L", title: "Why you match", text: "Get matched with people based on your interests, hobbies, concentrations, level, language, hometown or much more.", at: [40, 1170] },
-      { side: "R", title: "Message", text: "Plan the session in the chat.", at: [1162, 2259] },
     ] },
   { kind: "feature", img: "chat", kicker: "03 · Plan", head: "Plan sessions easily", em: "in the chat.",
     labels: [

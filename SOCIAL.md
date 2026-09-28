@@ -447,7 +447,7 @@ The screens are shot signed in (`scripts/landing/save-cookie.mjs --fresh`, then
 | **8-slide LAUNCH carousel, 3:4 (1080×1440), white** — the phone in the middle of every slide and the features either side of it, each with an arrow to the button it is about: the intro (the four actions on their tabs), Match, Why you match, Plan, Profile, Gyms, Campus Colours, the waitlist (2026-09-27) | `mockups/social/launch/` | `scripts/social/launch-carousel.mjs`; fresh screens + card boxes: `scripts/social/capture-launch.mjs` |
 | **5 LOOKS with a real 3D phone, 3:4, to pick from** — studio (grey seamless, the serif), poster (brand blue, heavy capitals, blue phone metal), tumble (three phones thrown), floor (flat lay with a hex dumbbell, the words on the floor), pair (two phones in the mark's navy + blue). The same two slides in each so only the look differs (2026-09-27) | `mockups/social/styles/` (`sheet.png` = all five) | `scripts/social/styles-3d.mjs`; the 3D phone itself: `scripts/social/phone3d.mjs` |
 | **The MATCHING carousel, 5 slides, 3:4, pure white, the PAIR look** (the owner's pick): what makes the app different — matched on who you are, and told why. 1 "Sport is better with friends." (two phones) · 2 Why you match, the screen's reasons in big type · 3 the owner's own "not accessible anywhere else" sentence from Why I built it · 4 Find training partners. Make friends. · 5 Get in on day one. + the bio link. Site words only (2026-09-27) | `mockups/social/match/` | `scripts/social/match-carousel.mjs` |
-| **The 9-post GRID** — the mark in 3D across nine posts, "Your campus. / Your gym. / Your people." down the middle column; light and dark. **Upload `post-1` first (bottom right), `post-9` last (top left); after it, post in threes** or drag new posts below it (grid rearranging, worldwide since 8 Jun 2026) | `mockups/social/grid/<light\|dark>/` (`profile.png` = the profile in a phone) | `scripts/social/grid-puzzle.mjs` |
+| **The 9-post GRID** (NOT used: no logo on the grid, owner 2026-09-28, §6d) — the mark in 3D across nine posts, "Your campus. / Your gym. / Your people." down the middle column; light and dark. **Upload `post-1` first (bottom right), `post-9` last (top left); after it, post in threes** or drag new posts below it (grid rearranging, worldwide since 8 Jun 2026) | `mockups/social/grid/<light\|dark>/` (`profile.png` = the profile in a phone) | `scripts/social/grid-puzzle.mjs` |
 
 **The posts:** 01 waitlist ("Get in on day one." + the link) · 02 the headline
 ("Your campus. Your gym. Your people.") · 03 Match · 04 Why you match · 05 Plan in the
@@ -483,10 +483,18 @@ He does not read a script; the beats above are the order, the words are his.
 
 ### 6d. The first nine posts: a plan to pick from (2026-09-27)
 
+**DECIDED 2026-09-28: no logo on the grid.** The owner, on the four layouts below: "We
+won't be doing it in the thing because it takes too much space." The logo stays where it
+normally is, in the profile picture, and nowhere else. Every post is an ordinary post
+whose cover is its own first slide, so there are no grid covers to make. The launch
+carousel (`mockups/social/launch/`, with the black lines) goes up as it is. The four
+layouts stay below as the record of what was tried.
+
 **The plan page (private, the owner's): https://claude.ai/artifact/L1HeUEc1A11hYE7Ei3NR7x**
 It holds four Instagram profile mock-ups you can tap into, every carousel slide by
-slide, the story frames, and the posting order. **Not picked yet** — nothing below is
-built beyond the two carousels marked made.
+slide, the story frames, and the posting order. It was drawn before the decision above,
+so its layouts, its Launch story (the U building up) and its brief ("the grid cover
+first") are out of date.
 
 **Nine carousels, three per door.** In each row the middle one is the whole door; the
 two either side are its top things.
@@ -497,9 +505,10 @@ two either side are its top things.
 | Varsity athlete | Varsity Mode | Log · Workouts and statistics |
 | Coach | The Coach's Console | Lineups and video · Statistics and notes |
 
-**Four layouts. Same nine carousels, different covers** (a cover goes in front of slide 1):
+**Four layouts, NOT used (the decision above). Same nine carousels, different covers**
+(a cover would have gone in front of slide 1):
 
-4. **Along the lines — the owner's own drawing (2026-09-28), now Claude's pick.** The U
+4. **Along the lines — the owner's own drawing (2026-09-28).** The U
    sits on the middle post of the top row: its legs run down the two lines between the
    posts, the heads sit at the top of those lines (half in each post), and the bottom
    just dips into the top of the post below. "Your campus. / Your gym. / Your people."
@@ -525,7 +534,9 @@ crosses from one post into the next; the phones never do.**
 2026-09-28: "make the arrows black … so that it's not that visible. It's just tied to
 it"): a 2 px black line on a hairline of white, ending in a small dot on the spot, never
 on the words. `scripts/social/launch-carousel.mjs` draws them that way now; it was a blue
-line with an open arrowhead.
+line with an open arrowhead. No line goes to a button that says what it does: slide 3's
+"Message" label came off on 2026-09-28 ("don't say 'message', so you don't need to point
+there").
 
 **Stories, each saved to a Highlight:** Launch (1/3 · 2/3 · 3/3, the U building up),
 Student, Varsity, Coach, Questions (the site's FAQ word for word, ending on "officially
