@@ -8,18 +8,21 @@
   the console's Workouts tab is a coach's alone.
 
   THREE LISTS, never one score (lib/varsity/ranking.ts): ERG — points by place
-  on every ranked erg test; WATER — pieces won on the timing sheets, class by
-  class; CONSISTENCY — the plan's sessions done, the ones logged on top, and
-  the days out. Then the window: Month, Semester, or two dates.
+  on every ranked erg test; WATER — pieces won on the timing sheets; and
+  CONSISTENCY — the plan's sessions done, the ones logged on top, and the days
+  out. Then the window: Month, Semester, or two dates.
 
-  DRESSED LIKE THE STUDENTS' LEADERBOARDS, NOT A BLACK TABLE (owner,
-  2026-09-27: "make it very UI, so it's not just black"). The top three stand
-  on the podium the leaderboards open with — gold, silver and bronze blocks,
-  medals, the Messages avatar — and every list below it keeps the spreadsheet
-  the owner liked ("I like how it looks"): a medal on the first three rows, the
-  round badge after them, a face beside every name, and on the erg the places
-  that earned a medal in its colour. The top three are in the table too: it is
-  where their places test by test are.
+  A LIST, NOT A LEADERBOARD (owner, 2026-09-27). It was dressed for one round
+  like the students' boards — a podium, medals — and the owner took it back
+  off: "it's for coaches, so you don't need to do these top leaderboards. Just
+  make them normal… on the left, you can do a little bit more gold, but still
+  1, 2, 3. Don't put medals and other emojis there." So the rows are the
+  spreadsheet from the first round, in white, and the first three places on
+  the left are gold, silver and bronze with the number on them. What stayed
+  from the dressed round is what the owner kept: a face beside every name, and
+  the places piece by piece — "so they see first, second, third, and fourth" —
+  on the erg's tests and on every water piece, a medal place in its metal's
+  colour.
 
   Erg is made of what the Workouts tab already read — the boards and their
   results — so it can never disagree with a board a coach opens; while the Erg
@@ -28,21 +31,18 @@
   own logs, the published plan and the days out — only when it is opened, and
   only for a coach (can.readTraining), the same reads the team statistics make.
 
-  A person who has an account opens their console page from their row or
-  their block. Water matches people by the surname the sheet wrote, like the
-  race board's Athletes tab, so it has no page to open. Colours are theme
-  tokens; the podium metals are the app's own tokens (--podium-1..3).
+  A person who has an account opens their console page from their row. Water
+  matches people by the surname the sheet wrote, like the race board's
+  Athletes tab, so it has no page to open. Colours are theme tokens; the three
+  metals are the app's own tokens (--podium-1..3).
 */
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import Dropdown from "@/components/varsity/profile/Dropdown";
 import DatesSheet, { type Dates } from "@/components/varsity/team/DatesSheet";
 import RankBadge from "@/components/varsity/team/RankBadge";
 import ExampleTag from "@/components/varsity/ExampleTag";
 import Segmented from "@/components/ui/Segmented";
-import Podium, { type PodiumEntry } from "@/components/leaderboards/Podium";
-import Medal from "@/components/leaderboards/Medal";
 import Avatar from "@/components/messages/Avatar";
 import { useMembership } from "@/components/varsity/useMembership";
 import { can, fetchSquad } from "@/lib/varsity/membership";
@@ -50,6 +50,7 @@ import { fetchSquadLogsInRange, type LogEntry } from "@/lib/varsity/logStore";
 import { fetchPlan } from "@/lib/varsity/planStore";
 import { publishedSessions } from "@/lib/varsity/athleteHome";
 import { fetchOutDaysBetween } from "@/lib/varsity/squadDaysOut";
+import { classTitle } from "@/lib/varsity/racePieces";
 import { TEAM_CUSTOM_RANGE, customTeamRange, teamRangeByKey, toIso } from "@/lib/varsity/teamStats";
 import {
   consistencyRanking,
@@ -78,17 +79,26 @@ const EMPTY = "rounded-2xl border border-dashed border-border bg-surface px-4 py
 const noneIn = (key: string, label: string) =>
   key === "month" ? "the last month" : key === "semester" ? "the semester" : label;
 
-/* The medal's colour, washed, behind a place that earned one. */
+/* The three metals: a solid fill for a place in the list, a wash behind a
+   place in a piece. Literal class names, so the stylesheet keeps them. */
+const METAL_FILL: Record<number, string> = { 1: "bg-podium-1", 2: "bg-podium-2", 3: "bg-podium-3" };
 const METAL_TINT: Record<number, string> = { 1: "bg-podium-1-tint", 2: "bg-podium-2-tint", 3: "bg-podium-3-tint" };
 
-/* A place in the list: a medal for the top three, the race board's round
-   badge after them, and a dash for somebody who has not scored at all — a
-   list where everybody is level at nothing has no first place to hand out
-   (the leaderboards' own rule). */
+/* A place in the list: 1, 2 and 3 on gold, silver and bronze, the race
+   board's round grey badge after them, and a dash for somebody who has not
+   scored at all — a list where everybody is level at nothing has no first
+   place to hand out (the leaderboards' own rule). */
 function Place({ rank, scored }: { rank: number; scored: boolean }) {
   if (!scored) return <span className="flex h-[22px] w-[22px] items-center justify-center text-[12px] text-muted">–</span>;
-  if (rank <= 3) return <Medal place={rank as 1 | 2 | 3} rank={rank} size={22} />;
-  return <RankBadge rank={rank} />;
+  const fill = METAL_FILL[rank];
+  if (!fill) return <RankBadge rank={rank} />;
+  return (
+    <span
+      className={`flex h-[22px] w-[22px] flex-shrink-0 items-center justify-center rounded-full text-[11px] font-bold tabular-nums text-podium-ink ${fill}`}
+    >
+      {rank}
+    </span>
+  );
 }
 
 /* A person: the Messages avatar and the name. */
@@ -101,19 +111,20 @@ function Who({ name }: { name: string }) {
   );
 }
 
-/* Where somebody finished one erg test: a place that earned a medal sits in
-   its colour, every other place is plain, and a test they did not row is a
-   dash. */
-function TestPlace({ place }: { place: number | null }) {
+/* Where somebody finished one test or piece: a medal place sits on its
+   metal's wash, every other place is plain, and one they did not row is a
+   dash. `under` is a word beneath it — the class of the boat, on the water. */
+function PiecePlace({ place, under }: { place: number | null; under?: string }) {
   if (place == null) return <span className="text-right text-[12px] text-muted">—</span>;
   const tint = METAL_TINT[place];
   return (
-    <span className="flex justify-end">
+    <span className="flex flex-col items-end leading-tight">
       <span
         className={`rounded-md px-1.5 py-0.5 text-[12px] tabular-nums ${tint ? `${tint} font-semibold text-text` : "text-muted"}`}
       >
         {ordinal(place)}
       </span>
+      {under && <span className="mt-0.5 pr-1.5 font-mono text-[9px] text-muted">{under}</span>}
     </span>
   );
 }
@@ -145,6 +156,7 @@ function Row({
 }
 
 const athleteHref = (id: string) => `/varsity/coach/athlete/${id}`;
+const dayLabel = (d: Date) => `${d.getDate()} ${MO[d.getMonth()]}`;
 
 /* The consistency list's reads, for one window. */
 type SquadRead = {
@@ -168,7 +180,6 @@ export default function TeamRanking({
   /** The timing sheets on the Water side. */
   races: RaceDay[];
 }) {
-  const router = useRouter();
   const now = useMemo(() => new Date(), []);
   const [list, setList] = useState<RankingList>("erg");
   const [rangeKey, setRangeKey] = useState(defaultRankingRange);
@@ -235,62 +246,23 @@ export default function TeamRanking({
   );
   const consistencyLoading = canRead && !!teamId && consistency === null;
 
-  /* The top three of whichever list is open, standing on the podium. Only
-     people who have scored: nobody stands on a block for nothing. */
-  const podium: PodiumEntry[] = useMemo(() => {
-    const entry = (
-      i: number,
-      id: string,
-      rank: number,
-      title: string,
-      value: string,
-      unit: string,
-      href?: string,
-    ): PodiumEntry => ({
-      id,
-      place: (i + 1) as 1 | 2 | 3,
-      rank,
-      title,
-      kind: "person",
-      value,
-      unit,
-      residence: null,
-      classYear: null,
-      onOpen: href ? () => router.push(href) : undefined,
-    });
-    if (list === "erg")
-      return erg
-        .filter((r) => r.points > 0)
-        .slice(0, 3)
-        .map((r, i) =>
-          entry(i, r.athleteId, r.rank, r.name || "Unnamed", String(r.points), "pts", example ? undefined : athleteHref(r.athleteId)),
-        );
-    if (list === "water")
-      return water.rows
-        .filter((r) => r.wins > 0)
-        .slice(0, 3)
-        .map((r, i) => entry(i, r.key, r.rank, r.name, String(r.wins), r.wins === 1 ? "win" : "wins"));
-    return (consistency ?? [])
-      .filter((r) => (r.share ?? 0) > 0)
-      .slice(0, 3)
-      .map((r, i) => entry(i, r.id, r.rank, r.name, `${r.share}%`, "done", athleteHref(r.id)));
-  }, [list, erg, water, consistency, example, router]);
-
-  /* A test is headed by the coach's words and its day; two on one day say
+  /* A column is headed by its name and its day; two sessions on one day say
      which half of it. */
-  const dayOf = (w: TeamWorkout) => `${w.date.getDate()} ${MO[w.date.getMonth()]}`;
-  const sharedDay = (w: TeamWorkout) => tests.some((t) => t !== w && dayOf(t) === dayOf(w));
+  const ergShared = (w: TeamWorkout) =>
+    tests.some((t) => t.dayKey !== w.dayKey && dayLabel(t.date) === dayLabel(w.date));
+  const waterShared = (dayKey: string, date: Date) =>
+    water.pieces.some((p) => p.dayKey !== dayKey && dayLabel(p.date) === dayLabel(date));
 
   /*
     THE COLUMNS. The place, the person, THE NUMBER THE LIST IS ORDERED BY
     beside the name — at the end of a row it fell off a phone's screen — and
-    then the detail: a column per test, per class of boat, or the plan's
+    then the detail: a column per erg test or water piece, or the plan's
     counts. Whatever does not fit scrolls sideways; the ranking never does.
   */
   const ergCols = `1.6rem minmax(0,1fr) 2.6rem repeat(${tests.length}, 3rem)`;
   const ergMin = `${1.6 + 9.5 + 2.6 + tests.length * 3 + (tests.length + 2) * 0.375 + 1.25}rem`;
-  const waterCols = `1.6rem minmax(0,1fr) 2.6rem repeat(${water.classes.length}, 3rem)`;
-  const waterMin = `${1.6 + 9.5 + 2.6 + water.classes.length * 3 + (water.classes.length + 2) * 0.375 + 1.25}rem`;
+  const waterCols = `1.6rem minmax(0,1fr) 2.6rem repeat(${water.pieces.length}, 3rem)`;
+  const waterMin = `${1.6 + 9.5 + 2.6 + water.pieces.length * 3 + (water.pieces.length + 2) * 0.375 + 1.25}rem`;
   /* Consistency's plan count rides UNDER its percentage rather than in a
      column of its own: four columns of numbers cut every full name short. */
   const consCols = "1.6rem minmax(0,1fr) 2.9rem 2.4rem 2.1rem";
@@ -323,12 +295,14 @@ export default function TeamRanking({
         />
       </div>
 
-      {podium.length > 0 && (
-        <Podium key={list} entries={podium} corner={list === "erg" && example ? <ExampleTag /> : undefined} />
+      {list === "erg" && example && erg.length > 0 && (
+        <div className="mt-2 flex justify-end">
+          <ExampleTag />
+        </div>
       )}
 
       <div className="mt-3">
-        {/* ── ERG ── */}
+        {/* ── ERG ── points, then the place on every test. */}
         {list === "erg" &&
           (erg.length === 0 ? (
             <div className={EMPTY}>No ranked erg tests in {noneIn(range.key, range.label)}.</div>
@@ -343,8 +317,8 @@ export default function TeamRanking({
                     <span key={t.dayKey} className="min-w-0 text-right" title={t.session.description.trim() || undefined}>
                       <span className="block truncate">{t.session.description.trim() || "Erg"}</span>
                       <span className="block truncate font-medium normal-case tracking-normal">
-                        {dayOf(t)}
-                        {sharedDay(t) ? ` ${t.period}` : ""}
+                        {dayLabel(t.date)}
+                        {ergShared(t) ? ` ${t.period}` : ""}
                       </span>
                     </span>
                   ))}
@@ -362,7 +336,7 @@ export default function TeamRanking({
                     <Who name={r.name || "Unnamed"} />
                     <span className="text-right text-[14px] font-bold tabular-nums text-text">{r.points}</span>
                     {r.places.map((p, k) => (
-                      <TestPlace key={k} place={p?.place ?? null} />
+                      <PiecePlace key={k} place={p?.place ?? null} />
                     ))}
                   </Row>
                 ))}
@@ -370,7 +344,8 @@ export default function TeamRanking({
             </div>
           ))}
 
-        {/* ── WATER ── wins in each class, out of the pieces raced in it. */}
+        {/* ── WATER ── wins, then where their boat finished in every piece,
+            with the class it was in. */}
         {list === "water" &&
           (water.rows.length === 0 ? (
             <div className={EMPTY}>No timed race pieces in {noneIn(range.key, range.label)}.</div>
@@ -381,9 +356,13 @@ export default function TeamRanking({
                   <span />
                   <span>Athlete</span>
                   <span className="text-right">Wins</span>
-                  {water.classes.map((c) => (
-                    <span key={c.badge} className="text-right font-mono normal-case tracking-normal">
-                      {c.title}
+                  {water.pieces.map((p) => (
+                    <span key={p.id} className="min-w-0 text-right">
+                      <span className="block truncate">{p.name}</span>
+                      <span className="block truncate font-medium normal-case tracking-normal">
+                        {dayLabel(p.date)}
+                        {waterShared(p.dayKey, p.date) ? ` ${p.period}` : ""}
+                      </span>
                     </span>
                   ))}
                 </div>
@@ -392,21 +371,9 @@ export default function TeamRanking({
                     <Place rank={r.rank} scored={r.wins > 0} />
                     <Who name={r.name} />
                     <span className="text-right text-[14px] font-bold tabular-nums text-text">{r.wins}</span>
-                    {water.classes.map((c) => {
-                      const cls = r.byClass[c.badge];
-                      return (
-                        <span key={c.badge} className="text-right text-[12px] tabular-nums">
-                          {cls ? (
-                            <>
-                              <span className={cls.wins > 0 ? "font-semibold text-text" : "text-muted"}>{cls.wins}</span>
-                              <span className="text-muted">/{cls.raced}</span>
-                            </>
-                          ) : (
-                            <span className="text-muted">—</span>
-                          )}
-                        </span>
-                      );
-                    })}
+                    {r.places.map((p, k) => (
+                      <PiecePlace key={k} place={p?.place ?? null} under={p ? classTitle(p.badge) : undefined} />
+                    ))}
                   </Row>
                 ))}
               </div>

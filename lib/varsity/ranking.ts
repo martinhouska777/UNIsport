@@ -17,11 +17,13 @@
       can improve", and turning up is part of it.
     • WATER: the NUMBER OF WINS (the owner's pick over a win percentage) —
       every piece on a timing sheet where a class had two or more crews timed,
-      a win for each rower in the crew that finished first. The classes are
-      kept apart, "pairs, then fours, then fours plus, and 8 is just eight,
-      which is different"; a better or worse boat is left for the coach to
-      read off the names — "look at the names, and you just know the pattern.
-      Later, we can specify."
+      a win for each rower in the crew that finished first — and beside it
+      where their boat finished in every piece, "first, second, third, and
+      fourth… I would do it in every piece". A place is within its class,
+      "pairs, then fours, then fours plus, and 8 is just eight, which is
+      different"; a better or worse boat is left for the coach to read off
+      the names — "look at the names, and you just know the pattern. Later,
+      we can specify."
     • CONSISTENCY, "against the plan: how much he logged and extra sessions…
       so coaches also know how consistent each one is" — the athlete's own
       count of planned sessions done (athleteStats.planSlots, the one count
@@ -40,9 +42,9 @@ import { planSlots, type Span } from "./athleteStats";
 import { teamRanges, toIso, type TeamRange } from "./teamStats";
 import { buildBoard, onTheWater, type TeamWorkout } from "./teamBoard";
 import type { TeamResult } from "./resultsStore";
-import { boatTypes, roster } from "./coachLineup";
+import { roster } from "./coachLineup";
 import { parseSessionKey, type SessionMap } from "./coachPlan";
-import { classTitle, crewMembers, pieceBoards, type RaceDay } from "./racePieces";
+import { crewMembers, pieceBoards, type RaceDay } from "./racePieces";
 import type { LogEntry } from "./logStore";
 
 /* ── The lists ──────────────────────────────────────────────────────────── */
@@ -167,7 +169,11 @@ function numberPlaces<T extends { rank: number }>(list: T[], same: (a: T, b: T) 
 
 /* ── The water ranking ──────────────────────────────────────────────────── */
 
-export type WaterClass = { badge: string; title: string };
+/** One piece that was a race, as a column: its name and its session. */
+export type WaterPiece = { id: string; name: string; dayKey: string; date: Date; period: string };
+
+/** Where a rower's boat finished one piece, out of how many in its class, and the class. */
+export type WaterPlace = { place: number; of: number; badge: string };
 
 export type WaterRankRow = {
   /** As the timing sheet wrote them — their surname — which is how they are
@@ -176,16 +182,9 @@ export type WaterRankRow = {
   /** The roster's full name when exactly one rower has that surname. */
   name: string;
   wins: number;
-  raced: number;
-  /** Per class badge: the pieces won and raced in it. */
-  byClass: Record<string, { wins: number; raced: number }>;
+  /** Per piece, in waterRanking's order: where their boat finished, or null. */
+  places: (WaterPlace | null)[];
   rank: number;
-};
-
-/* Biggest boat first, as on a regatta card — the race board's order. */
-const classOrder = (badge: string) => {
-  const i = boatTypes.findIndex((k) => k.key === badge);
-  return i === -1 ? boatTypes.length : i;
 };
 
 const lastWord = (name: string) => {
@@ -202,55 +201,63 @@ function fullName(surname: string): string {
 
 /**
  * Every rower who raced a piece in the window, most wins first, and the
- * classes those pieces were in (biggest boat first).
+ * pieces themselves, oldest first — so each rower can be read piece by piece,
+ * "first, second, third, and fourth … in every piece" (owner, 2026-09-27).
  *
  * A piece counts in a class only when two or more of its crews have a time —
- * one boat is not a race (the race board's own rule). The crew with the
- * fastest time wins it, and so does any crew level with it to the hundredth.
- * No coxes, as on the race board's Athletes tab: a cox carries whichever boat
- * they steer, so their wins would be the boat's, not theirs.
+ * one boat is not a race (the race board's own rule) — and a piece with no
+ * such class is not a column at all. A place is within the class of the boat
+ * the rower sat in (a 1st in the pairs is not a 1st in the fours, so the
+ * class goes with it); the crew with the fastest time wins, and so does any
+ * crew level with it to the hundredth. No coxes, as on the race board's
+ * Athletes tab: a cox carries whichever boat they steer, so their wins would
+ * be the boat's, not theirs.
  */
-export function waterRanking(races: RaceDay[], span: Span): { rows: WaterRankRow[]; classes: WaterClass[] } {
-  const people = new Map<string, WaterRankRow>();
-  const seen = new Set<string>();
-  for (const day of races) {
-    const date = parseSessionKey(day.dayKey)?.date;
-    if (!date || !within(date, span)) continue;
+export function waterRanking(races: RaceDay[], span: Span): { rows: WaterRankRow[]; pieces: WaterPiece[] } {
+  /* The races first, in the order they were rowed: every session in the
+     window oldest first, its pieces in their own order. */
+  const days = races
+    .map((day) => ({ day, parsed: parseSessionKey(day.dayKey) }))
+    .filter((d): d is { day: RaceDay; parsed: NonNullable<typeof d.parsed> } => !!d.parsed && within(d.parsed.date, span))
+    .sort((a, b) => a.parsed.date.getTime() - b.parsed.date.getTime() || a.parsed.period.localeCompare(b.parsed.period));
+  const raced: { piece: WaterPiece; boards: ReturnType<typeof pieceBoards> }[] = [];
+  for (const { day, parsed } of days) {
     for (const piece of day.pieces) {
-      for (const board of pieceBoards(piece)) {
-        if (board.rows.length < 2) continue;
-        seen.add(board.badge);
-        const best = board.rows[0].time;
-        for (const row of board.rows) {
-          const won = row.time === best;
-          for (const raw of crewMembers(row.crew).rowers) {
-            const key = raw.trim();
-            if (!key) continue;
-            let person = people.get(key);
-            if (!person) {
-              person = { key, name: fullName(key), wins: 0, raced: 0, byClass: {}, rank: 0 };
-              people.set(key, person);
-            }
-            const cls = (person.byClass[board.badge] ??= { wins: 0, raced: 0 });
-            cls.raced += 1;
-            person.raced += 1;
-            if (won) {
-              cls.wins += 1;
-              person.wins += 1;
-            }
+      const boards = pieceBoards(piece).filter((b) => b.rows.length >= 2);
+      if (boards.length === 0) continue;
+      raced.push({
+        piece: { id: `${day.dayKey}:${piece.id}`, name: piece.name, dayKey: day.dayKey, date: parsed.date, period: parsed.period },
+        boards,
+      });
+    }
+  }
+
+  const people = new Map<string, WaterRankRow>();
+  raced.forEach(({ boards }, col) => {
+    for (const board of boards) {
+      for (const row of board.rows) {
+        // Level on time is level on place: 1 + the crews that were faster.
+        const place = 1 + board.rows.filter((r) => r.time < row.time).length;
+        for (const raw of crewMembers(row.crew).rowers) {
+          const key = raw.trim();
+          if (!key) continue;
+          let person = people.get(key);
+          if (!person) {
+            person = { key, name: fullName(key), wins: 0, places: Array(raced.length).fill(null), rank: 0 };
+            people.set(key, person);
           }
+          person.places[col] = { place, of: board.rows.length, badge: board.badge };
+          if (place === 1) person.wins += 1;
         }
       }
     }
-  }
+  });
+
   const rows = numberPlaces(
     [...people.values()].sort((a, b) => b.wins - a.wins || a.name.localeCompare(b.name)),
     (a, b) => a.wins === b.wins,
   );
-  const classes = [...seen]
-    .sort((a, b) => classOrder(a) - classOrder(b))
-    .map((badge) => ({ badge, title: classTitle(badge) }));
-  return { rows, classes };
+  return { rows, pieces: raced.map((r) => r.piece) };
 }
 
 /* ── The consistency ranking ────────────────────────────────────────────── */
