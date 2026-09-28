@@ -24,6 +24,14 @@
   on the erg's tests and on every water piece, a medal place in its metal's
   colour.
 
+  WHICH SESSIONS, ON TOP (owner, 2026-09-28: "make sure that we know which
+  pieces we were doing somewhere on top, so I'm going to see which piece it
+  was"). A column only has the width for a day and a name cut short, and on
+  the water every session's pieces are just "Piece 1", "Piece 2"; so above the
+  list, one line per session — its day, and the plan's own words for it
+  ("3×5' at r30, 2k+2") — and in the list's header that same day in the same
+  grey tag, once, across all of that session's columns.
+
   Erg is made of what the Workouts tab already read — the boards and their
   results — so it can never disagree with a board a coach opens; while the Erg
   side is still the worked example, so is this, and it says so. Water reads
@@ -52,6 +60,7 @@ import { fetchPlan } from "@/lib/varsity/planStore";
 import { publishedSessions } from "@/lib/varsity/athleteHome";
 import { fetchOutDaysBetween } from "@/lib/varsity/squadDaysOut";
 import { classTitle } from "@/lib/varsity/racePieces";
+import { dayKeyLabel, sessionLabel } from "@/lib/varsity/coachPlan";
 import { TEAM_CUSTOM_RANGE, customTeamRange, teamRangeByKey, toIso } from "@/lib/varsity/teamStats";
 import {
   consistencyRanking,
@@ -62,8 +71,10 @@ import {
   rankingLists,
   rankingRanges,
   rankingSpan,
+  sessionRuns,
   waterRanking,
   type RankingList,
+  type SessionRun,
 } from "@/lib/varsity/ranking";
 import type { TeamWorkout } from "@/lib/varsity/teamBoard";
 import type { TeamResult } from "@/lib/varsity/resultsStore";
@@ -157,8 +168,123 @@ function Row({
   );
 }
 
+/* A session's day in a grey tag — the SAME tag over its columns and beside
+   its words above the list, so the eye carries one to the other. `half` is
+   AM or PM, written only when two sessions share the day. Over the columns
+   the day STAYS IN SIGHT while any of its pieces are (`band`): the list
+   scrolls sideways, and a tag across three pieces would otherwise slide its
+   day out of the screen while two of them are still on it. */
+function DayTag({ day, half, big = false, band = false }: { day: string; half?: string; big?: boolean; band?: boolean }) {
+  return (
+    <span
+      className={`flex w-full items-center justify-center rounded-[5px] bg-surface-2 px-1.5 py-[3px] text-center font-semibold uppercase leading-tight text-text ${
+        big ? "text-[10px] tracking-[0.06em]" : "text-[9px] tracking-[0.08em]"
+      }`}
+    >
+      <span className={`min-w-0 max-w-full truncate ${band ? "sticky left-3 right-3" : ""}`}>
+        {day}
+        {half && <span className="block">{half}</span>}
+      </span>
+    </span>
+  );
+}
+
+/* One session of a list: its day, and what the plan called it. */
+type KeyItem = { key: string; day: string; half?: string; words: string };
+
+/* The key folds past this many sessions — a semester of timing sheets would
+   otherwise push the list itself off the screen — to the first six. */
+const KEY_FOLD = 8;
+const KEY_FOLDED = 6;
+
+/*
+  WHAT WAS ROWED — the list's sessions above it, oldest first like its
+  columns: the day in its tag, and the plan's own words beside it, in full.
+*/
+function SessionKey({ items }: { items: KeyItem[] }) {
+  const [all, setAll] = useState(false);
+  const folds = items.length > KEY_FOLD;
+  const shown = folds && !all ? items.slice(0, KEY_FOLDED) : items;
+  return (
+    <div className="mb-3 overflow-hidden rounded-2xl border border-border bg-surface shadow-card">
+      {shown.map((it, i) => (
+        <div key={it.key} className={`flex items-start gap-2.5 px-3 py-2 ${i > 0 ? "border-t border-border" : ""}`}>
+          <span className="w-[5.2rem] flex-shrink-0">
+            <DayTag day={it.day} half={it.half} big />
+          </span>
+          <span className="min-w-0 flex-1 text-[13px] font-semibold leading-snug text-text">{it.words}</span>
+        </div>
+      ))}
+      {folds && (
+        <button
+          type="button"
+          onClick={() => setAll((a) => !a)}
+          className="block w-full border-t border-border px-3 py-2.5 text-left text-[12px] font-semibold text-muted active:bg-surface-2"
+        >
+          {all ? "Show fewer" : `Show all ${items.length}`}
+        </button>
+      )}
+    </div>
+  );
+}
+
+/*
+  THE HEADER OF A LIST WITH A COLUMN PER PIECE, on two lines: each session's
+  day once, in its tag, across all of that session's columns — three pieces
+  of one timing sheet are three columns under one "5 Sep" — and under it
+  every column's own name, the test ("5k TEST") or the piece ("Piece 2").
+*/
+function ListHead({
+  cols,
+  score,
+  runs,
+  names,
+}: {
+  cols: string;
+  /** The heading of the number the list is ordered by: Pts, Wins. */
+  score: string;
+  runs: (SessionRun & { day: string; half?: string })[];
+  names: { key: string; name: string; full?: string }[];
+}) {
+  return (
+    <div className="border-b border-border px-2.5 py-2">
+      {/* Stretched, so a day that has to say AM or PM on a second line does
+          not leave its neighbours' tags shorter beside it. */}
+      <div className="grid items-stretch gap-x-1.5" style={{ gridTemplateColumns: cols }}>
+        <span />
+        <span />
+        <span />
+        {runs.map((r) => (
+          <span key={r.dayKey} className="flex min-w-0" style={{ gridColumn: `span ${r.count}` }}>
+            <DayTag day={r.day} half={r.half} band />
+          </span>
+        ))}
+      </div>
+      <div className={`mt-1.5 grid items-end gap-x-1.5 ${TH}`} style={{ gridTemplateColumns: cols }}>
+        <span />
+        <span>Athlete</span>
+        <span className="text-right">{score}</span>
+        {names.map((n) => (
+          <span key={n.key} className="min-w-0 truncate text-right" title={n.full}>
+            {n.name}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 const athleteHref = (id: string) => `/varsity/coach/athlete/${id}`;
 const dayLabel = (d: Date) => `${d.getDate()} ${MO[d.getMonth()]}`;
+
+/* Each session's day as a header or the key writes it, with AM or PM only
+   where another session in the list falls on the same day. */
+function labelRuns(runs: SessionRun[]) {
+  return runs.map((r) => {
+    const shared = runs.some((o) => o.dayKey !== r.dayKey && dayLabel(o.date) === dayLabel(r.date));
+    return { ...r, day: dayLabel(r.date), half: shared ? r.period : undefined };
+  });
+}
 
 /* The consistency list's reads, for one window. */
 type SquadRead = {
@@ -174,6 +300,7 @@ export default function TeamRanking({
   exampleKeys,
   races,
   raceBoats,
+  raceTitle,
 }: {
   /** Every board on the Workouts tab, worked examples included. */
   workouts: TeamWorkout[];
@@ -185,6 +312,9 @@ export default function TeamRanking({
   /** Those sessions' lineup boats — who sat where, so two rowers who share a
       surname are told apart. */
   raceBoats: Record<string, Boat[]>;
+  /** The plan's words for a timing sheet's session, as its row on the Water
+      side says them. */
+  raceTitle: (dayKey: string) => string;
 }) {
   const now = useMemo(() => new Date(), []);
   const [list, setList] = useState<RankingList>("erg");
@@ -252,12 +382,23 @@ export default function TeamRanking({
   );
   const consistencyLoading = canRead && !!teamId && consistency === null;
 
-  /* A column is headed by its name and its day; two sessions on one day say
-     which half of it. */
-  const ergShared = (w: TeamWorkout) =>
-    tests.some((t) => t.dayKey !== w.dayKey && dayLabel(t.date) === dayLabel(w.date));
-  const waterShared = (dayKey: string, date: Date) =>
-    water.pieces.some((p) => p.dayKey !== dayKey && dayLabel(p.date) === dayLabel(date));
+  /* Which sessions each list is made of: a run of columns per session, for
+     the header, and the same sessions spelled out for the key above it. */
+  const ergRuns = useMemo(() => labelRuns(sessionRuns(tests)), [tests]);
+  const waterRuns = useMemo(() => labelRuns(sessionRuns(water.pieces)), [water.pieces]);
+  const testWords = (w: TeamWorkout) => w.session.description.trim() || sessionLabel(w.session);
+  const ergKey: KeyItem[] = ergRuns.map((r) => ({
+    key: r.dayKey,
+    day: dayKeyLabel(r.dayKey),
+    half: r.half,
+    words: testWords(tests.find((t) => t.dayKey === r.dayKey)!),
+  }));
+  const waterKey: KeyItem[] = waterRuns.map((r) => ({
+    key: r.dayKey,
+    day: dayKeyLabel(r.dayKey),
+    half: r.half,
+    words: raceTitle(r.dayKey),
+  }));
 
   /*
     THE COLUMNS. The place, the person, THE NUMBER THE LIST IS ORDERED BY
@@ -313,41 +454,40 @@ export default function TeamRanking({
           (erg.length === 0 ? (
             <div className={EMPTY}>No ranked erg tests in {noneIn(range.key, range.label)}.</div>
           ) : (
-            <div className={CARD}>
-              <div style={{ minWidth: ergMin }}>
-                <div className={`grid items-end gap-1.5 border-b border-border px-2.5 py-2 ${TH}`} style={{ gridTemplateColumns: ergCols }}>
-                  <span />
-                  <span>Athlete</span>
-                  <span className="text-right">Pts</span>
-                  {tests.map((t) => (
-                    <span key={t.dayKey} className="min-w-0 text-right" title={t.session.description.trim() || undefined}>
-                      <span className="block truncate">{t.session.description.trim() || "Erg"}</span>
-                      <span className="block truncate font-medium normal-case tracking-normal">
-                        {dayLabel(t.date)}
-                        {ergShared(t) ? ` ${t.period}` : ""}
-                      </span>
-                    </span>
+            <>
+              <SessionKey items={ergKey} />
+              <div className={CARD}>
+                <div style={{ minWidth: ergMin }}>
+                  <ListHead
+                    cols={ergCols}
+                    score="Pts"
+                    runs={ergRuns}
+                    names={tests.map((t) => ({
+                      key: t.dayKey,
+                      name: t.session.description.trim() || "Erg",
+                      full: t.session.description.trim() || undefined,
+                    }))}
+                  />
+                  {erg.map((r, i) => (
+                    <Row
+                      key={r.athleteId}
+                      i={i}
+                      first={r.rank === 1}
+                      cols={ergCols}
+                      /* A worked example's people have no page to open. */
+                      href={example ? undefined : athleteHref(r.athleteId)}
+                    >
+                      <Place rank={r.rank} scored={r.points > 0} />
+                      <Who name={r.name || "Unnamed"} />
+                      <span className="text-right text-[14px] font-bold tabular-nums text-text">{r.points}</span>
+                      {r.places.map((p, k) => (
+                        <PiecePlace key={k} place={p?.place ?? null} />
+                      ))}
+                    </Row>
                   ))}
                 </div>
-                {erg.map((r, i) => (
-                  <Row
-                    key={r.athleteId}
-                    i={i}
-                    first={r.rank === 1}
-                    cols={ergCols}
-                    /* A worked example's people have no page to open. */
-                    href={example ? undefined : athleteHref(r.athleteId)}
-                  >
-                    <Place rank={r.rank} scored={r.points > 0} />
-                    <Who name={r.name || "Unnamed"} />
-                    <span className="text-right text-[14px] font-bold tabular-nums text-text">{r.points}</span>
-                    {r.places.map((p, k) => (
-                      <PiecePlace key={k} place={p?.place ?? null} />
-                    ))}
-                  </Row>
-                ))}
               </div>
-            </div>
+            </>
           ))}
 
         {/* ── WATER ── wins, then where their boat finished in every piece,
@@ -356,34 +496,29 @@ export default function TeamRanking({
           (water.rows.length === 0 ? (
             <div className={EMPTY}>No timed race pieces in {noneIn(range.key, range.label)}.</div>
           ) : (
-            <div className={CARD}>
-              <div style={{ minWidth: waterMin }}>
-                <div className={`grid items-end gap-1.5 border-b border-border px-2.5 py-2 ${TH}`} style={{ gridTemplateColumns: waterCols }}>
-                  <span />
-                  <span>Athlete</span>
-                  <span className="text-right">Wins</span>
-                  {water.pieces.map((p) => (
-                    <span key={p.id} className="min-w-0 text-right">
-                      <span className="block truncate">{p.name}</span>
-                      <span className="block truncate font-medium normal-case tracking-normal">
-                        {dayLabel(p.date)}
-                        {waterShared(p.dayKey, p.date) ? ` ${p.period}` : ""}
-                      </span>
-                    </span>
+            <>
+              <SessionKey items={waterKey} />
+              <div className={CARD}>
+                <div style={{ minWidth: waterMin }}>
+                  <ListHead
+                    cols={waterCols}
+                    score="Wins"
+                    runs={waterRuns}
+                    names={water.pieces.map((p) => ({ key: p.id, name: p.name }))}
+                  />
+                  {water.rows.map((r, i) => (
+                    <Row key={r.key} i={i} first={r.rank === 1 && r.wins > 0} cols={waterCols}>
+                      <Place rank={r.rank} scored={r.wins > 0} />
+                      <Who name={r.name} />
+                      <span className="text-right text-[14px] font-bold tabular-nums text-text">{r.wins}</span>
+                      {r.places.map((p, k) => (
+                        <PiecePlace key={k} place={p?.place ?? null} under={p ? classTitle(p.badge) : undefined} />
+                      ))}
+                    </Row>
                   ))}
                 </div>
-                {water.rows.map((r, i) => (
-                  <Row key={r.key} i={i} first={r.rank === 1 && r.wins > 0} cols={waterCols}>
-                    <Place rank={r.rank} scored={r.wins > 0} />
-                    <Who name={r.name} />
-                    <span className="text-right text-[14px] font-bold tabular-nums text-text">{r.wins}</span>
-                    {r.places.map((p, k) => (
-                      <PiecePlace key={k} place={p?.place ?? null} under={p ? classTitle(p.badge) : undefined} />
-                    ))}
-                  </Row>
-                ))}
               </div>
-            </div>
+            </>
           ))}
 
         {/* ── CONSISTENCY ── the plan's share done (and what of), the

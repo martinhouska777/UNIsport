@@ -497,6 +497,7 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
           exampleKeys={exampleKeys}
           races={races}
           raceBoats={raceBoats}
+          raceTitle={raceTitle}
         />
       )}
       <div className="flex flex-col gap-1.5">

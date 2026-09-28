@@ -259,6 +259,32 @@ export function waterRanking(
   return { rows, pieces: raced.map((r) => r.piece) };
 }
 
+/* ── Which session a column was ─────────────────────────────────────────── */
+
+/** Anything that is a column of a list and came out of one session: an erg
+    test, or one piece of a timing sheet. */
+type SessionColumn = { dayKey: string; date: Date; period: string };
+
+/** One session's columns side by side: its day, and how many columns it has. */
+export type SessionRun = SessionColumn & { count: number };
+
+/**
+ * THE SESSIONS A LIST IS MADE OF (owner, 2026-09-28: "make sure that we know
+ * which pieces we were doing somewhere on top, so I'm going to see which piece
+ * it was"). Columns arrive oldest first with a session's pieces next to each
+ * other, so each run of one day key is one session: the header puts its day
+ * once over all of its pieces, and the list above says what it was.
+ */
+export function sessionRuns(columns: SessionColumn[]): SessionRun[] {
+  const runs: SessionRun[] = [];
+  for (const c of columns) {
+    const last = runs[runs.length - 1];
+    if (last && last.dayKey === c.dayKey) last.count += 1;
+    else runs.push({ dayKey: c.dayKey, date: c.date, period: c.period, count: 1 });
+  }
+  return runs;
+}
+
 /* ── The consistency ranking ────────────────────────────────────────────── */
 
 export type ConsistencyRow = {
