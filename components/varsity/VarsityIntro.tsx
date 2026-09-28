@@ -4,7 +4,7 @@
   VARSITY MODE INTRO — a short title sequence played when you enter Varsity
   Mode. Two oars sweep in from the sides and cross in the middle; the crest then
   drops from the top onto the crossing point; the motto slides in under the
-  oars; the whole overlay fades to reveal the Home screen. About 2.5 seconds,
+  oars; the whole overlay fades to reveal the Home screen. About 2.3 seconds,
   and a tap anywhere ends it early.
 
   WHEN IT PLAYS — EVERY time you cross into Varsity Mode, and every time you
@@ -41,8 +41,9 @@ import { inVarsityMode, markMode } from "@/lib/varsity/mode";
 import { consumeSignIn } from "@/lib/loginIntro";
 
 // The motto lands at ~1.6s (globals.css); hold it long enough to read, then
-// fade. The hold was 0.15s until 2026-09-27 — the owner: EX NEMO "not visible".
-const FADE_AT_MS = 2150;
+// fade. The hold was 0.15s until 2026-09-27 (the owner: EX NEMO "not
+// visible"), then 0.55s, which the owner found a little long: 0.35s.
+const FADE_AT_MS = 1950;
 const FADE_MS = 350;
 
 export default function VarsityIntro() {

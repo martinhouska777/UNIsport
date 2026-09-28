@@ -1594,16 +1594,17 @@ body {
   to   { opacity: 1; transform: translateX(0); letter-spacing: 0.38em; }
 }
 /*
-  TIMING. The whole film is ~2.5s including the fade (components/varsity/
+  TIMING. The whole film is ~2.3s including the fade (components/varsity/
   VarsityIntro.tsx holds the two timers that have to agree with these delays).
 
   It ran 2.8s, was cut to 1.7s to stop it being in the way every morning, and
   the owner asked for the longer one back — "shorter by a little bit", and
   playing on every switch rather than once a day. So: the original's unhurried
   beats, trimmed about a quarter. The oars land at 0.7s, the crest at 1.05s,
-  the motto at 1.6s, and the fade begins at 2.15s. Until 2026-09-27 it began
+  the motto at 1.6s, and the fade begins at 1.95s. Until 2026-09-27 it began
   at 1.75s, which left the finished motto on screen for 0.15s — one reason the
-  owner found EX NEMO "not visible". The moves themselves are unchanged.
+  owner found EX NEMO "not visible". 2.15s was tried the same night and was a
+  little long for the owner. The moves themselves are unchanged.
 */
 .v-oar-in-left  { animation: v-oar-in-left  0.7s  cubic-bezier(0.18, 0.7, 0.2, 1) both; }
 .v-oar-in-right { animation: v-oar-in-right 0.7s  cubic-bezier(0.18, 0.7, 0.2, 1) both; }
