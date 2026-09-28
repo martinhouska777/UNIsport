@@ -75,6 +75,7 @@ import {
 import { removeRaceDay, writeRaceDay } from "@/lib/varsity/raceStore";
 import { saveFailureDetail, type SaveFailure } from "@/lib/saveFailure";
 import SaveState from "@/components/varsity/coach/SaveState";
+import RankBadge from "@/components/varsity/team/RankBadge";
 
 const COMBINED = "combined";
 const ATHLETES = "athletes";
@@ -87,20 +88,10 @@ const TH = "text-[9px] font-semibold uppercase tracking-[0.1em] text-muted";
   "just white"; then, of the two dressed-up looks, the table one — "all grey /
   black", because "just the swaps will be red"). So the session header is a
   black band, the class a black pill, the places round badges with the winner's
-  in black, and the winning row a light grey. The switches are the only red on
-  the screen, which is what makes them read.
+  in black (RankBadge.tsx, shared with the coach's rankings), and the winning
+  row a light grey. The switches are the only red on the screen, which is what
+  makes them read.
 */
-function RankBadge({ rank, faint = false }: { rank: number; faint?: boolean }) {
-  return (
-    <span
-      className={`flex h-[22px] w-[22px] flex-shrink-0 items-center justify-center rounded-full text-[11px] font-bold tabular-nums ${
-        rank === 1 && !faint ? "bg-text text-background" : faint ? "bg-surface-2 text-muted" : "bg-surface-2 text-text"
-      }`}
-    >
-      {rank}
-    </span>
-  );
-}
 function ClassTitle({ title }: { title: string }) {
   return (
     <div className="mb-1.5">

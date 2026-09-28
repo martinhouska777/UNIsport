@@ -16,6 +16,12 @@
              (teamBoard.ts → onTheWater).
   A timing sheet is never ranked as individuals; a piece is a CREW result.
 
+  AND, IN THE COACH CONSOLE ONLY, A THIRD: RANKING (owner, 2026-09-27: "for
+  coaches we want to do some athletes ranking"). Who has been on top over a
+  month, a semester or two dates — made of the same boards as Erg, so the two
+  can never disagree (TeamRanking.tsx, lib/varsity/ranking.ts). A rower's Team
+  tab never offers it.
+
   NO TELEMETRY HERE YET (owner, 2026-09-22: "we don't want the telemetry
   there now — something else takes care of it"). The water side also listed
   Peach PowerLine / SpeedCoach outings, and with nothing imported that meant
@@ -83,6 +89,7 @@ import { kindOf } from "@/lib/varsity/athleteHome";
 import { kindColor, kindLegend } from "@/lib/varsity/home";
 import { fetchTrainingConfig } from "@/lib/varsity/configStore";
 import RaceBoard from "@/components/varsity/team/RaceBoard";
+import TeamRanking from "@/components/varsity/team/TeamRanking";
 import Sheet from "@/components/varsity/Sheet";
 import ExampleTag from "@/components/varsity/ExampleTag";
 import { fetchRaceDays, saveRaceDay } from "@/lib/varsity/raceStore";
@@ -128,8 +135,8 @@ type Row = { key: string; date: Date; workout?: TeamWorkout; race?: RaceDay };
 const byDate = (a: Row, b: Row) => b.date.getTime() - a.date.getTime();
 const workoutRow = (w: TeamWorkout): Row => ({ key: `workout:${w.dayKey}`, date: w.date, workout: w });
 
-/** The two halves of this screen. */
-type Side = "erg" | "water";
+/** The two halves of this screen, and the coach's rankings beside them. */
+type Side = "erg" | "water" | "ranking";
 
 /*
   SEARCH BY NAME OR DATE (owner 2026-09-14; first Coach Console only, then the
@@ -380,7 +387,7 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
 
   /* Erg, unless there is nothing on it and there IS something on the water. */
   const side: Side = picked ?? (ergRows.length === 0 && waterRows.length > 0 ? "water" : "erg");
-  const rows = side === "erg" ? ergRows : waterRows;
+  const rows = side === "erg" ? ergRows : side === "water" ? waterRows : [];
 
   const words = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
   const shownRows = words.length
@@ -431,7 +438,7 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
           roster: the two halves ARE the box, no inset pill, and overflow-hidden
           is what lets the selected fill take the rounded corners with it. */}
       <div className="mb-3 flex overflow-hidden rounded-xl border border-border bg-surface">
-        {(["erg", "water"] as Side[]).map((t) => (
+        {((inConsole ? ["erg", "water", "ranking"] : ["erg", "water"]) as Side[]).map((t) => (
           <button
             key={t}
             type="button"
@@ -483,8 +490,9 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
           )}
         </div>
       )}
+      {side === "ranking" && <TeamRanking workouts={workouts} results={results} exampleKeys={exampleKeys} />}
       <div className="flex flex-col gap-1.5">
-        {rows.length === 0 && (
+        {side !== "ranking" && rows.length === 0 && (
           <div className="rounded-2xl border border-dashed border-border bg-surface px-4 py-8 text-center text-[12px] text-muted">
             {side === "erg" ? "No erg workouts yet." : "No water workouts yet."}
           </div>
