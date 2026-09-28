@@ -6,7 +6,7 @@
   with smart matching based on interests and stuff like that, explaining the
   most important part: why is the differentiation."
 
-  So: the pair (two black phones side by side, leaning in) on pure white, and the carousel is the one thing
+  So: the pair (two black phones side by side, straight) on pure white, and the carousel is the one thing
   no other gym app does — the match is made on who you are, not only on when
   and where you train, and the app says why. Every line is the site's own:
 
@@ -76,22 +76,22 @@ const css = `
 `;
 const tick = `<svg width="46" height="46" viewBox="0 0 46 46"><circle cx="23" cy="23" r="23" fill="${BLUE_DIM}"/><path d="M14 23.5l6 6 12-13" fill="none" stroke="${BLUE}" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
-/* THE PAIR: two black phones side by side, their tops leaning in toward each
-   other. Owner, 2026-09-27, on the first cut (tops apart, navy + blue metal):
-   "angle the phones so you can read the text there ... I want both phones
-   black ... tilt them the other way". So each is turned only a little (they
-   face the camera, which sits between them), leans a little, and is as big
-   as the frame allows: the screen's own words have to be readable. */
+/* THE PAIR: two black phones side by side, STRAIGHT. The owner, 2026-09-27,
+   after two cuts that turned and leaned them: "just make the phone straight,
+   that's best, so they look realistic". So no turn and no lean, face on to
+   the camera, and as big as the frame allows: the screen's own words have
+   to be readable (his note on the first cut). The 3D shows only where it is
+   real — the metal edge in perspective and the shadow behind. */
 const cam = camera(W, H, 22, 1100);
 /* light from almost straight ahead: each shadow sits close behind its phone
    instead of running down to the bottom edge like a pedestal */
 const sun = { pos: [0, 260, 1500], soft: 24, box: 520 };
 const wall = [{ pos: [0, 0, -120], opacity: 0.13 }];
-const pair = (l, r, cy, h, { turn = 9, lean = 2.5, gap = 86 } = {}) => {
+const pair = (l, r, cy, h, gap = 64) => {
   const off = (h * 0.438) / 2 + gap / 2;            // 0.438 = the body's width / height
   return [
-    { src: src(l), frame: "black", rot: [-3, turn, -lean], pos: cam.at(W / 2 - off, cy), scale: cam.scaleFor(h) },
-    { src: src(r), frame: "black", rot: [-3, -turn, lean], pos: cam.at(W / 2 + off, cy), scale: cam.scaleFor(h) },
+    { src: src(l), frame: "black", pos: cam.at(W / 2 - off, cy), scale: cam.scaleFor(h) },
+    { src: src(r), frame: "black", pos: cam.at(W / 2 + off, cy), scale: cam.scaleFor(h) },
   ];
 };
 const head = (k, a, b) => `
@@ -105,8 +105,8 @@ const SLIDES = [
 
   { html: `<div class="abs mono" style="left:${M}px;top:94px">${COPY.why}</div>
       <ul class="abs reasons" style="left:${M}px;top:176px;width:440px">${COPY.reasons.map((r) => `<li>${tick}<span>${r}</span></li>`).join("")}</ul>`,
-    /* the whole phone inside the frame, nearly face on, so its own list reads */
-    spec: { phones: [{ src: src("person"), frame: "black", rot: [-2, -8, -1], pos: cam.at(780, 742), scale: cam.scaleFor(1140) }] } },
+    /* the whole phone inside the frame, straight, so its own list reads */
+    spec: { phones: [{ src: src("person"), frame: "black", pos: cam.at(780, 742), scale: cam.scaleFor(1140) }] } },
 
   { html: `<div class="abs mono" style="left:${M}px;top:94px">${COPY.whyKicker}</div>
       <div class="abs mark" style="left:${M - 8}px;top:190px">“</div>
