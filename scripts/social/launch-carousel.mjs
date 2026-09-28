@@ -295,10 +295,15 @@ const render = (s) => {
 /* IN THE PAGE, once the type has wrapped: stand each label level with the
    point it names (its name's middle on the arrow's line), push labels on one
    side apart so none touch, keep them inside the phone's height, then draw
-   each arrow from the label's inner edge to its point: a curve that leaves
-   the label level and lands on the point, over a white halo so it reads on
-   top of the screen, ending in an open arrowhead. */
-function layOut(BLUE) {
+   each line from the label's inner edge to its point: a curve that leaves
+   the label level and lands on the point.
+
+   The line is thin and black, like a comment line in Word, and ends in a
+   small dot on the spot (owner, 2026-09-28: "make the arrows black, like when
+   you make comments in Word, so that it's not that visible. It's just tied to
+   it"). It was a blue line with an open arrowhead before. A hairline of white
+   under it keeps it whole where it crosses the phone's black bezel. */
+function layOut(LINE) {
   const NS = "http://www.w3.org/2000/svg";
   for (const svg of document.querySelectorAll("svg.arrows")) {
     const slide = svg.closest(".slide");
@@ -333,26 +338,17 @@ function layOut(BLUE) {
       const dx = tx - sx;
       const c1 = [sx + dx * 0.55, sy], c2 = [tx - dx * 0.3, ty];
       const d = `M${sx},${sy} C${c1[0]},${c1[1]} ${c2[0]},${c2[1]} ${tx},${ty}`;
-      /* the arrowhead follows the curve's last direction */
-      let ux = tx - c2[0], uy = ty - c2[1];
-      const n = Math.hypot(ux, uy) || 1; ux /= n; uy /= n;
-      const len = 17, a = 0.5;
-      const w1 = [tx - len * (ux * Math.cos(a) - uy * Math.sin(a)), ty - len * (uy * Math.cos(a) + ux * Math.sin(a))];
-      const w2 = [tx - len * (ux * Math.cos(a) + uy * Math.sin(a)), ty - len * (uy * Math.cos(a) - ux * Math.sin(a))];
-      const head = `M${w1[0]},${w1[1]} L${tx},${ty} L${w2[0]},${w2[1]}`;
-      for (const [stroke, width] of [["#fff", 9], [BLUE, 3.2]]) {
-        for (const dd of [d, head]) {
-          const p = document.createElementNS(NS, "path");
-          p.setAttribute("d", dd); p.setAttribute("fill", "none");
-          p.setAttribute("stroke", stroke); p.setAttribute("stroke-width", width);
-          p.setAttribute("stroke-linecap", "round"); p.setAttribute("stroke-linejoin", "round");
-          svg.appendChild(p);
-        }
+      for (const [stroke, width, r] of [["#fff", 5, 7.5], [LINE, 2, 5]]) {
+        const p = document.createElementNS(NS, "path");
+        p.setAttribute("d", d); p.setAttribute("fill", "none");
+        p.setAttribute("stroke", stroke); p.setAttribute("stroke-width", width);
+        p.setAttribute("stroke-linecap", "round");
+        svg.appendChild(p);
+        /* where it lands: a small dot on the spot */
+        const dot = document.createElementNS(NS, "circle");
+        dot.setAttribute("cx", tx); dot.setAttribute("cy", ty); dot.setAttribute("r", r); dot.setAttribute("fill", stroke);
+        svg.appendChild(dot);
       }
-      /* where it starts: a small dot, so the line reads as coming FROM the label */
-      const dot = document.createElementNS(NS, "circle");
-      dot.setAttribute("cx", sx); dot.setAttribute("cy", sy); dot.setAttribute("r", 4.5); dot.setAttribute("fill", BLUE);
-      svg.appendChild(dot);
     }
   }
 }
@@ -379,7 +375,7 @@ for (const [i, s] of SLIDES.entries()) {
       while (size > 56 && el.getBoundingClientRect().height > size * 2.1) el.style.fontSize = (size -= 2) + "px";
     }
   });
-  await page.evaluate(layOut, BLUE);
+  await page.evaluate(layOut, INK);
   const file = path.join(OUT, String(i + 1).padStart(2, "0") + ".png");
   await page.screenshot({ path: file, type: "png" });
   files.push(file);

@@ -484,7 +484,7 @@ He does not read a script; the beats above are the order, the words are his.
 ### 6d. The first nine posts: a plan to pick from (2026-09-27)
 
 **The plan page (private, the owner's): https://claude.ai/artifact/L1HeUEc1A11hYE7Ei3NR7x**
-It holds three Instagram profile mock-ups you can tap into, every carousel slide by
+It holds four Instagram profile mock-ups you can tap into, every carousel slide by
 slide, the story frames, and the posting order. **Not picked yet** — nothing below is
 built beyond the two carousels marked made.
 
@@ -497,20 +497,35 @@ two either side are its top things.
 | Varsity athlete | Varsity Mode | Log · Workouts and statistics |
 | Coach | The Coach's Console | Lineups and video · Statistics and notes |
 
-**Three layouts. Same nine carousels, different covers** (a cover goes in front of slide 1):
+**Four layouts. Same nine carousels, different covers** (a cover goes in front of slide 1):
 
+4. **Along the lines — the owner's own drawing (2026-09-28), now Claude's pick.** The U
+   sits on the middle post of the top row: its legs run down the two lines between the
+   posts, the heads sit at the top of those lines (half in each post), and the bottom
+   just dips into the top of the post below. "Your campus. / Your gym. / Your people."
+   across the top row with a phone in every post. Legs on the lines = 1080 px apart =
+   24.5 px a unit; only the straight part of the legs is shorter than in the logo (10.7
+   units, not 22) so the heads fit in the top row. The catch: Instagram's gaps run down
+   the middle of each leg and cut each head in half (black in dark mode), and the six
+   posts must stay together — no pin; drag new posts below them with Reorder grid.
 1. **The Big U** — the whole grid is the mark (the picture from 5b620a8); the middle
    column becomes the three doors: "Your campus. Your gym. Your people." / "Varsity
-   Mode." / "The Coach's Console." Claude's pick for launch. After the nine, new posts
-   are dragged below them with Reorder grid.
+   Mode." / "The Coach's Console." After the nine, new posts are dragged below them
+   with Reorder grid.
 2. **A U in every row** — each row is its own long U (a head on the far-left post, a head
    on the far-right post) holding three phones. The Student row is pinned.
 3. **Three doors** — one long U pinned on top holding Student · Varsity athlete · Coach;
    each column below is one door, posted in threes (Coach first, Student last).
 
 The long U only stretches the mark's flat bottom: heads, strokes and curves keep the real
-proportions (14 px a unit on a 3240 × 1440 row). The rule across all three: **the logo
+proportions (14 px a unit on a 3240 × 1440 row). The rule across all four: **the logo
 crosses from one post into the next; the phones never do.**
+
+**Lines to the screen are thin and black, like comment lines in Word** (owner,
+2026-09-28: "make the arrows black … so that it's not that visible. It's just tied to
+it"): a 2 px black line on a hairline of white, ending in a small dot on the spot, never
+on the words. `scripts/social/launch-carousel.mjs` draws them that way now; it was a blue
+line with an open arrowhead.
 
 **Stories, each saved to a Highlight:** Launch (1/3 · 2/3 · 3/3, the U building up),
 Student, Varsity, Coach, Questions (the site's FAQ word for word, ending on "officially
