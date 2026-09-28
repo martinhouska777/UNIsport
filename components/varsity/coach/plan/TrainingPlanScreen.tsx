@@ -893,23 +893,37 @@ export default function TrainingPlanScreen({
           data-tour="coach-plan-status"
           className="mt-3 w-full rounded-xl border border-border bg-surface px-4 py-3.5 shadow-card"
         >
-          <div className="flex items-start gap-3">
+          {/*
+            PUBLISH TOP RIGHT, EDIT BOTTOM RIGHT (owner, 2026-09-28: "edit
+            vpravo dole a publish nad nim vpravo nahore"). The two small
+            buttons no longer sit side by side in the corner: Publish (or
+            Unpublish) is in the top corner, level with the name, and Edit is
+            in the bottom corner, level with the race pill.
+          */}
+          <div className="flex items-stretch gap-3">
             <div className="min-w-0 flex-1">
               <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
                 <span className="min-w-0 break-words text-[17px] font-semibold leading-snug text-text">{block.name}</span>
                 <StatusChip live={live} />
               </div>
               <div className="mt-1 text-[11px] text-muted">{week.rangeLabel}</div>
+              {/* The race in a pill of its own, down at the foot of the left
+                  column so it answers the Edit button across from it. */}
+              {block.raceName && (
+                <span className="mt-3 inline-flex min-w-0 max-w-full items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-[11px] text-muted">
+                  <span className="flex-shrink-0 text-primary">
+                    <IconFlag size={12} />
+                  </span>
+                  <span className="truncate font-medium text-text">{block.raceName}</span>
+                  {race !== null && (
+                    <span className="flex-shrink-0">
+                      · <span className="font-semibold text-accent">{race}</span> days
+                    </span>
+                  )}
+                </span>
+              )}
             </div>
-            <div className="flex flex-shrink-0 items-center gap-1.5">
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => openEditBlock(block)}
-                aria-label={`Edit ${block.name}`}
-              >
-                <IconPencil size={12} /> Edit
-              </Button>
+            <div className="flex flex-shrink-0 flex-col items-end justify-between gap-2">
               <PublishBar
                 bare
                 live={live}
@@ -919,23 +933,16 @@ export default function TrainingPlanScreen({
                 onNotify={() => tellSquad(block.id)}
                 onUnpublish={() => unpublishBlock(block.id)}
               />
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => openEditBlock(block)}
+                aria-label={`Edit ${block.name}`}
+              >
+                <IconPencil size={12} /> Edit
+              </Button>
             </div>
           </div>
-            {/* The race in a pill of its own, down at the foot of the left
-                column so it answers the buttons across from it. */}
-            {block.raceName && (
-              <span className="mt-3 inline-flex min-w-0 max-w-full items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-[11px] text-muted">
-                <span className="flex-shrink-0 text-primary">
-                  <IconFlag size={12} />
-                </span>
-                <span className="truncate font-medium text-text">{block.raceName}</span>
-                {race !== null && (
-                  <span className="flex-shrink-0">
-                    · <span className="font-semibold text-accent">{race}</span> days
-                  </span>
-                )}
-              </span>
-            )}
         </div>
 
         {others.length > 0 && (
