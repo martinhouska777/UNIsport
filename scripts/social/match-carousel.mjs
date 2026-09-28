@@ -6,8 +6,7 @@
   with smart matching based on interests and stuff like that, explaining the
   most important part: why is the differentiation."
 
-  So: the pair (two phones leaning apart from a shared foot, their metal in
-  the mark's navy and blue) on pure white, and the carousel is the one thing
+  So: the pair (two black phones side by side, leaning in) on pure white, and the carousel is the one thing
   no other gym app does — the match is made on who you are, not only on when
   and where you train, and the app says why. Every line is the site's own:
 
@@ -68,7 +67,7 @@ const css = `
   .reasons { list-style:none; }
   .reasons li { display:flex; gap:22px; align-items:flex-start; margin-bottom:40px; }
   .reasons svg { flex:none; margin-top:6px; }
-  .reasons span { font-family:"Instrument Serif", Georgia, serif; font-size:54px; line-height:1.02; letter-spacing:-.01em; text-wrap:balance; }
+  .reasons span { font-family:"Instrument Serif", Georgia, serif; font-size:50px; line-height:1.02; letter-spacing:-.01em; text-wrap:balance; }
   .quote { font-family:"Instrument Serif", Georgia, serif; font-size:70px; line-height:1.08; letter-spacing:-.01em; text-wrap:pretty; }
   .quote em { font-style:italic; color:${BLUE}; }
   .mark { font-family:"Instrument Serif", Georgia, serif; font-size:260px; line-height:1; color:${BLUE}; }
@@ -77,30 +76,37 @@ const css = `
 `;
 const tick = `<svg width="46" height="46" viewBox="0 0 46 46"><circle cx="23" cy="23" r="23" fill="${BLUE_DIM}"/><path d="M14 23.5l6 6 12-13" fill="none" stroke="${BLUE}" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
-/* THE PAIR: two phones leaning apart from a shared foot, the left one's metal
-   navy and the right one's blue — the mark's two people */
+/* THE PAIR: two black phones side by side, their tops leaning in toward each
+   other. Owner, 2026-09-27, on the first cut (tops apart, navy + blue metal):
+   "angle the phones so you can read the text there ... I want both phones
+   black ... tilt them the other way". So each is turned only a little (they
+   face the camera, which sits between them), leans a little, and is as big
+   as the frame allows: the screen's own words have to be readable. */
 const cam = camera(W, H, 22, 1100);
-const sun = { pos: [0, 760, 900], soft: 18, box: 480 };
-const wall = [{ pos: [0, 0, -120], opacity: 0.15 }];
-const pair = (l, r, cy, h) => [
-  { src: src(l), frame: "navy", rot: [2, 18, 4], pos: cam.at(W / 2 - 206 * h / 830, cy), scale: cam.scaleFor(h) },
-  { src: src(r), frame: "blue", rot: [2, -18, -4], pos: cam.at(W / 2 + 206 * h / 830, cy), scale: cam.scaleFor(h) },
-];
-const head = (k, a, b, top = 136) => `
-  <div class="abs mono c" style="top:94px">${k}</div>
-  <div class="abs serif c" style="top:${top}px;font-size:96px">${a}<br><em>${b}</em></div>`;
+/* light from almost straight ahead: each shadow sits close behind its phone
+   instead of running down to the bottom edge like a pedestal */
+const sun = { pos: [0, 260, 1500], soft: 24, box: 520 };
+const wall = [{ pos: [0, 0, -120], opacity: 0.13 }];
+const pair = (l, r, cy, h, { turn = 9, lean = 2.5, gap = 86 } = {}) => {
+  const off = (h * 0.438) / 2 + gap / 2;            // 0.438 = the body's width / height
+  return [
+    { src: src(l), frame: "black", rot: [-3, turn, -lean], pos: cam.at(W / 2 - off, cy), scale: cam.scaleFor(h) },
+    { src: src(r), frame: "black", rot: [-3, -turn, lean], pos: cam.at(W / 2 + off, cy), scale: cam.scaleFor(h) },
+  ];
+};
+const head = (k, a, b) => `
+  <div class="abs mono c" style="top:84px">${k}</div>
+  <div class="abs serif c" style="top:122px;font-size:88px">${a}<br><em>${b}</em></div>`;
 
 const SLIDES = [
   { html: head(COPY.badge, ...COPY.door) +
-      `<div class="abs sub c" style="top:340px;font-size:28px;padding:0 170px">${COPY.doorSub}</div>`,
-    spec: { phones: pair("match", "person", 978, 850) } },
+      `<div class="abs sub c" style="top:306px;font-size:26px">${COPY.doorSub}</div>`,
+    spec: { phones: pair("match", "person", 872, 984) } },
 
   { html: `<div class="abs mono" style="left:${M}px;top:94px">${COPY.why}</div>
-      <ul class="abs reasons" style="left:${M}px;top:176px;width:470px">${COPY.reasons.map((r) => `<li>${tick}<span>${r}</span></li>`).join("")}</ul>`,
-    /* the whole phone inside the frame; lit from the upper left so its
-       shadow falls behind it, not as a block cut off by the bottom edge */
-    spec: { phones: [{ src: src("person"), frame: "blue", rot: [2, -17, -3], pos: cam.at(752, 744), scale: cam.scaleFor(1090) }],
-      sun: { pos: [-320, 700, 1000], soft: 20, box: 520 } } },
+      <ul class="abs reasons" style="left:${M}px;top:176px;width:440px">${COPY.reasons.map((r) => `<li>${tick}<span>${r}</span></li>`).join("")}</ul>`,
+    /* the whole phone inside the frame, nearly face on, so its own list reads */
+    spec: { phones: [{ src: src("person"), frame: "black", rot: [-2, -8, -1], pos: cam.at(780, 742), scale: cam.scaleFor(1140) }] } },
 
   { html: `<div class="abs mono" style="left:${M}px;top:94px">${COPY.whyKicker}</div>
       <div class="abs mark" style="left:${M - 8}px;top:190px">“</div>
@@ -109,8 +115,8 @@ const SLIDES = [
     spec: {} },
 
   { html: head(COPY.browse, ...COPY.s1) +
-      `<div class="abs sub c" style="top:340px;font-size:28px;padding:0 150px">${COPY.s1Sub}</div>`,
-    spec: { phones: pair("match", "chat", 984, 836) } },
+      `<div class="abs sub c" style="top:306px;font-size:26px;padding:0 150px">${COPY.s1Sub}</div>`,
+    spec: { phones: pair("match", "chat", 892, 956) } },
 
   { html: `<div class="abs serif c" style="top:470px;font-size:132px">${COPY.close[0]}<br><em>${COPY.close[1]}</em></div>
       <div class="abs sub c" style="top:760px;font-size:30px;padding:0 200px">${COPY.closeSub}</div>
