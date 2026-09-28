@@ -22,21 +22,8 @@
     and typing (high-passed out from under its music), library whooshes, no
     baked music, so a trending track can be laid on in Instagram.
 
-  2026-09-27 night (owner): "make the animation more visible overall so it
-  looks better on the background … put some shade behind it … make the
-  movement the same". So the whole picture sits in one wrapper drawn ZOOM
-  times bigger: every move, distance and blur grows with it, and no time in T
-  changes, so the version 5 sound still lands on its frames. Soft shade under
-  the tiles (a press pushes a tile into the ground, a picked tile stands
-  higher), under the two figures and the mark, and behind the words. The
-  ground is still white in the middle and turns a breath of cool grey towards
-  the corners, so the shade has a floor to sit on; the end fades to that
-  ground, not to white, so the loop has no jump.
-
   How it is made: Chrome stepped frame by frame through window.frame(t) at
-  120 fps, four frames averaged into each of the 30 for motion blur (60 and
-  two before 2026-09-27: the falling letters and the hand left a double
-  image). No bloom on white.
+  60 fps, tmix'd to 30 for motion blur. No bloom on white.
 
   Things that look like bugs if changed back:
     - every character exists in the DOM from frame one and is only hidden, the
@@ -63,19 +50,12 @@ const CHROME = "C:/Program Files/Google/Chrome/Application/chrome.exe";
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname).replace(/^\//, ""), "../..");
 
 const W = 1080, H = 1920;
-const RENDER_FPS = 120;
+const RENDER_FPS = 60;
 const OUT_FPS = 30;
-const BLUR_FRAMES = RENDER_FPS / OUT_FPS;
-
-/* how much bigger than cut 6 everything is drawn (owner: "more visible"). 1.35 put the
-   Cardio tile under Instagram's like and share buttons on the right edge. */
-const ZOOM = 1.3;
 
 const BLUE = "#1f32c1";
 const NAVY = "#2f3b52";
 const INK = "#141618";
-/* white where the words are, a breath of cool grey at the corners */
-const GROUND = "radial-gradient(125% 85% at 50% 46%, #ffffff 0%, #ffffff 44%, #f6f8fb 76%, #eff2f8 100%)";
 
 const PREFIX = "Never train";
 const SUF_A = "alone again";          // no full stop (owner)
@@ -140,48 +120,38 @@ const html = `<!doctype html><html><head><meta charset="utf-8">
   * { margin:0; padding:0; box-sizing:border-box; }
   html,body { width:${W}px; height:${H}px; overflow:hidden; background:#fff; }
   body { font-family:"Plus Jakarta Sans", system-ui, sans-serif; -webkit-font-smoothing:antialiased; color:${BLUE}; }
-  #stage { position:relative; width:${W}px; height:${H}px; overflow:hidden; background:${GROUND}; }
+  #stage { position:relative; width:${W}px; height:${H}px; overflow:hidden; background:#fff; }
   #cam { position:absolute; inset:0; transform-origin:50% 50%; will-change:transform; }
-  /* everything below is laid out at cut 6's size and drawn ZOOM times bigger */
-  #zoom { position:absolute; inset:0; transform-origin:50% 50%; transform:scale(${ZOOM}); }
 
   /* the headline: centred like the landing page, untyped letters invisible but present */
   #line { position:absolute; left:40px; right:40px; top:790px; text-align:center;
           font-family:"Instrument Serif", serif; font-style:italic; font-size:112px; line-height:1.08; letter-spacing:-.012em; color:${BLUE};
-          text-shadow:0 8px 22px rgba(31,50,193,.18);
           will-change:transform,opacity,filter; }
   #line .row { display:block; }
   .c { display:inline-block; visibility:hidden; }
   /* the landing's .l-caret: 0.055em wide, 0.74em tall, 1 s step blink */
   #cur { position:absolute; width:6px; height:83px; background:${BLUE}; opacity:0; will-change:transform,opacity; }
 
-  #act { position:absolute; left:74px; right:74px; top:640px; text-align:center; font-weight:700; font-size:54px; letter-spacing:-.02em; color:${BLUE}; opacity:0; will-change:opacity,filter,transform;
-         text-shadow:0 6px 16px rgba(31,50,193,.17); }
-  /* the gap was 70 before the zoom; closer, the row keeps clear of Instagram's buttons */
-  #acts { position:absolute; left:0; right:0; top:790px; display:flex; justify-content:center; gap:56px; }
+  #act { position:absolute; left:74px; right:74px; top:640px; text-align:center; font-weight:700; font-size:54px; letter-spacing:-.02em; color:${BLUE}; opacity:0; will-change:opacity,filter,transform; }
+  #acts { position:absolute; left:0; right:0; top:790px; display:flex; justify-content:center; gap:70px; }
   .a { display:flex; flex-direction:column; align-items:center; gap:22px; opacity:0; will-change:opacity,filter,transform; }
-  .a .lb { font-weight:700; font-size:42px; letter-spacing:-.01em; color:${BLUE}; text-shadow:0 5px 14px rgba(31,50,193,.15); }
-  /* the shade under each tile is set per frame, in frame() */
+  .a .lb { font-weight:700; font-size:42px; letter-spacing:-.01em; color:${BLUE}; }
   .a .tile { width:168px; height:168px; border-radius:36px; border:4px solid ${BLUE}; display:flex; align-items:center; justify-content:center; color:${BLUE};
              background:#fff; will-change:transform,background,color,box-shadow; }
   .a .tile svg { width:96px; height:96px; }
   #hand { position:absolute; left:0; top:0; width:120px; height:120px; opacity:0; will-change:transform,opacity; filter:drop-shadow(0 10px 18px rgba(20,24,40,.25)); }
 
-  #find, #match { position:absolute; left:74px; right:74px; top:560px; text-align:center; font-weight:700; font-size:54px; letter-spacing:-.02em; color:${BLUE}; opacity:0; will-change:opacity,filter,transform;
-                  text-shadow:0 6px 16px rgba(31,50,193,.17); }
+  #find, #match { position:absolute; left:74px; right:74px; top:560px; text-align:center; font-weight:700; font-size:54px; letter-spacing:-.02em; color:${BLUE}; opacity:0; will-change:opacity,filter,transform; }
   #mark { position:absolute; left:50%; top:700px; width:520px; height:520px; margin-left:-260px; overflow:visible; opacity:0; will-change:opacity,transform; }
   /* the wordmark, typed, above the mark */
   /* the wordmark: its letters FALL IN from above, one after another (owner) */
-  #word { position:absolute; left:0; right:0; top:470px; text-align:center; font-family:"Instrument Serif", serif; font-style:italic; font-size:140px; letter-spacing:-.02em; line-height:1; color:${INK};
-          text-shadow:0 8px 24px rgba(20,26,70,.14); }
+  #word { position:absolute; left:0; right:0; top:470px; text-align:center; font-family:"Instrument Serif", serif; font-style:italic; font-size:140px; letter-spacing:-.02em; line-height:1; color:${INK}; }
   #word .c { visibility:visible; opacity:0; will-change:transform,opacity; }
   #word .s { color:${BLUE}; }
-  #word .bi { display:inline-block; vertical-align:baseline; overflow:visible; filter:drop-shadow(0 8px 12px rgba(20,26,70,.14)); }
-  #live { position:absolute; left:0; right:0; top:1262px; text-align:center; font-weight:600; font-size:44px; letter-spacing:-.01em; color:${BLUE}; opacity:0; will-change:transform,opacity;
-          text-shadow:0 5px 14px rgba(31,50,193,.15); }
-  /* the end fades to the ground, not to white, so the last frame is the first */
-  #fade { position:absolute; inset:0; background:${GROUND}; opacity:0; }
-</style></head><body><div id="stage"><div id="cam"><div id="zoom">
+  #word .bi { display:inline-block; vertical-align:baseline; overflow:visible; }
+  #live { position:absolute; left:0; right:0; top:1262px; text-align:center; font-weight:600; font-size:44px; letter-spacing:-.01em; color:${BLUE}; opacity:0; will-change:transform,opacity; }
+  #fade { position:absolute; inset:0; background:#fff; opacity:0; }
+</style></head><body><div id="stage"><div id="cam">
 
   <div id="line"><span class="row" id="row1">${chars(PREFIX, "p")}</span><span class="row" id="row2"><span id="sufA">${chars(SUF_A, "a")}</span></span></div>
   <div id="cur"></div>
@@ -207,7 +177,7 @@ const html = `<!doctype html><html><head><meta charset="utf-8">
   </svg>
   <div id="word">${wordHtml}</div>
   <div id="live">${LIVE_A}<span style="color:${CRIMSON}">${LIVE_B}</span></div>
-</div></div><div id="fade"></div></div>
+</div><div id="fade"></div></div>
 <script>
   var T = ${JSON.stringify(T)}, TM = ${JSON.stringify(TIMES)};
   var NP = ${PREFIX.length}, NA = ${SUF_A.length}, NM = ${MATCH.length}, NW = ${WORD.length};
@@ -225,21 +195,13 @@ const html = `<!doctype html><html><head><meta charset="utf-8">
   pa.style.strokeDasharray = LA; pb.style.strokeDasharray = LB;
   var stage = $("stage").getBoundingClientRect();
 
-  /* a point on screen -> where it is inside #zoom, which is where the caret and the hand
-     are placed: the camera and the zoom both scale about the frame's centre */
-  var CX = ${W / 2}, CY = ${H / 2}, Z = ${ZOOM};
-  var local = function (x, y, cam) {
-    return { x: CX + (x - stage.left - CX) / (cam * Z), y: CY + (y - stage.top - CY) / (cam * Z) };
-  };
-
   /* a landing-style caret after the last visible char of a run; at the run's start when empty */
-  function caretAt(cur, els, firstEl, yOff, cam) {
+  function caretAt(cur, els, firstEl, yOff) {
     var last = null;
     for (var i = els.length - 1; i >= 0; i--) if (els[i].style.visibility === "visible") { last = els[i]; break; }
     var r = (last || firstEl).getBoundingClientRect();
-    var p = local(last ? r.right : r.left, r.top, cam);
-    var x = last ? p.x + 3 : p.x - 2;
-    cur.style.transform = "translate3d(" + x.toFixed(1) + "px," + (p.y + yOff).toFixed(1) + "px,0)";
+    var x = last ? r.right - stage.left + 3 : r.left - stage.left - 2;
+    cur.style.transform = "translate3d(" + x.toFixed(1) + "px," + (r.top - stage.top + yOff).toFixed(1) + "px,0)";
   }
   var blink = function (t) { return Math.floor(t * 2) % 2 === 0 ? 1 : 0; };   // 1 s, steps(1)
 
@@ -271,8 +233,8 @@ const html = `<!doctype html><html><head><meta charset="utf-8">
     var cur = $("cur");
     var typing = t >= T.typeA && t <= TM.sufA[NA - 1] + T.ms;
     cur.style.opacity = String(cl((t - T.cursor) / 0.05) * (1 - cl((t - T.lift) / 0.2)) * (typing ? 1 : blink(t)));
-    if (t < TM.sufA[0]) caretAt(cur, P, P[0], 14, cam);
-    else caretAt(cur, A, A[0], 14, cam);
+    if (t < TM.sufA[0]) caretAt(cur, P, P[0], 14);
+    else caretAt(cur, A, A[0], 14);
 
     var b = cl((t - T.lift) / 0.3);                     // quick (owner: "make it disappear faster")
     var lineEl = $("line");
@@ -302,18 +264,12 @@ const html = `<!doctype html><html><head><meta charset="utf-8">
       tile.style.background = "rgba(31,50,193," + sel.toFixed(3) + ")";
       tile.style.color = sel > 0.5 ? "#fff" : "${BLUE}";
       var ring = tapT > 0 ? (1 - cl((t - tapT) / 0.5)) * cl((t - tapT) / 0.05) : 0;
-      /* the shade: a card lifted off the ground. The press pushes it into the ground, so
-         the shade tightens under the finger; once picked it stands a little higher, and
-         the shade turns the tile's own blue */
-      var lift = (1 - 0.6 * dip) * (1 + 0.3 * sel);
-      tile.style.boxShadow = "0 0 0 " + (22 * (1 - ring) * (ring > 0 ? 1 : 0)).toFixed(0) + "px rgba(31,50,193," + (0.35 * ring).toFixed(2) + ")," +
-        "0 " + (2 * lift).toFixed(1) + "px " + (6 * lift).toFixed(1) + "px rgba(20,28,80," + (0.07 + 0.05 * sel).toFixed(3) + ")," +
-        "0 " + (18 * lift).toFixed(1) + "px " + (36 * lift).toFixed(1) + "px -14px rgba(31,50,193," + (0.26 + 0.24 * sel).toFixed(3) + ")";
+      tile.style.boxShadow = "0 0 0 " + (22 * (1 - ring) * (ring > 0 ? 1 : 0)).toFixed(0) + "px rgba(31,50,193," + (0.35 * ring).toFixed(2) + ")";
     }
     var hand = $("hand");
     var r0 = $("t0").getBoundingClientRect(), r2 = $("t2").getBoundingClientRect();
-    var g = local(r0.left + r0.width * 0.55, r0.top + r0.height * 0.55, cam);
-    var k = local(r2.left + r2.width * 0.55, r2.top + r2.height * 0.55, cam);
+    var g = { x: r0.left + r0.width * 0.55 - stage.left, y: r0.top + r0.height * 0.55 - stage.top };
+    var k = { x: r2.left + r2.width * 0.55 - stage.left, y: r2.top + r2.height * 0.55 - stage.top };
     var hx, hy;
     if (t < T.tap1) { var m1 = outExpo((t - T.hand) / 0.6); hx = g.x + 280 * (1 - m1); hy = g.y + 480 * (1 - m1); }
     else if (t < T.tap2) { var m2 = inOut((t - T.tap1 - 0.15) / 0.5); hx = g.x + (k.x - g.x) * m2; hy = g.y - 60 * Math.sin(Math.PI * m2); }
@@ -346,9 +302,8 @@ const html = `<!doctype html><html><head><meta charset="utf-8">
     var draw = legOnly + (1 - legOnly) * closeIn;
     pa.style.strokeDashoffset = (LA * (1 - draw)).toFixed(2);
     pb.style.strokeDashoffset = (LB * (1 - draw)).toFixed(2);
-    /* no ring, no lift, no punch on the connect (owner): the curves simply meet.
-       The two figures stand on their own shade, which becomes one as they connect. */
-    mark.style.filter = "drop-shadow(0 14px 16px rgba(22,30,96,.2)) blur(" + (3 * (1 - sl) * (t > T.slide && t < T.apart ? 1 : 0)).toFixed(1) + "px)";
+    /* no ring, no lift, no punch on the connect (owner): the curves simply meet */
+    mark.style.filter = "blur(" + (3 * (1 - sl) * (t > T.slide && t < T.apart ? 1 : 0)).toFixed(1) + "px)";
 
     /* ---- 5. UNIsport falls in from above, letter by letter; Live now at Harvard below ---- */
     for (i = 0; i < NW; i++) {
@@ -400,7 +355,7 @@ await browser.close();
 
 const out = path.join(ROOT, "mockups/video/unisport-intro.mp4");
 mkdirSync(path.dirname(out), { recursive: true });
-const VF = ["tmix=frames=" + BLUR_FRAMES + ":weights=" + Array(BLUR_FRAMES).fill(1).join(" "), "fps=" + OUT_FPS, "eq=contrast=1.03", "noise=alls=2:allf=t"].join(",");
+const VF = ["tmix=frames=2:weights=1 1", "fps=" + OUT_FPS, "eq=contrast=1.03", "noise=alls=2:allf=t"].join(",");
 execFileSync("ffmpeg", [
   "-y", "-framerate", String(RENDER_FPS), "-i", path.join(work, "%05d.png"),
   "-vf", VF,

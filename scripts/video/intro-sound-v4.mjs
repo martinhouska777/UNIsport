@@ -38,9 +38,6 @@
   Run:  node scripts/video/intro-sound-v4.mjs              -> unisport-intro-v5.mp4 (effects only)
         node scripts/video/intro-sound-v4.mjs --music a    -> unisport-intro-v5-music-a.mp4
         add --v4 for version 4 (unisport-intro-v4*.mp4)
-        add --name v6 to put the same sound on a newer picture without writing over
-        the v5 files (-> unisport-intro-v6.mp4): v6 is the bigger, shaded picture of
-        2026-09-27 night, same times, so the same sound fits it frame for frame
 */
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { execFileSync, spawnSync } from "node:child_process";
@@ -358,8 +355,7 @@ if (MUSIC) {
 /* 3. one fixed gain to the target, a safety limiter at -2 dBFS (AAC adds a little on top), onto the picture */
 const pre = loudness(mixWav);
 const gain = target - pre.I;
-const NAME = argAfter("--name") || (V4 ? "v4" : "v5");
-const out = V(`unisport-intro-${NAME}${argAfter("--tile") && !V4 ? "-tile-" + TILE : ""}${tag}.mp4`);
+const out = V(`unisport-intro-${V4 ? "v4" : "v5"}${argAfter("--tile") && !V4 ? "-tile-" + TILE : ""}${tag}.mp4`);
 execFileSync("ffmpeg", ["-y", "-v", "error", "-i", V("unisport-intro.mp4"), "-i", mixWav, "-filter_complex",
   `[1:a]volume=${gain.toFixed(2)}dB,alimiter=limit=${dB(-2).toFixed(4)}:level=false:attack=2:release=40[a]`,
   "-map", "0:v", "-map", "[a]", "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-ar", String(SR),

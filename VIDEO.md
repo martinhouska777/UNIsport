@@ -210,31 +210,3 @@ soft low note under it; "UNIsport" is no longer typed — its letters FALL IN fr
 another (70 ms stagger), each landing with a soft click; "Live now at **Harvard**" with Harvard in
 its crimson (#a51c30 from lib/themes.ts — the one school colour in brand material, the owner's
 call). 11.7 s. The zoom-in after the activities stays.
-
----
-
-## Cut 7 — the same film, bigger and shaded (2026-09-27, night). CURRENT.
-
-Owner: "make the animation more visible overall so it looks better on the background. Maybe
-put some shade behind it … you can improve the animation if you want, but make the movement
-the same."
-
-- **Bigger:** everything is drawn 1.3× bigger (`ZOOM` in intro.mjs). It is one wrapper inside
-  the camera, so every move, distance and blur grows with it, and no time in T changed, so
-  version 5's sound fits frame for frame. At 1.35 the Cardio tile ran under Instagram's
-  like/share buttons on the right edge, so it is 1.3, and the tiles sit 56 px apart (70
-  before) ahead of the zoom.
-- **Shade:** each tile is a card lifted off the ground. A press pushes it in and the shade
-  tightens, and a picked tile stands higher, its shade turning blue. The two figures and the mark
-  stand on a soft shade that becomes one as they connect. The words carry a faint shade in
-  their own colour.
-- **The ground:** white in the middle, a breath of cool grey at the corners (`GROUND`), so the
-  shade has a floor to sit on. The end fades to that ground instead of to white, so the last
-  frame is the first and the loop doesn't jump.
-- **Motion blur:** rendered at 120 fps with 4 frames averaged into each output frame (it was 60
-  and 2). The falling letters of UNIsport and the hand used to leave a double image.
-- **The hand and the caret** are placed through `local()`, which undoes the camera and the zoom.
-  Before, the hand drifted a few px off its tile as the camera pushed.
-- **File:** `unisport-intro-v6.mp4` = this picture + the v5 sound
-  (`node scripts/video/intro-sound-v4.mjs --name v6`). The v5 files are left as they were, for
-  comparison.
