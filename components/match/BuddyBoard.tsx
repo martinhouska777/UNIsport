@@ -82,8 +82,8 @@ function Status({ children }: { children: React.ReactNode }) {
   profile, one tap away on the name, the same profile People opens.
 
   THIN (owner, 2026-09-28 later: "too much like a poster"). The solid band
-  became a pale strip — "not just white, something in between" — with the
-  time on the left and the place on the right. The workout is a boxed tag
+  became a plain top line over a hairline — style 1 of five previewed — with
+  the time in bold on the left and the place on the right. The workout is a boxed tag
   beside the name so it is the first thing you read, the note follows in
   full, and Accept / Message stand on the right, where the card was empty.
 */
@@ -104,14 +104,14 @@ export function PostCard({
 }) {
   return (
     <div className="overflow-hidden rounded-xl border border-border bg-surface">
-      {/* When on the left, where on the right, on a pale strip of the school
-          colour — a header, not the poster the solid band was. */}
-      <div className="flex items-center justify-between gap-3 bg-primary-tint px-3.5 py-2 text-[12px]">
-        <span className="flex-shrink-0 font-bold text-primary">
+      {/* When on the left, where on the right, over a hairline — a header,
+          not the poster the solid band was. */}
+      <div className="flex items-center justify-between gap-3 border-b border-border px-3.5 py-2.5">
+        <span className="flex-shrink-0 text-[13px] font-bold text-text">
           {p.date ? dateLabel(p.date) : dayShort(p.day)} · {postWhenLabel(p.hour, p.timeOfDay)}
         </span>
         {p.gym && (
-          <span className="flex min-w-0 items-center gap-1 font-medium text-text-2">
+          <span className="flex min-w-0 items-center gap-1 text-[12px] font-medium text-text-2">
             <IconMapPin size={13} className="flex-shrink-0" />
             <span className="min-w-0 truncate">{p.gym}</span>
           </span>
