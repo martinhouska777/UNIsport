@@ -53,7 +53,10 @@ export type RaceCrew = {
   /** Off the running watch, in seconds. Null: not written yet. */
   start: number | null;
   finish: number | null;
-  /** The overall time typed straight in, when there is no watch reading. */
+  /** An overall time with no watch reading. Only older sheets have one — the
+      editor no longer types it (owner, 2026-09-29: "just start and finish and
+      the time will come from it"); crewTime() still shows it when there is no
+      start and finish. */
   total: number | null;
   /** "Bridge", "crab at 500" — the sheet's asterisked remarks. */
   note: string;
@@ -151,8 +154,8 @@ export function formatWatch(sec: number | null): string {
   return h ? `${h}:${String(m).padStart(2, "0")}:${s}.${tenths % 10}` : `${m}:${s}.${tenths % 10}`;
 }
 
-/** Which of a crew's three times is being written. */
-export type WatchField = "start" | "finish" | "total";
+/** Which of a crew's watch readings is being written. */
+export type WatchField = "start" | "finish";
 
 /*
   WHERE THE WHEEL STARTS on a time nobody has written yet (owner, 2026-09-28:
@@ -192,7 +195,6 @@ export function wheelStart(
   around: number | null,
 ): number {
   const above = crews.slice(0, i).reverse();
-  if (field === "total") return above.map(crewTime).find((t) => t != null) ?? 0;
   if (field === "finish") {
     const finish = above.find((c) => c.finish != null)?.finish;
     if (finish != null) return finish;

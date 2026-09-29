@@ -39,8 +39,8 @@
 
   IN THE COACH CONSOLE the board is also where the sheet is typed: Enter
   times opens the piece's crews with a Start and a Finish field each (the
-  running watch, "25:14.48"), an overall time when there is no watch reading,
-  and a note ("Bridge"). Crews are the session's lineup boats; one that did
+  running watch, "25:14.48") — the time is worked out from them — and a note
+  ("Bridge"). Crews are the session's lineup boats; one that did
   not race the piece is simply removed from it, and can be put back. New
   pieces come from the + at the end of the tabs. A rower sees the board,
   never the fields.
@@ -644,13 +644,15 @@ function TabButton({ on, onClick, children }: { on: boolean; onClick: () => void
   the UI a little better so it's not just white things").
 
   A crew is drawn as its BOAT under its class's black pill, the board's own
-  look, with three tiles: START and FINISH off the watch, and the TIME they
-  make, which fills itself in, in black, once both are there, so a glance down
-  the sheet says which boats are done. With no watch reading the Time tile is
-  tapped and the overall time goes straight in; it took the place of the
-  third box, "Overall". An empty tile is dashed. A tap on any of them opens
-  TimeSheet, the wheels and the digits, and its Next walks the sheet in the
-  order it is drawn: a boat's start, its finish, the next boat's start.
+  look, with two tiles to fill — START and FINISH off the watch — and the TIME
+  they make beside them, which fills itself in, in black, once both are there,
+  so a glance down the sheet says which boats are done. The Time is never
+  typed (owner, 2026-09-29: "I just want start and finish and the time will
+  come from it"); it used to be a third tile a coach could tap to write an
+  overall time straight in, and that is gone. An empty tile is dashed. A tap
+  on Start or Finish opens TimeSheet, the wheels and the digits, and its Next
+  walks the sheet in the order it is drawn: a boat's start, its finish, the
+  next boat's start.
 
   The note is a small "+ Note" until it is wanted; a note already written
   stays open. The paragraph that sat on top ("Start and finish off the
@@ -660,11 +662,11 @@ function TabButton({ on, onClick, children }: { on: boolean; onClick: () => void
   to go looking for it.
 */
 type Picking = { boatId: string; field: WatchField };
-const FIELD_WORD: Record<WatchField, string> = { start: "Start", finish: "Finish", total: "Time" };
+const FIELD_WORD: Record<WatchField, string> = { start: "Start", finish: "Finish" };
 
-/* One of a crew's three times: dashed while empty, grey once written, black
-   when it is the time the watch readings make; red when the finish is not
-   after the start. */
+/* One of a crew's times: dashed while empty, grey once written, black when it
+   is the time the watch readings make; red when the finish is not after the
+   start. */
 function TimeTile({
   word,
   value,
@@ -822,19 +824,20 @@ function PieceEditor({
                     <TimeTile
                       word="Finish"
                       value={c.finish}
+                      wrong={watched && c.finish! <= c.start!}
                       on={isOn(c, "finish")}
                       onTap={() => setPicking({ boatId: c.boatId, field: "finish" })}
                     />
-                    {watched && c.finish! > c.start! ? (
-                      <TimeTile word="Time" value={crewTime(c)} result />
+                    {/* Worked out, never typed: black once there is a time, a
+                        plain dash before that (not a box, so it does not read
+                        as a third thing to fill in). */}
+                    {crewTime(c) != null ? (
+                      <TimeTile word="Time" value={crewTime(c)} result={watched} />
                     ) : (
-                      <TimeTile
-                        word="Time"
-                        value={c.total}
-                        wrong={watched}
-                        on={isOn(c, "total")}
-                        onTap={() => setPicking({ boatId: c.boatId, field: "total" })}
-                      />
+                      <div className="min-w-0">
+                        <div className={`pl-0.5 ${TH}`}>Time</div>
+                        <div className="mt-1 flex h-10 items-center justify-center font-mono text-[14px] text-muted">–:––.–</div>
+                      </div>
                     )}
                   </div>
                   {noted.has(c.boatId) ? (
