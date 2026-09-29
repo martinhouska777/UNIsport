@@ -97,9 +97,9 @@ const TH = "text-[9px] font-semibold uppercase tracking-[0.1em] text-muted";
   row a light grey. The switches are the only red on the screen, which is what
   makes them read.
 */
-function ClassTitle({ title }: { title: string }) {
+function ClassTitle({ title, withButton }: { title: string; withButton?: boolean }) {
   return (
-    <div className="mb-1.5">
+    <div className={withButton ? "mb-1.5 flex min-h-8 items-center" : "mb-1.5"}>
       <span className="inline-flex rounded-md bg-text px-2 py-0.5 font-mono text-[12px] font-semibold text-background">{title}</span>
     </div>
   );
@@ -337,9 +337,9 @@ export default function RaceBoard({
 
       {/* ONE PIECE: a list per class — 4+, then 2−. */}
       {piece && (
-        <div className="mt-3">
+        <div className="relative mt-3">
           {inConsole && (
-            <div className="mb-2 flex justify-end">
+            <div className="absolute right-0 top-0">
               <button
                 type="button"
                 onClick={() => setEditing(piece.id)}
@@ -349,12 +349,12 @@ export default function RaceBoard({
               </button>
             </div>
           )}
-          {pieceBoards(piece).map((cb) =>
+          {pieceBoards(piece).map((cb, bi) =>
             cb.rows.length + cb.pending.length === 1 ? (
               /* The only boat in its class: the crew and its time, with no
                  place and no gap to a winner (see ONE BOAT above). */
               <div key={cb.badge} className="mb-4">
-                <ClassTitle title={cb.title} />
+                <ClassTitle title={cb.title} withButton={inConsole && bi === 0} />
                 <div className={`flex items-center gap-3 rounded-2xl border border-border bg-surface px-3 py-3 shadow-card`}>
                   <div className="min-w-0 flex-1">
                     <CrewBoat crew={cb.rows[0]?.crew ?? cb.pending[0]} dim={!cb.rows[0]} />
@@ -370,7 +370,7 @@ export default function RaceBoard({
               </div>
             ) : (
             <div key={cb.badge} className="mb-4">
-              <ClassTitle title={cb.title} />
+              <ClassTitle title={cb.title} withButton={inConsole && bi === 0} />
               <div className={`overflow-hidden rounded-2xl border border-border bg-surface shadow-card`}>
                 <div className={`grid grid-cols-[1.25rem_minmax(0,1fr)_4.4rem_3.9rem] gap-1.5 border-b border-border px-2.5 py-2 ${TH}`}>
                   <span />
@@ -411,7 +411,7 @@ export default function RaceBoard({
             ),
           )}
           {piece.crews.length === 0 && (
-            <div className="rounded-2xl border border-dashed border-border bg-surface px-4 py-8 text-center text-[12px] text-muted">
+            <div className={`rounded-2xl border border-dashed border-border bg-surface px-4 py-8 text-center text-[12px] text-muted ${inConsole ? "mt-10" : ""}`}>
               No crews in this piece{inConsole ? " — add them with Enter times." : "."}
             </div>
           )}
