@@ -26,6 +26,9 @@ import type { CSSProperties, ReactNode } from "react";
   column instead of in it: the row's height is the piece's alone, so opening a
   feature row can neither move the list's top nor re-centre the whole split.
   Unpinned (reduced motion, or under 1280) the list is in the flow as before.
+  The overlaid list is also given the column's bottom edge, so a list that asks
+  for it (FeatureList `fill`) can stretch to the piece's full height; one that
+  does not simply ignores the room.
 */
 export default function CloserSplit({
   aside,
@@ -48,7 +51,7 @@ export default function CloserSplit({
           } as CSSProperties
         }
       >
-        <div className="flex w-full justify-center xl:justify-start xl:[.lc-pinned_&]:absolute xl:[.lc-pinned_&]:inset-x-0 xl:[.lc-pinned_&]:top-0">
+        <div className="flex w-full justify-center xl:justify-start xl:[.lc-pinned_&]:absolute xl:[.lc-pinned_&]:inset-x-0 xl:[.lc-pinned_&]:top-0 xl:[.lc-pinned_&]:bottom-0">
           {aside}
         </div>
       </div>

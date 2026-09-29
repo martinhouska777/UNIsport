@@ -51,30 +51,53 @@ import type { FeatureCta, FeatureGroup, FeatureRow } from "@/lib/landingCopy";
    the window's height (about 6px at 720 high, the full 14px from 900), and the open
    detail runs the list's full width so the longest one (Leaderboards) is four
    lines, not six. Checked with the longest row open at 1280x720, 1366x768,
-   1440x900 and 1536x864: the kicker and the button stay on screen. */
+   1440x900 and 1536x864: the kicker and the button stay on screen.
+
+   `fill`: the list stretches to the height of the piece beside it (owner,
+   2026-09-29: the varsity list, seven rows and no Upcoming group, "is much
+   smaller" than the student one and should "fit the whole screen"). Inside a
+   pinned stage the list takes the piece column's full height, the rows share
+   what is left between the kicker and the button, and the icon and the title
+   grow with the window's height (--ico). An opened row is only as tall as its
+   words need and the others give back exactly that, so the kicker and the
+   button still never move. Outside a pinned stage (under 1280px, reduced
+   motion) nothing changes. The student list does not use it: the owner
+   liked it as it was. */
 export default function FeatureList({
   kicker,
   rows,
   coming,
   cta,
   ink = false,
+  fill = false,
 }: {
   kicker: string;
   rows: FeatureRow[];
   coming?: FeatureGroup;
   cta?: FeatureCta;
   ink?: boolean;
+  fill?: boolean;
 }) {
   /* The group every row of this list belongs to — one per list, so opening a
      varsity row never closes a student one. */
   const group = `features-${kicker.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
   return (
-    <div className="w-full max-w-[520px]">
+    <div
+      className={`w-full max-w-[520px] ${
+        fill
+          ? "[--ico:36px] xl:[.lc-pinned_&]:flex xl:[.lc-pinned_&]:h-full xl:[.lc-pinned_&]:flex-col xl:[.lc-pinned_&]:[--ico:clamp(36px,5.4svh,52px)]"
+          : ""
+      }`}
+    >
       <div className="mb-3 font-mono text-[11px] tracking-[0.14em] uppercase text-(--sa)">{kicker}</div>
       {/* The rows slide in from the left, one after another (SlideInRows). */}
-      <SlideInRows className="divide-y divide-l-line border-y border-l-line">
+      <SlideInRows
+        className={`divide-y divide-l-line border-y border-l-line ${
+          fill ? "xl:[.lc-pinned_&]:flex xl:[.lc-pinned_&]:flex-1 xl:[.lc-pinned_&]:flex-col" : ""
+        }`}
+      >
         {rows.map((r, i) => (
-          <Row key={r.title} r={r} i={i} group={group} />
+          <Row key={r.title} r={r} i={i} group={group} fill={fill} />
         ))}
       </SlideInRows>
       {coming && coming.rows.length > 0 && (
@@ -94,7 +117,7 @@ export default function FeatureList({
           href={cta.href}
           className={`mt-5 xl:[@media(max-height:800px)]:mt-3 inline-flex items-center gap-2 rounded-full px-6 py-3 l-lift text-[14px] font-semibold tracking-tight transition-[transform,background-color,color] duration-200 hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-l-text motion-reduce:transition-none ${
             ink ? "bg-l-varsity-glow text-l-text hover:bg-l-text hover:text-l-varsity-glow" : "bg-(--sa) text-(--sa-ink) hover:bg-l-text hover:text-l-bg"
-          }`}
+          } ${fill ? "xl:[.lc-pinned_&]:self-start" : ""}`}
         >
           {cta.label} →
         </Link>
@@ -104,19 +127,42 @@ export default function FeatureList({
 }
 
 /* One row: the icon, the title, the "+" that opens the detail. */
-function Row({ r, i, group, upcoming = false }: { r: FeatureRow; i: number; group: string; upcoming?: boolean }) {
+function Row({
+  r,
+  i,
+  group,
+  upcoming = false,
+  fill = false,
+}: {
+  r: FeatureRow;
+  i: number;
+  group: string;
+  upcoming?: boolean;
+  fill?: boolean;
+}) {
   return (
-    <li style={{ "--i": i } as CSSProperties}>
+    <li
+      style={{ "--i": i } as CSSProperties}
+      className={fill ? "xl:[.lc-pinned_&]:flex xl:[.lc-pinned_&]:flex-1 xl:[.lc-pinned_&]:flex-col xl:[.lc-pinned_&]:justify-center" : undefined}
+    >
       <details name={group} className="group">
-        <summary className="-mx-2 flex cursor-pointer list-none items-center gap-4 rounded-lg px-2 py-3.5 text-left xl:py-[clamp(5px,calc((100svh_-_600px)/21.4),14px)] transition-colors hover:bg-l-surface [&::-webkit-details-marker]:hidden">
+        <summary
+          className={`-mx-2 flex cursor-pointer list-none items-center gap-4 rounded-lg px-2 py-3.5 text-left xl:py-[clamp(5px,calc((100svh_-_600px)/21.4),14px)] transition-colors hover:bg-l-surface [&::-webkit-details-marker]:hidden ${
+            fill ? "xl:[.lc-pinned_&]:py-1.5" : ""
+          }`}
+        >
           <span
-            className={`flex h-9 w-9 flex-none items-center justify-center rounded-xl border bg-l-bg-elevated ${
-              upcoming ? "border-dashed border-(--color-l-text-2)/50 text-l-text-2" : "border-l-line text-(--sa)"
+            className={`flex flex-none items-center justify-center rounded-xl border bg-l-bg-elevated ${
+              fill ? "h-(--ico) w-(--ico)" : "h-9 w-9"
+            } ${upcoming ? "border-dashed border-(--color-l-text-2)/50 text-l-text-2" : "border-l-line text-(--sa)"}`}
+          >
+            <FeatureIcon name={r.icon} className={fill ? "h-[calc(var(--ico)*0.5556)] w-[calc(var(--ico)*0.5556)]" : ""} />
+          </span>
+          <span
+            className={`flex-1 font-display text-[clamp(19px,1.8vw,23px)] leading-tight tracking-tight text-l-text ${
+              fill ? "xl:[.lc-pinned_&]:text-[clamp(19px,1.8vw,25px)]" : ""
             }`}
           >
-            <FeatureIcon name={r.icon} />
-          </span>
-          <span className="flex-1 font-display text-[clamp(19px,1.8vw,23px)] leading-tight tracking-tight text-l-text">
             {r.title}
           </span>
           <span
@@ -127,7 +173,7 @@ function Row({ r, i, group, upcoming = false }: { r: FeatureRow; i: number; grou
             <span className="absolute top-0 left-1/2 h-full w-px -translate-x-1/2 bg-current" />
           </span>
         </summary>
-        <p className="max-w-[46ch] pb-4 pl-[52px] text-[14px] leading-[1.6] text-l-text-2 xl:max-w-none xl:[@media(max-height:800px)]:pb-3 xl:[@media(max-height:800px)]:text-[13px] xl:[@media(max-height:800px)]:leading-[1.5]">{r.detail}</p>
+        <p className={`max-w-[46ch] pb-4 ${fill ? "pl-[calc(var(--ico)+16px)]" : "pl-[52px]"} text-[14px] leading-[1.6] text-l-text-2 xl:max-w-none xl:[@media(max-height:800px)]:pb-3 xl:[@media(max-height:800px)]:text-[13px] xl:[@media(max-height:800px)]:leading-[1.5]`}>{r.detail}</p>
       </details>
     </li>
   );
