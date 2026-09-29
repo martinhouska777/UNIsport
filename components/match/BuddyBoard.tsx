@@ -81,11 +81,11 @@ function Status({ children }: { children: React.ReactNode }) {
   share with them ("Both into Film") is gone from here: that is on their
   profile, one tap away on the name, the same profile People opens.
 
-  WHITE AND THIN (owner, 2026-09-28 later: "too much like a poster"). The
-  school-colour band is gone. The place and the time share the top line, the
-  workout is a boxed tag beside the name so it is the first thing you read,
-  the note follows in full, and Accept / Message stand on the right, where
-  the card used to be empty.
+  THIN (owner, 2026-09-28 later: "too much like a poster"). The solid band
+  became a pale strip — "not just white, something in between" — with the
+  time on the left and the place on the right. The workout is a boxed tag
+  beside the name so it is the first thing you read, the note follows in
+  full, and Accept / Message stand on the right, where the card was empty.
 */
 export function PostCard({
   post: p,
@@ -103,20 +103,21 @@ export function PostCard({
   onOpenProfile: () => void;
 }) {
   return (
-    <div className="rounded-xl border border-border bg-surface px-3.5 py-3">
-      {/* Where on the left, when on the right — one line. */}
-      <div className="flex items-center justify-between gap-2 text-[12px] font-medium text-text-2">
+    <div className="overflow-hidden rounded-xl border border-border bg-surface">
+      {/* When on the left, where on the right, on a pale strip of the school
+          colour — a header, not the poster the solid band was. */}
+      <div className="flex items-center justify-between gap-3 bg-primary-tint px-3.5 py-2 text-[12px]">
+        <span className="flex-shrink-0 font-bold text-primary">
+          {p.date ? dateLabel(p.date) : dayShort(p.day)} · {postWhenLabel(p.hour, p.timeOfDay)}
+        </span>
         {p.gym && (
-          <span className="flex min-w-0 items-center gap-1">
+          <span className="flex min-w-0 items-center gap-1 font-medium text-text-2">
             <IconMapPin size={13} className="flex-shrink-0" />
             <span className="min-w-0 truncate">{p.gym}</span>
           </span>
         )}
-        <span className="flex-shrink-0">
-          {p.date ? dateLabel(p.date) : dayShort(p.day)} · {postWhenLabel(p.hour, p.timeOfDay)}
-        </span>
       </div>
-      <div className="mt-2.5 flex items-center gap-3">
+      <div className="flex items-center gap-3 px-3.5 py-3">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <button
