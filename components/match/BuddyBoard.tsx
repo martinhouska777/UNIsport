@@ -48,7 +48,7 @@ import BoardFiltersSheet, {
 } from "@/components/match/BoardFiltersSheet";
 import Avatar from "@/components/messages/Avatar";
 import { announceBoardChange } from "@/lib/gymGoing";
-import { IconMapPin, IconChevronRight, IconSearch, IconX } from "@/components/icons";
+import { IconMapPin, IconSearch, IconX } from "@/components/icons";
 
 function dayShort(key: string): string {
   return weekDays.find((d) => d.key === key)?.label.slice(0, 3) ?? key;
@@ -77,11 +77,15 @@ function Status({ children }: { children: React.ReactNode }) {
 }
 
 /*
-  A POST IS ABOUT THE SESSION, NOT THE PERSON (owner, 2026-09-28). A band in
-  the school colour says what and when — "Legs" on the left, "Sat 3 Oct ·
-  10:00 AM" on the right — then the place, then who, then their note in full.
-  What you share with them ("Both into Film") is gone from here: that is on
-  their profile, one tap away on the name row, the same profile People opens.
+  A POST IS ABOUT THE SESSION, NOT THE PERSON (owner, 2026-09-28). What you
+  share with them ("Both into Film") is gone from here: that is on their
+  profile, one tap away on the name, the same profile People opens.
+
+  WHITE AND THIN (owner, 2026-09-28 later: "too much like a poster"). The
+  school-colour band is gone. The place and the time share the top line, the
+  workout is a boxed tag beside the name so it is the first thing you read,
+  the note follows in full, and Accept / Message stand on the right, where
+  the card used to be empty.
 */
 export function PostCard({
   post: p,
@@ -99,37 +103,43 @@ export function PostCard({
   onOpenProfile: () => void;
 }) {
   return (
-    <div className="overflow-hidden rounded-xl border border-border bg-surface">
-      <div className="flex items-baseline justify-between gap-2 bg-primary px-3.5 py-2.5 text-primary-contrast">
-        <span className="min-w-0 truncate text-[16px] font-bold">{focusLabel(p.focus)}</span>
-        <span className="flex-shrink-0 text-[12px] font-semibold">
+    <div className="rounded-xl border border-border bg-surface px-3.5 py-3">
+      {/* Where on the left, when on the right — one line. */}
+      <div className="flex items-center justify-between gap-2 text-[12px] font-medium text-text-2">
+        {p.gym && (
+          <span className="flex min-w-0 items-center gap-1">
+            <IconMapPin size={13} className="flex-shrink-0" />
+            <span className="min-w-0 truncate">{p.gym}</span>
+          </span>
+        )}
+        <span className="flex-shrink-0">
           {p.date ? dateLabel(p.date) : dayShort(p.day)} · {postWhenLabel(p.hour, p.timeOfDay)}
         </span>
       </div>
-      <div className="px-3.5 pb-3.5 pt-2.5">
-        {p.gym && (
-          <div className="flex items-center gap-1 text-[12px] font-medium text-text-2">
-            <IconMapPin size={13} className="flex-shrink-0" />
-            <span className="min-w-0 truncate">{p.gym}</span>
+      <div className="mt-2.5 flex items-center gap-3">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={onOpenProfile}
+              className="press flex min-w-0 items-center gap-2 text-left"
+            >
+              <Avatar size={28} src={p.authorPhoto} alt={p.authorName} />
+              <span className="min-w-0 truncate text-[13px] font-semibold text-text">{p.authorName}</span>
+            </button>
+            <span className="flex-shrink-0 rounded-md border border-primary-line bg-primary-tint px-2 py-0.5 text-[12px] font-bold text-primary">
+              {focusLabel(p.focus)}
+            </span>
           </div>
-        )}
-        <button
-          type="button"
-          onClick={onOpenProfile}
-          className={`press flex w-full items-center gap-2 text-left ${p.gym ? "mt-2" : ""}`}
-        >
-          <Avatar size={28} src={p.authorPhoto} alt={p.authorName} />
-          <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-text">{p.authorName}</span>
-          <IconChevronRight size={16} className="flex-shrink-0 text-muted" />
-        </button>
-        {p.note && <p className="mt-2 text-[13px] leading-snug text-text-2">{p.note}</p>}
-        <div className="mt-3 flex gap-2">
+          {p.note && <p className="mt-1.5 text-[13px] leading-snug text-text-2">{p.note}</p>}
+        </div>
+        <div className="flex w-[88px] flex-shrink-0 flex-col gap-1.5">
           {onAccept && (
-            <Button size="md" onClick={onAccept} disabled={busy} className="flex-1">
+            <Button size="sm" onClick={onAccept} disabled={busy} full>
               {busy ? "…" : "Accept"}
             </Button>
           )}
-          <Button size="md" variant="secondary" onClick={onMessage} disabled={busy} className="flex-1">
+          <Button size="sm" variant="secondary" onClick={onMessage} disabled={busy} full>
             Message
           </Button>
         </div>
