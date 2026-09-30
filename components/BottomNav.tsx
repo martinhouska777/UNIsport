@@ -1,9 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useEffect, useState, type ReactNode } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { getUnreadTotal, UNREAD_REFRESH_EVENT } from "@/lib/supabase/messages";
+import { useMembership } from "@/components/varsity/useMembership";
+import { VARSITY_HOME } from "@/lib/varsity/theme";
+import useDoubleTap from "@/components/useDoubleTap";
 
 type Tab = {
   href: string;
@@ -111,7 +114,16 @@ export function useUnreadCount() {
 // Phone / tablet navigation. On laptop widths SideNav takes over, so this hides.
 export default function BottomNav() {
   const pathname = usePathname();
+  const router = useRouter();
   const unread = useUnreadCount();
+
+  /* TWO TAPS ON PROFILE = VARSITY MODE, for an approved squad member — the
+     same place two taps on the name in the Profile's top bar go. Anyone else
+     gets a plain tab: nothing here may hint that other accounts have a mode
+     this one doesn't. */
+  const { isMember } = useMembership();
+  const goVarsity = useCallback(() => router.push(VARSITY_HOME), [router]);
+  const profileDoubleTap = useDoubleTap(isMember ? goVarsity : null);
 
   return (
     /* A floating capsule, Instagram-style: the bar is a pill held off the
@@ -125,6 +137,7 @@ export default function BottomNav() {
             <li key={tab.href} className="flex-1">
               <Link
                 href={tab.href}
+                onClick={tab.href === "/profile" ? profileDoubleTap : undefined}
                 aria-current={active ? "page" : undefined}
                 className={`flex flex-col items-center rounded-full py-1.5 text-[10px] font-semibold transition-[color,background-color,transform] duration-150 active:scale-90 ${
                   active ? "bg-primary-tint text-primary" : "text-muted"

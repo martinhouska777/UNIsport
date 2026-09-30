@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState, type ReactNode } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useCallback, useState, type MouseEvent, type ReactNode } from "react";
 import LogSheet from "@/components/varsity/log/LogSheet";
+import { useAppState } from "@/components/AppState";
+import useDoubleTap from "@/components/useDoubleTap";
 import { IconUser, IconCalendar, IconPlus } from "@/components/icons";
 
 /*
@@ -57,10 +59,19 @@ const rightTabs: Tab[] = [
    tab appears in both navigations at once. */
 export const varsityTabs: Tab[] = [...leftTabs, ...rightTabs];
 
-function NavItem({ tab, active }: { tab: Tab; active: boolean }) {
+function NavItem({
+  tab,
+  active,
+  onClick,
+}: {
+  tab: Tab;
+  active: boolean;
+  onClick?: (e: MouseEvent) => void;
+}) {
   return (
     <Link
       href={tab.href}
+      onClick={onClick}
       aria-current={active ? "page" : undefined}
       className={`flex flex-col items-center gap-1 rounded-full py-1.5 text-[10px] font-semibold transition-[color,background-color,transform] duration-150 active:scale-90 ${
         active ? "bg-primary-tint text-primary" : "text-muted"
@@ -76,6 +87,15 @@ export default function VarsityNav() {
   const pathname = usePathname();
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + "/");
   const [logOpen, setLogOpen] = useState(false);
+
+  /* TWO TAPS ON PROFILE = BACK TO THE STUDENT SIDE, like two taps on the crest
+     in the top bar, and the mirror of the student app's Profile tab. Only when
+     there IS a student side: a rower who joined through a team link has never
+     set one up, and two taps must not drop them into the nine-step onboarding. */
+  const router = useRouter();
+  const { studentReady } = useAppState();
+  const goStudent = useCallback(() => router.push("/profile"), [router]);
+  const profileDoubleTap = useDoubleTap(studentReady ? goStudent : null);
 
   return (
     /*
@@ -109,7 +129,11 @@ export default function VarsityNav() {
 
         {rightTabs.map((tab) => (
           <li key={tab.href} className="flex flex-1 flex-col">
-            <NavItem tab={tab} active={isActive(tab.href)} />
+            <NavItem
+              tab={tab}
+              active={isActive(tab.href)}
+              onClick={tab.href === "/varsity/profile" ? profileDoubleTap : undefined}
+            />
           </li>
         ))}
       </ul>
