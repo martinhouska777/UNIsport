@@ -846,7 +846,7 @@ function PieceEditor({
                       onChange={(e) => update(c.boatId, { note: e.target.value })}
                       autoFocus={asked === c.boatId}
                       placeholder="Note"
-                      className="mt-2.5 block w-full rounded-lg border border-border bg-surface px-2.5 py-1.5 text-base text-text outline-none placeholder:text-muted"
+                      className="mt-2.5 block w-full rounded-lg border border-border bg-surface px-2.5 py-1.5 text-base text-text outline-none placeholder:text-faint"
                     />
                   ) : (
                     <button

@@ -122,7 +122,7 @@ function SlotCard({ slot }: { slot: TodaySlot }) {
           <div className="mt-1 flex">
             <KindTag label={s.label} color={mark ?? s.color} />
           </div>
-          {s.note && <div className="mt-1.5 text-[12px] leading-relaxed text-text/80">{s.note}</div>}
+          {s.note && <div className="mt-1.5 text-[12px] leading-relaxed text-text">{s.note}</div>}
         </div>
       ) : (
         <div className="px-3.5 pb-1 pt-2 text-[14px] italic text-muted">Nothing planned</div>

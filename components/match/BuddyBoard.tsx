@@ -444,7 +444,7 @@ export default function BuddyBoard({
               onChange={(e) => setNote(e.target.value)}
               maxLength={120}
               // 16px text avoids mobile auto-zoom on focus.
-              className="w-full rounded-[10px] border border-border bg-surface px-3.5 py-3 text-base text-text placeholder:text-muted focus:border-primary focus:outline-none"
+              className="w-full rounded-[10px] border border-border bg-surface px-3.5 py-3 text-base text-text placeholder:text-faint focus:border-primary focus:outline-none"
             />
           </div>
 

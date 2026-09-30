@@ -168,7 +168,7 @@ function Place({ entry }: { entry: PodiumEntry }) {
         )}
 
         <div className="mt-1 text-[18px] font-bold leading-none tabular-nums text-text">{entry.value}</div>
-        <div className="mt-0.5 text-[9px] font-semibold uppercase tracking-[0.08em] text-text/60">{entry.unit}</div>
+        <div className="mt-0.5 text-[9px] font-semibold uppercase tracking-[0.08em] text-text">{entry.unit}</div>
       </div>
 
       {/* The pedestal, with its medal standing on it. A trophy once floated

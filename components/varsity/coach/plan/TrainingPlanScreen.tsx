@@ -777,7 +777,7 @@ export default function TrainingPlanScreen({
     const editing = view.name === "edit" ? blocks.find((b) => b.id === view.blockId) : undefined;
     const valid = draft.name.trim() && draft.start && draft.end && draft.end >= draft.start;
     const inputCls =
-      "w-full rounded-xl border border-border bg-surface-2 px-3.5 py-3 text-base text-text outline-none focus:border-primary placeholder:text-muted";
+      "w-full rounded-xl border border-border bg-surface-2 px-3.5 py-3 text-base text-text outline-none focus:border-primary placeholder:text-faint";
     const labelCls = "mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.12em] text-muted";
     return (
       <div className="mx-auto w-full max-w-screen-sm px-4 pb-8 pt-4">
@@ -1142,7 +1142,7 @@ export default function TrainingPlanScreen({
     const longDate = editor.date.toLocaleDateString("en-US", { month: "long", day: "numeric" });
     const existing = !!sessions[sessionKey(editor.date, editor.period)];
     const inputCls =
-      "w-full rounded-xl border border-border bg-surface-2 px-3.5 py-3 text-base text-text outline-none focus:border-primary placeholder:text-muted";
+      "w-full rounded-xl border border-border bg-surface-2 px-3.5 py-3 text-base text-text outline-none focus:border-primary placeholder:text-faint";
     const labelCls = "mb-1.5 mt-4 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted";
     const overlay = (
       <div className="fixed inset-0 z-[60] flex h-dvh flex-col bg-background">
@@ -1186,7 +1186,7 @@ export default function TrainingPlanScreen({
                 placeholder={cfg.times[editor.period]}
                 aria-label="Session time"
                 /* 16px so a phone doesn't zoom in when it takes focus. */
-                className="w-[74px] bg-transparent text-base font-semibold tabular-nums text-text outline-none placeholder:font-normal placeholder:text-muted"
+                className="w-[74px] bg-transparent text-base font-semibold tabular-nums text-text outline-none placeholder:font-normal placeholder:text-faint"
               />
             </label>
           )}

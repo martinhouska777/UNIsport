@@ -320,7 +320,7 @@ export default function UploadVideoSheet({ onClose }: { onClose: () => void }) {
                     aria-label="File name"
                     /* text-base: anything smaller and a phone zooms the page in
                        when the field takes focus. */
-                    className="min-w-0 flex-1 bg-transparent text-base text-text outline-none placeholder:text-muted"
+                    className="min-w-0 flex-1 bg-transparent text-base text-text outline-none placeholder:text-faint"
                     placeholder={videoBoatName(boat)}
                   />
                   <span className="flex-shrink-0 text-[12px] text-muted">.{ext}</span>

@@ -97,7 +97,7 @@ export default function PartnerPicker({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search people"
-            className="w-full bg-transparent py-2.5 text-base text-text outline-none placeholder:text-muted"
+            className="w-full bg-transparent py-2.5 text-base text-text outline-none placeholder:text-faint"
           />
         </div>
       </div>

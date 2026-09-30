@@ -470,7 +470,7 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
                  says which search this is, for a screen reader. */
               placeholder="Search"
               aria-label="Search workouts"
-              className="w-full bg-transparent text-base text-text outline-none placeholder:text-muted"
+              className="w-full bg-transparent text-base text-text outline-none placeholder:text-faint"
             />
           </div>
           {/* THE COACH'S NEW RACE DAY — water side only. It was a dashed bar

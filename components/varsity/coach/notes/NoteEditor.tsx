@@ -116,7 +116,7 @@ export default function NoteEditor({
             value={text}
             onChange={(e) => setText(e.target.value)}
             rows={5}
-            className="mt-3 w-full resize-none rounded-2xl border border-border bg-surface px-3.5 py-3 text-base leading-relaxed text-text outline-none placeholder:text-text-3 focus:border-primary"
+            className="mt-3 w-full resize-none rounded-2xl border border-border bg-surface px-3.5 py-3 text-base leading-relaxed text-text outline-none placeholder:text-faint focus:border-primary"
           />
         </div>
       </div>

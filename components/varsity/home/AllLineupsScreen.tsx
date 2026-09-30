@@ -75,7 +75,7 @@ function BoatSearchList({ lineups, out }: { lineups: Lineup[]; out: OutPerson[] 
           onChange={(e) => setQ(e.target.value)}
           aria-label="Find someone in a boat"
           placeholder="Find a name…"
-          className="w-full rounded-xl border border-border bg-surface py-2.5 pl-9 pr-9 text-base text-text outline-none focus:border-primary placeholder:text-muted"
+          className="w-full rounded-xl border border-border bg-surface py-2.5 pl-9 pr-9 text-base text-text outline-none focus:border-primary placeholder:text-faint"
         />
         {q && (
           <button

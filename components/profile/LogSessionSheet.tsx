@@ -282,7 +282,7 @@ export default function LogSessionSheet({
   };
 
   const inputCls =
-    "w-full rounded-xl border border-border bg-surface px-3 py-2.5 text-base text-text outline-none focus:border-primary placeholder:text-muted";
+    "w-full rounded-xl border border-border bg-surface px-3 py-2.5 text-base text-text outline-none focus:border-primary placeholder:text-faint";
   const labelCls = "mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted";
   // A field inside a DetailRow: no box of its own, the answer on the right.
   const rowInput =
@@ -446,7 +446,7 @@ export default function LogSessionSheet({
                                 inputMode="decimal"
                                 placeholder="0"
                                 aria-label={`Set ${j + 1} ${weightUnit}`}
-                                className="h-10 w-full min-w-0 flex-1 rounded-lg border border-transparent bg-surface-2 px-2 text-center text-base font-semibold tabular-nums text-text outline-none placeholder:font-normal placeholder:text-muted focus:border-primary"
+                                className="h-10 w-full min-w-0 flex-1 rounded-lg border border-transparent bg-surface-2 px-2 text-center text-base font-semibold tabular-nums text-text outline-none placeholder:font-normal placeholder:text-faint focus:border-primary"
                               />
                               <input
                                 value={s.reps}
@@ -454,7 +454,7 @@ export default function LogSessionSheet({
                                 inputMode="numeric"
                                 placeholder="0"
                                 aria-label={`Set ${j + 1} reps`}
-                                className="h-10 w-full min-w-0 flex-1 rounded-lg border border-transparent bg-surface-2 px-2 text-center text-base font-semibold tabular-nums text-text outline-none placeholder:font-normal placeholder:text-muted focus:border-primary"
+                                className="h-10 w-full min-w-0 flex-1 rounded-lg border border-transparent bg-surface-2 px-2 text-center text-base font-semibold tabular-nums text-text outline-none placeholder:font-normal placeholder:text-faint focus:border-primary"
                               />
                               <button
                                 type="button"

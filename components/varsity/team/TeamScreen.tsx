@@ -543,7 +543,7 @@ export default function TeamScreen({
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search"
-              className="w-full bg-transparent text-base text-text outline-none placeholder:text-muted"
+              className="w-full bg-transparent text-base text-text outline-none placeholder:text-faint"
             />
           </div>
 

@@ -237,7 +237,7 @@ function InfoField({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         aria-label={label}
-        className={`min-w-0 flex-1 bg-transparent text-[16px] text-text outline-none placeholder:text-muted ${
+        className={`min-w-0 flex-1 bg-transparent text-[16px] text-text outline-none placeholder:text-faint ${
           strong ? "font-semibold" : "font-medium"
         }`}
       />
@@ -333,7 +333,7 @@ function PracticeBody({ practice }: { practice: Practice & { plan: PlanCell } })
             <KindTag label={plan.label} color={markColor(plan.color) ?? plan.color} />
           </span>
         ) : (
-          <span className="min-w-0 truncate text-[11px] font-medium text-muted/70">Nothing planned</span>
+          <span className="min-w-0 truncate text-[11px] font-medium text-muted">Nothing planned</span>
         )}
         <span className="flex-shrink-0 text-[10px] font-semibold tracking-[0.1em] text-muted">
           {practice.period}
@@ -343,7 +343,7 @@ function PracticeBody({ practice }: { practice: Practice & { plan: PlanCell } })
       {plan?.description && (
         /* Full-strength text on a painted cell: muted grey on the yellow of
            a UT1 outing is the one pairing that goes hard to read. */
-        <span className="w-full truncate text-[11px] leading-snug text-text/85">{plan.description}</span>
+        <span className="w-full truncate text-[11px] leading-snug text-text">{plan.description}</span>
       )}
 
       {/*
@@ -619,7 +619,7 @@ function Seat({
                just asks for a name. */
             placeholder="Type a name…"
             /* 16px, so a phone does not zoom the whole boat when it focuses. */
-            className="w-full min-w-0 flex-1 bg-transparent text-[16px] font-medium text-text outline-none placeholder:text-text-3"
+            className="w-full min-w-0 flex-1 bg-transparent text-[16px] font-medium text-text outline-none placeholder:text-faint"
           />
         </div>
       </div>
@@ -828,7 +828,7 @@ function SeatPool({
             placeholder={cox ? "Search coxswains" : "Search a name"}
             aria-label={cox ? "Search coxswains" : "Search the athlete pool"}
             /* 16px, so a phone does not zoom the whole boat when it focuses. */
-            className="w-full min-w-0 bg-transparent text-[16px] text-text outline-none placeholder:text-muted"
+            className="w-full min-w-0 bg-transparent text-[16px] text-text outline-none placeholder:text-faint"
           />
         </div>
       )}

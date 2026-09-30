@@ -152,7 +152,7 @@ export function TextField({
       placeholder={placeholder}
       aria-label={ariaLabel}
       // 16px text avoids mobile auto-zoom on focus.
-      className={`w-full rounded-[10px] border border-border bg-surface py-3 pl-3.5 text-base text-text placeholder:text-muted focus:border-primary focus:outline-none ${
+      className={`w-full rounded-[10px] border border-border bg-surface py-3 pl-3.5 text-base text-text placeholder:text-faint focus:border-primary focus:outline-none ${
         suffix ? "pr-12" : "pr-3.5"
       }`}
     />

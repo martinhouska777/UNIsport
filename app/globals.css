@@ -21,9 +21,13 @@
     Now: text (primary) > text-2 (secondary) > muted (labels) > text-3 (faint).
     Every step is a real colour that clears 4.5:1 on its own theme.
   */
-  --text-2: #3b3f47;
-  --text-3: #676d76;
-  --muted: #4a4f58;
+  --text-2: #141618;
+  --text-3: #141618;
+  --muted: #141618;
+  /* 2026-09-30: the owner found the grey words too hard to read, so the three
+     steps above are all black now. The one grey left is for empty-field hints
+     and off switches — see `faint` in lib/themes.ts. */
+  --faint: #676d76;
   --primary: #2f3b52;
   /*
     The fill for things you can TAP. Kept separate from --primary because a
@@ -133,12 +137,13 @@
     about 3:1 against the card in both themes, so an off switch is still a
     switch, and the white knob still reads on it.
   */
-  --color-switch-off: color-mix(in oklab, var(--text-3) 70%, var(--surface));
+  --color-switch-off: color-mix(in oklab, var(--faint) 70%, var(--surface));
   --color-border: var(--border);
   --color-text: var(--text);
   --color-text-2: var(--text-2);
   --color-text-3: var(--text-3);
   --color-muted: var(--muted);
+  --color-faint: var(--faint);
   --color-primary: var(--primary);
   --color-primary-live: var(--primary-live);
   --color-primary-ink: var(--primary-ink);
@@ -229,9 +234,9 @@
 */
 .on-ink {
   --text: var(--ink-contrast);
-  --text-2: color-mix(in oklab, var(--ink-contrast) 84%, var(--ink));
-  --text-3: color-mix(in oklab, var(--ink-contrast) 74%, var(--ink));
-  --muted: color-mix(in oklab, var(--ink-contrast) 80%, var(--ink));
+  --text-2: var(--ink-contrast);
+  --text-3: var(--ink-contrast);
+  --muted: var(--ink-contrast);
   --border: color-mix(in oklab, var(--ink-contrast) 20%, transparent);
   --primary: color-mix(in oklab, var(--primary-src) calc(100% - var(--ink-lift)), var(--ink-contrast));
   /* Words in the school colour on the strip: the strip's own primary above. */

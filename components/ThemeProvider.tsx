@@ -24,6 +24,7 @@ function tokensToCssVars(t: ThemeTokens): CSSProperties {
     "--text-2": t.text2,
     "--text-3": t.text3,
     "--muted": t.muted,
+    "--faint": t.faint,
     "--primary": t.primary,
     "--primary-live": t.primaryLive,
     "--primary-ink": t.primaryInk,

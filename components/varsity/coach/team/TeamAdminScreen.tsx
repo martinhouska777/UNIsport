@@ -431,7 +431,7 @@ export default function TeamAdminScreen({
                     autoFocus
                     aria-label="University email to lock this invite to"
                     /* text-base so phones don't zoom the page on focus */
-                    className="min-w-0 flex-1 rounded-lg border border-border bg-surface-2 px-3 py-2 text-base text-text placeholder:text-muted focus:border-accent focus:outline-none"
+                    className="min-w-0 flex-1 rounded-lg border border-border bg-surface-2 px-3 py-2 text-base text-text placeholder:text-faint focus:border-accent focus:outline-none"
                   />
                   <Button type="submit" size="md" disabled={busy === "new" || !emailValue.trim()}>
                     Make

@@ -308,7 +308,7 @@ function LogEditor({
   }, [scanFile, applyScan]);
 
   const inputCls =
-    "w-full rounded-xl border border-border bg-surface-2 px-3.5 py-3 text-base text-text outline-none focus:border-primary placeholder:text-muted";
+    "w-full rounded-xl border border-border bg-surface-2 px-3.5 py-3 text-base text-text outline-none focus:border-primary placeholder:text-faint";
   const labelCls = "mb-1.5 mt-4 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted";
 
   // The type chips. An extra log picks from everything; a flex day picks from

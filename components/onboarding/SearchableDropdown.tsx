@@ -175,7 +175,7 @@ export default function SearchableDropdown(props: Props) {
           aria-controls={undefined}
           placeholder={shownPlaceholder}
           /* 16px text so a phone doesn't zoom the page when it takes focus. */
-          className="min-w-0 flex-1 bg-transparent py-3 text-base text-text placeholder:text-muted focus:outline-none"
+          className="min-w-0 flex-1 bg-transparent py-3 text-base text-text placeholder:text-faint focus:outline-none"
         />
         <button
           type="button"

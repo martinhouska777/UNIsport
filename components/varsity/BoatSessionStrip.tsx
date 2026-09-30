@@ -72,7 +72,7 @@ function WorkField({
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
         inputMode="decimal"
-        className="w-full rounded-lg border border-border bg-surface-2 px-2.5 py-2 text-base font-medium text-text outline-none placeholder:font-normal placeholder:italic placeholder:text-text-3 focus:border-primary-line disabled:opacity-60"
+        className="w-full rounded-lg border border-border bg-surface-2 px-2.5 py-2 text-base font-medium text-text outline-none placeholder:font-normal placeholder:italic placeholder:text-faint focus:border-primary-line disabled:opacity-60"
       />
     </label>
   );

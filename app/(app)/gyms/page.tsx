@@ -303,7 +303,7 @@ export default function GymsPage() {
             placeholder="Search gyms..."
             aria-label="Search gyms"
             // 16px text prevents mobile browsers from auto-zooming on focus.
-            className="w-full min-w-0 bg-transparent text-base text-text placeholder:text-muted focus:outline-none"
+            className="w-full min-w-0 bg-transparent text-base text-text placeholder:text-faint focus:outline-none"
           />
         </div>
       </div>

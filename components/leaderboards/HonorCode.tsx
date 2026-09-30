@@ -126,7 +126,7 @@ export default function HonorCode({
             aria-label="Signature"
             autoComplete="name"
             maxLength={60}
-            className="mt-3 w-full border-b border-border bg-transparent px-1 pb-2 text-center text-base italic text-text placeholder:not-italic placeholder:text-muted focus:border-primary focus:outline-none"
+            className="mt-3 w-full border-b border-border bg-transparent px-1 pb-2 text-center text-base italic text-text placeholder:not-italic placeholder:text-faint focus:border-primary focus:outline-none"
           />
 
           <Button size="md" className="mt-4 w-full" onClick={onAgree} disabled={!signed}>

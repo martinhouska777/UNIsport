@@ -18,6 +18,13 @@ export type ThemeTokens = {
   text2: string; // secondary — body copy that isn't the headline
   text3: string; // faint — timestamps, unit labels, decorative captions
   muted: string; // labels and column headings
+  /*
+    The ONE grey left (owner, 2026-09-30: "lots of grey letters, hard to see —
+    make them black everywhere"). text2, text3 and muted now all equal `text`;
+    this is only for things that must NOT look like real words: the hint in an
+    empty field (placeholder) and the track of a switch that is off.
+  */
+  faint: string;
   primary: string;
   /*
     The fill for anything you can TAP. A brand colour is picked to look right,
@@ -100,9 +107,10 @@ export const neutralTheme: ThemeTokens = {
   surface2: "#dee3e9",
   border: "rgba(203, 207, 213, 0.55)",
   text: "#141618",
-  text2: "#3b3f47",
-  text3: "#676d76",
-  muted: "#4a4f58",
+  text2: "#141618",
+  text3: "#141618",
+  muted: "#141618",
+  faint: "#676d76",
   primary: "#2f3b52",
   primaryLive: "#2f3b52", // already clears 3:1 on a light ground
   primaryInk: "#2f3b52",
@@ -193,9 +201,10 @@ export const darkNeutrals = {
   surface2: "#232529",
   border: "rgba(47, 50, 53, 0.55)",
   text: "#edeef0",
-  text2: "#c3c4c6",
-  text3: "#808489", // the faintest grey that still clears 4.5:1 on a card
-  muted: "#8a8d92",
+  text2: "#edeef0",
+  text3: "#edeef0",
+  muted: "#edeef0",
+  faint: "#808489", // the faintest grey that still clears 4.5:1 on a card
   success: "#22c55e",
   warn: "#f59e0b",
   danger: "#ef4444",
@@ -221,9 +230,10 @@ export const lightNeutrals = {
   text: "#141618",
   // Secondary text is used at 9–11px all over the app, so `muted` clears 7:1
   // on the page background, not just 4.5:1.
-  muted: "#4a4f58",
-  text2: "#3b3f47",
-  text3: "#676d76",
+  muted: "#141618",
+  text2: "#141618",
+  text3: "#141618",
+  faint: "#676d76",
   /* A step darker than they were (launch audit, 2026-09-27): red, amber and
      green text on their own pale tints, and small status words on the page,
      measured 4.2-4.4:1. These clear 6:1 on the card and the page. */

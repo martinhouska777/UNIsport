@@ -73,7 +73,7 @@ export default function ExercisePicker({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search exercises"
-            className="w-full bg-transparent py-2.5 text-base text-text outline-none placeholder:text-muted"
+            className="w-full bg-transparent py-2.5 text-base text-text outline-none placeholder:text-faint"
           />
         </div>
         <div className="mt-2 chip-row flex gap-1.5 overflow-x-auto pb-1">

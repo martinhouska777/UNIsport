@@ -274,7 +274,7 @@ function Score({ value, unit }: { value: string; unit?: string }) {
     <div className="flex-shrink-0 text-right">
       <div className="text-[17px] font-bold leading-none tabular-nums text-text">{value}</div>
       {unit && (
-        <div className="mt-1 text-[9px] font-semibold uppercase tracking-[0.08em] text-text/60">{unit}</div>
+        <div className="mt-1 text-[9px] font-semibold uppercase tracking-[0.08em] text-text">{unit}</div>
       )}
     </div>
   );

@@ -221,7 +221,7 @@ function DayOutSection({
           placeholder="Why? (optional)"
           aria-label="Why you missed it"
           // 16px so a phone doesn't zoom in on focus.
-          className="mt-2.5 w-full rounded-xl border border-border bg-surface px-3 py-2.5 text-base text-text outline-none placeholder:text-muted focus:border-primary"
+          className="mt-2.5 w-full rounded-xl border border-border bg-surface px-3 py-2.5 text-base text-text outline-none placeholder:text-faint focus:border-primary"
         />
         <div className="mt-2.5 flex gap-2">
           <button

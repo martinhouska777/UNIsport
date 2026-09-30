@@ -839,7 +839,7 @@ export default function OnboardingFlow() {
                 onChange={(e) => set("hometownCity", e.target.value)}
                 placeholder="Your city or town"
                 aria-label="City or town"
-                className="mb-2 w-full rounded-[10px] border border-border bg-surface px-3.5 py-3 text-base text-text placeholder:text-muted focus:border-primary focus:outline-none"
+                className="mb-2 w-full rounded-[10px] border border-border bg-surface px-3.5 py-3 text-base text-text placeholder:text-faint focus:border-primary focus:outline-none"
               />
               <SearchableDropdown
                 options={countries}
@@ -939,7 +939,7 @@ export default function OnboardingFlow() {
                     }}
                     placeholder="Your own interest"
                     aria-label="Your own interest"
-                    className="min-w-0 flex-1 rounded-[10px] border border-border bg-surface px-3.5 py-3 text-base text-text placeholder:text-muted focus:border-primary focus:outline-none"
+                    className="min-w-0 flex-1 rounded-[10px] border border-border bg-surface px-3.5 py-3 text-base text-text placeholder:text-faint focus:border-primary focus:outline-none"
                   />
                   <button
                     type="button"
@@ -1009,7 +1009,7 @@ export default function OnboardingFlow() {
                 maxLength={160}
                 onChange={(e) => set("bio", e.target.value)}
                 aria-label="Bio"
-                className="min-h-[90px] w-full resize-none rounded-[10px] border border-border bg-surface px-3.5 py-3 text-base text-text placeholder:text-muted focus:border-primary focus:outline-none"
+                className="min-h-[90px] w-full resize-none rounded-[10px] border border-border bg-surface px-3.5 py-3 text-base text-text placeholder:text-faint focus:border-primary focus:outline-none"
               />
               <div className="mt-1 text-right text-[11px] text-muted">{profile.bio.length} / 160</div>
             </div>

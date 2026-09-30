@@ -349,7 +349,7 @@ function SeatRaceEditor({
           onChange={(e) => setR({ ...r, piece: e.target.value })}
           placeholder="Piece"
           aria-label="Piece"
-          className="min-w-0 rounded-xl border border-border bg-surface px-3 py-2 text-base text-text placeholder:text-muted"
+          className="min-w-0 rounded-xl border border-border bg-surface px-3 py-2 text-base text-text placeholder:text-faint"
         />
       </div>
 
@@ -496,7 +496,7 @@ function SeatRaceEditor({
                         inputMode="decimal"
                         placeholder="Time"
                         aria-label={`Piece ${k + 1}, ${b.name} time`}
-                        className={`w-24 flex-shrink-0 rounded-xl border bg-surface px-2 py-2 text-center font-mono text-base text-text placeholder:text-muted ${
+                        className={`w-24 flex-shrink-0 rounded-xl border bg-surface px-2 py-2 text-center font-mono text-base text-text placeholder:text-faint ${
                           texts[k]?.[bi] && pc.times[bi] == null
                             ? "border-danger"
                             : "border-border"
@@ -562,7 +562,7 @@ function SeatRaceEditor({
                         inputMode="decimal"
                         placeholder="Time"
                         aria-label={`Piece ${k + 1}, ${b.name} time`}
-                        className={`mt-1.5 w-full rounded-xl border bg-surface px-3 py-2 text-center font-mono text-base text-text placeholder:text-muted ${
+                        className={`mt-1.5 w-full rounded-xl border bg-surface px-3 py-2 text-center font-mono text-base text-text placeholder:text-faint ${
                           texts[k]?.[bi] && pc.times[bi] == null
                             ? "border-danger"
                             : "border-border"

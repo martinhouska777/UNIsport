@@ -114,7 +114,7 @@ export default function NewChannel({
             placeholder="Channel name"
             aria-label="Channel name"
             // 16px so a phone doesn't zoom in on focus.
-            className="w-full border-b-2 border-border bg-transparent py-2 text-base text-text outline-none placeholder:text-muted focus:border-primary"
+            className="w-full border-b-2 border-border bg-transparent py-2 text-base text-text outline-none placeholder:text-faint focus:border-primary"
           />
         </div>
         {error && <p className="mt-2 pl-[60px] text-[12px] text-danger">{error}</p>}
@@ -214,7 +214,7 @@ export function AddMembers({
             autoFocus
             placeholder="Search people"
             aria-label="Search people"
-            className="w-full bg-transparent py-2 text-base text-text outline-none placeholder:text-muted"
+            className="w-full bg-transparent py-2 text-base text-text outline-none placeholder:text-faint"
           />
         </div>
       </div>

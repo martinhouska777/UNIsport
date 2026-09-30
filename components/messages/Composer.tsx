@@ -55,7 +55,7 @@ export default function Composer({
         }}
         placeholder={placeholder}
         aria-label="Message"
-        className="min-w-0 flex-1 rounded-full border border-border bg-surface-2 px-4 py-2.5 text-base text-text placeholder:text-muted focus:border-primary focus:outline-none"
+        className="min-w-0 flex-1 rounded-full border border-border bg-surface-2 px-4 py-2.5 text-base text-text placeholder:text-faint focus:border-primary focus:outline-none"
       />
       <button
         type="button"

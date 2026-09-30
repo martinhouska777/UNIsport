@@ -75,7 +75,7 @@ function Dot({ color }: { color: string }) {
 }
 
 const inputCls =
-  "w-full rounded-xl border border-border bg-surface-2 px-3.5 py-3 text-base text-text outline-none focus:border-primary placeholder:text-muted";
+  "w-full rounded-xl border border-border bg-surface-2 px-3.5 py-3 text-base text-text outline-none focus:border-primary placeholder:text-faint";
 const labelCls = "mb-1.5 mt-4 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted";
 
 /* One tappable row of a list. */
@@ -724,7 +724,7 @@ function BoatSheet({
           inputMode="numeric"
           aria-label="Other number of seats"
           placeholder="…"
-          className="h-11 w-14 rounded-xl border border-border bg-surface-2 text-center text-base text-text outline-none focus:border-primary placeholder:text-muted"
+          className="h-11 w-14 rounded-xl border border-border bg-surface-2 text-center text-base text-text outline-none focus:border-primary placeholder:text-faint"
         />
       </div>
 

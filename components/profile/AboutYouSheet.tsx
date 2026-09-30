@@ -207,7 +207,7 @@ export default function AboutYouSheet({
                   }}
                   placeholder="Your own interest"
                   aria-label="Your own interest"
-                  className="min-w-0 flex-1 rounded-[10px] border border-border bg-surface-2 px-3.5 py-3 text-base text-text placeholder:text-muted focus:border-primary focus:outline-none"
+                  className="min-w-0 flex-1 rounded-[10px] border border-border bg-surface-2 px-3.5 py-3 text-base text-text placeholder:text-faint focus:border-primary focus:outline-none"
                 />
                 <button
                   type="button"
@@ -260,7 +260,7 @@ export default function AboutYouSheet({
               onChange={(e) => set("hometownCity", e.target.value)}
               placeholder="Your city or town"
               aria-label="City or town"
-              className="mb-2 w-full rounded-[10px] border border-border bg-surface-2 px-3.5 py-3 text-base text-text placeholder:text-muted focus:border-primary focus:outline-none"
+              className="mb-2 w-full rounded-[10px] border border-border bg-surface-2 px-3.5 py-3 text-base text-text placeholder:text-faint focus:border-primary focus:outline-none"
             />
             <SearchableDropdown
               options={countries}

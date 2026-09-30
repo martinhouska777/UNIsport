@@ -72,7 +72,7 @@ export default function ClaimSeatSheet({
           onChange={(e) => setQ(e.target.value)}
           aria-label="Find your name"
           placeholder="Find your name…"
-          className="w-full rounded-xl border border-border bg-surface-2 py-2.5 pl-9 pr-9 text-base text-text outline-none focus:border-primary placeholder:text-muted"
+          className="w-full rounded-xl border border-border bg-surface-2 py-2.5 pl-9 pr-9 text-base text-text outline-none focus:border-primary placeholder:text-faint"
         />
         {q && (
           <button

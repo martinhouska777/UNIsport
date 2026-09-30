@@ -138,7 +138,7 @@ function initialsOf(name: string): string {
   return (parts[0][0] + (parts[1]?.[0] ?? "")).toUpperCase();
 }
 const inputCls =
-  "w-full rounded-xl border border-border bg-surface-2 px-3.5 py-3 text-base text-text outline-none focus:border-primary placeholder:text-muted";
+  "w-full rounded-xl border border-border bg-surface-2 px-3.5 py-3 text-base text-text outline-none focus:border-primary placeholder:text-faint";
 /*
   How far back the LOGS are fetched — always the longest range the chips offer,
   once, so changing the range is instant and never returns to the database.
@@ -217,7 +217,7 @@ function CalendarNote({ value, onChange }: { value: string; onChange: (v: string
       placeholder="What was it? (optional)"
       aria-label="Note for your calendar"
       // 16px so a phone doesn't zoom in on focus.
-      className="mt-3 w-full resize-none rounded-xl border border-border bg-surface-2 px-3 py-2.5 text-base leading-snug text-text outline-none placeholder:text-muted focus:border-primary"
+      className="mt-3 w-full resize-none rounded-xl border border-border bg-surface-2 px-3 py-2.5 text-base leading-snug text-text outline-none placeholder:text-faint focus:border-primary"
     />
   );
 }
