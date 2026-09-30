@@ -39,7 +39,6 @@
   it moves to a `tourSeen` key on `profiles.data` — merged the way
   saveVarsitySetup does it in components/AppState.tsx.
 */
-import { gyms } from "@/lib/gyms";
 import { sessionPoints } from "@/lib/points";
 
 export type TourStep = {
@@ -59,6 +58,8 @@ export type TourStep = {
     Drawn by the overlay only — nothing is added to the form or saved.
   */
   demo?: "add-photo" | "photo-lands";
+  /** The forward button's word when it isn't "Next" — the opening card's "Show me". */
+  next?: string;
   /*
     Steps that only make sense together — a dive into a screen the walk had to
     open. If one of them never turns up, the REST OF THE GROUP is dropped
@@ -82,44 +83,38 @@ export type Tour = {
 };
 
 /*
-  The gym the tour opens is simply the first one in the data — so this file
-  never names a school's gym, and a new university's data works unchanged.
-*/
-const aGym = `/gyms/${gyms[0].slug}`;
-
-/*
   THE OWNER'S WALK (2026-09-30), in his order and his words: what a student
-  needs to know, nothing more. Gyms = hours, ratings, who's going. Match =
-  people ranked by fit, and Sessions to post or search by time. Messages =
-  plan it in the chat. Profile = log to earn points, a photo with your partner
-  becomes a memory, and the points count for your house. Seventeen steps became
-  eleven: the favourites pills, the rating stars and the log form's activity /
-  exercises / Save stops are gone.
+  needs to know, nothing more.
 
-  Steps 8 and 9 are ACTED OUT (`demo`): the finger taps "Add photo", a picture
-  appears, the form closes and the picture lands in Memories. Nothing is saved —
-  the picture is drawn by the overlay, not added to the form.
+  • It ASKS first. The opening card is a choice — "Show me" or "Skip" — because
+    it is the first thing a new student sees after the welcome.
+  • Gyms: it does NOT open a gym. It lights the first one and says what a tap
+    on any gym gets you ("just tell the actions").
+  • Match: ranked by interests, concentration and when you train — never
+    "same gyms" (owner: "I don't want to put them in the same gym").
+  • Sessions: lights "+ Post your session" and "Search by time" together, so
+    the text sits UNDER them instead of over them.
+  • Profile: log your workouts → a photo with your training partner → it lands
+    in Memories → the leaderboards, your house.
+
+  The Memories steps are ACTED OUT (`demo`): the finger taps "Add photo", a
+  picture appears, the form closes and the picture lands in Memories. Nothing
+  is saved — the picture is drawn by the overlay, not added to the form.
 */
 export const tourSteps: TourStep[] = [
   {
     route: "/gyms",
     anchor: null,
-    title: "Quick tour",
-    body: "A quick look at the four tabs. Skip anytime, bottom left.",
+    title: "Take a quick tour?",
+    body: "The four tabs in thirty seconds.",
+    next: "Show me",
   },
 
   /* ── Gyms ─────────────────────────────────────────────────────────────── */
   {
-    anchor: "tab-/gyms",
+    anchor: "gyms-first-card",
     title: "Gyms",
-    body: "Every gym on campus: opening hours, ratings, and how many people are going.",
-  },
-  {
-    press: "gyms-first-card",
-    route: aGym,
-    anchor: "gym-partner",
-    title: "Who’s going",
-    body: "See who’s going, or post that you are.",
+    body: "Tap any gym to see its opening hours and ratings, see who’s going, or post that you’re going.",
   },
 
   /* ── Match ────────────────────────────────────────────────────────────── */
@@ -128,13 +123,13 @@ export const tourSteps: TourStep[] = [
     route: "/match",
     anchor: "match-tab-people",
     title: "Match",
-    body: "Everyone, ranked by how well you fit: same gyms, same times, shared interests.",
+    body: "Everyone, ranked by how well you fit: interests, concentration and when you train.",
   },
   {
     press: "match-tab-sessions",
-    anchor: "match-tab-sessions",
+    anchor: "board-actions",
     title: "Sessions",
-    body: "Post what you’re training and when, or use Search by time to find someone going when you are.",
+    body: "Post your session: what you’re training and when. Or use Search by time to find someone going when you are.",
   },
 
   /* ── Messages ─────────────────────────────────────────────────────────── */
@@ -143,7 +138,7 @@ export const tourSteps: TourStep[] = [
     route: "/messages",
     anchor: "tab-/messages",
     title: "Messages",
-    body: "Plan the session right in the chat.",
+    body: "Plan your session easily.",
   },
 
   /* ── Profile ──────────────────────────────────────────────────────────── */
@@ -176,8 +171,8 @@ export const tourSteps: TourStep[] = [
       lib/points.ts, never retyped.
     */
     anchor: null,
-    title: "Points for your house",
-    body: `${sessionPoints.solo} points for a workout on your own, ${sessionPoints.partner} with a partner, ${sessionPoints.newPartner} with someone new. They count for you and your house or dorm, on leaderboards that reset every month.`,
+    title: "Leaderboards",
+    body: `Your workouts earn points for you and your house or dorm: ${sessionPoints.solo} on your own, ${sessionPoints.partner} with a partner, ${sessionPoints.newPartner} with someone new. The boards reset every month.`,
   },
 
   {

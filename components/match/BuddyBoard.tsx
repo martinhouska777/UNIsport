@@ -348,7 +348,8 @@ export default function BuddyBoard({
           line. The whole row goes away while the search sheet is open. */}
       {!composing ? (
         !hideActions && (
-          <div className="flex items-center gap-2">
+          /* data-tour: the tour lights both buttons at once (lib/tour.ts). */
+          <div data-tour="board-actions" className="flex items-center gap-2">
             <Button size="lg" onClick={() => setComposing(true)} className="min-w-0 flex-1">
               + Post your session
             </Button>

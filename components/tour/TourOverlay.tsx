@@ -590,16 +590,20 @@ export default function TourOverlay({
               {last ? "Close" : "Skip"}
             </button>
             <div className="flex items-center gap-3">
-              <span className="text-[11px] tabular-nums text-text-3">
-                {i + 1} / {steps.length}
-              </span>
+              {/* A card that ASKS (the opening "Show me") is a question, not
+                  step one of ten — no counter on it. */}
+              {!step.next && (
+                <span className="text-[11px] tabular-nums text-text-3">
+                  {i + 1} / {steps.length}
+                </span>
+              )}
               <button
                 ref={nextRef}
                 type="button"
                 onClick={next}
                 className="tap44 press rounded-full bg-primary-live px-4 py-2 text-[13px] font-semibold text-primary-contrast"
               >
-                {last ? "Done" : "Next"}
+                {step.next ?? (last ? "Done" : "Next")}
               </button>
             </div>
           </div>
