@@ -313,18 +313,37 @@ export default function TourOverlay({
       different shape parked near the button rather than a ring around it.
       Anything already rounded to half its height is a pill and stays one.
     */
-    const own = parseFloat(window.getComputedStyle(el).borderTopLeftRadius) || 0;
-    const pill = own >= Math.min(r.width, r.height) / 2 - 1;
+    let own = parseFloat(window.getComputedStyle(el).borderTopLeftRadius) || 0;
+    let pill = own >= Math.min(r.width, r.height) / 2 - 1;
+
+    /*
+      TWO THINGS IN ONE LIGHT (`alsoAnchor`): the hole grows to the box around
+      both — the Sessions tab and the post row under it. Neither one's corners
+      fit the pair, so it takes a card's rounding.
+    */
+    let edges = { left: r.left, top: r.top, right: r.right, bottom: r.bottom };
+    const also = step.alsoAnchor ? visibleAnchor(step.alsoAnchor) : null;
+    if (also) {
+      const a = also.getBoundingClientRect();
+      edges = {
+        left: Math.min(edges.left, a.left),
+        top: Math.min(edges.top, a.top),
+        right: Math.max(edges.right, a.right),
+        bottom: Math.max(edges.bottom, a.bottom),
+      };
+      own = 12;
+      pill = false;
+    }
 
     /*
       Clamped to the screen. A bottom-nav tab is a quarter-width cell that
       starts at x=0, so its ring used to hang off the left edge; a full-width
       block hung off both.
     */
-    const left = Math.max(EDGE, r.left - PAD);
-    const top = Math.max(EDGE, r.top - PAD);
-    const right = Math.min(window.innerWidth - EDGE, r.right + PAD);
-    const bottom = Math.min(window.innerHeight - EDGE, r.bottom + PAD);
+    const left = Math.max(EDGE, edges.left - PAD);
+    const top = Math.max(EDGE, edges.top - PAD);
+    const right = Math.min(window.innerWidth - EDGE, edges.right + PAD);
+    const bottom = Math.min(window.innerHeight - EDGE, edges.bottom + PAD);
 
     apply({
       top,
@@ -459,7 +478,13 @@ export default function TourOverlay({
     paint in order and the first one wins. None of them may be transitioned —
     re-interpolating a 9999px spread flickers the whole screen.
   */
-  const dim = "color-mix(in oklab, var(--background) 68%, transparent)";
+  /*
+    …and since 2026-09-30, lighter again with a slight BLUR instead (owner:
+    "you don't need to darken everything else that much, just blur it a little
+    bit, not that much"). 40% of the page colour plus a 2px blur keeps the app
+    readable around the hole while the lit part is still the only sharp thing.
+  */
+  const dim = "color-mix(in oklab, var(--background) 40%, transparent)";
   const glow = [
     "0 0 0 2px var(--primary-live)",
     "0 0 0 5px color-mix(in oklab, var(--primary-live) 30%, transparent)",
@@ -506,6 +531,25 @@ export default function TourOverlay({
         is deliberately left lit while the next step is being reached, so the
         light TRAVELS to its next target instead of blinking off and on.
       */}
+      {/*
+        The blur. The dim is a box-shadow, and a shadow can't blur, so four
+        bands with a backdrop blur frame the hole instead — above it, below it,
+        and either side. They glide with the hole (same transition as
+        .tour-hole). With no hole, one layer blurs the whole screen.
+      */}
+      {box ? (
+        [
+          { top: 0, left: 0, width: "100%", height: box.top },
+          { top: box.top + box.height, left: 0, width: "100%", bottom: 0 },
+          { top: box.top, left: 0, width: box.left, height: box.height },
+          { top: box.top, left: box.left + box.width, right: 0, height: box.height },
+        ].map((band, n) => (
+          <div key={n} aria-hidden="true" className="tour-blur absolute" style={band} />
+        ))
+      ) : (
+        <div aria-hidden="true" className="tour-blur absolute inset-0" />
+      )}
+
       {box ? (
         /*
           Tapping the lit element moves the tour on, which is the whole point of

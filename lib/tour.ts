@@ -60,6 +60,8 @@ export type TourStep = {
   demo?: "add-photo" | "photo-lands";
   /** The forward button's word when it isn't "Next" — the opening card's "Show me". */
   next?: string;
+  /** A second `data-tour` to light WITH the anchor — the hole grows to cover both. */
+  alsoAnchor?: string;
   /*
     Steps that only make sense together — a dive into a screen the walk had to
     open. If one of them never turns up, the REST OF THE GROUP is dropped
@@ -127,7 +129,11 @@ export const tourSteps: TourStep[] = [
   },
   {
     press: "match-tab-sessions",
-    anchor: "board-actions",
+    /* The Sessions tab on top AND the post row under it, in one light
+       (owner, 2026-09-30: "highlight the tab on top and just see the Post
+       your session"). */
+    anchor: "match-tab-sessions",
+    alsoAnchor: "board-actions",
     title: "Sessions",
     body: "Post your session: what you’re training and when. Or use Search by time to find someone going when you are.",
   },
