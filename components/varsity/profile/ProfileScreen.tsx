@@ -29,9 +29,7 @@ import Sheet from "@/components/varsity/Sheet";
 import { useRouter } from "next/navigation";
 import { useAppState } from "@/components/AppState";
 import { classOfLabel } from "@/lib/currentUser";
-import { useMembership } from "@/components/varsity/useMembership";
 import { useUnits } from "@/components/useUnits";
-import { can, canOpenConsole, roleLabel } from "@/lib/varsity/membership";
 import {
   formatWeight,
   type Units,
@@ -672,10 +670,6 @@ function WeeklyGraph({
 export default function ProfileScreen() {
   const { userId } = useAppState();
   const { units } = useUnits();
-  // Coach or captain? Decides whether the console door appears at the bottom.
-  const { membership, isMember } = useMembership();
-  const consoleRole =
-    isMember && canOpenConsole(membership!.role) ? membership!.role : null;
   const now = useMemo(() => new Date(), []);
 
   const [name, setName] = useState("");
@@ -1175,19 +1169,8 @@ export default function ProfileScreen() {
         })}
       </div>
 
-      {/* The door into the console, for the people who run the squad. A plain
-          athlete never sees it, and the database refuses them anyway. */}
-      {consoleRole && (
-        <div className="mx-3.5 mt-4">
-          <Link
-            href={can.buildPlan(consoleRole) ? "/varsity/coach/plan" : "/varsity/coach/team"}
-            className="flex items-center justify-center gap-2 rounded-xl border border-border bg-surface px-4 py-3 text-[11px] font-medium text-muted"
-          >
-            <IconChevronRight size={14} />
-            Open {roleLabel[consoleRole]} Console
-          </Link>
-        </div>
-      )}
+      {/* The door into the Coach Console lives in Varsity Mode's Settings
+          only (owner, 2026-09-30) — not here, not on Home. */}
 
       {/* REPLAY ATHLETE SETUP moved to Varsity Mode's Settings (owner,
           2026-09-30), with the same ask-first step. */}

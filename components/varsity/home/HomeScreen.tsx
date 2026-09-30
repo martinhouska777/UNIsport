@@ -11,8 +11,6 @@ import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useAppState } from "@/components/AppState";
-import { useMembership } from "@/components/varsity/useMembership";
-import { can, canOpenConsole, roleLabel, type VarsityRole } from "@/lib/varsity/membership";
 import ThemeProvider from "@/components/ThemeProvider";
 import { useVarsityTheme } from "@/components/varsity/useVarsityTheme";
 import { fetchPlan } from "@/lib/varsity/planStore";
@@ -56,7 +54,6 @@ import {
   IconChevronRight,
   IconChevronDown,
   IconChevronUp,
-  IconClipboard,
   IconPlus,
   IconPencil,
   IconVideo,
@@ -1011,47 +1008,6 @@ function EmptyHome() {
   );
 }
 
-/*
-  THE DOOR INTO THE COACH CONSOLE.
-
-  It used to exist only at the bottom of the athlete Profile, which is the last
-  place someone who RUNS the squad would look — the owner asked for it back in
-  Varsity Mode as a button, so here it is: the FIRST thing on the
-  first screen the mode opens, above even the greeting, and already there while
-  the plan is still loading. Whoever runs the squad shouldn't have to scroll
-  past their own name to reach it.
-  A plain athlete never sees it, and the database refuses them regardless.
-
-  A captain and a coach get different doors on purpose: a captain handles
-  invites and cannot build a plan (lib/varsity/membership.ts), so sending them
-  to the plan builder would open a screen with nothing on it.
-*/
-function ConsoleDoor({ role }: { role: VarsityRole }) {
-  return (
-    <div className="px-3 pt-3">
-      <Link
-        href={can.buildPlan(role) ? "/varsity/coach/plan" : "/varsity/coach/team"}
-        className="flex items-center gap-3 rounded-xl border border-accent-line bg-accent-tint px-3.5 py-3"
-      >
-        <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-accent text-background">
-          <IconClipboard size={16} />
-        </span>
-        <span className="flex min-w-0 flex-1 flex-col leading-tight">
-          <span className="text-[14px] font-semibold text-text">
-            {roleLabel[role]} Console
-          </span>
-          <span className="mt-0.5 text-[11px] text-muted">
-            {can.buildPlan(role)
-              ? "Training plan, lineups, notes and the squad"
-              : "Invite rowers and manage the squad"}
-          </span>
-        </span>
-        <IconChevronRight size={16} className="flex-shrink-0 text-muted" />
-      </Link>
-    </div>
-  );
-}
-
 function HomeScreenInner() {
   const { userId } = useAppState();
   /*
@@ -1061,10 +1017,9 @@ function HomeScreenInner() {
     takes over, and the × goes back to today as it always did.
   */
   const linkDay = useSearchParams().get("d");
-  // Coach or captain? Decides whether the console door appears at the top.
-  const { membership, isMember } = useMembership();
-  const consoleRole =
-    isMember && canOpenConsole(membership!.role) ? membership!.role : null;
+  /* No door into the Coach Console up here any more (owner, 2026-09-30):
+     the one way in is Varsity Mode's Settings (components/settings/
+     VarsitySettings.tsx). */
   const [data, setData] = useState<HomeData | null>(null);
   const [loading, setLoading] = useState(true);
   // null = still loading. Otherwise the note and who signed it (see notesStore).
@@ -1189,7 +1144,6 @@ function HomeScreenInner() {
   if (loading) {
     return (
       <div className="mx-auto w-full max-w-screen-sm pb-6">
-        {consoleRole && <ConsoleDoor role={consoleRole} />}
         <SkeletonLines count={2} />
         <SkeletonCards count={2} />
       </div>
@@ -1214,7 +1168,6 @@ function HomeScreenInner() {
   if (!data) {
     return (
       <div className="mx-auto w-full max-w-screen-sm pb-6">
-        {consoleRole && <ConsoleDoor role={consoleRole} />}
         {claimUi}
         <StillOutCard userId={userId} />
         <EmptyHome />
@@ -1277,7 +1230,6 @@ function HomeScreenInner() {
 
   return (
     <div className="mx-auto w-full max-w-screen-sm pb-6">
-      {consoleRole && <ConsoleDoor role={consoleRole} />}
       {claimUi}
       <StillOutCard userId={userId} />
       <DriveBar onUpload={() => setUploadOpen(true)} />
