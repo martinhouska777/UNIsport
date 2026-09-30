@@ -677,6 +677,8 @@ export default function LogSessionSheet({
               onClick={() => photoInputRef.current?.click()}
               disabled={photoBusy}
               aria-label="Add photo"
+              /* The tour's finger taps this (demo only — it is never clicked). */
+              data-tour="log-photo-add"
               className="flex aspect-square items-center justify-center rounded-xl border border-dashed border-border bg-surface text-muted active:text-primary disabled:opacity-50"
             >
               <IconPlus size={20} />

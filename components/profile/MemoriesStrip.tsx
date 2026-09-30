@@ -59,6 +59,10 @@ export default function MemoriesStrip() {
   return (
     <Link
       href="/memories"
+      /* data-tour: the tour lights the row and lands its demo photo in the
+         tiles below — on the loaded row only, never the placeholder above
+         (lib/tour.ts). */
+      data-tour="profile-memories"
       className="mx-3.5 my-2 flex items-center gap-3 rounded-2xl border border-border bg-surface px-3.5 py-3 active:bg-surface-2"
     >
       {/* An iPhone-style camera sticker (public/camera.svg) on a light grey
@@ -77,7 +81,7 @@ export default function MemoriesStrip() {
         <div className="text-[15px] font-semibold text-text">Memories</div>
       </div>
 
-      <div className="flex flex-shrink-0 items-center gap-1">
+      <div data-tour="profile-memories-tiles" className="flex flex-shrink-0 items-center gap-1">
         {tiles.map((m) => (
           <span
             key={m.id}

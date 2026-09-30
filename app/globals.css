@@ -1548,20 +1548,53 @@ body {
   transform, so the wrapper only has to be at the right coordinates.
 */
 @keyframes tour-tap-ring {
-  from { opacity: 0.85; transform: translate(-50%, -50%) scale(0.3); }
-  to   { opacity: 0;    transform: translate(-50%, -50%) scale(1.5); }
+  0%   { opacity: 0;    transform: translate(-50%, -50%) scale(0.3); }
+  1%   { opacity: 0.85; transform: translate(-50%, -50%) scale(0.3); }
+  100% { opacity: 0;    transform: translate(-50%, -50%) scale(1.5); }
 }
 @keyframes tour-tap-dot {
   0%   { opacity: 0;    transform: translate(-50%, -50%) scale(0.5); }
   35%  { opacity: 0.95; transform: translate(-50%, -50%) scale(1); }
   100% { opacity: 0;    transform: translate(-50%, -50%) scale(0.8); }
 }
-.tour-tap-ring { animation: tour-tap-ring 0.65s ease-out forwards; }
-.tour-tap-dot  { animation: tour-tap-dot 0.65s ease-out forwards; }
+/* The ring waits for the finger to arrive (0.3s) — `both` keeps it invisible
+   until then instead of showing its resting state. */
+.tour-tap-ring { animation: tour-tap-ring 0.65s ease-out 0.3s both; }
+.tour-tap-dot  { animation: tour-tap-dot 0.65s ease-out 0.3s both; }
+
+/*
+  THE TOUR FINGER (2026-09-30). Glides in from below-right, presses (a small
+  squash at the tip, where the ring opens), lifts and fades. Timed against
+  TAP_LEAD / TAP_HOLD in components/tour/TourOverlay.
+*/
+@keyframes tour-finger {
+  0%   { opacity: 0; transform: translate(22px, 34px) scale(1); }
+  36%  { opacity: 1; transform: translate(0, 0) scale(1); }
+  46%  { opacity: 1; transform: translate(0, 0) scale(0.86); }
+  58%  { opacity: 1; transform: translate(0, 0) scale(1); }
+  84%  { opacity: 1; transform: translate(0, 0) scale(1); }
+  100% { opacity: 0; transform: translate(6px, 10px) scale(1); }
+}
+.tour-finger { animation: tour-finger 0.82s ease-out both; }
+
+/* The tour's demo photo: pops into the Log form's photo square, then flies
+   into the Memories row (a slight overshoot, so it lands rather than stops). */
+@keyframes tour-shot-pop {
+  0%   { opacity: 0; transform: scale(0.5); }
+  60%  { opacity: 1; transform: scale(1.08); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.tour-shot-pop { animation: tour-shot-pop 0.4s ease-out both; }
+.tour-shot-fly {
+  transition: top 0.7s cubic-bezier(0.34, 1.25, 0.64, 1), left 0.7s cubic-bezier(0.34, 1.25, 0.64, 1),
+    width 0.7s cubic-bezier(0.34, 1.25, 0.64, 1), height 0.7s cubic-bezier(0.34, 1.25, 0.64, 1);
+}
 
 @media (prefers-reduced-motion: reduce) {
   /* Still shown, just not moving — it is information, not decoration. */
   .tour-tap-ring, .tour-tap-dot { animation: none; transform: translate(-50%, -50%); }
+  .tour-finger, .tour-shot-pop { animation: none; }
+  .tour-shot-fly { transition: none; }
 }
 
 /*

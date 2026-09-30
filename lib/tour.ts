@@ -40,6 +40,7 @@
   saveVarsitySetup does it in components/AppState.tsx.
 */
 import { gyms } from "@/lib/gyms";
+import { sessionPoints } from "@/lib/points";
 
 export type TourStep = {
   /** Press this `data-tour` to reach the step — tapped visibly, then clicked. */
@@ -50,6 +51,14 @@ export type TourStep = {
   anchor: string | null;
   title: string;
   body: string;
+  /*
+    Something the overlay ACTS OUT once the step is lit, for the parts a tap on
+    a real control can't show without changing anything:
+      add-photo    the finger taps "Add photo" and a picture appears in the grid
+      photo-lands  that picture flies into the Memories row
+    Drawn by the overlay only — nothing is added to the form or saved.
+  */
+  demo?: "add-photo" | "photo-lands";
   /*
     Steps that only make sense together — a dive into a screen the walk had to
     open. If one of them never turns up, the REST OF THE GROUP is dropped
@@ -78,62 +87,54 @@ export type Tour = {
 */
 const aGym = `/gyms/${gyms[0].slug}`;
 
+/*
+  THE OWNER'S WALK (2026-09-30), in his order and his words: what a student
+  needs to know, nothing more. Gyms = hours, ratings, who's going. Match =
+  people ranked by fit, and Sessions to post or search by time. Messages =
+  plan it in the chat. Profile = log to earn points, a photo with your partner
+  becomes a memory, and the points count for your house. Seventeen steps became
+  eleven: the favourites pills, the rating stars and the log form's activity /
+  exercises / Save stops are gone.
+
+  Steps 8 and 9 are ACTED OUT (`demo`): the finger taps "Add photo", a picture
+  appears, the form closes and the picture lands in Memories. Nothing is saved —
+  the picture is drawn by the overlay, not added to the form.
+*/
 export const tourSteps: TourStep[] = [
   {
     route: "/gyms",
     anchor: null,
-    title: "Here's the whole app",
-    body: "A minute, and you'll know where everything is — the four tabs and the parts of them that aren't obvious. Skip, bottom left, stops it any time.",
+    title: "Quick tour",
+    body: "A quick look at the four tabs. Skip anytime, bottom left.",
   },
 
   /* ── Gyms ─────────────────────────────────────────────────────────────── */
   {
     anchor: "tab-/gyms",
     title: "Gyms",
-    body: "Every gym on campus — the opening hours, where it is, and photos from the people who train there.",
-  },
-  {
-    anchor: "gyms-filters",
-    title: "Keep yours at the top",
-    /* No counts and no "House" (2026-09-30): "the big three" and "the twelve
-       house gyms" were one school's numbers, and another school's pill says
-       College (themes.ts → housePill). */
-    body: "Tap the heart on any gym and it lands under Favourites. The pills beside it narrow the list down.",
+    body: "Every gym on campus: opening hours, ratings, and how many people are going.",
   },
   {
     press: "gyms-first-card",
     route: aGym,
-    anchor: "gym-rate",
-    title: "This part is you telling the app",
-    body: "Equipment, cleanliness, atmosphere — tap the stars, and add a comment if there is something worth knowing. Everyone at your school sees it.",
-  },
-  {
     anchor: "gym-partner",
-    /* The gym page's own two buttons since the old "Find a partner at this
-       gym" went (components/gyms/GymProfile.tsx). */
-    title: "Going? Say so",
-    body: "“Post that you’re going” puts you on the board in Match, at this gym and your time, so someone free then can join you. “See who else is going” shows who has posted already.",
+    title: "Who’s going",
+    body: "See who’s going, or post that you are.",
   },
 
   /* ── Match ────────────────────────────────────────────────────────────── */
   {
     press: "tab-/match",
     route: "/match",
-    anchor: "tab-/match",
-    title: "Match",
-    body: "Where you find someone to train with. Two ways to go about it, in the row just underneath.",
-  },
-  {
-    press: "match-tab-people",
     anchor: "match-tab-people",
-    title: "People — everyone, ranked",
-    body: "People sorted by how well they fit you, with the reason spelled out under each name. Start here when you just want to find somebody.",
+    title: "Match",
+    body: "Everyone, ranked by how well you fit: same gyms, same times, shared interests.",
   },
   {
     press: "match-tab-sessions",
     anchor: "match-tab-sessions",
-    title: "Sessions — this coming week",
-    body: "Everyone who has said what they want to train and when. Put your own up with the button, tap “Accept” on a plan that suits you — or use “Search by time” to find the ones at one exact hour.",
+    title: "Sessions",
+    body: "Post what you’re training and when, or use Search by time to find someone going when you are.",
   },
 
   /* ── Messages ─────────────────────────────────────────────────────────── */
@@ -142,55 +143,47 @@ export const tourSteps: TourStep[] = [
     route: "/messages",
     anchor: "tab-/messages",
     title: "Messages",
-    body: "Where a match turns into an actual session. Your one-to-one chats live here, alongside the open community channels.",
+    body: "Plan the session right in the chat.",
   },
 
-  /* ── Profile, and the editor behind it ────────────────────────────────── */
+  /* ── Profile ──────────────────────────────────────────────────────────── */
   {
     press: "tab-/profile",
     route: "/profile",
-    anchor: "tab-/profile",
-    title: "Profile",
-    body: "Your training history, your personal records and your photos. Settings sit behind the gear in the corner — notifications, light or dark, and your answers.",
-  },
-  {
     anchor: "profile-log",
-    title: "Log Session",
-    body: "The button the rest of this screen is waiting on. It's worth opening once before you need it — so let's.",
+    title: "Log your workouts",
+    body: "Every workout you log earns points.",
   },
   {
     press: "profile-log",
-    anchor: "log-activity",
-    title: "Start with what you did",
-    body: "The date is already today unless you change it. Pick the activity and the rest of the form changes with it — a gym session asks for exercises, a run asks for distance and time.",
-  },
-  {
-    anchor: "log-exercises",
-    title: "Add and browse exercises",
-    body: "This opens a searchable library — bench, squat, whatever you did. Each exercise you add gets its own rows: weight and reps per set, and “Add set” for the next one.",
-  },
-  {
     anchor: "log-photos",
-    title: "A photo here becomes a memory",
-    body: "Attach a picture from the session and it goes into Memories on your profile — a photo album built out of sessions you actually did, rather than one more thing to keep up.",
-  },
-  {
-    anchor: "log-save",
-    title: "Saving is what feeds the rest",
-    body: "Your calendar, your personal records and your place on the leaderboards all come from this. Train at a gym the app knows and it offers you the rating screen on the way out.",
+    demo: "add-photo",
+    title: "Add a photo",
+    body: "Take a picture with your training partner and make memories.",
   },
   {
     press: "log-cancel",
-    anchor: "profile-leaderboards",
-    title: "Where you stand",
-    // The Profile's strip is the COMPACT one: two numbers, not three.
-    body: "Two numbers: how you rank among your housemates, and where you sit on campus. Tap through for the full boards.",
+    anchor: "profile-memories",
+    demo: "photo-lands",
+    title: "Memories",
+    body: "Your photos end up here.",
+  },
+  {
+    /*
+      A card, not the leaderboard row: the tour plays right after sign-up, and
+      a student with nothing logged has no row to point at (owner, 2026-09-30:
+      "don't open the leaderboards, just tell them"). The numbers are read from
+      lib/points.ts, never retyped.
+    */
+    anchor: null,
+    title: "Points for your house",
+    body: `${sessionPoints.solo} points for a workout on your own, ${sessionPoints.partner} with a partner, ${sessionPoints.newPartner} with someone new. They count for you and your house or dorm, on leaderboards that reset every month.`,
   },
 
   {
     anchor: null,
-    title: "That's the whole app",
-    body: "Four tabs, nothing hidden. You can walk through this again whenever you like — “Take the tour” in Settings.",
+    title: "That’s it",
+    body: "See it again anytime: Settings → Take the tour.",
   },
 ];
 

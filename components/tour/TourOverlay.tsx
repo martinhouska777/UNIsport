@@ -47,9 +47,62 @@ const GAP = 14; // between the hole and the caption
 const CAPTION_W = 340; // caption width when it sits beside the hole (laptop)
 const BEAT = 150; // ms between "is it here yet?" checks
 const PATIENCE = 30; // that many beats — about 4.5s — then move on
-const TAP_LEAD = 430; // let the tap animation land before the control is pressed
-const TAP_HOLD = 220; // and stay a moment after, so the cause outlives the effect
+const TAP_LEAD = 560; // let the finger glide in and land before the control is pressed
+const TAP_HOLD = 260; // and stay a moment after, so the cause outlives the effect
 const GRACE = 6; // beats to let a pressed control do its work before forcing the route
+const DEMO_WAIT = 800; // a demo step waits for its hole (and any scroll) to settle first
+const SHOT_LAND = 36; // the demo photo's size once it lands in Memories (the row's h-9 tiles)
+
+/*
+  THE FINGER. A pointing hand drawn in the theme's own surface and text colours,
+  whose fingertip sits exactly on the tap point — the owner asked for "a finger
+  or a mouse" going into the thing (2026-09-30), so the tap is no longer a ring
+  appearing on its own. 24-unit drawing, fingertip at (9, 1).
+*/
+const FINGER = 40;
+const TIP = { x: (9 * FINGER) / 24, y: (1 * FINGER) / 24 };
+
+function Finger() {
+  return (
+    <svg
+      width={FINGER}
+      height={FINGER}
+      viewBox="0 0 24 24"
+      className="tour-finger absolute drop-shadow-md"
+      style={{ left: -TIP.x, top: -TIP.y, transformOrigin: `${TIP.x}px ${TIP.y}px` }}
+    >
+      <path
+        d="M7 13.5V3a2 2 0 0 1 4 0v6a1.75 1.75 0 0 1 3.5 0v.8a1.75 1.75 0 0 1 3.5 0v1a1.5 1.5 0 0 1 3 0V15c0 4.4-2.8 7.5-7 7.5h-2.4c-2.2 0-3.5-.8-4.9-2.2L3 16.6a1.6 1.6 0 0 1 2.3-2.2L7 16.2Z"
+        fill="var(--surface)"
+        stroke="var(--text)"
+        strokeWidth={1.3}
+        strokeLinejoin="round"
+      />
+      <path d="M11 9v3M14.5 9.8v2.7M18 10.8v2.2" fill="none" stroke="var(--text)" strokeWidth={1.1} strokeLinecap="round" />
+    </svg>
+  );
+}
+
+/*
+  THE DEMO PHOTO — two people side by side, in the school's colours, standing
+  in for "a picture with your training partner". Drawn, not a stock photo: it
+  is a sign for a photo, and it re-colours with every school's theme.
+*/
+function PhotoArt() {
+  return (
+    <svg viewBox="0 0 40 40" preserveAspectRatio="xMidYMid slice" className="h-full w-full">
+      {/* The tint mixed over the SURFACE, not transparent: a photo is opaque.
+          (There is no --primary-tint variable to read — Tailwind inlines it.) */}
+      <rect width="40" height="40" fill="color-mix(in oklab, var(--primary) 14%, var(--surface))" />
+      <circle cx="26" cy="15" r="5.5" fill="var(--primary)" opacity="0.6" />
+      <path d="M15 40c0-9.5 4.9-15.5 11-15.5S37 30.5 37 40Z" fill="var(--primary)" opacity="0.6" />
+      <circle cx="14.5" cy="17" r="5.5" fill="var(--primary)" />
+      <path d="M3.5 40c0-9 4.9-14.5 11-14.5S25.5 31 25.5 40Z" fill="var(--primary)" />
+    </svg>
+  );
+}
+
+type Shot = { x: number; y: number; size: number; landing: boolean };
 
 type Box = { top: number; left: number; width: number; height: number; radius: number };
 
@@ -99,6 +152,8 @@ export default function TourOverlay({
   const [box, setBox] = useState<Box | null>(null);
   // Where the tour is currently pressing, so a tap can be drawn there first.
   const [tapAt, setTapAt] = useState<{ x: number; y: number } | null>(null);
+  // The demo photo (steps with `demo`) — where it is, and whether it is flying.
+  const [shot, setShot] = useState<Shot | null>(null);
   const nextRef = useRef<HTMLButtonElement | null>(null);
   const titleId = useId();
   const bodyId = useId();
@@ -316,6 +371,57 @@ export default function TourOverlay({
   }, [armed, measure]);
 
   /*
+    ACTING OUT a step (`demo` in lib/tour.ts), once its hole has settled.
+
+    add-photo    the finger taps "Add photo" — drawn only, the real button is
+                 never clicked, so no file picker opens — and a picture pops
+                 into that square.
+    photo-lands  the same picture, still floating where it was while the form
+                 closed under it, flies into the Memories row. If the photo
+                 step was skipped past too fast to draw one, it simply appears
+                 there.
+  */
+  const demo = armed ? step.demo : undefined;
+  useEffect(() => {
+    if (!demo) return;
+    let cancelled = false;
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    const later = (ms: number, fn: () => void) =>
+      timers.push(setTimeout(() => !cancelled && fn(), ms));
+
+    later(DEMO_WAIT, () => {
+      if (demo === "add-photo") {
+        const add = visibleAnchor("log-photo-add");
+        if (!add) return;
+        const r = add.getBoundingClientRect();
+        setTapAt({ x: r.left + r.width / 2, y: r.top + r.height / 2 });
+        later(TAP_LEAD, () => {
+          setShot({ x: r.left, y: r.top, size: r.width, landing: false });
+          later(TAP_HOLD, () => setTapAt(null));
+        });
+      } else {
+        // The tiles box has no width while there are no photos yet, so it is
+        // found directly rather than through visibleAnchor. Newest goes first.
+        const tiles = document.querySelector<HTMLElement>('[data-tour="profile-memories-tiles"]');
+        if (!tiles) return;
+        const r = tiles.getBoundingClientRect();
+        const land = {
+          x: r.width < 1 ? r.right - SHOT_LAND : r.left,
+          y: r.top + r.height / 2 - SHOT_LAND / 2,
+          size: SHOT_LAND,
+        };
+        setShot((s) => (s ? { ...land, landing: true } : { ...land, landing: false }));
+      }
+    });
+    return () => {
+      cancelled = true;
+      timers.forEach(clearTimeout);
+    };
+  }, [demo, i]);
+  // Only the two photo steps show it; everything after them simply doesn't.
+  const showShot = step.demo === "add-photo" || step.demo === "photo-lands";
+
+  /*
     Escape ends it, same as every other overlay in the app. Deliberately NOTHING
     else: focus sits on the Next button, so Enter and Space already advance it
     natively — handling them here as well would step twice per press.
@@ -427,10 +533,23 @@ export default function TourOverlay({
         <div className="absolute inset-0" style={{ background: dim }} />
       )}
 
+      {/* The demo photo, over the dim and under the finger. */}
+      {shot && showShot && (
+        <div
+          aria-hidden="true"
+          className={`pointer-events-none absolute overflow-hidden rounded-lg border-2 border-surface shadow-overlay ${
+            shot.landing ? "tour-shot-fly" : "tour-shot-pop"
+          }`}
+          style={{ left: shot.x, top: shot.y, width: shot.size, height: shot.size }}
+        >
+          <PhotoArt />
+        </div>
+      )}
+
       {/*
         The tap. Drawn on the control the tour is about to press, a beat before
-        it presses it — a ring opening out of a dot, the shape of a finger
-        landing. Without it a screen simply changed on its own.
+        it presses it — the finger glides in and presses, and a ring opens out
+        of a dot under its tip. Without it a screen simply changed on its own.
       */}
       {tapAt && (
         <div
@@ -446,6 +565,7 @@ export default function TourOverlay({
             className="tour-tap-dot absolute block h-9 w-9 rounded-full"
             style={{ background: "color-mix(in oklab, var(--primary-live) 55%, transparent)" }}
           />
+          <Finger />
         </div>
       )}
 
