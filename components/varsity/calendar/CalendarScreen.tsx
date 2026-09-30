@@ -506,7 +506,10 @@ export default function CalendarScreen({
        month flexes, so the grid always reaches the bottom of the screen. */
     /* The header above the grid is deliberately tight — every pixel it gives
        up is a pixel the month gets, and the month is the screen. */
-    <div className="mx-auto flex h-full w-full max-w-screen-sm flex-col px-1.5 pb-3 pt-1.5">
+    /* Your own tab: pt-3 since the Varsity bar left it (2026-09-30) — at pt-1.5
+       the month row sat against the top edge of the screen. Same gap as Match.
+       A teammate's calendar opens under its own header bar, so it stays tight. */
+    <div className={`mx-auto flex h-full w-full max-w-screen-sm flex-col px-1.5 pb-3 ${teammate ? "pt-1.5" : "pt-3"}`}>
       {/*
         ONE ROW ABOVE THE GRID — the month with its arrows on the left, the
         colour key on the right. The owner's note: as little bar at the top as

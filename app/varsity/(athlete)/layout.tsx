@@ -78,7 +78,8 @@ export default function VarsityLayout({ children }: { children: React.ReactNode 
       className="relative flex h-dvh flex-col overflow-hidden bg-background lg:flex-row"
     >
       <VarsityIntro />
-      {/* Laptop: the shared sidebar, like the student app. Phone: top bar + tabs. */}
+      {/* Laptop: the shared sidebar, like the student app. Phone: tabs, and the
+          top bar on Home and Profile only (it decides that itself). */}
       <VarsitySideNav />
       <VarsityTopBar />
       <main className="relative z-10 flex flex-1 flex-col overflow-y-auto">

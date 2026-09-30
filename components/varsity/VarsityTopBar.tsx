@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import VarsityCrest from "@/components/varsity/VarsityCrest";
 import ModeSwitcherSheet from "@/components/ModeSwitcherSheet";
 import { useAppState } from "@/components/AppState";
@@ -11,7 +11,7 @@ import useTapOrDoubleTap from "@/components/useTapOrDoubleTap";
 import { IconArrowLeft, IconChevronDown, IconSettings } from "@/components/icons";
 
 /*
-  Top bar for every Varsity Mode screen: the varsity mark on the left, and on
+  Top bar for the Varsity Home and Profile tabs: the varsity mark on the left, and on
   the right the settings cog plus an "exit" control that returns to the normal
   app (Profile tab). This is the mode-switch back out of Varsity Mode.
 
@@ -28,12 +28,26 @@ import { IconArrowLeft, IconChevronDown, IconSettings } from "@/components/icons
   that is only ~32 wide): this is the one place the mode announces itself, and
   at 30px the oars behind the shield read as a smudge. The bar's own vertical
   padding came down a notch to pay for most of the extra height.
+
+  ONLY ON HOME AND PROFILE (owner, 2026-09-30). It used to top every Varsity
+  screen. Now it works like the student side, where only the Profile has a bar
+  and Match starts straight with its search: Home keeps it because Varsity
+  Mode opens there, Profile because that is where you go for yourself and your
+  settings. Calendar, Workouts and the screens opened from inside a tab (Team,
+  All boats — they have their own back arrow) start with their own content, and
+  the Calendar's month gets the height. Both tabs are always in the bottom bar,
+  so the switch, the cog and Exit stay one tap away.
 */
+const BAR_ON = ["/varsity/home", "/varsity/profile"];
+
 export default function VarsityTopBar() {
+  const pathname = usePathname();
   const { studentReady, universityKey } = useAppState();
   const { handleModeTap, switchingMode, closeSwitcher } = useVarsityModeTap();
   // The school's everyday name is DATA (lib/themes.ts), never typed here.
   const school = getUniversity(universityKey)?.shortName ?? "";
+
+  if (!BAR_ON.includes(pathname)) return null;
 
   return (
     /* The sheet is a SIBLING of the bar, not a child: the bar sits in its own
