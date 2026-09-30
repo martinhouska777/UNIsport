@@ -95,7 +95,10 @@ export const tourSteps: TourStep[] = [
   {
     anchor: "gyms-filters",
     title: "Keep yours at the top",
-    body: "Tap the heart on any gym and it lands under Favourites. Main is the big three; House is the twelve house gyms.",
+    /* No counts and no "House" (2026-09-30): "the big three" and "the twelve
+       house gyms" were one school's numbers, and another school's pill says
+       College (themes.ts → housePill). */
+    body: "Tap the heart on any gym and it lands under Favourites. The pills beside it narrow the list down.",
   },
   {
     press: "gyms-first-card",
@@ -106,8 +109,10 @@ export const tourSteps: TourStep[] = [
   },
   {
     anchor: "gym-partner",
-    title: "Find a partner at this gym",
-    body: "This carries the gym across to Match, so you're looking at people who train here rather than everyone on campus.",
+    /* The gym page's own two buttons since the old "Find a partner at this
+       gym" went (components/gyms/GymProfile.tsx). */
+    title: "Going? Say so",
+    body: "“Post that you’re going” puts you on the board in Match, at this gym and your time, so someone free then can join you. “See who else is going” shows who has posted already.",
   },
 
   /* ── Match ────────────────────────────────────────────────────────────── */
@@ -178,7 +183,8 @@ export const tourSteps: TourStep[] = [
     press: "log-cancel",
     anchor: "profile-leaderboards",
     title: "Where you stand",
-    body: "Three numbers: how you rank among your housemates, how your house ranks, and where you sit on campus. Tap through for the full boards.",
+    // The Profile's strip is the COMPACT one: two numbers, not three.
+    body: "Two numbers: how you rank among your housemates, and where you sit on campus. Tap through for the full boards.",
   },
 
   {
