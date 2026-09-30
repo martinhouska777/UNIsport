@@ -554,8 +554,9 @@ export const interestOptions: string[] = [
                      you still browse Match yourself, and messages come and go
                      as normal.
     OFF → "either" — the normal, matchable state.
-  The three-way list stays because the Profile tab's preferences sheet still
-  offers it, and "partner" remains a valid stored value.
+  The three-way list is no longer offered anywhere (the old "Edit your answers"
+  sheet went on 2026-09-30); "partner" remains a valid stored value that some
+  older profiles carry, and it reads as matchable.
 */
 export const TRAIN_ALONE_NOTE = "You won't appear on the Match tab. You can still browse it, and messages keep working.";
 

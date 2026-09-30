@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import Button from "@/components/ui/Button";
 import { Toggle } from "@/components/onboarding/controls";
-import { IconBell } from "@/components/icons";
 import {
   getPermission,
   isSubscribed,
@@ -15,7 +14,7 @@ import {
 } from "@/lib/push/client";
 
 /*
-  The Notifications block on the SETTINGS screen. Two layers:
+  Settings → Notifications (app/settings/notifications). Two layers:
    • DEVICE — turn push on/off for THIS browser (subscribe / unsubscribe). This is
      where the OS permission prompt happens; if the user previously blocked it,
      we say so (can only be re-enabled from browser settings).
@@ -186,15 +185,10 @@ export default function NotificationSettings({
   };
 
   return (
-    /* Padding, header type and card shape all match <Section> and <Row> on the
-       Settings page, so this reads as one more group on that screen rather than
-       a block imported from somewhere else. */
-    <div className="border-b border-border px-3.5 py-4">
-      <h2 className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-        <IconBell size={12} />
-        Notifications
-      </h2>
-
+    /* The whole of Settings → Notifications, a page of its own; the page's
+       header already says what it is. Card shape matches the rows on the
+       Settings front page. */
+    <div>
       <div className="rounded-2xl border border-border bg-surface px-4 py-3">
         {renderDeviceRow()}
       </div>

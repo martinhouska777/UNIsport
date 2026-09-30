@@ -24,8 +24,9 @@ import {
   concentration and the hometown (city + country). It deliberately does NOT
   reach any further: the pencil sits beside those chips, so tapping it used to
   open the whole "Edit your answers" sheet (activity, gyms, mentorship…) and
-  you had to scroll past your training setup to change a hobby. Everything
-  else still lives in Settings, in PreferencesSheet.
+  you had to scroll past your training setup to change a hobby. That sheet is
+  gone (2026-09-30): the training answers live in Settings → Training, the
+  matching ones in Settings → Match, and these five only here.
 
   Same order as the block on the page, so what you tap is the first thing you
   see. Edits a local draft and hands the patch back on Save. Colors are theme

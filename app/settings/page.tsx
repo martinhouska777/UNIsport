@@ -1,386 +1,193 @@
 "use client";
 
 /*
-  SETTINGS — a full-screen page, not a sheet.
+  SETTINGS — the front page. A short list, top to bottom (owner, 2026-09-30):
 
-  Deliberately its OWN route rather than a tab inside the Zone 2 shell, so it
-  covers the whole screen with no bottom tab bar underneath (the Instagram
-  pattern the owner asked for) and the phone's back gesture leaves it.
+    Account      the address you signed in with
+    (list)       Training · Notifications · Design · Units — each opens a page
+    Match        Train alone, and who you'd be matched with
+    Help         the tour, the privacy policy, the terms
+    (bottom)     the varsity link and Invite a friend, then Log out
 
-  Everything here used to be scattered: the light/dark toggle sat in the profile
-  header next to a "settings" button that was drawn as a second sun, notification
-  switches sat in the middle of the profile page, and log out was pinned to the
-  bottom of it. This is now the one place for switches, so the profile page can
-  be about the person.
+  Everything used to sit open on this one page — seven notification switches,
+  the whole training setup, a units block — and an "Edit your answers" sheet
+  that repeated half of it. The big groups are pages of their own now, and each
+  answer has exactly one home: training answers in Training, matching answers
+  in Match, and what other people read about you on your profile.
+
+  VARSITY is not a section here any more — only the way IN (join, or waiting
+  for the captain). What a squad member manages about their team belongs to
+  Varsity Mode, so the team rows appear only when Settings was opened from
+  Varsity Mode (its gear leads here too, see lib/varsity/mode.ts).
 */
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { useAppState } from "@/components/AppState";
-import ThemeProvider from "@/components/ThemeProvider";
 import { useThemeMode } from "@/components/ThemeMode";
 import { useProfileData } from "@/components/profile/useProfileData";
-import TrainingSettings from "@/components/settings/TrainingSettings";
-import type { OnboardingProfile } from "@/lib/onboarding";
-import PreferencesSheet from "@/components/profile/PreferencesSheet";
-import NotificationSettings from "@/components/profile/NotificationSettings";
 import { useMembership } from "@/components/varsity/useMembership";
 import ShareInviteButton from "@/components/ShareInviteButton";
-import { Toggle } from "@/components/onboarding/controls";
 import { useUnits } from "@/components/useUnits";
-import { distanceOptions, weightOptions } from "@/lib/varsity/units";
-import { profileFromOnboarding } from "@/lib/currentUser";
-import { getUniversity, LIVE_UNIVERSITY, neutralTheme, universities } from "@/lib/themes";
+import MatchSettings from "@/components/settings/MatchSettings";
+import { Row, Section, SettingsBody, SettingsHeader } from "@/components/settings/SettingsShell";
+import { primaryActivities, type OnboardingProfile } from "@/lib/onboarding";
+import { LIVE_UNIVERSITY, universities } from "@/lib/themes";
 import SchoolCrest from "@/components/SchoolCrest";
 import { crestFor } from "@/lib/crests";
 import { can, canOpenConsole, roleLabel } from "@/lib/varsity/membership";
 import { VARSITY_HOME } from "@/lib/varsity/theme";
+import { inVarsityMode } from "@/lib/varsity/mode";
 import { appTour, requestTour, resetTour } from "@/lib/tour";
 import {
-  IconArrowLeft,
+  IconBarbell,
+  IconBell,
   IconBulb,
-  IconChevronRight,
   IconClipboard,
-  IconMoon,
+  IconInfo,
+  IconLock,
+  IconPalette,
   IconPencil,
+  IconRuler,
   IconShield,
-  IconSun,
 } from "@/components/icons";
-import Segmented from "@/components/ui/Segmented";
 
 // Dev-only affordances are compiled out of the production bundle.
 const isProduction = process.env.NODE_ENV === "production";
 
-/* A titled group of rows, matching the section labels used across the app. */
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="border-b border-border px-3.5 py-4">
-      <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-        {title}
-      </h2>
-      {children}
-    </div>
-  );
-}
-
-/* One tappable row: icon, label, optional detail, chevron. */
-function Row({
-  icon,
-  label,
-  detail,
-  onClick,
-  href,
-}: {
-  icon?: React.ReactNode;
-  label: string;
-  detail?: string;
-  onClick?: () => void;
-  href?: string;
-}) {
-  const inner = (
-    <>
-      {icon && <span className="text-muted">{icon}</span>}
-      <span className="flex-1 text-sm text-text">{label}</span>
-      {detail && <span className="text-xs text-muted">{detail}</span>}
-      <span className="text-muted">
-        <IconChevronRight size={16} />
-      </span>
-    </>
-  );
-  const className =
-    "flex w-full items-center gap-3 rounded-2xl border border-border bg-surface px-4 py-3 text-left";
-  return href ? (
-    <Link href={href} className={className}>
-      {inner}
-    </Link>
-  ) : (
-    <button type="button" onClick={onClick} className={className}>
-      {inner}
-    </button>
-  );
-}
-
-/* One unit choice: a label with the options as segmented pills beside it. */
-function UnitRow({
-  label,
-  options,
-  value,
-  onPick,
-}: {
-  label: string;
-  options: { key: string; label: string; short: string }[];
-  value: string;
-  onPick: (key: string) => void;
-}) {
-  return (
-    <div className="flex items-center gap-3 rounded-2xl border border-border bg-surface px-4 py-2.5">
-      <span className="flex-1 text-sm text-text">{label}</span>
-      <Segmented
-        ariaLabel={label}
-        options={options.map((o) => ({ key: o.key, label: o.short, ariaLabel: o.label }))}
-        value={value}
-        onChange={onPick}
-      />
-    </div>
-  );
-}
-
 export default function SettingsPage() {
-  const { ready, loggedIn, email, userId, studentReady, logout, resetOnboarding, universityKey, setUniversity } =
+  const { email, userId, studentReady, logout, resetOnboarding, universityKey, setUniversity } =
     useAppState();
-  const { mode, toggle } = useThemeMode();
-  const { data, loading, saveState, update, savePreferences } = useProfileData();
+  const { mode } = useThemeMode();
+  const { data, loading, saveState, savePreferences } = useProfileData();
   const { membership, loading: membershipLoading } = useMembership();
-  const { units, setUnits } = useUnits();
+  const { units } = useUnits();
   const router = useRouter();
-  const [editingPrefs, setEditingPrefs] = useState(false);
+  /*
+    Opened from Varsity Mode? The mode is remembered for the tab, not read off
+    the URL, and this page only mounts once the app is ready (the layout waits),
+    so reading it once here is safe.
+  */
+  const [fromVarsity] = useState(inVarsityMode);
 
-  useEffect(() => {
-    if (ready && !loggedIn) router.replace("/");
-  }, [ready, loggedIn, router]);
+  const answers = (data ?? {}) as Partial<OnboardingProfile>;
+  const activityLabel =
+    answers.primaryActivity === "other" && answers.activityOther
+      ? answers.activityOther
+      : primaryActivities.find((a) => a.key === answers.primaryActivity)?.label;
 
-  if (!ready || !loggedIn) return null;
-
-  const uni = getUniversity(universityKey);
-  const theme = uni?.theme ?? neutralTheme;
-  const user = data ? profileFromOnboarding(data) : null;
-  // trainingType already carries "solo" end-to-end (matching already excludes
-  // it, db/matching.sql) — this just gives it one obvious, standalone switch
-  // instead of leaving it buried inside "Edit answers → Train with". Default
-  // stays "either", so everyone is in Match unless they flip this themselves.
-  const trainsAlone = (data as Partial<OnboardingProfile> | null)?.trainingType === "solo";
+  const inSquad = membership?.status === "approved";
 
   return (
-    <ThemeProvider
-      tokens={theme}
-      light={uni?.themeLight}
-      paintRoot
-      className="flex h-dvh flex-col overflow-hidden bg-background"
-    >
-      {/* Header — back arrow leaves the page, exactly like a native screen. */}
-      <div className="flex items-center gap-3 border-b border-border bg-surface px-3.5 py-3">
-        <button
-          type="button"
-          onClick={() => router.back()}
-          aria-label="Back"
-          className="tap44 press-icon text-text"
-        >
-          <IconArrowLeft size={20} />
-        </button>
-        <h1 className="flex-1 text-base font-medium text-text">Settings</h1>
-        {saveState !== "idle" && (
-          <span className={`text-[11px] ${saveState === "error" ? "text-danger" : "text-muted"}`}>
-            {saveState === "saving" ? "Saving…" : saveState === "saved" ? "Saved ✓" : "Couldn’t save"}
-          </span>
-        )}
-      </div>
+    <>
+      <SettingsHeader title="Settings" saveState={saveState} fallback="/profile" />
 
-      <div className="mx-auto w-full max-w-screen-sm flex-1 overflow-y-auto">
+      <SettingsBody>
         <Section title="Account">
           <p className="rounded-2xl border border-border bg-surface px-4 py-3 text-sm text-text">
             {email ?? "Not signed in"}
           </p>
         </Section>
 
-        <Section title="Appearance">
-          <button
-            type="button"
-            onClick={toggle}
-            className="flex w-full items-center gap-3 rounded-2xl border border-border bg-surface px-4 py-3 text-left"
-          >
-            <span className="text-muted">
-              {mode === "dark" ? <IconMoon size={18} /> : <IconSun size={18} />}
-            </span>
-            <span className="flex-1 text-sm text-text">Appearance</span>
-            <span className="text-xs text-muted">{mode === "dark" ? "Dark" : "Light"}</span>
-          </button>
-        </Section>
+        {/* The squad, when you came here from Varsity Mode. */}
+        {fromVarsity && inSquad && membership && (
+          <Section title="Varsity">
+            <Row
+              icon={<IconShield size={18} />}
+              label={membership.teamName}
+              detail={roleLabel[membership.role]}
+              href={VARSITY_HOME}
+            />
+            {/* EDIT YOUR VARSITY PROFILE — it was a pencil in Varsity Mode's
+                top bar (owner, 2026-09-19: "put it in Settings"). The profile
+                screen opens its editor from ?edit=1 and tidies the URL. */}
+            <Row icon={<IconPencil size={18} />} label="Edit varsity profile" href="/varsity/profile?edit=1" />
+            {canOpenConsole(membership.role) && (
+              <Row
+                icon={<IconClipboard size={18} />}
+                label={`Open ${roleLabel[membership.role]} Console`}
+                href={can.buildPlan(membership.role) ? "/varsity/coach/plan" : "/varsity/coach/team"}
+              />
+            )}
+          </Section>
+        )}
 
-        {/* Invite — moved off the profile top bar, where it was a small icon
-            competing for space with editing your name/bio. A full-width
-            button reads better as a deliberate action here than as an icon. */}
-        <Section title="Invite">
-          <ShareInviteButton label="Invite a friend" full size="lg" />
+        {/* The pages. "Your answers" only exist if there ARE answers: someone
+            who joined through a team link never did the student flow, so they
+            are offered it rather than an editor over empty fields. */}
+        <Section>
+          {studentReady ? (
+            <Row
+              icon={<IconBarbell size={18} />}
+              label="Training"
+              detail={loading ? undefined : activityLabel}
+              href="/settings/training"
+            />
+          ) : (
+            <Row icon={<IconPencil size={18} />} label="Set up the student side" href="/onboarding" />
+          )}
+          <Row icon={<IconBell size={18} />} label="Notifications" href="/settings/notifications" />
+          <Row
+            icon={<IconPalette size={18} />}
+            label="Design"
+            detail={mode === "dark" ? "Dark" : "Light"}
+            href="/settings/design"
+          />
+          <Row
+            icon={<IconRuler size={18} />}
+            label="Units"
+            detail={`${units.distance} · ${units.weight}`}
+            href="/settings/units"
+          />
         </Section>
 
         {/*
           THE UNIVERSITY SWITCHER — the white-label demo, visible. One tap
           re-skins the whole app to another Ivy: theme, crest, gyms. Everything
-          it flips is DATA (lib/themes.ts, lib/crests.ts, lib/gyms.ts), which
-          is the point being demonstrated. Each button shows that school's
-          crest in its own pair — content colours from data, applied inline
-          (rule 1's exception). The real school now comes from the address you
-          signed in with (components/AppState.tsx); this OVERRIDES it for as
-          long as it is set, and is forgotten on logout.
+          it flips is DATA (lib/themes.ts, lib/crests.ts, lib/gyms.ts). Hidden
+          while the app is pinned to one school (LIVE_UNIVERSITY).
         */}
         {!LIVE_UNIVERSITY && (
-        <Section title="University">
-          <div className="grid grid-cols-2 gap-2">
-            {Object.values(universities).map((u) => {
-              const active = u.key === universityKey;
-              return (
-                <button
-                  key={u.key}
-                  type="button"
-                  onClick={() => setUniversity(u.key)}
-                  aria-pressed={active}
-                  className={`flex items-center gap-2.5 rounded-2xl border px-3.5 py-2.5 text-left ${
-                    active ? "border-primary bg-surface" : "border-border bg-surface"
-                  }`}
-                >
-                  <SchoolCrest
-                    crest={crestFor(u.key)}
-                    width={20}
-                    height={23}
-                    style={
-                      {
-                        "--crest-field": u.theme.primary,
-                        "--crest-mark": u.theme.primaryContrast,
-                      } as React.CSSProperties
-                    }
-                  />
-                  <span className={`flex-1 text-sm ${active ? "font-semibold text-text" : "text-text"}`}>
-                    {u.shortName}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </Section>
-        )}
-
-        {/* Varsity — a team you belong to sits alongside the student account.
-            Three states: not on a team, waiting for a captain, or in. */}
-        <Section title="Varsity">
-          {membershipLoading ? (
-            <p className="rounded-2xl border border-border bg-surface px-4 py-3 text-sm text-muted">
-              Checking…
-            </p>
-          ) : !membership ? (
-            <Row icon={<IconShield size={18} />} label="Join a varsity team" href="/join" />
-          ) : membership.status === "pending" ? (
-            <Row
-              icon={<IconShield size={18} />}
-              label={membership.teamName}
-              detail="Waiting"
-              href="/varsity/waiting"
-            />
-          ) : (
-            <div className="flex flex-col gap-2">
-              <Row
-                icon={<IconShield size={18} />}
-                label={membership.teamName}
-                detail={roleLabel[membership.role]}
-                href={VARSITY_HOME}
-              />
-              {/* EDIT YOUR VARSITY PROFILE — it was a pencil in Varsity Mode's
-                  top bar (owner, 2026-09-19: "put it in Settings"). The profile
-                  screen opens its editor from ?edit=1 and tidies the URL. */}
-              <Row
-                icon={<IconPencil size={18} />}
-                label="Edit varsity profile"
-                href="/varsity/profile?edit=1"
-              />
-              {/* The Coach Console used to be reachable ONLY from inside Varsity
-                  Mode (its home screen and varsity profile), which meant a coach
-                  sitting in the student app had to switch modes first and find
-                  the door there. A coach or captain goes looking in Settings, so
-                  the same door is here — gated on the role exactly as it is
-                  everywhere else, so no athlete or student ever sees it. */}
-              {canOpenConsole(membership.role) && (
-                <Row
-                  icon={<IconClipboard size={18} />}
-                  label={`Open ${roleLabel[membership.role]} Console`}
-                  href={can.buildPlan(membership.role) ? "/varsity/coach/plan" : "/varsity/coach/team"}
-                />
-              )}
+          <Section title="University">
+            <div className="grid grid-cols-2 gap-2">
+              {Object.values(universities).map((u) => {
+                const active = u.key === universityKey;
+                return (
+                  <button
+                    key={u.key}
+                    type="button"
+                    onClick={() => setUniversity(u.key)}
+                    aria-pressed={active}
+                    className={`flex items-center gap-2.5 rounded-2xl border px-3.5 py-2.5 text-left ${
+                      active ? "border-primary bg-surface" : "border-border bg-surface"
+                    }`}
+                  >
+                    <SchoolCrest
+                      crest={crestFor(u.key)}
+                      width={20}
+                      height={23}
+                      style={
+                        {
+                          "--crest-field": u.theme.primary,
+                          "--crest-mark": u.theme.primaryContrast,
+                        } as React.CSSProperties
+                      }
+                    />
+                    <span className={`flex-1 text-sm ${active ? "font-semibold text-text" : "text-text"}`}>
+                      {u.shortName}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
-          )}
-        </Section>
-
-        {/* Units — what the app shows, not what it stores. Everything is kept
-            in metres and kilograms underneath, so switching is only ever a
-            change of display. */}
-        <Section title="Units">
-          <div className="flex flex-col gap-2">
-            <UnitRow
-              label="Distance"
-              options={distanceOptions}
-              value={units.distance}
-              onPick={(v) => setUnits({ ...units, distance: v as typeof units.distance })}
-            />
-            <UnitRow
-              label="Weight"
-              options={weightOptions}
-              value={units.weight}
-              onPick={(v) => setUnits({ ...units, weight: v as typeof units.weight })}
-            />
-          </div>
-        </Section>
-
-        {/* "Your answers" only exists if there ARE answers. Someone who joined
-            through a team link never did the student flow, so they're offered
-            it rather than shown an editor over empty fields. */}
-        {studentReady ? (
-          <>
-            {/*
-              TRAINING, moved off the Profile tab. Every row opens in place —
-              the schedule especially, which used to be a sheet thrown over the
-              whole screen. See components/settings/TrainingSettings.tsx.
-            */}
-            <Section title="Training">
-              <TrainingSettings
-                answers={(data ?? {}) as Partial<OnboardingProfile>}
-                onSave={savePreferences}
-              />
-            </Section>
-
-            {/* Match — one standalone switch, not folded into a Training row,
-                because this is the one that removes you from Match entirely
-                rather than tuning who you're shown. Everyone starts included. */}
-            <Section title="Match">
-              <div className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-surface px-4 py-3">
-                <div className="min-w-0 text-sm text-text">Train alone</div>
-                <Toggle
-                  on={trainsAlone}
-                  onChange={() => savePreferences({ trainingType: trainsAlone ? "either" : "solo" })}
-                  ariaLabel="Train alone — hide me from Match"
-                />
-              </div>
-            </Section>
-
-            <Section title="Your answers">
-              <Row
-                icon={<IconPencil size={18} />}
-                label="Edit answers"
-                detail={loading ? "Loading…" : undefined}
-                onClick={() => user && setEditingPrefs(true)}
-              />
-            </Section>
-          </>
-        ) : (
-          <Section title="Student mode">
-            <Row icon={<IconPencil size={18} />} label="Set up the student side" href="/onboarding" />
           </Section>
         )}
 
-        {/* Reused as-is: device permission plus which kinds you receive. */}
-        {user && (
-          <NotificationSettings
-            messages={user.notifyMessages}
-            plans={user.notifyPlans}
-            follows={user.notifyFollows}
-            partnerTags={user.notifyPartnerTags}
-            logReminders={user.notifyLogReminders}
-            team={user.notifyTeam}
-            /* The coach's switch only exists for people who have a coach. */
-            showTeam={membership?.status === "approved"}
-            onChange={update}
-          />
-        )}
+        {/* Waits for the profile, so the rows under the switch don't appear
+            and vanish again while it loads. */}
+        {studentReady && !loading && <MatchSettings answers={answers} onSave={savePreferences} />}
 
         {/*
-          The tour points at things inside the tab shell, and this page
+          The tour points at things inside the tab shell, and Settings
           deliberately sits outside it. So this forgets the tour, leaves a
           request behind, and goes to Gyms — where the shell picks it up and
           walks the whole app again from the start.
@@ -395,13 +202,24 @@ export default function SettingsPage() {
               router.push("/gyms");
             }}
           />
+          <Row icon={<IconLock size={18} />} label="Privacy Policy" href="/privacy" />
+          <Row icon={<IconInfo size={18} />} label="Terms of Service" href="/terms" />
         </Section>
 
-        <Section title="About">
-          <div className="flex flex-col gap-2">
-            <Row label="Privacy Policy" href="/privacy" />
-            <Row label="Terms of Service" href="/terms" />
-          </div>
+        {/* At the bottom: the way into a varsity team, and bringing a friend. */}
+        <Section>
+          {!membershipLoading && !membership && (
+            <Row icon={<IconShield size={18} />} label="Join a varsity team" href="/join" />
+          )}
+          {membership?.status === "pending" && (
+            <Row
+              icon={<IconShield size={18} />}
+              label={membership.teamName}
+              detail="Waiting"
+              href="/varsity/waiting"
+            />
+          )}
+          <ShareInviteButton label="Invite a friend" full size="lg" />
         </Section>
 
         <div className="px-3.5 py-4">
@@ -433,15 +251,7 @@ export default function SettingsPage() {
             </button>
           </div>
         </div>
-      </div>
-
-      {editingPrefs && user && (
-        <PreferencesSheet
-          profile={user}
-          onSave={savePreferences}
-          onClose={() => setEditingPrefs(false)}
-        />
-      )}
-    </ThemeProvider>
+      </SettingsBody>
+    </>
   );
 }

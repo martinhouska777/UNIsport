@@ -295,8 +295,8 @@ export default function ProfilePage() {
          languages, what you study, where you're from, and your records.
       6. YOUR PHOTOS, always on screen, and the replay button under them.
 
-    Training, the schedule, the gyms and who you'll train with live in Settings
-    (components/settings/TrainingSettings.tsx): they are answers the app runs
+    Training, the free time, the gyms and who you'll train with live in Settings
+    (Settings → Training and → Match): they are answers the app runs
     on, not things a visitor to your profile reads.
   */
   return (
@@ -918,8 +918,8 @@ export default function ProfilePage() {
       )}
 
       {/* The pencil beside the chips edits ONLY the chips: interests,
-          languages, concentration and where you're from. The full "Edit your
-          answers" sheet (activity, gyms, mentorship) is in Settings. */}
+          languages, concentration and where you're from. Training answers are
+          in Settings → Training, the matching ones in Settings → Match. */}
       {editingPrefs && (
         <AboutYouSheet
           profile={user}

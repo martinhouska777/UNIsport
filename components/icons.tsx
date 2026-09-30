@@ -278,6 +278,24 @@ export const IconSliders = (p: IconProps) => (
   </Base>
 );
 
+/* A painter's palette — Settings → Design. */
+export const IconPalette = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.8-.8 1.8-1.8 0-.5-.2-.9-.5-1.3-.3-.3-.5-.8-.5-1.3 0-1 .8-1.8 1.8-1.8H17a4 4 0 0 0 4-4C21 6.4 17 3 12 3z" />
+    <circle cx="7.5" cy="11.5" r="1" />
+    <circle cx="10" cy="7.5" r="1" />
+    <circle cx="14.5" cy="7.5" r="1" />
+  </Base>
+);
+
+/* A ruler — Settings → Units. */
+export const IconRuler = (p: IconProps) => (
+  <Base {...p}>
+    <rect x="2.5" y="8" width="19" height="8" rx="1.5" />
+    <path d="M6.5 8v3M10 8v4.5M13.5 8v3M17 8v4.5" />
+  </Base>
+);
+
 export const IconBell = (p: IconProps) => (
   <Base {...p}>
     <path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6z" />
