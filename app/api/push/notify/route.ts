@@ -84,12 +84,19 @@ export async function POST(request: Request) {
   if (isTeamKind(kind)) {
     // The squad, or one athlete for a note. Both RPCs refuse anyone who is not
     // an approved coach of the team, so an athlete cannot push to their squad.
+    // The squad call names the KIND, so each athlete's own switch for it is
+    // read (db/varsity_push_kinds.sql); if that file hasn't been run yet the
+    // kind-less function answers instead, with the old single switch.
+    const squad = async () => {
+      const byKind = await supabase.rpc("team_push_targets", { p_kind: kind });
+      return byKind.error ? await supabase.rpc("team_push_targets") : byKind;
+    };
     const { data, error } =
       kind === "note"
         ? body.athleteId
           ? await supabase.rpc("athlete_push_targets", { p_athlete: body.athleteId })
           : { data: null, error: { message: "missing athleteId" } }
-        : await supabase.rpc("team_push_targets");
+        : await squad();
     if (error) return Response.json({ error: "forbidden" }, { status: 403 });
     subs = (data as StoredSubscription[]) ?? [];
   } else if (kind === "partner") {

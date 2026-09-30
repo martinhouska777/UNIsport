@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Button from "@/components/ui/Button";
-import { Toggle } from "@/components/onboarding/controls";
+import { Group, ToggleRow } from "@/components/settings/SettingsShell";
+import type { CurrentUser } from "@/lib/currentUser";
 import {
   getPermission,
   isSubscribed,
@@ -20,36 +21,67 @@ import {
      we say so (can only be re-enabled from browser settings).
    • CATEGORIES — which kinds of notification this user wants at all. These persist
      to the profile (so they apply on every device) and are enforced server-side
-     in db/push_notify.sql before anything is sent.
+     (db/push_notify.sql, db/varsity_push_kinds.sql) before anything is sent.
+
+  ONE PER MODE, like Settings itself (owner, 2026-09-30): the student app lists
+  what the student app sends — messages, invites, tags, followers, the log
+  reminder — and Varsity Mode lists what the coach sends, split into its three
+  kinds (it was one "From your coach" switch). Grouped like WhatsApp's own
+  notification settings: a heading, then the switches in one card.
   Colors come from theme variables only.
 */
+type Prefs = Pick<
+  CurrentUser,
+  | "notifyMessages"
+  | "notifyPlans"
+  | "notifyFollows"
+  | "notifyPartnerTags"
+  | "notifyLogReminders"
+  | "notifyTeamPlan"
+  | "notifyTeamLineup"
+  | "notifyTeamNotes"
+>;
+
+// The switches for each mode, in order, under their headings. Labels are what
+// the notification IS, never what the switch does.
+const groups: Record<"student" | "varsity", { title: string; rows: { key: keyof Prefs; label: string }[] }[]> = {
+  student: [
+    {
+      title: "Messages",
+      rows: [
+        { key: "notifyMessages", label: "New messages" },
+        { key: "notifyPlans", label: "Session invites" },
+      ],
+    },
+    {
+      title: "Activity",
+      rows: [
+        { key: "notifyPartnerTags", label: "Partner tags" },
+        { key: "notifyFollows", label: "New followers" },
+        { key: "notifyLogReminders", label: "Log reminder" },
+      ],
+    },
+  ],
+  varsity: [
+    {
+      title: "From your coach",
+      rows: [
+        { key: "notifyTeamPlan", label: "Training plan" },
+        { key: "notifyTeamLineup", label: "Lineups" },
+        { key: "notifyTeamNotes", label: "Notes to you" },
+      ],
+    },
+  ],
+};
+
 export default function NotificationSettings({
-  messages,
-  plans,
-  team,
-  follows,
-  partnerTags,
-  logReminders,
-  showTeam,
+  mode,
+  prefs,
   onChange,
 }: {
-  messages: boolean;
-  plans: boolean;
-  follows: boolean;
-  partnerTags: boolean;
-  logReminders: boolean;
-  team: boolean;
-  /* Only squad members are offered the squad switch — a student with no team
-     would be turning off something that can never reach them. */
-  showTeam: boolean;
-  onChange: (patch: {
-    notifyMessages?: boolean;
-    notifyPlans?: boolean;
-    notifyFollows?: boolean;
-    notifyPartnerTags?: boolean;
-    notifyLogReminders?: boolean;
-    notifyTeam?: boolean;
-  }) => void;
+  mode: "student" | "varsity";
+  prefs: Prefs;
+  onChange: (patch: Partial<Prefs>) => void;
 }) {
   // Browser push state, read after mount (these APIs don't exist during SSR, so
   // we keep them in one object set from an async callback — never synchronously
@@ -113,9 +145,9 @@ export default function NotificationSettings({
     Home Screen) and everyone on Chrome when our own keys were missing.
   */
   const note = (title: string, body: string) => (
-    <div>
-      <div className="text-sm text-text">{title}</div>
-      <p className="mt-0.5 text-[11px] leading-relaxed text-muted">{body}</p>
+    <div className="px-4 py-3.5">
+      <div className="text-[15px] text-text">{title}</div>
+      <p className="mt-0.5 text-[12px] leading-relaxed text-muted">{body}</p>
     </div>
   );
 
@@ -146,34 +178,22 @@ export default function NotificationSettings({
       );
     }
     if (permission === "denied") {
-      return (
-        <p className="text-[11px] text-muted">
-          Notifications are blocked for this site. Turn them back on in your browser’s
-          site settings, then return here.
-        </p>
+      return note(
+        "Notifications are blocked",
+        "Turn them back on in your browser’s site settings for UNIsport, then return here.",
       );
     }
     return (
-      <div className="flex items-center justify-between gap-3">
-        <div className="text-sm text-text">This device</div>
+      <div className="flex min-h-[52px] items-center justify-between gap-3 px-4 py-2.5">
+        <div className="text-[15px] text-text">This device</div>
         {subscribed ? (
           <div className="flex flex-shrink-0 items-center gap-2">
-            <button
-              type="button"
-              onClick={sendSample}
-              disabled={busy}
-              className="tap44 rounded-full border border-border bg-surface px-3.5 py-1.5 text-[11px] font-medium text-muted disabled:opacity-50"
-            >
+            <Button variant="secondary" size="sm" onClick={sendSample} disabled={busy}>
               Send a test
-            </button>
-            <button
-              type="button"
-              onClick={disable}
-              disabled={busy}
-              className="tap44 rounded-full border border-border bg-surface-2 px-3.5 py-1.5 text-[11px] font-medium text-text disabled:opacity-50"
-            >
+            </Button>
+            <Button variant="secondary" size="sm" onClick={disable} disabled={busy}>
               {busy ? "…" : "Turn off"}
-            </button>
+            </Button>
           </div>
         ) : (
           <Button size="sm" onClick={enable} disabled={busy}>
@@ -185,67 +205,20 @@ export default function NotificationSettings({
   };
 
   return (
-    /* The whole of Settings → Notifications, a page of its own; the page's
-       header already says what it is. Card shape matches the rows on the
-       Settings front page. */
-    <div>
-      <div className="rounded-2xl border border-border bg-surface px-4 py-3">
-        {renderDeviceRow()}
-      </div>
-
-      {/* What to be notified about — applies across all your devices. */}
-      <div className="mt-2 flex flex-col gap-2">
-        <div className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-surface px-4 py-3">
-          <div className="text-sm text-text">New messages</div>
-          <Toggle
-            on={messages}
-            onChange={() => onChange({ notifyMessages: !messages })}
-            ariaLabel="Notify me about new messages"
-          />
-        </div>
-        <div className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-surface px-4 py-3">
-          <div className="text-sm text-text">Session invites</div>
-          <Toggle
-            on={plans}
-            onChange={() => onChange({ notifyPlans: !plans })}
-            ariaLabel="Notify me about session invites"
-          />
-        </div>
-        <div className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-surface px-4 py-3">
-          <div className="text-sm text-text">Partner tags</div>
-          <Toggle
-            on={partnerTags}
-            onChange={() => onChange({ notifyPartnerTags: !partnerTags })}
-            ariaLabel="Notify me when someone logs a session with me"
-          />
-        </div>
-        <div className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-surface px-4 py-3">
-          <div className="text-sm text-text">Log reminder</div>
-          <Toggle
-            on={logReminders}
-            onChange={() => onChange({ notifyLogReminders: !logReminders })}
-            ariaLabel="Remind me to log at my usual training time"
-          />
-        </div>
-        <div className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-surface px-4 py-3">
-          <div className="text-sm text-text">New followers</div>
-          <Toggle
-            on={follows}
-            onChange={() => onChange({ notifyFollows: !follows })}
-            ariaLabel="Notify me about new followers"
-          />
-        </div>
-        {showTeam && (
-          <div className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-surface px-4 py-3">
-            <div className="text-sm text-text">From your coach</div>
-            <Toggle
-              on={team}
-              onChange={() => onChange({ notifyTeam: !team })}
-              ariaLabel="Notify me about what my coach publishes"
+    <>
+      <Group>{renderDeviceRow()}</Group>
+      {groups[mode].map((g) => (
+        <Group key={g.title} title={g.title}>
+          {g.rows.map((r) => (
+            <ToggleRow
+              key={r.key}
+              label={r.label}
+              on={prefs[r.key]}
+              onChange={() => onChange({ [r.key]: !prefs[r.key] })}
             />
-          </div>
-        )}
-      </div>
-    </div>
+          ))}
+        </Group>
+      ))}
+    </>
   );
 }

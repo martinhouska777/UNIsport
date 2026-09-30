@@ -45,8 +45,13 @@ export type CurrentUser = OnboardingProfile & {
   // One push at your usual training time: "Train today? Log it".
   notifyLogReminders: boolean;
   // Everything the coach publishes to the squad: the week, the boats, and a
-  // technical note written to you. One switch, because they are one voice.
+  // technical note written to you. It WAS one switch; it is three now (owner,
+  // 2026-09-30), and this old key is only what the three fall back to for
+  // anyone who switched it off before they existed.
   notifyTeam: boolean;
+  notifyTeamPlan: boolean; // the week is published
+  notifyTeamLineup: boolean; // the boats are published
+  notifyTeamNotes: boolean; // a technical note written to you
 };
 
 export const currentUser: CurrentUser = {
@@ -108,6 +113,9 @@ export const currentUser: CurrentUser = {
   notifyPartnerTags: true,
   notifyLogReminders: true,
   notifyTeam: true,
+  notifyTeamPlan: true,
+  notifyTeamLineup: true,
+  notifyTeamNotes: true,
   sessions: [
     { day: 3, activity: "Push day", gym: "Malkin Athletic Center", partner: "Alex Chen", exercises: ["Bench 5×5", "OHP 4×8", "Triceps"], photos: [] },
     { day: 6, activity: "Pull day", gym: "Malkin Athletic Center", partner: "Solo", exercises: ["Deadlift 5×3", "Rows 4×10", "Curls"], photos: [] },
@@ -167,6 +175,9 @@ export function profileFromOnboarding(raw: Record<string, unknown>): CurrentUser
     notifyPartnerTags?: boolean;
     notifyLogReminders?: boolean;
     notifyTeam?: boolean;
+    notifyTeamPlan?: boolean;
+    notifyTeamLineup?: boolean;
+    notifyTeamNotes?: boolean;
     // Set by get_public_profile when viewing SOMEONE ELSE: true if they're an
     // approved member of a squad. Absent when reading your own profiles.data
     // (membership lives in its own table), so your own page passes it in.
@@ -190,6 +201,11 @@ export function profileFromOnboarding(raw: Record<string, unknown>): CurrentUser
     notifyPartnerTags: extra.notifyPartnerTags ?? true,
     notifyLogReminders: extra.notifyLogReminders ?? true,
     notifyTeam: extra.notifyTeam ?? true,
+    // Each falls back to the old single switch, exactly as the database does
+    // (db/varsity_push_kinds.sql), so the screen and the sender agree.
+    notifyTeamPlan: extra.notifyTeamPlan ?? extra.notifyTeam ?? true,
+    notifyTeamLineup: extra.notifyTeamLineup ?? extra.notifyTeam ?? true,
+    notifyTeamNotes: extra.notifyTeamNotes ?? extra.notifyTeam ?? true,
     sessions: [],
   };
 }
