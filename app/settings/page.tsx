@@ -4,10 +4,11 @@
   SETTINGS — the front page. A short list, top to bottom (owner, 2026-09-30):
 
     Account      the address you signed in with
-    (list)       Training · Notifications · Design · Units — each opens a page
-    Match        Train alone, and who you'd be matched with
+    (list)       Training · Notifications · Design — each opens a page;
+                 Units — opens in place (two switches aren't worth a page)
+    Match        Train alone, mentorship, Partner — in that order
     Help         the tour, the privacy policy, the terms
-    (bottom)     the varsity link and Invite a friend, then Log out
+    (bottom)     the varsity link, then Invite a friend and Log out side by side
 
   Everything used to sit open on this one page — seven notification switches,
   the whole training setup, a units block — and an "Edit your answers" sheet
@@ -28,10 +29,19 @@ import { useProfileData } from "@/components/profile/useProfileData";
 import { useMembership } from "@/components/varsity/useMembership";
 import ShareInviteButton from "@/components/ShareInviteButton";
 import { useUnits } from "@/components/useUnits";
+import Button from "@/components/ui/Button";
 import MatchSettings from "@/components/settings/MatchSettings";
-import { Row, Section, SettingsBody, SettingsHeader } from "@/components/settings/SettingsShell";
+import {
+  ChoiceRow,
+  DropdownRow,
+  Row,
+  Section,
+  SettingsBody,
+  SettingsHeader,
+} from "@/components/settings/SettingsShell";
 import { primaryActivities, type OnboardingProfile } from "@/lib/onboarding";
 import { LIVE_UNIVERSITY, universities } from "@/lib/themes";
+import { distanceOptions, weightOptions } from "@/lib/varsity/units";
 import SchoolCrest from "@/components/SchoolCrest";
 import { crestFor } from "@/lib/crests";
 import { can, canOpenConsole, roleLabel } from "@/lib/varsity/membership";
@@ -54,13 +64,17 @@ import {
 // Dev-only affordances are compiled out of the production bundle.
 const isProduction = process.env.NODE_ENV === "production";
 
+// Unit pills show the short unit ("km"); a screen reader hears the full name.
+const unitPills = <K extends string>(options: { key: K; label: string; short: string }[]) =>
+  options.map((o) => ({ key: o.key, label: o.short, ariaLabel: o.label }));
+
 export default function SettingsPage() {
   const { email, userId, studentReady, logout, resetOnboarding, universityKey, setUniversity } =
     useAppState();
   const { mode } = useThemeMode();
   const { data, loading, saveState, savePreferences } = useProfileData();
   const { membership, loading: membershipLoading } = useMembership();
-  const { units } = useUnits();
+  const { units, setUnits } = useUnits();
   const router = useRouter();
   /*
     Opened from Varsity Mode? The mode is remembered for the tab, not read off
@@ -132,12 +146,28 @@ export default function SettingsPage() {
             detail={mode === "dark" ? "Dark" : "Light"}
             href="/settings/design"
           />
-          <Row
+          {/* Units — what the app SHOWS, not what it stores: everything is
+              kept in metres and kilograms underneath (lib/varsity/units.ts). */}
+          <DropdownRow
             icon={<IconRuler size={18} />}
             label="Units"
             detail={`${units.distance} · ${units.weight}`}
-            href="/settings/units"
-          />
+          >
+            <ChoiceRow
+              bare
+              label="Distance"
+              options={unitPills(distanceOptions)}
+              value={units.distance}
+              onPick={(distance) => setUnits({ ...units, distance })}
+            />
+            <ChoiceRow
+              bare
+              label="Weight"
+              options={unitPills(weightOptions)}
+              value={units.weight}
+              onPick={(weight) => setUnits({ ...units, weight })}
+            />
+          </DropdownRow>
         </Section>
 
         {/*
@@ -206,21 +236,21 @@ export default function SettingsPage() {
           <Row icon={<IconInfo size={18} />} label="Terms of Service" href="/terms" />
         </Section>
 
-        {/* At the bottom: the way into a varsity team, and bringing a friend. */}
-        <Section>
-          {!membershipLoading && !membership && (
-            <Row icon={<IconShield size={18} />} label="Join a varsity team" href="/join" />
-          )}
-          {membership?.status === "pending" && (
-            <Row
-              icon={<IconShield size={18} />}
-              label={membership.teamName}
-              detail="Waiting"
-              href="/varsity/waiting"
-            />
-          )}
-          <ShareInviteButton label="Invite a friend" full size="lg" />
-        </Section>
+        {/* At the bottom: the way into a varsity team. */}
+        {!membershipLoading && (!membership || membership.status === "pending") && (
+          <Section>
+            {!membership ? (
+              <Row icon={<IconShield size={18} />} label="Join a varsity team" href="/join" />
+            ) : (
+              <Row
+                icon={<IconShield size={18} />}
+                label={membership.teamName}
+                detail="Waiting"
+                href="/varsity/waiting"
+              />
+            )}
+          </Section>
+        )}
 
         <div className="px-3.5 py-4">
           <div className="flex flex-col gap-2">
@@ -239,16 +269,21 @@ export default function SettingsPage() {
                 Replay onboarding (dev)
               </button>
             )}
-            <button
-              type="button"
-              onClick={async () => {
-                await logout();
-                router.replace("/");
-              }}
-              className="w-full rounded-full border border-border bg-background px-5 py-2.5 text-sm font-medium text-text"
-            >
-              Log out
-            </button>
+            {/* Bringing a friend and leaving, side by side (owner, 2026-09-30). */}
+            <div className="grid grid-cols-2 gap-2">
+              <ShareInviteButton label="Invite a friend" full size="lg" />
+              <Button
+                variant="secondary"
+                size="lg"
+                full
+                onClick={async () => {
+                  await logout();
+                  router.replace("/");
+                }}
+              >
+                Log out
+              </Button>
+            </div>
           </div>
         </div>
       </SettingsBody>

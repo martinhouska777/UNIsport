@@ -8,16 +8,19 @@
   2026-09-30: "a thing you click and it gets you into a new thing, so it
   doesn't take that much space"). They all share this header, this scrolling
   body and these rows, so a page opened from the list looks like the list.
+  Small groups open IN PLACE instead (DropdownRow) — Units is two switches,
+  not worth a page of its own.
 
   The school theme and the signed-in gate sit one level up, in
   app/settings/layout.tsx, so moving between these pages never re-paints.
 */
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { ProfileSaveState } from "@/components/profile/useProfileData";
 import Segmented from "@/components/ui/Segmented";
 import { Toggle } from "@/components/onboarding/controls";
-import { IconArrowLeft, IconChevronRight } from "@/components/icons";
+import { IconArrowLeft, IconChevronDown, IconChevronRight } from "@/components/icons";
 
 /*
   The top bar: back arrow, title, and the save line on the right. The arrow
@@ -112,6 +115,43 @@ export function Row({
   );
 }
 
+/* A row that drops open where it is, its controls under a hairline. */
+export function DropdownRow({
+  icon,
+  label,
+  detail,
+  children,
+}: {
+  icon?: React.ReactNode;
+  label: string;
+  detail?: string;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="rounded-2xl border border-border bg-surface">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        className="flex w-full items-center gap-3 px-4 py-3 text-left"
+      >
+        {icon && <span className="text-muted">{icon}</span>}
+        <span className="flex-1 text-sm text-text">{label}</span>
+        {detail && <span className="truncate text-xs text-muted">{detail}</span>}
+        <span
+          className={`text-muted transition-transform duration-150 motion-reduce:transition-none ${
+            open ? "rotate-180" : ""
+          }`}
+        >
+          <IconChevronDown size={16} />
+        </span>
+      </button>
+      {open && <div className="divide-y divide-border border-t border-border px-4">{children}</div>}
+    </div>
+  );
+}
+
 /* A row with a switch on the right. */
 export function ToggleRow({
   label,
@@ -130,20 +170,27 @@ export function ToggleRow({
   );
 }
 
-/* A row with a few choices as segmented pills beside the label. */
+/* A row with a few choices as segmented pills beside the label. `bare` drops
+   the card, for a line inside a DropdownRow. */
 export function ChoiceRow<K extends string>({
   label,
   options,
   value,
   onPick,
+  bare = false,
 }: {
   label: string;
   options: { key: K; label: string; ariaLabel?: string }[];
   value: K;
   onPick: (key: K) => void;
+  bare?: boolean;
 }) {
   return (
-    <div className="flex items-center gap-3 rounded-2xl border border-border bg-surface px-4 py-2.5">
+    <div
+      className={`flex items-center gap-3 ${
+        bare ? "py-2.5" : "rounded-2xl border border-border bg-surface px-4 py-2.5"
+      }`}
+    >
       <span className="flex-1 text-sm text-text">{label}</span>
       <Segmented ariaLabel={label} options={options} value={value} onChange={onPick} />
     </div>

@@ -5,7 +5,8 @@
 
   "Train alone" is the switch that takes you off the Match tab altogether, so it
   comes first and, when it is on, the rest goes away: nobody is being matched
-  with you, so there is nothing left to tune.
+  with you, so there is nothing left to tune. Then the mentorship switches,
+  then Partner — the owner's order (2026-09-30).
 
   The rest used to live in the "Edit your answers" sheet, which repeated half of
   Training and half of the profile. Sorted by what each answer is for (owner,
@@ -61,13 +62,6 @@ export default function MatchSettings({
       />
       {!trainsAlone && (
         <>
-          <ChoiceRow
-            label="Partner"
-            options={partnerPreferences}
-            // An empty answer is "any" to matching (db/matching.sql).
-            value={answers.partnerPreference || "any"}
-            onPick={(key) => onSave({ partnerPreference: key })}
-          />
           {[...peerRows, ...gymRows].map((row) => (
             <ToggleRow
               key={row.key}
@@ -76,6 +70,13 @@ export default function MatchSettings({
               onChange={() => onSave({ [row.key]: !answers[row.key] })}
             />
           ))}
+          <ChoiceRow
+            label="Partner"
+            options={partnerPreferences}
+            // An empty answer is "any" to matching (db/matching.sql).
+            value={answers.partnerPreference || "any"}
+            onPick={(key) => onSave({ partnerPreference: key })}
+          />
         </>
       )}
     </Section>
