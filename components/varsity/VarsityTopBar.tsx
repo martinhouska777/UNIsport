@@ -64,9 +64,8 @@ export default function VarsityTopBar() {
       </button>
 
       <div className="flex flex-shrink-0 items-center gap-2">
-        {/* EDIT YOUR PROFILE moved to Settings → Varsity → "Edit varsity
-            profile" (owner, 2026-09-19). The pencil that stood here only on
-            your profile opened the same editor through ?edit=1. */}
+        {/* EDIT YOUR PROFILE moved to Settings (owner, 2026-09-19), and is
+            Settings → Rowing profile since 2026-09-30. A pencil stood here. */}
         {/* Settings has to be reachable from here: a rower who joined through a
             team link has no student profile to find the cog on, so without this
             they could never change units, notifications — or log out. */}

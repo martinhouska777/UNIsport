@@ -54,7 +54,7 @@ function ModeChoice({
       type="button"
       onClick={() => onPick(mode)}
       aria-pressed={chosen}
-      className={`flex flex-col items-center gap-2.5 rounded-2xl border bg-surface p-3 ${
+      className={`flex flex-col items-center gap-2.5 rounded-2xl border bg-surface p-3 shadow-card ${
         chosen ? "border-primary" : "border-border"
       }`}
     >
@@ -87,7 +87,7 @@ export default function DesignSettingsPage() {
     <>
       <SettingsHeader title="Design" />
       <SettingsBody>
-        <div className="grid grid-cols-2 gap-2.5 px-3.5 py-4">
+        <div className="grid grid-cols-2 gap-2.5">
           <ModeChoice mode="light" label="Light" tokens={light} chosen={mode === "light"} onPick={setMode} />
           <ModeChoice mode="dark" label="Dark" tokens={dark} chosen={mode === "dark"} onPick={setMode} />
         </div>

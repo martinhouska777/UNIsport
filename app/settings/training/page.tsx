@@ -27,18 +27,13 @@ export default function TrainingSettingsPage() {
     <>
       <SettingsHeader title="Training" saveState={saveState} />
       <SettingsBody>
-        <div className="px-3.5 py-4">
-          {/* Mounted only once the answers are in: the rows keep a working
-              copy of the typed answers and the week, taken when they mount. */}
-          {loading || !data ? (
-            <SkeletonLines count={5} />
-          ) : (
-            <TrainingSettings
-              answers={data as Partial<OnboardingProfile>}
-              onSave={savePreferences}
-            />
-          )}
-        </div>
+        {/* Mounted only once the answers are in: the rows keep a working
+            copy of the typed answers and the week, taken when they mount. */}
+        {loading || !data ? (
+          <SkeletonLines count={5} />
+        ) : (
+          <TrainingSettings answers={data as Partial<OnboardingProfile>} onSave={savePreferences} />
+        )}
       </SettingsBody>
     </>
   );

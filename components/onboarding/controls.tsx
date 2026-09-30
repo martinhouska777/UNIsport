@@ -126,6 +126,7 @@ export function TextField({
   ariaLabel,
   suffix,
   onBlur,
+  inputMode,
 }: {
   value: string;
   onChange: (v: string) => void;
@@ -134,6 +135,8 @@ export function TextField({
   /* Leaving the box — Settings saves a typed answer here rather than on
      every keystroke. */
   onBlur?: () => void;
+  /* Which keyboard a phone opens: "numeric" for a height, "decimal" for a weight. */
+  inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"];
   /* A unit printed inside the right of the box â€” "km", "/km". It is the unit
      itself, not a hint about what to type, so the field stays empty until the
      person fills it in. */
@@ -145,6 +148,7 @@ export function TextField({
       value={value}
       onChange={(e) => onChange(e.target.value)}
       onBlur={onBlur}
+      inputMode={inputMode}
       placeholder={placeholder}
       aria-label={ariaLabel}
       // 16px text avoids mobile auto-zoom on focus.

@@ -34,8 +34,6 @@ import { useUnits } from "@/components/useUnits";
 import { can, canOpenConsole, roleLabel } from "@/lib/varsity/membership";
 import {
   formatWeight,
-  kgToUnit,
-  weightToKg,
   type Units,
 } from "@/lib/varsity/units";
 import { fetchLogsInRange, type LogEntry } from "@/lib/varsity/logStore";
@@ -43,9 +41,6 @@ import { toISO, type SessionMap } from "@/lib/varsity/coachPlan";
 import {
   fetchAthleteProfile,
   saveAthleteProfile,
-  teamYearOptions,
-  boatRoleOptions,
-  sideOptions,
   sideLabel,
   statusOptions,
   prPieces,
@@ -75,7 +70,6 @@ import { CurveLegend } from "@/components/varsity/profile/CurveLegend";
 import Dropdown from "@/components/varsity/profile/Dropdown";
 import StatsFullScreen from "@/components/varsity/profile/StatsFullScreen";
 import TrainingMixSheet from "@/components/varsity/profile/TrainingMixSheet";
-import { Toggle } from "@/components/onboarding/controls";
 import ClaimSeatSheet from "@/components/varsity/ClaimSeatSheet";
 import { sideMeta, COX_COLOR, type Side } from "@/lib/varsity/coachLineup";
 import { fetchPlan } from "@/lib/varsity/planStore";
@@ -150,138 +144,6 @@ const inputCls =
   once, so changing the range is instant and never returns to the database.
 */
 const LOAD_DAYS = Math.max(...statRanges.map((r) => r.days));
-
-/* ─────────────────────────  edit identity sheet  ───────────────────────── */
-function EditIdentitySheet({
-  profile,
-  units,
-  onSave,
-  onClose,
-}: {
-  profile: VarsityAthleteProfile;
-  units: Units;
-  onSave: (patch: Partial<VarsityAthleteProfile>) => void;
-  onClose: () => void;
-}) {
-  const [teamYear, setTeamYear] = useState(profile.teamYear);
-  const [boatRole, setBoatRole] = useState(profile.boatRole);
-  const [side, setSide] = useState(profile.side);
-  const [height, setHeight] = useState(profile.heightCm != null ? String(profile.heightCm) : "");
-  // Shown and typed in whichever weight unit they chose; ALWAYS stored in kilos,
-  // so switching the setting later can't corrupt what's on the record.
-  const [weight, setWeight] = useState(
-    profile.weightKg != null ? String(Math.round(kgToUnit(profile.weightKg, units.weight))) : "",
-  );
-
-  const save = () => {
-    const typed = weight.trim() ? Number(weight) : null;
-    onSave({
-      teamYear,
-      boatRole,
-      // Same as setup: a coxswain has no side, so don't keep a stale one.
-      side: boatRole === "Coxswain" ? "B" : side,
-      heightCm: height.trim() ? Number(height) : null,
-      weightKg: typed == null ? null : Math.round(weightToKg(typed, units.weight) * 10) / 10,
-    });
-    onClose();
-  };
-
-  return (
-    <Sheet title="Edit profile" onClose={onClose}>
-      <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-        Year on the team
-      </div>
-      <div className="flex flex-wrap gap-1.5">
-        {teamYearOptions.map((y) => (
-          <button
-            key={y}
-            type="button"
-            onClick={() => setTeamYear(y)}
-            className={`rounded-full border px-3.5 py-2 text-[12px] font-medium ${
-              teamYear === y
-                ? "border-primary bg-primary-tint text-primary"
-                : "border-border bg-surface-2 text-text"
-            }`}
-          >
-            {y}
-          </button>
-        ))}
-      </div>
-
-      <div className="mb-1.5 mt-4 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-        In the boat
-      </div>
-      <div className="flex flex-wrap gap-1.5">
-        {boatRoleOptions.map((r) => (
-          <button
-            key={r}
-            type="button"
-            onClick={() => setBoatRole(r)}
-            className={`rounded-full border px-3.5 py-2 text-[12px] font-medium ${
-              boatRole === r
-                ? "border-primary bg-primary-tint text-primary"
-                : "border-border bg-surface-2 text-text"
-            }`}
-          >
-            {r}
-          </button>
-        ))}
-      </div>
-
-      {/* A coxswain never takes a rowing seat, so the side question disappears. */}
-      {boatRole === "Rower" && (
-        <>
-          <div className="mb-1.5 mt-4 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-            Side
-          </div>
-          <div className="flex flex-wrap gap-1.5">
-            {sideOptions.map((o) => (
-              <button
-                key={o.key}
-                type="button"
-                onClick={() => setSide(o.key)}
-                className={`flex flex-col items-center rounded-full border px-3.5 py-1.5 text-[12px] font-medium leading-tight ${
-                  side === o.key
-                    ? "border-primary bg-primary-tint text-primary"
-                    : "border-border bg-surface-2 text-text"
-                }`}
-              >
-                <span>{o.label}</span>
-              </button>
-            ))}
-          </div>
-        </>
-      )}
-
-      <div className="mt-4 grid grid-cols-2 gap-2">
-        <div>
-          <label className="mb-1 block text-[11px] text-muted">Height (cm)</label>
-          <input
-            value={height}
-            onChange={(e) => setHeight(e.target.value.replace(/[^\d]/g, ""))}
-            inputMode="numeric"
-            placeholder="—"
-            className={inputCls}
-          />
-        </div>
-        <div>
-          <label className="mb-1 block text-[11px] text-muted">Weight ({units.weight})</label>
-          <input
-            value={weight}
-            onChange={(e) => setWeight(e.target.value.replace(/[^\d.]/g, ""))}
-            inputMode="decimal"
-            placeholder="—"
-            className={inputCls}
-          />
-        </div>
-      </div>
-
-      <Button size="lg" full onClick={save} className="mt-5">
-        <IconCheck size={16} /> Save
-      </Button>
-    </Sheet>
-  );
-}
 
 /* ─────────────────────────  log the spell?  ───────────────────────── */
 /*
@@ -808,7 +670,7 @@ function WeeklyGraph({
 
 /* ─────────────────────────  screen  ───────────────────────── */
 export default function ProfileScreen() {
-  const { userId, resetVarsitySetup } = useAppState();
+  const { userId } = useAppState();
   const { units } = useUnits();
   // Coach or captain? Decides whether the console door appears at the bottom.
   const { membership, isMember } = useMembership();
@@ -863,30 +725,17 @@ export default function ProfileScreen() {
   */
   const [mixRangeKey, setMixRangeKey] = useState(defaultStatRange);
 
-  type Modal = "identity" | "status" | "seat" | null;
+  type Modal = "status" | "seat" | null;
   const [modal, setModal] = useState<Modal>(null);
   /* WHICH personal best is open, if any — the tile that was tapped. */
   const [prPiece, setPrPiece] = useState<string | null>(null);
-  // Replaying the athlete setup arms first — see the button at the bottom.
-  const [replayArmed, setReplayArmed] = useState(false);
   const router = useRouter();
 
   /*
-    ARRIVING FROM SETTINGS → "Edit varsity profile" (/varsity/profile?edit=1 —
-    it was a pencil in the top bar until 2026-09-19). Settings is another
-    page and this editor lives here, so the link is the message.
-    Read off the URL after mount — useSearchParams would force a Suspense
-    boundary around the whole screen — then cleared, so a refresh doesn't
-    reopen it. Same shape as the log reminder's deep link on Home.
+    YOUR ROWING DETAILS (year on the team, rower or cox, side, height, weight)
+    are edited in Settings → Rowing profile (app/settings/rowing) since
+    2026-09-30 — it was a sheet here, opened from Settings through ?edit=1.
   */
-  useEffect(() => {
-    const id = requestAnimationFrame(() => {
-      if (!new URLSearchParams(window.location.search).has("edit")) return;
-      setModal("identity");
-      router.replace("/varsity/profile");
-    });
-    return () => cancelAnimationFrame(id);
-  }, [router]);
 
   // Identity + saved varsity record.
   useEffect(() => {
@@ -1291,18 +1140,8 @@ export default function ProfileScreen() {
           <IconChevronRight size={17} />
         </span>
       </Link>
-      {/* WHO SEES IT (owner, 2026-09-13): teammates who open you on the Team
-          tab see your training month unless you switch it off here. Its own
-          row, not inside the link above, so flipping it never opens the
-          calendar. The coach sees it either way. */}
-      <div className="mx-3.5 mt-1.5 flex items-center justify-between gap-3 px-3.5 py-1.5">
-        <span className="text-[12px] text-muted">Teammates see my calendar</span>
-        <Toggle
-          on={profile.showCalendar}
-          onChange={() => patchProfile({ showCalendar: !profile.showCalendar })}
-          ariaLabel="Teammates see my calendar"
-        />
-      </div>
+      {/* WHO SEES YOUR CALENDAR is a switch in Varsity Mode's Settings
+          (owner, 2026-09-30) — it was a row here. */}
 
       {/* ── Personal bests ──
           NO "EDIT" IN THE CORNER (owner, 2026-09-22). The word and the pencil
@@ -1350,66 +1189,10 @@ export default function ProfileScreen() {
         </div>
       )}
 
-      {/*
-        REPLAY THE ATHLETE SETUP — the last thing on the page, under everything
-        it would rewrite.
-
-        The student profile has the same button for the nine-screen flow. This
-        one re-runs the SHORT setup a rower answers on the way in: name, class
-        year, sex, rower or cox, side, height and weight. It arms first,
-        because it is not a preview — the questions start blank, and what you
-        finish with replaces the identity above. Nothing else moves: the squad,
-        the logs and the personal bests are untouched.
-      */}
-      <div className="px-3.5 pb-4 pt-6">
-        {replayArmed ? (
-          <div className="rounded-2xl border border-border bg-surface p-3.5">
-            <div className="text-[13px] font-medium text-text">Run the setup again?</div>
-            <p className="mt-0.5 text-[11px] leading-relaxed text-muted">
-              You&apos;ll answer the setup screen from scratch. Whatever you finish with
-              replaces the name, year and measurements above.
-            </p>
-            <div className="mt-3 flex gap-2">
-              <Button
-                variant="secondary"
-                size="lg"
-                className="flex-1"
-                onClick={() => setReplayArmed(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                size="lg"
-                className="flex-1"
-                onClick={async () => {
-                  await resetVarsitySetup();
-                  router.replace("/varsity/setup");
-                }}
-              >
-                Start over
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <button
-            type="button"
-            onClick={() => setReplayArmed(true)}
-            className="w-full rounded-full border border-border bg-surface px-5 py-2.5 text-sm font-medium text-text"
-          >
-            Replay athlete setup
-          </button>
-        )}
-      </div>
+      {/* REPLAY ATHLETE SETUP moved to Varsity Mode's Settings (owner,
+          2026-09-30), with the same ask-first step. */}
 
       {/* ── Sheets ── */}
-      {modal === "identity" && (
-        <EditIdentitySheet
-          profile={profile}
-          units={units}
-          onSave={patchProfile}
-          onClose={() => setModal(null)}
-        />
-      )}
       {modal === "status" && (
         <StatusSheet current={profile.status} onSave={changeStatus} onClose={() => setModal(null)} />
       )}

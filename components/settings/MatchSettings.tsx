@@ -24,7 +24,7 @@ import {
   peerAdvising,
   type OnboardingProfile,
 } from "@/lib/onboarding";
-import { ChoiceRow, Section, ToggleRow } from "@/components/settings/SettingsShell";
+import { ChoiceRow, Group, ToggleRow } from "@/components/settings/SettingsShell";
 
 export default function MatchSettings({
   answers,
@@ -54,7 +54,7 @@ export default function MatchSettings({
     : [];
 
   return (
-    <Section title="Match">
+    <Group title="Match">
       <ToggleRow
         label="Train alone"
         on={trainsAlone}
@@ -79,6 +79,6 @@ export default function MatchSettings({
           />
         </>
       )}
-    </Section>
+    </Group>
   );
 }

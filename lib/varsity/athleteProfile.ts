@@ -210,7 +210,7 @@ export type VarsityAthleteProfile = {
     WHETHER TEAMMATES SEE YOUR CALENDAR (owner, 2026-09-13). Opening a rower on
     the Team tab shows their training month — so the squad can see how the
     people who train best actually train — but each athlete decides. On by
-    default; the switch sits under "Training calendar" on your profile. The
+    default; the switch is in Varsity Mode's Settings (since 2026-09-30). The
     coach sees it either way (can.readTraining).
   */
   showCalendar: boolean;
@@ -378,6 +378,20 @@ export async function saveAthleteProfile(
     .update({ data: merged, updated_at: new Date().toISOString() })
     .eq("id", userId);
   return error ? { error: error.message } : {};
+}
+
+/*
+  ── Change a few fields, onto the record as it is NOW ──
+  Settings edits the varsity record from its own pages while the profile screen
+  may hold an older copy, so a Settings change is read fresh and merged here
+  rather than written from whatever the page loaded a minute ago.
+*/
+export async function patchAthleteProfile(
+  userId: string | null,
+  patch: Partial<VarsityAthleteProfile>,
+): Promise<{ error?: string }> {
+  const b = await fetchAthleteProfile(userId);
+  return saveAthleteProfile(userId, { ...b.profile, ...patch });
 }
 
 /* ── Days out (lib/varsity/daysOut.ts), read and written on this same record ── */
