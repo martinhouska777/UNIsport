@@ -247,27 +247,30 @@ export default function AthleteDataScreen({ athleteId }: { athleteId: string }) 
           Not a switch that swaps the middle of this page: each one opens a
           whole screen of its own with a cross to come back — three long
           things taking turns in one panel is a page you get lost in. They
-          are the end of the page. */}
-      <div className="mt-6 grid grid-cols-3 gap-2">
+          are the end of the page. A COX HAS TWO (owner, 2026-10-01: Past
+          workouts — their erg and water — is "just for athletes"). */}
+      <div className={`mt-6 grid gap-2 ${cox ? "grid-cols-2" : "grid-cols-3"}`}>
         {(
           [
             ["stats", "Statistics", <IconActivity key="i" size={18} />],
             ["workouts", "Past workouts", <IconClipboard key="i" size={18} />],
             ["calendar", "Calendar", <IconCalendar key="i" size={18} />],
           ] as const
-        ).map(([k, label, icon]) => (
-          <button
-            key={k}
-            type="button"
-            onClick={() => setOpenScreen(k)}
-            className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-border bg-surface px-2 py-4 text-center active:bg-surface-2"
-          >
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary-tint text-primary">
-              {icon}
-            </span>
-            <span className="text-[12px] font-semibold leading-tight text-text">{label}</span>
-          </button>
-        ))}
+        )
+          .filter(([k]) => !(cox && k === "workouts"))
+          .map(([k, label, icon]) => (
+            <button
+              key={k}
+              type="button"
+              onClick={() => setOpenScreen(k)}
+              className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-border bg-surface px-2 py-4 text-center active:bg-surface-2"
+            >
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary-tint text-primary">
+                {icon}
+              </span>
+              <span className="text-[12px] font-semibold leading-tight text-text">{label}</span>
+            </button>
+          ))}
       </div>
 
       {/* ── the three screens ── */}
