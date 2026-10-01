@@ -169,24 +169,31 @@ function RowFrame({ icon, children }: { icon?: React.ReactNode; children: React.
 
 const rowClass = "flex w-full items-stretch text-left transition-colors active:bg-surface-2";
 
-/* One tappable row: icon, label, the current answer, chevron. */
+/* One tappable row: icon, label, the current answer, chevron. `alert` is for a
+   count somebody has to act on (people waiting to join the squad). */
 export function Row({
   icon,
   label,
   detail,
+  alert,
   onClick,
   href,
 }: {
   icon?: React.ReactNode;
   label: string;
   detail?: string;
+  alert?: boolean;
   onClick?: () => void;
   href?: string;
 }) {
   const inner = (
     <RowFrame icon={icon}>
       <span className="flex-1 text-[15px] text-text">{label}</span>
-      {detail && <span className="min-w-0 truncate text-[13px] text-muted">{detail}</span>}
+      {detail && (
+        <span className={`min-w-0 truncate text-[13px] ${alert ? "font-semibold text-warn" : "text-muted"}`}>
+          {detail}
+        </span>
+      )}
       <span className="flex-shrink-0 text-muted">
         <IconChevronRight size={16} />
       </span>

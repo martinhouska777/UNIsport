@@ -6,9 +6,10 @@
   deliberately NOT one of the four nav tabs: those are the daily screens, and
   handing out an invite link is a once-a-term job.
 
-  A MENU, LIKE THE APP'S OWN SETTINGS (owner, 2026-09-18). `page="menu"` is
-  the list — Administration (waiting, invite links, squad), Training,
-  Appearance, Help — and each administration row opens its own page
+  A MENU, LIKE THE APP'S OWN SETTINGS (owner, 2026-09-18), in round 2's
+  grouped look since 2026-10-01 (SETTINGS-ROUND3.md). `page="menu"` is the
+  list — your card, Administration (waiting, invite links, squad), Training,
+  Design, Help — and each administration row opens its own page
   (`page="waiting" | "invites" | "squad"`, routes under settings/) with a back
   arrow top-left (SettingsHeader). One component so the squad + invites are
   read in one place and the menu can show the counts.
@@ -55,19 +56,20 @@ import {
   IconCheck,
   IconChevronRight,
   IconCopy,
+  IconPalette,
   IconSend,
   IconSliders,
   IconClock,
   IconUser,
   IconTrash,
   IconX,
-  IconSun,
-  IconMoon,
 } from "@/components/icons";
 import { requestTour, resetTour } from "@/lib/tour";
 import { coachTour } from "@/lib/varsity/coachTour";
+import { fetchAthleteProfile, type AthleteProfileBundle } from "@/lib/varsity/athleteProfile";
 import { useAppState } from "@/components/AppState";
 import { useThemeMode } from "@/components/ThemeMode";
+import { Group, ProfileCard, Row, SettingsBody } from "@/components/settings/SettingsShell";
 import SettingsHeader from "@/components/varsity/coach/settings/SettingsHeader";
 
 export type AdminPage = "menu" | "waiting" | "invites" | "squad";
@@ -81,44 +83,6 @@ function Section({ title, hint, children }: { title?: string; hint?: string; chi
       {hint && <p className="mb-2.5 text-[11px] leading-relaxed text-muted">{hint}</p>}
       {children}
     </section>
-  );
-}
-
-/* One row of the menu: icon, name, an optional count, chevron. */
-function MenuRow({
-  icon,
-  label,
-  detail,
-  href,
-  onClick,
-  alert,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  detail?: string;
-  href?: string;
-  onClick?: () => void;
-  alert?: boolean;
-}) {
-  const inner = (
-    <>
-      <span className="text-muted">{icon}</span>
-      <span className="flex-1 text-[13px] font-medium text-text">{label}</span>
-      {detail && (
-        <span className={`text-[12px] ${alert ? "font-semibold text-warn" : "text-muted"}`}>{detail}</span>
-      )}
-      <IconChevronRight size={14} className="flex-shrink-0 text-muted" />
-    </>
-  );
-  const cls = "flex w-full items-center gap-3 border-b border-border px-3.5 py-3 text-left last:border-0";
-  return href ? (
-    <Link href={href} className={cls}>
-      {inner}
-    </Link>
-  ) : (
-    <button type="button" onClick={onClick} className={cls}>
-      {inner}
-    </button>
   );
 }
 
@@ -155,7 +119,10 @@ export default function TeamAdminScreen({
   const { teamId, role } = membership;
   const { userId } = useAppState();
   const router = useRouter();
-  const { mode, toggle: toggleMode } = useThemeMode();
+  const { mode } = useThemeMode();
+  // You, for the card at the top of the menu — the same card Varsity Mode's
+  // Settings opens with (photo, name, the squad and your role).
+  const [me, setMe] = useState<AthleteProfileBundle | null>(null);
 
   const [squad, setSquad] = useState<SquadMember[]>([]);
   const [invites, setInvites] = useState<Invite[]>([]);
@@ -190,6 +157,17 @@ export default function TeamAdminScreen({
       active = false;
     };
   }, [teamId]);
+
+  useEffect(() => {
+    if (page !== "menu" || !userId) return;
+    let active = true;
+    fetchAthleteProfile(userId).then((b) => {
+      if (active) setMe(b);
+    });
+    return () => {
+      active = false;
+    };
+  }, [page, userId]);
 
   const pending = squad.filter((m) => m.status === "pending");
   const approved = squad.filter((m) => m.status === "approved");
@@ -268,8 +246,95 @@ export default function TeamAdminScreen({
     else reload();
   };
 
-  const header = page === "menu" ? null : <SettingsHeader title={pageTitle[page]} />;
   const liveLinks = invites.filter((i) => inviteState(i) === "live").length;
+
+  /* ── THE MENU ── round 2's look: you on top, then the rows in groups. It
+     draws at once; the counts fill in when the squad has been read. No
+     explaining lines under the rows (owner: settings carry no small text). */
+  if (page === "menu") {
+    return (
+      <div className="w-full">
+        <SettingsHeader title="Settings" back={null} />
+        <SettingsBody>
+          <ProfileCard
+            name={me?.name ?? ""}
+            photo={me?.photo ?? null}
+            subline={`${membership.teamName} · ${roleLabel[role]}`}
+            href="/varsity/profile"
+          />
+
+          <Group title="Administration">
+            <Row
+              icon={<IconClock size={20} />}
+              label="Waiting to join"
+              detail={pending.length ? String(pending.length) : undefined}
+              alert
+              href="/varsity/coach/settings/waiting"
+            />
+            <Row
+              icon={<IconSend size={20} />}
+              label="Invite links"
+              detail={liveLinks ? `${liveLinks} live` : undefined}
+              href="/varsity/coach/settings/invites"
+            />
+            <Row
+              icon={<IconUser size={20} />}
+              label="Squad"
+              detail={loading ? undefined : String(approved.length)}
+              href="/varsity/coach/settings/squad"
+            />
+          </Group>
+
+          {/* Coach only — a captain never builds training, and the database
+              refuses them anyway. */}
+          {can.buildPlan(role) && (
+            <Group title="Training">
+              <Row
+                icon={<IconSliders size={20} />}
+                label="Training settings"
+                href="/varsity/coach/settings/training"
+              />
+            </Group>
+          )}
+
+          {/* Light or dark — the same Design page (two little pictures) the
+              student and Varsity Settings open, and the same one choice for
+              the whole app. It was a switch here, labelled with whichever mode
+              was on; the round sun/moon button before that sat in the top bar
+              (owner, 2026-09-18: "light and dark theme should be in the
+              settings"). Captains get it too — it is their screen. */}
+          <Group>
+            <Row
+              icon={<IconPalette size={20} />}
+              label="Design"
+              detail={mode === "dark" ? "Dark" : "Light"}
+              href="/settings/design"
+            />
+          </Group>
+
+          {/* The console's walk again, on demand. Unlike the app's Settings
+              this screen is INSIDE the shell the tour runs in, so the gate is
+              already mounted and hears the request as an event (lib/tour.ts).
+              It still navigates to Today, because that is where the walk opens. */}
+          {can.buildPlan(role) && (
+            <Group title="Help">
+              <Row
+                icon={<IconBulb size={20} />}
+                label="Take the console tour"
+                onClick={() => {
+                  if (userId) resetTour(coachTour, userId);
+                  router.push("/varsity/coach");
+                  requestTour(coachTour);
+                }}
+              />
+            </Group>
+          )}
+        </SettingsBody>
+      </div>
+    );
+  }
+
+  const header = <SettingsHeader title={pageTitle[page]} />;
 
   if (loading) {
     return (
@@ -288,50 +353,6 @@ export default function TeamAdminScreen({
         <p className="mx-3.5 mt-3 rounded-xl border border-danger-line bg-danger-tint px-3.5 py-2.5 text-[12px] text-danger">
           {error}
         </p>
-      )}
-
-      {/* ── THE MENU ── no explaining lines under the rows (owner: settings
-          carry no small text). */}
-      {page === "menu" && (
-        <>
-          <Section title="Administration">
-            <div className="rounded-xl border border-border bg-surface">
-              <MenuRow
-                icon={<IconClock size={18} />}
-                label="Waiting to join"
-                detail={pending.length ? String(pending.length) : undefined}
-                alert
-                href="/varsity/coach/settings/waiting"
-              />
-              <MenuRow
-                icon={<IconSend size={18} />}
-                label="Invite links"
-                detail={liveLinks ? `${liveLinks} live` : undefined}
-                href="/varsity/coach/settings/invites"
-              />
-              <MenuRow
-                icon={<IconUser size={18} />}
-                label="Squad"
-                detail={String(approved.length)}
-                href="/varsity/coach/settings/squad"
-              />
-            </div>
-          </Section>
-
-          {/* Coach only — a captain never builds training, and the database
-              refuses them anyway. */}
-          {can.buildPlan(role) && (
-            <Section title="Training">
-              <div className="rounded-xl border border-border bg-surface">
-                <MenuRow
-                  icon={<IconSliders size={18} />}
-                  label="Training settings"
-                  href="/varsity/coach/settings/training"
-                />
-              </div>
-            </Section>
-          )}
-        </>
       )}
 
       {/* ── 1. The waiting room ── */}
@@ -556,63 +577,6 @@ export default function TeamAdminScreen({
       </Section>
       )}
 
-      {page === "menu" && (
-      <>
-      {/* ── Appearance ──
-          Light or dark for the console. The round sun/moon button used to
-          sit in the top bar beside the gear (and in the laptop rail); the
-          owner moved it here (2026-09-18: "light and dark theme should be in
-          the settings"). Everyone who can open Settings gets it, captains
-          included — it is their screen, not the squad's. */}
-      <Section title="Appearance">
-        <button
-          type="button"
-          onClick={toggleMode}
-          aria-label={mode === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-          className="flex w-full items-center gap-3 rounded-xl border border-border bg-surface px-3.5 py-3 text-left"
-        >
-          <span className="text-muted">{mode === "dark" ? <IconMoon size={18} /> : <IconSun size={18} />}</span>
-          <span className="flex-1 text-[13px] font-medium text-text">
-            {mode === "dark" ? "Dark mode" : "Light mode"}
-          </span>
-          {/* The switch: a pill whose knob sits at the far end when dark is on. */}
-          <span
-            aria-hidden
-            className={`relative h-[22px] w-[38px] flex-shrink-0 rounded-full transition-colors ${
-              mode === "dark" ? "bg-primary-live" : "bg-switch-off"
-            }`}
-          >
-            <span
-              className={`absolute top-[3px] h-4 w-4 rounded-full bg-primary-contrast shadow-card transition-all ${
-                mode === "dark" ? "left-[19px]" : "left-[3px]"
-              }`}
-            />
-          </span>
-        </button>
-      </Section>
-
-      {/* ── 5. Help ──
-          The console's walk again, on demand. Unlike the app's Settings this
-          screen is INSIDE the shell the tour runs in, so the gate is already
-          mounted and hears the request as an event (lib/tour.ts). It still
-          navigates to Today, because that is where the walk opens. */}
-      {can.buildPlan(role) && (
-        <Section title="Help">
-          <div className="rounded-xl border border-border bg-surface">
-            <MenuRow
-              icon={<IconBulb size={18} />}
-              label="Take the console tour"
-              onClick={() => {
-                if (userId) resetTour(coachTour, userId);
-                router.push("/varsity/coach");
-                requestTour(coachTour);
-              }}
-            />
-          </div>
-        </Section>
-      )}
-      </>
-      )}
       </div>
     </div>
   );

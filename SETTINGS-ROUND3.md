@@ -99,7 +99,7 @@ Invites + Squad), `components/varsity/coach/settings/TrainingSettingsScreen.tsx`
 
 ## Checklist
 
-- [ ] **Slice 1 — the menu.** Title bar, your card, grouped rows (Administration ·
+- [x] **Slice 1 — the menu.** (done 2026-10-01, see git log "settings round 3, slice 1") Title bar, your card, grouped rows (Administration ·
       Training · Design · Help). The light/dark switch becomes a Design row.
 - [ ] **Slice 2 — Waiting / Invite links / Squad.** One card with hairlines, the
       sentences cut, old links folded, the squad arrow at the end.
