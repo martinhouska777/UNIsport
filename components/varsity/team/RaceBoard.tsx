@@ -34,16 +34,24 @@
   steer, so ranking them beside the rowers said the cox of the winning four
   was the fastest athlete of the day. They are still the NAME of their crew on
   the piece boards and on Combined, and they are in the "with" column beside
-  every rower they steered. Nothing else is excluded; this is the workout, not
-  selection. Seat racing proper is another screen.
+  every rower they steered. Nothing else is excluded; this is the workout.
+
+  SEAT RACING LIVES HERE TOO (owner, 2026-10-01: "build the swap into
+  workouts and remove seat races"). From the second piece on, the coach's
+  Switch button lets two rowers of boats of the same class change places
+  (SwitchSheet.tsx, raceSwitch.ts); the change carries into the pieces after
+  it, whoever sits in a different boat than in the piece before is drawn red,
+  and the switch itself is a red chip under its crew — read out of the crews,
+  not typed. A Switches tab says who beat whom and by how much, worked out
+  from the times: the coach's alone, like the rankings.
 
   IN THE COACH CONSOLE the board is also where the sheet is typed: Enter
   times opens the piece's crews with a Start and a Finish field each (the
   running watch, "25:14.48") — the time is worked out from them — and a note
   ("Bridge"). Crews are the session's lineup boats; one that did
   not race the piece is simply removed from it, and can be put back. New
-  pieces come from the + at the end of the tabs. A rower sees the board,
-  never the fields.
+  pieces come from the + at the end of the tabs, and start with the crews that
+  rowed the last one. A rower sees the board, never the fields.
 
   Times are typed at 16px (the phone-zoom rule). All colours are theme
   tokens, except the cox's yellow, which is the same per-role identity colour
@@ -53,7 +61,7 @@
 import { useMemo, useRef, useState } from "react";
 import Sheet from "@/components/varsity/Sheet";
 import { IconPencil, IconPlus, IconSwap, IconTrash, IconX } from "@/components/icons";
-import { COX_COLOR, COX_INK, COX_LABEL, type Boat } from "@/lib/varsity/coachLineup";
+import { COX_COLOR, COX_INK, COX_LABEL, rosterById, type Boat } from "@/lib/varsity/coachLineup";
 import {
   athleteBoards,
   classTitle,
@@ -65,7 +73,9 @@ import {
   formatClock,
   formatMargin,
   formatWatch,
+  freshCrew,
   newPiece,
+  pieceAfter,
   pieceBoards,
   piecesStartAround,
   switchPairs,
@@ -76,6 +86,18 @@ import {
   type RacePiece,
   type WatchField,
 } from "@/lib/varsity/racePieces";
+import {
+  folkNames,
+  folkOf,
+  nameKey,
+  secs,
+  switchedIn,
+  switchesOf,
+  type BoatOf,
+  type Switch,
+} from "@/lib/varsity/raceSwitch";
+import SwitchSheet from "@/components/varsity/team/SwitchSheet";
+import SwitchResults from "@/components/varsity/team/SwitchResults";
 import { removeRaceDay, writeRaceDay } from "@/lib/varsity/raceStore";
 import { saveFailureDetail, type SaveFailure } from "@/lib/saveFailure";
 import SaveState from "@/components/varsity/coach/SaveState";
@@ -84,6 +106,7 @@ import TimeSheet from "@/components/varsity/team/TimeSheet";
 
 const COMBINED = "combined";
 const ATHLETES = "athletes";
+const SWITCHES = "switches";
 
 /* The header row of a list. */
 const TH = "text-[9px] font-semibold uppercase tracking-[0.1em] text-muted";
@@ -114,12 +137,45 @@ function ClassTitle({ title, withButton }: { title: string; withButton?: boolean
   title: it IS its two chips. The note ("Bridge") is the last chip, dashed,
   so a remark never looks like a rower.
 */
-function CrewBoat({ crew, dim = false }: { crew: RaceCrew; dim?: boolean }) {
+/* A switch under its crew: who changed places with whom, and — for the coach
+   — what the times said about it. */
+type SwitchChip = { left: string; right: string; said?: string };
+
+const SWITCH_CHIP =
+  "inline-flex min-h-[24px] max-w-full flex-wrap items-center gap-x-1.5 rounded-[6px] border border-danger-line bg-danger-tint px-2 py-0.5 text-[12px] font-semibold text-danger";
+
+function CrewBoat({
+  crew,
+  dim = false,
+  red,
+  chips,
+  covered,
+}: {
+  crew: RaceCrew;
+  dim?: boolean;
+  /** Keys of the rowers who sat in another boat in the piece before this one — drawn red. */
+  red?: Set<string>;
+  /** The switches made after this piece that this crew carries (see switchChips). */
+  chips?: SwitchChip[];
+  /** Every name in this piece's switches, so a typed note that says the same thing is not drawn twice. */
+  covered?: Set<string>;
+}) {
   const { cox, rowers } = crewMembers(crew);
-  const switches = switchPairs(crew.note);
-  const chip =`flex h-[22px] min-w-0 max-w-full items-center rounded-[6px] border px-[7px] text-[12px] ${
-    dim ? "border-border text-muted" : "border-border bg-surface-2 font-medium text-text"
-  }`;
+  const folk = folkOf(crew); // the same rowers, in the same order, with their keys
+  const noted = switchPairs(crew.note);
+  /* A typed "Switch Dykema/HK" that the crews already show is the same switch;
+     one they do not show (it was written but never made) stays as it was. */
+  const typed = noted
+    ? noted.filter(([a, b]) => !(covered?.has(nameKey(a)) && covered?.has(nameKey(b))))
+    : null;
+  const chip = (switched: boolean) =>
+    `flex h-[22px] min-w-0 max-w-full items-center rounded-[6px] border px-[7px] text-[12px] ${
+      switched
+        ? "border-danger-line bg-danger-tint font-semibold text-danger"
+        : dim
+          ? "border-border text-muted"
+          : "border-border bg-surface-2 font-medium text-text"
+    }`;
   return (
     <div className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1">
       {cox && (
@@ -133,22 +189,38 @@ function CrewBoat({ crew, dim = false }: { crew: RaceCrew; dim?: boolean }) {
           </span>
         </span>
       )}
-      {rowers.map((n, i) => (
-        <span key={i} className={chip}>
-          <span className="truncate">{n}</span>
-        </span>
-      ))}
+      {rowers.map((n, i) => {
+        const switched = !!red?.has(folk[i]?.key ?? "");
+        return (
+          <span key={i} className={chip(switched)}>
+            {switched && <span className="sr-only">Switched in: </span>}
+            <span className="truncate">{n}</span>
+          </span>
+        );
+      })}
       {/* A SWITCH IS RED, WHOLE, AND AN ARROW (owner, 2026-09-27): each pair
           on its own chip on a line of its own — "Richards ⇄ Weldon", the red
-          and the two arrows saying "switch" — never cut off, so the note reads as the change it is, not as a remark. Any
-          other note stays the quiet dashed chip. */}
-      {switches ? (
-        <span className="flex basis-full flex-wrap gap-1 pt-0.5">
-          {switches.map(([a, b], i) => (
-            <span
-              key={i}
-              className="inline-flex min-h-[24px] max-w-full flex-wrap items-center gap-x-1.5 rounded-[6px] border border-danger-line bg-danger-tint px-2 py-0.5 text-[12px] font-semibold text-danger"
-            >
+          and the two arrows saying "switch" — never cut off, so it reads as
+          the change it is, not as a remark. Since 2026-10-01 they are READ
+          OUT OF THE CREWS (raceSwitch.ts) rather than typed, and the coach
+          also gets what the times said. Any other note stays the quiet dashed
+          chip. */}
+      {(chips && chips.length > 0) || (typed && typed.length > 0) ? (
+        <span className="flex basis-full flex-wrap items-center gap-x-2 gap-y-1 pt-0.5">
+          {chips?.map((c, i) => (
+            <span key={`s${i}`} className="inline-flex flex-wrap items-center gap-x-2 gap-y-0.5">
+              <span className={SWITCH_CHIP}>
+                <span className="sr-only">Switch:</span>
+                <span>{c.left}</span>
+                <IconSwap size={13} />
+                <span className="sr-only">switches with</span>
+                <span>{c.right}</span>
+              </span>
+              {c.said && <span className="text-[11px] tabular-nums text-muted">{c.said}</span>}
+            </span>
+          ))}
+          {typed?.map(([a, b], i) => (
+            <span key={`t${i}`} className={SWITCH_CHIP}>
               <span className="sr-only">Switch:</span>
               <span>{a}</span>
               <IconSwap size={13} />
@@ -158,6 +230,7 @@ function CrewBoat({ crew, dim = false }: { crew: RaceCrew; dim?: boolean }) {
           ))}
         </span>
       ) : (
+        !noted &&
         crew.note && (
           <span className="flex h-[22px] min-w-0 max-w-full items-center rounded-[6px] border border-dashed border-border px-[7px] text-[11px] text-muted">
             <span className="truncate">{crew.note}</span>
@@ -169,6 +242,41 @@ function CrewBoat({ crew, dim = false }: { crew: RaceCrew; dim?: boolean }) {
       )}
     </div>
   );
+}
+
+/*
+  THE SWITCHES THAT FOLLOW A PIECE, AS CHIPS UNDER ITS CREWS. Each switch hangs
+  under ONE of its two crews — whichever the board lists first — so it is
+  written once, with its answer after it for the coach: "HK 1.1 s faster".
+  Returns the chips by boat, and every name they mention (for `covered`).
+*/
+function switchChips(
+  after: Switch[],
+  order: Map<string, number>,
+  showResult: boolean,
+  fullName: (id: string) => string | undefined,
+): { byBoat: Map<string, SwitchChip[]>; covered: Set<string> } {
+  const byBoat = new Map<string, SwitchChip[]>();
+  const covered = new Set<string>();
+  for (const s of after) {
+    for (const f of [...s.moved[0], ...s.moved[1]]) covered.add(nameKey(f.name));
+    const said =
+      showResult && s.result.kind === "won"
+        ? `${folkNames(s.result.winners, s.result.losers, fullName)} ${secs(s.result.by)} s faster`
+        : showResult && s.result.kind === "level"
+          ? "level"
+          : undefined;
+    const carrier =
+      (order.get(s.boats[0]) ?? 0) <= (order.get(s.boats[1]) ?? 0) ? s.boats[0] : s.boats[1];
+    const list = byBoat.get(carrier) ?? [];
+    list.push({
+      left: folkNames(s.moved[0], s.moved[1], fullName),
+      right: folkNames(s.moved[1], s.moved[0], fullName),
+      said,
+    });
+    byBoat.set(carrier, list);
+  }
+  return { byBoat, covered };
 }
 
 export default function RaceBoard({
@@ -200,6 +308,8 @@ export default function RaceBoard({
 }) {
   const [picked, setTab] = useState<string>(day.pieces[0]?.id ?? COMBINED);
   const [editing, setEditing] = useState<string | null>(null);
+  /* The piece whose crews are being switched about (SwitchSheet). */
+  const [switching, setSwitching] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   /*
     A WRITE THAT DID NOT LAND (audit, 2026-09-27). The times went on screen at
@@ -241,7 +351,12 @@ export default function RaceBoard({
   const deleteWhy = deleteFailed ? saveFailureDetail(deleteFailed, "only a coach can delete") : null;
 
   const addPiece = () => {
-    const piece = newPiece(day.pieces.length + 1, boats);
+    /* The next piece starts with the crews that rowed the last one, so a
+       switch made earlier is not quietly undone; the lineup is the start
+       only when there is nothing before it. */
+    const last = day.pieces[day.pieces.length - 1];
+    const piece =
+      last && last.crews.length > 0 ? pieceAfter(last, day.pieces.length + 1) : newPiece(day.pieces.length + 1, boats);
     write({ ...day, pieces: [...day.pieces, piece] });
     setTab(piece.id);
     setEditing(piece.id);
@@ -262,13 +377,36 @@ export default function RaceBoard({
   const athletes = allAthletes.filter((ab) => raced.has(ab.badge));
   const ranked = raced.size > 0;
 
+  /* THE SWITCHES of the day, read out of the crews (raceSwitch.ts). Who a
+     rower is comes from the session's lineup boat where there is one. */
+  const boatOf = useMemo<BoatOf>(() => (crew) => boats.find((b) => b.id === crew.boatId), [boats]);
+  const switches = useMemo(() => switchesOf(day, boatOf), [day, boatOf]);
+  /* Their results are the coach's, like the rankings: a rower sees the red
+     names and chips but never a tab that says who beat whom. */
+  const showSwitches = inConsole && switches.length > 0;
+
   // A piece deleted from under the open tab — or Combined on a day that no
   // longer has one: the first piece left is shown.
   const tab =
-    ((picked === COMBINED || picked === ATHLETES) && ranked) || day.pieces.some((p) => p.id === picked)
+    ((picked === COMBINED || picked === ATHLETES) && ranked) ||
+    (picked === SWITCHES && showSwitches) ||
+    day.pieces.some((p) => p.id === picked)
       ? picked
       : (day.pieces[0]?.id ?? COMBINED);
   const piece = day.pieces.find((p) => p.id === tab) ?? null;
+  /* This piece's place in the day: what it follows, the red names, and the
+     chips of the switches that come after it. */
+  const pi = piece ? day.pieces.findIndex((p) => p.id === piece.id) : -1;
+  const boards = piece ? pieceBoards(piece) : [];
+  const red = piece ? switchedIn(day, pi, boatOf) : undefined;
+  const order = new Map<string, number>();
+  for (const cb of boards) for (const c of [...cb.rows.map((r) => r.crew), ...cb.pending]) order.set(c.boatId, order.size);
+  const { byBoat, covered } = switchChips(
+    switches.filter((s) => s.piece === pi),
+    order,
+    inConsole,
+    (id) => rosterById[id]?.name,
+  );
 
   /*
     Combined's columns: the crew, one column per piece, and Total — one line
@@ -307,6 +445,11 @@ export default function RaceBoard({
             </TabButton>
           </>
         )}
+        {showSwitches && (
+          <TabButton on={tab === SWITCHES} onClick={() => setTab(SWITCHES)}>
+            Switches
+          </TabButton>
+        )}
         {inConsole && (
           <button
             type="button"
@@ -339,7 +482,18 @@ export default function RaceBoard({
       {piece && (
         <div className="relative mt-3">
           {inConsole && (
-            <div className="absolute right-0 top-0">
+            <div className="absolute right-0 top-0 flex items-center gap-1.5">
+              {/* A switch is made BETWEEN pieces, so there is nothing to
+                  switch from in the first one. */}
+              {pi > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setSwitching(piece.id)}
+                  className="tap44 flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-[12px] font-medium text-text"
+                >
+                  <IconSwap size={13} /> Switch
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => setEditing(piece.id)}
@@ -349,7 +503,7 @@ export default function RaceBoard({
               </button>
             </div>
           )}
-          {pieceBoards(piece).map((cb, bi) =>
+          {boards.map((cb, bi) =>
             cb.rows.length + cb.pending.length === 1 ? (
               /* The only boat in its class: the crew and its time, with no
                  place and no gap to a winner (see ONE BOAT above). */
@@ -357,7 +511,7 @@ export default function RaceBoard({
                 <ClassTitle title={cb.title} withButton={inConsole && bi === 0} />
                 <div className={`flex items-center gap-3 rounded-2xl border border-border bg-surface px-3 py-3 shadow-card`}>
                   <div className="min-w-0 flex-1">
-                    <CrewBoat crew={cb.rows[0]?.crew ?? cb.pending[0]} dim={!cb.rows[0]} />
+                    <CrewBoat crew={cb.rows[0]?.crew ?? cb.pending[0]} dim={!cb.rows[0]} red={red} covered={covered} />
                   </div>
                   {cb.rows[0] ? (
                     <span className="flex-shrink-0 text-[13px] font-semibold tabular-nums text-text">
@@ -386,7 +540,7 @@ export default function RaceBoard({
                     } ${r.rank === 1 ? "bg-surface-2" : ""}`}
                   >
                     <RankBadge rank={r.rank} />
-                    <CrewBoat crew={r.crew} />
+                    <CrewBoat crew={r.crew} red={red} chips={byBoat.get(r.crew.boatId)} covered={covered} />
                     <span className={`text-right text-[13px] font-semibold tabular-nums text-text`}>{formatClock(r.time)}</span>
                     <span className="text-right text-[12px] tabular-nums text-muted">{r.rank === 1 ? "" : formatMargin(r.toWinner)}</span>
                   </div>
@@ -399,7 +553,7 @@ export default function RaceBoard({
                     }`}
                   >
                     <span />
-                    <CrewBoat crew={c} dim />
+                    <CrewBoat crew={c} dim red={red} chips={byBoat.get(c.boatId)} covered={covered} />
                     <span className="text-[11px] text-muted">no time yet</span>
                   </div>
                 ))}
@@ -443,12 +597,12 @@ export default function RaceBoard({
                     const whole = r.raced === day.pieces.length;
                     return (
                       <div
-                        key={r.boatId}
+                        key={r.key}
                         className={`grid items-center gap-1.5 px-2.5 py-2.5 ${i > 0 ? "border-t border-border" : ""} ${r.rank === 1 && whole ? "bg-surface-2" : ""}`}
                         style={{ gridTemplateColumns: combinedCols }}
                       >
                         <RankBadge rank={r.rank} faint={!whole} />
-                        <CrewBoat crew={crewOf(day, r.boatId)} dim={r.raced === 0} />
+                        <CrewBoat crew={r.crew} dim={r.raced === 0} />
                         {r.perPiece.map((m, k) => (
                           <span key={k} className="text-right text-[12px] tabular-nums text-muted">
                             {m == null ? "—" : formatMargin(m)}
@@ -540,6 +694,9 @@ export default function RaceBoard({
         </div>
       )}
 
+      {/* SWITCHES: who beat whom, from the times. The coach's alone. */}
+      {tab === SWITCHES && showSwitches && <SwitchResults switches={switches} pieces={day.pieces} />}
+
       {/* THE COACH'S WAY OUT OF A WRONG DAY. */}
       {inConsole && (
         <div className="mt-6 flex justify-center">
@@ -586,6 +743,16 @@ export default function RaceBoard({
         </div>
       )}
 
+      {switching && day.pieces.some((p) => p.id === switching) && (
+        <SwitchSheet
+          day={day}
+          k={day.pieces.findIndex((p) => p.id === switching)}
+          boatOf={boatOf}
+          onChange={(next) => void write(next)}
+          onClose={() => setSwitching(null)}
+        />
+      )}
+
       {editing && piece && editing === piece.id && (
         <PieceEditor
           piece={piece}
@@ -608,17 +775,6 @@ export default function RaceBoard({
       )}
     </Sheet>
   );
-}
-
-/* The crew as last written down in any piece — Combined has only the id.
-   The latest piece wins, so a crew re-drawn during the day shows its newest
-   seats. A piece's remark ("Bridge") is not the day's, so it is left off. */
-function crewOf(day: RaceDay, boatId: string): RaceCrew {
-  for (let i = day.pieces.length - 1; i >= 0; i--) {
-    const c = day.pieces[i].crews.find((x) => x.boatId === boatId);
-    if (c) return { ...c, note: "" };
-  }
-  return { boatId, label: boatId, badge: "", start: null, finish: null, total: null, note: "" };
 }
 
 function TabButton({ on, onClick, children }: { on: boolean; onClick: () => void; children: React.ReactNode }) {
@@ -877,7 +1033,10 @@ function PieceEditor({
                   key={b.id}
                   type="button"
                   onClick={() => {
-                    setCrews((cs) => [...cs, crewFromBoat(b)]);
+                    /* Back in with the people it had in the piece before —
+                       the lineup's seats are where the day began. */
+                    const carried = earlier?.crews.find((c) => c.boatId === b.id);
+                    setCrews((cs) => [...cs, carried ? freshCrew(carried) : crewFromBoat(b)]);
                     setAdding(false);
                   }}
                   className="tap44 rounded-full border border-border bg-surface px-3 py-1.5 text-[12px] font-medium text-text"

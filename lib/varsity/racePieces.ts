@@ -317,6 +317,33 @@ export function newPiece(n: number, boats: Boat[]): RacePiece {
   };
 }
 
+/*
+  THE NEXT PIECE STARTS WITH THE CREWS THAT ROWED THE LAST ONE — after a
+  switch, a new piece made from the lineup again would quietly put every
+  rower back where they began. Times and notes are the piece's own and start
+  empty; the people are carried over.
+*/
+export function pieceAfter(prev: RacePiece, n: number): RacePiece {
+  return {
+    id: `piece-${Date.now().toString(36)}-${n}`,
+    name: `Piece ${n}`,
+    crews: prev.crews.map(freshCrew),
+  };
+}
+
+/** The same crew, same people, for another piece: no times, no note. */
+export function freshCrew(c: RaceCrew): RaceCrew {
+  return {
+    ...c,
+    rowers: c.rowers ? [...c.rowers] : undefined,
+    rowerIds: c.rowerIds ? [...c.rowerIds] : undefined,
+    start: null,
+    finish: null,
+    total: null,
+    note: "",
+  };
+}
+
 /* ── Who is in the boat ─────────────────────────────────────────────────── */
 
 /** Does a boat of this class carry a cox? A badge no rigging knows: no. */
@@ -396,6 +423,18 @@ export function crewPeople(crew: RaceCrew, boat?: Boat): RacePerson[] {
 
 /** One key per person: their roster id, or the name when nobody could be told. */
 export const personKey = (p: RacePerson) => p.id ?? `name:${p.name}`;
+
+/*
+  A CREW AS IT WAS ROWED: its boat and the people in it. Two crews that share
+  a boat but not their people are two crews (owner, 2026-09-22: "we count as a
+  new boat the people that swapped") — which is what the Combined board adds
+  up, so a boat that had somebody switched out of it is not summed with the
+  boat it used to be. Without any rower on record it is just the boat.
+*/
+export function crewKey(crew: RaceCrew, boat?: Boat): string {
+  const keys = crewPeople(crew, boat).map(personKey).sort();
+  return keys.length ? `${crew.boatId}|${keys.join("+")}` : crew.boatId;
+}
 
 /*
   A SWITCH, READ OUT OF THE CREW'S NOTE. The timing sheet writes the seat
@@ -492,7 +531,11 @@ export function pieceBoards(piece: RacePiece): ClassBoard[] {
 /* ── The combined board ─────────────────────────────────────────────────── */
 
 export type CombinedRow = {
+  /** The crew as rowed (crewKey): the boat AND the people in it. */
+  key: string;
   boatId: string;
+  /** The crew, as it was written in the first piece it appears in. */
+  crew: RaceCrew;
   label: string;
   /** Sum of the crew's margins to its class winner, over the pieces it has a time for. */
   margins: number;
@@ -510,31 +553,43 @@ export type CombinedBoard = { badge: string; title: string; rows: CombinedRow[] 
   that have a time for EVERY piece; a crew that missed a piece cannot be
   placed against those that did not, so it is listed after them, still with
   what it has, rather than being dropped or handed a zero for the miss.
+
+  A CREW IS ITS BOAT AND ITS PEOPLE (crewKey): once somebody has been switched
+  into a boat, that is a new crew, so it starts a row of its own instead of
+  adding its margin to the crew it replaced.
 */
 export function combinedBoards(pieces: RacePiece[]): CombinedBoard[] {
   const boards = pieces.map(pieceBoards);
   const classes = new Map<string, Map<string, CombinedRow>>();
+  const blank = (key: string, crew: RaceCrew): CombinedRow => ({
+    key,
+    boatId: crew.boatId,
+    crew: { ...crew, note: "" },
+    label: crew.label,
+    margins: 0,
+    perPiece: Array(pieces.length).fill(null),
+    raced: 0,
+    rank: 0,
+  });
 
   boards.forEach((classList, pi) => {
     for (const cb of classList) {
       if (!classes.has(cb.badge)) classes.set(cb.badge, new Map());
       const rows = classes.get(cb.badge)!;
-      const seen = new Set<string>();
       for (const r of cb.rows) {
-        let row = rows.get(r.crew.boatId);
+        const key = crewKey(r.crew);
+        let row = rows.get(key);
         if (!row) {
-          row = { boatId: r.crew.boatId, label: r.crew.label, margins: 0, perPiece: Array(pieces.length).fill(null), raced: 0, rank: 0 };
-          rows.set(r.crew.boatId, row);
+          row = blank(key, r.crew);
+          rows.set(key, row);
         }
         row.perPiece[pi] = r.toWinner;
         row.margins = Math.round((row.margins + r.toWinner) * 100) / 100;
         row.raced++;
-        seen.add(r.crew.boatId);
       }
       for (const c of cb.pending) {
-        if (!rows.has(c.boatId)) {
-          rows.set(c.boatId, { boatId: c.boatId, label: c.label, margins: 0, perPiece: Array(pieces.length).fill(null), raced: 0, rank: 0 });
-        }
+        const key = crewKey(c);
+        if (!rows.has(key)) rows.set(key, blank(key, c));
       }
     }
   });
