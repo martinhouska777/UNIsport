@@ -8,12 +8,16 @@ import ModeSwitcherSheet from "@/components/ModeSwitcherSheet";
 import { useAppState } from "@/components/AppState";
 import { getUniversity } from "@/lib/themes";
 import useTapOrDoubleTap from "@/components/useTapOrDoubleTap";
-import { IconArrowLeft, IconChevronDown, IconSettings } from "@/components/icons";
+import { IconChevronDown, IconSettings } from "@/components/icons";
 
 /*
   Top bar for the Varsity Home and Profile tabs: the varsity mark on the left, and on
-  the right the settings cog plus an "exit" control that returns to the normal
-  app (Profile tab). This is the mode-switch back out of Varsity Mode.
+  the right the settings cog. The mark is the way back out of Varsity Mode (the
+  mode switcher; two taps go straight to the normal app).
+
+  NO EXIT BUTTON (owner, 2026-10-01: "delete the exit from varsity mode, leave
+  it in coaches"). There was a "← Exit" pill beside the cog that went to the
+  normal Profile. The Coach Console keeps its own "← Athlete view".
 
   There is no notifications bell and no light/dark toggle here any more. Both
   are SWITCHES, and every switch in the app lives on the Settings screen behind
@@ -36,13 +40,13 @@ import { IconArrowLeft, IconChevronDown, IconSettings } from "@/components/icons
   settings. Calendar, Workouts and the screens opened from inside a tab (Team,
   All boats — they have their own back arrow) start with their own content, and
   the Calendar's month gets the height. Both tabs are always in the bottom bar,
-  so the switch, the cog and Exit stay one tap away.
+  so the switch and the cog stay one tap away.
 */
 const BAR_ON = ["/varsity/home", "/varsity/profile"];
 
 export default function VarsityTopBar() {
   const pathname = usePathname();
-  const { studentReady, universityKey } = useAppState();
+  const { universityKey } = useAppState();
   const { handleModeTap, switchingMode, closeSwitcher } = useVarsityModeTap();
   // The school's everyday name is DATA (lib/themes.ts), never typed here.
   const school = getUniversity(universityKey)?.shortName ?? "";
@@ -90,17 +94,6 @@ export default function VarsityTopBar() {
         >
           <IconSettings size={16} />
         </Link>
-        {/* Only offered when there IS something to exit to. */}
-        {studentReady && (
-          <Link
-            href="/profile"
-            aria-label="Exit Varsity Mode"
-            className="flex h-8 flex-shrink-0 items-center gap-1 rounded-full border border-border bg-surface px-3 text-[11px] font-medium text-muted"
-          >
-            <IconArrowLeft size={14} />
-            Exit
-          </Link>
-        )}
       </div>
     </div>
 

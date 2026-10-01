@@ -8,11 +8,12 @@
     header  the crest + "Varsity Mode", which opens the mode switcher
     action  Log session (the phone's round + button)
     tabs    Home · Calendar · Workouts · Profile (from VarsityNav — one list)
-    footer  edit profile (on Profile only), settings, light/dark, Exit
+    footer  settings, light/dark — no Exit (owner, 2026-10-01: the way out is
+            the crest; the Coach Console keeps its "Athlete view")
 */
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import SideRail, { railIconCls, railPillCls } from "@/components/SideRail";
+import SideRail, { railIconCls } from "@/components/SideRail";
 import VarsityCrest from "@/components/varsity/VarsityCrest";
 import ModeSwitcherSheet from "@/components/ModeSwitcherSheet";
 import { ThemeModeToggle } from "@/components/ThemeMode";
@@ -20,16 +21,11 @@ import { useAppState } from "@/components/AppState";
 import { getUniversity } from "@/lib/themes";
 import { varsityTabs } from "@/components/varsity/VarsityNav";
 import { useVarsityModeTap } from "@/components/varsity/VarsityTopBar";
-import {
-  IconArrowLeft,
-  IconChevronDown,
-  IconPlus,
-  IconSettings,
-} from "@/components/icons";
+import { IconChevronDown, IconPlus, IconSettings } from "@/components/icons";
 
 export default function VarsitySideNav() {
   const pathname = usePathname();
-  const { studentReady, universityKey } = useAppState();
+  const { universityKey } = useAppState();
   const { handleModeTap, switchingMode, closeSwitcher } = useVarsityModeTap();
   // The school's everyday name is DATA (lib/themes.ts), never typed here.
   const school = getUniversity(universityKey)?.shortName ?? "";
@@ -76,21 +72,13 @@ export default function VarsitySideNav() {
           tour: `tab-${tab.href}`,
         }))}
         footer={
-          <>
-            <div className="flex items-center gap-2">
-              {/* Edit profile lives in Settings now (owner, 2026-09-19). */}
-              <Link href="/settings" aria-label="Settings" className={railIconCls}>
-                <IconSettings size={16} />
-              </Link>
-              <ThemeModeToggle />
-            </div>
-            {studentReady && (
-              <Link href="/profile" aria-label="Exit Varsity Mode" className={railPillCls}>
-                <IconArrowLeft size={14} />
-                Exit
-              </Link>
-            )}
-          </>
+          <div className="flex items-center gap-2">
+            {/* Edit profile lives in Settings now (owner, 2026-09-19). */}
+            <Link href="/settings" aria-label="Settings" className={railIconCls}>
+              <IconSettings size={16} />
+            </Link>
+            <ThemeModeToggle />
+          </div>
         }
       />
       {switchingMode && <ModeSwitcherSheet current="varsity" onClose={closeSwitcher} />}
