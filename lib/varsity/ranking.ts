@@ -207,9 +207,8 @@ export type WaterRankRow = {
  * such class is not a column at all. A place is within the class of the boat
  * the rower sat in (a 1st in the pairs is not a 1st in the fours, so the
  * class goes with it); the crew with the fastest time wins, and so does any
- * crew level with it to the hundredth. No coxes, as on the race board's
- * Athletes tab: a cox carries whichever boat they steer, so their wins would
- * be the boat's, not theirs.
+ * crew level with it to the hundredth. No coxes: a cox carries whichever
+ * boat they steer, so their wins would be the boat's, not theirs.
  *
  * People are WHO they are, not the surname the sheet wrote (crewPeople): the
  * crew's saved roster ids, or the seat in that session's lineup boat

@@ -24,17 +24,11 @@
   height there won't be enough space, so then two lines"). On Combined the
   margins are COLUMNS — Piece 1, Piece 2, Total — smallest total on top; a
   piece the crew did not race is a dash, and nothing is written about it.
-  ATHLETES reads the same day by person, and is SPLIT BY CLASS like the rest
-  — the fours' people, then the pairs' — because a gap in a four and a gap
-  in a pair are gaps to different winners. Crews are reshuffled between
-  pieces, so each ROWER is listed with the margin their boat carried in every
-  piece, who they sat with, and the AVERAGE — the owner's pick for "how each
-  person finished". NO COXES on it (owner, 2026-09-22): the board reads a
-  margin as something a person carried, and a cox carries whichever boat they
-  steer, so ranking them beside the rowers said the cox of the winning four
-  was the fastest athlete of the day. They are still the NAME of their crew on
-  the piece boards and on Combined, and they are in the "with" column beside
-  every rower they steered. Nothing else is excluded; this is the workout.
+  There used to be an ATHLETES tab too — the same day read by person, each
+  rower's average margin. It was removed (owner, 2026-10-01: "it will be in
+  rankings for the workout anyway and in boats ranking"): the coach's
+  Ranking reads the water by person across the month or semester, and the
+  Switches tab says who beat whom.
 
   SEAT RACING LIVES HERE TOO (owner, 2026-10-01: "build the swap into
   workouts and remove seat races"). From the second piece on, the coach's
@@ -63,7 +57,6 @@ import Sheet from "@/components/varsity/Sheet";
 import { IconPencil, IconPlus, IconSwap, IconTrash, IconX } from "@/components/icons";
 import { rosterById, type Boat } from "@/lib/varsity/coachLineup";
 import {
-  athleteBoards,
   classTitle,
   combinedBoards,
   crewFromBoat,
@@ -78,7 +71,6 @@ import {
   pieceBoards,
   piecesStartAround,
   wheelStart,
-  withLine,
   type RaceCrew,
   type RaceDay,
   type RacePiece,
@@ -103,7 +95,6 @@ import RankBadge from "@/components/varsity/team/RankBadge";
 import TimeSheet from "@/components/varsity/team/TimeSheet";
 
 const COMBINED = "combined";
-const ATHLETES = "athletes";
 const SWITCHES = "switches";
 
 /* The header row of a list. */
@@ -262,16 +253,13 @@ export default function RaceBoard({
   /*
     ONE BOAT IS NOT A RACE (owner, 2026-09-27: "if there is just one boat,
     then you don't need to do a leaderboard there"). A class with a single
-    crew — the eight, most mornings — is left off Combined and Athletes, where
-    it could only ever be "1st, 0.00"; on a piece it is the crew and its time.
-    A day with no class of two or more has no Combined or Athletes at all.
+    crew — the eight, most mornings — is left off Combined, where it could
+    only ever be "1st, 0.00"; on a piece it is the crew and its time. A day
+    with no class of two or more has no Combined at all.
   */
   const allCombined = useMemo(() => combinedBoards(day.pieces), [day.pieces]);
-  /* The session's lineup tells two rowers with one surname apart (crewPeople). */
-  const allAthletes = useMemo(() => athleteBoards(day.pieces, boats), [day.pieces, boats]);
   const raced = new Set(allCombined.filter((cb) => cb.rows.length > 1).map((cb) => cb.badge));
   const combined = allCombined.filter((cb) => raced.has(cb.badge));
-  const athletes = allAthletes.filter((ab) => raced.has(ab.badge));
   const ranked = raced.size > 0;
 
   /* THE SWITCHES of the day, read out of the crews (raceSwitch.ts). Who a
@@ -285,7 +273,7 @@ export default function RaceBoard({
   // A piece deleted from under the open tab — or Combined on a day that no
   // longer has one: the first piece left is shown.
   const tab =
-    ((picked === COMBINED || picked === ATHLETES) && ranked) ||
+    (picked === COMBINED && ranked) ||
     (picked === SWITCHES && showSwitches) ||
     day.pieces.some((p) => p.id === picked)
       ? picked
@@ -336,14 +324,9 @@ export default function RaceBoard({
           </TabButton>
         ))}
         {day.pieces.length > 0 && ranked && (
-          <>
-            <TabButton on={tab === COMBINED} onClick={() => setTab(COMBINED)}>
-              Combined
-            </TabButton>
-            <TabButton on={tab === ATHLETES} onClick={() => setTab(ATHLETES)}>
-              Athletes
-            </TabButton>
-          </>
+          <TabButton on={tab === COMBINED} onClick={() => setTab(COMBINED)}>
+            Combined
+          </TabButton>
         )}
         {showSwitches && (
           <TabButton on={tab === SWITCHES} onClick={() => setTab(SWITCHES)}>
@@ -512,77 +495,6 @@ export default function RaceBoard({
                           className={`text-right text-[13px] font-semibold tabular-nums ${whole ? "text-text" : "text-muted"}`}
                         >
                           {r.raced ? formatMargin(r.margins) : "—"}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* ATHLETES: the same day read by person, a board per class — the
-          fours' people, then the pairs' — with the margin of the boat each
-          one sat in, piece by piece, who they sat with, and the average. */}
-      {tab === ATHLETES && day.pieces.length > 0 && (
-        <div className="mt-3">
-          {athletes.length === 0 && (
-            <div className="rounded-2xl border border-dashed border-border bg-surface px-4 py-8 text-center text-[12px] text-muted">
-              No times yet.
-            </div>
-          )}
-          {athletes.map((ab) => (
-            <div key={ab.badge} className="mb-4">
-              <ClassTitle title={ab.title} />
-              <div className={`overflow-x-auto overscroll-x-contain rounded-2xl border border-border bg-surface shadow-card`}>
-                <div style={{ minWidth: combinedMin }}>
-                  <div
-                    className={`grid gap-1.5 border-b border-border px-2.5 py-2 ${TH}`}
-                    style={{ gridTemplateColumns: combinedCols }}
-                  >
-                    <span />
-                    <span>Athlete</span>
-                    {day.pieces.map((p) => (
-                      <span key={p.id} className="truncate text-right">
-                        {p.name}
-                      </span>
-                    ))}
-                    <span className="text-right">Avg</span>
-                  </div>
-                  {ab.rows.map((a, i) => {
-                    const whole = a.raced === day.pieces.length;
-                    return (
-                      <div
-                        key={a.key}
-                        className={`grid items-center gap-1.5 px-2.5 py-2.5 ${i > 0 ? "border-t border-border" : ""} ${a.rank === 1 && whole ? "bg-surface-2" : ""}`}
-                        style={{ gridTemplateColumns: combinedCols }}
-                      >
-                        <RankBadge rank={a.rank} faint={!whole} />
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-1.5">
-                            {/* No cox chip: athleteBoards no longer makes a
-                                row for a cox, so this could only ever have
-                                been an unreachable branch. */}
-                            <span className="truncate text-[13px] font-semibold text-text">{a.name}</span>
-                          </div>
-                          {/* Who they sat with — written once for a crew
-                              that stayed together, and again only where it
-                              changed (withLine, racePieces.ts). */}
-                          {withLine(a.with) && (
-                            <div className="mt-0.5 truncate text-[11px] text-muted">{withLine(a.with)}</div>
-                          )}
-                        </div>
-                        {a.perPiece.map((m, k) => (
-                          <span key={k} className="text-right text-[12px] tabular-nums text-muted">
-                            {m == null ? "—" : formatMargin(m)}
-                          </span>
-                        ))}
-                        <span
-                          className={`text-right text-[13px] font-semibold tabular-nums ${whole ? "text-text" : "text-muted"}`}
-                        >
-                          {a.raced ? formatMargin(a.average) : "—"}
                         </span>
                       </div>
                     );
