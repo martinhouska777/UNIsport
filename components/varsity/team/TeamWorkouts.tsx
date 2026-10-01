@@ -487,13 +487,14 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
               the full width of the screen above the search; the owner cut it
               (2026-09-21: "leave it just the search button"). It is the only
               way in to timing a race, so it is still here — as a plus on the
-              end of the search row, out of the way of the list. */}
+              end of the search row, out of the way of the list — filled in the
+              school's colour since 2026-10-01 ("make the + red"). */}
           {inConsole && side === "water" && (
             <button
               type="button"
               onClick={() => setPickingRace(true)}
               aria-label="Time race pieces"
-              className="tap44 press-icon flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border border-border bg-surface text-muted active:bg-surface-2"
+              className="tap44 press-icon flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary text-primary-contrast"
             >
               <IconPlus size={16} />
             </button>

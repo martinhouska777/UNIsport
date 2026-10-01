@@ -316,8 +316,11 @@ export default function RaceBoard({
       {/* PIECE 1 | PIECE 2 | COMBINED — and, for the coach, a + for the next one.
           A plain row of tabs that swipes sideways when it runs out of room,
           with no scroll bar under it (owner, 2026-10-01: "just a tab bar",
-          not a website's scroll bar with arrows). */}
-      <div ref={tabRow} className="chip-row mt-3 flex items-center gap-1.5 overflow-x-auto pb-1">
+          not a website's scroll bar with arrows). It moves sideways only:
+          the buttons' 44px touch area poked 2px out of the bottom of the row,
+          which let it be nudged up and down, so the row is 2px taller (pb-1.5)
+          and its vertical overflow is shut. */}
+      <div ref={tabRow} className="chip-row mt-3 flex items-center gap-1.5 overflow-x-auto overflow-y-hidden pb-1.5">
         {day.pieces.map((p) => (
           <TabButton key={p.id} on={tab === p.id} onClick={() => setTab(p.id)}>
             {p.name}
@@ -333,12 +336,15 @@ export default function RaceBoard({
             Switches
           </TabButton>
         )}
+        {/* The coach's + is filled in the school's colour (owner, 2026-10-01:
+            "make the + red in the water part") — the board's one button
+            in colour besides the red of the switches. */}
         {inConsole && (
           <button
             type="button"
             onClick={addPiece}
             aria-label="Add a piece"
-            className="tap44 press-icon flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border border-border bg-surface-2 text-muted"
+            className="tap44 press-icon flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary text-primary-contrast"
           >
             <IconPlus size={14} />
           </button>
