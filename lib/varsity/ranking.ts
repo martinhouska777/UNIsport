@@ -29,6 +29,9 @@
       count of planned sessions done (athleteStats.planSlots, the one count
       their Statistics use), the sessions logged on top, and the days they
       said they were out ("who was sick").
+    • SWITCHES (2026-10-01): seat racing, read out of the race pieces — who
+      won their switches, one rower against one, and by how many seconds. The
+      old Seat races screen is gone; this is its "Rowers" table.
     • THE WINDOW is the team statistics' own Month and Semester, or two dates
       ("1. a month 2. semester 3. pick dates"), so "a month" is the same four
       weeks on both screens.
@@ -44,19 +47,22 @@ import { buildBoard, onTheWater, type TeamWorkout } from "./teamBoard";
 import type { TeamResult } from "./resultsStore";
 import { rosterById, type Boat } from "./coachLineup";
 import { parseSessionKey, type SessionMap } from "./coachPlan";
-import { crewPeople, personKey, pieceBoards, type RaceDay } from "./racePieces";
+import { crewPeople, personKey, pieceBoards, type RaceCrew, type RaceDay } from "./racePieces";
+import { switchesOf, type Folk } from "./raceSwitch";
 import type { LogEntry } from "./logStore";
 
 /* ── The lists ──────────────────────────────────────────────────────────── */
 
-export type RankingList = "erg" | "water" | "consistency";
+export type RankingList = "erg" | "water" | "consistency" | "switches";
 
-/** The three lists, in the owner's order: "erg rankings and water rankings",
-    and consistency as "a third list". */
+/** The lists, in the owner's order: "erg rankings and water rankings",
+    consistency as "a third list", and since 2026-10-01 the seat-race
+    switches, which used to be a screen of their own. */
 export const rankingLists: { key: RankingList; label: string }[] = [
   { key: "erg", label: "Erg" },
   { key: "water", label: "Water" },
   { key: "consistency", label: "Consistency" },
+  { key: "switches", label: "Switches" },
 ];
 
 /* ── The window ─────────────────────────────────────────────────────────── */
@@ -257,6 +263,64 @@ export function waterRanking(
     (a, b) => a.wins === b.wins,
   );
   return { rows, pieces: raced.map((r) => r.piece) };
+}
+
+/* ── The switch ranking ─────────────────────────────────────────────────── */
+
+export type SwitchRankRow = {
+  /** Who they are — their roster id, or the sheet's name (personKey). */
+  key: string;
+  name: string;
+  won: number;
+  lost: number;
+  /** Seconds won across their switches, less the seconds lost. */
+  net: number;
+  rank: number;
+};
+
+const round2 = (n: number) => Math.round(n * 100) / 100;
+
+/**
+ * SEAT RACING OVER A STRETCH OF TIME (owner, 2026-10-01: seat races moved into
+ * the race pieces, so what the old screen's "Rowers" table said lives here).
+ *
+ * Every switch in the window that the times could score, ONE ROWER AGAINST ONE
+ * (raceSwitch.ts): a win for the rower who made their boat faster, a loss for
+ * the one they replaced, and the seconds between them. Two or more rowers
+ * traded at once are a result for the groups, not for any one of them, so they
+ * are not counted here; a switch with a time missing, or with other changes in
+ * the same boats, is not either. Most wins first; level on wins, fewer losses;
+ * level on both, the same place. Nobody who never switched is listed.
+ */
+export function switchRanking(races: RaceDay[], span: Span, boats: Record<string, Boat[]> = {}): SwitchRankRow[] {
+  const people = new Map<string, SwitchRankRow>();
+  const rowFor = (f: Folk) => {
+    let row = people.get(f.key);
+    if (!row) {
+      row = { key: f.key, name: (f.id && rosterById[f.id]?.name) || f.name, won: 0, lost: 0, net: 0, rank: 0 };
+      people.set(f.key, row);
+    }
+    return row;
+  };
+  for (const day of races) {
+    const parsed = parseSessionKey(day.dayKey);
+    if (!parsed || !within(parsed.date, span)) continue;
+    const boatOf = (crew: RaceCrew) => (boats[day.dayKey] ?? []).find((b) => b.id === crew.boatId);
+    for (const s of switchesOf(day, boatOf)) {
+      const r = s.result;
+      if (r.kind !== "won" || r.winners.length !== 1 || r.losers.length !== 1) continue;
+      const w = rowFor(r.winners[0]);
+      const l = rowFor(r.losers[0]);
+      w.won += 1;
+      w.net = round2(w.net + r.by);
+      l.lost += 1;
+      l.net = round2(l.net - r.by);
+    }
+  }
+  return numberPlaces(
+    [...people.values()].sort((a, b) => b.won - a.won || a.lost - b.lost || b.net - a.net || a.name.localeCompare(b.name)),
+    (a, b) => a.won === b.won && a.lost === b.lost,
+  );
 }
 
 /* ── Which session a column was ─────────────────────────────────────────── */

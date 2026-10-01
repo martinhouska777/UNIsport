@@ -7,10 +7,12 @@
   Coaches only: TeamWorkouts offers it in the console and nowhere else, and
   the console's Workouts tab is a coach's alone.
 
-  THREE LISTS, never one score (lib/varsity/ranking.ts): ERG — points by place
-  on every ranked erg test; WATER — pieces won on the timing sheets; and
+  FOUR LISTS, never one score (lib/varsity/ranking.ts): ERG — points by place
+  on every ranked erg test; WATER — pieces won on the timing sheets;
   CONSISTENCY — the plan's sessions done, the ones logged on top, and the days
-  out. Then the window: Month, Semester, or two dates.
+  out; and SWITCHES — seat racing, who won the switches made between pieces
+  (2026-10-01; it was a screen of its own). Then the window: Month, Semester,
+  or two dates.
 
   A LIST, NOT A LEADERBOARD (owner, 2026-09-27). It was dressed for one round
   like the students' boards — a podium, medals — and the owner took it back
@@ -60,6 +62,7 @@ import { fetchPlan } from "@/lib/varsity/planStore";
 import { publishedSessions } from "@/lib/varsity/athleteHome";
 import { fetchOutDaysBetween } from "@/lib/varsity/squadDaysOut";
 import { classTitle } from "@/lib/varsity/racePieces";
+import { secs } from "@/lib/varsity/raceSwitch";
 import { dayKeyLabel, sessionLabel } from "@/lib/varsity/coachPlan";
 import { TEAM_CUSTOM_RANGE, customTeamRange, teamRangeByKey, toIso } from "@/lib/varsity/teamStats";
 import {
@@ -72,6 +75,7 @@ import {
   rankingRanges,
   rankingSpan,
   sessionRuns,
+  switchRanking,
   waterRanking,
   withoutRest,
   type RankingList,
@@ -401,6 +405,8 @@ export default function TeamRanking({
 
   /* ── Water ── */
   const water = useMemo(() => waterRanking(races, span, raceBoats), [races, span, raceBoats]);
+  /* ── Switches: seat racing, read out of the same timing sheets ── */
+  const switches = useMemo(() => switchRanking(races, span, raceBoats), [races, span, raceBoats]);
 
   /* ── Consistency: the squad's logs, the published plan, the days out ── */
   const { membership } = useMembership();
@@ -493,6 +499,9 @@ export default function TeamRanking({
   /* Consistency's plan count rides UNDER its percentage rather than in a
      column of its own: four columns of numbers cut every full name short. */
   const consCols = "1.6rem minmax(0,1fr) 2.9rem 2.7rem 2.2rem";
+  /* Switches: wins first, then the losses and the seconds, which are only
+     numbers to read beside them. */
+  const switchCols = "1.6rem minmax(0,1fr) 2.6rem 2.6rem 3.2rem";
 
   const rangeOptions = [
     ...rankingRanges.map((r) => ({ key: r.key, label: r.label })),
@@ -504,22 +513,27 @@ export default function TeamRanking({
       {/* ERG | WATER | CONSISTENCY, and the window beside it. */}
       <div data-tour="coach-ranking-lists" className="flex flex-wrap items-center justify-between gap-2">
         <Segmented options={rankingLists} value={list} onChange={setList} ariaLabel="Ranking" />
-        <Dropdown
-          label={range.label}
-          options={rangeOptions}
-          value={range.key}
-          open={menuOpen}
-          onOpen={setMenuOpen}
-          align="right"
-          onPick={(k) => {
-            setMenuOpen(false);
-            if (k === TEAM_CUSTOM_RANGE) setPicking(true);
-            else {
-              setCustom(null);
-              setRangeKey(k);
-            }
-          }}
-        />
+        {/* ml-auto: with four lists the window no longer always fits beside
+            them on a phone, and when it drops to a line of its own it stays
+            at the right, where its menu opens from. */}
+        <div className="ml-auto">
+          <Dropdown
+            label={range.label}
+            options={rangeOptions}
+            value={range.key}
+            open={menuOpen}
+            onOpen={setMenuOpen}
+            align="right"
+            onPick={(k) => {
+              setMenuOpen(false);
+              if (k === TEAM_CUSTOM_RANGE) setPicking(true);
+              else {
+                setCustom(null);
+                setRangeKey(k);
+              }
+            }}
+          />
+        </div>
       </div>
 
       <div className="mt-3">
@@ -600,6 +614,36 @@ export default function TeamRanking({
                 const run = grownRun(waterRuns);
                 return run && grown ? <GrownWorkout run={run} top={grown.top} onClose={() => grow(null)} /> : null;
               })()}
+            </div>
+          ))}
+
+        {/* ── SWITCHES ── seat racing: who won their switches, who lost
+            them, and by how many seconds in all. Water knows people by
+            their seat, not their account, so a row has no page to open. */}
+        {list === "switches" &&
+          (switches.length === 0 ? (
+            <div className={EMPTY}>No scored switches in {noneIn(range.key, range.label)}.</div>
+          ) : (
+            <div className={CARD}>
+              <div className={`grid items-center ${GAP} border-b border-border px-2.5 py-2.5 ${HEAD}`} style={{ gridTemplateColumns: switchCols }}>
+                <span />
+                <span>Athlete</span>
+                <span className="text-center">Won</span>
+                <span className="text-center">Lost</span>
+                <span className="text-center">Secs</span>
+              </div>
+              {switches.map((r, i) => (
+                <Row key={r.key} i={i} first={r.rank === 1 && r.won > 0} cols={switchCols}>
+                  <Place rank={r.rank} scored={r.won > 0} />
+                  <Who name={r.name} />
+                  <span className="text-center text-[14px] font-bold tabular-nums text-text">{r.won}</span>
+                  <span className={`text-center text-[12px] tabular-nums ${r.lost > 0 ? "font-semibold text-text" : "text-muted"}`}>{r.lost}</span>
+                  <span className="text-center text-[12px] tabular-nums text-muted">
+                    {r.net > 0 ? "+" : r.net < 0 ? "−" : ""}
+                    {secs(r.net)}
+                  </span>
+                </Row>
+              ))}
             </div>
           ))}
 

@@ -19,8 +19,10 @@
   any more. It lives behind the gear in the top bar (/varsity/coach/settings),
   because it is a settings job you do once, not something you look at daily.
 
-  SEAT RACES (owner, 2026-09-18): a coach gets a Team | Seat races switch on
-  top; the second half is components/varsity/coach/team/SeatRacesScreen.
+  SEAT RACES ARE NOT HERE ANY MORE (owner, 2026-10-01). The Team | Seat races
+  switch and its screen are gone: seat racing is built into the race pieces on
+  the Workouts tab (the coach's Switch button, the Switches tab, and the
+  Switches list under Ranking — lib/varsity/raceSwitch.ts).
 
   Accounts are not linked to the (still mock) roster yet, so the two are matched
   by NAME — the same stand-in lib/varsity/demoAthlete.ts and lineupStore.ts use.
@@ -29,7 +31,6 @@
 */
 import { useEffect, useMemo, useState } from "react";
 import TeamScreen from "@/components/varsity/team/TeamScreen";
-import SeatRacesScreen from "@/components/varsity/coach/team/SeatRacesScreen";
 import NoteEditor from "@/components/varsity/coach/notes/NoteEditor";
 import Sheet from "@/components/varsity/Sheet";
 import { useMembership } from "@/components/varsity/useMembership";
@@ -41,7 +42,6 @@ import {
   type TeamMember,
 } from "@/lib/varsity/notesStore";
 import { IconPencil } from "@/components/icons";
-import Segmented from "@/components/ui/Segmented";
 
 export default function CoachTeamPage() {
   const { membership, loading } = useMembership();
@@ -55,8 +55,6 @@ export default function CoachTeamPage() {
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [writing, setWriting] = useState<TeamMember | null>(null);
   const [notJoined, setNotJoined] = useState<string | null>(null);
-  const [view, setView] = useState<"team" | "races">("team");
-  const seatRaces = !!role && can.buildPlan(role);
 
   useEffect(() => {
     if (!teamId || !role || !can.readTraining(role)) return;
@@ -109,70 +107,50 @@ export default function CoachTeamPage() {
 
   return (
     <>
-      {seatRaces && (
-        <div className="mx-auto w-full max-w-screen-sm px-4 pt-4">
-          <Segmented
-            size="md"
-            full
-            ariaLabel="Team or seat races"
-            options={[
-              { key: "team", label: "Team" },
-              { key: "races", label: "Seat races" },
-            ]}
-            value={view}
-            onChange={(k) => setView(k)}
-          />
-        </div>
-      )}
-
-      {view === "races" ? (
-        <SeatRacesScreen />
-      ) : (
-        <TeamScreen
-          /* Just the roster — Workouts is its own tab in the console. */
-          only="roster"
-          /* THE CONSOLE. It is what puts the squad's week above the roster
-             (components/varsity/team/TeamWeekStats) — a rower's own Team tab
-             does not get it, on the owner's call. */
-          inConsole
-          /* A coach (not a captain) gets the note button in each row. */
-          rowAction={
-            writesNotes
-              ? (a) => {
-                  const member = memberByRosterId[a.id];
-                  const hasNote = !!(member && notes[member.id]?.trim());
-                  return (
-                    <button
-                      type="button"
-                      onClick={() =>
-                        member ? setWriting(member) : setNotJoined(a.name)
-                      }
-                      aria-label={`${hasNote ? "Edit the" : "Write a"} technical note for ${a.name}`}
-                      /* THE PENCIL IS THE SCHOOL'S COLOUR — crimson at Harvard,
-                       navy at Yale — and never a fixed red (owner, 2026-09-17:
-                       "I want it in red, so it's working… the colour would be
-                       according to the school"). It used to be grey until a
-                       note existed, which read as switched off. It is live in
-                       every row now, and a row that already HAS a note is the
-                       filled one. */
-                      className={`tap44 press-icon flex h-8 w-8 items-center justify-center rounded-lg border text-primary ${
-                        hasNote
-                          ? "border-primary-line bg-primary-tint"
-                          : "border-border bg-surface-2"
-                      }`}
-                    >
-                      <IconPencil size={14} />
-                    </button>
-                  );
-                }
-              : undefined
-          }
-          athleteHref={(a) => {
-            const userId = accounts[a.id];
-            return userId ? `/varsity/coach/athlete/${userId}` : null;
-          }}
-        />
-      )}
+      <TeamScreen
+        /* Just the roster — Workouts is its own tab in the console. */
+        only="roster"
+        /* THE CONSOLE. It is what puts the squad's week above the roster
+           (components/varsity/team/TeamWeekStats) — a rower's own Team tab
+           does not get it, on the owner's call. */
+        inConsole
+        /* A coach (not a captain) gets the note button in each row. */
+        rowAction={
+          writesNotes
+            ? (a) => {
+                const member = memberByRosterId[a.id];
+                const hasNote = !!(member && notes[member.id]?.trim());
+                return (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      member ? setWriting(member) : setNotJoined(a.name)
+                    }
+                    aria-label={`${hasNote ? "Edit the" : "Write a"} technical note for ${a.name}`}
+                    /* THE PENCIL IS THE SCHOOL'S COLOUR — crimson at Harvard,
+                     navy at Yale — and never a fixed red (owner, 2026-09-17:
+                     "I want it in red, so it's working… the colour would be
+                     according to the school"). It used to be grey until a
+                     note existed, which read as switched off. It is live in
+                     every row now, and a row that already HAS a note is the
+                     filled one. */
+                    className={`tap44 press-icon flex h-8 w-8 items-center justify-center rounded-lg border text-primary ${
+                      hasNote
+                        ? "border-primary-line bg-primary-tint"
+                        : "border-border bg-surface-2"
+                    }`}
+                  >
+                    <IconPencil size={14} />
+                  </button>
+                );
+              }
+            : undefined
+        }
+        athleteHref={(a) => {
+          const userId = accounts[a.id];
+          return userId ? `/varsity/coach/athlete/${userId}` : null;
+        }}
+      />
 
       {notJoined && (
         <Sheet title="Technical note" onClose={() => setNotJoined(null)}>

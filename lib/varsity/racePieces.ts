@@ -647,8 +647,10 @@ export type AthleteRow = {
   they spent in the other boat. Smallest average on top; a person who missed
   a piece of their class is listed after those who rowed them all, with what
   they have. Nothing is excluded and nothing is judged — a "Bridge" still
-  counts; the coach knows what it means. Selection proper (seat racing) is a
-  different screen.
+  counts; the coach knows what it means. Seat racing — who beat whom when two
+  rowers changed boats — is read from the same pieces (raceSwitch.ts); a
+  rower who was switched into a boat is on this board with the margin of the
+  boat they sat in, piece by piece, wherever they sat.
   People are told apart by WHO they are, not by the surname the sheet wrote
   (crewPeople, 2026-09-27): two rowers who share one are two rows, each shown
   by their full name; everybody else keeps the sheet's short surname.
