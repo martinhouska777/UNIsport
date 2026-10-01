@@ -11,20 +11,25 @@
   built a session field by field. The student walk was cut to the bone the
   same day, and this one followed it.)
 
+  THE SECOND CUT (owner, 2026-09-30): Today, Plan and Lineup are easy — one
+  plain line each, and the lineup builder is no longer opened. Workouts then
+  explains the ranking, Team shows the squad's averages and says a tap opens a
+  person's profile, and the Settings step is gone ("it's useless" — the gear
+  is still named in the closing card, which is where the replay lives).
+
   IT MUST SURVIVE AN EMPTY CONSOLE — no block, no lineups, maybe no athletes.
     Today      the Today section, which is there with or without a plan
     Plan       the block's card (Publish lives on it) and the first day — or,
                with no block yet, the "No training blocks yet" card, which
                wears the same anchor
-    Lineup     the first day of the week, always there; its AM opens a builder
-               that always has an Add Boat and a pool
+    Lineup     the first day of the week, always there
     Workouts   the Erg | Water | Ranking switch, plus the first row if any
-    Team       the first rower
-    Settings   the gear
+    Ranking    the same switch, plus the list switch under it
+    Team       the squad's week card (a dash when nobody logged), then the
+               first rower
 
-  IT CHANGES NOTHING. It opens a practice's builder but seats nobody, adds no
-  boat and publishes nothing; walk out while it is open and `closeOnExit`
-  presses its "Days" back.
+  IT CHANGES NOTHING AND OPENS NOTHING — it only moves between the tabs and
+  presses the Ranking switch, so there is nothing to close on the way out.
 
   CAPTAINS DO NOT GET THIS. A captain's console is the squad screen and
   settings — most of these steps point at tabs they do not have. The gate in
@@ -73,15 +78,7 @@ const steps: TourStep[] = [
     route: LINEUP,
     anchor: "coach-lineup-first-day",
     title: "Lineup",
-    body: "Every practice of the week, and whether its lineup is out.",
-  },
-  {
-    press: "coach-lineup-first-practice",
-    route: LINEUP,
-    anchor: "coach-lineup-add-boat",
-    alsoAnchor: "coach-lineup-count",
-    title: "Seat the boats",
-    body: "Add a boat and tap rowers from the pool into the seats. Publish, and everyone sees their seat on Home.",
+    body: "Seat the boats for every practice. Publish, and everyone sees their seat on Home.",
   },
 
   /* ── Workouts ─────────────────────────────────────────────────────────── */
@@ -98,23 +95,21 @@ const steps: TourStep[] = [
     anchor: "varsity-workouts-switch",
     alsoAnchor: "coach-ranking-lists",
     title: "Ranking",
-    body: "The squad in order: erg, water, and who sticks to the plan.",
+    body: "Ranks every athlete by their erg tests, the race pieces they win on the water, and how much of the plan they did.",
   },
 
   /* ── Team ─────────────────────────────────────────────────────────────── */
   {
     press: tab(TEAM),
     route: TEAM,
-    anchor: "coach-team-first-rower",
+    anchor: "coach-team-week",
     title: "Team",
-    body: "Tap anyone to see their training. The pencil writes them a note.",
+    body: "The squad’s average week: how far each rower went and how long they trained.",
   },
-
-  /* ── The gear ─────────────────────────────────────────────────────────── */
   {
-    anchor: "coach-settings",
-    title: "Settings",
-    body: "Invite the squad with one link, and let them in.",
+    anchor: "coach-team-first-rower",
+    title: "Profiles",
+    body: "Tap anyone to see their profile. The pencil writes them a note.",
   },
 
   {
@@ -126,11 +121,11 @@ const steps: TourStep[] = [
 
 /*
   The id stays "coach" — it is what the seen flag is keyed on, so changing it
-  would re-offer the walk to every coach who has already had it. Walk out while
-  a practice's builder is open and this presses its "Days" back.
+  would re-offer the walk to every coach who has already had it. The walk
+  opens nothing it would have to shut, so `closeOnExit` is empty.
 */
 export const coachTour: Tour = {
   id: "coach",
   steps,
-  closeOnExit: ["coach-lineup-back"],
+  closeOnExit: [],
 };

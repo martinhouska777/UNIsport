@@ -516,7 +516,7 @@ export default function TeamScreen({
       {tab === "roster" ? (
         <>
           {inConsole && (
-            <div className={only ? "" : "mt-3"}>
+            <div data-tour="coach-team-week" className={only ? "" : "mt-3"}>
               <TeamWeekStats week={week} />
             </div>
           )}
