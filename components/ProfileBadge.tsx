@@ -4,14 +4,16 @@
 */
 import { badges, type BadgeKind } from "@/lib/badges";
 
-export default function ProfileBadge({ kind }: { kind: BadgeKind }) {
+export default function ProfileBadge({ kind, small = false }: { kind: BadgeKind; small?: boolean }) {
   const b = badges[kind];
   const themed = !b.background;
   return (
     <span
-      className={`inline-flex h-5 select-none items-center rounded-md px-2 text-[10px] font-semibold tracking-wide ${
-        themed ? "bg-primary-live text-primary-contrast" : ""
-      }`}
+      /* `small`: the pair that sits side by side under someone's photo
+         (people/[id], owner 2026-09-30: "smaller and next to each other"). */
+      className={`inline-flex select-none items-center font-semibold ${
+        small ? "h-4 rounded px-1 text-[8px] tracking-normal" : "h-5 rounded-md px-2 text-[10px] tracking-wide"
+      } ${themed ? "bg-primary-live text-primary-contrast" : ""}`}
       style={themed ? undefined : { background: b.background, color: b.text }}
     >
       {b.label}

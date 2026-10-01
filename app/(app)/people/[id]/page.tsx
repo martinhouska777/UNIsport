@@ -278,8 +278,13 @@ function PersonProfile() {
                       <IconUser size={30} />
                     )}
                   </div>
-                  {user.badges.varsity && <ProfileBadge kind="varsity" />}
-                  {user.badges.mentor && <ProfileBadge kind="mentor" />}
+                  {/* Small and side by side, not stacked (owner, 2026-09-30). */}
+                  {(user.badges.varsity || user.badges.mentor) && (
+                    <div className="flex items-center gap-1">
+                      {user.badges.varsity && <ProfileBadge kind="varsity" small />}
+                      {user.badges.mentor && <ProfileBadge kind="mentor" small />}
+                    </div>
+                  )}
                 </div>
                 <div className="flex min-w-0 flex-1 flex-col gap-2">
                   <div>
