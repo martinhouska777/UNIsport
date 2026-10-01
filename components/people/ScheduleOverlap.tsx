@@ -11,9 +11,10 @@
   Training tiles, and a 15px chevron as the only way into the week. Now:
 
     • the card has its own title (the page draws it — "When you're both free")
-    • the shared hours are RED SQUARES, a row a day, the hours left to right
-      (2026-10-01, owner: "the red squares are the similar times you can
-      train"; it was a text list from 2026-09-30)
+    • the shared hours are RED RECTANGLES, a chip per day and stretch, "Mon
+      7:00–9:00 AM" (2026-10-01, owner: "the rectangle tabs we had before").
+      A row of red SQUARES, one row a day, was tried the same morning and
+      was NOT what he meant — don't bring it back.
     • a full-width button opens THEIR CALENDAR as a grid — an hour a cell,
       filled when you are both free, tinted when only they are, outlined when
       only you are — and closes it again.
@@ -105,61 +106,22 @@ export default function ScheduleOverlap({
       ) : shared.length === 0 ? (
         <p className="text-[13px] text-muted">No hours in common.</p>
       ) : (
-        /* THE RED SQUARES (owner, 2026-10-01: "the red squares are the
-           similar times you can train", "similar times next to each other
-           each day"). A row a day, the hours left to right, a square red
-           where you are both free — so a day's shared hours sit side by side
-           in one strip and the week reads in seven short lines. The words
-           ("Mon 7:00–9:00 AM") live on each row for screen readers. */
-        <div>
-          <div className="flex items-end gap-2">
-            <span className="w-8 flex-shrink-0" aria-hidden="true" />
-            <div
-              className="grid min-w-0 flex-1 gap-[2px]"
-              style={{ gridTemplateColumns: `repeat(${HOURS.length}, minmax(0, 1fr))` }}
-              aria-hidden="true"
-            >
-              {HOURS.map((h) => (
-                <span
-                  key={h}
-                  className="whitespace-nowrap text-center text-[9px] leading-[12px] tabular-nums text-text-3"
-                >
-                  {h % 3 === 0 ? mark(h) : ""}
-                </span>
-              ))}
-            </div>
-          </div>
-          <div className="mt-1 flex flex-col gap-[3px]">
-            {weekDays.map((d) => {
-              const both = new Set([...lit[d.key].them].filter((h) => lit[d.key].me.has(h)));
-              const words = hoursToSlots(both)
-                .map((s) => rangeLabel(s))
-                .join(", ");
-              return (
-                <div
-                  key={d.key}
-                  role="img"
-                  aria-label={`${d.label}: ${words || "no shared hours"}`}
-                  className="flex items-center gap-2"
-                >
-                  <span className="w-8 flex-shrink-0 text-[12px] font-semibold text-text">
-                    {d.label.slice(0, 3)}
-                  </span>
-                  <div
-                    className="grid min-w-0 flex-1 gap-[2px]"
-                    style={{ gridTemplateColumns: `repeat(${HOURS.length}, minmax(0, 1fr))` }}
-                  >
-                    {HOURS.map((h) => (
-                      <span
-                        key={h}
-                        className={`h-[18px] rounded-[3px] ${both.has(h) ? "bg-primary" : "bg-surface-2"}`}
-                      />
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+        /* THE RED RECTANGLES (owner, 2026-10-01: "the rectangle tabs we had
+           before for the matching times — the day and what times you
+           overlap, in a red rectangle"). One solid school-colour chip per
+           day and stretch you are both free: "Mon 7:00–9:00 AM". The very
+           same chips the 22 Sep version carried above its folded grid. */
+        <div className="flex flex-wrap items-center gap-1.5">
+          {shared.flatMap((d) =>
+            d.slots.map((s) => (
+              <span
+                key={`${d.day} ${s}`}
+                className="rounded-md bg-primary px-2 py-1 text-[11.5px] font-medium tabular-nums text-primary-contrast"
+              >
+                {d.day} {rangeLabel(s)}
+              </span>
+            )),
+          )}
         </div>
       )}
 
