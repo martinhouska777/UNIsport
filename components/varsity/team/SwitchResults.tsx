@@ -10,9 +10,11 @@
   the small text… do a dropdown where you will directly see the 4 boats — a
   switch between 2 boats has 4 combinations"): the two crews before the
   switch and the same two boats after it, each with its time and its gap, the
-  rowers who changed places in red. The boats keep one order in both pieces,
-  so the eye reads straight down. It replaced a line of words that said the
-  same thing ("Grundy was 1.5 s down on Scott, then 2.6 s down").
+  rowers who changed places in red. Each piece lists its boats in finishing
+  order, numbered 1 and 2 like the board (owner, same day: keeping one order
+  in both pieces "looks strange" — the first boat is always on top). It
+  replaced a line of words that said the same thing ("Grundy was 1.5 s down
+  on Scott, then 2.6 s down").
 
   A switch the times cannot score shows a dash instead of guessing; its boats
   say why (a time missing, or other changes in the same boats — raceSwitch.ts).
@@ -24,6 +26,7 @@
 import { useEffect, useRef, useState } from "react";
 import { IconChevronDown, IconSwap } from "@/components/icons";
 import CrewBoat from "@/components/varsity/team/CrewBoat";
+import RankBadge from "@/components/varsity/team/RankBadge";
 import { rosterById } from "@/lib/varsity/coachLineup";
 import { classTitle, crewTime, formatClock, formatMargin, type RacePiece } from "@/lib/varsity/racePieces";
 import { folkNames, secs, type Switch } from "@/lib/varsity/raceSwitch";
@@ -33,38 +36,43 @@ const fullName = (id: string) => rosterById[id]?.name;
 /* The header row of a list — the same as the board's. */
 const TH = "text-[9px] font-semibold uppercase tracking-[0.1em] text-muted";
 
-/** One piece of a switch: its two boats, in the switch's order, with time and gap. */
+/** One piece of a switch: its two boats in finishing order, with place, time and gap.
+    A boat with no time yet comes last, with no place. */
 function PieceBoats({ piece, boats, red }: { piece: RacePiece | undefined; boats: [string, string]; red: Set<string> }) {
-  const crews = boats.map((id) => piece?.crews.find((c) => c.boatId === id));
-  const times = crews.map((c) => (c ? crewTime(c) : null));
+  const rows = boats
+    .map((id) => piece?.crews.find((c) => c.boatId === id))
+    .filter((c) => c != null)
+    .map((c) => ({ c, time: crewTime(c) }))
+    .sort((a, b) => (a.time ?? Infinity) - (b.time ?? Infinity));
+  const crews = rows.map((r) => r.c);
+  const times = rows.map((r) => r.time);
   const best = times.every((t) => t != null) ? Math.min(...(times as number[])) : null;
   return (
     <div className="overflow-hidden rounded-xl border border-border">
-      <div className={`grid grid-cols-[minmax(0,1fr)_4.4rem_3.9rem] gap-1.5 border-b border-border px-2.5 py-1.5 ${TH}`}>
-        <span>{piece?.name}</span>
+      <div className={`grid grid-cols-[1.25rem_minmax(0,1fr)_4.4rem_3.9rem] gap-1.5 border-b border-border px-2.5 py-1.5 ${TH}`}>
+        <span className="col-span-2">{piece?.name}</span>
         <span className="text-right">Time</span>
         <span className="text-right">To 1st</span>
       </div>
-      {crews.map((c, i) =>
-        c ? (
-          <div
-            key={c.boatId}
-            className={`grid grid-cols-[minmax(0,1fr)_4.4rem_3.9rem] items-center gap-1.5 px-2.5 py-2 ${
-              i > 0 ? "border-t border-border" : ""
-            } ${best != null && times[i] === best ? "bg-surface-2" : ""}`}
-          >
-            <CrewBoat crew={{ ...c, note: "" }} red={red} dim={times[i] == null} />
-            {times[i] != null ? (
-              <span className="text-right text-[13px] font-semibold tabular-nums text-text">{formatClock(times[i])}</span>
-            ) : (
-              <span className="text-right text-[11px] text-muted">no time yet</span>
-            )}
-            <span className="text-right text-[12px] tabular-nums text-muted">
-              {best != null && times[i] !== best ? formatMargin((times[i] as number) - best) : ""}
-            </span>
-          </div>
-        ) : null,
-      )}
+      {crews.map((c, i) => (
+        <div
+          key={c.boatId}
+          className={`grid grid-cols-[1.25rem_minmax(0,1fr)_4.4rem_3.9rem] items-center gap-1.5 px-2.5 py-2 ${
+            i > 0 ? "border-t border-border" : ""
+          } ${best != null && times[i] === best ? "bg-surface-2" : ""}`}
+        >
+          {times[i] != null ? <RankBadge rank={times[i] === times[0] ? 1 : i + 1} /> : <span />}
+          <CrewBoat crew={{ ...c, note: "" }} red={red} dim={times[i] == null} />
+          {times[i] != null ? (
+            <span className="text-right text-[13px] font-semibold tabular-nums text-text">{formatClock(times[i])}</span>
+          ) : (
+            <span className="text-right text-[11px] text-muted">no time yet</span>
+          )}
+          <span className="text-right text-[12px] tabular-nums text-muted">
+            {best != null && times[i] !== best ? formatMargin((times[i] as number) - best) : ""}
+          </span>
+        </div>
+      ))}
     </div>
   );
 }
