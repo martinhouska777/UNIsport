@@ -325,8 +325,11 @@ export default function RaceBoard({
         <div className="mt-0.5 text-[16px] font-semibold leading-snug">{title || "Race pieces"}</div>
       </div>
 
-      {/* PIECE 1 | PIECE 2 | COMBINED — and, for the coach, a + for the next one. */}
-      <div ref={tabRow} className="mt-3 flex items-center gap-1.5 overflow-x-auto pb-1">
+      {/* PIECE 1 | PIECE 2 | COMBINED — and, for the coach, a + for the next one.
+          A plain row of tabs that swipes sideways when it runs out of room,
+          with no scroll bar under it (owner, 2026-10-01: "just a tab bar",
+          not a website's scroll bar with arrows). */}
+      <div ref={tabRow} className="chip-row mt-3 flex items-center gap-1.5 overflow-x-auto pb-1">
         {day.pieces.map((p) => (
           <TabButton key={p.id} on={tab === p.id} onClick={() => setTab(p.id)}>
             {p.name}
