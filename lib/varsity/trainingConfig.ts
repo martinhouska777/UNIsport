@@ -222,12 +222,13 @@ const blank: TrainingConfig = {
    Content colours, so they live in data (rule 1's exception) and are applied
    via inline style. Theme tokens first, because those are the ones that follow
    the university's own palette; the fixed hexes exist because a plan needs more
-   distinguishable colours than a theme defines. */
+   distinguishable colours than a theme defines. The grey is the theme's faint
+   grey: var(--muted) turned black on 2026-09-30, when the app's grey words did. */
 export const paletteColors: string[] = [
   "var(--success)",
   "var(--danger)",
   "var(--accent)",
-  "var(--muted)",
+  "var(--faint)",
   "#4a90a4",
   "#60a5fa",
   "#c084fc",

@@ -35,12 +35,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Button from "@/components/ui/Button";
 import Sheet from "@/components/varsity/Sheet";
-import {
-  IconCheck,
-  IconChevronRight,
-  IconPlus,
-  IconTrash,
-} from "@/components/icons";
+import { Toggle as Switch } from "@/components/onboarding/controls";
+import { Group, Row, RowFrame, SettingsBody } from "@/components/settings/SettingsShell";
+import SettingsHeader from "@/components/varsity/coach/settings/SettingsHeader";
+import type { ProfileSaveState } from "@/components/profile/useProfileData";
+import { IconPlus, IconTrash } from "@/components/icons";
 import type { Membership } from "@/lib/varsity/membership";
 import { fetchTrainingConfigResult, saveTrainingConfig } from "@/lib/varsity/configStore";
 import { applyTeamColors, cacheTeamColors, teamColorMap } from "@/lib/varsity/teamColors";
@@ -61,15 +60,6 @@ import { markColor } from "@/lib/colorMarks";
 
 /* ── small shared pieces ─────────────────────────────────────────────────── */
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <section className="border-b border-border px-3.5 py-4">
-      <h2 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">{title}</h2>
-      <div className="mt-2.5">{children}</div>
-    </section>
-  );
-}
-
 function Dot({ color }: { color: string }) {
   return <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ background: markColor(color) }} />;
 }
@@ -78,19 +68,38 @@ const inputCls =
   "w-full rounded-xl border border-border bg-surface-2 px-3.5 py-3 text-base text-text outline-none focus:border-primary placeholder:text-faint";
 const labelCls = "mb-1.5 mt-4 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted";
 
-/* One tappable row of a list. */
-function ListRow({ children, onOpen }: { children: React.ReactNode; onOpen: () => void }) {
+/* The last row of a list's card: "+ Add a type", in the school colour — the
+   way WhatsApp ends a list with its add row, rather than a grey button under
+   the card. */
+function AddRow({ label, onClick }: { label: string; onClick: () => void }) {
   return (
     <button
       type="button"
-      onClick={onOpen}
-      className="flex w-full items-center gap-2.5 border-b border-border py-3 text-left last:border-0"
+      onClick={onClick}
+      className="flex w-full items-stretch text-left transition-colors active:bg-surface-2"
     >
-      {children}
-      <IconChevronRight size={16} />
+      <RowFrame
+        icon={
+          <span className="text-primary">
+            <IconPlus size={20} />
+          </span>
+        }
+      >
+        <span className="flex-1 text-[15px] font-medium text-primary">{label}</span>
+      </RowFrame>
     </button>
   );
 }
+
+/*
+  The grey swatch. It was var(--muted), which turned black when the app's grey
+  words did (2026-09-30: muted now equals the text colour), so the picker
+  offered a black dot and no grey at all. A colour saved before then still
+  reads as this swatch.
+*/
+const GREY = "var(--faint)";
+const sameSwatch = (value: string, swatch: string) =>
+  value === swatch || (swatch === GREY && value === "var(--muted)");
 
 function ColorPicker({ value, onChange }: { value: string; onChange: (c: string) => void }) {
   return (
@@ -102,7 +111,7 @@ function ColorPicker({ value, onChange }: { value: string; onChange: (c: string)
           aria-label={`Colour ${c}`}
           onClick={() => onChange(c)}
           className={`flex h-10 items-center justify-center rounded-xl border ${
-            value === c ? "border-primary" : "border-border"
+            sameSwatch(value, c) ? "border-primary" : "border-border"
           }`}
         >
           <span className="h-5 w-5 rounded-full" style={{ background: c }} />
@@ -112,7 +121,10 @@ function ColorPicker({ value, onChange }: { value: string; onChange: (c: string)
   );
 }
 
-function Toggle({
+/* A yes/no inside an editor sheet: the label and the app's own switch, in a
+   card — the same switch every Settings page uses (it was a tick box tinted
+   in the school colour). */
+function SwitchCard({
   label,
   on,
   onChange,
@@ -122,22 +134,10 @@ function Toggle({
   onChange: (v: boolean) => void;
 }) {
   return (
-    <button
-      type="button"
-      onClick={() => onChange(!on)}
-      className={`mt-2 flex w-full items-center gap-3 rounded-xl border px-3.5 py-3 text-left ${
-        on ? "border-primary bg-primary-tint" : "border-border bg-surface"
-      }`}
-    >
-      <span
-        className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-md border ${
-          on ? "border-primary bg-primary-live text-primary-contrast" : "border-border"
-        }`}
-      >
-        {on && <IconCheck size={12} />}
-      </span>
-      <span className="text-[13px] font-semibold text-text">{label}</span>
-    </button>
+    <div className="mt-2 flex min-h-[52px] items-center gap-3 rounded-xl border border-border bg-surface px-4 py-2.5">
+      <span className="flex-1 text-[15px] text-text">{label}</span>
+      <Switch on={on} onChange={() => onChange(!on)} ariaLabel={label} />
+    </div>
   );
 }
 
@@ -224,8 +224,8 @@ export default function TrainingSettingsScreen({ membership }: { membership: Mem
     return () => window.clearTimeout(t);
   }, [loading, dirty, saving, save]);
 
-  /* "Saved for the squad." is worth showing, but not worth keeping on screen —
-     it steps out of the way a couple of seconds after it lands. */
+  /* "Saved ✓" in the title bar is worth showing, but not worth keeping on
+     screen — it steps out of the way a couple of seconds after it lands. */
   useEffect(() => {
     if (!saved) return;
     const t = window.setTimeout(() => setSaved(false), 2200);
@@ -244,8 +244,18 @@ export default function TrainingSettingsScreen({ membership }: { membership: Mem
     [cfg.types, cfg.zones],
   );
 
+  // The save line in the title bar, like every other Settings page. "Saving…"
+  // covers the short pause before an autosave, too.
+  const saveState: ProfileSaveState = error ? "error" : saving || dirty ? "saving" : saved ? "saved" : "idle";
+  const header = <SettingsHeader title="Training settings" saveState={saveState} />;
+
   if (loading) {
-    return <p className="px-4 py-16 text-center text-sm text-muted">Loading your settings…</p>;
+    return (
+      <>
+        {header}
+        <p className="px-4 py-16 text-center text-sm text-muted">Loading your settings…</p>
+      </>
+    );
   }
 
   /*
@@ -255,146 +265,115 @@ export default function TrainingSettingsScreen({ membership }: { membership: Mem
   */
   if (loadFailed) {
     return (
-      <div className="mx-auto w-full max-w-screen-sm px-4 pb-8 pt-4">
-        <div className="mt-2 rounded-2xl border border-danger-line bg-danger-tint px-5 py-10 text-center">
-          <div className="text-[14px] font-semibold text-text">Couldn&apos;t load your settings</div>
-          <p className="mx-auto mt-1 max-w-[18rem] text-[12px] text-muted">
-            Your squad&apos;s session types and boats are safe — this screen
-            couldn&apos;t reach them, so it won&apos;t change anything until it can.
-          </p>
-          <Button size="md" onClick={() => window.location.reload()} className="mt-5">
-            Try again
-          </Button>
+      <>
+        {header}
+        <div className="mx-auto w-full max-w-screen-sm px-4 pb-8 pt-4">
+          <div className="mt-2 rounded-2xl border border-danger-line bg-danger-tint px-5 py-10 text-center">
+            <div className="text-[14px] font-semibold text-text">Couldn&apos;t load your settings</div>
+            <p className="mx-auto mt-1 max-w-[18rem] text-[12px] text-muted">
+              Your squad&apos;s session types and boats are safe — this screen
+              couldn&apos;t reach them, so it won&apos;t change anything until it can.
+            </p>
+            <Button size="md" onClick={() => window.location.reload()} className="mt-5">
+              Try again
+            </Button>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
+  /*
+    Round 2's look (owner, 2026-09-30: "like WhatsApp or Instagram"): each list
+    is one white card, rows split by a hairline, and the card ends with its own
+    "+ Add" row. A list keeps the order its items were added in.
+  */
   return (
-    <div className="mx-auto w-full max-w-screen-sm pb-28">
-      <Section title="Session types">
-        <div className="rounded-xl border border-border bg-surface px-3.5">
+    <>
+      {header}
+      <SettingsBody>
+        <Group title="Session types">
           {cfg.types.map((t, i) => (
-            <ListRow key={t.key} onOpen={() => setEditing({ kind: "type", index: i })}>
-              <Dot color={t.color} />
-              <span className="flex-1 text-[14px] font-semibold text-text">{t.label}</span>
-            </ListRow>
+            <Row
+              key={t.key}
+              icon={<Dot color={t.color} />}
+              label={t.label}
+              onClick={() => setEditing({ kind: "type", index: i })}
+            />
           ))}
-        </div>
-        <Button
-          variant="secondary"
-          size="md"
-          className="mt-2.5 w-full"
-          onClick={() => setEditing({ kind: "type", index: "new" })}
-        >
-          <IconPlus size={15} /> Add a type
-        </Button>
-      </Section>
+          <AddRow label="Add a type" onClick={() => setEditing({ kind: "type", index: "new" })} />
+        </Group>
 
-      <Section title="Intensity zones">
-        {cfg.zones.length > 0 && (
-          <div className="rounded-xl border border-border bg-surface px-3.5">
-            {cfg.zones.map((z, i) => (
-              <ListRow key={z.key} onOpen={() => setEditing({ kind: "zone", index: i })}>
-                <Dot color={z.color} />
-                <span className="flex-1 text-[14px] font-semibold text-text">{z.label}</span>
-              </ListRow>
-            ))}
-          </div>
-        )}
-        <Button
-          variant="secondary"
-          size="md"
-          className="mt-2.5 w-full"
-          onClick={() => setEditing({ kind: "zone", index: "new" })}
-        >
-          <IconPlus size={15} /> Add a zone
-        </Button>
-      </Section>
+        <Group title="Intensity zones">
+          {cfg.zones.map((z, i) => (
+            <Row
+              key={z.key}
+              icon={<Dot color={z.color} />}
+              label={z.label}
+              onClick={() => setEditing({ kind: "zone", index: i })}
+            />
+          ))}
+          <AddRow label="Add a zone" onClick={() => setEditing({ kind: "zone", index: "new" })} />
+        </Group>
 
-      {/*
-        BOATS. The four sweep riggings were hardcoded until the owner said the
-        obvious thing about them: "this is just a preset" (2026-09-17). A squad
-        with a quad, a single or a coxed pair adds it here and it appears on the
-        Lineup tab's Add Boat row, on the same footing as the four.
-      */}
-      <Section title="Boats">
-        {cfg.boats.length > 0 && (
-          <div className="rounded-xl border border-border bg-surface px-3.5">
-            {cfg.boats.map((b, i) => (
-              <ListRow key={b.key} onOpen={() => setEditing({ kind: "boat", index: i })}>
-                <span className="w-8 flex-shrink-0 text-[14px] font-semibold text-text">{b.symbol}</span>
-                <span className="flex-1 text-[14px] text-text">{b.name}</span>
-              </ListRow>
-            ))}
-          </div>
-        )}
-        <Button
-          variant="secondary"
-          size="md"
-          className="mt-2.5 w-full"
-          onClick={() => setEditing({ kind: "boat", index: "new" })}
-        >
-          <IconPlus size={15} /> Add a boat
-        </Button>
-      </Section>
+        {/*
+          BOATS. The four sweep riggings were hardcoded until the owner said the
+          obvious thing about them: "this is just a preset" (2026-09-17). A squad
+          with a quad, a single or a coxed pair adds it here and it appears on the
+          Lineup tab's Add Boat row, on the same footing as the four.
+        */}
+        <Group title="Boats">
+          {cfg.boats.map((b, i) => (
+            <Row
+              key={b.key}
+              icon={<span className="text-[15px] font-semibold">{b.symbol}</span>}
+              label={b.name}
+              onClick={() => setEditing({ kind: "boat", index: i })}
+            />
+          ))}
+          <AddRow label="Add a boat" onClick={() => setEditing({ kind: "boat", index: "new" })} />
+        </Group>
 
-      <Section title="Workout library">
-        <div className="rounded-xl border border-border bg-surface px-3.5">
+        <Group title="Workout library">
           {libraryRows.map(({ type, zone }) => (
-            <ListRow
+            <Row
               key={`${type.key}:${zone?.key ?? ""}`}
-              onOpen={() => setEditing({ kind: "library", typeKey: type.key, zoneKey: zone?.key })}
-            >
-              <Dot color={zone?.color ?? type.color} />
-              <span className="flex-1 text-[14px] text-text">
-                {type.label}
-                {zone && <span className="text-muted"> · {zone.label}</span>}
-              </span>
-            </ListRow>
+              icon={<Dot color={zone?.color ?? type.color} />}
+              label={zone ? `${type.label} · ${zone.label}` : type.label}
+              onClick={() => setEditing({ kind: "library", typeKey: type.key, zoneKey: zone?.key })}
+            />
           ))}
-        </div>
-      </Section>
+        </Group>
 
-      <Section title="Session times">
-        <div className="grid grid-cols-2 gap-2.5">
+        <Group title="Session times">
           {periods.map((p) => (
-            <label key={p} className="block">
-              <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-                {p}
-              </span>
-              <input
-                value={cfg.times[p]}
-                onChange={(e) =>
-                  update((c) => ({ ...c, times: { ...c.times, [p]: e.target.value } }))
-                }
-                className={inputCls}
-              />
+            <label key={p} className="flex w-full items-stretch">
+              <RowFrame>
+                <span className="flex-1 text-[15px] text-text">{p}</span>
+                <input
+                  value={cfg.times[p]}
+                  onChange={(e) =>
+                    update((c) => ({ ...c, times: { ...c.times, [p]: e.target.value } }))
+                  }
+                  /* text-base so phones don't zoom the page on focus */
+                  className="w-28 rounded-lg border border-border bg-surface-2 px-3 py-2 text-right text-base text-text outline-none focus:border-primary"
+                />
+              </RowFrame>
             </label>
           ))}
-        </div>
-      </Section>
+        </Group>
+      </SettingsBody>
 
-      {/* The save line — never a button, and only on screen while it has
-          something to say. Retry is the exception: a save that failed is the
-          one moment the coach can do something about it. */}
-      {(dirty || saving || saved || error) && (
+      {/* A save that failed — the one moment the coach can do something about
+          it, so it gets a card with Retry. "Saving…" and "Saved ✓" sit in the
+          title bar. */}
+      {error && (
         <div className="fixed inset-x-0 bottom-[76px] z-20 px-3.5 lg:bottom-5 lg:left-56">
-          <div className="mx-auto flex max-w-screen-sm items-center gap-2.5 rounded-2xl border border-border bg-surface p-3 shadow-lg">
-            <span className="flex-1 px-1 text-[12px] text-muted">
-              {error ? (
-                <span className="text-danger">Not saved — {error}</span>
-              ) : saved ? (
-                "Saved for the squad."
-              ) : (
-                "Saving…"
-              )}
-            </span>
-            {error && (
-              <Button size="md" onClick={() => void save()} disabled={saving}>
-                Retry
-              </Button>
-            )}
+          <div className="mx-auto flex max-w-screen-sm items-center gap-2.5 rounded-2xl border border-danger-line bg-surface p-3 shadow-lg">
+            <span className="flex-1 px-1 text-[12px] text-danger">Not saved — {error}</span>
+            <Button size="md" onClick={() => void save()} disabled={saving}>
+              Retry
+            </Button>
           </div>
         </div>
       )}
@@ -484,7 +463,7 @@ export default function TrainingSettingsScreen({ membership }: { membership: Mem
           }
         />
       )}
-    </div>
+    </>
   );
 }
 
@@ -571,7 +550,7 @@ function TypeSheet({
           <ColorPicker value={color} onChange={setColor} />
 
           <div className={labelCls}>Rules</div>
-          <Toggle label="Asks for an intensity" on={hasZones} onChange={setHasZones} />
+          <SwitchCard label="Asks for an intensity" on={hasZones} onChange={setHasZones} />
 
           <Button size="lg" className="mt-5 w-full" onClick={commit} disabled={!label.trim()}>
             {existing ? "Done" : "Add type"}
@@ -728,7 +707,7 @@ function BoatSheet({
         />
       </div>
 
-      <Toggle label="Has a cox" on={cox} onChange={setCox} />
+      <SwitchCard label="Has a cox" on={cox} onChange={setCox} />
 
       <Button size="lg" className="mt-5 w-full" onClick={commit} disabled={!symbol.trim() || rowers < 1}>
         {existing ? "Done" : "Add boat"}

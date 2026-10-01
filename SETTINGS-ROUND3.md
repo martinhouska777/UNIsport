@@ -105,43 +105,17 @@ Invites + Squad), `components/varsity/coach/settings/TrainingSettingsScreen.tsx`
       sentences cut, old links folded, the squad arrow at the end. (done 2026-10-01;
       also: a photo circle per person, and the role moved into the grey line under
       the name — as a pill it left a 375px phone ~70px for the name)
-- [ ] **Slice 3 — Training settings look.** Grouped cards, Add rows, switches, the
-      save line in the title bar, the grey swatch fixed.
-      **STARTED, NOT COMMITTED — stopped here on 2026-10-01 (the owner switched
-      accounts).** The half-done work is saved in `SETTINGS-ROUND3-slice3-wip.patch`
-      (repo root); the two files themselves are back to their last working state.
-      To pick it up: `git apply SETTINGS-ROUND3-slice3-wip.patch` (if it complains
-      about line endings: `git apply --ignore-whitespace …`), then delete the patch
-      file in the same commit as the finished slice. What the patch
-      already does:
-        - `app/varsity/coach/settings/training/page.tsx`: draws the title bar only
-          while loading; the screen draws its own (so the save line can sit in it).
-        - `TrainingSettingsScreen.tsx`: new imports (Group, Row, RowFrame,
-          SettingsBody, SettingsHeader, the onboarding `Toggle` as `Switch`);
-          the old `Section`, `ListRow` and tick-box `Toggle` are gone; new `AddRow`
-          (the "+ Add a type" row in the school colour, last row of a card),
-          `SwitchCard` (label + the app's switch, for "Asks for an intensity" and
-          "Has a cox"), `GREY = "var(--faint)"` + `sameSwatch()` so a colour saved
-          as var(--muted) still shows as the grey swatch; `saveState` + `header`
-          computed before the loading return, and the header added to the loading
-          and load-failed returns.
-      STILL TO DO in that file:
-        1. The load-failed return: the patch opens a `<>` fragment and adds
-           `{header}` — close it (`</>`) after the closing `</div>`.
-        2. The main return: `<>{header}<SettingsBody>` with one `Group` per list —
-           "Session types" (Row: icon `<Dot/>`, label, onClick → setEditing) +
-           `<AddRow label="Add a type">`; "Intensity zones" + "Add a zone";
-           "Boats" (icon = the symbol in bold, label = the name) + "Add a boat";
-           "Workout library" (label `Water · UT2`); "Session times" (RowFrame rows:
-           AM / PM on the left, the typed time box on the right, text-base, ~w-28,
-           right-aligned).
-        3. Delete the floating "Saved for the squad." card at the bottom; keep a
-           small card with Retry ONLY when `error` is set (the owner keeps errors).
-        4. In `TypeSheet` / `BoatSheet`: `<Toggle label=… />` → `<SwitchCard … />`.
-        5. `lib/varsity/trainingConfig.ts` `paletteColors`: `"var(--muted)"` →
-           `"var(--faint)"` (the 4th swatch).
-        6. eslint + tsc, check in the browser (owner signed in on localhost:3000),
-           commit, push, tick this box, send a screenshot.
+- [x] **Slice 3 — Training settings look.** (done 2026-10-01, see git log "settings
+      round 3, slice 3") Each list is one white card with hairlines, ending in a
+      "+ Add a type / zone / boat" row in the school colour; boats show their
+      symbol in bold on the left; session times are AM / PM rows with the typed
+      box on the right; "Saving… / Saved ✓" sits in the title bar (which stays put
+      while the page scrolls); the floating "Saved for the squad." card is gone —
+      a card with Retry appears only when a save fails; "Asks for an intensity"
+      and "Has a cox" are the app's switch instead of a tick box; the grey swatch
+      is a real grey (var(--faint)) and a colour saved as the old grey still
+      highlights it. Checked at phone and laptop width on a throwaway page
+      (deleted) with no login, so it saved to the browser only.
 - [ ] **Separate, not part of round 3 — flag to the owner:** `var(--muted)` is
       black since 2026-09-30, and it is still used as a DOT colour in a few places
       (calendar "Other" / "off" logs in lib/varsity/athleteProfile.ts and

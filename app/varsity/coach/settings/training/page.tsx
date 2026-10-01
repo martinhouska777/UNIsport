@@ -15,19 +15,21 @@ import { can } from "@/lib/varsity/membership";
   COACH ONLY. The console layout already sends a captain back to the squad
   screen, and varsity_save_team_config() refuses them in the database — this
   check only avoids flashing a screen they cannot use on the way there.
+
+  The screen draws its own title bar (with the back arrow the owner asked for
+  on 2026-09-18), because the save line sits in it; this page only draws the
+  bar while the squad is still being looked up.
 */
 export default function CoachTrainingSettingsPage() {
   const { membership, loading } = useMembership();
 
-  // The back arrow the owner asked for (2026-09-18) — to the Settings menu.
-  return (
-    <>
-      <SettingsHeader title="Training settings" />
-      {loading || !membership || !can.buildPlan(membership.role) ? (
+  if (loading || !membership || !can.buildPlan(membership.role)) {
+    return (
+      <>
+        <SettingsHeader title="Training settings" />
         <p className="px-4 py-16 text-center text-sm text-muted">Loading your settings…</p>
-      ) : (
-        <TrainingSettingsScreen membership={membership} />
-      )}
-    </>
-  );
+      </>
+    );
+  }
+  return <TrainingSettingsScreen membership={membership} />;
 }
