@@ -4,17 +4,18 @@
   COACH → ONE ATHLETE. Everything the squad's coach may see about one rower's
   training, on one screen, read-only.
 
-  Three blocks, in the order a coach asks the questions:
+  In the order a coach asks the questions:
     1. WHO — side, status, class year, height, weight, erg PRs. From the narrow
        `varsity_athlete_card` RPC, not from their profile row.
     2. WHEN — a month calendar of what they actually did, with the same category
        colours the athlete sees on their own Calendar tab. Tap a day for the
        sessions. This is the part that needed a new database permission
        (db/varsity_coach_reads.sql); everything else was already readable.
-    3. HOW FAST — every result they have posted to a team board, the erg
-       and the water apart: a water piece carries no watts, and filing it
-       under "Erg results" printed the erg formula's watts for a boat split
-       (audit, 2026-09-27). Which side is the plan session's own category.
+    3. THREE DOORS — Statistics, Past workouts, Calendar — each a screen of
+       its own. NOTHING UNDER THEM (owner, 2026-10-01: "just show statistics,
+       calendar and past workouts, don't show the erg results under"): the
+       lists of erg and water results posted to the team boards are gone;
+       those results are on Team → Workouts and in the Ranking.
 
   READ ONLY, deliberately and at the database level: there is no policy that
   would let a coach edit or delete a session. The log stays the athlete's own
@@ -24,26 +25,20 @@
   a BOAT rather than to a person — that lives in Team → Workouts. What a rower
   did on the water as an individual is in the calendar, like everything else.
 
-  WHEN THERE IS NOTHING YET, each of the bottom two blocks falls back on its own
-  to a worked example (lib/varsity/demoAthlete.ts), labelled as one, so the
-  screen can be reviewed before a squad has trained a single day. Real data
-  always wins — see the header of that file.
+  WHEN THERE IS NOTHING YET, the three screens fall back to a worked example
+  (lib/varsity/demoAthlete.ts), labelled as one, so the screen can be reviewed
+  before a squad has trained a single day. Real data always wins — see the
+  header of that file.
 
   Colours are theme tokens (rule 1); the category dots and the side blade are
   CONTENT colours from data, applied inline (the rule-1 exception).
 */
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useUnits } from "@/components/useUnits";
-import { formatDistance, type DistanceUnit } from "@/lib/varsity/units";
 import { fetchLogsInRange, type LogEntry } from "@/lib/varsity/logStore";
 import { fetchAthleteCard, type AthleteCard } from "@/lib/varsity/coachAthlete";
-import { fetchAthleteResults, type TeamResult } from "@/lib/varsity/resultsStore";
-import { fetchPlan } from "@/lib/varsity/planStore";
-import { onTheWater } from "@/lib/varsity/teamBoard";
-import { rosterIdForName, demoAthleteLogs, demoAthleteResults } from "@/lib/varsity/demoAthlete";
-import { secToSplit, deriveWatts } from "@/lib/varsity/ergMath";
-import { dayKeyLabel, toISO } from "@/lib/varsity/coachPlan";
+import { rosterIdForName, demoAthleteLogs } from "@/lib/varsity/demoAthlete";
+import { toISO } from "@/lib/varsity/coachPlan";
 import { sideMeta } from "@/lib/varsity/coachLineup";
 import {
   prPieces,
@@ -51,8 +46,6 @@ import {
   type StatusTone,
 } from "@/lib/varsity/athleteProfile";
 import { IconActivity, IconArrowLeft, IconCalendar, IconClipboard } from "@/components/icons";
-/* Says, without room for doubt, that what is below is made up. */
-import ExampleTag from "@/components/varsity/ExampleTag";
 import AthleteNote from "@/components/varsity/coach/athlete/AthleteNote";
 import AthleteStats from "@/components/varsity/coach/athlete/AthleteStats";
 import AthleteWorkouts from "@/components/varsity/coach/athlete/AthleteWorkouts";
@@ -78,58 +71,17 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 }
 
 
-/*
-  ONE POSTED RESULT. A hand-typed result carries the split as the monitor
-  showed it; a scanned or derived one only carries the seconds. Show whichever
-  exists, and on the ERG let the split imply the watts when none were typed —
-  the same arithmetic the team board does. On the WATER there are no watts, no
-  monitor and no body weight to go with them: the day, the split, the distance
-  and the rate.
-*/
-function ResultRow({ r, water, units }: { r: TeamResult; water: boolean; units: DistanceUnit }) {
-  const split = r.split ?? (r.splitSec != null ? secToSplit(r.splitSec) : null);
-  const watts = water ? null : deriveWatts(r.watts, r.splitSec);
-  return (
-    <div className="rounded-xl border border-border bg-surface px-3.5 py-3">
-      <div className="flex items-baseline justify-between gap-2">
-        <span className="truncate text-[13px] font-semibold text-text">{dayKeyLabel(r.dayKey)}</span>
-        {split && <span className="flex-shrink-0 text-[13px] font-semibold text-text">{split}</span>}
-      </div>
-      <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-muted">
-        {r.metres != null && <span>{formatDistance(r.metres, units)}</span>}
-        {r.strokeRate != null && <span>r{r.strokeRate}</span>}
-        {/* ROUNDED, like the board and the result detail. Watts that came
-            from the athlete's monitor are whole; watts we work out from a
-            split are not, and this line was printing "283.31454972708934 W". */}
-        {watts != null && <span>{Math.round(watts)} W</span>}
-        {!water && r.weightKg != null && <span>{r.weightKg} kg</span>}
-        {!water && r.monitor && <span>{r.monitor}</span>}
-      </div>
-      {r.note && <div className="mt-1 text-[11px] leading-relaxed text-muted">{r.note}</div>}
-    </div>
-  );
-}
-
 export default function AthleteDataScreen({ athleteId }: { athleteId: string }) {
-  const { units } = useUnits();
   const now = useMemo(() => new Date(), []);
 
   const [card, setCard] = useState<AthleteCard | null>(null);
   const [loading, setLoading] = useState(true);
-  const [results, setResults] = useState<TeamResult[]>([]);
-  /* The day keys of the plan's WATER sessions, so a result can be filed on
-     the side it was rowed on. Empty (everything reads as erg, as before) if
-     the plan could not be read. */
-  const [waterKeys, setWaterKeys] = useState<Set<string>>(() => new Set());
   /* THIS MONTH, and only this month. The page no longer draws a calendar — it
      reads one month of logs for a single purpose: to know whether this rower
      has ever logged anything, and so whether the three screens should fall
      back to the worked example. */
   const view = useMemo(() => ({ y: now.getFullYear(), m: now.getMonth() }), [now]);
   const [logs, setLogs] = useState<LogEntry[]>([]);
-  // Which of the two bottom blocks is showing the worked example rather than
-  // the athlete's own rows. They fall back separately — a rower can have ergs
-  // posted and an empty month, or the other way round.
   /* STATISTICS or CALENDAR (owner, 2026-09-19, then "above calendar put
      statistics"). Who they are stays above the switch — their side, their
      status, the coach's note and their bests are true whichever question is
@@ -139,7 +91,6 @@ export default function AthleteDataScreen({ athleteId }: { athleteId: string }) 
      where you go when the answer needs explaining. */
   const [openScreen, setOpenScreen] = useState<"stats" | "workouts" | "calendar" | null>(null);
   const [exampleLogs, setExampleLogs] = useState(false);
-  const [exampleResults, setExampleResults] = useState(false);
 
   /*
     The roster athlete this account is, if it is one of them — the example is
@@ -148,24 +99,13 @@ export default function AthleteDataScreen({ athleteId }: { athleteId: string }) 
   */
   const demoId = useMemo(() => rosterIdForName(card?.name), [card]);
 
-  // Who they are + every erg they have posted. Both are athlete-wide, so once.
+  // Who they are. Athlete-wide, so once.
   useEffect(() => {
     let active = true;
     (async () => {
-      const [c, r, plan] = await Promise.all([
-        fetchAthleteCard(athleteId),
-        fetchAthleteResults(athleteId),
-        fetchPlan(),
-      ]);
+      const c = await fetchAthleteCard(athleteId);
       if (!active) return;
       setCard(c);
-      setWaterKeys(
-        new Set(Object.entries(plan.sessions).filter(([, s]) => onTheWater(s)).map(([k]) => k)),
-      );
-      const stand = rosterIdForName(c?.name);
-      const example = r.length === 0 && !!stand;
-      setResults(example ? demoAthleteResults(stand!) : r);
-      setExampleResults(example);
       setLoading(false);
     })();
     return () => {
@@ -223,11 +163,6 @@ export default function AthleteDataScreen({ athleteId }: { athleteId: string }) 
   const cox = p.boatRole === "Coxswain";
   const side = sideMeta[p.side];
   const pinned = prPieces.filter((piece) => (p.prs[piece] ?? "").trim());
-
-  /* A result goes on the side its session was rowed on. The worked example
-     is erg pieces only, so it never lands on the water side. */
-  const waterResults = exampleResults ? [] : results.filter((r) => waterKeys.has(r.dayKey));
-  const ergResults = exampleResults ? results : results.filter((r) => !waterKeys.has(r.dayKey));
 
   /* Their name, or the honest absence of one — the page's title, and the name
      each of the three screens is opened under. */
@@ -310,10 +245,9 @@ export default function AthleteDataScreen({ athleteId }: { athleteId: string }) 
 
       {/* ── THREE DOORS (owner, 2026-09-19) ──────────────────────────────────
           Not a switch that swaps the middle of this page: each one opens a
-          whole screen of its own with a cross to come back. This page holds
-          more than two halves — the erg is below, and more after it — and
-          three long things taking turns in one panel is a page you get lost
-          in. */}
+          whole screen of its own with a cross to come back — three long
+          things taking turns in one panel is a page you get lost in. They
+          are the end of the page. */}
       <div className="mt-6 grid grid-cols-3 gap-2">
         {(
           [
@@ -335,38 +269,6 @@ export default function AthleteDataScreen({ athleteId }: { athleteId: string }) 
           </button>
         ))}
       </div>
-
-      {/* ── 3. How fast ── the erg and the water apart. The example is
-          always erg results (lib/varsity/demoAthlete). */}
-      {(ergResults.length > 0 || waterResults.length === 0) && (
-        <>
-          <SectionLabel>
-            Erg results · {ergResults.length}
-            {exampleResults && <ExampleTag />}
-          </SectionLabel>
-          {ergResults.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-border bg-surface px-4 py-6 text-center text-[12px] text-muted">
-              Nothing posted to the team board yet.
-            </div>
-          ) : (
-            <div className="flex flex-col gap-2">
-              {ergResults.map((r) => (
-                <ResultRow key={r.id} r={r} water={false} units={units.distance} />
-              ))}
-            </div>
-          )}
-        </>
-      )}
-      {waterResults.length > 0 && (
-        <>
-          <SectionLabel>Water results · {waterResults.length}</SectionLabel>
-          <div className="flex flex-col gap-2">
-            {waterResults.map((r) => (
-              <ResultRow key={r.id} r={r} water units={units.distance} />
-            ))}
-          </div>
-        </>
-      )}
 
       {/* ── the three screens ── */}
       {openScreen === "stats" && (
