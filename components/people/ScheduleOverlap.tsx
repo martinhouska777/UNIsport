@@ -11,10 +11,12 @@
   Training tiles, and a 15px chevron as the only way into the week. Now:
 
     • the card has its own title (the page draws it — "When you're both free")
-    • the shared hours are a LIST, a day a line: "Mon   7:00–9:00 AM"
-    • a full-width button opens their week as a grid — an hour a cell, filled
-      when you are both free, tinted when only they are, outlined when only
-      you are — and closes it again.
+    • the shared hours are RED SQUARES, a row a day, the hours left to right
+      (2026-10-01, owner: "the red squares are the similar times you can
+      train"; it was a text list from 2026-09-30)
+    • a full-width button opens THEIR CALENDAR as a grid — an hour a cell,
+      filled when you are both free, tinted when only they are, outlined when
+      only you are — and closes it again.
 
   Every state says what it is: nothing set on their side, nothing set on
   yours (with the way to set it), or no hours in common.
@@ -68,7 +70,7 @@ export default function ScheduleOverlap({
   theirs: Schedule;
   /** Your own schedule; null while it is still loading. */
   mine: Schedule | null;
-  /** Their first name, for the button and the key ("See Sam's whole week"). */
+  /** Their first name, for the button and the key ("See Sam's calendar"). */
   name: string;
 }) {
   const [open, setOpen] = useState(false);
@@ -103,26 +105,72 @@ export default function ScheduleOverlap({
       ) : shared.length === 0 ? (
         <p className="text-[13px] text-muted">No hours in common.</p>
       ) : (
-        <ul className="flex flex-col divide-y divide-border">
-          {shared.map((d) => (
-            <li key={d.day} className="flex items-baseline gap-3 py-2 first:pt-0 last:pb-0">
-              <span className="w-10 flex-shrink-0 text-[13px] font-semibold text-text">{d.day}</span>
-              <span className="min-w-0 text-[13.5px] font-medium tabular-nums text-text">
-                {d.slots.map((s) => rangeLabel(s)).join(", ")}
-              </span>
-            </li>
-          ))}
-        </ul>
+        /* THE RED SQUARES (owner, 2026-10-01: "the red squares are the
+           similar times you can train", "similar times next to each other
+           each day"). A row a day, the hours left to right, a square red
+           where you are both free — so a day's shared hours sit side by side
+           in one strip and the week reads in seven short lines. The words
+           ("Mon 7:00–9:00 AM") live on each row for screen readers. */
+        <div>
+          <div className="flex items-end gap-2">
+            <span className="w-8 flex-shrink-0" aria-hidden="true" />
+            <div
+              className="grid min-w-0 flex-1 gap-[2px]"
+              style={{ gridTemplateColumns: `repeat(${HOURS.length}, minmax(0, 1fr))` }}
+              aria-hidden="true"
+            >
+              {HOURS.map((h) => (
+                <span
+                  key={h}
+                  className="whitespace-nowrap text-center text-[9px] leading-[12px] tabular-nums text-text-3"
+                >
+                  {h % 3 === 0 ? mark(h) : ""}
+                </span>
+              ))}
+            </div>
+          </div>
+          <div className="mt-1 flex flex-col gap-[3px]">
+            {weekDays.map((d) => {
+              const both = new Set([...lit[d.key].them].filter((h) => lit[d.key].me.has(h)));
+              const words = hoursToSlots(both)
+                .map((s) => rangeLabel(s))
+                .join(", ");
+              return (
+                <div
+                  key={d.key}
+                  role="img"
+                  aria-label={`${d.label}: ${words || "no shared hours"}`}
+                  className="flex items-center gap-2"
+                >
+                  <span className="w-8 flex-shrink-0 text-[12px] font-semibold text-text">
+                    {d.label.slice(0, 3)}
+                  </span>
+                  <div
+                    className="grid min-w-0 flex-1 gap-[2px]"
+                    style={{ gridTemplateColumns: `repeat(${HOURS.length}, minmax(0, 1fr))` }}
+                  >
+                    {HOURS.map((h) => (
+                      <span
+                        key={h}
+                        className={`h-[18px] rounded-[3px] ${both.has(h) ? "bg-primary" : "bg-surface-2"}`}
+                      />
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       )}
 
-      {/* THE BUTTON — their whole week, opened and closed in place. */}
+      {/* THE BUTTON — his whole calendar, opened and closed in place. */}
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl border border-primary-line bg-primary-tint py-2.5 text-[13px] font-semibold text-primary active:opacity-70"
       >
-        {open ? "Hide the week" : `See ${name}’s whole week`}
+        {open ? "Hide the calendar" : `See ${name}’s calendar`}
         <IconChevronDown
           size={15}
           className={`transition-transform duration-200 motion-reduce:transition-none ${open ? "rotate-180" : ""}`}
