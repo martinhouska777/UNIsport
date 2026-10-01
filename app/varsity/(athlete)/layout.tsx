@@ -96,12 +96,10 @@ export default function VarsityLayout({ children }: { children: React.ReactNode 
         Varsity Mode's walk (lib/varsity/varsityTour.ts), the first time
         you are in. Once for the whole shell, not per screen — it crosses the
         tabs on its own — and inside ThemeProvider so its dim is this theme's.
-        Not for a coach: the console has its own walk, and this one is about
-        rowing.
+        Coaches get it too (owner, 2026-09-30): this is the side they land on,
+        and the console has its own walk on top.
       */}
-      {userId && introOver && membership!.role !== "coach" && (
-        <TourGate key={userId} tour={varsityTour} userId={userId} />
-      )}
+      {userId && introOver && <TourGate key={userId} tour={varsityTour} userId={userId} />}
     </ThemeProvider>
   );
 }

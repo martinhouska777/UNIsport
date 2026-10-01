@@ -23,8 +23,8 @@
   it — the scan button opens the camera, and a check-in answer saves the moment
   it is tapped — and `closeOnExit` shuts the sheet if the walk is left early.
 
-  COACHES DO NOT GET THIS. They have their own walk in the console, and this
-  one is about rowing. The gate in app/varsity/(athlete)/layout.tsx says so.
+  COACHES GET IT TOO (owner, 2026-09-30) — this is the side Varsity Mode opens
+  on for them as well. The console's own walk is lib/varsity/coachTour.ts.
 */
 import type { Tour, TourStep } from "@/lib/tour";
 
