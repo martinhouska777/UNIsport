@@ -4,27 +4,70 @@
   THE DAY'S SWITCHES — who beat whom (coach console only).
   ---------------------------------------------------------------------------
   One card per switch, in the order they happened: the class and the two
-  pieces it was made between, then the answer — "HK beat Dykema · 1.1 s" — and
-  under it the numbers it was worked out from, so it can be checked against the
-  board: "Grundy was 1.5 s down on Scott, then 2.6 s down."
+  pieces it was made between, then the answer — "HK beat Dykema · 1.1 s".
 
-  A switch the times cannot score says so in a word instead of guessing:
-  waiting for a time, or other changes in the same boats (raceSwitch.ts).
+  A tap opens THE FOUR BOATS the answer comes from (owner, 2026-10-01: "delete
+  the small text… do a dropdown where you will directly see the 4 boats — a
+  switch between 2 boats has 4 combinations"): the two crews before the
+  switch and the same two boats after it, each with its time and its gap, the
+  rowers who changed places in red. The boats keep one order in both pieces,
+  so the eye reads straight down. It replaced a line of words that said the
+  same thing ("Grundy was 1.5 s down on Scott, then 2.6 s down").
+
+  A switch the times cannot score shows a dash instead of guessing; its boats
+  say why (a time missing, or other changes in the same boats — raceSwitch.ts).
   Results are the coach's: a rower never opens this tab. Theme tokens only.
 
   Opened from the coach's list of seat races (TeamRanking), the race that was
   tapped there wears the school's colour round it and is scrolled into view.
 */
-import { useEffect, useRef } from "react";
-import { IconSwap } from "@/components/icons";
+import { useEffect, useRef, useState } from "react";
+import { IconChevronDown, IconSwap } from "@/components/icons";
+import CrewBoat from "@/components/varsity/team/CrewBoat";
 import { rosterById } from "@/lib/varsity/coachLineup";
-import { classTitle, type RacePiece } from "@/lib/varsity/racePieces";
+import { classTitle, crewTime, formatClock, formatMargin, type RacePiece } from "@/lib/varsity/racePieces";
 import { folkNames, secs, type Switch } from "@/lib/varsity/raceSwitch";
 
 const fullName = (id: string) => rosterById[id]?.name;
 
-/** "1.5 s up on Scott" / "2.6 s down on Scott" — the first boat's lead over the second. */
-const leadWords = (lead: number) => (lead >= 0 ? `${secs(lead)} s up` : `${secs(lead)} s down`);
+/* The header row of a list — the same as the board's. */
+const TH = "text-[9px] font-semibold uppercase tracking-[0.1em] text-muted";
+
+/** One piece of a switch: its two boats, in the switch's order, with time and gap. */
+function PieceBoats({ piece, boats, red }: { piece: RacePiece | undefined; boats: [string, string]; red: Set<string> }) {
+  const crews = boats.map((id) => piece?.crews.find((c) => c.boatId === id));
+  const times = crews.map((c) => (c ? crewTime(c) : null));
+  const best = times.every((t) => t != null) ? Math.min(...(times as number[])) : null;
+  return (
+    <div className="overflow-hidden rounded-xl border border-border">
+      <div className={`grid grid-cols-[minmax(0,1fr)_4.4rem_3.9rem] gap-1.5 border-b border-border px-2.5 py-1.5 ${TH}`}>
+        <span>{piece?.name}</span>
+        <span className="text-right">Time</span>
+        <span className="text-right">To 1st</span>
+      </div>
+      {crews.map((c, i) =>
+        c ? (
+          <div
+            key={c.boatId}
+            className={`grid grid-cols-[minmax(0,1fr)_4.4rem_3.9rem] items-center gap-1.5 px-2.5 py-2 ${
+              i > 0 ? "border-t border-border" : ""
+            } ${best != null && times[i] === best ? "bg-surface-2" : ""}`}
+          >
+            <CrewBoat crew={{ ...c, note: "" }} red={red} dim={times[i] == null} />
+            {times[i] != null ? (
+              <span className="text-right text-[13px] font-semibold tabular-nums text-text">{formatClock(times[i])}</span>
+            ) : (
+              <span className="text-right text-[11px] text-muted">no time yet</span>
+            )}
+            <span className="text-right text-[12px] tabular-nums text-muted">
+              {best != null && times[i] !== best ? formatMargin((times[i] as number) - best) : ""}
+            </span>
+          </div>
+        ) : null,
+      )}
+    </div>
+  );
+}
 
 export default function SwitchResults({
   switches,
@@ -40,62 +83,74 @@ export default function SwitchResults({
   useEffect(() => {
     focused.current?.scrollIntoView({ block: "center" });
   }, []);
+  const [open, setOpen] = useState<Set<number>>(new Set());
+  const toggle = (n: number) =>
+    setOpen((was) => {
+      const next = new Set(was);
+      if (!next.delete(n)) next.add(n);
+      return next;
+    });
   return (
     <div className="mt-3 flex flex-col gap-2">
       {switches.map((s, n) => {
-        const [x, y] = s.crews;
         const mine = folkNames(s.moved[0], s.moved[1], fullName);
         const theirs = folkNames(s.moved[1], s.moved[0], fullName);
         const r = s.result;
+        const shown = open.has(n);
+        // Everyone who changed boats, red in all four crews: leaving before, arrived after.
+        const red = new Set([...s.moved[0], ...s.moved[1]].map((f) => f.key));
         return (
           <div
             key={n}
             ref={n === focus ? focused : undefined}
-            className={`rounded-2xl border bg-surface px-3.5 py-3 shadow-card ${
+            className={`rounded-2xl border bg-surface shadow-card ${
               n === focus ? "border-primary ring-1 ring-primary" : "border-border"
             }`}
           >
-            <div className="flex items-center gap-2 text-[11px] text-muted">
-              <span className="rounded-md bg-text px-1.5 py-0.5 font-mono text-[11px] font-semibold text-background">
-                {classTitle(s.badge)}
+            <button
+              type="button"
+              onClick={() => toggle(n)}
+              aria-expanded={shown}
+              className="block w-full px-3.5 py-3 text-left"
+            >
+              <span className="flex items-center gap-2 text-[11px] text-muted">
+                <span className="rounded-md bg-text px-1.5 py-0.5 font-mono text-[11px] font-semibold text-background">
+                  {classTitle(s.badge)}
+                </span>
+                <span className="min-w-0 truncate">
+                  {pieces[s.piece]?.name} → {pieces[s.piece + 1]?.name}
+                </span>
               </span>
-              <span className="min-w-0 truncate">
-                {pieces[s.piece]?.name} → {pieces[s.piece + 1]?.name}
-              </span>
-            </div>
 
-            <div className="mt-2 flex items-center gap-3">
-              <div className="min-w-0 flex-1 text-[14px] text-text">
-                {r.kind === "won" ? (
-                  <>
-                    <span className="font-semibold">{folkNames(r.winners, r.losers, fullName)}</span>
-                    <span className="text-muted"> beat </span>
-                    {folkNames(r.losers, r.winners, fullName)}
-                  </>
-                ) : (
-                  <span className="inline-flex flex-wrap items-center gap-x-1.5 font-semibold text-danger">
-                    {mine}
-                    <IconSwap size={13} />
-                    {theirs}
-                  </span>
-                )}
-              </div>
-              <span className="flex-shrink-0 text-[14px] font-semibold tabular-nums text-text">
-                {r.kind === "won" ? `${secs(r.by)} s` : r.kind === "level" ? "Level" : "—"}
+              <span className="mt-2 flex items-center gap-3">
+                <span className="min-w-0 flex-1 text-[14px] text-text">
+                  {r.kind === "won" ? (
+                    <>
+                      <span className="font-semibold">{folkNames(r.winners, r.losers, fullName)}</span>
+                      <span className="text-muted"> beat </span>
+                      {folkNames(r.losers, r.winners, fullName)}
+                    </>
+                  ) : (
+                    <span className="inline-flex flex-wrap items-center gap-x-1.5 font-semibold text-danger">
+                      {mine}
+                      <IconSwap size={13} />
+                      {theirs}
+                    </span>
+                  )}
+                </span>
+                <span className="flex-shrink-0 text-[14px] font-semibold tabular-nums text-text">
+                  {r.kind === "won" ? `${secs(r.by)} s` : r.kind === "level" ? "Level" : "—"}
+                </span>
+                <span className={`flex-shrink-0 text-muted transition-transform ${shown ? "rotate-180" : ""}`}>
+                  <IconChevronDown size={14} />
+                </span>
               </span>
-            </div>
+            </button>
 
-            {(r.kind === "won" || r.kind === "level") && s.lead.before != null && s.lead.after != null && (
-              <div className="mt-1 text-[12px] leading-snug text-muted">
-                {x} was {leadWords(s.lead.before)} on {y}, then {leadWords(s.lead.after)}.
-              </div>
-            )}
-            {r.kind === "pending" && (
-              <div className="mt-1 text-[12px] leading-snug text-muted">Waiting for the times.</div>
-            )}
-            {r.kind === "mixed" && (
-              <div className="mt-1 text-[12px] leading-snug text-muted">
-                Other changes in these boats, so the times cannot say.
+            {shown && (
+              <div className="flex flex-col gap-2 px-3.5 pb-3.5">
+                <PieceBoats piece={pieces[s.piece]} boats={s.boats} red={red} />
+                <PieceBoats piece={pieces[s.piece + 1]} boats={s.boats} red={red} />
               </div>
             )}
           </div>
