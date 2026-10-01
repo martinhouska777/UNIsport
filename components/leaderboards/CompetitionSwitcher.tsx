@@ -28,11 +28,14 @@ export default function CompetitionSwitcher<K extends string>({
   options,
   value,
   onChange,
+  tour,
 }: {
   caption: string;
   options: SwitchOption<K>[];
   value: K;
   onChange: (key: K) => void;
+  /** A `data-tour` name; the Next arrow gets `<name>-next`, which the walk presses. */
+  tour?: string;
 }) {
   // Which way the last change went, so the name slides in from that side.
   const [dir, setDir] = useState<"next" | "prev" | null>(null);
@@ -53,6 +56,7 @@ export default function CompetitionSwitcher<K extends string>({
 
   return (
     <div
+      data-tour={tour}
       className="flex min-w-0 flex-1 touch-pan-y select-none items-stretch"
       onTouchStart={(e) => {
         const t = e.touches[0];
@@ -90,6 +94,7 @@ export default function CompetitionSwitcher<K extends string>({
       <button
         type="button"
         aria-label={`Next ${caption.toLowerCase()}`}
+        data-tour={tour ? `${tour}-next` : undefined}
         onClick={() => step(1)}
         className="tap44 flex w-8 flex-shrink-0 items-center justify-center rounded-r-2xl text-muted active:text-text"
       >

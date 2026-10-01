@@ -39,6 +39,7 @@
   it moves to a `tourSeen` key on `profiles.data` — merged the way
   saveVarsitySetup does it in components/AppState.tsx.
 */
+import { useSyncExternalStore } from "react";
 import { sessionPoints } from "@/lib/points";
 
 export type TourStep = {
@@ -123,7 +124,10 @@ export const tourSteps: TourStep[] = [
   {
     press: "tab-/match",
     route: "/match",
+    /* The tab AND the first person under it, sharp and lit — the owner: "they
+       want to see the things that are there". */
     anchor: "match-tab-people",
+    alsoAnchor: "match-first-card",
     title: "Match",
     body: "Everyone, ranked by how well you fit: interests, concentration and when you train.",
   },
@@ -169,16 +173,28 @@ export const tourSteps: TourStep[] = [
     title: "Memories",
     body: "Your photos end up here.",
   },
+  /*
+    THE LEADERBOARDS, opened for real (owner, 2026-09-30, second thought: "show
+    the leaderboards and then click them so that you can change houses … in the
+    competition"). The finger taps your row on the Profile; a brand-new student
+    has no row yet, so the route takes them there instead. The honour code waits
+    while the tour runs (useTourRunning below). The points are read from
+    lib/points.ts, never retyped.
+  */
   {
-    /*
-      A card, not the leaderboard row: the tour plays right after sign-up, and
-      a student with nothing logged has no row to point at (owner, 2026-09-30:
-      "don't open the leaderboards, just tell them"). The numbers are read from
-      lib/points.ts, never retyped.
-    */
-    anchor: null,
+    press: "profile-leaderboards",
+    route: "/leaderboards",
+    anchor: "lb-controls",
+    alsoAnchor: "lb-podium",
     title: "Leaderboards",
-    body: `Your workouts earn points for you and your house or dorm: ${sessionPoints.solo} on your own, ${sessionPoints.partner} with a partner, ${sessionPoints.newPartner} with someone new. The boards reset every month.`,
+    body: `Your workouts earn points for you and your house: ${sessionPoints.solo} on your own, ${sessionPoints.partner} with a partner, ${sessionPoints.newPartner} with someone new.`,
+  },
+  {
+    press: "lb-competition-next",
+    anchor: "lb-controls",
+    alsoAnchor: "lb-podium",
+    title: "Pick the competition",
+    body: "Houses, dorms, years, everyone: the arrows switch between them.",
   },
 
   {
@@ -290,4 +306,29 @@ export function onTourRequest(tour: Tour, run: () => void): () => void {
   };
   window.addEventListener(REQUEST_EVENT, handler);
   return () => window.removeEventListener(REQUEST_EVENT, handler);
+}
+
+/* ── Is a walk on screen right now? ─────────────────────────────────────── */
+/*
+  Screens that would otherwise stop the walk read this — the leaderboards'
+  honour code, which a new student would hit the moment the tour opens the
+  boards. TourOverlay switches it on while it is mounted.
+*/
+let running = false;
+const runningListeners = new Set<() => void>();
+
+export function setTourRunning(on: boolean) {
+  running = on;
+  runningListeners.forEach((l) => l());
+}
+
+export function useTourRunning(): boolean {
+  return useSyncExternalStore(
+    (l) => {
+      runningListeners.add(l);
+      return () => runningListeners.delete(l);
+    },
+    () => running,
+    () => false,
+  );
 }

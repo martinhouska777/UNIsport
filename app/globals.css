@@ -1536,7 +1536,8 @@ body {
     width 0.32s cubic-bezier(0.4, 0, 0.2, 1), height 0.32s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* The slight blur around the hole (2026-09-30) — travels with it. */
+/* The slight blur behind the opening and closing cards (2026-09-30). Never
+   while something is lit — the owner wants to see what is there. */
 .tour-blur {
   -webkit-backdrop-filter: blur(2px);
   backdrop-filter: blur(2px);

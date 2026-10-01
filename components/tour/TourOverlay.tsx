@@ -39,7 +39,7 @@
 */
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { Tour } from "@/lib/tour";
+import { setTourRunning, type Tour } from "@/lib/tour";
 
 const PAD = 8; // breathing room around the lit element
 const EDGE = 6; // never let the hole run off the side of the screen
@@ -157,6 +157,12 @@ export default function TourOverlay({
   const nextRef = useRef<HTMLButtonElement | null>(null);
   const titleId = useId();
   const bodyId = useId();
+
+  // While this is up, screens that would stop the walk stand aside (lib/tour.ts).
+  useEffect(() => {
+    setTourRunning(true);
+    return () => setTourRunning(false);
+  }, []);
 
   const steps = tour.steps;
   const step = steps[i];
@@ -481,8 +487,8 @@ export default function TourOverlay({
   /*
     …and since 2026-09-30, lighter again with a slight BLUR instead (owner:
     "you don't need to darken everything else that much, just blur it a little
-    bit, not that much"). 40% of the page colour plus a 2px blur keeps the app
-    readable around the hole while the lit part is still the only sharp thing.
+    bit, not that much") — and then no blur at all while something is lit
+    (below). 40% of the page colour keeps the app readable around the hole.
   */
   const dim = "color-mix(in oklab, var(--background) 40%, transparent)";
   const glow = [
@@ -532,23 +538,12 @@ export default function TourOverlay({
         light TRAVELS to its next target instead of blinking off and on.
       */}
       {/*
-        The blur. The dim is a box-shadow, and a shadow can't blur, so four
-        bands with a backdrop blur frame the hole instead — above it, below it,
-        and either side. They glide with the hole (same transition as
-        .tour-hole). With no hole, one layer blurs the whole screen.
+        The blur — ONLY on the cards with nothing lit (the opening question and
+        the closing card). While a step is showing something, nothing is
+        blurred: the owner, 2026-09-30, "they want to see the things that are
+        there" — with the blur on, Match showed no profile at all.
       */}
-      {box ? (
-        [
-          { top: 0, left: 0, width: "100%", height: box.top },
-          { top: box.top + box.height, left: 0, width: "100%", bottom: 0 },
-          { top: box.top, left: 0, width: box.left, height: box.height },
-          { top: box.top, left: box.left + box.width, right: 0, height: box.height },
-        ].map((band, n) => (
-          <div key={n} aria-hidden="true" className="tour-blur absolute" style={band} />
-        ))
-      ) : (
-        <div aria-hidden="true" className="tour-blur absolute inset-0" />
-      )}
+      {!box && <div aria-hidden="true" className="tour-blur absolute inset-0" />}
 
       {box ? (
         /*

@@ -103,6 +103,7 @@ import ScoringSheet from "@/components/leaderboards/ScoringSheet";
 import YouScreen from "@/components/leaderboards/YouScreen";
 import PersonAvatar from "@/components/leaderboards/PersonAvatar";
 import CompetitionSwitcher from "@/components/leaderboards/CompetitionSwitcher";
+import { useTourRunning } from "@/lib/tour";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { useProfileData } from "@/components/profile/useProfileData";
 import { houses, residenceLabel, yardDorms } from "@/lib/onboarding";
@@ -423,6 +424,9 @@ export default function LeaderboardsPage() {
   const router = useRouter();
   const { userId, universityKey } = useAppState();
   const { accepted, accept } = useHonorCode(userId);
+  // The walk shows the boards without stopping at the honour code — the
+  // student is asked the first time they open the leaderboards themselves.
+  const touring = useTourRunning();
   // You, for the "You" line at the top of Rankings and the You screen: your
   // photo, or your initials in your house's colours (PersonAvatar).
   const { data: myProfile } = useProfileData();
@@ -571,7 +575,7 @@ export default function LeaderboardsPage() {
       }));
 
   // Hooks are all above this line, so the honour code can gate the screen.
-  if (accepted === false) {
+  if (accepted === false && !touring) {
     return <HonorCode universityKey={universityKey} onAgree={accept} />;
   }
 
@@ -664,12 +668,18 @@ export default function LeaderboardsPage() {
               2026-09-19: "I want it in the foreground") — the same white card
               as everywhere else in the app, with a hairline between the two. */}
           <div className="px-3.5 pt-3">
-            <div className="flex divide-x divide-border rounded-2xl border border-border bg-surface shadow-card">
+            {/* data-tour: the walk lights these with the podium and presses the
+                Competition's arrow (lib/tour.ts). */}
+            <div
+              data-tour="lb-controls"
+              className="flex divide-x divide-border rounded-2xl border border-border bg-surface shadow-card"
+            >
               <CompetitionSwitcher
                 caption="Competition"
                 options={COMPETITIONS}
                 value={competition}
                 onChange={setCompetition}
+                tour="lb-competition"
               />
               {/* The period steps with arrows too (owner, 2026-09-19) — the
                   dropdown and its sheet are gone. */}
@@ -699,10 +709,12 @@ export default function LeaderboardsPage() {
                       top-right corner (owner, 2026-09-19); with nobody on the
                       podium it sits above the empty note instead. */}
                   {podium.length > 0 ? (
-                    <Podium
-                      entries={podium}
-                      corner={<MetricSwitch value={metric} onPick={setMetric} />}
-                    />
+                    <div data-tour="lb-podium">
+                      <Podium
+                        entries={podium}
+                        corner={<MetricSwitch value={metric} onPick={setMetric} />}
+                      />
+                    </div>
                   ) : (
                     <>
                       <div className="mt-3 flex justify-end">
@@ -735,7 +747,9 @@ export default function LeaderboardsPage() {
               </div>
             ) : (
               <>
-                <Podium entries={podium} />
+                <div data-tour="lb-podium">
+                  <Podium entries={podium} />
+                </div>
                 {people.length > 3 && (
                   <div className="mt-2.5 flex flex-col gap-1.5">
                     {people.slice(3).map((r) => (

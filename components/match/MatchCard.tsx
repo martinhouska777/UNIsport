@@ -35,6 +35,7 @@ export default function MatchCard({
   onView,
   rarity,
   chipCount = 14,
+  tour,
 }: {
   match: Match;
   max: number; // 100 for browse, 92 for session search
@@ -45,6 +46,8 @@ export default function MatchCard({
   /** How many chips to CONSIDER. The card shows as many as fit its three
       rows (see packRows), so this is a pool, not the number on screen. */
   chipCount?: number;
+  /** A `data-tour` for the walk to light — the first card on the board. */
+  tour?: string;
 }) {
   // Their TEAM's colours: the house when they have one, the first-year cohort
   // when they don't (lib/cohorts.ts) — so a first-year's card is never grey.
@@ -91,7 +94,7 @@ export default function MatchCard({
   }, [chips]);
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-border bg-surface">
+    <div data-tour={tour} className="overflow-hidden rounded-2xl border border-border bg-surface">
       {/*
         Avatar block + compatibility badge. The head is a SUNKEN panel with a
         hairline under it, so the card reads as two parts — the person, then

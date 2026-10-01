@@ -32,9 +32,18 @@ export default function MatchGrid({
     card, so each one can lead with the fact its neighbours don't have.
   */
   const rarity = reasonRarity(matches);
+  // The very first card is the one the tour lights beside the People tab.
+  const first = (tiered[0] ?? rest[0])?.userId;
   const cards = (list: Match[]) =>
     list.map((m) => (
-      <MatchCard key={m.userId} match={m} max={max} rarity={rarity} onView={(x) => onView(x, max)} />
+      <MatchCard
+        key={m.userId}
+        match={m}
+        max={max}
+        rarity={rarity}
+        onView={(x) => onView(x, max)}
+        tour={m.userId === first ? "match-first-card" : undefined}
+      />
     ));
   return (
     <div className="px-3 pb-4">
