@@ -27,7 +27,10 @@
       on top. The owner cut two things from this list by name: the word
       "outing" (2026-09-21) and the whole SQUAD group (2026-09-22) — who
       logged out of the roster, and the squad's raw distance and time.
-    • the squad's TRAINING MIX, over the same window
+    • the squad's TRAINING MIX, over the same window — ON ITS OWN TAB since
+      2026-10-01 (owner: "put training mix as a tab… call it team and not
+      squad"). The screen is two tabs, Team and Training mix
+      (lib/varsity/teamStats → teamStatTabs); everything else below is Team.
     • EVERY PERSON, one row each: what they rowed, how long, and done out of
       planned — "let's say there was something prescribed and then they did
       more or less, so they want to see how each person trained". TAPPING A
@@ -67,7 +70,9 @@ import { useUnits } from "@/components/useUnits";
 import Plot from "@/components/varsity/profile/Plot";
 import Dropdown from "@/components/varsity/profile/Dropdown";
 import DatesSheet, { type Dates } from "@/components/varsity/team/DatesSheet";
-import { IconX, IconCalendar, IconArrowLeft } from "@/components/icons";
+import Segmented from "@/components/ui/Segmented";
+import Avatar from "@/components/messages/Avatar";
+import { IconX, IconCalendar, IconArrowLeft, IconChevronDown } from "@/components/icons";
 import type { Boat } from "@/lib/varsity/coachLineup";
 import { chartTypes, type ChartType } from "@/lib/varsity/athleteStats";
 import { fetchLineupsFor } from "@/lib/varsity/lineupStore";
@@ -79,7 +84,7 @@ import { useMembership } from "@/components/varsity/useMembership";
 import { can, fetchSquad } from "@/lib/varsity/membership";
 import { trainingMix, type MixRow } from "@/lib/varsity/trainingMix";
 import TrainingMixList from "@/components/varsity/profile/TrainingMixList";
-import { squadRows, type SquadRow } from "@/lib/varsity/squadStats";
+import { squadRows, sortSquadRows, type PeopleSort, type SquadRow } from "@/lib/varsity/squadStats";
 import type { StatTone } from "@/lib/varsity/rowingStats";
 import { crewLabel } from "@/lib/varsity/racePieces";
 import { formatDistance, formatDuration, metresToUnit, type Units } from "@/lib/varsity/units";
@@ -95,6 +100,7 @@ import {
   teamRangeByKey,
   teamRanges,
   teamReport,
+  teamStatTabs,
   toIso,
   trainedBuckets,
   windowAverage,
@@ -104,6 +110,7 @@ import {
   bucketMinutes,
   type TeamBucket,
   type TeamRange,
+  type TeamStatTab,
 } from "@/lib/varsity/teamStats";
 
 /* ONE frozen empty map, shared. A fresh `{}` per render would be a new
@@ -129,6 +136,7 @@ export default function TeamStatsScreen({ onClose }: { onClose: () => void }) {
   const { units } = useUnits();
   const now = useMemo(() => new Date(), []);
 
+  const [tab, setTab] = useState<TeamStatTab>("team");
   const [rangeKey, setRangeKey] = useState(defaultTeamRange);
   /* Two dates the coach chose, or a stretch dragged on the graph. While it is
      set it IS the window. */
@@ -344,51 +352,69 @@ export default function TeamStatsScreen({ onClose }: { onClose: () => void }) {
   return createPortal(
     <ThemeProvider tokens={vTheme.dark} light={vTheme.light}>
       <div className="fixed inset-0 z-[60] flex flex-col bg-background [animation:backdrop-in_0.18s_ease-out]">
-        {/* ── The bar. What you are looking at, and the way out. ── */}
-        <div className="flex flex-shrink-0 items-center gap-3 border-b border-border px-3 pb-2.5 pt-[max(0.625rem,env(safe-area-inset-top))]">
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close team statistics"
-            className="tap44 press-icon flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-surface-2 text-muted"
-          >
-            <IconX size={15} />
-          </button>
-          <div className="min-w-0 flex-1">
-            <div className="truncate text-[15px] font-semibold leading-tight text-text">Team statistics</div>
-            {buckets.length > 0 && (
-              <div className="mt-0.5 flex items-center gap-1.5 truncate text-[11px] text-muted">
-                <IconCalendar size={11} />
-                {windowLabel(buckets)} · {each} by {each}
-              </div>
-            )}
-          </div>
-          {beforeZoom && (
+        {/* ── The bar. What you are looking at, the way out, and the two
+            tabs — in the bar, so they stay in reach however far down the
+            Team tab has been read. ── */}
+        <div className="flex-shrink-0 border-b border-border px-3 pb-2.5 pt-[max(0.625rem,env(safe-area-inset-top))]">
+          <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={zoomOut}
-              className="tap44 flex flex-shrink-0 items-center gap-1 rounded-full border border-border bg-surface-2 px-3 py-1.5 text-[12px] font-medium text-text"
+              onClick={onClose}
+              aria-label="Close team statistics"
+              className="tap44 press-icon flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-surface-2 text-muted"
             >
-              <IconArrowLeft size={13} /> Zoom out
+              <IconX size={15} />
             </button>
-          )}
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-[15px] font-semibold leading-tight text-text">Team statistics</div>
+              {buckets.length > 0 && (
+                <div className="mt-0.5 flex items-center gap-1.5 truncate text-[11px] text-muted">
+                  <IconCalendar size={11} />
+                  {windowLabel(buckets)} · {each} by {each}
+                </div>
+              )}
+            </div>
+            {beforeZoom && (
+              <button
+                type="button"
+                onClick={zoomOut}
+                className="tap44 flex flex-shrink-0 items-center gap-1 rounded-full border border-border bg-surface-2 px-3 py-1.5 text-[12px] font-medium text-text"
+              >
+                <IconArrowLeft size={13} /> Zoom out
+              </button>
+            )}
+          </div>
+          <div className="mx-auto mt-2.5 w-full max-w-screen-sm">
+            <Segmented
+              size="md"
+              full
+              options={teamStatTabs}
+              value={tab}
+              onChange={setTab}
+              ariaLabel="Team statistics"
+            />
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto overscroll-contain pb-[max(2rem,env(safe-area-inset-bottom))]">
           <div className="mx-auto w-full max-w-screen-sm px-3.5">
-            {/* ── The three choices, the athlete's own dropdowns. ── */}
+            {/* ── The three choices, the athlete's own dropdowns. The measure
+                and the shape are the graph's, so only the Team tab has them;
+                the window is both tabs'. ── */}
             <div className="flex flex-wrap items-center gap-2 py-3">
-              <Dropdown
-                label={metric.label(units)}
-                options={teamMetrics.map((m) => ({ key: m.key, label: m.label(units) }))}
-                value={metric.key}
-                open={openMenu === "metric"}
-                onOpen={(v) => setOpenMenu(v ? "metric" : null)}
-                onPick={(k) => {
-                  setMetricKey(k);
-                  setOpenMenu(null);
-                }}
-              />
+              {tab === "team" && (
+                <Dropdown
+                  label={metric.label(units)}
+                  options={teamMetrics.map((m) => ({ key: m.key, label: m.label(units) }))}
+                  value={metric.key}
+                  open={openMenu === "metric"}
+                  onOpen={(v) => setOpenMenu(v ? "metric" : null)}
+                  onPick={(k) => {
+                    setMetricKey(k);
+                    setOpenMenu(null);
+                  }}
+                />
+              )}
               <Dropdown
                 label={range.label}
                 options={rangeOptions}
@@ -401,21 +427,28 @@ export default function TeamStatsScreen({ onClose }: { onClose: () => void }) {
                   else pickRange(k);
                 }}
               />
-              <Dropdown
-                label={chartTypes.find((c) => c.key === chart)?.label ?? "Columns"}
-                options={chartTypes.map((c) => ({ key: c.key, label: c.label }))}
-                value={chart}
-                open={openMenu === "chart"}
-                onOpen={(v) => setOpenMenu(v ? "chart" : null)}
-                onPick={(k) => {
-                  setChart(k as ChartType);
-                  setOpenMenu(null);
-                }}
-              />
+              {tab === "team" && (
+                <Dropdown
+                  label={chartTypes.find((c) => c.key === chart)?.label ?? "Columns"}
+                  options={chartTypes.map((c) => ({ key: c.key, label: c.label }))}
+                  value={chart}
+                  open={openMenu === "chart"}
+                  onOpen={(v) => setOpenMenu(v ? "chart" : null)}
+                  onPick={(k) => {
+                    setChart(k as ChartType);
+                    setOpenMenu(null);
+                  }}
+                />
+              )}
             </div>
 
             {loading ? (
               <p className="py-12 text-center text-[13px] text-muted">Adding up the squad…</p>
+            ) : tab === "mix" ? (
+              /* WHAT ALL THAT TIME WAS, for the team — the same block the
+                 athlete gets, over the same window as the Team tab, so it
+                 carries no window of its own. Alone on its tab. */
+              <TrainingMixList rows={mix} />
             ) : empty ? (
               <p className="px-6 py-12 text-center text-[13px] leading-relaxed text-muted">{metric.empty}</p>
             ) : (
@@ -474,15 +507,6 @@ export default function TeamStatsScreen({ onClose }: { onClose: () => void }) {
                     </div>
                   </div>
                 ))}
-
-                {/* WHAT ALL THAT TIME WAS, for the squad — the same block the
-                    athlete gets, over the same window as the graph, so it
-                    carries no window of its own. */}
-                {mix.length > 0 && (
-                  <div className="mt-5">
-                    <TrainingMixList rows={mix} heading="Training mix" />
-                  </div>
-                )}
 
                 <PeopleTable rows={rows} units={units} />
 
@@ -586,39 +610,92 @@ function ReadOut({ bucket, each, units }: { bucket: TeamBucket; each: "day" | "w
   Anybody who logged nothing in the window is not here at all. They are an
   unknown, not a zero, and a row of dashes per person would be the screen
   telling a coach something it does not know.
+
+  REBUILT 2026-10-01 (owner: "person by person… make a better UI there, it is
+  pretty important"). It was a 12px spreadsheet with 9px headings, where
+  "211 km" and "20h 14m" broke onto two lines and the ± column was a bare
+  sign nobody could read. Now:
+    • a face beside every name, the console's rankings' own, and the name may
+      take two lines rather than be cut off
+    • the figures at the size of the rankings' scores, never broken: the
+      kilometres are the number alone (the heading says km or mi), with the
+      kilometres off the plan right under them, in green or amber
+    • the plan as a bar under "21/36", so who is behind shows down the column
+      without reading a single fraction
+    • every heading puts the list in its order — most first, the name A to Z
+      — with a small arrow under the one in use
 */
+const PEOPLE_HEAD = "tap44 flex items-center gap-0.5 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted";
+
 function PeopleTable({ rows, units }: { rows: SquadRow[]; units: Units }) {
+  const [by, setBy] = useState<PeopleSort>("km");
+  const shown = useMemo(() => sortSquadRows(rows, by), [rows, by]);
   if (rows.length === 0) return null;
-  const cols = "grid-cols-[minmax(0,1.3fr)_3.3rem_3rem_3.1rem_3.1rem]";
-  const cell = "px-1.5 py-2 text-right tabular-nums";
+  const cols = "grid-cols-[minmax(0,1fr)_3.5rem_4.25rem_4rem]";
+  const heads: { key: PeopleSort; label: string; end: boolean }[] = [
+    { key: "name", label: "Athlete", end: false },
+    { key: "km", label: units.distance === "mi" ? "Mi" : "Km", end: true },
+    { key: "time", label: "Time", end: true },
+    { key: "plan", label: "Plan", end: true },
+  ];
   return (
     <div className="mt-5">
       <div className="pb-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
         Person by person
       </div>
-      <div className="overflow-hidden rounded-xl border border-border bg-surface text-[12px]">
-        <div
-          className={`grid ${cols} border-b border-border bg-surface-2 text-[9px] font-semibold uppercase tracking-[0.1em] text-muted`}
-        >
-          <span className="px-2.5 py-2 text-left">Name</span>
-          <span className={cell}>{units.distance === "mi" ? "Mi" : "Km"}</span>
-          <span className={cell}>±</span>
-          <span className={cell}>Time</span>
-          <span className={cell}>Plan</span>
+      <div className="overflow-hidden rounded-2xl border border-border bg-surface shadow-card">
+        <div className={`grid ${cols} gap-x-1.5 border-b border-border px-3 py-2`}>
+          {heads.map((h) => (
+            <button
+              key={h.key}
+              type="button"
+              onClick={() => setBy(h.key)}
+              aria-pressed={by === h.key}
+              className={`${PEOPLE_HEAD} ${h.end ? "justify-end" : "justify-start"}`}
+            >
+              {h.label}
+              {by === h.key && <IconChevronDown size={11} />}
+            </button>
+          ))}
         </div>
-        {rows.map((r, i) => (
+        {shown.map((r, i) => (
           <Link
             key={r.id}
             href={`/varsity/coach/athlete/${r.id}`}
-            className={`grid ${cols} items-center border-b border-border last:border-b-0 active:bg-surface-2 ${
-              i % 2 === 1 ? "bg-surface-2/60" : ""
+            className={`grid ${cols} items-center gap-x-1.5 px-3 py-2.5 active:bg-surface-2 ${
+              i > 0 ? "border-t border-border" : ""
             }`}
           >
-            <span className="truncate px-2.5 py-2 font-medium text-text">{r.name}</span>
-            <span className={`${cell} font-semibold text-text`}>{r.distance}</span>
-            <span className={`${cell} font-semibold ${toneClass[r.deltaTone]}`}>{r.delta}</span>
-            <span className={`${cell} text-text`}>{r.time}</span>
-            <span className={`${cell} font-semibold ${toneClass[r.tone]}`}>{r.plan}</span>
+            <span className="flex min-w-0 items-center gap-2.5">
+              <Avatar size={30} name={r.name} />
+              <span className="line-clamp-2 min-w-0 break-words text-[13px] font-semibold leading-tight text-text">
+                {r.name}
+              </span>
+            </span>
+            <span className="text-right leading-tight">
+              <span className="block text-[15px] font-bold tabular-nums text-text">{r.km}</span>
+              {r.delta && (
+                <span className={`block text-[11px] font-semibold tabular-nums ${toneClass[r.deltaTone]}`}>
+                  {r.delta}
+                </span>
+              )}
+            </span>
+            <span className="whitespace-nowrap text-right text-[14px] font-semibold tabular-nums text-text">
+              {r.time}
+            </span>
+            <span className="flex flex-col items-end gap-1">
+              <span className="text-[14px] font-bold tabular-nums text-text">{r.plan}</span>
+              {/* A sliver even at none done, so a plan nobody touched still
+                  reads as a bar and not as a missing one. */}
+              {r.share != null && (
+                <span className="block h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
+                  <span
+                    className={`block h-full rounded-full ${r.tone === "success" ? "bg-success" : "bg-warn"}`}
+                    style={{ width: `${Math.max(4, Math.round(r.share * 100))}%` }}
+                  />
+                </span>
+              )}
+            </span>
           </Link>
         ))}
       </div>

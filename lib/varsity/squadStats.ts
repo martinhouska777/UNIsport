@@ -323,14 +323,20 @@ export function squadReport(people: SquadPerson[], span: Span, units: Units): St
   return groups;
 }
 
-/** One person's line in the table at the foot: what they did, against the plan. */
+/** One person's line in Person by person: what they did, against the plan. */
 export type SquadRow = {
   id: string;
   name: string;
-  distance: string;
+  /** What they rowed, the number alone ("211", "14.1") — the column says km or mi. */
+  km: string;
   time: string;
   /** "12/14", or a dash when nothing was planned for them in the window. */
   plan: string;
+  /** Done out of planned, 0–1, for the bar under it; null when nothing was planned. */
+  share: number | null;
+  /** The raw figures, so the list can be put in any column's order. */
+  metres: number;
+  minutes: number;
   /* HOW FAR OFF THE ASKED-FOR KILOMETRES THEY LANDED: "+1.5", "-1.0", or
      empty when the plan asked them for no distance at all. The unit is the
      column's, so the number carries none of its own. */
@@ -338,8 +344,16 @@ export type SquadRow = {
   deltaTone: "success" | "warn" | "muted";
   /** How they stand against the plan, as a word the screen turns into a colour. */
   tone: "success" | "warn" | "muted";
-  /** What the rows are ordered by. */
-  sort: number;
+};
+
+/* The column the list is in the order of. */
+export type PeopleSort = "name" | "km" | "time" | "plan";
+
+/** The rowed distance as Person by person prints it: no unit, a decimal under 100. */
+const kmFigure = (metres: number, units: Units) => {
+  if (metres <= 0) return dash;
+  const v = metresToUnit(metres, units.distance);
+  return v >= 100 ? v.toFixed(0) : v.toFixed(1);
 };
 
 /* The kilometres they came out ahead or behind by, as the column reads it. */
@@ -370,20 +384,41 @@ function deltaOf(p: SquadPerson, units: Units) {
   says whether a big week was the week that was asked for.
 */
 export function squadRows(people: SquadPerson[], units: Units): SquadRow[] {
-  return people
-    .map((p) => ({
+  return sortSquadRows(
+    people.map((p) => ({
       id: p.id,
       name: p.name,
-      distance: p.metres > 0 ? formatDistance(p.metres, units.distance) : dash,
+      km: kmFigure(p.metres, units),
       time: p.minutes > 0 ? formatDuration(Math.round(p.minutes)) : dash,
       plan: p.planned > 0 ? `${p.done}/${p.planned}` : dash,
+      share: p.planned > 0 ? Math.min(1, p.done / p.planned) : null,
+      metres: p.metres,
+      minutes: p.minutes,
       ...deltaOf(p, units),
       tone: (p.planned === 0
         ? "muted"
         : p.done >= p.planned
           ? "success"
           : "warn") as SquadRow["tone"],
-      sort: p.metres,
-    }))
-    .sort((a, b) => b.sort - a.sort || a.name.localeCompare(b.name));
+    })),
+    "km",
+  );
+}
+
+/*
+  ANY COLUMN CAN BE THE ORDER (owner, 2026-10-01: a better Person by person).
+  Tapping a heading puts the list in that column's order, the biggest first —
+  most kilometres, most hours, the most of the plan done — and the name A to
+  Z. Somebody with nothing planned goes under everybody who had a plan, and a
+  tie falls back to the name, so the order never jumps between two reads.
+*/
+export function sortSquadRows(rows: SquadRow[], by: PeopleSort): SquadRow[] {
+  const byName = (a: SquadRow, b: SquadRow) => a.name.localeCompare(b.name);
+  const order: Record<PeopleSort, (a: SquadRow, b: SquadRow) => number> = {
+    name: byName,
+    km: (a, b) => b.metres - a.metres || byName(a, b),
+    time: (a, b) => b.minutes - a.minutes || byName(a, b),
+    plan: (a, b) => (b.share ?? -1) - (a.share ?? -1) || b.metres - a.metres || byName(a, b),
+  };
+  return [...rows].sort(order[by]);
 }

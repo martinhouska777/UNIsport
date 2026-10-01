@@ -57,7 +57,10 @@ export default function TrainingMixList({
 
   return (
     <div>
-      {/* WHAT IT IS, and — only where nothing else says it — OVER WHAT. */}
+      {/* WHAT IT IS, and — only where nothing else says it — OVER WHAT. On
+          the coach's Training mix TAB neither is needed (the tab says what it
+          is, the window sits above it), so the line goes. */}
+      {(heading || ownWindow) && (
       <div className="flex items-center justify-between gap-2 pb-2">
         <span className="min-w-0 truncate text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
           {heading ?? "Over"}
@@ -74,6 +77,7 @@ export default function TrainingMixList({
           />
         )}
       </div>
+      )}
 
       {rows.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border bg-surface px-4 py-6 text-center text-[12px] text-muted">
