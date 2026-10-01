@@ -63,7 +63,7 @@ export type TourStep = {
   */
   demo?: "add-photo" | "photo-lands" | "accept-plan";
   /** Press the `press` control this many times (default once) — the
-      competition arrow goes Houses → Dorms → Everyone. */
+      list of competitions wraps, so a step can be taken more than once. */
   pressTimes?: number;
   /** The forward button's word when it isn't "Next" — the opening card's "Show me". */
   next?: string;
@@ -211,9 +211,8 @@ export const tourSteps: TourStep[] = [
     body: `Your workouts earn points for you and your house: ${sessionPoints.solo} on your own, ${sessionPoints.partner} with a partner, ${sessionPoints.newPartner} with someone new.`,
   },
   {
-    // Twice: Houses → Dorms → Everyone (owner: "switch it to all people").
+    // Once: Houses → Everyone (owner: "switch it to all people").
     press: "lb-competition-next",
-    pressTimes: 2,
     anchor: "lb-controls",
     alsoAnchor: "lb-podium",
     title: "Pick the competition",

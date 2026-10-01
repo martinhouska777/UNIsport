@@ -40,14 +40,15 @@
   the board, which is the number people shout about). Both come back in the
   same read, so switching is instant.
 
-  THE COMPETITIONS
+  THE COMPETITIONS, in the order the right arrow walks them
     • Houses      — the twelve upperclassman Houses, per member or by total
-    • Dorms       — the first-year Yard dorms, same way, kept separate because
-                    a dorm of four freshmen has no business being ranked
-                    against a house of four hundred
     • Everyone    — the whole campus
     • Most partners — who trained with the most DIFFERENT people
     • Years       — class year vs class year, also per member
+    • Dorms       — the first-year Yard dorms, same way, kept separate because
+                    a dorm of four freshmen has no business being ranked
+                    against a house of four hundred. Last in the loop, so it is
+                    one step left of Houses and never between Houses and Everyone.
 
   Houses opens first, on purpose. Everyone is an anonymous list of names; house
   vs house is the thing people already argue about at dinner, and it is the
@@ -148,12 +149,6 @@ const COMPETITIONS: Competition[] = [
     empty: "No houses to show.",
   },
   {
-    key: "dorms",
-    label: "Dorms",
-    note: "First-year Yard dorms",
-    empty: "No dorms to show.",
-  },
-  {
     key: "everyone",
     label: "Everyone",
     note: "The whole campus, by points",
@@ -170,6 +165,15 @@ const COMPETITIONS: Competition[] = [
     label: "Years",
     note: "Class year vs class year",
     empty: "No class years to show.",
+  },
+  // Last, so the right arrow from Houses lands on Everyone (owner, 2026-09-30:
+  // "click on the right and it will be everyone and not dorms"). The list wraps,
+  // so Dorms is one step LEFT of Houses.
+  {
+    key: "dorms",
+    label: "Dorms",
+    note: "First-year Yard dorms",
+    empty: "No dorms to show.",
   },
 ];
 
