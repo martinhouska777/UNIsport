@@ -19,7 +19,11 @@
   grey hint line, the per-row rule summaries, the crew sizes ("every coach
   knows what a 4+ is") and all the up/down arrows are gone. The presets for
   other sports still live in trainingConfig.ts; nothing on screen offers them.
-  A list keeps the order its items were added in.
+
+  ORDER. Zones and boats are held and dragged into place (2026-10-01, the
+  arrows' replacement — components/useDragReorder.ts): the plan editor's zone
+  buttons and the Lineup tab's Add Boat row read them in this order. Session
+  types keep the order they were added in.
 
   RENAMING IS SAFE, DELETING IS NOT. A session stores its type by KEY, and a
   rename never changes the key, so every session already planned simply follows
@@ -57,6 +61,7 @@ import {
 } from "@/lib/varsity/trainingConfig";
 import type { BoatKind } from "@/lib/varsity/coachLineup";
 import { markColor } from "@/lib/colorMarks";
+import { moveItem, useDragReorder } from "@/components/useDragReorder";
 
 /* ── small shared pieces ─────────────────────────────────────────────────── */
 
@@ -183,6 +188,14 @@ export default function TrainingSettingsScreen({ membership }: { membership: Mem
     setSaved(false);
   }, []);
 
+  // Hold a zone or a boat and drag it into place.
+  const zoneRow = useDragReorder(cfg.zones.length, (from, to) =>
+    update((c) => ({ ...c, zones: moveItem(c.zones, from, to) })),
+  );
+  const boatRow = useDragReorder(cfg.boats.length, (from, to) =>
+    update((c) => ({ ...c, boats: moveItem(c.boats, from, to) })),
+  );
+
   const save = useCallback(async () => {
     // Never write settings on top of settings we failed to read.
     if (loadFailed) return;
@@ -276,7 +289,9 @@ export default function TrainingSettingsScreen({ membership }: { membership: Mem
   /*
     Round 2's look (owner, 2026-09-30: "like WhatsApp or Instagram"): each list
     is one white card, rows split by a hairline, and the card ends with its own
-    "+ Add" row. A list keeps the order its items were added in.
+    "+ Add" row. Each zone and boat sits in a wrapper of its own — the drag
+    moves the wrapper — straight inside the card, so the hairlines still fall
+    between rows.
   */
   return (
     <>
@@ -296,12 +311,13 @@ export default function TrainingSettingsScreen({ membership }: { membership: Mem
 
         <Group title="Intensity zones">
           {cfg.zones.map((z, i) => (
-            <Row
-              key={z.key}
-              icon={<Dot color={z.color} />}
-              label={z.label}
-              onClick={() => setEditing({ kind: "zone", index: i })}
-            />
+            <div key={z.key} {...zoneRow(i)}>
+              <Row
+                icon={<Dot color={z.color} />}
+                label={z.label}
+                onClick={() => setEditing({ kind: "zone", index: i })}
+              />
+            </div>
           ))}
           <AddRow label="Add a zone" onClick={() => setEditing({ kind: "zone", index: "new" })} />
         </Group>
@@ -314,12 +330,13 @@ export default function TrainingSettingsScreen({ membership }: { membership: Mem
         */}
         <Group title="Boats">
           {cfg.boats.map((b, i) => (
-            <Row
-              key={b.key}
-              icon={<span className="text-[15px] font-semibold">{b.symbol}</span>}
-              label={b.name}
-              onClick={() => setEditing({ kind: "boat", index: i })}
-            />
+            <div key={b.key} {...boatRow(i)}>
+              <Row
+                icon={<span className="text-[15px] font-semibold">{b.symbol}</span>}
+                label={b.name}
+                onClick={() => setEditing({ kind: "boat", index: i })}
+              />
+            </div>
           ))}
           <AddRow label="Add a boat" onClick={() => setEditing({ kind: "boat", index: "new" })} />
         </Group>

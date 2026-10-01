@@ -129,7 +129,18 @@ Invites + Squad), `components/varsity/coach/settings/TrainingSettingsScreen.tsx`
       2026-09-30 call), chart labels included. A colour a coach saved as the old
       grey is read as the new grey (`regrey` in lib/varsity/configStore.ts), so
       the colour picker no longer needs its own check for it.
-- [ ] **Slice 4 — reorder zones and boats** by press-and-drag.
+- [x] **Slice 4 — reorder zones and boats** by press-and-drag. (done 2026-10-01,
+      see git log "settings round 3, slice 4") Hold a zone or a boat and drag it:
+      the rows it passes slide aside, letting go settles it into the gap and the
+      new order saves itself ("Saving… / Saved ✓"). The lineup builder's gesture
+      (components/useDragReorder.ts): a thumb that moves straight away scrolls,
+      one held still for a quarter second lifts the row; a mouse drags as soon
+      as it moves; a tap, even a slow one, still opens the row. The page scrolls
+      itself near the top/bottom edge, only as far as the list goes. No grip
+      handle on the rows (nothing the owner picked) — offered to him instead.
+      Session types are NOT reorderable (not asked). Checked in headless Chrome
+      on a throwaway page (deleted): mouse drag, touch hold-and-drag, quick
+      swipe = scroll, slow tap = open, autoscroll.
 - [ ] **Owner:** run `db/varsity_push_kinds.sql` (command in 1.a1).
 - [ ] **Owner to pick:** a1, a6, a10, a11, a12, the second green (a3), anything from
       (b), the laptop gear highlight, the captain's one-tab bar.
