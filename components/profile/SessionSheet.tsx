@@ -1,6 +1,6 @@
 "use client";
 
-import { longDate } from "@/lib/schedule";
+import { clockOf, longDate } from "@/lib/schedule";
 import { useEffect } from "react";
 import {
   activityLabel,
@@ -8,7 +8,8 @@ import {
   metricsSummary,
   type WorkoutLog,
 } from "@/lib/supabase/workouts";
-import { IconX, IconUser, IconChevronRight } from "@/components/icons";
+import type { UpcomingPlan } from "@/lib/supabase/sessionPlans";
+import { IconX, IconUser, IconCalendar, IconChevronRight } from "@/components/icons";
 
 /*
   Bottom sheet listing every workout logged on a given day as a compact, tappable
@@ -16,17 +17,25 @@ import { IconX, IconUser, IconChevronRight } from "@/components/icons";
   their metrics. Tapping a row opens that workout on its own full screen
   (WorkoutDetail), where the sets table + edit/delete live. Closes on the X, the
   backdrop, or Escape. Colors are theme tokens (rule 1).
+
+  Sessions you have ACCEPTED but not done yet sit above the logged ones, with a
+  calendar icon and "with <name>"; tapping one opens the chat the plan lives in.
 */
 export default function SessionSheet({
   date,
   logs,
+  plans,
   onClose,
   onOpen,
+  onOpenPlan,
 }: {
   date: string; // ISO yyyy-mm-dd
   logs: WorkoutLog[];
+  /** Accepted sessions on this day that aren't logged yet. */
+  plans: UpcomingPlan[];
   onClose: () => void;
   onOpen: (log: WorkoutLog) => void;
+  onOpenPlan: (plan: UpcomingPlan) => void;
 }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -55,7 +64,12 @@ export default function SessionSheet({
           <div>
             <div className="text-[15px] font-medium text-text">{dateLabel}</div>
             <div className="mt-0.5 text-[11px] text-muted">
-              {logs.length} session{logs.length === 1 ? "" : "s"} logged
+              {[
+                logs.length > 0 && `${logs.length} session${logs.length === 1 ? "" : "s"} logged`,
+                plans.length > 0 && `${plans.length} planned`,
+              ]
+                .filter(Boolean)
+                .join(" · ")}
             </div>
           </div>
           <button
@@ -70,6 +84,28 @@ export default function SessionSheet({
 
         {/* One tappable row per logged session */}
         <div className="flex flex-col divide-y divide-border pb-6">
+          {plans.map((plan) => (
+            <button
+              key={plan.planId}
+              type="button"
+              onClick={() => onOpenPlan(plan)}
+              className="flex w-full items-center gap-3 px-4 py-3 text-left active:bg-surface-2"
+            >
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-dashed border-primary bg-primary-tint text-primary">
+                <IconCalendar size={18} />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-[14px] font-medium text-text">
+                  {activityLabel(plan.activity)} with {plan.otherName}
+                </span>
+                <span className="mt-0.5 block truncate text-[11px] text-muted">
+                  {clockOf(new Date(plan.scheduledAt))}
+                  {plan.place ? ` · ${plan.place}` : ""}
+                </span>
+              </span>
+              <IconChevronRight size={16} className="shrink-0 text-muted" />
+            </button>
+          ))}
           {logs.map((log) => {
             const muscles = logMuscles(log);
             const metrics = metricsSummary(log);

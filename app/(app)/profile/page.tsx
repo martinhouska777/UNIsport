@@ -13,6 +13,7 @@ import { useMembership } from "@/components/varsity/useMembership";
 import { VARSITY_HOME } from "@/lib/varsity/theme";
 import TrainingCalendar, {
   calendarRange,
+  plansOn,
   type CalendarMode,
 } from "@/components/profile/TrainingCalendar";
 import SessionSheet from "@/components/profile/SessionSheet";
@@ -43,6 +44,7 @@ import {
 } from "@/lib/supabase/workouts";
 import { fileToDataUrl } from "@/lib/image";
 import { getMyFollowCounts } from "@/lib/supabase/follows";
+import { listUpcomingPlans, planChatHref, type UpcomingPlan } from "@/lib/supabase/sessionPlans";
 import { readLogLink, planCampusDay } from "@/lib/reminders";
 import { hometownLabel, nameError } from "@/lib/onboarding";
 import {
@@ -62,6 +64,8 @@ export default function ProfilePage() {
 
   // Logged workouts for the week/month on screen + the all-time count.
   const [logs, setLogs] = useState<WorkoutLog[]>([]);
+  // Accepted sessions still to come — they sit on the calendar as dashed chips.
+  const [plans, setPlans] = useState<UpcomingPlan[]>([]);
   const [sessionsCount, setSessionsCount] = useState(0);
   const [partners, setPartners] = useState<PartnerSummary[]>([]);
   const [partnersOpen, setPartnersOpen] = useState(false); // "Partners" stat → who list
@@ -189,17 +193,20 @@ export default function ProfilePage() {
   */
   const fetchLogs = useCallback(async (): Promise<{
     logs: WorkoutLog[];
+    plans: UpcomingPlan[];
     total: number;
     partners: PartnerSummary[];
   }> => {
-    if (!userId) return { logs: [], total: 0, partners: [] };
+    if (!userId) return { logs: [], plans: [], total: 0, partners: [] };
     const { from, to } = calendarRange(calAnchor, calMode);
-    const [logs, total, partners] = await Promise.all([
+    const [logs, plans, total, partners] = await Promise.all([
       listMonth(userId, from, to),
+      // The accepted sessions are the same ones the Upcoming list reads.
+      listUpcomingPlans().catch(() => [] as UpcomingPlan[]),
       countWorkouts(userId),
       listPartners(userId),
     ]);
-    return { logs, total, partners };
+    return { logs, plans, total, partners };
   }, [userId, calAnchor, calMode]);
 
   useEffect(() => {
@@ -207,6 +214,7 @@ export default function ProfilePage() {
     fetchLogs().then((r) => {
       if (!active) return;
       setLogs(r.logs);
+      setPlans(r.plans);
       setSessionsCount(r.total);
       setPartners(r.partners);
       setStatsLoaded(true);
@@ -220,6 +228,7 @@ export default function ProfilePage() {
   const reloadLogs = async () => {
     const r = await fetchLogs();
     setLogs(r.logs);
+    setPlans(r.plans);
     setSessionsCount(r.total);
     setPartners(r.partners);
   };
@@ -237,10 +246,13 @@ export default function ProfilePage() {
     if (userId) await deleteWorkout(userId, log.id);
     const r = await fetchLogs();
     setLogs(r.logs);
+    setPlans(r.plans);
     setSessionsCount(r.total);
     setPartners(r.partners);
     setOpenLog(null);
-    if (!r.logs.some((l) => l.date === log.date)) setOpenDate(null);
+    if (!r.logs.some((l) => l.date === log.date) && plansOn(r.plans, r.logs, log.date).length === 0) {
+      setOpenDate(null);
+    }
   };
 
   const user = data ? profileFromOnboarding(data) : null;
@@ -654,6 +666,7 @@ export default function ProfilePage() {
           swipe to move through either. */}
       <TrainingCalendar
         logs={logs}
+        plans={plans}
         anchor={calAnchor}
         mode={calMode}
         onAnchorChange={setCalAnchor}
@@ -879,8 +892,16 @@ export default function ProfilePage() {
         <SessionSheet
           date={openDate}
           logs={logs.filter((l) => l.date === openDate)}
+          plans={plansOn(plans, logs, openDate)}
           onClose={() => setOpenDate(null)}
           onOpen={(log) => setOpenLog(log)}
+          onOpenPlan={async (p) => {
+            try {
+              router.push(await planChatHref(p));
+            } catch {
+              // Tapping just won't navigate if the DM can't be opened.
+            }
+          }}
         />
       )}
 

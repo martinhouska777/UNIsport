@@ -27,11 +27,11 @@ import {
   confirmPlan,
   listPlansToConfirm,
   listUpcomingPlans,
+  planChatHref,
   planDayLabel,
   type PlanToConfirm,
   type UpcomingPlan,
 } from "@/lib/supabase/sessionPlans";
-import { startDirectConversation } from "@/lib/supabase/messages";
 import { activityLabel } from "@/lib/supabase/workouts";
 import { IconCalendar, IconCheck, IconChevronRight, IconX } from "@/components/icons";
 
@@ -113,12 +113,7 @@ export default function UpcomingSessions({
 
   const open = async (p: UpcomingPlan) => {
     try {
-      const cid = await startDirectConversation(p.otherId);
-      // `uid` matters: without it the thread header has no photo and the name
-      // isn't tappable through to their profile.
-      router.push(
-        `/messages?dm=${cid}&name=${encodeURIComponent(p.otherName)}&uid=${encodeURIComponent(p.otherId)}`,
-      );
+      router.push(await planChatHref(p));
     } catch {
       // Ignore — tapping just won't navigate if the DM can't be opened.
     }

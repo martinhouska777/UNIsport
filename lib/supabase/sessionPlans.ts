@@ -6,6 +6,7 @@
 */
 import { clockOf, shortDate } from "@/lib/schedule";
 import { createClient } from "@/lib/supabase/client";
+import { startDirectConversation } from "@/lib/supabase/messages";
 import { notifyConversation } from "@/lib/push/client";
 
 /** Propose a session in a conversation. Returns the new plan id. */
@@ -158,6 +159,18 @@ export type UpcomingPlan = {
   place: string | null;
   scheduledAt: string;
 };
+
+/**
+ * The link to the chat a plan lives in (the plan card is in that thread). Finds
+ * or opens the DM with the other person first.
+ *
+ * `uid` matters: without it the thread header has no photo and the name isn't
+ * tappable through to their profile.
+ */
+export async function planChatHref(p: Pick<UpcomingPlan, "otherId" | "otherName">): Promise<string> {
+  const cid = await startDirectConversation(p.otherId);
+  return `/messages?dm=${cid}&name=${encodeURIComponent(p.otherName)}&uid=${encodeURIComponent(p.otherId)}`;
+}
 
 /** A session that has happened and is waiting on the caller's "did it?". */
 export type PlanToConfirm = UpcomingPlan & { conversationId: string };

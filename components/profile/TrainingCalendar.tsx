@@ -13,12 +13,21 @@
   hands down the logs for that range (see the Profile tab), so the day sheet
   and the calendar can never disagree about what a day was.
 
+  PLANNED SESSIONS (owner, 2026-09-30: someone suggests a session, you accept
+  it, and it should show up in the calendar). An accepted session that hasn't
+  happened yet sits on its day as a DASHED chip — a promise, where a logged
+  session is a filled one. Once it's logged the filled chip replaces it, so the
+  same session is never drawn twice. Because a plan can be next week, forward
+  stops at the last planned session instead of at today.
+
   Replaces the old pair of components (a week strip + a separate month grid,
   both hard-wired to today, with a "Show the whole month" link between them).
   All colour is theme tokens (rule 1).
 */
 import { useRef } from "react";
 import { activityLabel, logMuscles, type WorkoutLog } from "@/lib/supabase/workouts";
+import type { UpcomingPlan } from "@/lib/supabase/sessionPlans";
+import { planCampusDay } from "@/lib/reminders";
 import { nextDays } from "@/lib/schedule";
 import { IconArrowLeft, IconArrowRight } from "@/components/icons";
 import Segmented from "@/components/ui/Segmented";
@@ -113,21 +122,42 @@ export function dayChips(logs: WorkoutLog[], iso: string): string[] {
   return acts;
 }
 
-/** The chips on a tile, at most two, plus "+N" for the rest. */
-function Chips({ chips }: { chips: string[] }) {
+/**
+ * The accepted sessions still to come on one day — the ones that are not
+ * logged yet. A plan whose session has been logged is already drawn by its log.
+ */
+export function plansOn(plans: UpcomingPlan[], logs: WorkoutLog[], iso: string): UpcomingPlan[] {
+  return plans.filter(
+    (p) => planCampusDay(p.scheduledAt) === iso && !logs.some((l) => l.planId === p.planId),
+  );
+}
+
+/** What a day's button says to a screen reader: "Legs, Gym planned". */
+const dayWords = (chips: string[], planned: string[]) =>
+  [...chips, ...planned.map((p) => `${p} planned`)].join(", ");
+
+/** The chips on a tile, at most two, plus "+N" for the rest. Logged ones are
+    filled; planned ones are dashed and unfilled. */
+function Chips({ chips, planned }: { chips: string[]; planned: string[] }) {
+  const all = [
+    ...chips.map((label) => ({ label, planned: false })),
+    ...planned.map((label) => ({ label, planned: true })),
+  ];
   return (
     <span className="mt-auto flex flex-col gap-0.5">
-      {chips.slice(0, 2).map((c) => (
+      {all.slice(0, 2).map((c) => (
         <span
-          key={c}
-          className="truncate rounded bg-primary-tint px-[3px] text-left text-[7px] font-medium leading-[1.4] text-primary"
+          key={`${c.planned}-${c.label}`}
+          className={`truncate rounded px-[3px] text-left text-[7px] font-medium leading-[1.4] text-primary ${
+            c.planned ? "border border-dashed border-primary-line" : "bg-primary-tint"
+          }`}
         >
-          {shortMuscle(c)}
+          {shortMuscle(c.label)}
         </span>
       ))}
-      {chips.length > 2 && (
+      {all.length > 2 && (
         <span className="px-[3px] text-left text-[7px] font-medium leading-[1.3] text-muted">
-          +{chips.length - 2}
+          +{all.length - 2}
         </span>
       )}
     </span>
@@ -136,6 +166,7 @@ function Chips({ chips }: { chips: string[] }) {
 
 export default function TrainingCalendar({
   logs,
+  plans,
   anchor,
   mode,
   onAnchorChange,
@@ -143,6 +174,8 @@ export default function TrainingCalendar({
   onPickDate,
 }: {
   logs: WorkoutLog[];
+  /** Accepted sessions that haven't happened yet (db: my_upcoming_plans). */
+  plans: UpcomingPlan[];
   /** Any day inside the week / month being shown. */
   anchor: Date;
   mode: CalendarMode;
@@ -152,12 +185,15 @@ export default function TrainingCalendar({
 }) {
   const todayIso = isoOf(new Date());
 
-  // Never past the week or month we're in: there is nothing logged in the
-  // future, so forward would only ever show empty boxes.
+  // Never past the week or month of the last planned session (or today's, when
+  // nothing is planned): beyond that there is nothing to show, so forward would
+  // only ever lead to empty boxes.
+  const lastIso = plans.reduce((latest, p) => {
+    const day = planCampusDay(p.scheduledAt);
+    return day > latest ? day : latest;
+  }, todayIso);
   const atLatest =
-    mode === "week"
-      ? calendarRange(anchor, "week").to >= calendarRange(new Date(), "week").to
-      : calendarRange(anchor, "month").to >= calendarRange(new Date(), "month").to;
+    calendarRange(anchor, mode).to >= calendarRange(new Date(`${lastIso}T00:00:00`), mode).to;
 
   const go = (step: number) => {
     if (step > 0 && atLatest) return;
@@ -250,7 +286,8 @@ export default function TrainingCalendar({
           <div className="grid grid-cols-7 gap-1">
             {days.map((d) => {
               const chips = dayChips(logs, d.iso);
-              const has = chips.length > 0;
+              const planned = plansOn(plans, logs, d.iso).map((p) => activityLabel(p.activity));
+              const has = chips.length > 0 || planned.length > 0;
               const isToday = d.iso === todayIso;
               const past = d.iso < todayIso;
               return (
@@ -259,13 +296,15 @@ export default function TrainingCalendar({
                   type="button"
                   disabled={!has}
                   onClick={() => has && onPickDate(d.iso)}
-                  aria-label={has ? `${chips.join(", ")} on ${d.name}` : d.name}
+                  aria-label={has ? `${dayWords(chips, planned)} on ${d.name}` : d.name}
                   className={`flex min-h-[64px] flex-col items-stretch overflow-hidden rounded-md p-1 text-left ${
-                    has
+                    chips.length > 0
                       ? "border border-primary-line bg-primary-tint"
-                      : isToday
-                        ? "border border-primary bg-surface"
-                        : "border border-border bg-surface"
+                      : has
+                        ? "border border-dashed border-primary-line bg-surface"
+                        : isToday
+                          ? "border border-primary bg-surface"
+                          : "border border-border bg-surface"
                   } ${isToday ? "ring-1 ring-primary" : ""} disabled:cursor-default`}
                 >
                   <span
@@ -282,7 +321,7 @@ export default function TrainingCalendar({
                   >
                     {d.num}
                   </span>
-                  {has && <Chips chips={chips} />}
+                  {has && <Chips chips={chips} planned={planned} />}
                 </button>
               );
             })}
@@ -309,7 +348,8 @@ export default function TrainingCalendar({
                       if (n === null) return <div key={idx} />;
                       const iso = isoFor(year, month, n);
                       const chips = dayChips(logs, iso);
-                      const has = chips.length > 0;
+                      const planned = plansOn(plans, logs, iso).map((p) => activityLabel(p.activity));
+                      const has = chips.length > 0 || planned.length > 0;
                       const isToday = iso === todayIso;
                       return (
                         <button
@@ -317,13 +357,15 @@ export default function TrainingCalendar({
                           type="button"
                           disabled={!has}
                           onClick={() => has && onPickDate(iso)}
-                          aria-label={has ? `${chips.join(", ")} on day ${n}` : `Day ${n}`}
+                          aria-label={has ? `${dayWords(chips, planned)} on day ${n}` : `Day ${n}`}
                           className={`flex aspect-square flex-col items-stretch overflow-hidden rounded-md p-1 ${
-                            has
+                            chips.length > 0
                               ? "border border-primary-line bg-primary-tint"
-                              : isToday
-                                ? "border border-primary bg-primary-tint"
-                                : "border border-border bg-surface"
+                              : has
+                                ? "border border-dashed border-primary-line bg-surface"
+                                : isToday
+                                  ? "border border-primary bg-primary-tint"
+                                  : "border border-border bg-surface"
                           } ${isToday ? "ring-1 ring-primary" : ""} disabled:cursor-default`}
                         >
                           <span
@@ -333,7 +375,7 @@ export default function TrainingCalendar({
                           >
                             {n}
                           </span>
-                          {has && <Chips chips={chips} />}
+                          {has && <Chips chips={chips} planned={planned} />}
                         </button>
                       );
                     })}
