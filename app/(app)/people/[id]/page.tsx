@@ -13,16 +13,15 @@
   Data is REAL: it loads the person's public profile via the get_public_profile
   RPC (RLS-safe) and runs it through profileFromOnboarding — the SAME mapping the
   owner's own Profile tab uses — so nothing here is faked. The fit tier is the
-  same one shown on the card the user tapped (passed via ?fit=), shown only
-  when present. All colors are theme tokens (rule 1).
+  same one shown on the card the user tapped — no longer shown here (owner,
+  2026-09-30); Match still adds ?fit= to the link, and it is ignored. All colors are theme tokens (rule 1).
 */
 import { Suspense, useEffect, useState } from "react";
 import Button from "@/components/ui/Button";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { getPublicProfile } from "@/lib/supabase/profiles";
 import { profileFromOnboarding, classOfLabel, type CurrentUser } from "@/lib/currentUser";
 import { residenceLabel, hometownLabel } from "@/lib/onboarding";
-import { MATCH_TIER_LABELS } from "@/lib/matchTier";
 import { getPairMatch, type Match } from "@/lib/supabase/matching";
 import { matchReasons, type MatchReason } from "@/lib/matchReasons";
 import { useAppState } from "@/components/AppState";
@@ -37,9 +36,9 @@ import { getFollowCounts, type FollowKind } from "@/lib/supabase/follows";
 import { getPartnerCount } from "@/lib/supabase/workouts";
 import SectionLabel from "@/components/ui/SectionLabel";
 
-// useSearchParams() requires a Suspense boundary or the production build fails
-// ("Missing Suspense boundary with useSearchParams"), so the page wraps the
-// real screen in one.
+// The real screen sits in a Suspense boundary. It was required while this page
+// read ?fit= with useSearchParams (the fit pill, cut 2026-09-30); it stays as
+// the loading state.
 export default function PersonProfilePage() {
   return (
     <Suspense
@@ -54,12 +53,8 @@ export default function PersonProfilePage() {
 
 function PersonProfile() {
   const params = useParams<{ id: string }>();
-  const search = useSearchParams();
   const router = useRouter();
   const id = params.id;
-  // Only ever the labels we ourselves emit — never arbitrary text from the URL.
-  const fitParam = search.get("fit");
-  const fit = fitParam && MATCH_TIER_LABELS.includes(fitParam) ? fitParam : null;
 
   const [user, setUser] = useState<CurrentUser | null>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "missing" | "error">("loading");
@@ -263,24 +258,33 @@ function PersonProfile() {
             {/* WHO THEY ARE — laid out like your own Profile tab: photo on the
                 left; name, house · class and the three counts on the right.
                 Followers and Following open the lists; Partners is the number
-                alone. Fit / Mentor pills and the bio run underneath. */}
+                alone. Varsity / Mentor under the photo; the bio underneath.
+                No fit pill (owner, 2026-09-30: "I don't want there to be
+                strong fit") — "Why you match" says it in words. */}
             <div className="rounded-2xl border border-border bg-surface p-3.5">
               <div className="flex items-center gap-4">
-                <div className="flex h-[72px] w-[72px] shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-primary bg-primary-tint text-primary">
-                  {user.photo ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={user.photo} alt={user.name || "Profile photo"} className="h-full w-full object-cover" />
-                  ) : (
-                    <IconUser size={30} />
-                  )}
+                {/* THE PHOTO, AND WHAT THEY ARE UNDER IT (owner, 2026-09-30):
+                    Varsity and Mentor sit on the left under the picture, so the
+                    name and the counts keep the right-hand side to themselves
+                    and the bio follows straight on. Mentor used to be a row of
+                    its own under all of this, which left a gap of empty space
+                    between the counts and the bio. */}
+                <div className="flex shrink-0 flex-col items-center gap-1.5">
+                  <div className="flex h-[72px] w-[72px] items-center justify-center overflow-hidden rounded-full border-2 border-primary bg-primary-tint text-primary">
+                    {user.photo ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={user.photo} alt={user.name || "Profile photo"} className="h-full w-full object-cover" />
+                    ) : (
+                      <IconUser size={30} />
+                    )}
+                  </div>
+                  {user.badges.varsity && <ProfileBadge kind="varsity" />}
+                  {user.badges.mentor && <ProfileBadge kind="mentor" />}
                 </div>
                 <div className="flex min-w-0 flex-1 flex-col gap-2">
                   <div>
-                    <div className="flex items-center gap-2">
-                      <span className="truncate text-[18px] font-semibold tracking-[-0.01em] text-text">
-                        {user.name || "Member"}
-                      </span>
-                      {user.badges.varsity && <ProfileBadge kind="varsity" />}
+                    <div className="truncate text-[18px] font-semibold tracking-[-0.01em] text-text">
+                      {user.name || "Member"}
                     </div>
                     {(user.residence || user.classYear) && (
                       <div className="mt-0.5 truncate text-[12.5px] text-muted">
@@ -340,20 +344,24 @@ function PersonProfile() {
                 </div>
               </div>
 
-              {(fit !== null || user.badges.mentor) && (
-                <div className="mt-3 flex flex-wrap items-center gap-1.5">
-                  {fit !== null && (
-                    <span className="rounded-full border border-primary-line bg-primary-tint px-2.5 py-0.5 text-[11.5px] font-semibold text-primary">
-                      {fit}
-                    </span>
-                  )}
-                  {user.badges.mentor && <ProfileBadge kind="mentor" />}
-                </div>
-              )}
-
               {user.bio && (
                 <p className="mt-3 text-[13.5px] leading-relaxed text-text-2">{user.bio}</p>
               )}
+            </div>
+
+            {/* WHEN YOU'RE BOTH FREE — its own card, high up, because finding a
+                time is the point of the whole app (owner, 2026-09-30: "this is
+                one of the main things that we are doing"). It used to be a row
+                of unlabelled chips at the foot of Training. */}
+            <div className="rounded-2xl border border-border bg-surface p-3.5">
+              <SectionLabel>When you’re both free</SectionLabel>
+              <div className="mt-2.5">
+                <ScheduleOverlap
+                  theirs={user.trainingSchedule}
+                  mine={mySchedule}
+                  name={(user.name || "Member").split(" ")[0]}
+                />
+              </div>
             </div>
 
             {/* WHY YOU MATCH — the one tinted card on the page, because it is
@@ -377,7 +385,7 @@ function PersonProfile() {
               </div>
             )}
 
-            {/* TRAINING — four tiles, then their week over yours. */}
+            {/* TRAINING — four tiles. Their week has its own card above. */}
             <div className="rounded-2xl border border-border bg-surface p-3.5">
               <SectionLabel>Training</SectionLabel>
               <div className="mt-2 grid grid-cols-2 gap-2">
@@ -389,9 +397,6 @@ function PersonProfile() {
                     </div>
                   </div>
                 ))}
-              </div>
-              <div className="mt-4">
-                <ScheduleOverlap theirs={user.trainingSchedule} mine={mySchedule} />
               </div>
             </div>
 

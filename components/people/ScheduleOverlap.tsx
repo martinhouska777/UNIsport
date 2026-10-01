@@ -1,22 +1,28 @@
 "use client";
 
 /*
-  WHEN YOU BOTH TRAIN — their week laid over yours.
+  WHEN YOU'RE BOTH FREE — the hours you share with this person, then their
+  whole week behind one button.
 
-  The same week-of-hours the onboarding grid draws (Mon–Sun across, 6 am to
-  9 pm down, lib/schedule.ts), shrunk to a glance: no text in the cells, an
-  hour mark every three hours down the left. An hour is filled solid when you
-  are BOTH free then, tinted when only they are, outlined when only you are.
-  The shared hours also as words ("Mon 07:00–09:00"), because that is what
-  you will type into the message.
+  REBUILT 2026-09-30 (owner: "I see random times and I don't know what the
+  times do … I want to see what the times are that match, and then press the
+  button down to see all the times … this is one of the main things we are
+  doing"). It used to be a row of crimson chips with no heading under the
+  Training tiles, and a 15px chevron as the only way into the week. Now:
 
-  FOLDED by default (owner, 2026-09-22: the full grid took half the screen).
-  The closed row carries the shared hours as chips, so the useful answer is
-  always on screen; the tap opens the whole week under it.
+    • the card has its own title (the page draws it — "When you're both free")
+    • the shared hours are a LIST, a day a line: "Mon   7:00–9:00 AM"
+    • a full-width button opens their week as a grid — an hour a cell, filled
+      when you are both free, tinted when only they are, outlined when only
+      you are — and closes it again.
+
+  Every state says what it is: nothing set on their side, nothing set on
+  yours (with the way to set it), or no hours in common.
 
   Nothing saved. Colours are theme tokens.
 */
 import { useState } from "react";
+import Link from "next/link";
 import { weekDays } from "@/lib/onboarding";
 import { IconChevronDown } from "@/components/icons";
 import {
@@ -37,6 +43,8 @@ const mark = (h: number) => `${h % 12 || 12}${h < 12 ? "a" : "p"}`;
 
 type Schedule = Record<string, string[]> | undefined;
 
+const hasAny = (s: Schedule) => weekDays.some((d) => hoursOfDay(s?.[d.key]).size > 0);
+
 /** The hours you share, per day, as saved-slot strings ("07:00-09:00"). */
 export function sharedSlots(
   theirs: Schedule,
@@ -55,82 +63,96 @@ export function sharedSlots(
 export default function ScheduleOverlap({
   theirs,
   mine,
+  name,
 }: {
   theirs: Schedule;
-  /** Your own schedule; null while it is still loading (their week alone is drawn). */
+  /** Your own schedule; null while it is still loading. */
   mine: Schedule | null;
+  /** Their first name, for the button and the key ("See Sam's whole week"). */
+  name: string;
 }) {
+  const [open, setOpen] = useState(false);
+  const theyHave = hasAny(theirs);
+  const iHave = mine ? hasAny(mine) : false;
+  const shared = mine ? sharedSlots(theirs, mine) : [];
+
   const lit = Object.fromEntries(
     weekDays.map((d) => [
       d.key,
       { them: hoursOfDay(theirs?.[d.key]), me: hoursOfDay(mine?.[d.key]) },
     ]),
   );
-  const shared = mine ? sharedSlots(theirs, mine) : [];
-  const [open, setOpen] = useState(false);
 
-  const chips = !mine ? (
-    <span className="text-[12px] text-muted">—</span>
-  ) : shared.length === 0 ? (
-    <span className="text-[12px] text-muted">No shared hours</span>
-  ) : (
-    shared.flatMap((d) =>
-      d.slots.map((s) => (
-        <span
-          key={`${d.day} ${s}`}
-          className="rounded-md bg-primary px-2 py-1 text-[11.5px] font-medium tabular-nums text-primary-contrast"
-        >
-          {d.day} {rangeLabel(s)}
-        </span>
-      )),
-    )
-  );
+  // Nothing of theirs to show at all — say so, and no button to an empty grid.
+  if (!theyHave) {
+    return <p className="text-[13px] text-muted">{name} hasn&rsquo;t set their times yet.</p>;
+  }
 
   return (
     <div>
-      {/* The closed row: the shared hours, and the chevron that opens the week. */}
+      {/* THE ANSWER — the shared hours, a day a line. */}
+      {mine === null ? (
+        <p className="text-[13px] text-muted">—</p>
+      ) : !iHave ? (
+        <p className="text-[13px] leading-relaxed text-muted">
+          Add your own free time to see the hours you share.{" "}
+          <Link href="/settings/training" className="font-semibold text-primary">
+            Set your hours
+          </Link>
+        </p>
+      ) : shared.length === 0 ? (
+        <p className="text-[13px] text-muted">No hours in common.</p>
+      ) : (
+        <ul className="flex flex-col divide-y divide-border">
+          {shared.map((d) => (
+            <li key={d.day} className="flex items-baseline gap-3 py-2 first:pt-0 last:pb-0">
+              <span className="w-10 flex-shrink-0 text-[13px] font-semibold text-text">{d.day}</span>
+              <span className="min-w-0 text-[13.5px] font-medium tabular-nums text-text">
+                {d.slots.map((s) => rangeLabel(s)).join(", ")}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {/* THE BUTTON — their whole week, opened and closed in place. */}
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="tap44 flex w-full items-center justify-between gap-3 text-left"
+        className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl border border-primary-line bg-primary-tint py-2.5 text-[13px] font-semibold text-primary active:opacity-70"
       >
-        <span className="flex flex-wrap items-center gap-1.5">{chips}</span>
-        <span
-          className={`shrink-0 text-muted transition-transform duration-150 motion-reduce:transition-none ${
-            open ? "rotate-180" : ""
-          }`}
-        >
-          <IconChevronDown size={15} />
-        </span>
+        {open ? "Hide the week" : `See ${name}’s whole week`}
+        <IconChevronDown
+          size={15}
+          className={`transition-transform duration-200 motion-reduce:transition-none ${open ? "rotate-180" : ""}`}
+        />
       </button>
 
       {open && (
         <div className="mt-3">
-          {/* Legend — the three states, in the order they matter. */}
-          {mine && (
-            <div className="mb-2 flex items-center gap-3 text-[11px] text-muted">
+          {/* The key — the three states, in the order they matter. */}
+          <div className="mb-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted">
+            {iHave && (
               <span className="flex items-center gap-1.5">
-                <i className="h-2.5 w-2.5 rounded-[3px] bg-primary" /> Both
+                <i className="h-2.5 w-2.5 rounded-[3px] bg-primary" /> Both free
               </span>
+            )}
+            <span className="flex items-center gap-1.5">
+              <i className="h-2.5 w-2.5 rounded-[3px] bg-primary-tint" /> Only {name}
+            </span>
+            {iHave && (
               <span className="flex items-center gap-1.5">
-                <i className="h-2.5 w-2.5 rounded-[3px] bg-primary-tint" /> Them
+                <i className="h-2.5 w-2.5 rounded-[3px] border border-dashed border-primary-line" /> Only you
               </span>
-              <span className="flex items-center gap-1.5">
-                <i className="h-2.5 w-2.5 rounded-[3px] border border-dashed border-primary-line" />{" "}
-                You
-              </span>
-            </div>
-          )}
+            )}
+          </div>
 
           <div className="grid grid-cols-[26px_repeat(7,minmax(0,1fr))] gap-x-1 gap-y-[2px]">
             <span aria-hidden="true" />
             {weekDays.map((d) => (
-              <div
-                key={d.key}
-                className="pb-1 text-center text-[11px] font-semibold text-text"
-              >
-                {d.letter}
+              <div key={d.key} className="pb-1 text-center text-[11px] font-semibold text-text">
+                {d.label.slice(0, 3)}
               </div>
             ))}
 
@@ -155,13 +177,7 @@ export default function ScheduleOverlap({
                       key={d.key}
                       role="img"
                       aria-label={`${d.label} ${h}:00 — ${
-                        them && me
-                          ? "both"
-                          : them
-                            ? "them"
-                            : me
-                              ? "you"
-                              : "neither"
+                        them && me ? "both free" : them ? `only ${name}` : me ? "only you" : "neither"
                       }`}
                       className={`h-[14px] rounded-[3px] ${cls}`}
                     />
