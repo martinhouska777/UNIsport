@@ -210,15 +210,8 @@ export const tourSteps: TourStep[] = [
     title: "Leaderboards",
     body: `Your workouts earn points for you and your house: ${sessionPoints.solo} on your own, ${sessionPoints.partner} with a partner, ${sessionPoints.newPartner} with someone new.`,
   },
-  {
-    // Once: Houses → Everyone (owner: "switch it to all people").
-    press: "lb-competition-next",
-    anchor: "lb-controls",
-    alsoAnchor: "lb-podium",
-    title: "Pick the competition",
-    body: "Houses, dorms, years, or everyone on campus: the arrows switch between them.",
-  },
-
+  // No "pick the competition" step after this (owner, 2026-09-30: "we don't need
+  // it twice") — the card above already lights the same controls and podium.
   {
     anchor: null,
     title: "That’s it",
