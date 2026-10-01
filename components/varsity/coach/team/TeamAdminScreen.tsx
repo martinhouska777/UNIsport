@@ -595,7 +595,7 @@ export default function TeamAdminScreen({
           The console's walk again, on demand. Unlike the app's Settings this
           screen is INSIDE the shell the tour runs in, so the gate is already
           mounted and hears the request as an event (lib/tour.ts). It still
-          navigates to Plan, because that is where the walk opens. */}
+          navigates to Today, because that is where the walk opens. */}
       {can.buildPlan(role) && (
         <Section title="Help">
           <div className="rounded-xl border border-border bg-surface">
@@ -604,7 +604,7 @@ export default function TeamAdminScreen({
               label="Take the console tour"
               onClick={() => {
                 if (userId) resetTour(coachTour, userId);
-                router.push("/varsity/coach/plan");
+                router.push("/varsity/coach");
                 requestTour(coachTour);
               }}
             />

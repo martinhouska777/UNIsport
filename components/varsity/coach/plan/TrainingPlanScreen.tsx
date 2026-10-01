@@ -753,7 +753,9 @@ export default function TrainingPlanScreen({
     return (
       <div className="mx-auto w-full max-w-screen-sm px-4 pb-8 pt-4">
         <h1 className="sr-only">Training plan</h1>
-        <div className="mt-2 rounded-2xl border border-dashed border-border bg-surface px-5 py-10 text-center">
+        {/* data-tour: with no block yet, the tour's Plan step lights this card
+            where the block's own card would be. */}
+        <div data-tour="coach-plan-status" className="mt-2 rounded-2xl border border-dashed border-border bg-surface px-5 py-10 text-center">
           <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary-tint text-primary">
             <IconCalendar size={22} />
           </div>

@@ -162,9 +162,10 @@ function SlotCard({ slot }: { slot: TodaySlot }) {
   Today is what is ON; who can't row is part of filling the boats.
 */
 
-function DaySection({ day }: { day: TodayDay }) {
+function DaySection({ day, tour }: { day: TodayDay; tour?: string }) {
   return (
-    <section>
+    // The console tour lights Today's section (lib/varsity/coachTour.ts).
+    <section data-tour={tour}>
       <div className="flex items-baseline justify-between">
         <h2 className="text-[19px] font-semibold text-text">{day.title}</h2>
         <span className="text-[12px] font-medium text-muted">{day.label}</span>
@@ -268,8 +269,8 @@ export default function CoachTodayScreen() {
         <div className="mt-10 text-center text-[13px] text-muted">Loading the morning…</div>
       ) : (
         <div className="flex flex-col gap-7">
-          {days.map((d) => (
-            <DaySection key={d.iso} day={d} />
+          {days.map((d, i) => (
+            <DaySection key={d.iso} day={d} tour={i === 0 ? "coach-today" : undefined} />
           ))}
         </div>
       )}

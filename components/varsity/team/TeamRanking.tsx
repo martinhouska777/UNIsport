@@ -502,7 +502,7 @@ export default function TeamRanking({
   return (
     <div>
       {/* ERG | WATER | CONSISTENCY, and the window beside it. */}
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div data-tour="coach-ranking-lists" className="flex flex-wrap items-center justify-between gap-2">
         <Segmented options={rankingLists} value={list} onChange={setList} ariaLabel="Ranking" />
         <Dropdown
           label={range.label}

@@ -1798,7 +1798,8 @@ function Builder({
           Sticky, so "finished — press publish" never means scrolling back up.
         */}
         <div className="sticky top-0 z-20 -mx-4 flex items-center gap-2 bg-background px-4 pb-2 pt-4 lg:-mx-6 lg:px-6">
-          <button type="button" onClick={onBack} className="flex items-center gap-1 text-[13px] text-muted">
+          {/* data-tour: the console tour presses this if it is left mid-builder. */}
+          <button type="button" onClick={onBack} data-tour="coach-lineup-back" className="flex items-center gap-1 text-[13px] text-muted">
             <IconArrowLeft size={16} /> Days
           </button>
           <div className="ml-auto flex min-w-0 items-center justify-end gap-2">

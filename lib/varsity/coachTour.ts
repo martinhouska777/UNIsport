@@ -1,43 +1,34 @@
 /*
   THE COACH CONSOLE TOUR — one walk, the first time a coach is in.
   ---------------------------------------------------------------------------
-  Same machine as the app's tour (lib/tour.ts): an ordered list of steps that
-  drives itself between the console's tabs, opens a practice, and lights the
-  REAL controls rather than pictures of them. All the copy lives here so it can
-  be read and changed without touching component code (rule 7).
+  Same machine and the same shape as the app's walk (lib/tour.ts) and Varsity
+  Mode's (lib/varsity/varsityTour.ts), and rebuilt to match them (owner,
+  2026-09-30: "same as in student mode … for coaches as well"): it asks first,
+  crosses the five tabs in the order the bar has them, and says what each is
+  for in one line. All the copy lives here (rule 7).
 
-  WHAT IT IS ABOUT. Not "here is a button". Every step answers the same
-  question — what does this save me? A coach already has a way of doing all of
-  this: a spreadsheet, a whiteboard, a photo of the whiteboard in the team
-  chat, and twenty messages asking what time we're pushing off. The console is
-  only worth learning if each screen replaces one of those, so each step names
-  the thing it replaces.
+  (It used to be twenty-five steps that dived into the workout editor and
+  built a session field by field. The student walk was cut to the bone the
+  same day, and this one followed it.)
 
-  THE TWO DIVES. The owner's call: the PLAN and the WORKOUT EDITOR are the
-  main event, so the walk does not describe them from the outside — it opens a
-  block, opens a week, opens the editor and builds a session field by field.
-  The draft is the spine of it: nothing a coach writes is visible to anybody
-  until they publish, and that is what makes planning in the app safe to do
-  badly at first.
+  IT MUST SURVIVE AN EMPTY CONSOLE — no block, no lineups, maybe no athletes.
+    Today      the Today section, which is there with or without a plan
+    Plan       the block's card (Publish lives on it) and the first day — or,
+               with no block yet, the "No training blocks yet" card, which
+               wears the same anchor
+    Lineup     the first day of the week, always there; its AM opens a builder
+               that always has an Add Boat and a pool
+    Workouts   the Erg | Water | Ranking switch, plus the first row if any
+    Team       the first rower
+    Settings   the gear
 
-  IT MUST SURVIVE AN EMPTY CONSOLE. A coach opening this for the first time has
-  no training blocks, may have no signed-up athletes, and certainly has no
-  lineups. The lineup half is fine — the day picker always has seven days and a
-  builder always has a pool. The PLAN half is not: with no block there is
-  nothing to open. So every step of that dive carries `group: "plan"`, and the
-  overlay drops the whole group the moment its first move fails (see `giveUp`
-  in TourOverlay). One four-second gap, not eleven.
-
-  IT NEVER SAVES ANYTHING. It fills the workout form in — it has to, because
-  every field below "Type" only exists once a type is chosen — but it never
-  presses Confirm, and it presses Back on the way out. Nothing reaches the
-  database, and `closeOnExit` presses that same Back if the walk is abandoned
-  while the editor is open, so nobody is stranded in a form they never opened.
-  It touches nothing at all on the lineup side: no boat is added.
+  IT CHANGES NOTHING. It opens a practice's builder but seats nobody, adds no
+  boat and publishes nothing; walk out while it is open and `closeOnExit`
+  presses its "Days" back.
 
   CAPTAINS DO NOT GET THIS. A captain's console is the squad screen and
-  settings — three quarters of these steps point at tabs they do not have. The
-  gate in app/varsity/coach/layout.tsx only mounts it for a coach.
+  settings — most of these steps point at tabs they do not have. The gate in
+  app/varsity/coach/layout.tsx only mounts it for a coach.
 */
 import type { Tour, TourStep } from "@/lib/tour";
 
@@ -50,210 +41,96 @@ const TEAM = "/varsity/coach/team";
 /** The console's nav anchors are named after their route, as the app's are. */
 const tab = (href: string) => `coach-tab-${href}`;
 
-/* Every step of the plan dive wears this, so they stand or fall together. */
-const PLAN_DIVE = "plan";
-
 const steps: TourStep[] = [
   {
-    route: PLAN,
+    route: TODAY,
     anchor: null,
-    title: "The Coach Console",
-    body: "Five screens, and one idea behind all of them: write it down once here, and the whole squad already has it. No group chat, no spreadsheet, no photograph of a whiteboard. A minute — Skip, bottom left, stops it any time.",
+    title: "Take a quick tour?",
+    body: "The Coach Console in thirty seconds.",
+    next: "Show me",
   },
 
   /* ── Today ────────────────────────────────────────────────────────────── */
   {
-    press: tab(TODAY),
-    route: TODAY,
-    anchor: tab(TODAY),
-    title: "Today — the morning on one screen",
-    body: "What the plan says for this morning and this afternoon, whether the boats are seated and live, and who is out — with one tap into the session or the lineup. It is the screen you open on the dock; the rest are where the work gets done.",
+    anchor: "coach-today",
+    title: "Today",
+    body: "Today’s and tomorrow’s sessions, and whether their boats are out.",
   },
 
   /* ── Plan ─────────────────────────────────────────────────────────────── */
   {
     press: tab(PLAN),
     route: PLAN,
-    anchor: tab(PLAN),
-    title: "Plan — the training itself",
-    body: "Weeks of it, an AM and a PM for every day. It is the screen the others feed off: the athletes' Home, their calendar, and the note the Lineup screen shows you about what is prescribed for each practice.",
-  },
-  {
-    anchor: "coach-plan-new-block",
-    title: "Everything starts with a block",
-    body: "A block is a stretch of training, usually up to a race. Give it a start, an end and the race at the end of it, and it cuts itself into weeks — you never lay out a calendar by hand. The tab opens on the block you are in, on this week; a new block starts from the button at the foot of the page.",
-  },
-
-  /* ── The plan dive. Needs a block to exist; see `group` at the top. The tab
-        already lands on the current block's current week (owner, 2026-09-17:
-        no list of blocks, no list of weeks), so there is nothing to press
-        first — the walk lights the controls where they are. ── */
-  {
-    group: PLAN_DIVE,
-    route: PLAN,
     anchor: "coach-plan-status",
-    title: "Draft is the whole point",
-    body: "A block is a DRAFT until you say otherwise, and not one word of a draft is visible to the squad. So you can rough six weeks in, sleep on it, tear half of it up on Tuesday — and nobody watched you do it. Publish, in the top corner of the block itself, flips the whole block onto every athlete's Home at once; Unpublish takes it straight back.",
-  },
-  {
-    group: PLAN_DIVE,
-    anchor: "coach-plan-weeks",
-    title: "The weeks are already there",
-    body: "One chip per week, the week you are standing in filled. The tab always opens on this week; tap any other to jump to it — week four is one tap away, not a screen.",
-  },
-  {
-    group: PLAN_DIVE,
-    anchor: "coach-plan-first-day",
-    title: "A day is an AM and a PM",
-    body: "Two slots per day, and that is the whole grid. An empty one says “add session”; a filled one shows the workout, its type, the time and whether it carries a note. Let's build one.",
-  },
-
-  /* ── Building the workout, field by field. ── */
-  {
-    group: PLAN_DIVE,
-    press: "coach-plan-first-slot",
-    route: PLAN,
-    anchor: "coach-plan-type",
-    title: "Start with what kind of session it is",
-    body: "Water, Erg, Weights, Off or Flex. It is the first question because the rest of the form changes with the answer — an erg asks things a day off does not. It is also the colour the session is drawn in everywhere it appears afterwards.",
-  },
-  {
-    group: PLAN_DIVE,
-    press: "coach-plan-cat-first",
-    route: PLAN,
-    anchor: "coach-plan-intensity",
-    title: "Then how hard",
-    body: "UT2, UT1 or Hard, for water and erg. This is not decoration: it colours the session on your grid and on their calendar, so a week reads as a shape — three green, one red — instead of as a list you have to parse.",
-  },
-  {
-    group: PLAN_DIVE,
-    press: "coach-plan-int-first",
-    route: PLAN,
-    anchor: "coach-plan-options",
-    title: "Most days are one tap",
-    body: "The five sessions written most often at this intensity, ready to drop in — water and erg each get their own. Tap one and the description fills itself. This is the difference between planning a week in two minutes and typing “3×25' UT2” for the ninetieth time.",
-  },
-  {
-    group: PLAN_DIVE,
-    press: "coach-plan-opt-first",
-    route: PLAN,
-    anchor: "coach-plan-desc",
-    title: "…and the rest you write",
-    body: "That is one of the suggestions, dropped in. Type over it, or write something else entirely — this exact line is what appears on their Home and in their calendar, so it is worth writing the way you would say it on the dock.",
-  },
-  {
-    group: PLAN_DIVE,
-    anchor: "coach-plan-time",
-    title: "The time is already filled in",
-    body: "AM sessions open at the usual morning time, PM at the usual afternoon one, and you only touch it on the days that are different. Tap it and type over it. Down in the form there is a note field too, for the one sentence a session sometimes needs.",
-  },
-  {
-    group: PLAN_DIVE,
-    anchor: "coach-plan-team",
-    title: "Turn a session into a board",
-    body: "Flip this and everyone who logs the session lands on one shared board — ranked for a test, or an average for steady work. It is where the erg boards on the Team tab come from, and it means you never collect times by message again.",
-  },
-  {
-    group: PLAN_DIVE,
-    anchor: "coach-plan-repeat",
-    title: "This one saves the most",
-    body: "“Every week” drops this session onto the SAME slot in every week from this one to the race — this weekday, this AM or PM. Weeks already behind you are left alone. A normal training week is therefore typed once: you build the pattern, then change only the days that break it.",
-  },
-  {
-    group: PLAN_DIVE,
-    anchor: "coach-plan-confirm",
-    title: "Done puts it in the week",
-    body: "It saves itself — there is no Save button in here, and the line at the top says so. And it is still a draft: it sits on your grid, coloured by its type, and the squad has no idea it exists until you publish the block.",
-  },
-  {
-    group: PLAN_DIVE,
-    press: "coach-plan-editor-back",
-    route: PLAN,
-    anchor: "coach-plan-first-day",
-    title: "Back changes nothing",
-    body: "Leave without confirming — as we just did — and the week is exactly as it was. Nothing in this editor is written until you press Confirm, so there is no way to break a plan by opening a day to look at it.",
+    alsoAnchor: "coach-plan-first-day",
+    title: "Plan",
+    body: "Write the training once and it’s on every athlete’s Home and calendar. Nobody sees it until you publish.",
   },
 
   /* ── Lineup ───────────────────────────────────────────────────────────── */
   {
     press: tab(LINEUP),
     route: LINEUP,
-    anchor: tab(LINEUP),
-    title: "Lineup — who is in which boat",
-    body: "The job that eats a morning if it is done on paper, and gets done twice if the paper goes home in someone's pocket.",
-  },
-  {
     anchor: "coach-lineup-first-day",
-    title: "You never open a day to find out",
-    body: "Each day gives you its AM and its PM already saying what the plan prescribes and whether that lineup is not started, a draft, or live. Seven of these, so the week ahead answers itself.",
+    title: "Lineup",
+    body: "Every practice of the week, and whether its lineup is out.",
   },
   {
     press: "coach-lineup-first-practice",
     route: LINEUP,
-    anchor: "coach-lineup-count",
-    title: "The pool already knows who is out",
-    body: "It counts itself: available, and out. Anyone injured or ill is listed apart at the bottom and cannot be seated by accident. A name exists in one place only — seat someone and they leave the pool, clear the seat and they are back in it.",
-  },
-  {
-    anchor: "coach-lineup-filters",
-    title: "Three buttons instead of a search",
-    body: "All, Port, Starboard. Anyone who rows both sides appears under every one of them, because they really can take either seat — so you are never one filter away from the person you were about to pick.",
-  },
-  {
     anchor: "coach-lineup-add-boat",
-    title: "Fill seats by typing, swap them by tapping",
-    body: "A boat lays itself out bow to stroke with the cox in the stern. Type the first few letters of a name into an empty seat. To swap two rowers, tap one seat to pick it up and then tap the other — two taps, no keyboard, gloves on. Tap a picked-up seat again to type a name into it instead. Nothing is locked to a side — you rig the boat, the app just holds the sheet.",
-  },
-  {
-    anchor: "coach-lineup-publish",
-    title: "This is the part that saves the morning",
-    body: "The crew saves itself as you seat it, and stays a draft nobody can see. Publish, and every rower opens their own Home to their own seat lit up, with the push-off time and which oars to take. After that it is live: a seat you swap is on their phones as you swap it, and the button only offers to buzz them about it.",
+    alsoAnchor: "coach-lineup-count",
+    title: "Seat the boats",
+    body: "Add a boat and tap rowers from the pool into the seats. Publish, and everyone sees their seat on Home.",
   },
 
   /* ── Workouts ─────────────────────────────────────────────────────────── */
   {
     press: tab(WORKOUTS),
     route: WORKOUTS,
-    anchor: tab(WORKOUTS),
-    title: "Workouts — the same boards they see",
-    body: "Every team workout and everyone's result on one board: the erg pieces ranked or averaged, the water outings by boat. Deliberately the athletes' own boards rather than a private coach's version, so nobody is arguing about whose numbers are right.",
+    anchor: "varsity-workouts-switch",
+    alsoAnchor: "varsity-workouts-first",
+    title: "Workouts",
+    body: "Every team piece with everyone’s result, on the erg and on the water.",
+  },
+  {
+    press: "varsity-workouts-ranking",
+    anchor: "varsity-workouts-switch",
+    alsoAnchor: "coach-ranking-lists",
+    title: "Ranking",
+    body: "The squad in order: erg, water, and who sticks to the plan.",
   },
 
   /* ── Team ─────────────────────────────────────────────────────────────── */
   {
     press: tab(TEAM),
     route: TEAM,
-    anchor: tab(TEAM),
-    title: "Team — the whole squad",
-    body: "The roster, rowers and coxswains, searchable. It is where you go when you are thinking about one person.",
-  },
-  {
     anchor: "coach-team-first-rower",
-    title: "Stop asking people what they did",
-    body: "Open any rower and their training month is already there — what they logged, how much of it, and their erg PRs. Their technical note is there too: the thing you said on the dock, straight onto their Home where they will read it again on Thursday.",
+    title: "Team",
+    body: "Tap anyone to see their training. The pencil writes them a note.",
   },
 
   /* ── The gear ─────────────────────────────────────────────────────────── */
   {
     anchor: "coach-settings",
-    title: "The squad signs itself up",
-    body: "One invite link, pasted into the team chat. People join, land in a waiting room, and you let them in — you never type anyone in by hand. Captains are made here too, and a leaked link is revoked in one press.",
+    title: "Settings",
+    body: "Invite the squad with one link, and let them in.",
   },
 
   {
     anchor: null,
-    title: "That is the console",
-    body: "Today, Plan, Lineup, Workouts, Team — and the gear for anything to do with people. Walk through it again any time from Settings.",
+    title: "That’s it",
+    body: "See it again anytime: Settings → Take the console tour.",
   },
 ];
 
 /*
-  Abandon the walk inside the workout editor and this presses its Back for you —
-  the same job `log-cancel` does in the app's tour. Nothing else needs shutting:
-  the lineup half opens no editor at all.
+  The id stays "coach" — it is what the seen flag is keyed on, so changing it
+  would re-offer the walk to every coach who has already had it. Walk out while
+  a practice's builder is open and this presses its "Days" back.
 */
 export const coachTour: Tour = {
   id: "coach",
   steps,
-  closeOnExit: ["coach-plan-editor-back"],
+  closeOnExit: ["coach-lineup-back"],
 };
