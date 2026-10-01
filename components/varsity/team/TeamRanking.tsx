@@ -11,9 +11,10 @@
   on every ranked erg test; WATER — pieces won on the timing sheets;
   CONSISTENCY — the plan's sessions done, the ones logged on top, and the days
   out; and SEAT RACES — who beat whom in the switches made between pieces
-  (2026-10-01; it was a screen of its own). That one is NOT a ranking: only the
-  people who seat raced, each with who they beat and who beat them, and by how
-  many seconds. Then the window: Month, Semester, or two dates.
+  (2026-10-01; it was a screen of its own). That one is NOT a ranking: every
+  seat race once, under the session it was rowed in, a tap away from that
+  session's board, and narrowed to one rower on demand (SeatRaceList). Then
+  the window: Month, Semester, or two dates.
 
   A LIST, NOT A LEADERBOARD (owner, 2026-09-27). It was dressed for one round
   like the students' boards — a podium, medals — and the owner took it back
@@ -55,7 +56,8 @@ import DatesSheet, { type Dates } from "@/components/varsity/team/DatesSheet";
 import RankBadge from "@/components/varsity/team/RankBadge";
 import Segmented from "@/components/ui/Segmented";
 import Avatar from "@/components/messages/Avatar";
-import { IconX } from "@/components/icons";
+import Sheet from "@/components/varsity/Sheet";
+import { IconCheck, IconChevronDown, IconChevronRight, IconX } from "@/components/icons";
 import { useMembership } from "@/components/varsity/useMembership";
 import { can, fetchSquad } from "@/lib/varsity/membership";
 import { fetchSquadLogsInRange, type LogEntry } from "@/lib/varsity/logStore";
@@ -63,7 +65,8 @@ import { fetchPlan } from "@/lib/varsity/planStore";
 import { publishedSessions } from "@/lib/varsity/athleteHome";
 import { fetchOutDaysBetween } from "@/lib/varsity/squadDaysOut";
 import { classTitle } from "@/lib/varsity/racePieces";
-import { secs, type Opponent } from "@/lib/varsity/raceSwitch";
+import { folkNames, secs, seatRaceRecords, type SeatRace, type SeatRaceDay } from "@/lib/varsity/raceSwitch";
+import { rosterById } from "@/lib/varsity/coachLineup";
 import { dayKeyLabel, sessionLabel } from "@/lib/varsity/coachPlan";
 import { TEAM_CUSTOM_RANGE, customTeamRange, teamRangeByKey, toIso } from "@/lib/varsity/teamStats";
 import {
@@ -75,7 +78,7 @@ import {
   rankingLists,
   rankingRanges,
   rankingSpan,
-  seatRacers,
+  seatRaceSessions,
   sessionRuns,
   waterRanking,
   withoutRest,
@@ -156,23 +159,170 @@ function PiecePlace({ place, under }: { place: number | null; under?: string }) 
   );
 }
 
-/* ONE LINE OF A ROWER'S SEAT RACES: the word, then each person and by how many
-   seconds ("Pierce Lapham 8.8 s"; "3.5 · 1.2 s" when they met more than once).
-   The wins are the ink and the losses the grey, so a quick look reads the wins.
-   It sits under the name, in line with it (the avatar's width and its gap). */
-function Meetings({ word, list, strong = false }: { word: string; list: Opponent[]; strong?: boolean }) {
+/*
+  THE SEAT RACES, SESSION BY SESSION (owner, 2026-10-01: of three drawn ways
+  to show them — a line per race under each person, by session, or short rows
+  that open — "I like the B by session"). The newest session first, each with
+  a grey tag of its day and the plan's words, and under it every seat race of
+  that session once: the class, the winner in green, the loser in red, and by
+  how many seconds. The tag opens the session's race board on its Switches
+  tab; a race opens it with that race outlined ("if we click it we want to
+  see the session that the seat race was in"). A switch whose times are not
+  all typed yet waits in grey, so the coach can see a time is still owed.
+
+  Picking a rower (the Everyone chip, RowerSheet) keeps only their races and
+  marks their name: who they beat, and who beat them.
+*/
+const fullName = (id: string) => rosterById[id]?.name;
+
+function SeatRaceLine({
+  race,
+  rower,
+  rule,
+  onOpen,
+}: {
+  race: SeatRace;
+  rower: string | null;
+  /** A hairline above it — every race of a session but the first. */
+  rule: boolean;
+  onOpen: () => void;
+}) {
+  const a = folkNames([race.a], [race.b], fullName);
+  const b = folkNames([race.b], [race.a], fullName);
+  /* The picked rower's name, washed in how their race went. */
+  const mark = (key: string, wash: string) => (rower === key ? `rounded px-0.5 ${wash}` : "");
+  const won = race.kind === "won";
   return (
-    <div className="mt-1.5 flex items-baseline gap-2 pl-[34px]">
-      <span className="w-[3.1rem] flex-shrink-0 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">{word}</span>
-      <span className="flex min-w-0 flex-wrap gap-x-3 gap-y-0.5">
-        {list.map((o) => (
-          <span key={o.key} className={`text-[13px] ${strong ? "text-text" : "text-muted"}`}>
-            <span className={strong ? "font-semibold" : ""}>{o.name}</span>{" "}
-            <span className="tabular-nums">{o.by.map(secs).join(" · ")} s</span>
-          </span>
-        ))}
+    <button
+      type="button"
+      onClick={onOpen}
+      className={`flex w-full items-center gap-2 px-1 py-2 text-left text-[13px] active:bg-surface-2 ${rule ? "border-t border-border" : ""}`}
+    >
+      <span className="flex-shrink-0 rounded-md bg-text px-1.5 py-0.5 font-mono text-[11px] font-semibold text-background">
+        {classTitle(race.badge)}
       </span>
+      <span className="min-w-0 flex-1 truncate">
+        {won ? (
+          <>
+            <span className={`font-semibold text-success ${mark(race.a.key, "bg-success-tint")}`}>{a}</span>
+            <span className="text-muted"> beat </span>
+            <span className={`text-danger ${mark(race.b.key, "bg-danger-tint")}`}>{b}</span>
+          </>
+        ) : (
+          <span className="text-muted">
+            <span className={mark(race.a.key, "bg-surface-2")}>{a}</span>
+            {race.kind === "level" ? " and " : " ⇄ "}
+            <span className={mark(race.b.key, "bg-surface-2")}>{b}</span>
+          </span>
+        )}
+      </span>
+      <span
+        className={`flex-shrink-0 tabular-nums ${won ? "font-semibold text-text" : "text-[12px] text-muted"}`}
+      >
+        {won ? `${secs(race.by ?? 0)} s` : race.kind === "level" ? "Level" : "Waiting for times"}
+      </span>
+    </button>
+  );
+}
+
+function SeatRaceList({
+  sessions,
+  rower,
+  raceTitle,
+  onOpenRace,
+}: {
+  sessions: SeatRaceDay[];
+  /** The rower the list is narrowed to, by key. */
+  rower: string | null;
+  raceTitle: (dayKey: string) => string;
+  onOpenRace?: (dayKey: string, focus?: number) => void;
+}) {
+  /* AM or PM only where two of the sessions fall on the same day. */
+  const days = sessions.map((d) => dayKeyLabel(d.dayKey));
+  return (
+    <div className={`${CARD} p-2.5`}>
+      {sessions.map((d, i) => {
+        const half = days.filter((x) => x === days[i]).length > 1 ? ` · ${d.dayKey.slice(-2)}` : "";
+        return (
+          <div key={d.dayKey} className={i > 0 ? "mt-2" : ""}>
+            <button
+              type="button"
+              onClick={() => onOpenRace?.(d.dayKey)}
+              className="flex w-full items-center gap-2 rounded-xl bg-surface-2 px-3 py-2 text-left active:bg-border"
+            >
+              <span className="min-w-0 flex-1">
+                <span className="block text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">
+                  {days[i]}
+                  {half}
+                </span>
+                <span className="line-clamp-2 text-[13px] font-semibold leading-snug text-text">
+                  {raceTitle(d.dayKey) || "Race pieces"}
+                </span>
+              </span>
+              <span className="flex-shrink-0 text-muted">
+                <IconChevronRight size={14} />
+              </span>
+            </button>
+            {d.races.map((r, k) => (
+              <SeatRaceLine
+                key={r.index}
+                race={r}
+                rower={rower}
+                rule={k > 0}
+                onOpen={() => onOpenRace?.(d.dayKey, r.index)}
+              />
+            ))}
+          </div>
+        );
+      })}
     </div>
+  );
+}
+
+/* WHO THE LIST CAN BE NARROWED TO: everybody in its seat races, A to Z, with
+   their record — the list of people the seat races first were. */
+function RowerSheet({
+  people,
+  rower,
+  onPick,
+  onClose,
+}: {
+  people: { key: string; name: string; won: number; lost: number }[];
+  rower: string | null;
+  onPick: (who: { key: string; name: string } | null) => void;
+  onClose: () => void;
+}) {
+  const row = "flex w-full items-center gap-2.5 px-1 py-2.5 text-left text-[14px] font-semibold text-text active:bg-surface-2";
+  return (
+    <Sheet title="Rowers" onClose={onClose}>
+      <button type="button" onClick={() => onPick(null)} className={row}>
+        <span className="flex-1">Everyone</span>
+        {rower === null && (
+          <span className="text-primary">
+            <IconCheck size={16} />
+          </span>
+        )}
+      </button>
+      {people.map((p) => (
+        <button
+          key={p.key}
+          type="button"
+          onClick={() => onPick({ key: p.key, name: p.name })}
+          className={`${row} border-t border-border`}
+        >
+          <Avatar size={26} name={p.name} />
+          <span className="min-w-0 flex-1 truncate">{p.name}</span>
+          {rower === p.key && (
+            <span className="text-primary">
+              <IconCheck size={16} />
+            </span>
+          )}
+          <span className="w-9 flex-shrink-0 text-right tabular-nums">
+            {p.won}–{p.lost}
+          </span>
+        </button>
+      ))}
+    </Sheet>
   );
 }
 
@@ -390,6 +540,7 @@ export default function TeamRanking({
   races,
   raceBoats,
   raceTitle,
+  onOpenRace,
 }: {
   /** Every board on the Workouts tab, worked examples included. */
   workouts: TeamWorkout[];
@@ -404,6 +555,9 @@ export default function TeamRanking({
   /** The plan's words for a timing sheet's session, as its row on the Water
       side says them. */
   raceTitle: (dayKey: string) => string;
+  /** Open a session's race board on its Switches tab — with one seat race
+      outlined when `focus` (its place in the day's switches) is given. */
+  onOpenRace?: (dayKey: string, focus?: number) => void;
 }) {
   const now = useMemo(() => new Date(), []);
   const [list, setList] = useState<RankingList>("erg");
@@ -426,8 +580,19 @@ export default function TeamRanking({
 
   /* ── Water ── */
   const water = useMemo(() => waterRanking(races, span, raceBoats), [races, span, raceBoats]);
-  /* ── Seat races: read out of the same timing sheets — a record, not a ranking ── */
-  const seatRaced = useMemo(() => seatRacers(races, span, raceBoats), [races, span, raceBoats]);
+  /* ── Seat races: read out of the same timing sheets, session by session ── */
+  const seatSessions = useMemo(() => seatRaceSessions(races, span, raceBoats), [races, span, raceBoats]);
+  const seatPeople = useMemo(() => seatRaceRecords(seatSessions), [seatSessions]);
+  /* The rower the seat races are narrowed to. Kept when the window changes,
+     so a window they did not race in says so rather than showing everyone. */
+  const [rower, setRower] = useState<{ key: string; name: string } | null>(null);
+  const [pickingRower, setPickingRower] = useState(false);
+  const rowerRecord = rower ? (seatPeople.find((p) => p.key === rower.key) ?? { ...rower, won: 0, lost: 0 }) : null;
+  const shownSessions = rower
+    ? seatSessions
+        .map((d) => ({ ...d, races: d.races.filter((r) => r.a.key === rower.key || r.b.key === rower.key) }))
+        .filter((d) => d.races.length > 0)
+    : seatSessions;
 
   /* ── Consistency: the squad's logs, the published plan, the days out ── */
   const { membership } = useMembership();
@@ -531,6 +696,44 @@ export default function TeamRanking({
       {/* ERG | WATER | CONSISTENCY, and the window beside it. */}
       <div data-tour="coach-ranking-lists" className="flex flex-wrap items-center justify-between gap-2">
         <Segmented options={rankingLists} value={list} onChange={setList} ariaLabel="Ranking" />
+        {/* EVERYONE, or the one rower the seat races are narrowed to. */}
+        {list === "seatraces" &&
+          (rowerRecord ? (
+            <span className="flex min-w-0 items-center rounded-full bg-text text-background">
+              <button
+                type="button"
+                onClick={() => setPickingRower(true)}
+                className="tap44 flex min-w-0 items-center gap-1.5 py-1 pl-1 pr-1 text-[12px] font-semibold"
+              >
+                {/* On a card of its own: the avatar's wash is see-through, and on
+                    the black chip it went black. */}
+                <span className="flex-shrink-0 rounded-full bg-surface">
+                  <Avatar size={20} name={rowerRecord.name} />
+                </span>
+                <span className="truncate">{rowerRecord.name}</span>
+                <span className="flex-shrink-0 tabular-nums opacity-70">
+                  · {rowerRecord.won}–{rowerRecord.lost}
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setRower(null)}
+                aria-label="Show everyone"
+                className="tap44 flex h-7 items-center pl-1 pr-2.5 opacity-70"
+              >
+                <IconX size={12} />
+              </button>
+            </span>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setPickingRower(true)}
+              className="tap44 flex flex-shrink-0 items-center gap-1 rounded-full border border-border bg-surface-2 px-3 py-1.5 text-[12px] text-muted"
+            >
+              Everyone
+              <IconChevronDown size={12} />
+            </button>
+          ))}
         {/* ml-auto: with four lists the window no longer always fits beside
             them on a phone, and when it drops to a line of its own it stays
             at the right, where its menu opens from. */}
@@ -635,31 +838,20 @@ export default function TeamRanking({
             </div>
           ))}
 
-        {/* ── SEAT RACES ── NOT A RANKING (owner, 2026-10-01: "just names and
-            who he beat… that is the valuable information"). Only the people
-            who seat raced, A to Z, each with the people they beat and the
-            people who beat them, and by how many seconds. Their record is
-            beside the name, so somebody who won every one reads at a glance.
-            Water knows people by their seat, not their account, so a row has
-            no page to open. */}
+        {/* ── SEAT RACES ── NOT A RANKING: every seat race once, under the
+            session it was rowed in, the newest first (SeatRaceList). */}
         {list === "seatraces" &&
-          (seatRaced.length === 0 ? (
-            <div className={EMPTY}>No seat races in {noneIn(range.key, range.label)}.</div>
-          ) : (
-            <div className={CARD}>
-              {seatRaced.map((p, i) => (
-                <div key={p.key} className={`px-2.5 py-3 ${i > 0 ? "border-t border-border" : ""}`}>
-                  <div className="flex items-center justify-between gap-2">
-                    <Who name={p.name} />
-                    <span className="flex-shrink-0 text-[14px] font-bold tabular-nums text-text">
-                      {p.won}–{p.lost}
-                    </span>
-                  </div>
-                  {p.beat.length > 0 && <Meetings word="Beat" list={p.beat} strong />}
-                  {p.lostTo.length > 0 && <Meetings word="Lost to" list={p.lostTo} />}
-                </div>
-              ))}
+          (shownSessions.length === 0 ? (
+            <div className={EMPTY}>
+              No seat races{rower ? ` for ${rower.name}` : ""} in {noneIn(range.key, range.label)}.
             </div>
+          ) : (
+            <SeatRaceList
+              sessions={shownSessions}
+              rower={rower?.key ?? null}
+              raceTitle={raceTitle}
+              onOpenRace={onOpenRace}
+            />
           ))}
 
         {/* ── CONSISTENCY ── the plan's share done (and what of), the
@@ -707,6 +899,18 @@ export default function TeamRanking({
             </div>
           ))}
       </div>
+
+      {pickingRower && (
+        <RowerSheet
+          people={seatPeople}
+          rower={rower?.key ?? null}
+          onPick={(who) => {
+            setRower(who);
+            setPickingRower(false);
+          }}
+          onClose={() => setPickingRower(false)}
+        />
+      )}
 
       {picking && (
         <DatesSheet

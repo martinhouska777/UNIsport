@@ -279,77 +279,76 @@ export function folkNames(who: Folk[], others: Folk[], fullName: (id: string) =>
 /** The same two names, as the typed notes spell them, for matching a note to a switch. */
 export const nameKey = norm;
 
-/* ── Seat racing, by person ─────────────────────────────────────────────── */
+/* ── Seat racing, session by session ───────────────────────────────────── */
 
-/** Somebody they met in a seat race, and by how much — once for every time. */
-export type Opponent = { key: string; name: string; by: number[] };
+/*
+  THE COACH'S LIST OF SEAT RACES (owner, 2026-10-01). It was a list of people
+  first — each with who they beat and who beat them — and then, from three
+  drawn ways of showing it, the owner picked BY SESSION: every seat race once,
+  under the session it was rowed in, so a tap can open that session's board.
+  Who one rower beat is still there: pick them, and the list keeps only their
+  races (seatRaceRecords is who can be picked, with their record).
 
-/**
- * ONE ROWER'S SEAT RACING: who they beat and who beat them, with the seconds
- * (owner, 2026-10-01: "not ranking but just names and who he beat… somebody
- * won every seat race and we want to know the people he beat and by how
- * much — many people didn't seat race, so there is no point for them to be
- * there"). So there is no place and no score here, only the meetings.
- */
-export type SeatRacer = {
-  key: string;
-  name: string;
-  /** How many seat races they won and lost (a rower met again counts again). */
-  won: number;
-  lost: number;
-  /** The people they beat, the biggest win first. */
-  beat: Opponent[];
-  /** The people who beat them, the biggest first. */
-  lostTo: Opponent[];
+  Only ONE ROWER AGAINST ONE is a seat race here. Two traded at once, or a
+  switch with other changes in the same boats, has no single winner.
+*/
+
+/** One seat race on a session's list. */
+export type SeatRace = {
+  /** Its place in the day's switchesOf — what the race board lights up. */
+  index: number;
+  badge: string;
+  /** Won: `a` beat `b` by `by` seconds. Level: the times were the same.
+      Pending: a time is still missing, so `a` and `b` are as the sheet has them. */
+  kind: "won" | "level" | "pending";
+  a: Folk;
+  b: Folk;
+  by: number | null;
 };
+
+/** A session and the seat races rowed in it. */
+export type SeatRaceDay = { dayKey: string; races: SeatRace[] };
+
+/** The seat races of one session, in the order they happened. */
+export function seatRacesOf(day: RaceDay, boatOf?: BoatOf): SeatRace[] {
+  const out: SeatRace[] = [];
+  switchesOf(day, boatOf).forEach((s, index) => {
+    const [mine, theirs] = s.moved;
+    if (mine.length !== 1 || theirs.length !== 1) return;
+    const r = s.result;
+    if (r.kind === "won") out.push({ index, badge: s.badge, kind: "won", a: r.winners[0], b: r.losers[0], by: r.by });
+    else if (r.kind === "level" || r.kind === "pending")
+      out.push({ index, badge: s.badge, kind: r.kind, a: mine[0], b: theirs[0], by: null });
+  });
+  return out;
+}
+
+/** Somebody who seat raced, and how many they won and lost. */
+export type SeatRacer = { key: string; name: string; won: number; lost: number };
 
 /** A rower's full name where the roster has them, else as the sheet wrote it. */
 const nameOfFolk = (f: Folk) => (f.id && rosterById[f.id]?.name) || f.name;
 
 /**
- * Every rower who took part in a seat race that the times could score, ONE
- * AGAINST ONE (a switch with a time missing, with other changes in the same
- * boats, or with two rowers traded at once has no single winner, so it is not
- * counted). People are listed alphabetically; nobody who never seat raced is.
+ * Everybody in those seat races, A to Z, with their record — who the list can
+ * be narrowed to. Only a race with a winner counts in the record; somebody
+ * whose one race is still waiting for its times is not listed yet.
  */
-export function seatRaceRecords(days: { day: RaceDay; boatOf?: BoatOf }[]): SeatRacer[] {
+export function seatRaceRecords(days: SeatRaceDay[]): SeatRacer[] {
   const people = new Map<string, SeatRacer>();
   const racer = (f: Folk) => {
     let p = people.get(f.key);
     if (!p) {
-      p = { key: f.key, name: nameOfFolk(f), won: 0, lost: 0, beat: [], lostTo: [] };
+      p = { key: f.key, name: nameOfFolk(f), won: 0, lost: 0 };
       people.set(f.key, p);
     }
     return p;
   };
-  const meet = (list: Opponent[], f: Folk, by: number) => {
-    let o = list.find((x) => x.key === f.key);
-    if (!o) {
-      o = { key: f.key, name: nameOfFolk(f), by: [] };
-      list.push(o);
+  for (const d of days)
+    for (const r of d.races) {
+      if (r.kind !== "won") continue;
+      racer(r.a).won += 1;
+      racer(r.b).lost += 1;
     }
-    o.by.push(by);
-  };
-  for (const { day, boatOf } of days) {
-    for (const s of switchesOf(day, boatOf)) {
-      const r = s.result;
-      if (r.kind !== "won" || r.winners.length !== 1 || r.losers.length !== 1) continue;
-      const winner = r.winners[0];
-      const loser = r.losers[0];
-      const pw = racer(winner);
-      const pl = racer(loser);
-      pw.won += 1;
-      pl.lost += 1;
-      meet(pw.beat, loser, r.by);
-      meet(pl.lostTo, winner, r.by);
-    }
-  }
-  const biggest = (a: Opponent, b: Opponent) => Math.max(...b.by) - Math.max(...a.by) || a.name.localeCompare(b.name);
-  for (const p of people.values()) {
-    for (const list of [p.beat, p.lostTo]) {
-      for (const o of list) o.by.sort((a, b) => b - a);
-      list.sort(biggest);
-    }
-  }
   return [...people.values()].sort((a, b) => a.name.localeCompare(b.name));
 }

@@ -49,7 +49,7 @@ import type { TeamResult } from "./resultsStore";
 import { rosterById, type Boat } from "./coachLineup";
 import { parseSessionKey, type SessionMap } from "./coachPlan";
 import { crewPeople, personKey, pieceBoards, type RaceCrew, type RaceDay } from "./racePieces";
-import { seatRaceRecords, type SeatRacer } from "./raceSwitch";
+import { seatRacesOf, type SeatRaceDay } from "./raceSwitch";
 import type { LogEntry } from "./logStore";
 
 /* ── The lists ──────────────────────────────────────────────────────────── */
@@ -58,8 +58,8 @@ export type RankingList = "erg" | "water" | "consistency" | "seatraces";
 
 /** The lists, in the owner's order: "erg rankings and water rankings",
     consistency as "a third list", and since 2026-10-01 the seat races, which
-    used to be a screen of their own — a record of who beat whom, not a
-    ranking (seatRacers). */
+    used to be a screen of their own — every seat race, session by session,
+    not a ranking (seatRaceSessions). */
 export const rankingLists: { key: RankingList; label: string }[] = [
   { key: "erg", label: "Erg" },
   { key: "water", label: "Water" },
@@ -267,33 +267,30 @@ export function waterRanking(
   return { rows, pieces: raced.map((r) => r.piece) };
 }
 
-/* ── The seat-race record ───────────────────────────────────────────────── */
+/* ── The seat races ─────────────────────────────────────────────────────── */
 
 /**
- * SEAT RACING OVER A STRETCH OF TIME — NOT A RANKING (owner, 2026-10-01: "not
- * ranking but just names and who he beat… somebody won every seat race and we
- * want to know the people he beat and by how much; many people didn't seat
- * race, so there is no point for them to be there"). It first came out as a
- * ranked table with places, and that was the wrong shape: most of the squad
- * never seat raced, so there is nothing to rank them on.
- *
- * So it is a list of the people who seat raced in the window, A to Z, each
- * with the people they beat and the people who beat them, and the seconds
- * (raceSwitch.ts: seatRaceRecords). Only results the times could score, one
- * rower against one, count.
+ * THE SEAT RACES OF A STRETCH OF TIME, SESSION BY SESSION — NOT A RANKING.
+ * Most of the squad never seat races, so there is nothing to rank them on
+ * (owner, 2026-10-01). It was a list of the people who did, A to Z, with who
+ * they beat; the owner then picked, from three drawn ways, every race listed
+ * once under the session it was rowed in, the newest session first, so a tap
+ * opens that session (raceSwitch.ts: seatRacesOf). A session with no seat
+ * race in it is left out.
  */
-export function seatRacers(races: RaceDay[], span: Span, boats: Record<string, Boat[]> = {}): SeatRacer[] {
-  return seatRaceRecords(
-    races
-      .filter((day) => {
-        const parsed = parseSessionKey(day.dayKey);
-        return !!parsed && within(parsed.date, span);
-      })
-      .map((day) => ({
-        day,
-        boatOf: (crew: RaceCrew) => (boats[day.dayKey] ?? []).find((b) => b.id === crew.boatId),
-      })),
-  );
+export function seatRaceSessions(races: RaceDay[], span: Span, boats: Record<string, Boat[]> = {}): SeatRaceDay[] {
+  return races
+    .map((day) => ({ day, when: parseSessionKey(day.dayKey) }))
+    .filter((x): x is { day: RaceDay; when: NonNullable<typeof x.when> } => !!x.when && within(x.when.date, span))
+    .sort(
+      (x, y) =>
+        y.when.date.getTime() - x.when.date.getTime() || (x.when.period === y.when.period ? 0 : x.when.period === "PM" ? -1 : 1),
+    )
+    .map(({ day }) => ({
+      dayKey: day.dayKey,
+      races: seatRacesOf(day, (crew: RaceCrew) => (boats[day.dayKey] ?? []).find((b) => b.id === crew.boatId)),
+    }))
+    .filter((d) => d.races.length > 0);
 }
 
 /* ── Which session a column was ─────────────────────────────────────────── */

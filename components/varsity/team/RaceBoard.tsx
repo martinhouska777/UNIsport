@@ -58,7 +58,7 @@
   the lineup card uses (COX_COLOR, from data — the documented rule-1
   exception).
 */
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Sheet from "@/components/varsity/Sheet";
 import { IconPencil, IconPlus, IconSwap, IconTrash, IconX } from "@/components/icons";
 import { COX_COLOR, COX_INK, COX_LABEL, rosterById, type Boat } from "@/lib/varsity/coachLineup";
@@ -286,6 +286,8 @@ export default function RaceBoard({
   sessionTime,
   boats,
   inConsole = false,
+  openOnSwitches = false,
+  focus,
   onChange,
   onDeleted,
   onClose,
@@ -301,12 +303,25 @@ export default function RaceBoard({
   /** The session's lineup boats, so a crew can be added to a piece. */
   boats: Boat[];
   inConsole?: boolean;
+  /** Open on the Switches tab — the board was opened from the coach's list
+      of seat races (TeamRanking), so it starts where that list left off. */
+  openOnSwitches?: boolean;
+  /** The seat race that was tapped there, by its place in switchesOf: it is
+      outlined on the Switches tab. */
+  focus?: number;
   /** The day as saved, so the list behind stays current. */
   onChange: (day: RaceDay) => void;
   onDeleted: () => void;
   onClose: () => void;
 }) {
-  const [picked, setTab] = useState<string>(day.pieces[0]?.id ?? COMBINED);
+  const [picked, setTab] = useState<string>(openOnSwitches ? SWITCHES : (day.pieces[0]?.id ?? COMBINED));
+  /* Opened on Switches, the tab row starts scrolled to its end, so the tab
+     that is lit is in sight — on a phone it is past the edge otherwise. */
+  const tabRow = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const row = tabRow.current;
+    if (openOnSwitches && row) row.scrollLeft = row.scrollWidth;
+  }, [openOnSwitches]);
   const [editing, setEditing] = useState<string | null>(null);
   /* The piece whose crews are being switched about (SwitchSheet). */
   const [switching, setSwitching] = useState<string | null>(null);
@@ -429,7 +444,7 @@ export default function RaceBoard({
       </div>
 
       {/* PIECE 1 | PIECE 2 | COMBINED — and, for the coach, a + for the next one. */}
-      <div className="mt-3 flex items-center gap-1.5 overflow-x-auto pb-1">
+      <div ref={tabRow} className="mt-3 flex items-center gap-1.5 overflow-x-auto pb-1">
         {day.pieces.map((p) => (
           <TabButton key={p.id} on={tab === p.id} onClick={() => setTab(p.id)}>
             {p.name}
@@ -695,7 +710,7 @@ export default function RaceBoard({
       )}
 
       {/* SWITCHES: who beat whom, from the times. The coach's alone. */}
-      {tab === SWITCHES && showSwitches && <SwitchResults switches={switches} pieces={day.pieces} />}
+      {tab === SWITCHES && showSwitches && <SwitchResults switches={switches} pieces={day.pieces} focus={focus} />}
 
       {/* THE COACH'S WAY OUT OF A WRONG DAY. */}
       {inConsole && (

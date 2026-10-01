@@ -178,6 +178,14 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
   const [raceBoats, setRaceBoats] = useState<Record<string, Boat[]>>({});
   const [planSessions, setPlanSessions] = useState<SessionMap>({});
   const [openRace, setOpenRace] = useState<string | null>(null);
+  /* A board opened from the Ranking's seat races starts on its Switches tab,
+     with the race that was tapped outlined (focus); one opened from the
+     Water list starts on its first piece. */
+  const [raceFrom, setRaceFrom] = useState<{ focus?: number } | null>(null);
+  const openRaceBoard = (dayKey: string, from: { focus?: number } | null = null) => {
+    setRaceFrom(from);
+    setOpenRace(dayKey);
+  };
   const [pickingRace, setPickingRace] = useState(false);
   /*
     WHICH WATER SESSIONS HAVE BOATS — practice key -> how many, for the
@@ -286,7 +294,7 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
     setRaceBoats((b) => ({ ...b, [dayKey]: boats }));
     setRaces((r) => [day, ...r.filter((d) => d.dayKey !== dayKey)]);
     setPickingRace(false);
-    setOpenRace(dayKey);
+    openRaceBoard(dayKey);
     await saveRaceDay(day);
   };
 
@@ -500,6 +508,7 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
           races={races}
           raceBoats={raceBoats}
           raceTitle={raceTitle}
+          onOpenRace={(dayKey, focus) => openRaceBoard(dayKey, { focus })}
         />
       )}
       <div className="flex flex-col gap-1.5">
@@ -564,7 +573,7 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
               <button
                 key={row.key}
                 type="button"
-                onClick={() => setOpenRace(r.dayKey)}
+                onClick={() => openRaceBoard(r.dayKey)}
                 data-tour={tour}
                 className="flex w-full items-center gap-3 rounded-2xl border border-border bg-surface px-3.5 py-3 text-left active:bg-surface-2"
               >
@@ -600,6 +609,8 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
             sessionTime={planSessions[openRace]?.time}
             boats={raceBoats[openRace] ?? []}
             inConsole={inConsole}
+            openOnSwitches={!!raceFrom}
+            focus={raceFrom?.focus}
             onChange={(next) => setRaces((rs) => rs.map((r) => (r.dayKey === next.dayKey ? next : r)))}
             onDeleted={() => {
               setRaces((rs) => rs.filter((r) => r.dayKey !== openRace));

@@ -11,7 +11,11 @@
   A switch the times cannot score says so in a word instead of guessing:
   waiting for a time, or other changes in the same boats (raceSwitch.ts).
   Results are the coach's: a rower never opens this tab. Theme tokens only.
+
+  Opened from the coach's list of seat races (TeamRanking), the race that was
+  tapped there wears the school's colour round it and is scrolled into view.
 */
+import { useEffect, useRef } from "react";
 import { IconSwap } from "@/components/icons";
 import { rosterById } from "@/lib/varsity/coachLineup";
 import { classTitle, type RacePiece } from "@/lib/varsity/racePieces";
@@ -22,7 +26,20 @@ const fullName = (id: string) => rosterById[id]?.name;
 /** "1.5 s up on Scott" / "2.6 s down on Scott" — the first boat's lead over the second. */
 const leadWords = (lead: number) => (lead >= 0 ? `${secs(lead)} s up` : `${secs(lead)} s down`);
 
-export default function SwitchResults({ switches, pieces }: { switches: Switch[]; pieces: RacePiece[] }) {
+export default function SwitchResults({
+  switches,
+  pieces,
+  focus,
+}: {
+  switches: Switch[];
+  pieces: RacePiece[];
+  /** The switch to outline, by its place in `switches`. */
+  focus?: number;
+}) {
+  const focused = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    focused.current?.scrollIntoView({ block: "center" });
+  }, []);
   return (
     <div className="mt-3 flex flex-col gap-2">
       {switches.map((s, n) => {
@@ -31,7 +48,13 @@ export default function SwitchResults({ switches, pieces }: { switches: Switch[]
         const theirs = folkNames(s.moved[1], s.moved[0], fullName);
         const r = s.result;
         return (
-          <div key={n} className="rounded-2xl border border-border bg-surface px-3.5 py-3 shadow-card">
+          <div
+            key={n}
+            ref={n === focus ? focused : undefined}
+            className={`rounded-2xl border bg-surface px-3.5 py-3 shadow-card ${
+              n === focus ? "border-primary ring-1 ring-primary" : "border-border"
+            }`}
+          >
             <div className="flex items-center gap-2 text-[11px] text-muted">
               <span className="rounded-md bg-text px-1.5 py-0.5 font-mono text-[11px] font-semibold text-background">
                 {classTitle(s.badge)}
