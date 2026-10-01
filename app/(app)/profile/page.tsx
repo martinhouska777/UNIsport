@@ -384,10 +384,10 @@ export default function ProfilePage() {
         where the name sits above the followers rather than above the photo):
 
           ( photo )   Martin Houska
+                      [VARSITY] [MENTOR]
                       48 | 12 | 96
                       workouts partners followers
 
-          [VARSITY] [MENTOR]
           a line of bio
           ──────────────────────────
 
@@ -487,6 +487,20 @@ export default function ProfilePage() {
             <div className="text-base font-medium text-text">{user.name || "Your name"}</div>
           )}
 
+          {/* WHAT YOU ARE — VARSITY and MENTOR, under your name and above the
+              counts (owner, 2026-09-30). They were a row of their own below
+              this block, between the counts and the bio, which pushed the bio
+              away. On your OWN profile the varsity badge comes from live
+              membership: profiles.data has no record of it (the squad lives
+              in its own table), so unlike a profile you're viewing, it can't
+              come through profileFromOnboarding. Colours in lib/badges.ts. */}
+          {(isMember || user.badges.mentor) && (
+            <div className="flex items-center gap-1.5">
+              {isMember && <ProfileBadge kind="varsity" />}
+              {user.badges.mentor && <ProfileBadge kind="mentor" />}
+            </div>
+          )}
+
           {/* Three EQUAL columns, so the two hairlines land at exactly a third
               and two thirds. They show a dash until the numbers have landed, so
               the row never jumps. The labels are 10px here because a third of
@@ -529,28 +543,6 @@ export default function ProfilePage() {
             })}
           </div>
         </div>
-      </div>
-
-      {/* WHAT YOU ARE — VARSITY and MENTOR, left-aligned under your name.
-
-          The "House · Class of ____" line that used to sit here is GONE from
-          your own profile (owner, 2026-09-14): you know where you live, and the
-          Leaderboards card a little further down already names your team. It
-          still shows on SOMEBODY ELSE's profile, where it tells you something
-          you didn't know — see app/(app)/people/[id]/page.tsx. */}
-      <div className="flex flex-col gap-1.5 px-3.5">
-        {/* On your OWN profile the varsity badge comes from live membership:
-            profiles.data has no record of it (the squad lives in its own
-            table), so unlike a profile you're viewing, it can't come through
-            profileFromOnboarding. */}
-        {(isMember || user.badges.mentor) && (
-          <div className="flex items-center gap-1.5">
-            {/* Like a small Log button: school colour for Varsity, dark green for Mentor (owner,
-                2026-09-16) — colours in lib/badges.ts. */}
-            {isMember && <ProfileBadge kind="varsity" />}
-            {user.badges.mentor && <ProfileBadge kind="mentor" />}
-          </div>
-        )}
       </div>
 
       {/* BIO — plain text, no card. The grey panel it used to sit in was the

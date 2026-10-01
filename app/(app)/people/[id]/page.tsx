@@ -263,7 +263,8 @@ function PersonProfile() {
             {/* WHO THEY ARE — laid out like your own Profile tab: photo on the
                 left; name, house · class and the three counts on the right.
                 Followers and Following open the lists; Partners is the number
-                alone. Fit / Mentor pills and the bio run underneath. */}
+                alone. Fit / Mentor pills sit above the counts; the bio runs
+                underneath. */}
             <div className="rounded-2xl border border-border bg-surface p-3.5">
               <div className="flex items-center gap-4">
                 <div className="flex h-[72px] w-[72px] shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-primary bg-primary-tint text-primary">
@@ -290,6 +291,21 @@ function PersonProfile() {
                       </div>
                     )}
                   </div>
+
+                  {/* Fit and Mentor UP HERE, beside the photo, rather than on a
+                      row of their own under it (owner, 2026-09-30): that row
+                      stood between the counts and the bio and pushed the bio
+                      away from the rest of the person. */}
+                  {(fit !== null || user.badges.mentor) && (
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {fit !== null && (
+                        <span className="rounded-full border border-primary-line bg-primary-tint px-2.5 py-0.5 text-[11.5px] font-semibold text-primary">
+                          {fit}
+                        </span>
+                      )}
+                      {user.badges.mentor && <ProfileBadge kind="mentor" />}
+                    </div>
+                  )}
 
                   {/* Three equal columns, hairlines at a third and two thirds —
                       the same row your own profile has. A dash until the
@@ -339,17 +355,6 @@ function PersonProfile() {
                   </div>
                 </div>
               </div>
-
-              {(fit !== null || user.badges.mentor) && (
-                <div className="mt-3 flex flex-wrap items-center gap-1.5">
-                  {fit !== null && (
-                    <span className="rounded-full border border-primary-line bg-primary-tint px-2.5 py-0.5 text-[11.5px] font-semibold text-primary">
-                      {fit}
-                    </span>
-                  )}
-                  {user.badges.mentor && <ProfileBadge kind="mentor" />}
-                </div>
-              )}
 
               {user.bio && (
                 <p className="mt-3 text-[13.5px] leading-relaxed text-text-2">{user.bio}</p>
