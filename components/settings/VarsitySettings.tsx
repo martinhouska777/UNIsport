@@ -7,7 +7,7 @@
     (card)       you: photo, name, your squad and role — opens your varsity profile
     Varsity      Rowing profile (a page) · Teammates see my calendar · the Console
     (group)      Notifications · Design — pages; Units — in place
-    Help         the privacy policy, the terms
+    Help         Take the tour (not for a coach), the privacy policy, the terms
     (group)      Replay athlete setup — asks first
     (bottom)     Log out
 
@@ -44,7 +44,9 @@ import {
   type AthleteProfileBundle,
 } from "@/lib/varsity/athleteProfile";
 import { can, canOpenConsole, roleLabel } from "@/lib/varsity/membership";
-import { IconCalendar, IconClipboard, IconRepeat, IconUser } from "@/components/icons";
+import { requestTour, resetTour } from "@/lib/tour";
+import { varsityTour } from "@/lib/varsity/varsityTour";
+import { IconBulb, IconCalendar, IconClipboard, IconRepeat, IconUser } from "@/components/icons";
 
 export default function VarsitySettings() {
   const { userId, logout, resetVarsitySetup } = useAppState();
@@ -122,7 +124,24 @@ export default function VarsitySettings() {
           <AppRows />
         </Group>
 
+        {/*
+          Settings sits outside the Varsity shell, like the student one, so this
+          forgets the walk, leaves a request behind and goes Home — where the
+          shell picks it up (lib/varsity/varsityTour.ts). Not for a coach: the
+          shell doesn't run this walk for them, and their console has its own.
+        */}
         <Group title="Help">
+          {role && role !== "coach" && (
+            <Row
+              icon={<IconBulb size={20} />}
+              label="Take the tour"
+              onClick={() => {
+                if (userId) resetTour(varsityTour, userId);
+                requestTour(varsityTour);
+                router.push("/varsity/home");
+              }}
+            />
+          )}
           <LegalRows />
         </Group>
 

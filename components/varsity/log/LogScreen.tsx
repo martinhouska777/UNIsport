@@ -1229,13 +1229,14 @@ function LogScreenInner() {
             else if (ergTargets.length > 1) setErgChooser(true);
             else startScan({ mode: "extra" });
           }}
+          data-tour="varsity-log-scan"
           className="mt-4 flex w-full items-center justify-center gap-2.5 rounded-2xl bg-primary-live py-3.5 text-[14px] font-semibold text-primary-contrast shadow-md transition-transform duration-150 active:scale-[0.98] disabled:opacity-60"
         >
           <IconCamera size={20} /> Scan C2 / RP3 monitor
         </button>
 
         {/* prescribed plan for the selected day */}
-        <div className="mt-6">
+        <div className="mt-6" data-tour="varsity-log-today">
           <SectionLabel>{isToday ? "Today" : dateLabel.split(",")[0]}</SectionLabel>
           {loading ? (
             <div className="py-6 text-center text-[12px] text-muted">Loading…</div>

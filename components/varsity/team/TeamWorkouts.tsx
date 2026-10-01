@@ -437,7 +437,8 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
       {/* ERG | WATER — the same full-width switch the Team tab uses above the
           roster: the two halves ARE the box, no inset pill, and overflow-hidden
           is what lets the selected fill take the rounded corners with it. */}
-      <div className="mb-3 flex overflow-hidden rounded-xl border border-border bg-surface">
+      {/* Varsity Mode's tour lights this switch and presses Water. */}
+      <div data-tour="varsity-workouts-switch" className="mb-3 flex overflow-hidden rounded-xl border border-border bg-surface">
         {((inConsole ? ["erg", "water", "ranking"] : ["erg", "water"]) as Side[]).map((t) => (
           <button
             key={t}
@@ -446,6 +447,7 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
               setPicked(t);
               setQuery(""); // a search belongs to the list it was typed into
             }}
+            data-tour={`varsity-workouts-${t}`}
             className={`flex-1 py-2.5 text-[12px] font-semibold capitalize transition-colors ${
               side === t ? "bg-text text-background" : "text-muted"
             }`}
@@ -511,7 +513,9 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
             No workouts match.
           </div>
         )}
-        {shownRows.map((row) => {
+        {shownRows.map((row, i) => {
+          // The first row is lit with the switch by Varsity Mode's tour.
+          const tour = i === 0 ? "varsity-workouts-first" : undefined;
           if (row.workout) {
             const w = row.workout;
             const n = counts.get(w.dayKey) ?? 0;
@@ -523,6 +527,7 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
                 key={row.key}
                 type="button"
                 onClick={() => setOpen(w.dayKey)}
+                data-tour={tour}
                 className="flex w-full items-center gap-3 rounded-2xl border border-border bg-surface px-3.5 py-3 text-left active:bg-surface-2"
               >
                 <span
@@ -560,6 +565,7 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
                 key={row.key}
                 type="button"
                 onClick={() => setOpenRace(r.dayKey)}
+                data-tour={tour}
                 className="flex w-full items-center gap-3 rounded-2xl border border-border bg-surface px-3.5 py-3 text-left active:bg-surface-2"
               >
                 <span

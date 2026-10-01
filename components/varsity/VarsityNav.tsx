@@ -73,12 +73,16 @@ function NavItem({
       href={tab.href}
       onClick={onClick}
       aria-current={active ? "page" : undefined}
-      className={`flex flex-col items-center gap-1 rounded-full py-1.5 text-[10px] font-semibold transition-[color,background-color,transform] duration-150 active:scale-90 ${
+      className={`flex flex-col items-center rounded-full py-1.5 text-[10px] font-semibold transition-[color,background-color,transform] duration-150 active:scale-90 ${
         active ? "bg-primary-tint text-primary" : "text-muted"
       }`}
     >
-      {tab.icon}
-      {tab.label}
+      {/* The tour rings the icon and its label, not the quarter-width cell —
+          the same as the student BottomNav (lib/varsity/varsityTour.ts). */}
+      <span data-tour={`tab-${tab.href}`} className="flex flex-col items-center gap-1">
+        {tab.icon}
+        {tab.label}
+      </span>
     </Link>
   );
 }
@@ -121,6 +125,7 @@ export default function VarsityNav() {
             type="button"
             onClick={() => setLogOpen(true)}
             aria-label="Log a session"
+            data-tour="varsity-log"
             className="flex h-12 w-12 items-center justify-center rounded-full bg-primary-live text-primary-contrast shadow-md transition-transform duration-150 active:scale-90"
           >
             <IconPlus size={26} />

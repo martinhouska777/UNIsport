@@ -547,7 +547,7 @@ function WeeklyGraph({
   ];
 
   return (
-    <div className="rounded-2xl border border-border bg-surface px-4 pb-3.5 pt-4">
+    <div data-tour="varsity-profile-stats" className="rounded-2xl border border-border bg-surface px-4 pb-3.5 pt-4">
       {/* THE HEADER. The measure names the card, because it is what the card is
           about; the window sits opposite it, because it is the other half of
           the same question. Both are the same kind of menu. */}
@@ -1118,6 +1118,7 @@ export default function ProfileScreen() {
           profile. ── */}
       <Link
         href="/varsity/profile/team"
+        data-tour="varsity-profile-team"
         className="mx-3.5 mt-2.5 flex w-[calc(100%-1.75rem)] items-center gap-3 rounded-2xl border border-border bg-surface px-3.5 py-3"
       >
         <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[10px] border border-primary-line bg-primary-tint text-primary">

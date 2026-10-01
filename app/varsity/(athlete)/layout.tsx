@@ -19,7 +19,7 @@
   who came in through a team link has never seen the student onboarding and
   doesn't need it.
 */
-import { useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAppState } from "@/components/AppState";
 import { useMembership } from "@/components/varsity/useMembership";
@@ -31,12 +31,18 @@ import VarsityNav from "@/components/varsity/VarsityNav";
 import VarsitySideNav from "@/components/varsity/VarsitySideNav";
 import TeamColors from "@/components/varsity/TeamColors";
 import { useVarsityTheme } from "@/components/varsity/useVarsityTheme";
+import TourGate from "@/components/tour/TourGate";
+import { varsityTour } from "@/lib/varsity/varsityTour";
 
 export default function VarsityLayout({ children }: { children: React.ReactNode }) {
-  const { ready, loggedIn, varsityReady } = useAppState();
+  const { ready, loggedIn, varsityReady, userId } = useAppState();
   const { membership, loading, isMember, failed } = useMembership();
   const vTheme = useVarsityTheme();
   const router = useRouter();
+
+  // The tour waits for the oars, as the student one waits for SchoolIntro.
+  const [introOver, setIntroOver] = useState(false);
+  const showTour = useCallback(() => setIntroOver(true), []);
 
   useEffect(() => {
     if (!ready) return;
@@ -77,7 +83,7 @@ export default function VarsityLayout({ children }: { children: React.ReactNode 
       paintRoot
       className="relative flex h-dvh flex-col overflow-hidden bg-background lg:flex-row"
     >
-      <VarsityIntro />
+      <VarsityIntro onFinished={showTour} />
       {/* Laptop: the shared sidebar, like the student app. Phone: tabs, and the
           top bar on Home and Profile only (it decides that itself). */}
       <VarsitySideNav />
@@ -86,6 +92,16 @@ export default function VarsityLayout({ children }: { children: React.ReactNode 
         <TeamColors teamId={membership!.teamId}>{children}</TeamColors>
       </main>
       <VarsityNav />
+      {/*
+        Varsity Mode's walk (lib/varsity/varsityTour.ts), the first time
+        you are in. Once for the whole shell, not per screen — it crosses the
+        tabs on its own — and inside ThemeProvider so its dim is this theme's.
+        Not for a coach: the console has its own walk, and this one is about
+        rowing.
+      */}
+      {userId && introOver && membership!.role !== "coach" && (
+        <TourGate key={userId} tour={varsityTour} userId={userId} />
+      )}
     </ThemeProvider>
   );
 }

@@ -597,6 +597,8 @@ export default function CalendarScreen({
               key={d.num}
               type="button"
               onClick={() => setPicked({ iso: d.iso, label })}
+              // Varsity Mode's tour lights today on your own calendar.
+              data-tour={d.today && !teammate ? "varsity-cal-today" : undefined}
               /*
                 EVERY day of the month is the same box, trained or not — the
                 empty ones simply have empty space under their number. A grid

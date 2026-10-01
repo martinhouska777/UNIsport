@@ -45,6 +45,7 @@ export default function LogSheet({ onClose }: { onClose: () => void }) {
               type="button"
               onClick={onClose}
               aria-label="Close"
+              data-tour="varsity-log-close"
               className="tap44 press-icon absolute right-3 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-surface-2 text-muted"
             >
               <IconX size={14} />

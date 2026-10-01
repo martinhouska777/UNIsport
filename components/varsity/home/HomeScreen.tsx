@@ -583,7 +583,7 @@ function WeekStrip({
   const pick = (d: WeekDay) => (d === selected ? onClearDay() : onSelect(d));
 
   return (
-    <div className="px-3 pt-4">
+    <div data-tour="varsity-home-plan" className="px-3 pt-4">
       <div className="flex items-center justify-between gap-3 px-0.5 pb-2">
         {/* The heading names the PLAN, not the category. "Training Plan" told
             you what the thing under it was, which the calendar already does;
@@ -935,7 +935,7 @@ function DayHeader({
 function CoachNoteCard({ note, coach }: { note: string; coach: string }) {
   if (note.trim()) {
     return (
-      <div className="overflow-hidden rounded-xl border border-primary-line bg-surface">
+      <div data-tour="varsity-home-note" className="overflow-hidden rounded-xl border border-primary-line bg-surface">
         <div className="flex items-center gap-2 border-b border-border bg-primary-tint px-3.5 py-2.5">
           <span className="flex-shrink-0 text-primary">
             <IconMessage size={15} />
@@ -949,7 +949,7 @@ function CoachNoteCard({ note, coach }: { note: string; coach: string }) {
     );
   }
   return (
-    <div className="flex items-center gap-2.5 rounded-xl border border-success-line bg-success-tint px-3.5 py-3">
+    <div data-tour="varsity-home-note" className="flex items-center gap-2.5 rounded-xl border border-success-line bg-success-tint px-3.5 py-3">
       <span className="text-success">
         <IconCheckCircle size={18} />
       </span>
@@ -996,14 +996,18 @@ function ClaimSeatCard({ onOpen }: { onOpen: () => void }) {
 function EmptyHome() {
   return (
     <div className="mx-auto flex w-full max-w-screen-sm flex-col items-center px-6 pt-20 text-center">
-      <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary-tint text-primary">
-        <IconCalendar size={22} />
+      {/* The tour lights this where the week strip would be (lib/varsity/varsityTour.ts) —
+          the words, not the 80px of space above them. */}
+      <div data-tour="varsity-home-plan" className="flex flex-col items-center">
+        <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary-tint text-primary">
+          <IconCalendar size={22} />
+        </div>
+        <div className="text-[15px] font-semibold text-text">No plan published yet</div>
+        <p className="mt-1 max-w-[18rem] text-[12px] leading-relaxed text-muted">
+          Your coach hasn&apos;t shared this week&apos;s training plan. It&apos;ll show up here as
+          soon as it&apos;s published.
+        </p>
       </div>
-      <div className="text-[15px] font-semibold text-text">No plan published yet</div>
-      <p className="mt-1 max-w-[18rem] text-[12px] leading-relaxed text-muted">
-        Your coach hasn&apos;t shared this week&apos;s training plan. It&apos;ll show up here as
-        soon as it&apos;s published.
-      </p>
     </div>
   );
 }
@@ -1284,7 +1288,7 @@ function HomeScreenInner() {
         onToday={!hasToday || onToday ? undefined : () => pickDay(null)}
       />
 
-      <div onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+      <div data-tour="varsity-home-day" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
         {sessions.length > 0 ? (
           <div className="flex flex-col gap-2 px-3">
             {sessions.map((sess, i) => (

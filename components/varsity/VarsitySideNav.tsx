@@ -60,6 +60,7 @@ export default function VarsitySideNav() {
         action={
           <Link
             href="/varsity/log"
+            data-tour="varsity-log"
             className="flex items-center justify-center gap-2 rounded-xl bg-primary-live py-2.5 text-[13px] font-semibold text-primary-contrast transition-[filter] hover:brightness-110"
           >
             <IconPlus size={16} />
@@ -71,6 +72,8 @@ export default function VarsitySideNav() {
           label: tab.label,
           icon: tab.icon,
           active: isActive(tab.href),
+          // Same anchor as the phone's tab (VarsityNav) — only one is on screen.
+          tour: `tab-${tab.href}`,
         }))}
         footer={
           <>

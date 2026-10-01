@@ -46,7 +46,16 @@ import { consumeSignIn } from "@/lib/loginIntro";
 const FADE_AT_MS = 1950;
 const FADE_MS = 350;
 
-export default function VarsityIntro() {
+export default function VarsityIntro({
+  /*
+    Called once there is nothing in the way any more — the sequence has
+    finished, or there was never one to play. The shell holds Varsity Mode's
+    tour back until then, the same way the student shell waits on SchoolIntro.
+  */
+  onFinished,
+}: {
+  onFinished?: () => void;
+} = {}) {
   const [leaving, setLeaving] = useState(false);
   // Decided once, at mount — the varsity layout only renders this on the client
   // (it waits for the app state), so reading the browser here is safe.
@@ -71,6 +80,11 @@ export default function VarsityIntro() {
     */
     consumeSignIn();
   }, []);
+
+  // Whatever is waiting on the intro can start: it is over, or never was.
+  useEffect(() => {
+    if (done) onFinished?.();
+  }, [done, onFinished]);
 
   useEffect(() => {
     if (done) return;
