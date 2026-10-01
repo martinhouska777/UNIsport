@@ -1,13 +1,21 @@
 "use client";
 
 /*
-  COACH → ONE ATHLETE → PAST WORKOUTS. Everything they have logged, newest
-  first, the way it was written.
+  COACH → ONE ATHLETE → PAST WORKOUTS. Their erg and their water sessions,
+  newest first, the way they were written.
   ---------------------------------------------------------------------------
   The calendar answers "which days", the statistics answer "how much"; this
   answers the one a coach actually asks out loud — what has this rower been
   doing? (owner, 2026-09-19). One day at a time, with its date, and every
   session in it.
+
+  ERG OR WATER, AND THE WAY THE ROWER SEES IT (owner, 2026-10-01: "just the
+  workouts on erg he has and how he sees it… so they can look at his erg or
+  water performance"). A switch picks the erg or the water — weights, runs and
+  the rest are on the Calendar — and a tap opens the session on the very
+  screen the rower opens off their own Calendar (WorkoutDetail): the split as
+  the headline, the monitor's numbers, and Compare with their other sessions
+  of the same kind.
 
   Read-only. A session belongs to the athlete who logged it; the coach gets to
   look, and there is no policy in the database that would let them do more
@@ -17,12 +25,21 @@
 */
 import { useEffect, useMemo, useState } from "react";
 import LogRow from "@/components/varsity/coach/athlete/LogRow";
+import Segmented from "@/components/ui/Segmented";
+import WorkoutDetail from "@/components/varsity/calendar/WorkoutDetail";
+import { logCategoryColor } from "@/lib/varsity/athleteProfile";
 import ExampleTag from "@/components/varsity/ExampleTag";
 import { fetchLogsInRange, type LogEntry } from "@/lib/varsity/logStore";
 
 /* How far back the list reaches. A season, which is as long as anybody has
    been on this squad — and further back than any coach scrolls in one sitting. */
 const DAYS_BACK = 365;
+
+const SIDES = [
+  { key: "erg" as const, label: "Erg" },
+  { key: "water" as const, label: "Water" },
+];
+type Side = (typeof SIDES)[number]["key"];
 
 const WD = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MO = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -50,6 +67,9 @@ export default function AthleteWorkouts({
   const now = useMemo(() => new Date(), []);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const [side, setSide] = useState<Side>("erg");
+  /* The session opened full screen, as the rower sees it. */
+  const [open, setOpen] = useState<LogEntry | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -72,7 +92,10 @@ export default function AthleteWorkouts({
 
   /* The example only while they have logged nothing, and tagged as one. */
   const example = logs.length === 0 && !!demo?.length;
-  const shown = example ? demo! : logs;
+  const shown = useMemo(
+    () => (example ? demo! : logs).filter((l) => l.category === side),
+    [example, demo, logs, side],
+  );
 
   /* Newest day first, and inside a day the order they were logged in — which is
      the order they were done in, morning before afternoon. */
@@ -88,20 +111,16 @@ export default function AthleteWorkouts({
   if (!loaded) {
     return <p className="py-12 text-center text-[13px] text-muted">Reading their training…</p>;
   }
-  if (days.length === 0) {
-    return (
-      <p className="px-6 py-12 text-center text-[13px] leading-relaxed text-muted">
-        Nothing logged yet. Sessions appear here the moment they write one down.
-      </p>
-    );
-  }
-
   return (
     <div className="flex flex-col gap-4">
-      {example && (
-        <div>
-          <ExampleTag />
-        </div>
+      <div className="flex items-center gap-2">
+        <Segmented options={SIDES} value={side} onChange={setSide} ariaLabel="Erg or water" />
+        {example && <ExampleTag />}
+      </div>
+      {days.length === 0 && (
+        <p className="px-6 py-12 text-center text-[13px] leading-relaxed text-muted">
+          No {side === "erg" ? "erg" : "water"} sessions logged yet.
+        </p>
       )}
       {days.map(([iso, entries]) => (
         <div key={iso}>
@@ -110,11 +129,23 @@ export default function AthleteWorkouts({
           </div>
           <div className="flex flex-col gap-2">
             {entries.map((l) => (
-              <LogRow key={l.id} log={l} />
+              <LogRow key={l.id} log={l} onOpen={() => setOpen(l)} />
             ))}
           </div>
         </div>
       ))}
+
+      {open && (
+        <WorkoutDetail
+          key={open.id}
+          log={open}
+          /* Compare reads THIS rower's sessions of the same kind; the worked
+             example has none of its own to read. */
+          userId={example ? null : athleteId}
+          colorOf={(l) => logCategoryColor[l.category ?? "other"] ?? "var(--muted)"}
+          onClose={() => setOpen(null)}
+        />
+      )}
     </div>
   );
 }

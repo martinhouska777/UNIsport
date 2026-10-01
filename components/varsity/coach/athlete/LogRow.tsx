@@ -3,10 +3,9 @@
 /*
   ONE LOGGED SESSION, exactly as the athlete wrote it — no edit, no delete.
   ---------------------------------------------------------------------------
-  Drawn once and used by both of the coach's readings of it: the day sheet that
-  opens off their calendar, and the list of past workouts. The two were the same
-  four lines of markup written twice, which is how a dot changes colour in one
-  place and not the other.
+  A row on the coach's list of an athlete's past workouts. Given `onOpen`, it
+  is a button that opens the session the way the athlete sees it
+  (WorkoutDetail).
 
   The category dot is a CONTENT colour from data (lib/varsity/athleteProfile),
   applied inline — the documented exception to rule 1. Everything else is a
@@ -16,11 +15,18 @@ import { logCategoryColor } from "@/lib/varsity/athleteProfile";
 import { formatMetrics } from "@/lib/varsity/logParse";
 import type { LogEntry } from "@/lib/varsity/logStore";
 import { markColor } from "@/lib/colorMarks";
+import { IconChevronRight } from "@/components/icons";
 
-export default function LogRow({ log }: { log: LogEntry }) {
+export default function LogRow({ log, onOpen }: { log: LogEntry; onOpen?: () => void }) {
   const metrics = formatMetrics(log.minutes, log.metres, log.split);
+  const Box = onOpen ? "button" : "div";
   return (
-    <div className="flex items-start gap-3 rounded-2xl border border-border bg-surface-2 px-3.5 py-3">
+    <Box
+      {...(onOpen ? { type: "button" as const, onClick: onOpen } : {})}
+      className={`flex w-full items-start gap-3 rounded-2xl border border-border bg-surface-2 px-3.5 py-3 text-left ${
+        onOpen ? "active:bg-surface" : ""
+      }`}
+    >
       <span
         className="mt-1 h-2.5 w-2.5 flex-shrink-0 rounded-full"
         style={{ background: markColor(logCategoryColor[log.category ?? "other"]) ?? "var(--muted)" }}
@@ -36,6 +42,7 @@ export default function LogRow({ log }: { log: LogEntry }) {
           Plan
         </span>
       )}
-    </div>
+      {onOpen && <IconChevronRight size={15} className="mt-0.5 flex-shrink-0 text-muted" />}
+    </Box>
   );
 }

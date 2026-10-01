@@ -836,7 +836,9 @@ export default function CalendarScreen({
         <WorkoutDetail
           key={openLog.id}
           log={openLog}
-          userId={userId}
+          /* Compare lists the sessions of whoever's calendar this is — on a
+             teammate's, theirs, not the viewer's own. */
+          userId={teammateId ?? userId}
           /* The same rule the grid and the day list use, so a session keeps its
              colour all the way in — including a Compare row, which swaps the
              workout on screen without leaving. */
