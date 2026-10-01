@@ -70,9 +70,10 @@ export const rankingLists: { key: RankingList; label: string }[] = [
 /* ── The window ─────────────────────────────────────────────────────────── */
 
 /** Month and Semester, the team statistics' own entries — "pick dates" is the
-    third choice, made on the screen. */
+    third choice, made on the screen. It opens on the semester (owner,
+    2026-10-01: "preset it for semester"). */
 export const rankingRanges: TeamRange[] = teamRanges.filter((r) => r.key === "month" || r.key === "semester");
-export const defaultRankingRange = "month";
+export const defaultRankingRange = "semester";
 
 /** The window's first and last day: a built-in one counts back from today,
     today included; two dates the coach picked are their own window. */

@@ -693,12 +693,46 @@ export default function TeamRanking({
 
   return (
     <div>
-      {/* ERG | WATER | CONSISTENCY, and the window beside it. */}
+      {/* ERG | WATER | CONSISTENCY | SEAT RACES, and the window beside them on
+          the right (owner, 2026-10-01: "put the month next to the seat races on
+          right"). It used to come after the Everyone button and was pushed down
+          a line with it. */}
       <div data-tour="coach-ranking-lists" className="flex flex-wrap items-center justify-between gap-2">
-        <Segmented options={rankingLists} value={list} onChange={setList} ariaLabel="Ranking" />
-        {/* EVERYONE, or the one rower the seat races are narrowed to. */}
-        {list === "seatraces" &&
-          (rowerRecord ? (
+        {/* The four lists a touch tighter than a switch's usual padding, so
+            "Semester" still fits beside them on a 375px phone. */}
+        <Segmented
+          options={rankingLists}
+          value={list}
+          onChange={setList}
+          ariaLabel="Ranking"
+          className="[&>button]:px-[9px]"
+        />
+        {/* ml-auto: on the narrowest phones it can still drop to a line of its
+            own, and stays at the right, where its menu opens from. */}
+        <div className="ml-auto">
+          <Dropdown
+            label={range.label}
+            options={rangeOptions}
+            value={range.key}
+            open={menuOpen}
+            onOpen={setMenuOpen}
+            align="right"
+            onPick={(k) => {
+              setMenuOpen(false);
+              if (k === TEAM_CUSTOM_RANGE) setPicking(true);
+              else {
+                setCustom(null);
+                setRangeKey(k);
+              }
+            }}
+          />
+        </div>
+      </div>
+      {/* EVERYONE, or the one rower the seat races are narrowed to — on a line
+          of its own under the lists. */}
+      {list === "seatraces" && (
+        <div className="mt-2 flex">
+          {rowerRecord ? (
             <span className="flex min-w-0 items-center rounded-full bg-text text-background">
               <button
                 type="button"
@@ -733,29 +767,9 @@ export default function TeamRanking({
               Everyone
               <IconChevronDown size={12} />
             </button>
-          ))}
-        {/* ml-auto: with four lists the window no longer always fits beside
-            them on a phone, and when it drops to a line of its own it stays
-            at the right, where its menu opens from. */}
-        <div className="ml-auto">
-          <Dropdown
-            label={range.label}
-            options={rangeOptions}
-            value={range.key}
-            open={menuOpen}
-            onOpen={setMenuOpen}
-            align="right"
-            onPick={(k) => {
-              setMenuOpen(false);
-              if (k === TEAM_CUSTOM_RANGE) setPicking(true);
-              else {
-                setCustom(null);
-                setRangeKey(k);
-              }
-            }}
-          />
+          )}
         </div>
-      </div>
+      )}
 
       <div className="mt-3">
         {/* ── ERG ── points, then the place on every test. */}
