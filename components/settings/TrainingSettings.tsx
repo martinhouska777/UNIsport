@@ -49,7 +49,7 @@ import {
   type OtherActivity,
   type PrimaryActivity,
 } from "@/lib/onboarding";
-import { GRID_FIRST_HOUR, GRID_LAST_HOUR, daySlots, hoursOfDay, hoursToSlots, slotLabel } from "@/lib/schedule";
+import { GRID_FIRST_HOUR, GRID_LAST_HOUR, hoursOfDay, hoursToSlots } from "@/lib/schedule";
 import { Pill, TextField } from "@/components/onboarding/controls";
 import SearchableDropdown from "@/components/onboarding/SearchableDropdown";
 import SportPicker from "@/components/onboarding/SportPicker";
@@ -60,6 +60,7 @@ import {
   IconCheck,
   IconChevronDown,
   IconChevronUp,
+  IconPencil,
   IconPlus,
   IconRun,
   IconX,
@@ -177,6 +178,7 @@ export default function TrainingSettings({
     });
   };
   const freeDays = weekDays.filter((d) => hoursOfDay(schedule[d.key]).size > 0);
+  const freeHours = freeDays.reduce((n, d) => n + hoursOfDay(schedule[d.key]).size, 0);
 
   // ---- the main activity --------------------------------------------------
   // Your main thing can't also be one of your extras.
@@ -479,17 +481,26 @@ export default function TrainingSettings({
         </div>
       </Group>
 
-      {/* ── When you're free: the week, the times, and the grid behind one
-          clear button ──
-          THE TIMES ARE WRITTEN OUT (owner, 2026-09-30: "where are the times?").
-          The little week used to be the whole answer — a sliver an hour with
-          no clock on it — so you could see THAT you were free, not WHEN. Each
-          free day now has its hours under the picture.
-          AND THE BUTTON LOOKS LIKE ONE ("highlight the dropdown — I wouldn't
-          know how to use it"). The grid opened from a small "Edit" in the
-          section label; now a full-width button at the foot of the card opens
-          it and closes it, its chevron turning with it. */}
-      <Group title="Free time">
+      {/* ── When you're free: a picture of the week, the grid behind Edit ── */}
+      <Group
+        title="Free time"
+        action={
+          <button
+            type="button"
+            onClick={() => setEditingWeek((e) => !e)}
+            className="tap44 flex items-center gap-1 rounded-full px-1.5 py-1 text-[11px] font-medium text-primary active:opacity-60"
+          >
+            {editingWeek ? (
+              "Done"
+            ) : (
+              <>
+                <IconPencil size={11} />
+                Edit
+              </>
+            )}
+          </button>
+        }
+      >
         <div ref={weekRef} className={card}>
           {editingWeek ? (
             <WeekHourGrid schedule={schedule} onSet={setHour} />
@@ -519,34 +530,15 @@ export default function TrainingSettings({
                   );
                 })}
               </div>
-              {freeDays.length === 0 ? (
-                <p className="mt-3 text-[12px] text-muted">Not set</p>
-              ) : (
-                <ul className="mt-3 flex flex-col gap-1">
-                  {freeDays.map((d) => (
-                    <li key={d.key} className="flex gap-3 text-[12.5px] leading-snug">
-                      <span className="w-9 flex-shrink-0 font-semibold text-text">{d.label.slice(0, 3)}</span>
-                      <span className="min-w-0 text-text-2">
-                        {daySlots(schedule[d.key]).map(slotLabel).join(", ")}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              )}
+              <p className="mt-3 text-[12px] text-muted">
+                {freeDays.length === 0
+                  ? "Not set"
+                  : `${freeDays.map((d) => d.label.slice(0, 3)).join(", ")} · ${freeHours} ${
+                      freeHours === 1 ? "hour" : "hours"
+                    } a week`}
+              </p>
             </button>
           )}
-          <button
-            type="button"
-            onClick={() => setEditingWeek((e) => !e)}
-            aria-expanded={editingWeek}
-            className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl border border-primary-line bg-primary-tint py-2.5 text-[13px] font-semibold text-primary active:opacity-70"
-          >
-            {editingWeek ? "Done" : freeDays.length === 0 ? "Set your hours" : "Edit hours"}
-            <IconChevronDown
-              size={15}
-              className={`transition-transform duration-200 motion-reduce:transition-none ${editingWeek ? "rotate-180" : ""}`}
-            />
-          </button>
         </div>
       </Group>
     </div>
