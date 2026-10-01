@@ -107,6 +107,45 @@ Invites + Squad), `components/varsity/coach/settings/TrainingSettingsScreen.tsx`
       the name — as a pill it left a 375px phone ~70px for the name)
 - [ ] **Slice 3 — Training settings look.** Grouped cards, Add rows, switches, the
       save line in the title bar, the grey swatch fixed.
+      **STARTED, NOT COMMITTED — stopped here on 2026-10-01 (the owner switched
+      accounts).** The half-done work is saved in `SETTINGS-ROUND3-slice3-wip.patch`
+      (repo root); the two files themselves are back to their last working state.
+      To pick it up: `git apply SETTINGS-ROUND3-slice3-wip.patch`. What the patch
+      already does:
+        - `app/varsity/coach/settings/training/page.tsx`: draws the title bar only
+          while loading; the screen draws its own (so the save line can sit in it).
+        - `TrainingSettingsScreen.tsx`: new imports (Group, Row, RowFrame,
+          SettingsBody, SettingsHeader, the onboarding `Toggle` as `Switch`);
+          the old `Section`, `ListRow` and tick-box `Toggle` are gone; new `AddRow`
+          (the "+ Add a type" row in the school colour, last row of a card),
+          `SwitchCard` (label + the app's switch, for "Asks for an intensity" and
+          "Has a cox"), `GREY = "var(--faint)"` + `sameSwatch()` so a colour saved
+          as var(--muted) still shows as the grey swatch; `saveState` + `header`
+          computed before the loading return, and the header added to the loading
+          and load-failed returns.
+      STILL TO DO in that file:
+        1. The load-failed return: the patch opens a `<>` fragment and adds
+           `{header}` — close it (`</>`) after the closing `</div>`.
+        2. The main return: `<>{header}<SettingsBody>` with one `Group` per list —
+           "Session types" (Row: icon `<Dot/>`, label, onClick → setEditing) +
+           `<AddRow label="Add a type">`; "Intensity zones" + "Add a zone";
+           "Boats" (icon = the symbol in bold, label = the name) + "Add a boat";
+           "Workout library" (label `Water · UT2`); "Session times" (RowFrame rows:
+           AM / PM on the left, the typed time box on the right, text-base, ~w-28,
+           right-aligned).
+        3. Delete the floating "Saved for the squad." card at the bottom; keep a
+           small card with Retry ONLY when `error` is set (the owner keeps errors).
+        4. In `TypeSheet` / `BoatSheet`: `<Toggle label=… />` → `<SwitchCard … />`.
+        5. `lib/varsity/trainingConfig.ts` `paletteColors`: `"var(--muted)"` →
+           `"var(--faint)"` (the 4th swatch).
+        6. eslint + tsc, check in the browser (owner signed in on localhost:3000),
+           commit, push, tick this box, send a screenshot.
+- [ ] **Separate, not part of round 3 — flag to the owner:** `var(--muted)` is
+      black since 2026-09-30, and it is still used as a DOT colour in a few places
+      (calendar "Other" / "off" logs in lib/varsity/athleteProfile.ts and
+      coachPlan.ts, CalendarScreen's neutral block, fallbacks in TeamWorkouts,
+      LogRow, findZone). Those dots were grey and now draw black. Same fix
+      (`var(--faint)`), but it touches the athletes' screens, so ask first.
 - [ ] **Slice 4 — reorder zones and boats** by press-and-drag.
 - [ ] **Owner:** run `db/varsity_push_kinds.sql` (command in 1.a1).
 - [ ] **Owner to pick:** a1, a6, a10, a11, a12, the second green (a3), anything from
