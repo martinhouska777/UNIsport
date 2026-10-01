@@ -127,7 +127,7 @@ export default function InlineEdit({
   return (
     <span className={`inline-flex gap-1 ${multiline ? "items-start" : "items-center"}`}>
       <span
-        className={`${multiline ? "" : "border-b border-dashed border-muted"} ${
+        className={`${multiline ? "" : "border-b border-dashed border-faint"} ${
           value ? "" : "text-muted"
         } ${textClassName}`}
       >
@@ -138,7 +138,7 @@ export default function InlineEdit({
         type="button"
         onClick={start}
         aria-label={`Edit ${ariaLabel}`}
-        className="tap44 shrink-0 rounded-full p-1 text-muted transition-colors hover:bg-muted/20"
+        className="tap44 shrink-0 rounded-full p-1 text-muted transition-colors hover:bg-faint/20"
       >
         <IconPencil size={multiline ? 14 : 12} />
       </button>

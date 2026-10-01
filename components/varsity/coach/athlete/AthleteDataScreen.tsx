@@ -57,7 +57,7 @@ const toneDot: Record<StatusTone, string> = {
   success: "bg-success",
   warn: "bg-warn",
   danger: "bg-danger",
-  muted: "bg-muted",
+  muted: "bg-faint",
 };
 const toneOf = (title: string): StatusTone =>
   statusOptions.find((s) => s.title === title)?.tone ?? "muted";

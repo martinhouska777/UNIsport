@@ -382,7 +382,7 @@ function PracticeBody({ practice }: { practice: Practice & { plan: PlanCell } })
         </span>
       ) : (
         <span className="mt-auto flex items-center gap-1.5 self-start rounded-[3px] border border-border bg-surface-2 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-text/75">
-          <span className="h-2 w-2 rounded-full bg-muted" />
+          <span className="h-2 w-2 rounded-full bg-faint" />
           {s.label}
         </span>
       )}
@@ -2073,7 +2073,7 @@ function Builder({
                           {boat.hasCox && (
                             <>
                               <div className="px-1.5 pb-[3px] pt-1">
-                                <div className="h-[1.5px] rounded-[1px] bg-muted" />
+                                <div className="h-[1.5px] rounded-[1px] bg-faint" />
                               </div>
                               {renderSeat({ boatId: boat.id, kind: "cox" }, COX_TAG, boat.coxId, true)}
                             </>

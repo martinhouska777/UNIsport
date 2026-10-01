@@ -230,7 +230,7 @@ export default function ResultDetail({
                          message; picking the fastest rep out in green made the
                          eye read the colour first and then need a caption to
                          say what the colour meant. */
-                      className="h-full rounded-full bg-muted"
+                      className="h-full rounded-full bg-faint"
                       style={{ width: `${Math.round(frac * 100)}%` }}
                     />
                   </div>
@@ -311,7 +311,7 @@ export default function ResultDetail({
                     <div
                       /* One colour here too — "Best" is already said in
                          words on the row above. */
-                      className="h-full rounded-full bg-muted"
+                      className="h-full rounded-full bg-faint"
                       style={{ width: `${Math.round(e.frac * 100)}%` }}
                     />
                   </div>

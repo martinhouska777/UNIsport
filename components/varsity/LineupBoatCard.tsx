@@ -238,7 +238,7 @@ export function LineupSeats({ l }: { l: Lineup }) {
           {/* The stroke divider — one rule, no words. Everything below it is
               the stern of the boat, which is where the cox sits. */}
           <div className="px-1.5 pb-[3px] pt-1">
-            <div className="h-[1.5px] rounded-[1px] bg-muted" />
+            <div className="h-[1.5px] rounded-[1px] bg-faint" />
           </div>
           <CoxRow cox={l.cox} />
         </>

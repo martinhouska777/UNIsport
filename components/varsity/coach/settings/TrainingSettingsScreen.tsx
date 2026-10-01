@@ -91,16 +91,6 @@ function AddRow({ label, onClick }: { label: string; onClick: () => void }) {
   );
 }
 
-/*
-  The grey swatch. It was var(--muted), which turned black when the app's grey
-  words did (2026-09-30: muted now equals the text colour), so the picker
-  offered a black dot and no grey at all. A colour saved before then still
-  reads as this swatch.
-*/
-const GREY = "var(--faint)";
-const sameSwatch = (value: string, swatch: string) =>
-  value === swatch || (swatch === GREY && value === "var(--muted)");
-
 function ColorPicker({ value, onChange }: { value: string; onChange: (c: string) => void }) {
   return (
     <div className="grid grid-cols-6 gap-2">
@@ -111,7 +101,7 @@ function ColorPicker({ value, onChange }: { value: string; onChange: (c: string)
           aria-label={`Colour ${c}`}
           onClick={() => onChange(c)}
           className={`flex h-10 items-center justify-center rounded-xl border ${
-            sameSwatch(value, c) ? "border-primary" : "border-border"
+            value === c ? "border-primary" : "border-border"
           }`}
         >
           <span className="h-5 w-5 rounded-full" style={{ background: c }} />

@@ -130,7 +130,7 @@ const swimming: TrainingConfig = {
     { key: "dryland", label: "Dryland", color: "var(--accent)", hasZones: false, canBoard: false, needsLineup: false },
     { key: "lift", label: "Lift", color: "#c084fc", hasZones: false, canBoard: false, needsLineup: false },
     { key: "off", label: "Off", color: "#166534", hasZones: false, canBoard: false, needsLineup: false },
-    { key: "recovery", label: "Recovery", color: "var(--muted)", hasZones: false, canBoard: false, needsLineup: false },
+    { key: "recovery", label: "Recovery", color: "var(--faint)", hasZones: false, canBoard: false, needsLineup: false },
   ],
   zones: [
     { key: "aerobic", label: "Aerobic", color: "var(--success)" },
@@ -155,7 +155,7 @@ const running: TrainingConfig = {
     { key: "track", label: "Track", color: "#f59e0b", hasZones: true, canBoard: true, needsLineup: false },
     { key: "lift", label: "Lift", color: "#c084fc", hasZones: false, canBoard: false, needsLineup: false },
     { key: "off", label: "Off", color: "#166534", hasZones: false, canBoard: false, needsLineup: false },
-    { key: "cross", label: "Cross", color: "var(--muted)", hasZones: false, canBoard: false, needsLineup: false },
+    { key: "cross", label: "Cross", color: "var(--faint)", hasZones: false, canBoard: false, needsLineup: false },
   ],
   zones: [
     { key: "easy", label: "Easy", color: "var(--success)" },
@@ -187,7 +187,7 @@ const teamSport: TrainingConfig = {
     { key: "lift", label: "Lift", color: "#c084fc", hasZones: false, canBoard: true, needsLineup: false },
     { key: "film", label: "Film", color: "var(--accent)", hasZones: false, canBoard: false, needsLineup: false },
     { key: "off", label: "Off", color: "#166534", hasZones: false, canBoard: false, needsLineup: false },
-    { key: "recovery", label: "Recovery", color: "var(--muted)", hasZones: false, canBoard: false, needsLineup: false },
+    { key: "recovery", label: "Recovery", color: "var(--faint)", hasZones: false, canBoard: false, needsLineup: false },
   ],
   zones: [
     { key: "skills", label: "Skills", color: "var(--success)" },
@@ -270,7 +270,7 @@ export function findType(cfg: TrainingConfig, key: string | undefined): SessionT
   return {
     key: key ?? "",
     label: key ?? "—",
-    color: "var(--muted)",
+    color: "var(--faint)",
     hasZones: false,
     canBoard: false,
     needsLineup: false,
@@ -279,7 +279,7 @@ export function findType(cfg: TrainingConfig, key: string | undefined): SessionT
 
 export function findZone(cfg: TrainingConfig, key: string | undefined): Zone | undefined {
   if (!key) return undefined;
-  return cfg.zones.find((z) => z.key === key) ?? { key, label: key, color: "var(--muted)" };
+  return cfg.zones.find((z) => z.key === key) ?? { key, label: key, color: "var(--faint)" };
 }
 
 export function workoutsFor(cfg: TrainingConfig, typeKey?: string, zoneKey?: string): string[] {

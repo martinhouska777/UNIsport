@@ -113,15 +113,22 @@ Invites + Squad), `components/varsity/coach/settings/TrainingSettingsScreen.tsx`
       while the page scrolls); the floating "Saved for the squad." card is gone —
       a card with Retry appears only when a save fails; "Asks for an intensity"
       and "Has a cox" are the app's switch instead of a tick box; the grey swatch
-      is a real grey (var(--faint)) and a colour saved as the old grey still
-      highlights it. Checked at phone and laptop width on a throwaway page
-      (deleted) with no login, so it saved to the browser only.
-- [ ] **Separate, not part of round 3 — flag to the owner:** `var(--muted)` is
-      black since 2026-09-30, and it is still used as a DOT colour in a few places
-      (calendar "Other" / "off" logs in lib/varsity/athleteProfile.ts and
-      coachPlan.ts, CalendarScreen's neutral block, fallbacks in TeamWorkouts,
-      LogRow, findZone). Those dots were grey and now draw black. Same fix
-      (`var(--faint)`), but it touches the athletes' screens, so ask first.
+      is a real grey (var(--faint)). Checked at phone and laptop width on a
+      throwaway page (deleted) with no login, so it saved to the browser only.
+- [x] **Separate, not part of round 3 — the grey marks that turned black.**
+      (owner, after seeing a before/after of a teammate's calendar: "fix it if
+      its a problem"; done 2026-10-01, see git log "grey marks") Every MARK that
+      used var(--muted) / bg-muted / bg-text-3 is var(--faint) now: the
+      calendar's neutral blocks (training outside the plan — on a teammate's
+      calendar that was nearly every block) and its Off / Other dots, Other in
+      the Log tab and the statistics, the result and telemetry bars, the status
+      dots (lineup "Not started" / "Rest day", "No lineup yet", the profile
+      tone dots), the lineup card's cox divider line, the race board's dashed
+      empty boxes, the profile's dashed edit underline, the gym crowd chart's
+      current-hour bar, and the fallbacks. Words stay black (the owner's
+      2026-09-30 call), chart labels included. A colour a coach saved as the old
+      grey is read as the new grey (`regrey` in lib/varsity/configStore.ts), so
+      the colour picker no longer needs its own check for it.
 - [ ] **Slice 4 — reorder zones and boats** by press-and-drag.
 - [ ] **Owner:** run `db/varsity_push_kinds.sql` (command in 1.a1).
 - [ ] **Owner to pick:** a1, a6, a10, a11, a12, the second green (a3), anything from

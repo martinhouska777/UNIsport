@@ -102,7 +102,7 @@ const toneDot: Record<StatusTone, string> = {
   success: "bg-success",
   warn: "bg-warn",
   danger: "bg-danger",
-  muted: "bg-muted",
+  muted: "bg-faint",
 };
 const toneRing: Record<StatusTone, string> = {
   success: "border-success-line bg-success-tint text-success",

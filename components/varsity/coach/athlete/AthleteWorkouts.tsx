@@ -122,7 +122,7 @@ export default function AthleteWorkouts({
      colour here, on the rower's calendar and on the Workouts tab. */
   const colorOf = (l: LogEntry) => {
     const planned = l.dayKey ? plan[l.dayKey] : undefined;
-    return planned ? kindColor[kindOf(planned)] : (logCategoryColor[l.category ?? "other"] ?? "var(--muted)");
+    return planned ? kindColor[kindOf(planned)] : (logCategoryColor[l.category ?? "other"] ?? "var(--faint)");
   };
 
   if (!loaded) {

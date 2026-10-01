@@ -186,7 +186,7 @@ export function BusyBars({ kind, now }: { kind: GymKind; now: Clock | null }) {
         <div key={h.hour} className="flex flex-1 flex-col items-center gap-1">
           <span className="flex h-8 w-full items-end">
             <span
-              className={`w-full rounded-sm ${i === 0 ? "bg-text-3" : "bg-border"}`}
+              className={`w-full rounded-sm ${i === 0 ? "bg-faint" : "bg-border"}`}
               style={{ height: `${Math.round(h.height * 100)}%` }}
             />
           </span>

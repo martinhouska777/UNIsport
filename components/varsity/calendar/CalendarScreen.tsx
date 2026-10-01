@@ -112,7 +112,7 @@ const DAY_NAMES = ["M", "T", "W", "T", "F", "S", "S"];
 const logColor = (l: LogEntry, planned: Session | undefined) =>
   planned
     ? kindColor[kindOf(planned)]
-    : (logCategoryColor[l.category ?? "other"] ?? "var(--muted)");
+    : (logCategoryColor[l.category ?? "other"] ?? "var(--faint)");
 
 /*
   THE BLOCK IN A GRID CELL — the same colour as above, as a 28% tint.
@@ -123,9 +123,11 @@ const logColor = (l: LogEntry, planned: Session | undefined) =>
 
   Outside the plan there is no intensity to read: weights, flex and off still
   land on the right colour from their category alone, and anything else stays
-  neutral rather than being coloured with a guess.
+  neutral rather than being coloured with a guess. Neutral is the grey
+  (var(--faint)); it was var(--muted), which became black with the app's grey
+  words on 2026-09-30 and painted every one of these blocks solid black.
 */
-const NEUTRAL_BLOCK = { background: "var(--muted)", color: "var(--background)" };
+const NEUTRAL_BLOCK = { background: "var(--faint)", color: "var(--background)" };
 
 function blockStyle(l: LogEntry, planned: Session | undefined) {
   if (planned) return kindBlock(kindOf(planned));

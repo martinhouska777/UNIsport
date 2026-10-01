@@ -53,7 +53,7 @@ function LineupPill({ slot }: { slot: TodaySlot }) {
     if (!slot.needsLineup) return null;
     return (
       <span className="flex items-center gap-1.5 rounded-md border border-border px-1.5 py-0.5 text-[11px] font-medium text-muted">
-        <span className="h-1.5 w-1.5 rounded-full bg-muted/50" />
+        <span className="h-1.5 w-1.5 rounded-full bg-faint/50" />
         No lineup yet
       </span>
     );

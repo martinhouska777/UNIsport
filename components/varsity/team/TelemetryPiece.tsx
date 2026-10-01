@@ -172,7 +172,7 @@ export default function TelemetryPiece({
                   </div>
                   <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-surface-2">
                     <div
-                      className={`h-full rounded-full ${top ? "bg-primary" : "bg-muted"}`}
+                      className={`h-full rounded-full ${top ? "bg-primary" : "bg-faint"}`}
                       style={{ width: `${Math.round(frac * 100)}%` }}
                     />
                   </div>

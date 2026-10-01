@@ -542,7 +542,7 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
               >
                 <span
                   className="h-2.5 w-2.5 flex-shrink-0 rounded-full"
-                  style={{ background: markColor(intensityOf(w.session)?.color) ?? "var(--muted)" }}
+                  style={{ background: markColor(intensityOf(w.session)?.color) ?? "var(--faint)" }}
                 />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
@@ -648,7 +648,7 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
                   onClick={() => startRace(c.dayKey)}
                   className="flex w-full items-center gap-3 rounded-2xl border border-border bg-surface px-3.5 py-3 text-left active:bg-surface-2"
                 >
-                  <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ background: markColor(intensityOf(c.session)?.color) ?? "var(--muted)" }} />
+                  <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ background: markColor(intensityOf(c.session)?.color) ?? "var(--faint)" }} />
                   <div className="min-w-0 flex-1">
                     <span className="block truncate text-[13px] font-semibold text-text">
                       {c.session.description.trim() || sessionLabel(c.session)}

@@ -16,6 +16,15 @@ import { defaultConfig, type TrainingConfig } from "./trainingConfig";
 const LOCAL_KEY = "varsityTrainingConfig";
 
 /*
+  THE OLD GREY. Until 2026-10-01 the colour picker's grey swatch saved
+  var(--muted) — the colour of grey WORDS, which became black on 2026-09-30 —
+  so a type or zone a coach made grey would paint black on every screen. It
+  reads as the grey it was meant to be, and the next save stores that.
+*/
+const regrey = <T extends { color: string }>(items: T[]): T[] =>
+  items.map((it) => (it.color === "var(--muted)" ? { ...it, color: "var(--faint)" } : it));
+
+/*
   A stored config was written by an older build, or hand-edited, or half-empty.
   Fill in anything missing rather than trusting the JSON — a config with no
   `types` would leave the coach staring at an editor with no buttons.
@@ -26,8 +35,8 @@ function normalise(raw: unknown): TrainingConfig {
   const v = raw as Partial<TrainingConfig>;
   return {
     preset: typeof v.preset === "string" ? v.preset : base.preset,
-    types: Array.isArray(v.types) && v.types.length ? v.types : base.types,
-    zones: Array.isArray(v.zones) ? v.zones : base.zones,
+    types: regrey(Array.isArray(v.types) && v.types.length ? v.types : base.types),
+    zones: regrey(Array.isArray(v.zones) ? v.zones : base.zones),
     library: v.library && typeof v.library === "object" ? v.library : {},
     // Written before boats were a setting: the four the app shipped with.
     boats: Array.isArray(v.boats) ? v.boats : base.boats,

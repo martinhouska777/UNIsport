@@ -40,7 +40,7 @@ export default function LogRow({
       onClick={onOpen}
       className="flex w-full items-center gap-3 rounded-2xl border border-border bg-surface px-3.5 py-3 text-left active:bg-surface-2"
     >
-      <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ background: markColor(color) ?? "var(--muted)" }} />
+      <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ background: markColor(color) ?? "var(--faint)" }} />
       <div className="min-w-0 flex-1">
         <div className="truncate text-[13px] font-semibold text-text">{log.title}</div>
         <div className="mt-1 truncate text-[11px] tabular-nums text-muted">

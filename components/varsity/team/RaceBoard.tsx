@@ -661,7 +661,7 @@ function TimeTile({
     : wrong
       ? "border border-dashed border-danger text-danger"
       : value == null
-        ? "border border-dashed border-muted/50 text-muted"
+        ? "border border-dashed border-faint/50 text-muted"
         : "bg-surface-2 text-text";
   const cls = `mt-1 flex h-10 w-full items-center justify-center rounded-xl px-1 font-mono text-[14px] font-semibold tabular-nums ${look} ${
     on ? "ring-2 ring-text ring-offset-2 ring-offset-surface" : ""
@@ -829,7 +829,7 @@ function PieceEditor({
                         setNoted((s) => new Set(s).add(c.boatId));
                         setAsked(c.boatId);
                       }}
-                      className="tap44 mt-2.5 inline-flex h-7 items-center gap-1 rounded-lg border border-dashed border-muted/50 px-2.5 text-[12px] font-medium text-muted"
+                      className="tap44 mt-2.5 inline-flex h-7 items-center gap-1 rounded-lg border border-dashed border-faint/50 px-2.5 text-[12px] font-medium text-muted"
                     >
                       <IconPlus size={12} /> Note
                     </button>

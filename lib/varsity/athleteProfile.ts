@@ -92,8 +92,10 @@ export const logCategoryColor: Record<string, string> = {
   run: "#c084fc", // violet — running
   bike: "#f59e0b", // amber — bike
   flex: "var(--accent)", // gold — mobility
-  off: "var(--muted)",
-  other: "var(--muted)",
+  // grey — var(--faint), not var(--muted): muted is the colour of WORDS, and
+  // it became black on 2026-09-30, which turned these dots black too
+  off: "var(--faint)",
+  other: "var(--faint)",
 };
 // Human labels for the calendar legend (same keys as logCategoryColor).
 export const logCategoryLabel: Record<string, string> = {

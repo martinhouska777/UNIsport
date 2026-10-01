@@ -468,7 +468,7 @@ function LogEditor({
             <>
               <div className="rounded-2xl border border-border bg-surface px-3.5 py-3">
                 <div className="flex items-center gap-2">
-                  <Dot color={catMeta[state.session.category]?.color ?? "var(--muted)"} />
+                  <Dot color={catMeta[state.session.category]?.color ?? "var(--faint)"} />
                   <span className="text-[13px] font-semibold text-text">{sessionLabel(state.session)}</span>
                   <span className="ml-auto flex items-center gap-1 text-[11px] text-muted">
                     <IconClock size={12} /> {state.period} · {state.session.time}

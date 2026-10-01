@@ -64,7 +64,7 @@ export const logCategoryMeta: Record<LogCategory, { label: string; color: string
   off: { label: "Off", color: categoryMeta.off.color },
   run: { label: "Run", color: "#c084fc" },
   bike: { label: "Bike", color: "#f59e0b" },
-  other: { label: "Other", color: "var(--muted)" },
+  other: { label: "Other", color: "var(--faint)" },
 };
 
 /* ── Intensities (Water + Erg only) ── */
@@ -211,8 +211,8 @@ export function dayKeyLabel(key: string): string {
 // The squad's own colours first (lib/varsity/teamColors.ts), then the shipped ones.
 export function sessionColor(s: Session): string {
   if (s.intensity)
-    return teamZoneColor(s.intensity) ?? intensityMeta[s.intensity as Intensity]?.color ?? "var(--muted)";
-  return teamTypeColor(s.category) ?? categoryMeta[s.category as Category]?.color ?? "var(--muted)";
+    return teamZoneColor(s.intensity) ?? intensityMeta[s.intensity as Intensity]?.color ?? "var(--faint)";
+  return teamTypeColor(s.category) ?? categoryMeta[s.category as Category]?.color ?? "var(--faint)";
 }
 /*
   THE PIECES of a session, as the coach wrote them, up to the first comma:
