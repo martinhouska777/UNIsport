@@ -101,8 +101,10 @@ Invites + Squad), `components/varsity/coach/settings/TrainingSettingsScreen.tsx`
 
 - [x] **Slice 1 — the menu.** (done 2026-10-01, see git log "settings round 3, slice 1") Title bar, your card, grouped rows (Administration ·
       Training · Design · Help). The light/dark switch becomes a Design row.
-- [ ] **Slice 2 — Waiting / Invite links / Squad.** One card with hairlines, the
-      sentences cut, old links folded, the squad arrow at the end.
+- [x] **Slice 2 — Waiting / Invite links / Squad.** One card with hairlines, the
+      sentences cut, old links folded, the squad arrow at the end. (done 2026-10-01;
+      also: a photo circle per person, and the role moved into the grey line under
+      the name — as a pill it left a 375px phone ~70px for the name)
 - [ ] **Slice 3 — Training settings look.** Grouped cards, Add rows, switches, the
       save line in the title bar, the grey swatch fixed.
 - [ ] **Slice 4 — reorder zones and boats** by press-and-drag.

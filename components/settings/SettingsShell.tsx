@@ -149,12 +149,24 @@ export function Group({ title, children }: { title?: string; children: React.Rea
 }
 
 /* The inside of every row: the icon in its own column, then everything else
-   on the line that carries the divider. */
-function RowFrame({ icon, children }: { icon?: React.ReactNode; children: React.ReactNode }) {
+   on the line that carries the divider. Exported for rows that are not one
+   button — a person with their own buttons on the right, say. */
+export function RowFrame({
+  icon,
+  wide,
+  children,
+}: {
+  icon?: React.ReactNode;
+  /** a 32px photo instead of a line icon: a wider column, so it doesn't touch the name */
+  wide?: boolean;
+  children: React.ReactNode;
+}) {
   return (
     <>
       {icon && (
-        <span className="flex w-12 flex-shrink-0 items-center pl-4 text-text">{icon}</span>
+        <span className={`flex flex-shrink-0 items-center pl-4 text-text ${wide ? "w-[60px]" : "w-12"}`}>
+          {icon}
+        </span>
       )}
       <span
         className={`row-line flex min-h-[52px] min-w-0 flex-1 items-center gap-3 border-border py-2.5 pr-4 ${

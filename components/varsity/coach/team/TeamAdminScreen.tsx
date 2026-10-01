@@ -69,22 +69,11 @@ import { coachTour } from "@/lib/varsity/coachTour";
 import { fetchAthleteProfile, type AthleteProfileBundle } from "@/lib/varsity/athleteProfile";
 import { useAppState } from "@/components/AppState";
 import { useThemeMode } from "@/components/ThemeMode";
-import { Group, ProfileCard, Row, SettingsBody } from "@/components/settings/SettingsShell";
+import { DropdownRow, Group, ProfileCard, Row, RowFrame, SettingsBody } from "@/components/settings/SettingsShell";
+import InitialsAvatar from "@/components/ui/InitialsAvatar";
 import SettingsHeader from "@/components/varsity/coach/settings/SettingsHeader";
 
 export type AdminPage = "menu" | "waiting" | "invites" | "squad";
-
-/* A titled block, matching the section labels used across Varsity Mode. The
-   pages behind the menu have their name in the header, so they pass none. */
-function Section({ title, hint, children }: { title?: string; hint?: string; children: React.ReactNode }) {
-  return (
-    <section className="border-b border-border px-3.5 py-4">
-      {title && <h2 className="mb-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">{title}</h2>}
-      {hint && <p className="mb-2.5 text-[11px] leading-relaxed text-muted">{hint}</p>}
-      {children}
-    </section>
-  );
-}
 
 const pageTitle: Record<Exclude<AdminPage, "menu">, string> = {
   waiting: "Waiting to join",
@@ -345,239 +334,252 @@ export default function TeamAdminScreen({
     );
   }
 
+  // Live links on top; the dead ones (expired, cancelled, full) fold away under
+  // "Old links" — kept, because how many people came through a link is still
+  // worth seeing, but out of the way of the links that work.
+  const live = invites.filter((i) => inviteState(i) === "live");
+  const old = invites.filter((i) => inviteState(i) !== "live");
+
+  /* One link: its name and state, then who it is locked to, how many came
+     through it, and — only while it works — how long it has left. */
+  const linkRow = (i: Invite) => {
+    const state = inviteState(i);
+    const s = stateLabel[state];
+    return (
+      <div key={i.id} className="flex w-full items-stretch">
+        <RowFrame>
+          <span className="min-w-0 flex-1">
+            <span className="flex items-center gap-2">
+              <span className="truncate text-[15px] text-text">{i.label || "Invite"}</span>
+              <span className={`text-[12px] font-semibold ${s.tone}`}>{s.text}</span>
+            </span>
+            <span className="mt-0.5 block truncate text-[13px] text-muted">
+              {i.emailLock ? `${i.emailLock} · ` : ""}
+              {i.uses}/{i.maxUses} joined
+              {state === "live" ? ` · ${expiryLabel(i.expiresAt)}` : ""}
+            </span>
+          </span>
+          {state === "live" && (
+            <>
+              <button
+                type="button"
+                onClick={() => copy(inviteUrl(i.code))}
+                aria-label="Copy this link"
+                className="tap44 press-icon flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border border-border bg-surface-2 text-muted"
+              >
+                <IconCopy size={13} />
+              </button>
+              <button
+                type="button"
+                onClick={() => kill(i.id)}
+                disabled={busy === i.id}
+                aria-label="Cancel this link"
+                className="tap44 press-icon flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border border-border bg-surface-2 text-danger disabled:opacity-50"
+              >
+                <IconTrash size={13} />
+              </button>
+            </>
+          )}
+        </RowFrame>
+      </div>
+    );
+  };
+
   return (
-    <div className="w-full pb-10">
+    <div className="w-full">
       {header}
-      <div className="mx-auto w-full max-w-screen-sm">
-      {error && (
-        <p className="mx-3.5 mt-3 rounded-xl border border-danger-line bg-danger-tint px-3.5 py-2.5 text-[12px] text-danger">
-          {error}
-        </p>
-      )}
-
-      {/* ── 1. The waiting room ── */}
-      {page === "waiting" && (
-      <Section>
-        {pending.length === 0 ? (
-          <p className="rounded-xl border border-border bg-surface px-3.5 py-3 text-[12px] text-muted">
-            Nobody waiting. Requests from your invite links land here.
+      <SettingsBody>
+        {error && (
+          <p className="rounded-xl border border-danger-line bg-danger-tint px-3.5 py-2.5 text-[12px] text-danger">
+            {error}
           </p>
-        ) : (
-          <ul className="flex flex-col gap-2">
-            {pending.map((m) => (
-              <li
-                key={m.userId}
-                className="flex items-center gap-3 rounded-xl border border-warn-line bg-surface px-3.5 py-3"
-              >
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm font-medium text-text">{m.name}</div>
-                  <div className="mt-0.5 truncate text-[11px] text-muted">{m.email}</div>
-                  {m.inviteLabel && (
-                    <div className="mt-0.5 text-[11px] text-muted">via {m.inviteLabel}</div>
-                  )}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => decide(m.userId, "removed")}
-                  disabled={busy === m.userId}
-                  aria-label={`Reject ${m.name}`}
-                  className="tap44 press-icon flex h-8 w-8 items-center justify-center rounded-full border border-border bg-surface-2 text-muted disabled:opacity-50"
-                >
-                  <IconX size={14} />
-                </button>
-                <Button size="sm" onClick={() => decide(m.userId, "approved")} disabled={busy === m.userId}>
-                  <IconCheck size={13} />
-                  Let in
-                </Button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Section>
-      )}
-
-      {/* ── 2. Invite links ── */}
-      {page === "invites" && (
-      <Section>
-        {/* The link just generated */}
-        {fresh && (
-          <div className="mb-3 rounded-xl border border-accent-line bg-accent/5 px-3.5 py-3">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-accent">
-              Ready to send
-            </div>
-            <div className="mt-1.5 break-all rounded-lg border border-border bg-surface px-2.5 py-2 font-mono text-[11px] text-text">
-              {fresh}
-            </div>
-            <div className="mt-2 flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => copy(fresh)}
-                className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-2 text-[11px] font-semibold text-text"
-              >
-                {copied ? <IconCheck size={13} /> : <IconCopy size={13} />}
-                {copied ? "Copied" : "Copy"}
-              </button>
-              <button
-                type="button"
-                onClick={() => share(fresh)}
-                className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-primary-live px-3 py-2 text-[11px] font-semibold text-primary-contrast"
-              >
-                <IconSend size={13} />
-                Send
-              </button>
-            </div>
-          </div>
         )}
 
-        {/* The two shapes of link */}
-        <div className="flex flex-col gap-2">
-          {invitePresets.map((p) => (
-            <div key={p.key} className="rounded-xl border border-border bg-surface px-3.5 py-3">
-              <div className="text-sm font-medium text-text">{p.title}</div>
-              <p className="mt-1 text-[11px] leading-relaxed text-muted">{p.blurb}</p>
-
-              {p.needsEmail && emailFor === p.key ? (
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    if (emailValue.trim()) generate(p.key, emailValue.trim().toLowerCase());
-                  }}
-                  className="mt-2.5 flex items-center gap-2"
-                >
-                  <input
-                    type="email"
-                    value={emailValue}
-                    onChange={(e) => setEmailValue(e.target.value)}
-                    placeholder="their university email"
-                    autoFocus
-                    aria-label="University email to lock this invite to"
-                    /* text-base so phones don't zoom the page on focus */
-                    className="min-w-0 flex-1 rounded-lg border border-border bg-surface-2 px-3 py-2 text-base text-text placeholder:text-faint focus:border-accent focus:outline-none"
-                  />
-                  <Button type="submit" size="md" disabled={busy === "new" || !emailValue.trim()}>
-                    Make
-                  </Button>
-                </form>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => (p.needsEmail ? setEmailFor(p.key) : generate(p.key))}
-                  disabled={busy === "new"}
-                  className="mt-2.5 w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-[11px] font-semibold text-text disabled:opacity-50"
-                >
-                  {busy === "new" ? "Making…" : "Generate link"}
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
-
-        {/* Every link made so far, and what it did */}
-        {invites.length > 0 && (
-          <ul className="mt-3 flex flex-col gap-2">
-            {invites.map((i) => {
-              const state = inviteState(i);
-              const s = stateLabel[state];
-              return (
-                <li
-                  key={i.id}
-                  className="flex items-center gap-3 rounded-xl border border-border bg-surface px-3.5 py-2.5"
-                >
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="truncate text-[12px] font-medium text-text">
-                        {i.label || "Invite"}
+        {/* ── 1. The waiting room ── */}
+        {page === "waiting" && (
+          <Group>
+            {pending.length === 0 ? (
+              <div className="flex w-full items-stretch">
+                <RowFrame>
+                  <span className="text-[15px] text-muted">Nobody waiting</span>
+                </RowFrame>
+              </div>
+            ) : (
+              pending.map((m) => (
+                <div key={m.userId} className="flex w-full items-stretch">
+                  <RowFrame wide icon={<InitialsAvatar name={m.name} size={32} />}>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[15px] text-text">{m.name}</span>
+                      <span className="mt-0.5 block truncate text-[13px] text-muted">
+                        {m.email}
+                        {m.inviteLabel ? ` · via ${m.inviteLabel}` : ""}
                       </span>
-                      <span className={`text-[11px] font-semibold ${s.tone}`}>{s.text}</span>
-                    </div>
-                    <div className="mt-0.5 truncate text-[11px] text-muted">
-                      {i.emailLock ? `${i.emailLock} · ` : ""}
-                      {i.uses}/{i.maxUses} joined · {expiryLabel(i.expiresAt)}
-                    </div>
-                  </div>
-                  {state === "live" && (
-                    <>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => decide(m.userId, "removed")}
+                      disabled={busy === m.userId}
+                      aria-label={`Reject ${m.name}`}
+                      className="tap44 press-icon flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border border-border bg-surface-2 text-muted disabled:opacity-50"
+                    >
+                      <IconX size={14} />
+                    </button>
+                    <Button size="sm" onClick={() => decide(m.userId, "approved")} disabled={busy === m.userId}>
+                      <IconCheck size={13} />
+                      Let in
+                    </Button>
+                  </RowFrame>
+                </div>
+              ))
+            )}
+          </Group>
+        )}
+
+        {/* ── 2. Invite links ── */}
+        {page === "invites" && (
+          <>
+            {/* The link just made — shown big, with copy + send, because that
+                is the whole point of the screen. */}
+            {fresh && (
+              <div className="rounded-2xl border border-accent-line bg-surface p-4 shadow-card">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-accent">
+                  Ready to send
+                </div>
+                <div className="mt-1.5 break-all rounded-lg border border-border bg-surface-2 px-2.5 py-2 font-mono text-[12px] text-text">
+                  {fresh}
+                </div>
+                <div className="mt-2.5 flex items-center gap-2">
+                  <Button variant="secondary" size="md" className="flex-1" onClick={() => copy(fresh)}>
+                    {copied ? <IconCheck size={14} /> : <IconCopy size={14} />}
+                    {copied ? "Copied" : "Copy"}
+                  </Button>
+                  <Button size="md" className="flex-1" onClick={() => share(fresh)}>
+                    <IconSend size={14} />
+                    Send
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* The two shapes of link. No sentence under either (owner:
+                settings carry no small text) — the title says which is which. */}
+            <Group>
+              {invitePresets.map((p) => (
+                <div key={p.key} className="flex w-full items-stretch">
+                  <RowFrame>
+                    {p.needsEmail && emailFor === p.key ? (
+                      <form
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          if (emailValue.trim()) generate(p.key, emailValue.trim().toLowerCase());
+                        }}
+                        className="flex min-w-0 flex-1 flex-wrap items-center gap-2"
+                      >
+                        <span className="w-full text-[15px] text-text">{p.title}</span>
+                        <input
+                          type="email"
+                          value={emailValue}
+                          onChange={(e) => setEmailValue(e.target.value)}
+                          placeholder="their university email"
+                          autoFocus
+                          aria-label="University email to lock this invite to"
+                          /* text-base so phones don't zoom the page on focus */
+                          className="min-w-0 flex-1 basis-0 rounded-lg border border-border bg-surface-2 px-3 py-2 text-base text-text placeholder:text-faint focus:border-accent focus:outline-none"
+                        />
+                        <Button type="submit" size="sm" disabled={busy === "new" || !emailValue.trim()}>
+                          Make
+                        </Button>
+                      </form>
+                    ) : (
+                      <>
+                        <span className="min-w-0 flex-1 text-[15px] text-text">{p.title}</span>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => (p.needsEmail ? setEmailFor(p.key) : generate(p.key))}
+                          disabled={busy === "new"}
+                        >
+                          {busy === "new" ? "Making…" : "Generate link"}
+                        </Button>
+                      </>
+                    )}
+                  </RowFrame>
+                </div>
+              ))}
+            </Group>
+
+            {/* Every link made so far, and what it did. */}
+            {(live.length > 0 || old.length > 0) && (
+              <Group>
+                {live.map(linkRow)}
+                {old.length > 0 && (
+                  <DropdownRow label="Old links" detail={String(old.length)}>
+                    {old.map(linkRow)}
+                  </DropdownRow>
+                )}
+              </Group>
+            )}
+          </>
+        )}
+
+        {/* ── 3. The squad ── */}
+        {page === "squad" && (
+          <Group>
+            {approved.map((m) => {
+              // A coach can open anyone to see their training; a captain
+              // cannot (the database would refuse), so gets no arrow.
+              const href = can.readTraining(role) ? `/varsity/coach/athlete/${m.userId}` : null;
+              // The role leads the line under the name (a coach or captain in
+              // the school colour) — as a pill beside the name it left a phone
+              // about 70px for the name itself.
+              const who = (
+                <>
+                  <span className="block truncate text-[15px] text-text">{m.name}</span>
+                  <span className="mt-0.5 block truncate text-[13px] text-muted">
+                    <span className={m.role === "athlete" ? "" : "font-semibold text-primary"}>
+                      {roleLabel[m.role]}
+                    </span>
+                    {m.email ? ` · ${m.email}` : ""}
+                  </span>
+                </>
+              );
+              return (
+                <div key={m.userId} className="flex w-full items-stretch">
+                  <RowFrame wide icon={<InitialsAvatar name={m.name} size={32} />}>
+                    {href ? (
+                      <Link href={href} className="min-w-0 flex-1">
+                        {who}
+                      </Link>
+                    ) : (
+                      <span className="min-w-0 flex-1">{who}</span>
+                    )}
+                    {/* Only a coach can hand out roles — a captain can never
+                        create another plan-builder, which is what keeps a
+                        leaked link cheap. */}
+                    {can.changeRoles(role) && m.role !== "coach" && (
                       <button
                         type="button"
-                        onClick={() => copy(inviteUrl(i.code))}
-                        aria-label="Copy this link"
-                        className="tap44 press-icon flex h-7 w-7 items-center justify-center rounded-full border border-border bg-surface-2 text-muted"
+                        onClick={() => promote(m.userId, m.role === "captain" ? "athlete" : "captain")}
+                        disabled={busy === m.userId}
+                        className="flex-shrink-0 rounded-full border border-border bg-surface-2 px-2.5 py-1 text-[11px] font-medium text-text disabled:opacity-50"
                       >
-                        <IconCopy size={12} />
+                        {m.role === "captain" ? "Make athlete" : "Make captain"}
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => kill(i.id)}
-                        disabled={busy === i.id}
-                        aria-label="Cancel this link"
-                        className="tap44 press-icon flex h-7 w-7 items-center justify-center rounded-full border border-border bg-surface-2 text-danger disabled:opacity-50"
-                      >
-                        <IconTrash size={12} />
-                      </button>
-                    </>
-                  )}
-                </li>
+                    )}
+                    {/* The arrow at the END of the row (it floated mid-row,
+                        beside the name); the name opens the same page. */}
+                    {href && (
+                      <Link href={href} tabIndex={-1} aria-hidden className="flex-shrink-0 text-muted">
+                        <IconChevronRight size={16} />
+                      </Link>
+                    )}
+                  </RowFrame>
+                </div>
               );
             })}
-          </ul>
+          </Group>
         )}
-      </Section>
-      )}
-
-      {/* ── 3. The squad ── */}
-      {page === "squad" && (
-      <Section>
-        <ul className="flex flex-col gap-2">
-          {approved.map((m) => (
-            <li
-              key={m.userId}
-              className="flex items-center gap-3 rounded-xl border border-border bg-surface px-3.5 py-2.5"
-            >
-              {can.readTraining(role) ? (
-                <Link
-                  href={`/varsity/coach/athlete/${m.userId}`}
-                  className="flex min-w-0 flex-1 items-center gap-2"
-                >
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[13px] text-text">{m.name}</span>
-                    <span className="mt-0.5 block truncate text-[11px] text-muted">{m.email}</span>
-                  </span>
-                  <IconChevronRight size={14} className="flex-shrink-0 text-muted" />
-                </Link>
-              ) : (
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-[13px] text-text">{m.name}</div>
-                  <div className="mt-0.5 truncate text-[11px] text-muted">{m.email}</div>
-                </div>
-              )}
-              <span
-                className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-                  m.role === "athlete"
-                    ? "bg-surface-2 text-muted"
-                    : "bg-primary-tint text-primary"
-                }`}
-              >
-                {roleLabel[m.role]}
-              </span>
-              {/* Only a coach can hand out roles — a captain can never create
-                  another plan-builder, which is what keeps a leaked link cheap. */}
-              {can.changeRoles(role) && m.role !== "coach" && (
-                <button
-                  type="button"
-                  onClick={() => promote(m.userId, m.role === "captain" ? "athlete" : "captain")}
-                  disabled={busy === m.userId}
-                  className="rounded-full border border-border bg-surface-2 px-2.5 py-1 text-[11px] font-medium text-text disabled:opacity-50"
-                >
-                  {m.role === "captain" ? "Make athlete" : "Make captain"}
-                </button>
-              )}
-            </li>
-          ))}
-        </ul>
-      </Section>
-      )}
-
-      </div>
+      </SettingsBody>
     </div>
   );
 }
