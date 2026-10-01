@@ -10,9 +10,10 @@
   FOUR LISTS, never one score (lib/varsity/ranking.ts): ERG — points by place
   on every ranked erg test; WATER — pieces won on the timing sheets;
   CONSISTENCY — the plan's sessions done, the ones logged on top, and the days
-  out; and SWITCHES — seat racing, who won the switches made between pieces
-  (2026-10-01; it was a screen of its own). Then the window: Month, Semester,
-  or two dates.
+  out; and SEAT RACES — who beat whom in the switches made between pieces
+  (2026-10-01; it was a screen of its own). That one is NOT a ranking: only the
+  people who seat raced, each with who they beat and who beat them, and by how
+  many seconds. Then the window: Month, Semester, or two dates.
 
   A LIST, NOT A LEADERBOARD (owner, 2026-09-27). It was dressed for one round
   like the students' boards — a podium, medals — and the owner took it back
@@ -62,7 +63,7 @@ import { fetchPlan } from "@/lib/varsity/planStore";
 import { publishedSessions } from "@/lib/varsity/athleteHome";
 import { fetchOutDaysBetween } from "@/lib/varsity/squadDaysOut";
 import { classTitle } from "@/lib/varsity/racePieces";
-import { secs } from "@/lib/varsity/raceSwitch";
+import { secs, type Opponent } from "@/lib/varsity/raceSwitch";
 import { dayKeyLabel, sessionLabel } from "@/lib/varsity/coachPlan";
 import { TEAM_CUSTOM_RANGE, customTeamRange, teamRangeByKey, toIso } from "@/lib/varsity/teamStats";
 import {
@@ -74,8 +75,8 @@ import {
   rankingLists,
   rankingRanges,
   rankingSpan,
+  seatRacers,
   sessionRuns,
-  switchRanking,
   waterRanking,
   withoutRest,
   type RankingList,
@@ -152,6 +153,26 @@ function PiecePlace({ place, under }: { place: number | null; under?: string }) 
       </span>
       {under && <span className="mt-0.5 font-mono text-[9px] text-muted">{under}</span>}
     </span>
+  );
+}
+
+/* ONE LINE OF A ROWER'S SEAT RACES: the word, then each person and by how many
+   seconds ("Pierce Lapham 8.8 s"; "3.5 · 1.2 s" when they met more than once).
+   The wins are the ink and the losses the grey, so a quick look reads the wins.
+   It sits under the name, in line with it (the avatar's width and its gap). */
+function Meetings({ word, list, strong = false }: { word: string; list: Opponent[]; strong?: boolean }) {
+  return (
+    <div className="mt-1.5 flex items-baseline gap-2 pl-[34px]">
+      <span className="w-[3.1rem] flex-shrink-0 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">{word}</span>
+      <span className="flex min-w-0 flex-wrap gap-x-3 gap-y-0.5">
+        {list.map((o) => (
+          <span key={o.key} className={`text-[13px] ${strong ? "text-text" : "text-muted"}`}>
+            <span className={strong ? "font-semibold" : ""}>{o.name}</span>{" "}
+            <span className="tabular-nums">{o.by.map(secs).join(" · ")} s</span>
+          </span>
+        ))}
+      </span>
+    </div>
   );
 }
 
@@ -405,8 +426,8 @@ export default function TeamRanking({
 
   /* ── Water ── */
   const water = useMemo(() => waterRanking(races, span, raceBoats), [races, span, raceBoats]);
-  /* ── Switches: seat racing, read out of the same timing sheets ── */
-  const switches = useMemo(() => switchRanking(races, span, raceBoats), [races, span, raceBoats]);
+  /* ── Seat races: read out of the same timing sheets — a record, not a ranking ── */
+  const seatRaced = useMemo(() => seatRacers(races, span, raceBoats), [races, span, raceBoats]);
 
   /* ── Consistency: the squad's logs, the published plan, the days out ── */
   const { membership } = useMembership();
@@ -499,9 +520,6 @@ export default function TeamRanking({
   /* Consistency's plan count rides UNDER its percentage rather than in a
      column of its own: four columns of numbers cut every full name short. */
   const consCols = "1.6rem minmax(0,1fr) 2.9rem 2.7rem 2.2rem";
-  /* Switches: wins first, then the losses and the seconds, which are only
-     numbers to read beside them. */
-  const switchCols = "1.6rem minmax(0,1fr) 2.6rem 2.6rem 3.2rem";
 
   const rangeOptions = [
     ...rankingRanges.map((r) => ({ key: r.key, label: r.label })),
@@ -617,32 +635,29 @@ export default function TeamRanking({
             </div>
           ))}
 
-        {/* ── SWITCHES ── seat racing: who won their switches, who lost
-            them, and by how many seconds in all. Water knows people by
-            their seat, not their account, so a row has no page to open. */}
-        {list === "switches" &&
-          (switches.length === 0 ? (
-            <div className={EMPTY}>No scored switches in {noneIn(range.key, range.label)}.</div>
+        {/* ── SEAT RACES ── NOT A RANKING (owner, 2026-10-01: "just names and
+            who he beat… that is the valuable information"). Only the people
+            who seat raced, A to Z, each with the people they beat and the
+            people who beat them, and by how many seconds. Their record is
+            beside the name, so somebody who won every one reads at a glance.
+            Water knows people by their seat, not their account, so a row has
+            no page to open. */}
+        {list === "seatraces" &&
+          (seatRaced.length === 0 ? (
+            <div className={EMPTY}>No seat races in {noneIn(range.key, range.label)}.</div>
           ) : (
             <div className={CARD}>
-              <div className={`grid items-center ${GAP} border-b border-border px-2.5 py-2.5 ${HEAD}`} style={{ gridTemplateColumns: switchCols }}>
-                <span />
-                <span>Athlete</span>
-                <span className="text-center">Won</span>
-                <span className="text-center">Lost</span>
-                <span className="text-center">Secs</span>
-              </div>
-              {switches.map((r, i) => (
-                <Row key={r.key} i={i} first={r.rank === 1 && r.won > 0} cols={switchCols}>
-                  <Place rank={r.rank} scored={r.won > 0} />
-                  <Who name={r.name} />
-                  <span className="text-center text-[14px] font-bold tabular-nums text-text">{r.won}</span>
-                  <span className={`text-center text-[12px] tabular-nums ${r.lost > 0 ? "font-semibold text-text" : "text-muted"}`}>{r.lost}</span>
-                  <span className="text-center text-[12px] tabular-nums text-muted">
-                    {r.net > 0 ? "+" : r.net < 0 ? "−" : ""}
-                    {secs(r.net)}
-                  </span>
-                </Row>
+              {seatRaced.map((p, i) => (
+                <div key={p.key} className={`px-2.5 py-3 ${i > 0 ? "border-t border-border" : ""}`}>
+                  <div className="flex items-center justify-between gap-2">
+                    <Who name={p.name} />
+                    <span className="flex-shrink-0 text-[14px] font-bold tabular-nums text-text">
+                      {p.won}–{p.lost}
+                    </span>
+                  </div>
+                  {p.beat.length > 0 && <Meetings word="Beat" list={p.beat} strong />}
+                  {p.lostTo.length > 0 && <Meetings word="Lost to" list={p.lostTo} />}
+                </div>
               ))}
             </div>
           ))}

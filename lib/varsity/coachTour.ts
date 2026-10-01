@@ -95,7 +95,7 @@ const steps: TourStep[] = [
     anchor: "varsity-workouts-switch",
     alsoAnchor: "coach-ranking-lists",
     title: "Ranking",
-    body: "Ranks every athlete by their erg tests, the race pieces they win on the water, how much of the plan they did, and the seat-race switches they win.",
+    body: "Ranks every athlete by their erg tests, the race pieces they win on the water, and how much of the plan they did. Seat races list who beat whom.",
   },
 
   /* ── Team ─────────────────────────────────────────────────────────────── */
