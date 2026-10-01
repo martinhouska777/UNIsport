@@ -27,6 +27,7 @@ export default function PlanCard({
   otherId,
   onChanged,
   onReschedule,
+  tour,
 }: {
   plan: DmPlan;
   conversationId: string; // so a response can ping the other person
@@ -35,6 +36,8 @@ export default function PlanCard({
   otherId: string | null; // the partner the "Yes, we trained" log is filled in with
   onChanged: () => void; // refetch the thread after a response
   onReschedule: (plan: DmPlan) => void; // open the reschedule editor (proposer)
+  /** A `data-tour` for the walk — set on the newest plan in the thread. */
+  tour?: string;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -127,7 +130,7 @@ export default function PlanCard({
     (plan.status === "proposed" && mine) || (plan.status === "accepted" && !isPast);
 
   return (
-    <div className="mx-auto w-full max-w-[88%] rounded-2xl border border-border bg-surface p-3.5">
+    <div data-tour={tour} className="mx-auto w-full max-w-[88%] rounded-2xl border border-border bg-surface p-3.5">
       <div className="flex items-center gap-2">
         <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-tint text-primary">
           <IconCalendar size={16} />
@@ -159,7 +162,15 @@ export default function PlanCard({
       <div className="mt-3 border-t border-border pt-2.5">
         {plan.status === "proposed" && !mine && (
           <div className="flex gap-2">
-            <Button size="sm" disabled={busy} onClick={() => respond(true)} className="flex-1">
+            {/* The walk's finger taps this as a DRAWING only — it is never
+                clicked, because accepting answers the other person. */}
+            <Button
+              size="sm"
+              disabled={busy}
+              onClick={() => respond(true)}
+              data-tour={tour ? "plan-accept" : undefined}
+              className="flex-1"
+            >
               <IconCheck size={14} /> Accept
             </Button>
             <Button

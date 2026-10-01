@@ -56,9 +56,15 @@ export type TourStep = {
     a real control can't show without changing anything:
       add-photo    the finger taps "Add photo" and a picture appears in the grid
       photo-lands  that picture flies into the Memories row
+      accept-plan  the finger taps a plan's Accept and an "Accepted" stamp
+                   appears — NEVER a real click: accepting answers the other
+                   person and pings them
     Drawn by the overlay only — nothing is added to the form or saved.
   */
-  demo?: "add-photo" | "photo-lands";
+  demo?: "add-photo" | "photo-lands" | "accept-plan";
+  /** Press the `press` control this many times (default once) — the
+      competition arrow goes Houses → Dorms → Everyone. */
+  pressTimes?: number;
   /** The forward button's word when it isn't "Next" — the opening card's "Show me". */
   next?: string;
   /** A second `data-tour` to light WITH the anchor — the hole grows to cover both. */
@@ -129,7 +135,7 @@ export const tourSteps: TourStep[] = [
     anchor: "match-tab-people",
     alsoAnchor: "match-first-card",
     title: "Match",
-    body: "Everyone, ranked by how well you fit: interests, concentration and when you train.",
+    body: "Find people who share your interests, concentration or training times.",
   },
   {
     press: "match-tab-sessions",
@@ -148,7 +154,21 @@ export const tourSteps: TourStep[] = [
     route: "/messages",
     anchor: "tab-/messages",
     title: "Messages",
-    body: "Plan your session easily.",
+    body: "Plan your sessions easily in the chat.",
+  },
+  /*
+    INTO A CHAT, TO A PLAN (owner, 2026-09-30: "you click it and it goes to the
+    chat and accepts it"). The finger opens the top chat and lights its newest
+    plan; Accept is tapped as a drawing only. A student with no chats yet — so
+    every brand-new one — simply doesn't get this step.
+  */
+  {
+    press: "msg-first-dm",
+    anchor: "dm-plan",
+    demo: "accept-plan",
+    group: "chat",
+    title: "Accept a plan",
+    body: "Accept it and the session shows up on your Profile.",
   },
 
   /* ── Profile ──────────────────────────────────────────────────────────── */
@@ -161,7 +181,8 @@ export const tourSteps: TourStep[] = [
   },
   {
     press: "profile-log",
-    anchor: "log-photos",
+    // Just the photo square, not the whole row (owner: "zoom just the part").
+    anchor: "log-photo-add",
     demo: "add-photo",
     title: "Add a photo",
     body: "Take a picture with your training partner and make memories.",
@@ -190,11 +211,13 @@ export const tourSteps: TourStep[] = [
     body: `Your workouts earn points for you and your house: ${sessionPoints.solo} on your own, ${sessionPoints.partner} with a partner, ${sessionPoints.newPartner} with someone new.`,
   },
   {
+    // Twice: Houses → Dorms → Everyone (owner: "switch it to all people").
     press: "lb-competition-next",
+    pressTimes: 2,
     anchor: "lb-controls",
     alsoAnchor: "lb-podium",
     title: "Pick the competition",
-    body: "Houses, dorms, years, everyone: the arrows switch between them.",
+    body: "Houses, dorms, years, or everyone on campus: the arrows switch between them.",
   },
 
   {

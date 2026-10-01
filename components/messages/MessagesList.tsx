@@ -257,11 +257,13 @@ function DirectList({
   }
   return (
     <div>
-      {list.map((c) => (
+      {list.map((c, n) => (
         <button
           key={c.conversationId}
           type="button"
           onClick={() => onOpen(c)}
+          /* data-tour: the walk opens the top chat to show a plan (lib/tour.ts). */
+          data-tour={n === 0 ? "msg-first-dm" : undefined}
           className="flex w-full items-stretch gap-3 pl-3.5 text-left active:bg-surface-2"
         >
           <span className="flex items-center py-2.5">

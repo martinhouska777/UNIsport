@@ -137,6 +137,8 @@ export default function DmThread({
         )}
         {messages?.map((m, i) => {
           const mine = m.senderId === currentUserId;
+          // The newest plan in the thread is the one the walk lights (lib/tour.ts).
+          const newestPlan = m.kind === "plan" && !messages.slice(i + 1).some((x) => x.kind === "plan");
           const showDay = i === 0 || !sameDay(m.createdAt, messages[i - 1].createdAt);
           return (
             <div key={m.id} className="flex flex-col gap-2">
@@ -150,6 +152,7 @@ export default function DmThread({
               {m.kind === "plan" && m.plan ? (
                 <PlanCard
                   plan={m.plan}
+                  tour={newestPlan ? "dm-plan" : undefined}
                   conversationId={conversationId}
                   mine={mine}
                   otherName={title}

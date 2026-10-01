@@ -37,9 +37,10 @@
   outside the keyed <main>, is also the only place that survives the tour's own
   navigation between tabs.
 */
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { setTourRunning, type Tour } from "@/lib/tour";
+import { IconCheck } from "@/components/icons";
 
 const PAD = 8; // breathing room around the lit element
 const EDGE = 6; // never let the hole run off the side of the screen
@@ -154,6 +155,10 @@ export default function TourOverlay({
   const [tapAt, setTapAt] = useState<{ x: number; y: number } | null>(null);
   // The demo photo (steps with `demo`) — where it is, and whether it is flying.
   const [shot, setShot] = useState<Shot | null>(null);
+  // The "Accepted" stamp drawn over a plan's buttons (demo accept-plan), and
+  // the step it belongs to — it is never shown on any other step.
+  const [stamp, setStamp] = useState<{ box: Box; step: number } | null>(null);
+  const captionRef = useRef<HTMLDivElement | null>(null);
   const nextRef = useRef<HTMLButtonElement | null>(null);
   const titleId = useId();
   const bodyId = useId();
@@ -219,7 +224,7 @@ export default function TourOverlay({
   */
   useEffect(() => {
     let cancelled = false;
-    let pressed = false;
+    let pressesLeft = step.press ? (step.pressTimes ?? 1) : 0;
     let pushed = false;
     let beats = 0;
     let timer: ReturnType<typeof setTimeout>;
@@ -228,11 +233,12 @@ export default function TourOverlay({
       if (cancelled) return;
       const arrived = () => !step.route || window.location.pathname === step.route;
 
-      // 1. Press the control that leads here — visibly.
-      if (step.press && !pressed) {
+      // 1. Press the control that leads here — visibly, and as many times as
+      //    the step asks (each one its own tap).
+      if (step.press && pressesLeft > 0) {
         const control = visibleAnchor(step.press);
         if (control) {
-          pressed = true;
+          pressesLeft--;
           let r = control.getBoundingClientRect();
           if (r.top < 0 || r.bottom > window.innerHeight) {
             control.scrollIntoView({ block: "center", behavior: "instant" as ScrollBehavior });
@@ -415,7 +421,21 @@ export default function TourOverlay({
       timers.push(setTimeout(() => !cancelled && fn(), ms));
 
     later(DEMO_WAIT, () => {
-      if (demo === "add-photo") {
+      if (demo === "accept-plan") {
+        // A plan you already answered has no Accept — then the lit card is all.
+        const accept = visibleAnchor("plan-accept");
+        if (!accept) return;
+        const r = accept.getBoundingClientRect();
+        const row = (accept.parentElement ?? accept).getBoundingClientRect();
+        setTapAt({ x: r.left + r.width / 2, y: r.top + r.height / 2 });
+        later(TAP_LEAD, () => {
+          setStamp({
+            box: { top: row.top, left: row.left, width: row.width, height: row.height, radius: 10 },
+            step: i,
+          });
+          later(TAP_HOLD, () => setTapAt(null));
+        });
+      } else if (demo === "add-photo") {
         const add = visibleAnchor("log-photo-add");
         if (!add) return;
         const r = add.getBoundingClientRect();
@@ -445,6 +465,34 @@ export default function TourOverlay({
   }, [demo, i]);
   // Only the two photo steps show it; everything after them simply doesn't.
   const showShot = step.demo === "add-photo" || step.demo === "photo-lands";
+
+  /*
+    THE TEXT IS ALWAYS ON SCREEN (owner, 2026-09-30: "in Memories I lost it").
+    The placement above picks a side by where the hole is, not by how tall the
+    card is, so a hole low on a short phone pushed the card off the bottom.
+    After each paint this measures the card: if it doesn't fit, it tries the
+    other side of the hole, and if neither side has room it sits on the
+    screen's bottom edge, over the hole if it must — text over the light beats
+    no text. Written straight onto the element (`translate`), so it costs no
+    render and React never fights it.
+  */
+  useLayoutEffect(() => {
+    const el = captionRef.current;
+    if (!el) return;
+    el.style.translate = "";
+    const r = el.getBoundingClientRect();
+    const H = window.innerHeight;
+    const M = 12;
+    if (r.top >= M && r.bottom <= H - M) return;
+    let top = H - M - r.height;
+    if (box) {
+      const above = box.top - GAP - r.height;
+      const below = box.top + box.height + GAP;
+      if (above >= M) top = above;
+      else if (below + r.height <= H - M) top = below;
+    }
+    el.style.translate = `0 ${Math.round(Math.max(M, top) - r.top)}px`;
+  });
 
   /*
     Escape ends it, same as every other overlay in the app. Deliberately NOTHING
@@ -572,6 +620,23 @@ export default function TourOverlay({
         <div className="absolute inset-0" style={{ background: dim }} />
       )}
 
+      {/* The drawn "Accepted" — over the plan's two buttons, never a real answer. */}
+      {stamp && stamp.step === i && (
+        <div
+          aria-hidden="true"
+          className="tour-shot-pop pointer-events-none absolute flex items-center justify-center gap-1.5 border border-border bg-surface text-[13px] font-semibold text-success"
+          style={{
+            top: stamp.box.top,
+            left: stamp.box.left,
+            width: stamp.box.width,
+            height: stamp.box.height,
+            borderRadius: stamp.box.radius,
+          }}
+        >
+          <IconCheck size={14} /> Accepted
+        </div>
+      )}
+
       {/* The demo photo, over the dim and under the finger. */}
       {shot && showShot && (
         <div
@@ -610,6 +675,7 @@ export default function TourOverlay({
 
       {armed && (
         <div
+          ref={captionRef}
           className="absolute rounded-2xl border border-border bg-surface p-4 shadow-overlay"
           style={caption}
         >
