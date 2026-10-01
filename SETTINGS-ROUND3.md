@@ -110,7 +110,9 @@ Invites + Squad), `components/varsity/coach/settings/TrainingSettingsScreen.tsx`
       **STARTED, NOT COMMITTED — stopped here on 2026-10-01 (the owner switched
       accounts).** The half-done work is saved in `SETTINGS-ROUND3-slice3-wip.patch`
       (repo root); the two files themselves are back to their last working state.
-      To pick it up: `git apply SETTINGS-ROUND3-slice3-wip.patch`. What the patch
+      To pick it up: `git apply SETTINGS-ROUND3-slice3-wip.patch` (if it complains
+      about line endings: `git apply --ignore-whitespace …`), then delete the patch
+      file in the same commit as the finished slice. What the patch
       already does:
         - `app/varsity/coach/settings/training/page.tsx`: draws the title bar only
           while loading; the screen draws its own (so the save line can sit in it).
