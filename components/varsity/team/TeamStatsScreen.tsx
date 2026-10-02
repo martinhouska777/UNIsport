@@ -84,7 +84,14 @@ import { useMembership } from "@/components/varsity/useMembership";
 import { can, fetchSquad } from "@/lib/varsity/membership";
 import { trainingMix, type MixRow } from "@/lib/varsity/trainingMix";
 import TrainingMixList from "@/components/varsity/profile/TrainingMixList";
-import { squadRows, sortSquadRows, type PeopleSort, type SquadRow } from "@/lib/varsity/squadStats";
+import {
+  squadAverage,
+  squadRows,
+  sortSquadRows,
+  type PeopleSort,
+  type SquadAverage,
+  type SquadRow,
+} from "@/lib/varsity/squadStats";
 import type { StatTone } from "@/lib/varsity/rowingStats";
 import { crewLabel } from "@/lib/varsity/racePieces";
 import { formatDistance, formatDuration, metresToUnit, type Units } from "@/lib/varsity/units";
@@ -333,6 +340,7 @@ export default function TeamStatsScreen({ onClose }: { onClose: () => void }) {
   );
   const groups = teamReport(people, buckets, units);
   const rows: SquadRow[] = useMemo(() => squadRows(people, units), [people, units]);
+  const average = useMemo(() => squadAverage(people, units), [people, units]);
   /* The squad's mix over the same window: everybody's logs pooled, which is
      the one figure here that is a share rather than an average. */
   const mix: MixRow[] = useMemo(
@@ -508,7 +516,7 @@ export default function TeamStatsScreen({ onClose }: { onClose: () => void }) {
                   </div>
                 ))}
 
-                <PeopleTable rows={rows} units={units} />
+                <PeopleTable rows={rows} average={average} units={units} />
 
                 <CompareTable
                   buckets={buckets}
@@ -618,20 +626,47 @@ function ReadOut({ bucket, each, units }: { bucket: TeamBucket; each: "day" | "w
     • a face beside every name, the console's rankings' own, and the name may
       take two lines rather than be cut off
     • the figures at the size of the rankings' scores, never broken: the
-      kilometres are the number alone (the heading says km or mi), with the
-      kilometres off the plan right under them, in green or amber
+      kilometres are the number alone (the heading says km or mi)
     • the plan as a bar under "21/36", so who is behind shows down the column
       without reading a single fraction
     • every heading puts the list in its order — most first, the name A to Z
       — with a small arrow under the one in use
+
+  AND HOW FAR EACH ONE IS FROM THE AVERAGE (owner, the same day: "for the
+  individual, we want to see how much they are from the average"). The team's
+  average person is the first line, on grey, and never moves with the order;
+  under every person's kilometres and time is how far above (green) or under
+  (amber) that line they are. The kilometres off the plan, which sat under
+  the distance until then, gave way — the plan is still the bar.
 */
 const PEOPLE_HEAD = "tap44 flex items-center gap-0.5 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted";
+const PEOPLE_COLS = "grid-cols-[minmax(0,1fr)_3.5rem_4.25rem_4rem]";
 
-function PeopleTable({ rows, units }: { rows: SquadRow[]; units: Units }) {
+/* "21/36" over its bar. `fill` is the bar's own class: the tone for a person,
+   the grey of a mark for the average. */
+function PlanCell({ plan, share, fill }: { plan: string; share: number | null; fill: string }) {
+  return (
+    <span className="flex flex-col items-end gap-1">
+      <span className="text-[14px] font-bold tabular-nums text-text">{plan}</span>
+      {/* A sliver even at none done, so a plan nobody touched still reads
+          as a bar and not as a missing one. */}
+      {share != null && (
+        <span className="block h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
+          <span
+            className={`block h-full rounded-full ${fill}`}
+            style={{ width: `${Math.max(4, Math.round(share * 100))}%` }}
+          />
+        </span>
+      )}
+    </span>
+  );
+}
+
+function PeopleTable({ rows, average, units }: { rows: SquadRow[]; average: SquadAverage | null; units: Units }) {
   const [by, setBy] = useState<PeopleSort>("km");
   const shown = useMemo(() => sortSquadRows(rows, by), [rows, by]);
   if (rows.length === 0) return null;
-  const cols = "grid-cols-[minmax(0,1fr)_3.5rem_4.25rem_4rem]";
+  const cols = PEOPLE_COLS;
   const heads: { key: PeopleSort; label: string; end: boolean }[] = [
     { key: "name", label: "Athlete", end: false },
     { key: "km", label: units.distance === "mi" ? "Mi" : "Km", end: true },
@@ -658,6 +693,16 @@ function PeopleTable({ rows, units }: { rows: SquadRow[]; units: Units }) {
             </button>
           ))}
         </div>
+        {average && (
+          <div className={`grid ${cols} items-center gap-x-1.5 border-b border-border bg-surface-2 px-3 py-2.5`}>
+            <span className="text-[13px] font-semibold leading-tight text-text">Team average</span>
+            <span className="text-right text-[15px] font-bold tabular-nums text-text">{average.km}</span>
+            <span className="whitespace-nowrap text-right text-[14px] font-semibold tabular-nums text-text">
+              {average.time}
+            </span>
+            <PlanCell plan={average.plan} share={average.share} fill="bg-faint" />
+          </div>
+        )}
         {shown.map((r, i) => (
           <Link
             key={r.id}
@@ -674,28 +719,17 @@ function PeopleTable({ rows, units }: { rows: SquadRow[]; units: Units }) {
             </span>
             <span className="text-right leading-tight">
               <span className="block text-[15px] font-bold tabular-nums text-text">{r.km}</span>
-              {r.delta && (
-                <span className={`block text-[11px] font-semibold tabular-nums ${toneClass[r.deltaTone]}`}>
-                  {r.delta}
-                </span>
-              )}
+              <span className={`block text-[11px] font-semibold tabular-nums ${toneClass[r.vsKmTone]}`}>
+                {r.vsKm}
+              </span>
             </span>
-            <span className="whitespace-nowrap text-right text-[14px] font-semibold tabular-nums text-text">
-              {r.time}
+            <span className="whitespace-nowrap text-right leading-tight">
+              <span className="block text-[14px] font-semibold tabular-nums text-text">{r.time}</span>
+              <span className={`block text-[11px] font-semibold tabular-nums ${toneClass[r.vsTimeTone]}`}>
+                {r.vsTime}
+              </span>
             </span>
-            <span className="flex flex-col items-end gap-1">
-              <span className="text-[14px] font-bold tabular-nums text-text">{r.plan}</span>
-              {/* A sliver even at none done, so a plan nobody touched still
-                  reads as a bar and not as a missing one. */}
-              {r.share != null && (
-                <span className="block h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
-                  <span
-                    className={`block h-full rounded-full ${r.tone === "success" ? "bg-success" : "bg-warn"}`}
-                    style={{ width: `${Math.max(4, Math.round(r.share * 100))}%` }}
-                  />
-                </span>
-              )}
-            </span>
+            <PlanCell plan={r.plan} share={r.share} fill={r.tone === "success" ? "bg-success" : "bg-warn"} />
           </Link>
         ))}
       </div>
@@ -711,6 +745,13 @@ function PeopleTable({ rows, units }: { rows: SquadRow[]; units: Units }) {
   dashes. The row being read out above is marked, and tapping a row reads it
   out. The outings column came off (owner, 2026-09-21), and since 2026-09-22
   every figure in it is made of what people LOGGED, not of the boats.
+
+  REDRAWN 2026-10-01 in Person by person's look (owner: "can you do the
+  week-to-week on the bottom… also better"): the same white card and 11px
+  headings, the kilometres big with the change on the row before UNDER them
+  (no "±" column of its own), and a bar under each row's name — its
+  kilometres against the biggest row in the window — so a block's build and
+  its taper show down the left edge. Still not coloured by better or worse.
 */
 function CompareTable({
   buckets,
@@ -746,50 +787,68 @@ function CompareTable({
     return `${d > 0 ? "+" : "−"}${Math.abs(d) >= 100 ? Math.abs(d).toFixed(0) : Math.abs(d).toFixed(1)}`;
   };
 
-  const cols = "grid-cols-[minmax(0,1.6fr)_3.6rem_3.4rem_4rem]";
-  const cell = "px-2 py-2 text-right tabular-nums";
+  /* The biggest row of the window, which every row's bar is a share of. */
+  const most = Math.max(0, ...buckets.filter((b) => b.trained.length > 0).map(bucketMetres));
+  const cols = "grid-cols-[minmax(0,1fr)_4rem_4.5rem]";
+  const head = "text-[11px] font-semibold uppercase tracking-[0.1em] text-muted";
 
   return (
     <div className="mt-5">
       <div className="pb-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
         {each} by {each}
       </div>
-      <div className="overflow-hidden rounded-xl border border-border bg-surface text-[12px]">
-        <div className={`grid ${cols} border-b border-border bg-surface-2 text-[9px] font-semibold uppercase tracking-[0.1em] text-muted`}>
-          <span className="px-2.5 py-2 text-left">{each}</span>
-          <span className={cell}>{unit === "mi" ? "Mi" : "Km"}</span>
-          <span className={cell}>±</span>
-          <span className={cell}>Hours</span>
+      <div className="overflow-hidden rounded-2xl border border-border bg-surface shadow-card">
+        <div className={`grid ${cols} gap-x-3 border-b border-border px-3 py-2.5`}>
+          <span className={head}>{each}</span>
+          <span className={`${head} text-right`}>{unit === "mi" ? "Mi" : "Km"}</span>
+          <span className={`${head} text-right`}>Hours</span>
         </div>
         {buckets
           .map((b, i) => ({ b, i }))
           .reverse()
           .map(({ b, i }, row) => {
             const had = b.trained.length > 0;
+            const metres = bucketMetres(b);
+            const change = delta(i);
             return (
               <button
                 key={b.start.getTime()}
                 type="button"
                 onClick={() => onPick(i)}
                 aria-pressed={i === selected}
-                className={`grid ${cols} w-full items-center border-b border-border text-left last:border-b-0 ${
-                  i === selected ? "bg-primary-tint" : row % 2 === 1 ? "bg-surface-2/60" : ""
-                }`}
+                className={`grid ${cols} w-full items-center gap-x-3 px-3 py-2.5 text-left ${
+                  row > 0 ? "border-t border-border" : ""
+                } ${i === selected ? "bg-primary-tint" : "active:bg-surface-2"}`}
               >
-                <span className={`truncate px-2.5 py-2 ${b.latest ? "font-semibold text-text" : "font-medium text-text"}`}>
-                  {b.latest ? (each === "day" ? "Today" : "This week") : b.label}
+                <span className="min-w-0">
+                  <span className="block truncate text-[13px] font-semibold text-text">
+                    {b.latest ? (each === "day" ? "Today" : "This week") : b.label}
+                  </span>
+                  {/* The week as a bar against the biggest one in the window,
+                      so the shape of the block reads down the left edge. */}
+                  {had && metres > 0 && most > 0 && (
+                    <span className="mt-1.5 block h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
+                      <span
+                        className="block h-full rounded-full bg-primary"
+                        style={{ width: `${Math.max(2, Math.round((metres / most) * 100))}%` }}
+                      />
+                    </span>
+                  )}
                 </span>
                 {had ? (
                   <>
-                    <span className={`${cell} font-semibold text-text`}>{km(bucketMetres(b))}</span>
-                    <span className={`${cell} text-muted`}>{delta(i)}</span>
-                    <span className={`${cell} text-text`}>{hrs(bucketMinutes(b))}</span>
+                    <span className="text-right leading-tight">
+                      <span className="block text-[15px] font-bold tabular-nums text-text">{km(metres)}</span>
+                      {change && <span className="block text-[11px] tabular-nums text-muted">{change}</span>}
+                    </span>
+                    <span className="whitespace-nowrap text-right text-[14px] font-semibold tabular-nums text-text">
+                      {hrs(bucketMinutes(b))}
+                    </span>
                   </>
                 ) : (
                   <>
-                    <span className={`${cell} text-muted`}>—</span>
-                    <span className={`${cell} text-muted`}></span>
-                    <span className={`${cell} text-muted`}>—</span>
+                    <span className="text-right text-[14px] text-muted">—</span>
+                    <span className="text-right text-[14px] text-muted">—</span>
                   </>
                 )}
               </button>

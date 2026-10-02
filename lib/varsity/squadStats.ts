@@ -41,6 +41,8 @@ import type { StatCell, StatGroup } from "./rowingStats";
 
 const sum = (ns: number[]) => ns.reduce((a, b) => a + b, 0);
 const dash = "—";
+const MINUS = "−";
+const PLUS_MINUS_ZERO = "±0";
 
 const asDate = (iso: string) => {
   const [y, m, d] = iso.split("-").map(Number);
@@ -337,13 +339,27 @@ export type SquadRow = {
   /** The raw figures, so the list can be put in any column's order. */
   metres: number;
   minutes: number;
-  /* HOW FAR OFF THE ASKED-FOR KILOMETRES THEY LANDED: "+1.5", "-1.0", or
-     empty when the plan asked them for no distance at all. The unit is the
-     column's, so the number carries none of its own. */
-  delta: string;
-  deltaTone: "success" | "warn" | "muted";
+  /* HOW FAR FROM THE TEAM'S AVERAGE THEY ARE (owner, 2026-10-01: "for the
+     individual, we want to see how much they are from the average"): the
+     distance as "+5.7" / "−5.7" in the column's unit, the time as "+24m".
+     Above the average is green, under it amber, level is "±0". */
+  vsKm: string;
+  vsKmTone: Tone;
+  vsTime: string;
+  vsTimeTone: Tone;
   /** How they stand against the plan, as a word the screen turns into a colour. */
-  tone: "success" | "warn" | "muted";
+  tone: Tone;
+};
+
+type Tone = "success" | "warn" | "muted";
+
+/** The team's average person, the first line of Person by person. */
+export type SquadAverage = {
+  km: string;
+  time: string;
+  /** "20.5/36", or a dash when nobody had a plan. */
+  plan: string;
+  share: number | null;
 };
 
 /* The column the list is in the order of. */
@@ -356,16 +372,49 @@ const kmFigure = (metres: number, units: Units) => {
   return v >= 100 ? v.toFixed(0) : v.toFixed(1);
 };
 
-/* The kilometres they came out ahead or behind by, as the column reads it. */
-function deltaOf(p: SquadPerson, units: Units) {
-  if (p.plannedMetres <= 0) return { delta: "", deltaTone: "muted" as const };
-  const d = metresToUnit(p.doneMetres - p.plannedMetres, units.distance);
+const toneOf = (d: number, level: boolean): Tone => (level ? "muted" : d > 0 ? "success" : "warn");
+
+/* Their distance against the average one, as the Km column reads it. */
+function vsKmOf(metres: number, avg: number, units: Units) {
+  const d = metresToUnit(metres - avg, units.distance);
   const size = Math.abs(d);
-  if (size < 0.05) return { delta: "\u00b10", deltaTone: "success" as const };
+  const level = size < 0.05;
   const shown = size >= 100 ? size.toFixed(0) : size.toFixed(1);
+  return { vsKm: level ? PLUS_MINUS_ZERO : `${d > 0 ? "+" : MINUS}${shown}`, vsKmTone: toneOf(d, level) };
+}
+
+/* Their time against the average one, as the Time column reads it. */
+function vsTimeOf(minutes: number, avg: number) {
+  const d = minutes - avg;
+  const level = Math.abs(d) < 0.5;
   return {
-    delta: `${d > 0 ? "+" : "\u2212"}${shown}`,
-    deltaTone: (d > 0 ? "success" : "warn") as "success" | "warn",
+    vsTime: level ? PLUS_MINUS_ZERO : `${d > 0 ? "+" : MINUS}${formatDuration(Math.abs(d))}`,
+    vsTimeTone: toneOf(d, level),
+  };
+}
+
+/* "20.5", "21" — a count that is an average may carry one decimal. */
+const countFigure = (v: number) => {
+  const r = Math.round(v * 10) / 10;
+  return Number.isInteger(r) ? String(r) : r.toFixed(1);
+};
+
+/*
+  THE TEAM'S AVERAGE PERSON — the same people, the same mean as the groups on
+  the Team tab ("over the people who logged", never the roster), so the line on
+  top of Person by person and the cells above it can never disagree.
+*/
+export function squadAverage(people: SquadPerson[], units: Units): SquadAverage | null {
+  if (people.length === 0) return null;
+  const metres = per(people, (p) => p.metres) ?? 0;
+  const minutes = per(people, (p) => p.minutes) ?? 0;
+  const planned = per(people, (p) => p.planned) ?? 0;
+  const done = per(people, (p) => p.done) ?? 0;
+  return {
+    km: kmFigure(metres, units),
+    time: minutes > 0 ? formatDuration(Math.round(minutes)) : dash,
+    plan: planned > 0 ? `${countFigure(done)}/${countFigure(planned)}` : dash,
+    share: planned > 0 ? Math.min(1, done / planned) : null,
   };
 }
 
@@ -377,13 +426,14 @@ function deltaOf(p: SquadPerson, units: Units) {
   their eye down. Somebody who did everything the plan asked is green;
   somebody short of it is warned; a person with nothing planned is neither.
 
-  THE PLUS-OR-MINUS COLUMN is the owner's own example (2026-09-22): "you're at
-  14 km today, somebody actually is at 13, so he's minus 1 km - the crew could
-  have done 15.5". It is the kilometres the plan asked for, taken off the
-  kilometres rowed against those same sessions, and it is the one column that
-  says whether a big week was the week that was asked for.
+  UNDER THE DISTANCE AND THE TIME, HOW FAR FROM THE AVERAGE (owner,
+  2026-10-01). Until then the line under the distance was the kilometres off
+  what the plan asked for (2026-09-22: "he's minus 1 km"); the plan is still
+  the Plan column, sessions done out of planned, with its bar.
 */
 export function squadRows(people: SquadPerson[], units: Units): SquadRow[] {
+  const avgMetres = per(people, (p) => p.metres) ?? 0;
+  const avgMinutes = per(people, (p) => p.minutes) ?? 0;
   return sortSquadRows(
     people.map((p) => ({
       id: p.id,
@@ -394,12 +444,13 @@ export function squadRows(people: SquadPerson[], units: Units): SquadRow[] {
       share: p.planned > 0 ? Math.min(1, p.done / p.planned) : null,
       metres: p.metres,
       minutes: p.minutes,
-      ...deltaOf(p, units),
+      ...vsKmOf(p.metres, avgMetres, units),
+      ...vsTimeOf(p.minutes, avgMinutes),
       tone: (p.planned === 0
         ? "muted"
         : p.done >= p.planned
           ? "success"
-          : "warn") as SquadRow["tone"],
+          : "warn") as Tone,
     })),
     "km",
   );
