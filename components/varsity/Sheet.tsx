@@ -2,14 +2,15 @@
 
 /*
   Shared Varsity bottom sheet: slides up from the bottom with a title + close,
-  closes on the X, the backdrop, or Escape. Portalled to <body>, so it re-wraps
+  closes on the X, the backdrop, Escape, or a swipe down (useSwipeToClose). Portalled to <body>, so it re-wraps
   itself in <ThemeProvider> to keep the Varsity theme (same pattern as the log
   editor). Content is whatever the caller passes. All colors are theme tokens.
 */
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import ThemeProvider from "@/components/ThemeProvider";
 import { useVarsityTheme } from "@/components/varsity/useVarsityTheme";
+import { useSwipeToClose } from "@/components/varsity/useSwipeToClose";
 import { IconArrowLeft, IconX } from "@/components/icons";
 
 export default function Sheet({
@@ -27,6 +28,10 @@ export default function Sheet({
   full?: boolean;
 }) {
   const vTheme = useVarsityTheme();
+  // The bottom sheet follows a finger down and closes (the full page has Back).
+  const panelRef = useRef<HTMLDivElement>(null);
+  const backdropRef = useRef<HTMLButtonElement>(null);
+  useSwipeToClose(panelRef, onClose, backdropRef);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     document.addEventListener("keydown", onKey);
@@ -58,12 +63,13 @@ export default function Sheet({
     <ThemeProvider tokens={vTheme.dark} light={vTheme.light}>
       <div className="fixed inset-0 z-[60] flex flex-col justify-end">
         <button
+          ref={backdropRef}
           type="button"
           aria-label="Close"
           onClick={onClose}
           className="absolute inset-0 bg-background/70 [animation:backdrop-in_0.2s_ease-out]"
         />
-        <div className="relative max-h-[85%] overflow-y-auto rounded-t-3xl border-t border-border bg-surface [animation:sheet-up_0.28s_cubic-bezier(0.2,0.8,0.2,1)]">
+        <div ref={panelRef} className="relative max-h-[85%] overflow-y-auto rounded-t-3xl border-t border-border bg-surface [animation:sheet-up_0.28s_cubic-bezier(0.2,0.8,0.2,1)]">
           <div className="flex justify-center pb-1.5 pt-2.5">
             <div className="h-1 w-9 rounded-full bg-border" />
           </div>
