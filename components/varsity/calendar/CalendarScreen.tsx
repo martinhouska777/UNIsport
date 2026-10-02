@@ -39,7 +39,7 @@
 
   A TEAMMATE'S CALENDAR is this same screen (`teammate` prop, owner
   2026-09-14): opened from their card on the Team tab, in a window of its own.
-  It is read-only — no Missed, no "Open the log", no opening a session — and
+  It is read-only — no Missed, no opening a session — and
   its month comes from lib/varsity/teamTraining (demo data until accounts link
   to roster seats) instead of your own logs.
 
@@ -48,7 +48,6 @@
   same colour here as on the coach's month view.
 */
 import { useEffect, useMemo, useRef, useState } from "react";
-import Link from "next/link";
 import Sheet from "@/components/varsity/Sheet";
 import WorkoutDetail from "@/components/varsity/calendar/WorkoutDetail";
 import CategoryStatsSheet from "@/components/varsity/calendar/CategoryStatsSheet";
@@ -330,18 +329,10 @@ function DaySheet({
           })}
         </div>
       )}
-      {!readOnly && (
-        <>
-          <DayOutSection value={dayOut} canMiss={canMiss} onSave={onDayOut} />
-          <Link
-            href="/varsity/log"
-            className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-surface px-4 py-3 text-[12px] font-medium text-text"
-          >
-            Open the log
-            <IconChevronRight size={14} />
-          </Link>
-        </>
-      )}
+      {/* No "Open the log" link under the day (owner, 2026-10-01: "I don't see
+          a point in it") — a session opens by tapping it, and the Log tab is
+          in the nav. */}
+      {!readOnly && <DayOutSection value={dayOut} canMiss={canMiss} onSave={onDayOut} />}
     </Sheet>
   );
 }
