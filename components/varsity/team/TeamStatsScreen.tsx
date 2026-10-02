@@ -627,40 +627,22 @@ function ReadOut({ bucket, each, units }: { bucket: TeamBucket; each: "day" | "w
       take two lines rather than be cut off
     • the figures at the size of the rankings' scores, never broken: the
       kilometres are the number alone (the heading says km or mi)
-    • the plan as a bar under "21/36", so who is behind shows down the column
-      without reading a single fraction
     • every heading puts the list in its order — most first, the name A to Z
       — with a small arrow under the one in use
 
   AND HOW FAR EACH ONE IS FROM THE AVERAGE (owner, the same day: "for the
   individual, we want to see how much they are from the average"). The team's
-  average person is the first line, on grey, and never moves with the order;
-  under every person's kilometres and time is how far above (green) or under
-  (amber) that line they are. The kilometres off the plan, which sat under
-  the distance until then, gave way — the plan is still the bar.
+  average person is a grey line ABOVE the headings ("put team average
+  above"), so it never moves with the order; under every person's kilometres
+  and time is how far above (green) or under (amber) that line they are. The
+  kilometres off the plan, which sat under the distance until then, gave way.
+
+  NO BARS (owner, the same day: "don't put the progress bars anywhere, it's
+  for coaches so make it simple"). The plan is "21/36" and nothing else.
 */
 const PEOPLE_HEAD = "tap44 flex items-center gap-0.5 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted";
 const PEOPLE_COLS = "grid-cols-[minmax(0,1fr)_3.5rem_4.25rem_4rem]";
-
-/* "21/36" over its bar. `fill` is the bar's own class: the tone for a person,
-   the grey of a mark for the average. */
-function PlanCell({ plan, share, fill }: { plan: string; share: number | null; fill: string }) {
-  return (
-    <span className="flex flex-col items-end gap-1">
-      <span className="text-[14px] font-bold tabular-nums text-text">{plan}</span>
-      {/* A sliver even at none done, so a plan nobody touched still reads
-          as a bar and not as a missing one. */}
-      {share != null && (
-        <span className="block h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
-          <span
-            className={`block h-full rounded-full ${fill}`}
-            style={{ width: `${Math.max(4, Math.round(share * 100))}%` }}
-          />
-        </span>
-      )}
-    </span>
-  );
-}
+const PLAN_CELL = "text-right text-[14px] font-bold tabular-nums text-text";
 
 function PeopleTable({ rows, average, units }: { rows: SquadRow[]; average: SquadAverage | null; units: Units }) {
   const [by, setBy] = useState<PeopleSort>("km");
@@ -679,6 +661,16 @@ function PeopleTable({ rows, average, units }: { rows: SquadRow[]; average: Squa
         Person by person
       </div>
       <div className="overflow-hidden rounded-2xl border border-border bg-surface shadow-card">
+        {average && (
+          <div className={`grid ${cols} items-center gap-x-1.5 border-b border-border bg-surface-2 px-3 py-2.5`}>
+            <span className="text-[13px] font-semibold leading-tight text-text">Team average</span>
+            <span className="text-right text-[15px] font-bold tabular-nums text-text">{average.km}</span>
+            <span className="whitespace-nowrap text-right text-[14px] font-semibold tabular-nums text-text">
+              {average.time}
+            </span>
+            <span className={PLAN_CELL}>{average.plan}</span>
+          </div>
+        )}
         <div className={`grid ${cols} gap-x-1.5 border-b border-border px-3 py-2`}>
           {heads.map((h) => (
             <button
@@ -693,16 +685,6 @@ function PeopleTable({ rows, average, units }: { rows: SquadRow[]; average: Squa
             </button>
           ))}
         </div>
-        {average && (
-          <div className={`grid ${cols} items-center gap-x-1.5 border-b border-border bg-surface-2 px-3 py-2.5`}>
-            <span className="text-[13px] font-semibold leading-tight text-text">Team average</span>
-            <span className="text-right text-[15px] font-bold tabular-nums text-text">{average.km}</span>
-            <span className="whitespace-nowrap text-right text-[14px] font-semibold tabular-nums text-text">
-              {average.time}
-            </span>
-            <PlanCell plan={average.plan} share={average.share} fill="bg-faint" />
-          </div>
-        )}
         {shown.map((r, i) => (
           <Link
             key={r.id}
@@ -729,7 +711,7 @@ function PeopleTable({ rows, average, units }: { rows: SquadRow[]; average: Squa
                 {r.vsTime}
               </span>
             </span>
-            <PlanCell plan={r.plan} share={r.share} fill={r.tone === "success" ? "bg-success" : "bg-warn"} />
+            <span className={PLAN_CELL}>{r.plan}</span>
           </Link>
         ))}
       </div>
@@ -749,9 +731,9 @@ function PeopleTable({ rows, average, units }: { rows: SquadRow[]; average: Squa
   REDRAWN 2026-10-01 in Person by person's look (owner: "can you do the
   week-to-week on the bottom… also better"): the same white card and 11px
   headings, the kilometres big with the change on the row before UNDER them
-  (no "±" column of its own), and a bar under each row's name — its
-  kilometres against the biggest row in the window — so a block's build and
-  its taper show down the left edge. Still not coloured by better or worse.
+  (no "±" column of its own). Still not coloured by better or worse. A bar
+  under each row's name came and went the same day ("don't put the progress
+  bars anywhere, it's for coaches so make it simple").
 */
 function CompareTable({
   buckets,
@@ -787,8 +769,6 @@ function CompareTable({
     return `${d > 0 ? "+" : "−"}${Math.abs(d) >= 100 ? Math.abs(d).toFixed(0) : Math.abs(d).toFixed(1)}`;
   };
 
-  /* The biggest row of the window, which every row's bar is a share of. */
-  const most = Math.max(0, ...buckets.filter((b) => b.trained.length > 0).map(bucketMetres));
   const cols = "grid-cols-[minmax(0,1fr)_4rem_4.5rem]";
   const head = "text-[11px] font-semibold uppercase tracking-[0.1em] text-muted";
 
@@ -820,20 +800,8 @@ function CompareTable({
                   row > 0 ? "border-t border-border" : ""
                 } ${i === selected ? "bg-primary-tint" : "active:bg-surface-2"}`}
               >
-                <span className="min-w-0">
-                  <span className="block truncate text-[13px] font-semibold text-text">
-                    {b.latest ? (each === "day" ? "Today" : "This week") : b.label}
-                  </span>
-                  {/* The week as a bar against the biggest one in the window,
-                      so the shape of the block reads down the left edge. */}
-                  {had && metres > 0 && most > 0 && (
-                    <span className="mt-1.5 block h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
-                      <span
-                        className="block h-full rounded-full bg-primary"
-                        style={{ width: `${Math.max(2, Math.round((metres / most) * 100))}%` }}
-                      />
-                    </span>
-                  )}
+                <span className="min-w-0 truncate text-[13px] font-semibold text-text">
+                  {b.latest ? (each === "day" ? "Today" : "This week") : b.label}
                 </span>
                 {had ? (
                   <>

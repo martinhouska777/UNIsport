@@ -334,7 +334,7 @@ export type SquadRow = {
   time: string;
   /** "12/14", or a dash when nothing was planned for them in the window. */
   plan: string;
-  /** Done out of planned, 0–1, for the bar under it; null when nothing was planned. */
+  /** Done out of planned, 0–1, what the Plan column is put in order by; null when nothing was planned. */
   share: number | null;
   /** The raw figures, so the list can be put in any column's order. */
   metres: number;
@@ -347,8 +347,6 @@ export type SquadRow = {
   vsKmTone: Tone;
   vsTime: string;
   vsTimeTone: Tone;
-  /** How they stand against the plan, as a word the screen turns into a colour. */
-  tone: Tone;
 };
 
 type Tone = "success" | "warn" | "muted";
@@ -359,7 +357,6 @@ export type SquadAverage = {
   time: string;
   /** "20.5/36", or a dash when nobody had a plan. */
   plan: string;
-  share: number | null;
 };
 
 /* The column the list is in the order of. */
@@ -414,7 +411,6 @@ export function squadAverage(people: SquadPerson[], units: Units): SquadAverage 
     km: kmFigure(metres, units),
     time: minutes > 0 ? formatDuration(Math.round(minutes)) : dash,
     plan: planned > 0 ? `${countFigure(done)}/${countFigure(planned)}` : dash,
-    share: planned > 0 ? Math.min(1, done / planned) : null,
   };
 }
 
@@ -423,8 +419,9 @@ export function squadAverage(people: SquadPerson[], units: Units): SquadAverage 
   person trained… what actually happened compared to the plan").
 
   Ordered by distance, most first, because that is the column a coach runs
-  their eye down. Somebody who did everything the plan asked is green;
-  somebody short of it is warned; a person with nothing planned is neither.
+  their eye down. The plan is the bare "21/36" — its bar, and the green /
+  amber that went with it, came off on the owner's call (2026-10-01: "it's
+  for coaches so make it simple").
 
   UNDER THE DISTANCE AND THE TIME, HOW FAR FROM THE AVERAGE (owner,
   2026-10-01). Until then the line under the distance was the kilometres off
@@ -446,11 +443,6 @@ export function squadRows(people: SquadPerson[], units: Units): SquadRow[] {
       minutes: p.minutes,
       ...vsKmOf(p.metres, avgMetres, units),
       ...vsTimeOf(p.minutes, avgMinutes),
-      tone: (p.planned === 0
-        ? "muted"
-        : p.done >= p.planned
-          ? "success"
-          : "warn") as Tone,
     })),
     "km",
   );
