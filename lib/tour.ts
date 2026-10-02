@@ -56,16 +56,17 @@ export type TourStep = {
     a real control can't show without changing anything:
       add-photo    the finger taps "Add photo" and a picture appears in the grid
       photo-lands  that picture flies into the Memories row
-      accept-plan  the finger taps a plan's Accept and an "Accepted" stamp
-                   appears — NEVER a real click: accepting answers the other
-                   person and pings them
     Drawn by the overlay only — nothing is added to the form or saved.
+    (Accepting a plan is NOT acted out any more: it is a real Accept, pressed
+    when you press the step's own "Accept" — see the Messages steps below.)
   */
-  demo?: "add-photo" | "photo-lands" | "accept-plan";
+  demo?: "add-photo" | "photo-lands";
   /** Press the `press` control this many times (default once) — the
       list of competitions wraps, so a step can be taken more than once. */
   pressTimes?: number;
-  /** The forward button's word when it isn't "Next" — the opening card's "Show me". */
+  /** The forward button's word when it isn't "Next" — the opening card's
+      "Show me", the invite's "Accept". A step with one is a question, so a tap
+      on the lit area doesn't answer it; only the button does. */
   next?: string;
   /** A second `data-tour` to light WITH the anchor — the hole grows to cover both. */
   alsoAnchor?: string;
@@ -101,8 +102,12 @@ export type Tour = {
     on any gym gets you ("just tell the actions").
   • Match: ranked by interests, concentration and when you train — never
     "same gyms" (owner: "I don't want to put them in the same gym").
+  • Then the first person's profile: why you match, and the hours you share
+    (2026-10-02).
   • Sessions: lights "+ Post your session" and "Search by time" together, so
     the text sits UNDER them instead of over them.
+  • Messages: the chat where someone planned a session with you — you accept
+    it for real, and the walk shows it on your Profile (2026-10-02).
   • Profile: log your workouts → a photo with your training partner → it lands
     in Memories → the leaderboards, your house.
 
@@ -137,8 +142,24 @@ export const tourSteps: TourStep[] = [
     title: "Match",
     body: "Find people who share your interests, concentration or training times.",
   },
+  /*
+    INTO THE FIRST PERSON'S PROFILE (owner, 2026-10-02: "you click their
+    profile and you see when you match and similar times"). The finger taps
+    View profile; the light covers "Why you match" and "When you're both free"
+    — the red chips of the hours you share. Someone with no reasons to list
+    has no first card, and the light is the times card alone.
+  */
+  {
+    press: "match-first-card-view",
+    anchor: "person-times",
+    alsoAnchor: "person-why",
+    title: "Why you match",
+    body: "Open a profile to see what you have in common and when you’re both free.",
+  },
   {
     press: "match-tab-sessions",
+    // Back from the profile first — the route takes it there, then the tap.
+    route: "/match",
     /* The Sessions tab on top AND the post row under it, in one light
        (owner, 2026-09-30: "highlight the tab on top and just see the Post
        your session"). */
@@ -157,18 +178,57 @@ export const tourSteps: TourStep[] = [
     body: "Plan your sessions easily in the chat.",
   },
   /*
-    INTO A CHAT, TO A PLAN (owner, 2026-09-30: "you click it and it goes to the
-    chat and accepts it"). The finger opens the top chat and lights its newest
-    plan; Accept is tapped as a drawing only. A student with no chats yet — so
-    every brand-new one — simply doesn't get this step.
+    AN INVITE, ACCEPTED FOR REAL, THEN ON YOUR PROFILE (owner, 2026-10-02:
+    "it zooms the chat where somebody scheduled with you, then you accept and
+    it shows in the calendar, and make sure it stays accepted … and show how it
+    shows in profile after you accepted it").
+
+    • The finger opens the chat holding the soonest invite someone sent you
+      (db/pending_invites.sql) — wherever it sits in the list — and lights it.
+    • Its forward button says "Accept". Pressing it is YOUR answer: the next
+      step taps the card's real Accept, so the session really is accepted and
+      the other person is told, exactly as if you had tapped it yourself. (It
+      used to be a drawn "Accepted" stamp that changed nothing.)
+    • Then the Profile: Upcoming sessions, and the day in the calendar — the
+      arrow is pressed until that day is on screen.
+
+    One group: with no invite waiting — every brand-new student — the whole
+    run is skipped after the first step gives up, rather than each one
+    waiting out its own four seconds.
   */
   {
-    press: "msg-first-dm",
+    press: "msg-invite-dm",
     anchor: "dm-plan",
-    demo: "accept-plan",
     group: "chat",
-    title: "Accept a plan",
-    body: "Accept it and the session shows up on your Profile.",
+    title: "Someone planned a session with you",
+    body: "Accept it and it goes in your calendar.",
+    next: "Accept",
+  },
+  {
+    press: "plan-accept",
+    // Lit once the card says "You're on" — i.e. once the answer is saved.
+    anchor: "plan-on",
+    alsoAnchor: "dm-plan",
+    group: "chat",
+    title: "You’re on",
+    body: "It stays accepted in the chat, and it’s on your Profile now.",
+  },
+  {
+    press: "tab-/profile",
+    route: "/profile",
+    anchor: "profile-upcoming",
+    group: "chat",
+    title: "Upcoming sessions",
+    body: "Every session you accept waits here, with who and where.",
+  },
+  {
+    press: "cal-next-plan",
+    // The forward arrow lets go of this name once the day is on screen.
+    pressTimes: 4,
+    anchor: "cal-plan-day",
+    group: "chat",
+    title: "In your calendar",
+    body: "Dashed until you’ve trained together.",
   },
 
   /* ── Profile ──────────────────────────────────────────────────────────── */

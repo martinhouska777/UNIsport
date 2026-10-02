@@ -160,8 +160,14 @@ export default function MatchCard({
         </div>
 
         {/* Was 22px tall with 10px text — the only action on the card and the
-            hardest thing on it to hit. Now a real 32px control. */}
-        <Button size="sm" full onClick={() => onView?.(match)}>
+            hardest thing on it to hit. Now a real 32px control.
+            data-tour: the walk opens the first card's profile (lib/tour.ts). */}
+        <Button
+          size="sm"
+          full
+          onClick={() => onView?.(match)}
+          data-tour={tour ? `${tour}-view` : undefined}
+        >
           View profile
         </Button>
       </div>

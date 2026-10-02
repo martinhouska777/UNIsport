@@ -31,6 +31,8 @@ import Avatar from "./Avatar";
 import ReadTicks from "./ReadTicks";
 import { teamFor } from "@/lib/cohorts";
 import type { HouseColors } from "@/lib/gyms";
+import { listPendingInvites } from "@/lib/supabase/sessionPlans";
+import { useTourRunning } from "@/lib/tour";
 
 // Channel icon keys (seeded in db/messages.sql) → icon components.
 const CHANNEL_ICONS: Record<string, (p: { size?: number }) => React.ReactElement> = {
@@ -97,6 +99,21 @@ export default function MessagesList({
       active = false;
     };
   }, [universityKey]);
+
+  /* The chat holding the soonest invite someone sent you — the walk opens it
+     (lib/tour.ts). Only asked while a walk is running; nothing else uses it. */
+  const touring = useTourRunning();
+  const [inviteChat, setInviteChat] = useState<string | null>(null);
+  useEffect(() => {
+    if (!touring) return;
+    let active = true;
+    listPendingInvites()
+      .then((invites) => active && setInviteChat(invites[0]?.conversationId ?? null))
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [touring]);
 
   const filteredDms = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -215,6 +232,7 @@ export default function MessagesList({
             loading={conversations === null}
             onOpen={onOpenDm}
             coloursOf={coloursOf}
+            inviteChat={inviteChat}
           />
         )}
 
@@ -238,12 +256,15 @@ function DirectList({
   loading,
   onOpen,
   coloursOf,
+  inviteChat,
 }: {
   list: DmConversation[];
   loading: boolean;
   onOpen: (c: DmConversation) => void;
   /** A person's house colours for their avatar, or null for the school tint. */
   coloursOf: (id: string) => HouseColors | null;
+  /** The chat with an invite waiting for you, while a walk is running. */
+  inviteChat: string | null;
 }) {
   if (loading) {
     return <SkeletonRows count={7} />;
@@ -257,13 +278,14 @@ function DirectList({
   }
   return (
     <div>
-      {list.map((c, n) => (
+      {list.map((c) => (
         <button
           key={c.conversationId}
           type="button"
           onClick={() => onOpen(c)}
-          /* data-tour: the walk opens the top chat to show a plan (lib/tour.ts). */
-          data-tour={n === 0 ? "msg-first-dm" : undefined}
+          /* data-tour: the walk opens the chat where someone planned a session
+             with you, wherever it sits in the list (lib/tour.ts). */
+          data-tour={c.conversationId === inviteChat ? "msg-invite-dm" : undefined}
           className="flex w-full items-stretch gap-3 pl-3.5 text-left active:bg-surface-2"
         >
           <span className="flex items-center py-2.5">

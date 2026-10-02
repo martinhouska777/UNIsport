@@ -177,7 +177,8 @@ export default function UpcomingSessions({
       )}
 
       {upcoming.length > 0 && (
-        <div>
+        /* data-tour: where the walk shows the session you just accepted. */
+        <div data-tour="profile-upcoming">
           <div className={HEAD}>Upcoming sessions</div>
           <div className="flex flex-col gap-2">
             {upcoming.map((p) => (

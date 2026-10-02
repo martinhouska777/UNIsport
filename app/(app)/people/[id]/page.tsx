@@ -357,9 +357,10 @@ function PersonProfile() {
             {/* WHY YOU MATCH — FIRST under who they are (owner, 2026-10-01:
                 "when you click somebody's profile, first is why you match"),
                 because it is what the tap was asking. The one tinted card on
-                the page. EVERY reason, not the handful the card had room for. */}
+                the page. EVERY reason, not the handful the card had room for.
+                data-tour: the walk lights this card and the next (lib/tour.ts). */}
             {reasons.length > 0 && (
-              <div className="rounded-2xl border border-primary-line bg-primary-tint p-3.5">
+              <div data-tour="person-why" className="rounded-2xl border border-primary-line bg-primary-tint p-3.5">
                 <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-primary">
                   Why you match
                 </div>
@@ -381,7 +382,7 @@ function PersonProfile() {
                 2026-09-30: "this is one of the main things that we are
                 doing"). It used to be a row of unlabelled chips at the foot of
                 Training. */}
-            <div className="rounded-2xl border border-border bg-surface p-3.5">
+            <div data-tour="person-times" className="rounded-2xl border border-border bg-surface p-3.5">
               <SectionLabel>When you’re both free</SectionLabel>
               <div className="mt-2.5">
                 <ScheduleOverlap

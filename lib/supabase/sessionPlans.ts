@@ -193,6 +193,21 @@ export async function listPlansToConfirm(): Promise<PlanToConfirm[]> {
   }));
 }
 
+/** A session someone else planned with the caller, still waiting for an answer. */
+export type PendingInvite = { planId: string; conversationId: string; scheduledAt: string };
+
+/** The caller's unanswered invites that are still to come, soonest first
+    (db/pending_invites.sql). The walk opens the chat of the first one. */
+export async function listPendingInvites(): Promise<PendingInvite[]> {
+  const { data, error } = await createClient().rpc("my_pending_invites");
+  if (error) throw new Error(`listPendingInvites failed: ${error.message}`);
+  return (data as Record<string, unknown>[]).map((r) => ({
+    planId: r.plan_id as string,
+    conversationId: r.conversation_id as string,
+    scheduledAt: r.scheduled_at as string,
+  }));
+}
+
 /** The caller's accepted, upcoming sessions, soonest first. */
 export async function listUpcomingPlans(): Promise<UpcomingPlan[]> {
   const { data, error } = await createClient().rpc("my_upcoming_plans");

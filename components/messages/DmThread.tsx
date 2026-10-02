@@ -46,6 +46,13 @@ export default function DmThread({
   const [peer, setPeer] = useState<PeerState | null>(null);
   const [planOpen, setPlanOpen] = useState(false); // "Plan a session" form
   const [editPlan, setEditPlan] = useState<DmPlan | null>(null); // reschedule editor
+  /*
+    The plan the walk lights (lib/tour.ts): the newest one the other person
+    sent you that was still waiting for your answer when the chat opened. Held
+    rather than recomputed, so it stays the same card after Accept turns it
+    into "You're on" — the walk lights it again then.
+  */
+  const [tourPlan, setTourPlan] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   // Load the other person's profile photo for the header (RLS-safe public read).
   useEffect(() => {
@@ -69,11 +76,18 @@ export default function DmThread({
       ]);
       setMessages(m);
       setPeer(p);
+      // Not before we know who "you" are — your own proposal is not an invite.
+      if (currentUserId) {
+        const invite = [...m]
+          .reverse()
+          .find((x) => x.plan?.status === "proposed" && x.senderId !== currentUserId);
+        setTourPlan((held) => held ?? invite?.plan?.planId ?? null);
+      }
       signalUnreadChanged();
     } catch (e) {
       setError((e as Error).message);
     }
-  }, [conversationId]);
+  }, [conversationId, currentUserId]);
 
   useEffect(() => {
     load();
@@ -137,8 +151,6 @@ export default function DmThread({
         )}
         {messages?.map((m, i) => {
           const mine = m.senderId === currentUserId;
-          // The newest plan in the thread is the one the walk lights (lib/tour.ts).
-          const newestPlan = m.kind === "plan" && !messages.slice(i + 1).some((x) => x.kind === "plan");
           const showDay = i === 0 || !sameDay(m.createdAt, messages[i - 1].createdAt);
           return (
             <div key={m.id} className="flex flex-col gap-2">
@@ -152,7 +164,7 @@ export default function DmThread({
               {m.kind === "plan" && m.plan ? (
                 <PlanCard
                   plan={m.plan}
-                  tour={newestPlan ? "dm-plan" : undefined}
+                  tour={m.plan.planId === tourPlan ? "dm-plan" : undefined}
                   conversationId={conversationId}
                   mine={mine}
                   otherName={title}

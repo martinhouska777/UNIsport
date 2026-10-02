@@ -162,8 +162,8 @@ export default function PlanCard({
       <div className="mt-3 border-t border-border pt-2.5">
         {plan.status === "proposed" && !mine && (
           <div className="flex gap-2">
-            {/* The walk's finger taps this as a DRAWING only — it is never
-                clicked, because accepting answers the other person. */}
+            {/* The walk taps this FOR REAL, but only once you press its
+                "Accept" — an answer is never given without you asking. */}
             <Button
               size="sm"
               disabled={busy}
@@ -190,7 +190,10 @@ export default function PlanCard({
         )}
 
         {plan.status === "accepted" && !isPast && (
-          <div className="flex items-center gap-1.5 text-[12px] font-medium text-success">
+          <div
+            data-tour={tour ? "plan-on" : undefined}
+            className="flex items-center gap-1.5 text-[12px] font-medium text-success"
+          >
             <IconCheck size={14} /> You&apos;re on — see you there
           </div>
         )}

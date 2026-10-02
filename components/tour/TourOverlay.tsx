@@ -40,7 +40,6 @@
 import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { setTourRunning, type Tour } from "@/lib/tour";
-import { IconCheck } from "@/components/icons";
 
 const PAD = 8; // breathing room around the lit element
 const EDGE = 6; // never let the hole run off the side of the screen
@@ -155,9 +154,6 @@ export default function TourOverlay({
   const [tapAt, setTapAt] = useState<{ x: number; y: number } | null>(null);
   // The demo photo (steps with `demo`) — where it is, and whether it is flying.
   const [shot, setShot] = useState<Shot | null>(null);
-  // The "Accepted" stamp drawn over a plan's buttons (demo accept-plan), and
-  // the step it belongs to — it is never shown on any other step.
-  const [stamp, setStamp] = useState<{ box: Box; step: number } | null>(null);
   const captionRef = useRef<HTMLDivElement | null>(null);
   const nextRef = useRef<HTMLButtonElement | null>(null);
   const titleId = useId();
@@ -421,21 +417,7 @@ export default function TourOverlay({
       timers.push(setTimeout(() => !cancelled && fn(), ms));
 
     later(DEMO_WAIT, () => {
-      if (demo === "accept-plan") {
-        // A plan you already answered has no Accept — then the lit card is all.
-        const accept = visibleAnchor("plan-accept");
-        if (!accept) return;
-        const r = accept.getBoundingClientRect();
-        const row = (accept.parentElement ?? accept).getBoundingClientRect();
-        setTapAt({ x: r.left + r.width / 2, y: r.top + r.height / 2 });
-        later(TAP_LEAD, () => {
-          setStamp({
-            box: { top: row.top, left: row.left, width: row.width, height: row.height, radius: 10 },
-            step: i,
-          });
-          later(TAP_HOLD, () => setTapAt(null));
-        });
-      } else if (demo === "add-photo") {
+      if (demo === "add-photo") {
         const add = visibleAnchor("log-photo-add");
         if (!add) return;
         const r = add.getBoundingClientRect();
@@ -462,7 +444,7 @@ export default function TourOverlay({
       cancelled = true;
       timers.forEach(clearTimeout);
     };
-  }, [demo, i]);
+  }, [demo]);
   // Only the two photo steps show it; everything after them simply doesn't.
   const showShot = step.demo === "add-photo" || step.demo === "photo-lands";
 
@@ -600,13 +582,17 @@ export default function TourOverlay({
           only ever press Next. The real control underneath never receives the
           tap — this sits over it — so the step that follows performs the press
           itself, animation and all, and the outcome is the same either way.
+
+          EXCEPT on a step that asks (its own `next` word): there only the
+          button answers. The invite card is lit whole, Decline included, and
+          a tap on Decline must never come out as an Accept.
         */
         <button
           type="button"
           aria-hidden="true"
           tabIndex={-1}
-          onClick={next}
-          className="tour-hole absolute cursor-pointer"
+          onClick={step.next ? undefined : next}
+          className={`tour-hole absolute ${step.next ? "" : "cursor-pointer"}`}
           style={{
             top: box.top,
             left: box.left,
@@ -618,23 +604,6 @@ export default function TourOverlay({
         />
       ) : (
         <div className="absolute inset-0" style={{ background: dim }} />
-      )}
-
-      {/* The drawn "Accepted" — over the plan's two buttons, never a real answer. */}
-      {stamp && stamp.step === i && (
-        <div
-          aria-hidden="true"
-          className="tour-shot-pop pointer-events-none absolute flex items-center justify-center gap-1.5 border border-border bg-surface text-[13px] font-semibold text-success"
-          style={{
-            top: stamp.box.top,
-            left: stamp.box.left,
-            width: stamp.box.width,
-            height: stamp.box.height,
-            borderRadius: stamp.box.radius,
-          }}
-        >
-          <IconCheck size={14} /> Accepted
-        </div>
       )}
 
       {/* The demo photo, over the dim and under the finger. */}
