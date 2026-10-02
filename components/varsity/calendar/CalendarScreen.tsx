@@ -25,7 +25,8 @@
        swallow the whole day. Two sessions take a half each.
     4. EVERY SESSION SAYS WHICH KIND IT WAS — the colour is the intensity, so
        water and erg are the same green and only the word tells them apart.
-       The figures stay in the day sheet: a column is about 33px of text wide.
+       The figures are on the session itself — the day sheet lists the plan,
+       a tap on a session opens its numbers: a column is about 33px wide.
     6. A DAY CAN BE OUT. Sick, injured, away or missed-for-another-reason
        (lib/varsity/daysOut.ts): the whole day painted in that reason's own
        colour, with its name in the middle. Only a day with nothing
@@ -58,7 +59,6 @@ import { teamMonthLogs } from "@/lib/varsity/teamTraining";
 import { fetchPlan } from "@/lib/varsity/planStore";
 import { kindOf } from "@/lib/varsity/athleteHome";
 import { kindBar, kindBlock, kindColor, kindLegend } from "@/lib/varsity/home";
-import { formatMetrics } from "@/lib/varsity/logParse";
 import {
   logLabel,
   logLabelParts,
@@ -293,15 +293,22 @@ function DaySheet({
       ) : (
         <div className="flex flex-col gap-2">
           {logs.map((l) => {
-            const metrics = formatMetrics(l.minutes, l.metres, l.split);
             const planned = l.dayKey ? planSessions[l.dayKey] : undefined;
             /* The same name the month grid uses, so one session is called one
-               thing on both screens. What it actually WAS — the coach's
-               "14k UT2", or whatever the athlete called their own — goes on
-               the line under it, and only when it says something the name
-               doesn't already. */
+               thing on both screens. Under it, WHAT WAS PLANNED, in the coach's
+               own words and in full ("2x2k open in small boats") — or, for a
+               session of the athlete's own, what they called it, when that
+               says something the name doesn't already.
+
+               NOTHING THAT WAS LOGGED (owner, 2026-10-02: "you don't need to
+               see what we logged there… we can click it when we want to see
+               it"). The minutes / metres line and the note are gone; a tap
+               opens the session with all of it. Only a session that was NOT
+               in the plan is labelled — EXTRA — and plan sessions carry no
+               chip at all. */
             const name = logLabel(l, planned);
-            const said = l.title.trim() && l.title.trim() !== name ? l.title.trim() : "";
+            const own = l.title.trim() && l.title.trim() !== name ? l.title.trim() : "";
+            const said = (planned?.description ?? "").trim() || own;
             return (
               <Row
                 key={l.id}
@@ -314,13 +321,11 @@ function DaySheet({
                 />
                 <div className="min-w-0 flex-1">
                   <div className="text-[13px] font-semibold text-text">{name}</div>
-                  {said && <div className="mt-0.5 truncate text-[12px] text-text-2">{said}</div>}
-                  {metrics && <div className="mt-0.5 text-[12px] text-text-2">{metrics}</div>}
-                  {l.note && <div className="mt-0.5 truncate text-[11px] text-muted">{l.note}</div>}
+                  {said && <div className="mt-0.5 text-[12px] leading-snug text-text-2">{said}</div>}
                 </div>
-                {l.source === "plan" && (
+                {l.source === "extra" && (
                   <span className="flex-shrink-0 rounded-md border border-border px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-muted">
-                    Plan
+                    Extra
                   </span>
                 )}
                 {!readOnly && <IconChevronRight size={15} className="mt-0.5 flex-shrink-0 text-muted" />}
