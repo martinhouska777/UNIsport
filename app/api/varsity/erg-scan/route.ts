@@ -60,6 +60,20 @@ export async function POST(request: Request) {
     return Response.json({ result: read.result });
   } catch (e) {
     console.error("erg-scan:", e);
-    return Response.json({ error: "scan_failed" }, { status: 502 });
+    // What Anthropic said (status, type, message — never the key), so a bad key,
+    // an empty balance and a wrong model can be told apart: to the rower they all
+    // read "couldn't read that photo".
+    const up = e as { status?: number; error?: { error?: { type?: string; message?: string } } };
+    return Response.json(
+      {
+        error: "scan_failed",
+        upstream: {
+          status: up.status ?? null,
+          type: up.error?.error?.type ?? null,
+          message: (up.error?.error?.message ?? (e instanceof Error ? e.message : "")).slice(0, 200),
+        },
+      },
+      { status: 502 },
+    );
   }
 }
