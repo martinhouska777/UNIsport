@@ -498,7 +498,9 @@ function ListHead({
   );
 }
 
-const athleteHref = (id: string) => `/varsity/coach/athlete/${id}`;
+/* Results typed in from the squad's own sheets belong to rowers with no account
+   yet (ids start "ae6c0000-"), so there is no page to open for them. */
+const athleteHref = (id: string) => (id.startsWith("ae6c0000-") ? undefined : `/varsity/coach/athlete/${id}`);
 const dayLabel = (d: Date) => `${d.getDate()} ${MO[d.getMonth()]}`;
 const testWords = (w: TeamWorkout) => w.session.description.trim() || sessionLabel(w.session);
 
