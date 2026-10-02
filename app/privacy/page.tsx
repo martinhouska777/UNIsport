@@ -52,6 +52,12 @@ export const metadata: Metadata = {
   the session — the athlete and their coach. "Otherwise we do not store it"
   stopped being true, so that sentence went.
 
+  2026-10-02 (later): "Gym crowd reports" and the gym-photo half of "Gym
+  reviews and photos" went. Nothing in the app asks how busy a gym is any
+  more (cut 2026-09-22) and gym photos were cut today (owner: "only in
+  memories and later in feed"). Rows already in gym_crowd / gym_photos and
+  files in the gym-photos bucket were NOT deleted by that change.
+
   One typography trap, found by reading the rendered page rather than the file:
   the space after a bold lead-in `<span>` is SWALLOWED in any paragraph that
   also contains an entity like `&apos;` — "Notifications.If you turn on…" shipped
@@ -122,20 +128,10 @@ export default function PrivacyPolicyPage() {
           board posts, who you follow, and who you record as a training partner.
         </p>
         <p>
-          <span className="text-l-text">Gym crowd reports.</span>{" "}
-          If you tap how busy a gym is, we store that answer with your account and the time. Other
-          students at your school see it only as a level and a count (&ldquo;2 people said
-          Busy&rdquo;), never your name, and it stops being shown after two hours.
-        </p>
-        <p>
-          <span className="text-l-text">Gym reviews and photos.</span>{" "}
+          <span className="text-l-text">Gym reviews.</span>{" "}
           If you review a gym, we store your scores and your comment with your account, and other
-          signed-in users see them on that gym&apos;s page with your name and profile photo. If you
-          add a photo of a gym, we store the picture and which gym it shows. Other signed-in users
-          see it on the gym&apos;s page without your name, and the newest one becomes that
-          gym&apos;s picture on the Gyms list. Gym photos are kept in public storage, so anyone who
-          has a photo&apos;s direct link can open it. You can take down your own review or photo
-          from the gym&apos;s page at any time, which deletes it.
+          signed-in users see them on that gym&apos;s page with your name and profile photo. You
+          can take down your own review from the gym&apos;s page at any time, which deletes it.
         </p>
         <p>
           <span className="text-l-text">The waitlist.</span>{" "}
@@ -182,7 +178,7 @@ export default function PrivacyPolicyPage() {
         </p>
         <List
           items={[
-            "Your account, profile, matches, messages, logs, and the gym reviews and photos you post — because you asked us to give you the app, and it cannot work without them.",
+            "Your account, profile, matches, messages, logs, and the gym reviews you post — because you asked us to give you the app, and it cannot work without them.",
             "The waitlist — with your consent, given when you join it and withdrawn by asking us to take you off it.",
             "Your training details, personal records, session logs and the photos you attach — with your consent. Some of it says something about your body and your health, which the law treats as a special category, so we hold it only because you chose to enter it, and you can remove it, or your whole account, at any time.",
             "Push notifications — with your consent, given when your browser asks and withdrawn by turning them off.",

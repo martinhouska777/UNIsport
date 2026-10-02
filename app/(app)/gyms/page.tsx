@@ -5,7 +5,7 @@ import Link from "next/link";
 import { gymsFor, type Gym } from "@/lib/gyms";
 import { useAppState } from "@/components/AppState";
 import { getUniversity } from "@/lib/themes";
-import { useFavorites, useGymPhotos } from "@/lib/gymSocial";
+import { useFavorites } from "@/lib/gymSocial";
 import { gymOpenState, useClock, type Clock } from "@/lib/gymHours";
 import OpenNow from "@/components/gyms/OpenNow";
 import GoingLine from "@/components/gyms/GoingLine";
@@ -33,11 +33,10 @@ const filters: { key: Filter; label: string }[] = [
   every render of an already-favourited gym: bumping it changes the inner span's
   key, which remounts it and restarts the animation from the top.
 
-  Three places, three looks: `band` floats in the corner of a main gym's colour
-  band, in the band's own contrast colour; `cover` floats on a main gym's
-  PHOTO, which fades to the card's surface at the top, so it takes the surface
-  and the theme's ink like the name beside it (a white heart there vanished);
-  `row` sits in line at the end of a house row, before the chevron.
+  Two places, two looks: `band` floats in the corner of a main gym's colour
+  band, in the band's own contrast colour; `row` sits in line at the end of a
+  house row, before the chevron. (A third, `cover`, sat on a gym's photo until
+  gym photos went on 2026-10-02.)
 */
 function FavHeart({
   fav,
@@ -46,15 +45,13 @@ function FavHeart({
 }: {
   fav: boolean;
   onToggle: () => void;
-  place: "band" | "cover" | "row";
+  place: "band" | "row";
 }) {
   const [taps, setTaps] = useState(0);
   const look =
     place === "band"
       ? "absolute right-2 top-2 z-10 h-7 w-7 bg-primary-contrast/15 text-primary-contrast"
-      : place === "cover"
-        ? `absolute right-2 top-2 z-10 h-7 w-7 bg-surface/85 ${fav ? "text-primary-live" : "text-text-2"}`
-        : `h-7 w-7 flex-shrink-0 ${fav ? "text-primary-live" : "text-text-3"}`;
+      : `h-7 w-7 flex-shrink-0 ${fav ? "text-primary-live" : "text-text-3"}`;
   return (
     <button
       type="button"
@@ -120,53 +117,33 @@ type CardProps = {
   /* The tour presses the first card to open a gym in front of you, rather than
      arriving there behind your back (lib/tour.ts). Only that card gets one. */
   tour?: string;
-  /* The newest photo anyone at the school has added to this gym (lib/gymSocial
-     useGymPhotos). When there is one it replaces the colour band. */
-  cover?: string | null;
 };
 
 /* The card chassis both kinds share: white, a hairline edge, the soft lift. */
 const CARD =
   "relative block overflow-hidden rounded-2xl border border-border bg-surface shadow-[var(--card-shadow)]";
 
-function MainCard({ gym, fav, onToggleFav, now, going, tour, cover }: CardProps) {
+function MainCard({ gym, fav, onToggleFav, now, going, tour }: CardProps) {
   return (
     <Link href={`/gyms/${gym.slug}`} data-tour={tour} className={CARD}>
-      <FavHeart fav={fav} onToggle={onToggleFav} place={cover ? "cover" : "band"} />
+      <FavHeart fav={fav} onToggle={onToggleFav} place="band" />
       {/*
-        This block is where the gym's photo goes. Until there is one it is a
-        SOLID BAND OF THE SCHOOL'S COLOUR with the name in white (owner,
+        A SOLID BAND OF THE SCHOOL'S COLOUR with the name in white (owner,
         2026-09-27, option 3 of five drawn: "the top from 3"). It replaced a
         wash that took turns down the list through the school's palette
         (`gymCardColors` in lib/themes.ts, no longer read here), which left
         Harvard's list striped pink, white, pink. Every card is now the same
         `--primary` with `--primary-contrast` on it — tokens, so Yale's band is
         blue and Princeton's orange without a line of code (rules 1, 2).
+        Until 2026-10-02 a student's photo of the gym could replace the band;
+        gym photos are gone (owner: "only in memories and later in feed").
       */}
-      {cover ? (
-        /*
-          THE DAY THE BAND GOES (2026-09-22): a student has added a photo of
-          this gym, so the card wears it. The name still has to read on top of
-          whatever the picture is, so a veil of the card surface fades down
-          from the top — the text sits on the veil, not on the photo.
-        */
-        <div className="relative flex h-24 items-start overflow-hidden pr-11">
-          {/* eslint-disable-next-line @next/next/no-img-element -- user upload, sized here */}
-          <img src={cover} alt="" className="absolute inset-0 h-full w-full object-cover" />
-          <div className="absolute inset-0 bg-[linear-gradient(180deg,color-mix(in_oklab,var(--surface)_88%,transparent),color-mix(in_oklab,var(--surface)_35%,transparent))]" />
-          <div className="relative p-3">
-            <div className="text-[15px] font-medium text-text">{gym.name}</div>
-            <div className="text-[11px] text-text-2">{gym.address}</div>
-          </div>
+      <div className="flex h-[68px] items-center bg-primary px-3.5 pr-11">
+        <div className="min-w-0">
+          <div className="truncate text-[15px] font-semibold text-primary-contrast">{gym.name}</div>
+          <div className="truncate text-[12px] text-primary-contrast/75">{gym.address}</div>
         </div>
-      ) : (
-        <div className="flex h-[68px] items-center bg-primary px-3.5 pr-11">
-          <div className="min-w-0">
-            <div className="truncate text-[15px] font-semibold text-primary-contrast">{gym.name}</div>
-            <div className="truncate text-[12px] text-primary-contrast/75">{gym.address}</div>
-          </div>
-        </div>
-      )}
+      </div>
       <StatsRow gym={gym} now={now} going={going} />
     </Link>
   );
@@ -230,9 +207,6 @@ function HouseCard({ gym, fav, onToggleFav, now, going }: CardProps) {
 export default function GymsPage() {
   const { userId, universityKey } = useAppState();
   const { isFavorite, toggle } = useFavorites(userId);
-  // The school's photos of its gyms (db/gym_photos.sql) — the newest one
-  // becomes the card's picture in place of the colour band.
-  const { coverFor } = useGymPhotos(userId);
   // The Buddy Board by gym — "3 going tonight" on the card people choose from.
   const { goingFor } = useBoardByGym(userId);
   // One clock for the whole list, so every card agrees on what time it is.
@@ -352,7 +326,6 @@ export default function GymsPage() {
             now={now}
             going={goingFor(g.name)}
             tour={idx === 0 ? "gyms-first-card" : undefined}
-            cover={coverFor(g.slug)?.url ?? null}
           />
         ))}
 

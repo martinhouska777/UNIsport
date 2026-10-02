@@ -11,9 +11,12 @@
 
   What the page is, top to bottom: which gym and where — what the campus
   thinks of it (the rating, its breakdown and the comments) — the week's hours
-  — photos — who has said they're going. "How busy is it" was cut on the
-  owner's instruction the same day; so was the strip of your own sessions here,
-  and so was the "Open now" line (the hours card answers it).
+  — who has said they're going. "How busy is it" was cut on the owner's
+  instruction the same day; so was the strip of your own sessions here, and so
+  was the "Open now" line (the hours card answers it). The PHOTOS strip went on
+  2026-10-02 (owner: "there will be no photos for the gyms, only in memories
+  and later in feed"); components/gyms/GymPhotos.tsx and useGymPhotos are left
+  in place, unused, like the crowd code.
 
   All colour is theme tokens (rule 1).
 */
@@ -21,8 +24,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useAppState } from "@/components/AppState";
 import { getUniversity } from "@/lib/themes";
-import { useFavorites, useGymPhotos } from "@/lib/gymSocial";
-import GymPhotos from "@/components/gyms/GymPhotos";
+import { useFavorites } from "@/lib/gymSocial";
 import GymReviews from "@/components/gyms/GymReviews";
 import WeekHours from "@/components/gyms/WeekHours";
 import GoingLine, { boardHref } from "@/components/gyms/GoingLine";
@@ -43,8 +45,6 @@ export default function GymProfile({ gym }: { gym: Gym }) {
   const { userId, universityKey } = useAppState();
   const { data: myProfile } = useProfileData();
   const { isFavorite, toggle } = useFavorites(userId);
-  // The school's own pictures of this gym (db/gym_photos.sql).
-  const { photosFor, addPhoto, removePhoto } = useGymPhotos(userId);
   // Who has already said they're coming here (the Buddy Board, by gym).
   const { goingFor } = useBoardByGym(userId);
   const going = goingFor(gym.name);
@@ -130,17 +130,6 @@ export default function GymProfile({ gym }: { gym: Gym }) {
           2026-09-22) — see weekHours() for the day that changes.
         */}
         <WeekHours hours={gym.hours} now={now} />
-
-        {/*
-          PHOTOS, where the empty four-panel carousel once was. Taken by the
-          people who train here rather than by anyone walking the campus with a
-          camera — the newest one also becomes the gym's picture on the list.
-        */}
-        <GymPhotos
-          photos={photosFor(gym.slug)}
-          onAdd={(file) => addPhoto(gym.slug, file)}
-          onRemove={removePhoto}
-        />
 
         {/*
           WHO'S GOING. The Buddy Board already holds people who volunteered for
