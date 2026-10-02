@@ -510,6 +510,8 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
           raceBoats={raceBoats}
           raceTitle={raceTitle}
           onOpenRace={(dayKey, focus) => openRaceBoard(dayKey, { focus })}
+          onOpenWorkout={(dayKey) => setOpen(dayKey)}
+          onOpenRaceDay={(dayKey) => openRaceBoard(dayKey)}
         />
       )}
       <div className="flex flex-col gap-1.5">

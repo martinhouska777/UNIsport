@@ -327,7 +327,7 @@ export function sessionRuns(columns: SessionColumn[]): SessionRun[] {
   So "8×500m, 1:30 rest" → "8×500m", "3×10' / 3' rest @ r24" → "3×10' @ r24",
   "6×1k (2' rest)" → "6×1k". Only a TIME followed by rest (or "rest" and a
   time) goes: "r20" is a rate and stays, "UT2 recovery paddle" stays. The
-  grown tag still says the whole workout, rest included.
+  board a tap on the tag opens still says the whole workout, rest included.
 */
 const REST_AMOUNT = String.raw`(?<![A-Za-z\d.:])\d+(?:[:.]\d+)?\s*(?:'|′|"|″|secs?|seconds?|mins?|minutes?|s|m)?`;
 const REST = new RegExp(
