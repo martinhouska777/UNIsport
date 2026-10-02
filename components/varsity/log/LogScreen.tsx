@@ -202,6 +202,9 @@ function LogEditor({
   // Already reading when the editor opened with a photo in hand (tab's Scan button).
   const [scanning, setScanning] = useState(!!state.scanFile);
   const [scanMsg, setScanMsg] = useState<string | null>(null);
+  // A read that filled the form: the button becomes "Scan again", and a sure
+  // read puts a green "Done" under it (an unsure one shows its warning instead).
+  const [scanFilled, setScanFilled] = useState(false);
   /*
     What the scan produced beyond the three visible fields. Rate and watts have
     no field of their own (they go in the note); the per-interval rows have no
@@ -254,6 +257,7 @@ function LogEditor({
         // Keep the photo even when the read failed — an unreadable screen is
         // exactly the one a human needs to look at.
         setScanned({ strokeRate: null, watts: null, monitor: null, intervals: [], image: image ?? null });
+        setScanFilled(false);
         setScanMsg(
           error === "unconfigured"
             ? "Photo scanning isn't switched on yet — enter the numbers by hand."
@@ -282,11 +286,10 @@ function LogEditor({
       if (result.strokeRate != null) bits.push(`r${result.strokeRate}`);
       if (result.avgWatts != null) bits.push(`${result.avgWatts}W`);
       if (bits.length) setNote((prev) => [bits.join(" · "), prev].filter(Boolean).join(" · "));
-      setScanMsg(
-        result.confident
-          ? "Filled from your photo — check it and save."
-          : "Read it, but I wasn't fully sure — please double-check.",
-      );
+      setScanFilled(true);
+      // A sure read needs no words beyond "Done" (drawn below). An unsure one
+      // keeps its warning instead: that is something the rower has to act on.
+      setScanMsg(result.confident ? null : "Read it, but I wasn't fully sure — please double-check.");
     },
     [isExtra],
   );
@@ -295,6 +298,7 @@ function LogEditor({
     if (!file) return;
     setScanning(true);
     setScanMsg(null);
+    setScanFilled(false);
     void scanErgPhoto(file).then(applyScan);
   };
 
@@ -535,8 +539,14 @@ function LogEditor({
                 disabled={scanning}
                 className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-primary-line bg-primary-tint py-3 text-[13px] font-semibold text-primary disabled:opacity-60"
               >
-                <IconCamera size={16} /> {scanning ? "Reading photo…" : "Scan C2 / RP3 monitor"}
+                <IconCamera size={16} />{" "}
+                {scanning ? "Reading photo…" : scanFilled ? "Scan again" : "Scan C2 / RP3 monitor"}
               </button>
+              {scanFilled && !scanning && !scanMsg && (
+                <p className="mt-1.5 flex items-center gap-1 text-[11px] font-semibold text-success">
+                  <IconCheckCircle size={13} /> Done
+                </p>
+              )}
               {scanMsg && <p className="mt-1.5 text-[11px] text-muted">{scanMsg}</p>}
               {teamWorkout && (
                 <p className="mt-1.5 text-[11px] leading-relaxed text-muted">
