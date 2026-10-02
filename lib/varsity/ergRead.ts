@@ -50,7 +50,7 @@ The PM5 View Detail screen, top to bottom:
 6. On interval screens a line like "r550" under the last row is the metres rowed during rest. It is not a row and not part of any total. Ignore it.
 
 Which numbers go where:
-- "totalMinutes" is the SUMMARY row's time as a decimal number of minutes (16:19.3 -> 16.3, 1:00:00.0 -> 60). On an interval workout the summary row counts the WORK only, and so do its metres and split, whereas "Total Time:" in the header also counts the rests. Never use "Total Time:". Time, metres and split must describe the same stretch of rowing.
+- "totalMinutes" is the SUMMARY row's time as a decimal number of minutes with three decimals, so no second is lost (16:19.3 -> 16.322, 6:03.5 -> 6.058, 1:00:00.0 -> 60). On an interval workout the summary row counts the WORK only, and so do its metres and split, whereas "Total Time:" in the header also counts the rests. Never use "Total Time:". Time, metres and split must describe the same stretch of rowing.
 - "splitPer500" only when the pace column is headed "/500m" (average split as "m:ss.t"). Headed "watt": put the summary figure in "avgWatts" and return null for the split. Headed "cal/hr": null for both, because calories per hour is not watts.
 - "avgWatts" only when a watts figure is shown.
 - "strokeRate" is the "s/m" figure of the summary row.
