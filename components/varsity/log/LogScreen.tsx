@@ -54,6 +54,7 @@ import {
   saveExtraLog,
   updateLog,
   deleteLog,
+  attachLogPhoto,
   loadPendingDraft,
   keepPendingDraft,
   clearPendingDraft,
@@ -214,8 +215,8 @@ function LogEditor({
   /*
     What the scan produced beyond the three visible fields. Rate and watts have
     no field of their own (they go in the note); the per-interval rows have no
-    field at all; and `image` is the photo itself, which becomes the evidence
-    attached to a team-workout result. None of it survives a manual edit with no
+    field at all; and `image` is the photo itself, which is kept with the saved
+    session (and with the result, on a team workout). None of it survives a manual edit with no
     fresh scan — which is honest: the row then says exactly what was last saved.
   */
   const [scanned, setScanned] = useState<{
@@ -403,6 +404,12 @@ function LogEditor({
     }
     clearPendingDraft(athleteId, slot);
 
+    // A scanned session keeps its photo, for the rower and their coach to open
+    // from the session. Uploaded on SAVE, not on scan, so an abandoned edit never
+    // leaves an orphan image behind. Runs alongside the board below.
+    const keepPhoto =
+      scanned.image && res.id ? attachLogPhoto(athleteId, res.id, scanned.image) : Promise.resolve();
+
     // Team workout → also put this on the squad board. The split is stored in
     // seconds so the board can rank without re-parsing text, and the time is
     // rebuilt from split × distance where possible (the Minutes field is whole
@@ -435,6 +442,7 @@ function LogEditor({
       // knowing about but must not look like the log failed.
       if (shared.error) console.error("share result:", shared.error);
     }
+    await keepPhoto;
 
     setBusy(false);
     onSaved();

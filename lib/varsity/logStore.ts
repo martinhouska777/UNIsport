@@ -7,6 +7,7 @@
   Falls back to localStorage when Supabase env isn't configured.
 */
 import { createClient, hasSupabaseEnv } from "@/lib/supabase/client";
+import { deleteLogPhoto, uploadLogPhoto } from "@/lib/varsity/ergPhotos";
 
 export type LogSource = "plan" | "extra";
 
@@ -31,10 +32,14 @@ export type LogEntry = {
   split: string | null; // e.g. "1:52" (mainly erg)
   effort: number | null; // how hard it felt, 1–5 (effortOptions); null = not answered
   note: string;
+  // The monitor photo it was scanned from (log-photos bucket), or null. Never
+  // part of a draft: only a fresh scan sets it (attachLogPhoto), so editing the
+  // numbers by hand keeps the picture they came off.
+  photoPath?: string | null;
 };
 
 // What you pass in to create/update a log (id + created server-side).
-export type LogDraft = Omit<LogEntry, "id">;
+export type LogDraft = Omit<LogEntry, "id" | "photoPath">;
 
 /*
   HOW HARD IT FELT — five taps, no typing. The plan says what was prescribed
@@ -71,6 +76,7 @@ type Row = {
   split: string | null;
   effort?: number | null; // absent on a table that predates the column
   note: string;
+  photo_path?: string | null; // absent until db/varsity_log_photos.sql has run
 };
 
 const rowToEntry = (r: Row): LogEntry => ({
@@ -86,6 +92,7 @@ const rowToEntry = (r: Row): LogEntry => ({
   split: r.split,
   effort: r.effort ?? null,
   note: r.note ?? "",
+  photoPath: r.photo_path ?? null,
 });
 
 const draftToRow = (athleteId: string, d: LogDraft) => ({
@@ -276,8 +283,11 @@ export async function fetchLogsByCategory(
   return (data as Row[]).map(rowToEntry);
 }
 
+/* What a save hands back: the saved log's id, so a photo can be attached to it. */
+export type SaveResult = { error?: string; id?: string };
+
 /* ── Save a PLAN log (one per slot → update if it exists, else insert) ── */
-export async function savePlanLog(athleteId: string, draft: LogDraft): Promise<{ error?: string }> {
+export async function savePlanLog(athleteId: string, draft: LogDraft): Promise<SaveResult> {
   if (!hasSupabaseEnv()) {
     const all = loadLocal(athleteId);
     const idx = all.findIndex((l) => l.dayKey && l.dayKey === draft.dayKey);
@@ -294,14 +304,17 @@ export async function savePlanLog(athleteId: string, draft: LogDraft): Promise<{
     .eq("day_key", draft.dayKey)
     .maybeSingle();
   const row = draftToRow(athleteId, draft);
-  const { error } = existing
-    ? await supabase.from("varsity_logs").update(row).eq("id", (existing as { id: string }).id)
-    : await supabase.from("varsity_logs").insert(row);
-  return error ? { error: error.message } : {};
+  if (existing) {
+    const id = (existing as { id: string }).id;
+    const { error } = await supabase.from("varsity_logs").update(row).eq("id", id);
+    return error ? { error: error.message } : { id };
+  }
+  const { data, error } = await supabase.from("varsity_logs").insert(row).select("id").single();
+  return error ? { error: error.message } : { id: (data as { id: string }).id };
 }
 
 /* ── Save an EXTRA log (always a new row) ── */
-export async function saveExtraLog(athleteId: string, draft: LogDraft): Promise<{ error?: string }> {
+export async function saveExtraLog(athleteId: string, draft: LogDraft): Promise<SaveResult> {
   if (!hasSupabaseEnv()) {
     const all = loadLocal(athleteId);
     all.push({ ...draft, id: `local-${Date.now()}` });
@@ -309,8 +322,12 @@ export async function saveExtraLog(athleteId: string, draft: LogDraft): Promise<
     return {};
   }
   const supabase = createClient();
-  const { error } = await supabase.from("varsity_logs").insert(draftToRow(athleteId, draft));
-  return error ? { error: error.message } : {};
+  const { data, error } = await supabase
+    .from("varsity_logs")
+    .insert(draftToRow(athleteId, draft))
+    .select("id")
+    .single();
+  return error ? { error: error.message } : { id: (data as { id: string }).id };
 }
 
 /* ── Update an existing log by id (used to edit an extra session) ── */
@@ -318,7 +335,7 @@ export async function updateLog(
   athleteId: string,
   id: string,
   draft: LogDraft,
-): Promise<{ error?: string }> {
+): Promise<SaveResult> {
   if (!hasSupabaseEnv()) {
     const all = loadLocal(athleteId);
     const idx = all.findIndex((l) => l.id === id);
@@ -328,7 +345,21 @@ export async function updateLog(
   }
   const supabase = createClient();
   const { error } = await supabase.from("varsity_logs").update(draftToRow(athleteId, draft)).eq("id", id);
-  return error ? { error: error.message } : {};
+  return error ? { error: error.message } : { id };
+}
+
+/*
+  ── Keep the monitor photo with a saved log ──
+  Called after the log itself has saved, with the photo the editor scanned.
+  A photo that fails to upload (bad signal, or the database step not run yet)
+  leaves the log saved without it — a missing picture is never a failed save.
+*/
+export async function attachLogPhoto(athleteId: string, logId: string, dataUrl: string): Promise<void> {
+  const path = await uploadLogPhoto(athleteId, logId, dataUrl);
+  if (!path) return;
+  const supabase = createClient();
+  const { error } = await supabase.from("varsity_logs").update({ photo_path: path }).eq("id", logId);
+  if (error) console.error("attachLogPhoto:", error.message);
 }
 
 /* ── Delete a log ── */
@@ -339,5 +370,7 @@ export async function deleteLog(athleteId: string, id: string): Promise<{ error?
   }
   const supabase = createClient();
   const { error } = await supabase.from("varsity_logs").delete().eq("id", id);
+  // Its photo goes with it (a no-op when it never had one).
+  if (!error) await deleteLogPhoto(athleteId, id);
   return error ? { error: error.message } : {};
 }

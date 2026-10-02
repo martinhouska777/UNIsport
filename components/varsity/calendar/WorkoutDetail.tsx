@@ -2,17 +2,20 @@
 
 /*
   Varsity WORKOUT DETAIL — one logged session on its own full screen, reached by
-  tapping a session in the calendar's day sheet. This is the home for the erg
-  screen, the Compare button and (later) Garmin / heart-rate data. Portalled to
-  <body> and re-wrapped in the Varsity ThemeProvider (same pattern as Sheet / the
-  log editor). All colors are theme tokens; the per-category dot is a content
-  color applied inline (rule-1 exception).
+  tapping a session in the calendar's day sheet (and, for a coach, a row on the
+  athlete's Workouts). This is the home for the erg result, the photo of the
+  monitor it was scanned from, the Compare button and (later) Garmin /
+  heart-rate data. Portalled to <body> and re-wrapped in the Varsity
+  ThemeProvider (same pattern as Sheet / the log editor). All colors are theme
+  tokens; the per-category dot is a content color applied inline (rule-1
+  exception).
 */
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import ThemeProvider from "@/components/ThemeProvider";
 import { useVarsityTheme } from "@/components/varsity/useVarsityTheme";
 import { fetchLogsByCategory, type LogEntry } from "@/lib/varsity/logStore";
+import { logPhotoUrl } from "@/lib/varsity/ergPhotos";
 import { formatMetrics } from "@/lib/varsity/logParse";
 import { logCategoryLabel } from "@/lib/varsity/athleteProfile";
 import { IconArrowLeft, IconClock, IconChevronDown, IconChevronRight } from "@/components/icons";
@@ -116,6 +119,22 @@ export default function WorkoutDetail({
   const [similar, setSimilar] = useState<LogEntry[] | null>(null); // null = not loaded yet
   const [loadingSimilar, setLoadingSimilar] = useState(false);
 
+  // The monitor photo, signed when the session on screen has one. Keyed by the
+  // path it was signed for, so a Compare row that swaps the session never shows
+  // the previous session's picture (or a failure that belonged to it).
+  const photoPath = current.photoPath ?? null;
+  const [photo, setPhoto] = useState<{ path: string; url: string | null } | null>(null);
+  const [failedPhoto, setFailedPhoto] = useState<string | null>(null);
+  useEffect(() => {
+    if (!photoPath) return;
+    let active = true;
+    logPhotoUrl(photoPath).then((url) => active && setPhoto({ path: photoPath, url }));
+    return () => {
+      active = false;
+    };
+  }, [photoPath]);
+  const photoUrl = photo && photo.path === photoPath ? photo.url : undefined; // undefined = still signing
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     document.addEventListener("keydown", onKey);
@@ -203,6 +222,28 @@ export default function WorkoutDetail({
               <div className="rounded-2xl border border-border bg-surface-2 px-3.5 py-3 text-[13px] leading-relaxed text-text-2">
                 {current.note}
               </div>
+            </div>
+          )}
+
+          {/* The monitor it was scanned from — the numbers above can be checked
+              against it. Hidden when the photo can't be opened. */}
+          {photoPath && failedPhoto !== photoPath && photoUrl !== null && (
+            <div className="mt-5">
+              <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
+                The monitor
+              </div>
+              {photoUrl ? (
+                // A signed, short-lived storage url can't go through next/image's optimiser.
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={photoUrl}
+                  alt="Erg monitor"
+                  onError={() => setFailedPhoto(photoPath)}
+                  className="w-full rounded-2xl border border-border bg-surface-2"
+                />
+              ) : (
+                <div className="skeleton h-40 w-full rounded-2xl" />
+              )}
             </div>
           )}
 

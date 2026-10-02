@@ -47,6 +47,11 @@ export const metadata: Metadata = {
   and a team workout's erg photo IS stored, in the private erg-photos bucket
   (components/varsity/log/LogScreen.tsx → lib/varsity/ergPhotos.ts).
 
+  2026-10-02: EVERY scanned session now keeps its photo, in the private
+  log-photos bucket (db/varsity_log_photos.sql), readable by whoever can read
+  the session — the athlete and their coach. "Otherwise we do not store it"
+  stopped being true, so that sentence went.
+
   One typography trap, found by reading the rendered page rather than the file:
   the space after a bold lead-in `<span>` is SWALLOWED in any paragraph that
   also contains an entity like `&apos;` — "Notifications.If you turn on…" shipped
@@ -55,7 +60,7 @@ export const metadata: Metadata = {
 */
 export default function PrivacyPolicyPage() {
   return (
-    <LegalPage title="Privacy Policy" updated="27 September 2026">
+    <LegalPage title="Privacy Policy" updated="2 October 2026">
       <Section heading="The short version">
         <p>
           UNIsport is a fitness app for university students. To work, it needs to know who you
@@ -156,9 +161,11 @@ export default function PrivacyPolicyPage() {
         <p>
           <span className="text-l-text">Photos of an erg monitor.</span>{" "}
           If you use the camera to read a workout off a rowing machine, that photo is sent to
-          Anthropic, who read the numbers off the screen and return them to the app. If the workout
-          is a team workout, the photo is also kept with your result, so the picture behind the
-          numbers can be opened from your squad&apos;s results; otherwise we do not store it.
+          Anthropic, who read the numbers off the screen and return them to the app. When you save
+          the session, we keep the photo with it, so you and your coach can open the screen the
+          numbers came off. If the workout is a team workout, a copy is also kept with your result,
+          so it can be opened from your squad&apos;s results. Deleting the session deletes its
+          photo.
         </p>
         <p>
           <span className="text-l-text">Stored only on your device.</span>{" "}
