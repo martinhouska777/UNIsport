@@ -16,6 +16,7 @@ import ThemeProvider from "@/components/ThemeProvider";
 import { useVarsityTheme } from "@/components/varsity/useVarsityTheme";
 import { fetchLogsByCategory, type LogEntry } from "@/lib/varsity/logStore";
 import { logPhotoUrl } from "@/lib/varsity/ergPhotos";
+import { ergNote, ergPiece, type ErgPiece } from "@/lib/varsity/ergLog";
 import { formatMetrics } from "@/lib/varsity/logParse";
 import { logCategoryLabel } from "@/lib/varsity/athleteProfile";
 import { IconArrowLeft, IconClock, IconChevronDown, IconChevronRight } from "@/components/icons";
@@ -31,62 +32,34 @@ function Stat({ label, value }: { label: string; value: string }) {
 }
 
 /*
-  Pull the extra erg numbers the scanner tucks into the note ("7:32 · r24 ·
-  250W · …"). Each is optional — only what's actually present is returned. Time
-  is anchored to the start so a user's own note text can't be mistaken for it.
-*/
-function ergExtras(note: string) {
-  const time = note.match(/^(\d{1,3}:\d{2})/)?.[1] ?? null;
-  const rate = note.match(/\br(\d{1,2})\b/i)?.[1] ?? null;
-  const watts = note.match(/\b(\d{2,4})\s*W\b/)?.[1] ?? null;
-  return { time, rate, watts };
-}
-
-// A single number on the erg "monitor" panel.
-function ErgCell({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="text-center">
-      <div className="text-[8px] font-semibold uppercase tracking-[0.12em] text-muted">{label}</div>
-      <div className="mt-1 text-lg font-semibold leading-none text-text tabular-nums">{value}</div>
-    </div>
-  );
-}
-
-/*
-  ERG RESULT — a Concept2-style summary for erg logs: the /500m split as the
-  headline (the number that matters on an erg), then distance / time / rate /
-  watts underneath. Reads stored fields + ergExtras(note). All theme tokens.
+  ERG RESULT — the four numbers of an erg piece in one row: split, metres,
+  time, rate (owner, 2026-10-02: smaller than the monitor-style panel it
+  replaces, which put the split in huge type over a grey box). The exact time
+  and the rate come from the scanner's part of the note (ergLog.ts → ergNote).
 */
 function ErgResult({ log }: { log: LogEntry }) {
-  const { time, rate, watts } = ergExtras(log.note);
+  const { time, rate } = ergNote(log.note);
   const timeLabel = time ?? (log.minutes != null ? `${log.minutes}:00` : null);
-  const cells: { label: string; value: string }[] = [];
-  if (log.metres != null) cells.push({ label: "Metres", value: log.metres.toLocaleString() });
+  const cells: { label: string; value: string; lead?: boolean }[] = [];
+  if (log.split) cells.push({ label: "Split", value: log.split, lead: true });
+  if (log.metres != null) cells.push({ label: "Metres", value: log.metres.toLocaleString("en-US") });
   if (timeLabel) cells.push({ label: "Time", value: timeLabel });
   if (rate) cells.push({ label: "s/m", value: rate });
-  if (watts) cells.push({ label: "Watts", value: watts });
+  if (cells.length === 0) return null;
 
   return (
-    <div className="mt-5 overflow-hidden rounded-2xl border border-border bg-surface-2">
-      <div className="border-b border-border px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-        Erg result
-      </div>
-      <div className="px-4 py-4 text-center">
-        <div className="text-4xl font-semibold leading-none text-primary tabular-nums">
-          {log.split ?? "—"}
+    <div
+      className="mt-5 grid gap-1 rounded-2xl border border-border bg-surface px-2 py-3"
+      style={{ gridTemplateColumns: `repeat(${cells.length}, minmax(0, 1fr))` }}
+    >
+      {cells.map((c) => (
+        <div key={c.label} className="text-center">
+          <div className={`text-lg font-semibold leading-none tabular-nums ${c.lead ? "text-primary" : "text-text"}`}>
+            {c.value}
+          </div>
+          <div className="mt-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">{c.label}</div>
         </div>
-        <div className="mt-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">/500m split</div>
-      </div>
-      {cells.length > 0 && (
-        <div
-          className="grid gap-2 border-t border-border px-4 py-3"
-          style={{ gridTemplateColumns: `repeat(${cells.length}, minmax(0, 1fr))` }}
-        >
-          {cells.map((c) => (
-            <ErgCell key={c.label} label={c.label} value={c.value} />
-          ))}
-        </div>
-      )}
+      ))}
     </div>
   );
 }
@@ -95,9 +68,21 @@ function ErgResult({ log }: { log: LogEntry }) {
 const shortDate = (iso: string) =>
   new Date(`${iso}T00:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
-// The one-line result shown on a compare row (split for ergs, else the summary).
-const rowMetric = (l: LogEntry) =>
-  l.category === "erg" && l.split ? `${l.split} /500` : formatMetrics(l.minutes, l.metres, l.split) || "";
+// The one-line result shown on a compare row (non-erg sessions).
+const rowMetric = (l: LogEntry) => formatMetrics(l.minutes, l.metres, l.split) || "";
+
+/* An erg compare row: the number the piece did NOT fix (the time of a 5,000 m,
+   the metres of a 30 min), then the split. */
+function ergRowMetrics(l: LogEntry, piece: ErgPiece): { middle: string; split: string } {
+  const exact = ergNote(l.note).time;
+  const middle =
+    piece.kind === "distance"
+      ? (exact ?? (l.minutes != null ? `${l.minutes}:00` : ""))
+      : l.metres != null
+        ? `${l.metres.toLocaleString("en-US")} m`
+        : "";
+  return { middle, split: l.split ? `${l.split} /500` : "" };
+}
 
 export default function WorkoutDetail({
   log,
@@ -156,7 +141,14 @@ export default function WorkoutDetail({
   if (current.minutes != null) tiles.push({ label: "Minutes", value: String(current.minutes) });
   if (current.split) tiles.push({ label: "Split /500m", value: current.split });
 
-  // Same-category logs, newest first, fetched once when Compare first opens.
+  // An erg session is compared only with the same piece (ergLog.ts), and its
+  // note shows only what the rower wrote — the scanner's numbers are above.
+  const erg = cat === "erg";
+  const piece = erg ? ergPiece(current) : null;
+  const noteText = erg ? ergNote(current.note).own : current.note.trim();
+
+  // Same-category logs, newest first, fetched once when Compare first opens
+  // (for an erg session, narrowed to the same piece below).
   const toggleCompare = async () => {
     if (compareOpen) {
       setCompareOpen(false);
@@ -170,7 +162,11 @@ export default function WorkoutDetail({
     }
   };
 
-  const others = (similar ?? []).filter((l) => l.id !== current.id);
+  const others = (similar ?? []).filter(
+    (l) => l.id !== current.id && (!piece || ergPiece(l)?.key === piece.key),
+  );
+  // What Compare is against: "5,000 m pieces", or "rowing sessions" off the erg.
+  const compareWhat = piece ? `${piece.label} pieces` : `${catLabel.toLowerCase()} sessions`;
 
   const overlay = (
     <div className="fixed inset-0 z-[60] flex h-dvh flex-col bg-background [animation:backdrop-in_0.2s_ease-out]">
@@ -198,8 +194,8 @@ export default function WorkoutDetail({
             {current.period && ` · ${current.period}`}
           </div>
 
-          {/* Erg logs get the Concept2-style result; everything else gets tiles. */}
-          {cat === "erg" ? (
+          {/* Erg logs get their four numbers in one row; everything else gets tiles. */}
+          {erg ? (
             <ErgResult log={current} />
           ) : tiles.length > 0 ? (
             <div className="mt-5 flex gap-2">
@@ -215,12 +211,12 @@ export default function WorkoutDetail({
             )
           )}
 
-          {/* Note */}
-          {current.note && (
+          {/* Note — only when the rower wrote one. */}
+          {noteText && (
             <div className="mt-5">
               <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">Note</div>
-              <div className="rounded-2xl border border-border bg-surface-2 px-3.5 py-3 text-[13px] leading-relaxed text-text-2">
-                {current.note}
+              <div className="rounded-2xl border border-border bg-surface px-3.5 py-3 text-[13px] leading-relaxed text-text-2">
+                {noteText}
               </div>
             </div>
           )}
@@ -247,14 +243,17 @@ export default function WorkoutDetail({
             </div>
           )}
 
-          {/* Compare — your other sessions of the same kind, tap to open one. */}
+          {/* Compare — your other sessions of the same kind (on the erg, the same
+              piece), tap to open one. An erg session with no distance or time
+              has no piece to compare. */}
+          {!(erg && !piece) && (
           <div className="mt-6">
             <button
               type="button"
               onClick={toggleCompare}
               className="flex w-full items-center justify-center gap-2 rounded-2xl border border-border bg-surface py-3 text-[13px] font-semibold text-text active:bg-surface-2"
             >
-              Compare with past {catLabel.toLowerCase()} sessions
+              Compare with past {compareWhat}
               <IconChevronDown size={15} className={compareOpen ? "rotate-180" : ""} />
             </button>
 
@@ -264,7 +263,7 @@ export default function WorkoutDetail({
                   <div className="py-4 text-center text-[12px] text-muted">Loading…</div>
                 ) : others.length === 0 ? (
                   <div className="rounded-2xl border border-dashed border-border bg-surface px-4 py-6 text-center text-[12px] text-muted">
-                    No other {catLabel.toLowerCase()} sessions yet.
+                    No other {compareWhat} yet.
                   </div>
                 ) : (
                   <div className="flex flex-col gap-2">
@@ -281,11 +280,24 @@ export default function WorkoutDetail({
                         <span className="w-12 flex-shrink-0 text-[11px] font-medium tabular-nums text-muted">
                           {shortDate(l.logDate)}
                         </span>
-                        <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-text">{l.title}</span>
-                        {rowMetric(l) && (
-                          <span className="flex-shrink-0 text-[12px] font-semibold tabular-nums text-text-2">
-                            {rowMetric(l)}
-                          </span>
+                        {piece ? (
+                          <>
+                            <span className="min-w-0 flex-1 truncate text-[13px] font-medium tabular-nums text-text">
+                              {ergRowMetrics(l, piece).middle}
+                            </span>
+                            <span className="flex-shrink-0 text-[12px] font-semibold tabular-nums text-text-2">
+                              {ergRowMetrics(l, piece).split}
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-text">{l.title}</span>
+                            {rowMetric(l) && (
+                              <span className="flex-shrink-0 text-[12px] font-semibold tabular-nums text-text-2">
+                                {rowMetric(l)}
+                              </span>
+                            )}
+                          </>
                         )}
                         <IconChevronRight size={15} className="flex-shrink-0 text-muted" />
                       </button>
@@ -295,6 +307,7 @@ export default function WorkoutDetail({
               </div>
             )}
           </div>
+          )}
         </div>
       </div>
     </div>
