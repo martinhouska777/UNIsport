@@ -5,8 +5,8 @@
   ---------------------------------------------------------------------------
   Everything the squad measured, newest first, behind TWO TABS:
 
-    ERG    — a session the coach flagged as a TEAM WORKOUT, with how many of
-             the squad have logged it. Tap → its board (WorkoutBoard.tsx).
+    ERG    — a session the coach flagged as a TEAM WORKOUT. Tap → its board
+             (WorkoutBoard.tsx).
     WATER  — the coach's TIMING SHEET: a session split into pieces, with the
              crews' times off the running watch. Tap → its board
              (RaceBoard.tsx). This is where the water work goes, races most
@@ -43,9 +43,9 @@
   screen while its outings sit one tap away. The moment anyone taps, their
   choice wins.
 
-  "N of M logged" is shown only on a RANKED board, where who turned up is part
-  of the result. On an averages board it read as a compliance score over a
-  steady session, so there the row just says how many.
+  NO TURNOUT COUNT ON A ROW (owner, 2026-10-02: "we don't care how many
+  logged"). It was "N of M logged" on a ranked board and "N logged" on an
+  averages one; a row now says what and when, nothing else (see ROW below).
 
   This is the screen that replaces the spreadsheet: nobody types results into a
   shared sheet and hunts for their own name — everyone logs their own session
@@ -81,8 +81,8 @@ import { useAppState } from "@/components/AppState";
 import { useMembership } from "@/components/varsity/useMembership";
 import WorkoutBoard from "@/components/varsity/team/WorkoutBoard";
 import { fetchPlan } from "@/lib/varsity/planStore";
-import { demoTeamPlan, demoSquadSize } from "@/lib/varsity/demoWorkouts";
-import { fetchResults, fetchSquadSize, type TeamResult } from "@/lib/varsity/resultsStore";
+import { demoTeamPlan } from "@/lib/varsity/demoWorkouts";
+import { fetchResults, type TeamResult } from "@/lib/varsity/resultsStore";
 import { onTheWater, teamWorkouts, type TeamWorkout } from "@/lib/varsity/teamBoard";
 import { sessionLabel, dayKeyLabel, parseSessionKey, type Session } from "@/lib/varsity/coachPlan";
 import { kindOf } from "@/lib/varsity/athleteHome";
@@ -93,7 +93,7 @@ import TeamRanking from "@/components/varsity/team/TeamRanking";
 import Sheet from "@/components/varsity/Sheet";
 import ExampleTag from "@/components/varsity/ExampleTag";
 import { fetchRaceDays, saveRaceDay } from "@/lib/varsity/raceStore";
-import { piecesFromSession, raceSummary, type RaceDay } from "@/lib/varsity/racePieces";
+import { piecesFromSession, type RaceDay } from "@/lib/varsity/racePieces";
 import { fetchLineupsFor } from "@/lib/varsity/lineupStore";
 import type { Boat } from "@/lib/varsity/coachLineup";
 import type { SessionMap } from "@/lib/varsity/coachPlan";
@@ -125,6 +125,29 @@ function intensityOf(session: Session | undefined): { color: string; word: strin
 function outingDateLabel(dayKey: string): string {
   const parsed = parseSessionKey(dayKey);
   return `${dayKeyLabel(dayKey)}${parsed ? ` · ${parsed.period}` : ""}`;
+}
+
+/*
+  A LIST ROW: the workout on the left, WHEN on the right (owner, 2026-10-02:
+  "put the date and time and AM/PM on the right of it, we don't care how many
+  logged — we have a lot of space there"). The small grey line under the name
+  (date · AM · "12 of 24 logged", or on water "3 pieces · 4 crews") is gone:
+  the name stands alone and may take two lines, and the day and the session's
+  start time ("Mon 28 Sep" / "4:30 PM") sit in their own column against the
+  chevron, so a scan down the list reads the dates like a calendar. A session
+  with its time cleared shows its AM / PM instead.
+*/
+const ROW =
+  "flex w-full items-center gap-3 rounded-2xl border border-border bg-surface px-3.5 py-3.5 text-left active:bg-surface-2";
+const NAME = "line-clamp-2 min-w-0 text-[14px] font-semibold leading-snug text-text";
+
+function When({ day, time }: { day: string; time: string }) {
+  return (
+    <span className="flex-shrink-0 whitespace-nowrap text-right tabular-nums leading-tight">
+      <span className="block text-[13px] font-semibold text-text">{day}</span>
+      {time && <span className="mt-1 block text-[12px] text-muted">{time}</span>}
+    </span>
+  );
 }
 
 /* A row is either a flagged team workout (everyone's own result, on either
@@ -162,7 +185,6 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
 
   const [workouts, setWorkouts] = useState<TeamWorkout[]>([]);
   const [results, setResults] = useState<TeamResult[]>([]);
-  const [squadSize, setSquadSize] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   /* Which listed workouts are the worked example, by day key — the rest are
      the squad's own. Empty once a real result exists. */
@@ -250,14 +272,6 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
       active = false;
     };
   }, [userId, teamId]);
-
-  useEffect(() => {
-    let active = true;
-    fetchSquadSize(teamId).then((n) => active && setSquadSize(n));
-    return () => {
-      active = false;
-    };
-  }, [teamId]);
 
   useEffect(() => {
     let active = true;
@@ -350,19 +364,6 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
     () => (candidateBoats ? raceCandidates.filter((c) => (candidateBoats[c.dayKey] ?? 0) > 0) : []),
     [raceCandidates, candidateBoats],
   );
-
-  /* The turnout count on a LIST ROW here — the board itself stopped printing
-     one. An example board counts against the EXAMPLE roster, never the real
-     squad: "37 of 3 logged" is nonsense on a squad that hasn't signed up yet. */
-  const squadSizeFor = (dayKey: string) => (exampleKeys.has(dayKey) ? demoSquadSize : squadSize);
-
-  // How many results each workout has, so the list can show it without
-  // re-filtering inside the render loop.
-  const counts = useMemo(() => {
-    const map = new Map<string, number>();
-    for (const r of results) map.set(r.dayKey, (map.get(r.dayKey) ?? 0) + 1);
-    return map;
-  }, [results]);
 
   /* A list per side, each newest first. A flagged workout goes to the side
      its session was rowed on — the water ones sit with the timing sheets. */
@@ -530,38 +531,27 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
           const tour = i === 0 ? "varsity-workouts-first" : undefined;
           if (row.workout) {
             const w = row.workout;
-            const n = counts.get(w.dayKey) ?? 0;
-            // The "of M" only where turning up is part of the result (ranked).
-            const squad = squadSizeFor(w.dayKey);
-            const ofSquad = w.board === "ranked" && squad ? ` of ${squad}` : "";
             return (
               <button
                 key={row.key}
                 type="button"
                 onClick={() => setOpen(w.dayKey)}
                 data-tour={tour}
-                className="flex w-full items-center gap-3 rounded-2xl border border-border bg-surface px-3.5 py-3 text-left active:bg-surface-2"
+                className={ROW}
               >
                 <span
                   className="h-2.5 w-2.5 flex-shrink-0 rounded-full"
                   style={{ background: markColor(intensityOf(w.session)?.color) ?? "var(--faint)" }}
                 />
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="truncate text-[13px] font-semibold text-text">
-                      {w.session.description.trim() || sessionLabel(w.session)}
-                    </span>
-                    {/* NO ERG / WATER TAG — the tab above says it. The one tag
-                        a row wears is EXAMPLE, on a worked example (audit,
-                        2026-09-27): its results sit under the squad's real
-                        names, so it must say nobody rowed it. */}
-                    {exampleKeys.has(w.dayKey) && <ExampleTag />}
-                  </div>
-                  <div className="mt-1 text-[11px] text-muted">
-                    {w.dateLabel} · {w.period} ·{" "}
-                    {n === 0 ? "nobody logged yet" : `${n}${ofSquad} logged`}
-                  </div>
+                <div className="flex min-w-0 flex-1 items-center gap-2">
+                  <span className={NAME}>{w.session.description.trim() || sessionLabel(w.session)}</span>
+                  {/* NO ERG / WATER TAG — the tab above says it. The one tag
+                      a row wears is EXAMPLE, on a worked example (audit,
+                      2026-09-27): its results sit under the squad's real
+                      names, so it must say nobody rowed it. */}
+                  {exampleKeys.has(w.dayKey) && <ExampleTag />}
                 </div>
+                <When day={w.dateLabel} time={w.session.time?.trim() || w.period} />
                 <span className="text-muted">
                   <IconChevronRight size={15} />
                 </span>
@@ -571,26 +561,25 @@ export default function TeamWorkouts({ inConsole = false }: { inConsole?: boolea
           {
             /* Every other row is a timing sheet: a water session's race pieces. */
             const r = row.race!;
-            const sum = raceSummary(r);
             return (
               <button
                 key={row.key}
                 type="button"
                 onClick={() => openRaceBoard(r.dayKey)}
                 data-tour={tour}
-                className="flex w-full items-center gap-3 rounded-2xl border border-border bg-surface px-3.5 py-3 text-left active:bg-surface-2"
+                className={ROW}
               >
                 <span
                   className="h-2.5 w-2.5 flex-shrink-0 rounded-full"
                   style={{ background: markColor(intensityOf(planSessions[r.dayKey])?.color) ?? "var(--accent)" }}
                 />
-                <div className="min-w-0 flex-1">
-                  <span className="block truncate text-[13px] font-semibold text-text">{raceTitle(r.dayKey)}</span>
-                  <div className="mt-1 text-[11px] tabular-nums text-muted">
-                    {outingDateLabel(r.dayKey)} · {sum.pieces} {sum.pieces === 1 ? "piece" : "pieces"} · {sum.crews}{" "}
-                    {sum.crews === 1 ? "crew" : "crews"}
-                  </div>
+                <div className="flex min-w-0 flex-1 items-center">
+                  <span className={NAME}>{raceTitle(r.dayKey)}</span>
                 </div>
+                <When
+                  day={dayKeyLabel(r.dayKey)}
+                  time={planSessions[r.dayKey]?.time?.trim() || parseSessionKey(r.dayKey)?.period || ""}
+                />
                 <span className="text-muted">
                   <IconChevronRight size={15} />
                 </span>
