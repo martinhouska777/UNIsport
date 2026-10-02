@@ -1,7 +1,7 @@
 -- ---------------------------------------------------------------------------
 -- THE MONITOR PHOTO STAYS WITH THE SESSION                        2026-10-02
 -- ---------------------------------------------------------------------------
--- NOT APPLIED YET. Idempotent — safe to re-run.
+-- APPLIED 2026-10-02 (column, private bucket, 4 policies checked). Idempotent — safe to re-run.
 --   node scripts/run-sql.mjs db/varsity_log_photos.sql
 --
 -- WHY. Until now a scanned erg photo was only kept when the session was a TEAM
