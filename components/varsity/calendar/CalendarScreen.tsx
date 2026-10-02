@@ -51,6 +51,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Sheet from "@/components/varsity/Sheet";
 import WorkoutDetail from "@/components/varsity/calendar/WorkoutDetail";
+import { ergNote } from "@/lib/varsity/ergLog";
 import CategoryStatsSheet from "@/components/varsity/calendar/CategoryStatsSheet";
 import { useAppState } from "@/components/AppState";
 import { useUnits } from "@/components/useUnits";
@@ -305,10 +306,24 @@ function DaySheet({
                it"). The minutes / metres line and the note are gone; a tap
                opens the session with all of it. Only a session that was NOT
                in the plan is labelled — EXTRA — and plan sessions carry no
-               chip at all. */
+               chip at all.
+
+               AN EXTRA HAS NO PLAN TO QUOTE, so it says how far and how long
+               instead (owner, same day: "for extra sessions write meters and
+               time") — the monitor's exact time on a scanned erg piece. */
             const name = logLabel(l, planned);
             const own = l.title.trim() && l.title.trim() !== name ? l.title.trim() : "";
             const said = (planned?.description ?? "").trim() || own;
+            const extraFigures =
+              l.source === "extra"
+                ? [
+                    l.metres != null ? `${l.metres.toLocaleString("en-US")} m` : null,
+                    (l.category === "erg" ? ergNote(l.note).time : null) ??
+                      (l.minutes != null ? `${l.minutes} min` : null),
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")
+                : "";
             return (
               <Row
                 key={l.id}
@@ -322,6 +337,7 @@ function DaySheet({
                 <div className="min-w-0 flex-1">
                   <div className="text-[13px] font-semibold text-text">{name}</div>
                   {said && <div className="mt-0.5 text-[12px] leading-snug text-text-2">{said}</div>}
+                  {extraFigures && <div className="mt-0.5 text-[12px] tabular-nums text-text-2">{extraFigures}</div>}
                 </div>
                 {l.source === "extra" && (
                   <span className="flex-shrink-0 rounded-md border border-border px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-muted">
