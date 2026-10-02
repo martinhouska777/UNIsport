@@ -51,9 +51,10 @@ import type { TeamResult } from "@/lib/varsity/resultsStore";
 import { IconFloors, IconChevronRight } from "@/components/icons";
 import { markColor } from "@/lib/colorMarks";
 
+// White like the cards around it (owner, 2026-10-02) — these were grey boxes.
 function Tile({ value, label }: { value: string; label: string }) {
   return (
-    <div className="flex-1 rounded-2xl border border-border bg-surface-2 px-2 py-3 text-center">
+    <div className="flex-1 rounded-2xl border border-border bg-surface px-2 py-3 text-center">
       <div className="text-[15px] font-semibold leading-none tabular-nums text-text">{value}</div>
       <div className="mt-1.5 text-[8px] font-semibold uppercase tracking-[0.12em] text-muted">
         {label}
@@ -252,7 +253,7 @@ export default function WorkoutBoard({
             every earlier go properly. The card is shorter for it. */}
       </div>
 
-      {/* metric filter */}
+      {/* metric filter — an unpicked pill is white, like the cards (owner, 2026-10-02) */}
       <div className={`mt-3 grid gap-1 ${metrics.length === 2 ? "grid-cols-2" : "grid-cols-4"}`}>
         {metrics.map((m) => (
           <button
@@ -260,7 +261,7 @@ export default function WorkoutBoard({
             type="button"
             onClick={() => setMetric(m.key)}
             className={`rounded-xl border px-1 py-2 text-center ${
-              metric === m.key ? "border-primary bg-primary-tint" : "border-border bg-surface-2"
+              metric === m.key ? "border-primary bg-primary-tint" : "border-border bg-surface"
             }`}
           >
             <div

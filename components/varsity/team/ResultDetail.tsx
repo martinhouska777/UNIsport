@@ -3,20 +3,21 @@
 /*
   RESULT DETAIL — one person's piece, opened from the board.
   ---------------------------------------------------------------------------
-  Three things a ranked row can't show:
+  Two things a ranked row can't show:
 
     • THE NUMBERS in full — time, distance, split, rate, watts, watts/kg — so
       you don't have to switch the whole board's metric to read one person.
-    • THE INTERVALS, when the monitor showed them. A 8×500m is not one number:
-      the shape of it is the point. Each rep gets a bar against the fastest one,
-      so the shape is visible without reading eight timestamps.
-      NOTHING WRITTEN OVER THEM (owner, 2026-09-22). "8 intervals" was counting
-      the eight rows directly under it, and "+0.7s last vs first" was doing the
-      arithmetic between the first row and the last one — both of which are on
-      the screen. The reps are simply there.
-    • THE PHOTO of the monitor. Self-reported times are worth what people trust
-      them with; the screen the numbers came off is the evidence. It is also
-      what makes a misread scan fixable.
+    • THE PHOTO of the monitor, straight under them. Self-reported times are
+      worth what people trust them with; the screen the numbers came off is the
+      evidence. It is also what makes a misread scan fixable.
+
+  NO REP-BY-REP LIST, NO DATE LINE, NO NAME IN THE TOP BAR (owner, 2026-10-02).
+  The rows of 1k splits under a 5k (and their bars) were the monitor's own
+  detail screen copied out again — the photo IS that screen, so it now sits
+  where they were. The line under the name ("Monday 28 September · PM · 5k erg
+  test") repeated the board this was opened from, and the name beside Back
+  repeated the name on the page. A result typed in by hand has no photo and
+  says nothing about it.
 
   And the question a single result can never answer on its own: AM I GETTING
   FASTER. Under the piece, with no heading over it, is this ONE person's run of
@@ -39,7 +40,6 @@ import { useEffect, useMemo, useState } from "react";
 import Sheet from "@/components/varsity/Sheet";
 import { ergPhotoUrl } from "@/lib/varsity/ergPhotos";
 import { secToClock, secToSplit, deriveWatts, wattsPerKg } from "@/lib/varsity/ergMath";
-import { sessionLabel } from "@/lib/varsity/coachPlan";
 import {
   initialsOf,
   metricMeta,
@@ -54,9 +54,10 @@ import type { TeamResult } from "@/lib/varsity/resultsStore";
 import Delta from "@/components/varsity/team/Delta";
 import { IconStar, IconChevronRight } from "@/components/icons";
 
+// White, like every card around it (owner, 2026-10-02) — it was a grey box.
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-border bg-surface-2 px-2.5 py-2.5 text-center">
+    <div className="rounded-xl border border-border bg-surface px-2.5 py-2.5 text-center">
       <div className="text-[15px] font-semibold leading-none tabular-nums text-text">{value}</div>
       <div className="mt-1.5 text-[8px] font-semibold uppercase tracking-[0.12em] text-muted">
         {label}
@@ -104,9 +105,6 @@ export default function ResultDetail({
     };
   }, [result.photoPath]);
 
-  const dateLabel = `${workout.dateLabel} · ${workout.period} · ${
-    workout.session.description.trim() || sessionLabel(workout.session)
-  }`;
   // This person's every go at the piece, newest first. The result compared is
   // the piece's OWN — time on a distance piece, metres on a timed one — not the
   // metric the board happens to be sorted by, so the comparison reads the same
@@ -146,29 +144,15 @@ export default function ResultDetail({
   const splitSec = result.splitSec;
   const watts = deriveWatts(result.watts, splitSec);
   const wkg = wattsPerKg(watts, result.weightKg);
-  const rows = result.intervals ?? [];
-
-  // Bars are drawn against the fastest rep, so the slowest is visibly longest.
-  const best = rows.reduce<number | null>(
-    (m, r) => (r.splitSec != null && (m == null || r.splitSec < m) ? r.splitSec : m),
-    null,
-  );
-  const worst = rows.reduce<number | null>(
-    (m, r) => (r.splitSec != null && (m == null || r.splitSec > m) ? r.splitSec : m),
-    null,
-  );
 
   return (
-    <Sheet title={result.athleteName || "Result"} onClose={onClose} full>
+    <Sheet title="" onClose={onClose} full>
       <div className="flex items-center gap-3">
         <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-primary-tint text-[13px] font-semibold text-primary">
           {initialsOf(result.athleteName)}
         </span>
-        <div className="min-w-0">
-          <div className="truncate text-[14px] font-semibold text-text">
-            {result.athleteName || "Unnamed"}
-          </div>
-          <div className="mt-0.5 text-[11px] text-muted">{dateLabel}</div>
+        <div className="min-w-0 truncate text-[14px] font-semibold text-text">
+          {result.athleteName || "Unnamed"}
         </div>
       </div>
 
@@ -189,55 +173,30 @@ export default function ResultDetail({
       </div>
 
       {result.note.trim() && (
-        <p className="mt-2.5 rounded-xl border border-border bg-surface-2 px-3 py-2.5 text-[12px] leading-relaxed text-text-2">
+        <p className="mt-2.5 rounded-xl border border-border bg-surface px-3 py-2.5 text-[12px] leading-relaxed text-text-2">
           {result.note}
         </p>
       )}
 
-      {/* the reps — the list and nothing over it */}
-      {rows.length > 0 && (
+      {/* the evidence */}
+      {result.photoPath && !photoFailed && (
         <>
-          <div className="mt-4 overflow-hidden rounded-2xl border border-border bg-surface">
-            {rows.map((r, i) => {
-              // Widths run 40%–100% across the range, so a tight piece still
-              // reads as tight rather than being stretched into a big spread.
-              const span = best != null && worst != null ? worst - best : 0;
-              const frac =
-                r.splitSec != null && best != null && span > 0.01
-                  ? 0.4 + 0.6 * ((r.splitSec - best) / span)
-                  : 1;
-              return (
-                <div
-                  key={i}
-                  className={`px-3 py-2 ${i > 0 ? "border-t border-border" : ""}`}
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="w-4 flex-shrink-0 text-[11px] font-semibold text-muted">
-                      {r.label ?? i + 1}
-                    </span>
-                    <span className="flex-1 text-[11px] tabular-nums text-muted">
-                      {r.metres != null && `${r.metres.toLocaleString("en-US")} m`}
-                      {r.timeSec != null && ` · ${secToClock(r.timeSec)}`}
-                      {r.strokeRate != null && ` · r${r.strokeRate}`}
-                    </span>
-                    <span className="flex-shrink-0 text-[13px] font-semibold tabular-nums text-text">
-                      {r.splitSec != null ? secToSplit(r.splitSec, true) : "—"}
-                    </span>
-                  </div>
-                  <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-surface-2">
-                    <div
-                      /* ONE COLOUR for every bar. The LENGTH is the whole
-                         message; picking the fastest rep out in green made the
-                         eye read the colour first and then need a caption to
-                         say what the colour meant. */
-                      className="h-full rounded-full bg-faint"
-                      style={{ width: `${Math.round(frac * 100)}%` }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
+          <div className="mb-2 mt-4 px-0.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
+            The monitor
           </div>
+          {photo ? (
+            // A signed, short-lived storage url can't go through next/image's
+            // optimiser, and the drawn example is an inline data url.
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={photo}
+              alt={`${result.athleteName}'s erg monitor`}
+              onError={() => setPhotoFailed(true)}
+              className="w-full rounded-2xl border border-border bg-surface-2"
+            />
+          ) : (
+            <div className="skeleton h-40 w-full rounded-2xl" />
+          )}
         </>
       )}
 
@@ -329,33 +288,6 @@ export default function ResultDetail({
         </>
       )}
 
-      {/* the evidence */}
-      {result.photoPath && !photoFailed && (
-        <>
-          <div className="mb-2 mt-4 px-0.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-            The monitor
-          </div>
-          {photo ? (
-            // A signed, short-lived storage url can't go through next/image's
-            // optimiser, and the drawn example is an inline data url.
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={photo}
-              alt={`${result.athleteName}'s erg monitor`}
-              onError={() => setPhotoFailed(true)}
-              className="w-full rounded-2xl border border-border bg-surface-2"
-            />
-          ) : (
-            <div className="skeleton h-40 w-full rounded-2xl" />
-          )}
-        </>
-      )}
-
-      {!result.photoPath && !water && (
-        <p className="mt-4 px-0.5 text-[11px] leading-relaxed text-muted">
-          No monitor photo on this one — it was typed in by hand.
-        </p>
-      )}
     </Sheet>
   );
 }
