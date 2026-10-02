@@ -369,25 +369,26 @@ export default function WorkoutBoard({
       ) : (
         <div className="mt-2 overflow-hidden rounded-2xl border border-border bg-surface">
           {/* The headings over the columns. Same widths as the rows below. */}
-          <div className="flex items-center gap-1.5 border-b border-border px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
+          <div className="flex items-center gap-3 border-b border-border px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
             {ranked && <span className="w-5 flex-shrink-0" />}
             <span className="min-w-0 flex-1" />
             {showMiddle && (
-              <span className="w-9 flex-shrink-0 text-right">{metricMeta(middle).label}</span>
+              <span className="w-11 flex-shrink-0 text-right">{metricMeta(middle).label}</span>
             )}
-            {showRate && <span className="w-6 flex-shrink-0 text-right">Rate</span>}
-            <span className="w-[52px] flex-shrink-0 text-right">{metricMeta(metric).label}</span>
-            {previous && <span className="w-[62px] flex-shrink-0" />}
+            {showRate && <span className="w-8 flex-shrink-0 text-right">Rate</span>}
+            <span className="w-[62px] flex-shrink-0 text-right">{metricMeta(metric).label}</span>
           </div>
           {board.rows.map((row, i) => (
             <button
               key={row.result.id}
               type="button"
               onClick={() => setOpenRow(row.result.id)}
-              /* gap-1.5 / px-2.5: every pixel goes to the name. A name too long
-                 for its share wraps onto a second line rather than being cut —
-                 a ranked board is a list of PEOPLE. */
-              className={`flex w-full items-center gap-1.5 px-2.5 py-2.5 text-left ${
+              /* The columns stand well apart (owner, 2026-10-02: "they're
+                 crammed"). The room comes from the ± chip, which sits UNDER
+                 the result rather than beside it. A name too long for its
+                 share wraps onto a second line rather than being cut — a
+                 ranked board is a list of PEOPLE. */
+              className={`flex w-full items-center gap-3 px-2.5 py-2.5 text-left ${
                 i > 0 ? "border-t border-border" : ""
               } ${row.mine ? "bg-primary-tint" : "active:bg-surface-2"}`}
             >
@@ -423,27 +424,23 @@ export default function WorkoutBoard({
                 )}
               </div>
               {showMiddle && (
-                <span className="w-9 flex-shrink-0 text-right text-[12px] tabular-nums text-text-2">
+                <span className="w-11 flex-shrink-0 text-right text-[13px] tabular-nums text-text-2">
                   {middleValue(row.result)}
                 </span>
               )}
               {showRate && (
-                <span className="w-6 flex-shrink-0 text-right text-[12px] tabular-nums text-text-2">
+                <span className="w-8 flex-shrink-0 text-right text-[13px] tabular-nums text-text-2">
                   {row.result.strokeRate ?? "—"}
                 </span>
               )}
-              <div className="flex flex-shrink-0 items-center gap-1.5">
-                <span className="w-[52px] whitespace-nowrap text-right text-[13px] font-semibold tabular-nums text-text">
+              <div className="flex w-[62px] flex-shrink-0 flex-col items-end gap-1">
+                <span className="whitespace-nowrap text-[14px] font-semibold leading-none tabular-nums text-text">
                   {row.display}
                 </span>
                 {/* how much faster (or slower) than their own last go at this
                     piece — a chip, not small print, because it is the second
                     thing everyone reads on a ranking */}
-                {row.improvement != null ? (
-                  <Delta improvement={row.improvement} metric={metric} />
-                ) : (
-                  previous && <span className="w-[62px] flex-shrink-0" aria-hidden />
-                )}
+                {row.improvement != null && <Delta improvement={row.improvement} metric={metric} />}
               </div>
             </button>
           ))}
