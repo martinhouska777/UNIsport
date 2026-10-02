@@ -301,10 +301,14 @@ function LogEditor({
   // A photo taken BEFORE the editor opened (the tab's Scan button) is read the
   // moment the editor mounts. `scanning` already starts true for it (above), so
   // the effect only starts the upload and lets the form be filled in the
-  // callback when it comes back. Once: the file object never changes after that.
+  // callback when it comes back. Once per file: React's dev double-run of effects
+  // used to send the photo twice (two paid reads, and the note filled in twice).
   const scanFile = state.scanFile;
+  const readFile = useRef<File | null>(null);
   useEffect(() => {
-    if (scanFile) void scanErgPhoto(scanFile).then(applyScan);
+    if (!scanFile || readFile.current === scanFile) return;
+    readFile.current = scanFile;
+    void scanErgPhoto(scanFile).then(applyScan);
   }, [scanFile, applyScan]);
 
   const inputCls =
@@ -522,7 +526,6 @@ function LogEditor({
                 ref={fileRef}
                 type="file"
                 accept="image/*"
-                capture="environment"
                 className="hidden"
                 onChange={(e) => handleScan(e.target.files?.[0])}
               />
@@ -593,25 +596,19 @@ function LogEditor({
                   type="button"
                   role="radio"
                   aria-checked={on}
-                  title={o.hint}
+                  aria-label={o.label}
                   onClick={() => setEffort(on ? null : o.value)}
-                  className={`flex flex-col items-center rounded-xl border py-2 ${
+                  className={`flex items-center justify-center rounded-xl border py-3 ${
                     on ? "border-primary bg-primary-tint" : "border-border bg-surface"
                   }`}
                 >
                   <span className={`text-[15px] font-semibold leading-none ${on ? "text-primary" : "text-text"}`}>
                     {o.value}
                   </span>
-                  <span className="mt-1 text-[10px] leading-none text-muted">{o.label}</span>
                 </button>
               );
             })}
           </div>
-          {effort != null && (
-            <p className="mt-1.5 text-[11px] text-muted">
-              {effortOptions.find((o) => o.value === effort)?.hint}
-            </p>
-          )}
 
           <div className={labelCls}>Note (optional)</div>
           <input
@@ -766,21 +763,30 @@ function OffRow({ session, period, color }: { session: Session; period: string; 
 function ExtraRow({ log, onEdit }: { log: LogEntry; onEdit: () => void }) {
   const meta = catMeta[log.category ?? "other"] ?? catMeta.other;
   return (
+    /* The same card as a logged session above it: the category's stripe, the
+       small kind label, the title, the result, a green "Logged" (owner,
+       2026-10-01: "make the UI consistent with other things"). */
     <button
       type="button"
       onClick={onEdit}
-      className="flex w-full items-start gap-3 rounded-2xl border border-border bg-surface px-3.5 py-3 text-left active:bg-surface-2"
+      className="relative flex w-full items-end gap-3 overflow-hidden rounded-2xl border border-success-line bg-success-tint pt-5 pr-3.5 pb-3 pl-5 text-left"
     >
-      <span className="mt-1">
-        <Dot color={meta.color} />
-      </span>
+      <span aria-hidden className="absolute inset-y-0 left-0 w-1.5" style={{ background: markColor(meta.color) }} />
       <div className="min-w-0 flex-1">
-        <span className="text-[14px] font-semibold text-text">{log.title}</span>
-        {summaryOf(log) && <div className="mt-0.5 text-[12px] text-text-2">{summaryOf(log)}</div>}
-        {log.note && <div className="mt-0.5 truncate text-[11px] text-muted">{log.note}</div>}
+        <span
+          className="rounded border px-1.5 py-px text-[8px] font-bold uppercase tracking-[0.08em] text-text-2"
+          style={{
+            background: `color-mix(in srgb, ${meta.color} 18%, var(--surface))`,
+            borderColor: `color-mix(in srgb, ${meta.color} 40%, var(--surface))`,
+          }}
+        >
+          {meta.label}
+        </span>
+        <div className="mt-2.5 text-[15px] font-semibold leading-snug text-text">{log.title}</div>
+        {summaryOf(log) && <div className="mt-0.5 text-[12px] font-medium text-text-2">{summaryOf(log)}</div>}
       </div>
-      <span className="flex-shrink-0 rounded-md border border-border px-2 py-0.5 text-[11px] font-medium text-muted">
-        {meta.label}
+      <span className="flex flex-shrink-0 items-center gap-1 text-[12px] font-semibold text-success">
+        <IconCheckCircle size={15} /> Logged
       </span>
     </button>
   );
@@ -847,7 +853,9 @@ function CheckInRow({ userId, iso }: { userId: string; iso: string }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="mt-2 flex w-full items-center justify-center gap-2.5 rounded-2xl border border-border bg-surface py-3.5 text-[14px] font-semibold text-text shadow-card transition-transform duration-150 active:scale-[0.98]"
+        className={`mt-2 flex w-full items-center justify-center gap-2.5 rounded-2xl border py-3.5 text-[14px] font-semibold text-text shadow-card transition-transform duration-150 active:scale-[0.98] ${
+          done ? "border-success-line bg-success-tint" : "border-border bg-surface"
+        }`}
       >
         {done ? (
           <span className="text-success">
@@ -1217,7 +1225,6 @@ function LogScreenInner() {
           ref={scanInputRef}
           type="file"
           accept="image/*"
-          capture="environment"
           className="hidden"
           onChange={(e) => onScanPicked(e.target.files?.[0])}
         />
